@@ -1,3 +1,5 @@
+**English** · [Français](background-jobs.fr.md)
+
 # Background jobs
 
 **Summary.** A background job is work a use case hands to a worker, to run later and outside
@@ -25,22 +27,163 @@ the command through a table of the same database, for the same reason.
 
 ## Declaring and enqueueing
 
+A job is a class of `application/background/`: a static `jobName`, a decorator with its
+options, and a `run` method that sends commands. This one is the job of the running example,
+which cancels the appointments of a calendar before an absence of its practitioner:
+
+<!-- checked sample -->
 ```ts
-// scheduling/application/background/reschedule-absence.background-job.ts
-@Background({ maxAttempts: 5, timeout: '30m', lease: '1m' })
-export class RescheduleAbsenceBackgroundJob implements BackgroundJob<RescheduleAbsencePayload> {
-  static readonly jobName = 'scheduling.reschedule-absence';
+// scheduling/application/background/clear-calendar.background-job.ts
+import {
+  AuthorizedCommand,
+  isRefusal,
+  type Actor,
+  type BackgroundJob,
+  type BackgroundJobExecution,
+  type CommandBus,
+} from '@ddd-ts-kit/kernel';
+import { Background } from '@ddd-ts-kit/kernel/declarations';
+
+// the command of another use case of the context, which the job sends
+declare class CancelAppointmentCommand extends AuthorizedCommand {
+  constructor(actor: Actor, appointmentId: string, reason: string);
+}
+
+/** Plain JSON: ids and text, a date as its ISO text. */
+export interface ClearCalendarPayload {
+  readonly calendarId: string;
+  readonly appointmentIds: readonly string[];
+  readonly reason: string;
+}
+
+/** What an attempt left behind: the number of appointments of the payload already handled. */
+interface ClearCalendarCheckpoint {
+  readonly done: number;
+}
+
+@Background({ timeout: '30m', lease: '1m' })
+export class ClearCalendarBackgroundJob implements BackgroundJob<ClearCalendarPayload> {
+  static readonly jobName = 'scheduling.clear-calendar';
 
   constructor(private readonly commands: CommandBus) {}
 
-  async run(payload: RescheduleAbsencePayload, execution: BackgroundJobExecution): Promise<void> {
-    // one command per appointment, each safe to send twice; progress and checkpoint between them
+  async run(payload: ClearCalendarPayload, execution: BackgroundJobExecution): Promise<void> {
+    const total = payload.appointmentIds.length;
+    // where an earlier attempt stopped: 0 on a fresh start
+    let done = doneBefore(execution.checkpoint);
+
+    // a client polling the job sees 0 of 3, or 1 of 3 after a resume, before the first step
+    await execution.reportProgress({ done, total });
+
+    for (const appointmentId of payload.appointmentIds.slice(done)) {
+      // cancelled, timed out, lease lost or worker stopping: stop between two steps
+      execution.signal.throwIfAborted();
+      await this.cancel(appointmentId, payload.reason, execution.actor);
+      done += 1;
+
+      const checkpoint: ClearCalendarCheckpoint = { done };
+
+      await execution.saveCheckpoint(checkpoint);
+      await execution.reportProgress({ done, total });
+    }
+  }
+
+  /** Idempotent: an appointment that is already over is what the job wants. */
+  private async cancel(appointmentId: string, reason: string, actor: Actor): Promise<void> {
+    try {
+      await this.commands.execute(new CancelAppointmentCommand(actor, appointmentId, reason));
+    } catch (error) {
+      if (!isRefusal(error, 'APPOINTMENT_ENDED')) {
+        throw error;
+      }
+    }
   }
 }
 
-// in the handler of DeclareAbsence, inside its unit of work
-await this.jobs.enqueue(RescheduleAbsenceBackgroundJob, { calendarId, from, to }, { idempotencyKey: absenceId });
+/** The checkpoint is stored as JSON and comes back as `unknown`: read it, never cast it. */
+function doneBefore(checkpoint: unknown): number {
+  return typeof checkpoint === 'object' &&
+    checkpoint !== null &&
+    'done' in checkpoint &&
+    typeof checkpoint.done === 'number'
+    ? checkpoint.done
+    : 0;
+}
 ```
+
+The use case enqueues it through the `JobQueue` port, inside its own unit of work, and answers
+the id of the job, which a client polls. The handler of the example also refuses an unknown
+calendar (`CalendarError.unknown`) and keeps only the appointments the period covers; this
+sample, shortened, keeps the enqueueing:
+
+<!-- checked sample -->
+```ts
+// scheduling/application/commands/clear-calendar/clear-calendar.handler.ts
+import { definePermissions } from '@ddd-ts-kit/auth';
+import {
+  AuthorizedCommand,
+  JobQueue,
+  type Actor,
+  type BackgroundJob,
+  type BackgroundJobExecution,
+} from '@ddd-ts-kit/kernel';
+import { CommandHandler, Requires } from '@ddd-ts-kit/kernel/declarations';
+
+// the job of the previous sample, and a repository port of the domain
+interface ClearCalendarPayload {
+  readonly calendarId: string;
+  readonly appointmentIds: readonly string[];
+  readonly reason: string;
+}
+declare class ClearCalendarBackgroundJob implements BackgroundJob<ClearCalendarPayload> {
+  static readonly jobName: 'scheduling.clear-calendar';
+  run(payload: ClearCalendarPayload, execution: BackgroundJobExecution): Promise<void>;
+}
+declare abstract class AppointmentRepository {
+  heldOn(calendarId: string, from: Date, to: Date): Promise<readonly { readonly id: string }[]>;
+}
+
+const permissions = definePermissions('scheduling', { 'calendar.clear': { description: 'Clear calendar' } });
+
+@Requires(permissions['calendar.clear'], {
+  resource: (command: ClearCalendarCommand) => ({ type: 'calendar', id: command.calendarId }),
+})
+export class ClearCalendarCommand extends AuthorizedCommand<string> {
+  constructor(
+    actor: Actor,
+    readonly calendarId: string,
+    readonly startsAt: Date,
+    readonly endsAt: Date,
+    readonly reason: string,
+  ) {
+    super(actor);
+  }
+}
+
+@CommandHandler(ClearCalendarCommand)
+export class ClearCalendarHandler implements CommandHandler<ClearCalendarCommand> {
+  constructor(
+    private readonly appointments: AppointmentRepository,
+    private readonly jobs: JobQueue,
+  ) {}
+
+  async execute(command: ClearCalendarCommand): Promise<string> {
+    const covered = await this.appointments.heldOn(command.calendarId, command.startsAt, command.endsAt);
+
+    // written in the transaction of the command: no commit, no job; a commit, a job
+    const clearance = await this.jobs.enqueue(
+      ClearCalendarBackgroundJob,
+      { calendarId: command.calendarId, appointmentIds: covered.map(({ id }) => id), reason: command.reason },
+      { subject: command.calendarId },
+    );
+
+    return clearance.id;
+  }
+}
+```
+
+The payload is checked against `run`: `enqueue(ClearCalendarBackgroundJob, { calendarId })`
+does not compile, since `appointmentIds` and `reason` are missing.
 
 - **The name** is a static `jobName`, `<context>.<job-name>`: how the job is enqueued, the
   label of its metrics and its spans, and the key of its idempotency. The **queue** of a job is
@@ -68,6 +211,37 @@ await this.jobs.enqueue(RescheduleAbsenceBackgroundJob, { calendarId, from, to }
   command takes primitives and ids), and a spec that enqueues it as a user and runs what is
   due. `init --queue database|redis|memory` chooses the store ([`stack.queue`](../CONFIG.md)).
 
+**An idempotency key is derived from the work, never drawn at random.** A request retried by
+its client, or a command sent twice by a consumer, must find the job it already enqueued:
+
+<!-- checked sample -->
+```ts
+import { randomUUID } from 'node:crypto';
+import type { BackgroundJob, BackgroundJobExecution, JobQueue } from '@ddd-ts-kit/kernel';
+
+interface CompileMonthlyReportPayload {
+  readonly practiceId: string;
+  readonly month: string;
+}
+declare class CompileMonthlyReportJob implements BackgroundJob<CompileMonthlyReportPayload> {
+  static readonly jobName: 'reporting.compile-monthly-report';
+  run(payload: CompileMonthlyReportPayload, execution: BackgroundJobExecution): Promise<void>;
+}
+declare const jobs: JobQueue;
+
+const report = { practiceId: 'practice-42', month: '2026-10' };
+
+// instead of: a new key at every call, so a retried request compiles the report twice
+await jobs.enqueue(CompileMonthlyReportJob, report, { idempotencyKey: randomUUID() });
+
+// write: the same key for the same work
+const key = `${report.practiceId}:${report.month}`;
+const first = await jobs.enqueue(CompileMonthlyReportJob, report, { idempotencyKey: key });
+const again = await jobs.enqueue(CompileMonthlyReportJob, report, { idempotencyKey: key });
+// again.id === first.id and again.duplicate === true: nothing was added
+console.log(first.id === again.id, again.duplicate);
+```
+
 ## The enqueue shares the transaction of the command
 
 The choice made by the kit: **a jobs table of the context, in the database of the context**,
@@ -76,11 +250,11 @@ instead of facts, without its relay:
 
 ```mermaid
 sequenceDiagram
-  participant H as handler of DeclareAbsence
+  participant H as handler of the command
   participant DB as database (one transaction)
   participant W as worker
-  H->>DB: update the calendar
-  H->>DB: insert into scheduling.background_jobs
+  H->>DB: save the business change
+  H->>DB: insert into background_jobs
   H->>DB: commit
   loop every second, per queue
     W->>DB: claim due jobs FOR UPDATE SKIP LOCKED, lease them
@@ -113,6 +287,8 @@ a database, keep the jobs table.
 to the concurrency of that queue, and asks again at each poll (one second by default) when the
 queue is idle.
 
+![The lifecycle of a background job: enqueued waiting, claimed running, then succeeded, back to waiting after a failure or a release, dead after its last attempt, or cancelled; an operator revives a dead job](../assets/diagrams/background-jobs-lifecycle.svg)
+
 - **At least once.** A claim is a lease. The worker extends it by heartbeats while the run goes
   on (a third of the lease); a worker that died stops extending it, and the job is claimed
   again when the lease ends, one attempt more. A job is therefore run twice when its worker
@@ -139,6 +315,11 @@ queue is idle.
   Stopping, like a timeout or a cancellation, is cooperative: a job that ignores its signal
   goes on behind, outside of the concurrency of its queue, until its body settles.
 
+What a checkpoint buys, on the job of the example: an attempt that fails half-way does not
+start over, and the one step that may run twice is the step it failed on.
+
+![Attempt 1 cancels the first appointment, saves checkpoint 1 and fails on the second; attempt 2 receives checkpoint 1, cancels the second and the third, saving a checkpoint after each](../assets/diagrams/background-jobs-checkpoint.svg)
+
 ## In the example
 
 A practitioner going away cannot add a time off over booked appointments
@@ -154,6 +335,65 @@ answers its status (an enum of the contract) and `{ done, total }` from `JobQueu
 half-way and watch the next one resume after the last appointment handled; an end-to-end
 journey runs it on the worker of the application, on PostgreSQL.
 
+The query that reads a clearance does not trust the id it is given. Returning
+`jobs.find(clearanceId)` as it is would show any job of the tenant to whoever may clear one
+calendar: the handler checks that the job is a clearance, and a clearance of the calendar the
+URL names.
+
+<!-- checked sample -->
+```ts
+// scheduling/application/queries/get-clearance/get-clearance.handler.ts
+import { definePermissions } from '@ddd-ts-kit/auth';
+import { AuthorizedQuery, ConceptError, JobQueue, type Actor, type QueuedJobStatus } from '@ddd-ts-kit/kernel';
+import { QueryHandler, Requires } from '@ddd-ts-kit/kernel/declarations';
+
+const permissions = definePermissions('scheduling', { 'calendar.clear': { description: 'Clear calendar' } });
+
+export class CalendarError extends ConceptError {
+  static unknownClearance(clearanceId: string) {
+    return CalendarError.refusal('UNKNOWN_CLEARANCE', `There is no clearance ${clearanceId}.`, { clearanceId });
+  }
+}
+
+export interface GetClearanceResult {
+  readonly status: QueuedJobStatus;
+  readonly done: number;
+  readonly total?: number;
+}
+
+// whoever may clear this calendar may follow its clearances
+@Requires(permissions['calendar.clear'], {
+  resource: (query: GetClearanceQuery) => ({ type: 'calendar', id: query.calendarId }),
+})
+export class GetClearanceQuery extends AuthorizedQuery<GetClearanceResult> {
+  constructor(
+    actor: Actor,
+    readonly calendarId: string,
+    readonly clearanceId: string,
+  ) {
+    super(actor);
+  }
+}
+
+@QueryHandler(GetClearanceQuery)
+export class GetClearanceHandler implements QueryHandler<GetClearanceQuery> {
+  constructor(private readonly jobs: JobQueue) {}
+
+  async execute(query: GetClearanceQuery): Promise<GetClearanceResult> {
+    const job = await this.jobs.find(query.clearanceId);
+
+    // another kind of job, or the clearance of another calendar: unknown here
+    if (job?.name !== 'scheduling.clear-calendar' || job.subject !== query.calendarId) {
+      throw CalendarError.unknownClearance(query.clearanceId);
+    }
+
+    const { status, progress } = job;
+
+    return { status, done: progress?.done ?? 0, ...(progress?.total === undefined ? {} : { total: progress.total }) };
+  }
+}
+```
+
 ## Worker mode
 
 Every process that starts the application with its jobs on (`jobs: { start: true }`) runs the
@@ -165,6 +405,8 @@ memory of a process (`InMemoryJobStore`, `stack.queue` `memory`, the store of a 
 initialised before background jobs existed) is seen by no other process: that process consumes it even with its
 jobs off, so the API next to a worker still runs what it enqueues, and loses what waits when
 it restarts. Share the queue (the jobs table, Redis) to let the worker run it.
+
+![On the left, the API enqueues into a shared jobs table and the worker claims from it; on the right, a queue in the memory of the API, which the API runs itself and the worker never sees](../assets/diagrams/background-jobs-worker-mode.svg)
 
 ## What travels with the job
 
@@ -207,10 +449,45 @@ emulated cluster mode on Dragonfly. BullMQ cannot share the transaction either.
 ## Testing
 
 A spec of a background job is a spec of the use cases it triggers: the test application holds
-the queue in memory, `app.backgroundJobs.runDue()` runs what is due on its clock (and throws
-what an attempt threw), and `app.backgroundJobs.store.list()` shows what was enqueued. A spec
-of the handler that enqueues asserts the job through the same list. Time is moved with
-`app.clock.advance(ms)` for a delayed job.
+the queue in memory, `application.backgroundJobs.runDue()` runs what is due on its clock (and
+throws what an attempt threw), and `application.backgroundJobs.store.list()` shows what was
+enqueued. A spec of the handler that enqueues asserts the job through the same list. Time is
+moved with `application.clock.advance(ms)` for a delayed job.
+
+A spec of the example, shortened: the second cancellation fails once, and the next attempt
+resumes from the checkpoint instead of starting over.
+
+```ts
+it('resumes after the last appointment an interrupted attempt handled, never cancelling one twice', async () => {
+  const { application } = await cleared(); // three appointments, the clearance asked as the holder of the calendar
+  const sent: string[] = [];
+  let failures = 1;
+
+  application.commandBus.use(async (message, next) => {
+    if (message instanceof CancelAppointmentCommand) {
+      sent.push(message.appointmentId);
+
+      if (message.appointmentId === 'second' && failures-- > 0) {
+        throw new Error('the database went away');
+      }
+    }
+
+    return next();
+  });
+
+  await expect(application.backgroundJobs.runDue()).rejects.toThrow('the database went away');
+  expect(application.backgroundJobs.store.list()).toMatchObject([{ status: 'waiting', progress: { done: 1 } }]);
+
+  application.clock.advance(1_000); // the first backoff
+  await application.backgroundJobs.runDue();
+
+  expect(sent).toEqual(['first', 'second', 'second', 'third']);
+  expect(application.backgroundJobs.store.list()).toMatchObject([{ status: 'succeeded', attempts: 2 }]);
+});
+```
+
+No mock and no timer: the queue, the clock and the bus of the test application are real, in
+memory. The middleware on the command bus is the one place where the test injects a failure.
 
 ## Limits and when not to use it
 

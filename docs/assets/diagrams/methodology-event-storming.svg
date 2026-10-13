@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 520" width="960" height="520" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">A written event storming of the scheduling application</title>
+  <desc id="desc">Three lines of a discovery, each read from left to right: a read model informs an actor, the actor gives a command, the command causes a domain event, and a policy follows the event. A client looks at the open slots of a practitioner and books an appointment; the appointment is booked, so a confirmation is sent and a reminder scheduled. A client or a practitioner cancels an appointment; it is cancelled, so the slot is freed and the other party told. Every morning, time sends the reminders of tomorrow's appointments; a reminder is sent, with no policy after it. Below, a hot spot asks until when a client may cancel for free, and the external systems are listed.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="520" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">A written event storming: three lines of the scheduling discovery</text>
+  <!-- column headers -->
+  <text x="102" y="80" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">read model</text>
+  <text x="294" y="80" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">actor</text>
+  <text x="482" y="80" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">command</text>
+  <text x="670" y="80" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">domain event</text>
+  <text x="858" y="80" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">policy</text>
+  <text x="102" y="98" font-size="13" fill="#1f2328" text-anchor="middle">what is seen to decide</text>
+  <text x="294" y="98" font-size="13" fill="#1f2328" text-anchor="middle">who asks</text>
+  <text x="482" y="98" font-size="13" fill="#1f2328" text-anchor="middle">what is asked</text>
+  <text x="670" y="98" font-size="13" fill="#1f2328" text-anchor="middle">what happened, past tense</text>
+  <text x="858" y="98" font-size="13" fill="#1f2328" text-anchor="middle">whenever X, then Y</text>
+  <!-- lane 1: book -->
+  <rect x="20" y="114" width="164" height="72" rx="6" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="102" y="145" font-size="13" fill="#1f2328" text-anchor="middle">open slots of a</text>
+  <text x="102" y="163" font-size="13" fill="#1f2328" text-anchor="middle">practitioner</text>
+  <rect x="212" y="114" width="164" height="72" rx="36" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="294" y="155" font-size="14" fill="#1f2328" text-anchor="middle">client</text>
+  <rect x="400" y="114" width="164" height="72" rx="6" fill="#e7eef5" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="482" y="155" font-size="14" fill="#1f2328" text-anchor="middle">book an appointment</text>
+  <rect x="588" y="114" width="164" height="72" rx="6" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="1.5"/>
+  <text x="670" y="155" font-size="14" fill="#1f2328" text-anchor="middle">appointment booked</text>
+  <rect x="776" y="114" width="164" height="72" rx="6" fill="#ffffff" stroke="#5f6b73" stroke-width="2"/>
+  <text x="858" y="145" font-size="13" fill="#1f2328" text-anchor="middle">send a confirmation;</text>
+  <text x="858" y="163" font-size="13" fill="#1f2328" text-anchor="middle">schedule a reminder</text>
+  <line x1="184" y1="150" x2="210" y2="150" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="376" y1="150" x2="398" y2="150" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="564" y1="150" x2="586" y2="150" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="752" y1="150" x2="774" y2="150" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- lane 2: cancel -->
+  <rect x="20" y="210" width="164" height="72" rx="6" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="102" y="251" font-size="14" fill="#1f2328" text-anchor="middle">my appointments</text>
+  <rect x="212" y="210" width="164" height="72" rx="36" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="294" y="241" font-size="13" fill="#1f2328" text-anchor="middle">client or</text>
+  <text x="294" y="259" font-size="13" fill="#1f2328" text-anchor="middle">practitioner</text>
+  <rect x="400" y="210" width="164" height="72" rx="6" fill="#e7eef5" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="482" y="251" font-size="14" fill="#1f2328" text-anchor="middle">cancel an appointment</text>
+  <rect x="588" y="210" width="164" height="72" rx="6" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="1.5"/>
+  <text x="670" y="251" font-size="14" fill="#1f2328" text-anchor="middle">appointment cancelled</text>
+  <rect x="776" y="210" width="164" height="72" rx="6" fill="#ffffff" stroke="#5f6b73" stroke-width="2"/>
+  <text x="858" y="241" font-size="13" fill="#1f2328" text-anchor="middle">free the slot;</text>
+  <text x="858" y="259" font-size="13" fill="#1f2328" text-anchor="middle">tell the other party</text>
+  <line x1="184" y1="246" x2="210" y2="246" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="376" y1="246" x2="398" y2="246" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="564" y1="246" x2="586" y2="246" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="752" y1="246" x2="774" y2="246" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- lane 3: reminders -->
+  <rect x="20" y="306" width="164" height="72" rx="6" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="102" y="337" font-size="13" fill="#1f2328" text-anchor="middle">appointments</text>
+  <text x="102" y="355" font-size="13" fill="#1f2328" text-anchor="middle">of tomorrow</text>
+  <rect x="212" y="306" width="164" height="72" rx="36" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="294" y="337" font-size="13" fill="#1f2328" text-anchor="middle">time</text>
+  <text x="294" y="355" font-size="13" fill="#1f2328" text-anchor="middle">(every morning)</text>
+  <rect x="400" y="306" width="164" height="72" rx="6" fill="#e7eef5" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="482" y="347" font-size="14" fill="#1f2328" text-anchor="middle">send reminders</text>
+  <rect x="588" y="306" width="164" height="72" rx="6" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="1.5"/>
+  <text x="670" y="347" font-size="14" fill="#1f2328" text-anchor="middle">reminder sent</text>
+  <text x="858" y="347" font-size="13" font-style="italic" fill="#5f6b73" text-anchor="middle">no policy follows</text>
+  <line x1="184" y1="342" x2="210" y2="342" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="376" y1="342" x2="398" y2="342" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="564" y1="342" x2="586" y2="342" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- hot spot and external systems -->
+  <rect x="20" y="412" width="450" height="84" rx="6" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="38" y="438" font-size="15" font-weight="700" fill="#5f6b73">hot spot, on cancel an appointment</text>
+  <text x="38" y="462" font-size="13" fill="#1f2328">"Until when may a client cancel for free?"</text>
+  <text x="38" y="482" font-size="13" fill="#1f2328">A question for a domain expert, never a guess.</text>
+  <rect x="490" y="412" width="450" height="84" rx="6" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="508" y="438" font-size="15" font-weight="700" fill="#5f6b73">external systems</text>
+  <text x="508" y="462" font-size="13" fill="#1f2328">identity provider, email and SMS providers,</text>
+  <text x="508" y="482" font-size="13" fill="#1f2328">each with what happens when it is down</text>
+</svg>

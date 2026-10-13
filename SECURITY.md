@@ -1,9 +1,12 @@
+**English** · [Français](SECURITY.fr.md)
+
 # Security policy
 
 ## Supported versions
 
-The packages are not published to a registry yet: the `main` branch is the only supported
-version, and a fix lands there.
+Only the latest version published on npm and the `main` branch receive security fixes. A fix
+lands on `main` and ships in the next release of every package; an older version is not
+patched, so upgrade to the latest one.
 
 ## Reporting a vulnerability
 
@@ -15,8 +18,8 @@ Say what is affected (a package, the CLI, a generated template, the plugin hook,
 asset), how to reproduce it and what an attacker gains.
 
 You can expect an acknowledgement within seven days. A confirmed vulnerability is fixed on
-`main`, then disclosed in a GitHub security advisory that credits the reporter unless they ask
-otherwise.
+`main` and shipped in a new version, then disclosed in a GitHub security advisory that credits
+the reporter unless they ask otherwise.
 
 ## Scope
 

@@ -1,3 +1,5 @@
+**English** · [Français](representations-and-forms.fr.md)
+
 # Representations and forms: XML, CSV, JSON Forms and its renderers
 
 **Summary.** `@ddd-ts-kit/http` writes JSON, XML and CSV, reads XML, negotiates on `Accept`,

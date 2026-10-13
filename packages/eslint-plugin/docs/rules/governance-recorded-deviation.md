@@ -1,3 +1,5 @@
+**English** · [Français](governance-recorded-deviation.fr.md)
+
 # ddd-ts-kit/governance-recorded-deviation
 
 Architecture id: `governance/recorded-deviation`. Default severity: `error` in `recommended`, `error` in `strict`.

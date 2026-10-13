@@ -1,3 +1,5 @@
+**English** · [Français](declarations-constructor-injection.fr.md)
+
 # ddd-ts-kit/declarations-constructor-injection
 
 Architecture id: `declarations/constructor-injection`. Default severity: `error` in `recommended`, `error` in `strict`.

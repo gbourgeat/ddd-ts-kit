@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" width="960" height="420" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Quatre niveaux de specs, et l'exécution qui les mesure</title>
+  <desc id="desc">Une spec du domaine, où Appointment refuse une seconde annulation, et une spec de gestionnaire, où CancelAppointment passe par le bus de commandes avec des fakes, prennent des millisecondes et s'exécutent dans le projet unit, qui mesure les couches domaine, application et présentation. Une spec d'adaptateur, le repository face à PostgreSQL tenu à son contrat, prend des secondes et s'exécute dans le projet integration, qui mesure la couche infrastructure. Une spec de bout en bout, POST /appointments par HTTP et le bus d'événements, prend des secondes et s'exécute avec sa propre configuration contre toute l'application.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="420" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Quatre niveaux de specs, et l'exécution qui les mesure</text>
+  <!-- levels -->
+  <rect x="32" y="66" width="400" height="64" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="48" y="92" font-size="16" font-weight="700" fill="#2f6f4f">spec du domaine</text>
+  <text x="48" y="116" font-size="13" fill="#1f2328">Appointment refuse une seconde annulation</text>
+  <rect x="32" y="146" width="400" height="64" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="48" y="172" font-size="16" font-weight="700" fill="#2b5d8a">spec de gestionnaire</text>
+  <text x="48" y="196" font-size="13" fill="#1f2328">CancelAppointment via le bus de commandes, avec fakes</text>
+  <rect x="32" y="226" width="400" height="64" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="48" y="252" font-size="16" font-weight="700" fill="#7a4f9a">spec d'adaptateur</text>
+  <text x="48" y="276" font-size="13" fill="#1f2328">le repository face à PostgreSQL, tenu à son contrat</text>
+  <rect x="32" y="306" width="400" height="64" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="48" y="332" font-size="16" font-weight="700" fill="#9a5b2b">spec de bout en bout</text>
+  <text x="48" y="356" font-size="13" fill="#1f2328">POST /appointments par HTTP et le bus d'événements</text>
+  <!-- speeds -->
+  <line x1="434" y1="98" x2="584" y2="98" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="508" y="90" font-size="13" fill="#1f2328" text-anchor="middle">millisecondes</text>
+  <line x1="434" y1="178" x2="584" y2="178" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="508" y="170" font-size="13" fill="#1f2328" text-anchor="middle">millisecondes</text>
+  <line x1="434" y1="258" x2="584" y2="258" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="508" y="250" font-size="13" fill="#1f2328" text-anchor="middle">secondes</text>
+  <line x1="434" y1="338" x2="584" y2="338" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="508" y="330" font-size="13" fill="#1f2328" text-anchor="middle">secondes</text>
+  <!-- runs -->
+  <rect x="586" y="66" width="342" height="144" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="602" y="96" font-size="16" font-weight="700" fill="#5f6b73">projet unit</text>
+  <text x="602" y="122" font-size="13" fill="#1f2328" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">vitest run --project unit</text>
+  <text x="602" y="150" font-size="13" fill="#1f2328">à chaque changement, sans base de données</text>
+  <text x="602" y="176" font-size="13" fill="#1f2328">couverture : domaine, application,</text>
+  <text x="602" y="196" font-size="13" fill="#1f2328">présentation</text>
+  <rect x="586" y="226" width="342" height="64" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="602" y="252" font-size="16" font-weight="700" fill="#5f6b73">projet integration</text>
+  <text x="602" y="276" font-size="13" fill="#1f2328">une vraie base ; couverture : infrastructure</text>
+  <rect x="586" y="306" width="342" height="64" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="602" y="332" font-size="16" font-weight="700" fill="#5f6b73">configuration de bout en bout</text>
+  <text x="602" y="356" font-size="13" fill="#1f2328">toute l'application, sur un port libre</text>
+  <text x="32" y="400" font-size="13" fill="#5f6b73">Les niveaux et les exécutions sont ceux que Vitest configure ; sous Jest, une seule exécution réunit les trois premiers.</text>
+</svg>

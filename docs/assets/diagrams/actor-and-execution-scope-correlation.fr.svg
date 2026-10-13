@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 400" width="960" height="400" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Corrélation et causalité à travers un saut entre deux contextes</title>
+  <desc id="desc">Une requête HTTP du contexte appointments s'exécute dans une portée d'identifiant de corrélation req-42, sans identifiant de causalité, d'origine http, du tenant acme et de l'acteur utilisateur u-7. L'événement d'intégration appointments.appointment.booked, d'identifiant evt-9, part avec la corrélation req-42 et le tenant acme, apposés par le publisher. Le contexte notifications le consomme dans une nouvelle portée : la même corrélation req-42, la causalité evt-9, l'origine event, le tenant acme et l'acteur système system:notifications.remind-on-appointment-booked. Chaque ligne de journal, span et entrée d'audit des deux contextes porte la corrélation req-42 ; les colonnes d'audit du rappel enregistré nomment l'acteur système.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="400" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Un identifiant de corrélation à travers le saut, l'événement pour cause</text>
+  <!-- scope 1 -->
+  <rect x="24" y="64" width="300" height="230" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="174" y="90" font-size="16" font-weight="700" fill="#9a5b2b" text-anchor="middle">portée de la requête HTTP</text>
+  <text x="174" y="110" font-size="13" fill="#1f2328" text-anchor="middle">contexte appointments</text>
+  <line x1="40" y1="122" x2="308" y2="122" stroke="#9a5b2b" stroke-opacity="0.35"/>
+  <text x="40" y="146" font-size="13" font-weight="600" fill="#1f2328">correlationId</text>
+  <text x="150" y="146" font-size="13" fill="#1f2328">req-42 (nouveau)</text>
+  <text x="40" y="170" font-size="13" font-weight="600" fill="#1f2328">causationId</text>
+  <text x="150" y="170" font-size="13" fill="#1f2328">aucun</text>
+  <text x="40" y="194" font-size="13" font-weight="600" fill="#1f2328">origin</text>
+  <text x="150" y="194" font-size="13" fill="#1f2328">http</text>
+  <text x="40" y="218" font-size="13" font-weight="600" fill="#1f2328">tenantId</text>
+  <text x="150" y="218" font-size="13" fill="#1f2328">acme</text>
+  <text x="40" y="242" font-size="13" font-weight="600" fill="#1f2328">actor</text>
+  <text x="150" y="242" font-size="13" fill="#1f2328">u-7 (un utilisateur)</text>
+  <!-- the event -->
+  <rect x="370" y="96" width="220" height="154" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="480" y="126" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">événement d'intégration</text>
+  <text x="480" y="150" font-size="13" fill="#1f2328" text-anchor="middle">appointments.</text>
+  <text x="480" y="168" font-size="13" fill="#1f2328" text-anchor="middle">appointment.booked</text>
+  <text x="480" y="194" font-size="13" fill="#1f2328" text-anchor="middle">id : evt-9</text>
+  <text x="480" y="214" font-size="13" fill="#1f2328" text-anchor="middle">correlationId : req-42</text>
+  <text x="480" y="234" font-size="13" fill="#1f2328" text-anchor="middle">tenantId : acme</text>
+  <line x1="326" y1="166" x2="366" y2="166" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <line x1="592" y1="166" x2="632" y2="166" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <text x="480" y="274" font-size="13" fill="#1f2328" text-anchor="middle">le publisher appose les deux ;</text>
+  <text x="480" y="294" font-size="13" fill="#1f2328" text-anchor="middle">le consommateur ouvre une portée</text>
+  <!-- scope 2 -->
+  <rect x="636" y="64" width="300" height="230" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="786" y="90" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">portée du consommateur</text>
+  <text x="786" y="110" font-size="13" fill="#1f2328" text-anchor="middle">contexte notifications</text>
+  <line x1="652" y1="122" x2="920" y2="122" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text x="652" y="146" font-size="13" font-weight="600" fill="#1f2328">correlationId</text>
+  <text x="762" y="146" font-size="13" fill="#1f2328">req-42 (le même)</text>
+  <text x="652" y="170" font-size="13" font-weight="600" fill="#1f2328">causationId</text>
+  <text x="762" y="170" font-size="13" fill="#1f2328">evt-9 (l'événement)</text>
+  <text x="652" y="194" font-size="13" font-weight="600" fill="#1f2328">origin</text>
+  <text x="762" y="194" font-size="13" fill="#1f2328">event</text>
+  <text x="652" y="218" font-size="13" font-weight="600" fill="#1f2328">tenantId</text>
+  <text x="762" y="218" font-size="13" fill="#1f2328">acme (de l'enveloppe)</text>
+  <text x="652" y="242" font-size="13" font-weight="600" fill="#1f2328">actor</text>
+  <text x="762" y="242" font-size="13" fill="#1f2328">system:notifications.</text>
+  <text x="762" y="260" font-size="13" fill="#1f2328">remind-on-appointment-</text>
+  <text x="762" y="278" font-size="13" fill="#1f2328">booked</text>
+  <!-- shared correlation -->
+  <rect x="24" y="324" width="912" height="52" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="480" y="346" font-size="14" fill="#1f2328" text-anchor="middle">Chaque ligne de journal, span et entrée d'audit des deux contextes porte correlationId req-42 ;</text>
+  <text x="480" y="366" font-size="14" fill="#1f2328" text-anchor="middle">les colonnes d'audit du rappel enregistré nomment l'acteur système.</text>
+</svg>

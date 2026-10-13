@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 680" width="960" height="680" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Testable par construction : avant et après</title>
+  <desc id="desc">Avant, le gestionnaire va chercher lui-même un générateur aléatoire, l'horloge du système, l'environnement et un module d'envoi de SMS : une spec doit les simuler. Après, il reçoit par son constructeur les ports Clock et IdGenerator du noyau et le port de repository de son contexte ; chaque port est implémenté par un vrai adaptateur en production et par un fake dans une spec.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+    <marker id="arrow-infrastructure" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#7a4f9a"/>
+    </marker>
+  </defs>
+  <rect width="960" height="680" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Testable par construction : avant et après</text>
+  <!-- before -->
+  <rect x="24" y="58" width="912" height="216" rx="14" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="44" y="86" font-size="14" font-weight="600" fill="#5f6b73">Avant : le gestionnaire va chercher ses dépendances lui-même</text>
+  <rect x="60" y="112" width="240" height="76" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="180.0" y="138" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">BookAppointmentHandler</text>
+  <line x1="74" y1="148" x2="286" y2="148" stroke="#2b5d8a" stroke-opacity="0.35"/>
+  <text x="180.0" y="168" font-size="13" fill="#1f2328" text-anchor="middle">execute(command)</text>
+  <rect x="520" y="102" width="300" height="30" rx="6" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="536" y="122" font-size="14" fill="#1f2328">crypto.randomUUID()</text>
+  <line x1="302" y1="150" x2="516" y2="117" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="520" y="142" width="300" height="30" rx="6" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="536" y="162" font-size="14" fill="#1f2328">new Date()</text>
+  <line x1="302" y1="150" x2="516" y2="157" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="520" y="182" width="300" height="30" rx="6" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="536" y="202" font-size="14" fill="#1f2328">process.env.SMS_ENABLED</text>
+  <line x1="302" y1="150" x2="516" y2="197" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="520" y="222" width="300" height="30" rx="6" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="536" y="242" font-size="14" fill="#1f2328">sendSms, un module importé</text>
+  <line x1="302" y1="150" x2="516" y2="237" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="60" y="218" font-size="13" font-style="italic" fill="#5f6b73">Une spec doit simuler un module,</text>
+  <text x="60" y="236" font-size="13" font-style="italic" fill="#5f6b73">une variable globale, l'environnement,</text>
+  <text x="60" y="254" font-size="13" font-style="italic" fill="#5f6b73">et deux exécutions n'ont pas le même id.</text>
+  <!-- after -->
+  <rect x="24" y="292" width="912" height="320" rx="14" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="44" y="320" font-size="14" font-weight="600" fill="#5f6b73">Après : tout ce dont il a besoin arrive par un port, par son constructeur</text>
+  <rect x="60" y="414" width="240" height="76" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="180.0" y="440" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">BookAppointmentHandler</text>
+  <line x1="74" y1="450" x2="286" y2="450" stroke="#2b5d8a" stroke-opacity="0.35"/>
+  <text x="180.0" y="470" font-size="13" fill="#1f2328" text-anchor="middle">execute(command)</text>
+  <rect x="370" y="344" width="240" height="62" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="490.0" y="370" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">Clock</text>
+  <text x="490.0" y="390" font-size="13" fill="#1f2328" text-anchor="middle">port du noyau</text>
+  <line x1="302" y1="452" x2="366" y2="375" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="690" y="344" width="240" height="62" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="704" y="369" font-size="13" fill="#1f2328">production : SystemClock</text>
+  <text x="704" y="391" font-size="13" fill="#1f2328">spec : FixedClock</text>
+  <line x1="688" y1="375" x2="614" y2="375" stroke="#7a4f9a" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow-infrastructure)"/>
+  <rect x="370" y="430" width="240" height="62" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="490.0" y="456" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">IdGenerator</text>
+  <text x="490.0" y="476" font-size="13" fill="#1f2328" text-anchor="middle">port du noyau</text>
+  <line x1="302" y1="452" x2="366" y2="461" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="690" y="430" width="240" height="62" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="704" y="455" font-size="13" fill="#1f2328">production : UuidGenerator</text>
+  <text x="704" y="477" font-size="13" fill="#1f2328">spec : SequentialIdGenerator</text>
+  <line x1="688" y1="461" x2="614" y2="461" stroke="#7a4f9a" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow-infrastructure)"/>
+  <rect x="370" y="516" width="240" height="62" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="490.0" y="542" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">AppointmentRepository</text>
+  <text x="490.0" y="562" font-size="13" fill="#1f2328" text-anchor="middle">port du contexte</text>
+  <line x1="302" y1="452" x2="366" y2="547" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="690" y="516" width="240" height="62" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="704" y="541" font-size="13" fill="#1f2328">production : adaptateur de l'ORM</text>
+  <text x="704" y="563" font-size="13" fill="#1f2328">spec : InMemoryRepository</text>
+  <line x1="688" y1="547" x2="614" y2="547" stroke="#7a4f9a" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow-infrastructure)"/>
+  <!-- legend -->
+  <line x1="40" y1="636" x2="84" y2="636" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="96" y="641" font-size="14" fill="#1f2328">dépend de, ou appelle</text>
+  <line x1="40" y1="662" x2="84" y2="662" stroke="#7a4f9a" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow-infrastructure)"/>
+  <text x="96" y="667" font-size="14" fill="#1f2328">implémente le port : la production et la spec lient chacune une classe différente</text>
+</svg>

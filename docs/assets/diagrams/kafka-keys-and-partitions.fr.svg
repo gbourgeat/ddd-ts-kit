@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 500" width="960" height="500" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">La clé de l'enregistrement décide de l'ordre</title>
+  <desc id="desc">Deux événements de la commande 1, placée puis payée. Avec la clé par défaut, l'id de l'événement, ils tombent sur deux partitions, P1 et P2, possédées par deux instances du consommateur, et payée peut être traitée avant placée. Avec keyOf qui donne l'id de la commande, les deux tombent sur P0, possédée par une seule instance, et sont traités l'un après l'autre dans l'ordre du journal. Le relais doit utiliser le même keyOf avec l'ordre per-key.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="500" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">La clé de l'enregistrement décide de l'ordre</text>
+
+  <!-- left: default key -->
+  <rect x="24" y="56" width="444" height="380" rx="12" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="44" y="82" font-size="14" font-weight="600" fill="#5f6b73">Au lieu de : la clé par défaut, l'id de l'événement</text>
+
+  <rect x="44" y="98" width="190" height="66" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="139" y="124" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">placée, commande 1</text>
+  <text x="139" y="148" font-size="13" fill="#1f2328" text-anchor="middle">clé e-17, son id d'événement</text>
+  <rect x="254" y="98" width="190" height="66" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="349" y="124" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">payée, commande 1</text>
+  <text x="349" y="148" font-size="13" fill="#1f2328" text-anchor="middle">clé e-42, son id d'événement</text>
+
+  <g fill="#ffffff" stroke="#5f6b73" stroke-width="2">
+    <rect x="44" y="214" width="120" height="42" rx="8"/>
+    <rect x="179" y="214" width="120" height="42" rx="8"/>
+    <rect x="314" y="214" width="120" height="42" rx="8"/>
+  </g>
+  <g font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">
+    <text x="104" y="241">P0</text>
+    <text x="239" y="241">P1</text>
+    <text x="374" y="241">P2</text>
+  </g>
+
+  <rect x="44" y="306" width="190" height="62" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="139" y="332" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">instance 1</text>
+  <text x="139" y="354" font-size="13" fill="#1f2328" text-anchor="middle">possède P0 et P1</text>
+  <rect x="254" y="306" width="190" height="62" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="349" y="332" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">instance 2</text>
+  <text x="349" y="354" font-size="13" fill="#1f2328" text-anchor="middle">possède P2</text>
+
+  <line x1="150" y1="166" x2="232" y2="211" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="355" y1="166" x2="370" y2="211" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="230" y1="258" x2="196" y2="303" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="374" y1="258" x2="374" y2="303" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <text x="44" y="398" font-size="14" fill="#1f2328">Deux partitions, deux instances, en parallèle :</text>
+  <text x="44" y="420" font-size="14" font-weight="600" fill="#1f2328">« payée » peut être traitée avant « placée ».</text>
+
+  <!-- right: aggregate id -->
+  <rect x="492" y="56" width="444" height="380" rx="12" fill="#f1ebf5" fill-opacity="0.35" stroke="#7a4f9a" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="512" y="82" font-size="14" font-weight="600" fill="#7a4f9a">Écrire : keyOf donne l'id de l'agrégat</text>
+
+  <rect x="512" y="98" width="190" height="66" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="607" y="124" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">placée, commande 1</text>
+  <text x="607" y="148" font-size="13" fill="#1f2328" text-anchor="middle">clé o-1, l'id de la commande</text>
+  <rect x="722" y="98" width="190" height="66" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="817" y="124" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">payée, commande 1</text>
+  <text x="817" y="148" font-size="13" fill="#1f2328" text-anchor="middle">clé o-1, l'id de la commande</text>
+
+  <g fill="#ffffff" stroke="#5f6b73" stroke-width="2">
+    <rect x="512" y="214" width="120" height="42" rx="8"/>
+    <rect x="647" y="214" width="120" height="42" rx="8"/>
+    <rect x="782" y="214" width="120" height="42" rx="8"/>
+  </g>
+  <g font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">
+    <text x="572" y="241">P0</text>
+    <text x="707" y="241">P1</text>
+    <text x="842" y="241">P2</text>
+  </g>
+
+  <rect x="512" y="306" width="190" height="62" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="607" y="332" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">instance 1</text>
+  <text x="607" y="354" font-size="13" fill="#1f2328" text-anchor="middle">possède P0 et P1</text>
+  <rect x="722" y="306" width="190" height="62" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="817" y="332" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">instance 2</text>
+  <text x="817" y="354" font-size="13" fill="#1f2328" text-anchor="middle">possède P2</text>
+
+  <line x1="590" y1="166" x2="572" y2="211" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="740" y1="166" x2="600" y2="211" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="572" y1="258" x2="572" y2="303" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <text x="512" y="398" font-size="14" fill="#1f2328">Une partition, une instance, un enregistrement à la fois :</text>
+  <text x="512" y="420" font-size="14" font-weight="600" fill="#1f2328">« placée », puis « payée », dans l'ordre du journal.</text>
+
+  <text x="32" y="468" font-size="14" fill="#1f2328">La partition est un hachage de la clé. Donnez au relais le même keyOf avec ordering: 'per-key', sinon l'ordre est</text>
+  <text x="32" y="488" font-size="14" fill="#1f2328">perdu avant même que Kafka voie les événements.</text>
+</svg>

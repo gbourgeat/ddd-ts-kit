@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 424" width="960" height="424" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Ce qui remplace le cycle de vie des requêtes HTTP de Nest pour une route du kit</title>
+  <desc id="desc">En haut, le cycle de vie des requêtes HTTP d'un contrôleur Nest natif : gardes, intercepteurs, pipes, méthode du contrôleur, filtres d'exception. Aucun ne s'exécute pour une route montée par createRoutesModule. En bas, ce qui remplace chacun : le résolveur du principal et le middleware d'autorisation du bus pour les gardes, les middlewares du bus et les aspects pour les intercepteurs, le schéma de la route pour les pipes, le gestionnaire de la route pour la méthode du contrôleur, et le mapper d'erreurs, qui répond en application/problem+json, pour les filtres d'exception.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="424" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Ce qui remplace le cycle de vie des requêtes HTTP de Nest</text>
+  <!-- top lane -->
+  <text x="28" y="70" font-size="14" font-weight="600" fill="#5f6b73">un contrôleur Nest natif : son cycle de vie, qui ne s'exécute pas pour une route du kit</text>
+  <rect x="28" y="84" width="168" height="64" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="112" y="111" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">gardes</text>
+  <text x="112" y="133" font-size="13" fill="#1f2328" text-anchor="middle">@UseGuards, Passport</text>
+  <rect x="212" y="84" width="168" height="64" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="296" y="111" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">intercepteurs</text>
+  <text x="296" y="133" font-size="13" fill="#1f2328" text-anchor="middle">journaux, cache</text>
+  <rect x="396" y="84" width="168" height="64" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="480" y="111" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">pipes</text>
+  <text x="480" y="133" font-size="13" fill="#1f2328" text-anchor="middle">ValidationPipe</text>
+  <rect x="580" y="84" width="168" height="64" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="664" y="111" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">contrôleur</text>
+  <text x="664" y="133" font-size="13" fill="#1f2328" text-anchor="middle">méthode @Post()</text>
+  <rect x="764" y="84" width="168" height="64" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="848" y="111" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">filtres</text>
+  <text x="848" y="133" font-size="13" fill="#1f2328" text-anchor="middle">d'exception, @Catch()</text>
+  <line x1="197" y1="116" x2="210" y2="116" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="381" y1="116" x2="394" y2="116" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="565" y1="116" x2="578" y2="116" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="749" y1="116" x2="762" y2="116" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- replaced by -->
+  <line x1="112" y1="150" x2="112" y2="222" stroke="#5f6b73" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arrow)"/>
+  <line x1="296" y1="150" x2="296" y2="222" stroke="#5f6b73" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arrow)"/>
+  <line x1="480" y1="150" x2="480" y2="222" stroke="#5f6b73" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arrow)"/>
+  <line x1="664" y1="150" x2="664" y2="222" stroke="#5f6b73" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arrow)"/>
+  <line x1="848" y1="150" x2="848" y2="222" stroke="#5f6b73" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arrow)"/>
+  <!-- bottom lane -->
+  <rect x="28" y="224" width="168" height="76" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="112" y="251" font-size="15" font-weight="700" fill="#9a5b2b" text-anchor="middle">resolvePrincipal</text>
+  <text x="112" y="271" font-size="13" fill="#1f2328" text-anchor="middle">puis l'autorisation,</text>
+  <text x="112" y="289" font-size="13" fill="#1f2328" text-anchor="middle">un middleware du bus</text>
+  <rect x="212" y="224" width="168" height="76" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="296" y="251" font-size="14" font-weight="700" fill="#2b5d8a" text-anchor="middle">middlewares du bus</text>
+  <text x="296" y="271" font-size="13" fill="#1f2328" text-anchor="middle">et aspects ;</text>
+  <text x="296" y="289" font-size="13" fill="#1f2328" text-anchor="middle">tracedRoutes()</text>
+  <rect x="396" y="224" width="168" height="76" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="480" y="251" font-size="15" font-weight="700" fill="#9a5b2b" text-anchor="middle">Schema de la route</text>
+  <text x="480" y="271" font-size="13" fill="#1f2328" text-anchor="middle">422</text>
+  <text x="480" y="289" font-size="13" fill="#1f2328" text-anchor="middle">VALIDATION_FAILED</text>
+  <rect x="580" y="224" width="168" height="76" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="664" y="251" font-size="15" font-weight="700" fill="#9a5b2b" text-anchor="middle">gestionnaire</text>
+  <text x="664" y="271" font-size="13" fill="#1f2328" text-anchor="middle">de la route : envoie</text>
+  <text x="664" y="289" font-size="13" fill="#1f2328" text-anchor="middle">commande ou requête</text>
+  <rect x="764" y="224" width="168" height="76" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="848" y="251" font-size="15" font-weight="700" fill="#9a5b2b" text-anchor="middle">mapper d'erreurs</text>
+  <text x="848" y="271" font-size="13" fill="#1f2328" text-anchor="middle">application/</text>
+  <text x="848" y="289" font-size="13" fill="#1f2328" text-anchor="middle">problem+json</text>
+  <text x="28" y="326" font-size="14" font-weight="600" fill="#9a5b2b">une route du kit, montée par createRoutesModule : ce qui remplace chaque étape</text>
+  <!-- the rest -->
+  <text x="28" y="360" font-size="13" fill="#1f2328">Sans effet non plus sur ces routes : setGlobalPrefix (utilisez prefixRoutes) et @nestjs/swagger (le contrat vient de generateOpenApi).</text>
+  <!-- legend -->
+  <line x1="28" y1="394" x2="64" y2="394" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="72" y="398" font-size="13" fill="#1f2328">ordre du cycle de vie de Nest</text>
+  <line x1="268" y1="394" x2="304" y2="394" stroke="#5f6b73" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arrow)"/>
+  <text x="312" y="398" font-size="13" fill="#1f2328">en tient lieu pour une route du kit</text>
+</svg>

@@ -1,3 +1,5 @@
+**English** · [Français](domain-and-integration-events.fr.md)
+
 # Domain events and integration events
 
 **Summary.** An event states that something happened, in the past tense. This kit distinguishes
@@ -22,44 +24,274 @@ the second. Keeping them apart is what lets a model change without breaking its 
 | Documented in | the code | the generated event catalog and AsyncAPI document |
 
 Both follow the name format `<context>.<aggregate>.<fact>` (`events/name-format`), which is why
-the same string, `appointments.appointment.booked`, can name the domain event and the
+the same string, `scheduling.appointment.booked`, can name the domain event and the
 integration event made from it. They are still two declarations with two lifecycles.
+
+Side by side, in the `scheduling` context of the example application. The domain event is a
+class of the domain, free to hold a `Date` or a value object:
+
+```ts
+// contexts/scheduling/domain/events/appointment-booked.event.ts (simplified)
+export class AppointmentBooked implements DomainEvent {
+  static readonly eventName = 'scheduling.appointment.booked';
+
+  readonly name = AppointmentBooked.eventName;
+
+  constructor(
+    readonly aggregateId: string,
+    readonly occurredAt: Date,
+    readonly slot: Slot, // a type of the model, which consumers never see
+  ) {}
+}
+```
+
+The integration event is a declaration of the published language: a type, a version and a
+schema of plain JSON, which validates what is published and what is consumed:
+
+```ts
+// contexts/scheduling/published-language/appointment-booked.v1.integration-event.ts (simplified)
+export const appointmentBookedV1 = defineIntegrationEvent({
+  type: 'scheduling.appointment.booked',
+  version: 1,
+  payload: zodSchema(z.object({ appointmentId: z.string(), startsAt: z.string().datetime() /* ... */ })),
+});
+```
+
+The full declaration is in [Designing the payload](#designing-the-payload).
 
 ## The path of one fact
 
-```mermaid
-sequenceDiagram
-  participant H as BookAppointmentHandler
-  participant A as Appointment
-  participant P as publisher (application/integration/publishers)
-  participant O as outbox
-  participant N as notifications handler
-  H->>A: Appointment.book(...)
-  A-->>A: records AppointmentBooked (domain event)
-  H->>H: save(appointment), the event is queued
-  H-->>P: AppointmentBooked, dispatched once the handler has returned, before the commit
-  P->>O: publish integration event appointments.appointment.booked v1
-  Note over H,O: the appointment and the outbox record commit together, or neither exists
-  O-->>N: relayed after the commit, at least once
-  N->>N: sends a command of its own context
-```
+![The path of one fact: in the scheduling context the command handler books an Appointment, which records AppointmentBooked; the save queues the event; once the handler has returned, the publisher turns it into an outbox row in the same transaction; after the commit the relay delivers it, at least once, to the integration event handler of the notification context, which sends a command of its own](../assets/diagrams/domain-and-integration-events-path.svg)
 
 1. **The aggregate records.** `Appointment.book(...)` checks the invariants and records the
    domain event. An aggregate never publishes anything itself and knows no bus.
+
+   <!-- checked sample -->
+   ```ts
+   // contexts/scheduling/domain/aggregates/appointment.aggregate.ts (simplified)
+   import { AggregateRoot, ConceptError, type DomainEvent } from '@ddd-ts-kit/kernel';
+
+   interface Slot {
+     readonly calendarId: string;
+     readonly practitionerId: string;
+     readonly patientId: string;
+     readonly startsAt: Date;
+     readonly endsAt: Date;
+   }
+
+   export class AppointmentBooked implements DomainEvent {
+     static readonly eventName = 'scheduling.appointment.booked';
+
+     readonly name = AppointmentBooked.eventName;
+
+     constructor(
+       readonly aggregateId: string,
+       readonly occurredAt: Date,
+       readonly slot: Slot,
+     ) {}
+   }
+
+   export class AppointmentError extends ConceptError {
+     static emptySlot(startsAt: Date) {
+       return AppointmentError.refusal('EMPTY_SLOT', 'A slot ends after it starts.', { startsAt });
+     }
+   }
+
+   export class Appointment extends AggregateRoot {
+     private constructor(
+       id: string,
+       readonly slot: Slot,
+     ) {
+       super(id);
+     }
+
+     static book(id: string, slot: Slot, now: Date): Appointment {
+       if (slot.endsAt <= slot.startsAt) {
+         throw AppointmentError.emptySlot(slot.startsAt); // the invariant first
+       }
+
+       const appointment = new Appointment(id, slot);
+       appointment.record(new AppointmentBooked(id, now, slot)); // recorded, not published
+
+       return appointment;
+     }
+   }
+   ```
+
 2. **The save hands the events over, the unit of work dispatches them.** `save` only queues
    the recorded events. Once the command handler has returned, they are dispatched to the
    handlers of the same context, inside the transaction of the command, before its commit. The
    command handler writes `await this.appointments.save(appointment)` and nothing else: no
    `pullEvents()`, no dispatcher (`domain-events/dispatched-on-save`,
    [ARCHITECTURE.md](../ARCHITECTURE.md) section 4, "Domain events").
+
+   Instead of handing the events over by hand:
+
+   ```ts
+   await this.appointments.save(appointment);
+   await this.dispatcher.dispatch(appointment.pullEvents()); // refused: domain-events/dispatched-on-save
+   ```
+
+   write the save alone:
+
+   <!-- checked sample -->
+   ```ts
+   // contexts/scheduling/application/commands/book-appointment/book-appointment.handler.ts (simplified)
+   import { AggregateRoot, Clock, Command, IdGenerator, Repository } from '@ddd-ts-kit/kernel';
+   import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
+
+   interface Slot {
+     readonly calendarId: string;
+     readonly practitionerId: string;
+     readonly patientId: string;
+     readonly startsAt: Date;
+     readonly endsAt: Date;
+   }
+
+   declare class Appointment extends AggregateRoot {
+     static book(id: string, slot: Slot, now: Date): Appointment;
+   }
+
+   export abstract class AppointmentRepository extends Repository<Appointment> {}
+
+   export class BookAppointmentCommand extends Command<string> {
+     constructor(readonly slot: Slot) {
+       super();
+     }
+   }
+
+   @CommandHandler(BookAppointmentCommand)
+   export class BookAppointmentHandler implements CommandHandler<BookAppointmentCommand> {
+     constructor(
+       private readonly appointments: AppointmentRepository,
+       private readonly ids: IdGenerator,
+       private readonly clock: Clock,
+     ) {}
+
+     async execute(command: BookAppointmentCommand): Promise<string> {
+       const appointment = Appointment.book(this.ids.next(), command.slot, this.clock.now());
+
+       await this.appointments.save(appointment); // the recorded events leave with the save
+
+       return appointment.id;
+     }
+   }
+   ```
+
 3. **A publisher translates.** One of those handlers is the publisher: it builds the
    integration event from the domain event and hands it to the `IntegrationEventPublisher`
    port. With a database that port is the outbox, so the event is stored in the transaction of
    the command (`events/outbox-required`, see [Transactional outbox](transactional-outbox.md)).
    The relay publishes it after the commit, never for a command that rolled back.
-4. **The consumer reacts.** In `notifications`, an integration event handler translates the
+
+   <!-- checked sample -->
+   ```ts
+   // contexts/scheduling/application/integration/publishers/appointment-booked.publisher.ts (simplified)
+   import { IdGenerator, IntegrationEventPublisher, type DomainEvent } from '@ddd-ts-kit/kernel';
+   import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
+   import type { IntegrationEventDefinition } from '@ddd-ts-kit/events';
+
+   interface Slot {
+     readonly calendarId: string;
+     readonly practitionerId: string;
+     readonly patientId: string;
+     readonly startsAt: Date;
+     readonly endsAt: Date;
+   }
+
+   class AppointmentBooked implements DomainEvent {
+     static readonly eventName = 'scheduling.appointment.booked';
+
+     readonly name = AppointmentBooked.eventName;
+
+     constructor(
+       readonly aggregateId: string,
+       readonly occurredAt: Date,
+       readonly slot: Slot,
+     ) {}
+   }
+
+   interface AppointmentBookedV1Payload {
+     readonly appointmentId: string;
+     readonly practitionerId: string;
+     readonly patientId: string;
+     readonly startsAt: string;
+     readonly endsAt: string;
+   }
+
+   // the declaration of the published language, shown in "Designing the payload"
+   declare const appointmentBookedV1: IntegrationEventDefinition<AppointmentBookedV1Payload>;
+
+   @DomainEventHandler(AppointmentBooked, { name: AppointmentBooked.eventName })
+   export class AppointmentBookedPublisher implements DomainEventHandler<AppointmentBooked> {
+     constructor(
+       private readonly publisher: IntegrationEventPublisher,
+       private readonly ids: IdGenerator,
+     ) {}
+
+     async handle(event: AppointmentBooked): Promise<void> {
+       // the model is translated field by field: a Date becomes an ISO 8601 text
+       const published = appointmentBookedV1.create(
+         {
+           appointmentId: event.aggregateId,
+           practitionerId: event.slot.practitionerId,
+           patientId: event.slot.patientId,
+           startsAt: event.slot.startsAt.toISOString(),
+           endsAt: event.slot.endsAt.toISOString(),
+         },
+         { id: this.ids.next(), occurredAt: event.occurredAt },
+       );
+
+       await this.publisher.publish([published]); // the outbox, in the transaction of the command
+     }
+   }
+   ```
+
+4. **The consumer reacts.** In `notification`, an integration event handler translates the
    event into a command of its own context and sends it on the command bus. It contains no
-   business logic and imports only the upstream's published language.
+   business logic and imports only the upstream's published language. Its consumer name is
+   stable: it scopes the idempotency of the handler, and names the system actor it runs as.
+
+   <!-- checked sample -->
+   ```ts
+   // contexts/notification/application/integration/handlers/scheduling-appointment-booked.integration-handler.ts (simplified)
+   import { AuthorizedCommand, CommandBus, systemActor, type Actor, type IntegrationEvent } from '@ddd-ts-kit/kernel';
+   import { IntegrationEventHandler } from '@ddd-ts-kit/kernel/declarations';
+   import type { IntegrationEventDefinition } from '@ddd-ts-kit/events';
+
+   interface AppointmentBookedV1Payload {
+     readonly appointmentId: string;
+     readonly patientId: string;
+     readonly startsAt: string;
+   }
+
+   // imported from the published language of scheduling, the only thing notification knows of it
+   declare const appointmentBookedV1: IntegrationEventDefinition<AppointmentBookedV1Payload>;
+
+   export class SendNotificationCommand extends AuthorizedCommand {
+     constructor(
+       actor: Actor,
+       readonly notice: { readonly recipientId: string; readonly appointmentId: string; readonly startsAt: Date },
+     ) {
+       super(actor);
+     }
+   }
+
+   @IntegrationEventHandler(appointmentBookedV1, { consumer: 'notification.scheduling-appointment-booked' })
+   export class SchedulingAppointmentBookedIntegrationHandler {
+     readonly actor = systemActor('notification.scheduling-appointment-booked');
+
+     constructor(private readonly commands: CommandBus) {}
+
+     async handle(event: IntegrationEvent<AppointmentBookedV1Payload>): Promise<void> {
+       const { patientId, appointmentId, startsAt } = event.payload;
+
+       await this.commands.execute(
+         new SendNotificationCommand(this.actor, { recipientId: patientId, appointmentId, startsAt: new Date(startsAt) }),
+       );
+     }
+   }
+   ```
 
 The publisher is the anti-leak valve: the domain event can gain a field, be split or be renamed,
 and the integration event stays what it was until the team decides to version it.
@@ -72,27 +304,7 @@ integration event is published only after it.
 
 One command, two saves:
 
-```mermaid
-sequenceDiagram
-  participant C as Command handler
-  participant U as Unit of work
-  participant B as before-commit handlers
-  participant O as outbox
-  participant A as after-commit handlers
-  participant R as relay
-  U->>U: begin transaction
-  U->>C: execute
-  C->>U: save(a), its events are queued
-  C->>U: save(b), its events are queued
-  C-->>U: the handler returns
-  U->>B: dispatch the queue, in recording order
-  Note over B: every handler sees a and b
-  B->>O: the publisher appends the integration event
-  U->>U: commit (state, handler writes, outbox row)
-  U->>A: the same events, in the same order
-  Note over U,A: awaited before the command answers, never run after a rollback
-  R-->>O: later, reads the row and publishes, at least once
-```
+![The timeline of one command: inside one transaction the command handler saves a and b, their events wait in a queue, the before-commit handlers run once it has returned and the publisher writes the outbox row, then everything commits together; after the commit the after-commit handlers run on the same events before the command answers; later the relay publishes the outbox row, at least once](../assets/diagrams/domain-and-integration-events-unit-of-work.svg)
 
 Inside a unit of work a save only queues the events its aggregates recorded, in recording
 order across all the saves. When the command handler has returned, still inside the
@@ -102,7 +314,7 @@ to the outbox. Then the transaction commits, and the handlers of the `after-comm
 
 | | Guarantees | When it fails | Delivery |
 |---|---|---|---|
-| `before-commit` handler (default) | runs after every save of the command, in its transaction; what it writes commits or rolls back with the state change | the command fails and everything rolls back | in the transaction: exactly with the commit |
+| `before-commit` handler (default) | runs once every save of the command is done (when the command handler has returned), in its transaction; what it writes commits or rolls back with the state change | the command fails and everything rolls back | in the transaction: exactly with the commit |
 | `after-commit` handler | runs once the transaction has committed, never when it rolled back, in dispatch order, awaited before the command answers | the command still succeeds; the failure is logged and reported, the other handlers still run | at most once |
 | integration event | appended to the outbox by a `before-commit` publisher, published by the relay after the commit, never for a rolled back command | the relay retries; consumers are idempotent | at least once |
 
@@ -110,8 +322,28 @@ to the outbox. Then the transaction commits, and the handlers of the `after-comm
 
 `before-commit` is the default. `after-commit` is declared on the handler:
 
+<!-- checked sample -->
 ```ts
-// contexts/appointments/application/event-handlers/appointment-booked.event-handler.ts
+// an after-commit handler, for illustration
+import type { DomainEvent } from '@ddd-ts-kit/kernel';
+import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
+
+class AppointmentBooked implements DomainEvent {
+  static readonly eventName = 'scheduling.appointment.booked';
+
+  readonly name = AppointmentBooked.eventName;
+
+  constructor(
+    readonly aggregateId: string,
+    readonly occurredAt: Date,
+  ) {}
+}
+
+/** A board of free slots kept in a cache: refreshing it may fail without harm. */
+export abstract class AvailabilityBoard {
+  abstract refresh(appointmentId: string): Promise<void>;
+}
+
 @DomainEventHandler(AppointmentBooked, { name: AppointmentBooked.eventName, phase: 'after-commit' })
 export class AppointmentBookedEventHandler implements DomainEventHandler<AppointmentBooked> {
   constructor(private readonly board: AvailabilityBoard) {}
@@ -124,8 +356,91 @@ export class AppointmentBookedEventHandler implements DomainEventHandler<Appoint
 
 In the explicit style the phase is given at registration:
 `dispatcher.on(AppointmentBooked.eventName, callback, { phase: 'after-commit' })`.
-The generator writes either: `npx ddd-ts-kit generate event-handler appointments Appointment
+The generator writes either: `npx ddd-ts-kit generate event-handler scheduling Appointment
 Booked --phase after-commit`.
+
+**See the order for yourself.** The in-memory parts of the kernel follow the same rules as the
+ORM adapters, so a few lines show when each phase runs. `unitOfWorkStage()` tells a handler
+where it stands:
+
+<!-- checked sample -->
+```ts
+import {
+  AggregateRoot,
+  InMemoryDomainEventDispatcher,
+  InMemoryUnitOfWork,
+  Repository,
+  dispatchingOnSave,
+  unitOfWorkStage,
+  type DomainEvent,
+} from '@ddd-ts-kit/kernel';
+
+class SlotHeld implements DomainEvent {
+  static readonly eventName = 'scheduling.slot.held';
+
+  readonly name = SlotHeld.eventName;
+
+  constructor(
+    readonly aggregateId: string,
+    readonly occurredAt: Date,
+  ) {}
+}
+
+class Slot extends AggregateRoot {
+  static hold(id: string, now: Date): Slot {
+    const slot = new Slot(id);
+    slot.record(new SlotHeld(id, now));
+
+    return slot;
+  }
+}
+
+class InMemorySlotRepository implements Repository<Slot> {
+  private readonly rows = new Map<string, Slot>();
+
+  async findById(id: string): Promise<Slot | undefined> {
+    return this.rows.get(id);
+  }
+
+  async save(slot: Slot): Promise<void> {
+    this.rows.set(slot.id, slot); // persists only: no dispatch code in an adapter
+  }
+}
+
+const dispatcher = new InMemoryDomainEventDispatcher();
+const slots = dispatchingOnSave(new InMemorySlotRepository(), () => dispatcher); // what the container does
+const unitOfWork = new InMemoryUnitOfWork();
+const seen: string[] = [];
+
+dispatcher.on(SlotHeld.eventName, async (event) => {
+  seen.push(`before-commit ${event.aggregateId} (${unitOfWorkStage()})`);
+});
+dispatcher.on(
+  SlotHeld.eventName,
+  async (event) => {
+    seen.push(`after-commit ${event.aggregateId} (${unitOfWorkStage()})`);
+  },
+  { phase: 'after-commit' },
+);
+
+const now = new Date('2026-03-09T10:00:00Z');
+
+await unitOfWork.run(async () => {
+  await slots.save(Slot.hold('a', now));
+  await slots.save(Slot.hold('b', now));
+  seen.push(`the command handler returns (${unitOfWorkStage()})`);
+});
+
+// seen is now:
+//   the command handler returns (open)
+//   before-commit a (before-commit)
+//   before-commit b (before-commit)
+//   after-commit a (after-commit)
+//   after-commit b (after-commit)
+```
+
+Nothing reaches a handler while the work runs: both saves are done before the first
+`before-commit` handler hears of either.
 
 **What is at most once.** The `after-commit` phase, and only it. A crash between the commit and
 the run loses the effect, and a failing handler is not retried. Its failure cannot fail the
@@ -140,6 +455,22 @@ unit of work is over, so nothing would dispatch the events of that aggregate nor
 back. Such a handler sends a command through the `CommandBus`, which opens a unit of work of
 its own. `unitOfWorkStage()` of the kernel answers `'outside'`, `'open'`, `'before-commit'` or
 `'after-commit'`.
+
+Instead of saving in the handler:
+
+```ts
+// an after-commit handler of AppointmentCancelled
+const waitlist = await this.waitlists.findById(event.calendarId);
+waitlist.offer(event.slot, this.clock.now());
+await this.waitlists.save(waitlist); // SaveAfterCommitError: the unit of work is over
+```
+
+send a command, whose own unit of work saves, dispatches and commits:
+
+```ts
+const freed = { startsAt: event.slot.startsAt, endsAt: event.slot.endsAt, heldUntil: event.slot.heldUntil };
+await this.commands.execute(new OfferFreedSlotCommand(this.actor, event.calendarId, freed));
+```
 
 ### Why a before-commit handler has transactional effects only
 
@@ -156,6 +487,8 @@ which is what `domain-events/transactional-before-commit` holds. Such a handler 
 - ports of `application/ports/` whose adapters are all under `infrastructure/persistence/`.
 
 A gateway, an external port or an adapter of `infrastructure/external/` asks for a choice:
+
+![Where the reaction to a domain event goes: another context reacts, publish an integration event; the effect writes only in the transaction, a before-commit handler; the effect may be lost, an after-commit handler; otherwise, behind an integration event through the outbox](../assets/diagrams/domain-and-integration-events-where-a-reaction-goes.svg)
 
 | The effect | Goes |
 |---|---|
@@ -195,19 +528,29 @@ project's own `UnitOfWork` that does not.
 - A project that writes its own `UnitOfWork` builds `run` on it, and runs `unitOfWorkContract`
   of `@ddd-ts-kit/testing/contracts`, which fails an adapter that forgot:
 
+<!-- checked sample -->
 ```ts
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { withinUnitOfWork, type UnitOfWork } from '@ddd-ts-kit/kernel';
 
+/** The driver of the project: begins, calls, commits when the work resolved, rolls back when it rejected. */
+interface Ledger {
+  transaction<T>(work: (transaction: LedgerTransaction) => Promise<T>): Promise<T>;
+}
+
+interface LedgerTransaction {
+  readonly id: string;
+}
+
 export class LedgerUnitOfWork implements UnitOfWork {
   private readonly current = new AsyncLocalStorage<LedgerTransaction>();
 
-  constructor(private readonly ledger: Ledger) {} // the project's own driver
+  constructor(private readonly ledger: Ledger) {}
 
   run<T>(work: () => Promise<T>): Promise<T> {
     return withinUnitOfWork(work, (scoped) => {
       if (this.current.getStore() !== undefined) {
-        return scoped();
+        return scoped(); // a nested run joins the transaction in progress
       }
 
       return this.ledger.transaction((transaction) => this.current.run(transaction, scoped));
@@ -251,9 +594,9 @@ transaction. What to check when upgrading:
 
 It is tempting to hand `AppointmentBooked` to every interested context. Three things go wrong:
 
-- **The model becomes a public API.** Renaming a value object of `appointments` breaks
+- **The model becomes a public API.** Renaming a value object of `scheduling` breaks
   `analytics`. The upstream can no longer refactor.
-- **Internal facts leak.** `appointments` may record fine-grained events useful to itself
+- **Internal facts leak.** `scheduling` may record fine-grained events useful to itself
   (a slot was held, a hold expired). Consumers do not need them and should not build on them.
 - **The delivery contract differs.** A domain event is handled in process, at the end of the
   unit of work of the command. An integration event may cross a broker, arrive twice, arrive late. Mixing
@@ -267,30 +610,41 @@ to react to, when one asks for it.
 The payload is what consumers need in order to act without calling back, and nothing internal
 (the `integration-event` skill gives the same rule).
 
+<!-- checked sample -->
 ```ts
-// contexts/appointments/published-language/appointment-booked.v1.integration-event.ts
+// contexts/scheduling/published-language/appointment-booked.v1.integration-event.ts (simplified)
+import { defineIntegrationEvent, type PayloadOf } from '@ddd-ts-kit/events';
+import { zodSchema } from '@ddd-ts-kit/validation/zod';
+import { z } from 'zod';
+
 export const appointmentBookedV1 = defineIntegrationEvent({
-  type: 'appointments.appointment.booked',
+  type: 'scheduling.appointment.booked',
   version: 1,
-  description: 'A client booked an appointment with a practitioner.',
+  description: 'A patient booked an appointment with a practitioner.',
   payload: zodSchema(
     z.object({
       appointmentId: z.string().describe('Identifier of the appointment.'),
       practitionerId: z.string(),
-      clientId: z.string(),
+      patientId: z.string(),
       startsAt: z.string().datetime().describe('Start of the slot, ISO 8601, UTC.'),
       endsAt: z.string().datetime(),
     }),
   ),
 });
+
+/** What a consumer reads, derived from the schema: no second type to keep in step. */
+export type AppointmentBookedV1Payload = PayloadOf<typeof appointmentBookedV1>;
 ```
+
+The example application declares the same event with class-validator
+(`classSchema(AppointmentBookedV1Payload)`); any schema of `@ddd-ts-kit/validation` fits.
 
 | Question | Guidance |
 |---|---|
-| Identifiers or data? | Identifiers plus the facts that define the event (the slot). `notifications` can schedule a reminder from `startsAt` without asking `appointments` |
+| Identifiers or data? | Identifiers plus the facts that define the event (the slot). `notification` can schedule a reminder from `startsAt` without asking `scheduling` |
 | The whole aggregate? | No. A dump of the aggregate couples consumers to the model and grows with it |
 | Personal data? | Only when a consumer needs it. A broker keeps messages; the envelope carries no actor by default for the same reason (events README) |
-| A fact or an instruction? | A fact. `appointments.appointment.booked`, not "send-reminder": the producer does not know what consumers do |
+| A fact or an instruction? | A fact. `scheduling.appointment.booked`, not "send-reminder": the producer does not know what consumers do |
 | Order-sensitive consumers? | Carry a version or a sequence of the aggregate in the payload: ordering is not guaranteed by default (see [Delivery and idempotency](delivery-and-idempotency.md)) |
 | Field descriptions | Written in the schema: they flow into the catalog and the AsyncAPI document |
 
@@ -304,8 +658,8 @@ calling back defeats the autonomy the event was meant to give.
 - `defineIntegrationEvent` gives the payload type, validates what is published and what is
   consumed, and feeds the generated catalog and AsyncAPI document
   (`events/defined-in-published-language`).
-- The envelope is standard: id, type, version, time of occurrence, payload, trace context and
-  correlation id.
+- The envelope is standard: id, type, version, time of occurrence, payload, trace context,
+  correlation id, and the tenant the fact belongs to when there is one.
 - The provider is behind two kernel ports, a publisher and a subscriber; the in-memory bus is
   the default, and brokers are adapters held to one contract suite
   (see [Message brokers](../tools/message-brokers.md)).

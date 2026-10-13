@@ -1,3 +1,5 @@
+**English** · [Français](file-storage.fr.md)
+
 # File storage
 
 **Summary.** A file (a scan, a photo, a signed contract, an export) is kept in a file storage,
@@ -10,6 +12,8 @@ key as the last step of that transaction, back if it rolls back. A committed row
 a staged file, so a scheduled job purges every staged file older than a day. Keys are generated
 on the server, links are signed and short, and the content is checked on its bytes as it
 streams.
+
+![The aggregate keeps a StoredFile (key, size, media type, checksum) saved in its row; the content lives in the file storage, under staging/ until the commit and under its final key after it](../assets/diagrams/file-storage-reference-and-content.svg)
 
 ## Why never in the database
 
@@ -28,6 +32,30 @@ saves.
 `.binary()`, a Prisma `Bytes` field) or a base64 column in a schema or a migration. A small
 binary value that is not a file, a hash or a key, is a deviation recorded with its reason.
 
+<!-- checked sample -->
+```ts
+import type { Knex } from 'knex';
+
+// Instead of: the content in a column, read and written whole
+export async function withContent(knex: Knex): Promise<void> {
+  await knex.schema.createTable('appointment_documents', (table) => {
+    table.string('id').primary();
+    table.binary('content'); // reported by persistence/no-file-content
+  });
+}
+
+// Write: the four fields of the StoredFile, a few hundred bytes per row
+export async function withReference(knex: Knex): Promise<void> {
+  await knex.schema.createTable('appointment_documents', (table) => {
+    table.string('id').primary();
+    table.string('file_key').notNullable();
+    table.bigInteger('file_size').notNullable();
+    table.string('file_media_type').notNullable();
+    table.string('file_checksum').notNullable();
+  });
+}
+```
+
 ## The ports
 
 | Port | What it is |
@@ -44,27 +72,114 @@ the platform binds the connector of each environment (`stack.storage` in
 [CONFIG.md](../CONFIG.md)). The connectors and how they compare are in
 [tools/file-storage.md](../tools/file-storage.md).
 
+In the platform, the files are one capability: the storage of the environment, the ports bound
+to the implementations of the kernel, and the hourly purge. On the container of the kit, `init`
+writes it as below, in `src/platform/files/` (`files.module.ts` and `bind-files.ts`, here in
+one piece); wired by hand, `create-files.ts` builds the same objects:
+
+<!-- checked sample -->
+```ts
+import { defineContextModule, type ContextModule } from '@ddd-ts-kit/di';
+import {
+  AcceptEveryFileScanner,
+  Clock,
+  ErrorReporter,
+  ExecutionScope,
+  FileKeys,
+  FileScanner,
+  FileStaging,
+  FileStorage,
+  IdGenerator,
+  PurgeStagedFiles,
+  TenantFileKeys,
+} from '@ddd-ts-kit/kernel';
+
+export function filesModule(storage: FileStorage): ContextModule {
+  return defineContextModule({
+    name: 'files',
+    register(builder) {
+      // the connector main.ts opened for this environment: S3, a directory, the memory
+      builder.bind(FileStorage).toValue(storage);
+      // replace it with an antivirus before accepting files from people you do not know
+      builder.bind(FileScanner).toValue(new AcceptEveryFileScanner());
+      builder
+        .bind(FileKeys)
+        .toFactory((resolve) => new TenantFileKeys(resolve(IdGenerator), resolve(Clock), resolve(ExecutionScope)));
+      builder
+        .bind(FileStaging)
+        .toFactory((resolve) => new FileStaging(resolve(FileStorage), resolve(FileScanner), resolve(ErrorReporter)));
+      // every hour, the staged files older than a day are removed
+      builder.job('files.purge-staged', { every: '1h' }).handledBy(PurgeStagedFiles, [FileStaging, Clock]);
+    },
+  });
+}
+```
+
 ## Receiving a file
 
 A controller declares the file it receives, and the declaration is the contract: the field, the
 most it may weigh and the media types it may be. The OpenAPI document states them
 (`multipart/form-data`, `x-max-bytes`, `x-media-types`) with the 413, 415 and 422 refusals.
 
+<!-- checked sample -->
 ```ts
+import { definePermissions } from '@ddd-ts-kit/auth';
+import {
+  acceptedSchema,
+  Authenticated,
+  Controller,
+  RouteGroup,
+  type Accepted,
+  type HttpRequest,
+  type IncomingFile,
+} from '@ddd-ts-kit/http';
+import { AuthorizedCommand, FileUpload, type Actor, type CommandBus, type ReceivedFile } from '@ddd-ts-kit/kernel';
+import { Requires } from '@ddd-ts-kit/kernel/declarations';
+import { zodSchema } from '@ddd-ts-kit/validation/zod';
+import { z } from 'zod';
+
+const permissions = definePermissions('scheduling', {
+  'appointment.attach-document': { description: 'Attach a document to an appointment' },
+});
+
+// application: the command carries the file, wrapped in a FileUpload of its area
+@Requires(permissions['appointment.attach-document'])
+export class AttachDocumentCommand extends AuthorizedCommand<string> {
+  readonly document: FileUpload;
+
+  constructor(
+    actor: Actor,
+    readonly appointmentId: string,
+    file: ReceivedFile,
+  ) {
+    super(actor);
+    this.document = new FileUpload(file, 'appointment-documents');
+  }
+}
+
+// presentation: the route declares the file it accepts, and that declaration is the contract
+@RouteGroup({ prefix: '/appointments', tags: ['scheduling'], guards: [Authenticated] })
+export class AppointmentRoutes {}
+
+const params = zodSchema(z.object({ appointmentId: z.string() }));
+
 @Controller({
   group: AppointmentRoutes,
   method: 'POST',
   path: '/:appointmentId/document',
   summary: 'Attach a document',
   params,
-  upload: { field: 'document', maxBytes: 10_000_000, mediaTypes: ['application/pdf', 'image/png', 'image/jpeg'] },
-  response: { status: 201, description: 'Attached.', body: attached },
+  upload: { field: 'document', maxBytes: 10_485_760, mediaTypes: ['application/pdf', 'image/png', 'image/jpeg'] },
+  response: { status: 201, description: 'Attached.', body: acceptedSchema },
+  errors: ['APPOINTMENT_NOT_FOUND', 'FILE_REJECTED'],
 })
 export class AttachDocumentController {
   constructor(private readonly commands: CommandBus) {}
 
-  async handle({ params, actor, upload }: HttpRequest<{ params: Params; upload: IncomingFile }>) {
-    return { key: await this.commands.execute(new AttachDocumentCommand(actor, params.appointmentId, upload)) };
+  async handle({ params, actor, upload }: HttpRequest<{ params: { appointmentId: string }; upload: IncomingFile }>): Promise<Accepted> {
+    await this.commands.execute(new AttachDocumentCommand(actor, params.appointmentId, upload));
+
+    return { id: params.appointmentId };
   }
 }
 ```
@@ -82,6 +197,73 @@ a byte reaches the storage. A PDF starts with `%PDF-`; a Word or Excel document 
 archive; text is UTF-8 without control characters; SVG and the binary formats the kit does not
 recognise never pass, since a name or a declared type proves nothing.
 
+The handler therefore never sees bytes. It records the reference and asks for the promotion:
+
+<!-- checked sample -->
+```ts
+import { AuthorizedCommand, ConceptError, type Clock, type FileStaging, type FileUpload, type StoredFile } from '@ddd-ts-kit/kernel';
+import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
+
+declare class AttachDocumentCommand extends AuthorizedCommand<string> {
+  readonly appointmentId: string;
+  readonly document: FileUpload;
+}
+
+declare class Appointment {
+  /** Keeps the reference of the new document; answers the one it replaces, if any. */
+  attachDocument(file: StoredFile, name: string, now: Date): StoredFile | undefined;
+}
+
+declare abstract class AppointmentRepository {
+  abstract findById(id: string): Promise<Appointment | undefined>;
+  abstract save(appointment: Appointment): Promise<void>;
+}
+
+class AppointmentError extends ConceptError {
+  static notFound(appointmentId: string) {
+    return AppointmentError.refusal('APPOINTMENT_NOT_FOUND', `Appointment ${appointmentId} does not exist.`, { appointmentId });
+  }
+}
+
+@CommandHandler(AttachDocumentCommand)
+export class AttachDocumentHandler implements CommandHandler<AttachDocumentCommand> {
+  constructor(
+    private readonly appointments: AppointmentRepository,
+    private readonly staging: FileStaging,
+    private readonly clock: Clock,
+  ) {}
+
+  async execute(command: AttachDocumentCommand): Promise<string> {
+    const appointment = await this.appointments.findById(command.appointmentId);
+
+    if (appointment === undefined) {
+      throw AppointmentError.notFound(command.appointmentId);
+    }
+
+    // staged and scanned by the bus already: a key, a size, a verified type, a checksum
+    const { file, fileName } = command.document;
+    const replaced = appointment.attachDocument(file, fileName, this.clock.now());
+
+    await this.appointments.save(appointment);
+    // the file moves from staging/ to its key as the last step of this transaction
+    await this.staging.promoteOnCommit(file.key);
+
+    if (replaced !== undefined) {
+      // the old file goes once the commit is certain; a crash here only leaves an orphan
+      await this.staging.deleteAfterCommit(replaced.key);
+    }
+
+    return file.key;
+  }
+}
+```
+
+The example application holds this use case end to end, with a spec that commits and rolls back
+against a real database and a real directory:
+[`attach-appointment-document`](../../examples/scheduling/src/contexts/scheduling/application/commands/attach-appointment-document/attach-appointment-document.handler.ts)
+and
+[`document-lands-with-its-file.spec.ts`](../../examples/scheduling/src/contexts/scheduling/test/integration/document-lands-with-its-file.spec.ts).
+
 For a large file, the client sends it straight to the store. A first command generates the key
 and signs an upload link for it (`FileStaging.uploadUrl(key, { expiresInSeconds, mediaType,
 accepted, maxBytes })`); it hands the `link` to the client and records the `pending` grant (key,
@@ -93,31 +275,63 @@ client can neither choose the key it confirms nor raise the cap. The links of th
 memory storages refuse a larger upload themselves; a presigned link of an object store cannot
 cap the size, so the confirmation is what holds it.
 
+![A direct upload in four steps: the first command signs a link and keeps the grant on the aggregate, the client sends the file to the store, the second command names the aggregate and confirms what arrived against the grant](../assets/diagrams/file-storage-direct-upload.svg)
+
+The two commands, reduced to what they do with the files:
+
+<!-- checked sample -->
+```ts
+import { ConceptError, type FileKeys, type FileStaging, type PendingUpload, type SignedUpload, type StoredFile } from '@ddd-ts-kit/kernel';
+
+declare class AppointmentError extends ConceptError {
+  static noUploadAwaited(): AppointmentError;
+}
+
+declare class Appointment {
+  /** Records the grant: the key, the cap and the media types the server accepted to sign. */
+  awaitDocument(pending: PendingUpload): void;
+  /** The grant recorded by the first command; `undefined` when no upload is awaited. */
+  readonly awaitedDocument: PendingUpload | undefined;
+  attachDocument(file: StoredFile, now: Date): void;
+}
+
+const TEN_MINUTES = 600;
+const TWO_HUNDRED_MEGABYTES = 200_000_000;
+
+// 1. The first command: a key generated here, a link for the client, the grant for the aggregate.
+export async function offerUpload(keys: FileKeys, staging: FileStaging, appointment: Appointment): Promise<SignedUpload> {
+  const { link, pending } = await staging.uploadUrl(keys.next('appointment-documents'), {
+    expiresInSeconds: TEN_MINUTES,
+    mediaType: 'application/pdf',
+    accepted: ['application/pdf'],
+    maxBytes: TWO_HUNDRED_MEGABYTES,
+  });
+
+  appointment.awaitDocument(pending); // saved with the appointment, never sent to the client
+
+  return link; // url, method PUT, headers to send as they are, expiresAt
+}
+
+// 2. The second command names the appointment, never a key: the grant comes from the server.
+export async function confirmUpload(staging: FileStaging, appointment: Appointment, now: Date): Promise<StoredFile> {
+  const pending = appointment.awaitedDocument;
+
+  if (pending === undefined) {
+    throw AppointmentError.noUploadAwaited();
+  }
+
+  const file = await staging.confirm(pending); // measured against the cap, checked on its bytes, scanned
+
+  appointment.attachDocument(file, now);
+  await staging.promoteOnCommit(file.key);
+
+  return file;
+}
+```
+
 ## Keeping the store and the database consistent
 
-```mermaid
-sequenceDiagram
-  participant B as Command bus
-  participant S as FileStaging
-  participant F as File storage
-  participant H as Handler
-  participant U as Unit of work
-  B->>S: after the permission: stage(key, stream)
-  S->>F: put staging/key, then scan
-  B->>U: open the transaction
-  H->>U: save the aggregate with its StoredFile (key, size, type, checksum)
-  H->>S: promoteOnCommit(key)
-  U->>S: last step before the commit
-  S->>F: move staging/key to key
-  alt the transaction commits
-    Note over F: the row and the file land together
-  else the promotion or the commit fails
-    U-->>S: rolled back
-    S->>F: move key back to staging/key
-    Note over F: staging/key stays where nothing reads it
-  end
-  Note over F: every hour, files.purge-staged removes staged files older than a day
-```
+![The file is staged before the transaction, the row is saved inside it, and the move to the final key is the last step before the commit: when the transaction commits, the row and the file land together; when it rolls back, the file goes back to staging/, where the hourly purge removes it after a day](../assets/diagrams/file-storage-promotion-on-commit.svg)
 
 The aggregate holds the final key from the start, and the file reaches it inside the
 transaction that records it: a promotion that fails (the storage is away) fails the command, so
@@ -139,6 +353,27 @@ minutes is enough for a click). An object store answers its own links. The local
 the memory connector are answered by the application itself, `signedFileRoutes` of
 `@ddd-ts-kit/http` under `/files`, public since the token is the grant, with `nosniff` and
 `no-store`.
+
+<!-- checked sample -->
+```ts
+import type { FileStorage, StoredFile } from '@ddd-ts-kit/kernel';
+
+/** Five minutes: long enough for a click, short enough that a link copied into a mail soon grants nothing. */
+const LINK_SECONDS = 300;
+
+export interface DocumentLink {
+  readonly url: string;
+  readonly expiresAt: Date;
+  readonly name: string;
+}
+
+// in the handler of the query, once the appointment is loaded and the permission granted
+export async function linkToDocument(files: FileStorage, file: StoredFile, name: string): Promise<DocumentLink> {
+  const link = await files.signedDownloadUrl(file.key, { expiresInSeconds: LINK_SECONDS, fileName: name });
+
+  return { url: link.url, expiresAt: link.expiresAt, name };
+}
+```
 
 The use case that signs the link is a query with its permission like any other. When the files
 hold personal data, its permission is declared sensitive (`sensitivePermissions` of
@@ -162,6 +397,22 @@ whom, on which resource, under which correlation, without the content or the lin
   refused file is removed and never visible.
 - **The file name is data.** It is shown back to people, escaped in `Content-Disposition`, and
   never used to decide anything.
+
+The first and the last rule, side by side:
+
+<!-- checked sample -->
+```ts
+import type { FileKeys, ReceivedFile } from '@ddd-ts-kit/kernel';
+
+declare const keys: FileKeys;
+declare const received: ReceivedFile;
+
+// Instead of: a key built from what the client sent ("../../config.json", two "scan.pdf" that overwrite each other)
+const unsafe = `documents/${received.fileName}`;
+
+// Write: a key generated on the server, under the tenant, never guessable
+const key = keys.next('appointment-documents'); // tenants/acme/appointment-documents/2026/03/<id>
+```
 
 ## Import and export in the background
 

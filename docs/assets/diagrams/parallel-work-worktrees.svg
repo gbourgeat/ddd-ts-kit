@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 486" width="960" height="486" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">One repository, one worktree per worker</title>
+  <desc id="desc">The main checkout, on the default branch, belongs to the conductor: the config, src/platform, the generators that write shared files, the merges. npx ddd-ts-kit worker-scope adds one worktree per context, each on its own branch build/&lt;context&gt;, with a .ddd-ts-kit/worker.json naming the context; its worker writes only that context directory and the end-to-end specs of its slices. Each worktree has its own npm install and .env, and is removed once its branch is merged.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="486" rx="16" fill="#ffffff"/>
+  <text x="32" y="34" font-size="18" font-weight="600" fill="#1f2328">One repository, one worktree per worker</text>
+  <rect x="40" y="62" width="240" height="344" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="160" y="168" font-size="16" font-weight="700" text-anchor="middle" fill="#5f6b73">main checkout</text>
+  <text x="160" y="196" font-size="13" text-anchor="middle" fill="#1f2328">../scheduling</text>
+  <text x="160" y="220" font-size="13" text-anchor="middle" fill="#1f2328">branch: main</text>
+  <text x="160" y="244" font-size="13" text-anchor="middle" fill="#1f2328">the conductor:</text>
+  <text x="160" y="268" font-size="13" text-anchor="middle" fill="#1f2328">config, src/platform/,</text>
+  <text x="160" y="292" font-size="13" text-anchor="middle" fill="#1f2328">shared generators, merges</text>
+  <rect x="470" y="62" width="450" height="104" rx="10" fill="#ffffff" stroke="#3d4449" stroke-width="2"/>
+  <text x="695" y="88" font-size="16" font-weight="700" text-anchor="middle" fill="#3d4449">../scheduling-appointments</text>
+  <text x="695" y="110" font-size="13" text-anchor="middle" fill="#1f2328">branch: build/appointments</text>
+  <text x="695" y="131" font-size="13" text-anchor="middle" fill="#1f2328">worker.json: { "context": "appointments" }</text>
+  <text x="695" y="152" font-size="13" text-anchor="middle" fill="#1f2328">writes src/contexts/appointments/** and its e2e specs</text>
+  <line x1="280" y1="114" x2="468" y2="114" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="470" y="182" width="450" height="104" rx="10" fill="#ffffff" stroke="#3d4449" stroke-width="2"/>
+  <text x="695" y="208" font-size="16" font-weight="700" text-anchor="middle" fill="#3d4449">../scheduling-calendars</text>
+  <text x="695" y="230" font-size="13" text-anchor="middle" fill="#1f2328">branch: build/calendars</text>
+  <text x="695" y="251" font-size="13" text-anchor="middle" fill="#1f2328">worker.json: { "context": "calendars" }</text>
+  <text x="695" y="272" font-size="13" text-anchor="middle" fill="#1f2328">writes src/contexts/calendars/** and its e2e specs</text>
+  <line x1="280" y1="234" x2="468" y2="234" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="470" y="302" width="450" height="104" rx="10" fill="#ffffff" stroke="#3d4449" stroke-width="2"/>
+  <text x="695" y="328" font-size="16" font-weight="700" text-anchor="middle" fill="#3d4449">../scheduling-notifications</text>
+  <text x="695" y="350" font-size="13" text-anchor="middle" fill="#1f2328">branch: build/notifications</text>
+  <text x="695" y="371" font-size="13" text-anchor="middle" fill="#1f2328">worker.json: { "context": "notifications" }</text>
+  <text x="695" y="392" font-size="13" text-anchor="middle" fill="#1f2328">writes src/contexts/notifications/** and its e2e specs</text>
+  <line x1="280" y1="354" x2="468" y2="354" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="375" y="90" font-size="13" text-anchor="middle" fill="#1f2328">npx ddd-ts-kit</text>
+  <text x="375" y="106" font-size="13" text-anchor="middle" fill="#1f2328">worker-scope &lt;context&gt;</text>
+  <text x="40" y="440" font-size="14" fill="#1f2328">Each worktree: one worker, one branch, its own npm install and its own .env (ports).</text>
+  <text x="40" y="464" font-size="14" fill="#1f2328">Removed once its branch is merged: git worktree remove.</text>
+</svg>

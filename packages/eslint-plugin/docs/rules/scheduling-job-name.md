@@ -1,3 +1,5 @@
+**English** · [Français](scheduling-job-name.fr.md)
+
 # ddd-ts-kit/scheduling-job-name
 
 Architecture id: `scheduling/job-name`. Default severity: `error` in `recommended`, `error` in `strict`.

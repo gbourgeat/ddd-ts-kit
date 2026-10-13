@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 520" width="960" height="520" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Les quatre stratégies d'isolation des tenants, et les helpers de chacune</title>
+  <desc id="desc">Quatre cartes, de la plus partagée à la plus séparée. Tables partagées : une table et une colonne tenant_id ; tenantColumn dans la migration, tenantTable pour les lectures, ownTenantTable pour les mises à jour et les suppressions, tenantRow pour les insertions, whereTenant pour un builder à vous. Sécurité au niveau des lignes : les mêmes tables, plus des politiques PostgreSQL ; enableTenantIsolation ou tenantIsolationStatements dans la migration, tenantSession comme begin de l'unité de travail, et un rôle applicatif qui n'est pas superutilisateur et n'a pas BYPASSRLS. Schéma par tenant : un schéma par tenant nommé schéma__tenant ; tenantSchemaOf le nomme, tenantSchemaTable atteint la table, tenantOfMigration et migrateTenantSchema jouent les migrations du tenant, tenantSearchPath est un begin. Base par tenant : un knex et un pool borné par tenant ; TenantDatabases les prête sous maxTenants, createTenantRoutedUnitOfWork est l'unité de travail, migrateEveryTenant les migre toutes. De gauche à droite, le partage diminue, tandis que la séparation et le coût par tenant augmentent. Chaque stratégie passe tenantIsolationContract de @ddd-ts-kit/testing/contracts.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="520" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Isolation des tenants : quatre stratégies, les helpers de chacune</text>
+
+  <!-- card 1: shared tables -->
+  <rect x="22" y="60" width="220" height="352" rx="12" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="132" y="88" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">Tables partagées</text>
+  <text x="132" y="108" font-size="13" fill="#1f2328" text-anchor="middle">une table, une colonne tenant_id</text>
+  <line x1="38" y1="122" x2="226" y2="122" stroke="#7a4f9a" stroke-opacity="0.35"/>
+  <text x="38" y="146" font-size="13" font-weight="600" fill="#5f6b73">migration</text>
+  <text x="38" y="165" font-size="13" fill="#1f2328">tenantColumn(table)</text>
+  <text x="38" y="193" font-size="13" font-weight="600" fill="#5f6b73">lectures</text>
+  <text x="38" y="212" font-size="13" fill="#1f2328">tenantTable(...)</text>
+  <text x="38" y="240" font-size="13" font-weight="600" fill="#5f6b73">mises à jour, suppressions</text>
+  <text x="38" y="259" font-size="13" fill="#1f2328">ownTenantTable(...)</text>
+  <text x="38" y="287" font-size="13" font-weight="600" fill="#5f6b73">insertions</text>
+  <text x="38" y="306" font-size="13" fill="#1f2328">tenantRow(tenantScopeOf(...))</text>
+  <text x="38" y="334" font-size="13" font-weight="600" fill="#5f6b73">un builder à vous</text>
+  <text x="38" y="353" font-size="13" fill="#1f2328">whereTenant(builder, scope)</text>
+  <text x="132" y="392" font-size="13" font-style="italic" fill="#7a4f9a" text-anchor="middle">le kit écrit la condition</text>
+
+  <!-- card 2: row-level security -->
+  <rect x="254" y="60" width="220" height="352" rx="12" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="364" y="88" font-size="14" font-weight="700" fill="#7a4f9a" text-anchor="middle">Sécurité au niveau des lignes</text>
+  <text x="364" y="108" font-size="13" fill="#1f2328" text-anchor="middle">tables partagées et politiques</text>
+  <line x1="270" y1="122" x2="458" y2="122" stroke="#7a4f9a" stroke-opacity="0.35"/>
+  <text x="270" y="146" font-size="13" font-weight="600" fill="#5f6b73">migration</text>
+  <text x="270" y="165" font-size="13" fill="#1f2328">enableTenantIsolation(...)</text>
+  <text x="270" y="193" font-size="13" font-weight="600" fill="#5f6b73">migration écrite à la main</text>
+  <text x="270" y="212" font-size="13" fill="#1f2328">tenantIsolationStatements</text>
+  <text x="270" y="240" font-size="13" font-weight="600" fill="#5f6b73">begin de l'unité de travail</text>
+  <text x="270" y="259" font-size="13" fill="#1f2328">tenantSession(scope)</text>
+  <text x="270" y="287" font-size="13" font-weight="600" fill="#5f6b73">rôle de l'application</text>
+  <text x="270" y="306" font-size="13" fill="#1f2328">ni superutilisateur, ni BYPASSRLS</text>
+  <text x="270" y="334" font-size="13" font-weight="600" fill="#5f6b73">chaque requête SQL</text>
+  <text x="270" y="353" font-size="13" fill="#1f2328">dans l'unité de travail</text>
+  <text x="364" y="392" font-size="13" font-style="italic" fill="#7a4f9a" text-anchor="middle">la base refuse la ligne</text>
+
+  <!-- card 3: schema per tenant -->
+  <rect x="486" y="60" width="220" height="352" rx="12" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="596" y="88" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">Schéma par tenant</text>
+  <text x="596" y="108" font-size="13" fill="#1f2328" text-anchor="middle">billing__acme, billing__globex</text>
+  <line x1="502" y1="122" x2="690" y2="122" stroke="#7a4f9a" stroke-opacity="0.35"/>
+  <text x="502" y="146" font-size="13" font-weight="600" fill="#5f6b73">nom du schéma</text>
+  <text x="502" y="165" font-size="13" fill="#1f2328">tenantSchemaOf(schema, id)</text>
+  <text x="502" y="193" font-size="13" font-weight="600" fill="#5f6b73">requêtes SQL</text>
+  <text x="502" y="212" font-size="13" fill="#1f2328">tenantSchemaTable(...)</text>
+  <text x="502" y="240" font-size="13" font-weight="600" fill="#5f6b73">migrations du tenant</text>
+  <text x="502" y="259" font-size="13" fill="#1f2328">tenantOfMigration(knex)</text>
+  <text x="502" y="287" font-size="13" font-weight="600" fill="#5f6b73">migrer un tenant</text>
+  <text x="502" y="306" font-size="13" fill="#1f2328">migrateTenantSchema(...)</text>
+  <text x="502" y="334" font-size="13" font-weight="600" fill="#5f6b73">begin : SQL sans schéma</text>
+  <text x="502" y="353" font-size="13" fill="#1f2328">tenantSearchPath(scope, [...])</text>
+  <text x="596" y="392" font-size="13" font-style="italic" fill="#7a4f9a" text-anchor="middle">une copie des tables chacun</text>
+
+  <!-- card 4: database per tenant -->
+  <rect x="718" y="60" width="220" height="352" rx="12" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="828" y="88" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">Base par tenant</text>
+  <text x="828" y="108" font-size="13" fill="#1f2328" text-anchor="middle">un knex, un pool par tenant</text>
+  <line x1="734" y1="122" x2="922" y2="122" stroke="#7a4f9a" stroke-opacity="0.35"/>
+  <text x="734" y="146" font-size="13" font-weight="600" fill="#5f6b73">connexions, bornées</text>
+  <text x="734" y="165" font-size="13" fill="#1f2328">TenantDatabases</text>
+  <text x="734" y="184" font-size="13" fill="#1f2328">lease(...), maxTenants</text>
+  <text x="734" y="212" font-size="13" font-weight="600" fill="#5f6b73">unité de travail, KnexContext</text>
+  <text x="734" y="231" font-size="13" fill="#1f2328">createTenantRouted-</text>
+  <text x="734" y="250" font-size="13" fill="#1f2328">UnitOfWork(databases, scope)</text>
+  <text x="734" y="278" font-size="13" font-weight="600" fill="#5f6b73">migrer tous les tenants</text>
+  <text x="734" y="297" font-size="13" fill="#1f2328">migrateEveryTenant(...)</text>
+  <text x="734" y="325" font-size="13" font-weight="600" fill="#5f6b73">le travail d'un autre tenant</text>
+  <text x="734" y="344" font-size="13" fill="#1f2328">ne rejoint jamais la transaction</text>
+  <text x="828" y="392" font-size="13" font-style="italic" fill="#7a4f9a" text-anchor="middle">une base chacun</text>
+
+  <!-- the axis -->
+  <line x1="40" y1="444" x2="918" y2="444" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="480" y="468" font-size="14" fill="#1f2328" text-anchor="middle">le partage diminue ; la séparation et le coût par tenant augmentent</text>
+  <text x="480" y="496" font-size="13" fill="#5f6b73" text-anchor="middle">Chaque stratégie passe tenantIsolationContract de @ddd-ts-kit/testing/contracts.</text>
+</svg>

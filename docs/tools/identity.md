@@ -1,3 +1,5 @@
+**English** · [Français](identity.fr.md)
+
 # Identity: Keycloak or plain OIDC and JWT
 
 **Summary.** Identity is a generic subdomain: who a person is, how they sign in, how a password
@@ -20,6 +22,125 @@ In the scheduling application, clients and practitioners sign in somewhere, and 
 The second part is cheap to change: it is one adapter of the `Authenticator` port in
 `src/platform/auth/`. The first is not: users, credentials and client applications live in the
 provider.
+
+![A request from the client application to the use case: the client signs in at the identity provider and receives an access token; the API boundary verifies the token against the key set of the provider, turns it into an actor and a session, and sends the command with the actor; the token goes no further than the boundary](../assets/diagrams/identity-token-at-the-boundary.svg)
+
+Whichever provider is chosen, the token is verified once, at the boundary, and the rest of the
+application sees an `Actor`: a plain object with an id, a type, roles, attributes and a tenant.
+The use case receives it in its command; it never sees the token.
+
+### The two entry points, in code
+
+With Keycloak, the preset needs the address of the server, the realm and the audience; it
+derives the issuer and the key set. This is the authenticator of the scheduling example:
+
+<!-- checked sample -->
+```ts
+// platform/auth/create-authenticator.ts
+import type { Authenticator } from '@ddd-ts-kit/auth';
+import { keycloakAuthenticator } from '@ddd-ts-kit/auth/jwt';
+
+interface KeycloakSettings {
+  readonly baseUrl: string; // KEYCLOAK_URL, without the realm
+  readonly realm: string; // KEYCLOAK_REALM
+  readonly audience: string; // KEYCLOAK_AUDIENCE: what the `aud` claim must name
+  readonly clientId?: string; // KEYCLOAK_CLIENT_ID: its client roles join the realm roles
+}
+
+export function createAuthenticator({ baseUrl, realm, audience, clientId }: KeycloakSettings): Authenticator {
+  return keycloakAuthenticator({
+    baseUrl,
+    realm,
+    audience,
+    // the claim the session note mapper writes when support staff impersonate a user
+    impersonatorClaim: 'impersonator_id',
+    ...(clientId === undefined ? {} : { clientId }),
+  });
+}
+```
+
+With any other OpenID Connect provider, `JwtAuthenticator` takes the issuer, the audience and the
+key set explicitly. The default mapping covers users; a `toActor` written once covers what is
+specific to the provider, here a service account recognised by a claim of the provider:
+
+<!-- checked sample -->
+```ts
+// platform/auth/create-authenticator.ts
+import type { Authenticator } from '@ddd-ts-kit/auth';
+import { JwtAuthenticator } from '@ddd-ts-kit/auth/jwt';
+import type { Actor } from '@ddd-ts-kit/kernel';
+import type { JWTPayload } from 'jose';
+
+interface OidcSettings {
+  readonly issuer: string; // AUTH_ISSUER
+  readonly audience: string; // AUTH_AUDIENCE
+  readonly jwksUri: string; // AUTH_JWKS_URI
+}
+
+/** Plain data only: the actor travels in commands, log lines and queue messages. */
+export function actorOfClaims(claims: JWTPayload): Actor {
+  const roles = Array.isArray(claims['roles']) ? claims['roles'].filter((role) => typeof role === 'string') : [];
+  const tenantId = typeof claims['tenant_id'] === 'string' ? claims['tenant_id'] : undefined;
+
+  return {
+    id: claims.sub ?? '',
+    // this provider marks the tokens of the client credentials grant with `gty`
+    type: claims['gty'] === 'client-credentials' ? 'service' : 'user',
+    roles,
+    attributes: {},
+    ...(tenantId === undefined ? {} : { tenantId }),
+  };
+}
+
+export function createAuthenticator({ issuer, audience, jwksUri }: OidcSettings): Authenticator {
+  return new JwtAuthenticator({ issuer, audience, jwksUri, toActor: actorOfClaims });
+}
+```
+
+The boundary then reads the bearer token of each request with `principalResolver`, which the
+HTTP adapters receive as `resolvePrincipal`:
+
+<!-- checked sample -->
+```ts
+// platform/http/server.ts
+import { principalResolver, type Authenticator } from '@ddd-ts-kit/auth';
+import type { ExecuteOptions } from '@ddd-ts-kit/http';
+import type { ExecutionScope } from '@ddd-ts-kit/kernel';
+
+declare const authenticator: Authenticator; // one of the two above, resolved from the application
+declare const executionScope: ExecutionScope;
+
+export const options: ExecuteOptions = {
+  // Authorization: Bearer <token>; no header gives the anonymous session, a malformed one a 401
+  resolvePrincipal: principalResolver(authenticator),
+  executionScope,
+};
+```
+
+A route then reads the actor from the execution context of the request, and puts it in the
+command. Instead of reading the token in the presentation layer and handing it to the use case:
+
+```ts
+// presentation/http/book-appointment.route.ts: refused
+async ({ body, context }) => {
+  const token = String(context.raw.headers.authorization).slice('Bearer '.length);
+  const claims = JSON.parse(atob(token.split('.')[1]));                  // decoded, never verified
+  if (!claims.realm_access.roles.includes('client')) throw new Error();  // authz/in-application
+
+  return { status: 201, body: { id: await commands.execute(new BookAppointment(claims.sub, body.startsAt)) } };
+};
+```
+
+write:
+
+```ts
+async ({ body, context }) => {
+  // the actor of the verified token; whether it may book is the permission of the command
+  const id = await commands.execute(new BookAppointment(context.execution.actor, new Date(body.startsAt)));
+
+  return { status: 201, body: { id } };
+};
+```
 
 ## Comparison
 
@@ -66,12 +187,15 @@ always refused. A refused token raises one error with a reason code (`TOKEN_EXPI
 answered as a 5xx. Nothing of the token is kept in the actor or the session, and the
 verification key is not a property of the object, so logging the authenticator shows no key.
 
-Session fields come from standard claims: the session id from `sid` then `jti`, the instants
-from `iat` and `exp`, multi-factor from `amr` (RFC 8176), the assurance level from `acr`, the
-impersonator from the `act` claim (RFC 8693) or a claim you name, the locale and time zone from
-`locale` and `zoneinfo`.
+Session fields come from standard claims: the session id from `sid`, else `jti`, else the
+subject and the issue instant; the instants from `iat` and `exp`, multi-factor from `amr`
+(RFC 8176), the assurance level from `acr`, the impersonator from the `act` claim (RFC 8693) or
+a claim you name, the locale and time zone from `locale` and `zoneinfo`, the granted scopes from
+`scope` (or `scp`), which the `HasScope` guard of `@ddd-ts-kit/http` reads at the edge.
 
 **The Keycloak preset** maps an access token as follows.
+
+![The claims of a Keycloak access token on the left, the fields of the actor and of the session on the right, and which claim fills which field; the token itself is kept nowhere](../assets/diagrams/identity-keycloak-claims.svg)
 
 | Field | Claim |
 |---|---|
@@ -109,19 +233,49 @@ specs sign their own tokens in the test. Every route declares
 its `security`, and the route type refuses one that does not (`authz/declared` in the
 [architecture reference](../ARCHITECTURE.md)).
 
-```mermaid
-sequenceDiagram
-  participant C as Client app
-  participant K as Identity provider
-  participant A as API boundary
-  participant U as Use case
-  C->>K: sign in
-  K-->>C: access token (JWT)
-  C->>A: POST /appointments, Bearer token
-  A->>K: fetch key set (cached, rotated keys followed)
-  A->>A: verify signature, issuer, audience, expiry
-  A->>U: BookAppointment(actor, ...)
-  Note over A,U: the token stops at the boundary
+**Signing a token in a test.** No identity server is needed to test the boundary: a spec
+generates a key pair, signs the tokens it needs with `jose`, and gives the public key to the
+authenticator. The refusals are then tested as plainly as the happy path:
+
+<!-- checked sample -->
+```ts
+import { InvalidCredentialError } from '@ddd-ts-kit/auth';
+import { JwtAuthenticator } from '@ddd-ts-kit/auth/jwt';
+import { SignJWT, generateKeyPair, type JWTPayload } from 'jose';
+import { describe, expect, it } from 'vitest';
+
+const ISSUER = 'https://id.example.test/realms/scheduling';
+const AUDIENCE = 'scheduling-api';
+const { privateKey, publicKey } = await generateKeyPair('RS256');
+const authenticator = new JwtAuthenticator({ key: publicKey, issuer: ISSUER, audience: AUDIENCE });
+
+function tokenOf(claims: JWTPayload, audience = AUDIENCE): Promise<string> {
+  return new SignJWT(claims)
+    .setProtectedHeader({ alg: 'RS256' })
+    .setIssuer(ISSUER)
+    .setAudience(audience)
+    .setIssuedAt()
+    .setExpirationTime('5m')
+    .sign(privateKey);
+}
+
+describe('the authenticator of the API', () => {
+  it('turns a token into an actor that keeps nothing of it', async () => {
+    const token = await tokenOf({ sub: 'ada', realm_access: { roles: ['client'] }, tenant_id: 'practice-7' });
+
+    const actor = await authenticator.authenticate(token);
+
+    expect(actor).toEqual({ id: 'ada', type: 'user', tenantId: 'practice-7', roles: ['client'], attributes: {} });
+    expect(JSON.stringify(actor)).not.toContain(token);
+  });
+
+  it('refuses a token meant for another API', async () => {
+    const refusal = await authenticator.authenticate(await tokenOf({ sub: 'ada' }, 'billing-api')).catch((error: unknown) => error);
+
+    expect(refusal).toBeInstanceOf(InvalidCredentialError);
+    expect(refusal).toMatchObject({ code: 'UNAUTHORIZED', reason: 'CLAIM_MISMATCH' });
+  });
+});
 ```
 
 **The people and organisations of the application.** The provider says who signed in; which

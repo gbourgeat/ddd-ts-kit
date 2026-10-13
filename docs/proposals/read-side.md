@@ -1,3 +1,5 @@
+**English** · [Français](read-side.fr.md)
+
 # Proposal: the read side
 
 This page describes what the kit adds, or would add, for reading data: criteria and filters,
@@ -17,7 +19,7 @@ generate` and `check` do not know it), **not built**.
 | 2. Representations | `Representation`, `Representations.standard()` and negotiation on `Accept` (406) in `@ddd-ts-kit/http`; JSON, `application/problem+json` and `+xml`, XML written and read (415 otherwise), CSV streamed, `streamSchemaOf`, `everyPage` to stream a search page by page through the bus; files and bodiless answers left out of negotiation; every media type, 406 and 415 in the contract; `withFieldAccess` and `fieldDeciderOf` for fields reserved to a permission or a policy, in every representation and in request bodies; the rule `authz/fields-by-schema` | generated since 2026-10-13: `stack.representations` chosen at `init`, `generate representation`, `describe` lists the media types | an XML vocabulary of its own (namespaces, mixed content); CSV input |
 | 3. Forms | `formRoutes` at `GET /forms/<operationId>`, `defineForm` hints, JSON Forms and the neutral tree of blocks, the form given only to who may run its use case (`requires`), hidden and read-only fields by caller, `formDocumentsOf` | generated since 2026-10-13: `stack.forms` chosen at `init`, `generate form`, the forms written to `openapi/forms/` | other dialects than JSON Forms, which a front end maps from the tree; a lookup renderer |
 | 4. Another context's data | hydration: `hydrate(...).with(...).orElse(...)` in the kernel, with the failure and timeout policy; the gateway port it calls (`generate gateway`) | no generated use of `hydrate` | the analyzer rule: the compiler refuses a criteria on a hydrated field instead |
-| 5. Projections and search | `@Projection` and `@On` (`@ddd-ts-kit/kernel/declarations`), their registration and metrics in `@ddd-ts-kit/di`; the `ReadModelStore` port, `TableReadModelStore` over `InMemoryReadModelStore`, `KnexReadModelStore`, `DrizzleReadModelStore`, `PrismaReadModelStore`, `TypeOrmReadModelStore`, held to `readModelStoreContract`; `ProjectionRebuild` on PostgreSQL | generated since 2026-10-12: `generate projection <context> <Name> <event-type>` writes a projector and its spec, `application/projections/` is a role of the canonical tree, the generated barrel exports a projector and registers what its constructor takes, `describe` and `CONTEXT.md` list it. Still not generated: the port of the read model with its adapter, which `generate port` and the ORM package give | the search index store and the Elasticsearch and OpenSearch package; a generated rebuild job |
+| 5. Projections and search | `@Projection` and `@On` (`@ddd-ts-kit/kernel/declarations`), their registration and metrics in `@ddd-ts-kit/di`; the `ReadModelStore` port, `TableReadModelStore` over `InMemoryReadModelStore`, `KnexReadModelStore`, `DrizzleReadModelStore`, `PrismaReadModelStore`, `TypeOrmReadModelStore`, held to `readModelStoreContract`; `ProjectionRebuild` on PostgreSQL | generated since 2026-10-12, in the declared style: `generate projection <context> <Name> <event-type>` writes a projector and its spec, `application/projections/` is a role of the canonical tree, the generated barrel exports a projector and registers what its constructor takes, `describe` and `CONTEXT.md` list it. Still not generated: the port of the read model with its adapter, which `generate port` and the ORM package give | the search index store and the Elasticsearch and OpenSearch package; a generated rebuild job |
 
 The reference for what is built is the README of each package: `@ddd-ts-kit/kernel`
 ("Criteria", "Hydration", "Projections"), `@ddd-ts-kit/http` (the query grammar, the
@@ -35,18 +37,15 @@ aggregates grow and repositories sprout `findByXAndYOrderByZ` methods. The desig
 the two apart, CQRS as the kit already uses it, and gives the read side its own small,
 standard vocabulary so every project filters, pages, serializes and projects the same way.
 
-```mermaid
-flowchart LR
-  subgraph Write side
-    C[Command] --> A[Aggregate] --> E[(Outbox)]
-  end
-  E -->|integration events| P[Projector]
-  P --> RM[(Read model: SQL table or search index)]
-  Q[Query + Criteria] --> RP[Read port]
-  RP --> RM
-  RP -. small pages, fresh data .-> H[Hydrator] --> G[Gateway to another context]
-  RP --> R[Representation: JSON, XML, CSV, form blocks]
-```
+![The read side next to the write side: a command changes an aggregate whose events leave through the outbox; a projector applies them to a read model; a route hands a query to its handler, which joins the criteria and the access scope, reads through a read port and completes the rows through a gateway port](../assets/diagrams/read-side-overview.svg)
+
+Read the drawing from the two ends. At the top, the write side does not change: a command, an
+aggregate, one transaction, and the events leave through the outbox. A projector turns those
+events into a read model shaped for the screens that read it. At the bottom, a search never
+touches an aggregate: the route reads the query string into a criteria, the handler joins it
+to what the actor may see, the read port answers a page, and data owned by another context is
+added by hydration. Two boxes, the route and the read model, say which of their parts are built
+and which are proposed.
 
 ## 1. Criteria and filters
 
@@ -56,16 +55,75 @@ Built in the runtime; not yet generated by the CLI; no search engine translator.
 finder methods.
 
 **What exists.** One standard, typed description of a read, in the kernel next to `Page` and
-`PageRequest`:
+`PageRequest`. Compare the two ways of serving three screens that list appointments:
 
 ```ts
-const criteria = Criteria.of<AppointmentRow>()
-  .where('status', 'in', ['booked', 'confirmed'])
-  .where('startsAt', 'gte', from)
-  .where('practitionerId', 'eq', practitionerId)
-  .orderBy('startsAt', 'asc')
-  .page(pageRequest);
+// Instead of: one finder per screen on the repository of the aggregate
+interface AppointmentRepository {
+  findByPractitionerAndStatusOrderByStartsAt(practitionerId: string, statuses: string[]): Promise<Appointment[]>;
+  findByTenantAndStartsAtBetween(tenantId: string, from: Date, to: Date): Promise<Appointment[]>;
+  findCancelledByPractitionerPaged(practitionerId: string, page: number): Promise<Appointment[]>;
+  // ... and one more for the next screen, each with its own paging and its own rights check
+}
 ```
+
+write one read port over a read model, which declares once what a caller may filter and sort,
+and describe each read as a criteria:
+
+<!-- checked sample -->
+```ts
+import { Criteria, ReadModelStore, defineCriteria, offsetPage, scoped, type Page, type ReadScope } from '@ddd-ts-kit/kernel';
+
+// application/ports/appointment-list.port.ts: the rows of the read model, and what a caller may ask of them
+export interface AppointmentRow {
+  readonly id: string;
+  readonly status: 'booked' | 'confirmed' | 'cancelled';
+  readonly startsAt: Date;
+  readonly practitionerId: string;
+  readonly tenantId: string;
+}
+
+export const appointmentCriteria = defineCriteria<AppointmentRow>({
+  fields: {
+    id: { type: 'string' },
+    status: { type: 'string', filter: ['eq', 'in'], sortable: true },
+    startsAt: { type: 'instant', filter: ['gte', 'lt', 'between'], sortable: true },
+    practitionerId: { type: 'string', filter: ['eq'] },
+    tenantId: { type: 'string' },
+  },
+  defaultSort: [{ field: 'startsAt', direction: 'asc' }],
+  tieBreaker: 'id',
+  limits: { maxPageSize: 50 },
+});
+
+export abstract class AppointmentList extends ReadModelStore<AppointmentRow> {}
+
+// application/queries/search-appointments: the body of the handler, one read described as data
+export function upcomingOf(
+  appointments: AppointmentList,
+  scope: ReadScope,
+  practitionerId: string,
+  from: Date,
+): Promise<Page<AppointmentRow>> {
+  const criteria = Criteria.of<AppointmentRow>()
+    .where('status', 'in', ['booked', 'confirmed'])
+    .where('startsAt', 'gte', from)
+    .where('practitionerId', 'eq', practitionerId)
+    .orderBy('startsAt', 'asc')
+    .page(offsetPage({ limit: 20 }));
+
+  // The scope the authorizer computed is joined by AND: no filter of the caller can widen it.
+  return appointments.search(scoped(criteria, scope, { ids: 'id', filter: { tenantId: 'tenantId' } }));
+}
+```
+
+The compiler already holds most mistakes: `where('status', 'eq', 'pending')` (a value outside
+the union), `where('startsAt', 'contains', '2026')` (an operator for strings on an instant),
+`where('practitionerId', 'isNull', true)` (a field that is never null) and `orderBy('colour')`
+(a field the row does not have) do not compile. What the compiler cannot
+see, a field the definition does not open to callers, is refused when the criteria is planned.
+
+![A search request crossing the layers: the route reads the query string into a criteria or answers 422, the handler joins the access scope, the read port plans the criteria, and a translator renders it for the store, or the in-memory evaluator for a fake, all held to one contract suite](../assets/diagrams/read-side-criteria.svg)
 
 - A read port declares with `defineCriteria` which fields may be filtered and sorted, and
   with which operators (`eq`, `ne`, `in`, `gt`, `gte`, `lt`, `lte`, `contains`, `startsWith`,
@@ -77,6 +135,9 @@ const criteria = Criteria.of<AppointmentRow>()
 - Translators turn a criteria plan into the store's query: Knex, Drizzle, Prisma, TypeORM,
   and an in-memory evaluator for fakes. One contract suite (`criteriaContract`) holds them to
   the same table of criteria and answers. A search engine translator (part 5) is not built.
+  The fake of a read port is a class of a few lines, and answers with the reference semantics:
+  `class FakeAppointmentList extends InMemoryReadModelStore<AppointmentRow> implements AppointmentList`,
+  its constructor calling `super(appointmentCriteria)`.
 - The access scope computed by the authorizer is joined to the criteria with `scoped`, with
   AND, and nothing in a query string can remove it: a filter never widens what the actor may
   see.
@@ -199,17 +260,68 @@ context's internals.
 | **Hydration at query time** | the query handler reads its own rows, then completes them through a gateway port to the other context's published read contract, by batch of identifiers | detail views and small pages, data that must be fresh, low volume | latency and availability now depend on the other context; no filtering or sorting on hydrated fields |
 | **Composition above the contexts** | a presentation-level route (or a front-end gateway) calls two queries and merges | screens that are truly a mix of two contexts' views | orchestration lives outside any context |
 
+![Choosing how a read gets data of another context: a list filtered or sorted by the foreign field, or read often, takes a projection; a detail view or a small page whose foreign data must be fresh takes hydration; a screen that is truly two views takes composition above the contexts](../assets/diagrams/read-side-foreign-data.svg)
+
 For hydration the kernel provides a small, declarative helper (`hydrate`) so it is never
 written as a loop of calls:
 
 ```ts
-const page = await this.appointments.search(criteria);
-
-return hydrate(page)
-  .with('practitioner', (row) => row.practitionerId, this.practitioners.byIds)
-  .with('location', (row) => row.locationId, this.locations.byIds)
-  .orElse('practitioner', unknownPractitioner, { onFailure: 'fallback', timeoutMs: 300 });
+// Instead of: one call to the other context per row, written by hand
+for (const row of page.items) {
+  row.practitioner = await this.practitioners.byId(row.practitionerId); // 20 rows, 20 calls
+}
 ```
+
+<!-- checked sample -->
+```ts
+import { hydrate, type Page } from '@ddd-ts-kit/kernel';
+
+interface AppointmentRow {
+  readonly id: string;
+  readonly practitionerId: string;
+  readonly locationId: string;
+}
+
+interface Practitioner {
+  readonly displayName: string;
+}
+
+interface Location {
+  readonly city: string;
+}
+
+// application/ports: gateway ports to what identity and sites publish, one call for many ids
+export abstract class PractitionerGateway {
+  abstract byIds(ids: readonly string[]): Promise<ReadonlyMap<string, Practitioner>>;
+}
+
+export abstract class LocationGateway {
+  abstract byIds(ids: readonly string[]): Promise<ReadonlyMap<string, Location>>;
+}
+
+const unknownPractitioner: Practitioner = { displayName: 'Unknown practitioner' };
+
+export class AppointmentDetails {
+  constructor(
+    private readonly practitioners: PractitionerGateway,
+    private readonly locations: LocationGateway,
+  ) {}
+
+  async complete(page: Page<AppointmentRow>) {
+    return hydrate(page)
+      // a lookup is called without its object: wrap the method of a class in an arrow
+      .with('practitioner', (row) => row.practitionerId, (ids) => this.practitioners.byIds(ids))
+      .with('location', (row) => row.locationId, (ids) => this.locations.byIds(ids))
+      .orElse('practitioner', unknownPractitioner, { onFailure: 'fallback', timeoutMs: 300 });
+  }
+}
+```
+
+A page of 20 rows costs two calls, one per relation, made at the same time. Every row has a
+`practitioner`: the fallback when identity does not know the id, and also when its lookup
+fails or takes more than 300 ms, which `warnings` then reports (`lookup_failed`,
+`lookup_timed_out`). `location` is optional in the type of the rows, and a location lookup
+that fails fails the whole read, because that relation has no fallback.
 
 - One call per relation per page, never one per row; identifiers are deduplicated; the
   relations are looked up at the same time; the gateway can be cached with the existing
@@ -223,8 +335,9 @@ return hydrate(page)
 
 ## 5. Projections and a search engine
 
-Projections on SQL are built in the runtime; the CLI neither generates nor accepts them yet;
-the search engine is not built.
+Projections on SQL are built in the runtime, and `generate projection` writes a projector; the
+CLI does not write the port of the read model with it, nor a rebuild job; the search engine is
+not built.
 
 **Problem.** Without a standard, read models are written by hand in integration event
 handlers, each with its own answer to idempotence, rebuild and lag; and some reads
@@ -245,20 +358,100 @@ handlers, each with its own answer to idempotence, rebuild and lag; and some rea
   work that holds the processed-event mark.
 - **Rebuild.** A read model fed by events no store keeps is rebuilt from the source of
   truth (a read model of event-sourced aggregates is rebuilt from the event store instead,
-  `EventStoreProjectionRebuild`): the owning context exposes a paged export of stamped rows through its published
-  language, `ProjectionRebuild` copies it into a new table while events keep being applied,
+  `EventStoreProjectionRebuild`): the owning context exposes a paged export of stamped rows
+  through its published language, `ProjectionRebuild` copies it into a new table while events keep being applied,
   then swaps the two in one transaction. PostgreSQL only.
 - **Observability.** `projection_events_total` by result (`applied`, `stale`, `ignored`,
   `failed`) and `projection_last_event_age_ms`, the lag, on the `Metrics` port; one
   `process <projection>` span per delivery; an event buried after its retries reaches the
   error reporter as for any consumer.
 
+A projector of the read model of practitioner names, fed by an event identity publishes, its
+port, its fake, and what it does with a late or repeated event:
+
+<!-- checked sample -->
+```ts
+import { InMemoryReadModelStore, ReadModelStore, defineCriteria, stampOf, type IntegrationEvent, type ReadModelWrite } from '@ddd-ts-kit/kernel';
+import { On, Projection, type EventContract } from '@ddd-ts-kit/kernel/declarations';
+
+// identity/published-language: declared by identity with defineIntegrationEvent, imported here
+interface PractitionerRenamedPayload {
+  readonly practitionerId: string;
+  readonly displayName: string;
+}
+declare const practitionerRenamedV1: EventContract<PractitionerRenamedPayload>;
+
+// scheduling/application/ports/practitioner-names.port.ts: the read model and its port
+export interface PractitionerName {
+  readonly practitionerId: string;
+  readonly displayName: string;
+}
+
+export const practitionerNameCriteria = defineCriteria<PractitionerName>({
+  fields: {
+    practitionerId: { type: 'string', filter: ['eq', 'in'] },
+    displayName: { type: 'string', filter: ['startsWith'], sortable: true },
+  },
+  tieBreaker: 'practitionerId',
+});
+
+export abstract class PractitionerNames extends ReadModelStore<PractitionerName> {}
+
+// scheduling/application/projections/practitioner-names.projection.ts
+@Projection('scheduling.practitioner-names')
+export class PractitionerNamesProjection {
+  constructor(private readonly names: PractitionerNames) {}
+
+  @On(practitionerRenamedV1)
+  renamed(event: IntegrationEvent<PractitionerRenamedPayload>): Promise<ReadModelWrite> {
+    const { practitionerId, displayName } = event.payload;
+
+    return this.names.upsertIfNewer(practitionerId, stampOf(event), () => ({ practitionerId, displayName }));
+  }
+}
+
+// scheduling/test/fakes/practitioner-names.fake.ts
+export class FakePractitionerNames extends InMemoryReadModelStore<PractitionerName> implements PractitionerNames {
+  constructor() {
+    super(practitionerNameCriteria);
+  }
+}
+
+// What a redelivery and a late event do: the row ends on the newest event, whatever the order.
+const renamed = (id: string, occurredAt: string, displayName: string): IntegrationEvent<PractitionerRenamedPayload> => ({
+  id,
+  type: 'identity.practitioner.renamed',
+  version: 1,
+  occurredAt,
+  payload: { practitionerId: 'p-7', displayName },
+});
+
+export async function deliveredOutOfOrder(): Promise<PractitionerName | undefined> {
+  const names = new FakePractitionerNames();
+  const projection = new PractitionerNamesProjection(names);
+  const older = renamed('evt-1', '2026-10-01T10:00:00.000Z', 'Ada');
+  const newer = renamed('evt-2', '2026-10-01T10:05:00.000Z', 'Ada Lovelace');
+
+  await projection.renamed(newer); // 'applied'
+  await projection.renamed(older); // 'stale': older than the event the row holds
+  await projection.renamed(newer); // 'stale': the same event, delivered again
+
+  return names.get('p-7'); // { practitionerId: 'p-7', displayName: 'Ada Lovelace' }
+}
+```
+
+![Three deliveries to a projector: the newer event is applied, then the older event arriving late and the newer event delivered twice are both stale, so the row keeps the newest name](../assets/diagrams/read-side-stamps.svg)
+
 **What is still proposed.**
 
-- **In the CLI.** `application/projections/` in the canonical tree, a line in the generated
-  barrel, and `generate projection <context> <Name> --on <event>... [--store sql|search]`
-  writing the read model, the projector, its spec and its rebuild job. Until then, see the
-  status table for how a project held by `ddd-ts-kit check` registers a projection.
+- **In the CLI.** What is generated since 2026-10-12 is in the status table:
+  `generate projection <context> <Name> <event-type>` writes the projector of one integration
+  event and its spec, and the barrel registers it. This holds in the declared style only: in the
+  explicit style the generator refuses, and the projector is a class written by hand, registered
+  with `builder.include(...)`. Still proposed: one projector for several
+  events (`--on <event>...`), a `--store sql|search` that writes the read model's port with
+  its adapter and its fake (today `generate port` and the ORM package, by hand), and the
+  rebuild job.
 - **A search index** as a second implementation of the read model store.
 - **Search engine adapter.** A package for Elasticsearch and OpenSearch (same protocol for
   what is needed): index per read model, mapping derived from the read model's schema,
@@ -271,8 +464,9 @@ of the source, a rebuild is exact only for events that set state, not for events
 (the kernel README states both). A search index would be a copy, never the source of truth,
 and eventually consistent: a write followed at once by a search may not see itself; the kit
 would document the ways to handle it (read your own write from the SQL model, or wait for
-refresh on that one request) rather than hide it. Running a search cluster is a real operational cost; a
-PostgreSQL table with the right indexes, and its full-text search, covers many projects.
+refresh on that one request) rather than hide it. Running a search cluster is a real
+operational cost; a PostgreSQL table with the right indexes, and its full-text search, covers
+many projects.
 
 ## What is asked of the project owner
 
@@ -283,8 +477,11 @@ PostgreSQL table with the right indexes, and its full-text search, covers many p
 3. **Search engine**: Elasticsearch, OpenSearch, or both behind one adapter. Recommended:
    one adapter tested on OpenSearch (open licence) and on Elasticsearch.
 4. **Order of work**. Criteria, hydration, projections on SQL, representations and forms are
-   in the runtime, representations and forms in the CLI too. What remains, in the recommended
-   order: the generator and the checker for criteria, then the search adapter.
+   in the runtime, representations and forms in the CLI too, and the projector is generated.
+   What remains, in the recommended order: criteria in the generator and the checker
+   (`defineCriteria` and the `filter[...]` parameters from `generate query --search`) and the
+   rest of the projection generator (the port of the read model, the rebuild job), then the
+   search adapter.
 
 ## See also
 

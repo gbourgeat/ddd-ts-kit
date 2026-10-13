@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 564" width="960" height="564" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">When each analyzer runs</title>
+  <desc id="desc">Four moments, from left to right. At every file write, the editor hook runs ddd-ts-kit check on the file. At a commit, the pre-commit hook runs ddd-ts-kit check, ESLint with the plugin of the kit and the Biome formatter on the staged files. Before a push, the TypeScript compiler and the unit project of the tests run: every spec but the integration ones, with the architecture test. In the pipeline, on a pull request and on the default branch: ddd-ts-kit check with every rule, ESLint, Biome, dependency-cruiser on the resolved import graph, knip for dead code, the compiler and the tests. Biome, the checker, dependency-cruiser, knip and the compiler always cover the whole project; on a pull request, ESLint and the tests cover only the affected contexts, and the default branch runs them on everything.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="564" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">When each analyzer runs</text>
+  <!-- the four moments -->
+  <rect x="24" y="60" width="210" height="56" rx="10" fill="#ffffff" stroke="#3d4449" stroke-width="2"/>
+  <text x="129" y="84" font-size="16" font-weight="700" fill="#1f2328" text-anchor="middle">every file write</text>
+  <text x="129" y="105" font-size="13" fill="#1f2328" text-anchor="middle">editor hook, one file</text>
+  <rect x="258" y="60" width="210" height="56" rx="10" fill="#ffffff" stroke="#3d4449" stroke-width="2"/>
+  <text x="363" y="84" font-size="16" font-weight="700" fill="#1f2328" text-anchor="middle">commit</text>
+  <text x="363" y="105" font-size="13" fill="#1f2328" text-anchor="middle">pre-commit, staged files</text>
+  <rect x="492" y="60" width="210" height="56" rx="10" fill="#ffffff" stroke="#3d4449" stroke-width="2"/>
+  <text x="597" y="84" font-size="16" font-weight="700" fill="#1f2328" text-anchor="middle">push</text>
+  <text x="597" y="105" font-size="13" fill="#1f2328" text-anchor="middle">pre-push</text>
+  <rect x="726" y="60" width="210" height="56" rx="10" fill="#ffffff" stroke="#3d4449" stroke-width="2"/>
+  <text x="831" y="84" font-size="16" font-weight="700" fill="#1f2328" text-anchor="middle">pipeline</text>
+  <text x="831" y="105" font-size="13" fill="#1f2328" text-anchor="middle">pull request, default branch</text>
+  <line x1="236" y1="88" x2="254" y2="88" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="470" y1="88" x2="488" y2="88" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="704" y1="88" x2="722" y2="88" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- every file write -->
+  <rect x="24" y="136" width="210" height="56" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="129" y="160" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">ddd-ts-kit check</text>
+  <text x="129" y="181" font-size="13" fill="#1f2328" text-anchor="middle">structure, names, imports</text>
+  <!-- commit -->
+  <rect x="258" y="136" width="210" height="56" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="363" y="160" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">ddd-ts-kit check</text>
+  <text x="363" y="181" font-size="13" fill="#1f2328" text-anchor="middle">and the size of the commit</text>
+  <rect x="258" y="202" width="210" height="56" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="363" y="226" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">ESLint</text>
+  <text x="363" y="247" font-size="13" fill="#1f2328" text-anchor="middle">syntax tree, authoritative</text>
+  <rect x="258" y="268" width="210" height="56" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="363" y="292" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">Biome</text>
+  <text x="363" y="313" font-size="13" fill="#1f2328" text-anchor="middle">layout, line width 120</text>
+  <!-- push -->
+  <rect x="492" y="136" width="210" height="56" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="597" y="160" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">TypeScript compiler</text>
+  <text x="597" y="181" font-size="13" fill="#1f2328" text-anchor="middle">strict</text>
+  <rect x="492" y="202" width="210" height="56" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="597" y="226" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">unit tests</text>
+  <text x="597" y="247" font-size="13" fill="#1f2328" text-anchor="middle">every spec but integration</text>
+  <!-- pipeline -->
+  <rect x="726" y="136" width="210" height="56" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="831" y="160" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">ddd-ts-kit check</text>
+  <text x="831" y="181" font-size="13" fill="#1f2328" text-anchor="middle">every rule, every file</text>
+  <rect x="726" y="202" width="210" height="56" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="831" y="226" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">ESLint, Biome</text>
+  <text x="831" y="247" font-size="13" fill="#1f2328" text-anchor="middle">ESLint: affected contexts</text>
+  <rect x="726" y="268" width="210" height="56" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="831" y="292" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">dependency-cruiser</text>
+  <text x="831" y="313" font-size="13" fill="#1f2328" text-anchor="middle">the resolved import graph</text>
+  <rect x="726" y="334" width="210" height="56" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="831" y="358" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">knip</text>
+  <text x="831" y="379" font-size="13" fill="#1f2328" text-anchor="middle">dead code, unused packages</text>
+  <rect x="726" y="400" width="210" height="56" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="831" y="424" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">compiler and tests</text>
+  <text x="831" y="445" font-size="13" fill="#1f2328" text-anchor="middle">tests: affected contexts</text>
+  <!-- note -->
+  <text x="32" y="490" font-size="14" fill="#1f2328">The earlier a check runs, the cheaper it is: one file, then the staged files, then the whole project.</text>
+  <text x="32" y="514" font-size="14" fill="#1f2328">On a pull request, ESLint and the tests cover only the affected contexts; the default branch runs everything.</text>
+  <text x="32" y="538" font-size="14" fill="#1f2328">When ESLint and the checker disagree on a rule they both hold, ESLint is right.</text>
+</svg>

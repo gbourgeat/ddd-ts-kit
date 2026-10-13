@@ -1,3 +1,5 @@
+**English** · [Français](analytics.fr.md)
+
 # Briefing: analytics
 
 > Kept as it was given. After delivery (2026-10-10) the owner replaced part of what it asks for:

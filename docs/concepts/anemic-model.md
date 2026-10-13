@@ -1,3 +1,5 @@
+**English** · [Français](anemic-model.fr.md)
+
 # Anemic model
 
 **Summary.** An anemic domain model has the classes of a domain model and none of its
@@ -60,10 +62,61 @@ Everything a domain expert would call a rule is in the handler. The consequences
 
 ## The same use case with the behaviour in the model
 
+<!-- checked sample -->
 ```ts
-// AFTER: the aggregate decides
+// AFTER: the aggregate decides, the handler orchestrates
+import {
+  AggregateRoot,
+  AuthorizedCommand,
+  ConceptError,
+  Repository,
+  type Clock,
+  type CommandHandler,
+  type DomainEvent,
+} from '@ddd-ts-kit/kernel';
+
+// Written in their own files of the context (the whole aggregate is on the Aggregates page):
+declare class TimeSlot {
+  readonly startsAt: Date;
+  startsWithin(durationMs: number, at: Date): boolean;
+}
+declare class CancellationReason {
+  static of(text: string): CancellationReason;
+}
+declare class AppointmentCancelled implements DomainEvent {
+  constructor(aggregateId: string, occurredAt: Date, reason: CancellationReason);
+  readonly name: string;
+  readonly occurredAt: Date;
+  readonly aggregateId: string;
+}
+declare class AppointmentError extends ConceptError {
+  static notFound(appointmentId: string): AppointmentError;
+  static alreadyCancelled(appointmentId: string): AppointmentError;
+  static cancellationWindowPassed(appointmentId: string, startsAt: Date): AppointmentError;
+}
+declare class CancelAppointment extends AuthorizedCommand {
+  readonly appointmentId: string;
+  readonly reason: string;
+}
+
+const FREE_CANCELLATION_MS = 24 * 60 * 60 * 1000;
+
+interface AppointmentState {
+  readonly slot: TimeSlot;
+  readonly status: 'booked' | 'cancelled';
+}
+
 export class Appointment extends AggregateRoot<string> {
-  /* private constructor, book, rehydrate: see the Aggregates page */
+  private constructor(
+    id: string,
+    private state: AppointmentState,
+  ) {
+    super(id);
+  }
+
+  static rehydrate(id: string, state: AppointmentState): Appointment {
+    return new Appointment(id, state);
+  }
 
   cancel(reason: CancellationReason, at: Date): void {
     this.assertNotCancelled();
@@ -74,16 +127,18 @@ export class Appointment extends AggregateRoot<string> {
 
   private assertNotCancelled(): void {
     if (this.state.status === 'cancelled') {
-      throw new AppointmentAlreadyCancelled();
+      throw AppointmentError.alreadyCancelled(this.id);
     }
   }
 
   private assertCancellationStillFree(at: Date): void {
     if (this.state.slot.startsWithin(FREE_CANCELLATION_MS, at)) {
-      throw new CancellationWindowPassed();
+      throw AppointmentError.cancellationWindowPassed(this.id, this.state.slot.startsAt);
     }
   }
 }
+
+export abstract class AppointmentRepository extends Repository<Appointment> {}
 
 export class CancelAppointmentHandler implements CommandHandler<CancelAppointment> {
   constructor(
@@ -97,7 +152,7 @@ export class CancelAppointmentHandler implements CommandHandler<CancelAppointmen
       throw AppointmentError.notFound(command.appointmentId);
     }
 
-    appointment.cancel(command.reason, this.clock.now());
+    appointment.cancel(CancellationReason.of(command.reason), this.clock.now());
 
     await this.appointments.save(appointment);
   }
@@ -111,8 +166,12 @@ are tested without a database, a clock or a bus:
 ```ts
 given(anAppointment().cancelled())
   .when((appointment) => appointment.reschedule(anotherSlot, at))
-  .thenError(AppointmentAlreadyCancelled);
+  .thenError('APPOINTMENT_ALREADY_CANCELLED');
 ```
+
+Side by side, the two designs of the same rules:
+
+![On the left, an anemic Appointment holds public fields and the cancel handler, the reschedule handler and an import script each assign them with their own checks or none; on the right, every caller calls an intention of the Appointment aggregate root, which holds the rules, raises named refusals and records the events](../assets/diagrams/anemic-model-before-after.svg)
 
 ## How to recognise it
 
@@ -176,7 +235,15 @@ is written for it, and so is a human review focused on the domain layer
    intention, then the event or the error.
 2. Add the intention method on the aggregate and move the condition into it. Name the refusal
    with `generate error <context> <Concept> <refusal>`, which adds a factory to the error class
-   of the concept.
+   of the concept:
+
+   ```bash
+   npx ddd-ts-kit generate error appointments Appointment alreadyCancelled --code APPOINTMENT_ALREADY_CANCELLED
+   ```
+
+   It adds `AppointmentError.alreadyCancelled()` to `domain/errors/appointment.error.ts`, and
+   its case to the spec. Without `--code`, the code is the name of the refusal alone,
+   `ALREADY_CANCELLED`.
 3. Replace the handler's branches by the single call. Its spec gets shorter: happy path, each
    error code, nothing saved or published on failure.
 4. Remove the setter or public property the handler was using. The compiler lists the other
@@ -184,7 +251,18 @@ is written for it, and so is a human review focused on the domain layer
 5. Replace the primitives the rule manipulated by a value object (`TimeSlot` instead of two
    dates) when the same comparison appears twice.
 
-Do it per use case, in small commits, not as a rewrite.
+Do it per use case, in small commits, not as a rewrite. One move, on the 24-hour rule:
+
+```ts
+// Instead of: the rule in the handler, on the system clock, with a generic error
+if (appointment.startsAt.getTime() - Date.now() < 24 * 60 * 60 * 1000) {
+  throw new Error('Too late to cancel');
+}
+appointment.status = 'cancelled';
+
+// Write: one intention; the aggregate checks the rule on the instant it is given
+appointment.cancel(reason, this.clock.now()); // throws AppointmentError.cancellationWindowPassed
+```
 
 ## When a thin model is fine
 

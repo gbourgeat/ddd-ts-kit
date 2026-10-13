@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 560" width="960" height="560" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">L'isolation des tenants sur drizzle : dans l'instruction, puis dans la base</title>
+  <desc id="desc">La portée d'exécution nomme le tenant du travail, acme. Première ligne de défense : le repository met le tenant dans chaque instruction, tenantCondition sur les lectures, ownTenantCondition sur les mises à jour et les suppressions, tenantScopeOf sur les insertions. Seconde ligne : l'unité de travail commence chaque transaction par tenantSession, qui pose ddd_ts_kit.tenant_id pour cette seule transaction, et les politiques déclarées avec la table ne laissent la transaction voir et écrire que les lignes d'acme. La ligne de globex reste invisible, même pour une instruction qui a oublié sa condition.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="560" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">L'isolation des tenants sur drizzle : dans l'instruction, puis dans la base</text>
+  <!-- execution scope -->
+  <rect x="32" y="176" width="210" height="100" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="137" y="204" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">ExecutionScope</text>
+  <line x1="48" y1="216" x2="226" y2="216" stroke="#2b5d8a" stroke-opacity="0.35"/>
+  <text x="137" y="240" font-size="13" fill="#1f2328" text-anchor="middle">le travail en cours</text>
+  <text x="137" y="260" font-size="13" fill="#1f2328" text-anchor="middle">tenant : acme</text>
+  <!-- line 1: the statement -->
+  <rect x="300" y="64" width="340" height="160" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="316" y="90" font-size="16" font-weight="700" fill="#7a4f9a">1. Dans chaque instruction</text>
+  <text x="316" y="110" font-size="13" fill="#1f2328">le repository, sur des tables partagées</text>
+  <line x1="316" y1="122" x2="624" y2="122" stroke="#7a4f9a" stroke-opacity="0.35"/>
+  <text x="316" y="146" font-size="13" fill="#1f2328">lecture : tenantCondition(column, scope)</text>
+  <text x="316" y="168" font-size="13" fill="#1f2328">mise à jour, suppression : ownTenantCondition(...)</text>
+  <text x="316" y="190" font-size="13" fill="#1f2328">insertion : ...tenantScopeOf(scope)</text>
+  <text x="316" y="212" font-size="13" font-style="italic" fill="#5f6b73">WHERE ... AND tenant_id = 'acme'</text>
+  <!-- line 2: row-level security -->
+  <rect x="300" y="256" width="340" height="160" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="316" y="282" font-size="16" font-weight="700" fill="#7a4f9a">2. Sécurité au niveau des lignes</text>
+  <text x="316" y="302" font-size="13" fill="#1f2328">l'unité de travail, à chaque transaction</text>
+  <line x1="316" y1="314" x2="624" y2="314" stroke="#7a4f9a" stroke-opacity="0.35"/>
+  <text x="316" y="338" font-size="13" fill="#1f2328">begin : tenantSession(scope)</text>
+  <text x="316" y="360" font-size="13" fill="#1f2328">set_config('ddd_ts_kit.tenant_id', 'acme',</text>
+  <text x="316" y="380" font-size="13" fill="#1f2328">true) : pour cette transaction seulement, une</text>
+  <text x="316" y="400" font-size="13" fill="#1f2328">connexion du pool ne transmet rien à la suivante</text>
+  <!-- the table -->
+  <rect x="700" y="64" width="228" height="352" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="814" y="90" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">billing_core.invoices</text>
+  <text x="814" y="110" font-size="13" fill="#1f2328" text-anchor="middle">id, amount, tenant_id</text>
+  <rect x="716" y="124" width="196" height="30" fill="#ffffff" stroke="#5f6b73"/>
+  <text x="814" y="144" font-size="13" fill="#1f2328" text-anchor="middle">inv-1, 120, acme</text>
+  <rect x="716" y="154" width="196" height="30" fill="#ffffff" stroke="#5f6b73" stroke-dasharray="4 3" opacity="0.6"/>
+  <text x="814" y="174" font-size="13" fill="#5f6b73" text-anchor="middle">inv-2, 300, globex : invisible</text>
+  <rect x="716" y="184" width="196" height="30" fill="#ffffff" stroke="#5f6b73"/>
+  <text x="814" y="204" font-size="13" fill="#1f2328" text-anchor="middle">inv-3, 75, acme</text>
+  <line x1="716" y1="236" x2="912" y2="236" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text x="716" y="260" font-size="13" font-weight="600" fill="#1f2328">politiques (tenantPolicies) :</text>
+  <text x="716" y="282" font-size="13" fill="#1f2328">tenant_isolation_select</text>
+  <text x="716" y="300" font-size="13" fill="#1f2328">tenant_isolation_insert</text>
+  <text x="716" y="318" font-size="13" fill="#1f2328">tenant_isolation_update</text>
+  <text x="716" y="336" font-size="13" fill="#1f2328">tenant_isolation_delete</text>
+  <text x="716" y="364" font-size="13" fill="#1f2328">.enableRLS(), et FORCE par</text>
+  <text x="716" y="382" font-size="13" fill="#1f2328">forceRowLevelSecurity() dans</text>
+  <text x="716" y="400" font-size="13" fill="#1f2328">une migration personnalisée</text>
+  <!-- arrows -->
+  <path d="M244,206 H270 V144 H298" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <path d="M244,246 H270 V336 H298" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="642" y1="144" x2="698" y2="144" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="642" y1="336" x2="698" y2="336" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- notes -->
+  <rect x="32" y="440" width="896" height="100" rx="12" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="52" y="466" font-size="14" fill="#1f2328">Une élévation élargit les lectures (tenantCondition, la politique select), jamais les écritures (les trois autres).</text>
+  <text x="52" y="490" font-size="14" fill="#1f2328">Un travail sans tenant : NoCurrentTenantError avant tout SQL ; sous les seules politiques, il ne voit rien.</text>
+  <text x="52" y="514" font-size="14" fill="#1f2328">Le rôle de l'application ne possède aucune table (ou FORCE est posé), n'est pas superutilisateur, n'a pas BYPASSRLS.</text>
+</svg>

@@ -1,3 +1,5 @@
+**English** · [Français](invariants-permissions-validation.fr.md)
+
 # Invariants, permissions and validation
 
 **Summary.** Three kinds of "this request is refused" exist in a business application, and
@@ -27,31 +29,24 @@ A simple discriminator: **would the rule still hold if an administrator with eve
 a perfectly formed request?** If yes, it is an invariant. If the answer depends on who asks, it
 is a permission. If the request could not even be understood, it is validation.
 
+![A decision tree: a request that cannot be understood is validation; a rule that holds whoever asks is an invariant; a rule that depends on who asks is a permission, and a policy when it also depends on the element; what a tenant may see is tenant scoping](../assets/diagrams/invariants-permissions-validation-which-rule.svg)
+
 ## The same feature, seen three ways
 
 Cancelling an appointment.
 
-```mermaid
-flowchart LR
-  REQ[HTTP request] --> V{Validation}
-  V -- malformed --> E422[422 with issues]
-  V -- well formed --> CMD[CancelAppointment command, with its actor]
-  CMD --> P{Permission}
-  P -- not allowed --> E403[403 forbidden]
-  P -- allowed --> H[Handler loads the appointment]
-  H --> POL{Policy on this appointment}
-  POL -- not theirs --> E403
-  POL -- theirs --> I{Invariants in appointment.cancel}
-  I -- violated --> E409[DomainError, mapped by its code]
-  I -- hold --> OK[saved, event recorded]
-```
+![The path of a cancellation: the schema at the boundary answers 422 to a malformed request; the permission checked by the bus answers 401 or 403; the policy on the loaded appointment answers 403; the invariants of the aggregate answer a domain error with its code; only then is the appointment saved and its event recorded](../assets/diagrams/invariants-permissions-validation-three-checks.svg)
 
 **1. Validation, at the boundary.** The route declares the shape of the input. It knows nothing
 about appointments beyond their identifier format.
 
+<!-- checked sample -->
 ```ts
+import { zodSchema } from '@ddd-ts-kit/validation/zod';
+import { z } from 'zod';
+
 // presentation/http: the request schema of the route (zod shown)
-const cancelAppointmentBody = zodSchema(
+export const cancelAppointmentBody = zodSchema(
   z.object({
     reason: z.enum(['client-request', 'practitioner-unavailable', 'other']),
     note: z.string().max(500).optional(),
@@ -63,25 +58,156 @@ const cancelAppointmentBody = zodSchema(
 asks the authorizer before the handler runs. Nothing is reachable by default
 (`authz/declared`).
 
+<!-- checked sample -->
 ```ts
+import { definePermissions } from '@ddd-ts-kit/auth';
+import { AuthorizedCommand, type Actor } from '@ddd-ts-kit/kernel';
+import { Requires } from '@ddd-ts-kit/kernel/declarations';
+
+// application/authorization/appointments.permissions.ts
+export const permissions = definePermissions('appointments', {
+  'appointment.cancel': { description: 'Cancel an appointment' },
+});
+
 // application/commands/cancel-appointment/cancel-appointment.command.ts
-@Requires(permissions['appointment.cancel'])
+@Requires(permissions['appointment.cancel'], {
+  resource: (command: CancelAppointment) => ({ type: 'appointment', id: command.appointmentId }),
+})
 export class CancelAppointment extends AuthorizedCommand<void> {
-  /* actor, appointmentId, reason */
+  constructor(
+    actor: Actor,
+    readonly appointmentId: string,
+    readonly reason: string,
+  ) {
+    super(actor);
+  }
 }
 ```
 
 "Only the client who booked it, or its practitioner" depends on the loaded appointment. That is
 a policy in `application/authorization/*.policy.ts`: a named, unit-tested rule that the handler
-evaluates through the same port once the aggregate is loaded.
+evaluates once the aggregate is loaded, through the `Access` port of `@ddd-ts-kit/auth`, which
+asks every policy of the permission, then the authorizer.
+
+<!-- checked sample -->
+```ts
+import { Access, definePermissions, type PolicyContext } from '@ddd-ts-kit/auth';
+import { AuthorizedCommand, ConceptError, isAuthenticated, type Actor, type Clock } from '@ddd-ts-kit/kernel';
+import { CommandHandler, Policy } from '@ddd-ts-kit/kernel/declarations';
+
+const permissions = definePermissions('appointments', {
+  'appointment.cancel': { description: 'Cancel an appointment' },
+});
+
+declare class CancelAppointment extends AuthorizedCommand<void> {
+  readonly appointmentId: string;
+  readonly reason: string;
+}
+
+declare class Appointment {
+  readonly clientId: string;
+  readonly practitionerId: string;
+  cancel(reason: string, at: Date): void;
+}
+
+declare abstract class AppointmentRepository {
+  abstract findById(id: string): Promise<Appointment | undefined>;
+  abstract save(appointment: Appointment): Promise<void>;
+}
+
+declare class AppointmentError extends ConceptError {
+  static notFound(appointmentId: string): AppointmentError;
+}
+
+// application/authorization/own-appointment.policy.ts
+/** Only the client who booked the appointment, or its practitioner, may cancel it. */
+@Policy(permissions['appointment.cancel'], { name: 'appointments.own-appointment' })
+export class OwnAppointmentPolicy {
+  appliesTo(subject: unknown): subject is Appointment {
+    return subject instanceof Appointment;
+  }
+
+  allows(actor: Actor, appointment: Appointment, _context: PolicyContext): boolean {
+    return isAuthenticated(actor) && (actor.id === appointment.clientId || actor.id === appointment.practitionerId);
+  }
+}
+
+// application/commands/cancel-appointment/cancel-appointment.handler.ts
+@CommandHandler(CancelAppointment)
+export class CancelAppointmentHandler implements CommandHandler<CancelAppointment> {
+  constructor(
+    private readonly appointments: AppointmentRepository,
+    private readonly access: Access,
+    private readonly clock: Clock,
+  ) {}
+
+  async execute({ actor, appointmentId, reason }: CancelAppointment): Promise<void> {
+    const appointment = await this.appointments.findById(appointmentId);
+
+    if (appointment === undefined) {
+      throw AppointmentError.notFound(appointmentId);
+    }
+
+    await this.access.authorize(actor, permissions['appointment.cancel'], appointment); // 403 when a policy refuses
+    appointment.cancel(reason, this.clock.now()); // the invariants: a DomainError when one is violated
+    await this.appointments.save(appointment);
+  }
+}
+```
 
 **3. Invariants, in the domain.** The aggregate refuses what is never valid.
 
+<!-- checked sample -->
 ```ts
-cancel(reason: CancellationReason, at: Date): void {
-  this.assertNotCancelled();              // AppointmentAlreadyCancelled
-  this.assertCancellationStillFree(at);   // CancellationWindowPassed
-  /* change state, record the event */
+import { AggregateRoot, ConceptError } from '@ddd-ts-kit/kernel';
+
+const FREE_CANCELLATION_MS = 24 * 60 * 60_000;
+
+export class AppointmentError extends ConceptError {
+  static alreadyCancelled(appointmentId: string) {
+    return AppointmentError.refusal('APPOINTMENT_ALREADY_CANCELLED', `Appointment ${appointmentId} is already cancelled.`, {
+      appointmentId,
+    });
+  }
+
+  static cancellationWindowPassed(appointmentId: string, startsAt: Date) {
+    return AppointmentError.refusal(
+      'CANCELLATION_WINDOW_PASSED',
+      `Appointment ${appointmentId} starts at ${startsAt.toISOString()}: free cancellation ended 24 hours before.`,
+      { appointmentId, startsAt },
+    ).exposing('startsAt');
+  }
+}
+
+export class Appointment extends AggregateRoot<string> {
+  private cancelledFor: string | undefined;
+
+  constructor(
+    id: string,
+    private readonly startsAt: Date,
+  ) {
+    super(id);
+  }
+
+  /** No actor: these rules hold whoever asks. */
+  cancel(reason: string, at: Date): void {
+    this.assertNotCancelled();
+    this.assertCancellationStillFree(at);
+    this.cancelledFor = reason;
+    // then record the event, see Aggregates
+  }
+
+  private assertNotCancelled(): void {
+    if (this.cancelledFor !== undefined) {
+      throw AppointmentError.alreadyCancelled(this.id);
+    }
+  }
+
+  private assertCancellationStillFree(at: Date): void {
+    if (this.startsAt.getTime() - at.getTime() < FREE_CANCELLATION_MS) {
+      throw AppointmentError.cancellationWindowPassed(this.id, this.startsAt);
+    }
+  }
 }
 ```
 
@@ -127,6 +253,41 @@ not the acting user's rights.
 | loading a list, then filtering by rights in memory | leaks counts, breaks paging, slow | an access scope from the authorizer, handed to the read port |
 | trusting the schema and skipping the invariant | the next entry point has no schema | keep both: each answers its own question |
 
+The two mistakes that put access in the model, next to what to write instead:
+
+<!-- checked sample -->
+```ts
+import { isAuthenticated, type Actor } from '@ddd-ts-kit/kernel';
+
+declare function forbidden(): Error;
+
+// Instead of: the aggregate checks who asks; every test of cancel needs an actor,
+// and a rule about rights hides in the model, invisible to the audit trail
+export class AppointmentDecidingAccess {
+  constructor(
+    readonly clientId: string,
+    readonly isAdmin: boolean,
+  ) {}
+
+  cancel(reason: string, actor: Actor): void {
+    if (!this.isAdmin && (!isAuthenticated(actor) || actor.id !== this.clientId)) {
+      throw forbidden();
+    }
+    // ...
+  }
+}
+
+// Write: the aggregate keeps its own rules and takes no actor; who may cancel is the
+// policy of the permission, evaluated by the handler (above)
+export class Appointment {
+  constructor(readonly clientId: string) {}
+
+  cancel(reason: string, at: Date): void {
+    // the invariants only
+  }
+}
+```
+
 Rules that look ambiguous usually separate cleanly with the discriminator above:
 
 | Rule | Kind | Reasoning |
@@ -152,9 +313,13 @@ Rules that look ambiguous usually separate cleanly with the discriminator above:
 
 One error class per concept of the language, one static factory per refusal:
 
+<!-- checked sample -->
 ```ts
 // domain/errors/appointment.error.ts
 import { ConceptError } from '@ddd-ts-kit/kernel';
+
+declare const calendar: { readonly id: string };
+declare const slot: { readonly startsAt: Date };
 
 export class AppointmentError extends ConceptError {
   static slotTaken(calendarId: string, startsAt: Date) {

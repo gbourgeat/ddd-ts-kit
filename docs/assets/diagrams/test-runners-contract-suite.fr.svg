@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 336" width="960" height="336" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Une suite de contrat, deux lanceurs, deux sujets</title>
+  <desc id="desc">Une suite de contrat est écrite une fois sur ContractSuite et n'importe aucun lanceur. La spec qui l'exécute lui remet les fonctions de son lanceur, de vitest ou de @jest/globals, sous forme de ContractRunner. La suite s'exécute deux fois : contre le fake, InMemoryMailer, dans l'exécution unit, et contre l'adaptateur réel, SmtpMailer, dans l'exécution integration. Les deux passent les mêmes tests : une spec qui se fie au fake peut se fier à l'adaptateur.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="336" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Une suite de contrat, deux lanceurs, deux sujets</text>
+  <!-- runners -->
+  <rect x="32" y="80" width="230" height="64" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="147" y="107" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">Vitest</text>
+  <text x="147" y="129" font-size="13" fill="#1f2328" text-anchor="middle">ses fonctions, de vitest</text>
+  <rect x="32" y="200" width="230" height="64" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="147" y="227" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">ou Jest</text>
+  <text x="147" y="249" font-size="13" fill="#1f2328" text-anchor="middle">ses fonctions, de @jest/globals</text>
+  <path d="M264,112 H292 M264,232 H292 M292,112 V232" fill="none" stroke="#3d4449" stroke-width="2"/>
+  <line x1="292" y1="172" x2="346" y2="172" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="298" y="163" font-size="13" fill="#1f2328" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">runner</text>
+  <!-- suite -->
+  <rect x="348" y="112" width="264" height="120" rx="12" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="480" y="142" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">mailerContract</text>
+  <line x1="364" y1="154" x2="596" y2="154" stroke="#2b5d8a" stroke-opacity="0.35"/>
+  <text x="480" y="178" font-size="13" fill="#1f2328" text-anchor="middle">les tests du port Mailer, écrits</text>
+  <text x="480" y="198" font-size="13" fill="#1f2328" text-anchor="middle">une fois sur ContractSuite</text>
+  <text x="480" y="220" font-size="13" font-style="italic" fill="#2b5d8a" text-anchor="middle">n'importe aucun lanceur</text>
+  <!-- subjects -->
+  <path d="M614,150 H640 V112 H678" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <path d="M614,194 H640 V232 H678" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="646" y="176" font-size="13" fill="#1f2328" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">create()</text>
+  <rect x="680" y="80" width="248" height="64" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="804" y="107" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">InMemoryMailer</text>
+  <text x="804" y="129" font-size="13" fill="#1f2328" text-anchor="middle">le fake, dans l'exécution unit</text>
+  <rect x="680" y="200" width="248" height="64" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="804" y="227" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">SmtpMailer</text>
+  <text x="804" y="249" font-size="13" fill="#1f2328" text-anchor="middle">l'adaptateur, exécution integration</text>
+  <text x="480" y="312" font-size="14" fill="#2f6f4f" text-anchor="middle">Les deux passent les mêmes tests : une spec qui se fie au fake peut se fier à l'adaptateur.</text>
+</svg>

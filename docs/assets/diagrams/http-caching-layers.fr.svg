@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 370" width="960" height="370" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Où une réponse peut être gardée</title>
+  <desc id="desc">Une lecture va du navigateur à un cache partagé comme Varnish ou un CDN, puis à l'application, puis à la base de données. Le navigateur garde les réponses privées, le cache partagé les réponses publiques, toutes deux indexées par URL : y trouver la réponse épargne la requête HTTP elle-même. Dans le processus, le cache applicatif épargne un calcul ou un appel, et un modèle de lecture en base épargne la mise en forme d'une requête.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="370" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Où une réponse peut être gardée</text>
+  <text x="32" y="62" font-size="14" fill="#5f6b73">Une lecture traverse quatre couches ; une réponse trouvée dans l'une épargne tout ce qui est à sa droite</text>
+  <!-- browser -->
+  <rect x="24" y="88" width="200" height="96" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="124" y="118" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">navigateur</text>
+  <line x1="40" y1="130" x2="208" y2="130" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text x="124" y="152" font-size="13" fill="#1f2328" text-anchor="middle">son propre cache</text>
+  <text x="124" y="172" font-size="13" fill="#1f2328" text-anchor="middle">réponses publiques et privées</text>
+  <!-- shared cache -->
+  <rect x="264" y="88" width="200" height="96" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="364" y="118" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">cache partagé</text>
+  <line x1="280" y1="130" x2="448" y2="130" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text x="364" y="152" font-size="13" fill="#1f2328" text-anchor="middle">Varnish, un CDN</text>
+  <text x="364" y="172" font-size="13" fill="#1f2328" text-anchor="middle">réponses publiques seulement</text>
+  <!-- application -->
+  <rect x="504" y="88" width="200" height="96" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="604" y="118" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">application</text>
+  <line x1="520" y1="130" x2="688" y2="130" stroke="#2b5d8a" stroke-opacity="0.35"/>
+  <text x="604" y="152" font-size="13" fill="#1f2328" text-anchor="middle">cache applicatif</text>
+  <text x="604" y="172" font-size="13" fill="#1f2328" text-anchor="middle">le port Cache : mémoire, Redis</text>
+  <!-- database -->
+  <rect x="744" y="88" width="200" height="96" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="844" y="118" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">base de données</text>
+  <line x1="760" y1="130" x2="928" y2="130" stroke="#7a4f9a" stroke-opacity="0.35"/>
+  <text x="844" y="152" font-size="13" fill="#1f2328" text-anchor="middle">modèles de lecture</text>
+  <text x="844" y="172" font-size="13" fill="#1f2328" text-anchor="middle">à jour par les événements</text>
+  <!-- the way of a read -->
+  <line x1="226" y1="136" x2="262" y2="136" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="466" y1="136" x2="502" y2="136" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="706" y1="136" x2="742" y2="136" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- what a hit saves -->
+  <text x="124" y="216" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">épargne le réseau :</text>
+  <text x="124" y="236" font-size="13" fill="#1f2328" text-anchor="middle">rien ne quitte l'appareil</text>
+  <text x="364" y="216" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">épargne la requête HTTP :</text>
+  <text x="364" y="236" font-size="13" fill="#1f2328" text-anchor="middle">ni connexion, ni</text>
+  <text x="364" y="256" font-size="13" fill="#1f2328" text-anchor="middle">authentification, ni requête</text>
+  <text x="604" y="216" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">épargne un calcul,</text>
+  <text x="604" y="236" font-size="13" fill="#1f2328" text-anchor="middle">ou un appel à un autre contexte</text>
+  <text x="844" y="216" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">un modèle de lecture épargne</text>
+  <text x="844" y="236" font-size="13" fill="#1f2328" text-anchor="middle">les jointures et la mise en forme</text>
+  <text x="844" y="256" font-size="13" fill="#1f2328" text-anchor="middle">d'une requête</text>
+  <!-- groups -->
+  <path d="M24,292 V302 H464 V292" fill="none" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="244" y="326" font-size="14" font-weight="600" fill="#5f6b73" text-anchor="middle">caches HTTP : hors du processus</text>
+  <text x="244" y="346" font-size="13" fill="#1f2328" text-anchor="middle">indexés par URL et les en-têtes que Vary nomme</text>
+  <path d="M504,292 V302 H944 V292" fill="none" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="724" y="326" font-size="14" font-weight="600" fill="#2b5d8a" text-anchor="middle">l'application et sa base</text>
+  <text x="724" y="346" font-size="13" fill="#1f2328" text-anchor="middle">atteintes après l'authentification et la décision du cas d'usage</text>
+</svg>

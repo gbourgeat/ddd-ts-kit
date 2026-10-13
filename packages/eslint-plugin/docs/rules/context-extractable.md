@@ -1,3 +1,5 @@
+**English** · [Français](context-extractable.fr.md)
+
 # ddd-ts-kit/context-extractable
 
 Architecture id: `context/extractable`. Default severity: `error` in `recommended`, `error` in `strict`.

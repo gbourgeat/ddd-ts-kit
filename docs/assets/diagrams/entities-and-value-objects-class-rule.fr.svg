@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 830" width="960" height="830" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Ce que lit la règle domain/value-object-class</title>
+  <desc id="desc">Un arbre de décision de quatre questions sur un fichier source, specs à part. Si la configuration ne dit pas &quot;stack.values&quot;: &quot;classes&quot;, le fichier n&#x27;est pas jugé. Un fichier de domain/value-objects/ d&#x27;un contexte, ou un *.vo.ts du noyau partagé, exporte exactement une classe qui étend ValueObject ou un autre objet-valeur du projet, au constructeur privé ou protégé, avec une fabrique statique, et aucune fonction, constante fléchée ni objet littéral. Un autre fichier hors de domain/ et du noyau partagé n&#x27;est pas jugé. Dans domain/ et dans le noyau partagé hors de presentation/, une fonction exportée qui renvoie un enregistrement de données est signalée ; un service du domaine, une machine à états, une spécification, un enregistrement d&#x27;objets-valeurs que la fonction construit, un reducer et une fonction qui déclare un type de retour d&#x27;un package ne sont pas concernés.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="830" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Ce que lit domain/value-object-class</text>
+  <rect x="124" y="56" width="240" height="32" rx="16" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="244" y="77" font-size="13" fill="#1f2328" text-anchor="middle">un fichier source, specs à part</text>
+  <line x1="244" y1="90" x2="244" y2="106" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="24" y="110" width="440" height="64" rx="32" fill="#ffffff" stroke="#3d4449" stroke-width="2"/>
+  <text x="244" y="137" font-size="14" font-weight="600" fill="#1f2328" text-anchor="middle">La configuration dit-elle</text>
+  <text x="244" y="157" font-size="14" font-weight="600" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" fill="#1f2328" text-anchor="middle">&quot;stack.values&quot;: &quot;classes&quot; ?</text>
+  <rect x="600" y="104" width="336" height="76" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="620" y="132" font-size="16" font-weight="700" fill="#5f6b73">non jugé</text>
+  <text x="620" y="156" font-size="13" fill="#1f2328">une configuration sans la clé se lit free</text>
+  <line x1="466" y1="142" x2="596" y2="142" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="531" y="132" font-size="13" fill="#1f2328" text-anchor="middle">non</text>
+  <line x1="244" y1="176" x2="244" y2="222" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="254" y="204" font-size="13" fill="#1f2328">oui</text>
+  <rect x="24" y="226" width="440" height="64" rx="32" fill="#ffffff" stroke="#3d4449" stroke-width="2"/>
+  <text x="244" y="253" font-size="14" font-weight="600" fill="#1f2328" text-anchor="middle">Dans domain/value-objects/ d&#x27;un contexte,</text>
+  <text x="244" y="273" font-size="14" font-weight="600" fill="#1f2328" text-anchor="middle">ou un *.vo.ts du noyau partagé ?</text>
+  <rect x="600" y="206" width="336" height="214" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="620" y="234" font-size="16" font-weight="700" fill="#2f6f4f">un fichier d&#x27;objet-valeur contient</text>
+  <text x="620" y="258" font-size="13" fill="#1f2328">• exactement une classe exportée, qui</text>
+  <text x="632" y="278" font-size="13" fill="#1f2328">étend ValueObject ou un autre objet-valeur ;</text>
+  <text x="620" y="298" font-size="13" fill="#1f2328">• un constructeur privé ou protégé</text>
+  <text x="632" y="318" font-size="13" fill="#1f2328">(ou aucun : celui de ValueObject) ;</text>
+  <text x="620" y="338" font-size="13" fill="#1f2328">• une fabrique statique : create, of, between.. ;</text>
+  <text x="620" y="358" font-size="13" fill="#1f2328">• aucune fonction, constante fléchée ni</text>
+  <text x="632" y="378" font-size="13" fill="#1f2328">objet littéral exporté.</text>
+  <text x="620" y="406" font-size="13" font-style="italic" fill="#2f6f4f">Les types de ses props peuvent être exportés.</text>
+  <line x1="466" y1="258" x2="596" y2="258" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="531" y="248" font-size="13" fill="#1f2328" text-anchor="middle">oui</text>
+  <line x1="244" y1="292" x2="244" y2="446" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="254" y="372" font-size="13" fill="#1f2328">non</text>
+  <rect x="24" y="450" width="440" height="64" rx="32" fill="#ffffff" stroke="#3d4449" stroke-width="2"/>
+  <text x="244" y="477" font-size="14" font-weight="600" fill="#1f2328" text-anchor="middle">Dans domain/ d&#x27;un contexte, ou le noyau</text>
+  <text x="244" y="497" font-size="14" font-weight="600" fill="#1f2328" text-anchor="middle">partagé hors de presentation/ ?</text>
+  <rect x="600" y="444" width="336" height="76" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="620" y="472" font-size="16" font-weight="700" fill="#5f6b73">non jugé</text>
+  <text x="620" y="496" font-size="13" fill="#1f2328">un fichier hors du modèle</text>
+  <line x1="466" y1="482" x2="596" y2="482" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="531" y="472" font-size="13" fill="#1f2328" text-anchor="middle">non</text>
+  <line x1="244" y1="516" x2="244" y2="558" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="254" y="542" font-size="13" fill="#1f2328">oui</text>
+  <rect x="24" y="562" width="440" height="84" rx="32" fill="#ffffff" stroke="#3d4449" stroke-width="2"/>
+  <text x="244" y="589" font-size="14" font-weight="600" fill="#1f2328" text-anchor="middle">Une fonction exportée renvoie-t-elle un</text>
+  <text x="244" y="609" font-size="14" font-weight="600" fill="#1f2328" text-anchor="middle">enregistrement de données : des données, sans</text>
+  <text x="244" y="629" font-size="14" font-weight="600" fill="#1f2328" text-anchor="middle">décomposition, rien de construit par le modèle ?</text>
+  <rect x="600" y="546" width="336" height="140" rx="10" fill="#fbeae8" stroke="#b42318" stroke-width="2"/>
+  <text x="620" y="574" font-size="16" font-weight="700" fill="#b42318">signalé</text>
+  <text x="620" y="598" font-size="13" fill="#1f2328">une valeur du modèle écrite en fonction, une</text>
+  <text x="620" y="616" font-size="13" fill="#1f2328">décision renvoyée en enregistrement : écrivez</text>
+  <text x="620" y="634" font-size="13" fill="#1f2328">une classe d&#x27;objet-valeur, ou levez le refus</text>
+  <text x="620" y="652" font-size="13" fill="#1f2328">par une fabrique de sa classe d&#x27;erreur.</text>
+  <text x="620" y="674" font-size="13" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" fill="#1f2328">npx ddd-ts-kit generate value-object</text>
+  <line x1="466" y1="604" x2="596" y2="604" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="531" y="594" font-size="13" fill="#1f2328" text-anchor="middle">oui</text>
+  <line x1="244" y1="648" x2="244" y2="706" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="254" y="682" font-size="13" fill="#1f2328">non</text>
+  <rect x="24" y="710" width="912" height="100" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="44" y="738" font-size="16" font-weight="700" fill="#5f6b73">non concerné</text>
+  <text x="44" y="762" font-size="13" fill="#1f2328">un service du domaine (une classe) ; une machine à états (defineStateMachine(..), un appel) ; une spécification</text>
+  <text x="44" y="782" font-size="13" fill="#1f2328">(un booléen, ou des fonctions seulement, fermetures locales comprises) ; un enregistrement d&#x27;objets-valeurs</text>
+  <text x="44" y="802" font-size="13" fill="#1f2328">qu&#x27;elle construit (Money.of(..)) ; un reducer ({ ...state }) ; une fonction qui déclare un type de retour d&#x27;un package (EventStamp).</text>
+</svg>

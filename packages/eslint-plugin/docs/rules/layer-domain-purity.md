@@ -1,3 +1,5 @@
+**English** · [Français](layer-domain-purity.fr.md)
+
 # ddd-ts-kit/layer-domain-purity
 
 Architecture id: `layer/domain-purity`. Default severity: `error` in `recommended`, `error` in `strict`.
@@ -11,7 +13,7 @@ The domain is the part of the system that must survive a change of framework, OR
 ## Reported
 
 - a package outside `domainAllowedPackages` (default: `@ddd-ts-kit/kernel`)
-- `@ddd-ts-kit/aspects`, `@ddd-ts-kit/audit`, `@ddd-ts-kit/redis`, `@ddd-ts-kit/scheduling`, `@ddd-ts-kit/sentry` and `@ddd-ts-kit/tracing`, by any entry (`.`, `/decorators`, `/testing`, `/node`, ...), with a message of their own: they apply or record a concern from outside the model
+- `@ddd-ts-kit/aspects`, `@ddd-ts-kit/audit`, `@ddd-ts-kit/redis`, `@ddd-ts-kit/s3`, `@ddd-ts-kit/scheduling`, `@ddd-ts-kit/sentry` and `@ddd-ts-kit/tracing`, by any entry (`.`, `/decorators`, `/testing`, `/node`, ...), with a message of their own: they apply or record a concern from outside the model
 - in a declared-style project (`stack.style: "declared"`): `@ddd-ts-kit/kernel/declarations`, even though `@ddd-ts-kit/kernel` is allowed, with a message of its own: the domain declares nothing
 - any Node built-in
 - another layer of the same context, the platform, `main.ts`
@@ -44,7 +46,7 @@ Static imports, type-only imports, `export ... from`, dynamic `import()`, `requi
 
 ## Options
 
-None. `domainAllowedPackages` in `ddd-ts-kit.config.json` extends the allow-list. The four packages above stay refused even when the list names them: logging, metrics, retry, timeout, circuit breaking, caching and tracing reach the model from the composition root (`.with(...)` on a binding, the `decorate` hook), a bus middleware or an adapter in `infrastructure/`; Redis sits behind a port; the audit trail is fed by the bus middleware, the authorization hook and an event subscription. The only way around is a recorded suppression of the line.
+None. `domainAllowedPackages` in `ddd-ts-kit.config.json` extends the allow-list. The seven packages above stay refused whatever the list says, even when it names them: logging, metrics, retry, timeout, circuit breaking, caching and tracing reach the model from the composition root (`.with(...)` on a binding, the `decorate` hook), a bus middleware or an adapter in `infrastructure/`; Redis sits behind a port, an object store behind the `FileStorage` port of the kernel, the scheduler behind the `JobScheduler` port and error reporting behind the `ErrorReporter` port; the audit trail is fed by the bus middleware, the authorization hook and an event subscription. The only way around is a recorded suppression of the line.
 
 `rules."layer/domain-purity"` in `ddd-ts-kit.config.json` set to `off` silences the rule, and `// ddd-ts-kit-disable-next-line layer/domain-purity -- <reason>` silences one line, exactly as for `ddd-ts-kit check`.
 

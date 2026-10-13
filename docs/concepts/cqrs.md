@@ -1,3 +1,5 @@
+**English** · [Français](cqrs.fr.md)
+
 # CQRS as used here
 
 **Summary.** Command Query Responsibility Segregation separates the code that changes state from
@@ -33,24 +35,7 @@ publishes is reported by `application/command-query-separation`.
 
 ## The two paths, on the scheduling application
 
-```mermaid
-flowchart LR
-  subgraph write [Command path]
-    R1[POST /appointments] --> CB[CommandBus]
-    CB --> MW[middlewares: logging, metrics, permission, span, audit, unit of work]
-    MW --> H1[BookAppointmentHandler]
-    H1 --> AG[Appointment aggregate]
-    H1 --> RP[AppointmentRepository]
-  end
-  subgraph read [Query path]
-    R2[GET /appointments] --> QB[QueryBus]
-    QB --> MW2[middlewares: logging, metrics, permission, span, audit]
-    MW2 --> H2[SearchAppointmentsHandler]
-    H2 --> RD[read port]
-  end
-  RP --> DB[(appointments schema)]
-  RD --> DB
-```
+![The two paths of one context: POST /appointments goes through the command bus and its middlewares to the BookAppointment handler, which changes the Appointment aggregate and saves it through its repository port; GET /appointments goes through the query bus to the SearchAppointments handler, which asks a read port; both adapters read and write the same appointments tables](../assets/diagrams/cqrs-two-paths.svg)
 
 **Command.** `BookAppointment` carries the actor and the requested slot. The handler loads what
 it needs, calls one intention method (`Appointment.book(...)`), saves through the repository
@@ -69,15 +54,123 @@ query, so nothing is filtered in memory after loading (see
 Both paths read the same tables. The read side is a different code path, not a different
 database.
 
+### The query path in code
+
+A query names its answer in its type, a read port declares the shape the caller needs, and the
+handler asks the port. The bus infers the answer from the query, so the route gets a typed
+result without knowing the handler:
+
+<!-- checked sample -->
+```ts
+import { definePermissions } from '@ddd-ts-kit/auth';
+import { AuthorizedQuery, InMemoryQueryBus, type Actor, type BusMiddleware, type Logger } from '@ddd-ts-kit/kernel';
+import { QueryHandler, Requires } from '@ddd-ts-kit/kernel/declarations';
+
+const appointmentsPermissions = definePermissions('appointments', {
+  'appointment.search': { description: 'Search the appointments of a practitioner' },
+});
+
+// application/ports/appointment-lines.port.ts: the shape the screen needs, not the aggregate
+export interface AppointmentLine {
+  readonly id: string;
+  readonly startsAt: string;
+  readonly clientName: string;
+}
+
+export abstract class AppointmentLines {
+  abstract ofPractitioner(practitionerId: string, limit: number): Promise<readonly AppointmentLine[]>;
+}
+
+// application/queries/search-appointments/search-appointments.query.ts
+@Requires(appointmentsPermissions['appointment.search'])
+export class SearchAppointments extends AuthorizedQuery<readonly AppointmentLine[]> {
+  constructor(
+    actor: Actor,
+    readonly practitionerId: string,
+  ) {
+    super(actor);
+  }
+}
+
+// application/queries/search-appointments/search-appointments.handler.ts: reads, never saves
+@QueryHandler(SearchAppointments)
+export class SearchAppointmentsHandler implements QueryHandler<SearchAppointments> {
+  constructor(private readonly lines: AppointmentLines) {}
+
+  execute(query: SearchAppointments): Promise<readonly AppointmentLine[]> {
+    return this.lines.ofPractitioner(query.practitionerId, 20);
+  }
+}
+
+// platform/buses/: what every query goes through, written once for all of them
+declare const logger: Logger;
+declare const lines: AppointmentLines; // the adapter the platform binds to the port
+
+const logged: BusMiddleware = async (message, next, info) => {
+  logger.info('use case', { kind: info.kind, name: info.name });
+
+  return next();
+};
+
+const queryBus = new InMemoryQueryBus()
+  .use(logged)
+  .register(SearchAppointments, new SearchAppointmentsHandler(lines), { context: 'appointments' });
+
+// presentation/: the route knows the bus and the query, never the handler
+export async function appointmentsOf(actor: Actor, practitionerId: string): Promise<readonly AppointmentLine[]> {
+  return queryBus.execute(new SearchAppointments(actor, practitionerId));
+}
+```
+
+In a generated project the buses are built in `src/platform/buses/`. In the declared style the
+handlers are registered from their declarations; in the explicit style the module of the
+context calls `register` for each one, as the sample does to show what the bus holds (see
+[Ports and composition](ports-and-composition.md)).
+
+### Two habits the rules hold
+
+Instead of a command that hands the aggregate back to the caller:
+
+```ts
+export class BookAppointment extends AuthorizedCommand<Appointment> { /* ... */ }
+// the route serialises the aggregate: the response is now tied to the write model
+```
+
+write a command that answers its identifier, and a query for what the client displays:
+
+```ts
+export class BookAppointment extends AuthorizedCommand<string> { /* ... */ }
+const id = await commandBus.execute(new BookAppointment(actor, calendarId, startsAt));
+const appointment = await queryBus.execute(new GetAppointment(actor, id));
+```
+
+Instead of a query that changes state on the way:
+
+```ts
+async execute(query: GetAppointment): Promise<AppointmentView> {
+  const appointment = await this.appointments.findById(query.appointmentId);
+  appointment.markSeenBy(query.actor.id);
+  await this.appointments.save(appointment); // application/command-query-separation
+  return toView(appointment);
+}
+```
+
+write the change as a command of its own (`MarkAppointmentSeen`), sent by the caller that
+wants it, and keep the query a pure read.
+
 ## Why buses
 
 A route could call a handler directly. The buses exist for three reasons:
 
 1. **One place for what every use case needs.** The generated platform
-   (`src/platform/buses/`) puts logging, metrics, the permission check, the span of the use
-   case, the audit entry and, for commands, the unit of work on the buses as middlewares, in
-   that order, outermost first. A handler contains none of it, so none of it can be forgotten
-   in a new handler.
+   (`src/platform/buses/`) puts on the buses, as middlewares and outermost first: the report of
+   an unexpected failure (when the stack has an error tracker), the log entry, the measure, the
+   permission check, the span of the use case, the staging of an uploaded file and the wake-up
+   of the outbox relay (commands only, when the stack has them), the audit entry (when the
+   audit trail is on) and, for commands, the unit of work. A handler contains none of it, so
+   none of it can be forgotten in a new handler.
+
+   ![The middlewares of the generated buses, outermost first: error report, log, measure, permission, span, file staging, relay wake-up, audit entry and unit of work around a command handler; error report, log, measure, permission, span and audit entry around a query handler; the parts that depend on the stack are marked](../assets/diagrams/cqrs-middlewares.svg)
 2. **One way in for every caller.** A route, an integration event handler and a scheduled job
    all send a command. The use case is authorized, audited and run in a transaction the same
    way whoever started it.
@@ -109,14 +202,18 @@ found.
   of work, not to rebuild them. CQRS and event sourcing are independent patterns that are often
   presented together: one aggregate whose history is the business can be event-sourced while
   the others keep their rows ([Event sourcing, per aggregate](event-sourcing.md)).
-- **No separate read database, and no generated projection.** A projection is a table of the
+- **No separate read database, and no generated read store.** A projection is a table of the
   consuming context. The runtime packages carry the read side: `Criteria` (filters, sort and
   page of a list, checked against a definition), hydration, the `ReadModelStore` port with a
   SQL table store, the `@Projection` and `@On` declarations of a projector and a rebuild
-  (kernel README, "Criteria", "Hydration" and "Projections"). The CLI generates none of it
-  yet: `generate query --search` writes a read port with an in-memory adapter and a fake, and
-  the projector and its store are written by hand. The status of each part is in the
-  [read side proposal](../proposals/read-side.md).
+  (kernel README, "Criteria", "Hydration" and "Projections"). The CLI generates part of it:
+  `generate query --search` writes a read port with an in-memory adapter and a fake, and
+  `generate projection <context> <Name> <event-type>` writes a projector and its spec, in the
+  declared style only (in the explicit style the generator refuses: the projector is written by
+  hand in `application/projections/` and included in the module file of its context with
+  `builder.include(<Name>Projection)`); the port of the read model and its store adapter come
+  from `generate port` and the ORM package. The
+  status of each part is in the [read side proposal](../proposals/read-side.md).
 - **No performance by itself.** Two code paths over one database scale like one database.
 - **No asynchronous commands by default.** The in-process buses are awaited. A command answered
   "accepted" and processed later is a design the project builds on events.
@@ -131,6 +228,70 @@ slots, updated when `calendars.calendar.working-hours-changed`,
 one local query. The cost is that the answer can be a moment late: a slot shown as open may have
 been taken a second ago, and `appointments` is what refuses the double booking (see
 [Eventual consistency](eventual-consistency.md)).
+
+![A projection as read model: calendars and appointments publish integration events through their outbox; the projector of availability applies them to its own open slots table; the FindOpenSlots query reads that table alone, and booking itself is still refused by appointments when the slot is taken](../assets/diagrams/cqrs-projection.svg)
+
+The projector applies each event to one row, and its store writes only when the event is newer
+than the one the row holds, so a redelivery or a late event changes nothing:
+
+<!-- checked sample -->
+```ts
+import { defineIntegrationEvent, type PayloadOf } from '@ddd-ts-kit/events';
+import { ReadModelStore, stampOf, type IntegrationEvent, type ReadModelWrite } from '@ddd-ts-kit/kernel';
+import { On, Projection } from '@ddd-ts-kit/kernel/declarations';
+import { zodSchema } from '@ddd-ts-kit/validation/zod';
+import { z } from 'zod';
+
+// appointments/published-language/: what availability may know of a booking
+const slotTaken = z.object({ appointmentId: z.string(), calendarId: z.string(), startsAt: z.iso.datetime() });
+
+export const appointmentBooked = defineIntegrationEvent({
+  type: 'appointments.appointment.booked',
+  version: 1,
+  payload: zodSchema(slotTaken),
+});
+
+export const appointmentCancelled = defineIntegrationEvent({
+  type: 'appointments.appointment.cancelled',
+  version: 1,
+  payload: zodSchema(slotTaken),
+});
+
+// availability/application/ports/open-slots.port.ts: the read model, one row per slot
+export interface OpenSlotRow {
+  readonly calendarId: string;
+  readonly startsAt: string;
+  readonly open: boolean;
+}
+
+export abstract class OpenSlots extends ReadModelStore<OpenSlotRow> {}
+
+// availability/application/projections/open-slots.projection.ts
+const keyOf = ({ calendarId, startsAt }: PayloadOf<typeof appointmentBooked>) => `${calendarId}@${startsAt}`;
+
+@Projection('availability.open-slots')
+export class OpenSlotsProjection {
+  constructor(private readonly slots: OpenSlots) {}
+
+  @On(appointmentBooked)
+  booked(event: IntegrationEvent<PayloadOf<typeof appointmentBooked>>): Promise<ReadModelWrite> {
+    // a slot outside the working hours has no row: answering undefined writes nothing
+    return this.slots.upsertIfNewer(keyOf(event.payload), stampOf(event), (row) =>
+      row === undefined ? undefined : { ...row, open: false },
+    );
+  }
+
+  @On(appointmentCancelled)
+  cancelled(event: IntegrationEvent<PayloadOf<typeof appointmentCancelled>>): Promise<ReadModelWrite> {
+    return this.slots.upsertIfNewer(keyOf(event.payload), stampOf(event), (row) =>
+      row === undefined ? undefined : { ...row, open: true },
+    );
+  }
+}
+```
+
+`FindOpenSlots` then reads `OpenSlots` with a criteria, like any other read port. The
+projector sends no command and reads no other context: it only keeps its table current.
 
 ## Limits and when not to use it
 

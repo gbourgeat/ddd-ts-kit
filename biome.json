@@ -15,6 +15,7 @@
       "!**/reports",
       "!**/generated",
       "!**/clients/*/src",
+      "!.ddd-ts-kit",
       "!**/package-lock.json",
       "!**/.dependency-cruiser.cjs",
       "!**/openapi/*.json",

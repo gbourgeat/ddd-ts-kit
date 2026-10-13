@@ -1,0 +1,127 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 616" width="960" height="616" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Where @ddd-ts-kit/redis sits in an application</title>
+  <desc id="desc">Six ports, named by the code of the application: Cache, Lock and RateLimiter of the kernel, used by use cases, cached and getOrLoad; RelaySignal of @ddd-ts-kit/events, used by the outbox relay; JobStore of @ddd-ts-kit/scheduling, used by the job worker; EventBus of the kernel, used by the relay and the consumers. Six adapters of @ddd-ts-kit/redis implement them: RedisCache, RedisLock, RedisRateLimiter, RedisRelaySignal, RedisJobStore and RedisStreamsEventBus. Each sends its commands to one server, Redis, Dragonfly or Valkey, on one shared connection, plus one connection to listen for the relay signal and one reading connection per consumer name for the event bus. The platform opens the connection once and binds each adapter to its port. The outbox and the processed events stay in the database, because they commit with the business data.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+    <marker id="arrow-infrastructure" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#7a4f9a"/>
+    </marker>
+  </defs>
+  <rect width="960" height="616" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Where @ddd-ts-kit/redis sits in an application</text>
+
+  <!-- column headings -->
+  <text x="32" y="80" font-size="14" font-weight="600" fill="#2b5d8a">ports: what the code names</text>
+  <text x="32" y="100" font-size="13" fill="#1f2328">and who uses them</text>
+  <text x="340" y="80" font-size="14" font-weight="600" fill="#7a4f9a">adapters of @ddd-ts-kit/redis</text>
+  <text x="340" y="100" font-size="13" fill="#1f2328">bound in platform/</text>
+  <text x="716" y="80" font-size="14" font-weight="600" fill="#5f6b73">one server</text>
+  <text x="716" y="100" font-size="13" fill="#1f2328">chosen by a URL</text>
+
+  <!-- ports -->
+  <g>
+    <rect x="32" y="124" width="236" height="38" rx="8" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+    <text x="46" y="148" font-size="14" font-weight="700" fill="#2b5d8a">Cache</text>
+    <text x="256" y="148" font-size="13" fill="#1f2328" text-anchor="end">use cases, cached</text>
+
+    <rect x="32" y="174" width="236" height="38" rx="8" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+    <text x="46" y="198" font-size="14" font-weight="700" fill="#2b5d8a">Lock</text>
+    <text x="256" y="198" font-size="13" fill="#1f2328" text-anchor="end">jobs, getOrLoad</text>
+
+    <rect x="32" y="224" width="236" height="38" rx="8" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+    <text x="46" y="248" font-size="14" font-weight="700" fill="#2b5d8a">RateLimiter</text>
+    <text x="256" y="248" font-size="13" fill="#1f2328" text-anchor="end">routes, use cases</text>
+
+    <rect x="32" y="274" width="236" height="38" rx="8" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+    <text x="46" y="298" font-size="14" font-weight="700" fill="#2b5d8a">RelaySignal</text>
+    <text x="256" y="298" font-size="13" fill="#1f2328" text-anchor="end">outbox relay</text>
+
+    <rect x="32" y="324" width="236" height="38" rx="8" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+    <text x="46" y="348" font-size="14" font-weight="700" fill="#2b5d8a">JobStore</text>
+    <text x="256" y="348" font-size="13" fill="#1f2328" text-anchor="end">job worker</text>
+
+    <rect x="32" y="374" width="236" height="38" rx="8" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+    <text x="46" y="398" font-size="14" font-weight="700" fill="#2b5d8a">EventBus</text>
+    <text x="256" y="398" font-size="13" fill="#1f2328" text-anchor="end">relay, consumers</text>
+  </g>
+
+  <!-- adapters -->
+  <g>
+    <rect x="340" y="124" width="210" height="38" rx="8" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+    <text x="445" y="148" font-size="14" font-weight="700" fill="#7a4f9a" text-anchor="middle">RedisCache</text>
+    <rect x="340" y="174" width="210" height="38" rx="8" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+    <text x="445" y="198" font-size="14" font-weight="700" fill="#7a4f9a" text-anchor="middle">RedisLock</text>
+    <rect x="340" y="224" width="210" height="38" rx="8" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+    <text x="445" y="248" font-size="14" font-weight="700" fill="#7a4f9a" text-anchor="middle">RedisRateLimiter</text>
+    <rect x="340" y="274" width="210" height="38" rx="8" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+    <text x="445" y="298" font-size="14" font-weight="700" fill="#7a4f9a" text-anchor="middle">RedisRelaySignal</text>
+    <rect x="340" y="324" width="210" height="38" rx="8" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+    <text x="445" y="348" font-size="14" font-weight="700" fill="#7a4f9a" text-anchor="middle">RedisJobStore</text>
+    <rect x="340" y="374" width="210" height="38" rx="8" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+    <text x="445" y="398" font-size="14" font-weight="700" fill="#7a4f9a" text-anchor="middle">RedisStreamsEventBus</text>
+  </g>
+
+  <!-- implements: adapter to port -->
+  <g stroke="#7a4f9a" stroke-width="2" stroke-dasharray="6 4" fill="none">
+    <line x1="338" y1="143" x2="272" y2="143" marker-end="url(#arrow-infrastructure)"/>
+    <line x1="338" y1="193" x2="272" y2="193" marker-end="url(#arrow-infrastructure)"/>
+    <line x1="338" y1="243" x2="272" y2="243" marker-end="url(#arrow-infrastructure)"/>
+    <line x1="338" y1="293" x2="272" y2="293" marker-end="url(#arrow-infrastructure)"/>
+    <line x1="338" y1="343" x2="272" y2="343" marker-end="url(#arrow-infrastructure)"/>
+    <line x1="338" y1="393" x2="272" y2="393" marker-end="url(#arrow-infrastructure)"/>
+  </g>
+
+  <!-- commands: adapter to server -->
+  <g font-size="13" fill="#1f2328" text-anchor="middle">
+    <text x="632" y="138">GET, SET, SCAN</text>
+    <text x="632" y="188">SET NX, INCR</text>
+    <text x="632" y="238">ZADD, ZCARD</text>
+    <text x="632" y="288">PUBLISH, SUBSCRIBE</text>
+    <text x="632" y="338">Lua scripts</text>
+    <text x="632" y="388">XADD, XREADGROUP</text>
+  </g>
+  <g stroke="#3d4449" stroke-width="2">
+    <line x1="552" y1="150" x2="712" y2="150" marker-end="url(#arrow)"/>
+    <line x1="552" y1="200" x2="712" y2="200" marker-end="url(#arrow)"/>
+    <line x1="552" y1="250" x2="712" y2="250" marker-end="url(#arrow)"/>
+    <line x1="552" y1="300" x2="712" y2="300" marker-end="url(#arrow)"/>
+    <line x1="552" y1="350" x2="712" y2="350" marker-end="url(#arrow)"/>
+    <line x1="552" y1="400" x2="712" y2="400" marker-end="url(#arrow)"/>
+  </g>
+
+  <!-- server -->
+  <rect x="716" y="124" width="212" height="288" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="822" y="156" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">Redis, Dragonfly</text>
+  <text x="822" y="176" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">or Valkey</text>
+  <line x1="732" y1="190" x2="912" y2="190" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text x="822" y="214" font-size="13" fill="#1f2328" text-anchor="middle">one common subset</text>
+  <text x="822" y="232" font-size="13" fill="#1f2328" text-anchor="middle">of the protocol</text>
+  <text x="732" y="268" font-size="13" font-weight="600" fill="#5f6b73">connections</text>
+  <text x="732" y="290" font-size="13" fill="#1f2328">1 shared by every adapter</text>
+  <text x="732" y="312" font-size="13" fill="#1f2328">+ 1 to listen, opened by</text>
+  <text x="746" y="330" font-size="13" fill="#1f2328">the relay signal</text>
+  <text x="732" y="352" font-size="13" fill="#1f2328">+ 1 per consumer name,</text>
+  <text x="746" y="370" font-size="13" fill="#1f2328">for its blocking reads</text>
+
+  <!-- platform -->
+  <rect x="32" y="444" width="544" height="96" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="48" y="470" font-size="14" font-weight="600" fill="#5f6b73">platform/: the composition root</text>
+  <text x="48" y="494" font-size="13" fill="#1f2328">connectRedis(REDIS_URL) once, every adapter on redis.client;</text>
+  <text x="48" y="514" font-size="13" fill="#1f2328">each one bound to its port:</text>
+  <text x="48" y="532" font-size="13" fill="#1f2328">builder.rebind(Cache).toValue(new RedisCache(…))</text>
+
+  <!-- database -->
+  <rect x="604" y="444" width="324" height="96" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="620" y="470" font-size="14" font-weight="600" fill="#5f6b73">stays in the database</text>
+  <text x="620" y="494" font-size="13" fill="#1f2328">the outbox, the processed events:</text>
+  <text x="620" y="514" font-size="13" fill="#1f2328">they commit with the business data,</text>
+  <text x="620" y="532" font-size="13" fill="#1f2328">which Redis cannot join</text>
+
+  <!-- legend -->
+  <line x1="40" y1="572" x2="84" y2="572" stroke="#7a4f9a" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#arrow-infrastructure)"/>
+  <text x="96" y="577" font-size="14" fill="#1f2328">implements the port: the code that names the port never sees the adapter</text>
+  <line x1="40" y1="598" x2="84" y2="598" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="96" y="603" font-size="14" fill="#1f2328">sends its commands to the server</text>
+</svg>

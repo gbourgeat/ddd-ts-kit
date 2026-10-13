@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 604" width="960" height="604" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Ce que devient une entrée livrée à un consommateur</title>
+  <desc id="desc">Une entrée est livrée avec un numéro de tentative n : 1 à la première lecture, un de plus à chaque reprise. Une entrée qui ne contient pas d'enveloppe va dans le flux de rejet comme entrée empoisonnée, avec le code POISON_ENTRY. Une entrée dont n dépasse retry.maxAttempts, après que ses instances ont planté sur elle, va dans le flux de rejet avec le code ATTEMPTS_EXHAUSTED sans être traitée de nouveau. Sinon, chaque gestionnaire de son type s'exécute. Quand chaque gestionnaire s'est résolu, l'entrée est acquittée avec XACK. Quand l'un a levé une exception et que n vaut retry.maxAttempts, l'entrée est copiée dans le flux de rejet et acquittée en un seul script, raison max-attempts. Sinon, elle reste en attente, son temps d'inactivité repart de zéro, et après retry.delayMs la même instance la reprend avec XCLAIM, tentative n plus 1. Les entrées en attente d'une instance qui a planté ou qui est bloquée sont reprises par une autre instance après visibilityTimeoutMs, tentative n plus 1.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="604" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Ce que devient une entrée livrée à un consommateur</text>
+
+  <!-- main column -->
+  <rect x="250" y="70" width="220" height="60" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="360" y="96" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">entrée livrée</text>
+  <text x="360" y="118" font-size="13" fill="#1f2328" text-anchor="middle">tentative n (1 à la 1re lecture)</text>
+
+  <rect x="250" y="160" width="220" height="46" rx="23" fill="#ffffff" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="360" y="188" font-size="14" fill="#1f2328" text-anchor="middle">contient une enveloppe ?</text>
+
+  <rect x="250" y="236" width="220" height="46" rx="23" fill="#ffffff" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="360" y="264" font-size="14" fill="#1f2328" text-anchor="middle">n ≤ retry.maxAttempts ?</text>
+
+  <rect x="250" y="312" width="220" height="46" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="360" y="340" font-size="14" font-weight="700" fill="#2b5d8a" text-anchor="middle">chaque gestionnaire du type</text>
+
+  <rect x="250" y="388" width="220" height="46" rx="23" fill="#ffffff" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="360" y="416" font-size="14" fill="#1f2328" text-anchor="middle">chaque gestionnaire résolu ?</text>
+
+  <rect x="250" y="464" width="220" height="46" rx="23" fill="#ffffff" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="360" y="492" font-size="14" fill="#1f2328" text-anchor="middle">n = retry.maxAttempts ?</text>
+
+  <!-- main column arrows -->
+  <g stroke="#3d4449" stroke-width="2">
+    <line x1="360" y1="132" x2="360" y2="156" marker-end="url(#arrow)"/>
+    <line x1="360" y1="208" x2="360" y2="232" marker-end="url(#arrow)"/>
+    <line x1="360" y1="284" x2="360" y2="308" marker-end="url(#arrow)"/>
+    <line x1="360" y1="360" x2="360" y2="384" marker-end="url(#arrow)"/>
+    <line x1="360" y1="436" x2="360" y2="460" marker-end="url(#arrow)"/>
+  </g>
+  <g font-size="13" fill="#1f2328">
+    <text x="370" y="226">oui</text>
+    <text x="370" y="302">oui</text>
+    <text x="370" y="454">non, l'un a levé une exception</text>
+  </g>
+
+  <!-- takeover -->
+  <rect x="540" y="62" width="396" height="76" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="556" y="86" font-size="14" font-weight="600" fill="#5f6b73">une instance a planté ou est bloquée</text>
+  <text x="556" y="106" font-size="13" fill="#1f2328">après visibilityTimeoutMs, une autre instance</text>
+  <text x="556" y="124" font-size="13" fill="#1f2328">reprend ses entrées en attente : XCLAIM, n + 1</text>
+  <line x1="538" y1="100" x2="474" y2="100" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- outcomes -->
+  <line x1="472" y1="183" x2="536" y2="183" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="504" y="174" font-size="13" fill="#1f2328" text-anchor="middle">non</text>
+  <rect x="540" y="160" width="396" height="46" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="556" y="188" font-size="14" fill="#1f2328"><tspan font-weight="700" fill="#7a4f9a">flux de rejet</tspan> : empoisonnée, POISON_ENTRY</text>
+
+  <line x1="472" y1="259" x2="536" y2="259" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="504" y="250" font-size="13" fill="#1f2328" text-anchor="middle">non</text>
+  <rect x="540" y="236" width="396" height="46" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="556" y="264" font-size="14" fill="#1f2328"><tspan font-weight="700" fill="#7a4f9a">flux de rejet</tspan> : ATTEMPTS_EXHAUSTED, non traitée</text>
+
+  <line x1="472" y1="411" x2="536" y2="411" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="504" y="402" font-size="13" fill="#1f2328" text-anchor="middle">oui</text>
+  <rect x="540" y="388" width="396" height="46" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="556" y="416" font-size="14" fill="#1f2328"><tspan font-weight="700" fill="#7a4f9a">XACK</tspan> : acquittée, traitement terminé</text>
+
+  <line x1="472" y1="487" x2="536" y2="487" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="504" y="478" font-size="13" fill="#1f2328" text-anchor="middle">oui</text>
+  <rect x="540" y="464" width="396" height="46" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="556" y="492" font-size="14" fill="#1f2328"><tspan font-weight="700" fill="#7a4f9a">flux de rejet</tspan> + XACK en un script : max-attempts</text>
+
+  <!-- retried -->
+  <line x1="248" y1="487" x2="218" y2="487" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="233" y="478" font-size="13" fill="#1f2328" text-anchor="middle">non</text>
+  <rect x="24" y="464" width="190" height="64" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="119" y="488" font-size="14" font-weight="700" fill="#7a4f9a" text-anchor="middle">reste en attente</text>
+  <text x="119" y="508" font-size="13" fill="#1f2328" text-anchor="middle">inactivité remise à zéro</text>
+  <path d="M44,462 V100 H246" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <g font-size="13" fill="#1f2328">
+    <text x="58" y="226">après retry.delayMs,</text>
+    <text x="58" y="244">cette instance la</text>
+    <text x="58" y="262">reprend :</text>
+    <text x="58" y="280">XCLAIM, n + 1</text>
+    <text x="58" y="316" font-style="italic">jamais sur-le-champ :</text>
+    <text x="58" y="334" font-style="italic">pas de boucle effrénée</text>
+  </g>
+
+  <!-- footer -->
+  <text x="32" y="560" font-size="13" fill="#1f2328">onDelivery signale chaque issue : acknowledged, retried (reste en attente), dead ou poison.</text>
+  <text x="32" y="580" font-size="13" fill="#1f2328">La livraison se fait au moins une fois : chaque gestionnaire est idempotent.</text>
+</svg>

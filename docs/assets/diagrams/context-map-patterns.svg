@@ -1,0 +1,102 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 510" width="960" height="510" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">The relationship patterns between two contexts</title>
+  <desc id="desc">Eight panels. Published language: the upstream publishes a versioned contract made for its consumers. Customer-supplier: the needs of the downstream flow back into the plan of the upstream. Conformist: the downstream takes the upstream model as it is. Anticorruption layer: the downstream translates at its edge. Open host service: one protocol serves every consumer. Shared kernel: two contexts co-own a small model. Partnership: two teams plan together, with no upstream; the config has no value for it. Separate ways: no integration; declare nothing.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="510" rx="16" fill="#ffffff"/>
+  <text x="32" y="36" font-size="18" font-weight="600" fill="#1f2328">Who adapts to whom: the eight patterns</text>
+  <rect x="24" y="56" width="222" height="214" rx="12" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="38" y="80" font-size="14" font-weight="700" fill="#1f2328" text-anchor="start">Published language</text>
+  <text x="135" y="240" font-size="13" fill="#5f6b73" text-anchor="middle">the upstream versions a</text>
+  <text x="135" y="258" font-size="13" fill="#5f6b73" text-anchor="middle">contract made for consumers</text>
+  <rect x="55" y="94" width="160" height="34" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="135" y="116" font-size="13" font-weight="600" fill="#5f6b73" text-anchor="middle">upstream</text>
+  <rect x="55" y="188" width="160" height="34" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="135" y="210" font-size="13" font-weight="600" fill="#5f6b73" text-anchor="middle">downstream</text>
+  <line x1="135" y1="130" x2="135" y2="142" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="83" y="144" width="104" height="26" rx="8" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="135" y="162" font-size="13" font-weight="600" fill="#2b5d8a" text-anchor="middle">contract v1</text>
+  <line x1="135" y1="172" x2="135" y2="186" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="254" y="56" width="222" height="214" rx="12" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="268" y="80" font-size="14" font-weight="700" fill="#1f2328" text-anchor="start">Customer-supplier</text>
+  <text x="365" y="240" font-size="13" fill="#5f6b73" text-anchor="middle">the downstream's needs</text>
+  <text x="365" y="258" font-size="13" fill="#5f6b73" text-anchor="middle">enter the upstream's plan</text>
+  <rect x="285" y="94" width="160" height="34" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="365" y="116" font-size="13" font-weight="600" fill="#5f6b73" text-anchor="middle">upstream</text>
+  <rect x="285" y="188" width="160" height="34" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="365" y="210" font-size="13" font-weight="600" fill="#5f6b73" text-anchor="middle">downstream</text>
+  <line x1="335" y1="130" x2="335" y2="184" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="395" y1="186" x2="395" y2="132" stroke="#3d4449" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#arrow)"/>
+  <text x="405" y="164" font-size="13" fill="#2b5d8a" text-anchor="start">needs</text>
+  <rect x="484" y="56" width="222" height="214" rx="12" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="498" y="80" font-size="14" font-weight="700" fill="#1f2328" text-anchor="start">Conformist</text>
+  <text x="595" y="240" font-size="13" fill="#5f6b73" text-anchor="middle">the downstream takes the</text>
+  <text x="595" y="258" font-size="13" fill="#5f6b73" text-anchor="middle">upstream model as it is</text>
+  <rect x="515" y="94" width="160" height="34" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="595" y="116" font-size="13" font-weight="600" fill="#5f6b73" text-anchor="middle">upstream (model A)</text>
+  <rect x="515" y="188" width="160" height="34" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="595" y="210" font-size="13" font-weight="600" fill="#5f6b73" text-anchor="middle">downstream (model A)</text>
+  <line x1="595" y1="130" x2="595" y2="184" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="714" y="56" width="222" height="214" rx="12" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="728" y="80" font-size="14" font-weight="700" fill="#1f2328" text-anchor="start">Anticorruption layer</text>
+  <text x="825" y="240" font-size="13" fill="#5f6b73" text-anchor="middle">the downstream translates</text>
+  <text x="825" y="258" font-size="13" fill="#5f6b73" text-anchor="middle">at its edge</text>
+  <rect x="745" y="94" width="160" height="34" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="825" y="116" font-size="13" font-weight="600" fill="#5f6b73" text-anchor="middle">upstream (model A)</text>
+  <rect x="745" y="188" width="160" height="34" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="825" y="210" font-size="13" font-weight="600" fill="#5f6b73" text-anchor="middle">downstream (model B)</text>
+  <line x1="825" y1="130" x2="825" y2="150" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="775" y="152" width="100" height="28" rx="8" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="825" y="171" font-size="13" font-weight="600" fill="#2b5d8a" text-anchor="middle">translator</text>
+  <line x1="825" y1="180" x2="825" y2="188" stroke="#2b5d8a" stroke-width="2"/>
+  <rect x="24" y="280" width="222" height="214" rx="12" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="38" y="304" font-size="14" font-weight="700" fill="#1f2328" text-anchor="start">Open host service</text>
+  <text x="135" y="464" font-size="13" fill="#5f6b73" text-anchor="middle">one protocol</text>
+  <text x="135" y="482" font-size="13" fill="#5f6b73" text-anchor="middle">for every consumer</text>
+  <rect x="55" y="318" width="160" height="34" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="135" y="340" font-size="13" font-weight="600" fill="#5f6b73" text-anchor="middle">upstream</text>
+  <rect x="65" y="354" width="140" height="22" rx="8" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="135" y="370" font-size="13" font-weight="600" fill="#2b5d8a" text-anchor="middle">protocol</text>
+  <line x1="79" y1="378" x2="79" y2="408" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="55" y="412" width="48" height="34" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="79" y="434" font-size="13" fill="#5f6b73" text-anchor="middle">down.</text>
+  <line x1="135" y1="378" x2="135" y2="408" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="111" y="412" width="48" height="34" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="135" y="434" font-size="13" fill="#5f6b73" text-anchor="middle">down.</text>
+  <line x1="191" y1="378" x2="191" y2="408" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="167" y="412" width="48" height="34" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="191" y="434" font-size="13" fill="#5f6b73" text-anchor="middle">down.</text>
+  <rect x="254" y="280" width="222" height="214" rx="12" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="268" y="304" font-size="14" font-weight="700" fill="#1f2328" text-anchor="start">Shared kernel</text>
+  <text x="365" y="464" font-size="13" fill="#5f6b73" text-anchor="middle">two contexts co-own</text>
+  <text x="365" y="482" font-size="13" fill="#5f6b73" text-anchor="middle">a small model</text>
+  <rect x="278" y="330" width="82" height="84" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="304" y="356" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">A</text>
+  <rect x="370" y="330" width="82" height="84" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="426" y="356" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">B</text>
+  <rect x="318" y="376" width="94" height="46" rx="8" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="365" y="395" font-size="13" font-weight="600" fill="#2b5d8a" text-anchor="middle">shared</text>
+  <text x="365" y="412" font-size="13" font-weight="600" fill="#2b5d8a" text-anchor="middle">kernel</text>
+  <rect x="484" y="280" width="222" height="214" rx="12" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="498" y="304" font-size="14" font-weight="700" fill="#1f2328" text-anchor="start">Partnership</text>
+  <text x="595" y="464" font-size="13" fill="#5f6b73" text-anchor="middle">two teams plan together;</text>
+  <text x="595" y="482" font-size="13" fill="#5f6b73" text-anchor="middle">no value in the config</text>
+  <rect x="508" y="350" width="64" height="52" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="540" y="382" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">A</text>
+  <rect x="618" y="350" width="64" height="52" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="650" y="382" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">B</text>
+  <line x1="578" y1="376" x2="612" y2="376" stroke="#3d4449" stroke-width="2" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+  <text x="595" y="428" font-size="13" fill="#1f2328" text-anchor="middle">coordinate</text>
+  <rect x="714" y="280" width="222" height="214" rx="12" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="728" y="304" font-size="14" font-weight="700" fill="#1f2328" text-anchor="start">Separate ways</text>
+  <text x="825" y="464" font-size="13" fill="#5f6b73" text-anchor="middle">nobody adapts;</text>
+  <text x="825" y="482" font-size="13" fill="#5f6b73" text-anchor="middle">declare nothing</text>
+  <rect x="738" y="350" width="64" height="52" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="770" y="382" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">A</text>
+  <rect x="848" y="350" width="64" height="52" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="880" y="382" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">B</text>
+  <text x="825" y="428" font-size="13" font-style="italic" fill="#1f2328" text-anchor="middle">no integration</text>
+</svg>

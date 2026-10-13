@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 672" width="960" height="672" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">De l'outbox aux consommateurs durables de NATS JetStream</title>
+  <desc id="desc">Le gestionnaire de PlaceOrder écrit la commande client et un enregistrement d'outbox dans une seule transaction. Le relais de l'outbox lit l'enregistrement après la validation (commit) et le donne à NatsEventBus, qui le publie sur le sujet events.ordering.order.placed avec l'identifiant de l'événement comme Nats-Msg-Id et attend l'acquittement du flux avant que l'enregistrement soit marqué publié. Le flux integration-events garde les événements et écarte un second message de même identifiant dans sa fenêtre de déduplication. Chaque consommateur a un consommateur durable par type d'événement, billing_ordering_order_placed et shipping_ordering_order_placed, qui tire les messages et les remet aux gestionnaires de son contexte ; le message est acquitté après la validation de leur unité de travail. Ce qu'un consommateur abandonne est copié dans le flux integration-events-dead.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="672" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">De l'outbox aux consommateurs durables de NATS JetStream</text>
+
+  <!-- row 1: publishing side -->
+  <rect x="32" y="70" width="200" height="90" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="132" y="100" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">gestionnaire</text>
+  <text x="132" y="122" font-size="13" fill="#1f2328" text-anchor="middle">de PlaceOrder (ordering)</text>
+  <text x="132" y="142" font-size="13" fill="#1f2328" text-anchor="middle">publie dans l'outbox</text>
+
+  <rect x="264" y="70" width="200" height="90" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="364" y="100" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">table de l'outbox</text>
+  <text x="364" y="122" font-size="13" fill="#1f2328" text-anchor="middle">même transaction</text>
+  <text x="364" y="142" font-size="13" fill="#1f2328" text-anchor="middle">que la commande client</text>
+
+  <rect x="496" y="70" width="200" height="90" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="596" y="100" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">OutboxRelay</text>
+  <text x="596" y="122" font-size="13" fill="#1f2328" text-anchor="middle">après la validation ; marque</text>
+  <text x="596" y="142" font-size="13" fill="#1f2328" text-anchor="middle">publié à l'acquittement</text>
+
+  <rect x="728" y="70" width="200" height="90" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="828" y="100" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">NatsEventBus</text>
+  <text x="828" y="122" font-size="13" fill="#1f2328" text-anchor="middle">publish(events)</text>
+  <text x="828" y="142" font-size="13" fill="#1f2328" text-anchor="middle">Nats-Msg-Id = id d'événement</text>
+
+  <g stroke="#3d4449" stroke-width="2">
+    <line x1="234" y1="115" x2="262" y2="115" marker-end="url(#arrow)"/>
+    <line x1="466" y1="115" x2="494" y2="115" marker-end="url(#arrow)"/>
+    <line x1="698" y1="115" x2="726" y2="115" marker-end="url(#arrow)"/>
+  </g>
+  <path d="M828,162 V285 H722" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="840" y="214" font-size="13" fill="#1f2328">events.ordering</text>
+  <text x="840" y="232" font-size="13" fill="#1f2328">.order.placed,</text>
+  <text x="840" y="250" font-size="13" fill="#1f2328">attend l'ack</text>
+
+  <!-- row 2: streams -->
+  <rect x="242" y="236" width="478" height="104" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="481" y="264" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">flux integration-events</text>
+  <text x="481" y="288" font-size="13" fill="#1f2328" text-anchor="middle">sujets events.&gt;, rétention limits, stockage fichier</text>
+  <text x="481" y="308" font-size="13" fill="#1f2328" text-anchor="middle">écarte un second message de même Nats-Msg-Id</text>
+  <text x="481" y="326" font-size="13" fill="#1f2328" text-anchor="middle">dans la fenêtre de déduplication (2 min)</text>
+
+  <rect x="26" y="236" width="198" height="104" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="125" y="264" font-size="14" font-weight="700" fill="#5f6b73" text-anchor="middle">flux</text>
+  <text x="125" y="284" font-size="14" font-weight="700" fill="#5f6b73" text-anchor="middle">integration-events-dead</text>
+  <text x="125" y="308" font-size="13" fill="#1f2328" text-anchor="middle">dead.events.&lt;consommateur&gt;</text>
+  <text x="125" y="326" font-size="13" fill="#1f2328" text-anchor="middle">.&lt;type d'événement&gt;</text>
+
+  <!-- row 3: durable consumers -->
+  <g stroke="#3d4449" stroke-width="2">
+    <line x1="330" y1="342" x2="330" y2="402" marker-end="url(#arrow)"/>
+    <line x1="660" y1="342" x2="660" y2="402" marker-end="url(#arrow)"/>
+  </g>
+  <text x="342" y="378" font-size="13" fill="#1f2328">pull, prefetch 10</text>
+  <text x="672" y="378" font-size="13" fill="#1f2328">pull, prefetch 10</text>
+
+  <rect x="180" y="404" width="300" height="76" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="330" y="432" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">billing_ordering_order_placed</text>
+  <text x="330" y="454" font-size="13" fill="#1f2328" text-anchor="middle">consommateur durable, ack explicite</text>
+  <text x="330" y="472" font-size="13" fill="#1f2328" text-anchor="middle">filtre events.ordering.order.placed</text>
+
+  <rect x="510" y="404" width="300" height="76" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="660" y="432" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">shipping_ordering_order_placed</text>
+  <text x="660" y="454" font-size="13" fill="#1f2328" text-anchor="middle">consommateur durable, ack explicite</text>
+  <text x="660" y="472" font-size="13" fill="#1f2328" text-anchor="middle">filtre events.ordering.order.placed</text>
+
+  <path d="M178,442 H122 V344" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="132" y="378" font-size="13" fill="#1f2328">abandonné :</text>
+  <text x="132" y="396" font-size="13" fill="#1f2328">copie, puis term</text>
+
+  <!-- row 4: handlers -->
+  <g stroke="#3d4449" stroke-width="2">
+    <line x1="330" y1="482" x2="330" y2="530" marker-end="url(#arrow)"/>
+    <line x1="660" y1="482" x2="660" y2="530" marker-end="url(#arrow)"/>
+  </g>
+  <rect x="180" y="532" width="300" height="70" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="330" y="560" font-size="15" font-weight="700" fill="#2b5d8a" text-anchor="middle">gestionnaires de billing</text>
+  <text x="330" y="582" font-size="13" fill="#1f2328" text-anchor="middle">marque + travail, une unité de travail ; puis ack</text>
+
+  <rect x="510" y="532" width="300" height="70" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="660" y="560" font-size="15" font-weight="700" fill="#2b5d8a" text-anchor="middle">gestionnaires de shipping</text>
+  <text x="660" y="582" font-size="13" fill="#1f2328" text-anchor="middle">marque + travail, une unité de travail ; puis ack</text>
+
+  <text x="32" y="630" font-size="13" fill="#1f2328">Deux consommateurs reçoivent chacun chaque événement. Deux instances d'un consommateur partagent son consommateur durable :</text>
+  <text x="32" y="650" font-size="13" fill="#1f2328">chaque événement va à l'une d'elles.</text>
+</svg>

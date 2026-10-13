@@ -1,3 +1,5 @@
+**English** · [Français](presentation-controller-shape.fr.md)
+
 # ddd-ts-kit/presentation-controller-shape
 
 Architecture id: `presentation/controller-shape` (added by this plugin). Default severity: `error` in `recommended`, `error` in `strict`.

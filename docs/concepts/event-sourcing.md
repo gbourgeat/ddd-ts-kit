@@ -1,3 +1,5 @@
+**English** · [Français](event-sourcing.fr.md)
+
 # Event sourcing, per aggregate
 
 **Summary.** An event-sourced aggregate keeps no row of state: it keeps the facts that happened
@@ -17,6 +19,8 @@ as the events it recorded: `AttendanceRecordCreated`, then `NoShowNoted`, then
 `CancellationNoted`. Loading it replays them, oldest first, through one apply method per event;
 the result is the state its next command decides on. Nothing else ever writes the state, so the
 state a command leaves and the state a later load rebuilds are the same.
+
+![On the left, an attendance record kept as one row of a table, updated in place, which cannot say whether a missed appointment was a no-show or a cancellation; on the right, the same record kept as a stream of three events, replayed oldest first through the apply methods into the state the next command decides on](../assets/diagrams/event-sourcing-state-or-stream.svg)
 
 The events of one aggregate form its stream. The store keeps every stream, and the whole store
 in the order the appends committed, so that projections can follow it.
@@ -50,13 +54,15 @@ An audit trail is not a reason by itself: the kit records who did what around ev
 
 | Piece | Where | What it does |
 |---|---|---|
-| `EventSourcedAggregate<E, S>` | kernel, `domain/` | a command checks its invariants on the state, then `this.record(event)`; the event is applied through the method `appliers()` names for it and kept for the save. `rehydrate(id, history)` replays, from a snapshot when there is one |
+| `EventSourcedAggregate<E, S>` | kernel, `domain/` | a command checks its invariants on the state, then `this.record(event)`; the event is applied through the method `appliers()` names for it and kept for the save. The static `rehydrate(id, history)` of the aggregate calls `replay`, which applies the history from a snapshot when there is one and records nothing |
 | apply methods | the aggregate | `apply<Fact>(event)`, one per event, the only place that writes the state (`event-sourcing/state-in-apply`); they record nothing |
 | the codec | `infrastructure/persistence/<aggregate>-events.mapper.ts` | `defineStoredEvent(Event, { version, encode, decode, upcasters })` per event, with the named type of its data |
 | the repository | the port in `domain/repositories/`, its adapter in `infrastructure/persistence/` | the same port as any aggregate; the adapter delegates to `EventSourcedRepository`, which appends at the version the aggregate was loaded at (a `ConcurrencyError` otherwise) |
 | the store | `EventStore` port; PostgreSQL through knex, drizzle, prisma and TypeORM; in memory for tests | append with an expected version, each stream in order, the whole store by position, held to one contract suite |
 | snapshots | `SnapshotPolicy` of the repository, per aggregate | every so many events, a shape version of their own; `expectSnapshotEquivalence` proves them |
 | projections | `@Projection(name, { feed: 'event-store' })` | applied by a `CatchUpSubscription` with a stored checkpoint, rebuilt from position zero by `EventStoreProjectionRebuild` |
+
+![Three paths: a save records and applies the event, encodes and seals it, and appends it at the expected version in the unit of work; a load reads the last snapshot and the stream after it, opens, upcasts and decodes, then replays through the apply methods; a projection fed by the store reads it after its checkpoint and applies each event to rows stamped with the stream version](../assets/diagrams/event-sourcing-save-load-follow.svg)
 
 `ddd-ts-kit generate aggregate <context> <Name> --event-sourced` writes the aggregate with its
 birth event and apply method, the codec, a builder that replays a history and a given-events
@@ -77,6 +83,186 @@ conflict.
 (`event-sourcing/store-behind-repository`): they load and save through the port. A projection
 never appends to a stream (`event-sourcing/projection-never-appends`). Events are named in the
 past tense (`event-sourcing/past-tense`).
+
+### The whole chain, in memory
+
+The pieces of the table, in one file, on the in-memory store of the kernel: an aggregate with
+two events, its codec, and the `EventSourcedRepository` its repository adapter delegates to. A
+project splits it across `domain/` and `infrastructure/persistence/`, as the comments say.
+
+<!-- checked sample -->
+```ts
+import {
+  ConceptError,
+  EventSerializer,
+  EventSourcedAggregate,
+  EventSourcedRepository,
+  InMemoryEventStore,
+  defineStoredEvent,
+  type AggregateHistory,
+  type Appliers,
+  type DomainEvent,
+  type StoredEventTypes,
+} from '@ddd-ts-kit/kernel';
+
+// domain/events: facts, in the past tense
+export class AttendanceRecordCreated implements DomainEvent {
+  static readonly eventName = 'scheduling.attendance-record.created';
+
+  readonly name = AttendanceRecordCreated.eventName;
+
+  constructor(
+    readonly aggregateId: string,
+    readonly occurredAt: Date,
+    readonly patientId: string,
+  ) {}
+}
+
+export class AttendanceRecordNoShowNoted implements DomainEvent {
+  static readonly eventName = 'scheduling.attendance-record.no-show-noted';
+
+  readonly name = AttendanceRecordNoShowNoted.eventName;
+
+  constructor(
+    readonly aggregateId: string,
+    readonly occurredAt: Date,
+    readonly appointmentId: string,
+  ) {}
+}
+
+export type AttendanceRecordEvent = AttendanceRecordCreated | AttendanceRecordNoShowNoted;
+
+export class AttendanceRecordError extends ConceptError {
+  static alreadyNoted(appointmentId: string) {
+    return AttendanceRecordError.refusal('ALREADY_NOTED', `Appointment ${appointmentId} is already noted.`, {
+      appointmentId,
+    });
+  }
+}
+
+// domain/aggregates: the state is what the events add up to
+export class AttendanceRecord extends EventSourcedAggregate<AttendanceRecordEvent> {
+  private noted: readonly string[] = [];
+
+  private constructor(id: string) {
+    super(id);
+  }
+
+  static create(id: string, patientId: string, now: Date): AttendanceRecord {
+    const record = new AttendanceRecord(id);
+    record.record(new AttendanceRecordCreated(id, now, patientId));
+
+    return record;
+  }
+
+  static rehydrate(id: string, history: AggregateHistory<AttendanceRecordEvent>): AttendanceRecord {
+    return new AttendanceRecord(id).replay(history);
+  }
+
+  get missed(): number {
+    return this.noted.length;
+  }
+
+  /** A command: checks on the state, then records what it decided. */
+  noteNoShow(appointmentId: string, now: Date): void {
+    if (this.noted.includes(appointmentId)) {
+      throw AttendanceRecordError.alreadyNoted(appointmentId);
+    }
+
+    this.record(new AttendanceRecordNoShowNoted(this.id, now, appointmentId));
+  }
+
+  /** One apply method per event: an event without one does not compile. */
+  protected appliers(): Appliers<AttendanceRecordEvent> {
+    return {
+      [AttendanceRecordCreated.eventName]: () => undefined,
+      [AttendanceRecordNoShowNoted.eventName]: (event) => this.applyNoShowNoted(event),
+    };
+  }
+
+  /** The only place that writes the state; it records nothing. */
+  private applyNoShowNoted(event: AttendanceRecordNoShowNoted): void {
+    this.noted = [...this.noted, event.appointmentId];
+  }
+}
+
+// infrastructure/persistence/attendance-record-events.mapper.ts: one stored shape per event
+interface AttendanceRecordCreatedData {
+  readonly patientId: string;
+}
+
+interface AttendanceRecordNoShowNotedData {
+  readonly appointmentId: string;
+}
+
+const attendanceRecordEvents: StoredEventTypes<AttendanceRecordEvent> = {
+  [AttendanceRecordCreated.eventName]: defineStoredEvent(AttendanceRecordCreated, {
+    version: 1,
+    encode: (event): AttendanceRecordCreatedData => ({ patientId: event.patientId }),
+    decode: (data, { aggregateId, occurredAt }) =>
+      new AttendanceRecordCreated(aggregateId, occurredAt, data.text('patientId')),
+  }),
+  [AttendanceRecordNoShowNoted.eventName]: defineStoredEvent(AttendanceRecordNoShowNoted, {
+    version: 1,
+    encode: (event): AttendanceRecordNoShowNotedData => ({ appointmentId: event.appointmentId }),
+    decode: (data, { aggregateId, occurredAt }) =>
+      new AttendanceRecordNoShowNoted(aggregateId, occurredAt, data.text('appointmentId')),
+  }),
+};
+
+// infrastructure/persistence: what the adapter of the repository port delegates to
+const store = new InMemoryEventStore();
+const records = new EventSourcedRepository({
+  store,
+  category: 'scheduling.attendance-record',
+  serializer: new EventSerializer<AttendanceRecordEvent>(attendanceRecordEvents),
+  rehydrate: (id, history) => AttendanceRecord.rehydrate(id, history),
+});
+
+const now = new Date('2026-03-09T10:00:00Z');
+
+await records.save(AttendanceRecord.create('practice-1.patient-1', 'patient-1', now)); // appends at version 0
+
+const record = await records.findById('practice-1.patient-1'); // replays the stream
+record?.noteNoShow('appointment-1', now);
+record?.noteNoShow('appointment-2', now);
+
+if (record !== undefined) {
+  await records.save(record); // appends two events, expecting version 1
+}
+
+// the stream holds created (version 1), no-show-noted (version 2), no-show-noted (version 3)
+await store.readStream('scheduling.attendance-record-practice-1.patient-1');
+
+// two commands load the same version: the first append wins, the second is refused
+const first = await records.findById('practice-1.patient-1');
+const second = await records.findById('practice-1.patient-1');
+first?.noteNoShow('appointment-3', now);
+second?.noteNoShow('appointment-4', now);
+
+if (first !== undefined && second !== undefined) {
+  await records.save(first);
+  await records.save(second).catch((error: unknown) => error); // ConcurrencyError, code CONCURRENCY_CONFLICT: retry the command
+}
+```
+
+Instead of changing the state in the command and recording on the side:
+
+```ts
+noteNoShow(appointmentId: string, now: Date): void {
+  this.noted = [...this.noted, appointmentId]; // event-sourcing/state-in-apply: a replay would never do it
+  this.record(new AttendanceRecordNoShowNoted(this.id, now, appointmentId));
+}
+```
+
+record the fact, and let its apply method change the state, the same way for the command and
+for every later replay:
+
+```ts
+noteNoShow(appointmentId: string, now: Date): void {
+  this.record(new AttendanceRecordNoShowNoted(this.id, now, appointmentId)); // applies it: applyNoShowNoted
+}
+```
 
 ## Stored events are versioned like contracts with the past
 
@@ -105,10 +291,59 @@ discipline with its own mechanism:
 A domain event can change freely as long as `encode` and `decode` still map it to and from the
 stored shapes: the stored type, not the class, is the contract.
 
+Say version 1 of `AttendanceRecordCancellationNoted` stored no reason, and the business now asks
+for the words of the patient. The codec declares version 2 and the upcaster that reads a
+version 1 as a version 2; the events already stored stay as they are:
+
+<!-- checked sample -->
+```ts
+// contexts/scheduling/infrastructure/persistence/attendance-record-events.mapper.ts (one entry)
+import { defineStoredEvent, personalData, type DomainEvent, type PersonalValue } from '@ddd-ts-kit/kernel';
+
+export class AttendanceRecordCancellationNoted implements DomainEvent {
+  static readonly eventName = 'scheduling.attendance-record.cancellation-noted';
+
+  readonly name = AttendanceRecordCancellationNoted.eventName;
+
+  constructor(
+    readonly aggregateId: string,
+    readonly occurredAt: Date,
+    readonly cancelled: { readonly patientId: string; readonly appointmentId: string; readonly reason: string | undefined },
+  ) {}
+}
+
+/** The stored shape of version 2: what `docs --stored-events` fingerprints. */
+interface AttendanceRecordCancellationNotedData {
+  readonly patientId: string;
+  readonly appointmentId: string;
+  /** The words of the patient, sealed with the key of the patient: erased with it. */
+  readonly reason: PersonalValue | null;
+}
+
+export const cancellationNoted = defineStoredEvent(AttendanceRecordCancellationNoted, {
+  version: 2,
+  encode: ({ cancelled }): AttendanceRecordCancellationNotedData => ({
+    patientId: cancelled.patientId,
+    appointmentId: cancelled.appointmentId,
+    reason: cancelled.reason === undefined ? null : personalData(cancelled.patientId, cancelled.reason),
+  }),
+  decode: (data, { aggregateId, occurredAt }) =>
+    new AttendanceRecordCancellationNoted(aggregateId, occurredAt, {
+      patientId: data.text('patientId'),
+      appointmentId: data.text('appointmentId'),
+      reason: data.optionalText('reason'),
+    }),
+  // version 1 had no reason: it is read as a version 2 where none was given, each time, never rewritten
+  upcasters: { 1: (data) => ({ ...data, reason: null }) },
+});
+```
+
 ## Personal data: crypto-shredding
 
 An event cannot be edited to forget a person, and backups keep it anyway. The kit seals
 personal values instead:
+
+![Crypto-shredding: the codec marks the reason of a patient as personal data, PersonalDataCipher seals it with the key of that patient before the store keeps it; an erasure destroys the key in the SubjectKeyStore, after which a replay reads '[erased]' while the stored event is unchanged; backups of the events never hold the keys, which are kept apart with a shorter retention](../assets/diagrams/event-sourcing-crypto-shredding.svg)
 
 - `personalData(subjectId, value)` marks a value in `encode`; `PersonalDataCipher` seals it with
   the key of its data subject (AES-256-GCM, a fresh nonce per value, the key id written next to
@@ -119,6 +354,75 @@ personal values instead:
   same subject never opens an older value.
 - A projection rebuilt after an erasure shows the erased value; a projection that already holds
   the clear value has to be rebuilt, or to apply an erasure event of its own.
+
+The whole mechanism in a few lines, on the in-memory stores of the kernel:
+
+<!-- checked sample -->
+```ts
+import {
+  ERASED_PERSONAL_DATA,
+  EventSerializer,
+  InMemoryEventStore,
+  InMemorySubjectKeyStore,
+  PersonalDataCipher,
+  defineStoredEvent,
+  personalData,
+  type DomainEvent,
+  type PersonalValue,
+  type StoredEventTypes,
+} from '@ddd-ts-kit/kernel';
+
+export class AttendanceRecordCancellationNoted implements DomainEvent {
+  static readonly eventName = 'scheduling.attendance-record.cancellation-noted';
+
+  readonly name = AttendanceRecordCancellationNoted.eventName;
+
+  constructor(
+    readonly aggregateId: string,
+    readonly occurredAt: Date,
+    readonly patientId: string,
+    readonly reason: string | undefined, // the words of the patient: personal data
+  ) {}
+}
+
+interface AttendanceRecordCancellationNotedData {
+  readonly patientId: string;
+  readonly reason: PersonalValue | null;
+}
+
+const events: StoredEventTypes<AttendanceRecordCancellationNoted> = {
+  [AttendanceRecordCancellationNoted.eventName]: defineStoredEvent(AttendanceRecordCancellationNoted, {
+    version: 1,
+    encode: (event): AttendanceRecordCancellationNotedData => ({
+      patientId: event.patientId,
+      reason: event.reason === undefined ? null : personalData(event.patientId, event.reason),
+    }),
+    decode: (data, { aggregateId, occurredAt }) =>
+      new AttendanceRecordCancellationNoted(aggregateId, occurredAt, data.text('patientId'), data.optionalText('reason')),
+  }),
+};
+
+const keys = new InMemorySubjectKeyStore();
+const serializer = new EventSerializer(events, { cipher: new PersonalDataCipher(keys) });
+const store = new InMemoryEventStore();
+const stream = 'scheduling.attendance-record-practice-1.patient-1';
+
+const noted = new AttendanceRecordCancellationNoted('practice-1.patient-1', new Date(), 'patient-1', 'Flu');
+await store.append(stream, 0, [await serializer.serialize(noted)]);
+// stored: { patientId: 'patient-1', reason: { $sealed: { key: '<key id>', iv: '...', data: '...' } } }
+
+const [stored] = await store.readStream(stream);
+
+if (stored !== undefined) {
+  const before = await serializer.deserialize(stored);
+  before.reason; // 'Flu': opened with the key of patient-1
+
+  await keys.erase('patient-1'); // the right to erasure: the key is destroyed
+
+  const after = await serializer.deserialize(stored);
+  after.reason === ERASED_PERSONAL_DATA; // true: '[erased]', and the stored event is untouched
+}
+```
 
 What an erasure reaches is exactly what loses the key:
 
@@ -158,6 +462,21 @@ replays the store into an empty copy of the read model and swaps it in, without 
 subscription. Each row is stamped with the version of its stream (`storedStampOf`), so an event
 applied twice changes nothing.
 
+The history read model of the example is such a projection (an excerpt):
+
+```ts
+@Projection('scheduling.attendance-history', { feed: 'event-store' })
+export class AttendanceHistoryProjection {
+  constructor(private readonly history: AttendanceHistory) {}
+
+  @On(AttendanceRecordNoShowNoted, { name: AttendanceRecordNoShowNoted.eventName })
+  async noShowNoted(event: AttendanceRecordNoShowNoted): Promise<ReadModelWrite> {
+    const stamp = storedStampOf(event) ?? stampOf(event); // the version of the stream: applied twice, changes nothing
+    // ... upserts the entry `${event.aggregateId}#${stamp.version}` if it is newer
+  }
+}
+```
+
 `applyingProjection(projection, serializer)` reads the events back with the serializer of one
 aggregate, and refuses (`DeclarationError`) a projection whose `@On` methods name an event that
 serializer does not declare: such an event would otherwise be passed over at every batch,
@@ -172,6 +491,69 @@ read model that joins two of them is two projections, or a projection fed by the
   state of the full replay, for every version of the history.
 - `eventStoreContract` and `eventStoreUnitOfWorkContract` for a store; the repository contract of
   the kit applies to the adapter like to any other.
+
+A spec of the aggregate reads as the facts it starts from, the command, and the facts it
+records:
+
+<!-- checked sample -->
+```ts
+import { describe, expect, it } from 'vitest';
+import { givenEvents } from '@ddd-ts-kit/testing';
+import { EventSourcedAggregate, type AggregateHistory, type Appliers, type DomainEvent } from '@ddd-ts-kit/kernel';
+
+class AttendanceRecordCreated implements DomainEvent {
+  static readonly eventName = 'scheduling.attendance-record.created';
+
+  readonly name = AttendanceRecordCreated.eventName;
+
+  constructor(
+    readonly aggregateId: string,
+    readonly occurredAt: Date,
+    readonly patientId: string,
+  ) {}
+}
+
+class AttendanceRecordNoShowNoted implements DomainEvent {
+  static readonly eventName = 'scheduling.attendance-record.no-show-noted';
+
+  readonly name = AttendanceRecordNoShowNoted.eventName;
+
+  constructor(
+    readonly aggregateId: string,
+    readonly occurredAt: Date,
+    readonly appointmentId: string,
+  ) {}
+}
+
+type AttendanceRecordEvent = AttendanceRecordCreated | AttendanceRecordNoShowNoted;
+
+// the aggregate of "The whole chain, in memory"
+declare class AttendanceRecord extends EventSourcedAggregate<AttendanceRecordEvent> {
+  static rehydrate(id: string, history: AggregateHistory<AttendanceRecordEvent>): AttendanceRecord;
+  get missed(): number;
+  noteNoShow(appointmentId: string, now: Date): void;
+  protected appliers(): Appliers<AttendanceRecordEvent>;
+}
+
+const rehydrate = (id: string, history: AggregateHistory<AttendanceRecordEvent>) => AttendanceRecord.rehydrate(id, history);
+const now = new Date('2026-03-09T10:00:00Z');
+const created = new AttendanceRecordCreated('practice-1.patient-1', now, 'patient-1');
+
+describe('AttendanceRecord', () => {
+  it('notes a no-show and counts it as missed', () => {
+    givenEvents(rehydrate, [created, new AttendanceRecordNoShowNoted('practice-1.patient-1', now, 'appointment-1')])
+      .when((record) => record.noteNoShow('appointment-2', now))
+      .thenEvents([AttendanceRecordNoShowNoted])
+      .thenState((record) => expect(record.missed).toBe(2));
+  });
+
+  it('refuses to note an appointment twice', () => {
+    givenEvents(rehydrate, [created, new AttendanceRecordNoShowNoted('practice-1.patient-1', now, 'appointment-1')])
+      .when((record) => record.noteNoShow('appointment-1', now))
+      .thenError('ALREADY_NOTED', { appointmentId: 'appointment-1' });
+  });
+});
+```
 
 ## Moving an aggregate to event sourcing, and back
 

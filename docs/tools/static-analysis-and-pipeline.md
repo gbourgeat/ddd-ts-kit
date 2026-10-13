@@ -1,3 +1,5 @@
+**English** · [Français](static-analysis-and-pipeline.fr.md)
+
 # Static analysis and the pipeline
 
 **Summary.** The architecture is held by analyzers, not by review comments. Three of them share
@@ -12,15 +14,90 @@ verified and what was not, and when a lighter setup is enough.
 ## Why several analyzers
 
 A single rule such as `layer/domain-purity` (see the rule table of the
-[architecture reference](../ARCHITECTURE.md)) can be broken in ways that different tools see:
+[architecture reference](../ARCHITECTURE.md)) can be broken in ways that different tools see.
+Each case below was run through the three analyzers on a small project:
 
-- a direct `import { z } from 'zod'` in an aggregate: any of the three sees it;
-- the same import hidden in a string or a comment: a text reader may report it wrongly, a
-  syntax tree does not;
-- a type that reaches the domain through a barrel of an allowed folder: only a tool that
-  resolves modules sees it.
+- a direct `import { z } from 'zod'` in a value object: all three report it;
+- the same text in a comment or a string: a plain text search would report it; the checker's
+  lexer skips comments and strings, and the syntax tree has no import there, so none does,
+  rightly;
+- an import through a `tsconfig` path other than the alias of the project
+  (`#billing-infra/invoice-row`, leading to `infrastructure/`): the checker and the ESLint
+  plugin read the specifier as written and report "the package `#billing-infra`";
+  dependency-cruiser resolves it like the compiler and names the real file,
+  `infrastructure/invoice-row.ts`;
+- a type of `zod` re-exported by `shared-kernel/index.ts`, which the domain may import: none
+  reports it. The checker does not resolve re-exports, the ESLint plugin sees an allowed import,
+  and the generated dependency-cruiser rules judge each edge alone. What no rule constrains is
+  reviewed by hand (see [Limits](#limits-and-when-not-to-use-it)).
+
+![The four cases against the checker, the ESLint plugin and dependency-cruiser: all report a direct import, none reports text in a comment, dependency-cruiser alone names the real file behind a tsconfig path, none sees a package re-exported by the shared kernel](../assets/diagrams/static-analysis-and-pipeline-three-analyzers.svg)
 
 So the cheapest tool runs most often and the most exact one has the last word.
+
+What a finding looks like, and what to write instead. The checker answers the direct import
+with the rule, the place and the fix:
+
+```ts
+// Instead of: domain/value-objects/email.vo.ts validating with a library
+import { ValueObject } from '@ddd-ts-kit/kernel';
+import { z } from 'zod';
+
+export class Email extends ValueObject<{ readonly value: string }> {
+  private constructor(props: { readonly value: string }) {
+    super(props);
+  }
+
+  static create(value: string): Email {
+    return new Email({ value: z.string().email().parse(value) });
+  }
+}
+```
+
+```text
+$ npx ddd-ts-kit check-file src/contexts/billing/domain/value-objects/email.vo.ts
+src/contexts/billing/domain/value-objects/email.vo.ts:2  error  layer/domain-purity
+  The domain imports the package "zod".
+  fix: Remove the import: express the need as plain TypeScript or as a port in application/ports, and keep decorators and schemas of "zod" in infrastructure or presentation.
+
+1 error, 0 warnings, 0 suppressions in 1 file.
+```
+
+The shape of a request is validated at the edge, by the schema of its route; the rule of the
+business stays in plain TypeScript, with a refusal of its concept:
+
+<!-- checked sample -->
+```ts
+import { ConceptError, ValueObject } from '@ddd-ts-kit/kernel';
+
+// domain/errors/email.error.ts
+export class EmailError extends ConceptError {
+  static invalid(value: string) {
+    return EmailError.refusal('INVALID_EMAIL', `"${value}" is not an email address.`, { value });
+  }
+}
+
+// domain/value-objects/email.vo.ts: the domain imports only the kernel
+export class Email extends ValueObject<{ readonly value: string }> {
+  private constructor(props: { readonly value: string }) {
+    super(props);
+  }
+
+  static create(value: string): Email {
+    const address = value.trim().toLowerCase();
+
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(address)) {
+      throw EmailError.invalid(value);
+    }
+
+    return new Email({ value: address });
+  }
+
+  get value(): string {
+    return this.props.value;
+  }
+}
+```
 
 ## Comparison
 
@@ -44,12 +121,34 @@ generated `npm run depcruise` starts with `depcruise-config --check`, which fail
 file.
 
 `ddd-ts-kit rules` lists every rule id with its default severity. Most code rules exist in
-both the checker (a fast approximation on text) and the ESLint plugin (the exact one). Eight
+both the checker (a fast approximation on text) and the ESLint plugin (the exact one). Thirteen
 are held by the ESLint plugin only, and the listing says so: `domain/aggregate-encapsulation`,
-`domain/value-object-immutability`, `domain/no-generic-error`, `application/handler-shape`,
-`application/command-query-separation`, `presentation/controller-shape`,
-`presentation/controller-delegates`, `presentation/guard-at-the-edge`. One, `clean/formatted`, is held by neither: the
-formatter of the project, Biome, lays out every file, and the listing says "checked by Biome".
+`domain/value-object-immutability`, `domain/no-generic-error`, `errors/through-factory`,
+`errors/constructor-not-public`, `errors/factory-name`, `clean/no-magic-number`,
+`application/handler-shape`, `application/command-query-separation`,
+`presentation/controller-shape`, `presentation/controller-delegates`,
+`presentation/shared-cache-varies`, `presentation/guard-at-the-edge`. One, `clean/formatted`, is
+held by neither: the formatter of the project, Biome, lays out every file, and the listing says
+"checked by Biome":
+
+```text
+$ npx ddd-ts-kit rules
+...
+domain/aggregate-encapsulation             error  An aggregate or entity has a private or protected constructor, no public mutable property and no setter. (checked by @ddd-ts-kit/eslint-plugin)
+...
+clean/formatted                            error  Every TypeScript, JavaScript and JSON file is laid out by the formatter of the project, Biome, at a line width of 120: the format check reports nothing to change. (checked by Biome)
+```
+
+The ESLint side of a project is one function, which reads `ddd-ts-kit.config.json` next to it:
+
+<!-- checked sample -->
+```ts
+// eslint.config.ts (init writes the same as eslint.config.mjs)
+import { dddTsKit } from '@ddd-ts-kit/eslint-plugin';
+
+export default dddTsKit({ tsconfigRootDir: import.meta.dirname });
+```
+
 What every project gets, tool by tool, is on the [quality baseline](quality-baseline.md) page.
 
 ## Selection criteria
@@ -62,6 +161,41 @@ What every project gets, tool by tool, is on the [quality baseline](quality-base
   glossary or a cycle in the context map are not facts of one file.
 - **Cost of a false positive.** A heuristic rule (noise comments, commented-out code) defaults
   to a warning; structural rules default to errors.
+
+Put together, a generated project runs each analyzer at the moment its cost allows:
+
+![From a file write to the merge: check-file after each write of an agent, ESLint, Biome and the checker on staged files before a commit, the type check and the unit tests before a push, every ci script on the pull request, and one required check at the merge](../assets/diagrams/static-analysis-and-pipeline-when-each-runs.svg)
+
+The hooks of the laptop are in the `lefthook.yml` that `init` writes:
+
+```yaml
+pre-commit:
+  parallel: true
+  jobs:
+    - name: eslint
+      glob: '*.{ts,mts,cts,js,mjs,cjs}'
+      run: npx --no -- eslint --no-warn-ignored {staged_files}
+    - name: format
+      glob: '*.{ts,mts,cts,js,mjs,cjs,json,jsonc}'
+      run: npx --no -- biome format --no-errors-on-unmatched {staged_files}
+    - name: architecture
+      glob: 'src/**/*.{ts,mts,cts}'
+      run: npx --no -- ddd-ts-kit check {staged_files}
+    - name: commit size
+      run: npx --no -- ddd-ts-kit check --commit-size --staged
+
+pre-push:
+  jobs:
+    - name: typecheck
+      run: npm run ci:typecheck
+    - name: unit tests
+      run: npm run ci:test:unit
+
+commit-msg:
+  jobs:
+    - name: conventional commit
+      run: npx --no -- commitlint --edit {1}
+```
 
 ## TypeScript 6 and 7 side by side
 
@@ -81,7 +215,27 @@ The kit's answer, as its READMEs state: a generated project installs both. `type
 serves the tools that read sources through the compiler API (ESLint with types,
 dependency-cruiser), and `@typescript/native`, an npm alias of `typescript` 7, compiles and
 type-checks, called by its path because both packages declare a `tsc` binary and `npx tsc`
-would pick one of them. With `typescript` 7 alone, ESLint with types does not start, and the
+would pick one of them.
+
+![typescript 6 is loaded by ESLint with types and by dependency-cruiser; @typescript/native, typescript 7, runs the type check and the build](../assets/diagrams/static-analysis-and-pipeline-two-compilers.svg)
+
+In the `package.json` of a generated project:
+
+```json
+{
+  "scripts": {
+    "typecheck": "node node_modules/@typescript/native/bin/tsc -p tsconfig.json --noEmit",
+    "build": "node node_modules/@typescript/native/bin/tsc -p tsconfig.build.json && ddd-ts-kit build-aliases"
+  },
+  "devDependencies": {
+    "@typescript/native": "npm:typescript@~7.0.2",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.71.1"
+  }
+}
+```
+
+With `typescript` 7 alone, ESLint with types does not start, and the
 dependency-cruiser configuration falls back to `@swc/core` when it is installed (it then
 follows type-only imports without telling them apart) and fails loudly otherwise.
 
@@ -92,7 +246,30 @@ itself to 7; refuse it until the lint tools accept it.
 ## GitHub Actions and GitLab CI
 
 The rule of the pipeline directory: CI logic lives in npm scripts, and the two platform files
-only orchestrate. Every gate therefore runs on a laptop with the same command.
+only orchestrate. Every gate therefore runs on a laptop with the same command. The same gate, in
+the two files `init` writes:
+
+```yaml
+# .github/workflows/ci.yml: the steps of the Architecture job
+- name: Architecture rules
+  run: npm run ci:arch:check -- --format github
+- name: Dependency graph
+  run: npm run ci:arch:graph
+```
+
+```yaml
+# .gitlab-ci.yml: the architecture job
+architecture:
+  extends: .node
+  stage: test
+  needs: [install]
+  script:
+    - mkdir -p reports
+    - npm run --silent ci:arch:check -- --format gitlab > reports/gl-code-quality-arch.json
+    - npm run ci:arch:graph
+```
+
+and on a laptop, `npm run ci:arch`, which runs both.
 
 | Piece | GitHub Actions | GitLab CI |
 |---|---|---|
@@ -137,9 +314,9 @@ From [`pipeline/README.md`](../../pipeline/README.md), the
   with the TypeScript 6 parser and with `@swc/core`, every rule reporting its deliberate
   violation.
 - **knip.** Unused file, export, type and dependency reported on the sample project.
-- **Hooks.** lefthook: ESLint and the checker on staged files before a commit, with the
-  advisory `check --commit-size --staged`; type check and unit tests before a push; commitlint
-  on the message.
+- **Hooks.** lefthook: ESLint, the Biome format check and the checker on staged files before a
+  commit, with the advisory `check --commit-size --staged`; type check and unit tests before a
+  push; commitlint on the message.
 - **Coverage thresholds per layer**, highest for `domain/`, lowest for `infrastructure/`, read
   from the config file, applied to each context, enforced by `verify` and by the pipeline.
 - **Drift gates.** The context map, the generated parts of each `CONTEXT.md`, the barrels

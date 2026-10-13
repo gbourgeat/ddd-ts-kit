@@ -1,3 +1,5 @@
+**English** · [Français](http-caches.fr.md)
+
 # HTTP caches: Varnish, Souin, nginx, Fastly, Cloudflare, Bunny
 
 **Summary.** A shared HTTP cache in front of the API answers the reads that are the same for
@@ -20,6 +22,40 @@ nginx are described, not implemented.
 3. **Purge by tag**, over an API the application calls, confirmed by a 2xx: the outbox relay
    retries until it is.
 4. **Revalidate** a stale answer with `If-None-Match` and keep it on a `304`.
+
+The whole cycle, for the opening hours of a calendar in the example application: the first read
+reaches the API and is filed under its tag, the next ones are answered by the cache, and the
+command that changes the hours purges the tag once it has committed.
+
+![A sequence over the client, the shared cache, the API, the database and the outbox relay: a public read is passed to the API on a miss, answered with the tag header xkey: calendar:c-1 and kept an hour under that tag; the same read is then answered from the cache; a command saves the calendar and a purge request in one transaction, and the relay sends PURGE with xkey-purge: calendar:c-1, which drops the answer](../assets/diagrams/http-caches-read-and-purge.svg)
+
+What travels on the wire for `GET /calendars/c-1/opening-hours` of the example, behind the
+Varnish the CLI generates. Its controller declares the policy of the sample further down, plus
+`etag: { version: 'version' }`, which turns the `version` field of the body into the `ETag`:
+
+```http
+# 1. The API answers a miss of Varnish: the policy of the route, the version, the tags
+HTTP/1.1 200 OK
+Cache-Control: public, max-age=60, s-maxage=3600, stale-while-revalidate=30, stale-if-error=86400
+ETag: W/"7"
+xkey: calendar:c-1
+
+# 2. Varnish answers the client: the tag header removed, x-cache added by the generated VCL
+HTTP/1.1 200 OK
+Cache-Control: public, max-age=60, s-maxage=3600, stale-while-revalidate=30, stale-if-error=86400
+ETag: W/"7"
+x-cache: MISS
+
+# 3. Once the change of the hours has committed, the relay purges through VarnishCachePurger
+PURGE / HTTP/1.1
+x-purge-key: <the key Varnish was started with>
+xkey-purge: calendar:c-1
+
+HTTP/1.1 200 Purged 1
+```
+
+The tag header changes with the cache (`Surrogate-Key` for Fastly, `Cache-Tag` for Cloudflare,
+`CDN-Tag` for Bunny), and so does the purge request; the route and the use case stay the same.
 
 ## Comparison
 
@@ -70,6 +106,241 @@ kit did not run it on Vinyl Cache, whose packages of vmod_xkey were not checked.
 - **End to end**: the example application runs behind Varnish in CI and proves that the read of a
   calendar is served from the cache, then fetched again after the command that changes it.
 
+The heart of the generated `docker/varnish/default.vcl`, shortened: who may purge, the two ways
+to purge, and the rule that keeps only what an answer allows by name.
+
+```vcl
+sub vcl_recv {
+    if (req.method == "PURGE") {
+        # from this machine, or from anywhere with the key Varnish was started with
+        if (client.ip !~ purgers && !(std.getenv("VARNISH_PURGE_KEY") != "" && req.http.x-purge-key == std.getenv("VARNISH_PURGE_KEY"))) {
+            return (synth(403, "Forbidden"));
+        }
+
+        if (req.http.xkey-purge) {
+            # every object filed under one of the tags, removed now
+            set req.http.x-purged = xkey.purge(req.http.xkey-purge);
+        } elsif (req.http.x-ban-tag) {
+            # a ban on the xkey header the objects keep, tested as they are looked up
+            if (!std.ban("obj.http.xkey ~ (^|\s)" + req.http.x-ban-tag + "(\s|$)")) {
+                return (synth(500, "Ban refused: " + std.ban_error()));
+            }
+
+            set req.http.x-purged = "a ban";
+        }
+
+        return (synth(200, "Purged " + req.http.x-purged));
+    }
+}
+
+sub vcl_backend_response {
+    # no max-age or s-maxage: never kept, whatever the default TTL of Varnish
+    if (beresp.http.cache-control !~ "(^|,)\s*(s-maxage|max-age)=") {
+        set beresp.uncacheable = true;
+        set beresp.ttl = 120s;
+
+        return (deliver);
+    }
+}
+```
+
+## How a purge reaches the cache
+
+A handler of a domain event of the use case asks `CacheInvalidation` to purge tags; the request
+becomes a row of the outbox in the transaction of the command; after the commit the relay hands it
+to `PurgingPublisher`, which sends the purge requests to the `CachePurger` port and every other
+event to the broker. Of all these pieces, only the adapter behind the `CachePurger` port knows
+which cache is in front.
+
+![The pieces of a purge: an event handler asks CacheInvalidation, PublishedCacheInvalidation publishes a purge request that the outbox store writes in the transaction of the command; the OutboxRelay hands it to PurgingPublisher, which sends purge requests to the CachePurger port and every other event to the broker; VarnishCachePurger, FastlyCachePurger, CloudflareCachePurger or a purger of your own implement the port, and RepeatedCachePurger wraps one of them](../assets/diagrams/http-caches-purger-wiring.svg)
+
+The read names its tags, and the use case that changes the resource asks for them to be purged,
+with the same function (`cacheTag`), so the two always meet:
+
+<!-- checked sample -->
+```ts
+import { CacheScope, Public, RouteGroup } from '@ddd-ts-kit/http';
+import { cacheTag, type CacheInvalidation, type DomainEvent } from '@ddd-ts-kit/kernel';
+import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
+
+// presentation: every read of the group is kept an hour by a shared cache, filed under calendar:<calendarId>,
+// and served stale for a day if the API fails
+@RouteGroup({
+  prefix: '/calendars/:calendarId',
+  guards: [Public],
+  cache: {
+    scope: CacheScope.public,
+    maxAge: '1m',
+    sMaxAge: '1h',
+    staleWhileRevalidate: '30s',
+    staleIfError: '1d',
+    tags: [{ resource: 'calendar', param: 'calendarId' }],
+  },
+})
+export class CalendarPagesRoutes {}
+
+// domain: what the aggregate records when its opening hours change
+export class CalendarOpeningHoursSet implements DomainEvent {
+  static readonly eventName = 'scheduling.calendar.opening-hours-set';
+
+  readonly name = CalendarOpeningHoursSet.eventName;
+
+  constructor(
+    readonly aggregateId: string,
+    readonly occurredAt: Date,
+  ) {}
+}
+
+// application: asked before the commit (the default phase), purged after it, through the outbox
+@DomainEventHandler(CalendarOpeningHoursSet, { name: CalendarOpeningHoursSet.eventName })
+export class CalendarOpeningHoursSetEventHandler implements DomainEventHandler<CalendarOpeningHoursSet> {
+  constructor(private readonly cacheInvalidation: CacheInvalidation) {}
+
+  async handle(event: CalendarOpeningHoursSet): Promise<void> {
+    await this.cacheInvalidation.invalidate([cacheTag('calendar', event.aggregateId)]);
+  }
+}
+```
+
+The platform picks the cache in two places that must agree: the tag header the routes send
+(`cacheTags.header` of the options of the mount) and the purger the relay calls. `main.ts` of a
+project generated with `--http-cache varnish` does the Varnish half of this; the example
+application adds the second purge:
+
+<!-- checked sample -->
+```ts
+import { OutboxRelay, type OutboxStore } from '@ddd-ts-kit/events';
+import { CacheTagHeader } from '@ddd-ts-kit/http';
+import { CloudflareCachePurger, FastlyCachePurger, VarnishCachePurger } from '@ddd-ts-kit/http/purgers';
+import {
+  PurgingPublisher,
+  RepeatedCachePurger,
+  type CachePurger,
+  type Clock,
+  type IntegrationEventPublisher,
+} from '@ddd-ts-kit/kernel';
+
+type CacheInFront = 'varnish' | 'fastly' | 'cloudflare';
+
+// read from the environment by the configuration of the platform
+declare const config: {
+  readonly cache: CacheInFront;
+  readonly varnishUrl: string;
+  readonly varnishPurgeKey: string;
+  readonly fastlyServiceId: string;
+  readonly fastlyToken: string;
+  readonly cloudflareZoneId: string;
+  readonly cloudflareToken: string;
+};
+declare const store: OutboxStore;
+declare const broker: IntegrationEventPublisher;
+declare const clock: Clock;
+
+// the header the routes send, given to the mount as cacheTags: { header: tagHeaders[config.cache] }
+export const tagHeaders = {
+  varnish: CacheTagHeader.xkey,
+  fastly: CacheTagHeader.surrogateKey,
+  cloudflare: CacheTagHeader.cacheTag,
+} as const satisfies Record<CacheInFront, CacheTagHeader>;
+
+// the purger of the same cache: only the one in front of the API is built
+const purgers: Record<CacheInFront, () => CachePurger> = {
+  varnish: () => new VarnishCachePurger({ url: config.varnishUrl, key: config.varnishPurgeKey }),
+  fastly: () => new FastlyCachePurger({ serviceId: config.fastlyServiceId, token: config.fastlyToken }),
+  cloudflare: () => new CloudflareCachePurger({ zoneId: config.cloudflareZoneId, token: config.cloudflareToken }),
+};
+
+// purge requests to the cache, purged once more 2 s later; every other event to the broker
+const relay = new OutboxRelay({
+  store,
+  publisher: new PurgingPublisher(new RepeatedCachePurger(purgers[config.cache](), { againAfterMs: 2_000 }), broker),
+  clock,
+});
+
+relay.start({ intervalMs: 1_000 });
+```
+
+## A purger of your own
+
+Souin, Bunny or any cache with a purge API takes a class of a few lines that implements
+`CachePurger`: it sends the tags, resolves on a 2xx, and throws `CachePurgeError` on anything else
+so that the relay retries. Then the contract suite proves it against the real cache, as the kit
+proves Varnish. The sample follows the purge API Souin documents (a `PURGE` naming the keys in
+`Surrogate-Key`); the kit has not run it.
+
+<!-- checked sample -->
+```ts
+import { beforeEach, describe, expect, it } from 'vitest';
+import { CachePurgeError } from '@ddd-ts-kit/http/purgers';
+import type { CachePurger } from '@ddd-ts-kit/kernel';
+import { cachePurgerContract } from '@ddd-ts-kit/testing/contracts';
+
+// platform/http-cache/souin-cache-purger.ts
+export interface SouinCachePurgerOptions {
+  /** The purge API of Souin as the application reaches it, as its `api` settings expose it. */
+  readonly url: string;
+  /** Default 5000. */
+  readonly timeoutMs?: number;
+}
+
+export class SouinCachePurger implements CachePurger {
+  constructor(private readonly options: SouinCachePurgerOptions) {}
+
+  async purge(tags: readonly string[]): Promise<void> {
+    if (tags.length === 0) {
+      return;
+    }
+
+    const { url, timeoutMs = 5_000 } = this.options;
+    const answer = await fetch(url, {
+      method: 'PURGE',
+      headers: { 'surrogate-key': tags.join(', ') },
+      signal: AbortSignal.timeout(timeoutMs),
+    }).catch((cause: unknown) => {
+      throw new CachePurgeError(`PURGE ${url} reached no cache.`, undefined, { cause });
+    });
+
+    await answer.body?.cancel();
+
+    // anything but a 2xx throws: the relay retries the purge request
+    if (!answer.ok) {
+      throw new CachePurgeError(`PURGE ${url} answered ${answer.status}.`, answer.status);
+    }
+  }
+}
+
+// test/integration/souin-cache-purger.contract.spec.ts: Souin in front of an origin the spec starts
+declare const souin: { readonly url: string; readonly purgeUrl: string };
+declare const origin: { answerUnder(path: string, tags: readonly string[]): void };
+declare function servedFromCache(answer: Response): boolean; // reads the Cache-Status header of Souin
+
+let run = 0;
+
+cachePurgerContract(
+  { describe, it, expect, beforeEach },
+  {
+    name: 'SouinCachePurger',
+    createCache: () => {
+      run += 1;
+      const namespace = `/${Date.now()}-${run}`;
+
+      return {
+        purger: new SouinCachePurger({ url: souin.purgeUrl }),
+        store: async (key, tags) => {
+          origin.answerUnder(`${namespace}${key}`, tags);
+          await fetch(`${souin.url}${namespace}${key}`).then((answer) => answer.text());
+        },
+        holds: async (key) => servedFromCache(await fetch(`${souin.url}${namespace}${key}`)),
+      };
+    },
+  },
+);
+```
+
+The suite holds what the relay relies on: only the answers a tag names are purged, every tag of a
+request, a tag holding the characters of a pattern taken as written, the answers of another tenant
+untouched, and a second purge of the same tags changes nothing.
+
 ## Limits and when not to use it
 
 - **Purge is not instantaneous**: it happens when the relay delivers the request, after the
@@ -103,6 +374,8 @@ kit did not run it on Vinyl Cache, whose packages of vmod_xkey were not checked.
   Bunny ignore: read it from the host or the path behind them.
 
 ## Recommendation by situation
+
+![A decision tree: if no public answer is read by many callers far more often than it changes, no shared cache, only private policies and ETags; if a CDN is already in front, its adapter (Fastly, Cloudflare, or your own for Bunny); otherwise, by the proxy in front of the API: none, Varnish with the generated VCL; Caddy or Traefik, Souin with a purger of your own; nginx, no purge by tag without NGINX Plus, so a short s-maxage or Varnish behind it](../assets/diagrams/http-caches-choosing.svg)
 
 | Situation | Choice |
 |---|---|

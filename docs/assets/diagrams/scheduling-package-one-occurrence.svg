@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 680" width="960" height="680" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">What the scheduler does with one occurrence</title>
+  <desc id="desc">When an occurrence is due, the scheduler first checks whether it was reached later than lateAfterMs: with missed skip it records missed. Then whether the previous run is still in progress: with overlap skip it records skipped-overlap, with queue it waits for it. Then, for a singleInstance job, it takes the lock of the occurrence: held by another instance it records skipped-locked, unreachable it records failed with JOB_LOCK_UNAVAILABLE. Taken, it runs the job in an execution scope: the run succeeds or fails, with the code of what it threw, JOB_TIMEOUT or JOB_ABORTED. Every outcome is logged, counted and given to onRun.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="680" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">What the scheduler does with one occurrence</text>
+  <!-- A: due -->
+  <rect x="60" y="62" width="360" height="50" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="240" y="92" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">the timer fires: an occurrence is due</text>
+  <line x1="240" y1="114" x2="240" y2="142" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- B: late? -->
+  <rect x="60" y="144" width="360" height="60" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="240" y="170" font-size="15" font-weight="700" fill="#7a4f9a" text-anchor="middle">reached later than lateAfterMs?</text>
+  <text x="240" y="192" font-size="13" fill="#1f2328" text-anchor="middle">60 s by default, plus the jitter</text>
+  <line x1="422" y1="174" x2="596" y2="174" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="509" y="164" font-size="13" fill="#1f2328" text-anchor="middle">yes, missed: 'skip'</text>
+  <rect x="600" y="146" width="300" height="56" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="750" y="169" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">missed</text>
+  <text x="750" y="190" font-size="13" fill="#1f2328" text-anchor="middle">the job waits for its next occurrence</text>
+  <line x1="240" y1="206" x2="240" y2="242" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="252" y="229" font-size="13" fill="#1f2328">no, or missed: 'run-once'</text>
+  <!-- C: overlap? -->
+  <rect x="60" y="244" width="360" height="60" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="240" y="270" font-size="15" font-weight="700" fill="#7a4f9a" text-anchor="middle">is the previous run still in progress?</text>
+  <text x="240" y="292" font-size="13" fill="#1f2328" text-anchor="middle">the option overlap decides</text>
+  <line x1="422" y1="274" x2="596" y2="274" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="509" y="264" font-size="13" fill="#1f2328" text-anchor="middle">yes, overlap: 'skip'</text>
+  <rect x="600" y="246" width="300" height="56" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="750" y="269" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">skipped-overlap</text>
+  <text x="750" y="290" font-size="13" fill="#1f2328" text-anchor="middle">nothing starts for this occurrence</text>
+  <line x1="240" y1="306" x2="240" y2="338" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="252" y="327" font-size="13" fill="#1f2328">no, or overlap: 'queue', once it ends</text>
+  <!-- D: lock -->
+  <rect x="60" y="340" width="360" height="88" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="240" y="366" font-size="15" font-weight="700" fill="#7a4f9a" text-anchor="middle">singleInstance: take the lock</text>
+  <text x="240" y="390" font-size="13" fill="#1f2328" text-anchor="middle">key job:&lt;name&gt;:&lt;scheduled instant&gt;</text>
+  <text x="240" y="412" font-size="13" fill="#1f2328" text-anchor="middle">runNow and singleInstance: false take none</text>
+  <line x1="422" y1="358" x2="596" y2="358" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="509" y="348" font-size="13" fill="#1f2328" text-anchor="middle">held elsewhere</text>
+  <rect x="600" y="334" width="300" height="48" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="750" y="363" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">skipped-locked</text>
+  <line x1="422" y1="416" x2="596" y2="416" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="509" y="406" font-size="13" fill="#1f2328" text-anchor="middle">store unreachable</text>
+  <rect x="600" y="392" width="300" height="48" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="750" y="421" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">failed, JOB_LOCK_UNAVAILABLE</text>
+  <line x1="240" y1="430" x2="240" y2="466" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="252" y="453" font-size="13" fill="#1f2328">taken</text>
+  <!-- E: run -->
+  <rect x="60" y="468" width="360" height="88" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="240" y="494" font-size="15" font-weight="700" fill="#2b5d8a" text-anchor="middle">run(execution) in an execution scope</text>
+  <text x="240" y="518" font-size="13" fill="#1f2328" text-anchor="middle">origin schedule, system actor, new correlation id</text>
+  <text x="240" y="540" font-size="13" fill="#1f2328" text-anchor="middle">signal aborted past timeoutMs or at stop()</text>
+  <line x1="422" y1="486" x2="596" y2="486" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="509" y="476" font-size="13" fill="#1f2328" text-anchor="middle">resolved</text>
+  <rect x="600" y="462" width="300" height="48" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="750" y="491" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">succeeded</text>
+  <line x1="422" y1="544" x2="596" y2="544" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="509" y="534" font-size="13" fill="#1f2328" text-anchor="middle">threw or aborted</text>
+  <rect x="600" y="518" width="300" height="56" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="750" y="541" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">failed</text>
+  <text x="750" y="562" font-size="13" fill="#1f2328" text-anchor="middle">its code, JOB_TIMEOUT or JOB_ABORTED</text>
+  <!-- recording -->
+  <rect x="60" y="600" width="840" height="56" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="480" y="624" font-size="14" font-weight="600" fill="#5f6b73" text-anchor="middle">every outcome on the right: one log entry, scheduled_job_runs_total, the onRun observer</text>
+  <text x="480" y="645" font-size="13" fill="#1f2328" text-anchor="middle">a run also gives scheduled_job_duration_ms; nothing is retried, the next occurrence is the retry</text>
+</svg>

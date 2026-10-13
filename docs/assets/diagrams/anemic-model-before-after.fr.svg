@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 460" width="960" height="460" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Modèle anémique et modèle riche : où vivent les règles d'un rendez-vous</title>
+  <desc id="desc">À gauche, un modèle anémique : Appointment est un porteur de données aux champs publics, sans règle. Le gestionnaire d'annulation vérifie le statut et la fenêtre de 24 heures, puis affecte les champs ; le gestionnaire de report recopie la vérification ou l'oublie ; un script d'import affecte le statut sans aucune vérification. À droite, un modèle riche : la racine d'agrégat Appointment a les intentions cancel et reschedule, porte les règles (pas d'annulation en double, la fenêtre d'annulation gratuite), lève des refus nommés et enregistre les événements. Chaque appelant, le script d'import compris, passe par la même intention : les règles s'appliquent une fois, partout.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="460" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Où vivent les règles : modèle anémique, modèle riche</text>
+  <!-- anemic: the rules around the data -->
+  <rect x="24" y="60" width="444" height="340" rx="14" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="44" y="88" font-size="14" font-weight="600" fill="#5f6b73">anémique : les appelants affectent des champs</text>
+  <rect x="40" y="104" width="176" height="88" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="128" y="126" font-size="14" font-weight="700" fill="#2b5d8a" text-anchor="middle">gestionnaire</text>
+  <text x="128" y="143" font-size="14" font-weight="700" fill="#2b5d8a" text-anchor="middle">d'annulation</text>
+  <text x="128" y="164" font-size="13" fill="#1f2328" text-anchor="middle">vérifie statut et 24 h,</text>
+  <text x="128" y="182" font-size="13" fill="#1f2328" text-anchor="middle">puis affecte les champs</text>
+  <line x1="218" y1="148" x2="266" y2="148" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="40" y="200" width="176" height="88" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="128" y="222" font-size="14" font-weight="700" fill="#2b5d8a" text-anchor="middle">gestionnaire</text>
+  <text x="128" y="239" font-size="14" font-weight="700" fill="#2b5d8a" text-anchor="middle">de report</text>
+  <text x="128" y="260" font-size="13" fill="#1f2328" text-anchor="middle">recopie la vérification,</text>
+  <text x="128" y="278" font-size="13" fill="#1f2328" text-anchor="middle">ou l'oublie</text>
+  <line x1="218" y1="244" x2="266" y2="244" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="40" y="296" width="176" height="88" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="128" y="324" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">script d'import</text>
+  <text x="128" y="352" font-size="13" fill="#1f2328" text-anchor="middle">affecte le statut</text>
+  <text x="128" y="370" font-size="13" fill="#1f2328" text-anchor="middle">sans vérification</text>
+  <line x1="218" y1="340" x2="266" y2="340" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="268" y="104" width="184" height="280" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="360" y="134" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">Appointment</text>
+  <text x="360" y="152" font-size="13" fill="#2f6f4f" text-anchor="middle">porteur de données</text>
+  <line x1="280" y1="164" x2="440" y2="164" stroke="#2f6f4f" stroke-opacity="0.35"/>
+  <text x="360" y="186" font-size="13" fill="#1f2328" text-anchor="middle">id, status</text>
+  <text x="360" y="208" font-size="13" fill="#1f2328" text-anchor="middle">startsAt, endsAt</text>
+  <text x="360" y="230" font-size="13" fill="#1f2328" text-anchor="middle">cancelledAt?</text>
+  <text x="360" y="252" font-size="13" fill="#1f2328" text-anchor="middle">cancellationReason?</text>
+  <line x1="280" y1="266" x2="440" y2="266" stroke="#2f6f4f" stroke-opacity="0.35"/>
+  <text x="360" y="284" font-size="13" fill="#1f2328" text-anchor="middle">champs publics, sans règle</text>
+  <text x="246" y="428" font-size="14" font-style="italic" fill="#1f2328" text-anchor="middle">règles recopiées ou sautées, erreurs génériques</text>
+  <!-- rich: the rules inside the model -->
+  <rect x="492" y="60" width="444" height="340" rx="14" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="512" y="88" font-size="14" font-weight="600" fill="#5f6b73">riche : les appelants appellent des intentions</text>
+  <rect x="508" y="104" width="176" height="88" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="596" y="126" font-size="14" font-weight="700" fill="#2b5d8a" text-anchor="middle">gestionnaire</text>
+  <text x="596" y="143" font-size="14" font-weight="700" fill="#2b5d8a" text-anchor="middle">d'annulation</text>
+  <text x="596" y="164" font-size="13" fill="#1f2328" text-anchor="middle">charge, cancel(...),</text>
+  <text x="596" y="182" font-size="13" fill="#1f2328" text-anchor="middle">enregistre</text>
+  <line x1="686" y1="148" x2="734" y2="148" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="508" y="200" width="176" height="88" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="596" y="222" font-size="14" font-weight="700" fill="#2b5d8a" text-anchor="middle">gestionnaire</text>
+  <text x="596" y="239" font-size="14" font-weight="700" fill="#2b5d8a" text-anchor="middle">de report</text>
+  <text x="596" y="260" font-size="13" fill="#1f2328" text-anchor="middle">charge, reschedule(...),</text>
+  <text x="596" y="278" font-size="13" fill="#1f2328" text-anchor="middle">enregistre</text>
+  <line x1="686" y1="244" x2="734" y2="244" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="508" y="296" width="176" height="88" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="596" y="324" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">script d'import</text>
+  <text x="596" y="352" font-size="13" fill="#1f2328" text-anchor="middle">cancel(...) : les mêmes</text>
+  <text x="596" y="370" font-size="13" fill="#1f2328" text-anchor="middle">règles s'appliquent</text>
+  <line x1="686" y1="340" x2="734" y2="340" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="736" y="104" width="184" height="280" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="828" y="134" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">Appointment</text>
+  <text x="828" y="152" font-size="13" fill="#2f6f4f" text-anchor="middle">racine d'agrégat</text>
+  <line x1="748" y1="164" x2="908" y2="164" stroke="#2f6f4f" stroke-opacity="0.35"/>
+  <text x="828" y="186" font-size="13" fill="#1f2328" text-anchor="middle">cancel(reason, at)</text>
+  <text x="828" y="208" font-size="13" fill="#1f2328" text-anchor="middle">reschedule(slot, at)</text>
+  <line x1="748" y1="222" x2="908" y2="222" stroke="#2f6f4f" stroke-opacity="0.35"/>
+  <text x="828" y="240" font-size="13" fill="#1f2328" text-anchor="middle">pas annulé deux fois</text>
+  <text x="828" y="262" font-size="13" fill="#1f2328" text-anchor="middle">fenêtre gratuite de 24 h</text>
+  <text x="828" y="284" font-size="13" fill="#1f2328" text-anchor="middle">refus nommés, événements</text>
+  <text x="714" y="428" font-size="14" font-style="italic" fill="#1f2328" text-anchor="middle">un seul endroit, chaque appelant, testé seul</text>
+</svg>

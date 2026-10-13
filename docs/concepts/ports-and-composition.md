@@ -1,3 +1,5 @@
+**English** · [Français](ports-and-composition.fr.md)
+
 # Ports and composition
 
 **Summary.** A port is what the inner layers need from the outside, stated in their own words.
@@ -12,28 +14,33 @@ and where the limits are.
 
 ## A port, in the scheduling application
 
-`appointments` must know the working hours of a practitioner to accept a booking, and must store
-appointments. Neither need says anything about HTTP or SQL:
+`scheduling` must store appointments, and it shows the name of a patient, which `identity`
+knows. Neither need says anything about HTTP or SQL:
 
+<!-- checked sample -->
 ```ts
-// contexts/appointments/domain/repositories/appointment.repository.ts
-import { Repository } from '@ddd-ts-kit/kernel';
+import { AggregateRoot, Repository } from '@ddd-ts-kit/kernel';
 
+declare class Appointment extends AggregateRoot {}
+
+// contexts/scheduling/domain/repositories/appointment.repository.ts
 export abstract class AppointmentRepository extends Repository<Appointment> {
-  abstract findOverlapping(practitionerId: string, slot: TimeSlot): Promise<readonly Appointment[]>;
+  /** The active appointments of a calendar that hold an instant between `from` and `until`. */
+  abstract heldOn(calendarId: string, from: Date, until: Date): Promise<readonly Appointment[]>;
 }
-```
 
-```ts
-// contexts/appointments/application/ports/working-hours.port.ts
-export abstract class WorkingHoursReader {
-  abstract covers(practitionerId: string, slot: TimeSlot): Promise<boolean>;
+// contexts/scheduling/application/ports/person-directory-gateway.port.ts
+/** What scheduling asks identity about people: the name to show for a patient, and nothing else. */
+export abstract class PersonDirectoryGateway {
+  abstract namesOf(personIds: readonly string[]): Promise<ReadonlyMap<string, { readonly displayName: string }>>;
 }
 ```
 
 A port is named for what the application needs, not for the technology behind it. A repository
 port lives in `domain/repositories/`, any other port in `application/ports/`, one per file
 ([ARCHITECTURE.md](../ARCHITECTURE.md) section 4, "Ports" and "Ports and adapters").
+
+![A handler depends on the PersonDirectoryGateway port, which is both the type of its constructor parameter and the token the container keys on; the adapter and the fake implement the port, and the composition root binds it to one of them](../assets/diagrams/ports-and-composition-port-and-adapters.svg)
 
 ## Why an abstract class, and not an interface
 
@@ -52,19 +59,60 @@ An abstract class is both things at once:
 | a constructor parameter that names what is injected | not possible: the type is erased, a token must be repeated next to it | the type of the parameter is the token |
 | renaming | two names to rename | one |
 
+Instead of an interface and a token kept in step by hand:
+
+```ts
+export interface PersonDirectoryGateway {
+  namesOf(personIds: readonly string[]): Promise<ReadonlyMap<string, { readonly displayName: string }>>;
+}
+
+export const PERSON_DIRECTORY_GATEWAY = Symbol('PersonDirectoryGateway'); // ports/no-token-constant
+
+constructor(@Inject(PERSON_DIRECTORY_GATEWAY) private readonly directory: PersonDirectoryGateway) {}
+```
+
+write the abstract class of the previous section, and name it once:
+
+```ts
+constructor(private readonly directory: PersonDirectoryGateway) {}
+```
+
 So the handler below names its dependencies once, as the ports that type its constructor
 parameters, and nowhere else:
 
+<!-- checked sample -->
 ```ts
-@CommandHandler(BookAppointment)
-export class BookAppointmentHandler implements CommandHandler<BookAppointment> {
+// contexts/scheduling/application/commands/book-appointment/book-appointment.handler.ts (simplified)
+import { AggregateRoot, Clock, Command, IdGenerator, Repository } from '@ddd-ts-kit/kernel';
+import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
+
+declare class Appointment extends AggregateRoot {}
+declare class Calendar extends AggregateRoot {}
+
+export abstract class AppointmentRepository extends Repository<Appointment> {}
+export abstract class CalendarRepository extends Repository<Calendar> {}
+
+export class BookAppointmentCommand extends Command<string> {
+  constructor(readonly calendarId: string) {
+    super();
+  }
+}
+
+@CommandHandler(BookAppointmentCommand)
+export class BookAppointmentHandler implements CommandHandler<BookAppointmentCommand> {
   constructor(
-    private readonly appointments: AppointmentRepository,
-    private readonly workingHours: WorkingHoursReader,
+    private readonly appointmentRepository: AppointmentRepository,
+    private readonly calendarRepository: CalendarRepository,
+    private readonly ids: IdGenerator,
     private readonly clock: Clock,
   ) {}
 
-  async execute(command: BookAppointment): Promise<string> { /* ... */ }
+  async execute(command: BookAppointmentCommand): Promise<string> {
+    const calendar = await this.calendarRepository.findById(command.calendarId);
+    // ... books a slot of the calendar at this.clock.now(), saves it with this.appointmentRepository
+
+    return calendar === undefined ? '' : this.ids.next();
+  }
 }
 ```
 
@@ -104,17 +152,17 @@ its tests and fail under `npm run dev`, or work for a project on class-validator
 one on zod. The kit therefore reads the signatures itself, statically, and writes them down:
 
 ```ts
-// contexts/appointments/appointments.declarations.ts, generated: never edited
+// contexts/scheduling/scheduling.declarations.ts, generated: never edited (an excerpt)
 import { injected } from '@ddd-ts-kit/kernel/declarations';
-import { BookAppointmentHandler } from '@/contexts/appointments/application/commands/book-appointment/book-appointment.handler';
-import { WorkingHoursReader } from '@/contexts/appointments/application/ports/working-hours.port';
-import { AppointmentRepository } from '@/contexts/appointments/domain/repositories/appointment.repository';
-import { Clock } from '@ddd-ts-kit/kernel';
+import { BookAppointmentHandler } from '@/contexts/scheduling/application/commands/book-appointment/book-appointment.handler';
+import { AppointmentRepository } from '@/contexts/scheduling/domain/repositories/appointment.repository';
+import { CalendarRepository } from '@/contexts/scheduling/domain/repositories/calendar.repository';
+import { Clock, IdGenerator } from '@ddd-ts-kit/kernel';
 
-export * from '@/contexts/appointments/application/commands/book-appointment/book-appointment.command';
-export * from '@/contexts/appointments/application/commands/book-appointment/book-appointment.handler';
+export * from '@/contexts/scheduling/application/commands/book-appointment/book-appointment.command';
+export * from '@/contexts/scheduling/application/commands/book-appointment/book-appointment.handler';
 
-injected(BookAppointmentHandler, [AppointmentRepository, WorkingHoursReader, Clock]);
+injected(BookAppointmentHandler, [AppointmentRepository, CalendarRepository, IdGenerator, Clock]);
 ```
 
 `injected` is typed like the list of a decorator was: the compiler refuses a list that does not
@@ -132,6 +180,8 @@ from going stale silently:
   that names the class and the command to run. Nothing is ever injected as `undefined`.
 - **A rule.** `declarations/constructor-injection` refuses a parameter that names no single
   class: a union, an interface, a primitive, an optional or defaulted parameter.
+
+![From a constructor signature to an instance: ddd-ts-kit docs reads the constructor, writes injected(Handler, [ports]) in the generated declarations file, createApplication checks the graph and builds; a rule, the dev script, a gate and the startup keep the generated list in step with the constructor](../assets/diagrams/ports-and-composition-constructor-to-instance.svg)
 
 What a signature may say, and what it may not:
 
@@ -152,7 +202,7 @@ in standard decorators, so such an escape would work in one decorator mode only;
 decorator would move a dependency off the constructor, which is the one place the kit reads.
 The escape for a parameter whose type is not a token is the one the kit already had for
 values: an abstract class, bound in the platform. A list written in the decorator,
-`@CommandHandler(BookAppointment, [AppointmentRepository, WorkingHoursReader, Clock])`, is
+`@CommandHandler(BookAppointmentCommand, [AppointmentRepository, CalendarRepository, IdGenerator, Clock])`, is
 the form 0.1 projects wrote. It is still read, it is checked by the compiler against the
 constructor and it wins over the signature; a project keeps it with
 `"stack.dependencies": "listed"` (what a config without the key means) and leaves it with
@@ -185,13 +235,34 @@ compiled once into one program never needs it.
 
 ## Adapters
 
+<!-- checked sample -->
 ```ts
-// contexts/appointments/infrastructure/external/in-process-working-hours.gateway.ts
-@Gateway(WorkingHoursReader)
-export class InProcessWorkingHoursReader implements WorkingHoursReader {
-  /* reads through the published language of calendars */
+// contexts/scheduling/infrastructure/external/in-process-person-directory.gateway.ts
+import { Gateway } from '@ddd-ts-kit/kernel/declarations';
+
+// the published language of identity: the contract scheduling may call in process
+export abstract class PersonDirectoryContract {
+  abstract byIds(personIds: readonly string[]): Promise<readonly { readonly personId: string; readonly displayName: string }[]>;
+}
+
+export abstract class PersonDirectoryGateway {
+  abstract namesOf(personIds: readonly string[]): Promise<ReadonlyMap<string, { readonly displayName: string }>>;
+}
+
+@Gateway(PersonDirectoryGateway)
+export class InProcessPersonDirectoryGateway implements PersonDirectoryGateway {
+  constructor(readonly upstream: PersonDirectoryContract) {}
+
+  async namesOf(personIds: readonly string[]): Promise<ReadonlyMap<string, { readonly displayName: string }>> {
+    const cards = await this.upstream.byIds(personIds);
+
+    return new Map(cards.map((card) => [card.personId, { displayName: card.displayName }]));
+  }
 }
 ```
+
+When `identity` runs as a service of its own, this class becomes an HTTP or RPC client behind
+the same port: the declaration stays, and nothing else of `scheduling` changes.
 
 An adapter says which port it implements and which role it plays (`@Repository`, `@Gateway`,
 `@Adapter`). The role is what lets cross-cutting behaviour be attached from outside: tracing
@@ -209,21 +280,98 @@ file (explicit style), in `main.ts` and in the platform directory
 the storage and calls `composeApplication` of `src/platform/compose-application.ts`, which lists
 the modules: the kernel module (default buses, clock, id generator, in-memory defaults), the
 platform module (storage, the event provider, the policy around outbound adapters), the
-authorization and audit modules, and one module per context, built from its declarations. The
+authorization and audit modules, the files module when the project stores files, and one module
+per context, built from its declarations. The
 container checks the whole graph before anything is instantiated: duplicate bindings, unbound
 dependencies and cycles are errors at startup, with the port and the module named (the list of
 checks is in the README of `@ddd-ts-kit/di`).
 
-```mermaid
-flowchart TB
-  main[main.ts] --> compose[platform/compose-application.ts]
-  compose --> K[kernel module]
-  compose --> PF[platform module]
-  compose --> C1[appointments]
-  compose --> C2[calendars]
-  compose --> C3[notifications]
-  C1 -. ports bound to adapters .-> PF
+![The composition root of the example application: main.ts calls composeApplication, which hands createApplication the kernel, platform, authorization and audit and files modules and one module per context, identity, scheduling, notification and analytics; the container checks the whole graph before it builds anything](../assets/diagrams/ports-and-composition-composition-root.svg)
+
+In the explicit style a whole composition fits in a few lines. The same port is given the
+adapter in the application and a fake in a test, and the handler does not change:
+
+<!-- checked sample -->
+```ts
+import { Query, QueryBus, type QueryHandler } from '@ddd-ts-kit/kernel';
+import { createApplication, createTestApplication, defineContextModule, fake, kernelModule } from '@ddd-ts-kit/di';
+
+export abstract class PersonDirectoryContract {
+  abstract byIds(personIds: readonly string[]): Promise<readonly { readonly personId: string; readonly displayName: string }[]>;
+}
+
+export abstract class PersonDirectoryGateway {
+  abstract namesOf(personIds: readonly string[]): Promise<ReadonlyMap<string, { readonly displayName: string }>>;
+}
+
+export class InProcessPersonDirectoryGateway implements PersonDirectoryGateway {
+  constructor(private readonly upstream: PersonDirectoryContract) {}
+
+  async namesOf(personIds: readonly string[]): Promise<ReadonlyMap<string, { readonly displayName: string }>> {
+    const cards = await this.upstream.byIds(personIds);
+
+    return new Map(cards.map((card) => [card.personId, { displayName: card.displayName }]));
+  }
+}
+
+// test/fakes/person-directory-gateway.fake.ts: the same shape, answers what the test gave it
+export class FakePersonDirectoryGateway implements PersonDirectoryGateway {
+  constructor(private readonly names: Readonly<Record<string, string>>) {}
+
+  async namesOf(personIds: readonly string[]): Promise<ReadonlyMap<string, { readonly displayName: string }>> {
+    return new Map(personIds.flatMap((id) => (id in this.names ? [[id, { displayName: this.names[id] ?? '' }] as const] : [])));
+  }
+}
+
+export class GetPatientName extends Query<string | undefined> {
+  constructor(readonly patientId: string) {
+    super();
+  }
+}
+
+export class GetPatientNameHandler implements QueryHandler<GetPatientName> {
+  constructor(private readonly directory: PersonDirectoryGateway) {}
+
+  async execute(query: GetPatientName): Promise<string | undefined> {
+    const names = await this.directory.namesOf([query.patientId]);
+
+    return names.get(query.patientId)?.displayName;
+  }
+}
+
+export const schedulingModule = defineContextModule({
+  name: 'scheduling',
+  register(builder) {
+    builder.bind(PersonDirectoryGateway).toClass(InProcessPersonDirectoryGateway, [PersonDirectoryContract]).as('gateway');
+    builder.query(GetPatientName).handledBy(GetPatientNameHandler, [PersonDirectoryGateway]);
+  },
+});
+
+export const identityModule = defineContextModule({
+  name: 'identity',
+  register(builder) {
+    builder.bind(PersonDirectoryContract).toValue({
+      byIds: async (ids) => ids.map((personId) => ({ personId, displayName: 'Ada Lovelace' })),
+    });
+  },
+});
+
+// the application: the port is given the adapter
+const app = createApplication({ modules: [kernelModule(), identityModule, schedulingModule] });
+await app.resolve(QueryBus).execute(new GetPatientName('patient-1')); // 'Ada Lovelace'
+
+// a test: the same port is given the fake
+const test = createTestApplication({
+  modules: [identityModule, schedulingModule],
+  fakes: [fake(PersonDirectoryGateway, new FakePersonDirectoryGateway({ 'patient-1': 'Ada' }))],
+});
+await test.get(QueryBus).execute(new GetPatientName('patient-1')); // 'Ada'
 ```
+
+The test still lists `identityModule`: a fake replaces a binding, and the container still checks
+every binding a module declares. Without it, `createTestApplication` stops with
+`WiringError: "PersonDirectoryGateway" in module "scheduling" depends on "PersonDirectoryContract",
+which no module binds.` (`UNBOUND_DEPENDENCY`).
 
 ## Two ways to tell the root what exists
 

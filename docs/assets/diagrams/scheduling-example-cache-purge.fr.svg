@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 971" width="960" height="971" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Une réponse publique, mise en cache puis purgée</title>
+  <desc id="desc">La séquence d'une réponse mise en cache. Un premier GET des horaires du calendrier c1 ne trouve rien dans le cache de Varnish et atteint l'API, qui lit les horaires et répond 200 sous le tag calendar:c1, gardée une heure. Le GET suivant est un HIT et n'atteint jamais l'API. Un PUT des horaires valide le changement et, dans la même transaction, une demande de purge dans l'outbox. Après la validation, le relais de l'outbox, dans le processus API, lit l'outbox et envoie à Varnish une PURGE du tag calendar:c1, puis la même PURGE deux secondes plus tard. Le GET suivant ne trouve plus rien en cache, atteint l'API et montre au client les nouveaux horaires.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+    <marker id="arrow-infrastructure" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#7a4f9a"/>
+    </marker>
+  </defs>
+  <rect width="960" height="971" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Une réponse publique, mise en cache puis purgée</text>
+  <!-- the steps -->
+  <rect x="24" y="124" width="912" height="219" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-opacity="0.25"/>
+  <rect x="24" y="353" width="912" height="104" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-opacity="0.25"/>
+  <rect x="24" y="467" width="912" height="153" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-opacity="0.25"/>
+  <rect x="24" y="630" width="912" height="137" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-opacity="0.25"/>
+  <rect x="24" y="777" width="912" height="170" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-opacity="0.25"/>
+  <!-- the participants and their lifelines -->
+  <line x1="90" y1="110" x2="90" y2="957" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="4 4"/>
+  <rect x="15" y="58" width="150" height="52" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="90" y="89" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">client</text>
+  <line x1="280" y1="110" x2="280" y2="957" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="4 4"/>
+  <rect x="205" y="58" width="150" height="52" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="280" y="80" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">Varnish</text>
+  <text x="280" y="99" font-size="13" fill="#1f2328" text-anchor="middle">:54081</text>
+  <line x1="470" y1="110" x2="470" y2="957" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="4 4"/>
+  <rect x="395" y="58" width="150" height="52" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="470" y="80" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">API</text>
+  <text x="470" y="99" font-size="13" fill="#1f2328" text-anchor="middle">cas d'usage</text>
+  <line x1="660" y1="110" x2="660" y2="957" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="4 4"/>
+  <rect x="585" y="58" width="150" height="52" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="660" y="80" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">PostgreSQL</text>
+  <text x="660" y="99" font-size="13" fill="#1f2328" text-anchor="middle">tables, outbox</text>
+  <line x1="850" y1="110" x2="850" y2="957" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="4 4"/>
+  <rect x="775" y="58" width="150" height="52" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="850" y="80" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">relais</text>
+  <text x="850" y="99" font-size="13" fill="#1f2328" text-anchor="middle">de l'outbox, dans l'API</text>
+  <!-- the messages -->
+  <text x="36" y="146" font-size="14" font-weight="700" fill="#1f2328" stroke="#f3f4f5" stroke-width="6" stroke-linejoin="round" paint-order="stroke">1. GET /calendars/c1/opening-hours : la première lecture ne trouve rien en cache</text>
+  <line x1="94" y1="183" x2="274" y2="183" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="185" y="177" font-size="13" fill="#1f2328" text-anchor="middle" stroke="#f3f4f5" stroke-width="5" stroke-linejoin="round" paint-order="stroke">GET</text>
+  <line x1="284" y1="216" x2="464" y2="216" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="375" y="210" font-size="13" fill="#1f2328" text-anchor="middle" stroke="#f3f4f5" stroke-width="5" stroke-linejoin="round" paint-order="stroke">MISS : transmise</text>
+  <line x1="474" y1="249" x2="654" y2="249" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="565" y="243" font-size="13" fill="#1f2328" text-anchor="middle" stroke="#f3f4f5" stroke-width="5" stroke-linejoin="round" paint-order="stroke">lit les horaires</text>
+  <line x1="466" y1="298" x2="286" y2="298" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="375" y="276" font-size="13" fill="#1f2328" text-anchor="middle" stroke="#f3f4f5" stroke-width="5" stroke-linejoin="round" paint-order="stroke">200, tag calendar:c1</text>
+  <text x="375" y="292" font-size="13" fill="#1f2328" text-anchor="middle" stroke="#f3f4f5" stroke-width="5" stroke-linejoin="round" paint-order="stroke">gardée 1 h (s-maxage)</text>
+  <line x1="276" y1="331" x2="96" y2="331" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="185" y="325" font-size="13" fill="#1f2328" text-anchor="middle" stroke="#f3f4f5" stroke-width="5" stroke-linejoin="round" paint-order="stroke">200, x-cache: MISS</text>
+  <text x="36" y="375" font-size="14" font-weight="700" fill="#1f2328" stroke="#ffffff" stroke-width="6" stroke-linejoin="round" paint-order="stroke">2. Les lectures suivantes sont des HIT : l'API n'est pas appelée</text>
+  <line x1="94" y1="412" x2="274" y2="412" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="185" y="406" font-size="13" fill="#1f2328" text-anchor="middle" stroke="#ffffff" stroke-width="5" stroke-linejoin="round" paint-order="stroke">GET</text>
+  <line x1="276" y1="445" x2="96" y2="445" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="185" y="439" font-size="13" fill="#1f2328" text-anchor="middle" stroke="#ffffff" stroke-width="5" stroke-linejoin="round" paint-order="stroke">200, x-cache: HIT</text>
+  <text x="36" y="489" font-size="14" font-weight="700" fill="#1f2328" stroke="#f3f4f5" stroke-width="6" stroke-linejoin="round" paint-order="stroke">3. PUT /calendars/c1/opening-hours : le changement est validé avec sa demande de purge</text>
+  <line x1="94" y1="526" x2="464" y2="526" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="280" y="520" font-size="13" fill="#1f2328" text-anchor="middle" stroke="#f3f4f5" stroke-width="5" stroke-linejoin="round" paint-order="stroke">PUT, avec un jeton</text>
+  <line x1="474" y1="575" x2="654" y2="575" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="565" y="553" font-size="13" fill="#1f2328" text-anchor="middle" stroke="#f3f4f5" stroke-width="5" stroke-linejoin="round" paint-order="stroke">une validation : les horaires,</text>
+  <text x="565" y="569" font-size="13" fill="#1f2328" text-anchor="middle" stroke="#f3f4f5" stroke-width="5" stroke-linejoin="round" paint-order="stroke">la purge dans l'outbox</text>
+  <line x1="466" y1="608" x2="96" y2="608" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="280" y="602" font-size="13" fill="#1f2328" text-anchor="middle" stroke="#f3f4f5" stroke-width="5" stroke-linejoin="round" paint-order="stroke">200</text>
+  <text x="36" y="652" font-size="14" font-weight="700" fill="#1f2328" stroke="#ffffff" stroke-width="6" stroke-linejoin="round" paint-order="stroke">4. Après la validation, le relais purge le tag, deux fois</text>
+  <line x1="846" y1="689" x2="666" y2="689" stroke="#7a4f9a" stroke-width="2" marker-end="url(#arrow-infrastructure)"/>
+  <text x="755" y="683" font-size="13" fill="#1f2328" text-anchor="middle" stroke="#ffffff" stroke-width="5" stroke-linejoin="round" paint-order="stroke">lit l'outbox</text>
+  <line x1="846" y1="722" x2="286" y2="722" stroke="#7a4f9a" stroke-width="2" marker-end="url(#arrow-infrastructure)"/>
+  <text x="565" y="716" font-size="13" fill="#1f2328" text-anchor="middle" stroke="#ffffff" stroke-width="5" stroke-linejoin="round" paint-order="stroke">PURGE, xkey-purge: calendar:c1</text>
+  <line x1="846" y1="755" x2="286" y2="755" stroke="#7a4f9a" stroke-width="2" marker-end="url(#arrow-infrastructure)"/>
+  <text x="565" y="749" font-size="13" fill="#1f2328" text-anchor="middle" stroke="#ffffff" stroke-width="5" stroke-linejoin="round" paint-order="stroke">la même PURGE, 2 s plus tard</text>
+  <text x="36" y="799" font-size="14" font-weight="700" fill="#1f2328" stroke="#f3f4f5" stroke-width="6" stroke-linejoin="round" paint-order="stroke">5. La lecture suivante n'est plus en cache, et montre les nouveaux horaires</text>
+  <line x1="94" y1="836" x2="274" y2="836" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="185" y="830" font-size="13" fill="#1f2328" text-anchor="middle" stroke="#f3f4f5" stroke-width="5" stroke-linejoin="round" paint-order="stroke">GET</text>
+  <line x1="284" y1="869" x2="464" y2="869" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="375" y="863" font-size="13" fill="#1f2328" text-anchor="middle" stroke="#f3f4f5" stroke-width="5" stroke-linejoin="round" paint-order="stroke">MISS : transmise</text>
+  <line x1="466" y1="902" x2="286" y2="902" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="375" y="896" font-size="13" fill="#1f2328" text-anchor="middle" stroke="#f3f4f5" stroke-width="5" stroke-linejoin="round" paint-order="stroke">200, les nouveaux horaires</text>
+  <line x1="276" y1="935" x2="96" y2="935" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="185" y="929" font-size="13" fill="#1f2328" text-anchor="middle" stroke="#f3f4f5" stroke-width="5" stroke-linejoin="round" paint-order="stroke">200, x-cache: MISS</text>
+</svg>

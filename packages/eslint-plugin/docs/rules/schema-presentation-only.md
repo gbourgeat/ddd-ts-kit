@@ -1,3 +1,5 @@
+**English** · [Français](schema-presentation-only.fr.md)
+
 # ddd-ts-kit/schema-presentation-only
 
 Architecture id: `schema/presentation-only`. Default severity: `error` in `recommended`, `error` in `strict`.

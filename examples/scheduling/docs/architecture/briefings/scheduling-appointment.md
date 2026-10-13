@@ -1,3 +1,5 @@
+**English** · [Français](scheduling-appointment.fr.md)
+
 # Briefing: scheduling, appointments
 
 You build half of the bounded context `scheduling` (the core). Worker name:

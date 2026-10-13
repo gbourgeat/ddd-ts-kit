@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 556" width="960" height="556" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Two bounded contexts that collaborate</title>
+  <desc id="desc">An upstream context, scheduling, keeps its model and its tables private and publishes a published-language folder. The downstream context, notification, imports only the types of that published language. At run time, the upstream writes each integration event to its outbox in the transaction of the command; a relay publishes it after the commit, through the event bus or a broker, to the integration event handlers of the downstream, which deduplicate it and send a command. An optional anti-corruption layer translates the upstream model. No table, join or transaction is shared.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="556" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Two bounded contexts that collaborate</text>
+  <!-- upstream context -->
+  <rect x="24" y="60" width="360" height="384" rx="12" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="44" y="88" font-size="14" font-weight="600" fill="#5f6b73">upstream context: scheduling</text>
+  <rect x="44" y="104" width="320" height="120" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="204" y="134" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">private to the context</text>
+  <line x1="60" y1="146" x2="348" y2="146" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text x="204" y="170" font-size="13" fill="#1f2328" text-anchor="middle">domain, application, infrastructure</text>
+  <text x="204" y="192" font-size="13" fill="#1f2328" text-anchor="middle">its tables, in its own schema</text>
+  <text x="204" y="214" font-size="13" fill="#1f2328" text-anchor="middle">imported by no other context</text>
+  <rect x="44" y="244" width="320" height="104" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="204" y="274" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">published-language/</text>
+  <line x1="60" y1="286" x2="348" y2="286" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text x="204" y="310" font-size="13" fill="#1f2328" text-anchor="middle">integration event declarations</text>
+  <text x="204" y="332" font-size="13" fill="#1f2328" text-anchor="middle">payload types, read contracts</text>
+  <rect x="44" y="368" width="220" height="60" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="154" y="394" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">outbox</text>
+  <text x="154" y="415" font-size="13" fill="#1f2328" text-anchor="middle">rows committed with the state</text>
+  <!-- relay, between the two contexts -->
+  <rect x="400" y="368" width="160" height="60" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="480" y="394" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">relay</text>
+  <text x="480" y="415" font-size="13" fill="#1f2328" text-anchor="middle">to the bus or broker</text>
+  <!-- downstream context -->
+  <rect x="576" y="60" width="360" height="384" rx="12" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="596" y="88" font-size="14" font-weight="600" fill="#5f6b73">downstream context: notification</text>
+  <rect x="596" y="104" width="320" height="120" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="756" y="134" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">anti-corruption/ (optional)</text>
+  <line x1="612" y1="146" x2="900" y2="146" stroke="#7a4f9a" stroke-opacity="0.35"/>
+  <text x="756" y="170" font-size="13" fill="#1f2328" text-anchor="middle">translates the model of the upstream</text>
+  <text x="756" y="192" font-size="13" fill="#1f2328" text-anchor="middle">into the words of this context</text>
+  <text x="756" y="214" font-size="13" fill="#1f2328" text-anchor="middle">under infrastructure/</text>
+  <rect x="596" y="244" width="320" height="104" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="756" y="274" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">integration event handlers</text>
+  <line x1="612" y1="286" x2="900" y2="286" stroke="#2b5d8a" stroke-opacity="0.35"/>
+  <text x="756" y="310" font-size="13" fill="#1f2328" text-anchor="middle">one consumer name each</text>
+  <text x="756" y="332" font-size="13" fill="#1f2328" text-anchor="middle">deduplicate, then send a command</text>
+  <text x="800" y="404" font-size="13" font-style="italic" fill="#5f6b73" text-anchor="middle">its own tables, its own schema</text>
+  <!-- compile-time import: downstream handlers to the upstream published language -->
+  <line x1="594" y1="300" x2="368" y2="300" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="480" y="288" font-size="13" fill="#1f2328" text-anchor="middle">imports these types only</text>
+  <!-- run time: outbox, relay, handlers -->
+  <line x1="266" y1="398" x2="396" y2="398" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <path d="M562,398 H660 V352" fill="none" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <!-- legend -->
+  <line x1="40" y1="478" x2="84" y2="478" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="96" y="483" font-size="14" fill="#1f2328">imports at compile time: only the published language of a declared upstream</text>
+  <line x1="40" y1="504" x2="84" y2="504" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <text x="96" y="509" font-size="14" fill="#1f2328">an integration event at run time, delivered at least once</text>
+  <text x="40" y="537" font-size="14" fill="#1f2328">No table, no join and no transaction is shared between the two contexts.</text>
+</svg>

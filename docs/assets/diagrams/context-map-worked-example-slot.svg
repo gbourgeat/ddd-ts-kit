@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 460" width="960" height="460" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Two meanings of slot: availability advises, appointments decides</title>
+  <desc id="desc">availability computes the slots still on offer from events, a moment late, and tells two clients that 10:00 is free. Both ask appointments to book 10:00. appointments, where no double booking is held by the aggregate and a unique constraint, books the first and refuses the second with SlotAlreadyTaken. The appointment booked event then reaches availability, which stops offering 10:00.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="460" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Two meanings of slot: availability advises, appointments decides</text>
+  <!-- availability -->
+  <rect x="24" y="64" width="256" height="214" rx="10" fill="#ffffff" stroke="#2f6f4f" stroke-width="1.5"/>
+  <text x="152" y="92" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">availability</text>
+  <text x="152" y="112" font-size="13" font-style="italic" fill="#1f2328" text-anchor="middle">supporting</text>
+  <line x1="40" y1="124" x2="264" y2="124" stroke="#2f6f4f" stroke-opacity="0.35"/>
+  <text x="40" y="148" font-size="13" font-weight="700" fill="#2f6f4f">slot: an interval still on offer</text>
+  <text x="40" y="172" font-size="13" fill="#1f2328">computed from published events,</text>
+  <text x="40" y="194" font-size="13" fill="#1f2328">so always a moment late</text>
+  <text x="40" y="250" font-size="13" font-style="italic" font-weight="600" fill="#2f6f4f">advises, never decides</text>
+  <!-- clients -->
+  <rect x="370" y="74" width="210" height="60" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="475" y="98" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">client Ada</text>
+  <text x="475" y="120" font-size="13" fill="#1f2328" text-anchor="middle">gets: booked</text>
+  <rect x="370" y="176" width="210" height="60" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="475" y="200" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">client Bob, a second later</text>
+  <text x="475" y="222" font-size="13" fill="#1f2328" text-anchor="middle">gets: SlotAlreadyTaken</text>
+  <!-- appointments -->
+  <rect x="680" y="64" width="256" height="214" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="3"/>
+  <text x="808" y="92" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">appointments</text>
+  <text x="808" y="112" font-size="13" font-style="italic" fill="#1f2328" text-anchor="middle">core</text>
+  <line x1="696" y1="124" x2="920" y2="124" stroke="#2f6f4f" stroke-opacity="0.35"/>
+  <text x="696" y="148" font-size="13" font-weight="700" fill="#2f6f4f">slot: the interval an</text>
+  <text x="696" y="166" font-size="13" font-weight="700" fill="#2f6f4f">appointment occupies</text>
+  <text x="696" y="190" font-size="13" fill="#1f2328">no double booking, held by the</text>
+  <text x="696" y="210" font-size="13" fill="#1f2328">aggregate and a unique constraint</text>
+  <text x="696" y="250" font-size="13" font-style="italic" font-weight="600" fill="#2f6f4f">decides, at every instant</text>
+  <!-- reads -->
+  <line x1="282" y1="104" x2="366" y2="104" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="324" y="94" font-size="13" fill="#1f2328" text-anchor="middle">10:00 free</text>
+  <line x1="282" y1="206" x2="366" y2="206" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="324" y="196" font-size="13" fill="#1f2328" text-anchor="middle">10:00 free</text>
+  <!-- bookings -->
+  <line x1="582" y1="104" x2="676" y2="104" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="629" y="94" font-size="13" fill="#1f2328" text-anchor="middle">book 10:00</text>
+  <line x1="582" y1="206" x2="676" y2="206" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="629" y="196" font-size="13" fill="#1f2328" text-anchor="middle">book 10:00</text>
+  <!-- the event, later -->
+  <path d="M808,280 V326 H152 V284" fill="none" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <text x="480" y="350" font-size="13" fill="#1f2328" text-anchor="middle">appointments.appointment.booked, a moment later: 10:00 is no longer offered</text>
+  <!-- legend -->
+  <line x1="40" y1="404" x2="84" y2="404" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="96" y="409" font-size="14" fill="#1f2328">a request and its answer, at once</text>
+  <line x1="40" y1="434" x2="84" y2="434" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <text x="96" y="439" font-size="14" fill="#1f2328">an integration event, delivered later</text>
+</svg>

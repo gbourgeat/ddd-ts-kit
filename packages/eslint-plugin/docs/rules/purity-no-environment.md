@@ -1,3 +1,5 @@
+**English** · [Français](purity-no-environment.fr.md)
+
 # ddd-ts-kit/purity-no-environment
 
 Architecture id: `purity/no-environment`. Default severity: `error` in `recommended`, `error` in `strict`.

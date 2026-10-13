@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" width="960" height="540" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Offset ou curseur : la page suivante après l'insertion d'une ligne</title>
+  <desc id="desc">Des factures triées par montant, puis par id pour départager. À gauche, une page par offset : la page 1 montre les trois premières lignes ; une ligne de montant 110 est insérée avant la seconde lecture, si bien que la page 2, à l'offset 3, montre de nouveau inv-f et perd inv-e de vue. À droite, une page par curseur : le curseur est la position de la dernière ligne de la page 1, montant 120 et id inv-f ; la page suivante sélectionne les lignes après cette position par une comparaison de tuples et lit une ligne de plus que la limite, si bien que l'insertion ne change rien et que la ligne en trop dit qu'une page suit.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="540" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Offset ou curseur : la page suivante après l'insertion d'une ligne</text>
+  <!-- left panel: offset -->
+  <rect x="24" y="58" width="444" height="460" rx="12" fill="#ffffff" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="44" y="86" font-size="16" font-weight="700" fill="#2b5d8a">page par offset : limit 3, offset 3</text>
+  <text x="44" y="106" font-size="13" fill="#1f2328">ORDER BY amount, id LIMIT 3 OFFSET 3</text>
+  <text x="140" y="138" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">première lecture</text>
+  <text x="352" y="138" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">seconde lecture, après insertion</text>
+  <!-- first read -->
+  <rect x="44" y="148" width="192" height="28" fill="#e7eef5" stroke="#2b5d8a"/>
+  <text x="140" y="167" font-size="13" fill="#1f2328" text-anchor="middle">100, inv-a</text>
+  <rect x="44" y="176" width="192" height="28" fill="#e7eef5" stroke="#2b5d8a"/>
+  <text x="140" y="195" font-size="13" fill="#1f2328" text-anchor="middle">120, inv-c</text>
+  <rect x="44" y="204" width="192" height="28" fill="#e7eef5" stroke="#2b5d8a"/>
+  <text x="140" y="223" font-size="13" fill="#1f2328" text-anchor="middle">120, inv-f</text>
+  <rect x="44" y="240" width="192" height="28" fill="#ffffff" stroke="#2b5d8a"/>
+  <text x="140" y="259" font-size="13" fill="#1f2328" text-anchor="middle">150, inv-b</text>
+  <rect x="44" y="268" width="192" height="28" fill="#ffffff" stroke="#2b5d8a"/>
+  <text x="140" y="287" font-size="13" fill="#1f2328" text-anchor="middle">150, inv-d</text>
+  <rect x="44" y="296" width="192" height="28" fill="#ffffff" stroke="#2b5d8a"/>
+  <text x="140" y="315" font-size="13" fill="#1f2328" text-anchor="middle">200, inv-e</text>
+  <text x="140" y="346" font-size="13" fill="#2b5d8a" text-anchor="middle">page 1 : les trois premières lignes</text>
+  <!-- second read -->
+  <rect x="256" y="148" width="192" height="28" fill="#ffffff" stroke="#2b5d8a"/>
+  <text x="352" y="167" font-size="13" fill="#1f2328" text-anchor="middle">100, inv-a</text>
+  <rect x="256" y="176" width="192" height="28" fill="#f6ede6" stroke="#9a5b2b"/>
+  <text x="352" y="195" font-size="13" fill="#1f2328" text-anchor="middle">110, inv-g (nouvelle)</text>
+  <rect x="256" y="204" width="192" height="28" fill="#ffffff" stroke="#2b5d8a"/>
+  <text x="352" y="223" font-size="13" fill="#1f2328" text-anchor="middle">120, inv-c</text>
+  <rect x="256" y="240" width="192" height="28" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="352" y="259" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">120, inv-f, de nouveau</text>
+  <rect x="256" y="268" width="192" height="28" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="352" y="287" font-size="13" fill="#1f2328" text-anchor="middle">150, inv-b</text>
+  <rect x="256" y="296" width="192" height="28" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="352" y="315" font-size="13" fill="#1f2328" text-anchor="middle">150, inv-d</text>
+  <text x="352" y="346" font-size="13" fill="#2b5d8a" text-anchor="middle">page 2 : lignes 4 à 6</text>
+  <text x="352" y="364" font-size="13" fill="#2b5d8a" text-anchor="middle">de la nouvelle liste</text>
+  <line x1="44" y1="236" x2="448" y2="236" stroke="#3d4449" stroke-width="1.5" stroke-dasharray="5 4"/>
+  <text x="44" y="388" font-size="13" fill="#1f2328">Chaque ligne avant l'offset compte : une ligne insérée</text>
+  <text x="44" y="408" font-size="13" fill="#1f2328">avant lui décale la page suivante d'un cran. inv-f est</text>
+  <text x="44" y="428" font-size="13" fill="#1f2328">montrée deux fois, inv-e arrive une page plus tard.</text>
+  <text x="44" y="460" font-size="13" fill="#1f2328">La page répond total, par un comptage : proposez-la</text>
+  <text x="44" y="480" font-size="13" fill="#1f2328">pour de petites listes parcourues page par page.</text>
+  <!-- right panel: cursor -->
+  <rect x="492" y="58" width="444" height="460" rx="12" fill="#ffffff" stroke="#7a4f9a" stroke-width="1.5"/>
+  <text x="512" y="86" font-size="16" font-weight="700" fill="#7a4f9a">page par curseur : limit 3, après (120, inv-f)</text>
+  <text x="512" y="106" font-size="13" fill="#1f2328">WHERE amount &gt; 120 OR (amount = 120 AND id &gt; 'inv-f')</text>
+  <text x="512" y="124" font-size="13" fill="#1f2328">ORDER BY amount, id LIMIT 4</text>
+  <rect x="512" y="148" width="192" height="28" fill="#ffffff" stroke="#7a4f9a"/>
+  <text x="608" y="167" font-size="13" fill="#1f2328" text-anchor="middle">100, inv-a</text>
+  <rect x="512" y="176" width="192" height="28" fill="#f6ede6" stroke="#9a5b2b"/>
+  <text x="608" y="195" font-size="13" fill="#1f2328" text-anchor="middle">110, inv-g (nouvelle)</text>
+  <rect x="512" y="204" width="192" height="28" fill="#ffffff" stroke="#7a4f9a"/>
+  <text x="608" y="223" font-size="13" fill="#1f2328" text-anchor="middle">120, inv-c</text>
+  <rect x="512" y="232" width="192" height="28" fill="#ffffff" stroke="#7a4f9a"/>
+  <text x="608" y="251" font-size="13" fill="#1f2328" text-anchor="middle">120, inv-f</text>
+  <line x1="512" y1="264" x2="704" y2="264" stroke="#3d4449" stroke-width="1.5" stroke-dasharray="5 4"/>
+  <rect x="512" y="268" width="192" height="28" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="608" y="287" font-size="13" fill="#1f2328" text-anchor="middle">150, inv-b</text>
+  <rect x="512" y="296" width="192" height="28" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="608" y="315" font-size="13" fill="#1f2328" text-anchor="middle">150, inv-d</text>
+  <rect x="512" y="324" width="192" height="28" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="608" y="343" font-size="13" fill="#1f2328" text-anchor="middle">200, inv-e</text>
+  <rect x="512" y="352" width="192" height="28" fill="#ffffff" stroke="#7a4f9a" stroke-dasharray="4 3"/>
+  <text x="608" y="371" font-size="13" fill="#5f6b73" text-anchor="middle">210, inv-h : la ligne en trop</text>
+  <!-- annotations -->
+  <path d="M800,224 V264 H708" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="724" y="190" font-size="13" fill="#1f2328">le curseur : la position</text>
+  <text x="724" y="208" font-size="13" fill="#1f2328">de la dernière ligne, page 1</text>
+  <path d="M760,310 H708" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="768" y="315" font-size="13" fill="#1f2328">page 2, inchangée</text>
+  <path d="M760,366 H708" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="768" y="362" font-size="13" fill="#1f2328">une ligne de trop :</text>
+  <text x="768" y="380" font-size="13" fill="#1f2328">nextCursor est posé</text>
+  <text x="512" y="412" font-size="13" fill="#1f2328">Les lignes avant le curseur ne comptent pas : l'insertion</text>
+  <text x="512" y="432" font-size="13" fill="#1f2328">ne change rien. L'id après le montant rend l'ordre total,</text>
+  <text x="512" y="452" font-size="13" fill="#1f2328">deux lignes à 120 ou 150 ne s'échangent jamais.</text>
+  <text x="512" y="480" font-size="13" fill="#1f2328">Aucun comptage : proposez-la pour tout ce qui grandit.</text>
+  <text x="512" y="500" font-size="13" fill="#1f2328">L'index couvre (tenant_id, amount, id).</text>
+</svg>

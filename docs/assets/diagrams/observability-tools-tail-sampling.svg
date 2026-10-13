@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 336" width="960" height="336" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Tail sampling in a collector</title>
+  <desc id="desc">Your service samples every trace and exports its spans as they end. An OpenTelemetry Collector waits for the whole trace, then keeps it when a span is in error or an event was dead-lettered, and keeps ten percent of the rest. The kept traces go to Jaeger or Tempo.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="336" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Keeping every trace in error: decided in a collector, after the trace</text>
+  <!-- application -->
+  <rect x="32" y="96" width="214" height="128" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="139" y="126" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">your service</text>
+  <text x="139" y="156" font-size="13" fill="#1f2328" text-anchor="middle">samples every trace</text>
+  <text x="139" y="178" font-size="13" fill="#1f2328" text-anchor="middle">(no sampleRatio)</text>
+  <text x="139" y="200" font-size="13" fill="#1f2328" text-anchor="middle">exports spans as they end</text>
+  <!-- collector -->
+  <rect x="300" y="64" width="410" height="200" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="505" y="92" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">Collector: tail_sampling</text>
+  <text x="505" y="114" font-size="13" fill="#1f2328" text-anchor="middle">waits decision_wait (30 s), then decides on the whole trace</text>
+  <rect x="324" y="128" width="362" height="34" rx="6" fill="#ffffff" stroke="#5f6b73"/>
+  <text x="340" y="150" font-size="13" fill="#1f2328">a span with status ERROR: keep</text>
+  <rect x="324" y="170" width="362" height="34" rx="6" fill="#ffffff" stroke="#5f6b73"/>
+  <text x="340" y="192" font-size="13" fill="#1f2328">app.outcome = dead-lettered: keep</text>
+  <rect x="324" y="212" width="362" height="34" rx="6" fill="#ffffff" stroke="#5f6b73"/>
+  <text x="340" y="234" font-size="13" fill="#1f2328">any other trace: keep 10%</text>
+  <!-- backend -->
+  <rect x="764" y="114" width="164" height="100" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="846" y="152" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">Jaeger or Tempo</text>
+  <text x="846" y="178" font-size="13" fill="#1f2328" text-anchor="middle">the kept traces</text>
+  <!-- arrows -->
+  <line x1="248" y1="160" x2="296" y2="160" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="272" y="150" font-size="13" fill="#1f2328" text-anchor="middle">OTLP</text>
+  <line x1="712" y1="164" x2="760" y2="164" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="32" y="300" font-size="14" fill="#1f2328">decision_wait must cover the delay of the outbox relay and of the retries,</text>
+  <text x="32" y="320" font-size="14" fill="#1f2328">or the late spans of a trace are decided apart from the others.</text>
+</svg>

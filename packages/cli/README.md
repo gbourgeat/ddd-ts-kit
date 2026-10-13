@@ -1,3 +1,5 @@
+**English** · [Français](README.fr.md)
+
 # ddd-ts-kit
 
 Bootstrap, scaffold, document and verify Domain-Driven Design and Clean Architecture projects
@@ -10,6 +12,15 @@ dependency-cruiser, knip, coverage thresholds, git hooks and the CI of GitHub or
 
 The generator and the checker share one definition of the canonical tree, and a test generates
 every kind for every stack and requires zero violation: they cannot disagree.
+
+The main commands fall into two families. The first writes the project: `init` once, `generate` for
+each piece, `docs`, `sdk` and `depcruise-config` for what is derived from the code and the
+config, and three migrations that move a project from an older form to the current one. The
+second reads the project back without changing it: `check` judges it, `list` and `describe` state
+what it holds, `status` and `todo` say what is left to do, `affected` says what a pull request has
+to run.
+
+![The commands of the CLI around a project: on the left the ones that write it (init, generate, docs, sdk and depcruise-config, the three migrations), in the middle the project (ddd-ts-kit.config.json, the bounded contexts and the platform under src/, the generated documents), on the right the ones that read it back (check and check-file, list and describe, status and todo, affected)](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/cli-commands-and-project.svg)
 
 No runtime dependency. Node 22.12 or later.
 
@@ -98,7 +109,7 @@ existed keeps its spelling. See [docs/CONFIG.md](../../docs/CONFIG.md).
 
 Defaults: `express`, `zod`, `tsyringe` (`nest` with `--http nest`, and only then), `vitest`,
 `drizzle` on `postgres`, `outbox` when there is an ORM, `swagger`, `github`, `jwt`, `rbac`, no broker,
-the cache in the process, the audit trail `on` when there is an ORM, unexpected failures reported
+the cache in the process, files in a local directory (`--storage local`), the audit trail `on` when there is an ORM, unexpected failures reported
 nowhere (`--errors none`), JSON lines on the standard output (`--logger stdout`), and the
 `declared` style with a `barrel` wherever the declarations are read: with `--di tsyringe`.
 
@@ -110,7 +121,7 @@ proven by a real install of a generated project, its build and its `verify`. The
 from the registry either way.
 
 **Pipelines.** A pull or merge request runs the unit specs, the integration specs and the lint of
-the contexts its change reaches through the context map (`ddd-ts-kit affected`); types,
+the contexts its change reaches through the context map ([`ddd-ts-kit affected`](#affected)); types,
 architecture, import graph, dead code, end to end, build and documents always run on the whole
 project, and the default branch and the nightly schedule run everything.
 
@@ -132,6 +143,104 @@ files it imports itself are compiled by the runner. Discovery is accepted behind
 context listens on the subscriber `EventSubscribers.forContext(name)` hands it, in either assembly.
 A config written before `stack.style` existed is explicit.
 
+The same use case in both styles. In the declared style, the command and its handler carry their
+decorator, and the handler's constructor says what it needs. The body of the handler is the one
+`generate command billing IssueInvoice --aggregate Invoice --permission invoice.issue` writes,
+before its `TODO(domain)` is answered; the input of the command is filled in:
+
+<!-- checked sample -->
+```ts
+import { definePermissions } from '@ddd-ts-kit/auth';
+import { type Actor, AggregateRoot, AuthorizedCommand, type Clock, type IdGenerator, Repository } from '@ddd-ts-kit/kernel';
+import { CommandHandler, Requires } from '@ddd-ts-kit/kernel/declarations';
+
+declare class Invoice extends AggregateRoot {
+  static create(id: string, now: Date): Invoice;
+}
+
+// domain/repositories/invoice.repository.ts
+export abstract class InvoiceRepository extends Repository<Invoice> {}
+
+// application/authorization/billing.permissions.ts
+export const billingPermissions = definePermissions('billing', {
+  'invoice.issue': { description: 'Issue invoice' },
+});
+
+// application/commands/issue-invoice/issue-invoice.command.ts
+@Requires(billingPermissions['invoice.issue'])
+export class IssueInvoiceCommand extends AuthorizedCommand<string> {
+  constructor(
+    actor: Actor,
+    readonly customerId: string,
+  ) {
+    super(actor);
+  }
+}
+
+// application/commands/issue-invoice/issue-invoice.handler.ts
+@CommandHandler(IssueInvoiceCommand)
+export class IssueInvoiceHandler implements CommandHandler<IssueInvoiceCommand> {
+  // each parameter is typed by one class, which is also its injection token
+  constructor(
+    private readonly invoiceRepository: InvoiceRepository,
+    private readonly ids: IdGenerator,
+    private readonly clock: Clock,
+  ) {}
+
+  async execute(command: IssueInvoiceCommand): Promise<string> {
+    const target = Invoice.create(this.ids.next(), this.clock.now());
+
+    await this.invoiceRepository.save(target);
+
+    return target.id;
+  }
+}
+```
+
+In the explicit style, the same classes carry no decorator, and the module file of the context
+binds each of them, with its permission and the ports it is given:
+
+<!-- checked sample -->
+```ts
+import { definePermissions } from '@ddd-ts-kit/auth';
+import { defineContextModule } from '@ddd-ts-kit/di';
+import { AggregateRoot, AuthorizedCommand, Clock, type CommandHandler, IdGenerator, Repository } from '@ddd-ts-kit/kernel';
+
+// the classes of the declared sample, without their decorators
+declare class Invoice extends AggregateRoot {}
+declare class IssueInvoiceCommand extends AuthorizedCommand<string> {}
+declare class IssueInvoiceHandler implements CommandHandler<IssueInvoiceCommand> {
+  constructor(invoiceRepository: InvoiceRepository, ids: IdGenerator, clock: Clock);
+  execute(command: IssueInvoiceCommand): Promise<string>;
+}
+declare class InMemoryInvoiceRepository implements InvoiceRepository {
+  findById(id: string): Promise<Invoice | undefined>;
+  save(invoice: Invoice): Promise<void>;
+}
+
+export abstract class InvoiceRepository extends Repository<Invoice> {}
+
+export const billingPermissions = definePermissions('billing', {
+  'invoice.issue': { description: 'Issue invoice' },
+});
+
+// billing.module.ts: every binding of the context, one line each
+export const billingModule = defineContextModule({
+  name: 'billing',
+  register(builder) {
+    builder.bind(InvoiceRepository).toClass(InMemoryInvoiceRepository).as('repository');
+    builder
+      .command(IssueInvoiceCommand)
+      .requires(billingPermissions['invoice.issue'])
+      .handledBy(IssueInvoiceHandler, [InvoiceRepository, IdGenerator, Clock]);
+  },
+});
+```
+
+`check` holds both forms: `authz/declared` reports a command that says neither who may send it
+nor that it is public, `declarations/role-declared` a role file of the declared style without its
+decorator.
+
 **A port is an abstract class and its own injection token.** `application/ports/<name>.port.ts`
 and `domain/repositories/<name>.repository.ts` hold one abstract class each. Generated code holds
 no `token()`, no UPPER_SNAKE injection constant, no `<context>.ports.ts` and no
@@ -139,6 +248,50 @@ no `token()`, no UPPER_SNAKE injection constant, no `<context>.ports.ts` and no
 (`private readonly clock: Clock`), kernel ports are value imports wherever they are named in a
 list or a binding and type imports where they only type a parameter, an adapter `implements`
 its port.
+
+Instead of an interface, a token constant and an injection by name:
+
+```ts
+export interface IPaymentGateway {
+  charge(invoiceId: string, amountInCents: number): Promise<void>;
+}
+
+export const PAYMENT_GATEWAY = Symbol('PaymentGateway'); // ports/no-token-constant
+
+constructor(@inject(PAYMENT_GATEWAY) private readonly payments: IPaymentGateway) {}
+```
+
+write one abstract class, which is both the contract and the token:
+
+<!-- checked sample -->
+```ts
+import { Adapter } from '@ddd-ts-kit/kernel/declarations';
+
+// application/ports/payment-gateway.port.ts
+export abstract class PaymentGateway {
+  abstract charge(invoiceId: string, amountInCents: number): Promise<void>;
+}
+
+// infrastructure/external/remote-payment-gateway.adapter.ts: implements the port, never extends it
+@Adapter(PaymentGateway, { kind: 'external' })
+export class RemotePaymentGateway implements PaymentGateway {
+  async charge(invoiceId: string, amountInCents: number): Promise<void> {
+    // TODO(platform): call the payment provider with invoiceId and amountInCents
+  }
+}
+
+// a handler names the port by the type of its parameter: nothing else says what is injected
+export class SettleInvoiceHandler {
+  constructor(private readonly payments: PaymentGateway) {}
+
+  async settle(invoiceId: string, amountInCents: number): Promise<void> {
+    await this.payments.charge(invoiceId, amountInCents);
+  }
+}
+```
+
+`ports/abstract-class`, `ports/implements-never-extends`, `ports/no-token-constant` and
+`ports/value-import` hold this form, in `check` and in ESLint.
 
 **The constructor states the dependencies.** In the declared style a generated class lists
 nothing in its decorator (`@CommandHandler(IssueInvoiceCommand)`): each constructor parameter
@@ -154,12 +307,77 @@ is absent with standard decorators and under `tsx`. `init` writes
 what each class is given. Every generated file exports one class, interface or function and is named
 after it.
 
+![How a declared context reaches the composition root: the role files carry their decorator and type their constructor parameters by classes; generate, docs and the dev script read those signatures and write the barrel, one export per role file and one injected statement per class that takes something; the composition root includes the barrel with contextModule and @ddd-ts-kit/di injects from it; check and docs --check report a barrel that no longer matches the role files](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/cli-declared-barrel.svg)
+
+An excerpt of the barrel of the `notification` context of the example application, as the CLI
+writes it (never by hand):
+
+```ts
+// src/contexts/notification/notification.declarations.ts
+import { injected } from '@ddd-ts-kit/kernel/declarations';
+import { WithdrawReminderHandler } from '@/contexts/notification/application/commands/withdraw-reminder/withdraw-reminder.handler';
+import { ReminderRepository } from '@/contexts/notification/domain/repositories/reminder.repository';
+import { KnexReminderRepository } from '@/contexts/notification/infrastructure/persistence/knex-reminder.repository';
+import { Clock, ExecutionScope } from '@ddd-ts-kit/kernel';
+import { KnexContext } from '@ddd-ts-kit/knex';
+
+export * from '@/contexts/notification/application/commands/withdraw-reminder/withdraw-reminder.command';
+export * from '@/contexts/notification/application/commands/withdraw-reminder/withdraw-reminder.handler';
+export * from '@/contexts/notification/infrastructure/persistence/knex-reminder.repository';
+
+injected(WithdrawReminderHandler, [ReminderRepository]);
+injected(KnexReminderRepository, [KnexContext, ExecutionScope, Clock]);
+```
+
+and the one line of the composition root that adds the whole context:
+`contextModule('notification', notificationDeclarations)` in `src/platform/compose-application.ts`.
+
 **Domain errors are built by factories.** `init` writes `"stack.refusals": "factories"`: a
 context has one error class per concept, extending `ConceptError` of the kernel, and
 `generate error <context> <Concept> <refusal>` adds a static factory to it. The `errors/*`
 rules hold that form. `--refusals classes`, or a config without the key, keeps one class per
 error built with `new`, as 0.1 and 0.2 wrote them; `error-factories` moves a project from one
 to the other.
+
+The older form, under `"stack.refusals": "classes"`: one class per error.
+
+<!-- checked sample -->
+```ts
+import { DomainError } from '@ddd-ts-kit/kernel';
+
+// domain/errors/slot-taken.error.ts
+export class SlotTakenError extends DomainError {
+  readonly code = 'SLOT_TAKEN';
+
+  constructor(readonly calendarId: string) {
+    super(`The slot of calendar ${calendarId} is already held.`);
+  }
+}
+
+const refusal = new SlotTakenError('calendar-1');
+```
+
+The form `init` writes: one class per concept of the glossary, one factory per refusal, which
+`generate error scheduling Appointment slotTaken` adds.
+
+<!-- checked sample -->
+```ts
+import { ConceptError } from '@ddd-ts-kit/kernel';
+
+// domain/errors/appointment.error.ts
+export class AppointmentError extends ConceptError {
+  static slotTaken(calendarId: string) {
+    return AppointmentError.refusal('SLOT_TAKEN', `The slot of calendar ${calendarId} is already held.`, { calendarId });
+  }
+}
+
+const refusal = AppointmentError.slotTaken('calendar-1');
+
+// what catches it tells the refusal by its class and its code, and reads its facts
+if (AppointmentError.is(refusal, 'SLOT_TAKEN')) {
+  console.log(refusal.facts.calendarId);
+}
+```
 
 **A route is a controller class.** `init` writes `"stack.routes": "controllers"`: each route is
 one class with one method, in a folder of its own, behind the guards of its route group, and a
@@ -188,6 +406,65 @@ the aggregate recorded are dispatched once the save resolves, inside the unit of
 command: by the kernel module on tsyringe, by `dispatchingOnSave` around each repository in
 `platform/create-platform.ts` with hand wiring (`domain-events/dispatched-on-save`).
 
+Instead of pulling the events and dispatching them in the handler:
+
+```ts
+async execute(command: IssueInvoiceCommand): Promise<void> {
+  const invoice = await this.invoiceRepository.findById(command.invoiceId);
+
+  invoice.issue(this.clock.now());
+  await this.invoiceRepository.save(invoice);
+  await this.dispatcher.dispatch(invoice.pullEvents()); // domain-events/dispatched-on-save
+}
+```
+
+write the save, and nothing after it:
+
+<!-- checked sample -->
+```ts
+import { type Actor, AggregateRoot, AuthorizedCommand, type Clock, type CommandHandler, ConceptError, Repository } from '@ddd-ts-kit/kernel';
+
+declare class Invoice extends AggregateRoot {
+  /** Makes the invoice final and records InvoiceIssued, which waits in the aggregate. */
+  issue(now: Date): void;
+}
+
+declare class InvoiceError extends ConceptError {
+  static notFound(invoiceId: string): InvoiceError;
+}
+
+export abstract class InvoiceRepository extends Repository<Invoice> {}
+
+export class IssueInvoiceCommand extends AuthorizedCommand<void> {
+  constructor(
+    actor: Actor,
+    readonly invoiceId: string,
+  ) {
+    super(actor);
+  }
+}
+
+export class IssueInvoiceHandler implements CommandHandler<IssueInvoiceCommand> {
+  constructor(
+    private readonly invoiceRepository: InvoiceRepository,
+    private readonly clock: Clock,
+  ) {}
+
+  async execute(command: IssueInvoiceCommand): Promise<void> {
+    const invoice = await this.invoiceRepository.findById(command.invoiceId);
+
+    if (invoice === undefined) {
+      throw InvoiceError.notFound(command.invoiceId);
+    }
+
+    invoice.issue(this.clock.now());
+
+    // InvoiceIssued is dispatched once this save resolves, inside the unit of work of the command
+    await this.invoiceRepository.save(invoice);
+  }
+}
+```
+
 `--events in-memory` together with an ORM is refused unless `--allow-no-outbox "<reason>"` is given:
 it records a `deviations` entry (`stack.events`) and writes the decision record it points to. The generated
 persistence of the four ORMs is written for PostgreSQL; `custom` starts on in-memory adapters
@@ -212,6 +489,7 @@ config, `docsUi`, `ci` and `logger` included.
 | `--http-cache varnish` | a compose service `varnish` (Varnish 9.1.0, reaching the API on `host.docker.internal`) with its VCL in `docker/varnish/default.vcl` (only answers whose `Cache-Control` allows them by `max-age` or `s-maxage` are kept, filed under their `xkey` tags, purged by `PURGE` from the machine of Varnish or with `VARNISH_PURGE_KEY`, `x-cache: HIT\|MISS`), `VARNISH_URL` and `VARNISH_PURGE_KEY` validated, `cacheTags: { header: CacheTagHeader.xkey }` in the HTTP boundary, and the outbox relay of `main.ts` and of every `generate service` entry point publishing through `PurgingPublisher` with `VarnishCachePurger` (the end-to-end application records the purges in `purges`); on `--di manual` and `nest` the platform gains `cacheInvalidation`; with `--tenancy`, the tags of the answers and the purges are filed under the tenant (`perTenant`) and the tenant of a request is read from `x-tenant-id`. Needs an HTTP framework and `--events outbox`: a purge is a row of the outbox |
 | `--errors sentry` | unexpected failures reported to Sentry or GlitchTip (one protocol, only the DSN differs) through the kernel `ErrorReporter`, bound to `@ddd-ts-kit/sentry`. `src/platform/errors.ts` (`initSentry` on the validated configuration, then `reportProcessFailures`), the second import of `main.ts`, of `apps/<context>/main.ts` and of `apps/worker/main.ts`, right after `tracing.ts`; `errors` handed to `composeApplication`, which gives it to the kernel module on tsyringe (`errorReporter`, flushed by `container.stop()` before the logger, `errorReportingMiddleware` first on both buses, the default scheduler observing with `reportFailedRuns`) or to `createPlatform` by hand (the same middleware, `onRun: reportFailedRuns(errors)`, `platform.errors`, flushed two seconds at most when the application stops); `reportHttpErrors` in `auth/http-boundary.ts` for every request answered 5xx; `DeadLetterReports` on the `onFailure` hook of a provided broker (`createEventProvider(config, errors)`, with `observing` around each consumer) and of the outbox relay. `SENTRY_DSN`, `SENTRY_ENVIRONMENT` (default: `NODE_ENV`), `SENTRY_RELEASE` and `SENTRY_SCRUB_MESSAGES` validated in `config/load-config.ts` as `errorReporting`: without a DSN the application starts and reports nothing; a DSN that is not a URL refuses the start. Dependencies `@ddd-ts-kit/sentry` and `@sentry/node`. A compose profile `errors` running GlitchTip 6.2.6 with its own PostgreSQL and Valkey (`GLITCHTIP_PORT`, loopback only, development bootstrap), and a section of the generated README saying how to read its DSN. The tools and the tests compose the application without a reporter. It goes with every other choice of the stack; with `--errors none` nothing of this is written |
 | `--authn keycloak` | a compose service `keycloak` (Keycloak 26.8.0, `start-dev --import-realm`, profile `identity`) and `docker/keycloak/<project>-realm.json`: the API client, a public client `<project>-local` with the direct grant, its audience and `tenant_id` mappers, the realm role `admin`, and the demo users `demo-admin` and `demo-user`, for local development only |
+| `--storage local\|s3` | recorded as `stack.storage`: where the content of files lives, never in the database. `src/platform/config/read-files.ts` and `src/platform/files/open-files.ts`, one per choice: `local`, a directory in development (`FILES_DIRECTORY`, `.data/files`) and the signed links answered by the application under `/files` (`FILES_PUBLIC_URL` and `FILES_SIGNING_SECRET` required in production); `s3`, a bucket of any provider of the S3 protocol through `@ddd-ts-kit/s3` (the `S3_*` variables, MinIO in the compose stack); the memory of the process in the tests and the tools, either way. With `--di tsyringe`: `files/bind-files.ts`, `files/files.module.ts` and `files/staging-uploads.ts`; with hand wiring `files/create-files.ts`; with an HTTP stack `files/file-routes.ts`. They bind `FileStorage`, `FileKeys`, `FileScanner` and `FileStaging`, register the hourly purge of staged files and stage the file a command carries before its transaction; `generate file-upload` needs them. `--storage none` writes none of this ([File storage](../../docs/concepts/file-storage.md)) |
 | `src/platform/events/` | `event-provider.ts` (`bus`, `forConsumer(name)`, `start()`, `close()`), `in-process-events.ts`, and for `--broker` `create-event-provider.ts`: `RabbitMqEventBus` (`AMQP_URL`), `KafkaEventBus` (`KAFKA_BROKERS`, with `aggregate-key-of.ts` for per-aggregate order), `NatsEventBus` (`NATS_URL`) or `RedisStreamsEventBus` of `@ddd-ts-kit/redis/event-bus` (`REDIS_URL`: Redis, Dragonfly or Valkey), each with one subscriber per consuming context (`forConsumer`), `assertTopology` at start, its address validated and a compose service with a healthcheck; or `custom-event-bus.ts` with its `eventBusContract` spec. `start-outbox-relay.ts` with the outbox. `--broker redis` with `--cache redis` is one server and one compose service, `cache`; alone, the service is `streams` |
 | `src/platform/database/` | `persistence.ts` (`interface Persistence`: unit of work, outbox and processed-event stores of the ORM package, the storage handle), `open-persistence.ts`, `persistence-over.ts`, `inert-persistence.ts`, the connection (`connect-to-database.ts`, `create-client.ts` or `create-data-source.ts`), `schema.ts`, `open-test-database.ts` (PostgreSQL in process, or the server named by a URL). The storage class a repository adapter names in its dependency list: `database.ts` with drizzle and prisma (`abstract class Database extends` the context type of the ORM package), `KnexContext` of `@ddd-ts-kit/knex`, `TypeOrmContext` of `@ddd-ts-kit/typeorm` |
 | migration tooling | `drizzle.config.ts`, `knexfile.js` and `migrations/00000000000000_initial.js`, `prisma/schema.prisma` and `prisma.config.ts`, or `data-source.ts` |
@@ -297,10 +575,42 @@ ddd-ts-kit generate <kind> ... [--term "<Term>=<meaning>"]... [--allow-name] [--
 ddd-ts-kit generate --help --json
 ```
 
+One run of `generate` does five things, in this order, and writes nothing when the first one
+refuses:
+
+![One run of generate command: the name is checked against the glossary of the context (refused with exit code 2 and the --term to add when a word is not defined), the files are written from the templates, the new pieces are registered between marker comments, the derived documents are refreshed, and the places that need a business decision are printed as file:line](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/cli-generate-one-run.svg)
+
+In the example application, a use case named with a word its glossary does not define is refused,
+and the message says how to go on:
+
+```
+$ npx ddd-ts-kit generate command notification ArchiveNotification --permission notification.archive --aggregate Notification
+error: "ArchiveNotification" uses "archive", which the glossary of src/contexts/notification/CONTEXT.md does not define.
+  fix: Either use an existing term (Notification, Send, Recipient, Contact, Confirmation, Reminder, Plan, Due, Withdraw, Mailer, Kind, Request, Rescheduling, Cancellation, Read, Search), or add the term in the same command: --term "Archive=<what it means for the business>". The glossary is written before the code (rule language/glossary-term).
+```
+
+With the term given in the same command (and `--dry-run`, which says what it would write):
+
+```
+$ npx ddd-ts-kit generate command notification ArchiveNotification --permission notification.archive --aggregate Notification \
+    --term "Archive=To set a sent notification aside, out of the default search" --dry-run
+would create src/contexts/notification/application/commands/archive-notification/archive-notification.command.ts
+would create src/contexts/notification/application/commands/archive-notification/archive-notification.handler.ts
+would create src/contexts/notification/test/unit/archive-notification.handler.spec.ts
+would update src/contexts/notification/CONTEXT.md
+would update src/contexts/notification/application/authorization/notification.permissions.ts
+would update src/contexts/notification/notification.declarations.ts
+
+Next, in this order: the language of the context first, then the business decisions only you can make
+  src/contexts/notification/application/commands/archive-notification/archive-notification.command.ts:9  declare the input of "archive notification" as a constructor with the actor first, ...
+  src/contexts/notification/application/commands/archive-notification/archive-notification.handler.ts:16  decide what "archive notification" does to a Notification: ...
+  src/contexts/notification/test/unit/archive-notification.handler.spec.ts:38  replace each entry below by a test named after the business behaviour of "archive notification": ...
+```
+
 | Kind | Arguments | Writes |
 |---|---|---|
 | `context` | `<name> --classification <c> [--purpose "<two sentences>"] [--term ...]... [--upstream <ctx>[:relationship]]... [--preset identity]` | `CONTEXT.md` with its glossary, `published-language/index.ts`, config entry, registration in `platform/compose-application.ts` and in `test/architecture/extractable.spec.ts`; on tsyringe, with HTTP, `presentation/http/<name>.routes.ts` (a function of the two buses, in both styles); declared: the barrel `<name>.declarations.ts`; explicit and hand wiring: `<name>.module.ts`. `application/authorization/<name>.permissions.ts` is born with the first permission, or at once when `platform/auth/permissions.ts` lists the permission sets (rebac, custom). With `--preset`, the context is then written whole from that preset, its classification and purpose those of the preset unless the flags say otherwise ([Presets](#presets)) |
-| `aggregate` | `<context> <Name>` | aggregate, builder, spec in given / when / then |
+| `aggregate` | `<context> <Name> [--event-sourced]` | aggregate, builder, spec in given / when / then; with `--event-sourced`, an aggregate on `EventSourcedAggregate` whose state is the replay of its events, born with its `Created` domain event, the codec of its stored events in `infrastructure/persistence/<name>-events.mapper.ts`, a builder that replays a history and a spec given events, and a note naming the `EventSourcedRepository` its repository adapter delegates to |
 | `builder` | `<context> <Aggregate>` | `test/builders/<name>.builder.ts`, a class extending `Builder` |
 | `entity` | `<context> <Name>` | entity, spec |
 | `value-object` (`vo`) | `<context> <Name>` | value object, spec |
@@ -316,6 +626,7 @@ ddd-ts-kit generate --help --json
 | `port` | `<context> <Name>` | `application/ports/<name>.port.ts`, one abstract class, and its fake |
 | `route` | `<context> <UseCaseName> --method <GET\|POST\|PUT\|PATCH\|DELETE> --path <p> [--command\|--query] [--group <Name>] [--mapper] [--serializer] [--cache public\|private\|no-store]` | under `"stack.routes": "controllers"`: a controller class in `presentation/http/<resource>/<use-case>/` (the resource is the first segment of the path), depending on `CommandBus` or `QueryBus`, behind the route group of its resource, written with it when it is new (`<resource>.routes.ts`: prefix, tag, `Authenticated`); a public use case stands in no group and says `guards: [Public]`; with class-validator one class per file (`<use-case>.params.ts`, `.body.ts`, `.answer.ts`, `.accepted.ts`, `.line.ts`); `--mapper` and `--serializer` add a request mapper and a serializer the controller is given; a spec; no registration in a declared project, a controller built by hand in `<context>.routes.ts` (the module file with hand wiring) in an explicit one. Under `"functions"`: a `defineRoute` function, its spec, its registration in `<context>.routes.ts`, and `<use-case>-<role>.dto.ts` classes |
 | `controller` | the same arguments as `route` | the controller class, whatever `stack.routes` says: for a project of function routes that writes its next route as a class. `--cache` writes its cache policy: `private` (a `GET` of a caller, `max-age=0`, `must-revalidate`, strong `ETag`), `public` (a `GET` of a public use case, `max-age` 1m, `s-maxage` 5m, tagged with the resources of its path), `no-store`; refused on a write, and `public` behind a route group |
+| `file-upload` | `<context> <UseCaseName> --path <p> (--permission <aggregate>.<action> \| --public) [--method POST\|PUT] [--group <Name>]` | an upload: a controller that declares the file it receives (its size and media types in the contract, checked as it streams), the command that carries it as a `FileUpload`, staged by the command bus before the transaction, the handler that records it and promotes it with the commit, and their specs. Refused without `stack.storage` or without an HTTP stack, with the `init --force --storage local` to run |
 | `route-group` (`group`) | `<context> <Name> [--prefix <path>] [--group <ParentName>] [--public \| --role <role>]` | `presentation/http/<name>.routes.ts`: an empty class carrying `@RouteGroup`, behind `Authenticated` unless `--public` or `--role` says otherwise (`HasRole(Role.Admin)`, the role read from the vocabulary of the platform, `<platformDir>/auth/role.ts`, which gets it when it does not hold it); with `--group` it refines that group and inherits from it |
 | `guard` | `<context> <Name>` | `presentation/http/guards/<name>.guard.ts`: a declared guard class to fill, and its spec |
 | `representation` | `<context> <UseCase> <xml\|csv\|media/type>[,...]` | adds `produces` to the `@Controller` of the use case, and `consumes: ['application/xml']` to one that receives a body when XML is asked; says when CSV needs a page or a streamed list, and when `stack.representations` is not `negotiated` |
@@ -323,7 +634,7 @@ ddd-ts-kit generate --help --json
 | `schema` | `<context\|shared-kernel> <Name>` | `presentation/http/shared/<name>.schema.ts` of the context, or `presentation/<name>.schema.ts` of the shared kernel: one shape of the contract declared once (a zod schema with `.meta({ id })`, a class-validator class, or a schema wrapped by `sharedSchema`), to fill; the routes use it whole, nested or in part |
 | `integration-event` | `<context> <Aggregate> <Fact> [--version n]` | `defineIntegrationEvent` declaration in the published language (its payload in `<event>.v<n>.payload.ts` with class-validator or a schema of your own), index export, the publisher `application/integration/publishers/<event>.publisher.ts`, spec, registration, a line of `platform/audit/audited-events.ts` |
 | `integration-handler` (`consumer`) | `<context> <upstreamContext> <eventType>` | `application/integration/handlers/<name>.integration-handler.ts`, a class `<Name>IntegrationHandler` depending on `CommandBus`, its spec, its idempotent subscription under the consumer name `<context>.<name>`; refused unless the upstream is declared |
-| `event-handler` | `<context> <Aggregate> <Fact> [--phase after-commit]` | reaction to a domain event of the context, spec, subscription; before the commit of the unit of work by default, after it with `--phase after-commit` (an effect no transaction covers, at most once), and the spec runs the reaction in that phase |
+| `event-handler` | `<context> <Aggregate> <Fact> [--phase before-commit\|after-commit]` | reaction to a domain event of the context, spec, subscription; before the commit of the unit of work by default, after it with `--phase after-commit` (an effect no transaction covers, at most once), and the spec runs the reaction in that phase |
 | `projection` (`projector`) | `<context> <Name> <event-type>` | a projector in `application/projections/<name>.projection.ts`, declared with `@Projection('<context>.<name>')` and one `@On(definition)` method for the integration event, which the context itself or a declared upstream publishes, and its spec; declared style only. It keeps one read model: its port is received in the constructor |
 | `job` | `<context> <Name> (--every <duration> \| --cron "<expression>" [--time-zone <zone>]) --command <UseCaseName>` | `application/scheduling/<name>.job.ts`, a class `<Name>Job implements ScheduledJob` that sends the command, as `systemActor('<context>.<name>')` when it is protected, with `execution.scheduledAt` when the command takes it; `test/unit/<name>.job.spec.ts`, which runs the job (by name on tsyringe, `application.jobs.runNow`; `job.run(occurrence)` with hand wiring) and asserts the command it sent; its registration; its switch in `platform/job-settings.ts`; the grant of its system actor (below) |
 | `background-job` | `<context> <Name> --command <UseCaseName>` | `application/background/<name>.background-job.ts`, a class `<Name>BackgroundJob implements BackgroundJob<<Name>Payload>` named by its static `jobName` `<context>.<name>`, that sends the command as `execution.actor` when it is protected, followed by one field of `<Name>Payload` per other parameter of the constructor of the command (strings, numbers, booleans, literals and lists of them as written, a `Date` as its ISO text; anything else is refused); `test/unit/<name>.background-job.spec.ts`, which enqueues it with a payload of every field as a user holding the permission and runs what is due; its registration (`@Background()`, or `builder.backgroundJob(..)` in the module file). `--di tsyringe` only |
@@ -622,6 +933,15 @@ this command rewrites, in every `.js`, `.mjs`, `.cjs`, `.d.ts`, `.d.mts` and `.d
 output directory of the tsconfig (`tsconfig.build.json` by default), each alias specifier into
 the relative path of the emitted file it names, with its `.js` extension
 (`../../platform/errors.js`), so that `node dist/src/main.js` runs with no loader and no flag.
+
+```js
+// dist/src/contexts/billing/domain/aggregates/invoice.aggregate.js, as the compiler emits it
+import { InvoiceError } from '@/contexts/billing/domain/errors/invoice.error';
+
+// the same line after ddd-ts-kit build-aliases
+import { InvoiceError } from '../errors/invoice.error.js';
+```
+
 It reads `importAlias` and `importExtension` of the config: `@/platform/errors` names
 `platform/errors.js` under `none`, `@/platform/errors.js` names it under `js`, and no other
 spelling is guessed.
@@ -722,6 +1042,53 @@ from `docs/architecture/slices.md`, the published languages it consumes. An exis
 kept and only the file is written again; `--dry-run` creates and writes nothing. It needs a git
 repository with one commit at least. The worker then generates with `--local-only`.
 
+## affected
+
+```
+ddd-ts-kit affected [--base <git-ref>] [--head <git-ref>] [--format text|json|github|env]
+```
+
+What a pull or merge request has to run, read from the context map and the paths that differ
+between `--base` and `--head` (`HEAD` by default; the merge base is used when the clone has it).
+Each changed path reaches something:
+
+- a path under a declared context reaches that context and every context downstream of it, since
+  their code may read its published language; a path under its `test/` alone reaches that
+  context alone, since no other context may import its tests;
+- a document reaches nothing that runs: a Markdown file at the root, anything under `docs/`,
+  `openapi/` or `.claude/` (the documents gate always runs);
+- anything else reaches everything: the platform, the shared kernel, `main.ts`, the config, the
+  lockfile, the pipeline, a directory of `src/contexts/` the config does not declare.
+
+Without `--base`, or when git cannot tell what changed (an unknown ref, a shallow clone without
+the base), everything is selected: that is what the default branch and the nightly run get. The
+selection is never narrower than the declared relationships, because `context/declared-relationship`
+keeps every import between contexts inside them, and that rule runs on the whole project in every
+pipeline.
+
+![A change in the scheduling context of the example application: scheduling is selected, and so are notification and analytics, which are downstream of it in the context map; identity, upstream, is left to the default branch](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/cli-affected-selection.svg)
+
+In the example application, a branch that changes one aggregate of `scheduling`:
+
+```
+$ npx ddd-ts-kit affected --base main
+Affected contexts: scheduling, notification, analytics (the changed contexts and the contexts downstream of them in the context map).
+Specs: src/contexts/scheduling/**/*.spec.ts src/contexts/notification/**/*.spec.ts src/contexts/analytics/**/*.spec.ts !src/contexts/**
+Left to the default branch: src/contexts/identity/
+
+$ npx ddd-ts-kit affected --base main --format github
+scope=contexts
+contexts=scheduling,notification,analytics
+args=--passWithNoTests
+lint=--ignore-pattern src/contexts/identity/
+```
+
+`--format github` writes `key=value` lines for `$GITHUB_OUTPUT`, `--format env` the same keys in
+upper case behind `AFFECTED_` for a GitLab `dotenv` report, `--json` the selection as data
+(`{ scope, reason, contexts, specs, leftOut }`). `contexts` is what the test runner reads as
+`DDD_TS_KIT_AFFECTED`, `args` what a partial run adds to it, `lint` what it adds to ESLint; the
+generated pipelines wire all three.
+
 ## check
 
 ```
@@ -732,7 +1099,58 @@ ddd-ts-kit check --commit-size [--staged] [--strict]
 ```
 
 Each violation has a rule id, a severity, a file, a line, a message and a `fix`: one sentence
-saying what to do instead. Exit code 1 when there is at least one error.
+saying what to do instead. Exit code 1 when there is at least one error. Suppose that the
+`Reminder` aggregate of the example application read the system clock in its domain: an `isDue()`
+at line 63 that calls `Date.now()`, where the real one receives the instant as `isDue(asOf: Date)`.
+`check` would report:
+
+```
+$ npx ddd-ts-kit check src/contexts/notification/domain
+src/contexts/notification/domain/aggregates/reminder.aggregate.ts:64  error  purity/no-system-clock
+  Date.now() is used in the domain layer.
+  fix: Receive the instant as a parameter in the domain, and take it from the Clock port (`this.clock.now()`) in a handler, so that a test fixes time with FixedClock.
+
+1 error, 0 warnings, 0 suppressions in 772 files.
+```
+
+The `fix` is the change to make. Instead of that hypothetical method:
+
+```ts
+isDue(): boolean {
+  return this.state.status === ReminderStatus.Planned && this.state.dueAt.getTime() <= Date.now();
+}
+```
+
+write:
+
+<!-- checked sample -->
+```ts
+import { Clock, FixedClock } from '@ddd-ts-kit/kernel';
+
+// domain: the instant is a parameter, as in the Reminder aggregate of the example
+export class Reminder {
+  constructor(private readonly dueAt: Date) {}
+
+  isDue(asOf: Date): boolean {
+    return this.dueAt.getTime() <= asOf.getTime();
+  }
+}
+
+// application: the handler takes the instant from the Clock port
+export class SendDueRemindersHandler {
+  constructor(private readonly clock: Clock) {}
+
+  isDueNow(reminder: Reminder): boolean {
+    return reminder.isDue(this.clock.now());
+  }
+}
+
+// a test fixes the time
+const handler = new SendDueRemindersHandler(new FixedClock(new Date('2026-03-02T09:00:00Z')));
+const due = handler.isDueNow(new Reminder(new Date('2026-03-01T09:00:00Z'))); // true
+```
+
+`ddd-ts-kit explain <rule-id>` prints the same kind of bad and good example for every rule.
 
 - `paths` and `--changed-since` limit what is reported, not what is analysed.
   `--changed-since` runs `git diff --name-only --relative <ref>...` in the project.

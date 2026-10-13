@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 560" width="960" height="560" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">A large file goes straight to the store, under a grant the server keeps</title>
+  <desc id="desc">Three participants: the client, the application and the file storage. 1, the client asks for an upload, naming the appointment. The first command generates the key, signs an upload link with FileStaging.uploadUrl and records the grant (key, size cap, media types) on the appointment. 2, the application answers the signed link. 3, the client sends the file to the store, under the staged key. 4, the client asks to confirm, naming the appointment and never a key. The second command reads the grant back from the appointment, and FileStaging.confirm measures the file against the cap, checks its bytes and scans it; the reference is recorded and the file is promoted with the commit.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="560" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">A large file goes straight to the store, under a grant the server keeps</text>
+  <!-- participants -->
+  <rect x="40" y="60" width="200" height="48" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="140" y="90" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">client</text>
+  <rect x="380" y="60" width="200" height="48" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="480" y="90" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">application</text>
+  <rect x="720" y="60" width="200" height="48" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="820" y="90" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">file storage</text>
+  <!-- lifelines -->
+  <line x1="140" y1="108" x2="140" y2="510" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="4 4"/>
+  <line x1="480" y1="108" x2="480" y2="510" stroke="#2b5d8a" stroke-width="1.5" stroke-dasharray="4 4"/>
+  <line x1="820" y1="108" x2="820" y2="510" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="4 4"/>
+  <!-- 1. request -->
+  <text x="148" y="140" font-size="13" font-weight="600" fill="#1f2328">1. request an upload for appointment a-1</text>
+  <line x1="142" y1="150" x2="476" y2="150" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="330" y="164" width="300" height="80" rx="8" fill="#e7eef5" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="346" y="186" font-size="13" fill="#1f2328">k = keys.next('appointment-documents')</text>
+  <text x="346" y="206" font-size="13" fill="#1f2328">staging.uploadUrl(k, cap, media types)</text>
+  <text x="346" y="226" font-size="13" font-weight="600" fill="#1f2328">grant saved on the appointment</text>
+  <!-- 2. the link -->
+  <text x="312" y="270" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">2. the signed link: PUT, expires in minutes</text>
+  <line x1="478" y1="280" x2="144" y2="280" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- 3. the file to the store -->
+  <text x="148" y="318" font-size="13" font-weight="600" fill="#1f2328">3. PUT the file to the link</text>
+  <text x="808" y="318" font-size="13" fill="#1f2328" text-anchor="end">lands under staging/k</text>
+  <line x1="142" y1="328" x2="816" y2="328" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- 4. confirm -->
+  <text x="148" y="366" font-size="13" font-weight="600" fill="#1f2328">4. confirm for appointment a-1 (no key)</text>
+  <line x1="142" y1="376" x2="476" y2="376" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="330" y="390" width="300" height="100" rx="8" fill="#e7eef5" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="346" y="412" font-size="13" fill="#1f2328">grant read back from the appointment</text>
+  <text x="346" y="432" font-size="13" fill="#1f2328">staging.confirm(grant): size against</text>
+  <text x="346" y="452" font-size="13" fill="#1f2328">the cap, type on the bytes, scan</text>
+  <text x="346" y="472" font-size="13" font-weight="600" fill="#1f2328">recorded, promoteOnCommit(k)</text>
+  <line x1="632" y1="440" x2="816" y2="440" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="724" y="430" font-size="13" fill="#1f2328" text-anchor="middle">reads staging/k</text>
+  <line x1="632" y1="480" x2="816" y2="480" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="724" y="470" font-size="13" fill="#1f2328" text-anchor="middle">moves it to k</text>
+  <text x="724" y="500" font-size="13" fill="#5f6b73" text-anchor="middle">at the commit</text>
+  <text x="32" y="540" font-size="13" fill="#5f6b73">The client never sends a key back: it can neither choose the key it confirms nor raise the cap.</text>
+</svg>

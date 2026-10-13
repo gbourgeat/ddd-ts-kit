@@ -1,10 +1,12 @@
+**English** · [Français](README.fr.md)
+
 # @ddd-ts-kit/audit
 
 A tamper-evident audit trail that the use cases never write to. Who was allowed or refused
 what, which command ran and how it ended, which integration event occurred: each fact is an
 append-only entry, hash-chained to the one before it, recorded by a bus middleware, the
-authorization hook or an event subscription. No handler and no aggregate contains an audit
-call.
+authorization hook, the HTTP pipeline when a guard refuses, or an event subscription. No
+handler and no aggregate contains an audit call.
 
 ```
 npm i @ddd-ts-kit/audit
@@ -14,7 +16,7 @@ npm i drizzle-orm      # only for @ddd-ts-kit/audit/drizzle
 
 | Entry | Holds | Imports |
 |---|---|---|
-| `@ddd-ts-kit/audit` | `InMemoryAuditTrail`, the three sources, `auditedFields`, the `AuditMasker` port and `hmacMasker`, `verifyChain`; re-exported from the kernel: `AuditEntry`, the `AuditTrail` and `AuditReader` ports and the types they name | the kernel only |
+| `@ddd-ts-kit/audit` | `InMemoryAuditTrail`, the sources (`auditDecisions`, `auditGuardRefusals`, `auditMiddleware`, `auditIntegrationEvents`) and `auditRecordOf`, `auditedFields`, `auditedProjection` and `masked`, the `AuditMasker` port and `hmacMasker`, `verifyChain`, `TenantAuditReader`, the chain primitives (`canonicalize`, `hashOf`, `GENESIS_HASH`, `chainOfTenant`); re-exported from the kernel: `AuditEntry`, the `AuditTrail` and `AuditReader` ports and the types they name | the kernel only |
 | `@ddd-ts-kit/audit/knex` | `KnexAuditTrail`, `createAuditTables`, `dropAuditTables` | `knex` (optional peer) |
 | `@ddd-ts-kit/audit/drizzle` | `DrizzleAuditTrail`, `auditEntriesTable`, `auditChainsTable`, `auditGuardStatements` | `drizzle-orm` (optional peer) |
 | `@ddd-ts-kit/audit/testing` | `auditTrailContract` | `@ddd-ts-kit/testing` (optional peer), the runner you pass |
@@ -26,8 +28,9 @@ the application: an auditor, a customer, a regulator. Three consequences:
 
 - **It is fed from outside the use cases.** A handler that must remember to call the audit
   will forget, and an aggregate that calls it has stopped being a model. Authorization
-  decisions, commands and integration events already pass through three places; the entries are
-  written there.
+  decisions, refusals at the HTTP edge, commands and integration events already pass through a
+  few places (the authorization middleware, the HTTP pipeline, the buses, the event
+  subscriptions); the entries are written there.
 - **It is append-only and each entry seals the previous one.** Changing, removing or
   reordering an entry breaks the chain at a place `verifyChain` names.
 - **It holds identifiers and codes, never content.** Same rule as tracing and the aspects
@@ -37,6 +40,99 @@ the application: an auditor, a customer, a regulator. Three consequences:
 It is not a log (logs are sampled, rotated and lost), not event sourcing (it does not rebuild
 state) and not the `AuditStamp` of the kernel (`createdBy`, `updatedBy`: the last writer of a
 row, not the history).
+
+![The sources auditGuardRefusals, auditDecisions, auditMiddleware, auditIntegrationEvents and, by hand, auditRecordOf call the AuditTrail port; a store (in memory, knex or drizzle) implements it, seals each record with its chain, sequence, previous hash and hash, and writes to PostgreSQL behind append-only triggers; the same store implements AuditReader, which the handler of SearchAuditEntriesQuery and verifyChain read; sealing hands checkpoints to a place the application cannot write](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/audit-place-in-an-application.svg)
+
+The diagram is the map of this page: [the entry](#the-entry) and its hash, the
+[sources](#wiring-the-sources), [redaction](#redaction), [verification](#verification-and-anchoring),
+the [stores](#stores) and [querying](#querying).
+
+## A first trail, in memory
+
+Everything at once, in one file that runs: a command bus with the audit middleware, the
+declaration of what the entry of one command carries, two commands, then the verification of
+the chain and what a changed entry does to it. `InMemoryAuditTrail` is the fake of the tests;
+in production a SQL store takes its place and nothing else changes.
+
+<!-- checked sample -->
+```ts
+import {
+  AuthorizedCommand,
+  FixedClock,
+  FixedExecutionScope,
+  InMemoryCommandBus,
+  SequentialIdGenerator,
+  executionContext,
+  type Actor,
+} from '@ddd-ts-kit/kernel';
+import { InMemoryAuditTrail, auditMiddleware, auditedFields, hmacMasker, masked, verifyChain } from '@ddd-ts-kit/audit';
+
+class RescheduleAppointmentCommand extends AuthorizedCommand {
+  constructor(
+    actor: Actor,
+    readonly appointmentId: string,
+    readonly startsAt: Date,
+    readonly patientEmail: string,
+    readonly note: string,
+  ) {
+    super(actor);
+  }
+}
+
+const ada: Actor = { id: 'ada', type: 'user', tenantId: 'acme', roles: ['practitioner'], attributes: {} };
+
+// In an application, the HTTP boundary opens this scope for each request.
+const scope = new FixedExecutionScope(executionContext({ correlationId: 'request-1', actor: ada, origin: 'http' }));
+const trail = new InMemoryAuditTrail();
+
+const commands = new InMemoryCommandBus()
+  .use(
+    auditMiddleware(trail, {
+      scope,
+      clock: new FixedClock(new Date('2026-03-01T10:00:00.000Z')),
+      ids: new SequentialIdGenerator('audit'),
+      masker: hmacMasker('a secret of the configuration', { keyId: 'k1' }),
+      fields: [
+        auditedFields(RescheduleAppointmentCommand, ['startsAt', masked('patientEmail')], {
+          resource: (command) => ({ type: 'appointment', id: command.appointmentId }),
+          context: 'scheduling',
+        }),
+      ],
+    }),
+  )
+  .register(RescheduleAppointmentCommand, { execute: async () => undefined }); // the handler: no audit call
+
+const startsAt = new Date('2026-03-04T09:30:00.000Z');
+await commands.execute(new RescheduleAppointmentCommand(ada, 'apt-1', startsAt, 'lin@example.org', 'Family matter'));
+await commands.execute(new RescheduleAppointmentCommand(ada, 'apt-1', startsAt, 'lin@example.org', 'Again'));
+
+// trail.entries[0]:
+// { id: 'audit-1', chain: 'tenant:acme', sequence: 1, occurredAt: 2026-03-01T10:00:00.000Z,
+//   category: 'command', action: 'RescheduleAppointmentCommand', outcome: 'succeeded',
+//   resource: { type: 'appointment', id: 'apt-1' }, context: 'scheduling',
+//   changes: { startsAt: '2026-03-04T09:30:00.000Z', patientEmail: { masked: 'k1:f3997a...' } },
+//   actor: { id: 'ada', type: 'user', tenantId: 'acme' }, tenantId: 'acme',
+//   correlationId: 'request-1', origin: 'http', extensions: {},
+//   previousHash: '0000...0000', hash: 'f65501...' }
+// No `note`: it was not declared, so it was never read.
+
+await verifyChain(trail.entries); // { valid: true, checked: 2 }
+
+// Somebody moves the appointment by one hour, in the trail itself:
+const first = trail.entries[0];
+
+if (first !== undefined) {
+  trail.entries[0] = { ...first, changes: { ...first.changes, startsAt: '2026-03-04T10:30:00.000Z' } };
+}
+
+await verifyChain(trail.entries);
+// { valid: false, checked: 0,
+//   break: { kind: 'altered-content', chain: 'tenant:acme', position: 0, sequence: 1, entryId: 'audit-1' } }
+```
+
+Ada works in the tenant `acme`, so her entries go to the chain `tenant:acme`; the second one
+carries the hash of the first as its `previousHash`. The rest of this page takes each piece in
+turn.
 
 ## The entry
 
@@ -220,6 +316,8 @@ that was then refused). Hence the arrangement: the middleware is installed **bef
   that write fails too, the caller still receives the failure of the use case, and
   `onLostRecord` is told.
 
+![CancelAppointment reaches authorization first: denied, it leaves one authorization denied entry and opens no transaction; allowed, the audit middleware opens the transaction and the handler runs in it; on success the succeeded entry is written in the same transaction and commits with the change, or neither exists; on failure the transaction rolls back, then the failed entry is written outside of it with the code of the error](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/audit-trail-transaction.svg)
+
 Without `unitOfWork` (no database, the in-memory trail) the middleware records after the
 handler. Recording through the outbox would also be atomic for successes, but an outbox row
 shares the fate of the transaction, so it cannot carry the failures: it solves half of the
@@ -240,7 +338,7 @@ name `audit`; with `unitOfWork`, the mark and the entry commit together.
 
 ### d. By hand, the exception
 
-`AuditTrail.record` stays available for what none of the three sources can see: a
+`AuditTrail.record` stays available for what none of the sources can see: a
 `data-access` entry written by infrastructure, such as an export. `auditRecordOf` fills
 everything the scope knows:
 
@@ -255,7 +353,53 @@ await trail.record(auditRecordOf({ scope, clock, ids }, {
 ```
 
 This is infrastructure code. A call to the trail in `domain/` or `application/` is the defect
-this package exists to prevent.
+this package exists to prevent, and
+[`layer/application-inward`](../eslint-plugin/docs/rules/layer-application-inward.md) reports
+an import of `@ddd-ts-kit/audit` in `application/`. What a handler is tempted to write, and what
+replaces it:
+
+<!-- checked sample -->
+```ts
+import { AuthorizedCommand, type Actor, type AuditTrail, type Clock, type ExecutionScope, type IdGenerator } from '@ddd-ts-kit/kernel';
+import { auditRecordOf, auditedFields } from '@ddd-ts-kit/audit';
+
+class CancelAppointmentCommand extends AuthorizedCommand {
+  constructor(
+    actor: Actor,
+    readonly appointmentId: string,
+  ) {
+    super(actor);
+  }
+}
+
+// Instead of: the handler records its own entry. Each handler must remember to, a failure
+// leaves no entry at all, and the use case now depends on the audit.
+export class CancelAppointmentHandler {
+  constructor(
+    private readonly trail: AuditTrail,
+    private readonly source: { scope: ExecutionScope; clock: Clock; ids: IdGenerator },
+  ) {}
+
+  async execute(command: CancelAppointmentCommand): Promise<void> {
+    // ... cancel the appointment ...
+    await this.trail.record(
+      auditRecordOf(this.source, {
+        category: 'command',
+        action: 'CancelAppointmentCommand',
+        outcome: 'succeeded',
+        resource: { type: 'appointment', id: command.appointmentId },
+      }),
+    );
+  }
+}
+
+// Write: the handler only cancels. In the composition root, one declaration says what the entry
+// carries, and `auditMiddleware` records every outcome, failures included, with their code.
+export const cancelAppointmentAudit = auditedFields(CancelAppointmentCommand, [], {
+  resource: (command) => ({ type: 'appointment', id: command.appointmentId }),
+  context: 'scheduling',
+});
+```
 
 ### In an application of `@ddd-ts-kit/di`
 
@@ -318,7 +462,7 @@ const app = createApplication({
 ```
 
 A project generated by the CLI with `--audit on` (the default) has this wiring under
-`src/platform/audit/`: `create-audit.ts` builds the trail and its three sources,
+`src/platform/audit/`: `create-audit.ts` builds the trail and its sources,
 `audit.module.ts` binds the two ports, subscribes the integration events under the consumer
 name `audit` and registers the protected `SearchAuditEntriesQuery`, and
 `src/platform/buses/create-command-bus.ts` places the audit middleware between the use case
@@ -336,6 +480,8 @@ the store: `[AuditReader]` for the query that lists entries (see [Querying](#que
 auditedFields(RescheduleAppointmentCommand, ['status', 'startsAt', masked('patientEmail')]);
 auditedProjection(ExportAppointmentsCommand, (command) => ({ plain: { format: command.options.format } }));
 ```
+
+![A RescheduleAppointmentCommand and its five fields, the declaration, and the entry: appointmentId becomes the resource, status is kept as it is, startsAt as an ISO instant, patientEmail as the HMAC of the value under a secret, and note, free text that is not listed, is never read and leaves no trace](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/audit-redaction.svg)
 
 - A field that is not listed is never read. The compiler refuses a name the message does not
   have.
@@ -419,6 +565,8 @@ are never sorted first: a shuffled file is reported as such. Given a reader, `ch
 required and the range is read page by page, then held in memory: verify long chains by ranges
 (`from`, `to`). A range starting above 1 trusts the entry before it.
 
+![Four entries of the chain tenant:acme, each holding the hash of the entry before it and its own, the first linked to the genesis hash; a changed entry is reported as altered-content, a removed one as missing-entry, two swapped as reordered; a chain rewritten as a whole is valid again, so a checkpoint copied where the trail's owner cannot write is what shows it](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/audit-trail-hash-chain.svg)
+
 **Why anchoring.** The chain protects against whoever can change some rows. Whoever can
 rewrite the whole table (a database administrator, an attacker with the owner's role) can
 recompute every hash from the altered entry onwards: the result is a perfectly valid chain. The
@@ -476,8 +624,10 @@ with `SELECT ... FOR UPDATE`, computes the entry from it, inserts the entry and 
 The row lock lasts until the transaction ends, so two appends to one chain never read the same
 head and the chain cannot fork; appends to other chains do not wait. The primary key refuses a
 duplicate position should the lock ever be bypassed. Under `REPEATABLE READ` or `SERIALIZABLE`
-the second append fails with a serialization error instead of waiting, and the unit of work is
-retried like any other.
+the second append fails with a serialization error instead of waiting, and its caller retries
+the unit of work, as for any other statement under those levels: the kit does not retry it.
+
+![Three transactions append at the same time: T1 locks the head of tenant:acme, writes entry 42 and commits; T2, on the same chain, waits for that commit, then reads 42 and writes entry 43; T3, on tenant:globex, writes entry 8 without waiting](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/audit-chain-append.svg)
 
 **Append-only in the database too.** The migration helper creates the function
 `audit_entries_append_only` and two triggers: `UPDATE`, `DELETE` and `TRUNCATE` on

@@ -1,0 +1,109 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 616" width="960" height="616" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Deux points de contrôle : la garde du bus, puis Access dans le gestionnaire</title>
+  <desc id="desc">À gauche, la garde du bus, pour chaque commande et chaque requête, avant son gestionnaire. Un message absent de la carte des autorisations échoue avec UndeclaredUseCaseError, une erreur de programmation. Un message public va à son gestionnaire sans contrôle. Un message protégé sans acteur échoue avec MissingActorError. L'acteur anonyme est refusé avec UnauthenticatedError, code UNAUTHORIZED, traduit en 401. Sinon l'Authorizer décide : refusé, ForbiddenError, code FORBIDDEN, traduit en 403 avec un code de raison ; autorisé, l'unité de travail s'ouvre et le gestionnaire s'exécute. À droite, Access dans le gestionnaire, une fois l'élément chargé. L'acteur anonyme est refusé avec UnauthenticatedError. Chaque politique de la permission est interrogée : un sujet auquel elle ne s'applique pas est refusé avec la raison SUBJECT_MISMATCH, une politique qui renvoie false refuse avec son propre nom pour raison. Puis l'Authorizer est interrogé sur la ressource que représente le sujet ; refusé, ForbiddenError avec la raison du modèle. Autorisé, l'agrégat change. Les deux points de contrôle transmettent chaque décision, autorisée ou refusée, au hook onDecision.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="616" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Deux points de contrôle : la garde du bus, puis Access dans le gestionnaire</text>
+  <text x="24" y="84" font-size="16" font-weight="700" fill="#2b5d8a">1. La garde du bus</text>
+  <text x="24" y="106" font-size="13" fill="#5f6b73">authorizationMiddleware, pour chaque commande et requête</text>
+  <rect x="24" y="124" width="206" height="46" rx="10" fill="#ffffff" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="127" y="143" font-size="13" fill="#1f2328" text-anchor="middle">déclaré dans la carte</text>
+  <text x="127" y="160" font-size="13" fill="#1f2328" text-anchor="middle">des autorisations ?</text>
+  <line x1="232" y1="147.0" x2="274" y2="147.0" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="246" y="134" font-size="13" fill="#1f2328" text-anchor="middle">non</text>
+  <rect x="276" y="124" width="196" height="46" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="374" y="143" font-size="14" font-weight="700" fill="#5f6b73" text-anchor="middle">UndeclaredUseCaseError</text>
+  <text x="374" y="161" font-size="13" fill="#1f2328" text-anchor="middle">un bug : un test échoue</text>
+  <line x1="127.0" y1="172" x2="127.0" y2="194" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="136.0" y="188" font-size="13" fill="#1f2328">oui</text>
+  <rect x="24" y="196" width="206" height="46" rx="10" fill="#ffffff" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="127" y="224" font-size="13" fill="#1f2328" text-anchor="middle">déclaré public ?</text>
+  <line x1="232" y1="219.0" x2="274" y2="219.0" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="246" y="206" font-size="13" fill="#1f2328" text-anchor="middle">oui</text>
+  <rect x="276" y="196" width="196" height="46" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="374" y="215" font-size="14" font-weight="700" fill="#2b5d8a" text-anchor="middle">gestionnaire exécuté</text>
+  <text x="374" y="233" font-size="13" fill="#1f2328" text-anchor="middle">aucune vérification</text>
+  <line x1="127.0" y1="244" x2="127.0" y2="266" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="136.0" y="260" font-size="13" fill="#1f2328">non</text>
+  <rect x="24" y="268" width="206" height="46" rx="10" fill="#ffffff" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="127" y="296" font-size="13" fill="#1f2328" text-anchor="middle">porte un acteur ?</text>
+  <line x1="232" y1="291.0" x2="274" y2="291.0" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="246" y="278" font-size="13" fill="#1f2328" text-anchor="middle">non</text>
+  <rect x="276" y="268" width="196" height="46" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="374" y="287" font-size="14" font-weight="700" fill="#5f6b73" text-anchor="middle">MissingActorError</text>
+  <text x="374" y="305" font-size="13" fill="#1f2328" text-anchor="middle">un bug : un test échoue</text>
+  <line x1="127.0" y1="316" x2="127.0" y2="338" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="136.0" y="332" font-size="13" fill="#1f2328">oui</text>
+  <rect x="24" y="340" width="206" height="46" rx="10" fill="#ffffff" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="127" y="368" font-size="13" fill="#1f2328" text-anchor="middle">acteur anonyme ?</text>
+  <line x1="232" y1="363.0" x2="274" y2="363.0" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="246" y="350" font-size="13" fill="#1f2328" text-anchor="middle">oui</text>
+  <rect x="276" y="340" width="196" height="46" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="374" y="359" font-size="14" font-weight="700" fill="#9a5b2b" text-anchor="middle">UnauthenticatedError</text>
+  <text x="374" y="377" font-size="13" fill="#1f2328" text-anchor="middle">UNAUTHORIZED, 401</text>
+  <line x1="127.0" y1="388" x2="127.0" y2="410" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="136.0" y="404" font-size="13" fill="#1f2328">non</text>
+  <rect x="24" y="412" width="206" height="46" rx="10" fill="#ffffff" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="127" y="440" font-size="13" fill="#1f2328" text-anchor="middle">Authorizer.check(request)</text>
+  <line x1="232" y1="435.0" x2="274" y2="435.0" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="246" y="422" font-size="13" fill="#1f2328" text-anchor="middle">non</text>
+  <rect x="276" y="412" width="196" height="46" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="374" y="431" font-size="14" font-weight="700" fill="#9a5b2b" text-anchor="middle">ForbiddenError</text>
+  <text x="374" y="449" font-size="13" fill="#1f2328" text-anchor="middle">FORBIDDEN, 403, raison</text>
+  <line x1="127.0" y1="460" x2="127.0" y2="482" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="136.0" y="476" font-size="13" fill="#1f2328">autorisé</text>
+  <rect x="24" y="484" width="206" height="46" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="127" y="503" font-size="14" font-weight="700" fill="#2b5d8a" text-anchor="middle">unité de travail ouverte</text>
+  <text x="127" y="521" font-size="13" fill="#1f2328" text-anchor="middle">puis le gestionnaire</text>
+  <text x="486" y="84" font-size="16" font-weight="700" fill="#2b5d8a">2. Access, dans le gestionnaire</text>
+  <text x="486" y="106" font-size="13" fill="#5f6b73">access.authorize(actor, permission, invoice)</text>
+  <rect x="486" y="124" width="206" height="46" rx="10" fill="#ffffff" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="589" y="152" font-size="13" fill="#1f2328" text-anchor="middle">acteur anonyme ?</text>
+  <line x1="694" y1="147.0" x2="736" y2="147.0" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="708" y="134" font-size="13" fill="#1f2328" text-anchor="middle">oui</text>
+  <rect x="738" y="124" width="196" height="46" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="836" y="143" font-size="14" font-weight="700" fill="#9a5b2b" text-anchor="middle">UnauthenticatedError</text>
+  <text x="836" y="161" font-size="13" fill="#1f2328" text-anchor="middle">UNAUTHORIZED, 401</text>
+  <line x1="589.0" y1="172" x2="589.0" y2="194" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="598.0" y="188" font-size="13" fill="#1f2328">non</text>
+  <rect x="486" y="196" width="206" height="46" rx="10" fill="#ffffff" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="589" y="215" font-size="13" fill="#1f2328" text-anchor="middle">chaque politique :</text>
+  <text x="589" y="233" font-size="13" fill="#1f2328" text-anchor="middle">appliesTo ?</text>
+  <line x1="694" y1="219.0" x2="736" y2="219.0" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="708" y="206" font-size="13" fill="#1f2328" text-anchor="middle">non</text>
+  <rect x="738" y="196" width="196" height="46" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="836" y="215" font-size="14" font-weight="700" fill="#9a5b2b" text-anchor="middle">ForbiddenError</text>
+  <text x="836" y="233" font-size="13" fill="#1f2328" text-anchor="middle">SUBJECT_MISMATCH</text>
+  <line x1="589.0" y1="244" x2="589.0" y2="266" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="598.0" y="260" font-size="13" fill="#1f2328">oui</text>
+  <rect x="486" y="268" width="206" height="46" rx="10" fill="#ffffff" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="589" y="287" font-size="13" fill="#1f2328" text-anchor="middle">chaque politique :</text>
+  <text x="589" y="305" font-size="13" fill="#1f2328" text-anchor="middle">allows ?</text>
+  <line x1="694" y1="291.0" x2="736" y2="291.0" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="708" y="278" font-size="13" fill="#1f2328" text-anchor="middle">non</text>
+  <rect x="738" y="268" width="196" height="46" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="836" y="287" font-size="14" font-weight="700" fill="#9a5b2b" text-anchor="middle">ForbiddenError</text>
+  <text x="836" y="305" font-size="13" fill="#1f2328" text-anchor="middle">raison : nom de la politique</text>
+  <line x1="589.0" y1="316" x2="589.0" y2="338" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="598.0" y="332" font-size="13" fill="#1f2328">oui</text>
+  <rect x="486" y="340" width="206" height="46" rx="10" fill="#ffffff" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="589" y="359" font-size="13" fill="#1f2328" text-anchor="middle">Authorizer.check</text>
+  <text x="589" y="377" font-size="13" fill="#1f2328" text-anchor="middle">avec la ressource</text>
+  <line x1="694" y1="363.0" x2="736" y2="363.0" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="708" y="350" font-size="13" fill="#1f2328" text-anchor="middle">non</text>
+  <rect x="738" y="340" width="196" height="46" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="836" y="359" font-size="14" font-weight="700" fill="#9a5b2b" text-anchor="middle">ForbiddenError</text>
+  <text x="836" y="377" font-size="13" fill="#1f2328" text-anchor="middle">raison du modèle</text>
+  <line x1="589.0" y1="388" x2="589.0" y2="410" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="598.0" y="404" font-size="13" fill="#1f2328">autorisé</text>
+  <rect x="486" y="412" width="206" height="46" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="589" y="431" font-size="14" font-weight="700" fill="#2f6f4f" text-anchor="middle">l'agrégat change</text>
+  <text x="589" y="449" font-size="13" fill="#1f2328" text-anchor="middle">invoice.void(now)</text>
+  <rect x="24" y="554" width="910" height="50" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="480" y="575" font-size="14" font-weight="600" fill="#5f6b73" text-anchor="middle">onDecision : les deux points de contrôle enregistrent chaque décision, autorisée ou refusée</text>
+  <text x="480" y="594" font-size="13" fill="#1f2328" text-anchor="middle">{ actorId, permissionId, resource?, decision, useCase?, kind? }, pour le journal d'audit ; un hook qui lève une erreur refuse</text>
+</svg>

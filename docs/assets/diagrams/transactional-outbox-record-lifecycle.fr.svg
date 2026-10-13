@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 440" width="960" height="440" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">La vie d'un enregistrement de l'outbox : en attente, publié ou mort</title>
+  <desc id="desc">Un enregistrement est ajouté en attente par la validation de la commande. Le relais le réclame quand il est dû et le publie ; il est alors marqué publié, et purgePublished le supprime plus tard. Quand une publication échoue, l'enregistrement reste en attente et une nouvelle tentative a lieu après un délai exponentiel : 1 seconde, 2, 4, et 5 minutes au plus par défaut. Après maxAttempts tentatives, 8 par défaut, il est mort, et reste dans la table jusqu'à ce qu'un opérateur appelle retryDead, qui le remet en attente avec un budget de tentatives neuf. store.stats() compte les enregistrements en attente, ceux en échec parmi eux, et les morts.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="440" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">La vie d'un enregistrement de l'outbox</text>
+  <!-- start -->
+  <circle cx="40" cy="180" r="8" fill="#3d4449"/>
+  <line x1="50" y1="180" x2="106" y2="180" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="78" y="170" font-size="13" fill="#1f2328" text-anchor="middle">append</text>
+  <!-- pending -->
+  <rect x="110" y="144" width="180" height="72" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="200" y="174" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">pending</text>
+  <text x="200" y="196" font-size="13" fill="#1f2328" text-anchor="middle">réclamé quand il est dû</text>
+  <!-- retry loop -->
+  <path d="M170,144 V104 H250 V140" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="210" y="72" font-size="13" fill="#1f2328" text-anchor="middle">publication échouée : nouvelle tentative après un délai</text>
+  <text x="210" y="90" font-size="13" fill="#1f2328" text-anchor="middle">1 s, 2 s, 4 s, ... 5 min au plus</text>
+  <!-- published -->
+  <rect x="430" y="144" width="180" height="72" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="520" y="174" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">published</text>
+  <text x="520" y="196" font-size="13" fill="#1f2328" text-anchor="middle">publishedAt est renseigné</text>
+  <line x1="292" y1="180" x2="426" y2="180" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="359" y="170" font-size="13" fill="#1f2328" text-anchor="middle">le relais publie</text>
+  <!-- purged -->
+  <rect x="750" y="144" width="180" height="72" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="840" y="174" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">purgé</text>
+  <text x="840" y="196" font-size="13" fill="#1f2328" text-anchor="middle">la table reste petite</text>
+  <line x1="612" y1="180" x2="746" y2="180" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="679" y="170" font-size="13" fill="#1f2328" text-anchor="middle">purgePublished</text>
+  <!-- dead -->
+  <rect x="430" y="292" width="180" height="72" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="520" y="322" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">dead</text>
+  <text x="520" y="344" font-size="13" fill="#1f2328" text-anchor="middle">attend un opérateur</text>
+  <path d="M240,218 V328 H426" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="333" y="318" font-size="13" fill="#1f2328" text-anchor="middle">après maxAttempts (8)</text>
+  <path d="M520,366 V400 H160 V220" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="340" y="422" font-size="13" fill="#1f2328" text-anchor="middle">retryDead(ids) : de nouveau pending, un budget neuf</text>
+  <!-- what the store counts -->
+  <rect x="680" y="292" width="250" height="72" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="805" y="320" font-size="14" font-weight="600" fill="#1f2328" text-anchor="middle">store.stats()</text>
+  <text x="805" y="344" font-size="13" fill="#1f2328" text-anchor="middle">pending, dont failed, dead</text>
+</svg>

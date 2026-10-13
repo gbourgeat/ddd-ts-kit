@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" width="960" height="540" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">How the kit saves, loads and follows an event-sourced aggregate</title>
+  <desc id="desc">Three paths. Save: the aggregate records an event and applies it, the repository delegates to EventSourcedRepository, the serializer encodes the event to its stored shape and seals the personal values, and the event store appends it to the stream at the expected version, in the unit of work. Load: the snapshot store gives the last snapshot if one was taken, the event store reads the stream after its version, the serializer opens the personal values, upcasts and decodes, and the aggregate is rehydrated by replaying through its apply methods. Follow: a CatchUpSubscription reads the whole store after the checkpoint of a projection, its On methods apply each event to the read model, rows stamped with the stream version, and the checkpoint moves in the same unit of work.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="540" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Save, load, follow: the three paths of an event-sourced aggregate</text>
+  <text x="32" y="78" font-size="14" font-weight="600" fill="#1f2328">save: what a command leaves</text>
+  <rect x="32" y="90" width="200" height="100" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="132" y="118" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">aggregate</text>
+  <text x="132" y="142" font-size="13" fill="#1f2328" text-anchor="middle">record(event):</text>
+  <text x="132" y="160" font-size="13" fill="#1f2328" text-anchor="middle">applies it, keeps it</text>
+  <text x="132" y="178" font-size="13" fill="#1f2328" text-anchor="middle">for the save</text>
+  <rect x="264" y="90" width="200" height="100" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="364" y="118" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">repository</text>
+  <text x="364" y="142" font-size="13" fill="#1f2328" text-anchor="middle">save(aggregate):</text>
+  <text x="364" y="160" font-size="13" fill="#1f2328" text-anchor="middle">EventSourcedRepository</text>
+  <rect x="496" y="90" width="200" height="100" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="596" y="118" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">serializer</text>
+  <text x="596" y="142" font-size="13" fill="#1f2328" text-anchor="middle">encodes the stored</text>
+  <text x="596" y="160" font-size="13" fill="#1f2328" text-anchor="middle">shape, seals the</text>
+  <text x="596" y="178" font-size="13" fill="#1f2328" text-anchor="middle">personal values</text>
+  <rect x="728" y="90" width="200" height="100" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="828" y="118" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">event store</text>
+  <text x="828" y="142" font-size="13" fill="#1f2328" text-anchor="middle">append(stream,</text>
+  <text x="828" y="160" font-size="13" fill="#1f2328" text-anchor="middle">expected version),</text>
+  <text x="828" y="178" font-size="13" fill="#1f2328" text-anchor="middle">in the unit of work</text>
+  <line x1="234" y1="140" x2="262" y2="140" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="466" y1="140" x2="494" y2="140" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="698" y1="140" x2="726" y2="140" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="32" y="220" font-size="14" font-weight="600" fill="#1f2328">load: what the next command decides on</text>
+  <rect x="32" y="232" width="200" height="100" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="132" y="260" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">snapshot store</text>
+  <text x="132" y="284" font-size="13" fill="#1f2328" text-anchor="middle">the last snapshot,</text>
+  <text x="132" y="302" font-size="13" fill="#1f2328" text-anchor="middle">when one was taken</text>
+  <rect x="264" y="232" width="200" height="100" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="364" y="260" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">event store</text>
+  <text x="364" y="284" font-size="13" fill="#1f2328" text-anchor="middle">readStream(stream,</text>
+  <text x="364" y="302" font-size="13" fill="#1f2328" text-anchor="middle">after that version)</text>
+  <rect x="496" y="232" width="200" height="100" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="596" y="260" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">serializer</text>
+  <text x="596" y="284" font-size="13" fill="#1f2328" text-anchor="middle">opens the personal</text>
+  <text x="596" y="302" font-size="13" fill="#1f2328" text-anchor="middle">values, upcasts,</text>
+  <text x="596" y="320" font-size="13" fill="#1f2328" text-anchor="middle">decodes</text>
+  <rect x="728" y="232" width="200" height="100" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="828" y="260" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">aggregate</text>
+  <text x="828" y="284" font-size="13" fill="#1f2328" text-anchor="middle">rehydrate: replays</text>
+  <text x="828" y="302" font-size="13" fill="#1f2328" text-anchor="middle">through the apply</text>
+  <text x="828" y="320" font-size="13" fill="#1f2328" text-anchor="middle">methods</text>
+  <line x1="234" y1="282" x2="262" y2="282" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="466" y1="282" x2="494" y2="282" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="698" y1="282" x2="726" y2="282" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="32" y="362" font-size="14" font-weight="600" fill="#1f2328">follow: a projection fed by the store</text>
+  <rect x="32" y="374" width="200" height="100" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="132" y="402" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">event store</text>
+  <text x="132" y="426" font-size="13" fill="#1f2328" text-anchor="middle">readAll(after the</text>
+  <text x="132" y="444" font-size="13" fill="#1f2328" text-anchor="middle">checkpoint, a batch)</text>
+  <rect x="264" y="374" width="200" height="100" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="364" y="402" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">CatchUpSubscription</text>
+  <text x="364" y="426" font-size="13" fill="#1f2328" text-anchor="middle">one per projection,</text>
+  <text x="364" y="444" font-size="13" fill="#1f2328" text-anchor="middle">under its name</text>
+  <rect x="496" y="374" width="200" height="100" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="596" y="402" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">projection</text>
+  <text x="596" y="426" font-size="13" fill="#1f2328" text-anchor="middle">its @On methods</text>
+  <text x="596" y="444" font-size="13" fill="#1f2328" text-anchor="middle">apply each event</text>
+  <rect x="728" y="374" width="200" height="100" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="828" y="402" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">read model</text>
+  <text x="828" y="426" font-size="13" fill="#1f2328" text-anchor="middle">rows stamped with the</text>
+  <text x="828" y="444" font-size="13" fill="#1f2328" text-anchor="middle">stream version, the</text>
+  <text x="828" y="462" font-size="13" fill="#1f2328" text-anchor="middle">checkpoint moved too</text>
+  <line x1="234" y1="424" x2="262" y2="424" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="466" y1="424" x2="494" y2="424" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="698" y1="424" x2="726" y2="424" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="32" y="506" font-size="14" fill="#1f2328">The save also hands the recorded events to the dispatcher, like any save: the publisher writes the outbox</text>
+  <text x="32" y="526" font-size="14" fill="#1f2328">in the same transaction as the append. No double write, and nothing published for a refused append.</text>
+</svg>

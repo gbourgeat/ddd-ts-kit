@@ -1,3 +1,5 @@
+**English** · [Français](domain-no-generic-error.fr.md)
+
 # ddd-ts-kit/domain-no-generic-error
 
 Architecture id: `domain/no-generic-error` (added by this plugin). Default severity: `error` in `recommended`, `error` in `strict`.

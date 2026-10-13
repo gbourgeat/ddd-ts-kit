@@ -1,3 +1,5 @@
+**English** · [Français](README.fr.md)
+
 # ddd-ts-kit
 
 Domain-Driven Design, Clean Architecture and Clean Code for TypeScript backends, held by tools
@@ -13,11 +15,15 @@ It is three things that share one definition of the architecture
 - **runtime packages and analyzers**: framework-agnostic building blocks, an ESLint plugin
   and a CI pipeline for GitHub and GitLab.
 
-TypeScript only. No framework imposed: Express, Fastify or NestJS; zod, class-validator or any
-Standard Schema library; tsyringe, NestJS or manual wiring; Drizzle, Knex, Prisma or TypeORM;
-RabbitMQ, Kafka, NATS JetStream or Redis Streams; JWT or Keycloak; roles, attributes or
-relationships. `ddd-ts-kit init` without a flag takes Express, zod, tsyringe, Drizzle on
-PostgreSQL and Vitest.
+TypeScript only. No framework imposed: Express, Fastify, Hono or NestJS; zod, class-validator,
+TypeBox or any Standard Schema library; tsyringe, NestJS or manual wiring; Drizzle, Knex,
+Prisma or TypeORM; RabbitMQ, Kafka, NATS JetStream or Redis Streams; JWT or Keycloak; roles,
+attributes or relationships. `ddd-ts-kit init` without a flag takes Express, zod, tsyringe,
+Drizzle on PostgreSQL and Vitest.
+
+The documentation is also written in French: every page has its translation next to it, reached
+by the link on its first line, starting from [README.fr.md](README.fr.md) and the
+[French index of the documentation](docs/README.fr.md).
 
 ## Start a project
 
@@ -37,6 +43,8 @@ one reads. `/ddd-ts-kit:start` conducts steps 1 to 7 one at a time, records them
 | 7 | Build slice by slice | `use-case` (`parallel-work` for several workers) | the code and its tests, one commit per slice |
 | 8 | Pass the quality gate | `quality-gate`, `npm run verify` | a green gate before each merge |
 | 9 | Document | `document`, `npm run docs:generate` | current contracts, context map and decision records |
+
+![The nine steps: four written in the words of the business under docs/architecture/ (discover the domain, find the contexts, write the glossaries, draw the context map), then five with the generators (bootstrap, plan the slices, build a slice, pass the gate, document); steps 7 and 8 repeat for each slice](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/ddd-ts-kit-workflow.svg)
 
 Skipping a step costs later, and the cost is known: without steps 1 to 4 the boundaries are
 drawn from the database tables, and every rename crosses contexts; a glossary written after
@@ -84,8 +92,154 @@ run: `cp .env.example .env`, `pnpm run infra:up` (PostgreSQL, in Docker), `pnpm 
 Each `generate` writes the file, its spec, its fake or builder and its registration, and lists
 the `TODO(domain)` places where a business decision is expected. A name that is not in the
 context's glossary is refused, and so is a command or a query that declares neither a
-permission nor `--public`. `pnpm exec ddd-ts-kit generate --help` lists the 25 kinds. What
+permission nor `--public`. `pnpm exec ddd-ts-kit generate --help` lists the 36 kinds. What
 changes from one version to the next: [CHANGELOG.md](CHANGELOG.md).
+
+### One slice, end to end
+
+The `generate` lines above build a vertical slice of the `ordering` context: the request
+`POST /orders` crosses the four layers. The controller, the handler, the `Order` aggregate and
+its repository are classes the generators wrote; the command bus comes from the platform that
+`init` wrote.
+
+![The request POST /orders followed through the controller, the command bus, the handler, the Order aggregate and the Drizzle repository, inside one unit of work, until the answer 201](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/ddd-ts-kit-slice-flow.svg)
+
+1. The controller (`presentation/http/orders/place-order/place-order.controller.ts`) validates
+   the body with its schema, builds `PlaceOrderCommand` with the actor of the request and sends
+   it on the command bus (1, 2).
+2. The command bus of the platform logs and measures the use case, lets it through only when the
+   actor holds `order.place`, and opens the unit of work (3).
+3. The handler (`application/commands/place-order/place-order.handler.ts`) asks the aggregate:
+   `Order.place(...)` checks its invariants and records `OrderPlaced`, or throws a refusal
+   (4 to 6).
+4. The handler saves through the `OrderRepository` port of the domain. The Drizzle adapter
+   (`infrastructure/persistence/drizzle-order.repository.ts`), bound to that port when the
+   application starts, writes the row inside the transaction (7, 8).
+5. The unit of work hands `OrderPlaced` to its handlers, still inside the transaction, then
+   commits (9). The controller answers `201` with the identifier (10, 11). A refusal answers a
+   problem document (RFC 9457) that carries its stable code instead.
+
+What is left to you is the business: the `TODO(domain)` places. Filled in, the domain and
+application part of this slice reads as follows, in one block here where the generators write
+one file per class (the refusal comes from `generate error ordering Order empty`, the event from
+`generate domain-event ordering Order Placed`):
+
+<!-- checked sample -->
+```ts
+import { definePermissions } from '@ddd-ts-kit/auth';
+import {
+  type Actor,
+  AggregateRoot,
+  AuthorizedCommand,
+  type Clock,
+  ConceptError,
+  type DomainEvent,
+  type IdGenerator,
+  Repository,
+} from '@ddd-ts-kit/kernel';
+import { CommandHandler, Requires } from '@ddd-ts-kit/kernel/declarations';
+
+// application/authorization/ordering.permissions.ts: `generate command` declared the permission
+export const orderingPermissions = definePermissions('ordering', {
+  'order.place': { description: 'Place order' },
+});
+
+// domain/errors/order.error.ts: each refusal is a static factory with a stable code
+export class OrderError extends ConceptError {
+  static empty() {
+    return OrderError.refusal('ORDER_EMPTY', 'An order holds at least one product.');
+  }
+}
+
+// domain/events/order-placed.event.ts: a fact, named in the past tense
+export class OrderPlaced implements DomainEvent {
+  static readonly eventName = 'ordering.order.placed';
+
+  readonly name = OrderPlaced.eventName;
+
+  constructor(
+    readonly aggregateId: string,
+    readonly occurredAt: Date,
+    readonly customerId: string,
+  ) {}
+}
+
+// domain/aggregates/order.aggregate.ts: the invariants live here, and nowhere else
+export interface OrderState {
+  readonly customerId: string;
+  readonly productIds: readonly string[];
+  readonly placedAt: Date;
+}
+
+export class Order extends AggregateRoot<string> {
+  private constructor(
+    id: string,
+    private state: OrderState,
+  ) {
+    super(id);
+  }
+
+  // the customer and the products travel together: one parameter object, three parameters at most
+  static place(id: string, request: Pick<OrderState, 'customerId' | 'productIds'>, now: Date): Order {
+    if (request.productIds.length === 0) {
+      throw OrderError.empty();
+    }
+
+    const order = new Order(id, { ...request, placedAt: now });
+
+    order.record(new OrderPlaced(id, now, request.customerId));
+
+    return order;
+  }
+
+  static rehydrate(id: string, state: OrderState): Order {
+    return new Order(id, state);
+  }
+
+  toState(): OrderState {
+    return { ...this.state };
+  }
+}
+
+// domain/repositories/order.repository.ts: a port, an abstract class that is its own injection token
+export abstract class OrderRepository extends Repository<Order> {}
+
+// application/commands/place-order/place-order.command.ts: the actor comes first, then plain data
+@Requires(orderingPermissions['order.place'])
+export class PlaceOrderCommand extends AuthorizedCommand<string> {
+  constructor(
+    actor: Actor,
+    readonly customerId: string,
+    readonly productIds: readonly string[],
+  ) {
+    super(actor);
+  }
+}
+
+// application/commands/place-order/place-order.handler.ts: time and identifiers come from ports
+@CommandHandler(PlaceOrderCommand)
+export class PlaceOrderHandler implements CommandHandler<PlaceOrderCommand> {
+  constructor(
+    private readonly orderRepository: OrderRepository,
+    private readonly ids: IdGenerator,
+    private readonly clock: Clock,
+  ) {}
+
+  async execute({ customerId, productIds }: PlaceOrderCommand): Promise<string> {
+    const order = Order.place(this.ids.next(), { customerId, productIds }, this.clock.now());
+
+    await this.orderRepository.save(order);
+
+    return order.id;
+  }
+}
+```
+
+The handler never opens a transaction, never checks the permission and never publishes the
+event: the command bus and the repository do, around it. Its spec runs it through the test
+application with the fakes of its ports; [Which command, when](docs/guides/commands.md#a-first-feature-from-zero) follows
+this first feature to the end, and the [example application](examples/scheduling/README.md)
+shows a whole product built this way.
 
 ## The Claude Code plugin
 
@@ -172,6 +326,52 @@ Rules have ids, a reason and a fix (`npx ddd-ts-kit explain <rule-id>`):
 - **Deviations** (`governance/recorded-deviation`): a suppression or a relaxed rule carries a
   reason and a decision record. The guard puts each one to the project owner.
 - **Tests** (`test/*`): a spec for every unit of behaviour, a builder per aggregate, no mocks.
+- **And the rest**: `errors/*`, `naming/*`, `presentation/*`, `persistence/*`, `tenancy/*`,
+  `event-sourcing/*`, `imports/*` and a few more. `npx ddd-ts-kit rules` lists every id with
+  its severity.
+
+### Instead of, write
+
+A handler written the quick way breaks four rules at once, and each finding names its rule:
+
+```ts
+// application/commands/place-order/place-order.handler.ts, written the quick way
+import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
+import { PlaceOrderCommand } from '@/contexts/ordering/application/commands/place-order/place-order.command';
+import { db, orders } from '@/contexts/ordering/infrastructure/database'; // layer/application-inward
+
+@CommandHandler(PlaceOrderCommand)
+export class PlaceOrderHandler implements CommandHandler<PlaceOrderCommand> {
+  async execute({ customerId, productIds }: PlaceOrderCommand): Promise<string> {
+    if (productIds.length === 0) {
+      throw new Error('Empty order'); // domain/no-generic-error
+    }
+
+    const id = crypto.randomUUID(); // purity/no-ambient-randomness
+
+    await db.insert(orders).values({ id, customerId, productIds, placedAt: new Date() }); // purity/no-system-clock
+
+    return id;
+  }
+}
+```
+
+The handler of the [quick start](#one-slice-end-to-end) is the same use case, written inside
+the rules:
+
+| Instead of | Write | Rule |
+|---|---|---|
+| `new Date()` | `this.clock.now()`, the `Clock` port received in the constructor | `purity/no-system-clock` |
+| `crypto.randomUUID()` | `this.ids.next()`, the `IdGenerator` port | `purity/no-ambient-randomness` |
+| `throw new Error('Empty order')` | `throw OrderError.empty()`, a refusal with a stable code | `domain/no-generic-error` |
+| an import of `infrastructure/` in a handler | the `OrderRepository` port, bound to its adapter by the platform | `layer/application-inward` |
+| an import of another context's `domain/` | that context's `published-language/`, or an integration event | `context/published-language-only` |
+
+Each finding comes with its fix, and `npx ddd-ts-kit explain <rule-id>` gives the reason.
+
+### Where they are checked
+
+![The same rules checked at three moments: at every file write by the hook of the Claude Code plugin, before each merge by npm run verify, and on every push by the CI pipeline, all three applying the rules defined in docs/ARCHITECTURE.md](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/ddd-ts-kit-checks.svg)
 
 Three analyzers hold them, each where it is exact: the zero-dependency CLI checker for
 structure and for instant feedback at every file write, the ESLint plugin on the syntax tree
@@ -182,7 +382,7 @@ compiler in strict mode complete the gate.
 
 | Package | What it gives |
 |---|---|
-| [`ddd-ts-kit`](packages/cli) | the CLI: `init`, `generate`, `check`, `docs`, `sdk` (a typed client of the OpenAPI contract, its refusals typed by their error codes), `list`, `describe`, `status`, `todo`, `worker-scope`, `depcruise-config`, `rules`, `explain` |
+| [`ddd-ts-kit`](packages/cli) | the CLI: `init`, `generate`, `check`, `docs`, `sdk` (a typed client of the OpenAPI contract, its refusals typed by their error codes), `list`, `describe`, `status`, `todo`, `worker-scope`, `affected` (what a pull request has to run), `depcruise-config`, `build-aliases`, `rules`, `explain`, and the migrations from one style to another (`error-factories`, `controllers`, `value-objects`) |
 | [`@ddd-ts-kit/kernel`](packages/kernel) | entities, aggregates, value objects, domain errors, `Result`; ports as abstract classes; the declarations (`@CommandHandler`, `@Repository`, ...); command, query and event buses with in-memory implementations; the standard extensible interfaces: `Actor`, `Session`, `ExecutionContext`, `Logger`, `Metrics`, `Cache`, `Page`, `Clock`, `IdGenerator`, `UnitOfWork`, `ErrorReporter`, `FileStorage`; the read side: criteria, hydration and read models |
 | [`@ddd-ts-kit/events`](packages/events) | typed integration event declarations, registry, transactional outbox and relay, AsyncAPI and event catalog generation |
 | [`@ddd-ts-kit/rabbitmq`](packages/rabbitmq), [`kafka`](packages/kafka), [`nats`](packages/nats), [`redis/event-bus`](packages/redis) | broker providers behind one contract: acknowledged publishing for the outbox relay, one durable subscription per consumer, bounded retries, dead letters |
@@ -193,8 +393,8 @@ compiler in strict mode complete the gate.
 | [`@ddd-ts-kit/audit`](packages/audit) | hash-chained, append-only audit trail fed by authorization decisions, commands and integration events |
 | [`@ddd-ts-kit/redis`](packages/redis) | cache, lock, rate limiter and relay signal on Redis, Dragonfly or Valkey |
 | [`@ddd-ts-kit/s3`](packages/s3) | the kernel `FileStorage` port on AWS S3, MinIO, OVHcloud, Scaleway or Cloudflare R2: streamed uploads, short signed links; file content never in the database |
-| [`@ddd-ts-kit/http`](packages/http) | routes declared once, mounted on Express, Fastify or NestJS; RFC 9457 errors; OpenAPI 3.1 generation; Swagger UI, Scalar or Redoc; cache policies, `ETag`, `If-Match` and cache tags, with purgers for Varnish, Fastly and Cloudflare (`/purgers`) |
-| [`@ddd-ts-kit/validation`](packages/validation) | one `Schema` port over zod, class-validator and Standard Schema |
+| [`@ddd-ts-kit/http`](packages/http) | routes declared once, mounted on Express, Fastify, Hono or NestJS; RFC 9457 errors; OpenAPI 3.1 generation; Swagger UI, Scalar or Redoc; cache policies, `ETag`, `If-Match` and cache tags, with purgers for Varnish, Fastly and Cloudflare (`/purgers`) |
+| [`@ddd-ts-kit/validation`](packages/validation) | one `Schema` port over zod, class-validator, TypeBox and Standard Schema; schemas shared by several routes, documented once |
 | [`@ddd-ts-kit/di`](packages/di) | context modules on tsyringe from the declarations of a context or from an explicit module, port classes as tokens, a test application with fakes |
 | [`@ddd-ts-kit/pino`](packages/pino), [`winston`](packages/winston) | the kernel `Logger` port on pino or winston, with the correlation fields on every line |
 | [`@ddd-ts-kit/sentry`](packages/sentry) | the kernel `ErrorReporter` port on Sentry or GlitchTip: unexpected failures only, scrubbed |
@@ -205,6 +405,13 @@ compiler in strict mode complete the gate.
 
 Everything talks through ports of the kernel, so each piece is replaceable: another event
 provider, ORM or HTTP framework is an adapter that passes the same contract suite.
+
+![Where each package is imported: inside a bounded context the domain imports only the kernel, the application adds auth, the presentation imports http and validation, the infrastructure one ORM package, the published language events and validation; the platform composes the contexts with di and the packages of its technical capabilities](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/ddd-ts-kit-packages.svg)
+
+The domain of a context depends on the kernel alone, which has no dependency at all: the
+business code compiles and runs its tests without an HTTP framework, a database or a broker. The
+packages that talk to the outside world are imported by the infrastructure and by the platform,
+which binds each adapter to its port when the application starts.
 
 ## Pipeline
 
@@ -231,21 +438,38 @@ reading order for a newcomer to DDD, a tech lead adopting the kit and a contribu
 - **Tools.** One page per decision, with a comparison, the kit's verified support and its
   limits: [HTTP frameworks](docs/tools/http-frameworks.md),
   [validation](docs/tools/validation.md),
+  [contract pairs](docs/tools/contract-pairs.md),
   [dependency injection](docs/tools/dependency-injection.md),
   [persistence](docs/tools/persistence.md), [message brokers](docs/tools/message-brokers.md),
   [cache and coordination](docs/tools/cache-and-coordination.md),
   [HTTP caches](docs/tools/http-caches.md),
+  [file storage](docs/tools/file-storage.md),
   [identity](docs/tools/identity.md),
   [authorization engines](docs/tools/authorization-engines.md),
   [observability](docs/tools/observability.md),
   [static analysis and pipeline](docs/tools/static-analysis-and-pipeline.md),
-  [test runners](docs/tools/test-runners.md).
+  [quality baseline](docs/tools/quality-baseline.md),
+  [test runners](docs/tools/test-runners.md),
+  [client SDK](docs/tools/client-sdk.md),
+  [import aliases](docs/tools/import-aliases.md).
 - **Guides.** [Methodology](docs/guides/methodology.md), [which command, when](docs/guides/commands.md),
   [team workflow](docs/guides/team-workflow.md), [parallel work](docs/guides/parallel-work.md),
   [commit discipline](docs/guides/commit-discipline.md),
+  [choosing access control](docs/guides/choosing-access-control.md),
   [when to extract microservices](docs/guides/when-to-extract-microservices.md),
   [token economy](docs/guides/token-economy.md).
 - **Proposals.** [The read side](docs/proposals/read-side.md), with its build status.
+
+## Example application
+
+[examples/scheduling](examples/scheduling/README.md) is an appointment scheduling platform for
+practices, built with the kit the way a user would build it: from a statement of needs, through
+the nine steps, by several workers in parallel. Four bounded contexts (`scheduling`, the core,
+then `identity`, `notification` and `analytics`) run in one application and a worker process,
+on Express, class-validator, tsyringe, Knex on PostgreSQL, the transactional outbox, Keycloak and
+relationship-based authorization. It is the place to read real aggregates, refusals, policies,
+integration events and their tests; its tooling report says how the kit behaved during the
+build.
 
 ## Requirements
 

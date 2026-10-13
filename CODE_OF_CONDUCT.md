@@ -1,3 +1,5 @@
+**English** · [Français](CODE_OF_CONDUCT.fr.md)
+
 # Code of conduct
 
 This project adopts the

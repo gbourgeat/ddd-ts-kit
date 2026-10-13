@@ -1,3 +1,5 @@
+**English** · [Français](bounded-context.fr.md)
+
 # Bounded context
 
 **Summary.** A bounded context is the explicit boundary inside which one model and one
@@ -17,20 +19,7 @@ the three ends up with every field optional and every rule conditional.
 A bounded context ends that negotiation: each of the three keeps the model that serves it, and
 the contexts exchange facts through contracts instead of sharing a class or a table.
 
-```mermaid
-flowchart LR
-  subgraph appointments
-    A1[Appointment: slot, status, cancellation rules]
-  end
-  subgraph notifications
-    N1[Reminder: recipient, sendAt, channel]
-  end
-  subgraph analytics
-    S1[Visit fact: practitioner, duration, outcome]
-  end
-  A1 -- "appointments.appointment.booked" --> N1
-  A1 -- "appointments.appointment.booked" --> S1
-```
+![Three bounded contexts each keep their own model of an appointment: appointments holds the Appointment and its rules, notifications a Reminder, analytics a visit fact; appointments publishes appointments.appointment.booked to the two others](../assets/diagrams/bounded-context-one-model-per-context.svg)
 
 ## Subdomain versus bounded context
 
@@ -100,6 +89,8 @@ folder into a boundary is a set of rules, each with an id:
 
 `npx ddd-ts-kit explain <rule-id>` prints the reason and an example for each.
 
+![Two bounded contexts: notifications may import the published-language folder of appointments, an import of its domain is refused by context/published-language-only, and each context owns its schema with no join, foreign key or transaction across them](../assets/diagrams/bounded-context-boundary.svg)
+
 Three consequences are worth spelling out:
 
 - **Own data.** One database schema per context, no foreign key, join or transaction across
@@ -122,6 +113,68 @@ npx ddd-ts-kit generate context availability --classification supporting \
   --term "Slot=An interval a practitioner can still offer to a client"
 ```
 
+### Crossing the boundary, in code
+
+A consumer that needs to know about a booking does not import the `Appointment` aggregate.
+Instead of:
+
+```ts
+// contexts/notifications/application/integration/handlers/appointment-booked.integration-handler.ts
+// refused: context/published-language-only (the domain of appointments is not a contract)
+import { Appointment } from '@/contexts/appointments/domain/aggregates/appointment.aggregate';
+```
+
+write the fact once, in the published language of the producer, as a versioned integration
+event with a schema, and let the consumer build its own model from that payload:
+
+<!-- checked sample -->
+```ts
+import { defineIntegrationEvent } from '@ddd-ts-kit/events';
+import type { IntegrationEvent } from '@ddd-ts-kit/kernel';
+import { zodSchema } from '@ddd-ts-kit/validation/zod';
+import { z } from 'zod';
+
+// contexts/appointments/published-language/appointment-booked.v1.integration-event.ts
+// The contract appointments owns: plain, serializable facts, no class of its domain.
+const AppointmentBookedV1Payload = z.object({
+  appointmentId: z.string(),
+  practitionerId: z.string(),
+  clientId: z.string(),
+  startsAt: z.iso.datetime(),
+  endsAt: z.iso.datetime(),
+});
+
+export const appointmentBookedV1 = defineIntegrationEvent({
+  type: 'appointments.appointment.booked',
+  version: 1,
+  description: 'A client booked a slot with a practitioner.',
+  payload: zodSchema(AppointmentBookedV1Payload),
+});
+
+export type AppointmentBookedV1 = IntegrationEvent<z.output<typeof AppointmentBookedV1Payload>>;
+
+// contexts/notifications: its own model of the same appointment, built from the contract only.
+interface Reminder {
+  readonly recipientId: string;
+  readonly appointmentId: string;
+  readonly sendAt: Date;
+}
+
+const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+
+export function reminderFor(event: AppointmentBookedV1): Reminder {
+  const { clientId, appointmentId, startsAt } = event.payload;
+
+  return { recipientId: clientId, appointmentId, sendAt: new Date(Date.parse(startsAt) - ONE_DAY_MS) };
+}
+```
+
+The contract can now evolve on its own terms (a `v2` next to `v1`, see
+[Event versioning](event-versioning.md)), and `appointments` can rename every field of its
+aggregate without a single change in `notifications`. The relationship is declared in the
+config of the consumer (`"upstreams": [{ "context": "appointments", "relationship":
+"published-language" }]`), or `context/declared-relationship` refuses the import.
+
 ## The example: where does "no double booking" live?
 
 A first sketch puts the rule in `availability`: it knows the open slots, so it should refuse a
@@ -129,7 +182,49 @@ taken one. The consistency test says otherwise. Availability is computed from ev
 other contexts and is therefore always slightly late. A rule that must hold at every instant
 cannot rest on late data. The rule belongs to `appointments`, guarded by the aggregate and by a
 database constraint; `availability` only advises the user interface, and booking a slot that
-was taken a moment ago ends in the domain error `SlotAlreadyTaken`.
+was taken a moment ago ends in the refusal `SLOT_TAKEN`, built by a factory of the error class
+of the concept:
+
+<!-- checked sample -->
+```ts
+import { ConceptError } from '@ddd-ts-kit/kernel';
+
+// contexts/appointments/domain/errors/appointment.error.ts
+export class AppointmentError extends ConceptError {
+  static slotTaken(practitionerId: string, startsAt: Date) {
+    return AppointmentError.refusal(
+      'SLOT_TAKEN',
+      `The slot starting at ${startsAt.toISOString()} is already held for practitioner ${practitionerId}.`,
+      { practitionerId, startsAt },
+    ).exposing('startsAt');
+  }
+}
+
+interface HeldSlot {
+  readonly practitionerId: string;
+  readonly startsAt: Date;
+  readonly endsAt: Date;
+}
+
+// Decided where appointments are written, against the appointments of the same practitioner
+// read in the same transaction (and a unique constraint behind it), never against the list
+// of open slots of availability, which is always a moment late.
+export function assertFree(wish: HeldSlot, held: readonly HeldSlot[]): void {
+  const taken = held.some(
+    (other) =>
+      other.practitionerId === wish.practitionerId && other.startsAt < wish.endsAt && wish.startsAt < other.endsAt,
+  );
+
+  if (taken) {
+    throw AppointmentError.slotTaken(wish.practitionerId, wish.startsAt);
+  }
+}
+```
+
+The route lists `SLOT_TAKEN` among the errors it answers, the platform maps the code to a
+status (`409` in the example application, `src/platform/http/error-statuses.ts`), and the
+client receives a problem document with the code and the exposed fact `startsAt`: it can offer
+the nearest open slots instead.
 
 ## Limits and when not to use it
 

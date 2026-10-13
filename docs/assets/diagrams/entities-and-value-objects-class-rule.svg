@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 830" width="960" height="830" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">What the rule domain/value-object-class reads</title>
+  <desc id="desc">A decision tree of four questions on a source file, specs aside. If the config does not say &quot;stack.values&quot;: &quot;classes&quot;, the file is not judged. A file of domain/value-objects/ of a context, or a *.vo.ts of the shared kernel, must export exactly one class extending ValueObject or another value object of the project, with a private or protected constructor and a static factory, and no function, arrow constant or object literal. Another file outside domain/ and the shared kernel is not judged. In domain/ and the shared kernel outside presentation/, an exported function that answers a record of data is reported; a domain service, a state machine, a specification, a record of value objects the function builds, a reducer and a function declaring a return type of a package are not concerned.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="830" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">What domain/value-object-class reads</text>
+  <rect x="124" y="56" width="240" height="32" rx="16" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="244" y="77" font-size="13" fill="#1f2328" text-anchor="middle">a source file, specs aside</text>
+  <line x1="244" y1="90" x2="244" y2="106" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="24" y="110" width="440" height="64" rx="32" fill="#ffffff" stroke="#3d4449" stroke-width="2"/>
+  <text x="244" y="137" font-size="14" font-weight="600" fill="#1f2328" text-anchor="middle">Does the config say</text>
+  <text x="244" y="157" font-size="14" font-weight="600" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" fill="#1f2328" text-anchor="middle">&quot;stack.values&quot;: &quot;classes&quot;?</text>
+  <rect x="600" y="104" width="336" height="76" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="620" y="132" font-size="16" font-weight="700" fill="#5f6b73">not judged</text>
+  <text x="620" y="156" font-size="13" fill="#1f2328">a config without the key reads as free</text>
+  <line x1="466" y1="142" x2="596" y2="142" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="531" y="132" font-size="13" fill="#1f2328" text-anchor="middle">no</text>
+  <line x1="244" y1="176" x2="244" y2="222" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="254" y="204" font-size="13" fill="#1f2328">yes</text>
+  <rect x="24" y="226" width="440" height="64" rx="32" fill="#ffffff" stroke="#3d4449" stroke-width="2"/>
+  <text x="244" y="253" font-size="14" font-weight="600" fill="#1f2328" text-anchor="middle">In domain/value-objects/ of a context,</text>
+  <text x="244" y="273" font-size="14" font-weight="600" fill="#1f2328" text-anchor="middle">or a *.vo.ts of the shared kernel?</text>
+  <rect x="600" y="206" width="336" height="214" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="620" y="234" font-size="16" font-weight="700" fill="#2f6f4f">a value object file holds</text>
+  <text x="620" y="258" font-size="13" fill="#1f2328">• exactly one exported class, extending</text>
+  <text x="632" y="278" font-size="13" fill="#1f2328">ValueObject or another value object;</text>
+  <text x="620" y="298" font-size="13" fill="#1f2328">• a private or protected constructor</text>
+  <text x="632" y="318" font-size="13" fill="#1f2328">(or none: the one of ValueObject);</text>
+  <text x="620" y="338" font-size="13" fill="#1f2328">• a static factory: create, of, between..;</text>
+  <text x="620" y="358" font-size="13" fill="#1f2328">• no exported function, arrow constant</text>
+  <text x="632" y="378" font-size="13" fill="#1f2328">or object literal.</text>
+  <text x="620" y="406" font-size="13" font-style="italic" fill="#2f6f4f">The types of its props may be exported.</text>
+  <line x1="466" y1="258" x2="596" y2="258" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="531" y="248" font-size="13" fill="#1f2328" text-anchor="middle">yes</text>
+  <line x1="244" y1="292" x2="244" y2="446" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="254" y="372" font-size="13" fill="#1f2328">no</text>
+  <rect x="24" y="450" width="440" height="64" rx="32" fill="#ffffff" stroke="#3d4449" stroke-width="2"/>
+  <text x="244" y="477" font-size="14" font-weight="600" fill="#1f2328" text-anchor="middle">In domain/ of a context, or the shared</text>
+  <text x="244" y="497" font-size="14" font-weight="600" fill="#1f2328" text-anchor="middle">kernel outside presentation/?</text>
+  <rect x="600" y="444" width="336" height="76" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="620" y="472" font-size="16" font-weight="700" fill="#5f6b73">not judged</text>
+  <text x="620" y="496" font-size="13" fill="#1f2328">a file outside the model</text>
+  <line x1="466" y1="482" x2="596" y2="482" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="531" y="472" font-size="13" fill="#1f2328" text-anchor="middle">no</text>
+  <line x1="244" y1="516" x2="244" y2="558" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="254" y="542" font-size="13" fill="#1f2328">yes</text>
+  <rect x="24" y="562" width="440" height="84" rx="32" fill="#ffffff" stroke="#3d4449" stroke-width="2"/>
+  <text x="244" y="589" font-size="14" font-weight="600" fill="#1f2328" text-anchor="middle">Does an exported function answer a record</text>
+  <text x="244" y="609" font-size="14" font-weight="600" fill="#1f2328" text-anchor="middle">of data, with no spread and nothing</text>
+  <text x="244" y="629" font-size="14" font-weight="600" fill="#1f2328" text-anchor="middle">a call of the model built?</text>
+  <rect x="600" y="546" width="336" height="140" rx="10" fill="#fbeae8" stroke="#b42318" stroke-width="2"/>
+  <text x="620" y="574" font-size="16" font-weight="700" fill="#b42318">reported</text>
+  <text x="620" y="598" font-size="13" fill="#1f2328">a value of the model written as a function,</text>
+  <text x="620" y="616" font-size="13" fill="#1f2328">a decision answered as a record: write a</text>
+  <text x="620" y="634" font-size="13" fill="#1f2328">value object class, or throw the refusal</text>
+  <text x="620" y="652" font-size="13" fill="#1f2328">from a factory of its error class.</text>
+  <text x="620" y="674" font-size="13" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" fill="#1f2328">npx ddd-ts-kit generate value-object</text>
+  <line x1="466" y1="604" x2="596" y2="604" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="531" y="594" font-size="13" fill="#1f2328" text-anchor="middle">yes</text>
+  <line x1="244" y1="648" x2="244" y2="706" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="254" y="682" font-size="13" fill="#1f2328">no</text>
+  <rect x="24" y="710" width="912" height="100" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="44" y="738" font-size="16" font-weight="700" fill="#5f6b73">not concerned</text>
+  <text x="44" y="762" font-size="13" fill="#1f2328">a domain service (a class); a state machine (defineStateMachine(..), a call); a specification (a boolean,</text>
+  <text x="44" y="782" font-size="13" fill="#1f2328">or functions only, local closures included); a record of value objects it builds (Money.of(..));</text>
+  <text x="44" y="802" font-size="13" fill="#1f2328">a reducer ({ ...state }); a function that declares a return type of a package (EventStamp).</text>
+</svg>

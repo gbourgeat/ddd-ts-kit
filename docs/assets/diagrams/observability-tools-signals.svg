@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 568" width="960" height="568" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">What the kit emits, and where it goes</title>
+  <desc id="desc">Inside the API process the platform binds four things. Traces leave over OTLP/HTTP, through an optional OpenTelemetry Collector, to Jaeger or Grafana Tempo. Log lines leave on the standard output for your log pipeline. Error reports go to Sentry or GlitchTip, the same adapter with another DSN. Metrics go nowhere until you write an adapter of the Metrics port.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="568" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">What the kit emits, and where it goes</text>
+  <!-- process -->
+  <rect x="24" y="60" width="372" height="384" rx="14" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="44" y="88" font-size="14" font-weight="600" fill="#5f6b73">API process: bound by src/platform</text>
+  <!-- traces -->
+  <rect x="44" y="104" width="332" height="68" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="62" y="132" font-size="16" font-weight="700" fill="#7a4f9a">traces</text>
+  <text x="62" y="156" font-size="13" fill="#1f2328">initTracing, traceApplication()</text>
+  <!-- logs -->
+  <rect x="44" y="188" width="332" height="68" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="62" y="216" font-size="16" font-weight="700" fill="#7a4f9a">log lines</text>
+  <text x="62" y="240" font-size="13" fill="#1f2328">Logger: StdoutLogger, pino or winston</text>
+  <!-- errors -->
+  <rect x="44" y="272" width="332" height="68" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="62" y="300" font-size="16" font-weight="700" fill="#7a4f9a">error reports</text>
+  <text x="62" y="324" font-size="13" fill="#1f2328">ErrorReporter: initSentry(...)</text>
+  <!-- metrics -->
+  <rect x="44" y="356" width="332" height="68" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="62" y="384" font-size="16" font-weight="700" fill="#7a4f9a">metrics</text>
+  <text x="62" y="408" font-size="13" fill="#1f2328">Metrics: NoopMetrics until you bind one</text>
+  <!-- collector -->
+  <rect x="470" y="104" width="196" height="68" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="568" y="132" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">Collector</text>
+  <text x="568" y="156" font-size="13" fill="#1f2328" text-anchor="middle">optional: tail sampling</text>
+  <!-- backends -->
+  <rect x="736" y="70" width="196" height="44" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="834" y="98" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">Jaeger</text>
+  <rect x="736" y="124" width="196" height="44" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="834" y="152" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">Grafana Tempo</text>
+  <rect x="470" y="188" width="462" height="68" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="488" y="216" font-size="16" font-weight="700" fill="#5f6b73">your log pipeline</text>
+  <text x="488" y="240" font-size="13" fill="#1f2328">what collects the output of your containers (Loki, for instance)</text>
+  <rect x="470" y="272" width="462" height="68" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="488" y="300" font-size="16" font-weight="700" fill="#5f6b73">Sentry or GlitchTip</text>
+  <text x="488" y="324" font-size="13" fill="#1f2328">one adapter for both: only the DSN differs</text>
+  <rect x="470" y="356" width="462" height="68" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="488" y="384" font-size="16" font-weight="700" fill="#5f6b73">an exporter you write</text>
+  <text x="488" y="408" font-size="13" fill="#1f2328">Prometheus or OpenTelemetry metrics: none is shipped</text>
+  <!-- arrows -->
+  <line x1="378" y1="138" x2="466" y2="138" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="422" y="128" font-size="13" fill="#1f2328" text-anchor="middle">OTLP/HTTP</text>
+  <line x1="668" y1="126" x2="732" y2="96" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="668" y1="146" x2="732" y2="146" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="378" y1="222" x2="466" y2="222" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="422" y="212" font-size="13" fill="#1f2328" text-anchor="middle">stdout</text>
+  <line x1="378" y1="306" x2="466" y2="306" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="422" y="296" font-size="13" fill="#1f2328" text-anchor="middle">DSN</text>
+  <line x1="378" y1="390" x2="466" y2="390" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <!-- what ties them -->
+  <text x="40" y="464" font-size="14" font-weight="600" fill="#1f2328">One trace id on every span, log line and error report;</text>
+  <text x="40" y="484" font-size="14" font-weight="600" fill="#1f2328">the correlation id on the root span, every log line and every error report.</text>
+  <!-- legend -->
+  <line x1="40" y1="520" x2="84" y2="520" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="96" y="525" font-size="14" fill="#1f2328">shipped and wired by the kit</text>
+  <line x1="40" y1="546" x2="84" y2="546" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <text x="96" y="551" font-size="14" fill="#1f2328">yours to write; a dashed box is optional or not shipped</text>
+</svg>

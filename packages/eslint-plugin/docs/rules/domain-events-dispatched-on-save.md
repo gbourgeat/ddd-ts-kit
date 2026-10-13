@@ -1,3 +1,5 @@
+**English** · [Français](domain-events-dispatched-on-save.fr.md)
+
 # ddd-ts-kit/domain-events-dispatched-on-save
 
 Architecture id: `domain-events/dispatched-on-save`. Default severity: `error` in `recommended`, `error` in `strict`.

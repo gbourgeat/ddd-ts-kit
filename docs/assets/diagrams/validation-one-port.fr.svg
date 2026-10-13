@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 392" width="960" height="392" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Un port Schema, quatre adaptateurs, deux usages</title>
+  <desc id="desc">Les adaptateurs zodSchema, classSchema, typeboxSchema et standardSchema construisent chacun une valeur du port Schema. Sa méthode parse valide ce qui entre : les parties d'une requête HTTP pour une route, la charge utile d'un événement d'intégration pour son gestionnaire. Sa méthode toJsonSchema décrit la même forme dans les contrats : le document OpenAPI 3.1, le document AsyncAPI et le catalogue des événements.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="392" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Un port Schema, quatre adaptateurs, deux usages</text>
+  <!-- adapters -->
+  <text x="32" y="66" font-size="13" font-weight="600" fill="#7a4f9a">adaptateurs : chacun un sous-chemin et une bibliothèque facultative</text>
+  <rect x="32" y="78" width="220" height="56" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="142" y="101" font-size="15" font-weight="700" fill="#7a4f9a" text-anchor="middle">zod</text>
+  <text x="142" y="122" font-size="13" fill="#1f2328" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">zodSchema(z.object())</text>
+  <rect x="32" y="148" width="220" height="56" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="142" y="171" font-size="15" font-weight="700" fill="#7a4f9a" text-anchor="middle">class-validator</text>
+  <text x="142" y="192" font-size="13" fill="#1f2328" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">classSchema(Dto)</text>
+  <rect x="32" y="218" width="220" height="56" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="142" y="241" font-size="15" font-weight="700" fill="#7a4f9a" text-anchor="middle">TypeBox</text>
+  <text x="142" y="262" font-size="13" fill="#1f2328" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">typeboxSchema(Type)</text>
+  <rect x="32" y="288" width="220" height="56" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="142" y="311" font-size="15" font-weight="700" fill="#7a4f9a" text-anchor="middle">Standard Schema</text>
+  <text x="142" y="332" font-size="13" fill="#1f2328" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">standardSchema(s, json?)</text>
+  <path d="M254,106 H282 M254,176 H282 M254,246 H282 M254,316 H282 M282,106 V316" fill="none" stroke="#3d4449" stroke-width="2"/>
+  <line x1="282" y1="211" x2="318" y2="211" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- port -->
+  <rect x="320" y="156" width="264" height="110" rx="12" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="452" y="186" font-size="16" font-weight="700" fill="#9a5b2b" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">Schema&lt;T&gt;</text>
+  <line x1="336" y1="198" x2="568" y2="198" stroke="#9a5b2b" stroke-opacity="0.35"/>
+  <text x="336" y="222" font-size="13" fill="#1f2328" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">parse(input): Result</text>
+  <text x="336" y="248" font-size="13" fill="#1f2328" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">toJsonSchema(): JsonSchema</text>
+  <!-- parse consumers -->
+  <text x="640" y="66" font-size="13" font-weight="600" fill="#1f2328">parse : valide ce qui entre</text>
+  <rect x="640" y="78" width="288" height="56" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="784" y="101" font-size="15" font-weight="700" fill="#9a5b2b" text-anchor="middle">une route</text>
+  <text x="784" y="122" font-size="13" fill="#1f2328" text-anchor="middle">params, query, headers, body</text>
+  <rect x="640" y="148" width="288" height="56" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="784" y="171" font-size="15" font-weight="700" fill="#2b5d8a" text-anchor="middle">un gestionnaire d'événement</text>
+  <text x="784" y="192" font-size="13" fill="#1f2328" text-anchor="middle">la charge utile de l'événement d'intégration</text>
+  <path d="M586,217 H612 V106 H636" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <path d="M612,176 H636" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- json consumers -->
+  <text x="640" y="236" font-size="13" font-weight="600" fill="#1f2328">toJsonSchema : la décrit dans les contrats</text>
+  <rect x="640" y="248" width="288" height="56" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="784" y="271" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">document OpenAPI 3.1</text>
+  <text x="784" y="292" font-size="13" fill="#1f2328" text-anchor="middle">une forme partagée n'y figure qu'une fois</text>
+  <rect x="640" y="318" width="288" height="56" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="784" y="341" font-size="14" font-weight="700" fill="#5f6b73" text-anchor="middle">AsyncAPI, catalogue des événements</text>
+  <text x="784" y="362" font-size="13" fill="#1f2328" text-anchor="middle">les charges utiles des événements</text>
+  <path d="M586,243 H612 V346 H636" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <path d="M612,276 H636" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+</svg>

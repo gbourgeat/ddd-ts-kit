@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 470" width="960" height="470" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Four checkpoints, one Authorizer port</title>
+  <desc id="desc">An HTTP request meets the guards of its route group, then the requirement of its use case, checked by the bus middleware; a consumed event or a job enters at the requirement, without guards. The handler asks the policies on the loaded element, and a search asks for an access scope that the read port turns into a WHERE clause. The requirement, the policies and the scope ask the Authorizer port, bound by the platform to the chosen model. Refusals at the edge and every decision of the use cases reach the audit trail.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="470" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Four checkpoints, one Authorizer port</text>
+
+  <!-- entries -->
+  <text x="133" y="68" font-size="13" fill="#1f2328" text-anchor="middle">HTTP request</text>
+  <line x1="133" y1="74" x2="133" y2="94" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="368" y="68" font-size="13" fill="#1f2328" text-anchor="middle">consumed event, job</text>
+  <line x1="368" y1="74" x2="368" y2="94" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- guards -->
+  <rect x="32" y="98" width="203" height="172" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="133" y="126" font-size="16" font-weight="700" fill="#9a5b2b" text-anchor="middle">guards</text>
+  <text x="133" y="145" font-size="13" fill="#9a5b2b" text-anchor="middle">of the route group</text>
+  <line x1="48" y1="156" x2="219" y2="156" stroke="#9a5b2b" stroke-opacity="0.35"/>
+  <text x="133" y="178" font-size="13" fill="#1f2328" text-anchor="middle">Authenticated, HasRole,</text>
+  <text x="133" y="198" font-size="13" fill="#1f2328" text-anchor="middle">HasScope, TenantMember</text>
+  <text x="133" y="226" font-size="13" fill="#1f2328" text-anchor="middle">read the session only</text>
+  <text x="133" y="254" font-size="13" font-style="italic" fill="#9a5b2b" text-anchor="middle">401 or 403 at the edge</text>
+
+  <!-- requirement -->
+  <rect x="266" y="98" width="203" height="172" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="368" y="126" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">requirement</text>
+  <text x="368" y="145" font-size="13" fill="#2b5d8a" text-anchor="middle">of the use case</text>
+  <line x1="282" y1="156" x2="453" y2="156" stroke="#2b5d8a" stroke-opacity="0.35"/>
+  <text x="368" y="178" font-size="13" fill="#1f2328" text-anchor="middle">@Requires(permission,</text>
+  <text x="368" y="198" font-size="13" fill="#1f2328" text-anchor="middle">{ resource, context })</text>
+  <text x="368" y="226" font-size="13" fill="#1f2328" text-anchor="middle">bus middleware, before</text>
+  <text x="368" y="246" font-size="13" fill="#1f2328" text-anchor="middle">the unit of work opens</text>
+
+  <!-- policies -->
+  <rect x="500" y="98" width="203" height="172" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="601" y="126" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">policies</text>
+  <text x="601" y="145" font-size="13" fill="#2b5d8a" text-anchor="middle">in the handler</text>
+  <line x1="516" y1="156" x2="687" y2="156" stroke="#2b5d8a" stroke-opacity="0.35"/>
+  <text x="601" y="178" font-size="13" fill="#1f2328" text-anchor="middle">Access.authorize(actor,</text>
+  <text x="601" y="198" font-size="13" fill="#1f2328" text-anchor="middle">permission, element)</text>
+  <text x="601" y="226" font-size="13" fill="#1f2328" text-anchor="middle">once the element is loaded:</text>
+  <text x="601" y="246" font-size="13" fill="#1f2328" text-anchor="middle">policies, then the authorizer</text>
+
+  <!-- access scope -->
+  <rect x="734" y="98" width="194" height="172" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="831" y="126" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">access scope</text>
+  <text x="831" y="145" font-size="13" fill="#2b5d8a" text-anchor="middle">in a search</text>
+  <line x1="750" y1="156" x2="912" y2="156" stroke="#2b5d8a" stroke-opacity="0.35"/>
+  <text x="831" y="178" font-size="13" fill="#1f2328" text-anchor="middle">Access.scope(actor,</text>
+  <text x="831" y="198" font-size="13" fill="#1f2328" text-anchor="middle">permission, type)</text>
+  <text x="831" y="226" font-size="13" fill="#1f2328" text-anchor="middle">the read port turns it</text>
+  <text x="831" y="246" font-size="13" fill="#1f2328" text-anchor="middle">into a WHERE clause</text>
+
+  <!-- the path of a request -->
+  <line x1="237" y1="184" x2="262" y2="184" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="471" y1="184" x2="496" y2="184" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="705" y1="184" x2="730" y2="184" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- authorizer port -->
+  <rect x="266" y="326" width="662" height="84" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="597" y="354" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">Authorizer port, bound by the platform to the chosen model</text>
+  <text x="597" y="378" font-size="13" fill="#1f2328" text-anchor="middle">RoleBasedAuthorizer, PolicyBasedAuthorizer, RelationBasedAuthorizer,</text>
+  <text x="597" y="398" font-size="13" fill="#1f2328" text-anchor="middle">OpenFgaAuthorizer, or a combination of them</text>
+  <line x1="368" y1="272" x2="368" y2="322" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="378" y="302" font-size="13" fill="#1f2328">check</text>
+  <line x1="601" y1="272" x2="601" y2="322" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="611" y="302" font-size="13" fill="#1f2328">check</text>
+  <line x1="831" y1="272" x2="831" y2="322" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="841" y="302" font-size="13" fill="#1f2328">listAccessible</text>
+
+  <!-- audit trail -->
+  <rect x="32" y="326" width="190" height="84" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="127" y="354" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">audit trail</text>
+  <text x="127" y="378" font-size="13" fill="#1f2328" text-anchor="middle">auditGuardRefusals</text>
+  <text x="127" y="398" font-size="13" fill="#1f2328" text-anchor="middle">onDecision</text>
+  <line x1="127" y1="272" x2="127" y2="322" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="137" y="302" font-size="13" fill="#1f2328">refusals</text>
+  <line x1="264" y1="368" x2="226" y2="368" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <text x="32" y="446" font-size="14" fill="#1f2328">A job or a consumer skips the guards, never the requirement: the rule lives on the use case.</text>
+</svg>

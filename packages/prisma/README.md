@@ -1,8 +1,11 @@
+**English** · [Français](README.fr.md)
+
 # @ddd-ts-kit/prisma
 
 Prisma adapters of the kernel and events ports: a unit of work that repositories never see,
-the transactional outbox store, the processed-event store, and the models of their tables as
-a schema fragment to copy. Same pieces as `@ddd-ts-kit/drizzle`, for projects on Prisma.
+the transactional outbox store, the processed-event store, the read models of projections and
+the translation of criteria, the event store, and the models of their tables as a schema
+fragment to copy. Same pieces as `@ddd-ts-kit/drizzle`, for projects on Prisma.
 
 ```
 npm i @ddd-ts-kit/prisma @prisma/client @prisma/adapter-pg
@@ -12,6 +15,26 @@ npm i -D prisma
 The package imports no Prisma code: it is typed structurally against the few methods it calls,
 so it works with your generated client, wherever you generate it, and with an extended client
 (`$extends`). PostgreSQL first; see [Dialect coverage](#dialect-coverage) for MySQL and SQLite.
+
+## Where it sits in an application
+
+Nothing here is imported from `domain/` or `application/`. A handler depends on ports of the
+kernel (`UnitOfWork`, `IntegrationEventPublisher`) and of its domain (a repository); this
+package gives the adapters of the kernel ports, your `infrastructure/` writes the adapters of
+the domain ports on top of it, and the platform binds them all at start-up.
+
+![The PrismaInvoiceRepository adapter of the project implements the InvoiceRepository port that a command handler calls, and queries database.client(); the package gives the unit of work (bound to UnitOfWork and Database), the processed-event store and the outbox store, where the handler's events are appended; the OutboxRelay of @ddd-ts-kit/events claims them and publishes to the broker; every statement goes through the generated Prisma client to PostgreSQL](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/prisma-place-in-an-application.svg)
+
+| Piece | What it provides | Section |
+|---|---|---|
+| `createPrismaUnitOfWork(prisma)` | `UnitOfWork` of the kernel, and the `PrismaContext` your `Database` extends | [Composition root](#composition-root) |
+| `optimisticUpdate`, `ConcurrencyError` (from the kernel) | the version guard of your repositories | [Repository](#repository) |
+| `criteriaToPrisma`, `predicateToPrisma` | the arguments of a `findMany` for a criteria | [Criteria](#criteria) |
+| `PrismaReadModelStore` | the read model port of a projection (`TableReadModelStore`) | [Read models](#read-models) |
+| `PrismaOutboxStore` | `OutboxStore` of `@ddd-ts-kit/events` | [Outbox and idempotency](#outbox-and-idempotency) |
+| `PrismaProcessedEventStore` | `ProcessedEventStore` of the kernel | [Outbox and idempotency](#outbox-and-idempotency) |
+| `createPrismaEventSourcing(context)` | the event store, snapshots, checkpoints and subject keys of the kernel | [Event store](#event-store) |
+| `schemaNameOf(context)` | the schema name of a bounded context | [Schema](#schema) |
 
 ## Schema
 
@@ -170,6 +193,53 @@ of work and on the root client outside. Because `append` uses the current client
 published by a handler that then fails is rolled back with the business write: that is the
 whole point of the outbox.
 
+![One command in a Prisma unit of work: the command bus calls run, which opens the Prisma transaction and keeps its client in an AsyncLocalStorage; the handler saves the invoice and appends its events on that client; when the work returns, the domain events go to their before-commit handlers, then the transaction commits, then the after-commit handlers run; a failure before the commit leaves no row and no outbox record](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/prisma-unit-of-work-timeline.svg)
+
+The same two calls, with the publisher bound to the broker or to the outbox, do not give the
+same guarantee:
+
+<!-- checked sample -->
+```ts
+import { EventBus, IntegrationEventPublisher, UnitOfWork, type IntegrationEvent } from '@ddd-ts-kit/kernel';
+
+interface Invoice {
+  issue(): void;
+}
+
+interface Invoices {
+  save(invoice: Invoice): Promise<void>;
+}
+
+declare const unitOfWork: UnitOfWork;
+declare const invoices: Invoices;
+
+// Instead of: the broker called from the work. The message leaves before the commit: if the
+// commit then fails, consumers act on an invoice that was never issued, and no rollback takes
+// the message back.
+export async function issueAndSend(invoice: Invoice, issued: IntegrationEvent, broker: EventBus): Promise<void> {
+  await unitOfWork.run(async () => {
+    invoice.issue();
+    await invoices.save(invoice);
+    await broker.publish([issued]);
+  });
+}
+
+// Write: the publisher bound to the outbox (OutboxPublisher over PrismaOutboxStore). The
+// record is a row of the same transaction: it commits with the invoice or disappears with it,
+// and the relay publishes it once committed.
+export async function issue(invoice: Invoice, issued: IntegrationEvent, publisher: IntegrationEventPublisher): Promise<void> {
+  await unitOfWork.run(async () => {
+    invoice.issue();
+    await invoices.save(invoice);
+    await publisher.publish([issued]);
+  });
+}
+```
+
+A command handler does not call `run` itself: the command bus does it, and a declared
+integration event handler is run in a unit of work too. A script, or a consumer wired by hand,
+calls it as above.
+
 `createPrismaUnitOfWork(prisma, { timeout: 15_000, isolationLevel: 'RepeatableRead' })`
 forwards the options of `$transaction`.
 
@@ -193,22 +263,34 @@ database, never a transaction: `client()` is the transaction client of the unit 
 there is one and the root client otherwise.
 
 ```ts
+// Instead of: the transaction in the port, which puts Prisma in the domain and makes every
+// caller carry a transaction it has to get from somewhere.
+abstract save(invoice: Invoice, transaction: Prisma.TransactionClient): Promise<void>;
+
+// Write: a port of the domain that knows nothing of storage; the adapter asks for the client.
+abstract save(invoice: Invoice): Promise<void>;
+```
+
+```ts
 // contexts/billing-core/domain/repositories/invoice.repository.ts
 import { Repository } from '@ddd-ts-kit/kernel';
 
 export abstract class InvoiceRepository extends Repository<Invoice> {}
 ```
 
+<!-- checked sample -->
 ```ts
 // contexts/billing-core/infrastructure/persistence/prisma-invoice.repository.ts
+import type { AggregateRoot } from '@ddd-ts-kit/kernel';
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
-import { optimisticUpdate } from '@ddd-ts-kit/prisma';
+import { optimisticUpdate, PrismaContext } from '@ddd-ts-kit/prisma';
 
 @Repository(InvoiceRepository)
 export class PrismaInvoiceRepository implements InvoiceRepository {
   constructor(private readonly database: Database) {}
 
   async findById(id: string): Promise<Invoice | undefined> {
+    // Inside a unit of work: the transaction client. Outside: the root client.
     const row = await this.database.client().invoice.findUnique({ where: { id } });
 
     if (row === null) {
@@ -235,6 +317,33 @@ export class PrismaInvoiceRepository implements InvoiceRepository {
     });
   }
 }
+
+// What the project has elsewhere, declared so that this sample compiles alone: the domain,
+// the mapper, the Database of the platform, and the part of the generated client used here.
+interface InvoiceState {
+  readonly id: string;
+  readonly amount: number;
+  readonly status: string;
+}
+interface InvoiceRow extends InvoiceState {
+  readonly version: number;
+}
+declare abstract class Invoice extends AggregateRoot {
+  get state(): InvoiceState;
+}
+declare abstract class InvoiceRepository {
+  abstract findById(id: string): Promise<Invoice | undefined>;
+  abstract save(invoice: Invoice): Promise<void>;
+}
+declare const InvoiceMapper: { toDomain(row: InvoiceRow): Invoice };
+interface TransactionClient {
+  readonly invoice: {
+    findUnique(args: { where: { id: string } }): Promise<InvoiceRow | null>;
+    createMany(args: { data: InvoiceRow[]; skipDuplicates: boolean }): Promise<{ count: number }>;
+    updateMany(args: { where: { id: string; version: number }; data: InvoiceRow }): Promise<{ count: number }>;
+  };
+}
+declare abstract class Database extends PrismaContext<TransactionClient> {}
 ```
 
 In the explicit style, without the decorator, the same binding is one line of
@@ -252,6 +361,42 @@ statement wrote no row, and moves `invoice.version` on otherwise. Use `createMan
 `updateMany` for the guarded write: they return a count, where `create` and `update` throw,
 and a thrown unique violation aborts the surrounding PostgreSQL transaction. `upsert` cannot
 carry the version guard.
+
+![Two transactions load invoice inv-1 at version 3; A saves first, its update matches version 3 and the row moves to version 4; B saves after, its update still expects version 3, matches no row, and optimisticUpdate throws ConcurrencyError with the code CONCURRENCY_CONFLICT; the transaction of B rolls back](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/persistence-optimistic-concurrency.svg)
+
+A `ConcurrencyError` is an expected outcome, not a bug: the command can be retried on a fresh
+load, or the caller told that someone else changed the invoice.
+
+<!-- checked sample -->
+```ts
+import { CONCURRENCY_CONFLICT, ConcurrencyError, optimisticUpdate } from '@ddd-ts-kit/prisma';
+
+interface Invoice {
+  readonly id: string;
+  version: number;
+}
+
+declare function updateWhereVersion(invoice: Invoice, expected: number, next: number): Promise<{ count: number }>;
+
+export async function saveOrReport(invoice: Invoice): Promise<'saved' | 'changed meanwhile'> {
+  try {
+    // Loaded at version 3: UPDATE ... WHERE id = $1 AND version = 3, writing version 4.
+    await optimisticUpdate(invoice, async ({ expected, next }) => {
+      const written = await updateWhereVersion(invoice, expected, next);
+
+      return written.count;
+    });
+
+    return 'saved'; // invoice.version is 4 now
+  } catch (error) {
+    if (error instanceof ConcurrencyError && error.code === CONCURRENCY_CONFLICT) {
+      return 'changed meanwhile'; // no row matched version 3; invoice.version is still 3
+    }
+
+    throw error;
+  }
+}
+```
 
 ## Audit columns, tenant scoping and pages
 
@@ -461,6 +606,52 @@ A cursor page is fetched one row longer than asked, which is how `pageOfPlan` kn
 another follows; an offset page takes its total from `count({ where: counted })`. A field
 declared `nullable` is ordered `{ sort, nulls }`: last ascending, first descending.
 
+What Prisma receives, for the second page of the booked appointments, after a first page that
+ended on the appointment `a2` at 10:00:
+
+<!-- checked sample -->
+```ts
+import { Criteria, cursorPage, defineCriteria, planCriteria } from '@ddd-ts-kit/kernel';
+import { criteriaToPrisma } from '@ddd-ts-kit/prisma';
+
+interface AppointmentRow {
+  readonly id: string;
+  readonly status: string;
+  readonly startsAt: Date;
+}
+
+const appointmentCriteria = defineCriteria<AppointmentRow>({
+  fields: {
+    id: { type: 'string' },
+    status: { type: 'string', filter: ['eq', 'in'], sortable: true },
+    startsAt: { type: 'instant', filter: ['gte', 'lt', 'between'], sortable: true },
+  },
+  defaultSort: [{ field: 'startsAt', direction: 'asc' }],
+  tieBreaker: 'id',
+});
+
+// The nextCursor of the first page: the position { startsAt: '2026-10-13T10:00:00.000Z', id: 'a2' }.
+declare const nextCursor: string;
+
+const plan = planCriteria(
+  appointmentCriteria,
+  Criteria.of<AppointmentRow>().where('status', 'eq', 'booked').page(cursorPage({ limit: 20, cursor: nextCursor })),
+);
+
+export const { where, counted, orderBy, take, skip } = criteriaToPrisma(plan);
+// where:   { AND: [
+//            { status: { equals: 'booked' } },
+//            { OR: [
+//              { startsAt: { gt: new Date('2026-10-13T10:00:00.000Z') } },
+//              { AND: [{ startsAt: { equals: new Date('2026-10-13T10:00:00.000Z') } }, { id: { gt: 'a2' } }] },
+//            ] },
+//          ] }
+// counted: { status: { equals: 'booked' } }, what an offset page would count
+// orderBy: [{ startsAt: 'asc' }, { id: 'asc' }], the tie-breaker last: a total order
+// take:    21, one row more than the page, to know whether another follows
+// skip:    0
+```
+
 **Strings.** A text column is ordered and compared by range in the collation of the column;
 criteria order strings by code point. Declare the text columns that are sorted or compared
 with `gt`, `lt` or `between` with `COLLATE "C"`, in the migration since the Prisma schema cannot say it (`ALTER TABLE ... ALTER COLUMN room TYPE text COLLATE "C"`): the index then serves the sort, and the
@@ -537,9 +728,84 @@ it is the generated client that validates them.
 - `'compare-and-set'` reads the due rows and takes each one with an `updateMany` guarded by the
   attempt count it read: same guarantee, no raw SQL, any database, one statement per record.
 
+![The two claim strategies side by side: skip-locked locks the due rows with a raw select for update skip locked, reads them and leases them in one short transaction, so relays pass over each other's rows; compare-and-set reads the due rows, takes each one with an updateMany guarded by the attempt count it read, and reads again to replace the rows another relay took; both hide a claimed record for leaseMs, so the records of a relay that died are claimed again](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/prisma-outbox-claim.svg)
+
+<!-- checked sample -->
+```ts
+// platform/database/outbox.ts
+import {
+  createPrismaUnitOfWork,
+  PrismaOutboxStore,
+  PrismaProcessedEventStore,
+  type PrismaOutboxDelegate,
+  type PrismaProcessedEventDelegate,
+  type PrismaRawQueries,
+} from '@ddd-ts-kit/prisma';
+
+// Stands for the client `prisma generate` writes, reduced to what the stores call: the models
+// of the shipped fragment, renamed MessagingOutboxRecord and MessagingProcessedEvent here.
+interface TransactionClient extends PrismaRawQueries {
+  readonly messagingOutboxRecord: PrismaOutboxDelegate;
+  readonly messagingProcessedEvent: PrismaProcessedEventDelegate;
+}
+declare const prisma: TransactionClient & {
+  $transaction<R>(work: (transaction: TransactionClient) => Promise<R>, options?: { timeout?: number }): Promise<R>;
+};
+
+const unitOfWork = createPrismaUnitOfWork(prisma);
+
+// PostgreSQL or MySQL 8: one raw select per batch, relays never wait for each other.
+export const outbox = new PrismaOutboxStore(unitOfWork, {
+  delegate: (client) => client.messagingOutboxRecord,
+  claim: { strategy: 'skip-locked', dialect: 'postgresql', schema: 'messaging', table: 'outbox', raw: (client) => client },
+  leaseMs: 60_000, // longer than the slowest publication of a batch
+});
+
+// Any database, Prisma Client only: one updateMany per claimed record.
+export const portableOutbox = new PrismaOutboxStore(unitOfWork, {
+  delegate: (client) => client.messagingOutboxRecord,
+  claim: 'compare-and-set',
+});
+
+export const processedEvents = new PrismaProcessedEventStore(unitOfWork, {
+  delegate: (client) => client.messagingProcessedEvent,
+});
+```
+
 `PrismaProcessedEventStore.markProcessed` is `createMany({ skipDuplicates: true })`. Run the
 consumer inside the unit of work: the mark then commits with the effects of the handler, and
-disappears with them if it fails.
+disappears with them if it fails. A declared `@IntegrationEventHandler`, or `consume` of
+`@ddd-ts-kit/events`, does exactly this; by hand it reads:
+
+<!-- checked sample -->
+```ts
+import type { IntegrationEvent, ProcessedEventStore, UnitOfWork } from '@ddd-ts-kit/kernel';
+
+declare const unitOfWork: UnitOfWork;
+declare const processedEvents: ProcessedEventStore;
+declare function issueInvoiceFor(event: IntegrationEvent): Promise<void>;
+
+const consumer = 'billing.invoice-on-order-placed';
+
+// Instead of: act first, then remember. A crash in between, or a redelivery while the first
+// delivery is still running, issues the invoice twice.
+export async function onOrderPlacedTwice(event: IntegrationEvent): Promise<void> {
+  await issueInvoiceFor(event);
+  await processedEvents.markProcessed(consumer, event.id);
+}
+
+// Write: the mark and the effects in one unit of work. The mark answers false for an event
+// already handled; if the handler fails, the mark is rolled back and the redelivery runs.
+export async function onOrderPlaced(event: IntegrationEvent): Promise<void> {
+  await unitOfWork.run(async () => {
+    if (!(await processedEvents.markProcessed(consumer, event.id))) {
+      return;
+    }
+
+    await issueInvoiceFor(event);
+  });
+}
+```
 
 Delivery is at least once, unordered.
 
@@ -622,8 +888,8 @@ What Prisma does not allow, and what the package does about it:
 
 - **The store cannot see the database provider**, so nothing is chosen for you: `claim` is
   required.
-- Tested with Prisma 7.10 and its driver adapters. The peer range also admits Prisma 6, on
-  which nothing was run.
+- Tested with Prisma 7.10 and its driver adapters. The peer range is Prisma 7
+  (`@prisma/client` `^7.0.0`).
 - `stats()` is three `count` queries, not one statement: the numbers of a busy outbox may not
   add up to the same instant.
 

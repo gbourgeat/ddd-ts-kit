@@ -1,3 +1,5 @@
+**English** · [Français](declarations-role-declared.fr.md)
+
 # ddd-ts-kit/declarations-role-declared
 
 Architecture id: `declarations/role-declared`. Default severity: `error` in `recommended`, `error` in `strict`.

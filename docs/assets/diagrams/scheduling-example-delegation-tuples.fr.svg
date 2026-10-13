@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 690" width="960" height="690" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Comment les relations laissent un assistant réserver sur un calendrier délégué</title>
+  <desc id="desc">La commande demande scheduling:appointment.book sur calendar:c1 pour user:linus. Sur un calendrier, cette permission signifie run, et run sur un calendrier est run sur son desk : le tuple calendar:c1#desk@desk:p1.grace, écrit par scheduling à la création du calendrier, mène à desk:p1.grace. Run sur un desk vaut pour son holder, user:grace, pour un delegate, et pour qui gère sa practice, practice:p1, dont le manager est user:ada. La vérification trouve le tuple desk:p1.grace#delegate@user:linus, écrit par identity dans la transaction qui accorde la délégation : autorisé. Avant ce tuple, aucun chemin, et la réponse est 403 ; la révocation l'efface, et la réponse redevient 403.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+    <marker id="arrow-other" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#5f6b73"/>
+    </marker>
+  </defs>
+  <rect width="960" height="690" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Comment les relations laissent un assistant réserver sur un calendrier délégué</text>
+
+  <!-- the question -->
+  <rect x="24" y="64" width="280" height="100" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="164" y="92" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">la commande demande</text>
+  <line x1="40" y1="104" x2="288" y2="104" stroke="#2b5d8a" stroke-opacity="0.35"/>
+  <text x="164" y="128" font-size="13" fill="#1f2328" text-anchor="middle">scheduling:appointment.book</text>
+  <text x="164" y="148" font-size="13" fill="#1f2328" text-anchor="middle">sur calendar:c1, pour user:linus</text>
+
+  <!-- calendar -->
+  <rect x="400" y="64" width="260" height="100" rx="10" fill="#f3f4f5" stroke="#3d4449" stroke-width="2.5"/>
+  <text x="530" y="92" font-size="16" font-weight="700" fill="#1f2328" text-anchor="middle">calendar:c1</text>
+  <line x1="416" y1="104" x2="644" y2="104" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text x="530" y="128" font-size="13" fill="#1f2328" text-anchor="middle">run = run de son desk</text>
+  <line x1="306" y1="114" x2="396" y2="114" stroke="#3d4449" stroke-width="2.5" marker-end="url(#arrow)"/>
+  <text x="351" y="104" font-size="13" fill="#1f2328" text-anchor="middle">signifie run</text>
+  <text x="680" y="96" font-size="13" font-weight="600" fill="#1f2328">calendar:c1#desk@desk:p1.grace</text>
+  <text x="680" y="116" font-size="13" fill="#5f6b73">écrit par scheduling à la</text>
+  <text x="680" y="134" font-size="13" fill="#5f6b73">création du calendrier</text>
+
+  <!-- desk -->
+  <rect x="400" y="230" width="260" height="100" rx="10" fill="#f3f4f5" stroke="#3d4449" stroke-width="2.5"/>
+  <text x="530" y="258" font-size="16" font-weight="700" fill="#1f2328" text-anchor="middle">desk:p1.grace</text>
+  <line x1="416" y1="270" x2="644" y2="270" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text x="530" y="294" font-size="13" fill="#1f2328" text-anchor="middle">run = holder, ou delegate,</text>
+  <text x="530" y="314" font-size="13" fill="#1f2328" text-anchor="middle">ou manage de sa practice</text>
+  <line x1="530" y1="166" x2="530" y2="226" stroke="#3d4449" stroke-width="2.5" marker-end="url(#arrow)"/>
+  <text x="540" y="202" font-size="13" fill="#1f2328">desk</text>
+
+  <!-- holder branch -->
+  <path d="M450,332 V372 H180 V426" fill="none" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4" marker-end="url(#arrow-other)"/>
+  <text x="190" y="404" font-size="13" fill="#5f6b73">holder</text>
+  <rect x="60" y="430" width="240" height="76" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="180" y="460" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">user:grace</text>
+  <text x="180" y="484" font-size="13" fill="#1f2328" text-anchor="middle">le praticien</text>
+
+  <!-- delegate branch: the path found -->
+  <line x1="530" y1="332" x2="530" y2="426" stroke="#3d4449" stroke-width="2.5" marker-end="url(#arrow)"/>
+  <text x="540" y="404" font-size="13" font-weight="600" fill="#1f2328">delegate</text>
+  <rect x="400" y="430" width="260" height="76" rx="10" fill="#f3f4f5" stroke="#3d4449" stroke-width="2.5"/>
+  <text x="530" y="460" font-size="16" font-weight="700" fill="#1f2328" text-anchor="middle">user:linus</text>
+  <text x="530" y="484" font-size="13" fill="#1f2328" text-anchor="middle">l'assistant : autorisé</text>
+  <text x="530" y="534" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">desk:p1.grace#delegate@user:linus</text>
+  <text x="530" y="554" font-size="13" fill="#5f6b73" text-anchor="middle">écrit par identity dans la transaction qui</text>
+  <text x="530" y="572" font-size="13" fill="#5f6b73" text-anchor="middle">accorde la délégation ; la révocation l'efface</text>
+
+  <!-- practice branch -->
+  <path d="M610,332 V372 H818 V426" fill="none" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4" marker-end="url(#arrow-other)"/>
+  <text x="828" y="404" font-size="13" fill="#5f6b73">practice</text>
+  <rect x="700" y="430" width="236" height="76" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="818" y="460" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">practice:p1</text>
+  <text x="818" y="484" font-size="13" fill="#1f2328" text-anchor="middle">manage = relation manager</text>
+  <line x1="818" y1="508" x2="818" y2="552" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4" marker-end="url(#arrow-other)"/>
+  <text x="828" y="536" font-size="13" fill="#5f6b73">manager</text>
+  <rect x="700" y="556" width="236" height="60" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="818" y="582" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">user:ada</text>
+  <text x="818" y="602" font-size="13" fill="#1f2328" text-anchor="middle">le responsable</text>
+
+  <!-- legend -->
+  <line x1="40" y1="646" x2="84" y2="646" stroke="#3d4449" stroke-width="2.5" marker-end="url(#arrow)"/>
+  <text x="96" y="651" font-size="14" fill="#1f2328">le chemin que la vérification trouve pour user:linus : autorisé, 201</text>
+  <line x1="40" y1="672" x2="84" y2="672" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4" marker-end="url(#arrow-other)"/>
+  <text x="96" y="677" font-size="14" fill="#1f2328">les autres chemins vers run sur le desk ; sans le tuple delegate, aucun chemin n'atteint user:linus : 403</text>
+</svg>

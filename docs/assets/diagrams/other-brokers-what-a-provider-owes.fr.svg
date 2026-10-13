@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 480" width="960" height="480" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Ce que doit tout fournisseur d'événements d'intégration</title>
+  <desc id="desc">Le relais de l'outbox appelle publish et ne marque un enregistrement publié que lorsque la promesse se résout, ce qui arrive une fois que le broker a accusé réception de chaque événement de façon durable. Le broker garde un abonnement par consommateur et livre chaque événement au moins une fois. Le consommateur billing exécute son gestionnaire par consume, avec un store d'événements traités, et le fournisseur accuse réception du message après la résolution du gestionnaire. Quand le gestionnaire lève une exception, il n'y a pas d'accusé de réception : l'événement revient après un délai, un nombre borné de fois, puis il est garé dans une destination morte qu'un opérateur peut lire et rejouer. Une suite de contrat, eventBusContract, tient chaque fournisseur au même comportement.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="480" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Ce que doit tout fournisseur, quel que soit le broker</text>
+
+  <!-- row 1 -->
+  <rect x="32" y="80" width="188" height="110" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="126" y="108" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">relais de l'outbox</text>
+  <text x="126" y="132" font-size="13" fill="#1f2328" text-anchor="middle">marque l'enregistrement</text>
+  <text x="126" y="152" font-size="13" fill="#1f2328" text-anchor="middle">publié seulement quand</text>
+  <text x="126" y="172" font-size="13" fill="#1f2328" text-anchor="middle">publish se résout</text>
+  <rect x="300" y="80" width="230" height="110" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="415" y="108" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">broker</text>
+  <text x="415" y="132" font-size="13" fill="#1f2328" text-anchor="middle">accuse réception durablement</text>
+  <text x="415" y="152" font-size="13" fill="#1f2328" text-anchor="middle">un abonnement</text>
+  <text x="415" y="172" font-size="13" fill="#1f2328" text-anchor="middle">par consommateur</text>
+  <rect x="660" y="80" width="268" height="110" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="794" y="108" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">consommateur billing</text>
+  <text x="794" y="132" font-size="13" fill="#1f2328" text-anchor="middle">son gestionnaire, par consume</text>
+  <text x="794" y="152" font-size="13" fill="#1f2328" text-anchor="middle">et un store d'événements traités :</text>
+  <text x="794" y="172" font-size="13" fill="#1f2328" text-anchor="middle">une nouvelle livraison ne change rien</text>
+
+  <line x1="222" y1="135" x2="296" y2="135" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="259" y="125" font-size="13" fill="#1f2328" text-anchor="middle">publish</text>
+  <line x1="532" y1="115" x2="656" y2="115" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="594" y="105" font-size="13" fill="#1f2328" text-anchor="middle">au moins une fois</text>
+  <line x1="658" y1="160" x2="534" y2="160" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="594" y="180" font-size="13" fill="#1f2328" text-anchor="middle">ack, après lui</text>
+
+  <!-- row 2: failure -->
+  <line x1="794" y1="192" x2="794" y2="256" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="804" y="228" font-size="13" fill="#1f2328">le gestionnaire lève</text>
+  <rect x="660" y="260" width="268" height="64" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="794" y="285" font-size="15" font-weight="700" fill="#2b5d8a" text-anchor="middle">pas d'accusé de réception</text>
+  <text x="794" y="306" font-size="13" fill="#1f2328" text-anchor="middle">l'erreur est remontée par son code</text>
+  <rect x="300" y="260" width="230" height="64" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="415" y="285" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">nouvelle tentative différée</text>
+  <text x="415" y="306" font-size="13" fill="#1f2328" text-anchor="middle">un nombre borné de fois</text>
+  <line x1="658" y1="292" x2="534" y2="292" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="415" y1="258" x2="415" y2="194" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="425" y="232" font-size="13" fill="#1f2328">livré de nouveau</text>
+
+  <line x1="415" y1="326" x2="415" y2="370" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="425" y="352" font-size="13" fill="#1f2328">après la dernière tentative</text>
+  <rect x="300" y="374" width="230" height="64" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="415" y="399" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">destination morte</text>
+  <text x="415" y="420" font-size="13" fill="#1f2328" text-anchor="middle">lue et rejouée par un opérateur</text>
+
+  <!-- contract note -->
+  <rect x="32" y="260" width="220" height="190" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="5 4"/>
+  <text x="48" y="284" font-size="14" font-weight="700" fill="#5f6b73">eventBusContract</text>
+  <text x="48" y="308" font-size="13" fill="#1f2328">une suite pour tout fournisseur :</text>
+  <text x="48" y="330" font-size="13" fill="#1f2328">livraison par type, à chaque</text>
+  <text x="48" y="350" font-size="13" fill="#1f2328">abonné, de chaque événement</text>
+  <text x="48" y="370" font-size="13" fill="#1f2328">d'un lot ; l'enveloppe</text>
+  <text x="48" y="390" font-size="13" fill="#1f2328">intacte ; un gestionnaire en</text>
+  <text x="48" y="410" font-size="13" fill="#1f2328">échec n'affame aucun autre</text>
+  <text x="48" y="430" font-size="13" fill="#1f2328">abonné</text>
+</svg>

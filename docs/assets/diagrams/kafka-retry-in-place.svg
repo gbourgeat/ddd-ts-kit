@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 560" width="960" height="560" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Why the bus retries in place and not through a retry topic</title>
+  <desc id="desc">Two records of order 1 on partition P0: placed, then paid. With a retry topic, the failed placed record is moved aside, paid is handled, and placed is handled later: paid before placed, the order of the key is lost. With the retry in place of this bus, the partition P0 is paused for retry.delayMs while the other partitions keep flowing, placed is read again and handled, then paid is handled after it. After retry.maxAttempts failed deliveries the record goes to the dead-letter topic and the partition moves on.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="560" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Why the bus retries in place, and not through a retry topic</text>
+
+  <!-- panel A: retry topic -->
+  <rect x="24" y="58" width="912" height="190" rx="12" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="44" y="84" font-size="14" font-weight="600" fill="#5f6b73">With a retry topic (not this bus): the partition moves on at the first failure</text>
+
+  <rect x="44" y="104" width="190" height="76" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="139" y="130" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">placed, order 1</text>
+  <text x="139" y="152" font-size="13" fill="#1f2328" text-anchor="middle">fails: moved to</text>
+  <text x="139" y="170" font-size="13" fill="#1f2328" text-anchor="middle">the retry topic</text>
+
+  <rect x="274" y="104" width="190" height="76" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="369" y="130" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">paid, order 1</text>
+  <text x="369" y="152" font-size="13" fill="#1f2328" text-anchor="middle">handled at once</text>
+
+  <rect x="504" y="104" width="190" height="76" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="599" y="130" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">placed, order 1</text>
+  <text x="599" y="152" font-size="13" fill="#1f2328" text-anchor="middle">handled later,</text>
+  <text x="599" y="170" font-size="13" fill="#1f2328" text-anchor="middle">from the retry topic</text>
+
+  <rect x="734" y="104" width="182" height="76" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="2"/>
+  <text x="825" y="130" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">order lost</text>
+  <text x="825" y="152" font-size="13" fill="#1f2328" text-anchor="middle">paid was applied</text>
+  <text x="825" y="170" font-size="13" fill="#1f2328" text-anchor="middle">before placed</text>
+
+  <line x1="236" y1="142" x2="272" y2="142" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="466" y1="142" x2="502" y2="142" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="696" y1="142" x2="732" y2="142" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="44" y1="216" x2="900" y2="216" stroke="#5f6b73" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="908" y="236" font-size="13" fill="#5f6b73" text-anchor="end">time</text>
+
+  <!-- panel B: retry in place -->
+  <rect x="24" y="268" width="912" height="190" rx="12" fill="#f1ebf5" fill-opacity="0.35" stroke="#7a4f9a" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="44" y="294" font-size="14" font-weight="600" fill="#7a4f9a">Retry in place (this bus): the partition of the record waits for it</text>
+
+  <rect x="44" y="314" width="190" height="76" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="139" y="340" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">placed, order 1</text>
+  <text x="139" y="362" font-size="13" fill="#1f2328" text-anchor="middle">attempt 1 fails:</text>
+  <text x="139" y="380" font-size="13" fill="#1f2328" text-anchor="middle">nothing committed</text>
+
+  <rect x="274" y="314" width="190" height="76" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="2"/>
+  <text x="369" y="340" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">P0 paused</text>
+  <text x="369" y="362" font-size="13" fill="#1f2328" text-anchor="middle">for retry.delayMs;</text>
+  <text x="369" y="380" font-size="13" fill="#1f2328" text-anchor="middle">P1 and P2 keep flowing</text>
+
+  <rect x="504" y="314" width="190" height="76" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="599" y="340" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">placed, order 1</text>
+  <text x="599" y="362" font-size="13" fill="#1f2328" text-anchor="middle">read again, attempt 2:</text>
+  <text x="599" y="380" font-size="13" fill="#1f2328" text-anchor="middle">handled, offset committed</text>
+
+  <rect x="734" y="314" width="182" height="76" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="825" y="340" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">paid, order 1</text>
+  <text x="825" y="362" font-size="13" fill="#1f2328" text-anchor="middle">handled after it:</text>
+  <text x="825" y="380" font-size="13" fill="#1f2328" text-anchor="middle">the order is kept</text>
+
+  <line x1="236" y1="352" x2="272" y2="352" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="466" y1="352" x2="502" y2="352" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="696" y1="352" x2="732" y2="352" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="44" y1="426" x2="900" y2="426" stroke="#5f6b73" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="908" y="446" font-size="13" fill="#5f6b73" text-anchor="end">time</text>
+
+  <!-- the bound -->
+  <text x="32" y="490" font-size="14" fill="#1f2328">If every attempt fails: at the retry.maxAttempts-th failed delivery the record is copied to the dead-letter topic,</text>
+  <text x="32" y="512" font-size="14" fill="#1f2328">its offset is committed and the partition moves on. The wait is bounded: (maxAttempts - 1) x delayMs plus the</text>
+  <text x="32" y="534" font-size="14" fill="#1f2328">time of the handlers, 20 s with the defaults (5 attempts, 5 s).</text>
+</svg>

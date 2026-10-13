@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" width="960" height="540" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Where the entry of a command is written</title>
+  <desc id="desc">CancelAppointment reaches authorization first. Denied, it leaves one authorization denied entry and opens no transaction. Allowed, the audit middleware opens the transaction and the handler runs in it. When the handler succeeds, the succeeded entry is written in the same transaction and commits with the change, or neither exists. When the handler throws, the transaction rolls back, then the failed entry is written outside of it, with the code of the error.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="540" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Where the entry of a command is written</text>
+  <!-- command -->
+  <rect x="320" y="60" width="180" height="44" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="410" y="88" font-size="15" font-weight="700" fill="#2b5d8a" text-anchor="middle">CancelAppointment</text>
+  <line x1="410" y1="106" x2="410" y2="132" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- authorization -->
+  <rect x="320" y="136" width="180" height="44" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="410" y="164" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">authorization</text>
+  <!-- denied -->
+  <line x1="318" y1="158" x2="254" y2="158" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="286" y="148" font-size="13" fill="#1f2328" text-anchor="middle">denied</text>
+  <rect x="24" y="118" width="228" height="82" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="38" y="142" font-size="13" font-weight="700" fill="#7a4f9a">authorization, denied</text>
+  <text x="38" y="164" font-size="13" fill="#1f2328">reason NO_MATCHING_ROLE</text>
+  <text x="38" y="186" font-size="13" fill="#1f2328">no transaction is opened</text>
+  <!-- the transaction -->
+  <rect x="200" y="232" width="420" height="246" rx="12" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="214" y="254" font-size="13" font-weight="600" fill="#5f6b73">one transaction, opened</text>
+  <text x="214" y="272" font-size="13" font-weight="600" fill="#5f6b73">by the audit middleware</text>
+  <!-- allowed -->
+  <line x1="410" y1="182" x2="410" y2="276" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="420" y="214" font-size="13" fill="#1f2328">allowed</text>
+  <rect x="320" y="280" width="180" height="44" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="410" y="308" font-size="15" font-weight="700" fill="#2b5d8a" text-anchor="middle">handler</text>
+  <!-- succeeds -->
+  <line x1="410" y1="326" x2="410" y2="360" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="400" y="348" font-size="13" fill="#1f2328" text-anchor="end">succeeds</text>
+  <rect x="230" y="364" width="360" height="62" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="244" y="388" font-size="13" font-weight="700" fill="#7a4f9a">command, succeeded</text>
+  <text x="244" y="410" font-size="13" fill="#1f2328">written in the same transaction as the change</text>
+  <text x="410" y="458" font-size="13" font-style="italic" font-weight="600" fill="#5f6b73" text-anchor="middle">commit: the change and its entry, or neither</text>
+  <!-- throws -->
+  <path d="M502,302 H793 V360" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="700" y="292" font-size="13" fill="#1f2328" text-anchor="middle">throws: rolled back</text>
+  <rect x="650" y="364" width="286" height="88" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="664" y="388" font-size="13" font-weight="700" fill="#7a4f9a">command, failed</text>
+  <text x="664" y="410" font-size="13" fill="#1f2328">reason CANCELLATION_WINDOW_PASSED</text>
+  <text x="664" y="432" font-size="13" fill="#1f2328">written after the rollback, outside</text>
+  <!-- legend -->
+  <rect x="40" y="500" width="40" height="22" rx="6" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="96" y="516" font-size="14" fill="#1f2328">an entry of the audit trail: category, outcome, reason</text>
+</svg>

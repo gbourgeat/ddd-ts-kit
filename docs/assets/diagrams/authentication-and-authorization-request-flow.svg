@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 520" width="960" height="520" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Who is calling, then may they do it: the path of a request</title>
+  <desc id="desc">The authenticator of the platform verifies the bearer token and answers an Actor and a Session; the token goes no further. The route builds CancelAppointment with that actor. The authorization middleware of the command bus checks the permission: denied, the request is answered 403 FORBIDDEN before any transaction opens; allowed, the handler runs, loads the appointment and asks Access, which runs the policies of the permission then the authorizer. The aggregate holds the invariants.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="520" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Who is calling, then may they do it: the path of a request</text>
+  <!-- row 1: from the credential to the command bus -->
+  <text x="28" y="82" font-size="13" fill="#5f6b73">outside</text>
+  <rect x="24" y="92" width="146" height="90" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="97.0" y="118" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">HTTP request</text>
+  <line x1="38" y1="128" x2="156" y2="128" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text x="97.0" y="148" font-size="13" fill="#1f2328" text-anchor="middle">Authorization:</text>
+  <text x="97.0" y="168" font-size="13" fill="#1f2328" text-anchor="middle">Bearer &lt;token&gt;</text>
+  <text x="204" y="82" font-size="13" fill="#5f6b73">platform</text>
+  <rect x="200" y="92" width="170" height="90" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="285.0" y="118" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">Authenticator</text>
+  <line x1="214" y1="128" x2="356" y2="128" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text x="285.0" y="148" font-size="13" fill="#1f2328" text-anchor="middle">verifies the token,</text>
+  <text x="285.0" y="168" font-size="13" fill="#1f2328" text-anchor="middle">keeps nothing of it</text>
+  <text x="484" y="82" font-size="13" fill="#5f6b73">presentation</text>
+  <rect x="480" y="92" width="200" height="90" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="580.0" y="118" font-size="16" font-weight="700" fill="#9a5b2b" text-anchor="middle">Route</text>
+  <line x1="494" y1="128" x2="666" y2="128" stroke="#9a5b2b" stroke-opacity="0.35"/>
+  <text x="580.0" y="148" font-size="13" fill="#1f2328" text-anchor="middle">builds</text>
+  <text x="580.0" y="168" font-size="13" fill="#1f2328" text-anchor="middle">CancelAppointment(actor, ..)</text>
+  <text x="724" y="82" font-size="13" fill="#5f6b73">application</text>
+  <rect x="720" y="92" width="216" height="90" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="828.0" y="118" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">Command bus</text>
+  <line x1="734" y1="128" x2="922" y2="128" stroke="#2b5d8a" stroke-opacity="0.35"/>
+  <text x="828.0" y="148" font-size="13" fill="#1f2328" text-anchor="middle">authorization middleware:</text>
+  <text x="828.0" y="168" font-size="13" fill="#1f2328" text-anchor="middle">is the permission held?</text>
+  <line x1="172" y1="137" x2="196" y2="137" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="372" y1="137" x2="476" y2="137" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="682" y1="137" x2="716" y2="137" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="424" y="112" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">Actor and</text>
+  <text x="424" y="128" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">Session</text>
+  <!-- allowed and denied -->
+  <path d="M744,184 V222 H580 V258" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="662" y="214" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">allowed</text>
+  <line x1="880" y1="184" x2="880" y2="258" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="888" y="226" font-size="13" font-weight="600" fill="#1f2328">denied</text>
+  <!-- row 2: the handler, Access, the refusal -->
+  <text x="244" y="252" font-size="13" fill="#5f6b73">application</text>
+  <rect x="240" y="262" width="200" height="90" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="340.0" y="288" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">Access</text>
+  <line x1="254" y1="298" x2="426" y2="298" stroke="#2b5d8a" stroke-opacity="0.35"/>
+  <text x="340.0" y="318" font-size="13" fill="#1f2328" text-anchor="middle">the policies first,</text>
+  <text x="340.0" y="338" font-size="13" fill="#1f2328" text-anchor="middle">then the authorizer</text>
+  <text x="484" y="252" font-size="13" fill="#5f6b73">application</text>
+  <rect x="480" y="262" width="200" height="90" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="580.0" y="288" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">Handler</text>
+  <line x1="494" y1="298" x2="666" y2="298" stroke="#2b5d8a" stroke-opacity="0.35"/>
+  <text x="580.0" y="318" font-size="13" fill="#1f2328" text-anchor="middle">loads the appointment,</text>
+  <text x="580.0" y="338" font-size="13" fill="#1f2328" text-anchor="middle">asks Access with it</text>
+  <text x="764" y="252" font-size="13" fill="#5f6b73">presentation</text>
+  <rect x="760" y="262" width="176" height="90" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="848.0" y="288" font-size="16" font-weight="700" fill="#9a5b2b" text-anchor="middle">403 FORBIDDEN</text>
+  <line x1="774" y1="298" x2="922" y2="298" stroke="#9a5b2b" stroke-opacity="0.35"/>
+  <text x="848.0" y="318" font-size="13" fill="#1f2328" text-anchor="middle">refused before any</text>
+  <text x="848.0" y="338" font-size="13" fill="#1f2328" text-anchor="middle">transaction opens</text>
+  <line x1="478" y1="307" x2="444" y2="307" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- row 3: the aggregate -->
+  <text x="484" y="396" font-size="13" fill="#5f6b73">domain</text>
+  <rect x="480" y="406" width="200" height="90" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="580.0" y="432" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">Appointment</text>
+  <line x1="494" y1="442" x2="666" y2="442" stroke="#2f6f4f" stroke-opacity="0.35"/>
+  <text x="580.0" y="462" font-size="13" fill="#1f2328" text-anchor="middle">cancel(reason, at):</text>
+  <text x="580.0" y="482" font-size="13" fill="#1f2328" text-anchor="middle">the invariants</text>
+  <line x1="580" y1="354" x2="580" y2="402" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+</svg>

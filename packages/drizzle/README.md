@@ -1,3 +1,5 @@
+**English** · [Français](README.fr.md)
+
 # @ddd-ts-kit/drizzle
 
 Drizzle adapters of the kernel and events ports on PostgreSQL: a unit of work that
@@ -13,13 +15,28 @@ npm i @ddd-ts-kit/drizzle drizzle-orm
 Works with every drizzle PostgreSQL driver (node-postgres, postgres-js, PGlite, Neon): the
 functions are generic over the database type, so `executor()` is typed exactly like your `db`.
 
+## Where it sits in an application
+
+Nothing here is imported from `domain/` or `application/`. A handler depends on the repository
+port of its domain; the adapter of that port, in `infrastructure/`, runs its statements on the
+`Database` of the project; the platform builds the unit of work once and binds it.
+
+![A bounded context holds a handler, the repository port of the domain and the drizzle repository that implements it; createDrizzleUnitOfWork gives one object that is both the UnitOfWork the command bus runs each command in and the Database whose executor() the repository and the stores query through; it opens db.transaction() on a drizzle database of any PostgreSQL driver, whose tables drizzle-kit migrations create](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/drizzle-place-in-an-application.svg)
+
+The one idea to keep: **every statement goes through `executor()`**. Inside a unit of work it
+is the transaction of that unit of work, so the row of the aggregate, the outbox record of the
+event it published and the processed-event mark of a consumer commit or roll back together.
+Outside one (a query, a script) it is the database itself.
+
 ## Schema
 
 The tables are plain drizzle definitions: export them from the schema files drizzle-kit reads
 and they are created by your own migrations.
 
+<!-- checked sample -->
 ```ts
 // platform/database/schema.ts
+import { integer, text } from 'drizzle-orm/pg-core';
 import { contextSchema, outboxTable, processedEventsTable } from '@ddd-ts-kit/drizzle/postgres';
 
 export const outbox = outboxTable('messaging'); // messaging.outbox; no argument: public.outbox
@@ -43,6 +60,7 @@ export const orders = orderManagement.table('orders', {
 over the drizzle database, so the project names its own database with a class, which is then
 the injection token:
 
+<!-- checked sample -->
 ```ts
 // platform/database/database.ts
 import type { PgQueryResultHKT } from 'drizzle-orm/pg-core';
@@ -132,7 +150,8 @@ run after the commit. Handlers declared `after-commit` run once the transaction 
 A nested `run` joins the unit of work in progress: one dispatch, at the end of the outermost.
 A `run` called directly (a consumer, a script) has the same timing as a command.
 `unitOfWorkContract` of `@ddd-ts-kit/testing/contracts` proves it on PGlite, with a deferred
-constraint for the commit that fails.
+constraint for the commit that fails. The README of `@ddd-ts-kit/kernel` draws this timeline
+([Domain events and the unit of work](../kernel/README.md#domain-events-and-the-unit-of-work)).
 
 ## Repository
 
@@ -141,33 +160,127 @@ database, never a transaction: `executor()` is the transaction of the unit of wo
 is one and `db` otherwise.
 
 ```ts
-// contexts/order-management/domain/repositories/order.repository.ts
-import { Repository } from '@ddd-ts-kit/kernel';
+// Instead of: a transaction handed down by the caller, which every port and every handler would then carry
+save(order: Order, transaction: PgTransaction<PgQueryResultHKT>): Promise<void>;
 
+// Write: the database, whose executor() is the transaction of the unit of work in progress
+constructor(private readonly database: Database) {}
+```
+
+The domain side, an aggregate that knows nothing of rows, and its port:
+
+<!-- checked sample -->
+```ts
+// contexts/order-management/domain/order.aggregate.ts
+import { AggregateRoot, ConceptError, Repository } from '@ddd-ts-kit/kernel';
+
+export type OrderStatus = 'open' | 'placed';
+
+export class OrderError extends ConceptError {
+  static alreadyPlaced(orderId: string) {
+    return OrderError.refusal('ORDER_ALREADY_PLACED', `Order ${orderId} is already placed.`, { orderId });
+  }
+}
+
+export class Order extends AggregateRoot {
+  private constructor(
+    id: string,
+    private status: OrderStatus,
+  ) {
+    super(id);
+  }
+
+  static open(id: string): Order {
+    return new Order(id, 'open');
+  }
+
+  /** Rebuilds a stored order: used by the mapper only. */
+  static rehydrate(id: string, status: OrderStatus): Order {
+    return new Order(id, status);
+  }
+
+  get currentStatus(): OrderStatus {
+    return this.status;
+  }
+
+  place(): void {
+    if (this.status === 'placed') {
+      throw OrderError.alreadyPlaced(this.id);
+    }
+
+    this.status = 'placed';
+  }
+}
+
+// contexts/order-management/domain/repositories/order.repository.ts: findById and save come from Repository
 export abstract class OrderRepository extends Repository<Order> {}
 ```
 
+The infrastructure side, the table, the mapper and the adapter:
+
+<!-- checked sample -->
 ```ts
 // contexts/order-management/infrastructure/persistence/drizzle-order.repository.ts
 import { and, eq } from 'drizzle-orm';
+import { integer, text, type PgQueryResultHKT } from 'drizzle-orm/pg-core';
+import { AggregateRoot } from '@ddd-ts-kit/kernel';
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
-import { optimisticUpdate } from '@ddd-ts-kit/drizzle/postgres';
+import { contextSchema, DrizzleContext, optimisticUpdate } from '@ddd-ts-kit/drizzle/postgres';
+
+// The aggregate and its port of the previous sample, reduced to their shape.
+type OrderStatus = 'open' | 'placed';
+declare class Order extends AggregateRoot {
+  static rehydrate(id: string, status: OrderStatus): Order;
+  get currentStatus(): OrderStatus;
+}
+abstract class OrderRepository {
+  abstract findById(id: string): Promise<Order | undefined>;
+  abstract save(order: Order): Promise<void>;
+}
+
+// platform/database/database.ts: the injection token of the database
+abstract class Database extends DrizzleContext<PgQueryResultHKT> {}
+
+// order-management.schema.ts: the table of the schema sample, with a typed status
+const orders = contextSchema('order-management').table('orders', {
+  id: text('id').primaryKey(),
+  status: text('status').$type<OrderStatus>().notNull(),
+  version: integer('version').notNull(),
+});
+
+type OrderRow = typeof orders.$inferSelect;
+
+// order.mapper.ts: the row never leaves infrastructure
+const OrderMapper = {
+  toDomain(row: OrderRow): Order {
+    const order = Order.rehydrate(row.id, row.status);
+
+    order.version = row.version; // the version optimisticUpdate will expect
+
+    return order;
+  },
+
+  toRow(order: Order, version: number): OrderRow {
+    return { id: order.id, status: order.currentStatus, version };
+  },
+};
 
 @Repository(OrderRepository)
 export class DrizzleOrderRepository implements OrderRepository {
   constructor(private readonly database: Database) {}
 
   async findById(id: string): Promise<Order | undefined> {
+    // executor(): the transaction of the unit of work in progress, or the database outside one
     const [row] = await this.database.executor().select().from(orders).where(eq(orders.id, id));
 
-    return row === undefined ? undefined : OrderMapper.toDomain(row); // sets order.version
+    return row === undefined ? undefined : OrderMapper.toDomain(row);
   }
 
   async save(order: Order): Promise<void> {
     const db = this.database.executor();
 
     await optimisticUpdate(order, async ({ expected, next }) => {
-      const row = { ...OrderMapper.toRow(order), version: next };
+      const row = OrderMapper.toRow(order, next);
       const written =
         expected === 0
           ? await db.insert(orders).values(row).onConflictDoNothing().returning({ id: orders.id })
@@ -177,7 +290,7 @@ export class DrizzleOrderRepository implements OrderRepository {
               .where(and(eq(orders.id, order.id), eq(orders.version, expected)))
               .returning({ id: orders.id });
 
-      return written.length;
+      return written.length; // 0 rows: optimisticUpdate throws ConcurrencyError
     });
   }
 }
@@ -193,34 +306,73 @@ statement wrote no row, and moves `order.version` on otherwise. If your database
 with a relational schema (`drizzle(url, { schema })`), declare `Database` as
 `DrizzleContext<PgQueryResultHKT, typeof schema>` to keep `executor().query`.
 
+| `expected` | Statement | No row written means |
+|---|---|---|
+| `0`: never saved | `INSERT ... ON CONFLICT DO NOTHING` | the id is taken |
+| `n` | `UPDATE ... SET version = n + 1 WHERE id = ... AND version = n` | another transaction saved it since it was read |
+
 ## Audit columns, tenant scoping and pages
 
 The standard persistence shapes of the kernel, on drizzle. `auditColumns()` and `tenantColumn()`
 are column helpers to spread into a table: their keys are those of the kernel `AuditStamp` and
-`TenantScoped`, so a stamp spreads into an insert as it is, and the four columns have the same
+`TenantScoped`, so a stamp spreads into an insert as it is, and the columns have the same
 names in every project (`created_at`, `created_by`, `updated_at`, `updated_by`, `tenant_id`),
 which is what lets a dashboard, an export or the audit package be written once.
 
-```ts
-import { auditColumns, contextSchema, tenantColumn } from '@ddd-ts-kit/drizzle/postgres';
+The table, then the repository. It reads through `tenantCondition` and writes through
+`ownTenantCondition`, the two conditions of [Tenant isolation](#tenant-isolation):
 
+<!-- checked sample -->
+```ts
+import { and, eq } from 'drizzle-orm';
+import { index, integer, text, type PgQueryResultHKT } from 'drizzle-orm/pg-core';
+import { AggregateRoot, Clock, ExecutionScope, stampCreation, stampUpdate, tenantScopeOf } from '@ddd-ts-kit/kernel';
+import { Repository } from '@ddd-ts-kit/kernel/declarations';
+import {
+  auditColumns,
+  contextSchema,
+  DrizzleContext,
+  optimisticUpdate,
+  ownTenantCondition,
+  tenantColumn,
+  tenantCondition,
+} from '@ddd-ts-kit/drizzle/postgres';
+
+// The aggregate, its port and the database, reduced to their shape.
+type InvoiceStatus = 'draft' | 'issued';
+declare class Invoice extends AggregateRoot {
+  static rehydrate(id: string, amount: number, status: InvoiceStatus): Invoice;
+  get amount(): number;
+  get status(): InvoiceStatus;
+}
+abstract class InvoiceRepository {
+  abstract findById(id: string): Promise<Invoice | undefined>;
+  abstract save(invoice: Invoice): Promise<void>;
+}
+abstract class Database extends DrizzleContext<PgQueryResultHKT> {}
+
+// contexts/billing-core/infrastructure/persistence/invoices.ts
 export const invoices = contextSchema('billing-core').table(
   'invoices',
   {
     id: text('id').primaryKey(),
     amount: integer('amount').notNull(),
-    status: text('status').$type<'draft' | 'issued'>().notNull(),
+    status: text('status').$type<InvoiceStatus>().notNull(),
     version: integer('version').notNull(),
     ...tenantColumn(),
     ...auditColumns(),
   },
+  // the order of the list queries, tie-breaker included, so a page is read from the index
   (table) => [index('invoices_tenant_amount_idx').on(table.tenantId, table.amount, table.id)],
 );
-```
 
-```ts
-import { Clock, ExecutionScope, stampCreation, stampUpdate, tenantScopeOf } from '@ddd-ts-kit/kernel';
-import { Repository } from '@ddd-ts-kit/kernel/declarations';
+/** What the aggregate says of itself, plus the version to store: the rest of the row is the adapter's. */
+interface VersionedInvoice {
+  readonly id: string;
+  readonly amount: number;
+  readonly status: InvoiceStatus;
+  readonly version: number;
+}
 
 @Repository(InvoiceRepository)
 export class DrizzleInvoiceRepository implements InvoiceRepository {
@@ -235,14 +387,22 @@ export class DrizzleInvoiceRepository implements InvoiceRepository {
       .executor()
       .select()
       .from(invoices)
-      .where(and(eq(invoices.id, id), ownTenant(this.scope)));
+      .where(and(eq(invoices.id, id), tenantCondition(invoices.tenantId, this.scope)));
 
-    return row === undefined ? undefined : InvoiceMapper.toDomain(row);
+    if (row === undefined) {
+      return undefined;
+    }
+
+    const invoice = Invoice.rehydrate(row.id, row.amount, row.status);
+
+    invoice.version = row.version;
+
+    return invoice;
   }
 
   async save(invoice: Invoice): Promise<void> {
     await optimisticUpdate(invoice, async ({ expected, next }) => {
-      const state = { ...InvoiceMapper.toRow(invoice), version: next };
+      const state = { id: invoice.id, amount: invoice.amount, status: invoice.status, version: next };
       const written = expected === 0 ? await this.insert(state) : await this.update(state, expected);
 
       return written.length;
@@ -250,6 +410,7 @@ export class DrizzleInvoiceRepository implements InvoiceRepository {
   }
 
   private insert(state: VersionedInvoice) {
+    // tenant_id from the work in progress, created_* and updated_* from its actor and the Clock
     const row = { ...state, ...tenantScopeOf(this.scope), ...stampCreation(this.scope, this.clock) };
 
     return this.database.executor().insert(invoices).values(row).onConflictDoNothing().returning({ id: invoices.id });
@@ -259,13 +420,17 @@ export class DrizzleInvoiceRepository implements InvoiceRepository {
     return this.database
       .executor()
       .update(invoices)
-      .set({ ...state, ...stampUpdate(this.scope, this.clock) })
-      .where(and(eq(invoices.id, state.id), eq(invoices.version, expected), ownTenant(this.scope)))
+      .set({ ...state, ...stampUpdate(this.scope, this.clock) }) // leaves created_at and created_by alone
+      .where(
+        and(
+          eq(invoices.id, state.id),
+          eq(invoices.version, expected),
+          ownTenantCondition(invoices.tenantId, this.scope),
+        ),
+      )
       .returning({ id: invoices.id });
   }
 }
-
-const ownTenant = (scope: ExecutionScope) => eq(invoices.tenantId, tenantScopeOf(scope).tenantId);
 ```
 
 A search query takes the kernel `PageRequest` and answers a `Page`, in both variants:
@@ -277,10 +442,40 @@ export abstract class InvoiceQueries {
 }
 ```
 
+<!-- checked sample -->
 ```ts
 // contexts/billing-core/infrastructure/persistence/drizzle-invoice-queries.reader.ts
-import { ExecutionScope, decodeCursor, encodeCursor, pageOf } from '@ddd-ts-kit/kernel';
+import { and, asc, desc, eq, gt, lt, or, type SQL } from 'drizzle-orm';
+import { index, integer, text, type PgQueryResultHKT } from 'drizzle-orm/pg-core';
+import {
+  ExecutionScope,
+  InvalidPageRequestError,
+  decodeCursor,
+  encodeCursor,
+  pageOf,
+  type CursorPageRequest,
+  type OffsetPageRequest,
+  type Page,
+  type PageRequest,
+  type SortDirection,
+} from '@ddd-ts-kit/kernel';
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
+import { contextSchema, DrizzleContext, tenantColumn, tenantCondition } from '@ddd-ts-kit/drizzle/postgres';
+
+// The port of the application, the database and the table of the previous samples, reduced to their shape.
+interface InvoiceSummary {
+  readonly id: string;
+  readonly amount: number;
+}
+abstract class InvoiceQueries {
+  abstract search(request: PageRequest<'amount'>): Promise<Page<InvoiceSummary>>;
+}
+abstract class Database extends DrizzleContext<PgQueryResultHKT> {}
+const invoices = contextSchema('billing-core').table(
+  'invoices',
+  { id: text('id').primaryKey(), amount: integer('amount').notNull(), ...tenantColumn() },
+  (table) => [index('invoices_tenant_amount_idx').on(table.tenantId, table.amount, table.id)],
+);
 
 @Repository(InvoiceQueries)
 export class DrizzleInvoiceQueries implements InvoiceQueries {
@@ -295,15 +490,16 @@ export class DrizzleInvoiceQueries implements InvoiceQueries {
 
   private async byOffset(request: OffsetPageRequest<'amount'>): Promise<Page<InvoiceSummary>> {
     const db = this.database.executor();
+    const own = tenantCondition(invoices.tenantId, this.scope);
     const rows = await db
       .select()
       .from(invoices)
-      .where(ownTenant(this.scope))
+      .where(own)
       .orderBy(...totalOrder(directionOf(request)))
       .limit(request.limit)
       .offset(request.offset);
 
-    return pageOf(rows.map(toSummary), { total: await db.$count(invoices, ownTenant(this.scope)) });
+    return pageOf(rows.map(toSummary), { total: await db.$count(invoices, own) });
   }
 
   private async byCursor(request: CursorPageRequest<'amount'>): Promise<Page<InvoiceSummary>> {
@@ -313,9 +509,9 @@ export class DrizzleInvoiceQueries implements InvoiceQueries {
       .executor()
       .select()
       .from(invoices)
-      .where(and(ownTenant(this.scope), after))
+      .where(and(tenantCondition(invoices.tenantId, this.scope), after))
       .orderBy(...totalOrder(direction))
-      .limit(request.limit + 1);
+      .limit(request.limit + 1); // one row more than asked: it says whether a page follows
     const items = rows.slice(0, request.limit);
     const last = items.at(-1);
     const more = rows.length > request.limit && last !== undefined;
@@ -324,7 +520,9 @@ export class DrizzleInvoiceQueries implements InvoiceQueries {
   }
 }
 
-const directionOf = (request: PageRequest<'amount'>) => request.sort[0]?.direction ?? 'asc';
+const directionOf = (request: PageRequest<'amount'>): SortDirection => request.sort[0]?.direction ?? 'asc';
+
+const toSummary = (row: typeof invoices.$inferSelect): InvoiceSummary => ({ id: row.id, amount: row.amount });
 
 // The primary key follows the sort field, in the same direction: the order is total.
 function totalOrder(direction: SortDirection): SQL[] {
@@ -334,12 +532,13 @@ function totalOrder(direction: SortDirection): SQL[] {
 }
 
 // The rows after a position, as a tuple comparison: the tie-breaker decides among equals.
-function beyond({ amount, id }: { amount: number; id: string }, direction: SortDirection) {
+function beyond({ amount, id }: { amount: number; id: string }, direction: SortDirection): SQL | undefined {
   const past = direction === 'asc' ? gt : lt;
 
   return or(past(invoices.amount, amount), and(eq(invoices.amount, amount), past(invoices.id, id)));
 }
 
+// A cursor comes back from a client: what it decodes to is checked before it reaches a statement.
 function positionOf(cursor: string): { amount: number; id: string } {
   const { amount, id } = decodeCursor(cursor);
 
@@ -355,6 +554,10 @@ A read adapter over the database is declared with `@Repository`, as the ones the
 generates: its kind is `repository`. Declared with `@Adapter` it would be `external`, and a
 generated platform puts a retry and a time limit around every `external` and `gateway`
 adapter, which a statement of the unit of work must not get.
+
+What the two kinds of page do when a row is inserted between two reads:
+
+![Invoices sorted by amount then id: an offset page 2 read after an insertion shows inv-f a second time, while a cursor page that starts after the position (120, inv-f) of the last row of page 1 shows the same rows whatever was inserted before it, and fetches one row more than the limit to know that a page follows](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/drizzle-keyset-pages.svg)
 
 The rules these examples hold, and that the tests of this package check on a real database:
 
@@ -384,13 +587,18 @@ Two strategies on drizzle, both proven by `tenantIsolationContract` of
 `@ddd-ts-kit/testing/contracts`; schema per tenant and database per tenant are shipped for knex
 only ([Multitenancy](../../docs/concepts/multitenancy.md) has the table).
 
+![The execution scope names the tenant of the work; first line, the repository puts it in every statement with tenantCondition, ownTenantCondition and tenantScopeOf; second line, the unit of work begins each transaction with tenantSession, which sets the tenant for that transaction only, and the policies declared with the table let it see and write the rows of that tenant alone](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/drizzle-tenant-isolation.svg)
+
 **Shared tables.** A `tenant_id` column (`tenantColumn()`) and the condition of the kit in every
 statement instead of one written by hand:
 
 ```ts
-// reads: the tenant of the work, or the tenants of an elevation
+// Instead of: a condition written by hand, which an elevation of platform staff cannot widen
+.where(and(eq(invoices.id, id), eq(invoices.tenantId, tenantScopeOf(this.scope).tenantId)))
+
+// Write, for reads: the tenant of the work, or the tenants of an elevation
 .where(and(eq(invoices.id, id), tenantCondition(invoices.tenantId, this.scope)))
-// updates and deletes: the one tenant of the work, which an elevation never widens
+// and for updates and deletes: the one tenant of the work, which an elevation never widens
 .where(and(eq(invoices.id, state.id), eq(invoices.version, expected), ownTenantCondition(invoices.tenantId, this.scope)))
 ```
 
@@ -401,12 +609,44 @@ column: table.tenantId }` to `DrizzleReadModelTable` and `DrizzleReadModelStore`
 the work, an insert, an update and a delete only its one tenant) are declared with the table, so
 drizzle-kit generates them, and the unit of work sets the tenant of each transaction.
 
+<!-- checked sample -->
 ```ts
-export const invoices = billing
-  .table('invoices', { /* ... */ ...tenantColumn() }, (table) => [...tenantPolicies(table.tenantId)])
+// contexts/billing-core/infrastructure/persistence/invoices.ts
+import { integer, text } from 'drizzle-orm/pg-core';
+import type { PgDatabase, PgQueryResultHKT } from 'drizzle-orm/pg-core';
+import type { ExecutionScope } from '@ddd-ts-kit/kernel';
+import {
+  contextSchema,
+  createDrizzleUnitOfWork,
+  forceRowLevelSecurity,
+  tenantColumn,
+  tenantPolicies,
+  tenantSession,
+} from '@ddd-ts-kit/drizzle/postgres';
+
+export const invoices = contextSchema('billing-core')
+  .table(
+    'invoices',
+    {
+      id: text('id').primaryKey(),
+      amount: integer('amount').notNull(),
+      version: integer('version').notNull(),
+      ...tenantColumn(),
+    },
+    // tenant_isolation_select, _insert, _update and _delete: drizzle-kit writes them into the migration
+    (table) => [...tenantPolicies(table.tenantId)],
+  )
   .enableRLS();
 
-const unitOfWork = createDrizzleUnitOfWork(db, undefined, { begin: tenantSession(executionScope) });
+// platform/database/persistence-over.ts: each transaction starts by setting the tenant of the work
+declare const db: PgDatabase<PgQueryResultHKT>;
+declare const executionScope: ExecutionScope;
+
+export const unitOfWork = createDrizzleUnitOfWork(db, undefined, { begin: tenantSession(executionScope) });
+
+// The one statement drizzle-kit does not write, for a custom migration (drizzle-kit generate --custom):
+// alter table "billing_core"."invoices" force row level security;
+export const forced = forceRowLevelSecurity(invoices);
 ```
 
 drizzle-kit does not force the policies on the owner of the table: `forceRowLevelSecurity(invoices)`
@@ -425,25 +665,79 @@ condition. `columns` maps each field of the read model to its column, and is the
 of identifiers: every value is a parameter encoded by its column, a text search is
 `like $1 escape $2` with `%`, `_` and `\` escaped.
 
+A read port declares what a caller may ask with `defineCriteria`; a query of your own on the
+table of a read model plans the criteria, then hands the plan to the translator:
+
+<!-- checked sample -->
 ```ts
+import { and, eq } from 'drizzle-orm';
+import { text, timestamp, type PgQueryResultHKT } from 'drizzle-orm/pg-core';
+import { defineCriteria, pageOfPlan, planCriteria, type Page, type ScopedCriteria } from '@ddd-ts-kit/kernel';
+import { contextSchema, criteriaToDrizzle, DrizzleContext, readModelColumns } from '@ddd-ts-kit/drizzle/postgres';
+
+// application/ports/appointment-list.port.ts: the row, and what a caller may filter and sort by
+export interface AppointmentRow {
+  readonly id: string;
+  readonly status: string;
+  readonly startsAt: Date;
+}
+
+export const appointmentCriteria = defineCriteria<AppointmentRow>({
+  fields: {
+    id: { type: 'string' },
+    status: { type: 'string', filter: ['eq', 'in'], sortable: true },
+    startsAt: { type: 'instant', filter: ['gte', 'lt', 'between'], sortable: true },
+  },
+  defaultSort: [{ field: 'startsAt', direction: 'asc' }],
+  tieBreaker: 'id',
+});
+
+abstract class Database extends DrizzleContext<PgQueryResultHKT> {}
+
+// infrastructure/persistence/appointment-list.schema.ts
+export const appointmentList = contextSchema('scheduling').table('appointment_list', {
+  id: text('id').primaryKey(),
+  status: text('status').notNull(),
+  startsAt: timestamp('starts_at', { withTimezone: true, mode: 'date' }).notNull(),
+  ...readModelColumns(), // last_event_id, last_event_at, last_event_version, deleted
+});
+
+// the only source of identifiers: a field the map does not name never reaches a statement
+const COLUMNS = { id: appointmentList.id, status: appointmentList.status, startsAt: appointmentList.startsAt };
+
 // infrastructure/persistence/drizzle-appointment-queries.reader.ts
-async search(criteria: ScopedCriteria<AppointmentRow>): Promise<Page<AppointmentRow>> {
-  const plan = planCriteria(appointmentCriteria, criteria);
+export async function searchAppointments(
+  database: Database,
+  criteria: ScopedCriteria<AppointmentRow>,
+): Promise<Page<AppointmentRow>> {
+  const plan = planCriteria(appointmentCriteria, criteria); // refuses what the definition does not open
 
   if (plan.empty) {
-    return pageOfPlan(plan, []);
+    return pageOfPlan(plan, []); // the access scope reaches no row: no statement at all
   }
 
-  const { where, orderBy, limit, offset } = criteriaToDrizzle(plan, COLUMNS);
-  const rows = await this.database.executor().select().from(appointments).where(where).orderBy(...orderBy).limit(limit).offset(offset);
+  const { where, counted, orderBy, limit, offset } = criteriaToDrizzle(plan, COLUMNS);
+  const live = eq(appointmentList.deleted, false); // a removed row stays in the table, flagged
+  const db = database.executor();
+  const rows = await db
+    .select(COLUMNS)
+    .from(appointmentList)
+    .where(and(where, live))
+    .orderBy(...orderBy)
+    .limit(limit)
+    .offset(offset);
 
-  return pageOfPlan(plan, rows);
+  // An offset page counts its total; a cursor page knows what follows from the extra row.
+  const total = plan.kind === 'offset' ? await db.$count(appointmentList, and(counted, live)) : undefined;
+
+  return pageOfPlan(plan, rows, total);
 }
 ```
 
 A cursor page is fetched one row longer than asked, which is how `pageOfPlan` knows whether
-another follows; an offset page takes its total from `db.$count(table, counted)`. A field
-declared `nullable` is ordered `nulls last` ascending and `nulls first` descending.
+another follows; an offset page takes its total from `db.$count(table, counted)`, passed as
+the third argument of `pageOfPlan`. A field declared `nullable` is ordered `nulls last`
+ascending and `nulls first` descending.
 
 **Strings.** A text column is ordered and compared by range in the collation of the column;
 criteria order strings by code point. Declare the text columns that are sorted or compared
@@ -454,7 +748,26 @@ An integer is `integer`: a `bigint` comes back as a string from the driver.
 
 ## Read models
 
+The adapter of a read model port extends `DrizzleReadModelStore` and adds nothing: it gets
+`get`, `upsertIfNewer`, `delete` and `search` from it.
+
+<!-- checked sample -->
 ```ts
+import { text, timestamp, type PgQueryResultHKT } from 'drizzle-orm/pg-core';
+import { ReadModelStore, type CriteriaDefinition } from '@ddd-ts-kit/kernel';
+import { Repository } from '@ddd-ts-kit/kernel/declarations';
+import { contextSchema, DrizzleContext, DrizzleReadModelStore, readModelColumns } from '@ddd-ts-kit/drizzle/postgres';
+
+// The row, its criteria and the database of the previous samples, reduced to their shape.
+interface AppointmentRow {
+  readonly id: string;
+  readonly status: string;
+  readonly startsAt: Date;
+}
+declare const appointmentCriteria: CriteriaDefinition<AppointmentRow>;
+abstract class AppointmentList extends ReadModelStore<AppointmentRow> {}
+abstract class Database extends DrizzleContext<PgQueryResultHKT> {}
+
 // infrastructure/persistence/appointment-list.schema.ts
 export const appointmentList = contextSchema('scheduling').table('appointment_list', {
   id: text('id').primaryKey(),
@@ -484,19 +797,22 @@ a query of your own on the table leaves those rows out, and so does a unique ind
 (`WHERE NOT deleted`). `store.table` is what `ProjectionRebuild` takes; the rebuild is
 PostgreSQL only (a copy `<table>__rebuild` made `LIKE ... INCLUDING ALL`, the keys written
 meanwhile in `<table>__touched`, the swap by rename in one transaction) and its guarantees
-and limits are in the README of `@ddd-ts-kit/kernel` ("Rebuild"). The store passes
-`criteriaContract` and `readModelStoreContract` of `@ddd-ts-kit/testing/contracts`, on PGlite
-and on PostgreSQL 18.
+and limits are in the README of `@ddd-ts-kit/kernel` ([Rebuild](../kernel/README.md#rebuild)).
+The store passes `criteriaContract` and `readModelStoreContract` of
+`@ddd-ts-kit/testing/contracts`, on PGlite and on PostgreSQL 18.
 
 ## Outbox and idempotency
 
 - `DrizzleOutboxStore.claimBatch` selects the due rows `FOR UPDATE SKIP LOCKED` and leases
   them in the same short transaction by pushing `next_attempt_at` forward (`leaseMs`, default
   30 s), so several relays share the work without waiting for each other, and the records of a
-  relay that died come back when the lease expires. Delivery is at least once, unordered.
+  relay that died come back when the lease expires. Delivery is at least once and, by default,
+  unordered: `ordering: 'per-key'` of `OutboxRelay`, given a `keyOf` (typically the aggregate
+  id), keeps the records of one key in order, with a single relay ([Ordering per key](../events/README.md#ordering-per-key)).
 - `DrizzleProcessedEventStore.markProcessed` is an `INSERT ... ON CONFLICT DO NOTHING`. Run
   the consumer inside the unit of work: the mark then commits with the effects of the handler,
-  and disappears with them if it fails.
+  and disappears with them if it fails. `consume` of `@ddd-ts-kit/events` does exactly that
+  ([Consume idempotently](../events/README.md#consume-idempotently)).
 - A multi-tenant project declares `tenantOutboxTable('messaging')` instead of `outboxTable`: the
   same table and a nullable `tenant_id`, which the store, given that table, fills from the tenant
   of each event, so that its consumers run in that tenant. Switching an existing project is one
@@ -504,12 +820,19 @@ and on PostgreSQL 18.
 
 ## Event store
 
+<!-- checked sample -->
 ```ts
+import type { PgQueryResultHKT } from 'drizzle-orm/pg-core';
+import { createDrizzleEventSourcing, DrizzleContext, eventStoreTables } from '@ddd-ts-kit/drizzle/postgres';
+
 // src/contexts/scheduling/infrastructure/persistence/scheduling.schema.ts, read by drizzle-kit
 export const { events, head, snapshots, checkpoints, subjectKeys } = eventStoreTables('scheduling');
 
-// the composition root
-const stores = createDrizzleEventSourcing(database, { schema: 'scheduling' });
+// the composition root: the database of the project, then one store per port
+declare const database: DrizzleContext<PgQueryResultHKT>;
+
+export const stores = createDrizzleEventSourcing(database, { schema: 'scheduling' });
+// stores.events, stores.snapshots, stores.checkpoints, stores.subjectKeys
 ```
 
 `eventStoreTables` declares the tables drizzle-kit creates in a migration of the project, with
@@ -521,7 +844,8 @@ unit of work, so the stream and the outbox records its events publish commit tog
 transaction ends: positions are given in commit order, without gaps, and two appends never run
 side by side, whatever their streams. PostgreSQL only. The stores are the ones of the kernel
 (`PostgresEventStore` and its companions), held to `eventStoreContract` here; how an
-event-sourced aggregate uses them: the README of `@ddd-ts-kit/kernel`, section "Event sourcing".
+event-sourced aggregate uses them: the README of `@ddd-ts-kit/kernel`, section
+[Event sourcing](../kernel/README.md#event-sourcing).
 
 ## Background jobs
 
@@ -530,10 +854,25 @@ context in `jobsTable('scheduling')`, which the schema files of drizzle-kit incl
 migration creates it. `add` runs on the executor of the context, inside the transaction of the
 command that enqueues; claims select the due rows `FOR UPDATE SKIP LOCKED` and lease them.
 
+<!-- checked sample -->
 ```ts
-export const schedulingJobs = jobsTable('scheduling');
+import type { PgDatabase, PgQueryResultHKT } from 'drizzle-orm/pg-core';
+import { kernelModule } from '@ddd-ts-kit/di';
+import { createDrizzleUnitOfWork, DrizzleJobStore, DrizzleProcessStore, jobsTable, processesTable } from '@ddd-ts-kit/drizzle/postgres';
 
-kernelModule({ unitOfWork, jobStore: new DrizzleJobStore(unitOfWork, schedulingJobs) });
+// scheduling.schema.ts, read by drizzle-kit: scheduling.background_jobs and scheduling.process_instances
+export const schedulingJobs = jobsTable('scheduling');
+export const schedulingProcesses = processesTable('scheduling');
+
+// the composition root
+declare const db: PgDatabase<PgQueryResultHKT>;
+const unitOfWork = createDrizzleUnitOfWork(db);
+
+export const kernel = kernelModule({
+  unitOfWork,
+  jobStore: new DrizzleJobStore(unitOfWork, schedulingJobs),
+  processStore: new DrizzleProcessStore(unitOfWork, schedulingProcesses),
+});
 ```
 
 It passes `jobStoreContract`, its unit of work suite included, on PGlite and, in the integration
@@ -545,7 +884,8 @@ guarantee: [Background jobs](../../docs/concepts/background-jobs.md).
 
 `DrizzleProcessStore` is the `ProcessStore` of the kernel, on `processesTable(schema)`: a first
 save inserts, a next one updates at the previous version, and a save that changes no row throws
-`ConcurrencyError`, in the transaction of the step. It passes `processStoreContract`.
+`ConcurrencyError`, in the transaction of the step. It passes `processStoreContract`. The
+sample of [Background jobs](#background-jobs) binds it with `kernelModule({ processStore })`.
 
 ## Testing an adapter
 
@@ -561,3 +901,11 @@ database of its own that it drops afterwards (last run: PostgreSQL 18):
 ```
 DDD_TS_KIT_TEST_DATABASE_URL=postgresql://user:password@localhost:5432/postgres npx vitest run packages/drizzle
 ```
+
+## See also
+
+- [Persistence](../../docs/tools/persistence.md): choosing an ORM, and what each adapter package verified
+- [Aggregates](../../docs/concepts/aggregates.md#optimistic-concurrency): optimistic concurrency, seen from the domain
+- [The transactional outbox](../../docs/concepts/transactional-outbox.md): why the outbox record commits with the business write
+- [Multitenancy](../../docs/concepts/multitenancy.md#isolation-four-strategies): the four isolation strategies
+- [`@ddd-ts-kit/typeorm`](../typeorm/README.md): the same pieces on TypeORM

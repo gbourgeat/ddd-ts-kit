@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 620" width="960" height="620" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Quand passer d'un modèle d'autorisation au suivant</title>
+  <desc id="desc">Quatre marches, chacune franchie seulement quand un besoin apparaît. Les rôles, le défaut d'init, tant que les droits suivent les fonctions. Les rôles et des politiques d'instance quand quelques règles ont besoin de l'élément chargé. Les relations, avec des tuples dans votre propre base écrits dans la transaction, quand les droits se partagent élément par élément. Un moteur dédié comme OpenFGA quand un besoin mesuré apparaît : un acteur qui atteint trop de tuples, un second service qui pose les mêmes questions, une exigence de cohérence. À part, des règles possédées et relues hors du code mènent à Cedar ou à Open Policy Agent derrière le même port.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="620" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Quand passer d'un modèle au suivant : seulement quand un besoin apparaît</text>
+  <!-- step 1 -->
+  <rect x="40" y="62" width="380" height="70" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="60" y="90" font-size="16" font-weight="700" fill="#7a4f9a">1. Rôles</text>
+  <text x="60" y="114" font-size="13" fill="#1f2328">RoleBasedAuthorizer, le défaut d'init</text>
+  <text x="460" y="92" font-size="13" fill="#1f2328">les droits suivent les fonctions :</text>
+  <text x="460" y="112" font-size="13" fill="#1f2328">patient, praticien, administrateur</text>
+  <line x1="230" y1="132" x2="230" y2="172" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="244" y="157" font-size="13" font-style="italic" fill="#3d4449">quand quelques règles ont besoin de l'élément chargé</text>
+  <!-- step 2 -->
+  <rect x="40" y="176" width="380" height="70" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="60" y="204" font-size="16" font-weight="700" fill="#7a4f9a">2. Rôles et politiques d'instance</text>
+  <text x="60" y="228" font-size="13" fill="#1f2328">la façade d'accès interroge les politiques, puis les rôles</text>
+  <text x="460" y="206" font-size="13" fill="#1f2328">seul le patient qui a réservé, ou le praticien,</text>
+  <text x="460" y="226" font-size="13" fill="#1f2328">peut annuler : toujours pas de magasin de tuples</text>
+  <line x1="230" y1="246" x2="230" y2="286" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="244" y="271" font-size="13" font-style="italic" fill="#3d4449">quand les droits se partagent élément par élément</text>
+  <!-- step 3 -->
+  <rect x="40" y="290" width="380" height="70" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="60" y="318" font-size="16" font-weight="700" fill="#7a4f9a">3. Relations dans votre base</text>
+  <text x="60" y="342" font-size="13" fill="#1f2328">RelationBasedAuthorizer, tuples dans la transaction</text>
+  <text x="460" y="320" font-size="13" fill="#1f2328">assistants délégués, cabinets qui possèdent des calendriers :</text>
+  <text x="460" y="340" font-size="13" fill="#1f2328">ce que fait l'application d'exemple</text>
+  <line x1="230" y1="360" x2="230" y2="420" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="244" y="384" font-size="13" font-style="italic" fill="#3d4449">quand une mesure le dit : un acteur atteint trop de tuples,</text>
+  <text x="244" y="404" font-size="13" font-style="italic" fill="#3d4449">un second service interroge, une exigence de cohérence</text>
+  <!-- step 4 -->
+  <rect x="40" y="424" width="380" height="70" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="60" y="452" font-size="16" font-weight="700" fill="#5f6b73">4. Un moteur dédié</text>
+  <text x="60" y="476" font-size="13" fill="#1f2328">@ddd-ts-kit/openfga, ou SpiceDB à la main</text>
+  <text x="460" y="454" font-size="13" fill="#1f2328">un service avec état sur le chemin de chaque requête,</text>
+  <text x="460" y="474" font-size="13" fill="#1f2328">tuples écrits après la validation</text>
+  <!-- another axis -->
+  <rect x="40" y="518" width="880" height="80" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="60" y="545" font-size="14" font-weight="700" fill="#5f6b73">Un autre axe : qui écrit les règles</text>
+  <text x="60" y="570" font-size="13" fill="#1f2328">des règles possédées et relues hors du code, par une équipe sécurité :</text>
+  <text x="60" y="588" font-size="13" fill="#1f2328">Cedar ou Open Policy Agent derrière le même port, avec des attributs fournis par une projection</text>
+</svg>

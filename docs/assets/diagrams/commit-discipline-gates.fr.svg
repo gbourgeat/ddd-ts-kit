@@ -1,0 +1,95 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 416" width="960" height="416" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">D'une écriture de fichier à la porte de la CI</title>
+  <desc id="desc">Six moments dans l'ordre. Sur le poste : le hook du plugin à chaque écriture de fichier d'une session d'agent, qui bloque mais laisse passer s'il échoue ; le hook pre-commit, qui bloque sur ESLint, le formateur et le contrôle d'architecture et ne fait que conseiller sur la taille du commit ; le hook commit-msg, qui bloque un message qui n'est pas un commit conventionnel ; le hook pre-push, qui bloque sur la vérification des types et les tests unitaires. Sur le serveur : le contrôle du titre de la pull request, et la CI, dont le job unique gate fait autorité. En dessous, ce qu'aucun outil ne tient : un cas d'usage par commit, les fichiers générés dans le même commit, chaque commit intermédiaire vert, la qualité d'un message au-delà de son format, et la taille sauf si --strict est ajouté.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="416" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">D'une écriture de fichier à la porte de la CI</text>
+
+  <!-- groups -->
+  <text x="32" y="70" font-size="13" font-weight="600" fill="#5f6b73">sur le poste</text>
+  <line x1="32" y1="78" x2="619" y2="78" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="644" y="70" font-size="13" font-weight="600" fill="#5f6b73">sur le serveur</text>
+  <line x1="644" y1="78" x2="925" y2="78" stroke="#5f6b73" stroke-width="1.5"/>
+
+  <!-- 1 write -->
+  <rect x="32" y="88" width="128" height="200" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="96" y="112" font-size="14" font-weight="700" fill="#1f2328" text-anchor="middle">écriture</text>
+  <text x="96" y="130" font-size="13" fill="#5f6b73" text-anchor="middle">session d'agent</text>
+  <line x1="44" y1="140" x2="148" y2="140" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text x="96" y="162" font-size="13" fill="#1f2328" text-anchor="middle">hook du plugin :</text>
+  <text x="96" y="180" font-size="13" fill="#1f2328" text-anchor="middle">fichiers générés,</text>
+  <text x="96" y="198" font-size="13" fill="#1f2328" text-anchor="middle">portée du worker,</text>
+  <text x="96" y="216" font-size="13" fill="#1f2328" text-anchor="middle">violations</text>
+  <text x="96" y="238" font-size="13" font-weight="700" fill="#1f2328" text-anchor="middle">bloque ;</text>
+  <text x="96" y="256" font-size="13" font-weight="700" fill="#1f2328" text-anchor="middle">laisse passer</text>
+  <text x="96" y="274" font-size="13" font-weight="700" fill="#1f2328" text-anchor="middle">s'il échoue</text>
+
+  <!-- 2 pre-commit -->
+  <rect x="185" y="88" width="128" height="200" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="249" y="112" font-size="14" font-weight="700" fill="#1f2328" text-anchor="middle">pre-commit</text>
+  <text x="249" y="130" font-size="13" fill="#5f6b73" text-anchor="middle">lefthook</text>
+  <line x1="197" y1="140" x2="301" y2="140" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text x="249" y="162" font-size="13" fill="#1f2328" text-anchor="middle">ESLint, format,</text>
+  <text x="249" y="180" font-size="13" fill="#1f2328" text-anchor="middle">check sur src/,</text>
+  <text x="249" y="198" font-size="13" fill="#1f2328" text-anchor="middle">taille du commit</text>
+  <text x="249" y="256" font-size="13" font-weight="700" fill="#1f2328" text-anchor="middle">bloque ;</text>
+  <text x="249" y="274" font-size="13" font-weight="700" fill="#1f2328" text-anchor="middle">taille : conseil</text>
+
+  <!-- 3 commit-msg -->
+  <rect x="338" y="88" width="128" height="200" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="402" y="112" font-size="14" font-weight="700" fill="#1f2328" text-anchor="middle">commit-msg</text>
+  <text x="402" y="130" font-size="13" fill="#5f6b73" text-anchor="middle">lefthook</text>
+  <line x1="350" y1="140" x2="454" y2="140" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text x="402" y="162" font-size="13" fill="#1f2328" text-anchor="middle">commitlint :</text>
+  <text x="402" y="180" font-size="13" fill="#1f2328" text-anchor="middle">format</text>
+  <text x="402" y="198" font-size="13" fill="#1f2328" text-anchor="middle">conventionnel</text>
+  <text x="402" y="274" font-size="13" font-weight="700" fill="#1f2328" text-anchor="middle">bloque</text>
+
+  <!-- 4 pre-push -->
+  <rect x="491" y="88" width="128" height="200" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="555" y="112" font-size="14" font-weight="700" fill="#1f2328" text-anchor="middle">pre-push</text>
+  <text x="555" y="130" font-size="13" fill="#5f6b73" text-anchor="middle">lefthook</text>
+  <line x1="503" y1="140" x2="607" y2="140" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text x="555" y="162" font-size="13" fill="#1f2328" text-anchor="middle">vérification</text>
+  <text x="555" y="180" font-size="13" fill="#1f2328" text-anchor="middle">des types,</text>
+  <text x="555" y="198" font-size="13" fill="#1f2328" text-anchor="middle">tests unitaires</text>
+  <text x="555" y="274" font-size="13" font-weight="700" fill="#1f2328" text-anchor="middle">bloque</text>
+
+  <!-- 5 pull request -->
+  <rect x="644" y="88" width="128" height="200" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="708" y="112" font-size="14" font-weight="700" fill="#1f2328" text-anchor="middle">pull request</text>
+  <text x="708" y="130" font-size="13" fill="#5f6b73" text-anchor="middle">contrôle du titre</text>
+  <line x1="656" y1="140" x2="760" y2="140" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text x="708" y="162" font-size="13" fill="#1f2328" text-anchor="middle">commitlint sur</text>
+  <text x="708" y="180" font-size="13" fill="#1f2328" text-anchor="middle">le titre, dont</text>
+  <text x="708" y="198" font-size="13" fill="#1f2328" text-anchor="middle">un squash fait</text>
+  <text x="708" y="216" font-size="13" fill="#1f2328" text-anchor="middle">le commit</text>
+  <text x="708" y="274" font-size="13" font-weight="700" fill="#1f2328" text-anchor="middle">bloque la fusion</text>
+
+  <!-- 6 CI -->
+  <rect x="797" y="88" width="128" height="200" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="861" y="112" font-size="14" font-weight="700" fill="#1f2328" text-anchor="middle">CI</text>
+  <text x="861" y="130" font-size="13" fill="#5f6b73" text-anchor="middle">le job gate</text>
+  <line x1="809" y1="140" x2="913" y2="140" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text x="861" y="162" font-size="13" fill="#1f2328" text-anchor="middle">chaque porte,</text>
+  <text x="861" y="180" font-size="13" fill="#1f2328" text-anchor="middle">fichiers générés</text>
+  <text x="861" y="198" font-size="13" fill="#1f2328" text-anchor="middle">périmés compris</text>
+  <text x="861" y="274" font-size="13" font-weight="700" fill="#1f2328" text-anchor="middle">fait autorité</text>
+
+  <!-- order -->
+  <line x1="162" y1="188" x2="181" y2="188" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="315" y1="188" x2="334" y2="188" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="468" y1="188" x2="487" y2="188" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="621" y1="188" x2="640" y2="188" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="774" y1="188" x2="793" y2="188" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- not enforced -->
+  <rect x="32" y="312" width="893" height="84" rx="12" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="52" y="338" font-size="14" font-weight="600" fill="#1f2328">Tenu par la relecture et l'habitude, par aucun outil</text>
+  <text x="52" y="362" font-size="13" fill="#1f2328">un cas d'usage par commit · les fichiers générés dans le commit de leur cause · chaque commit intermédiaire vert</text>
+  <text x="52" y="382" font-size="13" fill="#1f2328">la qualité d'un message au-delà de son format · la taille d'un commit ou d'une pull request, sauf avec --strict</text>
+</svg>

@@ -1,3 +1,5 @@
+**English** · [Français](presentation-guard-at-the-edge.fr.md)
+
 # ddd-ts-kit/presentation-guard-at-the-edge
 
 Architecture id: `presentation/guard-at-the-edge` (added by this plugin). Default severity: `error` in `recommended`, `error` in `strict`.

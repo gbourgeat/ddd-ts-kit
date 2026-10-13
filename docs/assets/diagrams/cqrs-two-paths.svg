@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 440" width="960" height="440" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">The command path and the query path of one context</title>
+  <desc id="desc">Top, the command path: POST /appointments goes to the command bus and its middlewares, then to the BookAppointment handler, which asks the Appointment aggregate to book and saves it through the AppointmentRepository port. Bottom, the query path: GET /appointments goes to the query bus and its middlewares, then to the SearchAppointments handler, which asks a read port. The adapters of both ports use the same appointments tables.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+    <marker id="arrow-infrastructure" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#7a4f9a"/>
+    </marker>
+  </defs>
+  <rect width="960" height="440" rx="16" fill="#ffffff"/>
+  <text x="32" y="36" font-size="18" font-weight="600" fill="#1f2328">One context, two paths over the same tables</text>
+  <!-- command lane -->
+  <rect x="24" y="54" width="720" height="168" rx="14" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="40" y="78" font-size="14" font-weight="600" fill="#5f6b73">Command path: changes state, answers at most an identifier</text>
+  <rect x="40" y="110" width="130" height="64" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="105" y="136" font-size="16" font-weight="700" fill="#9a5b2b" text-anchor="middle">POST</text>
+  <text x="105" y="158" font-size="13" fill="#1f2328" text-anchor="middle">/appointments</text>
+  <rect x="196" y="110" width="130" height="64" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="261" y="136" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">CommandBus</text>
+  <text x="261" y="158" font-size="13" fill="#1f2328" text-anchor="middle">+ middlewares</text>
+  <rect x="352" y="110" width="160" height="64" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="432" y="136" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">handler</text>
+  <text x="432" y="158" font-size="13" fill="#1f2328" text-anchor="middle">BookAppointment</text>
+  <rect x="548" y="92" width="182" height="52" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="639" y="114" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">Appointment</text>
+  <text x="639" y="134" font-size="13" fill="#1f2328" text-anchor="middle">aggregate, invariants</text>
+  <rect x="548" y="156" width="182" height="52" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="639" y="178" font-size="14" font-weight="700" fill="#2f6f4f" text-anchor="middle">AppointmentRepository</text>
+  <text x="639" y="198" font-size="13" fill="#1f2328" text-anchor="middle">repository port</text>
+  <line x1="172" y1="142" x2="192" y2="142" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="328" y1="142" x2="348" y2="142" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <path d="M514,128 H530 V118 H544" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <path d="M514,156 H530 V182 H544" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- query lane -->
+  <rect x="24" y="242" width="720" height="146" rx="14" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="40" y="266" font-size="14" font-weight="600" fill="#5f6b73">Query path: changes nothing, answers a view shaped for the caller</text>
+  <rect x="40" y="296" width="130" height="64" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="105" y="322" font-size="16" font-weight="700" fill="#9a5b2b" text-anchor="middle">GET</text>
+  <text x="105" y="344" font-size="13" fill="#1f2328" text-anchor="middle">/appointments</text>
+  <rect x="196" y="296" width="130" height="64" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="261" y="322" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">QueryBus</text>
+  <text x="261" y="344" font-size="13" fill="#1f2328" text-anchor="middle">+ middlewares</text>
+  <rect x="352" y="296" width="160" height="64" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="432" y="322" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">handler</text>
+  <text x="432" y="344" font-size="13" fill="#1f2328" text-anchor="middle">SearchAppointments</text>
+  <rect x="548" y="296" width="182" height="64" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="639" y="322" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">read port</text>
+  <text x="639" y="344" font-size="13" fill="#1f2328" text-anchor="middle">no aggregate loaded</text>
+  <line x1="172" y1="328" x2="192" y2="328" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="328" y1="328" x2="348" y2="328" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="514" y1="328" x2="544" y2="328" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- database -->
+  <rect x="814" y="120" width="122" height="236" rx="12" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="875" y="226" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">appointments</text>
+  <text x="875" y="248" font-size="13" fill="#1f2328" text-anchor="middle">tables</text>
+  <text x="875" y="268" font-size="13" fill="#1f2328" text-anchor="middle">one database</text>
+  <line x1="732" y1="182" x2="810" y2="182" stroke="#7a4f9a" stroke-width="2" marker-end="url(#arrow-infrastructure)"/>
+  <text x="771" y="172" font-size="13" fill="#7a4f9a" text-anchor="middle">adapter</text>
+  <line x1="732" y1="328" x2="810" y2="328" stroke="#7a4f9a" stroke-width="2" marker-end="url(#arrow-infrastructure)"/>
+  <text x="771" y="318" font-size="13" fill="#7a4f9a" text-anchor="middle">adapter</text>
+  <text x="32" y="420" font-size="14" fill="#1f2328">The read side is a different code path, not a different database. A projection fed by events is a choice, not the default.</text>
+</svg>

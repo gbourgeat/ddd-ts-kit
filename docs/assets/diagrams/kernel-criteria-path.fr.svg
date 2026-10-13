@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 460" width="960" height="460" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Le chemin des critères, du gestionnaire de requête jusqu'à une page</title>
+  <desc id="desc">Dans l'application, le gestionnaire de requête construit des critères (filtres, tri, page), que le compilateur vérifie par rapport à la ligne ; scoped leur joint par un ET le périmètre d'accès de l'acteur ; le port de lecture reçoit les critères restreints. Dans l'infrastructure, l'adaptateur du modèle de lecture les planifie avec planCriteria, qui les valide par rapport à la définition ou lève InvalidCriteriaError ; le plan n'est que des données ; un traducteur d'un package ORM le rend en instruction, ou evaluateCriteria l'exécute en mémoire pour un fake ; pageOfPlan transforme les lignes en la page que le gestionnaire renvoie.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="460" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Le chemin des critères, du gestionnaire de requête jusqu'à une page</text>
+
+  <!-- application row -->
+  <text x="40" y="74" font-size="14" font-weight="600" fill="#2b5d8a">application : le gestionnaire de requête</text>
+  <rect x="40" y="86" width="260" height="104" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="170" y="112" font-size="15" font-weight="700" fill="#2b5d8a" text-anchor="middle">Criteria.of&lt;Row&gt;()</text>
+  <text x="170" y="136" font-size="13" fill="#1f2328" text-anchor="middle">.where(...).orderBy(...).page(...)</text>
+  <text x="170" y="158" font-size="13" fill="#1f2328" text-anchor="middle">champs, opérateurs et valeurs</text>
+  <text x="170" y="176" font-size="13" font-style="italic" font-weight="600" fill="#2b5d8a" text-anchor="middle">vérifiés par le compilateur</text>
+
+  <rect x="350" y="86" width="260" height="104" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="480" y="112" font-size="15" font-weight="700" fill="#2b5d8a" text-anchor="middle">scoped(criteria, scope, mapping)</text>
+  <text x="480" y="136" font-size="13" fill="#1f2328" text-anchor="middle">ce que l'acteur peut lire,</text>
+  <text x="480" y="158" font-size="13" fill="#1f2328" text-anchor="middle">joint par un ET, tenu à part :</text>
+  <text x="480" y="176" font-size="13" font-style="italic" font-weight="600" fill="#2b5d8a" text-anchor="middle">aucun filtre ne peut l'élargir</text>
+
+  <rect x="660" y="86" width="260" height="104" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="790" y="112" font-size="15" font-weight="700" fill="#2b5d8a" text-anchor="middle">port de lecture</text>
+  <text x="790" y="136" font-size="13" fill="#1f2328" text-anchor="middle">ReadModelStore.search(scoped)</text>
+  <text x="790" y="158" font-size="13" fill="#1f2328" text-anchor="middle">n'accepte que des ScopedCriteria :</text>
+  <text x="790" y="176" font-size="13" fill="#1f2328" text-anchor="middle">aucune lecture sans périmètre</text>
+
+  <line x1="302" y1="138" x2="348" y2="138" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="612" y1="138" x2="658" y2="138" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- infrastructure row, right to left -->
+  <text x="40" y="406" font-size="14" font-weight="600" fill="#7a4f9a">infrastructure : l'adaptateur du modèle de lecture</text>
+  <rect x="724" y="262" width="196" height="120" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="822" y="288" font-size="15" font-weight="700" fill="#7a4f9a" text-anchor="middle">planCriteria</text>
+  <text x="822" y="312" font-size="13" fill="#1f2328" text-anchor="middle">selon la définition :</text>
+  <text x="822" y="332" font-size="13" fill="#1f2328" text-anchor="middle">des critères refusés lèvent</text>
+  <text x="822" y="352" font-size="13" fill="#1f2328" text-anchor="middle">InvalidCriteriaError</text>
+  <text x="822" y="370" font-size="13" font-style="italic" font-weight="600" fill="#7a4f9a" text-anchor="middle">vérifiés à l'exécution</text>
+
+  <rect x="496" y="262" width="196" height="120" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="594" y="288" font-size="15" font-weight="700" fill="#7a4f9a" text-anchor="middle">CriteriaPlan</text>
+  <text x="594" y="312" font-size="13" fill="#1f2328" text-anchor="middle">le prédicat, le keyset</text>
+  <text x="594" y="332" font-size="13" fill="#1f2328" text-anchor="middle">d'un curseur, l'ordre total,</text>
+  <text x="594" y="352" font-size="13" fill="#1f2328" text-anchor="middle">les lignes à charger</text>
+  <text x="594" y="370" font-size="13" font-style="italic" font-weight="600" fill="#7a4f9a" text-anchor="middle">rien que des valeurs simples</text>
+
+  <rect x="268" y="262" width="196" height="120" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="366" y="288" font-size="15" font-weight="700" fill="#7a4f9a" text-anchor="middle">un traducteur</text>
+  <text x="366" y="312" font-size="13" fill="#1f2328" text-anchor="middle">criteriaToKnex, ...ToDrizzle,</text>
+  <text x="366" y="332" font-size="13" fill="#1f2328" text-anchor="middle">...ToPrisma, ...ToTypeOrm ;</text>
+  <text x="366" y="352" font-size="13" fill="#1f2328" text-anchor="middle">evaluateCriteria dans un fake</text>
+
+  <rect x="40" y="262" width="196" height="120" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="138" y="288" font-size="15" font-weight="700" fill="#7a4f9a" text-anchor="middle">pageOfPlan</text>
+  <text x="138" y="312" font-size="13" fill="#1f2328" text-anchor="middle">les lignes deviennent une</text>
+  <text x="138" y="332" font-size="13" fill="#1f2328" text-anchor="middle">Page&lt;Row&gt; : items,</text>
+  <text x="138" y="352" font-size="13" fill="#1f2328" text-anchor="middle">total ou nextCursor</text>
+
+  <line x1="822" y1="192" x2="822" y2="260" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="722" y1="322" x2="694" y2="322" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="494" y1="322" x2="466" y2="322" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="266" y1="322" x2="238" y2="322" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- back to the handler -->
+  <line x1="138" y1="260" x2="138" y2="192" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <text x="150" y="232" font-size="13" fill="#1f2328">renvoyée au gestionnaire</text>
+
+  <text x="40" y="436" font-size="13" fill="#1f2328">En trait plein : les critères descendent le chemin. En pointillé : la page remonte. Un adaptateur de store rend le plan, et rien d'autre.</text>
+</svg>

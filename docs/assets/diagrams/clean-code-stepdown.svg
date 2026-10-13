@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 440" width="960" height="440" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">A class reads from top to bottom: the stepdown rule</title>
+  <desc id="desc">The file appointment.aggregate.ts lists its static factories first, then its public intentions, then its private helpers, each placed below the method that calls it first. The first screen tells what an appointment can do; the details come after, in calling order.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="440" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">A class reads from top to bottom: the stepdown rule</text>
+  <!-- the file -->
+  <rect x="40" y="60" width="590" height="360" rx="12" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="60" y="88" font-size="14" font-weight="600" fill="#2f6f4f">appointment.aggregate.ts</text>
+  <text x="60" y="122" font-size="13" font-weight="700" fill="#2f6f4f">1. static factories</text>
+  <rect x="80" y="132" width="420" height="30" rx="6" fill="#ffffff" stroke="#2f6f4f" stroke-width="1"/>
+  <text x="96" y="152" font-size="14" fill="#1f2328">static book(id, slot)</text>
+  <rect x="80" y="168" width="420" height="30" rx="6" fill="#ffffff" stroke="#2f6f4f" stroke-width="1"/>
+  <text x="96" y="188" font-size="14" fill="#1f2328">static rehydrate(id, state)</text>
+  <text x="60" y="226" font-size="13" font-weight="700" fill="#2f6f4f">2. public intentions</text>
+  <rect x="80" y="236" width="420" height="30" rx="6" fill="#ffffff" stroke="#2f6f4f" stroke-width="1"/>
+  <text x="96" y="256" font-size="14" fill="#1f2328">reschedule(slot, at)</text>
+  <rect x="80" y="272" width="420" height="30" rx="6" fill="#ffffff" stroke="#2f6f4f" stroke-width="1"/>
+  <text x="96" y="292" font-size="14" fill="#1f2328">cancel(reason, at)</text>
+  <text x="60" y="330" font-size="13" font-weight="700" fill="#2f6f4f">3. private helpers, each below its first caller</text>
+  <rect x="80" y="340" width="420" height="30" rx="6" fill="#ffffff" stroke="#2f6f4f" stroke-width="1"/>
+  <text x="96" y="360" font-size="14" fill="#1f2328">private assertNotCancelled()</text>
+  <rect x="80" y="376" width="420" height="30" rx="6" fill="#ffffff" stroke="#2f6f4f" stroke-width="1"/>
+  <text x="96" y="396" font-size="14" fill="#1f2328">private assertWithinCancellationWindow(at)</text>
+  <!-- cancel calls its two helpers, both placed below it -->
+  <path d="M500,280 H562 V391 H504" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <path d="M500,294 H536 V355 H504" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="570" y="340" font-size="13" fill="#3d4449">calls</text>
+  <!-- what the reader gets -->
+  <path d="M656,112 H664 V306 H656" fill="none" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="678" y="186" font-size="14" font-weight="600" fill="#1f2328">The first screen:</text>
+  <text x="678" y="206" font-size="14" font-weight="600" fill="#1f2328">what can an appointment do?</text>
+  <text x="678" y="234" font-size="13" fill="#1f2328">A reader who knows enough</text>
+  <text x="678" y="254" font-size="13" fill="#1f2328">stops here.</text>
+  <path d="M656,322 H664 V410 H656" fill="none" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="678" y="358" font-size="14" font-weight="600" fill="#1f2328">Then the details,</text>
+  <text x="678" y="378" font-size="13" fill="#1f2328">in the order they are called.</text>
+</svg>

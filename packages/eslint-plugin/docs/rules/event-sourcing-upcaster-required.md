@@ -1,3 +1,5 @@
+**English** · [Français](event-sourcing-upcaster-required.fr.md)
+
 # ddd-ts-kit/event-sourcing-upcaster-required
 
 Architecture id: `event-sourcing/upcaster-required`. Default severity: `error` in `recommended`, `error` in `strict`.

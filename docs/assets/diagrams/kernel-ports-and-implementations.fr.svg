@@ -1,0 +1,113 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 644" width="960" height="644" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Le noyau déclare les ports, d'autres packages les implémentent</title>
+  <desc id="desc">À gauche, le domaine et l'application d'un contexte délimité importent le noyau : agrégats, objets-valeurs, refus et ports de repository étendent ses classes, et les gestionnaires dépendent de ses ports. Au centre, le noyau porte les ports sous forme de classes abstraites, chacune son propre jeton d'injection, et les blocs de base. À droite, les implémentations des ports : les doubles et les implémentations en processus du noyau lui-même, les packages d'adaptateurs du kit (pino, winston, sentry, redis, s3, les packages ORM, scheduling) et l'infrastructure du projet. En bas, la plateforme lie une implémentation à chaque port au démarrage avec @ddd-ts-kit/di ; une spec lie les doubles.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+    <marker id="arrow-infrastructure" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#7a4f9a"/>
+    </marker>
+  </defs>
+  <rect width="960" height="644" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Le noyau déclare les ports, d'autres packages les implémentent</text>
+  <text x="149" y="70" font-size="13" font-weight="600" fill="#5f6b73" text-anchor="middle">un contexte délimité</text>
+  <text x="801" y="70" font-size="13" font-weight="600" fill="#5f6b73" text-anchor="middle">implémentations</text>
+
+  <!-- domain -->
+  <rect x="24" y="84" width="250" height="178" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="149" y="112" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">domaine</text>
+  <line x1="40" y1="124" x2="258" y2="124" stroke="#2f6f4f" stroke-opacity="0.35"/>
+  <text x="40" y="148" font-size="13" fill="#1f2328">agrégats : AggregateRoot</text>
+  <text x="40" y="170" font-size="13" fill="#1f2328">objets-valeurs : ValueObject</text>
+  <text x="40" y="192" font-size="13" fill="#1f2328">refus : ConceptError</text>
+  <text x="40" y="214" font-size="13" fill="#1f2328">ports de repository : Repository</text>
+  <text x="40" y="244" font-size="13" font-style="italic" font-weight="600" fill="#2f6f4f">n'importe que le noyau</text>
+
+  <!-- application -->
+  <rect x="24" y="274" width="250" height="194" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="149" y="302" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">application</text>
+  <line x1="40" y1="314" x2="258" y2="314" stroke="#2b5d8a" stroke-opacity="0.35"/>
+  <text x="40" y="338" font-size="13" fill="#1f2328">commandes : Command</text>
+  <text x="40" y="360" font-size="13" fill="#1f2328">les gestionnaires dépendent de</text>
+  <text x="40" y="382" font-size="13" fill="#1f2328">ports : Clock, un repository,</text>
+  <text x="40" y="404" font-size="13" fill="#1f2328">JobQueue</text>
+  <text x="40" y="426" font-size="13" fill="#1f2328">déclarations : @CommandHandler</text>
+  <text x="40" y="452" font-size="13" font-style="italic" font-weight="600" fill="#2b5d8a">et @ddd-ts-kit/auth</text>
+
+  <!-- kernel -->
+  <rect x="330" y="84" width="280" height="384" rx="12" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2.5"/>
+  <text x="470" y="108" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">@ddd-ts-kit/kernel</text>
+  <text x="470" y="128" font-size="13" fill="#1f2328" text-anchor="middle">ports : classes abstraites,</text>
+  <text x="470" y="144" font-size="13" fill="#1f2328" text-anchor="middle">chacune son propre jeton</text>
+  <line x1="346" y1="154" x2="594" y2="154" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text x="348" y="170" font-size="13" fill="#1f2328">Clock</text>
+  <text x="348" y="190" font-size="13" fill="#1f2328">IdGenerator</text>
+  <text x="348" y="210" font-size="13" fill="#1f2328">UnitOfWork</text>
+  <text x="348" y="230" font-size="13" fill="#1f2328">Repository</text>
+  <text x="348" y="250" font-size="13" fill="#1f2328">CommandBus</text>
+  <text x="348" y="270" font-size="13" fill="#1f2328">QueryBus</text>
+  <text x="348" y="290" font-size="13" fill="#1f2328">EventBus</text>
+  <text x="348" y="310" font-size="13" fill="#1f2328">ExecutionScope</text>
+  <text x="348" y="330" font-size="13" fill="#1f2328">ReadModelStore</text>
+  <text x="348" y="350" font-size="13" fill="#1f2328">EventStore</text>
+  <text x="490" y="170" font-size="13" fill="#1f2328">Logger</text>
+  <text x="490" y="190" font-size="13" fill="#1f2328">Metrics</text>
+  <text x="490" y="210" font-size="13" fill="#1f2328">ErrorReporter</text>
+  <text x="490" y="230" font-size="13" fill="#1f2328">Cache</text>
+  <text x="490" y="250" font-size="13" fill="#1f2328">Lock</text>
+  <text x="490" y="270" font-size="13" fill="#1f2328">RateLimiter</text>
+  <text x="490" y="290" font-size="13" fill="#1f2328">FileStorage</text>
+  <text x="490" y="310" font-size="13" fill="#1f2328">JobScheduler</text>
+  <text x="490" y="330" font-size="13" fill="#1f2328">JobQueue</text>
+  <text x="490" y="350" font-size="13" fill="#1f2328">AuditTrail</text>
+  <line x1="346" y1="366" x2="594" y2="366" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text x="470" y="384" font-size="13" fill="#1f2328" text-anchor="middle">blocs de base : AggregateRoot,</text>
+  <text x="470" y="403" font-size="13" fill="#1f2328" text-anchor="middle">ValueObject, DomainError, Criteria</text>
+  <text x="470" y="432" font-size="13" font-weight="600" fill="#5f6b73" text-anchor="middle">…/kernel/declarations :</text>
+  <text x="470" y="451" font-size="13" fill="#1f2328" text-anchor="middle">décorateurs, pures métadonnées</text>
+
+  <!-- implementations: the kernel itself -->
+  <rect x="666" y="84" width="270" height="116" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="801" y="110" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">dans le noyau lui-même</text>
+  <line x1="682" y1="122" x2="920" y2="122" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text x="682" y="144" font-size="13" fill="#1f2328">doubles : FixedClock, InMemoryCache,</text>
+  <text x="682" y="164" font-size="13" fill="#1f2328">InMemoryLock, InMemoryUnitOfWork</text>
+  <text x="682" y="184" font-size="13" fill="#1f2328">par défaut : NoopLogger, NoopMetrics</text>
+
+  <!-- implementations: adapter packages -->
+  <rect x="666" y="212" width="270" height="190" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="801" y="238" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">packages d'adaptateurs</text>
+  <line x1="682" y1="250" x2="920" y2="250" stroke="#7a4f9a" stroke-opacity="0.35"/>
+  <text x="682" y="272" font-size="13" fill="#1f2328">pino, winston : Logger</text>
+  <text x="682" y="292" font-size="13" fill="#1f2328">sentry : ErrorReporter</text>
+  <text x="682" y="312" font-size="13" fill="#1f2328">redis : Cache, Lock, RateLimiter</text>
+  <text x="682" y="332" font-size="13" fill="#1f2328">s3 : FileStorage</text>
+  <text x="682" y="352" font-size="13" fill="#1f2328">les packages ORM : UnitOfWork,</text>
+  <text x="682" y="372" font-size="13" fill="#1f2328">ReadModelStore, EventStore</text>
+  <text x="682" y="392" font-size="13" fill="#1f2328">scheduling : JobScheduler, JobQueue</text>
+
+  <!-- implementations: the project -->
+  <rect x="666" y="414" width="270" height="54" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="801" y="437" font-size="14" font-weight="700" fill="#7a4f9a" text-anchor="middle">infrastructure/ du contexte</text>
+  <text x="801" y="457" font-size="13" fill="#1f2328" text-anchor="middle">adaptateurs de repository, gateways</text>
+
+  <!-- imports -->
+  <line x1="276" y1="173" x2="328" y2="173" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="276" y1="371" x2="328" y2="371" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- implements -->
+  <line x1="664" y1="142" x2="612" y2="142" stroke="#7a4f9a" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow-infrastructure)"/>
+  <line x1="664" y1="306" x2="612" y2="306" stroke="#7a4f9a" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow-infrastructure)"/>
+  <line x1="664" y1="441" x2="612" y2="441" stroke="#7a4f9a" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow-infrastructure)"/>
+
+  <!-- platform -->
+  <rect x="24" y="492" width="912" height="72" rx="12" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="44" y="520" font-size="14" font-weight="600" fill="#5f6b73">plateforme (src/platform), avec @ddd-ts-kit/di</text>
+  <text x="44" y="546" font-size="13" fill="#1f2328">lie une implémentation à chaque port au démarrage, d'après les déclarations ; une spec y lie les doubles à la place</text>
+
+  <!-- legend -->
+  <line x1="40" y1="594" x2="84" y2="594" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="96" y="599" font-size="14" fill="#1f2328">importe : étend une classe du noyau ou dépend de l'un de ses ports</text>
+  <line x1="40" y1="620" x2="84" y2="620" stroke="#7a4f9a" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow-infrastructure)"/>
+  <text x="96" y="625" font-size="14" fill="#1f2328">implémente des ports du noyau</text>
+</svg>

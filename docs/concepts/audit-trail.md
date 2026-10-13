@@ -1,3 +1,5 @@
+**English** · [Français](audit-trail.fr.md)
+
 # Audit trail
 
 **Summary.** An audit trail answers "who did what, on what, when, with what outcome, on whose
@@ -33,8 +35,14 @@ unit of work already crosses, wired once in the platform:
 | commands | each command with `succeeded` or `failed` and the code of the error | a bus middleware placed before the unit of work |
 | integration events | that an event of a given type occurred, from its envelope only | one idempotent subscription |
 
-A fourth, exceptional source exists for what none of the three can see: an explicit record
-written by infrastructure, such as a bulk export. A call to the trail from `domain/` or
+![A command crosses the authorization middleware, the audit middleware and the unit of work before the use case, which holds no audit call; the decision hook, the audit middleware and an event subscription append to the audit trail and read who acted from the execution scope](../assets/diagrams/audit-trail-sources.svg)
+
+A request a guard refuses at the HTTP edge (a role, a scope, a tenant the caller does not
+belong to) never reaches the bus: the HTTP pipeline reports it to `auditGuardRefusals`, which
+records it as an `authorization` entry, `denied`, for authenticated callers only (a caller
+without a credential belongs to the access log and to rate limiting). A fourth, exceptional
+source exists for what none of these can see: an explicit record written by infrastructure,
+such as a bulk export. A call to the trail from `domain/` or
 `application/` is the defect the design exists to prevent.
 
 Who acted, in which session, impersonated by whom, for which tenant, with which correlation id
@@ -42,33 +50,101 @@ and from which origin: all of it comes from the execution scope
 ([The actor and the execution scope](actor-and-execution-scope.md)), never threaded through a
 use case.
 
+Instead of a handler that remembers to record:
+
+```ts
+// instead of: the audit inside the use case
+async execute(command: CancelAppointment): Promise<void> {
+  const appointment = await this.appointments.findById(command.appointmentId);
+  appointment.cancel(this.clock.now());
+  await this.appointments.save(appointment);
+  await this.trail.record({ category: 'command', action: 'CancelAppointment', outcome: 'succeeded', ... }); // forgotten in the next handler, lost on a failure
+}
+```
+
+write a handler that only does its work, and wire the trail once, on the bus. Assembled by
+hand, with the in-memory pieces of the kernel and the package, so that it runs as it is:
+
+<!-- checked sample -->
+```ts
+import {
+  AuthorizedCommand,
+  ConceptError,
+  FixedExecutionScope,
+  InMemoryCommandBus,
+  InMemoryUnitOfWork,
+  SequentialIdGenerator,
+  SystemClock,
+  executionContext,
+  unitOfWorkMiddleware,
+  type Actor,
+} from '@ddd-ts-kit/kernel';
+import { InMemoryAuditTrail, auditMiddleware, auditedFields } from '@ddd-ts-kit/audit';
+
+// the use case: a command and its handler, with no audit call anywhere
+class AppointmentError extends ConceptError {
+  static cancellationWindowPassed(appointmentId: string) {
+    return AppointmentError.refusal('CANCELLATION_WINDOW_PASSED', `Appointment ${appointmentId} starts in less than 24 hours.`, { appointmentId });
+  }
+}
+
+class CancelAppointment extends AuthorizedCommand<void> {
+  constructor(
+    actor: Actor,
+    readonly appointmentId: string,
+  ) {
+    super(actor);
+  }
+}
+
+const handler = {
+  async execute(command: CancelAppointment): Promise<void> {
+    throw AppointmentError.cancellationWindowPassed(command.appointmentId);
+  },
+};
+
+// the platform: who acts comes from the execution scope, what is recorded is declared here
+const ada: Actor = { id: 'user-ada', type: 'user', roles: ['client'], attributes: {} };
+const scope = new FixedExecutionScope(executionContext({ correlationId: 'corr-1', actor: ada, origin: 'http' }));
+const trail = new InMemoryAuditTrail();
+const unitOfWork = new InMemoryUnitOfWork();
+
+const commands = new InMemoryCommandBus()
+  .use(
+    auditMiddleware(trail, {
+      scope,
+      clock: new SystemClock(),
+      ids: new SequentialIdGenerator('audit'),
+      unitOfWork,
+      fields: [
+        auditedFields(CancelAppointment, ['appointmentId'], {
+          resource: (command) => ({ type: 'appointment', id: command.appointmentId }),
+          context: 'appointments',
+        }),
+      ],
+    }),
+  )
+  .use(unitOfWorkMiddleware(unitOfWork))
+  .register(CancelAppointment, handler);
+
+await commands.execute(new CancelAppointment(ada, '8f2')).catch(() => undefined);
+
+const [entry] = trail.entries;
+console.log(entry?.category, entry?.action, entry?.outcome, entry?.reason);
+// command CancelAppointment failed CANCELLATION_WINDOW_PASSED
+```
+
+In a project generated with `stack.audit` on, this wiring is already written under
+`src/platform/audit/`, with the PostgreSQL store, the authorization hook and the event
+subscription; the [`@ddd-ts-kit/audit`](../../packages/audit/README.md) README shows each
+piece.
+
 ### The transaction problem
 
 Two requirements pull in opposite directions. The entry of a failed command must survive the
 rollback. The entry of a succeeded command must not exist if its transaction did not commit.
 
-```mermaid
-sequenceDiagram
-  participant B as Command bus
-  participant Z as Authorization
-  participant A as Audit middleware
-  participant U as Unit of work
-  participant H as Handler
-  B->>Z: CancelAppointment
-  Z-->>B: denied: one "authorization denied" entry, no transaction
-  B->>Z: CancelAppointment
-  Z->>A: allowed
-  A->>U: open the transaction
-  U->>H: execute
-  alt handler succeeds
-    H-->>A: ok
-    A->>U: write "succeeded" in the same transaction, commit
-  else handler throws
-    H-->>A: CancellationWindowPassed
-    U-->>A: rolled back
-    A->>A: write "failed" with the code, outside the transaction
-  end
-```
+![CancelAppointment is denied by authorization and leaves one entry with no transaction; allowed, it runs in a transaction opened by the audit middleware, where a success writes its entry before the commit, while a failure is rolled back and its entry written outside](../assets/diagrams/audit-trail-transaction.svg)
 
 A middleware inside the unit of work loses the failures; one outside loses atomicity for the
 successes. Hence the arrangement above: the audit middleware sits before the unit of work and
@@ -97,7 +173,16 @@ correlation and causation ids, the origin, and its place in a chain. For the run
 
 By default an entry carries no payload at all. A value enters only when the project declares
 it, field by field, for one command: the new `startsAt` of a rescheduled appointment, for
-instance. A field that is not declared is never read.
+instance. A field that is not declared is never read, and the compiler refuses a name the
+command does not have.
+
+```ts
+// src/platform/audit: given to auditMiddleware as `fields`, with `masker: hmacMasker(secret, { keyId: 'k1' })`
+auditedFields(RescheduleAppointment, ['startsAt', masked('clientEmail')], {
+  resource: (command) => ({ type: 'appointment', id: command.appointmentId }),
+});
+// the entry then carries: changes: { startsAt: '2026-03-02T09:00:00.000Z', clientEmail: { masked: 'k1:5d0e...' } }
+```
 
 Personal data that must be correlated ("every entry about this client") is stored masked: a
 keyed hash of the value. Two entries about the same email carry the same mask, so the question
@@ -116,6 +201,31 @@ Each entry stores the hash of the previous one and its own hash, computed over a
 that any program in any language can recompute. Changing, removing or reordering an entry
 breaks the chain at a place the verification names: altered content, a missing entry, or a
 reordering.
+
+![Four entries of the chain tenant:acme, each holding the hash of the one before it; verifyChain reports a changed, removed or swapped entry, and a checkpoint copied elsewhere catches a chain rewritten as a whole](../assets/diagrams/audit-trail-hash-chain.svg)
+
+The hash is a SHA-256 of the entry without its own `hash`, so `previousHash`, `chain` and
+`sequence` are sealed too; the first entry of a chain links to `GENESIS_HASH`, 64 zeros.
+When somebody turns a failure into a success in an export, its verification says where:
+
+<!-- checked sample -->
+```ts
+import { verifyChain, type AuditEntry } from '@ddd-ts-kit/audit';
+
+declare const exported: AuditEntry[]; // the entries of one chain, as an export hands them over
+
+const untouched = await verifyChain(exported, { chain: 'tenant:acme' });
+// { valid: true, checked: 3 }
+
+const second = exported[1];
+if (second !== undefined) {
+  exported[1] = { ...second, outcome: 'succeeded' }; // somebody turns a failure into a success
+}
+
+const tampered = await verifyChain(exported, { chain: 'tenant:acme' });
+// { valid: false, checked: 1, break: { kind: 'altered-content', chain: 'tenant:acme', position: 1, sequence: 2, entryId: '...' } }
+console.log(untouched, tampered);
+```
 
 The kit keeps one chain per tenant by default. A tenant can then be verified, exported and
 handed over without the entries of the others, appends of different tenants do not wait for
@@ -164,6 +274,17 @@ its own permission, pagination, the filter narrowed to the tenant of the actor, 
 recorded. Whoever reads the trail leaves an entry in it. Support staff acting as a user appear
 as such: the impersonator is on the entry.
 
+```ts
+// the handler of SearchAuditEntriesQuery, which depends on the AuditReader port of the kernel
+const page = await this.reader.search(
+  { ...query.filter, tenantId: query.tenantId, category: 'authorization', outcome: 'denied' },
+  cursorPage({ limit: 50, sort: [{ field: 'occurredAt', direction: 'desc' }] }),
+);
+```
+
+In a multitenant project, `TenantAuditReader` bound to `AuditReader` confines every search to
+the tenant of the work, whatever its filter says.
+
 ## Limits and when not to use it
 
 These are stated by [`@ddd-ts-kit/audit`](../../packages/audit/README.md):
@@ -186,8 +307,8 @@ These are stated by [`@ddd-ts-kit/audit`](../../packages/audit/README.md):
   the table is undetectable.
 - **Verification reads its range into memory**: verify long chains by ranges.
 - **When not to use it.** A prototype, or a system with no accountability requirement, pays the
-  serialized append and the storage for nothing: the trail can be switched off in the config
-  (see [Configuration](../CONFIG.md)). If what you want is to reconstruct state or debug a
+  serialized append and the storage for nothing: the trail can be switched off in the config,
+  `stack.audit: "off"` (see [Configuration](../CONFIG.md)). If what you want is to reconstruct state or debug a
   request, you want event sourcing or tracing, not this.
 
 ## Sources

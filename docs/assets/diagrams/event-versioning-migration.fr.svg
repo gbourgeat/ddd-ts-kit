@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" width="960" height="420" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Passer de la version 1 à la version 2 d'un événement</title>
+  <desc id="desc">Une frise en colonnes : avant, livraisons 1 à 4, et plus tard. appointments publie v1 jusqu'à la livraison 3 ; à la livraison 4, v1 est marqué déprécié puis n'est plus publié. appointments publie v2 dès la livraison 1. notifications lit v1 jusqu'à la livraison 1 et v2 dès la 2. analytics lit v1 jusqu'à la livraison 2 et v2 dès la 3. La déclaration de v1 est retirée plus tard, quand plus aucun événement v1 n'est retenu nulle part.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="420" rx="16" fill="#ffffff"/>
+  <text x="32" y="36" font-size="18" font-weight="600" fill="#1f2328">Deux versions côte à côte, un consommateur à la fois</text>
+  <text x="272" y="76" font-size="13" fill="#5f6b73" text-anchor="middle">avant</text>
+  <text x="392" y="76" font-size="13" fill="#5f6b73" text-anchor="middle">livraison 1</text>
+  <text x="512" y="76" font-size="13" fill="#5f6b73" text-anchor="middle">livraison 2</text>
+  <text x="632" y="76" font-size="13" fill="#5f6b73" text-anchor="middle">livraison 3</text>
+  <text x="752" y="76" font-size="13" fill="#5f6b73" text-anchor="middle">livraison 4</text>
+  <text x="872" y="76" font-size="13" fill="#5f6b73" text-anchor="middle">plus tard</text>
+  <line x1="212" y1="86" x2="212" y2="318" stroke="#d0d7de" stroke-width="1"/>
+  <line x1="332" y1="86" x2="332" y2="318" stroke="#d0d7de" stroke-width="1"/>
+  <line x1="452" y1="86" x2="452" y2="318" stroke="#d0d7de" stroke-width="1"/>
+  <line x1="572" y1="86" x2="572" y2="318" stroke="#d0d7de" stroke-width="1"/>
+  <line x1="692" y1="86" x2="692" y2="318" stroke="#d0d7de" stroke-width="1"/>
+  <line x1="812" y1="86" x2="812" y2="318" stroke="#d0d7de" stroke-width="1"/>
+  <line x1="932" y1="86" x2="932" y2="318" stroke="#d0d7de" stroke-width="1"/>
+  <text x="32" y="121" font-size="14" fill="#1f2328">appointments publie</text>
+  <text x="32" y="177" font-size="14" fill="#1f2328">appointments publie</text>
+  <text x="32" y="233" font-size="14" fill="#1f2328">notifications lit</text>
+  <text x="32" y="289" font-size="14" fill="#1f2328">analytics lit</text>
+  <rect x="216" y="96" width="472" height="40" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="452" y="121" font-size="14" font-weight="600" fill="#5f6b73" text-anchor="middle">v1</text>
+  <rect x="696" y="96" width="112" height="40" rx="8" fill="#ffffff" stroke="#5f6b73" stroke-width="2" stroke-dasharray="7 5"/>
+  <text x="752" y="121" font-size="14" font-weight="600" fill="#5f6b73" text-anchor="middle">déprécié</text>
+  <rect x="336" y="152" width="592" height="40" rx="8" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="632" y="177" font-size="14" font-weight="600" fill="#2b5d8a" text-anchor="middle">v2</text>
+  <rect x="216" y="208" width="232" height="40" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="332" y="233" font-size="14" font-weight="600" fill="#5f6b73" text-anchor="middle">v1</text>
+  <rect x="456" y="208" width="472" height="40" rx="8" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="692" y="233" font-size="14" font-weight="600" fill="#2b5d8a" text-anchor="middle">v2</text>
+  <rect x="216" y="264" width="352" height="40" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="392" y="289" font-size="14" font-weight="600" fill="#5f6b73" text-anchor="middle">v1</text>
+  <rect x="576" y="264" width="352" height="40" rx="8" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="752" y="289" font-size="14" font-weight="600" fill="#2b5d8a" text-anchor="middle">v2</text>
+  <text x="32" y="350" font-size="13" fill="#1f2328">La livraison 1 déclare v2 à côté de v1 et publie les deux à partir du même événement du domaine.</text>
+  <text x="32" y="372" font-size="13" fill="#1f2328">La livraison 4 marque v1 comme déprécié, puis arrête de le publier.</text>
+  <text x="32" y="394" font-size="13" fill="#1f2328">La déclaration de v1 est retirée quand plus aucun événement v1 ne reste dans une file, un journal ou une file de rejet.</text>
+</svg>

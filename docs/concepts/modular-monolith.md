@@ -1,3 +1,5 @@
+**English** · [Français](modular-monolith.fr.md)
+
 # Modular monolith
 
 **Summary.** A modular monolith is one deployable application whose inside is cut into modules
@@ -9,6 +11,8 @@ reasoning) without the operational cost of a distributed system, and it keeps ex
 for the day a measured reason appears.
 
 ## Three shapes compared
+
+![Three panels: a layered monolith, one process cut into technical layers over one schema joined freely; a modular monolith, one process cut into bounded contexts layered inside, each with its own schema; microservices, one process and one database per context, talking over the network](../assets/diagrams/modular-monolith-three-shapes.svg)
 
 | | Layered monolith | Modular monolith | Microservices |
 |---|---|---|---|
@@ -39,25 +43,22 @@ because four things hold, each checked:
 | Its dependencies are declared and acyclic | `availability` names `calendars` and `appointments` as upstreams in the config | `context/declared-relationship`, `context/no-cycle` |
 | It shares no transaction | booking an appointment and scheduling its reminder are two transactions joined by an event | the unit of work per command, `events/outbox-required`, `events/consumer-idempotent` |
 
-```mermaid
-flowchart LR
-  subgraph one process, one deployment
-    CAL[calendars] -- events --> APP[appointments]
-    CAL -- events --> AVA[availability]
-    APP -- events --> AVA
-    APP -- events --> NOT[notifications]
-    APP -- events --> ANA[analytics]
-  end
-  CAL --- S1[(schema calendars)]
-  APP --- S2[(schema appointments)]
-  AVA --- S3[(schema availability)]
-  NOT --- S4[(schema notifications)]
-  ANA --- S5[(schema analytics)]
-```
+![The scheduling application in one process: calendars publishes events to appointments and availability, appointments publishes events to availability, notifications and analytics, and each context owns its schema](../assets/diagrams/modular-monolith-contexts-and-schemas.svg)
 
 The schemas can live in one PostgreSQL database. What matters is that no context reads or joins
 another's tables: a context reads another's data through a published contract or through its own
 projection fed by integration events.
+
+Instead of a query that reaches into the tables of another context:
+
+```sql
+-- contexts/analytics/infrastructure/...: refused, analytics reads the schema of appointments
+SELECT practitioner_id, count(*) FROM appointments.appointment WHERE status = 'no-show' GROUP BY practitioner_id;
+```
+
+`analytics` keeps its own table, `analytics.visit`, written by its handler of
+`appointments.appointment.marked-no-show` and read by its own queries. The two schemas can then
+move apart, to two databases or two services, without a line of SQL to rewrite.
 
 ## How contexts collaborate inside one process
 
@@ -68,11 +69,53 @@ projection fed by integration events.
   events, eventually consistent.
 - **To get an answer now**: a port of the caller bound as a gateway
   (`npx ddd-ts-kit generate gateway <context> <upstream> <Name>`). Its adapter calls the
-  published read contract of the upstream in process today and could be an HTTP client tomorrow. Timeouts and failure behaviour
-  are part of the port from the first day.
+  published read contract of the upstream in process today and could be an HTTP client
+  tomorrow. Timeouts and failure behaviour are part of the port from the first day.
 - **To change two contexts in one transaction**: not available. Either the two are one context,
   or the requirement is a process in steps (see
   [Sagas and process managers](sagas-and-process-managers.md)).
+
+The three pieces of a gateway, in the shape `generate gateway` writes them: the read contract
+the upstream publishes, the port of the caller in its own words, and the in-process adapter
+that translates one into the other.
+
+<!-- checked sample -->
+```ts
+import { Gateway } from '@ddd-ts-kit/kernel/declarations';
+
+// contexts/calendars/published-language/working-hours.contract.ts (the upstream)
+// Serializable types only, changed additively: it is a contract.
+export interface WorkingInterval {
+  readonly from: string;
+  readonly to: string;
+}
+
+export abstract class WorkingHoursContract {
+  /** The intervals a practitioner works on a day (`YYYY-MM-DD`), or undefined for an unknown practitioner. */
+  abstract workingHours(practitionerId: string, day: string): Promise<readonly WorkingInterval[] | undefined>;
+}
+
+// contexts/appointments/application/ports/working-hours-gateway.port.ts (the caller, in its words)
+export abstract class WorkingHoursGateway {
+  abstract worksDuring(practitionerId: string, startsAt: Date, endsAt: Date): Promise<boolean>;
+}
+
+// contexts/appointments/infrastructure/external/in-process-working-hours.gateway.ts
+// When calendars runs as its own service, this class becomes an HTTP client with a timeout:
+// the port and every handler that uses it stay as they are.
+@Gateway(WorkingHoursGateway)
+export class InProcessWorkingHoursGateway implements WorkingHoursGateway {
+  constructor(readonly upstream: WorkingHoursContract) {}
+
+  async worksDuring(practitionerId: string, startsAt: Date, endsAt: Date): Promise<boolean> {
+    const intervals = await this.upstream.workingHours(practitionerId, startsAt.toISOString().slice(0, 10));
+
+    return (intervals ?? []).some(
+      (interval) => Date.parse(interval.from) <= startsAt.getTime() && endsAt.getTime() <= Date.parse(interval.to),
+    );
+  }
+}
+```
 
 The decision list is in the `extract-service` skill; the choice of relationship pattern is in
 [Context map](context-map.md).
@@ -123,8 +166,8 @@ exercise it is a separate decision, with measurable signals: see
   cheaper than between services (one repository, one refactoring), not free: data must be moved
   between schemas.
 - **It is too much for a small application with one model.** One context is a perfectly good
-  modular monolith. Do not invent contexts to fill the tree; the `bootstrap` skill says the
-  same.
+  modular monolith. Do not invent contexts to fill the tree; the `bounded-contexts` skill says
+  the same (prefer few contexts).
 - **It is not enough** when a part must scale, be released or fail independently, or must be
   isolated for compliance. That is what the extraction guide is for.
 

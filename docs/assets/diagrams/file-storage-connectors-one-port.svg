@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 590" width="960" height="590" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">One port, four kinds of connector, one contract suite</title>
+  <desc id="desc">The use cases and FileStaging depend on the FileStorage port of the kernel only. Four kinds of connector implement it: InMemoryFileStorage for the tests and the tools, LocalFileStorage for development on one machine, S3FileStorage of @ddd-ts-kit/s3 for every deployment, and a connector of your own for Google Cloud Storage or Azure Blob Storage. The first two are served storages: the application answers their signed links through signedFileRoutes. S3FileStorage speaks to any provider of the S3 protocol: AWS S3, MinIO, OVHcloud, Scaleway, Cloudflare R2, Garage. fileStorageContract runs on every one of them.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+    <marker id="arrow-infrastructure" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#7a4f9a"/>
+    </marker>
+  </defs>
+  <rect width="960" height="590" rx="16" fill="#ffffff"/>
+  <text x="24" y="36" font-size="18" font-weight="600" fill="#1f2328">One port, four kinds of connector, one contract suite</text>
+  <!-- the application -->
+  <rect x="320" y="56" width="320" height="58" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="480" y="80" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">use cases, FileStaging</text>
+  <text x="480" y="102" font-size="13" fill="#1f2328" text-anchor="middle">know the port, never the connector</text>
+  <line x1="480" y1="116" x2="480" y2="150" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- the port -->
+  <rect x="300" y="152" width="360" height="78" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="480" y="176" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">FileStorage</text>
+  <text x="480" y="198" font-size="13" fill="#1f2328" text-anchor="middle">put, get, stat, delete, copy, move, list</text>
+  <text x="480" y="218" font-size="13" fill="#1f2328" text-anchor="middle">signedDownloadUrl, signedUploadUrl</text>
+  <!-- the connectors -->
+  <rect x="24" y="296" width="210" height="76" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="129" y="320" font-size="15" font-weight="700" fill="#7a4f9a" text-anchor="middle">InMemoryFileStorage</text>
+  <text x="129" y="342" font-size="13" fill="#1f2328" text-anchor="middle">a map in the process</text>
+  <text x="129" y="362" font-size="13" fill="#5f6b73" text-anchor="middle">tests, tools</text>
+  <rect x="250" y="296" width="210" height="76" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="355" y="320" font-size="15" font-weight="700" fill="#7a4f9a" text-anchor="middle">LocalFileStorage</text>
+  <text x="355" y="342" font-size="13" fill="#1f2328" text-anchor="middle">a directory</text>
+  <text x="355" y="362" font-size="13" fill="#5f6b73" text-anchor="middle">development, one machine</text>
+  <rect x="476" y="296" width="230" height="76" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="591" y="320" font-size="15" font-weight="700" fill="#7a4f9a" text-anchor="middle">S3FileStorage</text>
+  <text x="591" y="342" font-size="13" fill="#1f2328" text-anchor="middle">@ddd-ts-kit/s3, a bucket</text>
+  <text x="591" y="362" font-size="13" fill="#5f6b73" text-anchor="middle">every deployment</text>
+  <rect x="722" y="296" width="214" height="76" rx="10" fill="#ffffff" stroke="#7a4f9a" stroke-width="2" stroke-dasharray="5 4"/>
+  <text x="829" y="320" font-size="15" font-weight="700" fill="#7a4f9a" text-anchor="middle">your own</text>
+  <text x="829" y="342" font-size="13" fill="#1f2328" text-anchor="middle">Google Cloud Storage,</text>
+  <text x="829" y="362" font-size="13" fill="#1f2328" text-anchor="middle">Azure Blob Storage</text>
+  <g stroke="#7a4f9a" stroke-width="2" stroke-dasharray="7 5" fill="none">
+    <line x1="129" y1="294" x2="356" y2="234" marker-end="url(#arrow-infrastructure)"/>
+    <line x1="355" y1="294" x2="436" y2="234" marker-end="url(#arrow-infrastructure)"/>
+    <line x1="591" y1="294" x2="524" y2="234" marker-end="url(#arrow-infrastructure)"/>
+    <line x1="829" y1="294" x2="604" y2="234" marker-end="url(#arrow-infrastructure)"/>
+  </g>
+  <!-- served storages -->
+  <rect x="24" y="388" width="436" height="64" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="1.5"/>
+  <text x="242" y="412" font-size="14" font-weight="700" fill="#9a5b2b" text-anchor="middle">ServedFileStorage</text>
+  <text x="242" y="434" font-size="13" fill="#1f2328" text-anchor="middle">the application answers their links: signedFileRoutes</text>
+  <!-- providers -->
+  <rect x="476" y="388" width="230" height="84" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="591" y="410" font-size="13" font-weight="600" fill="#5f6b73" text-anchor="middle">providers of the S3 protocol</text>
+  <text x="591" y="434" font-size="13" fill="#1f2328" text-anchor="middle">AWS S3, MinIO, OVHcloud,</text>
+  <text x="591" y="454" font-size="13" fill="#1f2328" text-anchor="middle">Scaleway, Cloudflare R2, Garage</text>
+  <line x1="591" y1="374" x2="591" y2="386" stroke="#3d4449" stroke-width="2"/>
+  <text x="829" y="410" font-size="13" fill="#1f2328" text-anchor="middle">extends FileStorage,</text>
+  <text x="829" y="430" font-size="13" fill="#1f2328" text-anchor="middle">run against the service</text>
+  <text x="829" y="450" font-size="13" fill="#1f2328" text-anchor="middle">or its emulator</text>
+  <!-- the contract suite -->
+  <rect x="24" y="490" width="912" height="40" rx="10" fill="#ffffff" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="480" y="515" font-size="14" fill="#1f2328" text-anchor="middle"><tspan font-weight="700">fileStorageContract</tspan> of @ddd-ts-kit/testing/contracts: the same suite runs on every connector</text>
+  <!-- legend -->
+  <line x1="24" y1="556" x2="68" y2="556" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="80" y="561" font-size="14" fill="#1f2328">depends on</text>
+  <line x1="200" y1="556" x2="244" y2="556" stroke="#7a4f9a" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow-infrastructure)"/>
+  <text x="256" y="561" font-size="14" fill="#1f2328">implements the port (extends FileStorage); the platform binds one of them at start-up</text>
+</svg>

@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 520" width="960" height="520" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">A booking is true at once in appointments, and a moment later everywhere else</title>
+  <desc id="desc">A sequence over time. The client books Tuesday 10:00; appointments records it and answers booked at once. Then the consistency window opens: appointments publishes appointments.appointment.booked; availability removes the slot from the open slots, and notifications schedules the reminder. When both have processed the event, the window closes and every context agrees.</desc>
+  <defs>
+    <marker id="arrow-neutral" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="520" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">A booking is true at once in appointments, and a moment later everywhere else</text>
+  <rect x="40" y="196" width="880" height="210" rx="8" fill="#f3f4f5"/>
+  <text x="56" y="216" font-size="13" font-weight="600" font-style="italic" fill="#5f6b73">the consistency window: two screens may disagree</text>
+  <rect x="30" y="60" width="160" height="40" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="110" y="85" font-size="15" font-weight="700" fill="#9a5b2b" text-anchor="middle">client</text>
+  <line x1="110" y1="100" x2="110" y2="406" stroke="#5f6b73" stroke-opacity="0.5" stroke-dasharray="3 4"/>
+  <rect x="250" y="60" width="160" height="40" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="330" y="85" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">appointments</text>
+  <line x1="330" y1="100" x2="330" y2="406" stroke="#5f6b73" stroke-opacity="0.5" stroke-dasharray="3 4"/>
+  <rect x="510" y="60" width="160" height="40" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="590" y="85" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">availability</text>
+  <line x1="590" y1="100" x2="590" y2="406" stroke="#5f6b73" stroke-opacity="0.5" stroke-dasharray="3 4"/>
+  <rect x="750" y="60" width="160" height="40" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="830" y="85" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">notifications</text>
+  <line x1="830" y1="100" x2="830" y2="406" stroke="#5f6b73" stroke-opacity="0.5" stroke-dasharray="3 4"/>
+  <line x1="112" y1="136" x2="326" y2="136" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow-neutral)"/>
+  <text x="219" y="126" font-size="13" fill="#1f2328" text-anchor="middle">book Tuesday 10:00</text>
+  <line x1="328" y1="172" x2="114" y2="172" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow-neutral)"/>
+  <text x="221" y="162" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">booked: true now</text>
+  <line x1="332" y1="244" x2="586" y2="244" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow-neutral)"/>
+  <text x="459" y="234" font-size="13" fill="#1f2328" text-anchor="middle">appointments.appointment.booked</text>
+  <rect x="512" y="256" width="156" height="46" rx="8" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="590" y="275" font-size="13" fill="#1f2328" text-anchor="middle">removes Tuesday 10:00</text>
+  <text x="590" y="293" font-size="13" fill="#1f2328" text-anchor="middle">from the open slots</text>
+  <line x1="332" y1="340" x2="826" y2="340" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow-neutral)"/>
+  <text x="459" y="330" font-size="13" fill="#1f2328" text-anchor="middle">appointments.appointment.booked</text>
+  <rect x="762" y="352" width="136" height="46" rx="8" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="830" y="371" font-size="13" fill="#1f2328" text-anchor="middle">schedules</text>
+  <text x="830" y="389" font-size="13" fill="#1f2328" text-anchor="middle">the reminder</text>
+  <text x="480" y="424" font-size="13" font-weight="600" fill="#2f6f4f" text-anchor="middle">the window closes: every context agrees</text>
+  <line x1="32" y1="466" x2="76" y2="466" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow-neutral)"/>
+  <text x="88" y="471" font-size="14" fill="#1f2328">a call and its answer, in one transaction</text>
+  <line x1="32" y1="492" x2="76" y2="492" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow-neutral)"/>
+  <text x="88" y="497" font-size="14" fill="#1f2328">an integration event, delivered after the commit</text>
+</svg>

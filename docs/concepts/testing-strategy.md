@@ -1,3 +1,5 @@
+**English** · [Français](testing-strategy.fr.md)
+
 # Testing strategy
 
 **Summary.** The kit tests behaviour through public interfaces at four levels (domain,
@@ -29,22 +31,32 @@ appointment is stored and cancelled".
 ## Fakes, not mocks
 
 ```ts
-// with a mock: asserts how the handler talks to its collaborators
+// instead of, with a mock: asserts how the handler talks to its collaborators
 const appointments = { findById: vi.fn().mockResolvedValue(appointment), save: vi.fn() };
-await handler.execute(new CancelAppointment(actor, appointment.id, 'ill'));
+// the access check is mocked too: the test now knows every collaborator of the handler
+const access = { authorize: vi.fn().mockResolvedValue(undefined) };
+const handler = new CancelAppointmentHandler(appointments, access, clock);
+
+await handler.execute(new CancelAppointmentCommand(patient, appointment.id));
+
 expect(appointments.save).toHaveBeenCalledWith(expect.objectContaining({ status: 'cancelled' }));
 
-// with a fake: asserts what is true afterwards
+// write, with a fake: asserts what is true afterwards
 const appointments = new FakeAppointmentRepository();
+await appointments.save(appointment);
+
 const app = createTestApplication({
-  modules: [platformTestModule, contextModule('appointments', appointmentsDeclarations), authorization],
+  modules: [platformTestModule, contextModule('scheduling', schedulingDeclarations), holders],
   fakes: [fake(AppointmentRepository, appointments)],
 });
-await appointments.save(appointment);
-await app.commandBus.execute(new CancelAppointment(actor, appointment.id, 'ill'));
-expect((await appointments.findById(appointment.id))?.isCancelled).toBe(true);
-expect(app.eventBus.published).toMatchObject([{ type: 'appointments.appointment.cancelled' }]);
+
+await app.commandBus.execute(new CancelAppointmentCommand(patient, appointment.id));
+
+expect((await appointments.findById(appointment.id))?.status).toBe('cancelled');
+expect(app.eventBus.published).toMatchObject([{ type: 'scheduling.appointment.cancelled' }]);
 ```
+
+![Left, a test with a mock watches the calls between the handler and a mocked repository; right, a test with a fake runs the real handler through the bus and reads the state of the fake and the published events afterwards](../assets/diagrams/testing-strategy-mock-or-fake.svg)
 
 Why the kit prefers the second form (rule
 [`test/no-mocks`](../ARCHITECTURE.md#3-dependency-rules), a warning by default):
@@ -55,7 +67,7 @@ Why the kit prefers the second form (rule
 - **Mocks can assert a lie.** A mocked repository returns whatever the test says, including
   things the real one never would. The test passes; production does not.
 - **Fakes are reusable.** One in-memory repository serves every handler spec of the context,
-  and a failure is a method on the fake (`sms.failNextWith(...)`) rather than a setup repeated
+  and a failure is a method on the fake (`mailer.failNextWith(...)`) rather than a setup repeated
   in each test.
 - **The architecture makes mocks unnecessary.** Every dependency is a port received by
   constructor; time and identifiers are ports too. A class that needs a module mock to be
@@ -70,6 +82,45 @@ assertions add coupling without adding information.
 The one accepted double that is not a fake: a stub of an outside HTTP API at the network level,
 in an adapter's integration spec.
 
+A fake is a small class of `test/fakes/` that implements the port with a shortcut, and offers
+the failures a test needs as methods. The mailer of the notification context of the example,
+shortened:
+
+<!-- checked sample -->
+```ts
+// notification/application/ports/mailer.port.ts
+export abstract class Mailer {
+  /** Fails when the provider did not take the mail. */
+  abstract deliver(address: string, subject: string): Promise<void>;
+}
+
+// notification/test/fakes/mailer.fake.ts
+export class FakeMailer implements Mailer {
+  /** What the provider took, in order: what a spec asserts. */
+  readonly delivered: { readonly address: string; readonly subject: string }[] = [];
+
+  private readonly failures: Error[] = [];
+
+  /** The next delivery fails with this error, then the mailer works again. */
+  failNextWith(error: Error): void {
+    this.failures.push(error);
+  }
+
+  async deliver(address: string, subject: string): Promise<void> {
+    const failure = this.failures.shift();
+
+    if (failure !== undefined) {
+      throw failure;
+    }
+
+    this.delivered.push({ address, subject });
+  }
+}
+```
+
+A spec then reads like the rule it proves: `mailer.failNextWith(new Error('provider
+unreachable'))`, send the notification, and expect that nothing was saved and nothing published.
+
 ## Contract tests keep fakes honest
 
 The weakness of a fake is drift: an in-memory repository that tolerates what PostgreSQL would
@@ -79,17 +130,68 @@ the fake and against the real adapter.
 ```mermaid
 flowchart TB
   C[Contract suite of the port: save then find, unknown id, update, optimistic concurrency...]
-  C --> F[FakeAppointmentRepository, in test/fakes]
+  C --> F[FakeCalendarRepository, in test/fakes]
   C --> R[Real adapter on PostgreSQL]
   F --> H[used by every handler spec]
   R --> P[used in production]
 ```
 
+In code, one call per implementation, with the same expectations. The spec of the calendar
+repository of the example, shortened:
+
+<!-- checked sample -->
+```ts
+// scheduling/test/integration/calendar.repository.contract.spec.ts
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { AggregateRoot, type Repository } from '@ddd-ts-kit/kernel';
+import { InMemoryRepository } from '@ddd-ts-kit/testing';
+import { repositoryContract } from '@ddd-ts-kit/testing/contracts';
+
+// from the domain, the builders and the test database of the project
+interface CalendarState {
+  readonly exceptions: readonly string[];
+}
+declare class Calendar extends AggregateRoot {
+  static rehydrate(id: string, state: CalendarState): Calendar;
+  addException(day: string, at: Date): void;
+  toState(): CalendarState;
+}
+declare function aCalendar(): { build(): Calendar };
+declare function knexCalendarRepositoryOnAFreshDatabase(): Promise<Repository<Calendar>>;
+
+const runner = { describe, it, expect, beforeEach, afterEach };
+
+const expectations = {
+  createAggregate: () => aCalendar().build(),
+  mutate: (calendar: Calendar) => calendar.addException('2026-12-25', new Date('2026-01-02T00:00:00.000Z')),
+  idOf: (calendar: Calendar) => calendar.id,
+  stateOf: (calendar: Calendar) => calendar.toState(),
+};
+
+// the fake every handler spec uses
+repositoryContract<Calendar>(runner, {
+  ...expectations,
+  name: 'FakeCalendarRepository',
+  createRepository: () =>
+    new InMemoryRepository<Calendar>({ clone: (stored) => Calendar.rehydrate(stored.id, stored.toState()) }),
+});
+
+// the adapter production uses, on a real database
+repositoryContract<Calendar>(runner, {
+  ...expectations,
+  name: 'KnexCalendarRepository',
+  createRepository: () => knexCalendarRepositoryOnAFreshDatabase(),
+});
+```
+
 If both pass the same suite, a handler tested on the fake behaves the same on the adapter for
-everything the contract covers. The kit ships suites for its own ports (repository, event bus,
-outbox store, processed-event store, cache, lock, rate limiter, job scheduler, logger,
-authorizer) and a base to write the suite of a port of your own. Replacing an ORM or a broker
-is then "write the adapter, pass the suite".
+everything the contract covers. The kit ships suites for its own ports in
+`@ddd-ts-kit/testing/contracts` (repository, unit of work, read model store and criteria, event
+bus, event store, outbox store, processed-event store, process store, job store, job scheduler,
+cache, cache purger, lock, rate limiter, file storage, logger, tenant isolation) and in
+`@ddd-ts-kit/auth/testing` (authorizer, relation tuple store), and `ContractSuite`, the base to
+write the suite of a port of your own. Replacing an ORM or a broker is then "write the adapter,
+pass the suite".
 
 A contract covers what it tests and nothing more: behaviour specific to an adapter (the mapping
 of every column, a transaction rollback) gets its own integration tests.
@@ -99,12 +201,76 @@ of every column, a transaction rollback) gets its own integration tests.
 Test data comes from builders, one per aggregate:
 
 ```ts
-const appointment = anAppointment().withClient('ada').on(aSlot().tomorrowAt('09:00')).cancelled().build();
+const appointment = anAppointment().forPatient('ada').startingAt(tomorrowAt9).cancelledByPatient().build();
+```
+
+A builder extends `Builder` of `@ddd-ts-kit/testing`: valid `defaults()` once, a `construct()`
+that goes through the public API of the aggregate, and one method per word of the language.
+Shortened from the builder of the example:
+
+<!-- checked sample -->
+```ts
+// scheduling/test/builders/appointment.builder.ts
+import { AggregateRoot } from '@ddd-ts-kit/kernel';
+import { Builder, sequence, type Defaults } from '@ddd-ts-kit/testing';
+
+// the aggregate, from the domain
+declare class Appointment extends AggregateRoot {
+  static create(id: string, patientId: string, startsAt: Date, bornAt: Date): Appointment;
+  cancel(by: 'patient' | 'practice', at: Date): void;
+}
+
+interface AppointmentIngredients {
+  readonly id: string;
+  readonly patientId: string;
+  readonly startsAt: Date;
+  readonly bornAt: Date;
+  readonly cancelled: boolean;
+}
+
+export class AppointmentBuilder extends Builder<AppointmentIngredients, Appointment> {
+  forPatient(patientId: string): this {
+    return this.with('patientId', patientId);
+  }
+
+  startingAt(instant: Date): this {
+    return this.with('startsAt', instant);
+  }
+
+  cancelledByPatient(): this {
+    return this.with('cancelled', true);
+  }
+
+  protected defaults(): Defaults<AppointmentIngredients> {
+    return {
+      id: sequence('appointment'),
+      patientId: 'patient-1',
+      startsAt: new Date('2026-03-02T09:00:00.000Z'),
+      bornAt: new Date('2026-03-01T00:00:00.000Z'),
+      cancelled: false,
+    };
+  }
+
+  /** Through the public API only: a test can never start from a state the rules forbid. */
+  protected construct({ id, patientId, startsAt, bornAt, cancelled }: AppointmentIngredients): Appointment {
+    const appointment = Appointment.create(id, patientId, startsAt, bornAt);
+
+    if (cancelled) {
+      appointment.cancel('patient', bornAt);
+    }
+
+    return appointment;
+  }
+}
+
+export function anAppointment(): AppointmentBuilder {
+  return new AppointmentBuilder();
+}
 ```
 
 - **Valid defaults.** `anAppointment().build()` is a valid appointment. A test states only
   what matters to the rule it checks, so the reader sees the cause of the outcome.
-- **Named in the ubiquitous language.** `cancelled()`, not `withStatus('CANCELLED')`.
+- **Named in the ubiquitous language.** `cancelledByPatient()`, not `withStatus('CANCELLED')`.
 - **Built through the public API.** `build()` goes through the aggregate's factory and
   intention methods, so a test cannot start from an invalid state. If a test needs a state the
   public API cannot reach, either the state is impossible or the API is incomplete.
@@ -119,15 +285,45 @@ irrelevant ones.
 An aggregate spec is a scenario: a built state (or past events), one intention, then the
 recorded events or the raised error.
 
+<!-- checked sample -->
 ```ts
-given(anAppointment().cancelled())
-  .when((appointment) => appointment.reschedule(aSlot().build(), at))
-  .thenError(AppointmentAlreadyCancelled, 'APPOINTMENT_ALREADY_CANCELLED');
+// scheduling/test/unit/appointment.aggregate.spec.ts
+import { describe, expect, it } from 'vitest';
+import { AggregateRoot } from '@ddd-ts-kit/kernel';
+import { Builder, given } from '@ddd-ts-kit/testing';
 
-given(anAppointment())
-  .when((appointment) => appointment.cancel(reason, wellBeforeTheSlot))
-  .thenEvents([{ name: 'appointments.appointment.cancelled' }]);
+// the aggregate and its builder, from the previous sample
+declare class Appointment extends AggregateRoot {
+  readonly status: 'booked' | 'cancelled';
+  cancel(by: 'patient' | 'practice', at: Date): void;
+  reschedule(startsAt: Date, at: Date): void;
+}
+declare abstract class AppointmentBuilder extends Builder<object, Appointment> {
+  cancelledByPatient(): this;
+}
+declare function anAppointment(): AppointmentBuilder;
+
+const at = new Date('2026-03-01T08:00:00.000Z');
+
+describe('Appointment', () => {
+  it('records that it was cancelled', () => {
+    given(anAppointment())
+      .when((appointment) => appointment.cancel('patient', at))
+      .thenEvents([{ name: 'scheduling.appointment.cancelled', occurredAt: at }])
+      .thenState((appointment) => expect(appointment.status).toBe('cancelled'));
+  });
+
+  it('refuses to reschedule a cancelled appointment', () => {
+    given(anAppointment().cancelledByPatient())
+      .when((appointment) => appointment.reschedule(new Date('2026-03-03T09:00:00.000Z'), at))
+      .thenError('APPOINTMENT_ENDED');
+  });
+});
 ```
+
+`given` takes the builder, builds the aggregate and forgets the events recorded while
+building it, so `thenEvents` sees only those of `when`. `thenError` takes a code, or the class
+of the error and a code.
 
 One intention per test, and assertions on events, errors and state through the public API
 only. The test name states the rule: `refuses to reschedule a cancelled appointment`.
@@ -140,6 +336,8 @@ only. The test name states the rule: `refuses to reschedule a cancelled appointm
 | application | real handlers through the in-memory buses | fakes for every port, a fixed clock | milliseconds |
 | adapter | one real adapter against its real dependency, plus the contract suite | none | seconds |
 | end to end | the whole application with real adapters, through HTTP and the event bus | none; generated data with a fixed seed | seconds |
+
+![The four levels, from the domain to the end to end level: what runs at each one, which part is a double, how fast it is and how many tests it holds](../assets/diagrams/testing-strategy-four-levels.svg)
 
 Normative table: [section 7 of the architecture reference](../ARCHITECTURE.md#7-test-levels).
 An architecture level sits beside them: `ddd-ts-kit check`, and a generated test that boots
@@ -155,7 +353,7 @@ assert what a client observes (responses, published events), never the database 
 |---|---|---|
 | "A cancelled appointment cannot be rescheduled" | domain | an invariant: no I/O needed, exhaustive cases are cheap |
 | Boundaries of `TimeSlot` (end before start, zero length) | domain, table-driven | value object validation |
-| "Cancelling publishes `appointments.appointment.cancelled` once the command handler has returned; a refusal saves and publishes nothing" | application | orchestration: load, one intention, save |
+| "Cancelling publishes `scheduling.appointment.cancelled` once the command handler has returned; a refusal saves and publishes nothing" | application | orchestration: load, one intention, save |
 | Each declared error code of a use case | application | the contract of the handler |
 | "An actor without `appointment.cancel` is refused" | application, with the authorization module listed | a property of the wiring of the context |
 | "Only the client who booked may cancel" (the policy) | unit, on the policy alone | a pure function |
@@ -207,6 +405,21 @@ does.
 test to move a number. A threshold is lowered only by a recorded deviation, and the measure is
 never narrowed around the code that fails it (`test/coverage-governed`): an uncovered branch
 is tested, or deleted when nothing can reach it.
+
+```ts
+// instead of, in vitest.config.ts: a measure narrowed by hand, refused by test/coverage-governed
+test: { coverage: { exclude: ['src/contexts/billing/infrastructure/**'], thresholds: { branches: 50 } } }
+
+// write: the runner reads what it measures and its floors from ddd-ts-kit.config.json
+test: { coverage: { provider: 'v8', ...governedCoverage(mode) } } // from @ddd-ts-kit/testing/coverage
+```
+
+```json
+"coverage": { "infrastructure": { "branches": 50 } },
+"deviations": [
+  { "what": "coverage.infrastructure.branches", "adr": "0011", "reason": "The failure branches of the driver are held by its contract suite." }
+]
+```
 
 ## Limits and when not to use it
 

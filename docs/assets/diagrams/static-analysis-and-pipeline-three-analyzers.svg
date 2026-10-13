@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 528" width="960" height="528" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">One rule, layer/domain-purity, and what each analyzer sees</title>
+  <desc id="desc">Four ways a file of the domain may depend on something outside it, and what the checker, the ESLint plugin and dependency-cruiser answer. A direct import of a package: all three report it. The same text in a comment or a string: none reports it, rightly, though a plain text search would. An import through a tsconfig path other than the alias of the project: the checker and the ESLint plugin report it as a package, dependency-cruiser resolves it and names the real file of infrastructure. A package re-exported by the shared kernel, which the domain may import: none reports it, so the shared kernel is reviewed by hand.</desc>
+  <rect width="960" height="528" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">One rule, layer/domain-purity, and what each analyzer sees</text>
+  <!-- headers -->
+  <rect x="24" y="56" width="360" height="40" rx="8" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="1.5"/>
+  <text x="40" y="81" font-size="14" font-weight="700" fill="#2f6f4f">written in domain/value-objects/email.vo.ts</text>
+  <rect x="394" y="56" width="180" height="40" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="484" y="81" font-size="14" font-weight="700" fill="#5f6b73" text-anchor="middle">ddd-ts-kit check</text>
+  <rect x="584" y="56" width="180" height="40" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="674" y="81" font-size="14" font-weight="700" fill="#5f6b73" text-anchor="middle">ESLint plugin</text>
+  <rect x="774" y="56" width="162" height="40" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="855" y="81" font-size="14" font-weight="700" fill="#5f6b73" text-anchor="middle">dependency-cruiser</text>
+  <!-- row 1 -->
+  <rect x="24" y="104" width="360" height="84" rx="8" fill="#ffffff" stroke="#2f6f4f" stroke-width="1.5"/>
+  <text x="40" y="136" font-size="14" font-weight="600" fill="#1f2328">import { z } from 'zod';</text>
+  <text x="40" y="162" font-size="13" fill="#3d4449">a direct import of a package</text>
+  <rect x="394" y="104" width="180" height="84" rx="8" fill="#f3f4f5" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="484" y="151" font-size="14" font-weight="700" fill="#1f2328" text-anchor="middle">reports it</text>
+  <rect x="584" y="104" width="180" height="84" rx="8" fill="#f3f4f5" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="674" y="151" font-size="14" font-weight="700" fill="#1f2328" text-anchor="middle">reports it</text>
+  <rect x="774" y="104" width="162" height="84" rx="8" fill="#f3f4f5" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="855" y="151" font-size="14" font-weight="700" fill="#1f2328" text-anchor="middle">reports it</text>
+  <!-- row 2 -->
+  <rect x="24" y="196" width="360" height="84" rx="8" fill="#ffffff" stroke="#2f6f4f" stroke-width="1.5"/>
+  <text x="40" y="228" font-size="14" font-weight="600" fill="#1f2328">// import { z } from 'zod'</text>
+  <text x="40" y="250" font-size="13" fill="#3d4449">the same text in a comment or a string:</text>
+  <text x="40" y="268" font-size="13" fill="#3d4449">a plain text search would report it</text>
+  <rect x="394" y="196" width="180" height="84" rx="8" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <text x="484" y="232" font-size="14" font-weight="700" fill="#5f6b73" text-anchor="middle">silent, rightly</text>
+  <text x="484" y="254" font-size="13" fill="#1f2328" text-anchor="middle">its lexer skips</text>
+  <text x="484" y="271" font-size="13" fill="#1f2328" text-anchor="middle">comments and strings</text>
+  <rect x="584" y="196" width="180" height="84" rx="8" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <text x="674" y="232" font-size="14" font-weight="700" fill="#5f6b73" text-anchor="middle">silent, rightly</text>
+  <text x="674" y="254" font-size="13" fill="#1f2328" text-anchor="middle">the syntax tree</text>
+  <text x="674" y="271" font-size="13" fill="#1f2328" text-anchor="middle">has no import</text>
+  <rect x="774" y="196" width="162" height="84" rx="8" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <text x="855" y="232" font-size="14" font-weight="700" fill="#5f6b73" text-anchor="middle">silent, rightly</text>
+  <text x="855" y="254" font-size="13" fill="#1f2328" text-anchor="middle">no edge</text>
+  <text x="855" y="271" font-size="13" fill="#1f2328" text-anchor="middle">in the graph</text>
+  <!-- row 3 -->
+  <rect x="24" y="288" width="360" height="84" rx="8" fill="#ffffff" stroke="#2f6f4f" stroke-width="1.5"/>
+  <text x="40" y="320" font-size="14" font-weight="600" fill="#1f2328">from '#billing-infra/invoice-row';</text>
+  <text x="40" y="342" font-size="13" fill="#3d4449">a tsconfig path other than the alias,</text>
+  <text x="40" y="360" font-size="13" fill="#3d4449">leading to infrastructure/</text>
+  <rect x="394" y="288" width="180" height="84" rx="8" fill="#f3f4f5" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="484" y="324" font-size="14" font-weight="700" fill="#1f2328" text-anchor="middle">reports it</text>
+  <text x="484" y="346" font-size="13" fill="#1f2328" text-anchor="middle">as the package</text>
+  <text x="484" y="363" font-size="13" fill="#1f2328" text-anchor="middle">"#billing-infra"</text>
+  <rect x="584" y="288" width="180" height="84" rx="8" fill="#f3f4f5" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="674" y="324" font-size="14" font-weight="700" fill="#1f2328" text-anchor="middle">reports it</text>
+  <text x="674" y="346" font-size="13" fill="#1f2328" text-anchor="middle">as the package</text>
+  <text x="674" y="363" font-size="13" fill="#1f2328" text-anchor="middle">"#billing-infra"</text>
+  <rect x="774" y="288" width="162" height="84" rx="8" fill="#f3f4f5" stroke="#3d4449" stroke-width="2.5"/>
+  <text x="855" y="324" font-size="14" font-weight="700" fill="#1f2328" text-anchor="middle">names the file</text>
+  <text x="855" y="346" font-size="13" fill="#1f2328" text-anchor="middle">infrastructure/</text>
+  <text x="855" y="363" font-size="13" fill="#1f2328" text-anchor="middle">invoice-row.ts</text>
+  <!-- row 4 -->
+  <rect x="24" y="380" width="360" height="84" rx="8" fill="#ffffff" stroke="#2f6f4f" stroke-width="1.5"/>
+  <text x="40" y="412" font-size="14" font-weight="600" fill="#1f2328">from '@/shared-kernel/index';</text>
+  <text x="40" y="434" font-size="13" fill="#3d4449">whose index re-exports a type of zod:</text>
+  <text x="40" y="452" font-size="13" fill="#3d4449">the domain may import the shared kernel</text>
+  <rect x="394" y="380" width="180" height="84" rx="8" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <text x="484" y="416" font-size="14" font-weight="700" fill="#5f6b73" text-anchor="middle">silent</text>
+  <text x="484" y="438" font-size="13" fill="#1f2328" text-anchor="middle">re-exports of an</text>
+  <text x="484" y="455" font-size="13" fill="#1f2328" text-anchor="middle">allowed layer</text>
+  <rect x="584" y="380" width="180" height="84" rx="8" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <text x="674" y="416" font-size="14" font-weight="700" fill="#5f6b73" text-anchor="middle">silent</text>
+  <text x="674" y="438" font-size="13" fill="#1f2328" text-anchor="middle">one file at a time:</text>
+  <text x="674" y="455" font-size="13" fill="#1f2328" text-anchor="middle">an allowed import</text>
+  <rect x="774" y="380" width="162" height="84" rx="8" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <text x="855" y="416" font-size="14" font-weight="700" fill="#5f6b73" text-anchor="middle">silent</text>
+  <text x="855" y="438" font-size="13" fill="#1f2328" text-anchor="middle">each edge is</text>
+  <text x="855" y="455" font-size="13" fill="#1f2328" text-anchor="middle">allowed alone</text>
+  <!-- conclusion -->
+  <text x="32" y="496" font-size="14" font-weight="600" fill="#1f2328">The cheapest tool runs most often, the most exact one has the last word,</text>
+  <text x="32" y="516" font-size="14" font-weight="600" fill="#1f2328">and what no rule constrains (shared-kernel/, platform/, main.ts) is reviewed by hand.</text>
+</svg>

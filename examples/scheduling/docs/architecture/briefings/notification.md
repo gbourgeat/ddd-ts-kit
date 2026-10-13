@@ -1,3 +1,5 @@
+**English** · [Français](notification.fr.md)
+
 # Briefing: notification
 
 You build the bounded context `notification` of the scheduling example. Worker name: `notification`.

@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 450" width="960" height="450" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Concurrence optimiste : le second enregistrement d'une même version est refusé</title>
+  <desc id="desc">Les requêtes A et B chargent toutes deux le rendez-vous a-1 en version 3. A enregistre la première : sa mise à jour gardée par la version 3 écrit une ligne, et la ligne est maintenant en version 4. B enregistre ensuite avec la même garde : la mise à jour n'écrit aucune ligne, et le repository lève une ConcurrencyError de code CONCURRENCY_CONFLICT. Aucun verrou n'a été tenu entre le chargement et l'enregistrement.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="450" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Concurrence optimiste sur la version d'un agrégat</text>
+  <!-- participants -->
+  <rect x="60" y="60" width="180" height="56" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="150" y="84" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">requête A</text>
+  <text x="150" y="104" font-size="13" fill="#1f2328" text-anchor="middle">annule a-1</text>
+  <rect x="380" y="60" width="200" height="56" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="480" y="84" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">table appointments</text>
+  <text x="480" y="104" font-size="13" fill="#1f2328" text-anchor="middle">ligne a-1</text>
+  <rect x="720" y="60" width="180" height="56" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="810" y="84" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">requête B</text>
+  <text x="810" y="104" font-size="13" fill="#1f2328" text-anchor="middle">déplace a-1</text>
+  <!-- lifelines -->
+  <line x1="150" y1="118" x2="150" y2="392" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="4 4"/>
+  <line x1="480" y1="118" x2="480" y2="392" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="4 4"/>
+  <line x1="810" y1="118" x2="810" y2="392" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="4 4"/>
+  <!-- loads -->
+  <line x1="478" y1="156" x2="154" y2="156" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="315" y="146" font-size="13" fill="#1f2328" text-anchor="middle">chargement : version 3</text>
+  <line x1="482" y1="196" x2="806" y2="196" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="645" y="186" font-size="13" fill="#1f2328" text-anchor="middle">chargement : version 3</text>
+  <!-- A saves -->
+  <line x1="152" y1="246" x2="476" y2="246" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="315" y="236" font-size="13" fill="#1f2328" text-anchor="middle">update ... where version = 3</text>
+  <line x1="478" y1="286" x2="154" y2="286" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="315" y="276" font-size="13" fill="#1f2328" text-anchor="middle">1 ligne écrite : version 4 désormais</text>
+  <!-- B saves -->
+  <line x1="808" y1="326" x2="484" y2="326" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="645" y="316" font-size="13" fill="#1f2328" text-anchor="middle">update ... where version = 3</text>
+  <line x1="482" y1="366" x2="806" y2="366" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="645" y="356" font-size="13" font-weight="600" fill="#2f6f4f" text-anchor="middle">0 ligne : ConcurrencyError</text>
+  <!-- outcome -->
+  <text x="480" y="420" font-size="14" fill="#1f2328" text-anchor="middle">B reçoit CONCURRENCY_CONFLICT : il réessaie sur l'état frais, ou signale le conflit. Aucun verrou tenu.</text>
+</svg>

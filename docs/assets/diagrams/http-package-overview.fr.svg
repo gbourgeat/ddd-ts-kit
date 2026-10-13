@@ -1,0 +1,95 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" width="960" height="540" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">La place de @ddd-ts-kit/http dans une application</title>
+  <desc id="desc">Quatre adaptateurs de framework, mountExpress, mountFastify, mountHono et createRoutesModule pour NestJS, confient chaque requête au même pipeline executeRoute. Le pipeline exécute le gestionnaire de la route, une fonction defineRoute ou la méthode handle d'un contrôleur, et le gestionnaire envoie une commande ou une requête aux cas d'usage de l'application. Les routes forment une seule liste, readonly Route[], construite par defineRoutes ou controllerRoutes : les adaptateurs la montent, et generateOpenApi transforme la même liste en contrat OpenAPI 3.1, servi sur /docs quand l'application monte openApiDocsRoutes.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="540" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Une déclaration, quatre frameworks, un pipeline, un contrat</text>
+
+  <!-- adapters -->
+  <text x="40" y="78" font-size="14" font-weight="600" fill="#5f6b73">adaptateurs, un par framework</text>
+  <rect x="40" y="92" width="200" height="52" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="140" y="114" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">Express 5</text>
+  <text x="140" y="134" font-size="13" fill="#1f2328" text-anchor="middle">mountExpress</text>
+  <rect x="40" y="156" width="200" height="52" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="140" y="178" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">Fastify 5</text>
+  <text x="140" y="198" font-size="13" fill="#1f2328" text-anchor="middle">mountFastify, fastifyRoutes</text>
+  <rect x="40" y="220" width="200" height="52" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="140" y="242" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">Hono 4 (Node)</text>
+  <text x="140" y="262" font-size="13" fill="#1f2328" text-anchor="middle">mountHono</text>
+  <rect x="40" y="284" width="200" height="52" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="140" y="306" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">NestJS</text>
+  <text x="140" y="326" font-size="13" fill="#1f2328" text-anchor="middle">createRoutesModule</text>
+
+  <!-- adapters to pipeline -->
+  <line x1="242" y1="118" x2="290" y2="118" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="242" y1="182" x2="290" y2="182" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="242" y1="246" x2="290" y2="246" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="242" y1="310" x2="290" y2="310" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- pipeline -->
+  <rect x="294" y="92" width="244" height="244" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="416" y="122" font-size="16" font-weight="700" fill="#9a5b2b" text-anchor="middle">executeRoute</text>
+  <line x1="310" y1="134" x2="522" y2="134" stroke="#9a5b2b" stroke-opacity="0.35"/>
+  <text x="416" y="158" font-size="13" fill="#1f2328" text-anchor="middle">authentification</text>
+  <text x="416" y="180" font-size="13" fill="#1f2328" text-anchor="middle">validation de chaque partie</text>
+  <text x="416" y="202" font-size="13" fill="#1f2328" text-anchor="middle">contexte d'exécution, tenant</text>
+  <text x="416" y="224" font-size="13" fill="#1f2328" text-anchor="middle">gardes, puis le gestionnaire</text>
+  <text x="416" y="246" font-size="13" fill="#1f2328" text-anchor="middle">en-têtes de cache, ETag, 304</text>
+  <text x="416" y="268" font-size="13" fill="#1f2328" text-anchor="middle">refus en problem+json</text>
+  <text x="416" y="314" font-size="13" font-style="italic" font-weight="600" fill="#9a5b2b" text-anchor="middle">le même sur chaque framework</text>
+
+  <!-- pipeline to handler -->
+  <line x1="540" y1="214" x2="586" y2="214" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="563" y="202" font-size="13" fill="#1f2328" text-anchor="middle">lance</text>
+
+  <!-- handler -->
+  <rect x="590" y="152" width="160" height="124" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="670" y="182" font-size="15" font-weight="700" fill="#9a5b2b" text-anchor="middle">votre gestionnaire</text>
+  <line x1="606" y1="194" x2="734" y2="194" stroke="#9a5b2b" stroke-opacity="0.35"/>
+  <text x="670" y="218" font-size="13" fill="#1f2328" text-anchor="middle">fonction defineRoute</text>
+  <text x="670" y="240" font-size="13" fill="#1f2328" text-anchor="middle">ou Controller.handle</text>
+
+  <!-- handler to use cases -->
+  <line x1="752" y1="214" x2="796" y2="214" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- application -->
+  <rect x="800" y="152" width="128" height="124" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="864" y="182" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">cas d'usage</text>
+  <line x1="814" y1="194" x2="914" y2="194" stroke="#2b5d8a" stroke-opacity="0.35"/>
+  <text x="864" y="218" font-size="13" fill="#1f2328" text-anchor="middle">bus de commandes</text>
+  <text x="864" y="240" font-size="13" fill="#1f2328" text-anchor="middle">bus de requêtes</text>
+
+  <!-- route list -->
+  <rect x="294" y="404" width="244" height="84" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="416" y="434" font-size="16" font-weight="700" fill="#9a5b2b" text-anchor="middle">readonly Route[]</text>
+  <text x="416" y="456" font-size="13" fill="#1f2328" text-anchor="middle">defineRoutes(...)</text>
+  <text x="416" y="476" font-size="13" fill="#1f2328" text-anchor="middle">controllerRoutes(...)</text>
+
+  <!-- route list to adapters (mounted) -->
+  <line x1="416" y1="402" x2="416" y2="340" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="428" y="376" font-size="13" fill="#1f2328">montée : la route que vise la requête</text>
+
+  <!-- route list to generateOpenApi -->
+  <line x1="540" y1="446" x2="586" y2="446" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- generateOpenApi -->
+  <rect x="590" y="404" width="160" height="84" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="670" y="434" font-size="16" font-weight="700" fill="#9a5b2b" text-anchor="middle">generateOpenApi</text>
+  <text x="670" y="456" font-size="13" fill="#1f2328" text-anchor="middle">les mêmes routes,</text>
+  <text x="670" y="476" font-size="13" fill="#1f2328" text-anchor="middle">le même ErrorMapper</text>
+
+  <line x1="752" y1="446" x2="796" y2="446" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- contract -->
+  <rect x="800" y="404" width="128" height="84" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="864" y="434" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">contrat</text>
+  <text x="864" y="456" font-size="13" fill="#1f2328" text-anchor="middle">OpenAPI 3.1</text>
+  <text x="864" y="476" font-size="13" fill="#1f2328" text-anchor="middle">/docs si monté</text>
+
+  <!-- the same declaration -->
+  <text x="416" y="516" font-size="13" font-style="italic" fill="#9a5b2b" text-anchor="middle">une déclaration : méthode, chemin, schémas, réponses, erreurs, sécurité</text>
+</svg>

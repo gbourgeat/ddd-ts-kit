@@ -1,3 +1,5 @@
+**English** · [Français](scheduling-job-triggers-use-case.fr.md)
+
 # ddd-ts-kit/scheduling-job-triggers-use-case
 
 Architecture id: `scheduling/job-triggers-use-case`. Default severity: `error` in `recommended`, `error` in `strict`.

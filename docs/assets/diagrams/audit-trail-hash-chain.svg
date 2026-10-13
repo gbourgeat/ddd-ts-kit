@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 456" width="960" height="456" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">A hash chain, and what it proves</title>
+  <desc id="desc">Four entries of the chain tenant:acme. Each stores the hash of the entry before it and its own hash; the previousHash of the first one is GENESIS_HASH, 64 zeros. Verification reports the first break: a changed entry as altered-content, a removed one as missing-entry, two swapped as reordered. A whole chain rewritten is valid again, so a checkpoint, the hash at a given sequence, is copied to a store whose owner cannot write in the trail, and verification compares the chain with it.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="456" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">A hash chain, and what it proves</text>
+  <text x="40" y="70" font-size="14" font-weight="600" fill="#7a4f9a">chain tenant:acme</text>
+  <!-- entries -->
+  <rect x="40" y="84" width="190" height="96" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="54" y="108" font-size="14" font-weight="700" fill="#7a4f9a">sequence 1</text>
+  <text x="54" y="130" font-size="13" fill="#1f2328">previousHash 0000...0</text>
+  <text x="54" y="149" font-size="13" font-style="italic" fill="#5f6b73">= GENESIS_HASH</text>
+  <text x="54" y="170" font-size="13" fill="#1f2328">hash 3fa2...</text>
+  <rect x="270" y="84" width="190" height="96" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="284" y="108" font-size="14" font-weight="700" fill="#7a4f9a">sequence 2</text>
+  <text x="284" y="130" font-size="13" fill="#1f2328">previousHash 3fa2...</text>
+  <text x="284" y="150" font-size="13" fill="#1f2328">hash 91c0...</text>
+  <rect x="500" y="84" width="190" height="96" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="514" y="108" font-size="14" font-weight="700" fill="#7a4f9a">sequence 3</text>
+  <text x="514" y="130" font-size="13" fill="#1f2328">previousHash 91c0...</text>
+  <text x="514" y="150" font-size="13" fill="#1f2328">hash 07bd...</text>
+  <rect x="730" y="84" width="190" height="96" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="744" y="108" font-size="14" font-weight="700" fill="#7a4f9a">sequence 4</text>
+  <text x="744" y="130" font-size="13" fill="#1f2328">previousHash 07bd...</text>
+  <text x="744" y="150" font-size="13" fill="#1f2328">hash c45e...</text>
+  <line x1="268" y1="132" x2="234" y2="132" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="498" y1="132" x2="464" y2="132" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="728" y1="132" x2="694" y2="132" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- verification -->
+  <rect x="40" y="236" width="420" height="152" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="56" y="262" font-size="15" font-weight="700" fill="#5f6b73">verifyChain reports the first break</text>
+  <text x="56" y="288" font-size="13" fill="#1f2328">an entry changed: altered-content</text>
+  <text x="56" y="310" font-size="13" fill="#1f2328">an entry removed: missing-entry</text>
+  <text x="56" y="332" font-size="13" fill="#1f2328">two entries swapped: reordered</text>
+  <text x="56" y="358" font-size="13" fill="#1f2328">the whole chain rewritten, every hash recomputed:</text>
+  <text x="56" y="378" font-size="13" fill="#1f2328">valid again, unless a checkpoint disagrees</text>
+  <!-- anchoring -->
+  <line x1="595" y1="182" x2="595" y2="232" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <text x="607" y="212" font-size="13" fill="#1f2328">sealed every N entries</text>
+  <rect x="500" y="236" width="190" height="80" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="595" y="264" font-size="15" font-weight="700" fill="#7a4f9a" text-anchor="middle">checkpoint</text>
+  <text x="595" y="286" font-size="13" fill="#1f2328" text-anchor="middle">sequence 3,</text>
+  <text x="595" y="304" font-size="13" fill="#1f2328" text-anchor="middle">hash 07bd...</text>
+  <line x1="692" y1="276" x2="726" y2="276" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <rect x="730" y="236" width="190" height="152" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="825" y="262" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">kept elsewhere</text>
+  <text x="825" y="288" font-size="13" fill="#1f2328" text-anchor="middle">another database,</text>
+  <text x="825" y="308" font-size="13" fill="#1f2328" text-anchor="middle">under another role;</text>
+  <text x="825" y="328" font-size="13" fill="#1f2328" text-anchor="middle">an object store with</text>
+  <text x="825" y="348" font-size="13" fill="#1f2328" text-anchor="middle">retention lock; a</text>
+  <text x="825" y="368" font-size="13" fill="#1f2328" text-anchor="middle">signed timestamp</text>
+  <!-- legend -->
+  <line x1="40" y1="420" x2="84" y2="420" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="96" y="425" font-size="14" fill="#1f2328">holds the hash of</text>
+  <line x1="260" y1="420" x2="304" y2="420" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <text x="316" y="425" font-size="14" fill="#1f2328">a copy leaves for a place the owner of the table cannot write to</text>
+</svg>

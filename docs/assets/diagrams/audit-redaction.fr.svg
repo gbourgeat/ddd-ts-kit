@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 470" width="960" height="470" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Ce qu'une déclaration laisse entrer dans une entrée d'audit</title>
+  <desc id="desc">Une RescheduleAppointmentCommand a cinq champs. La déclaration auditedFields(RescheduleAppointmentCommand, ['status', 'startsAt', masked('patientEmail')], { resource }) décide, champ par champ, de ce qui atteint l'entrée. appointmentId devient la ressource de l'entrée, de type appointment. status est listé et gardé tel quel. startsAt est listé et gardé comme un instant ISO. patientEmail est listé comme masqué et stocké sous la forme du HMAC-SHA-256 de la valeur sous un secret, préfixé par l'identifiant de la clé. note, du texte libre, n'est pas listé : il n'est jamais lu et l'entrée n'en garde aucune trace.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="470" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Ce qu'une déclaration laisse entrer dans une entrée d'audit</text>
+  <!-- column headings -->
+  <text x="24" y="78" font-size="14" font-weight="600" fill="#2b5d8a">RescheduleAppointmentCommand</text>
+  <text x="344" y="78" font-size="14" font-weight="600" fill="#5f6b73">auditedFields(...)</text>
+  <text x="616" y="78" font-size="14" font-weight="600" fill="#7a4f9a">l'entrée d'audit</text>
+
+  <!-- row 1: appointmentId -->
+  <rect x="24" y="92" width="270" height="44" rx="8" fill="#e7eef5" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="38" y="119" font-size="13" fill="#1f2328">appointmentId: 'apt-1'</text>
+  <rect x="344" y="98" width="232" height="32" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="460" y="119" font-size="13" fill="#1f2328" text-anchor="middle">resource: (command) =&gt; ...</text>
+  <rect x="616" y="92" width="320" height="44" rx="8" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="1.5"/>
+  <text x="630" y="119" font-size="13" fill="#1f2328">resource: { type: 'appointment', id: 'apt-1' }</text>
+  <line x1="296" y1="114" x2="340" y2="114" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="578" y1="114" x2="612" y2="114" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- row 2: status -->
+  <rect x="24" y="148" width="270" height="44" rx="8" fill="#e7eef5" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="38" y="175" font-size="13" fill="#1f2328">status: 'confirmed'</text>
+  <rect x="344" y="154" width="232" height="32" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="460" y="175" font-size="13" fill="#1f2328" text-anchor="middle">'status' : gardé tel quel</text>
+  <rect x="616" y="148" width="320" height="44" rx="8" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="1.5"/>
+  <text x="630" y="175" font-size="13" fill="#1f2328">changes.status: 'confirmed'</text>
+  <line x1="296" y1="170" x2="340" y2="170" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="578" y1="170" x2="612" y2="170" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- row 3: startsAt -->
+  <rect x="24" y="204" width="270" height="44" rx="8" fill="#e7eef5" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="38" y="231" font-size="13" fill="#1f2328">startsAt: une Date</text>
+  <rect x="344" y="210" width="232" height="32" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="460" y="231" font-size="13" fill="#1f2328" text-anchor="middle">'startsAt' : en instant ISO</text>
+  <rect x="616" y="204" width="320" height="44" rx="8" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="1.5"/>
+  <text x="630" y="231" font-size="13" fill="#1f2328">changes.startsAt: '2026-03-04T09:30:00.000Z'</text>
+  <line x1="296" y1="226" x2="340" y2="226" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="578" y1="226" x2="612" y2="226" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- row 4: patientEmail -->
+  <rect x="24" y="260" width="270" height="44" rx="8" fill="#e7eef5" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="38" y="287" font-size="13" fill="#1f2328">patientEmail: 'lin@example.org'</text>
+  <rect x="344" y="266" width="232" height="32" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="460" y="287" font-size="13" fill="#1f2328" text-anchor="middle">masked(...) : HMAC sous un secret</text>
+  <rect x="616" y="260" width="320" height="44" rx="8" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="1.5"/>
+  <text x="630" y="287" font-size="13" fill="#1f2328">changes.patientEmail: { masked: 'k1:f399...' }</text>
+  <line x1="296" y1="282" x2="340" y2="282" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="578" y1="282" x2="612" y2="282" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- row 5: note -->
+  <rect x="24" y="316" width="270" height="44" rx="8" fill="#e7eef5" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="38" y="343" font-size="13" fill="#1f2328">note: 'Patient asked to come...'</text>
+  <rect x="344" y="322" width="232" height="32" rx="8" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="5 4"/>
+  <text x="460" y="343" font-size="13" fill="#1f2328" text-anchor="middle">non listé : jamais lu</text>
+  <rect x="616" y="316" width="320" height="44" rx="8" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="5 4"/>
+  <text x="630" y="343" font-size="13" font-style="italic" fill="#5f6b73">aucune trace</text>
+  <line x1="296" y1="338" x2="340" y2="338" stroke="#3d4449" stroke-width="2" stroke-dasharray="4 4"/>
+
+  <!-- the declaration -->
+  <rect x="24" y="384" width="912" height="62" rx="12" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="44" y="408" font-size="13" font-weight="600" fill="#5f6b73">Dans la racine de composition, à côté du cas d'usage et sans le toucher :</text>
+  <text x="44" y="430" font-size="13" fill="#1f2328">auditedFields(RescheduleAppointmentCommand, ['status', 'startsAt', masked('patientEmail')], { resource })</text>
+</svg>

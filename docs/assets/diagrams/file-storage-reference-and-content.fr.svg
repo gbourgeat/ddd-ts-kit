@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 410" width="960" height="410" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Une référence dans la base, le contenu dans le stockage de fichiers</title>
+  <desc id="desc">L'agrégat Appointment garde un StoredFile : une clé, une taille, un type de média et une empreinte, enregistrés dans sa ligne par son repository. La clé désigne le fichier dans le stockage de fichiers, où le contenu vit sous sa clé finale une fois validé. Avant la validation, le fichier attend sous staging/, où rien ne le lit et où la purge le supprime au bout d'un jour.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="410" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Une référence dans la base, le contenu dans le stockage de fichiers</text>
+  <!-- the aggregate and its reference -->
+  <rect x="32" y="64" width="420" height="266" rx="12" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="52" y="94" font-size="16" font-weight="700" fill="#2f6f4f">Appointment (agrégat)</text>
+  <text x="52" y="116" font-size="13" fill="#1f2328">enregistré en une ligne par son repository</text>
+  <rect x="56" y="134" width="372" height="172" rx="8" fill="#ffffff" stroke="#2f6f4f" stroke-width="1.5"/>
+  <text x="72" y="160" font-size="14" font-weight="700" fill="#2f6f4f">document: StoredFile</text>
+  <line x1="72" y1="172" x2="412" y2="172" stroke="#2f6f4f" stroke-opacity="0.35"/>
+  <text x="72" y="192" font-size="13" font-weight="600" fill="#1f2328">key</text>
+  <text x="72" y="210" font-size="13" fill="#1f2328">tenants/acme/appointment-documents/2026/03/7f3a</text>
+  <text x="72" y="238" font-size="13" font-weight="600" fill="#1f2328">size</text>
+  <text x="172" y="238" font-size="13" fill="#1f2328">482113</text>
+  <text x="72" y="262" font-size="13" font-weight="600" fill="#1f2328">mediaType</text>
+  <text x="172" y="262" font-size="13" fill="#1f2328">application/pdf, vérifié sur ses octets</text>
+  <text x="72" y="286" font-size="13" font-weight="600" fill="#1f2328">checksum</text>
+  <text x="172" y="286" font-size="13" fill="#1f2328">sha256:9f2c…e41a</text>
+  <!-- the file storage -->
+  <rect x="520" y="64" width="416" height="266" rx="12" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="540" y="94" font-size="16" font-weight="700" fill="#5f6b73">stockage de fichiers</text>
+  <text x="540" y="116" font-size="13" fill="#1f2328">un stockage objet, un répertoire, la mémoire d'un test</text>
+  <rect x="540" y="160" width="376" height="76" rx="8" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="556" y="184" font-size="14" font-weight="700" fill="#5f6b73">sous sa clé finale, une fois validé</text>
+  <text x="556" y="206" font-size="13" fill="#1f2328">tenants/acme/appointment-documents/2026/03/7f3a</text>
+  <text x="556" y="226" font-size="13" fill="#1f2328">le contenu : 482113 octets, en flux</text>
+  <rect x="540" y="248" width="376" height="64" rx="8" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="556" y="272" font-size="14" font-weight="700" fill="#5f6b73">staging/, jusqu'à la validation</text>
+  <text x="556" y="294" font-size="13" fill="#1f2328">rien n'y lit ; purgé au bout d'un jour</text>
+  <!-- the key names the file -->
+  <line x1="430" y1="205" x2="536" y2="205" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="486" y="195" font-size="13" fill="#1f2328" text-anchor="middle">désigne</text>
+  <!-- notes -->
+  <text x="32" y="362" font-size="14" fill="#1f2328">La base : des lignes de quelques centaines d'octets,</text>
+  <text x="32" y="384" font-size="14" fill="#1f2328">sauvegardées et répliquées avec le reste.</text>
+  <text x="520" y="362" font-size="14" fill="#1f2328">Le stockage : sa propre réplication, son cycle</text>
+  <text x="520" y="384" font-size="14" fill="#1f2328">de vie et ses liens signés ; le contenu circule en flux.</text>
+</svg>

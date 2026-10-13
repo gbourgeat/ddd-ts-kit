@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 530" width="960" height="530" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Choosing a shared HTTP cache</title>
+  <desc id="desc">A decision tree in three questions. Is one public answer read by many callers, far more often than it changes? If not, no shared cache: private policies and ETags. If so, is a CDN already in front, for a global audience? If so, its adapter: FastlyCachePurger, CloudflareCachePurger, or a purger of your own for Bunny. If not, which proxy is already in front of the API? None: Varnish with the VCL init --http-cache varnish writes. Caddy or Traefik: Souin as their middleware, with a CachePurger of your own held to the contract suite. nginx: no purge by tag without NGINX Plus, so a short s-maxage, or Varnish behind it.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="530" rx="16" fill="#ffffff"/>
+  <text x="24" y="36" font-size="18" font-weight="600" fill="#1f2328">Choosing a shared HTTP cache</text>
+  <!-- question 1 -->
+  <rect x="250" y="58" width="420" height="62" rx="10" fill="#ffffff" stroke="#3d4449" stroke-width="2"/>
+  <text x="460" y="84" font-size="14" font-weight="600" fill="#1f2328" text-anchor="middle">Is one public answer read by many callers,</text>
+  <text x="460" y="104" font-size="14" font-weight="600" fill="#1f2328" text-anchor="middle">far more often than it changes?</text>
+  <rect x="726" y="58" width="210" height="62" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="831" y="84" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">no shared cache</text>
+  <text x="831" y="106" font-size="13" fill="#1f2328" text-anchor="middle">private policies, ETags</text>
+  <line x1="672" y1="89" x2="724" y2="89" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="698" y="81" font-size="13" fill="#1f2328" text-anchor="middle">no</text>
+  <line x1="460" y1="122" x2="460" y2="164" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="470" y="148" font-size="13" fill="#1f2328">yes</text>
+  <!-- question 2 -->
+  <rect x="250" y="166" width="420" height="62" rx="10" fill="#ffffff" stroke="#3d4449" stroke-width="2"/>
+  <text x="460" y="192" font-size="14" font-weight="600" fill="#1f2328" text-anchor="middle">Is a CDN already in front,</text>
+  <text x="460" y="212" font-size="14" font-weight="600" fill="#1f2328" text-anchor="middle">for a global audience?</text>
+  <rect x="726" y="156" width="210" height="82" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="831" y="180" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">its adapter</text>
+  <text x="831" y="202" font-size="13" fill="#1f2328" text-anchor="middle">Fastly, Cloudflare,</text>
+  <text x="831" y="222" font-size="13" fill="#1f2328" text-anchor="middle">or your own for Bunny</text>
+  <line x1="672" y1="197" x2="724" y2="197" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="698" y="189" font-size="13" fill="#1f2328" text-anchor="middle">yes</text>
+  <line x1="460" y1="230" x2="460" y2="272" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="470" y="256" font-size="13" fill="#1f2328">no</text>
+  <!-- question 3 -->
+  <rect x="250" y="274" width="420" height="50" rx="10" fill="#ffffff" stroke="#3d4449" stroke-width="2"/>
+  <text x="460" y="304" font-size="14" font-weight="600" fill="#1f2328" text-anchor="middle">Which proxy is already in front of the API?</text>
+  <path d="M460,326 V350 H162 V390" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <path d="M460,326 V390" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <path d="M460,326 V350 H778 V390" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="172" y="374" font-size="13" fill="#1f2328">none</text>
+  <text x="470" y="374" font-size="13" fill="#1f2328">Caddy or Traefik</text>
+  <text x="788" y="374" font-size="13" fill="#1f2328">nginx</text>
+  <!-- answers -->
+  <rect x="24" y="392" width="276" height="90" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="162" y="418" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">Varnish</text>
+  <text x="162" y="442" font-size="13" fill="#1f2328" text-anchor="middle">init --http-cache varnish</text>
+  <text x="162" y="462" font-size="13" fill="#1f2328" text-anchor="middle">writes its VCL and wires the purger</text>
+  <rect x="330" y="392" width="260" height="90" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="460" y="418" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">Souin</text>
+  <text x="460" y="442" font-size="13" fill="#1f2328" text-anchor="middle">as their middleware, and a</text>
+  <text x="460" y="462" font-size="13" fill="#1f2328" text-anchor="middle">CachePurger of your own</text>
+  <rect x="620" y="392" width="316" height="90" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="778" y="418" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">no purge by tag</text>
+  <text x="778" y="442" font-size="13" fill="#1f2328" text-anchor="middle">without NGINX Plus: a short s-maxage,</text>
+  <text x="778" y="462" font-size="13" fill="#1f2328" text-anchor="middle">or Varnish behind nginx</text>
+  <text x="480" y="512" font-size="14" fill="#1f2328" text-anchor="middle">Whichever it is: the routes send the tag header it reads, and the purges go through the outbox.</text>
+</svg>

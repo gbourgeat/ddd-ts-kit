@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 668" width="960" height="668" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">How the Keycloak preset maps an access token</title>
+  <desc id="desc">The claims of a Keycloak access token, each mapped to a field of the actor or of the session. sub gives the actor id; a preferred_username starting with service-account- makes the actor a service; the realm roles and the client roles give the roles; preferred_username, email and groups give the attributes; tenant_id or a single organization gives the tenant. sid, or jti for a service account, gives the session id; iat and exp its instants; the kind of account its authentication method; acr its strength; act or the impersonator claim the impersonator. The token itself is kept nowhere.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="668" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">How the Keycloak preset maps an access token</text>
+  <rect x="32" y="60" width="400" height="560" rx="12" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="48" y="86" font-size="16" font-weight="700" fill="#5f6b73">access token: its claims</text>
+  <rect x="560" y="60" width="368" height="268" rx="12" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="576" y="86" font-size="16" font-weight="700" fill="#2b5d8a" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">Actor</text>
+  <rect x="560" y="344" width="368" height="276" rx="12" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="576" y="370" font-size="16" font-weight="700" fill="#2b5d8a" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">Session</text>
+  <rect x="44" y="100" width="376" height="38" rx="6" fill="#ffffff" stroke="#5f6b73" stroke-opacity="0.4"/>
+  <text x="54" y="124" font-size="13" fill="#1f2328" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">sub</text>
+  <rect x="572" y="100" width="344" height="38" rx="6" fill="#ffffff" stroke="#2b5d8a" stroke-opacity="0.4"/>
+  <text x="582" y="124" font-size="14" font-weight="600" fill="#2b5d8a" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">id</text>
+  <line x1="422" y1="119" x2="568" y2="119" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="44" y="144" width="376" height="38" rx="6" fill="#ffffff" stroke="#5f6b73" stroke-opacity="0.4"/>
+  <text x="54" y="160" font-size="13" fill="#1f2328" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">preferred_username</text>
+  <text x="54" y="176" font-size="13" fill="#5f6b73" >starts with service-account-?</text>
+  <rect x="572" y="144" width="344" height="38" rx="6" fill="#ffffff" stroke="#2b5d8a" stroke-opacity="0.4"/>
+  <text x="582" y="160" font-size="14" font-weight="600" fill="#2b5d8a" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">type</text>
+  <text x="582" y="176" font-size="13" fill="#5f6b73">service, else user</text>
+  <line x1="422" y1="163" x2="568" y2="163" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="44" y="188" width="376" height="38" rx="6" fill="#ffffff" stroke="#5f6b73" stroke-opacity="0.4"/>
+  <text x="54" y="204" font-size="13" fill="#1f2328" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">realm_access.roles</text>
+  <text x="54" y="220" font-size="13" fill="#5f6b73" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">+ resource_access.&lt;clientId&gt;.roles</text>
+  <rect x="572" y="188" width="344" height="38" rx="6" fill="#ffffff" stroke="#2b5d8a" stroke-opacity="0.4"/>
+  <text x="582" y="204" font-size="14" font-weight="600" fill="#2b5d8a" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">roles</text>
+  <text x="582" y="220" font-size="13" fill="#5f6b73">each role once</text>
+  <line x1="422" y1="207" x2="568" y2="207" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="44" y="232" width="376" height="38" rx="6" fill="#ffffff" stroke="#5f6b73" stroke-opacity="0.4"/>
+  <text x="54" y="256" font-size="13" fill="#1f2328" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">preferred_username, email, groups</text>
+  <rect x="572" y="232" width="344" height="38" rx="6" fill="#ffffff" stroke="#2b5d8a" stroke-opacity="0.4"/>
+  <text x="582" y="248" font-size="14" font-weight="600" fill="#2b5d8a" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">attributes</text>
+  <text x="582" y="264" font-size="13" fill="#5f6b73">username, email, groups</text>
+  <line x1="422" y1="251" x2="568" y2="251" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="44" y="276" width="376" height="38" rx="6" fill="#ffffff" stroke="#5f6b73" stroke-opacity="0.4"/>
+  <text x="54" y="292" font-size="13" fill="#1f2328" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">tenant_id, or organization</text>
+  <text x="54" y="308" font-size="13" fill="#5f6b73" >when it names exactly one organization</text>
+  <rect x="572" y="276" width="344" height="38" rx="6" fill="#ffffff" stroke="#2b5d8a" stroke-opacity="0.4"/>
+  <text x="582" y="300" font-size="14" font-weight="600" fill="#2b5d8a" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">tenantId</text>
+  <line x1="422" y1="295" x2="568" y2="295" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="44" y="384" width="376" height="38" rx="6" fill="#ffffff" stroke="#5f6b73" stroke-opacity="0.4"/>
+  <text x="54" y="400" font-size="13" fill="#1f2328" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">sid</text>
+  <text x="54" y="416" font-size="13" fill="#5f6b73" >jti for a service account, which has none</text>
+  <rect x="572" y="384" width="344" height="38" rx="6" fill="#ffffff" stroke="#2b5d8a" stroke-opacity="0.4"/>
+  <text x="582" y="408" font-size="14" font-weight="600" fill="#2b5d8a" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">id</text>
+  <line x1="422" y1="403" x2="568" y2="403" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="44" y="428" width="376" height="38" rx="6" fill="#ffffff" stroke="#5f6b73" stroke-opacity="0.4"/>
+  <text x="54" y="452" font-size="13" fill="#1f2328" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">iat, exp</text>
+  <rect x="572" y="428" width="344" height="38" rx="6" fill="#ffffff" stroke="#2b5d8a" stroke-opacity="0.4"/>
+  <text x="582" y="452" font-size="14" font-weight="600" fill="#2b5d8a" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">issuedAt, expiresAt</text>
+  <line x1="422" y1="447" x2="568" y2="447" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="44" y="472" width="376" height="38" rx="6" fill="#ffffff" stroke="#5f6b73" stroke-opacity="0.4"/>
+  <text x="54" y="488" font-size="13" fill="#1f2328" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">preferred_username</text>
+  <text x="54" y="504" font-size="13" fill="#5f6b73" >a person, or a service account</text>
+  <rect x="572" y="472" width="344" height="38" rx="6" fill="#ffffff" stroke="#2b5d8a" stroke-opacity="0.4"/>
+  <text x="582" y="488" font-size="14" font-weight="600" fill="#2b5d8a" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">authenticationMethod</text>
+  <text x="582" y="504" font-size="13" fill="#5f6b73">sso, or service</text>
+  <line x1="422" y1="491" x2="568" y2="491" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="44" y="516" width="376" height="38" rx="6" fill="#ffffff" stroke="#5f6b73" stroke-opacity="0.4"/>
+  <text x="54" y="540" font-size="13" fill="#1f2328" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">acr</text>
+  <rect x="572" y="516" width="344" height="38" rx="6" fill="#ffffff" stroke="#2b5d8a" stroke-opacity="0.4"/>
+  <text x="582" y="532" font-size="14" font-weight="600" fill="#2b5d8a" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">authenticationStrength</text>
+  <text x="582" y="548" font-size="13" fill="#5f6b73">the assurance level</text>
+  <line x1="422" y1="535" x2="568" y2="535" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="44" y="560" width="376" height="38" rx="6" fill="#ffffff" stroke="#5f6b73" stroke-opacity="0.4"/>
+  <text x="54" y="576" font-size="13" fill="#1f2328" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">act, or the claim you name</text>
+  <text x="54" y="592" font-size="13" fill="#5f6b73" >impersonator_id, from a session note mapper</text>
+  <rect x="572" y="560" width="344" height="38" rx="6" fill="#ffffff" stroke="#2b5d8a" stroke-opacity="0.4"/>
+  <text x="582" y="584" font-size="14" font-weight="600" fill="#2b5d8a" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">impersonatedBy</text>
+  <line x1="422" y1="579" x2="568" y2="579" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="480" y="652" font-size="14" fill="#2f6f4f" text-anchor="middle">the token itself is kept nowhere: not in the actor, not in the session</text>
+</svg>

@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 418" width="960" height="418" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Relationships: three stored tuples, one derived permission</title>
+  <desc id="desc">Three stored tuples: ada is a member of the team finance, the members of finance are viewers of the folder reports, the folder reports is the parent of the document q3. The schema derives that ada may view q3: the view of a document includes the view of its parent folder, the view of a folder includes its viewers, and the viewers of reports are the members of finance.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+    <marker id="arrow-application" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#2b5d8a"/>
+    </marker>
+  </defs>
+  <rect width="960" height="418" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Relationships: three stored tuples, one derived permission</text>
+
+  <!-- elements -->
+  <rect x="32" y="84" width="160" height="64" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="112" y="112" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">user:ada</text>
+  <text x="112" y="133" font-size="13" fill="#1f2328" text-anchor="middle">the actor</text>
+  <rect x="277" y="84" width="160" height="64" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="357" y="112" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">team:finance</text>
+  <text x="357" y="133" font-size="13" fill="#1f2328" text-anchor="middle">a group of users</text>
+  <rect x="522" y="84" width="160" height="64" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="602" y="112" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">folder:reports</text>
+  <text x="602" y="133" font-size="13" fill="#1f2328" text-anchor="middle">a folder</text>
+  <rect x="767" y="84" width="160" height="64" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="847" y="112" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">document:q3</text>
+  <text x="847" y="133" font-size="13" fill="#1f2328" text-anchor="middle">the resource</text>
+
+  <!-- stored tuples -->
+  <line x1="194" y1="116" x2="273" y2="116" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="234" y="106" font-size="13" fill="#1f2328" text-anchor="middle">member</text>
+  <line x1="439" y1="116" x2="518" y2="116" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="479" y="106" font-size="13" fill="#1f2328" text-anchor="middle">viewer</text>
+  <line x1="684" y1="116" x2="763" y2="116" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="724" y="106" font-size="13" fill="#1f2328" text-anchor="middle">parent</text>
+  <text x="357" y="170" font-size="13" fill="#1f2328" text-anchor="middle">its members, as a userset</text>
+
+  <!-- derived permission -->
+  <path d="M112,150 V200 H847 V152" fill="none" stroke="#2b5d8a" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow-application)"/>
+  <text x="480" y="222" font-size="14" font-weight="600" fill="#2b5d8a" text-anchor="middle">may view: derived by the schema, never stored</text>
+
+  <!-- how the check walks -->
+  <rect x="32" y="244" width="896" height="118" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="52" y="270" font-size="14" font-weight="600" fill="#2b5d8a">How check(ada, document.view, document:q3) walks the tuples</text>
+  <text x="52" y="294" font-size="13" fill="#1f2328">1. document view = union('edit', from('parent', 'view')): the parent of q3 is folder:reports, ask its view</text>
+  <text x="52" y="316" font-size="13" fill="#1f2328">2. folder view = union('edit', 'viewer', from('parent', 'view')): a viewer of reports is team:finance#member</text>
+  <text x="52" y="338" font-size="13" fill="#1f2328">3. team:finance#member holds user:ada: allowed. Nothing leads to owner, editor or delegate, so edit is NO_RELATION</text>
+
+  <!-- legend -->
+  <line x1="40" y1="390" x2="84" y2="390" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="96" y="395" font-size="14" fill="#1f2328">a stored tuple: subject, relation, object</text>
+  <line x1="460" y1="390" x2="504" y2="390" stroke="#2b5d8a" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow-application)"/>
+  <text x="516" y="395" font-size="14" fill="#1f2328">a permission the schema derives at check time</text>
+</svg>

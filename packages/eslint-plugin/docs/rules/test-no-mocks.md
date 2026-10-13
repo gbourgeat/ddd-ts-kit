@@ -1,3 +1,5 @@
+**English** · [Français](test-no-mocks.fr.md)
+
 # ddd-ts-kit/test-no-mocks
 
 Architecture id: `test/no-mocks`. Default severity: `warn` in `recommended`, `error` in `strict`.

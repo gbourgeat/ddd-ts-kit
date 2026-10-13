@@ -1,3 +1,5 @@
+**English** · [Français](domain-events-transactional-before-commit.fr.md)
+
 # ddd-ts-kit/domain-events-transactional-before-commit
 
 Architecture id: `domain-events/transactional-before-commit`. Default severity: `error` in `recommended`, `error` in `strict`.

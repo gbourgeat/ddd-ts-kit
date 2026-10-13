@@ -1,3 +1,5 @@
+**English** · [Français](aspects-outside-in.fr.md)
+
 # ddd-ts-kit/aspects-outside-in
 
 Architecture id: `aspects/outside-in`. Default severity: `error` in `recommended`, `error` in `strict`.

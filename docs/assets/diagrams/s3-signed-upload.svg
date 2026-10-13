@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 672" width="960" height="672" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">An upload through a signed link, and what is checked where</title>
+  <desc id="desc">Three participants: the client, the API with FileStaging and S3FileStorage, and the bucket. 1, the client asks to upload, with a command. 2, FileStaging.uploadUrl has S3FileStorage sign a PUT locally, without any request to the bucket, and the grant (key, size cap, media types) is kept on the aggregate. 3, the API returns the URL, the method PUT, the content-type header and the expiry. 4, the client sends the file straight to the bucket with the signed headers. The bucket checks the signature: the key, the method, the content-type and the expiry; it cannot cap the size. 5, the client confirms the upload with a second command. 6, the API reads the staged object back with GetObject, and 7, the bucket streams the content. 8, FileStaging.confirm checks the bytes: the size against the cap of the grant, the media type, the sha256 checksum and the scan; a file that fails is discarded.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="672" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">An upload through a signed link, and what is checked where</text>
+
+  <!-- participants -->
+  <rect x="40" y="60" width="200" height="52" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="140" y="84" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">client</text>
+  <text x="140" y="103" font-size="13" fill="#1f2328" text-anchor="middle">browser or mobile app</text>
+  <rect x="330" y="60" width="300" height="52" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="480" y="84" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">API</text>
+  <text x="480" y="103" font-size="13" fill="#1f2328" text-anchor="middle">FileStaging, S3FileStorage</text>
+  <rect x="720" y="60" width="200" height="52" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="820" y="84" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">bucket</text>
+  <text x="820" y="103" font-size="13" fill="#1f2328" text-anchor="middle">of the provider</text>
+
+  <!-- lifelines -->
+  <line x1="140" y1="112" x2="140" y2="652" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="4 4"/>
+  <line x1="480" y1="112" x2="480" y2="652" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="4 4"/>
+  <line x1="820" y1="112" x2="820" y2="652" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="4 4"/>
+
+  <!-- 1 -->
+  <text x="310" y="144" font-size="13" fill="#1f2328" text-anchor="middle">1. asks to upload (a command)</text>
+  <line x1="142" y1="154" x2="477" y2="154" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- 2 -->
+  <rect x="496" y="166" width="308" height="84" rx="8" fill="#e7eef5" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="512" y="188" font-size="13" font-weight="600" fill="#2b5d8a">2. FileStaging.uploadUrl</text>
+  <text x="512" y="206" font-size="13" fill="#1f2328">a PUT signed locally: no request to</text>
+  <text x="512" y="224" font-size="13" fill="#1f2328">the bucket; the grant (key, cap, types)</text>
+  <text x="512" y="242" font-size="13" fill="#1f2328">is kept on the aggregate</text>
+  <!-- 3 -->
+  <text x="310" y="270" font-size="13" fill="#1f2328" text-anchor="middle">3. url, method PUT, content-type, expiresAt</text>
+  <line x1="477" y1="280" x2="143" y2="280" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- 4 -->
+  <text x="310" y="316" font-size="13" fill="#1f2328" text-anchor="middle">4. PUT the file with the signed headers</text>
+  <line x1="142" y1="326" x2="817" y2="326" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="496" y="340" width="308" height="66" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="512" y="362" font-size="13" fill="#1f2328">the bucket checks the signature: key,</text>
+  <text x="512" y="380" font-size="13" fill="#1f2328">method, content-type, expiry;</text>
+  <text x="512" y="398" font-size="13" font-weight="600" fill="#1f2328">it cannot cap the size</text>
+  <!-- 5 -->
+  <text x="310" y="436" font-size="13" fill="#1f2328" text-anchor="middle">5. confirms the upload (a second command)</text>
+  <line x1="142" y1="446" x2="477" y2="446" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- 6 and 7 -->
+  <text x="650" y="474" font-size="13" fill="#1f2328" text-anchor="middle">6. GetObject on the staged key</text>
+  <line x1="482" y1="484" x2="817" y2="484" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="650" y="512" font-size="13" fill="#1f2328" text-anchor="middle">7. the content, streamed</text>
+  <line x1="818" y1="522" x2="483" y2="522" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- 8 -->
+  <rect x="164" y="540" width="300" height="100" rx="8" fill="#e7eef5" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="180" y="562" font-size="13" font-weight="600" fill="#2b5d8a">8. FileStaging.confirm, on the bytes</text>
+  <text x="180" y="582" font-size="13" fill="#1f2328">size against the cap of the grant,</text>
+  <text x="180" y="600" font-size="13" fill="#1f2328">media type, sha256 checksum, scan;</text>
+  <text x="180" y="618" font-size="13" fill="#1f2328">a file that fails is discarded</text>
+</svg>

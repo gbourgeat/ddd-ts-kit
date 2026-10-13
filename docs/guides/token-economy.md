@@ -1,3 +1,5 @@
+**English** · [Français](token-economy.fr.md)
+
 # Token economy: spending less with coding agents
 
 **Summary.** A coding agent pays for everything it reads, on every turn, and most of what it
@@ -28,6 +30,12 @@ Output is the smaller part, and generated boilerplate removes most of it. The le
 therefore: know where to look without searching, read small things, and be right the first
 time.
 
+![Four requests of one session drawn as bars: each carries the instructions, every earlier turn and every tool result still in the conversation, so a 900-line file read at the second request is paid again by the third and the fourth; after a clear, the next task starts small](../assets/diagrams/token-economy-context-growth.svg)
+
+The second cost is the one that grows quietly: a tool result is not paid once, it is paid by
+every request that follows until the conversation is cleared or compacted. Reading 40 lines
+instead of 900 saves on every later turn of the session, not only on the turn that read them.
+
 ## Why structure saves tokens
 
 | Property of a project built with the kit | What the agent no longer does |
@@ -43,9 +51,30 @@ time.
 | **Checks at each write** (the plugin's hook runs the per-file check) | discover a layer violation after the whole feature is written |
 | **Fast, local test levels**: domain and application specs run in milliseconds without infrastructure | wait on, and read the output of, a full stack to check one rule |
 
-The session start hook also reminds the order of work, the next step of the plan and a
-one-line map per context,
-capped in size, so a new session does not begin by rediscovering them.
+The same task, walked both ways:
+
+![The same task on two projects: on the left, listing directories, searching, opening candidate files, writing by hand, being refused and rewriting, in six steps with a rework loop; on the right, describe, generate, fill the listed places and check what changed, in four steps](../assets/diagrams/token-economy-search-or-map.svg)
+
+The session start hook of the plugin also reminds the order of work, the next step of the plan
+and a one-line map per context, capped in size, so a new session does not begin by
+rediscovering them. On the [example application](../../examples/scheduling/README.md), with
+the CLI installed, a session starts with:
+
+```text
+ddd-ts-kit project (DDD, Clean Architecture). The rules are checked: `npx ddd-ts-kit explain <rule-id>`.
+Order of work: glossary of the context (CONTEXT.md), `npx ddd-ts-kit generate <kind> ... --json`, fill only the TODO(domain) places it lists, tests, `npx ddd-ts-kit check --changed-since <ref>`, then commit the slice.
+Never write by hand a file a generator produces; never edit a generated file (declaration barrels, contracts).
+Read `npx ddd-ts-kit list --json` and the CONTEXT.md of one context instead of browsing the tree.
+Plan: docs/architecture/plan.md (resume with /ddd-ts-kit:start). Next: done
+Contexts:
+analytics [supporting] upstreams: scheduling; glossary: 9 terms; 0 aggregates, 0 commands, 1 queries, 0 published events
+identity [supporting] upstreams: none; glossary: 21 terms; 3 aggregates, 7 commands, 0 queries, 6 published events
+notification [supporting] upstreams: scheduling, identity; glossary: 16 terms; 2 aggregates, 4 commands, 1 queries, 0 published events
+scheduling [core] upstreams: identity; glossary: 65 terms; 4 aggregates, 19 commands, 8 queries, 8 published events
+```
+
+Ten lines, and the agent knows the rules of the house, where the project stands and what each
+context holds, before it has opened a single file.
 
 None of this is specific to one agent product: a path convention and a JSON map help any tool
 that reads files. The path-scoped rule files and the hook use the Claude Code formats, since
@@ -57,16 +86,105 @@ the kit's plugin targets it.
 `next`, implement each `TODO(domain)`, replace each `it.todo`. Do not ask an agent to "create
 an aggregate": ask it to run the generator and fill the three decisions it lists.
 
+```bash
+npx ddd-ts-kit generate command ordering PlaceOrder --permission order.place --aggregate Order --json
+```
+
+answers, abbreviated (`todos` repeats each place of `next` with the decision to make there):
+
+```json
+{
+  "dryRun": false,
+  "created": [
+    "src/contexts/ordering/application/authorization/ordering.permissions.ts",
+    "src/contexts/ordering/application/commands/place-order/place-order.command.ts",
+    "src/contexts/ordering/application/commands/place-order/place-order.handler.ts",
+    "src/contexts/ordering/test/unit/place-order.handler.spec.ts"
+  ],
+  "updated": [
+    "src/contexts/ordering/ordering.declarations.ts",
+    "src/contexts/ordering/CONTEXT.md"
+  ],
+  "skipped": [],
+  "next": [
+    "src/contexts/ordering/application/commands/place-order/place-order.command.ts:7",
+    "src/contexts/ordering/application/commands/place-order/place-order.handler.ts:16",
+    "src/contexts/ordering/test/unit/place-order.handler.spec.ts:38"
+  ]
+}
+```
+
+Three `file:line` locations are the whole reading list of the task: the input of the command,
+the decision of the handler, the tests to write. The agent reads those lines and their
+neighbours, not the four files from the top, and never the files the generator wired for it.
+
 **Read the map, not the tree.** Start with `npx ddd-ts-kit describe <context> --json` (or
 `list --json` for the whole project) and the `CONTEXT.md` of the context in hand;
 `npx ddd-ts-kit todo <context>` then says what is left to write, as `file:line`. Read a
 neighbouring context's `CONTEXT.md` and `published-language/`, never its internals: the rules
 forbid depending on them anyway.
 
+```bash
+# Instead of: walking the tree and reading what the search returns
+ls -R src/contexts/ordering
+grep -rn "Handler" src/contexts/ordering
+
+# Write: one call, facts only
+npx ddd-ts-kit describe ordering --json
+```
+
+An extract of what it answers, for the context of the first slice above:
+
+```json
+{
+  "name": "ordering",
+  "classification": "core",
+  "useCases": [
+    {
+      "kind": "command",
+      "name": "PlaceOrder",
+      "permission": "order.place",
+      "file": "src/contexts/ordering/application/commands/place-order"
+    }
+  ],
+  "ports": [
+    {
+      "name": "OrderRepository",
+      "kind": "repository",
+      "adapters": ["DrizzleOrderRepository"],
+      "file": "src/contexts/ordering/domain/repositories/order.repository.ts"
+    }
+  ]
+}
+```
+
+The full answer also lists the glossary, the upstreams and downstreams, the aggregates, the
+routes with their guards, responses and error codes, the events published and consumed, the
+policies, the jobs and the contracts. `todo` answers one line per marker:
+
+```text
+src/contexts/ordering/application/commands/place-order/place-order.handler.ts:16  TODO(domain)  decide what "place order" does to a Order: ...
+src/contexts/ordering/test/unit/place-order.handler.spec.ts:39  it.todo  applies the business decision to the order
+```
+
 **Small, scoped tasks.** One use case in one context per task, then a fresh session. A task
 stated as "add the ability to cancel an appointment, in `appointments`, permission
 `appointment.cancel`" gives the agent the context, the path and the vocabulary; "improve the
 booking flow" makes it scan.
+
+```text
+Instead of:
+  Improve the booking flow.
+
+Write:
+  In appointments, add CancelAppointment: a client cancels one of their appointments,
+  permission appointment.cancel, refused when the appointment is already cancelled
+  (APPOINTMENT_ALREADY_CANCELLED). Route POST /appointments/:id/cancel.
+  Generate, fill the TODO(domain) places, then check --changed-since origin/main.
+```
+
+The second brief names the context (one directory), the use case (the file names follow), the
+permission, the refusal code and the route: every word of it saves a search.
 
 **One context per agent.** With several agents, each owns one directory and receives the
 contract of its upstream, not the upstream's code; see [Parallel work](parallel-work.md).
@@ -76,15 +194,43 @@ Remember that each agent carries its own context window: parallelism buys time, 
 tests of one context, not the whole gate after every edit. Run `npm run verify` once at the
 end.
 
+```bash
+npx ddd-ts-kit check --changed-since origin/main   # the rules, on the changed files only
+npx vitest run src/contexts/ordering                # the tests of one context
+npm run verify                                      # the whole gate, once, before the commit
+```
+
 **Keep noisy output out of the main conversation.** Run long test suites and log reading in a
-subagent, or filter the output before it is read. Ask for failures only.
+subagent, or filter the output before it is read. Ask for failures only: with Vitest 5, the
+test runner `init` installs, `--reporter=minimal` prints the failed tests and nothing else.
+
+```bash
+npx vitest run src/contexts/ordering --reporter=minimal
+```
 
 **Clear between unrelated tasks.** Stale context is paid again on every later turn.
 
 **Keep state in files, not in the conversation.** The plugin's `start` skill records where the
-project stands in `docs/architecture/plan.md` and the slices in `docs/architecture/slices.md`,
-so a new session resumes from two short files instead of a long history, and
-`npx ddd-ts-kit status` reads both back in a few lines.
+project stands in `docs/architecture/plan.md`, and its `plan-slices` step writes the slices in
+`docs/architecture/slices.md`, so a new session resumes from two short files instead of a long
+history, and `npx ddd-ts-kit status` reads both back in a few lines:
+
+```text
+Next: 7 use-case - fill the TODO(domain) places of PlaceOrder
+
+Slices (docs/architecture/slices.md): 3, 1 in progress, 1 todo, 1 done
+  in progress
+    #2 ordering slice "Place order" (owner ordering, depends on 1)
+  todo
+    #3 ordering slice "Cancel order" (owner ordering, depends on 2)
+  by owner
+    conductor: 1 done
+    ordering: 1 in progress, 1 todo
+
+Remaining
+  ordering: 25 TODO(domain), 0 TODO(platform), 11 it.todo
+  outside the contexts: 9 TODO(domain), 6 TODO(platform), 0 it.todo
+```
 
 **Do not paste what a path can say.** Point to `docs/ARCHITECTURE.md` by rule id rather than
 quoting it; the skills of the plugin do the same, on purpose.

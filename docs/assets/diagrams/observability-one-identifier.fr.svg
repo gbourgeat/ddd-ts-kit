@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 520" width="960" height="520" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Une action, un identifiant, dans chaque signal</title>
+  <desc id="desc">Un client réserve un rendez-vous. Dans appointments, la requête HTTP ouvre la portée d'exécution avec l'identifiant de corrélation c-1 et l'origine http, et la trace t-1 avec son span racine ; le gestionnaire et les repositories ajoutent leurs spans, et la réponse 201 porte la référence de support c-1. L'événement appointments.appointment.booked attend dans l'outbox avec c-1 et traceparent t-1 dans son enveloppe ; le relais le publie plus tard. Dans notifications, le consommateur ouvre une portée avec le même identifiant de corrélation c-1, l'identifiant de l'événement comme causationId et l'origine event, et son span continue la trace t-1. En bas, ce que porte chaque signal : les lignes de journal portent c-1 et trace_id t-1 des deux côtés, la trace t-1 contient les deux contextes, les métriques portent des noms et des issues mais aucun identifiant, une remontée d'erreur, d'un côté ou de l'autre, porte c-1 et t-1.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="520" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Une action, un identifiant, dans chaque signal</text>
+  <!-- appointments -->
+  <rect x="24" y="64" width="300" height="200" rx="12" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="44" y="92" font-size="16" font-weight="700" fill="#2b5d8a">appointments (HTTP)</text>
+  <text x="44" y="116" font-size="13" fill="#1f2328">POST /appointments, du client</text>
+  <text x="44" y="140" font-size="13" fill="#1f2328">portée : correlationId c-1, origine http</text>
+  <text x="44" y="162" font-size="13" fill="#1f2328">trace t-1, son span racine</text>
+  <text x="44" y="184" font-size="13" fill="#1f2328">spans de BookAppointment et</text>
+  <text x="44" y="204" font-size="13" fill="#1f2328">des repositories</text>
+  <text x="44" y="240" font-size="13" font-weight="600" fill="#2b5d8a">201, référence de support c-1</text>
+  <!-- outbox and relay -->
+  <rect x="368" y="64" width="224" height="200" rx="12" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="388" y="92" font-size="16" font-weight="700" fill="#7a4f9a">outbox et relais</text>
+  <text x="388" y="116" font-size="13" fill="#1f2328">événement appointments.</text>
+  <text x="388" y="136" font-size="13" fill="#1f2328">appointment.booked</text>
+  <text x="388" y="162" font-size="13" fill="#1f2328">enveloppe : correlationId c-1,</text>
+  <text x="388" y="182" font-size="13" fill="#1f2328">traceparent t-1</text>
+  <text x="388" y="240" font-size="13" font-style="italic" fill="#5f6b73">publié plus tard par le relais</text>
+  <!-- notifications -->
+  <rect x="636" y="64" width="300" height="200" rx="12" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="656" y="92" font-size="16" font-weight="700" fill="#2b5d8a">notifications (consommateur)</text>
+  <text x="656" y="116" font-size="13" fill="#1f2328">portée : correlationId c-1,</text>
+  <text x="656" y="138" font-size="13" fill="#1f2328">causationId = id de l'événement,</text>
+  <text x="656" y="160" font-size="13" fill="#1f2328">origine event, acteur système</text>
+  <text x="656" y="184" font-size="13" fill="#1f2328">span process … continue t-1</text>
+  <text x="656" y="206" font-size="13" fill="#1f2328">spans de sa commande, repositories</text>
+  <!-- flow -->
+  <line x1="326" y1="164" x2="364" y2="164" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <line x1="594" y1="164" x2="632" y2="164" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <!-- what each signal carries -->
+  <text x="32" y="310" font-size="16" font-weight="700" fill="#1f2328">Ce que porte chaque signal, des deux côtés</text>
+  <rect x="24" y="328" width="213" height="112" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="40" y="354" font-size="16" font-weight="700" fill="#5f6b73">journaux</text>
+  <text x="40" y="378" font-size="13" fill="#1f2328">correlationId c-1,</text>
+  <text x="40" y="398" font-size="13" fill="#1f2328">trace_id t-1, span_id</text>
+  <text x="40" y="418" font-size="13" fill="#1f2328">sur chaque ligne</text>
+  <rect x="257" y="328" width="213" height="112" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="273" y="354" font-size="16" font-weight="700" fill="#5f6b73">trace</text>
+  <text x="273" y="378" font-size="13" fill="#1f2328">une trace t-1 avec les deux</text>
+  <text x="273" y="398" font-size="13" fill="#1f2328">contextes ; c-1 sur chaque</text>
+  <text x="273" y="418" font-size="13" fill="#1f2328">span racine</text>
+  <rect x="490" y="328" width="213" height="112" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="506" y="354" font-size="16" font-weight="700" fill="#5f6b73">métriques</text>
+  <text x="506" y="374" font-size="13" fill="#1f2328">message, ou classe et</text>
+  <text x="506" y="392" font-size="13" fill="#1f2328">méthode ; issue, code</text>
+  <text x="506" y="410" font-size="13" fill="#1f2328">d'erreur : jamais un</text>
+  <text x="506" y="428" font-size="13" fill="#1f2328">identifiant</text>
+  <rect x="723" y="328" width="213" height="112" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="739" y="354" font-size="16" font-weight="700" fill="#5f6b73">remontée d'erreur</text>
+  <text x="739" y="378" font-size="13" fill="#1f2328">d'un côté ou de l'autre :</text>
+  <text x="739" y="398" font-size="13" fill="#1f2328">correlationId c-1,</text>
+  <text x="739" y="418" font-size="13" fill="#1f2328">traceId t-1, la pile</text>
+  <!-- legend -->
+  <line x1="32" y1="478" x2="76" y2="478" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <text x="88" y="483" font-size="14" fill="#1f2328">un message asynchrone : l'événement d'intégration, son enveloppe porte c-1 et t-1</text>
+  <text x="32" y="506" font-size="14" fill="#1f2328">La référence de support que cite le client est c-1 : elle retrouve les lignes, la trace et la remontée.</text>
+</svg>

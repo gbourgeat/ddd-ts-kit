@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 432" width="960" height="432" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">One action, followed across the trace, the logs, the error report and the audit trail</title>
+  <desc id="desc">A user action carries one correlation id and one trace id. The root span of its trace carries the correlation id, its log lines carry the trace id and the correlation id, an error report carries the trace id of the active span and the correlation id, and its audit entries carry the correlation id. From any of the four, the shared ids lead to the three others.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="432" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">One action, four records, two shared ids</text>
+  <!-- center -->
+  <rect x="350" y="178" width="260" height="88" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="480" y="206" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">one user action</text>
+  <text x="480" y="230" font-size="13" fill="#1f2328" text-anchor="middle">correlationId (the execution scope)</text>
+  <text x="480" y="250" font-size="13" fill="#1f2328" text-anchor="middle">trace_id (the active span)</text>
+  <!-- trace -->
+  <rect x="32" y="64" width="290" height="100" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="50" y="92" font-size="16" font-weight="700" fill="#5f6b73">trace: Jaeger, Tempo</text>
+  <text x="50" y="118" font-size="13" fill="#1f2328">root span: app.correlation_id</text>
+  <text x="50" y="140" font-size="13" fill="#1f2328">opened by its trace id</text>
+  <!-- logs -->
+  <rect x="638" y="64" width="290" height="100" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="656" y="92" font-size="16" font-weight="700" fill="#5f6b73">log lines</text>
+  <text x="656" y="118" font-size="13" fill="#1f2328">trace_id, span_id</text>
+  <text x="656" y="140" font-size="13" fill="#1f2328">correlationId, actorId, tenantId</text>
+  <!-- error report -->
+  <rect x="32" y="280" width="290" height="100" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="50" y="308" font-size="16" font-weight="700" fill="#5f6b73">error report: Sentry, GlitchTip</text>
+  <text x="50" y="334" font-size="13" fill="#1f2328">contexts.trace: the trace id</text>
+  <text x="50" y="356" font-size="13" fill="#1f2328">correlationId of the ErrorReport</text>
+  <!-- audit -->
+  <rect x="638" y="280" width="290" height="100" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="656" y="308" font-size="16" font-weight="700" fill="#5f6b73">audit entries</text>
+  <text x="656" y="334" font-size="13" fill="#1f2328">correlationId of the AuditEntry</text>
+  <text x="656" y="356" font-size="13" fill="#1f2328">search app.correlation_id in traces</text>
+  <!-- links -->
+  <line x1="348" y1="196" x2="300" y2="168" stroke="#3d4449" stroke-width="2" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+  <line x1="612" y1="196" x2="660" y2="168" stroke="#3d4449" stroke-width="2" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+  <line x1="348" y1="248" x2="300" y2="276" stroke="#3d4449" stroke-width="2" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+  <line x1="612" y1="248" x2="660" y2="276" stroke="#3d4449" stroke-width="2" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+  <text x="480" y="412" font-size="14" fill="#1f2328" text-anchor="middle">Nothing personal on a span: the actor and the tenant stay in the log fields, where retention is yours.</text>
+</svg>

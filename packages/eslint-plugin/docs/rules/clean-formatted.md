@@ -1,3 +1,5 @@
+**English** · [Français](clean-formatted.fr.md)
+
 # clean/formatted (layout)
 
 Architecture id: `clean/formatted`. No severity: a file is formatted or it is not. Fixable with `npm run format`.

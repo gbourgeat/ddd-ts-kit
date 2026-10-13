@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 440" width="960" height="440" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">One command, two saves: when the domain events of a unit of work are handled</title>
+  <desc id="desc">A timeline of one command. Inside one transaction: the command handler saves aggregates a and b, and their events wait in a queue; once the handler has returned, the before-commit handlers run on the queue in recording order and see both saves, and the publisher appends the outbox row; then the transaction commits the state, what the handlers wrote and the outbox row together. After the commit, the after-commit handlers run on the same events in the same order, at most once, before the command answers. Later, the relay reads the outbox row and publishes it, at least once.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="440" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">One command, two saves: when the domain events are handled</text>
+  <!-- the transaction -->
+  <rect x="24" y="60" width="516" height="244" rx="12" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="40" y="84" font-size="14" fill="#5f6b73">one transaction: commits or rolls back as a whole</text>
+  <rect x="36" y="104" width="144" height="180" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="108" y="134" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">handler</text>
+  <line x1="48" y1="146" x2="168" y2="146" stroke="#2b5d8a" stroke-opacity="0.35"/>
+  <text x="108" y="170" font-size="13" fill="#1f2328" text-anchor="middle">of the command</text>
+  <text x="108" y="190" font-size="13" fill="#1f2328" text-anchor="middle">save(a)</text>
+  <text x="108" y="210" font-size="13" fill="#1f2328" text-anchor="middle">save(b)</text>
+  <text x="108" y="230" font-size="13" fill="#1f2328" text-anchor="middle">their events wait</text>
+  <text x="108" y="250" font-size="13" fill="#1f2328" text-anchor="middle">in the queue</text>
+  <rect x="208" y="104" width="144" height="180" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="280" y="134" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">before-commit</text>
+  <line x1="220" y1="146" x2="340" y2="146" stroke="#2b5d8a" stroke-opacity="0.35"/>
+  <text x="280" y="170" font-size="13" fill="#1f2328" text-anchor="middle">handlers run on</text>
+  <text x="280" y="190" font-size="13" fill="#1f2328" text-anchor="middle">the queue, in</text>
+  <text x="280" y="210" font-size="13" fill="#1f2328" text-anchor="middle">recording order,</text>
+  <text x="280" y="230" font-size="13" fill="#1f2328" text-anchor="middle">see a and b; the</text>
+  <text x="280" y="250" font-size="13" fill="#1f2328" text-anchor="middle">publisher writes</text>
+  <text x="280" y="270" font-size="13" fill="#1f2328" text-anchor="middle">the outbox row</text>
+  <rect x="380" y="104" width="144" height="180" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="452" y="134" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">commit</text>
+  <line x1="392" y1="146" x2="512" y2="146" stroke="#7a4f9a" stroke-opacity="0.35"/>
+  <text x="452" y="170" font-size="13" fill="#1f2328" text-anchor="middle">the state, what</text>
+  <text x="452" y="190" font-size="13" fill="#1f2328" text-anchor="middle">the handlers</text>
+  <text x="452" y="210" font-size="13" fill="#1f2328" text-anchor="middle">wrote and the</text>
+  <text x="452" y="230" font-size="13" fill="#1f2328" text-anchor="middle">outbox row,</text>
+  <text x="452" y="250" font-size="13" fill="#1f2328" text-anchor="middle">together</text>
+  <rect x="580" y="104" width="144" height="180" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="652" y="134" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">after-commit</text>
+  <line x1="592" y1="146" x2="712" y2="146" stroke="#2b5d8a" stroke-opacity="0.35"/>
+  <text x="652" y="170" font-size="13" fill="#1f2328" text-anchor="middle">handlers run on</text>
+  <text x="652" y="190" font-size="13" fill="#1f2328" text-anchor="middle">the same events,</text>
+  <text x="652" y="210" font-size="13" fill="#1f2328" text-anchor="middle">in the same order,</text>
+  <text x="652" y="230" font-size="13" fill="#1f2328" text-anchor="middle">at most once</text>
+  <rect x="792" y="104" width="144" height="180" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="864" y="134" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">relay</text>
+  <line x1="804" y1="146" x2="924" y2="146" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text x="864" y="170" font-size="13" fill="#1f2328" text-anchor="middle">reads the outbox</text>
+  <text x="864" y="190" font-size="13" fill="#1f2328" text-anchor="middle">row, publishes it,</text>
+  <text x="864" y="210" font-size="13" fill="#1f2328" text-anchor="middle">at least once</text>
+  <!-- one step after the other -->
+  <line x1="182" y1="194" x2="206" y2="194" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="354" y1="194" x2="378" y2="194" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="526" y1="194" x2="578" y2="194" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="726" y1="194" x2="790" y2="194" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <text x="758" y="182" font-size="13" fill="#1f2328" text-anchor="middle">later</text>
+  <!-- time axis -->
+  <line x1="24" y1="330" x2="934" y2="330" stroke="#3d4449" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="934" y="352" font-size="13" fill="#5f6b73" text-anchor="end">time</text>
+  <line x1="195" y1="322" x2="195" y2="338" stroke="#3d4449" stroke-width="2"/>
+  <text x="195" y="356" font-size="13" fill="#1f2328" text-anchor="middle">the handler returns</text>
+  <line x1="552" y1="322" x2="552" y2="338" stroke="#3d4449" stroke-width="2"/>
+  <text x="552" y="356" font-size="13" fill="#1f2328" text-anchor="middle">the transaction ends</text>
+  <line x1="758" y1="322" x2="758" y2="338" stroke="#3d4449" stroke-width="2"/>
+  <text x="758" y="356" font-size="13" fill="#1f2328" text-anchor="middle">the command answers</text>
+  <!-- legend -->
+  <line x1="40" y1="396" x2="84" y2="396" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="96" y="401" font-size="14" fill="#1f2328">then, awaited by the command</text>
+  <line x1="40" y1="420" x2="84" y2="420" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <text x="96" y="425" font-size="14" fill="#1f2328">later, outside the command, asynchronously</text>
+</svg>

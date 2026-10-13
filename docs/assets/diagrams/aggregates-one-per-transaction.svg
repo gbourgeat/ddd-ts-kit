@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 396" width="960" height="396" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">One aggregate per transaction: a second aggregate changes later, in reaction to an event</title>
+  <desc id="desc">Transaction 1: the handler of the command BookAppointment calls book on the Appointment aggregate, saves it and commits; the integration event appointments.appointment.booked is written to the outbox in the same commit. The outbox delivers it asynchronously, at least once. Transaction 2, later: the integration event handler of the reminder context sends the command that creates a Reminder, another aggregate, saved in its own transaction. A before-commit domain event handler would not do: the command it sends joins the unit of work of transaction 1, so both aggregates would be saved together.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="396" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">One aggregate per transaction</text>
+  <!-- transaction 1 -->
+  <rect x="24" y="60" width="360" height="248" rx="14" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="44" y="86" font-size="14" font-weight="600" fill="#5f6b73">transaction 1: the command BookAppointment</text>
+  <rect x="84" y="104" width="240" height="62" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="204" y="130" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">command handler</text>
+  <text x="204" y="152" font-size="13" fill="#1f2328" text-anchor="middle">BookAppointment</text>
+  <line x1="204" y1="168" x2="204" y2="204" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="214" y="192" font-size="13" fill="#1f2328">book(...), then save</text>
+  <rect x="84" y="206" width="240" height="62" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="204" y="232" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">Appointment</text>
+  <text x="204" y="254" font-size="13" fill="#1f2328" text-anchor="middle">one aggregate</text>
+  <text x="204" y="292" font-size="13" font-style="italic" fill="#5f6b73" text-anchor="middle">commit: appointment and outbox row</text>
+  <!-- the event -->
+  <line x1="386" y1="237" x2="572" y2="237" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <text x="480" y="187" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">integration event</text>
+  <text x="480" y="205" font-size="13" fill="#1f2328" text-anchor="middle">appointments.</text>
+  <text x="480" y="223" font-size="13" fill="#1f2328" text-anchor="middle">appointment.booked</text>
+  <text x="480" y="257" font-size="13" fill="#1f2328" text-anchor="middle">through the outbox,</text>
+  <text x="480" y="275" font-size="13" fill="#1f2328" text-anchor="middle">later, at least once</text>
+  <!-- transaction 2 -->
+  <rect x="576" y="60" width="360" height="248" rx="14" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="596" y="86" font-size="14" font-weight="600" fill="#5f6b73">transaction 2: in reaction to the event</text>
+  <rect x="636" y="104" width="240" height="62" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="756" y="130" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">event handler</text>
+  <text x="756" y="152" font-size="13" fill="#1f2328" text-anchor="middle">of the integration event, reminders</text>
+  <line x1="756" y1="168" x2="756" y2="204" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="766" y="192" font-size="13" fill="#1f2328">a command: create, save</text>
+  <rect x="636" y="206" width="240" height="62" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="756" y="232" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">Reminder</text>
+  <text x="756" y="254" font-size="13" fill="#1f2328" text-anchor="middle">another aggregate</text>
+  <text x="756" y="292" font-size="13" font-style="italic" fill="#5f6b73" text-anchor="middle">its own commit; retried if it fails</text>
+  <!-- legend and the alternative refused -->
+  <line x1="40" y1="338" x2="84" y2="338" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <text x="96" y="343" font-size="14" fill="#1f2328">an integration event, published through the outbox and delivered at least once.</text>
+  <text x="40" y="371" font-size="14" fill="#1f2328">Not a before-commit domain event handler: the command it sends joins transaction 1.</text>
+</svg>

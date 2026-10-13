@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 568" width="960" height="568" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Trois ports du noyau, deux jeux d'adaptateurs</title>
+  <desc id="desc">Une gateway enveloppée par l'aspect cached, une route ou un cas d'usage dont le débit est limité, et le planificateur de jobs avec getOrLoad dépendent des ports Cache, RateLimiter et Lock du noyau. Deux jeux d'adaptateurs les implémentent : ceux en mémoire que kernelModule lie par défaut, corrects pour un processus, et les adaptateurs de @ddd-ts-kit/redis, liés par la plateforme sur une connexion à Redis, Valkey ou Dragonfly.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+    <marker id="arrow-infrastructure" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#7a4f9a"/>
+    </marker>
+  </defs>
+  <rect width="960" height="568" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Trois ports du noyau, deux jeux d'adaptateurs</text>
+  <!-- who depends on the ports -->
+  <rect x="32" y="62" width="280" height="68" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="172" y="90" font-size="16" font-weight="700" fill="#1f2328" text-anchor="middle">une gateway, par cached</text>
+  <text x="172" y="114" font-size="13" fill="#1f2328" text-anchor="middle">Cache : get, set, delete</text>
+  <rect x="340" y="62" width="280" height="68" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="480" y="90" font-size="16" font-weight="700" fill="#1f2328" text-anchor="middle">une route, un cas d'usage</text>
+  <text x="480" y="114" font-size="13" fill="#1f2328" text-anchor="middle">RateLimiter : consume</text>
+  <rect x="648" y="62" width="280" height="68" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="788" y="90" font-size="16" font-weight="700" fill="#1f2328" text-anchor="middle">le planificateur, getOrLoad</text>
+  <text x="788" y="114" font-size="13" fill="#1f2328" text-anchor="middle">Lock : acquire, release</text>
+  <line x1="172" y1="132" x2="172" y2="172" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="480" y1="132" x2="480" y2="172" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="788" y1="132" x2="788" y2="172" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- ports -->
+  <rect x="32" y="176" width="896" height="68" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="480" y="204" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">ports du noyau : Cache, RateLimiter, Lock</text>
+  <text x="480" y="228" font-size="13" fill="#1f2328" text-anchor="middle">ce dont le code dépend ; l'adaptateur est lié une fois, à la racine de composition</text>
+  <!-- adapters -->
+  <rect x="32" y="300" width="420" height="112" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="242" y="328" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">en mémoire : ce que lie kernelModule()</text>
+  <text x="242" y="354" font-size="13" fill="#1f2328" text-anchor="middle">InMemoryCache, InMemoryRateLimiter, InMemoryLock</text>
+  <text x="242" y="376" font-size="13" fill="#1f2328" text-anchor="middle">corrects pour un processus et pour les tests</text>
+  <text x="242" y="398" font-size="13" fill="#1f2328" text-anchor="middle">aucun serveur à faire tourner</text>
+  <rect x="508" y="300" width="420" height="112" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="718" y="328" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">@ddd-ts-kit/redis : liés par la plateforme</text>
+  <text x="718" y="354" font-size="13" fill="#1f2328" text-anchor="middle">RedisCache, RedisRateLimiter, RedisLock</text>
+  <text x="718" y="376" font-size="13" fill="#1f2328" text-anchor="middle">sur une connexion ioredis</text>
+  <text x="718" y="398" font-size="13" fill="#1f2328" text-anchor="middle">partagés par toutes les instances</text>
+  <path d="M242,298 V248" fill="none" stroke="#7a4f9a" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow-infrastructure)"/>
+  <path d="M718,298 V248" fill="none" stroke="#7a4f9a" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow-infrastructure)"/>
+  <text x="480" y="270" font-size="14" fill="#7a4f9a" text-anchor="middle">l'un ou l'autre jeu les implémente</text>
+  <!-- server -->
+  <rect x="508" y="444" width="420" height="56" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="718" y="468" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">Redis, Valkey ou Dragonfly</text>
+  <text x="718" y="490" font-size="13" fill="#1f2328" text-anchor="middle">une connexion, derrière REDIS_URL</text>
+  <line x1="718" y1="414" x2="718" y2="440" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- legend -->
+  <line x1="40" y1="460" x2="84" y2="460" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="96" y="465" font-size="14" fill="#1f2328">dépend de, ou se connecte à</text>
+  <line x1="40" y1="488" x2="84" y2="488" stroke="#7a4f9a" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow-infrastructure)"/>
+  <text x="96" y="493" font-size="14" fill="#1f2328">implémente un port</text>
+  <text x="32" y="540" font-size="14" fill="#1f2328">Le domaine et l'application n'importent jamais @ddd-ts-kit/redis (layer/domain-purity, layer/application-inward).</text>
+</svg>

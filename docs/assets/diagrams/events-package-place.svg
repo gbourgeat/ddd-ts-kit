@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 648" width="960" height="648" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">One integration event through @ddd-ts-kit/events</title>
+  <desc id="desc">Inside the transaction of the command, in the producing context: the aggregate Order records the domain event OrderPlaced; its publisher, a handler of that domain event, calls orderPlaced.create and publishes to the IntegrationEventPublisher port, bound to validatingPublisher and scopedPublisher around the OutboxPublisher, which appends a pending record to the outbox table in the same transaction. After the commit: the OutboxRelay claims the record, publishes it to the broker or the in-memory bus, and marks it published or schedules a retry; the broker delivers the event at least once to consume, in the consuming context, which parses and deduplicates it and runs the handler in one unit of work; the handler sends the command IssueInvoice, which joins that unit of work. One declaration per event and version feeds create, parse, the registry, the AsyncAPI document and the event catalog.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="648" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">One integration event through @ddd-ts-kit/events</text>
+
+  <!-- lane 1: inside the transaction -->
+  <rect x="24" y="56" width="912" height="160" rx="12" fill="none" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="44" y="80" font-size="14" font-weight="600" fill="#5f6b73">ordering, the producer: inside the transaction of the command</text>
+
+  <rect x="48" y="96" width="198" height="104" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="147" y="122" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">aggregate Order</text>
+  <text x="147" y="146" font-size="13" fill="#1f2328" text-anchor="middle">place() records</text>
+  <text x="147" y="166" font-size="13" fill="#1f2328" text-anchor="middle">the domain event</text>
+  <text x="147" y="186" font-size="13" fill="#1f2328" text-anchor="middle">OrderPlaced</text>
+
+  <rect x="270" y="96" width="198" height="104" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="369" y="122" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">publisher</text>
+  <text x="369" y="146" font-size="13" fill="#1f2328" text-anchor="middle">handler of OrderPlaced,</text>
+  <text x="369" y="166" font-size="13" fill="#1f2328" text-anchor="middle">before the commit:</text>
+  <text x="369" y="186" font-size="13" fill="#1f2328" text-anchor="middle">orderPlaced.create(...)</text>
+
+  <rect x="492" y="96" width="198" height="104" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="591" y="122" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">publisher port</text>
+  <text x="591" y="146" font-size="13" fill="#1f2328" text-anchor="middle">IntegrationEventPublisher</text>
+  <text x="591" y="166" font-size="13" fill="#1f2328" text-anchor="middle">scopedPublisher,</text>
+  <text x="591" y="186" font-size="13" fill="#1f2328" text-anchor="middle">validatingPublisher</text>
+
+  <rect x="714" y="96" width="198" height="104" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="813" y="122" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">OutboxPublisher</text>
+  <text x="813" y="146" font-size="13" fill="#1f2328" text-anchor="middle">appends a pending</text>
+  <text x="813" y="166" font-size="13" fill="#1f2328" text-anchor="middle">record, in the same</text>
+  <text x="813" y="186" font-size="13" fill="#1f2328" text-anchor="middle">transaction</text>
+
+  <line x1="248" y1="148" x2="268" y2="148" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="470" y1="148" x2="490" y2="148" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="692" y1="148" x2="712" y2="148" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- the outbox table, between the two lanes -->
+  <rect x="714" y="236" width="198" height="56" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="813" y="259" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">outbox table</text>
+  <text x="813" y="280" font-size="13" fill="#1f2328" text-anchor="middle">the OutboxStore port</text>
+  <line x1="813" y1="202" x2="813" y2="234" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="813" y1="294" x2="813" y2="350" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="700" y="268" font-size="13" fill="#1f2328" text-anchor="end">commits with the business write,</text>
+  <text x="700" y="286" font-size="13" fill="#1f2328" text-anchor="end">or rolls back with it</text>
+
+  <!-- lane 2: after the commit -->
+  <rect x="24" y="312" width="912" height="168" rx="12" fill="none" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="44" y="336" font-size="14" font-weight="600" fill="#5f6b73">after the commit: published, then delivered at least once</text>
+
+  <rect x="714" y="352" width="198" height="104" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="813" y="378" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">OutboxRelay</text>
+  <text x="813" y="402" font-size="13" fill="#1f2328" text-anchor="middle">claimBatch, publish,</text>
+  <text x="813" y="422" font-size="13" fill="#1f2328" text-anchor="middle">then markPublished,</text>
+  <text x="813" y="442" font-size="13" fill="#1f2328" text-anchor="middle">or markFailed: a retry</text>
+
+  <rect x="492" y="352" width="198" height="104" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="591" y="378" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">broker or bus</text>
+  <text x="591" y="402" font-size="13" fill="#1f2328" text-anchor="middle">RabbitMQ, Kafka, NATS,</text>
+  <text x="591" y="422" font-size="13" fill="#1f2328" text-anchor="middle">Redis Streams,</text>
+  <text x="591" y="442" font-size="13" fill="#1f2328" text-anchor="middle">the in-memory bus</text>
+
+  <rect x="270" y="352" width="198" height="104" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="369" y="378" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">consume</text>
+  <text x="369" y="402" font-size="13" fill="#1f2328" text-anchor="middle">parse, deduplicate,</text>
+  <text x="369" y="422" font-size="13" fill="#1f2328" text-anchor="middle">run the handler, all</text>
+  <text x="369" y="442" font-size="13" fill="#1f2328" text-anchor="middle">in one unit of work</text>
+
+  <rect x="48" y="352" width="198" height="104" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="147" y="378" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">IssueInvoice</text>
+  <text x="147" y="402" font-size="13" fill="#1f2328" text-anchor="middle">a command of billing,</text>
+  <text x="147" y="422" font-size="13" fill="#1f2328" text-anchor="middle">the consumer: it joins</text>
+  <text x="147" y="442" font-size="13" fill="#1f2328" text-anchor="middle">that unit of work</text>
+
+  <line x1="712" y1="404" x2="692" y2="404" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="490" y1="404" x2="470" y2="404" stroke="#3d4449" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arrow)"/>
+  <line x1="268" y1="404" x2="248" y2="404" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- the declaration -->
+  <rect x="24" y="500" width="912" height="86" rx="12" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="44" y="526" font-size="14" font-weight="600" fill="#1f2328">One declaration per event and version: orderPlaced = defineIntegrationEvent({ type, version, payload })</text>
+  <text x="44" y="550" font-size="13" fill="#1f2328">create() in the publisher, parse() in consume, and createEventRegistry() for validatingPublisher,</text>
+  <text x="44" y="572" font-size="13" fill="#1f2328">generateAsyncApi() and generateEventCatalog(): the documents always say what the code publishes.</text>
+
+  <!-- legend -->
+  <line x1="40" y1="614" x2="84" y2="614" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="96" y="619" font-size="14" fill="#1f2328">a call</text>
+  <line x1="200" y1="614" x2="244" y2="614" stroke="#3d4449" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arrow)"/>
+  <text x="256" y="619" font-size="14" fill="#1f2328">an asynchronous delivery, at least once</text>
+</svg>

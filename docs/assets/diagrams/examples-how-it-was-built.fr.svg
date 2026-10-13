@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" width="960" height="420" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Comment l'exemple scheduling a été construit</title>
+  <desc id="desc">Huit étapes, chacune laissant un document : sept sous docs/architecture, la dernière sous docs/. L'expression des besoins, la seule entrée, est en gris. Conception stratégique, avant tout code : l'expression des besoins, la découverte, les contextes délimités, puis les glossaires et l'ébauche de la carte des contextes. Amorçage et construction : le plan avec la commande init, les tranches, les consignes de cinq workers en parallèle, et la transcription de la démo : après une porte verte (npm run verify), une exécution réelle enregistrée.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="420" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Comment l'exemple a été construit : d'une page de besoins à une porte verte</text>
+
+  <!-- strategic design -->
+  <text x="40" y="74" font-size="14" font-weight="600" fill="#2f6f4f">conception stratégique, avant tout code</text>
+  <rect x="40" y="86" width="200" height="90" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="140" y="114" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">1. needs.md</text>
+  <text x="140" y="138" font-size="13" fill="#1f2328" text-anchor="middle">une page du product owner,</text>
+  <text x="140" y="156" font-size="13" fill="#1f2328" text-anchor="middle">la seule entrée</text>
+  <rect x="264" y="86" width="200" height="90" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="364" y="114" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">2. discovery.md</text>
+  <text x="364" y="138" font-size="13" fill="#1f2328" text-anchor="middle">acteurs, commandes,</text>
+  <text x="364" y="156" font-size="13" fill="#1f2328" text-anchor="middle">événements et politiques</text>
+  <rect x="488" y="86" width="200" height="90" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="588" y="114" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">3. contexts.md</text>
+  <text x="588" y="138" font-size="13" fill="#1f2328" text-anchor="middle">un cœur, trois de soutien,</text>
+  <text x="588" y="156" font-size="13" fill="#1f2328" text-anchor="middle">une raison par frontière</text>
+  <rect x="712" y="86" width="200" height="90" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="812" y="114" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">4. before-bootstrap/</text>
+  <text x="812" y="138" font-size="13" fill="#1f2328" text-anchor="middle">un glossaire par contexte,</text>
+  <text x="812" y="156" font-size="13" fill="#1f2328" text-anchor="middle">l'ébauche de la carte</text>
+  <line x1="240" y1="131" x2="260" y2="131" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="464" y1="131" x2="484" y2="131" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="688" y1="131" x2="708" y2="131" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- from the strategy to the bootstrap -->
+  <path d="M812,176 V214 H140 V256" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- bootstrap and build -->
+  <text x="912" y="246" font-size="14" font-weight="600" fill="#2b5d8a" text-anchor="end">amorçage et construction</text>
+  <rect x="40" y="260" width="200" height="90" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="140" y="288" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">5. plan.md</text>
+  <text x="140" y="312" font-size="13" fill="#1f2328" text-anchor="middle">les décisions, et la</text>
+  <text x="140" y="330" font-size="13" fill="#1f2328" text-anchor="middle">commande init, mot pour mot</text>
+  <rect x="264" y="260" width="200" height="90" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="364" y="288" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">6. slices.md</text>
+  <text x="364" y="312" font-size="13" fill="#1f2328" text-anchor="middle">le backlog : une ligne</text>
+  <text x="364" y="330" font-size="13" fill="#1f2328" text-anchor="middle">par cas d'usage, dans l'ordre</text>
+  <rect x="488" y="260" width="200" height="90" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="588" y="288" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">7. briefings/</text>
+  <text x="588" y="312" font-size="13" fill="#1f2328" text-anchor="middle">cinq workers en parallèle,</text>
+  <text x="588" y="330" font-size="13" fill="#1f2328" text-anchor="middle">un périmètre chacun</text>
+  <rect x="712" y="260" width="200" height="90" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="812" y="288" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">8. demo-transcript.md</text>
+  <text x="812" y="312" font-size="13" fill="#1f2328" text-anchor="middle">après une porte verte, une</text>
+  <text x="812" y="330" font-size="13" fill="#1f2328" text-anchor="middle">exécution réelle enregistrée</text>
+  <line x1="240" y1="305" x2="260" y2="305" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="464" y1="305" x2="484" y2="305" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="688" y1="305" x2="708" y2="305" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <text x="40" y="386" font-size="14" fill="#1f2328">Étapes 1 à 7 : docs/architecture/ ; étape 8 : docs/. Chaque étape stratégique se clôt par une question au propriétaire.</text>
+  <text x="40" y="408" font-size="14" fill="#1f2328">La durée de chaque étape, et ce que l'outillage a bien ou mal fait : docs/tooling-report.md.</text>
+</svg>

@@ -1,3 +1,5 @@
+**English** · [Français](README.fr.md)
+
 # @ddd-ts-kit/nats
 
 The integration event provider for NATS JetStream: an `EventBus` of the kernel that publishes
@@ -29,17 +31,24 @@ each consuming context listens through the bus under its own name. The bus is gi
 application as two ports of the kernel: `IntegrationEventPublisher` stays the outbox, and
 `EventSubscribers` hands each context the subscriber of its own consumer name.
 
+![The handler of ordering writes the order and an outbox record in one transaction; the outbox relay gives the record to NatsEventBus, which publishes it to the stream integration-events with the event id as Nats-Msg-Id and waits for the acknowledgement; the stream drops a second message with the same id within its duplicate window; one durable consumer per consumer and event type pulls the message and hands it to the handlers of its context, acknowledged after their unit of work committed; what a consumer gives up on is copied to the stream integration-events-dead](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/nats-outbox-to-consumers.svg)
+
 `init --broker nats` writes this wiring in the platform of the project: the bus is built by
 `platform/events/create-event-provider.ts`, `platform/platform.module.ts` rebinds
 `EventSubscribers` on it, and `main.ts` gives it, traced, to the outbox relay. By hand, the
 same thing reads:
 
+<!-- checked sample -->
 ```ts
 // platform/messaging.module.ts
 import { defineContextModule } from '@ddd-ts-kit/di';
-import { EventSubscribers, IntegrationEventPublisher } from '@ddd-ts-kit/kernel';
+import { EventSubscribers, IntegrationEventPublisher, type Logger, type Metrics } from '@ddd-ts-kit/kernel';
 import { OutboxPublisher, OutboxStore } from '@ddd-ts-kit/events';
 import { NatsEventBus } from '@ddd-ts-kit/nats';
+
+declare const config: { readonly natsUrl: string };
+declare const logger: Logger;
+declare const metrics: Metrics;
 
 export const bus = new NatsEventBus({
   connection: config.natsUrl, // or a list, or options of the client, or a factory opening a new connection
@@ -49,7 +58,8 @@ export const bus = new NatsEventBus({
   retry: { maxAttempts: 5, delayMs: 5_000 }, // the defaults
   prefetch: 10, // the default
   onFailure: (failure) => logger.warn('event bus failure', { ...failure }), // codes only, never an error message
-  onDelivery: ({ consumer, outcome }) => deliveries.add(1, { consumer, outcome }),
+  // The label `outcome` of the kernel is success or failure: the four outcomes of a delivery take another name.
+  onDelivery: ({ consumer, outcome }) => metrics.counter('event_deliveries_total').increment({ consumer, status: outcome }),
 });
 
 export const messagingModule = defineContextModule({
@@ -63,11 +73,32 @@ export const messagingModule = defineContextModule({
 });
 ```
 
+<!-- checked sample -->
 ```ts
-// contexts/billing/application/integration/handlers/invoice-on-order-placed.integration-handler.ts
-import { CommandBus, systemActor, type IntegrationEvent } from '@ddd-ts-kit/kernel';
+import { Command, CommandBus, systemActor, type Actor, type IntegrationEvent } from '@ddd-ts-kit/kernel';
 import { IntegrationEventHandler } from '@ddd-ts-kit/kernel/declarations';
+import { defineIntegrationEvent, type PayloadOf } from '@ddd-ts-kit/events';
+import { zodSchema } from '@ddd-ts-kit/validation/zod';
+import { z } from 'zod';
 
+// contexts/ordering/published-language: the contract billing listens to.
+export const orderPlaced = defineIntegrationEvent({
+  type: 'ordering.order.placed',
+  version: 1,
+  payload: zodSchema(z.object({ orderId: z.string() })),
+});
+
+// contexts/billing/application/commands/issue-invoice/issue-invoice.command.ts
+export class IssueInvoice extends Command {
+  constructor(
+    readonly actor: Actor,
+    readonly orderId: string,
+  ) {
+    super();
+  }
+}
+
+// contexts/billing/application/integration/handlers/invoice-on-order-placed.integration-handler.ts
 @IntegrationEventHandler(orderPlaced, { consumer: 'billing.invoice-on-order-placed' })
 export class InvoiceOnOrderPlacedIntegrationHandler {
   constructor(private readonly commands: CommandBus) {}
@@ -75,18 +106,26 @@ export class InvoiceOnOrderPlacedIntegrationHandler {
   // Nobody is calling: the handler acts as a system actor named after its consumer.
   readonly actor = systemActor('billing.invoice-on-order-placed');
 
-  async handle(event: IntegrationEvent<OrderPlacedPayload>): Promise<void> {
+  async handle(event: IntegrationEvent<PayloadOf<typeof orderPlaced>>): Promise<void> {
     await this.commands.execute(new IssueInvoice(this.actor, event.payload.orderId));
   }
 }
 ```
 
+<!-- checked sample -->
 ```ts
 // main.ts
-import { contextModule, createApplication, kernelModule } from '@ddd-ts-kit/di';
+import { contextModule, createApplication, kernelModule, type ContextModule, type DeclaredSource } from '@ddd-ts-kit/di';
 import { Clock } from '@ddd-ts-kit/kernel';
 import { OutboxRelay, OutboxStore } from '@ddd-ts-kit/events';
-import { bus, messagingModule } from '@/platform/messaging.module';
+import type { NatsEventBus } from '@ddd-ts-kit/nats';
+
+// In a project: import { bus, messagingModule } from '@/platform/messaging.module';
+declare const bus: NatsEventBus;
+declare const messagingModule: ContextModule;
+declare const persistenceModule: ContextModule;
+declare const orderingDeclarations: DeclaredSource;
+declare const billingDeclarations: DeclaredSource;
 
 const app = createApplication({
   modules: [
@@ -123,6 +162,40 @@ process.on('SIGTERM', async () => {
   `kernelModule({ eventBus: bus, eventSubscribers: () => ({ forContext: (name) => bus.forConsumer(name) }) })`.
 - Without a container the same objects are wired by hand: `bus.forConsumer('billing')` is an
   `IntegrationEventSubscriber`, to give to `subscribeAll` and `consume` of `@ddd-ts-kit/events`.
+  A bus built without the `consumer` option has no name to give its durable consumers, so
+  `bus.subscribe(...)` throws `ConsumerNameRequiredError`: name the consuming context instead.
+
+<!-- checked sample -->
+```ts
+import { consume, defineIntegrationEvent, subscribeAll } from '@ddd-ts-kit/events';
+import type { ProcessedEventStore, UnitOfWork } from '@ddd-ts-kit/kernel';
+import { NatsEventBus } from '@ddd-ts-kit/nats';
+import { zodSchema } from '@ddd-ts-kit/validation/zod';
+import { z } from 'zod';
+
+declare const processed: ProcessedEventStore; // the store of the persistence adapter
+declare const unitOfWork: UnitOfWork; // the transaction of the database
+declare function issueInvoice(orderId: string): Promise<void>;
+
+const orderPlaced = defineIntegrationEvent({
+  type: 'ordering.order.placed',
+  version: 1,
+  payload: zodSchema(z.object({ orderId: z.string() })),
+});
+
+const bus = new NatsEventBus({ connection: 'nats://127.0.0.1:4222' });
+
+// Instead of: bus.subscribe(orderPlaced.type, handler), which throws ConsumerNameRequiredError here.
+// Write: the subscriber of one consuming context, whose name its durable consumers carry.
+export const billing = subscribeAll(bus.forConsumer('billing'), [
+  consume(orderPlaced, { consumer: 'billing.invoice-on-order-placed', processed, unitOfWork }, async (event) => {
+    await issueInvoice(event.payload.orderId);
+  }),
+]);
+
+await bus.assertTopology(); // creates billing_ordering_order_placed, then consumes
+```
+
 - `publish(events)` resolves only when the stream acknowledged **every** message of the batch
   as stored and rejects otherwise (`PUBLISH_NOT_ACKNOWLEDGED`, `BROKER_UNAVAILABLE`,
   `EVENT_BUS_CLOSED`). Nothing is buffered for later: the outbox is the buffer.
@@ -188,6 +261,8 @@ aggregate matters.
 
 ## Retry and dead-letter behaviour
 
+![What becomes of a message delivered to a durable consumer: a message replayed for another consumer is acknowledged and skipped; a body that is not an envelope is copied to the dead-letter stream as poison and terminated; otherwise every handler of the type runs; when they all resolved the message is acknowledged; when one threw before the last attempt the message is refused with a delay and the server delivers it again, delivery count plus one; at the attempt retry.maxAttempts it is copied to the dead-letter stream with max-attempts, then terminated](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/nats-retry-and-dead-letter.svg)
+
 1. A message is acknowledged after every handler subscribed to its durable consumer
    resolved. A declared `@IntegrationEventHandler` (or `consume` of `@ddd-ts-kit/events` by
    hand) commits its work and its idempotency mark in one unit of work: the acknowledgement
@@ -200,9 +275,10 @@ aggregate matters.
    (`<stream>/<sequence>`), waits for the acknowledgement of the dead-letter stream, then
    terminates the original (`term`). If the copy cannot be stored the message is refused
    with the delay instead, and parked at a later delivery.
-4. A message whose body is not an envelope (unparseable, or without `id`, `type`, `version`,
-   `occurredAt`) is poison: it goes straight to the dead-letter stream with
-   `x-dead-reason: poison` and `x-error-code: POISON_MESSAGE`, and no handler sees it.
+4. A message whose body is not an envelope (unparseable, without `id`, `type`, `version` or
+   `occurredAt`, or with a `tenantId` that `isTenantId` of the kernel refuses) is poison: it
+   goes straight to the dead-letter stream with `x-dead-reason: poison` and
+   `x-error-code: POISON_MESSAGE`, and no handler sees it.
 5. Only codes travel: `x-error-code` is the `code` of the error or its class name. The message
    of an error is never logged, reported or attached, because it may quote payload data.
 
@@ -241,7 +317,8 @@ this package: do not log those.
 
 **What a handler is told.** Next to the event, each handler receives the delivery
 (`EventDelivery` of the kernel): `{ attempt, maxAttempts, system: 'nats', destination, consumer }`,
-where `destination` is the subject. Handlers of the application ignore it; `@ddd-ts-kit/tracing` reads it
+where `destination` is the subject and `consumer` the durable consumer
+(`billing_ordering_order_placed`). Handlers of the application ignore it; `@ddd-ts-kit/tracing` reads it
 to make one CONSUMER span per attempt and to mark the redeliveries and the attempt after which
 the event is buried. The bus names itself `messagingSystem: 'nats'`, and `traceparent` travels in
 the envelope and as a real header, intact across a retry.
@@ -261,10 +338,22 @@ What to watch:
 | `onFailure` with `kind: 'connection'` | this bus | disconnections (`CONNECTION_LOST`) and requests the server refused (`JETSTREAM_<code>`) |
 | `bus.deliveriesInFlight` | this bus | handlers running now; stuck above 0 means a handler that hangs |
 
+With an error tracker, `DeadLetterReports` of the kernel turns `onFailure` into reports of the
+events given up, and of those only: `onFailure: (failure) => reports.onFailure(failure)`, and
+`reports.observing(bus.forConsumer(name))` as the subscriber of each context, so that a report
+carries what the handler threw. `init` wires it when the project has one.
+
 Replaying dead messages, once the cause is fixed:
 
+<!-- checked sample -->
 ```ts
+import type { NatsEventBus } from '@ddd-ts-kit/nats';
+
+declare const bus: NatsEventBus;
+
+// Up to 100 messages billing gave up on for this type, oldest first.
 const replayed = await bus.replayDead({ consumer: 'billing', type: 'ordering.order.placed' }, 100);
+console.log(`${String(replayed)} message(s) replayed`);
 ```
 
 It moves up to that many messages of that consumer from the dead-letter stream back to the

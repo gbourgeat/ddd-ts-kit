@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" width="960" height="540" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">D'où vient le tenant du travail, et ce qui le lit</title>
+  <desc id="desc">Trois frontières nomment le tenant : une requête HTTP, par un résolveur vérifié contre les appartenances de l'appelant ; un événement consommé, par le tenantId de son enveloppe ; un job par tenant, une fois pour chaque tenant du TenantDirectory. Chacune ouvre la portée d'exécution de son unité de travail avec ce tenant. L'infrastructure le lit : les repositories par tenantTable et ownTenantTable, l'outbox et les brokers, les clés des caches, des limites de débit et des verrous, les journaux et le journal d'audit. Les gestionnaires et le domaine ne lisent jamais la portée : une règle qui a besoin du tenant le reçoit comme une donnée.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="540" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">D'où vient le tenant, et ce qui le lit</text>
+  <!-- sources -->
+  <rect x="24" y="72" width="252" height="100" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="150" y="98" font-size="16" font-weight="700" fill="#9a5b2b" text-anchor="middle">requête HTTP</text>
+  <text x="150" y="120" font-size="13" fill="#1f2328" text-anchor="middle">un résolveur : sous-domaine, en-tête,</text>
+  <text x="150" y="140" font-size="13" fill="#1f2328" text-anchor="middle">segment de chemin ou claim du jeton,</text>
+  <text x="150" y="160" font-size="13" fill="#1f2328" text-anchor="middle">vérifié contre les appartenances</text>
+  <rect x="24" y="196" width="252" height="76" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="150" y="224" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">événement consommé</text>
+  <text x="150" y="248" font-size="13" fill="#1f2328" text-anchor="middle">le tenantId de son enveloppe</text>
+  <rect x="24" y="296" width="252" height="92" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="150" y="322" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">job par tenant</text>
+  <text x="150" y="346" font-size="13" fill="#1f2328" text-anchor="middle">une exécution par tenant du</text>
+  <text x="150" y="366" font-size="13" fill="#1f2328" text-anchor="middle">TenantDirectory, tour à tour</text>
+  <!-- execution scope -->
+  <rect x="340" y="176" width="240" height="116" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="460" y="204" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">portée d'exécution</text>
+  <line x1="356" y1="216" x2="564" y2="216" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text x="460" y="238" font-size="13" fill="#1f2328" text-anchor="middle">tenantId, correlationId, actor</text>
+  <text x="460" y="258" font-size="13" fill="#1f2328" text-anchor="middle">une par unité de travail</text>
+  <text x="460" y="278" font-size="13" fill="#1f2328" text-anchor="middle">ouverte à la frontière</text>
+  <line x1="278" y1="122" x2="338" y2="208" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="278" y1="234" x2="338" y2="234" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="278" y1="342" x2="338" y2="262" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- readers: infrastructure -->
+  <rect x="660" y="60" width="276" height="72" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="798" y="88" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">repositories</text>
+  <text x="798" y="112" font-size="13" fill="#1f2328" text-anchor="middle">tenantTable, ownTenantTable</text>
+  <rect x="660" y="148" width="276" height="72" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="798" y="176" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">outbox et brokers</text>
+  <text x="798" y="200" font-size="13" fill="#1f2328" text-anchor="middle">colonne tenant_id, en-tête x-tenant-id</text>
+  <rect x="660" y="236" width="276" height="72" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="798" y="264" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">caches, limites, verrous</text>
+  <text x="798" y="288" font-size="13" fill="#1f2328" text-anchor="middle">clés tenant:&lt;id&gt;:...</text>
+  <rect x="660" y="324" width="276" height="72" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="798" y="352" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">journaux et journal d'audit</text>
+  <text x="798" y="376" font-size="13" fill="#1f2328" text-anchor="middle">champ tenantId, une chaîne par tenant</text>
+  <line x1="582" y1="226" x2="656" y2="98" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="582" y1="230" x2="656" y2="186" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="582" y1="240" x2="656" y2="272" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="582" y1="246" x2="656" y2="356" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- never read by handlers and the domain -->
+  <line x1="460" y1="294" x2="460" y2="398" stroke="#5f6b73" stroke-width="2" stroke-dasharray="3 5"/>
+  <text x="470" y="350" font-size="13" font-style="italic" fill="#5f6b73">jamais lue</text>
+  <rect x="320" y="400" width="280" height="84" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="460" y="426" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">gestionnaires et domaine</text>
+  <text x="460" y="448" font-size="13" fill="#1f2328" text-anchor="middle">une règle qui a besoin du tenant</text>
+  <text x="460" y="468" font-size="13" fill="#1f2328" text-anchor="middle">le reçoit en donnée, dans la commande</text>
+  <!-- legend -->
+  <line x1="40" y1="516" x2="84" y2="516" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="96" y="521" font-size="14" fill="#1f2328">nomme le tenant, ou le lit</text>
+  <line x1="660" y1="516" x2="704" y2="516" stroke="#5f6b73" stroke-width="2" stroke-dasharray="3 5"/>
+  <text x="716" y="521" font-size="14" fill="#1f2328">aucun accès</text>
+</svg>

@@ -1,3 +1,5 @@
+**English** · [Français](glossary.fr.md)
+
 # Ubiquitous language (before the bootstrap)
 
 One section per context. The bootstrap turns each row into a `--term` of `generate context` and

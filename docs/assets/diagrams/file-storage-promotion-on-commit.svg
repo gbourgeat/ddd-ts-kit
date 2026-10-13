@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 500" width="960" height="500" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">The file lands with the commit, or goes back to staging/</title>
+  <desc id="desc">Two lanes, the unit of work on the database and the file storage, over three steps and two outcomes. 1, stage: before any transaction, the file is written under staging/k and scanned. 2, save: the row is saved with document.key = k, not committed yet. 3, promote: as the last step of the transaction, the file moves from staging/k to k. If the transaction commits, the row and the file land together. If it rolls back, no row points to k and the file moves back to staging/k. Every hour, files.purge-staged removes the staged files older than a day, which are all orphans.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="500" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">The file lands with the commit, or goes back to staging/</text>
+  <!-- column headers -->
+  <text x="222" y="80" font-size="14" font-weight="700" fill="#1f2328" text-anchor="middle">1. stage</text>
+  <text x="384" y="80" font-size="14" font-weight="700" fill="#1f2328" text-anchor="middle">2. save</text>
+  <text x="546" y="80" font-size="14" font-weight="700" fill="#1f2328" text-anchor="middle">3. promote</text>
+  <text x="798" y="80" font-size="14" font-weight="700" fill="#1f2328" text-anchor="middle">4. outcome</text>
+  <text x="222" y="101" font-size="13" fill="#5f6b73" text-anchor="middle">after the permission</text>
+  <text x="384" y="101" font-size="13" fill="#5f6b73" text-anchor="middle">in the transaction</text>
+  <text x="546" y="101" font-size="13" fill="#5f6b73" text-anchor="middle">before the commit</text>
+  <text x="798" y="101" font-size="13" fill="#5f6b73" text-anchor="middle">one of two</text>
+  <!-- lane labels -->
+  <rect x="24" y="116" width="116" height="120" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="82" y="170" font-size="14" font-weight="700" fill="#7a4f9a" text-anchor="middle">unit of work</text>
+  <text x="82" y="190" font-size="13" fill="#7a4f9a" text-anchor="middle">(database)</text>
+  <rect x="24" y="256" width="116" height="120" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="82" y="320" font-size="14" font-weight="700" fill="#5f6b73" text-anchor="middle">file storage</text>
+  <!-- lane: database -->
+  <text x="222" y="160" font-size="13" font-style="italic" fill="#5f6b73" text-anchor="middle">no transaction yet:</text>
+  <text x="222" y="180" font-size="13" font-style="italic" fill="#5f6b73" text-anchor="middle">the client may still</text>
+  <text x="222" y="200" font-size="13" font-style="italic" fill="#5f6b73" text-anchor="middle">be uploading</text>
+  <rect x="318" y="128" width="132" height="96" rx="8" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="1.5"/>
+  <text x="384" y="156" font-size="13" fill="#1f2328" text-anchor="middle">row saved with</text>
+  <text x="384" y="176" font-size="13" fill="#1f2328" text-anchor="middle">document.key = k</text>
+  <text x="384" y="196" font-size="13" fill="#1f2328" text-anchor="middle">not committed</text>
+  <rect x="480" y="128" width="132" height="96" rx="8" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="1.5"/>
+  <text x="546" y="156" font-size="13" fill="#1f2328" text-anchor="middle">still open: the</text>
+  <text x="546" y="176" font-size="13" fill="#1f2328" text-anchor="middle">move is its last</text>
+  <text x="546" y="196" font-size="13" fill="#1f2328" text-anchor="middle">step</text>
+  <line x1="290" y1="176" x2="314" y2="176" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="452" y1="176" x2="476" y2="176" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- lane: file storage -->
+  <rect x="156" y="268" width="132" height="96" rx="8" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="222" y="296" font-size="14" font-weight="700" fill="#5f6b73" text-anchor="middle">staging/k</text>
+  <text x="222" y="318" font-size="13" fill="#1f2328" text-anchor="middle">written as it</text>
+  <text x="222" y="338" font-size="13" fill="#1f2328" text-anchor="middle">streams, scanned</text>
+  <rect x="318" y="268" width="132" height="96" rx="8" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="384" y="296" font-size="14" font-weight="700" fill="#5f6b73" text-anchor="middle">staging/k</text>
+  <text x="384" y="318" font-size="13" fill="#1f2328" text-anchor="middle">unchanged:</text>
+  <text x="384" y="338" font-size="13" fill="#1f2328" text-anchor="middle">nothing reads it</text>
+  <rect x="480" y="268" width="132" height="96" rx="8" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="546" y="296" font-size="14" font-weight="700" fill="#5f6b73" text-anchor="middle">k</text>
+  <text x="546" y="318" font-size="13" fill="#1f2328" text-anchor="middle">moved from</text>
+  <text x="546" y="338" font-size="13" fill="#1f2328" text-anchor="middle">staging/k</text>
+  <line x1="290" y1="316" x2="314" y2="316" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="452" y1="316" x2="476" y2="316" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- outcomes -->
+  <rect x="660" y="116" width="276" height="120" rx="10" fill="#ffffff" stroke="#3d4449" stroke-width="2"/>
+  <text x="676" y="144" font-size="14" font-weight="700" fill="#1f2328">the transaction commits</text>
+  <text x="676" y="170" font-size="13" fill="#1f2328">database: the row, document.key = k</text>
+  <text x="676" y="192" font-size="13" fill="#1f2328">storage: the file under k</text>
+  <text x="676" y="218" font-size="13" font-weight="600" fill="#1f2328">they land together</text>
+  <rect x="660" y="256" width="276" height="120" rx="10" fill="#ffffff" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5"/>
+  <text x="676" y="284" font-size="14" font-weight="700" fill="#1f2328">the transaction rolls back</text>
+  <text x="676" y="310" font-size="13" fill="#1f2328">database: no row points to k</text>
+  <text x="676" y="332" font-size="13" fill="#1f2328">storage: k moves back to staging/k</text>
+  <text x="676" y="358" font-size="13" font-weight="600" fill="#1f2328">a failed move fails the command</text>
+  <path d="M614,176 H634 V316 H614" fill="none" stroke="#3d4449" stroke-width="2"/>
+  <line x1="634" y1="246" x2="646" y2="246" stroke="#3d4449" stroke-width="2"/>
+  <path d="M646,246 V176 H656" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <path d="M646,246 V316 H656" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- the purge -->
+  <rect x="24" y="404" width="912" height="72" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="44" y="433" font-size="14" font-weight="600" fill="#5f6b73">Every hour, the job files.purge-staged removes the staged files older than a day.</text>
+  <text x="44" y="456" font-size="13" fill="#1f2328">They are all orphans (a refused command, a rollback, an upload never confirmed): a committed row never points into staging/.</text>
+</svg>

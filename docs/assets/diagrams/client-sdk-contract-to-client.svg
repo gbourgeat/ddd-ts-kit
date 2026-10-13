@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 488" width="960" height="488" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">From the routes to the clients, and back to the pipeline</title>
+  <desc id="desc">The routes of the contexts write the OpenAPI contract with docs:generate. ddd-ts-kit sdk reads the committed contract and writes one client package per document, with no runtime dependency. A front end, another service and the end-to-end specs of the project import it. In the pipeline, docs:check regenerates the contract and the client and compares them, and ci:build compiles every client.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+    <marker id="arrow-platform" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#5f6b73"/>
+    </marker>
+  </defs>
+  <rect width="960" height="488" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">From the routes to the clients, and back to the pipeline</text>
+  <!-- routes -->
+  <rect x="24" y="96" width="166" height="140" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="107" y="124" font-size="16" font-weight="700" fill="#9a5b2b" text-anchor="middle">routes</text>
+  <line x1="38" y1="136" x2="176" y2="136" stroke="#9a5b2b" stroke-opacity="0.35"/>
+  <text x="107" y="160" font-size="13" fill="#1f2328" text-anchor="middle">request and response</text>
+  <text x="107" y="180" font-size="13" fill="#1f2328" text-anchor="middle">schemas, security,</text>
+  <text x="107" y="200" font-size="13" fill="#1f2328" text-anchor="middle">error codes per status</text>
+  <!-- contract -->
+  <rect x="290" y="96" width="176" height="140" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="378" y="124" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">the contract</text>
+  <line x1="304" y1="136" x2="452" y2="136" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text x="378" y="160" font-size="13" fill="#1f2328" text-anchor="middle">openapi/openapi.yaml</text>
+  <text x="378" y="180" font-size="13" fill="#1f2328" text-anchor="middle">committed</text>
+  <text x="378" y="200" font-size="13" fill="#1f2328" text-anchor="middle">one file per document</text>
+  <!-- client -->
+  <rect x="566" y="96" width="176" height="140" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="654" y="124" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">clients/api</text>
+  <line x1="580" y1="136" x2="728" y2="136" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text x="654" y="160" font-size="13" fill="#1f2328" text-anchor="middle">scheduling-api-client</text>
+  <text x="654" y="180" font-size="13" fill="#1f2328" text-anchor="middle">types and functions</text>
+  <text x="654" y="200" font-size="13" fill="#1f2328" text-anchor="middle">no runtime dependency</text>
+  <!-- generation arrows -->
+  <line x1="194" y1="166" x2="286" y2="166" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="240" y="156" font-size="13" fill="#1f2328" text-anchor="middle">docs:generate</text>
+  <line x1="470" y1="166" x2="562" y2="166" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="516" y="156" font-size="13" fill="#1f2328" text-anchor="middle">ddd-ts-kit sdk</text>
+  <!-- consumers -->
+  <rect x="790" y="64" width="146" height="58" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="863" y="88" font-size="14" font-weight="700" fill="#5f6b73" text-anchor="middle">a front end</text>
+  <text x="863" y="108" font-size="13" fill="#1f2328" text-anchor="middle">browser bundle</text>
+  <rect x="790" y="137" width="146" height="58" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="863" y="161" font-size="14" font-weight="700" fill="#5f6b73" text-anchor="middle">a service</text>
+  <text x="863" y="181" font-size="13" fill="#1f2328" text-anchor="middle">another team, Node</text>
+  <rect x="790" y="210" width="146" height="58" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="863" y="234" font-size="14" font-weight="700" fill="#5f6b73" text-anchor="middle">end-to-end specs</text>
+  <text x="863" y="254" font-size="13" fill="#1f2328" text-anchor="middle">of the project</text>
+  <line x1="746" y1="160" x2="786" y2="96" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="746" y1="166" x2="786" y2="166" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="746" y1="172" x2="786" y2="236" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- pipeline -->
+  <rect x="24" y="304" width="912" height="104" rx="12" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="44" y="332" font-size="16" font-weight="700" fill="#5f6b73">the pipeline</text>
+  <text x="44" y="358" font-size="13" fill="#1f2328">docs:check ends with ddd-ts-kit sdk --check: a route added without docs:generate fails on the contract first, then on the client</text>
+  <text x="44" y="382" font-size="13" fill="#1f2328">ci:build compiles every client with its own compiler options: what ships to a consumer is type-checked</text>
+  <line x1="378" y1="302" x2="378" y2="240" stroke="#5f6b73" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow-platform)"/>
+  <text x="388" y="276" font-size="13" fill="#5f6b73">regenerates and compares</text>
+  <line x1="654" y1="302" x2="654" y2="240" stroke="#5f6b73" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow-platform)"/>
+  <text x="664" y="276" font-size="13" fill="#5f6b73">compares, builds</text>
+  <!-- legend -->
+  <line x1="40" y1="440" x2="84" y2="440" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="96" y="445" font-size="14" fill="#1f2328">writes, or is imported by</text>
+  <line x1="40" y1="466" x2="84" y2="466" stroke="#5f6b73" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow-platform)"/>
+  <text x="96" y="471" font-size="14" fill="#1f2328">checks: the committed file must equal what the command writes now</text>
+</svg>

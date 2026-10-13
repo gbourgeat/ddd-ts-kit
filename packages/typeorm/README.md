@@ -1,3 +1,5 @@
+**English** · [Français](README.fr.md)
+
 # @ddd-ts-kit/typeorm
 
 TypeORM adapters of the kernel and events ports: a unit of work that repositories never see,
@@ -12,6 +14,19 @@ npm i @ddd-ts-kit/typeorm typeorm pg
 Everything here uses `EntitySchema`, not decorated classes: no `reflect-metadata` import, no
 `experimentalDecorators`, and rows stay plain objects that a mapper turns into aggregates.
 PostgreSQL first; see [Dialect coverage](#dialect-coverage) for MySQL and SQLite.
+
+## Where it sits in an application
+
+Nothing here is imported from `domain/` or `application/`. A handler depends on the repository
+port of its domain; the adapter of that port, in `infrastructure/`, runs its statements on the
+`TypeOrmContext`; the platform builds the unit of work once and binds it.
+
+![A bounded context holds a handler, the repository port of the domain and the TypeORM repository that implements it; createTypeOrmUnitOfWork gives one object that is both the UnitOfWork the command bus runs each command in and the TypeOrmContext whose manager() the repository and the stores query through; it opens dataSource.transaction() on the TypeORM DataSource, which writes the tables of the context, the outbox and the processed events in PostgreSQL](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/typeorm-place-in-an-application.svg)
+
+The one idea to keep: **every statement goes through `manager()`**. Inside a unit of work it
+is the transactional `EntityManager` of that unit of work, so the row of the aggregate, the
+outbox record of the event it published and the processed-event mark of a consumer commit or
+roll back together. Outside one (a query, a script) it is `dataSource.manager`.
 
 ## Schema
 
@@ -143,7 +158,8 @@ A `run` called directly (a consumer, a script) has the same timing as a command.
 `unitOfWorkContract` of `@ddd-ts-kit/testing/contracts` proves it, with a deferred constraint
 for the commit that fails; on a real PostgreSQL (`DDD_TS_KIT_TEST_DATABASE_URL`) it also proves
 that the rows of a `before-commit` handler are invisible from another connection and visible
-to the `after-commit` handlers.
+to the `after-commit` handlers. The README of `@ddd-ts-kit/kernel` draws this timeline
+([Domain events and the unit of work](../kernel/README.md#domain-events-and-the-unit-of-work)).
 
 `TypeOrmContext` is an abstract class, so it is its own injection token. A project with two
 data sources gives each a class of its own (`export abstract class Ledger extends TypeOrmContext {}`
@@ -214,6 +230,50 @@ leaves the surrounding PostgreSQL transaction usable. Do not use `manager.save` 
 aggregate: it reads before writing and decides by itself between insert and update, which
 defeats the version guard. TypeORM's own `@VersionColumn` is not used for the same reason: the
 version belongs to the aggregate.
+
+```ts
+// Instead of: a read, then an insert or an update chosen by TypeORM, with no version guard
+await manager.save(invoices, { ...invoice.state, version: invoice.version + 1 });
+
+// Write: the guarded statement, which writes no row when another transaction saved first
+await optimisticUpdate(invoice, async ({ expected, next }) => {
+  // a first save (expected 0) inserts with insertIgnoringConflict instead, as in the repository above
+  const updated = await manager.update(invoices, { id: invoice.id, version: expected }, { ...invoice.state, version: next });
+
+  return updated.affected ?? 0;
+});
+```
+
+![optimisticUpdate reads the version the aggregate was loaded at and computes the next one; a first save inserts with insertIgnoringConflict, a later save runs an update guarded by the expected version; one row written moves the version of the aggregate on, no row written raises ConcurrencyError; beside it, two concurrent manager.save calls both succeed and the second erases the first](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/typeorm-save-an-aggregate.svg)
+
+What `optimisticUpdate` does with the count the write answers, on its own:
+
+<!-- checked sample -->
+```ts
+import { ConcurrencyError, optimisticUpdate } from '@ddd-ts-kit/typeorm';
+
+// What a repository hands to optimisticUpdate: the aggregate, and a write that answers how many rows it wrote.
+const invoice = { id: 'inv-1', version: 3 }; // read at version 3
+
+await optimisticUpdate(invoice, async ({ expected, next }) => {
+  // expected = 3: the guard of the UPDATE (WHERE id = 'inv-1' AND version = 3)
+  // next = 4: the version the row is written with
+  return expected === 3 && next === 4 ? 1 : 0;
+});
+// invoice.version is now 4: the same aggregate can be saved again
+
+try {
+  // Another transaction saved inv-1 in between: the guarded UPDATE matches no row.
+  await optimisticUpdate(invoice, async () => 0);
+} catch (error) {
+  if (error instanceof ConcurrencyError) {
+    console.log(error.code); // CONCURRENCY_CONFLICT; invoice.version is still 4
+  }
+}
+```
+
+The command that saved fails with that error and its unit of work rolls back: nothing it
+wrote stays, and the caller reads the aggregate again before it retries.
 
 ## Audit columns, tenant scoping and pages
 
@@ -464,7 +524,7 @@ a query of your own on the table leaves those rows out, and so does a unique ind
 (`WHERE NOT deleted`). `store.table` is what `ProjectionRebuild` takes; the rebuild is
 PostgreSQL only (a copy `<table>__rebuild` made `LIKE ... INCLUDING ALL`, the keys written
 meanwhile in `<table>__touched`, the swap by rename in one transaction) and its guarantees
-and limits are in the README of `@ddd-ts-kit/kernel` ("Rebuild"). The store passes
+and limits are in the README of `@ddd-ts-kit/kernel` ([Rebuild](../kernel/README.md#rebuild)). The store passes
 `criteriaContract` and `readModelStoreContract` of `@ddd-ts-kit/testing/contracts`, on PGlite
 and on PostgreSQL 18.
 Criteria and read models were never run on MySQL or SQLite.
@@ -474,11 +534,15 @@ column through the same query builder.
 
 ## Outbox and idempotency
 
+![Two relays share the outbox: with skip-locked, each selects the due rows FOR UPDATE SKIP LOCKED in a short transaction and relay B passes over the rows relay A has locked; with compare-and-set, both read row 7 and try an update guarded by the attempt count they read, the first takes it and the second writes no row and reads again; either way a claimed row stays hidden until its lease ends](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/typeorm-outbox-claim.svg)
+
 - `TypeOrmOutboxStore.claimBatch` selects the due rows `FOR UPDATE SKIP LOCKED`
   (`setLock('pessimistic_write').setOnLocked('skip_locked')`) and leases them in the same short
   transaction by pushing `next_attempt_at` forward (`leaseMs`, default 30 s), so several relays
   share the work without waiting for each other, and the records of a relay that died come
-  back when the lease expires. Delivery is at least once, unordered.
+  back when the lease expires. Delivery is at least once and, by default, unordered:
+  `ordering: 'per-key'` of `OutboxRelay`, given a `keyOf` (typically the aggregate id), keeps
+  the records of one key in order, with a single relay ([Ordering per key](../events/README.md#ordering-per-key)).
 - Where the database has no `SKIP LOCKED` (SQLite), or when you pass
   `claim: 'compare-and-set'`, the claim reads the due rows and takes each one with an update
   guarded by the attempt count it read: same guarantee, no lock clause, one statement per
@@ -487,6 +551,69 @@ column through the same query builder.
 - `TypeOrmProcessedEventStore.markProcessed` is an insert ignoring the conflict on
   `(consumer, event_id)`. Run the consumer inside the unit of work: the mark then commits with
   the effects of the handler, and disappears with them if it fails.
+
+The options of the outbox store, and the relay that reads it:
+
+<!-- checked sample -->
+```ts
+import { OutboxRelay } from '@ddd-ts-kit/events';
+import type { Clock, IntegrationEventPublisher } from '@ddd-ts-kit/kernel';
+import { outboxEntity, TypeOrmOutboxStore, type TypeOrmUnitOfWork } from '@ddd-ts-kit/typeorm';
+
+// From the composition root: createTypeOrmUnitOfWork(dataSource), the broker adapter, the clock.
+declare const unitOfWork: TypeOrmUnitOfWork;
+declare const broker: IntegrationEventPublisher;
+declare const clock: Clock;
+
+export const outbox = outboxEntity({ schema: 'messaging' }); // the entity the data source registers
+
+const store = new TypeOrmOutboxStore(unitOfWork, {
+  entity: outbox,
+  leaseMs: 60_000, // a record claimed by a relay that died is due again after one minute
+  claim: 'compare-and-set', // instead of the default of the driver, e.g. on MySQL 5.7
+});
+
+const relay = new OutboxRelay({ store, publisher: broker, clock });
+
+relay.start({ intervalMs: 500 });
+```
+
+A consumer on the processed-event store: `consume` of `@ddd-ts-kit/events` runs the mark and
+the handler in one unit of work ([Consume idempotently](../events/README.md#consume-idempotently)).
+
+<!-- checked sample -->
+```ts
+import { z } from 'zod';
+import { consume, defineIntegrationEvent } from '@ddd-ts-kit/events';
+import { zodSchema } from '@ddd-ts-kit/validation/zod';
+import { processedEventEntity, TypeOrmProcessedEventStore, type TypeOrmUnitOfWork } from '@ddd-ts-kit/typeorm';
+
+// From the composition root and the context: the unit of work, and what the consumer does.
+declare const unitOfWork: TypeOrmUnitOfWork;
+declare function issueInvoice(orderId: string): Promise<void>;
+
+// The declaration of the producer, in its published language.
+const orderPlaced = defineIntegrationEvent({
+  type: 'ordering.order.placed',
+  version: 1,
+  description: 'An order was placed by a customer.',
+  payload: zodSchema(z.object({ orderId: z.string() })),
+});
+
+const processed = new TypeOrmProcessedEventStore(unitOfWork, {
+  entity: processedEventEntity({ schema: 'messaging' }),
+});
+
+// The mark in messaging.processed_events and the writes of issueInvoice commit in one transaction:
+// a redelivery is skipped, and an event whose handler threw is handled again when it comes back.
+export const invoiceOnOrderPlaced = consume(
+  orderPlaced,
+  { consumer: 'billing.invoice-on-order-placed', processed, unitOfWork },
+  async (event) => {
+    await issueInvoice(event.payload.orderId);
+  },
+);
+```
 
 ## Event store
 
@@ -498,7 +625,8 @@ const { events, snapshots, checkpoints, subjectKeys } = createTypeOrmEventSourci
 
 `eventStoreEntities` declares the tables as `EntitySchema`s, so `typeorm migration:generate`
 creates them with the columns of `eventStoreTablesSql` of the kernel. The stores never load them
-as entities. `createTypeOrmEventSourcing` refuses a data source that is not PostgreSQL.
+as entities. The stores of `createTypeOrmEventSourcing` refuse a data source that is not
+PostgreSQL: their first statement throws a `TypeError` that names its type.
 
 Each statement runs on the executor of the context: an append joins the transaction of the
 unit of work, so the stream and the outbox records its events publish commit together
@@ -506,7 +634,8 @@ unit of work, so the stream and the outbox records its events publish commit tog
 transaction ends: positions are given in commit order, without gaps, and two appends never run
 side by side, whatever their streams. PostgreSQL only. The stores are the ones of the kernel
 (`PostgresEventStore` and its companions), held to `eventStoreContract` here; how an
-event-sourced aggregate uses them: the README of `@ddd-ts-kit/kernel`, section "Event sourcing".
+event-sourced aggregate uses them: the README of `@ddd-ts-kit/kernel`, section
+[Event sourcing](../kernel/README.md#event-sourcing).
 
 ## Dialect coverage
 
@@ -522,14 +651,16 @@ refuses `--database mysql` and `--database sqlite`.
 
 ## Limits
 
-- Tested with TypeORM 1.1. The peer range also admits 0.3, on which nothing was run.
+- Tested with TypeORM 1.1. The peer range is `^1.0.0`: TypeORM 0.3 is not accepted.
 - An `EntitySchema` is static: the column types depend on the `dialect` you pass, not on the
   data source it is registered in.
 - A JSON `null` payload is stored as SQL `NULL` and read back as `null`.
 - On MySQL 5.7 there is no `SKIP LOCKED`: pass `claim: 'compare-and-set'`.
 - `synchronize: true` is for tests. In production the tables come from your migrations.
-- Ordering is not guaranteed, not even per aggregate: a failed event is retried later while its
-  successors go out.
+- By default ordering is not guaranteed, not even per aggregate: a failed event is retried
+  later while its successors go out. `ordering: 'per-key'` of `OutboxRelay`, given a `keyOf`,
+  orders the records of one key, with a single relay running. Without `keyOf` nothing is
+  ordered.
 
 ## Testing an adapter
 
@@ -545,3 +676,11 @@ DDD_TS_KIT_TEST_DATABASE_URL=postgresql://user:password@localhost:5432/postgres 
 With the variable set, each spec file creates a database of its own on that server and drops
 it afterwards, and the tests that need two real connections (a relay passing over rows locked
 by another one) run instead of being skipped.
+
+## See also
+
+- [Persistence](../../docs/tools/persistence.md): choosing an ORM, and what each adapter package verified
+- [Aggregates](../../docs/concepts/aggregates.md#optimistic-concurrency): optimistic concurrency, seen from the domain
+- [The transactional outbox](../../docs/concepts/transactional-outbox.md): why the outbox record commits with the business write
+- [Delivery and idempotency](../../docs/concepts/delivery-and-idempotency.md): at least once, and what a consumer does about it
+- [`@ddd-ts-kit/drizzle`](../drizzle/README.md): the same pieces on Drizzle, the default persistence of the kit

@@ -1,3 +1,5 @@
+**English** · [Français](commit-discipline.fr.md)
+
 # Commit and pull request discipline
 
 **Summary.** A commit carries one use case or one concept, together with everything that was
@@ -37,6 +39,8 @@ and the generated lists of each `CONTEXT.md`, the barrel `<context>.declarations
 
 The rule: **the regenerated file is in the same commit as the change that caused it.**
 
+![Two histories of the same work: on the left, two feature commits fail the gate because their regenerated contracts arrive in a later commit; on the right, each commit carries the contract it changed and every commit passes](../assets/diagrams/commit-discipline-generated-files.svg)
+
 - A route added without its OpenAPI diff fails the drift gate in CI.
 - A reviewer reads the generated diff as a summary: the catalog diff says in ten lines what
   the event change means for consumers.
@@ -59,23 +63,40 @@ an edit for the three generated contracts, the barrels and `.dependency-cruiser.
   conventional set).
 - **scope**: the bounded context, or `platform`, `pipeline`, `docs`. It tells which owner
   reviews.
-- **summary**: imperative, in the ubiquitous language: `feat(appointments): refuse to book a
+- **summary**: imperative, in the ubiquitous language: `feat(scheduling): refuse to book a
   slot that is already taken`, not `feat: add check in handler`.
 - **body**: the reason, the rule encoded and where, what was deliberately left out. The diff
   already says what changed.
 - **breaking changes**: a `!` after the scope and a `BREAKING CHANGE:` footer, for a route or
   an event whose contract breaks.
 
-Examples:
+Examples, with the contexts of `examples/scheduling`:
 
 ```
-feat(appointments): publish appointments.appointment.cancelled v1
+feat(scheduling): publish scheduling.appointment.cancelled v1
 
-docs(calendars): add TimeOff to the glossary
+docs(scheduling): add TimeOff to the glossary
 
-refactor(appointments): rename Booking to Appointment
+refactor(scheduling): extract BookingWindow from Calendar
 
-fix(notifications): send one reminder when the event is redelivered
+fix(notification): send one reminder when the event is redelivered
+```
+
+A message is read in `git log --oneline` a year later, by someone who does not have the diff in
+mind:
+
+```
+# Instead of
+fix: stuff
+feat: add check in handler
+wip
+
+# Write
+feat(scheduling): refuse to book a slot that is already taken
+
+Two patients confirming the same slot at once both got it. The aggregate now
+refuses the second booking; the unique index on the slot stays as the last line
+of defence, not as the rule.
 ```
 
 With squash merges the pull request title becomes the commit on the default branch, so the
@@ -89,7 +110,35 @@ committed (`--staged` reads the index only) against `commit` in the config, 20 f
 changed lines by default, generated files not counted (see [Configuration](../CONFIG.md)).
 Past the limits it names the slices to commit one by one. It is advisory: it exits 1 only
 with `--strict`. The generated `lefthook.yml` runs it at `pre-commit` without `--strict`, and
-the plugin's hook gives the same reminder in an agent session, without blocking.
+the plugin's hook gives the same reminder in an agent session, without blocking. Its answer
+is one line, wrapped here:
+
+```bash
+$ npx ddd-ts-kit check --commit-size --staged
+34 changed files and 912 changed lines are staged (advised at most 20 files and 600 lines a
+commit, generated files not counted): over the limits. Commit each finished slice on its own,
+with the files its generator wrote: scheduling: reschedule-appointment (12 files),
+scheduling: cancel-appointment (10 files), scheduling: domain (8 files), scheduling: test (4 files).
+```
+
+A slice is a use case of a context (the folder of its command or query, its route, their
+specs), else a layer of a context, else `platform` or the top folder of the file. "Generated"
+means what a command rewrites: the lock files, the OpenAPI and AsyncAPI documents, the event
+catalog, `docs/context-map.md`, `.dependency-cruiser.cjs`, and the barrel and dependency files
+of each context. The limits are a key of `ddd-ts-kit.config.json`:
+
+```json
+{
+  "commit": { "maxFiles": 15, "maxLines": 400 }
+}
+```
+
+and a team that wants the limit to block adds `--strict` to the job of its `lefthook.yml`:
+
+```yaml
+    - name: commit size
+      run: npx --no -- ddd-ts-kit check --commit-size --staged --strict
+```
 
 | Measure | Target | Past this, expect |
 |---|---|---|
@@ -143,25 +192,55 @@ before review, not after.
 5. **Stack them.** When the second depends on the first, open it on top of the first and say
    so; merge in order.
 
-The mechanics with git: `git add -p` to stage part of a file, `git reset --soft` to the base
-and recommit in pieces for a branch nobody else uses, or `git rebase -i` locally. Never
-rewrite a branch somebody else has pulled; add commits instead.
+![A change that grew, split into five pull requests merged in order: the refactoring alone, then the contract, then the domain concept with its spec, then the use case that reschedules, stacked on the domain concept, and the use case that cancels, on its own](../assets/diagrams/commit-discipline-splitting.svg)
+
+The mechanics with git: `git add -p` to stage part of a file, `git reset` to the base (the
+changes stay in the working tree) and recommit in pieces for a branch nobody else uses, or
+`git rebase -i` locally. Never rewrite a branch somebody else has pulled; add commits instead.
+
+```bash
+# a branch nobody else has pulled: undo its commits, keep the changes, recommit in pieces
+git reset "$(git merge-base HEAD origin/main)"
+
+# the refactoring first, hunk by hunk
+git add -p src/contexts/scheduling/domain/aggregates/calendar.aggregate.ts
+git add src/contexts/scheduling/domain/value-objects/booking-window.vo.ts
+git commit -m "refactor(scheduling): extract BookingWindow from Calendar"
+
+# then one use case with everything its generator and docs:generate wrote:
+# command and handler, route, their specs, the regenerated barrel and the contract
+git add src/contexts/scheduling/application/commands/reschedule-appointment/ \
+        src/contexts/scheduling/presentation/http/appointments/reschedule-appointment/ \
+        src/contexts/scheduling/test/unit/reschedule-appointment.*.spec.ts \
+        src/contexts/scheduling/scheduling.declarations.ts \
+        openapi/openapi.yaml
+npx ddd-ts-kit check --commit-size --staged
+git commit -m "feat(scheduling): reschedule an appointment"
+```
 
 After any split, run the gate on each piece: a commit that only builds together with the next
-one is not split, just cut.
+one is not split, just cut. To test exactly what is staged, put the rest aside first:
+
+```bash
+git stash push --keep-index --include-untracked   # the working tree is now the index
+npm run verify
+git stash pop
+```
 
 ## What the hooks and the pipeline enforce
 
-Stated exactly, from [pipeline/README.md](../../pipeline/README.md) and the plugin:
+Stated exactly, from [pipeline/lefthook.yml](../../pipeline/lefthook.yml), [pipeline/README.md](../../pipeline/README.md) and the plugin:
 
 | Moment | What runs | Enforces |
 |---|---|---|
-| every file write in an agent session | the plugin's hook | refuses a hand-written file where a generator exists and an edit of a generated file (contracts, barrels, `.dependency-cruiser.cjs`); asks the owner before a suppression, a skipped test or a change of the governed files; returns the violations of the written file; refuses to finish while architecture errors remain |
-| `pre-commit` (lefthook) | ESLint on staged sources; `ddd-ts-kit check` on staged sources under `src/`; `ddd-ts-kit check --commit-size --staged` | code rules and structure on what is being committed; the size of the commit, as advice |
+| every file write in an agent session | the plugin's hook | refuses a hand-written file where a generator exists, an edit of a generated file (contracts, barrels, `.dependency-cruiser.cjs`) and, for a worker of one context, a write outside that context; asks the owner before a suppression, a skipped test or a change of the governed files; returns the violations of the written file; refuses to finish while architecture errors remain, then reminds of the commit size without blocking |
+| `pre-commit` (lefthook) | ESLint and the formatter (`biome format`) on staged files; `ddd-ts-kit check` on staged sources under `src/`; `ddd-ts-kit check --commit-size --staged` | code rules, format and structure on what is being committed; the size of the commit, as advice |
 | `commit-msg` (lefthook) | commitlint | the conventional commit format |
 | `pre-push` (lefthook) | type check and unit tests | the project compiles and its fast tests pass |
 | pull request | the title check | the title is a conventional commit |
 | CI | type check, lint, architecture, dead code, tests, documentation and contract drift, security, build, image, then the single `gate` job | everything, including stale generated files |
+
+![The moments a change goes through, from the file write in an agent session to the gate of the CI, with what each one blocks or only advises, and below them what no tool holds](../assets/diagrams/commit-discipline-gates.svg)
 
 The hooks are installed once per clone (`npm run hooks:install`). The plugin's hook fails open
 by design: a broken guard never blocks work, so it is a convenience and CI is the authority.

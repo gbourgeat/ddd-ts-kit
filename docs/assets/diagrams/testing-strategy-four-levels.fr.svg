@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 500" width="960" height="500" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Les quatre niveaux de tests</title>
+  <desc id="desc">Quatre lignes, du domaine au niveau de bout en bout. Les specs du domaine exécutent les agrégats et les objets-valeurs seuls, sans double, en millisecondes. Les specs de l'application exécutent les vrais gestionnaires par les bus, avec un fake pour chaque port et une horloge fixe, en millisecondes. Les specs d'adaptateur exécutent un vrai adaptateur contre sa vraie dépendance, sous sa suite de contrat, en secondes. Les specs de bout en bout exécutent toute l'application par HTTP, avec les vrais adaptateurs et des données générées, en secondes. Chaque règle est prouvée au plus bas niveau qui peut la prouver.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="500" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Les quatre niveaux de tests</text>
+  <text x="32" y="80" font-size="13" font-weight="600" fill="#5f6b73">niveau</text>
+  <text x="196" y="80" font-size="13" font-weight="600" fill="#5f6b73">ce qui s'exécute (en tirets : un double)</text>
+  <text x="776" y="80" font-size="13" font-weight="600" fill="#5f6b73">vitesse, combien</text>
+  <line x1="24" y1="92" x2="936" y2="92" stroke="#5f6b73" stroke-opacity="0.25"/>
+  <text x="32" y="132" font-size="16" font-weight="700" fill="#2f6f4f">domaine</text>
+  <text x="32" y="152" font-size="13" fill="#1f2328">aucun double</text>
+  <rect x="196" y="114" width="126" height="40" rx="8" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="259" y="139" font-size="13" font-weight="600" fill="#2f6f4f" text-anchor="middle">agrégat</text>
+  <rect x="338" y="114" width="126" height="40" rx="8" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="401" y="139" font-size="13" font-weight="600" fill="#2f6f4f" text-anchor="middle">objet-valeur</text>
+  <text x="776" y="132" font-size="14" font-weight="700" fill="#1f2328">millisecondes</text>
+  <text x="776" y="152" font-size="13" fill="#1f2328">chaque cas de chaque règle</text>
+  <line x1="24" y1="180" x2="936" y2="180" stroke="#5f6b73" stroke-opacity="0.25"/>
+  <text x="32" y="220" font-size="16" font-weight="700" fill="#2b5d8a">application</text>
+  <text x="32" y="240" font-size="13" fill="#1f2328">fakes, horloge fixe</text>
+  <rect x="196" y="202" width="126" height="40" rx="8" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="259" y="227" font-size="13" font-weight="600" fill="#2b5d8a" text-anchor="middle">bus en mémoire</text>
+  <rect x="338" y="202" width="126" height="40" rx="8" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="401" y="227" font-size="13" font-weight="600" fill="#2b5d8a" text-anchor="middle">gestionnaire</text>
+  <line x1="324" y1="222" x2="336" y2="222" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="480" y="202" width="126" height="40" rx="8" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="543" y="227" font-size="13" font-weight="600" fill="#2f6f4f" text-anchor="middle">agrégat</text>
+  <line x1="466" y1="222" x2="478" y2="222" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="622" y="202" width="126" height="40" rx="8" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="685" y="227" font-size="13" font-weight="600" fill="#7a4f9a" text-anchor="middle">fakes des ports</text>
+  <path d="M401,200 V190 H685 V200" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="776" y="214" font-size="14" font-weight="700" fill="#1f2328">millisecondes</text>
+  <text x="776" y="234" font-size="13" fill="#1f2328">chaque cas d'usage,</text>
+  <text x="776" y="252" font-size="13" fill="#1f2328">chaque code</text>
+  <line x1="24" y1="268" x2="936" y2="268" stroke="#5f6b73" stroke-opacity="0.25"/>
+  <text x="32" y="308" font-size="16" font-weight="700" fill="#7a4f9a">adaptateur</text>
+  <text x="32" y="328" font-size="13" fill="#1f2328">aucun</text>
+  <rect x="196" y="290" width="126" height="40" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="259" y="315" font-size="13" font-weight="600" fill="#5f6b73" text-anchor="middle">suite de contrat</text>
+  <rect x="338" y="290" width="126" height="40" rx="8" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="401" y="315" font-size="13" font-weight="600" fill="#7a4f9a" text-anchor="middle">adaptateur</text>
+  <line x1="324" y1="310" x2="336" y2="310" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="480" y="290" width="126" height="40" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="543" y="315" font-size="13" font-weight="600" fill="#5f6b73" text-anchor="middle">PostgreSQL</text>
+  <line x1="466" y1="310" x2="478" y2="310" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="776" y="302" font-size="14" font-weight="700" fill="#1f2328">secondes</text>
+  <text x="776" y="322" font-size="13" fill="#1f2328">chaque adaptateur,</text>
+  <text x="776" y="340" font-size="13" fill="#1f2328">son contrat</text>
+  <line x1="24" y1="356" x2="936" y2="356" stroke="#5f6b73" stroke-opacity="0.25"/>
+  <text x="32" y="396" font-size="16" font-weight="700" fill="#9a5b2b">de bout en bout</text>
+  <text x="32" y="416" font-size="13" fill="#1f2328">aucun, graine fixe</text>
+  <rect x="196" y="378" width="100" height="40" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="246" y="403" font-size="13" font-weight="600" fill="#5f6b73" text-anchor="middle">client HTTP</text>
+  <rect x="314" y="378" width="100" height="40" rx="8" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="364" y="403" font-size="13" font-weight="600" fill="#9a5b2b" text-anchor="middle">routes</text>
+  <line x1="298" y1="398" x2="312" y2="398" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="432" y="378" width="100" height="40" rx="8" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="482" y="403" font-size="13" font-weight="600" fill="#2b5d8a" text-anchor="middle">application</text>
+  <line x1="416" y1="398" x2="430" y2="398" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="550" y="378" width="100" height="40" rx="8" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="600" y="403" font-size="13" font-weight="600" fill="#7a4f9a" text-anchor="middle">adaptateurs</text>
+  <line x1="534" y1="398" x2="548" y2="398" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="668" y="378" width="100" height="40" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="718" y="403" font-size="13" font-weight="600" fill="#5f6b73" text-anchor="middle">PostgreSQL</text>
+  <line x1="652" y1="398" x2="666" y2="398" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="776" y="396" font-size="14" font-weight="700" fill="#1f2328">secondes</text>
+  <text x="776" y="416" font-size="13" fill="#1f2328">un cas par câblage</text>
+  <line x1="24" y1="444" x2="936" y2="444" stroke="#5f6b73" stroke-opacity="0.25"/>
+  <text x="32" y="478" font-size="13" font-style="italic" fill="#5f6b73">Chaque règle descend au plus bas niveau qui peut la prouver : dix cas d'un délai d'annulation font dix specs du domaine, pas dix allers-retours HTTP.</text>
+</svg>

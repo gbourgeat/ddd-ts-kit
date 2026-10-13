@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 536" width="960" height="536" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">The layers of a bounded context, and the dependency rule</title>
+  <desc id="desc">Four layers inside a bounded context, inside the platform. Presentation imports application, application imports domain, infrastructure imports domain and implements the ports the application declares. The domain imports only the kernels: @ddd-ts-kit/kernel and the shared kernel. The platform around the context composes it: it binds each adapter to its port at start-up.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+    <marker id="arrow-infrastructure" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#7a4f9a"/>
+    </marker>
+  </defs>
+  <rect width="960" height="536" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">The layers of a bounded context, and the dependency rule</text>
+  <!-- platform -->
+  <rect x="24" y="58" width="912" height="398" rx="14" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="44" y="86" font-size="14" font-weight="600" fill="#5f6b73">platform (src/platform): composition root, configuration, HTTP server, worker</text>
+  <!-- bounded context -->
+  <rect x="48" y="102" width="864" height="330" rx="12" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="68" y="130" font-size="14" font-weight="600" fill="#5f6b73">bounded context: src/contexts/&lt;context&gt;/</text>
+  <!-- presentation -->
+  <rect x="70" y="152" width="176" height="176" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="158" y="182" font-size="16" font-weight="700" fill="#9a5b2b" text-anchor="middle">presentation</text>
+  <line x1="86" y1="194" x2="230" y2="194" stroke="#9a5b2b" stroke-opacity="0.35"/>
+  <text x="158" y="218" font-size="13" fill="#1f2328" text-anchor="middle">controllers, routes</text>
+  <text x="158" y="240" font-size="13" fill="#1f2328" text-anchor="middle">request schemas</text>
+  <text x="158" y="262" font-size="13" fill="#1f2328" text-anchor="middle">guards at the edge</text>
+  <!-- application -->
+  <rect x="286" y="152" width="176" height="176" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="374" y="182" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">application</text>
+  <line x1="302" y1="194" x2="446" y2="194" stroke="#2b5d8a" stroke-opacity="0.35"/>
+  <text x="374" y="218" font-size="13" fill="#1f2328" text-anchor="middle">commands, queries</text>
+  <text x="374" y="240" font-size="13" fill="#1f2328" text-anchor="middle">handlers</text>
+  <text x="374" y="262" font-size="13" fill="#1f2328" text-anchor="middle">ports, permissions</text>
+  <!-- domain -->
+  <rect x="502" y="152" width="176" height="176" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="590" y="182" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">domain</text>
+  <line x1="518" y1="194" x2="662" y2="194" stroke="#2f6f4f" stroke-opacity="0.35"/>
+  <text x="590" y="218" font-size="13" fill="#1f2328" text-anchor="middle">aggregates, entities</text>
+  <text x="590" y="240" font-size="13" fill="#1f2328" text-anchor="middle">value objects</text>
+  <text x="590" y="262" font-size="13" fill="#1f2328" text-anchor="middle">domain events</text>
+  <text x="590" y="284" font-size="13" fill="#1f2328" text-anchor="middle">repository ports</text>
+  <text x="590" y="314" font-size="13" font-style="italic" font-weight="600" fill="#2f6f4f" text-anchor="middle">imports only the kernels</text>
+  <!-- infrastructure -->
+  <rect x="718" y="152" width="176" height="176" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="806" y="182" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">infrastructure</text>
+  <line x1="734" y1="194" x2="878" y2="194" stroke="#7a4f9a" stroke-opacity="0.35"/>
+  <text x="806" y="218" font-size="13" fill="#1f2328" text-anchor="middle">repositories (ORM)</text>
+  <text x="806" y="240" font-size="13" fill="#1f2328" text-anchor="middle">gateways, mappers</text>
+  <text x="806" y="262" font-size="13" fill="#1f2328" text-anchor="middle">broker clients</text>
+  <!-- imports: presentation to application, application to domain, infrastructure to domain -->
+  <line x1="248" y1="240" x2="284" y2="240" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="464" y1="240" x2="500" y2="240" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="716" y1="240" x2="680" y2="240" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- infrastructure implements the ports of the application -->
+  <path d="M806,330 V376 H374 V332" fill="none" stroke="#7a4f9a" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow-infrastructure)"/>
+  <text x="590" y="402" font-size="14" fill="#7a4f9a" text-anchor="middle">implements the ports the application declares</text>
+  <!-- legend -->
+  <line x1="40" y1="488" x2="84" y2="488" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="96" y="493" font-size="14" fill="#1f2328">imports: every source dependency points towards the domain</text>
+  <line x1="40" y1="514" x2="84" y2="514" stroke="#7a4f9a" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow-infrastructure)"/>
+  <text x="96" y="519" font-size="14" fill="#1f2328">implements a port: the platform binds the adapter to it at start-up</text>
+</svg>

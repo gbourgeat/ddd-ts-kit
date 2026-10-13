@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 520" width="960" height="520" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">A cursor page is a position, not a page number</title>
+  <desc id="desc">Invoices in total order, by amount then id: 20 inv-3, 40 inv-1, 40 inv-7, 40 inv-9, 55 inv-2, 70 inv-4, 70 inv-5. Page 1, with a limit of 3, read four rows: the fourth says a page follows, and the cursor is the position of the last row kept, amount 40 and id inv-7. Then an invoice of 10, inv-8, is inserted before it. Page 2 by offset 3 now answers inv-7, inv-9, inv-2: inv-7 is read twice. Page 2 after the cursor compares the position as a tuple, amount greater than 40, or amount 40 and id greater than inv-7, and answers inv-9, inv-2, inv-4, with inv-5 read to know that a page follows: nothing repeated, nothing skipped, no count.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+    <marker id="arrow-infrastructure" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#7a4f9a"/>
+    </marker>
+  </defs>
+  <rect width="960" height="520" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">A cursor page is a position, not a page number</text>
+  <text x="110" y="76" font-size="14" font-weight="600" fill="#5f6b73">invoices, in total order</text>
+  <text x="165" y="100" font-size="13" font-weight="600" fill="#5f6b73" text-anchor="middle">amount</text>
+  <text x="275" y="100" font-size="13" font-weight="600" fill="#5f6b73" text-anchor="middle">id</text>
+  <!-- r0: inserted after page 1 -->
+  <rect x="110" y="108" width="220" height="34" rx="6" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="5 4"/>
+  <text x="165" y="130" font-size="14" fill="#1f2328" text-anchor="middle">10</text>
+  <text x="275" y="130" font-size="14" fill="#1f2328" text-anchor="middle">inv-8</text>
+  <text x="342" y="130" font-size="13" font-style="italic" fill="#5f6b73">inserted later</text>
+  <!-- r1..r7 -->
+  <rect x="110" y="146" width="220" height="34" rx="6" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="165" y="168" font-size="14" fill="#1f2328" text-anchor="middle">20</text>
+  <text x="275" y="168" font-size="14" fill="#1f2328" text-anchor="middle">inv-3</text>
+  <rect x="110" y="184" width="220" height="34" rx="6" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="165" y="206" font-size="14" fill="#1f2328" text-anchor="middle">40</text>
+  <text x="275" y="206" font-size="14" fill="#1f2328" text-anchor="middle">inv-1</text>
+  <rect x="110" y="222" width="220" height="34" rx="6" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="165" y="244" font-size="14" fill="#1f2328" text-anchor="middle">40</text>
+  <text x="275" y="244" font-size="14" fill="#1f2328" text-anchor="middle">inv-7</text>
+  <rect x="110" y="262" width="220" height="34" rx="6" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="165" y="284" font-size="14" fill="#1f2328" text-anchor="middle">40</text>
+  <text x="275" y="284" font-size="14" fill="#1f2328" text-anchor="middle">inv-9</text>
+  <text x="342" y="284" font-size="13" font-style="italic" fill="#5f6b73">the +1 row</text>
+  <rect x="110" y="300" width="220" height="34" rx="6" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="165" y="322" font-size="14" fill="#1f2328" text-anchor="middle">55</text>
+  <text x="275" y="322" font-size="14" fill="#1f2328" text-anchor="middle">inv-2</text>
+  <rect x="110" y="338" width="220" height="34" rx="6" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="165" y="360" font-size="14" fill="#1f2328" text-anchor="middle">70</text>
+  <text x="275" y="360" font-size="14" fill="#1f2328" text-anchor="middle">inv-4</text>
+  <rect x="110" y="376" width="220" height="34" rx="6" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="165" y="398" font-size="14" fill="#1f2328" text-anchor="middle">70</text>
+  <text x="275" y="398" font-size="14" fill="#1f2328" text-anchor="middle">inv-5</text>
+  <!-- page brackets -->
+  <path d="M104,148 H96 V254 H104" fill="none" stroke="#3d4449" stroke-width="2"/>
+  <text x="88" y="196" font-size="13" font-weight="600" fill="#1f2328" text-anchor="end">page 1</text>
+  <text x="88" y="214" font-size="13" fill="#5f6b73" text-anchor="end">limit 3</text>
+  <path d="M104,264 H96 V370 H104" fill="none" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="88" y="312" font-size="13" font-weight="600" fill="#7a4f9a" text-anchor="end">page 2</text>
+  <text x="88" y="330" font-size="13" fill="#5f6b73" text-anchor="end">after it</text>
+  <!-- the cursor -->
+  <line x1="100" y1="259" x2="330" y2="259" stroke="#7a4f9a" stroke-width="3"/>
+  <path d="M332,259 H462 V362 H476" fill="none" stroke="#7a4f9a" stroke-width="2" marker-end="url(#arrow-infrastructure)"/>
+  <text x="344" y="251" font-size="13" font-weight="600" fill="#7a4f9a">nextCursor</text>
+  <!-- panel A: offset -->
+  <rect x="480" y="96" width="456" height="150" rx="12" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="500" y="124" font-size="16" font-weight="700" fill="#5f6b73">Page 2 by offset: offset 3, limit 3</text>
+  <text x="500" y="152" font-size="13" fill="#1f2328">The row inserted before shifts every position by one.</text>
+  <text x="500" y="176" font-size="13" fill="#1f2328">Rows 4 to 6 are now: inv-7, inv-9, inv-2.</text>
+  <text x="500" y="200" font-size="13" font-weight="600" fill="#1f2328">inv-7 is read twice; a deleted row, one skipped.</text>
+  <text x="500" y="226" font-size="13" fill="#5f6b73">It also counts every row, to answer total.</text>
+  <!-- panel B: cursor -->
+  <rect x="480" y="268" width="456" height="188" rx="12" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="500" y="296" font-size="16" font-weight="700" fill="#7a4f9a">Page 2 by cursor: after (40, inv-7)</text>
+  <text x="500" y="322" font-size="13" fill="#1f2328">where amount &gt; 40</text>
+  <text x="530" y="342" font-size="13" fill="#1f2328">or (amount = 40 and id &gt; 'inv-7')</text>
+  <text x="500" y="362" font-size="13" fill="#1f2328">order by amount, id limit 4</text>
+  <text x="500" y="390" font-size="13" fill="#1f2328">Answers inv-9, inv-2, inv-4; inv-5, the fourth row,</text>
+  <text x="500" y="410" font-size="13" fill="#1f2328">says that a page follows.</text>
+  <text x="500" y="436" font-size="13" font-weight="600" fill="#1f2328">Nothing repeated, nothing skipped, no count.</text>
+  <!-- footnote -->
+  <text x="32" y="490" font-size="13" fill="#5f6b73">The id follows the sort field as a tie-breaker, in the same direction. The index covers (tenant_id, amount, id).</text>
+</svg>

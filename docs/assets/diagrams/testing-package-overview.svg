@@ -1,0 +1,102 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 600" width="960" height="600" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">What @ddd-ts-kit/testing gives each test level</title>
+  <desc id="desc">Four columns, one per test level. A domain spec runs the aggregate alone with given, when, then, givenEvents, givenProcess and expectRefusal. An application spec runs the real handler on createTestBuses, with InMemoryRepository fakes made to dispatch their events. An adapter spec runs one contract suite of the contracts entry against the fake and against the real adapter. An end-to-end spec drives the whole application over HTTP with the e2e entry: startTestServer, the client, expectStatus, expectProblem, collectEvents and eventually. Under the four columns, the same builders feed every level: build gives an aggregate to the first three, buildRequest gives a request payload to the end-to-end spec. At the bottom, what is set up once in the runner config: the vitest entry, the coverage entry and the faker entry.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="600" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">What @ddd-ts-kit/testing gives each test level</text>
+
+  <!-- domain spec -->
+  <rect x="32" y="64" width="212" height="250" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="138" y="94" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">domain spec</text>
+  <text x="138" y="116" font-size="13" fill="#1f2328" text-anchor="middle">the aggregate alone, no double</text>
+  <line x1="48" y1="128" x2="228" y2="128" stroke="#2f6f4f" stroke-opacity="0.35"/>
+  <g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13" fill="#1f2328">
+    <text x="48" y="152" font-weight="600" fill="#2f6f4f">@ddd-ts-kit/testing</text>
+    <text x="48" y="178">given(…).when(…)</text>
+    <text x="64" y="200">.thenEvents([…])</text>
+    <text x="64" y="222">.thenError(code)</text>
+    <text x="48" y="244">givenEvents(…)</text>
+    <text x="48" y="266">givenProcess(…)</text>
+    <text x="48" y="288">expectRefusal(…)</text>
+  </g>
+
+  <!-- application spec -->
+  <rect x="260" y="64" width="212" height="250" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="366" y="94" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">application spec</text>
+  <text x="366" y="116" font-size="13" fill="#1f2328" text-anchor="middle">the real handler, fakes</text>
+  <line x1="276" y1="128" x2="456" y2="128" stroke="#2b5d8a" stroke-opacity="0.35"/>
+  <g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13" fill="#1f2328">
+    <text x="276" y="152" font-weight="600" fill="#2b5d8a">@ddd-ts-kit/testing</text>
+    <text x="276" y="178">createTestBuses()</text>
+    <text x="276" y="200">InMemoryRepository</text>
+    <text x="276" y="222">dispatching(fake)</text>
+    <text x="276" y="244">publishedEvents()</text>
+    <text x="276" y="266">aSession()</text>
+    <text x="276" y="288">anExecutionContext()</text>
+  </g>
+
+  <!-- adapter spec -->
+  <rect x="488" y="64" width="212" height="250" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="594" y="94" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">adapter spec</text>
+  <text x="594" y="116" font-size="13" fill="#1f2328" text-anchor="middle">one suite, fake and adapter</text>
+  <line x1="504" y1="128" x2="684" y2="128" stroke="#7a4f9a" stroke-opacity="0.35"/>
+  <g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13" fill="#1f2328">
+    <text x="504" y="152" font-weight="600" fill="#7a4f9a">/contracts</text>
+    <text x="504" y="178">repositoryContract</text>
+    <text x="504" y="200">unitOfWorkContract</text>
+    <text x="504" y="222">eventBusContract</text>
+    <text x="504" y="244">outboxStoreContract</text>
+    <text x="504" y="288">ContractSuite</text>
+  </g>
+  <text x="504" y="266" font-size="13" font-style="italic" fill="#1f2328">and 15 more suites</text>
+
+  <!-- end-to-end spec -->
+  <rect x="716" y="64" width="212" height="250" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="822" y="94" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">end-to-end spec</text>
+  <text x="822" y="116" font-size="13" fill="#1f2328" text-anchor="middle">the whole application, HTTP</text>
+  <line x1="732" y1="128" x2="912" y2="128" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13" fill="#1f2328">
+    <text x="732" y="152" font-weight="600" fill="#5f6b73">/e2e</text>
+    <text x="732" y="178">startTestServer(…)</text>
+    <text x="732" y="200">client.post(…)</text>
+    <text x="732" y="222">expectStatus(…)</text>
+    <text x="732" y="244">expectProblem(…)</text>
+    <text x="732" y="266">collectEvents(…)</text>
+    <text x="732" y="288">eventually(…)</text>
+  </g>
+
+  <!-- builders feed every level -->
+  <line x1="138" y1="362" x2="138" y2="318" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="366" y1="362" x2="366" y2="318" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="594" y1="362" x2="594" y2="318" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="822" y1="362" x2="822" y2="318" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13" fill="#1f2328">
+    <text x="146" y="345">.build()</text>
+    <text x="374" y="345">.build()</text>
+    <text x="602" y="345">.build()</text>
+    <text x="814" y="345" text-anchor="end">.buildRequest()</text>
+  </g>
+  <rect x="32" y="364" width="896" height="74" rx="10" fill="#ffffff" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="480" y="392" font-size="16" font-weight="700" fill="#1f2328" text-anchor="middle">builders: the same at every level, the same vocabulary</text>
+  <text x="480" y="420" font-size="13" fill="#1f2328" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">Builder · defineBuilder · sequence · lazy · generated (/faker)</text>
+
+  <!-- runner setup -->
+  <rect x="32" y="458" width="896" height="106" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="52" y="484" font-size="16" font-weight="700" fill="#5f6b73">set up once, in the runner config</text>
+  <g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13" fill="#1f2328">
+    <text x="52" y="512" font-weight="600" fill="#5f6b73">/vitest</text>
+    <text x="52" y="532">decorators()</text>
+    <text x="52" y="552">decoratorCoverage()</text>
+    <text x="360" y="512" font-weight="600" fill="#5f6b73">/coverage</text>
+    <text x="360" y="532">governedCoverage(mode)</text>
+    <text x="360" y="552">governedJestCoverage()</text>
+    <text x="668" y="512" font-weight="600" fill="#5f6b73">/faker</text>
+    <text x="668" y="532">dataGenerator()</text>
+    <text x="668" y="552">reportSeedOnFailure(…)</text>
+  </g>
+  <text x="32" y="588" font-size="13" fill="#1f2328">/contracts, /e2e, /faker, /vitest and /coverage stand for @ddd-ts-kit/testing/contracts and the other entries.</text>
+</svg>

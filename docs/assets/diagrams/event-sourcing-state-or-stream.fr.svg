@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 440" width="960" height="440" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">L'état dans une table, ou les événements d'un flux</title>
+  <desc id="desc">À gauche, un agrégat persisté par état : une ligne dans une table, mise à jour sur place, si bien que les valeurs précédentes disparaissent et qu'une question sur le passé reste sans réponse. À droite, un agrégat en event sourcing : son flux contient AttendanceRecordCreated, NoShowNoted et CancellationNoted aux versions 1, 2 et 3 ; les rejouer, du plus ancien au plus récent, par une méthode apply par événement donne l'état, deux rendez-vous manqués, sur lequel la commande suivante décide.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="440" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">L'état dans une table, ou les événements d'un flux</text>
+  <rect x="24" y="60" width="424" height="356" rx="12" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="44" y="88" font-size="16" font-weight="700" fill="#1f2328">état dans une table</text>
+  <text x="44" y="110" font-size="13" fill="#5f6b73">une ligne par agrégat : ce qui est vrai maintenant</text>
+  <rect x="44" y="132" width="384" height="72" rx="6" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="1.5"/>
+  <line x1="44" y1="164" x2="428" y2="164" stroke="#7a4f9a" stroke-width="1.5"/>
+  <text x="54" y="153" font-size="13" font-weight="700" fill="#7a4f9a">id</text>
+  <text x="204" y="153" font-size="13" font-weight="700" fill="#7a4f9a">patient</text>
+  <text x="312" y="153" font-size="13" font-weight="700" fill="#7a4f9a">missed</text>
+  <line x1="194" y1="132" x2="194" y2="204" stroke="#7a4f9a" stroke-opacity="0.5"/>
+  <line x1="302" y1="132" x2="302" y2="204" stroke="#7a4f9a" stroke-opacity="0.5"/>
+  <text x="54" y="189" font-size="13" fill="#1f2328">practice-1.patient-1</text>
+  <text x="204" y="189" font-size="13" fill="#1f2328">patient-1</text>
+  <text x="312" y="189" font-size="13" fill="#1f2328">2</text>
+  <text x="44" y="236" font-size="13" fill="#1f2328">chaque commande met la ligne à jour sur place :</text>
+  <text x="44" y="256" font-size="13" fill="#1f2328">les valeurs d'avant disparaissent</text>
+  <text x="44" y="296" font-size="14" font-weight="600" fill="#1f2328">« Absence ou annulation ? »</text>
+  <text x="44" y="320" font-size="13" fill="#1f2328">la ligne ne peut pas le dire : personne ne l'a</text>
+  <text x="44" y="340" font-size="13" fill="#1f2328">stocké en colonne, et le passé est perdu</text>
+  <rect x="472" y="60" width="464" height="356" rx="12" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="492" y="88" font-size="16" font-weight="700" fill="#1f2328">un agrégat en event sourcing</text>
+  <text x="492" y="110" font-size="13" fill="#5f6b73">flux scheduling.attendance-record-practice-1.patient-1</text>
+  <rect x="492" y="126" width="248" height="38" rx="8" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="1.5"/>
+  <text x="508" y="150" font-size="13" font-weight="700" fill="#2f6f4f">v1</text>
+  <text x="536" y="150" font-size="13" fill="#1f2328">AttendanceRecordCreated</text>
+  <rect x="492" y="174" width="248" height="38" rx="8" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="1.5"/>
+  <text x="508" y="198" font-size="13" font-weight="700" fill="#2f6f4f">v2</text>
+  <text x="536" y="198" font-size="13" fill="#1f2328">NoShowNoted</text>
+  <rect x="492" y="222" width="248" height="38" rx="8" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="1.5"/>
+  <text x="508" y="246" font-size="13" font-weight="700" fill="#2f6f4f">v3</text>
+  <text x="536" y="246" font-size="13" fill="#1f2328">CancellationNoted</text>
+  <text x="756" y="150" font-size="13" fill="#1f2328">le plus ancien</text>
+  <text x="756" y="246" font-size="13" fill="#1f2328">ajoutés, jamais</text>
+  <text x="756" y="266" font-size="13" fill="#1f2328">modifiés</text>
+  <line x1="616" y1="270" x2="616" y2="312" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="628" y="296" font-size="13" fill="#1f2328">rejeu par les méthodes apply</text>
+  <rect x="492" y="314" width="248" height="84" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="616" y="340" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">l'état</text>
+  <text x="616" y="362" font-size="13" fill="#1f2328" text-anchor="middle">missed: 2</text>
+  <text x="616" y="382" font-size="13" fill="#1f2328" text-anchor="middle">noted : 2 rendez-vous</text>
+  <text x="756" y="350" font-size="13" fill="#1f2328">ce sur quoi la</text>
+  <text x="756" y="370" font-size="13" fill="#1f2328">commande suivante décide</text>
+</svg>

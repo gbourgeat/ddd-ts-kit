@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 500" width="960" height="500" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">The three sources of the audit trail</title>
+  <desc id="desc">A command crosses the command bus of the platform: the authorization middleware, the audit middleware, the unit of work, then the use case, which holds no audit call. The decision hook of the authorization middleware records denials, allowed writes and sensitive reads. The audit middleware records each command, succeeded or failed with its code. A subscription to the integration events records that an event occurred, from its envelope. All three append to the audit trail, append-only and hash-chained, and read who acted from the execution scope.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+    <marker id="arrow-infrastructure" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#7a4f9a"/>
+    </marker>
+  </defs>
+  <rect width="960" height="500" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">The three sources of the audit trail</text>
+  <!-- command bus -->
+  <rect x="24" y="58" width="912" height="140" rx="12" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="44" y="82" font-size="14" font-weight="600" fill="#5f6b73">command bus of the platform, in this order</text>
+  <rect x="44" y="100" width="180" height="76" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="2"/>
+  <text x="134" y="130" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">1. authorization</text>
+  <text x="134" y="152" font-size="13" fill="#1f2328" text-anchor="middle">its decision hook</text>
+  <rect x="264" y="100" width="180" height="76" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="2"/>
+  <text x="354" y="130" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">2. audit middleware</text>
+  <text x="354" y="152" font-size="13" fill="#1f2328" text-anchor="middle">opens the unit of work</text>
+  <rect x="484" y="100" width="180" height="76" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="2"/>
+  <text x="574" y="130" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">3. unit of work</text>
+  <text x="574" y="152" font-size="13" fill="#1f2328" text-anchor="middle">joins its transaction</text>
+  <rect x="704" y="100" width="212" height="76" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="810" y="126" font-size="15" font-weight="700" fill="#2b5d8a" text-anchor="middle">use case</text>
+  <text x="810" y="146" font-size="13" fill="#1f2328" text-anchor="middle">handler, aggregates</text>
+  <text x="810" y="166" font-size="13" font-style="italic" font-weight="600" fill="#2b5d8a" text-anchor="middle">no audit call</text>
+  <line x1="226" y1="138" x2="262" y2="138" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="446" y1="138" x2="482" y2="138" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="666" y1="138" x2="702" y2="138" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- integration events -->
+  <rect x="508" y="236" width="224" height="76" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="620" y="262" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">event subscription</text>
+  <text x="620" y="282" font-size="13" fill="#1f2328" text-anchor="middle">consumer audit,</text>
+  <text x="620" y="300" font-size="13" fill="#1f2328" text-anchor="middle">deduplicated by event id</text>
+  <!-- what each source records -->
+  <line x1="134" y1="178" x2="134" y2="376" stroke="#7a4f9a" stroke-width="2" marker-end="url(#arrow-infrastructure)"/>
+  <text x="146" y="250" font-size="13" fill="#1f2328">every denial,</text>
+  <text x="146" y="268" font-size="13" fill="#1f2328">every allowed write,</text>
+  <text x="146" y="286" font-size="13" fill="#1f2328">the sensitive reads</text>
+  <line x1="354" y1="178" x2="354" y2="376" stroke="#7a4f9a" stroke-width="2" marker-end="url(#arrow-infrastructure)"/>
+  <text x="366" y="250" font-size="13" fill="#1f2328">each command:</text>
+  <text x="366" y="268" font-size="13" fill="#1f2328">succeeded, or failed</text>
+  <text x="366" y="286" font-size="13" fill="#1f2328">with its code</text>
+  <line x1="620" y1="314" x2="620" y2="376" stroke="#7a4f9a" stroke-width="2" marker-end="url(#arrow-infrastructure)"/>
+  <text x="608" y="350" font-size="13" fill="#1f2328" text-anchor="end">that an event occurred</text>
+  <!-- the trail -->
+  <rect x="44" y="380" width="696" height="76" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="392" y="410" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">audit trail</text>
+  <text x="392" y="434" font-size="13" fill="#1f2328" text-anchor="middle">append-only, hash-chained, one chain per tenant; identifiers and codes, never content</text>
+  <!-- execution scope -->
+  <rect x="764" y="236" width="172" height="220" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="850" y="264" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">execution scope</text>
+  <text x="850" y="292" font-size="13" fill="#1f2328" text-anchor="middle">every source reads</text>
+  <text x="850" y="312" font-size="13" fill="#1f2328" text-anchor="middle">here who acted,</text>
+  <text x="850" y="332" font-size="13" fill="#1f2328" text-anchor="middle">the session, the</text>
+  <text x="850" y="352" font-size="13" fill="#1f2328" text-anchor="middle">impersonator, the</text>
+  <text x="850" y="372" font-size="13" fill="#1f2328" text-anchor="middle">tenant, the correlation</text>
+  <text x="850" y="392" font-size="13" fill="#1f2328" text-anchor="middle">and the origin:</text>
+  <text x="850" y="412" font-size="13" fill="#1f2328" text-anchor="middle">no use case passes</text>
+  <text x="850" y="432" font-size="13" fill="#1f2328" text-anchor="middle">them along</text>
+  <!-- legend -->
+  <line x1="40" y1="484" x2="84" y2="484" stroke="#7a4f9a" stroke-width="2" marker-end="url(#arrow-infrastructure)"/>
+  <text x="96" y="489" font-size="14" fill="#1f2328">appends an entry, wired once in the platform</text>
+</svg>

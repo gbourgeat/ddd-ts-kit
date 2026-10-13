@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 470" width="960" height="470" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Chaque requête renvoie toute la conversation</title>
+  <desc id="desc">Quatre requêtes d'une session d'agent dessinées en barres. Chaque requête porte les instructions et les règles, chaque tour précédent et chaque résultat d'outil encore présent dans la conversation. Un fichier de 900 lignes lu à la deuxième requête est porté de nouveau par la troisième et la quatrième. Après un /clear ou dans une nouvelle session, la tâche suivante repart des seules instructions.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="470" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Chaque requête renvoie toute la conversation</text>
+  <text x="32" y="62" font-size="14" fill="#1f2328">Ce qu'une session d'agent envoie au modèle, requête après requête</text>
+  <!-- request 1 -->
+  <text x="32" y="111" font-size="14" font-weight="600" fill="#1f2328">requête 1</text>
+  <rect x="170" y="88" width="160" height="36" rx="6" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="250" y="111" font-size="13" fill="#1f2328" text-anchor="middle">instructions, règles</text>
+  <rect x="330" y="88" width="64" height="36" rx="6" fill="#e7eef5" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="362" y="111" font-size="13" fill="#2b5d8a" text-anchor="middle">tour 1</text>
+  <!-- request 2 -->
+  <text x="32" y="167" font-size="14" font-weight="600" fill="#1f2328">requête 2</text>
+  <rect x="170" y="144" width="160" height="36" rx="6" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="250" y="167" font-size="13" fill="#1f2328" text-anchor="middle">instructions, règles</text>
+  <rect x="330" y="144" width="64" height="36" rx="6" fill="#e7eef5" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="362" y="167" font-size="13" fill="#2b5d8a" text-anchor="middle">tour 1</text>
+  <rect x="394" y="144" width="64" height="36" rx="6" fill="#e7eef5" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="426" y="167" font-size="13" fill="#2b5d8a" text-anchor="middle">tour 2</text>
+  <rect x="458" y="144" width="270" height="36" rx="6" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="5 3"/>
+  <text x="593" y="167" font-size="13" font-style="italic" fill="#5f6b73" text-anchor="middle">fichier de 900 lignes, pour une méthode</text>
+  <!-- request 3 -->
+  <text x="32" y="223" font-size="14" font-weight="600" fill="#1f2328">requête 3</text>
+  <rect x="170" y="200" width="160" height="36" rx="6" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="250" y="223" font-size="13" fill="#1f2328" text-anchor="middle">instructions, règles</text>
+  <rect x="330" y="200" width="64" height="36" rx="6" fill="#e7eef5" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="362" y="223" font-size="13" fill="#2b5d8a" text-anchor="middle">tour 1</text>
+  <rect x="394" y="200" width="64" height="36" rx="6" fill="#e7eef5" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="426" y="223" font-size="13" fill="#2b5d8a" text-anchor="middle">tour 2</text>
+  <rect x="458" y="200" width="270" height="36" rx="6" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="5 3"/>
+  <text x="593" y="223" font-size="13" font-style="italic" fill="#5f6b73" text-anchor="middle">le même fichier, payé à nouveau</text>
+  <rect x="728" y="200" width="64" height="36" rx="6" fill="#e7eef5" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="760" y="223" font-size="13" fill="#2b5d8a" text-anchor="middle">tour 3</text>
+  <!-- request 4 -->
+  <text x="32" y="279" font-size="14" font-weight="600" fill="#1f2328">requête 4</text>
+  <rect x="170" y="256" width="160" height="36" rx="6" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="250" y="279" font-size="13" fill="#1f2328" text-anchor="middle">instructions, règles</text>
+  <rect x="330" y="256" width="64" height="36" rx="6" fill="#e7eef5" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="362" y="279" font-size="13" fill="#2b5d8a" text-anchor="middle">tour 1</text>
+  <rect x="394" y="256" width="64" height="36" rx="6" fill="#e7eef5" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="426" y="279" font-size="13" fill="#2b5d8a" text-anchor="middle">tour 2</text>
+  <rect x="458" y="256" width="270" height="36" rx="6" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="5 3"/>
+  <text x="593" y="279" font-size="13" font-style="italic" fill="#5f6b73" text-anchor="middle">le même fichier, payé à nouveau</text>
+  <rect x="728" y="256" width="64" height="36" rx="6" fill="#e7eef5" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="760" y="279" font-size="13" fill="#2b5d8a" text-anchor="middle">tour 3</text>
+  <rect x="792" y="256" width="64" height="36" rx="6" fill="#e7eef5" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="824" y="279" font-size="13" fill="#2b5d8a" text-anchor="middle">tour 4</text>
+  <!-- clear -->
+  <line x1="32" y1="318" x2="928" y2="318" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="480" y="340" font-size="14" font-style="italic" fill="#5f6b73" text-anchor="middle">/clear, ou une nouvelle session pour la tâche suivante</text>
+  <!-- next task -->
+  <text x="32" y="379" font-size="14" font-weight="600" fill="#1f2328">tâche suivante</text>
+  <rect x="170" y="356" width="160" height="36" rx="6" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="250" y="379" font-size="13" fill="#1f2328" text-anchor="middle">instructions, règles</text>
+  <rect x="330" y="356" width="64" height="36" rx="6" fill="#e7eef5" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="362" y="379" font-size="13" fill="#2b5d8a" text-anchor="middle">tour 1</text>
+  <path d="M410,374 H560" fill="none" stroke="#3d4449" stroke-width="2" marker-start="url(#arrow)"/>
+  <text x="572" y="379" font-size="14" fill="#1f2328">repart léger : l'état vit dans des fichiers</text>
+  <!-- legend -->
+  <rect x="32" y="422" width="22" height="16" rx="4" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="62" y="435" font-size="14" fill="#1f2328">envoyé à chaque requête</text>
+  <rect x="240" y="422" width="22" height="16" rx="4" fill="#e7eef5" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="270" y="435" font-size="14" fill="#1f2328">un message et sa réponse</text>
+  <rect x="460" y="422" width="22" height="16" rx="4" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="5 3"/>
+  <text x="490" y="435" font-size="14" fill="#1f2328">résultat d'outil : reste jusqu'au /clear ou au compactage</text>
+</svg>

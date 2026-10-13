@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 316" width="960" height="316" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">One word, two meanings, two bounded contexts</title>
+  <desc id="desc">In availability, a Slot is an interval a practitioner can still offer, which nobody holds yet. In appointments, a Slot is the interval one appointment occupies. Each glossary says what the word must not be confused with.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="316" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">One word, two meanings, two bounded contexts</text>
+  <rect x="32" y="60" width="434" height="214" rx="12" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="52" y="88" font-size="14" font-weight="600" fill="#5f6b73">bounded context: availability</text>
+  <rect x="52" y="104" width="394" height="152" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="72" y="132" font-size="16" font-weight="700" fill="#2f6f4f">Slot</text>
+  <line x1="66" y1="142" x2="432" y2="142" stroke="#2f6f4f" stroke-opacity="0.35"/>
+  <text x="72" y="164" font-size="13" fill="#1f2328">An interval a practitioner can still offer.</text>
+  <text x="72" y="184" font-size="13" fill="#1f2328">Nobody holds it yet.</text>
+  <text x="72" y="216" font-size="13" font-weight="600" fill="#2f6f4f">Not to be confused with</text>
+  <text x="72" y="236" font-size="13" fill="#1f2328">the Slot of an appointment, which is held.</text>
+  <rect x="494" y="60" width="434" height="214" rx="12" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="514" y="88" font-size="14" font-weight="600" fill="#5f6b73">bounded context: appointments</text>
+  <rect x="514" y="104" width="394" height="152" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="534" y="132" font-size="16" font-weight="700" fill="#2f6f4f">Slot</text>
+  <line x1="528" y1="142" x2="894" y2="142" stroke="#2f6f4f" stroke-opacity="0.35"/>
+  <text x="534" y="164" font-size="13" fill="#1f2328">The interval, start and end, that one</text>
+  <text x="534" y="184" font-size="13" fill="#1f2328">appointment occupies.</text>
+  <text x="534" y="216" font-size="13" font-weight="600" fill="#2f6f4f">Not to be confused with</text>
+  <text x="534" y="236" font-size="13" fill="#1f2328">an open Slot of availability.</text>
+  <text x="480" y="302" font-size="14" font-style="italic" fill="#1f2328" text-anchor="middle">Both definitions are right, each inside its own boundary: no compromise definition.</text>
+</svg>

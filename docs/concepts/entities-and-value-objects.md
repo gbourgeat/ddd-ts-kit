@@ -1,3 +1,5 @@
+**English** · [Français](entities-and-value-objects.fr.md)
+
 # Entities and value objects
 
 **Summary.** The domain model is made of two kinds of objects. An entity has an identity that
@@ -27,6 +29,8 @@ Two appointments for the same client, practitioner and slot would still be two a
 (and a bug the invariant must prevent): entity. Two `TimeSlot`s from 09:00 to 09:30 on the same
 day are the same slot: value object.
 
+![On the left, the entity Appointment apt-42 is booked, rescheduled then cancelled and stays the same appointment, equal by its id; on the right, two TimeSlot values with the same attributes are equal, and moving a slot creates a new value](../assets/diagrams/entities-and-value-objects-identity.svg)
+
 The same concept can be an entity in one context and a value in another. A practitioner is an
 entity where profiles are managed; in `appointments` it is only a `practitionerId`.
 
@@ -35,11 +39,22 @@ entity where profiles are managed; in `appointments` it is only a `practitionerI
 A value object gathers a concept that would otherwise be scattered as primitives, together with
 the rules that make it valid and the operations that belong to it.
 
+<!-- checked sample -->
 ```ts
-// contexts/appointments/domain/value-objects/time-slot.vo.ts
-import { ValueObject } from '@ddd-ts-kit/kernel';
-import { AppointmentError } from '@/contexts/appointments/domain/errors/appointment.error';
+import { ConceptError, ValueObject } from '@ddd-ts-kit/kernel';
 
+// contexts/appointments/domain/errors/appointment.error.ts
+export class AppointmentError extends ConceptError {
+  static invalidTimeSlot(startsAt: Date, endsAt: Date) {
+    return AppointmentError.refusal(
+      'INVALID_TIME_SLOT',
+      `A slot ends after it starts: ${startsAt.toISOString()} to ${endsAt.toISOString()} does not.`,
+      { startsAt, endsAt },
+    );
+  }
+}
+
+// contexts/appointments/domain/value-objects/time-slot.vo.ts
 export type TimeSlotProps = {
   readonly startsAt: Date;
   readonly endsAt: Date;
@@ -87,6 +102,53 @@ What the shape gives:
   being repeated wherever two pairs of dates meet.
 - **No hidden clock.** `startsWithin` receives `now`; the domain never reads the system time
   (`purity/no-system-clock`).
+- **Equality for free.** `ValueObject` freezes the props at construction and compares them in
+  `equals`, dates by their instant and arrays item by item: two slots built from the same
+  instants are equal, `===` is not the question.
+- **Props are a `type`, not an `interface`.** `ValueObject<Props>` requires
+  `Record<string, unknown>`: an object type alias satisfies it, an interface does not, because
+  TypeScript gives an implicit index signature to the first only.
+
+In a spec, the value is used as the business speaks of it:
+
+<!-- checked sample -->
+```ts
+import { ValueObject } from '@ddd-ts-kit/kernel';
+import { describe, expect, it } from 'vitest';
+
+// The TimeSlot above, reduced to what this spec uses.
+type TimeSlotProps = { readonly startsAt: Date; readonly endsAt: Date };
+
+class TimeSlot extends ValueObject<TimeSlotProps> {
+  private constructor(props: TimeSlotProps) {
+    super(props);
+  }
+
+  static create(startsAt: Date, endsAt: Date): TimeSlot {
+    return new TimeSlot({ startsAt, endsAt });
+  }
+
+  overlaps(other: TimeSlot): boolean {
+    return this.props.startsAt < other.props.endsAt && other.props.startsAt < this.props.endsAt;
+  }
+}
+
+const at = (time: string): Date => new Date(`2026-03-03T${time}:00.000Z`);
+
+describe('TimeSlot', () => {
+  it('is equal to another slot with the same start and end', () => {
+    expect(TimeSlot.create(at('09:00'), at('09:30')).equals(TimeSlot.create(at('09:00'), at('09:30')))).toBe(true);
+  });
+
+  it('overlaps a slot that starts before it ends', () => {
+    expect(TimeSlot.create(at('09:00'), at('09:30')).overlaps(TimeSlot.create(at('09:15'), at('09:45')))).toBe(true);
+  });
+
+  it('does not overlap the slot that starts when it ends', () => {
+    expect(TimeSlot.create(at('09:00'), at('09:30')).overlaps(TimeSlot.create(at('09:30'), at('10:00')))).toBe(false);
+  });
+});
+```
 
 ### Why a value object is a class
 
@@ -95,7 +157,7 @@ The kit writes, and checks, the class (`domain/value-object-class`).
 
 ![A function that builds a plain object leaves every caller to validate, compare and recognise
 the value; a class built through its static factory checks once, compares by value and is
-recognised at the boundary](images/value-object-function-or-class.svg)
+recognised at the boundary](../assets/diagrams/entities-and-value-objects-function-or-class.svg)
 
 The function form looks lighter:
 
@@ -188,7 +250,7 @@ reported; [CONFIG.md](../CONFIG.md#stack) gives the steps to move.
 
 ![The rule first reads the config, then the value object files, then the functions of domain/
 and of the shared kernel; a function is reported when the object it answers is a record of
-data](images/value-object-class-rule.svg)
+data](../assets/diagrams/entities-and-value-objects-class-rule.svg)
 
 - **A value object file** (`domain/value-objects/*.vo.ts` of a context, a `*.vo.ts` of the shared
   kernel outside `presentation/`) exports exactly one class extending `ValueObject`, directly or
@@ -203,7 +265,7 @@ data](images/value-object-class-rule.svg)
 Whether an answered object is a record of data is read entry by entry, without the types:
 
 ![Five answered objects read entry by entry: data, built by the model, behaviour or derived; only
-the records of data alone are reported](images/value-object-record-roles.svg)
+the records of data alone are reported](../assets/diagrams/entities-and-value-objects-record-roles.svg)
 
 | Entry | Reads as | Examples |
 |---|---|---|
@@ -292,6 +354,18 @@ be swapped unnoticed, two dates whose order nothing guarantees. Candidates for a
 - anything with a **closed set of values** (a status, a channel);
 - **identifiers of other aggregates**, when confusing them would be costly.
 
+Instead of:
+
+```ts
+book(practitionerId: string, clientId: string, startsAt: Date, endsAt: Date): void; // end before start? swapped ids?
+```
+
+write:
+
+```ts
+book(practitionerId: string, clientId: string, slot: TimeSlot): void; // a TimeSlot that exists is valid
+```
+
 The generator's own templates remind it: state is declared "with value objects, not
 primitives".
 
@@ -299,11 +373,41 @@ primitives".
 
 An entity is defined by a thread of continuity. Its class protects that thread:
 
+<!-- checked sample -->
 ```ts
-// contexts/calendars/domain/entities/time-off.entity.ts
-import { Entity } from '@ddd-ts-kit/kernel';
-import type { Period } from '@/contexts/calendars/domain/value-objects/period.vo';
+import { ConceptError, Entity, ValueObject } from '@ddd-ts-kit/kernel';
 
+// contexts/calendars/domain/errors/calendar.error.ts
+export class CalendarError extends ConceptError {
+  static timeOffCanOnlyShrink(timeOffId: string) {
+    return CalendarError.refusal('TIME_OFF_CAN_ONLY_SHRINK', `Time off ${timeOffId} can only be shortened.`, {
+      timeOffId,
+    });
+  }
+}
+
+// contexts/calendars/domain/value-objects/period.vo.ts, reduced to what the entity uses
+type PeriodProps = { readonly from: Date; readonly to: Date };
+
+export class Period extends ValueObject<PeriodProps> {
+  private constructor(props: PeriodProps) {
+    super(props);
+  }
+
+  static create(from: Date, to: Date): Period {
+    return new Period({ from, to });
+  }
+
+  overlaps(other: Period): boolean {
+    return this.props.from < other.props.to && other.props.from < this.props.to;
+  }
+
+  contains(other: Period): boolean {
+    return this.props.from <= other.props.from && other.props.to <= this.props.to;
+  }
+}
+
+// contexts/calendars/domain/entities/time-off.entity.ts
 export interface TimeOffState {
   readonly period: Period;
   readonly reason: string;
@@ -326,6 +430,10 @@ export class TimeOff extends Entity<string> {
   }
 
   shortenTo(period: Period): void {
+    if (!this.state.period.contains(period)) {
+      throw CalendarError.timeOffCanOnlyShrink(this.id);
+    }
+
     this.state = { ...this.state, period };
   }
 
@@ -347,13 +455,19 @@ export class TimeOff extends Entity<string> {
 - **Identity is given, not generated inside.** The identifier comes from the `IdGenerator` port
   through the application layer (`purity/no-ambient-randomness`), which keeps tests
   deterministic.
+- **The intention method guards its rule.** `shortenTo` refuses a period that is not inside the
+  current one: the entity cannot be lengthened through a method named "shorten".
 - **State is made of value objects.** The entity carries identity and lifecycle; the values
   carry validity.
+- **Equal by identity.** `Entity.equals` compares the class and the id, never the state: a
+  `TimeOff` loaded before and after `shortenTo` is the same time off.
 
 An entity is either the root of an [aggregate](aggregates.md) (`Appointment`, `Calendar`) or
 lives inside one (`TimeOff` inside `Calendar`). An inner entity is reached and changed only
 through its root, has no repository of its own, and its identity only needs to be unique
 within the aggregate.
+
+![The Calendar aggregate: a handler loads it and calls a method of its root, which holds WorkingHours and two inner TimeOff entities with a Period each; reaching an inner entity directly never happens, and the CalendarRepository loads and saves the whole](../assets/diagrams/entities-and-value-objects-aggregate.svg)
 
 ```bash
 npx ddd-ts-kit generate value-object appointments TimeSlot

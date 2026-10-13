@@ -1,3 +1,5 @@
+**English** · [Français](README.fr.md)
+
 # @ddd-ts-kit/scheduling
 
 Scheduled jobs and background jobs for a project built with the kit. A scheduled job is a class
@@ -5,7 +7,8 @@ of the application layer that says when it runs and triggers use cases: it decid
 business rules stay in the domain. The scheduler opens an execution scope around each run, makes
 sure one instance of the application runs a given occurrence, and records what became of it. A
 background job is enqueued by a use case and run later by the worker of this package (see
-"Background jobs" below).
+"Background jobs" below). Why a job only triggers a use case, and how to design one that is safe
+to run twice: [Scheduled jobs](../../docs/concepts/scheduled-jobs.md).
 
 ```
 npm i @ddd-ts-kit/scheduling
@@ -13,25 +16,32 @@ npm i @ddd-ts-kit/scheduling
 
 | Entry | Holds | Imports |
 |---|---|---|
-| `@ddd-ts-kit/scheduling` | `InProcessJobScheduler`, `nextOccurrence`, `latestOccurrence`, `systemJobTimers`, the `JobTimers` and `JobCheckpoints` ports, `JobTimeoutError`, `JobAbortedError`, `JobLockUnavailableError`, the metric names; for background jobs `QueueWorker`, `StoredJobQueue`, the `JobStore` port, `InMemoryJobStore`, `reportFailedBackgroundJobs`, `JobInterruptedError`, `InvalidEnqueueError` | the kernel |
+| `@ddd-ts-kit/scheduling` | `InProcessJobScheduler`, `nextOccurrence`, `latestOccurrence`, `systemJobTimers`, the `JobTimers` and `JobCheckpoints` ports, `JobTimeoutError`, `JobAbortedError`, `JobLockUnavailableError`, `reportFailedRuns`, `UNEXPECTED_ERROR`, the metric names; for background jobs `QueueWorker`, `StoredJobQueue`, the `JobStore` port, `InMemoryJobStore`, `tenantKeyOf`, `reportFailedBackgroundJobs`, `JobInterruptedError`, `InvalidEnqueueError`, `UnknownBackgroundJobError`, `AttemptsExhaustedError`; for process managers `StoredProcessRunner`, `NoTimeoutJobError` | the kernel |
 | `@ddd-ts-kit/scheduling/testing` | `ManualJobScheduler`, `ManualJobTimers` | the kernel |
 
-The declaration (`@Scheduled`), the port (`JobScheduler`) and the schedule parser live in
-`@ddd-ts-kit/kernel`, so `application/` imports the kernel and nothing else.
-`@ddd-ts-kit/di` binds `JobScheduler` to an `InProcessJobScheduler` in its kernel module and
-registers the declared jobs: an application built with it needs no line of this README but
-the job itself.
+The declarations (`@Scheduled`, `@Background`), the ports (`JobScheduler`, `JobQueue`,
+`ProcessRunner`) and the schedule parser live in `@ddd-ts-kit/kernel`, so `application/` imports
+the kernel and nothing else. `@ddd-ts-kit/di` binds `JobScheduler` to an `InProcessJobScheduler`
+in its kernel module and registers the declared jobs: an application built with it needs no line
+of this README but the job itself.
+
+![The application layer of a bounded context declares its jobs against the kernel, which holds the declarations and the JobScheduler, JobQueue and ProcessRunner ports, and never imports this package; this package implements those ports, runs the jobs and calls the Lock, the JobStore and the JobCheckpoints the platform binds; the kernel module of @ddd-ts-kit/di binds every port to its implementation and registers the declared jobs](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/scheduling-package-place.svg)
 
 `JobScheduler` is not the `Scheduler` of `@ddd-ts-kit/aspects`. That one is a timer for retry
 and timeout (`schedule(work, delayMs)`); this one knows jobs, schedules and instances.
 
 ## A job
 
+<!-- checked sample -->
 ```ts
 // src/contexts/billing/application/scheduling/send-payment-reminders.job.ts
-import { CommandBus, systemActor } from '@ddd-ts-kit/kernel';
+import { AuthorizedCommand, CommandBus, systemActor, type Actor } from '@ddd-ts-kit/kernel';
 import { Scheduled, type JobExecution, type ScheduledJob } from '@ddd-ts-kit/kernel/declarations';
-import { SendPaymentReminders } from '@/contexts/billing/application/commands/send-payment-reminders/send-payment-reminders.command';
+
+// the command of the use case, in application/commands/send-payment-reminders/
+declare class SendPaymentReminders extends AuthorizedCommand {
+  constructor(actor: Actor, dueOn: Date);
+}
 
 @Scheduled('billing.send-payment-reminders', { cron: '0 7 * * 1-5', timeZone: 'Europe/Paris' })
 export class SendPaymentRemindersJob implements ScheduledJob {
@@ -92,10 +102,34 @@ per tenant receives the tenant in its command. `tenancy: 'per-tenant'` runs once
 the `TenantDirectory` given to the scheduler (`tenants` option; registering such a job without
 it throws `InvalidJobScheduleError`):
 
+<!-- checked sample -->
 ```ts
+import {
+  InMemoryTenantDirectory,
+  type Clock,
+  type ExecutionScope,
+  type IdGenerator,
+  type JobExecution,
+  type Lock,
+} from '@ddd-ts-kit/kernel';
+import { InProcessJobScheduler } from '@ddd-ts-kit/scheduling';
+
+declare const clock: Clock, lock: Lock, scope: ExecutionScope, ids: IdGenerator;
+declare function closeMonthOf(tenantId: string, month: Date): Promise<void>;
+
 const scheduler = new InProcessJobScheduler({ clock, lock, scope, ids, tenants: new InMemoryTenantDirectory(['acme', 'globex']) });
 
-scheduler.register({ name: 'billing.close-month', schedule: { cron: '0 2 1 * *' }, tenancy: 'per-tenant', run });
+scheduler.register({
+  name: 'billing.close-month',
+  schedule: { cron: '0 2 1 * *' },
+  tenancy: 'per-tenant',
+  // called twice per occurrence: once with tenantId 'acme', then once with 'globex'
+  run: async (execution: JobExecution) => {
+    if (execution.tenantId !== undefined) {
+      await closeMonthOf(execution.tenantId, execution.scheduledAt);
+    }
+  },
+});
 ```
 
 Each tenant's run happens in its own execution scope, `tenantId` set, and `execution.tenantId`
@@ -116,6 +150,8 @@ process: `'15m'` falls at :00, :15, :30 and :45, `'1d'` at midnight UTC. This is
 instance name the same instants, and a restart keep them. An interval that does not divide a
 day (`'7h'`) drifts against the wall clock, and none follows a time zone: for "every morning",
 write a cron.
+
+![Two instances started at 10:07 and 10:11: aligned on the epoch, both name the occurrences 10:15, 10:30, 10:45 and 11:00, so one lock key per occurrence and one instance runs it; counted from the start of each process, the first would name 10:22, 10:37, 10:52 and the second 10:26, 10:41, 10:56, different keys, and both would run](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/scheduling-package-interval-alignment.svg)
 
 **Cron** has the five standard fields, no seconds:
 
@@ -147,7 +183,26 @@ other job follows the clocks. Do not schedule in the changed hour what must run 
 `30 2 * * *` in `Europe/Paris` has no run on the last Sunday of March.
 
 `nextOccurrence(parseJobSchedule(schedule), after)` and `latestOccurrence(parsed, { after,
-notAfter })` answer the instants, for a screen that shows when a job runs next.
+notAfter })` answer the instants, for a screen that shows when a job runs next, or for a spec
+that pins a schedule before it is deployed:
+
+<!-- checked sample -->
+```ts
+import { describeJobSchedule, parseJobSchedule } from '@ddd-ts-kit/kernel';
+import { latestOccurrence, nextOccurrence } from '@ddd-ts-kit/scheduling';
+
+const every15 = parseJobSchedule({ every: '15m' });
+nextOccurrence(every15, new Date('2026-03-02T10:07:00Z')); // 2026-03-02T10:15:00Z, whenever the process started
+
+const weekdayMornings = { cron: '0 7 * * 1-5', timeZone: 'Europe/Paris' };
+const parsed = parseJobSchedule(weekdayMornings);
+describeJobSchedule(weekdayMornings); // 'cron 0 7 * * 1-5 (Europe/Paris)'
+nextOccurrence(parsed, new Date('2026-03-06T08:00:00Z')); // Monday 2026-03-09T06:00:00Z: 07:00 in Paris, UTC+1
+latestOccurrence(parsed, { after: new Date('2026-03-02T00:00:00Z'), notAfter: new Date('2026-03-04T12:00:00Z') }); // 2026-03-04T06:00:00Z
+
+// 02:30 does not exist in Paris on 2026-03-29: that day has no run
+nextOccurrence(parseJobSchedule({ cron: '30 2 * * *', timeZone: 'Europe/Paris' }), new Date('2026-03-28T12:00:00Z')); // 2026-03-30T00:30:00Z
+```
 
 ## Options
 
@@ -162,6 +217,11 @@ Written next to the schedule: `{ every: '15m', overlap: 'queue', timeoutMs: 60_0
 | `enabled` | `true` | `false` never starts the job by time; `runNow` still runs it |
 | `singleInstance` | `true` | one instance runs an occurrence: see below |
 
+Each option acts at one step of an occurrence, and each step that stops it records an outcome
+(see "Observability"):
+
+![An occurrence becomes due; reached later than lateAfterMs with missed skip, it is recorded missed; with the previous run still in progress and overlap skip, skipped-overlap; for a singleInstance job the scheduler takes the lock of the occurrence, held by another instance it records skipped-locked, unreachable failed with JOB_LOCK_UNAVAILABLE; taken, the job runs in an execution scope and succeeds or fails with its code, JOB_TIMEOUT or JOB_ABORTED; every outcome is logged, counted and given to onRun](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/scheduling-package-one-occurrence.svg)
+
 **Missed** means reached later than `lateAfterMs` (60 s by default, an option of the
 scheduler) after the instant, jitter aside: the process was down, asleep, or its event loop
 blocked. A timer a few seconds late still runs its occurrence. What passed **while the process
@@ -174,15 +234,6 @@ export abstract class JobCheckpoints {
 
   abstract write(job: string, handled: Date): Promise<void>;
 }
-
-// src/platform/scheduling/knex-job-checkpoints.ts, your adapter
-export class KnexJobCheckpoints implements JobCheckpoints {
-  constructor(private readonly database: Database) {}
-
-  async read(job: string): Promise<Date | undefined> { /* one row per job */ }
-
-  async write(job: string, handled: Date): Promise<void> { /* upsert */ }
-}
 ```
 
 The scheduler writes there the last occurrence it handled for each job and reads it when it
@@ -191,16 +242,94 @@ starts. Without it a restart forgets: every job starts from the instant of the s
 table or a key shared by the instances. It is given to the scheduler where the scheduler is
 built: see "Replacing the scheduler".
 
+An adapter on a SQL client of your own, one row per job:
+
+<!-- checked sample -->
+```ts
+// src/platform/scheduling/sql-job-checkpoints.ts
+import { JobCheckpoints } from '@ddd-ts-kit/scheduling';
+
+// the client of your database, a port your platform binds
+declare abstract class Sql {
+  abstract rows<Row>(text: string, values: readonly unknown[]): Promise<readonly Row[]>;
+  abstract execute(text: string, values: readonly unknown[]): Promise<void>;
+}
+
+export class SqlJobCheckpoints implements JobCheckpoints {
+  constructor(private readonly sql: Sql) {}
+
+  async read(job: string): Promise<Date | undefined> {
+    const [row] = await this.sql.rows<{ handled_at: Date }>('select handled_at from job_checkpoints where job = $1', [job]);
+
+    return row?.handled_at;
+  }
+
+  async write(job: string, handled: Date): Promise<void> {
+    await this.sql.execute(
+      `insert into job_checkpoints (job, handled_at) values ($1, $2)
+       on conflict (job) do update set handled_at = greatest(job_checkpoints.handled_at, excluded.handled_at)`,
+      [job, handled],
+    );
+  }
+}
+```
+
+`greatest` keeps the latest instant when two instances write at once: the checkpoint only moves
+forward.
+
 **A timeout does not kill.** A run is a promise, and nothing can stop a promise: the scheduler
 aborts the signal, stops waiting and frees the job for its next occurrence. A job that ignores
 its signal goes on behind, and then overlaps the next run. Pass the signal on, or check it.
+
+```ts
+// instead of: a loop that never looks at the signal, still sending commands after the timeout
+for (const batch of batches) {
+  await this.commands.execute(new ArchiveBatch(actor, batch, execution.scheduledAt));
+}
+```
+
+<!-- checked sample -->
+```ts
+import { AuthorizedCommand, CommandBus, systemActor, type Actor } from '@ddd-ts-kit/kernel';
+import { Scheduled, type JobExecution, type ScheduledJob } from '@ddd-ts-kit/kernel/declarations';
+
+declare class ArchiveBatch extends AuthorizedCommand {
+  constructor(actor: Actor, batch: number, asOf: Date);
+}
+
+const BATCHES = 20;
+
+// write: stop between two steps once the run is aborted (timeout or stop())
+@Scheduled('archive.archive-old-records', { cron: '0 3 * * *', timeoutMs: 10 * 60_000 })
+export class ArchiveOldRecordsJob implements ScheduledJob {
+  constructor(private readonly commands: CommandBus) {}
+
+  async run(execution: JobExecution): Promise<void> {
+    const actor = systemActor('archive.archive-old-records');
+
+    for (let batch = 0; batch < BATCHES; batch += 1) {
+      execution.signal.throwIfAborted(); // throws the JobTimeoutError or the JobAbortedError
+      await this.commands.execute(new ArchiveBatch(actor, batch, execution.scheduledAt));
+    }
+  }
+}
+```
+
+Make the command of each batch safe to send again: what a timeout leaves undone, the next
+occurrence picks up from the state.
 
 ## Switching a job off, per environment
 
 A job is switched off, rescheduled or tuned by configuration, never by a code change. With
 `@ddd-ts-kit/di`:
 
+<!-- checked sample -->
 ```ts
+import { createApplication, type ContextModule } from '@ddd-ts-kit/di';
+
+declare const modules: readonly ContextModule[];
+declare const config: { readonly jobs: { readonly reminders: { readonly enabled: boolean }; readonly ledgerCron: string } };
+
 createApplication({
   modules,
   jobs: {
@@ -298,10 +427,13 @@ below the termination grace of the platform.
 `ErrorReporter` as `onRun`. To build it otherwise (with checkpoints, another grace period,
 another observer), give the kernel module yours:
 
+<!-- checked sample -->
 ```ts
-import { Clock, ExecutionScope, IdGenerator, Lock, Logger, Metrics } from '@ddd-ts-kit/kernel';
-import { createApplication, kernelModule } from '@ddd-ts-kit/di';
-import { InProcessJobScheduler, JobCheckpoints } from '@ddd-ts-kit/scheduling';
+import { Clock, ErrorReporter, ExecutionScope, IdGenerator, Lock, Logger, Metrics } from '@ddd-ts-kit/kernel';
+import { createApplication, kernelModule, type ContextModule } from '@ddd-ts-kit/di';
+import { InProcessJobScheduler, JobCheckpoints, reportFailedRuns } from '@ddd-ts-kit/scheduling';
+
+declare const platformModule: ContextModule, billingModule: ContextModule;
 
 const kernel = kernelModule({
   jobScheduler: (resolve) =>
@@ -315,20 +447,29 @@ const kernel = kernelModule({
       metrics: resolve(Metrics),
       checkpoints: resolve(JobCheckpoints),
       graceMs: 10_000,
+      // what the default scheduler does with failed runs: keep it
+      onRun: reportFailedRuns(resolve(ErrorReporter)),
     }),
 });
 
 const app = createApplication({ modules: [kernel, platformModule, billingModule] });
 ```
 
-with, in the module of the platform, `builder.bind(JobCheckpoints).toClass(KnexJobCheckpoints, [Database])`.
+with, in the module of the platform, `builder.bind(JobCheckpoints).toClass(SqlJobCheckpoints, [Sql])`.
 A later module replaces the scheduler the same way, with
 `builder.rebind(JobScheduler).toFactory((resolve) => new InProcessJobScheduler({ ... }))`, and
 so does another implementation of the `JobScheduler` port (on a database, on a queue).
 
 Without `@ddd-ts-kit/di`:
 
+<!-- checked sample -->
 ```ts
+import type { Clock, ExecutionScope, IdGenerator, Lock, Logger, Metrics, ScheduledJob } from '@ddd-ts-kit/kernel';
+import { InProcessJobScheduler } from '@ddd-ts-kit/scheduling';
+
+declare const clock: Clock, lock: Lock, scope: ExecutionScope, ids: IdGenerator, logger: Logger, metrics: Metrics;
+declare const job: ScheduledJob;
+
 const scheduler = new InProcessJobScheduler({ clock, lock, scope, ids, logger, metrics });
 scheduler.register({ name: 'billing.send-payment-reminders', schedule: { every: '15m' }, run: (execution) => job.run(execution) });
 await scheduler.start();
@@ -365,8 +506,12 @@ Every occurrence handled has one outcome, recorded three times:
 | `skipped-locked` | another instance runs this occurrence | debug |
 | `missed` | the occurrence passed and was not run | warn |
 
-- **Log**: one entry, `Scheduled job <outcome>`, with `job`, `context`, `outcome`,
-  `scheduledAt`, and for a run `durationMs`, `correlationId`, `errorCode`, `errorType`.
+- **Log**: one entry, `Scheduled job succeeded`, `Scheduled job failed`, `Scheduled job missed`,
+  `Scheduled job skipped: the previous run is still in progress` or `Scheduled job skipped:
+  another instance runs this occurrence`, with `job`, `context`, `outcome`, `scheduledAt`, and
+  for a run `durationMs`, `correlationId`, `errorCode`, `errorType`. What goes wrong around the
+  runs (a checkpoint that cannot be read or written) is logged at `error` as `Scheduled job could
+  not be followed`, and the job goes on.
 - **Metrics**: the counter `scheduled_job_runs_total` and, for a run, the histogram
   `scheduled_job_duration_ms`, labelled `job`, `context`, `status` (the outcome) and
   `error_code`. An alert on "no `succeeded` for this job since N intervals" catches every way a
@@ -385,7 +530,22 @@ retry.
 A spec of a job is a spec of the use case it triggers: run the job, assert the fakes. Time is
 not involved, and the test application of `@ddd-ts-kit/di` never starts jobs by time.
 
+<!-- checked sample -->
 ```ts
+import { contextModule, createTestApplication, fake, type DeclaredSource } from '@ddd-ts-kit/di';
+import { expect } from 'vitest';
+
+// the barrel of the context, and the fake of its Mailer port
+declare const billing: DeclaredSource;
+declare abstract class Mailer {
+  abstract send(to: string, subject: string): Promise<void>;
+}
+declare class FakeMailer extends Mailer {
+  readonly sent: readonly { readonly to: string; readonly subject: string }[];
+  send(to: string, subject: string): Promise<void>;
+}
+const mailer = new FakeMailer();
+
 const app = createTestApplication({ modules: [contextModule('billing', billing)], fakes: [fake(Mailer, mailer)] });
 
 await app.jobs.runNow('billing.send-payment-reminders');
@@ -397,10 +557,13 @@ expect(mailer.sent).toHaveLength(2);
 system actor, lock aside) and throws what the job threw. For a spec about time itself,
 `app.jobs.scheduler` is a `ManualJobScheduler` on the clock of the application:
 
+<!-- checked sample -->
 ```ts
 import { FixedClock, FixedExecutionScope, InMemoryLock, SequentialIdGenerator } from '@ddd-ts-kit/kernel';
 import { ManualJobScheduler } from '@ddd-ts-kit/scheduling/testing';
+import { expect } from 'vitest';
 
+const run = async (): Promise<void> => undefined;
 const clock = new FixedClock(new Date('2026-03-02T09:58:30Z'));
 const scheduler = new ManualJobScheduler({ clock, lock: new InMemoryLock(clock), scope: new FixedExecutionScope(), ids: new SequentialIdGenerator() });
 scheduler.register({ name: 'billing.send-payment-reminders', schedule: { every: '15m' }, run });
@@ -432,16 +595,41 @@ with the guarantees: [Background jobs](../../docs/concepts/background-jobs.md).
 
 | Piece | |
 |---|---|
-| `StoredJobQueue` | the `JobQueue` of the kernel on a `JobStore`: names the job, captures the correlation, the actor, the tenant and the `traceparent` of the work that enqueues, adds it to the store; `find` and `cancel` reach the jobs of the tenant of the work in progress only (those of an elevation's tenants; every job without a tenant) |
+| `StoredJobQueue` | the `JobQueue` of the kernel on a `JobStore`: names the job, captures the correlation, the actor, the tenant and the `traceparent` of the work that enqueues, adds it to the store; `find` and `cancel` reach the jobs of the tenant of the work in progress only (of the tenants of its elevation; every job when the work has no tenant) |
 | `JobStore` | the port of the stores: `add`, `claim` (a lease), `heartbeat`, `update` (progress, checkpoint), `complete`, `fail`, `release`, `cancel`, `find`, `retryDead`, `purgeFinished`, `stats`; every report names its attempt (`JobLease`) |
 | `InMemoryJobStore` | the store of tests and of a process without a database: `add`, `cancel` and `retryDead` wait for the commit of the unit of work; `list()` for assertions |
 | `tenantKeyOf(enqueuedBy)` | the tenant part of the idempotency key, for a store that keeps it in a unique index: the tenant, or the empty text |
 | `QueueWorker` | claims and runs the jobs of the queues it has jobs for: `register`, `start`, `stop` (waits for a claim in flight, whose jobs go back uncounted, then for the attempts in progress), `runDue` |
 | `reportFailedBackgroundJobs(reporter)` | the observer that sends an attempt that failed unexpectedly to the error reporter |
 
+<!-- checked sample -->
 ```ts
+import type {
+  BackgroundJob,
+  BackgroundJobExecution,
+  Clock,
+  ErrorReporter,
+  ExecutionScope,
+  IdGenerator,
+  Logger,
+  Metrics,
+} from '@ddd-ts-kit/kernel';
+import { InMemoryJobStore, QueueWorker, reportFailedBackgroundJobs, StoredJobQueue } from '@ddd-ts-kit/scheduling';
+import { captureTraceparent } from '@ddd-ts-kit/tracing';
+
+declare const clock: Clock, ids: IdGenerator, scope: ExecutionScope, logger: Logger, metrics: Metrics, errors: ErrorReporter;
+interface CompileStatementsPayload {
+  readonly month: string;
+}
+declare class CompileStatementsBackgroundJob implements BackgroundJob<CompileStatementsPayload> {
+  static readonly jobName: 'billing.compile-statements';
+  run(payload: CompileStatementsPayload, execution: BackgroundJobExecution): Promise<void>;
+}
+declare const job: CompileStatementsBackgroundJob;
+
 const store = new InMemoryJobStore(); // KnexJobStore, DrizzleJobStore or RedisJobStore in production
-const jobs = new StoredJobQueue({ store, clock, ids, scope, traceparent: captureTraceparent });
+// the JobQueue a use case enqueues on: jobs.enqueue(CompileStatementsBackgroundJob, { month: '2026-10' })
+export const jobs = new StoredJobQueue({ store, clock, ids, scope, traceparent: captureTraceparent });
 
 const worker = new QueueWorker({
   store,
@@ -449,11 +637,16 @@ const worker = new QueueWorker({
   scope,
   logger,
   metrics,
-  concurrency: { scheduling: 4, default: 1 },
+  concurrency: { billing: 4, default: 1 }, // the queue of a job is its context
   onRun: reportFailedBackgroundJobs(errors),
 });
 
-worker.register({ name: CompileStatementsBackgroundJob.jobName, options: { maxAttempts: 3 }, run: (payload, execution) => job.run(payload, execution) });
+worker.register({
+  name: CompileStatementsBackgroundJob.jobName,
+  options: { maxAttempts: 3 },
+  // the payload comes back from the store as plain JSON
+  run: (payload, execution) => job.run(payload as CompileStatementsPayload, execution),
+});
 await worker.start();
 ```
 

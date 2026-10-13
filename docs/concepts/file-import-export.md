@@ -1,3 +1,5 @@
+**English** · [Français](file-import-export.fr.md)
+
 # File import and export
 
 **Status: a design, not built.** This page says how the kit intends to process a large file in
@@ -16,26 +18,7 @@ by several jobs and followed by a process manager.
 
 ## Import
 
-```mermaid
-sequenceDiagram
-  participant C as Client
-  participant H as StartImport handler
-  participant DB as Database (one transaction)
-  participant Q as Job queue
-  participant J as ImportRowsBackgroundJob
-  participant F as File storage
-  C->>H: upload (FileUpload, staged and scanned by the bus)
-  H->>DB: save Import (StoredFile, status running)
-  H->>Q: enqueue ImportRows { importId } in the same transaction
-  H->>F: promoteOnCommit(key)
-  loop each batch of rows, until the end of the file
-    J->>F: get(key), read from the checkpoint
-    J->>DB: one unit of work: the commands of the batch, the counts
-    J->>Q: saveCheckpoint({ row, rejected }), reportProgress
-  end
-  J->>F: put(report key): the rejected rows
-  J->>DB: CompleteImport (counts, report)
-```
+![An import in two parts: the request saves the Import and enqueues ImportRows in one transaction; then a worker runs ImportRowsBackgroundJob, which streams the file through a row reader, sends one command per batch of 200 rows in one unit of work, saves its checkpoint, writes rejected rows to a report part, and ends with CompleteImport](../assets/diagrams/file-import-export-import-flow.svg)
 
 1. **Receiving.** The file arrives as any other: a `FileUpload` the bus stages and scans before
    the transaction, or a direct upload confirmed from its `PendingUpload` for a large one.
@@ -47,12 +30,16 @@ sequenceDiagram
 3. **Reading.** The job opens `FileStorage.get(key)` and hands the stream to a row reader that
    yields one row at a time. It never loads the file: memory stays at one batch.
 4. **Writing.** Rows are validated against the input of the use case they feed, then sent as
-   commands, a batch of, say, 200 rows per unit of work, so that a batch commits or rolls back
-   whole and a crash repeats at most one batch. Each command is idempotent by a key derived from
-   the import and the row (`<importId>:<row>`), kept by the use case (a unique constraint, or
-   the processed-key store) so that a repeated batch changes nothing.
-5. **Resuming.** After each batch the job saves `{ row, accepted, rejected }` as its checkpoint
-   and reports `{ done: row }` (and `total` once a first pass counted the rows, or the bytes
+   one command per batch of, say, 200 rows: the bus runs a command in one unit of work, so a
+   batch commits or rolls back whole and a crash repeats at most one batch. Each row is
+   idempotent by a key derived from the import and the row (`<importId>:<row>`), kept by the
+   use case (a unique constraint, or the processed-key store), so that a repeated batch changes
+   nothing. The handler of that command records the counts of the batch on the `Import` in the
+   same unit of work, keyed by the batch, so that a repeated batch replaces its counts instead
+   of adding them twice.
+5. **Resuming.** After each batch the job saves `{ row }` as its checkpoint (the counts are
+   already committed with the batch, so they cannot drift from what was imported) and reports
+   `{ done: row }` (and `total` once a first pass counted the rows, or the bytes
    read against the size when it did not). A retry, an expired lease or a stop of the worker
    resumes from the checkpoint: the stream is opened again and skips to the row, or, once the
    port offers it, reads from a byte offset.
@@ -61,12 +48,127 @@ sequenceDiagram
    of the refusal. The report is a file of its own: written in parts during the run
    (`imports/<id>/rejected/<batch>.csv`, each `put` once per batch, so a repeated batch
    overwrites its own part) and joined at the end into one file offered through a signed link.
-7. **Ending.** The job sends `CompleteImport` with the counts and the key of the report; the
-   `Import` aggregate ends, and its integration event tells whoever waits (a notification to
-   the person who uploaded). A job that dies after its last attempt leaves the import
-   `running` with its checkpoint: an operator revives the job (`retryDead`), nothing is lost.
+7. **Ending.** The job sends `CompleteImport`: the `Import` aggregate, which already holds the
+   counts, records the key of the joined report and ends, and its integration event tells
+   whoever waits (a notification to the person who uploaded). A job that dies after its last
+   attempt leaves the import `running` with its checkpoint: an operator revives the job
+   (`retryDead`), nothing is lost.
+
+### The job, on the pieces that exist
+
+Everything below compiles against the kit today except the row reader, which is declared
+here because it is the first piece of [What would be added](#what-would-be-added). The
+payload is the identifier of the import, the checkpoint the last row committed.
+
+<!-- checked sample -->
+```ts
+import {
+  AuthorizedCommand,
+  FileStorage,
+  type Actor,
+  type BackgroundJob,
+  type BackgroundJobExecution,
+  type CommandBus,
+} from '@ddd-ts-kit/kernel';
+import { Background } from '@ddd-ts-kit/kernel/declarations';
+import type { Readable } from 'node:stream';
+
+// Not in the kit yet: a streaming reader that yields one row at a time from a row number.
+interface Row {
+  readonly number: number;
+  readonly cells: Readonly<Record<string, string>>;
+}
+declare function readRows(stream: Readable, options: { readonly from: number }): AsyncIterable<Row>;
+
+// The use cases of the context the import feeds (generated as any command). The handler of
+// ImportPatientRows imports the valid rows idempotently by <importId>:<row>, records the counts
+// of the batch on the Import, and writes the rejected rows to imports/<id>/rejected/<batch>.csv.
+declare class ImportPatientRows extends AuthorizedCommand {
+  constructor(actor: Actor, importId: string, rows: readonly Row[]);
+}
+declare class CompleteImport extends AuthorizedCommand {
+  constructor(actor: Actor, importId: string);
+}
+
+/** What the job reads of the Import aggregate: the key of its stored file. */
+export abstract class ImportFiles {
+  abstract keyOf(importId: string): Promise<string>;
+}
+
+export interface ImportRowsPayload {
+  readonly importId: string;
+}
+
+interface ImportRowsCheckpoint {
+  readonly row: number;
+}
+
+const BATCH_SIZE = 200;
+
+@Background({ timeout: '30m', lease: '1m' })
+export class ImportRowsBackgroundJob implements BackgroundJob<ImportRowsPayload> {
+  static readonly jobName = 'patients.import-rows';
+
+  constructor(
+    private readonly storage: FileStorage,
+    private readonly imports: ImportFiles,
+    private readonly commands: CommandBus,
+  ) {}
+
+  async run({ importId }: ImportRowsPayload, execution: BackgroundJobExecution): Promise<void> {
+    const content = await this.storage.get(await this.imports.keyOf(importId));
+
+    if (content === undefined) {
+      throw new Error(`The file of import ${importId} is gone.`);
+    }
+
+    let batch: Row[] = [];
+
+    for await (const row of readRows(content.stream, { from: rowOf(execution.checkpoint) + 1 })) {
+      batch.push(row);
+
+      if (batch.length === BATCH_SIZE) {
+        await this.importBatch(importId, batch, execution);
+        batch = [];
+      }
+    }
+
+    if (batch.length > 0) {
+      await this.importBatch(importId, batch, execution);
+    }
+
+    await this.commands.execute(new CompleteImport(execution.actor, importId));
+  }
+
+  /** One command, one unit of work: the batch commits whole, then the checkpoint moves past it. */
+  private async importBatch(importId: string, batch: readonly Row[], execution: BackgroundJobExecution): Promise<void> {
+    execution.signal.throwIfAborted();
+    await this.commands.execute(new ImportPatientRows(execution.actor, importId, batch));
+
+    const checkpoint: ImportRowsCheckpoint = { row: batch[batch.length - 1]?.number ?? 0 };
+
+    await execution.saveCheckpoint(checkpoint);
+    await execution.reportProgress({ done: checkpoint.row });
+  }
+}
+
+function rowOf(checkpoint: unknown): number {
+  return typeof checkpoint === 'object' && checkpoint !== null && 'row' in checkpoint && typeof checkpoint.row === 'number'
+    ? checkpoint.row
+    : 0;
+}
+```
+
+The commands are sent as `execution.actor`, the person who uploaded the file, so each batch is
+authorized and audited as theirs. A crash between the commit of a batch and its checkpoint
+repeats that batch on the next attempt, which is why `ImportPatientRows` keeps each row
+idempotent by `<importId>:<row>`:
+
+![A file of 1000 rows in five batches: attempt 1 commits batches 1 to 3 with checkpoints after batches 1 and 2, the worker dies before the checkpoint of batch 3; attempt 2 resumes from row 400, repeats batch 3 without effect thanks to the idempotency key, then imports batches 4 and 5 and completes](../assets/diagrams/file-import-export-batches.svg)
 
 ## Export
+
+![An export: a search of the context read page by page with a cursor, each page written as a part under exports/id/parts, the parts joined at the end into one file recorded by CompleteExport, downloaded by the owner through a signed link](../assets/diagrams/file-import-export-export-parts.svg)
 
 1. `RequestExport` records an `Export` with its criteria and its owner, and enqueues
    `ExportBackgroundJob`. The criteria are those of a search of the context, scoped by the

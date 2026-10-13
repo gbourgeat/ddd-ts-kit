@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 520" width="960" height="520" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">What may cross the boundary of a context</title>
+  <desc id="desc">Two bounded contexts, appointments and notifications. notifications may import the published-language folder of appointments, which holds its integration events and read contracts. An import of the domain of appointments is refused by context/published-language-only. Each context owns its database schema; a join, a foreign key or a transaction across the two schemas is refused.</desc>
+  <defs>
+    <marker id="arrow-neutral" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+    <marker id="arrow-refused" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#b42318"/>
+    </marker>
+  </defs>
+  <rect width="960" height="520" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">What may cross the boundary of a context</text>
+  <rect x="32" y="60" width="440" height="290" rx="12" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="52" y="88" font-size="14" font-weight="600" fill="#5f6b73">bounded context: appointments</text>
+  <rect x="56" y="136" width="180" height="40" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="146" y="162" font-size="15" font-weight="700" fill="#9a5b2b" text-anchor="middle">presentation</text>
+  <rect x="56" y="186" width="180" height="40" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="146" y="212" font-size="15" font-weight="700" fill="#2b5d8a" text-anchor="middle">application</text>
+  <rect x="56" y="236" width="180" height="40" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="146" y="262" font-size="15" font-weight="700" fill="#2f6f4f" text-anchor="middle">domain</text>
+  <rect x="56" y="286" width="180" height="40" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="146" y="312" font-size="15" font-weight="700" fill="#7a4f9a" text-anchor="middle">infrastructure</text>
+  <rect x="272" y="170" width="180" height="120" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2.5"/>
+  <text x="362" y="198" font-size="14" font-weight="700" fill="#5f6b73" text-anchor="middle">published-language/</text>
+  <line x1="286" y1="210" x2="438" y2="210" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text x="362" y="234" font-size="13" fill="#1f2328" text-anchor="middle">integration events</text>
+  <text x="362" y="254" font-size="13" fill="#1f2328" text-anchor="middle">read contracts</text>
+  <text x="362" y="274" font-size="13" font-weight="600" font-style="italic" fill="#5f6b73" text-anchor="middle">the only door</text>
+  <rect x="600" y="60" width="328" height="290" rx="12" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="620" y="88" font-size="14" font-weight="600" fill="#5f6b73">bounded context: notifications</text>
+  <rect x="624" y="170" width="280" height="120" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="764" y="198" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">application</text>
+  <line x1="638" y1="210" x2="890" y2="210" stroke="#2b5d8a" stroke-opacity="0.35"/>
+  <text x="764" y="234" font-size="13" fill="#1f2328" text-anchor="middle">integration handlers</text>
+  <text x="764" y="256" font-size="13" fill="#1f2328" text-anchor="middle">its own projections</text>
+  <line x1="622" y1="230" x2="456" y2="230" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow-neutral)"/>
+  <text x="536" y="254" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">allowed:</text>
+  <text x="536" y="272" font-size="13" fill="#1f2328" text-anchor="middle">its contract</text>
+  <path d="M700,168 V124 H256 V256 H240" fill="none" stroke="#b42318" stroke-width="2" marker-end="url(#arrow-refused)"/>
+  <text x="462" y="116" font-size="13" fill="#b42318" text-anchor="middle">refused: an import of its domain (context/published-language-only)</text>
+  <rect x="152" y="392" width="200" height="48" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="252" y="421" font-size="14" font-weight="600" fill="#5f6b73" text-anchor="middle">schema appointments</text>
+  <rect x="664" y="392" width="200" height="48" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="764" y="421" font-size="14" font-weight="600" fill="#5f6b73" text-anchor="middle">schema notifications</text>
+  <line x1="252" y1="352" x2="252" y2="390" stroke="#3d4449" stroke-width="2"/>
+  <text x="262" y="375" font-size="13" fill="#1f2328">owns</text>
+  <line x1="764" y1="352" x2="764" y2="390" stroke="#3d4449" stroke-width="2"/>
+  <text x="774" y="375" font-size="13" fill="#1f2328">owns</text>
+  <line x1="662" y1="416" x2="356" y2="416" stroke="#b42318" stroke-width="2" marker-end="url(#arrow-refused)"/>
+  <text x="509" y="404" font-size="13" fill="#b42318" text-anchor="middle">refused: a join, a foreign key,</text>
+  <text x="509" y="436" font-size="13" fill="#b42318" text-anchor="middle">a transaction across schemas</text>
+  <line x1="32" y1="474" x2="76" y2="474" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow-neutral)"/>
+  <text x="88" y="479" font-size="14" fill="#1f2328">an import the rules allow</text>
+  <line x1="32" y1="500" x2="76" y2="500" stroke="#b42318" stroke-width="2" marker-end="url(#arrow-refused)"/>
+  <text x="88" y="505" font-size="14" fill="#1f2328">refused by the analyzers (context/published-language-only, context/extractable)</text>
+</svg>

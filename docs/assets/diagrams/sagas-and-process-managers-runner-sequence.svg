@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" width="960" height="540" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">The process runner: a step, then its timeout</title>
+  <desc id="desc">In the unit of work of the booking, the handler of AppointmentBooked calls run; the runner loads no instance, enqueues the timeout job for the deadline and saves version 1. At the deadline, unless a step disarmed it, the timeout job calls timeout with its job id; the runner loads the instance, checks that this job is the armed one, saves version 2, ended, then sends ExpireUnconfirmedAppointments.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="540" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">The process runner: a step, then its timeout</text>
+  <line x1="100" y1="112" x2="100" y2="520" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="4 4"/>
+  <rect x="20" y="58" width="160" height="54" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="100" y="80" font-size="15" font-weight="700" fill="#2b5d8a" text-anchor="middle">Event handler</text>
+  <text x="100" y="100" font-size="13" fill="#1f2328" text-anchor="middle">of AppointmentBooked</text>
+  <line x1="290" y1="112" x2="290" y2="520" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="4 4"/>
+  <rect x="210" y="58" width="160" height="54" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="290" y="80" font-size="15" font-weight="700" fill="#2b5d8a" text-anchor="middle">ProcessRunner</text>
+  <text x="290" y="100" font-size="13" fill="#1f2328" text-anchor="middle">one unit of work</text>
+  <line x1="480" y1="112" x2="480" y2="520" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="4 4"/>
+  <rect x="400" y="58" width="160" height="54" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="480" y="80" font-size="15" font-weight="700" fill="#7a4f9a" text-anchor="middle">ProcessStore</text>
+  <text x="480" y="100" font-size="13" fill="#1f2328" text-anchor="middle">versioned instances</text>
+  <line x1="670" y1="112" x2="670" y2="520" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="4 4"/>
+  <rect x="590" y="58" width="160" height="54" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="670" y="80" font-size="15" font-weight="700" fill="#7a4f9a" text-anchor="middle">JobQueue</text>
+  <text x="670" y="100" font-size="13" fill="#1f2328" text-anchor="middle">and its worker</text>
+  <line x1="856" y1="112" x2="856" y2="520" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="4 4"/>
+  <rect x="776" y="58" width="160" height="54" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="856" y="80" font-size="15" font-weight="700" fill="#2b5d8a" text-anchor="middle">CommandBus</text>
+  <text x="856" y="100" font-size="13" fill="#1f2328" text-anchor="middle">of the context</text>
+  <line x1="103" y1="148" x2="286" y2="148" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="105" y="127" width="168" height="19" fill="#ffffff"/>
+  <text x="110" y="141" font-size="13" fill="#1f2328">run(process, id, step)</text>
+  <line x1="293" y1="186" x2="476" y2="186" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="295" y="165" width="82" height="19" fill="#ffffff"/>
+  <text x="300" y="179" font-size="13" fill="#1f2328">load: none</text>
+  <line x1="293" y1="224" x2="666" y2="224" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="295" y="203" width="298" height="19" fill="#ffffff"/>
+  <text x="300" y="217" font-size="13" fill="#1f2328">enqueue the timeout job, at the deadline</text>
+  <line x1="293" y1="262" x2="476" y2="262" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="295" y="241" width="111" height="19" fill="#ffffff"/>
+  <text x="300" y="255" font-size="13" fill="#1f2328">save version 1</text>
+  <line x1="667" y1="360" x2="294" y2="360" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="453" y="339" width="212" height="19" fill="#ffffff"/>
+  <text x="660" y="353" font-size="13" fill="#1f2328" text-anchor="end">timeout(process, due, jobId)</text>
+  <line x1="293" y1="398" x2="476" y2="398" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="295" y="377" width="190" height="19" fill="#ffffff"/>
+  <text x="300" y="391" font-size="13" fill="#1f2328">load, check the armed job</text>
+  <line x1="293" y1="436" x2="476" y2="436" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="295" y="415" width="161" height="19" fill="#ffffff"/>
+  <text x="300" y="429" font-size="13" fill="#1f2328">save version 2, ended</text>
+  <line x1="293" y1="474" x2="852" y2="474" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="295" y="453" width="284" height="19" fill="#ffffff"/>
+  <text x="300" y="467" font-size="13" fill="#1f2328">execute(ExpireUnconfirmedAppointments)</text>
+  <!-- the deadline -->
+  <line x1="24" y1="304" x2="936" y2="304" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="7 5"/>
+  <rect x="250" y="292" width="460" height="24" rx="6" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1"/>
+  <text x="480" y="309" font-size="13" font-style="italic" fill="#1f2328" text-anchor="middle">the booking commits; at the deadline, unless a step disarmed it</text>
+</svg>

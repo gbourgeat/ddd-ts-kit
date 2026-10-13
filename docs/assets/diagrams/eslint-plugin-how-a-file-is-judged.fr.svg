@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" width="960" height="420" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Comment le plugin juge un fichier</title>
+  <desc id="desc">ESLint passe un fichier au plugin. Le plugin remonte depuis ce fichier jusqu'à ddd-ts-kit.config.json, lu une fois par répertoire. Il classe le fichier comme le fait ddd-ts-kit check : contexte billing, couche application, pas un fichier de test. Chaque règle lit ensuite l'arbre syntaxique, à la sévérité que la config donne à son identifiant ou à sa sévérité par défaut, et un commentaire de désactivation avec une raison fait taire une ligne. Le résultat est un rapport qui nomme la ligne, le problème, quoi faire à la place et la règle.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="420" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Comment le plugin juge un fichier</text>
+  <!-- 1: the file -->
+  <rect x="28" y="62" width="196" height="168" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="126" y="90" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">1. le fichier analysé</text>
+  <line x1="44" y1="102" x2="208" y2="102" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text x="126" y="126" font-size="13" fill="#1f2328" text-anchor="middle">src/contexts/billing/</text>
+  <text x="126" y="148" font-size="13" fill="#1f2328" text-anchor="middle">application/commands/</text>
+  <text x="126" y="170" font-size="13" fill="#1f2328" text-anchor="middle">issue-invoice/</text>
+  <text x="126" y="192" font-size="13" fill="#1f2328" text-anchor="middle">issue-invoice.handler.ts</text>
+  <!-- 2: the config -->
+  <rect x="264" y="62" width="196" height="168" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="362" y="90" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">2. la config</text>
+  <line x1="280" y1="102" x2="444" y2="102" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text x="362" y="126" font-size="13" fill="#1f2328" text-anchor="middle">ddd-ts-kit.config.json,</text>
+  <text x="362" y="148" font-size="13" fill="#1f2328" text-anchor="middle">trouvé en remontant</text>
+  <text x="362" y="170" font-size="13" fill="#1f2328" text-anchor="middle">contextsDir, rules, stack</text>
+  <text x="362" y="192" font-size="13" fill="#1f2328" text-anchor="middle">lu une fois par répertoire</text>
+  <!-- 3: classification -->
+  <rect x="500" y="62" width="196" height="168" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="598" y="90" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">3. classé</text>
+  <line x1="516" y1="102" x2="680" y2="102" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text x="598" y="126" font-size="13" fill="#1f2328" text-anchor="middle">contexte : billing</text>
+  <rect x="521" y="134" width="154" height="22" rx="11" fill="#e7eef5" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="598" y="150" font-size="13" font-weight="600" fill="#2b5d8a" text-anchor="middle">couche : application</text>
+  <text x="598" y="176" font-size="13" fill="#1f2328" text-anchor="middle">fichier de test : non</text>
+  <text x="598" y="206" font-size="13" font-style="italic" fill="#5f6b73" text-anchor="middle">comme ddd-ts-kit check</text>
+  <!-- 4: the rules -->
+  <rect x="736" y="62" width="196" height="168" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="834" y="90" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">4. règles appliquées</text>
+  <line x1="752" y1="102" x2="916" y2="102" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text x="834" y="126" font-size="13" fill="#1f2328" text-anchor="middle">sur l'arbre syntaxique</text>
+  <text x="834" y="148" font-size="13" fill="#1f2328" text-anchor="middle">sévérité : rules.&lt;id&gt;,</text>
+  <text x="834" y="170" font-size="13" fill="#1f2328" text-anchor="middle">sinon celle par défaut</text>
+  <text x="834" y="192" font-size="13" fill="#1f2328" text-anchor="middle">une désactivation avec une</text>
+  <text x="834" y="214" font-size="13" fill="#1f2328" text-anchor="middle">raison fait taire une ligne</text>
+  <!-- arrows -->
+  <line x1="226" y1="146" x2="260" y2="146" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="462" y1="146" x2="496" y2="146" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="698" y1="146" x2="732" y2="146" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="834" y1="232" x2="834" y2="276" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="822" y="260" font-size="13" fill="#1f2328" text-anchor="end">une règle qui vise la couche application signale</text>
+  <!-- the report -->
+  <rect x="28" y="280" width="904" height="112" rx="10" fill="#ffffff" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="48" y="306" font-size="13" font-weight="600" fill="#1f2328">src/contexts/billing/application/commands/issue-invoice/issue-invoice.handler.ts</text>
+  <text x="48" y="330" font-size="13" fill="#1f2328">16:68  error  new Date() without argument is used in the application layer. Receive the instant as a parameter in the</text>
+  <text x="48" y="350" font-size="13" fill="#1f2328">domain, and take it from the Clock port (this.clock.now()) in a handler, so that a test fixes time with FixedClock</text>
+  <text x="912" y="376" font-size="13" font-weight="600" fill="#1f2328" text-anchor="end">ddd-ts-kit/purity-no-system-clock</text>
+  <text x="48" y="376" font-size="13" font-style="italic" fill="#5f6b73">où, ce qui ne va pas, quoi écrire à la place, quelle règle</text>
+</svg>

@@ -1,3 +1,5 @@
+**English** · [Français](http-frameworks.fr.md)
+
 # HTTP frameworks: Express, Fastify, Hono, NestJS
 
 **Summary.** In this kit a route is declared once, as data plus a handler, and mounted on
@@ -16,20 +18,107 @@ The presentation layer is thin by rule (`layer/presentation-no-infrastructure`,
 its input, builds a command or a query carrying the actor, sends it on a bus and maps the
 answer. In the running domain:
 
-```mermaid
-sequenceDiagram
-  participant C as Client
-  participant F as Express, Fastify or Nest
-  participant P as executeRoute (the kit's pipeline)
-  participant B as CommandBus
-  C->>F: POST /appointments
-  F->>P: raw request
-  P->>P: resolve principal, validate body (Schema port)
-  P->>B: BookAppointment(actor, slot)
-  B-->>P: appointment id, or SlotAlreadyTaken
-  P-->>F: 201, or 409 application/problem+json
-  F-->>C: response
+![Four adapters, one pipeline: Express, Fastify, Hono and NestJS each hand the raw request to executeRoute, which resolves the principal, validates the parts of the request, builds the execution context, runs the handler that sends the command on the bus, and answers; a refusal at any step goes through the error mapper and is answered as an RFC 9457 problem](../assets/diagrams/http-frameworks-one-pipeline.svg)
+
+The route is written once, as data plus a handler, and knows no framework:
+
+<!-- checked sample -->
+```ts
+// contexts/scheduling/presentation/http/book-appointment.route.ts
+import { z } from 'zod';
+import { acceptedSchema, defineRoute, defineRoutes } from '@ddd-ts-kit/http';
+import { AuthorizedCommand, type Actor, type CommandBus } from '@ddd-ts-kit/kernel';
+import { zodSchema } from '@ddd-ts-kit/validation/zod';
+
+// application/commands/book-appointment/book-appointment.command.ts (declared here for the sample)
+declare class BookAppointment extends AuthorizedCommand<string> {
+  constructor(actor: Actor, practitionerId: string, startsAt: Date);
+}
+
+const body = zodSchema(z.object({ practitionerId: z.uuid(), startsAt: z.iso.datetime() }));
+
+export const appointmentRoutes = (commands: CommandBus) =>
+  defineRoutes(
+    defineRoute(
+      {
+        method: 'POST',
+        path: '/appointments',
+        operationId: 'bookAppointment',
+        summary: 'Book an appointment',
+        tags: ['scheduling'],
+        request: { body },
+        responses: { 201: { description: 'Booked; the body carries its identifier.', body: acceptedSchema } },
+        errors: ['SLOT_TAKEN'],
+        security: ['bearer'],
+      },
+      // body is typed from its schema: { practitionerId: string; startsAt: string }
+      async ({ body: { practitionerId, startsAt }, context }) => {
+        const id = await commands.execute(new BookAppointment(context.execution.actor, practitionerId, new Date(startsAt)));
+
+        return { status: 201, body: { id } };
+      },
+    ),
+  );
 ```
+
+The framework only mounts that list. Each adapter is a subpath of `@ddd-ts-kit/http`, and the
+three mounts below serve the same routes with the same behaviour:
+
+<!-- checked sample -->
+```ts
+// platform/http/start-http-server.ts: one of these, chosen by `stack.http`
+import { serve } from '@hono/node-server';
+import express from 'express';
+import Fastify from 'fastify';
+import { Hono } from 'hono';
+import type { ExecuteOptions, Route } from '@ddd-ts-kit/http';
+import { mountExpress } from '@ddd-ts-kit/http/express';
+import { fastifyRoutes } from '@ddd-ts-kit/http/fastify';
+import { mountHono } from '@ddd-ts-kit/http/hono';
+
+declare const routes: readonly Route[]; // appointmentRoutes(commands), and the routes of the other contexts
+declare const options: ExecuteOptions; // resolvePrincipal, executionScope, errorMapper...
+
+export function onExpress(): void {
+  const app = express();
+  app.use(express.json()); // the adapter does not parse bodies
+  mountExpress(app, routes, options);
+  app.listen(3000);
+}
+
+export async function onFastify(): Promise<void> {
+  const app = Fastify();
+  await app.register(fastifyRoutes(routes, options));
+  await app.listen({ port: 3000 });
+}
+
+export function onHono(): void {
+  const app = new Hono();
+  mountHono(app, routes, options); // reads the JSON body itself, up to bodyLimit
+  serve({ fetch: app.fetch, port: 3000 });
+}
+```
+
+What a route of the kit replaces is a handler written against the framework. Instead of:
+
+```ts
+// presentation/http/book-appointment.ts: an Express handler of its own
+app.post('/appointments', async (req, res) => {
+  if (typeof req.body.startsAt !== 'string') {
+    return res.status(400).json({ error: 'startsAt is required' }); // a format of its own, absent from the contract
+  }
+  try {
+    const id = await commands.execute(new BookAppointment(req.user, req.body.practitionerId, new Date(req.body.startsAt)));
+    res.status(201).json({ id });
+  } catch (error) {
+    res.status(409).json({ message: (error as Error).message }); // every failure is a 409, and its message leaks
+  }
+});
+```
+
+write the declaration above: the schema validates and documents the body, the handler only
+maps the request to a command, and a refusal of the use case (`SLOT_TAKEN`) is answered as a
+problem with the status the error mapper gives its code, on every framework alike.
 
 What stays the framework's: listening, body parsing, plugins or middlewares in front of the
 routes (compression, CORS, rate limiting), and its own answer to a body it refuses before the
@@ -76,9 +165,27 @@ talks to a database the framework is rarely where the time goes.
 
 `createRoutesModule` mounts the routes on the HTTP server underneath Nest at module init,
 whether Nest runs on Express or on Fastify. No decorator per route; handlers get their
-dependencies by closure. The package README is explicit about the consequence: these routes
+dependencies by closure:
+
+<!-- checked sample: legacy-decorators -->
+```ts
+// platform/http/app.module.ts
+import { Module } from '@nestjs/common';
+import type { ExecuteOptions, Route } from '@ddd-ts-kit/http';
+import { createRoutesModule } from '@ddd-ts-kit/http/nest';
+
+declare const routes: readonly Route[]; // the same list Express, Fastify or Hono would mount
+declare const options: ExecuteOptions;
+
+@Module({ imports: [createRoutesModule(routes, options)] })
+export class AppModule {}
+```
+
+The package README is explicit about the consequence: these routes
 **bypass Nest's pipes, guards, interceptors, exception filters and global prefix**. In
 practice:
+
+![The request lifecycle of a native Nest controller (guards, interceptors, pipes, controller method, exception filters) above, and below what takes the place of each for a route of the kit: the principal resolver and the authorization middleware of the bus, the bus middlewares and aspects, the schema of the route, the route handler, and the error mapper](../assets/diagrams/http-frameworks-nest-bypass.svg)
 
 | Nest feature | For a route of the kit |
 |---|---|
@@ -166,7 +273,10 @@ a GraphQL API: the route declaration models request and response JSON over REST.
 | No HTTP at all (worker, consumer) | `none` |
 
 Changing later is a change of mount in the composition root and of the platform's server
-file, not of routes, handlers or contract: that is what the declaration buys.
+file, not of routes, handlers or contract: that is what the declaration buys. Going from
+Express to Fastify, for instance, is the difference between `onExpress` and `onFastify` in the
+mounting sample above, plus the server's own plugins; `appointmentRoutes` and the OpenAPI
+document stay as they are.
 
 ## Sources
 

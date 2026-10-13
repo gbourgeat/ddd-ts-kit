@@ -1,3 +1,5 @@
+**English** · [Français](purity-no-ambient-randomness.fr.md)
+
 # ddd-ts-kit/purity-no-ambient-randomness
 
 Architecture id: `purity/no-ambient-randomness`. Default severity: `error` in `recommended`, `error` in `strict`.

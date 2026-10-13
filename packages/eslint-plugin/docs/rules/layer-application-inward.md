@@ -1,3 +1,5 @@
+**English** · [Français](layer-application-inward.fr.md)
+
 # ddd-ts-kit/layer-application-inward
 
 Architecture id: `layer/application-inward`. Default severity: `error` in `recommended`, `error` in `strict`.
@@ -11,7 +13,7 @@ Use cases orchestrate the domain through ports. An import of an adapter, a drive
 ## Reported
 
 - a package outside `applicationAllowedPackages`
-- `@ddd-ts-kit/aspects`, `@ddd-ts-kit/audit`, `@ddd-ts-kit/redis`, `@ddd-ts-kit/scheduling`, `@ddd-ts-kit/sentry` and `@ddd-ts-kit/tracing`, by any entry (`.`, `/decorators`, `/testing`, `/node`, ...), with a message of their own: they apply or record a concern from outside the use cases
+- `@ddd-ts-kit/aspects`, `@ddd-ts-kit/audit`, `@ddd-ts-kit/redis`, `@ddd-ts-kit/s3`, `@ddd-ts-kit/scheduling`, `@ddd-ts-kit/sentry` and `@ddd-ts-kit/tracing`, by any entry (`.`, `/decorators`, `/testing`, `/node`, ...), with a message of their own: they apply or record a concern from outside the use cases
 - any Node built-in
 - `infrastructure/`, `presentation/` or the module file of the same context
 - the platform or `main.ts`
@@ -47,7 +49,7 @@ Static imports, type-only imports, `export ... from`, dynamic `import()`, `requi
 
 ## Options
 
-None. `applicationAllowedPackages` in `ddd-ts-kit.config.json` replaces the allow-list, which defaults to `@ddd-ts-kit/kernel` and `@ddd-ts-kit/auth` (permissions and policies are declared in `application/authorization/`). In a declared-style project (`stack.style: "declared"`) `@ddd-ts-kit/kernel/declarations` is allowed whatever the list says: a handler, a consumer or a policy says what it is with a decorator of that entry, which is pure metadata. In an explicit-style project the entry is allowed like the rest of `@ddd-ts-kit/kernel`, by the list. `@ddd-ts-kit/aspects`, `@ddd-ts-kit/audit`, `@ddd-ts-kit/redis` and `@ddd-ts-kit/tracing` stay refused even when the list names them: an aspect is applied at the composition root (`.with(...)` on a binding, the `decorate` hook), in a bus middleware or on an adapter in `infrastructure/`; a use case depends on the port (`Cache` of the kernel, a port in `application/ports/`) and the platform binds the Redis adapter; the audit trail is fed by the bus middleware, the authorization hook and an event subscription, never by a use case. The only way around is a recorded suppression of the line.
+None. `applicationAllowedPackages` in `ddd-ts-kit.config.json` replaces the allow-list, which defaults to `@ddd-ts-kit/kernel` and `@ddd-ts-kit/auth` (permissions and policies are declared in `application/authorization/`). In a declared-style project (`stack.style: "declared"`) `@ddd-ts-kit/kernel/declarations` is allowed whatever the list says: a handler, a consumer or a policy says what it is with a decorator of that entry, which is pure metadata. In an explicit-style project the entry is allowed like the rest of `@ddd-ts-kit/kernel`, by the list. The seven packages listed under Reported stay refused whatever the allow-list says, even when it names them: an aspect is applied at the composition root (`.with(...)` on a binding, the `decorate` hook), in a bus middleware or on an adapter in `infrastructure/`; a use case depends on the port (`Cache` or `FileStorage` of the kernel, a port in `application/ports/`) and the platform binds the Redis or S3 adapter; a job declares its schedule with `@Scheduled` and the composition root binds the scheduler; failures are reported by the bus middleware, the HTTP error mapper and the job runner; the audit trail is fed by the bus middleware, the authorization hook and an event subscription, never by a use case. The only way around is a recorded suppression of the line.
 
 `rules."layer/application-inward"` in `ddd-ts-kit.config.json` set to `off` silences the rule, and `// ddd-ts-kit-disable-next-line layer/application-inward -- <reason>` silences one line, exactly as for `ddd-ts-kit check`.
 

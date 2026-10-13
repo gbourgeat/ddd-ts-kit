@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 480" width="960" height="480" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Ce que S3FileStorage.put fait d'un flux</title>
+  <desc id="desc">Le contenu arrive en flux. FileInspection compte et hache chaque morceau au passage. L'Upload de @aws-sdk/lib-storage l'envoie en parties de 8 Mio, une seule en mémoire à la fois, et le bucket n'assemble l'objet qu'une fois la dernière partie envoyée : l'objet apparaît entier. put répond alors le StoredFile : clé, taille, type de média et l'empreinte sha256 calculée au passage. Au-delà de maxBytes, FileInspection échoue avec FILE_TOO_LARGE : l'envoi est abandonné, aucune partie ne reste, et l'objet qui était sous la clé reste tel quel.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="480" rx="16" fill="#ffffff"/>
+  <text x="24" y="36" font-size="18" font-weight="600" fill="#1f2328">Ce que S3FileStorage.put fait d'un flux</text>
+  <!-- the stream -->
+  <rect x="24" y="64" width="160" height="96" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="104" y="92" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">FileSource</text>
+  <text x="104" y="116" font-size="13" fill="#1f2328" text-anchor="middle">un flux de morceaux,</text>
+  <text x="104" y="136" font-size="13" fill="#1f2328" text-anchor="middle">jamais un fichier entier</text>
+  <!-- inspection -->
+  <rect x="224" y="64" width="200" height="96" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="324" y="92" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">FileInspection</text>
+  <text x="324" y="116" font-size="13" fill="#1f2328" text-anchor="middle">compte chaque octet,</text>
+  <text x="324" y="136" font-size="13" fill="#1f2328" text-anchor="middle">le hache (sha256)</text>
+  <!-- upload -->
+  <rect x="464" y="64" width="200" height="96" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="564" y="92" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">Upload</text>
+  <text x="564" y="116" font-size="13" fill="#1f2328" text-anchor="middle">@aws-sdk/lib-storage</text>
+  <text x="564" y="136" font-size="13" fill="#1f2328" text-anchor="middle">parties de 8 Mio, une à la fois</text>
+  <!-- bucket -->
+  <rect x="704" y="64" width="232" height="186" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="820" y="92" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">bucket</text>
+  <rect x="724" y="106" width="60" height="30" rx="4" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="754" y="126" font-size="13" fill="#1f2328" text-anchor="middle">partie 1</text>
+  <rect x="790" y="106" width="60" height="30" rx="4" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="820" y="126" font-size="13" fill="#1f2328" text-anchor="middle">partie 2</text>
+  <rect x="856" y="106" width="60" height="30" rx="4" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="886" y="126" font-size="13" fill="#1f2328" text-anchor="middle">partie 3</text>
+  <line x1="820" y1="140" x2="820" y2="176" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="830" y="164" font-size="13" fill="#1f2328">assemblées</text>
+  <rect x="724" y="180" width="192" height="54" rx="6" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="820" y="202" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">l'objet, entier</text>
+  <text x="820" y="222" font-size="13" fill="#1f2328" text-anchor="middle">sous sa clé</text>
+  <!-- flow -->
+  <line x1="186" y1="112" x2="222" y2="112" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="426" y1="112" x2="462" y2="112" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="666" y1="112" x2="702" y2="112" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- success -->
+  <line x1="564" y1="162" x2="564" y2="290" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="574" y="232" font-size="13" fill="#1f2328">terminé</text>
+  <rect x="464" y="292" width="300" height="80" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="614" y="318" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">StoredFile, répondu par put</text>
+  <text x="614" y="342" font-size="13" fill="#1f2328" text-anchor="middle">key, size, mediaType,</text>
+  <text x="614" y="362" font-size="13" fill="#1f2328" text-anchor="middle">checksum : sha256 du flux reçu</text>
+  <!-- refusal -->
+  <line x1="324" y1="162" x2="324" y2="290" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="314" y="224" font-size="13" fill="#1f2328" text-anchor="end">au-delà de</text>
+  <text x="314" y="242" font-size="13" fill="#1f2328" text-anchor="end">maxBytes</text>
+  <rect x="24" y="292" width="400" height="80" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="224" y="318" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">FILE_TOO_LARGE</text>
+  <text x="224" y="342" font-size="13" fill="#1f2328" text-anchor="middle">l'envoi est abandonné, aucune partie ne reste,</text>
+  <text x="224" y="362" font-size="13" fill="#1f2328" text-anchor="middle">l'objet précédent sous la clé reste intact</text>
+  <!-- footer -->
+  <text x="24" y="412" font-size="14" fill="#1f2328">Mémoire par envoi : une partie (partSize, 8 Mio par défaut, 5 Mio au moins), quelle que soit la taille du fichier.</text>
+  <text x="24" y="434" font-size="14" fill="#1f2328">Un fichier plus petit qu'une partie part en une seule requête. Le bucket n'assemble les parties qu'après la dernière.</text>
+  <text x="24" y="456" font-size="14" fill="#1f2328">Le bucket ne garde pas l'empreinte : stat n'en répond pas, put si.</text>
+</svg>

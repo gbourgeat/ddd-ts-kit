@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 424" width="960" height="424" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">What takes the place of the Nest request lifecycle for a route of the kit</title>
+  <desc id="desc">Above, the request lifecycle of a native Nest controller: guards, interceptors, pipes, the controller method, exception filters. None of them runs for a route mounted by createRoutesModule. Below, what takes the place of each: the principal resolver and the authorization middleware of the bus for the guards, the bus middlewares and aspects for the interceptors, the schema of the route for the pipes, the route handler for the controller method, and the error mapper, answering application/problem+json, for the exception filters.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="424" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">What takes the place of the Nest request lifecycle</text>
+  <!-- top lane -->
+  <text x="28" y="70" font-size="14" font-weight="600" fill="#5f6b73">a native Nest controller: its lifecycle, which does not run for a route of the kit</text>
+  <rect x="28" y="84" width="168" height="64" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="112" y="111" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">guards</text>
+  <text x="112" y="133" font-size="13" fill="#1f2328" text-anchor="middle">@UseGuards, Passport</text>
+  <rect x="212" y="84" width="168" height="64" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="296" y="111" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">interceptors</text>
+  <text x="296" y="133" font-size="13" fill="#1f2328" text-anchor="middle">logging, caching</text>
+  <rect x="396" y="84" width="168" height="64" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="480" y="111" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">pipes</text>
+  <text x="480" y="133" font-size="13" fill="#1f2328" text-anchor="middle">ValidationPipe</text>
+  <rect x="580" y="84" width="168" height="64" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="664" y="111" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">controller method</text>
+  <text x="664" y="133" font-size="13" fill="#1f2328" text-anchor="middle">@Post() handler</text>
+  <rect x="764" y="84" width="168" height="64" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="848" y="111" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">exception filters</text>
+  <text x="848" y="133" font-size="13" fill="#1f2328" text-anchor="middle">@Catch()</text>
+  <line x1="197" y1="116" x2="210" y2="116" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="381" y1="116" x2="394" y2="116" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="565" y1="116" x2="578" y2="116" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="749" y1="116" x2="762" y2="116" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- replaced by -->
+  <line x1="112" y1="150" x2="112" y2="222" stroke="#5f6b73" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arrow)"/>
+  <line x1="296" y1="150" x2="296" y2="222" stroke="#5f6b73" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arrow)"/>
+  <line x1="480" y1="150" x2="480" y2="222" stroke="#5f6b73" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arrow)"/>
+  <line x1="664" y1="150" x2="664" y2="222" stroke="#5f6b73" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arrow)"/>
+  <line x1="848" y1="150" x2="848" y2="222" stroke="#5f6b73" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arrow)"/>
+  <!-- bottom lane -->
+  <rect x="28" y="224" width="168" height="76" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="112" y="251" font-size="15" font-weight="700" fill="#9a5b2b" text-anchor="middle">resolvePrincipal</text>
+  <text x="112" y="271" font-size="13" fill="#1f2328" text-anchor="middle">then authorization,</text>
+  <text x="112" y="289" font-size="13" fill="#1f2328" text-anchor="middle">a middleware of the bus</text>
+  <rect x="212" y="224" width="168" height="76" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="296" y="251" font-size="15" font-weight="700" fill="#2b5d8a" text-anchor="middle">bus middlewares</text>
+  <text x="296" y="271" font-size="13" fill="#1f2328" text-anchor="middle">and aspects;</text>
+  <text x="296" y="289" font-size="13" fill="#1f2328" text-anchor="middle">tracedRoutes()</text>
+  <rect x="396" y="224" width="168" height="76" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="480" y="251" font-size="15" font-weight="700" fill="#9a5b2b" text-anchor="middle">Schema of the route</text>
+  <text x="480" y="271" font-size="13" fill="#1f2328" text-anchor="middle">422</text>
+  <text x="480" y="289" font-size="13" fill="#1f2328" text-anchor="middle">VALIDATION_FAILED</text>
+  <rect x="580" y="224" width="168" height="76" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="664" y="251" font-size="15" font-weight="700" fill="#9a5b2b" text-anchor="middle">route handler</text>
+  <text x="664" y="271" font-size="13" fill="#1f2328" text-anchor="middle">sends a command</text>
+  <text x="664" y="289" font-size="13" fill="#1f2328" text-anchor="middle">or a query</text>
+  <rect x="764" y="224" width="168" height="76" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="848" y="251" font-size="15" font-weight="700" fill="#9a5b2b" text-anchor="middle">error mapper</text>
+  <text x="848" y="271" font-size="13" fill="#1f2328" text-anchor="middle">application/</text>
+  <text x="848" y="289" font-size="13" fill="#1f2328" text-anchor="middle">problem+json</text>
+  <text x="28" y="326" font-size="14" font-weight="600" fill="#9a5b2b">a route of the kit, mounted by createRoutesModule: what takes the place of each</text>
+  <!-- the rest -->
+  <text x="28" y="360" font-size="13" fill="#1f2328">Not seen by Nest either: setGlobalPrefix (use prefixRoutes) and @nestjs/swagger (the contract comes from generateOpenApi).</text>
+  <!-- legend -->
+  <line x1="28" y1="394" x2="64" y2="394" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="72" y="398" font-size="13" fill="#1f2328">order of the Nest lifecycle</text>
+  <line x1="268" y1="394" x2="304" y2="394" stroke="#5f6b73" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arrow)"/>
+  <text x="312" y="398" font-size="13" fill="#1f2328">takes its place for a route of the kit</text>
+</svg>

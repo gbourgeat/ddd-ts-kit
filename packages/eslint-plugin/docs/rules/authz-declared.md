@@ -1,3 +1,5 @@
+**English** · [Français](authz-declared.fr.md)
+
 # ddd-ts-kit/authz-declared
 
 Architecture id: `authz/declared`. Default severity: `error` in `recommended`, `error` in `strict`.

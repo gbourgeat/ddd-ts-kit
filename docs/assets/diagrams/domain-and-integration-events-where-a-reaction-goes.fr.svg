@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 548" width="960" height="548" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Où va la réaction à un événement du domaine</title>
+  <desc id="desc">Un arbre de décision en trois questions. Un autre contexte délimité réagit-il ? Oui : publier un événement d'intégration, qu'un publisher écrit dans l'outbox et que l'autre contexte consomme. Non : l'effet écrit-il seulement dans la transaction de la commande ? Oui : un gestionnaire before-commit, le choix par défaut, validé ou annulé avec le changement d'état. Non : l'effet peut-il être perdu ? Oui : un gestionnaire after-commit, au plus une fois, dont l'échec ne fait jamais échouer la commande. Non : le placer derrière un événement d'intégration, par l'outbox, au moins une fois, consommé par un gestionnaire idempotent.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="548" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Où va la réaction à un événement du domaine</text>
+  <rect x="32" y="64" width="420" height="84" rx="10" fill="#ffffff" stroke="#3d4449" stroke-width="2"/>
+  <text x="242" y="98" font-size="16" font-weight="700" fill="#1f2328" text-anchor="middle">Un autre contexte réagit-il ?</text>
+  <text x="242" y="122" font-size="13" fill="#5f6b73" text-anchor="middle">un contexte délimité autre que celui-ci</text>
+  <rect x="32" y="184" width="420" height="84" rx="10" fill="#ffffff" stroke="#3d4449" stroke-width="2"/>
+  <text x="242" y="218" font-size="16" font-weight="700" fill="#1f2328" text-anchor="middle">Écrit-il seulement dans la transaction ?</text>
+  <text x="242" y="242" font-size="13" fill="#5f6b73" text-anchor="middle">repositories du contexte, l'outbox, ports</text>
+  <text x="242" y="260" font-size="13" fill="#5f6b73" text-anchor="middle">du kernel qui rejoignent la transaction</text>
+  <rect x="32" y="304" width="420" height="84" rx="10" fill="#ffffff" stroke="#3d4449" stroke-width="2"/>
+  <text x="242" y="338" font-size="16" font-weight="700" fill="#1f2328" text-anchor="middle">L'effet peut-il être perdu ?</text>
+  <text x="242" y="362" font-size="13" fill="#5f6b73" text-anchor="middle">un cache à rafraîchir, une notification sans garantie</text>
+  <rect x="560" y="64" width="368" height="84" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="744" y="94" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">un événement d'intégration</text>
+  <text x="744" y="118" font-size="13" fill="#1f2328" text-anchor="middle">un publisher l'écrit dans l'outbox ;</text>
+  <text x="744" y="136" font-size="13" fill="#1f2328" text-anchor="middle">l'autre contexte le consomme</text>
+  <rect x="560" y="184" width="368" height="84" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="744" y="214" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">un gestionnaire before-commit</text>
+  <text x="744" y="238" font-size="13" fill="#1f2328" text-anchor="middle">par défaut : validé ou annulé</text>
+  <text x="744" y="256" font-size="13" fill="#1f2328" text-anchor="middle">avec le changement d'état</text>
+  <rect x="560" y="304" width="368" height="84" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="744" y="334" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">un gestionnaire after-commit</text>
+  <text x="744" y="358" font-size="13" fill="#1f2328" text-anchor="middle">phase: 'after-commit' ; au plus une fois,</text>
+  <text x="744" y="376" font-size="13" fill="#1f2328" text-anchor="middle">son échec ne fait jamais échouer la commande</text>
+  <rect x="560" y="440" width="368" height="84" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="744" y="470" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">un événement d'intégration</text>
+  <text x="744" y="494" font-size="13" fill="#1f2328" text-anchor="middle">par l'outbox, au moins une fois ;</text>
+  <text x="744" y="512" font-size="13" fill="#1f2328" text-anchor="middle">consommé par un gestionnaire idempotent</text>
+  <line x1="454" y1="106" x2="558" y2="106" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="506" y="98" font-size="14" font-weight="600" fill="#1f2328" text-anchor="middle">oui</text>
+  <line x1="454" y1="226" x2="558" y2="226" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="506" y="218" font-size="14" font-weight="600" fill="#1f2328" text-anchor="middle">oui</text>
+  <line x1="454" y1="346" x2="558" y2="346" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="506" y="338" font-size="14" font-weight="600" fill="#1f2328" text-anchor="middle">oui</text>
+  <line x1="242" y1="150" x2="242" y2="182" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="254" y="171" font-size="14" font-weight="600" fill="#1f2328">non</text>
+  <line x1="242" y1="270" x2="242" y2="302" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="254" y="291" font-size="14" font-weight="600" fill="#1f2328">non</text>
+  <path d="M242,390 V482 H558" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="254" y="424" font-size="14" font-weight="600" fill="#1f2328">non</text>
+</svg>

@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" width="960" height="420" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Worker mode: who runs the jobs</title>
+  <desc id="desc">On the left, a shared queue: the API process starts with its jobs off and enqueues into the jobs table or Redis, and the worker process claims and runs the jobs from it. On the right, a queue kept in the memory of the API process: the API runs its own jobs even with its jobs off, the worker sees none of them, and a restart of the API loses the jobs that wait.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="420" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Worker mode: who runs the jobs</text>
+  <!-- shared queue -->
+  <rect x="24" y="58" width="448" height="340" rx="14" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="44" y="86" font-size="14" font-weight="600" fill="#5f6b73">A shared queue: the jobs table, or Redis</text>
+  <rect x="48" y="106" width="180" height="104" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="138" y="134" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">apps/api</text>
+  <text x="138" y="158" font-size="13" fill="#1f2328" text-anchor="middle">jobs: { start: false }</text>
+  <text x="138" y="180" font-size="13" fill="#1f2328" text-anchor="middle">answers requests,</text>
+  <text x="138" y="198" font-size="13" fill="#1f2328" text-anchor="middle">enqueues</text>
+  <rect x="268" y="106" width="180" height="104" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="358" y="134" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">apps/worker</text>
+  <text x="358" y="158" font-size="13" fill="#1f2328" text-anchor="middle">jobs: { start: true }</text>
+  <text x="358" y="180" font-size="13" fill="#1f2328" text-anchor="middle">claims and runs,</text>
+  <text x="358" y="198" font-size="13" fill="#1f2328" text-anchor="middle">scheduled jobs too</text>
+  <rect x="78" y="282" width="340" height="60" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="248" y="308" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">background_jobs</text>
+  <text x="248" y="330" font-size="13" fill="#1f2328" text-anchor="middle">in the database of the context, or Redis</text>
+  <line x1="138" y1="212" x2="138" y2="280" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="146" y="250" font-size="13" fill="#1f2328">enqueue</text>
+  <line x1="358" y1="212" x2="358" y2="280" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="366" y="250" font-size="13" fill="#1f2328">claim</text>
+  <text x="248" y="380" font-size="13" font-style="italic" fill="#5f6b73" text-anchor="middle">one composition root, two entry points</text>
+  <!-- queue in memory -->
+  <rect x="488" y="58" width="448" height="340" rx="14" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="508" y="86" font-size="14" font-weight="600" fill="#5f6b73">A queue in memory: InMemoryJobStore</text>
+  <rect x="512" y="106" width="180" height="104" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="602" y="134" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">apps/api</text>
+  <text x="602" y="158" font-size="13" fill="#1f2328" text-anchor="middle">jobs: { start: false }</text>
+  <text x="602" y="180" font-size="13" fill="#1f2328" text-anchor="middle">enqueues, and still</text>
+  <text x="602" y="198" font-size="13" fill="#1f2328" text-anchor="middle">runs its own queue</text>
+  <rect x="732" y="106" width="180" height="104" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="822" y="134" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">apps/worker</text>
+  <text x="822" y="158" font-size="13" fill="#1f2328" text-anchor="middle">jobs: { start: true }</text>
+  <text x="822" y="180" font-size="13" fill="#1f2328" text-anchor="middle">sees none of</text>
+  <text x="822" y="198" font-size="13" fill="#1f2328" text-anchor="middle">these jobs</text>
+  <rect x="512" y="282" width="180" height="60" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="602" y="308" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">queue</text>
+  <text x="602" y="330" font-size="13" fill="#1f2328" text-anchor="middle">in the API's memory</text>
+  <line x1="572" y1="212" x2="572" y2="280" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="564" y="250" font-size="13" fill="#1f2328" text-anchor="end">enqueue</text>
+  <line x1="632" y1="212" x2="632" y2="280" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="640" y="250" font-size="13" fill="#1f2328">claim</text>
+  <text x="712" y="374" font-size="13" font-style="italic" fill="#5f6b73" text-anchor="middle">a restart of the API loses the jobs that wait</text>
+</svg>

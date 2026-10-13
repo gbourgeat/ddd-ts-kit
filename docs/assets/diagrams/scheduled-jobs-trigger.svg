@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 456" width="960" height="456" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">A scheduled job only triggers a use case</title>
+  <desc id="desc">The scheduler of the platform computes the instants, opens an execution scope, takes the lock of the occurrence and runs the job. The job of the application decides nothing: it sends one command. An operator through an endpoint and a spec of the use case send the same command to the same handler, which loads the reminders and lets the domain decide which ones are due.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="456" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">A scheduled job only triggers a use case</text>
+  <!-- scheduler (platform) -->
+  <rect x="24" y="72" width="210" height="226" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="129" y="102" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">scheduler</text>
+  <line x1="40" y1="114" x2="218" y2="114" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text x="40" y="138" font-size="13" fill="#1f2328">computes the instants</text>
+  <text x="40" y="160" font-size="13" fill="#1f2328">opens an execution scope:</text>
+  <text x="52" y="182" font-size="13" fill="#1f2328">origin schedule,</text>
+  <text x="52" y="204" font-size="13" fill="#1f2328">system actor of the job,</text>
+  <text x="52" y="226" font-size="13" fill="#1f2328">fresh correlation id</text>
+  <text x="40" y="248" font-size="13" fill="#1f2328">takes the occurrence lock</text>
+  <text x="40" y="270" font-size="13" fill="#1f2328">records the outcome</text>
+  <text x="129" y="322" font-size="13" font-style="italic" fill="#5f6b73" text-anchor="middle">platform</text>
+  <!-- job (application) -->
+  <rect x="280" y="72" width="190" height="130" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="375" y="102" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">job</text>
+  <line x1="296" y1="114" x2="454" y2="114" stroke="#2b5d8a" stroke-opacity="0.35"/>
+  <text x="375" y="138" font-size="13" fill="#1f2328" text-anchor="middle">SendRemindersJob</text>
+  <text x="375" y="160" font-size="13" fill="#1f2328" text-anchor="middle">run(execution)</text>
+  <text x="375" y="186" font-size="13" font-style="italic" font-weight="600" fill="#2b5d8a" text-anchor="middle">decides nothing</text>
+  <!-- other senders -->
+  <rect x="280" y="232" width="190" height="56" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="375" y="256" font-size="14" font-weight="700" fill="#9a5b2b" text-anchor="middle">operator endpoint</text>
+  <text x="375" y="276" font-size="13" fill="#1f2328" text-anchor="middle">replays a given morning</text>
+  <rect x="280" y="312" width="190" height="56" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="375" y="336" font-size="14" font-weight="700" fill="#5f6b73" text-anchor="middle">spec</text>
+  <text x="375" y="356" font-size="13" fill="#1f2328" text-anchor="middle">of the use case</text>
+  <!-- use case (application) -->
+  <rect x="570" y="72" width="190" height="296" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="665" y="102" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">use case</text>
+  <line x1="586" y1="114" x2="744" y2="114" stroke="#2b5d8a" stroke-opacity="0.35"/>
+  <text x="665" y="138" font-size="13" fill="#1f2328" text-anchor="middle">SendReminders</text>
+  <text x="665" y="160" font-size="13" fill="#1f2328" text-anchor="middle">and its handler</text>
+  <text x="665" y="196" font-size="13" fill="#1f2328" text-anchor="middle">which reminders,</text>
+  <text x="665" y="218" font-size="13" fill="#1f2328" text-anchor="middle">for which clients,</text>
+  <text x="665" y="240" font-size="13" fill="#1f2328" text-anchor="middle">what counts as</text>
+  <text x="665" y="262" font-size="13" fill="#1f2328" text-anchor="middle">already sent</text>
+  <text x="665" y="300" font-size="13" font-style="italic" font-weight="600" fill="#2b5d8a" text-anchor="middle">the one place</text>
+  <text x="665" y="320" font-size="13" font-style="italic" font-weight="600" fill="#2b5d8a" text-anchor="middle">for the rule</text>
+  <!-- domain -->
+  <rect x="796" y="72" width="140" height="130" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="866" y="102" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">domain</text>
+  <line x1="812" y1="114" x2="920" y2="114" stroke="#2f6f4f" stroke-opacity="0.35"/>
+  <text x="866" y="138" font-size="13" fill="#1f2328" text-anchor="middle">Reminder</text>
+  <text x="866" y="160" font-size="13" fill="#1f2328" text-anchor="middle">isDue(asOf)</text>
+  <text x="866" y="182" font-size="13" fill="#1f2328" text-anchor="middle">send(asOf)</text>
+  <!-- arrows -->
+  <line x1="236" y1="150" x2="278" y2="150" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="472" y1="150" x2="568" y2="150" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="520" y="138" font-size="13" fill="#1f2328" text-anchor="middle">a command</text>
+  <line x1="472" y1="260" x2="568" y2="260" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="472" y1="340" x2="568" y2="340" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="520" y="302" font-size="13" fill="#1f2328" text-anchor="middle">the same</text>
+  <text x="520" y="320" font-size="13" fill="#1f2328" text-anchor="middle">command</text>
+  <line x1="762" y1="150" x2="794" y2="150" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- caption -->
+  <text x="32" y="410" font-size="14" fill="#1f2328">SendReminders(systemActor('notifications.send-reminders'), execution.scheduledAt): the job passes</text>
+  <text x="32" y="432" font-size="14" fill="#1f2328">the instant the run was due; the handler finds what to act on, and the domain decides.</text>
+</svg>

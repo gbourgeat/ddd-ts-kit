@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 520" width="960" height="520" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Deux détenteurs d'un même verrou, et le jeton de clôture</title>
+  <desc id="desc">L'instance A prend le verrou avec une durée de vie de 60 secondes et reçoit le jeton 41, puis elle est mise en pause 90 secondes. La clé expire. L'instance B prend le verrou et reçoit le jeton 42, puis écrit dans un stockage avec le jeton 42. A reprend et écrit avec le jeton 41 : les deux instances croient détenir le verrou, et seul un stockage qui retient le plus grand jeton vu refuse l'écriture périmée.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="520" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Une pause plus longue que la durée de vie : deux détenteurs</text>
+  <!-- participants -->
+  <rect x="40" y="58" width="160" height="44" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="120" y="86" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">instance A</text>
+  <rect x="268" y="58" width="184" height="44" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="360" y="86" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">serveur de verrous</text>
+  <rect x="520" y="58" width="160" height="44" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="600" y="86" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">instance B</text>
+  <rect x="748" y="58" width="184" height="44" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="840" y="86" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">stockage protégé</text>
+  <!-- lifelines -->
+  <line x1="120" y1="104" x2="120" y2="452" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="4 4"/>
+  <line x1="360" y1="104" x2="360" y2="452" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="4 4"/>
+  <line x1="600" y1="104" x2="600" y2="452" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="4 4"/>
+  <line x1="840" y1="104" x2="840" y2="452" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="4 4"/>
+  <!-- A acquires -->
+  <line x1="122" y1="136" x2="356" y2="136" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="240" y="128" font-size="13" fill="#1f2328" text-anchor="middle">acquire(job, ttl 60 s)</text>
+  <line x1="358" y1="170" x2="124" y2="170" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <text x="240" y="162" font-size="13" fill="#1f2328" text-anchor="middle">pris, jeton 41</text>
+  <!-- A paused -->
+  <rect x="64" y="188" width="112" height="100" rx="6" fill="#f3f4f5" stroke="#5f6b73"/>
+  <text x="120" y="232" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">en pause 90 s</text>
+  <text x="120" y="252" font-size="13" fill="#1f2328" text-anchor="middle">(GC, disque)</text>
+  <!-- key expires -->
+  <rect x="296" y="196" width="128" height="34" rx="6" fill="#ffffff" stroke="#5f6b73"/>
+  <text x="360" y="218" font-size="13" fill="#1f2328" text-anchor="middle">la clé expire</text>
+  <!-- B acquires -->
+  <line x1="598" y1="252" x2="364" y2="252" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="480" y="244" font-size="13" fill="#1f2328" text-anchor="middle">acquire(job, ttl 60 s)</text>
+  <line x1="362" y1="286" x2="596" y2="286" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <text x="480" y="278" font-size="13" fill="#1f2328" text-anchor="middle">pris, jeton 42</text>
+  <!-- B writes -->
+  <line x1="602" y1="326" x2="836" y2="326" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="720" y="318" font-size="13" fill="#1f2328" text-anchor="middle">écriture, jeton 42 : acceptée</text>
+  <!-- A resumes and writes -->
+  <line x1="122" y1="376" x2="836" y2="376" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="240" y="368" font-size="13" fill="#1f2328" text-anchor="middle">reprend : écriture, jeton 41</text>
+  <line x1="838" y1="420" x2="124" y2="420" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <text x="720" y="412" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">refusée : 41 est inférieur à 42</text>
+  <!-- conclusion -->
+  <text x="32" y="484" font-size="14" fill="#1f2328">Les deux instances croyaient détenir le verrou. Seul le stockage, qui retient le plus grand jeton vu,</text>
+  <text x="32" y="504" font-size="14" fill="#1f2328">a arrêté l'écriture périmée ; une ressource incapable de comparer les jetons accepte les deux.</text>
+</svg>

@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 450" width="960" height="450" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Four isolation strategies, from the most shared to the most separate</title>
+  <desc id="desc">Shared tables: one appointments table holds the rows of every tenant, told apart by a tenant_id column, and the helpers add the condition to every statement. Row-level security: the same table, and a PostgreSQL policy refuses another tenant's row even to a statement without the condition. Schema per tenant: one copy of the tables of the context per tenant, appointments__acme and appointments__globex, in one database. Database per tenant: one database and one connection pool per tenant. From left to right, sharing and cost per tenant decrease and separation grows.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="450" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Four isolation strategies</text>
+  <!-- shared tables -->
+  <rect x="24" y="60" width="210" height="40" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="129" y="86" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">shared tables</text>
+  <rect x="34" y="116" width="190" height="200" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="129" y="138" font-size="13" font-weight="600" fill="#5f6b73" text-anchor="middle">one database</text>
+  <rect x="48" y="150" width="162" height="134" rx="6" fill="#ffffff" stroke="#7a4f9a" stroke-width="1.5"/>
+  <text x="129" y="170" font-size="13" font-weight="700" fill="#7a4f9a" text-anchor="middle">appointments</text>
+  <line x1="48" y1="178" x2="210" y2="178" stroke="#7a4f9a" stroke-opacity="0.35"/>
+  <text x="64" y="196" font-size="13" font-weight="600" fill="#1f2328">id</text>
+  <text x="124" y="196" font-size="13" font-weight="600" fill="#1f2328">tenant_id</text>
+  <text x="64" y="218" font-size="13" fill="#1f2328">a-1</text>
+  <text x="124" y="218" font-size="13" fill="#1f2328">acme</text>
+  <text x="64" y="238" font-size="13" fill="#1f2328">a-2</text>
+  <text x="124" y="238" font-size="13" fill="#1f2328">globex</text>
+  <text x="64" y="258" font-size="13" fill="#1f2328">a-3</text>
+  <text x="124" y="258" font-size="13" fill="#1f2328">acme</text>
+  <text x="64" y="278" font-size="13" fill="#1f2328">a-4</text>
+  <text x="124" y="278" font-size="13" fill="#1f2328">globex</text>
+  <text x="129" y="304" font-size="13" font-style="italic" fill="#5f6b73" text-anchor="middle">helpers add the where</text>
+  <text x="129" y="344" font-size="13" fill="#1f2328" text-anchor="middle">isolates: a tenant_id column</text>
+  <text x="129" y="364" font-size="13" fill="#1f2328" text-anchor="middle">and a condition per statement</text>
+  <!-- row-level security -->
+  <rect x="258" y="60" width="210" height="40" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="363" y="86" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">row-level security</text>
+  <rect x="268" y="116" width="190" height="200" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="363" y="138" font-size="13" font-weight="600" fill="#5f6b73" text-anchor="middle">one database</text>
+  <rect x="282" y="150" width="162" height="134" rx="6" fill="#ffffff" stroke="#7a4f9a" stroke-width="1.5"/>
+  <text x="363" y="170" font-size="13" font-weight="700" fill="#7a4f9a" text-anchor="middle">appointments</text>
+  <line x1="282" y1="178" x2="444" y2="178" stroke="#7a4f9a" stroke-opacity="0.35"/>
+  <text x="298" y="196" font-size="13" font-weight="600" fill="#1f2328">id</text>
+  <text x="358" y="196" font-size="13" font-weight="600" fill="#1f2328">tenant_id</text>
+  <text x="298" y="218" font-size="13" fill="#1f2328">a-1</text>
+  <text x="358" y="218" font-size="13" fill="#1f2328">acme</text>
+  <text x="298" y="238" font-size="13" fill="#1f2328">a-2</text>
+  <text x="358" y="238" font-size="13" fill="#1f2328">globex</text>
+  <text x="298" y="258" font-size="13" fill="#1f2328">a-3</text>
+  <text x="358" y="258" font-size="13" fill="#1f2328">acme</text>
+  <text x="298" y="278" font-size="13" fill="#1f2328">a-4</text>
+  <text x="358" y="278" font-size="13" fill="#1f2328">globex</text>
+  <text x="363" y="304" font-size="13" font-style="italic" fill="#5f6b73" text-anchor="middle">+ a policy on every row</text>
+  <text x="363" y="344" font-size="13" fill="#1f2328" text-anchor="middle">isolates: the same, and the</text>
+  <text x="363" y="364" font-size="13" fill="#1f2328" text-anchor="middle">database refuses other rows</text>
+  <!-- schema per tenant -->
+  <rect x="492" y="60" width="210" height="40" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="597" y="86" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">schema per tenant</text>
+  <rect x="502" y="116" width="190" height="200" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="597" y="138" font-size="13" font-weight="600" fill="#5f6b73" text-anchor="middle">one database</text>
+  <rect x="516" y="150" width="162" height="58" rx="6" fill="#ffffff" stroke="#7a4f9a" stroke-width="1.5"/>
+  <text x="597" y="174" font-size="13" font-weight="700" fill="#7a4f9a" text-anchor="middle">appointments__acme</text>
+  <text x="597" y="194" font-size="13" fill="#1f2328" text-anchor="middle">the tables of acme</text>
+  <rect x="516" y="222" width="162" height="58" rx="6" fill="#ffffff" stroke="#7a4f9a" stroke-width="1.5"/>
+  <text x="597" y="246" font-size="13" font-weight="700" fill="#7a4f9a" text-anchor="middle">appointments__globex</text>
+  <text x="597" y="266" font-size="13" fill="#1f2328" text-anchor="middle">the tables of globex</text>
+  <text x="597" y="304" font-size="13" font-style="italic" fill="#5f6b73" text-anchor="middle">search_path per tenant</text>
+  <text x="597" y="344" font-size="13" fill="#1f2328" text-anchor="middle">isolates: one copy of the</text>
+  <text x="597" y="364" font-size="13" fill="#1f2328" text-anchor="middle">tables per tenant</text>
+  <!-- database per tenant -->
+  <rect x="726" y="60" width="210" height="40" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="831" y="86" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">database per tenant</text>
+  <rect x="736" y="116" width="190" height="96" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="831" y="138" font-size="13" font-weight="600" fill="#5f6b73" text-anchor="middle">database acme</text>
+  <rect x="750" y="150" width="162" height="48" rx="6" fill="#ffffff" stroke="#7a4f9a" stroke-width="1.5"/>
+  <text x="831" y="170" font-size="13" font-weight="700" fill="#7a4f9a" text-anchor="middle">appointments</text>
+  <text x="831" y="189" font-size="13" fill="#1f2328" text-anchor="middle">the tables of acme</text>
+  <rect x="736" y="220" width="190" height="96" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="831" y="242" font-size="13" font-weight="600" fill="#5f6b73" text-anchor="middle">database globex</text>
+  <rect x="750" y="254" width="162" height="48" rx="6" fill="#ffffff" stroke="#7a4f9a" stroke-width="1.5"/>
+  <text x="831" y="274" font-size="13" font-weight="700" fill="#7a4f9a" text-anchor="middle">appointments</text>
+  <text x="831" y="293" font-size="13" fill="#1f2328" text-anchor="middle">the tables of globex</text>
+  <text x="831" y="344" font-size="13" fill="#1f2328" text-anchor="middle">isolates: one database</text>
+  <text x="831" y="364" font-size="13" fill="#1f2328" text-anchor="middle">and one pool per tenant</text>
+  <!-- axis -->
+  <line x1="40" y1="396" x2="920" y2="396" stroke="#3d4449" stroke-width="2" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+  <text x="40" y="426" font-size="14" fill="#1f2328">more sharing: many small tenants, one migration</text>
+  <text x="920" y="426" font-size="14" fill="#1f2328" text-anchor="end">more separation: stricter, costlier per tenant</text>
+</svg>

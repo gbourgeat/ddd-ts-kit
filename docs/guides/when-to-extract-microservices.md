@@ -1,3 +1,5 @@
+**English** · [Français](when-to-extract-microservices.fr.md)
+
 # When to extract a microservice, and when not to
 
 **Summary.** Start with a modular monolith: one deployable whose bounded contexts are kept
@@ -49,15 +51,22 @@ stay.
 | **Isolation of compliance scope** | one context handles data under a regime (payment card data, health records) whose audit scope would otherwise cover the whole system | the audit perimeter and its cost; who needs production access to what | a separate database and credentials for that context inside the monolith (often insufficient for auditors) |
 | **Different technology constraint** | a context needs another runtime, a library that conflicts, a GPU, a region, or a data store with a different operational profile | a concrete requirement that the current runtime cannot meet | an adapter behind a port calling an external component |
 
-In the scheduling application: `notifications` may send in bursts every morning and depends on
+In the scheduling application (`examples/scheduling`, four contexts: `identity`, `scheduling`,
+`notification`, `analytics`): `notification` may send in bursts every morning and depends on
 slow external providers, a candidate for failure isolation, first as a worker process and
 only then as a service. `analytics` may want a different store and tolerate hours of delay, a
-candidate on technology grounds. `appointments` and `calendars` change together and are owned
-by one team: extracting them buys nothing.
+candidate on technology grounds. Appointments and calendars change together and are owned by
+one team, which is why they are one context, `scheduling`: splitting them would buy nothing.
+Today none of the signals holds there: every context says `Deployable alone: no` in the
+[context map of the example](../../examples/scheduling/docs/context-map.md), and only the
+scheduled jobs run in a process of their own.
 
 Notice the third column: several signals have a cheaper answer that keeps one deployable.
 A dedicated worker process is the most useful of them, and the kit supports it for scheduled
-jobs without leaving the codebase (see [Scheduled jobs](../concepts/scheduled-jobs.md)).
+jobs without leaving the codebase: `npx ddd-ts-kit generate worker` writes
+`src/apps/worker/main.ts`, the same modules as `main.ts` without an HTTP server, and starts the
+API with its jobs off (see [Scheduled jobs](../concepts/scheduled-jobs.md)). The example runs
+its jobs that way.
 
 ## Signals that do not justify it
 
@@ -70,6 +79,11 @@ jobs without leaving the codebase (see [Scheduled jobs](../concepts/scheduled-jo
 | **Slow builds or tests** | fix with test levels, caching and affected-only runs. The fast gates of the pipeline run in seconds |
 | **A wish to rewrite in another language** | a technology constraint is a requirement, not a preference |
 | **One context is "messy"** | extracting a mess produces a distributed mess. Fix the model first |
+
+Put together, with the readiness checklist and the operational questions further down, the
+decision reads as four questions in order:
+
+![The decision to extract as four questions: no measured signal means staying a modular monolith; a cheaper answer such as a worker process means keeping one deployable; a context that is not ready means fixing its isolation first; no team to run the service means waiting; the extraction happens only when all four questions point to it](../assets/diagrams/when-to-extract-microservices-decision.svg)
 
 ## The costs that arrive on day one
 
@@ -124,14 +138,67 @@ Run `npx ddd-ts-kit check --rule context/extractable` and the architecture test.
 checks no tool makes: is there a team to own and operate the service, a deployment target, an
 on-call rota, dashboards and alerts for the new failure modes?
 
+The requirement that most often fails is the synchronous need. A context that reads another
+context's data directly can never leave:
+
+```ts
+// Instead of: scheduling imports a repository of identity and reads its tables.
+// context/published-language-only refuses the import, and the two could never be deployed apart.
+import { PersonRepository } from '@/contexts/identity/domain/repositories/person.repository';
+```
+
+The caller declares what it needs, in its own words, as a port of its application layer; the
+upstream offers a contract in its published language; a gateway adapter joins the two. This is
+the shape of the example, where `scheduling` shows the names of patients that `identity` knows:
+
+<!-- checked sample -->
+```ts
+import { Gateway } from '@ddd-ts-kit/kernel/declarations';
+
+// identity/published-language/person-directory.contract.ts: what identity offers to other contexts
+export interface PersonCard {
+  readonly personId: string;
+  readonly displayName: string;
+}
+
+export abstract class PersonDirectoryContract {
+  abstract byIds(personIds: readonly string[]): Promise<readonly PersonCard[]>;
+}
+
+// scheduling/application/ports/person-directory-gateway.port.ts: what scheduling needs, in its words
+export abstract class PersonDirectoryGateway {
+  abstract namesOf(personIds: readonly string[]): Promise<ReadonlyMap<string, { readonly displayName: string }>>;
+}
+
+// scheduling/infrastructure/external/in-process-person-directory.gateway.ts: identity in the same process
+@Gateway(PersonDirectoryGateway)
+export class InProcessPersonDirectoryGateway implements PersonDirectoryGateway {
+  constructor(readonly upstream: PersonDirectoryContract) {}
+
+  async namesOf(personIds: readonly string[]): Promise<ReadonlyMap<string, { readonly displayName: string }>> {
+    const cards = await this.upstream.byIds(personIds);
+
+    return new Map(cards.map((card) => [card.personId, { displayName: card.displayName }]));
+  }
+}
+```
+
+The handlers of `scheduling` depend on `PersonDirectoryGateway` and nothing else; whether
+`identity` answers in the same process or over the network is the business of the adapter. In
+a project generated by the CLI, the platform wraps every adapter of kind `gateway` or `external`
+that states no policy of its own in its resilience policy (the `resilience` settings of its
+configuration: retry, timeout), so the call is already treated as one that can fail.
+
 ## The extraction steps
 
 As the `extract-service` skill drives them:
 
 1. **Generate the entry point.** `npx ddd-ts-kit generate service <context>` writes
-   `src/apps/<context>/main.ts` (that context, the kernel and the platform), a start script, a
-   compose service, the line of the context map, and sets `deployable: true` in the config.
-   The service takes the scheduled jobs of its context with it, and no job of another one.
+   `src/apps/<context>/main.ts` (that context, the kernel and the platform), a start script
+   (`npm run start:<context>`), a compose service in the `services` profile, and sets
+   `deployable: true` for the context in the config, which the context map shows in its
+   "Deployable alone" column once `npx ddd-ts-kit docs` has run. The service takes the
+   scheduled jobs of its context with it (unless `RUN_JOBS=false`), and no job of another one.
 2. **Replace in-process gateways by remote adapters.** In the remaining contexts, each
    `gateway` adapter that pointed at the extracted context becomes a remote adapter of the
    same port, held to the same contract suite.
@@ -143,6 +210,45 @@ As the `extract-service` skill drives them:
    folder: a contract either way.
 6. **Record it.** `docs/context-map.md` and an ADR: what is deployed where, and the new
    failure modes.
+
+![Before and after the extraction of notification: before, one deployable holds the four contexts, an in-process event bus with the outbox, and one database with a schema per context; after, the monolith keeps identity, scheduling and analytics, the outbox relay publishes to a broker, and the notification service consumes through a durable subscription with its own schema; the domain and application code is the same on both sides](../assets/diagrams/when-to-extract-microservices-before-after.svg)
+
+No gateway points at `notification`, so step 2 has nothing to change in the drawing above.
+Step 2 in code. When `identity` leaves, the in-process gateway of `scheduling` becomes a remote
+one: the same port, the same declaration, an HTTP client behind it. The handlers, their specs
+and the contract suite of the port do not change.
+
+<!-- checked sample -->
+```ts
+import { Gateway } from '@ddd-ts-kit/kernel/declarations';
+
+declare abstract class PersonDirectoryGateway {
+  abstract namesOf(personIds: readonly string[]): Promise<ReadonlyMap<string, { readonly displayName: string }>>;
+}
+
+interface PersonCard {
+  readonly personId: string;
+  readonly displayName: string;
+}
+
+/** The HTTP client of the identity service, bound by the platform with its base URL and credentials. */
+export abstract class IdentityApi {
+  abstract getJson<T>(path: string): Promise<T>;
+}
+
+// scheduling/infrastructure/external/remote-person-directory.gateway.ts: identity behind the network
+@Gateway(PersonDirectoryGateway)
+export class RemotePersonDirectoryGateway implements PersonDirectoryGateway {
+  constructor(private readonly identity: IdentityApi) {}
+
+  async namesOf(personIds: readonly string[]): Promise<ReadonlyMap<string, { readonly displayName: string }>> {
+    const ids = personIds.map((id) => encodeURIComponent(id)).join(',');
+    const cards = await this.identity.getJson<readonly PersonCard[]>(`/people?ids=${ids}`);
+
+    return new Map(cards.map((card) => [card.personId, { displayName: card.displayName }]));
+  }
+}
+```
 
 Roll out behind the existing interfaces: run the extracted service next to the monolith,
 switch one adapter at a time, keep the ability to switch back until the new path has carried

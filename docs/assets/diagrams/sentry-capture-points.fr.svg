@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 560" width="960" height="560" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Où les échecs sont capturés, et où ils vont</title>
+  <desc id="desc">Les gestionnaires, les agrégats et les repositories lèvent des exceptions et ne signalent jamais rien. Cinq points de capture les entourent : les bus de commandes et de requêtes avec errorReportingMiddleware, le pipeline HTTP avec reportHttpErrors, le planificateur de jobs avec reportFailedRuns, les fournisseurs d'événements avec DeadLetterReports, et le processus avec reportProcessFailures. Chacun confie un échec inattendu au port ErrorReporter du noyau, une fois par erreur. SentryErrorReporter, construit par initSentry et lié par la racine de composition, implémente le port. L'événement est nettoyé par le kit, puis donné au beforeSend du projet, puis envoyé à Sentry ou GlitchTip. Son identifiant de trace mène à la trace dans le backend de traçage.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+    <marker id="arrow-infrastructure" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#7a4f9a"/>
+    </marker>
+  </defs>
+  <rect width="960" height="560" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Où les échecs sont capturés, et où ils vont</text>
+
+  <!-- capture points -->
+  <text x="32" y="78" font-size="14" font-weight="600" fill="#5f6b73">points de capture</text>
+  <rect x="32" y="90" width="296" height="56" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="180" y="113" font-size="14" font-weight="700" fill="#2b5d8a" text-anchor="middle">bus de commandes et de requêtes</text>
+  <text x="180" y="134" font-size="13" fill="#1f2328" text-anchor="middle">errorReportingMiddleware</text>
+  <rect x="32" y="156" width="296" height="56" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="180" y="179" font-size="15" font-weight="700" fill="#9a5b2b" text-anchor="middle">pipeline HTTP</text>
+  <text x="180" y="200" font-size="13" fill="#1f2328" text-anchor="middle">onError: reportHttpErrors, 5xx seulement</text>
+  <rect x="32" y="222" width="296" height="56" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="180" y="245" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">planificateur de jobs</text>
+  <text x="180" y="266" font-size="13" fill="#1f2328" text-anchor="middle">reportFailedRuns</text>
+  <rect x="32" y="288" width="296" height="56" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="180" y="311" font-size="15" font-weight="700" fill="#7a4f9a" text-anchor="middle">fournisseurs d'événements</text>
+  <text x="180" y="332" font-size="13" fill="#1f2328" text-anchor="middle">DeadLetterReports : événements abandonnés</text>
+  <rect x="32" y="354" width="296" height="56" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="180" y="377" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">processus</text>
+  <text x="180" y="398" font-size="13" fill="#1f2328" text-anchor="middle">reportProcessFailures, en fatal</text>
+
+  <!-- the code that throws -->
+  <rect x="32" y="440" width="296" height="64" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="180" y="465" font-size="15" font-weight="700" fill="#2f6f4f" text-anchor="middle">gestionnaires, agrégats</text>
+  <text x="180" y="487" font-size="13" fill="#1f2328" text-anchor="middle">lèvent, et ne signalent jamais rien</text>
+
+  <!-- port -->
+  <rect x="366" y="90" width="180" height="320" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="456" y="200" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">ErrorReporter</text>
+  <text x="456" y="224" font-size="13" fill="#1f2328" text-anchor="middle">port du noyau</text>
+  <text x="456" y="246" font-size="13" fill="#1f2328" text-anchor="middle">report, flush</text>
+  <line x1="330" y1="118" x2="362" y2="118" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="330" y1="184" x2="362" y2="184" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="330" y1="250" x2="362" y2="250" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="330" y1="316" x2="362" y2="316" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="330" y1="382" x2="362" y2="382" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="456" y="282" font-size="13" fill="#1f2328" text-anchor="middle">échecs inattendus</text>
+  <text x="456" y="302" font-size="13" fill="#1f2328" text-anchor="middle">seulement, chaque</text>
+  <text x="456" y="322" font-size="13" fill="#1f2328" text-anchor="middle">objet d'erreur une fois</text>
+  <text x="456" y="342" font-size="13" fill="#1f2328" text-anchor="middle">(reportOnce)</text>
+
+  <!-- adapter chain -->
+  <rect x="640" y="90" width="288" height="116" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="784" y="118" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">SentryErrorReporter</text>
+  <text x="784" y="142" font-size="13" fill="#1f2328" text-anchor="middle">issu d'initSentry, lié par la</text>
+  <text x="784" y="162" font-size="13" fill="#1f2328" text-anchor="middle">racine de composition ; étiquettes,</text>
+  <text x="784" y="182" font-size="13" fill="#1f2328" text-anchor="middle">id de l'acteur, empreinte, id de trace</text>
+  <line x1="638" y1="148" x2="550" y2="148" stroke="#7a4f9a" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow-infrastructure)"/>
+  <text x="594" y="138" font-size="13" fill="#7a4f9a" text-anchor="middle">implémente</text>
+
+  <rect x="640" y="240" width="288" height="56" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="784" y="263" font-size="15" font-weight="700" fill="#7a4f9a" text-anchor="middle">nettoyé par le kit</text>
+  <text x="784" y="284" font-size="13" fill="#1f2328" text-anchor="middle">ni corps de requête, ni courriel, ni cookie</text>
+  <line x1="784" y1="208" x2="784" y2="236" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="640" y="330" width="288" height="56" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="784" y="353" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">beforeSend du projet</text>
+  <text x="784" y="374" font-size="13" fill="#1f2328" text-anchor="middle">facultatif ; null écarte l'événement</text>
+  <line x1="784" y1="298" x2="784" y2="326" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="640" y="420" width="288" height="64" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="784" y="445" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">Sentry ou GlitchTip</text>
+  <text x="784" y="467" font-size="13" fill="#1f2328" text-anchor="middle">le même protocole, un autre DSN</text>
+  <line x1="784" y1="388" x2="784" y2="416" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- tracing backend -->
+  <rect x="380" y="420" width="180" height="64" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="470" y="445" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">backend de traçage</text>
+  <text x="470" y="467" font-size="13" fill="#1f2328" text-anchor="middle">Jaeger, Grafana Tempo</text>
+  <line x1="638" y1="452" x2="564" y2="452" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <text x="600" y="442" font-size="13" fill="#1f2328" text-anchor="middle">id de trace</text>
+
+  <!-- legend -->
+  <line x1="380" y1="524" x2="424" y2="524" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="436" y="529" font-size="14" fill="#1f2328">appelle</text>
+  <line x1="500" y1="524" x2="544" y2="524" stroke="#7a4f9a" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow-infrastructure)"/>
+  <text x="556" y="529" font-size="14" fill="#1f2328">implémente</text>
+  <line x1="660" y1="524" x2="704" y2="524" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <text x="716" y="529" font-size="14" fill="#1f2328">mène à, par un identifiant</text>
+</svg>

@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" width="960" height="420" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Both directions of compatibility</title>
+  <desc id="desc">A producer of the previous release and a producer of the new release both write events that wait in an outbox, a queue, a log or a dead-letter destination. Consumers of the new release read events of the previous release: backward compatibility, old data with new code. Consumers of the previous release read events of the new release: forward compatibility, new data with old code.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="420" rx="16" fill="#ffffff"/>
+  <text x="32" y="36" font-size="18" font-weight="600" fill="#1f2328">Events outlive the release that wrote them</text>
+  <rect x="40" y="80" width="200" height="64" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2" stroke-dasharray="7 5"/>
+  <text x="140" y="106" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">producer</text>
+  <text x="140" y="128" font-size="13" fill="#1f2328" text-anchor="middle">previous release</text>
+  <rect x="40" y="236" width="200" height="64" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="140" y="262" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">producer</text>
+  <text x="140" y="284" font-size="13" fill="#1f2328" text-anchor="middle">new release</text>
+  <rect x="370" y="80" width="220" height="220" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="2"/>
+  <text x="480" y="168" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">waiting events</text>
+  <text x="480" y="190" font-size="13" fill="#1f2328" text-anchor="middle">outbox, queue, log,</text>
+  <text x="480" y="209" font-size="13" fill="#1f2328" text-anchor="middle">dead letters:</text>
+  <text x="480" y="228" font-size="13" fill="#1f2328" text-anchor="middle">seconds to days</text>
+  <rect x="720" y="80" width="200" height="64" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="820" y="106" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">consumer</text>
+  <text x="820" y="128" font-size="13" fill="#1f2328" text-anchor="middle">new release</text>
+  <rect x="720" y="236" width="200" height="64" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2" stroke-dasharray="7 5"/>
+  <text x="820" y="262" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">consumer</text>
+  <text x="820" y="284" font-size="13" fill="#1f2328" text-anchor="middle">previous release</text>
+  <line x1="242" y1="112" x2="366" y2="112" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="592" y1="112" x2="716" y2="112" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="242" y1="268" x2="366" y2="268" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="592" y1="268" x2="716" y2="268" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="820" y="166" font-size="14" font-weight="700" fill="#2b5d8a" text-anchor="middle">backward compatibility</text>
+  <text x="820" y="186" font-size="13" fill="#1f2328" text-anchor="middle">old data, new code</text>
+  <text x="820" y="322" font-size="14" font-weight="700" fill="#2b5d8a" text-anchor="middle">forward compatibility</text>
+  <text x="820" y="342" font-size="13" fill="#1f2328" text-anchor="middle">new data, old code</text>
+  <rect x="40" y="368" width="44" height="18" rx="4" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2" stroke-dasharray="7 5"/>
+  <text x="96" y="382" font-size="14" fill="#1f2328">dashed border: the previous release, still running or still in flight</text>
+  <text x="40" y="408" font-size="13" fill="#5f6b73">In a modular monolith too: during a deployment, and for every event retained by the outbox or a broker.</text>
+</svg>

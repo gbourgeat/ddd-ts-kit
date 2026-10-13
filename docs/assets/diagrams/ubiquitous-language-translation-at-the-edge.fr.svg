@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" width="960" height="540" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Traduire à la frontière : chaque contexte garde ses mots</title>
+  <desc id="desc">Le contexte appointments publie appointments.appointment.booked, version 1, dans son langage publié. Le gestionnaire d'événement d'intégration de notifications le traduit en une commande de son propre vocabulaire, ScheduleReminder, et le Reminder décide quand il est dû. Le gestionnaire de ScheduleReminder envoie par un port de notifications ; la couche anticorruption qui l'implémente traduit dans les mots d'un fournisseur de SMS, qui n'atteignent jamais le domaine.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="540" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Traduire à la frontière : chaque contexte garde ses mots</text>
+  <!-- appointments, the upstream -->
+  <rect x="24" y="64" width="460" height="176" rx="12" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="40" y="90" font-size="14" font-weight="600" fill="#5f6b73">appointments</text>
+  <rect x="36" y="104" width="160" height="112" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="116.0" y="130" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">Appointment</text>
+  <line x1="50" y1="140" x2="182" y2="140" stroke="#2f6f4f" stroke-opacity="0.35"/>
+  <text x="116.0" y="160" font-size="13" fill="#1f2328" text-anchor="middle">book(slot)</text>
+  <text x="116.0" y="180" font-size="13" fill="#1f2328" text-anchor="middle">enregistre</text>
+  <text x="116.0" y="200" font-size="13" fill="#1f2328" text-anchor="middle">AppointmentBooked</text>
+  <!-- the published language -->
+  <rect x="240" y="104" width="232" height="112" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="356.0" y="130" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">Langage publié</text>
+  <line x1="254" y1="140" x2="458" y2="140" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text x="356.0" y="160" font-size="13" fill="#1f2328" text-anchor="middle">le contrat, dans ses mots :</text>
+  <text x="356.0" y="180" font-size="13" fill="#1f2328" text-anchor="middle">appointments.appointment</text>
+  <text x="356.0" y="200" font-size="13" fill="#1f2328" text-anchor="middle">.booked, version 1</text>
+  <!-- notifications, the downstream -->
+  <rect x="504" y="64" width="432" height="368" rx="12" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="520" y="90" font-size="14" font-weight="600" fill="#5f6b73">notifications</text>
+  <rect x="520" y="104" width="180" height="112" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="610.0" y="130" font-size="15" font-weight="700" fill="#2b5d8a" text-anchor="middle">Gestionnaire</text>
+  <line x1="534" y1="140" x2="686" y2="140" stroke="#2b5d8a" stroke-opacity="0.35"/>
+  <text x="610.0" y="160" font-size="13" fill="#1f2328" text-anchor="middle">de l'événement</text>
+  <text x="610.0" y="180" font-size="13" fill="#1f2328" text-anchor="middle">d'intégration : il</text>
+  <text x="610.0" y="200" font-size="13" fill="#1f2328" text-anchor="middle">ne fait que traduire</text>
+  <rect x="520" y="244" width="180" height="72" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="610.0" y="270" font-size="15" font-weight="700" fill="#2b5d8a" text-anchor="middle">ScheduleReminder</text>
+  <line x1="534" y1="280" x2="686" y2="280" stroke="#2b5d8a" stroke-opacity="0.35"/>
+  <text x="610.0" y="300" font-size="13" fill="#1f2328" text-anchor="middle">dans ses propres mots</text>
+  <rect x="520" y="344" width="180" height="72" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="610.0" y="370" font-size="15" font-weight="700" fill="#2f6f4f" text-anchor="middle">Reminder</text>
+  <line x1="534" y1="380" x2="686" y2="380" stroke="#2f6f4f" stroke-opacity="0.35"/>
+  <text x="610.0" y="400" font-size="13" fill="#1f2328" text-anchor="middle">décide quand il est dû</text>
+  <rect x="748" y="244" width="176" height="72" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="836.0" y="270" font-size="15" font-weight="700" fill="#2b5d8a" text-anchor="middle">Port d'envoi</text>
+  <line x1="762" y1="280" x2="910" y2="280" stroke="#2b5d8a" stroke-opacity="0.35"/>
+  <text x="836.0" y="300" font-size="13" fill="#1f2328" text-anchor="middle">envoie dans nos mots</text>
+  <rect x="748" y="344" width="176" height="72" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="836.0" y="370" font-size="14" font-weight="700" fill="#7a4f9a" text-anchor="middle">Couche anticorruption</text>
+  <line x1="762" y1="380" x2="910" y2="380" stroke="#7a4f9a" stroke-opacity="0.35"/>
+  <text x="836.0" y="400" font-size="13" fill="#1f2328" text-anchor="middle">les mots du fournisseur</text>
+  <rect x="748" y="452" width="176" height="66" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="836.0" y="478" font-size="14" font-weight="700" fill="#5f6b73" text-anchor="middle">Fournisseur de SMS</text>
+  <line x1="762" y1="488" x2="910" y2="488" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text x="836.0" y="508" font-size="13" fill="#1f2328" text-anchor="middle">son propre vocabulaire</text>
+  <!-- messages and calls -->
+  <line x1="198" y1="160" x2="236" y2="160" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <line x1="474" y1="160" x2="516" y2="160" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <line x1="610" y1="218" x2="610" y2="240" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="610" y1="318" x2="610" y2="340" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="702" y1="280" x2="744" y2="280" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="836" y1="342" x2="836" y2="320" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="846" y="336" font-size="13" font-style="italic" fill="#1f2328">implémente</text>
+  <line x1="836" y1="418" x2="836" y2="448" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- legend -->
+  <line x1="40" y1="472" x2="84" y2="472" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <text x="96" y="477" font-size="14" fill="#1f2328">un événement d'intégration : asynchrone, par l'outbox</text>
+  <line x1="40" y1="498" x2="84" y2="498" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="96" y="503" font-size="14" fill="#1f2328">un appel ou une commande, dans un même contexte</text>
+</svg>

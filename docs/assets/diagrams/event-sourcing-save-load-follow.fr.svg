@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" width="960" height="540" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Comment le kit enregistre, charge et suit un agrégat en event sourcing</title>
+  <desc id="desc">Trois chemins. Enregistrer : l'agrégat enregistre un événement et l'applique, le repository délègue à EventSourcedRepository, le sérialiseur encode l'événement dans sa forme stockée et scelle les valeurs personnelles, et l'event store l'ajoute au flux à la version attendue, dans l'unité de travail. Charger : le snapshot store donne le dernier snapshot s'il y en a un, l'event store lit le flux après sa version, le sérialiseur ouvre les valeurs personnelles, applique les upcasters et décode, et l'agrégat est reconstitué en rejouant ses méthodes apply. Suivre : une CatchUpSubscription lit tout le store après le point de reprise d'une projection, ses méthodes On appliquent chaque événement au modèle de lecture, lignes estampillées de la version du flux, et le point de reprise avance dans la même unité de travail.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="540" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Enregistrer, charger, suivre : les trois chemins d'un agrégat en event sourcing</text>
+  <text x="32" y="78" font-size="14" font-weight="600" fill="#1f2328">enregistrer : ce que laisse une commande</text>
+  <rect x="32" y="90" width="200" height="100" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="132" y="118" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">agrégat</text>
+  <text x="132" y="142" font-size="13" fill="#1f2328" text-anchor="middle">record(event) :</text>
+  <text x="132" y="160" font-size="13" fill="#1f2328" text-anchor="middle">l'applique, le conserve</text>
+  <text x="132" y="178" font-size="13" fill="#1f2328" text-anchor="middle">pour le save</text>
+  <rect x="264" y="90" width="200" height="100" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="364" y="118" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">repository</text>
+  <text x="364" y="142" font-size="13" fill="#1f2328" text-anchor="middle">save(aggregate) :</text>
+  <text x="364" y="160" font-size="13" fill="#1f2328" text-anchor="middle">EventSourcedRepository</text>
+  <rect x="496" y="90" width="200" height="100" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="596" y="118" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">sérialiseur</text>
+  <text x="596" y="142" font-size="13" fill="#1f2328" text-anchor="middle">encode la forme</text>
+  <text x="596" y="160" font-size="13" fill="#1f2328" text-anchor="middle">stockée, scelle les</text>
+  <text x="596" y="178" font-size="13" fill="#1f2328" text-anchor="middle">valeurs personnelles</text>
+  <rect x="728" y="90" width="200" height="100" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="828" y="118" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">event store</text>
+  <text x="828" y="142" font-size="13" fill="#1f2328" text-anchor="middle">append(stream,</text>
+  <text x="828" y="160" font-size="13" fill="#1f2328" text-anchor="middle">expected version),</text>
+  <text x="828" y="178" font-size="13" fill="#1f2328" text-anchor="middle">dans l'unité de travail</text>
+  <line x1="234" y1="140" x2="262" y2="140" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="466" y1="140" x2="494" y2="140" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="698" y1="140" x2="726" y2="140" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="32" y="220" font-size="14" font-weight="600" fill="#1f2328">charger : ce sur quoi décide la commande suivante</text>
+  <rect x="32" y="232" width="200" height="100" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="132" y="260" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">snapshot store</text>
+  <text x="132" y="284" font-size="13" fill="#1f2328" text-anchor="middle">le dernier snapshot,</text>
+  <text x="132" y="302" font-size="13" fill="#1f2328" text-anchor="middle">s'il y en a un</text>
+  <rect x="264" y="232" width="200" height="100" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="364" y="260" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">event store</text>
+  <text x="364" y="284" font-size="13" fill="#1f2328" text-anchor="middle">readStream(stream,</text>
+  <text x="364" y="302" font-size="13" fill="#1f2328" text-anchor="middle">après cette version)</text>
+  <rect x="496" y="232" width="200" height="100" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="596" y="260" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">sérialiseur</text>
+  <text x="596" y="284" font-size="13" fill="#1f2328" text-anchor="middle">ouvre les valeurs</text>
+  <text x="596" y="302" font-size="13" fill="#1f2328" text-anchor="middle">personnelles, applique</text>
+  <text x="596" y="320" font-size="13" fill="#1f2328" text-anchor="middle">les upcasters, décode</text>
+  <rect x="728" y="232" width="200" height="100" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="828" y="260" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">agrégat</text>
+  <text x="828" y="284" font-size="13" fill="#1f2328" text-anchor="middle">rehydrate : rejoue</text>
+  <text x="828" y="302" font-size="13" fill="#1f2328" text-anchor="middle">par les méthodes</text>
+  <text x="828" y="320" font-size="13" fill="#1f2328" text-anchor="middle">apply</text>
+  <line x1="234" y1="282" x2="262" y2="282" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="466" y1="282" x2="494" y2="282" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="698" y1="282" x2="726" y2="282" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="32" y="362" font-size="14" font-weight="600" fill="#1f2328">suivre : une projection alimentée par le store</text>
+  <rect x="32" y="374" width="200" height="100" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="132" y="402" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">event store</text>
+  <text x="132" y="426" font-size="13" fill="#1f2328" text-anchor="middle">readAll(après le point</text>
+  <text x="132" y="444" font-size="13" fill="#1f2328" text-anchor="middle">de reprise, un lot)</text>
+  <rect x="264" y="374" width="200" height="100" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="364" y="402" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">CatchUpSubscription</text>
+  <text x="364" y="426" font-size="13" fill="#1f2328" text-anchor="middle">une par projection,</text>
+  <text x="364" y="444" font-size="13" fill="#1f2328" text-anchor="middle">sous son nom</text>
+  <rect x="496" y="374" width="200" height="100" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="596" y="402" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">projection</text>
+  <text x="596" y="426" font-size="13" fill="#1f2328" text-anchor="middle">ses méthodes @On</text>
+  <text x="596" y="444" font-size="13" fill="#1f2328" text-anchor="middle">appliquent chaque</text>
+  <text x="596" y="462" font-size="13" fill="#1f2328" text-anchor="middle">événement</text>
+  <rect x="728" y="374" width="200" height="100" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="828" y="402" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">modèle de lecture</text>
+  <text x="828" y="426" font-size="13" fill="#1f2328" text-anchor="middle">lignes estampillées de</text>
+  <text x="828" y="444" font-size="13" fill="#1f2328" text-anchor="middle">la version du flux, point</text>
+  <text x="828" y="462" font-size="13" fill="#1f2328" text-anchor="middle">de reprise avancé aussi</text>
+  <line x1="234" y1="424" x2="262" y2="424" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="466" y1="424" x2="494" y2="424" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="698" y1="424" x2="726" y2="424" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="32" y="506" font-size="14" fill="#1f2328">Le save remet aussi les événements enregistrés au dispatcher, comme tout save : le publisher écrit l'outbox</text>
+  <text x="32" y="526" font-size="14" fill="#1f2328">dans la même transaction que l'ajout. Aucune double écriture, et rien n'est publié pour un ajout refusé.</text>
+</svg>

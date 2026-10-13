@@ -1,3 +1,5 @@
+**English** · [Français](clean-no-flag-argument.fr.md)
+
 # ddd-ts-kit/clean-no-flag-argument
 
 Architecture id: `clean/no-flag-argument`. Default severity: `warn` in `recommended`, `error` in `strict`.

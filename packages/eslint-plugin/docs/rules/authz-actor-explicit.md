@@ -1,3 +1,5 @@
+**English** · [Français](authz-actor-explicit.fr.md)
+
 # ddd-ts-kit/authz-actor-explicit
 
 Architecture id: `authz/actor-explicit`. Default severity: `error` in `recommended`, `error` in `strict`.

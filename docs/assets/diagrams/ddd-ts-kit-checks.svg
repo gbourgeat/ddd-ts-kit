@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 496" width="960" height="496" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">One set of rules, checked at three moments</title>
+  <desc id="desc">At every file write, the hook of the Claude Code plugin checks the written file and returns each violation with its fix. Before each merge, npm run verify runs the compiler, ESLint with the plugin of the kit, the formatter, the tests, the checker, dependency-cruiser, knip and the drift checks. On every push, the CI pipeline runs the same scripts, plus integration tests, security scans and the image build, behind one final gate. All three apply the rules defined in docs/ARCHITECTURE.md.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="496" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">One set of rules, checked at three moments</text>
+  <rect x="32" y="62" width="272" height="330" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="50" y="92" font-size="16" font-weight="700" fill="#5f6b73">1. At every file write</text>
+  <text x="50" y="114" font-size="13" font-style="italic" fill="#1f2328">the hook of the Claude Code plugin</text>
+  <line x1="48" y1="128" x2="288" y2="128" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <circle cx="54" cy="149" r="2.5" fill="#5f6b73"/>
+  <text x="64" y="154" font-size="14" fill="#1f2328">check-file on the written file</text>
+  <circle cx="54" cy="175" r="2.5" fill="#5f6b73"/>
+  <text x="64" y="180" font-size="14" fill="#1f2328">each violation returned</text>
+  <text x="64" y="200" font-size="14" fill="#1f2328">with its fix</text>
+  <circle cx="54" cy="221" r="2.5" fill="#5f6b73"/>
+  <text x="64" y="226" font-size="14" fill="#1f2328">a hand-written file refused</text>
+  <text x="64" y="246" font-size="14" fill="#1f2328">where a generator exists</text>
+  <circle cx="54" cy="267" r="2.5" fill="#5f6b73"/>
+  <text x="64" y="272" font-size="14" fill="#1f2328">no finish while architecture</text>
+  <text x="64" y="292" font-size="14" fill="#1f2328">errors remain</text>
+  <rect x="344" y="62" width="272" height="330" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="362" y="92" font-size="16" font-weight="700" fill="#5f6b73">2. npm run verify</text>
+  <text x="362" y="114" font-size="13" font-style="italic" fill="#1f2328">on your machine, before each merge</text>
+  <line x1="360" y1="128" x2="600" y2="128" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <circle cx="366" cy="149" r="2.5" fill="#5f6b73"/>
+  <text x="376" y="154" font-size="14" fill="#1f2328">TypeScript, strict</text>
+  <circle cx="366" cy="175" r="2.5" fill="#5f6b73"/>
+  <text x="376" y="180" font-size="14" fill="#1f2328">ESLint and the plugin of the kit</text>
+  <circle cx="366" cy="201" r="2.5" fill="#5f6b73"/>
+  <text x="376" y="206" font-size="14" fill="#1f2328">Biome: format</text>
+  <circle cx="366" cy="227" r="2.5" fill="#5f6b73"/>
+  <text x="376" y="232" font-size="14" fill="#1f2328">unit and end-to-end tests</text>
+  <circle cx="366" cy="253" r="2.5" fill="#5f6b73"/>
+  <text x="376" y="258" font-size="14" fill="#1f2328">ddd-ts-kit check: structure</text>
+  <circle cx="366" cy="279" r="2.5" fill="#5f6b73"/>
+  <text x="376" y="284" font-size="14" fill="#1f2328">dependency-cruiser: import graph</text>
+  <circle cx="366" cy="305" r="2.5" fill="#5f6b73"/>
+  <text x="376" y="310" font-size="14" fill="#1f2328">knip: dead code</text>
+  <circle cx="366" cy="331" r="2.5" fill="#5f6b73"/>
+  <text x="376" y="336" font-size="14" fill="#1f2328">documentation and contract drift</text>
+  <rect x="656" y="62" width="272" height="330" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="674" y="92" font-size="16" font-weight="700" fill="#5f6b73">3. The CI pipeline</text>
+  <text x="674" y="114" font-size="13" font-style="italic" fill="#1f2328">GitHub or GitLab, on every push</text>
+  <line x1="672" y1="128" x2="912" y2="128" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <circle cx="678" cy="149" r="2.5" fill="#5f6b73"/>
+  <text x="688" y="154" font-size="14" fill="#1f2328">the same npm scripts</text>
+  <circle cx="678" cy="175" r="2.5" fill="#5f6b73"/>
+  <text x="688" y="180" font-size="14" fill="#1f2328">integration tests on PostgreSQL</text>
+  <circle cx="678" cy="201" r="2.5" fill="#5f6b73"/>
+  <text x="688" y="206" font-size="14" fill="#1f2328">security: npm audit, gitleaks</text>
+  <circle cx="678" cy="227" r="2.5" fill="#5f6b73"/>
+  <text x="688" y="232" font-size="14" fill="#1f2328">the image build</text>
+  <circle cx="678" cy="253" r="2.5" fill="#5f6b73"/>
+  <text x="688" y="258" font-size="14" fill="#1f2328">one final gate, to mark</text>
+  <text x="688" y="278" font-size="14" fill="#1f2328">as required</text>
+  <line x1="306" y1="227" x2="342" y2="227" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="618" y1="227" x2="654" y2="227" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="32" y="424" width="896" height="52" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="480" y="446" font-size="14" font-weight="600" fill="#1f2328" text-anchor="middle">One definition for all three: docs/ARCHITECTURE.md</text>
+  <text x="480" y="466" font-size="13" fill="#1f2328" text-anchor="middle">every rule has an id, a reason and a fix: npx ddd-ts-kit explain &lt;rule-id&gt;</text>
+  <line x1="168" y1="422" x2="168" y2="396" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="480" y1="422" x2="480" y2="396" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="792" y1="422" x2="792" y2="396" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+</svg>

@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 604" width="960" height="604" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">What becomes of an entry delivered to a consumer</title>
+  <desc id="desc">An entry is delivered with an attempt number n: 1 at the first read, one more at each claim. An entry that does not hold an envelope goes to the dead stream as poison, with the code POISON_ENTRY. An entry whose n exceeds retry.maxAttempts, after its instances crashed on it, goes to the dead stream with the code ATTEMPTS_EXHAUSTED without being handled again. Otherwise every handler of its type runs. When every handler resolved, the entry is acknowledged with XACK. When one threw and n equals retry.maxAttempts, the entry is copied to the dead stream and acknowledged in one script, reason max-attempts. Otherwise it stays pending, its idle time restarts, and after retry.delayMs the same instance claims it again with XCLAIM, attempt n plus 1. The pending entries of an instance that crashed or is stuck are claimed by another instance after visibilityTimeoutMs, attempt n plus 1.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="604" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">What becomes of an entry delivered to a consumer</text>
+
+  <!-- main column -->
+  <rect x="250" y="70" width="220" height="60" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="360" y="96" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">entry delivered</text>
+  <text x="360" y="118" font-size="13" fill="#1f2328" text-anchor="middle">attempt n (1 at the first read)</text>
+
+  <rect x="250" y="160" width="220" height="46" rx="23" fill="#ffffff" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="360" y="188" font-size="14" fill="#1f2328" text-anchor="middle">holds an envelope?</text>
+
+  <rect x="250" y="236" width="220" height="46" rx="23" fill="#ffffff" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="360" y="264" font-size="14" fill="#1f2328" text-anchor="middle">n ≤ retry.maxAttempts?</text>
+
+  <rect x="250" y="312" width="220" height="46" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="360" y="340" font-size="14" font-weight="700" fill="#2b5d8a" text-anchor="middle">every handler of the type</text>
+
+  <rect x="250" y="388" width="220" height="46" rx="23" fill="#ffffff" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="360" y="416" font-size="14" fill="#1f2328" text-anchor="middle">every handler resolved?</text>
+
+  <rect x="250" y="464" width="220" height="46" rx="23" fill="#ffffff" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="360" y="492" font-size="14" fill="#1f2328" text-anchor="middle">n = retry.maxAttempts?</text>
+
+  <!-- main column arrows -->
+  <g stroke="#3d4449" stroke-width="2">
+    <line x1="360" y1="132" x2="360" y2="156" marker-end="url(#arrow)"/>
+    <line x1="360" y1="208" x2="360" y2="232" marker-end="url(#arrow)"/>
+    <line x1="360" y1="284" x2="360" y2="308" marker-end="url(#arrow)"/>
+    <line x1="360" y1="360" x2="360" y2="384" marker-end="url(#arrow)"/>
+    <line x1="360" y1="436" x2="360" y2="460" marker-end="url(#arrow)"/>
+  </g>
+  <g font-size="13" fill="#1f2328">
+    <text x="370" y="226">yes</text>
+    <text x="370" y="302">yes</text>
+    <text x="370" y="454">no, one threw</text>
+  </g>
+
+  <!-- takeover -->
+  <rect x="540" y="62" width="396" height="76" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="556" y="86" font-size="14" font-weight="600" fill="#5f6b73">an instance crashed or is stuck</text>
+  <text x="556" y="106" font-size="13" fill="#1f2328">after visibilityTimeoutMs, another instance</text>
+  <text x="556" y="124" font-size="13" fill="#1f2328">claims its pending entries: XCLAIM, n + 1</text>
+  <line x1="538" y1="100" x2="474" y2="100" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- outcomes -->
+  <line x1="472" y1="183" x2="536" y2="183" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="504" y="174" font-size="13" fill="#1f2328" text-anchor="middle">no</text>
+  <rect x="540" y="160" width="396" height="46" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="556" y="188" font-size="14" fill="#1f2328"><tspan font-weight="700" fill="#7a4f9a">dead stream</tspan>: poison, POISON_ENTRY</text>
+
+  <line x1="472" y1="259" x2="536" y2="259" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="504" y="250" font-size="13" fill="#1f2328" text-anchor="middle">no</text>
+  <rect x="540" y="236" width="396" height="46" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="556" y="264" font-size="14" fill="#1f2328"><tspan font-weight="700" fill="#7a4f9a">dead stream</tspan>: ATTEMPTS_EXHAUSTED, not handled</text>
+
+  <line x1="472" y1="411" x2="536" y2="411" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="504" y="402" font-size="13" fill="#1f2328" text-anchor="middle">yes</text>
+  <rect x="540" y="388" width="396" height="46" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="556" y="416" font-size="14" fill="#1f2328"><tspan font-weight="700" fill="#7a4f9a">XACK</tspan>: acknowledged, done</text>
+
+  <line x1="472" y1="487" x2="536" y2="487" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="504" y="478" font-size="13" fill="#1f2328" text-anchor="middle">yes</text>
+  <rect x="540" y="464" width="396" height="46" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="556" y="492" font-size="14" fill="#1f2328"><tspan font-weight="700" fill="#7a4f9a">dead stream</tspan> + XACK, one script: max-attempts</text>
+
+  <!-- retried -->
+  <line x1="248" y1="487" x2="218" y2="487" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="233" y="478" font-size="13" fill="#1f2328" text-anchor="middle">no</text>
+  <rect x="24" y="464" width="190" height="64" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="119" y="488" font-size="14" font-weight="700" fill="#7a4f9a" text-anchor="middle">stays pending</text>
+  <text x="119" y="508" font-size="13" fill="#1f2328" text-anchor="middle">its idle time restarts</text>
+  <path d="M44,462 V100 H246" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <g font-size="13" fill="#1f2328">
+    <text x="58" y="226">after retry.delayMs,</text>
+    <text x="58" y="244">this instance claims</text>
+    <text x="58" y="262">it again:</text>
+    <text x="58" y="280">XCLAIM, n + 1</text>
+    <text x="58" y="316" font-style="italic">never on the spot:</text>
+    <text x="58" y="334" font-style="italic">no hot loop</text>
+  </g>
+
+  <!-- footer -->
+  <text x="32" y="560" font-size="13" fill="#1f2328">onDelivery reports each outcome: acknowledged, retried (stays pending), dead or poison.</text>
+  <text x="32" y="580" font-size="13" fill="#1f2328">Delivery is at least once: every handler is idempotent.</text>
+</svg>

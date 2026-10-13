@@ -1,3 +1,5 @@
+**English** · [Français](README.fr.md)
+
 # @ddd-ts-kit/di
 
 Context modules on top of [tsyringe](https://github.com/microsoft/tsyringe), for projects that
@@ -16,6 +18,120 @@ npm i @ddd-ts-kit/di tsyringe reflect-metadata
 `reflect-metadata` is imported by this package before tsyringe loads (tsyringe refuses to load
 without it), so you do not import it yourself. No decorator of the kit needs it: dependencies
 are named, never reflected.
+
+![How the classes of a bounded context become a running application: the context declares its ports and classes (or writes an explicit module), one module is made per context by contextModule, discoverContext or defineContextModule, and createApplication records the modules, checks the whole graph, binds everything in a child container and starts nothing; then a separate call, app.start, subscribes the consumers and starts the jobs](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/di-assembly.svg)
+
+Whatever the style, the path is the same: the classes of a context say what they are, a module
+gathers them, and `createApplication` checks the whole graph before it builds a single instance.
+
+## A first application
+
+The smallest application, in one file: one port, its adapter, one command and its handler,
+the module that ties them, and the composition root. It is written in the explicit style, so
+that every binding is visible; the declared style below writes the same thing with no module
+file.
+
+<!-- checked sample -->
+```ts
+// src/main.ts: a whole application in one file, read from top to bottom.
+import { Clock, Command, CommandBus, IdGenerator, type CommandHandler } from '@ddd-ts-kit/kernel';
+import { createApplication, defineContextModule, kernelModule } from '@ddd-ts-kit/di';
+
+// A port: an abstract class. It types the parameter and keys the container.
+export abstract class StockGateway {
+  abstract reserve(sku: string): Promise<void>;
+}
+
+// An adapter implements its port; it never extends it.
+export class InMemoryStock implements StockGateway {
+  readonly reserved: string[] = [];
+
+  async reserve(sku: string): Promise<void> {
+    this.reserved.push(sku);
+  }
+}
+
+export class PlaceOrder extends Command<string> {
+  constructor(readonly sku: string) {
+    super();
+  }
+}
+
+// The handler states what it needs in its constructor, and nothing else.
+export class PlaceOrderHandler implements CommandHandler<PlaceOrder> {
+  constructor(
+    private readonly stock: StockGateway,
+    private readonly ids: IdGenerator,
+    private readonly clock: Clock,
+  ) {}
+
+  async execute(command: PlaceOrder): Promise<string> {
+    await this.stock.reserve(command.sku);
+
+    return `${this.ids.next()}@${this.clock.now().toISOString()}`;
+  }
+}
+
+// The module says which adapter answers a port, and which handler runs a command.
+export const orderingModule = defineContextModule({
+  name: 'ordering',
+  register(builder) {
+    builder.bind(StockGateway).toClass(InMemoryStock).as('gateway');
+    builder.command(PlaceOrder).handledBy(PlaceOrderHandler, [StockGateway, IdGenerator, Clock]);
+  },
+});
+
+// The composition root. kernelModule() binds Clock, IdGenerator, the buses, the unit of work...
+const app = createApplication({ modules: [kernelModule(), orderingModule] });
+
+await app.start();
+
+const orderId: string = await app.resolve(CommandBus).execute(new PlaceOrder('sku-1'));
+
+console.log(orderId);
+
+await app.stop();
+```
+
+The list `[StockGateway, IdGenerator, Clock]` is checked by the compiler against the
+constructor of `PlaceOrderHandler`: a missing, extra or misplaced port does not compile (see
+"What the compiler checks"). The spec of the handler swaps the adapter for a fake and runs on
+a deterministic kernel, a frozen clock and identifiers `id-1`, `id-2`...:
+
+<!-- checked sample -->
+```ts
+// src/contexts/ordering/test/unit/place-order.handler.spec.ts
+import { expect, it } from 'vitest';
+import { Command } from '@ddd-ts-kit/kernel';
+import { createTestApplication, fake, type ContextModule } from '@ddd-ts-kit/di';
+
+// What the spec imports from the context, declared here so that the sample compiles alone.
+declare abstract class StockGateway {
+  abstract reserve(sku: string): Promise<void>;
+}
+declare class PlaceOrder extends Command<string> {
+  readonly sku: string;
+  constructor(sku: string);
+}
+declare const orderingModule: ContextModule;
+
+it('reserves the stock of the order it places', async () => {
+  const reserved: string[] = [];
+
+  const app = createTestApplication({
+    modules: [orderingModule],
+    fakes: [fake(StockGateway, { reserve: async (sku) => void reserved.push(sku) })],
+  });
+
+  const orderId = await app.commandBus.execute(new PlaceOrder('sku-1'));
+
+  expect(reserved).toEqual(['sku-1']);
+  expect(orderId).toBe('id-1@2026-01-01T00:00:00.000Z');
+});
+```
+
+The module is the unit under test: no `new PlaceOrderHandler(...)` by hand, no `vi.mock`. The
+fake is an object literal, since a port is only a shape.
 
 ## A context that declares itself
 
@@ -164,11 +280,76 @@ const invoiceId = await app.resolve(CommandBus).execute(new IssueInvoice(actor, 
 
 ```ts
 // main.ts, listed: one generated barrel per context and nothing else
-import { contextModule } from '@ddd-ts-kit/di';
+import { contextModule, createApplication, kernelModule } from '@ddd-ts-kit/di';
 import * as billing from '@/contexts/billing/billing.declarations';
 
 const app = createApplication({ modules: [kernelModule(), platformModule, contextModule('billing', billing)] });
 ```
+
+### The same mechanism, in one file
+
+In a project these classes live in their own files and the `injected(...)` line is written by
+`ddd-ts-kit docs` in the generated file of the context. Squeezed into one file that compiles,
+the whole mechanism reads at once: decorators that say what each class is, one line that says
+what a constructor takes, and a module made from the classes.
+
+<!-- checked sample -->
+```ts
+import { Command, CommandBus, IdGenerator } from '@ddd-ts-kit/kernel';
+import { CommandHandler, Gateway, Public, injected } from '@ddd-ts-kit/kernel/declarations';
+import { contextModule, createApplication, kernelModule } from '@ddd-ts-kit/di';
+
+// application/ports/stock.port.ts: a port is never decorated.
+export abstract class StockGateway {
+  abstract reserve(sku: string): Promise<void>;
+}
+
+// application/commands/place-order/place-order.command.ts
+@Public()
+export class PlaceOrder extends Command<string> {
+  constructor(readonly sku: string) {
+    super();
+  }
+}
+
+// application/commands/place-order/place-order.handler.ts: the decorator lists nothing.
+@CommandHandler(PlaceOrder)
+export class PlaceOrderHandler implements CommandHandler<PlaceOrder> {
+  constructor(
+    private readonly stock: StockGateway,
+    private readonly ids: IdGenerator,
+  ) {}
+
+  async execute(command: PlaceOrder): Promise<string> {
+    await this.stock.reserve(command.sku);
+
+    return this.ids.next();
+  }
+}
+
+// infrastructure/external/in-memory-stock.gateway.ts: bound to its port by its decorator.
+@Gateway(StockGateway)
+export class InMemoryStockGateway implements StockGateway {
+  readonly reserved: string[] = [];
+
+  async reserve(sku: string): Promise<void> {
+    this.reserved.push(sku);
+  }
+}
+
+// ordering.declarations.ts, generated by `ddd-ts-kit docs` from the constructor above.
+injected(PlaceOrderHandler, [StockGateway, IdGenerator]);
+
+// main.ts
+const ordering = contextModule('ordering', [PlaceOrder, PlaceOrderHandler, InMemoryStockGateway]);
+const app = createApplication({ modules: [kernelModule(), ordering] });
+
+const orderId: string = await app.resolve(CommandBus).execute(new PlaceOrder('sku-1'));
+```
+
+Compare with "A first application": the `bind(...).toClass(...)` and `command(...).handledBy(...)`
+statements are gone, each class carries its own, and the list of the handler moved out of the
+composition root into a generated line nobody writes by hand.
 
 ## Ports and values
 
@@ -180,6 +361,43 @@ the port. The
 ports of the kernel (`Clock`, `IdGenerator`, `UnitOfWork`, `CommandBus`, `QueryBus`,
 `IntegrationEventPublisher`, `ExecutionScope`...) are abstract classes imported from
 `@ddd-ts-kit/kernel`; yours are written the same way.
+
+Instead of the usual tsyringe pair, an interface for the type and a constant for the token,
+kept in step by hand:
+
+```ts
+export interface PaymentGateway {
+  capture(invoiceId: string): Promise<string>;
+}
+export const PAYMENT_GATEWAY = Symbol('PaymentGateway');
+
+@injectable()
+export class CaptureInvoiceHandler {
+  constructor(@inject(PAYMENT_GATEWAY) private readonly payments: PaymentGateway) {}
+}
+```
+
+write one abstract class, which is both:
+
+<!-- checked sample -->
+```ts
+import { Clock } from '@ddd-ts-kit/kernel';
+
+export abstract class PaymentGateway {
+  abstract capture(invoiceId: string): Promise<string>;
+}
+
+export class CaptureInvoiceHandler {
+  constructor(
+    private readonly payments: PaymentGateway, // the type of the parameter names the port
+    private readonly clock: Clock, // a port of the kernel, written the same way
+  ) {}
+}
+```
+
+No parameter decorator, no `@injectable()`, no constant to import next to the type: the class
+that types the parameter is also the token its list names (written in a statement or generated
+by `ddd-ts-kit docs`), so nothing else has to be kept in step.
 
 The rule, checked when a binding is registered (`INVALID_PORT` for `toClass`, a
 `DeclarationError` for a decorator):
@@ -218,6 +436,48 @@ builder.bind(PaymentSettings).toValue({ apiUrl: config.payments.url, apiKey: con
 
 A primitive is wrapped: `abstract class TaxRate { abstract readonly value: number }`, then
 `builder.bind(TaxRate).toValue({ value: 0.2 })`.
+
+A value and a port together, in one module that compiles: the adapter takes the value by its
+constructor like any other dependency, and `resolve` answers each typed by its class.
+
+<!-- checked sample -->
+```ts
+import { createApplication, defineContextModule, kernelModule } from '@ddd-ts-kit/di';
+
+// A value: an abstract class with abstract readonly properties.
+export abstract class PaymentSettings {
+  abstract readonly apiUrl: string;
+}
+
+// A port.
+export abstract class PaymentGateway {
+  abstract capture(invoiceId: string): Promise<string>;
+}
+
+// The adapter takes the value by its constructor, like any other dependency.
+export class HttpPaymentGateway implements PaymentGateway {
+  constructor(private readonly settings: PaymentSettings) {}
+
+  async capture(invoiceId: string): Promise<string> {
+    return `${this.settings.apiUrl}/captures/${invoiceId}`;
+  }
+}
+
+const paymentsModule = defineContextModule({
+  name: 'payments',
+  register(builder) {
+    builder.bind(PaymentSettings).toValue({ apiUrl: 'https://payments.example' });
+    builder.bind(PaymentGateway).toClass(HttpPaymentGateway, [PaymentSettings]).as('gateway');
+  },
+});
+
+const app = createApplication({ modules: [kernelModule(), paymentsModule] });
+
+const gateway: PaymentGateway = app.resolve(PaymentGateway); // typed by the port, no cast
+const settings: PaymentSettings = app.resolve(PaymentSettings);
+
+console.log(await gateway.capture('inv-1'), settings.apiUrl);
+```
 
 ### What the compiler checks
 
@@ -554,8 +814,10 @@ it('places an order and announces it', async () => {
 | `query(Type).handledBy(Handler, [ports])` | the same on `QueryBus` |
 | `on(contract, { consumer }).handledBy(Handler, [ports])` | binds the integration event handler under itself (kind `consumer`) and subscribes its `handle(event)` on the subscriber of the module |
 | `job(name, schedule and options).handledBy(Job, [ports])` | binds the job under itself (singleton, kind `job`) and registers its `run(execution)` on `JobScheduler` |
-| `.handledByFactory((resolve) => handler)` | the factory form of the four lines above, bound under a class made for the statement, which reads `command(PlaceOrder) handler` in a description |
+| `backgroundJob(name, options?).handledBy(Job, [ports])` | binds the background job under itself (singleton, kind `job`) and registers it on `QueueWorker`; `name` is the static `jobName` of the class (see "Background jobs") |
+| `.handledByFactory((resolve) => handler)` | the factory form of the five lines above, bound under a class made for the statement, which reads `command(PlaceOrder) handler` in a description |
 | `include(declared)` | adds classes that declare themselves: what `contextModule` does |
+| `around(kinds, (resolve) => aspect)` | puts an aspect around every binding of these kinds, whichever module declares it (see "Domain events and the unit of work") |
 
 **One class is one binding.** `handledBy(Handler)` binds the class under itself, so the same
 handler class cannot be given to two statements: the second is refused with
@@ -566,6 +828,68 @@ Handlers are registered when the application is created, which resolves the two 
 handler itself is built on the first message it handles, then reused. Consumers are subscribed
 by `start()` and unsubscribed by `stop()`, since a subscription is a side effect.
 
+## The life of an application
+
+![The three phases of an application: createApplication checks the whole graph before it builds any handler, app.start calls onStart of each module then subscribes the consumers and starts the jobs, app.stop stops the jobs first, unsubscribes the consumers, calls onStop in reverse order and flushes the error reporter and the logger last](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/di-lifecycle.svg)
+
+Whatever the style of its modules, an application goes through the same three calls:
+
+- **`createApplication(options)`** is synchronous: it runs `register` of every module, checks
+  the graph (a mistake throws a `WiringError`, see "Checks"), binds everything in a child
+  container and attaches the handlers to the buses, the jobs to the scheduler and the
+  background jobs to the queue worker. It builds what it attaches to (a bus when a handler goes
+  on it, the dispatcher when a domain event handler exists, the scheduler and the queue worker
+  when a job exists) and nothing else: a handler or an adapter is built when it is first
+  resolved.
+- **`app.start()`** calls `onStart` of each module in the order of the list, then subscribes
+  the consumers, then starts the scheduler and the queue worker. With `jobs: { start: false }`
+  the scheduler stays stopped, and so does the worker of a shared queue; a queue kept in memory
+  (`InMemoryJobStore`, the default) is still consumed, since no other process sees it. A second
+  `start()` calls no `onStart` again and subscribes nothing twice.
+- **`app.stop()`** undoes it in reverse: the jobs first, while everything they use is still
+  up, then the consumers, then `onStop` of each started module in reverse order, then the
+  `ErrorReporter` and the `Logger`. A module whose `onStop` fails does not keep the others from
+  stopping; the failures are thrown together at the end, as an `AggregateError`.
+
+A module that owns a resource opens it in `onStart` and closes it in `onStop`:
+
+<!-- checked sample -->
+```ts
+import { createApplication, defineContextModule, kernelModule } from '@ddd-ts-kit/di';
+
+interface Pool {
+  query(sql: string): Promise<unknown>;
+  end(): Promise<void>;
+}
+
+declare function createPool(url: string): Pool;
+declare const config: { readonly databaseUrl: string };
+
+export abstract class Database {
+  abstract readonly pool: Pool;
+}
+
+export const platformModule = defineContextModule({
+  name: 'platform',
+  register(builder) {
+    builder.bind(Database).toValue({ pool: createPool(config.databaseUrl) });
+  },
+  // Called by app.start(), in the order of the modules, before any consumer is subscribed.
+  async onStart({ resolve }) {
+    await resolve(Database).pool.query('select 1');
+  },
+  // Called by app.stop(), in reverse order, once the jobs and the consumers have stopped.
+  async onStop({ resolve }) {
+    await resolve(Database).pool.end();
+  },
+});
+
+const app = createApplication({ modules: [kernelModule(), platformModule] });
+
+await app.start();
+process.once('SIGTERM', () => void app.stop());
+```
+
 ## Integration event handlers
 
 `contract` is anything with `type`, `version` and `parse(event)`: a declaration made by
@@ -574,6 +898,8 @@ skipped, an event the contract cannot read throws `UnreadableEventError` so that
 retries or dead-letters it, and a redelivered event is handled once per `consumer` name when
 `ProcessedEventStore` is bound. The name is required: it is the idempotency key, and it must
 survive the renaming of a class.
+
+![What happens to one integration event delivered to one consumer: the contract parses it and skips another type or version or refuses an unreadable event; a valid event is handled in the execution scope of the event and in one unit of work, where the processed event store skips a redelivery, and the mark and the writes of the handler commit or roll back together](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/di-consumer-event.svg)
 
 ### The execution context of the event
 
@@ -888,7 +1214,7 @@ const app = createTestApplication({
 `fake(Port, value)` is checked: the value implements the port. An in-memory class, an object
 literal and a class written in the spec all fit, since a port is a shape.
 
-`createTestApplication({ modules, fakes, now?, idPrefix?, actor?, session?, executionContext?, jobs? })` puts the modules on a deterministic
+`createTestApplication({ modules, fakes, now?, idPrefix?, actor?, session?, executionContext?, authorization?, jobs? })` puts the modules on a deterministic
 kernel, whether or not they list `kernelModule()`, and returns the application plus what a
 spec touches:
 
@@ -907,6 +1233,8 @@ spec touches:
 | `cacheInvalidation` | `InMemoryCacheInvalidation`: `cacheInvalidation.invalidated` lists the tags the use cases asked to purge |
 | `lock`, `rateLimiter` | `InMemoryLock` and `InMemoryRateLimiter` on `clock` |
 | `jobs` | `runNow(name)` runs a declared job as the scheduler would and throws what it threw; `scheduler` is a `ManualJobScheduler` on `clock`, not started |
+| `jobQueue`, `backgroundJobs` | the queue the use cases enqueue on, in memory, and what runs it: `backgroundJobs.runDue()` (see "Background jobs") |
+| `processes` | `InMemoryProcessStore`: `processes.list()` shows the instances of the process managers |
 | `get(Port)` | `resolve`, typed by the port |
 | `as(actorOrSession, work)` | runs a block as someone else, then comes back |
 
@@ -1044,6 +1372,75 @@ of the application applied. What a job did last and when it runs next is not wir
 ## Domain events and the unit of work
 
 An effect of a domain event exists only if the state change that recorded it is committed.
+
+![The timeline of one command: inside one transaction the handler saves its aggregates and their events wait in a queue, the before-commit handlers run on the queue once the handler has returned, then the transaction commits; the after-commit handlers run after the commit, before the command answers](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/domain-and-integration-events-unit-of-work.svg)
+
+Instead of dispatching the events in the handler (behind `kernelModule()` the save has already
+taken them, so this line dispatches nothing; without it, the reactions would run outside the
+timing of the unit of work):
+
+```ts
+await this.invoices.save(invoice);
+await this.dispatcher.dispatch(invoice.pullEvents());
+return invoice.id;
+```
+
+save the aggregate, and stop there:
+
+<!-- checked sample -->
+```ts
+import { AggregateRoot, Clock, Command, Repository, type CommandHandler, type DomainEvent } from '@ddd-ts-kit/kernel';
+
+export class InvoiceIssued implements DomainEvent {
+  static readonly eventName = 'billing.invoice.issued';
+
+  readonly name = InvoiceIssued.eventName;
+
+  constructor(
+    readonly aggregateId: string,
+    readonly occurredAt: Date,
+  ) {}
+}
+
+export class Invoice extends AggregateRoot {
+  private constructor(id: string) {
+    super(id);
+  }
+
+  static issue(id: string, issuedAt: Date): Invoice {
+    const invoice = new Invoice(id);
+
+    invoice.record(new InvoiceIssued(id, issuedAt));
+
+    return invoice;
+  }
+}
+
+export abstract class InvoiceRepository extends Repository<Invoice> {}
+
+export class IssueInvoice extends Command<string> {
+  constructor(readonly invoiceId: string) {
+    super();
+  }
+}
+
+export class IssueInvoiceHandler implements CommandHandler<IssueInvoice> {
+  constructor(
+    private readonly invoices: InvoiceRepository,
+    private readonly clock: Clock,
+  ) {}
+
+  async execute(command: IssueInvoice): Promise<string> {
+    const invoice = Invoice.issue(command.invoiceId, this.clock.now());
+
+    // The save hands InvoiceIssued to the unit of work of the command, which dispatches it
+    // once this method has returned, before the commit.
+    await this.invoices.save(invoice);
+
+    return invoice.id;
+  }
+}
+```
 
 A handler writes `await this.orders.save(order); return order.id;` and nothing else: no
 `pullEvents()`, no `DomainEventDispatcher` in a use case. `kernelModule()` puts

@@ -1,3 +1,5 @@
+**English** · [Français](domain-value-object-immutability.fr.md)
+
 # ddd-ts-kit/domain-value-object-immutability
 
 Architecture id: `domain/value-object-immutability` (added by this plugin). Default severity: `error` in `recommended`, `error` in `strict`.

@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 500" width="960" height="500" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Les trois sources du journal d'audit</title>
+  <desc id="desc">Une commande traverse le bus de commandes de la plateforme : le middleware d'autorisation, le middleware d'audit, l'unité de travail, puis le cas d'usage, qui ne contient aucun appel d'audit. Le hook de décision du middleware d'autorisation enregistre les refus, les écritures autorisées et les lectures sensibles. Le middleware d'audit enregistre chaque commande, réussie ou échouée avec son code. Un abonnement aux événements d'intégration enregistre qu'un événement a eu lieu, d'après son enveloppe. Les trois ajoutent au journal d'audit, en ajout seul et chaîné par hachage, et lisent qui a agi dans la portée d'exécution.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+    <marker id="arrow-infrastructure" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#7a4f9a"/>
+    </marker>
+  </defs>
+  <rect width="960" height="500" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Les trois sources du journal d'audit</text>
+  <!-- command bus -->
+  <rect x="24" y="58" width="912" height="140" rx="12" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="44" y="82" font-size="14" font-weight="600" fill="#5f6b73">bus de commandes de la plateforme, dans cet ordre</text>
+  <rect x="44" y="100" width="180" height="76" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="2"/>
+  <text x="134" y="130" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">1. autorisation</text>
+  <text x="134" y="152" font-size="13" fill="#1f2328" text-anchor="middle">son hook de décision</text>
+  <rect x="264" y="100" width="180" height="76" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="2"/>
+  <text x="354" y="130" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">2. middleware d'audit</text>
+  <text x="354" y="152" font-size="13" fill="#1f2328" text-anchor="middle">ouvre l'unité de travail</text>
+  <rect x="484" y="100" width="180" height="76" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="2"/>
+  <text x="574" y="130" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">3. unité de travail</text>
+  <text x="574" y="152" font-size="13" fill="#1f2328" text-anchor="middle">rejoint sa transaction</text>
+  <rect x="704" y="100" width="212" height="76" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="810" y="126" font-size="15" font-weight="700" fill="#2b5d8a" text-anchor="middle">cas d'usage</text>
+  <text x="810" y="146" font-size="13" fill="#1f2328" text-anchor="middle">gestionnaire, agrégats</text>
+  <text x="810" y="166" font-size="13" font-style="italic" font-weight="600" fill="#2b5d8a" text-anchor="middle">aucun appel d'audit</text>
+  <line x1="226" y1="138" x2="262" y2="138" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="446" y1="138" x2="482" y2="138" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="666" y1="138" x2="702" y2="138" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- événements d'intégration -->
+  <rect x="496" y="236" width="248" height="76" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="620" y="262" font-size="14" font-weight="700" fill="#5f6b73" text-anchor="middle">abonnement aux événements</text>
+  <text x="620" y="282" font-size="13" fill="#1f2328" text-anchor="middle">consommateur audit, dédoublonné</text>
+  <text x="620" y="300" font-size="13" fill="#1f2328" text-anchor="middle">par identifiant d'événement</text>
+  <!-- ce que chaque source enregistre -->
+  <line x1="134" y1="178" x2="134" y2="376" stroke="#7a4f9a" stroke-width="2" marker-end="url(#arrow-infrastructure)"/>
+  <text x="146" y="250" font-size="13" fill="#1f2328">chaque refus,</text>
+  <text x="146" y="268" font-size="13" fill="#1f2328">chaque écriture autorisée,</text>
+  <text x="146" y="286" font-size="13" fill="#1f2328">les lectures sensibles</text>
+  <line x1="354" y1="178" x2="354" y2="376" stroke="#7a4f9a" stroke-width="2" marker-end="url(#arrow-infrastructure)"/>
+  <text x="366" y="250" font-size="13" fill="#1f2328">chaque commande :</text>
+  <text x="366" y="268" font-size="13" fill="#1f2328">réussie, ou échouée</text>
+  <text x="366" y="286" font-size="13" fill="#1f2328">avec son code</text>
+  <line x1="620" y1="314" x2="620" y2="376" stroke="#7a4f9a" stroke-width="2" marker-end="url(#arrow-infrastructure)"/>
+  <text x="608" y="350" font-size="13" fill="#1f2328" text-anchor="end">qu'un événement a eu lieu</text>
+  <!-- le journal -->
+  <rect x="44" y="380" width="696" height="76" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="392" y="410" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">journal d'audit</text>
+  <text x="392" y="434" font-size="13" fill="#1f2328" text-anchor="middle">ajout seul, chaîné par hachage, une chaîne par tenant ; des identifiants et des codes, jamais de contenu</text>
+  <!-- portée d'exécution -->
+  <rect x="764" y="236" width="172" height="220" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="850" y="264" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">portée d'exécution</text>
+  <text x="850" y="292" font-size="13" fill="#1f2328" text-anchor="middle">chaque source y lit</text>
+  <text x="850" y="312" font-size="13" fill="#1f2328" text-anchor="middle">qui a agi, la session,</text>
+  <text x="850" y="332" font-size="13" fill="#1f2328" text-anchor="middle">qui agit à sa place,</text>
+  <text x="850" y="352" font-size="13" fill="#1f2328" text-anchor="middle">le tenant,</text>
+  <text x="850" y="372" font-size="13" fill="#1f2328" text-anchor="middle">la corrélation</text>
+  <text x="850" y="392" font-size="13" fill="#1f2328" text-anchor="middle">et l'origine :</text>
+  <text x="850" y="412" font-size="13" fill="#1f2328" text-anchor="middle">aucun cas d'usage</text>
+  <text x="850" y="432" font-size="13" fill="#1f2328" text-anchor="middle">ne les transmet</text>
+  <!-- légende -->
+  <line x1="40" y1="484" x2="84" y2="484" stroke="#7a4f9a" stroke-width="2" marker-end="url(#arrow-infrastructure)"/>
+  <text x="96" y="489" font-size="14" fill="#1f2328">ajoute une entrée, câblé une fois dans la plateforme</text>
+</svg>

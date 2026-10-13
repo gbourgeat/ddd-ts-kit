@@ -1,3 +1,5 @@
+**English** · [Français](CONTRIBUTING.fr.md)
+
 # Contributing
 
 ```bash
@@ -8,6 +10,8 @@ npm run lint
 npm run format:check
 node packages/cli/dist/bin.js check --self
 npm run check:dashes
+npm run docs:translations
+npm run docs:samples
 node --test plugin/hooks/guard.test.mjs
 ```
 
@@ -28,7 +32,12 @@ node --test plugin/hooks/guard.test.mjs
 - A page of documentation says what the code does today: a sample compiles against the
   current packages, a command runs as written, and what could not be verified is said on the
   page. [docs/README.md](docs/README.md) is the index.
-- English everywhere. No em dash or en dash (`npm run check:dashes`, run by CI).
+- English in code, commit messages, the CLI and the checker. Every page of documentation has
+  a French translation next to it (`X.fr.md`), kept current in the same pull request: see
+  [docs/translation.md](docs/translation.md) for the conventions, the glossary, the style of
+  the diagrams and the checked code samples (`npm run docs:translations` and
+  `npm run docs:samples`, run by CI).
+- No em dash or en dash, in any language (`npm run check:dashes`, run by CI).
 - Conventional commits: `<type>(<scope>): <summary>`.
 - A pull request that changes the plugin (skills, agents, hooks) bumps `version` in
   `plugin/.claude-plugin/plugin.json`, and passes `claude plugin validate . --strict`.

@@ -1,3 +1,5 @@
+**English** · [Français](context-published-language-is-a-contract.fr.md)
+
 # ddd-ts-kit/context-published-language-is-a-contract
 
 Architecture id: `context/published-language-is-a-contract`. Default severity: `error` in `recommended`, `error` in `strict`.

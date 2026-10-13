@@ -1,3 +1,5 @@
+**English** · [Français](context-presets.fr.md)
+
 # Proposal: which contexts deserve a preset
 
 This page weighs which bounded contexts, besides `identity`, the kit should write whole with

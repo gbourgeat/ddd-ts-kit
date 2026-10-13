@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 440" width="960" height="440" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Anemic model and rich model: where the rules of an appointment live</title>
+  <desc id="desc">On the left, an anemic model: Appointment is a data holder with public fields and no rule. The cancel handler checks the status and the 24-hour window and then assigns the fields; the reschedule handler copies the check or forgets it; an import script assigns the status with no check at all. On the right, a rich model: the Appointment aggregate root has the intentions cancel and reschedule, holds the rules (not cancelled twice, the free cancellation window), raises named refusals and records the events. Every caller, the import script included, goes through the same intention, so the rules apply once, everywhere.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="440" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Where the rules live: anemic model, rich model</text>
+  <!-- anemic: the rules around the data -->
+  <rect x="24" y="60" width="444" height="320" rx="14" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="44" y="88" font-size="14" font-weight="600" fill="#5f6b73">anemic: callers assign the fields of a data holder</text>
+  <rect x="40" y="108" width="176" height="74" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="128" y="132" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">cancel handler</text>
+  <text x="128" y="154" font-size="13" fill="#1f2328" text-anchor="middle">checks status and 24 h,</text>
+  <text x="128" y="172" font-size="13" fill="#1f2328" text-anchor="middle">then assigns fields</text>
+  <line x1="218" y1="145" x2="266" y2="145" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="40" y="198" width="176" height="74" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="128" y="222" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">reschedule handler</text>
+  <text x="128" y="244" font-size="13" fill="#1f2328" text-anchor="middle">copies the check,</text>
+  <text x="128" y="262" font-size="13" fill="#1f2328" text-anchor="middle">or forgets it</text>
+  <line x1="218" y1="235" x2="266" y2="235" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="40" y="288" width="176" height="74" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="128" y="312" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">import script</text>
+  <text x="128" y="334" font-size="13" fill="#1f2328" text-anchor="middle">assigns the status</text>
+  <text x="128" y="352" font-size="13" fill="#1f2328" text-anchor="middle">with no check</text>
+  <line x1="218" y1="325" x2="266" y2="325" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="268" y="108" width="184" height="254" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="360" y="134" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">Appointment</text>
+  <text x="360" y="152" font-size="13" fill="#2f6f4f" text-anchor="middle">a data holder</text>
+  <line x1="280" y1="164" x2="440" y2="164" stroke="#2f6f4f" stroke-opacity="0.35"/>
+  <text x="360" y="186" font-size="13" fill="#1f2328" text-anchor="middle">id, status</text>
+  <text x="360" y="208" font-size="13" fill="#1f2328" text-anchor="middle">startsAt, endsAt</text>
+  <text x="360" y="230" font-size="13" fill="#1f2328" text-anchor="middle">cancelledAt?</text>
+  <text x="360" y="252" font-size="13" fill="#1f2328" text-anchor="middle">cancellationReason?</text>
+  <line x1="280" y1="266" x2="440" y2="266" stroke="#2f6f4f" stroke-opacity="0.35"/>
+  <text x="360" y="284" font-size="13" fill="#1f2328" text-anchor="middle">public fields, no rule</text>
+  <text x="246" y="410" font-size="14" font-style="italic" fill="#1f2328" text-anchor="middle">rules duplicated or skipped, generic errors</text>
+  <!-- rich: the rules inside the model -->
+  <rect x="492" y="60" width="444" height="320" rx="14" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="512" y="88" font-size="14" font-weight="600" fill="#5f6b73">rich: callers call the intentions of the aggregate</text>
+  <rect x="508" y="108" width="176" height="74" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="596" y="132" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">cancel handler</text>
+  <text x="596" y="154" font-size="13" fill="#1f2328" text-anchor="middle">loads, cancel(...),</text>
+  <text x="596" y="172" font-size="13" fill="#1f2328" text-anchor="middle">saves</text>
+  <line x1="686" y1="145" x2="734" y2="145" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="508" y="198" width="176" height="74" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="596" y="222" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">reschedule handler</text>
+  <text x="596" y="244" font-size="13" fill="#1f2328" text-anchor="middle">loads, reschedule(...),</text>
+  <text x="596" y="262" font-size="13" fill="#1f2328" text-anchor="middle">saves</text>
+  <line x1="686" y1="235" x2="734" y2="235" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="508" y="288" width="176" height="74" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="596" y="312" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">import script</text>
+  <text x="596" y="334" font-size="13" fill="#1f2328" text-anchor="middle">cancel(...): the same</text>
+  <text x="596" y="352" font-size="13" fill="#1f2328" text-anchor="middle">rules apply</text>
+  <line x1="686" y1="325" x2="734" y2="325" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="736" y="108" width="184" height="254" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="828" y="134" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">Appointment</text>
+  <text x="828" y="152" font-size="13" fill="#2f6f4f" text-anchor="middle">aggregate root</text>
+  <line x1="748" y1="164" x2="908" y2="164" stroke="#2f6f4f" stroke-opacity="0.35"/>
+  <text x="828" y="186" font-size="13" fill="#1f2328" text-anchor="middle">cancel(reason, at)</text>
+  <text x="828" y="208" font-size="13" fill="#1f2328" text-anchor="middle">reschedule(slot, at)</text>
+  <line x1="748" y1="222" x2="908" y2="222" stroke="#2f6f4f" stroke-opacity="0.35"/>
+  <text x="828" y="240" font-size="13" fill="#1f2328" text-anchor="middle">not cancelled twice</text>
+  <text x="828" y="262" font-size="13" fill="#1f2328" text-anchor="middle">24 h free window</text>
+  <text x="828" y="284" font-size="13" fill="#1f2328" text-anchor="middle">named refusals, events</text>
+  <text x="714" y="410" font-size="14" font-style="italic" fill="#1f2328" text-anchor="middle">one place, every caller, tested alone</text>
+</svg>

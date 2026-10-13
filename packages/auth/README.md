@@ -1,3 +1,5 @@
+**English** · [Français](README.fr.md)
+
 # @ddd-ts-kit/auth
 
 Authentication and authorization behind ports: who is calling, what they may do, and on which
@@ -16,7 +18,7 @@ npm i jose            # only for @ddd-ts-kit/auth/jwt
 | `@ddd-ts-kit/auth/rebac` | schema DSL, relation tuples, `RelationTupleStore`, `RelationBasedAuthorizer` | the kernel only |
 | `@ddd-ts-kit/auth/jwt` | `JwtAuthenticator`, `keycloakAuthenticator` | `jose` (optional peer), the only file that does |
 | `@ddd-ts-kit/auth/di` | `authorizationModule`, `authorizationMapOf`, and again the classes the module binds: `Authorizer`, `Authenticator`, `Access`, `AuthorizationMap` | `@ddd-ts-kit/di` (optional peer) |
-| `@ddd-ts-kit/auth/testing` | `anActor()`, `AllowAll`, `DenyAll`, `RecordingAuthorizer`, `FakeAuthenticator`, the two contract suites | `@ddd-ts-kit/testing` (optional peer), the runner you pass |
+| `@ddd-ts-kit/auth/testing` | `anActor()` and its `ActorBuilder`, `AllowAll`, `DenyAll`, `RecordingAuthorizer`, `FakeAuthenticator`, the two contract suites | `@ddd-ts-kit/testing` (optional peer), the runner you pass |
 
 The actor model lives in `@ddd-ts-kit/kernel`: `Actor`, `anonymousActor()`, `systemActor(name)`,
 `AuthorizedCommand`, `AuthorizedQuery`, the `ActorContext` port and its two implementations.
@@ -29,6 +31,8 @@ The actor model lives in `@ddd-ts-kit/kernel`: `Actor`, `anonymousActor()`, `sys
 | Authorization | may this actor do this, on this? | the application layer of each context (`application/authorization/`) | permissions declared as data, one requirement per use case checked by a bus middleware, policies for rules that need loaded state, all through the `Authorizer` port |
 | Invariants | is this a valid state of the business? | the domain | aggregates and `DomainError`s. "An invoice cannot be paid twice" is not a permission |
 
+![The place of the package in an application: the platform turns the bearer token into a Session and its Actor with principalResolver and an Authenticator; the route puts the actor in the command; the guard of the command bus refuses an undeclared use case and asks the Authorizer before the handler; the handler loads the element and asks Access, which runs the policies then the Authorizer; the aggregate imports nothing of the package; four classes implement the one Authorizer port](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/auth-package-place.svg)
+
 Nothing is reachable by default. A command or a query that declares neither a permission nor
 that it is public is refused, at run time by the middleware and, when you ask for it, when the
 application is created.
@@ -39,10 +43,81 @@ the request, and refuses before the controller runs. It never replaces the permi
 case, which a job, an event handler or another transport meets without passing any guard, and
 it never loads an element to decide. The rule is `presentation/guard-at-the-edge`.
 
+## The smallest working example
+
+Before the complete example, the mechanism in one file, with no container and no HTTP: a
+permission, a command that carries its actor, the requirement, a role model and the guard on a
+command bus of the kernel. Run it as it is: the comments say what it prints.
+
+<!-- checked sample -->
+```ts
+import {
+  AuthorizationMap,
+  ForbiddenError,
+  RoleBasedAuthorizer,
+  UnauthenticatedError,
+  authorizationMiddleware,
+  definePermissions,
+  requires,
+  type DecisionRecord,
+} from '@ddd-ts-kit/auth';
+import { AuthorizedCommand, InMemoryCommandBus, anonymousActor, type Actor } from '@ddd-ts-kit/kernel';
+
+// 1. The permissions of the context, as data.
+const billingPermissions = definePermissions('billing', {
+  'invoice.void': { description: 'Void an issued invoice' },
+});
+
+// 2. A use case that carries its actor.
+class VoidInvoice extends AuthorizedCommand {
+  constructor(
+    actor: Actor,
+    readonly invoiceId: string,
+  ) {
+    super(actor);
+  }
+}
+
+// 3. What each use case requires. A message missing from the map is refused.
+const map = AuthorizationMap.of(requires(VoidInvoice, billingPermissions['invoice.void']));
+
+// 4. The model: here, roles. Only a controller may void.
+const authorizer = new RoleBasedAuthorizer({
+  roles: { controller: [billingPermissions['invoice.void']], clerk: [] },
+});
+
+// 5. The guard runs on the bus, before the handler.
+const decisions: DecisionRecord[] = [];
+const commands = new InMemoryCommandBus()
+  .use(authorizationMiddleware({ authorizer, map, onDecision: (record) => void decisions.push(record) }))
+  .register(VoidInvoice, { execute: async (command) => console.log(`voided ${command.invoiceId}`) });
+
+const grace: Actor = { id: 'grace', type: 'user', roles: ['controller'], attributes: {} };
+const bob: Actor = { id: 'bob', type: 'user', roles: ['clerk'], attributes: {} };
+
+await commands.execute(new VoidInvoice(grace, 'inv-1')); // prints "voided inv-1"
+
+const refused = await commands.execute(new VoidInvoice(bob, 'inv-1')).catch((error: unknown) => error);
+console.log(refused instanceof ForbiddenError && refused.reason); // NO_MATCHING_ROLE, answered 403
+
+const nobody = await commands.execute(new VoidInvoice(anonymousActor(), 'inv-1')).catch((error: unknown) => error);
+console.log(nobody instanceof UnauthenticatedError && nobody.code); // UNAUTHORIZED, answered 401
+
+console.log(decisions.map(({ actorId, decision }) => `${actorId}: ${decision.allowed}`));
+// [ 'grace: true', 'bob: false', 'anonymous: false' ]
+```
+
+The handler never saw `bob` nor the anonymous caller, and holds no `if` about roles. Every
+piece has its place in a real project: the permissions in `application/authorization/`, the
+command next to its handler, the requirement on the message or in the module, the model and the
+guard in the composition root, where `authorizationModule` installs them for you. The complete
+example below puts each one there.
+
 ## A complete example
 
 ### 1. Permissions, declared by the context that owns them
 
+<!-- checked sample -->
 ```ts
 // contexts/billing/application/authorization/billing.permissions.ts
 import { definePermissions } from '@ddd-ts-kit/auth';
@@ -57,10 +132,15 @@ export const billingPermissions = definePermissions('billing', {
 
 `PermissionRegistry.of(billingPermissions, catalogPermissions)` lists them all (`all()`,
 `contexts()`, `inContext(name)`, `find(id)`): documentation and administration screens are
-generated from it, never written by hand.
+generated from it, never written by hand. The names are checked when they are declared: a
+context name is one lower-case word, a permission name lower-case words separated by dots
+(each word starts with a letter; digits and dashes are allowed). Anything else throws `AuthorizationSetupError` when the file is
+loaded, and so does `PermissionRegistry.of` for an id declared twice: a mistake found at
+start-up, never a refusal found in production.
 
 ### 2. Use cases that carry their actor
 
+<!-- checked sample -->
 ```ts
 // contexts/billing/application/commands/void-invoice/void-invoice.command.ts
 import { AuthorizedCommand, type Actor } from '@ddd-ts-kit/kernel';
@@ -143,9 +223,17 @@ object with the same methods stands for it in a test.
 
 ### 4. A policy, for a rule that needs the loaded element
 
+<!-- checked sample -->
 ```ts
 // contexts/billing/application/authorization/only-issuer-voids-same-day.policy.ts
-import { definePolicy } from '@ddd-ts-kit/auth';
+import { definePolicy, type PermissionSet } from '@ddd-ts-kit/auth';
+
+declare const billingPermissions: PermissionSet<'billing', 'invoice.void'>;
+declare class Invoice {
+  readonly issuedBy: string;
+  readonly issuedAt: Date;
+}
+declare function isSameDay(left: Date, right: Date): boolean;
 
 export const onlyIssuerVoidsSameDay = definePolicy<Invoice>({
   name: 'invoice.only-issuer-voids-same-day',
@@ -177,14 +265,27 @@ export class VoidInvoiceHandler {
 ```
 
 `Access.authorize` asks every policy of the permission, then the authorizer, and raises
-`ForbiddenError` with a reason code: the name of the policy that answered `false`, or the code
-the policy or the authorizer gave. A policy is a plain object: its spec calls
+`ForbiddenError` with a reason code: the name of the policy that answered `false`, the code
+the policy or the authorizer gave, or `SUBJECT_MISMATCH` when the subject is not one `appliesTo`
+accepts. The anonymous actor is refused before any policy is asked, with `UnauthenticatedError`
+(401), as on the bus. A policy is a plain object: its spec calls
 `onlyIssuerVoidsSameDay.allows(actor, invoice, { now })` and needs nothing else.
+
+A protected use case meets two checkpoints. The guard of the bus decides on the action, before
+the handler and before any transaction; `Access` decides on the element, once the handler has
+loaded it. Each refusal has its error, its code and its HTTP status:
+
+![The two checkpoints. The guard of the bus: an undeclared message fails with UndeclaredUseCaseError, a public one runs with no check, a protected one without actor fails with MissingActorError, the anonymous actor is refused with UnauthenticatedError (401), and a refusal of the Authorizer is a ForbiddenError (403) with its reason; allowed, the unit of work opens and the handler runs. Access in the handler: the anonymous actor is refused with UnauthenticatedError, each policy of the permission is asked, then the Authorizer about the resource; allowed, the aggregate changes. Both hand every decision to onDecision](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/auth-package-two-checkpoints.svg)
+
+`UndeclaredUseCaseError` and `MissingActorError` are not refusals: they say the code is wrong,
+fail the first test that sends the message, and are never answered as a 403.
 
 `Access` is the port the handler depends on; `PolicyAccess` is its implementation, which
 `authorizationModule` binds. `PolicyAccessOptions.resourceOf` says how a subject names its
 resource (`invoice => ({ type: 'invoice', id: invoice.id })`) when the authorizer decides per
-element. By default only a plain `{ type, id }` is taken as a resource reference.
+element. By default only a plain `{ type, id }` is taken as a resource reference. A
+`PolicyAccess` built by hand without an authorizer refuses, with `NO_POLICY`, a permission that
+no policy answers for: deny by default holds there too.
 
 ### 5. The composition root
 
@@ -519,8 +620,13 @@ this wrapper in `createAuthorizer` and its grant in `signed-in-grants.ts`.
 
 ### Roles
 
+<!-- checked sample -->
 ```ts
-new RoleBasedAuthorizer({
+import { RoleBasedAuthorizer, tenantOfContext, type PermissionSet } from '@ddd-ts-kit/auth';
+
+declare const billingPermissions: PermissionSet<'billing', 'invoice.read' | 'invoice.void'>;
+
+export const authorizer = new RoleBasedAuthorizer({
   roles: { admin: ['*'], controller: ['billing:*'], clerk: [billingPermissions['invoice.read']] },
   inherits: { controller: ['clerk'] },          // a controller has all a clerk has
   tenantOf: tenantOfContext,                    // turns the tenant check on
@@ -537,11 +643,29 @@ read from the `context` of the requirement: `requires(X, permission, { context: 
 
 ### Attribute policies
 
+<!-- checked sample -->
 ```ts
+import {
+  PolicyBasedAuthorizer,
+  allOf,
+  forbid,
+  not,
+  permit,
+  type Condition,
+  type PermissionSet,
+  type ResourceAttributes,
+} from '@ddd-ts-kit/auth';
+import type { Clock } from '@ddd-ts-kit/kernel';
+
+declare const billingPermissions: PermissionSet<'billing', 'invoice.read' | 'invoice.void'>;
+declare const clock: Clock;
+declare const invoiceAttributes: ResourceAttributes;
+
 const sameDepartment: Condition = ({ actor, attributes }) => actor.attributes['department'] === attributes['department'];
 const isLarge: Condition = ({ attributes }) => Number(attributes['amount']) > 10_000;
+const secondApproval: Condition = ({ context }) => context['secondApproval'] === true;
 
-new PolicyBasedAuthorizer({
+export const authorizer = new PolicyBasedAuthorizer({
   clock,                                         // time comes from the Clock port
   attributes: invoiceAttributes,                 // ResourceAttributes: of(resource) => attributes
   policies: [
@@ -558,8 +682,23 @@ attributes, context, now }`.
 
 ### Relationships
 
+<!-- checked sample -->
 ```ts
-import { defineSchema, union, intersection, exclusion, from } from '@ddd-ts-kit/auth/rebac';
+import { definePermissions } from '@ddd-ts-kit/auth';
+import {
+  InMemoryRelationTupleStore,
+  RelationBasedAuthorizer,
+  defineSchema,
+  exclusion,
+  from,
+  union,
+} from '@ddd-ts-kit/auth/rebac';
+
+export const docsPermissions = definePermissions('docs', {
+  'document.edit': { description: 'Change a document' },
+  'document.view': { description: 'Read a document' },
+  'folder.view': { description: 'Read a folder' },
+});
 
 const schema = defineSchema({
   user: {},
@@ -580,7 +719,9 @@ const schema = defineSchema({
   },
 });
 
-const authorizer = new RelationBasedAuthorizer({
+export const tupleStore = new InMemoryRelationTupleStore(); // a SQL store in production
+
+export const authorizer = new RelationBasedAuthorizer({
   schema,
   store: tupleStore,
   mapping: {
@@ -600,6 +741,41 @@ const authorizer = new RelationBasedAuthorizer({
 | Check | `authorizer.check({ actor, permission, resource })` |
 | Expand | `authorizer.expand({ actor, permission, resource })` |
 | reverse lookup | `authorizer.listAccessible({ actor, permission, resourceType })` |
+
+Three stored facts are enough to see a derived right. Ada is a member of the group finance, the
+members of finance view the folder reports, and reports is the parent of the document q3:
+
+<!-- checked sample -->
+```ts
+import type { PermissionSet } from '@ddd-ts-kit/auth';
+import type { InMemoryRelationTupleStore, RelationBasedAuthorizer } from '@ddd-ts-kit/auth/rebac';
+import type { Actor } from '@ddd-ts-kit/kernel';
+
+// the schema, the store and the authorizer of the block above
+declare const docsPermissions: PermissionSet<'docs', 'document.edit' | 'document.view' | 'folder.view'>;
+declare const tupleStore: InMemoryRelationTupleStore;
+declare const authorizer: RelationBasedAuthorizer;
+
+const ada: Actor = { id: 'ada', type: 'user', roles: [], attributes: {} };
+
+await tupleStore.write([
+  { object: 'group:finance', relation: 'member', subject: 'user:ada' },
+  { object: 'folder:reports', relation: 'viewer', subject: 'group:finance#member' },
+  { object: 'document:q3', relation: 'parent', subject: 'folder:reports' },
+]);
+
+const q3 = { type: 'document', id: 'q3' };
+
+await authorizer.check({ actor: ada, permission: docsPermissions['document.view'], resource: q3 });
+// { allowed: true }: view of q3 includes view of its parent, which includes the viewers of reports
+await authorizer.check({ actor: ada, permission: docsPermissions['document.edit'], resource: q3 });
+// { allowed: false, reason: 'NO_RELATION' }: no path leads to an owner or an editor
+await authorizer.listAccessible({ actor: ada, permission: docsPermissions['document.view'], resourceType: 'document' });
+// { kind: 'ids', ids: ['q3'] }
+```
+
+No tuple says "ada may view q3": the right is derived, so moving q3 to another folder or
+removing ada from finance changes it at once, with one tuple written or deleted.
 
 `defineSchema` validates when the schema is defined: an unknown type, a userset of a relation
 that does not exist, a rewrite naming something undeclared, a `from` over something that is not
@@ -760,8 +936,12 @@ the decider then asks `decide`, which records everything. The how-to is in the R
 
 ## Filtering lists
 
-A list is filtered by the query, never in memory after loading. The handler asks for a scope
-and hands it to the read port:
+A list is filtered by the query, never in memory after loading. A page filtered after it was
+read shows fewer rows than asked, and its total counts rows the actor may not see:
+
+![Filtering a list. Instead of reading a page of every tenant and filtering it in memory, which shows 3 rows instead of 20 and a wrong total, the handler asks access.scope for an AccessScope and the read port turns it into a WHERE clause, so the database answers the right page and the right total. For each kind of scope, the read port adds nothing for all, runs no query for none, one equality per entry for filter, and an id IN list for ids; the attribute policies cannot list](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/auth-package-list-scope.svg)
+
+The handler asks for a scope and hands it to the read port:
 
 ```ts
 // application/queries/search-invoices/search-invoices.handler.ts
@@ -799,6 +979,7 @@ function whereOf(scope: AccessScope): SQL | undefined {
 
 ## Testing
 
+<!-- checked sample -->
 ```ts
 import { anActor, AllowAll, RecordingAuthorizer, authorizerContract } from '@ddd-ts-kit/auth/testing';
 
@@ -813,19 +994,124 @@ const accountant = anActor().named('ada').ofTenant('acme').withRole('accountant'
   with a `RecordingAuthorizer` to assert what was asked as data (`authorizer.checks`); replace
   the authorizer of a composed application with `fake(Authorizer, new AllowAll())`. Add
   `authorization: 'required'` so that a use case without declaration fails the spec at wiring.
-- **Policies.** Plain objects: call `policy.allows(actor, subject, { now })`.
+- **Policies.** Plain objects: call `policy.allows(actor, subject, { now })`, as below.
 - **Boundaries.** `FakeAuthenticator({ 'token-of-ada': ada })` behind `principalResolver`; a credential may stand for a whole session, `{ 'token-of-support': aSession().of(ada).impersonatedBy('support-7').build() }`.
 - **Your own adapters.** Hold an `Authorizer` (an OpenFGA adapter, a custom model) to
   `authorizerContract(runner, { name, create })` and a tuple store to
   `relationTupleStoreContract(runner, { name, create })`, with `{ describe, it, expect,
   beforeEach }` of your runner.
 
-`anActor()` is a class on the `Builder` of `@ddd-ts-kit/testing`, so it nests in other builders
-(`anInvoice().issuedBy(anActor().named('ada'))`) and is immutable like them. `AllowAll` and
+A policy spec needs no application, no container and no fake: the policy, two actors, a
+subject and an instant.
+
+<!-- checked sample -->
+```ts
+// contexts/billing/application/authorization/only-issuer-voids.policy.spec.ts
+import { definePermissions, definePolicy } from '@ddd-ts-kit/auth';
+import { anActor } from '@ddd-ts-kit/auth/testing';
+import { describe, expect, it } from 'vitest';
+
+const billingPermissions = definePermissions('billing', {
+  'invoice.void': { description: 'Void an issued invoice' },
+});
+
+interface IssuedInvoice {
+  readonly issuedBy: string;
+}
+
+const onlyIssuerVoids = definePolicy<IssuedInvoice>({
+  name: 'invoice.only-issuer-voids',
+  permission: billingPermissions['invoice.void'],
+  allows: (actor, invoice) => actor.id === invoice.issuedBy,
+});
+
+describe('only the issuer voids an invoice', () => {
+  const now = new Date('2026-01-01T09:00:00.000Z');
+  const issuedByAda: IssuedInvoice = { issuedBy: 'ada' };
+
+  it('lets the issuer void it', () => {
+    expect(onlyIssuerVoids.allows(anActor().named('ada').build(), issuedByAda, { now })).toBe(true);
+  });
+
+  it('refuses anybody else, whatever their roles', () => {
+    const admin = anActor().named('bob').withRole('admin').build();
+
+    expect(onlyIssuerVoids.allows(admin, issuedByAda, { now })).toBe(false);
+  });
+});
+```
+
+When it answers `false` through `Access`, the reason of the `ForbiddenError` is the policy name,
+`invoice.only-issuer-voids`.
+
+`anActor()` answers an `ActorBuilder`, a `Builder` of `@ddd-ts-kit/testing`, so it nests in
+other builders (`anInvoice().issuedBy(anActor().named('ada'))`) and is immutable like them. `AllowAll` and
 `DenyAll` are stubs for specs that are not about rights; they are not held to the authorizer
 contract, which they contradict by design.
 
 ## The shortcuts this design removes
+
+The most common one first. Instead of a route that decides who may do what:
+
+```ts
+// contexts/billing/presentation/http/void-invoice.route.ts: what this package removes
+async ({ params, context }) => {
+  const user = context.principal as { id: string; roles: string[] };
+  if (!user.roles.includes('controller')) {
+    return { status: 403 };                       // a job or a consumer never passes here
+  }
+  const invoice = await invoices.findById(params.invoiceId);
+  if (invoice.issuedBy !== user.id) {
+    return { status: 403 };                       // a rule nobody can find, test or audit
+  }
+  invoice.void(new Date());                       // and a handler bypassed
+  await invoices.save(invoice);
+  return { status: 204 };
+};
+```
+
+write each decision where it belongs: the action on the use case, the element in a named
+policy, and the route only builds the command.
+
+<!-- checked sample -->
+```ts
+import { definePermissions, definePolicy, requires } from '@ddd-ts-kit/auth';
+import { AuthorizedCommand, type Actor } from '@ddd-ts-kit/kernel';
+
+declare class Invoice {
+  readonly issuedBy: string;
+}
+
+export const billingPermissions = definePermissions('billing', {
+  'invoice.void': { description: 'Void an issued invoice' },
+});
+
+export class VoidInvoice extends AuthorizedCommand {
+  constructor(
+    actor: Actor,
+    readonly invoiceId: string,
+  ) {
+    super(actor);
+  }
+}
+
+// The action: checked by the bus for every caller, a route, a job or a consumer alike.
+export const voidInvoiceRequirement = requires(VoidInvoice, billingPermissions['invoice.void'], {
+  resource: (command) => ({ type: 'invoice', id: command.invoiceId }),
+});
+
+// The element: a named rule with a spec of its own, asked by the handler once the invoice is loaded.
+export const onlyIssuerVoids = definePolicy<Invoice>({
+  name: 'invoice.only-issuer-voids',
+  permission: billingPermissions['invoice.void'],
+  appliesTo: (subject): subject is Invoice => subject instanceof Invoice,
+  allows: (actor, invoice) => actor.id === invoice.issuedBy,
+});
+```
+
+The route of [step 6](#6-a-route) is then a mapping from the request to `VoidInvoice`, and the
+roles live in the composition root. The table lists the other shortcuts and the rule that
+catches each one.
 
 | Shortcut | Why it is not needed any more | Caught by |
 |---|---|---|

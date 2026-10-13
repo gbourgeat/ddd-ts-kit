@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 556" width="960" height="556" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">One declaration of the import alias, followed by every tool</title>
+  <desc id="desc">ddd-ts-kit.config.json names the alias and the ending of an import. init writes the paths of tsconfig.json from it. The compiler, tsx, vitest, knip, dependency-cruiser and drizzle-kit read those paths; jest reads no tsconfig and receives a copy of the mapping. The ESLint plugin, ddd-ts-kit check and ddd-ts-kit build-aliases read the config itself. Node reads nothing, because build-aliases rewrote every alias of the compiled output. The rule imports/alias-declared compares every copy and every reader with the declaration.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="556" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">One declaration of the alias, every tool follows it</text>
+  <!-- the config -->
+  <rect x="32" y="190" width="244" height="100" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="48" y="216" font-size="16" font-weight="700" fill="#5f6b73">ddd-ts-kit.config.json</text>
+  <g font-size="13" fill="#1f2328" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">
+    <text x="48" y="244">"importAlias": "@/",</text>
+    <text x="48" y="266">"importExtension": "none"</text>
+  </g>
+  <!-- tsconfig.json -->
+  <rect x="336" y="64" width="284" height="114" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="352" y="88" font-size="16" font-weight="700" fill="#5f6b73">tsconfig.json</text>
+  <g font-size="13" fill="#1f2328" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">
+    <text x="352" y="112">"paths": {</text>
+    <text x="368" y="130">"@/*": ["./src/*"],</text>
+    <text x="368" y="148">"$test/*": ["./test/*"],</text>
+    <text x="368" y="166">"$scripts/*": ["./scripts/*"] }</text>
+  </g>
+  <path d="M154,188 V121 H334" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="166" y="112" font-size="13" fill="#1f2328">init writes it</text>
+  <!-- the tools that read the paths -->
+  <rect x="680" y="64" width="248" height="178" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="696" y="88" font-size="16" font-weight="700" fill="#5f6b73">read the paths</text>
+  <g font-size="13" fill="#1f2328">
+    <text x="696" y="112">tsc: type check and build</text>
+    <text x="696" y="133">tsx: npm run dev</text>
+    <text x="696" y="154">vitest: tsconfigPaths: true</text>
+    <text x="696" y="175">knip</text>
+    <text x="696" y="196">dependency-cruiser: tsConfig</text>
+    <text x="696" y="217">drizzle-kit</text>
+  </g>
+  <line x1="622" y1="121" x2="678" y2="121" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- jest gets a copy -->
+  <rect x="680" y="262" width="248" height="58" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="696" y="286" font-size="16" font-weight="700" fill="#5f6b73">jest</text>
+  <text x="696" y="307" font-size="13" fill="#1f2328">moduleNameMapper: a copy</text>
+  <path d="M622,160 H650 V291 H678" fill="none" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <!-- the tools that read the config -->
+  <rect x="336" y="262" width="284" height="112" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="352" y="286" font-size="16" font-weight="700" fill="#5f6b73">read the config itself</text>
+  <g font-size="13" fill="#1f2328">
+    <text x="352" y="310">the ESLint plugin: imports/* rules</text>
+    <text x="352" y="332">ddd-ts-kit check</text>
+    <text x="352" y="354">ddd-ts-kit build-aliases</text>
+  </g>
+  <path d="M154,292 V318 H334" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- node -->
+  <rect x="680" y="340" width="248" height="76" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="696" y="364" font-size="16" font-weight="700" fill="#5f6b73">node, in production</text>
+  <text x="696" y="385" font-size="13" fill="#1f2328">reads nothing: build-aliases left</text>
+  <text x="696" y="403" font-size="13" fill="#1f2328">relative paths only in dist/</text>
+  <line x1="622" y1="350" x2="678" y2="350" stroke="#3d4449" stroke-width="2" stroke-dasharray="2 4" marker-end="url(#arrow)"/>
+  <!-- the rule -->
+  <rect x="32" y="430" width="896" height="40" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="48" y="455" font-size="14" fill="#1f2328"><tspan font-weight="700" fill="#2b5d8a">imports/alias-declared</tspan> (ddd-ts-kit check) compares every copy and every reader with the declaration.</text>
+  <!-- legend -->
+  <line x1="32" y1="496" x2="76" y2="496" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="88" y="501" font-size="13" fill="#1f2328">writes, or is read by</text>
+  <line x1="300" y1="496" x2="344" y2="496" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <text x="356" y="501" font-size="13" fill="#1f2328">a copy in another file (jest reads no tsconfig), held equal by the checker</text>
+  <line x1="32" y1="526" x2="76" y2="526" stroke="#3d4449" stroke-width="2" stroke-dasharray="2 4" marker-end="url(#arrow)"/>
+  <text x="88" y="531" font-size="13" fill="#1f2328">produces the output (dist/, relative paths) run by</text>
+</svg>

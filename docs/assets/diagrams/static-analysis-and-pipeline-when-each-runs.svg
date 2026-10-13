@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 480" width="960" height="480" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">When each analyzer runs, from a file write to the merge</title>
+  <desc id="desc">Five moments. After each file write, the editor hook of a coding agent runs ddd-ts-kit check-file on that file. Before a commit, lefthook runs ESLint, the Biome format check and ddd-ts-kit check on the staged files, the advisory commit size check, and commitlint on the message. Before a push, the type check and the unit tests. On a pull or merge request, GitHub Actions or GitLab CI run the same ci scripts: type check, format, lint, the architecture check and the dependency graph, dead code, the tests, the build, the documents, the audit and gitleaks. One gate job, or pipelines must succeed, makes it binding at the merge. The feedback is faster on the left, the coverage wider on the right.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="480" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">When each analyzer runs, from a file write to the merge</text>
+  <!-- bands -->
+  <rect x="16" y="52" width="560" height="342" rx="12" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="32" y="74" font-size="14" font-weight="600" fill="#5f6b73">on the laptop</text>
+  <rect x="584" y="52" width="360" height="342" rx="12" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="600" y="74" font-size="14" font-weight="600" fill="#5f6b73">on the CI platform</text>
+  <!-- headers -->
+  <rect x="24" y="86" width="176" height="60" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="112" y="110" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">a file write</text>
+  <text x="112" y="132" font-size="13" fill="#1f2328" text-anchor="middle">editor hook of an agent</text>
+  <rect x="208" y="86" width="176" height="60" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="296" y="110" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">git commit</text>
+  <text x="296" y="132" font-size="13" fill="#1f2328" text-anchor="middle">lefthook pre-commit</text>
+  <rect x="392" y="86" width="176" height="60" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="480" y="110" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">git push</text>
+  <text x="480" y="132" font-size="13" fill="#1f2328" text-anchor="middle">lefthook pre-push</text>
+  <rect x="592" y="86" width="176" height="60" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="680" y="110" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">pull request</text>
+  <text x="680" y="132" font-size="13" fill="#1f2328" text-anchor="middle">Actions or GitLab CI</text>
+  <rect x="776" y="86" width="160" height="60" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="856" y="110" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">merge</text>
+  <text x="856" y="132" font-size="13" fill="#1f2328" text-anchor="middle">the required check</text>
+  <!-- bodies -->
+  <rect x="24" y="156" width="176" height="226" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="38" y="180" font-size="13" font-weight="600" fill="#1f2328">ddd-ts-kit check-file</text>
+  <text x="38" y="200" font-size="13" fill="#1f2328">on the file just written:</text>
+  <text x="38" y="220" font-size="13" fill="#1f2328">the agent reads the</text>
+  <text x="38" y="240" font-size="13" fill="#1f2328">findings and fixes</text>
+  <text x="38" y="260" font-size="13" fill="#1f2328">them before going on</text>
+  <rect x="208" y="156" width="176" height="226" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="222" y="180" font-size="13" font-weight="600" fill="#1f2328">on the staged files:</text>
+  <text x="222" y="200" font-size="13" fill="#1f2328">ESLint</text>
+  <text x="222" y="220" font-size="13" fill="#1f2328">Biome format</text>
+  <text x="222" y="240" font-size="13" fill="#1f2328">ddd-ts-kit check</text>
+  <text x="222" y="260" font-size="13" fill="#1f2328">check --commit-size,</text>
+  <text x="222" y="280" font-size="13" fill="#1f2328">advisory</text>
+  <text x="222" y="308" font-size="13" font-weight="600" fill="#1f2328">commit-msg:</text>
+  <text x="222" y="328" font-size="13" fill="#1f2328">commitlint</text>
+  <rect x="392" y="156" width="176" height="226" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="406" y="180" font-size="13" font-weight="600" fill="#1f2328">pre-push:</text>
+  <text x="406" y="200" font-size="13" fill="#1f2328">npm run ci:typecheck</text>
+  <text x="406" y="220" font-size="13" fill="#1f2328">npm run ci:test:unit</text>
+  <rect x="592" y="156" width="176" height="226" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="606" y="180" font-size="13" font-weight="600" fill="#1f2328">the same ci:* scripts:</text>
+  <text x="606" y="200" font-size="13" fill="#1f2328">typecheck, format, lint</text>
+  <text x="606" y="220" font-size="13" fill="#1f2328">arch:check (checker)</text>
+  <text x="606" y="240" font-size="13" fill="#1f2328">arch:graph</text>
+  <text x="606" y="260" font-size="13" fill="#1f2328">(dependency-cruiser)</text>
+  <text x="606" y="280" font-size="13" fill="#1f2328">deadcode (knip)</text>
+  <text x="606" y="300" font-size="13" fill="#1f2328">unit, integration, e2e</text>
+  <text x="606" y="320" font-size="13" fill="#1f2328">build, docs, audit</text>
+  <text x="606" y="340" font-size="13" fill="#1f2328">gitleaks</text>
+  <rect x="776" y="156" width="160" height="226" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="790" y="180" font-size="13" font-weight="600" fill="#1f2328">GitHub:</text>
+  <text x="790" y="200" font-size="13" fill="#1f2328">one gate job, marked</text>
+  <text x="790" y="220" font-size="13" fill="#1f2328">as required</text>
+  <text x="790" y="248" font-size="13" font-weight="600" fill="#1f2328">GitLab:</text>
+  <text x="790" y="268" font-size="13" fill="#1f2328">pipelines must</text>
+  <text x="790" y="288" font-size="13" fill="#1f2328">succeed</text>
+  <!-- feedback -->
+  <line x1="40" y1="420" x2="920" y2="420" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="40" y="448" font-size="14" fill="#1f2328">faster feedback, one file or the staged files</text>
+  <text x="920" y="448" font-size="14" fill="#1f2328" text-anchor="end">slower, the whole project and every gate</text>
+</svg>

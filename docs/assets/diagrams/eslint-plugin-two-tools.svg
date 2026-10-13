@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 550" width="960" height="550" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Two tools read the config; dependency-cruiser runs on a file generated from it</title>
+  <desc id="desc">The ESLint plugin and ddd-ts-kit check read ddd-ts-kit.config.json at run time and share its rule ids, severities and ddd-ts-kit-disable comments. The plugin judges one source file at a time on its syntax tree: layers, purity, clean code, tactical shapes, ports, authorization, jobs; it runs in the editor, the lint script and the CI, and it is right when it disagrees with the checker. The checker judges the whole project: the tree, names and files, the glossary terms, the config, the barrel, unique names; it runs in the editor hook after each write and in the CI. dependency-cruiser does not read the config: ddd-ts-kit depcruise-config --write generates .dependency-cruiser.cjs from it, and dependency-cruiser runs on that file only. It judges the resolved import graph (cycles, orphans, barrels, dev dependencies in production code) with its own rule names, always at severity error, and it honours no ddd-ts-kit-disable comment.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="550" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Two tools read the config; dependency-cruiser runs on a file generated from it</text>
+  <!-- config -->
+  <rect x="28" y="58" width="904" height="56" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="480" y="82" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">ddd-ts-kit.config.json</text>
+  <text x="480" y="103" font-size="13" fill="#1f2328" text-anchor="middle">rule ids, their severities, the ddd-ts-kit-disable comment: shared by the plugin and check</text>
+  <!-- read at run time by the plugin and the checker -->
+  <line x1="172" y1="116" x2="172" y2="230" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="480" y1="116" x2="480" y2="230" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="326" y="178" font-size="13" fill="#1f2328" text-anchor="middle">read at run time</text>
+  <!-- dependency-cruiser: generated file -->
+  <line x1="788" y1="116" x2="788" y2="140" stroke="#3d4449" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arrow)"/>
+  <text x="800" y="133" font-size="13" font-style="italic" fill="#1f2328">generated from it</text>
+  <rect x="664" y="142" width="248" height="52" rx="8" fill="#ffffff" stroke="#5f6b73" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="788" y="164" font-size="14" font-weight="700" fill="#5f6b73" text-anchor="middle">.dependency-cruiser.cjs</text>
+  <text x="788" y="184" font-size="13" fill="#1f2328" text-anchor="middle">by depcruise-config --write</text>
+  <line x1="788" y1="196" x2="788" y2="230" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="800" y="218" font-size="13" fill="#1f2328">read at run time</text>
+  <!-- plugin -->
+  <rect x="28" y="232" width="288" height="290" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="172" y="260" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">this plugin, in ESLint</text>
+  <line x1="44" y1="272" x2="300" y2="272" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text x="44" y="296" font-size="13" font-weight="600" fill="#5f6b73">reads</text>
+  <text x="44" y="316" font-size="13" fill="#1f2328">one source file, its syntax tree</text>
+  <text x="44" y="344" font-size="13" font-weight="600" fill="#5f6b73">holds</text>
+  <text x="44" y="364" font-size="13" fill="#1f2328">layer/*, purity/*, clean/*, domain/*,</text>
+  <text x="44" y="384" font-size="13" fill="#1f2328">ports/*, authz/*, scheduling/*, ...:</text>
+  <text x="44" y="404" font-size="13" fill="#1f2328">what one file shows</text>
+  <text x="44" y="432" font-size="13" font-weight="600" fill="#5f6b73">runs</text>
+  <text x="44" y="452" font-size="13" fill="#1f2328">editor, npm run lint, CI</text>
+  <text x="44" y="492" font-size="13" font-style="italic" font-weight="600" fill="#1f2328">right when it and check disagree</text>
+  <!-- checker -->
+  <rect x="336" y="232" width="288" height="290" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="480" y="260" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">ddd-ts-kit check</text>
+  <line x1="352" y1="272" x2="608" y2="272" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text x="352" y="296" font-size="13" font-weight="600" fill="#5f6b73">reads</text>
+  <text x="352" y="316" font-size="13" fill="#1f2328">the whole project, glossaries included</text>
+  <text x="352" y="344" font-size="13" font-weight="600" fill="#5f6b73">holds</text>
+  <text x="352" y="364" font-size="13" fill="#1f2328">tree/*, naming/*, config/*, glossary</text>
+  <text x="352" y="384" font-size="13" fill="#1f2328">terms, context/no-cycle, the barrel,</text>
+  <text x="352" y="404" font-size="13" fill="#1f2328">unique names: what spans files</text>
+  <text x="352" y="432" font-size="13" font-weight="600" fill="#5f6b73">runs</text>
+  <text x="352" y="452" font-size="13" fill="#1f2328">editor hook after each write, CI;</text>
+  <text x="352" y="472" font-size="13" fill="#1f2328">code rules approximated, no dependency</text>
+  <!-- dependency-cruiser -->
+  <rect x="644" y="232" width="288" height="290" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="788" y="260" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">dependency-cruiser</text>
+  <line x1="660" y1="272" x2="916" y2="272" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text x="660" y="296" font-size="13" font-weight="600" fill="#5f6b73">reads</text>
+  <text x="660" y="316" font-size="13" fill="#1f2328">the resolved import graph</text>
+  <text x="660" y="344" font-size="13" font-weight="600" fill="#5f6b73">holds</text>
+  <text x="660" y="364" font-size="13" fill="#1f2328">cycles, orphans, barrels, dev</text>
+  <text x="660" y="384" font-size="13" fill="#1f2328">dependencies in production code</text>
+  <text x="660" y="432" font-size="13" font-weight="600" fill="#5f6b73">runs</text>
+  <text x="660" y="452" font-size="13" fill="#1f2328">npm run depcruise, CI</text>
+  <text x="660" y="480" font-size="13" font-style="italic" font-weight="600" fill="#1f2328">its own rule names, always error;</text>
+  <text x="660" y="500" font-size="13" font-style="italic" font-weight="600" fill="#1f2328">ignores ddd-ts-kit-disable comments</text>
+</svg>

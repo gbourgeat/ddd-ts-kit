@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" width="960" height="540" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Le chemin d'une ligne de journal à travers WinstonLogger et winston</title>
+  <desc id="desc">Un adaptateur appelle logger.info avec un message et des champs. WinstonLogger demande d'abord à winston si le niveau est actif : sous le seuil, ou une fois le logger vidé, rien n'est écrit. Sinon, il décrit les erreurs parmi les champs et en tient à l'écart le niveau et le message. winston fusionne les champs de la ligne, ceux des enfants et son defaultMeta (service, environment, base). Puis les formats s'exécutent dans l'ordre : correlationFields remplit depuis fields() les clés que personne n'a données, redactCredentials remplace la valeur de chaque clé de secret par [redacted], isoTime écrit time, et json ou la ligne lisible sérialise. Chaque transport écrit la ligne si elle passe son propre niveau : la console par défaut, ou les fichiers, syslog ou les flux que vous donnez.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="540" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Le chemin d'une ligne de journal à travers winston</text>
+
+  <!-- row 1 -->
+  <rect x="32" y="70" width="240" height="96" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="152" y="98" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">un adaptateur</text>
+  <text x="152" y="122" font-size="13" fill="#1f2328" text-anchor="middle">logger.info('order shipped',</text>
+  <text x="152" y="142" font-size="13" fill="#1f2328" text-anchor="middle">{ orderId })</text>
+  <rect x="312" y="70" width="200" height="96" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="412" y="98" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">niveau actif ?</text>
+  <text x="412" y="122" font-size="13" fill="#1f2328" text-anchor="middle">demandé par WinstonLogger,</text>
+  <text x="412" y="142" font-size="13" fill="#1f2328" text-anchor="middle">false une fois vidé</text>
+  <rect x="552" y="70" width="240" height="96" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="672" y="98" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">WinstonLogger</text>
+  <text x="672" y="122" font-size="13" fill="#1f2328" text-anchor="middle">erreurs décrites une fois</text>
+  <text x="672" y="142" font-size="13" fill="#1f2328" text-anchor="middle">level et message protégés</text>
+  <line x1="274" y1="118" x2="308" y2="118" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="514" y1="118" x2="548" y2="118" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="530" y="108" font-size="13" fill="#1f2328" text-anchor="middle">oui</text>
+  <line x1="412" y1="168" x2="412" y2="196" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="422" y="188" font-size="13" fill="#1f2328">non</text>
+  <rect x="312" y="200" width="200" height="44" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="5 4"/>
+  <text x="412" y="219" font-size="13" fill="#1f2328" text-anchor="middle">rien d'écrit,</text>
+  <text x="412" y="236" font-size="13" fill="#1f2328" text-anchor="middle">aucun format ne s'exécute</text>
+
+  <!-- row 2, right to left -->
+  <line x1="740" y1="168" x2="740" y2="266" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="660" y="270" width="268" height="150" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="794" y="296" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">winston fusionne</text>
+  <text x="678" y="324" font-size="13" fill="#1f2328">les champs de la ligne</text>
+  <text x="678" y="348" font-size="13" fill="#1f2328">les champs des enfants</text>
+  <text x="678" y="372" font-size="13" fill="#1f2328">defaultMeta : service,</text>
+  <text x="678" y="392" font-size="13" fill="#1f2328">environment, base</text>
+
+  <rect x="340" y="270" width="280" height="250" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="480" y="296" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">formats, dans l'ordre</text>
+  <rect x="354" y="310" width="252" height="44" rx="8" fill="#ffffff" stroke="#7a4f9a" stroke-width="1.5"/>
+  <text x="366" y="328" font-size="13" font-weight="700" fill="#7a4f9a">1. correlationFields</text>
+  <text x="366" y="346" font-size="13" fill="#1f2328">fields() remplit les clés non données</text>
+  <rect x="354" y="362" width="252" height="44" rx="8" fill="#ffffff" stroke="#7a4f9a" stroke-width="1.5"/>
+  <text x="366" y="380" font-size="13" font-weight="700" fill="#7a4f9a">2. redactCredentials</text>
+  <text x="366" y="398" font-size="13" fill="#1f2328">password, token, ... [redacted]</text>
+  <rect x="354" y="414" width="252" height="44" rx="8" fill="#ffffff" stroke="#7a4f9a" stroke-width="1.5"/>
+  <text x="366" y="432" font-size="13" font-weight="700" fill="#7a4f9a">3. isoTime</text>
+  <text x="366" y="450" font-size="13" fill="#1f2328">time, en ISO 8601</text>
+  <rect x="354" y="466" width="252" height="44" rx="8" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="366" y="484" font-size="13" font-weight="700" fill="#5f6b73">4. json, ou la ligne lisible</text>
+  <text x="366" y="502" font-size="13" fill="#1f2328">clés triées en JSON</text>
+  <line x1="658" y1="345" x2="624" y2="345" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <rect x="32" y="270" width="268" height="200" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="166" y="296" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">transports</text>
+  <text x="50" y="322" font-size="13" fill="#1f2328">chacun vérifie son propre niveau</text>
+  <rect x="46" y="336" width="240" height="36" rx="8" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="58" y="359" font-size="13" fill="#1f2328">Console : par défaut</text>
+  <rect x="46" y="380" width="240" height="36" rx="8" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="58" y="403" font-size="13" fill="#1f2328">File, avec ou sans rotation</text>
+  <rect x="46" y="424" width="240" height="36" rx="8" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="58" y="447" font-size="13" fill="#1f2328">Stream, syslog, un éditeur</text>
+  <line x1="338" y1="390" x2="304" y2="390" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+</svg>

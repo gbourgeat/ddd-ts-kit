@@ -1,3 +1,5 @@
+**English** · [Français](README.fr.md)
+
 # @ddd-ts-kit/sentry
 
 The kernel `ErrorReporter` on Sentry or on GlitchTip, which speaks the same protocol: one adapter,
@@ -11,6 +13,12 @@ npm i @ddd-ts-kit/sentry @sentry/node @opentelemetry/api
 
 Written against `@sentry/node` 11: the options it relies on (`enableOpenTelemetrySetup`,
 `dataCollection`) do not exist in earlier majors.
+
+![Where the Sentry reporter sits: handlers and aggregates throw and report nothing; five capture points around them, the command and query buses, the HTTP pipeline, the job scheduler, DeadLetterReports on the hooks of the event providers and reportProcessFailures on the process, hand an unexpected failure to the kernel ErrorReporter, once; the composition root binds the SentryErrorReporter of initSentry to it; the event is scrubbed, then passed to the beforeSend of the project, then sent to Sentry or GlitchTip; its trace id leads to the trace in the tracing backend](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/sentry-capture-points.svg)
+
+The code of a use case never sees the reporter. It throws; what stands around it decides whether
+the failure is an incident, describes it with the identifiers of the work in progress and hands
+it to the kernel `ErrorReporter`, the one port this package implements.
 
 ## Composition root
 
@@ -31,9 +39,10 @@ reportProcessFailures(errors); // uncaughtException and unhandledRejection: repo
 // main.ts
 import { tracing } from '@/platform/tracing'; // first
 import { errors } from '@/platform/errors'; // second
-import { DeadLetterReports } from '@ddd-ts-kit/kernel';
+import { DeadLetterReports, ExecutionScope } from '@ddd-ts-kit/kernel';
 import { createApplication, kernelModule } from '@ddd-ts-kit/di';
 import { reportHttpErrors } from '@ddd-ts-kit/http';
+import { RabbitMqEventBus } from '@ddd-ts-kit/rabbitmq';
 
 const deadLetters = new DeadLetterReports(errors);
 const bus = new RabbitMqEventBus({ url, onFailure: (failure) => deadLetters.onFailure(failure) });
@@ -90,6 +99,8 @@ under the name of the command, and the route that answers 500 stays silent. The 
 says where it came from: `origin` is the origin of the execution context (`http`, `schedule`),
 and the correlation id and the trace lead to the request.
 
+![One failure, one report: a request reaches the route, which sends a command on the bus; the handler throws an unexpected error; errorReportingMiddleware of the bus reports it under the name of the command and marks it, then lets it go on; the route answers 500 and reportHttpErrors recognises the marked error and stays silent; the tracker receives one event, with origin http, the correlation id and the trace id](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/sentry-one-failure-one-report.svg)
+
 **Events.** A consumer is retried: its first failures are expected, and reporting them would
 bury the real incidents. The bus middleware therefore says nothing while an event is consumed,
 and `DeadLetterReports` reports the event once its provider gives it up. The hooks of the
@@ -97,6 +108,108 @@ providers say codes only, so `observing(subscriber)` remembers what each handler
 report carries the real error and its stack. Without it, or for a poison message, the report
 is a `DeadLetterError` naming the code. An event buried by a `DomainError` is reported as a
 `warning`: it is lost to its consumer all the same.
+
+![An event whose handler keeps failing: at each attempt observing remembers what the handler threw and the provider calls onFailure; while the provider retries, onFailure reports nothing; at the last attempt the provider gives the event up, onFailure hears dead and reports once, with the error the handler really threw, origin event and the operation named after the event type and the consumer](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/sentry-event-given-up.svg)
+
+The same steps, played by hand against the doubles of the kernel, as a test of the wiring would:
+
+<!-- checked sample -->
+```ts
+import {
+  DeadLetterReports,
+  InMemoryErrorReporter,
+  type IntegrationEvent,
+  type IntegrationEventCallback,
+  type IntegrationEventSubscriber,
+} from '@ddd-ts-kit/kernel';
+
+// A provider reduced to what matters here: it keeps the handler it is given.
+const handlers = new Map<string, IntegrationEventCallback>();
+const provider: IntegrationEventSubscriber = {
+  subscribe: (type, handler) => {
+    handlers.set(type, handler);
+
+    return { unsubscribe: () => handlers.delete(type) };
+  },
+};
+
+const reporter = new InMemoryErrorReporter();
+const deadLetters = new DeadLetterReports(reporter);
+
+deadLetters.observing(provider).subscribe('ordering.order.placed', async () => {
+  throw new Error('ledger unavailable');
+});
+
+const event: IntegrationEvent = {
+  id: 'evt-1',
+  type: 'ordering.order.placed',
+  version: 1,
+  occurredAt: '2026-03-01T10:00:00.000Z',
+  payload: {},
+};
+const deliver = handlers.get('ordering.order.placed');
+
+// What the provider says of each failed delivery: codes and identifiers only.
+const failure = { kind: 'handler', code: 'Error', eventId: 'evt-1', eventType: 'ordering.order.placed', consumer: 'billing' };
+
+await deliver?.(event).catch(() => undefined); // attempt 1 fails: observing remembers the error
+deadLetters.onFailure({ ...failure, attempt: 1 }); // retried: no report
+
+await deliver?.(event).catch(() => undefined); // attempt 2, the last one, fails
+deadLetters.onFailure({ ...failure, attempt: 2, dead: true }); // given up: one report
+
+// One report: the Error('ledger unavailable') itself, origin 'event', operation 'ordering.order.placed billing'.
+export const reports = reporter.reports;
+```
+
+**In a handler.** Nothing to write: a handler throws, and the capture point around it reports.
+
+<!-- checked sample -->
+```ts
+import { ConceptError, type ErrorReporter } from '@ddd-ts-kit/kernel';
+
+interface PaymentGateway {
+  capture(paymentId: string): Promise<'captured' | 'declined'>;
+}
+
+interface CapturePaymentCommand {
+  readonly paymentId: string;
+}
+
+export class PaymentError extends ConceptError {
+  static declined(paymentId: string) {
+    return PaymentError.refusal('PAYMENT_DECLINED', `Payment ${paymentId} was declined.`, { paymentId });
+  }
+}
+
+// Instead of: a handler that reports by itself, and hides the failure from its caller.
+export class CapturePaymentReportingItself {
+  constructor(
+    private readonly gateway: PaymentGateway,
+    private readonly errors: ErrorReporter,
+  ) {}
+
+  async execute(command: CapturePaymentCommand): Promise<void> {
+    try {
+      await this.gateway.capture(command.paymentId);
+    } catch (error) {
+      this.errors.report(error, { origin: 'command', operation: 'CapturePayment', severity: 'error' });
+    }
+  }
+}
+
+// Write: a handler that throws. A refusal is a DomainError, answered and never reported;
+// anything else goes up to the bus, which reports it once, with the actor, the tenant and the trace.
+export class CapturePaymentHandler {
+  constructor(private readonly gateway: PaymentGateway) {}
+
+  async execute(command: CapturePaymentCommand): Promise<void> {
+    if ((await this.gateway.capture(command.paymentId)) === 'declined') {
+      throw PaymentError.declined(command.paymentId);
+    }
+  }
+}
+```
 
 ## With OpenTelemetry
 
@@ -227,4 +340,5 @@ Put the DSN in `SENTRY_DSN`; from another container of the stack, replace `local
 ## In a test
 
 Nothing of this package: the test application binds `InMemoryErrorReporter`, and
-`app.errors.reports` lists what the buses and the jobs reported, as data.
+`app.errors.reports` lists what the buses and the jobs reported, as data: each entry is
+`{ error, report }`, the error as it was thrown and the `ErrorReport` that describes it.

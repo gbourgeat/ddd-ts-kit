@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 500" width="960" height="500" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">A port is the type and the token; adapters and fakes implement it</title>
+  <desc id="desc">A handler of the scheduling context takes a PersonDirectoryGateway in its constructor. The port is an abstract class with abstract members only: at compile time it is the type of the parameter, at run time it is the injection token the container keys on. The adapter InProcessPersonDirectoryGateway, in infrastructure, and the fake FakePersonDirectoryGateway, in the tests, both implement it and never extend it. The composition root binds the port to the adapter in production and to the fake in a test.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+    <marker id="arrow-infrastructure" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#7a4f9a"/>
+    </marker>
+    <marker id="arrow-platform" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#5f6b73"/>
+    </marker>
+  </defs>
+  <rect width="960" height="500" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">A port is the type and the token; adapters and fakes implement it</text>
+
+  <rect x="32" y="112" width="216" height="128" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="140" y="142" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">a handler</text>
+  <text x="140" y="170" font-size="13" fill="#1f2328" text-anchor="middle">constructor(directory:</text>
+  <text x="140" y="190" font-size="13" fill="#1f2328" text-anchor="middle">PersonDirectoryGateway)</text>
+  <rect x="340" y="84" width="272" height="196" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="476" y="114" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">PersonDirectoryGateway</text>
+  <text x="476" y="136" font-size="13" fill="#1f2328" text-anchor="middle">abstract class, abstract members only</text>
+  <rect x="356" y="152" width="240" height="52" rx="8" fill="#ffffff" stroke="#2b5d8a" stroke-opacity="0.5"/>
+  <text x="476" y="174" font-size="14" font-weight="600" fill="#2b5d8a" text-anchor="middle">at compile time: the type</text>
+  <text x="476" y="194" font-size="13" fill="#1f2328" text-anchor="middle">of the constructor parameter</text>
+  <rect x="356" y="214" width="240" height="52" rx="8" fill="#ffffff" stroke="#2b5d8a" stroke-opacity="0.5"/>
+  <text x="476" y="236" font-size="14" font-weight="600" fill="#2b5d8a" text-anchor="middle">at run time: the token</text>
+  <text x="476" y="256" font-size="13" fill="#1f2328" text-anchor="middle">what the container binds and resolves</text>
+  <rect x="684" y="84" width="252" height="84" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="810" y="114" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">adapter</text>
+  <text x="810" y="136" font-size="13" fill="#1f2328" text-anchor="middle">InProcessPersonDirectoryGateway</text>
+  <text x="810" y="154" font-size="13" fill="#1f2328" text-anchor="middle">infrastructure/external/</text>
+  <rect x="684" y="196" width="252" height="84" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="810" y="226" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">fake</text>
+  <text x="810" y="248" font-size="13" fill="#1f2328" text-anchor="middle">FakePersonDirectoryGateway</text>
+  <text x="810" y="266" font-size="13" fill="#1f2328" text-anchor="middle">test/fakes/</text>
+  <line x1="250" y1="176" x2="338" y2="176" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="294" y="164" font-size="13" fill="#1f2328" text-anchor="middle">depends on</text>
+  <line x1="682" y1="126" x2="614" y2="126" stroke="#7a4f9a" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow-infrastructure)"/>
+  <line x1="682" y1="238" x2="614" y2="238" stroke="#5f6b73" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow-platform)"/>
+  <rect x="32" y="336" width="904" height="88" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="56" y="364" font-size="16" font-weight="700" fill="#5f6b73">composition root</text>
+  <text x="56" y="388" font-size="13" fill="#1f2328">production: @Gateway(PersonDirectoryGateway) on the adapter, or bind(PersonDirectoryGateway).toClass(...)</text>
+  <text x="56" y="408" font-size="13" fill="#1f2328">a test: fake(PersonDirectoryGateway, new FakePersonDirectoryGateway(...)), same port, same handler</text>
+  <line x1="476" y1="334" x2="476" y2="282" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="488" y="314" font-size="13" fill="#1f2328">binds the port to one implementation</text>
+  <line x1="40" y1="460" x2="84" y2="460" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="96" y="465" font-size="14" fill="#1f2328">depends on, by a constructor parameter typed by the port</text>
+  <line x1="40" y1="484" x2="84" y2="484" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <text x="96" y="489" font-size="14" fill="#1f2328">implements the port, never extends it</text>
+</svg>

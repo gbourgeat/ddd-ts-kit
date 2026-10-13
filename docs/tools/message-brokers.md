@@ -1,3 +1,5 @@
+**English** · [Français](message-brokers.fr.md)
+
 # Message brokers: in-process, RabbitMQ, Kafka, NATS JetStream, Redis Streams
 
 **Summary.** Integration events between bounded contexts leave through the transactional
@@ -11,15 +13,7 @@ its own process, and choose it on ordering, durability and what your team alread
 
 ## What the broker does and does not do here
 
-```mermaid
-flowchart LR
-  H[BookAppointment handler] -->|same transaction| O[(outbox table)]
-  O --> R[outbox relay]
-  R -->|publish, wait for acknowledgement| B{{broker}}
-  B --> N[notifications consumer]
-  B --> A[analytics consumer]
-  N -->|mark + work in one unit of work| P[(processed events)]
-```
+![The handler of BookAppointment writes the appointment and an outbox row in one transaction; the outbox relay publishes the row to the broker after the commit and may publish twice; the broker gives each consumer its own subscription and may deliver twice; each consumer writes its processed-event mark and its change in one unit of work, so a second delivery changes nothing](../assets/diagrams/message-brokers-outbox-to-consumers.svg)
 
 Whatever the broker, three things are fixed by the architecture (`events/outbox-required`,
 `events/consumer-idempotent` in [ARCHITECTURE.md](../ARCHITECTURE.md)):
@@ -35,6 +29,65 @@ Whatever the broker, three things are fixed by the architecture (`events/outbox-
 So "exactly once" is not a property to shop for. The broker's job is to hold events durably
 between two processes, give each consumer its own subscription, retry a bounded number of
 times and park what cannot be handled.
+
+What the first rule means in code. Instead of sending to the broker from the handler:
+
+```ts
+await this.appointments.save(appointment);
+await this.rabbit.publish([booked]); // the commit can still fail after this line: an event for a booking that does not exist
+```
+
+publish to the `IntegrationEventPublisher` port from the handler of a domain event. The
+composition root binds that port to the `OutboxPublisher`, which only appends a row in the
+transaction of the command; the relay sends it after the commit, whichever broker is behind it:
+
+<!-- checked sample -->
+```ts
+import { defineIntegrationEvent } from '@ddd-ts-kit/events';
+import { IdGenerator, IntegrationEventPublisher, type DomainEvent } from '@ddd-ts-kit/kernel';
+import { zodSchema } from '@ddd-ts-kit/validation/zod';
+import { z } from 'zod';
+
+// contexts/appointments/domain/events/appointment-booked.event.ts
+export class AppointmentBooked implements DomainEvent {
+  readonly name = 'appointments.appointment.booked';
+
+  constructor(
+    readonly aggregateId: string,
+    readonly occurredAt: Date,
+    readonly startsAt: Date,
+  ) {}
+}
+
+// contexts/appointments/published-language/appointment-booked.v1.integration-event.ts
+export const appointmentBooked = defineIntegrationEvent({
+  type: 'appointments.appointment.booked',
+  version: 1,
+  description: 'An appointment was booked.',
+  payload: zodSchema(z.object({ appointmentId: z.string(), startsAt: z.iso.datetime() })),
+});
+
+// contexts/appointments/application/integration/publishers/appointment-booked.publisher.ts
+export class AppointmentBookedPublisher {
+  constructor(
+    private readonly publisher: IntegrationEventPublisher,
+    private readonly ids: IdGenerator,
+  ) {}
+
+  async handle(event: AppointmentBooked): Promise<void> {
+    const published = appointmentBooked.create(
+      { appointmentId: event.aggregateId, startsAt: event.startsAt.toISOString() },
+      { id: this.ids.next(), occurredAt: event.occurredAt },
+    );
+
+    // Bound to the outbox: a row in the transaction of the command, not a message on the wire.
+    await this.publisher.publish([published]);
+  }
+}
+```
+
+In a project the publisher is declared with `@DomainEventHandler` and the
+generator writes it ([domain and integration events](../concepts/domain-and-integration-events.md)).
 
 ## Comparison
 
@@ -73,6 +126,64 @@ Server versions and licences checked on 2026-10-10 (GitHub releases and licence 
    worse choice than a less capable one they know.
 6. **Build and image constraints.** The Kafka client is a native addon with an install script.
 
+![A decision tree: no consumer in another process leads to the in-process bus; order per aggregate without a version in the payload leads to Kafka; a consumer that must read past events leads to Kafka or NATS JetStream; events that tolerate a rare loss lead to Redis Streams on a server that is not the cache; otherwise RabbitMQ with quorum queues](../assets/diagrams/message-brokers-choosing.svg)
+
+The second question is usually answered by the payload, not by the broker. A producer that
+puts the version of the aggregate in its event lets every consumer ignore what arrives late,
+on any broker, across restarts and redeliveries:
+
+<!-- checked sample -->
+```ts
+import { consume, defineIntegrationEvent } from '@ddd-ts-kit/events';
+import type { ProcessedEventStore, UnitOfWork } from '@ddd-ts-kit/kernel';
+import { zodSchema } from '@ddd-ts-kit/validation/zod';
+import { z } from 'zod';
+
+export const appointmentStatusChanged = defineIntegrationEvent({
+  type: 'appointments.appointment.status-changed',
+  version: 1,
+  description: 'The status of an appointment changed.',
+  payload: zodSchema(
+    z.object({
+      appointmentId: z.string(),
+      status: z.enum(['booked', 'cancelled']),
+      // The version of the aggregate after the change: what lets a consumer sort the events.
+      appointmentVersion: z.number().int().positive(),
+    }),
+  ),
+});
+
+interface OccupancyRow {
+  readonly status: 'booked' | 'cancelled';
+  readonly appointmentVersion: number;
+}
+
+declare const occupancy: {
+  find(appointmentId: string): Promise<OccupancyRow | undefined>;
+  save(appointmentId: string, row: OccupancyRow): Promise<void>;
+};
+declare const processed: ProcessedEventStore;
+declare const unitOfWork: UnitOfWork;
+
+// analytics: the mark of the event and the row commit together, in one unit of work.
+export const occupancyOnStatusChanged = consume(
+  appointmentStatusChanged,
+  { consumer: 'analytics.occupancy-on-status-changed', processed, unitOfWork },
+  async ({ payload }) => {
+    const known = await occupancy.find(payload.appointmentId);
+
+    if (known !== undefined && known.appointmentVersion >= payload.appointmentVersion) {
+      return; // overtaken: a later change of this appointment is already applied
+    }
+
+    await occupancy.save(payload.appointmentId, { status: payload.status, appointmentVersion: payload.appointmentVersion });
+  },
+);
+```
+
+With that field, `cancelled` arriving before `booked` is no longer a problem: `booked` comes
+second, carries a lower version, and is ignored.
+
 ## What this kit supports and verified
 
 All four broker providers implement `IntegrationEventPublisher` and
@@ -107,6 +218,38 @@ codes travel, never error messages. Facts below come from the package READMEs
 In other words: every provider was proven against a single node on a developer machine or in
 CI. Multi-node behaviour, security configuration and crash recovery of the consumer process
 are yours to test before production.
+
+Because the four share their option names, changing broker is a change of the platform, in
+`src/platform/events/create-event-provider.ts` for a generated project. The handlers, the
+outbox and the consumers stay as they are:
+
+<!-- checked sample -->
+```ts
+import { KafkaEventBus } from '@ddd-ts-kit/kafka';
+import type { EventBus } from '@ddd-ts-kit/kernel';
+import { NatsEventBus } from '@ddd-ts-kit/nats';
+import { RabbitMqEventBus } from '@ddd-ts-kit/rabbitmq';
+import { RedisStreamsEventBus } from '@ddd-ts-kit/redis/event-bus';
+
+declare const url: string;
+declare const broker: 'rabbitmq' | 'kafka' | 'nats' | 'redis';
+
+// The same policy everywhere: five deliveries, five seconds apart (the defaults), then the dead destination.
+const retry = { maxAttempts: 5, delayMs: 5_000 };
+
+const providers: Record<typeof broker, () => EventBus> = {
+  rabbitmq: () => new RabbitMqEventBus({ connection: url, retry }), // quorum queues by default
+  kafka: () => new KafkaEventBus({ brokers: url, retry }), // keyOf: the key of each record, for ordering
+  nats: () => new NatsEventBus({ connection: url, retry }),
+  redis: () => new RedisStreamsEventBus({ connection: url, retry }), // Redis, Valkey or Dragonfly
+};
+
+export const bus = providers[broker]();
+```
+
+When a handler keeps failing, all four do the same thing:
+
+![After a failed attempt the provider delivers the event again after a fixed delay, up to maxAttempts deliveries; then the event goes to the dead destination of the provider (dead queue, dead-letter topic, dead-letter stream or dead stream), is reported once when DeadLetterReports is wired, and replayDead delivers it again once the cause is fixed](../assets/diagrams/message-brokers-retry-and-dead-letter.svg)
 
 **What the kit does not provide at all**: SQS/SNS, Google Pub/Sub, Azure Service Bus, Pulsar,
 Redpanda (may work as a Kafka-protocol broker; never run), change data capture (described as

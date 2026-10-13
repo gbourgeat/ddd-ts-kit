@@ -1,3 +1,5 @@
+**English** · [Français](lifecycle-status-through-machine.fr.md)
+
 # ddd-ts-kit/lifecycle-status-through-machine
 
 Architecture id: `lifecycle/status-through-machine`. Default severity: `error` in `recommended`, `error` in `strict`.

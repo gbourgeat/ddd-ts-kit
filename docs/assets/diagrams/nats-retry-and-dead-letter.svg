@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 640" width="960" height="640" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">What becomes of a message delivered to a durable consumer</title>
+  <desc id="desc">A message is delivered with a delivery count n, kept by the server. A message replayed for another durable consumer is acknowledged and skipped. A body that is not an envelope is poison: it is copied to the dead-letter stream with the code POISON_MESSAGE, then terminated. Otherwise every handler of its type runs. When every handler resolved, the message is acknowledged. When one threw and n is below retry.maxAttempts, the message is refused with a delay, nak with retry.delayMs, and the server delivers it again after that delay, to any instance, with n plus 1. When n reaches retry.maxAttempts, the message is copied to the dead-letter stream with the reason max-attempts, the copy is acknowledged, then the original is terminated. The server limit max_deliver is twice retry.maxAttempts, a backstop for deliveries that end without a verdict.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="640" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">What becomes of a message delivered to a durable consumer</text>
+
+  <!-- main column -->
+  <rect x="250" y="70" width="230" height="60" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="365" y="96" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">message delivered</text>
+  <text x="365" y="118" font-size="13" fill="#1f2328" text-anchor="middle">delivery count n (1 at first)</text>
+
+  <rect x="250" y="160" width="230" height="46" rx="23" fill="#ffffff" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="365" y="188" font-size="14" fill="#1f2328" text-anchor="middle">x-replay-for another consumer?</text>
+
+  <rect x="250" y="236" width="230" height="46" rx="23" fill="#ffffff" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="365" y="264" font-size="14" fill="#1f2328" text-anchor="middle">an envelope?</text>
+
+  <rect x="250" y="312" width="230" height="46" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="365" y="340" font-size="14" font-weight="700" fill="#2b5d8a" text-anchor="middle">every handler of the type</text>
+
+  <rect x="250" y="388" width="230" height="46" rx="23" fill="#ffffff" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="365" y="416" font-size="14" fill="#1f2328" text-anchor="middle">every handler resolved?</text>
+
+  <rect x="250" y="464" width="230" height="46" rx="23" fill="#ffffff" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="365" y="492" font-size="14" fill="#1f2328" text-anchor="middle">n = retry.maxAttempts?</text>
+
+  <g stroke="#3d4449" stroke-width="2">
+    <line x1="365" y1="132" x2="365" y2="156" marker-end="url(#arrow)"/>
+    <line x1="365" y1="208" x2="365" y2="232" marker-end="url(#arrow)"/>
+    <line x1="365" y1="284" x2="365" y2="308" marker-end="url(#arrow)"/>
+    <line x1="365" y1="360" x2="365" y2="384" marker-end="url(#arrow)"/>
+    <line x1="365" y1="436" x2="365" y2="460" marker-end="url(#arrow)"/>
+  </g>
+  <g font-size="13" fill="#1f2328">
+    <text x="375" y="226">no</text>
+    <text x="375" y="302">yes</text>
+    <text x="375" y="454">no, one threw</text>
+  </g>
+
+  <!-- outcomes -->
+  <line x1="482" y1="183" x2="536" y2="183" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="509" y="174" font-size="13" fill="#1f2328" text-anchor="middle">yes</text>
+  <rect x="540" y="160" width="396" height="46" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="556" y="188" font-size="14" fill="#1f2328"><tspan font-weight="700" fill="#5f6b73">ack</tspan> and skip: replayed for another consumer</text>
+
+  <line x1="482" y1="259" x2="536" y2="259" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="509" y="250" font-size="13" fill="#1f2328" text-anchor="middle">no</text>
+  <rect x="540" y="236" width="396" height="46" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="556" y="264" font-size="14" fill="#1f2328"><tspan font-weight="700" fill="#5f6b73">dead stream</tspan> + term: poison, POISON_MESSAGE</text>
+
+  <line x1="482" y1="411" x2="536" y2="411" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="509" y="402" font-size="13" fill="#1f2328" text-anchor="middle">yes</text>
+  <rect x="540" y="388" width="396" height="46" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="556" y="416" font-size="14" fill="#1f2328"><tspan font-weight="700" fill="#5f6b73">ack</tspan>: after the unit of work committed, done</text>
+
+  <line x1="482" y1="487" x2="536" y2="487" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="509" y="478" font-size="13" fill="#1f2328" text-anchor="middle">yes</text>
+  <rect x="540" y="464" width="396" height="66" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="556" y="490" font-size="14" fill="#1f2328"><tspan font-weight="700" fill="#5f6b73">dead stream</tspan>, copy acknowledged, then term:</text>
+  <text x="556" y="512" font-size="14" fill="#1f2328">max-attempts, x-error-code, x-attempt, x-source</text>
+
+  <!-- retried -->
+  <line x1="248" y1="487" x2="218" y2="487" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="233" y="478" font-size="13" fill="#1f2328" text-anchor="middle">no</text>
+  <rect x="24" y="464" width="190" height="66" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="119" y="490" font-size="14" font-weight="700" fill="#5f6b73" text-anchor="middle">nak(retry.delayMs)</text>
+  <text x="119" y="512" font-size="13" fill="#1f2328" text-anchor="middle">refused with a delay</text>
+  <path d="M44,462 V100 H246" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <g font-size="13" fill="#1f2328">
+    <text x="58" y="226">after the delay,</text>
+    <text x="58" y="244">the server delivers</text>
+    <text x="58" y="262">it again, to any</text>
+    <text x="58" y="280">instance: n + 1</text>
+    <text x="58" y="316" font-style="italic">never on the spot:</text>
+    <text x="58" y="334" font-style="italic">no hot loop</text>
+  </g>
+
+  <!-- footer -->
+  <text x="32" y="572" font-size="13" fill="#1f2328">If the copy to the dead stream is not acknowledged, the message is refused with the delay instead, and parked at a later delivery.</text>
+  <text x="32" y="594" font-size="13" fill="#1f2328">The server limit max_deliver is 2 x retry.maxAttempts: a delivery that ends without a verdict (a crash, an expired ack wait) counts too.</text>
+  <text x="32" y="616" font-size="13" fill="#1f2328">onDelivery reports each outcome: acknowledged, retried, dead or poison. Delivery is at least once: every handler is idempotent.</text>
+</svg>

@@ -1,3 +1,5 @@
+**English** · [Français](README.fr.md)
+
 # @ddd-ts-kit/eslint-plugin
 
 AST-accurate ESLint rules for the architecture of [docs/ARCHITECTURE.md](../../docs/ARCHITECTURE.md):
@@ -9,6 +11,8 @@ and 10.
 Every rule reads `ddd-ts-kit.config.json` ([docs/CONFIG.md](../../docs/CONFIG.md)), found by
 walking up from the linted file, and classifies the file into context and layer exactly like
 `ddd-ts-kit check` does. It also reads `stack.style` there: see [The two styles](#the-two-styles).
+
+![ESLint hands the plugin a file; the plugin walks up to ddd-ts-kit.config.json, classifies the file as ddd-ts-kit check does (context billing, layer application, not a test file), runs each rule on its syntax tree at the severity the config gives its id, and reports the line, the problem, what to write instead and the rule](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/eslint-plugin-how-a-file-is-judged.svg)
 
 ## Install
 
@@ -31,14 +35,15 @@ export default dddTsKit({ tsconfigRootDir: import.meta.dirname });
 
 | Layer of the config | Content |
 |---|---|
+| `ddd-ts-kit/ignores` | what is never linted: see `ignores` below |
 | `@eslint/js` recommended | the baseline of ESLint |
-| typescript-eslint `strictTypeChecked` and `stylisticTypeChecked` | with `projectService`; `strict` and `stylistic` when `typeChecked` is `false` |
+| typescript-eslint `strictTypeChecked` and `stylisticTypeChecked` | with `projectService` (`ddd-ts-kit/type-information`), and without type checking on JavaScript files (`ddd-ts-kit/javascript`); `strict` and `stylistic` when `typeChecked` is `false` |
 | `ddd-ts-kit/clean-code` | the standard rules backing section 6 of the architecture reference (below) |
 | `ddd-ts-kit/architecture` | every rule of this plugin, at the severity of `rules.<id>` in `ddd-ts-kit.config.json`, else at its default, the two layout rules of `@stylistic/eslint-plugin` at the severity of `rules."clean/blank-lines"` and `curly` at the severity of `rules."clean/braces"` (default `error`) |
 | `ddd-ts-kit/scripts` | `curly` on `.js`, `.mjs` and `.cjs` files, at the severity of `rules."clean/braces"`: a branch reads the same in a script |
 | `ddd-ts-kit/inner-layers` | `no-param-reassign` with `props` in `domain/` and `application/`: no output argument |
 | `ddd-ts-kit/aggregates` | `prefer-readonly` off in aggregates and entities, whose state is replaced by intention methods |
-| `ddd-ts-kit/tests` | a lighter set for specs, fakes and builders |
+| `ddd-ts-kit/tests` | a lighter set on `*.spec.ts`, `*.test.ts`, the `test/` directory of each context and the root `test/`: `any` and `!` warn, the `no-unsafe-*` rules off, type assertions allowed |
 
 | Option | Default | Meaning |
 |---|---|---|
@@ -47,9 +52,22 @@ export default dddTsKit({ tsconfigRootDir: import.meta.dirname });
 | `allowDefaultProject` | `['*.config.ts', '*.config.mts']` | files outside the tsconfig still linted with types |
 | `ignores` | none | added to `dist`, `coverage`, `node_modules`, `reports`, `*.d.ts`, and `clients/*/src` when `ddd-ts-kit.config.json` has `"sdk"` (the clients the CLI generates) |
 
+Blocks are applied in this order, and a later block wins for the files it matches. A block of
+your own goes after the helper:
+
+```js
+import { dddTsKit } from '@ddd-ts-kit/eslint-plugin';
+
+export default [
+  ...dddTsKit({ tsconfigRootDir: import.meta.dirname, ignores: ['src/generated/**'] }),
+  // a rule the kit does not enable: purity/no-environment refuses console in domain/ and application/ only
+  { files: ['src/**/*.ts'], rules: { 'no-console': 'error' } },
+];
+```
+
 To compose a config by hand, the plugin is the default export, with two presets that hold only
-its own rules, the three typescript-eslint rules they delegate to and the four layout rules of
-`@stylistic/eslint-plugin`, without type information:
+its own rules, the three typescript-eslint rules they delegate to, the two layout rules of
+`@stylistic/eslint-plugin` and `curly`, without type information:
 
 ```js
 import dddTsKit from '@ddd-ts-kit/eslint-plugin';
@@ -69,6 +87,104 @@ import dddTsKit, { standardRules } from '@ddd-ts-kit/eslint-plugin';
 
 export default [{ files: ['**/*.ts'], plugins: { 'ddd-ts-kit': dddTsKit, '@stylistic': stylistic }, rules: standardRules.layout }];
 ```
+
+### Changing a severity
+
+The severity of a rule of the kit is written once, in `ddd-ts-kit.config.json`, where both
+tools read it:
+
+```json
+{
+  "rules": {
+    "clean/function-size": "error",
+    "test/no-mocks": "off"
+  }
+}
+```
+
+```js
+// instead of: a severity in eslint.config.mjs, which `ddd-ts-kit check` never sees
+export default [...dddTsKit(), { rules: { 'ddd-ts-kit/test-no-mocks': 'off' } }];
+```
+
+`"off"` in the config silences the rule even where an ESLint config enables it. Raising a
+severity is free; lowering one under its default (`off`, or `warn` for an `error` rule) is a
+deviation, and `ddd-ts-kit check` asks for its decision record: see
+[Deviations](../../docs/CONFIG.md#deviations).
+
+## A report, and what to write instead
+
+Every message says what is wrong, what to write instead, and the rule. A handler that reads the
+system clock, in `src/contexts/billing/application/commands/issue-invoice/issue-invoice.handler.ts`:
+
+```ts
+// instead of
+import type { IdGenerator } from '@ddd-ts-kit/kernel';
+import { Invoice } from '@/contexts/billing/domain/aggregates/invoice.aggregate.js';
+import type { InvoiceRepository } from '@/contexts/billing/domain/repositories/invoice.repository.js';
+import type { IssueInvoice } from '@/contexts/billing/application/commands/issue-invoice/issue-invoice.command.js';
+
+export class IssueInvoiceHandler {
+  constructor(
+    private readonly invoices: InvoiceRepository,
+    private readonly ids: IdGenerator,
+  ) {}
+
+  async execute(command: IssueInvoice): Promise<string> {
+    const id = this.ids.next();
+
+    await this.invoices.save(Invoice.issue(id, command.customerId, new Date()));
+
+    return id;
+  }
+}
+```
+
+is reported, by `npx eslint src`:
+
+```
+src/contexts/billing/application/commands/issue-invoice/issue-invoice.handler.ts
+  16:68  error  new Date() without argument is used in the application layer. Receive the instant as a parameter in the domain, and take it from the Clock port (`this.clock.now()`) in a handler, so that a test fixes time with FixedClock  ddd-ts-kit/purity-no-system-clock
+```
+
+The fix the message names: the `Clock` port, which a spec fixes with `FixedClock`.
+
+<!-- checked sample -->
+```ts
+import { AuthorizedCommand, Clock, IdGenerator, type Actor } from '@ddd-ts-kit/kernel';
+
+// the command, the aggregate and its repository port, in their own files
+declare class IssueInvoice extends AuthorizedCommand<string> {
+  readonly customerId: string;
+  constructor(actor: Actor, customerId: string);
+}
+declare class Invoice {
+  static issue(id: string, customerId: string, issuedAt: Date): Invoice;
+}
+declare abstract class InvoiceRepository {
+  abstract save(invoice: Invoice): Promise<void>;
+}
+
+// write: the instant comes from a port
+export class IssueInvoiceHandler {
+  constructor(
+    private readonly invoices: InvoiceRepository,
+    private readonly clock: Clock,
+    private readonly ids: IdGenerator,
+  ) {}
+
+  async execute(command: IssueInvoice): Promise<string> {
+    const id = this.ids.next();
+
+    await this.invoices.save(Invoice.issue(id, command.customerId, this.clock.now()));
+
+    return id;
+  }
+}
+```
+
+When the code is right and the rule is not, the deviation is recorded, not hidden: see the
+suppression comment in [Settings](#settings).
 
 ## Rules
 
@@ -227,7 +343,7 @@ is not reported for following the conventions of the kit:
 | `no-unnecessary-type-arguments` | off | the id type of an aggregate is part of its declaration |
 | `consistent-type-definitions` | off | props are type aliases, states and options are interfaces |
 | `no-empty-object-type` | interfaces allowed | `interface SessionExtensions {}` is left open for declaration merging |
-| `no-extraneous-class` | empty classes allowed | a domain service or a fake starts empty |
+| `no-extraneous-class` | empty classes and decorated classes allowed | a domain service or a fake starts empty; a class that carries a decorator is a declaration, whatever its body |
 | `no-unused-vars` | `args: 'none'` | an adapter implements the whole signature of its port |
 | `dot-notation` | index signatures allowed | `process.env['PORT']` |
 | `no-confusing-void-expression`, `restrict-template-expressions`, `restrict-plus-operands` | arrow shorthand, numbers and booleans allowed | not coercion bugs |
@@ -261,16 +377,39 @@ editor after changing `ddd-ts-kit.config.json`.
 Two things work as with the CLI checker: `rules.<id>: "off"` in the config silences the rule
 even when the ESLint config enables it, and `// ddd-ts-kit-disable-next-line <id> -- <reason>`
 silences one line for both tools. A suppression without a reason silences nothing, and
-`governance/recorded-deviation` asks that the reason point to a decision record (`ADR-<number>`).
+`governance/recorded-deviation` asks that the reason point to a decision record (`ADR-<number>`):
+
+```ts
+// instead of: a reason that points to no decision
+// ddd-ts-kit-disable-next-line clean/no-flag-argument -- kept for now
+cancel(force: boolean): void {
+```
+
+```
+12:3  error  `ddd-ts-kit-disable-next-line clean/no-flag-argument` on line 12 silences a rule without pointing to a decision. Fix the diagnostic; if the deviation is deliberate, record it with `ddd-ts-kit generate adr` (reason, scope, condition for removing it) and end the comment with `-- ADR-<number>: <reason>`  ddd-ts-kit/governance-recorded-deviation
+```
+
+```ts
+// write: the decision record says why, for what scope and until when
+// ddd-ts-kit-disable-next-line clean/no-flag-argument -- ADR-0007: the legacy import sends a flag until 2027
+cancel(force: boolean): void {
+```
+
+The id is the one of the architecture reference (`clean/no-flag-argument`), not the ESLint name,
+and `npx ddd-ts-kit generate adr` writes the record. `eslint-disable` comments are held the same
+way, by `clean/no-escape-hatch` and `governance/recorded-deviation`.
 
 ## With `ddd-ts-kit check`
 
-Two tools, one set of ids, no overlap of authority.
+Two tools, one set of ids, no overlap of authority. A third, dependency-cruiser, does not read the
+config: it runs on a file generated from it, with its own rule names.
+
+![The plugin and ddd-ts-kit check read ddd-ts-kit.config.json at run time and share its rule ids, severities and suppression comments: the plugin judges one source file at a time on its syntax tree and is right when it disagrees with the checker; the checker judges what spans files, the tree, names, glossaries, config and barrel; dependency-cruiser runs only on the .dependency-cruiser.cjs that depcruise-config --write generates from the config and judges the resolved import graph with its own rule names, always at severity error, ignoring suppression comments](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/eslint-plugin-two-tools.svg)
 
 | Concern | Authority | Why |
 |---|---|---|
-| imports and boundaries (`layer/*`, `context/published-language-only`, `context/declared-relationship`, `context/published-language-is-a-contract`), `purity/*`, `clean/*`, `test/no-mocks`, `events/name-format`, `domain/*`, `application/*`, the code side of `events/outbox-required`, `events/consumer-idempotent`, `context/extractable`, `authz/*`, `aspects/outside-in`, `tracing/platform-only`, `domain-events/dispatched-on-save`, `domain-events/transactional-before-commit` on a declared class, `event-sourcing/*` (but the lock of `event-sourcing/upcaster-required`), `standard/no-parallel-interface`, `declarations/role-declared`, `ports/*`, `scheduling/*` (but the uniqueness of job names) and `governance/recorded-deviation` | this plugin | it reads the syntax tree: no false positive from a string or a comment, shadowing and arrow functions are understood |
-| the tree (`tree/closed`, `tree/context-doc`), names and files (`naming/*`, `test/spec-required`, `test/builder-required`), the language (`language/*`), the config (`config/*`, `context/no-cycle`), `events/defined-in-published-language`, `composition/only-in-module`, `declarations/barrel-current`, unique consumer names and job names, one declared class per role file, of `domain-events/transactional-before-commit` the adapters of an `application/ports/` port and the phase of an explicit-style handler, the config side of the ids above (`stack.events`, lowered severities, that a decision record exists) | `ddd-ts-kit check` | they judge the project, the glossary and files that are not sources; ESLint judges one source at a time |
+| imports and boundaries (`layer/*`, `context/published-language-only`, `context/declared-relationship`, `context/published-language-is-a-contract`), `purity/*`, `clean/*`, `test/no-mocks`, `events/name-format`, `domain/*`, `application/*`, the code side of `events/outbox-required`, `events/consumer-idempotent`, `context/extractable`, `authz/*`, `aspects/outside-in`, `tracing/platform-only`, `domain-events/dispatched-on-save`, `domain-events/transactional-before-commit` on a declared class, `event-sourcing/*` (but the lock of `event-sourcing/upcaster-required`), `standard/no-parallel-interface`, `declarations/role-declared`, `ports/*`, `scheduling/*` (but the uniqueness of job names), `language/declared-vocabulary`, `errors/through-factory`, `errors/constructor-not-public`, `errors/factory-name`, `presentation/*`, `lifecycle/*`, `process/*`, `schema/presentation-only`, `imports/alias-only`, `imports/extension` and `governance/recorded-deviation` | this plugin | it reads the syntax tree: no false positive from a string or a comment, shadowing and arrow functions are understood |
+| the tree (`tree/closed`, `tree/context-doc`), names and files (`naming/*`, `test/spec-required`, `test/builder-required`), the language (`language/glossary-term`, `language/no-technical-name`), error codes (`errors/code-unique`, `errors/known-code`), `imports/alias-declared`, `schema/no-duplicate-shape`, the config (`config/*`, `context/no-cycle`), `events/defined-in-published-language`, `composition/only-in-module`, `declarations/barrel-current`, unique consumer names and job names, one declared class per role file, of `domain-events/transactional-before-commit` the adapters of an `application/ports/` port and the phase of an explicit-style handler, the config side of the ids above (`stack.events`, lowered severities, that a decision record exists) | `ddd-ts-kit check` | they judge the project, the glossary and files that are not sources; ESLint judges one source at a time |
 | the real dependency graph (barrels, cycles, orphans, dev dependencies in production code) | dependency-cruiser, configured by the `.dependency-cruiser.cjs` that `ddd-ts-kit depcruise-config --write` generates from the config | it resolves modules instead of classifying paths |
 
 The CLI keeps approximating the code-level rules with regular expressions, without dependency:

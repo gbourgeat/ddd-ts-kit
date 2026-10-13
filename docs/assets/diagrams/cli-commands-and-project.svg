@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 552" width="960" height="552" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">The commands of ddd-ts-kit around a project</title>
+  <desc id="desc">On the left, the commands that write the project: init creates it, generate adds one piece at its canonical place with its spec and its registration, docs, sdk and depcruise-config rewrite what is derived, and the three migrations move an older form to the current one. In the middle, the project: ddd-ts-kit.config.json, the bounded contexts and the platform under src, and the generated documents. On the right, the commands that read it back without changing it: check and check-file, list and describe, status and todo, affected.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="552" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">The commands of ddd-ts-kit around a project</text>
+  <text x="24" y="80" font-size="14" font-weight="600" fill="#5f6b73">Write the project</text>
+  <text x="636" y="80" font-size="14" font-weight="600" fill="#5f6b73">Read it back, change nothing</text>
+  <!-- writers -->
+  <rect x="24" y="96" width="300" height="88" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="40" y="122" font-size="16" font-weight="700" fill="#5f6b73">init</text>
+  <text x="40" y="146" font-size="13" fill="#1f2328">creates the project: the config, the</text>
+  <text x="40" y="166" font-size="13" fill="#1f2328">platform, the pipeline, the contracts</text>
+  <line x1="326" y1="140" x2="356" y2="140" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="24" y="196" width="300" height="88" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="40" y="222" font-size="16" font-weight="700" fill="#5f6b73">generate &lt;kind&gt;</text>
+  <text x="40" y="246" font-size="13" fill="#1f2328">one piece at its canonical place,</text>
+  <text x="40" y="266" font-size="13" fill="#1f2328">with its spec and its registration</text>
+  <line x1="326" y1="240" x2="356" y2="240" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="24" y="296" width="300" height="88" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="40" y="322" font-size="16" font-weight="700" fill="#5f6b73">docs, sdk, depcruise-config</text>
+  <text x="40" y="346" font-size="13" fill="#1f2328">rewrite what the code and the config</text>
+  <text x="40" y="366" font-size="13" fill="#1f2328">derive; with --check, only compare</text>
+  <line x1="326" y1="340" x2="356" y2="340" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="24" y="396" width="300" height="88" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="40" y="422" font-size="16" font-weight="700" fill="#5f6b73">the migrations</text>
+  <text x="40" y="446" font-size="13" fill="#1f2328">controllers, error-factories and</text>
+  <text x="40" y="466" font-size="13" fill="#1f2328">value-objects: to the current form</text>
+  <line x1="326" y1="440" x2="356" y2="440" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- the project -->
+  <rect x="360" y="96" width="240" height="388" rx="12" fill="#ffffff" stroke="#3d4449" stroke-width="2.5"/>
+  <text x="480" y="122" font-size="16" font-weight="700" fill="#1f2328" text-anchor="middle">your project</text>
+  <rect x="376" y="136" width="208" height="64" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="480" y="162" font-size="14" font-weight="700" fill="#5f6b73" text-anchor="middle">ddd-ts-kit.config.json</text>
+  <text x="480" y="184" font-size="13" fill="#1f2328" text-anchor="middle">stack, contexts, rules</text>
+  <rect x="376" y="212" width="208" height="164" rx="8" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="480" y="236" font-size="14" font-weight="700" fill="#5f6b73" text-anchor="middle">src/contexts/&lt;context&gt;/</text>
+  <rect x="382" y="250" width="96" height="30" rx="6" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="1.5"/>
+  <text x="430" y="270" font-size="13" fill="#2f6f4f" text-anchor="middle">domain</text>
+  <rect x="482" y="250" width="96" height="30" rx="6" fill="#e7eef5" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="530" y="270" font-size="13" fill="#2b5d8a" text-anchor="middle">application</text>
+  <rect x="382" y="286" width="96" height="30" rx="6" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="1.5"/>
+  <text x="430" y="306" font-size="13" fill="#7a4f9a" text-anchor="middle">infrastructure</text>
+  <rect x="482" y="286" width="96" height="30" rx="6" fill="#f6ede6" stroke="#9a5b2b" stroke-width="1.5"/>
+  <text x="530" y="306" font-size="13" fill="#9a5b2b" text-anchor="middle">presentation</text>
+  <line x1="392" y1="332" x2="568" y2="332" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text x="480" y="356" font-size="13" fill="#1f2328" text-anchor="middle">src/platform/, src/main.ts</text>
+  <rect x="376" y="388" width="208" height="84" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="480" y="412" font-size="14" font-weight="700" fill="#5f6b73" text-anchor="middle">generated documents</text>
+  <text x="480" y="434" font-size="13" fill="#1f2328" text-anchor="middle">docs/, openapi/, clients/</text>
+  <text x="480" y="454" font-size="13" fill="#1f2328" text-anchor="middle">CONTEXT.md lists, barrels</text>
+  <!-- readers -->
+  <line x1="602" y1="140" x2="632" y2="140" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="636" y="96" width="300" height="88" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="652" y="122" font-size="16" font-weight="700" fill="#5f6b73">check, check-file</text>
+  <text x="652" y="146" font-size="13" fill="#1f2328">every rule, each finding with its fix;</text>
+  <text x="652" y="166" font-size="13" fill="#1f2328">exit code 1 on an error</text>
+  <line x1="602" y1="240" x2="632" y2="240" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="636" y="196" width="300" height="88" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="652" y="222" font-size="16" font-weight="700" fill="#5f6b73">list, describe</text>
+  <text x="652" y="246" font-size="13" fill="#1f2328">the contexts and what they hold,</text>
+  <text x="652" y="266" font-size="13" fill="#1f2328">as facts read from the source</text>
+  <line x1="602" y1="340" x2="632" y2="340" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="636" y="296" width="300" height="88" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="652" y="322" font-size="16" font-weight="700" fill="#5f6b73">status, todo</text>
+  <text x="652" y="346" font-size="13" fill="#1f2328">the slices, the TODO(domain) and</text>
+  <text x="652" y="366" font-size="13" fill="#1f2328">the it.todo left to do</text>
+  <line x1="602" y1="440" x2="632" y2="440" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="636" y="396" width="300" height="88" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="652" y="422" font-size="16" font-weight="700" fill="#5f6b73">affected</text>
+  <text x="652" y="446" font-size="13" fill="#1f2328">the contexts a pull request reaches</text>
+  <text x="652" y="466" font-size="13" fill="#1f2328">through the context map</text>
+  <!-- footer -->
+  <text x="24" y="520" font-size="13" fill="#1f2328">Every command accepts --json and --cwd &lt;dir&gt;; every one but init finds ddd-ts-kit.config.json in the directory or its parents.</text>
+</svg>

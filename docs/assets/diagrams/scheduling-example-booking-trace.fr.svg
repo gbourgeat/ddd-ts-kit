@@ -1,0 +1,98 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 774" width="960" height="774" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Une réservation, une trace</title>
+  <desc id="desc">L'arbre des spans d'une réservation, en deux parties. Dans la requête HTTP, avant la réponse 201 : POST /appointments contient la commande BookAppointmentCommand, ses appels de repository et son unité de travail, où l'événement du domaine scheduling.appointment.booked exécute ses gestionnaires : les relations du rendez-vous, l'échéance de confirmation, l'agenda et l'ajout à l'outbox. Après la réponse, dans la même trace : le relais de l'outbox publie l'événement, notification le traite, envoie le courriel par son mailer et planifie le rappel, analytics le traite et écrit l'issue du rendez-vous.</desc>
+  <rect width="960" height="774" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Une réservation, une trace: <tspan font-weight="400">POST /appointments</tspan></text>
+  <!-- the two parts of the trace -->
+  <rect x="24" y="74" width="912" height="314" rx="12" fill="#ffffff" stroke="#9a5b2b" stroke-width="1.5"/>
+  <rect x="24" y="414" width="912" height="264" rx="12" fill="#ffffff" stroke="#7a4f9a" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <line x1="24" y1="406" x2="936" y2="406" stroke="#3d4449" stroke-width="1.5" stroke-dasharray="3 4"/>
+  <rect x="310" y="393" width="340" height="26" rx="13" fill="#ffffff" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="480" y="411" font-size="14" font-weight="600" fill="#1f2328" text-anchor="middle">la validation, puis la réponse 201</text>
+  <text x="700" y="100" font-size="14" font-weight="700" fill="#1f2328">Dans la requête HTTP</text>
+  <text x="700" y="122" font-size="13" fill="#5f6b73">une transaction : le rendez-vous,</text>
+  <text x="700" y="142" font-size="13" fill="#5f6b73">ses relations, son agenda et</text>
+  <text x="700" y="162" font-size="13" fill="#5f6b73">l'événement dans l'outbox</text>
+  <text x="700" y="440" font-size="14" font-weight="700" fill="#1f2328">Plus tard, par le relais</text>
+  <text x="700" y="462" font-size="13" fill="#5f6b73">de l'outbox, dans la même trace,</text>
+  <text x="700" y="482" font-size="13" fill="#5f6b73">sous le même identifiant de</text>
+  <text x="700" y="502" font-size="13" fill="#5f6b73">corrélation ; une transaction par</text>
+  <text x="700" y="522" font-size="13" fill="#5f6b73">consommateur</text>
+  <!-- the tree -->
+  <path d="M45,103 V120 H60" fill="none" stroke="#3d4449" stroke-opacity="0.55" stroke-width="1.2"/>
+  <path d="M67,128 V145 H82" fill="none" stroke="#3d4449" stroke-opacity="0.55" stroke-width="1.2"/>
+  <path d="M67,128 V170 H82" fill="none" stroke="#3d4449" stroke-opacity="0.55" stroke-width="1.2"/>
+  <path d="M67,128 V195 H82" fill="none" stroke="#3d4449" stroke-opacity="0.55" stroke-width="1.2"/>
+  <path d="M89,203 V220 H104" fill="none" stroke="#3d4449" stroke-opacity="0.55" stroke-width="1.2"/>
+  <path d="M111,228 V245 H126" fill="none" stroke="#3d4449" stroke-opacity="0.55" stroke-width="1.2"/>
+  <path d="M133,253 V270 H148" fill="none" stroke="#3d4449" stroke-opacity="0.55" stroke-width="1.2"/>
+  <path d="M111,228 V295 H126" fill="none" stroke="#3d4449" stroke-opacity="0.55" stroke-width="1.2"/>
+  <path d="M111,228 V320 H126" fill="none" stroke="#3d4449" stroke-opacity="0.55" stroke-width="1.2"/>
+  <path d="M111,228 V345 H126" fill="none" stroke="#3d4449" stroke-opacity="0.55" stroke-width="1.2"/>
+  <path d="M133,353 V370 H148" fill="none" stroke="#3d4449" stroke-opacity="0.55" stroke-width="1.2"/>
+  <path d="M155,378 V435 H170" fill="none" stroke="#3d4449" stroke-opacity="0.55" stroke-width="1.2"/>
+  <path d="M177,443 V460 H192" fill="none" stroke="#3d4449" stroke-opacity="0.55" stroke-width="1.2"/>
+  <path d="M199,468 V485 H214" fill="none" stroke="#3d4449" stroke-opacity="0.55" stroke-width="1.2"/>
+  <path d="M221,493 V510 H236" fill="none" stroke="#3d4449" stroke-opacity="0.55" stroke-width="1.2"/>
+  <path d="M199,468 V535 H214" fill="none" stroke="#3d4449" stroke-opacity="0.55" stroke-width="1.2"/>
+  <path d="M221,543 V560 H236" fill="none" stroke="#3d4449" stroke-opacity="0.55" stroke-width="1.2"/>
+  <path d="M243,568 V585 H258" fill="none" stroke="#3d4449" stroke-opacity="0.55" stroke-width="1.2"/>
+  <path d="M265,593 V610 H280" fill="none" stroke="#3d4449" stroke-opacity="0.55" stroke-width="1.2"/>
+  <path d="M177,443 V635 H192" fill="none" stroke="#3d4449" stroke-opacity="0.55" stroke-width="1.2"/>
+  <path d="M199,643 V660 H214" fill="none" stroke="#3d4449" stroke-opacity="0.55" stroke-width="1.2"/>
+  <rect x="40" y="89" width="11" height="11" rx="2" fill="#f6ede6" stroke="#9a5b2b" stroke-width="1.5"/>
+  <text x="57" y="100" font-size="13" fill="#1f2328">POST /appointments</text>
+  <rect x="62" y="114" width="11" height="11" rx="2" fill="#e7eef5" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="79" y="125" font-size="13" fill="#1f2328">command BookAppointmentCommand</text>
+  <rect x="84" y="139" width="11" height="11" rx="2" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="1.5"/>
+  <text x="101" y="150" font-size="13" fill="#1f2328">repository CalendarRepository.findById</text>
+  <rect x="84" y="164" width="11" height="11" rx="2" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="1.5"/>
+  <text x="101" y="175" font-size="13" fill="#1f2328">repository AppointmentRepository : heldOn, heldBy, save</text>
+  <rect x="84" y="189" width="11" height="11" rx="2" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="101" y="200" font-size="13" fill="#1f2328">unit-of-work before-commit</text>
+  <rect x="106" y="214" width="11" height="11" rx="2" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="1.5"/>
+  <text x="123" y="225" font-size="13" fill="#1f2328">domain-event scheduling.appointment.booked</text>
+  <rect x="128" y="239" width="11" height="11" rx="2" fill="#e7eef5" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="145" y="250" font-size="13" fill="#1f2328">handler AppointmentBookedEventHandler</text>
+  <rect x="150" y="264" width="11" height="11" rx="2" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="1.5"/>
+  <text x="167" y="275" font-size="13" fill="#1f2328">repository SchedulingRelationships.recordAppointment</text>
+  <rect x="128" y="289" width="11" height="11" rx="2" fill="#e7eef5" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="145" y="300" font-size="13" fill="#1f2328">handler ConfirmationDeadlineOnBookedEventHandler</text>
+  <rect x="128" y="314" width="11" height="11" rx="2" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="1.5"/>
+  <text x="145" y="325" font-size="13" fill="#1f2328">repository Agenda.written</text>
+  <rect x="128" y="339" width="11" height="11" rx="2" fill="#e7eef5" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="145" y="350" font-size="13" fill="#1f2328">handler AppointmentBookedPublisher</text>
+  <rect x="150" y="364" width="11" height="11" rx="2" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="1.5"/>
+  <text x="167" y="375" font-size="13" fill="#1f2328">outbox append scheduling.appointment.booked</text>
+  <rect x="172" y="429" width="11" height="11" rx="2" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="189" y="440" font-size="13" fill="#1f2328">publish scheduling.appointment.booked</text>
+  <rect x="194" y="454" width="11" height="11" rx="2" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="211" y="465" font-size="13" fill="#1f2328">process notification.scheduling-appointment-booked</text>
+  <rect x="216" y="479" width="11" height="11" rx="2" fill="#e7eef5" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="233" y="490" font-size="13" fill="#1f2328">command SendNotificationCommand</text>
+  <rect x="238" y="504" width="11" height="11" rx="2" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="1.5"/>
+  <text x="255" y="515" font-size="13" fill="#1f2328">external Mailer.deliver, et ses appels de repository</text>
+  <rect x="216" y="529" width="11" height="11" rx="2" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="233" y="540" font-size="13" fill="#1f2328">unit-of-work before-commit</text>
+  <rect x="238" y="554" width="11" height="11" rx="2" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="1.5"/>
+  <text x="255" y="565" font-size="13" fill="#1f2328">domain-event notification.notification.sent</text>
+  <rect x="260" y="579" width="11" height="11" rx="2" fill="#e7eef5" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="277" y="590" font-size="13" fill="#1f2328">handler NotificationSentEventHandler</text>
+  <rect x="282" y="604" width="11" height="11" rx="2" fill="#e7eef5" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="299" y="615" font-size="13" fill="#1f2328">command PlanReminderCommand</text>
+  <rect x="194" y="629" width="11" height="11" rx="2" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="211" y="640" font-size="13" fill="#1f2328">process analytics.outcomes</text>
+  <rect x="216" y="654" width="11" height="11" rx="2" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="1.5"/>
+  <text x="233" y="665" font-size="13" fill="#1f2328">repository OutcomeRegister.written</text>
+  <!-- legend -->
+  <rect x="40" y="701" width="11" height="11" rx="2" fill="#f6ede6" stroke="#9a5b2b" stroke-width="1.5"/>
+  <text x="57" y="712" font-size="14" fill="#1f2328">requête HTTP</text>
+  <rect x="220" y="701" width="11" height="11" rx="2" fill="#e7eef5" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="237" y="712" font-size="14" fill="#1f2328">commande, gestionnaire</text>
+  <rect x="420" y="701" width="11" height="11" rx="2" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="1.5"/>
+  <text x="437" y="712" font-size="14" fill="#1f2328">événement du domaine</text>
+  <rect x="40" y="727" width="11" height="11" rx="2" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="1.5"/>
+  <text x="57" y="738" font-size="14" fill="#1f2328">repository, outbox, appel externe</text>
+  <rect x="420" y="727" width="11" height="11" rx="2" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="437" y="738" font-size="14" fill="#1f2328">unité de travail, publication, traitement</text>
+</svg>

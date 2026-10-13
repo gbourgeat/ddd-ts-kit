@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 600" width="960" height="600" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">From the outbox to the consumers, on Redis Streams</title>
+  <desc id="desc">The outbox relay claims a batch of pending records from the outbox table of the database and publishes them with XADD inside one MULTI; a record is marked published once the server answered an entry id for every event. Each event type has one stream, integration-events:ordering.order.placed, shared by every consumer. Each consumer name has its own consumer group on that stream: the group notifications and the group billing both receive every event. The instances of one consumer are members of its group, instance a and instance b for billing, and each entry goes to one of them. An entry is acknowledged with XACK after its handlers resolved. After its last failed attempt, or when it is not an envelope, an entry is copied to the dead stream of its consumer, integration-events:ordering.order.placed:billing:dead, and acknowledged, in one script.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="600" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">From the outbox to the consumers, on Redis Streams</text>
+
+  <!-- outbox -->
+  <rect x="24" y="110" width="210" height="84" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="129" y="140" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">outbox table</text>
+  <text x="129" y="162" font-size="13" fill="#1f2328" text-anchor="middle">in the database, written</text>
+  <text x="129" y="180" font-size="13" fill="#1f2328" text-anchor="middle">with the business data</text>
+
+  <line x1="129" y1="196" x2="129" y2="264" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="140" y="228" font-size="13" fill="#1f2328">claims a batch</text>
+  <text x="140" y="246" font-size="13" fill="#1f2328">of pending records</text>
+
+  <!-- relay -->
+  <rect x="24" y="268" width="210" height="84" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="129" y="298" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">OutboxRelay</text>
+  <text x="129" y="320" font-size="13" fill="#1f2328" text-anchor="middle">publisher: the bus</text>
+  <text x="129" y="338" font-size="13" fill="#1f2328" text-anchor="middle">(@ddd-ts-kit/events)</text>
+
+  <line x1="236" y1="310" x2="394" y2="310" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="315" y="296" font-size="13" fill="#1f2328" text-anchor="middle">XADD, in one MULTI</text>
+  <text x="315" y="332" font-size="13" fill="#1f2328" text-anchor="middle">published once every</text>
+  <text x="315" y="350" font-size="13" fill="#1f2328" text-anchor="middle">entry id is back</text>
+
+  <!-- events stream -->
+  <rect x="398" y="110" width="236" height="280" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="516" y="140" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">events stream</text>
+  <text x="516" y="164" font-size="13" fill="#1f2328" text-anchor="middle">integration-events:</text>
+  <text x="516" y="182" font-size="13" fill="#1f2328" text-anchor="middle">ordering.order.placed</text>
+  <g font-size="13" fill="#1f2328" text-anchor="middle">
+    <rect x="416" y="214" width="34" height="30" rx="4" fill="#ffffff" stroke="#7a4f9a"/>
+    <text x="433" y="234">e1</text>
+    <rect x="452" y="214" width="34" height="30" rx="4" fill="#ffffff" stroke="#7a4f9a"/>
+    <text x="469" y="234">e2</text>
+    <rect x="488" y="214" width="34" height="30" rx="4" fill="#ffffff" stroke="#7a4f9a"/>
+    <text x="505" y="234">e3</text>
+    <rect x="524" y="214" width="34" height="30" rx="4" fill="#ffffff" stroke="#7a4f9a"/>
+    <text x="541" y="234">e4</text>
+    <rect x="560" y="214" width="56" height="30" rx="4" fill="#ffffff" stroke="#7a4f9a" stroke-dasharray="4 3"/>
+    <text x="588" y="234">next</text>
+  </g>
+  <text x="516" y="276" font-size="13" fill="#1f2328" text-anchor="middle">one stream per event type,</text>
+  <text x="516" y="294" font-size="13" fill="#1f2328" text-anchor="middle">shared by every consumer;</text>
+  <text x="516" y="312" font-size="13" fill="#1f2328" text-anchor="middle">entries in the order the</text>
+  <text x="516" y="330" font-size="13" fill="#1f2328" text-anchor="middle">server took them in</text>
+  <text x="516" y="366" font-size="13" font-style="italic" fill="#7a4f9a" text-anchor="middle">lives in memory</text>
+
+  <!-- arrows to the groups -->
+  <line x1="636" y1="165" x2="678" y2="165" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="636" y1="315" x2="678" y2="315" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- group notifications -->
+  <rect x="682" y="110" width="254" height="110" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="698" y="138" font-size="16" font-weight="700" fill="#2b5d8a">group notifications</text>
+  <rect x="698" y="152" width="104" height="30" rx="6" fill="#ffffff" stroke="#2b5d8a"/>
+  <text x="750" y="172" font-size="13" fill="#1f2328" text-anchor="middle">instance c</text>
+  <text x="698" y="206" font-size="13" fill="#1f2328">receives every event too</text>
+
+  <!-- group billing -->
+  <rect x="682" y="240" width="254" height="150" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="698" y="268" font-size="16" font-weight="700" fill="#2b5d8a">group billing</text>
+  <rect x="698" y="282" width="104" height="30" rx="6" fill="#ffffff" stroke="#2b5d8a"/>
+  <text x="750" y="302" font-size="13" fill="#1f2328" text-anchor="middle">instance a</text>
+  <rect x="816" y="282" width="104" height="30" rx="6" fill="#ffffff" stroke="#2b5d8a"/>
+  <text x="868" y="302" font-size="13" fill="#1f2328" text-anchor="middle">instance b</text>
+  <text x="698" y="336" font-size="13" fill="#1f2328">each entry to one member;</text>
+  <text x="698" y="354" font-size="13" fill="#1f2328">XACK after its handlers;</text>
+  <text x="698" y="372" font-size="13" fill="#1f2328">position and pending entries</text>
+
+  <!-- dead stream -->
+  <line x1="809" y1="392" x2="809" y2="432" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="682" y="436" width="254" height="124" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="698" y="462" font-size="16" font-weight="700" fill="#7a4f9a">dead stream of billing</text>
+  <text x="698" y="484" font-size="13" fill="#1f2328">integration-events:ordering.</text>
+  <text x="698" y="502" font-size="13" fill="#1f2328">order.placed:billing:dead</text>
+  <text x="698" y="526" font-size="13" fill="#1f2328">last attempt failed, or poison:</text>
+  <text x="698" y="544" font-size="13" fill="#1f2328">copied and acknowledged</text>
+
+  <!-- caption -->
+  <text x="32" y="452" font-size="14" font-weight="600" fill="#1f2328">Two consumers of one type</text>
+  <text x="32" y="474" font-size="13" fill="#1f2328">a consumer group each: both receive every event.</text>
+  <text x="32" y="508" font-size="14" font-weight="600" fill="#1f2328">Two instances of one consumer</text>
+  <text x="32" y="530" font-size="13" fill="#1f2328">two members of its group: each entry goes to one of them.</text>
+  <text x="32" y="572" font-size="13" fill="#1f2328">Arrows: the path of the entries.</text>
+</svg>

@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 620" width="960" height="620" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">From the classes of a context to a running application</title>
+  <desc id="desc">On the left, what a bounded context says: in the declared style, its ports as abstract classes, its classes that declare themselves with a decorator, and the generated file that registers what each constructor takes; in the explicit style, a module file written by hand. In the middle, one module per context: the declared style as a whole goes either to contextModule, which reads the generated barrel, or to discoverContext, which loads the files from disk; the explicit style goes to defineContextModule. On the right, createApplication runs the register function of every module, checks the whole graph and throws a WiringError before any instance is built, binds everything in a tsyringe child container with the handlers on the buses and the jobs on the scheduler, and starts nothing. app.start is a separate call, made afterwards: it subscribes the consumers and starts the jobs.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="620" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">From the classes of a context to a running application</text>
+  <!-- column headings -->
+  <text x="24" y="76" font-size="14" font-weight="600" fill="#1f2328">1. What the context says</text>
+  <text x="316" y="76" font-size="14" font-weight="600" fill="#1f2328">2. One module per context</text>
+  <text x="624" y="76" font-size="14" font-weight="600" fill="#1f2328">3. createApplication({ modules })</text>
+  <!-- declared style: the group as a whole feeds a module -->
+  <rect x="24" y="92" width="244" height="282" rx="12" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="40" y="115" font-size="13" font-weight="600" fill="#5f6b73">declared style</text>
+  <rect x="40" y="128" width="212" height="70" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="146" y="156" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">ports</text>
+  <text x="146" y="180" font-size="13" fill="#1f2328" text-anchor="middle">abstract classes</text>
+  <rect x="40" y="210" width="212" height="70" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="146" y="238" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">declared classes</text>
+  <text x="146" y="262" font-size="13" fill="#1f2328" text-anchor="middle">@Repository, @Gateway...</text>
+  <rect x="40" y="292" width="212" height="70" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="146" y="320" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">generated file</text>
+  <text x="146" y="344" font-size="13" fill="#1f2328" text-anchor="middle">injected(Class, [ports])</text>
+  <!-- explicit style -->
+  <rect x="24" y="402" width="244" height="74" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="146" y="432" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">explicit module file</text>
+  <text x="146" y="456" font-size="13" fill="#1f2328" text-anchor="middle">&lt;context&gt;.module.ts, by hand</text>
+  <!-- modules -->
+  <rect x="316" y="128" width="260" height="70" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="446" y="156" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">contextModule(name, barrel)</text>
+  <text x="446" y="180" font-size="13" fill="#1f2328" text-anchor="middle">the generated barrel lists them</text>
+  <rect x="316" y="292" width="260" height="70" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="446" y="320" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">discoverContext(name, dir)</text>
+  <text x="446" y="344" font-size="13" fill="#1f2328" text-anchor="middle">loads the role files from disk</text>
+  <rect x="316" y="402" width="260" height="74" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="446" y="432" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">defineContextModule({ ... })</text>
+  <text x="446" y="456" font-size="13" fill="#1f2328" text-anchor="middle">every binding written by hand</text>
+  <!-- context to module: from the dashed group as a whole -->
+  <circle cx="268" cy="245" r="4" fill="#3d4449"/>
+  <line x1="268" y1="245" x2="284" y2="245" stroke="#3d4449" stroke-width="2"/>
+  <line x1="284" y1="245" x2="314" y2="172" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="284" y1="245" x2="314" y2="318" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="446" y="250" font-size="13" font-style="italic" fill="#5f6b73" text-anchor="middle">either</text>
+  <line x1="270" y1="439" x2="314" y2="439" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- createApplication: synchronous, starts nothing -->
+  <rect x="624" y="92" width="312" height="384" rx="12" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <circle cx="652" cy="130" r="12" fill="#5f6b73"/>
+  <text x="652" y="135" font-size="13" font-weight="700" fill="#ffffff" text-anchor="middle">1</text>
+  <text x="676" y="135" font-size="14" font-weight="600" fill="#1f2328">runs register() of each module</text>
+  <circle cx="652" cy="214" r="12" fill="#5f6b73"/>
+  <text x="652" y="219" font-size="13" font-weight="700" fill="#ffffff" text-anchor="middle">2</text>
+  <text x="676" y="219" font-size="14" font-weight="600" fill="#1f2328">checks the whole graph</text>
+  <text x="676" y="241" font-size="13" fill="#1f2328">a mistake throws a WiringError,</text>
+  <text x="676" y="261" font-size="13" fill="#1f2328">before any instance is built</text>
+  <circle cx="652" cy="318" r="12" fill="#5f6b73"/>
+  <text x="652" y="323" font-size="13" font-weight="700" fill="#ffffff" text-anchor="middle">3</text>
+  <text x="676" y="323" font-size="14" font-weight="600" fill="#1f2328">binds in a child container</text>
+  <text x="676" y="345" font-size="13" fill="#1f2328">the handlers on the buses,</text>
+  <text x="676" y="365" font-size="13" fill="#1f2328">the jobs on the scheduler</text>
+  <line x1="652" y1="144" x2="652" y2="198" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="652" y1="228" x2="652" y2="302" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="640" y1="410" x2="920" y2="410" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text x="780" y="446" font-size="13" font-style="italic" fill="#5f6b73" text-anchor="middle">synchronous: starts nothing</text>
+  <!-- module to createApplication -->
+  <line x1="578" y1="163" x2="622" y2="163" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="578" y1="327" x2="622" y2="327" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="578" y1="439" x2="622" y2="439" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- app.start: a separate call, afterwards -->
+  <line x1="780" y1="478" x2="780" y2="506" stroke="#3d4449" stroke-width="2" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
+  <rect x="624" y="510" width="312" height="84" rx="12" fill="#ffffff" stroke="#5f6b73" stroke-width="2"/>
+  <circle cx="652" cy="538" r="12" fill="#5f6b73"/>
+  <text x="652" y="543" font-size="13" font-weight="700" fill="#ffffff" text-anchor="middle">4</text>
+  <text x="676" y="543" font-size="14" font-weight="600" fill="#1f2328">app.start(), a separate call</text>
+  <text x="676" y="565" font-size="13" fill="#1f2328">subscribes the consumers,</text>
+  <text x="676" y="584" font-size="13" fill="#1f2328">starts the jobs</text>
+  <!-- note -->
+  <text x="32" y="536" font-size="14" fill="#1f2328">The three kinds of module mix in one application,</text>
+  <text x="32" y="558" font-size="14" fill="#1f2328">and every check applies across them.</text>
+</svg>

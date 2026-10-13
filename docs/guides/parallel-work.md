@@ -1,3 +1,5 @@
+**English** · [Français](parallel-work.fr.md)
+
 # Parallel work without collisions
 
 **Summary.** Several people, or several coding agents, can build one project at the same time
@@ -6,7 +8,7 @@ and the vertical use case. Almost everything inside a context is private to it a
 write in parallel. A short list of files is shared by construction (the config, the generated
 barrels and documents, the composition root, the migrations, the published language of an
 upstream) and must be changed in sequence. This guide lists both, explains worktrees, merge
-order and who regenerates what, and ends with a concrete plan: four contexts of the scheduling
+order and who regenerates what, and ends with a concrete plan: four contexts of a scheduling
 application built by four workers after a shared bootstrap.
 
 ## Two ways to slice
@@ -32,8 +34,8 @@ until the other exists, and the two meet in every file.
 | `src/contexts/<A>/**` and `src/contexts/<B>/**` | different workers | yes | disjoint by construction |
 | two use case folders of one context | different workers | mostly | they meet in the aggregate, the barrel and the routes file: merge often |
 | `ddd-ts-kit.config.json` | `init`, `generate context`, `generate service`, `generate worker`, `generate adr --deviation` | **no** | create all contexts and relationships in the bootstrap; later changes one at a time, by the platform owner |
-| `src/platform/compose-application.ts`, `src/platform/platform.module.ts`, `src/platform/platform-test.module.ts` | `generate context` (the first), `generate gateway` (the two modules), hand edits | **no** | registration regions are written between markers; two branches adding a context both touch them |
-| the registries of the platform: `src/platform/database/schema.ts` (with Prisma, `prisma/schema.prisma`), `src/platform/audit/audited-events.ts`, `src/platform/job-settings.ts`, the grants under `src/platform/auth/`, and the helper `src/platform/resilience/own-policy.ts` | `generate repository` (the first of a context; every one with Prisma), `generate integration-event`, `generate job`, `generate adapter` (the first of a project wired on tsyringe) | **no** | run these generators on the trunk before the workers start; `generate --help --json` says which kinds write shared files (`writesShared`) |
+| `src/platform/compose-application.ts`, `src/platform/platform.module.ts`, `src/platform/platform-test.module.ts` | `generate context` (the composition root), `generate gateway` (the two modules, in the declared style), hand edits | **no** | registration regions are written between markers; two branches adding a context both touch them |
+| the registries of the platform: `src/platform/database/schema.ts` (with Prisma, `prisma/schema.prisma`), `src/platform/auth/permissions.ts`, `src/platform/auth/role.ts`, `src/platform/auth/access-policies.ts` (explicit style), `src/platform/audit/audited-events.ts`, `src/platform/job-settings.ts`, the grants under `src/platform/auth/`, and the helper `src/platform/resilience/own-policy.ts` | `generate context`, `generate repository` (the first of a context; every one with Prisma), `generate command --aggregate` on an aggregate that has no repository yet, `generate route-group --role` with a new role, `generate policy` (explicit style), `generate integration-event`, `generate job`, `generate adapter` (the first of a project wired on tsyringe) | **no** | run these generators on the trunk before the workers start; `generate --help --json` says which kinds write shared files (`writesShared`) and which ones |
 | `src/main.ts` | hand edits | **no** | the platform owner |
 | `test/architecture/extractable.spec.ts`, `knip.json` (the first context) | `init`, `generate context` | **no** | same: written with each context |
 | `<context>.declarations.ts` (the barrel, with what each constructor is injected), `<context>.dependencies.ts` under discovery | every `generate` in that context, `docs`, and `npm run dev` | per context | derived: never merge by hand, regenerate (below) |
@@ -41,12 +43,14 @@ until the other exists, and the two meet in every file.
 | `openapi/*.yaml`, `docs/integration/asyncapi.yaml`, `docs/integration/event-catalog.md` | `npm run docs:generate` | **no**, but cheap | derived and deterministic: regenerate after merging |
 | `.dependency-cruiser.cjs` | `depcruise-config --write`, `generate context` | **no**, but cheap | derived from the config: regenerate |
 | database migrations | the ORM's tooling | **no** | one schema per context keeps tables apart, but the migration sequence is one list: number at merge time |
-| the `published-language/` of an upstream | the upstream's owner | **no** for its consumers | merge the contract first; consumers branch from it |
+| the `published-language/` of an upstream | the upstream's owner, and `generate gateway` run for a consumer (the read contract) | **no** for its consumers | merge the contract first; consumers branch from it |
 | `src/shared-kernel/` | co-owners | **no** | rare by design; one change at a time |
 | `package.json`, the lockfile | anyone adding a dependency | **no** | add dependencies in the bootstrap or in a dedicated change |
 
 The pattern behind the table: a file is safe when one worker owns it, and a derived file is
 never a merge problem as long as nobody tries to merge it.
+
+![The files of a project in three groups: the directory of each context, private to its worker and safe in parallel; the shared files, changed in sequence by the conductor; the derived files, regenerated after a merge and never merged by hand](../assets/diagrams/parallel-work-files.svg)
 
 ### Generated files: regenerate, never resolve by hand
 
@@ -61,13 +65,35 @@ npm run docs:generate        # OpenAPI, AsyncAPI, event catalog
 npm run verify
 ```
 
+In full, for the branch that lands second. Here the `notification` worker added
+`GET /notifications/preferences` while the default branch received `GET /people/invitations` from
+`identity`. The OpenAPI document sorts its paths, so both new entries land at the same place,
+just before `/people/me`, and git cannot put one after the other:
+
+```bash
+git fetch origin
+git merge origin/main
+# CONFLICT (content): Merge conflict in openapi/openapi.yaml
+git checkout --theirs openapi/openapi.yaml   # either side: the file is rewritten below
+npx ddd-ts-kit docs
+npm run docs:generate
+npm run verify
+git status --short                           # every file the generators rewrote
+git add openapi/openapi.yaml                 # file by file, then read the staged diff
+git diff --cached --stat
+git commit --no-edit
+```
+
+The regenerated document holds both routes, `/notifications/preferences` from this branch and
+`/people/invitations` from the default branch, because both are now in the sources.
+
 The generators are deterministic (sorted output, independent of registration order), so two
 people regenerating from the same sources get the same bytes. `docs --check` and
 `declarations/barrel-current` fail the pipeline if somebody forgot.
 
 **Who regenerates:** whoever merges second. The first branch to land is consistent by itself;
 the second one rebases or merges the default branch, regenerates, and commits the result with
-its own change. In a team of agents, give that job to the coordinator, not to each worker.
+its own change. In a team of agents, give that job to the conductor, not to each worker.
 
 ### Migrations
 
@@ -107,7 +133,39 @@ the directory it may write, the generators it may run, its rows of
 `docs/architecture/slices.md`, the contracts it consumes. `--dry-run` prints the same without
 touching anything. It needs a repository with at least one commit, and an existing worktree is
 kept: only the file is written again. `init` lists `.ddd-ts-kit/` in `.gitignore`, so the file
-is never committed.
+is never committed. The file is one line of meaning:
+
+```json
+{
+  "context": "appointments"
+}
+```
+
+The briefing is filled from the project. In the example application, an excerpt of what
+`npx ddd-ts-kit worker-scope notification --dry-run` prints (the path shortened, `main` as the
+trunk, and the generators, steps and report left out):
+
+```text
+You build the bounded context notification of scheduling.
+
+Worktree: ../scheduling-notification/   Branch: build/notification   Trunk: main
+
+Scope
+- You may write: src/contexts/notification/** and test/e2e/<use-case>.e2e.spec.ts of your slices.
+- You may not write anything else. Shared files (config, src/platform, src/main.ts,
+  package.json, lockfile, migrations, docs/) and other contexts are refused by the guard:
+  report the need, do not work around it.
+
+Slices, in this order (rows of docs/architecture/slices.md)
+- #31 Contacts known from identity (projection): `@Projection` over `identity.person.registered` ; ...
+- #32 Send a notification for a fact of an appointment: `port notification Mailer`; ...
+- #33 Plan, withdraw and send reminders: `command notification PlanReminder --aggregate Reminder --permission reminder.plan`; ...
+- #34 Sent notifications of a person: `query notification SearchNotifications --permission notification.read --search` (`GET /notifications`) ; ...
+
+Contracts you consume (read-only): src/contexts/scheduling/published-language/, src/contexts/identity/published-language/
+```
+
+![One repository, several worktrees: the main checkout on the default branch belongs to the conductor; each worktree is on its own branch, holds its own .ddd-ts-kit/worker.json naming its context, and its worker writes only that context's directory](../assets/diagrams/parallel-work-worktrees.svg)
 
 Each worktree needs its own `npm install` (dependencies are not shared between worktrees) and
 its own ports if two of them run `npm run dev` or the end-to-end tests at once: the generated
@@ -131,7 +189,13 @@ lint, test, compiler and pipeline configuration). For its `context-builder` agen
 further: with a `.ddd-ts-kit/worker.json` in the worktree, a write outside
 `src/contexts/<context>/` and the end-to-end specs is refused, and so are a generator that
 writes shared files and a dependency change. A worker passes `--local-only` to `generate`:
-the command then refuses, and writes nothing, when the kind would write outside its context.
+the command then refuses, and writes nothing, when the kind would write outside its context:
+
+```text
+$ npx ddd-ts-kit generate job notification SendDueConfirmations --every 15m --command SendNotification --local-only
+Error: --local-only: this command would write 2 shared files: src/platform/auth/relate-system-actors.ts, src/platform/job-settings.ts.
+  fix: Nothing was written. Have it run on the trunk without --local-only (the conductor of a parallel build does it), merge the trunk, then go on; a generated document listed alone means the trunk is stale: run `ddd-ts-kit docs` there first.
+```
 
 ## Merge order
 
@@ -147,32 +211,14 @@ in every derived file; the same work in ten pull requests conflicts in none.
 
 ## A concrete plan: four contexts, four workers
 
-The scheduling application: `calendars`, `appointments`, `availability`, `notifications`
-(`analytics` is added later the same way; identity is bought, not built).
+A scheduling application with four contexts: `calendars`, `appointments`, `availability`,
+`notifications` (`analytics` is added later the same way; identity is bought, not built). The
+example application of this repository ran the same kind of plan on its own four contexts
+(`identity`, `scheduling`, `notification`, `analytics`), with `scheduling` shared by two
+workers on two aggregates: its table is
+[examples/scheduling/docs/architecture/slices.md](../../examples/scheduling/docs/architecture/slices.md).
 
-```mermaid
-flowchart TD
-  subgraph S0[Phase 0: one worker, sequential]
-    B[Bootstrap: init, four contexts, relationships, glossaries, verify green, merged]
-  end
-  subgraph S1[Phase 1: contracts, sequential, small]
-    C1[calendars publishes working-hours-changed, time-off-added]
-    C2[appointments publishes booked, rescheduled, cancelled]
-    C1 --> C2
-  end
-  subgraph S2[Phase 2: four workers in parallel]
-    W1[W1 calendars: SetWorkingHours, AddTimeOff]
-    W2[W2 appointments: Book, Reschedule, Cancel, Get, Search]
-    W3[W3 availability: projection handlers, FindOpenSlots]
-    W4[W4 notifications: confirmation, reminders job, provider ACL]
-  end
-  subgraph S3[Phase 3: one worker]
-    I[Merge in map order, regenerate, cross-context e2e]
-  end
-  B --> C1
-  C2 --> W1 & W2 & W3 & W4
-  W1 & W2 & W3 & W4 --> I
-```
+![The plan in four phases: in phase 0 one worker bootstraps the project and merges it; in phase 1 the contracts are merged in sequence, calendars before appointments; in phase 2 four workers build calendars, appointments, availability and notifications in parallel, each in its worktree; in phase 3 one worker merges in the order of the map, regenerates and adds the end-to-end specs](../assets/diagrams/parallel-work-plan.svg)
 
 **Phase 0, shared bootstrap (one worker, nobody else starts).**
 
@@ -217,10 +263,23 @@ merge, write the migrations in sequence, then add the end-to-end specs that cros
 The plugin writes the same plan down as a table: the skill `plan-slices` produces
 `docs/architecture/slices.md`, where each row is a `contract`, a `skeleton` (an aggregate and
 its repository, whose generators also write shared files) or a `slice`, with an owner and the
-rows it depends on. Contracts and skeletons belong to the coordinator, slices to the worker of
-their context, and only the coordinator edits the file. `npx ddd-ts-kit status` reads it back:
+rows it depends on. Contracts and skeletons belong to the conductor, slices to the worker of
+their context, and only the conductor edits the file. `npx ddd-ts-kit status` reads it back:
 the slices by status and by owner, and the `TODO(domain)`, `TODO(platform)` and `it.todo` left
 in each context; `npx ddd-ts-kit todo <context>` lists them as `file:line`.
+
+Four rows of that table in the example application, as `status` and `worker-scope` read them:
+
+| # | Context | Kind | Slice | Start with | Depends on | Owner | Status |
+|---|---|---|---|---|---|---|---|
+| 3 | notification | skeleton | Notification, Reminder | `aggregate notification <Name>` then `repository notification <Name>`, twice | | conductor | done |
+| 31 | notification | slice | Contacts known from identity (projection) | `@Projection` over `identity.person.registered` | 4 | notification | todo |
+| 32 | notification | slice | Send a notification for a fact of an appointment | `port notification Mailer`; `adapter notification Mailer --kind external --decorators`; `command notification SendNotification --aggregate Notification --permission notification.send`; `integration-handler notification scheduling scheduling.appointment.booked`, `.confirmed`, `.rescheduled`, `.cancelled` | 3, 5, 31 | notification | todo |
+| 34 | notification | slice | Sent notifications of a person | `query notification SearchNotifications --permission notification.read --search` (`GET /notifications`) | 32 | notification | todo |
+
+Row 3 is a skeleton: its generators write the schema index of the platform, so the conductor
+runs it on the trunk. Rows 31, 32 and 34 belong to the `notification` worker, as does row 33, left out of this
+excerpt; the worker starts each one once the rows it depends on are merged.
 
 What makes the plan work is that phases 0 and 1 are deliberately not parallel. They take a
 small fraction of the total time and remove nearly every collision from the rest.

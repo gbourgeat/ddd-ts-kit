@@ -47,7 +47,10 @@ describe('the plugin', () => {
   });
 
   it('has no documentation page without a rule', () => {
-    const pages = fs.readdirSync(new URL('../docs/rules', import.meta.url)).map((file) => file.replace(/\.md$/, ''));
+    const pages = fs
+      .readdirSync(new URL('../docs/rules', import.meta.url))
+      .filter((file) => !file.endsWith('.fr.md'))
+      .map((file) => file.replace(/\.md$/, ''));
 
     expect(pages.sort()).toEqual([...names, ...DELEGATED_PAGES].sort());
   });

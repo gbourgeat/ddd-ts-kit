@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 468" width="960" height="468" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Une déclaration de route, un serveur, un contrat et un client</title>
+  <desc id="desc">Des schémas écrits avec zod, TypeBox ou class-validator, chacun enveloppé en Schema du package de validation, alimentent une classe contrôleur qui déclare sa méthode, son chemin, son corps, sa réponse, ses erreurs et ses gardes, et qui a une seule méthode handle. Un adaptateur de framework monte les contrôleurs sur Express, Fastify, Hono ou NestJS, et le même pipeline executeRoute tourne sous chacun. Le contrat OpenAPI 3.1 est généré à partir des mêmes déclarations et versionné, et le client typé est généré à partir du contrat. Changer de paire ne change que les schémas et le montage.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="468" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Une déclaration : un serveur, un contrat et un client</text>
+  <!-- schemas -->
+  <rect x="32" y="70" width="236" height="176" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="150" y="98" font-size="16" font-weight="700" fill="#9a5b2b" text-anchor="middle">schémas</text>
+  <text x="150" y="120" font-size="13" fill="#1f2328" text-anchor="middle">stack.validation</text>
+  <rect x="46" y="134" width="208" height="28" rx="6" fill="#ffffff" stroke="#9a5b2b"/>
+  <text x="150" y="153" font-size="13" fill="#1f2328" text-anchor="middle">zod 4 : zodSchema</text>
+  <rect x="46" y="168" width="208" height="28" rx="6" fill="#ffffff" stroke="#9a5b2b"/>
+  <text x="150" y="187" font-size="13" fill="#1f2328" text-anchor="middle">TypeBox 1 : typeboxSchema</text>
+  <rect x="46" y="202" width="208" height="28" rx="6" fill="#ffffff" stroke="#9a5b2b"/>
+  <text x="150" y="221" font-size="13" fill="#1f2328" text-anchor="middle">class-validator : classSchema</text>
+  <!-- controller -->
+  <rect x="330" y="70" width="290" height="176" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="475" y="98" font-size="16" font-weight="700" fill="#9a5b2b" text-anchor="middle">classe @Controller</text>
+  <text x="475" y="128" font-size="13" fill="#1f2328" text-anchor="middle">method, path, body, response</text>
+  <text x="475" y="150" font-size="13" fill="#1f2328" text-anchor="middle">errors, guards, groupe de routes</text>
+  <text x="475" y="172" font-size="13" fill="#1f2328" text-anchor="middle">une seule méthode handle</text>
+  <text x="475" y="202" font-size="13" font-style="italic" font-weight="600" fill="#9a5b2b" text-anchor="middle">ne connaît aucun framework</text>
+  <line x1="270" y1="158" x2="326" y2="158" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- adapters -->
+  <rect x="688" y="70" width="240" height="176" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="808" y="98" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">un serveur</text>
+  <text x="808" y="120" font-size="13" fill="#1f2328" text-anchor="middle">stack.http</text>
+  <text x="808" y="148" font-size="13" fill="#1f2328" text-anchor="middle">mountExpress, mountFastify,</text>
+  <text x="808" y="168" font-size="13" fill="#1f2328" text-anchor="middle">mountHono, createRoutesModule</text>
+  <text x="808" y="200" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">executeRoute sous chacun :</text>
+  <text x="808" y="220" font-size="13" fill="#1f2328" text-anchor="middle">un pipeline, un comportement</text>
+  <line x1="622" y1="158" x2="684" y2="158" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="653" y="148" font-size="13" fill="#1f2328" text-anchor="middle">monte</text>
+  <!-- contract and client -->
+  <rect x="330" y="300" width="290" height="76" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="475" y="328" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">un contrat : openapi/*.yaml</text>
+  <text x="475" y="354" font-size="13" fill="#1f2328" text-anchor="middle">OpenAPI 3.1, versionné, dérive contrôlée</text>
+  <rect x="688" y="300" width="240" height="76" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="808" y="328" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">un client typé</text>
+  <text x="808" y="354" font-size="13" fill="#1f2328" text-anchor="middle">ddd-ts-kit sdk</text>
+  <line x1="475" y1="248" x2="475" y2="296" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="487" y="278" font-size="13" fill="#1f2328">generateOpenApi</text>
+  <line x1="622" y1="338" x2="684" y2="338" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- note -->
+  <text x="32" y="420" font-size="14" fill="#1f2328">Changer de paire change les schémas et le montage. Les contrôleurs, ce qu'ils répondent et refusent,</text>
+  <text x="32" y="442" font-size="14" fill="#1f2328">et les routes du contrat restent les mêmes ; les codes d'anomalie d'une entrée refusée suivent la bibliothèque.</text>
+</svg>

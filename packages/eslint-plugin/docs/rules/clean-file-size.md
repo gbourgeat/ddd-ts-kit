@@ -1,3 +1,5 @@
+**English** · [Français](clean-file-size.fr.md)
+
 # ddd-ts-kit/clean-file-size
 
 Architecture id: `clean/file-size`. Default severity: `error` in `recommended`, `error` in `strict`.

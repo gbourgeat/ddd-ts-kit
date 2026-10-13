@@ -1,3 +1,5 @@
+**English** · [Français](events-name-format.fr.md)
+
 # ddd-ts-kit/events-name-format
 
 Architecture id: `events/name-format`. Default severity: `error` in `recommended`, `error` in `strict`.

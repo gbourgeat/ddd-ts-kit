@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 396" width="960" height="396" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Un agrégat par transaction : un second agrégat change plus tard, en réaction à un événement</title>
+  <desc id="desc">Transaction 1 : le gestionnaire de la commande BookAppointment appelle book sur l'agrégat Appointment, l'enregistre et valide ; l'événement d'intégration appointments.appointment.booked est écrit dans l'outbox par la même validation. L'outbox le livre de façon asynchrone, au moins une fois. Transaction 2, plus tard : le gestionnaire d'événement d'intégration du contexte des rappels envoie la commande qui crée un Reminder, un autre agrégat, enregistré dans sa propre transaction. Un gestionnaire d'événement du domaine before-commit ne conviendrait pas : la commande qu'il envoie rejoint l'unité de travail de la transaction 1, et les deux agrégats seraient enregistrés ensemble.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="396" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Un agrégat par transaction</text>
+  <!-- transaction 1 -->
+  <rect x="24" y="60" width="360" height="248" rx="14" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="44" y="86" font-size="14" font-weight="600" fill="#5f6b73">transaction 1 : la commande BookAppointment</text>
+  <rect x="84" y="104" width="240" height="62" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="204" y="130" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">gestionnaire de commande</text>
+  <text x="204" y="152" font-size="13" fill="#1f2328" text-anchor="middle">BookAppointment</text>
+  <line x1="204" y1="168" x2="204" y2="204" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="214" y="192" font-size="13" fill="#1f2328">book(...), puis save</text>
+  <rect x="84" y="206" width="240" height="62" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="204" y="232" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">Appointment</text>
+  <text x="204" y="254" font-size="13" fill="#1f2328" text-anchor="middle">un agrégat</text>
+  <text x="204" y="292" font-size="13" font-style="italic" fill="#5f6b73" text-anchor="middle">validation : rendez-vous et ligne d'outbox</text>
+  <!-- the event -->
+  <line x1="386" y1="237" x2="572" y2="237" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <text x="480" y="169" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">événement</text>
+  <text x="480" y="187" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">d'intégration</text>
+  <text x="480" y="205" font-size="13" fill="#1f2328" text-anchor="middle">appointments.</text>
+  <text x="480" y="223" font-size="13" fill="#1f2328" text-anchor="middle">appointment.booked</text>
+  <text x="480" y="257" font-size="13" fill="#1f2328" text-anchor="middle">par l'outbox, plus tard,</text>
+  <text x="480" y="275" font-size="13" fill="#1f2328" text-anchor="middle">au moins une fois</text>
+  <!-- transaction 2 -->
+  <rect x="576" y="60" width="360" height="248" rx="14" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="596" y="86" font-size="14" font-weight="600" fill="#5f6b73">transaction 2 : en réaction à l'événement</text>
+  <rect x="636" y="104" width="240" height="62" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="756" y="130" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">gestionnaire d'événement</text>
+  <text x="756" y="152" font-size="13" fill="#1f2328" text-anchor="middle">d'intégration, contexte des rappels</text>
+  <line x1="756" y1="168" x2="756" y2="204" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="766" y="192" font-size="13" fill="#1f2328">une commande : create, save</text>
+  <rect x="636" y="206" width="240" height="62" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="756" y="232" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">Reminder</text>
+  <text x="756" y="254" font-size="13" fill="#1f2328" text-anchor="middle">un autre agrégat</text>
+  <text x="756" y="292" font-size="13" font-style="italic" fill="#5f6b73" text-anchor="middle">sa propre validation ; rejouée si elle échoue</text>
+  <!-- legend and the alternative refused -->
+  <line x1="40" y1="338" x2="84" y2="338" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <text x="96" y="343" font-size="14" fill="#1f2328">un événement d'intégration, publié par l'outbox et livré au moins une fois.</text>
+  <text x="40" y="371" font-size="14" fill="#1f2328">Pas un gestionnaire d'événement du domaine before-commit : la commande qu'il envoie rejoint la transaction 1.</text>
+</svg>

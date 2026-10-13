@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 380" width="960" height="380" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Le parcours de lecture des concepts</title>
+  <desc id="desc">Six sections, lues dans l'ordre. 1, conception stratégique, pages 1 à 5 : où sont les frontières. 2, conception tactique, pages 6 à 11 : ce qu'il y a dans un contexte. 3, architecture, pages 12 à 15 : comment le code est rangé. 4, messagerie et cohérence, pages 16 à 22 : comment les contextes collaborent. 5, préoccupations transverses, pages 23 à 34 : ce qui entoure les cas d'usage. 6, code et tests, pages 35 et 36 : comment le code se lit et comment il est testé.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="380" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Le parcours de lecture des concepts</text>
+  <rect x="32" y="64" width="272" height="104" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="2"/>
+  <text x="168" y="101" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">1. Conception stratégique</text>
+  <text x="168" y="127" font-size="13" fill="#1f2328" text-anchor="middle">où sont les frontières</text>
+  <text x="168" y="147" font-size="13" fill="#1f2328" text-anchor="middle">pages 1 à 5</text>
+  <rect x="344" y="64" width="272" height="104" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="2"/>
+  <text x="480" y="101" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">2. Conception tactique</text>
+  <text x="480" y="127" font-size="13" fill="#1f2328" text-anchor="middle">ce qu'il y a dans un contexte</text>
+  <text x="480" y="147" font-size="13" fill="#1f2328" text-anchor="middle">pages 6 à 11</text>
+  <rect x="656" y="64" width="272" height="104" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="2"/>
+  <text x="792" y="101" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">3. Architecture</text>
+  <text x="792" y="127" font-size="13" fill="#1f2328" text-anchor="middle">comment le code est rangé</text>
+  <text x="792" y="147" font-size="13" fill="#1f2328" text-anchor="middle">pages 12 à 15</text>
+  <rect x="656" y="240" width="272" height="104" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="2"/>
+  <text x="792" y="277" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">4. Messagerie et cohérence</text>
+  <text x="792" y="303" font-size="13" fill="#1f2328" text-anchor="middle">comment les contextes collaborent</text>
+  <text x="792" y="323" font-size="13" fill="#1f2328" text-anchor="middle">pages 16 à 22</text>
+  <rect x="344" y="240" width="272" height="104" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="2"/>
+  <text x="480" y="277" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">5. Préoccupations transverses</text>
+  <text x="480" y="303" font-size="13" fill="#1f2328" text-anchor="middle">ce qui entoure les cas d'usage</text>
+  <text x="480" y="323" font-size="13" fill="#1f2328" text-anchor="middle">pages 23 à 34</text>
+  <rect x="32" y="240" width="272" height="104" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="2"/>
+  <text x="168" y="277" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">6. Code et tests</text>
+  <text x="168" y="303" font-size="13" fill="#1f2328" text-anchor="middle">comment le code se lit et se teste</text>
+  <text x="168" y="323" font-size="13" fill="#1f2328" text-anchor="middle">pages 35 et 36</text>
+  <line x1="306" y1="116.0" x2="342" y2="116.0" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="618" y1="116.0" x2="654" y2="116.0" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="792.0" y1="170" x2="792.0" y2="238" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="654" y1="292.0" x2="618" y2="292.0" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="342" y1="292.0" x2="306" y2="292.0" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+</svg>

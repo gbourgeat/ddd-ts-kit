@@ -1,3 +1,5 @@
+**English** · [Français](README.fr.md)
+
 # @ddd-ts-kit/winston
 
 The kernel `Logger` port on [winston](https://github.com/winstonjs/winston): JSON lines on the
@@ -12,8 +14,15 @@ npm i @ddd-ts-kit/winston winston
 
 Written against winston 3.19.
 
+The domain and the handlers log nothing: what they have to say is an event or an error. The
+adapters of `infrastructure/`, the controllers of `presentation/` and the aspects (`logged`,
+`loggingMiddleware`, the job scheduler) receive the kernel `Logger`, and the composition root
+binds `WinstonLogger` to it once. The code that logs is the same with `@ddd-ts-kit/pino` or
+`StdoutLogger`: see [Logging from an adapter](../pino/README.md#logging-from-an-adapter).
+
 ## Composition root
 
+<!-- checked sample -->
 ```ts
 // platform/observability/create-logger.ts
 import type { ExecutionScope, LogLevel } from '@ddd-ts-kit/kernel';
@@ -36,6 +45,7 @@ export function createLogger(scope: ExecutionScope, settings: LogSettings): Wins
 ```ts
 // main.ts
 import { tracing } from '@/platform/tracing'; // first
+import { createLogger } from '@/platform/observability/create-logger';
 import { AsyncLocalStorageExecutionScope } from '@ddd-ts-kit/kernel';
 import { createApplication, kernelModule } from '@ddd-ts-kit/di';
 
@@ -64,6 +74,8 @@ One line of the application, as it is written:
 {"actorId":"user-1","context":"shipping","correlationId":"9f2c","environment":"production","level":"info","message":"order shipped","origin":"http","service":"shop-api","span_id":"00f067aa0ba902b7","tenantId":"acme","time":"2026-03-01T10:00:00.000Z","trace_id":"4bf92f3577b34da6a3ce929d0e0e4736"}
 ```
 
+![The path of one call to logger.info through winston: below the threshold the adapter stops after one comparison; otherwise it describes the errors among the fields and keeps level and message out of them; winston merges the fields of the line, the fields of the children and its defaultMeta; then the formats run in order: correlationFields fills the keys nobody gave from fields(), redactCredentials hides the credential keys, isoTime writes time, json or the pretty line serializes; each transport writes the line: the console by default, or the files, syslog or stream you give](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/winston-path-of-a-line.svg)
+
 **Correlation.** `fields` is read at each line that is written, by a winston format: no call
 site passes an id. `traceLogFields(scope)` answers the trace and span ids inside a span, and
 inside the execution scope the correlation id, the causation id, the origin, the actor and the
@@ -74,13 +86,19 @@ format only fills the keys nobody gave. `StdoutLogger` and `@ddd-ts-kit/pino` di
 second step (there `fields` win over a child), so do not bind in a child a key that `fields`
 answers if the logger may be swapped.
 
+![Which value a key gets when it is given twice, from the weakest to the strongest: with pino and StdoutLogger, service, environment and base, then the children, then fields(), then the line, which wins; with winston, fields(), then the children, then the line, then service, environment and base, which win](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/pino-which-value-wins.svg)
+
 **An instance of your own.** The project that already configures winston keeps doing so, and
 takes the formats it wants:
 
+<!-- checked sample -->
 ```ts
-import { CREDENTIAL_KEYS } from '@ddd-ts-kit/kernel';
+import { CREDENTIAL_KEYS, type ExecutionScope } from '@ddd-ts-kit/kernel';
+import { traceLogFields } from '@ddd-ts-kit/tracing';
 import winston from 'winston';
 import { WinstonLogger, correlationFields, redactCredentials } from '@ddd-ts-kit/winston';
+
+declare const scope: ExecutionScope; // the one the composition root creates
 
 const instance = winston.createLogger({
   level: 'info',
@@ -93,13 +111,33 @@ const instance = winston.createLogger({
   transports: [new winston.transports.Console()],
 });
 
-const logger = new WinstonLogger(instance);
+export const logger = new WinstonLogger(instance);
 ```
 
 `createWinstonLogger` writes the instant under `time`, the level by its name and the message
 under `message`, like the `StdoutLogger` of the aspects package and like `@ddd-ts-kit/pino`:
 one dashboard reads the three. The keys of a line come out sorted: winston's JSON format
 serializes with a stable stringifier.
+
+**Transports of your own** without configuring winston yourself: `transports` replaces the
+console, so name it too when the lines must still reach the standard output.
+
+<!-- checked sample -->
+```ts
+import { createWinstonLogger } from '@ddd-ts-kit/winston';
+import winston from 'winston';
+
+export const logger = createWinstonLogger({
+  service: 'shop-api',
+  transports: [
+    new winston.transports.Console(), // the standard output, as by default
+    new winston.transports.File({ filename: 'logs/errors.log', level: 'error' }), // errors only, kept on disk
+  ],
+});
+```
+
+Each transport filters by its own `level` after the formats ran: the file above receives the
+`error` lines, the console every line from the threshold of the logger.
 
 ## Development mode
 
@@ -175,8 +213,17 @@ The names are the same in the `cli` levels. An instance on the `syslog` levels h
 say where it goes, or the line is dropped, since winston does not write at a level it does
 not know.
 
+<!-- checked sample -->
 ```ts
-new WinstonLogger(instance, { levels: { warn: 'warning' } });
+import { WinstonLogger } from '@ddd-ts-kit/winston';
+import winston from 'winston';
+
+const instance = winston.createLogger({
+  levels: winston.config.syslog.levels, // emerg, alert, crit, error, warning, notice, info, debug
+  transports: [new winston.transports.Console()],
+});
+
+export const logger = new WinstonLogger(instance, { levels: { warn: 'warning' } }); // logger.warn() writes at 'warning'
 ```
 
 A line below the threshold costs one comparison: the adapter asks `isLevelEnabled` first,
@@ -202,6 +249,12 @@ written what it was handed (their `finish` event). It never rejects, and a secon
 the same promise. `app.stop()` calls it, last, after the modules stopped and the error reporter
 was flushed: stopping logs too. Without the application of the di package, call it yourself at
 that place.
+
+| After `flush()` resolved | `@ddd-ts-kit/winston` | `@ddd-ts-kit/pino` |
+|---|---|---|
+| a line logged | dropped, without an error | written, like before |
+| `isLevelEnabled(level)` | `false` for every level | the threshold, as before |
+| a second `flush()` | the same promise | a new flush |
 
 The port calls a flush once, at shutdown, and leaves what is logged afterwards unspecified.
 Here the flush is final: a winston logger does not reopen, so what is logged afterwards,
@@ -262,8 +315,14 @@ you built, and wrap the same instance in `new WinstonLogger(instance)` for the k
 Nothing of this package: the test application binds `InMemoryLogger` of the kernel, and its
 `entries` are data. To hold another adapter of the port to the same behaviour, run the contract:
 
+<!-- checked sample -->
 ```ts
-import { loggerContract } from '@ddd-ts-kit/testing/contracts';
+import { Writable } from 'node:stream';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { LOG_LEVELS } from '@ddd-ts-kit/kernel';
+import { loggerContract, type LoggedLine } from '@ddd-ts-kit/testing/contracts';
+import { createWinstonLogger } from '@ddd-ts-kit/winston';
+import winston from 'winston';
 
 loggerContract({ describe, it, expect, beforeEach }, {
   name: 'WinstonLogger',
@@ -277,7 +336,18 @@ loggerContract({ describe, it, expect, beforeEach }, {
     });
     const logger = createWinstonLogger({ ...setup, transports: [new winston.transports.Stream({ stream })] });
 
-    return { logger, lines: () => written.map((line) => lineOf(JSON.parse(line))) }; // { level, message, fields }
+    return { logger, lines: () => written.map((line) => lineOf(JSON.parse(line))) };
   },
 });
+
+/** A written line as the contract reads it: the level by its name, the message, the other fields. */
+function lineOf({ level, message, time: _time, ...fields }: Record<string, unknown>): LoggedLine {
+  const known = LOG_LEVELS.find((one) => one === level);
+
+  if (known === undefined) {
+    throw new Error(`Not a level of the port: ${String(level)}`);
+  }
+
+  return { level: known, message: String(message), fields };
+}
 ```

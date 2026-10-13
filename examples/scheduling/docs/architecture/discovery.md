@@ -1,3 +1,5 @@
+**English** · [Français](discovery.fr.md)
+
 # Domain discovery
 
 Light event storming in writing, from `needs.md`. The words are those of the practices.

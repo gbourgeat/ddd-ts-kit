@@ -1,3 +1,5 @@
+**English** · [Français](eventual-consistency.fr.md)
+
 # Eventual consistency, explained to a product person
 
 **Summary.** In an application cut into bounded contexts, a change is immediately true in the
@@ -14,21 +16,7 @@ A client books a slot. `appointments` records the appointment at once. `availabi
 of open slots), `notifications` (the reminder) and `analytics` (occupancy figures) learn about
 it through an event.
 
-```mermaid
-sequenceDiagram
-  participant U as client
-  participant APP as appointments
-  participant AVA as availability
-  participant NOT as notifications
-  U->>APP: book Tuesday 10:00
-  APP-->>U: booked (true now)
-  Note over APP,NOT: the consistency window opens
-  APP-->>AVA: appointments.appointment.booked
-  AVA->>AVA: remove Tuesday 10:00 from open slots
-  APP-->>NOT: appointments.appointment.booked
-  NOT->>NOT: schedule the reminder
-  Note over APP,NOT: the window closes: every context agrees
-```
+![A sequence over time: the client books Tuesday 10:00, appointments answers booked at once, then the consistency window opens while availability removes the slot and notifications schedules the reminder from the event appointments.appointment.booked; the window closes when every context agrees](../assets/diagrams/eventual-consistency-window.svg)
 
 An everyday comparison: a bank transfer. Your balance drops immediately; the recipient sees the
 money later. Nobody calls that a bug, because the delay is known and the statement says
@@ -62,6 +50,20 @@ transaction:
 
 The design question is therefore: *which rules must never be seen broken, even for a second?*
 Those belong to one aggregate in one context. Everything else can follow.
+
+In code, the difference is where the check reads from. Instead of asking the projection of
+another context, which is a moment late:
+
+```ts
+// appointments, handler of BookAppointment: the rule rests on data that may be a second old
+if (!(await availabilityGateway.isOpen(practitionerId, slot))) {
+  throw AppointmentError.slotTaken(practitionerId, slot.startsAt);
+}
+```
+
+decide it where the appointment is written, against the appointments read in the same
+transaction, with a unique constraint behind it: the sample of
+[Bounded context](bounded-context.md#the-example-where-does-no-double-booking-live) shows it.
 
 ## Questions to settle for each cross-context flow
 
@@ -97,6 +99,8 @@ application then fails whenever any part does, and the contexts are no longer in
 
 ## For developers: where the window comes from
 
+![The path of an integration event: one transaction saves the aggregate and the outbox record, the relay publishes after the commit, the broker queues it per consumer, the consumer of availability updates its projection; under each step, what stretches the window and what to measure](../assets/diagrams/eventual-consistency-pipeline.svg)
+
 - The event is stored in the outbox with the state change, and a relay publishes it afterwards:
   the relay interval, or its wake-up signal, sets the floor of the window
   ([Transactional outbox](transactional-outbox.md)).
@@ -112,6 +116,41 @@ application then fails whenever any part does, and the contexts are no longer in
 To measure the window: the age of the oldest pending outbox record on the producing side, the
 depth or lag of each consumer on the broker, and the dead-letter destinations, which must be
 empty.
+
+### Duplicates and disorder in a projection
+
+Questions 5 and 6 above have a short answer in code. A row of a read model remembers the event
+that last changed it (its `EventStamp`), and an incoming event changes the row only when it is
+newer (`isNewer`). A duplicate carries the same stamp, a late event an older one: both change
+nothing. `ReadModelStore.upsertIfNewer` makes that comparison for every write:
+
+<!-- checked sample -->
+```ts
+import { ReadModelStore, stampOf, type IntegrationEvent } from '@ddd-ts-kit/kernel';
+
+// availability: one row per slot, fed by the events of appointments.
+interface OpenSlotRow {
+  readonly slotId: string;
+  readonly open: boolean;
+}
+
+export abstract class OpenSlots extends ReadModelStore<OpenSlotRow> {}
+
+type SlotEvent = IntegrationEvent<{ readonly slotId: string }>;
+
+// A booking closes the slot, a cancellation reopens it. A duplicate, or a cancellation
+// delivered after a later booking of the same slot, is not newer than what the row holds:
+// the write is skipped and the slot stays as the latest fact says.
+export async function project(slots: OpenSlots, event: SlotEvent, open: boolean): Promise<void> {
+  const { slotId } = event.payload;
+
+  await slots.upsertIfNewer(slotId, stampOf(event), () => ({ slotId, open }));
+}
+```
+
+Ordering by instant relies on the clock of the producer; when the upstream gives a version per
+key, `stampOf(event, version)` carries it and the order no longer depends on clocks. The
+projections of the kit are written this way ([CQRS as used here](cqrs.md)).
 
 ## Limits and when not to use it
 

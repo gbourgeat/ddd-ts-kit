@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 484" width="960" height="484" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Les fichiers générés voyagent avec ce qui les a générés</title>
+  <desc id="desc">Le même travail dans deux historiques. À gauche, un cas d'usage et une version d'événement sont commités sans leurs contrats régénérés, qu'un troisième commit ajoute : les deux premiers commits échouent à verify. À droite, chaque commit porte le contrat qu'il a changé : chaque commit passe verify, si bien que git bisect peut s'arrêter sur n'importe lequel et que git revert retire une fonctionnalité avec son contrat.</desc>
+  <rect width="960" height="484" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Les fichiers générés voyagent avec ce qui les a générés</text>
+
+  <!-- instead of -->
+  <rect x="24" y="58" width="448" height="378" rx="14" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="44" y="84" font-size="14" font-weight="600" fill="#5f6b73">Au lieu de : les contrats régénérés plus tard</text>
+  <line x1="44" y1="148" x2="44" y2="364" stroke="#5f6b73" stroke-width="2"/>
+
+  <circle cx="44" cy="148" r="7" fill="#ffffff" stroke="#5f6b73" stroke-width="2"/>
+  <rect x="64" y="100" width="392" height="96" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="80" y="124" font-size="13" font-weight="700" fill="#1f2328">feat(scheduling): reschedule an appointment</text>
+  <text x="80" y="146" font-size="13" fill="#1f2328">à la main : la commande, le gestionnaire, la route, les specs</text>
+  <text x="80" y="166" font-size="13" fill="#5f6b73">généré : rien</text>
+  <text x="80" y="186" font-size="13" font-weight="700" fill="#1f2328">✗ verify échoue : le document OpenAPI a dérivé</text>
+
+  <circle cx="44" cy="256" r="7" fill="#ffffff" stroke="#5f6b73" stroke-width="2"/>
+  <rect x="64" y="208" width="392" height="96" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="80" y="232" font-size="13" font-weight="700" fill="#1f2328">feat(scheduling): publish appointment.rescheduled v1</text>
+  <text x="80" y="254" font-size="13" fill="#1f2328">à la main : l'événement d'intégration, son publisher</text>
+  <text x="80" y="274" font-size="13" fill="#5f6b73">généré : rien</text>
+  <text x="80" y="294" font-size="13" font-weight="700" fill="#1f2328">✗ verify échoue : le catalogue des événements a dérivé</text>
+
+  <circle cx="44" cy="364" r="7" fill="#3d4449" stroke="#3d4449" stroke-width="2"/>
+  <rect x="64" y="316" width="392" height="96" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="2"/>
+  <text x="80" y="340" font-size="13" font-weight="700" fill="#1f2328">docs: regenerate</text>
+  <text x="80" y="362" font-size="13" fill="#1f2328">à la main : rien</text>
+  <text x="80" y="382" font-size="13" fill="#5f6b73">générés : OpenAPI, AsyncAPI, catalogue des événements</text>
+  <text x="80" y="402" font-size="13" font-weight="700" fill="#1f2328">✓ verify passe</text>
+
+  <!-- write -->
+  <rect x="488" y="58" width="448" height="378" rx="14" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="508" y="84" font-size="14" font-weight="600" fill="#5f6b73">Écrivez : chaque changement avec ce qu'il a généré</text>
+  <line x1="508" y1="148" x2="508" y2="256" stroke="#5f6b73" stroke-width="2"/>
+
+  <circle cx="508" cy="148" r="7" fill="#3d4449" stroke="#3d4449" stroke-width="2"/>
+  <rect x="528" y="100" width="392" height="96" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="544" y="124" font-size="13" font-weight="700" fill="#1f2328">feat(scheduling): reschedule an appointment</text>
+  <text x="544" y="146" font-size="13" fill="#1f2328">à la main : la commande, le gestionnaire, la route, les specs</text>
+  <text x="544" y="166" font-size="13" fill="#5f6b73">généré : openapi/openapi.yaml</text>
+  <text x="544" y="186" font-size="13" font-weight="700" fill="#1f2328">✓ verify passe</text>
+
+  <circle cx="508" cy="256" r="7" fill="#3d4449" stroke="#3d4449" stroke-width="2"/>
+  <rect x="528" y="208" width="392" height="96" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="544" y="232" font-size="13" font-weight="700" fill="#1f2328">feat(scheduling): publish appointment.rescheduled v1</text>
+  <text x="544" y="254" font-size="13" fill="#1f2328">à la main : l'événement d'intégration, son publisher</text>
+  <text x="544" y="274" font-size="13" fill="#5f6b73">générés : AsyncAPI, catalogue des événements</text>
+  <text x="544" y="294" font-size="13" font-weight="700" fill="#1f2328">✓ verify passe</text>
+
+  <text x="528" y="340" font-size="13" fill="#1f2328">Deux commits au lieu de trois, chacun complet :</text>
+  <text x="528" y="360" font-size="13" fill="#1f2328">git bisect peut s'arrêter sur l'un ou l'autre, et</text>
+  <text x="528" y="380" font-size="13" fill="#1f2328">git revert retire une fonctionnalité avec son contrat.</text>
+
+  <text x="32" y="466" font-size="14" fill="#1f2328">Un commit en pointillé laisse le projet rouge : la bissection s'y arrête sans distinguer un défaut d'un fichier manquant.</text>
+</svg>

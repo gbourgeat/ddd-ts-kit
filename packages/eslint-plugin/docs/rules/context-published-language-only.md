@@ -1,3 +1,5 @@
+**English** · [Français](context-published-language-only.fr.md)
+
 # ddd-ts-kit/context-published-language-only
 
 Architecture id: `context/published-language-only`. Default severity: `error` in `recommended`, `error` in `strict`.

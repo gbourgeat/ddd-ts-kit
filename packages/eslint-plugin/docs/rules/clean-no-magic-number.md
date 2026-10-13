@@ -1,3 +1,5 @@
+**English** · [Français](clean-no-magic-number.fr.md)
+
 # ddd-ts-kit/clean-no-magic-number
 
 Architecture id: `clean/no-magic-number`. Default severity: `error`.

@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 470" width="960" height="470" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Every request re-sends the whole conversation</title>
+  <desc id="desc">Four requests of one agent session drawn as bars. Each request carries the instructions and rules, every earlier turn and every tool result still in the conversation. A 900-line file read at the second request is carried again by the third and the fourth. After a clear or in a new session, the next task starts from the instructions alone.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="470" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Every request re-sends the whole conversation</text>
+  <text x="32" y="62" font-size="14" fill="#1f2328">What one agent session sends to the model, request after request</text>
+  <!-- request 1 -->
+  <text x="32" y="111" font-size="14" font-weight="600" fill="#1f2328">request 1</text>
+  <rect x="170" y="88" width="160" height="36" rx="6" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="250" y="111" font-size="13" fill="#1f2328" text-anchor="middle">instructions, rules</text>
+  <rect x="330" y="88" width="64" height="36" rx="6" fill="#e7eef5" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="362" y="111" font-size="13" fill="#2b5d8a" text-anchor="middle">turn 1</text>
+  <!-- request 2 -->
+  <text x="32" y="167" font-size="14" font-weight="600" fill="#1f2328">request 2</text>
+  <rect x="170" y="144" width="160" height="36" rx="6" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="250" y="167" font-size="13" fill="#1f2328" text-anchor="middle">instructions, rules</text>
+  <rect x="330" y="144" width="64" height="36" rx="6" fill="#e7eef5" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="362" y="167" font-size="13" fill="#2b5d8a" text-anchor="middle">turn 1</text>
+  <rect x="394" y="144" width="64" height="36" rx="6" fill="#e7eef5" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="426" y="167" font-size="13" fill="#2b5d8a" text-anchor="middle">turn 2</text>
+  <rect x="458" y="144" width="270" height="36" rx="6" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="5 3"/>
+  <text x="593" y="167" font-size="13" font-style="italic" fill="#5f6b73" text-anchor="middle">a 900-line file, read for one method</text>
+  <!-- request 3 -->
+  <text x="32" y="223" font-size="14" font-weight="600" fill="#1f2328">request 3</text>
+  <rect x="170" y="200" width="160" height="36" rx="6" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="250" y="223" font-size="13" fill="#1f2328" text-anchor="middle">instructions, rules</text>
+  <rect x="330" y="200" width="64" height="36" rx="6" fill="#e7eef5" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="362" y="223" font-size="13" fill="#2b5d8a" text-anchor="middle">turn 1</text>
+  <rect x="394" y="200" width="64" height="36" rx="6" fill="#e7eef5" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="426" y="223" font-size="13" fill="#2b5d8a" text-anchor="middle">turn 2</text>
+  <rect x="458" y="200" width="270" height="36" rx="6" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="5 3"/>
+  <text x="593" y="223" font-size="13" font-style="italic" fill="#5f6b73" text-anchor="middle">the same file, paid again</text>
+  <rect x="728" y="200" width="64" height="36" rx="6" fill="#e7eef5" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="760" y="223" font-size="13" fill="#2b5d8a" text-anchor="middle">turn 3</text>
+  <!-- request 4 -->
+  <text x="32" y="279" font-size="14" font-weight="600" fill="#1f2328">request 4</text>
+  <rect x="170" y="256" width="160" height="36" rx="6" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="250" y="279" font-size="13" fill="#1f2328" text-anchor="middle">instructions, rules</text>
+  <rect x="330" y="256" width="64" height="36" rx="6" fill="#e7eef5" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="362" y="279" font-size="13" fill="#2b5d8a" text-anchor="middle">turn 1</text>
+  <rect x="394" y="256" width="64" height="36" rx="6" fill="#e7eef5" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="426" y="279" font-size="13" fill="#2b5d8a" text-anchor="middle">turn 2</text>
+  <rect x="458" y="256" width="270" height="36" rx="6" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="5 3"/>
+  <text x="593" y="279" font-size="13" font-style="italic" fill="#5f6b73" text-anchor="middle">the same file, paid again</text>
+  <rect x="728" y="256" width="64" height="36" rx="6" fill="#e7eef5" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="760" y="279" font-size="13" fill="#2b5d8a" text-anchor="middle">turn 3</text>
+  <rect x="792" y="256" width="64" height="36" rx="6" fill="#e7eef5" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="824" y="279" font-size="13" fill="#2b5d8a" text-anchor="middle">turn 4</text>
+  <!-- clear -->
+  <line x1="32" y1="318" x2="928" y2="318" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="480" y="340" font-size="14" font-style="italic" fill="#5f6b73" text-anchor="middle">/clear, or a new session for the next task</text>
+  <!-- next task -->
+  <text x="32" y="379" font-size="14" font-weight="600" fill="#1f2328">next task</text>
+  <rect x="170" y="356" width="160" height="36" rx="6" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="250" y="379" font-size="13" fill="#1f2328" text-anchor="middle">instructions, rules</text>
+  <rect x="330" y="356" width="64" height="36" rx="6" fill="#e7eef5" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="362" y="379" font-size="13" fill="#2b5d8a" text-anchor="middle">turn 1</text>
+  <path d="M410,374 H560" fill="none" stroke="#3d4449" stroke-width="2" marker-start="url(#arrow)"/>
+  <text x="572" y="379" font-size="14" fill="#1f2328">starts small again: state lives in files, not here</text>
+  <!-- legend -->
+  <rect x="32" y="422" width="22" height="16" rx="4" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="62" y="435" font-size="14" fill="#1f2328">sent with every request</text>
+  <rect x="262" y="422" width="22" height="16" rx="4" fill="#e7eef5" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="292" y="435" font-size="14" fill="#1f2328">a message and its answer</text>
+  <rect x="502" y="422" width="22" height="16" rx="4" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="5 3"/>
+  <text x="532" y="435" font-size="14" fill="#1f2328">a tool result: stays until cleared or compacted</text>
+</svg>

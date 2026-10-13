@@ -1,3 +1,5 @@
+**English** · [Français](clean-braces.fr.md)
+
 # clean/braces (layout)
 
 Architecture id: `clean/braces`. Default severity: `error` in `recommended`, `error` in `strict`. Fixable with `--fix`.

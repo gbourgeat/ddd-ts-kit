@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 486" width="960" height="486" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Un événement en retard et une relivraison finissent sur la même ligne</title>
+  <desc id="desc">Trois livraisons au projecteur des noms de praticiens. D'abord evt-2, survenu à 10:05, qui renomme p-7 en Ada Lovelace : appliqué, la ligne garde son estampille. Puis evt-1, survenu à 10:00, qui arrive en retard : périmé, plus ancien que la ligne, qui ne change pas. Puis evt-2 de nouveau : périmé, la ligne le contient déjà. La ligne garde Ada Lovelace.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="486" rx="16" fill="#ffffff"/>
+  <text x="32" y="34" font-size="18" font-weight="600" fill="#1f2328">Un événement en retard et une relivraison finissent sur la même ligne</text>
+  <text x="200" y="70" font-size="14" font-weight="600" text-anchor="middle" fill="#5f6b73">livré au projecteur</text>
+  <text x="505" y="70" font-size="14" font-weight="600" text-anchor="middle" fill="#5f6b73">upsertIfNewer répond</text>
+  <text x="785" y="70" font-size="14" font-weight="600" text-anchor="middle" fill="#5f6b73">la ligne de p-7 ensuite</text>
+  <rect x="40" y="86" width="320" height="80" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="200" y="118" font-size="16" font-weight="700" text-anchor="middle" fill="#5f6b73">1. evt-2, survenu à 10:05</text>
+  <text x="200" y="140" font-size="13" text-anchor="middle" fill="#1f2328">renommé Ada Lovelace</text>
+  <rect x="420" y="86" width="170" height="80" rx="10" fill="#ffffff" stroke="#3d4449" stroke-width="2"/>
+  <text x="505" y="118" font-size="16" font-weight="700" text-anchor="middle" fill="#1f2328">applied</text>
+  <text x="505" y="140" font-size="13" text-anchor="middle" fill="#1f2328">plus récent que la ligne</text>
+  <rect x="650" y="86" width="270" height="80" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="785" y="118" font-size="16" font-weight="700" text-anchor="middle" fill="#7a4f9a">p-7 : Ada Lovelace</text>
+  <text x="785" y="140" font-size="13" text-anchor="middle" fill="#1f2328">estampille : evt-2, 10:05</text>
+  <line x1="360" y1="126" x2="418" y2="126" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="590" y1="126" x2="648" y2="126" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="40" y="190" width="320" height="80" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="200" y="222" font-size="16" font-weight="700" text-anchor="middle" fill="#5f6b73">2. evt-1, survenu à 10:00</text>
+  <text x="200" y="244" font-size="13" text-anchor="middle" fill="#1f2328">renommé Ada, arrive en retard</text>
+  <rect x="420" y="190" width="170" height="80" rx="10" fill="#ffffff" stroke="#3d4449" stroke-width="2"/>
+  <text x="505" y="222" font-size="16" font-weight="700" text-anchor="middle" fill="#1f2328">stale</text>
+  <text x="505" y="244" font-size="13" text-anchor="middle" fill="#1f2328">plus ancien que la ligne</text>
+  <rect x="650" y="190" width="270" height="80" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="785" y="222" font-size="16" font-weight="700" text-anchor="middle" fill="#7a4f9a">p-7 : Ada Lovelace</text>
+  <text x="785" y="244" font-size="13" text-anchor="middle" fill="#1f2328">inchangée</text>
+  <line x1="360" y1="230" x2="418" y2="230" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="590" y1="230" x2="648" y2="230" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="40" y="294" width="320" height="80" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="200" y="326" font-size="16" font-weight="700" text-anchor="middle" fill="#5f6b73">3. evt-2, survenu à 10:05</text>
+  <text x="200" y="348" font-size="13" text-anchor="middle" fill="#1f2328">le même événement, livré à nouveau</text>
+  <rect x="420" y="294" width="170" height="80" rx="10" fill="#ffffff" stroke="#3d4449" stroke-width="2"/>
+  <text x="505" y="326" font-size="16" font-weight="700" text-anchor="middle" fill="#1f2328">stale</text>
+  <text x="505" y="348" font-size="13" text-anchor="middle" fill="#1f2328">la ligne le contient déjà</text>
+  <rect x="650" y="294" width="270" height="80" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="785" y="326" font-size="16" font-weight="700" text-anchor="middle" fill="#7a4f9a">p-7 : Ada Lovelace</text>
+  <text x="785" y="348" font-size="13" text-anchor="middle" fill="#1f2328">inchangée</text>
+  <line x1="360" y1="334" x2="418" y2="334" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="590" y1="334" x2="648" y2="334" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="40" y="430" font-size="14" fill="#1f2328">Plus récent : une version plus grande quand les deux estampilles en portent une ; sinon un instant</text>
+  <text x="40" y="454" font-size="14" fill="#1f2328">plus tardif ; au même instant, le plus grand identifiant d'événement. Un événement n'est jamais plus récent que lui-même.</text>
+</svg>

@@ -10,7 +10,7 @@ pre-commit:
       glob: '*.{ts,mts,cts,js,mjs,cjs,json,jsonc}'
       run: npx --no -- biome format --no-errors-on-unmatched {staged_files}
     - name: no em dash or en dash
-      run: npm run ci:docs
+      run: npm run check:dashes
 
 pre-push:
   jobs:

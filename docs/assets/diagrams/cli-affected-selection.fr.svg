@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 500" width="960" height="500" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Ce que ddd-ts-kit affected retient pour un changement</title>
+  <desc id="desc">À gauche, la carte des contextes de l'application d'exemple, chaque flèche de l'amont vers l'aval : identity vers scheduling, identity vers notification, scheduling vers notification, scheduling vers analytics. Une branche modifie le contexte scheduling : scheduling est retenu, ainsi que notification et analytics, en aval de lui ; identity, en amont, est laissé à la branche par défaut. À droite, ce qu'atteint un chemin modifié : un chemin sous un contexte atteint ce contexte et chaque contexte en aval ; un chemin seulement sous son répertoire de tests atteint ce contexte seul ; docs, openapi, .claude et les fichiers Markdown à la racine n'atteignent rien qui s'exécute ; tout le reste atteint tout.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="500" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Ce que ddd-ts-kit affected retient pour un changement</text>
+  <!-- left panel: the context map -->
+  <text x="24" y="80" font-size="14" font-weight="600" fill="#5f6b73">Une branche modifie scheduling, dans l'application d'exemple</text>
+  <rect x="160" y="100" width="200" height="60" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="260" y="126" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">identity</text>
+  <text x="260" y="148" font-size="13" fill="#1f2328" text-anchor="middle">amont : laissé de côté</text>
+  <line x1="260" y1="162" x2="260" y2="206" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="160" y="210" width="200" height="60" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="3"/>
+  <text x="260" y="236" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">scheduling</text>
+  <text x="260" y="258" font-size="13" fill="#1f2328" text-anchor="middle">modifié : retenu</text>
+  <path d="M220,272 V300 H130 V326" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <path d="M300,272 V300 H370 V326" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <path d="M158,130 H60 V326" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="30" y="330" width="200" height="60" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="130" y="356" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">notification</text>
+  <text x="130" y="378" font-size="13" fill="#1f2328" text-anchor="middle">aval : retenu</text>
+  <rect x="270" y="330" width="200" height="60" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="370" y="356" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">analytics</text>
+  <text x="370" y="378" font-size="13" fill="#1f2328" text-anchor="middle">aval : retenu</text>
+  <text x="24" y="420" font-size="13" fill="#1f2328">Specs et lint : scheduling, notification, analytics.</text>
+  <text x="24" y="440" font-size="13" fill="#1f2328">Laissé à la branche par défaut : src/contexts/identity/</text>
+  <!-- right panel: what one path reaches -->
+  <text x="508" y="80" font-size="14" font-weight="600" fill="#5f6b73">Ce qu'atteint un chemin modifié</text>
+  <rect x="508" y="96" width="428" height="68" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="524" y="122" font-size="14" font-weight="700" fill="#5f6b73">un chemin sous src/contexts/&lt;context&gt;/</text>
+  <text x="524" y="146" font-size="13" fill="#1f2328">ce contexte et chaque contexte en aval de lui</text>
+  <rect x="508" y="176" width="428" height="68" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="524" y="202" font-size="14" font-weight="700" fill="#5f6b73">seulement sous src/contexts/&lt;context&gt;/test/</text>
+  <text x="524" y="226" font-size="13" fill="#1f2328">ce contexte seul : aucun autre n'importe ses tests</text>
+  <rect x="508" y="256" width="428" height="68" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="524" y="282" font-size="14" font-weight="700" fill="#5f6b73">docs/, openapi/, .claude/, un *.md à la racine</text>
+  <text x="524" y="306" font-size="13" fill="#1f2328">rien qui s'exécute (la porte des documents tourne toujours)</text>
+  <rect x="508" y="336" width="428" height="68" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="524" y="362" font-size="14" font-weight="700" fill="#5f6b73">tout le reste</text>
+  <text x="524" y="386" font-size="13" fill="#1f2328">tout : plateforme, noyau partagé, configuration, lockfile</text>
+  <text x="508" y="432" font-size="13" fill="#1f2328">Sans --base, ou quand git ne sait pas dire : tout.</text>
+  <!-- legend -->
+  <line x1="24" y1="476" x2="68" y2="476" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="80" y="481" font-size="13" fill="#1f2328">de l'amont vers l'aval, comme dans la carte des contextes</text>
+</svg>

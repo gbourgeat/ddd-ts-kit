@@ -1,3 +1,5 @@
+**English** · [Français](context-declared-relationship.fr.md)
+
 # ddd-ts-kit/context-declared-relationship
 
 Architecture id: `context/declared-relationship`. Default severity: `error` in `recommended`, `error` in `strict`.

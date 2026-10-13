@@ -1,3 +1,5 @@
+**English** · [Français](README.fr.md)
+
 # @ddd-ts-kit/http
 
 Declare a route once, without a framework. Mount it on Express 5, Fastify 5, Hono 4 (on Node)
@@ -6,12 +8,26 @@ or NestJS, and generate the OpenAPI 3.1 contract from the same declaration.
 Every adapter goes through one pipeline (`executeRoute`): validation, handler, error mapping.
 The behaviour is therefore the same on the four frameworks, and one test suite proves it.
 
+![The place of the package in an application: the adapter of each framework hands every request to the same executeRoute pipeline, which runs the handler of the route, and the handler calls a use case; the same list of routes is mounted on the server and given to generateOpenApi, which writes the contract](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/http-package-overview.svg)
+
+The package lives in the presentation layer: it turns an HTTP request into a call of your
+handler, and the answer of the handler (or its refusal) into an HTTP response. It decides
+nothing about the business: the handler sends a command or a query to the application, and
+the use case decides.
+
 ## Declare
 
+<!-- checked sample -->
 ```ts
 import { z } from 'zod';
+import type { Actor } from '@ddd-ts-kit/kernel';
 import { defineRoute, defineRoutes } from '@ddd-ts-kit/http';
 import { zodSchema } from '@ddd-ts-kit/validation/zod';
+
+/** The read side of the application, handed to the routes by the composition root. */
+interface OrderQueries {
+  byId(orderId: string, actor: Actor): Promise<{ id: string; total: number }>;
+}
 
 const order = zodSchema(z.object({ id: z.string(), total: z.number() }), { io: 'output' });
 
@@ -31,24 +47,44 @@ export const orderRoutes = (orders: OrderQueries) =>
       },
       async ({ params, context }) => ({
         status: 200, // must be a declared status, and the body must match its schema
-        body: await orders.byId(params.orderId, context.principal),
+        body: await orders.byId(params.orderId, context.execution.actor),
       }),
     ),
   );
 ```
 
 - `params`, `query`, `headers` and `body` are typed from the schemas. Any `Schema` of
-  `@ddd-ts-kit/validation` works (zod, class-validator, Standard Schema).
+  `@ddd-ts-kit/validation` works (zod, class-validator, TypeBox, Standard Schema).
 - Paths are literal segments and `:name` parameters, the form Express and Fastify share.
 - Frameworks hand query values over as strings: coerce in the schema (`z.coerce.number()`).
-- `context` is `{ requestId, execution, principal?, raw }`. `execution` is the kernel
-  `ExecutionContext` of the request (see "The execution context of a request"); `raw` is the
-  framework's request object.
+- `context` is `{ requestId, execution, principal?, rawHeaders?, raw, expectedVersion?, stream? }`.
+  `execution` is the kernel `ExecutionContext` of the request (see "The execution context of a
+  request"); `raw` is the framework's request object and `rawHeaders` the headers as they
+  arrived; `expectedVersion` is read from `If-Match` (see "Conditional requests") and `stream`
+  is the unparsed body of a route declared with `rawBody`.
 - `security` is required: the names of the security schemes that apply, or `false` for a route
   anybody may call. A route is never public by omission: leaving it out does not compile, and
   `defineRoute` refuses an empty list, which would say the same as `false` without saying it.
 - `defineRoutes` and every mount refuse a duplicate `operationId` or method and path.
 - `prefixRoutes('/api', routes)` moves routes under a prefix, for the server and the contract.
+
+A refusal is thrown, not returned. The handler answers only the success it declares; what can
+go wrong is a code in `errors`, which the contract documents and the pipeline answers:
+
+```ts
+// Instead of: a 404 written by hand, a second shape of answer that every route invents again
+responses: { 200: { description: 'The order.', body: order }, 404: { description: 'No such order.' } },
+async ({ params }) => {
+  const found = await orders.find(params.orderId);
+  return found === undefined ? { status: 404 } : { status: 200, body: found };
+},
+
+// Write: the use case throws a refusal (NotFoundError, or a factory of a ConceptError) and the
+// route lists its code; the answer is a problem document, the same on every route (see "Errors")
+responses: { 200: { description: 'The order.', body: order } },
+errors: ['NOT_FOUND'],
+async ({ params, context }) => ({ status: 200, body: await orders.byId(params.orderId, context.execution.actor) }),
+```
 
 ## Controllers, route groups and guards
 
@@ -56,8 +92,29 @@ A route may also be a class: one class per route, one method, `handle`. Its deco
 declaration, and the compiler holds `handle` to it: a part the schemas do not produce, or
 another body than the declared response, is an error on the decorator.
 
+<!-- checked sample -->
 ```ts
-import { Authenticated, Controller, RouteGroup, type HttpRequest } from '@ddd-ts-kit/http';
+import { z } from 'zod';
+import { AuthorizedCommand, type Actor, type CommandBus } from '@ddd-ts-kit/kernel';
+import { Authenticated, Controller, RouteGroup, controllerRoutes, type HttpRequest } from '@ddd-ts-kit/http';
+import type { Infer } from '@ddd-ts-kit/validation';
+import { zodSchema } from '@ddd-ts-kit/validation/zod';
+
+/** The command of the use case, in the application layer (its @Requires permission left out here). */
+class PlaceOrder extends AuthorizedCommand<string> {
+  constructor(
+    actor: Actor,
+    readonly customerId: string,
+  ) {
+    super(actor);
+  }
+}
+
+const body = zodSchema(z.object({ customerId: z.string().min(1) }));
+const placed = zodSchema(z.object({ id: z.string() }), { io: 'output' });
+
+type PlaceOrderBody = Infer<typeof body>; // { customerId: string }
+type Placed = Infer<typeof placed>; // { id: string }
 
 @RouteGroup({ prefix: '/orders', tags: ['orders'], guards: [Authenticated], errors: ['FORBIDDEN'] })
 export class OrdersRoutes {}
@@ -74,17 +131,24 @@ export class OrdersRoutes {}
 export class PlaceOrderController {
   constructor(private readonly commands: CommandBus) {}
 
-  async handle({ body, actor }: HttpRequest<{ body: Infer<typeof body> }>): Promise<Infer<typeof placed>> {
+  async handle({ body, actor }: HttpRequest<{ body: PlaceOrderBody }>): Promise<Placed> {
     return { id: await this.commands.execute(new PlaceOrder(actor, body.customerId)) };
   }
 }
 
-const routes = controllerRoutes([PlaceOrderController], { resolve: application.resolve });
+declare const application: { resolve<T>(target: abstract new (...args: never) => T): T };
+
+export const routes = controllerRoutes([PlaceOrderController], { resolve: application.resolve });
 ```
+
+The route of this controller is `POST /orders`: the prefix of its group, then its own path
+(`/` is the prefix itself).
+It answers 201 with `{ id }`, documents `OUT_OF_STOCK` (its own), `FORBIDDEN` (its group) and
+`UNAUTHORIZED` (the `Authenticated` guard), and lets no anonymous caller reach `handle`.
 
 | Export | What it is |
 |---|---|
-| `Controller(spec)` | the decorator of a controller: `group`, `method`, `path` (after the prefix of the group), `operationId` (the class name without `Controller` by default), `summary`, `description`, `tags`, `params`, `query`, `headers`, `body`, `response: { status, description?, body? }`, `errors`, `guards`, `deprecated`, `cache` and `ifMatch` (see "HTTP caching"), `produces` and `consumes` (see [Representations](#representations-json-xml-csv)), `form` (see [Forms described by the server](#forms-described-by-the-server)) |
+| `Controller(spec)` | the decorator of a controller: `group`, `method`, `path` (after the prefix of the group), `operationId` (the class name without `Controller` by default), `summary`, `description`, `tags`, `params`, `query`, `headers`, `body`, `upload` (see "Uploads and files"), `response: { status, description?, body? }`, `errors`, `guards`, `deprecated`, `cache` and `ifMatch` (see "HTTP caching"), `produces` and `consumes` (see [Representations](#representations-json-xml-csv)), `form` (see [Forms described by the server](#forms-described-by-the-server)) |
 | `RouteGroup({ parent, prefix, tags, guards, errors, cache })` | names a set of routes on an empty class; a child inherits from its `parent` and adds; the nearest `cache` wins |
 | `Guard` | the interface `{ documents?, check(request: GuardRequest) }`, and the decorator of a guard class that takes dependencies |
 | `Authenticated`, `Public`, `HasRole(...roles)`, `HasScope(...scopes)`, `TenantMember` | the guards the package ships, over the `Actor` and the `Session` of the request: 401 to the anonymous caller, 403 without one of the roles, without every scope named (`Session.scopes`, typed by the `SessionScopes` of the project) or outside the tenant of the request; `Public` lets everybody in and stands alone. A refusal of a guard is reported to `onGuardRefusal` |
@@ -102,6 +166,65 @@ it too. Controllers are declared classes of the edge (`Edge` of
 in `DeclaredEdges`. A controller has one response and answers its body: a route with several
 success statuses, response headers or a raw body stays a `defineRoute` function. The reasons
 are on the [presentation layer](../../docs/concepts/presentation-layer.md) page.
+
+## One request, step by step
+
+`executeRoute(route, request, options)` is the whole behaviour of the package: an adapter only
+copies the request of its framework into a `RawRequest` (`params`, `query`, `headers`, `body`,
+`raw`, and the body `stream`), calls it, and writes back the `RouteResponse` it returns.
+
+![The steps executeRoute takes for one request: the identifiers, then, inside the around hook, authentication, upload, validation, If-Match, execution context and tenant, then guards and handle inside the execution scope, the check of the answer, the headers and the 304; each step that can refuse names its status, and every refusal becomes a problem document](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/http-package-pipeline.svg)
+
+The steps that are not needed are skipped: no upload, no `If-Match`, no guard, no validator.
+The first refusal ends the request: a request that is not valid never reaches a guard, and a
+caller a guard refuses never reaches `handle`. Guards run after validation, so they read typed
+parameters; a credential that `resolvePrincipal` rejects is refused before anything else.
+
+Since `executeRoute` needs no server, a spec of a route calls it directly, as the adapters do:
+
+<!-- checked sample -->
+```ts
+import { z } from 'zod';
+import { NotFoundError } from '@ddd-ts-kit/kernel';
+import { defineRoute, executeRoute, type RawRequest } from '@ddd-ts-kit/http';
+import { zodSchema } from '@ddd-ts-kit/validation/zod';
+
+const orders = new Map([['7', { id: '7', total: 42 }]]);
+
+const getOrder = defineRoute(
+  {
+    method: 'GET',
+    path: '/orders/:orderId',
+    operationId: 'getOrder',
+    summary: 'Read an order',
+    request: { params: zodSchema(z.object({ orderId: z.string().regex(/^\d+$/) })) },
+    responses: {
+      200: { description: 'The order.', body: zodSchema(z.object({ id: z.string(), total: z.number() }), { io: 'output' }) },
+    },
+    errors: ['NOT_FOUND'],
+    security: false,
+  },
+  async ({ params }) => {
+    const found = orders.get(params.orderId);
+
+    if (found === undefined) {
+      throw new NotFoundError(`Order ${params.orderId} does not exist.`);
+    }
+
+    return { status: 200, body: found };
+  },
+);
+
+const request = (orderId: string): RawRequest => ({ params: { orderId }, query: {}, headers: {}, body: undefined, raw: undefined });
+
+export const found = await executeRoute(getOrder, request('7')); // 200, { id: '7', total: 42 }
+export const missing = await executeRoute(getOrder, request('8')); // 404, a problem with the code NOT_FOUND
+export const invalid = await executeRoute(getOrder, request('x')); // 422, VALIDATION_FAILED, one issue at params.orderId
+```
+
+Pass the options of the application as the third argument (`validateResponses: true` in
+tests, `resolvePrincipal` to call as a given actor): the answer is the one the server would
+send, headers included.
 
 ## HTTP caching
 
@@ -146,6 +269,21 @@ A policy that cannot stand is refused when the route is declared, with a `Declar
   tenant), it would hand the answer of one caller to the next. `private` is the usual answer.
   The ESLint rule `presentation/shared-cache-varies` reports the same declaration in the editor,
   for what one file shows.
+
+```ts
+// Instead of: refused with a DeclarationError; a CDN would hand the agenda of one caller to the next
+@RouteGroup({ prefix: '/me', guards: [Authenticated], cache: { scope: CacheScope.public, maxAge: '1m' } })
+
+// Write: kept by the browser of the caller only
+@RouteGroup({ prefix: '/me', guards: [Authenticated], cache: { scope: CacheScope.private, maxAge: '1m' } })
+
+// Or, when a shared cache must keep it: one copy per credential
+@RouteGroup({
+  prefix: '/me',
+  guards: [Authenticated],
+  cache: { scope: CacheScope.public, maxAge: '1m', vary: ['Authorization'] },
+})
+```
 
 When the routes are mounted (`mountExpress`, `mountFastify`, `createRoutesModule`), the options of
 the application are known, and a public answer is held to them with a `DeclarationError`:
@@ -275,11 +413,19 @@ the transaction of the command. A command that rolls back purges nothing; one th
 purges even when the process stops right after the commit, since the row waits for the next
 relay. The relay hands the requests to a `CachePurger` and every other event to the broker:
 
+<!-- checked sample -->
 ```ts
-import { PurgingPublisher } from '@ddd-ts-kit/kernel';
+import { OutboxRelay, type OutboxStore } from '@ddd-ts-kit/events';
+import { PurgingPublisher, type Clock, type IntegrationEventPublisher } from '@ddd-ts-kit/kernel';
 import { VarnishCachePurger } from '@ddd-ts-kit/http/purgers';
 
-const relay = new OutboxRelay({
+declare const store: OutboxStore;
+declare const broker: IntegrationEventPublisher;
+declare const clock: Clock;
+declare const varnishUrl: string;
+declare const varnishPurgeKey: string;
+
+export const relay = new OutboxRelay({
   store,
   publisher: new PurgingPublisher(new VarnishCachePurger({ url: varnishUrl, key: varnishPurgeKey }), broker),
   clock,
@@ -318,20 +464,32 @@ A handler throws a `DomainError`; its `code` is mapped to a status in one place 
   "detail": "Order 7 does not exist.", "requestId": "..." }
 ```
 
+![How the answer to an error is chosen: an error that is not a DomainError answers 500 with no detail; a DomainError gets the status its code maps to, from the defaults, the codes of the application, else 422; a 5xx answers its status and code only, a 4xx a problem document with its detail, its exposed facts and its issues](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/http-package-error-answer.svg)
+
 A refusal built by a factory of a `ConceptError` carries facts, and they are private: the
 document holds, under `facts`, only the ones its factory exposed by name, and no `facts` member
 when it exposed none.
 
+<!-- checked sample -->
 ```ts
-static slotTaken(calendarId: string, startsAt: Date) {
-  return AppointmentError.refusal('SLOT_TAKEN', 'The slot is already held.', { calendarId, startsAt }).exposing('startsAt');
+import { ConceptError } from '@ddd-ts-kit/kernel';
+
+export class AppointmentError extends ConceptError {
+  static slotTaken(calendarId: string, startsAt: Date) {
+    return AppointmentError.refusal('SLOT_TAKEN', 'The slot is already held.', { calendarId, startsAt }).exposing('startsAt');
+  }
 }
 ```
+
+With `SLOT_TAKEN` mapped to 409 (`createErrorMapper({ SLOT_TAKEN: 409 })`, below), a handler
+that throws `AppointmentError.slotTaken('c-1', startsAt)` answers:
 
 ```json
 { "type": "urn:problem:slot-taken", "title": "Conflict", "status": 409, "code": "SLOT_TAKEN",
   "detail": "The slot is already held.", "facts": { "startsAt": "2026-03-02T09:00:00.000Z" }, "requestId": "..." }
 ```
+
+`calendarId` stays in the process: the factory did not expose it.
 
 `facts` is an optional object of the `Problem` schema of the OpenAPI document. A client
 branches on `code` and reads data from `facts`, never from `detail`, which is a sentence for a
@@ -339,45 +497,87 @@ human and may change. The message is answered as it was written: it says nothing
 did not send, and nothing about another person. A refusal mapped to a 5xx answers neither its
 message nor its facts.
 
+<!-- checked sample -->
+```ts
+import type { Problem } from '@ddd-ts-kit/http';
+
+// Instead of: data parsed out of the sentence, which breaks the day the sentence is reworded
+export function startsAtFromDetail(problem: Problem): string | undefined {
+  return /held at (.+)\.$/.exec(problem.detail ?? '')?.[1];
+}
+
+// Write: branch on the stable code, read the fact the refusal exposed
+export function startsAtOf(problem: Problem): string | undefined {
+  if (problem.code !== 'SLOT_TAKEN') {
+    return undefined;
+  }
+
+  const startsAt = problem.facts?.['startsAt'];
+
+  return typeof startsAt === 'string' ? startsAt : undefined;
+}
+```
+
 Defaults: `VALIDATION_FAILED` 422 (with `issues`, paths prefixed by the part:
 `body.items.0.sku`), `NOT_FOUND` 404, `CONFLICT` 409, `INVARIANT_VIOLATION` 422, `UNAUTHORIZED`
-401, `FORBIDDEN` 403, `NOT_ACCEPTABLE` 406, `PRECONDITION_FAILED` 412, `UNSUPPORTED_MEDIA_TYPE` 415,
-`PRECONDITION_REQUIRED` 428. A domain code that is not mapped answers 422.
+401, `FORBIDDEN` 403, `NOT_ACCEPTABLE` 406, `PRECONDITION_FAILED` 412, `UNSUPPORTED_MEDIA_TYPE` 415
+(a body or a file of a type the route does not take), `PRECONDITION_REQUIRED` 428, and for files
+`FILE_NOT_FOUND` 404, `FILE_TOO_LARGE` 413. A domain code that is not mapped answers 422
+(`fallbackStatus` of the second argument changes it).
 
+<!-- checked sample -->
 ```ts
 import { createErrorMapper } from '@ddd-ts-kit/http';
 
-const errorMapper = createErrorMapper({ ORDER_ALREADY_SHIPPED: 409, QUOTA_EXCEEDED: 429 });
+export const errorMapper = createErrorMapper({ ORDER_ALREADY_SHIPPED: 409, QUOTA_EXCEEDED: 429, SLOT_TAKEN: 409 });
+
+errorMapper.statusOf('SLOT_TAKEN'); // 409, the code of the application
+errorMapper.statusOf('NOT_FOUND'); // 404, a default
+errorMapper.statusOf('INVALID_EMAIL'); // 422, a code not mapped
+errorMapper.typeOf('SLOT_TAKEN'); // 'urn:problem:slot-taken', the type of its problem document
 ```
 
-Anything that is not a `DomainError` answers 500 `Internal Server Error` with no detail: the
-message of an unexpected error never leaves the process. Log it from the `onError` hook, and
-report it to the error tracker with `onError: reportHttpErrors(errorReporter)`: every request
-answered 5xx goes to the kernel `ErrorReporter`, once, with the correlation, actor and tenant
-ids of its execution context (`context.execution`, present once the request got that far); a
-4xx never does.
+Anything that is not a `DomainError` answers 500 `Internal Server Error` with no detail (its
+code is `INTERNAL_ERROR`): the message of an unexpected error never leaves the process. Log it
+from the `onError` hook, and report it to the error tracker with
+`onError: reportHttpErrors(errorReporter)`: every request answered 5xx goes to the kernel
+`ErrorReporter`, once, with the correlation, actor and tenant ids of its execution context
+(`context.execution`, present once the request got that far); a 4xx never does.
 
 A refusal built by a factory (`ConceptError`) answers its message as `detail` unless the message
 quotes a fact the factory did not expose: then the client reads a sentence made from the code
 (`INVALID_EMAIL` gives `Invalid email.`) and the message stays in the logs and the error
 reports. A fact is found in the message as a text, a number or an ISO instant; a fact written
-another way (a formatted date, a part of an object) is not seen, so expose what a client may
+another way (a formatted date, a rounded number) is not seen, so expose what a client may
 read and keep the rest out of the sentence.
 
 ## Options shared by the adapters
 
-```ts
-import type { ExecuteOptions } from '@ddd-ts-kit/http';
+Every mount takes the same `ExecuteOptions`, a plain object built where the server starts:
 
-const options: ExecuteOptions = {
-  errorMapper,
+<!-- checked sample -->
+```ts
+import { auditGuardRefusals } from '@ddd-ts-kit/audit';
+import { CacheTagHeader, createErrorMapper, type ExecuteOptions } from '@ddd-ts-kit/http';
+import type { AuditTrail, Clock, IdGenerator } from '@ddd-ts-kit/kernel';
+import { tracedRoutes } from '@ddd-ts-kit/tracing';
+
+declare function authenticate(raw: unknown): Promise<unknown>;
+declare const logger: { error(fields: Record<string, unknown>): void };
+declare const trail: AuditTrail;
+declare const clock: Clock;
+declare const ids: IdGenerator;
+
+export const options: ExecuteOptions = {
+  errorMapper: createErrorMapper({ ORDER_ALREADY_SHIPPED: 409 }),
   resolvePrincipal: (raw) => authenticate(raw), // throw UnauthorizedError to refuse
   onError: (error, { requestId, correlationId, operationId, problem }) => {
     if (problem.status >= 500) {
       logger.error({ requestId, correlationId, operationId, error });
     }
   },
-  validateResponses: process.env.NODE_ENV === 'test', // checks answers against the declaration
+  onGuardRefusal: auditGuardRefusals(trail, { clock, ids }), // the refusals at the edge, in the audit trail
+  validateResponses: process.env['NODE_ENV'] === 'test', // checks answers against the declaration
   around: tracedRoutes(), // of @ddd-ts-kit/tracing: the span of the request, named by its route template
   // the header the shared cache in front reads the tags from; honoursVary and perTenant: see HTTP caching
   cacheTags: { header: CacheTagHeader.xkey },
@@ -416,10 +616,16 @@ as `context.execution`:
 | `locale` | the locale of the session, else the preferred language of `Accept-Language` |
 | `deadline` | arrival plus `requestTimeoutMs`, when the option is set |
 
+<!-- checked sample -->
 ```ts
+import { principalResolver, type Authenticator } from '@ddd-ts-kit/auth';
+import type { ExecuteOptions } from '@ddd-ts-kit/http';
 import { Clock, ExecutionScope } from '@ddd-ts-kit/kernel';
 
-const options: ExecuteOptions = {
+declare const authenticator: Authenticator;
+declare const app: { resolve<T>(token: abstract new (...args: never) => T): T };
+
+export const options: ExecuteOptions = {
   resolvePrincipal: principalResolver(authenticator), // of @ddd-ts-kit/auth: answers a Session
   executionScope: app.resolve(ExecutionScope), // the scope the application runs its use cases in
   clock: app.resolve(Clock),
@@ -441,10 +647,11 @@ or `actorOf(context.principal)` of `@ddd-ts-kit/auth`, which reads the same acto
 
 A multi-tenant application says where a request names its tenant with `resolveTenant`:
 
+<!-- checked sample -->
 ```ts
-import { firstTenantOf, tenantFromClaim, tenantFromSubdomain } from '@ddd-ts-kit/http';
+import { firstTenantOf, tenantFromClaim, tenantFromSubdomain, type ExecuteOptions } from '@ddd-ts-kit/http';
 
-const options: ExecuteOptions = {
+export const options: ExecuteOptions = {
   resolveTenant: firstTenantOf(tenantFromSubdomain('app.example.com'), tenantFromClaim()),
   // or tenantFromHeader('x-tenant-id'), tenantFromPath('tenantId')
 };
@@ -466,7 +673,16 @@ opens another tenant's data. An anonymous caller keeps the tenant it addressed, 
 routes of a tenant. The guard `TenantMember` puts a group of routes behind a tenant: 401 to the
 anonymous caller, 403 to a request in no tenant or of another tenant. Platform staff do not pass
 it: they reach tenants through an elevation of the kernel (`acrossTenants`), behind guards of their
-own.
+own. A tenant id that no tenant can have (`*`, a list, a `:`, outside the grammar of `isTenantId`)
+is answered 404 before anything reads it, whoever calls.
+
+| Caller | Tenant named by the request | Answer |
+|---|---|---|
+| anonymous | any | goes on, in the tenant it addressed; a `TenantMember` route answers 401 |
+| member of `acme` | `acme` | goes on, `execution.tenantId` is `acme` |
+| member of `acme` | `globex` | 403, before any guard or handler, reported to `onGuardRefusal` |
+| member of `acme` | none | goes on in `acme`, the tenant of the actor |
+| anybody | `*` or `a,b` | 404 |
 
 ## In the composition root
 
@@ -474,10 +690,13 @@ The package binds and resolves nothing: routes are a plain list and `ExecuteOpti
 object, both built where the server starts. What it takes from the application are ports,
 resolved by their class:
 
+<!-- checked sample -->
 ```ts
-import { createApplication, defineContextModule, kernelModule } from '@ddd-ts-kit/di';
+import { createApplication, defineContextModule, kernelModule, type ContextModule } from '@ddd-ts-kit/di';
 import { ErrorMapper, createErrorMapper, type ExecuteOptions } from '@ddd-ts-kit/http';
 import { Clock, ExecutionScope } from '@ddd-ts-kit/kernel';
+
+declare const orderingModule: ContextModule; // the module of a bounded context
 
 const httpModule = defineContextModule({
   name: 'http',
@@ -488,7 +707,7 @@ const httpModule = defineContextModule({
 
 const app = createApplication({ modules: [kernelModule(), httpModule, orderingModule] });
 
-const options: ExecuteOptions = {
+export const options: ExecuteOptions = {
   errorMapper: app.resolve(ErrorMapper),
   executionScope: app.resolve(ExecutionScope),
   clock: app.resolve(Clock),
@@ -509,10 +728,25 @@ One query vocabulary and one answer for every search, on top of the kernel `Page
 `Page`: `limit`, `offset` or `cursor`, and `sort` (`placedAt,-total`: comma-separated fields, a
 leading `-` for descending).
 
+<!-- checked sample -->
 ```ts
+import { z } from 'zod';
+import type { Page, PageRequest } from '@ddd-ts-kit/kernel';
 import { defineRoute, pageQuerySchema, pageResponse, pageSchemaOf } from '@ddd-ts-kit/http';
+import { zodSchema } from '@ddd-ts-kit/validation/zod';
 
-const searchOrders = defineRoute(
+interface Order {
+  readonly id: string;
+  readonly placedAt: Date;
+  readonly total: number;
+}
+
+declare const orders: { search(page: PageRequest<'placedAt' | 'total'>): Promise<Page<Order>> };
+
+const order = zodSchema(z.object({ id: z.string(), placedAt: z.string(), total: z.number() }), { io: 'output' });
+const toOrderDto = ({ id, placedAt, total }: Order) => ({ id, placedAt: placedAt.toISOString(), total });
+
+export const searchOrders = defineRoute(
   {
     method: 'GET',
     path: '/orders',
@@ -623,6 +857,8 @@ A route keeps answering a typed value its response schema checks; a `Representat
 into the text of one media type, chosen per request by the `Accept` header among those the
 route declares. The application registers its representations once and gives the same set to
 the adapters and to the contract generator:
+
+![A handler answers a typed value; the response schema checks it; field access leaves out what the caller may not read; negotiation on Accept picks JSON, XML or CSV among what the route produces, or refuses with 406 when none is in common](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/representations-and-forms-one-value.svg)
 
 ```ts
 import { Representations, type ExecuteOptions } from '@ddd-ts-kit/http';
@@ -826,6 +1062,8 @@ A route that declares `form` is described as a form, from what it already declar
 body schema, the restricted fields of that schema, and a few presentation hints. `formRoutes`
 serves one `GET /forms/<operationId>` per such route, mounted and documented like any route:
 
+![The body schema of the booking reserves the internal note; the form route asks the permission to book and Access about the calendar; the practitioner who holds the desk may set every field, an assistant on a delegated desk sees the note read-only, a patient booking for themselves does not see it, and an assistant without a delegation is refused with 403](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/representations-and-forms-one-form-per-caller.svg)
+
 ```ts
 // presentation/http/appointments/book-appointment/book-appointment.controller.ts, next to its schemas
 const form = defineForm<Infer<typeof body>>({
@@ -900,36 +1138,52 @@ both formats, for the documentation: a project generated by the CLI writes them 
 
 ## Express 5
 
+<!-- checked sample -->
 ```ts
 import express from 'express';
+import type { ExecuteOptions, Route } from '@ddd-ts-kit/http';
 import { mountExpress } from '@ddd-ts-kit/http/express';
+
+declare const routes: readonly Route[]; // defineRoutes(...), controllerRoutes(...)
+declare const options: ExecuteOptions;
 
 const app = express();
 app.use(express.json()); // required: the adapter does not parse bodies
-mountExpress(app, orderRoutes(orders), options); // an express.Router() works too
+mountExpress(app, routes, options); // an express.Router() works too
+app.listen(3000);
 ```
 
 ## Fastify 5
 
+<!-- checked sample -->
 ```ts
 import Fastify from 'fastify';
+import type { ExecuteOptions, Route } from '@ddd-ts-kit/http';
 import { fastifyRoutes, mountFastify } from '@ddd-ts-kit/http/fastify';
 
+declare const routes: readonly Route[];
+declare const options: ExecuteOptions;
+
 const app = Fastify();
-mountFastify(app, orderRoutes(orders), options);
+mountFastify(app, routes, options);
 // or, as a plugin:
-await app.register(fastifyRoutes(orderRoutes(orders), options), { prefix: '/api' });
+await app.register(fastifyRoutes(routes, options), { prefix: '/api' });
 ```
 
 ## Hono 4
 
+<!-- checked sample -->
 ```ts
 import { serve } from '@hono/node-server';
 import { Hono } from 'hono';
+import type { ExecuteOptions, Route } from '@ddd-ts-kit/http';
 import { mountHono } from '@ddd-ts-kit/http/hono';
 
+declare const routes: readonly Route[];
+declare const options: ExecuteOptions;
+
 const app = new Hono();
-mountHono(app, orderRoutes(orders), options);
+mountHono(app, routes, { ...options, bodyLimit: 2 * 1024 * 1024 }); // bodyLimit: 1 MiB by default
 serve({ fetch: app.fetch, port: 3000 });
 ```
 
@@ -951,9 +1205,18 @@ Node with `@hono/node-server`, not Bun, Deno or an edge runtime.
 No decorator per route: a module mounts the routes on the underlying HTTP server at module
 init, whether Nest runs on Express or on Fastify. Handlers get their dependencies by closure.
 
+<!-- checked sample: legacy-decorators -->
 ```ts
 import { Module } from '@nestjs/common';
+import type { ExecuteOptions, Route } from '@ddd-ts-kit/http';
 import { createRoutesModule } from '@ddd-ts-kit/http/nest';
+
+/** A token of the Nest application, exported by OrdersModule. */
+abstract class OrderQueries {}
+
+declare class OrdersModule {}
+declare function orderRoutes(orders: OrderQueries): readonly Route[];
+declare const options: ExecuteOptions;
 
 @Module({
   imports: [
@@ -972,14 +1235,19 @@ are those described above. Use `prefixRoutes` for a prefix.
 
 ## OpenAPI 3.1
 
+<!-- checked sample -->
 ```ts
 import { readFileSync, writeFileSync } from 'node:fs';
+import type { ErrorMapper, Route } from '@ddd-ts-kit/http';
 import { checkOpenApiDrift, generateOpenApi, stringifyOpenApi } from '@ddd-ts-kit/http/openapi';
+
+declare const routes: readonly Route[]; // the very list the server mounts
+declare const errorMapper: ErrorMapper;
 
 const document = generateOpenApi({
   info: { title: 'Orders', version: '1.0.0' },
   servers: [{ url: 'https://api.example.com' }],
-  routes: orderRoutes(orders),
+  routes,
   securitySchemes: { bearer: { type: 'http', scheme: 'bearer' } },
   errorMapper, // the one the server runs with
 });
@@ -1038,10 +1306,16 @@ Fields reserved by `withFieldAccess` stay reserved whichever of the two wraps th
 
 ## Serving the contract and its page
 
+<!-- checked sample -->
 ```ts
+import type { Route } from '@ddd-ts-kit/http';
 import { openApiDocsRoutes } from '@ddd-ts-kit/http/docs';
+import type { OpenApiDocument } from '@ddd-ts-kit/http/openapi';
 
-const routes = [...orderRoutes(orders), ...openApiDocsRoutes(document, { ui: 'scalar' })];
+declare const orderRoutes: readonly Route[];
+declare const document: OpenApiDocument; // generateOpenApi(...) of orderRoutes
+
+export const routes = [...orderRoutes, ...openApiDocsRoutes(document, { ui: 'scalar' })];
 ```
 
 Two public routes (`security: false`), mounted next to the application routes and absent
@@ -1055,9 +1329,13 @@ the UI chosen by `--docs-ui`, unless documentation is switched off by its config
 
 ## A contract split into documents
 
+<!-- checked sample -->
 ```ts
+import type { Route } from '@ddd-ts-kit/http';
 import { openApiDocumentsRoutes } from '@ddd-ts-kit/http/docs';
 import { generateOpenApi, routesByDocument } from '@ddd-ts-kit/http/openapi';
+
+declare const routes: readonly Route[];
 
 const documents = routesByDocument(routes, [
   { name: 'public', title: 'Booking API', groups: ['AppointmentRoutes'] },
@@ -1067,7 +1345,7 @@ const documents = routesByDocument(routes, [
   document: generateOpenApi({ info: { title: title ?? 'API', version: '1.0.0' }, routes: selected }),
 }));
 
-const served = [...routes, ...openApiDocumentsRoutes(documents, { ui: 'swagger' })];
+export const served = [...routes, ...openApiDocumentsRoutes(documents, { ui: 'swagger' })];
 ```
 
 `routesByDocument` gives each document the routes of its route groups (a controller route
@@ -1086,22 +1364,62 @@ A controller that receives a file declares it, and the declaration is the contra
 the most it may weigh and the media types it may be, which the OpenAPI document states
 (`multipart/form-data`, `x-max-bytes`, `x-media-types`, the 413, 415 and 422 refusals).
 
+<!-- checked sample -->
 ```ts
+import { z } from 'zod';
+import { AuthorizedCommand, FileUpload, type Actor, type CommandBus, type ReceivedFile } from '@ddd-ts-kit/kernel';
+import {
+  acceptedSchema,
+  Authenticated,
+  Controller,
+  RouteGroup,
+  type Accepted,
+  type HttpRequest,
+  type IncomingFile,
+} from '@ddd-ts-kit/http';
+import { zodSchema } from '@ddd-ts-kit/validation/zod';
+
+/** The command carries the file: the bus stages it before the transaction opens. */
+class AttachDocument extends AuthorizedCommand<string> {
+  readonly document: FileUpload;
+
+  constructor(
+    actor: Actor,
+    readonly appointmentId: string,
+    file: ReceivedFile,
+  ) {
+    super(actor);
+    this.document = new FileUpload(file, 'appointment-documents');
+  }
+}
+
+@RouteGroup({ prefix: '/appointments', guards: [Authenticated] })
+export class AppointmentRoutes {}
+
+const params = zodSchema(z.object({ appointmentId: z.string().min(1) }));
+const body = zodSchema(z.object({ note: z.string().max(200).optional() })); // the text fields, sent before the file
+
 @Controller({
   group: AppointmentRoutes,
   method: 'POST',
   path: '/:appointmentId/document',
   summary: 'Attach a document to an appointment',
   params,
-  body, // the text fields, sent before the file
+  body,
   upload: { field: 'document', maxBytes: 10_000_000, mediaTypes: ['application/pdf', 'image/*'] },
-  response: { status: 201, body: attached },
+  response: { status: 201, body: acceptedSchema },
 })
 export class AttachDocumentController {
   constructor(private readonly commands: CommandBus) {}
 
-  async handle({ params, upload, actor }: HttpRequest<{ params: Params; upload: IncomingFile }>) {
-    return this.commands.execute(new AttachDocument(actor, params.appointmentId, upload));
+  async handle({
+    params,
+    upload,
+    actor,
+  }: HttpRequest<{ params: { appointmentId: string }; upload: IncomingFile }>): Promise<Accepted> {
+    await this.commands.execute(new AttachDocument(actor, params.appointmentId, upload));
+
+    return { id: params.appointmentId };
   }
 }
 ```
@@ -1109,8 +1427,16 @@ export class AttachDocumentController {
 The routes are mounted with an upload reader, `multipartUploads()` of `@ddd-ts-kit/http/uploads`
 (on busboy, an optional peer: `npm i busboy`):
 
+<!-- checked sample -->
 ```ts
+import type { Express } from 'express';
+import type { ExecuteOptions, Route } from '@ddd-ts-kit/http';
+import { mountExpress } from '@ddd-ts-kit/http/express';
 import { multipartUploads } from '@ddd-ts-kit/http/uploads';
+
+declare const app: Express;
+declare const routes: readonly Route[];
+declare const options: ExecuteOptions;
 
 mountExpress(app, routes, { ...options, uploads: multipartUploads() });
 ```
@@ -1145,8 +1471,9 @@ writes a file, and a route that declares no body schema is never refused 406.
 
 ## Limits
 
-- A body the framework itself refuses (malformed JSON, payload too large) is answered by the
-  framework's own error handler, before the pipeline runs.
+- On Express, Fastify and NestJS, a body the framework itself refuses (malformed JSON, payload
+  too large) is answered by the framework's own error handler, before the pipeline runs. The
+  Hono adapter reads the body itself and answers both as problems (see "Hono 4").
 - Routes are JSON first. A handler may answer a string, bytes or a stream by setting its own
   `content-type` header, which no representation touches. A request body streams only as a
   declared upload or a raw body (`rawBody`): server-sent events and WebSockets are written

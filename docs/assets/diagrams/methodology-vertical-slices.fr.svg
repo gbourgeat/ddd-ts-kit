@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 660" width="960" height="660" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Planifier par couches, ou par tranches verticales</title>
+  <desc id="desc">En haut, le travail planifié par couches : tous les agrégats, puis tous les gestionnaires, puis tous les adaptateurs, puis toutes les routes ; rien ne tourne avant que la dernière couche soit finie, et les workers en parallèle modifient les mêmes fichiers. En bas, le même travail planifié en tranches verticales dans le contexte appointments : BookAppointment, CancelAppointment, GetAppointment, chacune traversant les couches dont elle a besoin et fusionnée seule ; puis ce qui traverse une frontière fait deux tranches, l'événement d'intégration AppointmentBooked publié en amont et son gestionnaire dans le contexte notifications en aval.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="660" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Planifier par couches, ou par tranches verticales</text>
+  <!-- by layers -->
+  <text x="32" y="72" font-size="16" font-weight="700" fill="#5f6b73">Par couches : à éviter</text>
+  <rect x="32" y="86" width="580" height="34" rx="6" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="1.5"/>
+  <text x="48" y="108" font-size="14" fill="#1f2328">d'abord, tous les agrégats et entités</text>
+  <rect x="32" y="126" width="580" height="34" rx="6" fill="#e7eef5" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="48" y="148" font-size="14" fill="#1f2328">puis toutes les commandes, requêtes et gestionnaires</text>
+  <rect x="32" y="166" width="580" height="34" rx="6" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="1.5"/>
+  <text x="48" y="188" font-size="14" fill="#1f2328">puis tous les adaptateurs</text>
+  <rect x="32" y="206" width="580" height="34" rx="6" fill="#f6ede6" stroke="#9a5b2b" stroke-width="1.5"/>
+  <text x="48" y="228" font-size="14" fill="#1f2328">puis toutes les routes : la première requête HTTP tourne enfin</text>
+  <rect x="640" y="86" width="288" height="154" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="656" y="114" font-size="14" font-weight="600" fill="#5f6b73">Ce qui se passe mal</text>
+  <text x="656" y="140" font-size="13" fill="#1f2328">rien n'est démontrable avant</text>
+  <text x="656" y="158" font-size="13" fill="#1f2328">la fin de la dernière bande ;</text>
+  <text x="656" y="184" font-size="13" fill="#1f2328">les workers en parallèle modifient</text>
+  <text x="656" y="202" font-size="13" fill="#1f2328">les mêmes fichiers et se heurtent ;</text>
+  <text x="656" y="228" font-size="13" fill="#1f2328">une règle fausse se voit à la fin</text>
+  <line x1="32" y1="268" x2="928" y2="268" stroke="#5f6b73" stroke-opacity="0.5" stroke-width="1.5"/>
+  <!-- by slices -->
+  <text x="32" y="300" font-size="16" font-weight="700" fill="#2b5d8a">Par tranches verticales : chacune tourne, est fusionnée, puis la suivante</text>
+  <text x="460" y="330" font-size="14" font-weight="600" fill="#5f6b73" text-anchor="middle">contexte appointments</text>
+  <text x="852" y="330" font-size="14" font-weight="600" fill="#5f6b73" text-anchor="middle">contexte notifications</text>
+  <!-- layer bands -->
+  <text x="32" y="420" font-size="14" font-weight="700" fill="#9a5b2b">présentation</text>
+  <rect x="160" y="398" width="768" height="36" rx="4" fill="#f6ede6"/>
+  <text x="32" y="460" font-size="14" font-weight="700" fill="#2b5d8a">application</text>
+  <rect x="160" y="438" width="768" height="36" rx="4" fill="#e7eef5"/>
+  <text x="32" y="500" font-size="14" font-weight="700" fill="#2f6f4f">domaine</text>
+  <rect x="160" y="478" width="768" height="36" rx="4" fill="#e8f1ec"/>
+  <text x="32" y="540" font-size="14" font-weight="700" fill="#7a4f9a">infrastructure</text>
+  <rect x="160" y="518" width="768" height="36" rx="4" fill="#f1ebf5"/>
+  <!-- slice headers -->
+  <text x="239" y="358" font-size="14" font-weight="700" fill="#1f2328" text-anchor="middle">1</text>
+  <text x="239" y="378" font-size="13" fill="#1f2328" text-anchor="middle">BookAppointment</text>
+  <text x="387" y="358" font-size="14" font-weight="700" fill="#1f2328" text-anchor="middle">2</text>
+  <text x="387" y="378" font-size="13" fill="#1f2328" text-anchor="middle">CancelAppointment</text>
+  <text x="535" y="358" font-size="14" font-weight="700" fill="#1f2328" text-anchor="middle">3</text>
+  <text x="535" y="378" font-size="13" fill="#1f2328" text-anchor="middle">GetAppointment</text>
+  <text x="683" y="358" font-size="14" font-weight="700" fill="#1f2328" text-anchor="middle">4</text>
+  <text x="683" y="378" font-size="13" fill="#1f2328" text-anchor="middle">AppointmentBooked</text>
+  <text x="852" y="358" font-size="14" font-weight="700" fill="#1f2328" text-anchor="middle">5</text>
+  <text x="852" y="378" font-size="13" fill="#1f2328" text-anchor="middle">envoyer la confirmation</text>
+  <!-- slices -->
+  <rect x="184" y="392" width="110" height="168" rx="8" fill="none" stroke="#3d4449" stroke-width="2.5"/>
+  <rect x="332" y="392" width="110" height="168" rx="8" fill="none" stroke="#3d4449" stroke-width="2.5"/>
+  <rect x="480" y="392" width="110" height="168" rx="8" fill="none" stroke="#3d4449" stroke-width="2.5"/>
+  <rect x="628" y="432" width="110" height="128" rx="8" fill="none" stroke="#3d4449" stroke-width="2.5"/>
+  <rect x="797" y="432" width="110" height="128" rx="8" fill="none" stroke="#3d4449" stroke-width="2.5"/>
+  <!-- boundary between the contexts -->
+  <line x1="766" y1="392" x2="766" y2="572" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <!-- integration event -->
+  <line x1="738" y1="456" x2="795" y2="456" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <!-- captions -->
+  <text x="32" y="600" font-size="14" fill="#1f2328">Chaque tranche : une commande ou une requête, de bout en bout, ses tests, une porte verte, un commit ; démontrable dès sa fusion.</text>
+  <line x1="32" y1="628" x2="76" y2="628" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <text x="88" y="633" font-size="14" fill="#1f2328">4 puis 5 : un besoin entre deux contextes fait deux tranches, l'événement publié en amont (4), son gestionnaire en aval (5).</text>
+</svg>

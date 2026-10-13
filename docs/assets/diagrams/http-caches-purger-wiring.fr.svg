@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 560" width="960" height="560" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Les pièces qui portent une purge d'un gestionnaire d'événement jusqu'au cache</title>
+  <desc id="desc">Un gestionnaire d'événement du domaine, dans la phase before-commit, demande à CacheInvalidation d'invalider des étiquettes. PublishedCacheInvalidation publie une demande de purge, que le store de l'outbox écrit comme une ligne dans la transaction de la commande. Après la validation, l'OutboxRelay remet la ligne à PurgingPublisher, qui envoie les demandes de purge au port CachePurger et tout autre événement au broker. Le port CachePurger est implémenté par VarnishCachePurger, FastlyCachePurger et CloudflareCachePurger de @ddd-ts-kit/http/purgers, ou par un purgeur à vous tenu à cachePurgerContract ; RepeatedCachePurger l'implémente aussi et enveloppe l'un d'eux pour purger une seconde fois.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+    <marker id="arrow-infrastructure" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#7a4f9a"/>
+    </marker>
+  </defs>
+  <rect width="960" height="560" rx="16" fill="#ffffff"/>
+  <text x="24" y="36" font-size="18" font-weight="600" fill="#1f2328">Les pièces qui portent une purge d'un gestionnaire d'événement jusqu'au cache</text>
+  <!-- row A: the request is written with the command -->
+  <rect x="24" y="60" width="196" height="88" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="122" y="82" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">gestionnaire</text>
+  <text x="122" y="100" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">d'événement</text>
+  <text x="122" y="120" font-size="13" fill="#1f2328" text-anchor="middle">phase before-commit</text>
+  <text x="122" y="138" font-size="13" fill="#1f2328" text-anchor="middle">invalidate(tags)</text>
+  <rect x="260" y="60" width="200" height="88" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="360" y="86" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">CacheInvalidation</text>
+  <text x="360" y="110" font-size="13" fill="#1f2328" text-anchor="middle">PublishedCacheInvalidation</text>
+  <text x="360" y="130" font-size="13" fill="#1f2328" text-anchor="middle">publie une demande de purge</text>
+  <rect x="500" y="60" width="196" height="88" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="598" y="86" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">store de l'outbox</text>
+  <text x="598" y="110" font-size="13" fill="#1f2328" text-anchor="middle">une ligne dans la transaction</text>
+  <text x="598" y="130" font-size="13" fill="#1f2328" text-anchor="middle">de la commande</text>
+  <rect x="736" y="60" width="200" height="88" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="836" y="86" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">OutboxRelay</text>
+  <text x="836" y="110" font-size="13" fill="#1f2328" text-anchor="middle">après la validation,</text>
+  <text x="836" y="130" font-size="13" fill="#1f2328" text-anchor="middle">réessaie jusqu'à un 2xx</text>
+  <line x1="222" y1="104" x2="258" y2="104" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="462" y1="104" x2="498" y2="104" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="698" y1="104" x2="734" y2="104" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- row B: the relay splits what it publishes -->
+  <rect x="24" y="196" width="296" height="70" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="172" y="218" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">RepeatedCachePurger</text>
+  <text x="172" y="238" font-size="13" fill="#1f2328" text-anchor="middle">facultatif : purge à nouveau</text>
+  <text x="172" y="256" font-size="13" fill="#1f2328" text-anchor="middle">après againAfterMs</text>
+  <rect x="370" y="196" width="250" height="70" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="495" y="222" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">CachePurger</text>
+  <text x="495" y="246" font-size="13" fill="#1f2328" text-anchor="middle">port du kernel : purge(tags)</text>
+  <rect x="736" y="196" width="200" height="70" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="836" y="222" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">PurgingPublisher</text>
+  <text x="836" y="246" font-size="13" fill="#1f2328" text-anchor="middle">trie ce que le relais envoie</text>
+  <line x1="836" y1="150" x2="836" y2="194" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="678" y="222" font-size="13" fill="#1f2328" text-anchor="middle">demandes</text>
+  <text x="678" y="238" font-size="13" fill="#1f2328" text-anchor="middle">de purge</text>
+  <line x1="734" y1="248" x2="622" y2="248" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="322" y1="231" x2="368" y2="231" stroke="#7a4f9a" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow-infrastructure)"/>
+  <!-- the broker -->
+  <rect x="736" y="350" width="200" height="70" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="836" y="376" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">broker</text>
+  <text x="836" y="400" font-size="13" fill="#1f2328" text-anchor="middle">RabbitMQ, Kafka, NATS...</text>
+  <line x1="836" y1="268" x2="836" y2="348" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="826" y="300" font-size="13" fill="#1f2328" text-anchor="end">tout autre événement</text>
+  <!-- the adapters -->
+  <rect x="24" y="320" width="692" height="156" rx="12" fill="#ffffff" stroke="#7a4f9a" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="40" y="344" font-size="14" font-weight="600" fill="#7a4f9a">@ddd-ts-kit/http/purgers, ou un purgeur à vous</text>
+  <rect x="34" y="358" width="160" height="104" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="114" y="382" font-size="14" font-weight="700" fill="#7a4f9a" text-anchor="middle">VarnishCachePurger</text>
+  <text x="114" y="406" font-size="13" fill="#1f2328" text-anchor="middle">PURGE, xkey-purge</text>
+  <text x="114" y="426" font-size="13" fill="#1f2328" text-anchor="middle">ou x-ban-tag</text>
+  <text x="114" y="448" font-size="13" fill="#5f6b73" text-anchor="middle">en-tête xkey</text>
+  <rect x="202" y="358" width="154" height="104" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="279" y="382" font-size="14" font-weight="700" fill="#7a4f9a" text-anchor="middle">FastlyCachePurger</text>
+  <text x="279" y="406" font-size="13" fill="#1f2328" text-anchor="middle">POST .../purge</text>
+  <text x="279" y="426" font-size="13" fill="#1f2328" text-anchor="middle">256 clés par requête</text>
+  <text x="279" y="448" font-size="13" fill="#5f6b73" text-anchor="middle">en-tête surrogate-key</text>
+  <rect x="364" y="358" width="182" height="104" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="455" y="382" font-size="14" font-weight="700" fill="#7a4f9a" text-anchor="middle">CloudflareCachePurger</text>
+  <text x="455" y="406" font-size="13" fill="#1f2328" text-anchor="middle">POST .../purge_cache</text>
+  <text x="455" y="426" font-size="13" fill="#1f2328" text-anchor="middle">100 étiquettes par requête</text>
+  <text x="455" y="448" font-size="13" fill="#5f6b73" text-anchor="middle">en-tête cache-tag</text>
+  <rect x="554" y="358" width="150" height="104" rx="10" fill="#ffffff" stroke="#7a4f9a" stroke-width="2" stroke-dasharray="5 4"/>
+  <text x="629" y="382" font-size="14" font-weight="700" fill="#7a4f9a" text-anchor="middle">le vôtre</text>
+  <text x="629" y="406" font-size="13" fill="#1f2328" text-anchor="middle">Souin, Bunny...</text>
+  <text x="629" y="426" font-size="13" fill="#1f2328" text-anchor="middle">fetch sur son API</text>
+  <text x="629" y="448" font-size="13" fill="#5f6b73" text-anchor="middle">tenu au contrat</text>
+  <line x1="495" y1="318" x2="495" y2="268" stroke="#7a4f9a" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow-infrastructure)"/>
+  <line x1="172" y1="268" x2="172" y2="318" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="182" y="298" font-size="13" fill="#1f2328">enveloppe l'un d'eux</text>
+  <!-- legend -->
+  <line x1="24" y1="510" x2="68" y2="510" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="80" y="515" font-size="14" fill="#1f2328">appelle, ou remet un message à</text>
+  <line x1="24" y1="536" x2="68" y2="536" stroke="#7a4f9a" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow-infrastructure)"/>
+  <text x="80" y="541" font-size="14" fill="#1f2328">implémente le port CachePurger ; « en-tête » : l'en-tête d'étiquettes que les routes envoient (cacheTags.header)</text>
+</svg>

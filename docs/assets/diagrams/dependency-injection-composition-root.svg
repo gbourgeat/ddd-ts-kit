@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 520" width="960" height="520" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">One handler, its ports, its adapters, and the composition root</title>
+  <desc id="desc">The handler of the application receives two kinds of ports by its constructor: a repository port of the domain and the clock and identifier ports of the kernel. An adapter of the infrastructure implements each port. The composition root is the only place that binds each adapter to its port, written in one of three styles: declared, explicit or manual.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+    <marker id="arrow-infrastructure" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#7a4f9a"/>
+    </marker>
+  </defs>
+  <rect width="960" height="520" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">One handler, its ports, its adapters, and the place that binds them</text>
+  <!-- column headings -->
+  <text x="150" y="72" font-size="13" font-weight="600" fill="#2b5d8a" text-anchor="middle">application</text>
+  <text x="470" y="72" font-size="13" font-weight="600" fill="#5f6b73" text-anchor="middle">ports (abstract classes)</text>
+  <text x="802" y="72" font-size="13" font-weight="600" fill="#7a4f9a" text-anchor="middle">infrastructure</text>
+  <!-- handler -->
+  <rect x="32" y="84" width="236" height="152" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="150" y="114" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">BookAppointmentHandler</text>
+  <line x1="48" y1="126" x2="252" y2="126" stroke="#2b5d8a" stroke-opacity="0.35"/>
+  <text x="150" y="150" font-size="13" fill="#1f2328" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">constructor(</text>
+  <text x="150" y="170" font-size="13" fill="#1f2328" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">appointments, clock, ids)</text>
+  <text x="150" y="208" font-size="13" font-style="italic" fill="#2b5d8a" text-anchor="middle">imports no container</text>
+  <!-- ports -->
+  <rect x="340" y="84" width="260" height="64" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="470" y="111" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">AppointmentRepository</text>
+  <text x="470" y="134" font-size="13" fill="#1f2328" text-anchor="middle">port of the domain</text>
+  <rect x="340" y="172" width="260" height="64" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="470" y="199" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">Clock, IdGenerator</text>
+  <text x="470" y="222" font-size="13" fill="#1f2328" text-anchor="middle">ports of the kernel</text>
+  <!-- adapters -->
+  <rect x="672" y="84" width="260" height="64" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="802" y="111" font-size="15" font-weight="700" fill="#7a4f9a" text-anchor="middle">KnexAppointmentRepository</text>
+  <text x="802" y="134" font-size="13" fill="#1f2328" text-anchor="middle">adapter of the context</text>
+  <rect x="672" y="172" width="260" height="64" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="802" y="199" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">kernel defaults</text>
+  <text x="802" y="222" font-size="13" fill="#1f2328" text-anchor="middle">SystemClock, UuidGenerator</text>
+  <!-- handler depends on ports -->
+  <line x1="270" y1="116" x2="337" y2="116" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="270" y1="204" x2="337" y2="204" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- adapters implement ports -->
+  <line x1="670" y1="116" x2="603" y2="116" stroke="#7a4f9a" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow-infrastructure)"/>
+  <line x1="670" y1="204" x2="603" y2="204" stroke="#7a4f9a" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow-infrastructure)"/>
+  <!-- composition root -->
+  <rect x="24" y="268" width="912" height="172" rx="14" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="44" y="296" font-size="14" font-weight="600" fill="#5f6b73">composition root (src/platform, main.ts): the only place that binds each adapter to its port</text>
+  <rect x="48" y="314" width="272" height="106" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="184" y="340" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">declared</text>
+  <text x="184" y="362" font-size="13" fill="#1f2328" text-anchor="middle">a declaration on each class</text>
+  <text x="184" y="384" font-size="13" fill="#1f2328" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">contextModule(name, barrel)</text>
+  <text x="184" y="406" font-size="13" font-style="italic" fill="#5f6b73" text-anchor="middle">tsyringe and @ddd-ts-kit/di</text>
+  <rect x="344" y="314" width="272" height="106" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="480" y="340" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">explicit</text>
+  <text x="480" y="362" font-size="13" fill="#1f2328" text-anchor="middle">one statement per binding</text>
+  <text x="480" y="384" font-size="13" fill="#1f2328" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">bind(Port).toClass(Adapter)</text>
+  <text x="480" y="406" font-size="13" font-style="italic" fill="#5f6b73" text-anchor="middle">tsyringe and @ddd-ts-kit/di</text>
+  <rect x="640" y="314" width="272" height="106" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="776" y="340" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">manual</text>
+  <text x="776" y="362" font-size="13" fill="#1f2328" text-anchor="middle">plain constructor calls</text>
+  <text x="776" y="384" font-size="13" fill="#1f2328" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">new Handler(repo, clock, ids)</text>
+  <text x="776" y="406" font-size="13" font-style="italic" fill="#5f6b73" text-anchor="middle">--di manual, contexts of --di nest</text>
+  <!-- legend -->
+  <line x1="40" y1="472" x2="84" y2="472" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="96" y="477" font-size="14" fill="#1f2328">depends on: a parameter of the constructor, typed by the port</text>
+  <line x1="40" y1="498" x2="84" y2="498" stroke="#7a4f9a" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow-infrastructure)"/>
+  <text x="96" y="503" font-size="14" fill="#1f2328">implements the port: the composition root binds it, whatever the style</text>
+</svg>

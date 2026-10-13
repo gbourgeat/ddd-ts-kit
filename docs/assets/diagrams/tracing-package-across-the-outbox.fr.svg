@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 618" width="960" height="618" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Une trace à travers l'outbox</title>
+  <desc id="desc">Une frise en quatre bandes. La requête HTTP : le span POST /appointments contient la commande BookAppointment, qui contient, à travers les spans unit-of-work, domain-event et handler dessinés en une barre estompée, outbox append ; outbox append inscrit son propre traceparent sur l'événement d'intégration. L'outbox : l'enregistrement stocke l'événement avec ce traceparent. Le relais, plus tard, depuis un minuteur et peut-être dans un autre processus : un tour n'a pas de span à lui ; publish, un span PRODUCER, est ouvert comme enfant du span que nomme l'enregistrement, et inscrit son propre traceparent sur le message. Les consommateurs : le traceparent voyage dans l'enveloppe et dans un en-tête, et chaque span process, un span CONSUMER, est un enfant de publish. L'identifiant de trace est le même de la requête HTTP aux consommateurs.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="618" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Une trace à travers l'outbox</text>
+
+  <!-- band labels -->
+  <text x="32" y="96" font-size="14" font-weight="700" fill="#1f2328">la requête HTTP</text>
+  <text x="32" y="114" font-size="13" fill="#5f6b73">une chaîne d'appels</text>
+  <line x1="24" y1="244" x2="936" y2="244" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text x="32" y="280" font-size="14" font-weight="700" fill="#1f2328">l'outbox</text>
+  <text x="32" y="298" font-size="13" fill="#5f6b73">une ligne de la base</text>
+  <line x1="24" y1="330" x2="936" y2="330" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text x="32" y="366" font-size="14" font-weight="700" fill="#1f2328">le relais, plus tard</text>
+  <text x="32" y="384" font-size="13" fill="#5f6b73">un minuteur, peut-être</text>
+  <text x="32" y="402" font-size="13" fill="#5f6b73">un autre processus</text>
+  <line x1="24" y1="434" x2="936" y2="434" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text x="32" y="470" font-size="14" font-weight="700" fill="#1f2328">les consommateurs</text>
+  <text x="32" y="488" font-size="13" fill="#5f6b73">un span par livraison</text>
+
+  <!-- the request -->
+  <rect x="220" y="72" width="340" height="30" rx="6" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="232" y="92" font-size="13" font-weight="600" fill="#9a5b2b">POST /appointments</text>
+  <text x="548" y="92" font-size="13" fill="#5f6b73" text-anchor="end">SERVER</text>
+  <rect x="240" y="110" width="300" height="30" rx="6" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="252" y="130" font-size="13" font-weight="600" fill="#2b5d8a">command BookAppointment</text>
+  <rect x="260" y="148" width="280" height="30" rx="6" fill="#ffffff" stroke="#5f6b73" stroke-opacity="0.6" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <text x="272" y="168" font-size="13" fill="#5f6b73">&#8230; unit-of-work, domain-event, handler</text>
+  <rect x="340" y="186" width="200" height="30" rx="6" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="352" y="206" font-size="13" font-weight="600" fill="#7a4f9a">outbox append &lt;type&gt;</text>
+
+  <!-- stamp into the outbox -->
+  <path d="M542,201 H640 V256" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="652" y="206" font-size="13" fill="#1f2328">inscrit son propre traceparent sur l'événement</text>
+
+  <!-- the outbox record -->
+  <rect x="580" y="258" width="300" height="56" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="730" y="281" font-size="14" font-weight="700" fill="#7a4f9a" text-anchor="middle">enregistrement de l'outbox</text>
+  <text x="730" y="302" font-size="13" fill="#1f2328" text-anchor="middle">l'événement et son traceparent, stockés</text>
+
+  <!-- the relay -->
+  <text x="220" y="372" font-size="13" font-style="italic" fill="#5f6b73">un tour : claimBatch, sans span à lui</text>
+  <path d="M640,316 V364" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="652" y="346" font-size="13" fill="#1f2328">parent : le span que nomme l'enregistrement</text>
+  <rect x="600" y="366" width="230" height="30" rx="6" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="612" y="386" font-size="13" font-weight="600" fill="#5f6b73">publish &lt;type&gt;</text>
+  <text x="818" y="386" font-size="13" fill="#5f6b73" text-anchor="end">PRODUCER</text>
+
+  <!-- the consumers -->
+  <path d="M612,398 V463 H638" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <path d="M612,463 V501 H658" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="640" y="448" width="296" height="30" rx="6" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="652" y="468" font-size="13" font-weight="600" fill="#2b5d8a">process notification.appointment-booked</text>
+  <rect x="660" y="486" width="276" height="30" rx="6" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="672" y="506" font-size="13" font-weight="600" fill="#2b5d8a">process analytics.appointment-booked</text>
+  <text x="220" y="470" font-size="13" fill="#1f2328">le traceparent de publish voyage dans l'enveloppe</text>
+  <text x="220" y="488" font-size="13" fill="#1f2328">et dans un en-tête : chaque span process est son enfant</text>
+
+  <!-- time axis -->
+  <line x1="220" y1="546" x2="934" y2="546" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="934" y="566" font-size="13" fill="#5f6b73" text-anchor="end">temps</text>
+  <text x="32" y="594" font-size="14" font-weight="600" fill="#1f2328">Un seul identifiant de trace de la requête HTTP aux consommateurs, bien que le relais tourne dans une autre chaîne d'appels.</text>
+</svg>

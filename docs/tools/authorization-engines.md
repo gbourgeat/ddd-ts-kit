@@ -1,3 +1,5 @@
+**English** · [Français](authorization-engines.fr.md)
+
 # Authorization engines: in process or a dedicated service
 
 **Summary.** The kit decides permissions behind one port, `Authorizer`, and ships three
@@ -5,8 +7,10 @@ in-process implementations: roles (RBAC), attribute policies (ABAC) and relation
 manner of Zanzibar (ReBAC). Dedicated engines exist for the same job: OpenFGA and SpiceDB for
 relationships, Cedar and Open Policy Agent for policies. This page compares them and says when
 moving from the in-process authorizer to a service pays for its cost. For relationships the kit
-ships both ends: a tuple store in the PostgreSQL of the project, and
-[`@ddd-ts-kit/openfga`](../../packages/openfga/README.md), the same two ports on an OpenFGA
+holds both ends to the same contract suites: a tuple store in the PostgreSQL of the project (the
+port and its suite ship with `@ddd-ts-kit/auth`, the example application has a Knex adapter of
+it, and `init --authz rebac` starts a project on the in-memory store with a note to replace it),
+and [`@ddd-ts-kit/openfga`](../../packages/openfga/README.md), the same two ports on an OpenFGA
 server, its model generated from the same schema. The other services have a contract suite to
 hold an adapter to.
 
@@ -18,16 +22,24 @@ page [authentication and authorization](../concepts/authentication-and-authoriza
 explains the three models. The choice here is where the decision is computed and where its data
 lives:
 
-```mermaid
-flowchart LR
-  UC[Use case requires appointment.cancel] --> P[Authorizer port]
-  P --> A[In process: roles, policies or tuples in your database]
-  P --> B[Remote engine: OpenFGA or SpiceDB]
-  P --> C[Embedded policy engine: Cedar or OPA]
-```
+![A use case requires a permission, the authorization middleware asks the Authorizer port, and behind the port one adapter: the in-process authorizers reading your own data, an adapter of a remote relationship engine calling its server, or an adapter around an embedded policy engine](../assets/diagrams/authorization-engines-one-port.svg)
 
 Handlers, permissions, routes and handler tests do not change with the choice. The adapter and
-the data it needs do.
+the data it needs do. The port is two methods: every engine of this page answers `check`;
+`listAccessible` is optional, and absent where the engine cannot enumerate (Cedar, OPA without
+partial evaluation), so asking such an adapter for a scope fails loudly. `Authorizer` itself is an
+abstract class, the injection token an adapter extends; the interface below only shows its shape:
+
+<!-- checked sample -->
+```ts
+import type { AccessScope, CheckRequest, Decision, ListRequest } from '@ddd-ts-kit/auth';
+
+// The shape of Authorizer, from @ddd-ts-kit/auth: what a middleware and a search handler ask.
+export interface AuthorizerShape {
+  check(request: CheckRequest): Promise<Decision>; // { allowed: true } or { allowed: false, reason: 'NO_RELATION' }
+  listAccessible?(request: ListRequest): Promise<AccessScope>; // all, none, ids or a filter for the read port
+}
+```
 
 ## Comparison
 
@@ -58,7 +70,7 @@ should be confirmed in the linked documentation before a decision.
   clinic owning many calendars) fit relationships.
 - **Listing.** "Show the appointments I may see" must become a query filter. Ask of each engine
   how it answers a list, at your sizes, before anything else.
-- **Consistency after a change.** When a client is removed from an appointment, how soon must
+- **Consistency after a change.** When a patient is removed from an appointment, how soon must
   access stop? In process with SQL tuples, the tuple commits with the change. With a remote
   engine the write is a second step, through the outbox, and reads may lag unless you carry a
   consistency token.
@@ -83,7 +95,55 @@ From [`@ddd-ts-kit/auth`](../../packages/auth/README.md):
 - **Relationships.** A schema DSL with union, intersection, exclusion and tuple-to-userset, a
   validating `defineSchema`, cycle protection and a depth limit (16 by default, answered
   `DEPTH_EXCEEDED`, never a guess), an `expand` that traces one check for debugging, a store
-  wrapper that refuses tuples the schema does not describe.
+  wrapper that refuses tuples the schema does not describe. A reduced version of the schema of
+  the example application, and one check:
+<!-- checked sample -->
+```ts
+import { definePermissions } from '@ddd-ts-kit/auth';
+import { defineSchema, from, InMemoryRelationTupleStore, RelationBasedAuthorizer, union } from '@ddd-ts-kit/auth/rebac';
+import type { Actor } from '@ddd-ts-kit/kernel';
+
+const schedulingPermissions = definePermissions('scheduling', {
+  'appointment.cancel': { description: 'Cancel an appointment' },
+});
+
+// Who is what to which element: a practice has managers, a calendar its holder and assistants.
+const schema = defineSchema({
+  user: {},
+  practice: { relations: { manager: ['user'] }, permissions: { manage: union('manager') } },
+  calendar: {
+    relations: { holder: ['user'], assistant: ['user'], practice: ['practice'] },
+    permissions: { run: union('holder', 'assistant', from('practice', 'manage')) },
+  },
+  appointment: {
+    relations: { patient: ['user'], calendar: ['calendar'] },
+    permissions: { change: union('patient', from('calendar', 'run')) },
+  },
+});
+
+const tuples = new InMemoryRelationTupleStore();
+const authorizer = new RelationBasedAuthorizer({
+  schema,
+  store: tuples,
+  mapping: { appointment: { [schedulingPermissions['appointment.cancel'].id]: 'change' } },
+});
+
+await tuples.write([
+  { object: 'calendar:dr-grace', relation: 'assistant', subject: 'user:ada' },
+  { object: 'appointment:42', relation: 'calendar', subject: 'calendar:dr-grace' },
+  { object: 'appointment:42', relation: 'patient', subject: 'user:bob' },
+]);
+
+const ada: Actor = { id: 'ada', type: 'user', roles: [], attributes: {} };
+
+// { allowed: true }: ada assists the calendar that holds appointment 42.
+export const decision = await authorizer.check({
+  actor: ada,
+  permission: schedulingPermissions['appointment.cancel'],
+  resource: { type: 'appointment', id: '42' },
+});
+```
+
 - **Tuples in the transaction.** With a SQL-backed tuple store the handler writes the tuple in
   the unit of work of the command: the appointment and its relationship commit together. The
   package has a tested example with the rollback case.
@@ -108,7 +168,28 @@ peer. The authorization model is generated from the relationship schema of the p
 (`authorizationModelOf`), written when it differs (`ensureAuthorizationModel`) and compared
 (`modelDrift`): one source of truth. Both adapters pass the contract suites of the in-process
 ones, in memory and against `openfga/openfga` v1.22.0 in the integration job. `init` does not
-wire it yet: bind the two adapters in the platform by hand, as the README of the package shows.
+wire it yet: bind the two adapters in the platform by hand, as the README of the package shows:
+
+<!-- checked sample -->
+```ts
+import type { PermissionMapping, Schema } from '@ddd-ts-kit/auth/rebac';
+import { ensureAuthorizationModel, OpenFgaAuthorizer, OpenFgaRelationTupleStore } from '@ddd-ts-kit/openfga';
+import { openFgaClient } from '@ddd-ts-kit/openfga/sdk';
+
+declare const relationshipSchema: Schema; // the defineSchema(...) the in-process authorizer read
+declare const permissionMapping: PermissionMapping; // unchanged too
+declare const config: { readonly openfga: { readonly url: string; readonly storeId: string } };
+
+const client = openFgaClient({ apiUrl: config.openfga.url, storeId: config.openfga.storeId });
+
+// At deployment or start-up: the model of the store becomes the one the schema generates.
+const { modelId, changes } = await ensureAuthorizationModel(client, relationshipSchema);
+console.log(`authorization model ${modelId}`, changes);
+
+// The same two ports, bound to the server instead of the table of the project.
+export const tuples = new OpenFgaRelationTupleStore(client, relationshipSchema);
+export const authorizer = new OpenFgaAuthorizer({ client, mapping: permissionMapping, listObjectsLimit: 1000 });
+```
 
 **SpiceDB** maps to `CheckPermission`, `LookupResources` and `WriteRelationships` behind the
 same ports; no adapter is shipped. `init --authz custom` generates an adapter skeleton, its
@@ -121,10 +202,64 @@ Both hold the same tuples and answer the same ports; the schema of the project i
 of both. What differs is where the evaluation runs and whether a tuple commits with the change it
 describes.
 
+![With the tuple store in PostgreSQL, the appointment and its tuple commit in one transaction; with OpenFGA, the appointment commits first and a second, retried step writes the tuple to the server, leaving a window where a check answers NO_RELATION](../assets/diagrams/authorization-engines-tuple-write.svg)
+
+Whoever writes the tuple, the handlers name a fact of their context, never the model: the
+adapter of a port in the words of the context knows the tuples, and the binding decides where
+they go.
+
+```ts
+// Instead of: the handler knows the authorization model, and calls a service inside the transaction
+async execute(command: BookAppointment): Promise<string> {
+  const appointment = Appointment.book(this.ids.next(), command.booking);
+  await this.appointments.save(appointment);
+  await this.openFga.write({ writes: [{ object: `appointment:${appointment.id}`, relation: 'patient', user: `user:${command.actor.id}` }] });
+  return appointment.id;
+}
+```
+
+<!-- checked sample -->
+```ts
+import type { RelationTupleStore } from '@ddd-ts-kit/auth/rebac';
+
+// application/ports/scheduling-relationships.port.ts: what the platform must know, in the words of the context.
+export abstract class SchedulingRelationships {
+  abstract recordAppointment(appointment: {
+    readonly appointmentId: string;
+    readonly calendarId: string;
+    readonly patientId: string;
+  }): Promise<void>;
+}
+
+// infrastructure/persistence/tuple-scheduling-relationships.repository.ts: the adapter knows the model.
+export class TupleSchedulingRelationships implements SchedulingRelationships {
+  constructor(private readonly tuples: RelationTupleStore) {}
+
+  async recordAppointment({ appointmentId, calendarId, patientId }: Parameters<SchedulingRelationships['recordAppointment']>[0]): Promise<void> {
+    await this.tuples.write([
+      { object: `appointment:${appointmentId}`, relation: 'patient', subject: `user:${patientId}` },
+      { object: `appointment:${appointmentId}`, relation: 'calendar', subject: `calendar:${calendarId}` },
+    ]);
+  }
+}
+```
+
+In the example application, the domain event handler of `AppointmentBooked` calls
+`recordAppointment`: domain events are dispatched inside the unit of work of the command, so with
+the Knex store the tuples commit with the appointment. Bound to `OpenFgaRelationTupleStore`, the
+write is a remote call that cannot join the transaction, and it must not be lost: a tuple that
+never lands means the patient never gets access to the appointment. So the same call moves to the
+consumer of an integration event published through the outbox (or of a command or job queued
+the same way): delivered at least once, the consumer idempotent. A handler of phase `after-commit`
+is no substitute: it runs at most once, a failure is only logged and reported, and a crash
+between the commit and the call loses it (see
+[when a domain event is handled](../concepts/domain-and-integration-events.md#when-a-domain-event-is-handled)).
+The adapter and the port do not change.
+
 | | Tuple store in PostgreSQL | OpenFGA (`@ddd-ts-kit/openfga`) |
 |---|---|---|
 | Where tuples live | a table of the project, written in the transaction of the command | the datastore of the OpenFGA server, through its API |
-| A tuple and its aggregate | commit together, or not at all | two steps: the aggregate commits, then the tuple is written (after commit, retried, idempotent) |
+| A tuple and its aggregate | commit together, or not at all | two steps: the aggregate commits, then the tuple is written (through the outbox, at least once, idempotent) |
 | Evaluation | in the API process, sequential, bounded by a depth limit | in the server, parallel, with its caches |
 | Listing | reverse expansion, one read per reached subject, refused beyond 10000 | `ListObjects`, evaluated in the server; capped by `OPENFGA_LIST_OBJECTS_MAX_RESULTS` (1000) and `OPENFGA_LIST_OBJECTS_DEADLINE` (3 s), which cut the list without an error: the adapter refuses an answer at the cap, and a cut by the deadline is not visible |
 | Consistency | that of the database: what committed is seen | a preference per request; no token is carried by the kit |
@@ -168,10 +303,12 @@ permission. See
 
 ## Recommendation by situation
 
+![Four steps, each taken when a need appears: roles, then roles and instance policies, then relationships with tuples in your database, then a dedicated engine; apart from them, rules owned by a security team point to Cedar or OPA](../assets/diagrams/authorization-engines-when-to-move.svg)
+
 | Situation | Choice |
 |---|---|
-| New project, rights follow job functions (client, practitioner, administrator) | in-process roles, the default of `init` |
-| A few per-element rules: only the client who booked or the practitioner may cancel | roles plus instance policies; still no tuple store |
+| New project, rights follow job functions (patient, practitioner, administrator) | in-process roles, the default of `init` |
+| A few per-element rules: only the patient who booked or the practitioner may cancel | roles plus instance policies; still no tuple store |
 | Sharing per element: delegated assistants, clinics owning calendars | in-process relationships with a SQL tuple store written in the handler |
 | Lists over large shared hierarchies, or reverse expansion hitting its limit | a projection of accessible ids first; then `@ddd-ts-kit/openfga` behind the port (its `ListObjects` is capped too, 1000 objects by default, refused at the cap) or SpiceDB by hand |
 | Several services and languages asking about the same objects | OpenFGA (`@ddd-ts-kit/openfga`) or SpiceDB as a shared service; choose on consistency needs, datastore and governance |

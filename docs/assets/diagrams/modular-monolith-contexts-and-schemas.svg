@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" width="960" height="420" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">The scheduling application as a modular monolith</title>
+  <desc id="desc">One process and one deployment hold five bounded contexts. calendars publishes events to appointments and availability; appointments publishes events to availability, notifications and analytics. Each context owns its schema. The schemas may live in one PostgreSQL database: no context reads or joins the tables of another.</desc>
+  <defs>
+    <marker id="arrow-neutral" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="420" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">The scheduling application as a modular monolith</text>
+  <rect x="24" y="56" width="912" height="296" rx="14" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="44" y="82" font-size="14" font-weight="600" fill="#5f6b73">one process, one deployment</text>
+  <rect x="120" y="100" width="180" height="64" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="210" y="127" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">calendars</text>
+  <text x="210" y="149" font-size="13" fill="#1f2328" text-anchor="middle">schema calendars</text>
+  <rect x="520" y="100" width="180" height="64" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="610" y="127" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">appointments</text>
+  <text x="610" y="149" font-size="13" fill="#1f2328" text-anchor="middle">schema appointments</text>
+  <rect x="120" y="256" width="180" height="64" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="210" y="283" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">availability</text>
+  <text x="210" y="305" font-size="13" fill="#1f2328" text-anchor="middle">schema availability</text>
+  <rect x="420" y="256" width="180" height="64" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="510" y="283" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">notifications</text>
+  <text x="510" y="305" font-size="13" fill="#1f2328" text-anchor="middle">schema notifications</text>
+  <rect x="720" y="256" width="180" height="64" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="810" y="283" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">analytics</text>
+  <text x="810" y="305" font-size="13" fill="#1f2328" text-anchor="middle">schema analytics</text>
+  <line x1="302" y1="132" x2="516" y2="132" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow-neutral)"/>
+  <line x1="210" y1="166" x2="210" y2="252" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow-neutral)"/>
+  <line x1="540" y1="166" x2="304" y2="262" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow-neutral)"/>
+  <path d="M610,166 V206 H510 V252" fill="none" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow-neutral)"/>
+  <path d="M680,166 V206 H810 V252" fill="none" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow-neutral)"/>
+  <text x="32" y="380" font-size="13" font-style="italic" fill="#5f6b73">the schemas may share one PostgreSQL database; no context reads or joins the tables of another</text>
+  <line x1="32" y1="404" x2="76" y2="404" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow-neutral)"/>
+  <text x="88" y="409" font-size="14" fill="#1f2328">an integration event, through the outbox</text>
+</svg>

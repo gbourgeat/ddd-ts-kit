@@ -1,3 +1,5 @@
+**English** · [Français](demo-transcript.fr.md)
+
 # Transcript of the real run
 
 One run of `scripts/demo.mjs`, on 2026-10-10, against the example's own `docker compose` stack

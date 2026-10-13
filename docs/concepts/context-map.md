@@ -1,3 +1,5 @@
+**English** · [Français](context-map.fr.md)
+
 # Context map
 
 **Summary.** A context map is the picture of how bounded contexts relate: who depends on whom
@@ -38,6 +40,8 @@ In the kit, the downstream names its upstream and the pattern:
 | Partnership | two teams coordinate, succeed or fail together | two contexts that must evolve in step for a while | constant coordination; no clear upstream |
 | Separate ways | nobody adapts: no integration | the cost of integrating exceeds the benefit | duplication, and no shared data |
 
+![The eight relationship patterns drawn as pairs of contexts: published language, a versioned contract between upstream and downstream; customer-supplier, the needs of the downstream flow back into the plan of the upstream; conformist, the downstream reuses the upstream model; anticorruption layer, a translator at the edge of the downstream; open host service, one protocol for many downstreams; shared kernel, a small model owned by two contexts; partnership, two contexts coordinated with no upstream; separate ways, no integration at all](../assets/diagrams/context-map-patterns.svg)
+
 ### Published language
 
 The upstream publishes a documented, versioned contract: event types, payload types, read
@@ -70,6 +74,53 @@ The downstream protects its model with a translator. In the kit it lives in
 one towards the email and SMS provider: the provider speaks of "messages", "templates" and
 delivery statuses of its own, and none of those words enter the glossary of notifications. The
 cost is real code, and it grows with the upstream's surface: translate only what is used.
+
+A translator takes what the provider sends, in its names and codes, and answers a value of the
+downstream's model; nothing of the provider's vocabulary goes past it:
+
+<!-- checked sample -->
+```ts
+// notifications/infrastructure/anti-corruption/sms-provider.translator.ts
+
+/** A delivery report exactly as the provider sends it: its names, its statuses. */
+export interface SmsProviderReport {
+  readonly message_sid: string;
+  readonly status: 'queued' | 'sent' | 'delivered' | 'undelivered' | 'failed';
+  readonly error?: 'invalid_destination' | 'blocked_by_carrier' | 'unknown';
+}
+
+/** What notifications calls it, in its glossary: the outcome of a reminder. */
+export type ReminderOutcome =
+  | { readonly kind: 'on-its-way' }
+  | { readonly kind: 'reached' }
+  | { readonly kind: 'unreachable'; readonly because: 'wrong-number' | 'refused' | 'unknown' };
+
+export class SmsProviderTranslator {
+  translate(report: SmsProviderReport): ReminderOutcome {
+    switch (report.status) {
+      case 'queued':
+      case 'sent':
+        return { kind: 'on-its-way' };
+      case 'delivered':
+        return { kind: 'reached' };
+      case 'undelivered':
+      case 'failed':
+        return { kind: 'unreachable', because: this.reasonOf(report.error) };
+    }
+  }
+
+  private reasonOf(error: SmsProviderReport['error']): 'wrong-number' | 'refused' | 'unknown' {
+    if (error === 'invalid_destination') {
+      return 'wrong-number';
+    }
+
+    return error === 'blocked_by_carrier' ? 'refused' : 'unknown';
+  }
+}
+```
+
+`generate acl notifications sms-provider` writes this class, empty, with `TODO(domain)` markers,
+and a spec whose `it.todo` entries ask for real samples received from the provider.
 
 ### Open host service
 
@@ -118,20 +169,65 @@ Whatever the pattern, the mechanics between two contexts are the same in this ki
 from `published-language/` (`context/published-language-only`), integration events for
 collaboration, and for a synchronous need a port in the caller with a gateway adapter.
 
+![What a downstream context may import from its upstream: availability imports the published-language folder of appointments, which the config declares as a published-language relationship; an import of the domain, application or infrastructure of appointments is refused by context/published-language-only, and any import without a declared relationship by context/declared-relationship](../assets/diagrams/context-map-imports.svg)
+
+Instead of reaching into the model of the upstream:
+
+```ts
+// src/contexts/availability/application/...
+import { Appointment } from '@/contexts/appointments/domain/aggregates/appointment.aggregate';
+// context/published-language-only: the aggregate of appointments is now frozen by availability
+```
+
+import what the upstream published for its consumers, and nothing else:
+
+```ts
+// src/contexts/availability/application/...
+import { appointmentBookedV1, type AppointmentBookedV1 } from '@/contexts/appointments/published-language/index';
+```
+
+For a synchronous need, the downstream declares a port in its own words, and a gateway adapter
+calls the read contract the upstream publishes. Today the call is in process; when the upstream
+runs as its own service, only the adapter changes. `generate gateway availability calendars
+OpeningTimes` writes the three files below (plus a fake and a contract suite), and names the
+upstream contract after the gateway:
+
+<!-- checked sample -->
+```ts
+import { Gateway } from '@ddd-ts-kit/kernel/declarations';
+
+// calendars/published-language/opening-times.contract.ts: what calendars offers to read
+export interface WorkingInterval {
+  readonly startsAt: string;
+  readonly endsAt: string;
+}
+
+export abstract class OpeningTimesContract {
+  abstract ofPractitioner(practitionerId: string, day: string): Promise<readonly WorkingInterval[]>;
+}
+
+// availability/application/ports/opening-times-gateway.port.ts: what availability needs, in its words
+export abstract class OpeningTimesGateway {
+  abstract openOn(practitionerId: string, day: string): Promise<readonly { readonly from: Date; readonly to: Date }[]>;
+}
+
+// availability/infrastructure/external/in-process-opening-times.gateway.ts: the only class that
+// knows the contract of calendars
+@Gateway(OpeningTimesGateway)
+export class InProcessOpeningTimesGateway implements OpeningTimesGateway {
+  constructor(private readonly calendars: OpeningTimesContract) {}
+
+  async openOn(practitionerId: string, day: string): Promise<readonly { readonly from: Date; readonly to: Date }[]> {
+    const intervals = await this.calendars.ofPractitioner(practitionerId, day);
+
+    return intervals.map((interval) => ({ from: new Date(interval.startsAt), to: new Date(interval.endsAt) }));
+  }
+}
+```
+
 ## Choosing
 
-```mermaid
-flowchart TD
-  Q1{Do the two contexts need each other at all?} -- no --> SW[separate ways: declare nothing]
-  Q1 -- yes --> Q2{Is the concept identical and changed together?}
-  Q2 -- yes --> SK[shared kernel, kept small]
-  Q2 -- no --> Q3{Do you control or influence the upstream?}
-  Q3 -- "yes, same product" --> PL[published language]
-  Q3 -- "yes, another team that plans with you" --> CS[customer-supplier]
-  Q3 -- no --> Q4{Is its model acceptable inside yours?}
-  Q4 -- yes --> CF[conformist]
-  Q4 -- no --> ACL[anticorruption layer]
-```
+![Choosing a pattern: if the two contexts do not need each other, separate ways, declare nothing; if the concept is identical and changes together, a small shared kernel; if you control or influence the upstream, published language within one product or customer-supplier with another team that plans with you; otherwise conformist when the upstream model is acceptable inside yours, and an anticorruption layer when it is not](../assets/diagrams/context-map-choosing.svg)
 
 An upstream serving many consumers adds an open host service on its side. The choice is the
 project owner's, and each pattern other than the default deserves a sentence of justification

@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 480" width="960" height="480" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">The three states of a circuit</title>
+  <desc id="desc">A state machine with three states. Closed, the initial state: calls go through and consecutive failures are counted; a DomainError is not a failure. When the consecutive failures reach failureThreshold, the circuit opens: calls are refused at once with CIRCUIT_OPEN, without calling the dependency. When resetAfterMs has passed, the circuit is half-open: a trial call goes through. If it succeeds, the circuit closes; if it fails, it opens again. The gauge circuit_breaker_state publishes 0 closed, 1 half-open, 2 open.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="480" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">The three states of a circuit</text>
+  <rect x="72" y="90" width="260" height="140" rx="12" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="202" y="118" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">closed</text>
+  <line x1="88" y1="130" x2="316" y2="130" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text x="202" y="152" font-size="13" fill="#1f2328" text-anchor="middle">calls go through; consecutive</text>
+  <text x="202" y="172" font-size="13" fill="#1f2328" text-anchor="middle">failures counted, not a DomainError</text>
+  <text x="202" y="218" font-size="13" font-style="italic" fill="#5f6b73" text-anchor="middle">circuit_breaker_state = 0</text>
+  <rect x="628" y="90" width="260" height="140" rx="12" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="758" y="118" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">open</text>
+  <line x1="644" y1="130" x2="872" y2="130" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text x="758" y="152" font-size="13" fill="#1f2328" text-anchor="middle">refused at once: CIRCUIT_OPEN,</text>
+  <text x="758" y="172" font-size="13" fill="#1f2328" text-anchor="middle">the dependency is not called</text>
+  <text x="758" y="218" font-size="13" font-style="italic" fill="#5f6b73" text-anchor="middle">circuit_breaker_state = 2</text>
+  <rect x="350" y="300" width="260" height="140" rx="12" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="480" y="328" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">half-open</text>
+  <line x1="366" y1="340" x2="594" y2="340" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text x="480" y="362" font-size="13" fill="#1f2328" text-anchor="middle">a trial call goes through</text>
+  <text x="480" y="382" font-size="13" fill="#1f2328" text-anchor="middle">(halfOpenMax, one by default)</text>
+  <text x="480" y="428" font-size="13" font-style="italic" fill="#5f6b73" text-anchor="middle">circuit_breaker_state = 1</text>
+  <circle cx="40" cy="160" r="7" fill="#3d4449"/>
+  <line x1="47" y1="160" x2="68" y2="160" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="334" y1="130" x2="624" y2="130" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="479" y="118" font-size="13" fill="#1f2328" text-anchor="middle">consecutive failures reach</text>
+  <text x="479" y="152" font-size="13" fill="#1f2328" text-anchor="middle">failureThreshold</text>
+  <line x1="700" y1="232" x2="560" y2="296" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="624" y="258" font-size="13" fill="#1f2328" text-anchor="end">resetAfterMs has passed</text>
+  <path d="M612,380 H800 V234" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="808" y="330" font-size="13" fill="#1f2328">the trial</text>
+  <text x="808" y="348" font-size="13" fill="#1f2328">call fails</text>
+  <path d="M348,380 H160 V234" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="168" y="330" font-size="13" fill="#1f2328">the trial call</text>
+  <text x="168" y="348" font-size="13" fill="#1f2328">succeeds</text>
+  <text x="32" y="468" font-size="14" fill="#1f2328">One circuit per instance and method, in the process: each instance learns on its own that the dependency is down.</text>
+</svg>

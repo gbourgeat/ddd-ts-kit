@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 560" width="960" height="560" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">The lifecycle of a background job</title>
+  <desc id="desc">A job is enqueued waiting. A worker claims it, which makes it running and counts one attempt. A running job either returns and succeeds, fails and waits for its backoff, is released by a worker that stops without counting the attempt, is claimed again when its lease expires, or dies after its last attempt. A waiting or running job can be cancelled. An operator revives a dead job with retryDead.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="560" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">The lifecycle of a background job</text>
+  <text x="32" y="62" font-size="14" fill="#5f6b73">The statuses of QueuedJobStatus, and what moves a job from one to another</text>
+  <!-- enqueue -->
+  <circle cx="40" cy="200" r="7" fill="#3d4449"/>
+  <text x="20" y="182" font-size="13" fill="#1f2328">enqueue</text>
+  <line x1="48" y1="200" x2="88" y2="200" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- waiting -->
+  <rect x="90" y="168" width="170" height="64" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="175" y="196" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">waiting</text>
+  <text x="175" y="218" font-size="13" fill="#1f2328" text-anchor="middle">due at runAt</text>
+  <!-- running -->
+  <rect x="500" y="168" width="180" height="64" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="590" y="196" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">running</text>
+  <text x="590" y="218" font-size="13" fill="#1f2328" text-anchor="middle">leased by one worker</text>
+  <!-- succeeded -->
+  <rect x="790" y="168" width="150" height="64" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="865" y="196" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">succeeded</text>
+  <text x="865" y="218" font-size="13" fill="#1f2328" text-anchor="middle">over</text>
+  <!-- cancelled -->
+  <rect x="330" y="348" width="150" height="64" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="405" y="376" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">cancelled</text>
+  <text x="405" y="398" font-size="13" fill="#1f2328" text-anchor="middle">over</text>
+  <!-- dead -->
+  <rect x="790" y="348" width="150" height="64" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="865" y="376" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">dead</text>
+  <text x="865" y="398" font-size="13" fill="#1f2328" text-anchor="middle">kept for an operator</text>
+  <!-- claim -->
+  <line x1="262" y1="186" x2="498" y2="186" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="380" y="176" font-size="13" fill="#1f2328" text-anchor="middle">claimed by a worker, attempt + 1</text>
+  <!-- back to waiting -->
+  <line x1="498" y1="214" x2="262" y2="214" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="380" y="238" font-size="13" fill="#1f2328" text-anchor="middle">failed: waits for its backoff</text>
+  <text x="380" y="256" font-size="13" fill="#1f2328" text-anchor="middle">released by stop(): not counted</text>
+  <!-- lease expired -->
+  <path d="M560,166 V132 H620 V164" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="590" y="120" font-size="13" fill="#1f2328" text-anchor="middle">lease expired (its worker died): claimed again, attempt + 1</text>
+  <!-- succeeded -->
+  <line x1="682" y1="200" x2="788" y2="200" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="735" y="190" font-size="13" fill="#1f2328" text-anchor="middle">returned</text>
+  <!-- dead -->
+  <path d="M682,222 H720 V380 H788" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="728" y="300" font-size="13" fill="#1f2328">last attempt</text>
+  <text x="728" y="318" font-size="13" fill="#1f2328">failed</text>
+  <!-- cancel -->
+  <path d="M150,234 V380 H328" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="160" y="318" font-size="13" fill="#1f2328">cancel(id)</text>
+  <path d="M560,234 V380 H482" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="570" y="300" font-size="13" fill="#1f2328">cancel(id): its</text>
+  <text x="570" y="318" font-size="13" fill="#1f2328">signal is aborted</text>
+  <!-- retry dead -->
+  <path d="M865,414 V480 H118 V236" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="480" y="470" font-size="13" fill="#1f2328" text-anchor="middle">retryDead(): an operator revives it, with a fresh attempt budget</text>
+  <!-- note -->
+  <text x="32" y="530" font-size="13" fill="#5f6b73">A job claimed again after its last attempt dies at once (ATTEMPTS_EXHAUSTED). purgeFinished(before) drops succeeded and cancelled jobs.</text>
+</svg>

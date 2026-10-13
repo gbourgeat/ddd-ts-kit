@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 486" width="960" height="486" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">A late event and a redelivery end on the same row</title>
+  <desc id="desc">Three deliveries to the projector of practitioner names. First evt-2, which occurred at 10:05 and renames p-7 to Ada Lovelace: applied, the row holds its stamp. Then evt-1, which occurred at 10:00 and arrives late: stale, older than the row, which does not change. Then evt-2 again: stale, the row already holds it. The row keeps Ada Lovelace.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="486" rx="16" fill="#ffffff"/>
+  <text x="32" y="34" font-size="18" font-weight="600" fill="#1f2328">A late event and a redelivery end on the same row</text>
+  <text x="200" y="70" font-size="14" font-weight="600" text-anchor="middle" fill="#5f6b73">delivered to the projector</text>
+  <text x="505" y="70" font-size="14" font-weight="600" text-anchor="middle" fill="#5f6b73">upsertIfNewer answers</text>
+  <text x="785" y="70" font-size="14" font-weight="600" text-anchor="middle" fill="#5f6b73">the row of p-7 afterwards</text>
+  <rect x="40" y="86" width="320" height="80" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="200" y="118" font-size="16" font-weight="700" text-anchor="middle" fill="#5f6b73">1. evt-2, occurred 10:05</text>
+  <text x="200" y="140" font-size="13" text-anchor="middle" fill="#1f2328">renamed to Ada Lovelace</text>
+  <rect x="420" y="86" width="170" height="80" rx="10" fill="#ffffff" stroke="#3d4449" stroke-width="2"/>
+  <text x="505" y="118" font-size="16" font-weight="700" text-anchor="middle" fill="#1f2328">applied</text>
+  <text x="505" y="140" font-size="13" text-anchor="middle" fill="#1f2328">newer than the row</text>
+  <rect x="650" y="86" width="270" height="80" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="785" y="118" font-size="16" font-weight="700" text-anchor="middle" fill="#7a4f9a">p-7: Ada Lovelace</text>
+  <text x="785" y="140" font-size="13" text-anchor="middle" fill="#1f2328">stamp: evt-2, 10:05</text>
+  <line x1="360" y1="126" x2="418" y2="126" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="590" y1="126" x2="648" y2="126" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="40" y="190" width="320" height="80" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="200" y="222" font-size="16" font-weight="700" text-anchor="middle" fill="#5f6b73">2. evt-1, occurred 10:00</text>
+  <text x="200" y="244" font-size="13" text-anchor="middle" fill="#1f2328">renamed to Ada, arrives late</text>
+  <rect x="420" y="190" width="170" height="80" rx="10" fill="#ffffff" stroke="#3d4449" stroke-width="2"/>
+  <text x="505" y="222" font-size="16" font-weight="700" text-anchor="middle" fill="#1f2328">stale</text>
+  <text x="505" y="244" font-size="13" text-anchor="middle" fill="#1f2328">older than the row</text>
+  <rect x="650" y="190" width="270" height="80" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="785" y="222" font-size="16" font-weight="700" text-anchor="middle" fill="#7a4f9a">p-7: Ada Lovelace</text>
+  <text x="785" y="244" font-size="13" text-anchor="middle" fill="#1f2328">unchanged</text>
+  <line x1="360" y1="230" x2="418" y2="230" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="590" y1="230" x2="648" y2="230" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="40" y="294" width="320" height="80" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="200" y="326" font-size="16" font-weight="700" text-anchor="middle" fill="#5f6b73">3. evt-2, occurred 10:05</text>
+  <text x="200" y="348" font-size="13" text-anchor="middle" fill="#1f2328">the same event, delivered again</text>
+  <rect x="420" y="294" width="170" height="80" rx="10" fill="#ffffff" stroke="#3d4449" stroke-width="2"/>
+  <text x="505" y="326" font-size="16" font-weight="700" text-anchor="middle" fill="#1f2328">stale</text>
+  <text x="505" y="348" font-size="13" text-anchor="middle" fill="#1f2328">the row already holds it</text>
+  <rect x="650" y="294" width="270" height="80" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="785" y="326" font-size="16" font-weight="700" text-anchor="middle" fill="#7a4f9a">p-7: Ada Lovelace</text>
+  <text x="785" y="348" font-size="13" text-anchor="middle" fill="#1f2328">unchanged</text>
+  <line x1="360" y1="334" x2="418" y2="334" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="590" y1="334" x2="648" y2="334" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="40" y="430" font-size="14" fill="#1f2328">Newer means: a greater version when both stamps carry one; otherwise a later instant;</text>
+  <text x="40" y="454" font-size="14" fill="#1f2328">at the same instant, the greater event id. The same event is never newer than itself.</text>
+</svg>

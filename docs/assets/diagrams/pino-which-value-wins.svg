@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 470" width="960" height="470" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Which value a key gets when it is given twice</title>
+  <desc id="desc">Two stacks, from the strongest at the top to the weakest at the bottom. With pino and StdoutLogger: the fields of the line win, then what fields() answers, then the fields of the children, the closest child winning, then service, environment and base. With winston: service, environment and base win, as winston's defaultMeta, then the fields of the line, then the fields of the children, then fields(), which only fills the keys nobody gave. pino writes a duplicated key twice and a JSON parser reads the last one; winston writes each key once. The two orders disagree on a key bound in a child that fields() also answers.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="470" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Which value a key gets when it is given twice</text>
+
+  <!-- strength axis -->
+  <line x1="44" y1="376" x2="44" y2="128" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="44" y="114" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">wins</text>
+
+  <!-- pino column -->
+  <text x="72" y="80" font-size="16" font-weight="700" fill="#1f2328">pino and StdoutLogger</text>
+  <rect x="72" y="124" width="380" height="52" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="88" y="147" font-size="14" font-weight="700" fill="#7a4f9a">the line</text>
+  <text x="88" y="166" font-size="13" fill="#1f2328">logger.info(message, fields)</text>
+  <rect x="72" y="188" width="380" height="52" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="88" y="211" font-size="14" font-weight="700" fill="#2b5d8a">fields()</text>
+  <text x="88" y="230" font-size="13" fill="#1f2328">correlation of the work in progress</text>
+  <rect x="72" y="252" width="380" height="52" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="88" y="275" font-size="14" font-weight="700" fill="#7a4f9a">the children</text>
+  <text x="88" y="294" font-size="13" fill="#1f2328">child(fields), the closest wins</text>
+  <rect x="72" y="316" width="380" height="52" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="88" y="339" font-size="14" font-weight="700" fill="#5f6b73">service, environment, base</text>
+  <text x="88" y="358" font-size="13" fill="#1f2328">options of createPinoLogger</text>
+
+  <!-- winston column -->
+  <text x="508" y="80" font-size="16" font-weight="700" fill="#1f2328">winston</text>
+  <rect x="508" y="124" width="420" height="52" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="524" y="147" font-size="14" font-weight="700" fill="#5f6b73">service, environment, base</text>
+  <text x="524" y="166" font-size="13" fill="#1f2328">winston's defaultMeta, merged last</text>
+  <rect x="508" y="188" width="420" height="52" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="524" y="211" font-size="14" font-weight="700" fill="#7a4f9a">the line</text>
+  <text x="524" y="230" font-size="13" fill="#1f2328">logger.info(message, fields)</text>
+  <rect x="508" y="252" width="420" height="52" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="524" y="275" font-size="14" font-weight="700" fill="#7a4f9a">the children</text>
+  <text x="524" y="294" font-size="13" fill="#1f2328">child(fields), the closest wins</text>
+  <rect x="508" y="316" width="420" height="52" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="524" y="339" font-size="14" font-weight="700" fill="#2b5d8a">fields()</text>
+  <text x="524" y="358" font-size="13" fill="#1f2328">fills only the keys nobody gave</text>
+
+  <!-- notes -->
+  <text x="72" y="412" font-size="14" fill="#1f2328">pino writes a duplicated key twice: a JSON parser reads the last one. winston writes it once.</text>
+  <text x="72" y="438" font-size="14" fill="#1f2328">The orders disagree on a key bound in a child that fields() also answers: do not bind one.</text>
+</svg>

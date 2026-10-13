@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 440" width="960" height="440" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">De la signature d'un constructeur à une instance, et ce qui garde la liste générée exacte</title>
+  <desc id="desc">Le constructeur d'une classe déclarée nomme ses ports. ddd-ts-kit docs lit la signature dans le source et l'écrit dans le fichier de déclarations généré du contexte, sous la forme injected(Handler, [ports]), que le compilateur vérifie contre le constructeur. createApplication charge ce fichier, vérifie tout le graphe et construit les instances. Quatre contrôles tiennent la chaîne : la règle declarations/constructor-injection sur le constructeur, npm run dev qui rafraîchit le fichier à chaque démarrage, la porte de ddd-ts-kit check et docs --check qui compare le fichier au source, et le démarrage, qui refuse une classe sans sa liste par une WiringError.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="440" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">De la signature d'un constructeur à une instance</text>
+  <rect x="32" y="64" width="200" height="156" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="132" y="94" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">le constructeur</text>
+  <line x1="46" y1="106" x2="218" y2="106" stroke="#2b5d8a" stroke-opacity="0.35"/>
+  <text x="132" y="130" font-size="13" fill="#1f2328" text-anchor="middle">constructor(</text>
+  <text x="132" y="150" font-size="13" fill="#1f2328" text-anchor="middle">appointments:</text>
+  <text x="132" y="170" font-size="13" fill="#1f2328" text-anchor="middle">AppointmentRepository,</text>
+  <text x="132" y="190" font-size="13" fill="#1f2328" text-anchor="middle">clock: Clock)</text>
+  <rect x="264" y="64" width="200" height="156" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="364" y="94" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">ddd-ts-kit docs</text>
+  <line x1="278" y1="106" x2="450" y2="106" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text x="364" y="130" font-size="13" fill="#1f2328" text-anchor="middle">lit les signatures</text>
+  <text x="364" y="150" font-size="13" fill="#1f2328" text-anchor="middle">dans le source,</text>
+  <text x="364" y="170" font-size="13" fill="#1f2328" text-anchor="middle">statiquement</text>
+  <rect x="496" y="64" width="200" height="156" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="596" y="94" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">fichier généré</text>
+  <line x1="510" y1="106" x2="682" y2="106" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text x="596" y="130" font-size="13" fill="#1f2328" text-anchor="middle">&lt;context&gt;.declarations.ts</text>
+  <text x="596" y="150" font-size="13" fill="#1f2328" text-anchor="middle">injected(Handler,</text>
+  <text x="596" y="170" font-size="13" fill="#1f2328" text-anchor="middle">[AppointmentRepository,</text>
+  <text x="596" y="190" font-size="13" fill="#1f2328" text-anchor="middle">Clock])</text>
+  <rect x="728" y="64" width="200" height="156" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="828" y="94" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">createApplication</text>
+  <line x1="742" y1="106" x2="914" y2="106" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text x="828" y="130" font-size="13" fill="#1f2328" text-anchor="middle">vérifie tout le graphe,</text>
+  <text x="828" y="150" font-size="13" fill="#1f2328" text-anchor="middle">puis construit</text>
+  <text x="828" y="170" font-size="13" fill="#1f2328" text-anchor="middle">les instances</text>
+  <line x1="234" y1="142" x2="262" y2="142" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="466" y1="142" x2="494" y2="142" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="698" y1="142" x2="726" y2="142" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="32" y="392" font-size="14" font-weight="600" fill="#1f2328">Quatre contrôles gardent la liste générée au pas du constructeur</text>
+  <line x1="132" y1="256" x2="132" y2="224" stroke="#3d4449" stroke-width="1.5" stroke-dasharray="4 4" marker-end="url(#arrow)"/>
+  <rect x="32" y="258" width="200" height="100" rx="8" fill="#ffffff" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="132" y="282" font-size="14" font-weight="700" fill="#1f2328" text-anchor="middle">une règle</text>
+  <text x="132" y="304" font-size="13" fill="#1f2328" text-anchor="middle">declarations/</text>
+  <text x="132" y="322" font-size="13" fill="#1f2328" text-anchor="middle">constructor-injection : une</text>
+  <text x="132" y="340" font-size="13" fill="#1f2328" text-anchor="middle">classe par paramètre</text>
+  <line x1="364" y1="256" x2="364" y2="224" stroke="#3d4449" stroke-width="1.5" stroke-dasharray="4 4" marker-end="url(#arrow)"/>
+  <rect x="264" y="258" width="200" height="100" rx="8" fill="#ffffff" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="364" y="282" font-size="14" font-weight="700" fill="#1f2328" text-anchor="middle">le développement</text>
+  <text x="364" y="304" font-size="13" fill="#1f2328" text-anchor="middle">npm run dev rafraîchit</text>
+  <text x="364" y="322" font-size="13" fill="#1f2328" text-anchor="middle">le fichier à chaque</text>
+  <text x="364" y="340" font-size="13" fill="#1f2328" text-anchor="middle">démarrage et rechargement</text>
+  <line x1="596" y1="256" x2="596" y2="224" stroke="#3d4449" stroke-width="1.5" stroke-dasharray="4 4" marker-end="url(#arrow)"/>
+  <rect x="496" y="258" width="200" height="100" rx="8" fill="#ffffff" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="596" y="282" font-size="14" font-weight="700" fill="#1f2328" text-anchor="middle">une porte</text>
+  <text x="596" y="304" font-size="13" fill="#1f2328" text-anchor="middle">check et docs --check</text>
+  <text x="596" y="322" font-size="13" fill="#1f2328" text-anchor="middle">comparent le fichier</text>
+  <text x="596" y="340" font-size="13" fill="#1f2328" text-anchor="middle">au source</text>
+  <line x1="828" y1="256" x2="828" y2="224" stroke="#3d4449" stroke-width="1.5" stroke-dasharray="4 4" marker-end="url(#arrow)"/>
+  <rect x="728" y="258" width="200" height="100" rx="8" fill="#ffffff" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="828" y="282" font-size="14" font-weight="700" fill="#1f2328" text-anchor="middle">le démarrage</text>
+  <text x="828" y="304" font-size="13" fill="#1f2328" text-anchor="middle">une classe sans sa liste :</text>
+  <text x="828" y="322" font-size="13" fill="#1f2328" text-anchor="middle">WiringError, rien n'est</text>
+  <text x="828" y="340" font-size="13" fill="#1f2328" text-anchor="middle">injecté comme undefined</text>
+  <text x="32" y="416" font-size="13" fill="#5f6b73">Ni métadonnées du compilateur ni reflect-metadata, donc la même chaîne fonctionne sous tsc, tsx, Vitest et swc, dans les deux modes de décorateurs.</text>
+</svg>

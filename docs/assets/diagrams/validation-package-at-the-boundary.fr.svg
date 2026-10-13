@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 500" width="960" height="500" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Une requête HTTP à la frontière : un Schema par partie</title>
+  <desc id="desc">Les params, la query, les headers et le body d'une requête HTTP passent chacun par le Schema que la route déclare pour eux, avec parse. Quand chaque partie est analysée, le gestionnaire reçoit des valeurs typées et le domaine vérifie les règles métier. Quand une partie échoue, ses problèmes sont rassemblés avec le nom de la partie devant leur chemin, comme body.items.0.sku, avec les problèmes des autres parties, et la requête HTTP est refusée avec une seule ValidationError, code VALIDATION_FAILED, qui reçoit la réponse 422 avec la liste des problèmes. toJsonSchema des mêmes schémas décrit la requête HTTP dans le document OpenAPI.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="500" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Une requête HTTP à la frontière : un Schema par partie</text>
+
+  <!-- request -->
+  <rect x="24" y="70" width="150" height="270" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="99" y="98" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">requête HTTP</text>
+  <rect x="40" y="116" width="118" height="40" rx="8" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="99" y="141" font-size="14" fill="#1f2328" text-anchor="middle">params</text>
+  <rect x="40" y="168" width="118" height="40" rx="8" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="99" y="193" font-size="14" fill="#1f2328" text-anchor="middle">query</text>
+  <rect x="40" y="220" width="118" height="40" rx="8" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="99" y="245" font-size="14" fill="#1f2328" text-anchor="middle">headers</text>
+  <rect x="40" y="272" width="118" height="40" rx="8" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="99" y="297" font-size="14" fill="#1f2328" text-anchor="middle">body</text>
+
+  <!-- route -->
+  <rect x="220" y="70" width="270" height="270" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="355" y="98" font-size="16" font-weight="700" fill="#9a5b2b" text-anchor="middle">route : un schéma par partie</text>
+  <rect x="236" y="116" width="238" height="40" rx="8" fill="#ffffff" stroke="#9a5b2b" stroke-width="1.5"/>
+  <text x="355" y="141" font-size="13" fill="#1f2328" text-anchor="middle">request.params.parse(...)</text>
+  <rect x="236" y="168" width="238" height="40" rx="8" fill="#ffffff" stroke="#9a5b2b" stroke-width="1.5"/>
+  <text x="355" y="193" font-size="13" fill="#1f2328" text-anchor="middle">request.query.parse(...)</text>
+  <rect x="236" y="220" width="238" height="40" rx="8" fill="#ffffff" stroke="#9a5b2b" stroke-width="1.5"/>
+  <text x="355" y="245" font-size="13" fill="#1f2328" text-anchor="middle">request.headers.parse(...)</text>
+  <rect x="236" y="272" width="238" height="40" rx="8" fill="#ffffff" stroke="#9a5b2b" stroke-width="1.5"/>
+  <text x="355" y="297" font-size="13" fill="#1f2328" text-anchor="middle">request.body.parse(...)</text>
+  <line x1="160" y1="136" x2="232" y2="136" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="160" y1="188" x2="232" y2="188" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="160" y1="240" x2="232" y2="240" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="160" y1="292" x2="232" y2="292" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- success -->
+  <rect x="620" y="70" width="308" height="64" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="774" y="95" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">gestionnaire</text>
+  <text x="774" y="117" font-size="13" fill="#1f2328" text-anchor="middle">reçoit params, query, body typés</text>
+  <rect x="620" y="158" width="308" height="64" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="774" y="183" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">domaine</text>
+  <text x="774" y="205" font-size="13" fill="#1f2328" text-anchor="middle">vérifie les règles métier, refuse</text>
+  <line x1="774" y1="136" x2="774" y2="154" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="492" y1="102" x2="616" y2="102" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="554" y="92" font-size="13" fill="#1f2328" text-anchor="middle">chaque partie</text>
+  <text x="554" y="122" font-size="13" fill="#1f2328" text-anchor="middle">est analysée</text>
+
+  <!-- failure -->
+  <rect x="620" y="246" width="308" height="94" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="774" y="271" font-size="16" font-weight="700" fill="#9a5b2b" text-anchor="middle">422, VALIDATION_FAILED</text>
+  <text x="774" y="295" font-size="13" fill="#1f2328" text-anchor="middle">une ValidationError, les problèmes de</text>
+  <text x="774" y="315" font-size="13" fill="#1f2328" text-anchor="middle">toutes les parties : chemin body.items.0.sku,</text>
+  <text x="774" y="333" font-size="13" fill="#1f2328" text-anchor="middle">code too_small, message</text>
+  <line x1="492" y1="292" x2="616" y2="292" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="554" y="282" font-size="13" fill="#1f2328" text-anchor="middle">une partie échoue</text>
+
+  <!-- contract -->
+  <rect x="220" y="384" width="270" height="72" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="355" y="410" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">document OpenAPI</text>
+  <text x="355" y="434" font-size="13" fill="#1f2328" text-anchor="middle">toJsonSchema() des mêmes schémas</text>
+  <line x1="355" y1="342" x2="355" y2="380" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+</svg>

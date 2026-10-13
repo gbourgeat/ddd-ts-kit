@@ -1,3 +1,5 @@
+**English** · [Français](language-declared-vocabulary.fr.md)
+
 # ddd-ts-kit/language-declared-vocabulary
 
 Architecture id: `language/declared-vocabulary`. Default severity: `error`.

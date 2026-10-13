@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 394" width="960" height="394" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Rendre l'ordre d'arrivée indifférent</title>
+  <desc id="desc">Le producteur envoie trois versions d'un même rendez-vous : v1 réservé, v2 déplacé, v3 annulé. Elles arrivent dans l'ordre v1, v3, v2. Le consommateur applique v1, puis v3, et ignore v2 car sa ligne tient déjà une version plus récente. Quel que soit l'ordre d'arrivée, la ligne finit dans l'état de v3.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="394" rx="16" fill="#ffffff"/>
+  <text x="32" y="36" font-size="18" font-weight="600" fill="#1f2328">Le consommateur garde la plus haute version appliquée</text>
+  <text x="32" y="88" font-size="14" font-weight="600" fill="#1f2328">envoyé</text>
+  <text x="32" y="106" font-size="13" fill="#5f6b73">par le producteur</text>
+  <text x="32" y="178" font-size="14" font-weight="600" fill="#1f2328">reçu</text>
+  <text x="32" y="196" font-size="13" fill="#5f6b73">par le consommateur</text>
+  <text x="32" y="294" font-size="14" font-weight="600" fill="#1f2328">la ligne tient</text>
+  <text x="32" y="312" font-size="13" fill="#5f6b73">après chaque événement</text>
+  <rect x="200" y="64" width="170" height="54" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="285" y="96" font-size="14" font-weight="600" fill="#5f6b73" text-anchor="middle">v1 réservé</text>
+  <rect x="400" y="64" width="170" height="54" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="485" y="96" font-size="14" font-weight="600" fill="#5f6b73" text-anchor="middle">v2 déplacé</text>
+  <rect x="600" y="64" width="170" height="54" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="685" y="96" font-size="14" font-weight="600" fill="#5f6b73" text-anchor="middle">v3 annulé</text>
+  <rect x="200" y="154" width="170" height="54" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="285" y="186" font-size="14" font-weight="600" fill="#2b5d8a" text-anchor="middle">v1 réservé</text>
+  <rect x="400" y="154" width="170" height="54" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="485" y="186" font-size="14" font-weight="600" fill="#2b5d8a" text-anchor="middle">v3 annulé</text>
+  <rect x="600" y="154" width="170" height="54" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="685" y="186" font-size="14" font-weight="600" fill="#2b5d8a" text-anchor="middle">v2 déplacé</text>
+  <rect x="200" y="270" width="170" height="54" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="285" y="302" font-size="14" font-weight="600" fill="#7a4f9a" text-anchor="middle">v1 : réservé</text>
+  <rect x="400" y="270" width="170" height="54" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="485" y="302" font-size="14" font-weight="600" fill="#7a4f9a" text-anchor="middle">v3 : annulé</text>
+  <rect x="600" y="270" width="170" height="54" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="685" y="302" font-size="14" font-weight="600" fill="#7a4f9a" text-anchor="middle">v3 : annulé</text>
+  <line x1="285" y1="210" x2="285" y2="266" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="297" y="246" font-size="13" fill="#1f2328">appliqué</text>
+  <line x1="485" y1="210" x2="485" y2="266" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="497" y="246" font-size="13" fill="#1f2328">appliqué</text>
+  <line x1="685" y1="210" x2="685" y2="266" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="697" y="246" font-size="13" fill="#1f2328">ignoré : 2 &lt; 3</text>
+  <line x1="200" y1="136" x2="770" y2="136" stroke="#8c959f" stroke-width="1.5" stroke-dasharray="4 4"/>
+  <rect x="796" y="270" width="140" height="80" rx="10" fill="#ffffff" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="866" y="294" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">Tout ordre</text>
+  <text x="866" y="313" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">d'arrivée finit</text>
+  <text x="866" y="332" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">sur v3.</text>
+  <line x1="200" y1="370" x2="770" y2="370" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="780" y="375" font-size="13" fill="#1f2328">temps</text>
+</svg>

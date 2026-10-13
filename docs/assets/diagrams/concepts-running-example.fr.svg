@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 560" width="960" height="560" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">L'exemple suivi : une application de prise de rendez-vous</title>
+  <desc id="desc">Cinq contextes délimités et deux systèmes externes, de l'amont vers l'aval. calendars publie son langage vers appointments et availability. appointments, le contexte cœur, publie vers availability et notifications, et analytics s'y conforme. Le fournisseur de courriel et de SMS, externe, est en amont de notifications, qui protège son modèle derrière une couche anticorruption. Le fournisseur d'identité, générique et acheté, émet les jetons OpenID Connect de chaque contexte, que la plateforme traduit une fois. Les flèches pleines vont de l'amont vers l'aval ; les flèches en tirets viennent d'un système externe.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="560" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">L'exemple suivi : une application de prise de rendez-vous</text>
+  <rect x="24" y="226" width="172" height="76" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="2"/>
+  <text x="110" y="259" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">calendars</text>
+  <text x="110" y="285" font-size="13" fill="#1f2328" text-anchor="middle">de soutien</text>
+  <rect x="274" y="226" width="182" height="76" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="3"/>
+  <text x="365" y="259" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">appointments</text>
+  <text x="365" y="285" font-size="13" fill="#1f2328" text-anchor="middle">cœur</text>
+  <rect x="534" y="96" width="182" height="76" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="2"/>
+  <text x="625" y="129" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">availability</text>
+  <text x="625" y="155" font-size="13" fill="#1f2328" text-anchor="middle">de soutien</text>
+  <rect x="534" y="226" width="182" height="76" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="2"/>
+  <text x="625" y="259" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">notifications</text>
+  <text x="625" y="285" font-size="13" fill="#1f2328" text-anchor="middle">de soutien</text>
+  <rect x="534" y="356" width="182" height="76" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="2"/>
+  <text x="625" y="389" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">analytics</text>
+  <text x="625" y="415" font-size="13" fill="#1f2328" text-anchor="middle">de soutien</text>
+  <rect x="784" y="226" width="152" height="76" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="860" y="259" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">Courriel, SMS</text>
+  <text x="860" y="285" font-size="13" fill="#1f2328" text-anchor="middle">fournisseur externe</text>
+  <rect x="264" y="356" width="202" height="76" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="365" y="389" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">Fournisseur d'identité</text>
+  <text x="365" y="415" font-size="13" fill="#1f2328" text-anchor="middle">générique, externe</text>
+  <line x1="198" y1="264" x2="272" y2="264" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="235" y="256" font-size="13" fill="#1f2328" text-anchor="middle" font-weight="600">PL</text>
+  <path d="M110,224 V120 H532" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="320" y="112" font-size="13" fill="#1f2328" text-anchor="middle" font-weight="600">PL</text>
+  <path d="M365,224 V150 H532" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="450" y="142" font-size="13" fill="#1f2328" text-anchor="middle" font-weight="600">PL</text>
+  <line x1="458" y1="256" x2="532" y2="256" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="495" y="248" font-size="13" fill="#1f2328" text-anchor="middle" font-weight="600">PL</text>
+  <path d="M458,286 H494 V394 H532" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="486" y="352" font-size="13" fill="#1f2328" text-anchor="end" font-weight="600">CF</text>
+  <line x1="782" y1="264" x2="718" y2="264" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <text x="750" y="256" font-size="13" fill="#1f2328" text-anchor="middle" font-weight="600">ACL</text>
+  <line x1="365" y1="354" x2="365" y2="304" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <text x="355" y="334" font-size="13" fill="#1f2328" text-anchor="end" font-weight="600">OIDC, chaque contexte</text>
+  <rect x="32" y="466" width="22" height="16" rx="4" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="64" y="479" font-size="14" fill="#1f2328" text-anchor="start">contexte cœur</text>
+  <rect x="232" y="466" width="22" height="16" rx="4" fill="#ffffff" stroke="#5f6b73" stroke-width="2"/>
+  <text x="264" y="479" font-size="14" fill="#1f2328" text-anchor="start">contexte de soutien</text>
+  <rect x="452" y="466" width="22" height="16" rx="4" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2" stroke-dasharray="4 3"/>
+  <text x="484" y="479" font-size="14" fill="#1f2328" text-anchor="start">système externe</text>
+  <line x1="672" y1="474" x2="716" y2="474" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="728" y="479" font-size="14" fill="#1f2328" text-anchor="start">de l'amont vers l'aval</text>
+  <line x1="32" y1="506" x2="76" y2="506" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <text x="88" y="511" font-size="14" fill="#1f2328" text-anchor="start">depuis un système externe</text>
+  <text x="32" y="540" font-size="14" fill="#1f2328" text-anchor="start">PL langage publié, CF conformiste, ACL couche anticorruption, OIDC jetons OpenID Connect</text>
+</svg>

@@ -1,3 +1,5 @@
+**English** · [Français](imports-alias-only.fr.md)
+
 # ddd-ts-kit/imports-alias-only
 
 Architecture id: `imports/alias-only`. Default severity: `error` in `recommended`, `error` in `strict`. Fixable (`eslint --fix`).

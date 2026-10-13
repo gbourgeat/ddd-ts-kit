@@ -1,3 +1,5 @@
+**English** · [Français](sagas-and-process-managers.fr.md)
+
 # Sagas and process managers
 
 **Summary.** A business process that spans several aggregates or contexts cannot be one
@@ -20,15 +22,7 @@ minutes. Three contexts are involved (`appointments`, a payment context or provi
 
 The process becomes steps:
 
-```mermaid
-stateDiagram-v2
-  [*] --> PendingDeposit: BookAppointment
-  PendingDeposit --> Confirmed: deposit paid
-  PendingDeposit --> Cancelled: deposit refused
-  PendingDeposit --> Cancelled: fifteen minutes passed
-  Confirmed --> [*]
-  Cancelled --> [*]
-```
+![The deposit process as states: BookAppointment leaves the appointment pending its deposit; deposit paid confirms it; deposit refused, or fifteen minutes passed, cancels it. Each arrow is one local transaction in one context](../assets/diagrams/sagas-and-process-managers-deposit-states.svg)
 
 Each arrow is a local transaction in one context. Between two arrows the system is in a visible
 intermediate state ("pending deposit"), which the product must name (see
@@ -60,6 +54,8 @@ Richardson calls the last such step the pivot).
 | Timeouts and "did every step happen?" | awkward: nobody owns the question | natural: the orchestrator holds the state |
 | Fits | short, linear flows of two or three steps | flows with branches, timeouts, compensations |
 | Risk | cyclic event dependencies, a process nobody can describe | a central component that accumulates business logic |
+
+![Two ways to run the deposit flow. Choreography: appointments, payments and notifications react to each other's events, and the process is the sum of their subscriptions. Orchestration: a process manager inside appointments reacts to the events and to its timeout, keeps the state of the process and sends the commands of its own context; payments is reached through its events and a gateway port](../assets/diagrams/sagas-and-process-managers-choreography-orchestration.svg)
 
 In the scheduling application, "send a reminder when an appointment is booked" is choreography
 and needs nothing more: `notifications` consumes `appointments.appointment.booked`. The deposit
@@ -98,31 +94,87 @@ products exist; they were not evaluated for this kit and nothing here integrates
 
 ## A process manager
 
+The scheduling example has one: the confirmation deadline of a requested appointment. It is
+armed when the appointment is requested, disarmed when it is confirmed, cancelled or expired,
+and when the deadline passes first, it expires the appointment at that very instant.
+
+<!-- checked sample -->
 ```ts
 // scheduling/application/processes/confirmation-deadline.process.ts
+import {
+  AuthorizedCommand,
+  systemActor,
+  type Actor,
+  type DomainEvent,
+  type ProcessDecision,
+  type ProcessManager,
+} from '@ddd-ts-kit/kernel';
+
+// Declared here so that the sample compiles alone; in the example they are files of the context.
+declare class AppointmentBooked implements DomainEvent {
+  readonly name: string;
+  readonly occurredAt: Date;
+  readonly aggregateId: string;
+  readonly held: { readonly confirmBefore?: Date };
+}
+declare class ExpireUnconfirmedAppointmentsCommand extends AuthorizedCommand {
+  constructor(actor: Actor, at: Date);
+}
+
+/** The state of the deadline of one requested appointment: plain JSON, so the deadline is ISO text. */
+export interface ConfirmationDeadlineState {
+  readonly appointmentId: string;
+  readonly confirmBefore: string;
+}
+
+/** The one timeout of the process. */
+const DEADLINE = 'deadline';
+
 export class ConfirmationDeadlineProcess implements ProcessManager<ConfirmationDeadlineState> {
   static readonly processName = 'scheduling.confirmation-deadline';
+
   static readonly timeoutJob = 'scheduling.confirmation-deadline-timeout';
 
-  static isState(value: unknown): value is ConfirmationDeadlineState { /* ... */ }
+  /** Recognises a state this version saved: a state written by another version is refused, not misread. */
+  static isState(value: unknown): value is ConfirmationDeadlineState {
+    return typeof value === 'object' && value !== null && 'appointmentId' in value && 'confirmBefore' in value;
+  }
 
-  requested(event: AppointmentBooked, current: ConfirmationDeadlineState | undefined) {
-    if (current !== undefined || event.held.confirmBefore === undefined) {
-      return undefined; // nothing to decide
+  /** Requested with a deadline: arm the timeout. Booked outright, or already armed: nothing to decide. */
+  requested(
+    event: AppointmentBooked,
+    current: ConfirmationDeadlineState | undefined,
+  ): ProcessDecision<ConfirmationDeadlineState> | undefined {
+    const { confirmBefore } = event.held;
+
+    if (current !== undefined || confirmBefore === undefined) {
+      return undefined;
     }
 
     return {
-      state: { appointmentId: event.aggregateId, confirmBefore: event.held.confirmBefore.toISOString() },
-      timeouts: [{ name: 'deadline', at: event.held.confirmBefore }],
+      state: { appointmentId: event.aggregateId, confirmBefore: confirmBefore.toISOString() },
+      timeouts: [{ name: DEADLINE, at: confirmBefore }],
     };
   }
 
-  settled(current: ConfirmationDeadlineState | undefined) {
-    return current === undefined ? undefined : { state: current, cancel: ['deadline'], ended: true };
+  /** Confirmed, cancelled or expired in time: disarm the deadline and end. */
+  settled(current: ConfirmationDeadlineState | undefined): ProcessDecision<ConfirmationDeadlineState> | undefined {
+    return current === undefined ? undefined : { state: current, cancel: [DEADLINE], ended: true };
   }
 
-  timedOut(name: string, current: ConfirmationDeadlineState) {
-    return { state: current, ended: true, commands: [new ExpireUnconfirmedAppointmentsCommand(actor, new Date(current.confirmBefore))] };
+  /** The deadline passed first: expire the appointment, as the process itself. */
+  timedOut(name: string, current: ConfirmationDeadlineState): ProcessDecision<ConfirmationDeadlineState> | undefined {
+    if (name !== DEADLINE) {
+      return undefined;
+    }
+
+    const actor = systemActor(ConfirmationDeadlineProcess.processName);
+
+    return {
+      state: current,
+      ended: true,
+      commands: [new ExpireUnconfirmedAppointmentsCommand(actor, new Date(current.confirmBefore))],
+    };
   }
 }
 ```
@@ -152,33 +204,125 @@ export class ConfirmationDeadlineProcess implements ProcessManager<ConfirmationD
   `createProcessTable`, `DrizzleProcessStore` and `processesTable`, which save in the transaction
   of the step. Every store is held by `processStoreContract`.
 
-```mermaid
-sequenceDiagram
-  participant H as handler of AppointmentBooked
-  participant R as ProcessRunner
-  participant S as ProcessStore
-  participant Q as JobQueue
-  H->>R: run(ConfirmationDeadlineProcess, appointmentId, requested)
-  R->>S: load (none)
-  R->>Q: enqueue the timeout job, runAt the deadline
-  R->>S: save version 1
-  Note over Q: at the deadline, unless disarmed
-  Q->>R: timeout(..., jobId)
-  R->>S: load, the armed job is this one
-  R->>R: send ExpireUnconfirmedAppointments
-  R->>S: save version 2, ended
+The two classes that call the steps, in the example: the handler of a domain event of the
+context, run in the unit of work of the command that booked, and the background job that
+delivers the timeout.
+
+<!-- checked sample -->
+```ts
+import {
+  ProcessRunner,
+  type BackgroundJob,
+  type BackgroundJobExecution,
+  type DomainEvent,
+  type ProcessDecision,
+  type ProcessTimeoutDue,
+} from '@ddd-ts-kit/kernel';
+import { Background, DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
+
+// Declared here so that the sample compiles alone: the event and the process shown above.
+interface ConfirmationDeadlineState {
+  readonly appointmentId: string;
+  readonly confirmBefore: string;
+}
+declare class AppointmentBooked implements DomainEvent {
+  static readonly eventName: 'scheduling.appointment.booked';
+  readonly name: string;
+  readonly occurredAt: Date;
+  readonly aggregateId: string;
+}
+type Decision = ProcessDecision<ConfirmationDeadlineState> | undefined;
+declare class ConfirmationDeadlineProcess {
+  static readonly processName: string;
+  static readonly timeoutJob: string;
+  static isState(value: unknown): value is ConfirmationDeadlineState;
+  requested(event: AppointmentBooked, current: ConfirmationDeadlineState | undefined): Decision;
+  timedOut(name: string, current: ConfirmationDeadlineState): Decision;
+}
+
+/** The step of the deadline of an appointment that is booked, in the unit of work that booked it. */
+@DomainEventHandler(AppointmentBooked, { name: AppointmentBooked.eventName })
+export class ConfirmationDeadlineOnBookedEventHandler implements DomainEventHandler<AppointmentBooked> {
+  private readonly process = new ConfirmationDeadlineProcess();
+
+  constructor(private readonly processes: ProcessRunner) {}
+
+  async handle(event: AppointmentBooked): Promise<void> {
+    // The correlation key: one instance of the process per appointment.
+    await this.processes.run(ConfirmationDeadlineProcess, event.aggregateId, (current) =>
+      this.process.requested(event, current),
+    );
+  }
+}
+
+/** A deadline delivered three times without success is dead: the expiry job still expires the appointment. */
+const MAX_ATTEMPTS = 3;
+
+/** Delivers the timeouts of the process, each when it is due. Its jobName is the timeoutJob of the process. */
+@Background({ maxAttempts: MAX_ATTEMPTS })
+export class ConfirmationDeadlineTimeoutBackgroundJob implements BackgroundJob<ProcessTimeoutDue> {
+  static readonly jobName = 'scheduling.confirmation-deadline-timeout';
+
+  private readonly process = new ConfirmationDeadlineProcess();
+
+  constructor(private readonly processes: ProcessRunner) {}
+
+  async run(due: ProcessTimeoutDue, execution: BackgroundJobExecution): Promise<void> {
+    // The runner runs the step only while this very job is the armed one.
+    await this.processes.timeout(ConfirmationDeadlineProcess, { ...due, jobId: execution.jobId }, (current) =>
+      this.process.timedOut(due.timeout, current),
+    );
+  }
+}
 ```
+
+![The runner at work: the handler of AppointmentBooked calls run; the runner loads no instance, enqueues the timeout job for the deadline and saves version 1, in the unit of work of the booking. At the deadline, unless a step disarmed it, the timeout job calls timeout with its job id; the runner loads the instance, checks that this job is the armed one, saves version 2, ended, then sends ExpireUnconfirmedAppointments](../assets/diagrams/sagas-and-process-managers-runner-sequence.svg)
 
 ## Testing
 
 A step is tested without a store, a queue or a bus:
 
+<!-- checked sample -->
 ```ts
-givenProcess<ConfirmationDeadlineState>(undefined)
-  .when((current) => process.requested(booked, current))
-  .thenState({ appointmentId: 'appointment-1', confirmBefore: deadline.toISOString() })
-  .thenTimeouts([{ name: 'deadline', at: deadline }])
-  .thenCommands([]);
+import { givenProcess } from '@ddd-ts-kit/testing';
+import type { ProcessDecision } from '@ddd-ts-kit/kernel';
+import { describe, it } from 'vitest';
+
+// Declared here so that the sample compiles alone: the process shown above and an event of the spec.
+interface ConfirmationDeadlineState {
+  readonly appointmentId: string;
+  readonly confirmBefore: string;
+}
+interface AppointmentBooked {
+  readonly aggregateId: string;
+  readonly held: { readonly confirmBefore?: Date };
+}
+type Decision = ProcessDecision<ConfirmationDeadlineState> | undefined;
+declare const process: {
+  requested(event: AppointmentBooked, current: ConfirmationDeadlineState | undefined): Decision;
+  settled(current: ConfirmationDeadlineState | undefined): Decision;
+};
+declare const booked: AppointmentBooked; // appointment-1, requested, to confirm before the deadline
+
+const deadline = new Date('2026-03-01T12:00:00.000Z');
+const watching: ConfirmationDeadlineState = { appointmentId: 'appointment-1', confirmBefore: deadline.toISOString() };
+
+describe('The confirmation deadline of an appointment', () => {
+  it('is armed when the appointment is requested, for its deadline', () => {
+    givenProcess<ConfirmationDeadlineState>(undefined)
+      .when((current) => process.requested(booked, current))
+      .thenState(watching)
+      .thenTimeouts([{ name: 'deadline', at: deadline }])
+      .thenCommands([]);
+  });
+
+  it('is disarmed and ended once the appointment is confirmed in time', () => {
+    givenProcess(watching)
+      .when((current) => process.settled(current))
+      .thenCancelled(['deadline'])
+      .thenEnded();
+  });
+});
 ```
 
 `thenIgnored`, `thenState`, `thenCommands` (by class or by the properties that matter),

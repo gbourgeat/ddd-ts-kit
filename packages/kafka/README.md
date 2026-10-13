@@ -1,3 +1,5 @@
+**English** · [Français](README.fr.md)
+
 # @ddd-ts-kit/kafka
 
 The integration event provider for Apache Kafka: an `EventBus` of the kernel that publishes
@@ -51,16 +53,20 @@ each consuming context listens through the bus under its own name. The bus is gi
 application as two ports of the kernel: `IntegrationEventPublisher` stays the outbox, and
 `EventSubscribers` hands each context the subscriber of its own consumer name.
 
-`init --broker kafka` writes this wiring in the platform of the project: the bus is built by
-`platform/events/create-event-provider.ts`, `platform/platform.module.ts` rebinds
-`EventSubscribers` on it, and `main.ts` gives it, traced, to the outbox relay. By hand, the
-same thing reads:
+![In the producing context the command handler writes the order and its event to the outbox in one transaction; the OutboxRelay claims the record and gives it to KafkaEventBus.publish (idempotent producer, acks=all), which writes it to the topic of its type, keyed by the order id; each consuming context is a consumer group, notifications and billing both receive every event, the two instances of billing share the partitions; the billing handler commits its mark and its work in one unit of work before the offset is committed; a record that keeps failing goes to the dead-letter topic of billing](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/kafka-place-in-an-application.svg)
 
+`init --broker kafka` writes this wiring in the platform of the project: the bus is built by
+`platform/events/create-event-provider.ts`, keyed by `platform/events/aggregate-key-of.ts`,
+`platform/platform.module.ts` rebinds `EventSubscribers` on it, and `main.ts` gives it, traced,
+to the outbox relay of `platform/events/start-outbox-relay.ts`, which runs
+`ordering: 'per-key'` with the same key. By hand, the same thing reads:
+
+<!-- checked sample -->
 ```ts
 // platform/messaging.module.ts
 import { defineContextModule } from '@ddd-ts-kit/di';
 import { EventSubscribers, IntegrationEventPublisher, type IntegrationEvent } from '@ddd-ts-kit/kernel';
-import { OutboxPublisher, OutboxStore } from '@ddd-ts-kit/events';
+import { OutboxPublisher, OutboxStore, type IntegrationEventDefinition } from '@ddd-ts-kit/events';
 import { KafkaEventBus } from '@ddd-ts-kit/kafka';
 
 // The ordering key, given to the relay and to the bus: the aggregate id an event is about.
@@ -87,11 +93,19 @@ export const messagingModule = defineContextModule({
     builder.rebind(EventSubscribers).toValue({ forContext: (name) => bus.forConsumer(name) });
   },
 });
+
+// What the project has elsewhere, declared so that this sample compiles alone.
+declare const orderPlaced: IntegrationEventDefinition<{ readonly orderId: string }>;
+declare const config: { readonly kafkaBrokers: string };
+declare const logger: { warn(message: string, fields: object): void };
+declare const deliveries: { add(value: number, attributes: Record<string, string>): void };
 ```
 
+<!-- checked sample -->
 ```ts
 // contexts/billing/application/integration/handlers/invoice-on-order-placed.integration-handler.ts
-import { CommandBus, systemActor, type IntegrationEvent } from '@ddd-ts-kit/kernel';
+import type { IntegrationEventDefinition } from '@ddd-ts-kit/events';
+import { CommandBus, systemActor, type Actor, type Command, type IntegrationEvent } from '@ddd-ts-kit/kernel';
 import { IntegrationEventHandler } from '@ddd-ts-kit/kernel/declarations';
 
 @IntegrationEventHandler(orderPlaced, { consumer: 'billing.invoice-on-order-placed' })
@@ -105,6 +119,13 @@ export class InvoiceOnOrderPlacedIntegrationHandler {
     await this.commands.execute(new IssueInvoice(this.actor, event.payload.orderId));
   }
 }
+
+// What the project has elsewhere: the published language of ordering, the command of billing.
+interface OrderPlacedPayload {
+  readonly orderId: string;
+}
+declare const orderPlaced: IntegrationEventDefinition<OrderPlacedPayload>;
+declare const IssueInvoice: new (actor: Actor, orderId: string) => Command;
 ```
 
 ```ts
@@ -193,6 +214,28 @@ once the consumers have their partitions. For `forConsumer('billing')` subscribe
 | dead-letter topic | `billing.ordering.order.placed.dead` | `<consumer>.<topic>.dead`; written by this consumer only |
 | replay group | `billing.replay` | exists once `replayDead` ran; its committed offsets on the dead-letter topics say what was replayed |
 
+The same, as the bus describes it:
+
+<!-- checked sample -->
+```ts
+import { KafkaEventBus, deadTopicOf, replayGroupOf } from '@ddd-ts-kit/kafka';
+
+const bus = new KafkaEventBus({ brokers: 'kafka-1:9092', publishedTypes: ['billing.invoice.issued'] });
+
+bus.forConsumer('billing').subscribe('ordering.order.placed', async () => {});
+
+export const { topics, groups } = bus.describeTopology();
+// topics: [
+//   { name: 'billing.invoice.issued', role: 'events', partitions: -1, replicationFactor: -1 },
+//   { name: 'ordering.order.placed', role: 'events', partitions: -1, replicationFactor: -1 },
+//   { name: 'billing.ordering.order.placed.dead', role: 'dead', partitions: -1, replicationFactor: -1 },
+// ]   (-1: the defaults of the broker, since `topics` is not given)
+// groups: [{ groupId: 'billing', topics: ['ordering.order.placed'] }]
+
+export const dead = deadTopicOf('billing', 'ordering.order.placed'); // 'billing.ordering.order.placed.dead'
+export const replay = replayGroupOf('billing'); // 'billing.replay'
+```
+
 One topic per event type is the default. `topicOf: (type) => type.split('.')[0]` gives one
 topic per producing context instead: a consumer then reads every type of that context and
 skips, by committing them, those it did not subscribe to; this is what keeps the order
@@ -225,6 +268,37 @@ Kafka orders the records of one partition, and the key chooses the partition. So
    batch (idempotent producer, so a retry of the client cannot reorder or duplicate them), a
    consumer handles the records of a partition one at a time, and a failed record is retried
    **in place**, see below.
+
+![Two events of order 1, placed then paid: with the default key, the event id, they land on two partitions owned by two instances and paid may be handled before placed; with keyOf giving the order id, both land on one partition owned by one instance and are handled in the order of the log](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/kafka-keys-and-partitions.svg)
+
+<!-- checked sample -->
+```ts
+// platform/events/create-event-provider.ts
+import { OutboxRelay, type IntegrationEventDefinition, type OutboxStore } from '@ddd-ts-kit/events';
+import { KafkaEventBus } from '@ddd-ts-kit/kafka';
+import type { Clock, IntegrationEvent } from '@ddd-ts-kit/kernel';
+
+declare const orderPlaced: IntegrationEventDefinition<{ readonly orderId: string }>;
+declare const orderPaid: IntegrationEventDefinition<{ readonly orderId: string; readonly amount: number }>;
+declare const store: OutboxStore;
+declare const clock: Clock;
+
+// Instead of: the default key, the event id. Each event is alone in its order, so two events
+// of one order may sit on two partitions and be handled side by side.
+export const unordered = new KafkaEventBus({ brokers: 'kafka-1:9092' });
+
+// Write: the aggregate id, one function given to the bus and to the relay alike.
+const orderIdOf = (event: IntegrationEvent): string | undefined =>
+  orderPlaced.is(event) || orderPaid.is(event) ? event.payload.orderId : undefined;
+
+export const bus = new KafkaEventBus({ brokers: 'kafka-1:9092', keyOf: orderIdOf });
+
+// One running relay: the records of an order leave in the order they were written.
+export const relay = new OutboxRelay({ store, publisher: bus, clock, ordering: 'per-key', keyOf: orderIdOf });
+```
+
+An event that `keyOf` answers `undefined` for is published without a key: Kafka then spreads
+such records over the partitions, and they keep no order between them.
 
 `concurrency` is the number of partitions a consumer handles at once (default 1); the records
 of one partition are never handled concurrently.
@@ -260,6 +334,40 @@ wait too, for a bounded time. The order is given up only at the dead-letter step
 that follow a dead one are handled without it, and a replay brings it back late. A consumer
 that cannot tolerate that must stop on the dead letter itself (carry a version in the
 payload, refuse a gap).
+
+![Two records of order 1 on one partition, placed then paid: with a retry topic, the failed placed record is moved aside, paid is handled, and placed later, so paid is applied before placed; with the retry in place of this bus, the partition is paused for retry.delayMs while the other partitions keep flowing, placed is read again and handled, then paid; after retry.maxAttempts failed deliveries the record goes to the dead-letter topic and the partition moves on](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/kafka-retry-in-place.svg)
+
+The bus decides from what the handler does, so a handler that hides its failure hides it from
+the bus too:
+
+<!-- checked sample -->
+```ts
+import type { KafkaEventBus } from '@ddd-ts-kit/kafka';
+import type { IntegrationEvent } from '@ddd-ts-kit/kernel';
+
+declare const bus: KafkaEventBus;
+declare const logger: { warn(message: string, fields: object): void };
+declare function sendReceipt(event: IntegrationEvent): Promise<void>;
+
+const notifications = bus.forConsumer('notifications');
+
+// Instead of: catching the error. The handler resolves, the offset is committed, and the
+// event is gone: no retry, no dead letter, nothing to replay.
+notifications.subscribe('billing.invoice.issued', async (event) => {
+  try {
+    await sendReceipt(event);
+  } catch {
+    logger.warn('receipt not sent', { eventId: event.id });
+  }
+});
+
+// Write: let it throw. The bus pauses the partition, reads the record again after
+// retry.delayMs, and after retry.maxAttempts copies it to
+// notifications.billing.invoice.issued.dead, where replayDead can take it back.
+notifications.subscribe('billing.invoice.issued', async (event) => {
+  await sendReceipt(event);
+});
+```
 
 Delivery is at least once. The copy-then-commit order means a crash in between delivers the
 record twice, never zero times.
@@ -303,14 +411,46 @@ What to watch:
 | lag of group `<consumer>.replay` on `<consumer>.<topic>.dead`, or the end offset of that topic before any replay | cluster | the dead-letter depth: must be 0, alert on anything else |
 | `onDelivery` counted by `outcome` | this bus | rate of `retried`, `dead`, `poison` against `acknowledged` |
 | `onFailure` with `kind: 'connection'` | this bus | consumers that could not start, commit or dead-letter, with the code of librdkafka |
+| `DeadLetterReports` of the kernel on `onFailure` | the error tracker | one report per event given up (dead or poison), with the error its handler threw; a retried delivery is not reported |
 | `bus.deliveriesInFlight` | this bus | handlers running now; stuck above 0 means a handler that hangs |
 | `bus.partitionsAssigned` | this bus | 0 on an instance that subscribed means it consumes nothing (more instances than partitions, or not joined) |
 | under-replicated partitions, `min.insync.replicas` | cluster | below 2 in-sync replicas, `acks=all` protects nothing |
 
-Replaying dead letters, once the cause is fixed:
+The signals of the bus, wired to a meter and a logger, and the replay of dead letters once the
+cause is fixed:
 
+<!-- checked sample -->
 ```ts
-const replayed = await bus.replayDead({ consumer: 'billing', type: 'ordering.order.placed' }, 100);
+import { KafkaEventBus } from '@ddd-ts-kit/kafka';
+import { DeadLetterReports, type ErrorReporter, type EventSubscribers } from '@ddd-ts-kit/kernel';
+
+declare const deliveries: { add(value: number, attributes: Record<string, string>): void };
+declare const logger: { warn(message: string, fields: object): void };
+declare const errorReporter: ErrorReporter;
+
+const deadLetters = new DeadLetterReports(errorReporter);
+
+export const bus = new KafkaEventBus({
+  brokers: ['kafka-1:9092', 'kafka-2:9092', 'kafka-3:9092'],
+  // One count per settled record: acknowledged, retried, dead or poison.
+  onDelivery: ({ consumer, topic, outcome }) => deliveries.add(1, { consumer, topic, outcome }),
+  // Codes only, never an error message: safe to log as it is.
+  onFailure: (failure) => {
+    logger.warn('event bus failure', failure);
+    deadLetters.onFailure(failure);
+  },
+});
+
+// Bound to EventSubscribers: the reports of buried events then carry what the handler threw.
+export const subscribers: EventSubscribers = { forContext: (name) => deadLetters.observing(bus.forConsumer(name)) };
+
+// For a gauge: handlers running now, and partitions this instance consumes.
+export const gauges = () => ({ inFlight: bus.deliveriesInFlight, partitions: bus.partitionsAssigned });
+
+// Once the cause is fixed: up to 100 records back to ordering.order.placed, for billing only.
+export async function replayBillingDeadLetters(): Promise<number> {
+  return bus.replayDead({ consumer: 'billing', type: 'ordering.order.placed' }, 100);
+}
 ```
 
 It copies up to that many records from the dead-letter topic back to the topic they came
@@ -372,8 +512,10 @@ exercised), brokers older than 4.3, and Debezium in place of the relay.
 contract suite. The three share the envelope, the header names (`traceparent`,
 `x-correlation-id`, `x-event-version`, `x-attempt`, `x-error-code`, `x-dead-reason`), the
 option names (`consumer`, `retry`, `reconnect`, `onFailure`, `onDelivery`) and the methods
-(`forConsumer`, `assertTopology`, `describeTopology`, `replayDead`, `close`). Kafka is the one
-to choose when the order of the events of an aggregate matters.
+(`forConsumer`, `assertTopology`, `describeTopology`, `replayDead`, `close`).
+`RedisStreamsEventBus` of `@ddd-ts-kit/redis` is a fourth: same ports, same contract suite,
+same option names and methods, on a server you may already run. Kafka is the one to choose
+when the order of the events of an aggregate matters.
 
 ## Testing
 

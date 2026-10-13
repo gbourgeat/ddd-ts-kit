@@ -1,3 +1,5 @@
+**English** · [Français](README.fr.md)
+
 # Concepts: a reading path
 
 **Summary.** These pages explain the ideas this kit is built on: Domain-Driven Design
@@ -8,6 +10,8 @@ teach and give the reasons; the rules themselves are stated once, in the
 page can be read on its own in a few minutes. Read in order, they form a path from "what is a
 domain" to "how do I test this", using one example throughout: an appointment scheduling
 application.
+
+![The reading path in six sections: strategic design (pages 1 to 5), tactical design (6 to 11), architecture (12 to 15), messaging and consistency (16 to 22), cross-cutting concerns (23 to 34), code and tests (35 and 36), each with the question it answers](../assets/diagrams/concepts-reading-path.svg)
 
 ## The running example
 
@@ -22,6 +26,14 @@ bought:
 | `notifications` | supporting | confirmations and reminders, through email and SMS providers |
 | `analytics` | supporting | occupancy and no-show statistics |
 | identity | generic | an OpenID Connect provider; no context in the code |
+
+How they depend on each other, upstream to downstream, as the
+[worked example of the context map](context-map-worked-example.md) finds it:
+
+![The running example: calendars publishes to appointments and availability; appointments, the core context, publishes to availability and notifications, and analytics conforms to it; the email and SMS provider is upstream of notifications, which keeps an anticorruption layer; the identity provider issues the tokens of every context](../assets/diagrams/concepts-running-example.svg)
+
+The example application of the repository, [`examples/scheduling`](../../examples/scheduling),
+is a smaller cut of the same domain that runs; several pages quote its code.
 
 ## 1. Strategic design: where the boundaries are
 

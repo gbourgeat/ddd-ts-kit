@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 460" width="960" height="460" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Deux sens de « créneau » : availability conseille, appointments décide</title>
+  <desc id="desc">availability calcule les créneaux encore proposés à partir d'événements, avec un léger retard, et dit à deux clients que 10:00 est libre. Tous deux demandent à appointments de réserver 10:00. appointments, où l'absence de double réservation est tenue par l'agrégat et une contrainte d'unicité, réserve pour le premier et refuse le second avec SlotAlreadyTaken. L'événement de réservation atteint ensuite availability, qui ne propose plus 10:00.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="460" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Deux sens de « créneau » : availability conseille, appointments décide</text>
+  <!-- availability -->
+  <rect x="24" y="64" width="256" height="214" rx="10" fill="#ffffff" stroke="#2f6f4f" stroke-width="1.5"/>
+  <text x="152" y="92" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">availability</text>
+  <text x="152" y="112" font-size="13" font-style="italic" fill="#1f2328" text-anchor="middle">de soutien</text>
+  <line x1="40" y1="124" x2="264" y2="124" stroke="#2f6f4f" stroke-opacity="0.35"/>
+  <text x="40" y="148" font-size="13" font-weight="700" fill="#2f6f4f">créneau : un intervalle</text>
+  <text x="40" y="166" font-size="13" font-weight="700" fill="#2f6f4f">encore proposé</text>
+  <text x="40" y="190" font-size="13" fill="#1f2328">calculé à partir des</text>
+  <text x="40" y="208" font-size="13" fill="#1f2328">événements publiés :</text>
+  <text x="40" y="226" font-size="13" fill="#1f2328">toujours un peu en retard</text>
+  <text x="40" y="256" font-size="13" font-style="italic" font-weight="600" fill="#2f6f4f">conseille, ne décide jamais</text>
+  <!-- clients -->
+  <rect x="370" y="74" width="210" height="60" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="475" y="98" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">client Ada</text>
+  <text x="475" y="120" font-size="13" fill="#1f2328" text-anchor="middle">reçoit : réservé</text>
+  <rect x="370" y="176" width="210" height="60" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="475" y="200" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">client Bob, juste après</text>
+  <text x="475" y="222" font-size="13" fill="#1f2328" text-anchor="middle">reçoit : SlotAlreadyTaken</text>
+  <!-- appointments -->
+  <rect x="680" y="64" width="256" height="214" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="3"/>
+  <text x="808" y="92" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">appointments</text>
+  <text x="808" y="112" font-size="13" font-style="italic" fill="#1f2328" text-anchor="middle">cœur</text>
+  <line x1="696" y1="124" x2="920" y2="124" stroke="#2f6f4f" stroke-opacity="0.35"/>
+  <text x="696" y="148" font-size="13" font-weight="700" fill="#2f6f4f">créneau : l'intervalle qu'occupe</text>
+  <text x="696" y="166" font-size="13" font-weight="700" fill="#2f6f4f">un rendez-vous</text>
+  <text x="696" y="190" font-size="13" fill="#1f2328">pas de double réservation,</text>
+  <text x="696" y="208" font-size="13" fill="#1f2328">tenue par l'agrégat et</text>
+  <text x="696" y="226" font-size="13" fill="#1f2328">une contrainte d'unicité</text>
+  <text x="696" y="256" font-size="13" font-style="italic" font-weight="600" fill="#2f6f4f">décide, à chaque instant</text>
+  <!-- lectures -->
+  <line x1="282" y1="104" x2="366" y2="104" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="324" y="94" font-size="13" fill="#1f2328" text-anchor="middle">10:00 libre</text>
+  <line x1="282" y1="206" x2="366" y2="206" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="324" y="196" font-size="13" fill="#1f2328" text-anchor="middle">10:00 libre</text>
+  <!-- réservations -->
+  <line x1="582" y1="104" x2="676" y2="104" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="629" y="78" font-size="13" fill="#1f2328" text-anchor="middle">réserver</text>
+  <text x="629" y="95" font-size="13" fill="#1f2328" text-anchor="middle">10:00</text>
+  <line x1="582" y1="206" x2="676" y2="206" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="629" y="180" font-size="13" fill="#1f2328" text-anchor="middle">réserver</text>
+  <text x="629" y="197" font-size="13" fill="#1f2328" text-anchor="middle">10:00</text>
+  <!-- l'événement, plus tard -->
+  <path d="M808,280 V326 H152 V284" fill="none" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <text x="480" y="350" font-size="13" fill="#1f2328" text-anchor="middle">appointments.appointment.booked, un peu plus tard : 10:00 n'est plus proposé</text>
+  <!-- légende -->
+  <line x1="40" y1="404" x2="84" y2="404" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="96" y="409" font-size="14" fill="#1f2328">une demande et sa réponse, aussitôt</text>
+  <line x1="40" y1="434" x2="84" y2="434" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <text x="96" y="439" font-size="14" fill="#1f2328">un événement d'intégration, livré plus tard</text>
+</svg>

@@ -1,0 +1,104 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 652" width="960" height="652" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Ce qui tourne après les trois commandes</title>
+  <desc id="desc">Un client appelle l'API sur le port 54300, ou Varnish sur le port 54081, qui sert les lectures publiques depuis son cache et transmet le reste à l'API. Le processus API exécute le serveur HTTP, les cas d'usage des quatre contextes, les consommateurs d'événements, le relais de l'outbox, le rattrapage de l'event store, ainsi que l'audit, les traces et les journaux. Le processus worker exécute les jobs planifiés et les consommateurs d'événements, sans serveur HTTP ni relais. Les deux processus utilisent les conteneurs de docker compose : PostgreSQL, Dragonfly, Keycloak, Jaeger et GlitchTip. Après une validation, le relais de l'outbox purge par tag les réponses gardées par Varnish.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+    <marker id="arrow-infrastructure" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#7a4f9a"/>
+    </marker>
+  </defs>
+  <rect width="960" height="652" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Ce qui tourne après les trois commandes</text>
+
+  <!-- client -->
+  <rect x="24" y="236" width="150" height="96" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="99" y="266" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">client</text>
+  <line x1="38" y1="278" x2="160" y2="278" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text x="99" y="300" font-size="13" fill="#1f2328" text-anchor="middle">scripts/demo.mjs</text>
+  <text x="99" y="320" font-size="13" fill="#1f2328" text-anchor="middle">curl, un navigateur</text>
+
+  <!-- varnish -->
+  <rect x="270" y="58" width="360" height="76" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="450" y="80" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">Varnish  :54081</text>
+  <text x="450" y="101" font-size="13" fill="#1f2328" text-anchor="middle">réponses publiques gardées sous leurs tags</text>
+  <text x="450" y="122" font-size="13" font-style="italic" fill="#5f6b73" text-anchor="middle">docker compose, sans profil</text>
+
+  <!-- API process -->
+  <rect x="270" y="170" width="360" height="240" rx="12" fill="#ffffff" stroke="#3d4449" stroke-width="2"/>
+  <text x="286" y="196" font-size="16" font-weight="700" fill="#1f2328">processus API  :54300</text>
+  <text x="614" y="196" font-size="13" fill="#5f6b73" text-anchor="end">dist/src/main.js</text>
+  <rect x="286" y="212" width="160" height="38" rx="8" fill="#f6ede6" stroke="#9a5b2b" stroke-width="1.5"/>
+  <text x="366" y="236" font-size="13" fill="#9a5b2b" text-anchor="middle" font-weight="600">serveur HTTP, /docs</text>
+  <rect x="454" y="212" width="160" height="38" rx="8" fill="#e7eef5" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="534" y="236" font-size="13" fill="#2b5d8a" text-anchor="middle" font-weight="600">commandes, requêtes</text>
+  <rect x="286" y="262" width="160" height="38" rx="8" fill="#e7eef5" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="366" y="286" font-size="13" fill="#2b5d8a" text-anchor="middle" font-weight="600">consommateurs</text>
+  <rect x="454" y="262" width="160" height="38" rx="8" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="1.5"/>
+  <text x="534" y="286" font-size="13" fill="#7a4f9a" text-anchor="middle" font-weight="600">relais de l'outbox</text>
+  <rect x="286" y="312" width="160" height="38" rx="8" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="1.5"/>
+  <text x="366" y="336" font-size="13" fill="#7a4f9a" text-anchor="middle" font-weight="600">rattrapage du store</text>
+  <rect x="454" y="312" width="160" height="38" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="534" y="336" font-size="13" fill="#5f6b73" text-anchor="middle" font-weight="600">audit, traces, journaux</text>
+  <text x="450" y="388" font-size="13" font-style="italic" fill="#5f6b73" text-anchor="middle">les quatre contextes, composés par src/platform</text>
+
+  <!-- worker process -->
+  <rect x="270" y="440" width="360" height="130" rx="12" fill="#ffffff" stroke="#3d4449" stroke-width="2"/>
+  <text x="286" y="466" font-size="16" font-weight="700" fill="#1f2328">processus worker</text>
+  <text x="614" y="466" font-size="13" fill="#5f6b73" text-anchor="end">dist/src/apps/worker/main.js</text>
+  <rect x="286" y="482" width="160" height="38" rx="8" fill="#e7eef5" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="366" y="506" font-size="13" fill="#2b5d8a" text-anchor="middle" font-weight="600">jobs planifiés</text>
+  <rect x="454" y="482" width="160" height="38" rx="8" fill="#e7eef5" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="534" y="506" font-size="13" fill="#2b5d8a" text-anchor="middle" font-weight="600">consommateurs</text>
+  <text x="450" y="552" font-size="13" font-style="italic" fill="#5f6b73" text-anchor="middle">ni serveur HTTP, ni relais de l'outbox</text>
+
+  <!-- containers -->
+  <rect x="700" y="58" width="236" height="512" rx="14" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="716" y="84" font-size="14" font-weight="600" fill="#5f6b73">docker compose, sur 127.0.0.1</text>
+  <rect x="714" y="100" width="208" height="96" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="728" y="124" font-size="16" font-weight="700" fill="#5f6b73">PostgreSQL  :54320</text>
+  <text x="728" y="146" font-size="13" fill="#1f2328">tables, outbox, event store,</text>
+  <text x="728" y="166" font-size="13" fill="#1f2328">tuples de relation,</text>
+  <text x="728" y="185" font-size="13" fill="#1f2328">clés des personnes</text>
+  <rect x="714" y="206" width="208" height="80" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="728" y="227" font-size="16" font-weight="700" fill="#5f6b73">Dragonfly  :54379</text>
+  <text x="728" y="246" font-size="13" fill="#1f2328">cache, limiteur de débit,</text>
+  <text x="728" y="262" font-size="13" fill="#1f2328">verrou des jobs, réveil du</text>
+  <text x="728" y="278" font-size="13" fill="#1f2328">relais, flux des événements</text>
+  <rect x="714" y="296" width="208" height="80" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="728" y="320" font-size="16" font-weight="700" fill="#5f6b73">Keycloak  :54080</text>
+  <text x="728" y="342" font-size="13" fill="#1f2328">jetons des comptes de démo</text>
+  <text x="728" y="362" font-size="13" font-style="italic" fill="#5f6b73">--profile identity</text>
+  <rect x="714" y="386" width="208" height="80" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="728" y="410" font-size="16" font-weight="700" fill="#5f6b73">Jaeger  :54686</text>
+  <text x="728" y="432" font-size="13" fill="#1f2328">traces, en OTLP :54318</text>
+  <text x="728" y="452" font-size="13" font-style="italic" fill="#5f6b73">--profile observability</text>
+  <rect x="714" y="476" width="208" height="80" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="728" y="500" font-size="16" font-weight="700" fill="#5f6b73">GlitchTip  :54800</text>
+  <text x="728" y="522" font-size="13" fill="#1f2328">remontée des erreurs</text>
+  <text x="728" y="542" font-size="13" font-style="italic" fill="#5f6b73">--profile errors</text>
+
+  <!-- client to Varnish, client to API, Varnish to API -->
+  <path d="M99,236 V96 H266" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="110" y="160" font-size="13" fill="#1f2328">lectures publiques</text>
+  <line x1="176" y1="284" x2="266" y2="284" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="221" y="274" font-size="13" fill="#1f2328" text-anchor="middle">avec un jeton</text>
+  <line x1="350" y1="136" x2="350" y2="166" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="360" y="156" font-size="13" fill="#1f2328">un MISS, ou une requête avec jeton</text>
+
+  <!-- relay purges Varnish -->
+  <path d="M616,281 H654 V96 H634" fill="none" stroke="#7a4f9a" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow-infrastructure)"/>
+
+  <!-- processes use the containers -->
+  <path d="M694,100 H684 V556 H694" fill="none" stroke="#5f6b73" stroke-width="2"/>
+  <line x1="632" y1="372" x2="681" y2="372" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="632" y1="530" x2="681" y2="530" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text transform="translate(674,451) rotate(-90)" font-size="13" fill="#1f2328" text-anchor="middle">utilisent les cinq</text>
+
+  <!-- legend -->
+  <line x1="40" y1="600" x2="84" y2="600" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="96" y="605" font-size="14" fill="#1f2328">appels, lectures et écritures</text>
+  <line x1="40" y1="628" x2="84" y2="628" stroke="#7a4f9a" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow-infrastructure)"/>
+  <text x="96" y="633" font-size="14" fill="#1f2328">le relais de l'outbox purge Varnish par tag après la validation d'un changement (deux fois, à deux secondes d'intervalle)</text>
+</svg>

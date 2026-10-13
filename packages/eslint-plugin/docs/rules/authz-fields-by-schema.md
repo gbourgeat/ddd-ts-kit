@@ -1,3 +1,5 @@
+**English** · [Français](authz-fields-by-schema.fr.md)
+
 # ddd-ts-kit/authz-fields-by-schema
 
 Architecture id: `authz/fields-by-schema`. Default severity: `error` in `recommended`, `error` in `strict`.

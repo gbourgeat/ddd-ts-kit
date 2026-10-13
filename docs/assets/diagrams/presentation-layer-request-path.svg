@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 530" width="960" height="530" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">The path of a request through a controller route</title>
+  <desc id="desc">Row one: the HTTP adapter of the framework, validation of every declared part by its schema (422), the execution context of the request, the guards in order (401, 403). Row two, right to left: the controller, its request mapper, the command bus that checks the permission of @Requires (403), the handler of the use case. Row three: the result goes back through the controller and its optional serializer to the response with the declared status. A refusal at any step becomes a problem document through the error mapper.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="530" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">The path of a request through a controller route</text>
+  <rect x="24" y="64" width="208" height="84" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="128" y="91" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">1  HTTP adapter</text>
+  <text x="128" y="117" font-size="13" fill="#1f2328" text-anchor="middle">Express, Fastify,</text>
+  <text x="128" y="137" font-size="13" fill="#1f2328" text-anchor="middle">Hono or NestJS</text>
+  <rect x="256" y="64" width="208" height="84" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="360" y="91" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">2  Schemas</text>
+  <text x="360" y="117" font-size="13" fill="#1f2328" text-anchor="middle">params, query,</text>
+  <text x="360" y="137" font-size="13" fill="#1f2328" text-anchor="middle">headers, body: 422</text>
+  <rect x="488" y="64" width="208" height="84" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="592" y="91" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">3  Execution context</text>
+  <text x="592" y="117" font-size="13" fill="#1f2328" text-anchor="middle">actor, session, tenant,</text>
+  <text x="592" y="137" font-size="13" fill="#1f2328" text-anchor="middle">correlation id</text>
+  <rect x="720" y="64" width="208" height="84" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="824" y="91" font-size="16" font-weight="700" fill="#9a5b2b" text-anchor="middle">4  Guards, in order</text>
+  <text x="824" y="117" font-size="13" fill="#1f2328" text-anchor="middle">parent group, group,</text>
+  <text x="824" y="137" font-size="13" fill="#1f2328" text-anchor="middle">controller: 401, 403</text>
+  <line x1="234" y1="106" x2="254" y2="106" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="466" y1="106" x2="486" y2="106" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="698" y1="106" x2="718" y2="106" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="824.0" y1="150" x2="824.0" y2="190" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="720" y="192" width="208" height="84" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="824" y="219" font-size="16" font-weight="700" fill="#9a5b2b" text-anchor="middle">5  Controller</text>
+  <text x="824" y="245" font-size="13" fill="#1f2328" text-anchor="middle">handle(request)</text>
+  <text x="824" y="265" font-size="13" fill="#1f2328" text-anchor="middle">decides nothing</text>
+  <rect x="488" y="192" width="208" height="84" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="592" y="219" font-size="16" font-weight="700" fill="#9a5b2b" text-anchor="middle">6  Request mapper</text>
+  <text x="592" y="245" font-size="13" fill="#1f2328" text-anchor="middle">request and actor</text>
+  <text x="592" y="265" font-size="13" fill="#1f2328" text-anchor="middle">to the command</text>
+  <rect x="256" y="192" width="208" height="84" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="360" y="219" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">7  Command bus</text>
+  <text x="360" y="245" font-size="13" fill="#1f2328" text-anchor="middle">permission of</text>
+  <text x="360" y="265" font-size="13" fill="#1f2328" text-anchor="middle">@Requires: 403</text>
+  <rect x="24" y="192" width="208" height="84" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="128" y="219" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">8  Handler</text>
+  <text x="128" y="245" font-size="13" fill="#1f2328" text-anchor="middle">the use case,</text>
+  <text x="128" y="265" font-size="13" fill="#1f2328" text-anchor="middle">its domain errors</text>
+  <line x1="718" y1="234" x2="698" y2="234" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="486" y1="234" x2="466" y2="234" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="254" y1="234" x2="234" y2="234" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="128.0" y1="278" x2="128.0" y2="322" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="140.0" y="306" font-size="13" fill="#1f2328" text-anchor="start" font-style="italic">the result, back through the controller</text>
+  <rect x="24" y="324" width="208" height="84" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="128" y="351" font-size="16" font-weight="700" fill="#9a5b2b" text-anchor="middle">9  Serializer</text>
+  <text x="128" y="377" font-size="13" fill="#1f2328" text-anchor="middle">optional: the result</text>
+  <text x="128" y="397" font-size="13" fill="#1f2328" text-anchor="middle">to the body</text>
+  <rect x="256" y="324" width="208" height="84" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="360" y="351" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">10  Response</text>
+  <text x="360" y="377" font-size="13" fill="#1f2328" text-anchor="middle">the declared status</text>
+  <text x="360" y="397" font-size="13" fill="#1f2328" text-anchor="middle">and its body</text>
+  <line x1="234" y1="366" x2="254" y2="366" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="528" y="324" width="400" height="84" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="728" y="351" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">A refusal at any step</text>
+  <text x="728" y="377" font-size="13" fill="#1f2328" text-anchor="middle">the error mapper answers a problem document</text>
+  <text x="728" y="397" font-size="13" fill="#1f2328" text-anchor="middle">(RFC 9457) with its error code</text>
+  <line x1="526" y1="366" x2="466" y2="366" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <rect x="32" y="448" width="22" height="16" rx="4" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="64" y="461" font-size="14" fill="#1f2328" text-anchor="start">pipeline of @ddd-ts-kit/http</text>
+  <rect x="332" y="448" width="22" height="16" rx="4" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="364" y="461" font-size="14" fill="#1f2328" text-anchor="start">presentation layer</text>
+  <rect x="592" y="448" width="22" height="16" rx="4" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="624" y="461" font-size="14" fill="#1f2328" text-anchor="start">application layer</text>
+  <line x1="32" y1="500" x2="76" y2="500" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="88" y="505" font-size="14" fill="#1f2328" text-anchor="start">the request goes on</text>
+  <line x1="332" y1="500" x2="376" y2="500" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <text x="388" y="505" font-size="14" fill="#1f2328" text-anchor="start">a refusal</text>
+</svg>

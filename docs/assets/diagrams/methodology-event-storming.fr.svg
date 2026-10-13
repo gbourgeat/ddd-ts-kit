@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 520" width="960" height="520" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Un event storming écrit de l'application scheduling</title>
+  <desc id="desc">Trois lignes d'une découverte, chacune lue de gauche à droite : un modèle de lecture informe un acteur, l'acteur donne une commande, la commande cause un événement du domaine, et une politique suit l'événement. Un client regarde les créneaux libres d'un praticien et réserve un rendez-vous ; le rendez-vous est réservé, donc une confirmation est envoyée et un rappel planifié. Un client ou un praticien annule un rendez-vous ; il est annulé, donc le créneau est libéré et l'autre partie prévenue. Chaque matin, le temps envoie les rappels des rendez-vous du lendemain ; un rappel est envoyé, sans politique après lui. En dessous, un point chaud demande jusqu'à quand un client peut annuler sans frais, et les systèmes externes sont listés.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="520" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Un event storming écrit : trois lignes de la découverte de scheduling</text>
+  <!-- column headers -->
+  <text x="102" y="80" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">modèle de lecture</text>
+  <text x="294" y="80" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">acteur</text>
+  <text x="482" y="80" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">commande</text>
+  <text x="670" y="80" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">événement du domaine</text>
+  <text x="858" y="80" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">politique</text>
+  <text x="102" y="98" font-size="13" fill="#1f2328" text-anchor="middle">ce qu'on voit pour décider</text>
+  <text x="294" y="98" font-size="13" fill="#1f2328" text-anchor="middle">qui demande</text>
+  <text x="482" y="98" font-size="13" fill="#1f2328" text-anchor="middle">ce qui est demandé</text>
+  <text x="670" y="98" font-size="13" fill="#1f2328" text-anchor="middle">ce qui s'est passé, au passé</text>
+  <text x="858" y="98" font-size="13" fill="#1f2328" text-anchor="middle">quand X, alors Y</text>
+  <!-- lane 1: book -->
+  <rect x="20" y="114" width="164" height="72" rx="6" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="102" y="145" font-size="13" fill="#1f2328" text-anchor="middle">créneaux libres</text>
+  <text x="102" y="163" font-size="13" fill="#1f2328" text-anchor="middle">d'un praticien</text>
+  <rect x="212" y="114" width="164" height="72" rx="36" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="294" y="155" font-size="14" fill="#1f2328" text-anchor="middle">client</text>
+  <rect x="400" y="114" width="164" height="72" rx="6" fill="#e7eef5" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="482" y="145" font-size="14" fill="#1f2328" text-anchor="middle">réserver un</text>
+  <text x="482" y="164" font-size="14" fill="#1f2328" text-anchor="middle">rendez-vous</text>
+  <rect x="588" y="114" width="164" height="72" rx="6" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="1.5"/>
+  <text x="670" y="155" font-size="14" fill="#1f2328" text-anchor="middle">rendez-vous réservé</text>
+  <rect x="776" y="114" width="164" height="72" rx="6" fill="#ffffff" stroke="#5f6b73" stroke-width="2"/>
+  <text x="858" y="136" font-size="13" fill="#1f2328" text-anchor="middle">envoyer une</text>
+  <text x="858" y="154" font-size="13" fill="#1f2328" text-anchor="middle">confirmation ;</text>
+  <text x="858" y="172" font-size="13" fill="#1f2328" text-anchor="middle">planifier un rappel</text>
+  <line x1="184" y1="150" x2="210" y2="150" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="376" y1="150" x2="398" y2="150" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="564" y1="150" x2="586" y2="150" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="752" y1="150" x2="774" y2="150" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- lane 2: cancel -->
+  <rect x="20" y="210" width="164" height="72" rx="6" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="102" y="251" font-size="14" fill="#1f2328" text-anchor="middle">mes rendez-vous</text>
+  <rect x="212" y="210" width="164" height="72" rx="36" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="294" y="241" font-size="13" fill="#1f2328" text-anchor="middle">client ou</text>
+  <text x="294" y="259" font-size="13" fill="#1f2328" text-anchor="middle">praticien</text>
+  <rect x="400" y="210" width="164" height="72" rx="6" fill="#e7eef5" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="482" y="241" font-size="14" fill="#1f2328" text-anchor="middle">annuler un</text>
+  <text x="482" y="260" font-size="14" fill="#1f2328" text-anchor="middle">rendez-vous</text>
+  <rect x="588" y="210" width="164" height="72" rx="6" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="1.5"/>
+  <text x="670" y="251" font-size="14" fill="#1f2328" text-anchor="middle">rendez-vous annulé</text>
+  <rect x="776" y="210" width="164" height="72" rx="6" fill="#ffffff" stroke="#5f6b73" stroke-width="2"/>
+  <text x="858" y="241" font-size="13" fill="#1f2328" text-anchor="middle">libérer le créneau ;</text>
+  <text x="858" y="259" font-size="13" fill="#1f2328" text-anchor="middle">prévenir l'autre partie</text>
+  <line x1="184" y1="246" x2="210" y2="246" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="376" y1="246" x2="398" y2="246" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="564" y1="246" x2="586" y2="246" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="752" y1="246" x2="774" y2="246" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- lane 3: reminders -->
+  <rect x="20" y="306" width="164" height="72" rx="6" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="102" y="337" font-size="13" fill="#1f2328" text-anchor="middle">rendez-vous</text>
+  <text x="102" y="355" font-size="13" fill="#1f2328" text-anchor="middle">du lendemain</text>
+  <rect x="212" y="306" width="164" height="72" rx="36" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="294" y="337" font-size="13" fill="#1f2328" text-anchor="middle">le temps</text>
+  <text x="294" y="355" font-size="13" fill="#1f2328" text-anchor="middle">(chaque matin)</text>
+  <rect x="400" y="306" width="164" height="72" rx="6" fill="#e7eef5" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="482" y="347" font-size="14" fill="#1f2328" text-anchor="middle">envoyer les rappels</text>
+  <rect x="588" y="306" width="164" height="72" rx="6" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="1.5"/>
+  <text x="670" y="347" font-size="14" fill="#1f2328" text-anchor="middle">rappel envoyé</text>
+  <text x="858" y="347" font-size="13" font-style="italic" fill="#5f6b73" text-anchor="middle">aucune politique ne suit</text>
+  <line x1="184" y1="342" x2="210" y2="342" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="376" y1="342" x2="398" y2="342" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="564" y1="342" x2="586" y2="342" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- hot spot and external systems -->
+  <rect x="20" y="412" width="450" height="84" rx="6" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="38" y="438" font-size="15" font-weight="700" fill="#5f6b73">point chaud, sur annuler un rendez-vous</text>
+  <text x="38" y="462" font-size="13" fill="#1f2328">« Jusqu'à quand un client peut-il annuler sans frais ? »</text>
+  <text x="38" y="482" font-size="13" fill="#1f2328">Une question pour un expert du domaine, jamais une supposition.</text>
+  <rect x="490" y="412" width="450" height="84" rx="6" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="508" y="438" font-size="15" font-weight="700" fill="#5f6b73">systèmes externes</text>
+  <text x="508" y="462" font-size="13" fill="#1f2328">fournisseur d'identité, fournisseurs d'e-mail et de SMS,</text>
+  <text x="508" y="482" font-size="13" fill="#1f2328">chacun avec ce qui se passe quand il est en panne</text>
+</svg>

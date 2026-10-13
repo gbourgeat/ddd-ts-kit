@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 560" width="960" height="560" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Une spec de gestionnaire sur createTestBuses</title>
+  <desc id="desc">La spec exécute une commande sur le bus de commandes, qui l'exécute dans l'unité de travail en mémoire. Le vrai gestionnaire sauvegarde l'agrégat dans le fake du repository, enveloppé par dispatching : le fake garde une copie et les événements enregistrés attendent. Une fois que le gestionnaire a rendu la main, les événements sont distribués dans l'ordre où l'agrégat les a enregistrés à domainEvents : les gestionnaires before-commit, puis les after-commit. Une réaction publie un événement d'intégration sur le bus d'événements en mémoire. Quand execute est résolu, la spec lit l'état du fake et les événements publiés.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="560" rx="16" fill="#ffffff"/>
+  <text x="32" y="36" font-size="18" font-weight="600" fill="#1f2328">Une spec de gestionnaire sur createTestBuses()</text>
+
+  <!-- the spec reads the fake afterwards -->
+  <path d="M107,110 V76 H819 V106" fill="none" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <circle cx="300" cy="76" r="11" fill="#ffffff" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="300" y="81" font-size="13" font-weight="700" fill="#1f2328" text-anchor="middle">7</text>
+  <text x="320" y="68" font-size="13" fill="#1f2328" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">orders.count(), orders.all()</text>
+
+  <!-- row 1 -->
+  <rect x="32" y="110" width="150" height="90" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="107" y="148" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">la spec</text>
+  <text x="107" y="172" font-size="13" fill="#1f2328" text-anchor="middle">prépare, agit, lit</text>
+
+  <rect x="238" y="110" width="180" height="90" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="328" y="142" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">commandBus</text>
+  <text x="328" y="166" font-size="13" fill="#1f2328" text-anchor="middle">exécute chaque commande</text>
+  <text x="328" y="186" font-size="13" fill="#1f2328" text-anchor="middle">dans l'unité de travail</text>
+
+  <rect x="474" y="110" width="180" height="90" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="564" y="142" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">le gestionnaire</text>
+  <text x="564" y="166" font-size="13" fill="#1f2328" text-anchor="middle">le vrai,</text>
+  <text x="564" y="186" font-size="13" fill="#1f2328" text-anchor="middle">il ne fait que sauvegarder</text>
+
+  <rect x="710" y="110" width="218" height="90" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="819" y="142" font-size="15" font-weight="700" fill="#7a4f9a" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">dispatching(fake)</text>
+  <text x="819" y="166" font-size="13" fill="#1f2328" text-anchor="middle">InMemoryRepository :</text>
+  <text x="819" y="186" font-size="13" fill="#1f2328" text-anchor="middle">une copie gardée, version + 1</text>
+
+  <!-- row 1 arrows -->
+  <line x1="182" y1="155" x2="234" y2="155" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <circle cx="208" cy="134" r="11" fill="#ffffff" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="208" y="139" font-size="13" font-weight="700" fill="#1f2328" text-anchor="middle">1</text>
+  <line x1="418" y1="155" x2="470" y2="155" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <circle cx="444" cy="134" r="11" fill="#ffffff" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="444" y="139" font-size="13" font-weight="700" fill="#1f2328" text-anchor="middle">2</text>
+  <line x1="654" y1="155" x2="706" y2="155" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <circle cx="680" cy="134" r="11" fill="#ffffff" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="680" y="139" font-size="13" font-weight="700" fill="#1f2328" text-anchor="middle">3</text>
+
+  <!-- fake to domainEvents -->
+  <line x1="819" y1="200" x2="819" y2="296" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <circle cx="842" cy="248" r="11" fill="#ffffff" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="842" y="253" font-size="13" font-weight="700" fill="#1f2328" text-anchor="middle">4</text>
+
+  <!-- row 2 -->
+  <rect x="710" y="300" width="218" height="90" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="819" y="332" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">domainEvents</text>
+  <text x="819" y="356" font-size="13" fill="#1f2328" text-anchor="middle">gestionnaires before-commit,</text>
+  <text x="819" y="376" font-size="13" fill="#1f2328" text-anchor="middle">puis after-commit</text>
+
+  <rect x="474" y="300" width="180" height="90" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="564" y="332" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">une réaction</text>
+  <text x="564" y="356" font-size="13" fill="#1f2328" text-anchor="middle">publie l'événement</text>
+  <text x="564" y="376" font-size="13" fill="#1f2328" text-anchor="middle">d'intégration</text>
+
+  <rect x="238" y="300" width="180" height="90" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="328" y="332" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">eventBus</text>
+  <text x="328" y="356" font-size="13" fill="#1f2328" text-anchor="middle">InMemoryEventBus :</text>
+  <text x="328" y="376" font-size="13" fill="#1f2328" text-anchor="middle">garde ce qui est publié</text>
+
+  <!-- row 2 arrows -->
+  <line x1="710" y1="345" x2="658" y2="345" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <circle cx="684" cy="324" r="11" fill="#ffffff" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="684" y="329" font-size="13" font-weight="700" fill="#1f2328" text-anchor="middle">5</text>
+  <line x1="474" y1="345" x2="422" y2="345" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <circle cx="448" cy="324" r="11" fill="#ffffff" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="448" y="329" font-size="13" font-weight="700" fill="#1f2328" text-anchor="middle">6</text>
+
+  <!-- the spec reads the published events afterwards -->
+  <path d="M107,200 V345 H234" fill="none" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <circle cx="107" cy="272" r="11" fill="#ffffff" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="107" y="277" font-size="13" font-weight="700" fill="#1f2328" text-anchor="middle">7</text>
+  <text x="40" y="370" font-size="13" fill="#1f2328" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">publishedEvents()</text>
+
+  <!-- steps -->
+  <line x1="32" y1="410" x2="928" y2="410" stroke="#3d4449" stroke-opacity="0.2"/>
+  <g font-size="13" fill="#1f2328">
+    <text x="40" y="436"><tspan font-weight="700">1</tspan>  execute(new PlaceOrder('sku-1'))</text>
+    <text x="40" y="458"><tspan font-weight="700">2</tspan>  le gestionnaire s'exécute dans l'unité de travail</text>
+    <text x="40" y="480"><tspan font-weight="700">3</tspan>  save : le fake garde une copie, les événements attendent</text>
+    <text x="40" y="502"><tspan font-weight="700">4</tspan>  le gestionnaire a rendu la main : événements remis dans l'ordre</text>
+    <text x="500" y="436"><tspan font-weight="700">5</tspan>  domainEvents appelle un gestionnaire before-commit</text>
+    <text x="500" y="458"><tspan font-weight="700">6</tspan>  cette réaction publie un événement d'intégration</text>
+    <text x="500" y="480"><tspan font-weight="700">7</tspan>  execute résolu : la spec lit ce qui est vrai à présent</text>
+  </g>
+  <line x1="40" y1="534" x2="84" y2="534" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="96" y="539" font-size="13" fill="#1f2328">un appel</text>
+  <line x1="180" y1="534" x2="224" y2="534" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <text x="236" y="539" font-size="13" fill="#1f2328">une lecture, une fois execute résolu : la spec vérifie l'état et les événements, jamais les appels</text>
+</svg>

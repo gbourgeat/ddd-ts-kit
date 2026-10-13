@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 640" width="960" height="640" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Ce que devient un message livré à un consommateur durable</title>
+  <desc id="desc">Un message est livré avec un compteur de livraisons n, tenu par le serveur. Un message rejoué pour un autre consommateur durable est acquitté et ignoré. Un corps qui n'est pas une enveloppe est empoisonné : il est copié dans le flux de rejet avec le code POISON_MESSAGE, puis terminé. Sinon chaque gestionnaire de son type s'exécute. Quand chaque gestionnaire s'est résolu, le message est acquitté. Quand l'un a levé une exception et que n est inférieur à retry.maxAttempts, le message est refusé avec un délai, nak avec retry.delayMs, et le serveur le livre à nouveau après ce délai, à n'importe quelle instance, avec n plus 1. Quand n atteint retry.maxAttempts, le message est copié dans le flux de rejet avec la raison max-attempts, la copie est acquittée, puis l'original est terminé. La limite max_deliver du serveur vaut deux fois retry.maxAttempts, un garde-fou pour les livraisons qui se terminent sans verdict.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="640" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Ce que devient un message livré à un consommateur durable</text>
+
+  <!-- main column -->
+  <rect x="236" y="70" width="258" height="60" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="365" y="96" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">message livré</text>
+  <text x="365" y="118" font-size="13" fill="#1f2328" text-anchor="middle">compteur de livraisons n (1 au début)</text>
+
+  <rect x="250" y="160" width="230" height="46" rx="23" fill="#ffffff" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="365" y="180" font-size="14" fill="#1f2328" text-anchor="middle">x-replay-for pour un autre</text>
+  <text x="365" y="197" font-size="14" fill="#1f2328" text-anchor="middle">consommateur ?</text>
+
+  <rect x="250" y="236" width="230" height="46" rx="23" fill="#ffffff" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="365" y="264" font-size="14" fill="#1f2328" text-anchor="middle">une enveloppe ?</text>
+
+  <rect x="250" y="312" width="230" height="46" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="365" y="340" font-size="14" font-weight="700" fill="#2b5d8a" text-anchor="middle">chaque gestionnaire du type</text>
+
+  <rect x="250" y="388" width="230" height="46" rx="23" fill="#ffffff" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="365" y="416" font-size="14" fill="#1f2328" text-anchor="middle">tous les gestionnaires résolus ?</text>
+
+  <rect x="250" y="464" width="230" height="46" rx="23" fill="#ffffff" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="365" y="492" font-size="14" fill="#1f2328" text-anchor="middle">n = retry.maxAttempts ?</text>
+
+  <g stroke="#3d4449" stroke-width="2">
+    <line x1="365" y1="132" x2="365" y2="156" marker-end="url(#arrow)"/>
+    <line x1="365" y1="208" x2="365" y2="232" marker-end="url(#arrow)"/>
+    <line x1="365" y1="284" x2="365" y2="308" marker-end="url(#arrow)"/>
+    <line x1="365" y1="360" x2="365" y2="384" marker-end="url(#arrow)"/>
+    <line x1="365" y1="436" x2="365" y2="460" marker-end="url(#arrow)"/>
+  </g>
+  <g font-size="13" fill="#1f2328">
+    <text x="375" y="226">non</text>
+    <text x="375" y="302">oui</text>
+    <text x="375" y="454">non, l'un a échoué</text>
+  </g>
+
+  <!-- outcomes -->
+  <line x1="482" y1="183" x2="536" y2="183" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="509" y="174" font-size="13" fill="#1f2328" text-anchor="middle">oui</text>
+  <rect x="540" y="160" width="396" height="46" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="556" y="188" font-size="14" fill="#1f2328"><tspan font-weight="700" fill="#5f6b73">ack</tspan> et ignoré : rejoué pour un autre consommateur</text>
+
+  <line x1="482" y1="259" x2="536" y2="259" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="509" y="250" font-size="13" fill="#1f2328" text-anchor="middle">non</text>
+  <rect x="540" y="236" width="396" height="46" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="556" y="264" font-size="14" fill="#1f2328"><tspan font-weight="700" fill="#5f6b73">flux de rejet</tspan> + term : poison, POISON_MESSAGE</text>
+
+  <line x1="482" y1="411" x2="536" y2="411" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="509" y="402" font-size="13" fill="#1f2328" text-anchor="middle">oui</text>
+  <rect x="540" y="388" width="396" height="46" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="556" y="416" font-size="14" fill="#1f2328"><tspan font-weight="700" fill="#5f6b73">ack</tspan> : après la validation de l'unité de travail, terminé</text>
+
+  <line x1="482" y1="487" x2="536" y2="487" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="509" y="478" font-size="13" fill="#1f2328" text-anchor="middle">oui</text>
+  <rect x="540" y="464" width="396" height="66" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="556" y="490" font-size="14" fill="#1f2328"><tspan font-weight="700" fill="#5f6b73">flux de rejet</tspan>, copie acquittée, puis term :</text>
+  <text x="556" y="512" font-size="14" fill="#1f2328">max-attempts, x-error-code, x-attempt, x-source</text>
+
+  <!-- retried -->
+  <line x1="248" y1="487" x2="218" y2="487" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="233" y="478" font-size="13" fill="#1f2328" text-anchor="middle">non</text>
+  <rect x="24" y="464" width="190" height="66" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="119" y="490" font-size="14" font-weight="700" fill="#5f6b73" text-anchor="middle">nak(retry.delayMs)</text>
+  <text x="119" y="512" font-size="13" fill="#1f2328" text-anchor="middle">refusé avec un délai</text>
+  <path d="M44,462 V100 H232" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <g font-size="13" fill="#1f2328">
+    <text x="58" y="226">après le délai,</text>
+    <text x="58" y="244">le serveur le livre</text>
+    <text x="58" y="262">à nouveau, à toute</text>
+    <text x="58" y="280">instance : n + 1</text>
+    <text x="58" y="316" font-style="italic">jamais sur-le-champ :</text>
+    <text x="58" y="334" font-style="italic">pas de boucle folle</text>
+  </g>
+
+  <!-- footer -->
+  <text x="32" y="572" font-size="13" fill="#1f2328">Si la copie vers le flux de rejet n'est pas acquittée, le message est refusé avec le délai à la place, et mis de côté à une livraison ultérieure.</text>
+  <text x="32" y="594" font-size="13" fill="#1f2328">La limite max_deliver du serveur vaut 2 x retry.maxAttempts : une livraison finie sans verdict (un plantage, un ack wait expiré) compte aussi.</text>
+  <text x="32" y="616" font-size="13" fill="#1f2328">onDelivery signale chaque issue : acknowledged, retried, dead ou poison. La livraison est au moins une fois : chaque gestionnaire est idempotent.</text>
+</svg>

@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 500" width="960" height="500" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Crypto-shredding: personal values sealed with a key per data subject</title>
+  <desc id="desc">When an event is stored, the codec marks the reason given by a patient with personalData; PersonalDataCipher seals it with the key of that patient, AES-256-GCM with a fresh nonce, and the store keeps only the sealed value and the key id. The key comes from the SubjectKeyStore, one key per data subject. An erasure deletes the key of the patient; a replay then reads '[erased]' in place of the value, and the stored event is never changed. Backups of the events hold the sealed values without their keys; the keys are kept apart, with a shorter retention, which is the delay the erasure promises.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="500" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Crypto-shredding: forget a person without editing an event</text>
+  <text x="32" y="76" font-size="14" font-weight="600" fill="#1f2328">storing an event</text>
+  <rect x="32" y="90" width="232" height="92" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="148" y="118" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">codec: encode</text>
+  <text x="148" y="142" font-size="13" fill="#1f2328" text-anchor="middle">reason: personalData(</text>
+  <text x="148" y="160" font-size="13" fill="#1f2328" text-anchor="middle">  'patient-1', 'Flu')</text>
+  <rect x="328" y="90" width="232" height="92" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="444" y="118" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">PersonalDataCipher</text>
+  <text x="444" y="142" font-size="13" fill="#1f2328" text-anchor="middle">seals it with the key of</text>
+  <text x="444" y="160" font-size="13" fill="#1f2328" text-anchor="middle">its subject, AES-256-GCM</text>
+  <rect x="624" y="90" width="304" height="92" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="776" y="118" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">event store</text>
+  <text x="776" y="142" font-size="13" fill="#1f2328" text-anchor="middle">reason: { $sealed: {</text>
+  <text x="776" y="160" font-size="13" fill="#1f2328" text-anchor="middle">key: &lt;key id&gt;, iv, data } }</text>
+  <line x1="266" y1="136" x2="326" y2="136" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="562" y1="136" x2="622" y2="136" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="32" y="224" font-size="14" font-weight="600" fill="#1f2328">erasing a person, then reading again</text>
+  <rect x="32" y="238" width="232" height="84" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="148" y="266" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">erasure</text>
+  <text x="148" y="290" font-size="13" fill="#1f2328" text-anchor="middle">erase('patient-1')</text>
+  <text x="148" y="308" font-size="13" fill="#1f2328" text-anchor="middle">npm run erase:patient</text>
+  <rect x="328" y="238" width="232" height="84" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="444" y="266" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">SubjectKeyStore</text>
+  <text x="444" y="290" font-size="13" fill="#1f2328" text-anchor="middle">one key per subject:</text>
+  <text x="444" y="308" font-size="13" fill="#1f2328" text-anchor="middle">the key is destroyed</text>
+  <rect x="624" y="238" width="304" height="84" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="776" y="266" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">replay</text>
+  <text x="776" y="290" font-size="13" fill="#1f2328" text-anchor="middle">reason reads '[erased]';</text>
+  <text x="776" y="308" font-size="13" fill="#1f2328" text-anchor="middle">the stored event is unchanged</text>
+  <line x1="444" y1="236" x2="444" y2="184" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="456" y="214" font-size="13" fill="#1f2328">keyFor(subject)</text>
+  <line x1="266" y1="280" x2="326" y2="280" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="562" y1="280" x2="622" y2="280" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <text x="592" y="270" font-size="13" fill="#1f2328" text-anchor="middle">no key</text>
+  <text x="32" y="366" font-size="14" font-weight="600" fill="#1f2328">backups: keep the keys apart in production</text>
+  <rect x="32" y="380" width="436" height="92" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="250" y="408" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">backups of the events</text>
+  <text x="250" y="432" font-size="13" fill="#1f2328" text-anchor="middle">the sealed values, never their keys:</text>
+  <text x="250" y="450" font-size="13" fill="#1f2328" text-anchor="middle">useless to read a person once the key is gone</text>
+  <rect x="492" y="380" width="436" height="92" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="710" y="408" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">backups of the keys</text>
+  <text x="710" y="432" font-size="13" fill="#1f2328" text-anchor="middle">another database, a shorter retention:</text>
+  <text x="710" y="450" font-size="13" fill="#1f2328" text-anchor="middle">that retention is the delay the erasure promises</text>
+</svg>

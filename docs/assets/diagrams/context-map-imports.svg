@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 450" width="960" height="450" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">What one context may import from another</title>
+  <desc id="desc">On the left the downstream context availability, on the right the upstream context appointments with four folders: published-language, domain, application and infrastructure. availability imports the published-language folder, allowed because the config declares the relationship. An import of the domain or of the infrastructure of appointments is refused by context/published-language-only. Without a declared relationship, even the published language is refused by context/declared-relationship.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="450" rx="16" fill="#ffffff"/>
+  <text x="32" y="36" font-size="18" font-weight="600" fill="#1f2328">Across contexts, only the published language is importable</text>
+  <rect x="32" y="64" width="260" height="310" rx="14" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="52" y="92" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="start">availability</text>
+  <text x="52" y="112" font-size="13" fill="#5f6b73" text-anchor="start">downstream</text>
+  <rect x="52" y="128" width="220" height="70" rx="8" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="162" y="150" font-size="14" font-weight="700" fill="#2b5d8a" text-anchor="middle">application/</text>
+  <text x="162" y="170" font-size="13" fill="#1f2328" text-anchor="middle">a projector,</text>
+  <text x="162" y="188" font-size="13" fill="#1f2328" text-anchor="middle">a handler, a gateway</text>
+  <rect x="52" y="254" width="220" height="100" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="162" y="278" font-size="13" font-weight="600" fill="#5f6b73" text-anchor="middle">ddd-ts-kit.config.json</text>
+  <text x="162" y="298" font-size="13" fill="#1f2328" text-anchor="middle">availability.upstreams:</text>
+  <text x="162" y="318" font-size="13" fill="#1f2328" text-anchor="middle">appointments,</text>
+  <text x="162" y="338" font-size="13" fill="#1f2328" text-anchor="middle">published-language</text>
+  <rect x="560" y="64" width="368" height="310" rx="14" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="580" y="92" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="start">appointments</text>
+  <text x="580" y="112" font-size="13" fill="#5f6b73" text-anchor="start">upstream</text>
+  <rect x="580" y="126" width="328" height="48" rx="8" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="596" y="147" font-size="14" font-weight="700" fill="#2b5d8a" text-anchor="start">published-language/</text>
+  <text x="596" y="165" font-size="13" fill="#1f2328" text-anchor="start">events, read contracts</text>
+  <rect x="580" y="186" width="328" height="48" rx="8" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="596" y="207" font-size="14" font-weight="700" fill="#2f6f4f" text-anchor="start">domain/</text>
+  <text x="596" y="225" font-size="13" fill="#1f2328" text-anchor="start">aggregates, ports</text>
+  <rect x="580" y="246" width="328" height="48" rx="8" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="596" y="267" font-size="14" font-weight="700" fill="#2b5d8a" text-anchor="start">application/</text>
+  <text x="596" y="285" font-size="13" fill="#1f2328" text-anchor="start">use cases</text>
+  <rect x="580" y="306" width="328" height="48" rx="8" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="596" y="327" font-size="14" font-weight="700" fill="#7a4f9a" text-anchor="start">infrastructure/</text>
+  <text x="596" y="345" font-size="13" fill="#1f2328" text-anchor="start">adapters</text>
+  <line x1="274" y1="150" x2="576" y2="150" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="425" y="140" font-size="13" font-weight="600" fill="#2f6f4f" text-anchor="middle">allowed</text>
+  <path d="M274,178 H420 V210 H576" fill="none" stroke="#8c959f" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#arrow)"/>
+  <path d="M274,190 H400 V330 H576" fill="none" stroke="#8c959f" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#arrow)"/>
+  <path d="M486,200 L506,220 M506,200 L486,220" stroke="#3d4449" stroke-width="3"/>
+  <text x="496" y="194" font-size="13" font-weight="600" fill="#3d4449" text-anchor="middle">refused</text>
+  <path d="M486,320 L506,340 M506,320 L486,340" stroke="#3d4449" stroke-width="3"/>
+  <text x="496" y="314" font-size="13" font-weight="600" fill="#3d4449" text-anchor="middle">refused</text>
+  <text x="32" y="408" font-size="13" fill="#1f2328" text-anchor="start">Refused: context/published-language-only, for every folder but published-language/.</text>
+  <text x="32" y="430" font-size="13" fill="#1f2328" text-anchor="start">Without the declared relationship, even published-language/ is refused: context/declared-relationship.</text>
+</svg>

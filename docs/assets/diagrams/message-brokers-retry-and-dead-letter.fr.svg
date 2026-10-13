@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 400" width="960" height="400" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Nouvelles tentatives à délai fixe, puis la destination de rejet</title>
+  <desc id="desc">Quand un gestionnaire lève une erreur, le provider livre à nouveau l'événement après un délai fixe, jusqu'à maxAttempts livraisons. Après la dernière tentative en échec, l'événement part dans la destination de rejet du provider : une file de rejet pour RabbitMQ, un topic de rejet pour Kafka, un stream de rejet pour NATS, un stream de rejet pour Redis Streams. Il est signalé une fois au suivi des erreurs si la plateforme câble DeadLetterReports. Une fois la cause corrigée, replayDead le livre à nouveau.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="400" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Un gestionnaire qui échoue toujours : délai fixe, tentatives bornées, rejet</text>
+  <!-- attempts -->
+  <rect x="32" y="100" width="150" height="64" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="107" y="128" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">tentative 1</text>
+  <text x="107" y="150" font-size="13" fill="#1f2328" text-anchor="middle">le gestionnaire lève</text>
+  <rect x="242" y="100" width="150" height="64" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="317" y="128" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">tentative 2</text>
+  <text x="317" y="150" font-size="13" fill="#1f2328" text-anchor="middle">lève à nouveau</text>
+  <rect x="452" y="100" width="150" height="64" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="527" y="128" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">tentative 5</text>
+  <text x="527" y="150" font-size="13" fill="#1f2328" text-anchor="middle">maxAttempts atteint</text>
+  <line x1="184" y1="132" x2="238" y2="132" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="211" y="92" font-size="13" fill="#1f2328" text-anchor="middle">delayMs</text>
+  <line x1="394" y1="132" x2="448" y2="132" stroke="#3d4449" stroke-width="2" stroke-dasharray="3 4" marker-end="url(#arrow)"/>
+  <text x="421" y="92" font-size="13" fill="#1f2328" text-anchor="middle">...</text>
+  <line x1="604" y1="132" x2="658" y2="132" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- dead destination -->
+  <rect x="662" y="64" width="266" height="176" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="795" y="92" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">destination de rejet</text>
+  <text x="680" y="118" font-size="13" fill="#1f2328">RabbitMQ : une file de rejet</text>
+  <text x="680" y="140" font-size="13" fill="#1f2328">Kafka : un topic de rejet</text>
+  <text x="680" y="162" font-size="13" fill="#1f2328">NATS : un stream de rejet</text>
+  <text x="680" y="184" font-size="13" fill="#1f2328">Redis Streams : un stream de rejet</text>
+  <text x="680" y="208" font-size="13" font-weight="600" fill="#1f2328">signalé une fois, si</text>
+  <text x="680" y="228" font-size="13" font-weight="600" fill="#1f2328">DeadLetterReports est câblé</text>
+  <!-- replay -->
+  <path d="M795,242 V292 H107 V168" fill="none" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <text x="451" y="284" font-size="14" fill="#1f2328" text-anchor="middle">replayDead(), une fois la cause corrigée</text>
+  <!-- notes -->
+  <text x="32" y="336" font-size="14" fill="#1f2328">Par défaut : 5 livraisons, à 5 secondes d'intervalle, sur les quatre brokers. Une dépendance en panne une heure</text>
+  <text x="32" y="358" font-size="14" fill="#1f2328">envoie chaque événement au rejet après 20 secondes environ : dimensionnez les deux, gardez le rejet vide.</text>
+  <text x="32" y="384" font-size="13" fill="#5f6b73">Seul le code d'erreur de chaque échec voyage avec l'événement, jamais son message.</text>
+</svg>

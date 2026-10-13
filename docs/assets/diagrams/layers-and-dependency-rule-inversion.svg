@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 470" width="960" height="470" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Before and after the dependency rule</title>
+  <desc id="desc">On the left, three tiers: the booking rules import the ORM and call it, so the arrow of the import and the arrow of the call both point down. On the right, the dependency rule: the booking rules declare a repository port, the ORM adapter imports that port and implements it, so the import points up, while the call still goes down at run time.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+    <marker id="arrow-infrastructure" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#7a4f9a"/>
+    </marker>
+    <marker id="arrow-call" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#8c959f"/>
+    </marker>
+  </defs>
+  <rect width="960" height="470" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Which way the import points</text>
+  <!-- left panel: three tiers -->
+  <rect x="24" y="58" width="444" height="300" rx="14" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="44" y="88" font-size="16" font-weight="700" fill="#5f6b73">Before: three tiers</text>
+  <text x="44" y="110" font-size="13" fill="#1f2328">the business code imports the database code</text>
+  <rect x="104" y="130" width="284" height="72" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="246" y="160" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">booking rules</text>
+  <text x="246" y="184" font-size="13" fill="#1f2328" text-anchor="middle">written with rows and sessions</text>
+  <rect x="104" y="268" width="284" height="72" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="246" y="298" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">ORM, database</text>
+  <text x="246" y="322" font-size="13" fill="#1f2328" text-anchor="middle">Knex, Prisma, TypeORM...</text>
+  <line x1="246" y1="204" x2="246" y2="264" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="258" y="230" font-size="13" fill="#1f2328">imports</text>
+  <text x="258" y="248" font-size="13" fill="#1f2328">and calls</text>
+  <!-- right panel: dependency rule -->
+  <rect x="492" y="58" width="444" height="300" rx="14" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="512" y="88" font-size="16" font-weight="700" fill="#5f6b73">After: the dependency rule</text>
+  <text x="512" y="110" font-size="13" fill="#1f2328">the business code declares a port, the edge implements it</text>
+  <rect x="572" y="130" width="284" height="96" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="714" y="156" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">booking rules</text>
+  <rect x="592" y="170" width="244" height="40" rx="8" fill="#ffffff" stroke="#2f6f4f" stroke-width="1.5"/>
+  <text x="714" y="195" font-size="13" font-weight="600" fill="#2f6f4f" text-anchor="middle">AppointmentRepository (port)</text>
+  <rect x="572" y="268" width="284" height="72" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="714" y="298" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">ORM adapter</text>
+  <text x="714" y="322" font-size="13" fill="#1f2328" text-anchor="middle">infrastructure/persistence/</text>
+  <!-- call at run time, down -->
+  <line x1="640" y1="212" x2="640" y2="264" stroke="#8c959f" stroke-width="2" stroke-dasharray="2 4" marker-end="url(#arrow-call)"/>
+  <text x="628" y="236" font-size="13" fill="#5f6b73" text-anchor="end">calls at</text>
+  <text x="628" y="254" font-size="13" fill="#5f6b73" text-anchor="end">run time</text>
+  <!-- import and implementation, up -->
+  <line x1="788" y1="266" x2="788" y2="214" stroke="#7a4f9a" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow-infrastructure)"/>
+  <text x="800" y="236" font-size="13" fill="#7a4f9a">imports and</text>
+  <text x="800" y="254" font-size="13" fill="#7a4f9a">implements</text>
+  <!-- legend -->
+  <line x1="40" y1="394" x2="84" y2="394" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="96" y="399" font-size="14" fill="#1f2328">import: a source dependency</text>
+  <line x1="40" y1="422" x2="84" y2="422" stroke="#7a4f9a" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow-infrastructure)"/>
+  <text x="96" y="427" font-size="14" fill="#1f2328">implements a port: an import too, pointing towards the domain</text>
+  <line x1="40" y1="450" x2="84" y2="450" stroke="#8c959f" stroke-width="2" stroke-dasharray="2 4" marker-end="url(#arrow-call)"/>
+  <text x="96" y="455" font-size="14" fill="#1f2328">call at run time: unchanged, it still goes from the rules to the database</text>
+</svg>

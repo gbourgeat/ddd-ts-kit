@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 620" width="960" height="620" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">De l'outbox aux files d'attente de RabbitMQ</title>
+  <desc id="desc">Le gestionnaire de PlaceOrder écrit la commande client et un enregistrement d'outbox dans une seule transaction. Le relais de l'outbox lit l'enregistrement après la validation (commit) et le donne à RabbitMqEventBus, qui publie un message persistant sur l'exchange topic integration-events, clé de routage ordering.order.placed, et attend la confirmation du broker avant que l'enregistrement soit marqué publié. L'exchange route une copie vers chaque file de travail liée avec cette clé de routage : billing.ordering.order.placed et shipping.ordering.order.placed, une file quorum durable par consommateur et par type d'événement. Chaque file remet le message aux gestionnaires de son contexte, acquitté après la validation de leur unité de travail.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="620" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">De l'outbox aux files d'attente de RabbitMQ</text>
+
+  <!-- row 1: publishing side -->
+  <rect x="32" y="70" width="200" height="90" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="132" y="100" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">gestionnaire</text>
+  <text x="132" y="122" font-size="13" fill="#1f2328" text-anchor="middle">de PlaceOrder (ordering)</text>
+  <text x="132" y="142" font-size="13" fill="#1f2328" text-anchor="middle">publie dans l'outbox</text>
+
+  <rect x="264" y="70" width="200" height="90" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="364" y="100" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">table de l'outbox</text>
+  <text x="364" y="122" font-size="13" fill="#1f2328" text-anchor="middle">même transaction</text>
+  <text x="364" y="142" font-size="13" fill="#1f2328" text-anchor="middle">que la commande client</text>
+
+  <rect x="496" y="70" width="200" height="90" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="596" y="100" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">OutboxRelay</text>
+  <text x="596" y="122" font-size="13" fill="#1f2328" text-anchor="middle">après la validation ; marque</text>
+  <text x="596" y="142" font-size="13" fill="#1f2328" text-anchor="middle">publié à la confirmation</text>
+
+  <rect x="728" y="70" width="200" height="90" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="828" y="100" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">RabbitMqEventBus</text>
+  <text x="828" y="122" font-size="13" fill="#1f2328" text-anchor="middle">publish(events)</text>
+  <text x="828" y="142" font-size="13" fill="#1f2328" text-anchor="middle">publisher confirms</text>
+
+  <g stroke="#3d4449" stroke-width="2">
+    <line x1="234" y1="115" x2="262" y2="115" marker-end="url(#arrow)"/>
+    <line x1="466" y1="115" x2="494" y2="115" marker-end="url(#arrow)"/>
+    <line x1="698" y1="115" x2="726" y2="115" marker-end="url(#arrow)"/>
+  </g>
+  <path d="M828,162 V280 H682" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="840" y="206" font-size="13" fill="#1f2328">message persistant,</text>
+  <text x="840" y="224" font-size="13" fill="#1f2328">clé de routage =</text>
+  <text x="840" y="242" font-size="13" fill="#1f2328">type d'événement</text>
+
+  <!-- row 2: exchange -->
+  <rect x="282" y="236" width="398" height="88" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="481" y="266" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">exchange integration-events</text>
+  <text x="481" y="290" font-size="13" fill="#1f2328" text-anchor="middle">topic, durable</text>
+  <text x="481" y="310" font-size="13" fill="#1f2328" text-anchor="middle">une copie par file liée</text>
+
+  <!-- row 3: work queues -->
+  <g stroke="#3d4449" stroke-width="2">
+    <line x1="330" y1="326" x2="330" y2="398" marker-end="url(#arrow)"/>
+    <line x1="630" y1="326" x2="630" y2="398" marker-end="url(#arrow)"/>
+  </g>
+  <text x="318" y="358" font-size="13" fill="#1f2328" text-anchor="end">liaison</text>
+  <text x="318" y="376" font-size="13" fill="#1f2328" text-anchor="end">ordering.order.placed</text>
+  <text x="642" y="358" font-size="13" fill="#1f2328">liaison</text>
+  <text x="642" y="376" font-size="13" fill="#1f2328">ordering.order.placed</text>
+
+  <rect x="160" y="400" width="320" height="76" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="320" y="428" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">billing.ordering.order.placed</text>
+  <text x="320" y="450" font-size="13" fill="#1f2328" text-anchor="middle">file de travail : durable, quorum</text>
+  <text x="320" y="468" font-size="13" fill="#1f2328" text-anchor="middle">+ .retry et .dead</text>
+
+  <rect x="500" y="400" width="320" height="76" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="660" y="428" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">shipping.ordering.order.placed</text>
+  <text x="660" y="450" font-size="13" fill="#1f2328" text-anchor="middle">file de travail : durable, quorum</text>
+  <text x="660" y="468" font-size="13" fill="#1f2328" text-anchor="middle">+ .retry et .dead</text>
+
+  <!-- row 4: handlers -->
+  <g stroke="#3d4449" stroke-width="2">
+    <line x1="320" y1="478" x2="320" y2="518" marker-end="url(#arrow)"/>
+    <line x1="660" y1="478" x2="660" y2="518" marker-end="url(#arrow)"/>
+  </g>
+  <rect x="160" y="520" width="320" height="64" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="320" y="546" font-size="15" font-weight="700" fill="#2b5d8a" text-anchor="middle">gestionnaires de billing</text>
+  <text x="320" y="568" font-size="13" fill="#1f2328" text-anchor="middle">marque + travail, une unité de travail ; puis ack</text>
+
+  <rect x="500" y="520" width="320" height="64" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="660" y="546" font-size="15" font-weight="700" fill="#2b5d8a" text-anchor="middle">gestionnaires de shipping</text>
+  <text x="660" y="568" font-size="13" fill="#1f2328" text-anchor="middle">marque + travail, une unité de travail ; puis ack</text>
+
+  <text x="32" y="606" font-size="13" fill="#1f2328">Deux consommateurs reçoivent chacun chaque événement. Deux instances d'un consommateur partagent sa file : chaque événement va à l'une d'elles.</text>
+</svg>

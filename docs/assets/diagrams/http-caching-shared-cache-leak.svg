@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 528" width="960" height="528" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">A public answer of an authenticated route leaks</title>
+  <desc id="desc">Above, an authenticated route answers public with no Vary: Ada asks for her agenda, the shared cache misses, the application decides for Ada and answers, and the cache keeps the answer under the URL. Bob then asks the same URL with his own token: the cache answers Ada's agenda without asking the application. Below, the same route answers private: the shared cache keeps nothing and passes every request on, so the application decides for each caller, and each browser keeps its own copy.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="528" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">A public answer of an authenticated route leaks</text>
+  <!-- instead of -->
+  <rect x="24" y="56" width="912" height="216" rx="14" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="44" y="82" font-size="14" font-weight="600" fill="#5f6b73">instead of: guards [Authenticated], cache { scope: public }, no vary</text>
+  <rect x="36" y="100" width="150" height="48" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="111" y="129" font-size="14" font-weight="700" fill="#5f6b73" text-anchor="middle">Ada's browser</text>
+  <rect x="36" y="196" width="150" height="48" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="111" y="225" font-size="14" font-weight="700" fill="#5f6b73" text-anchor="middle">Bob's browser</text>
+  <rect x="380" y="100" width="180" height="144" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="470" y="160" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">shared cache</text>
+  <text x="470" y="182" font-size="13" fill="#1f2328" text-anchor="middle">keeps under /agenda:</text>
+  <text x="470" y="200" font-size="13" fill="#1f2328" text-anchor="middle">Ada's agenda</text>
+  <rect x="760" y="100" width="156" height="144" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="838" y="160" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">application</text>
+  <text x="838" y="182" font-size="13" fill="#1f2328" text-anchor="middle">decides for Ada;</text>
+  <text x="838" y="200" font-size="13" fill="#1f2328" text-anchor="middle">never hears of Bob</text>
+  <line x1="188" y1="116" x2="378" y2="116" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="283" y="108" font-size="13" fill="#1f2328" text-anchor="middle">GET /agenda, Ada's token</text>
+  <line x1="378" y1="136" x2="188" y2="136" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="283" y="154" font-size="13" fill="#1f2328" text-anchor="middle">Ada's agenda</text>
+  <line x1="562" y1="116" x2="758" y2="116" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="660" y="108" font-size="13" fill="#1f2328" text-anchor="middle">miss: passed on</text>
+  <line x1="758" y1="136" x2="562" y2="136" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="660" y="154" font-size="13" fill="#1f2328" text-anchor="middle">Ada's agenda, public</text>
+  <line x1="188" y1="212" x2="378" y2="212" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="283" y="204" font-size="13" fill="#1f2328" text-anchor="middle">GET /agenda, Bob's token</text>
+  <line x1="378" y1="232" x2="188" y2="232" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="283" y="252" font-size="13" font-weight="700" fill="#1f2328" text-anchor="middle">hit: Ada's agenda, to Bob</text>
+  <!-- write -->
+  <rect x="24" y="288" width="912" height="216" rx="14" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="44" y="314" font-size="14" font-weight="600" fill="#5f6b73">write: cache { scope: private, maxAge: '0s', mustRevalidate: true, etag }</text>
+  <rect x="36" y="332" width="150" height="48" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="111" y="361" font-size="14" font-weight="700" fill="#5f6b73" text-anchor="middle">Ada's browser</text>
+  <rect x="36" y="428" width="150" height="48" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="111" y="457" font-size="14" font-weight="700" fill="#5f6b73" text-anchor="middle">Bob's browser</text>
+  <rect x="380" y="332" width="180" height="144" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="470" y="392" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">shared cache</text>
+  <text x="470" y="414" font-size="13" fill="#1f2328" text-anchor="middle">keeps nothing:</text>
+  <text x="470" y="432" font-size="13" fill="#1f2328" text-anchor="middle">the answer is private</text>
+  <rect x="760" y="332" width="156" height="144" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="838" y="392" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">application</text>
+  <text x="838" y="414" font-size="13" fill="#1f2328" text-anchor="middle">decides for</text>
+  <text x="838" y="432" font-size="13" fill="#1f2328" text-anchor="middle">each caller</text>
+  <line x1="188" y1="348" x2="378" y2="348" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="283" y="340" font-size="13" fill="#1f2328" text-anchor="middle">GET /agenda, Ada's token</text>
+  <line x1="378" y1="368" x2="188" y2="368" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="283" y="386" font-size="13" fill="#1f2328" text-anchor="middle">Ada's agenda, kept by Ada</text>
+  <line x1="562" y1="348" x2="758" y2="348" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="660" y="340" font-size="13" fill="#1f2328" text-anchor="middle">passed on</text>
+  <line x1="758" y1="368" x2="562" y2="368" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="660" y="386" font-size="13" fill="#1f2328" text-anchor="middle">Ada's agenda, private</text>
+  <line x1="188" y1="444" x2="378" y2="444" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="283" y="436" font-size="13" fill="#1f2328" text-anchor="middle">GET /agenda, Bob's token</text>
+  <line x1="378" y1="464" x2="188" y2="464" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="283" y="482" font-size="13" fill="#1f2328" text-anchor="middle">Bob's agenda, kept by Bob</text>
+  <line x1="562" y1="444" x2="758" y2="444" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="660" y="436" font-size="13" fill="#1f2328" text-anchor="middle">passed on</text>
+  <line x1="758" y1="464" x2="562" y2="464" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="660" y="482" font-size="13" fill="#1f2328" text-anchor="middle">Bob's agenda, private</text>
+</svg>

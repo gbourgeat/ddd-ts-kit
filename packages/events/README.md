@@ -1,3 +1,5 @@
+**English** · [Français](README.fr.md)
+
 # @ddd-ts-kit/events
 
 Integration events between bounded contexts, independent of any broker: typed declarations,
@@ -8,11 +10,94 @@ document and event catalog generated from the declarations.
 npm i @ddd-ts-kit/events @ddd-ts-kit/validation zod
 ```
 
+![One integration event through the package: inside the transaction of the command, the aggregate records a domain event, its publisher creates the integration event from its declaration and publishes it to the IntegrationEventPublisher port, bound to the OutboxPublisher, which appends a pending record to the outbox table; after the commit the OutboxRelay claims the record and publishes it to the broker or the in-memory bus, which delivers it at least once to consume in the consuming context, which deduplicates it and runs the handler, here the command IssueInvoice. One declaration feeds the producer, the consumer, the registry, the AsyncAPI document and the catalog](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/events-package-place.svg)
+
+## What is in the package
+
+| Step | What it is for | Exports |
+|---|---|---|
+| Declare | the contract of one event and version, owned by the producer | `defineIntegrationEvent`, `PayloadOf` |
+| Register | every event a system publishes, to validate what goes out and to generate the documents | `createEventRegistry`, `EventRegistry`, `validatingPublisher` |
+| Store | write the event in the transaction of the command | `OutboxPublisher`, the `OutboxStore` port, `InMemoryOutboxStore` |
+| Relay | publish what was stored, after the commit, with retries | `OutboxRelay`, the `RelaySignal` port, `InMemoryRelaySignal` |
+| Consume | typed, validated, deduplicated handling | `consume`, `on`, `subscribeAll` |
+| Document | the AsyncAPI document and the event catalog | `generateAsyncApi` (`@ddd-ts-kit/events/asyncapi`), `generateEventCatalog` |
+
+The concepts behind it are in [The transactional outbox](../../docs/concepts/transactional-outbox.md),
+[Delivery and idempotency](../../docs/concepts/delivery-and-idempotency.md) and
+[Event versioning](../../docs/concepts/event-versioning.md).
+
+## The whole loop in one process
+
+Everything below is in memory, so it runs as it is: one declaration, a consumer, the outbox,
+the relay, and a redelivery the consumer absorbs. A real application swaps the in-memory
+pieces for its database and its broker; the code of the producer and of the consumer does not
+change.
+
+<!-- checked sample -->
+```ts
+import { z } from 'zod';
+import { zodSchema } from '@ddd-ts-kit/validation/zod';
+import { InMemoryEventBus, InMemoryProcessedEventStore, InMemoryUnitOfWork, SystemClock } from '@ddd-ts-kit/kernel';
+import {
+  consume,
+  defineIntegrationEvent,
+  InMemoryOutboxStore,
+  OutboxPublisher,
+  OutboxRelay,
+  subscribeAll,
+} from '@ddd-ts-kit/events';
+
+// 1. The contract, declared once by the producer.
+const orderPlaced = defineIntegrationEvent({
+  type: 'ordering.order.placed',
+  version: 1,
+  payload: zodSchema(z.object({ orderId: z.string(), total: z.number().int() })),
+});
+
+// 2. A consumer of another context: deduplicated, in one unit of work.
+const bus = new InMemoryEventBus();
+const invoiced: string[] = [];
+
+subscribeAll(bus, [
+  consume(
+    orderPlaced,
+    {
+      consumer: 'billing.invoice-on-order-placed',
+      processed: new InMemoryProcessedEventStore(),
+      unitOfWork: new InMemoryUnitOfWork(),
+    },
+    async (event) => {
+      invoiced.push(event.payload.orderId); // typed: { orderId: string; total: number }
+    },
+  ),
+]);
+
+// 3. The producer only stores: nothing leaves yet.
+const store = new InMemoryOutboxStore();
+const event = orderPlaced.create({ orderId: 'order-1', total: 3000 }, { id: 'evt-1', occurredAt: new Date() });
+
+await new OutboxPublisher(store).publish([event]);
+console.log(await store.stats()); // { pending: 1, failed: 0, dead: 0 }
+
+// 4. The relay publishes what was stored, then marks it published.
+const relay = new OutboxRelay({ store, publisher: bus, clock: new SystemClock() });
+
+console.log(await relay.tick()); // { published: 1, failed: 0 }
+
+// 5. The same event delivered again is absorbed by the consumer.
+await bus.publish([event]);
+console.log(invoiced); // [ 'order-1' ]
+```
+
+The sections below take each step in turn, as a real application writes it.
+
 ## Declare
 
 One declaration per event and version, in the producer's `published-language/`. It gives the
 payload type, validates what is published and consumed, and feeds the generators.
 
+<!-- checked sample -->
 ```ts
 // contexts/ordering/published-language/order-placed.v1.integration-event.ts
 import { z } from 'zod';
@@ -35,8 +120,48 @@ export const orderPlaced = defineIntegrationEvent({
 export type OrderPlaced = PayloadOf<typeof orderPlaced>;
 ```
 
+The type is checked when the module loads: three kebab-case segments, `<context>.<aggregate>.<fact>`,
+and a positive integer version, or `defineIntegrationEvent` throws `InvalidEventDefinitionError`.
+The producer is the first segment of the type unless `producer` names it. The declaration then
+answers three questions, one per side:
+
+| Member | Side | What it does |
+|---|---|---|
+| `create(payload, { id, occurredAt, correlationId?, traceparent? })` | producer | validates the payload and builds the envelope; throws `InvalidEventPayloadError`, because publishing an invalid event is a bug |
+| `parse(event)` | consumer | checks type, version and payload and answers a `Result`; never throws |
+| `is(event)` | either | a cheap guard on type and version only, for a payload already trusted |
+
 A breaking change is a new declaration with `version: 2`; mark the old one `deprecated: true`
-and keep publishing both until the consumers have moved.
+and keep publishing both until the consumers have moved. Instead of changing the payload of
+`version: 1` under the feet of its consumers:
+
+<!-- checked sample -->
+```ts
+// contexts/ordering/published-language/order-placed.v2.integration-event.ts
+import { z } from 'zod';
+import { zodSchema } from '@ddd-ts-kit/validation/zod';
+import { defineIntegrationEvent } from '@ddd-ts-kit/events';
+
+// `amount` renamed `minorUnits`, any ISO currency accepted: a consumer of version 1 would break, so a new version.
+export const orderPlacedV2 = defineIntegrationEvent({
+  type: 'ordering.order.placed',
+  version: 2,
+  description: 'An order was placed by a customer.',
+  payload: zodSchema(
+    z.object({
+      orderId: z.string(),
+      total: z.object({ minorUnits: z.number().int(), currency: z.string().length(3) }),
+    }),
+  ),
+});
+
+// order-placed.v1.integration-event.ts keeps its payload and gains `deprecated: true`;
+// the publisher publishes both versions until no consumer reads version 1.
+```
+
+A consumer subscribed to version 1 skips version 2 and the other way round, so both live side
+by side. The AsyncAPI document lists both versions on the channel of the type, and the catalog
+marks the deprecated one.
 
 ## Publish through the outbox
 
@@ -74,44 +199,82 @@ export class OrderPlacedPublisher implements DomainEventHandler<OrderPlacedEvent
 The correlation id is not passed by hand: `scopedPublisher` stamps it (see "The execution
 context of a consumed event").
 
-The composition root binds the store under its port, `OutboxStore`, and replaces the
-publisher of the kernel by the outbox. Ports are abstract classes and the class is what a
-module binds and resolves:
+The publisher knows the port, never the transport. Instead of talking to a broker from the
+handler, which sends the event even when the transaction then rolls back:
+
+```ts
+// Reported by events/outbox-required: the event leaves before the commit, or without it.
+export class OrderPlacedPublisher {
+  constructor(private readonly bus: RabbitMqEventBus) {}
+}
+```
+
+write to `IntegrationEventPublisher`, as above, and let the composition root decide where it
+goes. The rule `events/outbox-required` reports two things. In `domain/` or `application/`, an
+import of a broker client, of any event bus (the `EventBus` port of the kernel included), of
+`OutboxRelay`, of `OutboxPublisher` or of `OutboxStore`. In `application/integration/publishers/`,
+a constructor parameter typed as a bus or a relay (a type whose name ends in `EventBus` or
+`Relay`): the sample above is reported this way, import or not.
+
+The composition root binds the store under its port, `OutboxStore`, and hands the outbox to
+the kernel module as the publisher handlers use. Ports are abstract classes and the class is
+what a module binds and resolves:
 
 ```ts
 // platform/messaging.module.ts
 import { defineContextModule } from '@ddd-ts-kit/di';
-import { IntegrationEventPublisher } from '@ddd-ts-kit/kernel';
-import { createEventRegistry, OutboxPublisher, OutboxStore, validatingPublisher } from '@ddd-ts-kit/events';
-
-const registry = createEventRegistry([orderPlaced, invoiceIssued]);
+import { OutboxStore } from '@ddd-ts-kit/events';
 
 export const messagingModule = defineContextModule({
   name: 'messaging',
   register(builder) {
     // The adapter of your database, or InMemoryOutboxStore in a single process.
     builder.bind(OutboxStore).toClass(SqlOutboxStore, [Database]);
-    builder
-      .rebind(IntegrationEventPublisher)
-      .toFactory((resolve) =>
-        validatingPublisher(new OutboxPublisher(resolve(OutboxStore)), registry, { unknown: 'reject' }),
-      );
   },
 });
 ```
 
+<!-- checked sample -->
 ```ts
 // main.ts
-import { createApplication, kernelModule } from '@ddd-ts-kit/di';
-import { Clock, Logger } from '@ddd-ts-kit/kernel';
-import { OutboxRelay, OutboxStore } from '@ddd-ts-kit/events';
+import { createApplication, kernelModule, type ContextModule } from '@ddd-ts-kit/di';
+import { Clock, ExecutionScope, Logger, scopedPublisher, type IntegrationEventPublisher } from '@ddd-ts-kit/kernel';
+import {
+  createEventRegistry,
+  OutboxPublisher,
+  OutboxRelay,
+  OutboxStore,
+  validatingPublisher,
+  type AnyIntegrationEventDefinition,
+} from '@ddd-ts-kit/events';
 
-const app = createApplication({ modules: [kernelModule(), persistenceModule, messagingModule, orderingModule] });
+// Written elsewhere in the project.
+declare const persistenceModule: ContextModule, messagingModule: ContextModule, orderingModule: ContextModule;
+declare const orderPlaced: AnyIntegrationEventDefinition, invoiceIssued: AnyIntegrationEventDefinition;
+declare const broker: IntegrationEventPublisher; // the real provider: a broker adapter, or the in-memory bus
+
+const registry = createEventRegistry([orderPlaced, invoiceIssued]);
+
+const app = createApplication({
+  modules: [
+    kernelModule({
+      // What handlers publish to: the outbox, behind the registry, with the correlation stamped.
+      eventPublisher: (resolve) =>
+        scopedPublisher(
+          validatingPublisher(new OutboxPublisher(resolve(OutboxStore)), registry, { unknown: 'reject' }),
+          resolve(ExecutionScope),
+        ),
+    }),
+    persistenceModule,
+    messagingModule,
+    orderingModule,
+  ],
+});
 const logger = app.resolve(Logger);
 
 const relay = new OutboxRelay({
   store: app.resolve(OutboxStore),
-  publisher: broker, // the real provider: any IntegrationEventPublisher
+  publisher: broker,
   clock: app.resolve(Clock),
   maxAttempts: 8,
   onFailure: (failure) => logger.warn('outbox relay failure', { ...failure }), // codes only, never an error message
@@ -119,6 +282,11 @@ const relay = new OutboxRelay({
 relay.start({ intervalMs: 500 });
 process.on('SIGTERM', () => void relay.stop()); // waits for the tick in progress
 ```
+
+Give the outbox to `kernelModule({ eventPublisher })` rather than rebinding
+`IntegrationEventPublisher` in a later module: the `instrumentation` of the kernel module wraps
+the publisher it binds, and only that one, so a publisher rebound elsewhere has no
+`outbox append` span and stores no `traceparent` with its events.
 
 An adapter `implements OutboxStore` and never extends it: the port has abstract members only.
 Without a container the same objects are built by hand:
@@ -134,10 +302,28 @@ with an exponential backoff; after `maxAttempts` the record is `dead` until
 `store.retryDead(ids, now)`. `store.stats()` gives `{ pending, failed, dead }` for a health
 check, `store.purgePublished(before)` keeps the table small.
 
+![The life of an outbox record: appended pending by the commit of the command, claimed by the relay when it is due, published then purged; a failed publication leaves it pending until its next attempt, after an exponential backoff; after maxAttempts attempts it is dead until retryDead puts it back pending](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/transactional-outbox-record-lifecycle.svg)
+
+The relay publishes the records of a batch one by one, so one event the provider refuses does
+not fail its neighbours. With the defaults (`baseMs: 1000`, `factor: 2`, `maxMs: 300000`,
+`maxAttempts: 8`) a record that always fails goes like this:
+
+| Attempt that failed | Next attempt | `onFailure` receives |
+|---|---|---|
+| 1 | 1 s later | `{ kind: 'publish', eventId, eventType, code, attempts: 1, dead: false }` |
+| 2 | 2 s later | `attempts: 2, dead: false` |
+| 3 to 7 | 4, 8, 16, 32, then 64 s later | `attempts` from 3 to 7, `dead: false` |
+| 8 | none: the record is `dead` | `attempts: 8, dead: true` |
+
+The delay is `min(maxMs, baseMs * factor ** (attempts - 1))`; pass `backoff: { baseMs, factor, maxMs }`
+to change it. `code` is the `code` of the error when it is shaped like an identifier, else its
+class name: never its message, which may quote the payload, so `onFailure` can be logged as it
+is.
+
 **Tracing across the outbox.** The envelope carries `traceparent`, and every outbox store
 persists and restores it exactly (the contract suite checks it). With
-`kernelModule({ instrumentation: traceApplication() })` the context of the request is stamped
-when the event is appended, and `new OutboxRelay({ store, publisher: tracedPublisher(broker), clock })`
+`kernelModule({ instrumentation: traceApplication(), eventPublisher: outbox })` the context of
+the request is stamped when the event is appended, and `new OutboxRelay({ store, publisher: tracedPublisher(broker), clock })`
 continues that trace when it publishes later: the relay has no span of its own, and a tick
 that publishes nothing makes none. `OutboxPublisher` names itself `messagingSystem: 'outbox'`,
 which `validatingPublisher` and `scopedPublisher` pass on. See the README of
@@ -188,6 +374,8 @@ key is still pending or failed. The price is head-of-line blocking: one event th
 published holds back every later event of its key (and only of its key) until it goes out or
 is dead. Events for which `keyOf` gives `undefined` are not ordered.
 
+![Five records in the outbox, in the order they were appended: A1, A2, B1, A3, B2, where A is the key order-1 and B the key order-2, and the publication of A1 fails. With the default ordering, A2, B1, A3 and B2 are published in the same tick and A1 is retried later, so A2 and A3 overtake A1. With ordering per-key, B1 and B2 are published, A2 and A3 are held with the code OUTBOX_HELD_FOR_ORDER, and once A1 goes out on its retry, A2 then A3 follow in order](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/events-package-per-key-ordering.svg)
+
 What it relies on, and what it does not give:
 
 - **Run a single relay.** The memory of which record blocks which key lives in the relay, not
@@ -232,8 +420,19 @@ export class InvoiceOnOrderPlaced {
 }
 ```
 
-`consume` is the tool of a project that wires without di. It gives the same semantics to a
-plain function:
+`consume` is the tool of a project that wires without di. Instead of subscribing a plain
+callback, which handles a redelivered event a second time and issues a second invoice:
+
+```ts
+// Reported by events/consumer-idempotent in application/ and in the module file:
+// no consumer name, no processed-event store, and a payload neither typed nor validated.
+subscriber.subscribe(orderPlaced.type, async (event) => {
+  const { orderId, total } = event.payload as OrderPlaced;
+  await commandBus.execute(new IssueInvoice(orderId, total));
+});
+```
+
+give the same semantics as the declared handler to a plain function:
 
 ```ts
 // contexts/billing/billing.subscriptions.ts
@@ -259,6 +458,12 @@ handled once per consumer, and an event whose handler threw is handled again whe
 back, because its mark was rolled back with the rest. The command bus middleware joins that
 unit of work (a nested `run` joins the outer transaction), so the handler needs nothing
 special.
+
+![One delivery through consume: the declaration parses the event; another type or version is skipped without a mark; an invalid payload throws InvalidEventPayloadError, so the provider retries or dead-letters it. A valid event enters one unit of work, inside the execution scope when one is given: the processed-event store marks the pair of the consumer and the event id; when the pair was already marked, the handler is skipped; otherwise the handler runs, and its success commits the mark with the state change, while its failure rolls both back, so the redelivery is handled](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/events-package-consume.svg)
+
+The consumer name is the idempotency scope: two consumers of the same event each handle it
+once, and renaming a consumer makes it handle again every event it is redelivered. Write it
+once, as `<context>.<reaction>`, and never derive it.
 
 `on(definition, handler, { consumer, processed, unitOfWork })` is the same thing with
 optional parts, for a consumer that needs no deduplication or has no transaction. Mind one
@@ -286,6 +491,7 @@ consume(orderPlaced, { consumer: 'billing.invoice-on-order-placed', processed, u
 | `correlationId` | the `correlationId` of the event, or its `id` when it names none |
 | `causationId` | the `id` of the event |
 | `actor` | `systemActor(consumer)`, unless `actorOf(event)` answers one |
+| `tenantId` | the `tenantId` of the event, when it names one: the consumer reads and writes in that tenant only |
 
 So the repositories of the consuming context stamp audit columns with
 `system:billing.invoice-on-order-placed`, and a log line of the consumer carries the correlation
@@ -293,27 +499,28 @@ of the request that started it all. The envelope carries no actor by default, on
 actor is personal data, and a broker keeps messages. A project that decides to put a reference
 in its own payload or envelope maps it with `actorOf: (event) => Actor | undefined`.
 
-On the publishing side, `scopedPublisher` of the kernel fills the correlation in, so use cases
-never pass it by hand:
+On the publishing side, `scopedPublisher` of the kernel fills the correlation in, and the
+tenant of the work in progress, so use cases never pass them by hand. It is the outer wrapper
+of the publisher given to `kernelModule` in `main.ts` above:
 
 ```ts
-import { ExecutionScope, IntegrationEventPublisher, scopedPublisher } from '@ddd-ts-kit/kernel';
-
-builder
-  .rebind(IntegrationEventPublisher) // what handlers publish to
-  .toFactory((resolve) => scopedPublisher(new OutboxPublisher(resolve(OutboxStore)), resolve(ExecutionScope)));
+eventPublisher: (resolve) => scopedPublisher(new OutboxPublisher(resolve(OutboxStore)), resolve(ExecutionScope)),
 ```
 
-An event created with a `correlationId` keeps it; one published outside of any execution
-context is left as it is. It is a decorator, not an option of `OutboxPublisher` or of
+An event created with a `correlationId` or a `tenantId` keeps it; one published outside of any
+execution context is left as it is. It is a decorator, not an option of `OutboxPublisher` or of
 `defineIntegrationEvent(...).create`: both stay pure, and the stamp applies to every provider.
 
 ## Generate the AsyncAPI document and the catalog
 
+<!-- checked sample -->
 ```ts
 // scripts/generate-contracts.ts
-import { generateEventCatalog } from '@ddd-ts-kit/events';
+import { readFile, writeFile } from 'node:fs/promises';
+import { generateEventCatalog, type EventRegistry } from '@ddd-ts-kit/events';
 import { checkAsyncApiDrift, generateAsyncApi, stringifyAsyncApi } from '@ddd-ts-kit/events/asyncapi';
+
+declare const registry: EventRegistry; // createEventRegistry([...every published declaration])
 
 const document = generateAsyncApi({
   info: { title: 'Shop events', version: '1.4.0' },

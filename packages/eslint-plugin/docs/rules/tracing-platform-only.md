@@ -1,3 +1,5 @@
+**English** · [Français](tracing-platform-only.fr.md)
+
 # ddd-ts-kit/tracing-platform-only
 
 Architecture id: `tracing/platform-only`. Default severity: `error` in `recommended`, `error` in `strict`.

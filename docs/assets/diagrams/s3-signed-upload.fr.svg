@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 672" width="960" height="672" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Un envoi par lien signé, et ce qui est vérifié où</title>
+  <desc id="desc">Trois participants : le client, l'API avec FileStaging et S3FileStorage, et le bucket. 1, le client demande à envoyer un fichier, par une commande. 2, FileStaging.uploadUrl fait signer un PUT localement par S3FileStorage, sans aucune requête au bucket, et l'autorisation d'envoi (clé, plafond de taille, types de média) est gardée sur l'agrégat. 3, l'API renvoie l'URL, la méthode PUT, l'en-tête content-type et l'expiration. 4, le client envoie le fichier directement au bucket avec les en-têtes signés. Le bucket vérifie la signature : la clé, la méthode, le content-type et l'expiration ; il ne peut pas plafonner la taille. 5, le client confirme l'envoi par une seconde commande. 6, l'API relit l'objet mis en attente par GetObject, et 7, le bucket transmet le contenu en flux. 8, FileStaging.confirm vérifie les octets : la taille contre le plafond de l'autorisation, le type de média, l'empreinte sha256 et l'analyse ; un fichier qui échoue est supprimé.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="672" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Un envoi par lien signé, et ce qui est vérifié où</text>
+
+  <!-- participants -->
+  <rect x="20" y="60" width="240" height="52" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="140" y="84" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">client</text>
+  <text x="140" y="103" font-size="13" fill="#1f2328" text-anchor="middle">navigateur ou application mobile</text>
+  <rect x="330" y="60" width="300" height="52" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="480" y="84" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">API</text>
+  <text x="480" y="103" font-size="13" fill="#1f2328" text-anchor="middle">FileStaging, S3FileStorage</text>
+  <rect x="720" y="60" width="200" height="52" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="820" y="84" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">bucket</text>
+  <text x="820" y="103" font-size="13" fill="#1f2328" text-anchor="middle">du fournisseur</text>
+
+  <!-- lifelines -->
+  <line x1="140" y1="112" x2="140" y2="652" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="4 4"/>
+  <line x1="480" y1="112" x2="480" y2="652" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="4 4"/>
+  <line x1="820" y1="112" x2="820" y2="652" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="4 4"/>
+
+  <!-- 1 -->
+  <text x="310" y="144" font-size="13" fill="#1f2328" text-anchor="middle">1. demande à envoyer (une commande)</text>
+  <line x1="142" y1="154" x2="477" y2="154" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- 2 -->
+  <rect x="496" y="166" width="308" height="84" rx="8" fill="#e7eef5" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="512" y="188" font-size="13" font-weight="600" fill="#2b5d8a">2. FileStaging.uploadUrl</text>
+  <text x="512" y="206" font-size="13" fill="#1f2328">un PUT signé localement : aucune</text>
+  <text x="512" y="224" font-size="13" fill="#1f2328">requête au bucket ; l'autorisation (clé,</text>
+  <text x="512" y="242" font-size="13" fill="#1f2328">plafond, types) est gardée sur l'agrégat</text>
+  <!-- 3 -->
+  <text x="310" y="270" font-size="13" fill="#1f2328" text-anchor="middle">3. url, méthode PUT, content-type, expiresAt</text>
+  <line x1="477" y1="280" x2="143" y2="280" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- 4 -->
+  <text x="310" y="316" font-size="13" fill="#1f2328" text-anchor="middle">4. PUT du fichier avec les en-têtes signés</text>
+  <line x1="142" y1="326" x2="817" y2="326" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="496" y="340" width="308" height="66" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="512" y="362" font-size="13" fill="#1f2328">le bucket vérifie la signature : clé,</text>
+  <text x="512" y="380" font-size="13" fill="#1f2328">méthode, content-type, expiration ;</text>
+  <text x="512" y="398" font-size="13" font-weight="600" fill="#1f2328">il ne peut pas plafonner la taille</text>
+  <!-- 5 -->
+  <text x="310" y="436" font-size="13" fill="#1f2328" text-anchor="middle">5. confirme l'envoi (une seconde commande)</text>
+  <line x1="142" y1="446" x2="477" y2="446" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- 6 and 7 -->
+  <text x="650" y="474" font-size="13" fill="#1f2328" text-anchor="middle">6. GetObject sur la clé en attente</text>
+  <line x1="482" y1="484" x2="817" y2="484" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="650" y="512" font-size="13" fill="#1f2328" text-anchor="middle">7. le contenu, en flux</text>
+  <line x1="818" y1="522" x2="483" y2="522" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- 8 -->
+  <rect x="164" y="540" width="300" height="100" rx="8" fill="#e7eef5" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="180" y="562" font-size="13" font-weight="600" fill="#2b5d8a">8. FileStaging.confirm, sur les octets</text>
+  <text x="180" y="582" font-size="13" fill="#1f2328">taille contre le plafond accordé,</text>
+  <text x="180" y="600" font-size="13" fill="#1f2328">type de média, empreinte sha256,</text>
+  <text x="180" y="618" font-size="13" fill="#1f2328">analyse ; un fichier refusé est supprimé</text>
+</svg>

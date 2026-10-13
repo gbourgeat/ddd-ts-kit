@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" width="960" height="540" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">One call through the middlewares of the bus and the aspects of an adapter</title>
+  <desc id="desc">A route or a consumer sends a command to the command bus, whose logging and metrics middlewares run around the handler. The handler calls the PaymentGateway port. What answers the port is the StripeGateway adapter, wrapped by the aspects logged, timed, retry and timeout, in that order from the outside in; the adapter calls the Stripe API. The composition root put the middlewares on the bus and the aspects around the adapter; domain and application import nothing from the package.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="540" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">One call through the middlewares of the bus and the aspects of an adapter</text>
+
+  <!-- row 1: route, bus, handler -->
+  <rect x="32" y="84" width="170" height="80" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="117" y="118" font-size="16" font-weight="700" fill="#9a5b2b" text-anchor="middle">route</text>
+  <text x="117" y="140" font-size="13" fill="#1f2328" text-anchor="middle">or consumer</text>
+
+  <rect x="242" y="68" width="476" height="112" rx="12" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="258" y="90" font-size="14" font-weight="600" fill="#5f6b73">command bus: bus.use(...)</text>
+  <rect x="258" y="102" width="210" height="62" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="363" y="128" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">loggingMiddleware</text>
+  <text x="363" y="148" font-size="13" fill="#1f2328" text-anchor="middle">command ChargeOrder started</text>
+  <rect x="492" y="102" width="210" height="62" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="597" y="128" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">metricsMiddleware</text>
+  <text x="597" y="148" font-size="13" fill="#1f2328" text-anchor="middle">use_case_duration_ms</text>
+
+  <rect x="758" y="84" width="170" height="80" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="843" y="118" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">handler</text>
+  <text x="843" y="140" font-size="13" fill="#1f2328" text-anchor="middle">of ChargeOrder</text>
+
+  <g stroke="#3d4449" stroke-width="2">
+    <line x1="204" y1="124" x2="240" y2="124" marker-end="url(#arrow)"/>
+    <line x1="470" y1="133" x2="490" y2="133" marker-end="url(#arrow)"/>
+    <line x1="720" y1="124" x2="756" y2="124" marker-end="url(#arrow)"/>
+    <line x1="843" y1="166" x2="843" y2="260" marker-end="url(#arrow)"/>
+  </g>
+  <text x="853" y="218" font-size="13" fill="#1f2328">calls the port</text>
+
+  <!-- row 2: port, aspects, adapter (the call goes right to left) -->
+  <rect x="758" y="262" width="170" height="76" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="843" y="295" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">PaymentGateway</text>
+  <text x="843" y="317" font-size="13" fill="#1f2328" text-anchor="middle">port</text>
+
+  <rect x="242" y="236" width="476" height="124" rx="12" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="258" y="258" font-size="14" font-weight="600" fill="#5f6b73">aspects around the adapter: .with(...)</text>
+  <rect x="608" y="272" width="94" height="72" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="655" y="302" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">logged</text>
+  <text x="655" y="324" font-size="13" fill="#1f2328" text-anchor="middle">log entries</text>
+  <rect x="490" y="272" width="94" height="72" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="537" y="302" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">timed</text>
+  <text x="537" y="324" font-size="13" fill="#1f2328" text-anchor="middle">two series</text>
+  <rect x="372" y="272" width="94" height="72" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="419" y="302" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">retry</text>
+  <text x="419" y="324" font-size="13" fill="#1f2328" text-anchor="middle">3 attempts</text>
+  <rect x="254" y="272" width="94" height="72" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="301" y="302" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">timeout</text>
+  <text x="301" y="324" font-size="13" fill="#1f2328" text-anchor="middle">2 s each</text>
+
+  <rect x="32" y="262" width="170" height="76" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="117" y="295" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">StripeGateway</text>
+  <text x="117" y="317" font-size="13" fill="#1f2328" text-anchor="middle">adapter, imports nothing</text>
+
+  <g stroke="#3d4449" stroke-width="2">
+    <line x1="756" y1="300" x2="720" y2="300" marker-end="url(#arrow)"/>
+    <line x1="606" y1="308" x2="586" y2="308" marker-end="url(#arrow)"/>
+    <line x1="488" y1="308" x2="468" y2="308" marker-end="url(#arrow)"/>
+    <line x1="370" y1="308" x2="350" y2="308" marker-end="url(#arrow)"/>
+    <line x1="240" y1="300" x2="204" y2="300" marker-end="url(#arrow)"/>
+    <line x1="117" y1="340" x2="117" y2="414" marker-end="url(#arrow)"/>
+  </g>
+
+  <!-- row 3: external system and the rule -->
+  <rect x="32" y="416" width="170" height="70" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="117" y="446" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">Stripe API</text>
+  <text x="117" y="468" font-size="13" fill="#1f2328" text-anchor="middle">external system</text>
+
+  <rect x="242" y="400" width="686" height="102" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="262" y="428" font-size="14" font-weight="700" fill="#2f6f4f">domain/ and application/ import nothing from @ddd-ts-kit/aspects</text>
+  <text x="262" y="452" font-size="14" fill="#1f2328">The handler and the port are plain code. The composition root (platform) puts</text>
+  <text x="262" y="474" font-size="14" fill="#1f2328">the middlewares on the bus and the aspects around the adapter: .with(...),</text>
+  <text x="262" y="494" font-size="14" fill="#1f2328">the decorate hook of createApplication, or builder.around(...).</text>
+</svg>

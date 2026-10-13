@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 470" width="960" height="470" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Choisir une paire de contrat, question par question</title>
+  <desc id="desc">Une application NestJS existante qui adopte le kit prend NestJS et class-validator. Une équipe qui veut que le contrat soit le schéma lui-même prend Fastify et TypeBox. Une équipe qui pourrait déplacer le service vers un autre runtime, ou qui préfère Request et Response du standard Web, prend Hono et zod. Sinon Express et zod, le défaut. La taille de l'application n'est pas un critère.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="470" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Choisir une paire de contrat, question par question</text>
+  <!-- questions -->
+  <rect x="32" y="64" width="480" height="60" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="2"/>
+  <text x="272" y="99" font-size="14" fill="#1f2328" text-anchor="middle">Une application NestJS existante adopte-t-elle le kit ?</text>
+  <rect x="32" y="164" width="480" height="60" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="2"/>
+  <text x="272" y="189" font-size="14" fill="#1f2328" text-anchor="middle">Le contrat doit-il être le schéma lui-même,</text>
+  <text x="272" y="210" font-size="14" fill="#1f2328" text-anchor="middle">avec les mots-clés JSON Schema comme codes d'anomalie ?</text>
+  <rect x="32" y="264" width="480" height="60" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="2"/>
+  <text x="272" y="289" font-size="14" fill="#1f2328" text-anchor="middle">Le service peut-il changer de runtime, ou l'équipe</text>
+  <text x="272" y="310" font-size="14" fill="#1f2328" text-anchor="middle">préfère-t-elle Request et Response du standard Web ?</text>
+  <line x1="272" y1="126" x2="272" y2="160" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="284" y="148" font-size="13" fill="#1f2328">non</text>
+  <line x1="272" y1="226" x2="272" y2="260" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="284" y="248" font-size="13" fill="#1f2328">non</text>
+  <line x1="272" y1="326" x2="272" y2="360" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="284" y="348" font-size="13" fill="#1f2328">non</text>
+  <!-- answers -->
+  <rect x="592" y="64" width="336" height="60" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="760" y="90" font-size="16" font-weight="700" fill="#9a5b2b" text-anchor="middle">NestJS + class-validator</text>
+  <text x="760" y="112" font-size="13" fill="#1f2328" text-anchor="middle">--http nest --di nest --validation class-validator</text>
+  <rect x="592" y="164" width="336" height="60" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="760" y="190" font-size="16" font-weight="700" fill="#9a5b2b" text-anchor="middle">Fastify + TypeBox</text>
+  <text x="760" y="212" font-size="13" fill="#1f2328" text-anchor="middle">--http fastify --validation typebox</text>
+  <rect x="592" y="264" width="336" height="60" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="760" y="290" font-size="16" font-weight="700" fill="#9a5b2b" text-anchor="middle">Hono + zod</text>
+  <text x="760" y="312" font-size="13" fill="#1f2328" text-anchor="middle">--http hono (éprouvé sur Node seulement)</text>
+  <rect x="32" y="364" width="480" height="60" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="272" y="390" font-size="16" font-weight="700" fill="#9a5b2b" text-anchor="middle">Express + zod</text>
+  <text x="272" y="412" font-size="13" fill="#1f2328" text-anchor="middle">le défaut d'init : aucune option</text>
+  <line x1="514" y1="94" x2="588" y2="94" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="551" y="86" font-size="13" fill="#1f2328" text-anchor="middle">oui</text>
+  <line x1="514" y1="194" x2="588" y2="194" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="551" y="186" font-size="13" fill="#1f2328" text-anchor="middle">oui</text>
+  <line x1="514" y1="294" x2="588" y2="294" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="551" y="286" font-size="13" fill="#1f2328" text-anchor="middle">oui</text>
+  <!-- note -->
+  <text x="592" y="384" font-size="14" font-weight="600" fill="#1f2328">Pas un critère : la taille de</text>
+  <text x="592" y="406" font-size="14" fill="#1f2328">l'application. Les quatre portent une</text>
+  <text x="592" y="428" font-size="14" fill="#1f2328">grande application de la même façon.</text>
+</svg>

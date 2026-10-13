@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 600" width="960" height="600" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Un passage de generate command</title>
+  <desc id="desc">Cinq étapes, dans l'ordre. D'abord, le nom du cas d'usage et sa permission sont vérifiés dans le glossaire du contexte : un mot qu'il ne définit pas refuse le passage avec le code de sortie 2, sans rien écrire, et la correction nomme le --term à ajouter. Puis la commande, le gestionnaire (handler) et la spec sont écrits depuis les templates. Puis la permission et la liaison sont enregistrées entre des commentaires marqueurs, dans le fichier des permissions et, dans le style explicite, le fichier de module. Puis ce qui est dérivé est rafraîchi : le barrel du style déclaré, réécrit en entier, les listes de CONTEXT.md, la carte des contextes, la configuration de dependency-cruiser. Enfin, les endroits qui attendent une décision métier sont affichés en fichier:ligne, le glossaire d'abord.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="600" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Un passage de generate command</text>
+  <text x="32" y="66" font-size="14" fill="#5f6b73">ddd-ts-kit generate command billing IssueInvoice --aggregate Invoice --permission invoice.issue</text>
+  <!-- steps -->
+  <rect x="24" y="92" width="360" height="72" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="40" y="120" font-size="15" font-weight="700" fill="#5f6b73">1. Vérifier le nom dans le glossaire</text>
+  <text x="40" y="146" font-size="13" fill="#1f2328">chaque mot de IssueInvoice et de la permission</text>
+  <line x1="204" y1="166" x2="204" y2="188" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="24" y="190" width="360" height="72" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="40" y="218" font-size="15" font-weight="700" fill="#5f6b73">2. Écrire les fichiers depuis les templates</text>
+  <text x="40" y="244" font-size="13" fill="#1f2328">selon la stack et le style de la configuration</text>
+  <line x1="204" y1="264" x2="204" y2="286" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="24" y="288" width="360" height="72" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="40" y="316" font-size="15" font-weight="700" fill="#5f6b73">3. Enregistrer entre les marqueurs</text>
+  <text x="40" y="342" font-size="13" fill="#1f2328">// ddd-ts-kit:&lt;region&gt; ... // /ddd-ts-kit:&lt;region&gt;</text>
+  <line x1="204" y1="362" x2="204" y2="384" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="24" y="386" width="360" height="72" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="40" y="414" font-size="15" font-weight="700" fill="#5f6b73">4. Rafraîchir ce qui est dérivé</text>
+  <text x="40" y="440" font-size="13" fill="#1f2328">s'il existe, et seulement là où il change</text>
+  <line x1="204" y1="460" x2="204" y2="482" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="24" y="484" width="360" height="72" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="40" y="512" font-size="15" font-weight="700" fill="#5f6b73">5. Afficher ce qui reste à décider</text>
+  <text x="40" y="538" font-size="13" fill="#1f2328">next : le glossaire, puis chaque TODO(domain)</text>
+  <!-- outcomes -->
+  <line x1="386" y1="128" x2="432" y2="128" stroke="#3d4449" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#arrow)"/>
+  <rect x="436" y="92" width="500" height="72" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="452" y="120" font-size="14" font-weight="700" fill="#5f6b73">un mot n'est pas défini : refus, code de sortie 2</text>
+  <text x="452" y="146" font-size="13" fill="#1f2328">rien n'est écrit ; la correction nomme le --term "Issue=..." à ajouter</text>
+  <line x1="386" y1="226" x2="432" y2="226" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="436" y="190" width="500" height="72" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="452" y="218" font-size="14" font-weight="700" fill="#2b5d8a">créés</text>
+  <text x="452" y="244" font-size="13" fill="#1f2328">issue-invoice.command.ts, issue-invoice.handler.ts, sa spec</text>
+  <line x1="386" y1="324" x2="432" y2="324" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="436" y="288" width="500" height="72" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="452" y="316" font-size="14" font-weight="700" fill="#2b5d8a">mis à jour</text>
+  <text x="452" y="342" font-size="13" fill="#1f2328">billing.permissions.ts, et billing.module.ts (style explicite)</text>
+  <line x1="386" y1="422" x2="432" y2="422" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="436" y="386" width="500" height="72" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="2"/>
+  <text x="452" y="410" font-size="14" font-weight="700" fill="#5f6b73">rafraîchis</text>
+  <text x="452" y="430" font-size="13" fill="#1f2328">billing.declarations.ts (le barrel, réécrit en entier)</text>
+  <text x="452" y="449" font-size="13" fill="#1f2328">CONTEXT.md, docs/context-map.md, .dependency-cruiser.cjs</text>
+  <line x1="386" y1="520" x2="432" y2="520" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="436" y="484" width="500" height="72" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="2"/>
+  <text x="452" y="512" font-size="14" font-weight="700" fill="#5f6b73">affichés, une ligne chacun</text>
+  <text x="452" y="538" font-size="13" fill="#1f2328">issue-invoice.handler.ts:16  decide what "issue invoice" does ...</text>
+  <!-- legend -->
+  <line x1="40" y1="580" x2="84" y2="580" stroke="#3d4449" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#arrow)"/>
+  <text x="96" y="585" font-size="13" fill="#1f2328">seulement quand l'étape refuse : le passage s'arrête là</text>
+</svg>

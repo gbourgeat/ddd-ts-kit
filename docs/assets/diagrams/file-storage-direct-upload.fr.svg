@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 560" width="960" height="560" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Un gros fichier va droit au stockage, sous une autorisation d'envoi gardée par le serveur</title>
+  <desc id="desc">Trois participants : le client, l'application et le stockage de fichiers. 1, le client demande un envoi en nommant le rendez-vous. La première commande génère la clé, signe un lien d'envoi avec FileStaging.uploadUrl et enregistre l'autorisation d'envoi (clé, plafond de taille, types de média) sur le rendez-vous. 2, l'application répond le lien signé. 3, le client envoie le fichier au stockage, sous la clé en attente. 4, le client demande la confirmation en nommant le rendez-vous, jamais une clé. La seconde commande relit l'autorisation sur le rendez-vous, et FileStaging.confirm mesure le fichier contre le plafond, vérifie ses octets et l'analyse ; la référence est enregistrée et le fichier promu avec la validation.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="560" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Un gros fichier va droit au stockage, sous une autorisation d'envoi gardée par le serveur</text>
+  <!-- participants -->
+  <rect x="40" y="60" width="200" height="48" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="140" y="90" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">client</text>
+  <rect x="380" y="60" width="200" height="48" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="480" y="90" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">application</text>
+  <rect x="720" y="60" width="200" height="48" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="820" y="90" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">stockage de fichiers</text>
+  <!-- lifelines -->
+  <line x1="140" y1="108" x2="140" y2="510" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="4 4"/>
+  <line x1="480" y1="108" x2="480" y2="510" stroke="#2b5d8a" stroke-width="1.5" stroke-dasharray="4 4"/>
+  <line x1="820" y1="108" x2="820" y2="510" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="4 4"/>
+  <!-- 1. request -->
+  <text x="148" y="140" font-size="13" font-weight="600" fill="#1f2328">1. demande d'envoi pour le rendez-vous a-1</text>
+  <line x1="142" y1="150" x2="476" y2="150" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="330" y="164" width="300" height="80" rx="8" fill="#e7eef5" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="346" y="186" font-size="13" fill="#1f2328">k = keys.next('appointment-documents')</text>
+  <text x="346" y="206" font-size="13" fill="#1f2328">staging.uploadUrl(k, plafond, types)</text>
+  <text x="346" y="226" font-size="13" font-weight="600" fill="#1f2328">autorisation gardée sur le rendez-vous</text>
+  <!-- 2. the link -->
+  <text x="312" y="270" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">2. le lien signé : PUT, expire en minutes</text>
+  <line x1="478" y1="280" x2="144" y2="280" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- 3. the file to the store -->
+  <text x="148" y="318" font-size="13" font-weight="600" fill="#1f2328">3. PUT du fichier vers le lien</text>
+  <text x="808" y="318" font-size="13" fill="#1f2328" text-anchor="end">arrive sous staging/k</text>
+  <line x1="142" y1="328" x2="816" y2="328" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- 4. confirm -->
+  <text x="148" y="366" font-size="13" font-weight="600" fill="#1f2328">4. confirmation pour a-1 (sans clé)</text>
+  <line x1="142" y1="376" x2="476" y2="376" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="330" y="390" width="300" height="100" rx="8" fill="#e7eef5" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="346" y="412" font-size="13" fill="#1f2328">autorisation relue sur le rendez-vous</text>
+  <text x="346" y="432" font-size="13" fill="#1f2328">staging.confirm(grant) : taille contre</text>
+  <text x="346" y="452" font-size="13" fill="#1f2328">le plafond, type sur les octets, analyse</text>
+  <text x="346" y="472" font-size="13" font-weight="600" fill="#1f2328">enregistré, promoteOnCommit(k)</text>
+  <line x1="632" y1="440" x2="816" y2="440" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="724" y="430" font-size="13" fill="#1f2328" text-anchor="middle">lit staging/k</text>
+  <line x1="632" y1="480" x2="816" y2="480" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="724" y="470" font-size="13" fill="#1f2328" text-anchor="middle">le déplace vers k</text>
+  <text x="724" y="500" font-size="13" fill="#5f6b73" text-anchor="middle">à la validation</text>
+  <text x="32" y="540" font-size="13" fill="#5f6b73">Le client ne renvoie jamais de clé : il ne peut ni choisir la clé qu'il confirme, ni relever le plafond.</text>
+</svg>

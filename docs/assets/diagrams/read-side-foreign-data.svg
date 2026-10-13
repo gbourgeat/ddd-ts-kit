@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 544" width="960" height="544" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Which strategy for a read that needs another context's data</title>
+  <desc id="desc">A decision tree. If the read filters or sorts by the foreign data, or reads it in long lists very often, use a projection, the default: the consumer keeps the fields it needs from events, at the cost of eventual consistency and a rebuild path. Otherwise, if the screen is truly two views of two contexts side by side, compose two queries above the contexts. Otherwise hydrate at query time through a gateway port: fresh data, at the cost of latency and of depending on the other side.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="544" rx="16" fill="#ffffff"/>
+  <text x="32" y="34" font-size="18" font-weight="600" fill="#1f2328">Which strategy for a read that needs another context's data</text>
+  <rect x="330" y="52" width="300" height="56" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="480" y="74" font-size="16" font-weight="700" text-anchor="middle" fill="#5f6b73">a read needs data</text>
+  <text x="480" y="96" font-size="13" text-anchor="middle" fill="#1f2328">owned by another context</text>
+  <line x1="480" y1="108" x2="480" y2="138" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="250" y="140" width="460" height="72" rx="10" fill="#ffffff" stroke="#3d4449" stroke-width="2"/>
+  <text x="480" y="171" font-size="14" font-weight="600" text-anchor="middle" fill="#1f2328">Filtered or sorted by that data,</text>
+  <text x="480" y="193" font-size="14" font-weight="600" text-anchor="middle" fill="#1f2328">or read in long lists, very often?</text>
+  <path d="M250,176 H168 V382" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="210" y="168" font-size="13" font-weight="600" text-anchor="middle" fill="#1f2328">yes</text>
+  <line x1="480" y1="212" x2="480" y2="260" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="492" y="241" font-size="13" font-weight="600" fill="#1f2328">no</text>
+  <rect x="290" y="262" width="380" height="72" rx="10" fill="#ffffff" stroke="#3d4449" stroke-width="2"/>
+  <text x="480" y="293" font-size="14" font-weight="600" text-anchor="middle" fill="#1f2328">Is the screen truly two views</text>
+  <text x="480" y="315" font-size="14" font-weight="600" text-anchor="middle" fill="#1f2328">of two contexts, side by side?</text>
+  <path d="M670,298 H792 V382" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="730" y="290" font-size="13" font-weight="600" text-anchor="middle" fill="#1f2328">yes</text>
+  <line x1="480" y1="334" x2="480" y2="382" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="492" y="363" font-size="13" font-weight="600" fill="#1f2328">no</text>
+  <rect x="24" y="384" width="288" height="133" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="168" y="410" font-size="16" font-weight="700" text-anchor="middle" fill="#2b5d8a">projection (default)</text>
+  <text x="168" y="432" font-size="13" text-anchor="middle" fill="#1f2328">kept by the consumer</text>
+  <text x="168" y="453" font-size="13" text-anchor="middle" fill="#1f2328">from events</text>
+  <text x="168" y="474" font-size="13" text-anchor="middle" fill="#1f2328">gives: filters, sorts, high volume</text>
+  <text x="168" y="495" font-size="13" text-anchor="middle" fill="#1f2328">costs: eventual consistency, a rebuild</text>
+  <rect x="336" y="384" width="288" height="133" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="480" y="410" font-size="16" font-weight="700" text-anchor="middle" fill="#2b5d8a">hydration</text>
+  <text x="480" y="432" font-size="13" text-anchor="middle" fill="#1f2328">at query time,</text>
+  <text x="480" y="453" font-size="13" text-anchor="middle" fill="#1f2328">through a gateway</text>
+  <text x="480" y="474" font-size="13" text-anchor="middle" fill="#1f2328">gives: fresh data, nothing to store</text>
+  <text x="480" y="495" font-size="13" text-anchor="middle" fill="#1f2328">costs: latency, the other side's uptime</text>
+  <rect x="648" y="384" width="288" height="133" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="792" y="410" font-size="16" font-weight="700" text-anchor="middle" fill="#9a5b2b">composition</text>
+  <text x="792" y="432" font-size="13" text-anchor="middle" fill="#1f2328">above the contexts:</text>
+  <text x="792" y="453" font-size="13" text-anchor="middle" fill="#1f2328">two queries</text>
+  <text x="792" y="474" font-size="13" text-anchor="middle" fill="#1f2328">gives: every context unchanged</text>
+  <text x="792" y="495" font-size="13" text-anchor="middle" fill="#1f2328">costs: orchestration outside them</text>
+</svg>

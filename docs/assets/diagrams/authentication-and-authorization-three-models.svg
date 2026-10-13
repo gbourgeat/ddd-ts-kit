@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 530" width="960" height="530" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Three models behind the same Authorizer port</title>
+  <desc id="desc">Roles: the actor has roles, a role grants permissions, and the answer is the same for every element. Attribute policies: the attributes of the actor, of the resource and of the moment feed permit and forbid rules, and a matching forbid wins. Relationships: stored tuples say that Ada owns calendar 42, whose parent is clinic 7, of which Bob is a member; a path of tuples grants Bob the calendar.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="530" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Three models behind the same Authorizer port</text>
+  <rect x="24" y="58" width="288" height="448" rx="12" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="40" y="86" font-size="16" font-weight="700" fill="#1f2328">Roles (RBAC)</text>
+  <text x="40" y="108" font-size="13" font-style="italic" fill="#5f6b73">does one of the actor's roles grant it?</text>
+  <text x="40" y="490" font-size="13" fill="#5f6b73">constant cost; blind to the element</text>
+  <rect x="336" y="58" width="288" height="448" rx="12" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="352" y="86" font-size="16" font-weight="700" fill="#1f2328">Attribute policies (ABAC)</text>
+  <text x="352" y="108" font-size="13" font-style="italic" fill="#5f6b73">do the attributes satisfy a rule?</text>
+  <text x="352" y="490" font-size="13" fill="#5f6b73">per element; cannot list</text>
+  <rect x="648" y="58" width="288" height="448" rx="12" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="664" y="86" font-size="16" font-weight="700" fill="#1f2328">Relationships (ReBAC)</text>
+  <text x="664" y="108" font-size="13" font-style="italic" fill="#5f6b73">is there a path of tuples to the actor?</text>
+  <text x="664" y="490" font-size="13" fill="#5f6b73">per element; lists by reverse expansion</text>
+  <!-- roles -->
+  <rect x="48" y="130" width="240" height="72" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="168.0" y="156" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">actor ada</text>
+  <line x1="62" y1="166" x2="274" y2="166" stroke="#2b5d8a" stroke-opacity="0.35"/>
+  <text x="168.0" y="186" font-size="13" fill="#1f2328" text-anchor="middle">roles: receptionist</text>
+  <line x1="168" y1="204" x2="168" y2="234" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="48" y="238" width="240" height="92" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="168.0" y="264" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">role receptionist</text>
+  <line x1="62" y1="274" x2="274" y2="274" stroke="#2b5d8a" stroke-opacity="0.35"/>
+  <text x="168.0" y="294" font-size="13" fill="#1f2328" text-anchor="middle">grants appointments:*, that is</text>
+  <text x="168.0" y="314" font-size="13" fill="#1f2328" text-anchor="middle">appointment.book and .cancel</text>
+  <line x1="168" y1="332" x2="168" y2="362" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="48" y="366" width="240" height="72" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="168.0" y="392" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">appointment.book</text>
+  <line x1="62" y1="402" x2="274" y2="402" stroke="#2f6f4f" stroke-opacity="0.35"/>
+  <text x="168.0" y="422" font-size="13" fill="#1f2328" text-anchor="middle">allowed, on every element</text>
+  <!-- attribute policies -->
+  <rect x="360" y="130" width="240" height="112" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="480.0" y="156" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">attributes</text>
+  <line x1="374" y1="166" x2="586" y2="166" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text x="480.0" y="186" font-size="13" fill="#1f2328" text-anchor="middle">actor: clinic 7</text>
+  <text x="480.0" y="206" font-size="13" fill="#1f2328" text-anchor="middle">resource: clinic 7, client active</text>
+  <text x="480.0" y="226" font-size="13" fill="#1f2328" text-anchor="middle">moment: 10:30, open hours</text>
+  <line x1="480" y1="244" x2="480" y2="268" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="360" y="272" width="240" height="112" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="480.0" y="298" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">rules</text>
+  <line x1="374" y1="308" x2="586" y2="308" stroke="#2b5d8a" stroke-opacity="0.35"/>
+  <text x="480.0" y="328" font-size="13" fill="#1f2328" text-anchor="middle">permit: same clinic,</text>
+  <text x="480.0" y="348" font-size="13" fill="#1f2328" text-anchor="middle">during opening hours</text>
+  <text x="480.0" y="368" font-size="13" fill="#1f2328" text-anchor="middle">forbid: suspended client</text>
+  <line x1="480" y1="386" x2="480" y2="410" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="360" y="414" width="240" height="52" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="480" y="446" font-size="14" font-weight="700" fill="#2f6f4f" text-anchor="middle">a matching forbid wins</text>
+  <!-- relationships: tuples as edges from the object to the subject -->
+  <rect x="737" y="132" width="110" height="36" rx="8" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="1.5"/>
+  <text x="792.0" y="155" font-size="14" font-weight="600" fill="#2f6f4f" text-anchor="middle">calendar:42</text>
+  <rect x="660" y="228" width="110" height="36" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="715.0" y="251" font-size="14" font-weight="600" fill="#5f6b73" text-anchor="middle">user:ada</text>
+  <rect x="814" y="228" width="110" height="36" rx="8" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="1.5"/>
+  <text x="869.0" y="251" font-size="14" font-weight="600" fill="#2f6f4f" text-anchor="middle">clinic:7</text>
+  <rect x="814" y="320" width="110" height="36" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="869.0" y="343" font-size="14" font-weight="600" fill="#5f6b73" text-anchor="middle">user:bob</text>
+  <line x1="772" y1="170" x2="730" y2="224" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="812" y1="170" x2="854" y2="224" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="869" y1="266" x2="869" y2="316" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="744" y="204" font-size="13" fill="#1f2328" text-anchor="end">owner</text>
+  <text x="842" y="204" font-size="13" fill="#1f2328">parent</text>
+  <text x="877" y="296" font-size="13" fill="#1f2328">member</text>
+  <text x="664" y="392" font-size="13" font-weight="600" fill="#1f2328">may bob manage calendar:42?</text>
+  <text x="664" y="412" font-size="13" fill="#1f2328">yes: the owner of calendar:42,</text>
+  <text x="664" y="430" font-size="13" fill="#1f2328">or a member of its parent clinic,</text>
+  <text x="664" y="448" font-size="13" fill="#1f2328">and bob is a member of clinic:7</text>
+</svg>
