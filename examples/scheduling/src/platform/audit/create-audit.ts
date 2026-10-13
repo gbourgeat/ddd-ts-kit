@@ -1,10 +1,12 @@
 import {
   auditDecisions,
+  auditGuardRefusals,
   auditIntegrationEvents,
   auditMiddleware,
   type AuditReader,
   type AuditSource,
   type AuditTrail,
+  type GuardRefusalOfARoute,
 } from '@ddd-ts-kit/audit';
 import { KnexAuditTrail } from '@ddd-ts-kit/audit/knex';
 import type { OnDecision } from '@ddd-ts-kit/auth';
@@ -15,6 +17,10 @@ import { AUDIT_SCHEMA } from '@/platform/database/schema';
 import { auditPermissions } from '@/platform/audit/audit.permissions';
 import { auditedEvents } from '@/platform/audit/audited-events';
 import { SearchAuditEntriesQuery } from '@/platform/audit/search-audit-entries.query';
+import { schedulingPermissions } from '@/contexts/scheduling/application/authorization/scheduling.permissions';
+
+/** Reading the trail, and reading a document that may hold health data: every allowed access is recorded. */
+const SENSITIVE_READS = [auditPermissions['trail.read'].id, schedulingPermissions['appointment.read-document'].id];
 
 /** The name the audit trail consumes integration events under: its idempotency scope, and its queues behind a broker. */
 const consumer = 'audit';
@@ -28,6 +34,8 @@ export interface Audit {
   readonly trail: AuditTrail & AuditReader;
   /** The `onDecision` hook of the authorization: who was allowed or refused what. */
   readonly decisions: OnDecision;
+  /** The `onGuardRefusal` hook of the HTTP pipeline: who a guard refused at the edge, before any use case. */
+  readonly refusals: (refusal: GuardRefusalOfARoute) => Promise<void>;
   /** On the command bus, before the unit of work: which command ran and how it ended. */
   readonly commands: BusMiddleware;
   /** On the query bus: whoever reads the trail leaves an entry in it. */
@@ -44,7 +52,8 @@ export function createAudit(persistence: Persistence, source: AuditSource): Audi
 
   return {
     trail,
-    decisions: auditDecisions(trail, { ...source, sensitivePermissions: [auditPermissions['trail.read'].id] }),
+    refusals: auditGuardRefusals(trail, source),
+    decisions: auditDecisions(trail, { ...source, sensitivePermissions: SENSITIVE_READS }),
     // TODO(platform): declare what may go into `changes` with `fields: [auditedFields(SomeCommand, ['status'])]`; by default an entry carries identifiers and codes only.
     commands: auditMiddleware(trail, { ...source, unitOfWork }),
     queries: auditMiddleware(trail, { ...source, queries: [SearchAuditEntriesQuery] }),

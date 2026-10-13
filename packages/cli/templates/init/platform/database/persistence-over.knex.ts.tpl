@@ -10,7 +10,12 @@ export function persistenceOver(db: Knex, close: () => Promise<void>): Persisten
   return {
     unitOfWork,
     database: unitOfWork,
+{{#if tenancy.any}}
+    outbox: new KnexOutboxStore(unitOfWork, { schema: MESSAGING, tenant: true }),
+{{/if}}
+{{#unless tenancy.any}}
     outbox: new KnexOutboxStore(unitOfWork, { schema: MESSAGING }),
+{{/unless}}
     processedEvents: new KnexProcessedEventStore(unitOfWork, { schema: MESSAGING }),
     close,
   };

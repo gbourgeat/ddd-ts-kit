@@ -15,6 +15,8 @@ export interface RequestExecution {
   /** What `resolvePrincipal` answered: a `Session`, an `Actor`, or anything else. */
   readonly principal: unknown;
   readonly deadline: Date | undefined;
+  /** The tenant the request named, already checked against the caller; the actor's own otherwise. */
+  readonly tenantId?: string | undefined;
 }
 
 const LANGUAGE_TAG = /^[A-Za-z]{1,8}(?:-[A-Za-z0-9]{1,8})*$/;
@@ -35,6 +37,7 @@ export function executionOfRequest(request: RequestExecution): ExecutionContext 
     ...(session === undefined ? {} : { session }),
     ...(locale === undefined ? {} : { locale }),
     ...(request.deadline === undefined ? {} : { deadline: request.deadline }),
+    ...(request.tenantId === undefined ? {} : { tenantId: request.tenantId }),
   });
 }
 

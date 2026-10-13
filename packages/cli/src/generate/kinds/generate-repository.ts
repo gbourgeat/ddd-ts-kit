@@ -39,12 +39,13 @@ export function generateRepository(scope: Scope, aggregate: Name): void {
 const TENANT_AWARE: readonly OrmStack[] = ['drizzle', 'knex'];
 
 /**
- * `--tenant-scoped`: the adapter takes the tenant of the work in progress from the execution scope
- * (`tenantScopeOf`) and confines every statement to it. Defence in depth: the permission is still
- * decided in the application layer.
+ * `--tenant-scoped`, or a project whose `stack.tenancy` is not `none`: the adapter confines every
+ * statement to the tenant of the work in progress through the helpers of its ORM package
+ * (`tenantTable`, `tenantCondition`). Defence in depth: the permission is still decided in the
+ * application layer.
  */
 function tenantVars(scope: Scope): RenderContext {
-  const asked = scope.flags.tenantScoped;
+  const asked = scope.flags.tenantScoped || scope.config.stack.tenancy !== 'none';
   const scoped = asked && TENANT_AWARE.includes(scope.config.stack.orm);
 
   if (asked && !scoped) {

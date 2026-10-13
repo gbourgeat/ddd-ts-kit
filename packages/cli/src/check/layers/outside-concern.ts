@@ -32,6 +32,10 @@ const OUTSIDE_CONCERNS: Readonly<Record<string, Concern>> = {
     why: 'the scheduler is an adapter of the JobScheduler port, a job only says when it runs',
     fix: 'Remove the import: a job declares its schedule with @Scheduled of @ddd-ts-kit/kernel/declarations (or `builder.job(...)` in a module file) and the platform binds the scheduler behind the `JobScheduler` port of @ddd-ts-kit/kernel.',
   },
+  '@ddd-ts-kit/s3': {
+    why: 'an object store is a technology behind the FileStorage port',
+    fix: 'Depend on `FileStorage` (or `FileStaging` and `FileKeys`) of @ddd-ts-kit/kernel and bind the S3 connector in the platform (`init --storage s3`).',
+  },
   '@ddd-ts-kit/sentry': {
     why: 'error reporting is wired from outside, behind the ErrorReporter port',
     fix: 'Remove the import: unexpected errors are reported by the platform (a bus middleware and the HTTP boundary) through the `ErrorReporter` port of @ddd-ts-kit/kernel, bound to the Sentry adapter at the composition root.',

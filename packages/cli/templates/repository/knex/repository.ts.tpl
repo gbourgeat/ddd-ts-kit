@@ -1,4 +1,6 @@
+{{#unless tenant.scoped}}
 import type { Knex } from 'knex';
+{{/unless}}
 {{#if tenant.scoped}}
 import { stampCreation, stampUpdate, tenantScopeOf, type Clock, type ExecutionScope } from '@ddd-ts-kit/kernel';
 {{/if}}
@@ -14,8 +16,9 @@ import {
   auditRow,
   insertIgnoringConflict,
   optimisticUpdate,
+  ownTenantTable,
   tenantRow,
-  type TenantRow,
+  tenantTable,
 } from '@ddd-ts-kit/knex';
 {{/if}}
 {{#unless tenant.scoped}}
@@ -33,6 +36,11 @@ import { {{aggregate.pascal}}Mapper } from '{{alias.context}}/infrastructure/per
 import type { {{aggregate.pascal}}Columns, {{aggregate.pascal}}Row } from '{{alias.context}}/infrastructure/persistence/{{aggregate.kebab}}-row.schema{{alias.ext}}';
 
 type Versioned{{aggregate.pascal}} = {{aggregate.pascal}}Columns & { readonly version: number };
+{{#if tenant.scoped}}
+
+/** Tenant data: every statement reaches it through `tenantTable` or `ownTenantTable`, confined to the tenant of the work. */
+const TABLE = { schema: {{context.constant}}_SCHEMA, table: '{{aggregate.table}}' };
+{{/if}}
 
 {{#if style.declared}}
 @Repository({{aggregate.pascal}}Repository)
@@ -46,9 +54,7 @@ export class Knex{{aggregate.pascal}}Repository implements {{aggregate.pascal}}R
 
   async findById(id: string): Promise<{{aggregate.pascal}} | undefined> {
 {{#if tenant.scoped}}
-    const row = await tableOf(this.database)
-      .where({ id, ...this.ownTenant() })
-      .first();
+    const row = await tenantTable<{{aggregate.pascal}}Row>(this.database, this.scope, TABLE).where({ id }).first();
 {{/if}}
 {{#unless tenant.scoped}}
     const row = await tableOf(this.database).where({ id }).first();
@@ -65,8 +71,27 @@ export class Knex{{aggregate.pascal}}Repository implements {{aggregate.pascal}}R
     });
   }
 
+{{#if tenant.scoped}}
   private async insert(state: Versioned{{aggregate.pascal}}): Promise<number> {
-    const row = { ...state, {{#if tenant.scoped}}...this.ownTenant(), {{/if}}...auditRow(stampCreation(this.scope, this.clock)) };
+    const tenant = tenantRow(tenantScopeOf(this.scope));
+    const row = { ...state, ...tenant, ...auditRow(stampCreation(this.scope, this.clock)) };
+    const table = ownTenantTable<{{aggregate.pascal}}Row>(this.database, this.scope, TABLE);
+
+    const inserted = await insertIgnoringConflict(this.database.executor(), table, { row, conflict: 'id' });
+
+    return inserted ? 1 : 0;
+  }
+
+  private async update(state: Versioned{{aggregate.pascal}}, expected: number): Promise<number> {
+    return ownTenantTable<{{aggregate.pascal}}Row>(this.database, this.scope, TABLE)
+      .where({ id: state.id, version: expected })
+      .update({ ...state, ...auditRow(stampUpdate(this.scope, this.clock)) });
+  }
+}
+{{/if}}
+{{#unless tenant.scoped}}
+  private async insert(state: Versioned{{aggregate.pascal}}): Promise<number> {
+    const row = { ...state, ...auditRow(stampCreation(this.scope, this.clock)) };
 
     const inserted = await insertIgnoringConflict(this.database.executor(), tableOf(this.database), {
       row,
@@ -78,15 +103,9 @@ export class Knex{{aggregate.pascal}}Repository implements {{aggregate.pascal}}R
 
   private async update(state: Versioned{{aggregate.pascal}}, expected: number): Promise<number> {
     return tableOf(this.database)
-      .where({ id: state.id, version: expected{{#if tenant.scoped}}, ...this.ownTenant(){{/if}} })
+      .where({ id: state.id, version: expected })
       .update({ ...state, ...auditRow(stampUpdate(this.scope, this.clock)) });
   }
-{{#if tenant.scoped}}
-
-  private ownTenant(): TenantRow {
-    return tenantRow(tenantScopeOf(this.scope));
-  }
-{{/if}}
 }
 
 /** A function and not a method: a query builder is thenable, and a method that answers one is read as asynchronous by whatever wraps the adapter (tracing), which then answers a promise. */
@@ -95,3 +114,4 @@ function tableOf(database: KnexContext): Knex.QueryBuilder<{{aggregate.pascal}}R
 
   return table.withSchema({{context.constant}}_SCHEMA);
 }
+{{/unless}}

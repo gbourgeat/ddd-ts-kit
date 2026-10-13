@@ -58,7 +58,7 @@ export class KnexReadModelTable<Row extends object> implements ReadModelTable<Ro
   async search(plan: CriteriaPlan): Promise<SearchedRows<Row>> {
     const { columns } = this.options;
     const mapper = new RowMapper<Row>(columns);
-    const kept = () => this.rows.table().where('deleted', false);
+    const kept = () => this.rows.reading().where('deleted', false);
     const answered: unknown = await criteriaToKnex(kept().select(Object.values<string>(columns)), plan, columns);
     const rows = recordsOf(answered).map((record) => mapper.toRow(record));
 

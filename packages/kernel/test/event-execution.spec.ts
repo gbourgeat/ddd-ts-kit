@@ -49,6 +49,12 @@ describe('executionContextOfEvent', () => {
 
     expect(context).toMatchObject({ actor: ada, tenantId: 'acme' });
   });
+
+  it('runs the consumer in the tenant the event belongs to', () => {
+    const context = executionContextOfEvent(placed({ tenantId: 'globex' }), { consumer: 'billing.invoice' });
+
+    expect(context).toMatchObject({ actor: systemActor('billing.invoice'), tenantId: 'globex' });
+  });
 });
 
 describe('inEventScope', () => {
@@ -77,22 +83,31 @@ describe('scopedPublisher', () => {
   const scope = new AsyncLocalStorageExecutionScope();
   const request = executionContext({ correlationId: 'corr-7', actor: ada, origin: 'http' });
 
-  it('stamps the correlation of the work in progress on an event that names none', async () => {
+  it('stamps the correlation and the tenant of the work in progress on an event that names neither', async () => {
     const bus = new InMemoryEventBus();
 
     await scope.run(request, () => scopedPublisher(bus, scope).publish([placed()]));
 
-    expect(bus.published).toEqual([placed({ correlationId: 'corr-7' })]);
+    expect(bus.published).toEqual([placed({ correlationId: 'corr-7', tenantId: 'acme' })]);
   });
 
-  it('keeps the correlation an event already names, and stamps nothing outside of any work', async () => {
+  it('keeps the correlation and the tenant an event already names, and stamps nothing outside of any work', async () => {
     const bus = new InMemoryEventBus();
     const publisher = scopedPublisher(bus, scope);
 
-    await scope.run(request, () => publisher.publish([placed({ correlationId: 'corr-1' })]));
+    await scope.run(request, () => publisher.publish([placed({ correlationId: 'corr-1', tenantId: 'globex' })]));
     await publisher.publish([placed({ id: 'evt-2' })]);
 
-    expect(bus.published).toEqual([placed({ correlationId: 'corr-1' }), placed({ id: 'evt-2' })]);
+    expect(bus.published).toEqual([placed({ correlationId: 'corr-1', tenantId: 'globex' }), placed({ id: 'evt-2' })]);
+  });
+
+  it('stamps no tenant from work that names none', async () => {
+    const bus = new InMemoryEventBus();
+    const job = executionContext({ correlationId: 'corr-8', actor: systemActor('relay'), origin: 'schedule' });
+
+    await scope.run(job, () => scopedPublisher(bus, scope).publish([placed()]));
+
+    expect(bus.published).toEqual([placed({ correlationId: 'corr-8' })]);
   });
 });
 

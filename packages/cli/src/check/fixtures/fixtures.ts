@@ -15,6 +15,7 @@ import { EVENT_SOURCING_FIXTURES } from './event-sourcing-fixtures.js';
 import { EVENTS_FIXTURES } from './events-fixtures.js';
 import { EXTENSION_FIXTURES } from './extension-fixtures.js';
 import { EXTRACTABLE_FIXTURES } from './extractable-fixtures.js';
+import { FILES_FIXTURES } from './files-fixtures.js';
 import { GOVERNANCE_FIXTURES } from './governance-fixtures.js';
 import { IMPORTS_FIXTURES } from './imports-fixtures.js';
 import { LANGUAGE_FIXTURES } from './language-fixtures.js';
@@ -28,6 +29,7 @@ import { PORTS_FIXTURES } from './ports-fixtures.js';
 import { PURITY_FIXTURES } from './purity-fixtures.js';
 import { SCHEDULING_FIXTURES } from './scheduling-fixtures.js';
 import { STANDARD_FIXTURES } from './standard-fixtures.js';
+import { TENANCY_FIXTURES } from './tenancy-fixtures.js';
 import { TEST_FIXTURES } from './test-fixtures.js';
 import { TRACING_FIXTURES } from './tracing-fixtures.js';
 import { TREE_FIXTURES } from './tree-fixtures.js';
@@ -56,6 +58,7 @@ export const FIXTURES: readonly Fixture[] = [
   ...EVENTS_FIXTURES,
   ...EXTENSION_FIXTURES,
   ...EXTRACTABLE_FIXTURES,
+  ...FILES_FIXTURES,
   ...GOVERNANCE_FIXTURES,
   ...IMPORTS_FIXTURES,
   ...LANGUAGE_FIXTURES,
@@ -69,6 +72,7 @@ export const FIXTURES: readonly Fixture[] = [
   ...PURITY_FIXTURES,
   ...SCHEDULING_FIXTURES,
   ...STANDARD_FIXTURES,
+  ...TENANCY_FIXTURES,
   ...TEST_FIXTURES,
   ...TRACING_FIXTURES,
   ...TREE_FIXTURES,

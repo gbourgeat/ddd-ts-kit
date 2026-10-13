@@ -3,7 +3,7 @@ import type { Awaitable } from './awaitable.js';
 import type { ContractRunner } from './contract-runner.js';
 import { ContractSuite } from './contract-suite.js';
 import { failureOf } from './failure-of.js';
-import { fullEnvelope } from './full-envelope.js';
+import { tenantEnvelope } from './tenant-envelope.js';
 
 export interface EventBusUnderContract {
   readonly bus: EventBus;
@@ -106,9 +106,9 @@ class EventBusSuite extends ContractSuite<EventBusUnderContract> {
   }
 
   private handsTheEnvelopeOverUntouched(): void {
-    this.it('hands the envelope over exactly as published, trace and correlation included', async () => {
+    this.it('hands the envelope over exactly as published, trace, correlation and tenant included', async () => {
       const happened = this.collect(HAPPENED);
-      const published = fullEnvelope(busEvent('evt-1'));
+      const published = tenantEnvelope(busEvent('evt-1'));
 
       await this.publish([published]);
 
@@ -123,6 +123,7 @@ class EventBusSuite extends ContractSuite<EventBusUnderContract> {
       this.expect(happened.events[0]).toEqual(busEvent('evt-1'));
       this.expect(happened.events[0]?.traceparent).toBe(undefined);
       this.expect(happened.events[0]?.correlationId).toBe(undefined);
+      this.expect(happened.events[0]?.tenantId).toBe(undefined);
     });
   }
 

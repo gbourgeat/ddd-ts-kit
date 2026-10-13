@@ -378,6 +378,43 @@ The rules these examples hold, and that the tests of this package check on a rea
 - **An offset page answers `total`**, a cursor page `nextCursor`. Offer the offset form for
   small, browsable lists and the cursor form for anything that grows.
 
+## Tenant isolation
+
+Two strategies on drizzle, both proven by `tenantIsolationContract` of
+`@ddd-ts-kit/testing/contracts`; schema per tenant and database per tenant are shipped for knex
+only ([Multitenancy](../../docs/concepts/multitenancy.md) has the table).
+
+**Shared tables.** A `tenant_id` column (`tenantColumn()`) and the condition of the kit in every
+statement instead of one written by hand:
+
+```ts
+// reads: the tenant of the work, or the tenants of an elevation
+.where(and(eq(invoices.id, id), tenantCondition(invoices.tenantId, this.scope)))
+// updates and deletes: the one tenant of the work, which an elevation never widens
+.where(and(eq(invoices.id, state.id), eq(invoices.version, expected), ownTenantCondition(invoices.tenantId, this.scope)))
+```
+
+Inserts spread `tenantScopeOf(this.scope)`. A read model of tenant data passes `tenant: { scope,
+column: table.tenantId }` to `DrizzleReadModelTable` and `DrizzleReadModelStore`.
+
+**Row-level security**, the second line: the policies (one per command: a select sees the reach of
+the work, an insert, an update and a delete only its one tenant) are declared with the table, so
+drizzle-kit generates them, and the unit of work sets the tenant of each transaction.
+
+```ts
+export const invoices = billing
+  .table('invoices', { /* ... */ ...tenantColumn() }, (table) => [...tenantPolicies(table.tenantId)])
+  .enableRLS();
+
+const unitOfWork = createDrizzleUnitOfWork(db, undefined, { begin: tenantSession(executionScope) });
+```
+
+drizzle-kit does not force the policies on the owner of the table: `forceRowLevelSecurity(invoices)`
+is the statement of a custom migration (`drizzle-kit generate --custom`), or the application
+connects with a role that does not own the tables. In every case that role is not a superuser and
+has no `BYPASSRLS`, and every statement runs inside the unit of work: one outside of a transaction
+carries no setting and sees nothing.
+
 ## Criteria
 
 `criteriaToDrizzle(plan, columns)` turns a criteria plan of the kernel into the parts of a
@@ -460,6 +497,10 @@ and on PostgreSQL 18.
 - `DrizzleProcessedEventStore.markProcessed` is an `INSERT ... ON CONFLICT DO NOTHING`. Run
   the consumer inside the unit of work: the mark then commits with the effects of the handler,
   and disappears with them if it fails.
+- A multi-tenant project declares `tenantOutboxTable('messaging')` instead of `outboxTable`: the
+  same table and a nullable `tenant_id`, which the store, given that table, fills from the tenant
+  of each event, so that its consumers run in that tenant. Switching an existing project is one
+  generated migration that adds the column.
 
 ## Event store
 

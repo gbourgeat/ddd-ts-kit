@@ -11,7 +11,7 @@ const KEYCLOAK_VERSION = '26.8.0';
 
 /** What the templates of `init` read: the variables of the stack, then the ones only a new project needs. */
 export function templateVars(config: Config, projectName: string): RenderContext {
-  const { database, docsUi, ci, cache, broker, errors } = config.stack;
+  const { database, docsUi, ci, cache, broker, errors, storage } = config.stack;
 
   return {
     ...stackVars(config),
@@ -30,7 +30,8 @@ export function templateVars(config: Config, projectName: string): RenderContext
         database === 'mysql' ||
         cache === 'redis' ||
         ['redis', 'nats'].includes(broker) ||
-        errors === 'sentry',
+        errors === 'sentry' ||
+        storage === 's3',
     },
     database: {
       postgres: database === 'postgres',

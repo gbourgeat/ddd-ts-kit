@@ -65,6 +65,8 @@ const BY_CHOICE: Readonly<Record<string, readonly [readonly string[], readonly s
   'authn:keycloak': [['jose'], []],
   'cache:redis': [['@ddd-ts-kit/redis', 'ioredis'], []],
   'audit:on': [['@ddd-ts-kit/audit'], []],
+  // The connector and the official SDK it is written against: the three packages are its optional peers.
+  'storage:s3': [['@ddd-ts-kit/s3', '@aws-sdk/client-s3', '@aws-sdk/lib-storage', '@aws-sdk/s3-request-presigner'], []],
   // The adapter, and the SDK it is written against; `@opentelemetry/api`, which links a report to its trace, is in the base.
   'errors:sentry': [['@ddd-ts-kit/sentry', '@sentry/node'], []],
   // The pretty format of pino is a transport of its own, loaded by name when `LOG_FORMAT=pretty`: knip knows it as a peer of the adapter.
@@ -85,9 +87,14 @@ export function dependenciesFor(config: Config): Packages {
   const development = { ...ranges([...BASE_DEV, ...choices.flatMap(([, names]) => names)]), ...analyzers(config) };
 
   return {
-    dependencies: sorted(ranges([...BASE, ...choices.flatMap(([runtime]) => runtime)])),
+    dependencies: sorted(ranges([...BASE, ...choices.flatMap(([runtime]) => runtime), ...uploads(config)])),
     devDependencies: sorted(development),
   };
+}
+
+/** The parser of the multipart uploads of `@ddd-ts-kit/http/uploads`, its optional peer, wherever files arrive over HTTP. */
+function uploads(config: Config): readonly string[] {
+  return config.stack.storage !== 'none' && config.stack.http !== 'none' ? ['busboy'] : [];
 }
 
 function ranges(names: readonly string[]): Record<string, string> {

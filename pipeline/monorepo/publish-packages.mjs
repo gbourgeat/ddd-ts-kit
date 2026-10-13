@@ -31,6 +31,14 @@ function main() {
     console.error(`\nNot published: ${failed.map((entry) => entry.name).join(', ')}`);
   }
 
+  const unknown = failed.filter((entry) => !knownToRegistry(entry));
+
+  if (unknown.length > 0) {
+    console.error(
+      `New on the registry: ${unknown.map((entry) => entry.name).join(', ')}. Reserve each name and declare its trusted publisher (CONTRIBUTING.md, "A new package"), then run the failed job again.`,
+    );
+  }
+
   return failed.length === 0 ? 0 : 1;
 }
 
@@ -65,6 +73,12 @@ function published(entry) {
   });
 
   return run.status === 0;
+}
+
+function knownToRegistry(entry) {
+  const where = registry === undefined ? [] : ['--registry', registry];
+
+  return spawnSync('npm', ['view', entry.name, 'name', ...where], { encoding: 'utf8' }).status === 0;
 }
 
 function onRegistry(entry) {

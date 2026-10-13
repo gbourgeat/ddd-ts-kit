@@ -996,6 +996,110 @@ Frictions, for the owner of the kit:
 3. The catch-up and the rebuild of a projection fed by the store are still written by hand in
    the platform (`store-fed-projections.ts`): `generate projection` has no event-store form.
 
+## 2026-10-13: documents of appointments, kept in the file storage
+
+A practice attaches a document to an appointment (a referral, a prescription, a report), a
+patient or the practice fetches it through a link of five minutes, and the practice removes
+it. The content never reaches the database: the appointment keeps the reference of the stored
+file (key, size, media type, checksum), its name and when it was attached.
+
+| | |
+|---|---|
+| Config | `"storage": "local"`: a directory in development (`.data/files`), and in the end-to-end journey and the integration spec of the slice, each in a temporary directory; the memory in the handler specs. MinIO in `docker-compose.yml` behind the `files` profile is a recipe for moving to an object store (the comment of the service says the steps), not a storage the example runs on |
+| Platform | what `init --storage local` writes for this stack (`platform/files/`, `platform/config/read-files.ts`, the file routes mounted before `express.json()`, the upload reader of the HTTP boundary, the purge of staged files every hour), applied as the diff between `init --storage none` and `init --storage local` of the same stack, since `init --force` would have rewritten the hand-tuned files of the platform |
+| Generators | `generate value-object` (`AttachedDocument`), two `generate error` (`noDocument`, `documentNameTooLong`), `generate file-upload`, `generate command`, `generate query`, two `generate route`, then `docs` |
+| Written or rewritten by hand | the value object, the two refusals, the state and two methods of `Appointment`, the six columns of the mapper, the migration `20261013090000_add-appointment-documents.js` and `upgradeTables` for the in-process database of the tests, the three handlers, the three controllers, the specs, the end-to-end journey |
+| Routes added | `POST`, `GET` and `DELETE` `/appointments/{appointmentId}/document`; the rest of `openapi/openapi.yaml` is unchanged (228 lines added, none removed) |
+| Audit | `scheduling:appointment.read-document` is a sensitive permission of `auditDecisions`: every allowed read of a document is recorded |
+| Tests | 23 unit specs of the slice, the round trip of the reference in the contract of both appointment repositories, `document-lands-with-its-file.spec.ts` on the in-process database and the local storage (the row and the file land together; a commit refused after the file moved returns it to `staging/` and leaves the row without a document), and `test/e2e/journey-documents.e2e.spec.ts` on the local storage: an upload streamed through the multipart reader, the file under its final key on disk, a download through the link, a 415 for a disguised file, a 403 for another patient, the link that stops answering and the file gone once the document is removed |
+
+After the review of the lot, the order of a write changed in the kit and here with it. The
+command carries a `FileUpload` (`new FileUpload(file, 'appointment-documents')`), which the
+command bus stages after the permission and before the audit entry opens the transaction
+(`platform/files/staging-uploads.ts`, as `init` now writes it): no transaction waits on a
+client that uploads slowly. The handler reads `command.document.file` and calls
+`promoteOnCommit`, which moves the file inside the transaction, as its last step, so a committed
+row never points into `staging/` and the hourly purge only meets orphans. One behaviour moved:
+an upload to an appointment that does not exist is now received, then left in `staging/` for
+the purge, since the handler that finds the appointment runs after the staging. In production
+`FILES_PUBLIC_URL` is now required, like `FILES_SIGNING_SECRET`.
+
+What the generators did not fit, to change in the kit:
+
+- `generate file-upload` writes a controller without the schema of its path parameters: a
+  document attached to an appointment needs `appointmentId`, written by hand with its class
+  schema. The command it writes carries the file only; the identifier of the aggregate was added.
+- `generate query` wrote a reader port, its in-memory adapter and its fake: this query reads the
+  aggregate and signs a link, so the three files were removed.
+- `scripts/kit.mjs` of this example failed on any generator that creates a file (`NOT_A_FILE`
+  was declared after the call that read it); fixed here.
+- The integration specs of this example time out when vitest runs their files in parallel on a
+  loaded machine (PGlite per file); `npm run test:postgres` runs them one file at a time, and
+  passes.
+
+## 2026-10-13: refusals at the edge in the audit trail, and the tenancy of the application
+
+Two changes of the kit reached this application.
+
+**A caller refused by a guard leaves a denied decision.** The previous section noted it: since
+`PracticeOpeningRoutes` and `AuditRoutes` ask `HasRole('platform-admin')` at the edge, a caller
+without the role was refused before the bus, and the trail no longer recorded anything, since no
+decision was asked. The HTTP pipeline now reports every refusal of a guard to `onGuardRefusal`,
+and `auditGuardRefusals` of `@ddd-ts-kit/audit` records it: category `authorization`, action
+`http:<operationId>`, outcome `denied`, the code of the refusal as reason, and the actor, the
+session and the correlation of the request. Three files changed here, as `init` now writes them:
+`audit/create-audit.ts` (the hook, next to `decisions`), `auth/http-boundary.ts` (`refusals` in,
+`onGuardRefusal` out) and `compose-application.ts` (the hook built from the bound `AuditTrail`,
+`Clock` and `IdGenerator`). `identity-open-practice.e2e.spec.ts` now holds that the refusal of
+a person who is not a platform admin is in the trail, under `http:openPractice`.
+
+**The tenancy of this application is proposed, not yet decided.** The kit can now
+confine every statement to a tenant (`"stack.tenancy": "shared-table"`, row-level security, a
+schema or a database per tenant). The data here is grouped by practice, but a practice is not a
+tenant: a patient books in several practices with one account and lists their appointments across
+them, and the boundary between practices is the relationship model, decided per element and
+narrowing every search. ADR-0003 proposes it; the owner had asked for a tenancy made explicit
+and enforced, so the record stays `proposed` until the owner chooses between it and one network
+as a tenant on shared tables. Until then the config says nothing of tenancy, so the new rule
+`tenancy/scoped-statement` has nothing to judge: it is the one entry of `NOT_APPLICABLE` of the
+conformance suite, with that reason, and the kit proves the rule both ways in its own fixtures and
+on the shared-table stacks of its end-to-end matrix.
+
+Checked here: the type check of the application and `ddd-ts-kit check` (0 finding in 657 files).
+The end-to-end specs, `npm run verify` and the conformance run were left to the pipeline of the
+pull request, which runs them on a fresh clone.
+
+Frictions:
+
+1. **A refusal at the edge is recorded outside the unit of work of any command.** It is written
+   when the answer is built, after the request scope closed: the entry carries the execution
+   context the pipeline hands over, not one the trail reads from the scope. Same facts, another
+   path; a project that writes its own hook must use `GuardRefusal.execution`.
+2. **The tenant of the realm token is not the practice.** The `tenant_id` claim still names the
+   chain of the audit trail of an actor; a reader who expects it to bound what a user sees will
+   be surprised. ADR-0003 says where the boundary is instead.
+
+## 2026-10-13 (later): what a review of the tenancy changed here
+
+A review of the kit's multitenancy found holes the application does not reach, since its config
+says nothing of tenancy, and two that it does:
+
+- **A refusal of a caller without a credential is no longer recorded.** The trail of
+  `http:openPractice` keeps the refusal of an authenticated person who is not a platform admin
+  (what `identity-open-practice.e2e.spec.ts` holds); an anonymous request answered 401 writes
+  nothing, so unauthenticated traffic cannot grow the trail.
+- **A guard that fails is not a refusal.** A guard of this application that threw something other
+  than a `DomainError` would now answer 500 and leave no denied decision.
+
+ADR-0003 went back to `proposed`: the owner asked for an enforced tenancy, and the record says the
+opposite, so the owner decides. Nothing else changed in the code of the application.
+
+Frictions:
+
+1. **A tenant id has one grammar now** (letters, digits, `_`, `-`, at most 63). The `tenant_id`
+   claim of the realm names a practice by its id, which fits; a realm whose ids held a `.` would
+   be refused at the first request.
+
 ## 2026-10-12: value objects that throw their refusals
 
 The value objects of the four contexts moved from a `Result` to factories that return the value

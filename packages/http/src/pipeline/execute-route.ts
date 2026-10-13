@@ -1,3 +1,4 @@
+import { Readable } from 'node:stream';
 import type { ExecutionContext } from '@ddd-ts-kit/kernel';
 import { createErrorMapper } from '../error/create-error-mapper.js';
 import { toProblem } from '../error/to-problem.js';
@@ -11,7 +12,10 @@ import type { ErrorContext } from './error-context.js';
 import type { ExecuteOptions } from './execute-options.js';
 import { executionOfRequest } from './execution-of-request.js';
 import type { RawRequest } from './raw-request.js';
+import { receiveUpload } from './receive-upload.js';
 import type { RouteResponse } from './route-response.js';
+import { resolvedTenant } from '../tenancy/resolved-tenant.js';
+import { guardRefusals } from '../controller/guard-refusals.js';
 import { validateRequest } from './validate-request.js';
 import { wellFormedIdentifier } from './well-formed-identifier.js';
 
@@ -46,7 +50,11 @@ async function responded(call: Call): Promise<RouteResponse> {
   try {
     return answer(await handled(call), call);
   } catch (error) {
-    return refusal(error, call);
+    const { response, context } = refusal(error, call);
+
+    await reportGuardRefusal(call.options, error, context);
+
+    return response;
   }
 }
 
@@ -55,13 +63,12 @@ function defaultRequestId(request: RawRequest): string {
 }
 
 async function handled(call: Call): Promise<RouteOutput> {
-  const { route, request, options, requestId, correlationId } = call;
+  const { route, request, options, requestId } = call;
   const principal = await options.resolvePrincipal?.(request.raw);
-  const input = validateRequest(route, request);
+  const received = await receiveUpload(route, request, options);
+  const input = validateRequest(route, received.request);
   const { headers } = request;
-  const execution = executionOfRequest({ correlationId, headers, principal, deadline: deadlineOf(options) });
-
-  call.reached.execution = execution;
+  const execution = executionOf(call, principal, input.params);
 
   const context: RequestContext = {
     requestId,
@@ -69,9 +76,11 @@ async function handled(call: Call): Promise<RouteOutput> {
     raw: request.raw,
     rawHeaders: headers,
     ...(principal === undefined ? {} : { principal }),
+    ...(route.rawBody === true && request.stream !== undefined ? { stream: request.stream } : {}),
   };
 
-  const handle = async (): Promise<RouteOutput> => route.handle({ ...input, context });
+  const upload = received.upload === undefined ? {} : { upload: received.upload };
+  const handle = async (): Promise<RouteOutput> => route.handle({ ...input, ...upload, context });
   const asPrincipal = (): Promise<RouteOutput> => options.withPrincipal?.(principal, handle) ?? handle();
   const result = await (options.executionScope?.run(execution, asPrincipal) ?? asPrincipal());
 
@@ -80,6 +89,23 @@ async function handled(call: Call): Promise<RouteOutput> {
   }
 
   return result;
+}
+
+/** The execution context of the request, in the tenant it names once the caller is known to belong to it. */
+function executionOf(call: Call, principal: unknown, params: unknown): ExecutionContext {
+  const { request, options, correlationId } = call;
+  const { headers } = request;
+  const deadline = deadlineOf(options);
+  const execution = executionOfRequest({ correlationId, headers, principal, deadline });
+
+  call.reached.execution = execution;
+
+  const tenantId = resolvedTenant({ resolver: options.resolveTenant, headers, params, actor: execution.actor });
+  const named = tenantId === undefined || tenantId === execution.tenantId ? execution : undefined;
+
+  call.reached.execution = named ?? executionOfRequest({ correlationId, headers, principal, deadline, tenantId });
+
+  return call.reached.execution;
 }
 
 function deadlineOf(options: ExecuteOptions): Date | undefined {
@@ -109,7 +135,9 @@ function defaultContentType(body: unknown): Record<string, string> {
     return {};
   }
 
-  return { 'content-type': body instanceof Uint8Array ? 'application/octet-stream' : JSON_CONTENT_TYPE };
+  const binary = body instanceof Uint8Array || body instanceof Readable;
+
+  return { 'content-type': binary ? 'application/octet-stream' : JSON_CONTENT_TYPE };
 }
 
 function lowerCaseKeys(headers: Readonly<Record<string, string>>): Record<string, string> {
@@ -120,12 +148,12 @@ function identifierHeaders({ requestId, correlationId }: Call): Record<string, s
   return { 'x-request-id': requestId, [CORRELATION_HEADER]: correlationId };
 }
 
-function refusal(error: unknown, call: Call): RouteResponse {
+function refusal(error: unknown, call: Call): { response: RouteResponse; context: ErrorContext } {
   const { route, options, requestId, correlationId } = call;
   const { execution } = call.reached;
   const problem = toProblem(error, options.errorMapper ?? defaultErrorMapper, requestId);
 
-  notify(options, error, {
+  const context: ErrorContext = {
     requestId,
     correlationId,
     operationId: route.operationId,
@@ -133,13 +161,27 @@ function refusal(error: unknown, call: Call): RouteResponse {
     path: route.path,
     problem,
     ...(execution === undefined ? {} : { execution }),
-  });
-
-  return {
-    status: problem.status,
-    headers: { 'content-type': PROBLEM_CONTENT_TYPE, ...identifierHeaders(call) },
-    body: problem,
   };
+
+  notify(options, error, context);
+
+  const headers = { 'content-type': PROBLEM_CONTENT_TYPE, ...identifierHeaders(call) };
+
+  return { response: { status: problem.status, headers, body: problem }, context };
+}
+
+async function reportGuardRefusal(options: ExecuteOptions, error: unknown, context: ErrorContext): Promise<void> {
+  const { execution } = context;
+
+  if (options.onGuardRefusal === undefined || execution === undefined || !guardRefusals.has(error)) {
+    return;
+  }
+
+  try {
+    await options.onGuardRefusal({ ...context, execution });
+  } catch {
+    // The request is refused either way: a failing hook must not turn the refusal into a fault.
+  }
 }
 
 function notify(options: ExecuteOptions, error: unknown, context: ErrorContext): void {

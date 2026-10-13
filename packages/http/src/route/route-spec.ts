@@ -1,6 +1,7 @@
 import type { HttpMethod } from './http-method.js';
 import type { RequestSchemas } from './request-schemas.js';
 import type { ResponsesSpec } from './responses-spec.js';
+import type { UploadSpec } from './upload-spec.js';
 
 export interface RouteSpec<
   Request extends RequestSchemas = RequestSchemas,
@@ -14,6 +15,10 @@ export interface RouteSpec<
   readonly description?: string;
   readonly tags?: readonly string[];
   readonly request?: Request;
+  /** A file received as `multipart/form-data`: the text fields are the body, the file streams to the handler. */
+  readonly upload?: UploadSpec;
+  /** The body is not parsed: the handler reads `context.stream`. For a route that receives a file as it is, such as `signedFileRoutes`. */
+  readonly rawBody?: boolean;
   readonly responses: Responses;
   /** Domain error codes this route may answer; they are documented in the contract. */
   readonly errors?: readonly string[];

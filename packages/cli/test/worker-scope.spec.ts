@@ -105,6 +105,7 @@ describe('worker-scope', () => {
       'port',
       'route',
       'controller',
+      'file-upload',
       'route-group (without --role, or with a role the vocabulary already holds)',
       'guard',
       'integration-handler',

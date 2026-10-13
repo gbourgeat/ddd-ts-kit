@@ -5,6 +5,7 @@ import {
   type ExecutionContextExtensionValues,
   type ExecutionOrigin,
   type Session,
+  type TenantElevation,
 } from '@ddd-ts-kit/kernel';
 import type { Buildable } from '../builders/buildable.js';
 import { Builder } from '../builders/builder.js';
@@ -19,6 +20,7 @@ interface ExecutionContextProps {
   actor: Actor | undefined;
   session: Session | undefined;
   tenantId: string | undefined;
+  elevation: TenantElevation | undefined;
   locale: string | undefined;
   deadline: Date | undefined;
   origin: ExecutionOrigin;
@@ -53,6 +55,11 @@ export class ExecutionContextBuilder extends Builder<ExecutionContextProps, Exec
     return this.with('tenantId', tenantId);
   }
 
+  /** Platform staff reading over tenants, as `acrossTenants` would have opened it, without the audit entry. */
+  elevatedOver(tenants: TenantElevation['tenants'], reason = 'TEST'): this {
+    return this.with('elevation', { reason, tenants });
+  }
+
   from(origin: ExecutionOrigin): this {
     return this.with('origin', origin);
   }
@@ -76,6 +83,7 @@ export class ExecutionContextBuilder extends Builder<ExecutionContextProps, Exec
       actor: undefined,
       session: undefined,
       tenantId: undefined,
+      elevation: undefined,
       locale: undefined,
       deadline: undefined,
       origin: 'test',
@@ -84,7 +92,7 @@ export class ExecutionContextBuilder extends Builder<ExecutionContextProps, Exec
   }
 
   protected construct(props: ExecutionContextProps): ExecutionContext {
-    const { causationId, actor, session, tenantId, locale, deadline, ...required } = props;
+    const { causationId, actor, session, tenantId, elevation, locale, deadline, ...required } = props;
 
     return executionContext({
       ...required,
@@ -92,6 +100,7 @@ export class ExecutionContextBuilder extends Builder<ExecutionContextProps, Exec
       ...(causationId === undefined ? {} : { causationId }),
       ...(session === undefined ? {} : { session }),
       ...(tenantId === undefined ? {} : { tenantId }),
+      ...(elevation === undefined ? {} : { elevation }),
       ...(locale === undefined ? {} : { locale }),
       ...(deadline === undefined ? {} : { deadline }),
     });

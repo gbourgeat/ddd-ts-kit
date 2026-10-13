@@ -12,6 +12,7 @@ export { aSession } from './execution/a-session.js';
 export { anExecutionContext } from './execution/an-execution-context.js';
 export { ExecutionContextBuilder } from './execution/execution-context-builder.js';
 export { scoped } from './execution/scoped.js';
+export { asTenant } from './execution/as-tenant.js';
 export { SessionBuilder } from './execution/session-builder.js';
 export { createTestBuses, type TestBuses, type TestBusesOptions } from './harness/create-test-buses.js';
 export { expectSnapshotEquivalence } from './event-sourcing/expect-snapshot-equivalence.js';

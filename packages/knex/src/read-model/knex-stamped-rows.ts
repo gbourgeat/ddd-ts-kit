@@ -1,6 +1,7 @@
 import type { Knex } from 'knex';
-import type { EventStamp, ReadModelRows, StampedRow } from '@ddd-ts-kit/kernel';
+import { tenantScopeOf, type EventStamp, type ReadModelRows, type StampedRow } from '@ddd-ts-kit/kernel';
 import { insertIgnoringConflict } from '../sql/insert-ignoring-conflict.js';
+import { TENANT_COLUMN, whereTenant } from '../tenancy/where-tenant.js';
 import type { KnexContext } from '../unit-of-work/knex-context.js';
 import type { KnexReadModelOptions } from './knex-read-model-options.js';
 import { recordsOf } from './records-of.js';
@@ -18,7 +19,7 @@ export class KnexStampedRows<Row extends object> implements ReadModelRows<Row> {
   }
 
   async find(key: string): Promise<StampedRow<Row> | undefined> {
-    const answered: unknown = await this.table().where(this.keyColumn(), key).limit(1);
+    const answered: unknown = await this.reading().where(this.keyColumn(), key).limit(1);
     const [record] = recordsOf(answered);
 
     if (record === undefined) {
@@ -50,7 +51,7 @@ export class KnexStampedRows<Row extends object> implements ReadModelRows<Row> {
   }
 
   async replace(entry: StampedRow<Row>, held: EventStamp): Promise<boolean> {
-    const replaced: unknown = await this.table()
+    const replaced: unknown = await this.writing()
       .where(this.keyColumn(), entry.key)
       .where('last_event_id', held.eventId)
       .where('last_event_at', held.occurredAt)
@@ -67,9 +68,25 @@ export class KnexStampedRows<Row extends object> implements ReadModelRows<Row> {
     return schema === undefined ? builder : builder.withSchema(schema);
   }
 
+  /** What a read may reach: the table, confined to the tenant when the read model is of tenant data. */
+  reading(): Knex.QueryBuilder {
+    const { tenant } = this.options;
+
+    return tenant === undefined ? this.table() : whereTenant(this.table(), tenant);
+  }
+
+  private writing(): Knex.QueryBuilder {
+    const { tenant } = this.options;
+
+    return tenant === undefined ? this.table() : this.table().where(TENANT_COLUMN, tenantScopeOf(tenant).tenantId);
+  }
+
   private recordOf({ key, row, stamp }: StampedRow<Row>): Record<string, unknown> {
+    const { tenant } = this.options;
+
     return {
       ...(row === undefined ? {} : this.mapper.toRecord(row)),
+      ...(tenant === undefined ? {} : { [TENANT_COLUMN]: tenantScopeOf(tenant).tenantId }),
       [this.keyColumn()]: key,
       last_event_id: stamp.eventId,
       last_event_at: stamp.occurredAt,

@@ -100,6 +100,7 @@ describe('a declared job', () => {
         jitterMs: 0,
         enabled: true,
         singleInstance: true,
+        tenancy: 'global',
         timeoutMs: 600_000,
         job: 'IssueMonthlyInvoicesJob',
         module: 'billing',

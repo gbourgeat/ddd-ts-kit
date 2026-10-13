@@ -22,7 +22,12 @@ export function auditModule(audit: Audit): ContextModule {
     name: 'audit',
     register(builder) {
       builder.bind(AuditTrail).toValue(audit.trail);
+{{#if tenancy.any}}
+      builder.bind(AuditReader).toValue(audit.reader);
+{{/if}}
+{{#unless tenancy.any}}
       builder.bind(AuditReader).toValue(audit.trail);
+{{/unless}}
 {{#if audit.route}}
 {{#if authz.rebac}}
 

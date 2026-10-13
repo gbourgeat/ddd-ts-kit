@@ -71,6 +71,10 @@ This is why practices come: a time on a calendar is held once, under rules of av
 | Record | What a practice keeps of the attendance of one patient: the no-shows and cancellations noted, in order |  |
 | Note | To keep a fact in an attendance record, once per appointment |  |
 | History | The facts of an attendance record as they were noted, oldest first |  |
+| Document | A file attached to an appointment by the practice: a referral, a prescription, a report; its content lives in the file storage |  |
+| Attached | Joined to an appointment, kept as a reference to the stored file |  |
+| Remove | To take a document off an appointment, its file deleted once the change is committed |  |
+| Name | What a document was called when it was sent, shown back to people |  |
 
 ## Aggregates
 
@@ -117,6 +121,9 @@ This is why practices come: a time on a calendar is held once, under rules of av
 - `scheduling:calendar.browse`
 - `scheduling:attendance.note`
 - `scheduling:attendance.read`
+- `scheduling:appointment.attach-document`
+- `scheduling:appointment.remove-document`
+- `scheduling:appointment.read-document`
 <!-- /ddd-ts-kit:permissions -->
 
 ## Scheduled jobs
@@ -160,6 +167,7 @@ Generated from the code by `ddd-ts-kit docs`; the same facts as data: `ddd-ts-ki
 |---|---|---|
 | `AddException` | command | `calendar.add-exception` |
 | `AddTimeOff` | command | `calendar.add-time-off` |
+| `AttachAppointmentDocument` | command | `appointment.attach-document` |
 | `BookAppointment` | command | `appointment.book` |
 | `CancelAppointment` | command | `appointment.cancel` |
 | `CompleteAppointment` | command | `appointment.complete` |
@@ -168,12 +176,14 @@ Generated from the code by `ddd-ts-kit docs`; the same facts as data: `ddd-ts-ki
 | `DefineAppointmentType` | command | `calendar.define-appointment-type` |
 | `ExpireUnconfirmedAppointments` | command | `appointment.expire` |
 | `GetAppointment` | query | `appointment.read` |
+| `GetAppointmentDocument` | query | `appointment.read-document` |
 | `GetCalendarDay` | query | `calendar.browse` |
 | `JoinWaitlist` | command | `waitlist.join` |
 | `MarkAppointmentNoShow` | command | `appointment.mark-no-show` |
 | `NoteCancellation` | command | `attendance.note` |
 | `NoteNoShow` | command | `attendance.note` |
 | `OfferFreedSlot` | command | `waitlist.offer` |
+| `RemoveAppointmentDocument` | command | `appointment.remove-document` |
 | `RescheduleAppointment` | command | `appointment.reschedule` |
 | `SearchAppointments` | query | `appointment.search` |
 | `SearchAttendanceHistory` | query | `attendance.read` |
@@ -190,6 +200,9 @@ Generated from the code by `ddd-ts-kit docs`; the same facts as data: `ddd-ts-ki
 | POST | `/appointments/:appointmentId/cancellation` | `cancelAppointment` | `AppointmentsRoutes` | `Authenticated` | `CancelAppointment` | `appointment.cancel` | params: `CancelAppointmentParams`, body: `CancelAppointmentBody` | 201: `CancelAppointmentAccepted` | `UNAUTHORIZED`, `FORBIDDEN`, `APPOINTMENT_NOT_FOUND`, `APPOINTMENT_ENDED`, `REASON_REQUIRED` |
 | POST | `/appointments/:appointmentId/completion` | `completeAppointment` | `AppointmentsRoutes` | `Authenticated` | `CompleteAppointment` | `appointment.complete` | params: `CompleteAppointmentParams` | 201: `CompleteAppointmentAccepted` | `UNAUTHORIZED`, `FORBIDDEN`, `APPOINTMENT_NOT_FOUND`, `APPOINTMENT_ENDED`, `APPOINTMENT_NOT_STARTED` |
 | POST | `/appointments/:appointmentId/confirmation` | `confirmAppointment` | `AppointmentsRoutes` | `Authenticated` | `ConfirmAppointment` | `appointment.confirm` | params: `ConfirmAppointmentParams` | 201: `ConfirmAppointmentAccepted` | `UNAUTHORIZED`, `FORBIDDEN`, `APPOINTMENT_NOT_FOUND`, `APPOINTMENT_ENDED`, `APPOINTMENT_ALREADY_CONFIRMED` |
+| DELETE | `/appointments/:appointmentId/document` | `removeAppointmentDocument` | `AppointmentsRoutes` | `Authenticated` | `RemoveAppointmentDocument` | `appointment.remove-document` | params: `RemoveAppointmentDocumentParams` | 200: `RemoveAppointmentDocumentAccepted` | `UNAUTHORIZED`, `FORBIDDEN`, `APPOINTMENT_NOT_FOUND`, `NO_DOCUMENT` |
+| GET | `/appointments/:appointmentId/document` | `getAppointmentDocument` | `AppointmentsRoutes` | `Authenticated` | `GetAppointmentDocument` | `appointment.read-document` | params: `GetAppointmentDocumentParams` | 200: `GetAppointmentDocumentAnswer` | `UNAUTHORIZED`, `FORBIDDEN`, `APPOINTMENT_NOT_FOUND`, `NO_DOCUMENT` |
+| POST | `/appointments/:appointmentId/document` | `attachAppointmentDocument` | `AppointmentsRoutes` | `Authenticated` | `AttachAppointmentDocument` | `appointment.attach-document` | params: `AttachAppointmentDocumentParams` | 201: `AttachAppointmentDocumentAccepted` | `UNAUTHORIZED`, `FORBIDDEN`, `APPOINTMENT_NOT_FOUND`, `DOCUMENT_NAME_TOO_LONG`, `FILE_REJECTED` |
 | POST | `/appointments/:appointmentId/no-show` | `markAppointmentNoShow` | `AppointmentsRoutes` | `Authenticated` | `MarkAppointmentNoShow` | `appointment.mark-no-show` | params: `MarkAppointmentNoShowParams` | 201: `MarkAppointmentNoShowAccepted` | `UNAUTHORIZED`, `FORBIDDEN`, `APPOINTMENT_NOT_FOUND`, `APPOINTMENT_ENDED`, `APPOINTMENT_NOT_STARTED` |
 | POST | `/appointments/:appointmentId/reschedule` | `rescheduleAppointment` | `AppointmentsRoutes` | `Authenticated` | `RescheduleAppointment` | `appointment.reschedule` | params: `RescheduleAppointmentParams`, body: `RescheduleAppointmentBody` | 201: `RescheduleAppointmentAccepted` | `UNAUTHORIZED`, `FORBIDDEN`, `APPOINTMENT_NOT_FOUND`, `APPOINTMENT_ENDED`, `UNKNOWN_CALENDAR`, `UNKNOWN_APPOINTMENT_TYPE`, `OUTSIDE_AVAILABILITY`, `OFF_GRID`, `BOOKING_TOO_LATE`, `BOOKING_TOO_FAR`, `SLOT_TAKEN`, `PATIENT_LIMIT_REACHED` |
 | POST | `/calendars` | `createCalendar` | `CalendarsRoutes` | `Authenticated` | `CreateCalendar` | `calendar.create` | body: `CreateCalendarBody` | 201: `CreateCalendarAccepted` | `UNAUTHORIZED`, `FORBIDDEN`, `UNKNOWN_PRACTITIONER`, `UNKNOWN_TIME_ZONE` |
@@ -262,6 +275,8 @@ Generated from the code by `ddd-ts-kit docs`; the same facts as data: `ddd-ts-ki
 | `AppointmentError` | `reasonRequired` | `REASON_REQUIRED` | none |
 | `AppointmentError` | `slotTaken` | `SLOT_TAKEN` | `startsAt` |
 | `AttendanceRecordError` | `alreadyNoted` | `ALREADY_NOTED` | none |
+| `AppointmentError` | `noDocument` | `NO_DOCUMENT` | none |
+| `AppointmentError` | `documentNameTooLong` | `DOCUMENT_NAME_TOO_LONG` | `longest` |
 | `CalendarError` | `invalidAppointmentType` | `INVALID_APPOINTMENT_TYPE` | none |
 | `CalendarError` | `invalidBookingWindow` | `INVALID_BOOKING_WINDOW` | none |
 | `CalendarError` | `invalidDay` | `INVALID_DAY` | `day` |

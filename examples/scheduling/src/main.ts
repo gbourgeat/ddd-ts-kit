@@ -10,6 +10,7 @@ import { openPersistence } from '@/platform/database/open-persistence';
 import { createEventProvider } from '@/platform/events/create-event-provider';
 import { startCatchUp } from '@/platform/events/start-catch-up';
 import { startOutboxRelay } from '@/platform/events/start-outbox-relay';
+import { openFiles } from '@/platform/files/open-files';
 import { storeFedProjections } from '@/platform/events/store-fed-projections';
 import { startHttpServer } from '@/platform/http/start-http-server';
 import { jobSettings } from '@/platform/job-settings';
@@ -28,6 +29,7 @@ const application = composeApplication(persistence, {
   resilience: config.resilience,
   jobs: { start: config.runJobs, settings: jobSettings(process.env) },
   redis,
+  files: openFiles(config.files),
 });
 
 await application.start();

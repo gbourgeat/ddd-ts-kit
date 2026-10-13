@@ -68,6 +68,12 @@ export async function up(knex: Knex): Promise<void> {
 `processed_events` has `(consumer, event_id)` as its primary key. `occurred_at` is text on
 purpose: the envelope comes back exactly as published, offset included.
 
+A multi-tenant project keeps the tenant of each event, so that its consumers run in that tenant:
+`createOutboxTables(knex, { schema: 'messaging', tenant: true })` adds a nullable `tenant_id`
+(`addOutboxTenantColumn(knex, { schema: 'messaging' })` is the migration of a project that becomes
+multi-tenant), and `new KnexOutboxStore(context, { schema: 'messaging', tenant: true })` writes
+it. A table that has the column is read back either way.
+
 One schema per bounded context: `schemaNameOf('order-management')` gives `order_management`,
 to pass to `knex.schema.createSchemaIfNotExists`, `knex.schema.withSchema` and
 `.withSchema(...)` on queries. Contexts never join each other's tables.
@@ -418,6 +424,91 @@ The rules these examples hold, and that the tests of this package check on a rea
   the adapter checks the types of the position before they reach a statement.
 - **An offset page answers `total`**, a cursor page `nextCursor`. Offer the offset form for
   small, browsable lists and the cursor form for anything that grows.
+
+## Tenant isolation
+
+Four strategies, chosen per project ([Multitenancy](../../docs/concepts/multitenancy.md) says
+when each fits). Every one of them is proven here by `tenantIsolationContract` of
+`@ddd-ts-kit/testing/contracts`, on PGlite and on PostgreSQL.
+
+**Shared tables.** One table per aggregate, a `tenant_id` column, and every statement confined
+by the kit instead of by a condition written by hand:
+
+```ts
+const INVOICES = { schema: BILLING, table: 'invoices' };
+
+// reads: the tenant of the work, or the tenants of an elevation
+const row = await tenantTable<InvoiceRow>(this.context, this.scope, INVOICES).where({ id }).first();
+// updates and deletes: the one tenant of the work, which an elevation never widens
+await ownTenantTable<InvoiceRow>(this.context, this.scope, INVOICES).where({ id, version: expected }).update(changes);
+// inserts name the tenant themselves
+const inserted = { ...state, ...tenantRow(tenantScopeOf(this.scope)), ...auditRow(stampCreation(this.scope, this.clock)) };
+```
+
+`whereTenant(builder, scope)` is the condition alone, for a builder of your own. Work that names
+no tenant raises `NoCurrentTenantError` before any SQL. A read model of tenant data passes
+`tenant: scope` to `KnexReadModelTable` and `KnexReadModelStore`: each row is written with the
+tenant of the work and every read and write is confined to it (keys stay unique across tenants;
+a rebuild, which runs in no tenant, is refused).
+
+**Row-level security**, a second line on shared tables: the database itself refuses a row of
+another tenant, even to a statement that forgot its condition.
+
+```ts
+// the migration that creates the table
+await enableTenantIsolation(knex, INVOICES); // enable, force on the owner, one policy per command
+
+// the composition root
+const unitOfWork = createKnexUnitOfWork(knex, undefined, { begin: tenantSession(executionScope) });
+```
+
+`tenantSession` sets the tenant settings for each transaction only (`set_config(..., true)`), so
+a pooled connection never carries a tenant into the next one: `ddd_ts_kit.tenant_id`, and for an
+elevation `ddd_ts_kit.reach` (the tenants listed) or `ddd_ts_kit.every_tenant`. There is one
+policy per command: a select sees the tenant of the work and what an elevation reaches; an
+insert, an update and a delete only ever touch the tenant of the work, so an elevated
+`delete from invoices` without a condition removes no other tenant's row.
+`tenantIsolationStatements(target)` gives the SQL for a migration written by hand. Three
+conditions hold it: the application connects with a role that is **not a superuser and has no
+`BYPASSRLS`** (both ignore every policy); every statement runs **inside the unit of work** (a
+statement outside of a transaction carries no setting and sees nothing, so queries go through the
+unit of work too); migrations run as the owner, outside of it.
+
+**Schema per tenant.** The tables of a context exist once per tenant, in `<schema>__<tenant>`
+(`tenantSchemaOf('billing', 'acme')`; a tenant id that a schema name could not hold as it is, is
+refused rather than altered). `tenantSchemaTable(context, scope, { schema: BILLING, table:
+'invoices' })` reaches the tenant's copy. The tenant migrations live in a directory of their own
+and name their schema from the tenant they run for:
+
+```ts
+export async function up(knex: Knex): Promise<void> {
+  const schema = tenantSchemaOf(BILLING, tenantOfMigration(knex));
+
+  await knex.schema.createSchemaIfNotExists(schema);
+  await knex.schema.withSchema(schema).createTable('invoices', (table) => { /* ... */ });
+}
+```
+
+`migrateTenantSchema(knex, tenantId, { directory: 'migrations/tenant' })` applies them for one
+tenant and records them in `migrations__<tenant>`, so each tenant moves on its own and a new
+tenant is provisioned by its first run. `tenantSearchPath(scope, [BILLING])` is a `begin` that
+sets the search path of each transaction to the tenant's schemas only, for SQL that names no
+schema. An elevation does not reach several schemas at once: staff read one tenant at a time.
+
+**Database per tenant.** `new TenantDatabases({ connectionOf: (tenantId) => configOf(tenantId),
+maxTenants: 20 })` opens one knex (one bounded pool) per tenant on first use. At most
+`maxTenants` instances exist at once, those still closing included, so the server never has to
+accept more than `maxTenants * pool.max` connections per instance of the application. Work holds
+the instance of its tenant by a lease (`databases.lease(tenantId, (knex) => ...)`): an instance is
+closed only when no work holds it, the least recently used first, and work for another tenant
+waits for a place instead of opening beyond the bound. `createTenantRoutedUnitOfWork(databases,
+scope)` is the unit of work and `KnexContext`: each transaction holds a lease on the database of
+the tenant of the work until it ends; every statement runs inside it
+(`StatementOutsideUnitOfWorkError` otherwise, so queries go through the unit of work too), work
+that names no tenant reaches no database, and work of another tenant never joins an open
+transaction (`CrossTenantUnitOfWorkError`). `migrateEveryTenant(databases, directory, migrate)`
+applies the migrations to every tenant of a `TenantDirectory`, stopping at the first failure and
+naming its tenant.
 
 ## Criteria
 

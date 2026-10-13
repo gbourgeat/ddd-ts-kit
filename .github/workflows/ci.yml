@@ -171,6 +171,8 @@ jobs:
     timeout-minutes: 20
     env:
       DDD_TS_KIT_TEST_DATABASE_URL: postgres://app:app@localhost:5432/app
+      DDD_TS_KIT_TEST_S3_ENDPOINT: http://localhost:9000
+      DDD_TS_KIT_OPENFGA_URL: http://localhost:8080
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -179,6 +181,24 @@ jobs:
       - name: PostgreSQL (pulled with retries, from the next registry when one refuses)
         if: ${{ needs.install.outputs.integration == 'true' }}
         run: sh pipeline/github/scripts/start-postgres.sh
+      - name: MinIO for the S3 connector (pinned by digest, pulled with retries)
+        if: ${{ needs.install.outputs.integration == 'true' }}
+        run: sh pipeline/github/scripts/start-minio.sh
+      - name: OpenFGA (the image the specs of @ddd-ts-kit/openfga are held to, pinned by digest)
+        if: ${{ needs.install.outputs.integration == 'true' }}
+        run: |
+          docker run --detach --name openfga --publish 8080:8080 \
+            openfga/openfga:v1.22.0@sha256:9cf9a20af32a40434cd3a788c429879439ee9ea9abf65c9c200ee17cd43f769e run > /dev/null
+          for second in $(seq 1 60); do
+            if curl --silent --fail http://localhost:8080/healthz > /dev/null; then
+              echo "OpenFGA is ready (${second}s)."
+              exit 0
+            fi
+            sleep 1
+          done
+          docker logs openfga >&2
+          echo "OpenFGA did not become healthy." >&2
+          exit 1
       - name: Adapter specs on a server (skipped when no adapter package is reached)
         if: ${{ needs.install.outputs.integration == 'true' }}
         run: npm run ci:test:integration

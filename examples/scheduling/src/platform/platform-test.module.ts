@@ -11,8 +11,10 @@ import {
   SnapshotStore,
   SubjectKeyStore,
 } from '@ddd-ts-kit/kernel';
+import { InMemoryFileStorage } from '@ddd-ts-kit/kernel';
 import { KnexContext } from '@ddd-ts-kit/knex';
 import { relationshipSchema } from '@/platform/auth/relationship-schema';
+import { bindFiles } from '@/platform/files/bind-files';
 // ddd-ts-kit:imports
 import { PersonDirectoryContract } from '@/contexts/identity/published-language/index';
 import { AppointmentExportContract } from '@/contexts/scheduling/published-language/index';
@@ -37,6 +39,9 @@ export const platformTestModule = defineContextModule({
     builder
       .bind(RelationTupleStore)
       .toFactory(() => new SchemaCheckedTupleStore(relationshipSchema, new InMemoryRelationTupleStore()));
+
+    // The files a handler spec stores stay in the memory of the test.
+    bindFiles(builder, new InMemoryFileStorage());
 
     // ddd-ts-kit:test-bindings
     builder.bind(PersonDirectoryContract).toValue({ byIds: () => Promise.resolve([]) });

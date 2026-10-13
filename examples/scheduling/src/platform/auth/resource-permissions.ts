@@ -39,6 +39,9 @@ export const resourcePermissions: PermissionMapping = {
     [schedulingPermissions['appointment.confirm'].id]: 'change',
     [schedulingPermissions['appointment.complete'].id]: 'close',
     [schedulingPermissions['appointment.mark-no-show'].id]: 'close',
+    [schedulingPermissions['appointment.attach-document'].id]: 'change',
+    [schedulingPermissions['appointment.remove-document'].id]: 'change',
+    [schedulingPermissions['appointment.read-document'].id]: 'read',
   },
   person: {
     [notificationPermissions['notification.read'].id]: 'be',

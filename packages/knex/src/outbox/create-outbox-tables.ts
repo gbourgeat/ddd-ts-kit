@@ -53,6 +53,11 @@ async function createOutboxTable(knex: Knex, options: OutboxTablesOptions): Prom
     table.jsonb('payload');
     table.text('traceparent');
     table.text('correlation_id');
+
+    if (options.tenant === true) {
+      table.string('tenant_id', INDEXABLE_LENGTH);
+    }
+
     table.string('status', 16).notNullable().defaultTo('pending');
     table.integer('attempts').notNullable().defaultTo(0);
     table.datetime('next_attempt_at', INSTANT).notNullable();

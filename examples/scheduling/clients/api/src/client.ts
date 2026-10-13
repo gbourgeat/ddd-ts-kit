@@ -14,7 +14,7 @@ export function connect(options: ClientOptions<SchemeName>): Connection {
   return openConnection(options, SCHEMES);
 }
 
-/** scheduling 0.7.0, every operation of its contract as a method. */
+/** scheduling 0.9.0, every operation of its contract as a method. */
 export interface Client {
   /**
    * Search appointments: `GET /appointments`.
@@ -52,6 +52,24 @@ export interface Client {
    * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), APPOINTMENT_NOT_FOUND (404), APPOINTMENT_ALREADY_CONFIRMED (409), APPOINTMENT_ENDED (409), VALIDATION_FAILED (422).
    */
   confirmAppointment(input: operations.ConfirmAppointmentInput, options?: CallOptions): Promise<operations.ConfirmAppointmentResult>;
+  /**
+   * Get a link to the document of an appointment: `GET /appointments/{appointmentId}/document`.
+   *
+   * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), APPOINTMENT_NOT_FOUND (404), NO_DOCUMENT (404), VALIDATION_FAILED (422).
+   */
+  getAppointmentDocument(input: operations.GetAppointmentDocumentInput, options?: CallOptions): Promise<operations.GetAppointmentDocumentResult>;
+  /**
+   * Attach a document to an appointment: `POST /appointments/{appointmentId}/document`.
+   *
+   * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), APPOINTMENT_NOT_FOUND (404), FILE_TOO_LARGE (413), UNSUPPORTED_MEDIA_TYPE (415), DOCUMENT_NAME_TOO_LONG (422), FILE_REJECTED (422), VALIDATION_FAILED (422).
+   */
+  attachAppointmentDocument(input: operations.AttachAppointmentDocumentInput, options?: CallOptions): Promise<operations.AttachAppointmentDocumentResult>;
+  /**
+   * Remove the document of an appointment: `DELETE /appointments/{appointmentId}/document`.
+   *
+   * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), APPOINTMENT_NOT_FOUND (404), NO_DOCUMENT (404), VALIDATION_FAILED (422).
+   */
+  removeAppointmentDocument(input: operations.RemoveAppointmentDocumentInput, options?: CallOptions): Promise<operations.RemoveAppointmentDocumentResult>;
   /**
    * Mark appointment no show: `POST /appointments/{appointmentId}/no-show`.
    *
@@ -184,6 +202,9 @@ export function createClient(options: ClientOptions<SchemeName>): Client {
     cancelAppointment: (input, call) => operations.cancelAppointment(connection, input, call),
     completeAppointment: (input, call) => operations.completeAppointment(connection, input, call),
     confirmAppointment: (input, call) => operations.confirmAppointment(connection, input, call),
+    getAppointmentDocument: (input, call) => operations.getAppointmentDocument(connection, input, call),
+    attachAppointmentDocument: (input, call) => operations.attachAppointmentDocument(connection, input, call),
+    removeAppointmentDocument: (input, call) => operations.removeAppointmentDocument(connection, input, call),
     markAppointmentNoShow: (input, call) => operations.markAppointmentNoShow(connection, input, call),
     rescheduleAppointment: (input, call) => operations.rescheduleAppointment(connection, input, call),
     searchAuditEntries: (input, call) => operations.searchAuditEntries(connection, input, call),
