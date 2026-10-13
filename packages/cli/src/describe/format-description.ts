@@ -33,6 +33,7 @@ export function formatDescription(context: ContextDescription): string {
     ['scheduled jobs', context.jobs.map((job) => `${job.name} (${job.schedule}, sends ${job.command})`)],
     ['background jobs', context.backgroundJobs.map((job) => `${job.name} (${job.className})`)],
     ['state machines', context.stateMachines.map(stateMachineLine)],
+    ['process managers', context.processes.map(({ name, className }) => `${name} (${className})`)],
   ];
 
   return [

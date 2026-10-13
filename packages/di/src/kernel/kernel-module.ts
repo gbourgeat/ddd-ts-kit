@@ -19,6 +19,7 @@ import {
   InMemoryUnitOfWork,
   IntegrationEventPublisher,
   IntegrationEventSubscriber,
+  InMemoryProcessStore,
   JobQueue,
   JobScheduler,
   Lock,
@@ -27,6 +28,8 @@ import {
   NoopErrorReporter,
   NoopLogger,
   NoopMetrics,
+  ProcessRunner,
+  ProcessStore,
   ProcessedEventStore,
   QueryBus,
   RateLimiter,
@@ -44,6 +47,7 @@ import {
   JobStore,
   QueueWorker,
   StoredJobQueue,
+  StoredProcessRunner,
   reportFailedBackgroundJobs,
   reportFailedRuns,
 } from '@ddd-ts-kit/scheduling';
@@ -211,6 +215,17 @@ function bindQueuePorts(builder: ModuleBuilder, options: KernelModuleOptions): v
   );
 
   builder.bind(QueueWorker).toFactory(either(options.queueWorker, (resolve) => queueWorker(resolve, options)));
+  builder.bind(ProcessStore).toFactory(either(options.processStore, () => new InMemoryProcessStore()));
+
+  builder.bind(ProcessRunner).toFactory(
+    (resolve) =>
+      new StoredProcessRunner({
+        store: resolve(ProcessStore),
+        jobs: resolve(JobQueue),
+        commands: resolve(CommandBus),
+        unitOfWork: resolve(UnitOfWork),
+      }),
+  );
 }
 
 /** Like the scheduler, the store is resolved when the worker first claims, not when the application registers the jobs. */

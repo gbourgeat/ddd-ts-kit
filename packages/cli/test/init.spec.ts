@@ -93,7 +93,7 @@ describe('init', () => {
     const root = initProject('--assembly', 'discovery', '--context', 'billing:core');
 
     const suffixes =
-      'command,query,handler,integration-handler,event-handler,publisher,policy,job,projection,repository,gateway,adapter';
+      'command,query,handler,integration-handler,event-handler,publisher,policy,job,background-job,projection,repository,gateway,adapter';
 
     expect(jsonAt(readJson(root, 'ddd-ts-kit.config.json'), 'stack')).toMatchObject({
       style: 'declared',

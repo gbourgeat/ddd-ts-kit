@@ -45,6 +45,7 @@ function membersOf(kernel: TestKernel): TestKernel {
     jobs: kernel.jobs,
     jobQueue: kernel.jobQueue,
     backgroundJobs: kernel.backgroundJobs,
+    processes: kernel.processes,
   };
 }
 

@@ -10,6 +10,7 @@ import {
   InMemoryLock,
   InMemoryLogger,
   InMemoryMetrics,
+  InMemoryProcessStore,
   InMemoryRateLimiter,
   SequentialIdGenerator,
   executionContext,
@@ -68,6 +69,7 @@ export function createTestKernel(options: TestApplicationOptions, resolve: Resol
     rateLimiter: new InMemoryRateLimiter(clock),
     jobs: testJobs(scheduler),
     ...testQueue({ clock, scope: executionScope, ...observability }, errors),
+    processes: new InMemoryProcessStore(),
   };
 }
 

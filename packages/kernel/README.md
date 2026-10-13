@@ -548,7 +548,7 @@ are in the README of `@ddd-ts-kit/scheduling`.
 ```ts
 // contexts/billing/application/background/compile-statements.background-job.ts
 @Background({ maxAttempts: 3, timeout: '10m' })
-export class CompileStatementsJob implements BackgroundJob<CompileStatementsPayload> {
+export class CompileStatementsBackgroundJob implements BackgroundJob<CompileStatementsPayload> {
   static readonly jobName = 'billing.compile-statements';
 
   constructor(private readonly commands: CommandBus) {}
@@ -560,7 +560,7 @@ export class CompileStatementsJob implements BackgroundJob<CompileStatementsPayl
 ```
 
 A background job is named by its static `jobName`, which is how a use case enqueues it
-(`jobs.enqueue(CompileStatementsJob, { month })`, the payload typed by `run`). The decorator
+(`jobs.enqueue(CompileStatementsBackgroundJob, { month })`, the payload typed by `run`). The decorator
 takes the options, all optional: `maxAttempts` (5), `backoff` (`{ baseMs: 1000, factor: 2,
 maxMs: 300000 }`), `timeout` and `lease` (30 s), as milliseconds or `'10m'`. A name that is not
 `<context>.<job-name>` and options it cannot read throw a `DeclarationError` when the file
@@ -841,6 +841,28 @@ builds: origin `queue`, the correlation, actor and tenant of the work that enque
 `retryDelayMs(policy, attempt)` is the backoff. The queue, its worker and its stores are
 `@ddd-ts-kit/scheduling` and the ORM packages; why and how:
 [Background jobs](../../docs/concepts/background-jobs.md).
+
+### ProcessRunner and ProcessStore
+
+```ts
+abstract class ProcessRunner {
+  abstract run<State>(process: ProcessType<State>, id: string, step: (current: State | undefined) => ProcessDecision<State> | undefined): Promise<void>;
+  abstract timeout<State>(process: ProcessType<State>, due: ProcessTimeoutDue & { jobId: string }, step: (current: State) => ProcessDecision<State> | undefined): Promise<void>;
+}
+
+abstract class ProcessStore {
+  abstract load(name: string, id: string): Promise<StoredProcess | undefined>;
+  abstract save(process: StoredProcess): Promise<void>; // ConcurrencyError unless version is the stored one plus 1
+}
+```
+
+Process managers: a class of `application/processes/` (`ProcessManager<State>`) with a static
+`processName`, an optional static `timeoutJob` and a static `isState` guard; its steps answer a
+`ProcessDecision` (`state`, `commands`, `timeouts` as `{ name, at }`, `cancel`, `ended`). A state
+the guard does not recognise throws `UnreadableProcessStateError`. `InMemoryProcessStore` keeps
+the instances as JSON, for tests and one process. The runner is `StoredProcessRunner` of
+`@ddd-ts-kit/scheduling`; why and how:
+[Sagas and process managers](../../docs/concepts/sagas-and-process-managers.md).
 
 ### RateLimiter
 

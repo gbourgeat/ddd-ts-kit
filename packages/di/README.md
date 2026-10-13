@@ -831,7 +831,7 @@ context, named by its static `jobName`:
 ```ts
 // contexts/billing/application/background/compile-statements.background-job.ts
 @Background({ maxAttempts: 3, timeout: '10m' })
-export class CompileStatementsJob implements BackgroundJob<CompileStatementsPayload> {
+export class CompileStatementsBackgroundJob implements BackgroundJob<CompileStatementsPayload> {
   static readonly jobName = 'billing.compile-statements';
 
   constructor(private readonly commands: CommandBus) {}
@@ -843,7 +843,7 @@ export class CompileStatementsJob implements BackgroundJob<CompileStatementsPayl
 ```
 
 An explicit module writes `builder.backgroundJob('billing.compile-statements', { maxAttempts: 3 })
-.handledBy(CompileStatementsJob, [CommandBus])`; a name other than the `jobName` of the class is
+.handledBy(CompileStatementsBackgroundJob, [CommandBus])`; a name other than the `jobName` of the class is
 refused (`INVALID_JOB_SETTINGS`), a name declared twice too (`DUPLICATE_JOB`).
 
 - **Registered when the application is created** on the `QueueWorker` of `@ddd-ts-kit/scheduling`,
@@ -858,6 +858,12 @@ refused (`INVALID_JOB_SETTINGS`), a name declared twice too (`DUPLICATE_JOB`).
   instrumentation) and `QueueWorker` (tuned by `queues: { concurrency, pollIntervalMs, graceMs }`,
   failures to the `ErrorReporter`).
 - **`describe().backgroundJobs`** lists each job, its queue and its options, defaults filled in.
+
+`kernelModule()` also binds `ProcessStore` (in memory by default: bind `KnexProcessStore` or
+`DrizzleProcessStore` with `processStore`) and `ProcessRunner`, the runner of
+`@ddd-ts-kit/scheduling` on it, the `JobQueue`, the `CommandBus` and the `UnitOfWork`: the
+handlers that drive a process manager depend on `ProcessRunner`, and its timeout job is a
+background job of the context. In a test application, `app.processes.list()` shows the instances.
 
 In a test application, `app.jobQueue` is the queue the use cases enqueue on, in memory, and
 `app.backgroundJobs.runDue()` runs what is due on `app.clock` and throws what an attempt threw;

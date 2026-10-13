@@ -5,6 +5,7 @@ import {
   FixedClock,
   InMemoryLogger,
   JobQueue,
+  ProcessRunner,
   type BackgroundJob,
   type BackgroundJobExecution,
 } from '@ddd-ts-kit/kernel';
@@ -266,5 +267,28 @@ describe('the queue ports of the kernel module', () => {
     await app.start();
 
     await expect(app.stop()).rejects.toThrow(AggregateError);
+  });
+});
+
+describe('the process ports of the kernel module', () => {
+  it('run the steps of a process on the store bound, in the test application as in an application', async () => {
+    class Dunning {
+      static readonly processName = 'billing.dunning';
+
+      static isState(value: unknown): value is { readonly stage: string } {
+        return typeof value === 'object' && value !== null && 'stage' in value;
+      }
+    }
+
+    const app = createTestApplication({ modules: [billing((builder) => builder.include([CompileStatementsJob]))] });
+
+    const real = createApplication({
+      modules: [kernelModule(), billing((builder) => builder.include([CompileStatementsJob]))],
+    });
+
+    await app.resolve(ProcessRunner).run(Dunning, 'invoice-1', () => ({ state: { stage: 'waiting' } }));
+    await real.resolve(ProcessRunner).run(Dunning, 'invoice-1', () => ({ state: { stage: 'waiting' } }));
+
+    expect(app.processes.list()).toMatchObject([{ name: 'billing.dunning', id: 'invoice-1', version: 1 }]);
   });
 });

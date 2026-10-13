@@ -452,7 +452,7 @@ const worker = new QueueWorker({
   onRun: reportFailedBackgroundJobs(errors),
 });
 
-worker.register({ name: CompileStatementsJob.jobName, options: { maxAttempts: 3 }, run: (payload, execution) => job.run(payload, execution) });
+worker.register({ name: CompileStatementsBackgroundJob.jobName, options: { maxAttempts: 3 }, run: (payload, execution) => job.run(payload, execution) });
 await worker.start();
 ```
 
@@ -472,6 +472,17 @@ Each attempt is recorded as a `BackgroundJobRun` (`succeeded`, `retried`, `dead`
 and `background_job_duration_ms` (`BACKGROUND_RUNS_COUNTER`, `BACKGROUND_DURATION_HISTOGRAM`),
 labelled `job`, `context`, `status` and `error_code`. A store of your own passes
 `jobStoreContract` of `@ddd-ts-kit/testing/contracts`, with its unit of work.
+
+## Process managers
+
+`StoredProcessRunner` is the `ProcessRunner` of the kernel: `new StoredProcessRunner({ store,
+jobs, commands, unitOfWork })`. A step runs in one unit of work: the instance is loaded, the step
+decides, the timeouts it disarms are cancelled and those it arms are enqueued on the `JobQueue`
+as delayed jobs of the `timeoutJob` of the process (`NoTimeoutJobError` without one), the state
+is saved at the next version, then the commands are sent. `timeout(process, { id, timeout,
+jobId }, step)` runs only while `jobId` is the armed job of that timeout. `@ddd-ts-kit/di` binds
+it on `ProcessStore`, `JobQueue`, `CommandBus` and `UnitOfWork`. See
+[Sagas and process managers](../../docs/concepts/sagas-and-process-managers.md).
 
 ## Limits
 

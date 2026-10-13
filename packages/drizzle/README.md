@@ -518,6 +518,12 @@ kernelModule({ unitOfWork, jobStore: new DrizzleJobStore(unitOfWork, schedulingJ
 It passes `jobStoreContract`, its unit of work suite included, on PGlite. What the jobs
 guarantee: [Background jobs](../../docs/concepts/background-jobs.md).
 
+## Process managers
+
+`DrizzleProcessStore` is the `ProcessStore` of the kernel, on `processesTable(schema)`: a first
+save inserts, a next one updates at the previous version, and a save that changes no row throws
+`ConcurrencyError`, in the transaction of the step. It passes `processStoreContract`.
+
 ## Testing an adapter
 
 The unit of work of this package passes `unitOfWorkContract`, and its stores

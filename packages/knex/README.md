@@ -619,6 +619,15 @@ The store passes `jobStoreContract`, its unit of work suite included, on PGlite 
 PostgreSQL. MySQL and SQLite are not covered: the table uses `jsonb` and a partial index.
 What the jobs guarantee: [Background jobs](../../docs/concepts/background-jobs.md).
 
+## Process managers
+
+`KnexProcessStore` is the `ProcessStore` of the kernel: one row per process and correlation key
+in `process_instances`, created by `createProcessTable(knex, { schema })` from a migration
+(`dropProcessTable` is its `down`). A first save inserts, ignoring a row a concurrent first save
+wrote; a next one updates the row at the previous version; a save that changes no row throws
+`ConcurrencyError`. It runs on the executor of the context, in the transaction of the step, and
+passes `processStoreContract` with its unit of work.
+
 ## Dialect coverage
 
 What follows is about this package. The CLI generates for PostgreSQL only: `init --orm knex`

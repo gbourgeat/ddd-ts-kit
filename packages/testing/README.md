@@ -184,6 +184,24 @@ side, so they read well under any runner. An error raised by `when` is never swa
 assertion but `thenError` fails on it. When `when` (or the arrangement) is asynchronous, the
 chain is a promise: `await given(order).when(async (o) => ...).thenEventNames([...])`.
 
+## Process steps
+
+```ts
+import { givenProcess } from '@ddd-ts-kit/testing';
+
+givenProcess<DeadlineState>(undefined)
+  .when((current) => deadlines.requested(booked, current))
+  .thenState({ appointmentId: 'appointment-1', confirmBefore: '2026-03-01T12:00:00.000Z' })
+  .thenTimeouts([{ name: 'deadline', at: deadline }])
+  .thenCommands([]);
+```
+
+A step of a process manager is a function of its state and of what happened: `givenProcess(state)`
+(or `undefined` for an instance that does not exist) runs it and asserts its decision without a
+store, a queue or a bus. `thenIgnored()`, `thenState(state)`, `thenCommands([...])` (each by its
+class or by the properties that matter), `thenTimeouts([...])`, `thenCancelled([...])` and
+`thenEnded()` chain; a failure is an `AssertionError` that says what differs.
+
 ## Refusals
 
 A business refusal is known by its code, and carries its facts as data: a test asserts both,
@@ -436,6 +454,7 @@ repositoryContract(runner, { ...options, name: 'DrizzleOrderRepository', createR
 | `unitOfWorkContract` | any `UnitOfWork`, called through `run` without a command bus: domain events wait for the end and are dispatched before the commit, so handlers see every save and what they write, the outbox included, commits with it; a failure in a save, in the work, in a handler or in the commit (a deferred constraint) leaves nothing behind; `after-commit` handlers run once the rows are committed, never otherwise. An adapter not built on `withinUnitOfWork` fails here |
 | `outboxStoreContract` | any outbox store: order, limit, lease, concurrent claims, published, failed, dead, `retryDead`, purge; with `carriesTenant: true`, the tenant of each event kept |
 | `processedEventStoreContract` | any `ProcessedEventStore`: once per consumer and event, also under concurrent deliveries |
+| `processStoreContract` | any `ProcessStore` of process managers: an instance as saved (JSON state, armed timeouts, end), a version that is not the next one refused with `CONCURRENCY_CONFLICT`, one of two first saves winning, and with `unitOfWork` nothing left by a rolled back save |
 | `jobStoreContract` | any `JobStore` of background jobs: due jobs earliest first and each to one claim, delayed jobs, idempotency keys, the lease and its heartbeats, reports heard only from the attempt that holds the job (progress, checkpoint handed to the next attempt, success, retry, dead and revived, release), cancellation of a waiting and of a running job, purge. With `unitOfWork` (over the same context as the store just created), a job added in a unit of work that rolls back is not there and one that commits is claimed. The claims ask for a lease of 30 s |
 | `cacheContract` | any `Cache`: round trip of every shape of value, isolation of entries, deletion, time to live |
 | `lockContract` | any `Lock`: one holder at a time also under concurrent requests, release, expiry, a late release ignored, growing fencing token, `waitMs` |

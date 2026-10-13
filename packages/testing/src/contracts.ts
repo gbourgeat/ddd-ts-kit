@@ -35,6 +35,11 @@ export {
   type OutboxStoreUnderContract,
 } from './contracts/outbox-store-contract.js';
 export {
+  processStoreContract,
+  type ProcessStoreContractOptions,
+  type ProcessStoreUnderContract,
+} from './contracts/process-store-contract.js';
+export {
   processedEventStoreContract,
   type ProcessedEventStoreContractOptions,
 } from './contracts/processed-event-store-contract.js';

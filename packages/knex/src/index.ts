@@ -50,3 +50,8 @@ export * from './jobs/job-table-options.js';
 export * from './jobs/create-job-table.js';
 export * from './jobs/drop-job-table.js';
 export * from './jobs/knex-job-store.js';
+export * from './processes/process-table-name.js';
+export * from './processes/process-table-options.js';
+export * from './processes/create-process-table.js';
+export * from './processes/drop-process-table.js';
+export * from './processes/knex-process-store.js';

@@ -120,6 +120,7 @@ describe('createTestApplication', () => {
       'lock',
       'logger',
       'metrics',
+      'processes',
       'queryBus',
       'rateLimiter',
       'resolve',

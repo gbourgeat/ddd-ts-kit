@@ -1,5 +1,6 @@
 import { injected } from '@ddd-ts-kit/kernel/declarations';
 import { PersonDirectoryContract } from '@/contexts/identity/published-language/index';
+import { ConfirmationDeadlineTimeoutBackgroundJob } from '@/contexts/scheduling/application/background/confirmation-deadline-timeout.background-job';
 import { AddExceptionHandler } from '@/contexts/scheduling/application/commands/add-exception/add-exception.handler';
 import { AddTimeOffHandler } from '@/contexts/scheduling/application/commands/add-time-off/add-time-off.handler';
 import { BookAppointmentHandler } from '@/contexts/scheduling/application/commands/book-appointment/book-appointment.handler';
@@ -19,6 +20,10 @@ import { AppointmentCancelledEventHandler } from '@/contexts/scheduling/applicat
 import { AppointmentExpiredEventHandler } from '@/contexts/scheduling/application/event-handlers/appointment-expired.event-handler';
 import { AppointmentRescheduledEventHandler } from '@/contexts/scheduling/application/event-handlers/appointment-rescheduled.event-handler';
 import { CalendarCreatedEventHandler } from '@/contexts/scheduling/application/event-handlers/calendar-created.event-handler';
+import { ConfirmationDeadlineOnBookedEventHandler } from '@/contexts/scheduling/application/event-handlers/confirmation-deadline-on-booked.event-handler';
+import { ConfirmationDeadlineOnCancelledEventHandler } from '@/contexts/scheduling/application/event-handlers/confirmation-deadline-on-cancelled.event-handler';
+import { ConfirmationDeadlineOnConfirmedEventHandler } from '@/contexts/scheduling/application/event-handlers/confirmation-deadline-on-confirmed.event-handler';
+import { ConfirmationDeadlineOnExpiredEventHandler } from '@/contexts/scheduling/application/event-handlers/confirmation-deadline-on-expired.event-handler';
 import { AppointmentBookedPublisher } from '@/contexts/scheduling/application/integration/publishers/appointment-booked.publisher';
 import { AppointmentCancelledPublisher } from '@/contexts/scheduling/application/integration/publishers/appointment-cancelled.publisher';
 import { AppointmentCompletedPublisher } from '@/contexts/scheduling/application/integration/publishers/appointment-completed.publisher';
@@ -76,12 +81,14 @@ import {
   ExecutionScope,
   IdGenerator,
   IntegrationEventPublisher,
+  ProcessRunner,
   QueryBus,
 } from '@ddd-ts-kit/kernel';
 import { KnexContext } from '@ddd-ts-kit/knex';
 
 export * from '@/contexts/scheduling/application/authorization/patient-cancels-until-notice.policy';
 export * from '@/contexts/scheduling/application/authorization/patient-reschedules-until-notice.policy';
+export * from '@/contexts/scheduling/application/background/confirmation-deadline-timeout.background-job';
 export * from '@/contexts/scheduling/application/commands/add-exception/add-exception.command';
 export * from '@/contexts/scheduling/application/commands/add-exception/add-exception.handler';
 export * from '@/contexts/scheduling/application/commands/add-time-off/add-time-off.command';
@@ -115,6 +122,10 @@ export * from '@/contexts/scheduling/application/event-handlers/appointment-canc
 export * from '@/contexts/scheduling/application/event-handlers/appointment-expired.event-handler';
 export * from '@/contexts/scheduling/application/event-handlers/appointment-rescheduled.event-handler';
 export * from '@/contexts/scheduling/application/event-handlers/calendar-created.event-handler';
+export * from '@/contexts/scheduling/application/event-handlers/confirmation-deadline-on-booked.event-handler';
+export * from '@/contexts/scheduling/application/event-handlers/confirmation-deadline-on-cancelled.event-handler';
+export * from '@/contexts/scheduling/application/event-handlers/confirmation-deadline-on-confirmed.event-handler';
+export * from '@/contexts/scheduling/application/event-handlers/confirmation-deadline-on-expired.event-handler';
 export * from '@/contexts/scheduling/application/integration/publishers/appointment-booked.publisher';
 export * from '@/contexts/scheduling/application/integration/publishers/appointment-cancelled.publisher';
 export * from '@/contexts/scheduling/application/integration/publishers/appointment-completed.publisher';
@@ -162,6 +173,7 @@ export * from '@/contexts/scheduling/presentation/http/calendars/set-opening-hou
 export * from '@/contexts/scheduling/presentation/http/practices/search-practice-agenda/search-practice-agenda.controller';
 export * from '@/contexts/scheduling/presentation/http/shared/agenda-entry.serializer';
 
+injected(ConfirmationDeadlineTimeoutBackgroundJob, [ProcessRunner]);
 injected(AddExceptionHandler, [CalendarRepository, Clock]);
 injected(AddTimeOffHandler, [CalendarRepository, AppointmentRepository, Clock]);
 injected(BookAppointmentHandler, [AppointmentRepository, CalendarRepository, IdGenerator, Clock]);
@@ -181,6 +193,10 @@ injected(AppointmentCancelledEventHandler, [CommandBus]);
 injected(AppointmentExpiredEventHandler, [CommandBus]);
 injected(AppointmentRescheduledEventHandler, [CommandBus]);
 injected(CalendarCreatedEventHandler, [SchedulingRelationships]);
+injected(ConfirmationDeadlineOnBookedEventHandler, [ProcessRunner]);
+injected(ConfirmationDeadlineOnCancelledEventHandler, [ProcessRunner]);
+injected(ConfirmationDeadlineOnConfirmedEventHandler, [ProcessRunner]);
+injected(ConfirmationDeadlineOnExpiredEventHandler, [ProcessRunner]);
 injected(AppointmentBookedPublisher, [IntegrationEventPublisher, IdGenerator]);
 injected(AppointmentCancelledPublisher, [IntegrationEventPublisher, IdGenerator]);
 injected(AppointmentCompletedPublisher, [IntegrationEventPublisher, IdGenerator]);

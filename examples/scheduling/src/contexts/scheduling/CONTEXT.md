@@ -35,6 +35,7 @@ This is why practices come: a time on a calendar is held once, under rules of av
 | Scheduler | The rule keeper that says whether a slot can be taken on a calendar, given what the calendar already holds |  |
 | Appointment | The hold of a slot on a calendar for a patient, from booking to its end |  |
 | Lifecycle | The statuses an appointment goes through, and which change leads from one to the next |  |
+| Deadline | The instant before which a requested appointment is confirmed, or expires | Horizon |
 | Book | To take a free slot for a patient | Request |
 | Request | To take a slot that the patient must still confirm |  |
 | Confirm | To say that a requested appointment will be honoured |  |
@@ -124,7 +125,9 @@ This is why practices come: a time on a calendar is held once, under rules of av
 ## Background jobs
 
 <!-- ddd-ts-kit:background-jobs -->
-No background job.
+| Job | Class |
+|---|---|
+| `scheduling.confirmation-deadline-timeout` | `ConfirmationDeadlineTimeoutBackgroundJob` |
 <!-- /ddd-ts-kit:background-jobs -->
 
 ## State machines
@@ -153,6 +156,19 @@ stateDiagram-v2
   no_show --> [*]
 ```
 <!-- /ddd-ts-kit:state-machines -->
+
+## Process managers
+
+<!-- ddd-ts-kit:processes -->
+| Process | Class | Timeouts delivered by |
+|---|---|---|
+| `scheduling.confirmation-deadline` | `ConfirmationDeadlineProcess` | `scheduling.confirmation-deadline-timeout` |
+<!-- /ddd-ts-kit:processes -->
+
+The confirmation deadline of a requested appointment is a process: armed when the appointment
+is requested, disarmed when it is confirmed, cancelled or expired, and when the deadline passes
+first it expires the appointment at that instant. `ExpireUnconfirmedAppointmentsJob` stays the
+safety net: every five minutes, it expires what a lost timeout left.
 
 ## Relationships
 

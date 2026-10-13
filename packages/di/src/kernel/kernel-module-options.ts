@@ -16,6 +16,7 @@ import type {
   Lock,
   Logger,
   Metrics,
+  ProcessStore,
   ProcessedEventStore,
   QueryBus,
   RateLimiter,
@@ -80,6 +81,12 @@ export interface KernelModuleOptions {
   readonly jobQueue?: Provided<JobQueue>;
   /** Defaults to a worker on `jobStore`, `Clock`, `ExecutionScope`, `Logger`, `Metrics` and `ErrorReporter`, tuned by `queues`. */
   readonly queueWorker?: Provided<QueueWorker>;
+  /**
+   * Where the process managers keep their instances. Defaults to the memory of the process: bind
+   * `KnexProcessStore` or `DrizzleProcessStore` so that a step saves its state in the transaction
+   * of its unit of work. `ProcessRunner` is always the one of `@ddd-ts-kit/scheduling`, on it.
+   */
+  readonly processStore?: Provided<ProcessStore>;
   /** Concurrency per queue, polling interval and grace period of the default worker. */
   readonly queues?: Pick<QueueWorkerOptions, 'concurrency' | 'pollIntervalMs' | 'graceMs'>;
   /**

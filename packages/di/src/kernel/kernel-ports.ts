@@ -16,6 +16,8 @@ import {
   Lock,
   Logger,
   Metrics,
+  ProcessRunner,
+  ProcessStore,
   ProcessedEventStore,
   QueryBus,
   RateLimiter,
@@ -49,4 +51,6 @@ export const KERNEL_PORTS: readonly Token<unknown>[] = [
   JobQueue,
   JobStore,
   QueueWorker,
+  ProcessStore,
+  ProcessRunner,
 ];

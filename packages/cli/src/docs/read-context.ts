@@ -7,6 +7,7 @@ import type { DeclaredFacts, DeclaredUseCase } from './declared-facts.js';
 import { readDeclarations } from './read-declarations.js';
 import { readBackgroundJobs } from './read-background-jobs.js';
 import { readJobs } from './read-jobs.js';
+import { readProcesses } from './read-processes.js';
 import { readStateMachines } from './read-state-machines.js';
 import { withoutComments } from './without-comments.js';
 
@@ -45,6 +46,7 @@ type TreeFacts = Pick<
   | 'jobs'
   | 'backgroundJobs'
   | 'stateMachines'
+  | 'processes'
 >;
 
 /** What the folders of the context hold, whatever the style of the project. */
@@ -58,6 +60,7 @@ function treeFacts(ws: Workspace, directory: string, name: string): TreeFacts {
     jobs: readJobs(ws, directory, name),
     backgroundJobs: readBackgroundJobs(ws, directory),
     stateMachines: readStateMachines(ws, directory),
+    processes: readProcesses(ws, directory),
   };
 }
 

@@ -39,6 +39,12 @@ export const ROLES: readonly Role[] = [
   },
   { directory: 'application/scheduling', suffixes: ['.job.ts'], oneConcept: true, specFor: ['.job.ts'] },
   {
+    directory: 'application/processes',
+    suffixes: ['.process.ts'],
+    oneConcept: true,
+    specFor: ['.process.ts'],
+  },
+  {
     directory: 'application/background',
     suffixes: ['.background-job.ts'],
     oneConcept: true,

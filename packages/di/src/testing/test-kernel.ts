@@ -10,6 +10,7 @@ import type {
   InMemoryLock,
   InMemoryLogger,
   InMemoryMetrics,
+  InMemoryProcessStore,
   InMemoryQueryBus,
   InMemoryRateLimiter,
   SequentialIdGenerator,
@@ -57,4 +58,6 @@ export interface TestKernel {
   readonly jobQueue: StoredJobQueue;
   /** The enqueued background jobs, which no worker runs by itself: a spec runs what is due, then asserts its fakes. */
   readonly backgroundJobs: TestBackgroundJobs;
+  /** The instances of the process managers: `processes.list()` shows their state, version, end and armed timeouts. */
+  readonly processes: InMemoryProcessStore;
 }

@@ -18,6 +18,8 @@ import {
   Lock,
   Logger,
   Metrics,
+  ProcessRunner,
+  ProcessStore,
   ProcessedEventStore,
   QueryBus,
   RateLimiter,
@@ -25,7 +27,7 @@ import {
   dispatchingOnSave,
 } from '@ddd-ts-kit/kernel';
 import { describeToken } from '@ddd-ts-kit/kernel/declarations';
-import { JobStore, QueueWorker } from '@ddd-ts-kit/scheduling';
+import { JobStore, QueueWorker, StoredProcessRunner } from '@ddd-ts-kit/scheduling';
 import type { Application } from '../application/application.js';
 import { assemble } from '../application/assemble.js';
 import { override, type Override } from '../application/override.js';
@@ -133,9 +135,21 @@ function kernelOverrides(kernel: TestKernel): Override[] {
     override(JobQueue, kernel.jobQueue),
     override(JobStore, kernel.backgroundJobs.store),
     override(QueueWorker, kernel.backgroundJobs.worker),
+    override(ProcessStore, kernel.processes),
+    override(ProcessRunner, processRunnerOf(kernel)),
   ];
 }
 
 function guardOverride(wiring: Wiring): Override[] {
   return wiring.bindings.has(UseCaseGuard) ? [] : [override(UseCaseGuard, passEveryMessage)];
+}
+
+/** The runner of the test application: its steps run in a unit of work of their own and send commands on the test bus. */
+function processRunnerOf(kernel: TestKernel): ProcessRunner {
+  return new StoredProcessRunner({
+    store: kernel.processes,
+    jobs: kernel.jobQueue,
+    commands: kernel.commandBus,
+    unitOfWork: new InMemoryUnitOfWork(),
+  });
 }

@@ -36,7 +36,14 @@ export const paymentLifecycle = defineStateMachine({
 });
 `;
 
-const JOB = `export class CompileStatementsJob {
+const PROCESS = `export class DunningProcess {
+  static readonly processName = 'billing.dunning';
+
+  static readonly timeoutJob: string | undefined = 'billing.dunning-timeout';
+}
+`;
+
+const JOB = `export class CompileStatementsBackgroundJob {
   static readonly jobName = 'billing.compile-statements';
 }
 `;
@@ -53,11 +60,13 @@ describe('state machines and background jobs in the documentation', () => {
     write(root, `${BILLING}/domain/state-machines/notes.md`, 'Not a machine.\n');
     write(root, `${BILLING}/domain/state-machines/broken.state-machine.ts`, 'export const nothing = 1;\n');
     write(root, `${BILLING}/application/background/compile-statements.background-job.ts`, JOB);
+    write(root, `${BILLING}/application/processes/dunning.process.ts`, PROCESS);
+    write(root, `${BILLING}/application/processes/collection.process.ts`, 'export class CollectionProcess {}\n');
 
     write(
       root,
       `${BILLING}/application/background/send-statements.background-job.ts`,
-      'export class SendStatementsJob {}\n',
+      'export class SendStatementsBackgroundJob {}\n',
     );
 
     expect(cli(root, 'docs').code).toBe(0);
@@ -87,14 +96,24 @@ describe('state machines and background jobs in the documentation', () => {
 
   it('lists the background jobs by their name, or by their class when it is not written', () => {
     expect(read(root, DOC)).toContain(
-      '| Job | Class |\n|---|---|\n| `billing.compile-statements` | `CompileStatementsJob` |\n| `SendStatementsJob` | `SendStatementsJob` |',
+      '| Job | Class |\n|---|---|\n| `billing.compile-statements` | `CompileStatementsBackgroundJob` |\n| `SendStatementsBackgroundJob` | `SendStatementsBackgroundJob` |',
+    );
+  });
+
+  it('lists the process managers and the job that delivers their timeouts', () => {
+    expect(read(root, DOC)).toContain(
+      '| Process | Class | Timeouts delivered by |\n|---|---|---|\n| `CollectionProcess` | `CollectionProcess` | none |\n| `billing.dunning` | `DunningProcess` | `billing.dunning-timeout` |',
+    );
+
+    expect(cli(root, 'describe', 'billing').stdout).toContain(
+      '  process managers:\n    CollectionProcess (CollectionProcess)',
     );
   });
 
   it('describes both', () => {
     const described = cli(root, 'describe', 'billing').stdout;
 
-    expect(described).toContain('  background jobs:\n    billing.compile-statements (CompileStatementsJob)');
+    expect(described).toContain('  background jobs:\n    billing.compile-statements (CompileStatementsBackgroundJob)');
 
     expect(described).toContain(
       '  state machines:\n    invoice (draft, issued, written-off; issue, write-off, annotate)',
@@ -108,6 +127,7 @@ describe('state machines and background jobs in the documentation', () => {
 
     expect(read(bare, DOC)).toContain('No state machine.');
     expect(read(bare, DOC)).toContain('No background job.');
+    expect(read(bare, DOC)).toContain('No process manager.');
 
     write(bare, DOC, read(bare, DOC).replace(/## Background jobs[\s\S]*?(?=## Relationships)/, ''));
     write(bare, `${BILLING}/domain/state-machines/payment.state-machine.ts`, LISTED);

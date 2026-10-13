@@ -8,6 +8,8 @@ const { AGGREGATE, BILLING } = PATHS;
 
 const MACHINE = `${BILLING}/domain/state-machines/invoice.state-machine.ts`;
 const MACHINE_SPEC = `${BILLING}/test/unit/invoice.state-machine.spec.ts`;
+const PROCESS = `${BILLING}/application/processes/dunning.process.ts`;
+const PROCESS_SPEC = `${BILLING}/test/unit/dunning.process.spec.ts`;
 
 const MACHINE_FILES = {
   [MACHINE]:
@@ -51,6 +53,26 @@ export const LIFECYCLE_FIXTURES: readonly Fixture[] = [
     files: project({
       ...MACHINE_FILES,
       ...aggregate(invoice("  issue(): void {\n    this.state = { ...this.state, status: 'issued' };\n  }", '')),
+    }),
+  },
+  {
+    ruleId: 'process/sends-commands-only',
+    name: 'a process that decides commands from its state',
+    expect: 'pass',
+    files: project({
+      [PROCESS]:
+        "import type { IssueInvoiceCommand } from '@/contexts/billing/application/commands/issue-invoice/issue-invoice.command.js';\n\nexport class DunningProcess {\n  readonly sends: IssueInvoiceCommand[] = [];\n}\n",
+      [PROCESS_SPEC]: SAMPLES.SPEC,
+    }),
+  },
+  {
+    ruleId: 'process/sends-commands-only',
+    name: 'a process that saves an aggregate itself',
+    expect: { file: PROCESS },
+    files: project({
+      [PROCESS]:
+        "import type { InvoiceRepository } from '@/contexts/billing/domain/repositories/invoice.repository.js';\n\nexport class DunningProcess {\n  readonly invoices: InvoiceRepository[] = [];\n}\n",
+      [PROCESS_SPEC]: SAMPLES.SPEC,
     }),
   },
 ];

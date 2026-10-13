@@ -30,3 +30,5 @@ export * from './postgres/tenancy/force-row-level-security.js';
 export * from './postgres/tenancy/tenant-session.js';
 export * from './postgres/jobs/jobs-table.js';
 export * from './postgres/jobs/drizzle-job-store.js';
+export * from './postgres/processes/processes-table.js';
+export * from './postgres/processes/drizzle-process-store.js';

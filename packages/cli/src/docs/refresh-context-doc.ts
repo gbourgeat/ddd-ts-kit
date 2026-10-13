@@ -13,11 +13,12 @@ const LATER_REGIONS: Readonly<Record<string, (facts: ContextFacts) => number>> =
   jobs: (facts) => facts.jobs.length,
   'background-jobs': (facts) => facts.backgroundJobs.length,
   'state-machines': (facts) => facts.stateMachines.length,
+  processes: (facts) => facts.processes.length,
 };
 
 /**
  * Rewrites the generated lists of a CONTEXT.md (aggregates, published events, permissions,
- * scheduled jobs, background jobs, state machines, relationships) and its reference (use cases, routes, events, ports, policies,
+ * scheduled jobs, background jobs, state machines, process managers, relationships) and its reference (use cases, routes, events, ports, policies,
  * gateways) from what is on disk and in the config. The generator and
  * `docs` both go through here, so `docs --check` is clean right after a `generate`.
  */
@@ -60,6 +61,7 @@ function generatedLists(facts: ContextFacts): Record<string, string[]> {
     jobs: jobLines(facts),
     'background-jobs': backgroundJobLines(facts),
     'state-machines': stateMachineLines(facts.stateMachines),
+    processes: processLines(facts),
     relationships: relationshipLines(facts),
   };
 }
@@ -85,6 +87,21 @@ function backgroundJobLines(facts: ContextFacts): string[] {
     '| Job | Class |',
     '|---|---|',
     ...facts.backgroundJobs.map((job) => `| \`${job.name}\` | \`${job.className}\` |`),
+  ];
+}
+
+function processLines(facts: ContextFacts): string[] {
+  if (facts.processes.length === 0) {
+    return ['No process manager.'];
+  }
+
+  return [
+    '| Process | Class | Timeouts delivered by |',
+    '|---|---|---|',
+    ...facts.processes.map(
+      ({ name, className, timeoutJob }) =>
+        `| \`${name}\` | \`${className}\` | ${timeoutJob === '' ? 'none' : `\`${timeoutJob}\``} |`,
+    ),
   ];
 }
 

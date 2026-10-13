@@ -50,6 +50,7 @@ export function describeContext(ws: Workspace, config: Config, facts: ContextFac
     jobs: facts.jobs,
     backgroundJobs: facts.backgroundJobs,
     stateMachines: facts.stateMachines,
+    processes: facts.processes,
     contracts: contractsOf(ws, config),
   };
 }

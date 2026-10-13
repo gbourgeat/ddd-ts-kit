@@ -12,7 +12,7 @@ export function readBackgroundJobs(ws: Workspace, directory: string): Background
     .list(`${directory}/${FOLDER}`)
     .filter((file) => file.endsWith(SUFFIX))
     .map((file) => {
-      const className = `${toName(file.slice(0, -SUFFIX.length)).pascal}Job`;
+      const className = `${toName(file.slice(0, -SUFFIX.length)).pascal}BackgroundJob`;
       const name = JOB_NAME.exec(ws.read(`${directory}/${FOLDER}/${file}`) ?? '')?.[1];
 
       return { name: name ?? className, className, file: `${directory}/${FOLDER}/${file}` };

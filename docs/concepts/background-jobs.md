@@ -28,7 +28,7 @@ the command through a table of the same database, for the same reason.
 ```ts
 // scheduling/application/background/reschedule-absence.background-job.ts
 @Background({ maxAttempts: 5, timeout: '30m', lease: '1m' })
-export class RescheduleAbsenceJob implements BackgroundJob<RescheduleAbsencePayload> {
+export class RescheduleAbsenceBackgroundJob implements BackgroundJob<RescheduleAbsencePayload> {
   static readonly jobName = 'scheduling.reschedule-absence';
 
   constructor(private readonly commands: CommandBus) {}
@@ -39,7 +39,7 @@ export class RescheduleAbsenceJob implements BackgroundJob<RescheduleAbsencePayl
 }
 
 // in the handler of DeclareAbsence, inside its unit of work
-await this.jobs.enqueue(RescheduleAbsenceJob, { calendarId, from, to }, { idempotencyKey: absenceId });
+await this.jobs.enqueue(RescheduleAbsenceBackgroundJob, { calendarId, from, to }, { idempotencyKey: absenceId });
 ```
 
 - **The name** is a static `jobName`, `<context>.<job-name>`: how the job is enqueued, the
