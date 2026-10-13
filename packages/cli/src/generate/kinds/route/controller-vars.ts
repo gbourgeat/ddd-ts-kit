@@ -55,9 +55,23 @@ function declarationVars(scope: Scope, plan: ControllerPlan, readsRequest: boole
   const { endpoint, group, cache } = plan;
   const rest = group === undefined ? endpoint.path : endpoint.path.slice(group.prefix.length);
 
-  const sharedAccepted = plan.useCase.returnsId && sharesSchemas(scope.config);
+  return {
+    access:
+      group === undefined
+        ? `tags: ['${scope.context.kebab}'],\n  guards: [Public],`
+        : `group: ${group.name.pascal}Routes,`,
+    groupPath: rest === '' ? '/' : rest,
+    httpImports: httpImports(scope, plan, readsRequest).join(', '),
+    cached: cache !== undefined,
+    cache: cache ?? '',
+  };
+}
 
-  const names = [
+/** What the controller imports from `@ddd-ts-kit/http`, in the order the formatter keeps. */
+function httpImports(scope: Scope, { useCase, group, cache }: ControllerPlan, readsRequest: boolean): string[] {
+  const sharedAccepted = useCase.returnsId && sharesSchemas(scope.config);
+
+  return [
     ...(sharedAccepted ? ['acceptedSchema'] : []),
     ...(cache === undefined ? [] : ['CacheScope']),
     'Controller',
@@ -65,17 +79,6 @@ function declarationVars(scope: Scope, plan: ControllerPlan, readsRequest: boole
     ...(sharedAccepted ? ['type Accepted'] : []),
     ...(readsRequest ? ['type HttpRequest'] : []),
   ];
-
-  return {
-    access:
-      group === undefined
-        ? `tags: ['${scope.context.kebab}'],\n  guards: [Public],`
-        : `group: ${group.name.pascal}Routes,`,
-    groupPath: rest === '' ? '/' : rest,
-    httpImports: names.join(', '),
-    cached: cache !== undefined,
-    cache: cache ?? '',
-  };
 }
 
 function controllerFileImports({ withMapper, withSerializer }: ControllerPlan, imports: ControllerImports): string[] {
