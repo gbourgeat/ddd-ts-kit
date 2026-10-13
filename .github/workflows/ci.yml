@@ -331,10 +331,44 @@ jobs:
       - name: Pack, publint, arethetypeswrong
         run: npm run ci:build
 
+  site:
+    name: Documentation website
+    needs: install
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          # A pull request is checked out as its merge commit, whose first parent is the base it is compared with.
+          fetch-depth: 2
+      # A pull request that touches no page, no diagram, no file of the site and none of its inputs
+      # passes without building it; the default branch and the night always build it.
+      - name: Whether this run changes what the website is built from
+        id: changed
+        env:
+          EVENT: ${{ github.event_name }}
+        run: |
+          if [ "$EVENT" != "pull_request" ] \
+            || git diff --name-only HEAD^1 HEAD \
+              | grep -qE '(\.md$|^docs/|^site/|^pipeline/monorepo/translations\.mjs$|^package-lock\.json$|^\.github/workflows/(ci|pages)\.yml$|^\.github/actions/setup/)'; then
+            echo "build=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "build=false" >> "$GITHUB_OUTPUT"
+            echo "No page, diagram or file of the website changed: nothing to build."
+          fi
+      - uses: ./.github/actions/setup
+        if: ${{ steps.changed.outputs.build == 'true' }}
+        with:
+          build: 'false'
+      - name: The pages assembled from the Markdown files, built by Astro, every link and anchor validated, every page in both languages at its route
+        if: ${{ steps.changed.outputs.build == 'true' }}
+        run: npm run site:build
+
   gate:
     name: gate
     if: ${{ always() }}
-    needs: [install, typecheck, lint, architecture, deadcode, docs, unit, unit-oldest, alias, integration, e2e, managers, example, conformance, security, package]
+    needs: [install, typecheck, lint, architecture, deadcode, docs, site, unit, unit-oldest, alias, integration, e2e, managers, example, conformance, security, package]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:

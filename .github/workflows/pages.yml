@@ -1,0 +1,60 @@
+name: Pages
+
+# The documentation website (site/), published on GitHub Pages from the default branch at
+# https://gbourgeat.github.io/ddd-ts-kit/. Its pages are the Markdown files of the repository,
+# assembled at each build: a change of a page publishes it.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - '**/*.md'
+      - 'packages/*/README*'
+      - 'packages/*/docs/**'
+      - 'examples/**/*.md'
+      - 'site/**'
+      - 'pipeline/monorepo/translations.mjs'
+      - 'package-lock.json'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+# One deployment at a time, and a deployment in progress is never cancelled half-way.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build the website
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+        with:
+          build: 'false'
+      - name: The pages assembled from the Markdown files, built by Astro, every link and anchor validated
+        run: npm run site:build
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: site/dist
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
