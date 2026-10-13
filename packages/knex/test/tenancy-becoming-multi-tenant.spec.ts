@@ -2,12 +2,21 @@ import type { Knex } from 'knex';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { AsyncLocalStorageExecutionScope, InvalidTenantIdError } from '@ddd-ts-kit/kernel';
 import { asTenant } from '@ddd-ts-kit/testing';
-import { addTenantColumn, createKnexUnitOfWork, derivedTable, tenantColumn, tenantTable } from '../src/index.js';
+import {
+  addOutboxTenantColumn,
+  addTenantColumn,
+  createKnexUnitOfWork,
+  createOutboxTables,
+  derivedTable,
+  tenantColumn,
+  tenantTable,
+} from '../src/index.js';
 import { createDatabase, type TestDatabase } from './support/database.js';
 
 const SCHEMA = 'clinic';
 const VISITS = 'visits';
 const BOOKED = 'booked';
+const MESSAGING = 'moved';
 
 interface Column {
   readonly table_schema: string;
@@ -24,8 +33,9 @@ beforeAll(async () => {
       await knex.schema.createSchemaIfNotExists(SCHEMA);
       await createVisits(knex, VISITS);
       await createVisits(knex, BOOKED, true);
+      await createOutboxTables(knex, { schema: MESSAGING });
     },
-    [`${SCHEMA}.${BOOKED}`],
+    [`${SCHEMA}.${BOOKED}`, `${MESSAGING}.outbox`],
   );
 });
 
@@ -69,6 +79,31 @@ describe('a table that becomes tenant data', () => {
     await addTenantColumn(database.knex, { schema: SCHEMA, table: BOOKED });
 
     expect(await nullable(VISITS)).toBe('NO');
+  });
+});
+
+describe('an outbox that becomes tenanted', () => {
+  it('gives the events not published yet to the tenant named, and none to those already published', async () => {
+    const outbox = () => database.knex('outbox').withSchema(MESSAGING);
+
+    const recorded = (id: string, status: string) => ({
+      id,
+      type: 'clinic.visit.booked',
+      version: 1,
+      occurred_at: '2026-03-01T10:00:00.000Z',
+      status,
+      next_attempt_at: new Date('2026-03-01T10:00:00.000Z'),
+    });
+
+    await outbox().insert([recorded('e-1', 'pending'), recorded('e-2', 'published'), recorded('e-3', 'dead')]);
+
+    await addOutboxTenantColumn(database.knex, { schema: MESSAGING, tenantOfUnpublished: 'acme' });
+
+    expect(await outbox().select('id', 'tenant_id').orderBy('id')).toEqual([
+      { id: 'e-1', tenant_id: 'acme' },
+      { id: 'e-2', tenant_id: null },
+      { id: 'e-3', tenant_id: 'acme' },
+    ]);
   });
 });
 

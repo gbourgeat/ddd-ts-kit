@@ -70,8 +70,9 @@ purpose: the envelope comes back exactly as published, offset included.
 
 A multi-tenant project keeps the tenant of each event, so that its consumers run in that tenant:
 `createOutboxTables(knex, { schema: 'messaging', tenant: true })` adds a nullable `tenant_id`
-(`addOutboxTenantColumn(knex, { schema: 'messaging' })` is the migration of a project that becomes
-multi-tenant), and `new KnexOutboxStore(context, { schema: 'messaging', tenant: true })` writes
+(`addOutboxTenantColumn(knex, { schema: 'messaging', tenantOfUnpublished: 'acme' })` is the
+migration of a project that becomes multi-tenant: the events not published yet go to the tenant
+the database served, or keep none and are refused by tenant-scoped consumers if it is left out), and `new KnexOutboxStore(context, { schema: 'messaging', tenant: true })` writes
 it. A table that has the column is read back either way.
 
 One schema per bounded context: `schemaNameOf('order-management')` gives `order_management`,

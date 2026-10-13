@@ -68,7 +68,8 @@ are wired by hand from the packages for now; `init` refuses them and says what t
 A project of one customer that becomes multi-tenant keeps its data: on Knex, a migration calls
 `addTenantColumn(knex, { schema, table, tenantOfExistingRows })` for each table of tenant data
 (the rows already there go to the customer it served, then the column is required and indexed)
-and `addOutboxTenantColumn` for the outbox. A table that already has the column is left alone, so
+and `addOutboxTenantColumn(knex, { schema, tenantOfUnpublished })` for the outbox (the events not
+published yet go to that customer too, so that their consumers run in its tenant). A table that already has the column is left alone, so
 the migration also runs on a database built from the current schema. The example application
 went this way (its ADR-0003): one network of practices is one tenant.
 

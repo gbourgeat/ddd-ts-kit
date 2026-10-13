@@ -25,9 +25,10 @@ const TABLES_OF_ONE_CUSTOMER: readonly AddTenantColumnOptions[] = [
 /**
  * What the migration `20261013120000_keep-the-network-of-every-row` does: every table of the
  * contexts gets the network of its rows, those already there going to `tenantOfExistingRows`,
- * the network the database served; the outbox keeps the network of each event, the events
- * already in it belonging to none. A table that has the column already is left alone, so that
- * the migration also runs on a database the first migration built from the current schema.
+ * the network the database served; the outbox keeps the network of each event, the events not
+ * published yet going to that network too, so that their consumers run in it. A table that has
+ * the column already is left alone, so that the migration also runs on a database the first
+ * migration built from the current schema.
  */
 export async function keepTheNetworkOfEveryRow(knex: Knex, tenantOfExistingRows?: string): Promise<void> {
   const existing = tenantOfExistingRows === undefined || tenantOfExistingRows === '' ? {} : { tenantOfExistingRows };
@@ -37,6 +38,12 @@ export async function keepTheNetworkOfEveryRow(knex: Knex, tenantOfExistingRows?
   }
 
   if (!(await knex.schema.withSchema(MESSAGING).hasColumn(OUTBOX_TABLE, 'tenant_id'))) {
-    await addOutboxTenantColumn(knex, { schema: MESSAGING });
+    await addOutboxTenantColumn(knex, { schema: MESSAGING, ...unpublishedOf(existing) });
   }
+}
+
+function unpublishedOf(existing: { readonly tenantOfExistingRows?: string }): {
+  readonly tenantOfUnpublished?: string;
+} {
+  return existing.tenantOfExistingRows === undefined ? {} : { tenantOfUnpublished: existing.tenantOfExistingRows };
 }
