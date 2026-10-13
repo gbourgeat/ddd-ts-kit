@@ -1,4 +1,5 @@
 import { scan } from '../check/scan/scan.js';
+import { escapeRegExp } from '../check/text/escape-reg-exp.js';
 import { isAssertedUse } from './is-asserted-use.js';
 import { isConvertedCall } from './is-converted-call.js';
 import { applyEdits } from './apply-edits.js';
@@ -42,7 +43,7 @@ export function inlineResults(source: string, methods: ResultMethods): string {
 }
 
 function usesIn(code: string, name: string, range: { from: number; to: number }): number[] {
-  const pattern = new RegExp(`(?<![\\w$.])${name.replace(/\$/g, '\\$')}(?![\\w$])`, 'g');
+  const pattern = new RegExp(`(?<![\\w$.])${escapeRegExp(name)}(?![\\w$])`, 'g');
 
   return [...code.slice(range.from, range.to).matchAll(pattern)].map((use) => range.from + use.index);
 }
