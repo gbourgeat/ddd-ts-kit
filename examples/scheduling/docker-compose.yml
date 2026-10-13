@@ -62,8 +62,10 @@ services:
       timeout: 5s
       retries: 40
 
-  # MinIO, an S3 server for the documents of appointments, when they are kept in an object store instead of the local
-  # directory of development: `docker compose --profile files up -d --wait minio`. pgsty/minio builds it from the upstream
+  # MinIO, an S3 server: a recipe for keeping the documents of appointments in an object store instead of the local
+  # directory, which is what this example runs on. To follow it: `docker compose --profile files up -d --wait minio`, add
+  # @ddd-ts-kit/s3 and the AWS SDK packages `init --storage s3` lists, and replace src/platform/files/open-files.ts and
+  # config/read-files.ts by what `init --storage s3` writes for this stack. pgsty/minio builds it from the upstream
   # sources, which no longer publish images. The bucket is created at the first start; local development ONLY.
   minio:
     image: pgsty/minio:RELEASE.2026-08-04T00-00-00Z@sha256:b6bfe7239bfc83fb90d31612d9704d86039dd714f7904b3f1ad68f211e602372

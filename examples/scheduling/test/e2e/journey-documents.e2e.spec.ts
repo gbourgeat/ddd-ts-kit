@@ -1,3 +1,5 @@
+import { readdirSync } from 'node:fs';
+import path from 'node:path';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { expectProblem, expectStatus, type HttpClient } from '@ddd-ts-kit/testing/e2e';
 import { bookAppointment } from '$test/e2e/support/book-appointment';
@@ -46,6 +48,7 @@ describe('A document attached to an appointment: sent as it streams, fetched thr
 
   it('keeps the document of the patient, serves it through a link that names it, and forgets it once removed', async () => {
     expect((await send('paul', PDF, 'application/pdf')).status).toBe(201);
+    expect(storedFiles()).toEqual([expect.stringMatching(/^appointment-documents\/\d{4}\/\d{2}\/[\w-]+$/)]);
 
     const link = expectStatus(await paul.get<DocumentLink>(`/appointments/${appointmentId}/document`), 200).body;
     const file = await fetch(onServer(link.url));
@@ -59,6 +62,7 @@ describe('A document attached to an appointment: sent as it streams, fetched thr
 
     expectProblem(await paul.get(`/appointments/${appointmentId}/document`), { status: 404, code: 'NO_DOCUMENT' });
     expect((await fetch(onServer(link.url))).status).toBe(403);
+    expect(storedFiles()).toEqual([]);
   });
 
   it('refuses a file whose bytes are not what it declares, and keeps the document from another patient', async () => {
@@ -81,6 +85,14 @@ describe('A document attached to an appointment: sent as it streams, fetched thr
       headers: await application.headersOf({ id: actor, roles: ['patient'] }),
       body: form,
     });
+  }
+
+  /** What the local storage holds under a final key: nothing of `staging/` or of its own bookkeeping. */
+  function storedFiles(): string[] {
+    return readdirSync(application.filesDirectory, { recursive: true, withFileTypes: true })
+      .filter((entry) => entry.isFile())
+      .map((entry) => path.relative(application.filesDirectory, path.join(entry.parentPath, entry.name)))
+      .filter((key) => !key.startsWith('staging/') && !key.startsWith('.'));
   }
 
   /** The link of the storage of the tests names the default address of the application: the same path, on the server of the test. */

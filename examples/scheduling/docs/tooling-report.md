@@ -939,13 +939,24 @@ file (key, size, media type, checksum), its name and when it was attached.
 
 | | |
 |---|---|
-| Config | `"storage": "local"`: a directory in development (`.data/files`), the memory in the tests; MinIO in `docker-compose.yml` behind the `files` profile, for who wants an object store locally |
+| Config | `"storage": "local"`: a directory in development (`.data/files`), and in the end-to-end journey and the integration spec of the slice, each in a temporary directory; the memory in the handler specs. MinIO in `docker-compose.yml` behind the `files` profile is a recipe for moving to an object store (the comment of the service says the steps), not a storage the example runs on |
 | Platform | what `init --storage local` writes for this stack (`platform/files/`, `platform/config/read-files.ts`, the file routes mounted before `express.json()`, the upload reader of the HTTP boundary, the purge of staged files every hour), applied as the diff between `init --storage none` and `init --storage local` of the same stack, since `init --force` would have rewritten the hand-tuned files of the platform |
 | Generators | `generate value-object` (`AttachedDocument`), two `generate error` (`noDocument`, `documentNameTooLong`), `generate file-upload`, `generate command`, `generate query`, two `generate route`, then `docs` |
 | Written or rewritten by hand | the value object, the two refusals, the state and two methods of `Appointment`, the six columns of the mapper, the migration `20261013090000_add-appointment-documents.js` and `upgradeTables` for the in-process database of the tests, the three handlers, the three controllers, the specs, the end-to-end journey |
 | Routes added | `POST`, `GET` and `DELETE` `/appointments/{appointmentId}/document`; the rest of `openapi/openapi.yaml` is unchanged (228 lines added, none removed) |
 | Audit | `scheduling:appointment.read-document` is a sensitive permission of `auditDecisions`: every allowed read of a document is recorded |
-| Tests | 23 unit specs of the slice, the round trip of the reference in the contract of both appointment repositories, and `test/e2e/journey-documents.e2e.spec.ts`: an upload streamed through the multipart reader, a download through the link, a 415 for a disguised file, a 403 for another patient, the link that stops answering once the document is removed |
+| Tests | 23 unit specs of the slice, the round trip of the reference in the contract of both appointment repositories, `document-lands-with-its-file.spec.ts` on the in-process database and the local storage (the row and the file land together; a commit refused after the file moved returns it to `staging/` and leaves the row without a document), and `test/e2e/journey-documents.e2e.spec.ts` on the local storage: an upload streamed through the multipart reader, the file under its final key on disk, a download through the link, a 415 for a disguised file, a 403 for another patient, the link that stops answering and the file gone once the document is removed |
+
+After the review of the lot, the order of a write changed in the kit and here with it. The
+command carries a `FileUpload` (`new FileUpload(file, 'appointment-documents')`), which the
+command bus stages after the permission and before the audit entry opens the transaction
+(`platform/files/staging-uploads.ts`, as `init` now writes it): no transaction waits on a
+client that uploads slowly. The handler reads `command.document.file` and calls
+`promoteOnCommit`, which moves the file inside the transaction, as its last step, so a committed
+row never points into `staging/` and the hourly purge only meets orphans. One behaviour moved:
+an upload to an appointment that does not exist is now received, then left in `staging/` for
+the purge, since the handler that finds the appointment runs after the staging. In production
+`FILES_PUBLIC_URL` is now required, like `FILES_SIGNING_SECRET`.
 
 What the generators did not fit, to change in the kit:
 
