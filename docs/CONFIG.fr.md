@@ -1,5 +1,5 @@
 [English](CONFIG.md) · **Français**
-<!-- translation-of: CONFIG.md sha256:529862b2f4c7e345 -->
+<!-- translation-of: CONFIG.md sha256:186565c49e3bf007 -->
 
 # `ddd-ts-kit.config.json`
 
@@ -61,6 +61,7 @@ aucune dérogation.
     "schemas": "shared",
     "valueObjects": "throwing",
     "literals": "named",
+    "values": "classes",
     "queue": "database",
     "assembly": "barrel",
     "dependencies": "signature",
@@ -90,7 +91,7 @@ Trois clés ne sont écrites que lorsqu'elles disent quelque chose : `stack.asse
 
 ## Comment une clé est lue
 
-![Un arbre de décision : une clé inconnue est ignorée ; une clé connue qui n'est pas écrite est lue avec sa valeur par défaut, qui pour douze clés de stack et importExtension est celle d'un fichier plus ancien ; une valeur acceptée est lue telle qu'écrite ; une valeur de stack erronée arrête toutes les commandes ; toute autre valeur erronée est gardée ou remplacée par sa valeur par défaut, et check la signale en config/valid](assets/diagrams/config-how-a-key-is-read.fr.svg)
+![Un arbre de décision : une clé inconnue est ignorée ; une clé connue qui n'est pas écrite est lue avec sa valeur par défaut, qui pour treize clés de stack et importExtension est celle d'un fichier plus ancien ; une valeur acceptée est lue telle qu'écrite ; une valeur de stack erronée arrête toutes les commandes ; toute autre valeur erronée est gardée ou remplacée par sa valeur par défaut, et check la signale en config/valid](assets/diagrams/config-how-a-key-is-read.fr.svg)
 
 Une valeur `stack.*` erronée arrête toutes les commandes avant qu'elles ne fassent quoi que ce
 soit, avec la liste des valeurs acceptées :
@@ -114,7 +115,7 @@ ddd-ts-kit.config.json:39  error  config/valid
 Une clé qui n'est pas écrite n'est pas toujours lue comme ce qu'écrit `init` aujourd'hui : un
 fichier sans la clé a été écrit par une version qui ne la connaissait pas, et le kit le lit
 comme cette version fonctionnait, si bien qu'une mise à jour des *packages* ne change rien dans
-un projet existant. Les douze clés concernées sont dans [la table de la section Stack](#une-clé-absente-de-stack),
+un projet existant. Les treize clés concernées sont dans [la table de la section Stack](#une-clé-absente-de-stack),
 et `importExtension` plus bas. Les règles exactes de l'analyseur sont dans [Limites](#limites).
 
 ## Chemins
@@ -237,6 +238,7 @@ hors de la liste arrête toutes les commandes avec la liste des valeurs accepté
 | `stack.schemas` | `shared`, `per-route` : comment s'écrivent les schémas du contrat HTTP. `shared` : une forme qu'utilisent plusieurs routes est déclarée une fois, `presentation/http/shared/<name>.schema.ts` de son contexte ou `presentation/<name>.schema.ts` du noyau partagé (`generate schema`), partagée (un `.meta({ id })` de zod, `classSchema(Dto, { shared: true })`, `sharedSchema`), documentée une fois dans `components.schemas` et référencée par `$ref` ; une commande répond son identifiant avec `acceptedSchema` de `@ddd-ts-kit/http` ; `schema/no-duplicate-shape` et `schema/presentation-only` jugent. `per-route` : chaque route déclare ses propres schémas, réponse d'identifiant comprise (`<use-case>.accepted.ts` avec class-validator), comme les écrivaient les versions 0.1 à 0.5, et aucune règle `schema/*` ne juge | `shared` |
 | `stack.valueObjects` | `throwing`, `result` : comment refuse la fabrique d'un objet-valeur. `throwing` : `create` renvoie l'objet-valeur ou lève le refus construit par la fabrique statique de son concept (`throw PersonError.invalidEmail(raw)`), comme refuse un agrégat ; un appelant prend la valeur telle quelle, et une *spec* affirme `expectRefusal(() => Email.create(raw), 'INVALID_EMAIL')`. `result` : `create` renvoie un `Result` du kernel, `err(PersonError.invalidEmail(raw))`, qu'un appelant déballe avec `unwrap(..)`, comme les écrivaient les versions 0.1 à 0.5. `generate value-object` écrit la forme que dit la clé ; `Result`, `ok`, `err` et `unwrap` restent dans le kernel pour un projet qui les garde. La validation en bordure (le schéma d'une requête HTTP) n'est pas concernée : une valeur refusée là n'atteint jamais la fabrique | `throwing` |
 | `stack.literals` | `named`, `free` : comment le code écrit une valeur fermée et un nombre. `named` : une valeur que déclare un vocabulaire fermé du projet est lue par lui, `AppointmentStatus.NoShow`, `billingPermissions['invoice.issue']`, `Role.Admin`, jamais réécrite en chaîne (`language/declared-vocabulary`, *checker* et ESLint), et un nombre de `domain/` ou d'`application/` autre que 0, 1, -1 et un indice a un nom (`clean/no-magic-number`, ESLint). `free` : les deux règles se taisent, comme le code qu'écrivaient les versions 0.1 à 0.5. Les *templates* de règles qu'écrit `init` ne mentionnent les règles que sous `named` | `named` |
+| `stack.values` | `classes`, `free` : comment s'écrit une valeur du modèle. `classes` : une classe d'objet-valeur qui étend `ValueObject`, construite par des fabriques statiques (`generate value-object` en écrit une), et jamais une fonction qui construit un objet simple ; `domain/value-object-class` (*checker* et ESLint) tient les fichiers de `domain/value-objects/` et les fonctions de `domain/` et du noyau partagé ([Entités et objets-valeurs](concepts/entities-and-value-objects.fr.md#pourquoi-un-objet-valeur-est-une-classe)). `free` : la règle se tait, comme les versions 0.1 à 0.15 écrivaient le code. Le *template* de règles qu'écrit `init` ne nomme la règle que sous `classes` | `classes` |
 | `stack.tenancy` | `none`, `shared-table` ; lues aussi : `row-level-security`, `schema-per-tenant`, `database-per-tenant`. Comment les données d'un *tenant* sont tenues à l'écart des autres ([Multitenance](concepts/multitenancy.fr.md)). `shared-table` : chaque *repository* généré, sur Knex ou Drizzle, restreint ses requêtes SQL au *tenant* du travail par `tenantTable` et `ownTenantTable` ou `tenantCondition` et `ownTenantCondition`, l'outbox garde le *tenant* de chaque événement pour que les consommateurs s'exécutent dans celui-ci, et `tenancy/scoped-statement` signale une requête SQL qui contourne ces aides. `init --tenancy` propose `none` et `shared-table`, et refuse `shared-table` avec Prisma, TypeORM, `custom` ou sans ORM ; les trois autres stratégies sont livrées par les *packages* de persistance et câblées à la main (`init` les refuse en disant quoi ajouter). Absente : `none`, et le fichier ne dit rien de la multitenance | absente (`none`) |
 | `stack.representations` | `negotiated`, `json` : ce dans quoi une route répond. `negotiated` : `src/platform/http/presentation-of.ts` enregistre `Representations.standard()` de `@ddd-ts-kit/http` dans la frontière HTTP et dans le script du contrat, si bien que chaque requête HTTP reçoit sa réponse dans le type de média que préfère son en-tête `Accept` parmi JSON et ce que sa route déclare dans `produces` (XML, CSV, `406` quand aucun ne convient), un corps XML est lu sur une route qui déclare `consumes`, et les champs qu'un schéma réserve avec `withFieldAccess` sont décidés par l'`Access` de l'application ; `generate representation` ajoute `produces` à un contrôleur. `json` : du JSON quoi que la requête accepte, comme avant que la clé n'existe. `init` écrit `json` sans *stack* HTTP | `negotiated` (`json` avec `http: none`) |
 | `stack.forms` | `on`, `off` : si une route qui déclare `form` est servie comme un formulaire. `on` : `src/platform/http/with-forms.ts` ajoute `formRoutes` de `@ddd-ts-kit/http` aux routes, un `GET /forms/<operationId>` par route de ce genre (JSON Forms, ou `?format=blocks`), les champs cachés ou en lecture seule pour chaque appelant par le même accès aux champs, et `npm run docs:generate` écrit chaque formulaire en entier dans `openapi/forms/<operationId>.json` ; `generate form` donne à un contrôleur ses indications. `off` : aucun formulaire n'est servi | `on` (`off` avec `http: none`) |
@@ -246,7 +248,7 @@ hors de la liste arrête toutes les commandes avec la liste des valeurs accepté
 ### Une clé absente de `stack`
 
 Un fichier de configuration qui omet une clé de `stack` est lu avec les valeurs par défaut de la
-table ci-dessus, sauf pour douze clés. Un fichier sans l'une d'elles a été écrit par une version
+table ci-dessus, sauf pour treize clés. Un fichier sans l'une d'elles a été écrit par une version
 qui n'offrait pas ce choix, et il est lu comme cette version fonctionnait :
 
 | Clé | Absente, lue comme | Ce qu'écrit `init` | Pour faire évoluer un projet |
@@ -263,6 +265,7 @@ qui n'offrait pas ce choix, et il est lu comme cette version fonctionnait :
 | `stack.packageManager` | `npm` | `pnpm` | `init --force --package-manager pnpm` |
 | `stack.representations` | `json` | `negotiated` (`json` avec `http: none`) | `init --force --representations negotiated` |
 | `stack.forms` | `off` | `on` (`off` avec `http: none`) | `init --force --forms on` |
+| `stack.values` | `free` | `classes` | poser la clé, puis suivre `check --rule domain/value-object-class` et ESLint |
 
 Les paragraphes ci-dessous disent pourquoi pour chacune, et ce que chaque évolution laisse à une
 personne.
@@ -450,6 +453,27 @@ negotiated --forms on` pose les deux clés et réécrit les fichiers dont `init`
 `presentation-of.ts` et `with-forms.ts`) ; puis `npm run docs:generate`, qui liste les types de
 média de chaque route et écrit les formulaires. Un projet qui a réécrit l'un de ces fichiers à la
 main réapplique son changement, comme pour tout `init --force`.
+
+La treizième : sans `stack.values`, le projet est lu comme `free`, parce qu'un tel fichier a été
+écrit avant que `domain/value-object-class` n'existe, et qu'une valeur écrite à la main peut être
+une fonction qui construit un objet simple. Rien n'y est signalé. Pour le faire évoluer :
+
+1. Posez `"stack.values": "classes"` et lancez `npx ddd-ts-kit check --rule domain/value-object-class`
+   et ESLint : chaque valeur écrite comme une fonction, chaque classe d'objet-valeur au
+   constructeur public ou sans fabrique, et chaque fonction utilitaire qu'exporte un fichier
+   d'objet-valeur sont signalées.
+2. Pour une valeur écrite comme une fonction, `npx ddd-ts-kit generate value-object <context> <Name>`
+   écrit la classe et sa *spec* ; déplacez dans sa fabrique statique les vérifications que
+   faisaient les appelants, et en méthodes les fonctions utilitaires qui prenaient
+   l'enregistrement, puis remplacez `money(a, c)` par `Money.of(a, c)`, une comparaison champ à
+   champ par `equals`, et un *mapper* qui lisait les champs par `instanceof` et `toJSON()`.
+3. Pour une classe d'objet-valeur, rendez le constructeur privé (protégé sur une classe de base)
+   et ajoutez la fabrique statique que nomme la règle ; une fonction utilitaire exportée à côté
+   devient une fabrique statique ou une méthode.
+
+Tant que ce n'est pas fait, la règle peut rester à `warn` sous `rules`, enregistrée dans
+`deviations` avec l'ADR qui dit quand elle s'en va, comme toute autre règle assouplie
+(`governance/recorded-deviation`).
 
 ## Pipeline
 

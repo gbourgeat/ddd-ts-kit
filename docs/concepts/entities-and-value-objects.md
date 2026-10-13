@@ -157,7 +157,7 @@ The kit writes, and checks, the class (`domain/value-object-class`).
 
 ![A function that builds a plain object leaves every caller to validate, compare and recognise
 the value; a class built through its static factory checks once, compares by value and is
-recognised at the boundary](images/value-object-function-or-class.svg)
+recognised at the boundary](../assets/diagrams/entities-and-value-objects-function-or-class.svg)
 
 The function form looks lighter:
 
@@ -250,7 +250,7 @@ reported; [CONFIG.md](../CONFIG.md#stack) gives the steps to move.
 
 ![The rule first reads the config, then the value object files, then the functions of domain/
 and of the shared kernel; a function is reported when the object it answers is a record of
-data](images/value-object-class-rule.svg)
+data](../assets/diagrams/entities-and-value-objects-class-rule.svg)
 
 - **A value object file** (`domain/value-objects/*.vo.ts` of a context, a `*.vo.ts` of the shared
   kernel outside `presentation/`) exports exactly one class extending `ValueObject`, directly or
@@ -265,7 +265,7 @@ data](images/value-object-class-rule.svg)
 Whether an answered object is a record of data is read entry by entry, without the types:
 
 ![Five answered objects read entry by entry: data, built by the model, behaviour or derived; only
-the records of data alone are reported](images/value-object-record-roles.svg)
+the records of data alone are reported](../assets/diagrams/entities-and-value-objects-record-roles.svg)
 
 | Entry | Reads as | Examples |
 |---|---|---|

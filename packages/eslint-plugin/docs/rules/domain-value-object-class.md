@@ -1,3 +1,5 @@
+**English** · [Français](domain-value-object-class.fr.md)
+
 # ddd-ts-kit/domain-value-object-class
 
 Architecture id: `domain/value-object-class`. Default severity: `error` in `recommended`, `error` in `strict`.

@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" width="960" height="540" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">A value of the model: the function form and the class form</title>
+  <desc id="desc">On the left, a function that builds a plain object leaves every caller to validate, compare and recognise the value: a handler checks the amount again or forgets, an aggregate compares field by field, a mapper cannot tell the value from any other object. On the right, a class extending ValueObject is built only through its static factory, which checks the invariants once; its private constructor is refused by the compiler; it compares by value, returns new instances, keeps its props frozen, and is recognised with instanceof at the boundary.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="540" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">A value of the model: function form or class form</text>
+  <!-- function form -->
+  <rect x="24" y="60" width="444" height="456" rx="14" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="44" y="88" font-size="14" font-weight="600" fill="#b42318">function form: reported</text>
+  <rect x="44" y="104" width="404" height="64" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="60" y="130" font-size="13" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" fill="#1f2328">export const money = (amount, currency) =&gt;</text>
+  <text x="76" y="152" font-size="13" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" fill="#1f2328">({ amount, currency });</text>
+  <line x1="246" y1="170" x2="108" y2="224" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="44" y="228" width="128" height="104" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="108" y="254" font-size="14" font-weight="700" fill="#2b5d8a" text-anchor="middle">a handler</text>
+  <text x="108" y="278" font-size="13" fill="#1f2328" text-anchor="middle">checks the</text>
+  <text x="108" y="297" font-size="13" fill="#1f2328" text-anchor="middle">amount again,</text>
+  <text x="108" y="316" font-size="13" fill="#1f2328" text-anchor="middle">or forgets</text>
+  <line x1="246" y1="170" x2="246" y2="224" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="182" y="228" width="128" height="104" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="246" y="254" font-size="14" font-weight="700" fill="#2f6f4f" text-anchor="middle">an aggregate</text>
+  <text x="246" y="278" font-size="13" fill="#1f2328" text-anchor="middle">compares two</text>
+  <text x="246" y="297" font-size="13" fill="#1f2328" text-anchor="middle">amounts, field</text>
+  <text x="246" y="316" font-size="13" fill="#1f2328" text-anchor="middle">by field</text>
+  <line x1="246" y1="170" x2="384" y2="224" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="320" y="228" width="128" height="104" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="384" y="254" font-size="14" font-weight="700" fill="#7a4f9a" text-anchor="middle">a mapper</text>
+  <text x="384" y="278" font-size="13" fill="#1f2328" text-anchor="middle">cannot tell it</text>
+  <text x="384" y="297" font-size="13" fill="#1f2328" text-anchor="middle">from any other</text>
+  <text x="384" y="316" font-size="13" fill="#1f2328" text-anchor="middle">object</text>
+  <rect x="44" y="352" width="404" height="148" rx="10" fill="#ffffff" stroke="#b42318" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="60" y="378" font-size="14" font-weight="700" fill="#b42318">What is lost</text>
+  <text x="60" y="402" font-size="13" fill="#1f2328">The rule lives nowhere: each caller repeats it, or not,</text>
+  <text x="60" y="422" font-size="13" fill="#1f2328">and { amount: -3 } exists as well as any other value.</text>
+  <text x="60" y="442" font-size="13" fill="#1f2328">Its operations (add, convert, compare) scatter in helpers.</text>
+  <text x="60" y="462" font-size="13" fill="#1f2328">Nothing freezes it: any holder can change a field.</text>
+  <!-- class form -->
+  <rect x="492" y="60" width="444" height="456" rx="14" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="512" y="88" font-size="14" font-weight="600" fill="#2f6f4f">class form: expected</text>
+  <rect x="512" y="104" width="196" height="36" rx="18" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="610" y="127" font-size="13" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" fill="#1f2328" text-anchor="middle">Money.of(1250, &#x27;EUR&#x27;)</text>
+  <rect x="724" y="104" width="196" height="36" rx="18" fill="#ffffff" stroke="#b42318" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="822" y="127" font-size="13" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" fill="#b42318" text-anchor="middle">new Money(..)</text>
+  <text x="822" y="162" font-size="13" fill="#b42318" text-anchor="middle">private constructor:</text>
+  <text x="822" y="180" font-size="13" fill="#b42318" text-anchor="middle">refused by the compiler</text>
+  <line x1="610" y1="142" x2="610" y2="196" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="512" y="200" width="300" height="72" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="528" y="224" font-size="14" font-weight="700" fill="#2f6f4f">static factory: the one way in</text>
+  <text x="528" y="244" font-size="13" fill="#1f2328">checks the invariants once, or throws</text>
+  <text x="528" y="262" font-size="13" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" fill="#1f2328">InvoiceError.invalidAmount(..)</text>
+  <line x1="640" y1="274" x2="640" y2="300" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="512" y="304" width="404" height="116" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="528" y="328" font-size="14" font-weight="700" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" fill="#2f6f4f">Money extends ValueObject</text>
+  <text x="528" y="352" font-size="13" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" fill="#1f2328">equals(other)</text>
+  <text x="640" y="352" font-size="13" fill="#1f2328">by value: no identity to compare</text>
+  <text x="528" y="372" font-size="13" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" fill="#1f2328">add(other)</text>
+  <text x="640" y="372" font-size="13" fill="#1f2328">a new Money, never changed</text>
+  <text x="528" y="392" font-size="13" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" fill="#1f2328">toJSON()</text>
+  <text x="640" y="392" font-size="13" fill="#1f2328">the props, for a read model or a log</text>
+  <text x="528" y="412" font-size="13" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" fill="#1f2328">props</text>
+  <text x="640" y="412" font-size="13" fill="#1f2328">frozen by ValueObject, readonly</text>
+  <line x1="714" y1="422" x2="714" y2="448" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="512" y="452" width="404" height="52" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="528" y="474" font-size="14" font-weight="700" fill="#7a4f9a">at the boundary</text>
+  <text x="900" y="474" font-size="13" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" fill="#1f2328" text-anchor="end">value instanceof Money</text>
+  <text x="528" y="494" font-size="13" fill="#1f2328">a mapper or a serializer recognises the value</text>
+</svg>

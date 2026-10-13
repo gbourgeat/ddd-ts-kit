@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 684" width="960" height="684" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Comment domain/value-object-class lit un objet renvoyé</title>
+  <desc id="desc">Cinq fonctions et l&#x27;objet que chacune renvoie, lu entrée par entrée. Un littéral, un paramètre ou un appel du langage est une donnée ; un appel du modèle comme Money.of est construit par le modèle ; une fonction est un comportement ; une décomposition (spread) est dérivée. money et decide ne renvoient que des données et sont signalées ; split contient un objet-valeur qu&#x27;elle construit, evolve décompose un état et dueBefore ne renvoie qu&#x27;une fonction : aucune n&#x27;est signalée.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="684" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Comment un objet renvoyé est lu, entrée par entrée</text>
+  <rect x="24" y="56" width="216" height="66" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="38" y="78" font-size="14" font-weight="700" fill="#2b5d8a">donnée</text>
+  <text x="38" y="98" font-size="13" fill="#1f2328">un littéral, un paramètre,</text>
+  <text x="38" y="114" font-size="13" fill="#1f2328">Math.round(..)</text>
+  <rect x="256" y="56" width="216" height="66" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="270" y="78" font-size="14" font-weight="700" fill="#2f6f4f">construit par le modèle</text>
+  <text x="270" y="98" font-size="13" fill="#1f2328">Money.of(..), total.add(..),</text>
+  <text x="270" y="114" font-size="13" fill="#1f2328">new Slot(..)</text>
+  <rect x="488" y="56" width="216" height="66" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="502" y="78" font-size="14" font-weight="700" fill="#7a4f9a">comportement</text>
+  <text x="502" y="98" font-size="13" fill="#1f2328">une fonction, une méthode,</text>
+  <text x="502" y="114" font-size="13" fill="#1f2328">une fermeture locale</text>
+  <rect x="720" y="56" width="216" height="66" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="734" y="78" font-size="14" font-weight="700" fill="#9a5b2b">dérivé</text>
+  <text x="734" y="98" font-size="13" fill="#1f2328">une décomposition (spread),</text>
+  <text x="734" y="114" font-size="13" fill="#1f2328">...state</text>
+  <text x="24" y="148" font-size="14" font-weight="600" fill="#1f2328">Signalé quand l&#x27;objet contient des données, rien de construit par le modèle et aucune décomposition.</text>
+  <rect x="24" y="164" width="912" height="82" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="40" y="188" font-size="13" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" xml:space="preserve" fill="#1f2328">export const money = (amount: number, currency: string) =&gt;</text>
+  <text x="40" y="206" font-size="13" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" xml:space="preserve" fill="#1f2328">  ({ <tspan fill="#2b5d8a" font-weight="700">amount</tspan>, <tspan fill="#2b5d8a" font-weight="700">currency</tspan> });</text>
+  <text x="40" y="232" font-size="13" fill="#1f2328"><tspan fill="#2b5d8a" font-weight="700">amount</tspan> : donnée · <tspan fill="#2b5d8a" font-weight="700">currency</tspan> : donnée</text>
+  <rect x="672" y="175" width="252" height="60" rx="8" fill="#fbeae8" stroke="#b42318" stroke-width="2"/>
+  <text x="686" y="195" font-size="14" font-weight="700" fill="#b42318">signalé</text>
+  <text x="686" y="213" font-size="13" fill="#1f2328">données seules : une valeur du</text>
+  <text x="686" y="229" font-size="13" fill="#1f2328">modèle écrite en fonction</text>
+  <rect x="24" y="258" width="912" height="82" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="40" y="282" font-size="13" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" xml:space="preserve" fill="#1f2328">export const split = (total: Money) =&gt;</text>
+  <text x="40" y="300" font-size="13" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" xml:space="preserve" fill="#1f2328">  ({ first: <tspan fill="#2f6f4f" font-weight="700">Money.of(1)</tspan>, rest: <tspan fill="#2b5d8a" font-weight="700">total</tspan> });</text>
+  <text x="40" y="326" font-size="13" fill="#1f2328"><tspan fill="#2f6f4f" font-weight="700">first</tspan> : construit par le modèle · <tspan fill="#2b5d8a" font-weight="700">rest</tspan> : donnée</text>
+  <rect x="672" y="269" width="252" height="60" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="686" y="289" font-size="14" font-weight="700" fill="#5f6b73">non signalé</text>
+  <text x="686" y="307" font-size="13" fill="#1f2328">construit un objet-valeur :</text>
+  <text x="686" y="323" font-size="13" fill="#1f2328">une opération du modèle</text>
+  <rect x="24" y="352" width="912" height="82" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="40" y="376" font-size="13" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" xml:space="preserve" fill="#1f2328">export const evolve = (state: State, status: string) =&gt;</text>
+  <text x="40" y="394" font-size="13" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" xml:space="preserve" fill="#1f2328">  ({ <tspan fill="#9a5b2b" font-weight="700">...state</tspan>, <tspan fill="#2b5d8a" font-weight="700">status</tspan> });</text>
+  <text x="40" y="420" font-size="13" fill="#1f2328"><tspan fill="#9a5b2b" font-weight="700">...state</tspan> : dérivé · <tspan fill="#2b5d8a" font-weight="700">status</tspan> : donnée</text>
+  <rect x="672" y="363" width="252" height="60" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="686" y="383" font-size="14" font-weight="700" fill="#5f6b73">non signalé</text>
+  <text x="686" y="401" font-size="13" fill="#1f2328">décomposition : dérivé d&#x27;un</text>
+  <text x="686" y="417" font-size="13" fill="#1f2328">enregistrement existant (reducer)</text>
+  <rect x="24" y="446" width="912" height="118" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="40" y="470" font-size="13" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" xml:space="preserve" fill="#1f2328">export const dueBefore = (day: Date) =&gt; {</text>
+  <text x="40" y="488" font-size="13" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" xml:space="preserve" fill="#1f2328">  const <tspan fill="#7a4f9a" font-weight="700">isSatisfiedBy</tspan> = (invoice: Invoice): boolean =&gt; invoice.dueAt &lt; day;</text>
+  <text x="40" y="506" font-size="13" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" xml:space="preserve" fill="#1f2328">  return { <tspan fill="#7a4f9a" font-weight="700">isSatisfiedBy</tspan> };</text>
+  <text x="40" y="524" font-size="13" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" xml:space="preserve" fill="#1f2328">};</text>
+  <text x="40" y="550" font-size="13" fill="#1f2328"><tspan fill="#7a4f9a" font-weight="700">isSatisfiedBy</tspan> : comportement</text>
+  <rect x="672" y="475" width="252" height="60" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="686" y="495" font-size="14" font-weight="700" fill="#5f6b73">non signalé</text>
+  <text x="686" y="513" font-size="13" fill="#1f2328">des fonctions seulement :</text>
+  <text x="686" y="529" font-size="13" fill="#1f2328">une spécification</text>
+  <rect x="24" y="576" width="912" height="82" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="40" y="600" font-size="13" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" xml:space="preserve" fill="#1f2328">export const decide = (reason: string) =&gt;</text>
+  <text x="40" y="618" font-size="13" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" xml:space="preserve" fill="#1f2328">  ({ kind: <tspan fill="#2b5d8a" font-weight="700">&#x27;refused&#x27; as const</tspan>, <tspan fill="#2b5d8a" font-weight="700">reason</tspan> });</text>
+  <text x="40" y="644" font-size="13" fill="#1f2328"><tspan fill="#2b5d8a" font-weight="700">kind</tspan> : donnée · <tspan fill="#2b5d8a" font-weight="700">reason</tspan> : donnée</text>
+  <rect x="672" y="587" width="252" height="60" rx="8" fill="#fbeae8" stroke="#b42318" stroke-width="2"/>
+  <text x="686" y="607" font-size="14" font-weight="700" fill="#b42318">signalé</text>
+  <text x="686" y="625" font-size="13" fill="#1f2328">données seules : levez le refus</text>
+  <text x="686" y="641" font-size="13" fill="#1f2328">d&#x27;une fabrique, ou un objet-valeur</text>
+</svg>

@@ -1,5 +1,5 @@
 [English](entities-and-value-objects.md) · **Français**
-<!-- translation-of: entities-and-value-objects.md sha256:1e4c59bf54f0199f -->
+<!-- translation-of: entities-and-value-objects.md sha256:215d2839a1efe616 -->
 
 # Entités et objets-valeurs
 
@@ -10,7 +10,9 @@ est immuable, et deux objets-valeurs aux mêmes attributs sont interchangeables,
 horaire ou un motif d'annulation. La plupart des concepts devraient être des objets-valeurs ; les
 entités sont les quelques choses dont le métier suit la continuité. Dans ce kit, les deux ont un
 constructeur privé et des fabriques, les entités ne changent que par des méthodes nommées d'après
-une intention métier, et les objets-valeurs ne changent jamais.
+une intention métier, et les objets-valeurs ne changent jamais. Un objet-valeur est toujours une
+classe qui étend `ValueObject`, jamais une fonction qui construit un objet simple
+(`domain/value-object-class`).
 
 ## Les distinguer
 
@@ -149,6 +151,197 @@ describe('TimeSlot', () => {
     expect(TimeSlot.create(at('09:00'), at('09:30')).overlaps(TimeSlot.create(at('09:30'), at('10:00')))).toBe(false);
   });
 });
+```
+
+### Pourquoi un objet-valeur est une classe
+
+Une valeur peut s'écrire de deux façons en TypeScript : une fonction qui construit un objet
+simple, ou une classe. Le kit écrit, et vérifie, la classe (`domain/value-object-class`).
+
+![Une fonction qui construit un objet simple laisse chaque appelant valider, comparer et reconnaître la valeur ; une classe construite par sa fabrique statique vérifie une fois, compare par valeur et se reconnaît à la frontière](../assets/diagrams/entities-and-value-objects-function-or-class.fr.svg)
+
+La forme fonction paraît plus légère :
+
+```ts
+// domain/value-objects/money.vo.ts : signalé
+export type Money = { readonly amount: number; readonly currency: string };
+
+export const money = (amount: number, currency: string): Money => ({ amount, currency });
+```
+
+et coûte davantage à chaque endroit qui l'utilise :
+
+```ts
+// trois appelants, trois copies des règles, ou aucune
+if (!Number.isInteger(price.amount)) { /* ... */ }                    // un gestionnaire valide encore
+const same = a.amount === b.amount && a.currency === b.currency;    // un agrégat compare à la main
+const total = { amount: a.amount + b.amount, currency: a.currency }; // une fonction utilitaire additionne, sans vérifier
+```
+
+La forme classe rassemble tout cela en un seul endroit :
+
+```ts
+// domain/value-objects/money.vo.ts : npx ddd-ts-kit generate value-object billing Money
+import { ValueObject } from '@ddd-ts-kit/kernel';
+import { InvoiceError } from '@/contexts/billing/domain/errors/invoice.error';
+
+export type MoneyProps = {
+  readonly amount: number;
+  readonly currency: string;
+};
+
+export class Money extends ValueObject<MoneyProps> {
+  private constructor(props: MoneyProps) {
+    super(props);
+  }
+
+  static of(amount: number, currency: string): Money {
+    if (!Number.isInteger(amount)) {
+      throw InvoiceError.invalidAmount(amount);
+    }
+
+    return new Money({ amount, currency });
+  }
+
+  static zero(currency: string): Money {
+    return Money.of(0, currency);
+  }
+
+  add(other: Money): Money {
+    if (other.currency !== this.currency) {
+      throw InvoiceError.currencyMismatch(this.currency, other.currency);
+    }
+
+    return Money.of(this.amount + other.amount, this.currency);
+  }
+
+  get amount(): number {
+    return this.props.amount;
+  }
+
+  get currency(): string {
+    return this.props.currency;
+  }
+}
+```
+
+```ts
+// les trois mêmes appelants
+const price = Money.of(1250, 'EUR');      // valide, ou refusé avec INVALID_AMOUNT
+const same = a.equals(b);                 // par valeur
+const total = a.add(b);                   // un nouveau Money, vérifié à nouveau par `of`
+```
+
+Ce que donne la classe, et que la fonction ne peut pas donner :
+
+| | Fonction qui renvoie `{ amount, currency }` | Classe qui étend `ValueObject` |
+|---|---|---|
+| **L'égalité sans identité** | chaque appelant compare champ par champ, ou compare des références par erreur | `equals` compare les props : deux valeurs égales sont interchangeables |
+| **Les invariants vérifiés une fois** | tout objet de la bonne forme passe, `{ amount: 0.5 }` compris ; chaque appelant revérifie ou oublie | le constructeur est privé, la fabrique statique est la seule entrée : un `Money` qui existe est valide |
+| **Le comportement à côté des données** | `add`, `convert`, `isZero` deviennent des fonctions utilitaires dans d'autres fichiers, trouvées en cherchant | des méthodes du type qu'elles concernent, trouvées par la complétion |
+| **Les refus depuis les fabriques statiques** | une entrée invalide passe inaperçue | `Money.of` lève le refus de son concept, `InvoiceError.invalidAmount(..)`, que le *mapping* HTTP, le journal d'audit et les tests connaissent par son code ; ou le renvoie dans un `Result` sous `"stack.valueObjects": "result"` |
+| **L'immuabilité** | un type `readonly` n'est qu'une promesse du compilateur : tout détenteur peut encore le décomposer et le modifier | les props sont figées par `ValueObject`, une opération renvoie une nouvelle instance (`domain/value-object-immutability`) |
+| **Reconnue à la frontière** | un *mapper* ne peut pas distinguer un `Money` de n'importe quel objet aux deux mêmes champs | `value instanceof Money` dans un *mapper* ou un sérialiseur ; `toJSON()` donne les props à un modèle de lecture ou à un journal |
+
+### Ce que vérifie `domain/value-object-class`
+
+La règle tient un projet dont la configuration dit `"stack.values": "classes"`, ce qu'écrit
+`init`. Une configuration sans la clé a été écrite avant que la règle n'existe : elle se lit
+`free` et rien n'est signalé ; [CONFIG.md](../CONFIG.fr.md#stack) donne les étapes pour la faire
+évoluer.
+
+![La règle lit d'abord la configuration, puis les fichiers d'objets-valeurs, puis les fonctions de domain/ et du noyau partagé ; une fonction est signalée quand l'objet qu'elle renvoie est un enregistrement de données](../assets/diagrams/entities-and-value-objects-class-rule.fr.svg)
+
+- **Un fichier d'objet-valeur** (`domain/value-objects/*.vo.ts` d'un contexte, un `*.vo.ts` du
+  noyau partagé hors de `presentation/`) exporte exactement une classe qui étend `ValueObject`,
+  directement ou par un autre objet-valeur du projet ; son constructeur est privé ou protégé
+  (une classe qui n'en déclare aucun hérite de celui, protégé, de `ValueObject`) ; une classe
+  concrète a une fabrique statique ; et le fichier n'exporte aucune fonction, aucune constante
+  fléchée et aucun objet littéral, en ligne, par une liste d'export ou par défaut. Les types et
+  les interfaces de ses props peuvent être exportés à côté.
+- **Dans les autres fichiers de `domain/` et du noyau partagé** (hors de `presentation/`), une
+  fonction exportée qui renvoie un **enregistrement de données** est une valeur écrite comme une
+  fonction, et elle est signalée avec la commande qui écrit la classe.
+
+Qu'un objet renvoyé soit un enregistrement de données se lit entrée par entrée, sans les types :
+
+![Cinq objets renvoyés lus entrée par entrée : donnée, construit par le modèle, comportement ou dérivé ; seuls les enregistrements faits de données seules sont signalés](../assets/diagrams/entities-and-value-objects-record-roles.fr.svg)
+
+| Entrée | Se lit comme | Exemples |
+|---|---|---|
+| un littéral, un paramètre, une opération sur eux, un appel du langage | donnée | `amount`, `'EUR'`, `cents * 100`, `Math.round(cents)`, `new Date(at)` |
+| tout autre appel ou `new`, ou un nom lié à l'un d'eux dans le module | construit par le modèle | `Money.of(1)`, `total.add(tax)`, `new Slot(..)` |
+| une fonction, une méthode, ou un nom lié à l'une d'elles dans le module | comportement | `isSatisfiedBy: (x) => ..`, `describe() {}`, `{ isSatisfiedBy }` |
+| `...state` | dérivé | `{ ...state, status }` |
+
+L'objet est un enregistrement de données quand il contient des données, rien de construit par le
+modèle et aucune décomposition (spread). Une fonction qui déclare un type de retour d'un
+*package* (`): EventStamp` du noyau) n'est pas jugée : la forme appartient à la bibliothèque, et
+le projet ne peut pas en faire une classe.
+
+Ce qui reste une fonction, parce que ce n'est pas une valeur :
+
+```ts
+// domain/state-machines/invoice.state-machine.ts : une déclaration, le résultat d'un appel
+export const invoiceLifecycle = defineStateMachine({ states: ['draft', 'issued'], /* ... */ });
+
+// domain/services/invoice-total.service.ts : prend et renvoie des objets-valeurs
+export function invoiceTotal(lines: readonly Money[], currency: string): Money {
+  return lines.reduce((sum, line) => sum.add(line), Money.zero(currency));
+}
+
+// une spécification : renvoie un booléen, ou seulement des fonctions, littérales ou fermetures locales
+export const isOverdue = (invoice: Invoice, now: Date): boolean => invoice.dueAt < now;
+export const dueBefore = (day: Date) => {
+  const isSatisfiedBy = (invoice: Invoice): boolean => invoice.dueAt < day;
+
+  return { isSatisfiedBy };
+};
+
+// une opération du modèle : un enregistrement d'objets-valeurs qu'elle construit
+export const split = (total: Money) => ({ first: Money.of(1), rest: total.subtract(Money.of(1)) });
+
+// un reducer : dérive un enregistrement qui existe, par une décomposition
+export const evolve = (state: InvoiceState, status: string): InvoiceState => ({ ...state, status });
+```
+
+Ce qui est signalé, par décision, avec ce qu'il faut écrire à la place :
+
+```ts
+// une décision renvoyée en enregistrement : le domaine refuse en levant le refus de son concept,
+// `throw InvoiceError.refused(reason)`, ou nomme la décision comme un objet-valeur,
+// `Decision.refused(reason)`, dont la classe dit quelles décisions existent
+export const decide = (reason: string) => ({ kind: 'refused' as const, reason });
+
+// des données avec des fermetures : une valeur qui a un comportement, donc une classe avec des méthodes
+export const money = (cents: number) => ({ cents, doubled: (): number => cents * 2 });
+
+// un enregistrement qui ne fait que rassembler ses paramètres, objets-valeurs compris : une paire
+// qui a un sens est une valeur du glossaire, `Period.between(start, end)`
+export const period = (start: Instant, end: Instant) => ({ start, end });
+```
+
+Tout type exporté de `domain/` n'est pas non plus une valeur. Un **objet de paramètres**, qui ne
+fait que regrouper les arguments d'une méthode ou d'une fabrique et n'est ni gardé, ni comparé,
+ni utilisé dans un calcul, reste un type : `CalendarDesk` (le cabinet, le praticien et le fuseau
+horaire donnés à `Calendar.create`, puis décomposés dans l'état) et `FreedSlot` (le créneau, le
+calendrier et les créneaux encore retenus, donnés à `Waitlist.offer`) dans l'exemple. Une valeur
+ne contient aucun agrégat : `FreedSlot` porte un `Calendar`, une entité dotée d'une identité,
+qu'aucune égalité par valeur ne peut comparer. Une valeur du glossaire avec laquelle le modèle
+calcule est un objet-valeur : `MeasuredOutcome` et `OccupancyFigures` du contexte analytics, que
+la mesure d'occupation lit et renvoie. Chacun vérifie ses règles une fois, dans sa fabrique :
+`MeasuredOutcome.of` refuse une fin avant le début, `OccupancyFigures.of` un chiffre inférieur à
+zéro et moins de rendez-vous qui occupent leur temps que de rendez-vous honorés et manqués, tous
+deux par une fabrique de `OccupancyError` :
+
+```ts
+static of(state: OutcomeState, startsAt: Date, endsAt: Date): MeasuredOutcome {
+  if (endsAt.getTime() < startsAt.getTime()) {
+    throw OccupancyError.outcomeEndsBeforeStart(startsAt.toISOString(), endsAt.toISOString());
+  }
+
+  return new MeasuredOutcome({ state, startsAt: new Date(startsAt), endsAt: new Date(endsAt) });
+}
 ```
 
 ### L'obsession des types primitifs
@@ -326,8 +519,20 @@ dans une table à lui avec une clé technique que le domaine ne voit jamais.
   peut ajouter des éléments à un tableau). Tenez des valeurs elles-mêmes immuables, ou copiez-les
   à l'entrée et à la sortie.
 - **Les règles d'encapsulation relèvent du *plugin* ESLint**, qui lit l'arbre syntaxique ; le
-  *checker* de la CLI, qui travaille au niveau du texte, n'a pas d'équivalent pour `domain/*`
-  (README de la CLI).
+  *checker* de la CLI, qui travaille au niveau du texte, n'a pas d'équivalent pour
+  `domain/aggregate-encapsulation` et `domain/value-object-immutability` (README de la CLI).
+  `domain/value-object-class` est lue par les deux.
+- **La forme fonction est détectée par ce qu'elle renvoie, sans les types.** La revue suit ce
+  que la règle ne suit pas : un objet d'abord construit dans une variable, puis renvoyé
+  (`const value = { .. }; return value;`) ; un objet renvoyé à travers une condition
+  (`cond ? { .. } : { .. }`), dans un tableau ou comme argument d'un appel ; un nom lu par sa
+  première déclaration dans le module, si bien qu'un paramètre nommé comme une fonction du module
+  se lit comme cette fonction ; un appel lu par le nom dont il part, si bien que `name.trim()` sur
+  un paramètre se lit comme construit par le modèle ; et un type de retour d'un *package* lu par
+  son seul nom déclaré.
+- **Une règle assouplie est une dérogation enregistrée.** La règle vaut `error` par défaut ; la
+  passer à `warn` ou `off` sous `rules` s'enregistre sous `deviations` avec son ADR
+  (`governance/recorded-deviation`). Un projet qui n'est pas prêt garde `"stack.values": "free"`.
 - **Un contexte CRUD mince** peut avoir des entités avec peu de règles. C'est acceptable là où le
   sous-domaine est simple ; voir [Modèle anémique](anemic-model.fr.md).
 

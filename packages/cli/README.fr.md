@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:a8de153db0cfd875 -->
+<!-- translation-of: README.md sha256:eae59eb228d7b41f -->
 
 # ddd-ts-kit
 
@@ -68,7 +68,8 @@ ddd-ts-kit init [--http express|fastify|hono|nest|none]
                 [--style declared|explicit] [--assembly barrel|discovery]
                 [--dependencies signature|listed] [--refusals factories|classes]
                 [--routes controllers|functions] [--value-objects throwing|result]
-                [--literals named|free] [--tenancy none|shared-table] [--queue database|redis|memory]
+                [--literals named|free] [--values classes|free] [--tenancy none|shared-table]
+                [--queue database|redis|memory]
                 [--schemas shared|per-route]
                 [--package-manager npm|pnpm]
                 [--allow-no-outbox "<reason>"] [--import-alias '$<name>/']
@@ -1318,6 +1319,7 @@ règle.
 | `schema/presentation-only` | sous `"stack.schemas": "shared"` : dans le noyau partagé hors de `presentation/`, un import d'une bibliothèque de validation ; dans `domain/`, `application/`, `infrastructure/`, `published-language/` et le noyau partagé hors de `presentation/`, un import d'un fichier de `presentation/` du noyau partagé |
 | `schema/no-duplicate-shape` | sous `"stack.schemas": "shared"`, dans la couche présentation d'un contexte, ou dans celle-ci et `presentation/` du noyau partagé : une classe DTO ou un schéma objet (`z.object`, `v.object`, `Type.Object`) qui déclare la forme d'un autre, avec l'endroit de l'original (le noyau partagé, puis `presentation/http/shared/`) ; deux contextes ne sont pas comparés, et les paramètres de requête HTTP et les formes qui portent encore un `TODO(domain)` du générateur ne sont pas jugés |
 | `errors/known-code` | sous `"stack.refusals": "factories"`, dans un `*.route.ts` : un code de la liste `errors` qu'aucun refus du contexte de la route ne pose, qu'aucune classe hors des contextes ne pose, et qui n'est pas un code du kit |
+| `domain/value-object-class` | sous `"stack.values": "classes"` : dans `domain/value-objects/` d'un contexte ou un `*.vo.ts` du noyau partagé hors de `presentation/`, aucune classe exportée ou une seconde, une classe qui n'étend ni `ValueObject` ni un autre objet-valeur du projet, un constructeur public, une classe concrète sans méthode statique, une fonction, une constante fléchée ou un objet littéral exporté (en ligne, par une liste ou par défaut) ; dans `domain/` et dans le noyau partagé hors de `presentation/`, une fonction exportée qui répond un enregistrement de données : des entrées de données, aucune décomposition, rien qu'un appel du modèle a construit |
 
 D'autres identifiants appartiennent à `@ddd-ts-kit/eslint-plugin`, qui lit l'arbre syntaxique là
 où ce *checker* lit du texte : `domain/aggregate-encapsulation`,

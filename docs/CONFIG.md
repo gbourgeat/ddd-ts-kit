@@ -88,7 +88,7 @@ only, `stack.tenancy` when it is not `none`. The optional keys (`coverage`, `dev
 
 ## How a key is read
 
-![A decision tree: an unknown key is ignored; a known key that is not written is read as its default, which for twelve stack keys and importExtension is the default of an older file; an accepted value is read as written; a wrong stack value stops every command; any other wrong value is kept or defaulted and reported by check as config/valid](assets/diagrams/config-how-a-key-is-read.svg)
+![A decision tree: an unknown key is ignored; a known key that is not written is read as its default, which for thirteen stack keys and importExtension is the default of an older file; an accepted value is read as written; a wrong stack value stops every command; any other wrong value is kept or defaulted and reported by check as config/valid](assets/diagrams/config-how-a-key-is-read.svg)
 
 A wrong `stack.*` value stops every command before it does anything, with the list of accepted
 values:
@@ -111,7 +111,7 @@ ddd-ts-kit.config.json:39  error  config/valid
 
 A key that is not written is not always read as what `init` writes today: a file without the key
 was written by a version that did not know it, and the kit reads it the way that version
-worked, so that an upgrade of the packages changes nothing in an existing project. The twelve keys
+worked, so that an upgrade of the packages changes nothing in an existing project. The thirteen keys
 concerned are in [the table of the Stack section](#a-key-left-out-of-stack), and `importExtension`
 below. The exact rules of the parser are in [Limits](#limits).
 

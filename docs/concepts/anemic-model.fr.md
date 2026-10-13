@@ -1,5 +1,5 @@
 [English](anemic-model.md) · **Français**
-<!-- translation-of: anemic-model.md sha256:463a237b37fdc997 -->
+<!-- translation-of: anemic-model.md sha256:25baaacb93704bae -->
 
 # Modèle anémique
 
@@ -215,6 +215,7 @@ Questions rapides pour une revue :
 |---|---|
 | `domain/aggregate-encapsulation` | un constructeur public, une propriété publique modifiable, un *setter* sur un agrégat ou une entité |
 | `domain/value-object-immutability` | un objet-valeur qui peut changer |
+| `domain/value-object-class` | une valeur du modèle écrite comme une fonction qui construit un objet simple, `money(amount, currency) => ({ amount, currency })`, ou une classe d'objet-valeur au constructeur public ou sans fabrique (sous `"stack.values": "classes"`) |
 | `domain/no-generic-error` | `throw new Error(...)` dans `domain/` ou `application/` |
 | `language/no-technical-name`, `language/glossary-term` | `AppointmentManager`, des noms hors du glossaire |
 | `purity/no-system-clock` | `Date.now()` ou `new Date()` dans un gestionnaire ou un agrégat |

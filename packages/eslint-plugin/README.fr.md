@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:065f9455ffa14618 -->
+<!-- translation-of: README.md sha256:2410aa470b6a05c6 -->
 
 # @ddd-ts-kit/eslint-plugin
 
@@ -225,6 +225,7 @@ chaque règle à `error`.
 | [`clean/formatted`](docs/rules/clean-formatted.fr.md) | aucun : Biome (`npm run format:check`) | chaque fichier est mis en forme par le formateur, à une largeur de ligne de 120 | aucune | formateur |
 | [`domain/aggregate-encapsulation`](docs/rules/domain-aggregate-encapsulation.fr.md) | `ddd-ts-kit/domain-aggregate-encapsulation` | agrégats et entités : pas de constructeur public, pas de propriété publique modifiable, pas de *setter* | `error` | maison |
 | [`domain/value-object-immutability`](docs/rules/domain-value-object-immutability.fr.md) | `ddd-ts-kit/domain-value-object-immutability` | objets-valeurs : chaque propriété `readonly`, pas de *setter*, pas d'écriture dans `this` | `error` | maison |
+| [`domain/value-object-class`](docs/rules/domain-value-object-class.fr.md) | `ddd-ts-kit/domain-value-object-class` | sous `"stack.values": "classes"` : un fichier d'objet-valeur exporte une classe qui étend `ValueObject`, au constructeur privé ou protégé, avec des fabriques statiques, sans fonction ni objet littéral ; aucune fonction exportée de `domain/` ou du noyau partagé ne répond un enregistrement de données | `error` | maison |
 | [`domain/no-generic-error`](docs/rules/domain-no-generic-error.fr.md) | `ddd-ts-kit/domain-no-generic-error` | pas de `throw new Error(...)` dans `domain/` et `application/` | `error` | maison |
 | [`errors/through-factory`](docs/rules/errors-through-factory.fr.md) | `ddd-ts-kit/errors-through-factory` | sous `"stack.refusals": "factories"`, pas de `new` d'une classe importée de `domain/errors/` : un refus se construit par une fabrique statique de sa classe de concept | `error` | maison |
 | [`errors/constructor-not-public`](docs/rules/errors-constructor-not-public.fr.md) | `ddd-ts-kit/errors-constructor-not-public` | sous `"stack.refusals": "factories"`, une classe d'erreur de `domain/errors/` n'a pas de constructeur public, déclaré ou hérité de `DomainError` | `error` | maison |
