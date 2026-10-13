@@ -48,6 +48,7 @@ A credential is given per security scheme of the contract, as a value or as a fu
 | `addMember` | `POST /practices/{practiceId}/members` | UNAUTHORIZED, FORBIDDEN, PERSON_NOT_REGISTERED, PRACTICE_NOT_FOUND, ALREADY_MEMBER, UNKNOWN_ROLE, VALIDATION_FAILED |
 | `removeMember` | `DELETE /practices/{practiceId}/members/{personId}` | UNAUTHORIZED, FORBIDDEN, PRACTICE_NOT_FOUND, LAST_MANAGER, NOT_A_MEMBER, VALIDATION_FAILED |
 | `searchOccupancy` | `GET /practices/{practiceId}/occupancy` | UNAUTHORIZED, FORBIDDEN, VALIDATION_FAILED |
+| `searchAttendanceHistory` | `GET /practices/{practiceId}/patients/{patientId}/attendance` | UNAUTHORIZED, FORBIDDEN, INVALID_CRITERIA, VALIDATION_FAILED |
 
 ## Error codes
 

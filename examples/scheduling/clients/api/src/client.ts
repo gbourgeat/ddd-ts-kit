@@ -166,6 +166,12 @@ export interface Client {
    * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), VALIDATION_FAILED (422).
    */
   searchOccupancy(input: operations.SearchOccupancyInput, options?: CallOptions): Promise<operations.SearchOccupancyResult>;
+  /**
+   * Search attendance history: `GET /practices/{practiceId}/patients/{patientId}/attendance`.
+   *
+   * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), INVALID_CRITERIA (422), VALIDATION_FAILED (422).
+   */
+  searchAttendanceHistory(input: operations.SearchAttendanceHistoryInput, options?: CallOptions): Promise<operations.SearchAttendanceHistoryResult>;
 }
 
 export function createClient(options: ClientOptions<SchemeName>): Client {
@@ -197,5 +203,6 @@ export function createClient(options: ClientOptions<SchemeName>): Client {
     addMember: (input, call) => operations.addMember(connection, input, call),
     removeMember: (input, call) => operations.removeMember(connection, input, call),
     searchOccupancy: (input, call) => operations.searchOccupancy(connection, input, call),
+    searchAttendanceHistory: (input, call) => operations.searchAttendanceHistory(connection, input, call),
   };
 }
