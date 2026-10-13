@@ -18,7 +18,7 @@ describe('When the opening hours of a calendar are set', () => {
     const reactedAt: string[] = [];
 
     domainEvents.on(
-      'scheduling.calendar.opening-hours-set',
+      CalendarOpeningHoursSet.eventName,
       async () => {
         await handler.handle(event);
         reactedAt.push(unitOfWorkStage());

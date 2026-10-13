@@ -17,6 +17,7 @@ interface OpeningHours {
 }
 
 const mornings = { ranges: [{ weekday: 'monday', start: '09:00', end: '12:00' }] };
+const closedOnMonday = { day: '2026-03-02', ranges: [] };
 const afternoons = { ranges: [{ weekday: 'monday', start: '14:00', end: '18:00' }] };
 
 describe('Get opening hours, end to end: what a cache may keep, and its purge after the change', () => {
@@ -24,6 +25,7 @@ describe('Get opening hours, end to end: what a cache may keep, and its purge af
   let practice: StaffedPractice;
   let practitioner: HttpClient;
   let hoursPath: string;
+  let exceptionsPath: string;
 
   beforeAll(async () => {
     application = await startApplication({ behindVarnish: THROUGH_VARNISH });
@@ -38,8 +40,11 @@ describe('Get opening hours, end to end: what a cache may keep, and its purge af
     practice = await openStaffedPractice(application, riverside);
     practitioner = await application.as({ id: practice.practitionerId });
     hoursPath = '/calendars/' + practice.calendarId + '/opening-hours';
-    // Setting up the practice set the hours once: what a test purges starts after that purge.
-    await eventually(() => expect(application.purges.purged).toContain(cacheTag('calendar', practice.calendarId)));
+    exceptionsPath = '/calendars/' + practice.calendarId + '/exceptions';
+    // Setting up the practice set the hours and defined a consultation, each purging the calendar: a test starts after both.
+    const calendar = cacheTag('calendar', practice.calendarId);
+
+    await eventually(() => expect(application.purges.purged.filter((tag) => tag === calendar)).toHaveLength(2));
     application.purges.purged.splice(0);
   });
 
@@ -97,6 +102,19 @@ describe('Get opening hours, end to end: what a cache may keep, and its purge af
     expect(current.body.ranges).toEqual(mornings.ranges);
   });
 
+  it('purges the hours after any change of the calendar, so that the version they name is the one a change is made on', async () => {
+    expectStatus(await practitioner.post(exceptionsPath, closedOnMonday), 201);
+
+    await eventually(() => expect(application.purges.purged).toEqual([cacheTag('calendar', practice.calendarId)]));
+
+    const read = expectStatus(await application.client.get<OpeningHours>(hoursPath), 200);
+
+    expectStatus(
+      await practitioner.put(hoursPath, mornings, { headers: { 'if-match': read.headers['etag'] ?? '' } }),
+      200,
+    );
+  });
+
   it('answers 404 to a calendar that does not exist, which no cache keeps', async () => {
     const missing = await application.client.get('/calendars/no-such-calendar/opening-hours');
 
@@ -105,6 +123,24 @@ describe('Get opening hours, end to end: what a cache may keep, and its purge af
   });
 
   describe.runIf(THROUGH_VARNISH)('through Varnish', () => {
+    it('serves, once another change of the calendar committed, the version a change of the hours is then made on', async () => {
+      const varnish = createHttpClient(VARNISH_URL);
+
+      await varnish.get(hoursPath);
+      expectStatus(await practitioner.post(exceptionsPath, closedOnMonday), 201);
+
+      const current = expectStatus(await application.client.get<OpeningHours>(hoursPath), 200);
+
+      await eventually(async () => {
+        expect(expectStatus(await varnish.get<OpeningHours>(hoursPath), 200).body.version).toBe(current.body.version);
+      });
+
+      const served = expectStatus(await varnish.get<OpeningHours>(hoursPath), 200);
+      const onTheVersionServed = { headers: { 'if-match': served.headers['etag'] ?? '' } };
+
+      expectStatus(await practitioner.put(hoursPath, mornings, onTheVersionServed), 200);
+    });
+
     it('serves the hours from Varnish until the command that changes them, then the new ones', async () => {
       const varnish = createHttpClient(VARNISH_URL);
 

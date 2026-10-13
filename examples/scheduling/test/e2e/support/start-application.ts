@@ -131,7 +131,10 @@ function backendPortOf({ behindVarnish }: StartOptions): { PORT?: string } {
 
 /** The purges are recorded for the spec, and sent to Varnish as well when it reads through one. */
 function purgerOf(purges: InMemoryCachePurger, { behindVarnish }: StartOptions, config: AppConfig): CachePurger {
-  const varnish = behindVarnish === true ? new VarnishCachePurger({ url: config.varnishUrl }) : undefined;
+  const varnish =
+    behindVarnish === true
+      ? new VarnishCachePurger({ url: config.varnishUrl, key: config.varnishPurgeKey })
+      : undefined;
 
   return {
     purge: async (tags) => {

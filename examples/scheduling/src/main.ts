@@ -3,7 +3,7 @@ import { tracing } from '@/platform/tracing';
 // Imported second on purpose: a failure while the rest of the application loads is already reported.
 import { errors } from '@/platform/errors';
 import { VarnishCachePurger } from '@ddd-ts-kit/http/purgers';
-import { PurgingPublisher } from '@ddd-ts-kit/kernel';
+import { PurgingPublisher, RepeatedCachePurger } from '@ddd-ts-kit/kernel';
 import { createAuthenticator } from '@/platform/auth/create-authenticator';
 import { composeApplication } from '@/platform/compose-application';
 import { loadConfig } from '@/platform/config/load-config';
@@ -13,6 +13,9 @@ import { startOutboxRelay } from '@/platform/events/start-outbox-relay';
 import { startHttpServer } from '@/platform/http/start-http-server';
 import { jobSettings } from '@/platform/job-settings';
 import { openRedis } from '@/platform/redis/open-redis';
+
+// Longer than the slowest read of the API: a read on its way when the first purge ran is purged by the second.
+const PURGE_AGAIN_AFTER_MS = 2_000;
 
 const config = loadConfig(process.env);
 const persistence = openPersistence(config);
@@ -34,7 +37,14 @@ await application.start();
 const relay = startOutboxRelay({
   store: persistence.outbox,
   // The purge requests the use cases wrote with their commands go to Varnish, every other event to the provider.
-  publisher: new PurgingPublisher(new VarnishCachePurger({ url: config.varnishUrl }), application.eventBus),
+  // Purged again two seconds later: a read that loaded the hours before the commit may reach Varnish after the purge.
+  publisher: new PurgingPublisher(
+    new RepeatedCachePurger(new VarnishCachePurger({ url: config.varnishUrl, key: config.varnishPurgeKey }), {
+      againAfterMs: PURGE_AGAIN_AFTER_MS,
+      onFailure: (_error, tags) => application.logger.warn('second purge failed', { tags: tags.join(' ') }),
+    }),
+    application.eventBus,
+  ),
   intervalMs: config.outboxRelayIntervalMs,
   logger: application.logger,
   errors,

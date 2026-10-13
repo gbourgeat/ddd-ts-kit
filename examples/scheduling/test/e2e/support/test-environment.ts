@@ -15,6 +15,7 @@ export function testEnvironment(overrides: Variables = {}): Variables {
     REDIS_URL: (process.env['REDIS_URL'] ?? '') || noRedis,
     // The relay of the tests purges the cache of the spec, or Varnish when VARNISH_URL names one: the address only has to be one.
     VARNISH_URL: (process.env['VARNISH_URL'] ?? '') || 'http://varnish.e2e.test',
+    VARNISH_PURGE_KEY: (process.env['VARNISH_PURGE_KEY'] ?? '') || 'e2e-purge-key',
     RATE_LIMIT_MAX: process.env['RATE_LIMIT_MAX'] ?? '1000000',
     ...overrides,
   };
