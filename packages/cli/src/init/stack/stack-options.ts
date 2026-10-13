@@ -27,6 +27,8 @@ export interface StackOptions {
   readonly valueObjects?: string;
   readonly literals?: string;
   readonly tenancy?: string;
+  /** `database`, `redis` or `memory`: where the background jobs wait. */
+  readonly queue?: string;
   readonly packageManager?: string;
   /** The prefix of the source root in imports, when it is not the default. */
   readonly importAlias?: string;

@@ -35,6 +35,21 @@ TODO(domain): say in one sentence why this context is {{doc.classification}}.
 <!-- ddd-ts-kit:jobs -->
 <!-- /ddd-ts-kit:jobs -->
 
+## Background jobs
+
+<!-- ddd-ts-kit:background-jobs -->
+<!-- /ddd-ts-kit:background-jobs -->
+
+## State machines
+
+<!-- ddd-ts-kit:state-machines -->
+<!-- /ddd-ts-kit:state-machines -->
+
+## Process managers
+
+<!-- ddd-ts-kit:processes -->
+<!-- /ddd-ts-kit:processes -->
+
 ## Relationships
 
 <!-- ddd-ts-kit:relationships -->

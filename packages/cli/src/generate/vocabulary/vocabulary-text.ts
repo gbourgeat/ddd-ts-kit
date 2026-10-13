@@ -1,6 +1,5 @@
+import { heldEntries } from './held-entries.js';
 import type { VocabularyEntry } from './vocabulary-entry.js';
-
-const DECLARED_VALUE = /^\s*([A-Za-z_$][\w$]*)\s*:\s*'([^']*)',?\s*$/gm;
 
 /**
  * The file of a closed vocabulary: an object `as const` of its values and the union type of the
@@ -20,7 +19,7 @@ export function vocabularyText(name: string, entries: readonly VocabularyEntry[]
     ].join('\n');
   }
 
-  const held = new Set([...existing.matchAll(DECLARED_VALUE)].map((found) => found[2]));
+  const held = new Set(heldEntries(existing).map(({ value }) => value));
   const missing = entries.filter(({ value }) => !held.has(value));
   const end = existing.indexOf('} as const;');
 

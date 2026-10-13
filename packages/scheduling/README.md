@@ -1,9 +1,11 @@
 # @ddd-ts-kit/scheduling
 
-Scheduled jobs for a project built with the kit. A job is a class of the application layer that
-says when it runs and triggers use cases: it decides nothing, the business rules stay in the
-domain. The scheduler opens an execution scope around each run, makes sure one instance of the
-application runs a given occurrence, and records what became of it.
+Scheduled jobs and background jobs for a project built with the kit. A scheduled job is a class
+of the application layer that says when it runs and triggers use cases: it decides nothing, the
+business rules stay in the domain. The scheduler opens an execution scope around each run, makes
+sure one instance of the application runs a given occurrence, and records what became of it. A
+background job is enqueued by a use case and run later by the worker of this package (see
+"Background jobs" below).
 
 ```
 npm i @ddd-ts-kit/scheduling
@@ -11,7 +13,7 @@ npm i @ddd-ts-kit/scheduling
 
 | Entry | Holds | Imports |
 |---|---|---|
-| `@ddd-ts-kit/scheduling` | `InProcessJobScheduler`, `nextOccurrence`, `latestOccurrence`, `systemJobTimers`, the `JobTimers` and `JobCheckpoints` ports, `JobTimeoutError`, `JobAbortedError`, `JobLockUnavailableError`, the metric names | the kernel |
+| `@ddd-ts-kit/scheduling` | `InProcessJobScheduler`, `nextOccurrence`, `latestOccurrence`, `systemJobTimers`, the `JobTimers` and `JobCheckpoints` ports, `JobTimeoutError`, `JobAbortedError`, `JobLockUnavailableError`, the metric names; for background jobs `QueueWorker`, `StoredJobQueue`, the `JobStore` port, `InMemoryJobStore`, `reportFailedBackgroundJobs`, `JobInterruptedError`, `InvalidEnqueueError` | the kernel |
 | `@ddd-ts-kit/scheduling/testing` | `ManualJobScheduler`, `ManualJobTimers` | the kernel |
 
 The declaration (`@Scheduled`), the port (`JobScheduler`) and the schedule parser live in
@@ -422,6 +424,67 @@ expect(scheduler.runs.map((run) => run.scheduledAt.toISOString())).toEqual(['202
 Another scheduler (on a database, on a queue) implements the `JobScheduler` port of the kernel
 and passes `jobSchedulerContract` of `@ddd-ts-kit/testing/contracts`.
 
+## Background jobs
+
+Work a use case hands to a worker, to run later: the port (`JobQueue`), the declaration
+(`@Background`) and the payload type live in the kernel; this package runs them. Why and when,
+with the guarantees: [Background jobs](../../docs/concepts/background-jobs.md).
+
+| Piece | |
+|---|---|
+| `StoredJobQueue` | the `JobQueue` of the kernel on a `JobStore`: names the job, captures the correlation, the actor, the tenant and the `traceparent` of the work that enqueues, adds it to the store; `find` and `cancel` reach the jobs of the tenant of the work in progress only (those of an elevation's tenants; every job without a tenant) |
+| `JobStore` | the port of the stores: `add`, `claim` (a lease), `heartbeat`, `update` (progress, checkpoint), `complete`, `fail`, `release`, `cancel`, `find`, `retryDead`, `purgeFinished`, `stats`; every report names its attempt (`JobLease`) |
+| `InMemoryJobStore` | the store of tests and of a process without a database: `add`, `cancel` and `retryDead` wait for the commit of the unit of work; `list()` for assertions |
+| `tenantKeyOf(enqueuedBy)` | the tenant part of the idempotency key, for a store that keeps it in a unique index: the tenant, or the empty text |
+| `QueueWorker` | claims and runs the jobs of the queues it has jobs for: `register`, `start`, `stop` (waits for a claim in flight, whose jobs go back uncounted, then for the attempts in progress), `runDue` |
+| `reportFailedBackgroundJobs(reporter)` | the observer that sends an attempt that failed unexpectedly to the error reporter |
+
+```ts
+const store = new InMemoryJobStore(); // KnexJobStore, DrizzleJobStore or RedisJobStore in production
+const jobs = new StoredJobQueue({ store, clock, ids, scope, traceparent: captureTraceparent });
+
+const worker = new QueueWorker({
+  store,
+  clock,
+  scope,
+  logger,
+  metrics,
+  concurrency: { scheduling: 4, default: 1 },
+  onRun: reportFailedBackgroundJobs(errors),
+});
+
+worker.register({ name: CompileStatementsBackgroundJob.jobName, options: { maxAttempts: 3 }, run: (payload, execution) => job.run(payload, execution) });
+await worker.start();
+```
+
+`@ddd-ts-kit/di` does all of it: `kernelModule({ jobStore })` binds the store, the queue and the
+worker, the declared jobs are registered on the worker, and the worker runs in the processes
+that run the jobs (`jobs: { start: true }`).
+
+| Option of `QueueWorker` | Default | |
+|---|---|---|
+| `concurrency` | `1` | attempts of one queue at once in this process: a number, or `{ <queue>: n, default: n }` |
+| `pollIntervalMs` | `1000` | how long an idle queue waits before asking the store again |
+| `graceMs` | `30000` | how long `stop()` waits for the attempts in progress before aborting them; an aborted attempt gives its job back uncounted |
+| `timers` | the runtime | `ManualJobTimers` in a spec |
+
+Each attempt is recorded as a `BackgroundJobRun` (`succeeded`, `retried`, `dead`, `released`,
+`interrupted`), logged at `info`, `warn` or `error`, and counted in `background_job_runs_total`
+and `background_job_duration_ms` (`BACKGROUND_RUNS_COUNTER`, `BACKGROUND_DURATION_HISTOGRAM`),
+labelled `job`, `context`, `status` and `error_code`. A store of your own passes
+`jobStoreContract` of `@ddd-ts-kit/testing/contracts`, with its unit of work.
+
+## Process managers
+
+`StoredProcessRunner` is the `ProcessRunner` of the kernel: `new StoredProcessRunner({ store,
+jobs, commands, unitOfWork })`. A step runs in one unit of work: the instance is loaded, the step
+decides, the timeouts it disarms are cancelled and those it arms are enqueued on the `JobQueue`
+as delayed jobs of the `timeoutJob` of the process (`NoTimeoutJobError` without one), the state
+is saved at the next version, then the commands are sent. `timeout(process, { id, timeout,
+jobId }, step)` runs only while `jobId` is the armed job of that timeout. `@ddd-ts-kit/di` binds
+it on `ProcessStore`, `JobQueue`, `CommandBus` and `UnitOfWork`. See
+[Sagas and process managers](../../docs/concepts/sagas-and-process-managers.md).
+
 ## Limits
 
 - **No persistence of its own.** Runs, outcomes and `lastRun` live in the memory of the
@@ -433,8 +496,11 @@ and passes `jobSchedulerContract` of `@ddd-ts-kit/testing/contracts`.
   possible and rarely wise, as each occurrence costs a lock.
 - **At most once per occurrence is best effort**, as said above. Exactly-once does not exist
   here.
-- **Not a queue.** A job does a bounded amount of work on a schedule. Work that arrives, must
-  not be lost and must be retried belongs to the outbox and to integration events.
+- **The scheduler is not a queue.** A scheduled job does a bounded amount of work on a
+  schedule. Work a command asks for, which must not be lost and must be retried, is a
+  background job (above).
+- **The worker:** at least once, no ordering, concurrency per process, polling: see the limits
+  of [Background jobs](../../docs/concepts/background-jobs.md).
 - **One process, one event loop.** A job that blocks the loop delays every other job; past
   `lateAfterMs` their occurrences are missed.
 - **Time zone rules are those of the runtime.** A zone whose rules changed needs an updated

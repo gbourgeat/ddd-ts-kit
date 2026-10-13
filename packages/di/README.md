@@ -816,12 +816,60 @@ createApplication({
 
 | Option | |
 |---|---|
-| `start: false` | the jobs are registered and described, `runNow` runs one, and `start()` never starts the scheduler: the process that serves requests next to a worker process that runs the jobs |
+| `start: false` | the jobs are registered and described, `runNow` runs one, and `start()` never starts the scheduler, nor the worker of a shared queue (a queue in the memory of the process is still consumed): the process that serves requests next to a worker process that runs the jobs |
 | `settings['<job name>']` | `enabled`, `schedule` and any option of the declaration (`overlap`, `missed`, `timeoutMs`, `jitterMs`, `singleInstance`), which win over what the class wrote. A key left undefined changes nothing |
 
 `app.resolve(JobScheduler)` is the port: `runNow(name)` for an operations endpoint,
 `describe()` for the next run and the last outcome of each job. A context extracted as its own
 service takes its jobs with it: they belong to its module, and nothing is global.
+
+## Background jobs
+
+A class of `application/background/` that carries `@Background` is a background job of its
+context, named by its static `jobName`:
+
+```ts
+// contexts/billing/application/background/compile-statements.background-job.ts
+@Background({ maxAttempts: 3, timeout: '10m' })
+export class CompileStatementsBackgroundJob implements BackgroundJob<CompileStatementsPayload> {
+  static readonly jobName = 'billing.compile-statements';
+
+  constructor(private readonly commands: CommandBus) {}
+
+  async run(payload: CompileStatementsPayload, execution: BackgroundJobExecution): Promise<void> {
+    await this.commands.execute(new CompileStatements(execution.jobId, payload.month));
+  }
+}
+```
+
+An explicit module writes `builder.backgroundJob('billing.compile-statements', { maxAttempts: 3 })
+.handledBy(CompileStatementsBackgroundJob, [CommandBus])`; a name other than the `jobName` of the class is
+refused (`INVALID_JOB_SETTINGS`), a name declared twice too (`DUPLICATE_JOB`).
+
+- **Registered when the application is created** on the `QueueWorker` of `@ddd-ts-kit/scheduling`,
+  which then consumes the queue of the context. The class is built on its first attempt.
+- **Consumed while the process runs the jobs**: `start()` starts the worker after the scheduler
+  when `jobs.start` is not `false`, `stop()` stops it with the scheduler, waiting for the
+  attempts in progress, then aborting them. A process started with `jobs: { start: false }`
+  enqueues and leaves the shared queue to the worker; a queue kept in its own memory
+  (`InMemoryJobStore`, the default) is still consumed, since no other process sees it.
+- **`kernelModule()`** binds `JobStore` (in memory by default: bind `KnexJobStore`,
+  `DrizzleJobStore` or `RedisJobStore` with `jobStore`, or no job reaches a worker of another
+  process), `JobQueue` (a `StoredJobQueue` on it, which stores the `traceparent` given by the
+  instrumentation) and `QueueWorker` (tuned by `queues: { concurrency, pollIntervalMs, graceMs }`,
+  failures to the `ErrorReporter`).
+- **`describe().backgroundJobs`** lists each job, its queue and its options, defaults filled in.
+
+`kernelModule()` also binds `ProcessStore` (in memory by default: bind `KnexProcessStore` or
+`DrizzleProcessStore` with `processStore`) and `ProcessRunner`, the runner of
+`@ddd-ts-kit/scheduling` on it, the `JobQueue`, the `CommandBus` and the `UnitOfWork`: the
+handlers that drive a process manager depend on `ProcessRunner`, and its timeout job is a
+background job of the context. In a test application, `app.processes.list()` shows the instances.
+
+In a test application, `app.jobQueue` is the queue the use cases enqueue on, in memory, and
+`app.backgroundJobs.runDue()` runs what is due on `app.clock` and throws what an attempt threw;
+`app.backgroundJobs.store.list()` shows what was enqueued. What the jobs guarantee:
+[Background jobs](../../docs/concepts/background-jobs.md).
 
 ## Tests
 

@@ -1,4 +1,13 @@
-import type { Actored, Command, DependencyKind, MessageType, Query, ScheduledJob } from '@ddd-ts-kit/kernel';
+import type {
+  Actored,
+  BackgroundJob,
+  BackgroundJobOptions,
+  Command,
+  DependencyKind,
+  MessageType,
+  Query,
+  ScheduledJob,
+} from '@ddd-ts-kit/kernel';
 import type {
   BindingAspect,
   EventContract,
@@ -48,6 +57,13 @@ export interface ModuleBuilder {
    * the `JobScheduler`. `builder.job('billing.send-reminders', { every: '15m' }).handledBy(SendReminders, [CommandBus])`.
    */
   job(name: string, settings: ScheduledOptions): HandlerTarget<ScheduledJob>;
+
+  /**
+   * Declares a background job, under the static `jobName` of its class: bound as a singleton and
+   * registered on the `QueueWorker`, which consumes the queue of its context.
+   * `builder.backgroundJob('billing.compile-statements', { maxAttempts: 3 }).handledBy(CompileStatementsJob, [CommandBus])`.
+   */
+  backgroundJob(name: string, options?: BackgroundJobOptions): HandlerTarget<BackgroundJob<unknown>>;
 
   /**
    * Adds classes that declare themselves with the decorators of `@ddd-ts-kit/kernel/declarations`:

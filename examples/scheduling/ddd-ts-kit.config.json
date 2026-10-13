@@ -29,7 +29,8 @@
     "refusals": "factories",
     "routes": "controllers",
     "valueObjects": "throwing",
-    "literals": "named"
+    "literals": "named",
+    "queue": "database"
   },
   "contexts": {
     "identity": {

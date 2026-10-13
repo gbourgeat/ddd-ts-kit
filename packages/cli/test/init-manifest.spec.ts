@@ -62,6 +62,8 @@ describe('the package.json init writes', () => {
     expect(dependencies).toMatchObject({
       '@ddd-ts-kit/drizzle': KIT_RANGE,
       '@ddd-ts-kit/events': KIT_RANGE,
+      // The jobs table of the default queue: its store and its worker.
+      '@ddd-ts-kit/scheduling': KIT_RANGE,
       '@opentelemetry/api': '^1.9.1',
       express: '^5.3.0',
       tsyringe: '^4.10.0',
@@ -72,7 +74,6 @@ describe('the package.json init writes', () => {
     expect(Object.keys(dependencies)).toEqual(expect.arrayContaining(['drizzle-orm', 'pg']));
     expect(dependencies['fastify']).toBeUndefined();
     expect(dependencies['@nestjs/core']).toBeUndefined();
-    expect(dependencies['@ddd-ts-kit/scheduling']).toBeUndefined();
   });
 
   it('declares the tools of the default stack, and what the lint preset needs beyond the plugin', () => {

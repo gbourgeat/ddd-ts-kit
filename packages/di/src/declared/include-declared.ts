@@ -1,6 +1,7 @@
 import type { DependencyKind, DomainEvent } from '@ddd-ts-kit/kernel';
 import {
   declarationOf,
+  type BackgroundJobDeclaration,
   type Declaration,
   type DeclaredClass,
   type Dependencies,
@@ -116,7 +117,15 @@ function register(registration: Registration, declaration: Declaration): void {
 
       return;
     default:
-      registerPort(registration, declaration);
+      registerOther(registration, declaration);
+  }
+}
+
+function registerOther(registration: Registration, declaration: BackgroundJobDeclaration | PortDeclaration): void {
+  if (declaration.role === 'background-job') {
+    registerBackgroundJob(registration, declaration);
+  } else {
+    registerPort(registration, declaration);
   }
 }
 
@@ -228,6 +237,14 @@ function registerJob(registration: Registration, declaration: JobDeclaration): v
   const { name, schedule, options, implementation, dependencies } = declaration;
 
   draft.addJob({ name, schedule, options, job: implementation, module, declaredBy });
+  draft.addBinding(underItself(registration, { implementation, dependencies, kind: 'job' }));
+}
+
+function registerBackgroundJob(registration: Registration, declaration: BackgroundJobDeclaration): void {
+  const { draft, module, declaredBy } = registration;
+  const { name, options, implementation, dependencies } = declaration;
+
+  draft.addBackgroundJob({ name, options, job: implementation, module, declaredBy });
   draft.addBinding(underItself(registration, { implementation, dependencies, kind: 'job' }));
 }
 

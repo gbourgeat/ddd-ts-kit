@@ -61,6 +61,8 @@ export interface StartOptions {
   readonly errors?: ErrorReporter;
   /** Put around the storage before the application is composed on it: where a spec makes the infrastructure fail. */
   readonly storage?: (persistence: Persistence) => Persistence;
+  /** Starts the scheduled jobs and the worker of the queues, as a process of `RUN_JOBS=true` does: where a spec waits for a background job. */
+  readonly jobs?: boolean;
 }
 
 /**
@@ -132,10 +134,11 @@ function eventsOf(config: AppConfig): EventProvider {
   return config.redisUrl === noRedis ? inProcessEvents() : createEventProvider(config);
 }
 
-function observedOf(options: StartOptions): Pick<StartOptions, 'log' | 'errors'> {
+function observedOf(options: StartOptions): Pick<StartOptions, 'log' | 'errors'> & { jobs?: { start: boolean } } {
   return {
     ...(options.log === undefined ? {} : { log: options.log }),
     ...(options.errors === undefined ? {} : { errors: options.errors }),
+    ...(options.jobs === true ? { jobs: { start: true } } : {}),
   };
 }
 

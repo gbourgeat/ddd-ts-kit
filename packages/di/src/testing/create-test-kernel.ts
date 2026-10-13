@@ -10,18 +10,27 @@ import {
   InMemoryLock,
   InMemoryLogger,
   InMemoryMetrics,
+  InMemoryProcessStore,
   InMemoryRateLimiter,
   SequentialIdGenerator,
   executionContext,
   type Actor,
   type ExecutionContext,
 } from '@ddd-ts-kit/kernel';
-import { reportFailedRuns } from '@ddd-ts-kit/scheduling';
-import { ManualJobScheduler, type ManualJobSchedulerOptions } from '@ddd-ts-kit/scheduling/testing';
+import {
+  InMemoryJobStore,
+  QueueWorker,
+  StoredJobQueue,
+  reportFailedBackgroundJobs,
+  reportFailedRuns,
+  type BackgroundJobRun,
+} from '@ddd-ts-kit/scheduling';
+import { ManualJobScheduler, ManualJobTimers, type ManualJobSchedulerOptions } from '@ddd-ts-kit/scheduling/testing';
 import { guardedQueryBus } from '../kernel/guarded-query-bus.js';
 import { transactionalCommandBus } from '../kernel/transactional-command-bus.js';
 import type { Resolve } from '../wiring/resolve.js';
 import type { TestApplicationOptions } from './test-application-options.js';
+import type { TestBackgroundJobs } from './test-background-jobs.js';
 import type { TestJobs } from './test-jobs.js';
 import type { TestKernel } from './test-kernel.js';
 
@@ -59,6 +68,8 @@ export function createTestKernel(options: TestApplicationOptions, resolve: Resol
     cache: new InMemoryCache(clock),
     rateLimiter: new InMemoryRateLimiter(clock),
     jobs: testJobs(scheduler),
+    ...testQueue({ clock, scope: executionScope, ...observability }, errors),
+    processes: new InMemoryProcessStore(),
   };
 }
 
@@ -92,6 +103,54 @@ function testJobs(scheduler: ManualJobScheduler): TestJobs {
       }
 
       return run;
+    },
+  };
+}
+
+type QueueParts = Pick<TestKernel, 'clock' | 'logger' | 'metrics'> & { readonly scope: FixedExecutionScope };
+
+/** The queue and its worker in memory, on the clock of the spec. */
+function testQueue(parts: QueueParts, errors: InMemoryErrorReporter): Pick<TestKernel, 'jobQueue' | 'backgroundJobs'> {
+  const { clock, scope, logger, metrics } = parts;
+  const store = new InMemoryJobStore();
+  const failures = new Map<BackgroundJobRun, unknown>();
+  const report = reportFailedBackgroundJobs(errors);
+
+  const worker = new QueueWorker({
+    store,
+    clock,
+    scope,
+    logger,
+    metrics,
+    timers: new ManualJobTimers(clock),
+    onRun: (run, error) => {
+      report(run, error);
+      failures.set(run, error);
+    },
+  });
+
+  const jobQueue = new StoredJobQueue({ store, clock, scope, ids: new SequentialIdGenerator('job') });
+
+  return { jobQueue, backgroundJobs: testBackgroundJobs(store, worker, failures) };
+}
+
+function testBackgroundJobs(
+  store: InMemoryJobStore,
+  worker: QueueWorker,
+  failures: Map<BackgroundJobRun, unknown>,
+): TestBackgroundJobs {
+  return {
+    store,
+    worker,
+    async runDue() {
+      const runs = await worker.runDue();
+      const failed = runs.find((run) => run.outcome === 'retried' || run.outcome === 'dead');
+
+      if (failed !== undefined) {
+        throw failures.get(failed);
+      }
+
+      return runs;
     },
   };
 }

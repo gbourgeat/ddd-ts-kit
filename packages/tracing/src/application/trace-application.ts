@@ -1,4 +1,5 @@
 import type {
+  BackgroundJobExecution,
   BusMiddleware,
   DomainEventDispatcher,
   ErrorReporter,
@@ -14,7 +15,9 @@ import { tracedDomainEvents } from '../domain-events/traced-domain-events.js';
 import type { ConsumerTrace } from '../events/consumer-trace.js';
 import { tracedConsumer } from '../events/traced-consumer.js';
 import { tracedPublisher } from '../events/traced-publisher.js';
+import { tracedBackgroundJob } from '../jobs/traced-background-job.js';
 import { tracedJob } from '../jobs/traced-job.js';
+import { captureTraceparent } from '../propagation/capture-traceparent.js';
 import { traceUseCases } from '../use-case/trace-use-cases.js';
 
 export interface TraceApplicationOptions {
@@ -28,6 +31,8 @@ export interface TraceApplicationOptions {
 
 type JobRun = (execution: JobExecution) => Promise<void>;
 
+type BackgroundJobRun = (payload: unknown, execution: BackgroundJobExecution) => Promise<void>;
+
 /** The wrappers `kernelModule({ instrumentation })` of `@ddd-ts-kit/di` applies, one per kind of span. */
 export interface TracedApplication {
   readonly binding: <T>(instance: T, binding: TracedBinding) => T;
@@ -39,6 +44,11 @@ export interface TracedApplication {
   ) => IntegrationEventCallback;
   readonly domainEvents: (dispatcher: DomainEventDispatcher) => DomainEventDispatcher;
   readonly job: (run: JobRun, job: { readonly name: string; readonly context: string }) => JobRun;
+  readonly backgroundJob: (
+    run: BackgroundJobRun,
+    job: { readonly name: string; readonly context: string },
+  ) => BackgroundJobRun;
+  readonly traceparent: () => string | undefined;
   readonly errorReporter: (reporter: ErrorReporter) => ErrorReporter;
   readonly executionScope: (scope: ExecutionScope) => void;
 }
@@ -46,7 +56,7 @@ export interface TracedApplication {
 /**
  * Everything that traces an application, in one value: `kernelModule({ instrumentation:
  * traceApplication() })`. Use cases, repositories and adapters, the dispatch of domain events
- * and their handlers, the outbox, the publications, the consumers and the jobs each get their
+ * and their handlers, the outbox, the publications, the consumers, the jobs and the background jobs each get their
  * span; error reports carry the trace id, and the execution scope of the application is given
  * to `configureTracing`, so spans and log fields carry the correlation id.
  */
@@ -60,6 +70,8 @@ export function traceApplication(options: TraceApplicationOptions = {}): TracedA
     consumer: (handler, { consumer, context }) => tracedConsumer(handler, { consumer, context, trace }),
     domainEvents: tracedDomainEvents,
     job: tracedJob,
+    backgroundJob: tracedBackgroundJob,
+    traceparent: captureTraceparent,
     errorReporter: tracedErrorReporter,
     executionScope: (executionScope) => {
       configureTracing({ executionScope });

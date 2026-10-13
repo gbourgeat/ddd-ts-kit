@@ -29,6 +29,7 @@ const STACK_FLAGS = [
   'routes',
   'literals',
   'tenancy',
+  'queue',
 ] as const;
 
 const OTHER_TEXT_FLAGS = [

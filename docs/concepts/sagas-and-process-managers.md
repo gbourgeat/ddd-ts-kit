@@ -5,9 +5,10 @@ transaction in this architecture. A saga is the alternative: a sequence of local
 each announced by an event, with a compensating action for each step that may need to be undone.
 It can be choreographed (each context reacts to the others' events) or orchestrated (one
 component, a process manager, decides the next step). The kit provides the building blocks
-(integration events, the outbox, idempotent consumers, scheduled jobs) and does not provide a
-saga or process manager framework: a process is modelled by the project, usually as an aggregate
-that holds the state of the process.
+(integration events, the outbox, idempotent consumers, scheduled and background jobs) and a
+small runtime for process managers: a process is a class whose steps decide from its state and
+what happened, a runner keeps its state with optimistic concurrency and delivers its timeouts as
+delayed background jobs. It is not a workflow engine.
 
 ## Why a saga at all
 
@@ -66,7 +67,7 @@ flow, with its timeout and two outcomes, deserves an owner.
 
 ## What the kit provides, and what it does not
 
-Provided, as building blocks:
+Provided:
 
 - **integration events** declared in a published language, with versions;
 - **the transactional outbox**, so each step's event exists if and only if the step committed;
@@ -75,67 +76,135 @@ Provided, as building blocks:
 - **the correlation id and causation id** carried by the execution context and stamped on
   published events, so every step of one process can be found again in logs, traces and the
   audit trail;
-- **scheduled jobs**, which can drive timeouts (below);
+- **process managers**: `ProcessManager`, `ProcessRunner` and `ProcessStore` in the kernel, the
+  runner in `@ddd-ts-kit/scheduling`, the stores in the ORM packages, `givenProcess` in
+  `@ddd-ts-kit/testing` (below);
+- **timeouts** as [background jobs](background-jobs.md) enqueued with a delay, in the
+  transaction of the step that arms them; **scheduled jobs** for the work derived from state;
 - **dead letters and error reporting** for a step that fails for good.
 
-Not provided (checked against the packages of this repository on 2026-10-10: no package, port
-or generator for it):
+Not provided:
 
-- no saga or process manager base class, DSL or framework;
-- no persisted state machine or workflow engine;
-- no timeout manager or delayed message: no "deliver this event in fifteen minutes";
-- no automatic compensation: undoing is code the project writes;
+- no workflow engine, DSL, visual designer or human task;
+- no automatic compensation: undoing is a command the process decides;
 - no command sent to another context: a context only reacts to events or answers through a
-  gateway port.
+  gateway port, so a process lives in the context whose commands it sends;
+- no ordering of the events of one instance beyond what the transport gives: a step decides
+  from the state it finds, and optimistic concurrency settles two steps at once.
 
-A project that needs long-running, heavily branching workflows with durable timers should look
-at a dedicated workflow engine behind a port (Temporal, Camunda and similar products exist; they
-were not evaluated for this kit and nothing here integrates them).
+A project that needs long-running, heavily branching workflows with durable timers and human
+steps should look at a dedicated workflow engine behind a port (Temporal, Camunda and similar
+products exist; they were not evaluated for this kit and nothing here integrates them).
 
-## Building one with the existing blocks
+## A process manager
 
-**The process state is an aggregate.** Here the `Appointment` itself can carry it: its state
-includes `pending-deposit`, and its methods are the transitions (`confirm(at)`,
-`cancel(reason, at)`). For a process that belongs to no existing aggregate, model a dedicated
-one in the context that owns the process, named in the ubiquitous language (a `Booking` or an
-`Enrolment`, not a `BookingSaga`: `language/no-technical-name` refuses technical names in the
-domain anyway).
+```ts
+// scheduling/application/processes/confirmation-deadline.process.ts
+export class ConfirmationDeadlineProcess implements ProcessManager<ConfirmationDeadlineState> {
+  static readonly processName = 'scheduling.confirmation-deadline';
+  static readonly timeoutJob = 'scheduling.confirmation-deadline-timeout';
 
-**Each step is a command of the owning context, triggered by an event.**
+  static isState(value: unknown): value is ConfirmationDeadlineState { /* ... */ }
+
+  requested(event: AppointmentBooked, current: ConfirmationDeadlineState | undefined) {
+    if (current !== undefined || event.held.confirmBefore === undefined) {
+      return undefined; // nothing to decide
+    }
+
+    return {
+      state: { appointmentId: event.aggregateId, confirmBefore: event.held.confirmBefore.toISOString() },
+      timeouts: [{ name: 'deadline', at: event.held.confirmBefore }],
+    };
+  }
+
+  settled(current: ConfirmationDeadlineState | undefined) {
+    return current === undefined ? undefined : { state: current, cancel: ['deadline'], ended: true };
+  }
+
+  timedOut(name: string, current: ConfirmationDeadlineState) {
+    return { state: current, ended: true, commands: [new ExpireUnconfirmedAppointmentsCommand(actor, new Date(current.confirmBefore))] };
+  }
+}
+```
+
+- **A step is a function of the state and of what happened.** It answers a `ProcessDecision`:
+  the next state (plain JSON), the commands to send, the timeouts to arm or disarm, whether the
+  process ended; or `undefined` to ignore the event. It holds no repository and writes no
+  aggregate: the commands do (`process/sends-commands-only`).
+- **Correlation.** An instance is named by the process and a correlation key the event carries:
+  the handler that receives an event gives the runner that key (`event.aggregateId`,
+  `event.payload.orderId`), and the runner loads the instance, or none when it does not exist.
+- **The runner** (`ProcessRunner`) runs a step in one unit of work: load, decide, disarm and arm
+  the timeouts, save with optimistic concurrency, send the commands. Two steps that decide on
+  the same version: one wins, the other fails with `ConcurrencyError`. For a step called by an
+  integration event handler, the redelivery of its event runs it again on the new state; for a
+  step called by a domain event handler, in the unit of work of the command that raised the
+  event, the command fails and its caller retries it. An ended instance ignores every later
+  event. A timeout disarmed or armed by a step that rolls back stays as it was, in every store
+  of the queue.
+- **Wiring.** The steps are called by the handlers of the context: domain event handlers for its
+  own events, integration event handlers for those of upstream contexts, each calling
+  `processes.run(Process, key, (current) => process.step(event, current))`. A timeout is a
+  background job of the context named by the static `timeoutJob`, which calls
+  `processes.timeout(Process, { ...due, jobId: execution.jobId }, ...)`: the runner runs it only
+  while that very job is the armed one, so a disarmed or replaced timeout never fires.
+- **Stores.** `InMemoryProcessStore` (kernel) for tests and one process; `KnexProcessStore` and
+  `createProcessTable`, `DrizzleProcessStore` and `processesTable`, which save in the transaction
+  of the step. Every store is held by `processStoreContract`.
 
 ```mermaid
 sequenceDiagram
-  participant APP as appointments (owns the process)
-  participant PAY as payments
-  participant NOT as notifications
-  APP->>APP: BookAppointment: state pending-deposit
-  APP-->>PAY: appointments.appointment.booked
-  PAY->>PAY: request the deposit
-  PAY-->>APP: payments.deposit.paid
-  APP->>APP: ConfirmAppointment: state confirmed
-  APP-->>NOT: appointments.appointment.confirmed
-  Note over APP: or, if nothing came
-  APP->>APP: job: CancelUnpaidAppointments(scheduledAt)
-  APP-->>PAY: appointments.appointment.cancelled
+  participant H as handler of AppointmentBooked
+  participant R as ProcessRunner
+  participant S as ProcessStore
+  participant Q as JobQueue
+  H->>R: run(ConfirmationDeadlineProcess, appointmentId, requested)
+  R->>S: load (none)
+  R->>Q: enqueue the timeout job, runAt the deadline
+  R->>S: save version 1
+  Note over Q: at the deadline, unless disarmed
+  Q->>R: timeout(..., jobId)
+  R->>S: load, the armed job is this one
+  R->>R: send ExpireUnconfirmedAppointments
+  R->>S: save version 2, ended
 ```
 
-The integration event handler in `appointments` translates `payments.deposit.paid` into
-`ConfirmAppointment` and sends it on the command bus; the aggregate decides whether the
-transition is still valid (an appointment already cancelled by the timeout refuses to be
-confirmed, and the payment context compensates with a refund on the cancellation event).
-(`payments` and its events are illustrative; they are not part of the running example's
-contexts.)
+## Testing
 
-**Timeouts are a query plus a repeatable command.** With no delayed delivery, the deadline is
-data: the aggregate stores when the deposit is due. A scheduled job runs every few minutes and
-sends one command, "cancel the appointments whose deposit is overdue", which derives what to do
-from the state. Because a job occurrence may run twice or not at all, the command must be safe
-to repeat (see [Scheduled jobs](scheduled-jobs.md)). The precision of the timeout is the
-interval of the job.
+A step is tested without a store, a queue or a bus:
 
-**Races are settled by the aggregate.** "Deposit paid" and "deadline passed" can arrive
-together. Both are commands on the same aggregate; optimistic concurrency lets one win and the
-other is refused with a domain error or retried against the new state. No lock is needed.
+```ts
+givenProcess<ConfirmationDeadlineState>(undefined)
+  .when((current) => process.requested(booked, current))
+  .thenState({ appointmentId: 'appointment-1', confirmBefore: deadline.toISOString() })
+  .thenTimeouts([{ name: 'deadline', at: deadline }])
+  .thenCommands([]);
+```
+
+`thenIgnored`, `thenState`, `thenCommands` (by class or by the properties that matter),
+`thenTimeouts`, `thenCancelled` and `thenEnded` chain. The test application runs the whole
+path: its `ProcessRunner` is in memory, `app.processes.list()` shows the instances and
+`app.backgroundJobs.runDue()` delivers the timeouts due on its clock.
+
+`ddd-ts-kit generate process <context> <Name>` starts one: the process with a first step that
+arms a deadline, a step that ends it in time and the step of the deadline, the background job
+that delivers its timeouts, and the specs of both, written with `givenProcess` and through the
+queue of the test application. The steps it has to react to are then called by event handlers
+(`generate event-handler`) through `ProcessRunner.run`. It needs `--di tsyringe`, which binds
+the runner; `stack.queue` says where the instances are kept.
+
+## Without a runtime: an aggregate holds the process
+
+A process that belongs to one aggregate is often the aggregate itself: the `Appointment` can
+carry `pending-deposit`, its methods being the transitions (see
+[State machines](state-machines.md)), each step a command triggered by an event. A deadline is
+then data on the aggregate, and a scheduled job sends "cancel the appointments whose deposit is
+overdue", derived from state and safe to repeat. Reach for a process manager when the process
+spans several aggregates, has its own state, or needs precise timeouts.
+
+**Races are settled by concurrency.** "Deposit paid" and "deadline passed" can arrive together.
+On an aggregate, optimistic concurrency lets one win and the other is refused or retried; on a
+process, the version of its instance does the same.
 
 ## Limits and when not to use it
 
@@ -146,11 +215,14 @@ other is refused with a domain error or retried against the new state. No lock i
   pending. Sagas have no isolation: design the states instead of hiding them.
 - **Compensation is not always possible** and is itself a step that can fail and must be
   retried.
-- **Hand-built orchestration does not scale to complex workflows.** Past a handful of steps,
-  parallel branches or human tasks, the bookkeeping (what was sent, what is awaited, what timed
-  out) is what workflow engines exist for.
-- **Timeouts driven by a job are coarse** (minute resolution for cron in the kit's scheduler,
-  and best-effort single run) and depend on the job running.
+- **This runtime does not scale to complex workflows.** Past a handful of steps, parallel
+  branches or human tasks, the bookkeeping is what workflow engines exist for.
+- **Timeouts are as precise as the worker**: a delayed job runs once due and claimed, up to
+  the polling interval of its queue later; a timeout derived by a scheduled job is as coarse as
+  its interval. A deadline that must hold to the second needs both: the timeout, and a scheduled
+  job as the safety net.
+- **At least once.** A step can run twice (a redelivered event, a timeout whose worker died):
+  the decision is derived from the state, and the commands are safe to repeat.
 - **Choreography can create cycles.** If `appointments` consumed events of `notifications`
   while `notifications` consumes `appointments`, the declared relationships would form a cycle,
   which `context/no-cycle` refuses. The process owner should be upstream or the reply should go
@@ -181,5 +253,7 @@ other is refused with a domain error or retried against the new state. No lock i
 - [Transactional outbox](transactional-outbox.md)
 - [Delivery and idempotency](delivery-and-idempotency.md)
 - [Scheduled jobs](scheduled-jobs.md)
+- [Background jobs](background-jobs.md)
+- [State machines](state-machines.md)
 - [Bounded context](bounded-context.md)
 - [Architecture reference](../ARCHITECTURE.md)

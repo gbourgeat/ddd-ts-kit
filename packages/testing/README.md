@@ -200,6 +200,24 @@ givenEvents((id, history) => AttendanceRecord.rehydrate(id, history), [opened, n
 aggregate: for every version of the history, the aggregate rebuilt from the snapshot its policy
 would store and the events after it has the state and the version of the full replay.
 
+## Process steps
+
+```ts
+import { givenProcess } from '@ddd-ts-kit/testing';
+
+givenProcess<DeadlineState>(undefined)
+  .when((current) => deadlines.requested(booked, current))
+  .thenState({ appointmentId: 'appointment-1', confirmBefore: '2026-03-01T12:00:00.000Z' })
+  .thenTimeouts([{ name: 'deadline', at: deadline }])
+  .thenCommands([]);
+```
+
+A step of a process manager is a function of its state and of what happened: `givenProcess(state)`
+(or `undefined` for an instance that does not exist) runs it and asserts its decision without a
+store, a queue or a bus. `thenIgnored()`, `thenState(state)`, `thenCommands([...])` (each by its
+class or by the properties that matter), `thenTimeouts([...])`, `thenCancelled([...])` and
+`thenEnded()` chain; a failure is an `AssertionError` that says what differs.
+
 ## Refusals
 
 A business refusal is known by its code, and carries its facts as data: a test asserts both,
@@ -454,6 +472,8 @@ repositoryContract(runner, { ...options, name: 'DrizzleOrderRepository', createR
 | `processedEventStoreContract` | any `ProcessedEventStore`: once per consumer and event, also under concurrent deliveries |
 | `eventStoreContract` | any `EventStore`: a stream created at version 0 and read back in order, numbered from 1, with its type, shape version, data, metadata and instant; an append at a version the stream no longer has (behind or ahead) refused with `CONCURRENCY_CONFLICT` and nothing kept of it; one of two appends at the same version through; streams numbered apart; the whole store read in the order of the appends, positions rising from 1, after a position and within a limit; `head()` |
 | `eventStoreUnitOfWorkContract` | a transactional `EventStore` with the outbox of its database under one `UnitOfWork`: the stream and the outbox records published for its events commit together; nothing left in the outbox for an append rolled back, nor for one refused by a concurrency conflict. `createSubject()` answers `{ unitOfWork, store, outbox }` |
+| `processStoreContract` | any `ProcessStore` of process managers: an instance as saved (JSON state, armed timeouts, end), a version that is not the next one refused with `CONCURRENCY_CONFLICT`, one of two first saves winning, and with `unitOfWork` nothing left by a rolled back save |
+| `jobStoreContract` | any `JobStore` of background jobs: due jobs earliest first and each to one claim, delayed jobs, idempotency keys scoped by tenant (two tenants never share one), the tenant and the subject `find` shows, the lease and its heartbeats, reports heard only from the attempt that holds the job (progress, checkpoint handed to the next attempt, success, retry, dead and revived, release), cancellation of a waiting and of a running job, purge. With `unitOfWork` (over the same context as the store just created), a job added, cancelled or revived in a unit of work that rolls back is left as it was, and one that commits is added, cancelled or revived. The claims ask for a lease of 30 s |
 | `cacheContract` | any `Cache`: round trip of every shape of value, isolation of entries, deletion, time to live |
 | `lockContract` | any `Lock`: one holder at a time also under concurrent requests, release, expiry, a late release ignored, growing fencing token, `waitMs` |
 | `jobSchedulerContract` | any `JobScheduler`: registration and description, a duplicate name and an unreadable schedule refused, `runNow` (also for a disabled job, an unknown name rejected), nothing by time before `start` or after `stop`, no overlap by default, a failing job answered `failed` with its code while the others go on, the execution context of a run |

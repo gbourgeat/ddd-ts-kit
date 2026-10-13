@@ -23,6 +23,7 @@ export const AUDIT_MODES = ['on', 'off'] as const;
 export const ERROR_REPORTERS = ['none', 'sentry'] as const;
 export const LOGGERS = ['stdout', 'pino', 'winston'] as const;
 export const PACKAGE_MANAGERS = ['npm', 'pnpm'] as const;
+export const QUEUE_STORES = ['memory', 'database', 'redis'] as const;
 export const TENANCY_STRATEGIES = [
   'none',
   'shared-table',
@@ -128,4 +129,13 @@ export interface Stack {
    * before the choice existed: it is `none`.
    */
   readonly tenancy: (typeof TENANCY_STRATEGIES)[number];
+  /**
+   * Where the background jobs and the instances of the process managers are kept: `database`,
+   * the tables of the ORM package (Knex, Drizzle), written in the transaction of the command;
+   * `redis`, `RedisJobStore` on the server of the cache, written once the command committed, the
+   * process instances staying in the database or the memory; `memory`, in the process, which no
+   * worker of another process sees. A config that says nothing was written before background jobs
+   * existed: it is `memory`, the default of the kernel module.
+   */
+  readonly queue: (typeof QUEUE_STORES)[number];
 }

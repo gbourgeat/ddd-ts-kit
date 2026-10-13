@@ -2,7 +2,7 @@ import type { Knex } from 'knex';
 {{#if audit.on}}
 import { createAuditTables } from '@ddd-ts-kit/audit/knex';
 {{/if}}
-import { createOutboxTables } from '@ddd-ts-kit/knex';
+import { {{#if queue.database}}createJobTable, {{/if}}createOutboxTables{{#if queue.processTable}}, createProcessTable{{/if}} } from '@ddd-ts-kit/knex';
 // ddd-ts-kit:imports
 // /ddd-ts-kit:imports
 
@@ -25,6 +25,12 @@ export const createTables = async (knex: Knex): Promise<void> => {
 {{#unless tenancy.any}}
   await createOutboxTables(knex, { schema: MESSAGING });
 {{/unless}}
+  {{#if queue.database}}
+  await createJobTable(knex, { schema: MESSAGING });
+  {{/if}}
+  {{#if queue.processTable}}
+  await createProcessTable(knex, { schema: MESSAGING });
+  {{/if}}
   {{#if audit.on}}
   await createAuditTables(knex, { schema: AUDIT_SCHEMA });
   {{/if}}
