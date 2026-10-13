@@ -15,6 +15,7 @@ import {
   DOCS_UIS,
   ERROR_REPORTERS,
   EVENT_STACKS,
+  HTTP_CACHE_STACKS,
   HTTP_STACKS,
   LOGGERS,
   ORM_STACKS,
@@ -54,7 +55,17 @@ export function parseStack(stack: Record<string, unknown>): Stack {
 
 type Choices = Pick<
   Stack,
-  'authn' | 'authz' | 'broker' | 'cache' | 'audit' | 'errors' | 'logger' | 'style' | 'assembly' | 'dependencies'
+  | 'authn'
+  | 'authz'
+  | 'broker'
+  | 'cache'
+  | 'httpCache'
+  | 'audit'
+  | 'errors'
+  | 'logger'
+  | 'style'
+  | 'assembly'
+  | 'dependencies'
 >;
 
 function parseChoices(choose: Choose, orm: Stack['orm']): Choices {
@@ -63,6 +74,7 @@ function parseChoices(choose: Choose, orm: Stack['orm']): Choices {
     authz: choose('authz', AUTHZ_STACKS, 'rbac'),
     broker: choose('broker', BROKER_STACKS, 'none'),
     cache: choose('cache', CACHE_STACKS, 'none'),
+    httpCache: choose('httpCache', HTTP_CACHE_STACKS, 'none'),
     audit: choose('audit', AUDIT_MODES, orm === 'none' ? 'off' : 'on'),
     errors: choose('errors', ERROR_REPORTERS, 'none'),
     logger: choose('logger', LOGGERS, 'stdout'),

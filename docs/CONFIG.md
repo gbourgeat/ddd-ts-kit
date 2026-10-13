@@ -31,6 +31,7 @@ deviation.
     "authz": "rbac",
     "broker": "none",
     "cache": "none",
+    "httpCache": "none",
     "audit": "on",
     "errors": "none",
     "logger": "stdout",
@@ -128,6 +129,7 @@ outside the list stops every command with the list of accepted values.
 | `stack.authz` | `rbac`, `abac`, `rebac`, `custom` | `rbac` |
 | `stack.broker` | `none`, `rabbitmq`, `kafka`, `nats`, `redis` (Redis Streams), `custom`; `init` refuses a broker without an ORM, since a broker is reached through the outbox | `none` |
 | `stack.cache` | `none`, `redis`: what backs the kernel `Cache` port, the wake-up of the outbox relay, the rate limiter and the lock of the scheduled jobs | `none` |
+| `stack.httpCache` | `none`, `varnish`: the shared HTTP cache in front of the API. `varnish` (`init --http-cache varnish`, with an HTTP framework and `events: outbox`) adds the Varnish 9.1.0 service to the compose file with its VCL in `docker/varnish/default.vcl`, reads `VARNISH_URL`, tags the public answers in `xkey` (`cacheTags` of the HTTP boundary) and hands the purge requests of the outbox to `VarnishCachePurger` in `main.ts`. A config without the key is `none`: nothing changes. See [HTTP caches](tools/http-caches.md) | `none` |
 | `stack.audit` | `on`, `off`: whether the audit trail is wired | `on` when an ORM is set, `off` otherwise |
 | `stack.errors` | `none`, `sentry`: where unexpected failures are reported; `sentry` binds the kernel `ErrorReporter` to `@ddd-ts-kit/sentry` (Sentry or GlitchTip) | `none` |
 | `stack.logger` | `stdout`, `pino`, `winston`: what implements the kernel `Logger` port | `stdout` |

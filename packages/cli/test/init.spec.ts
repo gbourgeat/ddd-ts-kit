@@ -169,6 +169,7 @@ describe('init, the choices it records and the ones it refuses', () => {
       authz: 'rbac',
       broker: 'none',
       cache: 'none',
+      httpCache: 'none',
       audit: 'on',
       errors: 'none',
       logger: 'stdout',

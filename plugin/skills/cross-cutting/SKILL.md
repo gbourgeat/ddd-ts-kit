@@ -37,6 +37,8 @@ imported by the platform, `main.ts` and `apps/` only (`tracing/platform-only`).
 | retry, timeout, circuit breaker on an outside call | the adapter's declaration or binding; defaults in `src/platform/resilience/` | `@Adapter(Port, { kind, aspects })`, or `.with(retry(...), timeout(...))` in an explicit module |
 | the same, when the policy is part of what the adapter is | the adapter class, in `infrastructure/` only | `@Retry`, `@Timeout` of `@ddd-ts-kit/aspects/decorators` (`aspects/outside-in`) |
 | cache a read of another system or context | the gateway or external adapter | `cached({...})`; never a repository of aggregates |
+| keep the answers of a read in the browser or a shared cache (Varnish, a CDN) | `cache` of the controller or its route group, never in the use case | a cache policy of `@ddd-ts-kit/http` (`private` with `etag` for a caller, `public` with `tags` only for what is the same for everybody); `stack.httpCache: varnish` puts Varnish in front. Never a decision of authorization shared across actors: the HTTP caching concept page |
+| purge the answers a change made stale | a `before-commit` handler of the domain event | `CacheInvalidation.invalidate([cacheTag('calendar', id)])` of the kernel: purged after the commit, through the outbox; never `CachePurger` in a use case |
 | rate limit | in front of the HTTP layer | the kernel `RateLimiter` port |
 
 `npx ddd-ts-kit generate adapter <ctx> <Port> [--kind external|gateway] [--decorators]`

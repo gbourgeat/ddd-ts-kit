@@ -16,6 +16,7 @@ export const DEPENDENCY_STATEMENTS = ['signature', 'listed'] as const;
 export const REFUSAL_FORMS = ['factories', 'classes'] as const;
 export const ROUTE_FORMS = ['controllers', 'functions'] as const;
 export const CACHE_STACKS = ['none', 'redis'] as const;
+export const HTTP_CACHE_STACKS = ['none', 'varnish'] as const;
 export const AUDIT_MODES = ['on', 'off'] as const;
 export const ERROR_REPORTERS = ['none', 'sentry'] as const;
 export const LOGGERS = ['stdout', 'pino', 'winston'] as const;
@@ -44,6 +45,12 @@ export interface Stack {
   readonly broker: (typeof BROKER_STACKS)[number];
   /** What backs the kernel `Cache` port, the relay signal, the rate limiter and the lock of the jobs: the process itself, or a Redis protocol server. */
   readonly cache: (typeof CACHE_STACKS)[number];
+  /**
+   * The shared HTTP cache in front of the API: `none`, or `varnish`, a service of the compose
+   * file with its VCL, the answers tagged in `xkey` and the purge requests of the outbox handed to
+   * `VarnishCachePurger`. A config that says nothing was written before the choice existed: `none`.
+   */
+  readonly httpCache: (typeof HTTP_CACHE_STACKS)[number];
   /** Whether the audit trail is wired: decisions, commands and integration events, recorded from outside the use cases. */
   readonly audit: (typeof AUDIT_MODES)[number];
   /** Where unexpected errors are reported: nowhere, or a Sentry protocol server (Sentry, GlitchTip). */

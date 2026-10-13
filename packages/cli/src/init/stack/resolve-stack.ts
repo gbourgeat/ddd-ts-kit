@@ -13,6 +13,7 @@ import {
   DI_STACKS,
   DOCS_UIS,
   ERROR_REPORTERS,
+  HTTP_CACHE_STACKS,
   HTTP_STACKS,
   IMPORT_EXTENSIONS,
   LOGGERS,
@@ -107,6 +108,7 @@ function stackOf(options: StackOptions): Record<string, string> {
     docsUi,
     ...resolveSecurity(options),
     broker,
+    httpCache: resolveHttpCache(options, http, persistence.events),
     ...resolveOperations(options, persistence.orm),
     ...resolveStyle(options, di),
   };
@@ -152,6 +154,20 @@ function resolveOperations(
     // A new project writes each route as a controller class; a recorded one keeps the form it says, or the functions of 0.3.
     routes: choose(ROUTE_FORMS, options.routes, 'routes') ?? 'controllers',
   };
+}
+
+/** A shared cache purged after the commit needs an API to put it in front of, and the outbox its purge requests ride on. */
+function resolveHttpCache(options: StackOptions, http: string, events: string): string {
+  const httpCache = choose(HTTP_CACHE_STACKS, options.httpCache, 'http-cache') ?? 'none';
+
+  if (httpCache === 'none' || (http !== 'none' && events === 'outbox')) {
+    return httpCache;
+  }
+
+  throw new CliError(
+    `--http-cache ${httpCache} cannot be combined with --http ${http} --events ${events}.`,
+    'The purge of the shared cache is a row of the outbox, written with the command and sent after its commit: keep an HTTP framework and --events outbox, or --http-cache none.',
+  );
 }
 
 function resolveSecurity(options: StackOptions): { authn: string; authz: string } {

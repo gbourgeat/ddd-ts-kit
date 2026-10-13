@@ -1,4 +1,5 @@
 import type { Scope } from '../../scope.js';
+import { cachePolicyText } from './cache-policy-text.js';
 import type { ControllerPlan } from './controller-plan.js';
 import { resolveGroup } from './resolve-group.js';
 import { resourceOf } from './resource-of.js';
@@ -10,11 +11,15 @@ export function planController(scope: Scope, parts: RouteParts): ControllerPlan 
   const group = resolveGroup(scope, endpoint, useCase);
   const resource = group?.name.kebab ?? resourceOf(scope, endpoint);
 
-  return {
+  const plan: ControllerPlan = {
     ...parts,
     group,
     folder: `presentation/http/${resource}/${name.kebab}`,
     withMapper: scope.flags.mapper && !useCase.isSearch,
     withSerializer: scope.flags.serializer && useCase.isQuery && !useCase.isSearch,
   };
+
+  const cache = cachePolicyText(scope.flags.cache, plan);
+
+  return cache === undefined ? plan : { ...plan, cache };
 }

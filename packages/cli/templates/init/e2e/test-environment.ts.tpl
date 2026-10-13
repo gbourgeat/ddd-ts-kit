@@ -25,6 +25,10 @@ export function testEnvironment(overrides: Variables = {}): Variables {
     {{#if redis.server}}
     REDIS_URL: (process.env['REDIS_URL'] ?? '') || noRedis,
     {{/if}}
+    {{#if httpCache.varnish}}
+    // The relay of the tests publishes to the bus, never to Varnish: the address only has to be one.
+    VARNISH_URL: (process.env['VARNISH_URL'] ?? '') || 'http://varnish.e2e.test',
+    {{/if}}
     {{#if cache.rateLimit}}
     RATE_LIMIT_MAX: process.env['RATE_LIMIT_MAX'] ?? '1000000',
     {{/if}}

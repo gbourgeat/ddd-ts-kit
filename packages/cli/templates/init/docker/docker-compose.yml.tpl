@@ -119,6 +119,23 @@ services:
       retries: 30
 
 {{/if}}
+{{#if httpCache.varnish}}
+  # Varnish in front of the API (`npm run dev` on the port of .env), with the VCL of docker/varnish: it keeps the public
+  # answers, files them under the tags of their xkey header and lets the API purge them. Read the API through it at VARNISH_PORT.
+  varnish:
+    image: varnish:9.1.0
+    ulimits:
+      memlock: -1
+    tmpfs:
+      - /var/lib/varnish/varnishd:exec
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "127.0.0.1:${VARNISH_PORT:-6081}:80"
+    volumes:
+      - ./docker/varnish/default.vcl:/etc/varnish/default.vcl:ro
+
+{{/if}}
 {{#if authn.keycloak}}
   # Keycloak {{keycloak.version}} in development mode, for local use only: it imports docker/keycloak/{{project.name}}-realm.json
   # at its first start (the API client, its audience mapper, a public client for the direct grant, demo users).

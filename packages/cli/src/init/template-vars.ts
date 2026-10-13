@@ -56,9 +56,10 @@ function extrasVars(extras: readonly string[]): RenderContext {
 
 /** Whether the validated configuration holds at least one URL: the reader of URLs is written only then. */
 function readsUrl(config: Config): boolean {
-  const { orm, broker, cache } = config.stack;
+  const { orm, broker, cache, httpCache } = config.stack;
 
   return (
+    httpCache === 'varnish' ||
     WITH_DATABASE.includes(orm) ||
     verifiesTokens(config) ||
     ['rabbitmq', 'nats', 'redis'].includes(broker) ||

@@ -48,6 +48,8 @@ export interface KindFlags {
   readonly mapper: boolean;
   /** A controller of a query gets a serializer of its own. */
   readonly serializer: boolean;
+  /** The cache policy of a controller: `public`, `private` or `no-store`. */
+  readonly cache?: string;
 }
 
 export interface KindRequest {

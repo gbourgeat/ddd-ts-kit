@@ -59,6 +59,9 @@ export function loadConfig(env: Variables): AppConfig {
     {{#if redis.server}}
     redisUrl: readUrl(env, 'REDIS_URL', problems),
     {{/if}}
+    {{#if httpCache.varnish}}
+    varnishUrl: readUrl(env, 'VARNISH_URL', problems),
+    {{/if}}
     {{#if cache.rateLimit}}
     rateLimit: readRateLimit(env, problems),
     {{/if}}

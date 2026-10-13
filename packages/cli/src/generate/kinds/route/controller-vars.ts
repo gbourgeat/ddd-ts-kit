@@ -45,10 +45,15 @@ function handleVars(
   };
 }
 
-function declarationVars(scope: Scope, { endpoint, group }: ControllerPlan, readsRequest: boolean): RenderContext {
+function declarationVars(
+  scope: Scope,
+  { endpoint, group, cache }: ControllerPlan,
+  readsRequest: boolean,
+): RenderContext {
   const rest = group === undefined ? endpoint.path : endpoint.path.slice(group.prefix.length);
 
   const names = [
+    ...(cache === undefined ? [] : ['CacheScope']),
     'Controller',
     ...(group === undefined ? ['Public'] : []),
     ...(readsRequest ? ['type HttpRequest'] : []),
@@ -61,6 +66,8 @@ function declarationVars(scope: Scope, { endpoint, group }: ControllerPlan, read
         : `group: ${group.name.pascal}Routes,`,
     groupPath: rest === '' ? '/' : rest,
     httpImports: names.join(', '),
+    cached: cache !== undefined,
+    cache: cache ?? '',
   };
 }
 

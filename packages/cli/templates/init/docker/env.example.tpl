@@ -90,6 +90,13 @@ AUTH_JWKS_URI=https://id.example.com/realms/app/protocol/openid-connect/certs
 REDIS_PORT=6379
 REDIS_URL=redis://localhost:6379
 {{/if}}
+{{#if httpCache.varnish}}
+
+# Varnish in front of the API (docker-compose.yml): the port to read the API through, and where the outbox relay sends the purges.
+# Its VCL (docker/varnish/default.vcl) reaches the API on host.docker.internal:3000: change both when PORT changes.
+VARNISH_PORT=6081
+VARNISH_URL=http://localhost:6081
+{{/if}}
 {{#if cache.rateLimit}}
 # Requests one caller address may send per window before the HTTP layer answers 429.
 # RATE_LIMIT_MAX=120

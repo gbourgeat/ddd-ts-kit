@@ -39,6 +39,14 @@ holds `VarnishCachePurger` (xkey or ban), `FastlyCachePurger` and `CloudflareCac
 `cachePurgerContract` of `@ddd-ts-kit/testing/contracts`; the test application exposes
 `cacheInvalidation`. Varnish 9.1.0 runs in the integration job. See `docs/tools/http-caches.md`.
 
+**Varnish in front of a generated project.** `init --http-cache varnish` (recorded as
+`stack.httpCache`; a config without it is `none`) adds the Varnish 9.1.0 service to the compose
+file with its VCL in `docker/varnish/default.vcl`, validates `VARNISH_URL`, tags the public
+answers in `xkey` from the HTTP boundary, and has the outbox relay of `main.ts` purge through
+`PurgingPublisher` and `VarnishCachePurger`; it needs an HTTP framework and `--events outbox`.
+`generate controller --cache public|private|no-store` writes the cache policy of a controller.
+The generated presentation rules say when to cache, purge and condition a write.
+
 **Every package carries the MIT notice.** Each published package now holds the `LICENSE` of the
 repository next to its `dist/`, and `npm run package:check` refuses a tarball without it, or with
 another text. Earlier versions were published without it.

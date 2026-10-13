@@ -28,7 +28,7 @@ const REPORTED_BEHIND_NATS: StackFlags = { ...DISCOVERED_BEHIND_NATS, errors: 's
  * The stack of the example application: Keycloak, relationships, knex, the audit trail, classes
  * that declare themselves under the legacy decorator mode class-validator imposes, one Redis
  * protocol server for the cache and the event bus, or another broker next to the cache,
- * failures reported to Sentry or GlitchTip and pino for the logs.
+ * failures reported to Sentry or GlitchTip, pino for the logs and Varnish in front of the API.
  */
 export const FIRST_CLASS: StackFlags = {
   http: 'express',
@@ -41,6 +41,7 @@ export const FIRST_CLASS: StackFlags = {
   authz: 'rebac',
   broker: 'redis',
   cache: 'redis',
+  'http-cache': 'varnish',
   audit: 'on',
   errors: 'sentry',
   logger: 'pino',

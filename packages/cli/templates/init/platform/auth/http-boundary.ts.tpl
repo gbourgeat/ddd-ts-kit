@@ -1,4 +1,7 @@
 import type { Authenticator } from '@ddd-ts-kit/auth';
+{{#if httpCache.varnish}}
+import { CacheTagHeader } from '@ddd-ts-kit/http';
+{{/if}}
 {{#if errors.none}}
 import type { ErrorContext, ErrorMapper, RouteAround } from '@ddd-ts-kit/http';
 import type { Clock, ExecutionScope, Logger, Session } from '@ddd-ts-kit/kernel';
@@ -21,6 +24,10 @@ export interface HttpBoundary {
   readonly onError: (error: unknown, context: ErrorContext) => void;
   /** The span of a request, named by its route template; probes and documentation routes make none. */
   readonly around: RouteAround;
+{{#if httpCache.varnish}}
+  /** The header Varnish files a public answer under the tags of its resources from. */
+  readonly cacheTags: { readonly header: CacheTagHeader };
+{{/if}}
 }
 
 interface Edge {
@@ -57,6 +64,9 @@ export function httpBoundary({
     errorMapper,
     clock,
     around: tracedRoutes(),
+{{#if httpCache.varnish}}
+    cacheTags: { header: CacheTagHeader.xkey },
+{{/if}}
     // The message of the error may quote data: only the code and the route are logged.
 {{#if errors.none}}
     onError: (_error, context) => {
