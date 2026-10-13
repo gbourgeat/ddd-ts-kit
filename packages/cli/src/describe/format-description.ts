@@ -12,7 +12,10 @@ import type {
 /** One context as `describe` prints it for a reader: a heading, then one block per kind of element. */
 export function formatDescription(context: ContextDescription): string {
   const blocks: readonly (readonly [string, readonly string[]])[] = [
-    ['aggregates', context.aggregates],
+    [
+      'aggregates',
+      context.aggregates.map((name) => (context.eventSourced.includes(name) ? `${name} (event-sourced)` : name)),
+    ],
     ['domain events', context.domainEvents],
     ['permissions', context.permissions],
     ['use cases', context.useCases.map((useCase) => `${useCase.kind} ${useCase.name} (${known(useCase.permission)})`)],

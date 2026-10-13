@@ -46,7 +46,9 @@ export function refreshContextDoc(ws: Workspace, config: Config, context: string
 
 function generatedLists(facts: ContextFacts): Record<string, string[]> {
   return {
-    aggregates: facts.aggregates.map((name) => `- \`${name}\``),
+    aggregates: facts.aggregates.map(
+      (name) => `- \`${name}\`${facts.eventSourced.includes(name) ? ' (event-sourced)' : ''}`,
+    ),
     events: facts.publishedEvents.map((event) => `- \`${event.type}\` (version ${event.version})`),
     permissions:
       facts.permissions.length > 0

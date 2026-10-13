@@ -14,6 +14,7 @@ export const resourcePermissions: PermissionMapping = {
     [identityPermissions['member.add'].id]: 'manage',
     [identityPermissions['member.remove'].id]: 'manage',
     [schedulingPermissions['agenda.read'].id]: 'work',
+    [schedulingPermissions['attendance.read'].id]: 'work',
     [analyticsPermissions['occupancy.read'].id]: 'work',
   },
   desk: {

@@ -1,0 +1,60 @@
+// Models of the event store of @ddd-ts-kit/prisma for PostgreSQL. Copy them into your
+// schema.prisma; your own `prisma migrate dev` then creates the tables in a migration of your
+// project. The stores run raw statements against these tables: keep the table and column names
+// (`@@map`, `@map`). A context that keeps its own event store puts the models in its schema
+// (`@@schema("<context>")`, with model names of its own) and gives `createPrismaEventSourcing`
+// that `schema`.
+
+/// The head of the store: the position the next append starts after. One row, id 1, locked by
+/// each append until its transaction ends.
+model StoredEventsHead {
+  id       Int    @id @db.SmallInt
+  position BigInt
+
+  @@map("stored_events_head")
+}
+
+/// The events of every stream, never changed once written.
+model StoredEvent {
+  position      BigInt   @id
+  stream        String
+  version       Int
+  eventId       String   @unique @map("event_id")
+  type          String
+  schemaVersion Int      @map("schema_version")
+  data          Json
+  metadata      Json
+  occurredAt    DateTime @map("occurred_at") @db.Timestamptz(3)
+  recordedAt    DateTime @default(now()) @map("recorded_at") @db.Timestamptz(3)
+
+  @@unique([stream, version])
+  @@map("stored_events")
+}
+
+model StreamSnapshot {
+  stream        String   @id
+  version       Int
+  schemaVersion Int      @map("schema_version")
+  data          Json
+  takenAt       DateTime @default(now()) @map("taken_at") @db.Timestamptz(3)
+
+  @@map("stream_snapshots")
+}
+
+model SubscriptionCheckpoint {
+  subscriber String   @id
+  position   BigInt
+  updatedAt  DateTime @default(now()) @map("updated_at") @db.Timestamptz(3)
+
+  @@map("subscription_checkpoints")
+}
+
+/// One key per data subject: erasing the subject deletes its row.
+model SubjectKey {
+  subject   String   @id
+  keyId     String   @unique @map("key_id")
+  material  String
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@map("subject_keys")
+}

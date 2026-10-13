@@ -29,7 +29,7 @@ Never edit `<context>.declarations.ts`: `generate`, `docs` and `npm run dev` rew
 {{#if assembly.discovery}}
 Never edit `<context>.dependencies.ts`: `generate`, `docs` and `npm run dev` rewrite it from the constructor signatures (it registers what each constructor is injected). After changing a constructor by hand, `npx ddd-ts-kit docs`.
 {{/if}}
-Never edit the contracts under `openapi/` (`openapi/openapi.yaml`, one file per document when `openapi.documents` splits it, the forms of `openapi/forms/`), `docs/integration/asyncapi.yaml`, `docs/integration/event-catalog.md`, `{{config.platformDir}}/http/openapi-documents.ts`, `.dependency-cruiser.cjs` or the generated sections of a `CONTEXT.md`: change the code or the config, then `npm run docs:generate`, `npx ddd-ts-kit docs` and `npx ddd-ts-kit depcruise-config --write`.
+Never edit the contracts under `openapi/` (`openapi/openapi.yaml`, one file per document when `openapi.documents` splits it, the forms of `openapi/forms/`), `docs/integration/asyncapi.yaml`, `docs/integration/event-catalog.md`, `{{config.platformDir}}/http/openapi-documents.ts`, `.dependency-cruiser.cjs` or the generated sections of a `CONTEXT.md`: change the code or the config, then `npm run docs:generate`, `npx ddd-ts-kit docs` and `npx ddd-ts-kit depcruise-config --write`. `stored-events.lock.json` is written by `npx ddd-ts-kit docs --stored-events` once the shape of a version is final (`docs --check` fails while one is unrecorded), never by hand: a stored shape changes only by a new version with its upcaster (`event-sourcing/upcaster-required`).
 {{#if sdk.on}}
 {{sdk.instruction}}
 {{/if}}

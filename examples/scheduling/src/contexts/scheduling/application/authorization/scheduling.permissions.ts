@@ -25,5 +25,7 @@ export const schedulingPermissions = definePermissions('scheduling', {
   'appointment.read-document': { description: 'Read the document of an appointment, recorded in the audit trail' },
   'appointment.note.read': { description: 'Read the internal note of an appointment' },
   'appointment.note.write': { description: 'Write the internal note of an appointment' },
+  'attendance.note': { description: 'Note attendance' },
+  'attendance.read': { description: 'Search attendance history' },
   // /ddd-ts-kit:permissions
 });

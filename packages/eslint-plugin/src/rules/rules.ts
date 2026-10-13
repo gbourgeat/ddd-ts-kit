@@ -28,6 +28,11 @@ import { domainAggregateEncapsulation } from './domain-aggregate-encapsulation.j
 import { domainEventsDispatchedOnSave } from './domain-events-dispatched-on-save.js';
 import { domainEventsTransactionalBeforeCommit } from './domain-events-transactional-before-commit.js';
 import { domainNoGenericError } from './domain-no-generic-error.js';
+import { eventSourcingPastTense } from './event-sourcing-past-tense.js';
+import { eventSourcingProjectionNeverAppends } from './event-sourcing-projection-never-appends.js';
+import { eventSourcingStateInApply } from './event-sourcing-state-in-apply.js';
+import { eventSourcingStoreBehindRepository } from './event-sourcing-store-behind-repository.js';
+import { eventSourcingUpcasterRequired } from './event-sourcing-upcaster-required.js';
 import { errorsConstructorNotPublic } from './errors-constructor-not-public.js';
 import { errorsFactoryName } from './errors-factory-name.js';
 import { errorsThroughFactory } from './errors-through-factory.js';
@@ -91,6 +96,11 @@ const ALL = [
   applicationCommandQuerySeparation,
   domainEventsDispatchedOnSave,
   domainEventsTransactionalBeforeCommit,
+  eventSourcingStateInApply,
+  eventSourcingPastTense,
+  eventSourcingStoreBehindRepository,
+  eventSourcingProjectionNeverAppends,
+  eventSourcingUpcasterRequired,
   testNoMocks,
   eventsNameFormat,
   eventsOutboxRequired,

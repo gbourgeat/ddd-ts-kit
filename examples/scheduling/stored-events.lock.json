@@ -1,0 +1,11 @@
+{
+  "scheduling.attendance-record.cancellation-noted": {
+    "1": "sha256:4491ef0405782201"
+  },
+  "scheduling.attendance-record.created": {
+    "1": "sha256:6aff43d3849d05b6"
+  },
+  "scheduling.attendance-record.no-show-noted": {
+    "1": "sha256:d92a6c6bacab91de"
+  }
+}

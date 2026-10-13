@@ -22,7 +22,10 @@ export function formatContext(context: ContextSummary): string {
       'upstreams',
       context.upstreams.map((upstream) => `${upstream.context} (${upstream.relationship})`),
     ),
-    list('aggregates', context.aggregates),
+    list(
+      'aggregates',
+      context.aggregates.map((name) => (context.eventSourced.includes(name) ? `${name} (event-sourced)` : name)),
+    ),
     list('commands', lists.commands),
     list('queries', lists.queries),
     list('domain events', context.domainEvents),

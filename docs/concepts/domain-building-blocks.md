@@ -215,8 +215,11 @@ they go through the same public API, so a test cannot start from an invalid stat
   inside the transaction of the command: a reaction that fails makes the command fail. A reaction that
   must run apart from the command, or reach another context, goes through an integration
   event and the [transactional outbox](transactional-outbox.md).
-- **Domain events are not event sourcing.** The aggregate's state is stored as state. Events
-  are notifications of changes, not the source of truth.
+- **Domain events are not event sourcing.** Unless an aggregate opts into event sourcing, its
+  state is stored as state, and its events are notifications of changes, not the source of
+  truth. An aggregate that extends `EventSourcedAggregate` is the exception: its events are what
+  is stored, and its state is what they add up to
+  ([Event sourcing, per aggregate](event-sourcing.md)).
 - **Do not create events nobody reacts to "just in case".** Each one is a name to maintain. The
   exception is the fact that a test asserts on.
 - **A domain service is easy to overuse.** If most rules live in services and aggregates only
