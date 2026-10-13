@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" width="960" height="420" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">How the scheduling example was built</title>
+  <desc id="desc">Eight steps, each leaving a document: seven under docs/architecture, the last under docs/. The statement of needs, the only input, is grey. Strategic design, before any code: the statement of needs, the discovery, the bounded contexts, then the glossaries and the draft context map. Bootstrap and build: the plan with the init command, the slices, the briefings of five parallel workers, and the demo transcript: after a green gate (npm run verify), a recorded real run.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="420" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">How the example was built: from one page of needs to a green gate</text>
+
+  <!-- strategic design -->
+  <text x="40" y="74" font-size="14" font-weight="600" fill="#2f6f4f">strategic design, before any code</text>
+  <rect x="40" y="86" width="200" height="90" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="140" y="114" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">1. needs.md</text>
+  <text x="140" y="138" font-size="13" fill="#1f2328" text-anchor="middle">one page from the owner,</text>
+  <text x="140" y="156" font-size="13" fill="#1f2328" text-anchor="middle">the only input</text>
+  <rect x="264" y="86" width="200" height="90" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="364" y="114" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">2. discovery.md</text>
+  <text x="364" y="138" font-size="13" fill="#1f2328" text-anchor="middle">actors, commands, events</text>
+  <text x="364" y="156" font-size="13" fill="#1f2328" text-anchor="middle">and policies, on a timeline</text>
+  <rect x="488" y="86" width="200" height="90" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="588" y="114" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">3. contexts.md</text>
+  <text x="588" y="138" font-size="13" fill="#1f2328" text-anchor="middle">one core, three supporting,</text>
+  <text x="588" y="156" font-size="13" fill="#1f2328" text-anchor="middle">a reason per boundary</text>
+  <rect x="712" y="86" width="200" height="90" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="812" y="114" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">4. before-bootstrap/</text>
+  <text x="812" y="138" font-size="13" fill="#1f2328" text-anchor="middle">a glossary per context,</text>
+  <text x="812" y="156" font-size="13" fill="#1f2328" text-anchor="middle">the draft context map</text>
+  <line x1="240" y1="131" x2="260" y2="131" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="464" y1="131" x2="484" y2="131" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="688" y1="131" x2="708" y2="131" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- from the strategy to the bootstrap -->
+  <path d="M812,176 V214 H140 V256" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- bootstrap and build -->
+  <text x="912" y="246" font-size="14" font-weight="600" fill="#2b5d8a" text-anchor="end">bootstrap and build</text>
+  <rect x="40" y="260" width="200" height="90" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="140" y="288" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">5. plan.md</text>
+  <text x="140" y="312" font-size="13" fill="#1f2328" text-anchor="middle">the decisions, and the</text>
+  <text x="140" y="330" font-size="13" fill="#1f2328" text-anchor="middle">init command, verbatim</text>
+  <rect x="264" y="260" width="200" height="90" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="364" y="288" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">6. slices.md</text>
+  <text x="364" y="312" font-size="13" fill="#1f2328" text-anchor="middle">the backlog: one row</text>
+  <text x="364" y="330" font-size="13" fill="#1f2328" text-anchor="middle">per use case, in order</text>
+  <rect x="488" y="260" width="200" height="90" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="588" y="288" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">7. briefings/</text>
+  <text x="588" y="312" font-size="13" fill="#1f2328" text-anchor="middle">five workers in parallel,</text>
+  <text x="588" y="330" font-size="13" fill="#1f2328" text-anchor="middle">one scope each</text>
+  <rect x="712" y="260" width="200" height="90" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="812" y="288" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">8. demo-transcript.md</text>
+  <text x="812" y="312" font-size="13" fill="#1f2328" text-anchor="middle">after a green gate,</text>
+  <text x="812" y="330" font-size="13" fill="#1f2328" text-anchor="middle">a recorded real run</text>
+  <line x1="240" y1="305" x2="260" y2="305" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="464" y1="305" x2="484" y2="305" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="688" y1="305" x2="708" y2="305" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <text x="40" y="386" font-size="14" fill="#1f2328">Steps 1 to 7 are in docs/architecture/, step 8 in docs/; each strategic step ends with a question to the owner.</text>
+  <text x="40" y="408" font-size="14" fill="#1f2328">How long each step took, and what the tooling did well or badly: docs/tooling-report.md.</text>
+</svg>

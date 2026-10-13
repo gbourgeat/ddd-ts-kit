@@ -1,0 +1,113 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 576" width="960" height="576" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">L'exemple scheduling à l'exécution</title>
+  <desc id="desc">Le script de démo et les specs de bout en bout appellent l'API directement, sur le port 54300. Varnish, sur le port 54081, est une façade facultative qui met en cache les lectures publiques et laisse passer les autres ; une spec lit à travers lui, et le relais de l'outbox le purge par tag après un commit. Le processus API porte le serveur HTTP, le relais de l'outbox et le rattrapage des projections alimentées par l'event store, autour des quatre contextes délimités : scheduling (cœur), identity, notification et analytics. Un processus worker, construit à partir de la même image, exécute les jobs planifiés avec les mêmes contextes. Les deux processus utilisent Keycloak, PostgreSQL, Dragonfly, Jaeger, GlitchTip et MinIO.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+    <marker id="arrow-purge" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#7a4f9a"/>
+    </marker>
+  </defs>
+  <rect width="960" height="576" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">L'exemple scheduling à l'exécution</text>
+
+  <!-- callers and Varnish -->
+  <rect x="24" y="92" width="152" height="116" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="100" y="116" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">Varnish</text>
+  <text x="100" y="140" font-size="13" fill="#1f2328" text-anchor="middle">facultatif, :54081,</text>
+  <text x="100" y="158" font-size="13" fill="#1f2328" text-anchor="middle">met en cache les</text>
+  <text x="100" y="176" font-size="13" fill="#1f2328" text-anchor="middle">lectures publiques,</text>
+  <text x="100" y="194" font-size="13" fill="#1f2328" text-anchor="middle">laisse passer les autres</text>
+  <rect x="24" y="244" width="152" height="64" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="100" y="270" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">clients</text>
+  <text x="100" y="292" font-size="13" fill="#1f2328" text-anchor="middle">script de démo, specs</text>
+  <!-- optional: through Varnish -->
+  <line x1="100" y1="244" x2="100" y2="212" stroke="#3d4449" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arrow)"/>
+  <text x="110" y="238" font-size="13" fill="#5f6b73">facultatif</text>
+  <line x1="176" y1="128" x2="212" y2="128" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- direct -->
+  <path d="M176,276 H190 V168 H212" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- API process -->
+  <rect x="200" y="64" width="456" height="236" rx="14" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="216" y="88" font-size="14" font-weight="600" fill="#5f6b73">processus API : src/main.ts</text>
+  <rect x="216" y="104" width="128" height="76" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="280" y="128" font-size="16" font-weight="700" fill="#9a5b2b" text-anchor="middle">serveur HTTP</text>
+  <text x="280" y="150" font-size="13" fill="#1f2328" text-anchor="middle">routes, gardes,</text>
+  <text x="280" y="168" font-size="13" fill="#1f2328" text-anchor="middle">Express</text>
+  <rect x="356" y="104" width="136" height="76" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="424" y="128" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">relais outbox</text>
+  <text x="424" y="150" font-size="13" fill="#1f2328" text-anchor="middle">vers les flux,</text>
+  <text x="424" y="168" font-size="13" fill="#1f2328" text-anchor="middle">après le commit</text>
+  <rect x="504" y="104" width="136" height="76" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="572" y="128" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">rattrapage</text>
+  <text x="572" y="150" font-size="13" fill="#1f2328" text-anchor="middle">projections</text>
+  <text x="572" y="168" font-size="13" fill="#1f2328" text-anchor="middle">de l'event store</text>
+  <!-- the four contexts -->
+  <rect x="216" y="196" width="100" height="60" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="2"/>
+  <text x="266" y="222" font-size="15" font-weight="700" fill="#1f2328" text-anchor="middle">scheduling</text>
+  <text x="266" y="243" font-size="13" font-weight="600" fill="#2f6f4f" text-anchor="middle">cœur</text>
+  <rect x="324" y="196" width="100" height="60" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="374" y="222" font-size="15" font-weight="700" fill="#1f2328" text-anchor="middle">identity</text>
+  <text x="374" y="243" font-size="13" fill="#5f6b73" text-anchor="middle">de soutien</text>
+  <rect x="432" y="196" width="100" height="60" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="482" y="222" font-size="15" font-weight="700" fill="#1f2328" text-anchor="middle">notification</text>
+  <text x="482" y="243" font-size="13" fill="#5f6b73" text-anchor="middle">de soutien</text>
+  <rect x="540" y="196" width="100" height="60" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="590" y="222" font-size="15" font-weight="700" fill="#1f2328" text-anchor="middle">analytics</text>
+  <text x="590" y="243" font-size="13" fill="#5f6b73" text-anchor="middle">de soutien</text>
+  <text x="428" y="282" font-size="13" fill="#1f2328" text-anchor="middle">quatre contextes délimités, leurs gestionnaires et consommateurs</text>
+
+  <!-- worker process -->
+  <rect x="200" y="324" width="456" height="132" rx="14" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="216" y="348" font-size="14" font-weight="600" fill="#5f6b73">processus worker : src/apps/worker/main.ts</text>
+  <rect x="216" y="364" width="200" height="76" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="316" y="388" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">jobs planifiés</text>
+  <text x="316" y="410" font-size="13" fill="#1f2328" text-anchor="middle">chacun envoie une commande,</text>
+  <text x="316" y="428" font-size="13" fill="#1f2328" text-anchor="middle">sous un verrou de job</text>
+  <rect x="432" y="364" width="208" height="76" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="536" y="388" font-size="16" font-weight="700" fill="#1f2328" text-anchor="middle">les quatre contextes</text>
+  <text x="536" y="410" font-size="13" fill="#1f2328" text-anchor="middle">même image, mêmes modules,</text>
+  <text x="536" y="428" font-size="13" fill="#1f2328" text-anchor="middle">sans serveur HTTP ni relais</text>
+
+  <!-- both processes use the services on the right -->
+  <line x1="656" y1="182" x2="676" y2="182" stroke="#3d4449" stroke-width="2"/>
+  <line x1="656" y1="390" x2="676" y2="390" stroke="#3d4449" stroke-width="2"/>
+  <line x1="676" y1="95" x2="676" y2="455" stroke="#3d4449" stroke-width="2"/>
+  <line x1="676" y1="95" x2="700" y2="95" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="676" y1="167" x2="700" y2="167" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="676" y1="239" x2="700" y2="239" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="676" y1="311" x2="700" y2="311" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="676" y1="383" x2="700" y2="383" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="676" y1="455" x2="700" y2="455" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- external systems -->
+  <rect x="704" y="64" width="232" height="62" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="820" y="89" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">Keycloak</text>
+  <text x="820" y="111" font-size="13" fill="#1f2328" text-anchor="middle">utilisateurs, rôles, jetons</text>
+  <rect x="704" y="136" width="232" height="62" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="820" y="161" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">PostgreSQL</text>
+  <text x="820" y="183" font-size="13" fill="#1f2328" text-anchor="middle">un schéma par contexte, outbox</text>
+  <rect x="704" y="208" width="232" height="62" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="820" y="233" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">Dragonfly</text>
+  <text x="820" y="255" font-size="13" fill="#1f2328" text-anchor="middle">cache, verrous, flux d'événements</text>
+  <rect x="704" y="280" width="232" height="62" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="820" y="305" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">Jaeger</text>
+  <text x="820" y="327" font-size="13" fill="#1f2328" text-anchor="middle">traces, OpenTelemetry</text>
+  <rect x="704" y="352" width="232" height="62" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="820" y="377" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">GlitchTip</text>
+  <text x="820" y="399" font-size="13" fill="#1f2328" text-anchor="middle">erreurs, protocole Sentry</text>
+  <rect x="704" y="424" width="232" height="62" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="820" y="449" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">MinIO</text>
+  <text x="820" y="471" font-size="13" fill="#1f2328" text-anchor="middle">fichiers des rendez-vous</text>
+
+  <!-- the relay purges Varnish by tag -->
+  <path d="M470,104 V54 H100 V88" fill="none" stroke="#7a4f9a" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arrow-purge)"/>
+  <text x="478" y="90" font-size="13" fill="#7a4f9a">PURGE par tag</text>
+
+  <!-- what docker compose starts -->
+  <text x="32" y="514" font-size="14" fill="#1f2328">Le script de démo et les specs appellent l'API directement (:54300) ; une spec lit à travers Varnish (:54081).</text>
+  <text x="32" y="536" font-size="14" fill="#1f2328">docker compose démarre toujours PostgreSQL, Dragonfly et Varnish ; un profil ajoute chaque autre service : identity</text>
+  <text x="32" y="558" font-size="14" fill="#1f2328">(Keycloak), observability (Jaeger), errors (GlitchTip), files (MinIO), services (le worker, en conteneur).</text>
+</svg>
