@@ -96,6 +96,39 @@ export const catalogRoutes: readonly Route[] = [
   ),
 ];
 
+/** An export whose cursor fails once it has given `count` products: the status is sent by then. */
+export function failingExportRoute(count: number): Route {
+  return defineRoute(
+    {
+      method: 'GET',
+      path: '/products/failing-export',
+      operationId: 'exportProductsUntilFailure',
+      summary: 'Export products, until the cursor fails',
+      responses: { 200: { description: 'Some products.', body: streamSchemaOf(product) } },
+      security: false,
+      produces: ['text/csv'],
+    },
+    () => ({ status: 200, body: failingAfter(count) }),
+  );
+}
+
+async function* failingAfter(count: number): AsyncIterable<Product> {
+  for (let index = 0; index < count; index += 1) {
+    await Promise.resolve();
+
+    yield {
+      id: String(index),
+      name: 'Kettle',
+      ...priced('1.00'),
+      status: 'on-sale',
+      releasedAt: released.toISOString(),
+      stock: index,
+    };
+  }
+
+  throw new Error('The cursor was lost');
+}
+
 function priced(amount: string): Pick<Product, 'price' | 'currency'> {
   const { amount: price, currency } = money(amount, 'EUR');
 

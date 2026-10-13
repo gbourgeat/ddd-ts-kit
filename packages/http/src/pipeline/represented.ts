@@ -1,3 +1,4 @@
+import { Readable } from 'node:stream';
 import type { BodyShape } from '../representation/body-shape.js';
 import type { Chosen } from '../representation/representations.js';
 import type { RouteOutput } from '../route/route-output.js';
@@ -8,7 +9,7 @@ import { primed } from './primed.js';
 import type { RepresentedAnswer } from './represented-answer.js';
 import { writtenIn } from './written-in.js';
 
-/** The answer of a route in the media type the request negotiated. A binary body is the handler's own and is left as it is. */
+/** The answer of a route in the media type the request negotiated. A binary body, a file stream, is the handler's own and is left as it is. */
 export async function represented(route: Route, result: RouteOutput, chosen: Chosen): Promise<RepresentedAnswer> {
   const { body } = result;
 
@@ -16,7 +17,7 @@ export async function represented(route: Route, result: RouteOutput, chosen: Cho
     return { headers: {} };
   }
 
-  if (body instanceof Uint8Array) {
+  if (body instanceof Uint8Array || body instanceof Readable) {
     return { headers: {}, body };
   }
 

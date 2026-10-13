@@ -6,5 +6,6 @@ import type { Definitions } from './definitions.js';
 export interface Documenting {
   readonly mapper: ErrorMapper;
   readonly definitions: Definitions;
-  readonly representations: Representations;
+  /** `undefined` when the server negotiates nothing: every answer is JSON, and no request is refused 406 or 415 for its media type. */
+  readonly representations: Representations | undefined;
 }

@@ -9,6 +9,7 @@ import {
   executeRoute,
   streamSchemaOf,
   type RawRequest,
+  type Route,
 } from '../src/index.js';
 import { AsyncLocalStorageExecutionScope } from '@ddd-ts-kit/kernel';
 import { iteratedWithin } from '../src/pipeline/iterated-within.js';
@@ -210,6 +211,50 @@ describe('the pipeline with representations, at its edges', () => {
     const response = await executeRoute(bare, raw({ 'content-type': 'text/plain' }, 'x'), { representations });
 
     expect(response.status).toBe(204);
+  });
+
+  it('adds accept to the Vary header the handler sets, once', async () => {
+    const varying = (vary: string) => ({
+      ...echo,
+      handle: () => ({ status: 200, body: items(), headers: { Vary: vary } }),
+    });
+
+    const response = async (vary: string) =>
+      (await executeRoute(varying(vary), raw({ accept: 'text/csv' }), { representations })).headers['vary'];
+
+    expect(await response('origin')).toBe('origin, accept');
+    expect(await response('Accept, origin')).toBe('Accept, origin');
+    expect(await response('*')).toBe('*');
+  });
+
+  it('answers a route that declares no body schema whatever the request accepts', async () => {
+    const download: Route = {
+      method: 'GET',
+      path: '/download',
+      operationId: 'download',
+      summary: 'Download',
+      security: false,
+      responses: { 200: { description: 'The file.' } },
+      handle: () => ({ status: 200, body: new Uint8Array([37, 80]), headers: { 'content-type': 'application/pdf' } }),
+    };
+
+    const response = await executeRoute(download, raw({ accept: 'application/pdf' }), { representations });
+
+    expect([response.status, response.headers['content-type'], response.headers['vary']]).toEqual([
+      200,
+      'application/pdf',
+      undefined,
+    ]);
+  });
+
+  it('fails as a defect when another parser read a body its representation must read', async () => {
+    const xml = { ...echo, consumes: ['application/xml'] };
+
+    const response = await executeRoute(xml, raw({ 'content-type': 'application/xml' }, { parsed: true }), {
+      representations,
+    });
+
+    expect(response.status).toBe(500);
   });
 
   it('answers in no media type the registry does not know, even if the route declares it', () => {

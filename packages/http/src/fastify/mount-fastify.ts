@@ -3,6 +3,7 @@ import type { FastifyInstance } from 'fastify';
 import { executeRoute } from '../pipeline/execute-route.js';
 import type { RouteResponse } from '../pipeline/route-response.js';
 import { serializeBody } from '../pipeline/serialize-body.js';
+import { assertServed } from '../representation/assert-served.js';
 import { assertUniqueRoutes } from '../route/assert-unique-routes.js';
 import type { Route } from '../route/route.js';
 import type { FastifyMountOptions } from './fastify-mount-options.js';
@@ -19,7 +20,7 @@ export function mountFastify(
   options: FastifyMountOptions = {},
 ): void {
   assertUniqueRoutes(routes);
-  options.representations?.assertServes(routes);
+  assertServed(routes, options.representations);
 
   const streamed = routes.filter(readsItsStream);
   const parsed = routes.filter((route) => !readsItsStream(route));

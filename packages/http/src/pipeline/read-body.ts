@@ -1,4 +1,5 @@
 import type { Representations } from '../representation/representations.js';
+import { isJsonMediaType } from '../representation/is-json-media-type.js';
 import { mediaTypeOf } from '../representation/media-type-of.js';
 import { UnsupportedMediaTypeError } from '../representation/unsupported-media-type-error.js';
 import type { Route } from '../route/route.js';
@@ -26,8 +27,19 @@ export function readBody(route: Route, request: RawRequest, representations: Rep
 
   // A framework that already parsed the body (JSON) hands an object over: it is the value already.
   if (typeof request.body !== 'string') {
+    assertUnparsed(request.body, mediaType);
+
     return request;
   }
 
   return { ...request, body: reader.read(request.body, { schema: jsonSchemaOf(schema), name: route.operationId }) };
+}
+
+/** Another parser than the representation's (a plugin, a middleware) read a body the representation must read: a defect of the setup. */
+function assertUnparsed(body: unknown, mediaType: string): void {
+  if (body !== undefined && !isJsonMediaType(mediaType)) {
+    throw new Error(
+      `A body in ${mediaType} reached the route already parsed: remove the body parser of ${mediaType}, the representation reads it.`,
+    );
+  }
 }

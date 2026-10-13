@@ -4,10 +4,10 @@ import type { UploadSpec } from '../route/upload-spec.js';
 import type { Documenting } from './documenting.js';
 
 /**
- * The request body of an operation: JSON and every media type the route reads it in besides, or
+ * The request body of an operation: JSON and, under negotiation, every media type the route reads it in besides, or
  * for an upload the multipart form with its file, its size and its media types.
  */
-export function requestBody(route: Route, { definitions }: Pick<Documenting, 'definitions'>): JsonSchema | undefined {
+export function requestBody(route: Route, { definitions, representations }: Documenting): JsonSchema | undefined {
   const body = route.request?.body;
   const fields = body === undefined ? undefined : definitions.embed(body);
 
@@ -19,7 +19,7 @@ export function requestBody(route: Route, { definitions }: Pick<Documenting, 'de
     return undefined;
   }
 
-  const mediaTypes = ['application/json', ...(route.consumes ?? [])];
+  const mediaTypes = ['application/json', ...(representations === undefined ? [] : (route.consumes ?? []))];
 
   return {
     required: true,

@@ -5,6 +5,7 @@ import type { ExecuteOptions } from '../pipeline/execute-options.js';
 import { executeRoute } from '../pipeline/execute-route.js';
 import { serializeBody } from '../pipeline/serialize-body.js';
 import { writeStream } from '../pipeline/write-stream.js';
+import { assertServed } from '../representation/assert-served.js';
 import { assertUniqueRoutes } from '../route/assert-unique-routes.js';
 import type { HttpMethod } from '../route/http-method.js';
 import type { Route } from '../route/route.js';
@@ -25,7 +26,7 @@ type Registrar = Record<HttpMethod, (path: string, ...handlers: RequestHandler[]
  */
 export function mountExpress(target: IRouter, routes: readonly Route[], options: ExpressMountOptions = {}): void {
   assertUniqueRoutes(routes);
-  options.representations?.assertServes(routes);
+  assertServed(routes, options.representations);
 
   const register = registrarOf(target);
 

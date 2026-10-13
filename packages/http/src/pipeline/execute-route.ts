@@ -30,6 +30,7 @@ import { readBody } from './read-body.js';
 import { receiveUpload } from './receive-upload.js';
 import type { RepresentedAnswer } from './represented-answer.js';
 import { represented } from './represented.js';
+import { reportedStream } from './reported-stream.js';
 import type { RouteResponse } from './route-response.js';
 import { validateRequest } from './validate-request.js';
 import { wellFormedIdentifier } from './well-formed-identifier.js';
@@ -156,7 +157,7 @@ async function acceptedInput(call: Call): Promise<Omit<RouteInput, 'context'>> {
   const received = await receiveUpload(route, request, options);
   const upload = received.upload === undefined ? {} : { upload: received.upload };
 
-  if (negotiated?.answer === undefined && negotiated !== undefined) {
+  if (negotiated?.refused === true) {
     throw new NotAcceptableError('The route answers in none of the media types the request accepts.');
   }
 
@@ -196,9 +197,12 @@ function deadlineOf(options: ExecuteOptions): Date | undefined {
 async function answer(result: RouteOutput, call: Call): Promise<RouteResponse> {
   const chosen = call.negotiated?.answer;
 
-  const written = chosen === undefined ? asItIs(result) : await represented(call.route, result, chosen);
+  const written = reportingFailures(
+    chosen === undefined ? asItIs(result) : await represented(call.route, result, chosen),
+    call,
+  );
 
-  const vary = call.negotiated?.varies === true ? { vary: 'accept' } : {};
+  const own = lowerCaseKeys(result.headers ?? {});
 
   return {
     ...written,
@@ -206,11 +210,39 @@ async function answer(result: RouteOutput, call: Call): Promise<RouteResponse> {
     headers: {
       ...defaultContentType(result.body),
       ...written.headers,
-      ...vary,
-      ...lowerCaseKeys(result.headers ?? {}),
+      ...own,
+      ...varyOf(call.negotiated?.varies === true, own['vary']),
       ...identifierHeaders(call),
     },
   };
+}
+
+/** `Vary: accept` for an answer negotiated among several media types, added to the one the handler sets. */
+function varyOf(varies: boolean, own: string | undefined): Record<string, string> {
+  if (!varies) {
+    return {};
+  }
+
+  const names = (own ?? '').split(',').map((name) => name.trim().toLowerCase());
+
+  if (own === undefined || own.trim() === '') {
+    return { vary: 'accept' };
+  }
+
+  return names.includes('accept') || names.includes('*') ? {} : { vary: `${own}, accept` };
+}
+
+/** A streamed list that fails after its status is told to the error hook, as a fault, before the response is cut short. */
+function reportingFailures(written: RepresentedAnswer, call: Call): RepresentedAnswer {
+  if (written.stream === undefined) {
+    return written;
+  }
+
+  const report = (error: unknown): void => {
+    notify(call.options, error, { ...contextOf(error, call), interrupted: true });
+  };
+
+  return { ...written, stream: reportedStream(written.stream, report) };
 }
 
 /** An answer no representation writes: the value of the handler, for the adapter to serialize. */
@@ -237,23 +269,27 @@ function identifierHeaders({ requestId, correlationId }: Call): Record<string, s
 }
 
 function refusal(error: unknown, call: Call): { response: RouteResponse; context: ErrorContext } {
+  const context = contextOf(error, call);
+  const { problem } = context;
+
+  notify(call.options, error, context);
+
+  return { response: { status: problem.status, ...problemBody(problem, call) }, context };
+}
+
+function contextOf(error: unknown, call: Call): ErrorContext {
   const { route, options, requestId, correlationId } = call;
   const { execution } = call.reached;
-  const problem = toProblem(error, options.errorMapper ?? defaultErrorMapper, requestId);
 
-  const context: ErrorContext = {
+  return {
     requestId,
     correlationId,
     operationId: route.operationId,
     method: route.method,
     path: route.path,
-    problem,
+    problem: toProblem(error, options.errorMapper ?? defaultErrorMapper, requestId),
     ...(execution === undefined ? {} : { execution }),
   };
-
-  notify(options, error, context);
-
-  return { response: { status: problem.status, ...problemBody(problem, call) }, context };
 }
 
 function problemBody(problem: Problem, call: Call): Omit<RouteResponse, 'status'> {

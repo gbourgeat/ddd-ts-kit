@@ -1,3 +1,5 @@
+import express from 'express';
+import Fastify from 'fastify';
 import { describe, expect, it } from 'vitest';
 import { DeclarationError } from '@ddd-ts-kit/kernel/declarations';
 import { z } from 'zod';
@@ -15,7 +17,8 @@ import {
   type Route,
   type RouteResponse,
 } from '../src/index.js';
-import { generateOpenApi } from '../src/openapi.js';
+import { mountExpress } from '../src/express.js';
+import { mountFastify } from '../src/fastify.js';
 import { catalogRoutes } from './support/catalog.js';
 
 const representations = Representations.standard();
@@ -243,39 +246,18 @@ describe('the representations of the platform', () => {
     expect(() => representations.assertServes(catalogRoutes)).not.toThrow();
   });
 
+  it('are required by a route that produces or consumes another media type than JSON', () => {
+    const app = express();
+
+    expect(() => mountExpress(app, catalogRoutes)).toThrow(/declares produces or consumes, and no representations/);
+    expect(() => mountFastify(Fastify(), catalogRoutes)).toThrow(DeclarationError);
+    expect(() => mountExpress(app, catalogRoutes, { representations })).not.toThrow();
+  });
+
   it('let a project replace JSON with its own', async () => {
     const response = await executeRoute(route(0), request(), { representations: Representations.of(new PrettyJson()) });
 
     expect(await text(response)).toContain('\n  "items"');
-  });
-});
-
-describe('the contract of a route that answers in several media types', () => {
-  const document = generateOpenApi({ info: { title: 'Catalog', version: '1' }, routes: catalogRoutes });
-  const operations = document.paths['/products'] ?? {};
-
-  it('lists every media type it answers in, with the schema of the response', () => {
-    const content = (operations['get']?.['responses'] as Record<string, { content: Record<string, unknown> }>)['200']
-      ?.content;
-
-    expect(Object.keys(content ?? {})).toEqual(['application/json', 'application/xml', 'text/csv']);
-  });
-
-  it('lists every media type it reads a body in, and the problem types and statuses of negotiation', () => {
-    const post = operations['post'] as {
-      requestBody: { content: object };
-      responses: Record<string, { content: object; 'x-error-codes': string[] }>;
-    };
-
-    expect(Object.keys(post.requestBody.content)).toEqual(['application/json', 'application/xml']);
-
-    expect(Object.keys(post.responses['406']?.content ?? {})).toEqual([
-      'application/problem+json',
-      'application/problem+xml',
-    ]);
-
-    expect(post.responses['406']?.['x-error-codes']).toEqual(['NOT_ACCEPTABLE']);
-    expect(post.responses['415']?.['x-error-codes']).toEqual(['UNSUPPORTED_MEDIA_TYPE']);
   });
 });
 
