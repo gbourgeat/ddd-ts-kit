@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 690" width="960" height="690" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
   <title id="title">The read side next to the write side</title>
-  <desc id="desc">At the top, the write side: a command changes an aggregate, and its events are stored in the outbox in the same transaction. The outbox delivers integration events to a projector, which writes a read model with upsertIfNewer. At the bottom, the read side: a route hands a query to its handler, which joins the criteria and the access scope and calls the read port; the read port searches the read model. The handler completes the rows by hydration, through a gateway port to another context. A search table is built; a search index, XML, CSV and forms are proposed.</desc>
+  <desc id="desc">At the top, the write side: a command changes an aggregate, and its events are stored in the outbox in the same transaction. The outbox delivers integration events to a projector, which writes a read model with upsertIfNewer. At the bottom, the read side: a route hands a query to its handler, which joins the criteria and the access scope and calls the read port; the read port searches the read model. The handler completes the rows by hydration, through a gateway port to another context. A search table, JSON, XML, CSV and forms are built; a search index is proposed.</desc>
   <defs>
     <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
       <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
@@ -37,8 +37,8 @@
   <text x="40" y="394" font-size="14" font-weight="600" fill="#5f6b73">read side: a criteria, the actor's scope, a page</text>
   <rect x="40" y="408" width="240" height="80" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
   <text x="160" y="432" font-size="16" font-weight="700" text-anchor="middle" fill="#9a5b2b">route</text>
-  <text x="160" y="454" font-size="13" text-anchor="middle" fill="#1f2328">JSON: built</text>
-  <text x="160" y="473" font-size="13" text-anchor="middle" fill="#1f2328">XML, CSV, forms: proposed</text>
+  <text x="160" y="454" font-size="13" text-anchor="middle" fill="#1f2328">JSON, XML, CSV: built</text>
+  <text x="160" y="473" font-size="13" text-anchor="middle" fill="#1f2328">forms by caller: built</text>
   <rect x="330" y="408" width="300" height="80" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
   <text x="480" y="440" font-size="16" font-weight="700" text-anchor="middle" fill="#2b5d8a">query handler</text>
   <text x="480" y="462" font-size="13" text-anchor="middle" fill="#1f2328">criteria + access scope</text>

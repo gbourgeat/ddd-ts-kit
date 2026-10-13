@@ -1,5 +1,5 @@
 [English](quality-baseline.md) · **Français**
-<!-- translation-of: quality-baseline.md sha256:0746103dfdea24eb -->
+<!-- translation-of: quality-baseline.md sha256:8db17e771d95e273 -->
 
 # Base de qualité
 
@@ -149,7 +149,8 @@ finales, points-virgules, parenthèses autour du paramètre d'une fonction fléc
 - Exclus dans `biome.json` : les sorties de build (`dist`, `coverage`, `reports`), le fichier de
   verrouillage, un répertoire `generated`, les instantanés des migrations (`migrations/meta`), et
   les artefacts que leur propre contrôle compare octet pour octet (`openapi/*.json` et
-  `asyncapi.json` sous `openapi.format: json`, `.dependency-cruiser.cjs`) ; les contrats YAML ne
+  `asyncapi.json` sous `openapi.format: json`, les formulaires de `openapi/forms/`,
+  `.dependency-cruiser.cjs`) ; les contrats YAML ne
   sont de toute façon pas formatés. Deux lignes de plus n'apparaissent que là où elles servent :
   les sources d'un client généré (`clients/*/src`), que `ddd-ts-kit sdk` ajoute à un projet qui
   demande des clients, et, dans le kit seul, les exemples compilés de sa documentation

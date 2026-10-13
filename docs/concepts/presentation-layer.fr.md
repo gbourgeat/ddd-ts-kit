@@ -1,5 +1,5 @@
 [English](presentation-layer.md) · **Français**
-<!-- translation-of: presentation-layer.md sha256:31fed7c9ff3ee844 -->
+<!-- translation-of: presentation-layer.md sha256:c18799f4e8bed73a -->
 
 # La couche présentation : contrôleurs, groupes de routes, gardes
 
@@ -460,6 +460,11 @@ export class GetAppointmentSerializer implements Serializer<AppointmentView, App
   }
 }
 ```
+
+Un sérialiseur décide des champs d'un corps, jamais de qui les voit : un champ réservé à
+certains appelants est marqué sur le schéma de réponse (`withFieldAccess`), et les types de média
+dans lesquels une route répond sont les `produces` de sa déclaration, tous deux expliqués dans
+[représentations, accès aux champs et formulaires](representations-and-forms.fr.md).
 
 ## Quand garder une route fonction
 

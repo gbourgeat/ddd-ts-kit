@@ -87,7 +87,7 @@ only, `stack.tenancy` when it is not `none`. The optional keys (`coverage`, `dev
 
 ## How a key is read
 
-![A decision tree: an unknown key is ignored; a known key that is not written is read as its default, which for ten stack keys and importExtension is the default of an older file; an accepted value is read as written; a wrong stack value stops every command; any other wrong value is kept or defaulted and reported by check as config/valid](assets/diagrams/config-how-a-key-is-read.svg)
+![A decision tree: an unknown key is ignored; a known key that is not written is read as its default, which for twelve stack keys and importExtension is the default of an older file; an accepted value is read as written; a wrong stack value stops every command; any other wrong value is kept or defaulted and reported by check as config/valid](assets/diagrams/config-how-a-key-is-read.svg)
 
 A wrong `stack.*` value stops every command before it does anything, with the list of accepted
 values:

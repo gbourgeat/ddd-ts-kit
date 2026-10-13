@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 690" width="960" height="690" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
   <title id="title">Le côté lecture à côté du côté écriture</title>
-  <desc id="desc">En haut, le côté écriture : une commande modifie un agrégat, et ses événements sont enregistrés dans l'outbox dans la même transaction. L'outbox livre les événements d'intégration à un projecteur, qui écrit un modèle de lecture avec upsertIfNewer. En bas, le côté lecture : une route confie une requête à son gestionnaire, qui joint les critères et le périmètre d'accès et appelle le port de lecture ; le port de lecture cherche dans le modèle de lecture. Le gestionnaire complète les lignes par hydratation, à travers un port gateway vers un autre contexte. La table SQL est construite ; un index de recherche, XML, CSV et les formulaires sont proposés.</desc>
+  <desc id="desc">En haut, le côté écriture : une commande modifie un agrégat, et ses événements sont enregistrés dans l'outbox dans la même transaction. L'outbox livre les événements d'intégration à un projecteur, qui écrit un modèle de lecture avec upsertIfNewer. En bas, le côté lecture : une route confie une requête à son gestionnaire, qui joint les critères et le périmètre d'accès et appelle le port de lecture ; le port de lecture cherche dans le modèle de lecture. Le gestionnaire complète les lignes par hydratation, à travers un port gateway vers un autre contexte. La table SQL, JSON, XML, CSV et les formulaires sont construits ; un index de recherche est proposé.</desc>
   <defs>
     <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
       <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
@@ -37,8 +37,8 @@
   <text x="40" y="394" font-size="14" font-weight="600" fill="#5f6b73">côté lecture : des critères, le périmètre de l'acteur, une page</text>
   <rect x="40" y="408" width="240" height="80" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
   <text x="160" y="432" font-size="16" font-weight="700" text-anchor="middle" fill="#9a5b2b">route</text>
-  <text x="160" y="454" font-size="13" text-anchor="middle" fill="#1f2328">JSON : construit</text>
-  <text x="160" y="473" font-size="13" text-anchor="middle" fill="#1f2328">XML, CSV, formulaires : proposés</text>
+  <text x="160" y="454" font-size="13" text-anchor="middle" fill="#1f2328">JSON, XML, CSV : construits</text>
+  <text x="160" y="473" font-size="13" text-anchor="middle" fill="#1f2328">formulaires par appelant : construits</text>
   <rect x="330" y="408" width="300" height="80" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
   <text x="480" y="440" font-size="16" font-weight="700" text-anchor="middle" fill="#2b5d8a">gestionnaire de requête</text>
   <text x="480" y="462" font-size="13" text-anchor="middle" fill="#1f2328">critères + périmètre d'accès</text>

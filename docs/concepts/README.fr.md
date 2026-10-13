@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:ec9f0f7b3baaa0e8 -->
+<!-- translation-of: README.md sha256:6dbf82a7ead22790 -->
 
 # Concepts : un parcours de lecture
 
@@ -13,7 +13,7 @@ règle. Chaque page se lit seule en quelques minutes. Lues dans l'ordre, elles f
 de « qu'est-ce qu'un domaine » à « comment est-ce que je teste ceci », avec un seul exemple du
 début à la fin : une application de prise de rendez-vous.
 
-![Le parcours de lecture en six sections : conception stratégique (pages 1 à 5), conception tactique (6 à 11), architecture (12 à 15), messagerie et cohérence (16 à 22), préoccupations transverses (23 à 33), code et tests (34 et 35), chacune avec la question à laquelle elle répond](../assets/diagrams/concepts-reading-path.fr.svg)
+![Le parcours de lecture en six sections : conception stratégique (pages 1 à 5), conception tactique (6 à 11), architecture (12 à 15), messagerie et cohérence (16 à 22), préoccupations transverses (23 à 34), code et tests (35 et 36), chacune avec la question à laquelle elle répond](../assets/diagrams/concepts-reading-path.fr.svg)
 
 ## L'exemple suivi
 
@@ -76,7 +76,10 @@ personnes, pas d'outils.
 14. [CQRS](cqrs.fr.md) : les bus de commandes et de requêtes tels qu'ils sont utilisés ici ;
     l'*event sourcing* est un choix séparé, par agrégat.
     [La couche présentation](presentation-layer.fr.md) va avec : une classe de contrôleur par
-    route, les groupes de routes, les gardes à la bordure et les permissions sur le cas d'usage.
+    route, les groupes de routes, les gardes à la bordure et les permissions sur le cas d'usage ;
+    et [représentations, accès aux champs et formulaires](representations-and-forms.fr.md) : un
+    seul schéma servi en JSON, XML ou CSV, des champs réservés à certains appelants, des
+    formulaires décrits par le serveur.
 15. [Monolithe modulaire](modular-monolith.fr.md) : un seul déployable, de vrais modules.
 
 ## 4. Messagerie et cohérence : comment les contextes collaborent
@@ -100,43 +103,45 @@ personnes, pas d'outils.
 
 23. [Authentification et autorisation](authentication-and-authorization.fr.md) : rôles,
     attributs, relations, avec une table de décision.
-24. [Acteur et portée d'exécution](actor-and-execution-scope.fr.md) : qui agit, explicitement, et
+24. [L'autorisation en pratique](authorization-in-practice.fr.md) : `@Requires`, le *middleware*,
+    le port `Authorizer` et les politiques, suivis à travers une seule commande.
+25. [Acteur et portée d'exécution](actor-and-execution-scope.fr.md) : qui agit, explicitement, et
     ce que porte chaque unité de travail.
-25. [Multitenance](multitenancy.fr.md) : un seul déploiement, de nombreux clients, et aucune
+26. [Multitenance](multitenancy.fr.md) : un seul déploiement, de nombreux clients, et aucune
     lecture ni écriture qui passe de l'un à l'autre.
-26. [Journal d'audit](audit-trail.fr.md) : qui a fait quoi, enregistré depuis l'extérieur des cas
+27. [Journal d'audit](audit-trail.fr.md) : qui a fait quoi, enregistré depuis l'extérieur des cas
     d'usage.
-27. [Observabilité](observability.fr.md) : traçage, journaux, métriques, remontée des erreurs, et
+28. [Observabilité](observability.fr.md) : traçage, journaux, métriques, remontée des erreurs, et
     l'identifiant de corrélation qui les relie.
-28. [Résilience](resilience.fr.md) : nouvelle tentative (retry), délai d'expiration (timeout),
+29. [Résilience](resilience.fr.md) : nouvelle tentative (retry), délai d'expiration (timeout),
     disjoncteur (circuit breaker), cloison (bulkhead), cache, et comment chacun échoue.
-29. [Cache HTTP](http-caching.fr.md) : quoi mettre en cache à quelle couche, qui peut garder une
+30. [Cache HTTP](http-caching.fr.md) : quoi mettre en cache à quelle couche, qui peut garder une
     réponse, et jamais une décision d'autorisation d'un acteur à l'autre.
-30. [Jobs planifiés](scheduled-jobs.fr.md) : le travail déclenché par le temps, et pourquoi il
+31. [Jobs planifiés](scheduled-jobs.fr.md) : le travail déclenché par le temps, et pourquoi il
     doit être idempotent.
-31. [Jobs en arrière-plan](background-jobs.fr.md) : le travail qu'un cas d'usage confie à un
+32. [Jobs en arrière-plan](background-jobs.fr.md) : le travail qu'un cas d'usage confie à un
     *worker*, mis en file dans sa transaction, exécuté au moins une fois.
-32. [Stockage de fichiers](file-storage.fr.md) : les fichiers dans un stockage et jamais dans la
+33. [Stockage de fichiers](file-storage.fr.md) : les fichiers dans un stockage et jamais dans la
     base de données, l'ordre qui garde les deux cohérents, les liens signés.
-33. [Import et export de fichiers](file-import-export.fr.md) : une conception, pas encore
+34. [Import et export de fichiers](file-import-export.fr.md) : une conception, pas encore
     construite : un gros fichier lu ou écrit par un *job* en arrière-plan, ligne par ligne, entre
     la file d'attente et le stockage de fichiers.
 
 ## 6. Code et tests
 
-34. [Code propre](clean-code.fr.md) : nommage, petites fonctions, lecture en descente (stepdown),
+35. [Code propre](clean-code.fr.md) : nommage, petites fonctions, lecture en descente (stepdown),
     commentaires, testabilité par construction.
-35. [Stratégie de test](testing-strategy.fr.md) : des *fakes* plutôt que des *mocks*, des
+36. [Stratégie de test](testing-strategy.fr.md) : des *fakes* plutôt que des *mocks*, des
     *builders*, des tests de contrat, les quatre niveaux.
 
 ## Parcours plus courts
 
 - **Une personne du produit ou un nouveau venu au DDD :** 1, 2, 3, 5, puis 19.
-- **Avant d'écrire un premier cas d'usage :** 3, 7, 9, 12, 14, 35.
+- **Avant d'écrire un premier cas d'usage :** 3, 7, 9, 12, 14, 36.
 - **Avant de faire dialoguer deux contextes :** 4, 16, 17, 18, 21.
 - **Avant de garder un agrégat sous forme de ses événements :** 7, 16, 17, 21, 22.
-- **Avant de servir plusieurs clients depuis un seul déploiement :** 23, 24, 25.
-- **Avant de mettre le système en production :** 23, 27, 28, 29, 30, 31, 32, puis les
+- **Avant de servir plusieurs clients depuis un seul déploiement :** 23, 25, 26.
+- **Avant de mettre le système en production :** 23, 24, 28, 29, 30, 31, 32, 33, puis les
   [pages d'outils](../README.fr.md#outils--une-page-par-décision).
 
 ## Limites et quand ne pas l'utiliser

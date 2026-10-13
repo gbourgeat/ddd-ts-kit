@@ -1,3 +1,5 @@
+**English** · [Français](authorization-in-practice.fr.md)
+
 # Authorization in practice
 
 **Summary.** [Authentication and authorization](authentication-and-authorization.md) explains

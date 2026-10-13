@@ -11,7 +11,7 @@ page can be read on its own in a few minutes. Read in order, they form a path fr
 domain" to "how do I test this", using one example throughout: an appointment scheduling
 application.
 
-![The reading path in six sections: strategic design (pages 1 to 5), tactical design (6 to 11), architecture (12 to 15), messaging and consistency (16 to 22), cross-cutting concerns (23 to 33), code and tests (34 and 35), each with the question it answers](../assets/diagrams/concepts-reading-path.svg)
+![The reading path in six sections: strategic design (pages 1 to 5), tactical design (6 to 11), architecture (12 to 15), messaging and consistency (16 to 22), cross-cutting concerns (23 to 34), code and tests (35 and 36), each with the question it answers](../assets/diagrams/concepts-reading-path.svg)
 
 ## The running example
 

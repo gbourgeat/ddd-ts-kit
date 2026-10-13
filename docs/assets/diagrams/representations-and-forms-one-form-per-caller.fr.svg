@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 510" width="960" height="510" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Un formulaire, décrit pour chaque appelant</title>
+  <desc id="desc">Le schéma de corps de la réservation déclare startsAt et reason, que pose quiconque peut réserver, et internalNote, réservé avec withFieldAccess : le lire demande appointment.note.read, le poser appointment.note.write. GET /forms/bookAppointment?calendarId=c-1 demande d'abord appointment.book, comme la commande le demande, puis interroge Access, avec les mêmes décisions que les cas d'usage, à propos de l'agenda c-1. Le praticien titulaire du bureau reçoit chaque champ modifiable. Un assistant sur un bureau délégué reçoit la note interne en lecture seule. Un patient qui réserve pour lui-même ne reçoit pas du tout la note interne. Un assistant sans délégation est refusé par un 403, enregistré, et n'apprend rien des champs. Le serveur valide de nouveau le corps quand il est envoyé.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="510" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Un formulaire, décrit pour chaque appelant</text>
+  <rect x="24" y="72" width="300" height="132" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="174.0" y="103" font-size="16" fill="#9a5b2b" text-anchor="middle" font-weight="700">Schéma du corps de la réservation</text>
+  <text x="174.0" y="127" font-size="13" fill="#1f2328" text-anchor="middle">startsAt, reason</text>
+  <text x="174.0" y="147" font-size="13" fill="#1f2328" text-anchor="middle">internalNote, withFieldAccess :</text>
+  <text x="174.0" y="167" font-size="13" fill="#1f2328" text-anchor="middle">lire : appointment.note.read</text>
+  <text x="174.0" y="187" font-size="13" fill="#1f2328" text-anchor="middle">poser : appointment.note.write</text>
+  <rect x="368" y="72" width="288" height="132" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="512.0" y="113" font-size="16" fill="#9a5b2b" text-anchor="middle" font-weight="700">GET /forms/bookAppointment</text>
+  <text x="512.0" y="137" font-size="13" fill="#1f2328" text-anchor="middle">?calendarId=c-1</text>
+  <text x="512.0" y="157" font-size="13" fill="#1f2328" text-anchor="middle">requires appointment.book,</text>
+  <text x="512.0" y="177" font-size="13" fill="#1f2328" text-anchor="middle">demandée comme la commande</text>
+  <rect x="700" y="72" width="236" height="132" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="818.0" y="113" font-size="16" fill="#2b5d8a" text-anchor="middle" font-weight="700">Access</text>
+  <text x="818.0" y="137" font-size="13" fill="#1f2328" text-anchor="middle">les décisions des cas</text>
+  <text x="818.0" y="157" font-size="13" fill="#1f2328" text-anchor="middle">d'usage, à propos de</text>
+  <text x="818.0" y="177" font-size="13" fill="#1f2328" text-anchor="middle">l'agenda c-1</text>
+  <line x1="326" y1="138" x2="366" y2="138" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="658" y1="138" x2="698" y2="138" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="24" y="270" width="216" height="120" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="132.0" y="305" font-size="16" fill="#5f6b73" text-anchor="middle" font-weight="700">Praticien</text>
+  <text x="132.0" y="329" font-size="13" fill="#1f2328" text-anchor="middle">titulaire du bureau</text>
+  <text x="132.0" y="349" font-size="13" fill="#1f2328" text-anchor="middle">startsAt : modifiable</text>
+  <text x="132.0" y="369" font-size="13" fill="#1f2328" text-anchor="middle">internalNote : modifiable</text>
+  <line x1="512" y1="206" x2="132" y2="268" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="256" y="270" width="216" height="120" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="364.0" y="305" font-size="16" fill="#5f6b73" text-anchor="middle" font-weight="700">Assistant</text>
+  <text x="364.0" y="329" font-size="13" fill="#1f2328" text-anchor="middle">sur un bureau délégué</text>
+  <text x="364.0" y="349" font-size="13" fill="#1f2328" text-anchor="middle">startsAt : modifiable</text>
+  <text x="364.0" y="369" font-size="13" fill="#1f2328" text-anchor="middle">internalNote : lecture seule</text>
+  <line x1="512" y1="206" x2="364" y2="268" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="488" y="270" width="216" height="120" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="596.0" y="305" font-size="16" fill="#5f6b73" text-anchor="middle" font-weight="700">Patient</text>
+  <text x="596.0" y="329" font-size="13" fill="#1f2328" text-anchor="middle">réserve pour lui-même</text>
+  <text x="596.0" y="349" font-size="13" fill="#1f2328" text-anchor="middle">startsAt : modifiable</text>
+  <text x="596.0" y="369" font-size="13" fill="#1f2328" text-anchor="middle">internalNote : absent</text>
+  <line x1="512" y1="206" x2="596" y2="268" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="720" y="270" width="216" height="120" rx="10" fill="#fdeceb" stroke="#b42318" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="828.0" y="305" font-size="16" fill="#b42318" text-anchor="middle" font-weight="700">Assistant</text>
+  <text x="828.0" y="329" font-size="13" fill="#1f2328" text-anchor="middle">sans délégation</text>
+  <text x="828.0" y="349" font-size="13" fill="#1f2328" text-anchor="middle">403, enregistré,</text>
+  <text x="828.0" y="369" font-size="13" fill="#1f2328" text-anchor="middle">aucun champ montré</text>
+  <line x1="512" y1="206" x2="828" y2="268" stroke="#3d4449" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#arrow)"/>
+  <text x="32" y="420" font-size="13" fill="#1f2328" text-anchor="start">Quand le corps est envoyé, le serveur le valide de nouveau et refuse par un 403 un champ que l'appelant ne peut pas</text>
+  <text x="32" y="440" font-size="13" fill="#1f2328" text-anchor="start">poser ; la commande applique ses règles. Un formulaire porte la forme et la présentation, jamais une règle métier.</text>
+  <rect x="32" y="470" width="22" height="16" rx="4" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="64" y="483" font-size="14" fill="#1f2328" text-anchor="start">couche présentation</text>
+  <rect x="260" y="470" width="22" height="16" rx="4" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="292" y="483" font-size="14" fill="#1f2328" text-anchor="start">couche application</text>
+  <rect x="488" y="470" width="22" height="16" rx="4" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="520" y="483" font-size="14" fill="#1f2328" text-anchor="start">un appelant</text>
+  <rect x="716" y="470" width="22" height="16" rx="4" fill="#fdeceb" stroke="#b42318" stroke-width="2"/>
+  <text x="748" y="483" font-size="14" fill="#1f2328" text-anchor="start">refusé</text>
+</svg>

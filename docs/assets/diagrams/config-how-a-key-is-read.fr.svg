@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 604" width="960" height="604" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
   <title id="title">Comment une clé de ddd-ts-kit.config.json est lue</title>
-  <desc id="desc">Un arbre de décision. Une clé que le kit ne connaît pas est ignorée sans message. Une clé connue mais absente est lue avec sa valeur par défaut : celle de sa table, sauf pour dix clés de stack et importExtension, lues avec la valeur par défaut d'un fichier écrit avant que la clé n'existe. Une valeur écrite que le kit accepte est lue telle quelle. Une valeur de stack erronée arrête toutes les commandes avec les valeurs acceptées. Toute autre valeur erronée est gardée ou lue comme sa valeur par défaut, et ddd-ts-kit check la signale en config/valid avec sa ligne.</desc>
+  <desc id="desc">Un arbre de décision. Une clé que le kit ne connaît pas est ignorée sans message. Une clé connue mais absente est lue avec sa valeur par défaut : celle de sa table, sauf pour douze clés de stack et importExtension, lues avec la valeur par défaut d'un fichier écrit avant que la clé n'existe. Une valeur écrite que le kit accepte est lue telle quelle. Une valeur de stack erronée arrête toutes les commandes avec les valeurs acceptées. Toute autre valeur erronée est gardée ou lue comme sa valeur par défaut, et ddd-ts-kit check la signale en config/valid avec sa ligne.</desc>
   <defs>
     <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
       <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
@@ -23,7 +23,7 @@
   <text x="400" y="198" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">non</text>
   <rect x="440" y="166" width="480" height="80" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
   <text x="456" y="189" font-size="14" font-weight="600" fill="#5f6b73">Lue avec sa valeur par défaut</text>
-  <text x="456" y="210" font-size="13" fill="#1f2328">celle de sa table ; pour dix clés de stack et importExtension,</text>
+  <text x="456" y="210" font-size="13" fill="#1f2328">celle de sa table ; pour douze clés de stack et importExtension,</text>
   <text x="456" y="230" font-size="13" fill="#1f2328">celle d'un fichier plus ancien, pas ce qu'init écrit aujourd'hui</text>
   <line x1="200" y1="238" x2="200" y2="280" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
   <text x="210" y="264" font-size="13" font-weight="600" fill="#1f2328">oui</text>

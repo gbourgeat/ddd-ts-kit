@@ -1,5 +1,5 @@
 [English](identity.md) · **Français**
-<!-- translation-of: identity.md sha256:5d44cf5c168afa8a -->
+<!-- translation-of: identity.md sha256:7d10b81c2ceda863 -->
 
 # Identité : Keycloak ou simple OIDC et JWT
 
@@ -157,7 +157,7 @@ plus bas.
 | Configuration dans le kit | URL de base, realm, audience, identifiant de client et *claim* de *tenant* facultatifs | URL du jeu de clés ou une clé, émetteur, audience, algorithmes autorisés, `toActor` facultatif | aucune |
 | Émetteur et jeu de clés | déduits de l'URL de base et du realm | donnés explicitement | sans objet |
 | Rôles | les rôles du realm, plus les rôles de client d'un client quand il est nommé | le premier *claim* présent parmi `realm_access.roles`, `roles`, `scope`, jamais fusionnés ; ou votre `toActor` | ce que dit l'en-tête |
-| *Tenant* | un *claim* texte, ou le *claim* `organization` quand il nomme exactement une organisation | un *claim* texte (`tenant_id` par défaut) | ce que dit l'en-tête |
+| *Tenant* | un *claim* texte ; une liste ou le *claim* `organization` : un seul élément nomme le *tenant*, plusieurs forment l'attribut `tenants`, parmi lesquels une requête HTTP en nomme un | la même chose, depuis le *claim* de *tenant* (`tenant_id` par défaut) | ce que dit l'en-tête |
 | Comptes de service | reconnus (`preferred_username` commençant par `service-account-`) | traduits par votre `toActor` | sans objet |
 | Développement local | `init --authn keycloak` ajoute un service compose et un fichier de realm avec des utilisateurs de démonstration | vous apportez le fournisseur, ou signez vous-même des jetons de test | immédiat |
 | Vous exploitez | un serveur Keycloak, sa base de données, ses mises à jour | ce que demande le fournisseur : rien pour un fournisseur hébergé | rien |
@@ -213,8 +213,8 @@ accordées de `scope` (ou `scp`), que lit à la frontière la garde `HasScope` d
 | `actor.id` | `sub` |
 | `actor.type` | `service` pour un compte de service (octroi client credentials), sinon `user` |
 | `actor.roles` | `realm_access.roles`, plus `resource_access.<clientId>.roles` quand un identifiant de client est donné, chacun une fois |
-| `actor.attributes` | `username` depuis `preferred_username`, `email`, `groups` depuis le *claim* des groupes |
-| `actor.tenantId` | le *claim* de *tenant* : un *claim* texte, ou le *claim* `organization` quand il nomme exactement une organisation |
+| `actor.attributes` | `username` depuis `preferred_username`, `email`, `emailVerified` depuis `email_verified`, `groups` depuis le *claim* des groupes, `tenants` quand le *claim* de *tenant* en nomme plusieurs |
+| `actor.tenantId` | le *claim* de *tenant* : un *claim* texte, ou une liste (le *claim* `organization`) quand elle en nomme exactement un |
 | `session.id` | `sid` ; `jti` pour un compte de service, qui n'a pas de session |
 | `session.authenticationMethod` | `sso` pour une personne, `service` pour un compte de service |
 | `session.authenticationStrength` | le niveau d'assurance depuis `acr` |
@@ -293,6 +293,17 @@ describe('the authenticator of the API', () => {
 });
 ```
 
+**Les personnes et les organisations de l'application.** Le fournisseur dit qui s'est connecté ;
+à quelle organisation la personne appartient et ce qu'elle peut y faire relève de l'application.
+`--preset identity` écrit ce contexte en entier : des comptes provisionnés depuis le jeton à la
+première connexion, jamais de mot de passe, les organisations, les membres et les rôles, les
+invitations, les délégations, et le port `IdentityProviderAdmin` qui dit à Keycloak 26 (API des
+organisations) ce qui a été décidé, au moins une fois, depuis les consommateurs de ses faits
+publiés. Avec des *tenants*, l'authentificateur lit le *claim* `organization` comme les *tenants*
+de la personne. L'adaptateur Keycloak est une recette : spécifié contre un serveur local, il
+n'est pas exécuté contre un vrai Keycloak par le *pipeline* du kit. Voir
+[Démarrer avec des contextes bien conçus](../guides/bootstrap-with-well-designed-contexts.fr.md).
+
 ## Limites, et quand ne pas l'utiliser
 
 - **Aucun appel au fournisseur au-delà du jeu de clés.** Le README le dit du *preset* : une
@@ -305,8 +316,10 @@ describe('the authenticator of the API', () => {
   appartient au fournisseur et au frontal.
 - **Les jetons opaques ne sont pas pris en charge** par les authentificateurs livrés : ils
   vérifient des JWT.
-- **Plusieurs organisations par utilisateur ne donnent aucun *tenant*** avec le *claim*
-  `organization` : en choisir une est une décision du projet.
+- **Plusieurs organisations par utilisateur ne donnent aucun *tenant* par défaut** avec le
+  *claim* `organization` : elles sont les `tenants` de l'acteur, et chaque requête HTTP nomme
+  celui dans lequel elle travaille (`x-tenant-id`) ; une requête sans lui ne travaille dans aucun
+  *tenant*.
 - **Une portée n'est pas un rôle.** La correspondance par défaut ne fusionne jamais `scope` avec
   les rôles ; ne le contournez pas, écrivez un `toActor`.
 - **Le realm généré et l'authentificateur de développement par en-tête sont pour un usage

@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 470" width="960" height="470" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">One value, several representations</title>
+  <desc id="desc">A handler answers a typed value. The response schema checks it and is the contract. Field access then leaves out what this caller may not read, decided by the authorization of the application. Negotiation on the Accept header picks one media type among those the route produces: application/json by default, application/xml with names taken from the schema, or text/csv, one line per item, streamed. When no media type is in common the request is refused with 406 NOT_ACCEPTABLE before the handler runs. The same serialization rules hold in every representation.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="470" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">One value, several representations</text>
+  <rect x="24" y="72" width="180" height="96" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="114.0" y="115" font-size="16" fill="#2b5d8a" text-anchor="middle" font-weight="700">Handler</text>
+  <text x="114.0" y="139" font-size="13" fill="#1f2328" text-anchor="middle">answers a typed value</text>
+  <rect x="240" y="72" width="200" height="96" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="340.0" y="105" font-size="16" fill="#9a5b2b" text-anchor="middle" font-weight="700">Response schema</text>
+  <text x="340.0" y="129" font-size="13" fill="#1f2328" text-anchor="middle">checks the value,</text>
+  <text x="340.0" y="149" font-size="13" fill="#1f2328" text-anchor="middle">is the contract</text>
+  <rect x="476" y="72" width="210" height="96" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="581.0" y="105" font-size="16" fill="#2b5d8a" text-anchor="middle" font-weight="700">Field access</text>
+  <text x="581.0" y="129" font-size="13" fill="#1f2328" text-anchor="middle">leaves out what this</text>
+  <text x="581.0" y="149" font-size="13" fill="#1f2328" text-anchor="middle">caller may not read</text>
+  <rect x="722" y="72" width="214" height="96" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="829.0" y="105" font-size="16" fill="#9a5b2b" text-anchor="middle" font-weight="700">Negotiation</text>
+  <text x="829.0" y="129" font-size="13" fill="#1f2328" text-anchor="middle">on the Accept header, among</text>
+  <text x="829.0" y="149" font-size="13" fill="#1f2328" text-anchor="middle">what the route produces</text>
+  <line x1="206" y1="120" x2="238" y2="120" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="442" y1="120" x2="474" y2="120" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="688" y1="120" x2="720" y2="120" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="24" y="262" width="210" height="96" rx="10" fill="#fdeceb" stroke="#b42318" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="129.0" y="295" font-size="16" fill="#b42318" text-anchor="middle" font-weight="700">None in common</text>
+  <text x="129.0" y="319" font-size="13" fill="#1f2328" text-anchor="middle">406 NOT_ACCEPTABLE,</text>
+  <text x="129.0" y="339" font-size="13" fill="#1f2328" text-anchor="middle">before the handler runs</text>
+  <line x1="829" y1="170" x2="129" y2="260" stroke="#3d4449" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#arrow)"/>
+  <rect x="258" y="262" width="210" height="96" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="363.0" y="295" font-size="16" fill="#9a5b2b" text-anchor="middle" font-weight="700">application/json</text>
+  <text x="363.0" y="319" font-size="13" fill="#1f2328" text-anchor="middle">the default, always first</text>
+  <text x="363.0" y="339" font-size="13" fill="#1f2328" text-anchor="middle">a big integer as text</text>
+  <line x1="829" y1="170" x2="363" y2="260" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="492" y="262" width="210" height="96" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="597.0" y="295" font-size="16" fill="#9a5b2b" text-anchor="middle" font-weight="700">application/xml</text>
+  <text x="597.0" y="319" font-size="13" fill="#1f2328" text-anchor="middle">names from the schema,</text>
+  <text x="597.0" y="339" font-size="13" fill="#1f2328" text-anchor="middle">read back when consumed</text>
+  <line x1="829" y1="170" x2="597" y2="260" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="726" y="262" width="210" height="96" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="831.0" y="295" font-size="16" fill="#9a5b2b" text-anchor="middle" font-weight="700">text/csv</text>
+  <text x="831.0" y="319" font-size="13" fill="#1f2328" text-anchor="middle">one line per item,</text>
+  <text x="831.0" y="339" font-size="13" fill="#1f2328" text-anchor="middle">streamed, never read</text>
+  <line x1="829" y1="170" x2="831" y2="260" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="32" y="390" font-size="13" fill="#1f2328" text-anchor="start">The same rules in every representation: an instant in ISO 8601 UTC, money as a decimal string with its currency,</text>
+  <text x="32" y="410" font-size="13" fill="#1f2328" text-anchor="start">an identifier as a string, a closed vocabulary by its code. A file is no representation: it goes out as it was stored.</text>
+  <rect x="32" y="436" width="22" height="16" rx="4" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="64" y="449" font-size="14" fill="#1f2328" text-anchor="start">presentation layer</text>
+  <rect x="272" y="436" width="22" height="16" rx="4" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="304" y="449" font-size="14" fill="#1f2328" text-anchor="start">application layer</text>
+  <rect x="512" y="436" width="22" height="16" rx="4" fill="#fdeceb" stroke="#b42318" stroke-width="2"/>
+  <text x="544" y="449" font-size="14" fill="#1f2328" text-anchor="start">refused</text>
+</svg>

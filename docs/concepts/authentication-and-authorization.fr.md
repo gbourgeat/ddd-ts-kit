@@ -1,5 +1,5 @@
 [English](authentication-and-authorization.md) · **Français**
-<!-- translation-of: authentication-and-authorization.md sha256:85e80f6636c266b3 -->
+<!-- translation-of: authentication-and-authorization.md sha256:ae2374533bb86a4c -->
 
 # Authentification et autorisation
 
@@ -482,6 +482,7 @@ sa relation.
 
 ## Voir aussi
 
+- [L'autorisation en pratique](authorization-in-practice.fr.md) : une commande suivie à travers la mécanique
 - [Invariants, permissions, validation](invariants-permissions-validation.fr.md)
 - [Acteur et portée d'exécution](actor-and-execution-scope.fr.md)
 - [Journal d'audit](audit-trail.fr.md)

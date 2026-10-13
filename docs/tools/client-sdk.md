@@ -351,7 +351,7 @@ up with (`registerPeople`, `openStaffedPractice`), call the API through it
 // adapted from test/e2e/identity-open-practice.e2e.spec.ts: the comment after 'UNKNOWN_TIME_ZONE' is added
 it('answers the documented problem for each business refusal', async () => {
   await registerPeople(application, 'ada');
-  const root = application.apiAs({ id: 'root', roles: ['platform-admin'] });
+  const root = application.apiAs({ id: 'root', roles: ['network-admin'] });
 
   expectRefusal(
     await root.openPractice({ body: { ...opening, timeZone: 'Europe/Atlantis' } }),

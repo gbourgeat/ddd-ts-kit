@@ -1,5 +1,5 @@
 [English](client-sdk.md) · **Français**
-<!-- translation-of: client-sdk.md sha256:5bcd179a9b97e83c -->
+<!-- translation-of: client-sdk.md sha256:06a61c037a50c664 -->
 
 # SDK client : un client typé à partir du contrat OpenAPI
 
@@ -370,7 +370,7 @@ opération) :
 // adapté de test/e2e/identity-open-practice.e2e.spec.ts : le commentaire après 'UNKNOWN_TIME_ZONE' est ajouté
 it('answers the documented problem for each business refusal', async () => {
   await registerPeople(application, 'ada');
-  const root = application.apiAs({ id: 'root', roles: ['platform-admin'] });
+  const root = application.apiAs({ id: 'root', roles: ['network-admin'] });
 
   expectRefusal(
     await root.openPractice({ body: { ...opening, timeZone: 'Europe/Atlantis' } }),

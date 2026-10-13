@@ -1,5 +1,5 @@
 [English](CONFIG.md) · **Français**
-<!-- translation-of: CONFIG.md sha256:9e2f17b479127b9e -->
+<!-- translation-of: CONFIG.md sha256:529862b2f4c7e345 -->
 
 # `ddd-ts-kit.config.json`
 
@@ -64,7 +64,9 @@ aucune dérogation.
     "queue": "database",
     "assembly": "barrel",
     "dependencies": "signature",
-    "packageManager": "pnpm"
+    "packageManager": "pnpm",
+    "representations": "negotiated",
+    "forms": "on"
   },
   "contexts": {
     "billing": { "classification": "core", "upstreams": [] },
@@ -88,7 +90,7 @@ Trois clés ne sont écrites que lorsqu'elles disent quelque chose : `stack.asse
 
 ## Comment une clé est lue
 
-![Un arbre de décision : une clé inconnue est ignorée ; une clé connue qui n'est pas écrite est lue avec sa valeur par défaut, qui pour dix clés de stack et importExtension est celle d'un fichier plus ancien ; une valeur acceptée est lue telle qu'écrite ; une valeur de stack erronée arrête toutes les commandes ; toute autre valeur erronée est gardée ou remplacée par sa valeur par défaut, et check la signale en config/valid](assets/diagrams/config-how-a-key-is-read.fr.svg)
+![Un arbre de décision : une clé inconnue est ignorée ; une clé connue qui n'est pas écrite est lue avec sa valeur par défaut, qui pour douze clés de stack et importExtension est celle d'un fichier plus ancien ; une valeur acceptée est lue telle qu'écrite ; une valeur de stack erronée arrête toutes les commandes ; toute autre valeur erronée est gardée ou remplacée par sa valeur par défaut, et check la signale en config/valid](assets/diagrams/config-how-a-key-is-read.fr.svg)
 
 Une valeur `stack.*` erronée arrête toutes les commandes avant qu'elles ne fassent quoi que ce
 soit, avec la liste des valeurs acceptées :
@@ -112,7 +114,7 @@ ddd-ts-kit.config.json:39  error  config/valid
 Une clé qui n'est pas écrite n'est pas toujours lue comme ce qu'écrit `init` aujourd'hui : un
 fichier sans la clé a été écrit par une version qui ne la connaissait pas, et le kit le lit
 comme cette version fonctionnait, si bien qu'une mise à jour des *packages* ne change rien dans
-un projet existant. Les dix clés concernées sont dans [la table de la section Stack](#une-clé-absente-de-stack),
+un projet existant. Les douze clés concernées sont dans [la table de la section Stack](#une-clé-absente-de-stack),
 et `importExtension` plus bas. Les règles exactes de l'analyseur sont dans [Limites](#limites).
 
 ## Chemins
@@ -236,13 +238,15 @@ hors de la liste arrête toutes les commandes avec la liste des valeurs accepté
 | `stack.valueObjects` | `throwing`, `result` : comment refuse la fabrique d'un objet-valeur. `throwing` : `create` renvoie l'objet-valeur ou lève le refus construit par la fabrique statique de son concept (`throw PersonError.invalidEmail(raw)`), comme refuse un agrégat ; un appelant prend la valeur telle quelle, et une *spec* affirme `expectRefusal(() => Email.create(raw), 'INVALID_EMAIL')`. `result` : `create` renvoie un `Result` du kernel, `err(PersonError.invalidEmail(raw))`, qu'un appelant déballe avec `unwrap(..)`, comme les écrivaient les versions 0.1 à 0.5. `generate value-object` écrit la forme que dit la clé ; `Result`, `ok`, `err` et `unwrap` restent dans le kernel pour un projet qui les garde. La validation en bordure (le schéma d'une requête HTTP) n'est pas concernée : une valeur refusée là n'atteint jamais la fabrique | `throwing` |
 | `stack.literals` | `named`, `free` : comment le code écrit une valeur fermée et un nombre. `named` : une valeur que déclare un vocabulaire fermé du projet est lue par lui, `AppointmentStatus.NoShow`, `billingPermissions['invoice.issue']`, `Role.Admin`, jamais réécrite en chaîne (`language/declared-vocabulary`, *checker* et ESLint), et un nombre de `domain/` ou d'`application/` autre que 0, 1, -1 et un indice a un nom (`clean/no-magic-number`, ESLint). `free` : les deux règles se taisent, comme le code qu'écrivaient les versions 0.1 à 0.5. Les *templates* de règles qu'écrit `init` ne mentionnent les règles que sous `named` | `named` |
 | `stack.tenancy` | `none`, `shared-table` ; lues aussi : `row-level-security`, `schema-per-tenant`, `database-per-tenant`. Comment les données d'un *tenant* sont tenues à l'écart des autres ([Multitenance](concepts/multitenancy.fr.md)). `shared-table` : chaque *repository* généré, sur Knex ou Drizzle, restreint ses requêtes SQL au *tenant* du travail par `tenantTable` et `ownTenantTable` ou `tenantCondition` et `ownTenantCondition`, l'outbox garde le *tenant* de chaque événement pour que les consommateurs s'exécutent dans celui-ci, et `tenancy/scoped-statement` signale une requête SQL qui contourne ces aides. `init --tenancy` propose `none` et `shared-table`, et refuse `shared-table` avec Prisma, TypeORM, `custom` ou sans ORM ; les trois autres stratégies sont livrées par les *packages* de persistance et câblées à la main (`init` les refuse en disant quoi ajouter). Absente : `none`, et le fichier ne dit rien de la multitenance | absente (`none`) |
+| `stack.representations` | `negotiated`, `json` : ce dans quoi une route répond. `negotiated` : `src/platform/http/presentation-of.ts` enregistre `Representations.standard()` de `@ddd-ts-kit/http` dans la frontière HTTP et dans le script du contrat, si bien que chaque requête HTTP reçoit sa réponse dans le type de média que préfère son en-tête `Accept` parmi JSON et ce que sa route déclare dans `produces` (XML, CSV, `406` quand aucun ne convient), un corps XML est lu sur une route qui déclare `consumes`, et les champs qu'un schéma réserve avec `withFieldAccess` sont décidés par l'`Access` de l'application ; `generate representation` ajoute `produces` à un contrôleur. `json` : du JSON quoi que la requête accepte, comme avant que la clé n'existe. `init` écrit `json` sans *stack* HTTP | `negotiated` (`json` avec `http: none`) |
+| `stack.forms` | `on`, `off` : si une route qui déclare `form` est servie comme un formulaire. `on` : `src/platform/http/with-forms.ts` ajoute `formRoutes` de `@ddd-ts-kit/http` aux routes, un `GET /forms/<operationId>` par route de ce genre (JSON Forms, ou `?format=blocks`), les champs cachés ou en lecture seule pour chaque appelant par le même accès aux champs, et `npm run docs:generate` écrit chaque formulaire en entier dans `openapi/forms/<operationId>.json` ; `generate form` donne à un contrôleur ses indications. `off` : aucun formulaire n'est servi | `on` (`off` avec `http: none`) |
 | `stack.queue` | `database`, `redis`, `memory`. Où sont gardés les *jobs* en arrière-plan et les instances des gestionnaires de processus ([Jobs en arrière-plan](concepts/background-jobs.fr.md), [Sagas et gestionnaires de processus](concepts/sagas-and-process-managers.fr.md)). `database` : les tables `background_jobs` et `process_instances` de `@ddd-ts-kit/knex` ou de `@ddd-ts-kit/drizzle` dans le schéma `messaging`, créées par la première migration, liées à la place des magasins en mémoire par le module de la plateforme : un *job* mis en file par une commande existe si et seulement si la commande a été validée. `redis` : `RedisJobStore` sur le serveur du cache (`--cache redis`, Dragonfly dans docker-compose et en CI), écrit une fois la commande validée ; les instances de processus restent dans la base avec Knex ou Drizzle. `memory` : dans le processus, ce qu'un *worker* d'un autre processus ne voit pas. `init --queue` vaut par défaut `database` sur Knex ou Drizzle avec `--di tsyringe`, `memory` sinon ; il refuse un magasin avec un autre conteneur que tsyringe, `database` avec un autre ORM, et `redis` sans `--cache redis`. `generate background-job` et `generate process` demandent `--di tsyringe`. Avec `memory` et un *worker*, chaque processus consomme la file dans sa propre mémoire, que ses *jobs* soient actifs ou non : l'API exécute les *jobs* qu'elle met en file, le *worker* ceux que mettent en file ses *jobs* planifiés, et un redémarrage perd ce qui attend. Avec `redis`, l'écriture d'un *job* perdue après la validation de sa commande est journalisée et remontée (`reportLostJobs` de `@ddd-ts-kit/redis`, lié par le module de la plateforme). Absente : `memory`, le magasin d'un projet initialisé avant que les *jobs* en arrière-plan n'existent | `database` sur Knex ou Drizzle avec tsyringe, `memory` sinon |
 | `stack.packageManager` | `npm`, `pnpm` : ce qui installe les dépendances et exécute les scripts. Chaque commande qu'écrit la CLI est dans son dialecte : les scripts de `package.json`, les *pipelines*, les *hooks* git, le `Dockerfile`, le README et les notes qu'affichent `init` et `generate` (`pnpm run verify` et `pnpm exec ddd-ts-kit`, ou `npm run verify` et `npx ddd-ts-kit`). pnpm est épinglé par le champ `packageManager` de `package.json`, que fournit corepack (`corepack enable`, une fois par machine) ; npm vient avec Node et n'est pas épinglé. `init --package-manager npm\|pnpm` | `pnpm` dans ce qu'écrit `init` ; `npm` quand la clé est absente |
 
 ### Une clé absente de `stack`
 
 Un fichier de configuration qui omet une clé de `stack` est lu avec les valeurs par défaut de la
-table ci-dessus, sauf pour dix clés. Un fichier sans l'une d'elles a été écrit par une version
+table ci-dessus, sauf pour douze clés. Un fichier sans l'une d'elles a été écrit par une version
 qui n'offrait pas ce choix, et il est lu comme cette version fonctionnait :
 
 | Clé | Absente, lue comme | Ce qu'écrit `init` | Pour faire évoluer un projet |
@@ -257,6 +261,8 @@ qui n'offrait pas ce choix, et il est lu comme cette version fonctionnait :
 | `stack.queue` | `memory` | `database` sur Knex ou Drizzle avec tsyringe, `memory` sinon | `init --force --queue database` |
 | `stack.schemas` | `per-route` | `shared` | poser la clé, puis suivre `check --rule schema/no-duplicate-shape` |
 | `stack.packageManager` | `npm` | `pnpm` | `init --force --package-manager pnpm` |
+| `stack.representations` | `json` | `negotiated` (`json` avec `http: none`) | `init --force --representations negotiated` |
+| `stack.forms` | `off` | `on` (`off` avec `http: none`) | `init --force --forms on` |
 
 Les paragraphes ci-dessous disent pourquoi pour chacune, et ce que chaque évolution laisse à une
 personne.
@@ -434,6 +440,17 @@ pnpm dans le champ `packageManager` de `package.json` et réécrit dans son dial
 dont `init` est propriétaire ; puis `corepack enable`, `pnpm install` (qui écrit
 `pnpm-lock.yaml`) et `pnpm run verify`.
 
+La onzième et la douzième : sans `stack.representations`, le projet est lu comme `json`, et sans
+`stack.forms` comme `off`, parce qu'un tel fichier a été écrit avant que l'une ou l'autre
+n'existe. Rien n'y change : chaque réponse reste en JSON, aucun formulaire n'est servi, et un
+schéma marqué avec `withFieldAccess` cache ses champs restreints à tout le monde tant qu'aucun
+décideur n'est donné. Pour le faire évoluer : `npx ddd-ts-kit init --force --representations
+negotiated --forms on` pose les deux clés et réécrit les fichiers dont `init` est propriétaire
+(`http-boundary.ts`, `compose-application.ts`, `scripts/openapi.ts`, avec les nouveaux
+`presentation-of.ts` et `with-forms.ts`) ; puis `npm run docs:generate`, qui liste les types de
+média de chaque route et écrit les formulaires. Un projet qui a réécrit l'un de ces fichiers à la
+main réapplique son changement, comme pour tout `init --force`.
+
 ## Pipeline
 
 | Clé | Valeurs | Défaut |
@@ -479,6 +496,13 @@ dont `init` est propriétaire ; puis `corepack enable`, `pnpm install` (qui écr
 
 Les contextes de la configuration et les répertoires de `contextsDir` doivent former le même
 ensemble.
+
+Aucune clé n'enregistre de *preset*. `init --preset identity` et `generate context <name>
+--preset identity` écrivent un contexte une fois, comme les générateurs l'auraient écrit pièce par
+pièce, puis le déclarent ici comme n'importe quel autre (`generic`, sauf si `--classification` ou
+`--context <name>:<classification>` dit autre chose) ; dès lors, ses fichiers sont le code du
+projet, et une configuration sans *preset* se comporte comme avant. Voir
+[Démarrer avec des contextes bien conçus](guides/bootstrap-with-well-designed-contexts.fr.md).
 
 ## Règles et limites
 

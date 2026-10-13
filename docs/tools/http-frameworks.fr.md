@@ -1,5 +1,5 @@
 [English](http-frameworks.md) · **Français**
-<!-- translation-of: http-frameworks.md sha256:6407a74f980e7b6a -->
+<!-- translation-of: http-frameworks.md sha256:489c4118cd210821 -->
 
 # Frameworks HTTP : Express, Fastify, Hono, NestJS
 
@@ -238,6 +238,11 @@ D'après [`packages/http/README.md`](../../packages/http/README.fr.md) et
   (`authz/declared`).
 - OpenAPI 3.1 généré à partir des mêmes déclarations, déterministe, avec une vérification de
   dérive pour la CI.
+- La négociation de contenu (JSON, XML, CSV, listes en flux) et les corps XML de la même façon
+  sur les quatre : `mountExpress` pose un analyseur de texte sur chaque route qui `consumes` un
+  autre type de média, `mountFastify` enregistre un analyseur de type de contenu, `mountHono` lit
+  un tel corps comme du texte sous sa `bodyLimit`, Nest passe par Express ou Fastify ; la suite
+  partagée des adaptateurs le tient ([représentations et formulaires](representations-and-forms.fr.md)).
 - Chaque requête HTTP s'exécute dans la portée d'exécution avec son identifiant de corrélation
   quand la portée est donnée dans les options.
 - Les preuves de bout en bout de la CLI installent et exécutent des projets générés :

@@ -1,5 +1,5 @@
 [English](multitenancy.md) · **Français**
-<!-- translation-of: multitenancy.md sha256:cf10b3282bea1306 -->
+<!-- translation-of: multitenancy.md sha256:d63518b061a8d109 -->
 
 # Multitenance
 
@@ -99,7 +99,7 @@ Ce que fournit chaque adaptateur, prouvé par `tenantIsolationContract`
 
 | Stratégie | Knex | Drizzle | Prisma | TypeORM |
 |---|---|---|---|---|
-| Tables partagées | `tenantTable`, `ownTenantTable`, `whereTenant` ; modèles de lecture avec `tenant` | `tenantCondition`, `ownTenantCondition` ; modèles de lecture avec `tenant` | à la main : `tenantScopeOf` et `tenantReachOf` dans chaque instruction, aucun *helper*, aucune exécution du contrat | à la main, comme Prisma |
+| Tables partagées | `tenantTable`, `ownTenantTable`, `whereTenant`, `derivedTable` ; modèles de lecture avec `tenant` ; `addTenantColumn` pour migrer | `tenantCondition`, `ownTenantCondition` ; modèles de lecture avec `tenant` | à la main : `tenantScopeOf` et `tenantReachOf` dans chaque instruction, aucun *helper*, aucune exécution du contrat | à la main, comme Prisma |
 | Sécurité au niveau des lignes | `enableTenantIsolation`, `tenantSession` | `tenantPolicies`, `forceRowLevelSecurity`, `tenantSession` | non fourni | non fourni |
 | Un schéma par *tenant* | `tenantSchemaTable`, `migrateTenantSchema`, `tenantSearchPath` | non fourni : une table drizzle est liée à son schéma là où elle est déclarée | non fourni | non fourni |
 | Une base par *tenant* | `TenantDatabases`, `createTenantRoutedUnitOfWork`, `migrateEveryTenant` | non fourni | non fourni | non fourni |
@@ -187,6 +187,15 @@ export class KnexAppointmentRepository {
 }
 ```
 
+Un projet d'un seul client qui devient multitenant garde ses données : sur Knex, une migration
+appelle `addTenantColumn(knex, { schema, table, tenantOfExistingRows })` pour chaque table de
+données de *tenant* (les lignes déjà présentes vont au client qu'elle servait, puis la colonne
+devient obligatoire et indexée) et `addOutboxTenantColumn(knex, { schema, tenantOfUnpublished })`
+pour l'outbox (les événements pas encore publiés vont aussi à ce client, pour que leurs
+consommateurs s'exécutent dans son *tenant*). Une table qui a déjà la colonne est laissée telle
+quelle, si bien que la migration s'exécute aussi sur une base construite depuis le schéma actuel.
+L'application d'exemple a suivi ce chemin (son ADR-0003) : un réseau de cabinets est un *tenant*.
+
 L'outbox garde le *tenant* de chaque événement sur Knex (`tenant: true`) et Drizzle
 (`tenantOutboxTable`) ; les outbox de Prisma et de TypeORM ne le stockent pas encore, donc leurs
 consommateurs s'exécutent sans *tenant*.
@@ -248,7 +257,14 @@ de la requête.
 Lequel choisir : le *claim* seul quand un utilisateur appartient à un seul *tenant* ; un
 sous-domaine quand les *tenants* ont leur propre adresse (et leurs propres cookies) ; un segment
 de chemin ou un en-tête quand un utilisateur travaille dans plusieurs *tenants* et en choisit un
-par requête HTTP, le jeton listant alors chaque appartenance.
+par requête HTTP, le jeton listant alors chaque appartenance (un *claim* de *tenant* qui contient
+une liste, ou le *claim* `organization` de Keycloak, donne à l'acteur ses `tenants`).
+
+Un *tenant* que le déploiement ne sert pas, que son annuaire des *tenants* (les *tenants* pour
+lesquels ses *jobs* s'exécutent) ne liste pas, a intérêt à n'être pas trouvé du tout :
+`servedTenantOf(resolver, served)` répond 404 à quiconque le nomme, pour qu'un justificatif émis
+pour un *tenant* dont le déploiement ne sait rien n'écrive jamais de données qu'aucun *job* ni
+aucun opérateur ne verrait. L'application d'exemple sert ainsi les réseaux de `NETWORKS`.
 
 ## L'équipe de la plateforme : l'élévation, jamais implicite
 

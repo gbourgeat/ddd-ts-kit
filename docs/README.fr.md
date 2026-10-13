@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:d03f62616cdc8062 -->
+<!-- translation-of: README.md sha256:27f2a245a2c7cf85 -->
 
 # Documentation
 
@@ -49,6 +49,7 @@ Ordonnées en parcours de lecture dans [concepts/README.fr.md](concepts/README.f
 | [Les couches et la règle de dépendance](concepts/layers-and-dependency-rule.fr.md) | hexagonale, en oignon, clean : ce qu'elles partagent, où elles diffèrent |
 | [Ports et composition](concepts/ports-and-composition.fr.md) | les ports en classes abstraites, la racine de composition, le câblage déclaré ou explicite |
 | [La couche de présentation](concepts/presentation-layer.fr.md) | une classe de contrôleur par route, les groupes de routes, les gardes en bordure et les permissions sur le cas d'usage, *mapper* et sérialiseur |
+| [Représentations, accès aux champs et formulaires](concepts/representations-and-forms.fr.md) | un seul schéma en JSON, XML ou CSV par négociation de contenu, des champs réservés à une permission, des formulaires décrits par le serveur pour chaque appelant |
 | [CQRS](concepts/cqrs.fr.md) | bus de commandes et bus de requêtes, et l'*event sourcing* comme choix séparé : ce qu'il apporte et ce qu'il n'apporte pas |
 | [Monolithe modulaire](concepts/modular-monolith.fr.md) | un seul déployable, des contextes gardés extractibles |
 | [Événements du domaine et d'intégration](concepts/domain-and-integration-events.fr.md) | les deux sortes d'événements et la traduction entre elles |
@@ -59,6 +60,7 @@ Ordonnées en parcours de lecture dans [concepts/README.fr.md](concepts/README.f
 | [Versionnement des événements](concepts/event-versioning.fr.md) | faire évoluer un événement publié |
 | [Event sourcing, par agrégat](concepts/event-sourcing.fr.md) | quand garder un agrégat sous forme de ses événements, ce que cela coûte, *upcasters*, crypto-effacement (crypto-shredding), projections alimentées par le magasin, y migrer et en revenir |
 | [Authentification et autorisation](concepts/authentication-and-authorization.fr.md) | RBAC, ABAC, ReBAC comparés, avec une table de décision |
+| [L'autorisation en pratique](concepts/authorization-in-practice.fr.md) | `@Requires`, le *middleware* du bus, le port `Authorizer` et les politiques, suivis à travers une seule commande |
 | [Acteur et portée d'exécution](concepts/actor-and-execution-scope.fr.md) | l'acteur explicite, et ce que porte chaque unité de travail |
 | [Multitenance](concepts/multitenancy.fr.md) | le *tenant* de la bordure au stockage : stratégies d'isolation, propagation, élévation du personnel de la plateforme, la preuve |
 | [Journal d'audit](concepts/audit-trail.fr.md) | un historique où toute altération se voit (tamper-evident), enregistré autour des cas d'usage |
@@ -82,6 +84,7 @@ a vérifié, les limites, et une recommandation selon la situation.
 | [Frameworks HTTP](tools/http-frameworks.fr.md) | Express, Fastify, Hono ou NestJS, et ce que coûtent des routes indépendantes du framework avec Nest |
 | [Validation](tools/validation.fr.md) | zod, class-validator, TypeBox ou une bibliothèque Standard Schema ; les schémas partagés |
 | [Paires de contrat](tools/contract-pairs.fr.md) | quel framework avec quelle bibliothèque de validation, selon l'équipe : les quatre paires prouvées de bout en bout, mesurées ; pourquoi pas oRPC |
+| [Représentations et formulaires](tools/representations-and-forms.fr.md) | XML et CSV sans bibliothèque, et pourquoi ; les moteurs de rendu JSON Forms pour React, Angular et Vue, et les alternatives |
 | [Injection de dépendances](tools/dependency-injection.fr.md) | tsyringe avec les déclarations du kit, NestJS, ou un câblage manuel |
 | [Persistance](tools/persistence.fr.md) | Drizzle, Knex, Prisma ou TypeORM ; PostgreSQL face aux autres |
 | [Brokers de messages](tools/message-brokers.fr.md) | en processus, RabbitMQ, Kafka, NATS JetStream ou Redis Streams |
@@ -107,6 +110,7 @@ a vérifié, les limites, et une recommandation selon la situation.
 | [Travail en parallèle](guides/parallel-work.fr.md) | plusieurs personnes ou agents à la fois : ce qui est sûr, ce qui est séquencé, un plan concret |
 | [Discipline de commit](guides/commit-discipline.fr.md) | la taille d'un *commit* et d'une *pull request*, les fichiers générés, ce que les *hooks* et la CI imposent |
 | [Quand extraire des microservices](guides/when-to-extract-microservices.fr.md) | les signaux, les coûts, une liste de préparation, les étapes, quand refusionner |
+| [Démarrer avec des contextes bien conçus](guides/bootstrap-with-well-designed-contexts.fr.md) | un contexte générique écrit en entier avec `--preset identity` : ce qu'il écrit, ce qu'il demande à la *stack*, comment il se compose avec chaque modèle d'accès et avec les *tenants* |
 | [Choisir le contrôle d'accès](guides/choosing-access-control.fr.md) | cinq questions qui choisissent les rôles, les attributs ou les relations (Zanzibar), des préréglages commentés pour chacun, le modèle combiné de l'exemple, les périmètres et les refus en bordure |
 | [Économie de jetons](guides/token-economy.fr.md) | dépenser moins de jetons avec les agents de code, et des outils complémentaires |
 | [La documentation en français](translation.fr.md) | contributeurs : comment chaque page garde sa traduction française à jour, le glossaire, le style des diagrammes, les exemples de code que le *pipeline* compile |
@@ -115,7 +119,8 @@ a vérifié, les limites, et une recommandation selon la situation.
 
 | Page | Statut |
 |---|---|
-| [Le côté lecture](proposals/read-side.fr.md) | critères, représentations, modèles de lecture et projections ; la page dit, partie par partie, ce qui est construit dans les *packages* d'exécution, ce que la CLI ne génère pas encore et ce qui n'est pas construit |
+| [Quels contextes méritent un *preset*](proposals/context-presets.fr.md) | les critères, puis notification ensuite, les demandes sur les données personnelles comme guide ; fichiers (une capacité de la plateforme), audit, facturation et réglages non |
+| [Le côté lecture](proposals/read-side.fr.md) | critères, représentations, formulaires, modèles de lecture et projections ; la page dit, partie par partie, ce qui est construit dans les *packages* d'exécution, ce que la CLI ne génère pas encore et ce qui n'est pas construit |
 
 ## Partir d'une question
 

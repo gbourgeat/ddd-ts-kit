@@ -1,5 +1,5 @@
 [English](http-caching.md) · **Français**
-<!-- translation-of: http-caching.md sha256:f77f97d8b3075b4d -->
+<!-- translation-of: http-caching.md sha256:43a2614d81c8725d -->
 
 # Cache HTTP
 
@@ -82,8 +82,12 @@ refusée à sa déclaration (`defineRoute`, ou `controllerRoutes` pour un contr�
 (`vary: ['Accept-Language']` seul), elle est refusée au montage des routes, là où les options de
 l'application sont connues. Avec `vary: ['Authorization']`, un cache partagé garde une réponse par
 justificatif d'identité (credential), ce qui en vaut rarement la peine ; `private` est la réponse
-habituelle. Une route ouverte à tous (`Public`, `security: false`) montre la même chose à tout le monde et peut être
-`public` telle quelle.
+habituelle. Une route ouverte à tous (`Public`, `security: false`) montre la même chose à tout le
+monde et peut être `public` telle quelle, sauf si sa réponse réserve des champs à certains
+appelants (`withFieldAccess` avec une exigence `read`,
+[champs réservés à certains appelants](representations-and-forms.fr.md#champs-réservés-à-certains-appelants)) :
+le *pipeline* sait encore qui appelle et écarte ces champs selon l'appelant, si bien qu'une telle
+réponse est refusée au montage à moins que son `vary` ne nomme `Authorization` ou `Cookie`.
 
 <!-- checked sample -->
 ```ts
@@ -114,7 +118,9 @@ indexe sur un ensemble fixe qui lui est propre : derrière eux, `vary: ['Authori
 réponse d'un acteur au suivant. Le kit connaît le cache par l'en-tête d'étiquettes que nomme
 l'application (`cacheTags.header`), et refuse au montage une réponse publique qui varie derrière un
 cache qui ignore `Vary`, à moins que l'application ne dise qu'elle a fait indexer le cache sur ces
-en-têtes (`cacheTags.honoursVary`).
+en-têtes (`cacheTags.honoursVary`). Une réponse choisie par `Accept` entre JSON, XML et CSV varie
+sur `Accept` : derrière un tel cache, elle remettrait le XML d'un appelant au suivant qui demande
+du JSON, et elle est refusée de la même façon.
 
 **Le *tenant* est aussi une dimension.** Une requête HTTP dont le *tenant* est lu dans un en-tête
 (`tenantFromHeader`) montre les données de ce *tenant* sous la même URL que celles d'un autre :

@@ -1,3 +1,5 @@
+**English** · [Français](representations-and-forms.fr.md)
+
 # Representations, field access and forms described by the server
 
 **Summary.** A route answers a typed value that its response schema checks; how that value
@@ -16,17 +18,9 @@ The schema of a response is the contract: the server checks what it answers agai
 OpenAPI document is generated from it. A representation is a function of that value and that
 schema, nothing else:
 
-```mermaid
-flowchart LR
-  H[Handler] -->|typed value| S{Response schema}
-  S --> F[Field access: what this caller may see]
-  F --> N{Accept header}
-  N -->|application/json| J[JSON]
-  N -->|application/xml| X[XML, names from the schema]
-  N -->|text/csv| C[CSV, one row per item, streamed]
-```
+![A handler answers a typed value; the response schema checks it; field access leaves out what the caller may not read; negotiation on Accept picks JSON, XML or CSV among what the route produces, or refuses with 406 when none is in common](../assets/diagrams/representations-and-forms-one-value.svg)
 
-Three consequences:
+Four consequences:
 
 - **No second model.** There is no "XML DTO" next to the JSON one: element names and attributes
   come from the schema (the XML object of OpenAPI), columns of a CSV from the properties of an
@@ -104,6 +98,8 @@ A form carries shape and presentation, never a business rule. "An appointment ca
 another" is answered by the command when the form is sent; the form only tells the user early
 what the schema would refuse anyway. And the server validates again: a form is a convenience for
 the client, never a check.
+
+![The body schema of the booking reserves the internal note; the form route asks the permission to book and Access about the calendar; the practitioner who holds the desk may set every field, an assistant on a delegated desk sees the note read-only, a patient booking for themselves does not see it, and an assistant without a delegation is refused with 403](../assets/diagrams/representations-and-forms-one-form-per-caller.svg)
 
 ## Limits
 
