@@ -5,7 +5,7 @@ import type { EventStore } from '../../../application/ports/event-store.js';
 import { ConcurrencyError } from '../../../domain/errors/concurrency-error.js';
 import type { SqlRun } from '../../read-model/sql-run.js';
 import type { EventStoreTablesOptions } from './event-store-tables-options.js';
-import { isUniqueViolation } from './is-unique-violation.js';
+import { isAppendConflict } from './is-append-conflict.js';
 import { qualifiedTable } from './qualified-table.js';
 import { storedDataFrom } from './stored-data-from.js';
 
@@ -24,7 +24,9 @@ const SELECTED = `position, stream, version, event_id, type, schema_version, dat
  * version, and inserts the events after it. Appends therefore commit in the order of their
  * positions, and a subscription that read up to a position never meets a smaller one later; the
  * price is that two appends never run side by side, whatever their streams. A conflict that slips
- * between the check and the insert hits the unique (stream, version) and is a ConcurrencyError too.
+ * between the check and the insert hits the unique (stream, version) and is a ConcurrencyError too,
+ * and so are a serialization failure (a unit of work at REPEATABLE READ or SERIALIZABLE) and a
+ * deadlock with row locks the same transaction took in another order: the caller retries.
  */
 export class PostgresEventStore implements EventStore {
   private readonly events: string;
@@ -86,7 +88,7 @@ export class PostgresEventStore implements EventStore {
     try {
       return await this.run(this.appendStatement(), [stream, expected, JSON.stringify(events.map(recordOf))]);
     } catch (error) {
-      if (isUniqueViolation(error)) {
+      if (isAppendConflict(error)) {
         throw new ConcurrencyError(stream);
       }
 

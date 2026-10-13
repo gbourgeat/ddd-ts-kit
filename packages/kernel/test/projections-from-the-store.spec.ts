@@ -19,6 +19,7 @@ import { applyingProjection, declarationOf } from '../src/declarations.js';
 import { Account, type AccountEvent, type AccountState } from './support/bank/account.js';
 import { accountEvents } from './support/bank/account-events.js';
 import { BalancesProjection, balanceCriteria, type BalanceRow } from './fixtures/event-sourcing/balances.js';
+import { TwoAggregatesProjection } from './fixtures/event-sourcing/two-aggregates.js';
 
 const serializer = new EventSerializer<AccountEvent>(accountEvents, {
   cipher: new PersonalDataCipher(new InMemorySubjectKeyStore()),
@@ -172,6 +173,10 @@ describe('a projection fed by the event store, rebuilt', () => {
 
     expect(projection.applied).toBe(3);
     expect(() => applyingProjection({}, serializer)).toThrow('carries no @Projection');
+
+    expect(() => applyingProjection(new TwoAggregatesProjection(), serializer)).toThrow(
+      'TwoAggregatesProjection applies bank.loan.repaid, which the serializer it is given does not declare',
+    );
 
     await expect(
       new ShadowReadModelStore(new InMemoryReadModelTable<BalanceRow>()).search({} as never),

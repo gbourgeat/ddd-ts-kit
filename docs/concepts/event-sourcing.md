@@ -42,7 +42,7 @@ An audit trail is not a reason by itself: the kit records who did what around ev
 | Stored events are immutable | the shape of an event stored once is read for as long as the aggregate lives: a change is a new version with an upcaster, forever (`event-sourcing/upcaster-required`) |
 | Personal data | an event cannot be edited to forget a person: personal values are sealed with a key per data subject, and erasure destroys the key (below) |
 | Projections lag | a projection fed by the store is eventually consistent with the streams; a read that must see the write it follows reads the aggregate, or a projection fed inside the unit of work |
-| Appends are serialised | the PostgreSQL store gives positions in commit order by locking the head of the store until each appending transaction ends: two appends never run side by side, whatever their streams. Fine for a business aggregate, not for a firehose |
+| Appends are serialised | the PostgreSQL store gives positions in commit order by locking the head of the store until each appending transaction ends: two appends never run side by side, whatever their streams. Fine for a business aggregate, not for a firehose. An append that loses to another is a `ConcurrencyError` the caller retries: a duplicate version, and also a serialization failure (a unit of work at REPEATABLE READ or SERIALIZABLE) or a deadlock with row locks the same transaction took in another order. Append last in a unit of work to keep the head locked as briefly as possible |
 | Debugging | the state is not in a row: a bug is found by replaying a stream, which the tests do without a database (`givenEvents`) |
 | The team | apply methods, upcasters, snapshots and rebuilds are new habits; the rules hold the mechanical part |
 
@@ -157,6 +157,12 @@ later starts at position zero and so is filled from the whole history. `EventSto
 replays the store into an empty copy of the read model and swaps it in, without stopping the
 subscription. Each row is stamped with the version of its stream (`storedStampOf`), so an event
 applied twice changes nothing.
+
+`applyingProjection(projection, serializer)` reads the events back with the serializer of one
+aggregate, and refuses (`DeclarationError`) a projection whose `@On` methods name an event that
+serializer does not declare: such an event would otherwise be passed over at every batch,
+silently. A projection fed by the store follows the events of one event-sourced aggregate; a
+read model that joins two of them is two projections, or a projection fed by the dispatcher.
 
 ## Testing
 
