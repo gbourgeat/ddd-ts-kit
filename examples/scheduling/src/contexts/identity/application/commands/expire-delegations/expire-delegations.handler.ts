@@ -9,10 +9,10 @@ export class ExpireDelegationsHandler implements CommandHandler<ExpireDelegation
   async execute(command: ExpireDelegationsCommand): Promise<void> {
     const due = await this.delegationRepository.findDueAt(command.at);
 
-    for (const target of due) {
-      target.expire(command.at);
+    for (const delegation of due) {
+      delegation.expire(command.at);
 
-      await this.delegationRepository.save(target);
+      await this.delegationRepository.save(delegation);
     }
   }
 }

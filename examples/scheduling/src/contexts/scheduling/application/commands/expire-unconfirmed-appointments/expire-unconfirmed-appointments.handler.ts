@@ -10,10 +10,10 @@ export class ExpireUnconfirmedAppointmentsHandler implements CommandHandler<Expi
   async execute(command: ExpireUnconfirmedAppointmentsCommand): Promise<void> {
     const due = await this.appointmentRepository.unconfirmedAt(command.at);
 
-    for (const target of due) {
-      target.expire(command.at);
+    for (const appointment of due) {
+      appointment.expire(command.at);
 
-      await this.appointmentRepository.save(target);
+      await this.appointmentRepository.save(appointment);
     }
   }
 }

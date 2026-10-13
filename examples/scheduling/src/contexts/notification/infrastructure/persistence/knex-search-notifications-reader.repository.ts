@@ -72,11 +72,14 @@ export class KnexSearchNotificationsReader implements SearchNotificationsReader 
       : beyond(ordered, positionOf(page.cursor), direction)
     ).limit(page.limit + 1);
 
-    const items = rows.slice(0, page.limit).map(toItem);
-    const last = items.at(-1);
+    const notifications = rows.slice(0, page.limit).map(toItem);
+    const last = notifications.at(-1);
     const more = rows.length > page.limit && last !== undefined;
 
-    return pageOf(items, more ? { nextCursor: encodeCursor({ sentAt: last.sentAt.toISOString(), id: last.id }) } : {});
+    return pageOf(
+      notifications,
+      more ? { nextCursor: encodeCursor({ sentAt: last.sentAt.toISOString(), id: last.id }) } : {},
+    );
   }
 }
 

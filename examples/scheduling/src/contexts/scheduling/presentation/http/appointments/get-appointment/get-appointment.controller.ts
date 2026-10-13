@@ -37,21 +37,21 @@ export class GetAppointmentController {
   }
 }
 
-function answerOf(item: GetAppointmentResult): GetAppointmentAnswer {
+function answerOf(appointment: GetAppointmentResult): GetAppointmentAnswer {
   return {
-    id: item.id,
-    calendarId: item.calendarId,
-    practiceId: item.practiceId,
-    practitionerId: item.practitionerId,
-    patientId: item.patientId,
-    appointmentTypeId: item.appointmentTypeId,
-    startsAt: item.startsAt.toISOString(),
-    endsAt: item.endsAt.toISOString(),
-    day: item.day,
-    status: item.status,
-    ...(item.confirmBefore === null ? {} : { confirmBefore: item.confirmBefore.toISOString() }),
-    ...(item.cancelledBy === null ? {} : { cancelledBy: item.cancelledBy }),
-    ...(item.patientName === undefined ? {} : { patientName: item.patientName }),
-    ...(item.internalNote === null ? {} : { internalNote: item.internalNote }),
+    id: appointment.id,
+    calendarId: appointment.calendarId,
+    practiceId: appointment.practiceId,
+    practitionerId: appointment.practitionerId,
+    patientId: appointment.patientId,
+    appointmentTypeId: appointment.appointmentTypeId,
+    startsAt: appointment.startsAt.toISOString(),
+    endsAt: appointment.endsAt.toISOString(),
+    day: appointment.day,
+    status: appointment.status,
+    ...(appointment.confirmBefore === null ? {} : { confirmBefore: appointment.confirmBefore.toISOString() }),
+    ...(appointment.cancelledBy === null ? {} : { cancelledBy: appointment.cancelledBy }),
+    ...(appointment.patientName === undefined ? {} : { patientName: appointment.patientName }),
+    ...(appointment.internalNote === null ? {} : { internalNote: appointment.internalNote }),
   };
 }

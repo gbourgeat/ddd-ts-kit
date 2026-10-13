@@ -13,17 +13,17 @@ export class RevokeDelegationHandler implements CommandHandler<RevokeDelegationC
   ) {}
 
   async execute(command: RevokeDelegationCommand): Promise<string> {
-    const target = await this.delegationRepository.findById(command.delegationId);
+    const delegation = await this.delegationRepository.findById(command.delegationId);
 
     // The right was decided on the desk of the path: a delegation of another desk is not there to be found.
-    if (!target?.isOn(Desk.create(command.desk.practiceId, command.desk.practitionerId))) {
+    if (!delegation?.isOn(Desk.create(command.desk.practiceId, command.desk.practitionerId))) {
       throw DelegationError.notFound(command.delegationId);
     }
 
-    target.revoke(this.clock.now());
+    delegation.revoke(this.clock.now());
 
-    await this.delegationRepository.save(target);
+    await this.delegationRepository.save(delegation);
 
-    return target.id;
+    return delegation.id;
   }
 }

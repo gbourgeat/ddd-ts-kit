@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:63765042a293ed15 -->
+<!-- translation-of: README.md sha256:f2b47e191525fef0 -->
 
 # Scheduling : l'application d'exemple de ddd-ts-kit
 
@@ -397,22 +397,22 @@ export class CancelAppointmentHandler implements CommandHandler<CancelAppointmen
   ) {}
 
   async execute({ actor, appointmentId, reason }: CancelAppointmentCommand): Promise<string> {
-    const target = await this.appointmentRepository.findById(appointmentId);
+    const appointment = await this.appointmentRepository.findById(appointmentId);
 
-    if (target === undefined) {
+    if (appointment === undefined) {
       throw AppointmentError.notFound(appointmentId);
     }
 
     // Lève ForbiddenError (403) quand une politique dit non.
-    await this.access.authorize(actor, schedulingPermissions['appointment.cancel'], target);
+    await this.access.authorize(actor, schedulingPermissions['appointment.cancel'], appointment);
 
     // 3. Le domaine : qui n'est pas le patient agit pour le cabinet, et dit pourquoi.
-    const cancellation = Cancellation.create(actor.id === target.patientId ? 'patient' : 'practice', reason);
+    const cancellation = Cancellation.create(actor.id === appointment.patientId ? 'patient' : 'practice', reason);
 
-    target.cancel(cancellation, this.clock.now());
-    await this.appointmentRepository.save(target);
+    appointment.cancel(cancellation, this.clock.now());
+    await this.appointmentRepository.save(appointment);
 
-    return target.id;
+    return appointment.id;
   }
 }
 ```

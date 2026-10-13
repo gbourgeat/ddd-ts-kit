@@ -25,18 +25,18 @@ export class RescheduleAppointmentHandler implements CommandHandler<RescheduleAp
 
   /** One change of one aggregate: the patient is never left without a slot or with two. */
   async execute({ actor, appointmentId, startsAt }: RescheduleAppointmentCommand): Promise<string> {
-    const target = await this.appointmentRepository.findById(appointmentId);
+    const appointment = await this.appointmentRepository.findById(appointmentId);
 
-    if (target === undefined) {
+    if (appointment === undefined) {
       throw AppointmentError.notFound(appointmentId);
     }
 
-    await this.access.authorize(actor, schedulingPermissions['appointment.reschedule'], target);
+    await this.access.authorize(actor, schedulingPermissions['appointment.reschedule'], appointment);
 
-    const calendar = await this.calendarRepository.findById(target.calendarId);
+    const calendar = await this.calendarRepository.findById(appointment.calendarId);
 
     if (calendar === undefined) {
-      throw CalendarError.unknown(target.calendarId);
+      throw CalendarError.unknown(appointment.calendarId);
     }
 
     const now = this.clock.now();
@@ -47,13 +47,13 @@ export class RescheduleAppointmentHandler implements CommandHandler<RescheduleAp
         new Date(startsAt.getTime() - DAY),
         new Date(startsAt.getTime() + DAY),
       ),
-      byPatient: await this.appointmentRepository.heldBy(target.patientId, calendar.practitionerId, now),
+      byPatient: await this.appointmentRepository.heldBy(appointment.patientId, calendar.practitionerId, now),
     };
 
-    this.scheduler.reschedule({ appointment: target, startsAt, now }, calendar, held);
+    this.scheduler.reschedule({ appointment: appointment, startsAt, now }, calendar, held);
 
-    await this.appointmentRepository.save(target);
+    await this.appointmentRepository.save(appointment);
 
-    return target.id;
+    return appointment.id;
   }
 }

@@ -82,6 +82,16 @@ export const STRUCTURE_INJECTIONS: readonly Injection[] = [
     checker: true,
   },
   {
+    rule: 'naming/business-name',
+    what: 'a reminder handed on under a generic name in its handler',
+    file: HANDLER,
+    changes: [
+      { file: HANDLER, from: '    reminder.withdraw();\n', to: '    const item = reminder;\n\n    item.withdraw();\n' },
+    ],
+    checker: true,
+    eslint: 'ddd-ts-kit/naming-business-name',
+  },
+  {
     rule: 'test/spec-required',
     what: 'a value object whose spec was removed',
     file: VALUE_OBJECT,
@@ -208,8 +218,8 @@ export const STRUCTURE_INJECTIONS: readonly Injection[] = [
     changes: [
       {
         file: HANDLER,
-        from: '    target.withdraw();\n',
-        to: '    // ddd-ts-kit-disable-next-line domain-events/dispatched-on-save\n    target.withdraw();\n',
+        from: '    reminder.withdraw();\n',
+        to: '    // ddd-ts-kit-disable-next-line domain-events/dispatched-on-save\n    reminder.withdraw();\n',
       },
     ],
     checker: true,

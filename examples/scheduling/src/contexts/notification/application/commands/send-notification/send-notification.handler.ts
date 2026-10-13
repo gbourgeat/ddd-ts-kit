@@ -33,11 +33,11 @@ export class SendNotificationHandler implements CommandHandler<SendNotificationC
       throw NotificationError.contactUnknown(recipientId);
     }
 
-    const target = Notification.create(this.ids.next(), { ...command.notice, kind }, this.clock.now());
+    const notification = Notification.create(this.ids.next(), { ...command.notice, kind }, this.clock.now());
 
-    await this.mailer.deliver(contact.address, target);
-    await this.notificationRepository.save(target);
+    await this.mailer.deliver(contact.address, notification);
+    await this.notificationRepository.save(notification);
 
-    return target.id;
+    return notification.id;
   }
 }

@@ -16,14 +16,14 @@ export class NoteCancellationHandler implements CommandHandler<NoteCancellationC
     const { practiceId, patientId, appointment, reason } = command;
     const now = this.clock.now();
 
-    const target =
+    const attendanceRecord =
       (await this.attendanceRecordRepository.findById(AttendanceRecord.idOf(practiceId, patientId))) ??
       AttendanceRecord.create({ practiceId, patientId }, now);
 
-    target.noteCancellation({ appointmentId: appointment.id, startsAt: appointment.startsAt, reason }, now);
+    attendanceRecord.noteCancellation({ appointmentId: appointment.id, startsAt: appointment.startsAt, reason }, now);
 
-    await this.attendanceRecordRepository.save(target);
+    await this.attendanceRecordRepository.save(attendanceRecord);
 
-    return target.id;
+    return attendanceRecord.id;
   }
 }

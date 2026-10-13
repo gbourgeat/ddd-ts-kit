@@ -7,15 +7,15 @@ export class WithdrawReminderHandler implements CommandHandler<WithdrawReminderC
   constructor(private readonly reminderRepository: ReminderRepository) {}
 
   async execute(command: WithdrawReminderCommand): Promise<void> {
-    const target = await this.reminderRepository.findByAppointment(command.appointmentId);
+    const reminder = await this.reminderRepository.findByAppointment(command.appointmentId);
 
     // An appointment no reminder was planned for has nothing to withdraw: the fact may be delivered twice, or alone.
-    if (target === undefined) {
+    if (reminder === undefined) {
       return;
     }
 
-    target.withdraw();
+    reminder.withdraw();
 
-    await this.reminderRepository.save(target);
+    await this.reminderRepository.save(reminder);
   }
 }

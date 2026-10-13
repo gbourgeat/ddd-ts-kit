@@ -38,10 +38,10 @@ export class GrantDelegationHandler implements CommandHandler<GrantDelegationCom
       endsAt: command.terms.endsAt,
     };
 
-    const target = Delegation.create(this.ids.next(), terms, this.clock.now());
+    const delegation = Delegation.create(this.ids.next(), terms, this.clock.now());
 
-    await this.delegationRepository.save(target);
+    await this.delegationRepository.save(delegation);
 
-    return target.id;
+    return delegation.id;
   }
 }

@@ -39,16 +39,16 @@ export class BookAppointmentHandler implements CommandHandler<BookAppointmentCom
       byPatient: await this.appointmentRepository.heldBy(wish.patientId, calendar.practitionerId, now),
     };
 
-    const target = this.scheduler.book({ ...wish, id: this.ids.next(), now }, calendar, held);
+    const appointment = this.scheduler.book({ ...wish, id: this.ids.next(), now }, calendar, held);
 
     if (wish.internalNote !== undefined) {
       await this.mayAnnotate(actor, calendarId);
-      target.annotate(wish.internalNote, now);
+      appointment.annotate(wish.internalNote, now);
     }
 
-    await this.appointmentRepository.save(target);
+    await this.appointmentRepository.save(appointment);
 
-    return target.id;
+    return appointment.id;
   }
 
   /** Whoever sends the command, through HTTP or not, writes a note only on a calendar of their own desk, or of the practice they manage. */

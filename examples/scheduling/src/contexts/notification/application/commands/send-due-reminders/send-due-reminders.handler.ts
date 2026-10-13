@@ -9,10 +9,10 @@ export class SendDueRemindersHandler implements CommandHandler<SendDueRemindersC
   async execute(command: SendDueRemindersCommand): Promise<void> {
     const due = await this.reminderRepository.findDue(command.asOf);
 
-    for (const target of due) {
-      target.send(command.asOf);
+    for (const reminder of due) {
+      reminder.send(command.asOf);
 
-      await this.reminderRepository.save(target);
+      await this.reminderRepository.save(reminder);
     }
   }
 }

@@ -12,16 +12,16 @@ export class CompleteAppointmentHandler implements CommandHandler<CompleteAppoin
   ) {}
 
   async execute(command: CompleteAppointmentCommand): Promise<string> {
-    const target = await this.appointmentRepository.findById(command.appointmentId);
+    const appointment = await this.appointmentRepository.findById(command.appointmentId);
 
-    if (target === undefined) {
+    if (appointment === undefined) {
       throw AppointmentError.notFound(command.appointmentId);
     }
 
-    target.complete(this.clock.now());
+    appointment.complete(this.clock.now());
 
-    await this.appointmentRepository.save(target);
+    await this.appointmentRepository.save(appointment);
 
-    return target.id;
+    return appointment.id;
   }
 }

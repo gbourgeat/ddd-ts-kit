@@ -17,20 +17,20 @@ export class CancelAppointmentHandler implements CommandHandler<CancelAppointmen
 
   /** Whoever cancels an appointment that is not their own acts for the practice that runs its calendar. */
   async execute({ actor, appointmentId, reason }: CancelAppointmentCommand): Promise<string> {
-    const target = await this.appointmentRepository.findById(appointmentId);
+    const appointment = await this.appointmentRepository.findById(appointmentId);
 
-    if (target === undefined) {
+    if (appointment === undefined) {
       throw AppointmentError.notFound(appointmentId);
     }
 
-    await this.access.authorize(actor, schedulingPermissions['appointment.cancel'], target);
+    await this.access.authorize(actor, schedulingPermissions['appointment.cancel'], appointment);
 
-    const cancellation = Cancellation.create(actor.id === target.patientId ? 'patient' : 'practice', reason);
+    const cancellation = Cancellation.create(actor.id === appointment.patientId ? 'patient' : 'practice', reason);
 
-    target.cancel(cancellation, this.clock.now());
+    appointment.cancel(cancellation, this.clock.now());
 
-    await this.appointmentRepository.save(target);
+    await this.appointmentRepository.save(appointment);
 
-    return target.id;
+    return appointment.id;
   }
 }

@@ -25,10 +25,10 @@ export class CreateCalendarHandler implements CommandHandler<CreateCalendarComma
 
     // The calendar lives by the wall clock of its practice.
     const timeZone = TimeZone.create(practitioner.timeZone);
-    const target = Calendar.create(this.ids.next(), { practiceId, practitionerId, timeZone }, this.clock.now());
+    const calendar = Calendar.create(this.ids.next(), { practiceId, practitionerId, timeZone }, this.clock.now());
 
-    await this.calendarRepository.save(target);
+    await this.calendarRepository.save(calendar);
 
-    return target.id;
+    return calendar.id;
   }
 }

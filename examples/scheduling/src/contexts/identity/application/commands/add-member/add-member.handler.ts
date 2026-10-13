@@ -18,10 +18,10 @@ export class AddMemberHandler implements CommandHandler<AddMemberCommand> {
   /** Answers the identifier of the person who is now a member. */
   async execute(command: AddMemberCommand): Promise<string> {
     const role = Role.create(command.member.role);
-    const target = await this.practiceRepository.findById(command.practiceId);
+    const practice = await this.practiceRepository.findById(command.practiceId);
     const person = await this.personRepository.findById(command.member.personId);
 
-    if (target === undefined) {
+    if (practice === undefined) {
       throw PracticeError.notFound(command.practiceId);
     }
 
@@ -29,9 +29,9 @@ export class AddMemberHandler implements CommandHandler<AddMemberCommand> {
       throw PersonError.notRegistered(command.member.personId);
     }
 
-    target.addMember({ personId: person.id, role, displayName: person.displayName }, this.clock.now());
+    practice.addMember({ personId: person.id, role, displayName: person.displayName }, this.clock.now());
 
-    await this.practiceRepository.save(target);
+    await this.practiceRepository.save(practice);
 
     return person.id;
   }
