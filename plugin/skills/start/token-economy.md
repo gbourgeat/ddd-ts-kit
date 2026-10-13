@@ -25,8 +25,9 @@ losing correctness; the generators and the checker do the rest.
    `npx ddd-ts-kit todo <context>`, the file of a violation, the file of a failing test.
    Read a range around the line, not the file.
 7. **The rule, not the reference.** `npx ddd-ts-kit explain <rule-id>` instead of the whole
-   architecture reference; the rule files of `.claude/rules/` load by themselves with the
-   files of their layer.
+   architecture reference; the rule files of `.claude/rules/` (`.github/instructions/` for
+   Copilot) load by themselves with the files of their layer, and an agent that does not load
+   them (Codex) reads the one of the layer it edits.
 
 ## Check less often, on less
 

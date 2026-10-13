@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 500" width="960" height="500" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
   <title id="title">Ce que ddd-ts-kit affected retient pour un changement</title>
-  <desc id="desc">À gauche, la carte des contextes de l'application d'exemple, chaque flèche de l'amont vers l'aval : identity vers scheduling, identity vers notification, scheduling vers notification, scheduling vers analytics. Une branche modifie le contexte scheduling : scheduling est retenu, ainsi que notification et analytics, en aval de lui ; identity, en amont, est laissé à la branche par défaut. À droite, ce qu'atteint un chemin modifié : un chemin sous un contexte atteint ce contexte et chaque contexte en aval ; un chemin seulement sous son répertoire de tests atteint ce contexte seul ; docs, openapi, .claude et les fichiers Markdown à la racine n'atteignent rien qui s'exécute ; tout le reste atteint tout.</desc>
+  <desc id="desc">À gauche, la carte des contextes de l'application d'exemple, chaque flèche de l'amont vers l'aval : identity vers scheduling, identity vers notification, scheduling vers notification, scheduling vers analytics. Une branche modifie le contexte scheduling : scheduling est retenu, ainsi que notification et analytics, en aval de lui ; identity, en amont, est laissé à la branche par défaut. À droite, ce qu'atteint un chemin modifié : un chemin sous un contexte atteint ce contexte et chaque contexte en aval ; un chemin seulement sous son répertoire de tests atteint ce contexte seul ; docs, openapi, les règles des agents (.claude, .github/instructions, .github/copilot) et les fichiers Markdown à la racine n'atteignent rien qui s'exécute ; tout le reste atteint tout.</desc>
   <defs>
     <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
       <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
@@ -37,7 +37,7 @@
   <text x="524" y="202" font-size="14" font-weight="700" fill="#5f6b73">seulement sous src/contexts/&lt;context&gt;/test/</text>
   <text x="524" y="226" font-size="13" fill="#1f2328">ce contexte seul : aucun autre n'importe ses tests</text>
   <rect x="508" y="256" width="428" height="68" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
-  <text x="524" y="282" font-size="14" font-weight="700" fill="#5f6b73">docs/, openapi/, .claude/, un *.md à la racine</text>
+  <text x="524" y="282" font-size="14" font-weight="700" fill="#5f6b73">docs/, openapi/, règles d'agents, un *.md racine</text>
   <text x="524" y="306" font-size="13" fill="#1f2328">rien qui s'exécute (la porte des documents tourne toujours)</text>
   <rect x="508" y="336" width="428" height="68" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
   <text x="524" y="362" font-size="14" font-weight="700" fill="#5f6b73">tout le reste</text>

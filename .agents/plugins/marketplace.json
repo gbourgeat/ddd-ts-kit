@@ -1,0 +1,20 @@
+{
+  "name": "ddd-ts-kit",
+  "interface": {
+    "displayName": "ddd-ts-kit"
+  },
+  "plugins": [
+    {
+      "name": "ddd-ts-kit",
+      "source": {
+        "source": "local",
+        "path": "./plugin"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

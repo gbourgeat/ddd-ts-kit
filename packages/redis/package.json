@@ -2,6 +2,20 @@
   "name": "@ddd-ts-kit/redis",
   "version": "0.17.0",
   "description": "Adapters of the kernel ports on the Redis protocol (Redis, Dragonfly, Valkey): cache, distributed lock, rate limiter, relay wake-up signal, a background job store, and an integration event provider on Redis Streams.",
+  "keywords": [
+    "ddd",
+    "domain-driven-design",
+    "clean-architecture",
+    "hexagonal-architecture",
+    "typescript",
+    "redis",
+    "valkey",
+    "dragonfly",
+    "redis-streams",
+    "cache",
+    "distributed-lock",
+    "rate-limiter"
+  ],
   "license": "MIT",
   "repository": {
     "type": "git",

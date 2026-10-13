@@ -25,7 +25,7 @@ export default defineConfig({
     starlight({
       title: 'ddd-ts-kit',
       description:
-        'Domain-Driven Design, Clean Architecture and Clean Code for TypeScript backends, held by tools rather than by good intentions.',
+        'Domain-Driven Design (DDD), Clean Architecture and Clean Code for TypeScript and Node.js backends, held by tools: CLI, runtime packages, ESLint plugin, and a plugin for Claude Code, Codex and GitHub Copilot.',
       defaultLocale: 'root',
       locales: {
         root: { label: 'English', lang: 'en' },

@@ -1,6 +1,6 @@
 {
   "name": "ddd-ts-kit",
-  "description": "DDD, Clean Architecture and Clean Code tooling for TypeScript backends.",
+  "description": "Domain-Driven Design (DDD), Clean Architecture and Clean Code tooling for TypeScript backends, for Claude Code, Codex and GitHub Copilot.",
   "owner": {
     "name": "Gary Bourgeat"
   },
@@ -8,9 +8,17 @@
     {
       "name": "ddd-ts-kit",
       "source": "./plugin",
-      "description": "DDD, Clean Architecture and Clean Code for TypeScript backends: bootstrap, scaffolding, strategic design discipline and architecture checks.",
+      "description": "DDD, Clean Architecture and Clean Code for TypeScript backends: strategic design first, bootstrap, scaffolding and architecture checks at every write, in Claude Code, Codex and GitHub Copilot.",
       "category": "development",
-      "tags": ["ddd", "clean-architecture", "typescript"]
+      "tags": [
+        "ddd",
+        "domain-driven-design",
+        "clean-architecture",
+        "hexagonal-architecture",
+        "typescript",
+        "codex",
+        "github-copilot"
+      ]
     }
   ]
 }

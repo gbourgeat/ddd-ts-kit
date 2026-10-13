@@ -217,6 +217,113 @@ test('skipping a test and relaxing the rules both need the owner', () => {
   assert.equal(pipeline.output.hookSpecificOutput.permissionDecision, 'ask');
 });
 
+const patch = (root, ...sections) => ({
+  cwd: root,
+  turn_id: 'turn-1',
+  tool_name: 'apply_patch',
+  tool_input: { command: ['*** Begin Patch', ...sections, '*** End Patch'].join('\n') },
+});
+
+test('Codex: a patch that adds a file of a generated role is refused with the generator command', () => {
+  const root = project();
+  const result = run(
+    'pre-write',
+    patch(
+      root,
+      '*** Add File: src/contexts/ordering/infrastructure/persistence/order.mapper.ts',
+      '+export class OrderMapper {}',
+      '*** Add File: src/contexts/ordering/domain/aggregates/order.aggregate.ts',
+      '+export class Order {}',
+    ),
+  );
+  assert.equal(decision(result), 'deny');
+  assert.match(reason(result), /order\.aggregate\.ts is a new file of a generated role.*generate aggregate/);
+});
+
+test('Codex: what Claude Code asks the owner is said to the user, never a question Codex cannot put', () => {
+  const root = project();
+  const result = run(
+    'pre-write',
+    patch(
+      root,
+      '*** Update File: src/contexts/ordering/ordering.module.ts',
+      '@@',
+      '-const a = 1;',
+      '+// eslint-disable-next-line no-console',
+      '+const a = 1;',
+    ),
+  );
+  assert.equal(result.output.hookSpecificOutput, undefined);
+  assert.match(result.output.systemMessage, /a lint suppression/);
+  const removing = run(
+    'pre-write',
+    patch(
+      root,
+      '*** Update File: src/contexts/ordering/ordering.module.ts',
+      '-// eslint-disable-line',
+      '+const b = 2;',
+    ),
+  );
+  assert.equal(removing.output, undefined);
+  assert.equal(
+    run('pre-write', patch(root, '*** Delete File: src/contexts/ordering/domain/aggregates/order.aggregate.ts')).output,
+    undefined,
+  );
+});
+
+test('Codex: a patched file that breaks a rule blocks the result of the tool with the fix', () => {
+  const root = project();
+  put(
+    root,
+    'src/contexts/ordering/domain/services/pricing.service.ts',
+    "import express from 'express';\nexport class Pricing { now() { return express; } }\n",
+  );
+  const result = run(
+    'post-write',
+    patch(root, '*** Update File: src/contexts/ordering/domain/services/pricing.service.ts', '+import express'),
+  );
+  assert.equal(result.status, 0);
+  assert.equal(result.output.decision, 'block');
+  assert.match(result.output.reason, /layer\/domain-purity[\s\S]*do instead/);
+});
+
+test('Copilot: its own hook format is read, a relative path included, and answered in it', () => {
+  const root = project();
+  const result = run('pre-write', {
+    cwd: root,
+    sessionId: 'session-1',
+    toolName: 'create',
+    toolArgs: JSON.stringify({
+      path: 'src/contexts/ordering/domain/aggregates/order.aggregate.ts',
+      file_text: 'export class Order {}',
+    }),
+  });
+  assert.equal(result.output.permissionDecision, 'deny');
+  assert.match(result.output.permissionDecisionReason, /generate aggregate/);
+  const skipped = run('pre-write', {
+    tool_name: 'Edit',
+    tool_input: {
+      path: join(root, 'src/contexts/ordering/test/unit/order.spec.ts'),
+      old_str: "it('pays', () => {});",
+      new_str: "it.skip('pays', () => {});",
+    },
+  });
+  assert.equal(decision(skipped), 'ask');
+});
+
+test('a host that does not say the stop was refused is refused once for the same errors', () => {
+  const root = project();
+  put(
+    root,
+    'src/contexts/ordering/domain/services/pricing.service.ts',
+    "import express from 'express';\nexport class Pricing { now() { return express; } }\n",
+  );
+  const stopping = { cwd: root, sessionId: `session-${Date.now()}` };
+  assert.equal(run('stop', stopping).output.decision, 'block');
+  assert.equal(run('stop', stopping).output, undefined);
+  assert.equal(run('stop', { ...stopping, stop_hook_active: false }).output.decision, 'block');
+});
+
 test('malformed input never blocks', () => {
   const result = spawnSync('node', [guard, 'pre-write'], { input: 'not json', encoding: 'utf8' });
   assert.equal(result.status, 0);
@@ -309,6 +416,10 @@ test('the test setup, the compiler options and the rule files need the owner', (
     'biome.json',
     'commitlint.config.mjs',
     '.claude/rules/domain.md',
+    '.github/instructions/domain.instructions.md',
+    '.github/copilot/settings.json',
+    '.github/hooks/guard.json',
+    '.codex/config.toml',
   ]) {
     assert.equal(decision(run('pre-write', write(join(root, path)))), 'ask', path);
   }

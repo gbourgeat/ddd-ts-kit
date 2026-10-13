@@ -2,6 +2,19 @@
   "name": "@ddd-ts-kit/aspects",
   "version": "0.17.0",
   "description": "Cross-cutting behaviour applied from outside: logging, metrics, retry, timeout, circuit breaker and caching as composable wrappers at the composition root, as bus middlewares, or as standard decorators on adapters. The domain stays clean.",
+  "keywords": [
+    "ddd",
+    "domain-driven-design",
+    "clean-architecture",
+    "hexagonal-architecture",
+    "typescript",
+    "cross-cutting-concerns",
+    "aop",
+    "retry",
+    "circuit-breaker",
+    "cache",
+    "resilience"
+  ],
   "license": "MIT",
   "repository": {
     "type": "git",

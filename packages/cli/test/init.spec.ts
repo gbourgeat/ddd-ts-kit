@@ -23,6 +23,7 @@ const BOOTSTRAPPED = [
   'scripts/openapi.ts',
   'src/shared-kernel/.gitkeep',
   '.github/workflows/ci.yml',
+  'AGENTS.md',
   'CLAUDE.md',
   '.claude/rules/domain.md',
   '.claude/rules/tests.md',

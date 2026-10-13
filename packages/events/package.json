@@ -2,6 +2,18 @@
   "name": "@ddd-ts-kit/events",
   "version": "0.17.0",
   "description": "Technology-agnostic integration events: typed declarations, registry, transactional outbox, AsyncAPI and catalog generation.",
+  "keywords": [
+    "ddd",
+    "domain-driven-design",
+    "clean-architecture",
+    "hexagonal-architecture",
+    "typescript",
+    "integration-events",
+    "domain-events",
+    "transactional-outbox",
+    "asyncapi",
+    "event-driven"
+  ],
   "license": "MIT",
   "repository": {
     "type": "git",

@@ -2,6 +2,20 @@
   "name": "@ddd-ts-kit/auth",
   "version": "0.17.0",
   "description": "Authentication and authorization behind ports: actors, permissions declared per use case, role, attribute and relationship (Zanzibar-style) based authorizers, deny by default.",
+  "keywords": [
+    "ddd",
+    "domain-driven-design",
+    "clean-architecture",
+    "hexagonal-architecture",
+    "typescript",
+    "authorization",
+    "authentication",
+    "rbac",
+    "abac",
+    "rebac",
+    "zanzibar",
+    "access-control"
+  ],
   "license": "MIT",
   "repository": {
     "type": "git",

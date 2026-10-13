@@ -11,6 +11,8 @@ const GITHUB: readonly InitFile[] = [
   ['.github/workflows/pr-title.yml', 'pipeline/github/workflows/pr-title.yml'],
   ['.github/dependabot.yml', 'pipeline/github/dependabot.yml'],
   ['.github/branch-protection.md', 'pipeline/github/branch-protection.md'],
+  // The environment of the Copilot cloud agent: Node and the dependencies, before it starts.
+  ['.github/workflows/copilot-setup-steps.yml', 'pipeline/github/workflows/copilot-setup-steps.yml'],
 ];
 
 const GITLAB: readonly InitFile[] = [

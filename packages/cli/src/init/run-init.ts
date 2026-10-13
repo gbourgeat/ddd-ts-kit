@@ -22,6 +22,8 @@ import { resolveStack, type StackOptions } from './stack/resolve-stack.js';
 import { templateVars } from './template-vars.js';
 import { writeAgentSettings } from './write-agent-settings.js';
 import { writeContracts } from './write-contracts.js';
+import { writeCopilotInstructions } from './write-copilot-instructions.js';
+import { writeCopilotSettings } from './write-copilot-settings.js';
 import { writeTypeScriptConfigs } from './write-type-script-configs.js';
 
 const KNIP_FILE = 'knip.json';
@@ -47,8 +49,10 @@ export function runInit(root: string, options: InitOptions): WorkspaceReport {
   writeManifest(ws, { config, projectName, force: options.force });
   writeTypeScriptConfigs(ws, config);
   writeFiles(ws, config, projectName);
+  writeCopilotInstructions(ws);
   ws.create(DEPCRUISE_FILE, renderCruiseFile(config));
   writeAgentSettings(ws);
+  writeCopilotSettings(ws);
   ws.create(`${config.sharedKernelDir}/.gitkeep`, '');
 
   if (options.force) {

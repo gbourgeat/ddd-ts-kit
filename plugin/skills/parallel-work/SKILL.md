@@ -97,8 +97,10 @@ reported, agreed, and added on the trunk.
 fill what is left between angle brackets (the rules of each slice), nothing more
 ([briefing-template.md](briefing-template.md) is the same text, to write one by hand).
 Launch the `context-builder` agents in one message so they run together, each with its
-briefing, without the isolation option (the worktree already exists). A person takes the
-same briefing and the same branch.
+briefing, without the isolation option (the worktree already exists). A host without the
+agents of the plugin (Codex) runs one session per worktree, its briefing as the first prompt:
+the guard does not hold that session to its context, the briefing and the review do. A person
+takes the same briefing and the same branch.
 
 ## 6. Merge, in order
 

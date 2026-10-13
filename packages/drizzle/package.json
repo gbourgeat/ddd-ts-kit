@@ -2,6 +2,19 @@
   "name": "@ddd-ts-kit/drizzle",
   "version": "0.17.0",
   "description": "Drizzle adapters for the kernel ports on PostgreSQL: unit of work, transactional outbox store, processed-event store, event store, background job store, process store, one schema per context.",
+  "keywords": [
+    "ddd",
+    "domain-driven-design",
+    "clean-architecture",
+    "hexagonal-architecture",
+    "typescript",
+    "drizzle",
+    "drizzle-orm",
+    "postgresql",
+    "unit-of-work",
+    "transactional-outbox",
+    "repository-pattern"
+  ],
   "license": "MIT",
   "repository": {
     "type": "git",

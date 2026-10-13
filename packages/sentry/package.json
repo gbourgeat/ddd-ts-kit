@@ -2,6 +2,17 @@
   "name": "@ddd-ts-kit/sentry",
   "version": "0.17.0",
   "description": "Error reporting to Sentry or GlitchTip behind the kernel ErrorReporter port: unexpected failures only, correlated with traces, scrubbed before sending.",
+  "keywords": [
+    "ddd",
+    "domain-driven-design",
+    "clean-architecture",
+    "hexagonal-architecture",
+    "typescript",
+    "sentry",
+    "glitchtip",
+    "error-reporting",
+    "error-tracking"
+  ],
   "license": "MIT",
   "repository": {
     "type": "git",

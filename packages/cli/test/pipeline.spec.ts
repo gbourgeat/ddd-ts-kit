@@ -35,6 +35,7 @@ describe('pipeline templates', () => {
     ['github/scripts/start-postgres.sh', 'github/scripts/start-postgres.sh'],
     ['github/workflows/codeql.yml', 'github/workflows/codeql.yml'],
     ['github/workflows/pr-title.yml', 'github/workflows/pr-title.yml'],
+    ['github/workflows/copilot-setup-steps.yml', 'github/workflows/copilot-setup-steps.yml'],
     ['github/dependabot.yml', 'github/dependabot.yml'],
     ['github/branch-protection.md', 'github/branch-protection.md'],
     ['gitlab/merge-request-settings.md', 'gitlab/merge-request-settings.md'],
@@ -214,6 +215,7 @@ describe('init --ci', () => {
   const GITHUB = [
     '.github/workflows/ci.yml',
     '.github/workflows/pr-title.yml',
+    '.github/workflows/copilot-setup-steps.yml',
     '.github/actions/setup/action.yml',
     '.github/scripts/start-postgres.sh',
     '.github/dependabot.yml',

@@ -1,5 +1,5 @@
 [English](client-sdk.md) · **Français**
-<!-- translation-of: client-sdk.md sha256:06a61c037a50c664 -->
+<!-- translation-of: client-sdk.md sha256:e18f362439098e78 -->
 
 # SDK client : un client typé à partir du contrat OpenAPI
 
@@ -111,9 +111,10 @@ sur n'importe quel autre contrat ; le kit ne les en empêche pas.
 
 `init --sdk` demande les clients dans un nouveau projet ; `npx ddd-ts-kit sdk` les demande dans
 un projet existant (il inscrit `"sdk"` dans ddd-ts-kit.config.json, voir
-[CONFIG](../CONFIG.fr.md), ajoute à CLAUDE.md la consigne qu'écrit `init --sdk` pour les agents,
-ne jamais modifier un client, et indique d'ajouter `clients/**` aux chemins de
-`.claude/rules/presentation.md`). Pour chaque document du contrat, un *package* du *workspace* :
+[CONFIG](../CONFIG.fr.md), ajoute à AGENTS.md (à CLAUDE.md dans un projet écrit avant lui) la
+consigne qu'écrit `init --sdk` pour les agents, ne jamais modifier un client, et indique d'ajouter
+`clients/**` aux chemins de `.claude/rules/presentation.md` et de
+`.github/instructions/presentation.instructions.md`). Pour chaque document du contrat, un *package* du *workspace* :
 
 ```text
 clients/

@@ -31,6 +31,7 @@ const ASKED = [
   'Edit(./.gitlab-ci.yml)',
   'Edit(./.github/workflows/**)',
   'Edit(./.claude/settings.json)',
+  'Edit(./.github/copilot/settings.json)',
 ];
 
 describe('agent settings', () => {
@@ -78,7 +79,7 @@ describe('agent settings', () => {
     expect(permissions(root, 'deny')).toContain('Edit(./openapi/**)');
 
     expect(stringsAt(report, 'notes').join('\n')).toMatch(
-      /\.claude\/settings\.json gained 33 permission\(s\): allow Bash\(npx ddd-ts-kit check \*\)/,
+      /\.claude\/settings\.json gained 34 permission\(s\): allow Bash\(npx ddd-ts-kit check \*\)/,
     );
 
     expect(stringsAt(cli(root, 'init', '--json').json(), 'updated')).not.toContain(SETTINGS);

@@ -1,5 +1,5 @@
 [English](token-economy.md) · **Français**
-<!-- translation-of: token-economy.md sha256:e4f71b9122d91d02 -->
+<!-- translation-of: token-economy.md sha256:3566b978786aa336 -->
 
 # Économie de tokens : dépenser moins avec les agents de code
 
@@ -48,7 +48,7 @@ qui les a lues.
 | **Du code répétitif généré.** `generate` écrit le fichier, sa *spec*, son *builder* et son câblage | écrire, et se tromper subtilement sur, la visibilité du constructeur, le suffixe, l'enregistrement |
 | **Une sortie `--json` avec `next`** : le `file:line` de chaque `TODO(domain)` | ouvrir les fichiers générés pour trouver ce qui reste à décider |
 | **Des cartes lisibles par une machine.** `ddd-ts-kit list --json` donne les contextes, agrégats, cas d'usage, événements, gestionnaires et permissions ; `describe <context> --json` donne un contexte sous forme de faits (les cas d'usage avec leur permission, les routes, les événements, les ports avec leurs adaptateurs, les politiques, les *gateways*, les dépendances) ; `status` et `todo` donnent la prochaine étape du plan, les tranches et les marqueurs restants sous forme de `file:line` | parcourir l'arborescence pour apprendre ce qui existe et ce qui reste |
-| **Des règles délimitées par chemin.** `init` écrit `.claude/rules/*.md`, chacune délimitée par un *frontmatter* `paths`, à côté d'un `CLAUDE.md` court | garder les règles du domaine en contexte pendant qu'il modifie une route, et l'inverse |
+| **Des règles délimitées par chemin.** `init` écrit `.claude/rules/*.md`, chacune délimitée par un *frontmatter* `paths`, les mêmes règles pour Copilot dans `.github/instructions/`, délimitées par `applyTo`, à côté d'un `AGENTS.md` court que lit chaque agent | garder les règles du domaine en contexte pendant qu'il modifie une route, et l'inverse |
 | **Une documentation générée par contexte.** `CONTEXT.md` avec ses listes générées et sa `## Reference`, `docs/context-map.md` | lire le code d'un contexte voisin pour apprendre ce qu'il publie |
 | **Une phrase de correction sur chaque violation**, et `explain <rule-id>` | deviner une règle à partir d'un contrôle en échec |
 | **Des contrôles à chaque écriture** (le *hook* du *plugin* lance le contrôle par fichier) | découvrir une violation de couche une fois toute la fonctionnalité écrite |
@@ -461,7 +461,8 @@ chaque outil ajoutent aussi leurs propres définitions et leurs propres modes de
 - typescript-language-server,
   https://github.com/typescript-language-server/typescript-language-server
 - Ce dépôt : le [README de la CLI](../../packages/cli/README.fr.md) (`--json`, `list`, `describe`,
-  `status`, `todo`, le `CLAUDE.md` et les `.claude/rules` générés), le README racine (le *hook*).
+  `status`, `todo`, l'`AGENTS.md`, les `.claude/rules` et les `.github/instructions` générés), le
+  README racine (le *hook*).
 
 ## Voir aussi
 

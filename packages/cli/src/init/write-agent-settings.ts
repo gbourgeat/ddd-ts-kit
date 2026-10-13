@@ -1,5 +1,6 @@
 import type { Workspace } from '../workspace/index.js';
 import { isRecord } from './is-record.js';
+import { jsonObject } from './json-object.js';
 import { formatJson } from '../json/format-json.js';
 
 const AGENT_SETTINGS = '.claude/settings.json';
@@ -55,6 +56,7 @@ const PERMISSIONS: Permissions = {
     'Edit(./.gitlab-ci.yml)',
     'Edit(./.github/workflows/**)',
     'Edit(./.claude/settings.json)',
+    'Edit(./.github/copilot/settings.json)',
   ],
 };
 
@@ -68,7 +70,7 @@ export function writeAgentSettings(ws: Workspace): void {
     return;
   }
 
-  const settings = parse(existing);
+  const settings = jsonObject(existing);
 
   if (settings === undefined) {
     ws.note(`${AGENT_SETTINGS} is not a JSON object: it was left as it is.`);
@@ -86,16 +88,6 @@ export function writeAgentSettings(ws: Workspace): void {
 }
 
 const serialize = (settings: unknown): string => formatJson(settings);
-
-function parse(text: string): Record<string, unknown> | undefined {
-  try {
-    const parsed: unknown = JSON.parse(text);
-
-    return isRecord(parsed) ? parsed : undefined;
-  } catch {
-    return undefined;
-  }
-}
 
 interface Merged {
   readonly settings: Record<string, unknown>;

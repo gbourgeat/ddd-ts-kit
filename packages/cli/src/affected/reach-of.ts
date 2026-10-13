@@ -2,7 +2,7 @@ import type { Config } from '../config/index.js';
 import type { PathReach } from './path-reach.js';
 
 /** Written for people and agents, never loaded by a spec, a build or a tool of the pipeline other than the documents gate, which always runs. */
-const DOCUMENT_DIRECTORIES = ['docs/', 'openapi/', '.claude/'];
+const DOCUMENT_DIRECTORIES = ['docs/', 'openapi/', '.claude/', '.github/instructions/', '.github/copilot/'];
 
 /**
  * What a changed path, relative to the project root, reaches. A path under a declared context

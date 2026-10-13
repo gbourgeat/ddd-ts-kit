@@ -58,7 +58,9 @@ describe('the affected selection is never narrower than the declared dependencie
       const { scope, contexts } = selectAffected(example, [file]);
       const [, context = '', layer] = /^src\/contexts\/([^/]+)\/([^/]+)/.exec(file) ?? [];
       const needed = context === '' ? [] : layer === 'test' ? [context] : mustRun(example, context);
-      const document = /^(docs|openapi|\.claude)\//.test(file) || /^[^/]+\.md$/.test(file);
+
+      const document =
+        /^(docs|openapi|\.claude|\.github\/instructions|\.github\/copilot)\//.test(file) || /^[^/]+\.md$/.test(file);
 
       if (needed.some((name) => !contexts.includes(name)) || (context === '' && !document && scope !== 'all')) {
         narrower.push(file);

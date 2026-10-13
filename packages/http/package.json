@@ -2,6 +2,19 @@
   "name": "@ddd-ts-kit/http",
   "version": "0.17.0",
   "description": "Framework-agnostic route definitions with Express, Fastify, Hono and NestJS adapters and OpenAPI 3.1 generation.",
+  "keywords": [
+    "ddd",
+    "domain-driven-design",
+    "clean-architecture",
+    "hexagonal-architecture",
+    "typescript",
+    "express",
+    "fastify",
+    "hono",
+    "nestjs",
+    "openapi",
+    "rest-api"
+  ],
   "license": "MIT",
   "repository": {
     "type": "git",

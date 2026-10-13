@@ -1,10 +1,12 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:06ad064539473090 -->
+<!-- translation-of: README.md sha256:58e12799dab22299 -->
 
 # ddd-ts-kit
 
-Domain-Driven Design, Clean Architecture et Clean Code pour les backends TypeScript, tenus par
-des outils plutôt que par de bonnes intentions.
+Domain-Driven Design (DDD), Clean Architecture (hexagonale, ports et adaptateurs) et Clean Code
+pour les backends TypeScript et Node.js, tenus par des outils plutôt que par de bonnes
+intentions, pour les développeurs et pour les agents de code avec lesquels ils travaillent :
+Claude Code, Codex et GitHub Copilot.
 
 **La documentation est aussi un site web**, avec une recherche, en français et en anglais :
 <https://gbourgeat.github.io/ddd-ts-kit/fr/>.
@@ -12,8 +14,8 @@ des outils plutôt que par de bonnes intentions.
 C'est trois choses qui partagent une seule définition de l'architecture
 ([docs/ARCHITECTURE.fr.md](docs/ARCHITECTURE.fr.md)) :
 
-- un **plugin Claude Code** : des skills, des agents et des hooks qui font travailler un agent
-  de code à l'intérieur de l'architecture, générer au lieu de taper du code répétitif, et
+- un **plugin pour Claude Code, Codex et GitHub Copilot** : des skills, des agents et des hooks
+  qui font travailler un agent de code à l'intérieur de l'architecture, générer au lieu de taper du code répétitif, et
   s'arrêter quand une règle est enfreinte ;
 - une **CLI** : démarrer un projet en quelques minutes, générer chaque brique à partir de
   templates, vérifier la structure, générer la documentation ;
@@ -251,12 +253,16 @@ l'exécute dans l'application de test avec les fakes de ses ports ;
 suit cette première fonctionnalité jusqu'au bout, et l'[application d'exemple](examples/scheduling/README.fr.md)
 montre un produit entier construit de cette façon.
 
-## Le plugin Claude Code
+## Le plugin : Claude Code, Codex, GitHub Copilot
 
-```
-/plugin marketplace add gbourgeat/ddd-ts-kit
-/plugin install ddd-ts-kit@ddd-ts-kit
-```
+Ce dépôt est la marketplace du plugin pour les trois agents :
+
+| Agent | Installation | Une skill s'appelle |
+|---|---|---|
+| Claude Code | `/plugin marketplace add gbourgeat/ddd-ts-kit`, puis `/plugin install ddd-ts-kit@ddd-ts-kit` | `/ddd-ts-kit:start` |
+| Codex | `codex plugin marketplace add gbourgeat/ddd-ts-kit`, puis installer `ddd-ts-kit` depuis `/plugins` et approuver ses hooks dans `/hooks` | `$start` |
+| Copilot CLI | `copilot plugin marketplace add gbourgeat/ddd-ts-kit`, puis `copilot plugin install ddd-ts-kit@ddd-ts-kit` | par son nom, `start` |
+| Agent cloud de Copilot, VS Code | déclaré par le `.github/copilot/settings.json` qu'écrit `init` : l'agent cloud l'installe, VS Code le recommande | par son nom, `start` |
 
 Vingt-deux skills, dans l'ordre où un projet les rencontre :
 
@@ -301,6 +307,21 @@ dépassent la taille conseillée d'un commit, et dans le worktree d'un worker
 (`.ddd-ts-kit/worker.json`), il refuse une écriture hors du contexte du worker. En cas de
 panne, il laisse passer : une garde cassée ne bloque jamais le travail. Mettez `"guard": "advise"` dans la
 configuration pour être consulté au lieu d'essuyer un refus, `"off"` pour le faire taire.
+
+Chaque agent reçoit ce que son hôte exécute. Les skills fonctionnent dans les trois. Les quatre
+agents sont des sous-agents de Claude Code ; Codex ne charge aucun agent depuis un plugin, et une
+session par worktree tient le rôle de `context-builder`. Le hook tourne partout où l'hôte exécute
+les hooks d'un plugin : il lit les patchs de Codex et les appels d'outils de Copilot aussi bien
+que ceux de Claude Code. Codex ne sait pas poser de question à l'utilisateur : ce que Claude Code
+soumet au propriétaire du projet y est signalé à l'utilisateur, et laissé aux vérifications du
+pipeline.
+
+Même sans plugin, un projet guide chaque agent : `init` écrit `AGENTS.md`, le guide que lisent
+Codex, Copilot et la plupart des agents (`CLAUDE.md` l'importe), les règles par couche pour
+Claude Code dans `.claude/rules/` et les mêmes règles pour Copilot dans `.github/instructions/`,
+ciblées par `applyTo`, et, avec le pipeline GitHub, `copilot-setup-steps.yml`, qui installe le
+projet avant le démarrage de l'agent cloud de Copilot. `npm run verify` et le pipeline tiennent
+chaque agent aux mêmes règles.
 
 ## Ce qui est imposé
 

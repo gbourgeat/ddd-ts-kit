@@ -1,0 +1,13 @@
+{
+  "extraKnownMarketplaces": {
+    "ddd-ts-kit": {
+      "source": {
+        "source": "github",
+        "repo": "gbourgeat/ddd-ts-kit"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "ddd-ts-kit@ddd-ts-kit": true
+  }
+}

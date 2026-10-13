@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { read } from './helpers.js';
+import { cli, read, tempDir, write } from './helpers.js';
 import { initProject } from './support/init-project.js';
 import { NPM } from './support/npm.js';
 import { parseFrontmatter } from './support/parse-frontmatter.js';
@@ -40,11 +40,16 @@ const FORMER_STYLE = [
   /wire[A-Z]\w+\(/,
 ];
 
-const GUIDANCE = ['CLAUDE.md', 'README.md', ...RULE_FILES.map((rule) => `.claude/rules/${rule}.md`)];
+const GUIDANCE = [
+  'AGENTS.md',
+  'CLAUDE.md',
+  'README.md',
+  ...RULE_FILES.flatMap((rule) => [`.claude/rules/${rule}.md`, `.github/instructions/${rule}.instructions.md`]),
+];
 
 describe('the guidance init writes', () => {
   it('writes a slim project guide: commands, the three reading rules, the map of the rule files, generated files, the TypeScript note, the plan and the plugin skills by their current names', () => {
-    const guide = read(initProject(...NPM), 'CLAUDE.md');
+    const guide = read(initProject(...NPM), 'AGENTS.md');
 
     const commands = [
       'npm run verify',
@@ -82,7 +87,9 @@ describe('the guidance init writes', () => {
 
     // Skills that no longer exist.
     expect(guide).not.toMatch(/model-context|openapi-contract/);
-    expect(guide).toContain('from `.claude/rules/`');
+    expect(guide).toContain('in `.claude/rules/`');
+    expect(guide).toContain('`.github/instructions/<layer>.instructions.md`');
+    expect(guide).toContain('Codex');
 
     for (const rule of RULE_FILES) {
       expect(guide).toContain(`\`${rule}.md\``);
@@ -96,12 +103,12 @@ describe('the guidance init writes', () => {
 
   it('says the shape every file takes in the guide, and leaves what belongs to a layer to its rule file', () => {
     const root = initProject(...NPM);
-    const guide = read(root, 'CLAUDE.md');
+    const guide = read(root, 'AGENTS.md');
 
     expect(guide).toContain('one exported class, interface or function per file, named after it in kebab-case');
     expect(guide).toContain('`private` members, never `#name`');
     expect(guide).toContain('Never edit `<context>.declarations.ts`');
-    expect(read(initProject(...NPM, '--style', 'explicit'), 'CLAUDE.md')).not.toContain('declarations.ts');
+    expect(read(initProject(...NPM, '--style', 'explicit'), 'AGENTS.md')).not.toContain('declarations.ts');
 
     expect(read(root, '.claude/rules/application.md')).toContain(
       'A port is an abstract class in `ports/<name>.port.ts` and its own injection token',
@@ -142,6 +149,58 @@ describe('the guidance init writes', () => {
     expect(read(initProject(...NPM, '--di', 'manual'), '.claude/rules/tests.md')).toContain(
       'await job.run(occurrence)',
     );
+  });
+});
+
+describe('the guidance of each coding agent', () => {
+  it('writes the guide once, in AGENTS.md, which CLAUDE.md imports', () => {
+    const root = initProject(...NPM);
+
+    expect(read(root, 'CLAUDE.md').split('\n')[0]).toBe('@AGENTS.md');
+    expect(read(root, 'CLAUDE.md').split('\n').length).toBeLessThan(6);
+    expect(read(root, 'AGENTS.md')).toContain('npm run verify');
+  });
+
+  it.each(RULE_STACKS)(
+    'gives Copilot the rule of each layer, scoped by applyTo to the paths of Claude Code (%s)',
+    (stack) => {
+      const root = initProject(...NPM, ...flagsOf(stack));
+
+      for (const rule of RULE_FILES) {
+        const claude = read(root, `.claude/rules/${rule}.md`);
+        const copilot = read(root, `.github/instructions/${rule}.instructions.md`);
+        const frontmatter = parseFrontmatter(copilot);
+
+        expect(Object.keys(frontmatter), rule).toEqual(['applyTo']);
+        expect(frontmatter['applyTo'], rule).toEqual([parseFrontmatter(claude)['paths']?.join(',')]);
+        expect(copilot.slice(copilot.indexOf('\n---\n')), rule).toBe(claude.slice(claude.indexOf('\n---\n')));
+      }
+    },
+  );
+
+  it('declares the plugin for Copilot, and keeps what a project already declared', () => {
+    const root = initProject(...NPM);
+    const settings = JSON.parse(read(root, '.github/copilot/settings.json')) as unknown;
+
+    expect(settings).toEqual({
+      extraKnownMarketplaces: { 'ddd-ts-kit': { source: { source: 'github', repo: 'gbourgeat/ddd-ts-kit' } } },
+      enabledPlugins: { 'ddd-ts-kit@ddd-ts-kit': true },
+    });
+
+    const kept = tempDir('copilot-settings');
+
+    write(
+      kept,
+      '.github/copilot/settings.json',
+      JSON.stringify({ model: 'x', enabledPlugins: { 'other@market': true } }),
+    );
+
+    cli(kept, 'init', '--package-manager', 'npm');
+
+    expect(JSON.parse(read(kept, '.github/copilot/settings.json'))).toMatchObject({
+      model: 'x',
+      enabledPlugins: { 'other@market': true, 'ddd-ts-kit@ddd-ts-kit': true },
+    });
   });
 });
 

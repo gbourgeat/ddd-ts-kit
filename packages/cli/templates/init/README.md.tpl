@@ -1,7 +1,7 @@
 # {{project.name}}
 
 Domain-Driven Design and Clean Architecture on [ddd-ts-kit](https://www.npmjs.com/package/ddd-ts-kit).
-The rules are in `CLAUDE.md` and `.claude/rules/`; `npx ddd-ts-kit explain <rule-id>` explains each one.
+The rules are in `AGENTS.md`, which every coding agent reads, and by layer in `.claude/rules/` and `.github/instructions/`; `npx ddd-ts-kit explain <rule-id>` explains each one.
 
 ## Run it
 

@@ -2,8 +2,9 @@
 
 # ddd-ts-kit
 
-Domain-Driven Design, Clean Architecture and Clean Code for TypeScript backends, held by tools
-rather than by good intentions.
+Domain-Driven Design (DDD), Clean Architecture (hexagonal, ports and adapters) and Clean Code for
+TypeScript and Node.js backends, held by tools rather than by good intentions, for developers and
+for the AI coding agents they work with: Claude Code, Codex and GitHub Copilot.
 
 **The documentation is also a website**, with search, in English and in French:
 <https://gbourgeat.github.io/ddd-ts-kit/>.
@@ -11,8 +12,9 @@ rather than by good intentions.
 It is three things that share one definition of the architecture
 ([docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)):
 
-- a **Claude Code plugin**: skills, agents and hooks that make a coding agent work inside the
-  architecture, generate instead of typing boilerplate, and stop when a rule is broken;
+- a **plugin for Claude Code, Codex and GitHub Copilot**: skills, agents and hooks that make a
+  coding agent work inside the architecture, generate instead of typing boilerplate, and stop
+  when a rule is broken;
 - a **CLI**: bootstrap a project in minutes, scaffold every building block from templates,
   verify the structure, generate the documentation;
 - **runtime packages and analyzers**: framework-agnostic building blocks, an ESLint plugin
@@ -244,12 +246,16 @@ application with the fakes of its ports; [Which command, when](docs/guides/comma
 this first feature to the end, and the [example application](examples/scheduling/README.md)
 shows a whole product built this way.
 
-## The Claude Code plugin
+## The plugin: Claude Code, Codex, GitHub Copilot
 
-```
-/plugin marketplace add gbourgeat/ddd-ts-kit
-/plugin install ddd-ts-kit@ddd-ts-kit
-```
+This repository is the marketplace of the plugin for the three agents:
+
+| Agent | Install | A skill is called |
+|---|---|---|
+| Claude Code | `/plugin marketplace add gbourgeat/ddd-ts-kit`, then `/plugin install ddd-ts-kit@ddd-ts-kit` | `/ddd-ts-kit:start` |
+| Codex | `codex plugin marketplace add gbourgeat/ddd-ts-kit`, then install `ddd-ts-kit` from `/plugins` and trust its hooks in `/hooks` | `$start` |
+| Copilot CLI | `copilot plugin marketplace add gbourgeat/ddd-ts-kit`, then `copilot plugin install ddd-ts-kit@ddd-ts-kit` | by its name, `start` |
+| Copilot cloud agent, VS Code | declared by the `.github/copilot/settings.json` that `init` writes: the cloud agent installs it, VS Code recommends it | by its name, `start` |
 
 Twenty-two skills, in the order a project meets them:
 
@@ -292,6 +298,20 @@ architecture errors remain. It reminds, without blocking, when the uncommitted c
 the advised size of a commit, and in a worker's worktree (`.ddd-ts-kit/worker.json`) it
 refuses a write outside the worker's context. It fails open: a broken guard never blocks work. Set
 `"guard": "advise"` in the config to be asked instead of refused, `"off"` to silence it.
+
+Each agent gets what its host runs. The skills work in all three. The four agents are sub-agents
+of Claude Code; Codex loads no agent from a plugin, and one session per worktree takes the place
+of `context-builder`. The hook runs wherever the host runs the hooks of a plugin: it reads the
+patches of Codex and the tool calls of Copilot as well as those of Claude Code. Codex cannot put
+a question to the user, so what Claude Code asks the project owner is said to the user there,
+and left to the checks of the pipeline.
+
+Without any plugin, a project still guides every agent: `init` writes `AGENTS.md`, the guide
+Codex, Copilot and most agents read (`CLAUDE.md` imports it), the rules by layer for Claude Code
+in `.claude/rules/` and the same rules for Copilot in `.github/instructions/`, scoped by
+`applyTo`, and, with the GitHub pipeline, `copilot-setup-steps.yml`, which installs the project
+before the Copilot cloud agent starts. `npm run verify` and the pipeline hold every agent to
+the same rules.
 
 ## What is enforced
 

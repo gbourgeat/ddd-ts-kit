@@ -105,8 +105,9 @@ contract; the kit does not stand in the way.
 
 `init --sdk` asks for the clients in a new project; `npx ddd-ts-kit sdk` asks for them in an
 existing one (it records `"sdk"` in ddd-ts-kit.config.json, see [CONFIG](../CONFIG.md), appends
-to CLAUDE.md the instruction `init --sdk` writes for the agents, never to edit a client, and
-says to add `clients/**` to the paths of `.claude/rules/presentation.md`).
+to AGENTS.md (CLAUDE.md in a project written before it) the instruction `init --sdk` writes for
+the agents, never to edit a client, and says to add `clients/**` to the paths of
+`.claude/rules/presentation.md` and of `.github/instructions/presentation.instructions.md`).
 For each document of the contract, a workspace package:
 
 ```text

@@ -2,6 +2,17 @@
   "name": "@ddd-ts-kit/audit",
   "version": "0.17.0",
   "description": "Tamper-evident audit trail fed from outside the use cases: authorization decisions, executed commands and integration events, as hash-chained append-only entries.",
+  "keywords": [
+    "ddd",
+    "domain-driven-design",
+    "clean-architecture",
+    "hexagonal-architecture",
+    "typescript",
+    "audit-trail",
+    "audit-log",
+    "tamper-evident",
+    "hash-chain"
+  ],
   "license": "MIT",
   "repository": {
     "type": "git",

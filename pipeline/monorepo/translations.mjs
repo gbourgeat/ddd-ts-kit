@@ -6,9 +6,9 @@
  *
  * In scope: every .md file of the repository, except
  *   - the French pages themselves (*.fr.md);
- *   - every CHANGELOG.md, CLAUDE.md and CONTEXT.md (a CONTEXT.md is partly generated);
- *   - anything under a directory named node_modules, dist, coverage, reports, .git, .claude,
- *     .github, .gitlab or .ddd-ts-kit, wherever it is;
+ *   - every CHANGELOG.md, AGENTS.md, CLAUDE.md and CONTEXT.md (a CONTEXT.md is partly generated);
+ *   - anything under a directory named node_modules, dist, coverage, reports, .git, .agents,
+ *     .claude, .codex, .github, .gitlab or .ddd-ts-kit, wherever it is;
  *   - anything under plugin/, pipeline/ and packages/cli/templates/, and under site/, where the
  *     website copies these pages at each of its builds (site/scripts/assemble.mjs);
  *   - the generated examples/scheduling/clients/api/README.md and
@@ -33,13 +33,15 @@ const SKIPPED_DIRECTORIES = new Set([
   'coverage',
   'reports',
   '.git',
+  '.agents',
   '.claude',
+  '.codex',
   '.github',
   '.gitlab',
   '.ddd-ts-kit',
 ]);
 const SKIPPED_PREFIXES = ['plugin/', 'pipeline/', 'packages/cli/templates/', 'site/'];
-const SKIPPED_NAMES = new Set(['CHANGELOG.md', 'CLAUDE.md', 'CONTEXT.md']);
+const SKIPPED_NAMES = new Set(['CHANGELOG.md', 'AGENTS.md', 'CLAUDE.md', 'CONTEXT.md']);
 const SKIPPED_FILES = new Set([
   'examples/scheduling/clients/api/README.md',
   'examples/scheduling/docs/integration/event-catalog.md',
