@@ -182,18 +182,39 @@ What the class gives, and the function cannot:
 
 ### What `domain/value-object-class` checks
 
-![The rule reads value object files, then the other files of domain/, and leaves a domain
-service, a state machine, a specification or a function over value objects
-alone](images/value-object-class-rule.svg)
+The rule holds a project whose config says `"stack.values": "classes"`, which `init` writes. A
+config without the key was written before the rule existed: it reads as `free` and nothing is
+reported; [CONFIG.md](../CONFIG.md#stack) gives the steps to move.
+
+![The rule first reads the config, then the value object files, then the functions of domain/
+and of the shared kernel; a function is reported when the object it answers is a record of
+data](images/value-object-class-rule.svg)
 
 - **A value object file** (`domain/value-objects/*.vo.ts` of a context, a `*.vo.ts` of the shared
   kernel outside `presentation/`) exports exactly one class extending `ValueObject`, directly or
   through another value object of the project; its constructor is private or protected (a class
   that declares none inherits the protected one of `ValueObject`); a concrete class has a static
-  factory; and the file exports no function, no arrow constant and no object literal. The types
-  and interfaces of its props may be exported next to it.
-- **Anywhere else in `domain/`**, an exported function that answers an object literal holding
-  data is a value written as a function, and is reported with the command that writes the class.
+  factory; and the file exports no function, no arrow constant and no object literal, inline, by
+  an export list or by default. The types and interfaces of its props may be exported next to it.
+- **In the other files of `domain/` and of the shared kernel** (outside `presentation/`), an
+  exported function that answers a **record of data** is a value written as a function, and is
+  reported with the command that writes the class.
+
+Whether an answered object is a record of data is read entry by entry, without the types:
+
+![Five answered objects read entry by entry: data, built by the model, behaviour or derived; only
+the records of data alone are reported](images/value-object-record-roles.svg)
+
+| Entry | Reads as | Examples |
+|---|---|---|
+| a literal, a parameter, an operation on them, a call of the language | data | `amount`, `'EUR'`, `cents * 100`, `Math.round(cents)`, `new Date(at)` |
+| any other call or `new`, or a name bound to one in the module | built by the model | `Money.of(1)`, `total.add(tax)`, `new Slot(..)` |
+| a function, a method, or a name bound to one in the module | behaviour | `isSatisfiedBy: (x) => ..`, `describe() {}`, `{ isSatisfiedBy }` |
+| `...state` | derived | `{ ...state, status }` |
+
+The object is a record of data when it holds data, nothing built by the model and no spread. A
+function that declares a return type of a package (`): EventStamp` of the kernel) is not
+judged: the shape belongs to the library, and the project cannot make it a class.
 
 What stays a function, because it is not a value:
 
@@ -206,9 +227,35 @@ export function invoiceTotal(lines: readonly Money[], currency: string): Money {
   return lines.reduce((sum, line) => sum.add(line), Money.zero(currency));
 }
 
-// a specification: answers a boolean, or an object of functions only
+// a specification: answers a boolean, or functions only, literal or local closures
 export const isOverdue = (invoice: Invoice, now: Date): boolean => invoice.dueAt < now;
-export const dueBefore = (day: Date) => ({ isSatisfiedBy: (invoice: Invoice): boolean => invoice.dueAt < day });
+export const dueBefore = (day: Date) => {
+  const isSatisfiedBy = (invoice: Invoice): boolean => invoice.dueAt < day;
+
+  return { isSatisfiedBy };
+};
+
+// an operation of the model: a record of value objects it builds
+export const split = (total: Money) => ({ first: Money.of(1), rest: total.subtract(Money.of(1)) });
+
+// a reducer: derives a record that exists, with a spread
+export const evolve = (state: InvoiceState, status: string): InvoiceState => ({ ...state, status });
+```
+
+What is reported, by decision, with what to write instead:
+
+```ts
+// a decision answered as a record: the domain refuses by throwing the refusal of its concept,
+// `throw InvoiceError.refused(reason)`, or names the decision as a value object,
+// `Decision.refused(reason)`, whose class says which decisions exist
+export const decide = (reason: string) => ({ kind: 'refused' as const, reason });
+
+// data with closures: a value with behaviour, which is a class with methods
+export const money = (cents: number) => ({ cents, doubled: (): number => cents * 2 });
+
+// a record that only gathers its parameters, value objects included: a pair that means
+// something is a value of the glossary, `Period.between(start, end)`
+export const period = (start: Instant, end: Instant) => ({ start, end });
 ```
 
 Not every exported type of `domain/` is a value either. A **parameter object**, which only
@@ -219,7 +266,19 @@ slots still held, given to `Waitlist.offer`) in the example. A value holds no ag
 `FreedSlot` carries a `Calendar`, an entity with an identity, which no equality by value can
 compare. A value of the glossary that the model computes with is a value object:
 `MeasuredOutcome` and `OccupancyFigures` of the analytics context, which the occupancy measure
-reads and answers.
+reads and answers. Each checks its rules once, in its factory: `MeasuredOutcome.of` refuses an
+end before the start, `OccupancyFigures.of` a figure below zero and fewer appointments held than
+completed and missed ones, both through a factory of `OccupancyError`:
+
+```ts
+static of(state: OutcomeState, startsAt: Date, endsAt: Date): MeasuredOutcome {
+  if (endsAt.getTime() < startsAt.getTime()) {
+    throw OccupancyError.outcomeEndsBeforeStart(startsAt.toISOString(), endsAt.toISOString());
+  }
+
+  return new MeasuredOutcome({ state, startsAt: new Date(startsAt), endsAt: new Date(endsAt) });
+}
+```
 
 ### Primitive obsession
 
@@ -338,8 +397,16 @@ table of its own with a technical key the domain never sees.
 - **Encapsulation rules belong to the ESLint plugin**, which reads the syntax tree; the
   text-level CLI checker has no equivalent for `domain/aggregate-encapsulation` and
   `domain/value-object-immutability` (CLI README). `domain/value-object-class` is read by both.
-- **The function form is detected by what it answers.** A function that builds its object in a
-  variable first (`const value = { .. }; return value;`) is not followed; the review is.
+- **The function form is detected by what it answers, without the types.** The review follows
+  what the rule does not: an object built in a variable first, then returned
+  (`const value = { .. }; return value;`); an object answered through a condition
+  (`cond ? { .. } : { .. }`), inside an array or as the argument of a call; a name read by its
+  first declaration in the module, so a parameter named like a function of the module reads as
+  that function; a call read by the name it starts from, so `name.trim()` on a parameter reads as
+  built by the model; and a return type of a package read by its declared name only.
+- **A relaxed rule is a recorded deviation.** The rule defaults to `error`; setting it to `warn`
+  or `off` under `rules` is recorded under `deviations` with its ADR
+  (`governance/recorded-deviation`). A project not ready for it keeps `"stack.values": "free"`.
 - **A thin CRUD context** may have entities with few rules. That is acceptable where the
   subdomain is simple; see [Anemic model](anemic-model.md).
 

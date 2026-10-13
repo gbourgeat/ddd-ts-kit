@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="960" height="600" viewBox="0 0 960 600" role="img" aria-labelledby="title desc">
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="720" viewBox="0 0 960 720" role="img" aria-labelledby="title desc">
   <title id="title">What the rule domain/value-object-class reads</title>
-  <desc id="desc">A value object file must export one class extending ValueObject with a private or protected constructor and a static factory, and no function nor object literal. Elsewhere in domain/, an exported function that answers an object literal holding data is reported; a domain service, a state machine, a specification or a function over value objects is not concerned. Files outside domain/ are not judged.</desc>
+  <desc id="desc">The rule judges a project whose config says "stack.values": "classes". A value object file must export one class extending ValueObject with a private or protected constructor and a static factory, and no function nor object literal. In the other files of domain/ and of the shared kernel outside presentation/, an exported function that answers a record of data is reported: an object holding data, nothing built by a call of the model and no spread. A domain service, a state machine, a specification, a record of value objects the function builds, a reducer and a function returning a type of a package are not concerned. Files outside the model are not judged.</desc>
   <defs>
     <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
       <path d="M0,0 L10,5 L0,10 z" fill="#4b5563"/>
@@ -15,58 +15,75 @@
     .label { font-size: 12px; font-weight: 700; fill: #4b5563; }
   </style>
 
-  <rect width="960" height="600" fill="#ffffff"/>
+  <rect width="960" height="720" fill="#ffffff"/>
   <text class="title" x="480" y="36" text-anchor="middle">What domain/value-object-class reads</text>
 
-  <rect x="370" y="56" width="220" height="40" rx="20" fill="#eff6ff" stroke="#93c5fd"/>
-  <text class="body" x="480" y="81" text-anchor="middle">a source file, specs aside</text>
-  <path d="M480,96 L480,108" stroke="#4b5563" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <rect x="370" y="52" width="220" height="36" rx="18" fill="#eff6ff" stroke="#93c5fd"/>
+  <text class="body" x="480" y="75" text-anchor="middle">a source file, specs aside</text>
+  <path d="M480,88 L480,104" stroke="#4b5563" stroke-width="1.5" marker-end="url(#arrow)"/>
 
-  <polygon points="480,112 720,156 480,200 240,156" fill="#ffffff" stroke="#4b5563" stroke-width="1.5"/>
-  <text class="body" x="480" y="152" text-anchor="middle">in domain/value-objects/ of a context,</text>
-  <text class="body" x="480" y="170" text-anchor="middle">or a *.vo.ts of the shared kernel?</text>
+  <polygon points="480,108 680,146 480,184 280,146" fill="#ffffff" stroke="#4b5563" stroke-width="1.5"/>
+  <text class="body" x="480" y="142" text-anchor="middle">does the config say</text>
+  <text class="mono body" x="480" y="160" text-anchor="middle">"stack.values": "classes"?</text>
 
-  <path d="M240,156 L220,156 L220,216" stroke="#4b5563" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
-  <text class="label" x="226" y="148">yes</text>
-  <rect x="20" y="220" width="420" height="232" rx="10" fill="#f0fdf4" stroke="#15803d"/>
-  <text class="strong" x="40" y="248" style="fill:#166534">A value object file: it holds</text>
-  <text class="body" x="40" y="276">&#8226; exactly one exported class,</text>
-  <text class="body" x="40" y="298">&#8226; which extends ValueObject, or another value object</text>
-  <text class="body" x="52" y="316">of the project (same file, or imported from a *.vo.ts);</text>
-  <text class="body" x="40" y="338">&#8226; a private or protected constructor (or none: the</text>
-  <text class="body" x="52" y="356">one of ValueObject is protected);</text>
-  <text class="body" x="40" y="378">&#8226; a static factory: create, of, between, closed ..;</text>
-  <text class="body" x="40" y="400">&#8226; no exported function, arrow constant or object literal.</text>
-  <text class="body" x="40" y="428" style="fill:#166534">The types and interfaces of its props may be exported.</text>
+  <path d="M680,146 L756,146" stroke="#4b5563" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text class="label" x="692" y="138">no</text>
+  <rect x="760" y="120" width="186" height="52" rx="12" fill="#f3f4f6" stroke="#9ca3af"/>
+  <text class="strong" x="853" y="142" text-anchor="middle">not judged</text>
+  <text class="body" x="853" y="160" text-anchor="middle">a config without the key: free</text>
 
-  <path d="M720,156 L740,156 L740,211" stroke="#4b5563" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
-  <text class="label" x="726" y="148">no</text>
-  <polygon points="740,215 860,250 740,285 620,250" fill="#ffffff" stroke="#4b5563" stroke-width="1.5"/>
-  <text class="body" x="740" y="255" text-anchor="middle">in domain/ of a context?</text>
-  <path d="M860,250 L878,250" stroke="#4b5563" stroke-width="1.5" marker-end="url(#arrow)"/>
-  <text class="label" x="860" y="241">no</text>
-  <rect x="881" y="234" width="74" height="32" rx="16" fill="#f3f4f6" stroke="#9ca3af"/>
-  <text class="body" x="918" y="255" text-anchor="middle">not judged</text>
+  <path d="M480,184 L480,214" stroke="#4b5563" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text class="label" x="488" y="204">yes</text>
 
-  <path d="M740,285 L740,311" stroke="#4b5563" stroke-width="1.5" marker-end="url(#arrow)"/>
-  <text class="label" x="748" y="302">yes</text>
-  <polygon points="740,315 920,360 740,405 560,360" fill="#ffffff" stroke="#4b5563" stroke-width="1.5"/>
-  <text class="body" x="740" y="356" text-anchor="middle">an exported function answers an</text>
-  <text class="body" x="740" y="374" text-anchor="middle">object literal holding data?</text>
+  <polygon points="480,218 720,262 480,306 240,262" fill="#ffffff" stroke="#4b5563" stroke-width="1.5"/>
+  <text class="body" x="480" y="258" text-anchor="middle">in domain/value-objects/ of a context,</text>
+  <text class="body" x="480" y="276" text-anchor="middle">or a *.vo.ts of the shared kernel?</text>
 
-  <path d="M740,405 L740,446" stroke="#4b5563" stroke-width="1.5" marker-end="url(#arrow)"/>
-  <text class="label" x="748" y="430">yes</text>
-  <rect x="580" y="450" width="360" height="92" rx="10" fill="#fef2f2" stroke="#b91c1c"/>
-  <text class="strong" x="600" y="476" style="fill:#b91c1c">Reported</text>
-  <text class="body" x="600" y="498">a value of the model written as a function:</text>
-  <text class="body" x="600" y="518">write a value object class instead,</text>
-  <text class="mono body" x="600" y="536">npx ddd-ts-kit generate value-object</text>
+  <path d="M240,262 L220,262 L220,326" stroke="#4b5563" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+  <text class="label" x="226" y="254">yes</text>
+  <rect x="20" y="330" width="420" height="232" rx="10" fill="#f0fdf4" stroke="#15803d"/>
+  <text class="strong" x="40" y="358" style="fill:#166534">A value object file: it holds</text>
+  <text class="body" x="40" y="386">&#8226; exactly one exported class,</text>
+  <text class="body" x="40" y="408">&#8226; which extends ValueObject, or another value object</text>
+  <text class="body" x="52" y="426">of the project (same file, or imported from a *.vo.ts);</text>
+  <text class="body" x="40" y="448">&#8226; a private or protected constructor (or none: the</text>
+  <text class="body" x="52" y="466">one of ValueObject is protected);</text>
+  <text class="body" x="40" y="488">&#8226; a static factory: create, of, between, closed ..;</text>
+  <text class="body" x="40" y="510">&#8226; no exported function, arrow constant or object</text>
+  <text class="body" x="52" y="528">literal, inline, by an export list or by default.</text>
+  <text class="body" x="40" y="550" style="fill:#166534">The types and interfaces of its props may be exported.</text>
 
-  <path d="M560,360 L490,360 L490,466" stroke="#4b5563" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
-  <text class="label" x="518" y="352">no</text>
-  <rect x="20" y="470" width="540" height="112" rx="10" fill="#f9fafb" stroke="#9ca3af"/>
-  <text class="strong" x="40" y="496">Not concerned</text>
-  <text class="body" x="40" y="518">a domain service (a class), a state machine (defineStateMachine(..), a call),</text>
-  <text class="body" x="40" y="538">a specification answering a boolean or an object of functions,</text>
-  <text class="body" x="40" y="558">a function that takes and returns value objects (Money.of(..), new Slot(..)).</text>
+  <path d="M720,262 L720,332" stroke="#4b5563" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text class="label" x="728" y="320">no</text>
+  <polygon points="720,336 920,380 720,424 520,380" fill="#ffffff" stroke="#4b5563" stroke-width="1.5"/>
+  <text class="body" x="720" y="374" text-anchor="middle">in domain/ of a context, or the</text>
+  <text class="body" x="720" y="391" text-anchor="middle">shared kernel outside presentation/?</text>
+
+  <path d="M920,380 L936,380 L936,176" stroke="#4b5563" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+  <text class="label" x="940" y="398">no</text>
+
+  <path d="M720,424 L720,446" stroke="#4b5563" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text class="label" x="728" y="440">yes</text>
+  <polygon points="720,450 940,502 720,554 500,502" fill="#ffffff" stroke="#4b5563" stroke-width="1.5"/>
+  <text class="body" x="720" y="488" text-anchor="middle">an exported function answers</text>
+  <text class="body" x="720" y="504" text-anchor="middle">a record of data: data, no spread,</text>
+  <text class="body" x="720" y="520" text-anchor="middle">nothing a call of the model built?</text>
+
+  <path d="M720,554 L720,582" stroke="#4b5563" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text class="label" x="728" y="572">yes</text>
+  <rect x="540" y="586" width="400" height="110" rx="10" fill="#fef2f2" stroke="#b91c1c"/>
+  <text class="strong" x="560" y="612" style="fill:#b91c1c">Reported</text>
+  <text class="body" x="560" y="634">a value of the model written as a function, a decision</text>
+  <text class="body" x="560" y="652">answered as a record: write a value object class, or</text>
+  <text class="body" x="560" y="670">throw the refusal from a factory of its error class.</text>
+  <text class="mono body" x="560" y="688">npx ddd-ts-kit generate value-object</text>
+
+  <path d="M500,502 L480,502 L480,582" stroke="#4b5563" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+  <text class="label" x="484" y="494">no</text>
+  <rect x="20" y="586" width="500" height="110" rx="10" fill="#f9fafb" stroke="#9ca3af"/>
+  <text class="strong" x="40" y="612">Not concerned</text>
+  <text class="body" x="40" y="634">a domain service (a class); a state machine (defineStateMachine(..), a call);</text>
+  <text class="body" x="40" y="652">a specification (a boolean, or functions only, local closures included);</text>
+  <text class="body" x="40" y="670">a record of value objects it builds (Money.of(..)); a reducer ({ ...state });</text>
+  <text class="body" x="40" y="688">a function declaring a return type of a package (EventStamp).</text>
 </svg>
