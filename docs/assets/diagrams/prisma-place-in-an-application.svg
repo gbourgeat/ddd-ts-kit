@@ -1,0 +1,105 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 620" width="960" height="620" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Where @ddd-ts-kit/prisma sits in an application</title>
+  <desc id="desc">A command handler calls the InvoiceRepository port of the domain; the PrismaInvoiceRepository adapter of the project implements it and queries database.client(). The package gives the unit of work, which is also the Database, the processed-event store and the outbox store, where the handler's events are appended. The outbox relay of @ddd-ts-kit/events claims the records and publishes them to the broker. Every statement goes through the generated Prisma client to PostgreSQL: the transaction client inside a unit of work, the root client outside.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+    <marker id="arrow-infrastructure" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#7a4f9a"/>
+    </marker>
+  </defs>
+  <rect width="960" height="620" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Where @ddd-ts-kit/prisma sits in an application</text>
+
+  <!-- row A: the code of the bounded context -->
+  <rect x="40" y="64" width="280" height="104" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="180" y="92" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">PrismaInvoiceRepository</text>
+  <line x1="56" y1="104" x2="304" y2="104" stroke="#7a4f9a" stroke-opacity="0.35"/>
+  <text x="180" y="126" font-size="13" fill="#1f2328" text-anchor="middle">your adapter, in infrastructure/</text>
+  <text x="180" y="148" font-size="13" fill="#1f2328" text-anchor="middle">receives Database, never a transaction</text>
+
+  <rect x="360" y="64" width="240" height="104" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="480" y="92" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">InvoiceRepository</text>
+  <line x1="376" y1="104" x2="584" y2="104" stroke="#2f6f4f" stroke-opacity="0.35"/>
+  <text x="480" y="126" font-size="13" fill="#1f2328" text-anchor="middle">port of the domain</text>
+  <text x="480" y="148" font-size="13" fill="#1f2328" text-anchor="middle">findById, save</text>
+
+  <rect x="640" y="64" width="280" height="104" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="780" y="92" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">command handler</text>
+  <line x1="656" y1="104" x2="904" y2="104" stroke="#2b5d8a" stroke-opacity="0.35"/>
+  <text x="780" y="126" font-size="13" fill="#1f2328" text-anchor="middle">saves the invoice, publishes an event</text>
+  <text x="780" y="148" font-size="13" fill="#1f2328" text-anchor="middle">run in the unit of work by the command bus</text>
+
+  <line x1="638" y1="116" x2="602" y2="116" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="322" y1="116" x2="358" y2="116" stroke="#7a4f9a" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow-infrastructure)"/>
+
+  <!-- row B: the package -->
+  <rect x="24" y="210" width="720" height="186" rx="14" fill="#ffffff" stroke="#7a4f9a" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="44" y="236" font-size="14" font-weight="600" fill="#7a4f9a">@ddd-ts-kit/prisma</text>
+
+  <rect x="40" y="252" width="232" height="96" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="156" y="278" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">unit of work</text>
+  <line x1="56" y1="290" x2="256" y2="290" stroke="#7a4f9a" stroke-opacity="0.35"/>
+  <text x="156" y="312" font-size="13" fill="#1f2328" text-anchor="middle">createPrismaUnitOfWork(prisma)</text>
+  <text x="156" y="334" font-size="13" fill="#1f2328" text-anchor="middle">bound to UnitOfWork and Database</text>
+
+  <rect x="286" y="252" width="250" height="96" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="411" y="278" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">processed-event store</text>
+  <line x1="302" y1="290" x2="520" y2="290" stroke="#7a4f9a" stroke-opacity="0.35"/>
+  <text x="411" y="312" font-size="13" fill="#1f2328" text-anchor="middle">PrismaProcessedEventStore</text>
+  <text x="411" y="334" font-size="13" fill="#1f2328" text-anchor="middle">idempotency of consumers</text>
+
+  <rect x="550" y="252" width="180" height="96" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="640" y="278" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">outbox store</text>
+  <line x1="566" y1="290" x2="714" y2="290" stroke="#7a4f9a" stroke-opacity="0.35"/>
+  <text x="640" y="312" font-size="13" fill="#1f2328" text-anchor="middle">PrismaOutboxStore</text>
+  <text x="640" y="334" font-size="13" fill="#1f2328" text-anchor="middle">append, claimBatch</text>
+
+  <text x="44" y="380" font-size="13" fill="#1f2328">also: PrismaReadModelStore, createPrismaEventSourcing, criteriaToPrisma, optimisticUpdate</text>
+
+  <!-- the relay, in @ddd-ts-kit/events -->
+  <rect x="780" y="252" width="156" height="96" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="858" y="278" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">OutboxRelay</text>
+  <line x1="796" y1="290" x2="920" y2="290" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text x="858" y="312" font-size="13" fill="#1f2328" text-anchor="middle">@ddd-ts-kit/events</text>
+  <text x="858" y="334" font-size="13" fill="#1f2328" text-anchor="middle">claims, publishes</text>
+
+  <!-- adapter queries the context; handler publishes into the outbox; outbox to relay -->
+  <line x1="230" y1="170" x2="230" y2="250" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="240" y="200" font-size="13" fill="#1f2328">database.client()</text>
+  <line x1="700" y1="170" x2="700" y2="250" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="690" y="200" font-size="13" fill="#1f2328" text-anchor="end">publish: OutboxPublisher appends</text>
+  <line x1="732" y1="300" x2="778" y2="300" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- row C: the generated client, the database, the broker -->
+  <rect x="40" y="450" width="300" height="96" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="190" y="476" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">Prisma client</text>
+  <line x1="56" y1="488" x2="324" y2="488" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text x="190" y="510" font-size="13" fill="#1f2328" text-anchor="middle">generated by prisma generate</text>
+  <text x="190" y="532" font-size="13" fill="#1f2328" text-anchor="middle">transaction client inside run, root outside</text>
+
+  <rect x="400" y="450" width="344" height="96" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="572" y="476" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">PostgreSQL</text>
+  <line x1="416" y1="488" x2="728" y2="488" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text x="572" y="510" font-size="13" fill="#1f2328" text-anchor="middle">billing_core.invoices</text>
+  <text x="572" y="532" font-size="13" fill="#1f2328" text-anchor="middle">messaging.outbox, messaging.processed_events</text>
+
+  <rect x="780" y="450" width="156" height="96" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="858" y="476" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">broker</text>
+  <line x1="796" y1="488" x2="920" y2="488" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text x="858" y="510" font-size="13" fill="#1f2328" text-anchor="middle">Kafka, RabbitMQ,</text>
+  <text x="858" y="532" font-size="13" fill="#1f2328" text-anchor="middle">NATS, Redis</text>
+
+  <line x1="190" y1="398" x2="190" y2="448" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="200" y="428" font-size="13" fill="#1f2328">every statement</text>
+  <line x1="342" y1="498" x2="398" y2="498" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="858" y1="350" x2="858" y2="448" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- legend -->
+  <line x1="40" y1="578" x2="84" y2="578" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="96" y="583" font-size="14" fill="#1f2328">calls</text>
+  <line x1="160" y1="578" x2="204" y2="578" stroke="#7a4f9a" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow-infrastructure)"/>
+  <text x="216" y="583" font-size="14" fill="#1f2328">implements a port: the platform binds it at start-up</text>
+  <text x="40" y="606" font-size="13" fill="#5f6b73">Nothing in domain/ or application/ imports this package or the Prisma client.</text>
+</svg>

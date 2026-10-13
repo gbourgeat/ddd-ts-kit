@@ -1,0 +1,95 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 500" width="960" height="500" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">What OpenFgaAuthorizer answers</title>
+  <desc id="desc">Two panels. Left, check: an anonymous actor is denied ANONYMOUS; a check without a resource is denied RESOURCE_REQUIRED; a permission with no relation mapped for the type of the resource is denied UNMAPPED_PERMISSION; these three answer before any call to the server. Otherwise the adapter asks Check on the server, for example user:ada, change, appointment:42, and answers allowed true or the denial NO_RELATION. Right, listAccessible: an anonymous actor or an unmapped permission gets the scope none. Otherwise the adapter asks ListObjects for the user, the relation and the type. An answer holding at least listObjectsLimit objects may have been cut by the server, so the adapter throws ReverseExpansionLimitError; a shorter one becomes the scope ids, sorted, with the type prefix removed. A list cut by the deadline of the server looks complete: watch the latency of ListObjects.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="500" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">What OpenFgaAuthorizer answers</text>
+
+  <!-- left panel: check -->
+  <rect x="24" y="58" width="444" height="420" rx="14" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="44" y="88" font-size="16" font-weight="700" fill="#7a4f9a">check: one decision</text>
+
+  <rect x="44" y="108" width="180" height="48" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="134" y="137" font-size="13" fill="#1f2328" text-anchor="middle">anonymous actor?</text>
+  <rect x="272" y="108" width="184" height="48" rx="10" fill="#ffffff" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="364" y="137" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">ANONYMOUS</text>
+  <line x1="226" y1="132" x2="270" y2="132" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="248" y="124" font-size="13" fill="#1f2328" text-anchor="middle">yes</text>
+  <line x1="134" y1="158" x2="134" y2="186" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="142" y="177" font-size="13" fill="#1f2328">no</text>
+
+  <rect x="44" y="188" width="180" height="48" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="134" y="217" font-size="13" fill="#1f2328" text-anchor="middle">no resource named?</text>
+  <rect x="272" y="188" width="184" height="48" rx="10" fill="#ffffff" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="364" y="217" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">RESOURCE_REQUIRED</text>
+  <line x1="226" y1="212" x2="270" y2="212" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="248" y="204" font-size="13" fill="#1f2328" text-anchor="middle">yes</text>
+  <line x1="134" y1="238" x2="134" y2="266" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="142" y="257" font-size="13" fill="#1f2328">no</text>
+
+  <rect x="44" y="268" width="180" height="56" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="134" y="292" font-size="13" fill="#1f2328" text-anchor="middle">no relation mapped</text>
+  <text x="134" y="310" font-size="13" fill="#1f2328" text-anchor="middle">for the permission?</text>
+  <rect x="272" y="272" width="184" height="48" rx="10" fill="#ffffff" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="364" y="301" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">UNMAPPED_PERMISSION</text>
+  <line x1="226" y1="296" x2="270" y2="296" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="248" y="288" font-size="13" fill="#1f2328" text-anchor="middle">yes</text>
+  <line x1="134" y1="326" x2="134" y2="354" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="142" y="345" font-size="13" fill="#1f2328">no</text>
+
+  <rect x="44" y="356" width="180" height="70" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="134" y="378" font-size="13" font-weight="700" fill="#5f6b73" text-anchor="middle">Check on the server</text>
+  <text x="134" y="398" font-size="13" fill="#1f2328" text-anchor="middle">user:ada, change,</text>
+  <text x="134" y="416" font-size="13" fill="#1f2328" text-anchor="middle">appointment:42</text>
+  <rect x="272" y="356" width="184" height="30" rx="8" fill="#ffffff" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="364" y="376" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">{ allowed: true }</text>
+  <rect x="272" y="396" width="184" height="30" rx="8" fill="#ffffff" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="364" y="416" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">NO_RELATION</text>
+  <line x1="226" y1="371" x2="270" y2="371" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="248" y="364" font-size="13" fill="#1f2328" text-anchor="middle">yes</text>
+  <line x1="226" y1="411" x2="270" y2="411" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="248" y="404" font-size="13" fill="#1f2328" text-anchor="middle">no</text>
+
+  <text x="44" y="460" font-size="13" font-style="italic" fill="#5f6b73">The first three answer before any call to the server.</text>
+
+  <!-- right panel: listAccessible -->
+  <rect x="492" y="58" width="444" height="420" rx="14" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="512" y="88" font-size="16" font-weight="700" fill="#7a4f9a">listAccessible: the scope of a search</text>
+
+  <rect x="512" y="108" width="180" height="56" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="602" y="132" font-size="13" fill="#1f2328" text-anchor="middle">anonymous, or no</text>
+  <text x="602" y="150" font-size="13" fill="#1f2328" text-anchor="middle">relation mapped?</text>
+  <rect x="732" y="112" width="196" height="48" rx="10" fill="#ffffff" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="830" y="141" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">{ kind: 'none' }</text>
+  <line x1="694" y1="136" x2="730" y2="136" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="711" y="128" font-size="13" fill="#1f2328" text-anchor="middle">yes</text>
+  <line x1="602" y1="166" x2="602" y2="194" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="610" y="185" font-size="13" fill="#1f2328">no</text>
+
+  <rect x="512" y="196" width="180" height="56" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="602" y="220" font-size="13" font-weight="700" fill="#5f6b73" text-anchor="middle">ListObjects on the server</text>
+  <text x="602" y="240" font-size="13" fill="#1f2328" text-anchor="middle">user, relation, type</text>
+  <line x1="602" y1="254" x2="602" y2="282" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <rect x="512" y="284" width="180" height="56" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="602" y="308" font-size="13" fill="#1f2328" text-anchor="middle">at least listObjectsLimit</text>
+  <text x="602" y="326" font-size="13" fill="#1f2328" text-anchor="middle">objects answered?</text>
+  <rect x="732" y="284" width="196" height="56" rx="10" fill="#ffffff" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="830" y="308" font-size="13" fill="#1f2328" text-anchor="middle">throws</text>
+  <text x="830" y="326" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">ReverseExpansionLimitError</text>
+  <line x1="694" y1="312" x2="730" y2="312" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="711" y="304" font-size="13" fill="#1f2328" text-anchor="middle">yes</text>
+  <line x1="602" y1="342" x2="602" y2="370" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="610" y="361" font-size="13" fill="#1f2328">no</text>
+
+  <rect x="512" y="372" width="180" height="54" rx="10" fill="#ffffff" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="602" y="395" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">{ kind: 'ids', ids }</text>
+  <text x="602" y="414" font-size="13" fill="#1f2328" text-anchor="middle">sorted, type prefix removed</text>
+
+  <text x="512" y="452" font-size="13" font-style="italic" fill="#5f6b73">A list cut by the deadline of the server looks complete:</text>
+  <text x="512" y="470" font-size="13" font-style="italic" fill="#5f6b73">watch the latency of ListObjects.</text>
+</svg>

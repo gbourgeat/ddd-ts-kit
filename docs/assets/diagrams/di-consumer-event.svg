@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 548" width="960" height="548" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">One integration event, one consumer</title>
+  <desc id="desc">An integration event arrives from the subscriber of the context. The contract of the consumer parses it: an event of another type or version is skipped, an unreadable one throws UnreadableEventError so that the provider retries or dead-letters it. A valid event is handled inside the execution scope, in a context of origin event with the correlation of the event and the system actor of the consumer, and inside one unit of work: the processed event store says whether this consumer name already handled the event; if so, the redelivery is skipped; if not, the mark is taken and the handler runs. When the handler succeeds, the mark and its writes commit together; when it fails, the transaction rolls back, no mark is kept, and the redelivery is handled again.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="548" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">One integration event, one consumer</text>
+  <!-- event -->
+  <rect x="24" y="194" width="150" height="84" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="99" y="224" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">event</text>
+  <text x="99" y="246" font-size="13" fill="#1f2328" text-anchor="middle">from the subscriber</text>
+  <text x="99" y="264" font-size="13" fill="#1f2328" text-anchor="middle">of the context</text>
+  <!-- contract -->
+  <rect x="206" y="194" width="140" height="84" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="276" y="224" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">contract.parse</text>
+  <text x="276" y="246" font-size="13" fill="#1f2328" text-anchor="middle">type, version</text>
+  <text x="276" y="264" font-size="13" fill="#1f2328" text-anchor="middle">and payload</text>
+  <line x1="176" y1="236" x2="204" y2="236" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- not for this consumer -->
+  <rect x="24" y="352" width="332" height="112" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="2"/>
+  <text x="40" y="380" font-size="14" font-weight="600" fill="#1f2328">another type or version</text>
+  <text x="40" y="400" font-size="13" fill="#1f2328">skipped: its own contract reads it</text>
+  <text x="40" y="428" font-size="14" font-weight="600" fill="#1f2328">unreadable</text>
+  <text x="40" y="448" font-size="13" fill="#1f2328">UnreadableEventError: retried or dead-lettered</text>
+  <line x1="276" y1="280" x2="276" y2="350" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="286" y="320" font-size="13" fill="#1f2328">not valid</text>
+  <!-- execution scope -->
+  <rect x="390" y="72" width="546" height="334" rx="12" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="406" y="96" font-size="14" font-weight="600" fill="#5f6b73">ExecutionScope: origin event, its correlation,</text>
+  <text x="406" y="116" font-size="14" font-weight="600" fill="#5f6b73">actor systemActor(consumer)</text>
+  <!-- unit of work -->
+  <rect x="410" y="134" width="506" height="252" rx="12" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="426" y="160" font-size="14" font-weight="700" fill="#7a4f9a">UnitOfWork.run: one transaction</text>
+  <!-- processed events -->
+  <rect x="430" y="196" width="200" height="80" rx="10" fill="#ffffff" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="530" y="222" font-size="14" font-weight="700" fill="#7a4f9a" text-anchor="middle">ProcessedEventStore</text>
+  <text x="530" y="243" font-size="13" fill="#1f2328" text-anchor="middle">already handled under</text>
+  <text x="530" y="261" font-size="13" fill="#1f2328" text-anchor="middle">this consumer name?</text>
+  <line x1="348" y1="236" x2="428" y2="236" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="368" y="228" font-size="13" fill="#1f2328" text-anchor="middle">valid</text>
+  <!-- handler -->
+  <rect x="690" y="196" width="206" height="80" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="793" y="222" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">handle(event)</text>
+  <text x="793" y="243" font-size="13" fill="#1f2328" text-anchor="middle">the mark is taken,</text>
+  <text x="793" y="261" font-size="13" fill="#1f2328" text-anchor="middle">then the work runs</text>
+  <line x1="632" y1="236" x2="688" y2="236" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="660" y="228" font-size="13" fill="#1f2328" text-anchor="middle">no</text>
+  <!-- already handled -->
+  <rect x="430" y="310" width="200" height="56" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="2"/>
+  <text x="530" y="334" font-size="14" font-weight="600" fill="#1f2328" text-anchor="middle">skipped</text>
+  <text x="530" y="353" font-size="13" fill="#1f2328" text-anchor="middle">a redelivery</text>
+  <line x1="530" y1="278" x2="530" y2="308" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="540" y="298" font-size="13" fill="#1f2328">yes</text>
+  <!-- outcomes -->
+  <path d="M760,278 V420 H650 V444" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <path d="M826,278 V420 H846 V444" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="560" y="446" width="180" height="84" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="2"/>
+  <text x="650" y="474" font-size="15" font-weight="700" fill="#1f2328" text-anchor="middle">succeeds</text>
+  <text x="650" y="495" font-size="13" fill="#1f2328" text-anchor="middle">the mark and the writes</text>
+  <text x="650" y="513" font-size="13" fill="#1f2328" text-anchor="middle">commit together</text>
+  <rect x="756" y="446" width="180" height="84" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="2"/>
+  <text x="846" y="474" font-size="15" font-weight="700" fill="#1f2328" text-anchor="middle">fails</text>
+  <text x="846" y="495" font-size="13" fill="#1f2328" text-anchor="middle">rolled back, no mark:</text>
+  <text x="846" y="513" font-size="13" fill="#1f2328" text-anchor="middle">the redelivery is handled</text>
+</svg>

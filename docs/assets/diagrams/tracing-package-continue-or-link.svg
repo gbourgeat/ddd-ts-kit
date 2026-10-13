@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 510" width="960" height="510" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">A consumer continues the trace, or links to it</title>
+  <desc id="desc">Two panels. Left, consumers: continue, the default: one trace holds POST /appointments, outbox append under it, publish under that, and the two process spans of the consumers under publish; one action is one trace. Right, consumers: link: the first trace holds POST /appointments, outbox append and publish, and ends there; each delivery starts a trace of its own whose root is its process span, with a link to publish. Linking suits an event that fans out to many consumers or is retried for so long that one trace would never end.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="510" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">A consumer continues the trace, or links to it</text>
+
+  <!-- left panel: continue -->
+  <text x="32" y="74" font-size="16" font-weight="700" fill="#1f2328">consumers: 'continue' (the default)</text>
+  <rect x="24" y="90" width="444" height="196" rx="12" fill="none" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="40" y="112" font-size="13" font-weight="600" fill="#5f6b73">trace 1</text>
+  <rect x="48" y="122" width="300" height="26" rx="6" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="58" y="140" font-size="13" font-weight="600" fill="#9a5b2b">POST /appointments</text>
+  <rect x="72" y="156" width="250" height="26" rx="6" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="82" y="174" font-size="13" font-weight="600" fill="#7a4f9a">outbox append &lt;type&gt;</text>
+  <rect x="96" y="190" width="250" height="26" rx="6" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="106" y="208" font-size="13" font-weight="600" fill="#5f6b73">publish &lt;type&gt;</text>
+  <rect x="120" y="224" width="332" height="26" rx="6" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="130" y="242" font-size="13" font-weight="600" fill="#2b5d8a">process notification.appointment-booked</text>
+  <rect x="120" y="254" width="332" height="26" rx="6" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="130" y="272" font-size="13" font-weight="600" fill="#2b5d8a">process analytics.appointment-booked</text>
+  <text x="32" y="314" font-size="13" fill="#1f2328">Each span sits under its parent: one action is one trace,</text>
+  <text x="32" y="334" font-size="13" fill="#1f2328">opened once to follow it end to end.</text>
+
+  <!-- right panel: link -->
+  <text x="500" y="74" font-size="16" font-weight="700" fill="#1f2328">consumers: 'link'</text>
+  <rect x="492" y="90" width="380" height="144" rx="12" fill="none" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="508" y="112" font-size="13" font-weight="600" fill="#5f6b73">trace 1</text>
+  <rect x="516" y="122" width="260" height="26" rx="6" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="526" y="140" font-size="13" font-weight="600" fill="#9a5b2b">POST /appointments</text>
+  <rect x="540" y="152" width="220" height="26" rx="6" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="550" y="170" font-size="13" font-weight="600" fill="#7a4f9a">outbox append &lt;type&gt;</text>
+  <rect x="564" y="182" width="196" height="40" rx="6" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="574" y="207" font-size="13" font-weight="600" fill="#5f6b73">publish &lt;type&gt;</text>
+
+  <rect x="492" y="244" width="380" height="50" rx="12" fill="none" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="508" y="274" font-size="13" font-weight="600" fill="#5f6b73">trace 2</text>
+  <rect x="566" y="256" width="240" height="26" rx="6" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="576" y="274" font-size="13" font-weight="600" fill="#2b5d8a">process notification...</text>
+
+  <rect x="492" y="306" width="380" height="50" rx="12" fill="none" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="508" y="336" font-size="13" font-weight="600" fill="#5f6b73">trace 3</text>
+  <rect x="566" y="318" width="240" height="26" rx="6" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="576" y="336" font-size="13" font-weight="600" fill="#2b5d8a">process analytics...</text>
+
+  <!-- links to publish -->
+  <path d="M808,269 H892 V215 H764" fill="none" stroke="#3d4449" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arrow)"/>
+  <path d="M808,331 H918 V189 H764" fill="none" stroke="#3d4449" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arrow)"/>
+  <text x="500" y="388" font-size="13" fill="#1f2328">Each delivery is the root of its own trace, with a link</text>
+  <text x="500" y="408" font-size="13" fill="#1f2328">to publish: for an event that fans out to many consumers,</text>
+  <text x="500" y="428" font-size="13" fill="#1f2328">or is retried for so long that one trace would never end.</text>
+
+  <!-- legend -->
+  <line x1="32" y1="478" x2="76" y2="478" stroke="#3d4449" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arrow)"/>
+  <text x="88" y="483" font-size="13" fill="#1f2328">a span link; an indented span is a child of the one above it</text>
+</svg>

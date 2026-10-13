@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 470" width="960" height="470" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">An event whose handler keeps failing is reported once, when it is given up</title>
+  <desc id="desc">Three deliveries of one event to the consumer billing: attempt 1, attempt 2 after the retry delay, and the last attempt. At each one the handler throws, observing remembers what it threw, and the provider calls onFailure of DeadLetterReports. While the provider retries, onFailure reports nothing. At the last attempt the provider gives the event up: onFailure hears dead and reports once to Sentry or GlitchTip, with the error the handler really threw and its stack, origin event, and the operation named after the event type and the consumer.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="470" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">An event that keeps failing is reported once, when it is given up</text>
+
+  <!-- column 1 -->
+  <rect x="32" y="70" width="180" height="52" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="122" y="93" font-size="15" font-weight="700" fill="#7a4f9a" text-anchor="middle">attempt 1</text>
+  <text x="122" y="112" font-size="13" fill="#1f2328" text-anchor="middle">delivered to billing</text>
+  <rect x="32" y="146" width="180" height="52" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="122" y="169" font-size="15" font-weight="700" fill="#2b5d8a" text-anchor="middle">handler throws</text>
+  <text x="122" y="188" font-size="13" fill="#1f2328" text-anchor="middle">Error: ledger unavailable</text>
+  <rect x="32" y="222" width="180" height="52" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="122" y="245" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">observing</text>
+  <text x="122" y="264" font-size="13" fill="#1f2328" text-anchor="middle">remembers the error</text>
+  <rect x="32" y="298" width="180" height="52" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="5 4"/>
+  <text x="122" y="321" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">onFailure</text>
+  <text x="122" y="340" font-size="13" fill="#1f2328" text-anchor="middle">retried: no report</text>
+  <line x1="122" y1="124" x2="122" y2="142" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="122" y1="200" x2="122" y2="218" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="122" y1="276" x2="122" y2="294" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- column 2 -->
+  <rect x="248" y="70" width="180" height="52" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="338" y="93" font-size="15" font-weight="700" fill="#7a4f9a" text-anchor="middle">attempt 2</text>
+  <text x="338" y="112" font-size="13" fill="#1f2328" text-anchor="middle">after the retry delay</text>
+  <rect x="248" y="146" width="180" height="52" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="338" y="169" font-size="15" font-weight="700" fill="#2b5d8a" text-anchor="middle">handler throws</text>
+  <text x="338" y="188" font-size="13" fill="#1f2328" text-anchor="middle">Error: ledger unavailable</text>
+  <rect x="248" y="222" width="180" height="52" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="338" y="245" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">observing</text>
+  <text x="338" y="264" font-size="13" fill="#1f2328" text-anchor="middle">remembers the error</text>
+  <rect x="248" y="298" width="180" height="52" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="5 4"/>
+  <text x="338" y="321" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">onFailure</text>
+  <text x="338" y="340" font-size="13" fill="#1f2328" text-anchor="middle">retried: no report</text>
+  <line x1="338" y1="124" x2="338" y2="142" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="338" y1="200" x2="338" y2="218" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="338" y1="276" x2="338" y2="294" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- column 3 -->
+  <rect x="464" y="70" width="180" height="52" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="554" y="93" font-size="15" font-weight="700" fill="#7a4f9a" text-anchor="middle">the last attempt</text>
+  <text x="554" y="112" font-size="13" fill="#1f2328" text-anchor="middle">retry.maxAttempts</text>
+  <rect x="464" y="146" width="180" height="52" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="554" y="169" font-size="15" font-weight="700" fill="#2b5d8a" text-anchor="middle">handler throws</text>
+  <text x="554" y="188" font-size="13" fill="#1f2328" text-anchor="middle">Error: ledger unavailable</text>
+  <rect x="464" y="222" width="180" height="52" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="554" y="245" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">observing</text>
+  <text x="554" y="264" font-size="13" fill="#1f2328" text-anchor="middle">remembers the error</text>
+  <rect x="464" y="298" width="180" height="52" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="554" y="321" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">onFailure: dead</text>
+  <text x="554" y="340" font-size="13" fill="#1f2328" text-anchor="middle">reports, once</text>
+  <line x1="554" y1="124" x2="554" y2="142" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="554" y1="200" x2="554" y2="218" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="554" y1="276" x2="554" y2="294" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- redeliveries -->
+  <line x1="214" y1="96" x2="244" y2="96" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="430" y1="96" x2="460" y2="96" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- the report -->
+  <rect x="684" y="250" width="244" height="148" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="806" y="276" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">Sentry or GlitchTip</text>
+  <text x="700" y="302" font-size="13" fill="#1f2328">one event, severity error:</text>
+  <text x="700" y="324" font-size="13" fill="#1f2328">the Error the handler threw,</text>
+  <text x="700" y="344" font-size="13" fill="#1f2328">with its stack; origin event;</text>
+  <text x="700" y="364" font-size="13" fill="#1f2328">operation: the event type</text>
+  <text x="700" y="384" font-size="13" fill="#1f2328">and the consumer</text>
+  <line x1="646" y1="324" x2="680" y2="324" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- notes -->
+  <text x="32" y="392" font-size="14" fill="#1f2328">A delivery that fails and is retried is the normal life of an</text>
+  <text x="32" y="414" font-size="14" fill="#1f2328">at-least-once consumer: only the event given up is an incident.</text>
+  <text x="32" y="444" font-size="14" fill="#1f2328">Refused by a DomainError, the event is reported as a warning.</text>
+</svg>

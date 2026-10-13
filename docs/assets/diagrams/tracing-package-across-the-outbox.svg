@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 618" width="960" height="618" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">One trace across the outbox</title>
+  <desc id="desc">A timeline in four bands. The request: the span POST /appointments contains the command BookAppointment, which contains, through the unit-of-work, domain-event and handler spans drawn as one faint bar, outbox append; outbox append stamps its own traceparent on the integration event. The outbox: the record stores the event with that traceparent. The relay, later, from a timer and perhaps in another process: a tick has no span of its own; publish, a PRODUCER span, is opened as a child of the span the record names, and stamps its own traceparent on the message. The consumers: the traceparent travels in the envelope and in a header, and each process span, a CONSUMER span, is a child of publish. The trace id is the same from the request to the consumers.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="618" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">One trace across the outbox</text>
+
+  <!-- band labels -->
+  <text x="32" y="96" font-size="14" font-weight="700" fill="#1f2328">the request</text>
+  <text x="32" y="114" font-size="13" fill="#5f6b73">one call chain</text>
+  <line x1="24" y1="244" x2="936" y2="244" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text x="32" y="280" font-size="14" font-weight="700" fill="#1f2328">the outbox</text>
+  <text x="32" y="298" font-size="13" fill="#5f6b73">a row of the database</text>
+  <line x1="24" y1="330" x2="936" y2="330" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text x="32" y="366" font-size="14" font-weight="700" fill="#1f2328">the relay, later</text>
+  <text x="32" y="384" font-size="13" fill="#5f6b73">a timer, maybe</text>
+  <text x="32" y="402" font-size="13" fill="#5f6b73">another process</text>
+  <line x1="24" y1="434" x2="936" y2="434" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text x="32" y="470" font-size="14" font-weight="700" fill="#1f2328">the consumers</text>
+  <text x="32" y="488" font-size="13" fill="#5f6b73">one span per delivery</text>
+
+  <!-- the request -->
+  <rect x="220" y="72" width="340" height="30" rx="6" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="232" y="92" font-size="13" font-weight="600" fill="#9a5b2b">POST /appointments</text>
+  <text x="548" y="92" font-size="13" fill="#5f6b73" text-anchor="end">SERVER</text>
+  <rect x="240" y="110" width="300" height="30" rx="6" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="252" y="130" font-size="13" font-weight="600" fill="#2b5d8a">command BookAppointment</text>
+  <rect x="260" y="148" width="280" height="30" rx="6" fill="#ffffff" stroke="#5f6b73" stroke-opacity="0.6" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <text x="272" y="168" font-size="13" fill="#5f6b73">&#8230; unit-of-work, domain-event, handler</text>
+  <rect x="340" y="186" width="200" height="30" rx="6" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="352" y="206" font-size="13" font-weight="600" fill="#7a4f9a">outbox append &lt;type&gt;</text>
+
+  <!-- stamp into the outbox -->
+  <path d="M542,201 H640 V256" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="652" y="206" font-size="13" fill="#1f2328">stamps its own traceparent on the event</text>
+
+  <!-- the outbox record -->
+  <rect x="580" y="258" width="300" height="56" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="730" y="281" font-size="14" font-weight="700" fill="#7a4f9a" text-anchor="middle">outbox record</text>
+  <text x="730" y="302" font-size="13" fill="#1f2328" text-anchor="middle">the event and its traceparent, stored</text>
+
+  <!-- the relay -->
+  <text x="220" y="372" font-size="13" font-style="italic" fill="#5f6b73">a tick: claimBatch, no span of its own</text>
+  <path d="M640,316 V364" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="652" y="346" font-size="13" fill="#1f2328">parent: the span the record names</text>
+  <rect x="600" y="366" width="230" height="30" rx="6" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="612" y="386" font-size="13" font-weight="600" fill="#5f6b73">publish &lt;type&gt;</text>
+  <text x="818" y="386" font-size="13" fill="#5f6b73" text-anchor="end">PRODUCER</text>
+
+  <!-- the consumers -->
+  <path d="M612,398 V463 H638" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <path d="M612,463 V501 H658" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="640" y="448" width="296" height="30" rx="6" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="652" y="468" font-size="13" font-weight="600" fill="#2b5d8a">process notification.appointment-booked</text>
+  <rect x="660" y="486" width="276" height="30" rx="6" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="672" y="506" font-size="13" font-weight="600" fill="#2b5d8a">process analytics.appointment-booked</text>
+  <text x="220" y="470" font-size="13" fill="#1f2328">the traceparent of publish travels in the envelope</text>
+  <text x="220" y="488" font-size="13" fill="#1f2328">and in a header: each process span is its child</text>
+
+  <!-- time axis -->
+  <line x1="220" y1="546" x2="934" y2="546" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="934" y="566" font-size="13" fill="#5f6b73" text-anchor="end">time</text>
+  <text x="32" y="594" font-size="14" font-weight="600" fill="#1f2328">One trace id from the request to the consumers, though the relay runs in another call chain.</text>
+</svg>

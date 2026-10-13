@@ -1,0 +1,112 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 812" width="960" height="812" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Les étapes d'executeRoute pour une requête</title>
+  <desc id="desc">executeRoute franchit onze étapes dans l'ordre. 1, les identifiants : x-request-id et x-correlation-id, calculés avant le hook around, qui enveloppe toutes les étapes suivantes et leurs refus. 2, resolvePrincipal, qui répond 401 quand il lève UnauthorizedError. 3, le formulaire multipart d'une route qui déclare un upload : 413 ou 422 avant le fichier, 413 ou 415 pendant qu'il arrive. 4, la validation de params, query, headers et body : 422. 5, If-Match sur une route qui déclare ifMatch : 428 ou 412. 6, le contexte d'exécution et le tenant de resolveTenant : 403 pour un appelant d'un autre tenant, 404 pour un identifiant de tenant impossible. Puis, dans la portée d'exécution : 7, les gardes dans l'ordre, 401 ou 403 ; 8, handle, votre gestionnaire ou votre contrôleur et le cas d'usage qu'il appelle, répondu avec le statut de son code d'erreur. 9, validateResponses dans les tests : 500 quand la réponse n'est pas une de celles que la route déclare. 10, les en-têtes : Cache-Control, Vary, tags de cache, identifiants. 11, la réponse conditionnelle : ETag, Last-Modified, 304. Un succès finit en réponse ; chaque refus finit en document problem, signalé à onError, et à onGuardRefusal pour les gardes et le tenant.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="812" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Une requête à travers executeRoute</text>
+  <rect x="24" y="108" width="912" height="690" rx="14" fill="none" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="44" y="134" font-size="14" font-weight="600" fill="#5f6b73">around(route, respond)</text>
+  <text x="326" y="134" font-size="14" font-weight="600" fill="#5f6b73">enveloppe les étapes 2 à 11, refus compris (le span d'un traceur)</text>
+  <rect x="42" y="416" width="528" height="124" rx="10" fill="#e7eef5" fill-opacity="0.45" stroke="#2b5d8a" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="56" y="436" font-size="13" font-weight="600" fill="#2b5d8a">executionScope.run(...)</text>
+  <text x="320" y="436" font-size="13" font-weight="600" fill="#2b5d8a">loggers, audit et tenant le lisent</text>
+  <rect x="56" y="56" width="500" height="34" rx="8" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <circle cx="76" cy="73" r="11" fill="#9a5b2b"/>
+  <text x="76" y="78" font-size="13" font-weight="700" fill="#ffffff" text-anchor="middle">1</text>
+  <text x="96" y="78" font-size="14" fill="#1f2328"><tspan font-weight="700" fill="#9a5b2b">identifiants</tspan><tspan dx="8">x-request-id, x-correlation-id, renvoyés dans la réponse</tspan></text>
+  <line x1="306" y1="91" x2="306" y2="164" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="56" y="166" width="500" height="34" rx="8" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <circle cx="76" cy="183" r="11" fill="#9a5b2b"/>
+  <text x="76" y="188" font-size="13" font-weight="700" fill="#ffffff" text-anchor="middle">2</text>
+  <text x="96" y="188" font-size="14" fill="#1f2328"><tspan font-weight="700" fill="#9a5b2b">resolvePrincipal</tspan><tspan dx="8">qui appelle : une Session, un Actor, ou personne</tspan></text>
+  <line x1="306" y1="201" x2="306" y2="214" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="558" y1="183" x2="592" y2="183" stroke="#3d4449" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <rect x="594" y="168" width="262" height="30" rx="15" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="725" y="188" font-size="13" fill="#1f2328" text-anchor="middle">401 s'il lève UnauthorizedError</text>
+  <line x1="856" y1="183" x2="888" y2="183" stroke="#3d4449" stroke-width="1.5"/>
+  <rect x="56" y="216" width="500" height="34" rx="8" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <circle cx="76" cy="233" r="11" fill="#9a5b2b"/>
+  <text x="76" y="238" font-size="13" font-weight="700" fill="#ffffff" text-anchor="middle">3</text>
+  <text x="96" y="238" font-size="14" fill="#1f2328"><tspan font-weight="700" fill="#9a5b2b">upload</tspan><tspan dx="8">le formulaire multipart d'une route qui en déclare un</tspan></text>
+  <line x1="306" y1="251" x2="306" y2="264" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="558" y1="233" x2="592" y2="233" stroke="#3d4449" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <rect x="594" y="218" width="262" height="30" rx="15" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="725" y="238" font-size="13" fill="#1f2328" text-anchor="middle">413, 422 ; 413, 415 en cours de flux</text>
+  <line x1="856" y1="233" x2="888" y2="233" stroke="#3d4449" stroke-width="1.5"/>
+  <rect x="56" y="266" width="500" height="34" rx="8" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <circle cx="76" cy="283" r="11" fill="#9a5b2b"/>
+  <text x="76" y="288" font-size="13" font-weight="700" fill="#ffffff" text-anchor="middle">4</text>
+  <text x="96" y="288" font-size="14" fill="#1f2328"><tspan font-weight="700" fill="#9a5b2b">validation</tspan><tspan dx="8">params, query, headers et body, par leurs schémas</tspan></text>
+  <line x1="306" y1="301" x2="306" y2="314" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="558" y1="283" x2="592" y2="283" stroke="#3d4449" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <rect x="594" y="268" width="262" height="30" rx="15" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="725" y="288" font-size="13" fill="#1f2328" text-anchor="middle">422 VALIDATION_FAILED</text>
+  <line x1="856" y1="283" x2="888" y2="283" stroke="#3d4449" stroke-width="1.5"/>
+  <rect x="56" y="316" width="500" height="34" rx="8" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <circle cx="76" cy="333" r="11" fill="#9a5b2b"/>
+  <text x="76" y="338" font-size="13" font-weight="700" fill="#ffffff" text-anchor="middle">5</text>
+  <text x="96" y="338" font-size="14" fill="#1f2328"><tspan font-weight="700" fill="#9a5b2b">If-Match</tspan><tspan dx="8">la version sur laquelle l'écriture porte (ifMatch)</tspan></text>
+  <line x1="306" y1="351" x2="306" y2="364" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="558" y1="333" x2="592" y2="333" stroke="#3d4449" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <rect x="594" y="318" width="262" height="30" rx="15" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="725" y="338" font-size="13" fill="#1f2328" text-anchor="middle">428 absent, 412 sans version</text>
+  <line x1="856" y1="333" x2="888" y2="333" stroke="#3d4449" stroke-width="1.5"/>
+  <rect x="56" y="366" width="500" height="34" rx="8" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <circle cx="76" cy="383" r="11" fill="#9a5b2b"/>
+  <text x="76" y="388" font-size="13" font-weight="700" fill="#ffffff" text-anchor="middle">6</text>
+  <text x="96" y="388" font-size="14" fill="#1f2328"><tspan font-weight="700" fill="#9a5b2b">contexte d'exécution</tspan><tspan dx="8" font-size="13">acteur, tenant (resolveTenant), langue, échéance</tspan></text>
+  <line x1="306" y1="401" x2="306" y2="444" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="558" y1="383" x2="592" y2="383" stroke="#3d4449" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <rect x="594" y="368" width="262" height="30" rx="15" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="725" y="388" font-size="13" fill="#1f2328" text-anchor="middle">403 autre tenant, 404</text>
+  <line x1="856" y1="383" x2="888" y2="383" stroke="#3d4449" stroke-width="1.5"/>
+  <rect x="56" y="446" width="500" height="34" rx="8" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <circle cx="76" cy="463" r="11" fill="#9a5b2b"/>
+  <text x="76" y="468" font-size="13" font-weight="700" fill="#ffffff" text-anchor="middle">7</text>
+  <text x="96" y="468" font-size="14" fill="#1f2328"><tspan font-weight="700" fill="#9a5b2b">gardes</tspan><tspan dx="8">des groupes, puis du contrôleur, dans l'ordre</tspan></text>
+  <line x1="306" y1="481" x2="306" y2="494" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="558" y1="463" x2="592" y2="463" stroke="#3d4449" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <rect x="594" y="448" width="262" height="30" rx="15" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="725" y="468" font-size="13" fill="#1f2328" text-anchor="middle">401, 403</text>
+  <line x1="856" y1="463" x2="888" y2="463" stroke="#3d4449" stroke-width="1.5"/>
+  <rect x="56" y="496" width="500" height="34" rx="8" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <circle cx="76" cy="513" r="11" fill="#9a5b2b"/>
+  <text x="76" y="518" font-size="13" font-weight="700" fill="#ffffff" text-anchor="middle">8</text>
+  <text x="96" y="518" font-size="14" fill="#1f2328"><tspan font-weight="700" fill="#9a5b2b">handle</tspan><tspan dx="8">votre gestionnaire ou contrôleur, puis le cas d'usage</tspan></text>
+  <line x1="306" y1="531" x2="306" y2="556" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="558" y1="513" x2="592" y2="513" stroke="#3d4449" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <rect x="594" y="498" width="262" height="30" rx="15" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="725" y="518" font-size="13" fill="#1f2328" text-anchor="middle">le statut de son code d'erreur</text>
+  <line x1="856" y1="513" x2="888" y2="513" stroke="#3d4449" stroke-width="1.5"/>
+  <rect x="56" y="558" width="500" height="34" rx="8" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <circle cx="76" cy="575" r="11" fill="#9a5b2b"/>
+  <text x="76" y="580" font-size="13" font-weight="700" fill="#ffffff" text-anchor="middle">9</text>
+  <text x="96" y="580" font-size="14" fill="#1f2328"><tspan font-weight="700" fill="#9a5b2b">validateResponses</tspan><tspan dx="8">en test : la réponse est une de celles déclarées</tspan></text>
+  <line x1="306" y1="593" x2="306" y2="606" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="558" y1="575" x2="592" y2="575" stroke="#3d4449" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <rect x="594" y="560" width="262" height="30" rx="15" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="725" y="580" font-size="13" fill="#1f2328" text-anchor="middle">500 INTERNAL_ERROR</text>
+  <line x1="856" y1="575" x2="888" y2="575" stroke="#3d4449" stroke-width="1.5"/>
+  <rect x="56" y="608" width="500" height="34" rx="8" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <circle cx="76" cy="625" r="11" fill="#9a5b2b"/>
+  <text x="76" y="630" font-size="13" font-weight="700" fill="#ffffff" text-anchor="middle">10</text>
+  <text x="96" y="630" font-size="14" fill="#1f2328"><tspan font-weight="700" fill="#9a5b2b">en-têtes</tspan><tspan dx="8">Cache-Control, Vary, tags de cache, x-request-id</tspan></text>
+  <line x1="306" y1="643" x2="306" y2="656" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="56" y="658" width="500" height="34" rx="8" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <circle cx="76" cy="675" r="11" fill="#9a5b2b"/>
+  <text x="76" y="680" font-size="13" font-weight="700" fill="#ffffff" text-anchor="middle">11</text>
+  <text x="96" y="680" font-size="14" fill="#1f2328"><tspan font-weight="700" fill="#9a5b2b">réponse conditionnelle</tspan><tspan dx="8">ETag, Last-Modified, 304 Not Modified</tspan></text>
+  <line x1="888" y1="183" x2="888" y2="720" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="306" y1="693" x2="306" y2="720" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="56" y="722" width="500" height="56" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="306" y="746" font-size="16" font-weight="700" fill="#9a5b2b" text-anchor="middle">la réponse</text>
+  <text x="306" y="766" font-size="13" fill="#1f2328" text-anchor="middle">le statut déclaré, les en-têtes, le corps ou le flux</text>
+  <rect x="576" y="722" width="344" height="56" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="590" y="743" font-size="14" font-weight="700" fill="#5f6b73">un document problem</text>
+  <text x="590" y="759" font-size="13" fill="#1f2328">application/problem+json, par l'ErrorMapper</text>
+  <text x="590" y="774" font-size="13" fill="#1f2328">onError, onGuardRefusal (gardes, tenant)</text>
+</svg>

@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" width="960" height="540" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">One contract suite, the fake and the adapter</title>
+  <desc id="desc">The repository contract suite runs the same tests against two subjects: the in-memory fake, a Map that handler specs use in milliseconds, and the Drizzle adapter on a real database, which production uses. Both implement the same repository port of the domain. Because both pass the same tests, what a handler spec proves on the fake holds for production.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+    <marker id="arrow-infrastructure" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#7a4f9a"/>
+    </marker>
+  </defs>
+  <rect width="960" height="540" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">One contract suite, the fake and the adapter</text>
+
+  <!-- suite -->
+  <rect x="280" y="60" width="400" height="150" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="480" y="88" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">repositoryContract(runner, options)</text>
+  <line x1="296" y1="100" x2="664" y2="100" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text x="480" y="124" font-size="13" fill="#1f2328" text-anchor="middle">saved, then found with the same state</text>
+  <text x="480" y="146" font-size="13" fill="#1f2328" text-anchor="middle">undefined for an id never saved</text>
+  <text x="480" y="168" font-size="13" fill="#1f2328" text-anchor="middle">a stored copy that later changes do not reach</text>
+  <text x="480" y="190" font-size="13" fill="#1f2328" text-anchor="middle">a change it has not seen refused: CONCURRENCY_CONFLICT</text>
+
+  <!-- runs against -->
+  <path d="M400,210 V246 H230 V276" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <path d="M560,210 V246 H730 V276" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="315" y="238" font-size="13" fill="#1f2328" text-anchor="middle">runs against</text>
+  <text x="645" y="238" font-size="13" fill="#1f2328" text-anchor="middle">runs against</text>
+
+  <!-- fake -->
+  <rect x="60" y="280" width="340" height="110" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="230" y="310" font-size="15" font-weight="700" fill="#7a4f9a" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">InMemoryOrderRepository</text>
+  <text x="230" y="336" font-size="13" fill="#1f2328" text-anchor="middle">the fake: a Map, in memory</text>
+  <text x="230" y="358" font-size="13" fill="#1f2328" text-anchor="middle">used by the handler specs,</text>
+  <text x="230" y="378" font-size="13" fill="#1f2328" text-anchor="middle">milliseconds</text>
+
+  <!-- adapter -->
+  <rect x="560" y="280" width="340" height="110" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="730" y="310" font-size="15" font-weight="700" fill="#7a4f9a" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">DrizzleOrderRepository</text>
+  <text x="730" y="336" font-size="13" fill="#1f2328" text-anchor="middle">the adapter, on a real database</text>
+  <text x="730" y="358" font-size="13" fill="#1f2328" text-anchor="middle">used in production,</text>
+  <text x="730" y="378" font-size="13" fill="#1f2328" text-anchor="middle">checked in seconds</text>
+
+  <!-- implements the port -->
+  <path d="M230,390 V452 H376" fill="none" stroke="#7a4f9a" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow-infrastructure)"/>
+  <path d="M730,390 V452 H584" fill="none" stroke="#7a4f9a" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow-infrastructure)"/>
+  <text x="240" y="430" font-size="13" fill="#7a4f9a">implements</text>
+  <text x="720" y="430" font-size="13" fill="#7a4f9a" text-anchor="end">implements</text>
+
+  <!-- port -->
+  <rect x="380" y="420" width="200" height="64" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="480" y="448" font-size="15" font-weight="700" fill="#2f6f4f" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">OrderRepository</text>
+  <text x="480" y="470" font-size="13" fill="#1f2328" text-anchor="middle">the port, in the domain</text>
+
+  <text x="480" y="518" font-size="14" fill="#1f2328" text-anchor="middle">Both pass the same tests: what a handler spec proves on the fake holds for production.</text>
+</svg>

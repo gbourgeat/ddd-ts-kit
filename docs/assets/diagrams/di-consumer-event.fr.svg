@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 548" width="960" height="548" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Un événement d'intégration, un consommateur</title>
+  <desc id="desc">Un événement d'intégration arrive de l'abonné du contexte. Le contrat du consommateur le lit : un événement d'un autre type ou d'une autre version est ignoré, un événement illisible lève UnreadableEventError pour que le fournisseur le rejoue ou le mette en file de rejet. Un événement valide est traité dans la portée d'exécution, dans un contexte d'origine event, avec la corrélation de l'événement et l'acteur système du consommateur, et dans une unité de travail : le magasin des événements traités dit si ce nom de consommateur a déjà traité l'événement ; si oui, la relivraison est ignorée ; sinon, la marque est posée et le gestionnaire s'exécute. Quand le gestionnaire réussit, la marque et ses écritures sont validées ensemble ; quand il échoue, la transaction est annulée, aucune marque ne reste, et la relivraison est traitée.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="548" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Un événement d'intégration, un consommateur</text>
+  <!-- event -->
+  <rect x="24" y="194" width="150" height="84" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="99" y="224" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">événement</text>
+  <text x="99" y="246" font-size="13" fill="#1f2328" text-anchor="middle">de l'abonné</text>
+  <text x="99" y="264" font-size="13" fill="#1f2328" text-anchor="middle">du contexte</text>
+  <!-- contract -->
+  <rect x="206" y="194" width="140" height="84" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="276" y="224" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">contract.parse</text>
+  <text x="276" y="246" font-size="13" fill="#1f2328" text-anchor="middle">type, version</text>
+  <text x="276" y="264" font-size="13" fill="#1f2328" text-anchor="middle">et charge utile</text>
+  <line x1="176" y1="236" x2="204" y2="236" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- not for this consumer -->
+  <rect x="24" y="352" width="332" height="112" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="2"/>
+  <text x="40" y="380" font-size="14" font-weight="600" fill="#1f2328">autre type ou version</text>
+  <text x="40" y="400" font-size="13" fill="#1f2328">ignoré : son propre contrat le lit</text>
+  <text x="40" y="428" font-size="14" font-weight="600" fill="#1f2328">illisible</text>
+  <text x="40" y="448" font-size="13" fill="#1f2328">UnreadableEventError : rejoué ou en file de rejet</text>
+  <line x1="276" y1="280" x2="276" y2="350" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="286" y="320" font-size="13" fill="#1f2328">non valide</text>
+  <!-- execution scope -->
+  <rect x="390" y="72" width="546" height="334" rx="12" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="406" y="96" font-size="14" font-weight="600" fill="#5f6b73">ExecutionScope : origine event, sa corrélation,</text>
+  <text x="406" y="116" font-size="14" font-weight="600" fill="#5f6b73">acteur systemActor(consumer)</text>
+  <!-- unit of work -->
+  <rect x="410" y="134" width="506" height="252" rx="12" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="426" y="160" font-size="14" font-weight="700" fill="#7a4f9a">UnitOfWork.run : une transaction</text>
+  <!-- processed events -->
+  <rect x="430" y="196" width="200" height="80" rx="10" fill="#ffffff" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="530" y="222" font-size="14" font-weight="700" fill="#7a4f9a" text-anchor="middle">ProcessedEventStore</text>
+  <text x="530" y="243" font-size="13" fill="#1f2328" text-anchor="middle">déjà traité sous</text>
+  <text x="530" y="261" font-size="13" fill="#1f2328" text-anchor="middle">ce nom de consommateur ?</text>
+  <line x1="348" y1="236" x2="428" y2="236" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="368" y="228" font-size="13" fill="#1f2328" text-anchor="middle">valide</text>
+  <!-- handler -->
+  <rect x="690" y="196" width="206" height="80" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="793" y="222" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">handle(event)</text>
+  <text x="793" y="243" font-size="13" fill="#1f2328" text-anchor="middle">la marque est posée,</text>
+  <text x="793" y="261" font-size="13" fill="#1f2328" text-anchor="middle">puis le travail s'exécute</text>
+  <line x1="632" y1="236" x2="688" y2="236" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="660" y="228" font-size="13" fill="#1f2328" text-anchor="middle">non</text>
+  <!-- already handled -->
+  <rect x="430" y="310" width="200" height="56" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="2"/>
+  <text x="530" y="334" font-size="14" font-weight="600" fill="#1f2328" text-anchor="middle">ignoré</text>
+  <text x="530" y="353" font-size="13" fill="#1f2328" text-anchor="middle">une relivraison</text>
+  <line x1="530" y1="278" x2="530" y2="308" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="540" y="298" font-size="13" fill="#1f2328">oui</text>
+  <!-- outcomes -->
+  <path d="M760,278 V420 H650 V444" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <path d="M826,278 V420 H846 V444" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="560" y="446" width="180" height="84" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="2"/>
+  <text x="650" y="474" font-size="15" font-weight="700" fill="#1f2328" text-anchor="middle">réussit</text>
+  <text x="650" y="495" font-size="13" fill="#1f2328" text-anchor="middle">la marque et les écritures</text>
+  <text x="650" y="513" font-size="13" fill="#1f2328" text-anchor="middle">validées ensemble</text>
+  <rect x="756" y="446" width="180" height="84" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="2"/>
+  <text x="846" y="474" font-size="15" font-weight="700" fill="#1f2328" text-anchor="middle">échoue</text>
+  <text x="846" y="495" font-size="13" fill="#1f2328" text-anchor="middle">annulé, sans marque :</text>
+  <text x="846" y="513" font-size="13" fill="#1f2328" text-anchor="middle">la relivraison est traitée</text>
+</svg>

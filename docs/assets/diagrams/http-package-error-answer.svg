@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 652" width="960" height="652" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">How the answer to an error is chosen</title>
+  <desc id="desc">An error is thrown in a handler, a guard, a hook or the pipeline. If it is not a DomainError, the answer is 500 Internal Server Error with the code INTERNAL_ERROR and no detail, reported when the application sets onError to reportHttpErrors. If it is a DomainError, the ErrorMapper gives the status of its code: the default mapping, the codes of the application added with createErrorMapper, else 422. A 5xx status answers its status and its code only, without message or facts, and is reported the same way. A 4xx status answers a problem document: type (urn:problem: and the code in kebab case by default), title, status, code and requestId; the detail, which is the message unless it quotes a fact the factory did not expose; the facts the factory exposed; the issues of a validation.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="652" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">From a thrown error to its answer</text>
+  <rect x="300" y="60" width="360" height="56" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="480" y="84" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">an error is thrown</text>
+  <text x="480" y="104" font-size="13" fill="#1f2328" text-anchor="middle">in a handler, a guard, a hook, the pipeline</text>
+  <line x1="480" y1="118" x2="480" y2="144" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <polygon points="480,146 590,186 480,226 370,186" fill="#ffffff" stroke="#3d4449" stroke-width="2"/>
+  <text x="480" y="191" font-size="14" font-weight="700" fill="#1f2328" text-anchor="middle">a DomainError?</text>
+  <line x1="368" y1="186" x2="296" y2="186" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="332" y="176" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">no</text>
+  <rect x="40" y="140" width="254" height="96" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="167" y="162" font-size="15" font-weight="700" fill="#9a5b2b" text-anchor="middle">500 Internal Server Error</text>
+  <text x="167" y="184" font-size="13" fill="#1f2328" text-anchor="middle">code INTERNAL_ERROR, no detail</text>
+  <text x="167" y="204" font-size="13" fill="#1f2328" text-anchor="middle">reported when onError is</text>
+  <text x="167" y="222" font-size="13" fill="#1f2328" text-anchor="middle">reportHttpErrors(...)</text>
+  <line x1="480" y1="228" x2="480" y2="262" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="492" y="250" font-size="13" font-weight="600" fill="#1f2328">yes</text>
+  <rect x="370" y="264" width="220" height="80" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="480" y="290" font-size="16" font-weight="700" fill="#9a5b2b" text-anchor="middle">ErrorMapper</text>
+  <text x="480" y="312" font-size="13" fill="#1f2328" text-anchor="middle">statusOf(code): the defaults,</text>
+  <text x="480" y="332" font-size="13" fill="#1f2328" text-anchor="middle">your codes, else 422</text>
+  <line x1="592" y1="304" x2="640" y2="304" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="616" y="294" font-size="13" fill="#1f2328" text-anchor="middle">reads</text>
+  <rect x="644" y="140" width="280" height="330" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="784" y="164" font-size="15" font-weight="700" fill="#9a5b2b" text-anchor="middle">default mapping</text>
+  <line x1="658" y1="174" x2="910" y2="174" stroke="#9a5b2b" stroke-opacity="0.35"/>
+  <text x="660" y="194" font-size="13" fill="#1f2328">VALIDATION_FAILED</text>
+  <text x="908" y="194" font-size="13" font-weight="600" fill="#1f2328" text-anchor="end">422</text>
+  <text x="660" y="214" font-size="13" fill="#1f2328">NOT_FOUND</text>
+  <text x="908" y="214" font-size="13" font-weight="600" fill="#1f2328" text-anchor="end">404</text>
+  <text x="660" y="234" font-size="13" fill="#1f2328">CONFLICT</text>
+  <text x="908" y="234" font-size="13" font-weight="600" fill="#1f2328" text-anchor="end">409</text>
+  <text x="660" y="254" font-size="13" fill="#1f2328">INVARIANT_VIOLATION</text>
+  <text x="908" y="254" font-size="13" font-weight="600" fill="#1f2328" text-anchor="end">422</text>
+  <text x="660" y="274" font-size="13" fill="#1f2328">UNAUTHORIZED</text>
+  <text x="908" y="274" font-size="13" font-weight="600" fill="#1f2328" text-anchor="end">401</text>
+  <text x="660" y="294" font-size="13" fill="#1f2328">FORBIDDEN</text>
+  <text x="908" y="294" font-size="13" font-weight="600" fill="#1f2328" text-anchor="end">403</text>
+  <text x="660" y="314" font-size="13" fill="#1f2328">PRECONDITION_FAILED</text>
+  <text x="908" y="314" font-size="13" font-weight="600" fill="#1f2328" text-anchor="end">412</text>
+  <text x="660" y="334" font-size="13" fill="#1f2328">PRECONDITION_REQUIRED</text>
+  <text x="908" y="334" font-size="13" font-weight="600" fill="#1f2328" text-anchor="end">428</text>
+  <text x="660" y="354" font-size="13" fill="#1f2328">FILE_NOT_FOUND</text>
+  <text x="908" y="354" font-size="13" font-weight="600" fill="#1f2328" text-anchor="end">404</text>
+  <text x="660" y="374" font-size="13" fill="#1f2328">FILE_TOO_LARGE</text>
+  <text x="908" y="374" font-size="13" font-weight="600" fill="#1f2328" text-anchor="end">413</text>
+  <text x="660" y="394" font-size="13" fill="#1f2328">UNSUPPORTED_MEDIA_TYPE</text>
+  <text x="908" y="394" font-size="13" font-weight="600" fill="#1f2328" text-anchor="end">415</text>
+  <text x="660" y="414" font-size="13" font-style="italic" fill="#1f2328">any other code</text>
+  <text x="908" y="414" font-size="13" font-weight="600" fill="#1f2328" text-anchor="end">422</text>
+  <text x="784" y="440" font-size="13" font-weight="600" font-style="italic" fill="#9a5b2b" text-anchor="middle">createErrorMapper adds or overrides</text>
+  <line x1="480" y1="346" x2="480" y2="372" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <polygon points="480,374 590,414 480,454 370,414" fill="#ffffff" stroke="#3d4449" stroke-width="2"/>
+  <text x="480" y="419" font-size="14" font-weight="700" fill="#1f2328" text-anchor="middle">a 5xx status?</text>
+  <line x1="368" y1="414" x2="296" y2="414" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="332" y="404" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">yes</text>
+  <rect x="40" y="368" width="254" height="96" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="167" y="390" font-size="15" font-weight="700" fill="#9a5b2b" text-anchor="middle">its status and its code</text>
+  <text x="167" y="412" font-size="13" fill="#1f2328" text-anchor="middle">no message, no facts</text>
+  <text x="167" y="432" font-size="13" fill="#1f2328" text-anchor="middle">reported when onError is</text>
+  <text x="167" y="450" font-size="13" fill="#1f2328" text-anchor="middle">reportHttpErrors(...)</text>
+  <line x1="480" y1="456" x2="480" y2="502" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="492" y="484" font-size="13" font-weight="600" fill="#1f2328">no</text>
+  <rect x="40" y="504" width="884" height="124" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="60" y="532" font-size="15" font-weight="700" fill="#9a5b2b">a problem document (4xx), application/problem+json</text>
+  <text x="60" y="560" font-size="13" fill="#1f2328">type urn:problem:&lt;code in kebab case&gt; by default (SLOT_TAKEN gives slot-taken), the title of the status, status, code, requestId</text>
+  <text x="60" y="584" font-size="13" fill="#1f2328">detail: the message, or a sentence made from the code when the message quotes a fact not exposed</text>
+  <text x="60" y="608" font-size="13" fill="#1f2328">facts: only the ones the factory exposed by name; issues: one per mistake of a VALIDATION_FAILED</text>
+</svg>

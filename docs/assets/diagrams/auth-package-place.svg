@@ -1,0 +1,114 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 590" width="960" height="590" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">The place of @ddd-ts-kit/auth in an application</title>
+  <desc id="desc">A request crosses five places from left to right. The platform reads the bearer token with principalResolver and an Authenticator such as JwtAuthenticator or keycloakAuthenticator, and answers a Session and its Actor. The route reads the actor with actorOf and builds the command with it, and holds no role test. The guard of the command bus finds the use case in the AuthorizationMap, refuses it when it is undeclared, and asks the Authorizer before the handler runs. The handler loads the invoice and asks Access, which runs the policies of the permission then the Authorizer. The aggregate holds the invariants only and imports nothing of the package. The guard and Access both ask the one Authorizer port, which four classes implement: RoleBasedAuthorizer, PolicyBasedAuthorizer, RelationBasedAuthorizer and OpenFgaAuthorizer.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+    <marker id="arrow-infrastructure" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#7a4f9a"/>
+    </marker>
+  </defs>
+  <rect width="960" height="590" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">The place of @ddd-ts-kit/auth in an application</text>
+  <text x="32" y="64" font-size="14" fill="#5f6b73">One request, from the bearer token to the aggregate, and the one port every check asks</text>
+
+  <!-- labels of the request path -->
+  <text x="202" y="110" font-size="13" fill="#1f2328" text-anchor="middle">Session, Actor</text>
+  <text x="387" y="110" font-size="13" fill="#1f2328" text-anchor="middle">command</text>
+  <text x="572" y="110" font-size="13" fill="#1f2328" text-anchor="middle">allowed</text>
+  <text x="757" y="110" font-size="13" fill="#1f2328" text-anchor="middle">void(now)</text>
+
+  <!-- platform -->
+  <rect x="30" y="122" width="160" height="150" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="110" y="150" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">platform</text>
+  <line x1="44" y1="162" x2="176" y2="162" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text x="110" y="186" font-size="13" fill="#1f2328" text-anchor="middle">principalResolver</text>
+  <text x="110" y="206" font-size="13" fill="#1f2328" text-anchor="middle">an Authenticator:</text>
+  <text x="110" y="226" font-size="13" fill="#1f2328" text-anchor="middle">JwtAuthenticator</text>
+  <text x="110" y="246" font-size="13" fill="#1f2328" text-anchor="middle">keycloakAuthenticator</text>
+
+  <!-- presentation -->
+  <rect x="215" y="122" width="160" height="150" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="295" y="150" font-size="16" font-weight="700" fill="#9a5b2b" text-anchor="middle">route</text>
+  <line x1="229" y1="162" x2="361" y2="162" stroke="#9a5b2b" stroke-opacity="0.35"/>
+  <text x="295" y="186" font-size="13" fill="#1f2328" text-anchor="middle">actorOf(principal)</text>
+  <text x="295" y="206" font-size="13" fill="#1f2328" text-anchor="middle">builds the command</text>
+  <text x="295" y="226" font-size="13" fill="#1f2328" text-anchor="middle">with its actor</text>
+  <text x="295" y="252" font-size="13" font-style="italic" font-weight="600" fill="#9a5b2b" text-anchor="middle">no role test</text>
+
+  <!-- application: guard -->
+  <rect x="400" y="122" width="160" height="150" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="480" y="150" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">bus guard</text>
+  <line x1="414" y1="162" x2="546" y2="162" stroke="#2b5d8a" stroke-opacity="0.35"/>
+  <text x="480" y="186" font-size="13" fill="#1f2328" text-anchor="middle">AuthorizationMap:</text>
+  <text x="480" y="206" font-size="13" fill="#1f2328" text-anchor="middle">undeclared, refused</text>
+  <text x="480" y="226" font-size="13" fill="#1f2328" text-anchor="middle">asks the Authorizer</text>
+  <text x="480" y="246" font-size="13" fill="#1f2328" text-anchor="middle">before the handler</text>
+
+  <!-- application: handler -->
+  <rect x="585" y="122" width="160" height="150" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="665" y="150" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">handler</text>
+  <line x1="599" y1="162" x2="731" y2="162" stroke="#2b5d8a" stroke-opacity="0.35"/>
+  <text x="665" y="186" font-size="13" fill="#1f2328" text-anchor="middle">loads the invoice</text>
+  <text x="665" y="206" font-size="13" fill="#1f2328" text-anchor="middle">Access.authorize:</text>
+  <text x="665" y="226" font-size="13" fill="#1f2328" text-anchor="middle">the policies, then</text>
+  <text x="665" y="246" font-size="13" fill="#1f2328" text-anchor="middle">the Authorizer</text>
+
+  <!-- domain -->
+  <rect x="770" y="122" width="160" height="150" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="850" y="150" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">aggregate</text>
+  <line x1="784" y1="162" x2="916" y2="162" stroke="#2f6f4f" stroke-opacity="0.35"/>
+  <text x="850" y="186" font-size="13" fill="#1f2328" text-anchor="middle">invariants only</text>
+  <text x="850" y="206" font-size="13" fill="#1f2328" text-anchor="middle">no role, no actor</text>
+  <text x="850" y="232" font-size="13" font-style="italic" font-weight="600" fill="#2f6f4f" text-anchor="middle">imports nothing</text>
+  <text x="850" y="252" font-size="13" font-style="italic" font-weight="600" fill="#2f6f4f" text-anchor="middle">of this package</text>
+
+  <!-- request path -->
+  <line x1="192" y1="140" x2="213" y2="140" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="377" y1="140" x2="398" y2="140" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="562" y1="140" x2="583" y2="140" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="747" y1="140" x2="768" y2="140" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- both checks ask the port -->
+  <line x1="480" y1="274" x2="480" y2="324" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="490" y="304" font-size="13" fill="#1f2328">check</text>
+  <line x1="665" y1="274" x2="665" y2="324" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="675" y="304" font-size="13" fill="#1f2328">check</text>
+
+  <!-- the port -->
+  <rect x="400" y="326" width="345" height="56" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="572" y="350" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">Authorizer (port)</text>
+  <text x="572" y="372" font-size="13" fill="#1f2328" text-anchor="middle">check(request), listAccessible(request)</text>
+
+  <!-- implementations -->
+  <path d="M135,446 V414 H825 V446 M365,414 V446 M595,414 V446" fill="none" stroke="#7a4f9a" stroke-width="2" stroke-dasharray="7 5"/>
+  <line x1="480" y1="414" x2="480" y2="386" stroke="#7a4f9a" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow-infrastructure)"/>
+  <text x="490" y="406" font-size="13" fill="#7a4f9a">implement</text>
+
+  <rect x="30" y="446" width="210" height="76" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="135" y="472" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">RoleBasedAuthorizer</text>
+  <text x="135" y="494" font-size="13" fill="#1f2328" text-anchor="middle">roles (RBAC)</text>
+  <text x="135" y="512" font-size="13" fill="#1f2328" text-anchor="middle">roles come in the token</text>
+
+  <rect x="260" y="446" width="210" height="76" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="365" y="472" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">PolicyBasedAuthorizer</text>
+  <text x="365" y="494" font-size="13" fill="#1f2328" text-anchor="middle">attributes (ABAC)</text>
+  <text x="365" y="512" font-size="13" fill="#1f2328" text-anchor="middle">a ResourceAttributes port</text>
+
+  <rect x="490" y="446" width="210" height="76" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="595" y="472" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">RelationBasedAuthorizer</text>
+  <text x="595" y="494" font-size="13" fill="#1f2328" text-anchor="middle">relationships (ReBAC)</text>
+  <text x="595" y="512" font-size="13" fill="#1f2328" text-anchor="middle">a RelationTupleStore port</text>
+
+  <rect x="720" y="446" width="210" height="76" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="825" y="472" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">OpenFgaAuthorizer</text>
+  <text x="825" y="494" font-size="13" fill="#1f2328" text-anchor="middle">@ddd-ts-kit/openfga</text>
+  <text x="825" y="512" font-size="13" fill="#1f2328" text-anchor="middle">an OpenFGA server</text>
+
+  <!-- legend -->
+  <line x1="40" y1="550" x2="84" y2="550" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="96" y="555" font-size="14" fill="#1f2328">a call, or what is handed on</text>
+  <line x1="40" y1="574" x2="84" y2="574" stroke="#7a4f9a" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow-infrastructure)"/>
+  <text x="96" y="579" font-size="14" fill="#1f2328">implements the port: authorizationModule binds the one the project chose</text>
+</svg>

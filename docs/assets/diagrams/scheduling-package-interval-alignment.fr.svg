@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 520" width="960" height="520" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Un intervalle de 15 minutes est aligné sur l'époque Unix, pas sur le démarrage du processus</title>
+  <desc id="desc">Deux instances d'une application démarrent à 10:07 et à 10:11. Avec le kit, l'intervalle de 15 minutes est aligné sur l'époque Unix : les deux nomment les occurrences 10:15, 10:30 et 10:45, si bien que la clé de verrou de chaque occurrence est la même et qu'une seule instance l'exécute. Si chaque processus comptait depuis son propre démarrage, le premier nommerait 10:22, 10:37 et 10:52, le second 10:26, 10:41 et 10:56 : des clés différentes, et les deux exécuteraient.</desc>
+  <rect width="960" height="520" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">every: '15m' avec deux instances, démarrées à 10:07 et à 10:11</text>
+  <text x="32" y="84" font-size="15" font-weight="700" fill="#1f2328">Avec le kit : aligné sur l'époque Unix</text>
+  <text x="32" y="129" font-size="14" fill="#1f2328">instance A</text>
+  <line x1="284" y1="124" x2="920" y2="124" stroke="#5f6b73" stroke-width="2"/>
+  <circle cx="284" cy="124" r="6" fill="#ffffff" stroke="#5f6b73" stroke-width="2"/>
+  <text x="284" y="148" font-size="13" fill="#5f6b73" text-anchor="middle">démarrage</text>
+  <circle cx="380" cy="124" r="7" fill="#2b5d8a"/>
+  <text x="380" y="111" font-size="13" fill="#2b5d8a" text-anchor="middle">10:15</text>
+  <circle cx="560" cy="124" r="7" fill="#2b5d8a"/>
+  <text x="560" y="111" font-size="13" fill="#2b5d8a" text-anchor="middle">10:30</text>
+  <circle cx="740" cy="124" r="7" fill="#2b5d8a"/>
+  <text x="740" y="111" font-size="13" fill="#2b5d8a" text-anchor="middle">10:45</text>
+  <circle cx="920" cy="124" r="7" fill="#2b5d8a"/>
+  <text x="920" y="111" font-size="13" fill="#2b5d8a" text-anchor="middle">11:00</text>
+  <text x="32" y="177" font-size="14" fill="#1f2328">instance B</text>
+  <line x1="332" y1="172" x2="920" y2="172" stroke="#5f6b73" stroke-width="2"/>
+  <circle cx="332" cy="172" r="6" fill="#ffffff" stroke="#5f6b73" stroke-width="2"/>
+  <text x="332" y="196" font-size="13" fill="#5f6b73" text-anchor="middle">démarrage</text>
+  <circle cx="380" cy="172" r="7" fill="#2b5d8a"/>
+  <text x="380" y="159" font-size="13" fill="#2b5d8a" text-anchor="middle">10:15</text>
+  <circle cx="560" cy="172" r="7" fill="#2b5d8a"/>
+  <text x="560" y="159" font-size="13" fill="#2b5d8a" text-anchor="middle">10:30</text>
+  <circle cx="740" cy="172" r="7" fill="#2b5d8a"/>
+  <text x="740" y="159" font-size="13" fill="#2b5d8a" text-anchor="middle">10:45</text>
+  <circle cx="920" cy="172" r="7" fill="#2b5d8a"/>
+  <text x="920" y="159" font-size="13" fill="#2b5d8a" text-anchor="middle">11:00</text>
+  <text x="32" y="224" font-size="14" font-style="italic" fill="#1f2328">les mêmes instants des deux côtés : une clé de verrou job:&lt;name&gt;:&lt;instant&gt; par occurrence, une instance l'exécute</text>
+  <text x="32" y="276" font-size="15" font-weight="700" fill="#1f2328">Compté depuis le démarrage de chaque processus (ce que le kit ne fait pas)</text>
+  <text x="32" y="321" font-size="14" fill="#1f2328">instance A</text>
+  <line x1="284" y1="316" x2="920" y2="316" stroke="#5f6b73" stroke-width="2"/>
+  <circle cx="284" cy="316" r="6" fill="#ffffff" stroke="#5f6b73" stroke-width="2"/>
+  <text x="284" y="340" font-size="13" fill="#5f6b73" text-anchor="middle">démarrage</text>
+  <circle cx="464" cy="316" r="7" fill="#2b5d8a"/>
+  <text x="464" y="303" font-size="13" fill="#2b5d8a" text-anchor="middle">10:22</text>
+  <circle cx="644" cy="316" r="7" fill="#2b5d8a"/>
+  <text x="644" y="303" font-size="13" fill="#2b5d8a" text-anchor="middle">10:37</text>
+  <circle cx="824" cy="316" r="7" fill="#2b5d8a"/>
+  <text x="824" y="303" font-size="13" fill="#2b5d8a" text-anchor="middle">10:52</text>
+  <text x="32" y="369" font-size="14" fill="#1f2328">instance B</text>
+  <line x1="332" y1="364" x2="920" y2="364" stroke="#5f6b73" stroke-width="2"/>
+  <circle cx="332" cy="364" r="6" fill="#ffffff" stroke="#5f6b73" stroke-width="2"/>
+  <text x="332" y="388" font-size="13" fill="#5f6b73" text-anchor="middle">démarrage</text>
+  <circle cx="512" cy="364" r="7" fill="#2b5d8a"/>
+  <text x="512" y="351" font-size="13" fill="#2b5d8a" text-anchor="middle">10:26</text>
+  <circle cx="692" cy="364" r="7" fill="#2b5d8a"/>
+  <text x="692" y="351" font-size="13" fill="#2b5d8a" text-anchor="middle">10:41</text>
+  <circle cx="872" cy="364" r="7" fill="#2b5d8a"/>
+  <text x="872" y="351" font-size="13" fill="#2b5d8a" text-anchor="middle">10:56</text>
+  <text x="32" y="416" font-size="14" font-style="italic" fill="#1f2328">des instants différents : des clés de verrou différentes, les deux instances exécutent, un redémarrage les décale encore</text>
+  <line x1="200" y1="462" x2="920" y2="462" stroke="#3d4449" stroke-width="1.5"/>
+  <line x1="200" y1="456" x2="200" y2="468" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="200" y="486" font-size="13" fill="#1f2328" text-anchor="middle">10:00</text>
+  <line x1="380" y1="456" x2="380" y2="468" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="380" y="486" font-size="13" fill="#1f2328" text-anchor="middle">10:15</text>
+  <line x1="560" y1="456" x2="560" y2="468" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="560" y="486" font-size="13" fill="#1f2328" text-anchor="middle">10:30</text>
+  <line x1="740" y1="456" x2="740" y2="468" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="740" y="486" font-size="13" fill="#1f2328" text-anchor="middle">10:45</text>
+  <line x1="920" y1="456" x2="920" y2="468" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="920" y="486" font-size="13" fill="#1f2328" text-anchor="middle">11:00</text>
+  <text x="32" y="467" font-size="13" fill="#1f2328">UTC</text>
+</svg>
+

@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 724" width="960" height="724" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Une commande dans une unité de travail Prisma</title>
+  <desc id="desc">Le bus de commandes appelle run sur l'unité de travail, qui ouvre une transaction interactive Prisma et garde son client dans un AsyncLocalStorage. Le gestionnaire enregistre la facture et publie ses événements ; le repository et le registre de l'outbox écrivent sur ce client de transaction. Quand le travail rend la main, les événements du domaine sont distribués à leurs gestionnaires before-commit, toujours dans la transaction, puis la transaction est validée, puis les gestionnaires after-commit s'exécutent. Un échec avant la validation annule tout.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="724" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Une commande dans une unité de travail Prisma</text>
+
+  <!-- the transaction -->
+  <rect x="170" y="176" width="770" height="390" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="90" y="300" font-size="14" font-weight="600" fill="#5f6b73" text-anchor="middle">une seule</text>
+  <text x="90" y="318" font-size="14" font-weight="600" fill="#5f6b73" text-anchor="middle">transaction</text>
+  <text x="90" y="346" font-size="13" fill="#1f2328" text-anchor="middle">un échec ici</text>
+  <text x="90" y="364" font-size="13" fill="#1f2328" text-anchor="middle">annule tout :</text>
+  <text x="90" y="382" font-size="13" fill="#1f2328" text-anchor="middle">aucune ligne,</text>
+  <text x="90" y="400" font-size="13" fill="#1f2328" text-anchor="middle">aucun enregistrement</text>
+  <text x="90" y="418" font-size="13" fill="#1f2328" text-anchor="middle">d'outbox</text>
+
+  <!-- participants -->
+  <rect x="20" y="60" width="140" height="56" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="90" y="84" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">bus de</text>
+  <text x="90" y="104" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">commandes</text>
+  <rect x="180" y="60" width="140" height="56" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="250" y="84" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">unité</text>
+  <text x="250" y="104" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">de travail</text>
+  <rect x="340" y="60" width="140" height="56" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="410" y="93" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">gestionnaire</text>
+  <rect x="500" y="60" width="140" height="56" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="570" y="84" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">repository,</text>
+  <text x="570" y="104" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">outbox</text>
+  <rect x="660" y="60" width="140" height="56" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="730" y="80" font-size="14" font-weight="700" fill="#2b5d8a" text-anchor="middle">gestionnaires</text>
+  <text x="730" y="95" font-size="14" font-weight="700" fill="#2b5d8a" text-anchor="middle">d'événements</text>
+  <text x="730" y="110" font-size="14" font-weight="700" fill="#2b5d8a" text-anchor="middle">du domaine</text>
+  <rect x="820" y="60" width="120" height="56" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="880" y="93" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">PostgreSQL</text>
+
+  <!-- lifelines -->
+  <g stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="4 4">
+    <line x1="90" y1="118" x2="90" y2="270"/>
+    <line x1="90" y1="432" x2="90" y2="650"/>
+    <line x1="250" y1="118" x2="250" y2="650"/>
+    <line x1="410" y1="118" x2="410" y2="650"/>
+    <line x1="570" y1="118" x2="570" y2="650"/>
+    <line x1="730" y1="118" x2="730" y2="650"/>
+    <line x1="880" y1="118" x2="880" y2="650"/>
+  </g>
+
+  <!-- messages -->
+  <g stroke="#3d4449" stroke-width="2" fill="none">
+    <line x1="92" y1="152" x2="246" y2="152" marker-end="url(#arrow)"/>
+    <line x1="252" y1="200" x2="876" y2="200" marker-end="url(#arrow)"/>
+    <line x1="252" y1="240" x2="406" y2="240" marker-end="url(#arrow)"/>
+    <line x1="412" y1="280" x2="566" y2="280" marker-end="url(#arrow)"/>
+    <line x1="572" y1="320" x2="876" y2="320" marker-end="url(#arrow)"/>
+    <line x1="412" y1="360" x2="566" y2="360" marker-end="url(#arrow)"/>
+    <line x1="572" y1="400" x2="876" y2="400" marker-end="url(#arrow)"/>
+    <line x1="408" y1="440" x2="254" y2="440" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+    <line x1="252" y1="480" x2="726" y2="480" marker-end="url(#arrow)"/>
+    <line x1="732" y1="520" x2="876" y2="520" marker-end="url(#arrow)"/>
+    <line x1="252" y1="556" x2="876" y2="556" marker-end="url(#arrow)"/>
+    <line x1="252" y1="600" x2="726" y2="600" marker-end="url(#arrow)"/>
+    <line x1="248" y1="640" x2="94" y2="640" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  </g>
+  <g font-size="13" fill="#1f2328" text-anchor="middle" stroke="#f3f4f5" stroke-width="5" stroke-linejoin="round" paint-order="stroke">
+    <text x="170" y="144" stroke="#ffffff">run(work)</text>
+    <text x="564" y="192">BEGIN : prisma.$transaction, son client gardé dans un AsyncLocalStorage</text>
+    <text x="330" y="232">work()</text>
+    <text x="490" y="272">save(invoice)</text>
+    <text x="724" y="312">UPDATE invoices, sur client()</text>
+    <text x="490" y="352">publish : append</text>
+    <text x="724" y="392">INSERT INTO outbox, sur client()</text>
+    <text x="330" y="432">work rend la main</text>
+    <text x="490" y="472">distribue les événements du domaine : phase before-commit</text>
+    <text x="804" y="512">leurs écritures</text>
+    <text x="564" y="548">COMMIT</text>
+    <text x="490" y="592" stroke="#ffffff">gestionnaires after-commit, une fois validé</text>
+    <text x="170" y="632" stroke="#ffffff">résultat</text>
+  </g>
+
+  <!-- legend -->
+  <line x1="40" y1="680" x2="84" y2="680" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="96" y="685" font-size="14" fill="#1f2328">appel ou instruction</text>
+  <line x1="260" y1="680" x2="304" y2="680" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <text x="316" y="685" font-size="14" fill="#1f2328">retour</text>
+  <text x="40" y="710" font-size="14" fill="#1f2328">Un run imbriqué rejoint cette transaction : une seule distribution, à la fin du run le plus externe.</text>
+</svg>

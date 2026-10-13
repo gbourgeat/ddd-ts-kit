@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 500" width="960" height="500" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Le chemin d'une ligne de journal à travers PinoLogger et pino</title>
+  <desc id="desc">Un adaptateur appelle logger.info avec un message et des champs. PinoLogger demande d'abord si le niveau est actif : sous le seuil, rien n'est écrit et fields() n'est pas appelé. Sinon, il décrit les erreurs parmi les champs et écarte les clés level et time. pino écrit ensuite, dans cet ordre : level et time, service, environment et base, les champs des enfants, ce que renvoie fields() à cet instant, les champs de la ligne. Il remplace la valeur de chaque clé de secret par [redacted]. La ligne va à sa destination : la sortie standard avant le retour de l'appel par défaut, un tampon de 4 Kio écrit hors du chemin critique avec asynchronous: true, ou le worker thread de pino-pretty avec le format pretty.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="500" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Le chemin d'une ligne de journal</text>
+
+  <!-- row 1 -->
+  <rect x="32" y="70" width="240" height="96" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="152" y="98" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">un adaptateur</text>
+  <text x="152" y="122" font-size="13" fill="#1f2328" text-anchor="middle">logger.info('order shipped',</text>
+  <text x="152" y="142" font-size="13" fill="#1f2328" text-anchor="middle">{ orderId })</text>
+  <rect x="312" y="70" width="200" height="96" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="412" y="98" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">niveau actif ?</text>
+  <text x="412" y="122" font-size="13" fill="#1f2328" text-anchor="middle">vérifié par PinoLogger</text>
+  <text x="412" y="142" font-size="13" fill="#1f2328" text-anchor="middle">par rapport à son seuil</text>
+  <rect x="552" y="70" width="240" height="96" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="672" y="98" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">PinoLogger</text>
+  <text x="672" y="122" font-size="13" fill="#1f2328" text-anchor="middle">erreurs décrites une fois</text>
+  <text x="672" y="142" font-size="13" fill="#1f2328" text-anchor="middle">clés level et time écartées</text>
+  <line x1="274" y1="118" x2="308" y2="118" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="514" y1="118" x2="548" y2="118" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="530" y="108" font-size="13" fill="#1f2328" text-anchor="middle">oui</text>
+  <!-- below the threshold -->
+  <line x1="412" y1="168" x2="412" y2="196" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="422" y="188" font-size="13" fill="#1f2328">non</text>
+  <rect x="312" y="200" width="200" height="44" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="5 4"/>
+  <text x="412" y="219" font-size="13" fill="#1f2328" text-anchor="middle">rien d'écrit,</text>
+  <text x="412" y="236" font-size="13" fill="#1f2328" text-anchor="middle">fields() non appelé</text>
+
+  <!-- row 2, right to left -->
+  <line x1="740" y1="168" x2="740" y2="266" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="600" y="270" width="328" height="180" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="764" y="296" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">pino écrit, dans cet ordre</text>
+  <text x="620" y="324" font-size="13" fill="#1f2328">1. level, time</text>
+  <text x="620" y="348" font-size="13" fill="#1f2328">2. service, environment, base</text>
+  <text x="620" y="372" font-size="13" fill="#1f2328">3. les champs des enfants</text>
+  <text x="620" y="396" font-size="13" fill="#1f2328">4. ce que renvoie fields() à l'instant</text>
+  <text x="620" y="420" font-size="13" fill="#1f2328">5. les champs de la ligne, le message</text>
+
+  <rect x="372" y="306" width="188" height="108" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="466" y="334" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">redact</text>
+  <text x="466" y="358" font-size="13" fill="#1f2328" text-anchor="middle">password, token, ...</text>
+  <text x="466" y="378" font-size="13" fill="#1f2328" text-anchor="middle">aux niveaux 1 et 2,</text>
+  <text x="466" y="398" font-size="13" fill="#1f2328" text-anchor="middle">deviennent [redacted]</text>
+  <line x1="598" y1="360" x2="564" y2="360" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <rect x="32" y="270" width="300" height="200" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="182" y="296" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">destination</text>
+  <rect x="46" y="310" width="272" height="44" rx="8" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="58" y="328" font-size="13" font-weight="700" fill="#5f6b73">par défaut</text>
+  <text x="58" y="346" font-size="13" fill="#1f2328">sortie standard, avant le retour d'info()</text>
+  <rect x="46" y="362" width="272" height="44" rx="8" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="58" y="380" font-size="13" font-weight="700" fill="#5f6b73">asynchronous: true</text>
+  <text x="58" y="398" font-size="13" fill="#1f2328">tampon de 4 Kio, hors chemin critique</text>
+  <rect x="46" y="414" width="272" height="44" rx="8" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="58" y="432" font-size="13" font-weight="700" fill="#5f6b73">format: 'pretty'</text>
+  <text x="58" y="450" font-size="13" fill="#1f2328">pino-pretty, dans un worker thread</text>
+  <line x1="370" y1="360" x2="336" y2="360" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+</svg>

@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" width="960" height="540" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Une suite de contrat, le fake et l'adaptateur</title>
+  <desc id="desc">La suite de contrat du repository exécute les mêmes tests sur deux sujets : le fake en mémoire, une Map qu'utilisent les specs de gestionnaire en quelques millisecondes, et l'adaptateur Drizzle sur une vraie base de données, qu'utilise la production. Les deux implémentent le même port repository du domaine. Comme les deux passent les mêmes tests, ce qu'une spec de gestionnaire prouve sur le fake vaut pour la production.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+    <marker id="arrow-infrastructure" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#7a4f9a"/>
+    </marker>
+  </defs>
+  <rect width="960" height="540" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Une suite de contrat, le fake et l'adaptateur</text>
+
+  <!-- suite -->
+  <rect x="280" y="60" width="400" height="150" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="480" y="88" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">repositoryContract(runner, options)</text>
+  <line x1="296" y1="100" x2="664" y2="100" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text x="480" y="124" font-size="13" fill="#1f2328" text-anchor="middle">enregistré, puis retrouvé dans le même état</text>
+  <text x="480" y="146" font-size="13" fill="#1f2328" text-anchor="middle">undefined pour un id jamais enregistré</text>
+  <text x="480" y="168" font-size="13" fill="#1f2328" text-anchor="middle">une copie stockée, à l'abri des changements</text>
+  <text x="480" y="190" font-size="13" fill="#1f2328" text-anchor="middle">une version périmée refusée : CONCURRENCY_CONFLICT</text>
+
+  <!-- runs against -->
+  <path d="M400,210 V246 H230 V276" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <path d="M560,210 V246 H730 V276" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="315" y="238" font-size="13" fill="#1f2328" text-anchor="middle">exécutée sur</text>
+  <text x="645" y="238" font-size="13" fill="#1f2328" text-anchor="middle">exécutée sur</text>
+
+  <!-- fake -->
+  <rect x="60" y="280" width="340" height="110" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="230" y="310" font-size="15" font-weight="700" fill="#7a4f9a" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">InMemoryOrderRepository</text>
+  <text x="230" y="336" font-size="13" fill="#1f2328" text-anchor="middle">le fake : une Map, en mémoire</text>
+  <text x="230" y="358" font-size="13" fill="#1f2328" text-anchor="middle">utilisé par les specs de gestionnaire,</text>
+  <text x="230" y="378" font-size="13" fill="#1f2328" text-anchor="middle">quelques millisecondes</text>
+
+  <!-- adapter -->
+  <rect x="560" y="280" width="340" height="110" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="730" y="310" font-size="15" font-weight="700" fill="#7a4f9a" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">DrizzleOrderRepository</text>
+  <text x="730" y="336" font-size="13" fill="#1f2328" text-anchor="middle">l'adaptateur, sur une vraie base</text>
+  <text x="730" y="358" font-size="13" fill="#1f2328" text-anchor="middle">utilisé en production,</text>
+  <text x="730" y="378" font-size="13" fill="#1f2328" text-anchor="middle">vérifié en quelques secondes</text>
+
+  <!-- implements the port -->
+  <path d="M230,390 V452 H376" fill="none" stroke="#7a4f9a" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow-infrastructure)"/>
+  <path d="M730,390 V452 H584" fill="none" stroke="#7a4f9a" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow-infrastructure)"/>
+  <text x="240" y="430" font-size="13" fill="#7a4f9a">implémente</text>
+  <text x="720" y="430" font-size="13" fill="#7a4f9a" text-anchor="end">implémente</text>
+
+  <!-- port -->
+  <rect x="380" y="420" width="200" height="64" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="480" y="448" font-size="15" font-weight="700" fill="#2f6f4f" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">OrderRepository</text>
+  <text x="480" y="470" font-size="13" fill="#1f2328" text-anchor="middle">le port, dans le domaine</text>
+
+  <text x="480" y="518" font-size="14" fill="#1f2328" text-anchor="middle">Les deux passent les mêmes tests : ce qu'une spec de gestionnaire prouve sur le fake vaut pour la production.</text>
+</svg>

@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 520" width="960" height="520" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Filtering a list: in the query, not after loading</title>
+  <desc id="desc">On the left, what to avoid: the repository reads a page of twenty invoices of every tenant, then the code keeps, in memory, the rows the user may read; the page shows three rows instead of twenty and its total counts rows the user may not see. On the right, what to write: the handler asks access.scope for the permission invoice.read on the type invoice, the Authorizer answers an AccessScope such as a filter on the tenant acme, and the read port turns it into a WHERE clause with the limit of the page, so the database answers the right page and the right total. Below, what the read port adds for each kind of scope: nothing for all, no query at all for none, one equality per entry for filter, an id IN list for ids. The attribute policies cannot list: access.scope then throws ListingNotSupportedError.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="520" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Filtering a list: in the query, not after loading</text>
+  <rect x="24" y="58" width="444" height="296" rx="12" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="44" y="86" font-size="16" font-weight="700" fill="#5f6b73">Instead of: load, then filter</text>
+  <rect x="48" y="102" width="396" height="58" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="246" y="125" font-size="14" font-weight="700" fill="#7a4f9a" text-anchor="middle">invoices.list(page)</text>
+  <text x="246" y="145" font-size="13" fill="#1f2328" text-anchor="middle">a page of 20 rows, every tenant included</text>
+  <line x1="246" y1="162" x2="246" y2="188" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="48" y="190" width="396" height="58" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="246" y="213" font-size="14" font-weight="700" fill="#2b5d8a" text-anchor="middle">rows.filter((invoice) =&gt; canRead(user, invoice))</text>
+  <text x="246" y="233" font-size="13" fill="#1f2328" text-anchor="middle">the rule runs in memory, after the fact</text>
+  <line x1="246" y1="250" x2="246" y2="276" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="48" y="278" width="396" height="58" rx="10" fill="#ffffff" stroke="#3d4449" stroke-width="2"/>
+  <text x="246" y="301" font-size="14" font-weight="700" fill="#1f2328" text-anchor="middle">page 1 shows 3 rows instead of 20</text>
+  <text x="246" y="321" font-size="13" fill="#1f2328" text-anchor="middle">and its total counts rows the user may not see</text>
+  <rect x="492" y="58" width="444" height="296" rx="12" fill="#ffffff" stroke="#2b5d8a" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="512" y="86" font-size="16" font-weight="700" fill="#2b5d8a">Write: an access scope in the query</text>
+  <rect x="516" y="102" width="396" height="58" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="714" y="125" font-size="14" font-weight="700" fill="#2b5d8a" text-anchor="middle">access.scope(actor, invoice.read, 'invoice')</text>
+  <text x="714" y="145" font-size="13" fill="#1f2328" text-anchor="middle">{ kind: 'filter', filter: { tenantId: 'acme' } }</text>
+  <line x1="714" y1="162" x2="714" y2="188" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="516" y="190" width="396" height="58" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="714" y="213" font-size="14" font-weight="700" fill="#7a4f9a" text-anchor="middle">invoices.search(scope, page)</text>
+  <text x="714" y="233" font-size="13" fill="#1f2328" text-anchor="middle">WHERE tenant_id = 'acme' LIMIT 20</text>
+  <line x1="714" y1="250" x2="714" y2="276" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="516" y="278" width="396" height="58" rx="10" fill="#ffffff" stroke="#3d4449" stroke-width="2"/>
+  <text x="714" y="301" font-size="14" font-weight="700" fill="#1f2328" text-anchor="middle">page 1: 20 rows, and the right total</text>
+  <text x="714" y="321" font-size="13" fill="#1f2328" text-anchor="middle">the database filters, then pages</text>
+  <text x="32" y="392" font-size="16" font-weight="700" fill="#1f2328">What the read port adds, for each kind of AccessScope</text>
+  <rect x="24" y="406" width="214" height="74" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="131" y="428" font-size="14" font-weight="700" fill="#7a4f9a" text-anchor="middle">{ kind: 'all' }</text>
+  <text x="131" y="448" font-size="13" fill="#5f6b73" text-anchor="middle">RBAC, the role grants it</text>
+  <text x="131" y="468" font-size="13" fill="#1f2328" text-anchor="middle">adds nothing</text>
+  <rect x="256" y="406" width="214" height="74" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="363" y="428" font-size="14" font-weight="700" fill="#7a4f9a" text-anchor="middle">{ kind: 'none' }</text>
+  <text x="363" y="448" font-size="13" fill="#5f6b73" text-anchor="middle">anonymous, or no right</text>
+  <text x="363" y="468" font-size="13" fill="#1f2328" text-anchor="middle">no query: an empty page</text>
+  <rect x="488" y="406" width="214" height="74" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="595" y="428" font-size="14" font-weight="700" fill="#7a4f9a" text-anchor="middle">{ kind: 'filter' }</text>
+  <text x="595" y="448" font-size="13" fill="#5f6b73" text-anchor="middle">RBAC with the tenant check</text>
+  <text x="595" y="468" font-size="13" fill="#1f2328" text-anchor="middle">WHERE tenant_id = ...</text>
+  <rect x="720" y="406" width="214" height="74" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="827" y="428" font-size="14" font-weight="700" fill="#7a4f9a" text-anchor="middle">{ kind: 'ids' }</text>
+  <text x="827" y="448" font-size="13" fill="#5f6b73" text-anchor="middle">ReBAC, reverse expansion</text>
+  <text x="827" y="468" font-size="13" fill="#1f2328" text-anchor="middle">WHERE id IN (...)</text>
+  <text x="32" y="506" font-size="13" fill="#1f2328">PolicyBasedAuthorizer has no listAccessible: access.scope throws ListingNotSupportedError rather than guess.</text>
+</svg>

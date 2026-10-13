@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 470" width="960" height="470" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Les trois états d'un disjoncteur</title>
+  <desc id="desc">Un circuit commence fermé : chaque appel passe et les échecs consécutifs sont comptés. Après failureThreshold échecs consécutifs, il s'ouvre : chaque appel est refusé aussitôt avec CircuitOpenError, code CIRCUIT_OPEN. Une fois resetAfterMs écoulé, l'appel suivant le trouve semi-ouvert : jusqu'à halfOpenMax appels d'essai passent, les autres sont refusés. Un appel d'essai qui répond ferme le circuit ; un appel d'essai qui échoue le rouvre. La jauge circuit_breaker_state vaut 0 fermé, 1 semi-ouvert, 2 ouvert.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="470" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Les trois états d'un disjoncteur</text>
+
+  <!-- closed -->
+  <rect x="60" y="80" width="250" height="120" rx="12" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="185" y="110" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">fermé</text>
+  <line x1="76" y1="122" x2="294" y2="122" stroke="#7a4f9a" stroke-opacity="0.35"/>
+  <g font-size="13" fill="#1f2328" text-anchor="middle">
+    <text x="185" y="144">chaque appel passe</text>
+    <text x="185" y="164">échecs consécutifs comptés</text>
+    <text x="185" y="188" fill="#5f6b73">jauge 0</text>
+  </g>
+
+  <!-- open -->
+  <rect x="650" y="80" width="250" height="120" rx="12" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="3"/>
+  <text x="775" y="110" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">ouvert</text>
+  <line x1="666" y1="122" x2="884" y2="122" stroke="#7a4f9a" stroke-opacity="0.35"/>
+  <g font-size="13" fill="#1f2328" text-anchor="middle">
+    <text x="775" y="144">chaque appel refusé aussitôt :</text>
+    <text x="775" y="164">CircuitOpenError (CIRCUIT_OPEN)</text>
+    <text x="775" y="188" fill="#5f6b73">jauge 2</text>
+  </g>
+
+  <!-- half-open -->
+  <rect x="355" y="290" width="250" height="120" rx="12" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="480" y="320" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">semi-ouvert</text>
+  <line x1="371" y1="332" x2="589" y2="332" stroke="#7a4f9a" stroke-opacity="0.35"/>
+  <g font-size="13" fill="#1f2328" text-anchor="middle">
+    <text x="480" y="354">halfOpenMax appels d'essai (1)</text>
+    <text x="480" y="374">passent, les autres sont refusés</text>
+    <text x="480" y="398" fill="#5f6b73">jauge 1</text>
+  </g>
+
+  <!-- transitions -->
+  <line x1="312" y1="140" x2="646" y2="140" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="479" y="130" font-size="13" fill="#1f2328" text-anchor="middle">failureThreshold échecs consécutifs</text>
+  <path d="M800,202 V350 H609" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="812" y="262" font-size="13" fill="#1f2328">resetAfterMs écoulé :</text>
+  <text x="812" y="280" font-size="13" fill="#1f2328">l'appel suivant le</text>
+  <text x="812" y="298" font-size="13" fill="#1f2328">trouve semi-ouvert</text>
+  <path d="M520,288 V244 H700 V206" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="610" y="236" font-size="13" fill="#1f2328" text-anchor="middle">un appel d'essai échoue</text>
+  <path d="M353,350 H185 V206" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="197" y="262" font-size="13" fill="#1f2328">un appel d'essai répond</text>
+
+  <text x="32" y="438" font-size="13" fill="#1f2328">Une DomainError n'est pas un échec : la dépendance a répondu. Un circuit par instance et par méthode (scope: 'instance' en partage un).</text>
+  <text x="32" y="458" font-size="13" fill="#1f2328">onStateChange est informé de chaque transition ; circuitStateGauge() publie l'état dans la jauge circuit_breaker_state.</text>
+</svg>

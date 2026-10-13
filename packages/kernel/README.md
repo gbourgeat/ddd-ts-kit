@@ -3,12 +3,26 @@
 # @ddd-ts-kit/kernel
 
 The building blocks every context depends on, and nothing else: no framework, no ORM, no
-logger, no dependency at all. `domain/` and `application/` may import it; it is the only package
-of the kit they may import.
+logger, no dependency at all. It is the only package of the kit `domain/` may import;
+`application/` imports it too, and `@ddd-ts-kit/auth` next to it for permissions and policies.
 
 ```
 npm i @ddd-ts-kit/kernel
 ```
+
+Two entries: `@ddd-ts-kit/kernel` (the building blocks, the ports, the standard interfaces and
+their doubles) and `@ddd-ts-kit/kernel/declarations` (the decorators with which a class says
+what it is, see "Declarations").
+
+![The domain and the application of a bounded context import the kernel; the kernel declares the ports as abstract classes; its own doubles, the adapter packages of the kit and the infrastructure of the context implement them; the platform binds one implementation to each port at start-up](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/kernel-ports-and-implementations.svg)
+
+The kernel says **what** a context needs (a `Clock`, a `UnitOfWork`, a `Logger`) and never
+**how**: every port is an abstract class with abstract members only. Its implementations live
+elsewhere: the doubles and in-process versions of the kernel itself for tests and a single
+process, the adapter packages of the kit (`@ddd-ts-kit/pino`, `@ddd-ts-kit/redis`,
+`@ddd-ts-kit/s3`, the ORM packages, ...) for production, and the `infrastructure/` of each
+context for its own repositories and gateways. The platform chooses one per port when it
+starts, so a business rule never changes with a library.
 
 ## What is inside
 
@@ -19,16 +33,159 @@ npm i @ddd-ts-kit/kernel
 | Buses | `Command`, `Query`, `CommandBus`, `QueryBus`, `BusMiddleware`, the in-process `InMemoryCommandBus` and `InMemoryQueryBus` (`register(type, handler, { context })` names the bounded context in `MessageInfo`), `unitOfWorkMiddleware` |
 | Events | `IntegrationEvent`, `IntegrationEventPublisher`, `IntegrationEventSubscriber`, `EventBus` (both at once), `EventSubscribers` (the subscriber of each bounded context), `ProcessedEventStore`, `idempotent`, `InMemoryEventBus`, `DomainEventDispatcher`, `IntegrationEventCallback` and `DomainEventCallback` (the functions a subscriber and a dispatcher are given), `executionContextOfEvent`, `inEventScope`, `scopedPublisher`, `EventDelivery` (what a provider says of one delivery: attempt, last attempt, transport, source, consumer), `messagingSystemOf` |
 | Domain events and the unit of work | `dispatchingOnSave` (the wrapper that makes a repository hand over what the aggregates it is given recorded), `announceDomainEvents`, `withinUnitOfWork` (what every `UnitOfWork.run` is built on: queue, dispatch before the commit, `after-commit` phase), `unitOfWorkStage` and `UnitOfWorkStage`, `DomainEventPhase`, `DomainEventSubscription`, `SaveAfterCommitError`, `AfterCommitFailure`, `reportAfterCommitFailures`, `InMemoryDomainEventDispatcher` |
-| Actor | `Actor`, `AuthorizedCommand`, `AuthorizedQuery`, `ActorContext` |
+| State machines | `defineStateMachine`, `StateMachine`, `TransitionError`, `InvalidStateMachineError`, `mermaidOfStateMachine` (see "State machines") |
+| Actor | `Actor`, `AuthorizedCommand`, `AuthorizedQuery`, `ActorContext`, `systemActor` |
 | Standard interfaces | `Session`, `ExecutionContext` and `ExecutionScope`, `Logger`, `Metrics`, `ErrorReporter`, `Cache`, `CacheInvalidation` and `CachePurger` (with `cacheTag`, `tenantCacheTags`, `CachePurgeRequest`, `PublishedCacheInvalidation`, `PurgingPublisher`, `RepeatedCachePurger`: see "Purging the HTTP caches"), `Lock`, `RateLimiter`, `Page` and `PageRequest`, `AuditStamp`, `TenantScoped`, `AuditTrail`, `AuditReader` and `AuditEntry` |
 | Scheduled jobs | `JobScheduler`, `ScheduledJob`, `JobExecution`, `JobSchedule`, `JobOptions`, `JobDefinition`, `JobRun`, `JobDescription`, `parseJobSchedule`, `describeJobSchedule`, `jobPolicy`, `executionContextOfJob` |
+| Background jobs | `JobQueue`, `BackgroundJob`, `BackgroundJobExecution`, `EnqueueOptions`, `QueuedJob`, `QueuedJobStatus`, `backgroundJobPolicy`, `retryDelayMs`, `executionContextOfBackgroundJob`, `whenCommitted` (see "JobQueue") |
+| Process managers | `ProcessManager`, `ProcessDecision`, `ProcessRunner`, `ProcessStore`, `InMemoryProcessStore`, `UnreadableProcessStateError` (see "ProcessRunner and ProcessStore") |
+| Files | `FileStorage`, `StoredFile`, `FileScanner`, `FileKeys`, `TenantFileKeys`, `FileStaging`, `FileUpload`, `fileUploadsMiddleware`, `FileInspection`, `FileError`, `InMemoryFileStorage`, `LocalFileStorage`, `PurgeStagedFiles` (see "FileStorage, StoredFile, FileScanner") |
+| Tenancy | `tenantScopeOf`, `tenantReachOf`, `acrossTenants`, `tenantKey`, `tenantCacheKey`, `isTenantId`, `TenantDirectory`, `InMemoryTenantDirectory` (see "Tenancy") |
+| Event sourcing | `EventSourcedAggregate`, `EventStore`, `defineStoredEvent`, `EventSerializer`, `EventSourcedRepository`, `SnapshotPolicy`, `personalData`, `PersonalDataCipher`, `CatchUpSubscription`, `EventStoreProjectionRebuild`, `InMemoryEventStore`, `PostgresEventStore` (see "Event sourcing") |
 | Read side | `Criteria`, `defineCriteria`, `validateCriteria`, `scoped`, `planCriteria`, `evaluateCriteria`, `pageOfPlan`, `hydrate`, `ReadModelStore`, `stampOf`, `TableReadModelStore`, `ProjectionRebuild`, `InMemoryReadModelStore` (see "Criteria", "Hydration" and "Projections") |
 | Persistence helpers | `optimisticUpdate`, `expectVersion` (the version a caller read, `If-Match` over HTTP, still the current one, else `PreconditionFailedError`: 412), `schemaNameOf`, `stampCreation`, `stampUpdate`, `tenantScopeOf`, `encodeCursor`, `decodeCursor` |
 | Error reporting | `ErrorReporter`, `ErrorReport`, `errorReportOf`, `reportOnce`, `isUnexpectedError`, `errorReportingMiddleware`, `DeadLetterReports`, `reportProcessFailures`, `NoopErrorReporter` |
 | Doubles | `FixedClock`, `SequentialIdGenerator`, `InMemoryUnitOfWork`, `FixedActorContext`, `FixedExecutionScope`, `InMemoryLogger`, `InMemoryMetrics`, `InMemoryErrorReporter`, `InMemoryCache`, `InMemoryCacheInvalidation`, `InMemoryCachePurger`, `InMemoryLock`, `InMemoryRateLimiter` |
-| Declarations (`@ddd-ts-kit/kernel/declarations`) | `Requires`, `Public`, `CommandHandler`, `QueryHandler`, `IntegrationEventHandler`, `DomainEventHandler`, `Scheduled`, `Projection`, `On`, `Repository`, `Gateway`, `Adapter`, `Policy`, `injected`, `injectedDependencies`, `declarationOf`, `listDeclarations`, `Token`, `describeToken`, `tokenIdentity`, `portDefect` |
+| Declarations (`@ddd-ts-kit/kernel/declarations`) | `Requires`, `Public`, `CommandHandler`, `QueryHandler`, `IntegrationEventHandler`, `DomainEventHandler`, `Scheduled`, `Background`, `Projection`, `On`, `applyingProjection`, `Repository`, `Gateway`, `Adapter`, `Policy`, `Edge` (for the decorators of a transport package, such as `@Controller`), `injected`, `injectedDependencies`, `declarationOf`, `listDeclarations`, `DeclarationError`, `Token`, `describeToken`, `tokenIdentity`, `portDefect` |
 
 The rules these blocks serve are in `docs/ARCHITECTURE.md`.
+
+## A first aggregate
+
+The four building blocks of a model, in one file for the reading (a project gives each its own
+file, and `ddd-ts-kit generate` writes them):
+
+<!-- checked sample -->
+```ts
+import { AggregateRoot, ConceptError, Entity, ValueObject, type DomainEvent } from '@ddd-ts-kit/kernel';
+
+// The refusals of the concept, each a static factory (see "Domain errors").
+export class OrderError extends ConceptError {
+  static invalidQuantity(units: number) {
+    return OrderError.refusal('INVALID_QUANTITY', `${units} is not a positive whole quantity.`, { units });
+  }
+
+  static alreadyPlaced(orderId: string) {
+    return OrderError.refusal('ORDER_ALREADY_PLACED', `Order ${orderId} is already placed.`, { orderId });
+  }
+
+  static empty(orderId: string) {
+    return OrderError.refusal('ORDER_EMPTY', `Order ${orderId} has no line to place.`, { orderId });
+  }
+}
+
+// A value object: immutable, compared by value, valid once built.
+export class Quantity extends ValueObject<{ readonly units: number }> {
+  private constructor(props: { readonly units: number }) {
+    super(props);
+  }
+
+  static create(units: number): Quantity {
+    if (!Number.isInteger(units) || units <= 0) {
+      throw OrderError.invalidQuantity(units);
+    }
+
+    return new Quantity({ units });
+  }
+
+  get units(): number {
+    return this.props.units;
+  }
+}
+
+// An entity: known by its identity, reached only through its aggregate root.
+export class OrderLine extends Entity {
+  constructor(
+    productId: string,
+    readonly quantity: Quantity,
+  ) {
+    super(productId);
+  }
+}
+
+// A domain event: a fact of the past, named <context>.<aggregate>.<fact>.
+export class OrderPlaced implements DomainEvent {
+  static readonly eventName = 'ordering.order.placed';
+
+  readonly name = OrderPlaced.eventName;
+
+  constructor(
+    readonly aggregateId: string,
+    readonly occurredAt: Date,
+    readonly lineCount: number,
+  ) {}
+}
+
+// The aggregate root: the only way in, every rule checked by an intention method.
+export class Order extends AggregateRoot {
+  private readonly lines: OrderLine[] = [];
+  private placed = false;
+
+  private constructor(id: string) {
+    super(id);
+  }
+
+  static open(id: string): Order {
+    return new Order(id);
+  }
+
+  add(productId: string, quantity: Quantity): void {
+    if (this.placed) {
+      throw OrderError.alreadyPlaced(this.id);
+    }
+
+    this.lines.push(new OrderLine(productId, quantity));
+  }
+
+  place(now: Date): void {
+    if (this.placed) {
+      throw OrderError.alreadyPlaced(this.id);
+    }
+
+    if (this.lines.length === 0) {
+      throw OrderError.empty(this.id);
+    }
+
+    this.placed = true;
+    this.record(new OrderPlaced(this.id, now, this.lines.length));
+  }
+}
+
+// What a spec of the aggregate checks:
+const order = Order.open('o-1');
+order.add('p-7', Quantity.create(2));
+order.place(new Date('2026-01-05T09:00:00Z'));
+
+order.pullEvents(); // [OrderPlaced { aggregateId: 'o-1', lineCount: 1, ... }]
+Quantity.create(2).equals(Quantity.create(2)); // true: same value
+new OrderLine('p-7', Quantity.create(1)).equals(new OrderLine('p-7', Quantity.create(5))); // true: same identity
+```
+
+| Block | What the kernel gives it |
+|---|---|
+| `Entity<Id>` | `id` and `equals`: two entities are equal when their class and their id are |
+| `ValueObject<Props>` | frozen `props`, `equals` by value (dates by their time, lists and records deeply), `toJSON` |
+| `AggregateRoot<Id>` | an entity with `version`, the optimistic concurrency token its repository adapter manages, `record(event)` for its methods and `pullEvents()`. The recorded events are not enumerable: spreading, comparing or serialising an aggregate never sees them |
+| `DomainEvent` | an interface: `name`, `occurredAt`, `aggregateId` |
+
+Instead of changing the state from outside, where every caller has to remember the rule:
+
+```ts
+order.status = 'placed';                       // nothing checks that the order has lines
+events.push({ name: 'ordering.order.placed' }); // and nothing ties the fact to the change
+```
+
+write one intention method on the aggregate, which checks the rule and records the fact in the
+same move:
+
+```ts
+order.place(clock.now());
+```
+
+`Result`, `ok`, `err` and `unwrap` are for a project that has value objects answer their
+refusal instead of throwing it (`"stack.valueObjects": "result"`). Why each block exists:
+[Aggregates](../../docs/concepts/aggregates.md) and
+[Entities and value objects](../../docs/concepts/entities-and-value-objects.md).
 
 ## Domain errors
 
@@ -72,6 +229,22 @@ throw AppointmentError.slotTaken(calendar.id, slot.startsAt);
 | `exposedFacts` | the facts a client may read: what `@ddd-ts-kit/http` writes under `facts` in the problem document |
 | `toJSON()` | `{ name, code, message }`, plus `facts` when some are exposed: never the stack, the cause or a private fact |
 | `static is(error, code?)` | narrows what was caught to a refusal of this class, of this code when one is given |
+
+Instead of a bare `Error`, which nothing downstream can tell from a bug:
+
+```ts
+throw new Error(`Slot ${startsAt.toISOString()} is taken`); // reported as unexpected, answered as a 500
+```
+
+write the refusal of the concept, which every layer knows by its code:
+
+```ts
+throw AppointmentError.slotTaken(calendar.id, slot.startsAt); // a planned answer: a 4xx with code SLOT_TAKEN
+```
+
+The HTTP status of each code is chosen in the presentation layer, in one place; the error
+logs, the spans and the audit trail record the `code`, and the error reporter leaves a
+`DomainError` alone (the two exceptions are under "ErrorReporter").
 
 The codes of a class are a closed vocabulary the compiler derives from its factories, so a
 `switch` is exhaustive and each case knows its facts:
@@ -123,19 +296,84 @@ second. Both forms can live in one project.
 
 ## State machines
 
+<!-- checked sample -->
 ```ts
+import { AggregateRoot, ConceptError, defineStateMachine } from '@ddd-ts-kit/kernel';
+
+// domain/vocabularies/parcel-status.vocabulary.ts
+export const ParcelStatus = { Registered: 'registered', Shipped: 'shipped', Delivered: 'delivered' } as const;
+export type ParcelStatus = (typeof ParcelStatus)[keyof typeof ParcelStatus];
+
+// domain/errors/parcel.error.ts
+export class ParcelError extends ConceptError {
+  static unpaid(parcelId: string) {
+    return ParcelError.refusal('PARCEL_UNPAID', `Parcel ${parcelId} is not paid yet.`, { parcelId });
+  }
+
+  static cannot(parcelId: string, from: ParcelStatus, transition: string) {
+    return ParcelError.refusal('PARCEL_TRANSITION_REFUSED', `Parcel ${parcelId} cannot ${transition} once ${from}.`, {
+      parcelId,
+      from,
+      transition,
+    });
+  }
+}
+
+// What the transitions are judged with: the aggregate hands it to `next`.
+interface ParcelMoment {
+  readonly parcelId: string;
+  readonly paid: boolean;
+}
+
+// domain/state-machines/parcel.state-machine.ts
 export const parcelLifecycle = defineStateMachine({
   states: Object.values(ParcelStatus),
   initial: [ParcelStatus.Registered],
   transitions: {
-    ship: { from: [ParcelStatus.Registered], to: ParcelStatus.Shipped, guard: ({ paid }) => (paid ? undefined : ParcelError.unpaid()) },
+    ship: {
+      from: [ParcelStatus.Registered],
+      to: ParcelStatus.Shipped,
+      guard: ({ parcelId, paid }: ParcelMoment) => (paid ? undefined : ParcelError.unpaid(parcelId)),
+    },
     reroute: { from: [ParcelStatus.Shipped] },
     deliver: { from: [ParcelStatus.Shipped], to: ParcelStatus.Delivered },
   },
-  refused: ({ from, transition }) => ParcelError.cannot(from, transition),
+  refused: ({ from, transition }, { parcelId }: ParcelMoment) => ParcelError.cannot(parcelId, from, transition),
 });
 
-this.state = { ...this.state, status: parcelLifecycle.next(this.state.status, 'ship', { paid }) };
+// domain/aggregates/parcel.aggregate.ts: the aggregate asks the machine, never tests its status by hand
+export class Parcel extends AggregateRoot {
+  private status: ParcelStatus = parcelLifecycle.start(ParcelStatus.Registered);
+
+  private constructor(
+    id: string,
+    private readonly paid: boolean,
+  ) {
+    super(id);
+  }
+
+  static register(id: string, paid: boolean): Parcel {
+    return new Parcel(id, paid);
+  }
+
+  ship(): void {
+    this.status = parcelLifecycle.next(this.status, 'ship', this.moment());
+  }
+
+  deliver(): void {
+    this.status = parcelLifecycle.next(this.status, 'deliver', this.moment());
+  }
+
+  private moment(): ParcelMoment {
+    return { parcelId: this.id, paid: this.paid };
+  }
+}
+
+Parcel.register('p-1', false).ship(); // throws PARCEL_UNPAID: the guard refused
+Parcel.register('p-2', true).deliver(); // throws PARCEL_TRANSITION_REFUSED: registered cannot deliver
+
+parcelLifecycle.allowedFrom(ParcelStatus.Shipped); // ['reroute', 'deliver']
+parcelLifecycle.isFinal(ParcelStatus.Delivered); // true
 ```
 
 The lifecycle of an aggregate, in `domain/state-machines/<aggregate>.state-machine.ts`.
@@ -151,6 +389,8 @@ loads. Why, and the rule that holds the aggregate to it:
 ## Domain events and the unit of work
 
 An effect of a domain event exists only if the state change that recorded it is committed.
+
+![A timeline of one unit of work: the transaction begins, two saves each queue the event their cart recorded, the work returns and the before-commit handlers run in recording order and see both saves, the transaction commits, the after-commit handlers run, then the command answers; a failure before the commit rolls everything back and drops the queued events](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/kernel-unit-of-work-timeline.svg)
 
 An aggregate records its events; nothing in a use case hands them over. A repository wrapped
 by `dispatchingOnSave(repository, () => dispatcher)` pulls them itself, once a method that was
@@ -179,6 +419,73 @@ failures, wrapper order) is in the README of that package. In short:
   events are then dropped and never put back on the aggregates: a retry reloads them.
 - Outside any unit of work the save dispatches before it resolves, `before-commit` handlers
   then `after-commit` ones.
+
+The whole timeline, with the doubles of the kernel and nothing else, as a spec would set it up:
+
+<!-- checked sample -->
+```ts
+import {
+  AggregateRoot,
+  InMemoryDomainEventDispatcher,
+  InMemoryUnitOfWork,
+  dispatchingOnSave,
+  type DomainEvent,
+} from '@ddd-ts-kit/kernel';
+
+class CartOpened implements DomainEvent {
+  static readonly eventName = 'shop.cart.opened';
+
+  readonly name = CartOpened.eventName;
+
+  constructor(
+    readonly aggregateId: string,
+    readonly occurredAt: Date,
+  ) {}
+}
+
+class Cart extends AggregateRoot {
+  static open(id: string, now: Date): Cart {
+    const cart = new Cart(id);
+
+    cart.record(new CartOpened(id, now));
+
+    return cart;
+  }
+}
+
+class InMemoryCarts {
+  readonly saved: string[] = [];
+
+  async save(cart: Cart): Promise<void> {
+    this.saved.push(cart.id);
+  }
+}
+
+const journal: string[] = [];
+const dispatcher = new InMemoryDomainEventDispatcher();
+const carts = dispatchingOnSave(new InMemoryCarts(), () => dispatcher);
+const unitOfWork = new InMemoryUnitOfWork();
+
+dispatcher.on(CartOpened.eventName, async (event) => {
+  journal.push(`before-commit ${event.aggregateId} sees ${carts.saved.join(' and ')}`);
+});
+dispatcher.on(CartOpened.eventName, async (event) => void journal.push(`after-commit ${event.aggregateId}`), {
+  phase: 'after-commit',
+});
+
+const now = new Date('2026-01-05T09:00:00Z');
+
+await unitOfWork.run(async () => {
+  await carts.save(Cart.open('c1', now));
+  journal.push('saved c1');
+  await carts.save(Cart.open('c2', now));
+  journal.push('saved c2');
+});
+
+// journal: saved c1, saved c2,
+//          before-commit c1 sees c1 and c2, before-commit c2 sees c1 and c2,
+//          after-commit c1, after-commit c2
+```
 
 `pullEvents()` stays public for this wrapper and for the specs of an aggregate; a use case and
 a repository adapter never call it. An aggregate is recognised by what it does (it has
@@ -323,6 +630,43 @@ private or protected member. A port may extend another port. An adapter `impleme
 and never `extends` it. The type stays structural, so a fake, an in-memory class or a plain
 object literal stands for a port without ceremony.
 
+<!-- checked sample -->
+```ts
+import { Clock } from '@ddd-ts-kit/kernel';
+import { Adapter } from '@ddd-ts-kit/kernel/declarations';
+
+interface Money {
+  readonly amount: string;
+  readonly currency: string;
+}
+
+interface PaymentReceipt {
+  readonly reference: string;
+  readonly paidAt: Date;
+}
+
+// application/ports/payment-gateway.port.ts: abstract members only
+export abstract class PaymentGateway {
+  abstract charge(orderId: string, amount: Money): Promise<PaymentReceipt>;
+}
+
+// infrastructure/external/http-payment-gateway.adapter.ts: implements its port, never extends it
+@Adapter(PaymentGateway, { kind: 'external' })
+export class HttpPaymentGateway implements PaymentGateway {
+  constructor(private readonly clock: Clock) {}
+
+  async charge(orderId: string, amount: Money): Promise<PaymentReceipt> {
+    // the call to the payment provider goes here
+    return { reference: `${orderId}:${amount.amount}:${amount.currency}`, paidAt: this.clock.now() };
+  }
+}
+
+// test/fakes: a plain object is a PaymentGateway, since the type is structural
+export const acceptingGateway: PaymentGateway = {
+  charge: async (orderId) => ({ reference: `fake-${orderId}`, paidAt: new Date('2026-01-05T09:00:00Z') }),
+};
+```
+
 **`Repository<A, Id>`** is the contract every repository shares (`findById`, `save`), as an
 abstract class. The repository port of an aggregate extends it and adds its own finders, as
 `OrderRepository` above; the adapter implements that port.
@@ -347,7 +691,20 @@ builder.bind(Database).toValue({ client: knex });
 builder.bind(PaymentSettings).toValue({ apiKey: configuration.paymentApiKey });
 ```
 
-That is the one way: no string token, no symbol token, no helper.
+That is the one way: no string token, no symbol token, no helper. Instead of a token next to
+the type, two names to keep in step:
+
+```ts
+export const PAYMENT_GATEWAY = Symbol('PaymentGateway');
+
+constructor(@Inject(PAYMENT_GATEWAY) private readonly payments: PaymentGateway) {}
+```
+
+write the type alone, which is the token:
+
+```ts
+constructor(private readonly payments: PaymentGateway) {}
+```
 
 **Identity across copies.** A class is its own identity, and two copies of a package loaded in
 one process (a duplicated install, a bundle next to `node_modules`) hold two classes. A port
@@ -395,17 +752,46 @@ constructor parameter is typed by one class, its token, and `ddd-ts-kit docs` re
 signatures from the sources into the generated file of the context, which registers them with
 `injected`:
 
+<!-- checked sample -->
 ```ts
+import { AggregateRoot, Clock, Command, Repository } from '@ddd-ts-kit/kernel';
+import { CommandHandler, injected, injectedDependencies } from '@ddd-ts-kit/kernel/declarations';
+
+declare class Order extends AggregateRoot {
+  static place(id: string, customerId: string, now: Date): Order;
+}
+
+export abstract class OrderRepository extends Repository<Order> {}
+
+export class PlaceOrder extends Command<string> {
+  constructor(
+    readonly orderId: string,
+    readonly customerId: string,
+  ) {
+    super();
+  }
+}
+
 @CommandHandler(PlaceOrder)
 export class PlaceOrderHandler implements CommandHandler<PlaceOrder> {
   constructor(
     private readonly orders: OrderRepository,
     private readonly clock: Clock,
   ) {}
+
+  async execute(command: PlaceOrder): Promise<string> {
+    const order = Order.place(command.orderId, command.customerId, this.clock.now());
+
+    await this.orders.save(order);
+
+    return order.id;
+  }
 }
 
 // contexts/ordering/ordering.declarations.ts, generated
 injected(PlaceOrderHandler, [OrderRepository, Clock]);
+
+injectedDependencies(PlaceOrderHandler); // [OrderRepository, Clock]: what a container builds the handler with
 ```
 
 `injected(Class, [Tokens])` records one token per constructor parameter, in order, in a
@@ -465,9 +851,9 @@ left alone.
   the decorator only says who may send it. `@Requires` is refused by the compiler on a message
   without an actor. `audited` lists the fields an audit trail may record (a name, or
   `{ field, masked: true }`), as plain data; the compiler checks that the message has them.
-- **Dependencies are a list of ports**, checked against the constructor as said above. The
-  list is left out for a constructor without parameters. There is no parameter decorator and
-  no reflection.
+- **Dependencies are said by the constructor**, as above. A list written as the last argument
+  of a decorator, the form of 0.1, names one port per parameter and is checked against the
+  constructor. There is no parameter decorator and no reflection.
 - **The role is checked too**: a handler of another message or of another result, an event
   handler of another payload, a job without `run` are refused by the compiler.
 - **Options of a repository, a gateway and an adapter**: `transient: true` (one instance per
@@ -625,8 +1011,10 @@ what it received as a principal.
 
 What every unit of work carries, whatever started it: `correlationId`, `causationId?`, `actor`,
 `session?`, `tenantId?`, `elevation?` (platform staff reading over tenants, see "Tenancy"),
-`locale?`, `deadline?`, `scheduledAt?` (for a scheduled job, the instant it was due), `origin` (`http`, `event`, `schedule`, `cli`, or a string of the project) and `extensions`. `executionContext(init)` builds one and takes the tenant
-of the actor; `withActor(context, actor)` is the same work seen as another actor.
+`locale?`, `deadline?`, `scheduledAt?` (for a scheduled job, the instant it was due), `origin`
+(`http`, `event`, `schedule`, `queue` for a background job, `cli`, or a string of the project)
+and `extensions`. `executionContext(init)` builds one and takes the tenant of the actor;
+`withActor(context, actor)` is the same work seen as another actor.
 
 `ExecutionScope` (`current()`, `require()`, `run(context, work)`) gives the context of the work
 in progress to code that is not handed it. The boundary sets it once:
@@ -641,9 +1029,51 @@ scope.run(executionContext({ correlationId, actor, session, origin: 'http' }), (
 const row = { ...toRow(order), ...stampCreation(scope, clock), ...tenantScopeOf(scope) };
 ```
 
+Both ends, with the implementation that follows the asynchronous call chain:
+
+<!-- checked sample -->
+```ts
+import {
+  AsyncLocalStorageExecutionScope,
+  FixedClock,
+  executionContext,
+  stampCreation,
+  tenantScopeOf,
+  type Actor,
+} from '@ddd-ts-kit/kernel';
+
+const scope = new AsyncLocalStorageExecutionScope();
+const clock = new FixedClock(new Date('2026-01-05T09:00:00Z'));
+const actor: Actor = { id: 'u-42', type: 'user', tenantId: 'acme', roles: ['agent'], attributes: {} };
+
+// the boundary: set once for the request
+await scope.run(executionContext({ correlationId: 'req-7f3a', actor, origin: 'http' }), async () => {
+  // ...the command goes through the bus to its handler, which saves; in the repository adapter:
+  const row = { id: 'o-1', ...stampCreation(scope, clock), ...tenantScopeOf(scope) };
+  // { id: 'o-1', createdAt, createdBy: 'u-42', updatedAt, updatedBy: 'u-42', tenantId: 'acme' }
+  return row;
+});
+```
+
 Use cases and the domain never read the scope: they receive the actor, and anything else they
 need, in the command or query (`authz/actor-explicit`). The scope is for loggers, audit columns,
-tenant scoping and outgoing headers.
+tenant scoping and outgoing headers. Instead of a handler that asks the scope who acts, a
+dependency its signature hides:
+
+```ts
+const actor = this.scope.require().actor;
+```
+
+write a command that carries its actor, the first argument of an `AuthorizedCommand`, and read
+`command.actor` in the handler:
+
+```ts
+export class CancelOrder extends AuthorizedCommand {
+  constructor(actor: Actor, readonly orderId: string) {
+    super(actor);
+  }
+}
+```
 
 A consumed event opens its own context: `executionContextOfEvent(event, { consumer })` has
 origin `event`, the correlation of the event (its id when it names none), the event as
@@ -674,7 +1104,7 @@ log.
 
 **Errors are log values.** `LogValue` admits an `Error`, so
 `logger.error('payment failed', { error })` compiles as it is, and a project may name the key
-once (`interface LogFields { error?: Error }`, see "Extending"). An `Error` directly under a
+once (`interface LogFields { error?: Error }`, see "How to extend"). An `Error` directly under a
 key of the fields is written by every logger as `describeError(error)` describes it, an
 `ErrorDescription`:
 
@@ -758,11 +1188,25 @@ and tenant ids come from the execution context, never threaded by hand.
 
 ### Cache
 
+<!-- checked sample -->
 ```ts
+import { FixedClock, InMemoryCache, cacheKey } from '@ddd-ts-kit/kernel';
+
+interface Quote {
+  readonly pair: string;
+  readonly rate: string;
+}
+
 const quoteKey = (pair: string) => cacheKey<Quote>('quote', pair);
 
-await cache.set(quoteKey('EUR-USD'), quote, { ttlMs: 60_000 });
-const hit: Quote | undefined = await cache.get(quoteKey('EUR-USD'));
+const clock = new FixedClock(new Date('2026-01-05T09:00:00Z'));
+const cache = new InMemoryCache(clock, { maxEntries: 500 });
+
+await cache.set(quoteKey('EUR-USD'), { pair: 'EUR-USD', rate: '1.0842' }, { ttlMs: 60_000 });
+const hit: Quote | undefined = await cache.get(quoteKey('EUR-USD')); // the quote, typed by its key
+
+clock.advance(60_000);
+await cache.get(quoteKey('EUR-USD')); // undefined: expired, by the clock
 ```
 
 The key carries the type of its value. `InMemoryCache(clock, { maxEntries? })` expires by the
@@ -795,15 +1239,24 @@ and reached the cache after the first purge; the second purge is best effort, re
 
 ### Lock
 
+<!-- checked sample -->
 ```ts
-const handle = await lock.acquire('nightly-export', { ttlMs: 60_000, waitMs: 0 });
-if (handle === undefined) { // somebody else holds the key
-  return;
-}
-try {
-  await exportEverything();
-} finally {
-  await handle.release();
+import type { Lock } from '@ddd-ts-kit/kernel';
+
+declare function exportEverything(): Promise<void>;
+
+export async function nightlyExport(lock: Lock): Promise<void> {
+  const handle = await lock.acquire('nightly-export', { ttlMs: 60_000, waitMs: 0 });
+
+  if (handle === undefined) { // somebody else holds the key
+    return;
+  }
+
+  try {
+    await exportEverything();
+  } finally {
+    await handle.release();
+  }
 }
 ```
 
@@ -883,8 +1336,9 @@ Connectors: `InMemoryFileStorage` for the tests (`keys()` lists what it holds) a
 their signed links point at the application, which answers them with `signedFileRoutes` of
 `@ddd-ts-kit/http`. The object store connector is `@ddd-ts-kit/s3`. Each passes
 `fileStorageContract` of `@ddd-ts-kit/testing/contracts`. Background import and export (row by
-row validation, an error report, resumption) needs a job queue the kit does not have yet: the
-ports are ready for it, see `docs/concepts/file-storage.md`.
+row validation, an error report, resumption) is a design built on these ports and the job queue
+(see "JobQueue"), not a feature of this version:
+[File import and export](../../docs/concepts/file-import-export.md).
 
 ### JobScheduler
 
@@ -970,10 +1424,24 @@ the instances as JSON, for tests and one process. The runner is `StoredProcessRu
 
 ### RateLimiter
 
+<!-- checked sample -->
 ```ts
-const decision = await limiter.consume(`password-reset:${accountId}`, { limit: 3, windowMs: 3_600_000 });
-if (!decision.allowed) {
-  throw new TooManyAttempts(decision.retryAfterMs);
+import { ConceptError, type RateLimiter } from '@ddd-ts-kit/kernel';
+
+export class PasswordResetError extends ConceptError {
+  static tooManyAttempts(retryAfterMs: number) {
+    return PasswordResetError.refusal('TOO_MANY_RESET_ATTEMPTS', 'Too many password resets: try again later.', {
+      retryAfterMs,
+    }).exposing('retryAfterMs');
+  }
+}
+
+export async function allowReset(limiter: RateLimiter, accountId: string): Promise<void> {
+  const decision = await limiter.consume(`password-reset:${accountId}`, { limit: 3, windowMs: 3_600_000 });
+
+  if (!decision.allowed) {
+    throw PasswordResetError.tooManyAttempts(decision.retryAfterMs);
+  }
 }
 ```
 
@@ -1013,10 +1481,15 @@ case or a guard), then calls `acrossTenants`. A trail that fails to record it re
 
 One shape for every search, in two variants:
 
+<!-- checked sample -->
 ```ts
+import { cursorPage, offsetPage } from '@ddd-ts-kit/kernel';
+
+declare const cursor: string; // the nextCursor of the previous page
+
 offsetPage({ offset: 40, limit: 20, sort: [{ field: 'placedAt', direction: 'desc' }] });
 cursorPage({ cursor, limit: 50 });
-// both answer a Page<T>: { items, total?, nextCursor? }
+// both build a PageRequest; the search answers a Page<T>: { items, total?, nextCursor? }
 ```
 
 A cursor is opaque to the client and plain to the reader: `encodeCursor(position)` writes the
@@ -1132,6 +1605,11 @@ const scope = await this.access.scope(query.actor, permissions['appointment.read
 return this.appointments.search(scoped(criteria, scope, { ids: 'id', filter: { tenantId: 'tenantId' } }));
 ```
 
+From the handler to the store, a criteria is checked twice, and the scope of the actor travels
+with it:
+
+![The path of a criteria: in the application, the query handler builds it and the compiler checks it, scoped joins the access scope by AND, the read port receives the scoped criteria; in the infrastructure, planCriteria validates it against the definition, the plan is rendered by a translator of an ORM package or evaluated in memory by a fake, and pageOfPlan turns the rows into the page the handler answers](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/kernel-criteria-path.svg)
+
 **Checked by the compiler.** `where` takes a field of the row, an operator that applies to
 what the field holds, and a value of its type: `where('seats', 'contains', '2')`, an order on
 a boolean, `isNull` on a field that is never null, a value outside a union of literals and a
@@ -1206,6 +1684,50 @@ the restriction, and so does a mapped field the definition does not declare. The
 scope need no operator in the definition: the read port chose them, not the caller. The scope
 is the shape `AccessScope` of `@ddd-ts-kit/auth`, named `ReadScope` here so that the kernel
 depends on no authorization model.
+
+What that means on four rows, run in memory with the reference semantics:
+
+<!-- checked sample -->
+```ts
+import { Criteria, defineCriteria, evaluateCriteria, scoped } from '@ddd-ts-kit/kernel';
+
+interface BookingRow {
+  readonly id: string;
+  readonly room: string | null;
+  readonly tenantId: string;
+}
+
+const bookings = defineCriteria<BookingRow>({
+  fields: {
+    id: { type: 'string' },
+    room: { type: 'string', filter: ['eq'], nullable: true },
+    tenantId: { type: 'string' },
+  },
+  defaultSort: [{ field: 'id', direction: 'asc' }],
+  tieBreaker: 'id',
+});
+
+const rows: BookingRow[] = [
+  { id: 'a-1', room: 'A', tenantId: 'acme' },
+  { id: 'a-2', room: 'B', tenantId: 'acme' },
+  { id: 'a-3', room: null, tenantId: 'acme' },
+  { id: 'g-1', room: 'A', tenantId: 'globex' },
+];
+
+// `not` keeps the row without a room, where SQL alone would drop it
+evaluateCriteria(bookings, rows, Criteria.of<BookingRow>().not((all) => all.where('room', 'eq', 'B')));
+// items: a-1, a-3, g-1
+
+// an `or` the caller writes never widens the scope: the scope is joined to it by AND
+const anyRoom = Criteria.of<BookingRow>().or((any) => any.where('room', 'eq', 'A').where('room', 'eq', 'B'));
+const acmeOnly = { kind: 'filter', filter: { tenantId: 'acme' } } as const;
+evaluateCriteria(bookings, rows, scoped(anyRoom, acmeOnly, { filter: { tenantId: 'tenantId' } }));
+// items: a-1, a-2; g-1 belongs to another tenant
+
+// the caller cannot filter on tenantId itself: the field declares no operator
+evaluateCriteria(bookings, rows, Criteria.of<BookingRow>().where('tenantId', 'eq', 'globex'));
+// throws InvalidCriteriaError: filter.tenantId (operator_not_allowed)
+```
 
 ### For a store
 

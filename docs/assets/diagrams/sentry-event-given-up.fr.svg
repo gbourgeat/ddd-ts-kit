@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 470" width="960" height="470" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Un événement dont le gestionnaire échoue sans cesse est remonté une fois, quand il est abandonné</title>
+  <desc id="desc">Trois livraisons d'un événement au consommateur billing : la tentative 1, la tentative 2 après le délai de nouvelle tentative, et la dernière tentative. À chacune, le gestionnaire lève une exception, observing retient ce qu'il a levé, et le fournisseur appelle onFailure de DeadLetterReports. Tant que le fournisseur réessaie, onFailure ne remonte rien. À la dernière tentative, le fournisseur abandonne l'événement : onFailure apprend dead et remonte une fois à Sentry ou GlitchTip, avec l'erreur que le gestionnaire a réellement levée et sa pile, l'origine event, et l'opération nommée d'après le type de l'événement et le consommateur.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="470" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Un événement qui échoue sans cesse est remonté une fois, quand il est abandonné</text>
+
+  <!-- column 1 -->
+  <rect x="32" y="70" width="180" height="52" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="122" y="93" font-size="15" font-weight="700" fill="#7a4f9a" text-anchor="middle">tentative 1</text>
+  <text x="122" y="112" font-size="13" fill="#1f2328" text-anchor="middle">livré à billing</text>
+  <rect x="32" y="146" width="180" height="52" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="122" y="169" font-size="15" font-weight="700" fill="#2b5d8a" text-anchor="middle">le gestionnaire lève</text>
+  <text x="122" y="188" font-size="13" fill="#1f2328" text-anchor="middle">Error: ledger unavailable</text>
+  <rect x="32" y="222" width="180" height="52" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="122" y="245" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">observing</text>
+  <text x="122" y="264" font-size="13" fill="#1f2328" text-anchor="middle">retient l'erreur</text>
+  <rect x="32" y="298" width="180" height="52" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="5 4"/>
+  <text x="122" y="321" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">onFailure</text>
+  <text x="122" y="340" font-size="13" fill="#1f2328" text-anchor="middle">réessayé : aucun rapport</text>
+  <line x1="122" y1="124" x2="122" y2="142" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="122" y1="200" x2="122" y2="218" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="122" y1="276" x2="122" y2="294" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- column 2 -->
+  <rect x="248" y="70" width="180" height="52" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="338" y="93" font-size="15" font-weight="700" fill="#7a4f9a" text-anchor="middle">tentative 2</text>
+  <text x="338" y="112" font-size="13" fill="#1f2328" text-anchor="middle">après le délai prévu</text>
+  <rect x="248" y="146" width="180" height="52" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="338" y="169" font-size="15" font-weight="700" fill="#2b5d8a" text-anchor="middle">le gestionnaire lève</text>
+  <text x="338" y="188" font-size="13" fill="#1f2328" text-anchor="middle">Error: ledger unavailable</text>
+  <rect x="248" y="222" width="180" height="52" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="338" y="245" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">observing</text>
+  <text x="338" y="264" font-size="13" fill="#1f2328" text-anchor="middle">retient l'erreur</text>
+  <rect x="248" y="298" width="180" height="52" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="5 4"/>
+  <text x="338" y="321" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">onFailure</text>
+  <text x="338" y="340" font-size="13" fill="#1f2328" text-anchor="middle">réessayé : aucun rapport</text>
+  <line x1="338" y1="124" x2="338" y2="142" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="338" y1="200" x2="338" y2="218" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="338" y1="276" x2="338" y2="294" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- column 3 -->
+  <rect x="464" y="70" width="180" height="52" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="554" y="93" font-size="15" font-weight="700" fill="#7a4f9a" text-anchor="middle">la dernière tentative</text>
+  <text x="554" y="112" font-size="13" fill="#1f2328" text-anchor="middle">retry.maxAttempts</text>
+  <rect x="464" y="146" width="180" height="52" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="554" y="169" font-size="15" font-weight="700" fill="#2b5d8a" text-anchor="middle">le gestionnaire lève</text>
+  <text x="554" y="188" font-size="13" fill="#1f2328" text-anchor="middle">Error: ledger unavailable</text>
+  <rect x="464" y="222" width="180" height="52" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="554" y="245" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">observing</text>
+  <text x="554" y="264" font-size="13" fill="#1f2328" text-anchor="middle">retient l'erreur</text>
+  <rect x="464" y="298" width="180" height="52" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="554" y="321" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">onFailure: dead</text>
+  <text x="554" y="340" font-size="13" fill="#1f2328" text-anchor="middle">remonte, une fois</text>
+  <line x1="554" y1="124" x2="554" y2="142" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="554" y1="200" x2="554" y2="218" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="554" y1="276" x2="554" y2="294" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- redeliveries -->
+  <line x1="214" y1="96" x2="244" y2="96" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="430" y1="96" x2="460" y2="96" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- the report -->
+  <rect x="684" y="250" width="244" height="170" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="806" y="276" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">Sentry ou GlitchTip</text>
+  <text x="700" y="302" font-size="13" fill="#1f2328">un événement, sévérité error :</text>
+  <text x="700" y="324" font-size="13" fill="#1f2328">l'Error que le gestionnaire</text>
+  <text x="700" y="344" font-size="13" fill="#1f2328">a levée, avec sa pile ;</text>
+  <text x="700" y="364" font-size="13" fill="#1f2328">origine event ;</text>
+  <text x="700" y="384" font-size="13" fill="#1f2328">opération : le type d'événement</text>
+  <text x="700" y="404" font-size="13" fill="#1f2328">et le consommateur</text>
+  <line x1="646" y1="324" x2="680" y2="324" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- notes -->
+  <text x="32" y="392" font-size="14" fill="#1f2328">Une livraison qui échoue puis est réessayée est la vie normale d'un</text>
+  <text x="32" y="414" font-size="14" fill="#1f2328">consommateur « au moins une fois » : seul l'événement abandonné est un incident.</text>
+  <text x="32" y="444" font-size="14" fill="#1f2328">Refusé par une DomainError, l'événement est remonté en warning.</text>
+</svg>

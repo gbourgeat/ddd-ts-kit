@@ -1,0 +1,126 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 650" width="960" height="650" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Where @ddd-ts-kit/tracing wraps an application</title>
+  <desc id="desc">The wrappers that open spans, all in the platform, each around one place where work enters or leaves a bounded context, each opening one kind of span. By hand: tracedRoutes around the HTTP pipeline opens the SERVER span of the request. Given once to kernelModule as traceApplication: traceUseCases on the command and query buses opens command and query spans; traceBindings on repositories, gateways and handlers opens a span per call; tracedDomainEvents on the domain event dispatcher opens the unit-of-work and domain-event spans; tracedPublisher on the publisher of the kernel, the outbox, opens outbox append; tracedConsumer on the integration event handlers opens process, a CONSUMER span; tracedJob and tracedBackgroundJob open job spans; traceApplication also hands the error reporter and the execution scope to the tracing, which opens no span for them. By hand: tracedPublisher around the publisher of the outbox relay opens publish, a PRODUCER span. Below, initTracing starts the OpenTelemetry SDK with its instrumentations, runs the span processors and exports over OTLP to Jaeger or a collector. The domain, the application and the adapters import none of it.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="650" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Where @ddd-ts-kit/tracing wraps an application</text>
+
+  <text x="48" y="72" font-size="14" font-weight="600" fill="#5f6b73">wrapper, in the platform</text>
+  <text x="356" y="72" font-size="14" font-weight="600" fill="#5f6b73">what it wraps</text>
+  <text x="698" y="72" font-size="14" font-weight="600" fill="#5f6b73">the span it opens</text>
+
+  <!-- row 1: by hand -->
+  <rect x="40" y="86" width="270" height="34" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="54" y="108" font-size="14" font-weight="700" fill="#1f2328">tracedRoutes()</text>
+  <text x="298" y="108" font-size="13" fill="#5f6b73" text-anchor="end">by hand</text>
+  <rect x="348" y="86" width="292" height="34" rx="8" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="494" y="108" font-size="14" font-weight="600" fill="#9a5b2b" text-anchor="middle">the HTTP pipeline</text>
+  <rect x="690" y="86" width="230" height="34" rx="8" fill="#ffffff" stroke="#3d4449" stroke-width="1"/>
+  <text x="702" y="108" font-size="13" fill="#1f2328">POST /appointments</text>
+  <text x="910" y="108" font-size="13" fill="#5f6b73" text-anchor="end">SERVER</text>
+  <line x1="312" y1="103" x2="346" y2="103" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="642" y1="103" x2="688" y2="103" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- traceApplication group -->
+  <rect x="24" y="134" width="912" height="296" rx="12" fill="none" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="40" y="156" font-size="14" font-weight="600" fill="#5f6b73">traceApplication(): given once to kernelModule({ instrumentation })</text>
+
+  <!-- row 2 -->
+  <rect x="40" y="168" width="270" height="34" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="54" y="190" font-size="14" font-weight="700" fill="#1f2328">traceUseCases()</text>
+  <rect x="348" y="168" width="292" height="34" rx="8" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="494" y="190" font-size="14" font-weight="600" fill="#2b5d8a" text-anchor="middle">the command and query buses</text>
+  <rect x="690" y="168" width="230" height="34" rx="8" fill="#ffffff" stroke="#3d4449" stroke-width="1"/>
+  <text x="702" y="190" font-size="13" fill="#1f2328">command BookAppointment</text>
+  <line x1="312" y1="185" x2="346" y2="185" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="642" y1="185" x2="688" y2="185" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- row 3 -->
+  <rect x="40" y="212" width="270" height="34" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="54" y="234" font-size="14" font-weight="700" fill="#1f2328">traceBindings()</text>
+  <rect x="348" y="212" width="292" height="34" rx="8" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="494" y="234" font-size="14" font-weight="600" fill="#7a4f9a" text-anchor="middle">repositories, gateways, handlers</text>
+  <rect x="690" y="212" width="230" height="34" rx="8" fill="#ffffff" stroke="#3d4449" stroke-width="1"/>
+  <text x="702" y="234" font-size="13" fill="#1f2328">repository &lt;Port&gt;.&lt;method&gt;</text>
+  <line x1="312" y1="229" x2="346" y2="229" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="642" y1="229" x2="688" y2="229" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- row 4 -->
+  <rect x="40" y="256" width="270" height="34" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="54" y="278" font-size="14" font-weight="700" fill="#1f2328">tracedDomainEvents()</text>
+  <rect x="348" y="256" width="292" height="34" rx="8" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="494" y="278" font-size="14" font-weight="600" fill="#2f6f4f" text-anchor="middle">the domain event dispatcher</text>
+  <rect x="690" y="256" width="230" height="34" rx="8" fill="#ffffff" stroke="#3d4449" stroke-width="1"/>
+  <text x="702" y="278" font-size="13" fill="#1f2328">unit-of-work, domain-event</text>
+  <line x1="312" y1="273" x2="346" y2="273" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="642" y1="273" x2="688" y2="273" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- row 5 -->
+  <rect x="40" y="300" width="270" height="34" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="54" y="322" font-size="14" font-weight="700" fill="#1f2328">tracedPublisher()</text>
+  <rect x="348" y="300" width="292" height="34" rx="8" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="494" y="322" font-size="14" font-weight="600" fill="#7a4f9a" text-anchor="middle">the publisher: the outbox</text>
+  <rect x="690" y="300" width="230" height="34" rx="8" fill="#ffffff" stroke="#3d4449" stroke-width="1"/>
+  <text x="702" y="322" font-size="13" fill="#1f2328">outbox append &lt;type&gt;</text>
+  <line x1="312" y1="317" x2="346" y2="317" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="642" y1="317" x2="688" y2="317" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- row 6 -->
+  <rect x="40" y="344" width="270" height="34" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="54" y="366" font-size="14" font-weight="700" fill="#1f2328">tracedConsumer()</text>
+  <rect x="348" y="344" width="292" height="34" rx="8" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="494" y="366" font-size="14" font-weight="600" fill="#2b5d8a" text-anchor="middle">integration event handlers</text>
+  <rect x="690" y="344" width="230" height="34" rx="8" fill="#ffffff" stroke="#3d4449" stroke-width="1"/>
+  <text x="702" y="366" font-size="13" fill="#1f2328">process &lt;consumer&gt;</text>
+  <text x="910" y="366" font-size="13" fill="#5f6b73" text-anchor="end">CONSUMER</text>
+  <line x1="312" y1="361" x2="346" y2="361" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="642" y1="361" x2="688" y2="361" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- row 7 -->
+  <rect x="40" y="388" width="270" height="34" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="54" y="410" font-size="14" font-weight="700" fill="#1f2328">tracedJob(), tracedBackgroundJob()</text>
+  <rect x="348" y="388" width="292" height="34" rx="8" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="494" y="410" font-size="14" font-weight="600" fill="#2b5d8a" text-anchor="middle">scheduled and background jobs</text>
+  <rect x="690" y="388" width="230" height="34" rx="8" fill="#ffffff" stroke="#3d4449" stroke-width="1"/>
+  <text x="702" y="410" font-size="13" fill="#1f2328">job &lt;name&gt;</text>
+  <line x1="312" y1="405" x2="346" y2="405" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="642" y1="405" x2="688" y2="405" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- row 8: by hand -->
+  <rect x="40" y="444" width="270" height="34" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="54" y="466" font-size="14" font-weight="700" fill="#1f2328">tracedPublisher(bus)</text>
+  <text x="298" y="466" font-size="13" fill="#5f6b73" text-anchor="end">by hand</text>
+  <rect x="348" y="444" width="292" height="34" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="494" y="466" font-size="14" font-weight="600" fill="#5f6b73" text-anchor="middle">the bus of the outbox relay</text>
+  <rect x="690" y="444" width="230" height="34" rx="8" fill="#ffffff" stroke="#3d4449" stroke-width="1"/>
+  <text x="702" y="466" font-size="13" fill="#1f2328">publish &lt;type&gt;</text>
+  <text x="910" y="466" font-size="13" fill="#5f6b73" text-anchor="end">PRODUCER</text>
+  <line x1="312" y1="461" x2="346" y2="461" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="642" y1="461" x2="688" y2="461" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- initTracing -->
+  <line x1="24" y1="496" x2="936" y2="496" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text x="40" y="520" font-size="14" font-weight="600" fill="#5f6b73">initTracing() of @ddd-ts-kit/tracing/node, imported first: where the spans go</text>
+
+  <rect x="28" y="534" width="200" height="56" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="128" y="557" font-size="14" font-weight="700" fill="#5f6b73" text-anchor="middle">OpenTelemetry SDK</text>
+  <text x="128" y="578" font-size="13" fill="#1f2328" text-anchor="middle">http, pg, redis... patched</text>
+  <rect x="264" y="534" width="200" height="56" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="364" y="557" font-size="14" font-weight="700" fill="#5f6b73" text-anchor="middle">span processors</text>
+  <text x="364" y="578" font-size="13" fill="#1f2328" text-anchor="middle">caps, scrubbing, allow-list</text>
+  <rect x="500" y="534" width="200" height="56" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="600" y="557" font-size="14" font-weight="700" fill="#5f6b73" text-anchor="middle">OTLP exporter</text>
+  <text x="600" y="578" font-size="13" fill="#1f2328" text-anchor="middle">OTEL_EXPORTER_OTLP_*</text>
+  <rect x="736" y="534" width="200" height="56" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="836" y="557" font-size="14" font-weight="700" fill="#5f6b73" text-anchor="middle">Jaeger</text>
+  <text x="836" y="578" font-size="13" fill="#1f2328" text-anchor="middle">or a collector</text>
+  <line x1="230" y1="562" x2="262" y2="562" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="466" y1="562" x2="498" y2="562" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="702" y1="562" x2="734" y2="562" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <text x="40" y="626" font-size="14" font-style="italic" font-weight="600" fill="#2f6f4f">domain/, application/ and the adapters import none of it: the rule tracing/platform-only</text>
+</svg>

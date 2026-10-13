@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 600" width="960" height="600" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">One run of generate command</title>
+  <desc id="desc">Five steps in order. First the name of the use case and its permission are checked against the glossary of the context: a word it does not define refuses the run with exit code 2, nothing written, and the fix names the --term to add. Then the command, the handler and the spec are written from the templates. Then the permission and the binding are registered between marker comments, in the permissions file and, in the explicit style, the module file. Then what is derived is refreshed: the barrel of the declared style, rewritten whole, the lists of CONTEXT.md, the context map, the dependency-cruiser configuration. Last, the places that need a business decision are printed as file:line, the glossary first.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="600" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">One run of generate command</text>
+  <text x="32" y="66" font-size="14" fill="#5f6b73">ddd-ts-kit generate command billing IssueInvoice --aggregate Invoice --permission invoice.issue</text>
+  <!-- steps -->
+  <rect x="24" y="92" width="360" height="72" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="40" y="120" font-size="15" font-weight="700" fill="#5f6b73">1. Check the name against the glossary</text>
+  <text x="40" y="146" font-size="13" fill="#1f2328">every word of IssueInvoice and of the permission</text>
+  <line x1="204" y1="166" x2="204" y2="188" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="24" y="190" width="360" height="72" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="40" y="218" font-size="15" font-weight="700" fill="#5f6b73">2. Write the files from the templates</text>
+  <text x="40" y="244" font-size="13" fill="#1f2328">for the stack and the style the config records</text>
+  <line x1="204" y1="264" x2="204" y2="286" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="24" y="288" width="360" height="72" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="40" y="316" font-size="15" font-weight="700" fill="#5f6b73">3. Register between the markers</text>
+  <text x="40" y="342" font-size="13" fill="#1f2328">// ddd-ts-kit:&lt;region&gt; ... // /ddd-ts-kit:&lt;region&gt;</text>
+  <line x1="204" y1="362" x2="204" y2="384" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="24" y="386" width="360" height="72" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="40" y="414" font-size="15" font-weight="700" fill="#5f6b73">4. Refresh what is derived</text>
+  <text x="40" y="440" font-size="13" fill="#1f2328">when it exists, and only where it changes</text>
+  <line x1="204" y1="460" x2="204" y2="482" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="24" y="484" width="360" height="72" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="40" y="512" font-size="15" font-weight="700" fill="#5f6b73">5. Print what is left to decide</text>
+  <text x="40" y="538" font-size="13" fill="#1f2328">next: the glossary, then each TODO(domain)</text>
+  <!-- outcomes -->
+  <line x1="386" y1="128" x2="432" y2="128" stroke="#3d4449" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#arrow)"/>
+  <rect x="436" y="92" width="500" height="72" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="452" y="120" font-size="14" font-weight="700" fill="#5f6b73">a word is not defined: refused, exit code 2</text>
+  <text x="452" y="146" font-size="13" fill="#1f2328">nothing is written; the fix names the --term "Issue=..." to add</text>
+  <line x1="386" y1="226" x2="432" y2="226" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="436" y="190" width="500" height="72" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="452" y="218" font-size="14" font-weight="700" fill="#2b5d8a">created</text>
+  <text x="452" y="244" font-size="13" fill="#1f2328">issue-invoice.command.ts, issue-invoice.handler.ts, its spec</text>
+  <line x1="386" y1="324" x2="432" y2="324" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="436" y="288" width="500" height="72" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="452" y="316" font-size="14" font-weight="700" fill="#2b5d8a">updated</text>
+  <text x="452" y="342" font-size="13" fill="#1f2328">billing.permissions.ts, and billing.module.ts (explicit style)</text>
+  <line x1="386" y1="422" x2="432" y2="422" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="436" y="386" width="500" height="72" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="2"/>
+  <text x="452" y="410" font-size="14" font-weight="700" fill="#5f6b73">refreshed</text>
+  <text x="452" y="430" font-size="13" fill="#1f2328">billing.declarations.ts (the barrel, rewritten whole)</text>
+  <text x="452" y="449" font-size="13" fill="#1f2328">CONTEXT.md, docs/context-map.md, .dependency-cruiser.cjs</text>
+  <line x1="386" y1="520" x2="432" y2="520" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="436" y="484" width="500" height="72" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="2"/>
+  <text x="452" y="512" font-size="14" font-weight="700" fill="#5f6b73">printed, one line each</text>
+  <text x="452" y="538" font-size="13" fill="#1f2328">issue-invoice.handler.ts:16  decide what "issue invoice" does ...</text>
+  <!-- legend -->
+  <line x1="40" y1="580" x2="84" y2="580" stroke="#3d4449" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#arrow)"/>
+  <text x="96" y="585" font-size="13" fill="#1f2328">only when the step refuses: the run stops there</text>
+</svg>

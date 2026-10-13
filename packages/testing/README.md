@@ -18,7 +18,124 @@ npm i -D @ddd-ts-kit/testing
 | `@ddd-ts-kit/testing/faker` | generated data for builders | `@faker-js/faker` (optional peer) |
 | `@ddd-ts-kit/testing/e2e` | HTTP client, `eventually`, `collectEvents` | Node only: no HTTP framework, no container |
 | `@ddd-ts-kit/testing/contracts` | contract suites of the kernel ports, `ContractSuite` to write another | the runner you pass |
-| `@ddd-ts-kit/testing/vitest` | `decorators()`, the Vite plugin that lets Vitest run standard decorators | Node only; runs the `tsc` of the project |
+| `@ddd-ts-kit/testing/vitest` | `decorators()`, the Vite plugin that lets Vitest run standard decorators, and `decoratorCoverage()` | Node only; runs the `tsc` of the project |
+| `@ddd-ts-kit/testing/coverage` | `governedCoverage()`, `governedJestCoverage()`, `unaffectedContexts()`: the coverage the runner measures and its floor, read from `ddd-ts-kit.config.json` | Node only |
+
+The main entry, `/contracts` and `/e2e` follow the
+[test levels](../../docs/ARCHITECTURE.md#7-test-levels); the builders serve every level, and the
+other entries are set up once in the runner config:
+
+![The four test levels and what the package gives each one: given / when / then, givenEvents, givenProcess and expectRefusal for a domain spec; createTestBuses, InMemoryRepository and the execution context builders for an application spec; the contract suites for an adapter spec, run on the fake and on the real adapter; startTestServer, the HTTP client, expectProblem, collectEvents and eventually for an end-to-end spec. The same builders feed every level, and the vitest, coverage and faker entries are set up once in the runner config](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/testing-package-overview.svg)
+
+## A first test
+
+One aggregate, its builder and two scenarios, in one file for the reading (a project gives the
+aggregate its file under `domain/` and the builder its file under `test/builders/`):
+
+<!-- checked sample -->
+```ts
+import { AggregateRoot, ConceptError, type DomainEvent } from '@ddd-ts-kit/kernel';
+import { Builder, given, resetSequences, sequence, type Defaults } from '@ddd-ts-kit/testing';
+import { beforeEach, expect, it } from 'vitest';
+
+// The model under test.
+class OrderError extends ConceptError {
+  static alreadyPaid(orderId: string) {
+    return OrderError.refusal('ORDER_ALREADY_PAID', `Order ${orderId} is already paid.`, { orderId });
+  }
+}
+
+class OrderPaid implements DomainEvent {
+  readonly name = 'ordering.order.paid';
+
+  constructor(
+    readonly aggregateId: string,
+    readonly occurredAt: Date,
+    readonly amount: number,
+  ) {}
+}
+
+class Order extends AggregateRoot {
+  private paid = false;
+
+  private constructor(
+    id: string,
+    readonly amount: number,
+  ) {
+    super(id);
+  }
+
+  static place(id: string, amount: number): Order {
+    return new Order(id, amount);
+  }
+
+  get isPaid(): boolean {
+    return this.paid;
+  }
+
+  pay(at: Date): void {
+    if (this.paid) {
+      throw OrderError.alreadyPaid(this.id);
+    }
+
+    this.paid = true;
+    this.record(new OrderPaid(this.id, at, this.amount));
+  }
+}
+
+// The builder: valid defaults once, then methods named in the ubiquitous language.
+const at = new Date('2026-03-01T10:00:00.000Z');
+
+interface OrderProps {
+  readonly id: string;
+  readonly amount: number;
+  readonly paid: boolean;
+}
+
+class OrderBuilder extends Builder<OrderProps, Order> {
+  protected defaults(): Defaults<OrderProps> {
+    return { id: sequence('order'), amount: 30, paid: false };
+  }
+
+  protected construct(props: OrderProps): Order {
+    const order = Order.place(props.id, props.amount);
+
+    if (props.paid) {
+      order.pay(at);
+    }
+
+    return order;
+  }
+
+  paid(): this {
+    return this.with('paid', true);
+  }
+}
+
+const anOrder = (): OrderBuilder => new OrderBuilder();
+
+// The specs: one intention, then the facts it recorded or the refusal.
+beforeEach(() => {
+  resetSequences();
+});
+
+it('records the payment of a placed order', () => {
+  given(anOrder())
+    .when((order) => order.pay(at))
+    .thenEvents([{ name: 'ordering.order.paid', amount: 30 }]);
+});
+
+it('refuses to pay an order twice', () => {
+  given(anOrder().paid())
+    .when((order) => order.pay(at))
+    .thenError('ORDER_ALREADY_PAID', { orderId: 'order-1' })
+    .thenState((order) => expect(order.isPaid).toBe(true));
+});
+```
+
+No database, no container, no mock: the second test reads "given a paid order, when it is paid,
+then it is refused with `ORDER_ALREADY_PAID`, and it is still paid". The sections below take
+each piece in turn.
 
 ## Builders
 
@@ -73,6 +190,8 @@ const order = anOrder().paid().withLine(aLine().with('sku', 'sku-1')).build();
 const orders = anOrder().placedBy(aCustomer().named('Ada')).buildMany(3);
 ```
 
+![How a builder makes its value: the defaults declared once and what the test stated are merged by props(), which draws each sequence, lazy and generated value and builds each nested builder; build() hands the properties to construct, which goes through the public API and gives an aggregate valid by construction, and buildRequest(), a method the project writes on its own builder, gives the request payload of an end-to-end spec from the same properties](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/testing-package-builder.svg)
+
 For plain data (payloads, DTOs, simple value objects) the functional form is enough. It gives
 the generic `with(key, value)` and `withMany(partial)`, both checked against the properties:
 
@@ -99,14 +218,42 @@ aLine().with('quantity', 3).build(); // { sku: 'sku-1', quantity: 3 }
 - The class form keeps `with`, `withMany` and `adding` protected on purpose: the public
   surface of an aggregate builder is the language of the domain, not its property names.
 
+Instead of creating the whole object in every test, where the one value the rule depends on is
+lost among the others, and where a new argument of `Order.place` breaks every test:
+
+```ts
+const order = Order.place('order-1', { id: 'customer-1', name: 'Grace Hopper' }, [{ sku: 'sku-1', quantity: 1 }]);
+order.pay();
+```
+
+write what the test is about, and let the builder hold the rest in one place:
+
+```ts
+const order = anOrder().paid().build();
+```
+
 ## Generated data
 
 ```
 npm i -D @faker-js/faker
 ```
 
+<!-- checked sample -->
 ```ts
+import { defineBuilder, sequence } from '@ddd-ts-kit/testing';
 import { generated } from '@ddd-ts-kit/testing/faker';
+
+// From the domain of the context.
+interface CustomerProps {
+  readonly id: string;
+  readonly name: string;
+  readonly email: string;
+  readonly birthDate: Date;
+}
+
+declare class Customer {
+  static register(props: CustomerProps): Customer;
+}
 
 export const aCustomer = defineBuilder<CustomerProps, Customer>({
   defaults: {
@@ -129,9 +276,29 @@ The defaults are generated yet valid: each generator is constrained to what the 
 what the rule under test depends on.** A test never asserts a generated value it did not
 state, and never relies on a generated value falling on the right side of a rule.
 
+Instead of leaving the value the rule is about to the generator, so that the test passes
+because of a default nobody reads:
+
+```ts
+it('lets an adult buy wine', () => {
+  const customer = aCustomer().build();                               // adult because the default says so today
+  expect(customer.mayBuy(wine, today)).toBe(true);
+});
+```
+
+state it, with a date the reader can check:
+
+```ts
+it('lets an adult buy wine', () => {
+  const customer = aCustomer().with('birthDate', new Date('2008-05-01')).build();
+  expect(customer.mayBuy(wine, new Date('2026-05-01'))).toBe(true);  // 18 on that day
+});
+```
+
 Every `generated` value is drawn from one generator per test file, `dataGenerator()`. Its seed
 comes from `TEST_SEED`, else it is random, and it is always known (`dataGenerator().seed`):
 
+<!-- checked sample -->
 ```ts
 // vitest setup file
 import { beforeEach, onTestFailed } from 'vitest';
@@ -239,6 +406,37 @@ error, and fails with an `AssertionError` that names what was refused instead, o
 that differ, one line each. The facts given must be carried with those values; the refusal may
 carry others.
 
+Instead of asserting the wording of a message, which breaks when it is rephrased, or the class
+of the error, which says nothing about which refusal it was:
+
+```ts
+expect(() => order.pay(at)).toThrow('Order order-1 is already paid.');
+expect(() => order.pay(at)).toThrow(OrderError);
+```
+
+assert the code, stable for every client, and the facts the refusal carries:
+
+<!-- checked sample -->
+```ts
+import { ConceptError } from '@ddd-ts-kit/kernel';
+import { expectRefusal } from '@ddd-ts-kit/testing';
+
+class OrderError extends ConceptError {
+  static alreadyPaid(orderId: string) {
+    return OrderError.refusal('ORDER_ALREADY_PAID', `Order ${orderId} is already paid.`, { orderId });
+  }
+}
+
+const order = {
+  id: 'order-1',
+  pay(): void {
+    throw OrderError.alreadyPaid(this.id);
+  },
+};
+
+expectRefusal(() => order.pay(), 'ORDER_ALREADY_PAID', { orderId: 'order-1' });
+```
+
 ## Handlers
 
 ```ts
@@ -273,6 +471,8 @@ The handler only saves: `await this.orders.save(order); return order.id;`. `disp
 gives the fake what the application gives every repository: once `save` (or any method handed
 the aggregate) resolved, the events the aggregate recorded are handed over to `domainEvents`.
 
+![A handler spec on createTestBuses: the spec executes a command on the command bus, which runs it in the unit of work; the real handler saves into the repository fake wrapped by dispatching, which keeps a copy while the recorded events wait; once the handler has returned, domainEvents hands the events to a before-commit handler, which publishes an integration event on the in-memory event bus; when execute has resolved, the spec reads the state of the fake and the published events](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/testing-package-handler-spec.svg)
+
 A handler spec has the production timing. `commandBus` runs every command in `unitOfWork`
 (an `InMemoryUnitOfWork`), as the bus of the application does: the events of every save wait
 until the command handler has returned, then are dispatched in recording order, and
@@ -296,6 +496,88 @@ event handlers react, each in its phase.
 copy of what is saved (through `snapshots({ toSnapshot, fromSnapshot })` or `{ clone }`) and
 enforces optimistic concurrency on `version`, raising `ConcurrencyError` (code
 `CONCURRENCY_CONFLICT`). Assert its state with `all()` and `count()`.
+
+### A fake, not a mock
+
+Instead of a mock, which checks the calls the handler made and nothing of their effect:
+
+```ts
+const orders = { findById: vi.fn(), save: vi.fn() };
+await new PlaceOrderHandler(orders, ids, clock).execute(new PlaceOrder('sku-1'));
+expect(orders.save).toHaveBeenCalledTimes(1); // still green if the order could never be read back
+```
+
+run the real handler through the bus on a fake, and assert what is true afterwards:
+
+<!-- checked sample -->
+```ts
+import { AggregateRoot, Command, Repository, type Clock, type CommandHandler, type IdGenerator } from '@ddd-ts-kit/kernel';
+import { createTestBuses, InMemoryRepository, snapshots } from '@ddd-ts-kit/testing';
+import { expect, it } from 'vitest';
+
+// From the domain of the context.
+interface OrderSnapshot {
+  readonly id: string;
+  readonly sku: string;
+}
+
+declare class Order extends AggregateRoot {
+  static place(id: string, sku: string, at: Date): Order;
+  static rehydrate(snapshot: OrderSnapshot): Order;
+  toSnapshot(): OrderSnapshot;
+}
+
+abstract class OrderRepository extends Repository<Order> {}
+
+// From the application layer: the use case under test.
+class PlaceOrder extends Command<string> {
+  constructor(readonly sku: string) {
+    super();
+  }
+}
+
+class PlaceOrderHandler implements CommandHandler<PlaceOrder> {
+  constructor(
+    private readonly orders: OrderRepository,
+    private readonly ids: IdGenerator,
+    private readonly clock: Clock,
+  ) {}
+
+  async execute(command: PlaceOrder): Promise<string> {
+    const order = Order.place(this.ids.next(), command.sku, this.clock.now());
+
+    await this.orders.save(order);
+
+    return order.id;
+  }
+}
+
+// From test/fakes/: a working repository, held to the same contract suite as the adapter.
+class InMemoryOrderRepository extends InMemoryRepository<Order> implements OrderRepository {
+  constructor() {
+    super(snapshots({ toSnapshot: (order) => order.toSnapshot(), fromSnapshot: Order.rehydrate }));
+  }
+}
+
+it('places an order', async () => {
+  const { commandBus, dispatching, domainEvents, ids, clock } = createTestBuses();
+  const orders = dispatching(new InMemoryOrderRepository());
+  const heard: string[] = [];
+
+  domainEvents.on('ordering.order.placed', async (event) => void heard.push(event.aggregateId));
+  commandBus.register(PlaceOrder, new PlaceOrderHandler(orders, ids, clock));
+
+  const id = await commandBus.execute(new PlaceOrder('sku-1'));
+
+  expect((await orders.findById(id))?.toSnapshot()).toEqual({ id, sku: 'sku-1' });
+  expect(heard).toEqual([id]);
+});
+```
+
+The mock breaks when the handler calls another method of the port for the same effect, and stays
+green when the saved order cannot be found again; the fake does neither. The
+[`test/no-mocks`](../eslint-plugin/docs/rules/test-no-mocks.md) rule reports `vi.fn`,
+`vi.mock` and their kin in the tests of a context.
 
 ### Who is acting
 
@@ -331,9 +613,16 @@ The whole application, real adapters included, driven from the outside: requests
 and integration events out. Nothing here knows the HTTP framework or how the application is
 composed; `start` says it.
 
+<!-- checked sample -->
 ```ts
-import { createServer } from 'node:http';
-import { collectEvents, expectProblem, expectStatus, listenOnRandomPort, startTestServer } from '@ddd-ts-kit/testing/e2e';
+import { createServer, type RequestListener } from 'node:http';
+import { listenOnRandomPort, startTestServer } from '@ddd-ts-kit/testing/e2e';
+import { afterAll } from 'vitest';
+
+// From the project: its composition root, its HTTP framework, a token of the test identity provider.
+declare function composeApplication(): object;
+declare function expressApp(app: object): RequestListener;
+declare const testToken: string;
 
 const app = composeApplication();                   // the composition root of main.ts
 const server = await startTestServer({
@@ -376,8 +665,10 @@ const { body: order } = expectStatus(await client.post<OrderView>('/orders', anO
 **Reset between tests.** The harness names the contract and leaves the implementation to the
 project and its driver:
 
+<!-- checked sample -->
 ```ts
 import type { DatabaseReset } from '@ddd-ts-kit/testing/e2e';
+import { beforeEach } from 'vitest';
 
 // PostgreSQL, with any client exposing `query`: every table of the application schemas.
 export function truncateAllTables(db: { query(sql: string): Promise<{ rows: { name: string }[] }> }, schemas: string[]): DatabaseReset {
@@ -394,13 +685,16 @@ export function truncateAllTables(db: { query(sql: string): Promise<{ rows: { na
   };
 }
 
+declare const database: DatabaseReset; // truncateAllTables(pool, ['ordering', 'billing']), made once
+
 beforeEach(() => database.reset());
 ```
 
 ## Three levels with the same vocabulary
 
-One rule, "an order that is already paid cannot be paid again", at three of the four test
-levels of `docs/ARCHITECTURE.md` (the adapter level is the contract suites, below). The builder is the same; only what runs underneath changes.
+One rule, "an order that is already paid cannot be paid again", at three of the four
+[test levels](../../docs/ARCHITECTURE.md#7-test-levels) (the adapter level is the contract
+suites, below). The builder is the same; only what runs underneath changes.
 
 ```ts
 // 1. Domain: the aggregate alone. Milliseconds, no double.
@@ -447,10 +741,34 @@ again.
 A fake is only worth trusting if it behaves like the adapter it stands for. Each suite takes
 the runner's functions and a factory, and is run against both.
 
+![One contract suite, two subjects: repositoryContract runs the same tests against the in-memory fake, which the handler specs use, and against the Drizzle adapter on a real database, which production uses; both implement the repository port of the domain, so what a handler spec proves on the fake holds for production](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/testing-package-contract-suite.svg)
+
+<!-- checked sample -->
 ```ts
 // contexts/ordering/test/integration/order-repository.contract.spec.ts
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import type { AggregateRoot, Repository } from '@ddd-ts-kit/kernel';
+import type { InMemoryRepository } from '@ddd-ts-kit/testing';
 import { repositoryContract } from '@ddd-ts-kit/testing/contracts';
+
+// From the context and its test folder.
+interface Line {
+  readonly sku: string;
+  readonly quantity: number;
+}
+
+declare class Order extends AggregateRoot {
+  addLine(line: Line): void;
+  toSnapshot(): object;
+}
+
+declare const anOrder: () => { build(): Order };
+declare const aLine: () => { build(): Line };
+// The fake of the Handlers section: it extends InMemoryRepository, it never extends the port.
+declare class InMemoryOrderRepository extends InMemoryRepository<Order> {
+  constructor();
+}
+declare function freshDrizzleRepository(): Promise<Repository<Order>>;
 
 const runner = { describe, it, expect, beforeEach, afterEach };
 const options = {
@@ -486,8 +804,8 @@ repositoryContract(runner, { ...options, name: 'DrizzleOrderRepository', createR
 | `fileStorageContract` | any `FileStorage`: content round trip with size, media type and checksum, several mebibytes streamed, a write beyond `maxBytes` refused leaving the previous content, keys that could leave their place refused, deletion, copy, move, listing by prefix, signed download and upload links that expire, refuse a changed signature or another media type, and are never signed for more than an hour, a download served as an attachment even without a name. `follow` sends a request to a link: `fetch` by default, `followServed(storage)` for a storage the application serves |
 | `rateLimiterContract` | any `RateLimiter`: limit, `remaining` and `retryAfterMs`, refused calls not counted, sliding window, isolation of keys, concurrent calls |
 
-The cache, lock and rate limiter suites also take `elapse(ms)`, which makes time pass for the
-subject: advance the clock it reads, or really wait when the time is a server's. The job
+The cache, lock, rate limiter and file storage suites also take `elapse(ms)`, which makes time
+pass for the subject: advance the clock it reads, or really wait when the time is a server's. The job
 scheduler suite takes it from `createScheduler`, with the scheduler and the scope it runs its
 jobs in: `{ scheduler, scope, elapse }`. It asks for a few seconds at most, with jobs of every
 second.
@@ -509,8 +827,14 @@ runner is the `ContractRunner` type.
 A package that holds a port of its own publishes its contract on the same base, `ContractSuite`:
 a subject created anew before each test, and `it`, `expect`, `afterEach` bound to the runner.
 
+<!-- checked sample -->
 ```ts
 import { ContractSuite, type Awaitable, type ContractRunner } from '@ddd-ts-kit/testing/contracts';
+
+// The port the package holds.
+export interface Geocoder {
+  locate(address: string): Promise<{ readonly latitude: number; readonly longitude: number } | undefined>;
+}
 
 export function geocoderContract(runner: ContractRunner, options: { name: string; create(): Awaitable<Geocoder> }): void {
   new GeocoderSuite(runner, () => options.create()).describe(`${options.name} (geocoder contract)`);
@@ -533,8 +857,14 @@ shows through `JSON.stringify`, an object spread, the values `Object.keys` leads
 `util.inspect` at any depth, hidden properties included. The failure names the view and the
 rank of the secret, never its value.
 
+<!-- checked sample -->
 ```ts
+import { KafkaEventBus } from '@ddd-ts-kit/kafka';
 import { expectNoSecret } from '@ddd-ts-kit/testing';
+import { it } from 'vitest';
+
+declare const brokers: string;
+declare const password: string;
 
 it('shows no credential', () => {
   const bus = new KafkaEventBus({ brokers, client: { 'sasl.password': password } });
@@ -549,6 +879,7 @@ Vitest 5 (Vite 8, Oxc) lowers legacy decorators and does not lower standard (TC3
 spec that imports a `.ts` file holding `@CommandHandler(...)` or `@Retry(...)` stops on a
 syntax error. `decorators()` closes that gap, and only that one.
 
+<!-- checked sample -->
 ```ts
 // vitest.config.ts
 import { defineConfig } from 'vitest/config';
@@ -590,6 +921,7 @@ It does not type-check (the build does), and it does not touch `.tsx`.
 to, read from the `coverage` key of `ddd-ts-kit.config.json` (the reference when the key is
 absent), so that no threshold is written in a runner config:
 
+<!-- checked sample -->
 ```ts
 // vitest.config.ts
 import { governedCoverage } from '@ddd-ts-kit/testing/coverage';
@@ -605,6 +937,11 @@ export default defineConfig(({ mode }) => ({
   measures `infrastructure`, any other mode the four.
 - `thresholds`: one entry per context and layer that holds a source file, so a context cannot
   hide behind another and an empty layer is held to nothing until its first file.
+- A partial run measures and holds only the contexts named in `DDD_TS_KIT_AFFECTED` (comma
+  separated, as [`ddd-ts-kit affected`](../cli/README.md#affected) computes them for a pull
+  request); unset, the run covers every context. `unaffectedContexts()` answers the directories
+  of the other contexts, ending in `/`, for the runner to exclude their specs:
+  ``exclude: unaffectedContexts().map((directory) => `${directory}**`)``.
 - `governedJestCoverage()` gives the same as `collectCoverageFrom` and `coverageThreshold`.
 - `REFERENCE_COVERAGE` is the reference: domain 90/85/90/90, application 85/80/85/85,
   presentation 80/70/80/80, infrastructure 70/60/70/70 (statements, branches, functions, lines).
@@ -613,3 +950,13 @@ Under the legacy decorator mode with `emitDecoratorMetadata`, add `decoratorCove
 `@ddd-ts-kit/testing/vitest` to `plugins`: the statements the transform writes to apply
 decorators hold, for every type a decorated class names, a branch no test can take; the plugin
 marks them with the hint the `v8` provider reads, as the provider does by itself for SWC.
+
+## See also
+
+- [Testing strategy](../../docs/concepts/testing-strategy.md): why fakes and not mocks, the four
+  levels, what to test where
+- [Test runners](../../docs/tools/test-runners.md): Vitest or Jest, and what each gives with the kit
+- [`@ddd-ts-kit/di`, tests](../di/README.md#tests): `createTestApplication` and `fake`, the
+  application spec with the container
+- [`@ddd-ts-kit/kernel`](../kernel/README.md): the aggregates, ports and in-memory adapters the
+  builders and fakes work with

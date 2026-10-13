@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 460" width="960" height="460" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">The path of a criteria, from the query handler to a page</title>
+  <desc id="desc">In the application, the query handler builds a criteria (filters, sort, page), which the compiler checks against the row; scoped joins the access scope of the actor to it by AND; the read port receives the scoped criteria. In the infrastructure, the read model adapter plans it with planCriteria, which validates it against the definition or throws InvalidCriteriaError; the plan is plain data; a translator of an ORM package renders it as a statement, or evaluateCriteria runs it in memory for a fake; pageOfPlan turns the rows into the page the handler answers.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="460" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">The path of a criteria, from the query handler to a page</text>
+
+  <!-- application row -->
+  <text x="40" y="74" font-size="14" font-weight="600" fill="#2b5d8a">application: the query handler</text>
+  <rect x="40" y="86" width="260" height="104" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="170" y="112" font-size="15" font-weight="700" fill="#2b5d8a" text-anchor="middle">Criteria.of&lt;Row&gt;()</text>
+  <text x="170" y="136" font-size="13" fill="#1f2328" text-anchor="middle">.where(...).orderBy(...).page(...)</text>
+  <text x="170" y="158" font-size="13" fill="#1f2328" text-anchor="middle">fields, operators and values</text>
+  <text x="170" y="176" font-size="13" font-style="italic" font-weight="600" fill="#2b5d8a" text-anchor="middle">checked by the compiler</text>
+
+  <rect x="350" y="86" width="260" height="104" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="480" y="112" font-size="15" font-weight="700" fill="#2b5d8a" text-anchor="middle">scoped(criteria, scope, mapping)</text>
+  <text x="480" y="136" font-size="13" fill="#1f2328" text-anchor="middle">what the actor may read,</text>
+  <text x="480" y="158" font-size="13" fill="#1f2328" text-anchor="middle">joined by AND, kept apart:</text>
+  <text x="480" y="176" font-size="13" font-style="italic" font-weight="600" fill="#2b5d8a" text-anchor="middle">no filter can widen it</text>
+
+  <rect x="660" y="86" width="260" height="104" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="790" y="112" font-size="15" font-weight="700" fill="#2b5d8a" text-anchor="middle">read port</text>
+  <text x="790" y="136" font-size="13" fill="#1f2328" text-anchor="middle">ReadModelStore.search(scoped)</text>
+  <text x="790" y="158" font-size="13" fill="#1f2328" text-anchor="middle">accepts a ScopedCriteria only:</text>
+  <text x="790" y="176" font-size="13" fill="#1f2328" text-anchor="middle">no read without a scope</text>
+
+  <line x1="302" y1="138" x2="348" y2="138" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="612" y1="138" x2="658" y2="138" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- infrastructure row, right to left -->
+  <text x="40" y="406" font-size="14" font-weight="600" fill="#7a4f9a">infrastructure: the read model adapter</text>
+  <rect x="724" y="262" width="196" height="120" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="822" y="288" font-size="15" font-weight="700" fill="#7a4f9a" text-anchor="middle">planCriteria</text>
+  <text x="822" y="312" font-size="13" fill="#1f2328" text-anchor="middle">against the definition:</text>
+  <text x="822" y="332" font-size="13" fill="#1f2328" text-anchor="middle">a refused criteria throws</text>
+  <text x="822" y="352" font-size="13" fill="#1f2328" text-anchor="middle">InvalidCriteriaError</text>
+  <text x="822" y="370" font-size="13" font-style="italic" font-weight="600" fill="#7a4f9a" text-anchor="middle">checked at run time</text>
+
+  <rect x="496" y="262" width="196" height="120" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="594" y="288" font-size="15" font-weight="700" fill="#7a4f9a" text-anchor="middle">CriteriaPlan</text>
+  <text x="594" y="312" font-size="13" fill="#1f2328" text-anchor="middle">the predicate, the keyset</text>
+  <text x="594" y="332" font-size="13" fill="#1f2328" text-anchor="middle">of a cursor, the total order,</text>
+  <text x="594" y="352" font-size="13" fill="#1f2328" text-anchor="middle">the rows to fetch</text>
+  <text x="594" y="370" font-size="13" font-style="italic" font-weight="600" fill="#7a4f9a" text-anchor="middle">nothing but plain values</text>
+
+  <rect x="268" y="262" width="196" height="120" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="366" y="288" font-size="15" font-weight="700" fill="#7a4f9a" text-anchor="middle">a translator</text>
+  <text x="366" y="312" font-size="13" fill="#1f2328" text-anchor="middle">criteriaToKnex, ...ToDrizzle,</text>
+  <text x="366" y="332" font-size="13" fill="#1f2328" text-anchor="middle">...ToPrisma, ...ToTypeOrm;</text>
+  <text x="366" y="352" font-size="13" fill="#1f2328" text-anchor="middle">evaluateCriteria in a fake</text>
+
+  <rect x="40" y="262" width="196" height="120" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="138" y="288" font-size="15" font-weight="700" fill="#7a4f9a" text-anchor="middle">pageOfPlan</text>
+  <text x="138" y="312" font-size="13" fill="#1f2328" text-anchor="middle">the rows become a</text>
+  <text x="138" y="332" font-size="13" fill="#1f2328" text-anchor="middle">Page&lt;Row&gt;: items,</text>
+  <text x="138" y="352" font-size="13" fill="#1f2328" text-anchor="middle">total or nextCursor</text>
+
+  <line x1="822" y1="192" x2="822" y2="260" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="722" y1="322" x2="694" y2="322" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="494" y1="322" x2="466" y2="322" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="266" y1="322" x2="238" y2="322" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- back to the handler -->
+  <line x1="138" y1="260" x2="138" y2="192" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <text x="150" y="232" font-size="13" fill="#1f2328">answered to the handler</text>
+
+  <text x="40" y="436" font-size="13" fill="#1f2328">Solid: the criteria goes down the path. Dashed: the page comes back. A store adapter renders the plan and nothing else.</text>
+</svg>

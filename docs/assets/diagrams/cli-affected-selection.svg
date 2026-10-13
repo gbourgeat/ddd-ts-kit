@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 500" width="960" height="500" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">What ddd-ts-kit affected selects for a change</title>
+  <desc id="desc">On the left, the context map of the example application, each arrow from upstream to downstream: identity to scheduling, identity to notification, scheduling to notification, scheduling to analytics. A branch changes the scheduling context: scheduling is selected, and so are notification and analytics, downstream of it; identity, upstream, is left to the default branch. On the right, what one changed path reaches: a path under a context reaches that context and every context downstream of it; a path only under its test directory reaches that context alone; docs, openapi, .claude and Markdown files at the root reach nothing that runs; anything else reaches everything.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="500" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">What ddd-ts-kit affected selects for a change</text>
+  <!-- left panel: the context map -->
+  <text x="24" y="80" font-size="14" font-weight="600" fill="#5f6b73">A branch changes scheduling, in the example application</text>
+  <rect x="160" y="100" width="200" height="60" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="260" y="126" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">identity</text>
+  <text x="260" y="148" font-size="13" fill="#1f2328" text-anchor="middle">upstream: left out</text>
+  <line x1="260" y1="162" x2="260" y2="206" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="160" y="210" width="200" height="60" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="3"/>
+  <text x="260" y="236" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">scheduling</text>
+  <text x="260" y="258" font-size="13" fill="#1f2328" text-anchor="middle">changed: selected</text>
+  <path d="M220,272 V300 H130 V326" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <path d="M300,272 V300 H370 V326" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <path d="M158,130 H60 V326" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="30" y="330" width="200" height="60" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="130" y="356" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">notification</text>
+  <text x="130" y="378" font-size="13" fill="#1f2328" text-anchor="middle">downstream: selected</text>
+  <rect x="270" y="330" width="200" height="60" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="370" y="356" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">analytics</text>
+  <text x="370" y="378" font-size="13" fill="#1f2328" text-anchor="middle">downstream: selected</text>
+  <text x="24" y="420" font-size="13" fill="#1f2328">Specs and lint: scheduling, notification, analytics.</text>
+  <text x="24" y="440" font-size="13" fill="#1f2328">Left to the default branch: src/contexts/identity/</text>
+  <!-- right panel: what one path reaches -->
+  <text x="508" y="80" font-size="14" font-weight="600" fill="#5f6b73">What one changed path reaches</text>
+  <rect x="508" y="96" width="428" height="68" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="524" y="122" font-size="14" font-weight="700" fill="#5f6b73">a path under src/contexts/&lt;context&gt;/</text>
+  <text x="524" y="146" font-size="13" fill="#1f2328">that context and every context downstream of it</text>
+  <rect x="508" y="176" width="428" height="68" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="524" y="202" font-size="14" font-weight="700" fill="#5f6b73">only under src/contexts/&lt;context&gt;/test/</text>
+  <text x="524" y="226" font-size="13" fill="#1f2328">that context alone: no other context imports its tests</text>
+  <rect x="508" y="256" width="428" height="68" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="524" y="282" font-size="14" font-weight="700" fill="#5f6b73">docs/, openapi/, .claude/, a root *.md</text>
+  <text x="524" y="306" font-size="13" fill="#1f2328">nothing that runs (the documents gate always runs)</text>
+  <rect x="508" y="336" width="428" height="68" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="524" y="362" font-size="14" font-weight="700" fill="#5f6b73">anything else</text>
+  <text x="524" y="386" font-size="13" fill="#1f2328">everything: platform, shared kernel, config, lockfile</text>
+  <text x="508" y="432" font-size="13" fill="#1f2328">Without --base, or when git cannot tell: everything.</text>
+  <!-- legend -->
+  <line x1="24" y1="476" x2="68" y2="476" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="80" y="481" font-size="13" fill="#1f2328">from upstream to downstream, as in the context map</text>
+</svg>

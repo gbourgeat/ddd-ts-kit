@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 620" width="960" height="620" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">La place de @ddd-ts-kit/kafka dans une application</title>
+  <desc id="desc">Dans le contexte producteur, le gestionnaire de commande écrit la commande client et son événement dans l'outbox, en une transaction. Le relais de l'outbox réclame l'enregistrement et le donne à KafkaEventBus.publish, qui l'écrit avec un producteur idempotent et acks=all dans le topic de son type, avec pour clé l'id de la commande client : une commande tombe toujours sur la même partition. Chaque contexte consommateur est un groupe de consommateurs : notifications et billing reçoivent tous deux chaque événement ; les deux instances de billing se partagent les partitions. Le gestionnaire de billing valide sa marque d'idempotence et son travail dans une unité de travail, puis l'offset est validé. Un enregistrement dont les gestionnaires échouent encore et encore, ou qui n'est pas une enveloppe, part dans le topic de rejet de billing.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="620" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">La place de @ddd-ts-kit/kafka dans une application</text>
+
+  <!-- producing side -->
+  <text x="24" y="76" font-size="14" font-weight="600" fill="#5f6b73">ordering (producteur)</text>
+  <rect x="16" y="92" width="236" height="80" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="134" y="120" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">gestionnaire de commande</text>
+  <text x="134" y="144" font-size="13" fill="#1f2328" text-anchor="middle">enregistre la commande client,</text>
+  <text x="134" y="162" font-size="13" fill="#1f2328" text-anchor="middle">publie ordering.order.placed</text>
+
+  <rect x="16" y="210" width="236" height="80" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="134" y="238" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">table outbox</text>
+  <text x="134" y="262" font-size="13" fill="#1f2328" text-anchor="middle">écrite dans la même</text>
+  <text x="134" y="280" font-size="13" fill="#1f2328" text-anchor="middle">transaction que la commande</text>
+
+  <rect x="16" y="328" width="236" height="80" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="134" y="356" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">OutboxRelay</text>
+  <text x="134" y="380" font-size="13" fill="#1f2328" text-anchor="middle">ordering: 'per-key'</text>
+  <text x="134" y="398" font-size="13" fill="#1f2328" text-anchor="middle">keyOf : l'id de la commande</text>
+
+  <line x1="134" y1="174" x2="134" y2="208" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="134" y1="292" x2="134" y2="326" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="144" y="314" font-size="13" fill="#1f2328">réclame</text>
+
+  <rect x="270" y="328" width="160" height="80" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="350" y="356" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">KafkaEventBus</text>
+  <text x="350" y="380" font-size="13" fill="#1f2328" text-anchor="middle">publish : producteur</text>
+  <text x="350" y="398" font-size="13" fill="#1f2328" text-anchor="middle">idempotent, acks=all</text>
+  <line x1="254" y1="368" x2="268" y2="368" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="350" y="430" font-size="13" fill="#1f2328" text-anchor="middle">résolue quand chaque</text>
+  <text x="350" y="448" font-size="13" fill="#1f2328" text-anchor="middle">réplique in-sync l'a reçu</text>
+
+  <!-- the cluster -->
+  <rect x="440" y="60" width="276" height="420" rx="14" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="456" y="86" font-size="14" font-weight="600" fill="#5f6b73">cluster Kafka</text>
+
+  <rect x="456" y="106" width="244" height="210" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="2"/>
+  <text x="578" y="132" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">ordering.order.placed</text>
+  <text x="578" y="152" font-size="13" fill="#1f2328" text-anchor="middle">un topic par type d'événement</text>
+  <g font-size="13" fill="#1f2328">
+    <text x="472" y="190">P0</text>
+    <text x="472" y="236">P1</text>
+    <text x="472" y="282">P2</text>
+  </g>
+  <g fill="#e7eef5" stroke="#2b5d8a" stroke-width="1.5">
+    <rect x="500" y="174" width="44" height="24" rx="4"/>
+    <rect x="550" y="174" width="44" height="24" rx="4"/>
+    <rect x="600" y="174" width="44" height="24" rx="4"/>
+    <rect x="500" y="220" width="44" height="24" rx="4"/>
+    <rect x="550" y="220" width="44" height="24" rx="4"/>
+    <rect x="500" y="266" width="44" height="24" rx="4"/>
+  </g>
+  <g font-size="13" fill="#1f2328" text-anchor="middle">
+    <text x="522" y="191">o-1</text>
+    <text x="572" y="191">o-4</text>
+    <text x="622" y="191">o-1</text>
+    <text x="522" y="237">o-2</text>
+    <text x="572" y="237">o-5</text>
+    <text x="522" y="283">o-3</text>
+  </g>
+  <text x="578" y="308" font-size="13" fill="#5f6b73" text-anchor="middle">une même clé, une même partition</text>
+
+  <!-- drawn after the cluster panel so its arrowhead stays visible -->
+  <path d="M350,326 V236 H454" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <rect x="456" y="372" width="244" height="92" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="2"/>
+  <text x="578" y="398" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">topic de rejet</text>
+  <text x="578" y="422" font-size="13" fill="#1f2328" text-anchor="middle">billing.ordering.order.placed.dead</text>
+  <text x="578" y="444" font-size="13" fill="#1f2328" text-anchor="middle">écrit par billing seulement</text>
+
+  <!-- consuming side -->
+  <rect x="740" y="92" width="196" height="96" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="838" y="120" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">groupe notifications</text>
+  <text x="838" y="144" font-size="13" fill="#1f2328" text-anchor="middle">une instance :</text>
+  <text x="838" y="162" font-size="13" fill="#1f2328" text-anchor="middle">P0, P1 et P2</text>
+
+  <rect x="740" y="224" width="196" height="110" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="838" y="252" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">groupe billing</text>
+  <text x="838" y="276" font-size="13" fill="#1f2328" text-anchor="middle">instance 1 : P0, P1</text>
+  <text x="838" y="296" font-size="13" fill="#1f2328" text-anchor="middle">instance 2 : P2</text>
+  <text x="838" y="320" font-size="13" fill="#1f2328" text-anchor="middle">forConsumer('billing')</text>
+
+  <rect x="740" y="384" width="196" height="96" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="838" y="412" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">gestionnaire billing</text>
+  <text x="838" y="436" font-size="13" fill="#1f2328" text-anchor="middle">marque et travail dans une</text>
+  <text x="838" y="454" font-size="13" fill="#1f2328" text-anchor="middle">unité de travail, puis</text>
+  <text x="838" y="472" font-size="13" fill="#1f2328" text-anchor="middle">l'offset est validé</text>
+
+  <line x1="702" y1="140" x2="738" y2="140" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="702" y1="279" x2="738" y2="279" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="838" y1="336" x2="838" y2="382" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <path d="M738,318 H728 V418 H702" fill="none" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+
+  <!-- legend -->
+  <line x1="40" y1="522" x2="84" y2="522" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="96" y="527" font-size="14" fill="#1f2328">un enregistrement avance</text>
+  <line x1="290" y1="522" x2="334" y2="522" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <text x="346" y="527" font-size="14" fill="#1f2328">un enregistrement en échec retry.maxAttempts fois, ou empoisonné, aussitôt</text>
+  <text x="40" y="560" font-size="14" fill="#1f2328">Deux groupes reçoivent chacun tous les événements. Les instances d'un groupe se partagent ses partitions :</text>
+  <text x="40" y="580" font-size="14" fill="#1f2328">une clé, donc une commande client, est traitée par l'une d'elles, un enregistrement à la fois.</text>
+  <text x="40" y="600" font-size="14" fill="#1f2328">o-1 est un enregistrement de la commande 1, qui a pour clé son id.</text>
+</svg>

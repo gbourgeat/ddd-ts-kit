@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 470" width="960" height="470" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">La valeur que prend une clé donnée deux fois</title>
+  <desc id="desc">Deux piles, de la plus forte en haut à la plus faible en bas. Avec pino et StdoutLogger : les champs de la ligne l'emportent, puis ce que renvoie fields(), puis les champs des enfants, l'enfant le plus proche l'emportant, puis service, environment et base. Avec winston : service, environment et base l'emportent, en tant que defaultMeta de winston, puis les champs de la ligne, puis les champs des enfants, puis fields(), qui ne remplit que les clés que personne n'a données. pino écrit deux fois une clé en double et un analyseur JSON lit la dernière ; winston écrit chaque clé une fois. Les deux ordres divergent sur une clé liée dans un enfant que fields() renvoie aussi.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="470" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">La valeur que prend une clé donnée deux fois</text>
+
+  <!-- strength axis -->
+  <line x1="44" y1="376" x2="44" y2="128" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="44" y="114" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">l'emporte</text>
+
+  <!-- pino column -->
+  <text x="72" y="80" font-size="16" font-weight="700" fill="#1f2328">pino et StdoutLogger</text>
+  <rect x="72" y="124" width="380" height="52" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="88" y="147" font-size="14" font-weight="700" fill="#7a4f9a">la ligne</text>
+  <text x="88" y="166" font-size="13" fill="#1f2328">logger.info(message, fields)</text>
+  <rect x="72" y="188" width="380" height="52" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="88" y="211" font-size="14" font-weight="700" fill="#2b5d8a">fields()</text>
+  <text x="88" y="230" font-size="13" fill="#1f2328">corrélation du travail en cours</text>
+  <rect x="72" y="252" width="380" height="52" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="88" y="275" font-size="14" font-weight="700" fill="#7a4f9a">les enfants</text>
+  <text x="88" y="294" font-size="13" fill="#1f2328">child(fields), l'enfant le plus proche l'emporte</text>
+  <rect x="72" y="316" width="380" height="52" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="88" y="339" font-size="14" font-weight="700" fill="#5f6b73">service, environment, base</text>
+  <text x="88" y="358" font-size="13" fill="#1f2328">options de createPinoLogger</text>
+
+  <!-- winston column -->
+  <text x="508" y="80" font-size="16" font-weight="700" fill="#1f2328">winston</text>
+  <rect x="508" y="124" width="420" height="52" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="524" y="147" font-size="14" font-weight="700" fill="#5f6b73">service, environment, base</text>
+  <text x="524" y="166" font-size="13" fill="#1f2328">le defaultMeta de winston, fusionné en dernier</text>
+  <rect x="508" y="188" width="420" height="52" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="524" y="211" font-size="14" font-weight="700" fill="#7a4f9a">la ligne</text>
+  <text x="524" y="230" font-size="13" fill="#1f2328">logger.info(message, fields)</text>
+  <rect x="508" y="252" width="420" height="52" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="524" y="275" font-size="14" font-weight="700" fill="#7a4f9a">les enfants</text>
+  <text x="524" y="294" font-size="13" fill="#1f2328">child(fields), l'enfant le plus proche l'emporte</text>
+  <rect x="508" y="316" width="420" height="52" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="524" y="339" font-size="14" font-weight="700" fill="#2b5d8a">fields()</text>
+  <text x="524" y="358" font-size="13" fill="#1f2328">ne remplit que les clés que personne n'a données</text>
+
+  <!-- notes -->
+  <text x="72" y="412" font-size="14" fill="#1f2328">pino écrit deux fois une clé en double : un analyseur JSON lit la dernière. winston l'écrit une fois.</text>
+  <text x="72" y="438" font-size="14" fill="#1f2328">Les ordres divergent sur une clé liée dans un enfant que fields() renvoie aussi : n'en liez pas.</text>
+</svg>

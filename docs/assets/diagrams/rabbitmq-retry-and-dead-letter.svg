@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 720" width="960" height="720" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">The three queues of one consumer and one event type</title>
+  <desc id="desc">The exchange routes the message to the work queue billing.ordering.order.placed, which hands it to the handlers of billing with the attempt n read from the header x-attempt, 1 when absent. When every handler resolved, the message is acknowledged. When a handler threw and n is below retry.maxAttempts, the bus sends a confirmed copy to the retry queue with x-attempt n plus 1 and x-error-code, then acknowledges the original. The copy waits retry.delayMs, the x-message-ttl of the retry queue; when it expires the broker dead-letters it back to the work queue through the default exchange. When n equals retry.maxAttempts the copy goes to the dead queue instead, with x-dead-reason max-attempts; a poison message goes there at once. The dead queue has no consumer. A consumer that keeps crashing gets its message back without x-attempt changing; a quorum queue bounds that with its delivery limit and the broker dead-letters the message to the dead queue itself.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="720" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">The three queues of one consumer and one event type</text>
+
+  <!-- exchange -->
+  <rect x="32" y="80" width="190" height="70" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="127" y="110" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">integration-events</text>
+  <text x="127" y="132" font-size="13" fill="#1f2328" text-anchor="middle">topic exchange</text>
+  <line x1="224" y1="115" x2="298" y2="115" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- work queue -->
+  <rect x="300" y="80" width="320" height="70" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="460" y="108" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">billing.ordering.order.placed</text>
+  <text x="460" y="130" font-size="13" fill="#1f2328" text-anchor="middle">work queue</text>
+  <line x1="622" y1="115" x2="696" y2="115" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="659" y="104" font-size="13" fill="#1f2328" text-anchor="middle">attempt n</text>
+
+  <!-- handlers -->
+  <rect x="698" y="80" width="230" height="70" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="813" y="108" font-size="15" font-weight="700" fill="#2b5d8a" text-anchor="middle">handlers of billing</text>
+  <text x="813" y="130" font-size="13" fill="#1f2328" text-anchor="middle">all resolved: ack, done</text>
+
+  <!-- retry queue -->
+  <rect x="300" y="250" width="320" height="80" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="460" y="278" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">billing.ordering.order.placed.retry</text>
+  <text x="460" y="300" font-size="13" fill="#1f2328" text-anchor="middle">x-message-ttl = retry.delayMs</text>
+  <text x="460" y="318" font-size="13" fill="#1f2328" text-anchor="middle">no consumer: it only waits</text>
+
+  <!-- handler threw: to retry -->
+  <path d="M790,152 V290 H624" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- retry back to work -->
+  <line x1="460" y1="248" x2="460" y2="154" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+
+  <!-- dead queue -->
+  <rect x="300" y="420" width="320" height="80" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="3"/>
+  <text x="460" y="448" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">billing.ordering.order.placed.dead</text>
+  <text x="460" y="470" font-size="13" fill="#1f2328" text-anchor="middle">no consumer: must stay empty,</text>
+  <text x="460" y="488" font-size="13" fill="#1f2328" text-anchor="middle">replayDead moves it back</text>
+
+  <!-- handler threw at the last attempt: to dead -->
+  <path d="M870,152 V460 H624" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- broker dead-lettering after crashes -->
+  <path d="M298,140 H250 V460 H296" fill="none" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+
+  <!-- badges -->
+  <circle cx="790" cy="220" r="12" fill="#ffffff" stroke="#3d4449" stroke-width="2"/>
+  <text x="790" y="225" font-size="13" font-weight="700" fill="#1f2328" text-anchor="middle">1</text>
+  <circle cx="460" cy="200" r="12" fill="#ffffff" stroke="#3d4449" stroke-width="2"/>
+  <text x="460" y="205" font-size="13" font-weight="700" fill="#1f2328" text-anchor="middle">2</text>
+  <circle cx="870" cy="380" r="12" fill="#ffffff" stroke="#3d4449" stroke-width="2"/>
+  <text x="870" y="385" font-size="13" font-weight="700" fill="#1f2328" text-anchor="middle">3</text>
+  <circle cx="250" cy="300" r="12" fill="#ffffff" stroke="#3d4449" stroke-width="2"/>
+  <text x="250" y="305" font-size="13" font-weight="700" fill="#1f2328" text-anchor="middle">4</text>
+
+  <!-- what each numbered arrow does -->
+  <circle cx="44" cy="535" r="11" fill="#ffffff" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="44" y="540" font-size="13" font-weight="700" fill="#1f2328" text-anchor="middle">1</text>
+  <text x="66" y="540" font-size="13" fill="#1f2328">a handler threw and n &lt; retry.maxAttempts: confirmed copy to .retry with x-attempt n + 1 and x-error-code, then ack</text>
+  <circle cx="44" cy="561" r="11" fill="#ffffff" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="44" y="566" font-size="13" font-weight="700" fill="#1f2328" text-anchor="middle">2</text>
+  <text x="66" y="566" font-size="13" fill="#1f2328">after retry.delayMs, the x-message-ttl of .retry, the broker dead-letters the copy back to the work queue</text>
+  <circle cx="44" cy="587" r="11" fill="#ffffff" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="44" y="592" font-size="13" font-weight="700" fill="#1f2328" text-anchor="middle">3</text>
+  <text x="66" y="592" font-size="13" fill="#1f2328">n = retry.maxAttempts: the copy goes to .dead with x-dead-reason: max-attempts, then ack; a poison message at once</text>
+  <circle cx="44" cy="613" r="11" fill="#ffffff" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="44" y="618" font-size="13" font-weight="700" fill="#1f2328" text-anchor="middle">4</text>
+  <text x="66" y="618" font-size="13" fill="#1f2328">a consumer that keeps crashing: the delivery limit of a quorum queue makes the broker dead-letter it to .dead</text>
+
+  <!-- legend -->
+  <line x1="40" y1="660" x2="84" y2="660" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="96" y="665" font-size="14" fill="#1f2328">sent by the bus: a confirmed copy first, the acknowledgement of the original second</text>
+  <line x1="40" y1="688" x2="84" y2="688" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <text x="96" y="693" font-size="14" fill="#1f2328">dead-lettered by the broker, as the arguments of the queue say</text>
+</svg>

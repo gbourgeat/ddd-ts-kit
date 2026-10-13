@@ -5,7 +5,10 @@
 Knex adapters of the kernel and events ports: a unit of work that repositories never see, the
 transactional outbox store, the processed-event store, a migration helper for their tables,
 and one database schema per bounded context. Same pieces as `@ddd-ts-kit/drizzle`, for projects
-that build their SQL with knex.
+that build their SQL with knex. Around them: the helpers of a repository (optimistic
+concurrency, audit and tenant columns, pages), the four tenant isolation strategies, criteria
+and read models, and the stores of the event store, the background jobs and the process
+managers.
 
 ```
 npm i @ddd-ts-kit/knex knex pg
@@ -14,11 +17,70 @@ npm i @ddd-ts-kit/knex knex pg
 PostgreSQL first. MySQL 8 and SQLite work through the same code, see
 [Dialect coverage](#dialect-coverage) for what is tested and how.
 
+## Where it sits in an application
+
+Nothing here is imported from `domain/` or `application/`. The domain declares its repository
+ports and the application its query ports; the adapters written with this package live in the
+`infrastructure/` of each context, and the unit of work is built in `platform/`. One object is
+the hinge: `createKnexUnitOfWork(db)` answers the `UnitOfWork` the command bus runs every
+command in, and the `KnexContext` every adapter reaches the database through.
+
+![The command bus calls run on the UnitOfWork port; repositories, readers, the stores of the package and the audit trail call executor on the KnexContext port; both ports are the one object createKnexUnitOfWork answers, which keeps the open transaction in an AsyncLocalStorage, so every statement of a command runs in one PostgreSQL transaction, one schema per context](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/knex-place-in-an-application.svg)
+
+Instead of handing a transaction down the calls, which puts a knex type in every signature from
+the handler to the adapter and makes forgetting it a silent bug, the adapter asks the context
+where its statement runs:
+
+<!-- checked sample -->
+```ts
+import { knex, type Knex } from 'knex';
+import { createKnexUnitOfWork, KnexContext } from '@ddd-ts-kit/knex';
+
+declare const config: { readonly databaseUrl: string };
+
+interface InvoiceRow {
+  id: string;
+  status: 'draft' | 'issued';
+}
+
+// Instead of `issue(id: string, transaction: Knex.Transaction)`, threaded from the handler:
+export class KnexInvoiceIssuer {
+  constructor(private readonly context: KnexContext) {}
+
+  async issue(id: string): Promise<void> {
+    await invoicesOf(this.context).where({ id }).update({ status: 'issued' });
+  }
+}
+
+function invoicesOf(context: KnexContext): Knex.QueryBuilder<InvoiceRow, InvoiceRow[]> {
+  return context.executor()<InvoiceRow, InvoiceRow[]>('invoices').withSchema('billing_core');
+}
+
+const db = knex({ client: 'pg', connection: config.databaseUrl });
+const unitOfWork = createKnexUnitOfWork(db);
+const issuer = new KnexInvoiceIssuer(unitOfWork); // the unit of work is the KnexContext too
+
+// Both updates run in the transaction `run` opened: they commit, or roll back, together.
+await unitOfWork.run(async () => {
+  await issuer.issue('inv-1');
+  await issuer.issue('inv-2');
+});
+
+// Outside of `run`, `executor()` answers `db`: the update runs on its own.
+await issuer.issue('inv-3');
+```
+
+In an application the command bus calls `run` for you, and so do the consumers of
+`@ddd-ts-kit/di`, so a handler never sees it; a script, or a consumer wired by hand, calls it
+itself. With the CLI, `init --orm knex` writes this wiring, see
+[Composition root](#composition-root).
+
 ## Tables
 
 The consuming project owns its migrations. `createOutboxTables` is a helper to call from one of
 them:
 
+<!-- checked sample -->
 ```ts
 // migrations/20260301100000_outbox.ts
 import type { Knex } from 'knex';
@@ -85,6 +147,7 @@ to pass to `knex.schema.createSchemaIfNotExists`, `knex.schema.withSchema` and
 `createKnexUnitOfWork(db)` gives one object that is two ports: the kernel `UnitOfWork`, and
 `KnexContext`, the handle repositories and stores run their queries on. Bind it to both:
 
+<!-- checked sample -->
 ```ts
 // platform/database/persistence.module.ts
 import knex from 'knex';
@@ -98,7 +161,9 @@ import {
   KnexProcessedEventStore,
 } from '@ddd-ts-kit/knex';
 
-const db = knex({ client: 'pg', connection: process.env.DATABASE_URL });
+declare const config: { readonly databaseUrl: string }; // the configuration of the platform
+
+const db = knex({ client: 'pg', connection: config.databaseUrl });
 const unitOfWork = createKnexUnitOfWork(db);
 
 export const persistenceModule = defineContextModule({
@@ -123,7 +188,7 @@ bus of the kernel module runs every command in the bound `UnitOfWork`; handlers 
 `contextModule` of `@ddd-ts-kit/di` turns the declared classes of a context into its module.
 
 A project written by the CLI holds the same wiring in two files:
-`platform/database/persistence-over.ts` builds the unit of work and the two stores once, and
+`platform/database/persistence-over.ts` builds the unit of work and its stores once, and
 `platform/platform.module.ts` binds them, the outbox publisher being given to
 `kernelModule({ eventPublisher })`.
 
@@ -183,9 +248,11 @@ import { Repository } from '@ddd-ts-kit/kernel';
 export abstract class InvoiceRepository extends Repository<Invoice> {}
 ```
 
+<!-- checked sample -->
 ```ts
 // contexts/billing-core/infrastructure/persistence/knex-invoice.repository.ts
 import type { Knex } from 'knex';
+import { AggregateRoot } from '@ddd-ts-kit/kernel';
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
 import { insertIgnoringConflict, KnexContext, optimisticUpdate, schemaNameOf } from '@ddd-ts-kit/knex';
 
@@ -196,6 +263,19 @@ interface InvoiceRow {
   amount: number;
   status: 'draft' | 'issued';
   version: number;
+}
+
+// What the domain of the context holds, declared so that this file reads alone.
+type InvoiceState = Omit<InvoiceRow, 'version'>;
+
+declare class Invoice extends AggregateRoot {
+  static rehydrate(state: InvoiceState): Invoice;
+  readonly state: InvoiceState;
+}
+
+declare abstract class InvoiceRepository {
+  abstract findById(id: string): Promise<Invoice | undefined>;
+  abstract save(invoice: Invoice): Promise<void>;
 }
 
 @Repository(InvoiceRepository)
@@ -241,7 +321,45 @@ wraps an adapter from outside (the spans of `@ddd-ts-kit/tracing`, an aspect) re
 that answered a thenable as asynchronous: from its second call the method answers a promise
 of the rows, and `.where(...)` on it fails. The table is therefore reached through a function
 of the module, as the repository the CLI generates does, and a private method that runs a
-statement is declared `async`.
+statement is declared `async`:
+
+<!-- checked sample -->
+```ts
+import type { Knex } from 'knex';
+import { KnexContext } from '@ddd-ts-kit/knex';
+
+interface InvoiceRow {
+  id: string;
+  amount: number;
+}
+
+// Instead of a method that answers the builder: once a span wraps the adapter, the second call
+// of `invoices()` answers a promise of the rows, and `.where(...)` on it throws.
+export class FragileInvoiceTotals {
+  constructor(private readonly context: KnexContext) {}
+
+  async totalOf(id: string): Promise<number | undefined> {
+    return (await this.invoices().where({ id }).first())?.amount;
+  }
+
+  private invoices(): Knex.QueryBuilder<InvoiceRow, InvoiceRow[]> {
+    return this.context.executor()<InvoiceRow, InvoiceRow[]>('invoices');
+  }
+}
+
+// Write: the table is reached through a function of the module, and every method is async.
+export class KnexInvoiceTotals {
+  constructor(private readonly context: KnexContext) {}
+
+  async totalOf(id: string): Promise<number | undefined> {
+    return (await invoicesOf(this.context).where({ id }).first())?.amount;
+  }
+}
+
+function invoicesOf(context: KnexContext): Knex.QueryBuilder<InvoiceRow, InvoiceRow[]> {
+  return context.executor()<InvoiceRow, InvoiceRow[]>('invoices');
+}
+```
 
 In the explicit style, without the decorator, the same binding is one line of
 `<context>.module.ts`:
@@ -253,6 +371,11 @@ statement wrote no row, and moves `invoice.version` on otherwise. `insertIgnorin
 inserts unless the key exists and says whether it did; unlike a caught unique violation it
 leaves the surrounding PostgreSQL transaction usable, and it hides the one place where the
 dialects differ (`RETURNING` on PostgreSQL and SQLite, the affected-row count on MySQL).
+
+![Two transactions load invoice inv-1 at version 3; the first saves, its update matches version 3 and the row moves to version 4; the second saves afterwards, its update still expects version 3, writes no row, and optimisticUpdate throws ConcurrencyError, code CONCURRENCY_CONFLICT](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/persistence-optimistic-concurrency.svg)
+
+The second writer is refused instead of silently overwriting the first. Nothing retries it for
+you: the caller receives the `ConcurrencyError` and decides whether to load the invoice again.
 
 ## Audit columns, tenant scoping and pages
 
@@ -427,11 +550,17 @@ The rules these examples hold, and that the tests of this package check on a rea
 - **An offset page answers `total`**, a cursor page `nextCursor`. Offer the offset form for
   small, browsable lists and the cursor form for anything that grows.
 
+What the cursor buys, on invoices sorted by amount, when a row is inserted between two pages:
+
+![Invoices in total order by amount then id; page 1 reads four rows for a limit of 3 and keeps the position of the last, amount 40 and id inv-7, as its cursor; after an invoice of 10 is inserted, page 2 by offset 3 reads inv-7 a second time, while page 2 after the cursor compares the position as a tuple and answers inv-9, inv-2 and inv-4, nothing repeated, nothing skipped, no count](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/knex-cursor-page.svg)
+
 ## Tenant isolation
 
 Four strategies, chosen per project ([Multitenancy](../../docs/concepts/multitenancy.md) says
 when each fits). Every one of them is proven here by `tenantIsolationContract` of
 `@ddd-ts-kit/testing/contracts`, on PGlite and on PostgreSQL.
+
+![The four strategies from the most shared to the most separated, and the helpers of each: shared tables with tenantColumn, tenantTable, ownTenantTable, tenantRow and whereTenant; row-level security with enableTenantIsolation or tenantIsolationStatements, tenantSession and a role without BYPASSRLS; schema per tenant with tenantSchemaOf, tenantSchemaTable, tenantOfMigration, migrateTenantSchema and tenantSearchPath; database per tenant with TenantDatabases, createTenantRoutedUnitOfWork and migrateEveryTenant](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/knex-tenant-isolation-helpers.svg)
 
 **Shared tables.** One table per aggregate, a `tenant_id` column, and every statement confined
 by the kit instead of by a condition written by hand:
@@ -599,6 +728,12 @@ Criteria and read models were never run on MySQL or SQLite.
   `(consumer, event_id)`. Run the consumer inside the unit of work: the mark then commits with
   the effects of the handler, and disappears with them if it fails.
 
+The life of one record in the `outbox` table. The relay of `@ddd-ts-kit/events` drives it through
+`claimBatch`, `markPublished` and `markFailed`; `retryDead`, `purgePublished` and `stats` are
+called by an operator or a scheduled job, never by the relay:
+
+![A record is appended pending by the commit of the command; the relay claims it when due and publishes it, then marks it published, and purgePublished removes it later; a failed publication leaves it pending, retried after an exponential backoff; after the last attempt it is dead until retryDead puts it back pending; stats counts pending, failed and dead records](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/transactional-outbox-record-lifecycle.svg)
+
 ## Event store
 
 ```ts
@@ -679,8 +814,59 @@ refuses `--database mysql` and `--database sqlite`.
 ## Testing an adapter
 
 The unit of work of this package passes `unitOfWorkContract`, and its stores
-`outboxStoreContract` and `processedEventStoreContract`, of `@ddd-ts-kit/testing/contracts`. Hold your repositories to `repositoryContract` the same way,
-next to their in-memory fake. The tests of this package need no container:
+`outboxStoreContract` and `processedEventStoreContract`, of `@ddd-ts-kit/testing/contracts`.
+Hold your repositories to `repositoryContract` the same way, next to their in-memory fake: the
+same suite then proves that the fake the handlers are tested with behaves as the adapter that
+runs in production (found after a save, kept apart, later saves stored, unsaved changes ignored,
+an unseen change refused with `CONCURRENCY_CONFLICT`).
+
+<!-- checked sample -->
+```ts
+// contexts/billing-core/test/integration/knex-invoice.repository.spec.ts
+import { afterAll, afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { knex } from 'knex';
+import { AggregateRoot } from '@ddd-ts-kit/kernel';
+import { createKnexUnitOfWork, KnexContext } from '@ddd-ts-kit/knex';
+import { repositoryContract } from '@ddd-ts-kit/testing/contracts';
+
+// The aggregate and the adapter of the context, declared so that this file reads alone.
+declare class Invoice extends AggregateRoot {
+  static draft(id: string, amount: number): Invoice;
+  addCharge(amount: number): void;
+  readonly state: { readonly amount: number; readonly status: 'draft' | 'issued' };
+}
+
+declare class KnexInvoiceRepository {
+  constructor(context: KnexContext);
+  findById(id: string): Promise<Invoice | undefined>;
+  save(invoice: Invoice): Promise<void>;
+}
+
+declare const testDatabaseUrl: string; // a database of the test run, migrated
+
+const db = knex({ client: 'pg', connection: testDatabaseUrl });
+let next = 0;
+
+afterAll(() => db.destroy());
+
+repositoryContract<Invoice>(
+  { describe, it, expect, beforeEach, afterEach },
+  {
+    name: 'KnexInvoiceRepository',
+    createRepository: async () => {
+      await db('invoices').withSchema('billing_core').delete();
+
+      return new KnexInvoiceRepository(createKnexUnitOfWork(db));
+    },
+    createAggregate: () => Invoice.draft(`inv-${(next += 1)}`, 100),
+    mutate: (invoice) => invoice.addCharge(50),
+    idOf: (invoice) => invoice.id,
+    stateOf: (invoice) => invoice.state,
+  },
+);
+```
+
+The tests of this package need no container:
 
 ```
 npx vitest run packages/knex

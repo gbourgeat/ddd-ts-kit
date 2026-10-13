@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 600" width="960" height="600" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Domain events wait for the end of the unit of work</title>
+  <desc id="desc">A timeline of one unit of work that saves two carts. The transaction begins; each save writes its cart and queues the event the cart recorded; when the work returns, the queue is dispatched in recording order to the before-commit handlers, which see both saves; then the transaction commits; then the after-commit handlers run, and the command answers. Everything up to the commit is one transaction: if a save, the work, a handler or the commit fails, it rolls back, the queued events are dropped and no after-commit handler runs. The after-commit phase is at most once.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="600" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Domain events wait for the end of the unit of work</text>
+
+  <!-- time axis -->
+  <text x="44" y="68" font-size="13" fill="#3d4449" text-anchor="middle">time</text>
+  <line x1="44" y1="78" x2="44" y2="508" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <circle cx="44" cy="101" r="5" fill="#7a4f9a"/>
+  <circle cx="44" cy="163" r="5" fill="#2b5d8a"/>
+  <circle cx="44" cy="225" r="5" fill="#2b5d8a"/>
+  <circle cx="44" cy="287" r="5" fill="#2b5d8a"/>
+  <circle cx="44" cy="349" r="5" fill="#7a4f9a"/>
+  <circle cx="44" cy="411" r="5" fill="#2b5d8a"/>
+  <circle cx="44" cy="473" r="5" fill="#5f6b73"/>
+
+  <!-- 1 -->
+  <rect x="72" y="76" width="540" height="50" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="88" y="97" font-size="15" font-weight="700" fill="#7a4f9a">unitOfWork.run(work)</text>
+  <text x="88" y="116" font-size="13" fill="#1f2328">the transaction begins, and a scope that will hold the queue of events</text>
+  <!-- 2 -->
+  <rect x="72" y="138" width="540" height="50" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="88" y="159" font-size="15" font-weight="700" fill="#2b5d8a">await carts.save(c1)</text>
+  <text x="88" y="178" font-size="13" fill="#1f2328">c1 is written; the CartOpened event it recorded is queued</text>
+  <!-- 3 -->
+  <rect x="72" y="200" width="540" height="50" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="88" y="221" font-size="15" font-weight="700" fill="#2b5d8a">await carts.save(c2)</text>
+  <text x="88" y="240" font-size="13" fill="#1f2328">c2 is written; its event is queued behind the event of c1</text>
+  <!-- 4 -->
+  <rect x="72" y="262" width="540" height="50" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="88" y="283" font-size="15" font-weight="700" fill="#2b5d8a">the work returns: before-commit handlers</text>
+  <text x="88" y="302" font-size="13" fill="#1f2328">the queue is dispatched in recording order; each handler sees c1 and c2</text>
+  <!-- 5 -->
+  <rect x="72" y="324" width="540" height="50" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="88" y="345" font-size="15" font-weight="700" fill="#7a4f9a">commit</text>
+  <text x="88" y="364" font-size="13" fill="#1f2328">the carts and what the handlers wrote, the outbox included, commit together</text>
+  <!-- 6 -->
+  <rect x="72" y="386" width="540" height="50" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="88" y="407" font-size="15" font-weight="700" fill="#2b5d8a">after-commit handlers</text>
+  <text x="88" y="426" font-size="13" fill="#1f2328">run once committed; a failure is reported and never fails the command</text>
+  <!-- 7 -->
+  <rect x="72" y="448" width="540" height="50" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="88" y="469" font-size="15" font-weight="700" fill="#5f6b73">the command answers</text>
+  <text x="88" y="488" font-size="13" fill="#1f2328">the after-commit handlers were awaited before it</text>
+
+  <!-- bracket: one transaction -->
+  <path d="M628,78 H640 V372 H628" fill="none" stroke="#3d4449" stroke-width="2"/>
+  <text x="656" y="98" font-size="14" font-weight="700" fill="#1f2328">One transaction</text>
+  <text x="656" y="118" font-size="13" fill="#1f2328">the saves and every before-commit</text>
+  <text x="656" y="136" font-size="13" fill="#1f2328">handler commit or roll back together</text>
+
+  <!-- failure -->
+  <rect x="656" y="166" width="280" height="142" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="672" y="190" font-size="14" font-weight="700" fill="#1f2328">If anything fails before the commit</text>
+  <text x="672" y="212" font-size="13" fill="#1f2328">a save, the work, a handler, the commit:</text>
+  <text x="672" y="232" font-size="13" fill="#1f2328">everything rolls back, the queued</text>
+  <text x="672" y="252" font-size="13" fill="#1f2328">events are dropped, no after-commit</text>
+  <text x="672" y="272" font-size="13" fill="#1f2328">handler runs. A retry reloads the</text>
+  <text x="672" y="292" font-size="13" fill="#1f2328">aggregates, which record them anew</text>
+
+  <!-- bracket: at most once -->
+  <path d="M628,388 H640 V434 H628" fill="none" stroke="#3d4449" stroke-width="2"/>
+  <text x="656" y="400" font-size="14" font-weight="700" fill="#1f2328">At most once</text>
+  <text x="656" y="420" font-size="13" fill="#1f2328">a crash after the commit loses it:</text>
+  <text x="656" y="438" font-size="13" fill="#1f2328">what must not be lost goes through</text>
+  <text x="656" y="456" font-size="13" fill="#1f2328">the outbox, before the commit</text>
+
+  <!-- legend -->
+  <rect x="44" y="532" width="28" height="18" rx="4" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="84" y="546" font-size="14" fill="#1f2328">the unit of work (infrastructure)</text>
+  <rect x="44" y="562" width="28" height="18" rx="4" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="84" y="576" font-size="14" fill="#1f2328">the use case and the handlers of its domain events (application)</text>
+</svg>

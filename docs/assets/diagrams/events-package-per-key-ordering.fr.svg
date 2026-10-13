@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 500" width="960" height="500" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Ordre par clé : un échec ne retient que sa propre clé</title>
+  <desc id="desc">Cinq enregistrements dans l'outbox, dans l'ordre où ils ont été ajoutés : A1, A2, B1, A3 et B2, où A est la clé order-1 et B la clé order-2. La publication d'A1 échoue. Avec l'ordre par défaut, A2, B1, A3 et B2 sont publiés dans le même tour et A1 est retenté une seconde plus tard, si bien qu'A2 et A3 doublent A1. Avec l'ordre par clé, B1 et B2 sont publiés, tandis qu'A2 et A3 sont retenus avec le code OUTBOX_HELD_FOR_ORDER. Au tour qui suit l'attente d'A1, A1 est publié, puis A2, puis A3.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="500" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Ordre par clé : un échec ne retient que sa propre clé</text>
+
+  <!-- row 0: the outbox -->
+  <text x="32" y="86" font-size="14" font-weight="700" fill="#1f2328">l'outbox,</text>
+  <text x="32" y="104" font-size="13" fill="#1f2328">dans l'ordre d'ajout</text>
+  <rect x="270" y="62" width="120" height="56" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="330" y="86" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">A1</text>
+  <text x="330" y="106" font-size="13" fill="#1f2328" text-anchor="middle">clé order-1</text>
+  <rect x="406" y="62" width="120" height="56" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="466" y="86" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">A2</text>
+  <text x="466" y="106" font-size="13" fill="#1f2328" text-anchor="middle">clé order-1</text>
+  <rect x="542" y="62" width="120" height="56" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="602" y="86" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">B1</text>
+  <text x="602" y="106" font-size="13" fill="#1f2328" text-anchor="middle">clé order-2</text>
+  <rect x="678" y="62" width="120" height="56" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="738" y="86" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">A3</text>
+  <text x="738" y="106" font-size="13" fill="#1f2328" text-anchor="middle">clé order-1</text>
+  <rect x="814" y="62" width="120" height="56" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="874" y="86" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">B2</text>
+  <text x="874" y="106" font-size="13" fill="#1f2328" text-anchor="middle">clé order-2</text>
+
+  <line x1="24" y1="136" x2="936" y2="136" stroke="#5f6b73" stroke-opacity="0.35"/>
+
+  <!-- row 1: ordering none -->
+  <text x="32" y="172" font-size="14" font-weight="700" fill="#1f2328">ordering: 'none'</text>
+  <text x="32" y="190" font-size="13" fill="#1f2328">par défaut, un tour</text>
+  <rect x="270" y="152" width="120" height="56" rx="10" fill="#ffffff" stroke="#7a4f9a" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="330" y="176" font-size="14" font-weight="700" fill="#7a4f9a" text-anchor="middle">A1 échoue</text>
+  <text x="330" y="196" font-size="13" fill="#1f2328" text-anchor="middle">retenté dans 1 s</text>
+  <rect x="406" y="152" width="120" height="56" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="466" y="176" font-size="14" font-weight="700" fill="#7a4f9a" text-anchor="middle">A2 publié</text>
+  <text x="466" y="196" font-size="13" fill="#1f2328" text-anchor="middle">avant A1</text>
+  <rect x="542" y="152" width="120" height="56" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="602" y="176" font-size="14" font-weight="700" fill="#7a4f9a" text-anchor="middle">B1 publié</text>
+  <text x="602" y="196" font-size="13" fill="#1f2328" text-anchor="middle">dans ce tour</text>
+  <rect x="678" y="152" width="120" height="56" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="738" y="176" font-size="14" font-weight="700" fill="#7a4f9a" text-anchor="middle">A3 publié</text>
+  <text x="738" y="196" font-size="13" fill="#1f2328" text-anchor="middle">avant A1</text>
+  <rect x="814" y="152" width="120" height="56" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="874" y="176" font-size="14" font-weight="700" fill="#7a4f9a" text-anchor="middle">B2 publié</text>
+  <text x="874" y="196" font-size="13" fill="#1f2328" text-anchor="middle">dans ce tour</text>
+  <text x="270" y="232" font-size="13" fill="#1f2328">Un consommateur d'order-1 reçoit A2 et A3, puis A1 : il ne doit pas compter sur l'ordre d'arrivée.</text>
+
+  <line x1="24" y1="252" x2="936" y2="252" stroke="#5f6b73" stroke-opacity="0.35"/>
+
+  <!-- row 2: per-key, first tick -->
+  <text x="32" y="288" font-size="14" font-weight="700" fill="#1f2328">ordering: 'per-key'</text>
+  <text x="32" y="306" font-size="13" fill="#1f2328">keyOf : l'identifiant de la</text>
+  <text x="32" y="322" font-size="13" fill="#1f2328">commande client, 1er tour</text>
+  <rect x="270" y="268" width="120" height="56" rx="10" fill="#ffffff" stroke="#7a4f9a" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="330" y="292" font-size="14" font-weight="700" fill="#7a4f9a" text-anchor="middle">A1 échoue</text>
+  <text x="330" y="312" font-size="13" fill="#1f2328" text-anchor="middle">retenté dans 1 s</text>
+  <rect x="406" y="268" width="120" height="56" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="466" y="292" font-size="14" font-weight="700" fill="#5f6b73" text-anchor="middle">A2 retenu</text>
+  <text x="466" y="312" font-size="13" fill="#1f2328" text-anchor="middle">attend A1</text>
+  <rect x="542" y="268" width="120" height="56" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="602" y="292" font-size="14" font-weight="700" fill="#7a4f9a" text-anchor="middle">B1 publié</text>
+  <text x="602" y="312" font-size="13" fill="#1f2328" text-anchor="middle">dans ce tour</text>
+  <rect x="678" y="268" width="120" height="56" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="738" y="292" font-size="14" font-weight="700" fill="#5f6b73" text-anchor="middle">A3 retenu</text>
+  <text x="738" y="312" font-size="13" fill="#1f2328" text-anchor="middle">attend A1</text>
+  <rect x="814" y="268" width="120" height="56" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="874" y="292" font-size="14" font-weight="700" fill="#7a4f9a" text-anchor="middle">B2 publié</text>
+  <text x="874" y="312" font-size="13" fill="#1f2328" text-anchor="middle">dans ce tour</text>
+  <text x="270" y="348" font-size="13" fill="#1f2328">A2 et A3 sont reprogrammés avec A1, code OUTBOX_HELD_FOR_ORDER ; la clé order-2 n'est pas freinée.</text>
+
+  <!-- later -->
+  <line x1="100" y1="334" x2="100" y2="384" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="112" y="364" font-size="13" fill="#1f2328">1 s plus tard</text>
+
+  <!-- row 3: per-key, after the backoff -->
+  <text x="32" y="412" font-size="14" font-weight="700" fill="#1f2328">ordering: 'per-key'</text>
+  <text x="32" y="430" font-size="13" fill="#1f2328">le tour après l'attente</text>
+  <rect x="270" y="392" width="120" height="56" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="330" y="416" font-size="14" font-weight="700" fill="#7a4f9a" text-anchor="middle">A1 publié</text>
+  <text x="330" y="436" font-size="13" fill="#1f2328" text-anchor="middle">premier de sa clé</text>
+  <rect x="406" y="392" width="120" height="56" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="466" y="416" font-size="14" font-weight="700" fill="#7a4f9a" text-anchor="middle">A2 publié</text>
+  <text x="466" y="436" font-size="13" fill="#1f2328" text-anchor="middle">puis A2</text>
+  <rect x="542" y="392" width="120" height="56" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="602" y="416" font-size="14" font-weight="700" fill="#5f6b73" text-anchor="middle">B1</text>
+  <text x="602" y="436" font-size="13" fill="#5f6b73" text-anchor="middle">déjà parti</text>
+  <rect x="678" y="392" width="120" height="56" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="738" y="416" font-size="14" font-weight="700" fill="#7a4f9a" text-anchor="middle">A3 publié</text>
+  <text x="738" y="436" font-size="13" fill="#1f2328" text-anchor="middle">puis A3</text>
+  <rect x="814" y="392" width="120" height="56" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="874" y="416" font-size="14" font-weight="700" fill="#5f6b73" text-anchor="middle">B2</text>
+  <text x="874" y="436" font-size="13" fill="#5f6b73" text-anchor="middle">déjà parti</text>
+  <text x="270" y="474" font-size="13" fill="#1f2328">order-1 part dans l'ordre d'ajout. Un A1 mort cesserait de retenir sa clé.</text>
+</svg>

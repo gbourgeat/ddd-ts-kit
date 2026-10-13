@@ -14,6 +14,40 @@ npm i @opentelemetry/sdk-node @opentelemetry/auto-instrumentations-node @opentel
 npm i -D @opentelemetry/sdk-trace-base @opentelemetry/context-async-hooks
 ```
 
+![Where the package sits: the platform wraps each place where work enters or leaves a bounded context, and each wrapper opens one kind of span. tracedRoutes around the HTTP pipeline opens the SERVER span of the request. traceApplication, given once to kernelModule, holds the wrappers that open spans: traceUseCases on the buses opens command and query spans, traceBindings on repositories, gateways and handlers opens their spans, tracedDomainEvents on the domain event dispatcher opens the unit-of-work and domain-event spans, tracedPublisher on the publisher of the kernel opens outbox append, tracedConsumer opens process, and tracedJob and tracedBackgroundJob open job; it also hands the error reporter and the execution scope to the tracing. tracedPublisher around the publisher of the outbox relay opens publish. initTracing starts the OpenTelemetry SDK with its instrumentations and span processors, and exports over OTLP to Jaeger or a collector. The code of the contexts imports none of it](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/tracing-package-place.svg)
+
+Every span of a trace is opened by one of these few places, all of them in the platform. The
+domain, the application and the adapters of a context stay plain classes, which the rule
+`tracing/platform-only` holds: an import of `@ddd-ts-kit/tracing` or of `@opentelemetry/*`
+anywhere else under the source root is reported. Instead of opening a span in an adapter:
+
+```ts
+// src/contexts/billing/infrastructure/external/stripe-payment.gateway.ts
+import { trace } from '@opentelemetry/api'; // reported by tracing/platform-only
+
+export class StripePaymentGateway implements PaymentGateway {
+  async charge(invoiceId: string): Promise<void> {
+    await trace.getTracer('billing').startActiveSpan('charge', () => this.client.charge(invoiceId));
+  }
+}
+```
+
+write the adapter alone, and bind it with its kind: the instrumentation of the kernel module
+wraps it, and every call is an `external PaymentGateway.charge` span with the same attributes
+as every other adapter.
+
+```ts
+export class StripePaymentGateway implements PaymentGateway {
+  async charge(invoiceId: string): Promise<void> {
+    await this.client.charge(invoiceId);
+  }
+}
+
+// the module of the context, explicit style; the declared style writes
+// @Adapter(PaymentGateway, { kind: 'external' }) on the class instead
+builder.bind(PaymentGateway).toClass(StripePaymentGateway, [StripeClient]).as('external');
+```
+
 ## Setup
 
 ```ts
@@ -184,6 +218,8 @@ makes `publish <type>` a child of what the record names, never of the loop of th
 stamps its own span on what goes out, so the consumers are its children. A tick that finds
 nothing to publish makes no span, and there is no span per tick.
 
+![One trace across two call chains. In the request, the span POST /appointments contains the command, which contains, through the unit-of-work, domain-event and handler spans, outbox append; outbox append stamps its own traceparent on the event, and the outbox stores it with the record. Later, the relay claims the record from a timer, with no span of its own; tracedPublisher opens publish as a child of the span the record names, and stamps its own traceparent on the message, in the envelope and in a header. Each consumer opens process as a child of publish. The trace id is the same from the request to the consumers](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/tracing-package-across-the-outbox.svg)
+
 An event without `traceparent` (stored before tracing was configured) continues the active
 span instead.
 
@@ -194,6 +230,8 @@ one trace, and Jaeger shows a link only as a reference to click through, one con
 time. Choose `consumers: 'link'` for a system where one event fans out to so many consumers,
 or is retried for so long, that a trace would never end: each delivery is then the root of its
 own trace, linked to the publication.
+
+![The two ways a consumer relates to the publication. With consumers: continue, the default, the process spans of the two consumers are children of publish, in the trace of the request: one action is one trace. With consumers: link, publish ends the trace of the request, and each delivery starts a trace of its own, whose root process span carries a link to publish](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/tracing-package-continue-or-link.svg)
 
 **Deliveries.** A provider tells each handler which delivery this is (`EventDelivery` of the
 kernel: attempt, last attempt, transport, source, consumer), and each attempt is a span of its
@@ -237,14 +275,102 @@ A publisher names its transport itself (`messagingSystem`: `rabbitmq`, `kafka`, 
 publisher of your own.
 
 For a custom transport: `captureTraceparent()` when storing a message,
-`runWithTraceparent(traceparent, fn)` when handling it. `spanContextFromTraceparent` accepts
-version `00` only and rejects all-zero ids. `withSpan(name, fn, attributes?)` exists for
+`runWithTraceparent(traceparent, fn)` when handling it. This is all the outbox does, and it
+runs as it is:
+
+<!-- checked sample -->
+```ts
+import { captureTraceparent, runWithTraceparent, withSpan } from '@ddd-ts-kit/tracing';
+import { expectSpanTree, installTestTracing } from '@ddd-ts-kit/tracing/testing';
+
+interface QueuedMessage {
+  readonly body: string;
+  readonly traceparent: string | undefined;
+}
+
+const queue: QueuedMessage[] = [];
+const tracing = installTestTracing();
+
+const trace = await tracing.traceOf(async () => {
+  // Inside the request: store the message with the trace it belongs to.
+  await withSpan('POST /messages', async () => {
+    queue.push({ body: 'hello', traceparent: captureTraceparent() });
+  });
+
+  // Later, from a timer, outside of any span: continue the stored trace.
+  for (const message of queue.splice(0)) {
+    await runWithTraceparent(message.traceparent, () => withSpan('handle message', async () => undefined));
+  }
+});
+
+// One trace: the handling is a child of the request, though the request was over.
+expectSpanTree(trace, [{ name: 'POST /messages', children: [{ name: 'handle message' }] }]);
+tracing.uninstall();
+```
+
+With a missing or malformed `traceparent`, `runWithTraceparent` runs the function in the
+current context. `spanContextFromTraceparent` accepts version `00` only and rejects all-zero
+ids. `withSpan(name, fn, attributes?)` exists for
 platform code (a migration, a startup step); domain and application code never call it.
 
 ## What a dependency span contains
 
 `traceDependency` opens one span per call of an async method, named `<kind> <Port>.<method>`
-after the port when it is given and after the class otherwise.
+after the port when it is given and after the class otherwise. `traceBindings()` calls it for
+every binding declared with a kind; by hand, and asserted with the test harness:
+
+<!-- checked sample -->
+```ts
+import { traceDependency, withSpan } from '@ddd-ts-kit/tracing';
+import { expectSpanTree, installTestTracing } from '@ddd-ts-kit/tracing/testing';
+
+// An adapter as a context writes it: no import of the tracing package.
+class InMemoryOrderRepository {
+  private readonly rows = new Map<string, number>();
+
+  async save(orderId: string, total: number): Promise<void> {
+    this.rows.set(orderId, total);
+  }
+
+  async totalOf(orderId: string): Promise<number | undefined> {
+    return this.rows.get(orderId);
+  }
+}
+
+const tracing = installTestTracing();
+
+// The composition root wraps it, under the name of its port.
+const orders = traceDependency(new InMemoryOrderRepository(), {
+  kind: 'repository',
+  context: 'ordering',
+  port: 'OrderRepository',
+});
+
+const trace = await tracing.traceOf(() =>
+  withSpan('place order', async () => {
+    await orders.save('order-1', 3000);
+    await orders.totalOf('order-1');
+  }),
+);
+
+expectSpanTree(trace, [
+  {
+    name: 'place order',
+    children: [
+      {
+        name: 'repository OrderRepository.save',
+        attributes: { 'code.namespace': 'InMemoryOrderRepository', 'code.function': 'save', 'app.context': 'ordering' },
+      },
+      { name: 'repository OrderRepository.totalOf' },
+    ],
+  },
+]);
+
+console.log(orders instanceof InMemoryOrderRepository); // true: the same object, wrapped in place
+tracing.uninstall();
+```
+
+What the wrapping keeps and leaves out:
 
 - Never arguments, return values or error messages; the error is rethrown untouched.
 - Synchronous methods are not traced. A method declared `async` is traced from its first call; a

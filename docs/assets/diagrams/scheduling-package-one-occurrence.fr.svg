@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 680" width="960" height="680" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Ce que fait le planificateur d'une occurrence</title>
+  <desc id="desc">Quand une occurrence est due, le planificateur vérifie d'abord si elle est atteinte plus tard que lateAfterMs : avec missed skip, il enregistre missed. Puis si l'exécution précédente est encore en cours : avec overlap skip, il enregistre skipped-overlap ; avec queue, il l'attend. Puis, pour un job singleInstance, il prend le verrou de l'occurrence : détenu par une autre instance, il enregistre skipped-locked ; injoignable, il enregistre failed avec JOB_LOCK_UNAVAILABLE. Une fois le verrou pris, il exécute le job dans une portée d'exécution : l'exécution réussit ou échoue, avec le code de ce qu'elle a levé, JOB_TIMEOUT ou JOB_ABORTED. Chaque issue est journalisée, comptée et donnée à onRun.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="680" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Ce que fait le planificateur d'une occurrence</text>
+  <!-- A: due -->
+  <rect x="60" y="62" width="360" height="50" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="240" y="92" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">le minuteur sonne : une occurrence est due</text>
+  <line x1="240" y1="114" x2="240" y2="142" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- B: late? -->
+  <rect x="60" y="144" width="360" height="60" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="240" y="170" font-size="15" font-weight="700" fill="#7a4f9a" text-anchor="middle">atteinte plus tard que lateAfterMs ?</text>
+  <text x="240" y="192" font-size="13" fill="#1f2328" text-anchor="middle">60 s par défaut, plus la gigue</text>
+  <line x1="422" y1="174" x2="596" y2="174" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="509" y="164" font-size="13" fill="#1f2328" text-anchor="middle">oui, missed: 'skip'</text>
+  <rect x="600" y="146" width="300" height="56" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="750" y="169" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">missed</text>
+  <text x="750" y="190" font-size="13" fill="#1f2328" text-anchor="middle">le job attend sa prochaine occurrence</text>
+  <line x1="240" y1="206" x2="240" y2="242" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="252" y="229" font-size="13" fill="#1f2328">non, ou missed: 'run-once'</text>
+  <!-- C: overlap? -->
+  <rect x="60" y="244" width="360" height="60" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="240" y="270" font-size="15" font-weight="700" fill="#7a4f9a" text-anchor="middle">exécution précédente encore en cours ?</text>
+  <text x="240" y="292" font-size="13" fill="#1f2328" text-anchor="middle">l'option overlap décide</text>
+  <line x1="422" y1="274" x2="596" y2="274" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="509" y="264" font-size="13" fill="#1f2328" text-anchor="middle">oui, overlap: 'skip'</text>
+  <rect x="600" y="246" width="300" height="56" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="750" y="269" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">skipped-overlap</text>
+  <text x="750" y="290" font-size="13" fill="#1f2328" text-anchor="middle">rien ne démarre pour cette occurrence</text>
+  <line x1="240" y1="306" x2="240" y2="338" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="252" y="327" font-size="13" fill="#1f2328">non, ou overlap: 'queue', une fois qu'elle finit</text>
+  <!-- D: lock -->
+  <rect x="60" y="340" width="360" height="88" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="240" y="366" font-size="15" font-weight="700" fill="#7a4f9a" text-anchor="middle">singleInstance : prendre le verrou</text>
+  <text x="240" y="390" font-size="13" fill="#1f2328" text-anchor="middle">clé job:&lt;name&gt;:&lt;instant prévu&gt;</text>
+  <text x="240" y="412" font-size="13" fill="#1f2328" text-anchor="middle">sans verrou : runNow, singleInstance: false</text>
+  <line x1="422" y1="358" x2="596" y2="358" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="509" y="348" font-size="13" fill="#1f2328" text-anchor="middle">détenu ailleurs</text>
+  <rect x="600" y="334" width="300" height="48" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="750" y="363" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">skipped-locked</text>
+  <line x1="422" y1="416" x2="596" y2="416" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="509" y="406" font-size="13" fill="#1f2328" text-anchor="middle">store injoignable</text>
+  <rect x="600" y="392" width="300" height="48" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="750" y="421" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">failed, JOB_LOCK_UNAVAILABLE</text>
+  <line x1="240" y1="430" x2="240" y2="466" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="252" y="453" font-size="13" fill="#1f2328">pris</text>
+  <!-- E: run -->
+  <rect x="60" y="468" width="360" height="88" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="240" y="494" font-size="15" font-weight="700" fill="#2b5d8a" text-anchor="middle">run(execution) en portée d'exécution</text>
+  <text x="240" y="518" font-size="13" fill="#1f2328" text-anchor="middle">origine schedule, acteur système, corrélation neuve</text>
+  <text x="240" y="540" font-size="13" fill="#1f2328" text-anchor="middle">signal annulé après timeoutMs ou à stop()</text>
+  <line x1="422" y1="486" x2="596" y2="486" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="509" y="476" font-size="13" fill="#1f2328" text-anchor="middle">résolue</text>
+  <rect x="600" y="462" width="300" height="48" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="750" y="491" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">succeeded</text>
+  <line x1="422" y1="544" x2="596" y2="544" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="509" y="534" font-size="13" fill="#1f2328" text-anchor="middle">erreur ou annulation</text>
+  <rect x="600" y="518" width="300" height="56" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="750" y="541" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">failed</text>
+  <text x="750" y="562" font-size="13" fill="#1f2328" text-anchor="middle">son code, JOB_TIMEOUT ou JOB_ABORTED</text>
+  <!-- recording -->
+  <rect x="60" y="600" width="840" height="56" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="480" y="624" font-size="14" font-weight="600" fill="#5f6b73" text-anchor="middle">chaque issue à droite : une entrée de journal, scheduled_job_runs_total, l'observateur onRun</text>
+  <text x="480" y="645" font-size="13" fill="#1f2328" text-anchor="middle">une exécution donne aussi scheduled_job_duration_ms ; aucune nouvelle tentative : c'est l'occurrence suivante</text>
+</svg>

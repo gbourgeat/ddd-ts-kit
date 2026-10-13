@@ -1,0 +1,107 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 700" width="960" height="700" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">The place of @ddd-ts-kit/openfga in an application</title>
+  <desc id="desc">Three columns, from the code of the application down to the OpenFGA server. Decisions: the use cases (the guard of the command bus, Access, search handlers) ask the Authorizer port, which OpenFgaAuthorizer implements by calling Check and ListObjects. Tuples: an adapter of a context port writes tuples after the commit through the RelationTupleStore port, which OpenFgaRelationTupleStore implements by calling Write and Read. Model: the relationship schema declared with defineSchema is the one source; authorizationModelOf generates the model from it, ensureAuthorizationModel writes it at deployment or start-up and modelDrift compares it in the pipeline, through WriteAuthorizationModel and ReadLatestAuthorizationModel. The three adapters reach the server through one OpenFgaApi client bound to one store.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+    <marker id="arrow-infrastructure" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#7a4f9a"/>
+    </marker>
+  </defs>
+  <rect width="960" height="700" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">The place of @ddd-ts-kit/openfga in an application</text>
+
+  <!-- the application -->
+  <rect x="24" y="58" width="912" height="378" rx="14" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="44" y="84" font-size="14" font-weight="600" fill="#5f6b73">your application: the API process</text>
+
+  <!-- column headings -->
+  <text x="188" y="106" font-size="13" font-style="italic" fill="#5f6b73" text-anchor="middle">decide</text>
+  <text x="480" y="106" font-size="13" font-style="italic" fill="#5f6b73" text-anchor="middle">hold the tuples</text>
+  <text x="772" y="106" font-size="13" font-style="italic" fill="#5f6b73" text-anchor="middle">hold the model</text>
+
+  <g transform="translate(0 16)">
+  <!-- callers row -->
+  <rect x="56" y="104" width="264" height="60" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="188" y="130" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">use cases</text>
+  <text x="188" y="152" font-size="13" fill="#1f2328" text-anchor="middle">guard of the bus, Access, searches</text>
+
+  <rect x="348" y="104" width="264" height="60" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="480" y="130" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">a context adapter</text>
+  <text x="480" y="152" font-size="13" fill="#1f2328" text-anchor="middle">writes tuples after the commit</text>
+
+  <rect x="640" y="104" width="264" height="60" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="2"/>
+  <text x="772" y="130" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">relationship schema</text>
+  <text x="772" y="152" font-size="13" fill="#1f2328" text-anchor="middle">defineSchema: the one source</text>
+
+  <!-- ports row -->
+  <rect x="56" y="214" width="264" height="60" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="188" y="240" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">Authorizer</text>
+  <text x="188" y="262" font-size="13" fill="#1f2328" text-anchor="middle">port: check, listAccessible</text>
+
+  <rect x="348" y="214" width="264" height="60" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="480" y="240" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">RelationTupleStore</text>
+  <text x="480" y="262" font-size="13" fill="#1f2328" text-anchor="middle">port: write, delete, read</text>
+
+  <text x="716" y="226" font-size="13" fill="#1f2328">no port: the platform calls</text>
+  <text x="716" y="244" font-size="13" fill="#1f2328">them at deployment, at</text>
+  <text x="716" y="262" font-size="13" fill="#1f2328">start-up or in the pipeline</text>
+
+  <!-- adapters row: this package -->
+  <rect x="56" y="324" width="264" height="74" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="188" y="350" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">OpenFgaAuthorizer</text>
+  <text x="188" y="370" font-size="13" fill="#1f2328" text-anchor="middle">maps each permission</text>
+  <text x="188" y="388" font-size="13" fill="#1f2328" text-anchor="middle">to a relation of the model</text>
+
+  <rect x="348" y="324" width="264" height="74" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="480" y="350" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">OpenFgaRelationTupleStore</text>
+  <text x="480" y="370" font-size="13" fill="#1f2328" text-anchor="middle">idempotent writes,</text>
+  <text x="480" y="388" font-size="13" fill="#1f2328" text-anchor="middle">100 tuples per call</text>
+
+  <rect x="640" y="324" width="264" height="74" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="772" y="350" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">authorizationModelOf</text>
+  <text x="772" y="370" font-size="13" fill="#1f2328" text-anchor="middle">ensureAuthorizationModel,</text>
+  <text x="772" y="388" font-size="13" fill="#1f2328" text-anchor="middle">modelDrift</text>
+
+  <!-- the OpenFGA server -->
+  <rect x="24" y="440" width="912" height="136" rx="14" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="204" y="466" font-size="14" font-weight="600" fill="#5f6b73">OpenFGA server: one store</text>
+
+  <rect x="56" y="482" width="264" height="80" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="188" y="506" font-size="14" font-weight="700" fill="#5f6b73" text-anchor="middle">decisions</text>
+  <text x="188" y="528" font-size="13" fill="#1f2328" text-anchor="middle">Check</text>
+  <text x="188" y="548" font-size="13" fill="#1f2328" text-anchor="middle">ListObjects</text>
+
+  <rect x="348" y="482" width="264" height="80" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="480" y="506" font-size="14" font-weight="700" fill="#5f6b73" text-anchor="middle">tuples</text>
+  <text x="480" y="528" font-size="13" fill="#1f2328" text-anchor="middle">Write</text>
+  <text x="480" y="548" font-size="13" fill="#1f2328" text-anchor="middle">Read</text>
+
+  <rect x="640" y="482" width="264" height="80" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="772" y="506" font-size="14" font-weight="700" fill="#5f6b73" text-anchor="middle">models, every version kept</text>
+  <text x="772" y="528" font-size="13" fill="#1f2328" text-anchor="middle">WriteAuthorizationModel</text>
+  <text x="772" y="548" font-size="13" fill="#1f2328" text-anchor="middle">ReadLatestAuthorizationModel</text>
+
+  <!-- callers ask the ports -->
+  <line x1="188" y1="166" x2="188" y2="212" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="480" y1="166" x2="480" y2="212" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- the schema is read by the model functions -->
+  <line x1="700" y1="166" x2="700" y2="322" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- the adapters implement the ports -->
+  <line x1="188" y1="322" x2="188" y2="276" stroke="#7a4f9a" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow-infrastructure)"/>
+  <line x1="480" y1="322" x2="480" y2="276" stroke="#7a4f9a" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow-infrastructure)"/>
+  <!-- the adapters call the server -->
+  <line x1="188" y1="400" x2="188" y2="480" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="480" y1="400" x2="480" y2="480" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="772" y1="400" x2="772" y2="480" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+
+  </g>
+
+  <!-- legend -->
+  <line x1="40" y1="626" x2="84" y2="626" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="96" y="631" font-size="14" fill="#1f2328">calls or reads</text>
+  <line x1="40" y1="652" x2="84" y2="652" stroke="#7a4f9a" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow-infrastructure)"/>
+  <text x="96" y="657" font-size="14" fill="#1f2328">implements a port of @ddd-ts-kit/auth: the platform binds it at start-up</text>
+  <text x="40" y="684" font-size="13" fill="#1f2328">The three reach the server through one OpenFgaApi client bound to one store: openFgaClient of @ddd-ts-kit/openfga/sdk.</text>
+</svg>

@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 520" width="960" height="520" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">La place du logger pino dans une application</title>
+  <desc id="desc">La couche présentation, la couche infrastructure et les aspects du kit (logged, loggingMiddleware, le planificateur de jobs) écrivent par le port Logger du noyau. Le domaine et les gestionnaires ne journalisent rien : un événement ou une erreur dit ce qui s'est passé. PinoLogger de @ddd-ts-kit/pino implémente le port ; la racine de composition le crée et le lie au port une fois. PinoLogger écrit par une instance pino, qui écrit des lignes JSON sur la sortie standard, lues par le pipeline de journaux de la plateforme.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+    <marker id="arrow-infrastructure" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#7a4f9a"/>
+    </marker>
+  </defs>
+  <rect width="960" height="520" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">La place du logger pino dans une application</text>
+
+  <!-- writers -->
+  <text x="40" y="82" font-size="14" font-weight="600" fill="#5f6b73">écrivent par le port</text>
+  <rect x="40" y="96" width="300" height="64" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="190" y="122" font-size="16" font-weight="700" fill="#9a5b2b" text-anchor="middle">présentation</text>
+  <text x="190" y="144" font-size="13" fill="#1f2328" text-anchor="middle">contrôleurs, la frontière HTTP</text>
+  <rect x="40" y="176" width="300" height="64" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="190" y="202" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">infrastructure</text>
+  <text x="190" y="224" font-size="13" fill="#1f2328" text-anchor="middle">adaptateurs, gateways, clients de broker</text>
+  <rect x="40" y="256" width="300" height="64" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="190" y="282" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">aspects du kit</text>
+  <text x="190" y="304" font-size="13" fill="#1f2328" text-anchor="middle">logged, loggingMiddleware, planificateur</text>
+
+  <!-- silent -->
+  <text x="40" y="364" font-size="14" font-weight="600" fill="#5f6b73">ne journalisent rien : événement ou erreur</text>
+  <rect x="40" y="378" width="144" height="64" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="112" y="404" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">domaine</text>
+  <text x="112" y="426" font-size="13" fill="#1f2328" text-anchor="middle">événements, refus</text>
+  <rect x="196" y="378" width="144" height="64" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="268" y="404" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">gestionnaires</text>
+  <text x="268" y="426" font-size="13" fill="#1f2328" text-anchor="middle">ils lèvent</text>
+
+  <!-- port -->
+  <rect x="390" y="168" width="180" height="96" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="480" y="196" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">Logger</text>
+  <text x="480" y="220" font-size="13" fill="#1f2328" text-anchor="middle">port du noyau</text>
+  <text x="480" y="242" font-size="13" fill="#1f2328" text-anchor="middle">info, warn, child, flush</text>
+  <line x1="342" y1="128" x2="386" y2="190" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="342" y1="208" x2="386" y2="216" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="342" y1="288" x2="386" y2="242" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- adapter -->
+  <rect x="690" y="168" width="240" height="96" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="810" y="196" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">PinoLogger</text>
+  <text x="810" y="220" font-size="13" fill="#1f2328" text-anchor="middle">@ddd-ts-kit/pino</text>
+  <text x="810" y="242" font-size="13" fill="#1f2328" text-anchor="middle">corrélation, masquage, erreurs</text>
+  <line x1="688" y1="216" x2="574" y2="216" stroke="#7a4f9a" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow-infrastructure)"/>
+  <text x="630" y="206" font-size="13" fill="#7a4f9a" text-anchor="middle">implémente</text>
+
+  <!-- composition root -->
+  <rect x="380" y="304" width="200" height="84" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="480" y="330" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">racine de composition</text>
+  <text x="480" y="352" font-size="13" fill="#1f2328" text-anchor="middle">crée PinoLogger,</text>
+  <text x="480" y="372" font-size="13" fill="#1f2328" text-anchor="middle">le lie à Logger une fois</text>
+  <line x1="582" y1="326" x2="686" y2="262" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- pino and output -->
+  <rect x="690" y="304" width="240" height="56" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="810" y="327" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">pino</text>
+  <text x="810" y="348" font-size="13" fill="#1f2328" text-anchor="middle">un objet JSON par ligne</text>
+  <line x1="810" y1="266" x2="810" y2="300" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="690" y="394" width="240" height="56" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="810" y="417" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">sortie standard</text>
+  <text x="810" y="438" font-size="13" fill="#1f2328" text-anchor="middle">lue par votre pipeline de journaux</text>
+  <line x1="810" y1="362" x2="810" y2="390" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- legend -->
+  <line x1="40" y1="480" x2="84" y2="480" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="96" y="485" font-size="14" fill="#1f2328">appelle : écrit une ligne, crée</text>
+  <line x1="390" y1="480" x2="434" y2="480" stroke="#7a4f9a" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow-infrastructure)"/>
+  <text x="446" y="485" font-size="14" fill="#1f2328">implémente le port</text>
+</svg>

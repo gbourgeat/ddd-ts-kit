@@ -16,8 +16,17 @@ npm i -D pino-pretty        # only for the pretty format
 Written against pino 10. `pino-pretty` 13 is an optional peer: it is loaded only when the
 `pretty` format is asked for.
 
+![Where the pino logger sits in an application: the domain and the handlers log nothing; the adapters of infrastructure, the controllers of presentation and the aspects write through the kernel Logger port; the composition root binds PinoLogger to that port; pino writes JSON lines to the standard output, which the platform collects](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/pino-place-in-an-application.svg)
+
+The domain and the handlers say what happened with events and errors, never with a log line.
+What writes is around them: the adapters of `infrastructure/`, the controllers of
+`presentation/`, and the aspects (`logged`, `loggingMiddleware`, the job scheduler). They all
+receive the kernel `Logger`; the composition root binds `PinoLogger` to it once. Replacing pino
+later changes that one binding, never a call site.
+
 ## Composition root
 
+<!-- checked sample -->
 ```ts
 // platform/observability/create-logger.ts
 import type { ExecutionScope, LogLevel } from '@ddd-ts-kit/kernel';
@@ -40,6 +49,7 @@ export function createLogger(scope: ExecutionScope, settings: LogSettings): Pino
 ```ts
 // main.ts
 import { tracing } from '@/platform/tracing'; // first
+import { createLogger } from '@/platform/observability/create-logger';
 import { AsyncLocalStorageExecutionScope } from '@ddd-ts-kit/kernel';
 import { createApplication, kernelModule } from '@ddd-ts-kit/di';
 
@@ -68,6 +78,8 @@ One line of the application, as it is written:
 {"level":"info","time":"2026-03-01T10:00:00.000Z","service":"shop-api","environment":"production","correlationId":"9f2c","origin":"http","actorId":"user-1","tenantId":"acme","trace_id":"4bf92f3577b34da6a3ce929d0e0e4736","span_id":"00f067aa0ba902b7","context":"shipping","message":"order shipped"}
 ```
 
+![The path of one call to logger.info: below the threshold it stops after one comparison; otherwise the adapter describes the errors among the fields and drops the level and time keys; pino writes the header, then service, environment and base, the fields of the children, what fields() answers and the fields of the line; it replaces the value of every credential key by [redacted]; then it hands the JSON line to its destination, at once on the standard output, through a 4 KiB buffer with asynchronous, or to the pino-pretty worker](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/pino-path-of-a-line.svg)
+
 **Correlation.** `fields` is read at each line that is written, through the pino `mixin`: no
 call site passes an id. `traceLogFields(scope)` answers the trace and span ids inside a span,
 and inside the execution scope the correlation id, the causation id, the origin, the actor and
@@ -79,25 +91,102 @@ by both is written twice and a JSON parser reads the one of `fields`. `StdoutLog
 them the same way; `@ddd-ts-kit/winston` does not (there a child wins over `fields`). Do not
 bind in a child a key that `fields` answers.
 
+![Which value a key gets when it is given twice, from the weakest to the strongest: with pino and StdoutLogger, service, environment and base, then the children, then fields(), then the line, which wins; with winston, fields(), then the children, then the line, then service, environment and base, which win](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/pino-which-value-wins.svg)
+
 **An instance of your own.** The project that already configures pino keeps doing so, and
 takes the pieces it wants:
 
+<!-- checked sample -->
 ```ts
-import { CREDENTIAL_KEYS } from '@ddd-ts-kit/kernel';
+import { CREDENTIAL_KEYS, type ExecutionScope } from '@ddd-ts-kit/kernel';
 import { pino } from 'pino';
 import { PinoLogger, correlationMixin, credentialRedaction } from '@ddd-ts-kit/pino';
+import { traceLogFields } from '@ddd-ts-kit/tracing';
+
+declare const scope: ExecutionScope; // the one the composition root creates
 
 const instance = pino({
   mixin: correlationMixin(() => traceLogFields(scope)),
   redact: credentialRedaction([...CREDENTIAL_KEYS, 'iban']),
 });
 
-const logger = new PinoLogger(instance);
+export const logger = new PinoLogger(instance);
 ```
 
 `createPinoLogger` writes `level` by its name and the message under `message`, like the
 `StdoutLogger` of the aspects package and like `@ddd-ts-kit/winston`: one dashboard reads the
 three. An instance of your own keeps the keys you gave it (`msg` and a numeric level by default).
+
+## Logging from an adapter
+
+An adapter receives the `Logger` of the kernel in its constructor, like any other port, and
+never imports this package. Bind once, in a child, what every line of the adapter carries; put
+on each line what changes from one call to the next. The correlation fields are already there:
+`fields` adds them.
+
+<!-- checked sample -->
+```ts
+// infrastructure/carrier/carrier-gateway.ts
+import type { Logger } from '@ddd-ts-kit/kernel';
+
+interface Carrier {
+  readonly name: string;
+  book(orderId: string, weightGrams: number): Promise<string>; // the tracking number
+}
+
+export class CarrierGateway {
+  private readonly logger: Logger;
+
+  constructor(
+    private readonly preferred: Carrier,
+    private readonly fallback: Carrier,
+    logger: Logger,
+  ) {
+    this.logger = logger.child({ context: 'shipping' }); // on every line of this adapter
+  }
+
+  async book(orderId: string, weightGrams: number): Promise<string> {
+    try {
+      return await this.preferred.book(orderId, weightGrams);
+    } catch (error) {
+      // Handled here, not rethrown: worth a line, with the error described by the logger.
+      this.logger.warn('carrier unavailable, booking with the fallback', {
+        orderId,
+        carrier: this.preferred.name,
+        error: error instanceof Error ? error : String(error),
+      });
+
+      return this.fallback.book(orderId, weightGrams);
+    }
+  }
+}
+```
+
+The message is a constant and the identifiers are fields: a dashboard counts the lines by
+message, a search finds an order by its field, and no personal data slips into the text.
+
+<!-- checked sample -->
+```ts
+import type { Logger } from '@ddd-ts-kit/kernel';
+
+declare const logger: Logger;
+declare const order: { readonly id: string; readonly customerEmail: string; readonly lines: readonly unknown[] };
+
+// Instead of: one distinct message per order, an email in clear text, a search that cannot filter.
+logger.info(`order ${order.id} shipped to ${order.customerEmail}`);
+
+// Write: the same message every time, identifiers as fields, nothing personal.
+logger.info('order shipped', { orderId: order.id });
+
+// Fields that cost something to build are built only when the line is written.
+if (logger.isLevelEnabled('debug')) {
+  logger.debug('order shipped, detail', { orderId: order.id, lineCount: order.lines.length });
+}
+```
+
+An error that the code lets go (it throws, or rethrows) is not logged on the way: the bus, the
+route or the job reports it to the `ErrorReporter` once, and the aspects log its type and its
+code. Log an error only where it is handled and stops, as the fallback above does.
 
 ## Development mode
 
@@ -260,8 +349,12 @@ built, and wrap the same instance in `new PinoLogger(instance)` for the kit.
 Nothing of this package: the test application binds `InMemoryLogger` of the kernel, and its
 `entries` are data. To hold another adapter of the port to the same behaviour, run the contract:
 
+<!-- checked sample -->
 ```ts
-import { loggerContract } from '@ddd-ts-kit/testing/contracts';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { LOG_LEVELS } from '@ddd-ts-kit/kernel';
+import { createPinoLogger } from '@ddd-ts-kit/pino';
+import { loggerContract, type LoggedLine } from '@ddd-ts-kit/testing/contracts';
 
 loggerContract({ describe, it, expect, beforeEach }, {
   name: 'PinoLogger',
@@ -269,7 +362,18 @@ loggerContract({ describe, it, expect, beforeEach }, {
     const written: string[] = [];
     const logger = createPinoLogger({ ...setup, destination: { write: (line) => written.push(line) } });
 
-    return { logger, lines: () => written.map((line) => lineOf(JSON.parse(line))) }; // { level, message, fields }
+    return { logger, lines: () => written.map((line) => lineOf(JSON.parse(line))) };
   },
 });
+
+/** A written line as the contract reads it: the level by its name, the message, the other fields. */
+function lineOf({ level, message, time: _time, ...fields }: Record<string, unknown>): LoggedLine {
+  const known = LOG_LEVELS.find((one) => one === level);
+
+  if (known === undefined) {
+    throw new Error(`Not a level of the port: ${String(level)}`);
+  }
+
+  return { level: known, message: String(message), fields };
+}
 ```

@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 484" width="960" height="484" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">La vie d'une application : créer, démarrer, arrêter</title>
+  <desc id="desc">createApplication appelle la fonction register de chaque module, vérifie le graphe et lève une WiringError sur une erreur, lie tout dans un conteneur enfant, attache les gestionnaires aux bus de commandes et de requêtes et les gestionnaires d'événements du domaine au distributeur, et enregistre les jobs ; il ne construit aucun gestionnaire, qui l'est à son premier message. app.start appelle onStart de chaque module dans l'ordre de la liste, abonne les consommateurs, puis démarre le planificateur de jobs et le worker de la file ; quand jobs.start vaut false, le planificateur reste arrêté, tout comme le worker, sauf si sa file est gardée dans la mémoire du processus (InMemoryJobStore, le défaut), qui est quand même consommée. app.stop arrête le planificateur, en attendant les exécutions en cours puis en les coupant, arrête le worker de la file, désabonne les consommateurs, appelle onStop de chaque module dans l'ordre inverse, vide le rapporteur d'erreurs pendant deux secondes au plus, et vide le logger en dernier.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="484" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">La vie d'une application : créer, démarrer, arrêter</text>
+  <!-- createApplication -->
+  <rect x="20" y="60" width="290" height="400" rx="12" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="165" y="90" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">createApplication(options)</text>
+  <text x="165" y="112" font-size="13" font-style="italic" fill="#5f6b73" text-anchor="middle">vérifie d'abord, construit à la demande</text>
+  <line x1="36" y1="124" x2="294" y2="124" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <g font-size="13" fill="#1f2328">
+    <circle cx="48" cy="150" r="11" fill="#5f6b73"/><text x="48" y="155" font-weight="700" fill="#ffffff" text-anchor="middle">1</text>
+    <text x="68" y="155">appelle register() des modules</text>
+    <circle cx="48" cy="196" r="11" fill="#5f6b73"/><text x="48" y="201" font-weight="700" fill="#ffffff" text-anchor="middle">2</text>
+    <text x="68" y="201">vérifie le graphe : une erreur</text>
+    <text x="68" y="219">lève une WiringError</text>
+    <circle cx="48" cy="242" r="11" fill="#5f6b73"/><text x="48" y="247" font-weight="700" fill="#ffffff" text-anchor="middle">3</text>
+    <text x="68" y="247">lie dans un conteneur enfant</text>
+    <circle cx="48" cy="288" r="11" fill="#5f6b73"/><text x="48" y="293" font-weight="700" fill="#ffffff" text-anchor="middle">4</text>
+    <text x="68" y="293">attache les gestionnaires aux bus</text>
+    <text x="68" y="311">de commandes et de requêtes</text>
+    <circle cx="48" cy="334" r="11" fill="#5f6b73"/><text x="48" y="339" font-weight="700" fill="#ffffff" text-anchor="middle">5</text>
+    <text x="68" y="339">attache les gestionnaires</text>
+    <text x="68" y="357">d'événements du domaine</text>
+    <text x="68" y="375">au distributeur</text>
+    <circle cx="48" cy="398" r="11" fill="#5f6b73"/><text x="48" y="403" font-weight="700" fill="#ffffff" text-anchor="middle">6</text>
+    <text x="68" y="403">enregistre les jobs</text>
+  </g>
+  <text x="165" y="428" font-size="13" font-style="italic" fill="#5f6b73" text-anchor="middle">un gestionnaire est construit</text>
+  <text x="165" y="446" font-size="13" font-style="italic" fill="#5f6b73" text-anchor="middle">à son premier message</text>
+  <!-- start -->
+  <rect x="335" y="60" width="290" height="400" rx="12" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="480" y="90" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">app.start()</text>
+  <text x="480" y="112" font-size="13" font-style="italic" fill="#5f6b73" text-anchor="middle">dans l'ordre des modules</text>
+  <line x1="351" y1="124" x2="609" y2="124" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <g font-size="13" fill="#1f2328">
+    <circle cx="363" cy="150" r="11" fill="#5f6b73"/><text x="363" y="155" font-weight="700" fill="#ffffff" text-anchor="middle">1</text>
+    <text x="383" y="155">onStart de chaque module, dans</text>
+    <text x="383" y="173">l'ordre de la liste</text>
+    <circle cx="363" cy="196" r="11" fill="#5f6b73"/><text x="363" y="201" font-weight="700" fill="#ffffff" text-anchor="middle">2</text>
+    <text x="383" y="201">abonne les consommateurs :</text>
+    <text x="383" y="219">gestionnaires d'événements</text>
+    <text x="383" y="237">et projections</text>
+    <circle cx="363" cy="260" r="11" fill="#5f6b73"/><text x="363" y="265" font-weight="700" fill="#ffffff" text-anchor="middle">3</text>
+    <text x="383" y="265">démarre le planificateur de jobs</text>
+    <circle cx="363" cy="306" r="11" fill="#5f6b73"/><text x="363" y="311" font-weight="700" fill="#ffffff" text-anchor="middle">4</text>
+    <text x="383" y="311">démarre le worker de la file</text>
+  </g>
+  <text x="480" y="392" font-size="13" font-style="italic" fill="#5f6b73" text-anchor="middle">avec jobs: { start: false } :</text>
+  <text x="480" y="410" font-size="13" font-style="italic" fill="#5f6b73" text-anchor="middle">3 est sauté, et 4 aussi, sauf si</text>
+  <text x="480" y="428" font-size="13" font-style="italic" fill="#5f6b73" text-anchor="middle">la file est gardée en mémoire</text>
+  <!-- stop -->
+  <rect x="650" y="60" width="290" height="400" rx="12" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="795" y="90" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">app.stop()</text>
+  <text x="795" y="112" font-size="13" font-style="italic" fill="#5f6b73" text-anchor="middle">les jobs d'abord, le logger à la fin</text>
+  <line x1="666" y1="124" x2="924" y2="124" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <g font-size="13" fill="#1f2328">
+    <circle cx="678" cy="150" r="11" fill="#5f6b73"/><text x="678" y="155" font-weight="700" fill="#ffffff" text-anchor="middle">1</text>
+    <text x="698" y="155">arrête le planificateur : attend</text>
+    <text x="698" y="173">les exécutions, puis les coupe</text>
+    <circle cx="678" cy="196" r="11" fill="#5f6b73"/><text x="678" y="201" font-weight="700" fill="#ffffff" text-anchor="middle">2</text>
+    <text x="698" y="201">arrête le worker de la file</text>
+    <circle cx="678" cy="242" r="11" fill="#5f6b73"/><text x="678" y="247" font-weight="700" fill="#ffffff" text-anchor="middle">3</text>
+    <text x="698" y="247">désabonne les consommateurs</text>
+    <circle cx="678" cy="288" r="11" fill="#5f6b73"/><text x="678" y="293" font-weight="700" fill="#ffffff" text-anchor="middle">4</text>
+    <text x="698" y="293">onStop de chaque module, dans</text>
+    <text x="698" y="311">l'ordre inverse</text>
+    <circle cx="678" cy="334" r="11" fill="#5f6b73"/><text x="678" y="339" font-weight="700" fill="#ffffff" text-anchor="middle">5</text>
+    <text x="698" y="339">vide l'ErrorReporter (2 s)</text>
+    <circle cx="678" cy="380" r="11" fill="#5f6b73"/><text x="678" y="385" font-weight="700" fill="#ffffff" text-anchor="middle">6</text>
+    <text x="698" y="385">vide le Logger</text>
+  </g>
+  <text x="795" y="428" font-size="13" font-style="italic" fill="#5f6b73" text-anchor="middle">un onStop en échec n'arrête pas la suite</text>
+  <!-- between the phases -->
+  <line x1="311" y1="260" x2="333" y2="260" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="626" y1="260" x2="648" y2="260" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+</svg>

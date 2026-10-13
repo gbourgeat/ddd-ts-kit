@@ -15,28 +15,82 @@ npm i @ddd-ts-kit/redis ioredis
 
 | Entry | Holds | Imports |
 |---|---|---|
-| `@ddd-ts-kit/redis` | `connectRedis`, `redisHealth`, `RedisCache`, `RedisLock`, `RedisRateLimiter`, `RedisRelaySignal`, `relayWakeUpMiddleware`, `RedisJobStore`, `reportLostJobs`; re-exported from the kernel: the `Lock` and `RateLimiter` ports, `InMemoryLock`, `InMemoryRateLimiter` | the kernel, `@ddd-ts-kit/scheduling`, `ioredis` (peer) |
-| `@ddd-ts-kit/redis/event-bus` | `RedisStreamsEventBus`, its options, topology and error types, the names of the entry fields | the kernel, `ioredis` (peer) |
+| `@ddd-ts-kit/redis` | `connectRedis`, `closeRedis`, `FAIL_FAST`, `redisHealth`, `RedisCache`, `jsonCodec`, `RedisLock`, `RedisRateLimiter`, `RedisRelaySignal`, `relayWakeUpMiddleware`, `RedisJobStore`, `reportLostJobs`; re-exported from the kernel: the `Lock` and `RateLimiter` ports, `InMemoryLock`, `InMemoryRateLimiter` | the kernel, `@ddd-ts-kit/scheduling`, `ioredis` (peer) |
+| `@ddd-ts-kit/redis/event-bus` | `RedisStreamsEventBus`, its options, topology and error types, `streamNamesOf`, `DEFAULT_PREFIX`, the codes `ATTEMPTS_EXHAUSTED` and `POISON_ENTRY`, the names of the entry fields | the kernel, `ioredis` (peer) |
 | `@ddd-ts-kit/redis/testing` | `cacheContract`, `lockContract`, `rateLimiterContract`, re-exported from `@ddd-ts-kit/testing/contracts` | `@ddd-ts-kit/testing` (optional peer), the runner you pass |
+
+## Where it sits in an application
 
 Nothing here is imported from `domain/` or `application/`. A use case depends on the port
 (`Cache`, `Lock`, `RateLimiter` of the kernel); the adapter is chosen in `platform/` and bound
 in the composition root.
 
+![The six ports the code names (Cache, Lock, RateLimiter, RelaySignal, JobStore, EventBus), the six adapters of @ddd-ts-kit/redis that implement them, and the one server they send their commands to; the platform binds them, the outbox and the processed events stay in the database](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/redis-place-in-an-application.svg)
+
+The same use case then runs against Redis in production and against the in-memory adapters of
+the kernel in its tests. Instead of naming the adapter, which ties the use case to one server
+and which [`layer/application-inward`](../eslint-plugin/docs/rules/layer-application-inward.md)
+reports in `application/`, name the port:
+
+<!-- checked sample -->
+```ts
+import { Cache, FixedClock, InMemoryCache, cacheKey, type CacheKey } from '@ddd-ts-kit/kernel';
+
+interface Quote {
+  readonly pair: string;
+  readonly rate: number;
+}
+
+interface ExchangeRates {
+  quoteOf(pair: string): Promise<Quote>;
+}
+
+const quoteKey = (pair: string): CacheKey<Quote> => cacheKey<Quote>('quote', pair);
+
+// Instead of `constructor(private readonly cache: RedisCache)`: the port of the kernel.
+export class QuoteReader {
+  constructor(
+    private readonly cache: Cache,
+    private readonly rates: ExchangeRates,
+  ) {}
+
+  async quoteOf(pair: string): Promise<Quote> {
+    const cached = await this.cache.get(quoteKey(pair));
+
+    if (cached !== undefined) {
+      return cached;
+    }
+
+    const quote = await this.rates.quoteOf(pair);
+    await this.cache.set(quoteKey(pair), quote, { ttlMs: 30_000 });
+
+    return quote;
+  }
+}
+
+// In a test, the in-memory cache of the kernel; in production, RedisCache, bound in platform/.
+const clock = new FixedClock(new Date('2026-10-13T09:00:00Z'));
+export const reader = new QuoteReader(new InMemoryCache(clock), { quoteOf: async (pair) => ({ pair, rate: 1.08 }) });
+```
+
 With the CLI, `init --cache redis` writes `platform/redis/open-redis.ts` (one connection, the
-cache, the lock, the rate limiter, the relay signal, the readiness probe) and
-`init --broker redis` writes `platform/events/create-event-provider.ts` around
-`RedisStreamsEventBus`. What follows is each piece, wired by hand.
+cache, the lock, the rate limiter, the relay signal when events go through an outbox, the
+readiness probe), `init --broker redis` writes `platform/events/create-event-provider.ts`
+around `RedisStreamsEventBus`, and `init --queue redis` (which needs `--cache redis`) adds the
+job store to the same connection. What follows is each piece, wired by hand.
 
 ## Connection
 
+<!-- checked sample -->
 ```ts
 // src/platform/redis/redis.ts
 import { connectRedis, redisHealth } from '@ddd-ts-kit/redis';
 
-export const redis = connectRedis(config.redisUrl);          // or ioredis options, or a client you already have
+declare const config: { readonly redisUrl: string };
 
-export const ready = () => redisHealth(redis.client);        // { status: 'up', latencyMs } | { status: 'down', reason }
+export const redis = connectRedis(config.redisUrl); // or ioredis options, or a client you already have
+
+export const ready = () => redisHealth(redis.client); // { status: 'up', latencyMs } | { status: 'down', reason }
 export const shutdown = () => redis.close();
 ```
 
@@ -48,7 +102,7 @@ export const shutdown = () => redis.close();
   defaults, a command sent while the server is away waits for twenty reconnections before
   failing, and every request of the application waits with it.
 - `redisHealth(client, { timeoutMs? })` sends one `PING`, never throws, and answers within the
-  timeout: use it in a readiness probe. A cache being down is rarely a reason to stop
+  timeout (1 s by default): use it in a readiness probe. A cache being down is rarely a reason to stop
   receiving traffic; a lock or a rate limiter being down may be.
 - Every adapter takes the ioredis client, so several share one connection. The relay signal
   opens a second one, to listen, and the event bus one per consumer name, to block on its
@@ -77,31 +131,51 @@ volumes:
 **Credentials.** A client of ioredis keeps its options, password included, and shows them to
 whoever inspects it: that cannot be changed from here, so never log a client. The adapters of
 this package (`RedisCache`, `RedisLock`, `RedisRateLimiter`, `RedisRelaySignal`,
-`RedisStreamsEventBus`) hold their client in a field that is not enumerable, and answer their
-name to `JSON.stringify` and `util.inspect`: logging, spreading or serialising an adapter does
-not lead to the client. The object `connectRedis` answers gives its `client` by name
-(`redis.client`, `const { client } = redis`) and leaves it out of a spread or a log.
+`RedisJobStore`, `RedisStreamsEventBus`) hold their client in a field that is not enumerable,
+and answer their name to `JSON.stringify` and `util.inspect`: logging, spreading or serialising
+an adapter does not lead to the client. The object `connectRedis` answers gives its `client` by
+name (`redis.client`, `const { client } = redis`) and leaves it out of a spread or a log.
+
+<!-- checked sample -->
+```ts
+import type { Logger } from '@ddd-ts-kit/kernel';
+import { redisHealth, type RedisConnection } from '@ddd-ts-kit/redis';
+
+declare const redis: RedisConnection;
+declare const logger: Logger;
+
+export async function logStartup(): Promise<void> {
+  // Instead of: logger.info('redis connected', { client: redis.client }), the password with it.
+  // Write what an operator needs, which holds no secret:
+  const health = await redisHealth(redis.client);
+  logger.info('redis connected', { status: health.status });
+}
+```
 
 ## Cache
 
 `RedisCache` implements the kernel `Cache` port with its typed `CacheKey`.
 
+<!-- checked sample -->
 ```ts
 // src/main.ts
 import { Cache, Lock, Metrics, RateLimiter } from '@ddd-ts-kit/kernel';
-import { contextModule, createApplication, defineContextModule, kernelModule } from '@ddd-ts-kit/di';
-import { RedisCache, RedisLock, RedisRateLimiter } from '@ddd-ts-kit/redis';
+import { contextModule, createApplication, defineContextModule, kernelModule, type DeclaredSource } from '@ddd-ts-kit/di';
+import { RedisCache, RedisLock, RedisRateLimiter, type RedisConnection } from '@ddd-ts-kit/redis';
+
+declare const redis: RedisConnection; // connectRedis(config.redisUrl), above
+declare const catalogDeclarations: DeclaredSource;
 
 const platformModule = defineContextModule({
   name: 'platform',
   register(builder) {
     builder.rebind(Cache).toFactory((resolve) => new RedisCache(redis.client, { namespace: 'app', metrics: resolve(Metrics) }));
-    builder.rebind(Lock).toValue(new RedisLock(redis.client, { namespace: 'app' }));
-    builder.rebind(RateLimiter).toValue(new RedisRateLimiter(redis.client, { namespace: 'app' }));
+    builder.rebind(Lock).toValue(new RedisLock(redis.client, { namespace: 'app:lock' }));
+    builder.rebind(RateLimiter).toValue(new RedisRateLimiter(redis.client, { namespace: 'app:rate' }));
   },
 });
 
-const app = createApplication({ modules: [kernelModule(), platformModule, contextModule('catalog', catalogDeclarations)] });
+export const app = createApplication({ modules: [kernelModule(), platformModule, contextModule('catalog', catalogDeclarations)] });
 ```
 
 A port of the kernel is an abstract class, and the class is what a binding is keyed by: the
@@ -109,7 +183,9 @@ three adapters `implements` theirs, and a use case that names `Cache`, `Lock` or
 in its dependencies receives them. `kernelModule({ cache: (resolve) => new RedisCache(...), lock: ..., rateLimiter: ... })`
 does the same through its options. `cached` of `@ddd-ts-kit/aspects` and everything that
 resolves `Cache` then use it without knowing. A context that wants its keys apart builds its
-own instance with its own `namespace`.
+own instance with its own `namespace`. Give each adapter a namespace of its own, as above:
+without one, the lock writes under `lock:` and the rate limiter under `rate:`, which two
+applications sharing a server would share too.
 
 | Option | Default | Effect |
 |---|---|---|
@@ -128,6 +204,40 @@ own instance with its own `namespace`.
   request; prefer short time to live values to invalidation.
 - An entry that cannot be decoded is a miss and is counted.
 
+The type a `CacheKey` carries is a promise the codec has to keep. JSON keeps it for plain data
+only, so cache the shape the value really has after the round trip:
+
+<!-- checked sample -->
+```ts
+import { cacheKey, type Cache } from '@ddd-ts-kit/kernel';
+
+declare const cache: Cache;
+
+interface Slot {
+  readonly id: string;
+  readonly startsAt: Date;
+}
+
+// Instead of: the key promises a Date, and the cache answers a string.
+export async function cacheSlot(slot: Slot): Promise<void> {
+  await cache.set(cacheKey<Slot>('slot', slot.id), slot, { ttlMs: 60_000 });
+}
+
+// Write: plain data, in the shape it has once read back.
+interface SlotView {
+  readonly id: string;
+  readonly startsAt: string;
+}
+
+export async function cacheSlotView(slot: Slot): Promise<void> {
+  const view: SlotView = { id: slot.id, startsAt: slot.startsAt.toISOString() };
+
+  await cache.set(cacheKey<SlotView>('slot', slot.id), view, { ttlMs: 60_000 });
+}
+```
+
+Or give a `codec` (`{ encode(value): string; decode(text): unknown }`) that knows your types.
+
 **A cache must not take the application down.** With the default `onError: 'miss'`, a server
 that is away, slow beyond the command timeout or answering errors makes the application run
 as if it had no cache. Watch `cache_errors_total`: a cache that silently stopped working is a
@@ -141,16 +251,39 @@ When a popular entry expires, every request that misses it computes it again at 
   among concurrent identical calls (single flight). Give it a `RedisCache` and that part is done.
 - Across processes, use `getOrLoad` with a `lock`:
 
+<!-- checked sample -->
 ```ts
-const cache = new RedisCache(redis.client, { namespace: 'catalog', lock: new RedisLock(redis.client, { namespace: 'catalog' }) });
+import { cacheKey, type CacheKey } from '@ddd-ts-kit/kernel';
+import { RedisCache, RedisLock, type RedisConnection } from '@ddd-ts-kit/redis';
 
-const quote = await cache.getOrLoad(quoteKey(pair), () => rates.quoteOf(pair), { ttlMs: 30_000 });
+declare const redis: RedisConnection;
+
+interface Quote {
+  readonly pair: string;
+  readonly rate: number;
+}
+
+declare const rates: { quoteOf(pair: string): Promise<Quote> };
+
+const quoteKey = (pair: string): CacheKey<Quote> => cacheKey<Quote>('quote', pair);
+
+const cache = new RedisCache(redis.client, {
+  namespace: 'catalog',
+  lock: new RedisLock(redis.client, { namespace: 'catalog:lock' }),
+});
+
+export function quoteOf(pair: string): Promise<Quote> {
+  return cache.getOrLoad(quoteKey(pair), () => rates.quoteOf(pair), { ttlMs: 30_000 });
+}
 ```
 
 `getOrLoad` reads the entry; on a miss the callers of this process share one computation, and
 with a lock only one process computes: the others wait for its value up to `waitMs` (default
-2 s), then compute it themselves. It never fails because of the lock or the server: the worst
-case is the unprotected one. A failed computation is not cached.
+2 s), then compute it themselves. The process that computes holds the lock for `lockTtlMs` at
+most (default 10 s): past it, another one may start. It never fails because of the lock or the
+server: the worst case is the unprotected one. A failed computation is not cached. The
+[cache and coordination guide](../../docs/tools/cache-and-coordination.md#what-this-kit-supports-and-verified)
+draws these steps.
 
 ## Lock
 
@@ -163,15 +296,25 @@ abstract class Lock {
 interface LockHandle { readonly key: string; readonly fencingToken: number; release(): Promise<void> }
 ```
 
+<!-- checked sample -->
 ```ts
-const handle = await lock.acquire('nightly-export', { ttlMs: 60_000 });
-if (handle === undefined) { // another instance is already doing it
-  return;
-}
-try {
-  await exportEverything();
-} finally {
-  await handle.release();
+import type { Lock } from '@ddd-ts-kit/kernel';
+
+declare const lock: Lock;
+declare function exportEverything(): Promise<void>;
+
+export async function nightlyExport(): Promise<void> {
+  const handle = await lock.acquire('nightly-export', { ttlMs: 60_000 });
+
+  if (handle === undefined) {
+    return; // another instance is already doing it
+  }
+
+  try {
+    await exportEverything();
+  } finally {
+    await handle.release();
+  }
 }
 ```
 
@@ -200,10 +343,63 @@ double booking, a double payment or a duplicated invoice number belongs to a dat
 constraint (a unique index, an exclusion constraint, the optimistic version of the aggregate),
 which holds whatever any process believes about a lock.
 
+```ts
+// Instead of: a lock as the guard of an invariant.
+const handle = await lock.acquire(`slot:${slotId}`, { ttlMs: 5_000 });
+if (handle !== undefined && !(await bookings.existsForSlot(slotId))) {
+  await bookings.save(booking); // two holders (a pause, a failover) both get here: booked twice
+}
+
+// Write: the database refuses the second booking, whatever any process believes.
+//   CREATE UNIQUE INDEX bookings_one_per_slot ON bookings (slot_id);
+await bookings.save(booking); // the second insert fails on the index: the handler answers a refusal
+```
+
 The **fencing token** grows with each acquisition of a key (`INCR`, in the same script as the
 `SET`). A resource that stores the highest token it has seen can refuse a write from a stale
 holder. It narrows the gap, for resources able to compare; its counter lives in the same
 server and starts again if that server loses its data, so it is not a proof either.
+
+<!-- checked sample -->
+```ts
+import type { Lock } from '@ddd-ts-kit/kernel';
+
+declare const lock: Lock;
+declare function buildReport(): Promise<string>;
+
+/** In practice a column of the row being written: here, the highest token the store accepted. */
+export class ReportStore {
+  private highestToken = 0;
+
+  private readonly reports: string[] = [];
+
+  write(report: string, fencingToken: number): void {
+    if (fencingToken < this.highestToken) {
+      throw new Error(`Stale holder: token ${String(fencingToken)} after ${String(this.highestToken)}`);
+    }
+
+    this.highestToken = fencingToken;
+    this.reports.push(report);
+  }
+}
+
+export async function nightlyReport(store: ReportStore): Promise<void> {
+  const handle = await lock.acquire('nightly-report', { ttlMs: 60_000 });
+
+  if (handle === undefined) {
+    return;
+  }
+
+  try {
+    store.write(await buildReport(), handle.fencingToken);
+  } finally {
+    await handle.release();
+  }
+}
+```
+
+The [cache and coordination guide](../../docs/tools/cache-and-coordination.md#what-the-lock-does-and-does-not-guarantee)
+draws two holders of one key and how the token tells them apart.
 
 A server that is away makes `acquire` reject: whether somebody holds the key cannot be known,
 and the caller decides.
@@ -223,19 +419,33 @@ it. A refused call is not counted. `RedisRateLimiter` keeps one sorted set per k
 per allowed call, and decides in a single script, so concurrent calls from several instances
 cannot both take the last place.
 
+![A limit of three calls per minute: the calls at 20, 30 and 45 seconds are allowed; the call at 60 seconds sees three calls in its window, is refused, not counted, and told to retry after 20 seconds; the call at 82 seconds sees two and is allowed](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/redis-rate-limiter-sliding-window.svg)
+
+`remaining` counts the places left once this call is counted; `retryAfterMs` is 0 for an
+allowed call, and for a refused one the time until the oldest call of the window leaves it.
+
 In front of the HTTP layer, before authentication cost anything (Fastify shown; the same three
 lines fit an Express middleware):
 
+<!-- checked sample -->
 ```ts
 // src/platform/http/rate-limit.ts
+import Fastify from 'fastify';
+import { RedisRateLimiter, type RedisConnection } from '@ddd-ts-kit/redis';
+
+declare const redis: RedisConnection;
+
+export const server = Fastify();
 const limiter = new RedisRateLimiter(redis.client, { namespace: 'api', onError: 'allow' });
 
 server.addHook('onRequest', async (request, reply) => {
   const decision = await limiter.consume(`ip:${request.ip}`, { limit: 120, windowMs: 60_000 });
   reply.header('RateLimit-Remaining', decision.remaining);
+
   if (decision.allowed) {
     return;
   }
+
   reply.header('Retry-After', Math.ceil(decision.retryAfterMs / 1000));
   return reply.code(429).send({ type: 'about:blank', title: 'Too Many Requests', status: 429, code: 'RATE_LIMITED' });
 });
@@ -244,13 +454,49 @@ server.addHook('onRequest', async (request, reply) => {
 A use case that must be limited for a business reason (three password resets per hour)
 depends on the `RateLimiter` port of the kernel and receives the adapter by injection
 (`builder.rebind(RateLimiter)`, shown under [Cache](#cache)); `InMemoryRateLimiter` on a
-`FixedClock` is its fake.
+`FixedClock` is its fake. The refusal is a business answer, with its code, not an HTTP status
+written in the use case:
+
+<!-- checked sample -->
+```ts
+import { Command, ConceptError, FixedClock, InMemoryRateLimiter, RateLimiter, type CommandHandler } from '@ddd-ts-kit/kernel';
+
+export class RequestPasswordReset extends Command {
+  constructor(readonly accountId: string) {
+    super();
+  }
+}
+
+export class PasswordResetError extends ConceptError {
+  static tooMany(retryAfterMs: number) {
+    return PasswordResetError.refusal('PASSWORD_RESETS_EXHAUSTED', 'Three password resets per hour at most.', { retryAfterMs });
+  }
+}
+
+export class RequestPasswordResetHandler implements CommandHandler<RequestPasswordReset> {
+  constructor(private readonly limiter: RateLimiter) {}
+
+  async execute({ accountId }: RequestPasswordReset): Promise<void> {
+    const decision = await this.limiter.consume(`password-reset:${accountId}`, { limit: 3, windowMs: 3_600_000 });
+
+    if (!decision.allowed) {
+      throw PasswordResetError.tooMany(decision.retryAfterMs);
+    }
+
+    // send the link
+  }
+}
+
+// In a test: the in-memory limiter on a fixed clock, and time moves when the test says so.
+const clock = new FixedClock(new Date('2026-10-13T09:00:00Z'));
+export const handler = new RequestPasswordResetHandler(new InMemoryRateLimiter(clock));
+```
 
 - **Exact, at a memory cost.** One member per allowed call: a key costs memory in proportion
   to its limit. Fine up to thousands per window; for tens of thousands, limit a coarser key or
   a shorter window.
-- **The clock is the caller's.** Instants come from the `Clock` given to the limiter (the
-  system clock by default), not from the server, so every instance must be synchronized (NTP):
+- **The clock is the caller's.** Instants come from the `Clock` given to the limiter (its
+  `clock` option, the system clock by default), not from the server, so every instance must be synchronized (NTP):
   a skew between two instances shifts the window by as much. In exchange the limiter is tested
   on a fixed clock, and the script holds no arithmetic that differs between Lua versions.
 - **`onError`**: `throw` (default) lets the caller decide; `allow` keeps serving without a
@@ -263,13 +509,27 @@ depends on the `RateLimiter` port of the kernel and receives the adapter by inje
 An outbox relay polls. `RedisRelaySignal` lets it poll rarely and still publish at once, across
 processes: the process that committed a command notifies, a relay in any other process wakes.
 
+<!-- checked sample -->
 ```ts
-// the worker that relays
-const signal = new RedisRelaySignal(redis.client, { channel: 'app:outbox' });
-new OutboxRelay({ store, publisher, clock, wakeOn: signal }).start({ intervalMs: 5_000 });
+import { InMemoryCommandBus, SystemClock, unitOfWorkMiddleware, type IntegrationEventPublisher, type UnitOfWork } from '@ddd-ts-kit/kernel';
+import { OutboxRelay, type OutboxStore } from '@ddd-ts-kit/events';
+import { RedisRelaySignal, relayWakeUpMiddleware, type RedisConnection } from '@ddd-ts-kit/redis';
 
-// the API process, before the unit of work so that it notifies after the commit
-commandBus.use(relayWakeUpMiddleware(signal)).use(unitOfWorkMiddleware(unitOfWork));
+declare const redis: RedisConnection;
+declare const store: OutboxStore;
+declare const publisher: IntegrationEventPublisher;
+declare const unitOfWork: UnitOfWork;
+
+const signal = new RedisRelaySignal(redis.client, { channel: 'app:outbox' });
+
+// The worker that relays: it wakes on a notification, and still polls every 5 s.
+export const relay = new OutboxRelay({ store, publisher, clock: new SystemClock(), wakeOn: signal });
+relay.start({ intervalMs: 5_000 });
+
+// The API process. Instead of `.use(unitOfWorkMiddleware(unitOfWork)).use(relayWakeUpMiddleware(signal))`,
+// which notifies inside the transaction, before the record is visible, put the wake-up first:
+// it is then the outer middleware, and notifies once the unit of work committed.
+export const commandBus = new InMemoryCommandBus().use(relayWakeUpMiddleware(signal)).use(unitOfWorkMiddleware(unitOfWork));
 ```
 
 It satisfies the `RelaySignal` port of `@ddd-ts-kit/events` structurally: this package does not
@@ -313,12 +573,39 @@ memory: see [Guarantees and limits](#guarantees-and-limits).
 Handlers never see this package. They publish to the outbox; the relay publishes to the
 streams; each consuming context subscribes through the bus under its own name.
 
+![The outbox relay claims pending records from the outbox table and publishes them with XADD in one MULTI; each event type has one stream; each consumer name has its own group on it, notifications and billing, both receiving every event; the instances of billing share its entries; a failed or poison entry goes to the dead stream of billing](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/redis-streams-topology.svg)
+
+<!-- checked sample -->
 ```ts
 // main.ts
-import { SystemClock } from '@ddd-ts-kit/kernel';
-import { OutboxPublisher, OutboxRelay, consume, subscribeAll, validatingPublisher } from '@ddd-ts-kit/events';
+import { Command, SystemClock, type CommandBus, type Logger, type Metrics, type ProcessedEventStore, type UnitOfWork } from '@ddd-ts-kit/kernel';
+import {
+  OutboxPublisher,
+  OutboxRelay,
+  consume,
+  subscribeAll,
+  validatingPublisher,
+  type EventRegistry,
+  type IntegrationEventDefinition,
+  type OutboxStore,
+} from '@ddd-ts-kit/events';
 import { RedisStreamsEventBus } from '@ddd-ts-kit/redis/event-bus';
 import { tracedPublisher, tracedSubscriber } from '@ddd-ts-kit/tracing';
+
+declare const config: { readonly redisUrl: string };
+declare const logger: Logger;
+declare const metrics: Metrics;
+declare const outboxStore: OutboxStore;
+declare const registry: EventRegistry;
+declare const processed: ProcessedEventStore;
+declare const unitOfWork: UnitOfWork;
+declare const commandBus: CommandBus;
+declare const orderPlaced: IntegrationEventDefinition<{ readonly orderId: string }>;
+declare class IssueInvoice extends Command {
+  constructor(orderId: string);
+}
+
+const deliveries = metrics.counter('event_deliveries_total');
 
 const bus = new RedisStreamsEventBus({
   connection: config.redisUrl, // or ioredis options, or a client you already have (redis.client)
@@ -326,12 +613,12 @@ const bus = new RedisStreamsEventBus({
   retry: { maxAttempts: 5, delayMs: 5_000 }, // the defaults
   visibilityTimeoutMs: 60_000, // the default: above the worst case of a batch of handlers
   batchSize: 10, // the default
-  onFailure: (failure) => logger.warn(failure), // codes only, never an error message
-  onDelivery: ({ stream, consumer, outcome }) => deliveries.add(1, { stream, consumer, outcome }),
+  onFailure: (failure) => logger.warn('event bus failure', { ...failure }), // codes only, never an error message
+  onDelivery: ({ stream, consumer, outcome }) => deliveries.increment({ stream, consumer, result: outcome }),
 });
 
 // Publishing side: handlers write to the outbox, in the transaction of the command.
-const publisher = validatingPublisher(new OutboxPublisher(outboxStore), registry);
+export const publisher = validatingPublisher(new OutboxPublisher(outboxStore), registry);
 
 // The relay target is the bus. A record is marked published when the server answered its entry id.
 const relay = new OutboxRelay({ store: outboxStore, publisher: tracedPublisher(bus), clock: new SystemClock() });
@@ -445,6 +732,8 @@ version in the payload when it matters.
 
 ### Retry and dead-letter behaviour
 
+![An entry delivered with attempt n: without an envelope it goes to the dead stream as poison; past retry.maxAttempts after its instances crashed on it, to the dead stream as ATTEMPTS_EXHAUSTED; otherwise every handler of its type runs; all resolved, it is acknowledged; one threw on the last attempt, it is copied to the dead stream and acknowledged in one script; otherwise it stays pending and is claimed again after retry.delayMs; another instance takes over the entries of a crashed one after visibilityTimeoutMs](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/redis-streams-retry-and-dead-letter.svg)
+
 1. An entry is acknowledged (`XACK`) after every handler subscribed to its type resolved. Use
    `consume` of `@ddd-ts-kit/events`: the acknowledgement then follows the commit of the unit
    of work, and a redelivery is deduplicated.
@@ -515,10 +804,45 @@ What to watch, with the commands of any client (`<stream>` is `<prefix>:<type>`)
 | `onFailure` with `kind: 'connection'` | this bus | reconnections (`CONNECTION_LOST`, `ECONNREFUSED`) and what the server refused to a reader (`REDIS_NOGROUP`) |
 | `bus.deliveriesInFlight` | this bus | entries read and not settled; stuck above 0 means a handler that hangs |
 
+`onFailure` says codes only. To report an event the bus gives up with the error its handler
+really threw, as the example application does, hand the hook to `DeadLetterReports` of the
+kernel and subscribe through it: a delivery that fails and is retried is not reported, a dead
+or poison entry is.
+
+<!-- checked sample -->
+```ts
+import { DeadLetterReports, type ErrorReporter } from '@ddd-ts-kit/kernel';
+import { RedisStreamsEventBus } from '@ddd-ts-kit/redis/event-bus';
+
+declare const config: { readonly redisUrl: string };
+declare const errors: ErrorReporter;
+
+const deadLetters = new DeadLetterReports(errors);
+
+export const bus = new RedisStreamsEventBus({
+  connection: config.redisUrl,
+  onFailure: (failure) => deadLetters.onFailure(failure),
+});
+
+// Remembers what each handler threw, until onFailure says whether the event was given up.
+export const billingEvents = deadLetters.observing(bus.forConsumer('billing'));
+```
+
 Replaying dead entries, once the cause is fixed:
 
+<!-- checked sample -->
 ```ts
-const replayed = await bus.replayDead({ consumer: 'billing', type: 'ordering.order.placed' }, 100);
+import { streamNamesOf, type RedisStreamsEventBus } from '@ddd-ts-kit/redis/event-bus';
+
+declare const bus: RedisStreamsEventBus;
+
+const billing = { consumer: 'billing', type: 'ordering.order.placed' };
+
+// The keys to read first, with XLEN and XRANGE: the events stream and the dead stream of billing.
+export const { events, dead } = streamNamesOf(billing); // with the default prefix; pass `streamOf` otherwise
+
+// Up to 100 entries back to the events stream, oldest first, for billing only.
+export const replayed = await bus.replayDead(billing, 100);
 ```
 
 It moves up to that many entries, oldest first, from the dead stream back to the events
@@ -675,10 +999,19 @@ for a project without a database or a queue it wants out of it: a few Lua script
 client of the package, every key under `{<namespace>}` so that a cluster keeps them in one slot
 and Dragonfly sees every key a script touches declared.
 
+<!-- checked sample -->
 ```ts
-const jobStore = new RedisJobStore(redis, { namespace: 'jobs', onLostJob: reportLostJobs(logger, errors) });
+import type { ErrorReporter, Logger } from '@ddd-ts-kit/kernel';
+import { kernelModule } from '@ddd-ts-kit/di';
+import { RedisJobStore, reportLostJobs, type RedisConnection } from '@ddd-ts-kit/redis';
 
-kernelModule({ jobStore });
+declare const redis: RedisConnection;
+declare const logger: Logger;
+declare const errors: ErrorReporter;
+
+const jobStore = new RedisJobStore(redis.client, { namespace: 'jobs', onLostJob: reportLostJobs(logger, errors) });
+
+export const kernel = kernelModule({ jobStore });
 ```
 
 `reportLostJobs(logger, errors?)` logs a write lost after its unit of work committed (the id of
@@ -703,13 +1036,24 @@ hand on Redis 8 (last run: Dragonfly 2.0.2, Redis 8.2, 2026-10-13). What the job
 Each port has a suite that its in-memory implementation and its adapter both pass. An adapter
 of your own (another client library, another store) is held to the same:
 
+<!-- checked sample -->
 ```ts
+import { beforeEach, describe, expect, it } from 'vitest';
+import { FixedClock, type Cache, type Clock, type Lock, type RateLimiter } from '@ddd-ts-kit/kernel';
 import { cacheContract, lockContract, rateLimiterContract } from '@ddd-ts-kit/testing/contracts';
 
+// Your adapters, under test: each call answers a fresh one.
+declare function createMyCache(): Cache;
+declare function createMyLock(): Lock;
+declare function createMyLimiter(clock: Clock): RateLimiter;
+
+const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+const clock = new FixedClock(new Date('2026-10-13T09:00:00Z'));
+
 const runner = { describe, it, expect, beforeEach };
-cacheContract(runner, { name: 'MyCache', createCache: () => new MyCache(), elapse: (ms) => sleep(ms) });
-lockContract(runner, { name: 'MyLock', createLock: () => new MyLock(), elapse: (ms) => sleep(ms) });
-rateLimiterContract(runner, { name: 'MyLimiter', createLimiter: () => new MyLimiter(clock), elapse: (ms) => clock.advance(ms) });
+cacheContract(runner, { name: 'MyCache', createCache: () => createMyCache(), elapse: (ms) => sleep(ms) });
+lockContract(runner, { name: 'MyLock', createLock: () => createMyLock(), elapse: (ms) => sleep(ms) });
+rateLimiterContract(runner, { name: 'MyLimiter', createLimiter: () => createMyLimiter(clock), elapse: (ms) => clock.advance(ms) });
 ```
 
 `elapse` makes time pass for the subject: advance the clock it reads, or really wait when the

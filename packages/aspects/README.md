@@ -11,13 +11,84 @@ imports nothing, and `domain/` and `application/` never see this package.
 npm i @ddd-ts-kit/aspects
 ```
 
+## Where it sits in an application
+
+A call leaves a use case through a port. What answers it is the adapter bound to that port,
+wrapped by the aspects the composition root put around it. The use case itself is wrapped too,
+but by the buses: their middlewares log and measure every command and query.
+
+![A route calls the command bus, whose logging and metrics middlewares run around the handler; the handler calls the PaymentGateway port; the call goes through logged, timed, retry and timeout before it reaches the StripeGateway adapter, which calls the Stripe API; the composition root put the aspects and the middlewares in place, and neither domain nor application imports the package](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/aspects-place-in-an-application.svg)
+
+Instead of writing the policy into each adapter, write the adapter alone and put the policy
+around it:
+
+<!-- checked sample -->
+```ts
+import { compose, retry, timeout } from '@ddd-ts-kit/aspects';
+
+interface Quote {
+  readonly pair: string;
+  readonly rate: number;
+}
+
+declare function fetchQuote(pair: string): Promise<Quote>;
+
+export abstract class ExchangeRates {
+  abstract quoteOf(pair: string): Promise<Quote>;
+}
+
+// Instead of: the retry loop, its waits and its limit written inside the adapter,
+// once more in every adapter, and invisible from the composition root.
+export class TangledRates implements ExchangeRates {
+  async quoteOf(pair: string): Promise<Quote> {
+    for (let attempt = 1; ; attempt += 1) {
+      try {
+        return await fetchQuote(pair);
+      } catch (error) {
+        if (attempt === 3) {
+          throw error;
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, 100 * attempt));
+      }
+    }
+  }
+}
+
+// Write: the adapter does its one job...
+export class HttpRates implements ExchangeRates {
+  async quoteOf(pair: string): Promise<Quote> {
+    return fetchQuote(pair);
+  }
+}
+
+// ...and the composition root puts the policy around it: the same object, still an HttpRates.
+export const rates: ExchangeRates = compose(retry({ attempts: 3 }), timeout(2000))(new HttpRates(), { kind: 'external' });
+```
+
 ## Three forms, one implementation
 
 The same policy, written three ways. All three run the same code.
 
 ### 1. At the composition root, on one binding (preferred)
 
+<!-- checked sample -->
 ```ts
+import { retry, timeout } from '@ddd-ts-kit/aspects';
+import { defineContextModule } from '@ddd-ts-kit/di';
+
+interface Payment {
+  readonly orderId: string;
+  readonly amountCents: number;
+}
+
+interface Receipt {
+  readonly chargeId: string;
+}
+
+declare function post(url: string, body: Payment, options: { apiKey: string; signal?: AbortSignal | undefined }): Promise<Receipt>;
+declare const config: { readonly stripe: { readonly url: string; readonly key: string } };
+
 // contexts/billing/application/ports/payment-gateway.port.ts
 export abstract class PaymentGateway {
   abstract charge(payment: Payment, signal?: AbortSignal): Promise<Receipt>;
@@ -40,14 +111,17 @@ export class StripeGateway implements PaymentGateway {
 }
 
 // contexts/billing/billing.module.ts
-import { retry, timeout } from '@ddd-ts-kit/aspects';
-
-builder.bind(PaymentSettings).toValue({ baseUrl: config.stripe.url, apiKey: config.stripe.key });
-builder
-  .bind(PaymentGateway)
-  .toClass(StripeGateway, [PaymentSettings])
-  .as('external')
-  .with(retry({ attempts: 3 }), timeout(2000, { signal: true }));
+export const billingModule = defineContextModule({
+  name: 'billing',
+  register(builder) {
+    builder.bind(PaymentSettings).toValue({ baseUrl: config.stripe.url, apiKey: config.stripe.key });
+    builder
+      .bind(PaymentGateway)
+      .toClass(StripeGateway, [PaymentSettings])
+      .as('external')
+      .with(retry({ attempts: 3 }), timeout(2000, { signal: true }));
+  },
+});
 ```
 
 The port is an abstract class and the class is what is bound. `StripeGateway` has no import
@@ -58,11 +132,16 @@ of the adapter: `@Adapter(PaymentGateway, { kind: 'external', aspects: [retry({ 
 
 ### 2. At the composition root, on every binding
 
+<!-- checked sample -->
 ```ts
 // main.ts
 import { Cache, Clock, Logger, Metrics } from '@ddd-ts-kit/kernel';
-import { createApplication, kernelModule } from '@ddd-ts-kit/di';
-import { StdoutLogger, aspects, forKinds, installAspectRuntime, logged, retry, timed, timeout, when } from '@ddd-ts-kit/aspects';
+import { createApplication, kernelModule, type ContextModule } from '@ddd-ts-kit/di';
+import { StdoutLogger, aspects, forKinds, installAspectRuntime, logged, retry, timed, timeout, when, type Aspect } from '@ddd-ts-kit/aspects';
+
+declare const tracing: Aspect; // below
+declare const platformModule: ContextModule;
+declare const billingModule: ContextModule;
 
 const app = createApplication({
   modules: [kernelModule({ logger: new StdoutLogger() }), platformModule, billingModule],
@@ -83,8 +162,12 @@ installAspectRuntime({
 
 `tracing` is the hook of the tracing package written as an aspect:
 
+<!-- checked sample -->
 ```ts
-const tracing: Aspect = (instance, info) =>
+import type { Aspect } from '@ddd-ts-kit/aspects';
+import { traceDependency } from '@ddd-ts-kit/tracing';
+
+export const tracing: Aspect = (instance, info) =>
   info?.kind === undefined ? instance : traceDependency(instance, { kind: info.kind, ...(info.context === undefined ? {} : { context: info.context }) });
 ```
 
@@ -93,13 +176,37 @@ CLI generates, does not write this `tracing` aspect: the kernel module traces th
 itself. Its span is inside whatever the `decorate` hook adds and outside the aspects of a
 binding (see "Order"). A generated project does not use the `decorate` hook either: its
 platform module puts the default policy around the adapters that leave the process with
-`builder.around(['external', 'gateway'], () => when(forKinds('external', 'gateway'), retry(...), timeout(...)))`.
+`builder.around(['external', 'gateway'], () => when(forKinds('external', 'gateway'), retry(...), timeout(...)))`,
+and an adapter that states a policy of its own wraps it in `ownPolicy(...)` of
+`platform/resilience/`, which the default policy then leaves alone.
 
 ### 3. As a decorator, on an adapter
 
+<!-- checked sample -->
 ```ts
 // contexts/billing/infrastructure/external/stripe.gateway.ts
 import { Retry, Timeout } from '@ddd-ts-kit/aspects/decorators';
+
+interface Payment {
+  readonly orderId: string;
+  readonly amountCents: number;
+}
+
+interface Receipt {
+  readonly chargeId: string;
+}
+
+declare function post(url: string, body: Payment, options: { apiKey: string; signal?: AbortSignal | undefined }): Promise<Receipt>;
+
+abstract class PaymentGateway {
+  abstract charge(payment: Payment, signal?: AbortSignal): Promise<Receipt>;
+}
+
+abstract class PaymentSettings {
+  abstract readonly baseUrl: string;
+
+  abstract readonly apiKey: string;
+}
 
 export class StripeGateway implements PaymentGateway {
   constructor(private readonly settings: PaymentSettings) {}
@@ -152,10 +259,32 @@ kept: either one aborts. A method without parameter receives none.
 
 **`retry` and jitter.** `backoff: { baseMs, factor, maxMs, jitter }`. `jitter` is a function
 `(delayMs, attempt) => delayMs`: `fullJitter()` by default, `fullJitter(seededRandom)` or
-`noJitter` for a deterministic schedule. `sleep` replaces the wait altogether.
+`noJitter` for a deterministic schedule. `sleep` replaces the wait altogether. The wait after
+the failed attempt `n` is `baseMs x factor^(n - 1)`, capped at `maxMs`, then jittered:
+`delayBeforeRetry(n, backoff)` computes it.
 
 **`circuitBreaker` and metrics.** `onStateChange: circuitStateGauge()` publishes the state as
 the gauge `circuit_breaker_state`: 0 closed, 1 half-open, 2 open.
+
+![The three states of a circuit: closed lets every call through and counts consecutive failures; after failureThreshold of them it opens and refuses every call with CircuitOpenError; after resetAfterMs it is half-open and lets halfOpenMax trial calls through; a trial that answers closes it, a trial that fails opens it again](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/aspects-circuit-breaker-states.svg)
+
+A business refusal (a `DomainError`) proves that the dependency answers: it resets the count
+like a success. A policy for a provider that may go away for a while, in the order the next
+sections explain:
+
+<!-- checked sample -->
+```ts
+import { circuitBreaker, circuitStateGauge, compose, retry, timeout } from '@ddd-ts-kit/aspects';
+
+export const paymentProviderPolicy = compose(
+  // Outermost: an open circuit ends the retries at once (retry never retries CIRCUIT_OPEN).
+  retry({ attempts: 3, backoff: { baseMs: 200 } }),
+  // Five consecutive failures open it for 30 s; the gauge circuit_breaker_state follows it.
+  circuitBreaker({ failureThreshold: 5, resetAfterMs: 30_000, onStateChange: circuitStateGauge() }),
+  // Innermost: each attempt has its own 2 s.
+  timeout(2000),
+);
+```
 
 **`cached` is for reads of gateways and external adapters.** An aggregate served from a cache
 behind a repository hides that it is stale, and the next command would decide on old state.
@@ -163,6 +292,31 @@ Wrapping a repository or a use case therefore takes an explicit `allowKinds: ['r
 which is a decision to record.
 
 A project writes its own aspect with `defineAspect((joinPoint) => async ({ args, proceed }) => ...)`.
+The outer function runs once per method of each wrapped instance and may answer `undefined` to
+leave that method alone; the inner one runs at each call, and `proceed()` calls what is inside:
+
+<!-- checked sample -->
+```ts
+import { defineAspect, type Aspect } from '@ddd-ts-kit/aspects';
+import type { Clock, Logger } from '@ddd-ts-kit/kernel';
+
+/** Warns when a call lasts longer than the threshold: names from the code and a duration, never the arguments. */
+export function warnWhenSlow(thresholdMs: number, logger: Logger, clock: Clock): Aspect {
+  return defineAspect((joinPoint) => async ({ proceed }) => {
+    const startedAt = clock.now().getTime();
+
+    try {
+      return await proceed();
+    } finally {
+      const durationMs = clock.now().getTime() - startedAt;
+
+      if (durationMs > thresholdMs) {
+        logger.warn(`${joinPoint.className}.${joinPoint.method} slow`, { durationMs, thresholdMs });
+      }
+    }
+  });
+}
+```
 
 ## Selecting what is wrapped
 
@@ -176,8 +330,15 @@ A project writes its own aspect with `defineAspect((joinPoint) => async ({ args,
 | `forMethods('find*', 'get*')` | methods by name |
 | `allOf(...)`, `anyOf(...)`, `not(...)` | combinations |
 
+<!-- checked sample -->
 ```ts
-when(allOf(forKinds('gateway', 'external'), forMethods('find*')), cached({ key, ttlMs: 60_000 }));
+import { allOf, cached, forKinds, forMethods, when } from '@ddd-ts-kit/aspects';
+
+// The one place arguments are read: build the key from an identifier, never from personal data.
+// `undefined` leaves the call uncached. The cache key also holds the class and the method.
+const key = (_method: string, [id]: readonly unknown[]): string | undefined => (typeof id === 'string' ? id : undefined);
+
+export const cacheReads = when(allOf(forKinds('gateway', 'external'), forMethods('find*')), cached({ key, ttlMs: 60_000 }));
 ```
 
 ## Order
@@ -188,6 +349,10 @@ when(allOf(forKinds('gateway', 'external'), forMethods('find*')), cached({ key, 
 the order of the modules (the span of `kernelModule({ instrumentation })` comes first, then
 for a repository the hand-over of its domain events, then the ones of the platform module),
 and last the aspects of the binding itself (`.with(...)`, or `aspects` of a declaration).
+Decorators on the methods of the class are inside all of them.
+
+![Six nested layers around the method of one instance (an adapter or a repository), outermost first: the decorate hook of createApplication; the span of kernelModule instrumentation; for a repository, the hand-over of its domain events; the aspects of the platform module put with builder.around; the aspects of the binding, .with or the aspects of a declaration; the method decorators of the class; then the method itself](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/aspects-order-of-wrappers.svg)
+
 Order changes meaning:
 
 - `retry` then `timeout`: each attempt has its own time limit. The other way round, one limit
@@ -198,6 +363,19 @@ Order changes meaning:
   open circuit.
 - `circuitBreaker` inside `retry`: each failed attempt counts, and an open circuit ends the
   retries at once, since `retry` does not retry a `CircuitOpenError`.
+
+![Two timelines. With retry outside timeout, each of the three attempts has its own 2 s limit, and the call can last three times 2 s plus the waits. With timeout outside retry, one 2 s limit covers the attempts and the waits together, and the call rejects with TimeoutError at 2 s whatever the attempt in progress](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/aspects-retry-and-timeout-order.svg)
+
+<!-- checked sample -->
+```ts
+import { compose, retry, timeout } from '@ddd-ts-kit/aspects';
+
+// Each attempt has its own 2 s: the call may last 3 x 2 s, plus the waits between attempts.
+export const limitPerAttempt = compose(retry({ attempts: 3 }), timeout(2000));
+
+// One 2 s limit for the whole call: attempts and waits together.
+export const limitForTheCall = compose(timeout(2000), retry({ attempts: 3 }));
+```
 
 The order that fits most adapters, outermost first:
 
@@ -234,38 +412,59 @@ of a spec.
 
 Handlers are not wrapped one by one; the buses are:
 
+<!-- checked sample -->
 ```ts
-new InMemoryCommandBus()
-  .use(loggingMiddleware(logger))
-  .use(metricsMiddleware(metrics));
+import { loggingMiddleware, metricsMiddleware } from '@ddd-ts-kit/aspects';
+import { InMemoryCommandBus, InMemoryQueryBus, type Logger, type Metrics } from '@ddd-ts-kit/kernel';
+
+declare const logger: Logger;
+declare const metrics: Metrics;
+
+export const commands = new InMemoryCommandBus().use(loggingMiddleware(logger)).use(metricsMiddleware(metrics));
+export const queries = new InMemoryQueryBus().use(loggingMiddleware(logger)).use(metricsMiddleware(metrics));
 ```
 
 Same entries and series as `logged` and `timed` (prefix `use_case`), named after the message
-class, never its content. There is no middleware opening an `ExecutionScope`: a command does not
-carry a correlation id, and the scope must already be open when the route or the consumer runs,
-before any bus. Open it at the boundary.
+class, never its content: `command ChargeOrder started`, then `succeeded` or `failed`, with the
+fields `message` and `messageKind`, and the series `use_case_duration_ms` and `use_case_total`
+labelled `message` and `kind`. There is no middleware opening an `ExecutionScope`: a command
+does not carry a correlation id, and the scope must already be open when the route or the
+consumer runs, before any bus. Open it at the boundary.
 
 ## StdoutLogger
 
 A small adapter of the kernel `Logger` port writing JSON lines:
 
+<!-- checked sample -->
 ```ts
-const logger = new StdoutLogger({
+import { StdoutLogger } from '@ddd-ts-kit/aspects';
+import { logFieldsOf, type ExecutionScope } from '@ddd-ts-kit/kernel';
+import { traceLogFields } from '@ddd-ts-kit/tracing';
+
+declare const scope: ExecutionScope;
+
+// Without tracing: the correlation id, actor and tenant of the current execution context.
+export const logger = new StdoutLogger({
   level: 'info',
   base: { service: 'shop-api' },
   fields: () => {
     const context = scope.current();
-    return { ...traceLogFields(), ...(context === undefined ? {} : logFieldsOf(context)) };
+
+    return context === undefined ? {} : logFieldsOf(context);
   },
 });
-// {"time":"2026-03-01T10:00:00.000Z","level":"info","message":"...","service":"shop-api","trace_id":"..."}
+
+// With @ddd-ts-kit/tracing: the same fields, plus trace_id and span_id of the active span.
+export const tracedLogger = new StdoutLogger({ base: { service: 'shop-api' }, fields: () => traceLogFields(scope) });
+
+logger.info('payment accepted', { orderId: 'o-42' });
+// {"time":"2026-03-01T10:00:00.000Z","level":"info","message":"payment accepted","service":"shop-api","correlationId":"...","origin":"http","actorId":"...","orderId":"o-42"}
 ```
 
-`fields` is read at each entry: here the trace ids of the tracing package and, through
-`logFieldsOf` of the kernel, the correlation id, actor and tenant of the current execution
-context. This package depends on neither. When the same field comes from several places, the
-later wins: `base`, then the fields of `child(...)`, then `fields()`, then the fields of the
-log call. None can overwrite `time`, `level` or `message`.
+`fields` is read at each entry. This package depends neither on the tracing package nor on an
+execution scope: the project chooses what each entry carries. When the same field comes from
+several places, the later wins: `base`, then the fields of `child(...)`, then `fields()`, then
+the fields of the log call. None can overwrite `time`, `level` or `message`.
 
 It implements the whole port, held by `loggerContract` like the pino and winston adapters:
 
@@ -322,19 +521,36 @@ It redacts no credential: `@ddd-ts-kit/pino` and `@ddd-ts-kit/winston` do.
 ## Testing
 
 Wrappers take their collaborators as options, so a spec passes fakes of the kernel. For
-decorated classes and for aspects that read the runtime, `@ddd-ts-kit/aspects/testing` gives:
+decorated classes and for aspects that read the runtime, `@ddd-ts-kit/aspects/testing` gives
+`createAspectFakes()` (an in-memory logger, metrics and cache, a fixed clock and a
+`ManualScheduler` on the same clock) and `withAspectRuntime(runtime, work)`:
 
+<!-- checked sample -->
 ```ts
+import { expect, it } from 'vitest';
+import { Logged, Timeout } from '@ddd-ts-kit/aspects/decorators';
 import { createAspectFakes, withAspectRuntime } from '@ddd-ts-kit/aspects/testing';
 
-const fakes = createAspectFakes();           // logger, metrics, cache, clock, scheduler
-const gateway = new StripeGateway({ baseUrl: 'http://stripe.test', apiKey: 'test' });
+const fetchRate = (_pair: string): Promise<number> => new Promise(() => undefined); // a provider that never answers
 
-const pending = withAspectRuntime(fakes, () => gateway.charge(payment));
-fakes.scheduler.advance(2000);               // time moves when the test says so
+class SlowRates {
+  @Logged()
+  @Timeout(2000)
+  async rateOf(pair: string): Promise<number> {
+    return fetchRate(pair);
+  }
+}
 
-await expect(pending).rejects.toMatchObject({ code: 'TIMEOUT' });
-expect(fakes.logger.entries).toEqual([...]);
+it('gives up after two seconds, and logs the failure without the pair', async () => {
+  const fakes = createAspectFakes(); // logger, metrics, cache, clock, scheduler
+  const rates = new SlowRates();
+
+  const pending = withAspectRuntime(fakes, () => rates.rateOf('EUR-USD'));
+  fakes.scheduler.advance(2000); // time moves when the test says so
+
+  await expect(pending).rejects.toMatchObject({ code: 'TIMEOUT' });
+  expect(fakes.logger.entries.map((entry) => entry.message)).toEqual(['SlowRates.rateOf started', 'SlowRates.rateOf failed']);
+});
 ```
 
 `withAspectRuntime` holds for the work and everything it awaits, and concurrent tests do not

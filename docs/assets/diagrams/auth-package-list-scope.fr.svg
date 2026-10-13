@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 520" width="960" height="520" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Filtrer une liste : dans la requête, pas après le chargement</title>
+  <desc id="desc">À gauche, ce qu'il faut éviter : le repository lit une page de vingt factures de tous les tenants, puis le code garde, en mémoire, les lignes que l'utilisateur peut lire ; la page montre trois lignes au lieu de vingt et son total compte des lignes que l'utilisateur ne peut pas voir. À droite, ce qu'il faut écrire : le gestionnaire demande à access.scope la permission invoice.read sur le type invoice, l'Authorizer renvoie un AccessScope, par exemple un filtre sur le tenant acme, et le port de lecture le traduit en clause WHERE avec la limite de la page : la base de données renvoie la bonne page et le bon total. En dessous, ce qu'ajoute le port de lecture pour chaque sorte de périmètre : rien pour all, aucune requête pour none, une égalité par entrée pour filter, une liste id IN pour ids. Les politiques par attributs ne savent pas lister : access.scope lève alors ListingNotSupportedError.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="520" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Filtrer une liste : dans la requête, pas après le chargement</text>
+  <rect x="24" y="58" width="444" height="296" rx="12" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="44" y="86" font-size="16" font-weight="700" fill="#5f6b73">Au lieu de : charger, puis filtrer</text>
+  <rect x="48" y="102" width="396" height="58" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="246" y="125" font-size="14" font-weight="700" fill="#7a4f9a" text-anchor="middle">invoices.list(page)</text>
+  <text x="246" y="145" font-size="13" fill="#1f2328" text-anchor="middle">une page de 20 lignes, tous les tenants compris</text>
+  <line x1="246" y1="162" x2="246" y2="188" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="48" y="190" width="396" height="58" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="246" y="213" font-size="14" font-weight="700" fill="#2b5d8a" text-anchor="middle">rows.filter((invoice) =&gt; canRead(user, invoice))</text>
+  <text x="246" y="233" font-size="13" fill="#1f2328" text-anchor="middle">la règle s'exécute en mémoire, après coup</text>
+  <line x1="246" y1="250" x2="246" y2="276" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="48" y="278" width="396" height="58" rx="10" fill="#ffffff" stroke="#3d4449" stroke-width="2"/>
+  <text x="246" y="301" font-size="14" font-weight="700" fill="#1f2328" text-anchor="middle">la page 1 montre 3 lignes au lieu de 20</text>
+  <text x="246" y="321" font-size="13" fill="#1f2328" text-anchor="middle">et son total compte des lignes qu'il ne peut pas voir</text>
+  <rect x="492" y="58" width="444" height="296" rx="12" fill="#ffffff" stroke="#2b5d8a" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="512" y="86" font-size="16" font-weight="700" fill="#2b5d8a">Écrire : un périmètre d'accès dans la requête</text>
+  <rect x="516" y="102" width="396" height="58" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="714" y="125" font-size="14" font-weight="700" fill="#2b5d8a" text-anchor="middle">access.scope(actor, invoice.read, 'invoice')</text>
+  <text x="714" y="145" font-size="13" fill="#1f2328" text-anchor="middle">{ kind: 'filter', filter: { tenantId: 'acme' } }</text>
+  <line x1="714" y1="162" x2="714" y2="188" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="516" y="190" width="396" height="58" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="714" y="213" font-size="14" font-weight="700" fill="#7a4f9a" text-anchor="middle">invoices.search(scope, page)</text>
+  <text x="714" y="233" font-size="13" fill="#1f2328" text-anchor="middle">WHERE tenant_id = 'acme' LIMIT 20</text>
+  <line x1="714" y1="250" x2="714" y2="276" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="516" y="278" width="396" height="58" rx="10" fill="#ffffff" stroke="#3d4449" stroke-width="2"/>
+  <text x="714" y="301" font-size="14" font-weight="700" fill="#1f2328" text-anchor="middle">page 1 : 20 lignes, et le bon total</text>
+  <text x="714" y="321" font-size="13" fill="#1f2328" text-anchor="middle">la base filtre, puis pagine</text>
+  <text x="32" y="392" font-size="16" font-weight="700" fill="#1f2328">Ce qu'ajoute le port de lecture, pour chaque sorte d'AccessScope</text>
+  <rect x="24" y="406" width="214" height="74" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="131" y="428" font-size="14" font-weight="700" fill="#7a4f9a" text-anchor="middle">{ kind: 'all' }</text>
+  <text x="131" y="448" font-size="13" fill="#5f6b73" text-anchor="middle">RBAC, le rôle l'accorde</text>
+  <text x="131" y="468" font-size="13" fill="#1f2328" text-anchor="middle">n'ajoute rien</text>
+  <rect x="256" y="406" width="214" height="74" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="363" y="428" font-size="14" font-weight="700" fill="#7a4f9a" text-anchor="middle">{ kind: 'none' }</text>
+  <text x="363" y="448" font-size="13" fill="#5f6b73" text-anchor="middle">anonyme, ou aucun droit</text>
+  <text x="363" y="468" font-size="13" fill="#1f2328" text-anchor="middle">aucune requête : page vide</text>
+  <rect x="488" y="406" width="214" height="74" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="595" y="428" font-size="14" font-weight="700" fill="#7a4f9a" text-anchor="middle">{ kind: 'filter' }</text>
+  <text x="595" y="448" font-size="13" fill="#5f6b73" text-anchor="middle">RBAC avec contrôle du tenant</text>
+  <text x="595" y="468" font-size="13" fill="#1f2328" text-anchor="middle">WHERE tenant_id = ...</text>
+  <rect x="720" y="406" width="214" height="74" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="827" y="428" font-size="14" font-weight="700" fill="#7a4f9a" text-anchor="middle">{ kind: 'ids' }</text>
+  <text x="827" y="448" font-size="13" fill="#5f6b73" text-anchor="middle">ReBAC, expansion inverse</text>
+  <text x="827" y="468" font-size="13" fill="#1f2328" text-anchor="middle">WHERE id IN (...)</text>
+  <text x="32" y="506" font-size="13" fill="#1f2328">PolicyBasedAuthorizer n'a pas de listAccessible : access.scope lève ListingNotSupportedError plutôt que deviner.</text>
+</svg>

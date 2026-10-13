@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 600" width="960" height="600" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Les événements du domaine attendent la fin de l'unité de travail</title>
+  <desc id="desc">La chronologie d'une unité de travail qui enregistre deux paniers. La transaction commence ; chaque save écrit son panier et met en file l'événement que le panier a enregistré ; quand le travail rend la main, la file est distribuée dans l'ordre d'enregistrement aux gestionnaires before-commit, qui voient les deux saves ; puis la transaction est validée ; puis les gestionnaires after-commit s'exécutent, et la commande répond. Tout ce qui précède la validation forme une seule transaction : si un save, le travail, un gestionnaire ou la validation échoue, elle est annulée, les événements en file sont abandonnés et aucun gestionnaire after-commit ne s'exécute. La phase after-commit vaut au plus une fois.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="600" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Les événements du domaine attendent la fin de l'unité de travail</text>
+
+  <!-- time axis -->
+  <text x="44" y="68" font-size="13" fill="#3d4449" text-anchor="middle">temps</text>
+  <line x1="44" y1="78" x2="44" y2="508" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <circle cx="44" cy="101" r="5" fill="#7a4f9a"/>
+  <circle cx="44" cy="163" r="5" fill="#2b5d8a"/>
+  <circle cx="44" cy="225" r="5" fill="#2b5d8a"/>
+  <circle cx="44" cy="287" r="5" fill="#2b5d8a"/>
+  <circle cx="44" cy="349" r="5" fill="#7a4f9a"/>
+  <circle cx="44" cy="411" r="5" fill="#2b5d8a"/>
+  <circle cx="44" cy="473" r="5" fill="#5f6b73"/>
+
+  <!-- 1 -->
+  <rect x="72" y="76" width="540" height="50" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="88" y="97" font-size="15" font-weight="700" fill="#7a4f9a">unitOfWork.run(work)</text>
+  <text x="88" y="116" font-size="13" fill="#1f2328">la transaction commence, avec une portée qui tiendra la file des événements</text>
+  <!-- 2 -->
+  <rect x="72" y="138" width="540" height="50" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="88" y="159" font-size="15" font-weight="700" fill="#2b5d8a">await carts.save(c1)</text>
+  <text x="88" y="178" font-size="13" fill="#1f2328">c1 est écrit ; l'événement CartOpened qu'il a enregistré est mis en file</text>
+  <!-- 3 -->
+  <rect x="72" y="200" width="540" height="50" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="88" y="221" font-size="15" font-weight="700" fill="#2b5d8a">await carts.save(c2)</text>
+  <text x="88" y="240" font-size="13" fill="#1f2328">c2 est écrit ; son événement est mis en file derrière celui de c1</text>
+  <!-- 4 -->
+  <rect x="72" y="262" width="540" height="50" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="88" y="283" font-size="15" font-weight="700" fill="#2b5d8a">le travail rend la main : gestionnaires before-commit</text>
+  <text x="88" y="302" font-size="13" fill="#1f2328">la file est distribuée dans l'ordre d'enregistrement ; chacun voit c1 et c2</text>
+  <!-- 5 -->
+  <rect x="72" y="324" width="540" height="50" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="88" y="345" font-size="15" font-weight="700" fill="#7a4f9a">validation (commit)</text>
+  <text x="88" y="364" font-size="13" fill="#1f2328">les paniers et ce qu'ont écrit les gestionnaires, outbox comprise, sont validés</text>
+  <!-- 6 -->
+  <rect x="72" y="386" width="540" height="50" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="88" y="407" font-size="15" font-weight="700" fill="#2b5d8a">gestionnaires after-commit</text>
+  <text x="88" y="426" font-size="13" fill="#1f2328">exécutés ensuite ; un échec est signalé et ne fait jamais échouer la commande</text>
+  <!-- 7 -->
+  <rect x="72" y="448" width="540" height="50" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="88" y="469" font-size="15" font-weight="700" fill="#5f6b73">la commande répond</text>
+  <text x="88" y="488" font-size="13" fill="#1f2328">les gestionnaires after-commit ont été attendus avant</text>
+
+  <!-- bracket: one transaction -->
+  <path d="M628,78 H640 V372 H628" fill="none" stroke="#3d4449" stroke-width="2"/>
+  <text x="656" y="98" font-size="14" font-weight="700" fill="#1f2328">Une seule transaction</text>
+  <text x="656" y="118" font-size="13" fill="#1f2328">les saves et chaque gestionnaire</text>
+  <text x="656" y="136" font-size="13" fill="#1f2328">before-commit : validés ou annulés ensemble</text>
+
+  <!-- failure -->
+  <rect x="656" y="166" width="280" height="196" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="672" y="190" font-size="14" font-weight="700" fill="#1f2328">Si quoi que ce soit échoue</text>
+  <text x="672" y="208" font-size="14" font-weight="700" fill="#1f2328">avant la validation</text>
+  <text x="672" y="230" font-size="13" fill="#1f2328">un save, le travail, un gestionnaire</text>
+  <text x="672" y="250" font-size="13" fill="#1f2328">ou la validation : tout est annulé,</text>
+  <text x="672" y="270" font-size="13" fill="#1f2328">la file d'événements est abandonnée,</text>
+  <text x="672" y="290" font-size="13" fill="#1f2328">aucun gestionnaire after-commit</text>
+  <text x="672" y="310" font-size="13" fill="#1f2328">ne s'exécute. Une nouvelle tentative</text>
+  <text x="672" y="330" font-size="13" fill="#1f2328">recharge les agrégats, qui les</text>
+  <text x="672" y="350" font-size="13" fill="#1f2328">enregistrent à nouveau</text>
+
+  <!-- bracket: at most once -->
+  <path d="M628,388 H640 V434 H628" fill="none" stroke="#3d4449" stroke-width="2"/>
+  <text x="656" y="400" font-size="14" font-weight="700" fill="#1f2328">Au plus une fois</text>
+  <text x="656" y="420" font-size="13" fill="#1f2328">un crash après la validation perd</text>
+  <text x="656" y="438" font-size="13" fill="#1f2328">cette phase : ce qui ne doit pas se</text>
+  <text x="656" y="456" font-size="13" fill="#1f2328">perdre passe par l'outbox, avant</text>
+  <text x="656" y="474" font-size="13" fill="#1f2328">la validation</text>
+
+  <!-- legend -->
+  <rect x="44" y="532" width="28" height="18" rx="4" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="84" y="546" font-size="14" fill="#1f2328">l'unité de travail (infrastructure)</text>
+  <rect x="44" y="562" width="28" height="18" rx="4" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="84" y="576" font-size="14" fill="#1f2328">le cas d'usage et les gestionnaires de ses événements du domaine (application)</text>
+</svg>

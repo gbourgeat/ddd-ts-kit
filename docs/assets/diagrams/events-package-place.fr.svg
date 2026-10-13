@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 648" width="960" height="648" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Un événement d'intégration à travers @ddd-ts-kit/events</title>
+  <desc id="desc">Dans la transaction de la commande, dans le contexte producteur : l'agrégat Order enregistre l'événement du domaine OrderPlaced ; son publisher, un gestionnaire de cet événement du domaine, appelle orderPlaced.create et publie vers le port IntegrationEventPublisher, lié à validatingPublisher et scopedPublisher autour de l'OutboxPublisher, qui ajoute un enregistrement en attente à la table de l'outbox dans la même transaction. Après la validation : l'OutboxRelay réclame l'enregistrement, le publie vers le broker ou le bus en mémoire, puis le marque publié ou programme une nouvelle tentative ; le broker livre l'événement au moins une fois à consume, dans le contexte consommateur, qui le parse, le déduplique et exécute le gestionnaire dans une unité de travail ; le gestionnaire envoie la commande IssueInvoice, qui rejoint cette unité de travail. Une déclaration par événement et par version alimente create, parse, le registre, le document AsyncAPI et le catalogue des événements.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="648" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Un événement d'intégration à travers @ddd-ts-kit/events</text>
+
+  <!-- lane 1: inside the transaction -->
+  <rect x="24" y="56" width="912" height="160" rx="12" fill="none" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="44" y="80" font-size="14" font-weight="600" fill="#5f6b73">ordering, le producteur : dans la transaction de la commande</text>
+
+  <rect x="48" y="96" width="198" height="104" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="147" y="122" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">agrégat Order</text>
+  <text x="147" y="146" font-size="13" fill="#1f2328" text-anchor="middle">place() enregistre</text>
+  <text x="147" y="166" font-size="13" fill="#1f2328" text-anchor="middle">l'événement du domaine</text>
+  <text x="147" y="186" font-size="13" fill="#1f2328" text-anchor="middle">OrderPlaced</text>
+
+  <rect x="270" y="96" width="198" height="104" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="369" y="122" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">publisher</text>
+  <text x="369" y="146" font-size="13" fill="#1f2328" text-anchor="middle">gestionnaire d'OrderPlaced,</text>
+  <text x="369" y="166" font-size="13" fill="#1f2328" text-anchor="middle">avant la validation :</text>
+  <text x="369" y="186" font-size="13" fill="#1f2328" text-anchor="middle">orderPlaced.create(...)</text>
+
+  <rect x="492" y="96" width="198" height="104" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="591" y="122" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">port de publication</text>
+  <text x="591" y="146" font-size="13" fill="#1f2328" text-anchor="middle">IntegrationEventPublisher</text>
+  <text x="591" y="166" font-size="13" fill="#1f2328" text-anchor="middle">scopedPublisher,</text>
+  <text x="591" y="186" font-size="13" fill="#1f2328" text-anchor="middle">validatingPublisher</text>
+
+  <rect x="714" y="96" width="198" height="104" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="813" y="122" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">OutboxPublisher</text>
+  <text x="813" y="146" font-size="13" fill="#1f2328" text-anchor="middle">ajoute un enregistrement</text>
+  <text x="813" y="166" font-size="13" fill="#1f2328" text-anchor="middle">en attente, dans la</text>
+  <text x="813" y="186" font-size="13" fill="#1f2328" text-anchor="middle">même transaction</text>
+
+  <line x1="248" y1="148" x2="268" y2="148" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="470" y1="148" x2="490" y2="148" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="692" y1="148" x2="712" y2="148" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- the outbox table, between the two lanes -->
+  <rect x="714" y="236" width="198" height="56" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="813" y="259" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">table de l'outbox</text>
+  <text x="813" y="280" font-size="13" fill="#1f2328" text-anchor="middle">le port OutboxStore</text>
+  <line x1="813" y1="202" x2="813" y2="234" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="813" y1="294" x2="813" y2="350" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="700" y="268" font-size="13" fill="#1f2328" text-anchor="end">validée avec l'écriture métier,</text>
+  <text x="700" y="286" font-size="13" fill="#1f2328" text-anchor="end">ou annulée avec elle</text>
+
+  <!-- lane 2: after the commit -->
+  <rect x="24" y="312" width="912" height="168" rx="12" fill="none" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="44" y="336" font-size="14" font-weight="600" fill="#5f6b73">après la validation : publié, puis livré au moins une fois</text>
+
+  <rect x="714" y="352" width="198" height="104" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="813" y="378" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">OutboxRelay</text>
+  <text x="813" y="402" font-size="13" fill="#1f2328" text-anchor="middle">claimBatch, publish,</text>
+  <text x="813" y="422" font-size="13" fill="#1f2328" text-anchor="middle">puis markPublished,</text>
+  <text x="813" y="442" font-size="13" fill="#1f2328" text-anchor="middle">ou markFailed, à retenter</text>
+
+  <rect x="492" y="352" width="198" height="104" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="591" y="378" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">broker ou bus</text>
+  <text x="591" y="402" font-size="13" fill="#1f2328" text-anchor="middle">RabbitMQ, Kafka, NATS,</text>
+  <text x="591" y="422" font-size="13" fill="#1f2328" text-anchor="middle">Redis Streams,</text>
+  <text x="591" y="442" font-size="13" fill="#1f2328" text-anchor="middle">le bus en mémoire</text>
+
+  <rect x="270" y="352" width="198" height="104" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="369" y="378" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">consume</text>
+  <text x="369" y="402" font-size="13" fill="#1f2328" text-anchor="middle">parse, déduplique,</text>
+  <text x="369" y="422" font-size="13" fill="#1f2328" text-anchor="middle">exécute le gestionnaire,</text>
+  <text x="369" y="442" font-size="13" fill="#1f2328" text-anchor="middle">en une unité de travail</text>
+
+  <rect x="48" y="352" width="198" height="104" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="147" y="378" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">IssueInvoice</text>
+  <text x="147" y="402" font-size="13" fill="#1f2328" text-anchor="middle">une commande de billing,</text>
+  <text x="147" y="422" font-size="13" fill="#1f2328" text-anchor="middle">le consommateur : elle</text>
+  <text x="147" y="442" font-size="13" fill="#1f2328" text-anchor="middle">rejoint cette unité</text>
+
+  <line x1="712" y1="404" x2="692" y2="404" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="490" y1="404" x2="470" y2="404" stroke="#3d4449" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arrow)"/>
+  <line x1="268" y1="404" x2="248" y2="404" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- the declaration -->
+  <rect x="24" y="500" width="912" height="86" rx="12" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="44" y="526" font-size="14" font-weight="600" fill="#1f2328">Une déclaration par événement et par version : orderPlaced = defineIntegrationEvent({ type, version, payload })</text>
+  <text x="44" y="550" font-size="13" fill="#1f2328">create() dans le publisher, parse() dans consume, et createEventRegistry() pour validatingPublisher,</text>
+  <text x="44" y="572" font-size="13" fill="#1f2328">generateAsyncApi() et generateEventCatalog() : les documents disent toujours ce que le code publie.</text>
+
+  <!-- legend -->
+  <line x1="40" y1="614" x2="84" y2="614" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="96" y="619" font-size="14" fill="#1f2328">un appel</text>
+  <line x1="200" y1="614" x2="244" y2="614" stroke="#3d4449" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arrow)"/>
+  <text x="256" y="619" font-size="14" fill="#1f2328">une livraison asynchrone, au moins une fois</text>
+</svg>

@@ -8,6 +8,44 @@ on the contract, so the validation library can change without touching them.
 
 Business rules do not belong here: they live in the domain and never import a validation library.
 
+![A request at the boundary: its params, query, headers and body each go through the Schema the route declares; when every part parses, the handler receives typed values and the domain checks the business rules; when a part fails, its issues are collected with the name of the part in front of their path, such as body.items.0.sku, and the request is refused with one ValidationError, code VALIDATION_FAILED, answered 422 with the list of issues; the same schemas give the JSON Schema of the OpenAPI document](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/validation-package-at-the-boundary.svg)
+
+A schema checks the **shape** of what comes in: types, required fields, formats, lengths. What
+the business decides (a slot in the past, a quantity above the stock) is checked by the domain,
+whatever the entry point:
+
+<!-- checked sample -->
+```ts
+import { z } from 'zod';
+import { ConceptError } from '@ddd-ts-kit/kernel';
+import { zodSchema } from '@ddd-ts-kit/validation/zod';
+
+// Instead of: a business rule hidden in the schema of one route, which a job or a consumer never meets.
+export const bookWithARule = zodSchema(
+  z.object({ startsAt: z.iso.datetime() }).refine((body) => Date.parse(body.startsAt) > Date.now(), 'The slot is in the past.'),
+);
+
+// Write: the shape in the schema...
+export const book = zodSchema(z.object({ startsAt: z.iso.datetime() }));
+
+// ...and the rule in the domain, with its own refusal code.
+export class SlotError extends ConceptError {
+  static inThePast(startsAt: Date) {
+    return SlotError.refusal('SLOT_IN_THE_PAST', `The slot at ${startsAt.toISOString()} is in the past.`, {
+      startsAt: startsAt.toISOString(),
+    });
+  }
+}
+
+export function startingAt(startsAt: Date, now: Date): Date {
+  if (startsAt <= now) {
+    throw SlotError.inThePast(startsAt);
+  }
+
+  return startsAt;
+}
+```
+
 ## The contract
 
 ```ts
@@ -30,11 +68,76 @@ class): there is nothing to declare in a composition root.
   with code `VALIDATION_FAILED` and the `issues`.
 - `Infer<typeof schema>` gives the parsed type.
 - `customSchema(parse, jsonSchema?)` builds a schema from a plain function.
-
 - `sharedSchema(name, schema)` documents a schema once, under `name` (see [shared schemas](#shared-schemas)).
+
+<!-- checked sample -->
+```ts
+import { err, ok } from '@ddd-ts-kit/kernel';
+import { ValidationError, customSchema, parseOrThrow, type Infer } from '@ddd-ts-kit/validation';
+
+// A schema from a plain function: a check written by hand, or a double in a test.
+const quantity = customSchema(
+  (input: unknown) =>
+    typeof input === 'number' && Number.isInteger(input) && input > 0
+      ? ok(input)
+      : err([{ path: '', code: 'not_a_quantity', message: 'A positive whole number is expected.' }]),
+  { type: 'integer', minimum: 1 },
+);
+
+type Quantity = Infer<typeof quantity>; // number
+
+export const refused = quantity.parse('3'); // { ok: false, error: [{ path: '', code: 'not_a_quantity', ... }] }
+export const three: Quantity = parseOrThrow(quantity, 3); // 3
+
+try {
+  parseOrThrow(quantity, 0);
+} catch (error) {
+  if (error instanceof ValidationError) {
+    console.log(error.code, error.issues); // VALIDATION_FAILED [{ path: '', code: 'not_a_quantity', ... }]
+  }
+}
+```
 
 The root entry imports no third-party package. Each adapter lives in its own subpath and its
 library is an optional peer dependency: install only the one you use.
+
+## At the route
+
+A route of `@ddd-ts-kit/http` names a schema for each part of the request it reads. Every part
+is parsed before the handler runs, the issues of all parts are answered together, and each
+issue path starts with its part:
+
+<!-- checked sample -->
+```ts
+import { z } from 'zod';
+import { defineRoute, executeRoute, type RawRequest } from '@ddd-ts-kit/http';
+import { zodSchema } from '@ddd-ts-kit/validation/zod';
+
+const placeOrder = defineRoute(
+  {
+    method: 'POST',
+    path: '/orders',
+    operationId: 'placeOrder',
+    summary: 'Place an order',
+    request: {
+      body: zodSchema(z.object({ items: z.array(z.object({ sku: z.string().min(1), quantity: z.number().int().positive() })).min(1) })),
+    },
+    responses: { 201: { description: 'The order is placed.', body: zodSchema(z.object({ lines: z.number() }), { io: 'output' }) } },
+    security: false,
+  },
+  async ({ body }) => ({ status: 201, body: { lines: body.items.length } }), // body is typed: { items: { sku, quantity }[] }
+);
+
+const request = (body: unknown): RawRequest => ({ params: {}, query: {}, headers: {}, body, raw: undefined });
+
+export const placed = await executeRoute(placeOrder, request({ items: [{ sku: 'A-1', quantity: 2 }] })); // 201, { lines: 1 }
+export const refused = await executeRoute(placeOrder, request({ items: [{ sku: 'A-1', quantity: 0 }] }));
+// 422, a problem with the code VALIDATION_FAILED and
+// issues: [{ path: 'body.items.0.quantity', code: 'too_small', message: 'Too small: expected number to be >0' }]
+```
+
+The handler never sees an invalid request, and the OpenAPI document of the route describes the
+same body, from `toJsonSchema()`.
 
 ## zod
 
@@ -42,9 +145,12 @@ library is an optional peer dependency: install only the one you use.
 npm i zod
 ```
 
+<!-- checked sample -->
 ```ts
 import { z } from 'zod';
 import { zodSchema } from '@ddd-ts-kit/validation/zod';
+
+declare const input: unknown; // what the request carried
 
 const placeOrder = zodSchema(
   z.object({
@@ -70,6 +176,7 @@ failing the generation.
 npm i class-validator class-transformer class-validator-jsonschema reflect-metadata
 ```
 
+<!-- checked sample: legacy-decorators -->
 ```ts
 import { Type } from 'class-transformer';
 import { ArrayMinSize, IsInt, IsString, IsUUID, Min, ValidateNested } from 'class-validator';
@@ -89,7 +196,7 @@ class PlaceOrderDto {
   items: OrderItemDto[] = [];
 }
 
-const placeOrder = classSchema(PlaceOrderDto);
+export const placeOrder = classSchema(PlaceOrderDto);
 ```
 
 `parse` returns an instance of the class. `whitelist` and `forbidNonWhitelisted` are on by
@@ -106,12 +213,26 @@ with `@ValidateNested()` and `@Type`), extended (`class BookBody extends SlotDto
 part, through three helpers that copy the constraints, the nested types and the transformations
 of the properties they keep:
 
+<!-- checked sample: legacy-decorators -->
 ```ts
+import { IsEmail, IsIn, IsISO8601, IsString, IsUUID } from 'class-validator';
 import { omitClass, partialClass, pickClass } from '@ddd-ts-kit/validation/class-validator';
 
-class RescheduleBody extends pickClass(AppointmentDto, ['startsAt', 'endsAt']) {}
-class BookBody extends omitClass(AppointmentDto, ['status']) {}
-class EditPatientBody extends partialClass(PatientDto) {} // every property optional, checked when present
+class AppointmentDto {
+  @IsUUID() patientId = '';
+  @IsISO8601() startsAt = '';
+  @IsISO8601() endsAt = '';
+  @IsIn(['booked', 'cancelled']) status = 'booked';
+}
+
+class PatientDto {
+  @IsString() name = '';
+  @IsEmail() email = '';
+}
+
+export class RescheduleBody extends pickClass(AppointmentDto, ['startsAt', 'endsAt']) {}
+export class BookBody extends omitClass(AppointmentDto, ['status']) {}
+export class EditPatientBody extends partialClass(PatientDto) {} // every property optional, checked when present
 ```
 
 The class that extends a helper names the shape in the contract. Picking a property that carries
@@ -125,13 +246,14 @@ documents a class only from its own decorators.
 npm i typebox
 ```
 
+<!-- checked sample -->
 ```ts
 import Type from 'typebox';
 import { typeboxSchema } from '@ddd-ts-kit/validation/typebox';
 
-const slot = Type.Object({ startsAt: Type.String({ format: 'date-time' }), minutes: Type.Integer({ default: 30 }) }, { $id: 'Slot' });
-const book = typeboxSchema(Type.Object({ patientId: Type.String({ minLength: 1 }), slot }));
-const page = typeboxSchema(Type.Object({ limit: Type.Integer() }), { coerce: true }); // query strings
+export const slot = Type.Object({ startsAt: Type.String({ format: 'date-time' }), minutes: Type.Integer({ default: 30 }) }, { $id: 'Slot' });
+export const book = typeboxSchema(Type.Object({ patientId: Type.String({ minLength: 1 }), slot }));
+export const page = typeboxSchema(Type.Object({ limit: Type.Integer() }), { coerce: true }); // query strings
 ```
 
 The schema is compiled once (`typebox/compile`). `parse` fills the defaults and drops the
@@ -150,11 +272,12 @@ Written for the `typebox` package, version 1 (the successor of `@sinclair/typebo
 
 ## Standard Schema (valibot, arktype, ...)
 
+<!-- checked sample -->
 ```ts
 import * as v from 'valibot';
 import { standardSchema } from '@ddd-ts-kit/validation/standard-schema';
 
-const placeOrder = standardSchema(
+export const placeOrder = standardSchema(
   v.object({ customerId: v.pipe(v.string(), v.uuid()) }),
   // Optional: the JSON Schema of the contract, which this adapter does not derive.
   { type: 'object', required: ['customerId'], properties: { customerId: { type: 'string', format: 'uuid' } } },
@@ -181,23 +304,53 @@ route, whole or nested. A schema is shared when its JSON Schema is a reference t
 definitions (`{ $ref: '#/$defs/Slot', $defs: { Slot: ... } }`), the form each library reaches its
 own way:
 
+![A schema shared under the name Slot: its JSON Schema is a reference to its own definition; the routes reschedule and book use it, one whole and one nested in its body; the OpenAPI generator writes Slot once under components.schemas and points at it with $ref from both routes, instead of two copies](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/validation-package-shared-schemas.svg)
+
+<!-- checked sample -->
 ```ts
+import Type from 'typebox';
+import * as v from 'valibot';
+import { z } from 'zod';
+import { sharedSchema } from '@ddd-ts-kit/validation';
+import { classSchema } from '@ddd-ts-kit/validation/class-validator';
+import { standardSchema } from '@ddd-ts-kit/validation/standard-schema';
+import { typeboxSchema } from '@ddd-ts-kit/validation/typebox';
+import { zodSchema } from '@ddd-ts-kit/validation/zod';
+
+declare class PatientDto {
+  name: string;
+  email: string;
+}
+
 // zod: an id in its metadata, kept when the schema is nested in another one
 const slot = z.object({ startsAt: z.iso.datetime(), endsAt: z.iso.datetime() }).meta({ id: 'Slot' });
-const reschedule = zodSchema(slot);
-const book = zodSchema(z.object({ patientId: z.uuid(), slot }));
+export const reschedule = zodSchema(slot);
+export const book = zodSchema(z.object({ patientId: z.uuid(), slot }));
 
 // class-validator: the name of the class
-const patient = classSchema(PatientDto, { shared: true });
+export const patient = classSchema(PatientDto, { shared: true });
 
 // TypeBox: an $id in its options, kept when the schema is nested in another one
 const money = Type.Object({ cents: Type.Integer(), currency: Type.String() }, { $id: 'Money' });
+export const price = typeboxSchema(Type.Object({ amount: money }));
 
 // any schema, the Standard Schema ones included
-const amount = sharedSchema('Amount', standardSchema(amountSchema));
+const amountSchema = v.object({ cents: v.pipe(v.number(), v.integer()) });
+export const amount = sharedSchema('Amount', standardSchema(amountSchema));
 ```
 
-`sharedNameOf(jsonSchema)` answers the name a JSON Schema is shared under, if any. A shared
-schema of the presentation layer lives where `generate schema` writes it: under
+`sharedNameOf(jsonSchema)` answers the name a JSON Schema is shared under, if any:
+
+<!-- checked sample -->
+```ts
+import { customSchema, sharedNameOf, sharedSchema } from '@ddd-ts-kit/validation';
+
+const amount = sharedSchema('Amount', customSchema((input) => ({ ok: true, value: input }), { type: 'integer' }));
+
+export const jsonSchema = amount.toJsonSchema(); // { $ref: '#/$defs/Amount', $defs: { Amount: { type: 'integer' } } }
+export const name = sharedNameOf(jsonSchema); // 'Amount'
+```
+
+A shared schema of the presentation layer lives where `generate schema` writes it: under
 `presentation/http/schemas/` of its context, or under `presentation/` of the shared kernel when
 several contexts answer with it; never in the domain.

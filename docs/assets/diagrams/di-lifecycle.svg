@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 484" width="960" height="484" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">The life of an application: create, start, stop</title>
+  <desc id="desc">createApplication runs the register function of each module, checks the graph and throws a WiringError on a mistake, binds everything in a child container, attaches the handlers to the command and query buses and the domain event handlers to the dispatcher, and registers the jobs; it builds no handler, which is built on its first message. app.start calls onStart of each module in the order of the list, subscribes the consumers, then starts the job scheduler and the queue worker; when jobs.start is false the scheduler stays stopped, and so does the worker unless its queue is kept in the memory of the process (InMemoryJobStore, the default), which is still consumed. app.stop stops the scheduler, waiting for the runs in progress then aborting them, stops the queue worker, unsubscribes the consumers, calls onStop of each module in reverse order, flushes the error reporter for up to two seconds, and flushes the logger last.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="484" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">The life of an application: create, start, stop</text>
+  <!-- createApplication -->
+  <rect x="20" y="60" width="290" height="400" rx="12" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="165" y="90" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">createApplication(options)</text>
+  <text x="165" y="112" font-size="13" font-style="italic" fill="#5f6b73" text-anchor="middle">checks first, builds on demand</text>
+  <line x1="36" y1="124" x2="294" y2="124" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <g font-size="13" fill="#1f2328">
+    <circle cx="48" cy="150" r="11" fill="#5f6b73"/><text x="48" y="155" font-weight="700" fill="#ffffff" text-anchor="middle">1</text>
+    <text x="68" y="155">runs register() of each module</text>
+    <circle cx="48" cy="196" r="11" fill="#5f6b73"/><text x="48" y="201" font-weight="700" fill="#ffffff" text-anchor="middle">2</text>
+    <text x="68" y="201">checks the graph: a mistake</text>
+    <text x="68" y="219">throws a WiringError</text>
+    <circle cx="48" cy="242" r="11" fill="#5f6b73"/><text x="48" y="247" font-weight="700" fill="#ffffff" text-anchor="middle">3</text>
+    <text x="68" y="247">binds in a child container</text>
+    <circle cx="48" cy="288" r="11" fill="#5f6b73"/><text x="48" y="293" font-weight="700" fill="#ffffff" text-anchor="middle">4</text>
+    <text x="68" y="293">attaches the handlers to the</text>
+    <text x="68" y="311">command and query buses</text>
+    <circle cx="48" cy="334" r="11" fill="#5f6b73"/><text x="48" y="339" font-weight="700" fill="#ffffff" text-anchor="middle">5</text>
+    <text x="68" y="339">attaches the domain event</text>
+    <text x="68" y="357">handlers to the dispatcher</text>
+    <circle cx="48" cy="380" r="11" fill="#5f6b73"/><text x="48" y="385" font-weight="700" fill="#ffffff" text-anchor="middle">6</text>
+    <text x="68" y="385">registers the jobs</text>
+  </g>
+  <text x="165" y="428" font-size="13" font-style="italic" fill="#5f6b73" text-anchor="middle">a handler is built on its first message</text>
+  <!-- start -->
+  <rect x="335" y="60" width="290" height="400" rx="12" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="480" y="90" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">app.start()</text>
+  <text x="480" y="112" font-size="13" font-style="italic" fill="#5f6b73" text-anchor="middle">in the order of the modules</text>
+  <line x1="351" y1="124" x2="609" y2="124" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <g font-size="13" fill="#1f2328">
+    <circle cx="363" cy="150" r="11" fill="#5f6b73"/><text x="363" y="155" font-weight="700" fill="#ffffff" text-anchor="middle">1</text>
+    <text x="383" y="155">onStart of each module, in the</text>
+    <text x="383" y="173">order of the list</text>
+    <circle cx="363" cy="196" r="11" fill="#5f6b73"/><text x="363" y="201" font-weight="700" fill="#ffffff" text-anchor="middle">2</text>
+    <text x="383" y="201">subscribes the consumers: event</text>
+    <text x="383" y="219">handlers and projections</text>
+    <circle cx="363" cy="242" r="11" fill="#5f6b73"/><text x="363" y="247" font-weight="700" fill="#ffffff" text-anchor="middle">3</text>
+    <text x="383" y="247">starts the job scheduler</text>
+    <circle cx="363" cy="288" r="11" fill="#5f6b73"/><text x="363" y="293" font-weight="700" fill="#ffffff" text-anchor="middle">4</text>
+    <text x="383" y="293">starts the queue worker</text>
+  </g>
+  <text x="480" y="392" font-size="13" font-style="italic" fill="#5f6b73" text-anchor="middle">with jobs: { start: false }:</text>
+  <text x="480" y="410" font-size="13" font-style="italic" fill="#5f6b73" text-anchor="middle">3 is skipped, and 4 too unless</text>
+  <text x="480" y="428" font-size="13" font-style="italic" fill="#5f6b73" text-anchor="middle">the queue is kept in memory</text>
+  <!-- stop -->
+  <rect x="650" y="60" width="290" height="400" rx="12" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="795" y="90" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">app.stop()</text>
+  <text x="795" y="112" font-size="13" font-style="italic" fill="#5f6b73" text-anchor="middle">the jobs first, the logger last</text>
+  <line x1="666" y1="124" x2="924" y2="124" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <g font-size="13" fill="#1f2328">
+    <circle cx="678" cy="150" r="11" fill="#5f6b73"/><text x="678" y="155" font-weight="700" fill="#ffffff" text-anchor="middle">1</text>
+    <text x="698" y="155">stops the scheduler: waits for</text>
+    <text x="698" y="173">the runs, then aborts them</text>
+    <circle cx="678" cy="196" r="11" fill="#5f6b73"/><text x="678" y="201" font-weight="700" fill="#ffffff" text-anchor="middle">2</text>
+    <text x="698" y="201">stops the queue worker</text>
+    <circle cx="678" cy="242" r="11" fill="#5f6b73"/><text x="678" y="247" font-weight="700" fill="#ffffff" text-anchor="middle">3</text>
+    <text x="698" y="247">unsubscribes the consumers</text>
+    <circle cx="678" cy="288" r="11" fill="#5f6b73"/><text x="678" y="293" font-weight="700" fill="#ffffff" text-anchor="middle">4</text>
+    <text x="698" y="293">onStop of each module, in</text>
+    <text x="698" y="311">reverse order</text>
+    <circle cx="678" cy="334" r="11" fill="#5f6b73"/><text x="678" y="339" font-weight="700" fill="#ffffff" text-anchor="middle">5</text>
+    <text x="698" y="339">flushes the ErrorReporter (2 s)</text>
+    <circle cx="678" cy="380" r="11" fill="#5f6b73"/><text x="678" y="385" font-weight="700" fill="#ffffff" text-anchor="middle">6</text>
+    <text x="698" y="385">flushes the Logger</text>
+  </g>
+  <text x="795" y="428" font-size="13" font-style="italic" fill="#5f6b73" text-anchor="middle">a failing onStop does not stop the rest</text>
+  <!-- between the phases -->
+  <line x1="311" y1="260" x2="333" y2="260" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="626" y1="260" x2="648" y2="260" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+</svg>

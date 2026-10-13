@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 440" width="960" height="440" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Three appends at the same time: one chain waits, another does not</title>
+  <desc id="desc">Three transactions append an entry at the same time. T1 and T2 append to the chain tenant:acme, T3 to tenant:globex. T1 locks the head row of tenant:acme in audit_chains with SELECT FOR UPDATE and reads sequence 41, inserts entry 42 and moves the head to 42, then commits, which releases the lock. T2 asks for the same row and waits until T1 commits, then reads 42 and writes entry 43: the chain cannot fork. T3 locks the head of tenant:globex, which nobody holds, and writes entry 8 without waiting. Under REPEATABLE READ or SERIALIZABLE, T2 fails with a serialization error instead of waiting, and its caller retries the unit of work.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="440" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Three appends at the same time: one chain waits, another does not</text>
+  <!-- time axis -->
+  <line x1="200" y1="70" x2="930" y2="70" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="200" y="62" font-size="13" fill="#5f6b73">time</text>
+
+  <!-- lane labels -->
+  <text x="32" y="114" font-size="15" font-weight="700" fill="#1f2328">T1</text>
+  <text x="32" y="134" font-size="13" fill="#5f6b73">tenant:acme</text>
+  <text x="32" y="204" font-size="15" font-weight="700" fill="#1f2328">T2</text>
+  <text x="32" y="224" font-size="13" fill="#5f6b73">tenant:acme</text>
+  <text x="32" y="294" font-size="15" font-weight="700" fill="#1f2328">T3</text>
+  <text x="32" y="314" font-size="13" fill="#5f6b73">tenant:globex</text>
+
+  <!-- T1 -->
+  <rect x="200" y="96" width="150" height="44" rx="8" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="1.5"/>
+  <text x="275" y="123" font-size="13" fill="#1f2328" text-anchor="middle">lock head: 41</text>
+  <rect x="360" y="96" width="150" height="44" rx="8" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="1.5"/>
+  <text x="435" y="123" font-size="13" fill="#1f2328" text-anchor="middle">entry 42, head 42</text>
+  <rect x="520" y="96" width="90" height="44" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="565" y="123" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">commit</text>
+  <line x1="200" y1="150" x2="610" y2="150" stroke="#7a4f9a" stroke-width="4" stroke-opacity="0.5"/>
+  <text x="200" y="170" font-size="13" fill="#7a4f9a">row lock on the head of tenant:acme, until the commit</text>
+
+  <!-- T2 -->
+  <rect x="230" y="186" width="380" height="44" rx="8" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="5 4"/>
+  <text x="420" y="213" font-size="13" font-style="italic" fill="#5f6b73" text-anchor="middle">lock head: waits for T1</text>
+  <rect x="620" y="186" width="110" height="44" rx="8" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="1.5"/>
+  <text x="675" y="213" font-size="13" fill="#1f2328" text-anchor="middle">head: 42</text>
+  <rect x="740" y="186" width="100" height="44" rx="8" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="1.5"/>
+  <text x="790" y="213" font-size="13" fill="#1f2328" text-anchor="middle">entry 43</text>
+  <rect x="850" y="186" width="80" height="44" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="890" y="213" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">commit</text>
+  <!-- T1 commit releases T2 -->
+  <path d="M610,140 L640,184" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- T3 -->
+  <rect x="230" y="276" width="150" height="44" rx="8" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="1.5"/>
+  <text x="305" y="303" font-size="13" fill="#1f2328" text-anchor="middle">lock head: 7</text>
+  <rect x="390" y="276" width="130" height="44" rx="8" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="1.5"/>
+  <text x="455" y="303" font-size="13" fill="#1f2328" text-anchor="middle">entry 8, head 8</text>
+  <rect x="530" y="276" width="90" height="44" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="575" y="303" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">commit</text>
+  <text x="640" y="303" font-size="13" fill="#1f2328">another chain: no wait</text>
+
+  <!-- what an append does -->
+  <rect x="24" y="346" width="912" height="74" rx="12" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="44" y="370" font-size="13" font-weight="600" fill="#5f6b73">One append: insert the head row of the chain if missing, select it FOR UPDATE, seal the entry from it,</text>
+  <text x="44" y="390" font-size="13" font-weight="600" fill="#5f6b73">insert it into audit_entries, move the head in audit_chains. The lock lasts until the transaction ends.</text>
+  <text x="44" y="410" font-size="13" fill="#1f2328">Under REPEATABLE READ or SERIALIZABLE, T2 fails with a serialization error instead of waiting: its caller retries.</text>
+</svg>

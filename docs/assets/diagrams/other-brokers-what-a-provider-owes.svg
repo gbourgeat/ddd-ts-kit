@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 480" width="960" height="480" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">What every integration event provider owes</title>
+  <desc id="desc">The outbox relay calls publish and marks a record published only when the promise resolves, which happens once the broker acknowledged every event durably. The broker keeps one subscription per consumer and delivers each event at least once. The consumer billing runs its handler through consume, with a processed-event store, and the provider acknowledges the message after the handler resolved. When the handler throws, there is no acknowledgement: the event comes back after a delay, a bounded number of times, then it is parked in a dead destination that an operator can read and replay. One contract suite, eventBusContract, holds every provider to the same behaviour.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="480" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">What every provider owes, whatever the broker</text>
+
+  <!-- row 1 -->
+  <rect x="32" y="80" width="188" height="110" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="126" y="108" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">outbox relay</text>
+  <text x="126" y="132" font-size="13" fill="#1f2328" text-anchor="middle">marks a record published</text>
+  <text x="126" y="152" font-size="13" fill="#1f2328" text-anchor="middle">only when publish</text>
+  <text x="126" y="172" font-size="13" fill="#1f2328" text-anchor="middle">resolves</text>
+  <rect x="300" y="80" width="230" height="110" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="415" y="108" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">broker</text>
+  <text x="415" y="132" font-size="13" fill="#1f2328" text-anchor="middle">acknowledges durably</text>
+  <text x="415" y="152" font-size="13" fill="#1f2328" text-anchor="middle">one subscription</text>
+  <text x="415" y="172" font-size="13" fill="#1f2328" text-anchor="middle">per consumer</text>
+  <rect x="660" y="80" width="268" height="110" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="794" y="108" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">consumer billing</text>
+  <text x="794" y="132" font-size="13" fill="#1f2328" text-anchor="middle">its handler, through consume</text>
+  <text x="794" y="152" font-size="13" fill="#1f2328" text-anchor="middle">and a processed-event store:</text>
+  <text x="794" y="172" font-size="13" fill="#1f2328" text-anchor="middle">a redelivery changes nothing</text>
+
+  <line x1="222" y1="135" x2="296" y2="135" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="259" y="125" font-size="13" fill="#1f2328" text-anchor="middle">publish</text>
+  <line x1="532" y1="115" x2="656" y2="115" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="594" y="105" font-size="13" fill="#1f2328" text-anchor="middle">at least once</text>
+  <line x1="658" y1="160" x2="534" y2="160" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="594" y="180" font-size="13" fill="#1f2328" text-anchor="middle">ack, after it</text>
+
+  <!-- row 2: failure -->
+  <line x1="794" y1="192" x2="794" y2="256" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="804" y="228" font-size="13" fill="#1f2328">the handler throws</text>
+  <rect x="660" y="260" width="268" height="64" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="794" y="285" font-size="15" font-weight="700" fill="#2b5d8a" text-anchor="middle">no acknowledgement</text>
+  <text x="794" y="306" font-size="13" fill="#1f2328" text-anchor="middle">the error is reported by its code</text>
+  <rect x="300" y="260" width="230" height="64" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="415" y="285" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">retry after a delay</text>
+  <text x="415" y="306" font-size="13" fill="#1f2328" text-anchor="middle">a bounded number of times</text>
+  <line x1="658" y1="292" x2="534" y2="292" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="415" y1="258" x2="415" y2="194" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="425" y="232" font-size="13" fill="#1f2328">delivered again</text>
+
+  <line x1="415" y1="326" x2="415" y2="370" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="425" y="352" font-size="13" fill="#1f2328">after the last attempt</text>
+  <rect x="300" y="374" width="230" height="64" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="415" y="399" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">dead destination</text>
+  <text x="415" y="420" font-size="13" fill="#1f2328" text-anchor="middle">read and replayed by an operator</text>
+
+  <!-- contract note -->
+  <rect x="32" y="260" width="220" height="178" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="5 4"/>
+  <text x="48" y="284" font-size="14" font-weight="700" fill="#5f6b73">eventBusContract</text>
+  <text x="48" y="308" font-size="13" fill="#1f2328">one suite for every provider:</text>
+  <text x="48" y="330" font-size="13" fill="#1f2328">delivery by type, to every</text>
+  <text x="48" y="350" font-size="13" fill="#1f2328">subscriber, every event of a</text>
+  <text x="48" y="370" font-size="13" fill="#1f2328">batch; the envelope intact;</text>
+  <text x="48" y="390" font-size="13" fill="#1f2328">a failing handler starves</text>
+  <text x="48" y="410" font-size="13" fill="#1f2328">no other subscriber</text>
+</svg>
