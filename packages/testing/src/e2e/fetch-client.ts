@@ -43,15 +43,13 @@ export class FetchClient implements HttpClient {
   }
 
   private async send<Body>({ method, path, body, options }: Exchange): Promise<HttpResponse<Body>> {
-    const response = await fetch(`${this.baseUrl}${path}`, {
-      method,
-      headers: {
-        ...(body === undefined ? {} : { 'content-type': 'application/json' }),
-        ...this.headers,
-        ...lowerCased(options?.headers),
-      },
-      body: body === undefined ? null : JSON.stringify(body),
-    });
+    const headers = {
+      ...(body === undefined ? {} : { 'content-type': 'application/json' }),
+      ...this.headers,
+      ...lowerCased(options?.headers),
+    };
+
+    const response = await fetch(`${this.baseUrl}${path}`, { method, headers, body: payloadOf(body, headers) });
 
     return {
       status: response.status,
@@ -60,6 +58,15 @@ export class FetchClient implements HttpClient {
       body: (await readBody(response)) as Body,
     };
   }
+}
+
+/** JSON, unless the request says another content type and gives its text as it is: an XML body, a CSV import. */
+function payloadOf(body: unknown, headers: Readonly<Record<string, string>>): string | null {
+  if (body === undefined) {
+    return null;
+  }
+
+  return typeof body === 'string' && !isJson(headers['content-type'] ?? null) ? body : JSON.stringify(body);
 }
 
 async function readBody(response: Response): Promise<unknown> {
