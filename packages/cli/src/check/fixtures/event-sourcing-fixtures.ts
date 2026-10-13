@@ -1,4 +1,4 @@
-import { shapeFingerprint } from '../event-sourcing/shape-fingerprint.js';
+import { readStoredShape } from '../event-sourcing/read-stored-shape.js';
 import { STORED_EVENTS_LOCK } from '../event-sourcing/stored-events-lock-file.js';
 import { scan } from '../scan/scan.js';
 import { aggregate } from './aggregate.js';
@@ -123,6 +123,9 @@ const STORE_BEHIND_REPOSITORY: readonly Fixture[] = [
 
 const LIST_PORT = "import { InvoiceList } from '@/contexts/billing/application/ports/invoice-list.port.js';";
 
+const INVOICE_REPOSITORY =
+  "import { InvoiceRepository } from '@/contexts/billing/domain/repositories/invoice.repository.js';";
+
 const PROJECTION_NEVER_APPENDS: readonly Fixture[] = [
   {
     ruleId: PROJECTION_RULE,
@@ -144,13 +147,16 @@ const PROJECTION_NEVER_APPENDS: readonly Fixture[] = [
   },
   {
     ruleId: PROJECTION_RULE,
-    name: 'a projection given a repository',
+    name: 'a projection fed by the dispatcher that names a repository, as before event sourcing',
+    expect: 'pass',
+    files: project(projection([INVOICE_REPOSITORY], ['private readonly invoices: InvoiceRepository'])),
+  },
+  {
+    ruleId: PROJECTION_RULE,
+    name: 'a projection fed by the event store given a repository',
     expect: { file: PROJECTION },
     files: project(
-      projection(
-        ["import { InvoiceRepository } from '@/contexts/billing/domain/repositories/invoice.repository.js';"],
-        ['private readonly invoices: InvoiceRepository'],
-      ),
+      projection([INVOICE_REPOSITORY], ['private readonly invoices: InvoiceRepository'], "{ feed: 'event-store' }"),
     ),
   },
 ];
@@ -158,6 +164,8 @@ const PROJECTION_NEVER_APPENDS: readonly Fixture[] = [
 const AMOUNT = 'readonly amount: number;';
 const ENCODE = 'encode: (event): InvoiceIssuedData => ({ amount: event.amount }),';
 const UPCAST = 'upcasters: { 1: (data) => ({ amount: 0, ...data }) },';
+const LINE = 'readonly line: InvoiceLineData;';
+const LINE_DATA = 'interface InvoiceLineData {\n  readonly cents: number;\n}';
 
 const UPCASTER_REQUIRED: readonly Fixture[] = [
   {
@@ -194,6 +202,32 @@ const UPCASTER_REQUIRED: readonly Fixture[] = [
       ...EVENTS,
       [CODEC]: codec(AMOUNT, ['version: 1,', 'encode: (event) => ({ amount: event.amount }),']),
     }),
+  },
+  {
+    ruleId: UPCASTER,
+    name: 'a recorded shape that reaches a type of the file and a sealed value of the kit, both unchanged',
+    expect: 'pass',
+    files: project({
+      ...EVENTS,
+      [CODEC]: codec(`${LINE}\n  readonly note: PersonalValue;`, ['version: 1,', ENCODE], LINE_DATA),
+      ...locked({ 1: fingerprintOf(`${LINE}\n  readonly note: PersonalValue;`, LINE_DATA) }),
+    }),
+  },
+  {
+    ruleId: UPCASTER,
+    name: 'a field added to a type of the file that a recorded shape reaches',
+    expect: { file: CODEC },
+    files: project({
+      ...EVENTS,
+      [CODEC]: codec(LINE, ['version: 1,', ENCODE], LINE_DATA.replace('}', '  readonly currency: string;\n}')),
+      ...locked({ 1: fingerprintOf(LINE, LINE_DATA) }),
+    }),
+  },
+  {
+    ruleId: UPCASTER,
+    name: 'a stored shape that reaches a type declared in another file',
+    expect: { file: CODEC },
+    files: project({ ...EVENTS, [CODEC]: codec('readonly line: InvoiceLine;', ['version: 1,', ENCODE]) }),
   },
 ];
 
@@ -239,11 +273,17 @@ function invoice(command: readonly string[], apply: readonly string[], event = I
   );
 }
 
-function projection(imports: readonly string[], parameters: readonly string[]): FixtureFiles {
+/** A projection under `application/projections/`; declared with `@Projection` and these options when some are given. */
+function projection(imports: readonly string[], parameters: readonly string[], options?: string): FixtureFiles {
+  const decorator = options === undefined ? [] : [`@Projection('billing.invoice-list', ${options})`];
+  const imported = options === undefined ? [] : ["import { Projection } from '@ddd-ts-kit/kernel/declarations';"];
+
   return {
     [PROJECTION]: source(
       ...imports,
+      ...imported,
       '',
+      ...decorator,
       'export class InvoiceListProjection {',
       `  constructor(${parameters.join(', ')}) {}`,
       '}',
@@ -257,13 +297,14 @@ function projection(imports: readonly string[], parameters: readonly string[]): 
   };
 }
 
-/** The codec of the invoice: its data, then the entry of `billing.invoice.issued` with what the fixture declares. */
-function codec(data: string, entry: readonly string[]): string {
+/** The codec of the invoice: its data and the types it declares beside, then the entry of `billing.invoice.issued` with what the fixture declares. */
+function codec(data: string, entry: readonly string[], beside = ''): string {
   return source(
-    `import { defineStoredEvent } from ${KERNEL};`,
+    `import { defineStoredEvent, type PersonalValue } from ${KERNEL};`,
     ISSUED_EVENT,
     '',
     `interface InvoiceIssuedData {\n  ${data}\n}`,
+    beside,
     '',
     'export const invoiceEvents = {',
     "  'billing.invoice.issued': defineStoredEvent(InvoiceIssued, {",
@@ -274,8 +315,8 @@ function codec(data: string, entry: readonly string[]): string {
   );
 }
 
-function fingerprintOf(data: string): string {
-  return shapeFingerprint(scan(codec(data, [])), 'InvoiceIssuedData') ?? '';
+function fingerprintOf(data: string, beside = ''): string {
+  return readStoredShape(scan(codec(data, [], beside)), 'InvoiceIssuedData')?.fingerprint ?? '';
 }
 
 function locked(versions: Readonly<Record<string, string>>): FixtureFiles {

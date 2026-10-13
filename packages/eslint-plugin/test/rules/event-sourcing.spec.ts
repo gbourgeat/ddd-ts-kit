@@ -98,6 +98,10 @@ ruleTester.run('event-sourcing-projection-never-appends', eventSourcingProjectio
   valid: [
     at(PROJECTION, "import { stampOf } from '@ddd-ts-kit/kernel';\nexport class InvoiceListProjection {}"),
     at(HANDLER, "import { EventStore } from '@ddd-ts-kit/kernel';\nexport class PayInvoiceHandler {}"),
+    at(
+      PROJECTION,
+      "import { InvoiceRepository } from '@/contexts/billing/domain/repositories/invoice.repository';\n@Projection('billing.invoice-list')\nexport class InvoiceListProjection {}",
+    ),
   ],
   invalid: [
     {
@@ -107,7 +111,7 @@ ruleTester.run('event-sourcing-projection-never-appends', eventSourcingProjectio
     {
       ...at(
         `${BILLING}/application/event-handlers/invoice-paid.event-handler.ts`,
-        "import { InvoiceRepository } from '@/contexts/billing/domain/repositories/invoice.repository';\n@Projection('billing.invoice-list')\nexport class InvoiceList {}",
+        "import { InvoiceRepository } from '@/contexts/billing/domain/repositories/invoice.repository';\n@Projection('billing.invoice-list', { feed: 'event-store' })\nexport class InvoiceList {}",
       ),
       errors: [{ messageId: 'appends', data: { name: 'InvoiceRepository' } }],
     },
@@ -120,9 +124,19 @@ const codec = (encode: string, version = 1, upcasters = ''): string => `
     'billing.invoice.paid': defineStoredEvent(InvoicePaid, { version: ${version}, ${encode}, decode, ${upcasters} }),
   };`;
 
+const reaching = (field: string): string => `
+  type Currency = 'EUR' | 'USD';
+  interface Paged<T> { readonly items: readonly T[] }
+  interface LineData extends Paged<number> { readonly currency: Currency; readonly note: PersonalValue | null }
+  interface InvoicePaidData { readonly ${field}; readonly at: Date }
+  export const invoiceEvents = {
+    'billing.invoice.paid': defineStoredEvent(InvoicePaid, { version: 1, encode: (event): InvoicePaidData => event.paid, decode }),
+  };`;
+
 ruleTester.run('event-sourcing-upcaster-required', eventSourcingUpcasterRequired, {
   valid: [
     at(CODEC, codec('encode: (event): InvoicePaidData => ({ cents: event.cents })')),
+    at(CODEC, reaching('lines: readonly LineData[]')),
     at(
       CODEC,
       codec('encode(event: InvoicePaid): InvoicePaidData { return { cents: 1 }; }', 3, "upcasters: { 1: up, '2': up }"),
@@ -136,6 +150,12 @@ ruleTester.run('event-sourcing-upcaster-required', eventSourcingUpcasterRequired
     {
       ...at(CODEC, codec('encode: (event): Elsewhere => ({ cents: event.cents })')),
       errors: [{ messageId: 'undeclared', data: { eventClass: 'InvoicePaid', type: 'Elsewhere' } }],
+    },
+    {
+      ...at(CODEC, reaching('slot: Readonly<Record<string, SlotData>>')),
+      errors: [
+        { messageId: 'unresolved', data: { eventClass: 'InvoicePaid', type: 'InvoicePaidData', name: 'SlotData' } },
+      ],
     },
     {
       ...at(

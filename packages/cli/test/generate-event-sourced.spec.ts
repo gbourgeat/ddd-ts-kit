@@ -95,11 +95,18 @@ describe('generate aggregate --event-sourced', () => {
     );
   });
 
-  it('passes the checker, keeps the docs current and says which aggregates are event-sourced', () => {
+  it('passes the checker, keeps the generated docs current but its stored versions unrecorded, and says which aggregates are event-sourced', () => {
     const checked = checkJsonOf(cli(root, 'check', '--json'));
 
     expect(checked.violations.filter(({ file }) => file.includes('ledger'))).toEqual([]);
-    expect(cli(root, 'docs', '--check').code).toBe(0);
+
+    expect(cli(root, 'docs', '--check', '--json').json()).toEqual({
+      ok: false,
+      stale: [],
+      drift: {},
+      unrecorded: ['billing.ledger.created version 1', 'billing.ledger.credited version 1'],
+    });
+
     expect(read(root, `${BILLING}/CONTEXT.md`)).toContain('- `Invoice`\n- `Ledger` (event-sourced)');
     expect(cli(root, 'describe', 'billing').stdout).toContain('    Ledger (event-sourced)');
     expect(cli(root, 'list').stdout).toContain('aggregates: Invoice, Ledger (event-sourced)');
@@ -108,11 +115,18 @@ describe('generate aggregate --event-sourced', () => {
 
 describe('docs --stored-events', () => {
   it('records the stored shapes on purpose, and the checker then refuses a shape changed in place', () => {
+    const unrecorded = cli(root, 'docs', '--check');
+
+    expect(unrecorded.code).toBe(1);
+    expect(unrecorded.stdout).toContain(`unrecorded  billing.ledger.credited version 1 in ${LOCK}`);
+    expect(unrecorded.stdout).toContain('run `ddd-ts-kit docs --stored-events`');
+
     cli(root, 'docs', '--stored-events');
 
     const recorded = read(root, LOCK);
 
     expect(Object.keys(JSON.parse(recorded))).toEqual(['billing.ledger.created', 'billing.ledger.credited']);
+    expect(cli(root, 'docs', '--check').code).toBe(0);
 
     write(
       root,

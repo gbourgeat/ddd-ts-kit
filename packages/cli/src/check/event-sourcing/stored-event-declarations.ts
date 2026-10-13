@@ -2,7 +2,7 @@ import type { SourceFile } from '../model/source-file.js';
 import { callArguments } from '../text/call-arguments.js';
 import type { ListPart } from '../text/list-part.js';
 import { splitTopLevel } from '../text/split-top-level.js';
-import { shapeFingerprint } from './shape-fingerprint.js';
+import { readStoredShape } from './read-stored-shape.js';
 import type { StoredEventDeclaration } from './stored-event-declaration.js';
 
 const CALL = /(?<![\w$.])defineStoredEvent\s*(?:<[^()]*>)?\s*\(/g;
@@ -41,6 +41,7 @@ function declarationOf(file: SourceFile, { at, eventClass, spec }: Call): Stored
   const properties = splitTopLevel(spec.code.slice(1, spec.code.lastIndexOf('}'))).map((part) => part.code);
   const payloadType = properties.map((property) => ENCODE.exec(property)?.[1]).find((name) => name !== undefined);
   const version = properties.map((property) => VERSION.exec(property)?.[1]).find((value) => value !== undefined);
+  const shape = payloadType === undefined ? undefined : readStoredShape(file.scan, payloadType);
 
   return {
     name: keyBefore(file, at),
@@ -49,7 +50,8 @@ function declarationOf(file: SourceFile, { at, eventClass, spec }: Call): Stored
     version: version === undefined ? undefined : Number(version),
     upcasters: upcastersOf(properties),
     payloadType,
-    fingerprint: payloadType === undefined ? undefined : shapeFingerprint(file.scan, payloadType),
+    fingerprint: shape?.fingerprint,
+    unresolved: shape?.unresolved ?? [],
   };
 }
 

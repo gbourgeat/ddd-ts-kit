@@ -84,10 +84,17 @@ An integration event is a contract with other contexts ([Event versioning](event
 a stored event is a contract with every past version of the code. The kit applies the same
 discipline with its own mechanism:
 
-1. The data of a stored event is a named type in its codec file, answered by `encode`.
-2. `ddd-ts-kit docs --stored-events` records the fingerprint of that type for each version in
-   `stored-events.lock.json`, when a version starts being stored where events are kept (before
-   the release that ships it). A recorded version is never rewritten.
+1. The data of a stored event is a named type in its codec file, answered by `encode`. Every
+   named type it reaches is declared in the same file too (the kit's own `PersonalValue` aside):
+   a domain type imported from elsewhere would change the stored shape without anyone seeing it,
+   so the codec maps it to a stored type of its own.
+2. `ddd-ts-kit docs --stored-events` records the fingerprint of that type, and of the types it
+   reaches, for each version in `stored-events.lock.json`, once the shape of the version is the
+   one to store. A recorded version is never rewritten. `ddd-ts-kit docs --check`, which the
+   generated pipeline runs (`npm run docs:check`), fails while a declared version is not
+   recorded: a version cannot reach the main branch, and so a release, unrecorded. Before it is
+   merged, a recorded version that was never stored can still be dropped from the lock by hand
+   and recorded again.
 3. A change of the type is a new version: `version: 2` and the upcaster from version 1,
    `upcasters: { 1: (data) => ({ ...data, reason: '' }) }`. The stored event is never rewritten:
    it is upcast each time it is read.

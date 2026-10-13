@@ -183,7 +183,8 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
                    600 lines by default, generated files not counted); --staged reads the index only;
                    advisory, --strict exits 1 when over
   --stored-events  docs records the shape of each version of the stored events in stored-events.lock.json,
-                   never rewriting a recorded one: run it when a version starts being stored, before its release
+                   never rewriting a recorded one: run it once the shape of a version is the one to store;
+                   docs --check fails while a declared version is not recorded
   --local-only     generate refuses, and writes nothing, when the kind would write outside its context;
                    "generate --help --json" says which kinds do
 

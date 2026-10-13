@@ -45,10 +45,10 @@ const INJECTIONS: readonly Injection[] = [
   },
   {
     rule: 'event-sourcing/projection-never-appends',
-    what: 'a projection given a repository',
+    what: 'a projection given the event store',
     file: PROJECTION,
     from: 'import ',
-    to: "import { InvoiceRepository } from '@/contexts/billing/domain/repositories/invoice.repository';\nimport ",
+    to: "import { EventStore } from '@ddd-ts-kit/kernel';\nimport ",
   },
   {
     rule: 'event-sourcing/upcaster-required',

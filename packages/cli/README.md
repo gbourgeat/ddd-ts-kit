@@ -407,7 +407,7 @@ Templates are plain files in `templates/<kind>/`, with `{{name.pascal}}`, `{{nam
 ## docs
 
 ```
-ddd-ts-kit docs [--check]
+ddd-ts-kit docs [--check] [--stored-events]
 ```
 
 Regenerates what is derived from the config and the code, and nothing else:
@@ -428,7 +428,12 @@ Regenerates what is derived from the config and the code, and nothing else:
 - `docs/integration/README.md`, created once and never rewritten; its Provider section starts with
   the strategy of the chosen broker.
 
-`--check` writes nothing, names each stale file and exits 1. The event catalog and the
+`--stored-events` also records in `stored-events.lock.json` the shape of each version of a stored
+event declared in the codecs of `infrastructure/persistence/`, never rewriting a recorded version:
+run it once the shape of a version is final.
+
+`--check` writes nothing, names each stale file and each declared stored-event version not
+recorded in `stored-events.lock.json`, and exits 1. The event catalog and the
 AsyncAPI document need the code of the project to run, so they are produced by
 `scripts/events.ts` (`npm run events:generate`, part of `npm run docs:generate`).
 
@@ -730,8 +735,8 @@ saying what to do instead. Exit code 1 when there is at least one error.
 | `event-sourcing/state-in-apply` | in a class of `domain/aggregates/` extending `EventSourcedAggregate`, a write to something of `this` (assignment, increment, mutating call) outside the constructor, static methods, `apply<Fact>` methods and `restore`; `this.record(..)` inside an apply method |
 | `event-sourcing/past-tense` | in a file of `domain/aggregates/` holding an event-sourced aggregate, a name imported from `domain/events/` none of whose words is a past participle |
 | `event-sourcing/store-behind-repository` | `EventStore`, `SnapshotStore`, `CheckpointStore`, `EventSourcedRepository`, `EventSerializer`, `CatchUpSubscription` or `InMemoryEventStore` imported in `domain/` or `application/` |
-| `event-sourcing/projection-never-appends` | in `application/projections/` or a file declaring `@Projection`, `EventStore` or `EventSourcedRepository` imported, or anything of `domain/repositories/` |
-| `event-sourcing/upcaster-required` | a `defineStoredEvent` whose `encode` names no type, or a type not declared in the file; a version above 1 without an upcaster from each version below; a version below the last one recorded in `stored-events.lock.json`, or a recorded version whose shape changed. `ddd-ts-kit docs --stored-events` records new versions and never rewrites one |
+| `event-sourcing/projection-never-appends` | in `application/projections/` or a file declaring `@Projection`, `EventStore` or `EventSourcedRepository` imported; in a projection declared `{ feed: 'event-store' }`, anything of `domain/repositories/` too |
+| `event-sourcing/upcaster-required` | a `defineStoredEvent` whose `encode` names no type, or a type not declared in the file, or a type it reaches that the file does not declare; a version above 1 without an upcaster from each version below; a version below the last one recorded in `stored-events.lock.json`, or a recorded version whose shape changed. `ddd-ts-kit docs --stored-events` records new versions and never rewrites one; `docs --check` fails while a declared version is unrecorded |
 | `context/extractable` | a module file importing another context outside its published language; persistence importing another context's infrastructure or naming its schema; a handler importing another context's repository; `export let` or an exported `new Map`, `Set`, `WeakMap` at module level; `deployable: true` without `apps/<context>/main.ts`; in the declared style, a role file importing anything of a port file of another context |
 | `governance/recorded-deviation` | a `ddd-ts-kit-disable` or `eslint-disable` comment whose reason names no `ADR-<number>` with a file `docs/adr/<number>-*.md`; a rule set to `off` (or to `warn` below its default), an extra directory, an extra allowed package, a `guard` other than `enforce` or `stack.events` off the outbox, without a `deviations` entry `{ what, adr, reason }` pointing to an existing record |
 | `declarations/role-declared` | declared style only: a role file (other than `*.command.ts` and `*.query.ts`, held by `authz/declared`; `*.job.ts` under `application/scheduling/` with `@Scheduled` and `*.publisher.ts` with `@DomainEventHandler` are roles) exporting no class with the decorator of its suffix and folder, or one carrying another declaration; a declared class in a file that is not a role file; a `consumer` or `name` option that is missing, empty, a variable, a concatenation or a template with a substitution; a `@DomainEventHandler` name that differs from the `name` literal of the imported event class; any declaration decorator on a class under `domain/` |

@@ -12,4 +12,6 @@ export interface StoredEventDeclaration {
   readonly payloadType: string | undefined;
   /** The fingerprint of that type as declared in the same file; `undefined` when it is not declared there. */
   readonly fingerprint: string | undefined;
+  /** The named types that data reaches and the file does not declare: a change of theirs would not move the fingerprint. */
+  readonly unresolved: readonly string[];
 }

@@ -37,11 +37,16 @@ work), never by the dispatcher, and rebuilt from position zero by
 **Five rules for event-sourced aggregates**, in `ddd-ts-kit check` and in the ESLint plugin:
 `event-sourcing/state-in-apply` (the state changes only in apply methods, which record nothing),
 `event-sourcing/past-tense`, `event-sourcing/store-behind-repository` (the domain and the use
-cases never read the store), `event-sourcing/projection-never-appends` and
-`event-sourcing/upcaster-required`: the data of a stored event is a named type, a version above
-1 has an upcaster from each version below, and the shape of each version is recorded by
-`ddd-ts-kit docs --stored-events` in `stored-events.lock.json` (run when a version starts being stored, before its release), so a shape changed in place is refused. They
-judge event-sourced code only: a project that has none sees no new finding.
+cases never read the store), `event-sourcing/projection-never-appends` (no projection names the
+event store; one declared `{ feed: 'event-store' }` names no repository either) and
+`event-sourcing/upcaster-required`: the data of a stored event is a named type declared in its
+codec file with every named type it reaches, a version above 1 has an upcaster from each
+version below, and the shape of each version is recorded by `ddd-ts-kit docs --stored-events`
+in `stored-events.lock.json`, so a shape changed in place is refused. `ddd-ts-kit docs --check`
+(`npm run docs:check` in the generated pipeline) fails while a declared version is not
+recorded. The rules judge event-sourced code, the kernel's event store and projections declared
+`{ feed: 'event-store' }`, all new in this release: a project that has none sees no new finding,
+and a projection fed by the dispatcher may still name a repository port.
 
 **`ddd-ts-kit generate aggregate <context> <Name> --event-sourced`** writes the aggregate with
 its birth event (`<Name>Created`) and its apply method, the codec of its stored events

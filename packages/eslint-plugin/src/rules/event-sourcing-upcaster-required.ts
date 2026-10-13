@@ -1,7 +1,8 @@
 import { AST_NODE_TYPES, type TSESTree } from '@typescript-eslint/utils';
+import { unresolvedTypes } from '../support/event-sourcing/unresolved-types.js';
 import { defineRule, type Report } from '../support/rule/define-rule.js';
 
-type MessageId = 'unnamed' | 'undeclared' | 'missingUpcaster';
+type MessageId = 'unnamed' | 'undeclared' | 'unresolved' | 'missingUpcaster';
 
 interface StoredEvent {
   readonly node: TSESTree.CallExpression;
@@ -14,22 +15,25 @@ export const eventSourcingUpcasterRequired = defineRule<MessageId>({
   type: 'problem',
   recommended: 'error',
   description:
-    'A stored event names the type of its data in `encode` and declares it in its codec file, and a version above 1 has an upcaster from each version below. The lock of recorded shapes is read by `ddd-ts-kit check`.',
+    'A stored event names the type of its data in `encode` and declares it, with every named type it reaches, in its codec file, and a version above 1 has an upcaster from each version below. The lock of recorded shapes is read by `ddd-ts-kit check`.',
   messages: {
     unnamed:
       'The encode of {{eventClass}} does not name the type of the data it stores. Write the stored shape as a named type in this file and answer it: `encode: (event): InvoiceIssuedData => ({ ... })`.',
     undeclared:
       '{{type}}, the data of {{eventClass}}, is not declared in this file. Declare it next to the events it stores: it is the stored shape, kept even when the domain event changes.',
+    unresolved:
+      '{{name}}, reached by {{type}} of {{eventClass}}, is not declared in this file: a change of it would change the stored shape unseen. Declare its stored shape in the codec file too, mapped from the domain type in encode.',
     missingUpcaster:
       '{{eventClass}} is stored in version {{version}} and has no upcaster from version {{from}}. Add `upcasters: { {{from}}: (data) => ({ ...data }) }`: events stored in version {{from}} are read through it.',
   },
   create({ report }) {
-    const declared = new Set<string>();
+    const declared = new Map<string, TSESTree.Node>();
     const stored: StoredEvent[] = [];
 
     return {
-      TSInterfaceDeclaration: (node) => declared.add(node.id.name),
-      TSTypeAliasDeclaration: (node) => declared.add(node.id.name),
+      TSInterfaceDeclaration: (node) => declared.set(node.id.name, node),
+      TSTypeAliasDeclaration: (node) => declared.set(node.id.name, node),
+      TSEnumDeclaration: (node) => declared.set(node.id.name, node),
       CallExpression(node) {
         const [type, spec] = node.arguments;
 
@@ -51,15 +55,10 @@ export const eventSourcingUpcasterRequired = defineRule<MessageId>({
   },
 });
 
-function judge(event: StoredEvent, declared: ReadonlySet<string>, report: Report<MessageId>): void {
+function judge(event: StoredEvent, declared: ReadonlyMap<string, TSESTree.Node>, report: Report<MessageId>): void {
   const { node, eventClass, spec } = event;
-  const type = payloadType(property(spec, 'encode'));
 
-  if (type === undefined) {
-    report({ node, messageId: 'unnamed', data: { eventClass } });
-  } else if (!declared.has(type)) {
-    report({ node, messageId: 'undeclared', data: { eventClass, type } });
-  }
+  judgeShape(event, declared, report);
 
   const version = numberOf(property(spec, 'version'));
   const upcasters = upcasterKeys(property(spec, 'upcasters'));
@@ -71,6 +70,25 @@ function judge(event: StoredEvent, declared: ReadonlySet<string>, report: Report
         messageId: 'missingUpcaster',
         data: { eventClass, version: String(version), from: String(from) },
       });
+    }
+  }
+}
+
+/** The data type is named, declared in the file, and so is every named type it reaches. */
+function judgeShape(
+  { node, eventClass, spec }: StoredEvent,
+  declared: ReadonlyMap<string, TSESTree.Node>,
+  report: Report<MessageId>,
+): void {
+  const type = payloadType(property(spec, 'encode'));
+
+  if (type === undefined) {
+    report({ node, messageId: 'unnamed', data: { eventClass } });
+  } else if (!declared.has(type)) {
+    report({ node, messageId: 'undeclared', data: { eventClass, type } });
+  } else {
+    for (const name of unresolvedTypes(type, declared)) {
+      report({ node, messageId: 'unresolved', data: { eventClass, type, name } });
     }
   }
 }

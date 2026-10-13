@@ -11,7 +11,7 @@ const NEW_VERSION_FIX =
 
 export const eventSourcingUpcasterRequired: Rule = {
   id: 'event-sourcing/upcaster-required',
-  description: `A stored event names the type of its data in \`encode\` and declares it in its codec file; a version above 1 has an upcaster from each version below; and the shape of a version recorded in ${STORED_EVENTS_LOCK} never changes.`,
+  description: `A stored event names the type of its data in \`encode\` and declares it, with every named type it reaches, in its codec file; a version above 1 has an upcaster from each version below; and the shape of a version recorded in ${STORED_EVENTS_LOCK} never changes.`,
   scope: 'file',
   run(project) {
     const lock = readStoredEventsLock(project.root);
@@ -19,6 +19,7 @@ export const eventSourcingUpcasterRequired: Rule = {
     return perFile(project, this.id, (file) =>
       storedEventDeclarations(file).flatMap((declaration) => [
         ...unnamed(declaration),
+        ...unresolved(declaration),
         ...missingUpcasters(declaration),
         ...changedShape(declaration, lock),
       ]),
@@ -46,6 +47,14 @@ function unnamed({ eventClass, payloadType, fingerprint, line }: StoredEventDecl
         },
       ]
     : [];
+}
+
+function unresolved({ eventClass, payloadType, unresolved: names, line }: StoredEventDeclaration): Finding[] {
+  return names.map((name) => ({
+    line,
+    message: `${name}, reached by ${payloadType ?? 'the data'} of ${eventClass}, is not declared in this file: a change of it would change the stored shape unseen.`,
+    fix: `Declare the stored shape of ${name} in the codec file too (\`interface ${name}Data { ... }\`, mapped from the domain type in encode), so that its fields are part of the fingerprint of the version.`,
+  }));
 }
 
 function missingUpcasters({ eventClass, version, upcasters, line }: StoredEventDeclaration): Finding[] {
