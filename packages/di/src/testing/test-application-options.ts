@@ -34,7 +34,9 @@ export interface TestApplicationOptions {
   readonly jobs?: NonNullable<JobsOptions['settings']>;
   /**
    * The tenants a job declared `tenancy: 'per-tenant'` runs for, one run each. Default: the
-   * tenant of the execution context, or none.
+   * tenant of the execution context; with neither, none: the application still composes (the
+   * default scheduler would refuse such a job without a directory), and the job runs for no
+   * tenant until a spec names one.
    */
   readonly tenants?: readonly string[];
 }

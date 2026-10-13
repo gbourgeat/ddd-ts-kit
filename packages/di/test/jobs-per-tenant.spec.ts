@@ -66,4 +66,13 @@ describe('a job that runs per tenant in a test application', () => {
     expect(named).toEqual(['north', 'south']);
     expect(ofTheActor).toEqual(['east']);
   });
+
+  it('composes when neither the spec nor its execution context names a tenant, and then runs for none', async () => {
+    const seen: (string | undefined)[] = [];
+    const application = createTestApplication({ modules: [contextModule('desk', [tenantsJob(seen)])] });
+
+    await application.jobs.runNow('desk.close-the-day');
+
+    expect(seen).toEqual([]);
+  });
 });
