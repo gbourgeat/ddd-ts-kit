@@ -60,8 +60,9 @@ limits, and a recommendation by situation.
 
 | Page | The decision |
 |---|---|
-| [HTTP frameworks](tools/http-frameworks.md) | Express, Fastify or NestJS, and what framework-agnostic routes cost with Nest |
-| [Validation](tools/validation.md) | zod, class-validator or a Standard Schema library |
+| [HTTP frameworks](tools/http-frameworks.md) | Express, Fastify, Hono or NestJS, and what framework-agnostic routes cost with Nest |
+| [Validation](tools/validation.md) | zod, class-validator, TypeBox or a Standard Schema library; shared schemas |
+| [Contract pairs](tools/contract-pairs.md) | which framework with which validation library, by team: the four pairs proven end to end, measured; why not oRPC |
 | [Dependency injection](tools/dependency-injection.md) | tsyringe with the kit's declarations, NestJS, or manual wiring |
 | [Persistence](tools/persistence.md) | Drizzle, Knex, Prisma or TypeORM; PostgreSQL versus others |
 | [Message brokers](tools/message-brokers.md) | in-process, RabbitMQ, Kafka, NATS JetStream or Redis Streams |

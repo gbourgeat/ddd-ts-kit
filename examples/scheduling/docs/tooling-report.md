@@ -929,3 +929,35 @@ No route of the application is public, so `Public` is not shown here: the kit ho
 own specs. `PersonError.invalidEmail` quotes the address it refuses in its message: the client
 now reads `Invalid email.` as `detail`, and the spec of the controller holds that the address
 does not leave.
+
+## 2026-10-13: shapes declared once, and four contract pairs
+
+The example now says `"stack.schemas": "shared"`. The checker, run with the new rule
+`schema/no-duplicate-shape` on the tree as it was, reported 17 findings, all of one shape: the
+eighteen `<use-case>.accepted.ts` classes, each `{ @IsString() id }`. The two agenda searches
+shared one line class through `extends`, which the rule does not count but the contract
+documented twice. What changed, all by hand but the schema file (`generate schema scheduling
+AgendaLine`) and the regenerated documents:
+
+| | Before | After |
+|---|---|---|
+| Schema files under `presentation/` | 96 | 77 (18 `*.accepted.ts` and 2 `*.line.ts` removed, `shared/agenda-line.schema.ts` added) |
+| Identifier answers | 18 classes, 18 copies in the contract | `acceptedSchema` of `@ddd-ts-kit/http`, one `Accepted` component |
+| Lines of an agenda search | 2 classes, 2 copies of the page in the contract | `AgendaLine` (`classSchema(AgendaLine, { shared: true })`), one `AgendaLinePage` |
+| `openapi/openapi.yaml` | 2781 lines, 90,367 bytes, 112 `$ref` | 2690 lines, 87,262 bytes, 133 `$ref` |
+| `components.schemas` | 7 | 10: `Accepted`, `AgendaLine`, `AgendaLinePage` added |
+| Findings of `check` | 0 | 0 |
+
+The bytes on the wire did not change. The contract did where sharing is the point: the answer
+of the 18 command routes is a reference to `Accepted` (`{ id }`, now described and closed with
+`additionalProperties: false`), and the two searches answer a reference to `AgendaLinePage`.
+
+Two things met on the way. `scripts/kit.mjs` declared a constant below the call of its main
+function: any `generate` that created a file failed before running the CLI; the constant now
+comes first. And the rule caught a mistake in its own end-to-end spec, where two routes had been
+given the same body: the spec now nests the shared shape under a field of its own in each.
+
+The four contract pairs (Express and zod, Fastify and TypeBox, Hono on Node and zod, NestJS and
+class-validator) were each generated with two routes sharing one shape, and held to zero
+finding, their specs, their end-to-end specs and a current contract; the numbers and the
+decision table are in `docs/tools/contract-pairs.md` of the kit.

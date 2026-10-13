@@ -45,6 +45,14 @@ one shape between two routes, and holds each to zero finding, its specs and end-
 (401, 403, 201 and the trace of the request) and a current contract that documents the shape
 once. NestJS with class-validator, generated before but never run end to end, is now.
 
+**Which pair for which team.** `docs/tools/contract-pairs.md` compares the four pairs (type
+inference, composition of shapes, contract fidelity, issue codes, ecosystem, maintenance) with
+numbers measured by `pipeline/monorepo/measure-contract-pairs.mjs`: the pipeline of the kit costs
+about a microsecond per request before validation, zod parses in about half a microsecond,
+class-validator and TypeBox (through the adapter) in five to ten. oRPC was run and is documented
+as not fitting: its procedures, error format and second contract generator would sit next to the
+kit's, and the typed client it offers comes here from the generated contract.
+
 **Every package carries the MIT notice.** Each published package now holds the `LICENSE` of the
 repository next to its `dist/`, and `npm run package:check` refuses a tarball without it, or with
 another text. Earlier versions were published without it.

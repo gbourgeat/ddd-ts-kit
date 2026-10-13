@@ -1,9 +1,10 @@
-# HTTP frameworks: Express, Fastify, NestJS
+# HTTP frameworks: Express, Fastify, Hono, NestJS
 
 **Summary.** In this kit a route is declared once, as data plus a handler, and mounted on
-Express 5, Fastify 5 or NestJS by an adapter of `@ddd-ts-kit/http`. All three go through the
-same pipeline (validation, handler, error mapping), so the framework decides how the server is
-operated, not how a use case is reached. The choice therefore rests on the team's habits, the
+Express 5, Fastify 5, Hono 4 (on Node) or NestJS by an adapter of `@ddd-ts-kit/http`. All four
+go through the same pipeline (validation, handler, error mapping), so the framework decides how
+the server is operated, not how a use case is reached. Which framework goes with which
+validation library, with measured numbers, is in [contract pairs](contract-pairs.md). The choice therefore rests on the team's habits, the
 ecosystem it needs and how much of the framework it is ready to leave unused. With NestJS the
 price of framework-agnostic routes is the highest: they bypass most of what makes a Nest
 controller a Nest controller.
@@ -38,20 +39,22 @@ pipeline runs.
 
 Versions and figures checked on 2026-10-10 against the npm registry.
 
-| | Express | Fastify | NestJS |
-|---|---|---|---|
-| Current major | 5 (5.3.0; 4.x still published under `latest-4`) | 5 (5.12.5) | 12 (12.1.2; 11.x under `legacy`) |
-| Licence | MIT | MIT | MIT |
-| Node required by the package | 18 or later | not checked | 20 or later |
-| Weekly downloads | about 141 million | about 15 million | about 16 million (`@nestjs/core`) |
-| Nature | minimal router and middleware chain | router with schemas, hooks, encapsulated plugins, a logger (pino) | application framework: modules, DI container, decorators, on top of Express or Fastify |
-| Own validation | none | JSON Schema per route | pipes, usually class-validator |
-| Own DI | none | none (decorators on the instance) | yes, central to the framework |
-| Decorators | none | none | everywhere; legacy decorator mode in the generated projects of this kit |
-| What the kit's routes use of it | the router | the router, as routes or as a plugin with a prefix | the underlying HTTP server only |
+| | Express | Fastify | Hono | NestJS |
+|---|---|---|---|---|
+| Current major | 5 (5.3.0; 4.x still published under `latest-4`) | 5 (5.12.5) | 4 (4.13.13, with `@hono/node-server` 2.1.4 on Node) | 12 (12.1.2; 11.x under `legacy`) |
+| Licence | MIT | MIT | MIT | MIT |
+| Node required by the package | 18 or later | not checked | 16.9 or later (`hono`) | 20 or later |
+| Weekly downloads | about 141 million | about 15 million | not checked | about 16 million (`@nestjs/core`) |
+| Nature | minimal router and middleware chain | router with schemas, hooks, encapsulated plugins, a logger (pino) | router on Web standard `Request` and `Response`, for Node, Bun, Deno and edge runtimes | application framework: modules, DI container, decorators, on top of Express or Fastify |
+| Own validation | none | JSON Schema per route | validator middlewares | pipes, usually class-validator |
+| Own DI | none | none (decorators on the instance) | none | yes, central to the framework |
+| Decorators | none | none | none | everywhere; legacy decorator mode in the generated projects of this kit |
+| What the kit's routes use of it | the router | the router, as routes or as a plugin with a prefix | the router; the adapter reads the JSON body itself | the underlying HTTP server only |
 
 The download figures say how widely each is installed, nothing about fitness. Performance is
-deliberately absent from the table: no benchmark was run for this page, and in a service that
+measured in [contract pairs](contract-pairs.md): the pipeline of the kit costs about a
+microsecond per request plus validation, the request rates of the four frameworks were within
+the noise of a shared machine, and only the cold start of Nest stood apart. In a service that
 talks to a database the framework is rarely where the time goes.
 
 ## Selection criteria
@@ -106,8 +109,8 @@ routes remove exactly that, and Express or Fastify does the same job with less m
 From [`packages/http/README.md`](../../packages/http/README.md) and
 [`packages/cli/README.md`](../../packages/cli/README.md):
 
-- Adapters for Express 5, Fastify 5 and NestJS, all through one pipeline (`executeRoute`); the
-  README states that one test suite proves the behaviour is the same on the three.
+- Adapters for Express 5, Fastify 5, Hono 4 and NestJS, all through one pipeline
+  (`executeRoute`); one test suite proves the behaviour is the same on the four.
 - Errors answered as `application/problem+json` (RFC 9457) from one error mapper; an
   unexpected error answers 500 without detail.
 - `security` is mandatory on every route; a route is never public by omission
@@ -115,11 +118,11 @@ From [`packages/http/README.md`](../../packages/http/README.md) and
 - OpenAPI 3.1 generated from the same declarations, deterministic, with a drift check for CI.
 - Every request runs inside the execution scope with its correlation id when the scope is
   given in the options.
-- The CLI's end-to-end proof (`proven-stacks.spec.ts`, as its README lists it) installs and
-  runs eight generated projects: seven on Express and one on Fastify (with `--di manual`).
-  None is on NestJS: for Nest the evidence is the adapter suite of the package and the
-  generated stacks that pass `check` and the type check, not a generated project run end to
-  end.
+- The CLI's end-to-end proofs install and run generated projects: `proven-stacks.spec.ts`
+  eight of them, seven on Express and one on Fastify (with `--di manual`), and
+  `contract-pairs.spec.ts` one per pair of [contract pairs](contract-pairs.md), Express, Fastify,
+  Hono on Node and NestJS (with `--di nest` and class-validator), each held to zero finding,
+  its specs, its end-to-end specs and a current contract.
 
 ## Limits and when not to use it
 
@@ -145,6 +148,7 @@ a GraphQL API: the route declaration models request and response JSON over REST.
 |---|---|
 | No strong habit, a plain JSON API | Express: the kit's default, the smallest surface, the widest knowledge |
 | High request volume, pino already in place, plugin encapsulation wanted | Fastify |
+| A service that may move to Bun, Deno or an edge runtime, or a team at home with Web standard requests | Hono (proven on Node only) |
 | An existing Nest application adopting the kit context by context | NestJS, explicit style, routes of the kit for the contexts and native Nest for the rest |
 | A new project, Nest chosen "because it has structure" | reconsider: the structure here comes from the kit's tree and rules; Express or Fastify with tsyringe keeps the declared style |
 | No HTTP at all (worker, consumer) | `none` |
@@ -155,6 +159,7 @@ file, not of routes, handlers or contract: that is what the declaration buys.
 ## Sources
 
 - Express, release notes and migration guide for version 5: https://expressjs.com
+- Hono on Node: https://hono.dev/docs/getting-started/nodejs
 - Fastify documentation (hooks, encapsulation, validation): https://fastify.dev/docs/latest/
 - NestJS documentation (pipes, guards, interceptors, exception filters, request lifecycle):
   https://docs.nestjs.com/faq/request-lifecycle
