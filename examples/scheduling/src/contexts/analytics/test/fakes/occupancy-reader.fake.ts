@@ -6,6 +6,7 @@ import {
 } from '@/contexts/analytics/application/ports/occupancy-reader.port';
 import type { Outcome, OutcomeRegister } from '@/contexts/analytics/application/ports/outcome-register.port';
 import { OccupancyMeasureService } from '@/contexts/analytics/domain/services/occupancy-measure.service';
+import { MeasuredOutcome } from '@/contexts/analytics/domain/value-objects/measured-outcome.vo';
 
 const measure = new OccupancyMeasureService();
 
@@ -54,6 +55,10 @@ function measured(outcomes: readonly Outcome[]): readonly Occupancy[] {
 
     const { practiceId, calendarId, day } = first;
 
-    return [{ id: `${calendarId}.${day}`, practiceId, calendarId, day, ...measure.measure(onTheLine) }];
+    const figures = measure.measure(
+      onTheLine.map(({ state, startsAt, endsAt }) => MeasuredOutcome.of(state, startsAt, endsAt)),
+    );
+
+    return [{ id: `${calendarId}.${day}`, practiceId, calendarId, day, ...figures.toJSON() }];
   });
 }

@@ -1,0 +1,95 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="560" viewBox="0 0 960 560" role="img" aria-labelledby="title desc">
+  <title id="title">A value of the model: the function form and the class form</title>
+  <desc id="desc">On the left, a function that builds a plain object leaves every caller to validate, compare and recognise the value. On the right, a class extending ValueObject is built only through a static factory that checks its invariants, compares by value, returns new instances and is recognised with instanceof at the boundary.</desc>
+  <defs>
+    <marker id="arrow-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#b91c1c"/>
+    </marker>
+    <marker id="arrow-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#15803d"/>
+    </marker>
+  </defs>
+  <style>
+    text { font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; fill: #1f2937; }
+    .mono { font-family: "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace; }
+    .title { font-size: 20px; font-weight: 600; }
+    .head { font-size: 16px; font-weight: 700; }
+    .strong { font-size: 13px; font-weight: 700; }
+    .body { font-size: 12.5px; }
+    .code { font-size: 13px; }
+    .small { font-size: 12px; }
+  </style>
+
+  <rect width="960" height="560" fill="#ffffff"/>
+  <text class="title" x="480" y="36" text-anchor="middle">A value of the model: function form or class form</text>
+
+  <!-- Function form -->
+  <rect x="20" y="60" width="440" height="480" rx="12" fill="#fef2f2" stroke="#fca5a5"/>
+  <text class="head" x="40" y="92" style="fill:#b91c1c">Function form: reported</text>
+  <rect x="40" y="108" width="400" height="72" rx="8" fill="#ffffff" stroke="#fca5a5"/>
+  <text class="mono code" x="56" y="138">export const money = (amount, currency) =&gt;</text>
+  <text class="mono code" x="72" y="160">({ amount, currency });</text>
+
+  <path d="M240,180 L102,246" stroke="#b91c1c" stroke-width="1.5" fill="none" marker-end="url(#arrow-red)"/>
+  <path d="M240,180 L240,246" stroke="#b91c1c" stroke-width="1.5" fill="none" marker-end="url(#arrow-red)"/>
+  <path d="M240,180 L378,246" stroke="#b91c1c" stroke-width="1.5" fill="none" marker-end="url(#arrow-red)"/>
+
+  <rect x="40" y="250" width="124" height="112" rx="8" fill="#ffffff" stroke="#fca5a5"/>
+  <text class="strong" x="102" y="276" text-anchor="middle">A handler</text>
+  <text class="small" x="102" y="302" text-anchor="middle">checks the amount</text>
+  <text class="small" x="102" y="320" text-anchor="middle">again, or forgets</text>
+  <text class="small" x="102" y="338" text-anchor="middle">to check it</text>
+
+  <rect x="178" y="250" width="124" height="112" rx="8" fill="#ffffff" stroke="#fca5a5"/>
+  <text class="strong" x="240" y="276" text-anchor="middle">An aggregate</text>
+  <text class="small" x="240" y="302" text-anchor="middle">compares two</text>
+  <text class="small" x="240" y="320" text-anchor="middle">amounts field</text>
+  <text class="small" x="240" y="338" text-anchor="middle">by field</text>
+
+  <rect x="316" y="250" width="124" height="112" rx="8" fill="#ffffff" stroke="#fca5a5"/>
+  <text class="strong" x="378" y="276" text-anchor="middle">A mapper</text>
+  <text class="small" x="378" y="302" text-anchor="middle">cannot tell this</text>
+  <text class="small" x="378" y="320" text-anchor="middle">value from any</text>
+  <text class="small" x="378" y="338" text-anchor="middle">other object</text>
+
+  <rect x="40" y="390" width="400" height="128" rx="8" fill="#ffffff" stroke="#fca5a5"/>
+  <text class="strong" x="56" y="416" style="fill:#7f1d1d">What is lost</text>
+  <text class="body" x="56" y="440">The rule of the value lives nowhere: each caller repeats it,</text>
+  <text class="body" x="56" y="460">or does not, and { amount: -3 } exists as well as any other.</text>
+  <text class="body" x="56" y="480">Its operations (add, convert, compare) scatter in helpers.</text>
+  <text class="body" x="56" y="500">Nothing freezes it: any holder may change a field.</text>
+
+  <!-- Class form -->
+  <rect x="500" y="60" width="440" height="480" rx="12" fill="#f0fdf4" stroke="#86efac"/>
+  <text class="head" x="520" y="92" style="fill:#15803d">Class form: expected</text>
+
+  <rect x="520" y="108" width="180" height="36" rx="18" fill="#ffffff" stroke="#15803d"/>
+  <text class="mono code" x="610" y="131" text-anchor="middle">Money.of(1250, 'EUR')</text>
+  <rect x="740" y="108" width="180" height="36" rx="18" fill="#ffffff" stroke="#b91c1c" stroke-dasharray="5 4"/>
+  <text class="mono code" x="830" y="131" text-anchor="middle" style="fill:#b91c1c">new Money(..)</text>
+  <text class="small" x="830" y="162" text-anchor="middle" style="fill:#b91c1c">private constructor:</text>
+  <text class="small" x="830" y="178" text-anchor="middle" style="fill:#b91c1c">refused by the compiler</text>
+
+  <path d="M610,144 L610,184" stroke="#15803d" stroke-width="1.5" fill="none" marker-end="url(#arrow-green)"/>
+  <rect x="520" y="188" width="260" height="78" rx="8" fill="#ffffff" stroke="#15803d"/>
+  <text class="strong" x="536" y="212">static factory: the one way in</text>
+  <text class="body" x="536" y="234">checks the invariants once, or</text>
+  <text class="mono small" x="536" y="254">throws InvoiceError.invalid..</text>
+
+  <path d="M650,266 L650,292" stroke="#15803d" stroke-width="1.5" fill="none" marker-end="url(#arrow-green)"/>
+  <rect x="520" y="296" width="400" height="112" rx="8" fill="#ffffff" stroke="#15803d"/>
+  <text class="mono strong" x="536" y="320">Money extends ValueObject</text>
+  <text class="small" x="904" y="320" text-anchor="end" style="fill:#166534">props: frozen, readonly</text>
+  <text class="mono small" x="536" y="346">equals(other)</text>
+  <text class="body" x="656" y="346">by value: no identity to compare</text>
+  <text class="mono small" x="536" y="370">add(other)</text>
+  <text class="body" x="656" y="370">returns a new Money, never mutates</text>
+  <text class="mono small" x="536" y="394">toJSON()</text>
+  <text class="body" x="656" y="394">the props, for a read model or a log</text>
+
+  <path d="M720,408 L720,434" stroke="#15803d" stroke-width="1.5" fill="none" marker-end="url(#arrow-green)"/>
+  <rect x="520" y="438" width="400" height="84" rx="8" fill="#ffffff" stroke="#86efac"/>
+  <text class="strong" x="536" y="462">At the boundary</text>
+  <text class="mono small" x="536" y="484">if (value instanceof Money) { .. }</text>
+  <text class="body" x="536" y="506">a mapper or a serializer recognises the value and writes it</text>
+</svg>

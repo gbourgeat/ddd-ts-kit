@@ -52,7 +52,8 @@ ddd-ts-kit init [--http express|fastify|hono|nest|none]
                 [--style declared|explicit] [--assembly barrel|discovery]
                 [--dependencies signature|listed] [--refusals factories|classes]
                 [--routes controllers|functions] [--value-objects throwing|result]
-                [--literals named|free] [--tenancy none|shared-table] [--queue database|redis|memory]
+                [--literals named|free] [--values classes|free] [--tenancy none|shared-table]
+                [--queue database|redis|memory]
                 [--schemas shared|per-route]
                 [--package-manager npm|pnpm]
                 [--allow-no-outbox "<reason>"] [--import-alias '$<name>/']
@@ -843,6 +844,7 @@ saying what to do instead. Exit code 1 when there is at least one error.
 | `schema/presentation-only` | under `"stack.schemas": "shared"`: in the shared kernel outside `presentation/`, an import of a validation library; in `domain/`, `application/`, `infrastructure/`, `published-language/` and the shared kernel outside `presentation/`, an import of a file of `presentation/` of the shared kernel |
 | `schema/no-duplicate-shape` | under `"stack.schemas": "shared"`, in the presentation layer of one context, or in it and `presentation/` of the shared kernel: a DTO class or an object schema (`z.object`, `v.object`, `Type.Object`) declaring the shape of another one, with the place of the original (the shared kernel, then `presentation/http/shared/`); two contexts are not compared, and request parameters and shapes still carrying a `TODO(domain)` of the generator are not judged |
 | `errors/known-code` | under `"stack.refusals": "factories"`, in a `*.route.ts`: a code of the `errors` list that no refusal of the context of the route sets, that no class outside the contexts sets, and that is not a code of the kit |
+| `domain/value-object-class` | under `"stack.values": "classes"`: in `domain/value-objects/` of a context or a `*.vo.ts` of the shared kernel outside `presentation/`, no exported class or a second one, a class that extends neither `ValueObject` nor another value object of the project, a public constructor, a concrete class without a static method, an exported function, arrow constant or object literal (inline, listed or by default); in `domain/` and in the shared kernel outside `presentation/`, an exported function that answers a record of data: data entries, no spread, nothing a call of the model built |
 
 More ids belong to `@ddd-ts-kit/eslint-plugin`, which reads the syntax tree where this
 checker reads text: `domain/aggregate-encapsulation`, `domain/value-object-immutability`,

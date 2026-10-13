@@ -141,6 +141,7 @@ const FASTIFY_STACK = {
   storage: 'local',
   valueObjects: 'throwing',
   literals: 'named',
+  values: 'classes',
   queue: 'memory',
   style: 'explicit',
   packageManager: 'pnpm',

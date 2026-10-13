@@ -31,6 +31,7 @@ const STACK_FLAGS = [
   'forms',
   'schemas',
   'literals',
+  'values',
   'tenancy',
   'queue',
 ] as const;

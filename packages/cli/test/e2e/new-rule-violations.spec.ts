@@ -7,6 +7,7 @@ const PORT = `${BILLING}/application/ports/payment-gateway.port.ts`;
 const ADAPTER = `${BILLING}/infrastructure/external/remote-payment-gateway.adapter.ts`;
 const HANDLER = `${BILLING}/application/commands/issue-invoice/issue-invoice.handler.ts`;
 const SERVICE = `${BILLING}/domain/services/pricing.service.ts`;
+const VALUE_OBJECT = `${BILLING}/domain/value-objects/money.vo.ts`;
 const JOB = `${BILLING}/application/scheduling/cancel-stale-invoices.job.ts`;
 const EVENT_HANDLER = `${BILLING}/application/event-handlers/invoice-issued.event-handler.ts`;
 const OTHER_JOB = `${BILLING}/application/scheduling/issue-invoices-monthly.job.ts`;
@@ -193,6 +194,22 @@ const INJECTIONS: readonly Injection[] = [
     to: "@Scheduled('CancelStale'",
   },
   {
+    rule: 'domain/value-object-class',
+    eslint: 'ddd-ts-kit/domain-value-object-class',
+    what: 'a value object whose constructor is public',
+    file: VALUE_OBJECT,
+    from: '  private constructor(props: MoneyProps) {',
+    to: '  constructor(props: MoneyProps) {',
+  },
+  {
+    rule: 'domain/value-object-class',
+    eslint: 'ddd-ts-kit/domain-value-object-class',
+    what: 'a value of the model written as a function that builds a plain object',
+    file: SERVICE,
+    from: '',
+    to: '\nexport const money = (amount: number, currency: string) => ({ amount, currency });\n',
+  },
+  {
     rule: 'language/declared-vocabulary',
     eslint: 'ddd-ts-kit/language-declared-vocabulary',
     what: 'a role granted by its value in the platform, where the Role vocabulary of the platform declares it',
@@ -215,7 +232,10 @@ describe.runIf(SLOW)('a violation of a rule of this wave, written into a generat
   });
 
   it('is absent from the files these tests edit, as generated', () => {
-    expect(project.linted(PORT, ADAPTER, HANDLER, SERVICE, JOB, OTHER_JOB, EVENT_HANDLER, ROLES)).toBe('');
+    expect(project.linted(PORT, ADAPTER, HANDLER, SERVICE, VALUE_OBJECT, JOB, OTHER_JOB, EVENT_HANDLER, ROLES)).toBe(
+      '',
+    );
+
     expect(project.checkedRules()).toEqual([]);
   }, 120_000);
 
