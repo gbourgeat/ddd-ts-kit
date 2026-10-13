@@ -9,6 +9,9 @@ interface Asked {
   readonly body: string;
 }
 
+/** As many organizations as one read of the adapter lists. */
+const PAGE = 100;
+
 const asked: Asked[] = [];
 let server: Server;
 let admin: KeycloakIdentityProviderAdmin;
@@ -51,14 +54,16 @@ describe('KeycloakIdentityProviderAdmin, against a realm of Keycloak 26', () => 
     ]);
   });
 
-  it('adds and removes a member by the id the realm gives the organisation', async () => {
+  it('adds and removes a member by the id the realm gives the organisation, found by its alias on any page', async () => {
     await admin.addMember('acme', 'subject-ada');
     await admin.removeMember('acme', 'subject-ada');
 
     expect(asked.map((one) => one.call).filter((call) => !call.includes('token'))).toEqual([
-      'GET /admin/realms/acme/organizations?search=acme&exact=true',
+      'GET /admin/realms/acme/organizations?briefRepresentation=true&first=0&max=100',
+      'GET /admin/realms/acme/organizations?briefRepresentation=true&first=100&max=100',
       'POST /admin/realms/acme/organizations/org-acme/members',
-      'GET /admin/realms/acme/organizations?search=acme&exact=true',
+      'GET /admin/realms/acme/organizations?briefRepresentation=true&first=0&max=100',
+      'GET /admin/realms/acme/organizations?briefRepresentation=true&first=100&max=100',
       'DELETE /admin/realms/acme/organizations/org-acme/members/subject-ada',
     ]);
   });
@@ -96,8 +101,11 @@ async function answer(request: IncomingMessage, response: ServerResponse): Promi
 
   if (call.endsWith('/token')) {
     response.end(JSON.stringify({ access_token: 'token-of-the-client' }));
-  } else if (call.startsWith('GET') && call.includes('search=acme')) {
-    response.end(JSON.stringify([{ id: 'org-acme', alias: 'acme' }]));
+  } else if (call.startsWith('GET') && call.includes('first=0&')) {
+    // A full first page of other organizations, named like the one searched: Keycloak searches by name, never by alias.
+    response.end(JSON.stringify(Array.from({ length: PAGE }, (_, index) => ({ id: `org-${index}`, name: 'acme', alias: `other-${index}` }))));
+  } else if (call.startsWith('GET') && call.includes('first=100&')) {
+    response.end(JSON.stringify([{ id: 'org-acme', name: 'Acme', alias: 'acme' }]));
   } else if (call.startsWith('GET')) {
     response.end('[]');
   } else {

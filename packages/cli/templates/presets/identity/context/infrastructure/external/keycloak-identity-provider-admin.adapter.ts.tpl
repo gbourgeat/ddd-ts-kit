@@ -5,6 +5,9 @@ import type { IdentityProviderConnection } from '{{alias.context}}/application/p
 const CONFLICT = 409;
 const NOT_FOUND = 404;
 
+/** How many organizations one read of the realm lists. */
+const PAGE = 100;
+
 interface Call {
   readonly method: 'GET' | 'POST' | 'PUT' | 'DELETE';
   readonly path: string;
@@ -16,6 +19,12 @@ interface Call {
 interface KeycloakOrganisation {
   readonly id: string;
   readonly alias: string;
+}
+
+/** One page of the organizations of the realm: the one under the alias if it is there, and whether more may follow. */
+interface SearchedPage {
+  readonly found: KeycloakOrganisation | undefined;
+  readonly full: boolean;
 }
 
 /**
@@ -54,20 +63,32 @@ export class KeycloakIdentityProviderAdmin implements IdentityProviderAdmin {
     await this.send({ method: 'PUT', path: `users/${encodeURIComponent(accountId)}`, body: { enabled: false } });
   }
 
+  /** Keycloak searches organizations by name, not by alias: its pages are read until the alias is found. */
   private async organisationNamed(alias: string): Promise<string> {
-    const answer = await this.send({
-      method: 'GET',
-      path: `organizations?search=${encodeURIComponent(alias)}&exact=true`,
-    });
+    let first = 0;
+    let page = await this.searchPage(alias, first);
 
-    const found: unknown = await answer.json();
-    const organisation = Array.isArray(found) ? found.find((candidate) => isOrganisation(candidate, alias)) : undefined;
+    while (page.found === undefined && page.full) {
+      first += PAGE;
+      page = await this.searchPage(alias, first);
+    }
 
-    if (organisation === undefined) {
+    if (page.found === undefined) {
       throw new Error(`Keycloak knows no organization under the alias ${alias}.`);
     }
 
-    return organisation.id;
+    return page.found.id;
+  }
+
+  private async searchPage(alias: string, first: number): Promise<SearchedPage> {
+    const answer = await this.send({ method: 'GET', path: `organizations?briefRepresentation=true&first=${first}&max=${PAGE}` });
+    const listed: unknown = await answer.json();
+
+    if (!Array.isArray(listed)) {
+      return { found: undefined, full: false };
+    }
+
+    return { found: listed.find((candidate) => isOrganisation(candidate, alias)), full: listed.length === PAGE };
   }
 
   private async send(call: Call): Promise<Response> {
