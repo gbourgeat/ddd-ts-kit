@@ -11,6 +11,7 @@ import {
   InMemoryLogger,
   InMemoryMetrics,
   InMemoryRateLimiter,
+  InMemoryTenantDirectory,
   SequentialIdGenerator,
   executionContext,
   type Actor,
@@ -43,7 +44,8 @@ export function createTestKernel(options: TestApplicationOptions, resolve: Resol
     scope: executionScope,
   });
 
-  const scheduler = manualScheduler({ clock, scope: executionScope, ...observability }, errors);
+  const tenants = new InMemoryTenantDirectory(options.tenants ?? tenantsOf(context));
+  const scheduler = manualScheduler({ clock, scope: executionScope, tenants, ...observability }, errors);
 
   return {
     commandBus: transactionalCommandBus(resolve),
@@ -69,6 +71,11 @@ function defaultExecutionContext({ session, actor }: TestApplicationOptions): Ex
     origin: 'test',
     ...(session === undefined ? {} : { session }),
   });
+}
+
+/** The tenant of the work a spec runs as: what a per-tenant job runs for unless the spec names others. */
+function tenantsOf(context: ExecutionContext): readonly string[] {
+  return context.tenantId === undefined ? [] : [context.tenantId];
 }
 
 type SchedulerParts = Omit<ManualJobSchedulerOptions, 'ids' | 'onRun'>;

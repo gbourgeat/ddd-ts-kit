@@ -18,6 +18,7 @@ import type {
   ProcessedEventStore,
   QueryBus,
   RateLimiter,
+  TenantDirectory,
   UnitOfWork,
 } from '@ddd-ts-kit/kernel';
 import type { Instrumentation } from './instrumentation.js';
@@ -68,6 +69,12 @@ export interface KernelModuleOptions {
    * each run every job.
    */
   readonly jobScheduler?: Provided<JobScheduler>;
+  /**
+   * The tenants that exist, bound as `TenantDirectory`: a job declared `tenancy: 'per-tenant'` runs
+   * once for each, in its execution scope, on the default scheduler. Absent: no directory is
+   * bound, and the default scheduler refuses such a job when it is registered.
+   */
+  readonly tenants?: Provided<TenantDirectory>;
   /**
    * What observes the application from outside, typically `traceApplication()` of
    * `@ddd-ts-kit/tracing`: the default buses, the event publisher, the consumers, the domain event

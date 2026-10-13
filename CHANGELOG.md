@@ -6,6 +6,28 @@ list the pull requests behind it.
 
 ## Unreleased
 
+**The example serves several networks of practices, one tenant each** (its ADR-0003, accepted).
+
+- `@ddd-ts-kit/knex`: `addTenantColumn(knex, { schema, table, tenantOfExistingRows })`, the
+  migration of a table of a project that becomes multi-tenant: the rows already there go to the
+  tenant named (refused when there are rows and none), then the column is required and indexed; a
+  table that has the column is left alone. `derivedTable(context, query, alias)` selects from a
+  query confined by `tenantTable`, for a measure grouped then paged by its output columns.
+- `@ddd-ts-kit/di`: `kernelModule({ tenants })` binds a `TenantDirectory` and gives it to the
+  default scheduler, so that a job declared `tenancy: 'per-tenant'` can be registered; the test
+  application takes `tenants` too, by default the tenant of its execution context.
+- `tenancy/scoped-statement` reads the literal text of a raw call: an expression that names no
+  statement and no table (an aggregate of a select, a constraint of the schema) is no longer
+  reported; raw SQL that names one, or whose text is not a literal, still is.
+- Plugin 0.14.0: the guard lets `test/e2e/journey-*.e2e.spec.ts` be written by hand, since a
+  journey crosses several routes and no generator writes it.
+- Example: `"stack.tenancy": "shared-table"`, a tenant column on its twelve tables and the
+  migration that adds it to an existing database, `tenantIsolationContract` on every Knex
+  repository, the jobs run per network (`NETWORKS`), the audit trail read by platform staff
+  through a recorded elevation, and `x-tenant-id` refused at the edge for another network than
+  the caller's. Its HTTP contract changed: `POST /practices` asks the role `network-admin`,
+  `GET /audit/entries` takes `network`.
+
 **The tenant travels with every unit of work** ([Multitenancy](docs/concepts/multitenancy.md)).
 
 - `IntegrationEvent.tenantId`: `scopedPublisher` stamps the tenant of the work on every event

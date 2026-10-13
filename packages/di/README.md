@@ -741,6 +741,7 @@ barrel instead of discovery the two lines become `contextModule('ordering', orde
 | `Lock` | `InMemoryLock` on `Clock`: this process only | `lock` |
 | `RateLimiter` | `InMemoryRateLimiter` on `Clock`: this process only | `rateLimiter` |
 | `JobScheduler` | `InProcessJobScheduler` of `@ddd-ts-kit/scheduling` on `Clock`, `Lock`, `ExecutionScope`, `IdGenerator`, `Logger`, `Metrics` and `ErrorReporter` | `jobScheduler` |
+| `TenantDirectory` | none: a job declared `tenancy: 'per-tenant'` is refused when it is registered. Given, the default scheduler runs such a job once per tenant it lists, in that tenant's scope; the test application takes `tenants` (by default the tenant of its execution context) | `tenants` |
 
 The ports are the abstract classes of `@ddd-ts-kit/kernel`: a handler types a constructor
 parameter by `Clock` without importing this package.

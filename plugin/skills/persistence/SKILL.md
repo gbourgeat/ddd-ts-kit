@@ -54,7 +54,10 @@ lookups of the port, the columns, the mapper.
   `tenantCondition` and `ownTenantCondition` (Drizzle), never a table straight from the
   executor (`tenancy/scoped-statement`); reads may widen under an audited elevation, writes
   never. Row-level security, schema and database per tenant are in the packages, wired by
-  hand; prove the adapter with `tenantIsolationContract`. See `docs/concepts/multitenancy.md`.
+  hand; prove the adapter with `tenantIsolationContract`. A measure grouped then paged selects
+  from the scoped query with `derivedTable`; a raw expression is fine in its select, raw SQL that
+  names a table is not. A project that becomes multi-tenant migrates with `addTenantColumn`.
+  See `docs/concepts/multitenancy.md`.
 - **Outbox in the same transaction** as the business write (`events/outbox-required`).
 - **Searches** use the kernel `Page` and `PageRequest`; a cursor ends on a unique tie-breaker.
 - **Queries may skip aggregates**: `generate query` writes a read port and an in-memory

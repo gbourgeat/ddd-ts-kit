@@ -60,6 +60,17 @@ const DRIZZLE_UNSCOPED = `export class DrizzleInvoiceRepository {
 }
 `;
 
+/** Aggregates over the rows `tenantTable` confines: raw expressions that reach no table themselves. */
+const RAW_EXPRESSIONS = `export class KnexInvoiceRepository {
+  totals() {
+    return tenantTable(this.database, this.scope, INVOICES).select(
+      this.database.executor().raw('(count(*) filter (where paid))::integer as paid'),
+      this.database.executor().raw(\`coalesce(sum(amount) filter (where state in (\${among})), 0) as due\`, states),
+    );
+  }
+}
+`;
+
 const tenancy = (orm: string, value = 'shared-table') => ({
   [CONFIG_FILE]: config({ stack: { orm, tenancy: value } }),
 });
@@ -115,6 +126,21 @@ export const TENANCY_FIXTURES: readonly Fixture[] = [
   bypass('knex', 'a select chained on the executor', "return this.database.executor().select('id').from('invoices');"),
   bypass('knex', 'a table reached by table()', "return this.database.executor().table('invoices');"),
   bypass('knex', 'raw SQL', "return this.database.executor().raw('select * from invoices');"),
+  bypass('knex', 'raw SQL in a template', 'return this.database.executor().raw(`select * from ${INVOICES}`);'),
+  bypass('knex', 'raw SQL whose text is not a literal', 'return this.database.executor().raw(statement);'),
+  {
+    ruleId: RULE,
+    name: 'knex: a raw expression in the select of a confined statement, and a constraint of the schema',
+    expect: 'pass',
+    files: project(
+      {
+        [KNEX_ADAPTER]: RAW_EXPRESSIONS,
+        [`${PATHS.BILLING}/infrastructure/persistence/create-billing-tables.schema.ts`]:
+          "export const holdOnce = (knex: Knex) => knex.raw('alter table ??.?? add constraint held_once exclude using gist (desk with =)', [S, T]);\n",
+      },
+      tenancy('knex'),
+    ),
+  },
   bypass(
     'knex',
     'the executor held in a variable',

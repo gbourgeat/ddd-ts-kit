@@ -52,6 +52,9 @@ const GENERATORS = [
   [/\.e2e\.spec\.ts$/, 'e2e <context> <UseCase>'],
 ];
 
+// A journey crosses use cases, and often contexts: no single route generates it, so it is written by hand.
+const JOURNEY = /^test\/e2e\/journey-[^/]+\.e2e\.spec\.ts$/;
+
 // Changing these is a decision about the rules themselves: the project owner confirms it.
 const GOVERNED_FILES = [
   /^ddd-ts-kit\.config\.json$/,
@@ -382,7 +385,7 @@ function workerContext(project, input) {
 
 function handWrittenRoleReason(project, file) {
   const path = projectPath(project, file);
-  if (existsSync(file) || !(insideContexts(project, path) || path.startsWith('test/e2e/'))) {
+  if (existsSync(file) || JOURNEY.test(path) || !(insideContexts(project, path) || path.startsWith('test/e2e/'))) {
     return undefined;
   }
   if (/\.ports\.ts$/.test(path)) {

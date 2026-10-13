@@ -451,6 +451,14 @@ no tenant raises `NoCurrentTenantError` before any SQL. A read model of tenant d
 tenant of the work and every read and write is confined to it (keys stay unique across tenants;
 a rebuild, which runs in no tenant, is refused).
 
+A measure grouped by a scoped query, then filtered, sorted and paged by its output columns,
+selects from it with `derivedTable(context, grouped, 'occupancy')`: the grouped query is the one
+that reaches the table, through `tenantTable`. A project of one customer that becomes
+multi-tenant adds the column to each table of tenant data in a migration,
+`addTenantColumn(knex, { schema, table, tenantOfExistingRows: 'acme' })`: the rows already there
+go to that tenant (refused when there are rows and no tenant), then the column is required and
+indexed; a table that already has it is left alone.
+
 **Row-level security**, a second line on shared tables: the database itself refuses a row of
 another tenant, even to a statement that forgot its condition.
 

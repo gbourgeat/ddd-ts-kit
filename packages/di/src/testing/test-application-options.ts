@@ -32,4 +32,9 @@ export interface TestApplicationOptions {
   readonly authorization?: AuthorizationMode;
   /** See `JobsOptions.settings`: what configuration changes of a declared job, by job name. */
   readonly jobs?: NonNullable<JobsOptions['settings']>;
+  /**
+   * The tenants a job declared `tenancy: 'per-tenant'` runs for, one run each. Default: the
+   * tenant of the execution context, or none.
+   */
+  readonly tenants?: readonly string[];
 }

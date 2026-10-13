@@ -31,6 +31,7 @@ import {
   RateLimiter,
   ScopedActorContext,
   SystemClock,
+  TenantDirectory,
   UnitOfWork,
   UuidGenerator,
   dispatchingOnSave,
@@ -177,7 +178,18 @@ function bindCrossCuttingPorts(builder: ModuleBuilder, options: KernelModuleOpti
     .bind(RateLimiter)
     .toFactory(either(options.rateLimiter, (resolve) => new InMemoryRateLimiter(resolve(Clock))));
 
-  builder.bind(JobScheduler).toFactory(either(options.jobScheduler, inProcessJobScheduler));
+  bindJobs(builder, options);
+}
+
+/** The scheduler, and the tenants a job declared `per-tenant` runs for when the options name them. */
+function bindJobs(builder: ModuleBuilder, { jobScheduler, tenants }: KernelModuleOptions): void {
+  if (tenants !== undefined) {
+    builder.bind(TenantDirectory).toFactory(isFactory(tenants) ? tenants : () => tenants);
+  }
+
+  builder
+    .bind(JobScheduler)
+    .toFactory(either(jobScheduler, (resolve) => inProcessJobScheduler(resolve, tenants !== undefined)));
 }
 
 /** The logger, the reporter and the scope are resolved at each failure: a later module or a test may replace them. */
@@ -208,11 +220,11 @@ function scopedActorContext(resolve: Resolve): ActorContext {
 }
 
 /**
- * The lock and the error reporter are resolved when they are needed, not when the scheduler is
+ * The lock, the error reporter and the tenants are resolved when they are needed, not when the scheduler is
  * built: the application resolves the scheduler at creation to register the jobs, and that must
  * not open a connection.
  */
-function inProcessJobScheduler(resolve: Resolve): JobScheduler {
+function inProcessJobScheduler(resolve: Resolve, perTenant: boolean): JobScheduler {
   return new InProcessJobScheduler({
     clock: resolve(Clock),
     lock: { acquire: (key, options) => resolve(Lock).acquire(key, options) },
@@ -221,5 +233,6 @@ function inProcessJobScheduler(resolve: Resolve): JobScheduler {
     logger: resolve(Logger),
     metrics: resolve(Metrics),
     onRun: reportFailedRuns(lazyErrorReporter(resolve)),
+    ...(perTenant ? { tenants: { tenants: () => resolve(TenantDirectory).tenants() } } : {}),
   });
 }
