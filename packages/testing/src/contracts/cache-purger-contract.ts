@@ -34,6 +34,7 @@ class CachePurgerSuite extends ContractSuite<CachePurgerUnderContract> {
 
   protected tests(): void {
     this.purgesWhatATagNames();
+    this.keepsWhatItDoesNotName();
     this.isIdempotent();
   }
 
@@ -59,21 +60,20 @@ class CachePurgerSuite extends ContractSuite<CachePurgerUnderContract> {
       this.expect(await this.subject.holds('/calendars/c-2')).toBe(false);
       this.expect(await this.subject.holds('/calendars')).toBe(false);
     });
+  }
 
-    this.it(
-      'purges an identifier written with the characters of a pattern as written, and nothing it would match',
-      async () => {
-        const written = cacheTag('calendar', 'c.1(a)');
+  private keepsWhatItDoesNotName(): void {
+    this.it('purges a tag written with the characters of a pattern, and nothing the pattern would match', async () => {
+      const written = cacheTag('calendar', 'c.1(a)');
 
-        await this.subject.store('/calendars/written', [written]);
-        await this.subject.store('/calendars/matched', [cacheTag('calendar', 'cx1a')]);
+      await this.subject.store('/calendars/written', [written]);
+      await this.subject.store('/calendars/matched', [cacheTag('calendar', 'cx1a')]);
 
-        await this.subject.purger.purge([written]);
+      await this.subject.purger.purge([written]);
 
-        this.expect(await this.subject.holds('/calendars/written')).toBe(false);
-        this.expect(await this.subject.holds('/calendars/matched')).toBe(true);
-      },
-    );
+      this.expect(await this.subject.holds('/calendars/written')).toBe(false);
+      this.expect(await this.subject.holds('/calendars/matched')).toBe(true);
+    });
 
     this.it('keeps the answers of another tenant', async () => {
       const [ofAcme = MONDAY, ofGlobex = MONDAY] = [
