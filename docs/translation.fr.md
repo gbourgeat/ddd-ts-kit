@@ -1,5 +1,5 @@
 [English](translation.md) · **Français**
-<!-- translation-of: translation.md sha256:efe7d4ec1bd87a97 -->
+<!-- translation-of: translation.md sha256:320b1f939636d60d -->
 
 # La documentation en français
 
@@ -292,6 +292,7 @@ disent ainsi.
 | generator, template | générateur, *template* |
 | scaffold (verb) | générer |
 | stack (the choices of `init`) | *stack* |
+| preset (`--preset`, a context written whole) | *preset* (un exemple commenté de configuration reste un « préréglage ») |
 | spec, fake, builder | *spec*, *fake* (double de test), *builder* |
 | mock, stub, spy | *mock*, *stub*, *spy* |
 | contract suite | suite de contrat |
