@@ -36,15 +36,15 @@ export class OfferFreedSlotHandler implements CommandHandler<OfferFreedSlotComma
 
     const slot = Slot.between(freed.startsAt, freed.endsAt, freed.heldUntil);
 
-    const target = await this.waitlistRepository.findById(
+    const waitlist = await this.waitlistRepository.findById(
       Waitlist.idOf(calendarId, calendar.timeZone.dayOf(slot.startsAt)),
     );
 
     const held = await this.appointmentRepository.heldOn(calendarId, slot.startsAt, slot.heldUntil);
     const now = this.clock.now();
-    const offer = target?.offer({ slot, calendar, held: held.map((appointment) => appointment.slot) }, now);
+    const offer = waitlist?.offer({ slot, calendar, held: held.map((appointment) => appointment.slot) }, now);
 
-    if (target === undefined || offer === undefined) {
+    if (waitlist === undefined || offer === undefined) {
       return undefined;
     }
 
@@ -53,7 +53,7 @@ export class OfferFreedSlotHandler implements CommandHandler<OfferFreedSlotComma
       confirmBefore: offer.expiresAt,
     });
 
-    await this.waitlistRepository.save(target);
+    await this.waitlistRepository.save(waitlist);
     await this.appointmentRepository.save(requested);
 
     return requested.id;

@@ -1,5 +1,5 @@
 [English](choosing-access-control.md) · **Français**
-<!-- translation-of: choosing-access-control.md sha256:4e22d9a6fecf52a9 -->
+<!-- translation-of: choosing-access-control.md sha256:30fba3301223bdd7 -->
 
 # Choisir le contrôle d'accès, avec des préréglages commentés
 
@@ -55,7 +55,7 @@ modèle ne change que l'adaptateur derrière le port `Authorizer` :
 |---|---|---|---|
 | garde du groupe de routes | ce client peut-il seulement appeler ces routes ? | la session : `Authenticated`, `HasRole`, `HasScope`, `TenantMember` | 401 ou 403 avant le contrôleur, signalé par `onGuardRefusal` |
 | exigence du cas d'usage | cet acteur peut-il exécuter cette commande ou cette requête, sur cet élément ? | `@Requires(permission, { resource, context })`, vérifié par le *middleware* du bus via `Authorizer.check` | `ForbiddenError` (`FORBIDDEN`), avant l'ouverture de l'unité de travail |
-| politique dans le gestionnaire | une règle sur l'élément chargé l'autorise-t-elle ? | `Access.authorize(actor, permission, element)` : les politiques de la permission, puis l'*authorizer* | `ForbiddenError`, dont la raison est le nom de la politique |
+| politique dans le gestionnaire | une règle sur l'élément chargé l'autorise-t-elle ? | `Access.authorize(actor, permission, appointment)` : les politiques de la permission, puis l'*authorizer* | `ForbiddenError`, dont la raison est le nom de la politique |
 | port de lecture | quels éléments cet acteur peut-il lister ? | `Access.scope(actor, permission, type)`, un `AccessScope` | rien n'est refusé : les lignes que l'acteur ne peut pas lire ne sont jamais sélectionnées |
 
 Les permissions sont déclarées une fois par contexte, dans ses mots, et sont typées : une exigence

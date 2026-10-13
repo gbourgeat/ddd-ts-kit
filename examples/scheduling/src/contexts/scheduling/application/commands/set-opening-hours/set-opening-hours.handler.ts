@@ -15,19 +15,19 @@ export class SetOpeningHoursHandler implements CommandHandler<SetOpeningHoursCom
   ) {}
 
   async execute(command: SetOpeningHoursCommand): Promise<string> {
-    const target = await this.calendarRepository.findById(command.calendarId);
+    const calendar = await this.calendarRepository.findById(command.calendarId);
 
-    if (target === undefined) {
+    if (calendar === undefined) {
       throw CalendarError.unknown(command.calendarId);
     }
 
-    expectVersion(target, command.expectedVersion);
+    expectVersion(calendar, command.expectedVersion);
 
-    target.setOpeningHours(OpeningHours.create(weekOf(command)), this.clock.now());
+    calendar.setOpeningHours(OpeningHours.create(weekOf(command)), this.clock.now());
 
-    await this.calendarRepository.save(target);
+    await this.calendarRepository.save(calendar);
 
-    return target.id;
+    return calendar.id;
   }
 }
 

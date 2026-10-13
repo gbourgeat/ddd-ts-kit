@@ -68,6 +68,71 @@ const MINUTES_PER_HOUR = 60;
 return Number(hours) * MINUTES_PER_HOUR + Number(minutes);
 ```
 
+## Name things after the business, never generic
+
+The same holds for the names inside a function. A variable, a parameter, a property, a
+destructured name and a loop variable of `domain/` and `application/` name the concept they hold:
+`appointment`, `reminder`, `delegation`, never `target`, `data`, `item`, `obj`, `info`, `tmp`
+and the like. A generic word says that a value is there and nothing of what it is: `target` could
+be an appointment, a calendar or a practice, and the reader has to scroll up to the line that
+loaded it; `data` and `item` say even less. The ubiquitous language then stops at the class names,
+and a handler no longer reads as the domain expert would tell it. A generic name also spreads,
+because the next line is written by copying the last: the command handler templates of the kit
+wrote `const target = X.create(..)` until 0.17, and the example application inherited it in
+forty places.
+
+Rule `naming/business-name`, held by `ddd-ts-kit check` and by ESLint. `npx eslint --fix` renames
+a variable whose initializer names the concept (`X.create(..)`, `new X(..)`, a read of a
+repository, `found ?? X.create(..)`) with every use of it; a loop variable is reported with the
+singular of its collection. The list of words is `businessNames` of the config
+([Configuration](../CONFIG.md)).
+
+<!-- checked sample -->
+```ts
+export class Reminder {
+  private sentAt: Date | undefined;
+
+  constructor(
+    readonly id: string,
+    readonly dueAt: Date,
+  ) {}
+
+  get isSent(): boolean {
+    return this.sentAt !== undefined;
+  }
+
+  send(at: Date): void {
+    this.sentAt = at;
+  }
+}
+
+export abstract class ReminderRepository {
+  abstract findDue(at: Date): Promise<readonly Reminder[]>;
+
+  abstract save(reminder: Reminder): Promise<void>;
+}
+
+// Before: something is sent, and the reader has to find out what.
+export async function sendDue(repository: ReminderRepository, at: Date): Promise<void> {
+  for (const target of await repository.findDue(at)) {
+    target.send(at);
+    await repository.save(target);
+  }
+}
+
+// After: the loop reads as the business says it.
+export async function sendDueReminders(reminderRepository: ReminderRepository, at: Date): Promise<void> {
+  for (const reminder of await reminderRepository.findDue(at)) {
+    reminder.send(at);
+    await reminderRepository.save(reminder);
+  }
+}
+```
+
+A word inside a longer name is qualified and stays (`targetDate`, `itemCount`); infrastructure,
+presentation and the tests are not judged, though a serializer is still better named after what
+it serializes.
+
 ## Small functions, one thing, one level of abstraction
 
 A function has at most three parameters and stays short (rule `clean/function-size`, limits

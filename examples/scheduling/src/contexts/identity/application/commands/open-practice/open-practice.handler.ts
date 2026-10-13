@@ -26,10 +26,10 @@ export class OpenPracticeHandler implements CommandHandler<OpenPracticeCommand> 
     }
 
     const opening = { name, timeZone, manager: { personId: manager.id, displayName: manager.displayName } };
-    const target = Practice.create(this.ids.next(), opening, this.clock.now());
+    const practice = Practice.create(this.ids.next(), opening, this.clock.now());
 
-    await this.practiceRepository.save(target);
+    await this.practiceRepository.save(practice);
 
-    return target.id;
+    return practice.id;
   }
 }

@@ -1,5 +1,5 @@
 [English](tooling-report.md) · **Français**
-<!-- translation-of: tooling-report.md sha256:434aca3b916281a3 -->
+<!-- translation-of: tooling-report.md sha256:e8cf031825a87352 -->
 
 # Rapport sur l'outillage
 
@@ -1771,3 +1771,27 @@ les réseaux. Ce que chacune est devenue :
 *specs* (l'en-tête dans `Vary`, 404 pour l'agenda d'un autre réseau) et une à travers Varnish (un
 second réseau ne reçoit jamais la copie du premier) : 11 *specs*, passées à travers Varnish 9.1.0
 sur cette machine. Contrat : inchangé, mais une lecture anonyme des horaires nomme son réseau.
+
+## 2026-10-13 (tard) : des noms du métier, jamais `target`
+
+Les gabarits de gestionnaire de commande nommaient `target` l'agrégat qu'ils chargent ou
+construisent, et les gestionnaires de cet exemple l'avaient gardé : `naming/business-name`
+(`ddd-ts-kit check` et `ddd-ts-kit/naming-business-name`) a signalé 27 liaisons, toutes nommées
+`target`, dans 27 gestionnaires de trois contextes. `npx eslint src --fix` en a renommé 23 avec
+chacun de leurs usages, en lisant le concept dans l'initialiseur : 14 lus depuis un *repository*
+(`const practice = await this.practiceRepository.findById(..)`, par le type de l'appel), 4
+construits (`const calendar = Calendar.create(..)`), 5 chargés ou construits
+(`(await this.waitlistRepository.findById(..)) ?? Waitlist.create(..)`). Les 4
+restants ont été renommés à la main d'après le message : 3 variables de boucle (`for (const
+reminder of due)`, `delegation`, `appointment`) et le rendez-vous que réserve un service du domaine
+(`const appointment = this.scheduler.book(..)`).
+
+| | Liaisons | Occurrences | Par |
+|---|---|---|---|
+| `target` dans `application/` (gestionnaires d'identity, notification, scheduling) | 27 | 118 | 23 `eslint --fix`, 4 à la main |
+| `item` dans `presentation/` (un *serializer* et deux contrôleurs), `items` dans un adaptateur | 4 | 43 | à la main (non jugés : nommés `entry`, `appointment`, `notification`) |
+| Total | 31 | 161 | 31 fichiers |
+
+`npm run docs:generate` a réécrit `openapi/`, `clients/` et `docs/integration/` à l'octet près :
+un nom local ne fait pas partie du contrat. `check` : 0 erreur. Les 1145 tests unitaires passent,
+en même nombre.

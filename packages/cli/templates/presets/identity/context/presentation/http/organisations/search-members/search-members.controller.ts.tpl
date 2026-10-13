@@ -81,6 +81,6 @@ export class SearchMembersController {
   }
 }
 
-function toLine(item: SearchMembersItem): SearchMembersLine {
-  return { ...item, joinedAt: item.joinedAt.toISOString() };
+function toLine(member: SearchMembersItem): SearchMembersLine {
+  return { ...member, joinedAt: member.joinedAt.toISOString() };
 }

@@ -51,6 +51,13 @@ export interface OnePerFile {
   readonly allow: readonly AllowedFile[];
 }
 
+/** The generic words `naming/business-name` reports: `words` replaces its list, `allow` removes some of them. */
+export interface BusinessNames {
+  /** Undefined: the default list of the rule. */
+  readonly words: readonly string[] | undefined;
+  readonly allow: readonly string[];
+}
+
 export interface Config {
   readonly sourceRoot: string;
   readonly contextsDir: string;
@@ -70,6 +77,8 @@ export interface Config {
   readonly stack: Stack;
   /** Names reported by `standard/no-parallel-interface`, over its defaults: the kernel interface to use instead, or `false` to drop a default. */
   readonly standardInterfaces: Readonly<Record<string, string | false>>;
+  /** The words of `naming/business-name`, over its defaults, as the checker reads them. */
+  readonly businessNames: BusinessNames;
   /** The clients generated from the contract (`ddd-ts-kit sdk`), whose sources under `clients/` are not linted; none without the key. */
   readonly sdk: SdkConfig | undefined;
 }

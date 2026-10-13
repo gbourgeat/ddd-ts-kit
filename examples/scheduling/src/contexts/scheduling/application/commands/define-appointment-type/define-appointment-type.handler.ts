@@ -15,17 +15,17 @@ export class DefineAppointmentTypeHandler implements CommandHandler<DefineAppoin
   ) {}
 
   async execute(command: DefineAppointmentTypeCommand): Promise<string> {
-    const target = await this.calendarRepository.findById(command.calendarId);
+    const calendar = await this.calendarRepository.findById(command.calendarId);
 
-    if (target === undefined) {
+    if (calendar === undefined) {
       throw CalendarError.unknown(command.calendarId);
     }
 
     const appointmentType = AppointmentType.create({ ...command.facts, id: this.ids.next() });
 
-    target.defineAppointmentType(appointmentType, this.clock.now());
+    calendar.defineAppointmentType(appointmentType, this.clock.now());
 
-    await this.calendarRepository.save(target);
+    await this.calendarRepository.save(calendar);
 
     return appointmentType.id;
   }

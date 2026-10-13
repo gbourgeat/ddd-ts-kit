@@ -37,12 +37,12 @@ export class SearchNotificationsController {
   }
 }
 
-function toLine(item: SearchNotificationsItem): SearchNotificationsLine {
+function toLine(notification: SearchNotificationsItem): SearchNotificationsLine {
   return {
-    id: item.id,
-    kind: item.kind,
-    appointmentId: item.appointmentId,
-    startsAt: item.startsAt.toISOString(),
-    sentAt: item.sentAt.toISOString(),
+    id: notification.id,
+    kind: notification.kind,
+    appointmentId: notification.appointmentId,
+    startsAt: notification.startsAt.toISOString(),
+    sentAt: notification.sentAt.toISOString(),
   };
 }

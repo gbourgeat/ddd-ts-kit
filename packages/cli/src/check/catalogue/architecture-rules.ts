@@ -51,6 +51,7 @@ import { lifecycleStatusThroughMachine } from '../rules/lifecycle-status-through
 import { layerDomainPurity } from '../rules/layer-domain-purity.js';
 import { layerInfrastructureNoPresentation } from '../rules/layer-infrastructure-no-presentation.js';
 import { layerPresentationNoInfrastructure } from '../rules/layer-presentation-no-infrastructure.js';
+import { namingBusinessName } from '../rules/naming-business-name.js';
 import { namingOneConceptPerFile } from '../rules/naming-one-concept-per-file.js';
 import { namingSearchNotList } from '../rules/naming-search-not-list.js';
 import { namingSuffix } from '../rules/naming-suffix.js';
@@ -94,6 +95,7 @@ export const ARCHITECTURE_RULES: readonly Rule[] = [
   namingSuffix,
   namingOneConceptPerFile,
   namingSearchNotList,
+  namingBusinessName,
   schemaPresentationOnly,
   schemaNoDuplicateShape,
   testSpecRequired,

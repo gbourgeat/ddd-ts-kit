@@ -17,38 +17,40 @@ import type {
 @Repository({{name.pascal}}Reader)
 {{/if}}
 export class InMemory{{name.pascal}}Reader implements {{name.pascal}}Reader {
-  protected readonly items: readonly {{name.pascal}}Item[] = [];
+  protected readonly {{search.elements}}: readonly {{name.pascal}}Item[] = [];
 
   async search(scope: AccessScope, page: PageRequest<{{name.pascal}}Sort>): Promise<{{name.pascal}}Result> {
     // TODO(domain): replace these canned lines by a real read of the projection; a production adapter (SQL view, search index) implements the same port next to this file, turns the scope into a condition of its statement, and orders by the sort field then by `id` in the same direction, so that a cursor resumes on a total order.
-    const visible = this.items.filter((item) => isVisible(item, scope)).sort(inOrder(page));
+    const visible = this.{{search.elements}}.filter(isVisibleTo(scope)).sort(inOrder(page));
     const start = page.kind === 'offset' ? page.offset : positionAfter(visible, page.cursor);
-    const items = visible.slice(start, start + page.limit);
+    const {{search.elements}} = visible.slice(start, start + page.limit);
 
     if (page.kind === 'offset') {
-      return pageOf(items, { total: visible.length });
+      return pageOf({{search.elements}}, { total: visible.length });
     }
 
-    const last = items.at(-1);
+    const last = {{search.elements}}.at(-1);
 
     return pageOf(
-      items,
+      {{search.elements}},
       last !== undefined && start + page.limit < visible.length ? { nextCursor: encodeCursor({ id: last.id }) } : {},
     );
   }
 }
 
-function isVisible(item: {{name.pascal}}Item, scope: AccessScope): boolean {
-  switch (scope.kind) {
-    case 'all':
-      return true;
-    case 'none':
-      return false;
-    case 'ids':
-      return scope.ids.includes(item.id);
-    case 'filter':
-      return Object.entries(scope.filter).every(([field, value]) => Reflect.get(item, field) === value);
-  }
+function isVisibleTo(scope: AccessScope): ({{search.element}}: {{name.pascal}}Item) => boolean {
+  return ({{search.element}}) => {
+    switch (scope.kind) {
+      case 'all':
+        return true;
+      case 'none':
+        return false;
+      case 'ids':
+        return scope.ids.includes({{search.element}}.id);
+      case 'filter':
+        return Object.entries(scope.filter).every(([field, value]) => Reflect.get({{search.element}}, field) === value);
+    }
+  };
 }
 
 function inOrder(page: PageRequest<{{name.pascal}}Sort>): (left: {{name.pascal}}Item, right: {{name.pascal}}Item) => number {
@@ -68,5 +70,5 @@ function positionAfter(visible: readonly {{name.pascal}}Item[], cursor: string |
     throw new InvalidPageRequestError('The cursor of a page is the nextCursor of a previous page');
   }
 
-  return visible.findIndex((item) => item.id === id) + 1;
+  return visible.findIndex(({{search.element}}) => {{search.element}}.id === id) + 1;
 }

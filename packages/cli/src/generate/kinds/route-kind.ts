@@ -6,6 +6,7 @@ import { label } from '../label.js';
 import { named } from '../named.js';
 import { openScope } from '../open-scope.js';
 import type { Scope } from '../scope.js';
+import { searchedElements } from '../searched-elements.js';
 import { vars } from '../vars.js';
 import { wire } from '../wire.js';
 import { dtoClasses } from './route/dto-classes.js';
@@ -48,7 +49,7 @@ export const routeKind: Kind = {
     const context = vars(scope, {
       name: named(name),
       route: routeVars(scope, parts),
-      search: { customSchema: !SEARCH_LINE_LIBRARIES.has(validation) },
+      search: { customSchema: !SEARCH_LINE_LIBRARIES.has(validation), ...searchedElements(name) },
     });
 
     emit(scope, context, routeOutputs(scope, parts));

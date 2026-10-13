@@ -22,7 +22,7 @@ export class DrizzleSearchMembersReader implements SearchMembersReader {
     const order = page.sort[0]?.direction === 'desc' ? desc : asc;
     const current = and(eq(members.organisationId, organisationId), isNull(members.removedAt));
 
-    const items = await executorOf(this.database)
+    const currentMembers = await executorOf(this.database)
       .select({
         memberId: members.id,
         accountId: members.accountId,
@@ -40,7 +40,7 @@ export class DrizzleSearchMembersReader implements SearchMembersReader {
 
     const [counted] = await executorOf(this.database).select({ total: count() }).from(members).where(current);
 
-    return pageOf(items, { total: counted?.total ?? 0 });
+    return pageOf(currentMembers, { total: counted?.total ?? 0 });
   }
 }
 

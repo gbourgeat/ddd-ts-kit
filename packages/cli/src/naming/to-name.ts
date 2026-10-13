@@ -1,5 +1,6 @@
 import { capitalize } from './capitalize.js';
 import type { Name } from './name.js';
+import { plural as pluralize } from './plural.js';
 import { splitWords } from './split-words.js';
 
 export function toName(input: string): Name {
@@ -18,12 +19,4 @@ export function toName(input: string): Name {
     table: plural.join('_'),
     tableCamel: plural.map((word, index) => (index === 0 ? word : capitalize(word))).join(''),
   };
-}
-
-function pluralize(word: string): string {
-  if (/[^aeiou]y$/.test(word)) {
-    return `${word.slice(0, -1)}ies`;
-  }
-
-  return /(?:s|x|z|ch|sh)$/.test(word) ? `${word}es` : `${word}s`;
 }

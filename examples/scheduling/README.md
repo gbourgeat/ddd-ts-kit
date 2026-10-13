@@ -385,22 +385,22 @@ export class CancelAppointmentHandler implements CommandHandler<CancelAppointmen
   ) {}
 
   async execute({ actor, appointmentId, reason }: CancelAppointmentCommand): Promise<string> {
-    const target = await this.appointmentRepository.findById(appointmentId);
+    const appointment = await this.appointmentRepository.findById(appointmentId);
 
-    if (target === undefined) {
+    if (appointment === undefined) {
       throw AppointmentError.notFound(appointmentId);
     }
 
     // Raises ForbiddenError (403) when a policy says no.
-    await this.access.authorize(actor, schedulingPermissions['appointment.cancel'], target);
+    await this.access.authorize(actor, schedulingPermissions['appointment.cancel'], appointment);
 
     // 3. The domain: whoever is not the patient acts for the practice, and says why.
-    const cancellation = Cancellation.create(actor.id === target.patientId ? 'patient' : 'practice', reason);
+    const cancellation = Cancellation.create(actor.id === appointment.patientId ? 'patient' : 'practice', reason);
 
-    target.cancel(cancellation, this.clock.now());
-    await this.appointmentRepository.save(target);
+    appointment.cancel(cancellation, this.clock.now());
+    await this.appointmentRepository.save(appointment);
 
-    return target.id;
+    return appointment.id;
   }
 }
 ```

@@ -6,5 +6,7 @@ export { looksLikePastFact } from './looks-like-past-fact.js';
 export type { Name } from './name.js';
 export { parseConceptName } from './parse-concept-name.js';
 export { parseContextName } from './parse-context-name.js';
+export { plural } from './plural.js';
+export { singular } from './singular.js';
 export { splitWords } from './split-words.js';
 export { toName } from './to-name.js';

@@ -16,14 +16,14 @@ export class NoteNoShowHandler implements CommandHandler<NoteNoShowCommand> {
     const { practiceId, patientId, appointmentId, startsAt } = command;
     const now = this.clock.now();
 
-    const target =
+    const attendanceRecord =
       (await this.attendanceRecordRepository.findById(AttendanceRecord.idOf(practiceId, patientId))) ??
       AttendanceRecord.create({ practiceId, patientId }, now);
 
-    target.noteNoShow({ appointmentId, startsAt }, now);
+    attendanceRecord.noteNoShow({ appointmentId, startsAt }, now);
 
-    await this.attendanceRecordRepository.save(target);
+    await this.attendanceRecordRepository.save(attendanceRecord);
 
-    return target.id;
+    return attendanceRecord.id;
   }
 }

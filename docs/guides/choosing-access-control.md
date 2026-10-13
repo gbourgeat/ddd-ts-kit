@@ -51,7 +51,7 @@ adapter behind the `Authorizer` port:
 |---|---|---|---|
 | guard of the route group | may this client call these routes at all? | the session: `Authenticated`, `HasRole`, `HasScope`, `TenantMember` | 401 or 403 before the controller, reported through `onGuardRefusal` |
 | requirement of the use case | may this actor run this command or query, on this element? | `@Requires(permission, { resource, context })`, checked by the bus middleware through `Authorizer.check` | `ForbiddenError` (`FORBIDDEN`), before the unit of work opens |
-| policy in the handler | does a rule about the loaded element allow it? | `Access.authorize(actor, permission, element)`: the policies of the permission, then the authorizer | `ForbiddenError`, its reason the name of the policy |
+| policy in the handler | does a rule about the loaded element allow it? | `Access.authorize(actor, permission, appointment)`: the policies of the permission, then the authorizer | `ForbiddenError`, its reason the name of the policy |
 | read port | which elements may this actor list? | `Access.scope(actor, permission, type)`, an `AccessScope` | nothing is refused: the rows the actor may not read are never selected |
 
 Permissions are declared once per context, in its words, and are typed: a requirement can only

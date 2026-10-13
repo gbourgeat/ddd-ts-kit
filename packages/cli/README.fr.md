@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:eae59eb228d7b41f -->
+<!-- translation-of: README.md sha256:0380d292b64e3212 -->
 
 # ddd-ts-kit
 
@@ -200,11 +200,11 @@ export class IssueInvoiceHandler implements CommandHandler<IssueInvoiceCommand> 
   ) {}
 
   async execute(command: IssueInvoiceCommand): Promise<string> {
-    const target = Invoice.create(this.ids.next(), this.clock.now());
+    const invoice = Invoice.create(this.ids.next(), this.clock.now());
 
-    await this.invoiceRepository.save(target);
+    await this.invoiceRepository.save(invoice);
 
-    return target.id;
+    return invoice.id;
   }
 }
 ```
@@ -1258,6 +1258,7 @@ règle.
 | `naming/suffix` | un fichier sans le suffixe de son rôle, ou pas en kebab-case. `application/scheduling/` contient des `*.job.ts` ; un dossier de cas d'usage accepte un `*.result.ts` à côté de son message et de son gestionnaire ; `presentation/http/<context>.routes.ts`, nommé d'après son contexte au lieu d'un rôle, est accepté dans les deux styles |
 | `naming/one-concept-per-file` | plusieurs classes exportées dans un fichier d'agrégat, d'entité, d'objet-valeur, d'événement, de commande, de requête, de gestionnaire, de gestionnaire d'événement, de gestionnaire d'événement d'intégration ou de *job* ; dans le style déclaré, plusieurs classes portant un décorateur de déclaration dans un même fichier de rôle |
 | `naming/search-not-list` | dans un contexte, une méthode nommée `list` ou `list<Something>` dans un port (`domain/repositories/*.repository.ts`, `application/ports/*.port.ts`), dans une classe de `infrastructure/` ou dans un *fake* de `test/fakes/` ; sous `application/queries/`, un dossier ou un fichier nommé `list`, `list-...` ou `list....`, ou une classe nommée `List` ou `List<Something>`. Les propriétés et `listAccessible` (exigée par le port `Authorizer`) ne sont pas jugées. Nommez-les `search...` : `generate query <context> Search<Things> --search` |
+| `naming/business-name` | dans `domain/` et `application/` d'un contexte et dans le noyau partagé hors de `presentation/`, une variable, une variable de boucle, un nom déstructuré, un paramètre ou une propriété nommés d'un mot générique (`target`, `data`, `item` et les autres mots de la liste, que `businessNames` de la configuration change) ; le correctif nomme le concept qu'un initialiseur construit ou lit quand le texte le dit, et `npx eslint --fix` le renomme |
 | `test/spec-required` | un agrégat, un objet-valeur, un service du domaine, un gestionnaire, un gestionnaire d'événement du domaine, un gestionnaire d'événement d'intégration ou un *job* sans *spec* (un `*.result.ts` n'en a pas besoin) |
 | `test/no-mocks` | `vi.mock`, `vi.fn`, `vi.spyOn`, leurs jumeaux `jest`, ou une bibliothèque de *mocks* dans les tests d'un contexte |
 | `test/builder-required` | un agrégat sans `test/builders/<name>.builder.ts` |

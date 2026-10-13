@@ -167,6 +167,59 @@ export class AppointmentRescheduled implements DomainEvent {
 
 Its spec reads as the rule it holds: `it('refuses to reschedule a cancelled appointment')`.
 
+## Name things after the business, never generic
+
+The language does not stop at the names of classes. Inside a handler, the binding that holds
+the appointment is `appointment`: `target`, `data` or `item` would say that a value is there and
+hide which concept of the glossary it is, so that a line reads as plumbing where the domain
+expert expects a sentence of the business. The kit refuses those words in `domain/` and
+`application/` (`naming/business-name`), and `npx eslint --fix` renames a binding whose
+initializer already names the concept.
+
+<!-- checked sample -->
+```ts
+export class Appointment {
+  private cancelledAt: Date | undefined;
+
+  constructor(readonly id: string) {}
+
+  get isCancelled(): boolean {
+    return this.cancelledAt !== undefined;
+  }
+
+  cancel(at: Date): void {
+    this.cancelledAt = at;
+  }
+}
+
+export abstract class AppointmentRepository {
+  abstract findById(id: string): Promise<Appointment | undefined>;
+
+  abstract save(appointment: Appointment): Promise<void>;
+}
+
+// Before: `target` could be any element of the model.
+export async function cancelTarget(repository: AppointmentRepository, id: string, at: Date): Promise<void> {
+  const target = await repository.findById(id);
+
+  target?.cancel(at);
+}
+
+// After: the words of the glossary, down to the variable.
+export async function cancelAppointment(
+  appointmentRepository: AppointmentRepository,
+  appointmentId: string,
+  at: Date,
+): Promise<void> {
+  const appointment = await appointmentRepository.findById(appointmentId);
+
+  appointment?.cancel(at);
+}
+```
+
+The list of refused words, and how the fix finds the name, are in
+[Clean code](clean-code.md#name-things-after-the-business-never-generic).
+
 ## Closed vocabularies
 
 A status, a kind, a role, a channel: a word of the language whose values are a closed list. Written

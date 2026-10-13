@@ -9,7 +9,7 @@ import { contractFormat, stringifyContract } from 'ddd-ts-kit/dist/contracts.js'
 // published language; with --check, fails when a committed file differs. Both files are build
 // products: never edit them by hand.
 const contextsDirectory = '{{config.contextsDir}}';
-const target = path.resolve('docs/integration');
+const catalog = path.resolve('docs/integration');
 const format = contractFormat();
 const other = format === 'yaml' ? 'asyncapi.json' : 'asyncapi.yaml';
 
@@ -34,17 +34,17 @@ const generated: Readonly<Record<string, string>> = {
 if (process.argv.includes('--check')) {
   reportStale();
 } else {
-  fs.mkdirSync(target, { recursive: true });
-  fs.rmSync(path.join(target, other), { force: true });
+  fs.mkdirSync(catalog, { recursive: true });
+  fs.rmSync(path.join(catalog, other), { force: true });
 
   for (const [file, content] of Object.entries(generated)) {
-    fs.writeFileSync(path.join(target, file), content);
+    fs.writeFileSync(path.join(catalog, file), content);
   }
 }
 
 function reportStale(): void {
   for (const [file, content] of Object.entries(generated)) {
-    const committed = fs.existsSync(path.join(target, file)) ? fs.readFileSync(path.join(target, file), 'utf8') : '';
+    const committed = fs.existsSync(path.join(catalog, file)) ? fs.readFileSync(path.join(catalog, file), 'utf8') : '';
 
     if (committed.replaceAll('\r\n', '\n') !== content) {
       console.error('docs/integration/' + file + ' is out of date: run the script `docs:generate` and commit it.');
@@ -52,7 +52,7 @@ function reportStale(): void {
     }
   }
 
-  if (fs.existsSync(path.join(target, other))) {
+  if (fs.existsSync(path.join(catalog, other))) {
     console.error('docs/integration/' + other + ' is in the other format: run the script `docs:generate`.');
     process.exitCode = 1;
   }

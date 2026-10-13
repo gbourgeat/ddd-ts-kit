@@ -10,6 +10,7 @@ import { learnTerms } from '../learn-terms.js';
 import { named } from '../named.js';
 import { openScope } from '../open-scope.js';
 import type { Scope } from '../scope.js';
+import { searchedElements } from '../searched-elements.js';
 import { specVars } from '../spec-vars.js';
 import { vars } from '../vars.js';
 import { wire } from '../wire.js';
@@ -39,7 +40,7 @@ export const queryKind: Kind = {
       name: named(name),
       access,
       spec: specVars(scope, access),
-      search: { resource: searchedResource(access) },
+      search: { resource: searchedResource(access), ...searchedElements(name) },
       reader,
     });
 

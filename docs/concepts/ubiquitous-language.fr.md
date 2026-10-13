@@ -1,5 +1,5 @@
 [English](ubiquitous-language.md) · **Français**
-<!-- translation-of: ubiquitous-language.md sha256:b73fd24ae980ca65 -->
+<!-- translation-of: ubiquitous-language.md sha256:e59c242d4b143ea5 -->
 
 # Langage omniprésent
 
@@ -174,6 +174,59 @@ export class AppointmentRescheduled implements DomainEvent {
 
 Sa *spec* se lit comme la règle qu'elle garantit :
 `it('refuses to reschedule a cancelled appointment')`.
+
+## Nommer d'après le métier, jamais avec un mot générique
+
+Le langage ne s'arrête pas aux noms des classes. Dans un gestionnaire, la liaison qui tient le
+rendez-vous s'appelle `appointment` : `target`, `data` ou `item` diraient qu'une valeur est là et
+cacheraient quel concept du glossaire elle est, si bien qu'une ligne se lirait comme de la
+plomberie là où l'expert du domaine attend une phrase du métier. Le kit refuse ces mots dans
+`domain/` et `application/` (`naming/business-name`), et `npx eslint --fix` renomme une liaison
+dont l'initialiseur nomme déjà le concept.
+
+<!-- checked sample -->
+```ts
+export class Appointment {
+  private cancelledAt: Date | undefined;
+
+  constructor(readonly id: string) {}
+
+  get isCancelled(): boolean {
+    return this.cancelledAt !== undefined;
+  }
+
+  cancel(at: Date): void {
+    this.cancelledAt = at;
+  }
+}
+
+export abstract class AppointmentRepository {
+  abstract findById(id: string): Promise<Appointment | undefined>;
+
+  abstract save(appointment: Appointment): Promise<void>;
+}
+
+// Avant : `target` pourrait être n'importe quel élément du modèle.
+export async function cancelTarget(repository: AppointmentRepository, id: string, at: Date): Promise<void> {
+  const target = await repository.findById(id);
+
+  target?.cancel(at);
+}
+
+// Après : les mots du glossaire, jusqu'à la variable.
+export async function cancelAppointment(
+  appointmentRepository: AppointmentRepository,
+  appointmentId: string,
+  at: Date,
+): Promise<void> {
+  const appointment = await appointmentRepository.findById(appointmentId);
+
+  appointment?.cancel(at);
+}
+```
+
+La liste des mots refusés, et la façon dont le correctif trouve le nom, sont dans
+[Code propre](clean-code.fr.md#nommer-daprès-le-métier-jamais-avec-un-mot-générique).
 
 ## Vocabulaires fermés
 

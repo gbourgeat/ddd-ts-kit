@@ -20,12 +20,12 @@ export class RegisterPersonHandler implements CommandHandler<RegisterPersonComma
     };
 
     const known = await this.personRepository.findById(command.actor.id);
-    const target = known ?? Person.create(command.actor.id, contact, this.clock.now());
+    const person = known ?? Person.create(command.actor.id, contact, this.clock.now());
 
     known?.registerAgain(contact);
 
-    await this.personRepository.save(target);
+    await this.personRepository.save(person);
 
-    return target.id;
+    return person.id;
   }
 }

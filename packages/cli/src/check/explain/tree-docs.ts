@@ -35,6 +35,17 @@ abstract findById(id: string): Promise<InvoiceLine | undefined>;
 // application/queries/search-invoices/search-invoices.query.ts
 export class SearchInvoicesQuery {}`,
   },
+  'naming/business-name': {
+    why: 'The code of the model is read by people who speak the business, and it is the ubiquitous language written down: a handler that loads an appointment and calls it target, data or item makes every reader translate it back, and hides which concept a line handles. A generic name also spreads, because the next line copies it: the command handler templates of the kit wrote target until 0.17, and forty handlers of the example inherited it. Judged: a variable, a loop variable, a destructured binding, a parameter (of a function, a method, a signature or an arrow) and a property (of a class, an interface or a type of an object) under domain/ and application/ of a context, and in the shared kernel outside presentation/, named target, targets, data, item, items, obj, object, thing, things, stuff, info, element, el, tmp, temp, foo, bar or baz; "businessNames": { "words": [..] } replaces the list and { "allow": [..] } removes words from it. A key of an object literal follows the type it is written for and is not judged, nor infrastructure, presentation, the platform and the tests. npx eslint --fix renames a variable built by X.create(..) or new X(..), or read from a repository, with every use of it; a loop variable is reported with the singular of its collection.',
+    bad: `const target = await this.appointmentRepository.findById(command.appointmentId);
+for (const target of due) {
+  target.expire(now);
+}`,
+    good: `const appointment = await this.appointmentRepository.findById(command.appointmentId);
+for (const reminder of dueReminders) {
+  reminder.send(now);
+}`,
+  },
   'naming/one-concept-per-file': {
     why: 'One concept per file keeps the file name truthful and the diff of a change small. A second class in an aggregate file is usually an entity or a value object that deserves its own name and its own tests. In the declared style a role file is found by its name and holds one declared class: a second class carrying a declaration decorator in the same file is reported, whatever the role.',
     bad: `// invoice.aggregate.ts

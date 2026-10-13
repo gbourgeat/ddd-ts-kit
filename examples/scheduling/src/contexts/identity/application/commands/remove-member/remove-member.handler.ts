@@ -13,15 +13,15 @@ export class RemoveMemberHandler implements CommandHandler<RemoveMemberCommand> 
 
   /** Answers the identifier of the person who is no longer a member. */
   async execute(command: RemoveMemberCommand): Promise<string> {
-    const target = await this.practiceRepository.findById(command.practiceId);
+    const practice = await this.practiceRepository.findById(command.practiceId);
 
-    if (target === undefined) {
+    if (practice === undefined) {
       throw PracticeError.notFound(command.practiceId);
     }
 
-    target.removeMember(command.personId, this.clock.now());
+    practice.removeMember(command.personId, this.clock.now());
 
-    await this.practiceRepository.save(target);
+    await this.practiceRepository.save(practice);
 
     return command.personId;
   }

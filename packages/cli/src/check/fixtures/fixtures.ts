@@ -1,4 +1,5 @@
 import { ALIAS_DECLARED_FIXTURES } from './alias-declared-fixtures.js';
+import { BUSINESS_NAME_FIXTURES } from './business-name-fixtures.js';
 import { AUTHZ_DECLARED_FIXTURES } from './authz-declared-fixtures.js';
 import { AUTHZ_FIXTURES } from './authz-fixtures.js';
 import { CLEAN_FIXTURES } from './clean-fixtures.js';
@@ -72,6 +73,7 @@ export const FIXTURES: readonly Fixture[] = [
   ...LAYOUT_FIXTURES,
   ...LIFECYCLE_FIXTURES,
   ...NAMING_FIXTURES,
+  ...BUSINESS_NAME_FIXTURES,
   ...OUTBOX_FIXTURES,
   ...PERSISTENCE_FIXTURES,
   ...PORTS_FIXTURES,

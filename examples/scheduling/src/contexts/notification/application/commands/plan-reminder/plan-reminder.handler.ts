@@ -14,12 +14,12 @@ export class PlanReminderHandler implements CommandHandler<PlanReminderCommand> 
 
   async execute(command: PlanReminderCommand): Promise<string> {
     const planned = await this.reminderRepository.findByAppointment(command.appointment.appointmentId);
-    const target = planned ?? Reminder.create(this.ids.next(), command.appointment, this.clock.now());
+    const reminder = planned ?? Reminder.create(this.ids.next(), command.appointment, this.clock.now());
 
-    target.planFor(command.appointment.startsAt);
+    reminder.planFor(command.appointment.startsAt);
 
-    await this.reminderRepository.save(target);
+    await this.reminderRepository.save(reminder);
 
-    return target.id;
+    return reminder.id;
   }
 }

@@ -1630,3 +1630,25 @@ networks. What each became:
 header in `Vary`, 404 to the calendar of another network) and one through Varnish (a second
 network is never served the copy of the first): 11 specs, passed through Varnish 9.1.0 on this
 machine. Contract: unchanged, but an anonymous read of the hours names its network.
+
+## 2026-10-13 (late): names of the business, never `target`
+
+The command handler templates named the aggregate they load or build `target`, and the handlers
+of this example kept it: `naming/business-name` (`ddd-ts-kit check` and
+`ddd-ts-kit/naming-business-name`) reported 27 bindings, all named `target`, in 27 handlers of
+three contexts. `npx eslint src --fix` renamed 23 of them with every use, reading the concept from
+the initializer: 14 read from a repository (`const practice = await this.practiceRepository.findById(..)`,
+by the type of the call), 4 built (`const calendar = Calendar.create(..)`), 5 loaded or built
+(`(await this.waitlistRepository.findById(..)) ?? Waitlist.create(..)`). The 4 left were renamed by hand from the message: 3 loop variables (`for
+(const reminder of due)`, `delegation`, `appointment`) and the appointment a domain service books
+(`const appointment = this.scheduler.book(..)`).
+
+| | Bindings | Occurrences | By |
+|---|---|---|---|
+| `target` in `application/` (handlers of identity, notification, scheduling) | 27 | 118 | 23 `eslint --fix`, 4 by hand |
+| `item` in `presentation/` (a serializer and two controllers), `items` in an adapter | 4 | 43 | by hand (not judged: named after `entry`, `appointment`, `notification`) |
+| Total | 31 | 161 | 31 files |
+
+`npm run docs:generate` rewrote `openapi/`, `clients/` and `docs/integration/` byte for byte: a
+local name is not part of the contract. `check`: 0 errors. The 1145 unit tests pass unchanged in
+number.

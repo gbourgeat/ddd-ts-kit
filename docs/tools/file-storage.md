@@ -167,9 +167,9 @@ export class GcsFileStorage extends FileStorage {
     const mediaType = mediaTypeOf(options.mediaType);
     // counts and hashes the content on its way, and fails with FILE_TOO_LARGE beyond maxBytes
     const inspection = new FileInspection(options.maxBytes === undefined ? {} : { maxBytes: options.maxBytes });
-    const target = this.bucket.file(assertFileKey(key)).createWriteStream({ contentType: mediaType, resumable: true });
+    const upload = this.bucket.file(assertFileKey(key)).createWriteStream({ contentType: mediaType, resumable: true });
 
-    await pipeline(content, inspection, target);
+    await pipeline(content, inspection, upload);
 
     return { key, size: inspection.size, mediaType, checksum: inspection.checksum };
   }

@@ -50,7 +50,7 @@ function writtenContexts(config: Config): Record<string, unknown> {
 }
 
 function optionalKeys(config: Config): Record<string, unknown> {
-  const { deviations, standardInterfaces, onePerFile, worker, commit, coverage } = config;
+  const { deviations, standardInterfaces, businessNames, onePerFile, worker, commit, coverage } = config;
 
   const sized =
     commit.maxFiles !== DEFAULT_COMMIT_LIMITS.maxFiles || commit.maxLines !== DEFAULT_COMMIT_LIMITS.maxLines;
@@ -60,10 +60,20 @@ function optionalKeys(config: Config): Record<string, unknown> {
     ...(deviations.length > 0 ? { deviations } : {}),
     ...(Object.keys(standardInterfaces).length > 0 ? { standardInterfaces } : {}),
     ...(onePerFile.allow.length > 0 ? { onePerFile } : {}),
+    ...writtenBusinessNames(businessNames),
     ...(sized ? { commit } : {}),
     ...(worker ? { worker } : {}),
     ...pipelineKeys(config),
   };
+}
+
+/** Written once a project changes the list of `naming/business-name`. */
+function writtenBusinessNames({ words, allow }: Config['businessNames']): Record<string, unknown> {
+  if (words === undefined && allow.length === 0) {
+    return {};
+  }
+
+  return { businessNames: { ...(words === undefined ? {} : { words }), ...(allow.length > 0 ? { allow } : {}) } };
 }
 
 /** The extra jobs of the pipeline, the form of the contracts when they are not the defaults, and their clients once asked for. */

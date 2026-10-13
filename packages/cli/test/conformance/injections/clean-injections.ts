@@ -3,15 +3,15 @@ import { PATHS } from '../paths.js';
 
 const { AGGREGATE, DUE_HANDLER, EVENT_HANDLER, HANDLER, POLICY, QUERY_HANDLER, ROUTE, SEND_HANDLER } = PATHS;
 const WITHDRAWN = '    this.state = { ...this.state, status: ReminderStatus.Withdrawn };\n';
-const GUARD = '    if (target === undefined) {\n      return;\n    }\n';
+const GUARD = '    if (reminder === undefined) {\n      return;\n    }\n';
 
-const TO_LINE = `function toLine(item: SearchNotificationsItem): SearchNotificationsLine {
+const TO_LINE = `function toLine(notification: SearchNotificationsItem): SearchNotificationsLine {
   return {
-    id: item.id,
-    kind: item.kind,
-    appointmentId: item.appointmentId,
-    startsAt: item.startsAt.toISOString(),
-    sentAt: item.sentAt.toISOString(),
+    id: notification.id,
+    kind: notification.kind,
+    appointmentId: notification.appointmentId,
+    startsAt: notification.startsAt.toISOString(),
+    sentAt: notification.sentAt.toISOString(),
   };
 }
 `;
@@ -48,8 +48,8 @@ export const CLEAN_INJECTIONS: readonly Injection[] = [
     changes: [
       {
         file: HANDLER,
-        from: '    target.withdraw();\n',
-        to: '    // target.expire(command.at);\n    target.withdraw();\n',
+        from: '    reminder.withdraw();\n',
+        to: '    // reminder.expire(command.at);\n    reminder.withdraw();\n',
       },
     ],
     checker: true,
@@ -62,8 +62,8 @@ export const CLEAN_INJECTIONS: readonly Injection[] = [
     changes: [
       {
         file: DUE_HANDLER,
-        from: '      target.send(command.asOf);\n',
-        to: '      // ---------- sending ----------\n      target.send(command.asOf);\n',
+        from: '      reminder.send(command.asOf);\n',
+        to: '      // ---------- sending ----------\n      reminder.send(command.asOf);\n',
       },
     ],
     checker: true,
@@ -75,8 +75,8 @@ export const CLEAN_INJECTIONS: readonly Injection[] = [
     file: HANDLER,
     changes: [
       { file: HANDLER, from: `${GUARD}\n`, to: '' },
-      { file: HANDLER, from: '    target.withdraw();', to: '    target!.withdraw();' },
-      { file: HANDLER, from: 'save(target);', to: 'save(target!);' },
+      { file: HANDLER, from: '    reminder.withdraw();', to: '    reminder!.withdraw();' },
+      { file: HANDLER, from: 'save(reminder);', to: 'save(reminder!);' },
     ],
     checker: true,
     eslint: '@typescript-eslint/no-non-null-assertion',
@@ -130,7 +130,7 @@ export const CLEAN_INJECTIONS: readonly Injection[] = [
     rule: 'clean/braces',
     what: 'an if without braces',
     file: HANDLER,
-    changes: [{ file: HANDLER, from: GUARD, to: '    if (target === undefined) return;\n' }],
+    changes: [{ file: HANDLER, from: GUARD, to: '    if (reminder === undefined) return;\n' }],
     checker: true,
     eslint: 'curly',
   },

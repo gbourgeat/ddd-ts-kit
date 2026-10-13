@@ -76,7 +76,7 @@ describe('{{#if orm.knex}}Knex{{/if}}{{#if orm.drizzle}}Drizzle{{/if}}SearchMemb
 
     const page = await reader.search('acme', offsetPage({ limit: 1, offset: 1, sort: [{ field: 'joinedAt', direction: 'desc' }] }));
 
-    expect(page.items.map((item) => item.memberId)).toEqual(['member-1']);
+    expect(page.items.map((member) => member.memberId)).toEqual(['member-1']);
     expect(page.total).toBe(2);
   });
 });

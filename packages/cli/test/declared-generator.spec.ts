@@ -150,7 +150,7 @@ describe('a context generated in the declared style, towards the outside', () =>
     expect(
       read(root, `${BILLING}/infrastructure/persistence/in-memory-search-invoices-reader.repository.ts`),
     ).toContain(
-      '@Repository(SearchInvoicesReader)\nexport class InMemorySearchInvoicesReader implements SearchInvoicesReader {\n  protected readonly items: readonly SearchInvoicesItem[] = [];',
+      '@Repository(SearchInvoicesReader)\nexport class InMemorySearchInvoicesReader implements SearchInvoicesReader {\n  protected readonly invoices: readonly SearchInvoicesItem[] = [];',
     );
 
     expect(read(root, `${BILLING}/infrastructure/external/remote-payment-gateway.adapter.ts`)).toContain(

@@ -162,7 +162,7 @@ describe('a generated command handler', () => {
       const handler = read(root, 'src/contexts/billing/application/commands/issue-invoice/issue-invoice.handler.ts');
 
       expect(handler, flags.join(' ')).toContain(
-        '    await this.invoiceRepository.save(target);\n\n    return target.id;',
+        '    await this.invoiceRepository.save(invoice);\n\n    return invoice.id;',
       );
 
       expect(handler, flags.join(' ')).not.toMatch(/pullEvents|DomainEventDispatcher/);

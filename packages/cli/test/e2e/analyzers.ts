@@ -35,6 +35,7 @@ export const NEW_ESLINT_RULES = [
   'ddd-ts-kit/schema-presentation-only',
   'ddd-ts-kit/language-declared-vocabulary',
   'ddd-ts-kit/clean-no-magic-number',
+  'ddd-ts-kit/naming-business-name',
   '@stylistic/padding-line-between-statements',
   '@stylistic/lines-between-class-members',
 ];

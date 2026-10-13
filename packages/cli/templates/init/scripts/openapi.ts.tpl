@@ -65,8 +65,8 @@ if (process.argv.includes('--check')) {
 
 function reportDrift(): void {
   for (const [file, content] of generated) {
-    const target = path.join(directory, file);
-    const committed = fs.existsSync(target) ? fs.readFileSync(target, 'utf8') : '';
+    const contract = path.join(directory, file);
+    const committed = fs.existsSync(contract) ? fs.readFileSync(contract, 'utf8') : '';
 
     if (committed.replaceAll('\r\n', '\n') !== content) {
       console.error(`openapi/${file} is out of date: run the script \`docs:generate\` and commit it.`);

@@ -13,13 +13,13 @@ const {
   SCHEDULING,
 } = PATHS;
 
-const SENT = '    await this.notificationRepository.save(target);\n';
+const SENT = '    await this.notificationRepository.save(notification);\n';
 
 const CONSUMER =
   'The consumer name is held twice, as part of the declaration of the role and as the idempotency scope: both rules report its absence.';
 
 const AGENDA_HANDLER = `${SCHEDULING}/application/queries/search-practice-agenda/search-practice-agenda.handler.ts`;
-const SAVED = '    await this.reminderRepository.save(target);\n';
+const SAVED = '    await this.reminderRepository.save(reminder);\n';
 const TAKEN = '  constructor(private readonly commands: CommandBus) {}';
 
 const STALE =
@@ -74,8 +74,8 @@ export const AUTHZ_AND_EVENT_INJECTIONS: readonly Injection[] = [
       },
       {
         file: DUE_HANDLER,
-        from: '    for (const target of due) {\n',
-        to: '    this.actors.require();\n\n    for (const target of due) {\n',
+        from: '    for (const reminder of due) {\n',
+        to: '    this.actors.require();\n\n    for (const reminder of due) {\n',
       },
     ],
     checker: true,
@@ -151,7 +151,7 @@ export const AUTHZ_AND_EVENT_INJECTIONS: readonly Injection[] = [
       {
         file: PLAN_HANDLER,
         from: SAVED,
-        to: `${SAVED}    target.pullEvents();\n`,
+        to: `${SAVED}    reminder.pullEvents();\n`,
       },
     ],
     checker: true,

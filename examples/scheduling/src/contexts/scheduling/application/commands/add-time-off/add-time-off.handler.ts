@@ -15,23 +15,23 @@ export class AddTimeOffHandler implements CommandHandler<AddTimeOffCommand> {
   ) {}
 
   async execute(command: AddTimeOffCommand): Promise<string> {
-    const target = await this.calendarRepository.findById(command.calendarId);
+    const calendar = await this.calendarRepository.findById(command.calendarId);
 
-    if (target === undefined) {
+    if (calendar === undefined) {
       throw CalendarError.unknown(command.calendarId);
     }
 
     const timeOff = TimeOff.create(command.startsAt, command.endsAt);
-    const held = await this.appointmentRepository.heldOn(target.id, timeOff.startsAt, timeOff.endsAt);
+    const held = await this.appointmentRepository.heldOn(calendar.id, timeOff.startsAt, timeOff.endsAt);
 
-    target.addTimeOff(
+    calendar.addTimeOff(
       timeOff,
       held.map((appointment) => appointment.slot),
       this.clock.now(),
     );
 
-    await this.calendarRepository.save(target);
+    await this.calendarRepository.save(calendar);
 
-    return target.id;
+    return calendar.id;
   }
 }

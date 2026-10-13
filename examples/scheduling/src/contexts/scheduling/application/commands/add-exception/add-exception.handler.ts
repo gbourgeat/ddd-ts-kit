@@ -14,18 +14,18 @@ export class AddExceptionHandler implements CommandHandler<AddExceptionCommand> 
   ) {}
 
   async execute(command: AddExceptionCommand): Promise<string> {
-    const target = await this.calendarRepository.findById(command.calendarId);
+    const calendar = await this.calendarRepository.findById(command.calendarId);
 
-    if (target === undefined) {
+    if (calendar === undefined) {
       throw CalendarError.unknown(command.calendarId);
     }
 
     const ranges = command.ranges.map(({ start, end }) => Range.create(start, end));
 
-    target.addException(Exception.create(command.day, ranges), this.clock.now());
+    calendar.addException(Exception.create(command.day, ranges), this.clock.now());
 
-    await this.calendarRepository.save(target);
+    await this.calendarRepository.save(calendar);
 
-    return target.id;
+    return calendar.id;
   }
 }

@@ -38,6 +38,13 @@ export interface OnePerFile {
   readonly allow: readonly OnePerFileAllowance[];
 }
 
+/** The generic words `naming/business-name` reports: `words` replaces its list, `allow` removes some of them. */
+export interface BusinessNames {
+  /** Undefined: the default list of the rule. */
+  readonly words: readonly string[] | undefined;
+  readonly allow: readonly string[];
+}
+
 /** What the pipeline adds over the free gates: the jobs of `CI_EXTRAS` the team asked for. */
 export interface CiConfig {
   readonly extras: readonly string[];
@@ -87,6 +94,8 @@ export interface Config {
   readonly deviations: readonly Deviation[];
   /** Names reported by `standard/no-parallel-interface`, over its defaults: the kernel interface to use instead, or `false` to drop a default. */
   readonly standardInterfaces: Readonly<Record<string, string | false>>;
+  /** The generic words `naming/business-name` reports, over its defaults. */
+  readonly businessNames: BusinessNames;
   /** True once the project has a worker process under `apps/worker/main.ts`: the API then starts with its jobs off. */
   readonly worker: boolean;
   readonly ci: CiConfig;

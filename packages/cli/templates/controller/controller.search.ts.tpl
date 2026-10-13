@@ -90,7 +90,7 @@ export class {{name.pascal}}Controller {
     // TODO(domain): hand the criteria of the query over too, once the query schema declares them next to the page (a request mapper is their place); map each line to its public fields.
     const page = await this.queries.execute(new {{route.input}}(request.actor, request.query));
 
-    return pageResponse(page, (item) => ({ id: item.id }));
+    return pageResponse(page, ({{search.element}}) => ({ id: {{search.element}}.id }));
   }
 }
 {{#if search.customSchema}}

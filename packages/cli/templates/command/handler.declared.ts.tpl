@@ -20,11 +20,11 @@ export class {{name.pascal}}Handler implements CommandHandler<{{name.pascal}}Com
 {{#if refusals.classes}}
     // TODO(domain): decide what "{{name.words}}" does to a {{aggregate.pascal}}: either it gives birth to one (keep `create`, pass the facts of `command` as value objects), or it changes an existing one (load it with `findById`, throw a not-found DomainError, call ONE intention method). The events it records leave with the save: nothing else to do here.
 {{/if}}
-    const target = {{aggregate.pascal}}.create(this.ids.next(), this.clock.now());
+    const {{aggregate.camel}} = {{aggregate.pascal}}.create(this.ids.next(), this.clock.now());
 
-    await this.{{aggregate.camel}}Repository.save(target);
+    await this.{{aggregate.camel}}Repository.save({{aggregate.camel}});
 
-    return target.id;
+    return {{aggregate.camel}}.id;
   }
 }
 {{/if}}

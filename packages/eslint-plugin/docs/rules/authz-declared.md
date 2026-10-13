@@ -78,7 +78,7 @@ None.
 - A registered message reached through a barrel, a renaming export, a default import or a namespace is not followed to its class: its decorator is not seen and the registration is reported.
 - In a declared-style project that keeps a `<context>.module.ts`, a message registered there with `.requires(...)` and written without a decorator is still reported in its own file: put the decorator on the class.
 - A `*.command.ts` or `*.query.ts` file that exports no class is not reported here.
-- A registration split over statements (`const target = builder.command(X); target.handledBy(H);`) is not followed.
+- A registration split over statements (`const registration = builder.command(X); registration.handledBy(H);`) is not followed.
 - A wiring written by hand with `AuthorizationMap.of(requires(...), publicUseCase(...))` is not read: `authorizationMiddleware` refuses an undeclared use case at run time, and `createApplication({ authorization: 'required' })` at start.
 - A message extending plain `Command` or `Query` while its registration calls `.requires(...)` spans two files and is not seen here; the compiler refuses it, since `requires` only exists for a message that carries an actor.
 - A route spec that is not an object literal, or that spreads another object, is not judged.

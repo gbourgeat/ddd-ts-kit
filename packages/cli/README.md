@@ -188,11 +188,11 @@ export class IssueInvoiceHandler implements CommandHandler<IssueInvoiceCommand> 
   ) {}
 
   async execute(command: IssueInvoiceCommand): Promise<string> {
-    const target = Invoice.create(this.ids.next(), this.clock.now());
+    const invoice = Invoice.create(this.ids.next(), this.clock.now());
 
-    await this.invoiceRepository.save(target);
+    await this.invoiceRepository.save(invoice);
 
-    return target.id;
+    return invoice.id;
   }
 }
 ```
@@ -1201,6 +1201,7 @@ const due = handler.isDueNow(new Reminder(new Date('2026-03-01T09:00:00Z'))); //
 | `naming/suffix` | a file without the suffix of its role, or not in kebab-case. `application/scheduling/` holds `*.job.ts`; a use case folder accepts `*.result.ts` next to its message and its handler; `presentation/http/<context>.routes.ts`, named after its context instead of a role, is accepted in both styles |
 | `naming/one-concept-per-file` | several exported classes in an aggregate, entity, value object, event, command, query, handler, event handler, integration event handler or job file; in the declared style, several classes carrying a declaration decorator in one role file |
 | `naming/search-not-list` | in a context, a method named `list` or `list<Something>` in a port (`domain/repositories/*.repository.ts`, `application/ports/*.port.ts`), in a class of `infrastructure/` or in a fake of `test/fakes/`; under `application/queries/`, a folder or a file named `list`, `list-...` or `list....`, or a class named `List` or `List<Something>`. Properties and `listAccessible` (required by the `Authorizer` port) are not judged. Name them `search...`: `generate query <context> Search<Things> --search` |
+| `naming/business-name` | in `domain/` and `application/` of a context and in the shared kernel outside `presentation/`, a variable, loop variable, destructured binding, parameter or property named with a generic word (`target`, `data`, `item` and the other words of the list, which `businessNames` of the config changes); the fix names the concept an initializer builds or reads when the text says it, and `npx eslint --fix` renames it |
 | `test/spec-required` | an aggregate, value object, domain service, handler, domain event handler, integration event handler or job without a spec (a `*.result.ts` needs none) |
 | `test/no-mocks` | `vi.mock`, `vi.fn`, `vi.spyOn`, their `jest` twins, or a mocking library in a context's tests |
 | `test/builder-required` | an aggregate without `test/builders/<name>.builder.ts` |
