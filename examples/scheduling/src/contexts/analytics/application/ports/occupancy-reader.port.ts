@@ -1,8 +1,8 @@
 import { defineCriteria, type Page, type ScopedCriteria } from '@ddd-ts-kit/kernel';
-import type { OccupancyFigures } from '@/contexts/analytics/domain/services/occupancy-measure.service';
+import type { OccupancyFiguresProps } from '@/contexts/analytics/domain/value-objects/occupancy-figures.vo';
 
 /** The occupancy of a calendar over a day, under the key `<calendarId>.<day>`. */
-export type Occupancy = OccupancyFigures & {
+export type Occupancy = OccupancyFiguresProps & {
   readonly id: string;
   readonly practiceId: string;
   readonly calendarId: string;

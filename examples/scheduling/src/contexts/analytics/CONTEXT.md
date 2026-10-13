@@ -23,6 +23,7 @@ Needed by practice managers, built entirely from what scheduling announces: one 
 | Search | To read the occupancy of the calendars of a practice, day by day |  |
 | Read | To see the occupancy of the calendars one measures |  |
 | Measure | To compute the occupancy of a calendar over a day from the outcomes of its appointments |  |
+| Figures | The minutes held and the counts of one line of occupancy, as a measure gives them | Occupancy: the line itself, with its calendar and its day |
 
 ## How occupancy is measured
 
@@ -46,7 +47,11 @@ on its new day: the day it left loses it at once. A calendar and day without any
 no line; a day whose appointments were all cancelled has one, with nothing held.
 
 **Where it is defined.** `domain/services/occupancy-measure.service.ts` is the definition: which
-outcomes hold their time, and the figures of a set of outcomes.
+outcomes hold their time, and the figures of a set of outcomes. It reads each outcome as a
+`MeasuredOutcome` (`domain/value-objects/measured-outcome.vo.ts`: its state and the minutes it
+covers, to the nearest minute) and answers `OccupancyFigures`
+(`domain/value-objects/occupancy-figures.vo.ts`), two value objects compared by value; the read
+model line `Occupancy` carries the same figures as plain data.
 
 **Where it is computed.** In the database, when `SearchOccupancy` is read:
 `infrastructure/persistence/knex-occupancy-reader.repository.ts`, the adapter of the port
