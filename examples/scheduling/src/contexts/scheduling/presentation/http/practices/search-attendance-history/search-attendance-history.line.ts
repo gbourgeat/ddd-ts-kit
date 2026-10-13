@@ -1,4 +1,5 @@
 import { IsIn, IsInt, IsISO8601, IsOptional, IsString } from 'class-validator';
+import { AttendanceFact } from '@/contexts/scheduling/domain/vocabularies/attendance-fact.vocabulary';
 
 /** One fact of the attendance history of a patient: what was noted, when, and on which appointment. */
 export class SearchAttendanceHistoryLine {
@@ -6,8 +7,8 @@ export class SearchAttendanceHistoryLine {
   @IsInt()
   version = 0;
 
-  @IsIn(['opened', 'no-show', 'cancellation'])
-  fact: 'opened' | 'no-show' | 'cancellation' = 'opened';
+  @IsIn(Object.values(AttendanceFact))
+  fact: AttendanceFact = AttendanceFact.Opened;
 
   @IsISO8601()
   notedAt = '';

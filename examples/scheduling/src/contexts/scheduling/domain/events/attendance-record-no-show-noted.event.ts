@@ -1,7 +1,9 @@
 import type { DomainEvent } from '@ddd-ts-kit/kernel';
 
 export class AttendanceRecordNoShowNoted implements DomainEvent {
-  readonly name = 'scheduling.attendance-record.no-show-noted';
+  static readonly eventName = 'scheduling.attendance-record.no-show-noted';
+
+  readonly name = AttendanceRecordNoShowNoted.eventName;
 
   constructor(
     readonly aggregateId: string,

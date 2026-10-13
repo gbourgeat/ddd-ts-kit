@@ -1,4 +1,5 @@
 import { ReadModelStore, defineCriteria } from '@ddd-ts-kit/kernel';
+import type { AttendanceFact } from '@/contexts/scheduling/domain/vocabularies/attendance-fact.vocabulary';
 
 /** One fact of an attendance record, as its history shows it, under the identifier `<record>#<version>`. */
 export type AttendanceEntry = {
@@ -6,7 +7,7 @@ export type AttendanceEntry = {
   readonly recordId: string;
   /** Its rank in the stream of the record: the history reads in this order. */
   readonly version: number;
-  readonly fact: 'opened' | 'no-show' | 'cancellation';
+  readonly fact: AttendanceFact;
   readonly appointmentId: string | null;
   readonly startsAt: Date | null;
   /** The words of a patient who cancelled, `[erased]` once the patient was erased. */

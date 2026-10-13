@@ -3,6 +3,7 @@ import { On, Projection } from '@ddd-ts-kit/kernel/declarations';
 import { AttendanceRecordCancellationNoted } from '@/contexts/scheduling/domain/events/attendance-record-cancellation-noted.event';
 import { AttendanceRecordCreated } from '@/contexts/scheduling/domain/events/attendance-record-created.event';
 import { AttendanceRecordNoShowNoted } from '@/contexts/scheduling/domain/events/attendance-record-no-show-noted.event';
+import { AttendanceFact } from '@/contexts/scheduling/domain/vocabularies/attendance-fact.vocabulary';
 import type {
   AttendanceEntry,
   AttendanceHistory,
@@ -20,23 +21,23 @@ type Fact = Omit<AttendanceEntry, 'id' | 'recordId' | 'version' | 'notedAt'>;
 export class AttendanceHistoryProjection {
   constructor(private readonly history: AttendanceHistory) {}
 
-  @On(AttendanceRecordCreated, { name: 'scheduling.attendance-record.created' })
+  @On(AttendanceRecordCreated, { name: AttendanceRecordCreated.eventName })
   async created(event: AttendanceRecordCreated): Promise<ReadModelWrite> {
-    return this.noted(event, { fact: 'opened', appointmentId: null, startsAt: null, reason: null });
+    return this.noted(event, { fact: AttendanceFact.Opened, appointmentId: null, startsAt: null, reason: null });
   }
 
-  @On(AttendanceRecordNoShowNoted, { name: 'scheduling.attendance-record.no-show-noted' })
+  @On(AttendanceRecordNoShowNoted, { name: AttendanceRecordNoShowNoted.eventName })
   async noShowNoted(event: AttendanceRecordNoShowNoted): Promise<ReadModelWrite> {
     const { appointmentId, startsAt } = event.missed;
 
-    return this.noted(event, { fact: 'no-show', appointmentId, startsAt, reason: null });
+    return this.noted(event, { fact: AttendanceFact.NoShow, appointmentId, startsAt, reason: null });
   }
 
-  @On(AttendanceRecordCancellationNoted, { name: 'scheduling.attendance-record.cancellation-noted' })
+  @On(AttendanceRecordCancellationNoted, { name: AttendanceRecordCancellationNoted.eventName })
   async cancellationNoted(event: AttendanceRecordCancellationNoted): Promise<ReadModelWrite> {
     const { appointmentId, startsAt, reason } = event.cancelled;
 
-    return this.noted(event, { fact: 'cancellation', appointmentId, startsAt, reason: reason ?? null });
+    return this.noted(event, { fact: AttendanceFact.Cancellation, appointmentId, startsAt, reason: reason ?? null });
   }
 
   private noted(event: DomainEvent, fact: Fact): Promise<ReadModelWrite> {

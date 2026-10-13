@@ -93,9 +93,9 @@ export class AttendanceRecord extends EventSourcedAggregate<AttendanceRecordEven
 
   protected appliers(): Appliers<AttendanceRecordEvent> {
     return {
-      'scheduling.attendance-record.created': (event) => this.applyCreated(event),
-      'scheduling.attendance-record.no-show-noted': (event) => this.applyNoShowNoted(event),
-      'scheduling.attendance-record.cancellation-noted': (event) => this.applyCancellationNoted(event),
+      [AttendanceRecordCreated.eventName]: (event) => this.applyCreated(event),
+      [AttendanceRecordNoShowNoted.eventName]: (event) => this.applyNoShowNoted(event),
+      [AttendanceRecordCancellationNoted.eventName]: (event) => this.applyCancellationNoted(event),
     };
   }
 

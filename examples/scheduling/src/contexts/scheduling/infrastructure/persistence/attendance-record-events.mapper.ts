@@ -25,7 +25,7 @@ interface AttendanceRecordCancellationNotedData {
 
 /** How the events of AttendanceRecord are kept in its stream: one entry per event, read back by `decode`. */
 export const attendanceRecordEvents: StoredEventTypes<AttendanceRecordEvent> = {
-  'scheduling.attendance-record.created': defineStoredEvent(AttendanceRecordCreated, {
+  [AttendanceRecordCreated.eventName]: defineStoredEvent(AttendanceRecordCreated, {
     version: 1,
     encode: (event): AttendanceRecordCreatedData => event.held,
     decode: (data, { aggregateId, occurredAt }) =>
@@ -34,7 +34,7 @@ export const attendanceRecordEvents: StoredEventTypes<AttendanceRecordEvent> = {
         patientId: data.text('patientId'),
       }),
   }),
-  'scheduling.attendance-record.no-show-noted': defineStoredEvent(AttendanceRecordNoShowNoted, {
+  [AttendanceRecordNoShowNoted.eventName]: defineStoredEvent(AttendanceRecordNoShowNoted, {
     version: 1,
     encode: (event): AttendanceRecordNoShowNotedData => event.missed,
     decode: (data, { aggregateId, occurredAt }) =>
@@ -43,7 +43,7 @@ export const attendanceRecordEvents: StoredEventTypes<AttendanceRecordEvent> = {
         startsAt: data.instant('startsAt'),
       }),
   }),
-  'scheduling.attendance-record.cancellation-noted': defineStoredEvent(AttendanceRecordCancellationNoted, {
+  [AttendanceRecordCancellationNoted.eventName]: defineStoredEvent(AttendanceRecordCancellationNoted, {
     version: 1,
     encode: ({ cancelled }): AttendanceRecordCancellationNotedData => ({
       patientId: cancelled.patientId,
