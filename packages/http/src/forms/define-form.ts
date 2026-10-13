@@ -9,8 +9,8 @@ export interface TypedFormHints<Body> {
 }
 
 /**
- * The hints of the form of a route, in `<use-case>.form.ts` next to its controller:
- * `export const bookAppointmentForm = defineForm<BookAppointmentBody>({ fields: { reason: { widget: 'textarea' } } })`.
+ * The hints of the form of a route, next to the schemas of its controller:
+ * `const form = defineForm<Infer<typeof body>>({ fields: { reason: { widget: 'textarea' } } })`.
  */
 export function defineForm<Body>(hints: TypedFormHints<Body>): FormHints {
   return hints;

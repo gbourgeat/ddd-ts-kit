@@ -544,8 +544,8 @@ body schema, the restricted fields of that schema, and a few presentation hints.
 serves one `GET /forms/<operationId>` per such route, mounted and documented like any route:
 
 ```ts
-// presentation/http/appointments/book-appointment/book-appointment.form.ts
-export const bookAppointmentForm = defineForm<BookAppointmentBody>({
+// presentation/http/appointments/book-appointment/book-appointment.controller.ts, next to its schemas
+const form = defineForm<Infer<typeof body>>({
   groups: [{ name: 'when', fields: ['startsAt', 'appointmentTypeId'] }],
   fields: {
     appointmentTypeId: { lookup: 'searchAppointmentTypes' }, // options from a GET route
@@ -553,7 +553,7 @@ export const bookAppointmentForm = defineForm<BookAppointmentBody>({
   },
 });
 
-@Controller({ ..., body, form: bookAppointmentForm })
+@Controller({ ..., body, form })
 
 // the composition root
 const routes = defineRoutes(appRoutes, formRoutes(appRoutes, { fieldAccess }));

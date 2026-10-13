@@ -35,7 +35,7 @@ route with a body) to a controller, `generate form <context> <UseCase>` its `def
 hints, and `describe` lists the media types and the form of each route.
 
 **A route describes its body as a form.** A route that declares `form` (on `@Controller` or
-`defineRoute`, `defineForm<Body>(hints)` in a `.form.ts` file) is served by `formRoutes(routes,
+`defineRoute`, `defineForm<Body>(hints)` next to the schemas of the controller) is served by `formRoutes(routes,
 { fieldAccess })` at `GET /forms/<operationId>`: JSON Forms by default (schema, UI schema,
 data), or a neutral tree of groups and fields with `?format=blocks`. Fields, constraints and
 options come from the request schema and its closed vocabularies, layout, widgets, lookups and
@@ -53,6 +53,19 @@ access, clock })` decides through the `Access` of `@ddd-ts-kit/auth`, once per e
 request; without a decider a restricted field is refused to everybody. The new rule
 `authz/fields-by-schema` (checker and ESLint) refuses a test on the roles of the actor under
 `application/queries/`, the hand-written way of shaping an answer.
+
+**The JSON Schema of a class-validator class holds what it inherits.** A class that extends
+another one, `class SearchPracticeAgendaLine extends SearchAppointmentsLine {}`, was described as
+an empty object: the contract said nothing of its fields. `classSchema` now gives it the
+properties and the required names of its ancestors. A project with such classes sees its
+contract grow on the next `npm run docs:generate`. The end-to-end client of
+`@ddd-ts-kit/testing` sends a string body as it is when the call names another content type
+(`{ headers: { 'content-type': 'application/xml' } }`), as JSON otherwise.
+
+The concepts and the tools are explained in two new pages, `docs/concepts/representations-and-forms.md`
+and `docs/tools/representations-and-forms.md` (JSON Forms renderers for React, Angular and Vue,
+the alternatives, why no XML or CSV library), and parts 2 and 3 of `docs/proposals/read-side.md`
+are marked built.
 
 **Every package carries the MIT notice.** Each published package now holds the `LICENSE` of the
 repository next to its `dist/`, and `npm run package:check` refuses a tarball without it, or with

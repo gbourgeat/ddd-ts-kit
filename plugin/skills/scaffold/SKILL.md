@@ -60,7 +60,9 @@ the tree, so a generated file conforms by construction and costs no tokens.
   missing aggregate, port, use case or route stops the command with the one to run first.
 - `route` writes a controller class in its own folder (or a `defineRoute` function under
   `"stack.routes": "functions"`); `controller` always writes the class; `route-group` writes a
-  group with its prefix and guards, `guard` a guard of the project with its spec.
+  group with its prefix and guards, `guard` a guard of the project with its spec;
+  `representation <context> <UseCase> xml,csv` adds what a controller answers in besides JSON,
+  `form <context> <UseCase>` the hints of its form.
 - **Documents.** The generated lists of `CONTEXT.md` and the generated documentation are
   refreshed.
 

@@ -32,6 +32,6 @@ export interface ControllerSpec {
   readonly produces?: readonly string[];
   /** Media types a body is read in besides `application/json`: `['application/xml']`. */
   readonly consumes?: readonly string[];
-  /** Describes the body as a form at `GET /forms/<operationId>` (`formRoutes`): `defineForm(...)` of a `.form.ts` file, or `{}`. */
+  /** Describes the body as a form at `GET /forms/<operationId>` (`formRoutes`): `defineForm(...)` next to the schemas, or `{}`. */
   readonly form?: FormHints;
 }

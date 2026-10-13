@@ -72,6 +72,17 @@ Never load then filter in memory. `generate query ... --search` writes a handler
 access scope of the actor (`all`, `none`, a set of ids, or a filter) and hands it to the read
 port; the adapter turns it into the query.
 
+## A field only some callers see
+
+"The patient does not see the internal note" is a right on a field, not a role test in a
+serializer or a query (`authz/fields-by-schema`, `authz/in-application`). Mark it on the schema of
+the answer, and of the body when the caller sets it:
+`withFieldAccess(schema, { internalNote: { read: { permission }, write: { permission }, subject } })`
+of `@ddd-ts-kit/http`, decided through `Access` (`fieldDeciderOf`, which `presentation-of.ts`
+of the platform wires). It is left out of JSON, XML and CSV alike for a caller who may not read
+it, refused with 403 in a body from one who may not set it, absent or read-only in the form of
+the route. The handler still authorizes the write itself, for the callers that are not HTTP.
+
 ## The current actor
 
 - **Use cases**: explicit, the first field of the command or query (`command.actor`).
@@ -102,9 +113,10 @@ later replaces an adapter and the permission mapping, not the handlers.
 | reading the user from a global or the request in a handler | `command.actor` |
 | passing the request or the token inward | an `Actor`, mapped at the boundary |
 | an `isAdmin` flag on an entity deciding access | roles or relations in the authorizer |
+| `if (actor.roles.includes('staff'))` removing a field from an answer | `withFieldAccess` on the response schema |
 | authorization in a repository | tenant scoping only there; rights in the application |
 
 Finish with
-`npx ddd-ts-kit check --rule authz/declared --rule authz/in-application --rule authz/actor-explicit`.
+`npx ddd-ts-kit check --rule authz/declared --rule authz/in-application --rule authz/actor-explicit --rule authz/fields-by-schema`.
 Every decision, denials included, is recorded by the audit trail (skill
 `ddd-ts-kit:cross-cutting`).
