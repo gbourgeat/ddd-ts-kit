@@ -10,6 +10,7 @@ import {
   Representations,
   defineRoute,
   executeRoute,
+  formRoutes,
   pageSchemaOf,
   withFieldAccess,
   type CachePolicy,
@@ -30,6 +31,7 @@ const request = (headers: RawHeaders = {}): RawRequest => ({
   params: { calendarId: 'calendar-1' },
   query: {},
   headers,
+  body: undefined,
   raw: null,
 });
 
@@ -100,7 +102,11 @@ describe('a cached answer written in another media type', () => {
   });
 
   it('documents Vary with Accept in the contract, next to the headers of its policy', () => {
-    const document = generateOpenApi({ info: { title: 'Calendars', version: '1' }, routes: [described], representations });
+    const document = generateOpenApi({
+      info: { title: 'Calendars', version: '1' },
+      routes: [described],
+      representations,
+    });
 
     expect(JSON.stringify(document)).toContain('"const":"Accept-Language, accept"');
   });
@@ -118,10 +124,10 @@ describe('a public answer chosen by Accept', () => {
   });
 
   it('is accepted behind a cache that keys on Vary, and when it answers JSON only', () => {
+    const ignoringVary = { representations, cacheTags: { header: CacheTagHeader.cacheTag } };
+
     expect(() => mountExpress(express(), [shared], tagged)).not.toThrow();
-    expect(() =>
-      mountExpress(express(), [jsonOnly], { representations, cacheTags: { header: CacheTagHeader.cacheTag } }),
-    ).not.toThrow();
+    expect(() => mountExpress(express(), [jsonOnly], ignoringVary)).not.toThrow();
   });
 });
 
@@ -139,6 +145,7 @@ describe('fields reserved to some callers in a shared schema', () => {
 
   it('are left out of each item of a page shared under the name of its item', async () => {
     const item = withFieldAccess(sharedSchema('Note', zodSchema(noteShape)), reserved);
+    const page: { items: z.infer<typeof noteShape>[] } = { items: [{ id: 'n1', note: 'fragile' }] };
 
     const search = defineRoute(
       {
@@ -149,12 +156,38 @@ describe('fields reserved to some callers in a shared schema', () => {
         responses: { 200: { description: 'One page.', body: pageSchemaOf(item) } },
         security: false,
       },
-      () => ({ status: 200, body: { items: [{ id: 'n1', note: 'fragile' }] } }),
+      () => ({ status: 200, body: page }),
     );
 
     const response = await executeRoute(search, request());
 
     expect(pageSchemaOf(item).toJsonSchema()['$ref']).toBe('#/$defs/NotePage');
     expect(response.body).toEqual({ items: [{ id: 'n1' }] });
+  });
+});
+
+describe('a form of a shared body', () => {
+  it('describes the fields of the definition the body refers to', async () => {
+    const booking = sharedSchema('Booking', zodSchema(z.object({ calendarId: z.string(), startsAt: z.iso.datetime() })));
+
+    const book = defineRoute(
+      {
+        method: 'POST',
+        path: '/bookings',
+        operationId: 'book',
+        summary: 'Book',
+        request: { body: booking },
+        responses: { 201: { description: 'Booked.' } },
+        security: false,
+        form: {},
+      },
+      () => ({ status: 201 }),
+    );
+
+    const [form] = formRoutes([book]);
+    const response = form === undefined ? undefined : await executeRoute(form, { ...request(), params: {} });
+
+    expect(response?.status).toBe(200);
+    expect(response?.body).toMatchObject({ schema: { properties: { calendarId: {}, startsAt: {} } } });
   });
 });

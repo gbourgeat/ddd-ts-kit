@@ -35,9 +35,7 @@ export class ExportPracticeAgendaController {
     private readonly serializer: AgendaEntrySerializer,
   ) {}
 
-  async handle(
-    request: HttpRequest<{ params: ExportPracticeAgendaParams }>,
-  ): Promise<AsyncIterable<AgendaLine>> {
+  async handle(request: HttpRequest<{ params: ExportPracticeAgendaParams }>): Promise<AsyncIterable<AgendaLine>> {
     const { actor, params: asked } = request;
 
     const entries = everyPage((cursor) =>

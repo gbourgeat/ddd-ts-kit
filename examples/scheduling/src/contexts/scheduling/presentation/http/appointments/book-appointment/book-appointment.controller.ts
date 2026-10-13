@@ -1,4 +1,11 @@
-import { acceptedSchema, Controller, defineForm, withFieldAccess, type Accepted, type HttpRequest } from '@ddd-ts-kit/http';
+import {
+  acceptedSchema,
+  Controller,
+  defineForm,
+  withFieldAccess,
+  type Accepted,
+  type HttpRequest,
+} from '@ddd-ts-kit/http';
 import type { CommandBus } from '@ddd-ts-kit/kernel';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
 import { BookAppointmentBody } from '@/contexts/scheduling/presentation/http/appointments/book-appointment/book-appointment.body';

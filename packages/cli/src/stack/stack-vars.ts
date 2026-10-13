@@ -40,13 +40,17 @@ export function stackVars(config: Config): RenderContext {
     presentation: presentationVars(config),
     logger: one(logger, ['stdout', 'pino', 'winston']),
     tests: { ...one(tests, ['vitest', 'jest']), module: tests === 'jest' ? '@jest/globals' : 'vitest' },
-    worker: { on: config.worker, off: !config.worker },
     config: platformPaths(config),
     alias: aliasVars(config),
     persistence: persistenceVars(config),
     tenancy: { ...one(tenancy, ['none', 'shared-table']), any: tenancy !== 'none' },
-    queue: queueVars(config),
+    ...backgroundVars(config),
   };
+}
+
+/** Where the background jobs run and are kept. */
+function backgroundVars(config: Config): RenderContext {
+  return { worker: { on: config.worker, off: !config.worker }, queue: queueVars(config) };
 }
 
 /**

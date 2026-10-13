@@ -21,10 +21,10 @@ const READS: readonly string[] = ['GET', 'HEAD'];
 export async function conditionalAnswer(
   route: Pick<Route, 'method' | 'cache'>,
   request: Readonly<RawHeaders>,
-  response: RouteResponse,
-  value: unknown = response.body,
+  answered: { readonly response: RouteResponse; readonly value: unknown },
 ): Promise<RouteResponse> {
   const { cache } = route;
+  const { response, value } = answered;
 
   if (cache === undefined || response.status < SUCCESS_FROM || response.status > SUCCESS_TO) {
     return response;

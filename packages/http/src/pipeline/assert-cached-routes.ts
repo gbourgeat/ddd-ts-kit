@@ -44,18 +44,24 @@ function assertCachedRoute(route: Shared, options: ExecuteOptions): void {
     );
   }
 
-  if (!honoursVary(options) && (varyOf(declared, tenantHeaders).length > 0 || negotiated(route, options))) {
+  if (!honoursVary(options) && varies(route, options)) {
     throw refused(
-      `the cache in front (${options.cacheTags?.header ?? ''}) ignores Vary, and would hand one variant to every caller: declare scope private, read the tenant from the host or the path, or set cacheTags.honoursVary once the cache keys on these headers.`,
+      `the cache in front (${options.cacheTags?.header ?? ''}) ignores Vary, and would hand one variant to every caller: declare scope private, answer in one media type, read the tenant from the host or the path, or set cacheTags.honoursVary once the cache keys on these headers.`,
     );
   }
 
   assertTenantNamed(route, options, refused);
 }
 
-/** Whether the answer is chosen by `Accept` among several media types, which makes it vary on that header. */
-function negotiated(route: Route, { representations }: ExecuteOptions): boolean {
-  return representations !== undefined && answersWithSchema(route) && representations.offeredBy(route).length > 1;
+/** Whether the answer varies: on the headers its policy or the tenant names, or on `Accept` among several media types. */
+function varies(route: Shared, options: ExecuteOptions): boolean {
+  const { representations, resolveTenant } = options;
+  const named = varyOf(route.cache.vary ?? [], resolveTenant?.headers ?? []);
+
+  const negotiated =
+    representations !== undefined && answersWithSchema(route) && representations.offeredBy(route).length > 1;
+
+  return named.length > 0 || negotiated;
 }
 
 function lowerCase(names: readonly string[]): string[] {

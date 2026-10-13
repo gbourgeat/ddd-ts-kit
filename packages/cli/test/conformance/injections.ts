@@ -1,4 +1,5 @@
 import type { Injection } from './injection.js';
+import { AUTHZ_AND_EVENT_INJECTIONS } from './injections/authz-and-event-injections.js';
 import { BEHAVIOUR_INJECTIONS } from './injections/behaviour-injections.js';
 import { BOUNDARY_INJECTIONS } from './injections/boundary-injections.js';
 import { CLEAN_INJECTIONS } from './injections/clean-injections.js';
@@ -15,6 +16,7 @@ export const INJECTIONS: readonly Injection[] = [
   ...STRUCTURE_INJECTIONS,
   ...CLEAN_INJECTIONS,
   ...BEHAVIOUR_INJECTIONS,
+  ...AUTHZ_AND_EVENT_INJECTIONS,
   ...LIFECYCLE_INJECTIONS,
   ...ERROR_INJECTIONS,
   ...SCHEMA_INJECTIONS,

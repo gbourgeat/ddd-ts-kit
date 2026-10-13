@@ -77,7 +77,7 @@ async function responded(call: Call): Promise<RouteResponse> {
     const result = await handled(call);
     const tagged = taggedAnswer(await answer(result, call), taggingOf(call, result.body));
 
-    return await conditionalAnswer(call.route, call.request.headers, tagged, result.body);
+    return await conditionalAnswer(call.route, call.request.headers, { response: tagged, value: result.body });
   } catch (error) {
     const { response, context } = refusal(error, call);
 
