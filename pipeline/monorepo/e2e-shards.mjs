@@ -28,7 +28,7 @@ export const ELSEWHERE = [
 
 /** One list per runner, with the seconds each file took on the machine that measured it (2026-10-12). */
 export const SHARDS = [
-  { 'first-minute-no-context.spec.ts': 181 },
+  { 'first-minute-no-context.spec.ts': 181, 'preset-identity.spec.ts': 40 },
   { 'first-minute-two-contexts.spec.ts': 184 },
   { 'proven-stacks.spec.ts': 106, 'first-class.spec.ts': 68, 'error-rule-violations.spec.ts': 20 },
   {

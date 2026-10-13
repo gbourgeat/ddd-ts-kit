@@ -1,0 +1,8 @@
+import { IsNotEmpty, IsString } from 'class-validator';
+
+export class DeclineInvitationBody {
+  /** The token the invitation was sent with. */
+  @IsString()
+  @IsNotEmpty()
+  token = '';
+}

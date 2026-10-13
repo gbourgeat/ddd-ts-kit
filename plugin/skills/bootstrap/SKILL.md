@@ -82,6 +82,15 @@ pnpm exec ddd-ts-kit generate context <name> --classification <core|supporting|g
   --upstream <upstream>:<pattern> --json
 ```
 
+A `generic` context whose language is the one of a preset of the kit is written whole instead:
+`generate context <name> --preset identity --json` for accounts provisioned from the identity
+provider, organisations, members with roles, invitations and delegations. Propose it only when
+the row of `contexts.md` says so in those words, never for a context that only looks generic
+(delegations on a desk, practices in a time zone are a model of their own); the preset refuses
+a stack it is not written for, with the flag to change. It is green as written: read its
+`## Design` with the owner. Why and when:
+`docs/guides/bootstrap-with-well-designed-contexts.md` of the kit.
+
 Then, by hand, only what a flag cannot carry: the sentence under `## Classification` of each
 `CONTEXT.md`, the "Not to be confused with" cells, and in `docs/context-map.md`, outside the
 markers, the reasons from the draft map and from `contexts.md`. Delete

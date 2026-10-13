@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import { CliError } from '../cli-error.js';
-import { runInit } from '../init/run-init.js';
+import { runInit, type InitOptions } from '../init/run-init.js';
 import { Arguments } from './arguments.js';
 import { type Command } from './command.js';
 import { printReport } from './print-report.js';
@@ -44,6 +44,7 @@ export const initCommand: Command = (argv, io) => {
   const args = Arguments.parse(argv, {
     ...Object.fromEntries([...STACK_FLAGS, ...OTHER_TEXT_FLAGS].map((flag) => [flag, { type: 'string' as const }])),
     context: { type: 'string', multiple: true },
+    preset: { type: 'string', multiple: true },
     'dry-run': { type: 'boolean', default: false },
     force: { type: 'boolean', default: false },
     sdk: { type: 'boolean', default: false },
@@ -63,14 +64,20 @@ export const initCommand: Command = (argv, io) => {
     fs.mkdirSync(root, { recursive: true });
   }
 
-  printReport(
-    io,
-    args,
-    runInit(root, { ...stackOptions(args), contexts: args.many('context'), dryRun, force: args.flag('force') }),
-  );
+  printReport(io, args, runInit(root, initOptions(args, dryRun)));
 
   return 0;
 };
+
+function initOptions(args: Arguments, dryRun: boolean): InitOptions {
+  return {
+    ...stackOptions(args),
+    contexts: args.many('context'),
+    presets: args.many('preset'),
+    dryRun,
+    force: args.flag('force'),
+  };
+}
 
 function stackOptions(args: Arguments) {
   const docsUi = args.text('docs-ui');

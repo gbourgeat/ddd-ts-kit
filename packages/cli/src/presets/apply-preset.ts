@@ -1,0 +1,128 @@
+import { CONFIG_FILE, parseConfig, type Config } from '../config/index.js';
+import { CliError } from '../cli-error.js';
+import type { KindFlags } from '../generate/kind.js';
+import { learnTerms } from '../generate/learn-terms.js';
+import type { Scope } from '../generate/scope.js';
+import { vars } from '../generate/vars.js';
+import { parseContextName } from '../naming/index.js';
+import type { RenderContext } from '../templating/index.js';
+import { renderTemplate } from '../templating/index.js';
+import type { Workspace } from '../workspace/index.js';
+import { grantToSignedIn } from './grant-to-signed-in.js';
+import { NO_FLAGS } from './no-flags.js';
+import type { PresetFile } from './preset-file.js';
+import type { Preset } from './preset.js';
+import { presetDecision } from './preset-decision.js';
+
+/** The context a preset is written into, which `generate context` or `init` declared just before. */
+export interface PresetRequest {
+  readonly context: string;
+  readonly preset: Preset;
+}
+
+/**
+ * Writes a preset into its context: its glossary, its files, then the generators that wire them
+ * (the storage of the platform, the published language, the registries), then the files those
+ * generators keep adding to, laid out whole. A file already on disk is kept, as a generator keeps it.
+ */
+export function applyPreset(ws: Workspace, config: Config, request: PresetRequest): Config {
+  const { preset } = request;
+  const refusal = preset.refusal(config);
+
+  if (refusal !== undefined) {
+    throw new CliError(refusal.message, refusal.fix);
+  }
+
+  const scope = scopeOf(ws, config, request);
+  const adr = presetDecision(scope, preset.name);
+  const rendering = { preset: preset.name, context: vars(scope, { preset: { adr } }) };
+
+  learnTerms(scope);
+
+  writeFiles(
+    scope,
+    preset.files(config).filter((file) => file.afterSteps !== true),
+    rendering,
+  );
+
+  const wired = runSteps(scope, preset);
+
+  writeFiles(
+    { ...scope, config: wired },
+    preset.files(config).filter((file) => file.afterSteps === true),
+    rendering,
+  );
+
+  describeContext(scope, preset, rendering);
+
+  return wired;
+}
+
+interface Rendering {
+  readonly preset: string;
+  readonly context: RenderContext;
+}
+
+/** The purpose, the classification and the design of the context, in place of what its CONTEXT.md leaves to write. */
+function describeContext(scope: Scope, preset: Preset, rendering: Rendering): void {
+  const file = `${scope.dir}/CONTEXT.md`;
+  const design = renderTemplate(`presets/${rendering.preset}/design.md.tpl`, rendering.context);
+
+  const text = (scope.ws.read(file) ?? '')
+    .replace(/## Purpose\n\n[\s\S]*?\n\n## Classification/, `## Purpose\n\n${preset.purpose}\n\n## Classification`)
+    .replace(/TODO\(domain\): say in one sentence why this context is [a-z]+\./, preset.classificationReason)
+    .replace(/TODO\(domain\): define the ubiquitous language first[^\n]*\n\n/, '')
+    .replace('## Aggregates', `${design}## Aggregates`);
+
+  scope.ws.update(file, text);
+}
+
+function scopeOf(ws: Workspace, config: Config, { context, preset }: PresetRequest): Scope {
+  const name = parseContextName(context);
+  const term = preset.terms.map((row) => `${row.term}=${row.meaning}`);
+
+  return { ws, config, context: name, dir: `${config.contextsDir}/${name.kebab}`, flags: { ...NO_FLAGS, term } };
+}
+
+function writeFiles(scope: Scope, files: readonly PresetFile[], rendering: Rendering): void {
+  for (const file of files) {
+    const target = `${scope.dir}/${file.target.replaceAll('__context__', scope.context.kebab)}`;
+    const content = renderTemplate(`presets/${rendering.preset}/${file.template}`, rendering.context);
+
+    if (scope.ws.planned(target)) {
+      scope.ws.update(target, content);
+    } else {
+      scope.ws.create(target, content);
+    }
+  }
+}
+
+/** Each generator sees the config as the one before it left it; then the platform grants what the preset asks to every signed-in person. */
+function runSteps(scope: Scope, preset: Preset): Config {
+  const config = generated(scope, preset);
+
+  if (preset.grantsEverySignedInPerson) {
+    grantToSignedIn({ ...scope, config });
+  }
+
+  return config;
+}
+
+function generated(scope: Scope, preset: Preset): Config {
+  let config = scope.config;
+
+  for (const step of preset.steps) {
+    const flags: KindFlags = { ...NO_FLAGS, allowName: true, ...step.flags };
+
+    step.kind.run({ ws: scope.ws, config, args: [scope.context.kebab, ...step.args], flags });
+    config = current(scope.ws) ?? config;
+  }
+
+  return config;
+}
+
+function current(ws: Workspace): Config | undefined {
+  const text = ws.read(CONFIG_FILE);
+
+  return text === undefined ? undefined : parseConfig(JSON.parse(text));
+}

@@ -48,6 +48,7 @@ const TEXTS = { type: 'string', multiple: true } as const;
 const OPTIONS = {
   classification: TEXT,
   purpose: TEXT,
+  preset: TEXT,
   upstream: TEXTS,
   term: TEXTS,
   value: TEXTS,
@@ -136,6 +137,7 @@ function flagsOf(args: Arguments): KindFlags {
     ...args.texts([
       'classification',
       'purpose',
+      'preset',
       'code',
       'aggregate',
       'method',
