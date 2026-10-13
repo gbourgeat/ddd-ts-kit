@@ -32,6 +32,8 @@ describe('init --http-cache', () => {
       "varnishUrl: readUrl(env, 'VARNISH_URL', problems),\n    varnishPurgeKey: readText(env, 'VARNISH_PURGE_KEY', problems),",
     );
 
+    expect(read(root, 'src/platform/config/load-config.ts')).toContain('...readVarnish(env, problems),');
+
     expect(read(root, 'src/platform/auth/http-boundary.ts')).toContain('cacheTags: { header: CacheTagHeader.xkey },');
     expect(read(root, 'src/platform/auth/http-boundary.ts')).not.toContain('resolveTenant');
 
@@ -91,13 +93,13 @@ describe('init --http-cache', () => {
     expect(read(byHand, 'src/platform/platform.ts')).toContain('readonly cacheInvalidation: CacheInvalidation;');
 
     expect(read(byHand, 'src/platform/create-platform.ts')).toContain(
-      'return new PublishedCacheInvalidation({ publisher, ids, clock, scope, perTenant: true });',
+      'cacheInvalidation: new PublishedCacheInvalidation({ publisher, ids, clock, scope, perTenant: true }),',
     );
 
     expect(read(byHand, 'src/platform/auth/http-boundary.ts')).toContain('resolveTenant: tenantFromHeader(),');
 
     expect(read(nest, 'src/platform/create-platform.ts')).toContain(
-      'return new PublishedCacheInvalidation({ publisher, ids, clock, scope });',
+      'return { ...events, cacheInvalidation: new PublishedCacheInvalidation({ publisher, ids, clock, scope }) };',
     );
 
     expect(read(without, 'src/platform/platform.ts')).not.toContain('CacheInvalidation');

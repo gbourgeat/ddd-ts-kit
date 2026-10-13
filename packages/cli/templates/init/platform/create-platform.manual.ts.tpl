@@ -34,18 +34,12 @@ import {
   reportAfterCommitFailures,
   unitOfWorkMiddleware,
   type BusMiddleware,
-{{#if httpCache.varnish}}
-  type CacheInvalidation,
-{{/if}}
   type DomainEventDispatcher,
 {{#if errors.sentry}}
   type ErrorReporter,
 {{/if}}
 {{#if files.any}}
   type FileStorage,
-{{/if}}
-{{#if httpCache.varnish}}
-  type IntegrationEventPublisher,
 {{/if}}
   type JobSettings,
 } from '@ddd-ts-kit/kernel';
@@ -146,9 +140,6 @@ export function createPlatform(persistence: Persistence, options: PlatformOption
   const protection = new UseCaseProtection(authorizer, onDecision);
   const adapter = adapterOf(options.resilience ?? defaultResilience, { traced, domainEvents });
   const observed = observing(foundations, protection.guard, traced.useCase);
-{{#if httpCache.varnish}}
-  const events = eventsOn(persistence, options, { scope, traced });
-{{/if}}
 {{#if files.any}}
   const files = filesOf(options, foundations);
 {{/if}}
@@ -156,8 +147,7 @@ export function createPlatform(persistence: Persistence, options: PlatformOption
   return {
     ...foundations,
 {{#if httpCache.varnish}}
-    ...events,
-    cacheInvalidation: cacheInvalidationOf(events.publisher, foundations),
+    ...withCacheInvalidation(eventsOn(persistence, options, { scope, traced }), foundations),
 {{/if}}
 {{#unless httpCache.varnish}}
     ...eventsOn(persistence, options, { scope, traced }),
@@ -307,20 +297,25 @@ function eventsOn(
 
 {{#if httpCache.varnish}}
 /**
- * The purges a change asks for, written to the outbox with it: a rollback takes them away, the relay sends them to
- * Varnish once committed{{#if httpCache.perTenant}}. Filed under the tenant of the work, as the answers are tagged{{/if}}.
+ * The events, and the purges a change asks for, written to the outbox with it through the same publisher: a rollback
+ * takes them away, the relay sends them to Varnish once committed.{{#if httpCache.perTenant}} Filed under the tenant
+ * of the work, as the answers are tagged.{{/if}}
  */
-function cacheInvalidationOf(
-  publisher: IntegrationEventPublisher,
-  { ids, clock, scope }: Foundations,
-): CacheInvalidation {
+function withCacheInvalidation(events: Events, { ids, clock, scope }: Foundations): Events & CacheInvalidating {
+  const { publisher } = events;
+
 {{#if httpCache.perTenant}}
-  return new PublishedCacheInvalidation({ publisher, ids, clock, scope, perTenant: true });
+  return {
+    ...events,
+    cacheInvalidation: new PublishedCacheInvalidation({ publisher, ids, clock, scope, perTenant: true }),
+  };
 {{/if}}
 {{#unless httpCache.perTenant}}
-  return new PublishedCacheInvalidation({ publisher, ids, clock, scope });
+  return { ...events, cacheInvalidation: new PublishedCacheInvalidation({ publisher, ids, clock, scope }) };
 {{/unless}}
 }
+
+type CacheInvalidating = Pick<Platform, 'cacheInvalidation'>;
 
 {{/if}}
 interface Observation {
