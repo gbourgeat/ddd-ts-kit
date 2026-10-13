@@ -40,8 +40,10 @@ export class ExampleCopy {
     });
 
     installAsPublished(root);
-    // In the workspace the example extends the formatter configuration of the root; a project of its own holds the file `init` writes.
+    // In the workspace the example extends the formatter configuration of the root; a project of its own holds the file `init` writes,
+    // which `ddd-ts-kit sdk` wires around the clients the example asks for.
     fs.copyFileSync(FORMATTER_CONFIG, path.join(root, 'biome.json'));
+    expect(cli(root, 'sdk').code).toBe(0);
 
     return new ExampleCopy(root);
   }

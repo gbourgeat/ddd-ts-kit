@@ -66,4 +66,11 @@ export interface Config {
   readonly stack: Stack;
   /** Names reported by `standard/no-parallel-interface`, over its defaults: the kernel interface to use instead, or `false` to drop a default. */
   readonly standardInterfaces: Readonly<Record<string, string | false>>;
+  /** The clients generated from the contract (`ddd-ts-kit sdk`), whose sources under `clients/` are not linted; none without the key. */
+  readonly sdk: SdkConfig | undefined;
+}
+
+/** Of the clients of the contract, the plugin reads that they are asked for and their package name. */
+export interface SdkConfig {
+  readonly name: string;
 }

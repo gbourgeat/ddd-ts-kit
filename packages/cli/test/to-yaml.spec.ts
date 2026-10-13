@@ -2,38 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { stringifyContract } from '../src/contracts/stringify-contract.js';
 import { toYaml } from '../src/yaml/to-yaml.js';
 import { readYaml } from './support/read-yaml.js';
-
-/** Strings a YAML reader takes for something else when they are written plain. */
-const MISREAD = ['yes', 'no', 'on', 'off', 'y', 'N', 'null', '~', 'true', 'False', '1', '-2', '1.5', '.5', '0x1f'];
-
-const AWKWARD = [
-  ...MISREAD,
-  ...['1e3', '.inf', '.NaN', '2026-10-12', '1:20', '<<', '=', '@scope', '*alias', '&anchor', '!tag', '%directive'],
-  ...['a: b', 'a #b', 'ends:', '', ' lead', 'trail ', "it's", '"quoted"', '-', '- item', '? key', '{a}', '[a]'],
-  ...['|', '>', '#', '`', 'a\tb', 'a\u0001b', 'a\u2028b', 'é ü 中', 'https://example.com/a?b=c#d', 'x-error-codes'],
-];
-
-const TEXTS = {
-  clipped: 'line one\nline two\n',
-  stripped: 'a\nb',
-  kept: 'a\n\n',
-  indentedFirst: '  indented\nnext\n',
-  blankInside: 'a\n\nb\n',
-  newlineOnly: '\n',
-  carriageReturn: 'a\r\nb',
-  hashFirst: '# not a comment\nx',
-};
-
-const SHAPES = {
-  empty: {},
-  none: [],
-  nested: [[1, 2], [], {}, { a: [{ b: 'c\nd' }] }],
-  numbers: [0, -1, 3.25, 1e21],
-  flags: [true, false, null],
-  '200': { description: 'OK' },
-  '/calendars/{calendarId}': { get: { $ref: '#/components/schemas/Problem' } },
-  'application/problem+json': {},
-};
+import { AWKWARD, MISREAD, SHAPES, TEXTS } from './support/yaml-samples.js';
 
 describe('toYaml', () => {
   it('writes maps and lists in block style, two spaces per level, a map in a list after its dash', () => {

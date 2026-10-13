@@ -56,7 +56,7 @@ file and is part of `npm run verify`.
 
 ## The HTTP contract
 
-Routes, schemas, error codes, what is breaking, client generation: [openapi.md](openapi.md).
+Routes, schemas, error codes, what is breaking, the typed clients (`ddd-ts-kit sdk`): [openapi.md](openapi.md).
 
 ## Integration notes (`docs/integration/README.md`)
 

@@ -10,6 +10,7 @@ import { parseCoverage } from './parse-coverage.js';
 import { parseLimits } from './parse-limits.js';
 import { parseOnePerFile } from './parse-one-per-file.js';
 import { parseOpenApi } from './parse-open-api.js';
+import { parseSdk } from './parse-sdk.js';
 import { parseStack } from './parse-stack.js';
 import { isRecord } from './values/is-record.js';
 import { mapEntries } from './values/map-entries.js';
@@ -75,6 +76,7 @@ type Governance = Pick<
   | 'worker'
   | 'ci'
   | 'openapi'
+  | 'sdk'
 >;
 
 function parseGovernance(raw: Record<string, unknown>): Governance {
@@ -89,6 +91,7 @@ function parseGovernance(raw: Record<string, unknown>): Governance {
     worker: raw['worker'] === true,
     ci: parseCi(raw['ci']),
     openapi: parseOpenApi(raw['openapi']),
+    sdk: parseSdk(raw['sdk']),
   };
 }
 

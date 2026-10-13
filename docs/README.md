@@ -72,6 +72,7 @@ limits, and a recommendation by situation.
 | [Static analysis and pipeline](tools/static-analysis-and-pipeline.md) | the checker, the ESLint plugin, dependency-cruiser, knip, TypeScript 6 and 7; GitHub or GitLab |
 | [Quality baseline](tools/quality-baseline.md) | what every project gets and what each tool answers: type check, lint, format, dead code, import graph, architecture check, tests |
 | [Test runners](tools/test-runners.md) | Vitest or Jest |
+| [Client SDK](tools/client-sdk.md) | openapi-typescript with openapi-fetch, hey-api or orval, measured on the example contract, against the client `ddd-ts-kit sdk` writes: typed error codes, no dependency; how it is checked and published |
 | [Import aliases](tools/import-aliases.md) | `@/`, declared once under tsconfig `paths` and rewritten into relative paths by the build; imports without an extension by default, and why the build writes the `.js` Node needs; why not a Node subpath import; what each tool reads |
 
 ## Guides

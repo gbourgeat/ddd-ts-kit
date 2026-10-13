@@ -45,6 +45,7 @@ export const initCommand: Command = (argv, io) => {
     context: { type: 'string', multiple: true },
     'dry-run': { type: 'boolean', default: false },
     force: { type: 'boolean', default: false },
+    sdk: { type: 'boolean', default: false },
   });
 
   if (args.positionals.length > 0) {
@@ -88,5 +89,6 @@ function stackOptions(args: Arguments) {
     ...(importExtension === undefined ? {} : { importExtension }),
     ...(packageManager === undefined ? {} : { packageManager }),
     ...(valueObjects === undefined ? {} : { valueObjects }),
+    ...(args.flag('sdk') ? { sdk: true } : {}),
   };
 }
