@@ -15,6 +15,7 @@ paths:
 - A constructor parameter is typed by a port, never by an adapter or a fake (`ports/no-concrete-dependency`); a port that only types a parameter is imported with `import type`.
 - A job (`scheduling/*.job.ts`) and an integration event handler (`integration/handlers/`) only build one command and send it as a system actor; both are safe to repeat (`scheduling/job-triggers-use-case`, `events/consumer-idempotent`).
 - A query never saves, deletes or publishes (`application/command-query-separation`); it hands the access scope of the actor to its read port and never filters after loading.
+- A query answers every field its read model holds: a field reserved to some callers is marked on the response schema with `withFieldAccess` of `@ddd-ts-kit/http`, never removed by a test on the roles of the actor (`authz/fields-by-schema`).
 - A read that takes criteria, a scope or a page is a search, never a list (`naming/search-not-list`): `Search<Things>Query` in `queries/search-<things>/` (`generate query ... --search`), `search...` on the port, its adapters and its fakes; one element or none stays `findById` or `findBy...`.
 - Time through `Clock`, identifiers through `IdGenerator`, no `process.env` (`purity/*`). No logging, tracing, retry or audit call: they are applied from outside (`aspects/outside-in`, `tracing/platform-only`).
 - A whole feature with `/ddd-ts-kit:use-case`. Create with `npx ddd-ts-kit generate command|query|port|policy|job|event-handler|integration-handler ... --json`, then fill the `TODO(domain)` places.

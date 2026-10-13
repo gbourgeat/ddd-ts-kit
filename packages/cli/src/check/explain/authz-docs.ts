@@ -44,4 +44,16 @@ const { actor } = command;
 // infrastructure/persistence/drizzle-invoice.repository.ts
 const row = { ...toRow(invoice), ...stampCreation(this.scope, this.clock), ...tenantScopeOf(this.scope) };`,
   },
+  'authz/fields-by-schema': {
+    why: 'A query that removes a field for the callers without a role answers one way in JSON and is forgotten in the CSV export, the XML of a partner and the form of the front end, and nobody reading the contract knows the field may be missing. Marked on the response schema with withFieldAccess of @ddd-ts-kit/http, the field is reserved to a permission or a policy once: the pipeline leaves it out of every representation for an actor who may not read it, refuses it in a request body from one who may not set it, the contract says so with x-field-access, and a form described by the server shows it read-only or not at all. Which rows the actor may read stays the access scope of the query. Judged: a test on the roles (roles.includes, some, every, find, indexOf), a comparison with a role, or isAdmin, in a file under application/queries/ of a context.',
+    bad: `// application/queries/get-appointment/get-appointment.handler.ts
+const row = await this.appointments.findById(query.appointmentId);
+return query.actor.roles.includes('practitioner') ? row : { ...row, internalNote: undefined };`,
+    good: `// application/queries/get-appointment/get-appointment.handler.ts
+return this.appointments.findById(query.appointmentId);
+// presentation/http/appointments/get-appointment/get-appointment.controller.ts
+const answer = withFieldAccess(classSchema(GetAppointmentAnswer), {
+  internalNote: { read: { permission: schedulingPermissions['appointment.note.read'] } },
+});`,
+  },
 };

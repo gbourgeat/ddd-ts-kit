@@ -5,8 +5,9 @@ import type { Fixture } from './fixture.js';
 import { handler } from './handler.js';
 import { PATHS } from './paths.js';
 import { project } from './project.js';
+import { SAMPLES } from './samples.js';
 
-const { ADAPTER, AGGREGATE, COMMAND, HANDLER, POLICY, ROUTE } = PATHS;
+const { ADAPTER, AGGREGATE, COMMAND, HANDLER, POLICY, QUERY_HANDLER, QUERY_HANDLER_SPEC, ROUTE } = PATHS;
 
 export const AUTHZ_FIXTURES: readonly Fixture[] = [
   {
@@ -204,6 +205,26 @@ export const AUTHZ_FIXTURES: readonly Fixture[] = [
       ...handler(
         "import { ExecutionScope } from '@ddd-ts-kit/kernel';\nimport { CommandHandler } from '@ddd-ts-kit/kernel/declarations';\nimport { IssueInvoiceCommand } from '@/contexts/billing/application/commands/issue-invoice/issue-invoice.command.js';\n\n@CommandHandler(IssueInvoiceCommand, [ExecutionScope])\nexport class IssueInvoiceHandler {}\n",
       ),
+    }),
+  },
+  {
+    ruleId: 'authz/fields-by-schema',
+    name: 'a query that answers what its read model holds, the scope narrowing the rows',
+    expect: 'pass',
+    files: project({
+      [QUERY_HANDLER]:
+        "export class InvoicesIssuedHandler {\n  async execute(query: InvoicesIssuedQuery): Promise<readonly InvoiceLine[]> {\n    const scope = await this.access.scope(query.actor, permission, 'invoice');\n\n    return this.invoices.search(scope);\n  }\n}\n",
+      [QUERY_HANDLER_SPEC]: SAMPLES.SPEC,
+    }),
+  },
+  {
+    ruleId: 'authz/fields-by-schema',
+    name: 'a query that removes a field for the callers without a role',
+    expect: { file: QUERY_HANDLER },
+    files: project({
+      [QUERY_HANDLER]:
+        "export class InvoicesIssuedHandler {\n  async execute(query: InvoicesIssuedQuery): Promise<readonly InvoiceLine[]> {\n    const lines = await this.invoices.search(query.scope);\n\n    return query.actor.roles.includes('accountant') ? lines : lines.map(({ margin: _margin, ...line }) => line);\n  }\n}\n",
+      [QUERY_HANDLER_SPEC]: SAMPLES.SPEC,
     }),
   },
 ];

@@ -12,6 +12,7 @@ const CONSUMER =
 
 const { PUBLISHED, ROUTE, SCHEDULING, VALUE_OBJECT } = PATHS;
 const CALENDAR_DAY = `${SCHEDULING}/application/queries/get-calendar-day/get-calendar-day.handler.ts`;
+const AGENDA_HANDLER = `${SCHEDULING}/application/queries/search-practice-agenda/search-practice-agenda.handler.ts`;
 const DUE = '  return new Date(startsAt.getTime() - NOTICE_MS);';
 const SAVED = '    await this.reminderRepository.save(target);\n';
 const TAKEN = '  constructor(private readonly commands: CommandBus) {}';
@@ -217,6 +218,20 @@ export const BEHAVIOUR_INJECTIONS: readonly Injection[] = [
     ],
     checker: true,
     eslint: 'ddd-ts-kit/authz-in-application',
+  },
+  {
+    rule: 'authz/fields-by-schema',
+    what: 'a query that answers the agenda of a practice to its staff only, by role',
+    file: AGENDA_HANDLER,
+    changes: [
+      {
+        file: AGENDA_HANDLER,
+        from: "    const scope = await this.access.scope(query.actor, schedulingPermissions['agenda.read'], 'calendar');\n",
+        to: "    if (!query.actor.roles.includes('practitioner')) {\n      return { items: [] };\n    }\n\n    const scope = await this.access.scope(query.actor, schedulingPermissions['agenda.read'], 'calendar');\n",
+      },
+    ],
+    checker: true,
+    eslint: 'ddd-ts-kit/authz-fields-by-schema',
   },
   {
     rule: 'authz/actor-explicit',

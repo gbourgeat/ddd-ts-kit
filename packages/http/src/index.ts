@@ -59,6 +59,17 @@ export { XmlRepresentation } from './representation/xml/xml-representation.js';
 export { decimalText } from './serialization/decimal-text.js';
 export type { MoneyBody } from './serialization/money-body.js';
 export { money } from './serialization/money.js';
+export type { FieldDecider } from './field-access/field-decider.js';
+export {
+  fieldDeciderOf,
+  type FieldAccessDecisions,
+  type FieldDeciderOptions,
+} from './field-access/field-decider-of.js';
+export type { FieldPolicy } from './field-access/field-policy.js';
+export type { FieldRequirement } from './field-access/field-requirement.js';
+export type { FieldRule } from './field-access/field-rule.js';
+export type { FieldRules } from './field-access/field-rules.js';
+export { withFieldAccess } from './field-access/with-field-access.js';
 export { CORRELATION_HEADER } from './pipeline/correlation-header.js';
 export type { ErrorContext } from './pipeline/error-context.js';
 export type { ExecuteOptions } from './pipeline/execute-options.js';

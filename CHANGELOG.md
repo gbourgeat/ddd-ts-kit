@@ -22,6 +22,16 @@ representation. The contract lists every media type of each route, and `NOT_ACCE
 option nothing changes: every answer stays JSON. `money` and `decimalText` write money and
 decimals as strings, the rule every representation follows.
 
+**A field of an answer can be reserved to some callers.** `withFieldAccess(schema, { field: {
+read, write, subject } })` of `@ddd-ts-kit/http` marks a field with a permission or a policy:
+the pipeline leaves it out of every representation (JSON, XML, CSV, streamed lists) for an actor
+who may not read it, refuses it with 403 in a request body from one who may not set it, and the
+contract marks it with `x-field-access` and no longer lists it as required. `fieldDeciderOf({
+access, clock })` decides through the `Access` of `@ddd-ts-kit/auth`, once per element and per
+request; without a decider a restricted field is refused to everybody. The new rule
+`authz/fields-by-schema` (checker and ESLint) refuses a test on the roles of the actor under
+`application/queries/`, the hand-written way of shaping an answer.
+
 **Every package carries the MIT notice.** Each published package now holds the `LICENSE` of the
 repository next to its `dist/`, and `npm run package:check` refuses a tarball without it, or with
 another text. Earlier versions were published without it.

@@ -1,5 +1,10 @@
 import type { ExecutionContext } from '@ddd-ts-kit/kernel';
 import { createErrorMapper } from '../error/create-error-mapper.js';
+import { assertWritable } from '../field-access/assert-writable.js';
+import { fieldAccess } from '../field-access/field-access.js';
+import { FieldJudge } from '../field-access/field-judge.js';
+import { FieldTree } from '../field-access/field-tree.js';
+import { visibleBody } from '../field-access/visible-body.js';
 import { toProblem } from '../error/to-problem.js';
 import type { Problem } from '../error/problem.js';
 import { NotAcceptableError } from '../representation/not-acceptable-error.js';
@@ -66,22 +71,17 @@ function defaultRequestId(request: RawRequest): string {
 }
 
 async function handled(call: Call): Promise<RouteOutput> {
-  const { route, request, options, requestId, correlationId } = call;
+  const { route, request, options, correlationId } = call;
   const principal = await options.resolvePrincipal?.(request.raw);
   const input = acceptedInput(call);
   const { headers } = request;
   const execution = executionOfRequest({ correlationId, headers, principal, deadline: deadlineOf(options) });
+  const judge = new FieldJudge(execution.actor, options.fieldAccess);
 
   call.reached.execution = execution;
+  await assertWritable(input.body, FieldTree.of(fieldAccess.of(route.request?.body)), judge);
 
-  const context: RequestContext = {
-    requestId,
-    execution,
-    raw: request.raw,
-    rawHeaders: headers,
-    ...(principal === undefined ? {} : { principal }),
-  };
-
+  const context = requestContext(call, execution, principal);
   const handle = async (): Promise<RouteOutput> => route.handle({ ...input, context });
   const asPrincipal = (): Promise<RouteOutput> => options.withPrincipal?.(principal, handle) ?? handle();
   const result = await (options.executionScope?.run(execution, asPrincipal) ?? asPrincipal());
@@ -90,7 +90,24 @@ async function handled(call: Call): Promise<RouteOutput> {
     assertDeclaredResponse(route, result);
   }
 
-  return result;
+  return visibleOutput(route, result, judge);
+}
+
+function requestContext({ request, requestId }: Call, execution: ExecutionContext, principal: unknown): RequestContext {
+  return {
+    requestId,
+    execution,
+    raw: request.raw,
+    rawHeaders: request.headers,
+    ...(principal === undefined ? {} : { principal }),
+  };
+}
+
+/** The answer without the fields its schema reserves to callers this one is not. */
+async function visibleOutput(route: Route, result: RouteOutput, judge: FieldJudge): Promise<RouteOutput> {
+  const tree = FieldTree.of(fieldAccess.of(route.responses[result.status]?.body));
+
+  return tree.isEmpty() ? result : { ...result, body: await visibleBody(result.body, tree, judge) };
 }
 
 /** The parts of the request through their schemas, once the request accepts an answer and its body is read. */

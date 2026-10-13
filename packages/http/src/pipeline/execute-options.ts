@@ -1,5 +1,6 @@
 import type { Clock, ExecutionScope } from '@ddd-ts-kit/kernel';
 import type { ErrorMapper } from '../error/error-mapper.js';
+import type { FieldDecider } from '../field-access/field-decider.js';
 import type { Representations } from '../representation/representations.js';
 import type { ErrorContext } from './error-context.js';
 import type { RawRequest } from './raw-request.js';
@@ -46,4 +47,11 @@ export interface ExecuteOptions {
    * out, every answer is JSON whatever the request accepts, as before.
    */
   readonly representations?: Representations;
+  /**
+   * Decides the fields a schema reserves to some callers (`withFieldAccess`): left out of an
+   * answer for an actor who may not read them, refused in a body for one who may not set them.
+   * `fieldDeciderOf({ access, clock })` builds it from the `Access` of `@ddd-ts-kit/auth`. Left
+   * out, every restricted field is left out of every answer and refused in every body.
+   */
+  readonly fieldAccess?: FieldDecider;
 }

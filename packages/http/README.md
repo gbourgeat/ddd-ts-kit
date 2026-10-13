@@ -489,6 +489,50 @@ const representations = Representations.of(new XmlRepresentation(), new YamlRepr
 `read`, when present, turns a body back into the value; `refuses`, when present, says at mount
 time why a shape cannot be written. One given for `application/json` replaces the default.
 
+## Fields reserved to some callers
+
+A response or a request schema marks a field as requiring a permission or a policy; the
+pipeline does the rest, for every representation, instead of an `if (admin)` in a handler:
+
+```ts
+import { fieldDeciderOf, withFieldAccess } from '@ddd-ts-kit/http';
+
+const answer = withFieldAccess(classSchema(AppointmentAnswer), {
+  internalNote: {
+    read: { permission: schedulingPermissions['appointment.note.read'] },
+    write: { policy: notesOfTheirOwnCalendars }, // a policy of @ddd-ts-kit/auth fits as it is
+    subject: (row) => ({ type: 'calendar', id: row.calendarId }), // what the requirement is asked about
+  },
+});
+
+const options: ExecuteOptions = { ...boundary, fieldAccess: fieldDeciderOf({ access: app.resolve(Access), clock }) };
+```
+
+| Where | A field the actor may not read | A field the actor may read but not set |
+|---|---|---|
+| an answer (JSON, XML, CSV, a streamed list) | left out; in CSV the column stays, its cells empty | kept |
+| a request body | refused with `403 FORBIDDEN`, naming the path (`body.internalNote`) | refused the same way |
+| a form described by the server | absent | read-only |
+| the contract | `x-field-access: { read: { permission }, write: { policy } }` on the property, which is no longer listed in `required` | the same |
+
+- `read` absent: whoever may call the route sees the field; `write` absent: whoever sees it may
+  set it. A field left out of a body is never judged.
+- A permission is decided by `access.decide(actor, permission, subject)`, the policies of the
+  permission then the authorizer, as for a use case, and recorded as any decision; a policy
+  named on the field is asked directly, with the time of `clock`. `subject` names the element:
+  left out, the requirement is asked about nothing, which a role grant answers and a
+  relationship does not.
+- Each requirement is decided once per element and per request: a page of a hundred rows of
+  the same calendar asks once.
+- `pageSchemaOf(item)` and `streamSchemaOf(item)` carry the restricted fields of their item.
+  The rules apply to the properties of the schema given to `withFieldAccess`; a nested object is
+  restricted by wrapping its own schema.
+- Without `fieldAccess` in the options, a restricted field is left out of every answer and
+  refused in every body: nothing is shown by omission.
+- The rule `authz/fields-by-schema` of the checker and of the ESLint plugin refuses the
+  hand-written alternative, a test on the roles of the actor under `application/queries/`;
+  `authz/in-application` already refuses one in `presentation/`.
+
 ## Express 5
 
 ```ts
@@ -628,3 +672,6 @@ one document at a time: `/docs` lists their pages); one document is served as
   and the client sees a truncated body. The items of a stream are not checked one by one by
   `validateResponses`.
 - CSV is written, never read, and holds flat rows only.
+- Field access judges the fields a schema declares, not the rows: which rows an actor may read is
+  the access scope of the query. A requirement about an element is one decision per element of
+  the answer, recorded by the `onDecision` of the `Access` like any other.

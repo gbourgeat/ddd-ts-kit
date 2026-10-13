@@ -1,5 +1,6 @@
 import { err, ok } from '@ddd-ts-kit/kernel';
 import { customSchema, parseOrThrow, type Schema } from '@ddd-ts-kit/validation';
+import { fieldAccess } from '../field-access/field-access.js';
 import { isAsyncIterable } from '../support/is-async-iterable.js';
 
 /**
@@ -12,7 +13,7 @@ import { isAsyncIterable } from '../support/is-async-iterable.js';
 export function streamSchemaOf<T>(item: Schema<T>): Schema<AsyncIterable<T>> {
   const { $schema: _dialect, $defs, definitions, ...itemSchema } = item.toJsonSchema();
 
-  return customSchema(
+  const stream = customSchema(
     (input) =>
       isAsyncIterable(input)
         ? ok(checked(input, item))
@@ -24,6 +25,10 @@ export function streamSchemaOf<T>(item: Schema<T>): Schema<AsyncIterable<T>> {
       ...(definitions === undefined ? {} : { definitions }),
     },
   );
+
+  fieldAccess.carry(item, stream, ['*']);
+
+  return stream;
 }
 
 /** Each item through the schema as it is read: an item that does not match stops the list. */
