@@ -17,7 +17,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { englishPages, frenchOf, githubSlug } from '../../pipeline/monorepo/translations.mjs';
+import { englishPages, frenchOf, githubSlug, withoutTags } from '../../pipeline/monorepo/translations.mjs';
 import { homePage } from './home.mjs';
 import {
   BASE,
@@ -297,10 +297,7 @@ export function descriptionOf(body) {
 
 /** Inline Markdown as plain text: links as their text, no code marks, no emphasis, one line. */
 export function plainText(markdown) {
-  return markdown
-    .replace(/!?\[([^\]]*)\]\([^)]*\)/g, '$1')
-    .replace(/[`*]/g, '')
-    .replace(/<[^>]+>/g, '')
+  return withoutTags(markdown.replace(/!?\[([^\]]*)\]\([^)]*\)/g, '$1').replace(/[`*]/g, ''))
     .replace(/\s+/g, ' ')
     .trim();
 }

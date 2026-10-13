@@ -506,7 +506,7 @@ export function githubSlug(heading) {
  * The text without its HTML tags, read once from the left: what is left when
  * a tag is removed is never read again as a tag, so nothing is stripped twice.
  */
-function withoutTags(text) {
+export function withoutTags(text) {
   let kept = '';
   let index = 0;
 

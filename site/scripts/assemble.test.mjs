@@ -118,6 +118,8 @@ test('the switcher and the translation-of line are dropped, and the first headin
   assert.deepEqual(splitTitle('x.fr.md', withoutHead(french)), { title: 'Titre', body: 'Corps.\n' });
   assert.throws(() => splitTitle('x.md', 'Text first.\n\n# Title\n'), /does not start with a "# Title" line/);
   assert.equal(plainText('`ddd-ts-kit.config.json` and [a *link*](x.md)'), 'ddd-ts-kit.config.json and a link');
+  assert.equal(plainText('a <scr<script>ipt> b'), 'a ipt> b');
+  assert.equal(plainText('<b>bold</b> text'), 'bold text');
 });
 
 test('a link to a page leads to its route in the language of the page linked, its anchor kept', () => {
