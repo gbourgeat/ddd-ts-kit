@@ -41,9 +41,9 @@ export const STANDARD_FIXTURES: readonly Fixture[] = [
   {
     ruleId: 'aspects/outside-in',
     name: 'an aspect decorator in the shared kernel',
-    expect: { file: 'src/shared-kernel/money.vo.ts' },
+    expect: { file: 'src/shared-kernel/money.ts' },
     files: project({
-      'src/shared-kernel/money.vo.ts':
+      'src/shared-kernel/money.ts':
         "import { Cached } from '@ddd-ts-kit/aspects/decorators';\nexport class Money {}\nexport { Cached };\n",
     }),
   },

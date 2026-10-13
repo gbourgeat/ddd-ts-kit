@@ -35,6 +35,7 @@ import { TENANCY_FIXTURES } from './tenancy-fixtures.js';
 import { TEST_FIXTURES } from './test-fixtures.js';
 import { TRACING_FIXTURES } from './tracing-fixtures.js';
 import { TREE_FIXTURES } from './tree-fixtures.js';
+import { VALUE_OBJECT_FIXTURES } from './value-object-fixtures.js';
 import type { Fixture } from './fixture.js';
 
 /**
@@ -80,4 +81,5 @@ export const FIXTURES: readonly Fixture[] = [
   ...TEST_FIXTURES,
   ...TRACING_FIXTURES,
   ...TREE_FIXTURES,
+  ...VALUE_OBJECT_FIXTURES,
 ];
