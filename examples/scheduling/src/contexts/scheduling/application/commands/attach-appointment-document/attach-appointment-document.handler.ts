@@ -1,4 +1,4 @@
-import { unwrap, type Clock, type FileStaging } from '@ddd-ts-kit/kernel';
+import { type Clock, type FileStaging } from '@ddd-ts-kit/kernel';
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
 import { AppointmentError } from '@/contexts/scheduling/domain/errors/appointment.error';
 import type { AppointmentRepository } from '@/contexts/scheduling/domain/repositories/appointment.repository';
@@ -23,7 +23,7 @@ export class AttachAppointmentDocumentHandler implements CommandHandler<AttachAp
 
     const { file, fileName } = command.document;
     const now = this.clock.now();
-    const replaced = appointment.attachDocument(unwrap(AttachedDocument.create(file, fileName, now)), now);
+    const replaced = appointment.attachDocument(AttachedDocument.create(file, fileName, now), now);
 
     await this.appointmentRepository.save(appointment);
     await this.staging.promoteOnCommit(file.key);

@@ -114,5 +114,5 @@ function documentOf(row: AppointmentRow): Pick<AppointmentState, 'document'> {
     checksum: row.document_checksum ?? '',
   };
 
-  return { document: unwrap(AttachedDocument.create(file, row.document_name ?? '', row.document_attached_at)) };
+  return { document: AttachedDocument.create(file, row.document_name ?? '', row.document_attached_at) };
 }

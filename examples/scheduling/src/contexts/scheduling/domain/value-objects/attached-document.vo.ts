@@ -1,4 +1,4 @@
-import { ValueObject, err, ok, type Result, type StoredFile } from '@ddd-ts-kit/kernel';
+import { ValueObject, type StoredFile } from '@ddd-ts-kit/kernel';
 import { AppointmentError } from '@/contexts/scheduling/domain/errors/appointment.error';
 
 /** The longest name a document keeps: it is shown back to people, never used to find the file. */
@@ -20,14 +20,14 @@ export class AttachedDocument extends ValueObject<AttachedDocumentProps> {
   }
 
   /** The name is trimmed; a document sent without one is called `document`. */
-  static create(file: StoredFile, name: string, attachedAt: Date): Result<AttachedDocument, AppointmentError> {
+  static create(file: StoredFile, name: string, attachedAt: Date): AttachedDocument {
     const trimmed = name.trim();
 
     if (trimmed.length > LONGEST_NAME) {
-      return err(AppointmentError.documentNameTooLong(LONGEST_NAME));
+      throw AppointmentError.documentNameTooLong(LONGEST_NAME);
     }
 
-    return ok(new AttachedDocument({ file, name: trimmed === '' ? 'document' : trimmed, attachedAt }));
+    return new AttachedDocument({ file, name: trimmed === '' ? 'document' : trimmed, attachedAt });
   }
 
   get file(): StoredFile {

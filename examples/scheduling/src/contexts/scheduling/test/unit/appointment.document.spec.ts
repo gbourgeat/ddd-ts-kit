@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import { unwrap } from '@ddd-ts-kit/kernel';
 import { Cancellation } from '@/contexts/scheduling/domain/value-objects/cancellation.vo';
 import { anAppointment } from '@/contexts/scheduling/test/builders/appointment.builder';
 import { anAttachedDocument } from '@/contexts/scheduling/test/builders/attached-document.builder';
@@ -36,7 +35,7 @@ describe('The document of an appointment', () => {
 
     confirmed.attachDocument(anAttachedDocument(FIRST), NOW);
     confirmed.confirm(NOW);
-    cancelled.cancel(unwrap(Cancellation.create('patient')), NOW);
+    cancelled.cancel(Cancellation.create('patient'), NOW);
     cancelled.attachDocument(anAttachedDocument(SECOND), NOW);
 
     expect([confirmed.status, confirmed.document?.file.key]).toEqual(['booked', FIRST]);
