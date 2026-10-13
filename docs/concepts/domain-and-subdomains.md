@@ -1,3 +1,5 @@
+**English** · [Français](domain-and-subdomains.fr.md)
+
 # Domain and subdomains
 
 **Summary.** The domain is the area of activity the software serves; a subdomain is one part of

@@ -1,3 +1,5 @@
+**English** · [Français](commit-plan.fr.md)
+
 # Commit plan
 
 For the lead, who commits: the build ran without git (several workers on one tree), so the

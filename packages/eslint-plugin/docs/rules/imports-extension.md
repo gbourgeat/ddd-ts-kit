@@ -1,3 +1,5 @@
+**English** · [Français](imports-extension.fr.md)
+
 # ddd-ts-kit/imports-extension
 
 Architecture id: `imports/extension`. Default severity: `error` in `recommended`, `error` in `strict`. Fixable (`eslint --fix`).

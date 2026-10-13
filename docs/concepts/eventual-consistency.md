@@ -1,3 +1,5 @@
+**English** · [Français](eventual-consistency.fr.md)
+
 # Eventual consistency, explained to a product person
 
 **Summary.** In an application cut into bounded contexts, a change is immediately true in the

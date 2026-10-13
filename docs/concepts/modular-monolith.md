@@ -1,3 +1,5 @@
+**English** · [Français](modular-monolith.fr.md)
+
 # Modular monolith
 
 **Summary.** A modular monolith is one deployable application whose inside is cut into modules

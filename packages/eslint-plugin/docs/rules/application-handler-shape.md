@@ -1,3 +1,5 @@
+**English** · [Français](application-handler-shape.fr.md)
+
 # ddd-ts-kit/application-handler-shape
 
 Architecture id: `application/handler-shape` (added by this plugin). Default severity: `error` in `recommended`, `error` in `strict`.

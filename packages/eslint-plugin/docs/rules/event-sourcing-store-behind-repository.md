@@ -1,3 +1,5 @@
+**English** · [Français](event-sourcing-store-behind-repository.fr.md)
+
 # ddd-ts-kit/event-sourcing-store-behind-repository
 
 Architecture id: `event-sourcing/store-behind-repository`. Default severity: `error` in `recommended`, `error` in `strict`.

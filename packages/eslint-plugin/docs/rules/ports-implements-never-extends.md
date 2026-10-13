@@ -1,3 +1,5 @@
+**English** · [Français](ports-implements-never-extends.fr.md)
+
 # ddd-ts-kit/ports-implements-never-extends
 
 Architecture id: `ports/implements-never-extends`. Default severity: `error` in `recommended`, `error` in `strict`.

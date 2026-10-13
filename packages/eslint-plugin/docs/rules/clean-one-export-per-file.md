@@ -1,3 +1,5 @@
+**English** · [Français](clean-one-export-per-file.fr.md)
+
 # ddd-ts-kit/clean-one-export-per-file
 
 Architecture id: `clean/one-export-per-file`. Default severity: `error` in `recommended`, `error` in `strict`.

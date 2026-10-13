@@ -1,3 +1,5 @@
+**English** · [Français](quality-baseline.fr.md)
+
 # Quality baseline
 
 **Summary.** Every project the CLI generates, the example application and the kit itself carry

@@ -1,3 +1,5 @@
+**English** · [Français](transactional-outbox.fr.md)
+
 # Transactional outbox
 
 **Summary.** When a use case changes state in a database and must tell other contexts about it,

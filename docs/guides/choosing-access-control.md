@@ -1,3 +1,5 @@
+**English** · [Français](choosing-access-control.fr.md)
+
 # Choosing access control, with worked presets
 
 **Summary.** Five questions decide the authorization model of a project: whether rights depend on

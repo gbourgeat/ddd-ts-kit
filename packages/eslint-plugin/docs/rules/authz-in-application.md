@@ -1,3 +1,5 @@
+**English** · [Français](authz-in-application.fr.md)
+
 # ddd-ts-kit/authz-in-application
 
 Architecture id: `authz/in-application`. Default severity: `error` in `recommended`, `error` in `strict`.

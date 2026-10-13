@@ -1,3 +1,5 @@
+**English** · [Français](README.fr.md)
+
 # @ddd-ts-kit/typeorm
 
 TypeORM adapters of the kernel and events ports: a unit of work that repositories never see,

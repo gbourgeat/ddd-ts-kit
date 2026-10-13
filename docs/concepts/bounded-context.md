@@ -1,3 +1,5 @@
+**English** · [Français](bounded-context.fr.md)
+
 # Bounded context
 
 **Summary.** A bounded context is the explicit boundary inside which one model and one

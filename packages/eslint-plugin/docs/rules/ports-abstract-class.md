@@ -1,3 +1,5 @@
+**English** · [Français](ports-abstract-class.fr.md)
+
 # ddd-ts-kit/ports-abstract-class
 
 Architecture id: `ports/abstract-class`. Default severity: `error` in `recommended`, `error` in `strict`.

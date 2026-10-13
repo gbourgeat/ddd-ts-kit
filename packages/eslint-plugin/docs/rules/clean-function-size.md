@@ -1,3 +1,5 @@
+**English** · [Français](clean-function-size.fr.md)
+
 # ddd-ts-kit/clean-function-size
 
 Architecture id: `clean/function-size`. Default severity: `warn` in `recommended`, `error` in `strict`.

@@ -1,3 +1,5 @@
+**English** · [Français](contract-pairs.fr.md)
+
 # Contract pairs: an HTTP framework and a validation library
 
 **Summary.** A project of this kit declares each route once, as a controller class with one

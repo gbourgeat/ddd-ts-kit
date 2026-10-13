@@ -1,3 +1,5 @@
+**English** · [Français](scheduling-calendar.fr.md)
+
 # Briefing: scheduling, calendars and waitlist
 
 You build half of the bounded context `scheduling` (the core). Worker name: `scheduling-calendar`.

@@ -1,3 +1,5 @@
+**English** · [Français](testing-strategy.fr.md)
+
 # Testing strategy
 
 **Summary.** The kit tests behaviour through public interfaces at four levels (domain,

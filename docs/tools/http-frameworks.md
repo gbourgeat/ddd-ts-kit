@@ -1,3 +1,5 @@
+**English** · [Français](http-frameworks.fr.md)
+
 # HTTP frameworks: Express, Fastify, Hono, NestJS
 
 **Summary.** In this kit a route is declared once, as data plus a handler, and mounted on

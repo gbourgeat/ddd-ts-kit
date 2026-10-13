@@ -1,3 +1,5 @@
+**English** · [Français](cache-and-coordination.fr.md)
+
 # Cache and coordination: Redis, Dragonfly, Valkey
 
 **Summary.** `@ddd-ts-kit/redis` implements three kernel ports on the Redis protocol: `Cache`,

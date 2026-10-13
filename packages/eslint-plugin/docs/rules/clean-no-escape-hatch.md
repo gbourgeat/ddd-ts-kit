@@ -1,3 +1,5 @@
+**English** · [Français](clean-no-escape-hatch.fr.md)
+
 # ddd-ts-kit/clean-no-escape-hatch
 
 Architecture id: `clean/no-escape-hatch`. Default severity: `error` in `recommended`, `error` in `strict`.

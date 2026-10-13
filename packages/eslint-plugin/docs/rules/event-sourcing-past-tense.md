@@ -1,3 +1,5 @@
+**English** · [Français](event-sourcing-past-tense.fr.md)
+
 # ddd-ts-kit/event-sourcing-past-tense
 
 Architecture id: `event-sourcing/past-tense`. Default severity: `error` in `recommended`, `error` in `strict`.

@@ -1,3 +1,5 @@
+**English** · [Français](context-map.fr.md)
+
 # Context map (draft)
 
 | Downstream | Upstream | Pattern | What crosses | Why this pattern |

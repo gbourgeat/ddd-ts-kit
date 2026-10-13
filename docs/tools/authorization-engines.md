@@ -1,3 +1,5 @@
+**English** · [Français](authorization-engines.fr.md)
+
 # Authorization engines: in process or a dedicated service
 
 **Summary.** The kit decides permissions behind one port, `Authorizer`, and ships three

@@ -1,3 +1,5 @@
+**English** · [Français](layers-and-dependency-rule.fr.md)
+
 # Layers and the dependency rule
 
 **Summary.** A bounded context of this kit is cut into four layers: presentation, application,

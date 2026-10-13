@@ -1,3 +1,5 @@
+**English** · [Français](README.fr.md)
+
 # @ddd-ts-kit/di
 
 Context modules on top of [tsyringe](https://github.com/microsoft/tsyringe), for projects that

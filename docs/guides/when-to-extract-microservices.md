@@ -1,3 +1,5 @@
+**English** · [Français](when-to-extract-microservices.fr.md)
+
 # When to extract a microservice, and when not to
 
 **Summary.** Start with a modular monolith: one deployable whose bounded contexts are kept

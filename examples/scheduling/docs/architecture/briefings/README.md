@@ -1,3 +1,5 @@
+**English** · [Français](README.fr.md)
+
 # Briefings of the workers
 
 One file per worker, filled from the kit's `parallel-work/briefing-template.md`. What follows is

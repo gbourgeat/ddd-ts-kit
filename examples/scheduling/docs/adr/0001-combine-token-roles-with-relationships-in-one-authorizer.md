@@ -1,3 +1,5 @@
+**English** · [Français](0001-combine-token-roles-with-relationships-in-one-authorizer.fr.md)
+
 # ADR-0001: Combine token roles with relationships in one authorizer
 
 - Status: accepted

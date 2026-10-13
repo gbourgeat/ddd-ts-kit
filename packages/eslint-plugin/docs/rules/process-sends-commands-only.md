@@ -1,3 +1,5 @@
+**English** · [Français](process-sends-commands-only.fr.md)
+
 # ddd-ts-kit/process-sends-commands-only
 
 Architecture id: `process/sends-commands-only`. Default severity: `error` in `recommended`, `error` in `strict`.

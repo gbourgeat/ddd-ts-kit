@@ -1,3 +1,5 @@
+**English** · [Français](context-map.fr.md)
+
 # Context map
 
 **Summary.** A context map is the picture of how bounded contexts relate: who depends on whom

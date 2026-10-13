@@ -1,3 +1,5 @@
+**English** · [Français](file-import-export.fr.md)
+
 # File import and export
 
 **Status: a design, not built.** This page says how the kit intends to process a large file in

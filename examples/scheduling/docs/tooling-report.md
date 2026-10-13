@@ -1,3 +1,5 @@
+**English** · [Français](tooling-report.fr.md)
+
 # Tooling report
 
 How the kit behaved while this example was built, on 2026-10-10, by one conductor and seven

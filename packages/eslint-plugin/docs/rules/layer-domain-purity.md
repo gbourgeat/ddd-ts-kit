@@ -1,3 +1,5 @@
+**English** · [Français](layer-domain-purity.fr.md)
+
 # ddd-ts-kit/layer-domain-purity
 
 Architecture id: `layer/domain-purity`. Default severity: `error` in `recommended`, `error` in `strict`.

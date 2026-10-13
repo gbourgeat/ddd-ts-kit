@@ -1,3 +1,5 @@
+**English** · [Français](presentation-shared-cache-varies.fr.md)
+
 # ddd-ts-kit/presentation-shared-cache-varies
 
 Architecture id: `presentation/shared-cache-varies` (added by this plugin). Default severity: `error` in `recommended`, `error` in `strict`.

@@ -1,3 +1,5 @@
+**English** · [Français](scheduled-jobs.fr.md)
+
 # Scheduled jobs
 
 **Summary.** A scheduled job is work started by time instead of by a request or an event:

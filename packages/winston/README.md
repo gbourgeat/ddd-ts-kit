@@ -1,3 +1,5 @@
+**English** · [Français](README.fr.md)
+
 # @ddd-ts-kit/winston
 
 The kernel `Logger` port on [winston](https://github.com/winstonjs/winston): JSON lines on the

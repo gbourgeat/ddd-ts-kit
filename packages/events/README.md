@@ -1,3 +1,5 @@
+**English** · [Français](README.fr.md)
+
 # @ddd-ts-kit/events
 
 Integration events between bounded contexts, independent of any broker: typed declarations,

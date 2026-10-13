@@ -1,3 +1,5 @@
+**English** · [Français](README.fr.md)
+
 # Concepts: a reading path
 
 **Summary.** These pages explain the ideas this kit is built on: Domain-Driven Design

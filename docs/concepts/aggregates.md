@@ -1,3 +1,5 @@
+**English** · [Français](aggregates.fr.md)
+
 # Aggregates
 
 **Summary.** An aggregate is a cluster of entities and value objects that changes as one unit,

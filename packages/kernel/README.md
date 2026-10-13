@@ -1,3 +1,5 @@
+**English** · [Français](README.fr.md)
+
 # @ddd-ts-kit/kernel
 
 The building blocks every context depends on, and nothing else: no framework, no ORM, no

@@ -1,3 +1,5 @@
+**English** · [Français](identity.fr.md)
+
 # Identity: Keycloak or plain OIDC and JWT
 
 **Summary.** Identity is a generic subdomain: who a person is, how they sign in, how a password

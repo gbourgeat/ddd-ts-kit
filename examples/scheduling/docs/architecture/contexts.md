@@ -1,3 +1,5 @@
+**English** · [Français](contexts.fr.md)
+
 # Bounded contexts
 
 | Context | Classification | Purpose (two sentences, business terms) | Owns (events of the timeline) | Owner |

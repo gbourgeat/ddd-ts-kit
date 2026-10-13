@@ -1,3 +1,5 @@
+**English** · [Français](token-economy.fr.md)
+
 # Token economy: spending less with coding agents
 
 **Summary.** A coding agent pays for everything it reads, on every turn, and most of what it

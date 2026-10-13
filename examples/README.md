@@ -1,3 +1,5 @@
+**English** · [Français](README.fr.md)
+
 # Examples
 
 [scheduling](scheduling/README.md) is an appointment scheduling platform for practices, built

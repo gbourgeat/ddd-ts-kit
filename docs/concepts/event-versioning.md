@@ -1,3 +1,5 @@
+**English** · [Français](event-versioning.fr.md)
+
 # Versioning an integration event
 
 **Summary.** An integration event is a contract: once another context consumes it, the producer

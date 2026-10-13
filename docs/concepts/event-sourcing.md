@@ -1,3 +1,5 @@
+**English** · [Français](event-sourcing.fr.md)
+
 # Event sourcing, per aggregate
 
 **Summary.** An event-sourced aggregate keeps no row of state: it keeps the facts that happened

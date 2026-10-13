@@ -1,3 +1,5 @@
+**English** · [Français](commit-discipline.fr.md)
+
 # Commit and pull request discipline
 
 **Summary.** A commit carries one use case or one concept, together with everything that was

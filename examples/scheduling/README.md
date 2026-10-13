@@ -1,3 +1,5 @@
+**English** · [Français](README.fr.md)
+
 # Scheduling: the example application of ddd-ts-kit
 
 An appointment scheduling platform for practices, built with the kit the way a user of the kit

@@ -1,3 +1,5 @@
+**English** · [Français](README.fr.md)
+
 # @ddd-ts-kit/testing
 
 Readable tests without mocks: test data builders, given / when / then scenarios for

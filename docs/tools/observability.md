@@ -1,3 +1,5 @@
+**English** · [Français](observability.fr.md)
+
 # Observability: tracing backends, loggers and error tracking
 
 **Summary.** Three decisions hide under one word. Where traces go (the kit emits OpenTelemetry

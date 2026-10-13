@@ -1,3 +1,5 @@
+**English** · [Français](event-sourcing-projection-never-appends.fr.md)
+
 # ddd-ts-kit/event-sourcing-projection-never-appends
 
 Architecture id: `event-sourcing/projection-never-appends`. Default severity: `error` in `recommended`, `error` in `strict`.

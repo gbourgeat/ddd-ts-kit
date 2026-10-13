@@ -1,3 +1,5 @@
+**English** · [Français](clean-function-ceiling.fr.md)
+
 # ddd-ts-kit/clean-function-ceiling
 
 Architecture id: `clean/function-size`. Default severity: `error` in `recommended`, `error` in `strict`.

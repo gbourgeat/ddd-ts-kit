@@ -1,3 +1,5 @@
+**English** · [Français](audit-trail.fr.md)
+
 # Audit trail
 
 **Summary.** An audit trail answers "who did what, on what, when, with what outcome, on whose

@@ -1,3 +1,5 @@
+**English** · [Français](ARCHITECTURE.fr.md)
+
 # Architecture reference
 
 The single normative document. The CLI (`ddd-ts-kit check`), the templates, the skills and the

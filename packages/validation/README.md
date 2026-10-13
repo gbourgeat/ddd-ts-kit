@@ -1,3 +1,5 @@
+**English** · [Français](README.fr.md)
+
 # @ddd-ts-kit/validation
 
 One `Schema` contract for input validation at the boundary, with adapters for zod,

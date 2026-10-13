@@ -1,3 +1,5 @@
+**English** · [Français](ports-value-import.fr.md)
+
 # ddd-ts-kit/ports-value-import
 
 Architecture id: `ports/value-import`. Default severity: `error` in `recommended`, `error` in `strict`. Fixable with `--fix`.

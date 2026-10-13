@@ -1,3 +1,5 @@
+**English** · [Français](delivery-and-idempotency.fr.md)
+
 # Delivery guarantees and idempotent consumers
 
 **Summary.** Integration events in this kit are delivered at least once: every event reaches

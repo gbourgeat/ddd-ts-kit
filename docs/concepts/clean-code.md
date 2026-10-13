@@ -1,3 +1,5 @@
+**English** · [Français](clean-code.fr.md)
+
 # Clean code as applied here
 
 **Summary.** The kit applies a small, enforceable subset of Robert C. Martin's Clean Code to

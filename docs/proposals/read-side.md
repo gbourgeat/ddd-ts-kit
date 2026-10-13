@@ -1,3 +1,5 @@
+**English** · [Français](read-side.fr.md)
+
 # Proposal: the read side
 
 This page describes what the kit adds, or would add, for reading data: criteria and filters,

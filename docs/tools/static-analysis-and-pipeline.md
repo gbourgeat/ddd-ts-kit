@@ -1,3 +1,5 @@
+**English** · [Français](static-analysis-and-pipeline.fr.md)
+
 # Static analysis and the pipeline
 
 **Summary.** The architecture is held by analyzers, not by review comments. Three of them share

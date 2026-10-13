@@ -1,3 +1,5 @@
+**English** · [Français](authentication-and-authorization.fr.md)
+
 # Authentication and authorization
 
 **Summary.** Authentication answers "who is calling", authorization answers "may this actor do

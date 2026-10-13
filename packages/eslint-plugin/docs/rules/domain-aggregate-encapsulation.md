@@ -1,3 +1,5 @@
+**English** · [Français](domain-aggregate-encapsulation.fr.md)
+
 # ddd-ts-kit/domain-aggregate-encapsulation
 
 Architecture id: `domain/aggregate-encapsulation` (added by this plugin). Default severity: `error` in `recommended`, `error` in `strict`.

@@ -1,3 +1,5 @@
+**English** · [Français](sagas-and-process-managers.fr.md)
+
 # Sagas and process managers
 
 **Summary.** A business process that spans several aggregates or contexts cannot be one

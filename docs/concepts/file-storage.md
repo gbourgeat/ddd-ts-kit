@@ -1,3 +1,5 @@
+**English** · [Français](file-storage.fr.md)
+
 # File storage
 
 **Summary.** A file (a scan, a photo, a signed contract, an export) is kept in a file storage,

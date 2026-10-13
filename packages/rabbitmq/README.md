@@ -1,3 +1,5 @@
+**English** · [Français](README.fr.md)
+
 # @ddd-ts-kit/rabbitmq
 
 The integration event provider for RabbitMQ: an `EventBus` of the kernel that publishes with

@@ -1,3 +1,5 @@
+**English** · [Français](domain-and-integration-events.fr.md)
+
 # Domain events and integration events
 
 **Summary.** An event states that something happened, in the past tense. This kit distinguishes

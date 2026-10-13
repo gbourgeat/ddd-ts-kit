@@ -1,3 +1,5 @@
+**English** · [Français](team-workflow.fr.md)
+
 # Working as a team on a DDD project
 
 **Summary.** A bounded context is a unit of ownership as much as a unit of code. This guide

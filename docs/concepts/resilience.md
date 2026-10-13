@@ -1,3 +1,5 @@
+**English** · [Français](resilience.fr.md)
+
 # Resilience
 
 **Summary.** A call that leaves the process can be slow, fail, or never answer. Five patterns

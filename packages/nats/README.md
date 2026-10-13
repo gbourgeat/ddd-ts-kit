@@ -1,3 +1,5 @@
+**English** · [Français](README.fr.md)
+
 # @ddd-ts-kit/nats
 
 The integration event provider for NATS JetStream: an `EventBus` of the kernel that publishes

@@ -1,3 +1,5 @@
+**English** · [Français](needs.fr.md)
+
 # Statement of needs
 
 Stated by the product owner of a network of professional practices (medical, paramedical, legal:

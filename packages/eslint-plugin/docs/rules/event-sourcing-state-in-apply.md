@@ -1,3 +1,5 @@
+**English** · [Français](event-sourcing-state-in-apply.fr.md)
+
 # ddd-ts-kit/event-sourcing-state-in-apply
 
 Architecture id: `event-sourcing/state-in-apply`. Default severity: `error` in `recommended`, `error` in `strict`.

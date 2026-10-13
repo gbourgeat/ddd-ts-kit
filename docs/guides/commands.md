@@ -1,3 +1,5 @@
+**English** · [Français](commands.fr.md)
+
 # Which command, when
 
 **Summary.** The commands of the CLI and the skills of the plugin, by the moment of a project's

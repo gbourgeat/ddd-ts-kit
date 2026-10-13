@@ -1,3 +1,5 @@
+**English** · [Français](README.fr.md)
+
 # @ddd-ts-kit/s3
 
 The kernel `FileStorage` on any provider of the S3 protocol: AWS S3, MinIO, OVHcloud Object

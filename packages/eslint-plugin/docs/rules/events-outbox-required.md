@@ -1,3 +1,5 @@
+**English** · [Français](events-outbox-required.fr.md)
+
 # ddd-ts-kit/events-outbox-required
 
 Architecture id: `events/outbox-required`. Default severity: `error` in `recommended`, `error` in `strict`.

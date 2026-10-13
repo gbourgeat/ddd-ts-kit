@@ -1,3 +1,5 @@
+**English** · [Français](README.fr.md)
+
 # @ddd-ts-kit/tracing
 
 OpenTelemetry tracing that the domain never sees. Nothing in `domain/` or `application/` imports

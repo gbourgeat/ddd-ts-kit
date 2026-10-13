@@ -1,3 +1,5 @@
+**English** · [Français](methodology.fr.md)
+
 # Methodology: from a statement of needs to running code
 
 **Summary.** This guide walks the path the plugin drives, step by step: discover the domain in

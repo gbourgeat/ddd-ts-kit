@@ -1,3 +1,5 @@
+**English** · [Français](ports-no-token-constant.fr.md)
+
 # ddd-ts-kit/ports-no-token-constant
 
 Architecture id: `ports/no-token-constant`. Default severity: `error` in `recommended`, `error` in `strict`.

@@ -1,3 +1,5 @@
+**English** · [Français](layer-application-inward.fr.md)
+
 # ddd-ts-kit/layer-application-inward
 
 Architecture id: `layer/application-inward`. Default severity: `error` in `recommended`, `error` in `strict`.

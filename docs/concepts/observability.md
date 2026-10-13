@@ -1,3 +1,5 @@
+**English** · [Français](observability.fr.md)
+
 # Observability
 
 **Summary.** Four signals tell what a running system does: traces (where the time of one unit

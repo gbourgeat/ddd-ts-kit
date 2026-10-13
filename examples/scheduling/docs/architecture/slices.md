@@ -1,3 +1,5 @@
+**English** · [Français](slices.fr.md)
+
 # Slices
 
 `Start with` holds generator commands without the runner: in this example they are run with

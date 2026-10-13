@@ -1,3 +1,5 @@
+**English** · [Français](clean-no-commented-out-code.fr.md)
+
 # ddd-ts-kit/clean-no-commented-out-code
 
 Architecture id: `clean/no-commented-out-code`. Default severity: `error` in `recommended`, `error` in `strict`.

@@ -1,3 +1,5 @@
+**English** · [Français](anemic-model.fr.md)
+
 # Anemic model
 
 **Summary.** An anemic domain model has the classes of a domain model and none of its

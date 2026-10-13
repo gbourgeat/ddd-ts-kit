@@ -1,3 +1,5 @@
+**English** · [Français](clean-blank-lines.fr.md)
+
 # clean/blank-lines (layout)
 
 Architecture id: `clean/blank-lines`. Default severity: `error` in `recommended`, `error` in `strict`. Fixable with `--fix`.

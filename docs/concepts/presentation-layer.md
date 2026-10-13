@@ -1,3 +1,5 @@
+**English** · [Français](presentation-layer.fr.md)
+
 # The presentation layer: controllers, route groups, guards
 
 **Summary.** A route is one class with one method, `handle`, whose decorator is the single

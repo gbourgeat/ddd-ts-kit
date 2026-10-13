@@ -1,3 +1,5 @@
+**English** · [Français](state-machines.fr.md)
+
 # State machines
 
 **Summary.** Many aggregates have a status that moves through a lifecycle: an appointment is

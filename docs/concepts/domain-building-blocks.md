@@ -1,3 +1,5 @@
+**English** · [Français](domain-building-blocks.fr.md)
+
 # Domain events, domain services, repositories and factories
 
 **Summary.** Four building blocks complete entities, value objects and aggregates. A domain

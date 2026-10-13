@@ -1,3 +1,5 @@
+**English** · [Français](validation.fr.md)
+
 # Validation libraries: zod, class-validator, TypeBox, Standard Schema
 
 **Summary.** Validation in this kit means one thing: checking the shape of what crosses a

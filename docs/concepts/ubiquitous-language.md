@@ -1,3 +1,5 @@
+**English** · [Français](ubiquitous-language.fr.md)
+
 # Ubiquitous language
 
 **Summary.** The ubiquitous language is the vocabulary a team and its domain experts agree on

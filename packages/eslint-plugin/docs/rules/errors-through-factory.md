@@ -1,3 +1,5 @@
+**English** · [Français](errors-through-factory.fr.md)
+
 # ddd-ts-kit/errors-through-factory
 
 Architecture id: `errors/through-factory`. Default severity: `error` in `recommended`, `error` in `strict`.

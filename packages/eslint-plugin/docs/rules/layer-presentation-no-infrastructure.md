@@ -1,3 +1,5 @@
+**English** · [Français](layer-presentation-no-infrastructure.fr.md)
+
 # ddd-ts-kit/layer-presentation-no-infrastructure
 
 Architecture id: `layer/presentation-no-infrastructure`. Default severity: `error` in `recommended`, `error` in `strict`.

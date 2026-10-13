@@ -1,3 +1,5 @@
+**English** · [Français](background-jobs.fr.md)
+
 # Background jobs
 
 **Summary.** A background job is work a use case hands to a worker, to run later and outside

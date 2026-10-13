@@ -1,3 +1,5 @@
+**English** · [Français](clean-no-noise-comment.fr.md)
+
 # ddd-ts-kit/clean-no-noise-comment
 
 Architecture id: `clean/no-noise-comment`. Default severity: `warn` in `recommended`, `error` in `strict`.

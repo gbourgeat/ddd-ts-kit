@@ -1,3 +1,5 @@
+**English** · [Français](identity.fr.md)
+
 # Briefing: identity
 
 You build the bounded context `identity` of the scheduling example. Worker name: `identity`.

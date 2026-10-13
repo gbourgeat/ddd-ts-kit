@@ -1,3 +1,5 @@
+**English** · [Français](README.fr.md)
+
 # @ddd-ts-kit/eslint-plugin
 
 AST-accurate ESLint rules for the architecture of [docs/ARCHITECTURE.md](../../docs/ARCHITECTURE.md):

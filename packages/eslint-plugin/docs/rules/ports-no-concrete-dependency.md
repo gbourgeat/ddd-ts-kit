@@ -1,3 +1,5 @@
+**English** · [Français](ports-no-concrete-dependency.fr.md)
+
 # ddd-ts-kit/ports-no-concrete-dependency
 
 Architecture id: `ports/no-concrete-dependency`. Default severity: `error` in `recommended`, `error` in `strict`.

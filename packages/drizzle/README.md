@@ -1,3 +1,5 @@
+**English** · [Français](README.fr.md)
+
 # @ddd-ts-kit/drizzle
 
 Drizzle adapters of the kernel and events ports on PostgreSQL: a unit of work that

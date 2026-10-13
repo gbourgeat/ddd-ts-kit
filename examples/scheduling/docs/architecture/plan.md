@@ -1,3 +1,5 @@
+**English** · [Français](plan.fr.md)
+
 # Architecture plan
 
 Next: done

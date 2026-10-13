@@ -1,3 +1,5 @@
+**English** · [Français](README.fr.md)
+
 # @ddd-ts-kit/aspects
 
 Logging, metrics, retries, timeouts, circuit breakers and caching are not business logic, so

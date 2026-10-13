@@ -1,3 +1,5 @@
+**English** · [Français](README.fr.md)
+
 # @ddd-ts-kit/http
 
 Declare a route once, without a framework. Mount it on Express 5, Fastify 5, Hono 4 (on Node)

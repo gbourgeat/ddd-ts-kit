@@ -1,3 +1,5 @@
+**English** · [Français](README.fr.md)
+
 # @ddd-ts-kit/openfga
 
 The relationships of [`@ddd-ts-kit/auth`](../auth/README.md) on [OpenFGA](https://openfga.dev),

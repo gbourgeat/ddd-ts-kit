@@ -1,3 +1,5 @@
+**English** · [Français](README.fr.md)
+
 # ddd-ts-kit
 
 Bootstrap, scaffold, document and verify Domain-Driven Design and Clean Architecture projects

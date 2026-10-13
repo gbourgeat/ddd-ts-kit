@@ -1,3 +1,5 @@
+**English** · [Français](README.fr.md)
+
 # @ddd-ts-kit/scheduling
 
 Scheduled jobs and background jobs for a project built with the kit. A scheduled job is a class

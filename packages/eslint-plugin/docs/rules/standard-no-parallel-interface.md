@@ -1,3 +1,5 @@
+**English** · [Français](standard-no-parallel-interface.fr.md)
+
 # ddd-ts-kit/standard-no-parallel-interface
 
 Architecture id: `standard/no-parallel-interface`. Default severity: `warn` in `recommended`, `error` in `strict`.

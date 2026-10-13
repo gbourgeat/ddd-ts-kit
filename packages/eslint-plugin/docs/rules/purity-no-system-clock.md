@@ -1,3 +1,5 @@
+**English** · [Français](purity-no-system-clock.fr.md)
+
 # ddd-ts-kit/purity-no-system-clock
 
 Architecture id: `purity/no-system-clock`. Default severity: `error` in `recommended`, `error` in `strict`.

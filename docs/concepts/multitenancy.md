@@ -1,3 +1,5 @@
+**English** · [Français](multitenancy.fr.md)
+
 # Multitenancy
 
 **Summary.** A multi-tenant application serves several customers (tenants) from one deployment,

@@ -1,3 +1,5 @@
+**English** · [Français](README.fr.md)
+
 # @ddd-ts-kit/audit
 
 A tamper-evident audit trail that the use cases never write to. Who was allowed or refused

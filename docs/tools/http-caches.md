@@ -1,3 +1,5 @@
+**English** · [Français](http-caches.fr.md)
+
 # HTTP caches: Varnish, Souin, nginx, Fastly, Cloudflare, Bunny
 
 **Summary.** A shared HTTP cache in front of the API answers the reads that are the same for

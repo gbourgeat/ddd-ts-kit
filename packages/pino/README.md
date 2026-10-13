@@ -1,3 +1,5 @@
+**English** · [Français](README.fr.md)
+
 # @ddd-ts-kit/pino
 
 The kernel `Logger` port on [pino](https://getpino.io): JSON lines on the standard output, the

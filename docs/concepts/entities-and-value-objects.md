@@ -1,3 +1,5 @@
+**English** · [Français](entities-and-value-objects.fr.md)
+
 # Entities and value objects
 
 **Summary.** The domain model is made of two kinds of objects. An entity has an identity that

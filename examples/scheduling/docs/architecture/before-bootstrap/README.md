@@ -1,3 +1,5 @@
+**English** · [Français](README.fr.md)
+
 # Artefacts consumed by the bootstrap
 
 The method writes the glossary and the draft of the context map before the project exists, then

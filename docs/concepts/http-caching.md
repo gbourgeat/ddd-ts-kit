@@ -1,3 +1,5 @@
+**English** · [Français](http-caching.fr.md)
+
 # HTTP caching
 
 **Summary.** A read that many callers ask the same way can be answered without reaching the

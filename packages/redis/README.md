@@ -1,3 +1,5 @@
+**English** · [Français](README.fr.md)
+
 # @ddd-ts-kit/redis
 
 Adapters of kernel ports on the Redis protocol: the `Cache`, `Lock` and `RateLimiter` ports,

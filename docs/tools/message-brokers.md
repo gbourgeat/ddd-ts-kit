@@ -1,3 +1,5 @@
+**English** · [Français](message-brokers.fr.md)
+
 # Message brokers: in-process, RabbitMQ, Kafka, NATS JetStream, Redis Streams
 
 **Summary.** Integration events between bounded contexts leave through the transactional

@@ -1,3 +1,5 @@
+**English** · [Français](0002-keep-read-models-with-projections-in-application-projections.fr.md)
+
 # ADR-0002: Keep read models with projections in application/projections
 
 - Status: superseded on 2026-10-12 by the kit: `application/projections/` is a role of the canonical tree

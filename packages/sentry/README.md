@@ -1,3 +1,5 @@
+**English** · [Français](README.fr.md)
+
 # @ddd-ts-kit/sentry
 
 The kernel `ErrorReporter` on Sentry or on GlitchTip, which speaks the same protocol: one adapter,

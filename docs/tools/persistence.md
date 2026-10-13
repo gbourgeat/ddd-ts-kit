@@ -1,3 +1,5 @@
+**English** · [Français](persistence.fr.md)
+
 # Persistence: Drizzle, Knex, Prisma, TypeORM, and which database
 
 **Summary.** In this architecture an ORM is an implementation detail of

@@ -1,3 +1,5 @@
+**English** · [Français](import-aliases.fr.md)
+
 # Import aliases: tsconfig `paths`, rewritten at build
 
 **Summary.** A project built with the kit imports its own files by an alias, never by a

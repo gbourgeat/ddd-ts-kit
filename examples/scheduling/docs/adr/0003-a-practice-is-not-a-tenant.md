@@ -1,3 +1,5 @@
+**English** · [Français](0003-a-practice-is-not-a-tenant.fr.md)
+
 # ADR-0003: A practice is not a tenant
 
 - Status: proposed (awaiting the decision of the owner of the kit)

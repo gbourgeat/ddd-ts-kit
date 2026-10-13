@@ -1,3 +1,5 @@
+**English** · [Français](clean-no-hash-private.fr.md)
+
 # ddd-ts-kit/clean-no-hash-private
 
 Architecture id: `clean/no-hash-private`. Default severity: `error` in `recommended`, `error` in `strict`. Fixable with `--fix`.

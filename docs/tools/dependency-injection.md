@@ -1,3 +1,5 @@
+**English** · [Français](dependency-injection.fr.md)
+
 # Dependency injection: tsyringe with declarations, NestJS, manual wiring
 
 **Summary.** Clean Architecture needs one thing from dependency injection: a single place, the

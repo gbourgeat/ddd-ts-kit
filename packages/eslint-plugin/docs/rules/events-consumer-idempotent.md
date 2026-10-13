@@ -1,3 +1,5 @@
+**English** · [Français](events-consumer-idempotent.fr.md)
+
 # ddd-ts-kit/events-consumer-idempotent
 
 Architecture id: `events/consumer-idempotent`. Default severity: `error` in `recommended`, `error` in `strict`.

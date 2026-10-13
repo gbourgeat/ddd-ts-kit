@@ -1,3 +1,5 @@
+**English** · [Français](application-command-query-separation.fr.md)
+
 # ddd-ts-kit/application-command-query-separation
 
 Architecture id: `application/command-query-separation` (added by this plugin). Default severity: `warn` in `recommended`, `error` in `strict`.

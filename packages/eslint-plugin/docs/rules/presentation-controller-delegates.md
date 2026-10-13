@@ -1,3 +1,5 @@
+**English** · [Français](presentation-controller-delegates.fr.md)
+
 # ddd-ts-kit/presentation-controller-delegates
 
 Architecture id: `presentation/controller-delegates` (added by this plugin). Default severity: `error` in `recommended`, `error` in `strict`.

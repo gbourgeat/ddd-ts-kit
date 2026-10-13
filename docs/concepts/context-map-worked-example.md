@@ -1,3 +1,5 @@
+**English** · [Français](context-map-worked-example.fr.md)
+
 # A worked example: the context map of the scheduling application
 
 **Summary.** This page walks from a plain statement of needs to a context map, step by step:

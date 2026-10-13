@@ -1,3 +1,5 @@
+**English** · [Français](clean-stepdown.fr.md)
+
 # ddd-ts-kit/clean-stepdown
 
 Architecture id: `clean/stepdown`. Default severity: `error` in `recommended`, `error` in `strict`.

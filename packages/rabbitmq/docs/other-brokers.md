@@ -1,3 +1,5 @@
+**English** · [Français](other-brokers.fr.md)
+
 # The same provider on other brokers
 
 What an integration event provider owes, whatever the broker, and where each one stands:

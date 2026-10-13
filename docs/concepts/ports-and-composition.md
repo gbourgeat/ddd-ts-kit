@@ -1,3 +1,5 @@
+**English** · [Français](ports-and-composition.fr.md)
+
 # Ports and composition
 
 **Summary.** A port is what the inner layers need from the outside, stated in their own words.

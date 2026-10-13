@@ -1,3 +1,5 @@
+**English** · [Français](invariants-permissions-validation.fr.md)
+
 # Invariants, permissions and validation
 
 **Summary.** Three kinds of "this request is refused" exist in a business application, and

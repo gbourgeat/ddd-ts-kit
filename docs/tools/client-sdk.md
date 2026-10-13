@@ -1,3 +1,5 @@
+**English** · [Français](client-sdk.fr.md)
+
 # Client SDK: a typed client from the OpenAPI contract
 
 **Summary.** A project of the kit writes its OpenAPI contract from its routes

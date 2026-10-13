@@ -1,3 +1,5 @@
+**English** · [Français](cqrs.fr.md)
+
 # CQRS as used here
 
 **Summary.** Command Query Responsibility Segregation separates the code that changes state from

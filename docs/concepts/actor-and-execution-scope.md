@@ -1,3 +1,5 @@
+**English** · [Français](actor-and-execution-scope.fr.md)
+
 # The actor and the execution scope
 
 **Summary.** Two mechanisms carry "who and why" through the system, and they are deliberately

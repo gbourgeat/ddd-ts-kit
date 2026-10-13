@@ -1,3 +1,5 @@
+**English** · [Français](parallel-work.fr.md)
+
 # Parallel work without collisions
 
 **Summary.** Several people, or several coding agents, can build one project at the same time

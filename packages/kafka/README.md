@@ -1,3 +1,5 @@
+**English** · [Français](README.fr.md)
+
 # @ddd-ts-kit/kafka
 
 The integration event provider for Apache Kafka: an `EventBus` of the kernel that publishes

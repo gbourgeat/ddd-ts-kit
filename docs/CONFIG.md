@@ -1,3 +1,5 @@
+**English** · [Français](CONFIG.fr.md)
+
 # `ddd-ts-kit.config.json`
 
 Read by the CLI, the ESLint plugin, the editor hook and the skills. It lives at the root of

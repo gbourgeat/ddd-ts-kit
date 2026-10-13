@@ -1,3 +1,5 @@
+**English** · [Français](file-storage.fr.md)
+
 # File storage connectors
 
 **Summary.** Files live behind the `FileStorage` port of the kernel. The kit ships three

@@ -1,3 +1,5 @@
+**English** · [Français](errors-constructor-not-public.fr.md)
+
 # ddd-ts-kit/errors-constructor-not-public
 
 Architecture id: `errors/constructor-not-public`. Default severity: `error` in `recommended`, `error` in `strict`.

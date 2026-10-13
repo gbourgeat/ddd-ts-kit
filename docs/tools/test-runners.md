@@ -1,3 +1,5 @@
+**English** · [Français](test-runners.fr.md)
+
 # Test runners: Vitest and Jest
 
 **Summary.** The testing approach of the kit (fakes instead of mocks, builders, contract
