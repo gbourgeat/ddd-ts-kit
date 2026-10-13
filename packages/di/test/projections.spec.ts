@@ -213,6 +213,7 @@ describe('a declared projection, seen from outside', () => {
         name: NAME,
         projection: 'CustomerOrdersProjection',
         module: 'reporting',
+        feed: 'dispatch',
         applies: [
           { kind: 'integration', event: 'ordering.order.placed', version: 1, method: 'orderPlaced' },
           { kind: 'domain', event: 'reporting.customer.forgotten', method: 'forgotten' },

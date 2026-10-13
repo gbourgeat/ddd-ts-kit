@@ -1,7 +1,7 @@
 openapi: '3.1.0'
 info:
   title: scheduling
-  version: '0.9.0'
+  version: '0.10.0'
 tags:
   - name: analytics
   - name: audit
@@ -2630,6 +2630,173 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
           x-error-codes:
+            - VALIDATION_FAILED
+  /practices/{practiceId}/patients/{patientId}/attendance:
+    get:
+      operationId: searchAttendanceHistory
+      summary: Search attendance history
+      tags:
+        - scheduling
+      security:
+        - bearer: []
+      parameters:
+        - name: practiceId
+          in: path
+          schema:
+            type: string
+          required: true
+        - name: patientId
+          in: path
+          schema:
+            type: string
+          required: true
+        - name: filter[recordId]
+          in: query
+          description: 'Filters on `recordId`, written `<operator>:<value>`; the value alone means `eq`. Operators: eq. The value is text.'
+          required: false
+          schema:
+            type: string
+            description: 'Filters on `recordId`, written `<operator>:<value>`; the value alone means `eq`. Operators: eq. The value is text.'
+            x-filter-operators:
+              - eq
+            x-filter-type: string
+        - name: filter[fact]
+          in: query
+          description: 'Filters on `fact`, written `<operator>:<value>`; the value alone means `eq`. Operators: eq, in. The value is text.'
+          required: false
+          schema:
+            type: string
+            description: 'Filters on `fact`, written `<operator>:<value>`; the value alone means `eq`. Operators: eq, in. The value is text.'
+            x-filter-operators:
+              - eq
+              - in
+            x-filter-type: string
+        - name: filter[appointmentId]
+          in: query
+          description: 'Filters on `appointmentId`, written `<operator>:<value>`; the value alone means `eq`. Operators: eq. The value is text.'
+          required: false
+          schema:
+            type: string
+            description: 'Filters on `appointmentId`, written `<operator>:<value>`; the value alone means `eq`. Operators: eq. The value is text.'
+            x-filter-operators:
+              - eq
+            x-filter-type: string
+        - name: sort
+          in: query
+          description: The fields to sort by, a leading "-" for descending, repeated or separated by commas.
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - version
+                - '-version'
+                - notedAt
+                - '-notedAt'
+                - id
+                - '-id'
+            description: The fields to sort by, a leading "-" for descending, repeated or separated by commas.
+        - name: limit
+          in: query
+          description: Size of the page.
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+            description: Size of the page.
+        - name: offset
+          in: query
+          description: Items to skip. Not with `cursor`.
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            description: Items to skip. Not with `cursor`.
+        - name: cursor
+          in: query
+          description: The `nextCursor` of the previous page. Not with `offset`.
+          required: false
+          schema:
+            type: string
+            minLength: 1
+            description: The `nextCursor` of the previous page. Not with `offset`.
+      responses:
+        '200':
+          description: One page of the history, oldest fact first.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - items
+                properties:
+                  items:
+                    type: array
+                    items:
+                      properties:
+                        version:
+                          type: integer
+                        fact:
+                          type: string
+                          enum:
+                            - opened
+                            - no-show
+                            - cancellation
+                        notedAt:
+                          oneOf:
+                            - format: date
+                              type: string
+                            - format: date-time
+                              type: string
+                        appointmentId:
+                          type: string
+                        startsAt:
+                          oneOf:
+                            - format: date
+                              type: string
+                            - format: date-time
+                              type: string
+                        reason:
+                          type: string
+                      type: object
+                      required:
+                        - version
+                        - fact
+                        - notedAt
+                  total:
+                    type: integer
+                    minimum: 0
+                    description: Present when it is cheap to count.
+                  nextCursor:
+                    type: string
+                    description: Present when more items follow.
+        '401':
+          description: 'Unauthorized. Error codes: UNAUTHORIZED.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - UNAUTHORIZED
+        '403':
+          description: 'Forbidden. Error codes: FORBIDDEN.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - FORBIDDEN
+        '422':
+          description: 'Unprocessable Content. Error codes: INVALID_CRITERIA, VALIDATION_FAILED.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - INVALID_CRITERIA
             - VALIDATION_FAILED
 components:
   schemas:

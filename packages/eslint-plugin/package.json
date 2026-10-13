@@ -1,6 +1,6 @@
 {
   "name": "@ddd-ts-kit/eslint-plugin",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "description": "AST-accurate ESLint rules for DDD and Clean Architecture in TypeScript: layer and context isolation, domain purity, clean code ordering.",
   "license": "MIT",
   "repository": {

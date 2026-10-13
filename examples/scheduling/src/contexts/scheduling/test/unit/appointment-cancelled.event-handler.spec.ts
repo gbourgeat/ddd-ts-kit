@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { InMemoryCommandBus } from '@ddd-ts-kit/kernel';
+import { NoteCancellationCommand } from '@/contexts/scheduling/application/commands/note-cancellation/note-cancellation.command';
 import { OfferFreedSlotCommand } from '@/contexts/scheduling/application/commands/offer-freed-slot/offer-freed-slot.command';
 import { AppointmentCancelledEventHandler } from '@/contexts/scheduling/application/event-handlers/appointment-cancelled.event-handler';
 import { AppointmentCancelled } from '@/contexts/scheduling/domain/events/appointment-cancelled.event';
@@ -17,6 +18,40 @@ const held = anAppointment()
   .build();
 
 describe('When appointment cancelled', () => {
+  it('notes a cancellation of the patient in their attendance record, with their words, as the context itself', async () => {
+    const { handler, noted } = arrange();
+
+    await handler.handle(
+      new AppointmentCancelled('appointment-1', occurredAt, {
+        booking: held.booking,
+        cancellation: Cancellation.create('patient', 'Flu'),
+      }),
+    );
+
+    expect(noted).toMatchObject([
+      {
+        practiceId: held.booking.practiceId,
+        patientId: held.booking.patientId,
+        appointment: { id: 'appointment-1', startsAt: at('09:00') },
+        reason: 'Flu',
+        actor: { type: 'system', id: 'system:scheduling.note-attendance' },
+      },
+    ]);
+  });
+
+  it('notes nothing when the practice cancelled', async () => {
+    const { handler, noted } = arrange();
+
+    await handler.handle(
+      new AppointmentCancelled('appointment-1', occurredAt, {
+        booking: held.booking,
+        cancellation: Cancellation.create('practice', 'The practitioner is ill'),
+      }),
+    );
+
+    expect(noted).toEqual([]);
+  });
+
   it('offers the slot the appointment held, buffer included, to the waitlist of its calendar', async () => {
     const { handler, sent } = arrange();
 
@@ -48,16 +83,25 @@ describe('When appointment cancelled', () => {
 
 function arrange() {
   const sent: OfferFreedSlotCommand[] = [];
+  const noted: NoteCancellationCommand[] = [];
 
-  const commands = new InMemoryCommandBus().register(OfferFreedSlotCommand, {
-    execute: async (command) => {
-      sent.push(command);
+  const commands = new InMemoryCommandBus()
+    .register(OfferFreedSlotCommand, {
+      execute: async (command) => {
+        sent.push(command);
 
-      return undefined;
-    },
-  });
+        return undefined;
+      },
+    })
+    .register(NoteCancellationCommand, {
+      execute: async (command) => {
+        noted.push(command);
 
-  return { handler: new AppointmentCancelledEventHandler(commands), sent };
+        return 'record-1';
+      },
+    });
+
+  return { handler: new AppointmentCancelledEventHandler(commands), sent, noted };
 }
 
 function at(time: string): Date {

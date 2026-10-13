@@ -27,6 +27,9 @@ export const NOTES = `  affected         what a pull request has to run: the con
   --commit-size    the files and lines about to be committed against "commit" in the config (20 files and
                    600 lines by default, generated files not counted); --staged reads the index only;
                    advisory, --strict exits 1 when over
+  --stored-events  docs records the shape of each version of the stored events in stored-events.lock.json,
+                   never rewriting a recorded one: run it once the shape of a version is the one to store;
+                   docs --check fails while a declared version is not recorded
   --sdk            init records "sdk" in the config and generates the clients with the project
   --local-only     generate refuses, and writes nothing, when the kind would write outside its context;
                    "generate --help --json" says which kinds do`;

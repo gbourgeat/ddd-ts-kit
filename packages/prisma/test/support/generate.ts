@@ -76,17 +76,26 @@ model CriteriaContractRow {
 const inSchema = (models: string, schema: string): string => models.replaceAll(/^}$/gm, `  @@schema("${schema}")\n}`);
 
 /**
- * The schema the tests run on, built from the fragment the package ships, the way a consuming
- * project would: the models as they are in `public`, and a renamed copy in a schema of its own.
+ * The schema the tests run on, built from the fragments the package ships, the way a consuming
+ * project would: the models as they are in `public`, and a renamed copy of the outbox in a
+ * schema of its own.
  */
 async function composeSchema(): Promise<string> {
   const fragment = await readFile(`${packageRoot}prisma/outbox.postgresql.prisma`, 'utf8');
+  const eventStore = await readFile(`${packageRoot}prisma/event-store.postgresql.prisma`, 'utf8');
 
   const renamed = fragment
     .replace('model OutboxRecord ', 'model MessagingOutboxRecord ')
     .replace('model ProcessedEvent ', 'model MessagingProcessedEvent ');
 
-  return [HEADER, inSchema(fragment, 'public'), inSchema(renamed, 'messaging'), INVOICE, READ_MODEL].join('\n');
+  return [
+    HEADER,
+    inSchema(fragment, 'public'),
+    inSchema(renamed, 'messaging'),
+    inSchema(eventStore, 'public'),
+    INVOICE,
+    READ_MODEL,
+  ].join('\n');
 }
 
 async function prisma(args: readonly string[]): Promise<void> {

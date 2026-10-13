@@ -172,6 +172,12 @@ where the stored version matches the loaded one, and otherwise raises a concurre
 suite requires). The caller retries or reports the conflict. No lock is held while the user
 thinks.
 
+An aggregate whose history is the business can be kept as its events instead of its state: it
+extends `EventSourcedAggregate`, changes its state only in one apply method per event, and keeps
+the same repository port; its version is the length of its stream. The other aggregates of the
+context are not affected. When to choose it and what it costs:
+[Event sourcing, per aggregate](event-sourcing.md).
+
 ## A set-wide invariant needs a database constraint
 
 "A practitioner is never booked twice for overlapping slots" is not a rule about one
@@ -241,6 +247,7 @@ the guarantee.
 
 - [Entities and value objects](entities-and-value-objects.md)
 - [Domain events, domain services, repositories and factories](domain-building-blocks.md)
+- [Event sourcing, per aggregate](event-sourcing.md)
 - [Invariants, permissions and validation](invariants-permissions-validation.md)
 - [Anemic model](anemic-model.md)
 - [Bounded context](bounded-context.md)

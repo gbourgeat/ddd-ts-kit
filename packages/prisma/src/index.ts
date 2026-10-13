@@ -10,6 +10,7 @@ export * from './unit-of-work/prisma-transaction-host.js';
 export * from './unit-of-work/prisma-transaction-client.js';
 export * from './unit-of-work/prisma-context.js';
 export * from './unit-of-work/create-prisma-unit-of-work.js';
+export * from './event-sourcing/create-prisma-event-sourcing.js';
 export * from './outbox/prisma-json-input.js';
 export * from './outbox/prisma-outbox-delegate.js';
 export * from './outbox/prisma-raw-queries.js';

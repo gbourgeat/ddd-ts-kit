@@ -15,8 +15,7 @@ const INTEGRATION_README = 'docs/integration/README.md';
 
 /**
  * Plans every generated part of the documentation: the lists of each CONTEXT.md, the block
- * of the context map, the barrel of each declared context, and, once, the skeleton of what only
- * people can write. The caller commits the workspace, or reads what it would change to detect drift.
+ * of the context map, the barrel of each declared context, and, once, the skeleton of what only people can write. The caller commits the workspace, or reads what it would change to detect drift.
  */
 export function writeDocs(ws: Workspace, config: Config): void {
   const contexts = readContexts(ws, config);
@@ -28,6 +27,7 @@ export function writeDocs(ws: Workspace, config: Config): void {
   }
 
   writeContextMap(ws, contextMapLines(contexts));
+
   refreshBarrels(ws, config);
   writeOpenApiDocuments(ws, config);
 

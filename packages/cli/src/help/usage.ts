@@ -23,7 +23,7 @@ export const USAGE = `Usage
   ddd-ts-kit status
   ddd-ts-kit todo [<context>]
   ddd-ts-kit worker-scope <context> [--worktree <path>] [--branch <name>] [--dry-run]
-  ddd-ts-kit docs [--check]
+  ddd-ts-kit docs [--check] [--stored-events]
   ddd-ts-kit sdk [--check] [--dry-run]
   ddd-ts-kit depcruise-config [--check|--write]
   ddd-ts-kit build-aliases [--project <tsconfig>]
