@@ -47,6 +47,11 @@ export const ESLINT_ONLY_RULES: readonly { readonly id: string; readonly descrip
       'A controller takes the bus of its method (CommandBus for POST, PUT, PATCH, DELETE; QueryBus for GET, HEAD), a request mapper and a serializer, and nothing else.',
   },
   {
+    id: 'presentation/shared-cache-varies',
+    description:
+      'A route, a controller or a route group that knows its caller (a guard other than Public, security schemes) and declares a public cache policy names in vary the request headers its answer depends on.',
+  },
+  {
     id: 'presentation/guard-at-the-edge',
     description:
       'A *.guard.ts file imports nothing from domain/ or infrastructure/, no repository, no unit of work and no command bus.',

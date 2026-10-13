@@ -14,7 +14,9 @@ what it must not is refused when the route is declared, above all the `public` a
 that knows its caller without the request headers it varies on. A route that is not public and
 declares nothing now answers `Cache-Control: no-store`, refusals included (before, nothing): a
 generated contract gains that header on every authenticated operation, regenerate it with
-`npm run docs:generate`. See `docs/concepts/http-caching.md`.
+`npm run docs:generate`. The ESLint rule `presentation/shared-cache-varies` reports in the editor a
+public policy, without `vary`, on a declaration that writes guards or security schemes. See
+`docs/concepts/http-caching.md`.
 
 **Conditional requests.** A cache policy names the version of an answer, `etag: 'representation'`
 (a strong tag hashed from the bytes) or `etag: { version: 'version' }` (a weak tag from a field of

@@ -144,6 +144,8 @@ A policy that cannot stand is refused when the route is declared, with a `Declar
   function route with `security`) that does not name in `vary` what it depends on. A shared
   cache keys an answer by its URL: without `vary: ['Authorization']` (or the header carrying the
   tenant), it would hand the answer of one caller to the next. `private` is the usual answer.
+  The ESLint rule `presentation/shared-cache-varies` reports the same declaration in the editor,
+  for what one file shows.
 
 Never cache a decision of authorization across actors: what a caller may see is decided by the
 use case for that caller, and a shared cache only ever keeps what is the same for everybody
