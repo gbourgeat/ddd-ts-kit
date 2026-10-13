@@ -4,6 +4,30 @@ What each version changes for someone who uses the kit. The packages of `package
 together, under one version; the notes of each [GitHub release](https://github.com/gbourgeat/ddd-ts-kit/releases)
 list the pull requests behind it.
 
+## Unreleased
+
+**The documentation is in French too.** Every reader-facing page of the repository (the root
+pages, `docs/`, the README of every package, the page of every ESLint rule and the docs of the
+example) has a French translation next to it, `X.fr.md`, reached by a switcher on its first
+line; start at `README.fr.md` or `docs/README.fr.md`. A French page records the version of the
+English page it translates, so a change to the English page without its translation is
+reported. Release notes, agent instructions (`CLAUDE.md`, `.claude/`, `plugin/`), generated
+files and the partly generated `CONTEXT.md` stay in English only.
+
+**The pages teach with diagrams and samples that compile.** The concepts, guides, tools pages,
+package READMEs and the example docs are enriched with worked examples and hand-written SVG
+diagrams (one English and one French drawing each, readable in dark mode and on npm). A
+TypeScript block marked `<!-- checked sample -->` is compiled against the packages of the
+workspace, in both languages, so a sample cannot drift from the API; several samples that no
+longer matched the API were corrected on the way.
+
+**Two new checks.** `npm run docs:translations` (in `ci:docs`) reports a page without its
+switcher, a missing or stale French page, a link or anchor that leads nowhere, a French page
+that links to an English page whose French sibling exists, and a diagram without its French
+drawing or malformed. `npm run docs:samples` (in `ci:typecheck`) compiles every checked sample.
+[docs/translation.md](docs/translation.md) says what is translated, the shape of a French page,
+the glossary, the style of the diagrams and how to keep it all current.
+
 ## 0.13.0
 
 **A schema shared by several routes is documented once.** Declared once, a schema used whole or
