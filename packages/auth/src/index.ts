@@ -36,6 +36,10 @@ export { tenantOfContext } from './rbac/tenant-of-context.js';
 export { forbid, permit, type AttributePolicy } from './abac/attribute-policy.js';
 export { allOf, anyOf, not, type Condition } from './abac/condition.js';
 export { PolicyBasedAuthorizer, type PolicyBasedAuthorizerOptions } from './abac/policy-based-authorizer.js';
+export {
+  SignedInGrantsAuthorizer,
+  type SignedInGrantsAuthorizerOptions,
+} from './signed-in/signed-in-grants-authorizer.js';
 export type { PolicyInput } from './abac/policy-input.js';
 export type { ResourceAttributeValues } from './abac/resource-attribute-values.js';
 export { ResourceAttributes } from './abac/resource-attributes.js';

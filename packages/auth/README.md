@@ -493,6 +493,23 @@ tuple store at all, and is the place to start.
 Every authorizer refuses the anonymous actor (`ANONYMOUS`), and an actor of type `system` has no
 right unless the model gives it one.
 
+**What every signed-in person may do.** Some permissions belong to everyone who signed in,
+whatever the model says of them: provisioning one's own account, opening an organisation,
+accepting an invitation addressed to oneself. The policies of the context then decide on the
+element. `SignedInGrantsAuthorizer` answers them before the model, for any model:
+
+```ts
+new SignedInGrantsAuthorizer({
+  grants: ['identity:*'],                        // the same grants as a role: permissions, ids, <context>:*, *
+  otherwise: new RoleBasedAuthorizer({ roles }), // decides everything else, listings included
+});
+```
+
+Only an actor of type `user` holds these grants: a system, a service and the anonymous actor go
+to the model. What they cover lists `all`; another listing is the model's, and a model that
+cannot list makes it fail with `ListingNotSupportedError`. The identity preset of the CLI writes
+this wrapper in `createAuthorizer` and its grant in `signed-in-grants.ts`.
+
 ### Roles
 
 ```ts
