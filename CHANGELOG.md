@@ -4,7 +4,7 @@ What each version changes for someone who uses the kit. The packages of `package
 together, under one version; the notes of each [GitHub release](https://github.com/gbourgeat/ddd-ts-kit/releases)
 list the pull requests behind it.
 
-## Unreleased
+## 0.7.0
 
 **A value object throws its refusals.** `init` writes `"stack.valueObjects": "throwing"`:
 `generate value-object` writes a `create` that returns the value object or throws the refusal
