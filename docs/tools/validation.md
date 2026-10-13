@@ -59,7 +59,7 @@ Versions, licences and downloads checked on 2026-10-10 against the npm registry 
 | Type from schema | yes, inferred | the class is the type, written by hand | yes, inferred (`Static`) | yes, inferred |
 | JSON Schema for the contract | built in (`z.toJSONSchema`, draft 2020-12) | through `class-validator-jsonschema`, a separate package | the schema is JSON Schema | the library's own when it implements Standard JSON Schema (zod, arktype, valibot through `@valibot/to-json-schema`), or the one you supply |
 | Shared once in the contract | `.meta({ id })`, kept when nested | `classSchema(Dto, { shared: true })`; a nested class always is | `$id` in the options, kept when nested | the library's ids, or `sharedSchema(name, schema)` |
-| Reuse in part | `.pick`, `.omit`, `.partial`, `.extend` | `pickClass`, `omitClass`, `partialClass` of the kit, `extends` | `Type.Pick`, `Type.Omit`, `Type.Partial`, `Type.Composite` | the library's own (`v.pick`, `v.omit`, ...) |
+| Reuse in part | `.pick`, `.omit`, `.partial`, `.extend` | `pickClass`, `omitClass`, `partialClass` of the kit, `extends` | `Type.Pick`, `Type.Omit`, `Type.Partial`, `Type.Intersect` (keeps the reference) or `Type.Interface` (a flat copy) | the library's own (`v.pick`, `v.omit`, ...) |
 | Issue codes | the library's (`too_small`, ...) | the constraint name | the JSON Schema keyword (`minLength`, `format`) | always `invalid` |
 | Cost of one parse, measured ([contract pairs](contract-pairs.md)) | about 0.5 µs | about 5 to 9 µs | about 6 to 11 µs (its own check alone, 0.75 µs) | not measured |
 | Asynchronous schemas | not at the boundary | not at the boundary | not at the boundary | `parse` throws |
@@ -147,7 +147,7 @@ it, with a `DomainError` and a stable code, and it holds for every caller.
 |---|---|
 | New project, no constraint | zod: the default of the kit, inferred types, the contract generated without a second description |
 | NestJS, or an existing base of decorated DTO classes | class-validator: keep the DTOs, accept the legacy decorator mode |
-| The contract must be exactly the schema, or Fastify is already in place | TypeBox: the schema is JSON Schema, composed with `Type.Pick`, `Type.Omit`, `Type.Composite` |
+| The contract must be exactly the schema, or Fastify is already in place | TypeBox: the schema is JSON Schema, composed with `Type.Pick`, `Type.Omit`, `Type.Intersect` |
 | The team already standardised on valibot or arktype, or bundle size at the edge matters | Standard Schema adapter, with the JSON Schema supplied for every public input |
 | Integration event payloads | the same library as the routes: one vocabulary of schemas for both contracts |
 | An input no library fits | `customSchema`, with its JSON Schema |

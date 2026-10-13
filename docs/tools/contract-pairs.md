@@ -53,7 +53,7 @@ document. That is the maintained equivalent, built into zod itself.
 | | Express + zod | Fastify + TypeBox | Hono + zod | NestJS + class-validator |
 |---|---|---|---|---|
 | Types of a request | inferred from the schema (`Infer<typeof body>`) | inferred from the schema (`Static`) | inferred from the schema | the DTO class, written by hand |
-| Composition of shapes | `.pick`, `.omit`, `.partial`, `.extend`, `.meta({ id })` | `Type.Pick`, `Type.Omit`, `Type.Partial`, `Type.Composite`, `$id` | as Express + zod | `pickClass`, `omitClass`, `partialClass` of the kit, `extends`, nested classes |
+| Composition of shapes | `.pick`, `.omit`, `.partial`, `.extend`, `.meta({ id })` | `Type.Pick`, `Type.Omit`, `Type.Partial`, `Type.Intersect`, `Type.Interface`, `$id` | as Express + zod | `pickClass`, `omitClass`, `partialClass` of the kit, `extends`, nested classes |
 | Contract fidelity | high: zod writes its JSON Schema; transforms and refinements are not described | highest: the schema is JSON Schema | as Express + zod | good, through `class-validator-jsonschema`; custom validators need a converter |
 | Issue codes for a client | zod's (`too_small`, `invalid_format`) | the JSON Schema keyword (`minLength`, `format`) | zod's | the constraint name (`isUuid`) |
 | Decorators | none | none | none | legacy mode for the whole program |

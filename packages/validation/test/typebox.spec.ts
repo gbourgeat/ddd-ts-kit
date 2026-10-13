@@ -61,6 +61,65 @@ describe('the TypeBox adapter', () => {
     expect(sharedNameOf(typeboxSchema(Type.Pick(slot, ['startsAt'])).toJsonSchema())).toBeUndefined();
   });
 
+  it('reports each missing property at its own path, not at the object that lacks it', () => {
+    const result = typeboxSchema(booking).parse({ slot: {} });
+
+    expect(result).toEqual({
+      ok: false,
+      error: [
+        { path: 'patientId', code: 'required', message: 'must have required property patientId' },
+        { path: 'slot.startsAt', code: 'required', message: 'must have required property startsAt' },
+      ],
+    });
+  });
+
+  it('extends a shared shape by intersection, the shared part still a reference', () => {
+    const roomSlot = typeboxSchema(Type.Intersect([slot, Type.Object({ room: Type.String() })]));
+
+    expect(roomSlot.parse({ startsAt: '2026-10-13T09:00:00Z', room: 'B2', admin: true })).toEqual({
+      ok: true,
+      value: { startsAt: '2026-10-13T09:00:00Z', length: 30, room: 'B2' },
+    });
+
+    expect(roomSlot.parse({ startsAt: '2026-10-13T09:00:00Z' })).toMatchObject({
+      ok: false,
+      error: [{ path: 'room' }],
+    });
+
+    expect(roomSlot.toJsonSchema()).toMatchObject({
+      allOf: [{ $ref: '#/$defs/Slot' }, { type: 'object', required: ['room'] }],
+      $defs: { Slot: { required: ['startsAt', 'length'] } },
+    });
+  });
+
+  it('extends a shape into a new flat one with Interface, which carries no reference', () => {
+    const roomSlot = typeboxSchema(Type.Interface([slot], { room: Type.String() }));
+
+    expect(roomSlot.parse({ startsAt: '2026-10-13T09:00:00Z', room: 'B2' }).ok).toBe(true);
+    expect(roomSlot.toJsonSchema()).toMatchObject({ required: ['startsAt', 'length', 'room'] });
+    expect(roomSlot.toJsonSchema()).not.toHaveProperty('$defs');
+  });
+
+  it('reads $id only on a schema, never in a property name or a value', () => {
+    const odd = Type.Object({
+      $id: Type.String({ default: 'Slot' }),
+      tag: Type.Literal('x', { examples: [{ $id: 'Y' }] }),
+    });
+
+    expect(typeboxSchema(odd).toJsonSchema()).toMatchObject({
+      properties: { $id: { type: 'string', default: 'Slot' }, tag: { examples: [{ $id: 'Y' }] } },
+    });
+
+    expect(typeboxSchema(odd).toJsonSchema()).not.toHaveProperty('$defs');
+  });
+
+  it('refuses two different schemas under one $id', () => {
+    const other = Type.Object({ at: Type.String() }, { $id: 'Slot' });
+
+    expect(() => typeboxSchema(Type.Object({ first: slot, second: other })).toJsonSchema()).toThrow(/"Slot"/);
+    expect(typeboxSchema(Type.Object({ first: slot, second: slot })).toJsonSchema()).toHaveProperty('$defs.Slot');
+  });
+
   it('reads a path segment escaped by JSON Pointer', () => {
     const odd = Type.Object({ 'a/b': Type.String() });
 

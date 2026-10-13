@@ -36,8 +36,9 @@ file links included. The adapter reads a JSON body chunk by chunk up to `bodyLim
 default, as Fastify): a larger one is answered 413 `BODY_TOO_LARGE`, one that is not JSON 400
 `MALFORMED_BODY`, both as problems. `@ddd-ts-kit/validation/typebox` validates with TypeBox 1
 (`typeboxSchema`, compiled once, defaults filled, undeclared properties dropped, the failed
-keyword as the issue code, `{ coerce: true }` for query strings) and documents the schema as it
-is, a nested schema with an `$id` shared once in the contract. Both libraries are optional peers.
+keyword as the issue code and a missing property at its own path, `{ coerce: true }` for query
+strings) and documents the schema as it is, a nested schema with an `$id` shared once in the
+contract (`Type.Intersect` extends it and keeps the reference). Both libraries are optional peers.
 
 **Four contract pairs a project starts from.** `init --http hono` serves the routes with Hono on
 Node (`@hono/node-server`, the limiter and the readiness probe in front when the cache is

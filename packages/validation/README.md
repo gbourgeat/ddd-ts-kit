@@ -138,7 +138,12 @@ Schema keyword that failed (`required`, `format`, `minLength`...). `{ coerce: tr
 text to the declared types first, for path parameters and query strings. A TypeBox schema is
 JSON Schema already: `toJsonSchema()` returns it, a nested schema built with an `$id` moved
 under `$defs` and referenced, so it lands once in the contract; a schema with its own `$id` is
-shared. `Type.Pick`, `Type.Omit`, `Type.Partial` and `Type.Composite` reuse a schema in part.
+shared. A missing property is reported at its own path (`slot.startsAt`), as zod reports it, and
+two different schemas under one `$id` are refused. `Type.Pick`, `Type.Omit` and `Type.Partial`
+reuse a schema in part, as a new shape; `Type.Intersect([slot, Type.Object({...})])` extends it
+and keeps the shared part a reference (`allOf: [{ $ref: Slot }, ...]`), while
+`Type.Interface([slot], {...})` writes a new flat shape. (`Type.Composite` belongs to
+`@sinclair/typebox` 0.34 and does not exist in TypeBox 1.)
 Written for the `typebox` package, version 1 (the successor of `@sinclair/typebox`).
 
 ## Standard Schema (valibot, arktype, ...)
