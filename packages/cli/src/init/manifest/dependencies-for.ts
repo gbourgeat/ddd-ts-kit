@@ -78,6 +78,8 @@ const BY_CHOICE: Readonly<Record<string, readonly [readonly string[], readonly s
   'broker:redis': [['@ddd-ts-kit/redis', 'ioredis'], []],
   'broker:kafka': [['@ddd-ts-kit/kafka', '@confluentinc/kafka-javascript'], []],
   'broker:nats': [['@ddd-ts-kit/nats', '@nats-io/jetstream', '@nats-io/transport-node'], []],
+  'queue:database': [['@ddd-ts-kit/scheduling'], []],
+  'queue:redis': [['@ddd-ts-kit/scheduling', '@ddd-ts-kit/redis', 'ioredis'], []],
   'tests:vitest': [[], ['vitest']],
   'tests:jest': [[], ['jest', '@jest/globals', '@swc/core', '@swc/jest']],
 };

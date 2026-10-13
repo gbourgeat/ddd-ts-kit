@@ -3,6 +3,7 @@ import type {
   FixedClock,
   FixedExecutionScope,
   InMemoryCache,
+  InMemoryCacheInvalidation,
   InMemoryCommandBus,
   InMemoryDomainEventDispatcher,
   InMemoryErrorReporter,
@@ -10,10 +11,13 @@ import type {
   InMemoryLock,
   InMemoryLogger,
   InMemoryMetrics,
+  InMemoryProcessStore,
   InMemoryQueryBus,
   InMemoryRateLimiter,
   SequentialIdGenerator,
 } from '@ddd-ts-kit/kernel';
+import type { StoredJobQueue } from '@ddd-ts-kit/scheduling';
+import type { TestBackgroundJobs } from './test-background-jobs.js';
 import type { TestJobs } from './test-jobs.js';
 
 export interface TestKernel {
@@ -45,10 +49,18 @@ export interface TestKernel {
   readonly errors: InMemoryErrorReporter;
   /** Expires by `clock`. */
   readonly cache: InMemoryCache;
+  /** `cacheInvalidation.invalidated` lists the tags the use cases asked to purge after their commit. */
+  readonly cacheInvalidation: InMemoryCacheInvalidation;
   /** Frees a key by `clock`; a wait for a held key really waits. */
   readonly lock: InMemoryLock;
   /** Counts by `clock`. */
   readonly rateLimiter: InMemoryRateLimiter;
   /** The declared jobs, which no time starts: a spec runs one, then asserts its fakes. */
   readonly jobs: TestJobs;
+  /** The `JobQueue` the use cases enqueue on, in memory: a job of a rolled back command is not kept. */
+  readonly jobQueue: StoredJobQueue;
+  /** The enqueued background jobs, which no worker runs by itself: a spec runs what is due, then asserts its fakes. */
+  readonly backgroundJobs: TestBackgroundJobs;
+  /** The instances of the process managers: `processes.list()` shows their state, version, end and armed timeouts. */
+  readonly processes: InMemoryProcessStore;
 }

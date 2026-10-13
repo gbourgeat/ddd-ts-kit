@@ -19,11 +19,13 @@ export const SCHEMA_FORMS = ['shared', 'per-route'] as const;
 export const VALUE_OBJECT_FORMS = ['throwing', 'result'] as const;
 export const LITERAL_FORMS = ['named', 'free'] as const;
 export const CACHE_STACKS = ['none', 'redis'] as const;
+export const HTTP_CACHE_STACKS = ['none', 'varnish'] as const;
 export const STORAGE_STACKS = ['none', 'local', 's3'] as const;
 export const AUDIT_MODES = ['on', 'off'] as const;
 export const ERROR_REPORTERS = ['none', 'sentry'] as const;
 export const LOGGERS = ['stdout', 'pino', 'winston'] as const;
 export const PACKAGE_MANAGERS = ['npm', 'pnpm'] as const;
+export const QUEUE_STORES = ['memory', 'database', 'redis'] as const;
 export const TENANCY_STRATEGIES = [
   'none',
   'shared-table',
@@ -55,6 +57,12 @@ export interface Stack {
   readonly broker: (typeof BROKER_STACKS)[number];
   /** What backs the kernel `Cache` port, the relay signal, the rate limiter and the lock of the jobs: the process itself, or a Redis protocol server. */
   readonly cache: (typeof CACHE_STACKS)[number];
+  /**
+   * The shared HTTP cache in front of the API: `none`, or `varnish`, a service of the compose
+   * file with its VCL, the answers tagged in `xkey` and the purge requests of the outbox handed to
+   * `VarnishCachePurger`. A config that says nothing was written before the choice existed: `none`.
+   */
+  readonly httpCache: (typeof HTTP_CACHE_STACKS)[number];
   /**
    * Where the content of files lives, never in the database: `local`, a directory in development
    * and the memory in the tests; `s3`, a bucket of any provider of the S3 protocol (MinIO in the
@@ -137,4 +145,13 @@ export interface Stack {
    * before the choice existed: it is `none`.
    */
   readonly tenancy: (typeof TENANCY_STRATEGIES)[number];
+  /**
+   * Where the background jobs and the instances of the process managers are kept: `database`,
+   * the tables of the ORM package (Knex, Drizzle), written in the transaction of the command;
+   * `redis`, `RedisJobStore` on the server of the cache, written once the command committed, the
+   * process instances staying in the database or the memory; `memory`, in the process, which no
+   * worker of another process sees. A config that says nothing was written before background jobs
+   * existed: it is `memory`, the default of the kernel module.
+   */
+  readonly queue: (typeof QUEUE_STORES)[number];
 }

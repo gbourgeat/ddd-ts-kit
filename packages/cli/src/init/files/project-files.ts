@@ -4,7 +4,7 @@ import { when } from './when.js';
 
 /** What sits at the root of the project: the containers, the environment, the test runner, the analyzers and the git hooks. */
 export function projectFiles(config: Config, projectName: string): InitFile[] {
-  const { http, authn, tests, packageManager } = config.stack;
+  const { http, authn, tests, packageManager, httpCache } = config.stack;
 
   return [
     ['.gitignore', 'init/gitignore.tpl'],
@@ -16,6 +16,8 @@ export function projectFiles(config: Config, projectName: string): InitFile[] {
     ...when(http !== 'none' && authn === 'keycloak', [
       [`docker/keycloak/${projectName}-realm.json`, 'init/docker/keycloak-realm.json.tpl'],
     ]),
+    // The shared cache in front of the API: what it keeps, how it files answers under their tags, who may purge.
+    ...when(httpCache === 'varnish', [['docker/varnish/default.vcl', 'init/docker/varnish.vcl.tpl']]),
     // pnpm stops at a dependency whose build script nobody decided on: the file says none runs unless allowed by name.
     ...when(packageManager === 'pnpm', [['pnpm-workspace.yaml', 'init/pnpm-workspace.yaml']]),
     ['README.md', 'init/README.md.tpl'],

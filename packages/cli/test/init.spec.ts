@@ -93,7 +93,7 @@ describe('init', () => {
     const root = initProject('--assembly', 'discovery', '--context', 'billing:core');
 
     const suffixes =
-      'command,query,handler,integration-handler,event-handler,publisher,policy,job,projection,repository,gateway,adapter';
+      'command,query,handler,integration-handler,event-handler,publisher,policy,job,background-job,projection,repository,gateway,adapter';
 
     expect(jsonAt(readJson(root, 'ddd-ts-kit.config.json'), 'stack')).toMatchObject({
       style: 'declared',
@@ -169,6 +169,7 @@ describe('init, the choices it records and the ones it refuses', () => {
       authz: 'rbac',
       broker: 'none',
       cache: 'none',
+      httpCache: 'none',
       audit: 'on',
       errors: 'none',
       logger: 'stdout',
@@ -178,6 +179,7 @@ describe('init, the choices it records and the ones it refuses', () => {
       storage: 'local',
       valueObjects: 'throwing',
       literals: 'named',
+      queue: 'memory',
       style: 'explicit',
       packageManager: 'pnpm',
     });

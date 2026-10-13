@@ -1,7 +1,8 @@
-import { describeJobSchedule, type MessageInfo } from '@ddd-ts-kit/kernel';
+import { backgroundJobPolicy, describeJobSchedule, type MessageInfo } from '@ddd-ts-kit/kernel';
 import { describeToken } from '@ddd-ts-kit/kernel/declarations';
 import type { EffectiveJob } from '../jobs/effective-job.js';
 import type { TokenSet } from '../token/token-set.js';
+import type { BackgroundJobRegistration } from '../wiring/background-job-registration.js';
 import type { Binding } from '../wiring/binding.js';
 import type { Declarer } from '../wiring/declarer.js';
 import type { DomainEventHandling } from '../wiring/domain-event-handling.js';
@@ -10,6 +11,7 @@ import type { PolicyBinding } from '../wiring/policy-binding.js';
 import type { ProjectionRegistration } from '../wiring/projection-registration.js';
 import type { Wiring } from '../wiring/wiring.js';
 import type {
+  BackgroundJobDescription,
   BindingDescription,
   DomainEventHandlerDescription,
   HandlerDescription,
@@ -35,6 +37,7 @@ export function describeWiring(wiring: Wiring, overridden: TokenSet, jobs: reado
       .map(describeDomainEventHandler),
     policies: wiring.policies.map(describePolicy),
     jobs: jobs.map(describeJob),
+    backgroundJobs: wiring.backgroundJobs.map(describeBackgroundJob),
     projections: wiring.projections.map(describeProjection),
     overrides: overridden.tokens().map(describeToken),
   };
@@ -98,6 +101,19 @@ function describeJob({ name, schedule, policy, job, module, declaredBy }: Effect
     name,
     schedule: describeJobSchedule(schedule),
     ...policy,
+    job: describeToken(job),
+    module,
+    ...originOf(declaredBy),
+  };
+}
+
+function describeBackgroundJob(registration: BackgroundJobRegistration): BackgroundJobDescription {
+  const { name, options, job, module, declaredBy } = registration;
+
+  return {
+    name,
+    queue: name.split('.', 1).join(''),
+    ...backgroundJobPolicy(options),
     job: describeToken(job),
     module,
     ...originOf(declaredBy),

@@ -135,12 +135,12 @@ Usage
                   [--events in-memory|outbox] [--docs-ui swagger|scalar|redoc|none]
                   [--ci github|gitlab|both|none] [--ci-extras <extra>,...|none]
                   [--authn jwt|keycloak|none] [--authz rbac|abac|rebac|custom]
-                  [--broker none|rabbitmq|kafka|nats|redis|custom] [--cache none|redis] [--storage local|s3|none]
+                  [--broker none|rabbitmq|kafka|nats|redis|custom] [--cache none|redis] [--http-cache none|varnish]
+                  [--storage local|s3|none]
                   [--audit on|off]
                   [--errors none|sentry] [--logger stdout|pino|winston] [--style declared|explicit] [--assembly barrel|discovery]
                   [--dependencies signature|listed] [--refusals factories|classes]
-                  [--routes controllers|functions] [--value-objects throwing|result] [--literals named|free] [--tenancy none|shared-table]
-                  [--schemas shared|per-route]
+                  [--routes controllers|functions] [--value-objects throwing|result] [--literals named|free] [--tenancy none|shared-table] [--queue database|redis|memory]
                   [--package-manager npm|pnpm] [--allow-no-outbox "<reason>"] [--import-alias '$<name>/']
                   [--import-extension none|js] [--sdk]
                   [--context <name>:<core|supporting|generic>]... [--dry-run] [--force]
@@ -210,6 +210,7 @@ Kinds
   entity <context> <Name> [--term "<Term>=<meaning>"]...
   value-object <context> <Name> [--term "<Term>=<meaning>"]...   (alias: vo)
   vocabulary <context> <Name> --value <value> [--value <value>]...
+  state-machine <context> <Aggregate> [--value <state>]... [--transition "<intention>:<from>[,<from>]...[><to>]"]... [--term "<Term>=<meaning>"]...
   domain-event <context> <Aggregate> <Fact> [--term "<Term>=<meaning>"]...
   error <context> <Concept> <refusal> [--code CODE] [--term "<Term>=<meaning>"]...   (alias: refusal)
   domain-error <context> <Name> [--code CODE]
@@ -218,8 +219,8 @@ Kinds
   command <context> <UseCaseName> (--permission <aggregate>.<action> | --public) [--aggregate <Name>] [--term "<Term>=<meaning>"]...
   query <context> <UseCaseName> (--permission <aggregate>.<action> | --public) [--search] [--term "<Term>=<meaning>"]...
   port <context> <Name>
-  route <context> <UseCaseName> --method <GET|POST|PUT|PATCH|DELETE> --path <path> [--command|--query] [--group <Name>] [--mapper] [--serializer]
-  controller <context> <UseCaseName> --method <GET|POST|PUT|PATCH|DELETE> --path <path> [--command|--query] [--group <Name>] [--mapper] [--serializer]
+  route <context> <UseCaseName> --method <GET|POST|PUT|PATCH|DELETE> --path <path> [--command|--query] [--group <Name>] [--mapper] [--serializer] [--cache public|private|no-store]
+  controller <context> <UseCaseName> --method <GET|POST|PUT|PATCH|DELETE> --path <path> [--command|--query] [--group <Name>] [--mapper] [--serializer] [--cache public|private|no-store]
   file-upload <context> <UseCaseName> --path <path> (--permission <aggregate>.<action> | --public) [--method <POST|PUT>] [--group <Name>]
   route-group <context> <Name> [--prefix <path>] [--group <ParentName>] [--public | --role <role>]   (alias: group)
   guard <context> <Name>
@@ -229,6 +230,8 @@ Kinds
   event-handler <context> <Aggregate> <Fact> [--phase before-commit|after-commit] [--term "<Term>=<meaning>"]...
   projection <context> <Name> <eventType> [--term "<Term>=<meaning>"]...   (alias: projector)
   job <context> <Name> (--every <duration> | --cron "<expression>" [--time-zone <zone>]) --command <UseCaseName> [--term "<Term>=<meaning>"]...
+  background-job <context> <Name> --command <UseCaseName> [--term "<Term>=<meaning>"]...
+  process <context> <Name> [--term "<Term>=<meaning>"]...   (alias: process-manager)
   acl <context> <upstreamOrSystemName>
   e2e <context> <UseCaseName>
   policy <context> <Name> --permission <aggregate>.<action>

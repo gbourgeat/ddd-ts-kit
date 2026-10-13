@@ -226,5 +226,6 @@ by events when the data is needed often. See
 - [Ports and composition](ports-and-composition.md)
 - [Delivery and idempotency](delivery-and-idempotency.md)
 - [Cache and coordination tools](../tools/cache-and-coordination.md)
+- [HTTP caching](http-caching.md): the cache in front of the API, and its purge after the commit
 - [Architecture reference](../ARCHITECTURE.md): "Cross-cutting behaviour", rule
   `aspects/outside-in`

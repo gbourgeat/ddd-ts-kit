@@ -3,14 +3,22 @@ import type { Name } from '../../../naming/index.js';
 import { concept } from '../../concept.js';
 import { requireFile } from '../../require-file.js';
 import type { Scope } from '../../scope.js';
+import { commandInputOf } from './command-input.js';
 import { constructorParameters } from './constructor-parameters.js';
 import type { SentCommand } from './sent-command.js';
 
 const OPTIONAL = /^[^:=]*\?\s*:|=/;
 const INSTANT = /:\s*Date\b/;
 
-/** The command `--command` names: it has to exist, and a job has to be able to build it from what it knows. */
-export function readSentCommand(scope: Scope, input: string): SentCommand {
+/** Who sends the command: a job knows its schedule, a background job the work that enqueued it. */
+export type CommandSender = 'job' | 'background job';
+
+/**
+ * The command `--command` names: it has to exist, and its sender has to be able to build it. A
+ * scheduled job knows its actor and the instant it was due; a background job hands it, past its
+ * actor, the fields of its payload.
+ */
+export function readSentCommand(scope: Scope, input: string, sender: CommandSender = 'job'): SentCommand {
   const name = concept({ ...scope, flags: { ...scope.flags, allowName: true } }, input, {
     what: 'use case',
     strip: ['command', 'handler'],
@@ -26,17 +34,19 @@ export function readSentCommand(scope: Scope, input: string): SentCommand {
 
   const source = withoutComments(scope.ws.read(`${scope.dir}/${file}`) ?? '');
   const isProtected = /extends\s+AuthorizedCommand\b/.test(source);
-  const [first = '', ...others] = constructorParameters(source).slice(isProtected ? 1 : 0);
+  const parameters = constructorParameters(source).slice(isProtected ? 1 : 0);
+  const permission = isProtected ? requiredPermission(scope, name, source) : undefined;
+
+  if (sender === 'background job') {
+    return { name, isProtected, permission, takesInstant: false, inputs: parameters.map(commandInputOf) };
+  }
+
+  const [first = '', ...others] = parameters;
   const takesInstant = INSTANT.test(first);
 
-  refuseUnknownInput(scope, name, [...(takesInstant ? [] : [first]), ...others]);
+  refuseUnknownInput({ scope, name }, [...(takesInstant ? [] : [first]), ...others]);
 
-  return {
-    name,
-    isProtected,
-    permission: isProtected ? requiredPermission(scope, name, source) : undefined,
-    takesInstant,
-  };
+  return { name, isProtected, permission, takesInstant, inputs: [] };
 }
 
 /** A generated command describes its constructor in a `TODO(domain)` comment before it has one. */
@@ -47,16 +57,23 @@ function withoutComments(source: string): string {
     .join('\n');
 }
 
+interface Sent {
+  readonly scope: Scope;
+  readonly name: Name;
+}
+
 /** A job knows its actor and the instant it was due, nothing else: a command that needs more cannot be built by it. */
-function refuseUnknownInput(scope: Scope, name: Name, parameters: readonly string[]): void {
+function refuseUnknownInput({ scope, name }: Sent, parameters: readonly string[]): void {
   const unknown = parameters.filter((parameter) => parameter !== '' && !OPTIONAL.test(parameter)).map(nameOf);
 
   if (unknown.length === 0) {
     return;
   }
 
+  const needs = unknown.map((parameter) => `\`${parameter}\``).join(', ');
+
   throw new CliError(
-    `The constructor of ${name.pascal}Command needs ${unknown.map((parameter) => `\`${parameter}\``).join(', ')}, which a job cannot know.`,
+    `The constructor of ${name.pascal}Command needs ${needs}, which a job cannot know.`,
     `A job only says that the time has come: it sends a command that takes its actor and, at most, the instant the work is for (\`readonly dueBefore: Date\`), and the handler finds what to act on. Create that use case with \`ddd-ts-kit generate command ${scope.context.kebab} <UseCaseName>\` and pass it to --command, or make ${unknown.length === 1 ? 'this parameter' : 'these parameters'} optional.`,
   );
 }

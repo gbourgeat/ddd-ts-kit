@@ -50,6 +50,7 @@ export { overrideForTests } from './application/override-for-tests.js';
 export { override, type Override } from './application/override.js';
 export type {
   AppliedEventDescription,
+  BackgroundJobDescription,
   BindingDescription,
   DomainEventHandlerDescription,
   HandlerDescription,
@@ -75,5 +76,6 @@ export { createTestApplication } from './testing/create-test-application.js';
 export { fake } from './testing/fake.js';
 export type { TestApplicationOptions } from './testing/test-application-options.js';
 export type { TestApplication } from './testing/test-application.js';
+export type { TestBackgroundJobs } from './testing/test-background-jobs.js';
 export type { TestJobs } from './testing/test-jobs.js';
 export type { TestKernel } from './testing/test-kernel.js';

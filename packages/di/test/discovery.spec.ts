@@ -10,6 +10,7 @@ import { InvoiceIssuedPublisher } from './fixtures/contexts/billing/application/
 import { IssueMonthlyInvoicesJob } from './fixtures/contexts/billing/application/scheduling/issue-monthly-invoices.job.js';
 import { InMemoryInvoiceRepository } from './fixtures/contexts/billing/infrastructure/persistence/in-memory-invoice.repository.js';
 import { wiringRejection } from './support/rejection.js';
+import { CompileStatementsJob } from './support/compile-statements.background-job.js';
 
 const workspace = mkdtempSync(path.join(os.tmpdir(), 'discovery-'));
 
@@ -236,5 +237,26 @@ describe('a discovered publisher', () => {
     expect(failure.message).toBe(
       `${misplaced} of context "billing" is outside its canonical folder: a *.publisher file belongs in application/integration/publishers/.`,
     );
+  });
+});
+
+describe('discovery of background jobs', () => {
+  it('loads the background jobs of application/background/', async () => {
+    const loaded: string[] = [];
+
+    const directory = contextWith({
+      'application/background/compile-statements.background-job.mjs': '',
+      'application/background/notes.md': '',
+    });
+
+    await discoverContext('billing', directory, {
+      load: async (file) => {
+        loaded.push(path.relative(directory, file.pathname));
+
+        return { CompileStatementsJob };
+      },
+    });
+
+    expect(loaded).toEqual(['application/background/compile-statements.background-job.mjs']);
   });
 });

@@ -31,6 +31,7 @@ deviation.
     "authz": "rbac",
     "broker": "none",
     "cache": "none",
+    "httpCache": "none",
     "storage": "local",
     "audit": "on",
     "errors": "none",
@@ -132,8 +133,8 @@ outside the list stops every command with the list of accepted values.
 | `stack.authz` | `rbac`, `abac`, `rebac`, `custom` | `rbac` |
 | `stack.broker` | `none`, `rabbitmq`, `kafka`, `nats`, `redis` (Redis Streams), `custom`; `init` refuses a broker without an ORM, since a broker is reached through the outbox | `none` |
 | `stack.cache` | `none`, `redis`: what backs the kernel `Cache` port, the wake-up of the outbox relay, the rate limiter and the lock of the scheduled jobs | `none` |
+| `stack.httpCache` | `none`, `varnish`: the shared HTTP cache in front of the API. `varnish` (`init --http-cache varnish`, with an HTTP framework and `events: outbox`) adds the Varnish 9.1.0 service to the compose file with its VCL in `docker/varnish/default.vcl` (it keeps only an answer whose `Cache-Control` allows it by `max-age` or `s-maxage`, and lets a purge in from its machine or with `VARNISH_PURGE_KEY`), reads `VARNISH_URL` and `VARNISH_PURGE_KEY`, tags the public answers in `xkey` (`cacheTags` of the HTTP boundary), and hands the purge requests of the outbox to `VarnishCachePurger` in `main.ts` and in every entry point `generate service` writes; the end-to-end application records them instead (`purges.purged`). On `di: manual` and `nest`, the platform gains `cacheInvalidation`, what a before-commit handler asks to purge. With `stack.tenancy` other than `none`, the tags of the answers and of the purges are filed under the tenant (`perTenant`), and the HTTP boundary reads the tenant of a request from `x-tenant-id` (`resolveTenant: tenantFromHeader()`), so that a public call names its tenant and its answers vary on it. A config without the key is `none`: nothing changes. See [HTTP caches](tools/http-caches.md) | `none` |
 | `stack.storage` | `local`, `s3`, `none`: where the content of files lives, never in the database. `local`: a directory in development (`FILES_DIRECTORY`, `.data/files`), the memory of the process in the tests and the tools, the signed links answered by the application under `/files`; `s3`: a bucket of any provider of the S3 protocol (`@ddd-ts-kit/s3`, MinIO in the compose stack, `S3_*` variables), the memory in the tests; `none`: no file storage wired. Either way `platform/files/` binds `FileStorage`, `FileKeys`, `FileScanner` and `FileStaging`, registers the hourly purge of staged files, stages the file a command carries on the command bus before the transaction, and mounts the upload reader; `generate file-upload` needs it. With `local`, `FILES_PUBLIC_URL` and `FILES_SIGNING_SECRET` are required in production. See [file storage](concepts/file-storage.md) | `local` in what `init` writes; `none` when the key is absent |
-| `stack.audit` | `on`, `off`: whether the audit trail is wired | `on` when an ORM is set, `off` otherwise |
 | `stack.audit` | `on`, `off`: whether the audit trail is wired; `on` also records the refusals of the guards at the edge of authenticated callers (`onGuardRefusal`), never those of a caller without a credential | `on` when an ORM is set, `off` otherwise |
 | `stack.errors` | `none`, `sentry`: where unexpected failures are reported; `sentry` binds the kernel `ErrorReporter` to `@ddd-ts-kit/sentry` (Sentry or GlitchTip) | `none` |
 | `stack.logger` | `stdout`, `pino`, `winston`: what implements the kernel `Logger` port | `stdout` |
@@ -146,8 +147,9 @@ outside the list stops every command with the list of accepted values.
 | `stack.valueObjects` | `throwing`, `result`: how the factory of a value object refuses. `throwing`: `create` returns the value object or throws the refusal built by the static factory of its concept (`throw PersonError.invalidEmail(raw)`), as an aggregate refuses; a caller takes the value as it is, and a spec asserts `expectRefusal(() => Email.create(raw), 'INVALID_EMAIL')`. `result`: `create` returns a `Result` of the kernel, `err(PersonError.invalidEmail(raw))`, that a caller unwraps with `unwrap(..)`, as 0.1 to 0.5 wrote them. `generate value-object` writes the form the key says; `Result`, `ok`, `err` and `unwrap` stay in the kernel for a project that keeps them. Validation at the edge (the schema of a request) is not concerned: a value refused there never reaches the factory | `throwing` |
 | `stack.literals` | `named`, `free`: how the code writes a closed value and a number. `named`: a value a closed vocabulary of the project declares is read through it, `AppointmentStatus.NoShow`, `billingPermissions['invoice.issue']`, `Role.Admin`, never written again as a string (`language/declared-vocabulary`, checker and ESLint), and a number of `domain/` or `application/` other than 0, 1, -1 and an index has a name (`clean/no-magic-number`, ESLint). `free`: both rules are silent, as 0.1 to 0.5 wrote code. The rules templates `init` writes say the rules under `named` only | `named` |
 | `stack.tenancy` | `none`, `shared-table`; read also: `row-level-security`, `schema-per-tenant`, `database-per-tenant`. How the data of one tenant is kept from the others ([Multitenancy](concepts/multitenancy.md)). `shared-table`: every generated repository, on Knex or Drizzle, confines its statements to the tenant of the work through `tenantTable` and `ownTenantTable` or `tenantCondition` and `ownTenantCondition`, the outbox keeps the tenant of each event so that consumers run in it, and `tenancy/scoped-statement` reports a statement that bypasses the helpers. `init --tenancy` offers `none` and `shared-table`, and refuses `shared-table` with Prisma, TypeORM, `custom` or no ORM; the three other strategies are shipped by the persistence packages and wired by hand (`init` refuses them with what to add). Absent: `none`, and the file says nothing of tenancy | absent (`none`) |
+| `stack.queue` | `database`, `redis`, `memory`. Where the background jobs and the instances of the process managers are kept ([Background jobs](concepts/background-jobs.md), [Sagas and process managers](concepts/sagas-and-process-managers.md)). `database`: the `background_jobs` and `process_instances` tables of `@ddd-ts-kit/knex` or `@ddd-ts-kit/drizzle` in the `messaging` schema, created by the first migration, bound in place of the stores in memory by the platform module: a job enqueued by a command exists if and only if the command committed. `redis`: `RedisJobStore` on the server of the cache (`--cache redis`, Dragonfly in docker-compose and in CI), written once the command committed; the process instances stay in the database with Knex or Drizzle. `memory`: in the process, which a worker of another process does not see. `init --queue` defaults to `database` on Knex or Drizzle with `--di tsyringe`, `memory` otherwise; it refuses a store with another container than tsyringe, `database` with another ORM, and `redis` without `--cache redis`. `generate background-job` and `generate process` need `--di tsyringe`. With `memory` and a worker, each process consumes the queue in its own memory, its jobs on or off: the API runs the jobs it enqueues, the worker those its scheduled jobs enqueue, and a restart loses what waits. With `redis`, a job write lost after its command committed is logged and reported (`reportLostJobs` of `@ddd-ts-kit/redis`, bound by the platform module). Absent: `memory`, the store of a project initialised before background jobs existed | `database` on Knex or Drizzle with tsyringe, `memory` otherwise |
 
-A config file that omits a `stack` key is read with the same defaults, with seven exceptions:
+A config file that omits a `stack` key is read with the same defaults, with nine exceptions:
 without `stack.style` the project is read as `explicit`, whatever `stack.di` says, because
 such a file was written before the declared style existed; and without `stack.dependencies`
 a declared project is read as `listed`, because such a file was written when every decorator
@@ -191,7 +193,7 @@ written before the kit kept files: nothing is wired, nothing changes. To add fil
 `npx ddd-ts-kit generate file-upload <context> <UseCase>` writes the first upload. A project
 that keeps `local` sets `FILES_PUBLIC_URL` and `FILES_SIGNING_SECRET` in production, even before
 it receives a file: the start refuses without them.
-The fifth: without `stack.valueObjects` the project is read as `result`, because such a file was
+The sixth: without `stack.valueObjects` the project is read as `result`, because such a file was
 written when every value object returned a `Result`. Nothing changes there: `generate
 value-object` keeps writing a `Result`. To move it: `npx ddd-ts-kit value-objects --dry-run`
 says what would change, `npx ddd-ts-kit value-objects` rewrites it. In every class that extends
@@ -208,7 +210,7 @@ refusal asserted with its facts, a caller that branched on `.ok` or read `.error
 that was not returned. The example application was moved by it: 28 refusals thrown, 168
 `unwrap` removed, 31 assertions rewritten, nothing left by hand.
 
-The sixth: without `stack.literals` the project is read as `free`, because such a file was
+The seventh: without `stack.literals` the project is read as `free`, because such a file was
 written before the two rules existed, and code the kit generated then spells some values raw:
 `generate job` wrote the grant of a system actor by its permission id (`'billing:invoice.cancel',`
 in `roles.ts`, `permit('system-..', ['billing:invoice.cancel'], ..)` in `attribute-policies.ts`).
@@ -221,7 +223,19 @@ an object `Role` in `<platformDir>/auth/role.ts` written the same way. A number 
 becomes a constant of the module or a `static readonly`. Until it is done, a rule can stay at
 `warn` under `rules`, recorded in `deviations`.
 
-The seventh: without `stack.schemas` the project is read as `per-route`, because such a file was
+The eighth: without `stack.queue` the project is read as `memory`, because such a file was
+written before background jobs existed, and its platform module binds no store: the kernel
+module keeps jobs and process instances in the process, which consumes them even next to a
+worker (`RUN_JOBS` off): nothing a process enqueues is left unrun, but nothing survives its
+restart. To keep them in the database: add the
+tables to the schema (`createJobTable` and `createProcessTable` of `@ddd-ts-kit/knex` in a new
+migration, or `jobsTable` and `processesTable` of `@ddd-ts-kit/drizzle/postgres` and `npm run
+db:generate`), give `Persistence` the stores (`KnexJobStore`, `KnexProcessStore`, or their
+Drizzle twins), rebind `JobStore` and `ProcessStore` in the platform module, add
+`@ddd-ts-kit/scheduling` to the dependencies and set `"queue": "database"`; `init --force
+--queue database` on a clean tree writes the same.
+
+The ninth: without `stack.schemas` the project is read as `per-route`, because such a file was
 written when each route declared its own schemas. Nothing is reported there, and `generate
 route` keeps writing an identifier answer per route. To move it: set `"schemas": "shared"`, run
 `npx ddd-ts-kit check --rule schema/no-duplicate-shape`, and for each shape it reports keep one

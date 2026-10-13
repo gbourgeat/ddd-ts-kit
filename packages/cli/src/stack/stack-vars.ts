@@ -22,7 +22,7 @@ export function stackVars(config: Config): RenderContext {
     style: one(style, ['declared', 'explicit']),
     assembly: assemblyVars(config),
     decorators: { legacy, standard: !legacy },
-    http: httpVars(config),
+    ...edgeVars(config),
     validation: one(validation, ['zod', 'class-validator', 'typebox', 'standard-schema', 'none']),
     di: one(di, ['tsyringe', 'nest', 'manual']),
     orm: { ...one(orm, ['drizzle', 'knex', 'prisma', 'typeorm', 'custom', 'none']), any: orm !== 'none' },
@@ -44,6 +44,21 @@ export function stackVars(config: Config): RenderContext {
     alias: aliasVars(config),
     persistence: persistenceVars(config),
     tenancy: { ...one(tenancy, ['none', 'shared-table']), any: tenancy !== 'none' },
+    queue: queueVars(config),
+  };
+}
+
+/**
+ * `stored`: the jobs leave the memory of the process. `processTable`: the instances of the
+ * process managers go to the database whenever the jobs leave memory and the ORM keeps them.
+ */
+function queueVars(config: Config): RenderContext {
+  const { queue, orm } = config.stack;
+
+  return {
+    ...one(queue, ['memory', 'database', 'redis']),
+    stored: queue !== 'memory',
+    processTable: queue !== 'memory' && (orm === 'knex' || orm === 'drizzle'),
   };
 }
 
@@ -83,6 +98,15 @@ function assemblyVars(config: Config): RenderContext {
     barrel: style === 'declared' && assembly === 'barrel',
     discovery: style === 'declared' && assembly === 'discovery',
   };
+}
+
+/** The HTTP framework, and the shared cache in front of it. */
+function edgeVars(config: Config): RenderContext {
+  const { httpCache, tenancy } = config.stack;
+  // A multi-tenant application files its tags under the tenant, on the answers and on the purges alike.
+  const perTenant = httpCache !== 'none' && tenancy !== 'none';
+
+  return { http: httpVars(config), httpCache: { ...one(httpCache, ['none', 'varnish']), perTenant } };
 }
 
 function httpVars(config: Config): RenderContext {

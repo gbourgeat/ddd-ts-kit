@@ -1,4 +1,4 @@
-import { Controller, type HttpRequest } from '@ddd-ts-kit/http';
+import { CacheScope, Controller, type HttpRequest } from '@ddd-ts-kit/http';
 import type { QueryBus } from '@ddd-ts-kit/kernel';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
 import { GetCalendarDayQuery } from '@/contexts/scheduling/application/queries/get-calendar-day/get-calendar-day.query';
@@ -18,6 +18,8 @@ const answer = classSchema(GetCalendarDayAnswer);
   params,
   response: { status: 200, description: 'The answer.', body: answer },
   errors: ['UNKNOWN_CALENDAR', 'INVALID_DAY'],
+  // What this caller may read of the appointments of the day: kept by its browser only, and asked again each time, a 304 when nothing changed.
+  cache: { scope: CacheScope.private, maxAge: '0s', mustRevalidate: true, etag: 'representation' },
 })
 export class GetCalendarDayController {
   constructor(

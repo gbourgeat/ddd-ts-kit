@@ -79,6 +79,9 @@ const line = customSchema<{{name.pascal}}Line>(
   response: { status: 200, description: 'One page of the search.', body: pageSchemaOf(line) },
   // TODO(domain): list the codes of the refusals "{{name.words}}" can raise, as their factories set them, so that they appear in the contract with their status (`errors/known-code`).
   errors: [],
+  {{#if route.cached}}
+  cache: {{route.cache}},
+  {{/if}}
 })
 export class {{name.pascal}}Controller {
   constructor({{route.constructorParams}}) {}

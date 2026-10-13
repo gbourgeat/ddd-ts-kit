@@ -188,13 +188,15 @@ function storyOfTheBooking(correlationId: string): ExpectedSpan[] {
   ];
 }
 
-/** At the end of the unit of work of the command, before its commit: the relationships of the appointment, its publication through the outbox, its entry in the agenda. */
+/** At the end of the unit of work of the command, before its commit: the relationships of the appointment, its confirmation deadline, its publication through the outbox, its entry in the agenda. */
 function whatFollowsTheFact(followed: Readonly<Record<string, string>>): ExpectedSpan[] {
   return [
     {
       name: 'handler AppointmentBookedEventHandler',
       children: [{ name: 'repository SchedulingRelationships.recordAppointment' }],
     },
+    // A booking that needs no confirmation arms no deadline: the step of the process decides nothing.
+    { name: 'handler ConfirmationDeadlineOnBookedEventHandler' },
     {
       name: 'handler AppointmentBookedPublisher',
       children: [

@@ -21,7 +21,7 @@ const AFTER_FIX =
 export const domainEventsTransactionalBeforeCommit: Rule = {
   id: 'domain-events/transactional-before-commit',
   description:
-    'A domain event handler that runs before the commit has only effects the rollback undoes: it depends on the domain of its context, on persistence ports and on kernel ports other than Cache, Lock, RateLimiter, JobScheduler and EventBus; an after-commit handler never depends on IntegrationEventPublisher.',
+    'A domain event handler that runs before the commit has only effects the rollback undoes: it depends on the domain of its context, on persistence ports and on kernel ports other than Cache, CachePurger, Lock, RateLimiter, JobScheduler and EventBus; an after-commit handler never depends on IntegrationEventPublisher.',
   scope: 'file',
   run(project) {
     return perFile(project, this.id, (file) =>

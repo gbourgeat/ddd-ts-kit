@@ -19,6 +19,7 @@
     "authz": "rebac",
     "broker": "redis",
     "cache": "redis",
+    "httpCache": "varnish",
     "storage": "local",
     "audit": "on",
     "errors": "sentry",
@@ -30,7 +31,8 @@
     "routes": "controllers",
     "schemas": "shared",
     "valueObjects": "throwing",
-    "literals": "named"
+    "literals": "named",
+    "queue": "database"
   },
   "contexts": {
     "identity": {

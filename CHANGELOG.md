@@ -68,6 +68,154 @@ about a microsecond per request before validation, zod parses in about half a mi
 class-validator and TypeBox (through the adapter) in five to ten. oRPC was run and is documented
 as not fitting: its procedures, error format and second contract generator would sit next to the
 kit's, and the typed client it offers comes here from the generated contract.
+**Cache policies on routes, and `no-store` for authenticated answers.** A controller, a route
+group or a function route declares `cache: { scope, maxAge, sMaxAge, staleWhileRevalidate,
+staleIfError, mustRevalidate, vary }` of `@ddd-ts-kit/http`: the pipeline answers its
+`Cache-Control` and `Vary`, the contract documents them, and a policy that would let a cache keep
+what it must not is refused when the route is declared, above all the `public` answer of a route
+that knows its caller without the request headers it varies on. When the routes are mounted, a
+public answer is held to the options of the application: on a route that knows its caller, `vary`
+names `Authorization`, `Cookie` or the header its tenant is read from; behind a cache that ignores
+`Vary` (Cloudflare, Bunny; `cacheTags.honoursVary` to say otherwise) a varying answer is refused;
+and every kept answer varies on the headers `resolveTenant` reads (`TenantResolver.headers`, set by
+`tenantFromHeader` and `firstTenantOf`). The policy of a route group reaches its reads only: a
+write of the group keeps the default of a write. A route that is not public and
+declares nothing now answers `Cache-Control: no-store`, refusals included (before, nothing): a
+generated contract gains that header on every authenticated operation, regenerate it with
+`npm run docs:generate`. The ESLint rule `presentation/shared-cache-varies` reports in the editor a
+public policy, without `vary`, on a declaration that writes guards or security schemes. See
+`docs/concepts/http-caching.md`.
+
+**Conditional requests.** A cache policy names the version of an answer, `etag: 'representation'`
+(a strong tag hashed from the bytes) or `etag: { version: 'version' }` (a weak tag from a field of
+the body), and `lastModified: 'changedAt'`: the pipeline answers `ETag` and `Last-Modified`, and
+`304 Not Modified` to `If-None-Match` and `If-Modified-Since`. A write declares
+`ifMatch: 'optional' | 'required'`: the version named in `If-Match` reaches the handler as
+`context.expectedVersion`, `expectVersion(aggregate, expected)` of the kernel refuses a stale one
+with `PreconditionFailedError` (`PRECONDITION_FAILED`, 412), and a required one that is missing
+answers `PRECONDITION_REQUIRED` (428). Both codes join the default error mapping and the codes a
+route may declare without a class of its own (`errors/known-code`). The contract documents the
+parameters, headers and answers.
+
+**Cache tags, purged after the commit.** A public policy names the resources its answer shows
+(`tags: [{ resource: 'calendar', param: 'calendarId' }]`), sent in the header the shared cache
+reads (`cacheTags: { header: CacheTagHeader.xkey }` of the options; `surrogate-key`, `cache-tag`,
+`cdn-tag`), filed under the tenant of the request when the application says so (`perTenant`, on
+the answers and on the purges). The kernel gains two ports: `CacheInvalidation`,
+which a `before-commit` handler asks and which `kernelModule()` binds to purge requests published
+on the outbox (a rollback purges nothing, a commit purges even across a crash), and `CachePurger`,
+which the relay calls through `new PurgingPublisher(purger, broker)` and which
+`domain-events/transactional-before-commit` now refuses before the commit. `@ddd-ts-kit/http/purgers`
+holds `VarnishCachePurger` (xkey or ban, with the purge `key` of the VCL), `FastlyCachePurger` and
+`CloudflareCachePurger`, all held to `cachePurgerContract` of `@ddd-ts-kit/testing/contracts` (the
+CDN ones on a fake of the purge API each documents); the test application exposes
+`cacheInvalidation`. `RepeatedCachePurger` purges once more a little later, for a read that reached
+the cache after the purge. Filed per tenant, a tagged answer to a request naming no tenant is
+`no-store`, a tagged public route anybody may call needs `resolveTenant`, and an invalidation asked
+without a tenant throws `NoCurrentTenantError`. `CacheInvalidation` and `CachePurger` join the
+standard interfaces (`standard/no-parallel-interface`: `CacheInvalidator`, `CdnPurger` and the
+like). Varnish 9.1.0 runs in the integration job. See `docs/tools/http-caches.md`.
+
+**Varnish in front of a generated project.** `init --http-cache varnish` (recorded as
+`stack.httpCache`; a config without it is `none`) adds the Varnish 9.1.0 service to the compose
+file with its VCL in `docker/varnish/default.vcl` (it keeps only what an answer allows by
+`max-age` or `s-maxage`, and lets a purge in from its machine or with `VARNISH_PURGE_KEY`),
+validates `VARNISH_URL` and `VARNISH_PURGE_KEY`, tags the public answers in `xkey` from the HTTP
+boundary, and has the outbox relay of `main.ts` and of every `generate service` entry point purge
+through `PurgingPublisher` and `VarnishCachePurger`; the end-to-end application records the purges
+(`purges.purged`). It needs an HTTP framework and `--events outbox`. On `--di manual` and `nest`
+the platform gains `cacheInvalidation`. With `--tenancy`, the answers and the purges are tagged
+per tenant and the HTTP boundary reads the tenant of a request from `x-tenant-id`.
+`generate controller --cache public|private|no-store` writes the cache policy of a controller.
+The generated presentation rules say when to cache, purge and condition a write.
+
+## 0.11.0
+
+**File import and export, designed.** `docs/concepts/file-import-export.md` says how a large
+file is to be processed on the job queue and the file storage: an import read as a stream and
+sent as commands batch by batch, with its checkpoint, its progress and a rejection report; an
+export written in parts; chunks followed by a process manager beyond one attempt. Nothing of it
+is built in this version; the page lists what would be added.
+
+**A long background job in the example.** A practitioner going away clears a period of their
+calendar: `POST /calendars/:calendarId/clearances` (202, the identifier of the clearance) enqueues
+`ClearCalendarBackgroundJob` in the unit of work of the command, which cancels the appointments
+of the period one by one as the person who asked, with a checkpoint and its progress after each,
+and `GET /calendars/:calendarId/clearances/:clearanceId` answers its status (an enum of
+`QueuedJobStatus`) and `{ done, total }`, for a clearance of that calendar only (the subject of
+its job);
+then the time off is accepted. Both routes are new, with the permission `scheduling:calendar.clear`
+and the error code `UNKNOWN_CLEARANCE` (404); no existing route of the contract changes. The
+end-to-end support of the example can start the worker (`startApplication({ jobs: true })`).
+
+**Generators for background work.** `ddd-ts-kit generate background-job <context> <Name>
+--command <UseCase>` writes a background job that sends its command as the actor that enqueued
+it (`execution.actor`, new on `BackgroundJobExecution`), with one field of its payload per other
+input of the command (a `Date` as its ISO text), registered by `@Background()` or on the builder
+of the module file, and a spec that enqueues a payload of every field and runs what is due. `generate
+state-machine <context> <Aggregate> --value <state>... --transition "<intention>:<from>>[<to>]"`
+writes the status vocabulary (or adds the values it misses), the machine and its spec; a machine
+without `refused` throws the new `TransitionError.forbidden` (code `FORBIDDEN_TRANSITION`), and
+`lifecycle/status-through-machine` asks an aggregate to import its machine once it writes a
+status. `generate process <context> <Name>` writes a process manager, the background job of its
+timeouts and their specs. The two that run on the queue need `--di tsyringe`. `init --queue
+database|redis|memory` chooses where jobs and process instances are kept (`stack.queue`):
+`database` by default on Knex or Drizzle with tsyringe, the jobs and processes tables created by
+the first migration and bound by the platform module; `redis` puts the jobs on the server of the
+cache, a write lost after the commit logged and reported (`reportLostJobs`); a config without
+the key is read as `memory`, as before. A queue kept in the memory of a process is consumed by
+that process even with its jobs off, so the API of a project with a worker still runs the jobs
+it enqueues. Under standard decorators,
+`@Background` records the job once the class is defined, when its static `jobName` exists.
+
+**Process managers.** A long-running process that reacts to events, keeps its own state and
+sends commands is a class of `application/processes/` whose steps decide (`ProcessDecision`: the
+next state, the commands, the timeouts armed or disarmed, the end). The new `ProcessRunner`
+port (runner in `@ddd-ts-kit/scheduling`) runs a step in one unit of work: it loads the instance
+an event correlates, saves its state with optimistic concurrency through `ProcessStore`
+(`InMemoryProcessStore` in the kernel, `KnexProcessStore` and `createProcessTable`,
+`DrizzleProcessStore` and `processesTable`, held by `processStoreContract`), arms its timeouts
+as delayed background jobs and sends the commands. `givenProcess` of `@ddd-ts-kit/testing`
+tests a step without infrastructure. The new rule `process/sends-commands-only` (checker and
+ESLint) refuses a process that imports an aggregate, a repository, a port or infrastructure;
+`CONTEXT.md` gains a `Process managers` section and `describe` lists them. In the example, the
+confirmation deadline of a requested appointment is a process manager; the booking trace gains
+one handler span, the HTTP contract is unchanged.
+
+**State machines.** `defineStateMachine` (kernel) declares the lifecycle of an aggregate once,
+in `domain/state-machines/<aggregate>.state-machine.ts`: its states, the states it starts in,
+transitions named after the intention methods, guards, and the refusal of a forbidden transition
+from a static factory of the concept error. The aggregate asks `machine.next(status, 'confirm',
+context)`; the new rule `lifecycle/status-through-machine` (checker and ESLint) refuses a status
+written by hand in an aggregate whose machine exists, and `ddd-ts-kit docs` draws each machine in
+a new `State machines` section of `CONTEXT.md` (and lists the background jobs in a
+`Background jobs` section); `describe` lists both. A CONTEXT.md written before gains the
+sections by hand: copy them from a context generated by this version. In the example, the
+appointment lifecycle is a state machine; its HTTP contract is unchanged.
+
+**Background jobs.** A use case hands work to a worker with the new `JobQueue` port of the
+kernel: `jobs.enqueue(CompileStatementsBackgroundJob, { month }, { delay, runAt, idempotencyKey, subject })`, the
+job a class with a static `jobName` declared with `@Background({ maxAttempts, backoff, timeout,
+lease })`, its payload typed by its `run`. With a database the job is a row of the jobs table of
+its context, written by the transaction of the command (`KnexJobStore` and `createJobTable` in
+`@ddd-ts-kit/knex`, `DrizzleJobStore` and `jobsTable` in `@ddd-ts-kit/drizzle`), so a command
+that rolls back leaves no job and one that commits loses none; `RedisJobStore` and
+`InMemoryJobStore` write it, and a cancellation or a revival, once the unit of work committed
+(`whenCommitted`, new in the kernel). An idempotency key is scoped by the tenant of the job, and
+work done for a tenant finds and cancels the jobs of that tenant only; `find` answers the tenant
+and the `subject` of a job, never its payload, and its status is the closed vocabulary
+`QueuedJobStatus`. The `QueueWorker` of `@ddd-ts-kit/scheduling` claims the jobs of the queues of its
+contexts with a lease it extends by heartbeats, at least once, with retries and an exponential
+backoff, dead jobs, cancellation, progress, checkpoints for long jobs, a concurrency per queue
+and a graceful stop; each attempt runs as the actor, in the correlation, the tenant and the
+trace of the work that enqueued it, is counted in `background_job_runs_total` and
+`background_job_duration_ms`, and reports an unexpected failure to the error reporter.
+`@ddd-ts-kit/di` registers the declared jobs and runs the worker in the processes that run the
+jobs; the test application gains `jobQueue` and `backgroundJobs.runDue()`. One contract,
+`jobStoreContract`, holds every store; the Knex and Drizzle stores are proven on PostgreSQL in
+CI behind a pool of several connections, the Redis store on Dragonfly. Prisma and TypeORM get no
+store yet. `givenProcess(..).thenState` fails a state that JSON would change, as the runner
+stores it. See [Background jobs](docs/concepts/background-jobs.md).
 
 ## 0.10.0
 

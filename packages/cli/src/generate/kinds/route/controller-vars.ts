@@ -52,13 +52,14 @@ function declaresAnswer(useCase: ControllerPlan['useCase'], types: ControllerTyp
 }
 
 function declarationVars(scope: Scope, plan: ControllerPlan, readsRequest: boolean): RenderContext {
-  const { endpoint, group } = plan;
+  const { endpoint, group, cache } = plan;
   const rest = group === undefined ? endpoint.path : endpoint.path.slice(group.prefix.length);
 
   const sharedAccepted = plan.useCase.returnsId && sharesSchemas(scope.config);
 
   const names = [
     ...(sharedAccepted ? ['acceptedSchema'] : []),
+    ...(cache === undefined ? [] : ['CacheScope']),
     'Controller',
     ...(group === undefined ? ['Public'] : []),
     ...(sharedAccepted ? ['type Accepted'] : []),
@@ -72,6 +73,8 @@ function declarationVars(scope: Scope, plan: ControllerPlan, readsRequest: boole
         : `group: ${group.name.pascal}Routes,`,
     groupPath: rest === '' ? '/' : rest,
     httpImports: names.join(', '),
+    cached: cache !== undefined,
+    cache: cache ?? '',
   };
 }
 

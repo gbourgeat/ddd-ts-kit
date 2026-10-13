@@ -1,6 +1,7 @@
 import type {
   ActorContext,
   Cache,
+  CacheInvalidation,
   Clock,
   CommandBus,
   DomainEventDispatcher,
@@ -11,15 +12,18 @@ import type {
   IdGenerator,
   IntegrationEventPublisher,
   IntegrationEventSubscriber,
+  JobQueue,
   JobScheduler,
   Lock,
   Logger,
   Metrics,
+  ProcessStore,
   ProcessedEventStore,
   QueryBus,
   RateLimiter,
   UnitOfWork,
 } from '@ddd-ts-kit/kernel';
+import type { JobStore, QueueWorker, QueueWorkerOptions } from '@ddd-ts-kit/scheduling';
 import type { Instrumentation } from './instrumentation.js';
 import type { Provided } from './provided.js';
 
@@ -58,6 +62,12 @@ export interface KernelModuleOptions {
   readonly errorReporter?: Provided<ErrorReporter>;
   /** Defaults to a bounded cache in the memory of the process, expiring by `Clock`. */
   readonly cache?: Provided<Cache>;
+  /**
+   * Defaults to purge requests published on `eventPublisher`: behind an outbox they commit with the
+   * work, and the relay hands them to a `CachePurger` through `PurgingPublisher`. Without one, the
+   * requests reach the event bus, where nothing purges.
+   */
+  readonly cacheInvalidation?: Provided<CacheInvalidation>;
   /** Defaults to a lock inside this process, expiring by `Clock`: several instances exclude nothing between them. */
   readonly lock?: Provided<Lock>;
   /** Defaults to a limiter inside this process, counting by `Clock`: several instances each allow the limit. */
@@ -68,6 +78,24 @@ export interface KernelModuleOptions {
    * each run every job.
    */
   readonly jobScheduler?: Provided<JobScheduler>;
+  /**
+   * Where the background jobs wait. Defaults to a store in the memory of the process: bind the
+   * jobs table of the ORM package (`KnexJobStore`, `DrizzleJobStore`), or `RedisJobStore`, so that
+   * a job survives a restart and is shared by the workers.
+   */
+  readonly jobStore?: Provided<JobStore>;
+  /** Defaults to a queue on `jobStore` that captures the correlation, the actor, the tenant and the trace of the work. */
+  readonly jobQueue?: Provided<JobQueue>;
+  /** Defaults to a worker on `jobStore`, `Clock`, `ExecutionScope`, `Logger`, `Metrics` and `ErrorReporter`, tuned by `queues`. */
+  readonly queueWorker?: Provided<QueueWorker>;
+  /**
+   * Where the process managers keep their instances. Defaults to the memory of the process: bind
+   * `KnexProcessStore` or `DrizzleProcessStore` so that a step saves its state in the transaction
+   * of its unit of work. `ProcessRunner` is always the one of `@ddd-ts-kit/scheduling`, on it.
+   */
+  readonly processStore?: Provided<ProcessStore>;
+  /** Concurrency per queue, polling interval and grace period of the default worker. */
+  readonly queues?: Pick<QueueWorkerOptions, 'concurrency' | 'pollIntervalMs' | 'graceMs'>;
   /**
    * What observes the application from outside, typically `traceApplication()` of
    * `@ddd-ts-kit/tracing`: the default buses, the event publisher, the consumers, the domain event

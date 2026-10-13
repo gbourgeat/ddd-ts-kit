@@ -39,6 +39,8 @@ export function loadConfig(env: Variables): AppConfig {
     docsEnabled: readFlag(env, { name: 'API_DOCS', fallback: environment !== 'production' }, problems),
     keycloak: readKeycloak(env, problems),
     redisUrl: readUrl(env, 'REDIS_URL', problems),
+    varnishUrl: readUrl(env, 'VARNISH_URL', problems),
+    varnishPurgeKey: readText(env, 'VARNISH_PURGE_KEY', problems),
     rateLimit: readRateLimit(env, problems),
     errorReporting: readErrorReporting(env, environment, problems),
     files: readFiles(env, environment, problems),

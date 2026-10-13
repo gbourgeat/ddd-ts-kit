@@ -143,6 +143,24 @@ const TRANSACTIONAL_BEFORE_COMMIT: readonly Fixture[] = [
   },
   {
     ruleId: TRANSACTIONAL,
+    name: 'a before-commit handler given the purger of the shared caches, which purges before the commit',
+    expect: { file: EVENT_HANDLER },
+    files: declaredProject({
+      ...DECLARED_CONTEXT,
+      [EVENT_HANDLER]: reacting([FROM_KERNEL('CachePurger')], ['CachePurger']),
+    }),
+  },
+  {
+    ruleId: TRANSACTIONAL,
+    name: 'a before-commit handler asking for a purge after the commit',
+    expect: 'pass',
+    files: declaredProject({
+      ...DECLARED_CONTEXT,
+      [EVENT_HANDLER]: reacting([FROM_KERNEL('CacheInvalidation')], ['CacheInvalidation']),
+    }),
+  },
+  {
+    ruleId: TRANSACTIONAL,
     name: 'a before-commit handler given a port whose adapter is under infrastructure/external',
     expect: { file: EVENT_HANDLER },
     files: declaredProject({ ...DECLARED_CONTEXT, [EVENT_HANDLER]: reacting([PAYMENT_PORT], ['PaymentGateway']) }),

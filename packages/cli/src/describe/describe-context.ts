@@ -48,6 +48,9 @@ export function describeContext(ws: Workspace, config: Config, facts: ContextFac
     projections: readProjections(sources),
     gateways: gatewaysOf(ports, adapters),
     jobs: facts.jobs,
+    backgroundJobs: facts.backgroundJobs,
+    stateMachines: facts.stateMachines,
+    processes: facts.processes,
     contracts: contractsOf(ws, config),
   };
 }
