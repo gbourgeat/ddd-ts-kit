@@ -22,7 +22,21 @@ ruleTester.run('authz-fields-by-schema', authzFieldsBySchema, {
     },
     {
       ...at(QUERY_HANDLER, "const shown = actor.roles.some((role) => role === 'admin');"),
-      errors: [{ messageId: 'roles' }],
+      errors: [{ messageId: 'roles' }, { messageId: 'roleTest', data: { access: 'role' } }],
+    },
+    {
+      ...at(
+        QUERY_HANDLER,
+        "const { roles } = query.actor;\nconst lines = roles.includes('accountant') ? all : trimmed;",
+      ),
+      errors: [{ messageId: 'roles', data: { access: 'roles' } }],
+    },
+    {
+      ...at(
+        QUERY_HANDLER,
+        "const role = query.actor.attributes['role'];\nconst lines = role === 'accountant' ? all : trimmed;",
+      ),
+      errors: [{ messageId: 'roleTest', data: { access: 'role' } }],
     },
     {
       ...at(QUERY_HANDLER, "if (membership.role === 'practitioner') { keep(); }"),

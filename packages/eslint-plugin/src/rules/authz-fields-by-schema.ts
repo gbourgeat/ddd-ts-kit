@@ -38,7 +38,7 @@ export const authzFieldsBySchema = defineRule<MessageId>({
 
 function listeners(sourceCode: Readonly<TSESLint.SourceCode>, report: Report<MessageId>): TSESLint.RuleListener {
   const roleTest = (node: TSESTree.Node, tested: TSESTree.Node): void => {
-    if (tested.type === AST_NODE_TYPES.MemberExpression && propertyName(tested) === 'role') {
+    if (namedAs(tested, 'role')) {
       report({ node, messageId: 'roleTest', data: { access: sourceCode.getText(tested) } });
     }
   };
@@ -51,7 +51,7 @@ function listeners(sourceCode: Readonly<TSESLint.SourceCode>, report: Report<Mes
         return;
       }
 
-      if (callee.object.type === AST_NODE_TYPES.MemberExpression && propertyName(callee.object) === 'roles') {
+      if (namedAs(callee.object, 'roles')) {
         report({ node, messageId: 'roles', data: { access: sourceCode.getText(callee.object) } });
       }
     },
@@ -67,4 +67,13 @@ function listeners(sourceCode: Readonly<TSESLint.SourceCode>, report: Report<Mes
       }
     },
   };
+}
+
+/** `roles` or `role`, held by the actor (`query.actor.roles`) or taken out of it first (`const { roles } = query.actor`). */
+function namedAs(node: TSESTree.Node, name: string): boolean {
+  if (node.type === AST_NODE_TYPES.Identifier) {
+    return node.name === name;
+  }
+
+  return node.type === AST_NODE_TYPES.MemberExpression && propertyName(node) === name;
 }

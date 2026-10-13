@@ -219,6 +219,26 @@ export const AUTHZ_FIXTURES: readonly Fixture[] = [
   },
   {
     ruleId: 'authz/fields-by-schema',
+    name: 'a query that tests the roles it took out of the actor first',
+    expect: { file: QUERY_HANDLER },
+    files: project({
+      [QUERY_HANDLER]:
+        "export class InvoicesIssuedHandler {\n  async execute(query: InvoicesIssuedQuery): Promise<readonly InvoiceLine[]> {\n    const { roles } = query.actor;\n    const lines = await this.invoices.search(query.scope);\n\n    return roles.includes('accountant') ? lines : lines.map(({ margin: _margin, ...line }) => line);\n  }\n}\n",
+      [QUERY_HANDLER_SPEC]: SAMPLES.SPEC,
+    }),
+  },
+  {
+    ruleId: 'authz/fields-by-schema',
+    name: 'a query that compares a role held in a variable of its own',
+    expect: { file: QUERY_HANDLER },
+    files: project({
+      [QUERY_HANDLER]:
+        "export class InvoicesIssuedHandler {\n  async execute(query: InvoicesIssuedQuery): Promise<readonly InvoiceLine[]> {\n    const role = query.actor.attributes['role'];\n    const lines = await this.invoices.search(query.scope);\n\n    return role === 'accountant' ? lines : lines.map(({ margin: _margin, ...line }) => line);\n  }\n}\n",
+      [QUERY_HANDLER_SPEC]: SAMPLES.SPEC,
+    }),
+  },
+  {
+    ruleId: 'authz/fields-by-schema',
     name: 'a query that removes a field for the callers without a role',
     expect: { file: QUERY_HANDLER },
     files: project({
