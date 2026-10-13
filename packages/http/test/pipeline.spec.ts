@@ -139,6 +139,9 @@ describe('the error mapper', () => {
       FORBIDDEN: 403,
       PRECONDITION_FAILED: 412,
       PRECONDITION_REQUIRED: 428,
+      FILE_NOT_FOUND: 404,
+      FILE_TOO_LARGE: 413,
+      UNSUPPORTED_MEDIA_TYPE: 415,
     });
   });
 

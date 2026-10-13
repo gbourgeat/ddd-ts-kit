@@ -108,6 +108,7 @@ describe('a public answer behind a cache that ignores Vary', () => {
     const keyed: ExecuteOptions = { cacheTags: { header: CacheTagHeader.cacheTag, honoursVary: true } };
 
     expect(mounted(readHours({ ...kept, vary: ['Accept-Language'] }), keyed)).not.toThrow();
+
     expect(
       mounted(readHours({ ...kept, vary: ['Accept-Language'] }), { cacheTags: { header: CacheTagHeader.xkey } }),
     ).not.toThrow();

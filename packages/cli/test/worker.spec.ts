@@ -30,7 +30,7 @@ describe('generate worker', () => {
       '  await application.stop();\n  await redis.close();\n  await persistence.close();\n  await tracing.shutdown();',
     );
 
-    expect(worker).toContain('  redis,\n});');
+    expect(worker).toContain('  redis,\n  files: openFiles(config.files),\n});');
   });
 
   it('adds the start script, the compose service and the entry knip needs', () => {

@@ -66,6 +66,64 @@ the platform gains `cacheInvalidation`. With `--tenancy`, the answers and the pu
 per tenant and the HTTP boundary reads the tenant of a request from `x-tenant-id`.
 `generate controller --cache public|private|no-store` writes the cache policy of a controller.
 The generated presentation rules say when to cache, purge and condition a write.
+## 0.9.0
+
+**Files live in a storage, never in the database.** The kernel gains the ports `FileStorage`
+(streams in and out, `stat`, `delete`, `copy`, `move`, `list`, short signed download and upload
+links), `FileKeys` (keys generated on the server, under the tenant when there is one) and
+`FileScanner` (an antivirus or content check before a file is accepted), the reference an
+aggregate keeps, `StoredFile` (key, size, media type, checksum), and `FileStaging`, which stages a
+file, moves it to its key as the last step of the transaction that records it
+(`promoteOnCommit`, on the new `atCommit` step of the unit of work, undone on a rollback) and
+purges the staged files, every one an orphan since no committed row points into `staging/`. A
+command carries a client's file as a `FileUpload`, which `fileUploadsMiddleware` stages after
+the permission and before the unit of work, so no transaction waits on an upload. A direct
+upload is confirmed from the `PendingUpload` grant the server kept (`uploadUrl` answers the link
+and the grant, `confirm(pending)` checks the size cap it carries), and the upload links of the
+storages the application serves enforce that cap. Media types are checked on the bytes.
+`InMemoryFileStorage` and `LocalFileStorage` pass the new `fileStorageContract` of
+`@ddd-ts-kit/testing/contracts`; a signed download link is an attachment on every connector.
+
+**`@ddd-ts-kit/s3`, the connector of a deployment.** `S3FileStorage` holds files in a bucket of
+any provider of the S3 protocol (AWS, MinIO, OVHcloud, Scaleway, Cloudflare R2): multipart
+uploads streamed part by part, presigned links whose upload signature covers the media type,
+copy and move by the service. The AWS SDK v3 packages are optional peers. The contract runs on
+MinIO in the integration job (`pgsty/minio`, pinned by digest: the upstream project no longer
+publishes images).
+
+**A controller declares the file it receives.** `upload: { field, maxBytes, mediaTypes }` on
+`@Controller` puts the multipart form, the size and the media types in the OpenAPI contract
+(with the 413, 415 and 422 refusals) and streams the file to `handle` as `upload`, checked on
+its way: `multipartUploads()` of the new `@ddd-ts-kit/http/uploads` entry reads it (busboy, an
+optional peer); a client that drops the connection part-way fails the file stream, so nothing
+waits on it. `FILE_TOO_LARGE` answers 413, `UNSUPPORTED_MEDIA_TYPE` 415 and `FILE_NOT_FOUND`
+404 by default. `signedFileRoutes(storage)` answers the signed links of the local and in-memory
+storages, and a handler may answer a stream.
+
+**A generated project keeps files, from its first day.** `init --storage local|s3|none` (new key
+`stack.storage`, `local` in what `init` writes, `none` when a config does not say it, so an
+existing project changes nothing) writes `platform/files/` and `platform/config/read-files.ts`
+(with `local`, `FILES_PUBLIC_URL` and `FILES_SIGNING_SECRET` are required in production, even
+before the first file arrives):
+a local directory in development, a bucket of the S3 protocol with a MinIO service in
+`docker-compose.yml` for `s3`, the memory in the tests; the ports bound, the hourly purge of
+staged files, the routes that answer the links of a served storage and the upload reader.
+`generate file-upload <context> <UseCase> --path ...` writes the controller that declares the
+file, the command that carries it as a `FileUpload`, the handler that records and promotes it,
+and their specs.
+Two rules: `persistence/no-file-content` (no binary or base64 column in a schema or a
+migration) and `files/port-not-connector` (the model and the use cases name the port, never a
+connector); `@ddd-ts-kit/s3` is refused in `domain/` and `application/`. To add files to an
+existing project: `npx ddd-ts-kit init --force --storage local`.
+`FileStaging.deleteAfterCommit` deletes, once committed, a file an aggregate no longer
+references, and the refusals of a file are codes of the kit for `errors/known-code`.
+
+**The example keeps the documents of appointments.** A practice attaches a document (`POST
+/appointments/{appointmentId}/document`, multipart, at most 10 MiB of PDF, PNG or JPEG checked on
+its bytes), reads it through a link of five minutes (`GET`, every read recorded in the audit
+trail) and removes it (`DELETE`); the contract only gains these three operations. The local
+directory serves development and the memory the tests; MinIO waits behind the `files` profile
+of the compose stack.
 
 ## 0.8.0
 

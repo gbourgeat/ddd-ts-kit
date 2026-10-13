@@ -6,6 +6,7 @@ import { cacheTagsExtension } from './cache-tags-extension.js';
 import { conditionalParameters } from './conditional-parameters.js';
 import { openApiPath } from './open-api-path.js';
 import { pathParameters } from './path-parameters.js';
+import { requestBody } from './request-body.js';
 import { requirement } from './requirement.js';
 import { responses } from './responses.js';
 import { schemaParameters } from './schema-parameters.js';
@@ -47,15 +48,14 @@ function operation(route: Route, mapper: ErrorMapper, definitions: Definitions):
     ...(route.deprecated === true ? { deprecated: true } : {}),
     security: route.security === false ? [] : requirement(route.security),
     ...(parameters.length === 0 ? {} : { parameters }),
-    ...(request.body === undefined
-      ? {}
-      : {
-          requestBody: {
-            required: true,
-            content: { 'application/json': { schema: definitions.embed(request.body) } },
-          },
-        }),
+    ...bodyOf(route, definitions),
     responses: responses(route, mapper, definitions),
     ...cacheTagsExtension(route),
   };
+}
+
+function bodyOf(route: Route, definitions: Definitions): { requestBody?: JsonSchema } {
+  const body = requestBody(route, definitions);
+
+  return body === undefined ? {} : { requestBody: body };
 }

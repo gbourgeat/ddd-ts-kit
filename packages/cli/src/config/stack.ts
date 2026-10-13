@@ -19,6 +19,7 @@ export const VALUE_OBJECT_FORMS = ['throwing', 'result'] as const;
 export const LITERAL_FORMS = ['named', 'free'] as const;
 export const CACHE_STACKS = ['none', 'redis'] as const;
 export const HTTP_CACHE_STACKS = ['none', 'varnish'] as const;
+export const STORAGE_STACKS = ['none', 'local', 's3'] as const;
 export const AUDIT_MODES = ['on', 'off'] as const;
 export const ERROR_REPORTERS = ['none', 'sentry'] as const;
 export const LOGGERS = ['stdout', 'pino', 'winston'] as const;
@@ -60,6 +61,13 @@ export interface Stack {
    * `VarnishCachePurger`. A config that says nothing was written before the choice existed: `none`.
    */
   readonly httpCache: (typeof HTTP_CACHE_STACKS)[number];
+  /**
+   * Where the content of files lives, never in the database: `local`, a directory in development
+   * and the memory in the tests; `s3`, a bucket of any provider of the S3 protocol (MinIO in the
+   * compose stack); `none`, no file storage wired. A config that says nothing was written before
+   * the choice existed: it is `none`.
+   */
+  readonly storage: (typeof STORAGE_STACKS)[number];
   /** Whether the audit trail is wired: decisions, commands and integration events, recorded from outside the use cases. */
   readonly audit: (typeof AUDIT_MODES)[number];
   /** Where unexpected errors are reported: nowhere, or a Sentry protocol server (Sentry, GlitchTip). */

@@ -7,6 +7,7 @@ export const USAGE = `Usage
                   [--ci github|gitlab|both|none] [--ci-extras <extra>,...|none]
                   [--authn jwt|keycloak|none] [--authz rbac|abac|rebac|custom]
                   [--broker none|rabbitmq|kafka|nats|redis|custom] [--cache none|redis] [--http-cache none|varnish]
+                  [--storage local|s3|none]
                   [--audit on|off]
                   [--errors none|sentry] [--logger stdout|pino|winston] [--style declared|explicit] [--assembly barrel|discovery]
                   [--dependencies signature|listed] [--refusals factories|classes]

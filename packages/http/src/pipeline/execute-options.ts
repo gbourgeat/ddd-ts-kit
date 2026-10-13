@@ -6,6 +6,7 @@ import type { ErrorContext } from './error-context.js';
 import type { GuardRefusal } from './guard-refusal.js';
 import type { RawRequest } from './raw-request.js';
 import type { RouteAround } from './route-around.js';
+import type { UploadReader } from './upload-reader.js';
 
 export interface ExecuteOptions {
   readonly errorMapper?: ErrorMapper;
@@ -76,4 +77,6 @@ export interface ExecuteOptions {
      */
     readonly honoursVary?: boolean;
   };
+  /** Reads the file of the routes that declare an upload: `multipartUploads()` of `@ddd-ts-kit/http/uploads`. */
+  readonly uploads?: UploadReader;
 }

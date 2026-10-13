@@ -1,6 +1,7 @@
 import { LOG_LEVELS, type LogLevel } from '@ddd-ts-kit/kernel';
 import type { AppConfig } from '@/platform/config/app-config';
 import { ConfigError } from '@/platform/config/config-error';
+import { readFiles } from '@/platform/config/read-files';
 import { readTracing } from '@/platform/config/read-tracing';
 
 const environments = ['development', 'test', 'production'] as const;
@@ -42,6 +43,7 @@ export function loadConfig(env: Variables): AppConfig {
     varnishPurgeKey: readText(env, 'VARNISH_PURGE_KEY', problems),
     rateLimit: readRateLimit(env, problems),
     errorReporting: readErrorReporting(env, environment, problems),
+    files: readFiles(env, environment, problems),
   };
 
   if (problems.length > 0) {

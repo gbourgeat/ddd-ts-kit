@@ -27,6 +27,31 @@ export function platformFiles(config: Config): InitFile[] {
     ...httpFiles(config),
     ...when(config.stack.cache === 'redis', [file('redis/open-redis.ts')]),
     ...when(config.stack.errors === 'sentry', [file('errors.ts')]),
+    ...fileStorageFiles(config),
+  ];
+}
+
+/** Where the content of files lives, how its settings are read, and the capability every context receives. */
+function fileStorageFiles(config: Config): InitFile[] {
+  const { storage, http } = config.stack;
+  const file = (name: string, variant?: string): InitFile => platformFile(config, name, variant);
+  const family = familyOf(config);
+
+  if (storage === 'none') {
+    return [];
+  }
+
+  return [
+    file('config/read-files.ts', storage),
+    file('files/open-files.ts', storage),
+    ...(family === 'tsyringe'
+      ? [
+          file('files/bind-files.ts', family),
+          file('files/files.module.ts', family),
+          file('files/staging-uploads.ts', family),
+        ]
+      : [file('files/create-files.ts')]),
+    ...when(http !== 'none', [file('files/file-routes.ts')]),
   ];
 }
 

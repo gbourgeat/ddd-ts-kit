@@ -64,6 +64,7 @@ function documentationOf({ spec, declared, guards }: ResolvedController): Docume
     ...(declared.tags.length === 0 ? {} : { tags: declared.tags }),
     ...(declared.groups.length === 0 ? {} : { groups: declared.groups }),
     ...requestOf(spec),
+    ...(spec.upload === undefined ? {} : { upload: spec.upload }),
     responses: { [status]: { description: description ?? defaultDescription(body), ...bodyOf(body) } },
     errors: [...new Set([...declared.errors, ...guards.flatMap((guard) => guard.documents?.errors ?? [])])],
     ...(spec.deprecated === true ? { deprecated: true } : {}),

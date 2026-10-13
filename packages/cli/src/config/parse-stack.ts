@@ -22,6 +22,7 @@ import {
   PACKAGE_MANAGERS,
   REFUSAL_FORMS,
   ROUTE_FORMS,
+  STORAGE_STACKS,
   STYLES,
   TENANCY_STRATEGIES,
   TEST_STACKS,
@@ -66,6 +67,7 @@ type Choices = Pick<
   | 'broker'
   | 'cache'
   | 'httpCache'
+  | 'storage'
   | 'audit'
   | 'errors'
   | 'logger'
@@ -81,6 +83,7 @@ function parseChoices(choose: Choose, orm: Stack['orm']): Choices {
     broker: choose('broker', BROKER_STACKS, 'none'),
     cache: choose('cache', CACHE_STACKS, 'none'),
     httpCache: choose('httpCache', HTTP_CACHE_STACKS, 'none'),
+    storage: choose('storage', STORAGE_STACKS, 'none'),
     audit: choose('audit', AUDIT_MODES, orm === 'none' ? 'off' : 'on'),
     errors: choose('errors', ERROR_REPORTERS, 'none'),
     logger: choose('logger', LOGGERS, 'stdout'),

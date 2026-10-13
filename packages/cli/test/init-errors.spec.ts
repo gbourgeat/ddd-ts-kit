@@ -56,7 +56,10 @@ describe('init --errors', () => {
     cli(root, 'generate', 'service', 'billing');
     cli(root, 'generate', 'worker');
 
-    const files = walk(root).filter((file) => file !== 'ddd-ts-kit.config.json');
+    // The staging of files is handed the ErrorReporter port, the no-op one of the kernel module here: it reports nothing.
+    const files = walk(root).filter(
+      (file) => file !== 'ddd-ts-kit.config.json' && !file.startsWith('src/platform/files/'),
+    );
 
     expect(files.filter((file) => TRACE_OF_REPORTING.test(read(root, file)))).toEqual([]);
     expect(exists(root, 'src/platform/errors.ts')).toBe(false);

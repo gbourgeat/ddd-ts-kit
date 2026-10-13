@@ -17,6 +17,7 @@ export interface StackOptions {
   readonly cache?: string;
   /** `none` or `varnish`: the shared HTTP cache in front of the API. */
   readonly httpCache?: string;
+  readonly storage?: string;
   readonly audit?: string;
   readonly errors?: string;
   readonly logger?: string;

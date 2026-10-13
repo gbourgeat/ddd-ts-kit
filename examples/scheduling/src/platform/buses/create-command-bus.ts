@@ -9,6 +9,7 @@ import {
   type BusMiddleware,
 } from '@ddd-ts-kit/kernel';
 import { relayWakeUpMiddleware } from '@ddd-ts-kit/redis';
+import { stagingUploads } from '@/platform/files/staging-uploads';
 import type { Foundations } from '@/platform/lay-foundations';
 import type { RedisServices } from '@/platform/redis/open-redis';
 import { readOnlyImpersonation } from '@/platform/buses/read-only-impersonation';
@@ -20,7 +21,7 @@ interface Signalled {
 /**
  * Around every command, outermost first: the report of an unexpected failure (a failed commit
  * included), the log entry and the measure of the use case, the
- * permission, the span of the use case (a refused command never started), the wake-up of the outbox relay, the audit entry, the refusal of whoever
+ * permission, the span of the use case (a refused command never started), the staging of the file it carries, the wake-up of the outbox relay, the audit entry, the refusal of whoever
  * impersonates (inside the audit entry, which records the refused command and its impersonator), then the unit of work. The guard and the unit of
  * work are resolved at each command: building the bus must not open anything. The audit entry
  * opens the transaction itself, so that the entry of a success commits with the state change
@@ -35,6 +36,7 @@ export function createCommandBus(resolve: Resolve, foundations: Foundations, opt
     .use(metricsMiddleware(foundations.metrics))
     .use((message, next, info) => resolve(UseCaseGuard).check(message, next, info))
     .use(foundations.traced.useCase)
+    .use(stagingUploads(resolve))
     .use(wakingTheRelay(options.redis))
     .use(foundations.audit.commands)
     .use(readOnlyImpersonation(foundations.scope))

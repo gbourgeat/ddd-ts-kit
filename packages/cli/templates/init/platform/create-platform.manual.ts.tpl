@@ -8,6 +8,9 @@ import {
   InMemoryCache,
   InMemoryCommandBus,
   InMemoryDomainEventDispatcher,
+{{#if files.any}}
+  InMemoryFileStorage,
+{{/if}}
   InMemoryLock,
   InMemoryQueryBus,
 {{#if cache.rateLimit}}
@@ -23,6 +26,9 @@ import {
 {{#if errors.sentry}}
   errorReportingMiddleware,
 {{/if}}
+{{#if files.any}}
+  fileUploadsMiddleware,
+{{/if}}
   scopedPublisher,
   dispatchingOnSave,
   reportAfterCommitFailures,
@@ -34,6 +40,9 @@ import {
   type DomainEventDispatcher,
 {{#if errors.sentry}}
   type ErrorReporter,
+{{/if}}
+{{#if files.any}}
+  type FileStorage,
 {{/if}}
 {{#if httpCache.varnish}}
   type IntegrationEventPublisher,
@@ -67,6 +76,9 @@ import { logDecisions } from '{{alias.platform}}/auth/log-decisions{{alias.ext}}
 import { UseCaseProtection } from '{{alias.platform}}/auth/use-case-protection{{alias.ext}}';
 import type { Persistence } from '{{alias.platform}}/database/persistence{{alias.ext}}';
 import type { EventProvider } from '{{alias.platform}}/events/event-provider{{alias.ext}}';
+{{#if files.any}}
+import { createFiles, type Files } from '{{alias.platform}}/files/create-files{{alias.ext}}';
+{{/if}}
 import { ConfiguredJobScheduler } from '{{alias.platform}}/jobs/configured-job-scheduler{{alias.ext}}';
 import { createLogger, type LogSettings } from '{{alias.platform}}/observability/create-logger{{alias.ext}}';
 import { createMetrics } from '{{alias.platform}}/observability/create-metrics{{alias.ext}}';
@@ -105,6 +117,10 @@ export interface PlatformOptions {
   /** The Redis protocol server; left out, the cache, the lock and the limiter stay in the memory of the process. */
   readonly redis?: RedisServices;
 {{/if}}
+{{#if files.any}}
+  /** Where the content of files lives: the storage of `main.ts`; left out (the tools, the tests), the memory of the process. */
+  readonly files?: FileStorage;
+{{/if}}
 }
 
 /** Replacing a provider (another broker, another clock) happens here and nowhere else. */
@@ -133,6 +149,9 @@ export function createPlatform(persistence: Persistence, options: PlatformOption
 {{#if httpCache.varnish}}
   const events = eventsOn(persistence, options, { scope, traced });
 {{/if}}
+{{#if files.any}}
+  const files = filesOf(options, foundations);
+{{/if}}
 
   return {
     ...foundations,
@@ -143,9 +162,12 @@ export function createPlatform(persistence: Persistence, options: PlatformOption
 {{#unless httpCache.varnish}}
     ...eventsOn(persistence, options, { scope, traced }),
 {{/unless}}
-    // Around every use case, outermost first: {{#if errors.sentry}}the report of an unexpected failure, {{/if}}its log entry, its measure, the permission, its span; a command then runs in the unit of work.
+    // Around every use case, outermost first: {{#if errors.sentry}}the report of an unexpected failure, {{/if}}its log entry, its measure, the permission, its span; a command then {{#if files.any}}has the file it carries staged, out of any transaction, and {{/if}}runs in the unit of work.
     commands: chain(new InMemoryCommandBus(), [
       ...observed,
+{{#if files.any}}
+      fileUploadsMiddleware(() => files),
+{{/if}}
       ...beforeTheTransaction(foundations, options),
       unitOfWorkMiddleware(persistence.unitOfWork),
     ]),
@@ -157,9 +179,24 @@ export function createPlatform(persistence: Persistence, options: PlatformOption
     adapter,
     selfGoverned: (instance, info) => adapter(ownPolicy()(instance, info), info),
     protection,
+{{#if files.any}}
+    files,
+{{/if}}
   };
 }
 
+{{#if files.any}}
+/** Where the content of files lives: the storage of `main.ts`; left out (the tools, the tests), the memory of the process. */
+function filesOf(options: PlatformOptions, foundations: Foundations): Files {
+{{#if errors.none}}
+  return createFiles(options.files ?? new InMemoryFileStorage(), { ...foundations, errors: new NoopErrorReporter() });
+{{/if}}
+{{#if errors.sentry}}
+  return createFiles(options.files ?? new InMemoryFileStorage(), foundations);
+{{/if}}
+}
+
+{{/if}}
 /** What surrounds every use case on both buses, outermost first, before what each bus adds. */
 function observing(foundations: Foundations, guard: BusMiddleware, span: BusMiddleware): readonly BusMiddleware[] {
 {{#if errors.none}}

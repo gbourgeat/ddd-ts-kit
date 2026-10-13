@@ -2,6 +2,7 @@ import { injected } from '@ddd-ts-kit/kernel/declarations';
 import { PersonDirectoryContract } from '@/contexts/identity/published-language/index';
 import { AddExceptionHandler } from '@/contexts/scheduling/application/commands/add-exception/add-exception.handler';
 import { AddTimeOffHandler } from '@/contexts/scheduling/application/commands/add-time-off/add-time-off.handler';
+import { AttachAppointmentDocumentHandler } from '@/contexts/scheduling/application/commands/attach-appointment-document/attach-appointment-document.handler';
 import { BookAppointmentHandler } from '@/contexts/scheduling/application/commands/book-appointment/book-appointment.handler';
 import { CancelAppointmentHandler } from '@/contexts/scheduling/application/commands/cancel-appointment/cancel-appointment.handler';
 import { CompleteAppointmentHandler } from '@/contexts/scheduling/application/commands/complete-appointment/complete-appointment.handler';
@@ -12,6 +13,7 @@ import { ExpireUnconfirmedAppointmentsHandler } from '@/contexts/scheduling/appl
 import { JoinWaitlistHandler } from '@/contexts/scheduling/application/commands/join-waitlist/join-waitlist.handler';
 import { MarkAppointmentNoShowHandler } from '@/contexts/scheduling/application/commands/mark-appointment-no-show/mark-appointment-no-show.handler';
 import { OfferFreedSlotHandler } from '@/contexts/scheduling/application/commands/offer-freed-slot/offer-freed-slot.handler';
+import { RemoveAppointmentDocumentHandler } from '@/contexts/scheduling/application/commands/remove-appointment-document/remove-appointment-document.handler';
 import { RescheduleAppointmentHandler } from '@/contexts/scheduling/application/commands/reschedule-appointment/reschedule-appointment.handler';
 import { SetOpeningHoursHandler } from '@/contexts/scheduling/application/commands/set-opening-hours/set-opening-hours.handler';
 import { AppointmentBookedEventHandler } from '@/contexts/scheduling/application/event-handlers/appointment-booked.event-handler';
@@ -37,6 +39,7 @@ import { PractitionerDirectory } from '@/contexts/scheduling/application/ports/p
 import { SchedulingRelationships } from '@/contexts/scheduling/application/ports/scheduling-relationships.port';
 import { AgendaProjection } from '@/contexts/scheduling/application/projections/agenda.projection';
 import { PractitionersProjection } from '@/contexts/scheduling/application/projections/practitioners.projection';
+import { GetAppointmentDocumentHandler } from '@/contexts/scheduling/application/queries/get-appointment-document/get-appointment-document.handler';
 import { GetAppointmentHandler } from '@/contexts/scheduling/application/queries/get-appointment/get-appointment.handler';
 import { GetCalendarDayHandler } from '@/contexts/scheduling/application/queries/get-calendar-day/get-calendar-day.handler';
 import { GetOpeningHoursHandler } from '@/contexts/scheduling/application/queries/get-opening-hours/get-opening-hours.handler';
@@ -54,13 +57,16 @@ import { KnexCalendarRepository } from '@/contexts/scheduling/infrastructure/per
 import { KnexPractitionerDirectory } from '@/contexts/scheduling/infrastructure/persistence/knex-practitioner-directory.repository';
 import { KnexWaitlistRepository } from '@/contexts/scheduling/infrastructure/persistence/knex-waitlist.repository';
 import { TupleSchedulingRelationships } from '@/contexts/scheduling/infrastructure/persistence/tuple-scheduling-relationships.repository';
+import { AttachAppointmentDocumentController } from '@/contexts/scheduling/presentation/http/appointments/attach-appointment-document/attach-appointment-document.controller';
 import { BookAppointmentController } from '@/contexts/scheduling/presentation/http/appointments/book-appointment/book-appointment.controller';
 import { BookAppointmentMapper } from '@/contexts/scheduling/presentation/http/appointments/book-appointment/book-appointment.mapper';
 import { CancelAppointmentController } from '@/contexts/scheduling/presentation/http/appointments/cancel-appointment/cancel-appointment.controller';
 import { CompleteAppointmentController } from '@/contexts/scheduling/presentation/http/appointments/complete-appointment/complete-appointment.controller';
 import { ConfirmAppointmentController } from '@/contexts/scheduling/presentation/http/appointments/confirm-appointment/confirm-appointment.controller';
+import { GetAppointmentDocumentController } from '@/contexts/scheduling/presentation/http/appointments/get-appointment-document/get-appointment-document.controller';
 import { GetAppointmentController } from '@/contexts/scheduling/presentation/http/appointments/get-appointment/get-appointment.controller';
 import { MarkAppointmentNoShowController } from '@/contexts/scheduling/presentation/http/appointments/mark-appointment-no-show/mark-appointment-no-show.controller';
+import { RemoveAppointmentDocumentController } from '@/contexts/scheduling/presentation/http/appointments/remove-appointment-document/remove-appointment-document.controller';
 import { RescheduleAppointmentController } from '@/contexts/scheduling/presentation/http/appointments/reschedule-appointment/reschedule-appointment.controller';
 import { SearchAppointmentsController } from '@/contexts/scheduling/presentation/http/appointments/search-appointments/search-appointments.controller';
 import { AddExceptionController } from '@/contexts/scheduling/presentation/http/calendars/add-exception/add-exception.controller';
@@ -81,6 +87,8 @@ import {
   Clock,
   CommandBus,
   ExecutionScope,
+  FileStaging,
+  FileStorage,
   IdGenerator,
   IntegrationEventPublisher,
   QueryBus,
@@ -93,6 +101,8 @@ export * from '@/contexts/scheduling/application/commands/add-exception/add-exce
 export * from '@/contexts/scheduling/application/commands/add-exception/add-exception.handler';
 export * from '@/contexts/scheduling/application/commands/add-time-off/add-time-off.command';
 export * from '@/contexts/scheduling/application/commands/add-time-off/add-time-off.handler';
+export * from '@/contexts/scheduling/application/commands/attach-appointment-document/attach-appointment-document.command';
+export * from '@/contexts/scheduling/application/commands/attach-appointment-document/attach-appointment-document.handler';
 export * from '@/contexts/scheduling/application/commands/book-appointment/book-appointment.command';
 export * from '@/contexts/scheduling/application/commands/book-appointment/book-appointment.handler';
 export * from '@/contexts/scheduling/application/commands/cancel-appointment/cancel-appointment.command';
@@ -113,6 +123,8 @@ export * from '@/contexts/scheduling/application/commands/mark-appointment-no-sh
 export * from '@/contexts/scheduling/application/commands/mark-appointment-no-show/mark-appointment-no-show.handler';
 export * from '@/contexts/scheduling/application/commands/offer-freed-slot/offer-freed-slot.command';
 export * from '@/contexts/scheduling/application/commands/offer-freed-slot/offer-freed-slot.handler';
+export * from '@/contexts/scheduling/application/commands/remove-appointment-document/remove-appointment-document.command';
+export * from '@/contexts/scheduling/application/commands/remove-appointment-document/remove-appointment-document.handler';
 export * from '@/contexts/scheduling/application/commands/reschedule-appointment/reschedule-appointment.command';
 export * from '@/contexts/scheduling/application/commands/reschedule-appointment/reschedule-appointment.handler';
 export * from '@/contexts/scheduling/application/commands/set-opening-hours/set-opening-hours.command';
@@ -136,6 +148,8 @@ export * from '@/contexts/scheduling/application/integration/publishers/appointm
 export * from '@/contexts/scheduling/application/integration/publishers/calendar-created.publisher';
 export * from '@/contexts/scheduling/application/projections/agenda.projection';
 export * from '@/contexts/scheduling/application/projections/practitioners.projection';
+export * from '@/contexts/scheduling/application/queries/get-appointment-document/get-appointment-document.handler';
+export * from '@/contexts/scheduling/application/queries/get-appointment-document/get-appointment-document.query';
 export * from '@/contexts/scheduling/application/queries/get-appointment/get-appointment.handler';
 export * from '@/contexts/scheduling/application/queries/get-appointment/get-appointment.query';
 export * from '@/contexts/scheduling/application/queries/get-calendar-day/get-calendar-day.handler';
@@ -155,13 +169,16 @@ export * from '@/contexts/scheduling/infrastructure/persistence/knex-calendar.re
 export * from '@/contexts/scheduling/infrastructure/persistence/knex-practitioner-directory.repository';
 export * from '@/contexts/scheduling/infrastructure/persistence/knex-waitlist.repository';
 export * from '@/contexts/scheduling/infrastructure/persistence/tuple-scheduling-relationships.repository';
+export * from '@/contexts/scheduling/presentation/http/appointments/attach-appointment-document/attach-appointment-document.controller';
 export * from '@/contexts/scheduling/presentation/http/appointments/book-appointment/book-appointment.controller';
 export * from '@/contexts/scheduling/presentation/http/appointments/book-appointment/book-appointment.mapper';
 export * from '@/contexts/scheduling/presentation/http/appointments/cancel-appointment/cancel-appointment.controller';
 export * from '@/contexts/scheduling/presentation/http/appointments/complete-appointment/complete-appointment.controller';
 export * from '@/contexts/scheduling/presentation/http/appointments/confirm-appointment/confirm-appointment.controller';
+export * from '@/contexts/scheduling/presentation/http/appointments/get-appointment-document/get-appointment-document.controller';
 export * from '@/contexts/scheduling/presentation/http/appointments/get-appointment/get-appointment.controller';
 export * from '@/contexts/scheduling/presentation/http/appointments/mark-appointment-no-show/mark-appointment-no-show.controller';
+export * from '@/contexts/scheduling/presentation/http/appointments/remove-appointment-document/remove-appointment-document.controller';
 export * from '@/contexts/scheduling/presentation/http/appointments/reschedule-appointment/reschedule-appointment.controller';
 export * from '@/contexts/scheduling/presentation/http/appointments/search-appointments/search-appointments.controller';
 export * from '@/contexts/scheduling/presentation/http/calendars/add-exception/add-exception.controller';
@@ -178,6 +195,7 @@ export * from '@/contexts/scheduling/presentation/http/shared/agenda-entry.seria
 
 injected(AddExceptionHandler, [CalendarRepository, Clock]);
 injected(AddTimeOffHandler, [CalendarRepository, AppointmentRepository, Clock]);
+injected(AttachAppointmentDocumentHandler, [AppointmentRepository, FileStaging, Clock]);
 injected(BookAppointmentHandler, [AppointmentRepository, CalendarRepository, IdGenerator, Clock]);
 injected(CancelAppointmentHandler, [AppointmentRepository, Access, Clock]);
 injected(CompleteAppointmentHandler, [AppointmentRepository, Clock]);
@@ -188,6 +206,7 @@ injected(ExpireUnconfirmedAppointmentsHandler, [AppointmentRepository]);
 injected(JoinWaitlistHandler, [WaitlistRepository, CalendarRepository, Clock]);
 injected(MarkAppointmentNoShowHandler, [AppointmentRepository, Clock]);
 injected(OfferFreedSlotHandler, [WaitlistRepository, CalendarRepository, AppointmentRepository, IdGenerator, Clock]);
+injected(RemoveAppointmentDocumentHandler, [AppointmentRepository, FileStaging, Clock]);
 injected(RescheduleAppointmentHandler, [AppointmentRepository, CalendarRepository, Access, Clock]);
 injected(SetOpeningHoursHandler, [CalendarRepository, Clock]);
 injected(AppointmentBookedEventHandler, [SchedulingRelationships]);
@@ -209,6 +228,7 @@ injected(AppointmentRescheduledPublisher, [IntegrationEventPublisher, IdGenerato
 injected(CalendarCreatedPublisher, [IntegrationEventPublisher, IdGenerator]);
 injected(AgendaProjection, [Agenda]);
 injected(PractitionersProjection, [PractitionerDirectory]);
+injected(GetAppointmentDocumentHandler, [AppointmentRepository, FileStorage]);
 injected(GetAppointmentHandler, [Agenda, PersonDirectoryGateway, Access]);
 injected(GetCalendarDayHandler, [CalendarRepository, Agenda, Access]);
 injected(GetOpeningHoursHandler, [CalendarRepository]);
@@ -223,12 +243,15 @@ injected(KnexCalendarRepository, [KnexContext, ExecutionScope, Clock]);
 injected(KnexPractitionerDirectory, [KnexContext]);
 injected(KnexWaitlistRepository, [KnexContext, ExecutionScope, Clock]);
 injected(TupleSchedulingRelationships, [RelationTupleStore]);
+injected(AttachAppointmentDocumentController, [CommandBus]);
 injected(BookAppointmentController, [CommandBus, BookAppointmentMapper]);
 injected(CancelAppointmentController, [CommandBus]);
 injected(CompleteAppointmentController, [CommandBus]);
 injected(ConfirmAppointmentController, [CommandBus]);
+injected(GetAppointmentDocumentController, [QueryBus]);
 injected(GetAppointmentController, [QueryBus]);
 injected(MarkAppointmentNoShowController, [CommandBus]);
+injected(RemoveAppointmentDocumentController, [CommandBus]);
 injected(RescheduleAppointmentController, [CommandBus]);
 injected(SearchAppointmentsController, [QueryBus, AgendaEntrySerializer]);
 injected(AddExceptionController, [CommandBus]);

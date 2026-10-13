@@ -1,5 +1,7 @@
 import type { Actor } from '@ddd-ts-kit/kernel';
 import type { HandlerInput } from '../route/handler-input.js';
+import type { IncomingFile } from '../route/incoming-file.js';
+import type { UploadSpec } from '../route/upload-spec.js';
 import type { ControllerSpec } from './controller-spec.js';
 
 /**
@@ -8,4 +10,4 @@ import type { ControllerSpec } from './controller-spec.js';
  */
 export type ControllerRequest<Spec extends ControllerSpec = ControllerSpec> = HandlerInput<Spec> & {
   readonly actor: Actor;
-};
+} & (Spec extends { readonly upload: UploadSpec } ? { readonly upload: IncomingFile } : unknown);

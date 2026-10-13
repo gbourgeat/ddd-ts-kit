@@ -175,6 +175,7 @@ describe('init, the choices it records and the ones it refuses', () => {
       logger: 'stdout',
       refusals: 'factories',
       routes: 'controllers',
+      storage: 'local',
       valueObjects: 'throwing',
       literals: 'named',
       style: 'explicit',

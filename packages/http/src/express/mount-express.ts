@@ -1,3 +1,5 @@
+import { Readable } from 'node:stream';
+import { pipeline } from 'node:stream/promises';
 import type { IRouter, Request, Response } from 'express';
 import type { ExecuteOptions } from '../pipeline/execute-options.js';
 import { assertCachedRoutes } from '../pipeline/assert-cached-routes.js';
@@ -16,6 +18,8 @@ type Registrar = Record<HttpMethod, (path: string, handler: ExpressHandler) => v
 /**
  * Registers the routes on an Express 5 application or router. A JSON body parser
  * (`express.json()`) must be installed before, otherwise bodies reach validation as `undefined`.
+ * An upload and a raw body are read from the request stream, which that parser leaves alone
+ * unless the request is JSON. A body that is a stream is piped to the response.
  */
 export function mountExpress(target: IRouter, routes: readonly Route[], options: ExpressMountOptions = {}): void {
   assertUniqueRoutes(routes);
@@ -44,12 +48,18 @@ function handlerOf(route: Route, options: ExpressMountOptions): ExpressHandler {
   return async (request, response) => {
     const { params, query, headers } = request;
     const body: unknown = request.body;
-    const result = await executeRoute(route, { params, query, headers, body, raw: request }, options);
+    const result = await executeRoute(route, { params, query, headers, body, raw: request, stream: request }, options);
 
     response.status(result.status);
 
     for (const [name, value] of Object.entries(result.headers)) {
       response.setHeader(name, value);
+    }
+
+    if (result.body instanceof Readable) {
+      await pipeline(result.body, response).catch(() => response.destroy());
+
+      return;
     }
 
     response.end(serializeBody(result));

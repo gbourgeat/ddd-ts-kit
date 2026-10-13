@@ -1,6 +1,9 @@
 import { LOG_LEVELS, type LogLevel } from '@ddd-ts-kit/kernel';
 import type { AppConfig } from '{{alias.platform}}/config/app-config{{alias.ext}}';
 import { ConfigError } from '{{alias.platform}}/config/config-error{{alias.ext}}';
+{{#if files.any}}
+import { readFiles } from '{{alias.platform}}/config/read-files{{alias.ext}}';
+{{/if}}
 import { readTracing } from '{{alias.platform}}/config/read-tracing{{alias.ext}}';
 
 const environments = ['development', 'test', 'production'] as const;
@@ -68,6 +71,12 @@ export function loadConfig(env: Variables): AppConfig {
     {{/if}}
     {{#if errors.sentry}}
     errorReporting: readErrorReporting(env, environment, problems),
+    {{/if}}
+    {{#if files.local}}
+    files: readFiles(env, environment, problems),
+    {{/if}}
+    {{#if files.s3}}
+    files: readFiles(env, problems),
     {{/if}}
   };
 

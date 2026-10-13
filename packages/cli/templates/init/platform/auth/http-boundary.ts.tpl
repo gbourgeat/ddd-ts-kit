@@ -8,12 +8,23 @@ import { CacheTagHeader, tenantFromHeader, type TenantResolver } from '@ddd-ts-k
 {{/if}}
 {{/if}}
 {{#if errors.none}}
-import type { ErrorContext, ErrorMapper, {{#if audit.on}}GuardRefusal, {{/if}}RouteAround } from '@ddd-ts-kit/http';
+import type { ErrorContext, ErrorMapper, {{#if audit.on}}GuardRefusal, {{/if}}RouteAround{{#if files.http}}, UploadReader{{/if}} } from '@ddd-ts-kit/http';
 import type { Clock, ExecutionScope, Logger, Session } from '@ddd-ts-kit/kernel';
 {{/if}}
 {{#if errors.sentry}}
 {{#unless audit.on}}
+{{#unless files.http}}
 import { reportHttpErrors, type ErrorContext, type ErrorMapper, type RouteAround } from '@ddd-ts-kit/http';
+{{/unless}}
+{{#if files.http}}
+import {
+  reportHttpErrors,
+  type ErrorContext,
+  type ErrorMapper,
+  type RouteAround,
+  type UploadReader,
+} from '@ddd-ts-kit/http';
+{{/if}}
 {{/unless}}
 {{#if audit.on}}
 import {
@@ -22,9 +33,15 @@ import {
   type ErrorMapper,
   type GuardRefusal,
   type RouteAround,
+{{#if files.http}}
+  type UploadReader,
+{{/if}}
 } from '@ddd-ts-kit/http';
 {{/if}}
 import type { Clock, ErrorReporter, ExecutionScope, Logger, Session } from '@ddd-ts-kit/kernel';
+{{/if}}
+{{#if files.http}}
+import { multipartUploads } from '@ddd-ts-kit/http/uploads';
 {{/if}}
 import { tracedRoutes } from '@ddd-ts-kit/tracing';
 import { principalOf } from '{{alias.platform}}/auth/principal-of{{alias.ext}}';
@@ -50,6 +67,10 @@ export interface HttpBoundary {
    * answers are then filed under that tenant, and vary on the header. Without it, the tenant of the caller.
    */
   readonly resolveTenant: TenantResolver;
+{{/if}}
+{{#if files.http}}
+  /** Reads the file of a controller that declares an upload, as it streams: its size and media types are checked on the way. */
+  readonly uploads: UploadReader;
 {{/if}}
 {{#if audit.on}}
   /** A request a guard refused at the edge, written to the audit trail as a denied decision. */
@@ -119,6 +140,9 @@ export function httpBoundary({
 {{#unless httpCache.perTenant}}
     cacheTags: { header: CacheTagHeader.xkey },
 {{/unless}}
+{{/if}}
+{{#if files.http}}
+    uploads: multipartUploads(),
 {{/if}}
 {{#if audit.on}}
     onGuardRefusal: refusals,

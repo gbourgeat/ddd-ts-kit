@@ -139,6 +139,28 @@ services:
       - ./docker/varnish/default.vcl:/etc/varnish/default.vcl:ro
 
 {{/if}}
+{{#if files.s3}}
+  # MinIO, an S3 server for local use (pgsty/minio builds it from the upstream sources, which no longer publish images).
+  # The bucket of S3_BUCKET is created at the first start; its root account is for local development ONLY.
+  minio:
+    image: pgsty/minio:RELEASE.2026-08-04T00-00-00Z@sha256:b6bfe7239bfc83fb90d31612d9704d86039dd714f7904b3f1ad68f211e602372
+    entrypoint: ["sh", "-c"]
+    command: ["mkdir -p /data/$${S3_BUCKET} && exec minio server /data"]
+    environment:
+      MINIO_ROOT_USER: ${S3_ACCESS_KEY_ID:-minio-app}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_ACCESS_KEY:-minio-app-secret}
+      S3_BUCKET: ${S3_BUCKET:-{{project.name}}-files}
+    ports:
+      - "127.0.0.1:${MINIO_PORT:-9000}:9000"
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "-o", "/dev/null", "http://127.0.0.1:9000/minio/health/ready"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+{{/if}}
 {{#if authn.keycloak}}
   # Keycloak {{keycloak.version}} in development mode, for local use only: it imports docker/keycloak/{{project.name}}-realm.json
   # at its first start (the API client, its audience mapper, a public client for the direct grant, demo users).
@@ -251,4 +273,7 @@ volumes:
 {{/if}}
 {{#if errors.sentry}}
   glitchtip-postgres:
+{{/if}}
+{{#if files.s3}}
+  minio-data:
 {{/if}}

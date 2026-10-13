@@ -20,6 +20,7 @@
     "broker": "redis",
     "cache": "redis",
     "httpCache": "varnish",
+    "storage": "local",
     "audit": "on",
     "errors": "sentry",
     "logger": "pino",

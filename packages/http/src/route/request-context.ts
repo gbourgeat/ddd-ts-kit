@@ -1,3 +1,4 @@
+import type { Readable } from 'node:stream';
 import type { ExecutionContext } from '@ddd-ts-kit/kernel';
 import type { RawHeaders } from './raw-headers.js';
 
@@ -15,4 +16,6 @@ export interface RequestContext {
   readonly raw: unknown;
   /** The version named in `If-Match`, on a route that declares `ifMatch`: absent when the caller named none, or `*`. */
   readonly expectedVersion?: number;
+  /** The body as it arrives, unparsed, for a route declared with `rawBody`. */
+  readonly stream?: Readable;
 }

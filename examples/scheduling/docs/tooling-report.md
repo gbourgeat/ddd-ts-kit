@@ -930,6 +930,47 @@ own specs. `PersonError.invalidEmail` quotes the address it refuses in its messa
 now reads `Invalid email.` as `detail`, and the spec of the controller holds that the address
 does not leave.
 
+## 2026-10-13: documents of appointments, kept in the file storage
+
+A practice attaches a document to an appointment (a referral, a prescription, a report), a
+patient or the practice fetches it through a link of five minutes, and the practice removes
+it. The content never reaches the database: the appointment keeps the reference of the stored
+file (key, size, media type, checksum), its name and when it was attached.
+
+| | |
+|---|---|
+| Config | `"storage": "local"`: a directory in development (`.data/files`), and in the end-to-end journey and the integration spec of the slice, each in a temporary directory; the memory in the handler specs. MinIO in `docker-compose.yml` behind the `files` profile is a recipe for moving to an object store (the comment of the service says the steps), not a storage the example runs on |
+| Platform | what `init --storage local` writes for this stack (`platform/files/`, `platform/config/read-files.ts`, the file routes mounted before `express.json()`, the upload reader of the HTTP boundary, the purge of staged files every hour), applied as the diff between `init --storage none` and `init --storage local` of the same stack, since `init --force` would have rewritten the hand-tuned files of the platform |
+| Generators | `generate value-object` (`AttachedDocument`), two `generate error` (`noDocument`, `documentNameTooLong`), `generate file-upload`, `generate command`, `generate query`, two `generate route`, then `docs` |
+| Written or rewritten by hand | the value object, the two refusals, the state and two methods of `Appointment`, the six columns of the mapper, the migration `20261013090000_add-appointment-documents.js` and `upgradeTables` for the in-process database of the tests, the three handlers, the three controllers, the specs, the end-to-end journey |
+| Routes added | `POST`, `GET` and `DELETE` `/appointments/{appointmentId}/document`; the rest of `openapi/openapi.yaml` is unchanged (228 lines added, none removed) |
+| Audit | `scheduling:appointment.read-document` is a sensitive permission of `auditDecisions`: every allowed read of a document is recorded |
+| Tests | 23 unit specs of the slice, the round trip of the reference in the contract of both appointment repositories, `document-lands-with-its-file.spec.ts` on the in-process database and the local storage (the row and the file land together; a commit refused after the file moved returns it to `staging/` and leaves the row without a document), and `test/e2e/journey-documents.e2e.spec.ts` on the local storage: an upload streamed through the multipart reader, the file under its final key on disk, a download through the link, a 415 for a disguised file, a 403 for another patient, the link that stops answering and the file gone once the document is removed |
+
+After the review of the lot, the order of a write changed in the kit and here with it. The
+command carries a `FileUpload` (`new FileUpload(file, 'appointment-documents')`), which the
+command bus stages after the permission and before the audit entry opens the transaction
+(`platform/files/staging-uploads.ts`, as `init` now writes it): no transaction waits on a
+client that uploads slowly. The handler reads `command.document.file` and calls
+`promoteOnCommit`, which moves the file inside the transaction, as its last step, so a committed
+row never points into `staging/` and the hourly purge only meets orphans. One behaviour moved:
+an upload to an appointment that does not exist is now received, then left in `staging/` for
+the purge, since the handler that finds the appointment runs after the staging. In production
+`FILES_PUBLIC_URL` is now required, like `FILES_SIGNING_SECRET`.
+
+What the generators did not fit, to change in the kit:
+
+- `generate file-upload` writes a controller without the schema of its path parameters: a
+  document attached to an appointment needs `appointmentId`, written by hand with its class
+  schema. The command it writes carries the file only; the identifier of the aggregate was added.
+- `generate query` wrote a reader port, its in-memory adapter and its fake: this query reads the
+  aggregate and signs a link, so the three files were removed.
+- `scripts/kit.mjs` of this example failed on any generator that creates a file (`NOT_A_FILE`
+  was declared after the call that read it); fixed here.
+- The integration specs of this example time out when vitest runs their files in parallel on a
+  loaded machine (PGlite per file); `npm run test:postgres` runs them one file at a time, and
+  passes.
+
 ## 2026-10-13: refusals at the edge in the audit trail, and the tenancy of the application
 
 Two changes of the kit reached this application.

@@ -31,6 +31,9 @@ import {
 } from '@ddd-ts-kit/kernel';
 {{/unless}}
 {{/if}}
+{{#if files.any}}
+import { stagingUploads } from '{{alias.platform}}/files/staging-uploads{{alias.ext}}';
+{{/if}}
 import type { Foundations } from '{{alias.platform}}/lay-foundations{{alias.ext}}';
 {{#if cache.relaySignal}}
 import type { RedisServices } from '{{alias.platform}}/redis/open-redis{{alias.ext}}';
@@ -48,7 +51,7 @@ interface Signalled {
  * Around every command, outermost first: the report of an unexpected failure (a failed commit
  * included), the log entry and the measure of the use case, the
 {{/if}}
- * permission, the span of the use case (a refused command never started){{#if cache.relaySignal}}, the wake-up of the outbox relay{{/if}}{{#if audit.on}}, the audit entry{{/if}}, then the unit of work. The guard and the unit of
+ * permission, the span of the use case (a refused command never started){{#if files.any}}, the staging of the file it carries{{/if}}{{#if cache.relaySignal}}, the wake-up of the outbox relay{{/if}}{{#if audit.on}}, the audit entry{{/if}}, then the unit of work. The guard and the unit of
  * work are resolved at each command: building the bus must not open anything.{{#if audit.on}} The audit entry
  * opens the transaction itself, so that the entry of a success commits with the state change
  * and the entry of a failure survives the rollback.{{/if}}
@@ -69,6 +72,9 @@ export function createCommandBus(resolve: Resolve, foundations: Foundations): In
     .use(metricsMiddleware(foundations.metrics))
     .use((message, next, info) => resolve(UseCaseGuard).check(message, next, info))
     .use(foundations.traced.useCase)
+{{#if files.any}}
+    .use(stagingUploads(resolve))
+{{/if}}
 {{#if cache.relaySignal}}
     .use(wakingTheRelay(options.redis))
 {{/if}}

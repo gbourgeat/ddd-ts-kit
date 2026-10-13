@@ -1,4 +1,4 @@
-import { AggregateRoot } from '@ddd-ts-kit/kernel';
+import { AggregateRoot, type StoredFile } from '@ddd-ts-kit/kernel';
 import { AppointmentError } from '@/contexts/scheduling/domain/errors/appointment.error';
 import { AppointmentBooked } from '@/contexts/scheduling/domain/events/appointment-booked.event';
 import { AppointmentCancelled } from '@/contexts/scheduling/domain/events/appointment-cancelled.event';
@@ -7,6 +7,7 @@ import { AppointmentConfirmed } from '@/contexts/scheduling/domain/events/appoin
 import { AppointmentExpired } from '@/contexts/scheduling/domain/events/appointment-expired.event';
 import { AppointmentMarkedNoShow } from '@/contexts/scheduling/domain/events/appointment-marked-no-show.event';
 import { AppointmentRescheduled } from '@/contexts/scheduling/domain/events/appointment-rescheduled.event';
+import type { AttachedDocument } from '@/contexts/scheduling/domain/value-objects/attached-document.vo';
 import type { Booking } from '@/contexts/scheduling/domain/value-objects/booking.vo';
 import type { Cancellation } from '@/contexts/scheduling/domain/value-objects/cancellation.vo';
 import type { Slot } from '@/contexts/scheduling/domain/value-objects/slot.vo';
@@ -22,6 +23,8 @@ export interface AppointmentState {
   /** Only while requested: the instant after which the appointment expires unless confirmed. */
   readonly confirmBefore?: Date;
   readonly cancellation?: Cancellation;
+  /** The document the practice attached, whatever the status: its reference, never its content. */
+  readonly document?: AttachedDocument;
 }
 
 export class Appointment extends AggregateRoot<string> {
@@ -79,9 +82,8 @@ export class Appointment extends AggregateRoot<string> {
     }
 
     this.state = {
-      registeredAt: this.state.registeredAt,
+      ...this.carried(),
       changedAt: now,
-      booking: this.state.booking,
       status: AppointmentStatus.Booked,
     };
 
@@ -92,9 +94,8 @@ export class Appointment extends AggregateRoot<string> {
     this.refuseWhenEnded();
 
     this.state = {
-      registeredAt: this.state.registeredAt,
+      ...this.carried(),
       changedAt: now,
-      booking: this.state.booking,
       status: AppointmentStatus.Cancelled,
       cancellation,
     };
@@ -118,9 +119,8 @@ export class Appointment extends AggregateRoot<string> {
     this.refuseBeforeStart(now);
 
     this.state = {
-      registeredAt: this.state.registeredAt,
+      ...this.carried(),
       changedAt: now,
-      booking: this.state.booking,
       status: AppointmentStatus.Completed,
     };
 
@@ -132,9 +132,8 @@ export class Appointment extends AggregateRoot<string> {
     this.refuseBeforeStart(now);
 
     this.state = {
-      registeredAt: this.state.registeredAt,
+      ...this.carried(),
       changedAt: now,
-      booking: this.state.booking,
       status: AppointmentStatus.NoShow,
     };
 
@@ -154,13 +153,34 @@ export class Appointment extends AggregateRoot<string> {
     }
 
     this.state = {
-      registeredAt: this.state.registeredAt,
+      ...this.carried(),
       changedAt: at,
-      booking: this.state.booking,
       status: AppointmentStatus.Expired,
     };
 
     this.record(new AppointmentExpired(this.id, at, this.state.booking));
+  }
+
+  /** Attaches a document in place of the one it held, whatever the status: answers the file no longer referenced, to delete once committed. */
+  attachDocument(document: AttachedDocument, now: Date): StoredFile | undefined {
+    const replaced = this.state.document?.file;
+
+    this.state = { ...this.state, changedAt: now, document };
+
+    return replaced;
+  }
+
+  /** Takes the document off: answers its file, to delete once committed. */
+  removeDocument(now: Date): StoredFile {
+    const { document, ...kept } = this.state;
+
+    if (document === undefined) {
+      throw AppointmentError.noDocument(this.id);
+    }
+
+    this.state = { ...kept, changedAt: now };
+
+    return document.file;
   }
 
   /** Whether this appointment still holds an instant of that slot, its buffer included. */
@@ -213,8 +233,19 @@ export class Appointment extends AggregateRoot<string> {
     return this.state.changedAt;
   }
 
+  get document(): AttachedDocument | undefined {
+    return this.state.document;
+  }
+
   toState(): AppointmentState {
     return { ...this.state };
+  }
+
+  /** What a change of status keeps: when the appointment was registered, its booking, its document. */
+  private carried(): Pick<AppointmentState, 'registeredAt' | 'booking' | 'document'> {
+    const { registeredAt, booking, document } = this.state;
+
+    return { registeredAt, booking, ...(document === undefined ? {} : { document }) };
   }
 
   private refuseWhenEnded(): void {
