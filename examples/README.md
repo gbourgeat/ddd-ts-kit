@@ -305,7 +305,9 @@ of the demo in [Demo users](scheduling/README.md#demo-users).
 - The decisions: [ADR 0001](scheduling/docs/adr/0001-combine-token-roles-with-relationships-in-one-authorizer.md)
   (roles and relationships in one authorizer),
   [ADR 0002](scheduling/docs/adr/0002-keep-read-models-with-projections-in-application-projections.md)
-  (superseded), [ADR 0003](scheduling/docs/adr/0003-a-practice-is-not-a-tenant.md) (a practice
-  is not a tenant).
+  (superseded), [ADR 0003](scheduling/docs/adr/0003-one-network-is-one-tenant.md) (one network
+  of practices is one tenant),
+  [ADR 0004](scheduling/docs/adr/0004-attendance-records-wait-for-a-tenant-in-the-event-store.md)
+  (the attendance records wait for a tenant in the event store).
 - [Tooling report](scheduling/docs/tooling-report.md): how long each step took, what the
   generator refused, the defects found in the kit and what is not built.

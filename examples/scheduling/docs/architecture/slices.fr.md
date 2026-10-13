@@ -1,5 +1,5 @@
 [English](slices.md) · **Français**
-<!-- translation-of: slices.md sha256:4b9feb412e5b5200 -->
+<!-- translation-of: slices.md sha256:4b7ddc92f1b67614 -->
 
 # Tranches
 
@@ -55,7 +55,7 @@ sur des agrégats différents).
 ## Les règles de chaque tranche
 
 - 11 : une personne s'enregistre elle-même : l'identifiant de la personne est celui de l'acteur ; s'enregistrer deux fois met à jour le nom et les coordonnées et n'annonce rien de nouveau.
-- 12 : seul l'administrateur de la plateforme ouvre un cabinet ; le fuseau horaire est un fuseau IANA ; le premier responsable doit être une personne enregistrée ; un fuseau inconnu est refusé (`UNKNOWN_TIME_ZONE`).
+- 12 : seul l'administrateur du réseau ouvre un cabinet, dans ce réseau (ADR-0003) ; le fuseau horaire est un fuseau IANA ; le premier responsable doit être une personne enregistrée ; un fuseau inconnu est refusé (`UNKNOWN_TIME_ZONE`).
 - 13 : un membre est une personne enregistrée avec un rôle par cabinet (responsable, praticien, assistant) ; ajouter deux fois est refusé (`ALREADY_MEMBER`) ; le dernier responsable ne peut pas être retiré (`LAST_MANAGER`) ; retirer un membre révoque ses délégations, données et reçues (cause `member-removed`).
 - 14 : le praticien et l'assistant sont des membres du cabinet avec ces rôles (`NOT_A_PRACTITIONER`, `NOT_AN_ASSISTANT`) ; une fin dans le passé est refusée (`DELEGATION_ENDS_IN_THE_PAST`) ; une délégation active par paire ; révoquer deux fois est refusé (`DELEGATION_NOT_ACTIVE`) ; la délégation doit appartenir au poste du chemin.
 - 15 : idempotent ; l'instant vient du `scheduledAt` du *job*.
@@ -85,7 +85,7 @@ consommateurs : ressource `{ type: 'context', id: '<context>' }`, telle que gén
 | Permission | Ressource de l'exigence | Qui la détient |
 |---|---|---|
 | `identity:person.register` | contexte (valeur par défaut générée) | toute personne connectée (jeton) |
-| `identity:practice.open` | contexte | rôle `platform-admin` (jeton) |
+| `identity:practice.open` | contexte | rôle `network-admin` (jeton) |
 | `identity:member.add`, `identity:member.remove` | `practice:<practiceId>` | les responsables du cabinet |
 | `identity:delegation.grant`, `identity:delegation.revoke` | `desk:<practiceId>.<practitionerId>` | le praticien du poste, les responsables du cabinet |
 | `scheduling:calendar.create` | `desk:<practiceId>.<practitionerId>` | le praticien du poste, les responsables du cabinet |
@@ -99,7 +99,7 @@ consommateurs : ressource `{ type: 'context', id: '<context>' }`, telle que gén
 | `scheduling:agenda.read` | `practice:<practiceId>` | les membres du cabinet ; restreint par `Access.scope(actor, agenda.read, 'calendar')` aux calendriers qu'ils tiennent (`run`) |
 | `notification:notification.read` | contexte | toute personne connectée ; restreint par `Access.scope(actor, notification.read, 'person')` à elle-même |
 | `analytics:occupancy.read` | `practice:<practiceId>` | les membres du cabinet ; restreint par `Access.scope(actor, occupancy.read, 'calendar')` aux calendriers qu'ils mesurent (les leurs ; tous pour un responsable) |
-| `audit:trail.read` | (plateforme) | rôle `platform-admin` |
+| `audit:trail.read` | (plateforme) | rôle `platform-admin`, lu par une élévation sur les réseaux |
 
 Les relations écrites par les contextes (par un port à eux, dans l'unité de travail de la
 commande, jamais par le domaine) : voir la règle 16 pour `identity` ; `scheduling` écrit

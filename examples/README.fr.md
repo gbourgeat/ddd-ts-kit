@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:be045de22d56fdbf -->
+<!-- translation-of: README.md sha256:a4326d46243b9175 -->
 
 # Exemples
 
@@ -310,7 +310,9 @@ utilisateurs de la démonstration dans [Les utilisateurs de démonstration](sche
 - Les décisions : [ADR 0001](scheduling/docs/adr/0001-combine-token-roles-with-relationships-in-one-authorizer.fr.md)
   (les rôles et les relations dans un seul autorisateur),
   [ADR 0002](scheduling/docs/adr/0002-keep-read-models-with-projections-in-application-projections.fr.md)
-  (remplacé), [ADR 0003](scheduling/docs/adr/0003-a-practice-is-not-a-tenant.fr.md) (un cabinet
-  n'est pas un *tenant*).
+  (remplacé), [ADR 0003](scheduling/docs/adr/0003-one-network-is-one-tenant.fr.md) (un réseau
+  de cabinets est un *tenant*),
+  [ADR 0004](scheduling/docs/adr/0004-attendance-records-wait-for-a-tenant-in-the-event-store.fr.md)
+  (les relevés de présence attendent un *tenant* dans l'*event store*).
 - [Rapport sur l'outillage](scheduling/docs/tooling-report.fr.md) : combien de temps chaque étape a
   pris, ce que le générateur a refusé, les défauts trouvés dans le kit et ce qui n'est pas construit.

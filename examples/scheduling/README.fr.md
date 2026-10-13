@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:9aa77a561130a9b4 -->
+<!-- translation-of: README.md sha256:63765042a293ed15 -->
 
 # Scheduling : l'application d'exemple de ddd-ts-kit
 
@@ -83,7 +83,8 @@ et le mot de passe de chacun est son nom d'utilisateur.
 
 | Utilisateur | Rôle dans le jeton | Ce qui fait ses droits |
 |---|---|---|
-| `demo-admin` | `platform-admin` | le rôle : ouvre des cabinets, lit le journal d'audit |
+| `demo-admin` | `network-admin`, réseau `north` | le rôle : ouvre les cabinets de son réseau |
+| `demo-ops` | `platform-admin`, aucun réseau | le rôle : lit le journal d'audit de chaque réseau, par une élévation que le journal enregistre |
 | `demo-manager`, `demo-manager-b` | aucun | la relation `manager` d'un cabinet chacun, écrite à l'ouverture du cabinet |
 | `demo-practitioner` | aucun | `practitioner` du cabinet, `holder` de son poste |
 | `demo-assistant` | aucun | `assistant` du cabinet ; `delegate` d'un poste une fois la délégation accordée |
@@ -106,6 +107,9 @@ et le mot de passe de chacun est son nom d'utilisateur.
 | Des tuples de relation persistants, écrits dans l'unité de travail | `src/platform/auth/knex-relation-tuple-store.ts` ; `*/application/ports/*-relationships.port.ts` et leurs adaptateurs |
 | Des recherches restreintes dans la requête SQL par le périmètre d'accès, avec des critères | `scheduling/application/queries/search-appointments/`, `search-practice-agenda/`, `analytics/application/queries/search-occupancy/` |
 | Une différence au niveau des champs : occupé sans le nom | `scheduling/application/queries/get-calendar-day/` |
+| Un champ réservé à l'équipe, dans toutes les représentations : la note interne, cachée au patient, en lecture seule pour un assistant, écrite par qui tient l'agenda | `scheduling/presentation/http/appointments/book-appointment/book-appointment.controller.ts`, `get-appointment/get-appointment.controller.ts` (`withFieldAccess`), `test/e2e/book-appointment.e2e.spec.ts` |
+| Une seule route en JSON, XML et CSV selon l'en-tête `Accept` ; un corps XML lu et validé comme du JSON ; une liste diffusée page par page à travers le bus à mesure qu'elle est lue | `scheduling/presentation/http/practices/` (`produces`), `export-practice-agenda/`, `src/platform/http/presentation-of.ts`, `test/e2e/export-practice-agenda.e2e.spec.ts` |
+| Un formulaire décrit par le serveur, pour l'appelant qui le demande (JSON Forms, ou un arbre de blocs) | `GET /forms/bookAppointment`, le `form` de `book-appointment.controller.ts`, `src/platform/http/with-forms.ts`, `openapi/forms/bookAppointment.json` |
 | Une prise d'identité en lecture seule, visible dans le journal | `src/platform/buses/read-only-impersonation.ts`, `test/e2e/journey-authorization.e2e.spec.ts` |
 | Des événements d'intégration, versionnés, à travers l'outbox | `src/contexts/*/published-language/`, `docs/integration/event-catalog.md` |
 | Une projection d'un autre contexte (décide, libelle des listes) | `scheduling/application/projections/practitioners.projection.ts` |
@@ -198,11 +202,28 @@ antérieure stockait une ligne par calendrier et par jour, recomptée à chaque 
 chaque nuit : voir [docs/tooling-report.fr.md](docs/tooling-report.fr.md), « Après la livraison : des
 statistiques calculées à la lecture ».
 
+## Réseaux de cabinets : un *tenant* chacun
+
+L'application sert plusieurs réseaux de cabinets depuis un seul déploiement, et chaque réseau est
+un *tenant* ([ADR-0003](docs/adr/0003-one-network-is-one-tenant.fr.md),
+`"stack.tenancy": "shared-table"`) : chaque table des contextes porte le réseau de ses lignes,
+chaque *repository* l'atteint par `tenantTable` et `ownTenantTable`, l'outbox garde le réseau de
+chaque événement pour que ses consommateurs s'y exécutent, et chaque *job* planifié s'exécute une
+fois par réseau de `NETWORKS`. Le jeton nomme le réseau de son utilisateur (`tenant_id`) ; une
+requête HTTP peut le nommer dans `x-tenant-id`, nommer un autre réseau que celui de l'appelant est
+refusé par un 403 avant que rien ne s'exécute, et un réseau absent de `NETWORKS` n'est pas trouvé
+(404), pour que rien ne soit écrit là où aucun *job* ne s'exécute. Une personne appartient à un
+seul réseau : un second réseau demande un second compte. L'équipe de la plateforme n'appartient à
+aucun réseau : elle lit le journal d'audit de chaque réseau par une élévation que le journal
+enregistre d'abord. Les cabinets restent des relations à l'intérieur d'un réseau.
+`test/e2e/journey-tenancy.e2e.spec.ts` tient tout cela ; `tenantIsolationContract` le tient pour
+chaque *repository*.
+
 ## Le modèle d'autorisation, avec deux cas déroulés
 
 Trois questions, trois endroits. Qui appelle : Keycloak, vérifié à la frontière. A-t-il le droit de
 faire ceci, sur cela : décidé avant le gestionnaire par un seul autorisateur, qui regarde d'abord
-les rôles du jeton (`platform-admin` ; `patient` pour le libre-service ; rien pour `support`), puis
+les rôles du jeton (`network-admin`, `platform-admin` ; `patient` pour le libre-service ; rien pour `support`), puis
 les relations stockées en tuples `object#relation@subject` et réécrites à la Zanzibar. Est-ce
 valide tout court : le domaine. Les contextes ne nomment jamais un rôle ni une relation : ils
 nomment des permissions, et écrivent des relations par un port à eux quand un fait se produit.

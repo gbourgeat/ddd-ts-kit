@@ -1,3 +1,5 @@
+**English** · [Français](0004-attendance-records-wait-for-a-tenant-in-the-event-store.fr.md)
+
 # ADR-0004: The attendance records wait for a tenant in the event store
 
 - Status: accepted

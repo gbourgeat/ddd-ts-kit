@@ -1,5 +1,5 @@
 [English](tooling-report.md) · **Français**
-<!-- translation-of: tooling-report.md sha256:c1ed2d7c71fc2478 -->
+<!-- translation-of: tooling-report.md sha256:434aca3b916281a3 -->
 
 # Rapport sur l'outillage
 
@@ -1206,6 +1206,104 @@ Frictions :
    plus 63). La *claim* `tenant_id` du realm nomme un cabinet par son identifiant, qui convient ;
    un realm dont les identifiants contiendraient un `.` serait refusé à la première requête HTTP.
 
+## 2026-10-13 (soir) : un réseau de cabinets est un *tenant*
+
+Le propriétaire a choisi la deuxième alternative de l'ADR-0003, désormais acceptée : un réseau
+de cabinets est un *tenant*, sur des tables partagées, pour que chaque règle de multitenance du
+kit soit appliquée et testée ici. `"stack.tenancy": "shared-table"` ; chaque table des quatre
+contextes porte `tenant_id` (douze tables, chacune avec un index `(tenant_id, key)`) ; chaque
+*repository* et chaque modèle de lecture atteint sa table par `tenantTable`, `ownTenantTable` ou
+l'option `tenant` de son registre ; l'outbox garde le réseau de chaque événement ; les trois
+*jobs* s'exécutent une fois par réseau de `NETWORKS` ; le côté lecture du journal d'audit est un
+`TenantAuditReader` ; la bordure lit le réseau dans `x-tenant-id` ou dans le jeton.
+`tenancy/scoped-statement` juge les adaptateurs sans aucun constat (`ddd-ts-kit check` : 0 sur
+660 fichiers), et son entrée a quitté `NOT_APPLICABLE` de la suite de conformité pour une
+injection.
+
+Changements du contrat HTTP : `POST /practices` demande le rôle `network-admin` (il demandait
+`platform-admin`) ; `GET /audit/entries` prend `network`, et est lu par l'équipe de la
+plateforme par une élévation sur ce réseau ou sur tous les réseaux, enregistrée d'abord
+(`tenancy:elevate`, raison `AUDIT_TRAIL_SEARCH`) ; une requête HTTP dont `x-tenant-id` nomme un
+autre réseau que celui de l'appelant reçoit un 403, une qui ne nomme aucun réseau possible un
+404 ; chaque requête HTTP d'un utilisateur du *realm* a besoin d'un *claim* `tenant_id` (le
+réseau) pour atteindre des données.
+
+Mesuré ici : le projet d'intégration (26 fichiers, 338 tests, dont `tenantIsolationContract` sur
+les huit *repositories* Knex) et le projet unitaire passent ; `journey-tenancy.e2e.spec.ts` (5
+tests) passe ; les autres *specs* de bout en bout et l'exécution de conformité ont été laissées au
+*pipeline*.
+
+Frictions, chacune corrigée dans le kit plutôt que contournée ici :
+
+1. **Des expressions brutes étaient signalées comme du SQL brut.** L'occupation est mesurée par
+   des agrégats dans le select (`count(*) filter (where ...)`), et le schéma ajoute une
+   contrainte d'exclusion : la règle signalait chaque `raw`. Elle lit désormais le texte littéral
+   d'un appel brut et ne signale que le SQL qui nomme une instruction ou une table (ou qui n'est
+   pas un littéral).
+2. **Un select sur une requête groupée n'avait aucune fonction utilitaire.** L'occupation pagine
+   ses groupes par leurs colonnes de sortie, donc elle sélectionne depuis la requête groupée :
+   `derivedTable` de `@ddd-ts-kit/knex` le fait sur la requête restreinte au *tenant*, sans
+   l'exécuteur dans l'adaptateur.
+3. **Un *job* par *tenant* ne pouvait pas être enregistré.** Ni `kernelModule` ni l'application
+   de test ne donnaient au planificateur un `TenantDirectory` : les deux prennent `tenants`
+   désormais (l'application de test prend par défaut le *tenant* de son contexte d'exécution).
+4. **La migration d'une base existante.** La première migration construit depuis le schéma
+   actuel, donc la seconde doit ajouter la colonne là où elle manque et la laisser là où elle
+   est : `addTenantColumn` de `@ddd-ts-kit/knex` fait les deux, et donne les lignes déjà
+   présentes au réseau nommé (`NETWORK_OF_EXISTING_ROWS`), en refusant des lignes sans réseau.
+5. **Une *spec* de parcours ne pouvait pas être écrite.** La garde du *plugin* demandait
+   `generate e2e`, qui a besoin d'une seule route ; un parcours en traverse plusieurs.
+   `test/e2e/journey-*.e2e.spec.ts` s'écrit désormais à la main.
+6. **`date_part` n'est pas `extract`.** Réécrire la mesure sans le mot `from` a changé un
+   arrondi : `date_part` renvoie un double, que PostgreSQL arrondit au pair le plus proche. La
+   conversion en `numeric` garde l'arrondi que tient la *spec* de contrat.
+7. **Une *spec* qui publie un événement à la main ne nomme aucun *tenant*.** Le *publisher* de
+   l'application l'estampille (`scopedPublisher`) ; une *spec* qui écrit elle-même l'enveloppe y
+   décompose `tenantId`, sinon ses consommateurs s'exécutent dans aucun réseau et sont refusés.
+
+## 2026-10-13 (nuit) : le *preset* d'identité, mesuré contre ce contexte d'identité
+
+Le kit a gagné `--preset identity`, un contexte d'identité générique écrit en entier
+([Démarrer avec des contextes bien conçus](../../../docs/guides/bootstrap-with-well-designed-contexts.fr.md)).
+Le contexte d'identité de cet exemple a été comparé avec lui, partie par partie, pour en prendre
+ce qui l'améliore sans changer son comportement. Rien n'a été pris : chaque différence est soit
+un modèle dont cet exemple a besoin, soit un changement de son contrat.
+
+| Partie | Ici | Le *preset* | Pris |
+|---|---|---|---|
+| Classification | `supporting` : des délégations entre un praticien et un assistant sur un bureau | `generic` | non : la délégation est ici la raison du contexte |
+| Qui | `Person`, enregistrée à la première connexion, courriel envoyé par le client | `Account`, courriel toujours lu dans le jeton | non : `PUT /people/me` cesserait de lire `email` dans son corps, un changement de contrat |
+| Groupes | `Practice` avec un fuseau horaire, des responsables, des praticiens, des assistants | `Organisation` avec des propriétaires, des administrateurs, des membres | non : le fuseau horaire et les trois rôles sont le langage de scheduling |
+| Invitations | aucune : un responsable ajoute une personne connue | émises par jeton, acceptées une fois connecté | non : une nouvelle fonctionnalité, pas un alignement |
+| Délégations | sur un bureau, avec ou sans le droit de changer les disponibilités, expirant par un *job* | les droits d'un rôle prêtés pour quatre-vingt-dix jours | non : un autre sens sous le même mot |
+| Fournisseur d'identité | en lecture seule (le jeton) | `IdentityProviderAdmin` tenu à jour au moins une fois par les consommateurs de ses faits | non : rien ici n'a besoin que le *realm* suive |
+| Multitenance | le réseau est le *tenant*, les cabinets à l'intérieur | l'organisation est le *tenant* | non : l'ADR-0003 a choisi le réseau |
+
+Ce que la comparaison a changé dans le kit : le *preset* répondait d'abord `FORBIDDEN` à chaque
+personne connectée sous `rbac` (aucun rôle n'accorde ses permissions), ce qu'un projet de cette
+forme aurait rencontré à sa première requête HTTP. `SignedInGrantsAuthorizer` de
+`@ddd-ts-kit/auth` accorde désormais les permissions du contexte à chaque personne connectée
+avant que le modèle ne décide, et le *preset* enveloppe `createAuthorizer` dedans. Mesuré : cinq
+projets générés avec le *preset* (rbac sur Drizzle et Zod, rebac sur Knex et class-validator avec
+des *tenants* et Keycloak, abac sur Fastify avec des *tenants*, custom sur Knex avec JWT, rbac sur
+class-validator et Fastify) n'ont aucun constat, un lint et un formatage propres, passent la
+vérification de types et passent leurs *specs*.
+
+Les documents des rendez-vous sont arrivés de main au même moment. Avec le réseau comme
+*tenant*, `TenantFileKeys` range chaque document sous lui
+(`tenants/<network>/appointment-documents/...`) : `journey-documents.e2e.spec.ts` attend
+désormais cette clé, et la *spec* d'intégration des documents s'exécute dans un réseau, comme
+toute autre *spec* d'un *repository* ici.
+
+Le relevé de présence gardé sous forme d'événements est arrivé de main en dernier. L'*event
+store* du kit ne garde aucun *tenant* : ses événements ne portent aucun réseau et un abonnement
+les rejoue dans aucun, si bien que la projection de `attendance_history` ne peut pas connaître le
+réseau d'une ligne. L'ADR-0004 garde les cinq tables du registre et ce modèle de lecture en
+dehors des réseaux tant que le registre ne porte pas de *tenant*, sous une désactivation de
+`tenancy/scoped-statement` ; l'appartenance au cabinet, demandée avant chaque lecture et chaque
+note, garde encore un réseau hors des relevés d'un autre. C'est le manque du kit que le prochain
+changement de l'*event store* devrait combler.
+
 ## 2026-10-12 : des objets-valeurs qui lèvent leurs refus
 
 Les objets-valeurs des quatre contextes sont passés d'un `Result` à des fabriques qui renvoient
@@ -1537,3 +1635,139 @@ que son statut était publié en texte libre, et que la file d'attente ne voyait
 sous la forme de son texte ISO) : `--command CancelAppointment` générerait aujourd'hui, mais le
 vidage envoie toujours une commande par rendez-vous de son *payload*, avec un point de
 reprise entre deux, ce qu'aucun *template* ne devine.
+
+## 2026-10-13 : des types de média, des champs réservés à l'équipe, et un formulaire décrit par le serveur
+
+La configuration dit `"representations": "negotiated"` et `"forms": "on"`, et la plateforme a
+les deux fichiers qu'`init` écrit désormais pour elles (`http/presentation-of.ts`,
+`http/with-forms.ts`), avec la frontière, la racine de composition et `scripts/openapi.ts`
+changés comme le sont les *templates*.
+
+| | Avant | Après |
+|---|---|---|
+| Types de média dans lesquels une route répond | JSON | JSON, et ce qu'elle déclare : `application/xml` et `text/csv` pour l'agenda d'un cabinet et son export, `application/xml` pour une réservation |
+| Corps lus | JSON | JSON, et XML sur `POST /appointments` |
+| Export d'un agenda | aucun | `GET /practices/{practiceId}/agenda/export`, diffusé en flux page après page du modèle de lecture (CSV ou XML) |
+| Note interne | aucune | écrite à la réservation par qui tient l'agenda, lue par son équipe, refusée (403) à son patient et cachée de lui : `withFieldAccess` sur le corps et sur le détail, `Access.authorize` dans le gestionnaire pour tout autre appelant |
+| Formulaires | aucun | `GET /forms/bookAppointment` (JSON Forms, ou `?format=blocks`), `openapi/forms/bookAppointment.json` généré |
+| *Specs* de bout en bout | | `book-appointment.e2e.spec.ts` (réservation en XML, le formulaire pour le patient, l'assistant et le praticien, la note), `export-practice-agenda.e2e.spec.ts` (CSV, XML, 406) |
+
+Ce que les générateurs ont écrit : l'événement du domaine `AppointmentAnnotated` (avec son terme
+de glossaire), la requête et le contrôleur de l'export, les deux *specs* de bout en bout, les
+`produces` et `consumes` de trois contrôleurs (`generate representation`) et les indications du
+formulaire de réservation (`generate form`), qui ont ensuite été remplis. Ce qui a été fait à la
+main : la note dans l'agrégat, sa ligne, sa colonne et l'agenda, le projecteur de l'annotation,
+les règles des champs, les permissions `appointment.note.read` et `appointment.note.write` avec
+la relation `staff` d'un agenda (quiconque travaille dans son cabinet), et le gestionnaire de
+l'export, qui lit l'agenda par pages de curseur au lieu du port de lecture que propose le
+générateur de requêtes.
+
+Frictions rencontrées, corrigées dans le kit dans le même changement :
+
+- Le JSON Schema d'une classe class-validator qui ne fait qu'en étendre une autre était un objet
+  vide : les lignes d'agenda du contrat ne disaient rien de leurs champs, et un CSV de ces lignes
+  n'avait aucune colonne. `@ddd-ts-kit/validation` donne désormais à une classe les propriétés de
+  ses ancêtres ; le contrat de l'agenda les liste.
+- Une décision sur un champ s'exécutait hors de la portée d'exécution de la requête HTTP, là où
+  l'audit des décisions l'exige : le *pipeline* décide désormais des champs, et lit une liste en
+  flux, à l'intérieur de celle-ci.
+- Le générateur de formulaires importait `Infer` comme une valeur dans un contrôleur
+  class-validator.
+
+Changements du contrat HTTP : les types de média ci-dessus sous chaque route concernée, `406` avec
+`NOT_ACCEPTABLE` sur les routes qui produisent plus que du JSON, `415` avec
+`UNSUPPORTED_MEDIA_TYPE` sur la réservation, `internalNote` (facultatif, marqué `x-field-access`)
+dans le corps de `POST /appointments` et dans la réponse de `GET /appointments/{appointmentId}`,
+les nouvelles routes `GET /practices/{practiceId}/agenda/export` et `GET /forms/bookAppointment`,
+et les propriétés des lignes d'agenda, qui manquaient.
+
+La note interne est une migration à part, `20261013110000_add-internal-notes.js`, après celle des
+documents : les tables sont partagées depuis, et `upgrade-tables.ts` applique le même changement
+à la base en processus des tests.
+
+## 2026-10-13 (plus tard) : ce qu'une revue des types de média, de l'accès aux champs et des formulaires a changé ici
+
+| | Avant | Après |
+|---|---|---|
+| Téléchargements de documents (`/files?token=`) | sous négociation, un fichier partait comme un tableau JSON d'octets, et `Accept: application/pdf` était refusé par un 406 : `journey-documents.e2e.spec.ts` échouait | une route qui ne déclare aucun schéma de corps est laissée hors de la négociation ; le fichier part tel qu'il a été stocké, et le parcours passe de nouveau |
+| Export d'un agenda | la requête `ExportPracticeAgenda` répondait une liste paresseuse, lue après le retour du bus : aucune unité de travail, aucune session de *tenant*, aucun *span* pour ses pages | le contrôleur diffuse `everyPage` sur `SearchPracticeAgendaQuery`, une requête par page à travers le bus ; la requête d'export, son gestionnaire et sa *spec* sont retirés |
+| Un échec au milieu d'un export | la connexion était coupée, personne n'était prévenu | `onError` est prévenu, avec la corrélation et `interrupted: true` |
+| Le formulaire de réservation | donné à tout appelant qui présentait un justificatif | `requires` la permission `appointment.book`, demandée comme la commande la demande (l'agenda de la requête, `selfService` quand le patient est l'appelant) : un patient qui le demande pour quelqu'un d'autre reçoit un 403, de même qu'un assistant sans délégation du bureau, qui ne peut pas réserver |
+| Qui écrit la note | qui tient l'agenda (`run`), si bien qu'un assistant avec une délégation l'aurait modifiée | le titulaire du bureau ou le responsable du cabinet (`own`, une nouvelle permission de l'agenda dans le schéma des relations) : un assistant qui réserve sur un bureau délégué voit la note en lecture seule, ce que montre désormais la *spec* de bout en bout du formulaire après une délégation |
+| Une note reçue avant sa réservation | l'agenda la perdait quand les deux faits du même instant arrivaient dans cet ordre | `AppointmentAnnotated` porte la réservation qu'il laisse, comme les autres faits : l'agenda écrit l'entrée entière avec la note |
+| Décisions sur les champs | une décision enregistrée par champ montré ou caché | enregistrée seulement quand un champ est posé ; un champ montré ou caché ne fait que façonner la réponse |
+
+Changements du contrat HTTP : `406 NOT_ACCEPTABLE` sur chaque route qui répond par un corps, `415
+UNSUPPORTED_MEDIA_TYPE` sur chaque route qui en lit un (le contrat suit désormais les
+représentations avec lesquelles le serveur est monté, et la page de documentation aussi),
+`FORBIDDEN` sur `GET /forms/bookAppointment`. Le client typé gagne les mêmes échecs.
+
+## 2026-10-13 : les types de média rencontrent les formes partagées, le cache et les *jobs*
+
+Les deux lots ont été fusionnés en un seul arbre. Ce que la fusion a changé ici, au-delà de
+prendre les deux côtés :
+
+| | |
+|---|---|
+| Export d'un agenda | sa propre classe de ligne étendait une classe de ligne que les formes partagées ont retirée : l'export répond désormais `AgendaLine` (`classSchema(AgendaLine, { shared: true })`), le composant vers lequel pointent déjà les deux recherches |
+| Corps de réservation | `startsAt` pris de `TimeSpan`, la note interne et ses règles de champ gardées : le JSON Schema d'une classe qui étend une classe prise en partie contient les propriétés des deux |
+| Note interne | `annotate` demandait à l'agrégat une garde que la machine à états a remplacée : c'est désormais une transition de `appointmentLifecycle` (`annotate`, depuis requested ou booked, le statut inchangé) |
+| Contrat | les types de média, `406` et `415` des représentations à côté des `Cache-Control`, `ETag`, `If-Match` et `304` du cache ; `Vary` documente `accept` sur les routes qui répondent dans plusieurs types de média |
+
+Frictions rencontrées dans le kit, corrigées dans le même changement : les étiquettes de cache,
+l'`ETag` faible et `Last-Modified` étaient lus dans les octets d'une réponse XML, où aucun champ
+ne se trouve ; `Vary: accept` remplaçait le `Vary` d'une politique de cache au lieu de s'y
+joindre ; une réponse publique choisie par `Accept` était acceptée derrière un cache qui ignore
+`Vary` ; Hono ne lisait pas un corps XML ni ne diffusait une liste en flux ; et `withFieldAccess`
+sur un schéma partagé laissait le contrat sans son `x-field-access`.
+
+## 2026-10-13 (tard dans la nuit) : ce qu'une revue de la multitenance et du *preset* d'identité a changé ici
+
+Le *pipeline* de la *pull request* était rouge sur cet exemple, et la revue a trouvé pourquoi :
+
+| Trouvé | Changé |
+|---|---|
+| `journey-tenancy` échouait 5 fois sur 5 (`422 UNKNOWN_PRACTITIONER`) : `inNetwork` ne donnait son réseau qu'à `as`, si bien que le cabinet de `south` était ouvert par le client typé dans `north` | `inNetwork` donne le réseau à chaque justificatif qu'il construit (`as`, `headersOf`, `apiAs`) ; le parcours passe, 7 tests |
+| `journey-observability` attendait le rapport d'erreur d'avant les réseaux | le rapport nomme le réseau (`tenantId: 'north'`), ce qui est en soi une preuve |
+| La suite de conformité excusait `tenancy/scoped-statement` (« l'exemple ne dit rien de la multitenance »), et sa migration injectée prenait le numéro de la vraie | l'excuse a disparu, l'injection seule enfreint la règle ; la migration injectée de `persistence/no-file-content` est numérotée après toutes les vraies |
+| Un jeton qui nommait un réseau absent de `NETWORKS` atteignait des données qu'aucun *job* ne traiterait jamais | `servedTenantOf` répond 404 en bordure, et une *spec* le prouve |
+| Un sujet enregistré dans deux réseaux entrait en collision sur une clé unique entre les réseaux | l'ADR-0003 tient une personne à un seul réseau (un seul `tenant_id` par utilisateur du *realm*) ; le second enregistrement est refusé et le premier gardé, comme une *spec* le prouve |
+| Les événements de l'outbox au moment de la migration n'avaient aucun réseau | la migration donne aux événements non publiés `NETWORK_OF_EXISTING_ROWS` (`tenantOfUnpublished`) |
+
+Le *checker* juge désormais le SQL brut par ce qui peut atteindre des lignes, et refuse un
+gabarit qui interpole : deux agrégats bruts du lecteur d'occupation liaient leur liste d'états
+comme une seule valeur (`state = any(?)`) au lieu de marqueurs interpolés, et la contrainte du
+schéma lie son nom (`??`) au lieu de l'interpoler. `check` signale 0 erreur et 1 désactivation
+(ADR-0004).
+
+Le contexte d'identité de cet exemple n'a pas été changé par les corrections du *preset* : il n'a
+aucune organisation propre, ses rôles sont ceux d'un cabinet, et ses personnes s'enregistrent
+elles-mêmes. Ce que fait désormais le *preset* (des délégations dans les limites du rôle du
+délégué, le fournisseur tenu à jour au moins une fois, des organisations lues comme des *tenants*
+depuis le jeton) reste une comparaison de la section ci-dessus, pas un changement de ce contrat.
+
+L'adaptateur Keycloak du *preset* a été exécuté une fois à la main contre Keycloak 26.8.0
+(l'image de `--authn keycloak`, dans un conteneur supprimé ensuite) : ouvrir une organisation
+deux fois, ajouter, retirer et rajouter un membre, chaque fois deux fois, désactiver un
+utilisateur deux fois. La première exécution a échoué : l'adaptateur cherchait une organisation
+avec `search=<alias>&exact=true`, que Keycloak compare au nom. Il lit désormais les pages des
+organisations jusqu'à trouver l'alias ; la seconde exécution a passé chaque étape, et
+l'utilisateur désactivé a gardé son nom et son adresse.
+
+## 2026-10-13 (fusion) : les réseaux rencontrent les *jobs*, les processus, le cache et les représentations
+
+Fusionner 0.11 à 0.14 dans l'exemple multitenant a apporté des tables et des routes écrites avant
+les réseaux. Ce que chacune est devenue :
+
+| Ajouté par | Devenu |
+|---|---|
+| *Jobs* en arrière-plan (`messaging.background_jobs`) | gardaient déjà `tenant_id` et s'exécutaient dans le réseau du travail qui les avait mis en file ; un vidage est lu par la file, qui ne montre un *job* qu'à son réseau. La migration de l'ADR-0003 donne `NETWORK_OF_EXISTING_ROWS` aux *jobs* en attente ou en cours, dans la colonne et dans qui les a mis en file |
+| Instances de processus (`messaging.process_instances`) | `tenant_id`, obligatoire : `createProcessTable(knex, { tenant: true })`, et `KnexProcessStore` avec `tenant`, lié par portée d'exécution ; une instance d'un autre réseau n'est ni trouvée ni changée. La migration ajoute la colonne à une table créée avant, ses lignes recevant le réseau nommé |
+| Horaires d'ouverture, Varnish | étiquettes rangées sous le réseau de la requête HTTP (`cacheTags.perTenant`), purges sous le réseau du travail (`PublishedCacheInvalidation` avec `perTenant`), `Vary: x-tenant-id` ; un appelant anonyme nomme le réseau dans `x-tenant-id`. Les étiquettes se lisent `north/calendar:<id>` |
+| Représentations, formulaires, accès aux champs, exports | inchangés : ils lisent par les *repositories* et les modèles de lecture déjà restreints, et le résolveur du réseau est celui de chaque route |
+| Kit | `servedTenantOf` laissait tomber les en-têtes du résolveur qu'il tient : les réponses de l'exemple ne variaient pas sur `x-tenant-id`, et Varnish aurait remis les horaires lus par un réseau à tous les autres. Il les garde désormais, et une *spec* le dit |
+
+`check` : 0 erreur, 1 désactivation (ADR-0004). `get-opening-hours.e2e.spec.ts` a gagné deux
+*specs* (l'en-tête dans `Vary`, 404 pour l'agenda d'un autre réseau) et une à travers Varnish (un
+second réseau ne reçoit jamais la copie du premier) : 11 *specs*, passées à travers Varnish 9.1.0
+sur cette machine. Contrat : inchangé, mais une lecture anonyme des horaires nomme son réseau.

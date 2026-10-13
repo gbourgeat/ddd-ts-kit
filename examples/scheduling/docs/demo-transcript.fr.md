@@ -1,5 +1,5 @@
 [English](demo-transcript.md) · **Français**
-<!-- translation-of: demo-transcript.md sha256:a0a9318c369e3ff8 -->
+<!-- translation-of: demo-transcript.md sha256:c7ac6a527f96c7f1 -->
 
 # Transcription de l'exécution réelle
 
@@ -17,6 +17,12 @@ d'utilisateur, pour le développement local seulement. Les corps sont coupés ap
 > table et le *job* ont disparu. L'exécution est gardée telle qu'elle était ; la dernière section,
 > « Nouvelle exécution après le passage d'analytics au calcul à la lecture », contient ce qu'une
 > seconde exécution réelle a répondu pour ces deux étapes.
+>
+> Elle précède aussi les réseaux de cabinets (ADR-0003, 2026-10-13). Depuis, `demo-admin` détient
+> `network-admin` et ouvre les cabinets du réseau `north`, le journal d'audit de l'étape 9 est lu
+> par `demo-ops`, membre de l'équipe de la plateforme hors de tout réseau, par une élévation que
+> le journal enregistre, et chaque entrée porte le réseau de son acteur. `scripts/demo.mjs` le
+> demande ainsi ; cette exécution n'a pas été enregistrée de nouveau.
 
 ## Commandes
 
