@@ -28,6 +28,52 @@ drawing or malformed. `npm run docs:samples` (in `ci:typecheck`) compiles every 
 [docs/translation.md](docs/translation.md) says what is translated, the shape of a French page,
 the glossary, the style of the diagrams and how to keep it all current.
 
+## 0.16.0
+
+**A new project writes its values as classes, and the kit checks it.** `init` writes
+`"stack.values": "classes"` (`--values classes|free`), under which a new rule,
+`domain/value-object-class`, held by `ddd-ts-kit check` and by `@ddd-ts-kit/eslint-plugin`
+(`ddd-ts-kit/domain-value-object-class`), judges the model. A file of `domain/value-objects/` (or
+a `*.vo.ts` of the shared kernel) exports exactly one class extending `ValueObject`, directly or
+through another value object of the project, with a private or protected constructor and static
+factories, and no function, arrow constant or object literal, inline, by an export list or by
+default; the types of its props may sit next to it. In `domain/` and in the shared kernel outside
+`presentation/`, an exported function that answers a record of data,
+`export const money = (amount, currency) => ({ amount, currency })`, is reported with the command
+that writes the class (`npx ddd-ts-kit generate value-object`): an object is a record of data when
+it holds data (a literal, a parameter, a call of the language), no spread and nothing a call or
+`new` of the model built. A domain service, a state machine, a specification answering a boolean
+or functions only, a record of value objects the function builds, a reducer that spreads its state
+and a function declaring a return type of a package are not concerned; a decision answered as a
+plain record is. `ddd-ts-kit explain domain/value-object-class` gives the reason and both forms.
+
+A config without the key reads as `free`: an existing project upgrades without a change, and
+nothing is reported. To move: set `"stack.values": "classes"`, run
+`npx ddd-ts-kit check --rule domain/value-object-class` and ESLint, write each reported value as a
+class with `generate value-object` (its checks in the static factory, its helpers as methods, its
+callers on `Money.of(..)` and `equals`), make each reported constructor private and add the
+factory the rule names. The steps are in `docs/CONFIG.md`; until they are done, the rule can stay
+at `warn` under `rules`, recorded in `deviations`.
+
+**The text checker reads a class whose heritage holds an object type.** `class Money extends
+ValueObject<{ readonly cents: number }> {` was read as a class whose body was the object type:
+its methods and constructor are now found, for every rule that reads them.
+
+**Why a value object is a class.** `docs/concepts/entities-and-value-objects.md` explains it with
+three diagrams (the two forms, what the rule reads, how an answered object is read entry by
+entry) and both forms side by side: equality without identity, invariants checked once in
+the factory, behaviour next to the data, refusals from static factories, immutability and
+`instanceof` in the boundary mappers. The domain rules `init` writes and the `scaffold` and
+`clean-code` skills say the same.
+
+**The example models its values as classes.** In the analytics context, the outcome the occupancy
+measure reads and the figures it answers are value objects, `MeasuredOutcome` and
+`OccupancyFigures`, each with its spec. Each checks its rules in its factory: an outcome never
+ends before it starts, figures are whole numbers, none below zero, with at least as many
+appointments held as completed and missed ones, refused through `OccupancyError`.
+`CalendarDesk` and `FreedSlot` stay parameter objects: they group the arguments of one factory,
+and `FreedSlot` holds a `Calendar`, an entity no equality by value can compare.
+
 ## 0.15.0
 
 **A context written whole: the identity preset** ([Bootstrap with well-designed contexts](docs/guides/bootstrap-with-well-designed-contexts.md)).

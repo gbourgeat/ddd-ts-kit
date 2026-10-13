@@ -20,6 +20,7 @@ export const FORM_MODES = ['on', 'off'] as const;
 export const SCHEMA_FORMS = ['shared', 'per-route'] as const;
 export const VALUE_OBJECT_FORMS = ['throwing', 'result'] as const;
 export const LITERAL_FORMS = ['named', 'free'] as const;
+export const VALUE_FORMS = ['classes', 'free'] as const;
 export const CACHE_STACKS = ['none', 'redis'] as const;
 export const HTTP_CACHE_STACKS = ['none', 'varnish'] as const;
 export const STORAGE_STACKS = ['none', 'local', 's3'] as const;
@@ -144,6 +145,13 @@ export interface Stack {
    * are silent. A config that says nothing was written before the rules existed: it is `free`.
    */
   readonly literals: (typeof LITERAL_FORMS)[number];
+  /**
+   * How a value of the model is written: `classes`, a value object class extending `ValueObject`,
+   * built by static factories, and never a function that builds a plain object
+   * (`domain/value-object-class`); `free`, the rule is silent. A config that says nothing was
+   * written before the rule existed: it is `free`.
+   */
+  readonly values: (typeof VALUE_FORMS)[number];
   /**
    * What installs the dependencies and runs the scripts: every command the CLI writes (scripts,
    * pipelines, hooks, Dockerfile, guidance) is in its dialect. A config that says nothing was

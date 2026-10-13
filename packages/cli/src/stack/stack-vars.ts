@@ -69,13 +69,14 @@ function queueVars(config: Config): RenderContext {
 
 /** How the code is written: its refusals, its shared schemas, its value objects, its closed values. */
 function modelWritingVars(config: Config): RenderContext {
-  const { refusals, schemas, valueObjects, literals } = config.stack;
+  const { refusals, schemas, valueObjects, literals, values } = config.stack;
 
   return {
     refusals: one(refusals, ['factories', 'classes']),
     schemas: one(schemas, ['shared', 'per-route']),
     valueObjects: one(valueObjects, ['throwing', 'result']),
     literals: one(literals, ['named', 'free']),
+    values: one(values, ['classes', 'free']),
   };
 }
 

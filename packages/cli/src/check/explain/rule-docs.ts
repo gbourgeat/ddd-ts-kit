@@ -2,6 +2,7 @@ import type { RuleDoc } from '../model/rule-doc.js';
 import { AUTHZ_DOCS } from './authz-docs.js';
 import { CLEAN_DOCS } from './clean-docs.js';
 import { CONTEXT_DOCS } from './context-docs.js';
+import { DOMAIN_DOCS } from './domain-docs.js';
 import { ERRORS_DOCS } from './errors-docs.js';
 import { EVENT_SOURCING_DOCS } from './event-sourcing-docs.js';
 import { EVENTS_DOCS } from './events-docs.js';
@@ -24,6 +25,7 @@ export const RULE_DOCS: Readonly<Record<string, RuleDoc>> = {
   ...AUTHZ_DOCS,
   ...CLEAN_DOCS,
   ...CONTEXT_DOCS,
+  ...DOMAIN_DOCS,
   ...ERRORS_DOCS,
   ...EVENT_SOURCING_DOCS,
   ...EVENTS_DOCS,

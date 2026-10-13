@@ -36,12 +36,21 @@ export function tempDir(label: string): string {
   return directory;
 }
 
-// A git process of a throwaway repository can still be writing its objects when the file ends.
-afterAll(() => {
-  for (const directory of created.splice(0)) {
-    fs.rmSync(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
-  }
-});
+/**
+ * The throwaway projects of a file are removed together: each holds a copy of every package of
+ * the kit, and on a busy runner removing them one after the other outlasted the hook timeout of
+ * the end-to-end run. A git process of a throwaway repository can still be writing its objects
+ * when the file ends, hence the retries.
+ */
+const CLEANUP_TIMEOUT = 600_000;
+
+afterAll(async () => {
+  await Promise.all(
+    created
+      .splice(0)
+      .map((directory) => fs.promises.rm(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 })),
+  );
+}, CLEANUP_TIMEOUT);
 
 export function read(root: string, file: string): string {
   return fs.readFileSync(path.join(root, file), 'utf8');

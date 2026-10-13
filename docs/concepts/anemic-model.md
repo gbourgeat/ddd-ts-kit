@@ -207,6 +207,7 @@ Quick questions for a review:
 |---|---|
 | `domain/aggregate-encapsulation` | a public constructor, a public mutable property, a setter on an aggregate or entity |
 | `domain/value-object-immutability` | a value object that can change |
+| `domain/value-object-class` | a value of the model written as a function that builds a plain object, `money(amount, currency) => ({ amount, currency })`, or a value object class with a public constructor or no factory (under `"stack.values": "classes"`) |
 | `domain/no-generic-error` | `throw new Error(...)` in `domain/` or `application/` |
 | `language/no-technical-name`, `language/glossary-term` | `AppointmentManager`, names outside the glossary |
 | `purity/no-system-clock` | `Date.now()` or `new Date()` in a handler or an aggregate |

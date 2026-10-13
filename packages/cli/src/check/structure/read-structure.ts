@@ -1,5 +1,6 @@
 import type { Scan } from '../scan/scan.js';
 import { braceDepthAt } from '../text/brace-depth-at.js';
+import { classBodyBrace } from './class-body-brace.js';
 import { matchingBracket } from '../text/matching-bracket.js';
 import type { ClassShape } from './class-shape.js';
 import { methodsOf } from './methods-of.js';
@@ -31,7 +32,8 @@ export function readStructure(scan: Scan): Structure {
 
 function classShape(scan: Scan, match: RegExpExecArray): ClassShape {
   const { code } = scan;
-  const bodyStart = match.index + match[0].length - 1;
+  const named = /^class\s+[\w$]+/.exec(match[0])?.[0].length ?? 0;
+  const bodyStart = classBodyBrace(code, match.index + named);
   const bodyClose = matchingBracket(code, bodyStart);
   const before = BEFORE_CLASS.exec(code.slice(Math.max(0, match.index - 40), match.index));
 

@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="620" viewBox="0 0 960 620" role="img" aria-labelledby="title desc">
+  <title id="title">How domain/value-object-class reads an answered object</title>
+  <desc id="desc">Five functions and the object each answers, read entry by entry. A literal or a parameter is data, a call of the model such as Money.of is built by the model, a function is behaviour, a spread is derived. money and decide answer data alone and are reported; split holds a value object it builds, evolve spreads a state, and dueBefore answers a function only: none of them is reported.</desc>
+  <style>
+    text { font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; fill: #1f2937; }
+    .mono { font-family: "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace; font-size: 12.5px; }
+    .title { font-size: 20px; font-weight: 600; }
+    .strong { font-size: 13px; font-weight: 700; }
+    .body { font-size: 12.5px; }
+    .tag { font-size: 12px; }
+  </style>
+
+  <rect width="960" height="620" fill="#ffffff"/>
+  <text class="title" x="480" y="36" text-anchor="middle">How an answered object is read, entry by entry</text>
+
+  <rect x="20" y="56" width="224" height="46" rx="8" fill="#eff6ff" stroke="#1d4ed8"/>
+  <text class="strong" x="32" y="75" style="fill:#1d4ed8">data</text>
+  <text class="tag" x="32" y="93">a literal, a parameter, Math.round(..)</text>
+  <rect x="252" y="56" width="224" height="46" rx="8" fill="#f0fdf4" stroke="#15803d"/>
+  <text class="strong" x="264" y="75" style="fill:#15803d">built by the model</text>
+  <text class="tag" x="264" y="93">Money.of(..), total.add(..), new Slot(..)</text>
+  <rect x="484" y="56" width="224" height="46" rx="8" fill="#f5f3ff" stroke="#7c3aed"/>
+  <text class="strong" x="496" y="75" style="fill:#7c3aed">behaviour</text>
+  <text class="tag" x="496" y="93">a function, a method, a local closure</text>
+  <rect x="716" y="56" width="224" height="46" rx="8" fill="#fffbeb" stroke="#b45309"/>
+  <text class="strong" x="728" y="75" style="fill:#b45309">derived</text>
+  <text class="tag" x="728" y="93">a spread, ...state</text>
+  <text class="body" x="20" y="130">Reported when the object holds data, nothing built by the model and no spread.</text>
+  <rect x="20" y="150" width="920" height="80" rx="10" fill="#ffffff" stroke="#d1d5db"/>
+  <text class="mono" x="36" y="180">export const money = (amount: number, currency: string) =&gt; ({ <tspan style="fill:#1d4ed8;font-weight:700">amount</tspan>, <tspan style="fill:#1d4ed8;font-weight:700">currency</tspan> });</text>
+  <text class="tag" x="36" y="208"><tspan style="fill:#1d4ed8;font-weight:700">amount</tspan>: data &#183; <tspan style="fill:#1d4ed8;font-weight:700">currency</tspan>: data</text>
+  <rect x="700" y="160" width="228" height="60" rx="8" fill="#fef2f2" stroke="#b91c1c"/>
+  <text class="strong" x="712" y="178" style="fill:#b91c1c">Reported</text>
+  <text class="tag" x="712" y="195">data alone: a value of the model</text>
+  <text class="tag" x="712" y="211">written as a function</text>
+  <rect x="20" y="242" width="920" height="80" rx="10" fill="#ffffff" stroke="#d1d5db"/>
+  <text class="mono" x="36" y="272">export const split = (total: Money) =&gt; ({ first: <tspan style="fill:#15803d;font-weight:700">Money.of(1)</tspan>, rest: <tspan style="fill:#1d4ed8;font-weight:700">total</tspan> });</text>
+  <text class="tag" x="36" y="300"><tspan style="fill:#15803d;font-weight:700">first</tspan>: built by the model &#183; <tspan style="fill:#1d4ed8;font-weight:700">rest</tspan>: data</text>
+  <rect x="700" y="252" width="228" height="60" rx="8" fill="#f3f4f6" stroke="#9ca3af"/>
+  <text class="strong" x="712" y="270" style="fill:#374151">Not reported</text>
+  <text class="tag" x="712" y="287">a value object it builds:</text>
+  <text class="tag" x="712" y="303">an operation of the model</text>
+  <rect x="20" y="334" width="920" height="80" rx="10" fill="#ffffff" stroke="#d1d5db"/>
+  <text class="mono" x="36" y="364">export const evolve = (state: State, status: string) =&gt; ({ <tspan style="fill:#b45309;font-weight:700">...state</tspan>, <tspan style="fill:#1d4ed8;font-weight:700">status</tspan> });</text>
+  <text class="tag" x="36" y="392"><tspan style="fill:#b45309;font-weight:700">...state</tspan>: derived &#183; <tspan style="fill:#1d4ed8;font-weight:700">status</tspan>: data</text>
+  <rect x="700" y="344" width="228" height="60" rx="8" fill="#f3f4f6" stroke="#9ca3af"/>
+  <text class="strong" x="712" y="362" style="fill:#374151">Not reported</text>
+  <text class="tag" x="712" y="379">a spread: derived from a</text>
+  <text class="tag" x="712" y="395">record that exists (a reducer)</text>
+  <rect x="20" y="426" width="920" height="80" rx="10" fill="#ffffff" stroke="#d1d5db"/>
+  <text class="mono" x="36" y="448">export const dueBefore = (day: Date) =&gt; {</text>
+  <text class="mono" x="52" y="466">const <tspan style="fill:#7c3aed;font-weight:700">isSatisfiedBy</tspan> = (invoice: Invoice): boolean =&gt; invoice.dueAt &lt; day;</text>
+  <text class="mono" x="52" y="484">return { <tspan style="fill:#7c3aed;font-weight:700">isSatisfiedBy</tspan> }; };</text>
+  <text class="tag" x="330" y="484"><tspan style="fill:#7c3aed;font-weight:700">isSatisfiedBy</tspan>: behaviour</text>
+  <rect x="700" y="436" width="228" height="60" rx="8" fill="#f3f4f6" stroke="#9ca3af"/>
+  <text class="strong" x="712" y="454" style="fill:#374151">Not reported</text>
+  <text class="tag" x="712" y="471">functions only:</text>
+  <text class="tag" x="712" y="487">a specification</text>
+  <rect x="20" y="518" width="920" height="80" rx="10" fill="#ffffff" stroke="#d1d5db"/>
+  <text class="mono" x="36" y="548">export const decide = (reason: string) =&gt; ({ kind: <tspan style="fill:#1d4ed8;font-weight:700">'refused' as const</tspan>, <tspan style="fill:#1d4ed8;font-weight:700">reason</tspan> });</text>
+  <text class="tag" x="36" y="576"><tspan style="fill:#1d4ed8;font-weight:700">kind</tspan>: data &#183; <tspan style="fill:#1d4ed8;font-weight:700">reason</tspan>: data</text>
+  <rect x="700" y="528" width="228" height="60" rx="8" fill="#fef2f2" stroke="#b91c1c"/>
+  <text class="strong" x="712" y="546" style="fill:#b91c1c">Reported</text>
+  <text class="tag" x="712" y="563">data alone: throw the refusal from</text>
+  <text class="tag" x="712" y="579">a factory, or a value object</text>
+</svg>

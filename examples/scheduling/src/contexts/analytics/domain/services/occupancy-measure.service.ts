@@ -1,25 +1,6 @@
+import type { MeasuredOutcome } from '@/contexts/analytics/domain/value-objects/measured-outcome.vo';
+import { OccupancyFigures } from '@/contexts/analytics/domain/value-objects/occupancy-figures.vo';
 import { OutcomeState } from '@/contexts/analytics/domain/vocabularies/outcome-state.vocabulary';
-
-/** What the measure reads of the outcome of one appointment. */
-export type MeasuredOutcome = {
-  readonly state: OutcomeState;
-  readonly startsAt: Date;
-  readonly endsAt: Date;
-};
-
-/** The occupancy of a calendar over a day. */
-export type OccupancyFigures = {
-  /** The minutes of the appointments that hold their time: held, completed or missed by the patient. Each appointment counts to the nearest minute. */
-  readonly heldMinutes: number;
-  /** How many appointments hold their time. */
-  readonly appointmentsHeld: number;
-  readonly completed: number;
-  readonly noShows: number;
-  readonly cancelledByPatient: number;
-  readonly cancelledByPractice: number;
-};
-
-const MILLISECONDS_A_MINUTE = 60_000;
 
 /**
  * What occupancy means. The read of the occupancy computes the same figures in its statement,
@@ -31,20 +12,16 @@ export class OccupancyMeasureService {
 
   /** Counts from nothing each time: the same outcomes always give the same figures. */
   measure(outcomes: readonly MeasuredOutcome[]): OccupancyFigures {
-    const holding = outcomes.filter((outcome) => OccupancyMeasureService.HOLDING.includes(outcome.state));
-    const count = (state: OutcomeState): number => outcomes.filter((outcome) => outcome.state === state).length;
+    const holding = outcomes.filter((outcome) => outcome.isIn(OccupancyMeasureService.HOLDING));
+    const count = (state: OutcomeState): number => outcomes.filter((outcome) => outcome.isIn([state])).length;
 
-    return {
-      heldMinutes: holding.reduce((minutes, outcome) => minutes + minutesOf(outcome), 0),
+    return OccupancyFigures.of({
+      heldMinutes: holding.reduce((minutes, outcome) => minutes + outcome.minutes, 0),
       appointmentsHeld: holding.length,
       completed: count(OutcomeState.Completed),
       noShows: count(OutcomeState.NoShow),
       cancelledByPatient: count(OutcomeState.CancelledByPatient),
       cancelledByPractice: count(OutcomeState.CancelledByPractice),
-    };
+    });
   }
-}
-
-function minutesOf(outcome: MeasuredOutcome): number {
-  return Math.round((outcome.endsAt.getTime() - outcome.startsAt.getTime()) / MILLISECONDS_A_MINUTE);
 }

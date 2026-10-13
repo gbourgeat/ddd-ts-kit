@@ -1,0 +1,21 @@
+/** What a call of the language itself builds: a number, a string, a date, never a value of the model. Same list as the checker of the CLI. */
+export const JAVASCRIPT_GLOBALS: ReadonlySet<string> = new Set([
+  'Array',
+  'BigInt',
+  'Boolean',
+  'Date',
+  'Intl',
+  'JSON',
+  'Map',
+  'Math',
+  'Number',
+  'Object',
+  'RegExp',
+  'Set',
+  'String',
+  'Symbol',
+  'URL',
+  'parseFloat',
+  'parseInt',
+  'structuredClone',
+]);

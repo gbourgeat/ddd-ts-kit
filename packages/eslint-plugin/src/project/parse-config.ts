@@ -25,6 +25,7 @@ const DEPENDENCY_STATEMENTS: readonly Stack['dependencies'][] = ['signature', 'l
 const REFUSAL_FORMS: readonly Stack['refusals'][] = ['factories', 'classes'];
 const SCHEMA_FORMS: readonly Stack['schemas'][] = ['shared', 'per-route'];
 const LITERAL_FORMS: readonly Stack['literals'][] = ['named', 'free'];
+const VALUE_FORMS: readonly Stack['values'][] = ['classes', 'free'];
 
 const KERNEL = ['@ddd-ts-kit/kernel'];
 
@@ -90,6 +91,7 @@ function parseStack(value: unknown): Stack {
     refusals: oneOf(REFUSAL_FORMS, raw['refusals'], 'classes'),
     schemas: oneOf(SCHEMA_FORMS, raw['schemas'], 'per-route'),
     literals: oneOf(LITERAL_FORMS, raw['literals'], 'free'),
+    values: oneOf(VALUE_FORMS, raw['values'], 'free'),
     orm: text(raw['orm'], 'drizzle'),
   };
 }

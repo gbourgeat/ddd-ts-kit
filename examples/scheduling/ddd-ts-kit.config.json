@@ -32,6 +32,7 @@
     "schemas": "shared",
     "valueObjects": "throwing",
     "literals": "named",
+    "values": "classes",
     "tenancy": "shared-table",
     "queue": "database",
     "representations": "negotiated",

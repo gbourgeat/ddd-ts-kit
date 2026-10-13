@@ -231,7 +231,7 @@ Usage
                   [--errors none|sentry] [--logger stdout|pino|winston] [--style declared|explicit] [--assembly barrel|discovery]
                   [--dependencies signature|listed] [--refusals factories|classes]
                   [--routes controllers|functions] [--representations negotiated|json] [--forms on|off]
-                  [--value-objects throwing|result] [--literals named|free] [--tenancy none|shared-table] [--queue database|redis|memory]
+                  [--value-objects throwing|result] [--literals named|free] [--values classes|free] [--tenancy none|shared-table] [--queue database|redis|memory]
                   [--schemas shared|per-route]
                   [--package-manager npm|pnpm] [--allow-no-outbox "<reason>"] [--import-alias '$<name>/']
                   [--import-extension none|js] [--sdk]
