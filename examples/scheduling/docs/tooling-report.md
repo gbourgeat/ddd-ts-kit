@@ -1610,3 +1610,21 @@ and add back a member, each twice, disable a user twice. The first run failed: t
 an organization up with `search=<alias>&exact=true`, which Keycloak matches against the name.
 It now reads the pages of the organizations until the alias is found; the second run passed every
 step, and the disabled user kept their name and address.
+
+## 2026-10-13 (merge): the networks meet the jobs, the processes, the cache and the representations
+
+Merging 0.11 to 0.14 into the multi-tenant example brought tables and routes written before the
+networks. What each became:
+
+| Added by | Became |
+|---|---|
+| Background jobs (`messaging.background_jobs`) | already kept `tenant_id` and ran in the network of the work that enqueued them; a clearance is read through the queue, which shows a job to its network only. The migration of ADR-0003 gives `NETWORK_OF_EXISTING_ROWS` to the jobs waiting or running, in the column and in who enqueued them |
+| Process instances (`messaging.process_instances`) | `tenant_id`, required: `createProcessTable(knex, { tenant: true })`, and `KnexProcessStore` with `tenant`, bound per execution scope; an instance of another network is neither found nor changed. The migration adds the column to a table created before, its rows given the network named |
+| Opening hours, Varnish | tags filed under the network of the request (`cacheTags.perTenant`), purges under the network of the work (`PublishedCacheInvalidation` with `perTenant`), `Vary: x-tenant-id`; an anonymous caller names the network in `x-tenant-id`. The tags read `north/calendar:<id>` |
+| Representations, forms, field access, exports | unchanged: they read through the repositories and read models already confined, and the resolver of the network is the one of every route |
+| Kit | `servedTenantOf` dropped the headers of the resolver it holds: the answers of the example did not vary on `x-tenant-id`, and Varnish would have handed the hours one network read to every other. It now keeps them, and a spec says so |
+
+`check`: 0 errors, 1 suppression (ADR-0004). `get-opening-hours.e2e.spec.ts` gained two specs (the
+header in `Vary`, 404 to the calendar of another network) and one through Varnish (a second
+network is never served the copy of the first): 11 specs, passed through Varnish 9.1.0 on this
+machine. Contract: unchanged, but an anonymous read of the hours names its network.

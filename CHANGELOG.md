@@ -24,7 +24,8 @@ list the pull requests behind it.
   verify (`email_verified`) provisions no account. With tenants and Keycloak, the authenticator
   reads the `organization` claim as the tenants of the person. Written for the declared style on
   Knex or Drizzle on PostgreSQL, Zod or class-validator, Express or Fastify, with a token
-  verifier; another stack is refused with the flag to change, and so is a second context of the
+  verifier, and for both `stack.schemas`: shared, its identifier answers are `acceptedSchema` and
+  the token of an invitation one shared schema; per route, each route keeps its own; another stack is refused with the flag to change, and so is a second context of the
   same preset. Nothing is recorded in the config. Which other contexts deserve one:
   [Context presets](docs/proposals/context-presets.md).
 - `@ddd-ts-kit/auth`: `SignedInGrantsAuthorizer({ grants, otherwise })` grants every signed-in
@@ -38,7 +39,7 @@ list the pull requests behind it.
   (`email_verified`), where `JwtAuthenticator` gave none.
 - The barrels and dependency files the CLI writes set a call that takes several lines apart by
   blank lines, as `@stylistic/padding-line-between-statements` asks.
-- Plugin 0.18.0: the skill `bootstrap` proposes the preset for a generic identity context.
+- Plugin 0.22.0: the skill `bootstrap` proposes the preset for a generic identity context.
 
 **The example serves several networks of practices, one tenant each** (its ADR-0003, accepted).
 
@@ -51,7 +52,12 @@ list the pull requests behind it.
   events not published yet (pending or dead) the tenant the database served, so that their
   consumers run in it.
 - `@ddd-ts-kit/http`: `servedTenantOf(resolver, served)` answers 404 to a tenant the deployment
-  does not serve, whoever names it.
+  does not serve, whoever names it, and reads the headers its resolver reads, so that a cached
+  answer still varies on them.
+- `@ddd-ts-kit/knex`: `createProcessTable(knex, { tenant: true })` adds `tenant_id` to the
+  instances of the process managers, and `KnexProcessStore(context, { tenant: scope })` keeps each
+  one in the tenant of the work that saves it: an instance of another tenant is neither found nor
+  changed, and work that names no tenant is refused (`NoCurrentTenantError`).
 - `@ddd-ts-kit/di`: `kernelModule({ tenants })` binds a `TenantDirectory` and gives it to the
   default scheduler, so that a job declared `tenancy: 'per-tenant'` can be registered; the test
   application takes `tenants` too, by default the tenant of its execution context, and composes
@@ -62,7 +68,7 @@ list the pull requests behind it.
   functions (aggregates, casts, arithmetic, text), are no longer reported; raw SQL whose text is
   not a literal, or a template that interpolates, still is. Bind a list as one value
   (`state = any(?)`) instead of interpolating its placeholders.
-- Plugin 0.18.0: the guard lets `test/e2e/journey-*.e2e.spec.ts` be written by hand, since a
+- Plugin 0.22.0: the guard lets `test/e2e/journey-*.e2e.spec.ts` be written by hand, since a
   journey crosses several routes and no generator writes it.
 - Example: `"stack.tenancy": "shared-table"`, a tenant column on its twelve tables and the
   migration that adds it to an existing database, `tenantIsolationContract` on every Knex
@@ -72,7 +78,12 @@ list the pull requests behind it.
   /practices` asks the role `network-admin`, `GET /audit/entries` takes `network`, every request
   that reaches data needs the `tenant_id` claim, a token or header naming a network not served is
   answered 404, and a person registered in one network who registers in another is refused
-  (422, `CONCURRENCY_CONFLICT`).
+  (422, `CONCURRENCY_CONFLICT`). What 0.11 to 0.14 added to it is confined the same way: the
+  instances of the confirmation deadline keep their network, the migration gives the network to
+  the instances and the unfinished background jobs already there, a clearance is read in the
+  network of its job, and the public opening hours are tagged and purged per network
+  (`cacheTags.perTenant`, `PublishedCacheInvalidation` with `perTenant`), named by `x-tenant-id`
+  for an anonymous caller and varying on it; their tags read `<network>/calendar:<id>`.
 
 ## 0.14.0
 

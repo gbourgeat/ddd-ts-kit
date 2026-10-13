@@ -33,9 +33,17 @@ One network of practices is one tenant, on shared tables (`"stack.tenancy": "sha
   or the `tenant` option of its store, and `tenancy/scoped-statement` judges the adapters of
   the contexts with no finding;
 - the outbox keeps the network of each event, so that its consumers run in it; the scheduled
-  jobs run once per network (`tenancy: 'per-tenant'`, the networks listed by `NETWORKS`); the
-  audit trail keeps one chain per network, and its read side is confined to the network of the
-  work (`TenantAuditReader`);
+  jobs run once per network (`tenancy: 'per-tenant'`, the networks listed by `NETWORKS`); a
+  background job runs in the network of the work that enqueued it, and the queue shows a job
+  (a clearance) to that network only; the instances of the process managers keep the network
+  of the work that started them (`KnexProcessStore` with `tenant`), and the migration gives the
+  network to the instances and the unfinished jobs already there; the audit trail keeps one
+  chain per network, and its read side is confined to the network of the work
+  (`TenantAuditReader`);
+- a public answer kept by Varnish is tagged under the network of the request and purged under
+  the network of the work (`cacheTags.perTenant`, `PublishedCacheInvalidation` with `perTenant`),
+  and varies on `x-tenant-id`, which an anonymous caller sends to name the network it reads in:
+  a purge in one network never reaches the copy of another, and no copy is served to another;
 - the `tenant_id` claim of the token names the network of the user; a request may name it in
   `x-tenant-id`, a caller that names a network it does not belong to is refused with 403 before
   anything runs, and a network missing from `NETWORKS` is not found (404);
