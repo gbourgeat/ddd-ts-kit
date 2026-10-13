@@ -3,11 +3,15 @@ import {
   FixedClock,
   FixedExecutionScope,
   InMemoryCachePurger,
+  InMemoryDomainEventDispatcher,
   InMemoryEventBus,
   PublishedCacheInvalidation,
   PurgingPublisher,
   SequentialIdGenerator,
+  announceDomainEvents,
   cacheTag,
+  unitOfWorkStage,
+  type DomainEvent,
 } from '@ddd-ts-kit/kernel';
 import { OutboxPublisher, OutboxRelay } from '@ddd-ts-kit/events';
 import { KnexOutboxStore, createKnexUnitOfWork, createOutboxTables } from '../src/index.js';
@@ -84,6 +88,38 @@ describe('a purge asked by a use case, through the outbox', () => {
     });
 
     await expect(failing).rejects.toBeInstanceOf(PaymentProviderDown);
+
+    const { purger } = await relayOfANewProcess();
+
+    expect(purger.purged).toEqual([]);
+    expect(await database.knex('outbox')).toEqual([]);
+  });
+
+  it('purges nothing when a later reaction fails before the commit, after the event asked for the purge', async () => {
+    const { unitOfWork, repository, invalidation } = aProcess();
+    const drafted: DomainEvent = { name: 'billing.invoice.drafted', aggregateId: 'inv-1', occurredAt: now };
+    const domainEvents = new InMemoryDomainEventDispatcher();
+    const asked: string[] = [];
+
+    const purgeTheInvoice = async (): Promise<void> => {
+      await invalidation.invalidate([INVOICE]);
+      asked.push(unitOfWorkStage());
+    };
+
+    const chargeTheCustomer = async (): Promise<void> => {
+      throw new PaymentProviderDown();
+    };
+
+    domainEvents.on(drafted.name, purgeTheInvoice, { phase: 'before-commit' });
+    domainEvents.on(drafted.name, chargeTheCustomer, { phase: 'before-commit' });
+
+    const failing = unitOfWork.run(async () => {
+      await repository.save(Invoice.draft('inv-1', 100));
+      await announceDomainEvents([drafted], domainEvents);
+    });
+
+    await expect(failing).rejects.toBeInstanceOf(PaymentProviderDown);
+    expect(asked).toEqual(['before-commit']);
 
     const { purger } = await relayOfANewProcess();
 
