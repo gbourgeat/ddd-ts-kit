@@ -6,129 +6,6 @@ list the pull requests behind it.
 
 ## Unreleased
 
-**A schema shared by several routes is documented once.** Declared once, a schema used whole or
-inside other schemas by several routes lands once in `components.schemas` of the OpenAPI
-contract and every route points at it with `$ref`: a zod schema with `.meta({ id })`,
-`classSchema(Dto, { shared: true })`, or any schema through `sharedSchema(name, schema)` of
-`@ddd-ts-kit/validation`. class-validator gains `pickClass`, `omitClass` and `partialClass` to
-reuse a DTO class in part, and the Standard Schema adapter documents a schema its library
-converts itself (Standard JSON Schema, verified with zod 4) when no JSON Schema is given. The
-platform shares its own: `acceptedSchema` (`Accepted`, the `{ id }` a command route answers),
-the page of a shared item (`<Item>Page`) and the problem document. A shared `params`, `query`
-or `headers` schema still gives one parameter per property.
-
-**The contract of a project on the Standard Schema adapter can change.** `standardSchema(schema)`
-without a JSON Schema documented `{}` (any value); it now documents what the library converts
-itself, so a project on `"stack.validation": "standard-schema"` whose schemas implement Standard
-JSON Schema (zod 4 does) sees its OpenAPI contract and client SDK grow the real shapes, and
-`openapi --check` or `sdk --check` report drift until they are regenerated. To move: run
-`npm run docs:generate` and commit the contract and the client; to keep a schema documented as
-any value, pass `{}` as its second argument. A schema the library cannot convert (a date, a
-custom check) is still documented `{}`, never a failure.
-
-**A new project declares a shape once.** `init` writes `"stack.schemas": "shared"`: a generated
-command route answers its identifier with `acceptedSchema` instead of a schema of its own,
-`generate schema <context> <Name>` writes a shape several routes use in
-`presentation/http/shared/<name>.schema.ts` (`generate schema shared-kernel <Name>` in
-`presentation/` of the shared kernel, for what several contexts answer with), and two rules hold
-it: `schema/no-duplicate-shape` reports a DTO class or an object schema that declares by hand
-the shape of another one of its context or of the shared kernel (two contexts may say the same
-thing in their own words; a placeholder the generator left to fill is not judged), `schema/presentation-only` keeps every schema in a presentation layer
-(the second in ESLint too). A config without the key reads as `per-route`: nothing changes and
-nothing is reported; the steps to move are in `docs/CONFIG.md`. The example now shares its
-schemas: its twenty identifier answers are the one `Accepted` component, its two agenda
-searches answer `AgendaLinePage` pages of one `AgendaLine`, and one `TimeSpan` is the body of
-the time off route whole and the start of a booking or a rescheduling through
-`pickClass(TimeSpan, ['startsAt'])`; the bytes on the wire are unchanged.
-
-**Hono and TypeBox.** `@ddd-ts-kit/http/hono` mounts the routes on Hono 4 (`mountHono`), through
-the same pipeline and the same behaviour suite as Express, Fastify and NestJS, uploads and signed
-file links included. The adapter reads a JSON body chunk by chunk up to `bodyLimit` (1 MiB by
-default, as Fastify): a larger one is answered 413 `BODY_TOO_LARGE`, one that is not JSON 400
-`MALFORMED_BODY`, both as problems. `@ddd-ts-kit/validation/typebox` validates with TypeBox 1
-(`typeboxSchema`, compiled once, defaults filled, undeclared properties dropped, the failed
-keyword as the issue code and a missing property at its own path, `{ coerce: true }` for query
-strings) and documents the schema as it is, a nested schema with an `$id` shared once in the
-contract (`Type.Intersect` extends it and keeps the reference). Both libraries are optional peers.
-
-**Four contract pairs a project starts from.** `init --http hono` serves the routes with Hono on
-Node (`@hono/node-server`, the limiter and the readiness probe in front when the cache is
-shared), and `init --validation typebox` writes every schema of a route (the line of a search
-included), a function route and a shared schema with TypeBox. A new end-to-end spec,
-`contract-pairs.spec.ts`, generates one project per pair (Express and zod, Fastify and TypeBox,
-Hono and zod, NestJS and class-validator), shares one shape between two routes, adds a search,
-and holds each to zero finding, its specs and end-to-end specs (401, 403, 201 and the trace of
-the request), a current contract that documents the shape once, and a client generated from it
-that names `Money` and `Accepted` once and compiles. NestJS with class-validator, generated before but never run end to end, is now.
-
-**Which pair for which team.** `docs/tools/contract-pairs.md` compares the four pairs (type
-inference, composition of shapes, contract fidelity, issue codes, ecosystem, maintenance) with
-numbers measured by `pipeline/monorepo/measure-contract-pairs.mjs`: the pipeline of the kit costs
-about a microsecond per request before validation, zod parses in about half a microsecond,
-class-validator and TypeBox (through the adapter) in five to ten. oRPC was run and is documented
-as not fitting: its procedures, error format and second contract generator would sit next to the
-kit's, and the typed client it offers comes here from the generated contract.
-**Cache policies on routes, and `no-store` for authenticated answers.** A controller, a route
-group or a function route declares `cache: { scope, maxAge, sMaxAge, staleWhileRevalidate,
-staleIfError, mustRevalidate, vary }` of `@ddd-ts-kit/http`: the pipeline answers its
-`Cache-Control` and `Vary`, the contract documents them, and a policy that would let a cache keep
-what it must not is refused when the route is declared, above all the `public` answer of a route
-that knows its caller without the request headers it varies on. When the routes are mounted, a
-public answer is held to the options of the application: on a route that knows its caller, `vary`
-names `Authorization`, `Cookie` or the header its tenant is read from; behind a cache that ignores
-`Vary` (Cloudflare, Bunny; `cacheTags.honoursVary` to say otherwise) a varying answer is refused;
-and every kept answer varies on the headers `resolveTenant` reads (`TenantResolver.headers`, set by
-`tenantFromHeader` and `firstTenantOf`). The policy of a route group reaches its reads only: a
-write of the group keeps the default of a write. A route that is not public and
-declares nothing now answers `Cache-Control: no-store`, refusals included (before, nothing): a
-generated contract gains that header on every authenticated operation, regenerate it with
-`npm run docs:generate`. The ESLint rule `presentation/shared-cache-varies` reports in the editor a
-public policy, without `vary`, on a declaration that writes guards or security schemes. See
-`docs/concepts/http-caching.md`.
-
-**Conditional requests.** A cache policy names the version of an answer, `etag: 'representation'`
-(a strong tag hashed from the bytes) or `etag: { version: 'version' }` (a weak tag from a field of
-the body), and `lastModified: 'changedAt'`: the pipeline answers `ETag` and `Last-Modified`, and
-`304 Not Modified` to `If-None-Match` and `If-Modified-Since`. A write declares
-`ifMatch: 'optional' | 'required'`: the version named in `If-Match` reaches the handler as
-`context.expectedVersion`, `expectVersion(aggregate, expected)` of the kernel refuses a stale one
-with `PreconditionFailedError` (`PRECONDITION_FAILED`, 412), and a required one that is missing
-answers `PRECONDITION_REQUIRED` (428). Both codes join the default error mapping and the codes a
-route may declare without a class of its own (`errors/known-code`). The contract documents the
-parameters, headers and answers.
-
-**Cache tags, purged after the commit.** A public policy names the resources its answer shows
-(`tags: [{ resource: 'calendar', param: 'calendarId' }]`), sent in the header the shared cache
-reads (`cacheTags: { header: CacheTagHeader.xkey }` of the options; `surrogate-key`, `cache-tag`,
-`cdn-tag`), filed under the tenant of the request when the application says so (`perTenant`, on
-the answers and on the purges). The kernel gains two ports: `CacheInvalidation`,
-which a `before-commit` handler asks and which `kernelModule()` binds to purge requests published
-on the outbox (a rollback purges nothing, a commit purges even across a crash), and `CachePurger`,
-which the relay calls through `new PurgingPublisher(purger, broker)` and which
-`domain-events/transactional-before-commit` now refuses before the commit. `@ddd-ts-kit/http/purgers`
-holds `VarnishCachePurger` (xkey or ban, with the purge `key` of the VCL), `FastlyCachePurger` and
-`CloudflareCachePurger`, all held to `cachePurgerContract` of `@ddd-ts-kit/testing/contracts` (the
-CDN ones on a fake of the purge API each documents); the test application exposes
-`cacheInvalidation`. `RepeatedCachePurger` purges once more a little later, for a read that reached
-the cache after the purge. Filed per tenant, a tagged answer to a request naming no tenant is
-`no-store`, a tagged public route anybody may call needs `resolveTenant`, and an invalidation asked
-without a tenant throws `NoCurrentTenantError`. `CacheInvalidation` and `CachePurger` join the
-standard interfaces (`standard/no-parallel-interface`: `CacheInvalidator`, `CdnPurger` and the
-like). Varnish 9.1.0 runs in the integration job. See `docs/tools/http-caches.md`.
-
-**Varnish in front of a generated project.** `init --http-cache varnish` (recorded as
-`stack.httpCache`; a config without it is `none`) adds the Varnish 9.1.0 service to the compose
-file with its VCL in `docker/varnish/default.vcl` (it keeps only what an answer allows by
-`max-age` or `s-maxage`, and lets a purge in from its machine or with `VARNISH_PURGE_KEY`),
-validates `VARNISH_URL` and `VARNISH_PURGE_KEY`, tags the public answers in `xkey` from the HTTP
-boundary, and has the outbox relay of `main.ts` and of every `generate service` entry point purge
-through `PurgingPublisher` and `VarnishCachePurger`; the end-to-end application records the purges
-(`purges.purged`). It needs an HTTP framework and `--events outbox`. On `--di manual` and `nest`
-the platform gains `cacheInvalidation`. With `--tenancy`, the answers and the purges are tagged
-per tenant and the HTTP boundary reads the tenant of a request from `x-tenant-id`.
-`generate controller --cache public|private|no-store` writes the cache policy of a controller.
-The generated presentation rules say when to cache, purge and condition a write.
-
 **A route answers in JSON, XML or CSV, as the request asks.** `Representations.standard()` of
 `@ddd-ts-kit/http`, given to the adapters (`representations` of the mount options) and to
 `generateOpenApi`, chooses per request the media type the `Accept` header prefers among those
@@ -216,6 +93,134 @@ and `Vary` holds the headers of the policy and `accept`, in the answer and in th
 public answer chosen by `Accept` is refused at the mount behind a cache that ignores `Vary`.
 `withFieldAccess` over a shared schema marks the definition it refers to, and the page of a
 shared item keeps the restricted fields of the item.
+
+## 0.13.0
+
+**A schema shared by several routes is documented once.** Declared once, a schema used whole or
+inside other schemas by several routes lands once in `components.schemas` of the OpenAPI
+contract and every route points at it with `$ref`: a zod schema with `.meta({ id })`,
+`classSchema(Dto, { shared: true })`, or any schema through `sharedSchema(name, schema)` of
+`@ddd-ts-kit/validation`. class-validator gains `pickClass`, `omitClass` and `partialClass` to
+reuse a DTO class in part, and the Standard Schema adapter documents a schema its library
+converts itself (Standard JSON Schema, verified with zod 4) when no JSON Schema is given. The
+platform shares its own: `acceptedSchema` (`Accepted`, the `{ id }` a command route answers),
+the page of a shared item (`<Item>Page`) and the problem document. A shared `params`, `query`
+or `headers` schema still gives one parameter per property.
+
+**The contract of a project on the Standard Schema adapter can change.** `standardSchema(schema)`
+without a JSON Schema documented `{}` (any value); it now documents what the library converts
+itself, so a project on `"stack.validation": "standard-schema"` whose schemas implement Standard
+JSON Schema (zod 4 does) sees its OpenAPI contract and client SDK grow the real shapes, and
+`openapi --check` or `sdk --check` report drift until they are regenerated. To move: run
+`npm run docs:generate` and commit the contract and the client; to keep a schema documented as
+any value, pass `{}` as its second argument. A schema the library cannot convert (a date, a
+custom check) is still documented `{}`, never a failure.
+
+**A new project declares a shape once.** `init` writes `"stack.schemas": "shared"`: a generated
+command route answers its identifier with `acceptedSchema` instead of a schema of its own,
+`generate schema <context> <Name>` writes a shape several routes use in
+`presentation/http/shared/<name>.schema.ts` (`generate schema shared-kernel <Name>` in
+`presentation/` of the shared kernel, for what several contexts answer with), and two rules hold
+it: `schema/no-duplicate-shape` reports a DTO class or an object schema that declares by hand
+the shape of another one of its context or of the shared kernel (two contexts may say the same
+thing in their own words; a placeholder the generator left to fill is not judged), `schema/presentation-only` keeps every schema in a presentation layer
+(the second in ESLint too). A config without the key reads as `per-route`: nothing changes and
+nothing is reported; the steps to move are in `docs/CONFIG.md`. The example now shares its
+schemas: its twenty identifier answers are the one `Accepted` component, its two agenda
+searches answer `AgendaLinePage` pages of one `AgendaLine`, and one `TimeSpan` is the body of
+the time off route whole and the start of a booking or a rescheduling through
+`pickClass(TimeSpan, ['startsAt'])`; the bytes on the wire are unchanged.
+
+**Hono and TypeBox.** `@ddd-ts-kit/http/hono` mounts the routes on Hono 4 (`mountHono`), through
+the same pipeline and the same behaviour suite as Express, Fastify and NestJS, uploads and signed
+file links included. The adapter reads a JSON body chunk by chunk up to `bodyLimit` (1 MiB by
+default, as Fastify): a larger one is answered 413 `BODY_TOO_LARGE`, one that is not JSON 400
+`MALFORMED_BODY`, both as problems. `@ddd-ts-kit/validation/typebox` validates with TypeBox 1
+(`typeboxSchema`, compiled once, defaults filled, undeclared properties dropped, the failed
+keyword as the issue code and a missing property at its own path, `{ coerce: true }` for query
+strings) and documents the schema as it is, a nested schema with an `$id` shared once in the
+contract (`Type.Intersect` extends it and keeps the reference). Both libraries are optional peers.
+
+**Four contract pairs a project starts from.** `init --http hono` serves the routes with Hono on
+Node (`@hono/node-server`, the limiter and the readiness probe in front when the cache is
+shared), and `init --validation typebox` writes every schema of a route (the line of a search
+included), a function route and a shared schema with TypeBox. A new end-to-end spec,
+`contract-pairs.spec.ts`, generates one project per pair (Express and zod, Fastify and TypeBox,
+Hono and zod, NestJS and class-validator), shares one shape between two routes, adds a search,
+and holds each to zero finding, its specs and end-to-end specs (401, 403, 201 and the trace of
+the request), a current contract that documents the shape once, and a client generated from it
+that names `Money` and `Accepted` once and compiles. NestJS with class-validator, generated before but never run end to end, is now.
+
+**Which pair for which team.** `docs/tools/contract-pairs.md` compares the four pairs (type
+inference, composition of shapes, contract fidelity, issue codes, ecosystem, maintenance) with
+numbers measured by `pipeline/monorepo/measure-contract-pairs.mjs`: the pipeline of the kit costs
+about a microsecond per request before validation, zod parses in about half a microsecond,
+class-validator and TypeBox (through the adapter) in five to ten. oRPC was run and is documented
+as not fitting: its procedures, error format and second contract generator would sit next to the
+kit's, and the typed client it offers comes here from the generated contract.
+
+## 0.12.0
+
+**Cache policies on routes, and `no-store` for authenticated answers.** A controller, a route
+group or a function route declares `cache: { scope, maxAge, sMaxAge, staleWhileRevalidate,
+staleIfError, mustRevalidate, vary }` of `@ddd-ts-kit/http`: the pipeline answers its
+`Cache-Control` and `Vary`, the contract documents them, and a policy that would let a cache keep
+what it must not is refused when the route is declared, above all the `public` answer of a route
+that knows its caller without the request headers it varies on. When the routes are mounted, a
+public answer is held to the options of the application: on a route that knows its caller, `vary`
+names `Authorization`, `Cookie` or the header its tenant is read from; behind a cache that ignores
+`Vary` (Cloudflare, Bunny; `cacheTags.honoursVary` to say otherwise) a varying answer is refused;
+and every kept answer varies on the headers `resolveTenant` reads (`TenantResolver.headers`, set by
+`tenantFromHeader` and `firstTenantOf`). The policy of a route group reaches its reads only: a
+write of the group keeps the default of a write. A route that is not public and
+declares nothing now answers `Cache-Control: no-store`, refusals included (before, nothing): a
+generated contract gains that header on every authenticated operation, regenerate it with
+`npm run docs:generate`. The ESLint rule `presentation/shared-cache-varies` reports in the editor a
+public policy, without `vary`, on a declaration that writes guards or security schemes. See
+`docs/concepts/http-caching.md`.
+
+**Conditional requests.** A cache policy names the version of an answer, `etag: 'representation'`
+(a strong tag hashed from the bytes) or `etag: { version: 'version' }` (a weak tag from a field of
+the body), and `lastModified: 'changedAt'`: the pipeline answers `ETag` and `Last-Modified`, and
+`304 Not Modified` to `If-None-Match` and `If-Modified-Since`. A write declares
+`ifMatch: 'optional' | 'required'`: the version named in `If-Match` reaches the handler as
+`context.expectedVersion`, `expectVersion(aggregate, expected)` of the kernel refuses a stale one
+with `PreconditionFailedError` (`PRECONDITION_FAILED`, 412), and a required one that is missing
+answers `PRECONDITION_REQUIRED` (428). Both codes join the default error mapping and the codes a
+route may declare without a class of its own (`errors/known-code`). The contract documents the
+parameters, headers and answers.
+
+**Cache tags, purged after the commit.** A public policy names the resources its answer shows
+(`tags: [{ resource: 'calendar', param: 'calendarId' }]`), sent in the header the shared cache
+reads (`cacheTags: { header: CacheTagHeader.xkey }` of the options; `surrogate-key`, `cache-tag`,
+`cdn-tag`), filed under the tenant of the request when the application says so (`perTenant`, on
+the answers and on the purges). The kernel gains two ports: `CacheInvalidation`,
+which a `before-commit` handler asks and which `kernelModule()` binds to purge requests published
+on the outbox (a rollback purges nothing, a commit purges even across a crash), and `CachePurger`,
+which the relay calls through `new PurgingPublisher(purger, broker)` and which
+`domain-events/transactional-before-commit` now refuses before the commit. `@ddd-ts-kit/http/purgers`
+holds `VarnishCachePurger` (xkey or ban, with the purge `key` of the VCL), `FastlyCachePurger` and
+`CloudflareCachePurger`, all held to `cachePurgerContract` of `@ddd-ts-kit/testing/contracts` (the
+CDN ones on a fake of the purge API each documents); the test application exposes
+`cacheInvalidation`. `RepeatedCachePurger` purges once more a little later, for a read that reached
+the cache after the purge. Filed per tenant, a tagged answer to a request naming no tenant is
+`no-store`, a tagged public route anybody may call needs `resolveTenant`, and an invalidation asked
+without a tenant throws `NoCurrentTenantError`. `CacheInvalidation` and `CachePurger` join the
+standard interfaces (`standard/no-parallel-interface`: `CacheInvalidator`, `CdnPurger` and the
+like). Varnish 9.1.0 runs in the integration job. See `docs/tools/http-caches.md`.
+
+**Varnish in front of a generated project.** `init --http-cache varnish` (recorded as
+`stack.httpCache`; a config without it is `none`) adds the Varnish 9.1.0 service to the compose
+file with its VCL in `docker/varnish/default.vcl` (it keeps only what an answer allows by
+`max-age` or `s-maxage`, and lets a purge in from its machine or with `VARNISH_PURGE_KEY`),
+validates `VARNISH_URL` and `VARNISH_PURGE_KEY`, tags the public answers in `xkey` from the HTTP
+boundary, and has the outbox relay of `main.ts` and of every `generate service` entry point purge
+through `PurgingPublisher` and `VarnishCachePurger`; the end-to-end application records the purges
+(`purges.purged`). It needs an HTTP framework and `--events outbox`. On `--di manual` and `nest`
+the platform gains `cacheInvalidation`. With `--tenancy`, the answers and the purges are tagged
+per tenant and the HTTP boundary reads the tenant of a request from `x-tenant-id`.
+`generate controller --cache public|private|no-store` writes the cache policy of a controller.
+The generated presentation rules say when to cache, purge and condition a write.
 
 ## 0.11.0
 
