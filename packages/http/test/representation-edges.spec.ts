@@ -10,6 +10,8 @@ import {
   streamSchemaOf,
   type RawRequest,
 } from '../src/index.js';
+import { AsyncLocalStorageExecutionScope } from '@ddd-ts-kit/kernel';
+import { iteratedWithin } from '../src/pipeline/iterated-within.js';
 import { writeStream } from '../src/pipeline/write-stream.js';
 import { SchemaNode } from '../src/schema/schema-node.js';
 
@@ -228,3 +230,56 @@ describe('the pipeline with representations, at its edges', () => {
 function toIterable(written: string | AsyncIterable<string>): AsyncIterable<string> {
   return typeof written === 'string' ? (items(written) as AsyncIterable<string>) : written;
 }
+
+describe('a list streamed after its handler returned', () => {
+  it('is read inside the scope of its request, where an adapter still sees who acts', async () => {
+    const scope = new AsyncLocalStorageExecutionScope();
+
+    async function* seen(): AsyncIterable<{ id: string }> {
+      await Promise.resolve();
+      yield { id: scope.current()?.correlationId ?? 'outside' };
+      yield { id: scope.current()?.correlationId ?? 'outside' };
+    }
+
+    const exported = defineRoute(
+      {
+        method: 'GET',
+        path: '/seen',
+        operationId: 'exportSeen',
+        summary: 'Seen',
+        responses: { 200: { description: 'ok', body: streamSchemaOf(zodSchema(z.object({ id: z.string() }))) } },
+        security: false,
+      },
+      () => ({ status: 200, body: seen() }),
+    );
+
+    const response = await executeRoute(exported, raw({ 'x-correlation-id': 'c-42' }), {
+      representations,
+      executionScope: scope,
+      withPrincipal: (_principal, work) => work(),
+    });
+
+    expect(await all(response.stream ?? items())).toEqual(['[', '{"id":"c-42"}', ',{"id":"c-42"}', ']']);
+  });
+
+  it('closes what it reads when the reader stops early', async () => {
+    let closed = false;
+
+    async function* endless(): AsyncIterable<number> {
+      try {
+        for (let n = 0; ; n += 1) {
+          yield n;
+        }
+      } finally {
+        closed = true;
+      }
+    }
+
+    const iterator = iteratedWithin(endless(), (work) => work())[Symbol.asyncIterator]();
+
+    await iterator.next();
+    await iterator.return?.();
+
+    expect(closed).toBe(true);
+  });
+});

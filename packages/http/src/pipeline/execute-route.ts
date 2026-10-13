@@ -5,6 +5,7 @@ import { fieldAccess } from '../field-access/field-access.js';
 import { FieldJudge } from '../field-access/field-judge.js';
 import { FieldTree } from '../field-access/field-tree.js';
 import { visibleBody } from '../field-access/visible-body.js';
+import { isAsyncIterable } from '../support/is-async-iterable.js';
 import { toProblem } from '../error/to-problem.js';
 import type { Problem } from '../error/problem.js';
 import { NotAcceptableError } from '../representation/not-acceptable-error.js';
@@ -18,6 +19,7 @@ import { correlationIdOf } from './correlation-id-of.js';
 import type { ErrorContext } from './error-context.js';
 import type { ExecuteOptions } from './execute-options.js';
 import { executionOfRequest } from './execution-of-request.js';
+import { iteratedWithin, type Within } from './iterated-within.js';
 import { negotiation, type Negotiation } from './negotiation.js';
 import type { RawRequest } from './raw-request.js';
 import { readBody } from './read-body.js';
@@ -82,15 +84,25 @@ async function handled(call: Call): Promise<RouteOutput> {
   await assertWritable(input.body, FieldTree.of(fieldAccess.of(route.request?.body)), judge);
 
   const context = requestContext(call, execution, principal);
-  const handle = async (): Promise<RouteOutput> => route.handle({ ...input, context });
-  const asPrincipal = (): Promise<RouteOutput> => options.withPrincipal?.(principal, handle) ?? handle();
-  const result = await (options.executionScope?.run(execution, asPrincipal) ?? asPrincipal());
+
+  const within: Within = (work) => {
+    const asPrincipal = (): ReturnType<typeof work> => options.withPrincipal?.(principal, work) ?? work();
+
+    return options.executionScope?.run(execution, asPrincipal) ?? asPrincipal();
+  };
+
+  const result = await within(async () => route.handle({ ...input, context }));
 
   if (options.validateResponses === true) {
     assertDeclaredResponse(route, result);
   }
 
-  return visibleOutput(route, result, judge);
+  return visibleOutput(route, streamedWithin(result, within), judge);
+}
+
+/** A list streamed after the handler returned is still read inside the scope of the request. */
+function streamedWithin(result: RouteOutput, within: Within): RouteOutput {
+  return isAsyncIterable(result.body) ? { ...result, body: iteratedWithin(result.body, within) } : result;
 }
 
 function requestContext({ request, requestId }: Call, execution: ExecutionContext, principal: unknown): RequestContext {
