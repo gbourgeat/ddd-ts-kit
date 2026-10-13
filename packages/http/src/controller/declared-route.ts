@@ -38,7 +38,7 @@ export function declaredRoute(className: string, spec: ControllerSpec): Declared
   const inherited = spec.group === undefined ? NOTHING : inheritedFrom(className, spec.group);
   const guards = [...inherited.guards, ...(spec.guards ?? [])];
   const path = `${inherited.prefix}${spec.path === '/' && inherited.prefix !== '' ? '' : spec.path}`;
-  const cache = spec.cache ?? (READS.includes(spec.method) ? inherited.cache : undefined);
+  const cache = cacheOf(spec, inherited);
 
   assertPath(className, spec.path, path);
   assertAccess(className, guards);
@@ -52,6 +52,10 @@ export function declaredRoute(className: string, spec: ControllerSpec): Declared
     groups: inherited.groups,
     ...(cache === undefined ? {} : { cache }),
   };
+}
+
+function cacheOf(spec: ControllerSpec, inherited: Inherited): CachePolicy | undefined {
+  return spec.cache ?? (READS.includes(spec.method) ? inherited.cache : undefined);
 }
 
 function inheritedFrom(className: string, group: RouteGroupClass): Inherited {
