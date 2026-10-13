@@ -1550,6 +1550,12 @@ paths:
       responses:
         '202':
           description: 'Accepted: a worker cancels the appointments of the period; the body carries the clearance to follow.'
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
@@ -1614,6 +1620,12 @@ paths:
       responses:
         '200':
           description: How far the clearance went.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:

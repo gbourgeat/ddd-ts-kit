@@ -233,8 +233,8 @@ Generated from the code by `ddd-ts-kit docs`; the same facts as data: `ddd-ts-ki
 | `GetAppointment` | query | `appointment.read` |
 | `GetAppointmentDocument` | query | `appointment.read-document` |
 | `GetCalendarDay` | query | `calendar.browse` |
-| `GetOpeningHours` | query | `public` |
 | `GetClearance` | query | `calendar.clear` |
+| `GetOpeningHours` | query | `public` |
 | `JoinWaitlist` | command | `waitlist.join` |
 | `MarkAppointmentNoShow` | command | `appointment.mark-no-show` |
 | `NoteCancellation` | command | `attendance.note` |
