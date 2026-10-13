@@ -98,8 +98,8 @@ export class KnexOccupancyReader implements OccupancyReader {
 
 /** The measures of each group, as expressions over the grouped outcomes: the statement is the one `grouped` confines. */
 function measured(database: KnexContext, scope: ExecutionScope, plan: CriteriaPlan): Knex.QueryBuilder {
-  const holding = [...OccupancyMeasureService.HOLDING];
-  const among = holding.map(() => '?').join(', ');
+  // One binding, the list itself: the SQL stays a literal the tenancy rule can read.
+  const holding = [[...OccupancyMeasureService.HOLDING]];
 
   return grouped(database, scope, plan).select(
     'practice_id',
@@ -109,10 +109,10 @@ function measured(database: KnexContext, scope: ExecutionScope, plan: CriteriaPl
     database
       .executor()
       .raw(
-        `coalesce(sum(round((date_part('epoch', ends_at - starts_at) / 60)::numeric)) filter (where state in (${among})), 0)::integer as held_minutes`,
+        "coalesce(sum(round((date_part('epoch', ends_at - starts_at) / 60)::numeric)) filter (where state = any(?)), 0)::integer as held_minutes",
         holding,
       ),
-    database.executor().raw(`(count(*) filter (where state in (${among})))::integer as appointments_held`, holding),
+    database.executor().raw('(count(*) filter (where state = any(?)))::integer as appointments_held', holding),
     counted(database, OutcomeState.Completed, OutcomeState.Completed),
     counted(database, OutcomeState.NoShow, 'no_shows'),
     counted(database, OutcomeState.CancelledByPatient, 'cancelled_by_patient'),

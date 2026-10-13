@@ -65,7 +65,8 @@ const RAW_EXPRESSIONS = `export class KnexInvoiceRepository {
   totals() {
     return tenantTable(this.database, this.scope, INVOICES).select(
       this.database.executor().raw('(count(*) filter (where paid))::integer as paid'),
-      this.database.executor().raw(\`coalesce(sum(amount) filter (where state in (\${among})), 0) as due\`, states),
+      this.database.executor().raw('coalesce(sum(round(amount)) filter (where state = any(?)), 0)::numeric(12, 2) as due', [states]),
+      this.database.executor().raw("customer_id || ' from ' || day as label"),
     );
   }
 }
@@ -128,6 +129,20 @@ export const TENANCY_FIXTURES: readonly Fixture[] = [
   bypass('knex', 'raw SQL', "return this.database.executor().raw('select * from invoices');"),
   bypass('knex', 'raw SQL in a template', 'return this.database.executor().raw(`select * from ${INVOICES}`);'),
   bypass('knex', 'raw SQL whose text is not a literal', 'return this.database.executor().raw(statement);'),
+  bypass(
+    'knex',
+    'raw SQL completed by an interpolation',
+    'return this.database.executor().raw(`${statement} where id = ?`, [id]);',
+  ),
+  bypass('knex', 'raw SQL that names a table alone', "return this.database.executor().raw('table invoices');"),
+  bypass(
+    'knex',
+    'raw SQL that starts with a common table',
+    "return this.database.executor().raw('with due as (table invoices) table due');",
+  ),
+  bypass('knex', 'raw SQL of values', "return this.database.executor().raw('values (1), (2)');"),
+  bypass('knex', 'raw SQL that calls a procedure', "return this.database.executor().raw('call purge_invoices()');"),
+  bypass('knex', 'raw SQL that calls a function', "return this.database.executor().raw('purge_all()');"),
   {
     ruleId: RULE,
     name: 'knex: a raw expression in the select of a confined statement, and a constraint of the schema',

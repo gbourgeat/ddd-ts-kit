@@ -1,5 +1,6 @@
 import type { SourceFile } from '../model/source-file.js';
 import { executorUses } from './executor-uses.js';
+import { rawReachesRows } from './raw-reaches-rows.js';
 import { rawSqlText } from './raw-sql-text.js';
 
 /** Raw SQL, which no helper confines. */
@@ -8,14 +9,11 @@ const RAW = /\.raw\s*\(/g;
 /** A raw use of the executor: judged by what its SQL says, as any raw SQL. */
 const RAW_STATEMENT = /^\s*\.raw\s*\(/;
 
-/** The words without which SQL reaches no row: a statement, a table it reads, writes or joins. */
-const REACHES_ROWS = /\b(?:select|insert|update|delete|from|join|into|truncate|merge|copy)\b/i;
-
 /**
  * What a Knex adapter of tenant data reaches without the helpers: the executor called, chained or
- * held, and raw SQL. A raw expression whose literal text names no statement and no table (an
- * aggregate in a select, a constraint of the schema) reaches no row by itself: the statement it is
- * put in is what the tenant confines, so it is not reported.
+ * held, and raw SQL. A raw call whose first argument is a literal that reaches no row by itself
+ * (an aggregate in a select, a constraint of the schema: `rawReachesRows`) is not reported, since
+ * the statement it is put in is what the tenant confines; any other raw call is.
  */
 export function knexUnscoped(file: SourceFile): readonly { offset: number; message: string }[] {
   const { code } = file.scan;
@@ -34,9 +32,9 @@ export function knexUnscoped(file: SourceFile): readonly { offset: number; messa
   return [...straight, ...raw];
 }
 
-/** True unless the first argument is a literal whose text names nothing that reaches a row. */
+/** True unless the first argument is a literal whose SQL reaches no row by itself. */
 function reachesRows(file: SourceFile, argumentsStart: number): boolean {
   const text = rawSqlText(file, argumentsStart);
 
-  return text === undefined || REACHES_ROWS.test(text);
+  return text === undefined || rawReachesRows(text);
 }

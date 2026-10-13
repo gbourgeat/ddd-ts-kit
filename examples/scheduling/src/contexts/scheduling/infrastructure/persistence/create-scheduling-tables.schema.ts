@@ -93,8 +93,8 @@ function checkAppointmentRows(table: Knex.CreateTableBuilder): void {
  */
 async function holdEachSlotOnce(knex: Knex): Promise<void> {
   await knex.raw(
-    `alter table ??.?? add constraint ${APPOINTMENT_SLOT_HELD_ONCE} exclude using gist (calendar_id with =, tstzrange(starts_at, held_until, '[)') with &&) where (status in ('requested', 'booked'))`,
-    [SCHEDULING_SCHEMA, 'appointments'],
+    "alter table ??.?? add constraint ?? exclude using gist (calendar_id with =, tstzrange(starts_at, held_until, '[)') with &&) where (status in ('requested', 'booked'))",
+    [SCHEDULING_SCHEMA, 'appointments', APPOINTMENT_SLOT_HELD_ONCE],
   );
 }
 

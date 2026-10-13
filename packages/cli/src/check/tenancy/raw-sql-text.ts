@@ -4,9 +4,10 @@ const QUOTES = new Set(["'", '"']);
 const BACKTICK = '`';
 
 /**
- * The SQL text of the first argument of a raw call, from the source: a string literal, or the
- * text of a template without what its interpolations hold. `undefined` when the argument is not
- * a literal (a variable, a call): what it holds cannot be read here.
+ * The SQL text of the first argument of a raw call, from the source: a string literal, or a
+ * template without interpolation. `undefined` when the argument is not a literal (a variable, a
+ * call) or is a template that interpolates: what an interpolation holds may be SQL of its own,
+ * and cannot be read here.
  */
 export function rawSqlText(file: SourceFile, argumentsStart: number): string | undefined {
   const start = firstArgument(file.scan.code, argumentsStart);
@@ -21,8 +22,9 @@ export function rawSqlText(file: SourceFile, argumentsStart: number): string | u
   }
 
   const end = file.scan.code.indexOf(BACKTICK, start + 1);
+  const template = end === -1 ? undefined : file.text.slice(start + 1, end);
 
-  return end === -1 ? undefined : withoutInterpolations(file.text.slice(start + 1, end));
+  return template === undefined || template.includes('${') ? undefined : template;
 }
 
 function firstArgument(code: string, from: number): number {
@@ -33,9 +35,4 @@ function firstArgument(code: string, from: number): number {
   }
 
   return index;
-}
-
-/** The literal parts of a template: an interpolation is blanked in the code, and read nowhere here. */
-function withoutInterpolations(template: string): string {
-  return template.replace(/\$\{[^}]*\}/g, ' ');
 }
