@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { expectRefusal } from '@ddd-ts-kit/testing';
 import { MeasuredOutcome } from '@/contexts/analytics/domain/value-objects/measured-outcome.vo';
 
 const NINE = new Date('2026-10-12T09:00:00.000Z');
@@ -23,6 +24,11 @@ describe('MeasuredOutcome', () => {
     expect(missed.state).toBe('no-show');
     expect(missed.isIn(['held', 'no-show'])).toBe(true);
     expect(missed.isIn(['cancelled-by-patient'])).toBe(false);
+  });
+
+  it('covers no time when it ends as it starts, and refuses an end before its start', () => {
+    expect(MeasuredOutcome.of('held', NINE, NINE).minutes).toBe(0);
+    expectRefusal(() => MeasuredOutcome.of('held', later(30), NINE), 'OUTCOME_ENDS_BEFORE_START');
   });
 
   it('keeps its own copy of the instants it was given', () => {

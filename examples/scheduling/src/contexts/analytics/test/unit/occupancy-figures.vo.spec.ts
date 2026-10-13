@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { expectRefusal } from '@ddd-ts-kit/testing';
 import { OccupancyFigures } from '@/contexts/analytics/domain/value-objects/occupancy-figures.vo';
 
 const DAY = {
@@ -23,6 +24,15 @@ describe('OccupancyFigures', () => {
 
     expect(figures.heldMinutes).toBe(90);
     expect(figures.appointmentsHeld).toBe(3);
+  });
+
+  it('refuses a figure below zero or not whole', () => {
+    expectRefusal(() => OccupancyFigures.of({ ...DAY, cancelledByPractice: -1 }), 'FIGURES_INCONSISTENT');
+    expectRefusal(() => OccupancyFigures.of({ ...DAY, heldMinutes: 90.5 }), 'FIGURES_INCONSISTENT');
+  });
+
+  it('refuses fewer appointments held than those completed and those missed', () => {
+    expectRefusal(() => OccupancyFigures.of({ ...DAY, appointmentsHeld: 1 }), 'FIGURES_INCONSISTENT');
   });
 
   it('gives its figures as the line of a read model takes them', () => {

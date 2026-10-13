@@ -51,7 +51,11 @@ outcomes hold their time, and the figures of a set of outcomes. It reads each ou
 `MeasuredOutcome` (`domain/value-objects/measured-outcome.vo.ts`: its state and the minutes it
 covers, to the nearest minute) and answers `OccupancyFigures`
 (`domain/value-objects/occupancy-figures.vo.ts`), two value objects compared by value; the read
-model line `Occupancy` carries the same figures as plain data.
+model line `Occupancy` carries the same figures as plain data. Each checks its rules once, in its
+factory: an outcome never ends before it starts (`OccupancyError.outcomeEndsBeforeStart`), and
+figures are whole numbers, none below zero, with at least as many appointments held as completed
+and missed ones (`OccupancyError.figuresInconsistent`). Scheduling never announces such an
+outcome, so neither refusal reaches a client: they say what a measure is.
 
 **Where it is computed.** In the database, when `SearchOccupancy` is read:
 `infrastructure/persistence/knex-occupancy-reader.repository.ts`, the adapter of the port
@@ -127,6 +131,13 @@ Generated from the code by `ddd-ts-kit docs`; the same facts as data: `ddd-ts-ki
 | `AppointmentExportGateway` | gateway | `InProcessAppointmentExportGateway` |
 | `OccupancyReader` | repository | `KnexOccupancyReader` |
 | `OutcomeRegister` | repository | `KnexOutcomeRegister` |
+
+### Errors
+
+| Error class | Refusal | Code | Exposed facts |
+|---|---|---|---|
+| `OccupancyError` | `outcomeEndsBeforeStart` | `OUTCOME_ENDS_BEFORE_START` | none |
+| `OccupancyError` | `figuresInconsistent` | `FIGURES_INCONSISTENT` | none |
 
 ### Gateways
 

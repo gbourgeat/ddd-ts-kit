@@ -1,4 +1,5 @@
 import { ValueObject } from '@ddd-ts-kit/kernel';
+import { OccupancyError } from '@/contexts/analytics/domain/errors/occupancy.error';
 import type { OutcomeState } from '@/contexts/analytics/domain/vocabularies/outcome-state.vocabulary';
 
 export type MeasuredOutcomeProps = {
@@ -15,7 +16,12 @@ export class MeasuredOutcome extends ValueObject<MeasuredOutcomeProps> {
     super(props);
   }
 
+  /** Refuses an outcome that ends before it starts: the time it covers is never negative. */
   static of(state: OutcomeState, startsAt: Date, endsAt: Date): MeasuredOutcome {
+    if (endsAt.getTime() < startsAt.getTime()) {
+      throw OccupancyError.outcomeEndsBeforeStart(startsAt.toISOString(), endsAt.toISOString());
+    }
+
     return new MeasuredOutcome({ state, startsAt: new Date(startsAt), endsAt: new Date(endsAt) });
   }
 
