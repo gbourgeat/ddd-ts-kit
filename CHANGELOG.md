@@ -4,6 +4,12 @@ What each version changes for someone who uses the kit. The packages of `package
 together, under one version; the notes of each [GitHub release](https://github.com/gbourgeat/ddd-ts-kit/releases)
 list the pull requests behind it.
 
+## Unreleased
+
+**Every package carries the MIT notice.** Each published package now holds the `LICENSE` of the
+repository next to its `dist/`, and `npm run package:check` refuses a tarball without it, or with
+another text. Earlier versions were published without it.
+
 ## 0.6.0
 
 **A typed client of the contract, for the callers of the API.** `npx ddd-ts-kit sdk` (or
