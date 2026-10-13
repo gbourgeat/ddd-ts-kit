@@ -48,6 +48,7 @@ Ordered as a reading path in [concepts/README.md](concepts/README.md).
 | [Event versioning](concepts/event-versioning.md) | evolving a published event |
 | [Event sourcing, per aggregate](concepts/event-sourcing.md) | when to keep an aggregate as its events, what it costs, upcasters, crypto-shredding, projections fed by the store, migrating to it and back |
 | [Authentication and authorization](concepts/authentication-and-authorization.md) | RBAC, ABAC, ReBAC compared, with a decision table |
+| [Authorization in practice](concepts/authorization-in-practice.md) | `@Requires`, the bus middleware, the `Authorizer` port and policies, followed through one command |
 | [Actor and execution scope](concepts/actor-and-execution-scope.md) | the explicit actor, and what every unit of work carries |
 | [Multitenancy](concepts/multitenancy.md) | the tenant from the edge to the storage: isolation strategies, propagation, elevation of platform staff, the proof |
 | [Audit trail](concepts/audit-trail.md) | tamper-evident history recorded around the use cases |
