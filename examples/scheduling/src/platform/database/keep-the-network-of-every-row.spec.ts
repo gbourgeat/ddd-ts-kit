@@ -3,6 +3,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { keepTheNetworkOfEveryRow } from '@/platform/database/keep-the-network-of-every-row';
 import { openTestDatabase, type TestDatabase } from '@/platform/database/open-test-database';
 import { IDENTITY_SCHEMA } from '@/contexts/identity/infrastructure/persistence/identity.schema';
+import { MESSAGING } from '@/platform/database/schema';
 
 /** The schemas of the bounded contexts: every table in them holds the data of one network. */
 const CONTEXT_SCHEMAS = ['identity', 'scheduling', 'notification', 'analytics'];
@@ -68,6 +69,46 @@ describe('The network of every row (ADR-0003, ADR-0004)', () => {
       { id: 'person-before', tenant_id: 'north' },
     ]);
   });
+
+  it('is kept by the instances of the process managers, and given to those of a database created before', async () => {
+    const required = await knex<Column>('information_schema.columns')
+      .select('is_nullable')
+      .where('table_schema', MESSAGING)
+      .where('table_name', 'process_instances')
+      .where('column_name', 'tenant_id');
+
+    expect(required).toEqual([{ is_nullable: 'NO' }]);
+
+    await knex.schema.withSchema(MESSAGING).alterTable('process_instances', (table) => {
+      table.dropColumn('tenant_id');
+    });
+
+    await knex('process_instances').withSchema(MESSAGING).insert(processRow());
+    await keepTheNetworkOfEveryRow(knex, 'north');
+
+    expect(await knex('process_instances').withSchema(MESSAGING).select('id', 'tenant_id')).toEqual([
+      { id: 'appointment-before', tenant_id: 'north' },
+    ]);
+  });
+
+  it('is given to the background jobs not finished yet, so that their next attempt runs in that network', async () => {
+    await knex('background_jobs')
+      .withSchema(MESSAGING)
+      .insert([jobRow('waiting-before', 'waiting'), jobRow('done-before', 'succeeded')]);
+
+    await keepTheNetworkOfEveryRow(knex, 'north');
+
+    const jobs = await knex('background_jobs')
+      .withSchema(MESSAGING)
+      .select('id', 'tenant_id', 'enqueued_by')
+      .whereIn('id', ['waiting-before', 'done-before'])
+      .orderBy('id');
+
+    expect(jobs.map(({ id, tenant_id, enqueued_by }) => ({ id, tenant_id, tenantId: enqueued_by.tenantId }))).toEqual([
+      { id: 'done-before', tenant_id: '', tenantId: undefined },
+      { id: 'waiting-before', tenant_id: 'north', tenantId: 'north' },
+    ]);
+  });
 });
 
 function nameOf(column: Column): string {
@@ -87,5 +128,30 @@ function personRow(): Readonly<Record<string, unknown>> {
     created_by: 'system',
     updated_at: at,
     updated_by: 'system',
+  };
+}
+
+function processRow(): Readonly<Record<string, unknown>> {
+  return {
+    name: 'scheduling.confirmation-deadline',
+    id: 'appointment-before',
+    state: JSON.stringify({ appointmentId: 'appointment-before' }),
+    version: 1,
+    ended: false,
+    timeouts: JSON.stringify({}),
+  };
+}
+
+function jobRow(id: string, status: string): Readonly<Record<string, unknown>> {
+  const at = new Date('2026-01-01T00:00:00.000Z');
+
+  return {
+    id,
+    name: 'scheduling.clear-calendar',
+    queue: 'default',
+    enqueued_by: JSON.stringify({ correlationId: 'correlation-before', actor: { id: 'ada', type: 'user' } }),
+    status,
+    run_at: at,
+    enqueued_at: at,
   };
 }

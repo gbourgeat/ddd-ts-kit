@@ -74,7 +74,7 @@ export function platformModule(persistence: Persistence, options: PlatformOption
       builder.bind(KnexContext).toValue(persistence.database);
       builder.bind(OutboxStore).toValue(persistence.outbox);
       builder.rebind(JobStore).toValue(persistence.jobs);
-      builder.rebind(ProcessStore).toValue(persistence.processes);
+      builder.rebind(ProcessStore).toFactory((resolve) => persistence.processes(resolve(ExecutionScope)));
       bindEventSourcing(builder, persistence);
       // One store for the authorizer and for the adapters that keep relationships in sync: an adapter names `RelationTupleStore` in its dependencies and writes in the unit of work of its command.
       builder.bind(RelationTupleStore).toValue(createTupleStore(persistence.database));
