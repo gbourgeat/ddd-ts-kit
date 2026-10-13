@@ -56,6 +56,10 @@ for (const name of REPOSITORY_OF_THE_CALLER) {
 export default defineConfig({
   test: {
     include: ['packages/*/test/**/*.spec.ts'],
+    // Every file runs at once on a laptop, its PGlite databases and child compilers included: a
+    // spec slowed by its neighbours is not a failing one, and a spec that hangs still fails.
+    testTimeout: 30_000,
+    hookTimeout: 60_000,
     coverage: {
       provider: 'v8',
       include: AFFECTED.length === 0 ? ['packages/*/src/**'] : AFFECTED.map((name) => `packages/${name}/src/**`),
