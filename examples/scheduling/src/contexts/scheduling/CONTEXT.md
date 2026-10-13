@@ -119,11 +119,11 @@ This is why practices come: a time on a calendar is held once, under rules of av
 - `scheduling:agenda.read`
 - `scheduling:appointment.read`
 - `scheduling:calendar.browse`
-- `scheduling:attendance.note`
-- `scheduling:attendance.read`
 - `scheduling:appointment.attach-document`
 - `scheduling:appointment.remove-document`
 - `scheduling:appointment.read-document`
+- `scheduling:attendance.note`
+- `scheduling:attendance.read`
 <!-- /ddd-ts-kit:permissions -->
 
 ## Scheduled jobs
@@ -274,9 +274,9 @@ Generated from the code by `ddd-ts-kit docs`; the same facts as data: `ddd-ts-ki
 | `AppointmentError` | `patientLimitReached` | `PATIENT_LIMIT_REACHED` | `limit` |
 | `AppointmentError` | `reasonRequired` | `REASON_REQUIRED` | none |
 | `AppointmentError` | `slotTaken` | `SLOT_TAKEN` | `startsAt` |
-| `AttendanceRecordError` | `alreadyNoted` | `ALREADY_NOTED` | none |
 | `AppointmentError` | `noDocument` | `NO_DOCUMENT` | none |
 | `AppointmentError` | `documentNameTooLong` | `DOCUMENT_NAME_TOO_LONG` | `longest` |
+| `AttendanceRecordError` | `alreadyNoted` | `ALREADY_NOTED` | none |
 | `CalendarError` | `invalidAppointmentType` | `INVALID_APPOINTMENT_TYPE` | none |
 | `CalendarError` | `invalidBookingWindow` | `INVALID_BOOKING_WINDOW` | none |
 | `CalendarError` | `invalidDay` | `INVALID_DAY` | `day` |

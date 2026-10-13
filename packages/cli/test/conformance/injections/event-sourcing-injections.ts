@@ -40,6 +40,7 @@ export const EVENT_SOURCING_INJECTIONS: readonly Injection[] = [
       { file: RECORD, from: `  | ${CREATED}\n`, to: `  | ${RENAMED}\n` },
       { file: RECORD, from: `new ${CREATED}(`, to: `new ${RENAMED}(` },
       { file: RECORD, from: `(event: ${CREATED})`, to: `(event: ${RENAMED})` },
+      { file: RECORD, from: `[${CREATED}.eventName]`, to: `[${RENAMED}.eventName]` },
     ],
     checker: true,
     eslint: 'ddd-ts-kit/event-sourcing-past-tense',
@@ -87,8 +88,8 @@ export const EVENT_SOURCING_INJECTIONS: readonly Injection[] = [
     changes: [
       {
         file: CODEC,
-        from: "'scheduling.attendance-record.no-show-noted': defineStoredEvent(AttendanceRecordNoShowNoted, {\n    version: 1,",
-        to: "'scheduling.attendance-record.no-show-noted': defineStoredEvent(AttendanceRecordNoShowNoted, {\n    version: 2,",
+        from: '[AttendanceRecordNoShowNoted.eventName]: defineStoredEvent(AttendanceRecordNoShowNoted, {\n    version: 1,',
+        to: '[AttendanceRecordNoShowNoted.eventName]: defineStoredEvent(AttendanceRecordNoShowNoted, {\n    version: 2,',
       },
     ],
     checker: true,
