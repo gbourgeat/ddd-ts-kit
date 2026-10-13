@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
-import type { Actor } from '@ddd-ts-kit/kernel';
+import { AsyncLocalStorageExecutionScope, type Actor } from '@ddd-ts-kit/kernel';
 import { zodSchema } from '@ddd-ts-kit/validation/zod';
 import {
   Representations,
@@ -11,7 +11,9 @@ import {
   streamSchemaOf,
   withFieldAccess,
   type FieldAccessDecisions,
+  type FieldDecider,
   type FieldPolicy,
+  serializeBody,
   type RawRequest,
   type RouteResponse,
 } from '../src/index.js';
@@ -119,7 +121,9 @@ function options(access = new RoleAccess(grants)): Parameters<typeof executeRout
 }
 
 async function text(response: RouteResponse): Promise<string> {
-  let written = response.body instanceof Uint8Array ? new TextDecoder().decode(response.body) : '';
+  // The JSON of the kit stays a value, which the adapter writes as JSON; another representation is bytes or chunks.
+  const serialized = serializeBody(response);
+  let written = serialized instanceof Uint8Array ? new TextDecoder().decode(serialized) : (serialized ?? '');
 
   for await (const chunk of response.stream ?? []) {
     written += chunk;
@@ -270,5 +274,40 @@ describe('the contract of a schema with restricted fields', () => {
         },
       },
     });
+  });
+});
+
+describe('the decisions about the fields of a request', () => {
+  it('are taken in the scope of the request, where a decision is recorded with who asked', async () => {
+    const scope = new AsyncLocalStorageExecutionScope();
+    const seen: string[] = [];
+
+    const recorded: FieldDecider = async (actor) => {
+      seen.push(scope.require().correlationId);
+
+      return actor.id === 'dora';
+    };
+
+    const options = { resolvePrincipal: (raw: unknown) => raw, executionScope: scope, fieldAccess: recorded };
+    const headers = { 'x-correlation-id': 'c-7' };
+
+    await executeRoute(routes.search, { ...as('dora', 'doctor'), headers }, options);
+
+    await executeRoute(
+      routes.record,
+      { ...as('dora', 'doctor'), headers, body: { id: 'v', practitionerId: 'dora', note: 'n' } },
+      options,
+    );
+
+    const exported = await executeRoute(
+      routes.exported,
+      { ...as('dora', 'doctor'), headers },
+      { ...options, representations: Representations.standard() },
+    );
+
+    await text(exported);
+
+    expect(new Set(seen)).toEqual(new Set(['c-7']));
+    expect(seen.length).toBeGreaterThan(3);
   });
 });

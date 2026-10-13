@@ -9,6 +9,7 @@ import {
   controllerRoute,
   defineRoute,
   executeRoute,
+  serializeBody,
   type RawRequest,
   type Representation,
   type Route,
@@ -28,17 +29,15 @@ const request = (headers: RawRequest['headers'] = {}, body?: unknown): RawReques
 });
 
 async function text(response: RouteResponse): Promise<string> {
-  if (response.stream !== undefined) {
-    let written = '';
+  // The JSON of the kit stays a value, which the adapter writes as JSON; another representation is bytes or chunks.
+  const serialized = serializeBody(response);
+  let written = serialized instanceof Uint8Array ? new TextDecoder().decode(serialized) : (serialized ?? '');
 
-    for await (const chunk of response.stream) {
-      written += chunk;
-    }
-
-    return written;
+  for await (const chunk of response.stream ?? []) {
+    written += chunk;
   }
 
-  return response.body instanceof Uint8Array ? new TextDecoder().decode(response.body) : '';
+  return written;
 }
 
 const OPERATIONS = ['searchProducts', 'exportProducts', 'addProduct'];

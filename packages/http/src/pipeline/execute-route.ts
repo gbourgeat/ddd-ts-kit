@@ -27,7 +27,7 @@ import { represented } from './represented.js';
 import type { RouteResponse } from './route-response.js';
 import { validateRequest } from './validate-request.js';
 import { wellFormedIdentifier } from './well-formed-identifier.js';
-import { writtenAs } from './written-as.js';
+import { writtenIn } from './written-in.js';
 
 interface Call {
   readonly route: Route;
@@ -81,7 +81,6 @@ async function handled(call: Call): Promise<RouteOutput> {
   const judge = new FieldJudge(execution.actor, options.fieldAccess);
 
   call.reached.execution = execution;
-  await assertWritable(input.body, FieldTree.of(fieldAccess.of(route.request?.body)), judge);
 
   const context = requestContext(call, execution, principal);
 
@@ -91,13 +90,25 @@ async function handled(call: Call): Promise<RouteOutput> {
     return options.executionScope?.run(execution, asPrincipal) ?? asPrincipal();
   };
 
-  const result = await within(async () => route.handle({ ...input, context }));
+  // The fields are decided in the scope of the request too: a decision is recorded with who asked and under which correlation.
+  const result = await within(async () => {
+    await assertWritable(input.body, FieldTree.of(fieldAccess.of(route.request?.body)), judge);
+
+    return visibleOutput(route, await answered(call, { ...input, context }), judge);
+  });
+
+  return streamedWithin(result, within);
+}
+
+/** What the handler answers, checked against the declaration when the options ask for it. */
+async function answered({ route, options }: Call, input: Parameters<Route['handle']>[0]): Promise<RouteOutput> {
+  const result = await route.handle(input);
 
   if (options.validateResponses === true) {
     assertDeclaredResponse(route, result);
   }
 
-  return visibleOutput(route, streamedWithin(result, within), judge);
+  return result;
 }
 
 /** A list streamed after the handler returned is still read inside the scope of the request. */
@@ -217,7 +228,7 @@ function problemBody(problem: Problem, call: Call): Omit<RouteResponse, 'status'
     return { headers: { 'content-type': PROBLEM_CONTENT_TYPE, ...identifierHeaders(call) }, body: problem };
   }
 
-  const written = writtenAs(chosen.representation.write(problem, PROBLEM_SHAPE), chosen.mediaType);
+  const written = writtenIn(problem, chosen, PROBLEM_SHAPE);
 
   return { ...written, headers: { ...written.headers, ...identifierHeaders(call) } };
 }

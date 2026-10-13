@@ -414,8 +414,9 @@ JSON (`consumes`), on `@Controller` or on `defineRoute` alike:
 - **Streaming**: a handler that answers an `AsyncIterable` (a cursor, a paged read) under a
   `streamSchemaOf(item)` response is written item by item in every representation (one JSON
   array, one XML root, one CSV line per row), honouring the back pressure of the client and
-  stopping when it leaves. The first item is read before the status is sent: a cursor that
-  cannot open is answered as a problem. A failure after that can only cut the response short.
+  stopping when it leaves. Each item is read inside the execution scope of the request, as the
+  handler was. The first item is read before the status is sent: a cursor that cannot open is
+  answered as a problem. A failure after that can only cut the response short.
 - **Mount-time checks**: a media type no registered representation provides, a CSV answer
   whose rows hold a list or an object, and a consumed media type nothing reads are refused with
   a `DeclarationError` when the routes are mounted.
@@ -424,7 +425,9 @@ JSON (`consumes`), on `@Controller` or on `defineRoute` alike:
   under each refusal, and `406`, `415` with their codes when the route declares `produces` or
   `consumes`.
 - **Without `representations`**, nothing changes: every answer is JSON, whatever the request
-  accepts, and `produces` and `consumes` are only documented.
+  accepts, and `produces` and `consumes` are only documented. With them, an answer in the JSON of
+  the kit stays a value in the `RouteResponse` (a spec calling `executeRoute` reads it as
+  before); another representation gives bytes in `body`, or chunks in `stream`.
 
 ### The serialization rules, the same in every representation
 
@@ -522,8 +525,9 @@ const options: ExecuteOptions = { ...boundary, fieldAccess: fieldDeciderOf({ acc
   named on the field is asked directly, with the time of `clock`. `subject` names the element:
   left out, the requirement is asked about nothing, which a role grant answers and a
   relationship does not.
-- Each requirement is decided once per element and per request: a page of a hundred rows of
-  the same calendar asks once.
+- Each requirement is decided once per element and per request, inside the execution scope of
+  the request (a decision the `Access` records knows who asked, and under which correlation): a
+  page of a hundred rows of the same calendar asks once.
 - `pageSchemaOf(item)` and `streamSchemaOf(item)` carry the restricted fields of their item.
   The rules apply to the properties of the schema given to `withFieldAccess`; a nested object is
   restricted by wrapping its own schema.

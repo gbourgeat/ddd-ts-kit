@@ -8,6 +8,7 @@ import type { FormDescription } from './form-description.js';
 import type { JsonForm } from './json-form.js';
 
 const MAX_DEPTH = 16;
+const WIDGET_FORMATS: Readonly<Partial<Record<string, string>>> = { datetime: 'date-time', date: 'date', time: 'time' };
 /** What a schema says of itself and of other documents, which a self-contained form schema does not need. */
 const LEFT_OUT = new Set(['$ref', '$defs', 'definitions', '$schema', '$id', 'x-field-access']);
 
@@ -70,8 +71,15 @@ function propertySchema(field: FieldBlock, node: SchemaNode | undefined): JsonSc
     ...(field.options !== undefined && own['enum'] === undefined && field.multiple !== true
       ? { enum: field.options.map(({ value }) => value) }
       : {}),
-    ...(field.widget === 'datetime' && own['format'] === undefined ? { format: 'date-time' } : {}),
+    ...formatOf(field),
   };
+}
+
+/** A widget of an instant says the format a renderer picks its control by, whatever format the schema library wrote. */
+function formatOf({ widget }: FieldBlock): JsonSchema {
+  const format = WIDGET_FORMATS[widget];
+
+  return format === undefined ? {} : { format };
 }
 
 /** The node with every reference followed, so the form schema holds itself. */

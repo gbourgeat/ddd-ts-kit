@@ -13,7 +13,7 @@ describe('the edges of a form', () => {
         path: '/visits',
         operationId: 'planVisit',
         summary: 'Plan',
-        request: { body: zodSchema(z.object({ mood: z.string(), at: z.string(), note: z.string() })) },
+        request: { body: zodSchema(z.object({ mood: z.string(), at: z.iso.date(), note: z.string() })) },
         responses: { 204: { description: 'ok' } },
         security: false,
         form: {
