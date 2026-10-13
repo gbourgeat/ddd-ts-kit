@@ -106,6 +106,8 @@ describe('worker-scope', () => {
       'controller',
       'route-group',
       'guard',
+      'representation',
+      'form',
       'integration-handler',
       'event-handler',
       'projection',

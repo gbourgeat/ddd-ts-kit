@@ -16,7 +16,9 @@ import {
   HTTP_STACKS,
   IMPORT_EXTENSIONS,
   LOGGERS,
+  FORM_MODES,
   REFUSAL_FORMS,
+  REPRESENTATION_MODES,
   ROUTE_FORMS,
   PACKAGE_MANAGERS,
   parseConfig,
@@ -109,6 +111,7 @@ function stackOf(options: StackOptions): Record<string, string> {
     broker,
     ...resolveOperations(options, persistence.orm),
     ...resolveStyle(options, di),
+    ...resolvePresentation(options, http),
   };
 }
 
@@ -151,6 +154,21 @@ function resolveOperations(
     refusals: choose(REFUSAL_FORMS, options.refusals, 'refusals') ?? 'factories',
     // A new project writes each route as a controller class; a recorded one keeps the form it says, or the functions of 0.3.
     routes: choose(ROUTE_FORMS, options.routes, 'routes') ?? 'controllers',
+  };
+}
+
+/**
+ * A new project with an HTTP stack negotiates its representations and serves the forms its routes
+ * declare; one without HTTP has neither, and a recorded one keeps what it says, or JSON alone and
+ * no form when it says nothing.
+ */
+function resolvePresentation(options: StackOptions, http: string): Record<'representations' | 'forms', string> {
+  const representations = choose(REPRESENTATION_MODES, options.representations, 'representations');
+  const forms = choose(FORM_MODES, options.forms, 'forms');
+
+  return {
+    representations: representations ?? (http === 'none' ? 'json' : 'negotiated'),
+    forms: forms ?? (http === 'none' ? 'off' : 'on'),
   };
 }
 

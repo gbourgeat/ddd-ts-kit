@@ -25,6 +25,7 @@ paths:
 - Every route says who may call it (its group or its guards for a controller, `security` for a function) and the `DomainError` codes it can answer in `errors`; the mapping from code to status lives in one place, the error mapper.
 {{/if}}
 - No role or ownership test in a controller or a route (`authz/in-application`): a guard of the group asks for a role at the edge, the bus asks for the permission, a policy decides on loaded state.
+- A field reserved to some callers is marked on its schema, `withFieldAccess(schema, { field: { read, write } })`, never by an `if` on a role (`authz/fields-by-schema`).{{#if presentation.negotiated}} Other media types are `produces` and `consumes` of the declaration (`generate representation`), from the same schema.{{/if}}{{#if presentation.forms}} A form is `defineForm` hints next to the body (`generate form`): shape and presentation, never a business rule.{{/if}}
 - Request and response types are presentation types, one class or schema per file next to the controller (`*.body.ts`, `*.params.ts`, `*.answer.ts`...; `*.dto.ts` for function routes and under `shared/`): never an aggregate, never a row.
 - Never put the message of an unexpected failure in a response or a log.
 - Files: the canonical tree of `presentation/http/` (`naming/suffix`, `tree/closed`): a folder per controller, `*.routes.ts` for the groups, `guards/`, `shared/`; function routes stay flat (`*.route.ts`, `*.dto.ts`).

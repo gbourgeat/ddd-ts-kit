@@ -69,7 +69,7 @@ function eventFiles(config: Config): InitFile[] {
 }
 
 function httpFiles(config: Config): InitFile[] {
-  const { http, docsUi, cache } = config.stack;
+  const { http, docsUi, cache, representations, forms } = config.stack;
   const file = (name: string, variant?: string): InitFile => platformFile(config, name, variant);
 
   if (http === 'none') {
@@ -81,5 +81,7 @@ function httpFiles(config: Config): InitFile[] {
     ...when(http === 'nest', [file('http/create-app-module.ts')]),
     ...when(docsUi !== 'none', [file('http/with-documentation.ts')]),
     ...when(cache === 'redis', [file('http/refusal-for.ts')]),
+    ...when(representations === 'negotiated' || forms === 'on', [file('http/presentation-of.ts')]),
+    ...when(forms === 'on', [file('http/with-forms.ts')]),
   ];
 }

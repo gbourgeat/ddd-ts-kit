@@ -35,6 +35,7 @@ export function stackVars(config: Config): RenderContext {
     errors: errorVars(config),
     refusals: one(refusals, ['factories', 'classes']),
     routes: routeVars(config),
+    presentation: presentationVars(config),
     logger: one(logger, ['stdout', 'pino', 'winston']),
     tests: { ...one(tests, ['vitest', 'jest']), module: tests === 'jest' ? '@jest/globals' : 'vitest' },
     worker: { on: config.worker, off: !config.worker },
@@ -59,6 +60,19 @@ function routeVars(config: Config): RenderContext {
     declaredControllers,
     mountsControllers: declaredControllers || (http !== 'none' && audit === 'on' && routes === 'controllers'),
   };
+}
+
+/**
+ * `negotiated`: the boundary registers the representations of the kit; `forms`: the composition
+ * root serves the forms of the routes. Either one decides the restricted fields through the
+ * `Access` of the application, which `presentation.ts` of the platform builds.
+ */
+function presentationVars(config: Config): RenderContext {
+  const { http, representations, forms } = config.stack;
+  const negotiated = http !== 'none' && representations === 'negotiated';
+  const served = http !== 'none' && forms === 'on';
+
+  return { negotiated, forms: served, any: negotiated || served };
 }
 
 function assemblyVars(config: Config): RenderContext {

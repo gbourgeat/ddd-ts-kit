@@ -22,6 +22,18 @@ representation. The contract lists every media type of each route, and `NOT_ACCE
 option nothing changes: every answer stays JSON. `money` and `decimalText` write money and
 decimals as strings, the rule every representation follows.
 
+**A generated project negotiates its representations and serves its forms.** Two keys of
+`stack`, chosen at `init`: `representations` (`negotiated`, `json`) and `forms` (`on`, `off`),
+both on by default with an HTTP stack. `negotiated` writes `src/platform/http/presentation-of.ts`,
+which gives the HTTP boundary and the contract script `Representations.standard()` and a field
+decider over the `Access` of the application; `forms: on` writes `with-forms.ts`, which serves
+`GET /forms/<operationId>` for each route that declares `form`, and `npm run docs:generate`
+writes the forms to `openapi/forms/`. A config without the keys is read as `json` and `off`:
+nothing changes until `init --force --representations negotiated --forms on`. `generate
+representation <context> <UseCase> xml,csv` adds `produces` (and `consumes` of XML for a
+route with a body) to a controller, `generate form <context> <UseCase>` its `defineForm`
+hints, and `describe` lists the media types and the form of each route.
+
 **A route describes its body as a form.** A route that declares `form` (on `@Controller` or
 `defineRoute`, `defineForm<Body>(hints)` in a `.form.ts` file) is served by `formRoutes(routes,
 { fieldAccess })` at `GET /forms/<operationId>`: JSON Forms by default (schema, UI schema,

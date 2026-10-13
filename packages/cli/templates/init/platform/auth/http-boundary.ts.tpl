@@ -9,9 +9,12 @@ import type { Clock, ErrorReporter, ExecutionScope, Logger, Session } from '@ddd
 {{/if}}
 import { tracedRoutes } from '@ddd-ts-kit/tracing';
 import { principalOf } from '{{alias.platform}}/auth/principal-of{{alias.ext}}';
+{{#if presentation.any}}
+import type { Presentation } from '{{alias.platform}}/http/presentation-of{{alias.ext}}';
+{{/if}}
 
 /** What the HTTP adapter needs at the edge of the application: spread into its mount options, for every route. */
-export interface HttpBoundary {
+export interface HttpBoundary{{#if presentation.any}} extends Presentation{{/if}} {
   readonly resolvePrincipal: (raw: unknown) => Promise<Session>;
   /** Every handler runs inside it, with the correlation id, the actor and the session of its request. */
   readonly executionScope: ExecutionScope;
@@ -33,11 +36,26 @@ interface Edge {
   /** Where a request answered 5xx is reported, unless a bus already reported its failure. */
   readonly errors: ErrorReporter;
 {{/if}}
+{{#if presentation.any}}
+  readonly presentation: Presentation;
+{{/if}}
 }
 
 /** A request is authenticated once, then handled inside the execution scope, so infrastructure sees who acts and under which correlation. */
 {{#if errors.none}}
+{{#unless presentation.any}}
 export function httpBoundary({ authenticator, executionScope, errorMapper, clock, logger }: Edge): HttpBoundary {
+{{/unless}}
+{{#if presentation.any}}
+export function httpBoundary({
+  authenticator,
+  executionScope,
+  errorMapper,
+  clock,
+  logger,
+  presentation,
+}: Edge): HttpBoundary {
+{{/if}}
 {{/if}}
 {{#if errors.sentry}}
 export function httpBoundary({
@@ -47,11 +65,17 @@ export function httpBoundary({
   clock,
   logger,
   errors,
+{{#if presentation.any}}
+  presentation,
+{{/if}}
 }: Edge): HttpBoundary {
   const report = reportHttpErrors(errors);
 
 {{/if}}
   return {
+{{#if presentation.any}}
+    ...presentation,
+{{/if}}
     resolvePrincipal: principalOf(authenticator),
     executionScope,
     errorMapper,

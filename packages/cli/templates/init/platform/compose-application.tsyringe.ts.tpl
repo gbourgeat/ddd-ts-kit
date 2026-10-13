@@ -1,6 +1,11 @@
 import { installAspectRuntime } from '@ddd-ts-kit/aspects';
 {{#if http.any}}
+{{#if presentation.any}}
+import { Access, Authenticator } from '@ddd-ts-kit/auth';
+{{/if}}
+{{#unless presentation.any}}
 import { Authenticator } from '@ddd-ts-kit/auth';
+{{/unless}}
 {{/if}}
 import {
 {{#if routes.declaredControllers}}
@@ -71,6 +76,12 @@ import { securitySchemes } from '{{alias.platform}}/auth/security-schemes{{alias
 {{/if}}
 {{#if http.any}}
 import { httpBoundary, type HttpBoundary } from '{{alias.platform}}/auth/http-boundary{{alias.ext}}';
+{{/if}}
+{{#if presentation.any}}
+import { presentationOf } from '{{alias.platform}}/http/presentation-of{{alias.ext}}';
+{{/if}}
+{{#if presentation.forms}}
+import { withForms } from '{{alias.platform}}/http/with-forms{{alias.ext}}';
 {{/if}}
 {{#if authz.rebac}}
 import { relateSystemActors } from '{{alias.platform}}/auth/relate-system-actors{{alias.ext}}';
@@ -222,10 +233,19 @@ function kernel(foundations: Foundations, persistence: Persistence, options: App
 
 function running(container: Container, options: ApplicationOptions, contexts: ContextSelection): Application {
   const logger = container.resolve(Logger);
+{{#if presentation.any}}
+  // What the server answers in and which fields each caller sees: the forms and the contract are given the same.
+  const presentation = presentationOf(container.resolve(Access), container.resolve(Clock));
+{{/if}}
 
   return {
 {{#if http.any}}
+{{#if presentation.forms}}
+    routes: withForms(routesOf(container, contexts), presentation),
+{{/if}}
+{{#unless presentation.forms}}
     routes: routesOf(container, contexts),
+{{/unless}}
     boundary: httpBoundary({
       authenticator: container.resolve(Authenticator),
       executionScope: container.resolve(ExecutionScope),
@@ -234,6 +254,9 @@ function running(container: Container, options: ApplicationOptions, contexts: Co
       logger,
 {{#if errors.sentry}}
       errors: container.resolve(ErrorReporter),
+{{/if}}
+{{#if presentation.any}}
+      presentation,
 {{/if}}
     }),
 {{/if}}

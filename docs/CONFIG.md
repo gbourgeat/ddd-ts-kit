@@ -38,7 +38,9 @@ deviation.
     "assembly": "barrel",
     "dependencies": "signature",
     "refusals": "factories",
-    "routes": "controllers"
+    "routes": "controllers",
+    "representations": "negotiated",
+    "forms": "on"
   },
   "contexts": {
     "billing": { "classification": "core", "upstreams": [] },
@@ -136,8 +138,10 @@ outside the list stops every command with the list of accepted values.
 | `stack.dependencies` | `signature`, `listed`: where a declared class states what it depends on. `signature`: in its constructor and nowhere else; `ddd-ts-kit docs` reads the signatures into the generated file of each context, and a list left in a decorator is reported (`declarations/constructor-injection`, which ESLint fixes). `listed`: in the last argument of its decorator, as 0.1 wrote it. Both forms run in either: a class that lists is given its list, a class that does not is given what its constructor takes. `init` accepts the flag in the declared style only | `signature` |
 | `stack.refusals` | `factories`, `classes`: how a domain error is written. `factories`: one error class per concept of the model, each refusal built by a static factory named in the words of the business (`AppointmentError.slotTaken(..)`), held by the `errors/*` rules, and `generate error <context> <Concept> <refusal>` adds one. `classes`: one class per error, built with `new`, as 0.1 and 0.2 wrote them; `generate domain-error` writes one, and no `errors/*` rule judges. Both forms run in either: `ConceptError` and `DomainError` are one family | `factories` |
 | `stack.routes` | `controllers`, `functions`: how a route is written. `controllers`: one class per route carrying `@Controller` of `@ddd-ts-kit/http`, in a folder of its own under `presentation/http/<resource>/<use-case>/`, behind the guards of its `@RouteGroup`; `generate route` writes it, with `--mapper` and `--serializer` when asked. `functions`: one `defineRoute` function per route, listed in `<context>.routes.ts`, as 0.1 to 0.3 wrote them. Both forms run in either, and in one project during a migration: `generate controller` writes a controller whatever the key says, and `ddd-ts-kit controllers` turns the function routes of a context into controllers | `controllers` |
+| `stack.representations` | `negotiated`, `json`: what a route answers in. `negotiated`: `src/platform/http/presentation-of.ts` registers `Representations.standard()` of `@ddd-ts-kit/http` in the HTTP boundary and the contract script, so each request is answered in the media type its `Accept` header prefers among JSON and what its route declares in `produces` (XML, CSV, `406` when none fits), an XML body is read on a route that declares `consumes`, and the fields a schema reserves with `withFieldAccess` are decided through the `Access` of the application; `generate representation` adds `produces` to a controller. `json`: JSON whatever the request accepts, as before the key existed. `init` writes `json` without an HTTP stack | `negotiated` (`json` with `http: none`) |
+| `stack.forms` | `on`, `off`: whether a route that declares `form` is served as a form. `on`: `src/platform/http/with-forms.ts` adds `formRoutes` of `@ddd-ts-kit/http` to the routes, one `GET /forms/<operationId>` per such route (JSON Forms, or `?format=blocks`), fields hidden or read-only for each caller by the same field access, and `npm run docs:generate` writes each form whole to `openapi/forms/<operationId>.json`; `generate form` gives a controller its hints. `off`: no form is served | `on` (`off` with `http: none`) |
 
-A config file that omits a `stack` key is read with the same defaults, with four exceptions:
+A config file that omits a `stack` key is read with the same defaults, with six exceptions:
 without `stack.style` the project is read as `explicit`, whatever `stack.di` says, because
 such a file was written before the declared style existed; and without `stack.dependencies`
 a declared project is read as `listed`, because such a file was written when every decorator
@@ -173,6 +177,16 @@ What the command leaves to you is printed: run the formatter and `ddd-ts-kit doc
 helpers a controller kept to a mapper or a serializer, give the groups their guards, and, in a
 project initialised before 0.4, add the line that mounts the declared controllers to
 `compose-application.ts`.
+
+The fifth and the sixth: without `stack.representations` the project is read as `json`, and
+without `stack.forms` as `off`, because such a file was written before either existed. Nothing
+changes there: every answer stays JSON, no form is served, and a schema marked with
+`withFieldAccess` hides its restricted fields from everybody until a decider is given. To move
+it: `npx ddd-ts-kit init --force --representations negotiated --forms on` sets both keys and
+rewrites the files `init` owns (`http-boundary.ts`, `compose-application.ts`,
+`scripts/openapi.ts`, with the new `presentation-of.ts` and `with-forms.ts`); then
+`npm run docs:generate`, which lists the media types of every route and writes the forms. A
+project that rewrote one of those files by hand reapplies its change, as for any `init --force`.
 
 ## Pipeline
 

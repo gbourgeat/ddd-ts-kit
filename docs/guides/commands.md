@@ -136,7 +136,7 @@ Usage
                   [--broker none|rabbitmq|kafka|nats|redis|custom] [--cache none|redis] [--audit on|off]
                   [--errors none|sentry] [--logger stdout|pino|winston] [--style declared|explicit] [--assembly barrel|discovery]
                   [--dependencies signature|listed] [--refusals factories|classes]
-                  [--routes controllers|functions]
+                  [--routes controllers|functions] [--representations negotiated|json] [--forms on|off]
                   [--package-manager npm|pnpm] [--allow-no-outbox "<reason>"] [--import-alias '$<name>/']
                   [--import-extension none|js]
                   [--context <name>:<core|supporting|generic>]... [--dry-run] [--force]
@@ -203,6 +203,8 @@ Kinds
   controller <context> <UseCaseName> --method <GET|POST|PUT|PATCH|DELETE> --path <path> [--command|--query] [--group <Name>] [--mapper] [--serializer]
   route-group <context> <Name> [--prefix <path>] [--group <ParentName>] [--public | --role <role>]   (alias: group)
   guard <context> <Name>
+  representation <context> <UseCase> <xml|csv|media/type>[,...]
+  form <context> <UseCase>
   integration-event <context> <Aggregate> <Fact> [--version <n>] [--term "<Term>=<meaning>"]...
   integration-handler <context> <upstreamContext> <eventType>   (alias: consumer)
   event-handler <context> <Aggregate> <Fact> [--phase before-commit|after-commit] [--term "<Term>=<meaning>"]...

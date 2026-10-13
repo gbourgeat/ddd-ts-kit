@@ -15,6 +15,8 @@ export const ASSEMBLIES = ['barrel', 'discovery'] as const;
 export const DEPENDENCY_STATEMENTS = ['signature', 'listed'] as const;
 export const REFUSAL_FORMS = ['factories', 'classes'] as const;
 export const ROUTE_FORMS = ['controllers', 'functions'] as const;
+export const REPRESENTATION_MODES = ['negotiated', 'json'] as const;
+export const FORM_MODES = ['on', 'off'] as const;
 export const CACHE_STACKS = ['none', 'redis'] as const;
 export const AUDIT_MODES = ['on', 'off'] as const;
 export const ERROR_REPORTERS = ['none', 'sentry'] as const;
@@ -82,6 +84,18 @@ export interface Stack {
    * forms run in either.
    */
   readonly routes: (typeof ROUTE_FORMS)[number];
+  /**
+   * What a route answers in: `negotiated`, the media type the `Accept` header prefers among JSON
+   * and what the route declares in `produces` (XML, CSV), with the restricted fields of a schema
+   * decided for each caller; `json`, JSON whatever the request accepts. A config that says
+   * nothing was written before the choice existed: it is `json`.
+   */
+  readonly representations: (typeof REPRESENTATION_MODES)[number];
+  /**
+   * Whether a route that declares `form` is served as a form at `GET /forms/<operationId>`. A
+   * config that says nothing was written before forms existed: it is `off`.
+   */
+  readonly forms: (typeof FORM_MODES)[number];
   /**
    * What installs the dependencies and runs the scripts: every command the CLI writes (scripts,
    * pipelines, hooks, Dockerfile, guidance) is in its dialect. A config that says nothing was

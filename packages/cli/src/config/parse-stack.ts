@@ -21,6 +21,8 @@ import {
   PACKAGE_MANAGERS,
   REFUSAL_FORMS,
   ROUTE_FORMS,
+  FORM_MODES,
+  REPRESENTATION_MODES,
   STYLES,
   TEST_STACKS,
   VALIDATION_STACKS,
@@ -48,6 +50,8 @@ export function parseStack(stack: Record<string, unknown>): Stack {
     ...parseChoices(choose, orm),
     refusals: choose('refusals', REFUSAL_FORMS, 'classes'),
     routes: choose('routes', ROUTE_FORMS, 'functions'),
+    representations: choose('representations', REPRESENTATION_MODES, 'json'),
+    forms: choose('forms', FORM_MODES, 'off'),
     packageManager: choose('packageManager', PACKAGE_MANAGERS, 'npm'),
   };
 }

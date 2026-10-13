@@ -14,6 +14,7 @@ import { errorKind } from './kinds/error-kind.js';
 import { entityKind } from './kinds/entity-kind.js';
 import { eventHandlerKind } from './kinds/event-handler-kind.js';
 import { gatewayKind } from './kinds/gateway-kind.js';
+import { formKind } from './kinds/form-kind.js';
 import { guardKind } from './kinds/guard-kind.js';
 import { integrationEventKind } from './kinds/integration-event-kind.js';
 import { integrationHandlerKind } from './kinds/integration-handler-kind.js';
@@ -23,6 +24,7 @@ import { portKind } from './kinds/port-kind.js';
 import { projectionKind } from './kinds/projection-kind.js';
 import { queryKind } from './kinds/query-kind.js';
 import { repositoryKind } from './kinds/repository-kind.js';
+import { representationKind } from './kinds/representation-kind.js';
 import { routeGroupKind } from './kinds/route-group-kind.js';
 import { controllerKind, routeKind } from './kinds/route-kind.js';
 import { serviceKind } from './kinds/service-kind.js';
@@ -48,6 +50,8 @@ export const KINDS: readonly Kind[] = [
   controllerKind,
   routeGroupKind,
   guardKind,
+  representationKind,
+  formKind,
   integrationEventKind,
   integrationHandlerKind,
   eventHandlerKind,

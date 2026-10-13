@@ -37,6 +37,8 @@ const LOCAL_RUNS: readonly (readonly string[])[] = [
   ['controller', 'billing', 'SearchInvoices', '--method', 'GET', '--path', '/late-invoices', '--query', '--force'],
   ['route-group', 'billing', 'InvoiceAdministration', '--prefix', '/administration', '--role', 'billing-admin'],
   ['guard', 'billing', 'OfficeHours'],
+  ['representation', 'billing', 'IssueInvoice', 'xml'],
+  ['form', 'billing', 'IssueInvoice'],
   ['integration-handler', 'shipping', 'billing', 'billing.invoice.issued', '--force'],
   ['event-handler', 'billing', 'Invoice', 'Cancelled'],
   ['projection', 'shipping', 'InvoicesToShip', 'billing.invoice.issued'],
