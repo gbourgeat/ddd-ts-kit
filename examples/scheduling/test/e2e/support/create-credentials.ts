@@ -11,11 +11,15 @@ const realm = authEnvironment.KEYCLOAK_REALM;
 const audience = authEnvironment.KEYCLOAK_AUDIENCE;
 const keyId = 'e2e-key';
 
-/** Who a test calls as: the subject, the realm roles and the tenant its token carries. */
+/** The network every actor of a spec belongs to unless it says otherwise: one of the `NETWORKS` of the test environment. */
+export const NETWORK = 'north';
+
+/** Who a test calls as: the subject, the realm roles and the network its token carries. */
 export interface TestActor {
   readonly id: string;
   readonly roles?: readonly string[];
-  readonly tenantId?: string;
+  /** The `tenant_id` claim: `NETWORK` when left out, none for `null` (platform staff). */
+  readonly tenantId?: string | null;
   /** The support staff acting through this user: the session is then read-only. */
   readonly impersonatedBy?: string;
 }
@@ -67,9 +71,18 @@ function claimsOf(actor: TestActor): Record<string, unknown> {
     realm_access: { roles: actor.roles ?? [] },
     preferred_username: actor.id,
     sid: 'session-of-' + actor.id,
-    ...(actor.tenantId === undefined ? {} : { tenant_id: actor.tenantId }),
+    ...networkOf(actor),
     ...(actor.impersonatedBy === undefined ? {} : { [IMPERSONATOR_CLAIM]: actor.impersonatedBy }),
   };
+}
+
+/** The network the token names: the default one, another, or none for platform staff. */
+function networkOf({ tenantId }: TestActor): Record<string, string> {
+  if (tenantId === null) {
+    return {};
+  }
+
+  return { tenant_id: tenantId ?? NETWORK };
 }
 
 /** The key set endpoint of a realm, on a free port of this machine. The server holds no reference: it ends with the test process. */

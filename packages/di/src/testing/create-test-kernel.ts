@@ -13,6 +13,7 @@ import {
   InMemoryMetrics,
   InMemoryProcessStore,
   InMemoryRateLimiter,
+  InMemoryTenantDirectory,
   SequentialIdGenerator,
   executionContext,
   type Actor,
@@ -46,20 +47,14 @@ export function createTestKernel(options: TestApplicationOptions, resolve: Resol
   const executionScope = new FixedExecutionScope(context, actorContext);
   const observability = { logger: new InMemoryLogger(), metrics: new InMemoryMetrics(), lock: new InMemoryLock(clock) };
   const errors = new InMemoryErrorReporter();
-
-  const afterCommitFailed = reportAfterCommitFailures({
-    reporter: errors,
-    logger: observability.logger,
-    scope: executionScope,
-  });
-
-  const scheduler = manualScheduler({ clock, scope: executionScope, ...observability }, errors);
+  const tenants = new InMemoryTenantDirectory(options.tenants ?? tenantsOf(context));
+  const scheduler = manualScheduler({ clock, scope: executionScope, tenants, ...observability }, errors);
 
   return {
     commandBus: transactionalCommandBus(resolve),
     queryBus: guardedQueryBus(resolve),
     eventBus: new InMemoryEventBus(),
-    domainEvents: new InMemoryDomainEventDispatcher(afterCommitFailed),
+    domainEvents: domainEventsReportedTo(errors, observability.logger, executionScope),
     clock,
     ids: new SequentialIdGenerator(options.idPrefix),
     actorContext,
@@ -75,6 +70,15 @@ export function createTestKernel(options: TestApplicationOptions, resolve: Resol
   };
 }
 
+/** A failure after the commit is reported to the reporter the spec reads, and logged. */
+function domainEventsReportedTo(
+  reporter: InMemoryErrorReporter,
+  logger: InMemoryLogger,
+  scope: FixedExecutionScope,
+): InMemoryDomainEventDispatcher {
+  return new InMemoryDomainEventDispatcher(reportAfterCommitFailures({ reporter, logger, scope }));
+}
+
 function defaultExecutionContext({ session, actor }: TestApplicationOptions): ExecutionContext {
   return executionContext({
     correlationId: 'test-correlation',
@@ -82,6 +86,11 @@ function defaultExecutionContext({ session, actor }: TestApplicationOptions): Ex
     origin: 'test',
     ...(session === undefined ? {} : { session }),
   });
+}
+
+/** The tenant of the work a spec runs as: what a per-tenant job runs for unless the spec names others. */
+function tenantsOf(context: ExecutionContext): readonly string[] {
+  return context.tenantId === undefined ? [] : [context.tenantId];
 }
 
 type SchedulerParts = Omit<ManualJobSchedulerOptions, 'ids' | 'onRun'>;

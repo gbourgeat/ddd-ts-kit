@@ -392,6 +392,12 @@ new JwtAuthenticator({
 });
 ```
 
+The default mapping takes the subject as the actor, its roles (below), the tenant claim (a text
+claim is the tenant; a list names the tenant when it holds one, and the `tenants` attribute of
+an actor of several, among which a request names the one it works in), and the standard claims
+of OpenID Connect as attributes: `username` (`preferred_username`), `email`, and `emailVerified`
+(`email_verified`), which a use case that trusts the address (an invitation sent to it) reads.
+
 `authenticate(undefined)` answers the anonymous actor. A token that is expired, not valid yet,
 for another audience or issuer, signed with another key, altered, unsigned (`alg: none`), or
 using an algorithm outside the allow-list raises `InvalidCredentialError` (code `UNAUTHORIZED`)
@@ -428,8 +434,8 @@ an access token as follows:
 | `actor.id` | `sub` |
 | `actor.type` | `service` when `preferred_username` starts with `service-account-` (a client using the client credentials grant), else `user` |
 | `actor.roles` | `realm_access.roles`, plus `resource_access.<clientId>.roles` when `clientId` is given, each once |
-| `actor.attributes` | `username` from `preferred_username`, `email`, `groups` from the `groups` claim (or `groupsClaim`) |
-| `actor.tenantId` | the claim named by `tenantClaim`: a text claim, or the `organization` claim (a list of aliases, or an object keyed by alias) when it names exactly one organization |
+| `actor.attributes` | `username` from `preferred_username`, `email`, `emailVerified` from `email_verified`, `groups` from the `groups` claim (or `groupsClaim`), and `tenants` when the tenant claim names several |
+| `actor.tenantId` | the claim named by `tenantClaim`: a text claim, or the `organization` claim (a list of aliases, or an object keyed by alias) when it names exactly one organization; several are the `tenants` attribute |
 | `session.id` | `sid`, the session of the realm; `jti` for a service account, which has none |
 | `session.authenticationMethod` | `sso` for a person, `service` for a service account |
 | `session.authenticationStrength` | `assuranceLevel` from `acr` |
@@ -455,8 +461,9 @@ What to configure in the realm, for these claims to be in the access token:
 5. **The tenant**, one of: a mapper of type *User Attribute* writing `tenant_id` from an
    attribute of the user; or, with Organizations enabled in the realm, the client scope
    `organization` requested by the front end, and `tenantClaim: 'organization'`. A user who
-   belongs to several organizations gets no tenant from that claim: choosing one is a decision
-   of your project, to take in `toSessionExtensions` or in a mapper.
+   belongs to several organizations gets no default tenant from that claim: they are the
+   `tenants` of the actor, and each request names the one it works in (`x-tenant-id`, which the
+   HTTP adapter refuses with 403 for a tenant the actor does not hold).
 6. **Impersonation**, if support staff impersonate users from the admin console: Keycloak
    keeps the administrator in the session notes of the impersonated session. A mapper of type
    *User Session Note*, *User Session Note* `IMPERSONATOR_ID`, *Token Claim Name*
@@ -492,6 +499,23 @@ tuple store at all, and is the place to start.
 
 Every authorizer refuses the anonymous actor (`ANONYMOUS`), and an actor of type `system` has no
 right unless the model gives it one.
+
+**What every signed-in person may do.** Some permissions belong to everyone who signed in,
+whatever the model says of them: provisioning one's own account, opening an organisation,
+accepting an invitation addressed to oneself. The policies of the context then decide on the
+element. `SignedInGrantsAuthorizer` answers them before the model, for any model:
+
+```ts
+new SignedInGrantsAuthorizer({
+  grants: ['identity:*'],                        // the same grants as a role: permissions, ids, <context>:*, *
+  otherwise: new RoleBasedAuthorizer({ roles }), // decides everything else, listings included
+});
+```
+
+Only an actor of type `user` holds these grants: a system, a service and the anonymous actor go
+to the model. What they cover lists `all`; another listing is the model's, and a model that
+cannot list makes it fail with `ListingNotSupportedError`. The identity preset of the CLI writes
+this wrapper in `createAuthorizer` and its grant in `signed-in-grants.ts`.
 
 ### Roles
 
@@ -719,6 +743,20 @@ ones the CLI generates, name `ExecutionScope`. `require()` throws `NoExecutionCo
 `NoCurrentTenantError` for work that names no tenant: wiring mistakes, found by the first test.
 This is defence in depth, not authorization: the tenant filter of a repository stops a bug from
 leaking rows, the permission is still decided in the application layer.
+
+## Fields reserved to some callers
+
+A field of an answer or of a request body that only some callers may see or set is not a role
+test in a serializer: it is marked on its schema with `withFieldAccess` of `@ddd-ts-kit/http`,
+and decided by the `Access` of this package, as a use case is: `fieldDeciderOf({ access, clock })`
+takes an `Access` as it is, a permission is asked with `decideOn` (its policies, then the
+authorizer), and a policy written with `definePolicy` can be named on the field directly.
+`Access.decideOn({ actor, permission, subject, context, recorded })` is `decide` with what a
+use case adds through `@Requires` (`context`), and `recorded: false` for a decision that only
+shapes an answer, a field shown or left out, which then does not reach `onDecision`; a field set
+in a body and a form opened stay recorded. `decideOn` is optional on an `Access` of the project:
+the decider then asks `decide`, which records everything. The how-to is in the README of
+`@ddd-ts-kit/http` ("Fields reserved to some callers").
 
 ## Filtering lists
 

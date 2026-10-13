@@ -11,6 +11,7 @@ export { isPermission } from './permissions/is-permission.js';
 export type { Permission } from './permissions/permission.js';
 export { PermissionRegistry } from './permissions/permission-registry.js';
 export { Access } from './authorization/access.js';
+export type { AccessQuestion } from './authorization/access-question.js';
 export type { AccessScope } from './authorization/access-scope.js';
 export type { AuthorizationContext } from './authorization/authorization-context.js';
 export { Authorizer } from './authorization/authorizer.js';
@@ -36,6 +37,10 @@ export { tenantOfContext } from './rbac/tenant-of-context.js';
 export { forbid, permit, type AttributePolicy } from './abac/attribute-policy.js';
 export { allOf, anyOf, not, type Condition } from './abac/condition.js';
 export { PolicyBasedAuthorizer, type PolicyBasedAuthorizerOptions } from './abac/policy-based-authorizer.js';
+export {
+  SignedInGrantsAuthorizer,
+  type SignedInGrantsAuthorizerOptions,
+} from './signed-in/signed-in-grants-authorizer.js';
 export type { PolicyInput } from './abac/policy-input.js';
 export type { ResourceAttributeValues } from './abac/resource-attribute-values.js';
 export { ResourceAttributes } from './abac/resource-attributes.js';

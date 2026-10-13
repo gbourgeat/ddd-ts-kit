@@ -1,4 +1,4 @@
-import type { AuditRow } from '@ddd-ts-kit/knex';
+import type { AuditRow, TenantRow } from '@ddd-ts-kit/knex';
 import type { ReminderStatus } from '@/contexts/notification/domain/vocabularies/reminder-status.vocabulary';
 
 export interface ReminderColumns {
@@ -11,6 +11,6 @@ export interface ReminderColumns {
   readonly status: ReminderStatus;
 }
 
-export interface ReminderRow extends ReminderColumns, AuditRow {
+export interface ReminderRow extends ReminderColumns, TenantRow, AuditRow {
   readonly version: number;
 }

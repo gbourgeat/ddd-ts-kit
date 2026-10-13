@@ -63,7 +63,8 @@ of each is its user name.
 
 | User | Role in the token | What makes their rights |
 |---|---|---|
-| `demo-admin` | `platform-admin` | the role: opens practices, reads the audit trail |
+| `demo-admin` | `network-admin`, network `north` | the role: opens the practices of its network |
+| `demo-ops` | `platform-admin`, no network | the role: reads the audit trail of every network, through an elevation the trail records |
 | `demo-manager`, `demo-manager-b` | none | the relationship `manager` of one practice each, written when the practice is opened |
 | `demo-practitioner` | none | `practitioner` of the practice, `holder` of their desk |
 | `demo-assistant` | none | `assistant` of the practice; `delegate` of a desk once delegated |
@@ -86,6 +87,9 @@ of each is its user name.
 | Persistent relation tuples, written in the unit of work | `src/platform/auth/knex-relation-tuple-store.ts`; `*/application/ports/*-relationships.port.ts` and their adapters |
 | Searches narrowed in the statement by the access scope, with criteria | `scheduling/application/queries/search-appointments/`, `search-practice-agenda/`, `analytics/application/queries/search-occupancy/` |
 | Field-level difference: busy without the name | `scheduling/application/queries/get-calendar-day/` |
+| A field reserved to the staff, in every representation: the internal note, hidden from the patient, read-only for an assistant, written by whoever runs the calendar | `scheduling/presentation/http/appointments/book-appointment/book-appointment.controller.ts`, `get-appointment/get-appointment.controller.ts` (`withFieldAccess`), `test/e2e/book-appointment.e2e.spec.ts` |
+| One route in JSON, XML and CSV by the `Accept` header; an XML body read and validated as JSON; a list streamed page by page through the bus as it is read | `scheduling/presentation/http/practices/` (`produces`), `export-practice-agenda/`, `src/platform/http/presentation-of.ts`, `test/e2e/export-practice-agenda.e2e.spec.ts` |
+| A form described by the server, for the caller who asks (JSON Forms, or a tree of blocks) | `GET /forms/bookAppointment`, the `form` of `book-appointment.controller.ts`, `src/platform/http/with-forms.ts`, `openapi/forms/bookAppointment.json` |
 | Read-only impersonation, visible in the trail | `src/platform/buses/read-only-impersonation.ts`, `test/e2e/journey-authorization.e2e.spec.ts` |
 | Integration events, versioned, through the outbox | `src/contexts/*/published-language/`, `docs/integration/event-catalog.md` |
 | A projection of another context (decides, labels lists) | `scheduling/application/projections/practitioners.projection.ts` |
@@ -172,11 +176,26 @@ is the domain service `OccupancyMeasureService`; the statement is held to it by
 calendar and day, recounted at each event and verified nightly: see
 [docs/tooling-report.md](docs/tooling-report.md), "After delivery: analytics computed at read time".
 
+## Networks of practices: one tenant each
+
+The application serves several networks of practices from one deployment, and each network is a
+tenant ([ADR-0003](docs/adr/0003-one-network-is-one-tenant.md), `"stack.tenancy": "shared-table"`):
+every table of the contexts carries the network of its rows, every repository reaches it through
+`tenantTable` and `ownTenantTable`, the outbox keeps the network of each event so that its
+consumers run in it, and each scheduled job runs once per network of `NETWORKS`. The token names
+the network of its user (`tenant_id`); a request may name it in `x-tenant-id`, naming another
+network than the caller's is refused with 403 before anything runs, and a network missing from
+`NETWORKS` is not found (404), so that nothing is written where no job runs. A person belongs to
+one network: a second network needs a second account. Platform staff belong to no
+network: they read the audit trail of every network through an elevation that the trail records
+first. Practices stay relationships inside a network. `test/e2e/journey-tenancy.e2e.spec.ts`
+holds all of it; `tenantIsolationContract` holds it for every repository.
+
 ## The authorization model, with two worked cases
 
 Three questions, three places. Who is calling: Keycloak, verified at the boundary. May they do
 this, on this: decided before the handler by one authorizer that first looks at the roles of
-the token (`platform-admin`; `patient` for self-service; nothing for `support`), then at
+the token (`network-admin`, `platform-admin`; `patient` for self-service; nothing for `support`), then at
 relationships stored as tuples `object#relation@subject` and rewritten Zanzibar style. Is it
 valid at all: the domain. The contexts never name a role or a relation: they name permissions,
 and write relationships through a port of their own when a fact happens.

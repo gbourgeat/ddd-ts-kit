@@ -1,5 +1,13 @@
 import type { Knex } from 'knex';
-import { ConcurrencyError, type ProcessStore, type StoredProcess } from '@ddd-ts-kit/kernel';
+import {
+  ConcurrencyError,
+  tenantScopeOf,
+  type ExecutionScope,
+  type ProcessStore,
+  type StoredProcess,
+} from '@ddd-ts-kit/kernel';
+import { tenantRow } from '../columns/tenant-row.js';
+import { TENANT_COLUMN } from '../tenancy/where-tenant.js';
 import type { KnexContext } from '../unit-of-work/knex-context.js';
 import { PROCESS_TABLE } from './process-table-name.js';
 import type { ProcessTableOptions } from './process-table-options.js';
@@ -16,27 +24,41 @@ interface ProcessRow {
 
 type Rows = Knex.QueryBuilder<ProcessRow, ProcessRow[]>;
 
+export interface KnexProcessStoreOptions extends Omit<ProcessTableOptions, 'tenant'> {
+  /**
+   * Keeps each instance in the tenant of the work that saves it, in the `tenant_id` that
+   * `createProcessTable(knex, { tenant: true })` added: a step loads and changes the instances of
+   * its own tenant only, and work that names no tenant is refused (`NoCurrentTenantError`). Left
+   * out, the instances are shared, as before.
+   */
+  readonly tenant?: ExecutionScope;
+}
+
 /**
  * The instances of the process managers in a PostgreSQL table, on the executor of the context:
  * a step saves its state in the transaction of its unit of work. A first save inserts, ignoring
  * a row that a concurrent first save wrote; a next one updates the row at the previous version;
- * a save that changes no row is refused with `ConcurrencyError`.
+ * a save that changes no row is refused with `ConcurrencyError`. With `tenant`, an instance of
+ * another tenant is neither found nor changed, whoever knows its key.
  */
 export class KnexProcessStore implements ProcessStore {
   private readonly schemaName: string | undefined;
 
   private readonly tableName: string;
 
+  private readonly tenant: ExecutionScope | undefined;
+
   constructor(
     private readonly context: KnexContext,
-    options: ProcessTableOptions = {},
+    options: KnexProcessStoreOptions = {},
   ) {
     this.schemaName = options.schema;
     this.tableName = options.table ?? PROCESS_TABLE;
+    this.tenant = options.tenant;
   }
 
   async load(name: string, id: string): Promise<StoredProcess | undefined> {
-    const row = await this.rows(this.context.executor()).where({ name, id }).first();
+    const row = await this.owned(this.context.executor()).where({ name, id }).first();
 
     if (row === undefined) {
       return undefined;
@@ -56,7 +78,7 @@ export class KnexProcessStore implements ProcessStore {
 
   private async insert(executor: Knex, process: StoredProcess): Promise<number> {
     const inserted: unknown[] = await this.rows(executor)
-      .insert({ ...this.columns(process), name: process.name, id: process.id })
+      .insert({ ...this.columns(process), ...this.tenantOfWork(), name: process.name, id: process.id })
       .onConflict(['name', 'id'])
       .ignore()
       .returning('id');
@@ -65,7 +87,7 @@ export class KnexProcessStore implements ProcessStore {
   }
 
   private async update(executor: Knex, process: StoredProcess): Promise<number> {
-    return await this.rows(executor)
+    return await this.owned(executor)
       .where({ name: process.name, id: process.id, version: process.version - 1 })
       .update({ ...this.columns(process), updated_at: executor.fn.now(3) });
   }
@@ -78,6 +100,17 @@ export class KnexProcessStore implements ProcessStore {
       ended: process.ended,
       timeouts: JSON.stringify(process.timeouts),
     };
+  }
+
+  /** The rows of the tenant of the work, with `tenant`; every row without. */
+  private owned(executor: Knex): Rows {
+    const rows = this.rows(executor);
+
+    return this.tenant === undefined ? rows : rows.where(TENANT_COLUMN, tenantScopeOf(this.tenant).tenantId);
+  }
+
+  private tenantOfWork(): Readonly<Record<string, string>> {
+    return this.tenant === undefined ? {} : { ...tenantRow(tenantScopeOf(this.tenant)) };
   }
 
   private rows(executor: Knex): Rows {

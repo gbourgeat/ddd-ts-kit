@@ -1,4 +1,4 @@
-import type { AuditRow } from '@ddd-ts-kit/knex';
+import type { AuditRow, TenantRow } from '@ddd-ts-kit/knex';
 import type { AppointmentStatus } from '@/contexts/scheduling/domain/vocabularies/appointment-status.vocabulary';
 
 /** The exclusion constraint that holds a time on a calendar once, as PostgreSQL names it in a violation. */
@@ -21,6 +21,7 @@ export interface AppointmentColumns {
   readonly confirm_before: Date | null;
   readonly cancelled_by: 'patient' | 'practice' | null;
   readonly cancellation_reason: string | null;
+  readonly internal_note: string | null;
   /** The reference of the attached document, its content being in the file storage: all six null without one. */
   readonly document_key: string | null;
   readonly document_size: number | null;
@@ -30,6 +31,6 @@ export interface AppointmentColumns {
   readonly document_attached_at: Date | null;
 }
 
-export interface AppointmentRow extends AppointmentColumns, AuditRow {
+export interface AppointmentRow extends AppointmentColumns, TenantRow, AuditRow {
   readonly version: number;
 }

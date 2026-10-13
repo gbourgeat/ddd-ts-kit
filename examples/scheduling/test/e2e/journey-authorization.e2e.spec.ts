@@ -236,13 +236,13 @@ describe('Support staff acting through a patient', () => {
       'x-correlation-id': correlationId,
     });
 
-    const root = await application.as({ id: 'root', roles: ['platform-admin'] });
+    const ops = await application.as({ id: 'ops', roles: ['platform-admin'], tenantId: null });
 
     expectStatus(await sam.post('/appointments/' + ofPaul + '/cancellation', {}), 403);
     expectStatus(await sam.get('/appointments/' + ofRosa), 403);
 
-    const trail = await auditEntries(root, 'sort=sequence&correlationId=' + correlationId);
-    const denied = await auditEntries(root, 'outcome=denied&correlationId=' + correlationId);
+    const trail = await auditEntries(ops, 'sort=sequence&correlationId=' + correlationId);
+    const denied = await auditEntries(ops, 'outcome=denied&correlationId=' + correlationId);
 
     expect(trail.map(summaryOf)).toEqual(whatSamLeft(ofPaul, ofRosa));
     expect(denied.map((entry) => entry.action)).toEqual(['scheduling:appointment.read']);

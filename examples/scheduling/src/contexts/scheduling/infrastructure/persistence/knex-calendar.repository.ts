@@ -1,7 +1,14 @@
-import type { Knex } from 'knex';
-import { type Clock, type ExecutionScope, stampCreation, stampUpdate } from '@ddd-ts-kit/kernel';
+import { type Clock, type ExecutionScope, stampCreation, stampUpdate, tenantScopeOf } from '@ddd-ts-kit/kernel';
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
-import { KnexContext, auditRow, insertIgnoringConflict, optimisticUpdate } from '@ddd-ts-kit/knex';
+import {
+  KnexContext,
+  auditRow,
+  insertIgnoringConflict,
+  optimisticUpdate,
+  ownTenantTable,
+  tenantRow,
+  tenantTable,
+} from '@ddd-ts-kit/knex';
 import type { Calendar } from '@/contexts/scheduling/domain/aggregates/calendar.aggregate';
 import { CalendarRepository } from '@/contexts/scheduling/domain/repositories/calendar.repository';
 import { SCHEDULING_SCHEMA } from '@/contexts/scheduling/infrastructure/persistence/scheduling.schema';
@@ -13,6 +20,9 @@ import type {
 
 type VersionedCalendar = CalendarColumns & { readonly version: number };
 
+/** Tenant data: every statement reaches it through `tenantTable` or `ownTenantTable`, confined to the tenant of the work. */
+const TABLE = { schema: SCHEDULING_SCHEMA, table: 'calendars' };
+
 @Repository(CalendarRepository)
 export class KnexCalendarRepository implements CalendarRepository {
   constructor(
@@ -22,7 +32,7 @@ export class KnexCalendarRepository implements CalendarRepository {
   ) {}
 
   async findById(id: string): Promise<Calendar | undefined> {
-    const row = await tableOf(this.database).where({ id }).first();
+    const row = await tenantTable<CalendarRow>(this.database, this.scope, TABLE).where({ id }).first();
 
     return row === undefined ? undefined : CalendarMapper.toDomain(row);
   }
@@ -36,21 +46,24 @@ export class KnexCalendarRepository implements CalendarRepository {
   }
 
   private async insert(state: VersionedCalendar): Promise<number> {
-    const row = { ...state, ...auditRow(stampCreation(this.scope, this.clock)) };
+    const row = {
+      ...state,
+      ...tenantRow(tenantScopeOf(this.scope)),
+      ...auditRow(stampCreation(this.scope, this.clock)),
+    };
 
-    return (await insertIgnoringConflict(this.database.executor(), tableOf(this.database), { row, conflict: 'id' }))
+    return (await insertIgnoringConflict(
+      this.database.executor(),
+      ownTenantTable<CalendarRow>(this.database, this.scope, TABLE),
+      { row, conflict: 'id' },
+    ))
       ? 1
       : 0;
   }
 
   private async update(state: VersionedCalendar, expected: number): Promise<number> {
-    return tableOf(this.database)
+    return ownTenantTable<CalendarRow>(this.database, this.scope, TABLE)
       .where({ id: state.id, version: expected })
       .update({ ...state, ...auditRow(stampUpdate(this.scope, this.clock)) });
   }
-}
-
-/** A function and not a method: a query builder is thenable, and a method that answers one is read as asynchronous by whatever wraps the adapter (tracing), which then answers a promise. */
-function tableOf(database: KnexContext): Knex.QueryBuilder<CalendarRow, CalendarRow[]> {
-  return database.executor()<CalendarRow, CalendarRow[]>('calendars').withSchema(SCHEDULING_SCHEMA);
 }

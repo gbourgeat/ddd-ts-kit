@@ -23,6 +23,7 @@ const application = composeApplication(persistence, {
   log: { ...config.log, service: config.serviceName, environment: config.environment },
   traceConsumers: config.tracing.consumers,
   resilience: config.resilience,
+  networks: config.networks,
   // This process is the one that runs the jobs, whatever `RUN_JOBS` says to the others.
   jobs: { start: true, settings: jobSettings(process.env) },
   redis,

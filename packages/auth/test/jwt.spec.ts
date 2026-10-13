@@ -15,7 +15,9 @@ describe('JwtAuthenticator', () => {
     const credential = await token({
       realm_access: { roles: ['accountant', 'clerk'] },
       tenant_id: 'acme',
+      preferred_username: 'ada.l',
       email: 'ada@example.test',
+      email_verified: true,
     });
 
     const actor = await authenticator().authenticate(credential);
@@ -25,10 +27,19 @@ describe('JwtAuthenticator', () => {
       type: 'user',
       tenantId: 'acme',
       roles: ['accountant', 'clerk'],
-      attributes: {},
+      attributes: { username: 'ada.l', email: 'ada@example.test', emailVerified: true },
     });
 
     expect(JSON.stringify(actor)).not.toContain(credential);
+  });
+
+  it('reads a list of tenants as the tenants of an actor of several, none of them the default', async () => {
+    const several = await authenticator().authenticate(await token({ tenant_id: ['acme', 'globex'] }));
+    const one = await authenticator().authenticate(await token({ tenant_id: ['acme'] }));
+
+    expect(several).toMatchObject({ attributes: { tenants: ['acme', 'globex'] } });
+    expect(several.tenantId).toBeUndefined();
+    expect(one).toMatchObject({ tenantId: 'acme', attributes: {} });
   });
 
   it('refuses an expired token', async () => {

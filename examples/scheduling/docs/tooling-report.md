@@ -1100,6 +1100,95 @@ Frictions:
    claim of the realm names a practice by its id, which fits; a realm whose ids held a `.` would
    be refused at the first request.
 
+## 2026-10-13 (evening): one network of practices is one tenant
+
+The owner chose the second alternative of ADR-0003, now accepted: one network of practices is
+one tenant, on shared tables, so that every tenancy rule of the kit is applied and tested here.
+`"stack.tenancy": "shared-table"`; every table of the four contexts carries `tenant_id` (twelve
+tables, each with a `(tenant_id, key)` index); every repository and read model reaches its table
+through `tenantTable`, `ownTenantTable` or the `tenant` option of its store; the outbox keeps the
+network of each event; the three jobs run once per network of `NETWORKS`; the read side of the
+audit trail is a `TenantAuditReader`; the edge reads the network from `x-tenant-id` or the
+token. `tenancy/scoped-statement` judges the adapters with no finding (`ddd-ts-kit check`: 0 in
+660 files), and its entry left `NOT_APPLICABLE` of the conformance suite for an injection.
+
+HTTP contract changes: `POST /practices` asks the role `network-admin` (it asked
+`platform-admin`); `GET /audit/entries` takes `network`, and is read by platform staff through an
+elevation over that network or every network, recorded first (`tenancy:elevate`, reason
+`AUDIT_TRAIL_SEARCH`); a request whose `x-tenant-id` names another network than the caller's is
+answered 403, one that names no possible network 404; every request of a user of the realm needs
+a `tenant_id` claim (the network) to reach data.
+
+Measured here: the integration project (26 files, 338 tests, among them `tenantIsolationContract`
+on the eight Knex repositories) and the unit project pass; `journey-tenancy.e2e.spec.ts` (5
+tests) passes; the other end-to-end specs and the conformance run were left to the pipeline.
+
+Frictions, each fixed in the kit rather than worked around here:
+
+1. **Raw expressions were reported as raw SQL.** The occupancy is measured by aggregates in the
+   select (`count(*) filter (where ...)`), and the schema adds an exclusion constraint: the rule
+   reported each `raw`. It now reads the literal text of a raw call and reports only SQL that
+   names a statement or a table (or is not a literal).
+2. **A select over a grouped query had no helper.** The occupancy pages its groups by their
+   output columns, so it selects from the grouped query: `derivedTable` of `@ddd-ts-kit/knex`
+   does it on the scoped query, without the executor in the adapter.
+3. **A per-tenant job could not be registered.** Neither `kernelModule` nor the test application
+   gave the scheduler a `TenantDirectory`: both take `tenants` now (the test application defaults
+   to the tenant of its execution context).
+4. **The migration of an existing database.** The first migration builds from the current
+   schema, so the second must add the column where it is missing and leave it where it is:
+   `addTenantColumn` of `@ddd-ts-kit/knex` does both, and gives the rows already there to the
+   network named (`NETWORK_OF_EXISTING_ROWS`), refusing rows without one.
+5. **A journey spec could not be written.** The guard of the plugin asked for `generate e2e`,
+   which needs one route; a journey crosses several. `test/e2e/journey-*.e2e.spec.ts` is now
+   written by hand.
+6. **`date_part` is not `extract`.** Rewriting the measure without the word `from` changed a
+   rounding: `date_part` answers a double, which PostgreSQL rounds half to even. The cast to
+   `numeric` keeps the rounding the contract spec holds.
+7. **A spec that publishes an event by hand names no tenant.** The publisher of the application
+   stamps it (`scopedPublisher`); a spec that writes the envelope itself spreads `tenantId` into
+   it, or its consumers run in no network and are refused.
+
+## 2026-10-13 (night): the identity preset, measured against this identity context
+
+The kit gained `--preset identity`, a generic identity context written whole
+([Bootstrap with well-designed contexts](../../../docs/guides/bootstrap-with-well-designed-contexts.md)).
+The identity context of this example was compared with it, part by part, to take what improves
+it without changing its behaviour. Nothing was taken: each difference is either a model this
+example needs or a change of its contract.
+
+| Part | Here | The preset | Taken |
+|---|---|---|---|
+| Classification | `supporting`: delegations between a practitioner and an assistant on one desk | `generic` | no: the delegation here is the reason of the context |
+| Who | `Person`, registered at the first sign-in, email sent by the client | `Account`, email always read from the token | no: `PUT /people/me` would stop reading `email` from its body, a change of contract |
+| Groups | `Practice` with a time zone, managers, practitioners, assistants | `Organisation` with owners, admins, members | no: the time zone and the three roles are the language of scheduling |
+| Invitations | none: a manager adds a known person | issued by token, accepted signed in | no: a new feature, not an alignment |
+| Delegations | on a desk, with or without the right to change availability, expiring by a job | rights of a role lent for ninety days | no: another meaning under the same word |
+| Identity provider | read only (the token) | `IdentityProviderAdmin` kept in line at least once by consumers of its facts | no: nothing here needs the realm to follow |
+| Tenancy | the network is the tenant, practices inside it | the organisation is the tenant | no: ADR-0003 chose the network |
+
+What the comparison changed in the kit: the preset first answered `FORBIDDEN` to every signed-in
+person under `rbac` (no role grants its permissions), which a project of this shape would have
+met at its first request. `SignedInGrantsAuthorizer` of `@ddd-ts-kit/auth` now grants the
+permissions of the context to every signed-in person before the model decides, and the preset
+wraps `createAuthorizer` in it. Measured: five projects generated with the preset (rbac on
+Drizzle and Zod, rebac on Knex and class-validator with tenants and Keycloak, abac on Fastify
+with tenants, custom on Knex with JWT, rbac on class-validator and Fastify) have no finding,
+lint and format clean, type-check, and pass their specs.
+
+The documents of appointments arrived from main at the same time. With the network as tenant,
+`TenantFileKeys` files each document under it (`tenants/<network>/appointment-documents/...`):
+`journey-documents.e2e.spec.ts` now expects that key, and the integration spec of the documents
+runs in a network, as every other spec of a repository here.
+
+The event-sourced attendance record arrived from main last. The event store of the kit keeps no
+tenant: its events carry no network and a subscription replays them in none, so the projection
+of `attendance_history` cannot know the network of a row. ADR-0004 keeps the five tables of the
+store and that read model outside the networks until the store carries a tenant, under one
+suppression of `tenancy/scoped-statement`; the membership of the practice, asked before every
+read and note, still keeps one network out of another's records. This is the gap of the kit
+that the next change of the event store should close.
+
 ## 2026-10-12: value objects that throw their refusals
 
 The value objects of the four contexts moved from a `Result` to factories that return the value
@@ -1260,7 +1349,6 @@ in the kit, then `npm run docs:generate` rewrote `clients/api`:
 | Lockfile | none in this directory, which is a workspace of the kit; a generated npm project is told to run `npm install` when its lock misses a client |
 
 The two changed spec files and the three journeys pass again in process (30 tests).
-
 ## 2026-10-13: shapes declared once, and four contract pairs
 
 The example now says `"stack.schemas": "shared"`. The checker, run with the new rule
@@ -1411,3 +1499,132 @@ status published as free text, and the queue blind to tenants. What changed here
 `generate background-job` now carries the inputs of a command in the payload (a `Date` as its
 ISO text): `--command CancelAppointment` would generate today, but the clearance still sends one
 command per appointment of its payload, with a checkpoint between two, which no template guesses.
+
+## 2026-10-13: media types, fields reserved to the staff, and a form described by the server
+
+The config says `"representations": "negotiated"` and `"forms": "on"`, and the platform has the
+two files `init` now writes for them (`http/presentation-of.ts`, `http/with-forms.ts`), with
+the boundary, the composition root and `scripts/openapi.ts` changed as the templates are.
+
+| | Before | After |
+|---|---|---|
+| Media types a route answers in | JSON | JSON, and what it declares: `application/xml` and `text/csv` for the agenda of a practice and its export, `application/xml` for a booking |
+| Bodies read | JSON | JSON, and XML on `POST /appointments` |
+| Export of an agenda | none | `GET /practices/{practiceId}/agenda/export`, streamed page after page of the read model (CSV or XML) |
+| Internal note | none | written at booking by whoever runs the calendar, read by its staff, refused (403) from and hidden from its patient: `withFieldAccess` on the body and on the detail, `Access.authorize` in the handler for every other caller |
+| Forms | none | `GET /forms/bookAppointment` (JSON Forms, or `?format=blocks`), `openapi/forms/bookAppointment.json` generated |
+| End-to-end specs | | `book-appointment.e2e.spec.ts` (XML booking, the form for the patient, the assistant and the practitioner, the note), `export-practice-agenda.e2e.spec.ts` (CSV, XML, 406) |
+
+What the generators wrote: the domain event `AppointmentAnnotated` (with its glossary term),
+the query and the controller of the export, the two end-to-end specs, the `produces` and
+`consumes` of three controllers (`generate representation`) and the hints of the booking form
+(`generate form`), which were then filled. What was done by hand: the note in the aggregate,
+its row, its column and the agenda, the projector of the annotation, the field rules, the
+permissions `appointment.note.read` and `appointment.note.write` with the relationship `staff`
+of a calendar (whoever works in its practice), and the export handler, which reads the agenda
+by cursor pages instead of the reader port the query generator proposes.
+
+Frictions met, fixed in the kit in the same change:
+
+- The JSON Schema of a class-validator class that only extends another one was an empty object:
+  the agenda lines of the contract said nothing of their fields, and a CSV of them had no
+  column. `@ddd-ts-kit/validation` now gives a class the properties of its ancestors; the
+  contract of the agenda lists them.
+- A field decision ran outside the execution scope of the request, where the audit of the
+  decisions requires it: the pipeline now decides fields, and reads a streamed list, inside it.
+- The form generator imported `Infer` as a value in a class-validator controller.
+
+HTTP contract changes: the media types above under each route concerned, `406` with
+`NOT_ACCEPTABLE` on the routes that produce more than JSON, `415` with
+`UNSUPPORTED_MEDIA_TYPE` on the booking, `internalNote` (optional, marked `x-field-access`) in
+the body of `POST /appointments` and in the answer of `GET /appointments/{appointmentId}`, the
+new routes `GET /practices/{practiceId}/agenda/export` and `GET /forms/bookAppointment`, and
+the properties of the agenda lines, which were missing.
+
+The internal note is a migration of its own, `20261013110000_add-internal-notes.js`, after the
+one of the documents: the tables are shared since then, and `upgrade-tables.ts` applies the same
+change to the in-process database of the tests.
+
+## 2026-10-13 (later): what a review of media types, field access and forms changed here
+
+| | Before | After |
+|---|---|---|
+| Downloads of documents (`/files?token=`) | under negotiation, a file went out as a JSON array of bytes, and `Accept: application/pdf` was refused 406: `journey-documents.e2e.spec.ts` failed | a route that declares no body schema is left out of negotiation; the file goes out as it was stored, and the journey passes again |
+| Export of an agenda | the query `ExportPracticeAgenda` answered a lazy list, read after the bus had returned: no unit of work, no tenant session, no span for its pages | the controller streams `everyPage` over `SearchPracticeAgendaQuery`, one query per page through the bus; the export query, its handler and its spec are removed |
+| A failure half way through an export | the connection was cut, nobody was told | `onError` is told, with the correlation and `interrupted: true` |
+| The booking form | given to any caller who presented a credential | `requires` the permission `appointment.book`, asked as the command asks it (the calendar of the query, `selfService` when the patient is the caller): a patient asking it for somebody else gets 403, and so does an assistant without a delegation of the desk, who may not book |
+| Who writes the note | whoever runs the calendar (`run`), so an assistant with a delegation would have edited it | the holder of the desk or the manager of the practice (`own`, a new permission of the calendar in the relationship schema): an assistant who books on a delegated desk sees the note read-only, which is what the end-to-end spec of the form now shows after a delegation |
+| A note met before its booking | the agenda lost it when the two facts of the same instant came in that order | `AppointmentAnnotated` carries the booking it leaves, as the other facts do: the agenda writes the whole entry with the note |
+| Field decisions | one recorded decision per field shown or hidden | recorded only when a field is set; a shown or hidden field only shapes the answer |
+
+HTTP contract changes: `406 NOT_ACCEPTABLE` on every route that answers a body, `415
+UNSUPPORTED_MEDIA_TYPE` on every route that reads one (the contract now follows the
+representations the server is mounted with, and the documentation page too), `FORBIDDEN` on
+`GET /forms/bookAppointment`. The typed client gains the same failures.
+
+## 2026-10-13: the media types meet the shared shapes, the cache and the jobs
+
+The two lots were merged into one tree. What the merge changed here, beyond taking both sides:
+
+| | |
+|---|---|
+| Export of an agenda | its own line class extended a line class the shared shapes removed: the export now answers `AgendaLine` (`classSchema(AgendaLine, { shared: true })`), the component the two searches already point at |
+| Booking body | `startsAt` picked from `TimeSpan`, the internal note and its field rules kept: the JSON Schema of a class that extends a picked class holds the properties of both |
+| Internal note | `annotate` asked the aggregate a guard the state machine replaced: it is now a transition of `appointmentLifecycle` (`annotate`, from requested or booked, the status unchanged) |
+| Contract | the media types, `406` and `415` of the representations next to the `Cache-Control`, `ETag`, `If-Match` and `304` of the caching; `Vary` documents `accept` on the routes that answer in several media types |
+
+Frictions met in the kit, fixed in the same change: the cache tags, the weak `ETag` and
+`Last-Modified` were read from the bytes of an XML answer, where no field is found; `Vary: accept`
+replaced the `Vary` of a cache policy instead of joining it; a public answer chosen by `Accept`
+was accepted behind a cache that ignores `Vary`; Hono neither read an XML body nor streamed a
+list; and `withFieldAccess` over a shared schema left the contract without its `x-field-access`.
+
+## 2026-10-13 (late night): what a review of the tenancy and of the identity preset changed here
+
+The pipeline of the pull request was red on this example, and the review found why:
+
+| Found | Changed |
+|---|---|
+| `journey-tenancy` failed 5 times out of 5 (`422 UNKNOWN_PRACTITIONER`): `inNetwork` gave its network to `as` only, so the practice of `south` was opened by the typed client in `north` | `inNetwork` gives the network to every credential it builds (`as`, `headersOf`, `apiAs`); the journey passes, 7 tests |
+| `journey-observability` expected the error report of before the networks | the report names the network (`tenantId: 'north'`), which is itself a proof |
+| The conformance suite excused `tenancy/scoped-statement` ("the example says nothing of tenancy"), and its injected migration took the number of the real one | the excuse is gone, the injection alone breaks the rule; the injected migration of `persistence/no-file-content` is numbered after every real one |
+| A token naming a network missing from `NETWORKS` reached data that no job would ever process | `servedTenantOf` answers 404 at the edge, and a spec proves it |
+| A subject registered in two networks collided on a key unique across networks | ADR-0003 holds a person to one network (one `tenant_id` per user of the realm); the second registration is refused and the first kept, as a spec proves |
+| Events in the outbox at the time of the migration had no network | the migration gives the unpublished ones `NETWORK_OF_EXISTING_ROWS` (`tenantOfUnpublished`) |
+
+The checker now judges raw SQL by what may reach rows, and refuses a template that interpolates:
+two raw aggregates of the occupancy reader bound their list of states as one value
+(`state = any(?)`) instead of interpolated placeholders, and the constraint of the schema binds
+its name (`??`) instead of interpolating it. `check` reports 0 errors and 1 suppression
+(ADR-0004).
+
+The identity context of this example was not changed by the corrections of the preset: it has
+no organisation of its own, its roles are those of a practice, and its people register
+themselves. What the preset now does (delegations within the role of the delegate, the provider
+kept in line at least once, organisations read as tenants from the token) stays a comparison of
+the section above, not a change of this contract.
+
+The Keycloak adapter of the preset was run once by hand against Keycloak 26.8.0 (the image of
+`--authn keycloak`, in a container removed afterwards): open an organization twice, add, remove
+and add back a member, each twice, disable a user twice. The first run failed: the adapter looked
+an organization up with `search=<alias>&exact=true`, which Keycloak matches against the name.
+It now reads the pages of the organizations until the alias is found; the second run passed every
+step, and the disabled user kept their name and address.
+
+## 2026-10-13 (merge): the networks meet the jobs, the processes, the cache and the representations
+
+Merging 0.11 to 0.14 into the multi-tenant example brought tables and routes written before the
+networks. What each became:
+
+| Added by | Became |
+|---|---|
+| Background jobs (`messaging.background_jobs`) | already kept `tenant_id` and ran in the network of the work that enqueued them; a clearance is read through the queue, which shows a job to its network only. The migration of ADR-0003 gives `NETWORK_OF_EXISTING_ROWS` to the jobs waiting or running, in the column and in who enqueued them |
+| Process instances (`messaging.process_instances`) | `tenant_id`, required: `createProcessTable(knex, { tenant: true })`, and `KnexProcessStore` with `tenant`, bound per execution scope; an instance of another network is neither found nor changed. The migration adds the column to a table created before, its rows given the network named |
+| Opening hours, Varnish | tags filed under the network of the request (`cacheTags.perTenant`), purges under the network of the work (`PublishedCacheInvalidation` with `perTenant`), `Vary: x-tenant-id`; an anonymous caller names the network in `x-tenant-id`. The tags read `north/calendar:<id>` |
+| Representations, forms, field access, exports | unchanged: they read through the repositories and read models already confined, and the resolver of the network is the one of every route |
+| Kit | `servedTenantOf` dropped the headers of the resolver it holds: the answers of the example did not vary on `x-tenant-id`, and Varnish would have handed the hours one network read to every other. It now keeps them, and a spec says so |
+
+`check`: 0 errors, 1 suppression (ADR-0004). `get-opening-hours.e2e.spec.ts` gained two specs (the
+header in `Vary`, 404 to the calendar of another network) and one through Varnish (a second
+network is never served the copy of the first): 11 specs, passed through Varnish 9.1.0 on this
+machine. Contract: unchanged, but an anonymous read of the hours names its network.

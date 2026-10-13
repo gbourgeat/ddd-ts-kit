@@ -7,6 +7,8 @@ export interface KindFlags {
   readonly upstream: readonly string[];
   /** `<Term>=<meaning>` rows to add to the glossary of the context. */
   readonly term: readonly string[];
+  /** `generate context --preset <name>`: the context is written whole from that preset. */
+  readonly preset?: string;
   /** The values of a closed vocabulary, one per `--value`. */
   readonly value: readonly string[];
   /** The transitions of a state machine, one per `--transition "<intention>:<from>[,<from>]...[><to>]"`. */

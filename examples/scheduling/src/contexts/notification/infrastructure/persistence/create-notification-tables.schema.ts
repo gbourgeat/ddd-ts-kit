@@ -1,7 +1,7 @@
 // ddd-ts-kit:imports
 import type { Knex } from 'knex';
 import { NOTIFICATION_SCHEMA } from '@/contexts/notification/infrastructure/persistence/notification.schema';
-import { auditColumns, readModelColumns } from '@ddd-ts-kit/knex';
+import { auditColumns, readModelColumns, tenantColumn } from '@ddd-ts-kit/knex';
 // /ddd-ts-kit:imports
 
 export async function createNotificationTables(knex: Knex): Promise<void> {
@@ -27,6 +27,8 @@ function createNotificationTable(knex: Knex): Promise<void> {
     table.unique(['cause', 'recipient_id']);
     table.index(['recipient_id', 'registered_at', 'id']);
     table.integer('version').notNullable();
+    tenantColumn(table);
+    table.index(['tenant_id', 'id'], 'notifications_tenant_idx');
     auditColumns(table);
   });
 }
@@ -42,6 +44,8 @@ function createReminderTable(knex: Knex): Promise<void> {
     table.text('status').notNullable();
     table.index(['status', 'due_at']);
     table.integer('version').notNullable();
+    tenantColumn(table);
+    table.index(['tenant_id', 'id'], 'reminders_tenant_idx');
     auditColumns(table);
   });
 }
@@ -51,6 +55,8 @@ function createContactTable(knex: Knex): Promise<void> {
   return knex.schema.withSchema(NOTIFICATION_SCHEMA).createTable('contacts', (table) => {
     table.text('recipient_id').primary();
     table.text('address').notNullable();
+    tenantColumn(table);
+    table.index(['tenant_id', 'recipient_id'], 'contacts_tenant_idx');
     readModelColumns(table);
   });
 }

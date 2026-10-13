@@ -23,6 +23,8 @@ export const schedulingPermissions = definePermissions('scheduling', {
   'appointment.attach-document': { description: 'Attach a document to an appointment' },
   'appointment.remove-document': { description: 'Remove the document of an appointment' },
   'appointment.read-document': { description: 'Read the document of an appointment, recorded in the audit trail' },
+  'appointment.note.read': { description: 'Read the internal note of an appointment' },
+  'appointment.note.write': { description: 'Write the internal note of an appointment' },
   'attendance.note': { description: 'Note attendance' },
   'attendance.read': { description: 'Search attendance history' },
   'calendar.clear': { description: 'Clear calendar' },

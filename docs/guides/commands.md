@@ -34,6 +34,7 @@ The realistic sequence for an order-taking service, each line in the order it is
 | `/ddd-ts-kit:start` | conducts steps 1 to 7 of the method, one per turn, and resumes from the plan | first, before any code; again to resume | `docs/architecture/plan.md` and the artefact of each step | the step its `Next:` line names |
 | `/ddd-ts-kit:bootstrap` | chooses the stack by criteria, runs `init`, creates the contexts | step 5, once the context map is drafted | the project and one `CONTEXT.md` per context | `/ddd-ts-kit:plan-slices` |
 | `npx ddd-ts-kit init [flags]` | writes the config, the platform, the pipeline, the agent rules | the bootstrap; `--dry-run` first to read what it writes | a project that passes `npm run verify` | `npm install`, `npm run verify` |
+| `npx ddd-ts-kit init --preset identity`, `generate context <name> --preset identity` | writes a generic context whole instead of an empty one: accounts from the identity provider, organisations, members and roles, invitations, delegations ([why and which](bootstrap-with-well-designed-contexts.md)) | when `contexts.md` holds a generic identity context | the context, its specs, its adapters and its glossary, green at once | read its `## Design`, then the slices of the core |
 | `npx ddd-ts-kit status` | the next step of the plan, the slices by status and owner, what is left per context | at the start of every session | a short text, `--json` for data | the step or slice it names |
 
 ## Model the domain
@@ -140,11 +141,12 @@ Usage
                   [--audit on|off]
                   [--errors none|sentry] [--logger stdout|pino|winston] [--style declared|explicit] [--assembly barrel|discovery]
                   [--dependencies signature|listed] [--refusals factories|classes]
-                  [--routes controllers|functions] [--value-objects throwing|result] [--literals named|free] [--tenancy none|shared-table] [--queue database|redis|memory]
+                  [--routes controllers|functions] [--representations negotiated|json] [--forms on|off]
+                  [--value-objects throwing|result] [--literals named|free] [--tenancy none|shared-table] [--queue database|redis|memory]
                   [--schemas shared|per-route]
                   [--package-manager npm|pnpm] [--allow-no-outbox "<reason>"] [--import-alias '$<name>/']
                   [--import-extension none|js] [--sdk]
-                  [--context <name>:<core|supporting|generic>]... [--dry-run] [--force]
+                  [--context <name>:<core|supporting|generic>]... [--preset identity]... [--dry-run] [--force]
   ddd-ts-kit generate <kind> ... [--term "<Term>=<meaning>"]... [--allow-name] [--local-only] [--dry-run] [--force]     (alias: g)
   ddd-ts-kit generate --help --json
   ddd-ts-kit list [--context <name>]
@@ -205,7 +207,7 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
                    "generate --help --json" says which kinds do
 
 Kinds
-  context <name> --classification <core|supporting|generic> [--purpose "<two sentences>"] [--term "<Term>=<meaning>"]... [--upstream <ctx>[:relationship]]...
+  context <name> --classification <core|supporting|generic> [--purpose "<two sentences>"] [--term "<Term>=<meaning>"]... [--upstream <ctx>[:relationship]]... [--preset identity]
   aggregate <context> <Name> [--event-sourced] [--term "<Term>=<meaning>"]...
   builder <context> <Aggregate>
   entity <context> <Name> [--term "<Term>=<meaning>"]...
@@ -225,6 +227,8 @@ Kinds
   file-upload <context> <UseCaseName> --path <path> (--permission <aggregate>.<action> | --public) [--method <POST|PUT>] [--group <Name>]
   route-group <context> <Name> [--prefix <path>] [--group <ParentName>] [--public | --role <role>]   (alias: group)
   guard <context> <Name>
+  representation <context> <UseCase> <xml|csv|media/type>[,...]
+  form <context> <UseCase>
   schema <context|shared-kernel> <Name>
   integration-event <context> <Aggregate> <Fact> [--version <n>] [--term "<Term>=<meaning>"]...
   integration-handler <context> <upstreamContext> <eventType>   (alias: consumer)

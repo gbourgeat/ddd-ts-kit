@@ -48,6 +48,7 @@ const TEXTS = { type: 'string', multiple: true } as const;
 const OPTIONS = {
   classification: TEXT,
   purpose: TEXT,
+  preset: TEXT,
   upstream: TEXTS,
   term: TEXTS,
   value: TEXTS,
@@ -135,6 +136,7 @@ function requestedKind(name: string | undefined, rest: readonly string[]): Kind 
 const TEXT_FLAGS = [
   'classification',
   'purpose',
+  'preset',
   'code',
   'aggregate',
   'method',

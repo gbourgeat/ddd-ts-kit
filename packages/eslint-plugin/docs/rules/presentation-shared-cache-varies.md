@@ -41,7 +41,7 @@ export class AgendaRoutes {}
 
 A controller that names its group and writes no `guards` of its own takes the guards of the group, which another file declares: it is not judged here, and `@ddd-ts-kit/http` refuses the same declaration with a `DeclarationError` when the routes are built, for every route whatever the file. The rule is the editor's early view of that refusal.
 
-What a non-empty `vary` names is held when the routes are mounted, where the options of the application are known: it must name `Authorization`, `Cookie` or the header the tenant is read from (`vary: ['Accept-Language']` alone is refused), and a cache that ignores `Vary` (Cloudflare, Bunny) refuses a varying public answer. The rule does not judge that: one file does not show the options.
+What a non-empty `vary` names is held when the routes are mounted, where the options of the application are known: it must name `Authorization`, `Cookie` or the header the tenant is read from (`vary: ['Accept-Language']` alone is refused), and a cache that ignores `Vary` (Cloudflare, Bunny) refuses a varying public answer. An answer whose schema reserves fields to some callers (`withFieldAccess`) must name `Authorization` or `Cookie` there too, even on a route anybody may call. The rule does not judge that: one file does not show the options nor the marks of the schema.
 
 ## Options
 

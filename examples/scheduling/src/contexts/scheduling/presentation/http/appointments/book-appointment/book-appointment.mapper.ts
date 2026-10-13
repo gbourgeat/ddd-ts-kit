@@ -8,9 +8,15 @@ export class BookAppointmentMapper
   implements RequestMapper<HttpRequest<{ body: BookAppointmentBody }>, BookAppointmentCommand>
 {
   map({ actor, body }: HttpRequest<{ body: BookAppointmentBody }>): BookAppointmentCommand {
-    const { calendarId, appointmentTypeId, startsAt, patientId } = body;
+    const { calendarId, appointmentTypeId, startsAt, patientId, internalNote } = body;
+
     // Without a patient named, the caller books for themselves.
-    const wish = { patientId: patientId ?? actor.id, appointmentTypeId, startsAt: new Date(startsAt) };
+    const wish = {
+      patientId: patientId ?? actor.id,
+      appointmentTypeId,
+      startsAt: new Date(startsAt),
+      ...(internalNote === undefined ? {} : { internalNote }),
+    };
 
     return new BookAppointmentCommand(actor, calendarId, wish);
   }

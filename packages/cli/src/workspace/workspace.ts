@@ -73,6 +73,11 @@ export class Workspace {
     return [...new Set([...this.onDisk(directory, (entry) => entry.isDirectory()), ...planned])].sort();
   }
 
+  /** True when this command already wrote the file, whether it is on disk or not. */
+  planned(file: string): boolean {
+    return this.pending.has(file);
+  }
+
   /** Never replaces a file the user may have edited, unless asked to with --force. */
   create(file: string, content: string): boolean {
     const onDisk = fs.existsSync(this.absolute(file));

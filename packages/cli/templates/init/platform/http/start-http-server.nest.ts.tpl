@@ -38,7 +38,7 @@ interface Outgoing {
 export async function startHttpServer(served: Served, config: AppConfig): Promise<HttpServer> {
 {{#if files.http}}
 {{#if docs.any}}
-  const routes = [...withDocumentation(served.routes, config), ...served.fileRoutes];
+  const routes = [...withDocumentation(served.routes, config, served.boundary), ...served.fileRoutes];
 {{/if}}
 {{#unless docs.any}}
   const routes = [...served.routes, ...served.fileRoutes];
@@ -47,7 +47,7 @@ export async function startHttpServer(served: Served, config: AppConfig): Promis
 {{/if}}
 {{#unless files.http}}
 {{#if docs.any}}
-  const app = await NestFactory.create(createAppModule(withDocumentation(served.routes, config), served.boundary), {
+  const app = await NestFactory.create(createAppModule(withDocumentation(served.routes, config, served.boundary), served.boundary), {
     logger: ['error', 'warn'],
   });
 {{/if}}

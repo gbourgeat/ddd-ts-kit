@@ -56,6 +56,10 @@ class OrderingApplication implements DatabaseReset {
       return sendJson(response, 200, request.headers);
     }
 
+    if (method === 'POST' && url === '/echo') {
+      return sendJson(response, 200, { contentType: request.headers['content-type'], text: await readText(request) });
+    }
+
     if (method === 'DELETE') {
       return send(response, 204);
     }
@@ -94,13 +98,19 @@ function isPlaceOrderRequest(body: unknown): body is PlaceOrderRequest {
 }
 
 async function readJson(request: IncomingMessage): Promise<unknown> {
+  const text = await readText(request);
+
+  return text === '' ? undefined : JSON.parse(text);
+}
+
+async function readText(request: IncomingMessage): Promise<string> {
   let text = '';
 
   for await (const chunk of request.setEncoding('utf8')) {
     text += chunk;
   }
 
-  return text === '' ? undefined : JSON.parse(text);
+  return text;
 }
 
 function sendJson(response: ServerResponse, status: number, body: unknown): void {
@@ -178,6 +188,14 @@ describe('the JSON client', () => {
     const response = await server.client.get('/health');
 
     expect(response).toMatchObject({ status: 200, body: 'up' });
+  });
+
+  it('sends a text as it is in the media type a call names, and as JSON otherwise', async () => {
+    const xml = await server.client.post('/echo', '<order/>', { headers: { 'content-type': 'application/xml' } });
+    const json = await server.client.post('/echo', '<order/>');
+
+    expect(xml.body).toEqual({ contentType: 'application/xml', text: '<order/>' });
+    expect(json.body).toEqual({ contentType: 'application/json', text: '"<order/>"' });
   });
 
   it('sends the default headers, and no content type without a body', async () => {

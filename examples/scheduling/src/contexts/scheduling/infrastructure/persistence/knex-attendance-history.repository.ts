@@ -10,6 +10,7 @@ import { SCHEDULING_SCHEMA } from '@/contexts/scheduling/infrastructure/persiste
 @Repository(AttendanceHistory)
 export class KnexAttendanceHistory extends KnexReadModelStore<AttendanceEntry> implements AttendanceHistory {
   constructor(context: KnexContext) {
+    // ddd-ts-kit-disable-next-line tenancy/scoped-statement -- ADR-0004: the event store that feeds this history keeps no network yet
     super(context, {
       schema: SCHEDULING_SCHEMA,
       table: 'attendance_history',

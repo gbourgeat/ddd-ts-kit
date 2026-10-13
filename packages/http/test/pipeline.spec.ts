@@ -137,6 +137,7 @@ describe('the error mapper', () => {
       INVARIANT_VIOLATION: 422,
       UNAUTHORIZED: 401,
       FORBIDDEN: 403,
+      NOT_ACCEPTABLE: 406,
       PRECONDITION_FAILED: 412,
       PRECONDITION_REQUIRED: 428,
       FILE_NOT_FOUND: 404,

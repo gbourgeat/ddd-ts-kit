@@ -212,7 +212,7 @@ describe('what the stack does not have', () => {
     );
 
     expect(platform(root, 'http/start-http-server.ts')).toContain(
-      'mountExpress(app, withDocumentation(served.routes, config), served.boundary);',
+      'mountExpress(app, withDocumentation(served.routes, config, served.boundary), served.boundary);',
     );
 
     expect(read(root, 'scripts/openapi.ts')).toContain('errorMapper: application.boundary.errorMapper,');

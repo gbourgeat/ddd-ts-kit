@@ -4,6 +4,7 @@ import { applicationHandlerShape } from './application-handler-shape.js';
 import { aspectsOutsideIn } from './aspects-outside-in.js';
 import { authzActorExplicit } from './authz-actor-explicit.js';
 import { authzDeclared } from './authz-declared.js';
+import { authzFieldsBySchema } from './authz-fields-by-schema.js';
 import { authzInApplication } from './authz-in-application.js';
 import { cleanFileSize } from './clean-file-size.js';
 import { cleanFunctionCeiling } from './clean-function-ceiling.js';
@@ -114,6 +115,7 @@ const ALL = [
   authzDeclared,
   authzInApplication,
   authzActorExplicit,
+  authzFieldsBySchema,
   aspectsOutsideIn,
   tracingPlatformOnly,
   standardNoParallelInterface,

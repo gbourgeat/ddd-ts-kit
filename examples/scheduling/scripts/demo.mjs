@@ -24,10 +24,14 @@ const USERS = [
   'demo-patient-2',
   'demo-support',
 ];
+// Platform staff belong to no network of practices: they are not registered as a person of one (ADR-0003).
+const STAFF = ['demo-ops'];
 const EVERY_DAY = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 const HALF_HOUR = 30 * 60_000;
 
-const people = Object.fromEntries(await Promise.all(USERS.map(async (name) => [name, await signIn(name)])));
+const people = Object.fromEntries(
+  await Promise.all([...USERS, ...STAFF].map(async (name) => [name, await signIn(name)])),
+);
 
 await main();
 
@@ -51,7 +55,7 @@ async function main() {
 }
 
 async function openPractices() {
-  section('1. People register, the platform admin opens two practices');
+  section('1. People register, the administrator of the network opens two practices');
 
   for (const name of USERS) {
     await call(
@@ -231,18 +235,20 @@ async function support(booking) {
 }
 
 async function audit() {
-  section('9. The audit trail: who was allowed, who was refused, who looked on whose behalf');
+  section(
+    '9. The audit trail, read by platform staff across networks: who was allowed, who was refused, who looked on whose behalf',
+  );
   await call('demo-manager', 'GET', '/audit/entries', undefined, 403);
 
   const denied = await call(
-    'demo-admin',
+    'demo-ops',
     'GET',
     `/audit/entries?outcome=denied&actorId=${people['demo-manager-b'].id}&limit=3`,
     undefined,
     200,
   );
   const looked = await call(
-    'demo-admin',
+    'demo-ops',
     'GET',
     `/audit/entries?actorId=${people['demo-patient'].id}&limit=100`,
     undefined,

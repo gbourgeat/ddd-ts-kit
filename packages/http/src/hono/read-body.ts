@@ -1,4 +1,5 @@
 import type { Context } from 'hono';
+import { mediaTypeOf } from '../representation/media-type-of.js';
 import type { EdgeRefusal } from './edge-problem.js';
 
 export type ReadBody =
@@ -15,11 +16,15 @@ const MALFORMED: EdgeRefusal = {
 };
 
 /**
- * The JSON body of the request, `undefined` when there is none; not read when it is not JSON.
- * Read chunk by chunk and given up beyond `limit` bytes, so that no body is held whole past it.
+ * The JSON body of the request, `undefined` when there is none; a body in a media type the route
+ * consumes (`consumes`), as text, for its representation to read; not read in any other media
+ * type. Read chunk by chunk and given up beyond `limit` bytes, so that no body is held whole past it.
  */
-export async function readBody(context: Context, limit: number): Promise<ReadBody> {
-  if (!JSON_MEDIA.test(context.req.header('content-type') ?? '')) {
+export async function readBody(context: Context, limit: number, consumed: readonly string[] = []): Promise<ReadBody> {
+  const contentType = context.req.header('content-type') ?? '';
+  const json = JSON_MEDIA.test(contentType);
+
+  if (!json && !consumed.includes(mediaTypeOf(contentType) ?? '')) {
     return { read: true, value: undefined };
   }
 
@@ -29,7 +34,11 @@ export async function readBody(context: Context, limit: number): Promise<ReadBod
     return { read: false, refusal: tooLarge(limit) };
   }
 
-  return text === '' ? { read: true, value: undefined } : parsed(text);
+  if (text === '') {
+    return { read: true, value: undefined };
+  }
+
+  return json ? parsed(text) : { read: true, value: text };
 }
 
 async function boundedText(request: Request, limit: number): Promise<string | undefined> {

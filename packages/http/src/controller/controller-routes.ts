@@ -10,6 +10,7 @@ import type { Route } from '../route/route.js';
 import type { ControllerClass } from './controller-class.js';
 import type { ErasedController } from './erased-controller.js';
 import type { ControllerRoutesOptions } from './controller-routes-options.js';
+import type { ControllerSpec } from './controller-spec.js';
 import type { GuardRequest } from './guard-request.js';
 import { guardRefusals } from './guard-refusals.js';
 import type { Guard } from './guard.js';
@@ -68,6 +69,7 @@ function documentationOf({ spec, declared, guards }: ResolvedController): Docume
     responses: { [status]: { description: description ?? defaultDescription(body), ...bodyOf(body) } },
     errors: [...new Set([...declared.errors, ...guards.flatMap((guard) => guard.documents?.errors ?? [])])],
     ...(spec.deprecated === true ? { deprecated: true } : {}),
+    ...presentationOf(spec),
   };
 }
 
@@ -117,6 +119,14 @@ function requestOf(parts: RequestSchemas): { request?: RequestSchemas } {
   }).filter(([, schema]) => schema !== undefined);
 
   return declared.length === 0 ? {} : { request: Object.fromEntries(declared) };
+}
+
+function presentationOf({ produces, consumes, form }: ControllerSpec): Pick<Route, 'produces' | 'consumes' | 'form'> {
+  return {
+    ...(produces === undefined ? {} : { produces: [...produces] }),
+    ...(consumes === undefined ? {} : { consumes: [...consumes] }),
+    ...(form === undefined ? {} : { form }),
+  };
 }
 
 function bodyOf(body: Schema<unknown> | undefined): { body?: Schema<unknown> } {

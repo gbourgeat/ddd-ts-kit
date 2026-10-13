@@ -55,7 +55,7 @@ on PostgreSQL:
 
 | Strategy | Knex | Drizzle | Prisma | TypeORM |
 |---|---|---|---|---|
-| Shared tables | `tenantTable`, `ownTenantTable`, `whereTenant`; read models with `tenant` | `tenantCondition`, `ownTenantCondition`; read models with `tenant` | by hand: `tenantScopeOf` and `tenantReachOf` in every statement, no helper, no contract run | by hand, as Prisma |
+| Shared tables | `tenantTable`, `ownTenantTable`, `whereTenant`, `derivedTable`; read models with `tenant`; `addTenantColumn` to migrate | `tenantCondition`, `ownTenantCondition`; read models with `tenant` | by hand: `tenantScopeOf` and `tenantReachOf` in every statement, no helper, no contract run | by hand, as Prisma |
 | Row-level security | `enableTenantIsolation`, `tenantSession` | `tenantPolicies`, `forceRowLevelSecurity`, `tenantSession` | not shipped | not shipped |
 | Schema per tenant | `tenantSchemaTable`, `migrateTenantSchema`, `tenantSearchPath` | not shipped: a drizzle table is bound to its schema where it is declared | not shipped | not shipped |
 | Database per tenant | `TenantDatabases`, `createTenantRoutedUnitOfWork`, `migrateEveryTenant` | not shipped | not shipped | not shipped |
@@ -64,6 +64,14 @@ on PostgreSQL:
 through the helpers, the outbox keeping the tenant, and the rule `tenancy/scoped-statement` of the
 checker reporting a statement that reaches a table straight from the executor. The three others
 are wired by hand from the packages for now; `init` refuses them and says what to add.
+
+A project of one customer that becomes multi-tenant keeps its data: on Knex, a migration calls
+`addTenantColumn(knex, { schema, table, tenantOfExistingRows })` for each table of tenant data
+(the rows already there go to the customer it served, then the column is required and indexed)
+and `addOutboxTenantColumn(knex, { schema, tenantOfUnpublished })` for the outbox (the events not
+published yet go to that customer too, so that their consumers run in its tenant). A table that already has the column is left alone, so
+the migration also runs on a database built from the current schema. The example application
+went this way (its ADR-0003): one network of practices is one tenant.
 
 The outbox keeps the tenant of each event on Knex (`tenant: true`) and Drizzle
 (`tenantOutboxTable`); the Prisma and TypeORM outboxes do not store it yet, so their consumers
@@ -120,7 +128,14 @@ of the request.
 
 Which to choose: the claim alone when a user belongs to one tenant; a subdomain when tenants
 have their own address (and their own cookies); a path segment or a header when one user works in
-several tenants and picks one per request, the token then listing every membership.
+several tenants and picks one per request, the token then listing every membership (a tenant
+claim holding a list, or the `organization` claim of Keycloak, gives the actor its `tenants`).
+
+A tenant the deployment does not serve, one its directory of tenants (the tenants its jobs run
+for) does not list, is best not found at all: `servedTenantOf(resolver, served)` answers 404
+whoever names it, so that a credential issued for a tenant the deployment knows nothing of never
+writes data no job and no operator would see. The example application serves the networks of
+`NETWORKS` this way.
 
 ## Platform staff: elevation, never implicit
 

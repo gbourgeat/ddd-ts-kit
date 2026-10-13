@@ -97,6 +97,7 @@ export async function startApplication(options: StartOptions = {}): Promise<Runn
   const application = composeApplication(persistence, {
     events: eventsOf(config),
     authenticator: credentials.authenticator,
+    networks: config.networks,
     ...observedOf(options),
     ...(redis === undefined ? {} : { redis }),
     files: openFiles(config.files),

@@ -31,7 +31,7 @@ export async function startHttpServer(served: Served, config: AppConfig): Promis
   guardTheDoor(app, served, config);
 {{/if}}
 {{#if docs.any}}
-  mountHono(app, withDocumentation(served.routes, config), served.boundary);
+  mountHono(app, withDocumentation(served.routes, config, served.boundary), served.boundary);
 {{/if}}
 {{#unless docs.any}}
   mountHono(app, served.routes, served.boundary);

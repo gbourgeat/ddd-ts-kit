@@ -21,6 +21,7 @@ import type {
   ProcessedEventStore,
   QueryBus,
   RateLimiter,
+  TenantDirectory,
   UnitOfWork,
 } from '@ddd-ts-kit/kernel';
 import type { JobStore, QueueWorker, QueueWorkerOptions } from '@ddd-ts-kit/scheduling';
@@ -78,6 +79,12 @@ export interface KernelModuleOptions {
    * each run every job.
    */
   readonly jobScheduler?: Provided<JobScheduler>;
+  /**
+   * The tenants that exist, bound as `TenantDirectory`: a job declared `tenancy: 'per-tenant'` runs
+   * once for each, in its execution scope, on the default scheduler. Absent: no directory is
+   * bound, and the default scheduler refuses such a job when it is registered.
+   */
+  readonly tenants?: Provided<TenantDirectory>;
   /**
    * Where the background jobs wait. Defaults to a store in the memory of the process: bind the
    * jobs table of the ORM package (`KnexJobStore`, `DrizzleJobStore`), or `RedisJobStore`, so that

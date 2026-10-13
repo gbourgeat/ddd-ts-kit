@@ -17,6 +17,7 @@
       "!**/package-lock.json",
       "!**/.dependency-cruiser.cjs",
       "!**/openapi/*.json",
+      "!**/openapi/forms",
       "!**/asyncapi.json",
       "!**/migrations/meta"
     ]

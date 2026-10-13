@@ -1,7 +1,6 @@
 import type { JsonSchema } from '@ddd-ts-kit/validation';
-import type { ErrorMapper } from '../error/error-mapper.js';
 import type { Route } from '../route/route.js';
-import type { Definitions } from './definitions.js';
+import type { Documenting } from './documenting.js';
 import { cacheTagsExtension } from './cache-tags-extension.js';
 import { conditionalParameters } from './conditional-parameters.js';
 import { openApiPath } from './open-api-path.js';
@@ -14,8 +13,7 @@ import { schemaParameters } from './schema-parameters.js';
 /** The `paths` of the document: one item per path, one operation per method. */
 export function pathItems(
   routes: readonly Route[],
-  mapper: ErrorMapper,
-  definitions: Definitions,
+  documenting: Documenting,
 ): Record<string, Record<string, JsonSchema>> {
   const paths = new Map<string, Map<string, JsonSchema>>();
 
@@ -23,15 +21,16 @@ export function pathItems(
     const path = openApiPath(route.path);
     const item = paths.get(path) ?? new Map<string, JsonSchema>();
 
-    item.set(route.method.toLowerCase(), operation(route, mapper, definitions));
+    item.set(route.method.toLowerCase(), operation(route, documenting));
     paths.set(path, item);
   }
 
   return Object.fromEntries([...paths].map(([path, item]) => [path, Object.fromEntries(item)]));
 }
 
-function operation(route: Route, mapper: ErrorMapper, definitions: Definitions): JsonSchema {
+function operation(route: Route, documenting: Documenting): JsonSchema {
   const request = route.request ?? {};
+  const { definitions } = documenting;
 
   const parameters = [
     ...pathParameters(route.path, request.params, definitions),
@@ -48,14 +47,14 @@ function operation(route: Route, mapper: ErrorMapper, definitions: Definitions):
     ...(route.deprecated === true ? { deprecated: true } : {}),
     security: route.security === false ? [] : requirement(route.security),
     ...(parameters.length === 0 ? {} : { parameters }),
-    ...bodyOf(route, definitions),
-    responses: responses(route, mapper, definitions),
+    ...bodyOf(route, documenting),
+    responses: responses(route, documenting),
     ...cacheTagsExtension(route),
   };
 }
 
-function bodyOf(route: Route, definitions: Definitions): { requestBody?: JsonSchema } {
-  const body = requestBody(route, definitions);
+function bodyOf(route: Route, documenting: Documenting): { requestBody?: JsonSchema } {
+  const body = requestBody(route, documenting);
 
   return body === undefined ? {} : { requestBody: body };
 }

@@ -7,6 +7,7 @@ import {
   type Schema,
   type ValidationIssue,
 } from '@ddd-ts-kit/validation';
+import { fieldAccess } from '../field-access/field-access.js';
 import { isRecord } from '../support/is-record.js';
 import { issue } from './issue.js';
 import type { PageBody } from './page-body.js';
@@ -15,14 +16,18 @@ import type { PageBody } from './page-body.js';
  * The schema of a page of items, from the schema of one item: validates the envelope and each
  * item, and describes both in the contract. Local `$defs` of the item schema move to the top,
  * where the OpenAPI generator collects them. The page of a shared item is shared too, as
- * `<Item>Page`: every search that answers pages of it points at one component.
+ * `<Item>Page`: every search that answers pages of it points at one component. The restricted
+ * fields of an item are those of each item of the page.
  */
 export function pageSchemaOf<T>(item: Schema<T>): Schema<PageBody<T>> {
   const itemJsonSchema = item.toJsonSchema();
   const page = customSchema((input) => parsePageBody(input, item), pageJsonSchema(itemJsonSchema));
   const shared = sharedNameOf(itemJsonSchema);
+  const named = shared === undefined ? page : sharedSchema(`${shared}Page`, page);
 
-  return shared === undefined ? page : sharedSchema(`${shared}Page`, page);
+  fieldAccess.carry(item, named, ['items', '*']);
+
+  return named;
 }
 
 function parsePageBody<T>(input: unknown, item: Schema<T>): Result<PageBody<T>, ValidationIssue[]> {

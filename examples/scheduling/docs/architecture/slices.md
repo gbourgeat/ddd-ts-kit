@@ -51,7 +51,7 @@ and `scheduling-appointment`, on different aggregates).
 ## Rules per slice
 
 - 11: a person registers themselves: the person id is the actor's id; registering twice updates the name and the contact and announces nothing new.
-- 12: only the platform admin opens a practice; the time zone is an IANA zone; the first manager must be a registered person; refuses an unknown zone (`UNKNOWN_TIME_ZONE`).
+- 12: only the administrator of the network opens a practice, in that network (ADR-0003); the time zone is an IANA zone; the first manager must be a registered person; refuses an unknown zone (`UNKNOWN_TIME_ZONE`).
 - 13: a member is a registered person with one role per practice (manager, practitioner, assistant); adding twice is refused (`ALREADY_MEMBER`); the last manager cannot be removed (`LAST_MANAGER`); removing a member revokes their delegations, given and received (cause `member-removed`).
 - 14: practitioner and assistant are members of the practice with those roles (`NOT_A_PRACTITIONER`, `NOT_AN_ASSISTANT`); an end in the past is refused (`DELEGATION_ENDS_IN_THE_PAST`); one active delegation per pair; revoking twice is refused (`DELEGATION_NOT_ACTIVE`); the delegation must belong to the desk of the path.
 - 15: idempotent; the instant comes from the job's `scheduledAt`.
@@ -81,7 +81,7 @@ permission not listed here is for system actors only (jobs and consumers: resour
 | Permission | Resource of the requirement | Who holds it |
 |---|---|---|
 | `identity:person.register` | context (generated default) | any signed-in person (token) |
-| `identity:practice.open` | context | role `platform-admin` (token) |
+| `identity:practice.open` | context | role `network-admin` (token) |
 | `identity:member.add`, `identity:member.remove` | `practice:<practiceId>` | managers of the practice |
 | `identity:delegation.grant`, `identity:delegation.revoke` | `desk:<practiceId>.<practitionerId>` | the practitioner of the desk, managers of the practice |
 | `scheduling:calendar.create` | `desk:<practiceId>.<practitionerId>` | the practitioner of the desk, managers of the practice |
@@ -95,7 +95,7 @@ permission not listed here is for system actors only (jobs and consumers: resour
 | `scheduling:agenda.read` | `practice:<practiceId>` | members of the practice; narrowed by `Access.scope(actor, agenda.read, 'calendar')` to the calendars they run |
 | `notification:notification.read` | context | any signed-in person; narrowed by `Access.scope(actor, notification.read, 'person')` to themselves |
 | `analytics:occupancy.read` | `practice:<practiceId>` | members of the practice; narrowed by `Access.scope(actor, occupancy.read, 'calendar')` to the calendars they measure (their own; all for a manager) |
-| `audit:trail.read` | (platform) | role `platform-admin` |
+| `audit:trail.read` | (platform) | role `platform-admin`, read through an elevation over the networks |
 
 Relationships written by the contexts (through a port of their own, in the unit of work of the
 command, never by the domain): see rule 16 for `identity`; `scheduling` writes

@@ -9,14 +9,14 @@ import { Role } from '@/platform/auth/role';
 /**
  * What a role of the token grants before any relationship is read. Kept short on purpose: a
  * right over one element (a practice, a calendar, an appointment) is a relationship, never a
- * role. `support` grants nothing: support staff read through the user they impersonate.
+ * role. `support` grants nothing: support staff read through the user they impersonate. The
+ * administrator of a network opens its practices, in the network of the token; platform staff
+ * (`platform-admin`) belong to no network and read the audit trail of all of them through an
+ * elevation the trail records (ADR-0003).
  */
 export const roleGrants: readonly RoleGrant[] = [
-  {
-    role: Role.PlatformAdmin,
-    permissions: [identityPermissions['practice.open'].id, auditPermissions['trail.read'].id],
-    listing: 'all',
-  },
+  { role: Role.NetworkAdmin, permissions: [identityPermissions['practice.open'].id], listing: 'all' },
+  { role: Role.PlatformAdmin, permissions: [auditPermissions['trail.read'].id], listing: 'all' },
   {
     permissions: [
       identityPermissions['person.register'].id,

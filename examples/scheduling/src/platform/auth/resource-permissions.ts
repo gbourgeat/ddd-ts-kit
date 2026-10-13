@@ -32,6 +32,8 @@ export const resourcePermissions: PermissionMapping = {
     [schedulingPermissions['waitlist.join'].id]: 'run',
     [schedulingPermissions['agenda.read'].id]: 'run',
     [analyticsPermissions['occupancy.read'].id]: 'measure',
+    [schedulingPermissions['appointment.note.read'].id]: 'staff',
+    [schedulingPermissions['appointment.note.write'].id]: 'own',
   },
   appointment: {
     [schedulingPermissions['appointment.read'].id]: 'read',

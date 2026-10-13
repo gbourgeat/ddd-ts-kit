@@ -18,10 +18,12 @@ export function persistenceOver(db: Knex, close: () => Promise<void>): Persisten
   return {
     unitOfWork,
     database: unitOfWork,
-    outbox: new KnexOutboxStore(unitOfWork, { schema: MESSAGING }),
+    // The tenant of each event, so that its consumers run in the network it happened in.
+    outbox: new KnexOutboxStore(unitOfWork, { schema: MESSAGING, tenant: true }),
     processedEvents: new KnexProcessedEventStore(unitOfWork, { schema: MESSAGING }),
     jobs: new KnexJobStore(unitOfWork, { schema: MESSAGING }),
-    processes: new KnexProcessStore(unitOfWork, { schema: MESSAGING }),
+    // Each instance in the network of the work that started it: a step of another network finds none.
+    processes: (scope) => new KnexProcessStore(unitOfWork, { schema: MESSAGING, tenant: scope }),
     // One event store, in the schema of the one context with event-sourced aggregates.
     eventSourcing: createKnexEventSourcing(unitOfWork, { schema: SCHEDULING_SCHEMA }),
     close,

@@ -113,7 +113,12 @@ describe('keycloakAuthenticator', () => {
       id: 'f:1b2c3d4e:ada',
       type: 'user',
       roles: ['offline_access', 'default-roles-shop', 'accountant'],
-      attributes: { username: 'ada', email: 'ada@example.test', groups: ['/finance', '/finance/europe'] },
+      attributes: {
+        username: 'ada',
+        email: 'ada@example.test',
+        emailVerified: true,
+        groups: ['/finance', '/finance/europe'],
+      },
     });
   });
 
@@ -158,13 +163,35 @@ describe('keycloakAuthenticator', () => {
     ['a text claim', { tenant_id: 'acme' }, undefined, 'acme'],
     ['the organization claim as a list', { organization: ['acme'] }, 'organization', 'acme'],
     ['the organization claim as an object', { organization: { acme: { id: 'a1b2' } } }, 'organization', 'acme'],
-    ['several organizations, which name no tenant', { organization: ['acme', 'globex'] }, 'organization', undefined],
+    [
+      'several organizations, which name no default tenant',
+      { organization: ['acme', 'globex'] },
+      'organization',
+      undefined,
+    ],
     ['no organization', { organization: [] }, 'organization', undefined],
     ['a claim that is not text', { tenant_id: 42 }, undefined, undefined],
   ])('reads the tenant from %s', async (_case, claims, tenantClaim, tenantId) => {
     const subject = authenticator(tenantClaim === undefined ? {} : { tenantClaim });
 
     expect((await subject.authenticate(await signed({ ...userClaims(), ...claims }))).tenantId).toBe(tenantId);
+  });
+
+  it('lists the organizations of a member of several as their tenants, among which a request names one', async () => {
+    const subject = authenticator({ tenantClaim: 'organization' });
+    const claims = { ...userClaims(), organization: { acme: { id: 'a1' }, globex: { id: 'g1' } } };
+    const actor = await subject.authenticate(await signed(claims));
+
+    expect(actor.tenantId).toBeUndefined();
+    expect(actor.attributes['tenants']).toEqual(['acme', 'globex']);
+  });
+
+  it('says whether the realm verified the address of the user', async () => {
+    const verified = await authenticator().authenticate(await signed({ ...userClaims(), email_verified: true }));
+    const unverified = await authenticator().authenticate(await signed({ ...userClaims(), email_verified: false }));
+
+    expect(verified.attributes['emailVerified']).toBe(true);
+    expect(unverified.attributes['emailVerified']).toBe(false);
   });
 
   it('reads the administrator impersonating the user from the session note mapped to a claim', async () => {
@@ -181,6 +208,7 @@ describe('keycloakAuthenticator', () => {
     expect((await authenticator().authenticate(await signed(withoutGroups))).attributes).toEqual({
       username: 'ada',
       email: 'ada@example.test',
+      emailVerified: true,
     });
 
     expect(

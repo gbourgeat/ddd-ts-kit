@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { ok } from '@ddd-ts-kit/kernel';
-import { customSchema, sharedNameOf, sharedSchema } from '../src/index.js';
+import { customSchema, schemaBehind, sharedNameOf, sharedSchema } from '../src/index.js';
 import { zodSchema } from '../src/zod.js';
 
 const slot = customSchema((input) => ok(input), {
@@ -28,6 +28,13 @@ describe('a shared schema', () => {
 
   it('validates as the schema it shares', () => {
     expect(sharedSchema('Slot', slot).parse({ startsAt: 'now' })).toEqual(ok({ startsAt: 'now' }));
+  });
+
+  it('names the schema it was built from, so what another package attached to it holds for it too', () => {
+    const shared = sharedSchema('Slot', slot);
+
+    expect(schemaBehind.of(shared)).toBe(slot);
+    expect(schemaBehind.of(slot)).toBeUndefined();
   });
 
   it('is told by its name, and a schema that is not shared has none', () => {

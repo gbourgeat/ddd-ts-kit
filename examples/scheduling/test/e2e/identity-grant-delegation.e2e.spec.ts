@@ -147,11 +147,11 @@ describe('Grant delegation, end to end, kept from who may not grant it', () => {
 
 const terms = { assistantId: 'linus', availabilityIncluded: false };
 
-/** A practice opened by the platform admin and managed by ada, with grace as a practitioner and linus as an assistant; answers its identifier. */
+/** A practice opened by the administrator of the network and managed by ada, with grace as a practitioner and linus as an assistant; answers its identifier. */
 async function openPracticeWithMembers(application: RunningApplication): Promise<string> {
   await register(application, 'ada', 'grace', 'linus');
 
-  const root = await application.as({ id: 'root', roles: ['platform-admin'] });
+  const root = await application.as({ id: 'root', roles: ['network-admin'] });
 
   const opened = expectStatus(
     await root.post<{ id: string }>('/practices', { name: 'Riverside', timeZone: 'Europe/Paris', managerId: 'ada' }),

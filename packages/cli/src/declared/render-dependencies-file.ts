@@ -1,3 +1,4 @@
+import { laidOutCalls } from './injection/laid-out-calls.js';
 import type { RenderedInjections } from './injection/rendered-injections.js';
 
 /**
@@ -10,5 +11,5 @@ export function renderDependenciesFile(injected: RenderedInjections): string {
     return 'export {};\n';
   }
 
-  return `${injected.imports.join('\n')}\n\n${injected.calls.join('\n')}\n`;
+  return `${injected.imports.join('\n')}\n\n${laidOutCalls(injected.calls)}\n`;
 }

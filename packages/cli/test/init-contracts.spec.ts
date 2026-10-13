@@ -54,6 +54,14 @@ describe('the contracts init writes', () => {
     },
   );
 
+  it('documents 406 on the audit route of a project that negotiates its representations, and not otherwise', () => {
+    const statuses = (root: string) =>
+      keysAt(jsonAt(readContract(root, OPENAPI), 'paths', '/audit/entries', 'get', 'responses'));
+
+    expect(statuses(initProject())).toEqual(['200', '401', '403', '406', '422']);
+    expect(statuses(initProject('--representations', 'json'))).toEqual(['200', '401', '403', '422']);
+  });
+
   it('names the header of the development actor where nobody signs a token', () => {
     const openapi = readContract(initProject('--authn', 'none'), OPENAPI);
 
@@ -109,6 +117,8 @@ describe('the contracts init writes', () => {
       write(root, 'package.json', JSON.stringify({ name: 'orders-api', version: '3.2.1' }));
     }
 
+    // Both configs exist, so both projects keep what an absent key says (no negotiation): only the format differs.
+    write(yaml, 'ddd-ts-kit.config.json', JSON.stringify({}));
     write(json, 'ddd-ts-kit.config.json', JSON.stringify({ openapi: { format: 'json' } }));
     expect([cli(yaml, 'init').code, cli(json, 'init').code]).toEqual([0, 0]);
 

@@ -1,5 +1,6 @@
 import type { JsonSchema } from '@ddd-ts-kit/validation';
 import { cacheHeadersOf } from '../pipeline/cache-headers-of.js';
+import { negotiatedVary } from '../pipeline/negotiated-vary.js';
 import type { Route } from '../route/route.js';
 
 const SUCCESS_FROM = 200;
@@ -19,16 +20,21 @@ const LAST_MODIFIED = {
   schema: { type: 'string' },
 };
 
-/** The caching headers of a declared answer, as the pipeline sends them: `{}` when it sends none. */
-export function cacheResponseHeaders(route: Route, status: number): { headers?: JsonSchema } {
-  const headers = { ...sentHeaders(route, status), ...validatorHeaders(route, status) };
+/**
+ * The caching headers of a declared answer, as the pipeline sends them: `{}` when it sends none.
+ * An answer chosen by `Accept` among several media types (`varies`) varies on it too.
+ */
+export function cacheResponseHeaders(route: Route, status: number, varies = false): { headers?: JsonSchema } {
+  const headers = { ...sentHeaders(route, status, varies), ...validatorHeaders(route, status) };
 
   return Object.keys(headers).length === 0 ? {} : { headers };
 }
 
-function sentHeaders(route: Route, status: number): JsonSchema {
+function sentHeaders(route: Route, status: number, varies: boolean): JsonSchema {
+  const sent = cacheHeadersOf(route, status);
+
   return Object.fromEntries(
-    Object.entries(cacheHeadersOf(route, status)).map(([name, value]) => [
+    Object.entries({ ...sent, ...negotiatedVary(varies, sent['vary']) }).map(([name, value]) => [
       NAMES[name] ?? name,
       { description: DESCRIPTIONS[name] ?? name, schema: { type: 'string', const: value } },
     ]),

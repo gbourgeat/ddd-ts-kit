@@ -32,6 +32,7 @@ export const PATHS = {
   READER: `${NOTIFICATION}/application/ports/search-notifications-reader.port.ts`,
   ADAPTER: `${NOTIFICATION}/infrastructure/external/remote-mailer.adapter.ts`,
   REPOSITORY: `${NOTIFICATION}/infrastructure/persistence/knex-contacts.repository.ts`,
+  SEARCH_READER: `${NOTIFICATION}/infrastructure/persistence/knex-search-notifications-reader.repository.ts`,
   ROUTE: `${NOTIFICATION}/presentation/http/notifications/search-notifications/search-notifications.controller.ts`,
   OCCUPANCY_ROUTE: 'src/contexts/analytics/presentation/http/practices/search-occupancy/search-occupancy.controller.ts',
   BUILDER: `${NOTIFICATION}/test/builders/reminder.builder.ts`,

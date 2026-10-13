@@ -4,8 +4,11 @@ import type { Route } from '../route/route.js';
 import { cacheTagsOf, type TaggedParts } from './cache-tags-of.js';
 import type { RouteResponse } from './route-response.js';
 
-/** What tags an answer: the route, the header of the shared cache, and what the tags are read from. */
-export interface Tagging extends Omit<TaggedParts, 'body'> {
+/**
+ * What tags an answer: the route, the header of the shared cache, and what the tags are read
+ * from, the value the handler answered among them, before any representation wrote it.
+ */
+export interface Tagging extends TaggedParts {
   readonly route: Pick<Route, 'cache'>;
   readonly header: CacheTagHeader | undefined;
   /** Whether the tags are filed under the tenant of the request (`cacheTags.perTenant`). */
@@ -34,7 +37,7 @@ export function taggedAnswer(response: RouteResponse, tagging: Tagging): RouteRe
     return { ...response, headers: { ...response.headers, 'cache-control': CacheScope.noStore } };
   }
 
-  const tags = cacheTagsOf(cache.tags, { ...parts, body: response.body });
+  const tags = cacheTagsOf(cache.tags, parts);
 
   if (tags.length === 0) {
     return response;

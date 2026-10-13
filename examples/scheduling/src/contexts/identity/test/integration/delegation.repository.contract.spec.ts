@@ -6,7 +6,7 @@ import {
   type Actor,
   type ExecutionContext,
 } from '@ddd-ts-kit/kernel';
-import { repositoryContract } from '@ddd-ts-kit/testing/contracts';
+import { repositoryContract, tenantIsolationContract } from '@ddd-ts-kit/testing/contracts';
 import type { Delegation } from '@/contexts/identity/domain/aggregates/delegation.aggregate';
 import type { DelegationRepository } from '@/contexts/identity/domain/repositories/delegation.repository';
 import { Desk } from '@/contexts/identity/domain/value-objects/desk.vo';
@@ -51,6 +51,19 @@ repositoryContract<Delegation>(runner, {
 
     return new KnexDelegationRepository(database.persistence.database, new FixedExecutionScope(workOf('acme')), clock);
   },
+});
+
+/** No read and no write of one network reaches another, whatever the work in progress asks. */
+tenantIsolationContract<Delegation>(runner, {
+  ...expectations,
+  name: 'KnexDelegationRepository',
+  createRepository: async (scope) => {
+    await database.reset();
+
+    return new KnexDelegationRepository(database.persistence.database, scope, clock);
+  },
+  recreate: (delegation: Delegation) => aDelegation().identifiedBy(delegation.id).build(),
+  elevatedReads: true,
 });
 
 function workOf(tenantId: string): ExecutionContext {

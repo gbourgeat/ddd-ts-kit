@@ -37,15 +37,20 @@ export function stackVars(config: Config): RenderContext {
     errors: errorVars(config),
     ...modelWritingVars(config),
     routes: routeVars(config),
+    presentation: presentationVars(config),
     logger: one(logger, ['stdout', 'pino', 'winston']),
     tests: { ...one(tests, ['vitest', 'jest']), module: tests === 'jest' ? '@jest/globals' : 'vitest' },
-    worker: { on: config.worker, off: !config.worker },
     config: platformPaths(config),
     alias: aliasVars(config),
     persistence: persistenceVars(config),
     tenancy: { ...one(tenancy, ['none', 'shared-table']), any: tenancy !== 'none' },
-    queue: queueVars(config),
+    ...backgroundVars(config),
   };
+}
+
+/** Where the background jobs run and are kept. */
+function backgroundVars(config: Config): RenderContext {
+  return { worker: { on: config.worker, off: !config.worker }, queue: queueVars(config) };
 }
 
 /**
@@ -89,6 +94,21 @@ function routeVars(config: Config): RenderContext {
     declaredControllers,
     mountsControllers: declaredControllers || (http !== 'none' && audit === 'on' && routes === 'controllers'),
   };
+}
+
+/**
+ * `negotiated`: the boundary registers the representations of the kit; `forms`: the composition
+ * root serves the forms of the routes. Either one decides the restricted fields through the
+ * `Access` of the application, which `presentation-of.ts` of the platform builds.
+ */
+function presentationVars(config: Config): RenderContext {
+  const { http, representations, forms, audit } = config.stack;
+  const negotiated = http !== 'none' && representations === 'negotiated';
+  const served = http !== 'none' && forms === 'on';
+  const any = negotiated || served;
+
+  // The HTTP boundary takes more than its five ports when the audit trail or the presentation joins them.
+  return { negotiated, forms: served, any, widensEdge: any || audit === 'on' };
 }
 
 function assemblyVars(config: Config): RenderContext {

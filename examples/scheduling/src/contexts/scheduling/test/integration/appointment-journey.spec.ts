@@ -26,13 +26,18 @@ const DAY = 24 * 60 * 60_000;
 const clock = new SystemClock();
 
 const seeding = new FixedExecutionScope(
-  executionContext({ correlationId: 'appointment-journey', actor: systemActor('scheduling.spec'), origin: 'test' }),
+  executionContext({
+    correlationId: 'appointment-journey',
+    actor: systemActor('scheduling.spec'),
+    origin: 'test',
+    tenantId: 'north',
+  }),
 );
 
 // Two patients: what each may do to an appointment comes from the relationships the booking recorded, never from a role.
 const authenticator = new FakeAuthenticator({
-  ada: anActor().named('ada').withRole('patient').build(),
-  bob: anActor().named('bob').withRole('patient').build(),
+  ada: anActor().named('ada').ofTenant('north').withRole('patient').build(),
+  bob: anActor().named('bob').ofTenant('north').withRole('patient').build(),
 });
 
 const calendar = aCalendar()

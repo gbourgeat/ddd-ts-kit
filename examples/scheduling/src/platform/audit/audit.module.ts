@@ -18,12 +18,12 @@ export function auditModule(audit: Audit): ContextModule {
     name: 'audit',
     register(builder) {
       builder.bind(AuditTrail).toValue(audit.trail);
-      builder.bind(AuditReader).toValue(audit.trail);
+      builder.bind(AuditReader).toValue(audit.reader);
 
       builder
         .query(SearchAuditEntriesQuery)
         .requires(auditPermissions['trail.read'], { resource: () => ({ type: 'context', id: 'audit' }) })
-        .handledBy(SearchAuditEntriesHandler, [AuditReader]);
+        .handledByFactory((resolve) => new SearchAuditEntriesHandler(resolve(AuditReader), audit.elevate));
     },
     onStart({ resolve }) {
       subscribeAll(resolve(EventSubscribers).forContext(audit.consumer), audit.subscriptions);

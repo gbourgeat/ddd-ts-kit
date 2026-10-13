@@ -1,4 +1,5 @@
 import type { Schema } from '@ddd-ts-kit/validation';
+import type { FormHints } from '../forms/form-hints.js';
 import type { CachePolicy } from '../cache/cache-policy.js';
 import type { IfMatch } from '../cache/if-match.js';
 import type { HttpMethod } from '../route/http-method.js';
@@ -36,6 +37,12 @@ export interface ControllerSpec {
   /** Run after the guards of the group. With no group, at least one is required: `[Public]` says the route is open. */
   readonly guards?: readonly GuardReference[];
   readonly deprecated?: boolean;
+  /** Media types answered besides `application/json`, chosen by `Accept`: `['application/xml', 'text/csv']`. */
+  readonly produces?: readonly string[];
+  /** Media types a body is read in besides `application/json`: `['application/xml']`. */
+  readonly consumes?: readonly string[];
+  /** Describes the body as a form at `GET /forms/<operationId>` (`formRoutes`): `defineForm(...)` next to the schemas, or `{}`. */
+  readonly form?: FormHints;
   /** How the caches on the way may keep the answer; replaces the policy of the group. */
   readonly cache?: CachePolicy;
   /** A write conditional on the version the client read, handed to `handle` as `context.expectedVersion`. */

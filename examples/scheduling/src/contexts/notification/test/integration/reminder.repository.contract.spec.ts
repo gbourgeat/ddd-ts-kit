@@ -6,7 +6,7 @@ import {
   type Actor,
   type ExecutionContext,
 } from '@ddd-ts-kit/kernel';
-import { repositoryContract } from '@ddd-ts-kit/testing/contracts';
+import { repositoryContract, tenantIsolationContract } from '@ddd-ts-kit/testing/contracts';
 import type { Reminder } from '@/contexts/notification/domain/aggregates/reminder.aggregate';
 import { KnexReminderRepository } from '@/contexts/notification/infrastructure/persistence/knex-reminder.repository';
 import { openTestDatabase, type TestDatabase } from '@/platform/database/open-test-database';
@@ -111,6 +111,19 @@ async function createKnexRepository(): Promise<KnexReminderRepository> {
 
   return new KnexReminderRepository(database.persistence.database, new FixedExecutionScope(workOf('acme')), clock);
 }
+
+/** No read and no write of one network reaches another, whatever the work in progress asks. */
+tenantIsolationContract<Reminder>(runner, {
+  ...expectations,
+  name: 'KnexReminderRepository',
+  createRepository: async (scope) => {
+    await database.reset();
+
+    return new KnexReminderRepository(database.persistence.database, scope, clock);
+  },
+  recreate: (reminder: Reminder) => aReminder().identifiedBy(reminder.id).build(),
+  elevatedReads: true,
+});
 
 function workOf(tenantId: string): ExecutionContext {
   const actor: Actor = { id: 'member-of-' + tenantId, type: 'user', tenantId, roles: [], attributes: {} };

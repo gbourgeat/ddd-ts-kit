@@ -1,9 +1,11 @@
 import { Readable } from 'node:stream';
 import type { Context, Hono } from 'hono';
+import { assertCachedRoutes } from '../pipeline/assert-cached-routes.js';
 import { executeRoute } from '../pipeline/execute-route.js';
 import type { RawRequest } from '../pipeline/raw-request.js';
 import type { RouteResponse } from '../pipeline/route-response.js';
 import { serializeBody } from '../pipeline/serialize-body.js';
+import { assertServed } from '../representation/assert-served.js';
 import { assertUniqueRoutes } from '../route/assert-unique-routes.js';
 import type { Route } from '../route/route.js';
 import { edgeProblem } from './edge-problem.js';
@@ -19,11 +21,15 @@ const ONE_MEBIBYTE = 1_048_576;
 /**
  * Registers the routes on a Hono application. The adapter reads the JSON body itself, up to
  * `bodyLimit` (1 MiB by default): a larger body is answered 413 and a body that is not JSON 400,
- * both as problems, before the pipeline runs. An upload and a raw body are read from the
- * request stream; a body that is a stream is streamed to the response.
+ * both as problems, before the pipeline runs. A body in a media type the route consumes
+ * (`consumes`) is read as text under the same limit, for its representation. An upload and a raw
+ * body are read from the request stream; a body that is a stream, or a streamed list, is
+ * streamed to the response.
  */
 export function mountHono(app: Pick<Hono, 'on'>, routes: readonly Route[], options: HonoMountOptions = {}): void {
   assertUniqueRoutes(routes);
+  assertServed(routes, options.representations);
+  assertCachedRoutes(routes, options);
 
   for (const route of routes) {
     app.on(route.method, route.path, handlerOf(route, options));
@@ -34,7 +40,7 @@ function handlerOf(route: Route, options: HonoMountOptions): HonoHandler {
   const { bodyLimit = ONE_MEBIBYTE, ...execute } = options;
 
   return async (context) => {
-    const request = streamed(route) ? streamRequest(context) : await jsonRequest(context, bodyLimit);
+    const request = streamed(route) ? streamRequest(context) : await bodyRequest(context, route, bodyLimit);
 
     if (request instanceof Response) {
       return request;
@@ -58,8 +64,8 @@ function streamRequest(context: Context): RawRequest {
   };
 }
 
-async function jsonRequest(context: Context, limit: number): Promise<RawRequest | Response> {
-  const body = await readBody(context, limit);
+async function bodyRequest(context: Context, route: Route, limit: number): Promise<RawRequest | Response> {
+  const body = await readBody(context, limit, route.consumes);
 
   if (!body.read) {
     return edgeProblem(context.req.header(), body.refusal);
@@ -76,9 +82,16 @@ function common(context: Context): Omit<RawRequest, 'body'> {
 }
 
 function responseOf(result: RouteResponse): Response {
-  const body = result.body instanceof Readable ? Readable.toWeb(result.body) : (serializeBody(result) ?? null);
+  return new Response(sentOf(result), { status: result.status, headers: result.headers });
+}
 
-  return new Response(body, { status: result.status, headers: result.headers });
+/** A file as it is, a streamed list as a stream of its chunks, anything else serialized. */
+function sentOf(result: RouteResponse): ReadableStream | string | Uint8Array | null {
+  if (result.body instanceof Readable) {
+    return Readable.toWeb(result.body);
+  }
+
+  return result.stream === undefined ? (serializeBody(result) ?? null) : Readable.toWeb(Readable.from(result.stream));
 }
 
 /** A repeated key keeps its values as a list, a single one is a string: what Express and Fastify answer. */
