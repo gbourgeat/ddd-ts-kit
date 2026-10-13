@@ -274,11 +274,12 @@ export const STRUCTURE_INJECTIONS: readonly Injection[] = [
   },
   {
     rule: 'persistence/no-file-content',
+    // Numbered after every real migration, so that the history stays in order and only this rule speaks.
     what: 'a migration that adds a column of bytes for the scan of an appointment',
-    file: 'migrations/20261013120000_add-appointment-scan.js',
+    file: 'migrations/29991231235959_add-appointment-scan.js',
     changes: [
       {
-        file: 'migrations/20261013120000_add-appointment-scan.js',
+        file: 'migrations/29991231235959_add-appointment-scan.js',
         to: [
           'export const up = async (knex) => {',
           "  await knex.schema.withSchema('scheduling').alterTable('appointments', (table) => {",
