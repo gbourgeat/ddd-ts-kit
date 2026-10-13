@@ -83,8 +83,9 @@ export function {{name.camel}}Route(queries: QueryBus): Route {
     async (input) => {
       // TODO(domain): hand the criteria of the query over too, once the query schema declares them next to the page; map each line to its public fields.
       const page = await queries.execute(new {{route.input}}(actorOf(input.context.principal), input.query));
+      const body = pageResponse(page, ({{search.element}}) => ({ id: {{search.element}}.id }));
 
-      return { status: 200, body: pageResponse(page, (item) => ({ id: item.id })) };
+      return { status: 200, body };
     },
   );
 }

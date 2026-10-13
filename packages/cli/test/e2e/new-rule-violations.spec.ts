@@ -16,7 +16,7 @@ const READER = `${BILLING}/application/ports/search-invoices-reader.port.ts`;
 const BARE = '@CommandHandler(IssueInvoiceCommand)';
 /** The list a 0.1 project writes in the decorator: still read, and held to the same rules. */
 const listing = (first: string): string => `@CommandHandler(IssueInvoiceCommand, [${first}, IdGenerator, Clock])`;
-const SAVED = '    await this.invoiceRepository.save(target);\n';
+const SAVED = '    await this.invoiceRepository.save(invoice);\n';
 const SENT = "    await this.commands.execute(new CancelInvoiceCommand(systemActor('billing.cancel-stale-invoices')));";
 
 const ADAPTER_IMPORT =
@@ -110,8 +110,8 @@ const INJECTIONS: readonly Injection[] = [
     eslint: '@stylistic/padding-line-between-statements',
     what: 'a return glued to the statement above it',
     file: HANDLER,
-    from: '\n\n    return target.id;',
-    to: '\n    return target.id;',
+    from: '\n\n    return invoice.id;',
+    to: '\n    return invoice.id;',
   },
   {
     rule: 'clean/one-export-per-file',
@@ -151,7 +151,7 @@ const INJECTIONS: readonly Injection[] = [
     what: 'a handler that pulls the events of the aggregate it saved',
     file: HANDLER,
     from: SAVED,
-    to: `${SAVED}    target.pullEvents();\n`,
+    to: `${SAVED}    invoice.pullEvents();\n`,
   },
   {
     rule: 'domain-events/transactional-before-commit',

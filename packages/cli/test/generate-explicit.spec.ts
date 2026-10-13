@@ -247,7 +247,7 @@ describe('the files of an explicit context', () => {
     );
 
     expect(read(root, `${BILLING}/infrastructure/persistence/in-memory-search-invoices.reader.ts`)).toContain(
-      'export class InMemorySearchInvoicesReader implements SearchInvoicesReader {\n  protected readonly items: readonly SearchInvoicesItem[] = [];',
+      'export class InMemorySearchInvoicesReader implements SearchInvoicesReader {\n  protected readonly invoices: readonly SearchInvoicesItem[] = [];',
     );
 
     expect(read(root, `${BILLING}/test/fakes/search-invoices-reader.fake.ts`)).toContain(

@@ -2,7 +2,7 @@ import type { {{name.pascal}}Item } from '{{alias.context}}/application/queries/
 import { InMemory{{name.pascal}}Reader } from '{{alias.context}}/infrastructure/persistence/{{reader.file}}{{alias.ext}}';
 
 export class Fake{{name.pascal}}Reader extends InMemory{{name.pascal}}Reader {
-  constructor(protected override readonly items: readonly {{name.pascal}}Item[]) {
+  constructor(protected override readonly {{search.elements}}: readonly {{name.pascal}}Item[]) {
     super();
   }
 }

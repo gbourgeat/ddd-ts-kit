@@ -1,6 +1,7 @@
 import { emit, type Output } from '../../emit.js';
 import { named } from '../../named.js';
 import type { Scope } from '../../scope.js';
+import { searchedElements } from '../../searched-elements.js';
 import { vars } from '../../vars.js';
 import { wire } from '../../wire.js';
 import type { ControllerPlan } from './controller-plan.js';
@@ -18,7 +19,7 @@ export function writeController(scope: Scope, plan: ControllerPlan): void {
   const context = vars(scope, {
     name: named(name),
     route: controllerVars(scope, plan),
-    search: { customSchema: !SEARCH_LINE_LIBRARIES.has(validation) },
+    search: { customSchema: !SEARCH_LINE_LIBRARIES.has(validation), ...searchedElements(name) },
     ...(group === undefined
       ? {}
       : {
