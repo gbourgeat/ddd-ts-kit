@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { unwrap } from '@ddd-ts-kit/kernel';
 import { Slot } from '@/contexts/scheduling/domain/value-objects/slot.vo';
+import { expectRefusal } from '@ddd-ts-kit/testing';
 
 describe('Slot', () => {
   it('is equal to another slot with the same instants', () => {
-    const first = unwrap(Slot.create(at('09:00'), at('09:30'), at('09:40')));
+    const first = Slot.create(at('09:00'), at('09:30'), at('09:40'));
     const second = Slot.between(at('09:00'), at('09:30'), at('09:40'));
 
     expect(first.equals(second)).toBe(true);
@@ -22,9 +22,7 @@ describe('Slot', () => {
     ['is held less than it lasts', [at('09:00'), at('09:30'), at('09:20')]],
     ['has an instant that is no date', [at('09:00'), new Date(Number.NaN), at('09:40')]],
   ] as const)('refuses a slot that %s', (_rule, [startsAt, endsAt, heldUntil]) => {
-    const result = Slot.create(startsAt, endsAt, heldUntil);
-
-    expect(result).toMatchObject({ ok: false, error: { code: 'INVALID_SLOT' } });
+    expectRefusal(() => Slot.create(startsAt, endsAt, heldUntil), 'INVALID_SLOT');
     expect(() => Slot.between(startsAt, endsAt, heldUntil)).toThrow(expect.objectContaining({ code: 'INVALID_SLOT' }));
   });
 

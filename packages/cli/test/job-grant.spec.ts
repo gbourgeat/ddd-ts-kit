@@ -27,7 +27,7 @@ describe('generate job, the grant of its system actor', () => {
     const generated = report(cli(root, ...EVERY_QUARTER));
 
     const rule =
-      "  permit(\n    'system-billing.cancel-stale-invoices',\n    ['billing:invoice.cancel'],\n    ({ actor }) => actor.id === 'system:billing.cancel-stale-invoices',\n  ),";
+      "  permit(\n    'system-billing.cancel-stale-invoices',\n    [billingPermissions['invoice.cancel']],\n    ({ actor }) => actor.id === 'system:billing.cancel-stale-invoices',\n  ),";
 
     expect(read(root, `${AUTH}/attribute-policies.ts`)).toContain(
       `  // ddd-ts-kit:system-grants\n${rule}\n  // /ddd-ts-kit:system-grants`,
@@ -36,7 +36,7 @@ describe('generate job, the grant of its system actor', () => {
     expect(generated.todos.find((todo) => todo.text.startsWith('check this rule'))).toMatchObject({
       file: `${AUTH}/attribute-policies.ts`,
       // The rule takes several lines: the step points at the one that names it.
-      line: 16,
+      line: 18,
     });
 
     expect(read(root, JOB)).not.toContain('grant the system actor');
@@ -128,7 +128,43 @@ describe('generate job, the grant of its system actor', () => {
       ).code,
     ).toBe(0);
 
-    expect(read(root, `${AUTH}/roles.ts`).match(/'billing:invoice\.cancel',/g)).toHaveLength(1);
+    expect(read(root, `${AUTH}/roles.ts`).match(/billingPermissions\['invoice\.cancel'\],/g)).toHaveLength(1);
+  });
+});
+
+describe('generate job, a grant written by 0.5', () => {
+  it('reads a grant 0.5 wrote by its id as given, and does not give it a second time', () => {
+    const rbac = project();
+    const abac = project('--authz', 'abac');
+    const raw = "'billing:invoice.cancel',";
+
+    write(
+      rbac,
+      `${AUTH}/roles.ts`,
+      read(rbac, `${AUTH}/roles.ts`).replace(
+        '// /ddd-ts-kit:system-grants',
+        `${raw}\n    // /ddd-ts-kit:system-grants`,
+      ),
+    );
+
+    write(
+      abac,
+      `${AUTH}/attribute-policies.ts`,
+      read(abac, `${AUTH}/attribute-policies.ts`).replace(
+        '// /ddd-ts-kit:system-grants',
+        "permit(\n    'system-billing.cancel-stale-invoices',\n    ['billing:invoice.cancel'],\n    () => true,\n  ),\n  // /ddd-ts-kit:system-grants",
+      ),
+    );
+
+    for (const root of [rbac, abac]) {
+      expect(cli(root, ...EVERY_QUARTER).code).toBe(0);
+    }
+
+    expect(read(rbac, `${AUTH}/roles.ts`)).not.toContain("billingPermissions['invoice.cancel']");
+
+    expect(read(abac, `${AUTH}/attribute-policies.ts`).match(/'system-billing\.cancel-stale-invoices'/g)).toHaveLength(
+      1,
+    );
   });
 });
 

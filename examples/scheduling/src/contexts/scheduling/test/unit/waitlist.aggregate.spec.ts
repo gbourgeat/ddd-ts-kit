@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import { unwrap } from '@ddd-ts-kit/kernel';
 import { given } from '@ddd-ts-kit/testing';
 import { Waitlist } from '@/contexts/scheduling/domain/aggregates/waitlist.aggregate';
 import { Slot } from '@/contexts/scheduling/domain/value-objects/slot.vo';
@@ -160,5 +159,5 @@ function paris(time: string): Date {
 }
 
 function waiter(patientId: string, appointmentTypeId: string): Waiter {
-  return unwrap(Waiter.create({ patientId, appointmentTypeId, joinedAt: now }));
+  return Waiter.create({ patientId, appointmentTypeId, joinedAt: now });
 }

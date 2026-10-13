@@ -106,7 +106,7 @@ The realistic sequence for an order-taking service, each line in the order it is
 |---|---|---|---|---|
 | read [CHANGELOG.md](../../CHANGELOG.md) | what changed and what to do | before upgrading | the steps of the version | update the `@ddd-ts-kit/*` and `ddd-ts-kit` versions |
 | `npx ddd-ts-kit init --force` | rewrites the files `init` owns, keeps the config and wires the contexts again | after the upgrade | the platform and pipeline files of the new version, and notes | `npm run verify` |
-| `npx ddd-ts-kit controllers`, `error-factories --plan` then `--apply` | moves function routes to controllers, error classes to factories | when the project adopts those forms | the rewritten files and the config key | `npx ddd-ts-kit docs`, `npm run verify` |
+| `npx ddd-ts-kit controllers`, `error-factories --plan` then `--apply`, `value-objects` | moves function routes to controllers, error classes to factories, value objects from a `Result` to factories that throw | when the project adopts those forms | the rewritten files and the config key | `npx ddd-ts-kit docs`, `npm run verify` |
 | `npx ddd-ts-kit depcruise-config --write`, `npx ddd-ts-kit docs` | regenerate what derives from the config | after any change of the config | `.dependency-cruiser.cjs`, the generated documents | `npm run verify` |
 
 ## When something is refused
@@ -137,7 +137,7 @@ Usage
                   [--broker none|rabbitmq|kafka|nats|redis|custom] [--cache none|redis] [--audit on|off]
                   [--errors none|sentry] [--logger stdout|pino|winston] [--style declared|explicit] [--assembly barrel|discovery]
                   [--dependencies signature|listed] [--refusals factories|classes]
-                  [--routes controllers|functions]
+                  [--routes controllers|functions] [--value-objects throwing|result] [--literals named|free]
                   [--package-manager npm|pnpm] [--allow-no-outbox "<reason>"] [--import-alias '$<name>/']
                   [--import-extension none|js] [--sdk]
                   [--context <name>:<core|supporting|generic>]... [--dry-run] [--force]
@@ -154,6 +154,7 @@ Usage
   ddd-ts-kit build-aliases [--project <tsconfig>]
   ddd-ts-kit error-factories --plan | --apply [--dry-run]
   ddd-ts-kit controllers [<context>] [--dry-run]
+  ddd-ts-kit value-objects [--dry-run]
   ddd-ts-kit affected [--base <git-ref>] [--head <git-ref>] [--format text|json|github|env]
   ddd-ts-kit check [paths...] [--rule <id>]... [--format text|json|github|gitlab] [--changed-since <git-ref>] [--self]
   ddd-ts-kit check --clean-only <dir>... [--rule <id>]... [--format text|json|github]
@@ -172,6 +173,9 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
   error-factories  moves a project from one class per error to static factories on one error class per
                    concept: --plan writes error-factories.plan.json, where each class is given its concept;
                    --apply follows it (classes, specs, every usage, "stack.refusals" in the config)
+  value-objects    moves the value objects of a project from a Result to factories that return the value or
+                   throw: every create returning Result<T, E> returns T, err(..) is thrown, unwrap(..) of
+                   them goes, specs assert expectRefusal(() => ..), "stack.valueObjects" becomes throwing
   controllers      moves the function routes of a project, or of one context, to controller classes: each
                    <name>.route.ts becomes <resource>/<name>/<name>.controller.ts behind the route group of
                    its resource, its schema files and its spec follow; a context is turned whole or not at all
@@ -199,6 +203,7 @@ Kinds
   builder <context> <Aggregate>
   entity <context> <Name> [--term "<Term>=<meaning>"]...
   value-object <context> <Name> [--term "<Term>=<meaning>"]...   (alias: vo)
+  vocabulary <context> <Name> --value <value> [--value <value>]...
   domain-event <context> <Aggregate> <Fact> [--term "<Term>=<meaning>"]...
   error <context> <Concept> <refusal> [--code CODE] [--term "<Term>=<meaning>"]...   (alias: refusal)
   domain-error <context> <Name> [--code CODE]

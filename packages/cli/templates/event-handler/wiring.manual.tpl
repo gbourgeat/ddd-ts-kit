@@ -6,7 +6,7 @@ const {{event.camel}}EventHandler = platform.adapter(new {{event.pascal}}EventHa
 
 {{#if handler.afterCommit}}
 platform.domainEvents.on(
-  '{{event.name}}',
+  {{event.reference}},
   async (event) => {
     if (event instanceof {{event.pascal}}) {
       await {{event.camel}}EventHandler.handle(event);
@@ -16,7 +16,7 @@ platform.domainEvents.on(
 );
 {{/if}}
 {{#unless handler.afterCommit}}
-platform.domainEvents.on('{{event.name}}', async (event) => {
+platform.domainEvents.on({{event.reference}}, async (event) => {
   if (event instanceof {{event.pascal}}) {
     await {{event.camel}}EventHandler.handle(event);
   }

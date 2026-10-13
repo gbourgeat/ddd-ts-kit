@@ -56,6 +56,8 @@ export {
   STYLES,
   TEST_STACKS,
   VALIDATION_STACKS,
+  VALUE_OBJECT_FORMS,
+  LITERAL_FORMS,
   type OrmStack,
   type Stack,
 } from './stack.js';

@@ -10,6 +10,7 @@ const SERVICE = `${BILLING}/domain/services/pricing.service.ts`;
 const JOB = `${BILLING}/application/scheduling/cancel-stale-invoices.job.ts`;
 const EVENT_HANDLER = `${BILLING}/application/event-handlers/invoice-issued.event-handler.ts`;
 const OTHER_JOB = `${BILLING}/application/scheduling/issue-invoices-monthly.job.ts`;
+const ROLES = 'src/platform/auth/roles.ts';
 const READER = `${BILLING}/application/ports/search-invoices-reader.port.ts`;
 const BARE = '@CommandHandler(IssueInvoiceCommand)';
 /** The list a 0.1 project writes in the decorator: still read, and held to the same rules. */
@@ -21,7 +22,7 @@ const ADAPTER_IMPORT =
   "import { DrizzleInvoiceRepository } from '@/contexts/billing/infrastructure/persistence/drizzle-invoice.repository';\n";
 
 const DECLARED =
-  "import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';\nimport { InvoiceIssued } from '@/contexts/billing/domain/events/invoice-issued.event';\n\n@DomainEventHandler(InvoiceIssued, { name: 'billing.invoice.issued' })";
+  "import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';\nimport { InvoiceIssued } from '@/contexts/billing/domain/events/invoice-issued.event';\n\n@DomainEventHandler(InvoiceIssued, { name: InvoiceIssued.eventName })";
 
 const CACHING = `import { Cache } from '@ddd-ts-kit/kernel';\n${DECLARED.replace(' })', ' }, [Cache])')}`;
 const SPRAWL = `\nexport function sprawl(): number {\n  let total = 0;\n\n${'  total += 1;\n'.repeat(101)}\n  return total;\n}\n`;
@@ -191,6 +192,14 @@ const INJECTIONS: readonly Injection[] = [
     from: "@Scheduled('billing.cancel-stale-invoices'",
     to: "@Scheduled('CancelStale'",
   },
+  {
+    rule: 'language/declared-vocabulary',
+    eslint: 'ddd-ts-kit/language-declared-vocabulary',
+    what: 'a role granted by its value in the platform, where the Role vocabulary of the platform declares it',
+    file: ROLES,
+    from: '[Role.Admin]: ',
+    to: "'admin': ",
+  },
 ];
 
 /** Slow, opt-in (DDD_TS_KIT_E2E=1): one deliberate violation per rule of this wave, caught by the checker and by ESLint with the preset. */
@@ -206,7 +215,7 @@ describe.runIf(SLOW)('a violation of a rule of this wave, written into a generat
   });
 
   it('is absent from the files these tests edit, as generated', () => {
-    expect(project.linted(PORT, ADAPTER, HANDLER, SERVICE, JOB, OTHER_JOB, EVENT_HANDLER)).toBe('');
+    expect(project.linted(PORT, ADAPTER, HANDLER, SERVICE, JOB, OTHER_JOB, EVENT_HANDLER, ROLES)).toBe('');
     expect(project.checkedRules()).toEqual([]);
   }, 120_000);
 
@@ -231,6 +240,12 @@ describe.runIf(SLOW)('a violation of a rule of this wave, written into a generat
     expect(project.checked().filter((violation) => violation.ruleId === 'clean/function-size')).toEqual([
       expect.objectContaining({ severity: 'error', file: SERVICE }),
     ]);
+  }, 120_000);
+
+  it('ESLint catches a number without a name in the domain, a rule the checker leaves to it', () => {
+    project.append(SERVICE, '\nexport function minutesIn(hours: number): number {\n  return hours * 60;\n}\n');
+
+    expect(project.linted(SERVICE)).toContain('ddd-ts-kit/clean-no-magic-number');
   }, 120_000);
 
   it('the checker catches a padded block, the approximation of the layout the formatter holds', () => {

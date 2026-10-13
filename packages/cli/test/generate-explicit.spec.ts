@@ -130,7 +130,7 @@ describe('the module file of an explicit context', () => {
     );
 
     expect(module).toContain(
-      "resolve(DomainEventDispatcher).on('billing.invoice.issued', async (event) => {\n      if (event instanceof InvoiceIssued) {\n        await resolve(InvoiceIssuedV2Publisher).handle(event);\n      }\n    });",
+      'resolve(DomainEventDispatcher).on(InvoiceIssued.eventName, async (event) => {\n      if (event instanceof InvoiceIssued) {\n        await resolve(InvoiceIssuedV2Publisher).handle(event);\n      }\n    });',
     );
 
     expect(module).toContain(
@@ -142,7 +142,7 @@ describe('the module file of an explicit context', () => {
     const module = read(root, `${BILLING}/billing.module.ts`);
 
     expect(module).toContain(
-      "resolve(DomainEventDispatcher).on(\n      'billing.invoice.marked-as-paid',\n      async (event) => {\n        if (event instanceof InvoiceMarkedAsPaid) {\n          await resolve(InvoiceMarkedAsPaidEventHandler).handle(event);\n        }\n      },\n      { phase: 'after-commit' },\n    );",
+      "resolve(DomainEventDispatcher).on(\n      InvoiceMarkedAsPaid.eventName,\n      async (event) => {\n        if (event instanceof InvoiceMarkedAsPaid) {\n          await resolve(InvoiceMarkedAsPaidEventHandler).handle(event);\n        }\n      },\n      { phase: 'after-commit' },\n    );",
     );
   });
 
@@ -170,7 +170,11 @@ describe('the module file of an explicit context', () => {
 
     const module = read(root, `${SHIPPING}/shipping.module.ts`);
 
-    expect(consumer).toContain("import type { InvoiceIssuedV2 } from '@/contexts/billing/published-language/index';");
+    expect(consumer).toContain(
+      "import { invoiceIssuedV2, type InvoiceIssuedV2 } from '@/contexts/billing/published-language/index';",
+    );
+
+    expect(consumer).toContain('static readonly eventType = invoiceIssuedV2.type;');
 
     expect(consumer).toContain('constructor(private readonly commands: CommandBus) {}');
 

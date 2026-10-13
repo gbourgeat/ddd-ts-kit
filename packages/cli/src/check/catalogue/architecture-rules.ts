@@ -35,6 +35,7 @@ import { governanceRecordedDeviation } from '../rules/governance-recorded-deviat
 import { importsAliasDeclared } from '../rules/imports-alias-declared.js';
 import { importsAliasOnly } from '../rules/imports-alias-only.js';
 import { importsExtension } from '../rules/imports-extension.js';
+import { languageDeclaredVocabulary } from '../rules/language-declared-vocabulary.js';
 import { languageGlossaryTerm } from '../rules/language-glossary-term.js';
 import { languageNoTechnicalName } from '../rules/language-no-technical-name.js';
 import { layerApplicationInward } from '../rules/layer-application-inward.js';
@@ -87,6 +88,7 @@ export const ARCHITECTURE_RULES: readonly Rule[] = [
   testCoverageGoverned,
   languageGlossaryTerm,
   languageNoTechnicalName,
+  languageDeclaredVocabulary,
   purityNoSystemClock,
   purityNoAmbientRandomness,
   purityNoEnvironment,

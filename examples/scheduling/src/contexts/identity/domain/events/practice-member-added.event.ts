@@ -1,8 +1,10 @@
 import type { DomainEvent } from '@ddd-ts-kit/kernel';
-import type { RoleName } from '@/contexts/identity/domain/value-objects/role.vo';
+import type { RoleName } from '@/contexts/identity/domain/vocabularies/role-name.vocabulary';
 
 export class PracticeMemberAdded implements DomainEvent {
-  readonly name = 'identity.practice.member-added';
+  static readonly eventName = 'identity.practice.member-added';
+
+  readonly name = PracticeMemberAdded.eventName;
 
   constructor(
     readonly aggregateId: string,

@@ -1,4 +1,4 @@
-import { type Clock, type IdGenerator, unwrap } from '@ddd-ts-kit/kernel';
+import { type Clock, type IdGenerator } from '@ddd-ts-kit/kernel';
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
 import { CalendarError } from '@/contexts/scheduling/domain/errors/calendar.error';
 import type { CalendarRepository } from '@/contexts/scheduling/domain/repositories/calendar.repository';
@@ -21,7 +21,7 @@ export class DefineAppointmentTypeHandler implements CommandHandler<DefineAppoin
       throw CalendarError.unknown(command.calendarId);
     }
 
-    const appointmentType = unwrap(AppointmentType.create({ ...command.facts, id: this.ids.next() }));
+    const appointmentType = AppointmentType.create({ ...command.facts, id: this.ids.next() });
 
     target.defineAppointmentType(appointmentType, this.clock.now());
 

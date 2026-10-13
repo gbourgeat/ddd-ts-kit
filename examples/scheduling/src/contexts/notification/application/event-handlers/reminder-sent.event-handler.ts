@@ -2,9 +2,10 @@ import { type CommandBus, systemActor } from '@ddd-ts-kit/kernel';
 import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
 import { ReminderSent } from '@/contexts/notification/domain/events/reminder-sent.event';
 import { SendNotificationCommand } from '@/contexts/notification/application/commands/send-notification/send-notification.command';
+import { NotificationKindName } from '@/contexts/notification/domain/vocabularies/notification-kind-name.vocabulary';
 
 /** When a reminder is sent, its recipient is notified, once per reminder and start. */
-@DomainEventHandler(ReminderSent, { name: 'notification.reminder.sent' })
+@DomainEventHandler(ReminderSent, { name: ReminderSent.eventName })
 export class ReminderSentEventHandler implements DomainEventHandler<ReminderSent> {
   readonly actor = systemActor('notification.reminder-sent');
 
@@ -13,6 +14,8 @@ export class ReminderSentEventHandler implements DomainEventHandler<ReminderSent
   async handle(event: ReminderSent): Promise<void> {
     const cause = 'reminder:' + event.aggregateId + '@' + event.about.startsAt.toISOString();
 
-    await this.commands.execute(new SendNotificationCommand(this.actor, { ...event.about, kind: 'reminder', cause }));
+    await this.commands.execute(
+      new SendNotificationCommand(this.actor, { ...event.about, kind: NotificationKindName.Reminder, cause }),
+    );
   }
 }

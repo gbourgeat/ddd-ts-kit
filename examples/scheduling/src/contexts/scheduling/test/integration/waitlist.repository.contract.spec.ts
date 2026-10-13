@@ -3,7 +3,6 @@ import {
   FixedClock,
   FixedExecutionScope,
   executionContext,
-  unwrap,
   type Actor,
   type ExecutionContext,
 } from '@ddd-ts-kit/kernel';
@@ -21,13 +20,11 @@ const expectations = {
   createAggregate: () => aWaitlist().joinedBy('patient-1').joinedBy('patient-2', 'surgery').build(),
   mutate: (changed: Waitlist) => {
     changed.join(
-      unwrap(
-        Waiter.create({
-          patientId: 'patient-9',
-          appointmentTypeId: 'consultation',
-          joinedAt: new Date('2026-01-02T00:00:00.000Z'),
-        }),
-      ),
+      Waiter.create({
+        patientId: 'patient-9',
+        appointmentTypeId: 'consultation',
+        joinedAt: new Date('2026-01-02T00:00:00.000Z'),
+      }),
       new Date('2026-01-02T00:00:00.000Z'),
     );
   },

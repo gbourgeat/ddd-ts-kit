@@ -1,4 +1,4 @@
-import { type Clock, type IdGenerator, unwrap } from '@ddd-ts-kit/kernel';
+import { type Clock, type IdGenerator } from '@ddd-ts-kit/kernel';
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
 import { Calendar } from '@/contexts/scheduling/domain/aggregates/calendar.aggregate';
 import { CalendarError } from '@/contexts/scheduling/domain/errors/calendar.error';
@@ -24,7 +24,7 @@ export class CreateCalendarHandler implements CommandHandler<CreateCalendarComma
     }
 
     // The calendar lives by the wall clock of its practice.
-    const timeZone = unwrap(TimeZone.create(practitioner.timeZone));
+    const timeZone = TimeZone.create(practitioner.timeZone);
     const target = Calendar.create(this.ids.next(), { practiceId, practitionerId, timeZone }, this.clock.now());
 
     await this.calendarRepository.save(target);

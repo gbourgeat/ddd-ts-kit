@@ -177,7 +177,8 @@ throw AppointmentError.slotTaken(calendar.id, slot.startsAt);
 - **The concept is what was asked for**, not the class that detects the problem: a calendar
   that finds a slot held refuses with `AppointmentError.slotTaken`, because the caller asked
   for an appointment. The refusals of a value object are factories of the concept it
-  describes: `PersonError.invalidEmail(raw)`, returned in the `Result` of `Email.create`.
+  describes: `PersonError.invalidEmail(raw)`, thrown by `Email.create` (or returned in its
+  `Result` under `"stack.valueObjects": "result"`).
 - **The facts are data, and private.** What the message was built from is kept on the error as
   `facts`, so that a handler or a test reads a date and not a sentence. A fact reaches the
   client, under `facts` in the problem document, only when the factory names it with

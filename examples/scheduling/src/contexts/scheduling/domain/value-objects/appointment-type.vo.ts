@@ -1,4 +1,4 @@
-import { ValueObject, err, ok, type Result } from '@ddd-ts-kit/kernel';
+import { ValueObject } from '@ddd-ts-kit/kernel';
 import { CalendarError } from '@/contexts/scheduling/domain/errors/calendar.error';
 import { Slot } from '@/contexts/scheduling/domain/value-objects/slot.vo';
 
@@ -23,12 +23,14 @@ export class AppointmentType extends ValueObject<AppointmentTypeProps> {
     super(props);
   }
 
-  static create(facts: AppointmentTypeProps): Result<AppointmentType, CalendarError> {
+  static create(facts: AppointmentTypeProps): AppointmentType {
     const refusal = refusalOf(facts);
 
-    return refusal === undefined
-      ? ok(new AppointmentType({ ...facts, name: facts.name.trim() }))
-      : err(CalendarError.invalidAppointmentType(refusal));
+    if (refusal === undefined) {
+      return new AppointmentType({ ...facts, name: facts.name.trim() });
+    }
+
+    throw CalendarError.invalidAppointmentType(refusal);
   }
 
   /** What an appointment of this type holds when it starts at the instant: its duration, then its buffer. */

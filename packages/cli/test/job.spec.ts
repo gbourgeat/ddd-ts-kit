@@ -96,19 +96,19 @@ describe('generate job, in the declared style', () => {
     const printed = cli(root, ...EVERY_QUARTER, '--force').stdout;
 
     expect(read(root, ROLES)).toContain(
-      "  system: [\n    // ddd-ts-kit:system-grants\n    'billing:invoice.cancel',\n    // /ddd-ts-kit:system-grants\n  ],",
+      "  [Role.System]: [\n    // ddd-ts-kit:system-grants\n    billingPermissions['invoice.cancel'],\n    // /ddd-ts-kit:system-grants\n  ],",
     );
 
-    expect(grant).toMatchObject({ file: ROLES, line: 15 });
+    expect(grant).toMatchObject({ file: ROLES, line: 17 });
 
     expect(grant?.text).toContain(
       'gives `system:billing.cancel-stale-invoices` the permission `billing:invoice.cancel`',
     );
 
-    expect(generated.next).toContain(`${ROLES}:15`);
+    expect(generated.next).toContain(`${ROLES}:17`);
     expect(generated.updated).toContain(ROLES);
     expect(read(root, JOB)).not.toContain('grant the system actor');
-    expect(printed).toContain(`${ROLES}:15  check this grant: the role \`system\`, which every system actor holds`);
+    expect(printed).toContain(`${ROLES}:17  check this grant: the role \`system\`, which every system actor holds`);
   });
 
   it('passes the instant the run was due when the command takes it, and asks for nothing when the command is public', () => {
@@ -259,7 +259,7 @@ describe('generate job, where the wiring is written', () => {
 
     expect(read(root, JOB)).not.toContain('@Scheduled');
     expect(read(root, SPEC)).toContain('modules: [platformTestModule, billingModule, authorization]');
-    expect(read(root, ROLES)).toContain("    'billing:invoice.cancel',");
+    expect(read(root, ROLES)).toContain("    billingPermissions['invoice.cancel'],");
   });
 
   it('registers the job on the scheduler of the platform where contexts are wired by hand, and tests it on the test buses', () => {
@@ -273,7 +273,7 @@ describe('generate job, where the wiring is written', () => {
 
     expect(read(root, SPEC)).toContain('const { commandBus } = createTestBuses();');
     expect(read(root, SPEC)).toContain('await job.run(occurrence);');
-    expect(read(root, ROLES)).toContain("    'billing:invoice.cancel',");
+    expect(read(root, ROLES)).toContain("    billingPermissions['invoice.cancel'],");
   });
 });
 
