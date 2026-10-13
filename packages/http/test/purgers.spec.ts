@@ -29,13 +29,17 @@ describe('VarnishCachePurger', () => {
     expect(api.received[2]?.headers['xkey-softpurge']).toBe('calendar');
   });
 
-  it('bans each tag in turn', async () => {
-    await new VarnishCachePurger({ url: api.url, mode: VarnishPurgeMode.ban }).purge(['calendar:c-1', 'calendar']);
+  it('bans each tag in turn, its characters of a pattern escaped, with the key when it has one', async () => {
+    const purger = new VarnishCachePurger({ url: api.url, mode: VarnishPurgeMode.ban, key: 'secret' });
+
+    await purger.purge(['calendar:c-1', 'calendar:c.1(a)*']);
 
     expect(api.received.map(({ method, headers }) => `${method} ${String(headers['x-ban-tag'])}`)).toEqual([
       'PURGE calendar:c-1',
-      'PURGE calendar',
+      'PURGE calendar:c\\.1\\(a\\)\\*',
     ]);
+
+    expect(api.received[0]?.headers['x-purge-key']).toBe('secret');
   });
 
   it('sends nothing for no tag', async () => {

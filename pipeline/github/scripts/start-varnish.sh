@@ -3,7 +3,8 @@
 # <backend port>, with a VCL written by `ddd-ts-kit init --http-cache varnish` (its backend port rewritten).
 #   sh pipeline/github/scripts/start-varnish.sh <vcl file> <backend port> <port> [container name]
 # VARNISH_NETWORK=host runs it on the network of this machine instead, for a machine whose firewall keeps
-# containers from reaching it: the backend is then 127.0.0.1.
+# containers from reaching it: the backend is then 127.0.0.1. VARNISH_PURGE_KEY is the key a purge from another
+# address than the machine of Varnish sends (a container reached through its published port is one).
 set -eu
 
 vcl="$1"
@@ -15,10 +16,11 @@ backend_host="host.docker.internal"
 
 if [ "${VARNISH_NETWORK:-bridge}" = "host" ]; then
   backend_host="127.0.0.1"
-  docker create --name "$name" --network host --env "VARNISH_HTTP_PORT=$port" \
+  docker create --name "$name" --network host --env "VARNISH_HTTP_PORT=$port" --env "VARNISH_PURGE_KEY=${VARNISH_PURGE_KEY:-}" \
     --tmpfs /var/lib/varnish/varnishd:exec varnish:9.1.0 > /dev/null
 else
   docker create --name "$name" --add-host host.docker.internal:host-gateway --publish "127.0.0.1:$port:80" \
+    --env "VARNISH_PURGE_KEY=${VARNISH_PURGE_KEY:-}" \
     --tmpfs /var/lib/varnish/varnishd:exec varnish:9.1.0 > /dev/null
 fi
 
@@ -31,7 +33,9 @@ rm -f "$rewritten"
 docker start "$name" > /dev/null
 
 attempt=0
-until [ "$(curl --silent --output /dev/null --write-out '%{http_code}' --request PURGE --header 'xkey-purge: nothing' "http://127.0.0.1:$port/")" = "200" ]; do
+# Ready once it answers a purge, granted or not (without a key, a purge from the host is refused 403).
+until [ "$(curl --silent --output /dev/null --write-out '%{http_code}' --request PURGE --header 'xkey-purge: nothing' \
+  --header "x-purge-key: ${VARNISH_PURGE_KEY:-}" "http://127.0.0.1:$port/")" != "000" ]; do
   attempt=$((attempt + 1))
   if [ "$attempt" -ge 60 ]; then
     docker logs "$name"
