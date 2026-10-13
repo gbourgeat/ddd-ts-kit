@@ -1,3 +1,5 @@
+**English** · [Français](bootstrap-with-well-designed-contexts.fr.md)
+
 # Bootstrap with well-designed contexts
 
 **Summary.** A generic subdomain is one every application of its kind needs and none wins
@@ -131,6 +133,8 @@ provider writes (`tenantClaim` when it is a list or an object keyed by organisat
 otherwise).
 
 ## The identity provider
+
+![A person signs in at the identity provider, whose token gives the API edge the actor and its tenants; the identity context decides on accounts, organisations, members, invitations and delegations; its facts leave through the outbox, four consumers bring the provider in line through IdentityProviderAdmin at least once, and the other contexts build their own tuples and tenants from the same facts](../assets/diagrams/bootstrap-with-well-designed-contexts-identity-loop.svg)
 
 The provider authenticates, the context authorizes ([Identity](../tools/identity.md)). The
 provider follows the decisions of the context through four consumers of its own published facts

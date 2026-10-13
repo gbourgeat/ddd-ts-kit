@@ -1,5 +1,5 @@
 [English](choosing-access-control.md) · **Français**
-<!-- translation-of: choosing-access-control.md sha256:135652975809d0a3 -->
+<!-- translation-of: choosing-access-control.md sha256:4e22d9a6fecf52a9 -->
 
 # Choisir le contrôle d'accès, avec des préréglages commentés
 
@@ -448,8 +448,8 @@ on en ajoute une.
 
 `examples/scheduling` superpose deux modèles derrière l'unique port
 (`RolesAndRelationshipsAuthorizer`) : une courte liste d'attributions de rôles décide d'abord
-(l'administrateur de la plateforme, le libre-service d'un patient), puis les relations décident du
-reste : un cabinet avec ses responsables et ses praticiens, un bureau tenu ou délégué, un agenda
+(l'administrateur d'un réseau, l'équipe de la plateforme, le libre-service d'un patient), puis les
+relations décident du reste : un cabinet avec ses responsables et ses praticiens, un bureau tenu ou délégué, un agenda
 d'un bureau, un rendez-vous d'un agenda et de son patient. Un droit sur un élément est toujours
 une relation, jamais un rôle ; une liste ne vaut `all` que pour une attribution sans condition,
 sinon ce sont les identifiants qu'atteignent les relations. Un acteur système (un *job* planifié,
@@ -457,8 +457,8 @@ un gestionnaire d'événement d'intégration, nommé `<context>.<what it does>`)
 il peut utiliser les permissions de son propre contexte sur ce contexte, et tout ce qu'il demande
 d'autre va aux relations. Le cabinet n'y est pas un *tenant* : les patients prennent rendez-vous
 dans plusieurs cabinets, donc la frontière entre cabinets est une relation décidée élément par
-élément, pas une frontière de stockage
-([ADR 0003 de l'exemple](../../examples/scheduling/docs/adr/0003-a-practice-is-not-a-tenant.fr.md)).
+élément. Le réseau de cabinets est le *tenant*, une frontière de stockage sous toutes les relations
+([ADR 0003 de l'exemple](../../examples/scheduling/docs/adr/0003-one-network-is-one-tenant.fr.md)).
 
 | Qui demande | Ce qui décide | Exemple |
 |---|---|---|

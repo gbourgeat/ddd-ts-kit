@@ -1,5 +1,5 @@
 [English](methodology.md) · **Français**
-<!-- translation-of: methodology.md sha256:c9feaef0b21d6fb5 -->
+<!-- translation-of: methodology.md sha256:01abe0a1e7c7d42e -->
 
 # Méthodologie : d'une expression des besoins au code qui tourne
 
@@ -236,6 +236,11 @@ prouve le résultat avec `npm run verify` (`pnpm install` et `pnpm run verify` s
 gestionnaire par défaut : `init` affiche les deux commandes dans les termes du gestionnaire de
 paquets choisi, et le projet nu passe toute la porte avant son premier contexte). Un projet
 existant est adopté : les fichiers existants sont laissés de côté, sauf si `--force` est donné.
+
+Un contexte `generic` pour lequel le kit a un *preset* est écrit en entier à cette étape plutôt
+que construit tranche par tranche : `--preset identity` écrit les comptes venus du fournisseur
+d'identité, les organisations, les membres, les invitations et les délégations, verts tels
+qu'écrits ([Démarrer avec des contextes bien conçus](bootstrap-with-well-designed-contexts.fr.md)).
 
 Cette étape est celle qui doit être finie, fusionnée et partagée avant que tout travail en
 parallèle commence, parce qu'elle crée les fichiers dans lesquels le travail de tous les autres

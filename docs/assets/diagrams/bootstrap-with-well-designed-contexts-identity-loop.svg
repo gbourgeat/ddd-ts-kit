@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 530" width="960" height="530" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">The identity preset: the context decides, the provider follows</title>
+  <desc id="desc">A person signs in at the identity provider, Keycloak or another OIDC provider, which issues a token with the subject, email_verified and the organization claim. The API edge reads the actor and its tenants from the token, and the signed-in grants let every person use the permissions of the identity context. The identity context holds the accounts, organisations, members, invitations and delegations, and its policies decide inside an organisation. Its facts leave through the outbox: four consumers, delivered at least once and in any order, bring the identity provider in line through the IdentityProviderAdmin port, and the other contexts build their own tuples and tenants from the same facts.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="530" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">The identity preset: the context decides, the provider follows</text>
+  <rect x="24" y="72" width="150" height="100" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="99.0" y="117" font-size="16" fill="#5f6b73" text-anchor="middle" font-weight="700">A person</text>
+  <text x="99.0" y="141" font-size="13" fill="#1f2328" text-anchor="middle">signs in</text>
+  <rect x="206" y="72" width="230" height="100" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="321.0" y="97" font-size="16" fill="#5f6b73" text-anchor="middle" font-weight="700">Identity provider</text>
+  <text x="321.0" y="121" font-size="13" fill="#1f2328" text-anchor="middle">Keycloak or another OIDC,</text>
+  <text x="321.0" y="141" font-size="13" fill="#1f2328" text-anchor="middle">token: sub, email_verified,</text>
+  <text x="321.0" y="161" font-size="13" fill="#1f2328" text-anchor="middle">organization</text>
+  <rect x="468" y="72" width="210" height="100" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="573.0" y="97" font-size="16" fill="#9a5b2b" text-anchor="middle" font-weight="700">API edge</text>
+  <text x="573.0" y="121" font-size="13" fill="#1f2328" text-anchor="middle">the actor and its tenants;</text>
+  <text x="573.0" y="141" font-size="13" fill="#1f2328" text-anchor="middle">signed-in grants:</text>
+  <text x="573.0" y="161" font-size="13" fill="#1f2328" text-anchor="middle">identity:*</text>
+  <rect x="710" y="72" width="226" height="100" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="823.0" y="97" font-size="16" fill="#2f6f4f" text-anchor="middle" font-weight="700">Identity context</text>
+  <text x="823.0" y="121" font-size="13" fill="#1f2328" text-anchor="middle">accounts, organisations,</text>
+  <text x="823.0" y="141" font-size="13" fill="#1f2328" text-anchor="middle">members, invitations,</text>
+  <text x="823.0" y="161" font-size="13" fill="#1f2328" text-anchor="middle">delegations, policies</text>
+  <line x1="176" y1="122" x2="204" y2="122" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="438" y1="122" x2="466" y2="122" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="680" y1="122" x2="708" y2="122" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="710" y="250" width="226" height="100" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="823.0" y="285" font-size="16" fill="#7a4f9a" text-anchor="middle" font-weight="700">Outbox</text>
+  <text x="823.0" y="309" font-size="13" fill="#1f2328" text-anchor="middle">member.joined, member.removed,</text>
+  <text x="823.0" y="329" font-size="13" fill="#1f2328" text-anchor="middle">account.deactivated, ...</text>
+  <rect x="468" y="250" width="210" height="100" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="573.0" y="285" font-size="16" fill="#2b5d8a" text-anchor="middle" font-weight="700">Four consumers</text>
+  <text x="573.0" y="309" font-size="13" fill="#1f2328" text-anchor="middle">at least once, any order,</text>
+  <text x="573.0" y="329" font-size="13" fill="#1f2328" text-anchor="middle">align with the context</text>
+  <rect x="206" y="250" width="230" height="100" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="321.0" y="285" font-size="16" fill="#7a4f9a" text-anchor="middle" font-weight="700">IdentityProviderAdmin</text>
+  <text x="321.0" y="309" font-size="13" fill="#1f2328" text-anchor="middle">the Keycloak adapter is</text>
+  <text x="321.0" y="329" font-size="13" fill="#1f2328" text-anchor="middle">a recipe; a fake in tests</text>
+  <line x1="823" y1="174" x2="823" y2="248" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="708" y1="300" x2="680" y2="300" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="466" y1="300" x2="438" y2="300" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="321" y1="248" x2="321" y2="174" stroke="#3d4449" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#arrow)"/>
+  <text x="331" y="216" font-size="13" fill="#1f2328" text-anchor="start" font-style="italic">kept in line</text>
+  <rect x="710" y="392" width="226" height="90" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="823.0" y="422" font-size="16" fill="#5f6b73" text-anchor="middle" font-weight="700">Other contexts</text>
+  <text x="823.0" y="446" font-size="13" fill="#1f2328" text-anchor="middle">their tuples and tenants,</text>
+  <text x="823.0" y="466" font-size="13" fill="#1f2328" text-anchor="middle">from the same facts</text>
+  <line x1="823" y1="352" x2="823" y2="390" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="32" y="408" font-size="13" fill="#1f2328" text-anchor="start">The decisions live in the context. A provider that is down</text>
+  <text x="32" y="428" font-size="13" fill="#1f2328" text-anchor="start">is asked again by the relay until it answers: a removal</text>
+  <text x="32" y="448" font-size="13" fill="#1f2328" text-anchor="start">or a deactivation is never lost.</text>
+  <rect x="32" y="500" width="22" height="16" rx="4" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="64" y="513" font-size="14" fill="#1f2328" text-anchor="start">outside the application</text>
+  <rect x="259" y="500" width="22" height="16" rx="4" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="291" y="513" font-size="14" fill="#1f2328" text-anchor="start">presentation layer</text>
+  <rect x="448" y="500" width="22" height="16" rx="4" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="480" y="513" font-size="14" fill="#1f2328" text-anchor="start">the context</text>
+  <rect x="584" y="500" width="22" height="16" rx="4" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="616" y="513" font-size="14" fill="#1f2328" text-anchor="start">application layer</text>
+  <rect x="765" y="500" width="22" height="16" rx="4" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="797" y="513" font-size="14" fill="#1f2328" text-anchor="start">infrastructure</text>
+</svg>

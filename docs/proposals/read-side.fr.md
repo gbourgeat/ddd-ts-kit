@@ -1,5 +1,5 @@
 [English](read-side.md) · **Français**
-<!-- translation-of: read-side.md sha256:aeb7b818ecb02470 -->
+<!-- translation-of: read-side.md sha256:b8c13410cf8766bd -->
 
 # Proposition : le côté lecture
 
@@ -17,13 +17,14 @@ d'exécution l'ont, `ddd-ts-kit generate` et `check` ne le connaissent pas), **p
 | Partie | Construit dans les *packages* d'exécution | Pas encore généré par la CLI | Pas construit |
 |---|---|---|---|
 | 1. Critères et filtres | `Criteria`, `defineCriteria`, `validateCriteria`, `planCriteria`, `scoped` et l'évaluateur en mémoire `evaluateCriteria` dans `@ddd-ts-kit/kernel` ; la grammaire des paramètres d'URL et ses paramètres OpenAPI dans `@ddd-ts-kit/http` (`criteriaQuerySchema`, `criteriaFrom`, `criteriaParameters`) ; `criteriaToKnex`, `criteriaToDrizzle`, `criteriaToPrisma`, `criteriaToTypeOrm` ; `criteriaContract` dans `@ddd-ts-kit/testing` | `generate query --search` écrit un port de lecture qui prend le périmètre d'accès et une `PageRequest`, un adaptateur en mémoire et un `TODO(domain)` pour les critères : pas de `defineCriteria`, pas de paramètres `filter[...]` | le traducteur pour moteur de recherche ; RSQL |
-| 2. Représentations | rien au-delà de JSON et de `application/problem+json` | | tout : le port `Representation`, la négociation de contenu, XML, CSV, la visibilité des champs selon les permissions |
-| 3. Formulaires | | | tout |
+| 2. Représentations | `Representation`, `Representations.standard()` et la négociation sur `Accept` (406) dans `@ddd-ts-kit/http` ; JSON, `application/problem+json` et `+xml`, XML écrit et lu (415 sinon), CSV diffusé en flux, `streamSchemaOf`, `everyPage` pour diffuser une recherche page par page à travers le bus ; fichiers et réponses sans corps laissés hors de la négociation ; chaque type de média, 406 et 415 dans le contrat ; `withFieldAccess` et `fieldDeciderOf` pour les champs réservés à une permission ou à une politique, dans chaque représentation et dans les corps de requête HTTP ; la règle `authz/fields-by-schema` | généré depuis le 2026-10-13 : `stack.representations` choisi à `init`, `generate representation`, `describe` liste les types de média | un vocabulaire XML propre (espaces de noms, contenu mixte) ; l'entrée CSV |
+| 3. Formulaires | `formRoutes` sur `GET /forms/<operationId>`, les indications de `defineForm`, JSON Forms et l'arbre de blocs neutre, le formulaire donné seulement à qui peut exécuter son cas d'usage (`requires`), des champs cachés et en lecture seule selon l'appelant, `formDocumentsOf` | généré depuis le 2026-10-13 : `stack.forms` choisi à `init`, `generate form`, les formulaires écrits dans `openapi/forms/` | d'autres dialectes que JSON Forms, qu'un front-end obtient de l'arbre ; un moteur de rendu de consultation |
 | 4. Les données d'un autre contexte | l'hydratation : `hydrate(...).with(...).orElse(...)` dans le noyau, avec la politique en cas d'échec et de délai dépassé ; le port *gateway* qu'elle appelle (`generate gateway`) | aucun usage généré de `hydrate` | la règle des analyseurs : c'est le compilateur qui refuse des critères sur un champ hydraté, à sa place |
 | 5. Projections et recherche | `@Projection` et `@On` (`@ddd-ts-kit/kernel/declarations`), leur enregistrement et leurs métriques dans `@ddd-ts-kit/di` ; le port `ReadModelStore`, `TableReadModelStore` au-dessus d'`InMemoryReadModelStore`, `KnexReadModelStore`, `DrizzleReadModelStore`, `PrismaReadModelStore`, `TypeOrmReadModelStore`, tenus par `readModelStoreContract` ; `ProjectionRebuild` sur PostgreSQL | générés depuis le 2026-10-12, dans le style déclaré : `generate projection <context> <Name> <event-type>` écrit un projecteur et sa *spec*, `application/projections/` est un rôle de l'arborescence canonique, le *barrel* généré exporte un projecteur et enregistre ce que son constructeur reçoit, `describe` et `CONTEXT.md` le listent. Toujours pas générés : le port du modèle de lecture avec son adaptateur, que donnent `generate port` et le *package* de l'ORM | le stockage en index de recherche et le *package* Elasticsearch et OpenSearch ; un *job* de reconstruction généré |
 
 La référence de ce qui est construit est le README de chaque *package* : `@ddd-ts-kit/kernel`
-(« Criteria », « Hydration », « Projections »), `@ddd-ts-kit/http` (la grammaire des requêtes),
+(« Criteria », « Hydration », « Projections »), `@ddd-ts-kit/http` (la grammaire des requêtes, les
+représentations, les champs réservés à certains appelants, les formulaires),
 `@ddd-ts-kit/di` (« Projections »), les quatre *packages* d'ORM (« Criteria », « Read models »).
 Là où cette page et un README divergent sur une partie construite, le README a raison. Les
 critères et les modèles de lecture n'ont été exécutés que sur PostgreSQL.
@@ -166,80 +167,101 @@ relèvent de l'adaptateur de recherche.
 
 ## 2. Représentations et sérialisation
 
-Pas construit.
+Construit dans les *packages* d'exécution et généré par la CLI. Le mode d'emploi est dans le
+README de `@ddd-ts-kit/http` (« Représentations : JSON, XML, CSV » et « Champs réservés à
+certains appelants »), les idées dans
+[concepts/representations-and-forms.fr.md](../concepts/representations-and-forms.fr.md), les
+bibliothèques dans [tools/representations-and-forms.fr.md](../tools/representations-and-forms.fr.md).
 
 **Problème.** Une réponse relève de la présentation, mais les mêmes données sont voulues en JSON
 par l'application web, en XML par un partenaire, en CSV par un export.
 
-**Proposition.** Une route continue de renvoyer une valeur typée, vérifiée par son schéma de
-réponse ; un port `Representation` la transforme en octets pour un type de média choisi par
-négociation de contenu (`Accept`), avec un registre dans la plateforme :
+**Ce qui existe.** Une route continue de renvoyer une valeur typée, vérifiée par son schéma de
+réponse ; une `Representation` la transforme en texte pour un type de média choisi par
+négociation de contenu (`Accept`), depuis le registre que la plateforme donne aux adaptateurs et
+au générateur du contrat (`Representations.standard()`) :
 
 | Type de média | Fourni | Remarques |
 |---|---|---|
-| `application/json` | par défaut | comme aujourd'hui |
-| `application/problem+json` / `+xml` | erreurs | la RFC 9457 définit les deux |
-| `application/xml` | nouveau *package* | noms d'éléments et attributs dérivés du schéma de réponse, modifiables champ par champ ; une convention documentée pour les tableaux, les valeurs nulles et les dates |
-| `text/csv` | nouveau | pour les lignes de listes plates ; diffusé en flux |
+| `application/json` | par défaut | comme avant ; premier dans toute négociation |
+| `application/problem+json` / `+xml` | erreurs | RFC 9457 ; `+xml` quand XML a été négocié |
+| `application/xml` | `XmlRepresentation`, aucune dépendance | noms et attributs tirés du schéma et de son objet XML, la convention par défaut d'OpenAPI pour les listes, `xsi:nil` pour `null` ; relu selon la même convention ; aucune déclaration de type de document acceptée |
+| `text/csv` | `CsvRepresentation` | pour une page ou une liste de lignes plates ; diffusé en flux ; jamais lu |
 
-- Le schéma de réponse reste la source unique : le document OpenAPI liste chaque type de média
-  qu'une route produit, et la forme XML est documentée à partir du même schéma (indications
-  d'objet XML).
-- Les règles de sérialisation dont chaque projet a besoin sont standard et testées une seule
-  fois : dates en ISO 8601 UTC, décimaux et montants en chaînes avec une devise, identifiants en
-  chaînes, enveloppe de page, énumérations par leur code.
-- Visibilité des champs selon les permissions : un schéma de réponse peut marquer un champ comme
-  exigeant une permission ; le sérialiseur l'omet pour un acteur qui ne l'a pas, et le document
-  OpenAPI le dit. Cela remplace les « si admin alors ajouter le champ » écrits à la main.
-- Corps de requête HTTP : une entrée XML est acceptée sur les routes qui la déclarent, analysée
-  en le même objet que celui que produit le chemin JSON, puis validée par le même schéma.
+- Une route déclare `produces` et `consumes` ; le contrat liste chaque type de média de chaque
+  route, les types de problème de ses refus, `406 NOT_ACCEPTABLE` sur chaque route qu'écrit une
+  représentation et `415 UNSUPPORTED_MEDIA_TYPE` sur chaque route qui lit un corps. Une route qui
+  répond par un fichier ne déclare aucun schéma de corps et n'est jamais refusée par un 406.
+- Un gestionnaire qui répond par un `AsyncIterable` sous `streamSchemaOf(item)` est écrit élément
+  par élément dans chaque représentation, dans la portée d'exécution de sa requête HTTP ; un
+  curseur qui ne peut pas s'ouvrir reçoit encore une réponse sous forme de problème, un curseur
+  qui échoue plus tard est signalé à `onError`. `everyPage` construit cette liste à partir d'une
+  requête par page envoyée par le bus, si bien que chaque page s'exécute sous les *middlewares* du
+  bus (transaction, session du *tenant*, délai d'expiration, traçage).
+- Les règles de sérialisation sont standard et tenues une seule fois
+  (`standard-serialization.spec.ts`) : un instant en ISO 8601 UTC, les décimaux et les montants
+  en chaînes avec une devise (`decimalText`, `money`), les identifiants en chaînes, l'enveloppe de
+  page, un vocabulaire fermé par son code.
+- Visibilité des champs : `withFieldAccess(schema, { field: { read, write, subject } })` réserve
+  un champ à une permission (décidée par `Access`) ou à une politique ; le *pipeline* l'écarte de
+  toute représentation, le refuse dans un corps de requête HTTP, et le contrat le marque avec
+  `x-field-access`. Un champ montré ou caché est décidé sans être enregistré ; un champ posé est
+  enregistré. La règle `authz/fields-by-schema` refuse l'alternative écrite à la main dans une
+  requête.
+- Un projet généré choisit `stack.representations` à `init` (`negotiated` par défaut avec une
+  *stack* HTTP) ; `generate representation <context> <UseCase> xml,csv` déclare les types de
+  média d'un contrôleur.
 
 **Limites.** Le XML est ici un rendu fidèle du modèle JSON, pas un outil de conception de
 vocabulaires XML avec espaces de noms et contenu mixte ; un format de partenaire doté de son
 propre schéma est une couche anticorruption avec son propre *mapper*. Les agrégats ne sont jamais
-sérialisés : seuls les modèles de lecture et les types de présentation le sont.
+sérialisés : seuls les modèles de lecture et les types de présentation le sont. Une liste en flux
+ne peut plus être refusée une fois son premier élément écrit. L'accès aux champs juge les champs
+d'un schéma, jamais les lignes.
 
 ## 3. Formulaires décrits par le serveur
 
-Pas construit.
+Construit dans les *packages* d'exécution et généré par la CLI.
 
 **Problème.** Le front-end reconstruit à la main, pour chaque commande, un formulaire que le
 back-end décrit déjà : champs, types, contraintes, vocabulaires fermés.
 
-**Proposition.** Générer une description de formulaire à partir de ce qu'une route déclare déjà,
-servie sur `GET /forms/<operationId>` et générée dans la documentation.
+**Ce qui existe.** Une route qui déclare `form` (les indications de `defineForm`, à côté de ses
+schémas) est servie par `formRoutes` sur `GET /forms/<operationId>`, dans deux formats issus d'un
+même arbre :
 
-Deux sorties d'une même source, le schéma de la requête HTTP plus des indications de présentation
-facultatives :
-
-1. **JSON Forms** (schéma plus schéma d'interface), un standard ouvert existant, avec des moteurs
-   de rendu maintenus pour React, Angular et Vue. C'est le choix par défaut recommandé : aucun
-   nouveau format à maintenir, et le front-end peut utiliser une bibliothèque.
-2. **Un arbre de blocs neutre**, pour un front-end qui a son propre moteur de rendu :
+1. **JSON Forms** (schéma, schéma d'interface et données), le choix par défaut, avec des moteurs
+   de rendu maintenus pour React, Angular et Vue.
+2. **Un arbre de blocs neutre** (`?format=blocks`), pour un front-end qui a son propre moteur :
 
 ```json
-{ "type": "form", "operation": "bookAppointment", "blocks": [
-  { "type": "group", "label": "appointment.when", "blocks": [
-    { "type": "field", "name": "startsAt", "widget": "datetime", "required": true },
-    { "type": "field", "name": "durationMinutes", "widget": "select",
-      "options": [15, 30, 45, 60] } ] },
-  { "type": "field", "name": "reason", "widget": "textarea", "maxLength": 500,
-    "visibleWhen": { "field": "kind", "eq": "consultation" } } ] }
+{ "type": "form", "operation": "bookAppointment", "method": "POST", "path": "/appointments",
+  "label": "bookAppointment", "blocks": [
+  { "type": "group", "name": "when", "label": "bookAppointment.when", "blocks": [
+    { "type": "field", "name": "startsAt", "label": "bookAppointment.startsAt", "widget": "datetime", "required": true } ] },
+  { "type": "field", "name": "internalNote", "label": "bookAppointment.internalNote", "widget": "textarea",
+    "required": false, "readOnly": true, "constraints": { "maxLength": 2000 } } ] }
 ```
 
-- Les blocs s'imbriquent ; un bloc a un type, des libellés sous forme de clés de traduction, des
-  contraintes tirées du schéma, des options tirées des énumérations ou d'une route de
-  consultation, et des conditions simples. D'autres dialectes sont produits par de petits
-  *mappers* de cet arbre.
-- La description respecte l'appelant : un champ que l'acteur n'a pas le droit de renseigner est
-  absent ou en lecture seule.
-- La validation reste sur le serveur : le formulaire reprend les contraintes de forme pour que
-  l'utilisateur soit prévenu tôt, et la commande valide toujours et applique toujours les règles
-  métier.
+- Les blocs s'imbriquent ; un champ a un *widget*, une clé de traduction, les contraintes de son
+  schéma, des options tirées d'un vocabulaire fermé ou d'une route de consultation, et des
+  conditions simples (`visibleWhen`, `requiredWhen`).
+- La description respecte l'appelant : le formulaire n'est donné qu'à qui peut exécuter son cas
+  d'usage (`requires`, la permission demandée comme la demande `@Requires`), un champ qu'il ne
+  peut pas voir est absent, un champ qu'il ne peut pas renseigner est en lecture seule (un objet
+  avec chacun des champs qu'il contient), décidé par le même accès aux champs que les réponses, à
+  propos de l'élément que nomme la requête (`?calendarId=`).
+- La validation reste sur le serveur : le formulaire reprend les contraintes de forme, la route
+  valide de nouveau et refuse un champ que l'appelant ne peut pas renseigner, et la commande
+  applique les règles métier.
+- Un projet généré choisit `stack.forms` à `init` ; `generate form <context> <UseCase>` ajoute les
+  indications à un contrôleur ; `npm run docs:generate` écrit chaque formulaire en entier dans
+  `openapi/forms/<operationId>.json`.
 
 **Limites.** Une description de formulaire porte la forme et la présentation, jamais les règles
 métier : « un rendez-vous ne peut pas en chevaucher un autre » reçoit sa réponse de la commande,
-pas du formulaire. La mise en page au-delà des groupes et de l'ordre est l'affaire du front-end.
+pas du formulaire. La mise en page au-delà des groupes et de l'ordre est l'affaire du front-end,
+de même que le comportement d'une consultation.
 
 ## 4. Les modèles de lecture qui ont besoin des données d'un autre contexte
 
@@ -475,16 +497,17 @@ couvre bien des projets.
 
 1. **Grammaire des filtres** : tranchée par ce qui a été construit, la forme à crochets
    ci-dessus. RSQL (`status=in=(booked,confirmed)`) n'est pas fourni.
-2. **Formulaires** : JSON Forms seul, l'arbre de blocs neutre seul, ou les deux. Recommandé : les
-   deux, l'arbre de blocs comme modèle propre au kit et JSON Forms comme son premier *mapper*.
+2. **Formulaires** : tranché par ce qui a été construit : les deux, l'arbre de blocs comme
+   modèle propre au kit et JSON Forms comme son premier *mapper*.
 3. **Moteur de recherche** : Elasticsearch, OpenSearch, ou les deux derrière un seul adaptateur.
    Recommandé : un adaptateur testé sur OpenSearch (licence ouverte) et sur Elasticsearch.
-4. **Ordre du travail.** Les critères, l'hydratation et les projections sur SQL sont dans les
-   *packages* d'exécution, et le projecteur est généré. Ce qui reste, dans l'ordre recommandé :
-   les critères dans le générateur (`defineCriteria` et les paramètres `filter[...]` depuis
-   `generate query --search`) et le reste du générateur de projections (le port du modèle de
-   lecture, le *job* de reconstruction), puis les représentations et les formulaires, puis
-   l'adaptateur de recherche.
+4. **Ordre du travail.** Les critères, l'hydratation, les projections sur SQL, les
+   représentations et les formulaires sont dans les *packages* d'exécution, les représentations
+   et les formulaires dans la CLI aussi, et le projecteur est généré. Ce qui reste, dans l'ordre
+   recommandé : les critères dans le générateur et le *checker* (`defineCriteria` et les
+   paramètres `filter[...]` depuis `generate query --search`) et le reste du générateur de
+   projections (le port du modèle de lecture, le *job* de reconstruction), puis l'adaptateur de
+   recherche.
 
 ## Voir aussi
 
@@ -495,5 +518,6 @@ couvre bien des projets.
   [drizzle](../../packages/drizzle/README.fr.md), [prisma](../../packages/prisma/README.fr.md),
   [typeorm](../../packages/typeorm/README.fr.md)
 - [CQRS tel qu'il est utilisé ici](../concepts/cqrs.fr.md)
+- [Représentations, accès aux champs et formulaires](../concepts/representations-and-forms.fr.md)
 - [Cohérence à terme](../concepts/eventual-consistency.fr.md)
 - [Carte des contextes](../concepts/context-map.fr.md)

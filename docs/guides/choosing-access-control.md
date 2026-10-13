@@ -446,9 +446,9 @@ element is always a relationship, never a role; a list is `all` only for an unco
 otherwise the ids the relationships reach. A system actor (a scheduled job, an integration
 event handler, named `<context>.<what it does>`) holds no role: it may use the permissions of
 its own context on that context, and anything else it asks goes to the relationships. The
-practice is not a tenant there: patients book in
-several practices, so the boundary between practices is a relationship decided per element. The
-network of practices is the tenant, a storage boundary under every relationship
+practice is not a tenant there: patients book in several practices, so the boundary between
+practices is a relationship decided per element. The network of practices is the tenant, a
+storage boundary under every relationship
 ([ADR 0003 of the example](../../examples/scheduling/docs/adr/0003-one-network-is-one-tenant.md)).
 
 | Who asks | What decides | Example |
