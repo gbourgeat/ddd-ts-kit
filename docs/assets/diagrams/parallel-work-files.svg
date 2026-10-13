@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 510" width="960" height="510" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Which files may be written in parallel</title>
+  <desc id="desc">Three groups of files. Private to one worker, safe in parallel: the directory of each context under src/contexts. Shared, changed in sequence by the conductor: the config, src/platform, src/main.ts, package.json and the lockfile, the migrations, the published language of an upstream, the shared kernel. Derived, regenerated after a merge and never merged by hand: the barrels, docs/context-map.md, the lists of each CONTEXT.md, the OpenAPI and AsyncAPI documents, the event catalog and the dependency-cruiser configuration.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="510" rx="16" fill="#ffffff"/>
+  <text x="32" y="34" font-size="18" font-weight="600" fill="#1f2328">Which files may be written in parallel</text>
+  <rect x="24" y="52" width="280" height="440" rx="12" fill="#ffffff" stroke="#3d4449" stroke-width="2"/>
+  <text x="164" y="80" font-size="16" font-weight="700" text-anchor="middle" fill="#3d4449">private to one worker</text>
+  <text x="164" y="102" font-size="13" text-anchor="middle" fill="#1f2328">safe in parallel</text>
+  <text x="164" y="440" font-size="13" text-anchor="middle" font-style="italic" fill="#1f2328">two use cases of one context:</text>
+  <text x="164" y="458" font-size="13" text-anchor="middle" font-style="italic" fill="#1f2328">mostly safe, merge often</text>
+  <rect x="320" y="52" width="300" height="440" rx="12" fill="#ffffff" stroke="#5f6b73" stroke-width="2"/>
+  <text x="470" y="80" font-size="16" font-weight="700" text-anchor="middle" fill="#5f6b73">shared</text>
+  <text x="470" y="102" font-size="13" text-anchor="middle" fill="#1f2328">in sequence, by the conductor</text>
+  <text x="470" y="440" font-size="13" text-anchor="middle" font-style="italic" fill="#1f2328">on the default branch,</text>
+  <text x="470" y="458" font-size="13" text-anchor="middle" font-style="italic" fill="#1f2328">one change at a time</text>
+  <rect x="636" y="52" width="300" height="440" rx="12" fill="#ffffff" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 4"/>
+  <text x="786" y="80" font-size="16" font-weight="700" text-anchor="middle" fill="#3d4449">derived</text>
+  <text x="786" y="102" font-size="13" text-anchor="middle" fill="#1f2328">regenerate, never merge by hand</text>
+  <text x="786" y="440" font-size="13" text-anchor="middle" font-style="italic" fill="#1f2328">npx ddd-ts-kit docs</text>
+  <text x="786" y="458" font-size="13" text-anchor="middle" font-style="italic" fill="#1f2328">npm run docs:generate</text>
+  <text x="786" y="476" font-size="13" text-anchor="middle" font-style="italic" fill="#1f2328">npx ddd-ts-kit depcruise-config --write</text>
+  <rect x="40" y="124" width="248" height="34" rx="8" fill="#ffffff" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="52" y="146" font-size="13" fill="#1f2328">src/contexts/calendars/**</text>
+  <text x="276" y="146" font-size="13" font-weight="700" text-anchor="end" fill="#3d4449">W1</text>
+  <rect x="40" y="166" width="248" height="34" rx="8" fill="#ffffff" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="52" y="188" font-size="13" fill="#1f2328">src/contexts/appointments/**</text>
+  <text x="276" y="188" font-size="13" font-weight="700" text-anchor="end" fill="#3d4449">W2</text>
+  <rect x="40" y="208" width="248" height="34" rx="8" fill="#ffffff" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="52" y="230" font-size="13" fill="#1f2328">src/contexts/availability/**</text>
+  <text x="276" y="230" font-size="13" font-weight="700" text-anchor="end" fill="#3d4449">W3</text>
+  <rect x="40" y="250" width="248" height="34" rx="8" fill="#ffffff" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="52" y="272" font-size="13" fill="#1f2328">src/contexts/notifications/**</text>
+  <text x="276" y="272" font-size="13" font-weight="700" text-anchor="end" fill="#3d4449">W4</text>
+  <rect x="336" y="124" width="268" height="34" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="348" y="146" font-size="13" fill="#1f2328">ddd-ts-kit.config.json</text>
+  <rect x="336" y="166" width="268" height="34" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="348" y="188" font-size="13" fill="#1f2328">src/platform/ (composition, registries)</text>
+  <rect x="336" y="208" width="268" height="34" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="348" y="230" font-size="13" fill="#1f2328">src/main.ts</text>
+  <rect x="336" y="250" width="268" height="34" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="348" y="272" font-size="13" fill="#1f2328">package.json, lockfile</text>
+  <rect x="336" y="292" width="268" height="34" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="348" y="314" font-size="13" fill="#1f2328">migrations (one ordered list)</text>
+  <rect x="336" y="334" width="268" height="34" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="348" y="356" font-size="13" fill="#1f2328">published-language/ of an upstream</text>
+  <rect x="336" y="376" width="268" height="34" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="348" y="398" font-size="13" fill="#1f2328">src/shared-kernel/</text>
+  <rect x="652" y="124" width="268" height="34" rx="8" fill="#ffffff" stroke="#3d4449" stroke-width="1.5" stroke-dasharray="5 3"/>
+  <text x="664" y="146" font-size="13" fill="#1f2328">&lt;context&gt;.declarations.ts (barrels)</text>
+  <rect x="652" y="166" width="268" height="34" rx="8" fill="#ffffff" stroke="#3d4449" stroke-width="1.5" stroke-dasharray="5 3"/>
+  <text x="664" y="188" font-size="13" fill="#1f2328">docs/context-map.md</text>
+  <rect x="652" y="208" width="268" height="34" rx="8" fill="#ffffff" stroke="#3d4449" stroke-width="1.5" stroke-dasharray="5 3"/>
+  <text x="664" y="230" font-size="13" fill="#1f2328">the lists of each CONTEXT.md</text>
+  <rect x="652" y="250" width="268" height="34" rx="8" fill="#ffffff" stroke="#3d4449" stroke-width="1.5" stroke-dasharray="5 3"/>
+  <text x="664" y="272" font-size="13" fill="#1f2328">openapi/*.yaml</text>
+  <rect x="652" y="292" width="268" height="34" rx="8" fill="#ffffff" stroke="#3d4449" stroke-width="1.5" stroke-dasharray="5 3"/>
+  <text x="664" y="314" font-size="13" fill="#1f2328">docs/integration/asyncapi.yaml</text>
+  <rect x="652" y="334" width="268" height="34" rx="8" fill="#ffffff" stroke="#3d4449" stroke-width="1.5" stroke-dasharray="5 3"/>
+  <text x="664" y="356" font-size="13" fill="#1f2328">docs/integration/event-catalog.md</text>
+  <rect x="652" y="376" width="268" height="34" rx="8" fill="#ffffff" stroke="#3d4449" stroke-width="1.5" stroke-dasharray="5 3"/>
+  <text x="664" y="398" font-size="13" fill="#1f2328">.dependency-cruiser.cjs</text>
+</svg>

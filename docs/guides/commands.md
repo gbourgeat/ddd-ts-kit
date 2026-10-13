@@ -12,6 +12,12 @@ Commands are written for npm. On pnpm, `npx ddd-ts-kit` reads `pnpm exec ddd-ts-
 `npm run` reads `pnpm run`. A skill is typed in Claude Code with the plugin installed:
 `/ddd-ts-kit:<skill>`; the agent also uses most of them on its own when the situation matches.
 
+![The six moments of a project in order, start, model the domain, build a slice, before a commit, before a pull request, release and deploy, each with its skills and commands; the next slice loops back to build a slice; connecting two contexts and persistence come inside a slice; a refusal or a kit upgrade can come at any moment](../assets/diagrams/commands-moments.svg)
+
+The sections below follow these moments. Most of the time is spent in the loop from
+[Build a slice](#build-a-slice) to [Before a pull request](#before-a-pull-request), one slice
+per turn of the loop.
+
 ## A first feature, from zero
 
 The realistic sequence for an order-taking service, each line in the order it is typed:
@@ -28,6 +34,30 @@ The realistic sequence for an order-taking service, each line in the order it is
 | 8 | `/ddd-ts-kit:quality-gate`, that is `npm run verify` | a green gate |
 | 9 | `/ddd-ts-kit:commit-discipline` | one commit for the slice, generated files with it |
 | 10 | `npx ddd-ts-kit status` | the next slice of the plan |
+
+Line 5 is where the generators do the typing. With Drizzle chosen at `init`, the five commands
+it runs write these files, each in its layer:
+
+![The files written by generate aggregate, repository, command, route and e2e for the PlaceOrder slice: the routes and the controller in presentation, the permissions, the command and the handler in application, the aggregate and the repository port in domain, the Drizzle repository, the mapper and the schema in infrastructure, the builder, the fake, the contract suite and the specs under test, and the end-to-end spec outside the context](../assets/diagrams/commands-first-slice-files.svg)
+
+None of these files holds business code yet. Most of them hold `TODO(domain)` markers where a
+decision is left to you; three come wired and hold none (the route group `orders.routes.ts`, the
+permissions `ordering.permissions.ts` and the adapter `drizzle-order.repository.ts`). The
+generated specs hold `it.todo` entries. Line 6 lists them, one
+line each, in the order of the files:
+
+```text
+$ npx ddd-ts-kit todo ordering
+src/contexts/ordering/CONTEXT.md:5  TODO(domain)  say in two sentences which business capability this context owns and for whom; the first sentence is reused in the context map.
+src/contexts/ordering/application/commands/place-order/place-order.command.ts:7  TODO(domain)  declare the input of "place order" as a constructor with the actor first, then readonly primitives and ids, ...
+src/contexts/ordering/application/commands/place-order/place-order.handler.ts:16  TODO(domain)  decide what "place order" does to a Order: ...
+src/contexts/ordering/domain/aggregates/order.aggregate.ts:28  TODO(domain)  add one method per business intention (issue, cancel, ...): each guards its invariants, replaces `this.state` and records the event of what happened.
+...
+src/contexts/ordering/test/unit/order.aggregate.spec.ts:33  it.todo  records the fact of its birth
+...
+```
+
+The slice is finished when `todo ordering` no longer lists anything of it.
 
 ## Start a project
 
@@ -119,6 +149,58 @@ The realistic sequence for an order-taking service, each line in the order it is
 | `npx ddd-ts-kit check-file <path>`, `rules` | one file checked; every rule id | after an edit; to look a rule up | violations; the list | fix the cause |
 | `generate ... --term "<Term>=<meaning>"` | adds the missing word to the glossary as it generates | the generator refuses a name outside the glossary | the term in `CONTEXT.md` | `/ddd-ts-kit:glossary` if the meaning is unsure |
 | `/ddd-ts-kit:deviation`, `npx ddd-ts-kit generate adr "<title>" --deviation <what> --reason "<why>"` | puts the exception to the owner and records it | only when the owner agrees to go around a rule | a decision record and the config entry | `npm run verify` |
+
+Every refusal says what to do next. The generator refuses a name the glossary of the context
+does not hold, and writes nothing:
+
+```text
+$ npx ddd-ts-kit generate command ordering CancelOrder --permission order.cancel --aggregate Order
+error: "CancelOrder" uses "cancel", which the glossary of src/contexts/ordering/CONTEXT.md does not define.
+  fix: Either use an existing term (Order, Place), or add the term in the same command: --term "Cancel=<what it means for the business>". The glossary is written before the code (rule language/glossary-term).
+```
+
+so the same command, with the meaning of the word, goes through:
+
+```bash
+npx ddd-ts-kit generate command ordering CancelOrder --permission order.cancel --aggregate Order \
+  --term "Cancel=To withdraw an order before it is shipped"
+```
+
+The checker reports a violation with its rule id and a fix sentence. Here, a file of the
+`notification` context of the example application imports an aggregate of `scheduling`:
+
+```text
+$ npx ddd-ts-kit check-file src/contexts/notification/application/commands/probe.ts
+src/contexts/notification/application/commands/probe.ts:1  error  context/published-language-only
+  "notification" imports the internals of "scheduling" (src/contexts/scheduling/domain/aggregates/appointment.aggregate.ts).
+  fix: Import from src/contexts/scheduling/published-language only; if the type is missing there, publish it with `ddd-ts-kit generate integration-event scheduling <Aggregate> <Fact>` or react to an integration event.
+
+1 error, 0 warnings, 0 suppressions in 1 file.
+```
+
+and `explain` gives the reason of the rule, with one example each way:
+
+```text
+$ npx ddd-ts-kit explain context/published-language-only
+context/published-language-only
+
+A file imports from another context only through that context's published-language/.
+
+Why: A bounded context owns its model and must be free to change it. The published language is the only part designed for others; importing anything else couples two models and turns every refactoring into a cross-team negotiation.
+
+Bad:
+    // contexts/shipping/application/...
+    import { Invoice } from '@/contexts/billing/domain/aggregates/invoice.aggregate';
+
+Good:
+    // contexts/shipping/application/...
+    import type { InvoiceIssuedV1 } from '@/contexts/billing/published-language/index';
+
+Suppress one line (with a reason): // ddd-ts-kit-disable-next-line context/published-language-only -- <reason>
+```
+
+The last line is the suppression the checker accepts; using it is a deviation, which takes the
+owner's agreement and a decision record (the last row of the table above).
 
 ## Reference
 

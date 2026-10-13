@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 660" width="960" height="660" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">A search, from the query string to the store</title>
+  <desc id="desc">A search request is read by the route into a criteria with criteriaQuerySchema, or refused with a 422 problem. The query handler asks the authorizer for the scope of the actor and joins it with scoped, by AND. The read port plans the criteria with planCriteria. The plan is rendered by a store translator (Knex, Drizzle, Prisma, TypeORM) in production, or by the in-memory evaluator in the fakes; criteriaContract holds both to the same answers.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="660" rx="16" fill="#ffffff"/>
+  <text x="32" y="34" font-size="18" font-weight="600" fill="#1f2328">A search, from the query string to the store</text>
+  <rect x="40" y="52" width="880" height="44" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="56" y="79" font-size="13" fill="#1f2328">GET /appointments?filter[status]=in:booked,confirmed&amp;filter[startsAt]=gte:2026-10-01&amp;sort=-startsAt&amp;limit=20</text>
+  <line x1="290" y1="96" x2="290" y2="134" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="60" y="136" width="460" height="72" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="290" y="164" font-size="16" font-weight="700" text-anchor="middle" fill="#9a5b2b">route</text>
+  <text x="290" y="186" font-size="13" text-anchor="middle" fill="#1f2328">criteriaQuerySchema(appointmentCriteria)</text>
+  <rect x="620" y="136" width="300" height="72" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="770" y="164" font-size="16" font-weight="700" text-anchor="middle" fill="#9a5b2b">422 problem</text>
+  <text x="770" y="186" font-size="13" text-anchor="middle" fill="#1f2328">one issue per mistake, no value quoted</text>
+  <line x1="520" y1="172" x2="618" y2="172" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="569" y="164" font-size="13" text-anchor="middle" fill="#1f2328">refused</text>
+  <line x1="290" y1="208" x2="290" y2="254" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="302" y="236" font-size="13" fill="#1f2328">Criteria&lt;AppointmentRow&gt;</text>
+  <rect x="60" y="256" width="460" height="88" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="290" y="282" font-size="16" font-weight="700" text-anchor="middle" fill="#2b5d8a">query handler</text>
+  <text x="290" y="304" font-size="13" text-anchor="middle" fill="#1f2328">scoped(criteria, scope, mapping)</text>
+  <text x="290" y="325" font-size="13" text-anchor="middle" fill="#1f2328">joined by AND: no filter can widen it</text>
+  <rect x="596" y="264" width="344" height="72" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="768" y="292" font-size="16" font-weight="700" text-anchor="middle" fill="#5f6b73">authorizer</text>
+  <text x="768" y="314" font-size="13" text-anchor="middle" fill="#1f2328">access.scope(actor, permission, resourceType)</text>
+  <line x1="520" y1="300" x2="594" y2="300" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="557" y="292" font-size="13" text-anchor="middle" fill="#1f2328">asks</text>
+  <line x1="290" y1="344" x2="290" y2="390" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="302" y="372" font-size="13" fill="#1f2328">ScopedCriteria</text>
+  <rect x="60" y="392" width="460" height="72" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="290" y="420" font-size="16" font-weight="700" text-anchor="middle" fill="#2b5d8a">read port</text>
+  <text x="290" y="442" font-size="13" text-anchor="middle" fill="#1f2328">planCriteria(definition, scopedCriteria)</text>
+  <path d="M290,464 V488 H210 V510" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <path d="M290,488 H650 V510" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="302" y="479" font-size="13" fill="#1f2328">CriteriaPlan</text>
+  <rect x="60" y="512" width="300" height="88" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="210" y="538" font-size="16" font-weight="700" text-anchor="middle" fill="#7a4f9a">store translators</text>
+  <text x="210" y="560" font-size="13" text-anchor="middle" fill="#1f2328">criteriaToKnex, criteriaToDrizzle,</text>
+  <text x="210" y="581" font-size="13" text-anchor="middle" fill="#1f2328">criteriaToPrisma, criteriaToTypeOrm</text>
+  <rect x="500" y="512" width="300" height="88" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="650" y="538" font-size="16" font-weight="700" text-anchor="middle" fill="#7a4f9a">in-memory evaluator</text>
+  <text x="650" y="560" font-size="13" text-anchor="middle" fill="#1f2328">evaluateCriteria, for the fakes</text>
+  <text x="650" y="581" font-size="13" text-anchor="middle" fill="#1f2328">InMemoryReadModelStore</text>
+  <text x="430" y="632" font-size="14" text-anchor="middle" font-style="italic" fill="#1f2328">both held to the same table of criteria and answers by criteriaContract</text>
+</svg>

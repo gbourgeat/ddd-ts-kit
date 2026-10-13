@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 690" width="960" height="690" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">The moments of a project, and their commands</title>
+  <desc id="desc">Six moments in order: start a project, model the domain, build a slice, before a commit, before a pull request, release and deploy. Each one lists its skills of the plugin and its commands of the CLI. After a pull request the next slice starts again at build a slice. Inside a slice, connecting two contexts and persistence come when needed. At any moment, a refusal or a kit upgrade has its own commands.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="690" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">The moments of a project, and their commands</text>
+  <!-- 1 start -->
+  <rect x="100" y="64" width="520" height="74" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="118" y="88" font-size="16" font-weight="700" fill="#1f2328">1. Start a project</text>
+  <text x="118" y="109" font-size="13" fill="#2b5d8a">skills: start, bootstrap</text>
+  <text x="118" y="127" font-size="13" fill="#1f2328">CLI: init, status</text>
+  <!-- 2 model -->
+  <rect x="100" y="162" width="520" height="74" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="118" y="186" font-size="16" font-weight="700" fill="#1f2328">2. Model the domain</text>
+  <text x="118" y="207" font-size="13" fill="#2b5d8a">skills: discover-domain, bounded-contexts, glossary, context-map</text>
+  <text x="118" y="225" font-size="13" fill="#1f2328">CLI: generate context, list, describe</text>
+  <!-- 3 build -->
+  <rect x="100" y="260" width="520" height="74" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="118" y="284" font-size="16" font-weight="700" fill="#2b5d8a">3. Build a slice</text>
+  <text x="118" y="305" font-size="13" fill="#2b5d8a">skills: plan-slices, use-case, parallel-work</text>
+  <text x="118" y="323" font-size="13" fill="#1f2328">CLI: generate &lt;kind&gt;, todo</text>
+  <!-- 4 commit -->
+  <rect x="100" y="358" width="520" height="74" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="118" y="382" font-size="16" font-weight="700" fill="#2b5d8a">4. Before a commit</text>
+  <text x="118" y="403" font-size="13" fill="#2b5d8a">skills: commit-discipline</text>
+  <text x="118" y="421" font-size="13" fill="#1f2328">CLI: check --changed-since, docs, check --commit-size --staged</text>
+  <!-- 5 pull request -->
+  <rect x="100" y="456" width="520" height="74" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="118" y="480" font-size="16" font-weight="700" fill="#2b5d8a">5. Before a pull request</text>
+  <text x="118" y="501" font-size="13" fill="#2b5d8a">skills: quality-gate; agent architecture-reviewer</text>
+  <text x="118" y="519" font-size="13" fill="#1f2328">CLI: npm run verify, affected</text>
+  <!-- 6 release -->
+  <rect x="100" y="554" width="520" height="74" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="118" y="578" font-size="16" font-weight="700" fill="#1f2328">6. Release and deploy</text>
+  <text x="118" y="599" font-size="13" fill="#2b5d8a">skills: extract-service, to run one context alone</text>
+  <text x="118" y="617" font-size="13" fill="#1f2328">CLI: npm run build, docker build ., sdk, generate worker</text>
+  <!-- main flow -->
+  <line x1="360" y1="138" x2="360" y2="160" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="360" y1="236" x2="360" y2="258" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="360" y1="334" x2="360" y2="356" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="360" y1="432" x2="360" y2="454" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="360" y1="530" x2="360" y2="552" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- next slice loop -->
+  <path d="M100,493 H64 V297 H96" fill="none" stroke="#2b5d8a" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="50" y="395" font-size="14" font-weight="600" fill="#2b5d8a" text-anchor="middle" transform="rotate(-90 50 395)">next slice</text>
+  <!-- inside a slice, when needed -->
+  <text x="664" y="88" font-size="14" font-style="italic" fill="#1f2328">inside a slice, when needed</text>
+  <rect x="664" y="100" width="268" height="112" rx="10" fill="#ffffff" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="680" y="124" font-size="15" font-weight="700" fill="#2b5d8a">Connect two contexts</text>
+  <text x="680" y="146" font-size="13" fill="#2b5d8a">skill: integration-event</text>
+  <text x="680" y="166" font-size="13" fill="#1f2328">generate integration-event</text>
+  <text x="680" y="186" font-size="13" fill="#1f2328">generate integration-handler</text>
+  <text x="680" y="204" font-size="13" fill="#1f2328">generate acl, gateway</text>
+  <rect x="664" y="232" width="268" height="112" rx="10" fill="#ffffff" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="680" y="256" font-size="15" font-weight="700" fill="#2b5d8a">Persistence</text>
+  <text x="680" y="278" font-size="13" fill="#2b5d8a">skill: persistence</text>
+  <text x="680" y="298" font-size="13" fill="#1f2328">generate repository</text>
+  <text x="680" y="318" font-size="13" fill="#1f2328">npm run db:generate, db:migrate</text>
+  <text x="680" y="336" font-size="13" fill="#1f2328">npm run infra:up, dev</text>
+  <path d="M620,297 H642" fill="none" stroke="#2b5d8a" stroke-width="2"/>
+  <path d="M642,156 V288" fill="none" stroke="#2b5d8a" stroke-width="2"/>
+  <line x1="642" y1="156" x2="662" y2="156" stroke="#2b5d8a" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="642" y1="288" x2="662" y2="288" stroke="#2b5d8a" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- at any moment -->
+  <text x="664" y="392" font-size="14" font-style="italic" fill="#1f2328">at any moment</text>
+  <rect x="664" y="404" width="268" height="112" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="680" y="428" font-size="15" font-weight="700" fill="#5f6b73">When something is refused</text>
+  <text x="680" y="450" font-size="13" fill="#1f2328">explain &lt;rule-id&gt;, check-file, rules</text>
+  <text x="680" y="470" font-size="13" fill="#1f2328">generate ... --term "&lt;Term&gt;=..."</text>
+  <text x="680" y="490" font-size="13" fill="#2b5d8a">skill: deviation</text>
+  <text x="680" y="508" font-size="13" fill="#1f2328">generate adr --deviation</text>
+  <rect x="664" y="536" width="268" height="112" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="680" y="560" font-size="15" font-weight="700" fill="#5f6b73">After a kit upgrade</text>
+  <text x="680" y="582" font-size="13" fill="#1f2328">read CHANGELOG.md</text>
+  <text x="680" y="602" font-size="13" fill="#1f2328">init --force</text>
+  <text x="680" y="622" font-size="13" fill="#1f2328">controllers, error-factories</text>
+  <text x="680" y="640" font-size="13" fill="#1f2328">depcruise-config --write, docs</text>
+  <!-- legend -->
+  <text x="100" y="664" font-size="13" fill="#2b5d8a">skills: typed as /ddd-ts-kit:&lt;skill&gt; in Claude Code</text>
+  <text x="440" y="664" font-size="13" fill="#1f2328">CLI: a bare name is npx ddd-ts-kit &lt;name&gt;</text>
+</svg>

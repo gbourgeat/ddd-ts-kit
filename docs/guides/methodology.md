@@ -11,20 +11,7 @@ Strategic decisions belong to people; the tools make them explicit and keep them
 
 ## The path at a glance
 
-```mermaid
-flowchart LR
-  N[Statement of needs] --> D[1. Discover]
-  D --> C[2. Contexts and classification]
-  C --> G[3. Glossaries]
-  G --> M[4. Context map]
-  M --> B[5. Stack and bootstrap]
-  B --> P[6. Plan slices]
-  P --> W[7. Build]
-  W --> V[8. Verify]
-  V --> O[9. Document]
-  O -.next slice.-> P
-  V -.a boundary was wrong.-> C
-```
+![The nine steps in order: from the statement of needs, discover, contexts, glossaries and context map model the domain; stack and bootstrap builds the platform once; then plan slices, build, verify and document run for each slice, the next slice looping back to plan slices, and a wrong boundary sending the work back to contexts](../assets/diagrams/methodology-path.svg)
 
 | Step | Input | Output artefact | Produced by | Done when |
 |---|---|---|---|---|
@@ -87,6 +74,16 @@ For the scheduling application, a fragment:
 | practitioner | set working hours | working hours changed | recompute open slots | my calendar |
 | time (every morning) | send reminders | reminder sent | none | appointments of tomorrow |
 
+Laid out as an event storming reads it, from left to right, each line is one story: what the
+actor sees, what they ask, what happened, and what follows from it.
+
+![Three lines of the scheduling discovery read from left to right, read model, actor, command, domain event, policy: a client books an appointment from the open slots and a confirmation and a reminder follow; a client or a practitioner cancels and the slot is freed; every morning time sends the reminders of tomorrow. Below, a hot spot on cancelling for free and the list of external systems](../assets/diagrams/methodology-event-storming.svg)
+
+Each kind of note becomes a kind of code later, which is why the discovery is worth writing
+down: a command becomes a command and its handler (step 7), a domain event an event the
+aggregate records, a policy that crosses a boundary an integration event and its handler
+downstream (step 4), a read model a query or a projection, an actor a permission.
+
 The skill also lists the external systems (here: the identity provider, the email and SMS
 providers) with what happens when each is down, and the rules heard on the way ("a
 practitioner is never booked twice").
@@ -131,6 +128,19 @@ npx ddd-ts-kit generate context appointments --classification core \
   --term "Slot=A start and an end instant at which a practitioner can receive"
 ```
 
+From then on, a name made of words the glossary lacks is refused before any file is written.
+In a context whose glossary holds `Order` and `Place`:
+
+```text
+$ npx ddd-ts-kit generate command ordering CancelOrder --permission order.cancel --aggregate Order
+error: "CancelOrder" uses "cancel", which the glossary of src/contexts/ordering/CONTEXT.md does not define.
+  fix: Either use an existing term (Order, Place), or add the term in the same command: --term "Cancel=<what it means for the business>". The glossary is written before the code (rule language/glossary-term).
+```
+
+The answer is a definition, not a workaround: add
+`--term "Cancel=To withdraw an order before it is shipped"` to the same command, and the term
+lands in `CONTEXT.md` with the files.
+
 Then fill `CONTEXT.md` by hand: for each term, its meaning here and what it must not be
 confused with in a neighbouring context. See
 [Ubiquitous language](../concepts/ubiquitous-language.md).
@@ -154,6 +164,31 @@ npx ddd-ts-kit docs
 written sections outside them (reading guide, why these boundaries, relationship notes, known
 tensions). Write those: the diagram shows what, only people can say why. The patterns and
 their costs are in [Context map](../concepts/context-map.md).
+
+Declared this way, the downstream depends on the contract of its upstream, never on its model.
+In the [example application](../../examples/scheduling/README.md), `notification` reacts to a
+booking of `scheduling`:
+
+```ts
+// Instead of: notification reaches into the model of scheduling (refused: context/published-language-only)
+import { Appointment } from '@/contexts/scheduling/domain/aggregates/appointment.aggregate';
+
+// Write: notification imports what scheduling publishes, and reacts to it
+import { appointmentBookedV1, type AppointmentBookedV1 } from '@/contexts/scheduling/published-language/index';
+
+@IntegrationEventHandler(appointmentBookedV1, { consumer: 'notification.scheduling-appointment-booked' })
+export class SchedulingAppointmentBookedIntegrationHandler {
+  async handle(event: AppointmentBookedV1): Promise<void> {
+    const { patientId, appointmentId, startsAt, status } = event.payload;
+    // ... send a confirmation (or a request, for a requested booking) through the command bus of notification
+  }
+}
+```
+
+The handler is an excerpt of
+`examples/scheduling/src/contexts/notification/application/integration/handlers/scheduling-appointment-booked.integration-handler.ts`.
+The event is versioned (`V1`): scheduling can change its aggregate freely, as long as it keeps
+publishing that payload.
 
 **Done when** `npx ddd-ts-kit check --rule context/no-cycle --rule context/declared-relationship`
 is clean and every pattern other than the default has a sentence of justification.
@@ -215,6 +250,8 @@ output and the lists of step 1. The skill `plan-slices` writes it to
 `docs/architecture/plan.md`, the slices by status and by owner, and what is left to write in
 each context.
 
+![Above, the work planned by layers, every aggregate, then every handler, then every adapter, then every route, nothing running before the last one; below, the same work as vertical slices of the appointments context, each crossing the layers and merged on its own, then a published event in appointments and its handler in notifications as two slices](../assets/diagrams/methodology-vertical-slices.svg)
+
 **Done when** no slice touches two contexts, and every cross-context need is two slices: a
 published event upstream, a handler downstream.
 
@@ -224,6 +261,93 @@ The skill `use-case` drives one slice: restate it in the domain's words, name th
 (a use case is protected or explicitly public, never undecided), scaffold each file with
 `generate ... --json`, open only the `TODO(domain)` places the output lists, write the
 aggregate spec, then the handler spec with fakes, then the adapter and the route.
+
+"Inside out" starts with the rule itself. For `CancelAppointment`, the spec of the aggregate
+is written first, in the words of the glossary, with `given` of `@ddd-ts-kit/testing`; the
+intention method of the aggregate is then written to make it pass. Both are shown in one
+module here; in a project they are `domain/aggregates/appointment.aggregate.ts` and
+`test/unit/appointment.aggregate.spec.ts`, generated with their `TODO(domain)` places:
+
+<!-- checked sample -->
+```ts
+import { AggregateRoot, ConceptError, type DomainEvent } from '@ddd-ts-kit/kernel';
+import { given } from '@ddd-ts-kit/testing';
+import { describe, expect, it } from 'vitest';
+
+// The refusal, named in the words of the business.
+export class AppointmentError extends ConceptError {
+  static alreadyCancelled(appointmentId: string) {
+    return AppointmentError.refusal('APPOINTMENT_ALREADY_CANCELLED', `Appointment ${appointmentId} is already cancelled.`, {
+      appointmentId,
+    });
+  }
+}
+
+// The fact, in the past tense.
+export class AppointmentCancelled implements DomainEvent {
+  readonly name = 'appointments.appointment.cancelled';
+
+  constructor(
+    readonly aggregateId: string,
+    readonly occurredAt: Date,
+  ) {}
+}
+
+type AppointmentStatus = 'booked' | 'cancelled';
+
+export class Appointment extends AggregateRoot {
+  private constructor(
+    id: string,
+    private status: AppointmentStatus,
+  ) {
+    super(id);
+  }
+
+  static book(id: string): Appointment {
+    return new Appointment(id, 'booked');
+  }
+
+  get isCancelled(): boolean {
+    return this.status === 'cancelled';
+  }
+
+  // One intention: it guards its rule, changes the state and records what happened.
+  cancel(now: Date): void {
+    if (this.status === 'cancelled') {
+      throw AppointmentError.alreadyCancelled(this.id);
+    }
+
+    this.status = 'cancelled';
+    this.record(new AppointmentCancelled(this.id, now));
+  }
+}
+
+// The spec, written first: one business rule per test.
+const now = new Date('2026-03-01T08:00:00.000Z');
+
+describe('Appointment', () => {
+  it('is cancelled, and records the fact', () => {
+    given(Appointment.book('appointment-1'))
+      .when((appointment) => appointment.cancel(now))
+      .thenEvents([{ name: 'appointments.appointment.cancelled', aggregateId: 'appointment-1', occurredAt: now }])
+      .thenState((appointment) => expect(appointment.isCancelled).toBe(true));
+  });
+
+  it('refuses to be cancelled twice', () => {
+    const cancelled = Appointment.book('appointment-1');
+    cancelled.cancel(now);
+
+    given(cancelled)
+      .when((appointment) => appointment.cancel(now))
+      .thenError('APPOINTMENT_ALREADY_CANCELLED', { appointmentId: 'appointment-1' });
+  });
+});
+```
+
+`given` discards the events recorded while arranging, so `thenEvents` sees only what the
+intention under test recorded. The handler spec comes next, through the test application with
+the fakes the generator wrote, then the adapter and the route: see
+[Testing strategy](../concepts/testing-strategy.md).
 
 With several workers, one context per worker: see [Parallel work](parallel-work.md).
 

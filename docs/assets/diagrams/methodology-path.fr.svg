@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 520" width="960" height="520" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Le chemin, d'une expression des besoins au code qui tourne</title>
+  <desc id="desc">Neuf étapes dans l'ordre. Depuis l'expression des besoins : 1 découvrir, 2 contextes, 3 glossaires, 4 carte des contextes, qui modélisent le domaine ; 5 stack et amorçage, qui construit la plateforme ; puis pour chaque tranche 6 planifier les tranches, 7 construire, 8 vérifier, 9 documenter. Après l'étape 9, la tranche suivante reprend à l'étape 6. Quand la vérification montre qu'une frontière était mal placée, le travail revient à l'étape 2. Chaque étape nomme le fichier qu'elle laisse et le skill ou l'outil qui le produit.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="520" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Le chemin, d'une expression des besoins au code qui tourne</text>
+  <!-- needs -->
+  <rect x="14" y="58" width="180" height="34" rx="17" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="104" y="80" font-size="14" fill="#1f2328" text-anchor="middle">expression des besoins</text>
+  <line x1="104" y1="92" x2="104" y2="114" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- row 1: model the domain, then bootstrap -->
+  <rect x="24" y="116" width="160" height="96" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="104" y="142" font-size="15" font-weight="700" fill="#2f6f4f" text-anchor="middle">1. Découvrir</text>
+  <text x="104" y="168" font-size="13" fill="#1f2328" text-anchor="middle">discovery.md</text>
+  <text x="104" y="192" font-size="13" font-style="italic" fill="#2f6f4f" text-anchor="middle">discover-domain</text>
+  <rect x="212" y="116" width="160" height="96" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="292" y="142" font-size="15" font-weight="700" fill="#2f6f4f" text-anchor="middle">2. Contextes</text>
+  <text x="292" y="168" font-size="13" fill="#1f2328" text-anchor="middle">contexts.md</text>
+  <text x="292" y="192" font-size="13" font-style="italic" fill="#2f6f4f" text-anchor="middle">bounded-contexts</text>
+  <rect x="400" y="116" width="160" height="96" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="480" y="142" font-size="15" font-weight="700" fill="#2f6f4f" text-anchor="middle">3. Glossaires</text>
+  <text x="480" y="168" font-size="13" fill="#1f2328" text-anchor="middle">glossary.md</text>
+  <text x="480" y="192" font-size="13" font-style="italic" fill="#2f6f4f" text-anchor="middle">glossary</text>
+  <rect x="588" y="116" width="160" height="96" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="668" y="142" font-size="15" font-weight="700" fill="#2f6f4f" text-anchor="middle">4. Carte</text>
+  <text x="668" y="168" font-size="13" fill="#1f2328" text-anchor="middle">context-map.md</text>
+  <text x="668" y="192" font-size="13" font-style="italic" fill="#2f6f4f" text-anchor="middle">context-map</text>
+  <rect x="776" y="116" width="160" height="96" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="856" y="142" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">5. Stack, amorçage</text>
+  <text x="856" y="168" font-size="13" fill="#1f2328" text-anchor="middle">config, squelette, ADR</text>
+  <text x="856" y="192" font-size="13" font-style="italic" fill="#5f6b73" text-anchor="middle">bootstrap, init</text>
+  <line x1="184" y1="164" x2="210" y2="164" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="372" y1="164" x2="398" y2="164" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="560" y1="164" x2="586" y2="164" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="748" y1="164" x2="774" y2="164" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="856" y1="212" x2="856" y2="282" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- row 2: for each slice, right to left -->
+  <rect x="776" y="284" width="160" height="96" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="856" y="310" font-size="15" font-weight="700" fill="#2b5d8a" text-anchor="middle">6. Planifier</text>
+  <text x="856" y="336" font-size="13" fill="#1f2328" text-anchor="middle">slices.md</text>
+  <text x="856" y="360" font-size="13" font-style="italic" fill="#2b5d8a" text-anchor="middle">plan-slices</text>
+  <rect x="588" y="284" width="160" height="96" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="668" y="310" font-size="15" font-weight="700" fill="#2b5d8a" text-anchor="middle">7. Construire</text>
+  <text x="668" y="336" font-size="13" fill="#1f2328" text-anchor="middle">code, specs, un commit</text>
+  <text x="668" y="360" font-size="13" font-style="italic" fill="#2b5d8a" text-anchor="middle">use-case, generate</text>
+  <rect x="400" y="284" width="160" height="96" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="480" y="310" font-size="15" font-weight="700" fill="#2b5d8a" text-anchor="middle">8. Vérifier</text>
+  <text x="480" y="336" font-size="13" fill="#1f2328" text-anchor="middle">une porte verte</text>
+  <text x="480" y="360" font-size="13" font-style="italic" fill="#2b5d8a" text-anchor="middle">npm run verify</text>
+  <rect x="212" y="284" width="160" height="96" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="292" y="310" font-size="15" font-weight="700" fill="#2b5d8a" text-anchor="middle">9. Documenter</text>
+  <text x="292" y="336" font-size="13" fill="#1f2328" text-anchor="middle">documents générés</text>
+  <text x="292" y="360" font-size="13" font-style="italic" fill="#2b5d8a" text-anchor="middle">ddd-ts-kit docs</text>
+  <line x1="776" y1="332" x2="750" y2="332" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="588" y1="332" x2="562" y2="332" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="400" y1="332" x2="374" y2="332" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- loops -->
+  <path d="M292,380 V412 H836 V384" fill="none" stroke="#2b5d8a" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <text x="564" y="434" font-size="14" fill="#2b5d8a" text-anchor="middle">tranche suivante</text>
+  <path d="M480,284 V246 H292 V216" fill="none" stroke="#5f6b73" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <text x="386" y="268" font-size="14" fill="#5f6b73" text-anchor="middle">frontière mal placée</text>
+  <!-- legend -->
+  <rect x="24" y="464" width="22" height="16" rx="4" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="1.5"/>
+  <text x="54" y="477" font-size="14" fill="#1f2328">modéliser le domaine, avec les gens</text>
+  <rect x="320" y="464" width="22" height="16" rx="4" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="350" y="477" font-size="14" fill="#1f2328">la plateforme, une fois</text>
+  <rect x="530" y="464" width="22" height="16" rx="4" fill="#e7eef5" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="560" y="477" font-size="14" fill="#1f2328">pour chaque tranche ; la CI rejoue 8 et 9</text>
+  <text x="24" y="504" font-size="13" font-style="italic" fill="#1f2328">En italique : le skill du plugin ou l'outil qui fait l'étape. /ddd-ts-kit:start conduit les étapes 1 à 7, une par tour.</text>
+</svg>

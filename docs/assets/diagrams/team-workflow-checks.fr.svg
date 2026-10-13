@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 232" width="960" height="232" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Où tournent les vérifications, et ce qui reste au relecteur</title>
+  <desc id="desc">Les mêmes règles tournent trois fois, de la plus petite portée au projet entier : à chaque écriture de fichier dans une session d'agent, par le hook du plugin ; à chaque commit, par le hook de pre-commit sur les fichiers indexés ; sur la pull request, dans le pipeline, dont le job gate est la seule vérification requise. La revue humaine vient après une porte verte et juge la conception.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="232" rx="16" fill="#ffffff"/>
+  <text x="32" y="34" font-size="18" font-weight="600" fill="#1f2328">Où tournent les vérifications, et ce qui reste au relecteur</text>
+  <rect x="24" y="60" width="204" height="96" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="126" y="88" font-size="16" font-weight="700" text-anchor="middle" fill="#5f6b73">à chaque écriture</text>
+  <text x="126" y="110" font-size="13" text-anchor="middle" fill="#1f2328">le hook du plugin,</text>
+  <text x="126" y="130" font-size="13" text-anchor="middle" fill="#1f2328">dans une session d'agent</text>
+  <rect x="260" y="60" width="204" height="96" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="362" y="88" font-size="16" font-weight="700" text-anchor="middle" fill="#5f6b73">à chaque commit</text>
+  <text x="362" y="110" font-size="13" text-anchor="middle" fill="#1f2328">le hook de pre-commit,</text>
+  <text x="362" y="130" font-size="13" text-anchor="middle" fill="#1f2328">sur les fichiers indexés</text>
+  <rect x="496" y="60" width="204" height="96" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="598" y="88" font-size="16" font-weight="700" text-anchor="middle" fill="#5f6b73">sur la pull request</text>
+  <text x="598" y="110" font-size="13" text-anchor="middle" fill="#1f2328">le pipeline : son job gate</text>
+  <text x="598" y="130" font-size="13" text-anchor="middle" fill="#1f2328">est la vérification requise</text>
+  <rect x="732" y="60" width="204" height="96" rx="10" fill="#ffffff" stroke="#3d4449" stroke-width="2"/>
+  <text x="834" y="88" font-size="16" font-weight="700" text-anchor="middle" fill="#3d4449">revue humaine</text>
+  <text x="834" y="110" font-size="13" text-anchor="middle" fill="#1f2328">après une porte verte :</text>
+  <text x="834" y="130" font-size="13" text-anchor="middle" fill="#1f2328">la conception</text>
+  <line x1="228" y1="108" x2="258" y2="108" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="464" y1="108" x2="494" y2="108" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="700" y1="108" x2="730" y2="108" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <path d="M24,176 V188 H700 V176" fill="none" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="362" y="212" font-size="14" text-anchor="middle" font-style="italic" fill="#1f2328">les mêmes règles, de la plus petite portée au projet entier</text>
+</svg>

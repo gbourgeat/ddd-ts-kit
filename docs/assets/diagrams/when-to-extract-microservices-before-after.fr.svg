@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 520" width="960" height="520" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Extraire notification : ce qui change et ce qui ne change pas</title>
+  <desc id="desc">Avant : un seul déployable lancé par src/main.ts contient les quatre contextes identity, scheduling, analytics et notification, un bus d'événements en mémoire avec l'outbox écrite dans la même transaction, et une base de données avec un schéma par contexte. Après : src/main.ts garde identity, scheduling et analytics ; son relais d'outbox publie vers un broker ; le service notification, lancé par src/apps/notification/main.ts, consomme par un abonnement durable et possède son schéma. Le code du domaine et de l'application de chaque contexte est inchangé ; le point d'entrée, le fournisseur d'événements et la place du schéma changent.</desc>
+  <defs>
+    <marker id="arrow-infrastructure" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#7a4f9a"/>
+    </marker>
+  </defs>
+  <rect width="960" height="520" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Extraire notification : ce qui change et ce qui ne change pas</text>
+
+  <!-- before -->
+  <rect x="24" y="58" width="440" height="340" rx="14" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="44" y="84" font-size="14" font-weight="600" fill="#5f6b73">Avant : un seul déployable, src/main.ts</text>
+  <rect x="44" y="100" width="190" height="52" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="139" y="131" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">identity</text>
+  <rect x="254" y="100" width="190" height="52" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="349" y="131" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">scheduling</text>
+  <rect x="44" y="164" width="190" height="52" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="139" y="195" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">analytics</text>
+  <rect x="254" y="164" width="190" height="52" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="349" y="195" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">notification</text>
+  <rect x="44" y="236" width="400" height="66" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="244" y="262" font-size="14" font-weight="600" fill="#7a4f9a" text-anchor="middle">bus d'événements dans le processus</text>
+  <text x="244" y="284" font-size="13" fill="#1f2328" text-anchor="middle">l'outbox est écrite dans la transaction de la commande</text>
+  <rect x="44" y="314" width="400" height="66" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="244" y="340" font-size="14" font-weight="600" fill="#7a4f9a" text-anchor="middle">une seule base de données</text>
+  <text x="244" y="362" font-size="13" fill="#1f2328" text-anchor="middle">un schéma par contexte, aucune jointure entre eux</text>
+
+  <!-- after -->
+  <rect x="496" y="58" width="440" height="340" rx="14" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="516" y="84" font-size="14" font-weight="600" fill="#5f6b73">Après : notification déployé seul</text>
+  <rect x="512" y="96" width="408" height="96" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="528" y="116" font-size="13" font-weight="600" fill="#5f6b73">src/main.ts</text>
+  <rect x="528" y="128" width="120" height="48" rx="8" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="588" y="157" font-size="14" font-weight="700" fill="#2f6f4f" text-anchor="middle">identity</text>
+  <rect x="656" y="128" width="120" height="48" rx="8" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="716" y="157" font-size="14" font-weight="700" fill="#2f6f4f" text-anchor="middle">scheduling</text>
+  <rect x="784" y="128" width="120" height="48" rx="8" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="844" y="157" font-size="14" font-weight="700" fill="#2f6f4f" text-anchor="middle">analytics</text>
+  <line x1="716" y1="194" x2="716" y2="222" stroke="#7a4f9a" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow-infrastructure)"/>
+  <text x="728" y="213" font-size="13" fill="#7a4f9a">relais d'outbox</text>
+  <rect x="512" y="226" width="408" height="40" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="716" y="251" font-size="14" font-weight="700" fill="#5f6b73" text-anchor="middle">broker : RabbitMQ, Kafka, NATS, Redis Streams</text>
+  <line x1="716" y1="268" x2="716" y2="296" stroke="#7a4f9a" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow-infrastructure)"/>
+  <text x="728" y="287" font-size="13" fill="#7a4f9a">abonnement durable</text>
+  <rect x="512" y="300" width="408" height="84" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="528" y="320" font-size="13" font-weight="600" fill="#5f6b73">src/apps/notification/main.ts</text>
+  <rect x="528" y="330" width="180" height="44" rx="8" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="618" y="357" font-size="14" font-weight="700" fill="#2f6f4f" text-anchor="middle">notification</text>
+  <text x="724" y="349" font-size="13" fill="#1f2328">son schéma et ses migrations,</text>
+  <text x="724" y="367" font-size="13" fill="#1f2328">déplacés avec lui</text>
+
+  <!-- what changes -->
+  <rect x="24" y="414" width="440" height="84" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="44" y="440" font-size="16" font-weight="700" fill="#2f6f4f">Inchangé</text>
+  <text x="44" y="462" font-size="13" fill="#1f2328">le code du domaine et de l'application de chaque contexte,</text>
+  <text x="44" y="482" font-size="13" fill="#1f2328">ses gestionnaires et leurs specs, le langage publié</text>
+  <rect x="496" y="414" width="440" height="84" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="516" y="440" font-size="16" font-weight="700" fill="#7a4f9a">Changé</text>
+  <text x="516" y="462" font-size="13" fill="#1f2328">un point d'entrée, le fournisseur d'événements des deux côtés,</text>
+  <text x="516" y="482" font-size="13" fill="#1f2328">le schéma déplacé vers le service qui le possède</text>
+</svg>

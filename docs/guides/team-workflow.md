@@ -27,7 +27,26 @@ owner.
 | `docs/context-map.md` written sections, `docs/adr/` | the tech lead, with the owners concerned | propose |
 
 On GitHub or GitLab, a code owners file expresses this table mechanically. The kit does not
-generate one: write it by hand from the context list (`npx ddd-ts-kit list`).
+generate one: write it by hand from the context list (`npx ddd-ts-kit list`). For a project
+with an `appointments` and an `analytics` context:
+
+```text
+# .github/CODEOWNERS (GitHub) or CODEOWNERS (GitLab): the last matching line wins
+src/contexts/appointments/      @clinic/appointments-team
+src/contexts/analytics/         @clinic/data-team
+src/shared-kernel/              @clinic/appointments-team @clinic/data-team
+src/platform/                   @clinic/tech-lead
+src/main.ts                     @clinic/tech-lead
+ddd-ts-kit.config.json          @clinic/tech-lead
+.github/workflows/              @clinic/tech-lead
+docs/adr/                       @clinic/tech-lead
+```
+
+With branch protection asking for a code owner's review, a change under
+`src/contexts/appointments/` cannot merge without the appointments team. A line with two
+owners asks for one of them, not both: the joint approval of the shared kernel is a rule the
+team keeps, which the file alone does not enforce. The consumers of a `published-language/`
+are asked by name on its pull requests, as reviewers.
 
 Why one owner: a model stays coherent only if somebody can say no. Conway's law works in both
 directions (Skelton and Pais call the deliberate use the inverse Conway manoeuvre): boundaries
@@ -80,6 +99,41 @@ The practice:
    aggregate emit the fact, the consumer writes its handler against the declared type, tested
    with events built from the declaration.
 
+The declaration at the heart of that first pull request is short, and every line of it is
+something the consumers can argue about:
+
+<!-- checked sample -->
+```ts
+import { z } from 'zod';
+import { zodSchema } from '@ddd-ts-kit/validation/zod';
+import { defineIntegrationEvent, type PayloadOf } from '@ddd-ts-kit/events';
+import type { IntegrationEvent } from '@ddd-ts-kit/kernel';
+
+// src/contexts/appointments/published-language/appointment-booked.v1.integration-event.ts
+export const appointmentBookedV1 = defineIntegrationEvent({
+  type: 'appointments.appointment.booked',
+  version: 1,
+  description: 'An appointment was booked: the practitioner expects the client at the start instant.',
+  payload: zodSchema(
+    z.object({
+      appointmentId: z.string().describe('Identifier of the appointment.'),
+      clientId: z.string().describe('The client who comes.'),
+      practitionerId: z.string().describe('The practitioner who receives the client.'),
+      startsAt: z.string().describe('Start instant, ISO 8601 in UTC.'),
+    }),
+  ),
+});
+
+export type AppointmentBookedV1 = IntegrationEvent<PayloadOf<typeof appointmentBookedV1>>;
+
+// In the consumer's specs, the next day: an event built from the declaration, before the
+// producer emits anything. A payload that breaks the schema throws here, not in production.
+export const booked: AppointmentBookedV1 = appointmentBookedV1.create(
+  { appointmentId: 'a-1', clientId: 'c-1', practitionerId: 'p-1', startsAt: '2026-10-20T09:00:00.000Z' },
+  { id: 'evt-1', occurredAt: '2026-10-13T08:00:00.000Z' },
+);
+```
+
 The same applies to a route: merge the route definition with its schemas and declared errors,
 regenerate the OpenAPI document, and a front-end team can generate its client from the
 committed file while the handler is still a `TODO(domain)`.
@@ -95,6 +149,32 @@ The map is not only documentation. Three rules turn it into a permission system 
   (`context/published-language-only`);
 - and only if the relationship is declared in the config (`context/declared-relationship`);
 - and the declared relationships form no cycle (`context/no-cycle`).
+
+![Three contexts and the imports the checker accepts: analytics may import the published language of appointments because the config declares that relationship; an import of the domain of appointments is refused by context/published-language-only, and an import from notifications, which analytics does not name as an upstream, by context/declared-relationship](../assets/diagrams/team-workflow-imports.svg)
+
+The relationship is one entry of the config, in the downstream's list of upstreams:
+
+```json
+{
+  "contexts": {
+    "appointments": { "classification": "core", "upstreams": [] },
+    "analytics": {
+      "classification": "supporting",
+      "upstreams": [{ "context": "appointments", "relationship": "conformist" }]
+    }
+  }
+}
+```
+
+and the import that goes with it names the published language, never what is behind it:
+
+```ts
+// Instead of: the aggregate of another context (context/published-language-only)
+import { Appointment } from '@/contexts/appointments/domain/aggregates/appointment.aggregate';
+
+// write: what appointments publishes for its consumers
+import { appointmentCancelledV1 } from '@/contexts/appointments/published-language/index';
+```
 
 So "may my context use something of yours?" has a mechanical answer, and adding a dependency
 between two contexts is a visible change of `ddd-ts-kit.config.json`, reviewed by both owners,
@@ -140,16 +220,59 @@ cannot.
 This touches `appointments` (the fact must say whether it was late) and `analytics` (the
 count). It is never one pull request. Split it along the contract and order it upstream first:
 
-```mermaid
-sequenceDiagram
-  participant A as appointments owner
-  participant N as analytics owner
-  A->>N: 1. propose the payload change (additive: optional field `late`)
-  N-->>A: agreed
-  A->>A: 2. PR: published language + publisher + catalog (additive, same version)
-  A->>A: 3. PR: the aggregate computes the fact, tests
-  N->>N: 4. PR: handler reads the field, tolerates its absence
-  Note over A,N: each PR is green and deployable alone
+![A change that crosses two contexts, as a proposal then three pull requests on two lanes: the appointments owner proposes an additive payload change and the analytics owner agrees, then appointments merges its published language, then the aggregate computing the fact, while analytics merges a handler that tolerates the field's absence; each pull request is green and deployable alone](../assets/diagrams/team-workflow-cross-context.svg)
+
+Steps 2 and 4 in code. The field is optional, so it stays inside version 1, and the consumer
+reads an event without it as "unknown", never as "on time":
+
+<!-- checked sample -->
+```ts
+import { z } from 'zod';
+import { zodSchema } from '@ddd-ts-kit/validation/zod';
+import { defineIntegrationEvent, type PayloadOf } from '@ddd-ts-kit/events';
+import type { IntegrationEvent } from '@ddd-ts-kit/kernel';
+import { IntegrationEventHandler } from '@ddd-ts-kit/kernel/declarations';
+
+// Step 2, appointments: published-language/appointment-cancelled.v1.integration-event.ts
+export const appointmentCancelledV1 = defineIntegrationEvent({
+  type: 'appointments.appointment.cancelled',
+  version: 1,
+  description: 'An appointment was cancelled before it took place; its slot is free again.',
+  payload: zodSchema(
+    z.object({
+      appointmentId: z.string().describe('Identifier of the appointment.'),
+      cancelledAt: z.string().describe('When it was cancelled, ISO 8601 in UTC.'),
+      late: z
+        .boolean()
+        .optional()
+        .describe('True when cancelled less than 24 hours before the start; absent from the events published before.'),
+    }),
+  ),
+});
+
+export type AppointmentCancelledV1 = IntegrationEvent<PayloadOf<typeof appointmentCancelledV1>>;
+
+// Step 4, analytics: a port of its own, and a handler that tolerates both worlds
+export abstract class CancellationCounts {
+  abstract count(appointmentId: string, kind: 'late' | 'on-time' | 'unknown'): Promise<void>;
+}
+
+@IntegrationEventHandler(appointmentCancelledV1, { consumer: 'analytics.appointments-appointment-cancelled' })
+export class AppointmentsAppointmentCancelledHandler {
+  constructor(private readonly counts: CancellationCounts) {}
+
+  async handle(event: AppointmentCancelledV1): Promise<void> {
+    const { appointmentId, late } = event.payload;
+
+    if (late === undefined) {
+      // published before step 3, or by a producer not deployed yet
+      await this.counts.count(appointmentId, 'unknown');
+      return;
+    }
+
+    await this.counts.count(appointmentId, late ? 'late' : 'on-time');
+  }
+}
 ```
 
 Rules of the split:
@@ -173,7 +296,24 @@ A choice that constrains the future gets a record in `docs/adr/`: a boundary, a 
 pattern other than the default, a provider, an exception to a rule.
 `npx ddd-ts-kit generate adr "<title>"` writes the numbered file; with `--deviation <what>` it
 also writes the `deviations` entry of the config that points to it, which
-`governance/recorded-deviation` requires for any relaxed rule.
+`governance/recorded-deviation` requires for any relaxed rule:
+
+```bash
+npx ddd-ts-kit generate adr "No spec for generated adapters" \
+  --deviation rules.test/spec-required --reason "Generated adapters are covered by the contract suite."
+```
+
+writes `docs/adr/0009-no-spec-for-generated-adapters.md` (the next free number) and adds to
+`ddd-ts-kit.config.json`:
+
+```json
+"deviations": [
+  { "what": "rules.test/spec-required", "adr": "0009", "reason": "Generated adapters are covered by the contract suite." }
+]
+```
+
+The rule itself is relaxed in the same pull request, in the `rules` of the config, where the
+reviewers see the exception and its record side by side.
 
 Keep them to half a page: context, decision, consequences, alternatives rejected. An accepted
 record is never rewritten; a later one supersedes it. The record is what lets a newcomer tell
@@ -198,9 +338,31 @@ usual ones already are:
 | "you forgot to regenerate the OpenAPI file" | the documentation drift gate |
 
 Rule ids and their exact statements are in the
-[architecture reference](../ARCHITECTURE.md#3-dependency-rules). The checks run at three
-moments: at each file write in an agent session (the plugin's hook), on staged files
-(pre-commit), and in CI. A review that starts after a green gate is a review of design.
+[architecture reference](../ARCHITECTURE.md#3-dependency-rules). A finding names its rule, and
+the rule explains itself, so the author learns the reason without waiting for a reviewer:
+
+```text
+$ npx ddd-ts-kit explain purity/no-system-clock
+purity/no-system-clock
+
+No new Date() without argument, Date.now() or performance.now() in domain/ or application/: time comes from the Clock port.
+
+Why: Code that reads the clock gives a different answer every time it runs, so its tests are either flaky or need a mocked module. Passing the instant in, from the Clock port, makes every rule about time testable with a fixed date and replayable in production.
+
+Bad:
+    isOverdue(): boolean { return this.dueDate < new Date(); }
+
+Good:
+    isOverdue(now: Date): boolean { return this.dueDate < now; }
+
+Suppress one line (with a reason): // ddd-ts-kit-disable-next-line purity/no-system-clock -- <reason>
+```
+
+The checks run at three moments: at each file write in an agent session (the plugin's hook),
+on staged files (pre-commit), and in CI. A review that starts after a green gate is a review
+of design.
+
+![Where the checks run: at each file write in an agent session, on the staged files before a commit, and in the pipeline of the pull request, whose gate job is the required check; the human review comes after a green gate and judges the design](../assets/diagrams/team-workflow-checks.svg)
 
 ## Onboarding a newcomer in a day
 
