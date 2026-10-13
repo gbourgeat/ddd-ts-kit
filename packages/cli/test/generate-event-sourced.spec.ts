@@ -80,7 +80,7 @@ describe('generate aggregate --event-sourced', () => {
     expect(aggregate).toContain('export type LedgerEvent = LedgerCreated | LedgerCredited;');
 
     expect(aggregate).toContain(
-      "import type { LedgerCredited } from '@/contexts/billing/domain/events/ledger-credited.event';",
+      "import { LedgerCredited } from '@/contexts/billing/domain/events/ledger-credited.event';",
     );
 
     expect(aggregate).toContain(

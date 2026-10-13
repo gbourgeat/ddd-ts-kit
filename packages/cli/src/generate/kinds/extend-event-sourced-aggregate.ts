@@ -19,7 +19,7 @@ export function extendEventSourcedAggregate(scope: Scope, names: EventNames): vo
 
   const importLine = `import { ${names.event.pascal} } from '${importOf(scope, names)}';`;
   // The aggregate names the event in types only: a command that records it imports it as a value then.
-  const extended = extendedAggregate(aggregate, names, importLine.replace('import {', 'import type {'));
+  const extended = extendedAggregate(aggregate, names, importLine);
   const codecFile = `${scope.dir}/infrastructure/persistence/${names.aggregate.kebab}-events.mapper.ts`;
   const codec = scope.ws.read(codecFile);
   const extendedCodec = codec === undefined ? undefined : withStoredEvent(codec, names, importLine);

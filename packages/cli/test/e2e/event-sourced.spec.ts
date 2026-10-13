@@ -35,8 +35,8 @@ const INJECTIONS: readonly Injection[] = [
     rule: 'event-sourcing/past-tense',
     what: 'an event named as a command',
     file: AGGREGATE,
-    from: "import type { LedgerCredited } from '@/contexts/billing/domain/events/ledger-credited.event';",
-    to: "import type { LedgerCredited } from '@/contexts/billing/domain/events/ledger-credited.event';\nimport type { CreditLedger } from '@/contexts/billing/domain/events/credit-ledger.event';",
+    from: "import { LedgerCredited } from '@/contexts/billing/domain/events/ledger-credited.event';",
+    to: "import { LedgerCredited } from '@/contexts/billing/domain/events/ledger-credited.event';\nimport type { CreditLedger } from '@/contexts/billing/domain/events/credit-ledger.event';",
   },
   {
     rule: 'event-sourcing/store-behind-repository',
