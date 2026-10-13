@@ -1,14 +1,14 @@
 import { plural, singular } from '../../naming/index.js';
 import type { NamedBinding } from './named-binding.js';
 
-const BUILT = /^(?:await\s+)?(?:new\s+([A-Z][\w$]*)\s*[(<]|([A-Z][\w$]*)\.create\s*[(<])/;
-const READ = /^(?:await\s+)?(?:this\s*\.\s*)?([a-z][\w$]*)Repository\s*\.\s*[\w$]+\s*\(/;
+const BUILT = /(?:^|\?\?\s*)(?:await\s+)?(?:new\s+([A-Z][\w$]*)\s*[(<]|([A-Z][\w$]*)\.create\s*[(<])/;
+const READ = /^\(?(?:await\s+)?(?:this\s*\.\s*)?([a-z][\w$]*)Repository\s*\.\s*[\w$]+\s*\(/;
 const LAST_WORD = /([A-Za-z][a-z\d]*)$/;
 
 /**
  * The business name the code already gives to what a binding holds, as the checker reads it from
- * the text: the class an initializer builds or the repository it reads, the singular of the
- * collection a loop walks through. Undefined when the text says nothing.
+ * the text: the class an initializer builds (on either side of `??`) or the repository it
+ * reads, the singular of the collection a loop walks through. Undefined when the text says nothing.
  */
 export function suggestedName(binding: NamedBinding): string | undefined {
   const source = binding.source ?? '';

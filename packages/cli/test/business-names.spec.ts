@@ -125,9 +125,11 @@ describe('the name the code already gives to what a binding holds', () => {
           'const things = await reminderRepository.findDue(now);',
           'const stuff = compute();',
           'const tmp = 1;',
+          'const el = known ?? Person.create(id);',
+          'const foo = (await this.waitlistRepository.findById(id)) ?? draft;',
         ].join('\n'),
       ),
-    ).toEqual(['appointment', 'practiceMember', 'calendar', 'reminders', undefined, undefined]);
+    ).toEqual(['appointment', 'practiceMember', 'calendar', 'reminders', undefined, undefined, 'person', 'waitlist']);
   });
 
   it('is the singular of the collection a loop walks through, when it is a plural', () => {

@@ -79,6 +79,19 @@ ruleTester.run('naming-business-name', namingBusinessName, {
         'export async function remind(): Promise<void> {\n  const invoices = await invoiceRepository.findOverdue();\n\n  send(invoices);\n}\n',
     },
     {
+      ...at(
+        HANDLER,
+        `${INVOICE}const target = (await this.invoiceRepository.findById(id)) ?? Invoice.create(id);\nsend(target);\n`,
+      ),
+      errors: [generic('variable', 'target', named('invoice'))],
+      output: `${INVOICE}const invoice = (await this.invoiceRepository.findById(id)) ?? Invoice.create(id);\nsend(invoice);\n`,
+    },
+    {
+      ...at(HANDLER, 'const target = (await this.invoiceRepository.findById(id)) ?? draft;\nsend(target);\n'),
+      errors: [generic('variable', 'target', named('invoice'))],
+      output: 'const invoice = (await this.invoiceRepository.findById(id)) ?? draft;\nsend(invoice);\n',
+    },
+    {
       ...at(HANDLER, `${INVOICE}const invoice = 1;\nconst target = Invoice.create(invoice);\nsend(target);\n`),
       errors: [generic('variable', 'target', named('invoice'))],
       output: null,

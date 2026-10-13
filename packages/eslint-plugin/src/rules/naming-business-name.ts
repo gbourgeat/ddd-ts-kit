@@ -218,9 +218,14 @@ function walkedCollection(declarator: TSESTree.VariableDeclarator): TSESTree.Exp
 
 /**
  * The concept an initializer holds: the class of the project it builds, or what a repository it
- * reads answers, by its type when the parser has one, by the names of the kit otherwise.
+ * reads answers, by its type when the parser has one, by the names of the kit otherwise; for
+ * `found ?? X.create(..)`, either side.
  */
 function proposedName(judged: Judged, init: TSESTree.Expression, several: boolean): ProposedName | undefined {
+  if (init.type === AST_NODE_TYPES.LogicalExpression && init.operator === '??') {
+    return proposedName(judged, init.right, several) ?? proposedName(judged, init.left, several);
+  }
+
   const built = builtClass(judged.context.sourceCode, judged.file, init);
 
   if (built !== undefined) {
