@@ -48,8 +48,9 @@ real tokens of the local Keycloak. For traces, set
 `docker compose logs glitchtip | grep 'DSN:'` prints in `SENTRY_DSN`. The API documentation is
 at `http://127.0.0.1:54300/docs`. Varnish answers the same API at `http://127.0.0.1:54081`: the
 opening hours of a calendar (`GET /calendars/:calendarId/opening-hours`, public) come from its
-cache (`x-cache: HIT`) until `PUT` on them commits and the relay purges them; an authenticated
-read passes through to the API. Everything listens on 127.0.0.1, on ports 54xxx chosen not to
+cache (`x-cache: HIT`) until a change of the calendar commits and the relay purges them, twice
+two seconds apart; an authenticated read passes through to the API. The API purges with
+`VARNISH_PURGE_KEY` of `.env`, which Varnish is started with too. Everything listens on 127.0.0.1, on ports 54xxx chosen not to
 meet another stack. The gate is `npm run verify` (types, lint with the kit's preset, format, tests, end
 to end, architecture rules, import graph, dead code, documentation drift); it needs no
 container. Stop with `docker compose --profile identity --profile observability --profile

@@ -18,7 +18,7 @@ npm i @ddd-ts-kit/kernel
 | Events | `IntegrationEvent`, `IntegrationEventPublisher`, `IntegrationEventSubscriber`, `EventBus` (both at once), `EventSubscribers` (the subscriber of each bounded context), `ProcessedEventStore`, `idempotent`, `InMemoryEventBus`, `DomainEventDispatcher`, `IntegrationEventCallback` and `DomainEventCallback` (the functions a subscriber and a dispatcher are given), `executionContextOfEvent`, `inEventScope`, `scopedPublisher`, `EventDelivery` (what a provider says of one delivery: attempt, last attempt, transport, source, consumer), `messagingSystemOf` |
 | Domain events and the unit of work | `dispatchingOnSave` (the wrapper that makes a repository hand over what the aggregates it is given recorded), `announceDomainEvents`, `withinUnitOfWork` (what every `UnitOfWork.run` is built on: queue, dispatch before the commit, `after-commit` phase), `unitOfWorkStage` and `UnitOfWorkStage`, `DomainEventPhase`, `DomainEventSubscription`, `SaveAfterCommitError`, `AfterCommitFailure`, `reportAfterCommitFailures`, `InMemoryDomainEventDispatcher` |
 | Actor | `Actor`, `AuthorizedCommand`, `AuthorizedQuery`, `ActorContext` |
-| Standard interfaces | `Session`, `ExecutionContext` and `ExecutionScope`, `Logger`, `Metrics`, `ErrorReporter`, `Cache`, `CacheInvalidation` and `CachePurger` (with `cacheTag`, `tenantCacheTags`, `CachePurgeRequest`, `PublishedCacheInvalidation`, `PurgingPublisher`: see "Purging the HTTP caches"), `Lock`, `RateLimiter`, `Page` and `PageRequest`, `AuditStamp`, `TenantScoped`, `AuditTrail`, `AuditReader` and `AuditEntry` |
+| Standard interfaces | `Session`, `ExecutionContext` and `ExecutionScope`, `Logger`, `Metrics`, `ErrorReporter`, `Cache`, `CacheInvalidation` and `CachePurger` (with `cacheTag`, `tenantCacheTags`, `CachePurgeRequest`, `PublishedCacheInvalidation`, `PurgingPublisher`, `RepeatedCachePurger`: see "Purging the HTTP caches"), `Lock`, `RateLimiter`, `Page` and `PageRequest`, `AuditStamp`, `TenantScoped`, `AuditTrail`, `AuditReader` and `AuditEntry` |
 | Scheduled jobs | `JobScheduler`, `ScheduledJob`, `JobExecution`, `JobSchedule`, `JobOptions`, `JobDefinition`, `JobRun`, `JobDescription`, `parseJobSchedule`, `describeJobSchedule`, `jobPolicy`, `executionContextOfJob` |
 | Read side | `Criteria`, `defineCriteria`, `validateCriteria`, `scoped`, `planCriteria`, `evaluateCriteria`, `pageOfPlan`, `hydrate`, `ReadModelStore`, `stampOf`, `TableReadModelStore`, `ProjectionRebuild`, `InMemoryReadModelStore` (see "Criteria", "Hydration" and "Projections") |
 | Persistence helpers | `optimisticUpdate`, `expectVersion` (the version a caller read, `If-Match` over HTTP, still the current one, else `PreconditionFailedError`: 412), `schemaNameOf`, `stampCreation`, `stampUpdate`, `tenantScopeOf`, `encodeCursor`, `decodeCursor` |
@@ -725,11 +725,15 @@ Two ports, so that a use case can never purge before its commit:
 answers with the same function. `PublishedCacheInvalidation({ publisher, ids, clock, scope, perTenant? })`,
 what `kernelModule()` of `@ddd-ts-kit/di` binds, publishes one `CachePurgeRequest` on the
 publisher, the tags under the tenant of the work (`tenantCacheTags`) when `perTenant` is set, as
-a multi-tenant application whose answers are tagged per tenant sets it: behind an outbox it
+a multi-tenant application whose answers are tagged per tenant sets it (work that names no tenant
+is then refused with `NoCurrentTenantError`: its purge would meet no answer): behind an outbox it
 is a row of the transaction, gone with a rollback, kept across a crash after the commit.
 `new PurgingPublisher(purger, broker)` is what the relay publishes through: the purge requests
 go to the purger, the other events to the broker, and a failed purge throws so that the relay
-retries it. `InMemoryCacheInvalidation` remembers the tags asked for (`invalidated`), for specs.
+retries it. `new RepeatedCachePurger(purger, { againAfterMs, onFailure? })` purges, then the same
+tags once more `againAfterMs` later, for a read that loaded the previous state before the commit
+and reached the cache after the first purge; the second purge is best effort, reported to
+`onFailure`. `InMemoryCacheInvalidation` remembers the tags asked for (`invalidated`), for specs.
 
 ### Lock
 

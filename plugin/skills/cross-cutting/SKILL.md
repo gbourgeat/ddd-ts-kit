@@ -37,8 +37,8 @@ imported by the platform, `main.ts` and `apps/` only (`tracing/platform-only`).
 | retry, timeout, circuit breaker on an outside call | the adapter's declaration or binding; defaults in `src/platform/resilience/` | `@Adapter(Port, { kind, aspects })`, or `.with(retry(...), timeout(...))` in an explicit module |
 | the same, when the policy is part of what the adapter is | the adapter class, in `infrastructure/` only | `@Retry`, `@Timeout` of `@ddd-ts-kit/aspects/decorators` (`aspects/outside-in`) |
 | cache a read of another system or context | the gateway or external adapter | `cached({...})`; never a repository of aggregates |
-| keep the answers of a read in the browser or a shared cache (Varnish, a CDN) | `cache` of the controller or its route group, never in the use case | a cache policy of `@ddd-ts-kit/http` (`private` with `etag` for a caller, `public` with `tags` only for what is the same for everybody); `stack.httpCache: varnish` puts Varnish in front. Never a decision of authorization shared across actors: the HTTP caching concept page |
-| purge the answers a change made stale | a `before-commit` handler of the domain event | `CacheInvalidation.invalidate([cacheTag('calendar', id)])` of the kernel: purged after the commit, through the outbox; never `CachePurger` in a use case |
+| keep the answers of a read in the browser or a shared cache (Varnish, a CDN) | `cache` of the controller or its route group, never in the use case | a cache policy of `@ddd-ts-kit/http` (`private` with `etag` for a caller, `public` with `tags` only for what is the same for everybody); `stack.httpCache: varnish` puts Varnish in front. A `public` answer of a route that knows its caller names `Authorization`, `Cookie` or the tenant header in `vary`, and Cloudflare or Bunny ignore `Vary`. Never a decision of authorization shared across actors: the HTTP caching concept page |
+| purge the answers a change made stale | a `before-commit` handler of the domain event | `CacheInvalidation.invalidate([cacheTag('calendar', id)])` of the kernel (`platform.cacheInvalidation` when wired by hand), from every event that changes what a kept answer shows, its version included: purged after the commit, through the outbox; never `CachePurger` in a use case |
 | rate limit | in front of the HTTP layer | the kernel `RateLimiter` port |
 
 `npx ddd-ts-kit generate adapter <ctx> <Port> [--kind external|gateway] [--decorators]`
@@ -69,7 +69,7 @@ Before declaring a type for one of these, use the kernel's (`standard/no-paralle
 |---|---|---|
 | who acts, how they authenticated | `Actor`, `Session` | `ActorExtensions`, `SessionExtensions` |
 | correlation, causation, tenant, origin | `ExecutionContext` in the `ExecutionScope` | `ExecutionContextExtensions` |
-| logs, metrics, cache, lock, rate limit, jobs, errors | `Logger`, `Metrics`, `Cache`, `Lock`, `RateLimiter`, `JobScheduler`, `ErrorReporter` | an adapter of the port |
+| logs, metrics, cache, lock, rate limit, jobs, errors, HTTP purges | `Logger`, `Metrics`, `Cache`, `Lock`, `RateLimiter`, `JobScheduler`, `ErrorReporter`, `CacheInvalidation`, `CachePurger` | an adapter of the port |
 | lists | `Page`, `PageRequest` | generics |
 | audit columns, tenant column | `AuditStamp`, `TenantScoped` | |
 

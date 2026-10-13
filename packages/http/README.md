@@ -106,8 +106,8 @@ are on the [presentation layer](../../docs/concepts/presentation-layer.md) page.
 ## HTTP caching
 
 A read says how the caches on the way may keep its answer, on its controller, on its route
-group (every read of the group, unless a controller says otherwise) or on a function route
-(`cache` of the spec):
+group (every read of the group, `GET` and `HEAD`, unless a controller says otherwise: a write of
+the group keeps the default of a write) or on a function route (`cache` of the spec):
 
 ```ts
 import { CacheScope, Public, RouteGroup } from '@ddd-ts-kit/http';
@@ -146,6 +146,21 @@ A policy that cannot stand is refused when the route is declared, with a `Declar
   tenant), it would hand the answer of one caller to the next. `private` is the usual answer.
   The ESLint rule `presentation/shared-cache-varies` reports the same declaration in the editor,
   for what one file shows.
+
+When the routes are mounted (`mountExpress`, `mountFastify`, `createRoutesModule`), the options of
+the application are known, and a public answer is held to them with a `DeclarationError`:
+
+- on a route that knows its caller, `vary` names `Authorization`, `Cookie`, or a header the tenant
+  is read from (`resolveTenant`): `vary: ['Accept-Language']` alone is refused;
+- behind a cache that ignores `Vary` (`cacheTags.header` of Cloudflare or Bunny), a public answer
+  that varies is refused, unless `cacheTags.honoursVary: true` says the cache keys on those
+  headers;
+- with tags filed per tenant (`cacheTags.perTenant`), a tagged route anybody may call needs
+  `resolveTenant`: an anonymous call names no tenant otherwise, and no purge would meet its answer.
+
+Every answer a cache may keep varies on the headers the tenant is read from (`TenantResolver.headers`:
+`tenantFromHeader` names its header, `firstTenantOf` the headers of its resolvers), added to `Vary`
+by the pipeline. A tagged answer filed per tenant to a request that names no tenant is `no-store`.
 
 Never cache a decision of authorization across actors: what a caller may see is decided by the
 use case for that caller, and a shared cache only ever keeps what is the same for everybody
@@ -238,7 +253,7 @@ The purge is asked by the use case and done after its commit:
 
 ```ts
 // application/event-handlers/calendar-opening-hours-set.event-handler.ts: before-commit, the default phase
-@DomainEventHandler(CalendarOpeningHoursSet, { name: 'scheduling.calendar.opening-hours-set' })
+@DomainEventHandler(CalendarOpeningHoursSet, { name: CalendarOpeningHoursSet.eventName })
 export class CalendarOpeningHoursSetEventHandler implements DomainEventHandler<CalendarOpeningHoursSet> {
   constructor(private readonly cacheInvalidation: CacheInvalidation) {}
 
@@ -260,13 +275,16 @@ import { VarnishCachePurger } from '@ddd-ts-kit/http/purgers';
 
 const relay = new OutboxRelay({
   store,
-  publisher: new PurgingPublisher(new VarnishCachePurger({ url: process.env.VARNISH_URL }), broker),
+  publisher: new PurgingPublisher(new VarnishCachePurger({ url: varnishUrl, key: varnishPurgeKey }), broker),
   clock,
 });
 ```
 
 A purge that fails throws: the relay retries it as it retries a publication, and a request
-delivered twice purges twice, which changes nothing. Without an outbox (`events: in-memory`) the
+delivered twice purges twice, which changes nothing. A read that loaded the previous state just
+before the commit can still reach the cache after the purge and stay for its `s-maxage`:
+`RepeatedCachePurger` of the kernel purges once more a little later (`new
+RepeatedCachePurger(varnish, { againAfterMs: 2_000 })`), best effort. Without an outbox (`events: in-memory`) the
 request reaches the in-memory bus, where nothing purges: pass `cacheInvalidation` to
 `kernelModule` to purge otherwise.
 
@@ -277,9 +295,9 @@ passes too:
 
 | Adapter | Purges | Tag header | Verified |
 |---|---|---|---|
-| `VarnishCachePurger({ url, mode?, soft? })` | `PURGE` with `xkey-purge` (vmod_xkey), or `xkey-softpurge` with `soft`; `mode: 'ban'` sends one `x-ban-tag` per tag, which the VCL turns into a ban | `xkey` | the contract suite on Varnish 9.1.0 with the VCL `init --http-cache varnish` writes, in CI |
-| `FastlyCachePurger({ serviceId, token, soft? })` | `POST /service/<id>/purge`, 256 surrogate keys a request | `surrogate-key` | the requests it sends, against a recording server; never run against Fastly |
-| `CloudflareCachePurger({ zoneId, token })` | `POST /zones/<id>/purge_cache` with `tags`, 100 a request, on every plan | `cache-tag` | the requests it sends, against a recording server; never run against Cloudflare |
+| `VarnishCachePurger({ url, key?, mode?, soft? })` | `PURGE` with `xkey-purge` (vmod_xkey), or `xkey-softpurge` with `soft`; `mode: 'ban'` sends one `x-ban-tag` per tag, its pattern characters escaped, which the VCL turns into a ban; `key` goes in `x-purge-key`, which the VCL asks of a purge from another machine | `xkey` | the contract suite on Varnish 9.1.0 with the VCL `init --http-cache varnish` writes, in CI |
+| `FastlyCachePurger({ serviceId, token, soft? })` | `POST /service/<id>/purge`, 256 surrogate keys a request | `surrogate-key` | the contract suite on a fake of the documented purge API, and the requests it sends; never run against Fastly |
+| `CloudflareCachePurger({ zoneId, token })` | `POST /zones/<id>/purge_cache` with `tags`, 100 a request, on every plan | `cache-tag` | the contract suite on a fake of the documented purge API, and the requests it sends; never run against Cloudflare |
 
 A purge that the cache does not confirm with a 2xx is a `CachePurgeError`. Bunny and the other
 caches are compared on the [HTTP caches](../../docs/tools/http-caches.md) page.
@@ -354,7 +372,8 @@ const options: ExecuteOptions = {
   },
   validateResponses: process.env.NODE_ENV === 'test', // checks answers against the declaration
   around: tracedRoutes(), // of @ddd-ts-kit/tracing: the span of the request, named by its route template
-  cacheTags: { header: CacheTagHeader.xkey }, // the header the shared cache in front reads the tags from
+  // the header the shared cache in front reads the tags from; honoursVary and perTenant: see HTTP caching
+  cacheTags: { header: CacheTagHeader.xkey },
 };
 ```
 

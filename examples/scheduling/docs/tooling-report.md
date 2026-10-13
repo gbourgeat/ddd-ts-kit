@@ -1182,3 +1182,19 @@ One defect of the example's own tooling was found and fixed: `scripts/kit.mjs` r
 `NOT_A_FILE` before its declaration whenever a `generate` was about to create a file that did not
 exist yet, so every generator run that created a file crashed with a `ReferenceError` (the
 declaration moved above `main()`).
+
+## 2026-10-13 (later): what a review of the HTTP caching changed here
+
+A review found the cached hours stale after three of the four changes of a calendar, and the
+generated VCL keeping answers no route allowed.
+
+| | |
+|---|---|
+| Generator runs | 3: `generate event-handler scheduling Calendar ExceptionAdded`, `... TimeOffAdded`, `... AppointmentTypeDefined`, filled from their markers |
+| Purge | every event that changes the version of a calendar now purges `calendar:<id>`: before, only `CalendarOpeningHoursSet` did, and after an exception, a time off or an appointment type Varnish served for up to an hour a version every `If-Match` built on was refused with 412 |
+| Relay | `main.ts` purges through `RepeatedCachePurger` (two seconds apart, `PURGE_AGAIN_AFTER_MS`), for a read that loaded the hours before the commit and reached Varnish after the first purge |
+| VCL | `docker/varnish/default.vcl`, written again from the template: an answer without `max-age` or `s-maxage` is never kept (the 404 of an unknown calendar, a probe), a purge comes from the machine of Varnish or carries `VARNISH_PURGE_KEY`, a refused ban answers 500 |
+| Configuration | `VARNISH_PURGE_KEY` in `.env.example`, in the environment of the `varnish` service and in `loadConfig` (`varnishPurgeKey`, sent by `VarnishCachePurger`) |
+| End to end | `get-opening-hours.e2e.spec.ts`: a change of the calendar other than its hours purges them and a write made on the version read afterwards succeeds, in process and through Varnish (8 specs, passed through Varnish 9.1.0 on this machine); the setup waits for the two purges of the practice it opens |
+
+Contract: unchanged.
