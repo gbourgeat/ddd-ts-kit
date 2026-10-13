@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 440" width="960" height="440" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Cancelling an appointment: four checks, from the boundary to the domain</title>
+  <desc id="desc">The request passes four checks from left to right before the appointment is saved. 1, validation, in presentation, before a command exists: a malformed request is refused 422 with its issues. 2, permission, in the application, before the handler runs: the bus asks the authorizer, and refuses 401 or 403. 3, policy, in the application, once the appointment is loaded: an appointment that is not theirs is refused 403. 4, invariants, in the domain, when appointment.cancel runs: a violated rule raises a DomainError whose stable code is mapped once to a status, such as 409. When all hold, the appointment is saved and its event recorded.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="440" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Cancelling an appointment: four checks, from the boundary to the domain</text>
+  <!-- when -->
+  <text x="100" y="74" font-size="13" fill="#5f6b73" text-anchor="middle">before a command</text>
+  <text x="100" y="92" font-size="13" fill="#5f6b73" text-anchor="middle">exists</text>
+  <text x="290" y="74" font-size="13" fill="#5f6b73" text-anchor="middle">before the handler</text>
+  <text x="290" y="92" font-size="13" fill="#5f6b73" text-anchor="middle">runs</text>
+  <text x="480" y="74" font-size="13" fill="#5f6b73" text-anchor="middle">once the appointment</text>
+  <text x="480" y="92" font-size="13" fill="#5f6b73" text-anchor="middle">is loaded</text>
+  <text x="670" y="74" font-size="13" fill="#5f6b73" text-anchor="middle">when the aggregate</text>
+  <text x="670" y="92" font-size="13" fill="#5f6b73" text-anchor="middle">method runs</text>
+  <!-- checks -->
+  <rect x="24" y="108" width="152" height="124" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="100" y="134" font-size="16" font-weight="700" fill="#9a5b2b" text-anchor="middle">1. validation</text>
+  <text x="100" y="154" font-size="13" font-style="italic" fill="#9a5b2b" text-anchor="middle">presentation</text>
+  <line x1="40" y1="166" x2="160" y2="166" stroke="#9a5b2b" stroke-opacity="0.35"/>
+  <text x="100" y="188" font-size="13" fill="#1f2328" text-anchor="middle">the request schema</text>
+  <text x="100" y="208" font-size="13" fill="#1f2328" text-anchor="middle">of the route</text>
+  <rect x="214" y="108" width="152" height="124" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="290" y="134" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">2. permission</text>
+  <text x="290" y="154" font-size="13" font-style="italic" fill="#2b5d8a" text-anchor="middle">application</text>
+  <line x1="230" y1="166" x2="350" y2="166" stroke="#2b5d8a" stroke-opacity="0.35"/>
+  <text x="290" y="188" font-size="13" fill="#1f2328" text-anchor="middle">required by the use</text>
+  <text x="290" y="208" font-size="13" fill="#1f2328" text-anchor="middle">case, asked by the bus</text>
+  <rect x="404" y="108" width="152" height="124" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="480" y="134" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">3. policy</text>
+  <text x="480" y="154" font-size="13" font-style="italic" fill="#2b5d8a" text-anchor="middle">application</text>
+  <line x1="420" y1="166" x2="540" y2="166" stroke="#2b5d8a" stroke-opacity="0.35"/>
+  <text x="480" y="188" font-size="13" fill="#1f2328" text-anchor="middle">on this appointment,</text>
+  <text x="480" y="208" font-size="13" fill="#1f2328" text-anchor="middle">asked by the handler</text>
+  <rect x="594" y="108" width="152" height="124" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="670" y="134" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">4. invariants</text>
+  <text x="670" y="154" font-size="13" font-style="italic" fill="#2f6f4f" text-anchor="middle">domain</text>
+  <line x1="610" y1="166" x2="730" y2="166" stroke="#2f6f4f" stroke-opacity="0.35"/>
+  <text x="670" y="188" font-size="13" fill="#1f2328" text-anchor="middle">inside</text>
+  <text x="670" y="208" font-size="13" fill="#1f2328" text-anchor="middle">appointment.cancel</text>
+  <rect x="784" y="108" width="152" height="124" rx="10" fill="#ffffff" stroke="#3d4449" stroke-width="2"/>
+  <text x="860" y="134" font-size="16" font-weight="700" fill="#1f2328" text-anchor="middle">accepted</text>
+  <line x1="800" y1="166" x2="920" y2="166" stroke="#3d4449" stroke-opacity="0.35"/>
+  <text x="860" y="188" font-size="13" fill="#1f2328" text-anchor="middle">saved, its event</text>
+  <text x="860" y="208" font-size="13" fill="#1f2328" text-anchor="middle">recorded</text>
+  <!-- passes -->
+  <line x1="178" y1="170" x2="210" y2="170" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="368" y1="170" x2="400" y2="170" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="558" y1="170" x2="590" y2="170" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="748" y1="170" x2="780" y2="170" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- refused -->
+  <line x1="100" y1="234" x2="100" y2="290" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="108" y="266" font-size="13" fill="#1f2328">malformed</text>
+  <line x1="290" y1="234" x2="290" y2="290" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="298" y="266" font-size="13" fill="#1f2328">not allowed</text>
+  <line x1="480" y1="234" x2="480" y2="290" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="488" y="266" font-size="13" fill="#1f2328">not theirs</text>
+  <line x1="670" y1="234" x2="670" y2="290" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="678" y="266" font-size="13" fill="#1f2328">violated</text>
+  <rect x="24" y="294" width="152" height="84" rx="10" fill="#ffffff" stroke="#3d4449" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="100" y="322" font-size="16" font-weight="700" fill="#1f2328" text-anchor="middle">422</text>
+  <text x="100" y="344" font-size="13" fill="#1f2328" text-anchor="middle">the issues, with</text>
+  <text x="100" y="362" font-size="13" fill="#1f2328" text-anchor="middle">their paths</text>
+  <rect x="214" y="294" width="152" height="84" rx="10" fill="#ffffff" stroke="#3d4449" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="290" y="322" font-size="16" font-weight="700" fill="#1f2328" text-anchor="middle">401 or 403</text>
+  <text x="290" y="344" font-size="13" fill="#1f2328" text-anchor="middle">no handler runs</text>
+  <rect x="404" y="294" width="152" height="84" rx="10" fill="#ffffff" stroke="#3d4449" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="480" y="322" font-size="16" font-weight="700" fill="#1f2328" text-anchor="middle">403</text>
+  <text x="480" y="344" font-size="13" fill="#1f2328" text-anchor="middle">nothing changed</text>
+  <rect x="594" y="294" width="152" height="84" rx="10" fill="#ffffff" stroke="#3d4449" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="670" y="322" font-size="16" font-weight="700" fill="#1f2328" text-anchor="middle">DomainError</text>
+  <text x="670" y="344" font-size="13" fill="#1f2328" text-anchor="middle">its code, mapped</text>
+  <text x="670" y="362" font-size="13" fill="#1f2328" text-anchor="middle">once: 409, 422...</text>
+  <!-- legend -->
+  <text x="32" y="414" font-size="14" fill="#1f2328">Left to right: the check passes. Downwards: the request is refused, and nothing after it runs.</text>
+</svg>

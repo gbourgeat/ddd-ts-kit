@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 450" width="960" height="450" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Pourquoi la livraison exactement une fois est hors de portée</title>
+  <desc id="desc">Le relais publie l'événement e1 au broker, qui le stocke. L'acquittement se perd au retour, car la connexion tombe. Le relais ne peut pas distinguer ce cas d'un message qui n'est jamais arrivé. Renvoyer peut livrer e1 deux fois : c'est au moins une fois, le choix du kit, et les consommateurs dédoublonnent. Ne pas renvoyer peut perdre e1 : c'est au plus une fois.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="450" rx="16" fill="#ffffff"/>
+  <text x="32" y="36" font-size="18" font-weight="600" fill="#1f2328">Un acquittement perdu ressemble à un message perdu</text>
+  <!-- participants -->
+  <rect x="60" y="58" width="180" height="56" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="150" y="84" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">relais de l'outbox</text>
+  <text x="150" y="103" font-size="13" fill="#1f2328" text-anchor="middle">infrastructure</text>
+  <rect x="380" y="58" width="180" height="56" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="470" y="84" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">broker</text>
+  <text x="470" y="103" font-size="13" fill="#1f2328" text-anchor="middle">système externe</text>
+  <line x1="150" y1="116" x2="150" y2="306" stroke="#8c959f" stroke-width="1.5" stroke-dasharray="4 4"/>
+  <line x1="470" y1="116" x2="470" y2="306" stroke="#8c959f" stroke-width="1.5" stroke-dasharray="4 4"/>
+  <!-- publish -->
+  <text x="310" y="152" font-size="13" fill="#1f2328" text-anchor="middle">publie e1</text>
+  <line x1="152" y1="160" x2="466" y2="160" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="420" y="180" width="100" height="32" rx="6" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="470" y="201" font-size="13" fill="#1f2328" text-anchor="middle">e1 stocké</text>
+  <!-- lost acknowledgement -->
+  <text x="390" y="242" font-size="13" fill="#1f2328" text-anchor="middle">acquittement</text>
+  <line x1="468" y1="250" x2="320" y2="250" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5"/>
+  <path d="M302,240 L322,260 M322,240 L302,260" stroke="#3d4449" stroke-width="3"/>
+  <text x="312" y="282" font-size="13" fill="#5f6b73" text-anchor="middle">la connexion tombe</text>
+  <!-- question -->
+  <rect x="40" y="320" width="220" height="48" rx="8" fill="#ffffff" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="150" y="341" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">e1 est-il arrivé ?</text>
+  <text x="150" y="358" font-size="13" fill="#1f2328" text-anchor="middle">Le relais ne peut pas le savoir.</text>
+  <!-- choices -->
+  <path d="M262,344 H600 V160 H636" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <path d="M600,344 V284 H636" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="640" y="104" width="296" height="116" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="656" y="128" font-size="16" font-weight="700" fill="#2b5d8a">Renvoyer</text>
+  <text x="656" y="150" font-size="13" fill="#1f2328">e1 peut être livré deux fois :</text>
+  <text x="656" y="168" font-size="13" fill="#1f2328">au moins une fois.</text>
+  <text x="656" y="186" font-size="13" fill="#1f2328">Les consommateurs dédoublonnent.</text>
+  <text x="656" y="208" font-size="13" font-style="italic" fill="#2b5d8a">Le choix du kit.</text>
+  <rect x="640" y="236" width="296" height="96" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="656" y="262" font-size="16" font-weight="700" fill="#5f6b73">Ne pas renvoyer</text>
+  <text x="656" y="284" font-size="13" fill="#1f2328">e1 peut être perdu :</text>
+  <text x="656" y="302" font-size="13" fill="#1f2328">au plus une fois.</text>
+  <text x="32" y="410" font-size="14" fill="#1f2328">Il en va de même entre le broker et un consommateur : le gestionnaire valide, l'acquittement</text>
+  <text x="32" y="430" font-size="14" fill="#1f2328">se perd, le broker livre e1 à nouveau.</text>
+</svg>

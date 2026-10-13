@@ -1,0 +1,494 @@
+[English](testing-strategy.md) · **Français**
+<!-- translation-of: testing-strategy.md sha256:85d319b778894544 -->
+
+# Stratégie de test
+
+**Résumé.** Le kit teste le comportement à travers des interfaces publiques, à quatre niveaux
+(domaine, application, adaptateur, de bout en bout), avec les mêmes *builders* de données de test à
+chaque niveau. Les doublures de test sont des *fakes*, des implémentations en mémoire et
+fonctionnelles des ports, plutôt que des *mocks* ; un *fake* reste honnête en passant la même
+suite de contrat que l'adaptateur réel qu'il remplace. Les *specs* d'agrégat se lisent
+« étant donné / quand / alors ». Le résultat est une suite où la plupart des tests s'exécutent en
+quelques millisecondes sans aucune infrastructure, survivent aux refactorisations parce qu'ils
+vérifient des résultats plutôt que des appels, et se lisent comme des règles métier. Cette page
+explique chaque choix, dit quoi tester où, et énonce ce que la stratégie ne couvre pas.
+
+## Le vocabulaire des doublures de test
+
+« *Mock* » désigne souvent n'importe quelle doublure. Le vocabulaire de Gerard Meszaros,
+popularisé par Martin Fowler, est plus précis :
+
+| Doublure | Ce qu'elle est | Vérifie |
+|---|---|---|
+| *dummy* | passée mais jamais utilisée | rien |
+| *stub* | renvoie des réponses préparées | l'état, indirectement |
+| *spy* | un *stub* qui enregistre comment il a été appelé | les appels, après coup |
+| *mock* | préprogrammé avec les appels qu'il attend | les appels : le test échoue s'ils diffèrent |
+| *fake* | une implémentation qui fonctionne, avec un raccourci (en mémoire au lieu d'une base de données) | l'état |
+
+La distinction qui compte est la dernière colonne. Un test avec des *mocks* vérifie une
+interaction : « `save` a été appelée une fois avec cet objet ». Un test avec un *fake* vérifie un
+résultat : « le rendez-vous est enregistré et annulé ».
+
+## Des *fakes*, pas des *mocks*
+
+```ts
+// au lieu de, avec un mock : vérifie comment le gestionnaire parle à ses collaborateurs
+const appointments = { findById: vi.fn().mockResolvedValue(appointment), save: vi.fn() };
+// le contrôle d'accès est simulé lui aussi : le test connaît désormais chaque collaborateur du gestionnaire
+const access = { authorize: vi.fn().mockResolvedValue(undefined) };
+const handler = new CancelAppointmentHandler(appointments, access, clock);
+
+await handler.execute(new CancelAppointmentCommand(patient, appointment.id));
+
+expect(appointments.save).toHaveBeenCalledWith(expect.objectContaining({ status: 'cancelled' }));
+
+// écrivez, avec un fake : vérifie ce qui est vrai après coup
+const appointments = new FakeAppointmentRepository();
+await appointments.save(appointment);
+
+const app = createTestApplication({
+  modules: [platformTestModule, contextModule('scheduling', schedulingDeclarations), holders],
+  fakes: [fake(AppointmentRepository, appointments)],
+});
+
+await app.commandBus.execute(new CancelAppointmentCommand(patient, appointment.id));
+
+expect((await appointments.findById(appointment.id))?.status).toBe('cancelled');
+expect(app.eventBus.published).toMatchObject([{ type: 'scheduling.appointment.cancelled' }]);
+```
+
+![À gauche, un test avec un mock surveille les appels entre le gestionnaire et un repository simulé ; à droite, un test avec un fake exécute le vrai gestionnaire à travers le bus et lit ensuite l'état du fake et les événements publiés](../assets/diagrams/testing-strategy-mock-or-fake.fr.svg)
+
+Pourquoi le kit préfère la seconde forme (règle
+[`test/no-mocks`](../ARCHITECTURE.fr.md#3-règles-de-dépendance), un avertissement par défaut) :
+
+- **Les *mocks* couplent les tests à l'implémentation.** Renommez une méthode, enregistrez en deux
+  étapes au lieu d'une, chargez par une autre méthode de recherche : le comportement est inchangé,
+  les tests à base de *mocks* échouent. Des tests qui cassent à chaque refactorisation découragent
+  de refactoriser.
+- **Les *mocks* peuvent affirmer un mensonge.** Un *repository* simulé renvoie tout ce que dit le
+  test, y compris des choses que le vrai ne renverrait jamais. Le test passe ; la production, non.
+- **Les *fakes* sont réutilisables.** Un seul *repository* en mémoire sert toutes les *specs* de
+  gestionnaire du contexte, et une panne est une méthode du *fake* (`mailer.failNextWith(...)`)
+  plutôt qu'une préparation répétée dans chaque test.
+- **L'architecture rend les *mocks* inutiles.** Chaque dépendance est un port reçu par le
+  constructeur ; le temps et les identifiants sont aussi des ports. Une classe qui a besoin d'un
+  *mock* de module pour être testée enfreint une règle de pureté ([Code propre](clean-code.fr.md)).
+
+C'est l'école « classique » dans les termes de Fowler. L'école « mockiste », décrite par Freeman
+et Pryce, utilise les *mocks* pour découvrir les interfaces en concevant de l'extérieur vers
+l'intérieur ; c'est une pratique cohérente, et ses auteurs mettent eux aussi en garde contre le
+fait de simuler des types que l'on ne possède pas. La position du kit est plus étroite qu'une
+doctrine : ses ports sont déjà conçus et chacun a un *fake*, si bien que les vérifications
+d'interaction ajoutent du couplage sans ajouter d'information.
+
+La seule doublure acceptée qui n'est pas un *fake* : un *stub* d'une API HTTP extérieure au niveau
+du réseau, dans la *spec* d'intégration d'un adaptateur.
+
+Un *fake* est une petite classe de `test/fakes/` qui implémente le port avec un raccourci, et
+offre sous forme de méthodes les pannes dont un test a besoin. Le *mailer* du contexte de
+notification de l'exemple, raccourci :
+
+<!-- checked sample -->
+```ts
+// notification/application/ports/mailer.port.ts
+export abstract class Mailer {
+  /** Échoue quand le fournisseur n'a pas pris le courriel. */
+  abstract deliver(address: string, subject: string): Promise<void>;
+}
+
+// notification/test/fakes/mailer.fake.ts
+export class FakeMailer implements Mailer {
+  /** Ce que le fournisseur a pris, dans l'ordre : ce qu'une spec vérifie. */
+  readonly delivered: { readonly address: string; readonly subject: string }[] = [];
+
+  private readonly failures: Error[] = [];
+
+  /** La prochaine livraison échoue avec cette erreur, puis le mailer fonctionne de nouveau. */
+  failNextWith(error: Error): void {
+    this.failures.push(error);
+  }
+
+  async deliver(address: string, subject: string): Promise<void> {
+    const failure = this.failures.shift();
+
+    if (failure !== undefined) {
+      throw failure;
+    }
+
+    this.delivered.push({ address, subject });
+  }
+}
+```
+
+Une *spec* se lit alors comme la règle qu'elle prouve : `mailer.failNextWith(new Error('provider
+unreachable'))`, envoyer la notification, et attendre que rien n'ait été enregistré ni publié.
+
+## Les tests de contrat gardent les *fakes* honnêtes
+
+La faiblesse d'un *fake* est la dérive : un *repository* en mémoire qui tolère ce que PostgreSQL
+refuserait. La réponse est une suite de contrat : un ensemble de tests écrits contre le port,
+exécutés contre le *fake* et contre l'adaptateur réel.
+
+```mermaid
+flowchart TB
+  C[Suite de contrat du port : enregistrer puis trouver, identifiant inconnu, mise à jour, concurrence optimiste...]
+  C --> F[FakeCalendarRepository, dans test/fakes]
+  C --> R[Adaptateur réel sur PostgreSQL]
+  F --> H[utilisé par chaque spec de gestionnaire]
+  R --> P[utilisé en production]
+```
+
+Dans le code, un appel par implémentation, avec les mêmes attentes. La *spec* du *repository* des
+calendriers de l'exemple, raccourcie :
+
+<!-- checked sample -->
+```ts
+// scheduling/test/integration/calendar.repository.contract.spec.ts
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { AggregateRoot, type Repository } from '@ddd-ts-kit/kernel';
+import { InMemoryRepository } from '@ddd-ts-kit/testing';
+import { repositoryContract } from '@ddd-ts-kit/testing/contracts';
+
+// venus du domaine, des builders et de la base de données de test du projet
+interface CalendarState {
+  readonly exceptions: readonly string[];
+}
+declare class Calendar extends AggregateRoot {
+  static rehydrate(id: string, state: CalendarState): Calendar;
+  addException(day: string, at: Date): void;
+  toState(): CalendarState;
+}
+declare function aCalendar(): { build(): Calendar };
+declare function knexCalendarRepositoryOnAFreshDatabase(): Promise<Repository<Calendar>>;
+
+const runner = { describe, it, expect, beforeEach, afterEach };
+
+const expectations = {
+  createAggregate: () => aCalendar().build(),
+  mutate: (calendar: Calendar) => calendar.addException('2026-12-25', new Date('2026-01-02T00:00:00.000Z')),
+  idOf: (calendar: Calendar) => calendar.id,
+  stateOf: (calendar: Calendar) => calendar.toState(),
+};
+
+// le fake qu'utilise chaque spec de gestionnaire
+repositoryContract<Calendar>(runner, {
+  ...expectations,
+  name: 'FakeCalendarRepository',
+  createRepository: () =>
+    new InMemoryRepository<Calendar>({ clone: (stored) => Calendar.rehydrate(stored.id, stored.toState()) }),
+});
+
+// l'adaptateur qu'utilise la production, sur une vraie base de données
+repositoryContract<Calendar>(runner, {
+  ...expectations,
+  name: 'KnexCalendarRepository',
+  createRepository: () => knexCalendarRepositoryOnAFreshDatabase(),
+});
+```
+
+Si les deux passent la même suite, un gestionnaire testé sur le *fake* se comporte de la même
+façon sur l'adaptateur pour tout ce que couvre le contrat. Le kit fournit des suites pour ses
+propres ports dans `@ddd-ts-kit/testing/contracts` (*repository*, unité de travail, store de
+modèle de lecture et critères, bus d'événements, store d'événements, store de l'outbox, store des
+événements traités, store des processus, store des *jobs*, planificateur de *jobs*, cache,
+purgeur de cache, verrou, limiteur de débit, stockage de fichiers, *logger*, isolation des
+*tenants*) et dans `@ddd-ts-kit/auth/testing` (autorisateur, store des tuples de relation),
+ainsi que `ContractSuite`, la base pour écrire la suite d'un port à vous. Remplacer un ORM ou un
+*broker* revient alors à « écrire l'adaptateur, passer la suite ».
+
+Un contrat couvre ce qu'il teste et rien de plus : le comportement propre à un adaptateur (le
+*mapping* de chaque colonne, l'annulation d'une transaction) a ses propres tests d'intégration.
+
+## *Builders*
+
+Les données de test viennent de *builders*, un par agrégat :
+
+```ts
+const appointment = anAppointment().forPatient('ada').startingAt(tomorrowAt9).cancelledByPatient().build();
+```
+
+Un *builder* étend `Builder` de `@ddd-ts-kit/testing` : des `defaults()` valides une fois pour
+toutes, un `construct()` qui passe par l'API publique de l'agrégat, et une méthode par mot du
+langage. Raccourci à partir du *builder* de l'exemple :
+
+<!-- checked sample -->
+```ts
+// scheduling/test/builders/appointment.builder.ts
+import { AggregateRoot } from '@ddd-ts-kit/kernel';
+import { Builder, sequence, type Defaults } from '@ddd-ts-kit/testing';
+
+// l'agrégat, venu du domaine
+declare class Appointment extends AggregateRoot {
+  static create(id: string, patientId: string, startsAt: Date, bornAt: Date): Appointment;
+  cancel(by: 'patient' | 'practice', at: Date): void;
+}
+
+interface AppointmentIngredients {
+  readonly id: string;
+  readonly patientId: string;
+  readonly startsAt: Date;
+  readonly bornAt: Date;
+  readonly cancelled: boolean;
+}
+
+export class AppointmentBuilder extends Builder<AppointmentIngredients, Appointment> {
+  forPatient(patientId: string): this {
+    return this.with('patientId', patientId);
+  }
+
+  startingAt(instant: Date): this {
+    return this.with('startsAt', instant);
+  }
+
+  cancelledByPatient(): this {
+    return this.with('cancelled', true);
+  }
+
+  protected defaults(): Defaults<AppointmentIngredients> {
+    return {
+      id: sequence('appointment'),
+      patientId: 'patient-1',
+      startsAt: new Date('2026-03-02T09:00:00.000Z'),
+      bornAt: new Date('2026-03-01T00:00:00.000Z'),
+      cancelled: false,
+    };
+  }
+
+  /** Par l'API publique seulement : un test ne peut jamais partir d'un état que les règles interdisent. */
+  protected construct({ id, patientId, startsAt, bornAt, cancelled }: AppointmentIngredients): Appointment {
+    const appointment = Appointment.create(id, patientId, startsAt, bornAt);
+
+    if (cancelled) {
+      appointment.cancel('patient', bornAt);
+    }
+
+    return appointment;
+  }
+}
+
+export function anAppointment(): AppointmentBuilder {
+  return new AppointmentBuilder();
+}
+```
+
+- **Des valeurs par défaut valides.** `anAppointment().build()` est un rendez-vous valide. Un test
+  n'énonce que ce qui compte pour la règle qu'il vérifie, si bien que le lecteur voit la cause du
+  résultat.
+- **Nommés dans le langage omniprésent (ubiquitous language).** `cancelledByPatient()`, pas
+  `withStatus('CANCELLED')`.
+- **Construits par l'API publique.** `build()` passe par la fabrique et les méthodes d'intention
+  de l'agrégat, si bien qu'un test ne peut pas partir d'un état invalide. Si un test a besoin d'un
+  état que l'API publique ne peut pas atteindre, soit l'état est impossible, soit l'API est
+  incomplète.
+- **Immuables.** Chaque appel renvoie un nouveau *builder*, si bien qu'une base partagée ne peut
+  pas fuiter d'un test à l'autre.
+
+Règle [`test/builder-required`](../ARCHITECTURE.fr.md#3-règles-de-dépendance). Sans *builders*,
+chaque changement d'un constructeur modifie cinquante tests, et chaque test enfouit son unique
+valeur pertinente sous dix valeurs qui ne le sont pas.
+
+## Étant donné / quand / alors
+
+Une *spec* d'agrégat est un scénario : un état construit (ou des événements passés), une
+intention, puis les événements enregistrés ou l'erreur levée.
+
+<!-- checked sample -->
+```ts
+// scheduling/test/unit/appointment.aggregate.spec.ts
+import { describe, expect, it } from 'vitest';
+import { AggregateRoot } from '@ddd-ts-kit/kernel';
+import { Builder, given } from '@ddd-ts-kit/testing';
+
+// l'agrégat et son builder, venus de l'exemple précédent
+declare class Appointment extends AggregateRoot {
+  readonly status: 'booked' | 'cancelled';
+  cancel(by: 'patient' | 'practice', at: Date): void;
+  reschedule(startsAt: Date, at: Date): void;
+}
+declare abstract class AppointmentBuilder extends Builder<object, Appointment> {
+  cancelledByPatient(): this;
+}
+declare function anAppointment(): AppointmentBuilder;
+
+const at = new Date('2026-03-01T08:00:00.000Z');
+
+describe('Appointment', () => {
+  it('records that it was cancelled', () => {
+    given(anAppointment())
+      .when((appointment) => appointment.cancel('patient', at))
+      .thenEvents([{ name: 'scheduling.appointment.cancelled', occurredAt: at }])
+      .thenState((appointment) => expect(appointment.status).toBe('cancelled'));
+  });
+
+  it('refuses to reschedule a cancelled appointment', () => {
+    given(anAppointment().cancelledByPatient())
+      .when((appointment) => appointment.reschedule(new Date('2026-03-03T09:00:00.000Z'), at))
+      .thenError('APPOINTMENT_ENDED');
+  });
+});
+```
+
+`given` prend le *builder*, construit l'agrégat et oublie les événements enregistrés pendant sa
+construction, si bien que `thenEvents` ne voit que ceux de `when`. `thenError` prend un code, ou la
+classe de l'erreur et un code.
+
+Une intention par test, et des vérifications sur les événements, les erreurs et l'état par l'API
+publique seulement. Le nom du test énonce la règle : `refuses to reschedule a cancelled
+appointment`.
+
+## Les quatre niveaux
+
+| Niveau | Ce qui s'exécute | Doublures | Vitesse |
+|---|---|---|---|
+| domaine | agrégats, objets-valeurs, services du domaine | aucune | millisecondes |
+| application | les vrais gestionnaires à travers les bus en mémoire | des *fakes* pour chaque port, une horloge fixe | millisecondes |
+| adaptateur | un adaptateur réel contre sa dépendance réelle, plus la suite de contrat | aucune | secondes |
+| de bout en bout | l'application entière avec ses adaptateurs réels, par HTTP et le bus d'événements | aucune ; des données générées avec une graine fixe | secondes |
+
+![Les quatre niveaux, du domaine au niveau de bout en bout : ce qui s'exécute à chacun, quelle partie est une doublure, quelle est sa vitesse et combien de tests il porte](../assets/diagrams/testing-strategy-four-levels.fr.svg)
+
+Tableau normatif : [section 7 de la référence de l'architecture](../ARCHITECTURE.fr.md#7-niveaux-de-test).
+Un niveau d'architecture se tient à côté d'eux : `ddd-ts-kit check`, et un test généré qui démarre
+chaque contexte seul pour prouver qu'il reste extractible.
+
+Les mêmes *builders* servent à chaque niveau. Les tests de bout en bout créent leur état par l'API
+publique, utilisent des données générées avec une graine affichée en cas d'échec pour qu'une
+exécution en échec puisse être rejouée, et vérifient ce qu'un client observe (réponses, événements
+publiés), jamais directement la base de données.
+
+## Quoi tester où
+
+| Comportement | Niveau | Pourquoi là |
+|---|---|---|
+| « Un rendez-vous annulé ne peut pas être reprogrammé » | domaine | un invariant : aucune entrée-sortie nécessaire, des cas exhaustifs ne coûtent pas cher |
+| Bornes de `TimeSlot` (fin avant le début, durée nulle) | domaine, piloté par une table | validation d'un objet-valeur |
+| « L'annulation publie `scheduling.appointment.cancelled` une fois que le gestionnaire de la commande a rendu la main ; un refus n'enregistre et ne publie rien » | application | orchestration : charger, une intention, enregistrer |
+| Chaque code d'erreur déclaré d'un cas d'usage | application | le contrat du gestionnaire |
+| « Un acteur sans `appointment.cancel` est refusé » | application, avec le module d'autorisation listé | une propriété du câblage du contexte |
+| « Seul le client qui a réservé peut annuler » (la politique) | unitaire, sur la politique seule | une fonction pure |
+| *Mapping* de chaque colonne, concurrence optimiste, annulation de transaction | adaptateur | seule la vraie base de données peut le dire |
+| La contrainte d'exclusion qui empêche la double réservation | adaptateur | la contrainte vit dans la base de données |
+| Le *fake* et l'adaptateur sont d'accord | contrat, au niveau adaptateur | garde le niveau application digne de confiance |
+| 401 sans justificatif d'identité, 403 sans la permission, le statut documenté avec elle | de bout en bout | toute la chaîne : HTTP, authentification, bus |
+| « Une réservation entraîne la planification d'un rappel », à travers deux contextes | de bout en bout | traverse le bus d'événements ; à terme, si bien que le test attend le résultat |
+| Code de statut et corps du document *problem* pour une entrée de mauvaise forme | *spec* de route | validation à la frontière |
+
+Deux principes découlent du tableau. Poussez chaque règle au niveau le plus bas qui peut la
+prouver : dix cas d'un délai d'annulation font dix tests d'une milliseconde sur l'agrégat, pas dix
+allers-retours HTTP. Et ne répétez pas une règle à chaque niveau : le test de bout en bout prouve
+le câblage avec un cas, le test du domaine prouve la règle avec tous.
+
+Chaque unité de comportement a une *spec* (règle
+[`test/spec-required`](../ARCHITECTURE.fr.md#3-règles-de-dépendance)), et un test ne contient
+aucune logique : pas de `if`, pas de boucle, préparation, action et vérification séparées par des
+lignes vides.
+
+## Seuils de couverture
+
+Un projet énonce la couverture minimale de chaque couche à un seul endroit, la clé `coverage` de
+`ddd-ts-kit.config.json` ([CONFIG.md](../CONFIG.fr.md#seuils-de-couverture)) ; le lanceur de tests
+la lit, et `npm run verify` comme le *pipeline* échouent en dessous. La référence, en
+instructions, branches, fonctions, lignes :
+
+| Couche | Référence | Pourquoi ce plancher | Mesurée par |
+|---|---|---|---|
+| `domain/` | 90, 85, 90, 90 | du code pur, rien n'empêche de le tester ; il porte les règles | *specs* unitaires |
+| `application/` | 85, 80, 85, 85 | les gestionnaires s'exécutent avec des *fakes* | *specs* unitaires |
+| `presentation/` | 80, 70, 80, 80 | *mapping* et traduction des statuts ; ses chemins d'erreur sont aussi tenus de bout en bout | *specs* unitaires |
+| `infrastructure/` | 70, 60, 70, 70 | les chemins de défaillance des pilotes sont difficiles à provoquer ; les adaptateurs sont tenus par des suites de contrat | *specs* d'intégration |
+
+Chaque contexte est tenu à part, couche par couche, dès le premier fichier source de la couche. Un
+projet fraîchement généré passe : ce qu'écrit un générateur vient avec une *spec* qui l'exécute, et
+les entrées `it.todo` nomment le comportement qui reste à prouver.
+
+**Ce que prouve un taux.** Qu'une ligne, une branche ou une fonction s'est exécutée pendant qu'un
+test tournait. Une couche sous son plancher contient du code qu'aucun test n'a jamais exécuté :
+c'est certain, et c'est ce que la porte attrape.
+
+**Ce qu'il ne prouve pas.** Que quoi que ce soit a été vérifié sur ce qui s'est exécuté, que les
+cas qui comptent ont été essayés, ou que le test échouerait si le comportement changeait. Une
+*spec* qui appelle un gestionnaire et ne vérifie rien le couvre entièrement. Les *specs* nommées
+d'après des règles métier, les suites de contrat et les parcours de bout en bout prouvent le
+comportement ; la couverture dit seulement où rien ne le fait.
+
+**Un plancher, pas un objectif.** Relevez un seuil quand une couche est restée au-dessus ;
+n'écrivez jamais un test pour faire bouger un nombre. Un seuil ne s'abaisse que par une dérogation
+enregistrée, et la mesure n'est jamais rétrécie autour du code qui la fait échouer
+(`test/coverage-governed`) : une branche non couverte est testée, ou supprimée quand rien ne peut
+l'atteindre.
+
+```ts
+// au lieu de, dans vitest.config.ts : une mesure rétrécie à la main, refusée par test/coverage-governed
+test: { coverage: { exclude: ['src/contexts/billing/infrastructure/**'], thresholds: { branches: 50 } } }
+
+// écrivez : le lanceur lit ce qu'il mesure et ses planchers dans ddd-ts-kit.config.json
+test: { coverage: { provider: 'v8', ...governedCoverage(mode) } } // depuis @ddd-ts-kit/testing/coverage
+```
+
+```json
+"coverage": { "infrastructure": { "branches": 50 } },
+"deviations": [
+  { "what": "coverage.infrastructure.branches", "adr": "0011", "reason": "The failure branches of the driver are held by its contract suite." }
+]
+```
+
+## Limites et quand ne pas l'utiliser
+
+- **Les tests de mutation ne sont pas fournis.** C'est l'outil qui mesure si les tests
+  remarqueraient un comportement modifié. Le README du *pipeline* consigne pourquoi : Stryker 10,
+  lancé sur la couche domaine d'un projet généré avec Vitest 5, n'a exécuté aucun test par mutant
+  et a déclaré chaque mutant survivant, et son cœur réécrit le tsconfig par une API que le
+  TypeScript 7 natif n'a pas. Une porte qui donne zéro quoi que disent les tests est pire que pas
+  de porte du tout. Tant que le lanceur ne le prend pas en charge, la qualité des tests repose sur
+  la relecture et sur les conventions ci-dessus.
+- **Un *fake* ne vaut que ce que vaut sa suite de contrat.** Un comportement que la suite ne couvre
+  pas peut différer en silence : collation et tri SQL, moment d'application des contraintes,
+  gestion des fuseaux horaires. Quand un bogue vient d'un tel trou, ajoutez le cas à la suite, pas
+  seulement à un adaptateur.
+- **PostgreSQL dans le processus n'est pas le serveur de production.** Les *specs* rapides des
+  adaptateurs s'exécutent sur PGlite ; une dernière exécution d'intégration contre le vrai serveur
+  reste nécessaire, et les README des adaptateurs d'ORM disent que MySQL et SQLite sont hors de la
+  suite automatisée.
+- **Les règles d'existence vérifient des fichiers, pas leur contenu.** `test/spec-required` et
+  `test/builder-required` vérifient que le fichier existe ; une *spec* qui ne contient que des
+  `it.todo` les satisfait. Des *todos* restants signifient que le travail n'est pas fini.
+- **`test/no-mocks` est un avertissement par défaut** et concerne les tests d'un contexte. Du code
+  existant en cours d'adoption, ou un SDK tiers sans point d'injection, peut justifier un *mock* ;
+  faites-en une décision enregistrée plutôt qu'une habitude.
+- **Les tests de bout en bout d'un comportement à terme sont plus lents et demandent du soin.** Ils
+  attendent un résultat au lieu de dormir, et une attente mal bornée fait un test instable.
+- **Aucun test de performance, de charge ou de sécurité** ne fait partie de cette stratégie, ni
+  aucun test de contrat piloté par les consommateurs entre des services déployés séparément : les
+  documents OpenAPI et AsyncAPI générés, avec leurs vérifications de dérive, tiennent les contrats à
+  la place. Après l'extraction d'un service, envisagez de l'ajouter
+  ([Quand extraire des microservices](../guides/when-to-extract-microservices.fr.md)).
+
+## Sources
+
+- Gerard Meszaros, xUnit Test Patterns, Addison-Wesley, 2007 : Test Double et ses variantes
+  (Dummy, Stub, Spy, Mock, Fake), antécédents du Test Data Builder (Creation Method).
+- Martin Fowler, « Mocks Aren't Stubs » (2007), « TestDouble », « TestPyramid », « ContractTest »
+  et « GivenWhenThen », martinfowler.com.
+- Steve Freeman et Nat Pryce, Growing Object-Oriented Software, Guided by Tests, Addison-Wesley,
+  2009 : la pratique mockiste, « only mock types that you own », les *builders* de données de test
+  (chapitre 22).
+- Nat Pryce, « Test Data Builders: an alternative to the Object Mother pattern », 2007
+  (natpryce.com).
+- Vladimir Khorikov, Unit Testing Principles, Practices, and Patterns, Manning, 2020 : la
+  résistance à la refactorisation comme propriété d'un bon test.
+- Dan North, « Introducing BDD », 2006 (dannorth.net) : étant donné / quand / alors.
+- [`@ddd-ts-kit/testing`](../../packages/testing/README.fr.md) et
+  [`pipeline/README.md`](../../pipeline/README.md).
+
+## Voir aussi
+
+- [Code propre](clean-code.fr.md)
+- [Agrégats](aggregates.fr.md)
+- [Ports et composition](ports-and-composition.fr.md)
+- [Garanties de livraison et consommateurs idempotents](delivery-and-idempotency.fr.md)
+- [Lanceurs de tests](../tools/test-runners.fr.md)
+- [Analyse statique et pipeline](../tools/static-analysis-and-pipeline.fr.md)
+- [Référence de l'architecture](../ARCHITECTURE.fr.md) : sections 5 et 7, règles
+  `test/spec-required`, `test/no-mocks`, `test/builder-required`

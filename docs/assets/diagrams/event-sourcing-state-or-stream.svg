@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 440" width="960" height="440" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">State in a table, or the events of a stream</title>
+  <desc id="desc">On the left, a state-persisted aggregate: one row in a table, updated in place, so that the previous values are gone and a question about the past cannot be answered from it. On the right, an event-sourced aggregate: its stream holds AttendanceRecordCreated, NoShowNoted and CancellationNoted at versions 1, 2 and 3; replaying them, oldest first, through one apply method per event gives the state, two missed appointments, which the next command decides on.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="440" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">State in a table, or the events of a stream</text>
+  <rect x="24" y="60" width="424" height="356" rx="12" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="44" y="88" font-size="16" font-weight="700" fill="#1f2328">state in a table</text>
+  <text x="44" y="110" font-size="13" fill="#5f6b73">one row per aggregate: what is true now</text>
+  <rect x="44" y="132" width="384" height="72" rx="6" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="1.5"/>
+  <line x1="44" y1="164" x2="428" y2="164" stroke="#7a4f9a" stroke-width="1.5"/>
+  <text x="54" y="153" font-size="13" font-weight="700" fill="#7a4f9a">id</text>
+  <text x="204" y="153" font-size="13" font-weight="700" fill="#7a4f9a">patient</text>
+  <text x="312" y="153" font-size="13" font-weight="700" fill="#7a4f9a">missed</text>
+  <line x1="194" y1="132" x2="194" y2="204" stroke="#7a4f9a" stroke-opacity="0.5"/>
+  <line x1="302" y1="132" x2="302" y2="204" stroke="#7a4f9a" stroke-opacity="0.5"/>
+  <text x="54" y="189" font-size="13" fill="#1f2328">practice-1.patient-1</text>
+  <text x="204" y="189" font-size="13" fill="#1f2328">patient-1</text>
+  <text x="312" y="189" font-size="13" fill="#1f2328">2</text>
+  <text x="44" y="236" font-size="13" fill="#1f2328">each command updates the row in place:</text>
+  <text x="44" y="256" font-size="13" fill="#1f2328">the values it held before are gone</text>
+  <text x="44" y="296" font-size="14" font-weight="600" fill="#1f2328">"Was it a no-show or a cancellation?"</text>
+  <text x="44" y="320" font-size="13" fill="#1f2328">the row cannot say: nobody stored it</text>
+  <text x="44" y="340" font-size="13" fill="#1f2328">as a column, and the past is lost</text>
+  <rect x="472" y="60" width="464" height="356" rx="12" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="492" y="88" font-size="16" font-weight="700" fill="#1f2328">an event-sourced aggregate</text>
+  <text x="492" y="110" font-size="13" fill="#5f6b73">stream scheduling.attendance-record-practice-1.patient-1</text>
+  <rect x="492" y="126" width="248" height="38" rx="8" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="1.5"/>
+  <text x="508" y="150" font-size="13" font-weight="700" fill="#2f6f4f">v1</text>
+  <text x="536" y="150" font-size="13" fill="#1f2328">AttendanceRecordCreated</text>
+  <rect x="492" y="174" width="248" height="38" rx="8" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="1.5"/>
+  <text x="508" y="198" font-size="13" font-weight="700" fill="#2f6f4f">v2</text>
+  <text x="536" y="198" font-size="13" fill="#1f2328">NoShowNoted</text>
+  <rect x="492" y="222" width="248" height="38" rx="8" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="1.5"/>
+  <text x="508" y="246" font-size="13" font-weight="700" fill="#2f6f4f">v3</text>
+  <text x="536" y="246" font-size="13" fill="#1f2328">CancellationNoted</text>
+  <text x="756" y="150" font-size="13" fill="#1f2328">oldest first</text>
+  <text x="756" y="246" font-size="13" fill="#1f2328">appended, never</text>
+  <text x="756" y="266" font-size="13" fill="#1f2328">changed</text>
+  <line x1="616" y1="270" x2="616" y2="312" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="628" y="296" font-size="13" fill="#1f2328">replay through apply methods</text>
+  <rect x="492" y="314" width="248" height="84" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="616" y="340" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">the state</text>
+  <text x="616" y="362" font-size="13" fill="#1f2328" text-anchor="middle">missed: 2</text>
+  <text x="616" y="382" font-size="13" fill="#1f2328" text-anchor="middle">noted: 2 appointments</text>
+  <text x="756" y="350" font-size="13" fill="#1f2328">what the next</text>
+  <text x="756" y="370" font-size="13" fill="#1f2328">command decides on</text>
+</svg>

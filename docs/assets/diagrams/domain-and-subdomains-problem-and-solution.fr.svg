@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 560" width="960" height="560" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Les sous-domaines se trouvent dans le métier ; les contextes délimités se conçoivent dans le code</title>
+  <desc id="desc">À gauche, l'espace du problème : le domaine de la prise de rendez-vous découpé en six sous-domaines, appointments (cœur), availability, calendars, notifications et analytics (de soutien) et identity (générique). À droite, l'espace de la solution : un contexte délimité par sous-domaine sous src/contexts, sauf identity, acheté comme fournisseur OIDC, qui n'a aucun dossier ; la plateforme traduit ses jetons en Actor.</desc>
+  <defs>
+    <marker id="arrow-neutral" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+    <marker id="arrow-platform" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#5f6b73"/>
+    </marker>
+  </defs>
+  <rect width="960" height="560" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="17" font-weight="600" fill="#1f2328">Les sous-domaines se trouvent dans le métier ; les contextes délimités se conçoivent dans le code</text>
+  <rect x="32" y="60" width="360" height="420" rx="12" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="52" y="88" font-size="14" font-weight="600" fill="#5f6b73">espace du problème : le domaine (trouvé)</text>
+  <rect x="568" y="60" width="360" height="420" rx="12" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="588" y="88" font-size="14" font-weight="600" fill="#5f6b73">espace de la solution : le logiciel (conçu)</text>
+  <rect x="52" y="108" width="320" height="44" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="3"/>
+  <text x="68" y="136" font-size="15" font-weight="700" fill="#2f6f4f">appointments</text>
+  <text x="356" y="136" font-size="13" font-weight="600" font-style="italic" fill="#2f6f4f" text-anchor="end">cœur</text>
+  <rect x="588" y="108" width="320" height="44" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="604" y="136" font-size="14" font-weight="600" fill="#5f6b73">src/contexts/appointments/</text>
+  <line x1="374" y1="130" x2="584" y2="130" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow-neutral)"/>
+  <rect x="52" y="168" width="320" height="44" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="68" y="196" font-size="15" font-weight="700" fill="#2f6f4f">availability</text>
+  <text x="356" y="196" font-size="13" font-style="italic" fill="#2f6f4f" text-anchor="end">de soutien</text>
+  <rect x="588" y="168" width="320" height="44" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="604" y="196" font-size="14" font-weight="600" fill="#5f6b73">src/contexts/availability/</text>
+  <line x1="374" y1="190" x2="584" y2="190" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow-neutral)"/>
+  <rect x="52" y="228" width="320" height="44" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="68" y="256" font-size="15" font-weight="700" fill="#2f6f4f">calendars</text>
+  <text x="356" y="256" font-size="13" font-style="italic" fill="#2f6f4f" text-anchor="end">de soutien</text>
+  <rect x="588" y="228" width="320" height="44" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="604" y="256" font-size="14" font-weight="600" fill="#5f6b73">src/contexts/calendars/</text>
+  <line x1="374" y1="250" x2="584" y2="250" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow-neutral)"/>
+  <rect x="52" y="288" width="320" height="44" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="68" y="316" font-size="15" font-weight="700" fill="#2f6f4f">notifications</text>
+  <text x="356" y="316" font-size="13" font-style="italic" fill="#2f6f4f" text-anchor="end">de soutien</text>
+  <rect x="588" y="288" width="320" height="44" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="604" y="316" font-size="14" font-weight="600" fill="#5f6b73">src/contexts/notifications/</text>
+  <line x1="374" y1="310" x2="584" y2="310" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow-neutral)"/>
+  <rect x="52" y="348" width="320" height="44" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="68" y="376" font-size="15" font-weight="700" fill="#2f6f4f">analytics</text>
+  <text x="356" y="376" font-size="13" font-style="italic" fill="#2f6f4f" text-anchor="end">de soutien</text>
+  <rect x="588" y="348" width="320" height="44" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="604" y="376" font-size="14" font-weight="600" fill="#5f6b73">src/contexts/analytics/</text>
+  <line x1="374" y1="370" x2="584" y2="370" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow-neutral)"/>
+  <rect x="52" y="408" width="320" height="44" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="68" y="436" font-size="15" font-weight="700" fill="#5f6b73">identity</text>
+  <text x="356" y="436" font-size="13" font-style="italic" fill="#5f6b73" text-anchor="end">générique</text>
+  <rect x="588" y="404" width="320" height="64" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="604" y="426" font-size="14" font-weight="600" fill="#5f6b73">fournisseur OIDC, acheté</text>
+  <text x="604" y="446" font-size="13" fill="#1f2328">aucun dossier : la plateforme</text>
+  <text x="604" y="462" font-size="13" fill="#1f2328">traduit ses jetons en Actor</text>
+  <line x1="374" y1="430" x2="584" y2="430" stroke="#5f6b73" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow-platform)"/>
+  <line x1="32" y1="512" x2="76" y2="512" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow-neutral)"/>
+  <text x="88" y="517" font-size="14" fill="#1f2328">modélisé par un contexte délimité</text>
+  <line x1="32" y1="538" x2="76" y2="538" stroke="#5f6b73" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow-platform)"/>
+  <text x="88" y="543" font-size="14" fill="#1f2328">acheté, puis enveloppé à la frontière</text>
+</svg>

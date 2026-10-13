@@ -25,16 +25,46 @@ Each rule involves only the state of that appointment. They are invariants of th
 aggregate, checked inside its methods, and no code path can leave an appointment in a state
 that breaks them.
 
+![The Appointment aggregate: a handler calls one intention of the root and saves the whole aggregate through its repository; the root holds its value objects, refers to the Calendar and Client aggregates by identifier only, and records domain events](../assets/diagrams/aggregates-boundary.svg)
+
+The code of that aggregate. The value objects, events and errors it uses live in their own files
+of `domain/`; their shapes are declared at the top so that the sample stands alone:
+
+<!-- checked sample -->
 ```ts
 // contexts/appointments/domain/aggregates/appointment.aggregate.ts
-import { AggregateRoot } from '@ddd-ts-kit/kernel';
-import { AppointmentAlreadyCancelled } from '@/contexts/appointments/domain/errors/appointment-already-cancelled.error';
-import { CancellationWindowPassed } from '@/contexts/appointments/domain/errors/cancellation-window-passed.error';
-import { AppointmentBooked } from '@/contexts/appointments/domain/events/appointment-booked.event';
-import { AppointmentCancelled } from '@/contexts/appointments/domain/events/appointment-cancelled.event';
-import { AppointmentRescheduled } from '@/contexts/appointments/domain/events/appointment-rescheduled.event';
-import type { CancellationReason } from '@/contexts/appointments/domain/value-objects/cancellation-reason.vo';
-import type { TimeSlot } from '@/contexts/appointments/domain/value-objects/time-slot.vo';
+import { AggregateRoot, ConceptError, type DomainEvent } from '@ddd-ts-kit/kernel';
+
+// In domain/value-objects/, domain/events/ and domain/errors/:
+declare class TimeSlot {
+  readonly startsAt: Date;
+  startsWithin(durationMs: number, at: Date): boolean;
+}
+declare class CancellationReason {
+  readonly text: string;
+}
+declare class AppointmentBooked implements DomainEvent {
+  constructor(aggregateId: string, occurredAt: Date, practitionerId: string, slot: TimeSlot);
+  readonly name: string;
+  readonly occurredAt: Date;
+  readonly aggregateId: string;
+}
+declare class AppointmentRescheduled implements DomainEvent {
+  constructor(aggregateId: string, occurredAt: Date, slot: TimeSlot);
+  readonly name: string;
+  readonly occurredAt: Date;
+  readonly aggregateId: string;
+}
+declare class AppointmentCancelled implements DomainEvent {
+  constructor(aggregateId: string, occurredAt: Date, reason: CancellationReason);
+  readonly name: string;
+  readonly occurredAt: Date;
+  readonly aggregateId: string;
+}
+declare class AppointmentError extends ConceptError {
+  static alreadyCancelled(appointmentId: string): AppointmentError;
+  static cancellationWindowPassed(appointmentId: string, startsAt: Date): AppointmentError;
+}
 
 const FREE_CANCELLATION_MS = 24 * 60 * 60 * 1000;
 
@@ -116,11 +146,110 @@ the shape guarantees:
   which the save hands over: it is dispatched at the end of the unit of work of the command,
   once the command handler has returned and before the commit.
 
+The error class of the concept, in `domain/errors/appointment.error.ts`, writes each refusal
+once: its code, its message, its facts, and the facts a client may read:
+
+<!-- checked sample -->
+```ts
+import { ConceptError } from '@ddd-ts-kit/kernel';
+
+export class AppointmentError extends ConceptError {
+  static alreadyCancelled(appointmentId: string) {
+    return AppointmentError.refusal(
+      'APPOINTMENT_ALREADY_CANCELLED',
+      `Appointment ${appointmentId} is already cancelled.`,
+      { appointmentId },
+    );
+  }
+
+  static cancellationWindowPassed(appointmentId: string, startsAt: Date) {
+    return AppointmentError.refusal(
+      'CANCELLATION_WINDOW_PASSED',
+      `Appointment ${appointmentId} starts at ${startsAt.toISOString()}: too late to cancel for free.`,
+      { appointmentId, startsAt },
+    ).exposing('startsAt');
+  }
+}
+```
+
+Because the rules live in the aggregate, each one is a short spec with no database, no clock and
+no bus: given a state, when an intention, then an event or a refusal
+([Testing strategy](testing-strategy.md)). The builder `anAppointment()` is generated with the
+aggregate:
+
+<!-- checked sample -->
+```ts
+// contexts/appointments/test/unit/appointment.aggregate.spec.ts
+import { describe, it } from 'vitest';
+import { AggregateRoot } from '@ddd-ts-kit/kernel';
+import { given, type Resolvable } from '@ddd-ts-kit/testing';
+
+// The aggregate above, and its builder of test/builders/:
+declare class CancellationReason {
+  readonly text: string;
+}
+declare class Appointment extends AggregateRoot<string> {
+  private constructor();
+  cancel(reason: CancellationReason, at: Date): void;
+}
+interface AppointmentBuilder extends Resolvable<Appointment> {
+  startingAt(startsAt: Date): AppointmentBuilder;
+  cancelled(): AppointmentBuilder;
+}
+declare function anAppointment(): AppointmentBuilder;
+declare const movedAway: CancellationReason;
+
+const now = new Date('2026-03-01T09:00:00.000Z');
+
+describe('Appointment', () => {
+  it('records its cancellation', () => {
+    given(anAppointment().startingAt(new Date('2026-03-05T09:00:00.000Z')))
+      .when((appointment) => appointment.cancel(movedAway, now))
+      .thenEventNames(['appointments.appointment.cancelled']);
+  });
+
+  it('cannot be cancelled twice', () => {
+    given(anAppointment().cancelled())
+      .when((appointment) => appointment.cancel(movedAway, now))
+      .thenError('APPOINTMENT_ALREADY_CANCELLED');
+  });
+
+  it('refuses a free cancellation within 24 hours of its start', () => {
+    given(anAppointment().startingAt(new Date('2026-03-01T18:00:00.000Z')))
+      .when((appointment) => appointment.cancel(movedAway, now))
+      .thenError('CANCELLATION_WINDOW_PASSED');
+  });
+});
+```
+
 ## One aggregate per transaction
 
 A command changes one aggregate and saves it. If booking an appointment must also create a
-reminder, the reminder is created by another transaction, in reaction to
-`appointments.appointment.booked`. The reasons:
+reminder, the reminder is created by another transaction, in reaction to the integration event
+`appointments.appointment.booked`: the appointments context publishes it through the outbox, in
+the commit of the appointment, and the integration event handler of the reminder context
+receives it later, at least once, and sends the command that creates the reminder.
+
+A domain event handler is not the place for that command. By default it runs before the commit,
+and a command it sends joins the unit of work in progress: the reminder would be saved in the
+transaction of the appointment, which is exactly what this section rules out. An `after-commit`
+handler opens a unit of work of its own, but its reaction may be lost. The choice is laid out in
+[Where the reaction to a domain event goes](domain-and-integration-events.md#why-a-before-commit-handler-has-transactional-effects-only).
+
+![Transaction 1 saves the Appointment aggregate alone, with the outbox row of the integration event appointments.appointment.booked; the outbox delivers it later, at least once; in transaction 2 the integration event handler of the reminder context sends the command that creates the Reminder aggregate, in its own commit](../assets/diagrams/aggregates-one-per-transaction.svg)
+
+```ts
+// Instead of: one handler, two aggregates, one transaction
+await this.appointments.save(appointment);
+await this.reminders.save(Reminder.create(reminderId, appointment.id, remindAt)); // a second aggregate
+
+// Write: the command handler saves its aggregate only
+await this.appointments.save(appointment);
+// ... and the reminder context's integration event handler of appointments.appointment.booked
+// (published through the outbox, delivered at least once) sends the command that creates the reminder
+```
+
+The reasons:
 
 - **Contention.** A transaction locking two aggregates fails or waits whenever either is busy.
 - **Boundaries.** Two aggregates that must commit together are, by definition, inside one
@@ -143,6 +272,25 @@ loading it, and would silently extend the transaction. An identifier keeps each 
 loadable and saveable alone. When a rule needs data from another aggregate, the handler loads
 what is needed and passes it as an argument, or a [domain service](domain-building-blocks.md)
 takes both.
+
+```ts
+// Instead of: an object reference, which lets the appointment change the calendar
+interface AppointmentState {
+  readonly calendar: Calendar; // loaded with every appointment, saved with it
+}
+
+// Write: the identifier; the handler loads what the rule needs and passes it in
+interface AppointmentState {
+  readonly practitionerId: string;
+}
+
+// If booking also had to respect the working hours of the practitioner:
+const calendar = await this.calendars.findByPractitioner(command.practitionerId);
+const appointment = Appointment.book(id, booking, calendar.workingHours, this.clock.now());
+```
+
+The calendar is read, never changed, by this command: its working hours are an argument of the
+intention, and the calendar stays free for its own commands.
 
 ## Sizing
 
@@ -173,6 +321,51 @@ where the stored version matches the loaded one, and otherwise raises a concurre
 (the kernel's `ConcurrencyError`, code `CONCURRENCY_CONFLICT`, which the repository contract
 suite requires). The caller retries or reports the conflict. No lock is held while the user
 thinks.
+
+![Requests A and B both load appointment a-1 at version 3; A's update guarded by version 3 writes one row and moves it to version 4; B's update with the same guard writes no row and raises a ConcurrencyError](../assets/diagrams/aggregates-optimistic-concurrency.svg)
+
+`optimisticUpdate` of the kernel is that guard, around the two statements of the adapter (the
+ORM packages and the generated repositories call it the same way):
+
+<!-- checked sample -->
+```ts
+// contexts/appointments/infrastructure/persistence/appointment-versioning.ts
+import { AggregateRoot, optimisticUpdate } from '@ddd-ts-kit/kernel';
+
+declare class Appointment extends AggregateRoot<string> {
+  private constructor();
+}
+
+interface AppointmentRow {
+  readonly id: string;
+  readonly status: 'booked' | 'cancelled';
+  readonly version: number;
+}
+
+// The statements of the adapter, on the ORM of the project:
+declare function rowOf(appointment: Appointment): Omit<AppointmentRow, 'version'>;
+declare function insertUnlessExists(row: AppointmentRow): Promise<boolean>;
+declare function updateWhereVersion(row: AppointmentRow, expected: number): Promise<number>;
+
+export async function save(appointment: Appointment): Promise<void> {
+  // expected: the version loaded (0: never saved); next: the version to write.
+  await optimisticUpdate(appointment, async ({ expected, next }) => {
+    const row = { ...rowOf(appointment), version: next };
+
+    if (expected === 0) {
+      return (await insertUnlessExists(row)) ? 1 : 0;
+    }
+
+    return updateWhereVersion(row, expected); // the number of rows written
+  });
+  // One row written: appointment.version is now `next`. None: a ConcurrencyError was thrown.
+}
+```
+
+When a client must not overwrite a version it has not seen (an HTTP `If-Match`), the handler
+also compares the version the command carries with the loaded one, with
+`expectVersion(appointment, command.expectedVersion)` of the kernel, before calling the
+intention.
 
 An aggregate whose history is the business can be kept as its events instead of its state: it
 extends `EventSourcedAggregate`, changes its state only in one apply method per event, and keeps
@@ -211,11 +404,81 @@ versions do not help, because the two inserts touch two different rows. The opti
 | a database constraint on the appointments table | yes | a unique index on discrete slots, or an exclusion constraint on ranges in PostgreSQL |
 
 So the invariant is guarded twice, each guard doing what it can: the domain states the rule and
-names its refusal (`SlotAlreadyTaken`), and the storage makes it impossible to violate under
-concurrency. The repository adapter translates the constraint violation into the domain error,
-so the handler and the client see a business refusal with the code `SLOT_ALREADY_TAKEN`, not a
-driver error. The pre-check in the handler remains useful as the fast, friendly path; it is not
-the guarantee.
+names its refusal (`AppointmentError.slotAlreadyTaken`), and the storage makes it impossible to
+violate under concurrency. The repository adapter translates the constraint violation into the
+domain error, so the handler and the client see a business refusal with the code
+`SLOT_ALREADY_TAKEN`, not a driver error. The pre-check in the handler remains useful as the
+fast, friendly path; it is not the guarantee.
+
+On PostgreSQL, an exclusion constraint says "no two active appointments of a practitioner
+overlap", whatever their length:
+
+```sql
+-- a migration of the appointments context
+CREATE EXTENSION IF NOT EXISTS btree_gist;
+
+ALTER TABLE appointments.appointments
+  ADD CONSTRAINT appointments_no_overlap
+  EXCLUDE USING gist (practitioner_id WITH =, tstzrange(starts_at, ends_at) WITH &&)
+  WHERE (status <> 'cancelled');
+```
+
+The adapter recognises that constraint by its name and raises the refusal of the domain, the
+driver error kept as its cause:
+
+<!-- checked sample -->
+```ts
+import { ConceptError } from '@ddd-ts-kit/kernel';
+
+// domain/errors/appointment.error.ts
+export class AppointmentError extends ConceptError {
+  static slotAlreadyTaken(practitionerId: string, startsAt: Date, cause: unknown) {
+    return AppointmentError.refusal(
+      'SLOT_ALREADY_TAKEN',
+      `Practitioner ${practitionerId} already has an appointment at ${startsAt.toISOString()}.`,
+      { practitionerId, startsAt },
+    )
+      .exposing('startsAt')
+      .causedBy(cause);
+  }
+}
+
+// infrastructure/persistence/: the insert of the repository adapter
+const EXCLUSION_VIOLATION = '23P01'; // the SQLSTATE of PostgreSQL
+const NO_OVERLAP = 'appointments_no_overlap';
+
+interface AppointmentRow {
+  readonly id: string;
+  readonly practitioner_id: string;
+  readonly starts_at: Date;
+  readonly ends_at: Date;
+}
+
+declare function insertRow(row: AppointmentRow): Promise<void>;
+
+export async function insertAppointment(row: AppointmentRow): Promise<void> {
+  try {
+    await insertRow(row);
+  } catch (error) {
+    if (violates(error, NO_OVERLAP)) {
+      throw AppointmentError.slotAlreadyTaken(row.practitioner_id, row.starts_at, error);
+    }
+
+    throw error;
+  }
+}
+
+function violates(error: unknown, constraint: string): boolean {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    error.code === EXCLUSION_VIOLATION &&
+    'constraint' in error &&
+    error.constraint === constraint
+  );
+}
+```
 
 ## Limits and when not to use it
 

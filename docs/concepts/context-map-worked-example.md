@@ -9,6 +9,8 @@ dependency, and write the result where the kit expects it. The outcome is five c
 code (`appointments`, `availability`, `calendars`, `notifications`, `analytics`) and one bought
 capability (identity) that gets no context at all.
 
+![The seven steps of the walk, from the statement of needs to the signals that would change the map, each with what it produces](../assets/diagrams/context-map-worked-example-steps.svg)
+
 ## 1. The statement of needs
 
 As a product person would write it:
@@ -54,6 +56,8 @@ identity. Each is then put through the four tests of
 
 The word "slot" means two things, which the language test reads as two contexts. The harder
 question is where "never two clients at once" lives.
+
+![availability, fed by events and a moment late, tells two clients that 10:00 is free; both ask appointments to book it; appointments books the first and refuses the second with SlotAlreadyTaken, then its event stops availability offering 10:00](../assets/diagrams/context-map-worked-example-slot.svg)
 
 - If `availability` guarded it, booking would depend on data computed from events, which lag.
   Two clients looking at the same open slot would both be allowed.
@@ -108,27 +112,11 @@ No cycle: `calendars` depends on nobody, `appointments` on `calendars`, and the 
 only consume. `notifications` and `analytics` have no relationship with each other: separate
 ways, expressed by declaring nothing.
 
-```mermaid
-flowchart LR
-  calendars["calendars (supporting)"]
-  appointments["appointments (core)"]
-  availability["availability (supporting)"]
-  notifications["notifications (supporting)"]
-  analytics["analytics (supporting)"]
-  idp(["identity provider (generic, external)"])
-  sms(["email and SMS provider (external)"])
-
-  calendars -- "published-language" --> appointments
-  calendars -- "published-language" --> availability
-  appointments -- "published-language" --> availability
-  appointments -- "published-language" --> notifications
-  appointments -- "conformist" --> analytics
-  notifications -. "anti-corruption layer" .-> sms
-  idp -. "OIDC tokens, mapped by the platform" .-> appointments
-```
+![The context map: calendars, supporting, upstream of appointments and availability; appointments, the core, upstream of availability and notifications in published language and of analytics, conformist; the email and SMS provider upstream of notifications behind an anticorruption layer; the identity provider mapped to an Actor by the platform](../assets/diagrams/context-map-worked-example-map.svg)
 
 Arrows run from upstream to downstream, as in the generated map. The two external systems are
-drawn here for the reader; the generated diagram shows contexts of the config only.
+drawn here for the reader; the generated diagram, a Mermaid block between the markers of
+`docs/context-map.md`, shows the contexts of the config only.
 
 ## 6. Write it where the kit expects it
 
@@ -201,7 +189,35 @@ npx ddd-ts-kit check --rule tree/context-doc --rule context/no-cycle --rule cont
 
 And by hand, outside the generated markers of `docs/context-map.md`: the reading guide (book,
 then availability and notifications react), why "no double booking" is in `appointments`, why
-analytics is conformist, and the known tension about availability.
+analytics is conformist, and the known tension about availability. The generated file leaves a
+`TODO(domain)` under each of these headings; filled in for this map, they read:
+
+```md
+<!-- ddd-ts-kit:context-map -->
+(generated: the diagram and the table of the contexts)
+<!-- /ddd-ts-kit:context-map -->
+
+## Reading guide
+
+A client books in `appointments`, which holds the slot and announces it. `availability` stops
+offering the slot, `notifications` confirms and plans the reminder, `analytics` counts it.
+`calendars` only publishes working hours and time off.
+
+## Why these boundaries
+
+"Never two clients at once" must hold at every instant, so it lives in the `Appointment`
+aggregate, backed by a unique constraint. `availability` is derived from events and advises.
+
+## Relationship notes
+
+`analytics` is conformist: it stores the events of `appointments` as published and has no
+model to protect. Its cost: a breaking change of those events breaks its reports.
+
+## Known tensions
+
+`availability` may be queries of `appointments` in disguise. If its rules stay trivial for a
+year, merge it.
+```
 
 ## 7. What would change the map
 
@@ -224,6 +240,14 @@ analytics is conformist, and the known tension about availability.
 - Do not copy the number of contexts. For a first version with one developer, `appointments`
   and `calendars` alone, with availability as queries and notifications as an event handler,
   would be a reasonable start.
+- The example application of the repository (`examples/scheduling`) made another cut of the
+  same domain, which shows the point: one core context, `scheduling`, holds calendars,
+  availability and appointments together; `identity` is a supporting context of its own,
+  because practices and the delegations between practitioners and assistants are rules of the
+  product, not a bought login, and `scheduling` is its customer (customer-supplier);
+  `notification` consumes the events of `scheduling` and `identity`, and `analytics` conforms to
+  those of `scheduling`. Its map is in
+  [`examples/scheduling/docs/context-map.md`](../../examples/scheduling/docs/context-map.md).
 
 ## Sources
 

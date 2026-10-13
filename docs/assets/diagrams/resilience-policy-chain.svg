@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 470" width="960" height="470" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">A call through the policies, outermost first</title>
+  <desc id="desc">The handler calls the SmsSender port. The call enters nested wrappers put around the adapter, outermost first: tracing, logged and timed, cached, retry, circuit breaker, bulkhead and timeout, then reaches the adapter, the HTTP client of the provider, which calls the SMS provider. The answer comes back out through each wrapper in reverse. The handler sees none of them.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="470" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">A call through the policies, outermost first</text>
+  <rect x="232" y="70" width="560" height="330" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="246" y="90" font-size="13" fill="#1f2328"><tspan font-weight="700" fill="#5f6b73">tracing</tspan>: a span per call</text>
+  <rect x="246" y="100" width="532" height="292" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="260" y="120" font-size="13" fill="#1f2328"><tspan font-weight="700" fill="#5f6b73">logged, timed</tspan>: one entry, one measure per call, retries included</text>
+  <rect x="260" y="130" width="504" height="254" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="274" y="150" font-size="13" fill="#1f2328"><tspan font-weight="700" fill="#5f6b73">cached</tspan>: a hit answers here, nothing below runs</text>
+  <rect x="274" y="160" width="476" height="216" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="288" y="180" font-size="13" fill="#1f2328"><tspan font-weight="700" fill="#5f6b73">retry</tspan>: calls again after a transient failure</text>
+  <rect x="288" y="190" width="448" height="178" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="302" y="210" font-size="13" fill="#1f2328"><tspan font-weight="700" fill="#5f6b73">circuitBreaker</tspan>: refuses at once while open</text>
+  <rect x="302" y="220" width="420" height="140" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="316" y="240" font-size="13" fill="#1f2328"><tspan font-weight="700" fill="#5f6b73">bulkhead</tspan>: refuses beyond N calls at once</text>
+  <rect x="316" y="250" width="392" height="102" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="330" y="270" font-size="13" fill="#1f2328"><tspan font-weight="700" fill="#5f6b73">timeout</tspan>: bounds each attempt, aborts</text>
+  <rect x="330" y="280" width="364" height="64" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="512" y="306" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">adapter</text>
+  <text x="512" y="328" font-size="13" fill="#1f2328" text-anchor="middle">HTTP client of the provider</text>
+  <rect x="24" y="272" width="120" height="80" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="84" y="308" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">handler</text>
+  <text x="84" y="330" font-size="13" fill="#1f2328" text-anchor="middle">sees none of it</text>
+  <line x1="146" y1="312" x2="326" y2="312" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="188" y="304" font-size="13" fill="#1f2328" text-anchor="middle">SmsSender</text>
+  <text x="188" y="332" font-size="13" fill="#1f2328" text-anchor="middle">(port)</text>
+  <rect x="832" y="272" width="104" height="80" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="884" y="308" font-size="14" font-weight="700" fill="#5f6b73" text-anchor="middle">SMS</text>
+  <text x="884" y="328" font-size="14" font-weight="700" fill="#5f6b73" text-anchor="middle">provider</text>
+  <line x1="696" y1="312" x2="828" y2="312" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="32" y="436" font-size="14" fill="#1f2328">The call goes in through every layer and comes back out through each, in reverse. Each layer is an aspect</text>
+  <text x="32" y="458" font-size="14" fill="#1f2328">put around the adapter where the platform binds it.</text>
+</svg>

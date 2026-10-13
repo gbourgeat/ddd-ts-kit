@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 470" width="960" height="470" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Une entité garde son identité en changeant ; un objet-valeur est ses attributs</title>
+  <desc id="desc">À gauche, l'entité Appointment d'identifiant apt-42 passe par trois états : réservé le mardi à 10:00, déplacé au jeudi à 14:00, puis annulé. C'est le même rendez-vous du début à la fin, égal par son identifiant. À droite, deux valeurs TimeSlot de 09:00 à 09:30 sont égales par leurs attributs et interchangeables ; un créneau ne change jamais : le déplacer crée une nouvelle valeur et laisse la première telle quelle.</desc>
+  <defs>
+    <marker id="arrow-neutral" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="470" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Une entité garde son identité en changeant ; un objet-valeur est ses attributs</text>
+  <rect x="32" y="60" width="430" height="390" rx="12" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="52" y="88" font-size="14" font-weight="600" fill="#5f6b73">entité : Appointment</text>
+  <rect x="56" y="104" width="200" height="56" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="72" y="128" font-size="15" font-weight="700" fill="#2f6f4f">apt-42</text>
+  <text x="240" y="128" font-size="13" font-weight="600" font-style="italic" fill="#2f6f4f" text-anchor="end">réservé</text>
+  <text x="72" y="149" font-size="13" fill="#1f2328">mardi 10:00</text>
+  <line x1="156" y1="162" x2="156" y2="192" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow-neutral)"/>
+  <text x="168" y="182" font-size="13" fill="#1f2328">rescheduleTo(...)</text>
+  <rect x="56" y="196" width="200" height="56" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="72" y="220" font-size="15" font-weight="700" fill="#2f6f4f">apt-42</text>
+  <text x="240" y="220" font-size="13" font-weight="600" font-style="italic" fill="#2f6f4f" text-anchor="end">réservé</text>
+  <text x="72" y="241" font-size="13" fill="#1f2328">jeudi 14:00</text>
+  <line x1="156" y1="254" x2="156" y2="284" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow-neutral)"/>
+  <text x="168" y="274" font-size="13" fill="#1f2328">cancel(...)</text>
+  <rect x="56" y="288" width="200" height="56" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="72" y="312" font-size="15" font-weight="700" fill="#2f6f4f">apt-42</text>
+  <text x="240" y="312" font-size="13" font-weight="600" font-style="italic" fill="#2f6f4f" text-anchor="end">annulé</text>
+  <text x="72" y="333" font-size="13" fill="#1f2328">jeudi 14:00</text>
+  <path d="M272,104 H288 V344 H272" fill="none" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="300" y="200" font-size="13" font-weight="600" fill="#2f6f4f">le même rendez-vous</text>
+  <text x="300" y="220" font-size="13" fill="#1f2328">du début à la fin :</text>
+  <text x="300" y="240" font-size="13" fill="#1f2328">égal par son</text>
+  <text x="300" y="260" font-size="13" fill="#1f2328">identifiant</text>
+  <text x="56" y="398" font-size="13" fill="#1f2328">Appointment.equals(other) : même classe, même id</text>
+  <text x="56" y="422" font-size="13" font-style="italic" fill="#2f6f4f">son état ne change que par des méthodes d'intention</text>
+  <rect x="498" y="60" width="430" height="390" rx="12" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="518" y="88" font-size="14" font-weight="600" fill="#5f6b73">objet-valeur : TimeSlot</text>
+  <rect x="522" y="108" width="152" height="50" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="598" y="139" font-size="14" font-weight="600" fill="#2f6f4f" text-anchor="middle">09:00 à 09:30</text>
+  <rect x="752" y="108" width="152" height="50" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="828" y="139" font-size="14" font-weight="600" fill="#2f6f4f" text-anchor="middle">09:00 à 09:30</text>
+  <text x="713" y="130" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">equals</text>
+  <text x="713" y="148" font-size="16" font-weight="700" fill="#1f2328" text-anchor="middle">=</text>
+  <text x="522" y="190" font-size="13" font-weight="600" fill="#2f6f4f">sans identité : égal par ses attributs,</text>
+  <text x="522" y="210" font-size="13" fill="#1f2328">interchangeable</text>
+  <rect x="522" y="250" width="152" height="50" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="598" y="281" font-size="14" font-weight="600" fill="#2f6f4f" text-anchor="middle">09:00 à 09:30</text>
+  <line x1="676" y1="275" x2="748" y2="275" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow-neutral)"/>
+  <text x="712" y="242" font-size="13" fill="#1f2328" text-anchor="middle">TimeSlot.create(...)</text>
+  <rect x="752" y="250" width="152" height="50" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="828" y="281" font-size="14" font-weight="600" fill="#2f6f4f" text-anchor="middle">10:00 à 10:30</text>
+  <text x="522" y="332" font-size="13" font-weight="600" fill="#2f6f4f">immuable : un changement est une nouvelle valeur,</text>
+  <text x="522" y="352" font-size="13" fill="#1f2328">la première reste telle qu'elle était</text>
+  <text x="522" y="398" font-size="13" fill="#1f2328">TimeSlot.equals(other) : même classe, mêmes props</text>
+  <text x="522" y="422" font-size="13" font-style="italic" fill="#2f6f4f">props gelées à la construction</text>
+</svg>

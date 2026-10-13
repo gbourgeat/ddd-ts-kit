@@ -15,8 +15,11 @@ extractable.
 
 A use case that is protected receives the actor as data:
 
+<!-- checked sample -->
 ```ts
 // appointments/application/commands/cancel-appointment/cancel-appointment.command.ts
+import { AuthorizedCommand, systemActor, type Actor } from '@ddd-ts-kit/kernel';
+
 export class CancelAppointment extends AuthorizedCommand {
   constructor(
     actor: Actor,
@@ -26,6 +29,14 @@ export class CancelAppointment extends AuthorizedCommand {
     super(actor);
   }
 }
+
+// Whoever sends it says who acts: a user authenticated at the edge, or a spec...
+const client: Actor = { id: 'u-7', type: 'user', tenantId: 'acme', roles: ['client'], attributes: {} };
+export const byTheClient = new CancelAppointment(client, 'a-1', 'moved away');
+
+// ... or the system itself, named after the job that sends it.
+export const byTheJob = new CancelAppointment(systemActor('notifications.send-reminders'), 'a-1', 'not confirmed');
+// byTheJob.actor.id === 'system:notifications.send-reminders'
 ```
 
 The actor is the first constructor argument, so no call site can forget it. An `Actor` is plain
@@ -43,6 +54,21 @@ What follows from making it explicit:
   authorization model, not an accident.
 - **The use case works the same behind any transport.** HTTP today, a queue or an RPC call
   tomorrow: the actor travels in the message, never as a session.
+
+```ts
+// Instead of: a hidden input, read from the ambient scope
+async execute(command: CancelAppointment): Promise<void> {
+  const actor = this.scope.require().actor; // in a job or a consumer, fails far from its cause
+  // ...
+}
+
+// Write: the actor of the command, visible in the signature
+async execute({ actor, appointmentId }: CancelAppointment): Promise<void> {
+  const appointment = await this.appointments.findById(appointmentId);
+  // ...
+  await this.access.authorize(actor, appointmentPermissions['appointment.cancel'], appointment);
+}
+```
 
 The domain goes one step further: it knows no actor at all. When an aggregate needs "who", the
 handler passes the identifier as an argument named for its role in the business:
@@ -64,31 +90,17 @@ execution context:
 | `causationId` | the direct cause: for a consumed event, the id of that event |
 | `actor`, `session` | who, and how they authenticated (including impersonation by support staff) |
 | `tenantId` | the tenant of the work in progress |
-| `origin` | `http`, `event`, `schedule`, `cli`, or a value of the project |
+| `elevation` | platform staff reading across tenants, opened by `acrossTenants` and audited ([Multitenancy](multitenancy.md)) |
+| `locale` | the locale of the caller, when the boundary knows it |
+| `origin` | `http`, `event`, `schedule`, `queue`, `cli`, or a value of the project |
 | `scheduledAt` | for a job, the instant the run was due |
 | `deadline` | an instant after which the work is pointless |
 | `extensions` | the fields the project adds |
 
-The boundary opens one scope per unit of work and everything below runs inside it:
+The boundary opens one scope per unit of work and everything below runs inside it, while the
+actor travels in the message:
 
-```mermaid
-flowchart TB
-  subgraph Boundaries
-    HTTP[HTTP request: origin http, actor from the token]
-    EVT[Consumed event: origin event, system actor of the consumer, correlation of the event]
-    JOB[Scheduled job: origin schedule, system actor of the job, fresh correlation]
-  end
-  HTTP --> S[Execution scope]
-  EVT --> S
-  JOB --> S
-  S -->|read by| I[Infrastructure and platform]
-  S -. never read by .-> U[Use cases and domain]
-  I --> AC[Audit columns]
-  I --> TS[Tenant condition of every statement]
-  I --> LF[Log fields]
-  I --> CE[Correlation id stamped on published events]
-  I --> AT[Audit trail entries]
-```
+![The boundaries build the command, whose first argument is the actor, and open the execution scope; the handler reads only its command and the domain receives identifiers; only infrastructure and the platform read the scope](../assets/diagrams/actor-and-execution-scope-two-channels.svg)
 
 ## Who may read the scope, and who may not
 
@@ -103,7 +115,25 @@ flowchart TB
 | Aggregates, value objects, domain services | no | arguments of their methods |
 
 Infrastructure reads the `ExecutionScope` port. `ActorContext` is a view of the same scope that
-answers the actor only; it holds no state of its own.
+answers the actor only; it holds no state of its own. The kernel gives the readings the kit's
+adapters use, so a project's own adapter reads the scope the same way:
+
+<!-- checked sample -->
+```ts
+import { logFieldsOf, stampCreation, type Clock, type ExecutionScope, type Logger } from '@ddd-ts-kit/kernel';
+
+// Injected into an adapter of infrastructure, never into a handler:
+declare const scope: ExecutionScope;
+declare const clock: Clock;
+declare const logger: Logger;
+
+// The audit columns of an inserted row: { createdAt, createdBy: the actor id, updatedAt, updatedBy }
+export const stamp = stampCreation(scope, clock);
+
+// The identifiers of the work on a log line: correlationId, origin, actorId, and when present
+// causationId, tenantId, elevation (its reason) and impersonatedBy
+logger.info('reminder stored', logFieldsOf(scope.require()));
+```
 
 Why handlers may not, even though it would save a parameter:
 
@@ -139,6 +169,33 @@ The correlation id is set once, at the first boundary, and survives every hop:
    consumer.
 4. The reminder it stores carries audit columns naming that system actor, and every log line,
    span and audit entry of both contexts shares one correlation id.
+
+![The scope of the HTTP request in the appointments context and the scope of the consumer in the notifications context share the correlation id req-42; the event evt-9 is the causation id of the second; the actor of the second is the system actor of the consumer](../assets/diagrams/actor-and-execution-scope-correlation.svg)
+
+The scope of step 3 is what `executionContextOfEvent` of the kernel answers for the event, and
+what the kit's subscriptions open around a consumer:
+
+<!-- checked sample -->
+```ts
+import { executionContextOfEvent, type IntegrationEvent } from '@ddd-ts-kit/kernel';
+
+const booked: IntegrationEvent = {
+  id: 'evt-9',
+  type: 'appointments.appointment.booked',
+  version: 1,
+  occurredAt: '2026-03-01T09:00:00.000Z',
+  payload: { appointmentId: 'a-1' },
+  correlationId: 'req-42', // stamped by the publisher of the appointments context
+  tenantId: 'acme',
+};
+
+const context = executionContextOfEvent(booked, { consumer: 'notifications.remind-on-appointment-booked' });
+
+console.log(context.correlationId); // 'req-42': the same chain
+console.log(context.causationId); // 'evt-9': the direct cause
+console.log(context.actor.id); // 'system:notifications.remind-on-appointment-booked'
+console.log(context.origin, context.tenantId); // 'event' 'acme'
+```
 
 The envelope of an integration event carries no actor by default, on purpose: an actor is
 personal data, and brokers keep messages. A project that decides otherwise maps a reference

@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 370" width="960" height="370" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Where an answer can be kept</title>
+  <desc id="desc">A read goes from the browser to a shared cache such as Varnish or a CDN, then to the application, then to the database. The browser keeps private answers, the shared cache public ones, both keyed by URL: a hit there saves the request itself. Inside the process, the application cache saves a computation or a call, and a read model in the database saves the shaping of a query.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="370" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Where an answer can be kept</text>
+  <text x="32" y="62" font-size="14" fill="#5f6b73">A read crosses four layers; a hit at one of them saves everything to its right</text>
+  <!-- browser -->
+  <rect x="24" y="88" width="200" height="96" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="124" y="118" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">browser</text>
+  <line x1="40" y1="130" x2="208" y2="130" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text x="124" y="152" font-size="13" fill="#1f2328" text-anchor="middle">its own cache</text>
+  <text x="124" y="172" font-size="13" fill="#1f2328" text-anchor="middle">public and private answers</text>
+  <!-- shared cache -->
+  <rect x="264" y="88" width="200" height="96" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="364" y="118" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">shared cache</text>
+  <line x1="280" y1="130" x2="448" y2="130" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text x="364" y="152" font-size="13" fill="#1f2328" text-anchor="middle">Varnish, a CDN</text>
+  <text x="364" y="172" font-size="13" fill="#1f2328" text-anchor="middle">public answers only</text>
+  <!-- application -->
+  <rect x="504" y="88" width="200" height="96" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="604" y="118" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">application</text>
+  <line x1="520" y1="130" x2="688" y2="130" stroke="#2b5d8a" stroke-opacity="0.35"/>
+  <text x="604" y="152" font-size="13" fill="#1f2328" text-anchor="middle">application cache</text>
+  <text x="604" y="172" font-size="13" fill="#1f2328" text-anchor="middle">the Cache port: memory, Redis</text>
+  <!-- database -->
+  <rect x="744" y="88" width="200" height="96" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="844" y="118" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">database</text>
+  <line x1="760" y1="130" x2="928" y2="130" stroke="#7a4f9a" stroke-opacity="0.35"/>
+  <text x="844" y="152" font-size="13" fill="#1f2328" text-anchor="middle">read models</text>
+  <text x="844" y="172" font-size="13" fill="#1f2328" text-anchor="middle">kept current by events</text>
+  <!-- the way of a read -->
+  <line x1="226" y1="136" x2="262" y2="136" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="466" y1="136" x2="502" y2="136" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="706" y1="136" x2="742" y2="136" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- what a hit saves -->
+  <text x="124" y="216" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">a hit saves the network:</text>
+  <text x="124" y="236" font-size="13" fill="#1f2328" text-anchor="middle">nothing leaves the device</text>
+  <text x="364" y="216" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">a hit saves the request:</text>
+  <text x="364" y="236" font-size="13" fill="#1f2328" text-anchor="middle">no connection, no</text>
+  <text x="364" y="256" font-size="13" fill="#1f2328" text-anchor="middle">authentication, no query</text>
+  <text x="604" y="216" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">a hit saves a computation,</text>
+  <text x="604" y="236" font-size="13" fill="#1f2328" text-anchor="middle">or a call to another context</text>
+  <text x="844" y="216" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">a read model saves</text>
+  <text x="844" y="236" font-size="13" fill="#1f2328" text-anchor="middle">the joins and the shaping</text>
+  <text x="844" y="256" font-size="13" fill="#1f2328" text-anchor="middle">of a query</text>
+  <!-- groups -->
+  <path d="M24,292 V302 H464 V292" fill="none" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="244" y="326" font-size="14" font-weight="600" fill="#5f6b73" text-anchor="middle">HTTP caches: outside the process</text>
+  <text x="244" y="346" font-size="13" fill="#1f2328" text-anchor="middle">keyed by URL and the headers Vary names</text>
+  <path d="M504,292 V302 H944 V292" fill="none" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="724" y="326" font-size="14" font-weight="600" fill="#2b5d8a" text-anchor="middle">the application and its database</text>
+  <text x="724" y="346" font-size="13" fill="#1f2328" text-anchor="middle">reached after authentication and the decision of the use case</text>
+</svg>

@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 470" width="960" height="470" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Où naissent les quatre signaux</title>
+  <desc id="desc">Des cadres imbriqués autour d'un cas d'usage. La frontière HTTP, avec tracedRoutes, ouvre le span de la requête HTTP et remonte chaque réponse 5xx. À l'intérieur, les middlewares des bus de commandes et de requêtes ouvrent le span du cas d'usage, écrivent une entrée de journal, mesurent la durée et le nombre use_case, et remontent un échec qui n'est pas une DomainError. Au centre, le gestionnaire, l'agrégat et les ports sont du code métier et ne produisent aucun signal : ils lèvent une erreur. Le gestionnaire appelle un adaptateur par son port ; l'adaptateur est enveloppé là où la plateforme le lie, ce qui donne le span de l'appel, ses entrées de journal et les métriques dependency_call.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="470" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Où naissent les quatre signaux</text>
+  <!-- HTTP boundary -->
+  <rect x="24" y="60" width="912" height="340" rx="14" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="44" y="88" font-size="16" font-weight="700" fill="#9a5b2b">frontière HTTP : around: tracedRoutes()</text>
+  <text x="44" y="110" font-size="13" fill="#1f2328">span POST /appointments (SERVER), avec l'identifiant de corrélation et l'origine ; une remontée par 5xx</text>
+  <!-- buses -->
+  <rect x="48" y="128" width="560" height="248" rx="12" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="68" y="156" font-size="16" font-weight="700" fill="#2b5d8a">bus de commandes et de requêtes : middlewares</text>
+  <text x="68" y="178" font-size="13" fill="#1f2328">span command BookAppointment ; une entrée de journal par cas</text>
+  <text x="68" y="198" font-size="13" fill="#1f2328">d'usage ; use_case_duration_ms et use_case_total ; une remontée</text>
+  <text x="68" y="218" font-size="13" fill="#1f2328">pour tout ce qui n'est pas une DomainError</text>
+  <!-- business code -->
+  <rect x="72" y="238" width="360" height="118" rx="10" fill="#ffffff" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="92" y="266" font-size="16" font-weight="700" fill="#2f6f4f">gestionnaire, agrégat, ports</text>
+  <text x="92" y="290" font-size="13" fill="#1f2328">code métier : ni span, ni ligne de journal,</text>
+  <text x="92" y="310" font-size="13" fill="#1f2328">ni métrique, ni remontée</text>
+  <text x="92" y="336" font-size="13" font-style="italic" font-weight="600" fill="#2f6f4f">il lève une erreur, et c'est tout ce qu'il dit</text>
+  <!-- adapter -->
+  <rect x="656" y="200" width="256" height="156" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="676" y="228" font-size="16" font-weight="700" fill="#7a4f9a">adaptateur</text>
+  <text x="676" y="250" font-size="13" fill="#1f2328">enveloppé là où il est lié :</text>
+  <text x="676" y="272" font-size="13" fill="#1f2328">span &lt;kind&gt; &lt;Port&gt;.&lt;method&gt; ;</text>
+  <text x="676" y="292" font-size="13" fill="#1f2328">aspects logged et timed :</text>
+  <text x="676" y="312" font-size="13" fill="#1f2328">entrées de journal et</text>
+  <text x="676" y="332" font-size="13" fill="#1f2328">métriques dependency_call</text>
+  <!-- call through the port -->
+  <path d="M434,290 H652" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="446" y="280" font-size="13" fill="#1f2328">par son port</text>
+  <!-- legend -->
+  <text x="32" y="432" font-size="14" fill="#1f2328">Les consommateurs et les jobs ont leur propre frontière : un span process &lt;consumer&gt; ou job &lt;name&gt;, et une remontée</text>
+  <text x="32" y="454" font-size="14" fill="#1f2328">quand un événement est abandonné ou qu'une exécution échoue. Chaque signal porte des noms du code, jamais d'arguments.</text>
+</svg>

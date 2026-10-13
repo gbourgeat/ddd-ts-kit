@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 456" width="960" height="456" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Une chaîne de hachage, et ce qu'elle prouve</title>
+  <desc id="desc">Quatre entrées de la chaîne tenant:acme. Chacune garde le hachage de l'entrée précédente et le sien ; le previousHash de la première est GENESIS_HASH, 64 zéros. La vérification signale la première rupture : une entrée modifiée comme altered-content, une entrée supprimée comme missing-entry, deux entrées interverties comme reordered. Une chaîne réécrite en entier redevient valide : un point de contrôle, le hachage à une séquence donnée, est donc copié dans un stockage où le propriétaire de la table ne peut pas écrire, et la vérification compare la chaîne avec lui.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="456" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Une chaîne de hachage, et ce qu'elle prouve</text>
+  <text x="40" y="70" font-size="14" font-weight="600" fill="#7a4f9a">chaîne tenant:acme</text>
+  <!-- entrées -->
+  <rect x="40" y="84" width="190" height="96" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="54" y="108" font-size="14" font-weight="700" fill="#7a4f9a">séquence 1</text>
+  <text x="54" y="130" font-size="13" fill="#1f2328">previousHash 0000...0</text>
+  <text x="54" y="149" font-size="13" font-style="italic" fill="#5f6b73">= GENESIS_HASH</text>
+  <text x="54" y="170" font-size="13" fill="#1f2328">hash 3fa2...</text>
+  <rect x="270" y="84" width="190" height="96" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="284" y="108" font-size="14" font-weight="700" fill="#7a4f9a">séquence 2</text>
+  <text x="284" y="130" font-size="13" fill="#1f2328">previousHash 3fa2...</text>
+  <text x="284" y="150" font-size="13" fill="#1f2328">hash 91c0...</text>
+  <rect x="500" y="84" width="190" height="96" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="514" y="108" font-size="14" font-weight="700" fill="#7a4f9a">séquence 3</text>
+  <text x="514" y="130" font-size="13" fill="#1f2328">previousHash 91c0...</text>
+  <text x="514" y="150" font-size="13" fill="#1f2328">hash 07bd...</text>
+  <rect x="730" y="84" width="190" height="96" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="744" y="108" font-size="14" font-weight="700" fill="#7a4f9a">séquence 4</text>
+  <text x="744" y="130" font-size="13" fill="#1f2328">previousHash 07bd...</text>
+  <text x="744" y="150" font-size="13" fill="#1f2328">hash c45e...</text>
+  <line x1="268" y1="132" x2="234" y2="132" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="498" y1="132" x2="464" y2="132" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="728" y1="132" x2="694" y2="132" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- vérification -->
+  <rect x="40" y="236" width="420" height="152" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="56" y="262" font-size="15" font-weight="700" fill="#5f6b73">verifyChain signale la première rupture</text>
+  <text x="56" y="288" font-size="13" fill="#1f2328">une entrée modifiée : altered-content</text>
+  <text x="56" y="310" font-size="13" fill="#1f2328">une entrée supprimée : missing-entry</text>
+  <text x="56" y="332" font-size="13" fill="#1f2328">deux entrées interverties : reordered</text>
+  <text x="56" y="358" font-size="13" fill="#1f2328">toute la chaîne réécrite, chaque hachage recalculé :</text>
+  <text x="56" y="378" font-size="13" fill="#1f2328">de nouveau valide, sauf si un point de contrôle diffère</text>
+  <!-- ancrage -->
+  <line x1="595" y1="182" x2="595" y2="232" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <text x="607" y="212" font-size="13" fill="#1f2328">scellé toutes les N entrées</text>
+  <rect x="500" y="236" width="190" height="80" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="595" y="264" font-size="15" font-weight="700" fill="#7a4f9a" text-anchor="middle">point de contrôle</text>
+  <text x="595" y="286" font-size="13" fill="#1f2328" text-anchor="middle">séquence 3,</text>
+  <text x="595" y="304" font-size="13" fill="#1f2328" text-anchor="middle">hash 07bd...</text>
+  <line x1="692" y1="276" x2="726" y2="276" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <rect x="730" y="236" width="190" height="152" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="825" y="262" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">gardé ailleurs</text>
+  <text x="825" y="288" font-size="13" fill="#1f2328" text-anchor="middle">une autre base,</text>
+  <text x="825" y="308" font-size="13" fill="#1f2328" text-anchor="middle">sous un autre rôle ;</text>
+  <text x="825" y="328" font-size="13" fill="#1f2328" text-anchor="middle">un stockage objet avec</text>
+  <text x="825" y="348" font-size="13" fill="#1f2328" text-anchor="middle">verrou de rétention ;</text>
+  <text x="825" y="368" font-size="13" fill="#1f2328" text-anchor="middle">un horodatage signé</text>
+  <!-- légende -->
+  <line x1="40" y1="420" x2="84" y2="420" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="96" y="425" font-size="14" fill="#1f2328">garde le hachage de</text>
+  <line x1="260" y1="420" x2="304" y2="420" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <text x="316" y="425" font-size="14" fill="#1f2328">une copie part là où le propriétaire de la table ne peut pas écrire</text>
+</svg>

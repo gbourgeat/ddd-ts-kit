@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 330" width="960" height="330" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">From a statement of needs to a context map, in seven steps</title>
+  <desc id="desc">Seven steps, each with what it produces: the statement of needs, one paragraph; reading it for the language, nouns, verbs, facts and rules; candidate contexts, each boundary put through four tests; classification, core, supporting or generic; relationships, one pattern per dependency and no cycle; writing it, glossaries, the config and the context map; then the signals that would change the map.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="330" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">From a statement of needs to a context map, in seven steps</text>
+  <rect x="20" y="64" width="116" height="236" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="78" y="94" font-size="18" font-weight="700" fill="#5f6b73" text-anchor="middle">1</text>
+  <text x="78" y="118" font-size="14" font-weight="700" fill="#5f6b73" text-anchor="middle">statement</text>
+  <text x="78" y="136" font-size="14" font-weight="700" fill="#5f6b73" text-anchor="middle">of needs</text>
+  <line x1="32" y1="150" x2="124" y2="150" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text x="78" y="174" font-size="13" fill="#1f2328" text-anchor="middle">one paragraph,</text>
+  <text x="78" y="194" font-size="13" fill="#1f2328" text-anchor="middle">written by a</text>
+  <text x="78" y="214" font-size="13" fill="#1f2328" text-anchor="middle">product person</text>
+  <line x1="137" y1="182" x2="152" y2="182" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="154" y="64" width="116" height="236" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="212" y="94" font-size="18" font-weight="700" fill="#5f6b73" text-anchor="middle">2</text>
+  <text x="212" y="118" font-size="14" font-weight="700" fill="#5f6b73" text-anchor="middle">read it for</text>
+  <text x="212" y="136" font-size="14" font-weight="700" fill="#5f6b73" text-anchor="middle">the language</text>
+  <line x1="166" y1="150" x2="258" y2="150" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text x="212" y="174" font-size="13" fill="#1f2328" text-anchor="middle">nouns, verbs,</text>
+  <text x="212" y="194" font-size="13" fill="#1f2328" text-anchor="middle">facts, rules;</text>
+  <text x="212" y="214" font-size="13" fill="#1f2328" text-anchor="middle">sharpen words</text>
+  <line x1="271" y1="182" x2="286" y2="182" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="288" y="64" width="116" height="236" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="346" y="94" font-size="18" font-weight="700" fill="#5f6b73" text-anchor="middle">3</text>
+  <text x="346" y="118" font-size="14" font-weight="700" fill="#5f6b73" text-anchor="middle">candidate</text>
+  <text x="346" y="136" font-size="14" font-weight="700" fill="#5f6b73" text-anchor="middle">contexts</text>
+  <line x1="300" y1="150" x2="392" y2="150" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text x="346" y="174" font-size="13" fill="#1f2328" text-anchor="middle">four tests per</text>
+  <text x="346" y="194" font-size="13" fill="#1f2328" text-anchor="middle">boundary:</text>
+  <text x="346" y="214" font-size="13" fill="#1f2328" text-anchor="middle">language,</text>
+  <text x="346" y="234" font-size="13" fill="#1f2328" text-anchor="middle">autonomy,</text>
+  <text x="346" y="254" font-size="13" fill="#1f2328" text-anchor="middle">consistency,</text>
+  <text x="346" y="274" font-size="13" fill="#1f2328" text-anchor="middle">size</text>
+  <line x1="405" y1="182" x2="420" y2="182" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="422" y="64" width="116" height="236" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="480" y="94" font-size="18" font-weight="700" fill="#5f6b73" text-anchor="middle">4</text>
+  <text x="480" y="118" font-size="14" font-weight="700" fill="#5f6b73" text-anchor="middle">classify</text>
+  <line x1="434" y1="150" x2="526" y2="150" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text x="480" y="174" font-size="13" fill="#1f2328" text-anchor="middle">core,</text>
+  <text x="480" y="194" font-size="13" fill="#1f2328" text-anchor="middle">supporting or</text>
+  <text x="480" y="214" font-size="13" fill="#1f2328" text-anchor="middle">generic</text>
+  <line x1="539" y1="182" x2="554" y2="182" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="556" y="64" width="116" height="236" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="614" y="94" font-size="18" font-weight="700" fill="#5f6b73" text-anchor="middle">5</text>
+  <text x="614" y="118" font-size="14" font-weight="700" fill="#5f6b73" text-anchor="middle">choose the</text>
+  <text x="614" y="136" font-size="14" font-weight="700" fill="#5f6b73" text-anchor="middle">relationships</text>
+  <line x1="568" y1="150" x2="660" y2="150" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text x="614" y="174" font-size="13" fill="#1f2328" text-anchor="middle">a pattern per</text>
+  <text x="614" y="194" font-size="13" fill="#1f2328" text-anchor="middle">dependency,</text>
+  <text x="614" y="214" font-size="13" fill="#1f2328" text-anchor="middle">no cycle</text>
+  <line x1="673" y1="182" x2="688" y2="182" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="690" y="64" width="116" height="236" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="748" y="94" font-size="18" font-weight="700" fill="#5f6b73" text-anchor="middle">6</text>
+  <text x="748" y="118" font-size="14" font-weight="700" fill="#5f6b73" text-anchor="middle">write it</text>
+  <line x1="702" y1="150" x2="794" y2="150" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text x="748" y="174" font-size="13" fill="#1f2328" text-anchor="middle">glossaries,</text>
+  <text x="748" y="194" font-size="13" fill="#1f2328" text-anchor="middle">the config,</text>
+  <text x="748" y="214" font-size="13" fill="#1f2328" text-anchor="middle">context-map.md</text>
+  <line x1="807" y1="182" x2="822" y2="182" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="824" y="64" width="116" height="236" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="882" y="94" font-size="18" font-weight="700" fill="#5f6b73" text-anchor="middle">7</text>
+  <text x="882" y="118" font-size="14" font-weight="700" fill="#5f6b73" text-anchor="middle">watch the</text>
+  <text x="882" y="136" font-size="14" font-weight="700" fill="#5f6b73" text-anchor="middle">signals</text>
+  <line x1="836" y1="150" x2="928" y2="150" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text x="882" y="174" font-size="13" fill="#1f2328" text-anchor="middle">what would</text>
+  <text x="882" y="194" font-size="13" fill="#1f2328" text-anchor="middle">change the map</text>
+</svg>

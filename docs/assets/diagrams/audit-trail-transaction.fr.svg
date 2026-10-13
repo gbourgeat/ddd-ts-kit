@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" width="960" height="540" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Où l'entrée d'une commande est écrite</title>
+  <desc id="desc">CancelAppointment passe d'abord par l'autorisation. Refusée, elle laisse une entrée authorization denied et n'ouvre aucune transaction. Autorisée, le middleware d'audit ouvre la transaction et le gestionnaire s'y exécute. Quand le gestionnaire réussit, l'entrée succeeded est écrite dans la même transaction et validée avec le changement, ou aucun des deux n'existe. Quand le gestionnaire lève une erreur, la transaction est annulée, puis l'entrée failed est écrite hors de celle-ci, avec le code de l'erreur.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="540" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Où l'entrée d'une commande est écrite</text>
+  <!-- commande -->
+  <rect x="320" y="60" width="180" height="44" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="410" y="88" font-size="15" font-weight="700" fill="#2b5d8a" text-anchor="middle">CancelAppointment</text>
+  <line x1="410" y1="106" x2="410" y2="132" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- autorisation -->
+  <rect x="320" y="136" width="180" height="44" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="410" y="164" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">autorisation</text>
+  <!-- refusée -->
+  <line x1="318" y1="158" x2="254" y2="158" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="286" y="148" font-size="13" fill="#1f2328" text-anchor="middle">refusée</text>
+  <rect x="24" y="118" width="228" height="82" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="38" y="142" font-size="13" font-weight="700" fill="#7a4f9a">authorization, denied</text>
+  <text x="38" y="164" font-size="13" fill="#1f2328">raison NO_MATCHING_ROLE</text>
+  <text x="38" y="186" font-size="13" fill="#1f2328">aucune transaction ouverte</text>
+  <!-- la transaction -->
+  <rect x="200" y="232" width="420" height="246" rx="12" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="214" y="254" font-size="13" font-weight="600" fill="#5f6b73">une transaction, ouverte</text>
+  <text x="214" y="272" font-size="13" font-weight="600" fill="#5f6b73">par le middleware d'audit</text>
+  <!-- autorisée -->
+  <line x1="410" y1="182" x2="410" y2="276" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="420" y="214" font-size="13" fill="#1f2328">autorisée</text>
+  <rect x="320" y="280" width="180" height="44" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="410" y="308" font-size="15" font-weight="700" fill="#2b5d8a" text-anchor="middle">gestionnaire</text>
+  <!-- réussit -->
+  <line x1="410" y1="326" x2="410" y2="360" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="400" y="348" font-size="13" fill="#1f2328" text-anchor="end">réussit</text>
+  <rect x="230" y="364" width="360" height="62" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="244" y="388" font-size="13" font-weight="700" fill="#7a4f9a">command, succeeded</text>
+  <text x="244" y="410" font-size="13" fill="#1f2328">écrite dans la transaction du changement</text>
+  <text x="410" y="458" font-size="13" font-style="italic" font-weight="600" fill="#5f6b73" text-anchor="middle">validation : le changement et son entrée, ou aucun des deux</text>
+  <!-- lève une erreur -->
+  <path d="M502,302 H793 V360" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="700" y="292" font-size="13" fill="#1f2328" text-anchor="middle">erreur : annulation</text>
+  <rect x="650" y="364" width="286" height="88" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="664" y="388" font-size="13" font-weight="700" fill="#7a4f9a">command, failed</text>
+  <text x="664" y="410" font-size="13" fill="#1f2328">raison CANCELLATION_WINDOW_PASSED</text>
+  <text x="664" y="432" font-size="13" fill="#1f2328">écrite après l'annulation, hors transaction</text>
+  <!-- légende -->
+  <rect x="40" y="500" width="40" height="22" rx="6" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="96" y="516" font-size="14" fill="#1f2328">une entrée du journal d'audit : catégorie, résultat, raison</text>
+</svg>

@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 568" width="960" height="568" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">La carte des contextes de l'application de prise de rendez-vous</title>
+  <desc id="desc">Cinq contextes délimités dans l'application. calendars, de soutien, est en amont de appointments et de availability, en langage publié. appointments, le cœur, est en amont de availability et de notifications en langage publié, et de analytics, qui est conformiste. Le fournisseur d'e-mails et de SMS, externe, est en amont de notifications derrière une couche anticorruption. Le fournisseur d'identité, générique et externe, émet des jetons OIDC que la plateforme traduit une fois en Actor, pour chaque contexte. Les flèches vont de l'amont vers l'aval.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="568" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">La carte des contextes de l'application de prise de rendez-vous</text>
+  <!-- l'application -->
+  <rect x="24" y="60" width="676" height="388" rx="14" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="44" y="86" font-size="14" font-weight="600" fill="#5f6b73">l'application : cinq contextes délimités</text>
+  <!-- calendars -->
+  <rect x="48" y="104" width="190" height="62" rx="10" fill="#ffffff" stroke="#2f6f4f" stroke-width="1.5"/>
+  <text x="143" y="132" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">calendars</text>
+  <text x="143" y="152" font-size="13" font-style="italic" fill="#1f2328" text-anchor="middle">de soutien</text>
+  <!-- appointments -->
+  <rect x="400" y="104" width="220" height="62" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="3"/>
+  <text x="510" y="132" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">appointments</text>
+  <text x="510" y="152" font-size="13" font-style="italic" fill="#1f2328" text-anchor="middle">cœur</text>
+  <!-- rangée aval -->
+  <rect x="48" y="300" width="190" height="62" rx="10" fill="#ffffff" stroke="#2f6f4f" stroke-width="1.5"/>
+  <text x="143" y="328" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">availability</text>
+  <text x="143" y="348" font-size="13" font-style="italic" fill="#1f2328" text-anchor="middle">de soutien, consultatif</text>
+  <rect x="290" y="300" width="190" height="62" rx="10" fill="#ffffff" stroke="#2f6f4f" stroke-width="1.5"/>
+  <text x="385" y="328" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">notifications</text>
+  <text x="385" y="348" font-size="13" font-style="italic" fill="#1f2328" text-anchor="middle">de soutien</text>
+  <rect x="510" y="300" width="174" height="62" rx="10" fill="#ffffff" stroke="#2f6f4f" stroke-width="1.5"/>
+  <text x="597" y="328" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">analytics</text>
+  <text x="597" y="348" font-size="13" font-style="italic" fill="#1f2328" text-anchor="middle">de soutien</text>
+  <!-- calendars vers appointments -->
+  <line x1="240" y1="135" x2="396" y2="135" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="318" y="125" font-size="13" fill="#1f2328" text-anchor="middle">published-language</text>
+  <!-- calendars vers availability -->
+  <line x1="110" y1="168" x2="110" y2="296" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="118" y="194" font-size="13" fill="#1f2328">published-language</text>
+  <!-- appointments vers availability -->
+  <path d="M430,168 V234 H200 V296" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="316" y="226" font-size="13" fill="#1f2328" text-anchor="middle">published-language</text>
+  <!-- appointments vers notifications -->
+  <line x1="460" y1="168" x2="460" y2="296" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="468" y="272" font-size="13" fill="#1f2328">published-language</text>
+  <!-- appointments vers analytics -->
+  <line x1="600" y1="168" x2="600" y2="296" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="608" y="236" font-size="13" fill="#1f2328">conformist</text>
+  <!-- fournisseur d'e-mails et de SMS -->
+  <rect x="290" y="478" width="190" height="62" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="385" y="504" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">e-mails et SMS</text>
+  <text x="385" y="524" font-size="13" font-style="italic" fill="#1f2328" text-anchor="middle">fournisseur externe</text>
+  <line x1="385" y1="476" x2="385" y2="366" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <text x="395" y="420" font-size="13" fill="#1f2328">couche anticorruption</text>
+  <!-- fournisseur d'identité -->
+  <rect x="730" y="104" width="206" height="150" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="833" y="132" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">fournisseur d'identité</text>
+  <text x="833" y="152" font-size="13" font-style="italic" fill="#1f2328" text-anchor="middle">générique, externe</text>
+  <text x="833" y="182" font-size="13" fill="#1f2328" text-anchor="middle">jetons OpenID Connect,</text>
+  <text x="833" y="202" font-size="13" fill="#1f2328" text-anchor="middle">traduits une fois en Actor</text>
+  <text x="833" y="222" font-size="13" fill="#1f2328" text-anchor="middle">par la plateforme, pour</text>
+  <text x="833" y="242" font-size="13" fill="#1f2328" text-anchor="middle">chaque contexte</text>
+  <line x1="728" y1="180" x2="704" y2="180" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <!-- légende -->
+  <rect x="540" y="474" width="30" height="18" rx="5" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="3"/>
+  <text x="580" y="488" font-size="13" fill="#1f2328">cœur</text>
+  <rect x="640" y="474" width="30" height="18" rx="5" fill="#ffffff" stroke="#2f6f4f" stroke-width="1.5"/>
+  <text x="680" y="488" font-size="13" fill="#1f2328">de soutien</text>
+  <rect x="780" y="474" width="30" height="18" rx="5" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2" stroke-dasharray="4 3"/>
+  <text x="820" y="488" font-size="13" fill="#1f2328">externe</text>
+  <line x1="540" y1="514" x2="580" y2="514" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="592" y="519" font-size="13" fill="#1f2328">de l'amont vers l'aval</text>
+  <line x1="540" y1="540" x2="580" y2="540" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <text x="592" y="545" font-size="13" fill="#1f2328">depuis un système externe</text>
+</svg>

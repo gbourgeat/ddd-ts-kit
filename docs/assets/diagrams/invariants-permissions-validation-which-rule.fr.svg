@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 560" width="960" height="560" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Quelle sorte de règle est-ce ?</title>
+  <desc id="desc">Un arbre de décision de trois questions. D'abord : la requête est-elle compréhensible ? Sinon, c'est de la validation, un schéma à la frontière, refusé en 422. Si oui : la règle tiendrait-elle encore si un administrateur doté de tous les droits envoyait une requête parfaitement formée ? Si oui, c'est un invariant, dans l'agrégat ou un objet-valeur, refusé par une DomainError. Si elle dépend de qui demande : dépend-elle aussi de l'élément, pas seulement de l'action ? Sinon, c'est une permission exigée par le cas d'usage, refusée en 401 ou 403. Si oui, c'est une politique évaluée sur l'élément chargé, refusée en 403. Ce qu'un tenant peut voir ne relève d'aucune de ces règles : c'est le cloisonnement par tenant, appliqué par l'infrastructure à partir de la portée d'exécution.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="560" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Quelle sorte de règle est-ce ?</text>
+  <!-- questions -->
+  <rect x="24" y="64" width="440" height="64" rx="32" fill="#ffffff" stroke="#3d4449" stroke-width="2"/>
+  <text x="244" y="101" font-size="14" font-weight="600" fill="#1f2328" text-anchor="middle">La requête est-elle compréhensible ?</text>
+  <rect x="24" y="180" width="440" height="84" rx="32" fill="#ffffff" stroke="#3d4449" stroke-width="2"/>
+  <text x="244" y="210" font-size="14" font-weight="600" fill="#1f2328" text-anchor="middle">La règle tiendrait-elle encore si un administrateur</text>
+  <text x="244" y="230" font-size="14" font-weight="600" fill="#1f2328" text-anchor="middle">doté de tous les droits envoyait une requête</text>
+  <text x="244" y="250" font-size="14" font-weight="600" fill="#1f2328" text-anchor="middle">parfaitement formée ?</text>
+  <rect x="24" y="316" width="440" height="64" rx="32" fill="#ffffff" stroke="#3d4449" stroke-width="2"/>
+  <text x="244" y="343" font-size="14" font-weight="600" fill="#1f2328" text-anchor="middle">Dépend-elle aussi de l'élément,</text>
+  <text x="244" y="363" font-size="14" font-weight="600" fill="#1f2328" text-anchor="middle">pas seulement de l'action ?</text>
+  <!-- answers -->
+  <rect x="600" y="58" width="336" height="76" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="620" y="86" font-size="16" font-weight="700" fill="#9a5b2b">validation</text>
+  <text x="620" y="110" font-size="13" fill="#1f2328">un schéma à la frontière : 422</text>
+  <rect x="600" y="184" width="336" height="76" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="620" y="212" font-size="16" font-weight="700" fill="#2f6f4f">invariant</text>
+  <text x="620" y="236" font-size="13" fill="#1f2328">agrégat ou objet-valeur : une DomainError</text>
+  <rect x="600" y="310" width="336" height="76" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="620" y="338" font-size="16" font-weight="700" fill="#2b5d8a">permission</text>
+  <text x="620" y="362" font-size="13" fill="#1f2328">exigée par le cas d'usage : 401 ou 403</text>
+  <rect x="600" y="416" width="336" height="76" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="620" y="444" font-size="16" font-weight="700" fill="#2b5d8a">politique (policy)</text>
+  <text x="620" y="468" font-size="13" fill="#1f2328">évaluée sur l'élément chargé : 403</text>
+  <!-- branches -->
+  <line x1="466" y1="96" x2="596" y2="96" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="531" y="86" font-size="13" fill="#1f2328" text-anchor="middle">non</text>
+  <line x1="244" y1="130" x2="244" y2="176" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="254" y="158" font-size="13" fill="#1f2328">oui</text>
+  <line x1="466" y1="222" x2="596" y2="222" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="531" y="212" font-size="13" fill="#1f2328" text-anchor="middle">oui</text>
+  <line x1="244" y1="266" x2="244" y2="312" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="254" y="294" font-size="13" fill="#1f2328">non : elle dépend de qui demande</text>
+  <line x1="466" y1="348" x2="596" y2="348" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="531" y="338" font-size="13" fill="#1f2328" text-anchor="middle">non</text>
+  <path d="M244,382 V454 H596" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="254" y="444" font-size="13" fill="#1f2328">oui</text>
+  <!-- tenant scoping -->
+  <rect x="24" y="508" width="912" height="40" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="44" y="533" font-size="13" fill="#1f2328">Ce qu'un tenant peut voir ne relève d'aucune de ces règles : c'est le cloisonnement par tenant, appliqué par l'infrastructure (portée d'exécution).</text>
+</svg>

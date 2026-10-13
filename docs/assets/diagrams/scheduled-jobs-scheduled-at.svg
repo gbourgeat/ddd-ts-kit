@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 448" width="960" height="448" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">scheduledAt is the instant the run was due, not the instant it started</title>
+  <desc id="desc">A timeline of one morning. The occurrence is due at 07:00. A run that starts at 07:00:04 after the jitter, one queued behind the previous run that starts at 07:12, and one caught up after a restart at 08:40 all receive scheduledAt 07:00, so they mean the same work. A run asked with runNow at 09:30 receives 09:30.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="448" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">scheduledAt is the instant the run was due, not the instant it started</text>
+  <!-- the due instant -->
+  <rect x="150" y="90" width="80" height="254" rx="8" fill="#e7eef5"/>
+  <line x1="190" y1="90" x2="190" y2="344" stroke="#2b5d8a" stroke-width="3"/>
+  <text x="190" y="80" font-size="13" font-weight="700" fill="#2b5d8a" text-anchor="middle">the occurrence is due</text>
+  <!-- runs -->
+  <rect x="240" y="96" width="232" height="48" rx="8" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="252" y="115" font-size="13" font-weight="700" fill="#2b5d8a">after the jitter</text>
+  <text x="252" y="135" font-size="13" fill="#1f2328">scheduledAt = 07:00</text>
+  <line x1="240" y1="144" x2="240" y2="344" stroke="#2b5d8a" stroke-width="1.5" stroke-dasharray="4 4"/>
+  <rect x="380" y="158" width="232" height="48" rx="8" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="392" y="177" font-size="13" font-weight="700" fill="#2b5d8a">queued (overlap: 'queue')</text>
+  <text x="392" y="197" font-size="13" fill="#1f2328">scheduledAt = 07:00</text>
+  <line x1="380" y1="206" x2="380" y2="344" stroke="#2b5d8a" stroke-width="1.5" stroke-dasharray="4 4"/>
+  <rect x="560" y="220" width="232" height="48" rx="8" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="572" y="239" font-size="13" font-weight="700" fill="#2b5d8a">caught up (missed: 'run-once')</text>
+  <text x="572" y="259" font-size="13" fill="#1f2328">scheduledAt = 07:00</text>
+  <line x1="560" y1="268" x2="560" y2="344" stroke="#2b5d8a" stroke-width="1.5" stroke-dasharray="4 4"/>
+  <rect x="700" y="282" width="232" height="48" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="712" y="301" font-size="13" font-weight="700" fill="#5f6b73">runNow, by an operator</text>
+  <text x="712" y="321" font-size="13" fill="#1f2328">scheduledAt = 09:30</text>
+  <line x1="700" y1="330" x2="700" y2="344" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="4 4"/>
+  <!-- time axis -->
+  <line x1="60" y1="344" x2="930" y2="344" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="930" y="366" font-size="13" fill="#1f2328" text-anchor="end">time</text>
+  <text x="190" y="366" font-size="13" font-weight="700" fill="#2b5d8a" text-anchor="middle">07:00</text>
+  <text x="248" y="366" font-size="13" fill="#1f2328" text-anchor="start">07:00:04</text>
+  <text x="380" y="366" font-size="13" fill="#1f2328" text-anchor="middle">07:12</text>
+  <text x="560" y="366" font-size="13" fill="#1f2328" text-anchor="middle">08:40</text>
+  <text x="700" y="366" font-size="13" fill="#1f2328" text-anchor="middle">09:30</text>
+  <!-- caption -->
+  <text x="32" y="404" font-size="14" fill="#1f2328">From scheduledAt, the first three runs mean the same work: the reminders due at 07:00.</text>
+  <text x="32" y="426" font-size="14" fill="#1f2328">runNow receives the instant it was asked: to replay that morning, send the command with 07:00.</text>
+</svg>

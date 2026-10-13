@@ -51,24 +51,7 @@ reset is enough, and the loss is silent: no error is raised anywhere.
 
 Make the second write a write to the same database.
 
-```mermaid
-sequenceDiagram
-  participant H as handler
-  participant DB as database (one transaction)
-  participant R as relay
-  participant B as broker or in-memory bus
-  participant C as consumer
-  H->>DB: insert appointment
-  H->>DB: insert outbox record (the event)
-  H->>DB: commit
-  loop afterwards
-    R->>DB: claim a batch of pending records
-    R->>B: publish
-    B-->>R: acknowledged
-    R->>DB: mark published
-  end
-  B->>C: deliver (at least once)
-```
+![Inside one transaction the command handler saves the appointment and the before-commit publisher appends the event to the outbox table; after the commit a relay claims a batch, publishes it to the broker and marks it published; the broker delivers to the consumer at least once](../assets/diagrams/transactional-outbox-pattern.svg)
 
 - The appointment and the outbox record commit together or not at all: the event exists if and
   only if the change does.
@@ -83,6 +66,94 @@ and before the commit, and only knows the `IntegrationEventPublisher` port. With
 composition root binds that port to the outbox publisher, which only stores; the store is an
 adapter of the ORM package (Drizzle, Knex, Prisma, TypeORM), and the relay publishes to the real
 provider. Nothing in `domain/` or `application/` changes when the provider does.
+
+```ts
+// Instead of: two writes to two systems, in the command handler
+await this.appointments.save(appointment);
+await this.broker.publish([booked]); // lost if the process stops between the two lines
+```
+
+Write a publisher instead: a handler of the domain event that turns it into the integration
+event of the published language and hands it to the port:
+
+<!-- checked sample -->
+```ts
+// contexts/appointments/application/integration/publishers/appointment-booked.publisher.ts
+import type { IntegrationEventDefinition } from '@ddd-ts-kit/events';
+import type { DomainEvent, IdGenerator, IntegrationEventPublisher } from '@ddd-ts-kit/kernel';
+import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
+
+// The domain event of the aggregate, and the integration event of the published language:
+declare class AppointmentBooked implements DomainEvent {
+  static readonly eventName: 'appointments.appointment.booked';
+  readonly name: string;
+  readonly occurredAt: Date;
+  readonly aggregateId: string;
+  readonly startsAt: Date;
+}
+declare const appointmentBookedV1: IntegrationEventDefinition<{
+  readonly appointmentId: string;
+  readonly startsAt: string;
+}>;
+
+// No phase given: 'before-commit', inside the transaction of the command.
+@DomainEventHandler(AppointmentBooked, { name: AppointmentBooked.eventName })
+export class AppointmentBookedPublisher implements DomainEventHandler<AppointmentBooked> {
+  constructor(
+    private readonly publisher: IntegrationEventPublisher,
+    private readonly ids: IdGenerator,
+  ) {}
+
+  async handle(event: AppointmentBooked): Promise<void> {
+    const booked = appointmentBookedV1.create(
+      { appointmentId: event.aggregateId, startsAt: event.startsAt.toISOString() },
+      { id: this.ids.next(), occurredAt: event.occurredAt },
+    );
+
+    // With a database, the port is bound to the outbox: this appends a row, nothing leaves yet.
+    await this.publisher.publish([booked]);
+  }
+}
+```
+
+The composition root builds the two halves: the publisher the handlers see, which only stores,
+and the relay, which runs on its own and publishes to the real provider:
+
+<!-- checked sample -->
+```ts
+// platform/messaging.ts (a module of the container binds the same objects)
+import { OutboxPublisher, OutboxRelay, type OutboxStore } from '@ddd-ts-kit/events';
+import {
+  scopedPublisher,
+  type Clock,
+  type ExecutionScope,
+  type IntegrationEventPublisher,
+  type Logger,
+} from '@ddd-ts-kit/kernel';
+
+declare const store: OutboxStore; // the adapter of the ORM package: it joins the transaction
+declare const broker: IntegrationEventPublisher; // RabbitMQ, Kafka, NATS..., or the in-memory bus
+declare const scope: ExecutionScope;
+declare const clock: Clock;
+declare const logger: Logger;
+
+// What IntegrationEventPublisher is bound to: it appends to the outbox, and stamps the
+// correlation and the tenant of the work in progress on every event that does not name
+// them already.
+export const publisher = scopedPublisher(new OutboxPublisher(store), scope);
+
+// The relay: claims due records, publishes them, marks them published, retries the failures.
+const relay = new OutboxRelay({
+  store,
+  publisher: broker,
+  clock,
+  maxAttempts: 8,
+  onFailure: (failure) => logger.warn('outbox relay failure', { ...failure }), // codes only
+});
+
+relay.start({ intervalMs: 500 });
+process.on('SIGTERM', () => void relay.stop()); // waits for the tick in progress
+```
 
 If the command handler throws, a later handler fails or the commit itself fails, the row
 disappears with the transaction: the relay never publishes for a command that rolled back. The
@@ -122,6 +193,11 @@ A record that cannot be published is retried with an exponential backoff. After 
 number of attempts it is marked dead and stays in the table until an operator revives it. The
 outbox is thus also the dead-letter store of the publishing side.
 
+![An outbox record is appended pending; the relay publishes it and it becomes published, then purged; a failed publication keeps it pending and retries it after a backoff; after maxAttempts it is dead until retryDead puts it back pending](../assets/diagrams/transactional-outbox-record-lifecycle.svg)
+
+The defaults of `OutboxRelay`: `maxAttempts` 8, and a backoff of 1 second before the second
+attempt, doubled at each attempt, at most 5 minutes (`backoff: { baseMs, factor, maxMs }`).
+
 ## What to monitor
 
 The store exposes counts of pending, failed and dead records. The events README gives the
@@ -135,6 +211,33 @@ reading:
 | age of the oldest pending record | the real delivery delay; it is a query on the table, the stats do not carry it |
 
 Published records must be purged regularly, or the table and its index grow without bound.
+The store answers all three needs:
+
+<!-- checked sample -->
+```ts
+import type { OutboxStore } from '@ddd-ts-kit/events';
+
+declare const store: OutboxStore;
+
+const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+
+// A health check: any dead record is an alert.
+export async function outboxHealth() {
+  const { pending, failed, dead } = await store.stats();
+
+  return { healthy: dead === 0, pending, failed, dead };
+}
+
+// Housekeeping, from a scheduled job: drop what was published more than a week ago.
+export async function purgeOutbox(now: Date): Promise<number> {
+  return store.purgePublished(new Date(now.getTime() - WEEK_MS));
+}
+
+// Once the cause is fixed, an operator revives dead records with a fresh budget of attempts.
+export async function reviveDead(ids: readonly string[], now: Date): Promise<number> {
+  return store.retryDead(ids, now);
+}
+```
 
 ## Without a database
 

@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 520" width="960" height="520" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Choosing a relationship pattern</title>
+  <desc id="desc">A decision tree. Do the two contexts need each other at all? If not, separate ways: declare nothing. If they do: is the concept identical and changed together? If yes, a shared kernel kept small. If not: do you control or influence the upstream? Within the same product, published language; with another team that plans with you, customer-supplier. If not: is its model acceptable inside yours? If yes, conformist; if not, an anticorruption layer.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="520" rx="16" fill="#ffffff"/>
+  <text x="32" y="36" font-size="18" font-weight="600" fill="#1f2328">Choosing the pattern of a relationship</text>
+  <rect x="40" y="64" width="440" height="48" rx="8" fill="#ffffff" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="260" y="94" font-size="14" font-weight="600" fill="#1f2328" text-anchor="middle">Do the two contexts need each other at all?</text>
+  <rect x="40" y="164" width="440" height="48" rx="8" fill="#ffffff" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="260" y="194" font-size="14" font-weight="600" fill="#1f2328" text-anchor="middle">Is the concept identical and changed together?</text>
+  <rect x="40" y="264" width="440" height="48" rx="8" fill="#ffffff" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="260" y="294" font-size="14" font-weight="600" fill="#1f2328" text-anchor="middle">Do you control or influence the upstream?</text>
+  <rect x="40" y="394" width="440" height="48" rx="8" fill="#ffffff" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="260" y="424" font-size="14" font-weight="600" fill="#1f2328" text-anchor="middle">Is its model acceptable inside yours?</text>
+  <line x1="260" y1="114" x2="260" y2="160" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="272" y="141" font-size="13" font-weight="600" fill="#1f2328" text-anchor="start">yes</text>
+  <line x1="260" y1="214" x2="260" y2="260" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="272" y="241" font-size="13" font-weight="600" fill="#1f2328" text-anchor="start">no</text>
+  <line x1="260" y1="314" x2="260" y2="390" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="272" y="356" font-size="13" font-weight="600" fill="#1f2328" text-anchor="start">no</text>
+  <rect x="576" y="66" width="344" height="44" rx="8" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="592" y="85" font-size="14" font-weight="700" fill="#2b5d8a" text-anchor="start">separate ways</text>
+  <text x="592" y="103" font-size="13" fill="#1f2328" text-anchor="start">declare nothing</text>
+  <rect x="576" y="166" width="344" height="44" rx="8" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="592" y="185" font-size="14" font-weight="700" fill="#2b5d8a" text-anchor="start">shared kernel</text>
+  <text x="592" y="203" font-size="13" fill="#1f2328" text-anchor="start">kept small</text>
+  <rect x="576" y="236" width="344" height="44" rx="8" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="592" y="255" font-size="14" font-weight="700" fill="#2b5d8a" text-anchor="start">published language</text>
+  <text x="592" y="273" font-size="13" fill="#1f2328" text-anchor="start">yes, the same product</text>
+  <rect x="576" y="292" width="344" height="44" rx="8" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="592" y="311" font-size="14" font-weight="700" fill="#2b5d8a" text-anchor="start">customer-supplier</text>
+  <text x="592" y="329" font-size="13" fill="#1f2328" text-anchor="start">yes, another team that plans with you</text>
+  <rect x="576" y="362" width="344" height="44" rx="8" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="592" y="381" font-size="14" font-weight="700" fill="#2b5d8a" text-anchor="start">conformist</text>
+  <text x="592" y="399" font-size="13" fill="#1f2328" text-anchor="start">its model is good enough</text>
+  <rect x="576" y="430" width="344" height="44" rx="8" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="592" y="449" font-size="14" font-weight="700" fill="#2b5d8a" text-anchor="start">anticorruption layer</text>
+  <text x="592" y="467" font-size="13" fill="#1f2328" text-anchor="start">translate at your edge</text>
+  <line x1="482" y1="88" x2="572" y2="88" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="526" y="80" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">no</text>
+  <line x1="482" y1="188" x2="572" y2="188" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="526" y="180" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">yes</text>
+  <path d="M482,272 H528 V258 H572" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <path d="M482,302 H528 V314 H572" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="504" y="266" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">yes</text>
+  <text x="504" y="296" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">yes</text>
+  <path d="M482,404 H528 V384 H572" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <path d="M482,432 H528 V452 H572" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="504" y="398" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">yes</text>
+  <text x="504" y="450" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">no</text>
+  <text x="32" y="500" font-size="14" fill="#1f2328" text-anchor="start">An upstream that serves many consumers adds an open host service on its side.</text>
+</svg>

@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 524" width="960" height="524" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Les briques du domaine autour d'un cas d'usage</title>
+  <desc id="desc">Le gestionnaire de commande de l'application interroge un service du domaine, appelle une intention de l'agrégat, et le charge et le sauvegarde par le port du repository. L'agrégat naît par ses fabriques statiques et enregistre des événements du domaine. Une fois le gestionnaire terminé, les événements sont distribués aux gestionnaires d'événements du domaine du même contexte. L'adaptateur du repository, en infrastructure, implémente le port et reconstruit l'agrégat avec rehydrate.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+    <marker id="arrow-infrastructure" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#7a4f9a"/>
+    </marker>
+  </defs>
+  <rect width="960" height="524" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Les briques du domaine autour d'un cas d'usage</text>
+  <!-- cadre du domaine -->
+  <rect x="24" y="186" width="912" height="176" rx="14" fill="#e8f1ec" fill-opacity="0.45" stroke="#2f6f4f" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="44" y="208" font-size="14" font-weight="600" fill="#2f6f4f">domaine</text>
+  <!-- application -->
+  <rect x="40" y="54" width="220" height="96" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="150" y="76" font-size="15" font-weight="700" fill="#2b5d8a" text-anchor="middle">gestionnaires d'événements</text>
+  <text x="150" y="94" font-size="15" font-weight="700" fill="#2b5d8a" text-anchor="middle">du domaine</text>
+  <text x="150" y="116" font-size="13" fill="#1f2328" text-anchor="middle">réagissent dans le même contexte,</text>
+  <text x="150" y="136" font-size="13" fill="#1f2328" text-anchor="middle">avant ou après la validation</text>
+  <rect x="330" y="64" width="300" height="86" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="480" y="90" font-size="15" font-weight="700" fill="#2b5d8a" text-anchor="middle">gestionnaire de commande</text>
+  <text x="480" y="110" font-size="13" fill="#1f2328" text-anchor="middle">le cas d'usage : charger,</text>
+  <text x="480" y="127" font-size="13" fill="#1f2328" text-anchor="middle">une intention, sauvegarder</text>
+  <text x="480" y="144" font-size="13" font-style="italic" fill="#2b5d8a" text-anchor="middle">application</text>
+  <!-- service du domaine -->
+  <rect x="250" y="218" width="180" height="66" rx="10" fill="#ffffff" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="340" y="242" font-size="15" font-weight="700" fill="#2f6f4f" text-anchor="middle">service du domaine</text>
+  <text x="340" y="262" font-size="13" fill="#1f2328" text-anchor="middle">décide sur plusieurs</text>
+  <text x="340" y="278" font-size="13" fill="#1f2328" text-anchor="middle">objets, sans I/O</text>
+  <!-- agrégat -->
+  <rect x="460" y="218" width="200" height="130" rx="10" fill="#ffffff" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="560" y="242" font-size="15" font-weight="700" fill="#2f6f4f" text-anchor="middle">agrégat</text>
+  <text x="560" y="266" font-size="13" fill="#1f2328" text-anchor="middle">Appointment.book(...)</text>
+  <text x="560" y="286" font-size="13" fill="#1f2328" text-anchor="middle">Appointment.rehydrate(...)</text>
+  <text x="560" y="306" font-size="13" fill="#1f2328" text-anchor="middle">appointment.cancel(...)</text>
+  <text x="560" y="332" font-size="13" font-style="italic" fill="#2f6f4f" text-anchor="middle">fabriques, puis intentions</text>
+  <!-- événement du domaine -->
+  <rect x="40" y="290" width="186" height="62" rx="10" fill="#ffffff" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="133" y="314" font-size="15" font-weight="700" fill="#2f6f4f" text-anchor="middle">événement du domaine</text>
+  <text x="133" y="336" font-size="13" fill="#1f2328" text-anchor="middle">AppointmentCancelled</text>
+  <!-- port du repository -->
+  <rect x="710" y="218" width="210" height="80" rx="10" fill="#ffffff" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="815" y="242" font-size="15" font-weight="700" fill="#2f6f4f" text-anchor="middle">port du repository</text>
+  <text x="815" y="264" font-size="13" fill="#1f2328" text-anchor="middle">une classe abstraite :</text>
+  <text x="815" y="284" font-size="13" fill="#1f2328" text-anchor="middle">findById, save, recherches</text>
+  <!-- infrastructure -->
+  <rect x="710" y="410" width="210" height="80" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="815" y="434" font-size="15" font-weight="700" fill="#7a4f9a" text-anchor="middle">adaptateur du repository</text>
+  <text x="815" y="456" font-size="13" fill="#1f2328" text-anchor="middle">ORM et mapper : les lignes</text>
+  <text x="815" y="476" font-size="13" fill="#1f2328" text-anchor="middle">reviennent par rehydrate</text>
+  <!-- les appels du gestionnaire -->
+  <line x1="340" y1="152" x2="340" y2="214" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="348" y="176" font-size="13" fill="#1f2328">interroge</text>
+  <line x1="560" y1="152" x2="560" y2="214" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="568" y="176" font-size="13" fill="#1f2328">une intention</text>
+  <path d="M632,100 H815 V214" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="724" y="92" font-size="13" fill="#1f2328" text-anchor="middle">charger, sauvegarder</text>
+  <!-- enregistré, distribué -->
+  <line x1="458" y1="330" x2="230" y2="330" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="344" y="322" font-size="13" fill="#1f2328" text-anchor="middle">enregistre</text>
+  <line x1="133" y1="288" x2="133" y2="154" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <text x="141" y="236" font-size="13" fill="#1f2328">distribués</text>
+  <text x="141" y="254" font-size="13" fill="#1f2328">après le</text>
+  <text x="141" y="272" font-size="13" fill="#1f2328">gestionnaire</text>
+  <!-- implémente -->
+  <line x1="815" y1="408" x2="815" y2="302" stroke="#7a4f9a" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow-infrastructure)"/>
+  <text x="823" y="388" font-size="13" fill="#7a4f9a">implémente</text>
+  <!-- légende -->
+  <line x1="40" y1="438" x2="84" y2="438" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="96" y="443" font-size="14" fill="#1f2328">appelle, dans le processus</text>
+  <line x1="40" y1="468" x2="84" y2="468" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <text x="96" y="473" font-size="14" fill="#1f2328">remis par l'unité de travail</text>
+  <line x1="40" y1="498" x2="84" y2="498" stroke="#7a4f9a" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow-infrastructure)"/>
+  <text x="96" y="503" font-size="14" fill="#1f2328">implémente un port, lié par la plateforme</text>
+</svg>

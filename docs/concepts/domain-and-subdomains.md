@@ -25,6 +25,8 @@ Bounded contexts are designed. The usual target is one context per subdomain, an
 are kept apart because the target is sometimes missed (a legacy system covering three
 subdomains, or one subdomain split between two teams).
 
+![The six subdomains of the scheduling domain on the left, each modelled by one bounded context under src/contexts on the right, except identity, a generic subdomain bought as an OIDC provider that gets no folder](../assets/diagrams/domain-and-subdomains-problem-and-solution.svg)
+
 ## The three kinds
 
 | Kind | What it is | Design effort | Typical sourcing |
@@ -59,16 +61,7 @@ Four questions, asked of the business and not of the code:
    nothing in differentiation, the subdomain is generic. If nothing fits because the need is
    specific but dull, it is supporting.
 
-```mermaid
-flowchart TD
-  A[A subdomain] --> B{Would average quality here lose clients?}
-  B -- yes --> C{Are the rules complex or changing?}
-  C -- yes --> CORE[core]
-  C -- no --> S1[supporting, and watch it: easy to copy]
-  B -- no --> D{Does a product solve it well enough?}
-  D -- yes --> GEN[generic: buy and wrap]
-  D -- no --> SUP[supporting: build simply]
-```
+![A decision tree: would average quality lose clients; if yes, are the rules complex or changing (core, or supporting to watch); if no, does a product solve it well enough (generic, or supporting built simply)](../assets/diagrams/domain-and-subdomains-classify.svg)
 
 Classification is not permanent. A supporting subdomain becomes core when the business starts
 competing on it (availability would, if slot suggestion became the selling point), and a core
@@ -89,6 +82,57 @@ It changes the investment, not the architecture rules.
 
 A thin model in a supporting context is a legitimate choice, not a defect: see
 [Anemic model](anemic-model.md) for where the line is.
+
+### A generic subdomain in code: a port and an adapter
+
+Sending an SMS is a generic subdomain: `notifications` decides which reminder goes out and
+when, a vendor delivers it. Instead of calling the vendor's SDK from a handler, which lets its
+vocabulary (`messages.create`, `sid`, `from`) leak into the model and ties every test to it:
+
+```ts
+// contexts/notifications/application/commands/send-reminder/send-reminder.handler.ts
+await vendorClient.messages.create({ to: reminder.phone, body: text, from: '+33100000000' }); // the vendor's words
+```
+
+declare what the context needs, in its own words, and translate at the edge:
+
+<!-- checked sample -->
+```ts
+// contexts/notifications/application/ports/sms-sender.port.ts
+// What notifications needs, in its words: the vendor is a detail behind it.
+export abstract class SmsSender {
+  /** Fails when the provider did not take the message. */
+  abstract send(phoneNumber: string, text: string): Promise<void>;
+}
+
+// The vendor's client, as its SDK types it: bought, never modelled.
+interface VendorSmsClient {
+  readonly messages: {
+    create(input: { to: string; body: string; from: string }): Promise<{ sid: string; status: string }>;
+  };
+}
+
+// contexts/notifications/infrastructure/external/vendor-sms-sender.adapter.ts
+// The only file that knows the vendor: replacing it touches nothing else.
+export class VendorSmsSender implements SmsSender {
+  constructor(
+    private readonly client: VendorSmsClient,
+    private readonly senderNumber: string,
+  ) {}
+
+  async send(phoneNumber: string, text: string): Promise<void> {
+    const message = await this.client.messages.create({ to: phoneNumber, body: text, from: this.senderNumber });
+
+    if (message.status === 'failed') {
+      throw new Error(`The SMS provider refused message ${message.sid}.`);
+    }
+  }
+}
+```
+
+The handler depends on `SmsSender`; the tests bind a fake to it; the platform binds
+`VendorSmsSender` ([Ports and composition](ports-and-composition.md)).
+Changing vendor is then a new adapter, not a change of the model.
 
 ## In this kit
 
@@ -132,8 +176,8 @@ npx ddd-ts-kit generate context appointments --classification core \
 - **Do not classify by technical difficulty.** A hard integration with a payment provider is
   still generic. What counts is business differentiation.
 - **Do not create contexts to fill the three kinds.** A small product may have one core context
-  and nothing else worth a boundary. The bootstrap skill says it: one well-named context beats
-  four guessed ones.
+  and nothing else worth a boundary. The `bounded-contexts` skill says it: two well-named
+  contexts beat five guessed ones.
 - **A product with no core subdomain** (pure data entry, a back-office with no rule of its own)
   gains little from tactical DDD. The strategic vocabulary still helps to decide what to buy.
 

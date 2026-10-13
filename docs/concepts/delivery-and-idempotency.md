@@ -21,6 +21,9 @@ what ordering costs and where failed events go.
 Why the third does not exist: the relay publishes `appointments.appointment.booked` and the
 connection drops before the acknowledgement arrives. Did the broker take it? The relay cannot
 know. If it resends, the event may be delivered twice; if it does not, the event may be lost.
+
+![Why exactly-once delivery is out of reach: the relay publishes event e1, the broker stores it, the acknowledgement is lost on the way back; the relay cannot tell this case from a lost message, so it must choose between resending, which may deliver e1 twice (at least once), and not resending, which may lose it (at most once)](../assets/diagrams/delivery-and-idempotency-lost-ack.svg)
+
 The same holds between the broker and the consumer: the handler commits, the acknowledgement is
 lost, the broker redelivers. Products that advertise exactly-once semantics achieve it inside
 their own boundary (for example a Kafka transaction covering Kafka topics and offsets), not
@@ -39,23 +42,7 @@ once. Some operations are naturally so ("mark the appointment as cancelled"). Mo
 The general mechanism is a **processed-event store**: a table keyed by consumer name and event
 id.
 
-```mermaid
-sequenceDiagram
-  participant B as broker
-  participant C as consumer (notifications)
-  participant DB as notifications database
-  B->>C: appointments.appointment.booked (id e1)
-  C->>DB: begin
-  C->>DB: insert (consumer, e1) into processed events
-  C->>DB: insert reminder
-  C->>DB: commit
-  C-->>B: acknowledge
-  B->>C: same event again (redelivery)
-  C->>DB: begin
-  C->>DB: insert (consumer, e1): already there
-  C->>DB: commit, nothing done
-  C-->>B: acknowledge
-```
+![The processed-event store in three cases: on a first delivery the mark is taken, the reminder is inserted and both commit together before the acknowledgement; on a redelivery the mark already exists, the handler is skipped and the event is acknowledged; when the handler fails, the transaction rolls back with the mark, nothing is acknowledged and the redelivery is handled](../assets/diagrams/delivery-and-idempotency-processed-events.svg)
 
 The decisive detail is that **the mark and the state change commit together**:
 
@@ -67,6 +54,90 @@ The kit does this for a declared integration event handler without code in the h
 mark and the work run in one unit of work, and the command the handler sends joins that
 transaction. The rule is `events/consumer-idempotent`: every consumer has a stable, unique
 consumer name and deduplicates through a processed-event store.
+
+A declared handler only names its consumer; the platform subscribes it with the
+processed-event store and the unit of work bound in the container:
+
+<!-- checked sample -->
+```ts
+import { defineIntegrationEvent, type PayloadOf } from '@ddd-ts-kit/events';
+import { Command, CommandBus, type IntegrationEvent } from '@ddd-ts-kit/kernel';
+import { IntegrationEventHandler } from '@ddd-ts-kit/kernel/declarations';
+import { zodSchema } from '@ddd-ts-kit/validation/zod';
+import { z } from 'zod';
+
+// appointments/published-language/appointment-booked.v1.integration-event.ts
+export const appointmentBooked = defineIntegrationEvent({
+  type: 'appointments.appointment.booked',
+  version: 1,
+  payload: zodSchema(z.object({ appointmentId: z.string(), startsAt: z.iso.datetime() })),
+});
+
+// notifications/application/commands/schedule-reminder/schedule-reminder.command.ts
+export class ScheduleReminder extends Command {
+  constructor(
+    readonly appointmentId: string,
+    readonly startsAt: string,
+  ) {
+    super();
+  }
+}
+
+// notifications/application/integration/handlers/remind-on-appointment-booked.integration-handler.ts
+@IntegrationEventHandler(appointmentBooked, { consumer: 'notifications.remind-on-appointment-booked' })
+export class RemindOnAppointmentBooked implements IntegrationEventHandler<PayloadOf<typeof appointmentBooked>> {
+  constructor(private readonly commands: CommandBus) {}
+
+  // no deduplication here: the mark, this command and its writes commit in one unit of work
+  async handle(event: IntegrationEvent<PayloadOf<typeof appointmentBooked>>): Promise<void> {
+    await this.commands.execute(new ScheduleReminder(event.payload.appointmentId, event.payload.startsAt));
+  }
+}
+```
+
+Without the container, `consume` of `@ddd-ts-kit/events` gives a plain function the same
+semantics. Here the broker is played by hand and delivers the same event twice; the reminder is
+scheduled once:
+
+<!-- checked sample -->
+```ts
+import { consume, defineIntegrationEvent } from '@ddd-ts-kit/events';
+import { InMemoryProcessedEventStore, InMemoryUnitOfWork } from '@ddd-ts-kit/kernel';
+import { zodSchema } from '@ddd-ts-kit/validation/zod';
+import { z } from 'zod';
+
+const appointmentBooked = defineIntegrationEvent({
+  type: 'appointments.appointment.booked',
+  version: 1,
+  payload: zodSchema(z.object({ appointmentId: z.string(), startsAt: z.iso.datetime() })),
+});
+
+const reminders: string[] = [];
+
+const remindOnBooked = consume(
+  appointmentBooked,
+  {
+    consumer: 'notifications.remind-on-appointment-booked', // an identity: a literal, never a class name
+    processed: new InMemoryProcessedEventStore(), // in production, the store of the ORM package
+    unitOfWork: new InMemoryUnitOfWork(), // in production, the transaction of the database
+  },
+  async (event) => {
+    reminders.push(event.payload.appointmentId);
+  },
+);
+
+const e1 = appointmentBooked.create(
+  { appointmentId: 'a-17', startsAt: '2026-11-02T09:00:00Z' },
+  { id: 'e1', occurredAt: new Date('2026-10-13T08:00:00Z') },
+);
+
+export async function deliverTwice(): Promise<number> {
+  await remindOnBooked.handler(e1); // first delivery: handled
+  await remindOnBooked.handler(e1); // redelivery after a lost acknowledgement: skipped
+
+  return reminders.length; // 1
+}
+```
 
 ### The consumer name is an identity
 
@@ -95,6 +166,50 @@ of preference: make the outside call idempotent with a key derived from the even
 provider supports one; record the intent in the transaction and let a separate, repeatable step
 send it; accept the rare duplicate when it is harmless, and say so.
 
+Instead of a handler that hides the failure of the provider:
+
+```ts
+async handle(event: IntegrationEvent<AppointmentBookedV1>): Promise<void> {
+  try {
+    await this.sms.send({ clientId: event.payload.clientId, text: 'Your appointment is booked.' });
+  } catch (error) {
+    this.logger.warn('sms failed', { error }); // acknowledged: the event is lost for this consumer
+  }
+}
+```
+
+write one that lets the error reach the provider, which retries and then dead-letters, and that
+gives the outside call a key the provider deduplicates on:
+
+<!-- checked sample -->
+```ts
+import type { IntegrationEvent } from '@ddd-ts-kit/kernel';
+
+// application/ports/sms-sender.port.ts: what notifications needs from the SMS provider;
+// its adapter looks the phone number up, so the event carries no personal data
+export abstract class SmsSender {
+  abstract send(message: { readonly clientId: string; readonly text: string; readonly idempotencyKey: string }): Promise<void>;
+}
+
+interface AppointmentBookedV1 {
+  readonly appointmentId: string;
+  readonly clientId: string;
+}
+
+export class ConfirmByText {
+  constructor(private readonly sms: SmsSender) {}
+
+  async handle(event: IntegrationEvent<AppointmentBookedV1>): Promise<void> {
+    // a redelivery sends the same key: a provider that honours it sends the text once
+    await this.sms.send({
+      clientId: event.payload.clientId,
+      text: 'Your appointment is booked.',
+      idempotencyKey: `notifications.confirm-by-text:${event.id}`,
+    });
+  }
+}
+```
+
 ## Ordering
 
 By default **ordering is not guaranteed, not even for the events of one aggregate**: a failed
@@ -107,6 +222,38 @@ preceded it. Three ways to cope, cheapest first:
 1. **Make order irrelevant.** Carry a version or a sequence of the aggregate in the payload; the
    consumer keeps the highest it has applied and ignores anything older. This works on every
    provider and is what the provider READMEs recommend.
+
+   ![Making order irrelevant: the producer emits versions 1, 2 and 3 of one appointment; they arrive as 1, 3, 2; the consumer applies 1, then 3, and ignores 2 because the row already holds a later version, so it ends in the state of version 3 whatever the order of arrival](../assets/diagrams/delivery-and-idempotency-ordering.svg)
+
+   The kernel compares stamps for you: `stampOf(event, version)` and `isNewer`, the rule the
+   read model stores apply in `upsertIfNewer`:
+
+   <!-- checked sample -->
+   ```ts
+   import { isNewer, stampOf, type EventStamp, type IntegrationEvent } from '@ddd-ts-kit/kernel';
+
+   interface SlotChanged {
+     readonly slotId: string;
+     readonly version: number; // per slot, set by the producer
+     readonly state: 'open' | 'taken';
+   }
+
+   interface SlotRow {
+     readonly state: 'open' | 'taken';
+     readonly stamp: EventStamp;
+   }
+
+   /** Set the slot to what the event says, if the event is newer than what the row holds. */
+   export function applySlotChanged(row: SlotRow | undefined, event: IntegrationEvent<SlotChanged>): SlotRow {
+     const stamp = stampOf(event, event.payload.version);
+
+     if (row !== undefined && !isNewer(stamp, row.stamp)) {
+       return row; // older, or the same event again: nothing changes
+     }
+
+     return { state: event.payload.state, stamp };
+   }
+   ```
 2. **Make handlers commutative** where the business allows: "set the slot state to what this
    event says, if newer" instead of "toggle".
 3. **Ask for order per key.** The relay can hold back a record while an earlier record of the

@@ -20,15 +20,145 @@ The dependency rule reverses the direction of that one arrow. The business code 
 needs as an abstraction (a port), and the database code implements it. The call still goes from
 the business code to the database at run time; the import goes the other way.
 
-```mermaid
-flowchart LR
-  P[presentation] --> A[application]
-  A --> D[domain]
-  I[infrastructure] --> D
-  I -. implements ports of .-> A
+![Before and after: in three tiers the booking rules import the ORM; under the dependency rule the booking rules declare a repository port, the ORM adapter imports and implements it, and the call still goes from the rules to the adapter at run time](../assets/diagrams/layers-and-dependency-rule-inversion.svg)
+
+In code, the difference is one import. Instead of a domain that reaches for the database:
+
+```ts
+// domain/aggregates/appointment.aggregate.ts
+import type { Knex } from 'knex'; // layer/domain-purity: an ORM inside the domain
+
+export class Appointment {
+  static async book(db: Knex, calendarId: string, startsAt: Date) {
+    const taken = await db('appointments').where({ calendar_id: calendarId, starts_at: startsAt }).first();
+    // the rule is now written in terms of rows, and cannot be tested without a database
+  }
+}
 ```
 
+write a domain that states what it needs, and an application that uses it without knowing who
+answers. The four files are shown as one module here; the comments name the file each part
+lives in:
+
+<!-- checked sample -->
+```ts
+import { definePermissions } from '@ddd-ts-kit/auth';
+import {
+  AggregateRoot,
+  AuthorizedCommand,
+  ConceptError,
+  Repository,
+  type Actor,
+  type Clock,
+  type DomainEvent,
+  type IdGenerator,
+} from '@ddd-ts-kit/kernel';
+import { CommandHandler, Requires } from '@ddd-ts-kit/kernel/declarations';
+
+// domain/: imports nothing but the kernel
+export class AppointmentBooked implements DomainEvent {
+  readonly name = 'appointments.appointment.booked';
+
+  constructor(
+    readonly aggregateId: string,
+    readonly occurredAt: Date,
+  ) {}
+}
+
+export class AppointmentError extends ConceptError {
+  static slotTaken(calendarId: string, startsAt: Date) {
+    return AppointmentError.refusal('SLOT_TAKEN', `The slot at ${startsAt.toISOString()} is already taken.`, {
+      calendarId,
+      startsAt,
+    });
+  }
+}
+
+export class Appointment extends AggregateRoot {
+  private constructor(
+    id: string,
+    readonly calendarId: string,
+    readonly startsAt: Date,
+  ) {
+    super(id);
+  }
+
+  static book(id: string, calendarId: string, startsAt: Date, now: Date): Appointment {
+    const appointment = new Appointment(id, calendarId, startsAt);
+    appointment.record(new AppointmentBooked(id, now));
+
+    return appointment;
+  }
+}
+
+// domain/repositories/appointment.repository.ts: the port, an abstract class the domain owns
+export abstract class AppointmentRepository extends Repository<Appointment> {
+  abstract isTaken(calendarId: string, startsAt: Date): Promise<boolean>;
+}
+
+// application/: the use case knows the port, never the adapter behind it
+const appointmentsPermissions = definePermissions('appointments', {
+  'appointment.book': { description: 'Book an appointment' },
+});
+
+@Requires(appointmentsPermissions['appointment.book'])
+export class BookAppointment extends AuthorizedCommand<string> {
+  constructor(
+    actor: Actor,
+    readonly calendarId: string,
+    readonly startsAt: Date,
+  ) {
+    super(actor);
+  }
+}
+
+@CommandHandler(BookAppointment)
+export class BookAppointmentHandler implements CommandHandler<BookAppointment> {
+  constructor(
+    private readonly appointments: AppointmentRepository,
+    private readonly ids: IdGenerator,
+    private readonly clock: Clock,
+  ) {}
+
+  async execute({ calendarId, startsAt }: BookAppointment): Promise<string> {
+    if (await this.appointments.isTaken(calendarId, startsAt)) {
+      throw AppointmentError.slotTaken(calendarId, startsAt);
+    }
+
+    const appointment = Appointment.book(this.ids.next(), calendarId, startsAt, this.clock.now());
+    await this.appointments.save(appointment);
+
+    return appointment.id;
+  }
+}
+
+// infrastructure/persistence/: the adapter imports the port and implements it
+export class InMemoryAppointmentRepository implements AppointmentRepository {
+  private readonly rows = new Map<string, Appointment>();
+
+  async findById(id: string): Promise<Appointment | undefined> {
+    return this.rows.get(id);
+  }
+
+  async save(appointment: Appointment): Promise<void> {
+    this.rows.set(appointment.id, appointment);
+  }
+
+  async isTaken(calendarId: string, startsAt: Date): Promise<boolean> {
+    return [...this.rows.values()].some(
+      (held) => held.calendarId === calendarId && held.startsAt.getTime() === startsAt.getTime(),
+    );
+  }
+}
+```
+
+The rule "a slot cannot be booked twice" now reads without any library, and a spec runs it
+against the in-memory adapter in milliseconds. The ORM adapter of production (Knex, Drizzle,
+Prisma or TypeORM) is one more class that implements the same port; nothing above it changes.
+
 ## The four layers, on the scheduling application
+
+![The four layers of a bounded context inside the platform: presentation, application and infrastructure point towards the domain, infrastructure implements the ports of the application](../assets/diagrams/layers-dependency-rule.svg)
 
 | Layer | Holds | Example in `appointments` | May import |
 |---|---|---|---|
@@ -44,21 +174,7 @@ of section 2.
 
 A request to book an appointment crosses the layers like this:
 
-```mermaid
-sequenceDiagram
-  participant R as route (presentation)
-  participant B as CommandBus
-  participant H as handler (application)
-  participant Ag as Appointment (domain)
-  participant Repo as repository adapter (infrastructure)
-  R->>B: BookAppointment(actor, slot)
-  B->>H: execute(command)
-  H->>Ag: Appointment.book(...)
-  Ag-->>H: appointment, recorded event
-  H->>Repo: save(appointment) through the port
-  Repo-->>H: done
-  H-->>R: appointment id
-```
+![A booking request crossing the layers: the route sends BookAppointment to the command bus, the bus runs the handler, the handler asks the Appointment aggregate to book and saves it through the repository port, whose infrastructure adapter stores it; the identifier goes back the same way](../assets/diagrams/layers-and-dependency-rule-request.svg)
 
 The handler knows the port `AppointmentRepository`, an abstract class of the domain. It never
 names the adapter. Which adapter stands behind the port is decided in the composition root (see

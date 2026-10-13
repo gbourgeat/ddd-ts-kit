@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 510" width="960" height="510" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">L'outbox transactionnelle : l'événement est écrit avec l'état, un relais le publie ensuite</title>
+  <desc id="desc">Dans une seule transaction, l'unité de travail de la commande : le gestionnaire de commande réserve et enregistre le rendez-vous, ce qui insère sa ligne dans la table appointments ; l'événement du domaine AppointmentBooked est distribué avant la validation au publisher, un gestionnaire d'événement du domaine, qui ajoute l'événement d'intégration à la table outbox. La validation écrit les deux lignes ou aucune. Ensuite un relais, une boucle à part, réclame un lot d'enregistrements en attente, les publie vers le broker ou le bus en mémoire, et les marque publiés. Le broker livre au consommateur au moins une fois : le consommateur est idempotent.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="510" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">L'outbox transactionnelle</text>
+  <!-- the transaction -->
+  <rect x="24" y="60" width="516" height="250" rx="14" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="44" y="86" font-size="14" font-weight="600" fill="#5f6b73">une transaction : l'unité de travail de la commande</text>
+  <rect x="32" y="104" width="232" height="60" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="148" y="130" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">gestionnaire de commande</text>
+  <text x="148" y="150" font-size="13" fill="#1f2328" text-anchor="middle">réserve, puis enregistre</text>
+  <rect x="32" y="204" width="232" height="72" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="148" y="230" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">publisher</text>
+  <text x="148" y="250" font-size="13" fill="#1f2328" text-anchor="middle">gestionnaire de l'événement</text>
+  <text x="148" y="267" font-size="13" fill="#1f2328" text-anchor="middle">du domaine, phase before-commit</text>
+  <line x1="148" y1="166" x2="148" y2="200" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="158" y="188" font-size="13" fill="#1f2328">AppointmentBooked</text>
+  <rect x="320" y="104" width="200" height="60" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="420" y="130" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">appointments</text>
+  <text x="420" y="150" font-size="13" fill="#1f2328" text-anchor="middle">a-1, booked</text>
+  <rect x="320" y="204" width="200" height="72" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="420" y="230" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">outbox</text>
+  <text x="420" y="250" font-size="13" fill="#1f2328" text-anchor="middle">evt-9, pending</text>
+  <line x1="266" y1="134" x2="316" y2="134" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="291" y="124" font-size="13" fill="#1f2328" text-anchor="middle">insert</text>
+  <line x1="266" y1="240" x2="316" y2="240" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="291" y="230" font-size="13" fill="#1f2328" text-anchor="middle">append</text>
+  <text x="44" y="298" font-size="13" font-style="italic" fill="#5f6b73">validation : les deux lignes, ou aucune</text>
+  <!-- afterwards: the relay -->
+  <rect x="320" y="370" width="200" height="72" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="420" y="398" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">relais</text>
+  <text x="420" y="418" font-size="13" fill="#1f2328" text-anchor="middle">une boucle à part,</text>
+  <text x="420" y="435" font-size="13" fill="#1f2328" text-anchor="middle">après la validation</text>
+  <line x1="380" y1="278" x2="380" y2="366" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="370" y="344" font-size="13" fill="#1f2328" text-anchor="end">1. réclame un lot</text>
+  <line x1="460" y1="368" x2="460" y2="280" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="470" y="344" font-size="13" fill="#1f2328">3. marque publié</text>
+  <rect x="596" y="370" width="164" height="72" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="678" y="398" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">broker</text>
+  <text x="678" y="420" font-size="13" fill="#1f2328" text-anchor="middle">ou bus en mémoire</text>
+  <line x1="522" y1="406" x2="592" y2="406" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="557" y="396" font-size="13" fill="#1f2328" text-anchor="middle">2. publie</text>
+  <rect x="800" y="370" width="136" height="72" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="868" y="396" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">consommateur</text>
+  <text x="868" y="416" font-size="13" fill="#1f2328" text-anchor="middle">au moins une fois :</text>
+  <text x="868" y="433" font-size="13" fill="#1f2328" text-anchor="middle">idempotent</text>
+  <line x1="762" y1="406" x2="796" y2="406" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <!-- what the broker never sees -->
+  <rect x="600" y="104" width="336" height="172" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="616" y="130" font-size="14" font-weight="600" fill="#1f2328">Ce qu'elle garantit</text>
+  <text x="616" y="156" font-size="13" fill="#1f2328">événement et changement : les deux, ou aucun</text>
+  <text x="616" y="180" font-size="13" fill="#1f2328">une commande annulée ne publie rien</text>
+  <text x="616" y="204" font-size="13" fill="#1f2328">un arrêt entre 2 et 3 publie de nouveau :</text>
+  <text x="616" y="224" font-size="13" fill="#1f2328">livré au moins une fois, jamais perdu</text>
+  <text x="616" y="248" font-size="13" fill="#1f2328">le cas d'usage ne parle jamais au broker</text>
+  <!-- legend -->
+  <line x1="40" y1="482" x2="84" y2="482" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="96" y="487" font-size="14" fill="#1f2328">un appel ou une écriture</text>
+  <line x1="300" y1="482" x2="344" y2="482" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <text x="356" y="487" font-size="14" fill="#1f2328">une livraison asynchrone</text>
+</svg>

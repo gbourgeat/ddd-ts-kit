@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 600" width="960" height="600" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">The life of a domain event</title>
+  <desc id="desc">Inside the unit of work of the command: the handler calls cancel on the appointment, which checks its invariants, changes its state and records AppointmentCancelled. The handler saves the appointment, and the save queues the events the aggregate recorded. Once the handler has returned, the unit of work dispatches the queue in recording order to the domain event handlers, still inside the transaction. Then the transaction commits. Only once it has committed do the handlers declared after-commit run; on a failure the transaction rolls back and nothing more runs.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="600" rx="16" fill="#ffffff"/>
+  <text x="32" y="36" font-size="18" font-weight="600" fill="#1f2328">The life of a domain event</text>
+  <!-- the transaction -->
+  <rect x="24" y="120" width="912" height="306" rx="12" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <!-- participants -->
+  <rect x="40" y="50" width="150" height="62" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="115" y="84" font-size="14" font-weight="700" fill="#2b5d8a" text-anchor="middle">command handler</text>
+  <rect x="220" y="50" width="150" height="62" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="295" y="84" font-size="14" font-weight="700" fill="#2f6f4f" text-anchor="middle">Appointment</text>
+  <rect x="400" y="50" width="150" height="62" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="475" y="84" font-size="14" font-weight="700" fill="#2f6f4f" text-anchor="middle">repository</text>
+  <rect x="580" y="50" width="150" height="62" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="655" y="84" font-size="14" font-weight="700" fill="#5f6b73" text-anchor="middle">unit of work</text>
+  <rect x="760" y="50" width="170" height="62" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="845" y="76" font-size="14" font-weight="700" fill="#2b5d8a" text-anchor="middle">domain event</text>
+  <text x="845" y="94" font-size="14" font-weight="700" fill="#2b5d8a" text-anchor="middle">handlers</text>
+  <!-- lifelines -->
+  <line x1="115" y1="112" x2="115" y2="530" stroke="#2b5d8a" stroke-width="1.5" stroke-dasharray="5 5"/>
+  <line x1="295" y1="112" x2="295" y2="530" stroke="#2f6f4f" stroke-width="1.5" stroke-dasharray="5 5"/>
+  <line x1="475" y1="112" x2="475" y2="530" stroke="#2f6f4f" stroke-width="1.5" stroke-dasharray="5 5"/>
+  <line x1="655" y1="112" x2="655" y2="540" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="5 5"/>
+  <line x1="845" y1="112" x2="845" y2="530" stroke="#2b5d8a" stroke-width="1.5" stroke-dasharray="5 5"/>
+  <!-- 1. cancel -->
+  <text x="205" y="146" font-size="13" fill="#1f2328" text-anchor="middle">cancel(reason, at)</text>
+  <line x1="117" y1="156" x2="291" y2="156" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="226" y="168" width="226" height="56" rx="8" fill="#ffffff" stroke="#2f6f4f" stroke-width="1.5"/>
+  <text x="238" y="190" font-size="13" fill="#1f2328">checks, changes its state,</text>
+  <text x="238" y="210" font-size="13" fill="#1f2328">records AppointmentCancelled</text>
+  <!-- 2. save -->
+  <text x="205" y="246" font-size="13" fill="#1f2328" text-anchor="middle">save(appointment)</text>
+  <path d="M117,256 H471" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="406" y="266" width="224" height="56" rx="8" fill="#ffffff" stroke="#2f6f4f" stroke-width="1.5"/>
+  <text x="418" y="288" font-size="13" fill="#1f2328">queues the events</text>
+  <text x="418" y="308" font-size="13" fill="#1f2328">the aggregate recorded</text>
+  <!-- 3. returns, dispatch -->
+  <text x="205" y="344" font-size="13" fill="#1f2328" text-anchor="middle">the handler returns</text>
+  <line x1="117" y1="354" x2="651" y2="354" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <text x="750" y="376" font-size="13" fill="#1f2328" text-anchor="middle">dispatches, in order</text>
+  <line x1="657" y1="386" x2="841" y2="386" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- the transaction, named -->
+  <rect x="34" y="394" width="520" height="26" rx="6" fill="#f3f4f5"/>
+  <text x="40" y="412" font-size="13" font-weight="600" fill="#5f6b73">the unit of work of the command: one transaction, before the commit</text>
+  <!-- 4. commit, then after-commit -->
+  <rect x="580" y="440" width="150" height="34" rx="8" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="655" y="462" font-size="13" font-weight="600" fill="#5f6b73" text-anchor="middle">commit</text>
+  <text x="750" y="494" font-size="13" fill="#1f2328" text-anchor="middle">after-commit handlers,</text>
+  <text x="750" y="510" font-size="13" fill="#1f2328" text-anchor="middle">once committed</text>
+  <line x1="657" y1="522" x2="841" y2="522" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- or, on a failure, roll back -->
+  <rect x="560" y="544" width="190" height="34" rx="8" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="5 4"/>
+  <text x="655" y="566" font-size="13" font-weight="600" fill="#5f6b73" text-anchor="middle">on a failure: roll back</text>
+  <text x="764" y="566" font-size="13" font-style="italic" fill="#5f6b73">nothing more runs</text>
+</svg>

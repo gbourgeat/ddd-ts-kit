@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 470" width="960" height="470" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">A long job resumes from its checkpoint</title>
+  <desc id="desc">The clearance job cancels three appointments. Attempt 1 cancels the first one and saves checkpoint 1, then fails on the second one. After its backoff, attempt 2 receives checkpoint 1 in execution.checkpoint, starts at the second appointment, saves checkpoint 2, cancels the third one and saves checkpoint 3. The second appointment is sent twice, so each step must be idempotent.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+    <marker id="arrow-infrastructure" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#7a4f9a"/>
+    </marker>
+  </defs>
+  <rect width="960" height="470" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">A long job resumes from its checkpoint</text>
+  <text x="32" y="62" font-size="14" fill="#5f6b73">The clearance of a calendar with three appointments: first, second, third</text>
+  <!-- attempt 1 -->
+  <text x="32" y="129" font-size="16" font-weight="700" fill="#2b5d8a">attempt 1</text>
+  <rect x="130" y="96" width="110" height="56" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="185" y="120" font-size="14" font-weight="700" fill="#2b5d8a" text-anchor="middle">cancel first</text>
+  <text x="185" y="140" font-size="13" fill="#1f2328" text-anchor="middle">done: 1</text>
+  <line x1="242" y1="124" x2="260" y2="124" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="262" y="106" width="110" height="36" rx="18" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="317" y="129" font-size="13" font-weight="600" fill="#7a4f9a" text-anchor="middle">checkpoint 1</text>
+  <line x1="374" y1="124" x2="392" y2="124" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="394" y="96" width="110" height="56" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="449" y="120" font-size="14" font-weight="700" fill="#2b5d8a" text-anchor="middle">cancel second</text>
+  <text x="449" y="140" font-size="13" fill="#1f2328" text-anchor="middle">throws</text>
+  <line x1="506" y1="124" x2="524" y2="124" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="526" y="96" width="374" height="56" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="713" y="119" font-size="13" fill="#1f2328" text-anchor="middle">the attempt fails: the job waits for its backoff (1 s),</text>
+  <text x="713" y="139" font-size="13" fill="#1f2328" text-anchor="middle">then a worker claims it again</text>
+  <!-- the checkpoint reaches attempt 2 -->
+  <path d="M317,144 V264 H392" fill="none" stroke="#7a4f9a" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow-infrastructure)"/>
+  <text x="308" y="212" font-size="13" fill="#7a4f9a" text-anchor="end">execution.checkpoint = { done: 1 }</text>
+  <!-- attempt 2 -->
+  <text x="32" y="269" font-size="16" font-weight="700" fill="#2b5d8a">attempt 2</text>
+  <rect x="394" y="236" width="110" height="56" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="449" y="260" font-size="14" font-weight="700" fill="#2b5d8a" text-anchor="middle">cancel second</text>
+  <text x="449" y="280" font-size="13" fill="#1f2328" text-anchor="middle">done: 2</text>
+  <line x1="506" y1="264" x2="524" y2="264" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="526" y="246" width="110" height="36" rx="18" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="581" y="269" font-size="13" font-weight="600" fill="#7a4f9a" text-anchor="middle">checkpoint 2</text>
+  <line x1="638" y1="264" x2="656" y2="264" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="658" y="236" width="110" height="56" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="713" y="260" font-size="14" font-weight="700" fill="#2b5d8a" text-anchor="middle">cancel third</text>
+  <text x="713" y="280" font-size="13" fill="#1f2328" text-anchor="middle">done: 3</text>
+  <line x1="770" y1="264" x2="788" y2="264" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="790" y="246" width="110" height="36" rx="18" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="845" y="269" font-size="13" font-weight="600" fill="#7a4f9a" text-anchor="middle">checkpoint 3</text>
+  <text x="394" y="322" font-size="13" fill="#1f2328">The job succeeded, in 2 attempts. The second appointment was sent twice:</text>
+  <text x="394" y="342" font-size="13" fill="#1f2328">the first try failed before its checkpoint. Each step is idempotent.</text>
+  <!-- legend -->
+  <rect x="32" y="376" width="28" height="20" rx="5" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="70" y="391" font-size="13" fill="#1f2328">a command the job sends, in its own unit of work</text>
+  <rect x="32" y="406" width="40" height="20" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="84" y="421" font-size="13" fill="#1f2328">saveCheckpoint({ done }): written to the job store</text>
+  <line x1="32" y1="448" x2="76" y2="448" stroke="#7a4f9a" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow-infrastructure)"/>
+  <text x="88" y="453" font-size="13" fill="#1f2328">the next attempt receives the last checkpoint saved</text>
+</svg>

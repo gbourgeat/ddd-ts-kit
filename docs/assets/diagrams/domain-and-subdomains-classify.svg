@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 460" width="960" height="460" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Classifying a subdomain, asked of the business</title>
+  <desc id="desc">A decision tree. Would average quality here lose clients? If yes: are the rules complex or changing? Yes gives core; no gives supporting, to watch because it is easy to copy. If average quality would lose no client: does a product solve it well enough? Yes gives generic, bought and wrapped behind a port; no gives supporting, built simply.</desc>
+  <defs>
+    <marker id="arrow-neutral" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="460" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Classifying a subdomain, asked of the business</text>
+  <rect x="380" y="60" width="200" height="40" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="480" y="85" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">A subdomain</text>
+  <line x1="480" y1="100" x2="480" y2="124" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow-neutral)"/>
+  <rect x="320" y="128" width="320" height="64" rx="10" fill="#ffffff" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="480" y="155" font-size="14" fill="#1f2328" text-anchor="middle">Would average quality here</text>
+  <text x="480" y="175" font-size="14" fill="#1f2328" text-anchor="middle">lose clients?</text>
+  <rect x="80" y="252" width="320" height="64" rx="10" fill="#ffffff" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="240" y="279" font-size="14" fill="#1f2328" text-anchor="middle">Are the rules complex</text>
+  <text x="240" y="299" font-size="14" fill="#1f2328" text-anchor="middle">or changing?</text>
+  <rect x="560" y="252" width="320" height="64" rx="10" fill="#ffffff" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="720" y="279" font-size="14" fill="#1f2328" text-anchor="middle">Does a product solve it</text>
+  <text x="720" y="299" font-size="14" fill="#1f2328" text-anchor="middle">well enough?</text>
+  <path d="M420,192 V220 H240 V248" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow-neutral)"/>
+  <text x="330" y="212" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">yes</text>
+  <path d="M540,192 V220 H720 V248" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow-neutral)"/>
+  <text x="630" y="212" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">no</text>
+  <path d="M200,316 V344 H130 V368" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow-neutral)"/>
+  <text x="165" y="336" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">yes</text>
+  <path d="M280,316 V344 H350 V368" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow-neutral)"/>
+  <text x="315" y="336" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">no</text>
+  <path d="M680,316 V344 H610 V368" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow-neutral)"/>
+  <text x="645" y="336" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">yes</text>
+  <path d="M760,316 V344 H830 V368" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow-neutral)"/>
+  <text x="795" y="336" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">no</text>
+  <rect x="30" y="372" width="200" height="76" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="3"/>
+  <text x="130" y="398" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">core</text>
+  <text x="130" y="420" font-size="13" fill="#1f2328" text-anchor="middle">the richest model</text>
+  <rect x="250" y="372" width="200" height="76" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="350" y="398" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">supporting</text>
+  <text x="350" y="420" font-size="13" fill="#1f2328" text-anchor="middle">watch it: easy to copy</text>
+  <rect x="510" y="372" width="200" height="76" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="610" y="398" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">generic</text>
+  <text x="610" y="420" font-size="13" fill="#1f2328" text-anchor="middle">buy, wrap behind a port</text>
+  <rect x="730" y="372" width="200" height="76" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="830" y="398" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">supporting</text>
+  <text x="830" y="420" font-size="13" fill="#1f2328" text-anchor="middle">build it simply</text>
+</svg>

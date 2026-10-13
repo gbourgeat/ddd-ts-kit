@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 340" width="960" height="340" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Un export : page par page en parties, puis un fichier derrière un lien signé</title>
+  <desc id="desc">ExportBackgroundJob lit une recherche du contexte page par page avec un curseur, en tant que propriétaire de l'export. Il écrit chaque page comme une partie sous exports/&lt;id&gt;/parts/&lt;n&gt;.csv ; son point de reprise est le curseur et le nombre de parties. À la fin, les parties sont réunies en un fichier, puis supprimées, et CompleteExport enregistre le StoredFile ; le propriétaire le télécharge par un lien signé qu'une requête signe.</desc>
+  <defs>
+    <marker id="arrow-neutral" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="340" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Un export : page par page en parties, puis un fichier derrière un lien signé</text>
+  <rect x="32" y="90" width="210" height="96" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="137" y="118" font-size="15" font-weight="700" fill="#2b5d8a" text-anchor="middle">recherche du contexte</text>
+  <line x1="46" y1="130" x2="228" y2="130" stroke="#2b5d8a" stroke-opacity="0.35"/>
+  <text x="137" y="154" font-size="13" fill="#1f2328" text-anchor="middle">page par page, curseur,</text>
+  <text x="137" y="174" font-size="13" fill="#1f2328" text-anchor="middle">périmètre du propriétaire</text>
+  <line x1="244" y1="138" x2="300" y2="138" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow-neutral)"/>
+  <rect x="304" y="76" width="210" height="36" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="409" y="99" font-size="13" font-weight="600" fill="#5f6b73" text-anchor="middle">exports/&lt;id&gt;/parts/1.csv</text>
+  <rect x="304" y="120" width="210" height="36" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="409" y="143" font-size="13" font-weight="600" fill="#5f6b73" text-anchor="middle">exports/&lt;id&gt;/parts/2.csv</text>
+  <rect x="304" y="164" width="210" height="36" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="409" y="187" font-size="13" font-weight="600" fill="#5f6b73" text-anchor="middle">exports/&lt;id&gt;/parts/n.csv</text>
+  <line x1="516" y1="138" x2="572" y2="138" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow-neutral)"/>
+  <rect x="576" y="90" width="160" height="96" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="656" y="118" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">un fichier</text>
+  <line x1="590" y1="130" x2="722" y2="130" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text x="656" y="154" font-size="13" fill="#1f2328" text-anchor="middle">exports/&lt;id&gt;.csv,</text>
+  <text x="656" y="174" font-size="13" fill="#1f2328" text-anchor="middle">parties supprimées</text>
+  <line x1="738" y1="138" x2="776" y2="138" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow-neutral)"/>
+  <rect x="780" y="90" width="148" height="96" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="854" y="118" font-size="15" font-weight="700" fill="#9a5b2b" text-anchor="middle">lien signé</text>
+  <line x1="794" y1="130" x2="914" y2="130" stroke="#9a5b2b" stroke-opacity="0.35"/>
+  <text x="854" y="154" font-size="13" fill="#1f2328" text-anchor="middle">signé par une requête,</text>
+  <text x="854" y="174" font-size="13" fill="#1f2328" text-anchor="middle">audité si personnel</text>
+  <text x="137" y="236" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">1. lire page par page</text>
+  <text x="409" y="236" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">2. une partie par page</text>
+  <text x="409" y="254" font-size="13" fill="#2b5d8a" text-anchor="middle">point de reprise : { cursor, parts }</text>
+  <text x="656" y="236" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">3. réunir à la fin</text>
+  <text x="656" y="254" font-size="13" fill="#2b5d8a" text-anchor="middle">CompleteExport enregistre</text>
+  <text x="656" y="272" font-size="13" fill="#1f2328" text-anchor="middle">le StoredFile</text>
+  <text x="854" y="236" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">4. le propriétaire télécharge</text>
+  <line x1="32" y1="310" x2="76" y2="310" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow-neutral)"/>
+  <text x="88" y="315" font-size="14" fill="#1f2328">les étapes d'ExportBackgroundJob, en tant que propriétaire, repris au point de reprise</text>
+</svg>

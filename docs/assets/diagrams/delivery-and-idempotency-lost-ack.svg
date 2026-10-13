@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 450" width="960" height="450" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Why exactly-once delivery is out of reach</title>
+  <desc id="desc">The relay publishes event e1 to the broker, which stores it. The acknowledgement is lost on the way back because the connection drops. The relay cannot tell this case from a message that never arrived. Resending may deliver e1 twice: that is at least once, the choice of the kit, and consumers deduplicate. Not resending may lose e1: that is at most once.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="450" rx="16" fill="#ffffff"/>
+  <text x="32" y="36" font-size="18" font-weight="600" fill="#1f2328">A lost acknowledgement looks like a lost message</text>
+  <!-- participants -->
+  <rect x="60" y="58" width="180" height="56" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="150" y="84" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">outbox relay</text>
+  <text x="150" y="103" font-size="13" fill="#1f2328" text-anchor="middle">infrastructure</text>
+  <rect x="380" y="58" width="180" height="56" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="470" y="84" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">broker</text>
+  <text x="470" y="103" font-size="13" fill="#1f2328" text-anchor="middle">external system</text>
+  <line x1="150" y1="116" x2="150" y2="306" stroke="#8c959f" stroke-width="1.5" stroke-dasharray="4 4"/>
+  <line x1="470" y1="116" x2="470" y2="306" stroke="#8c959f" stroke-width="1.5" stroke-dasharray="4 4"/>
+  <!-- publish -->
+  <text x="310" y="152" font-size="13" fill="#1f2328" text-anchor="middle">publish e1</text>
+  <line x1="152" y1="160" x2="466" y2="160" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="420" y="180" width="100" height="32" rx="6" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="470" y="201" font-size="13" fill="#1f2328" text-anchor="middle">e1 stored</text>
+  <!-- lost acknowledgement -->
+  <text x="390" y="242" font-size="13" fill="#1f2328" text-anchor="middle">acknowledgement</text>
+  <line x1="468" y1="250" x2="320" y2="250" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5"/>
+  <path d="M302,240 L322,260 M322,240 L302,260" stroke="#3d4449" stroke-width="3"/>
+  <text x="312" y="282" font-size="13" fill="#5f6b73" text-anchor="middle">connection drops</text>
+  <!-- question -->
+  <rect x="40" y="320" width="220" height="48" rx="8" fill="#ffffff" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="150" y="341" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">Did e1 arrive?</text>
+  <text x="150" y="358" font-size="13" fill="#1f2328" text-anchor="middle">The relay cannot know.</text>
+  <!-- choices -->
+  <path d="M262,344 H600 V160 H636" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <path d="M600,344 V284 H636" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="640" y="112" width="296" height="96" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="656" y="138" font-size="16" font-weight="700" fill="#2b5d8a">Resend</text>
+  <text x="656" y="160" font-size="13" fill="#1f2328">e1 may be delivered twice:</text>
+  <text x="656" y="178" font-size="13" fill="#1f2328">at least once. Consumers deduplicate.</text>
+  <text x="656" y="198" font-size="13" font-style="italic" fill="#2b5d8a">The choice of the kit.</text>
+  <rect x="640" y="236" width="296" height="96" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="656" y="262" font-size="16" font-weight="700" fill="#5f6b73">Do not resend</text>
+  <text x="656" y="284" font-size="13" fill="#1f2328">e1 may be lost:</text>
+  <text x="656" y="302" font-size="13" fill="#1f2328">at most once.</text>
+  <text x="32" y="410" font-size="14" fill="#1f2328">The same holds between the broker and a consumer: the handler commits, the acknowledgement</text>
+  <text x="32" y="430" font-size="14" fill="#1f2328">is lost, the broker delivers e1 again.</text>
+</svg>

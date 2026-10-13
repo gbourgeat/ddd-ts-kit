@@ -17,17 +17,7 @@ provider of `notifications`) or another context reached synchronously through a 
 (`appointments` asking `calendars` for working hours). They do not belong inside a use case,
 around a repository of aggregates by default, or in the domain.
 
-```mermaid
-flowchart LR
-  H[Handler] --> P[Port: SmsSender]
-  P --> L[logged, timed]
-  L --> R[retry]
-  R --> CB[circuit breaker]
-  CB --> BH[bulkhead]
-  BH --> T[timeout]
-  T --> AD[Adapter: HTTP client of the provider]
-  AD --> X[(SMS provider)]
-```
+![The handler calls the SmsSender port; the call goes through nested policies put around the adapter, outermost first: tracing, logged and timed, cached, retry, circuit breaker, bulkhead, timeout, then the HTTP client of the provider](../assets/diagrams/resilience-policy-chain.svg)
 
 The handler depends on the port and sees none of the boxes in between.
 
@@ -46,6 +36,34 @@ timeout; it is the one policy with no good reason to be absent.
 - *A timed-out write is an unknown outcome*, not a failure. The SMS may have been sent.
 - *Timeouts longer than the caller's.* If the route's client gives up after 5 seconds, an inner
   timeout of 30 seconds only wastes resources. Budgets shrink going inward.
+
+An adapter that can be cancelled takes the signal as its last parameter and hands it to the
+call; `timeout(2000, { signal: true })` then aborts the request itself, not only the wait:
+
+<!-- checked sample -->
+```ts
+export abstract class SmsSender {
+  abstract send(phone: string, text: string, signal?: AbortSignal): Promise<void>;
+}
+
+export class HttpSmsSender implements SmsSender {
+  constructor(private readonly baseUrl: string) {}
+
+  // `signal` last, without a default value: the timeout aspect fills it
+  async send(phone: string, text: string, signal?: AbortSignal): Promise<void> {
+    const response = await fetch(`${this.baseUrl}/messages`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ to: phone, text }),
+      ...(signal === undefined ? {} : { signal }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`The SMS provider answered ${String(response.status)}.`);
+    }
+  }
+}
+```
 
 ### Retry
 
@@ -66,6 +84,42 @@ instant.
   bulkhead.
 - *Synchronised retries.* Without jitter, all clients that failed together retry together.
 
+<!-- checked sample -->
+```ts
+declare abstract class SmsSender {
+  abstract send(phone: string, text: string): Promise<void>;
+}
+
+// Instead of: a retry written in the use case, without backoff, jitter or a view on what failed;
+// it retries a refusal as readily as a dropped connection, and every handler writes its own
+export class SendReminderRetrying {
+  constructor(private readonly sms: SmsSender) {}
+
+  async execute(phone: string): Promise<void> {
+    for (let attempt = 1; ; attempt += 1) {
+      try {
+        await this.sms.send(phone, 'Your appointment is tomorrow.');
+        return;
+      } catch (error) {
+        if (attempt === 3) {
+          throw error;
+        }
+      }
+    }
+  }
+}
+
+// Write: the handler calls the port once; the policy is put on the binding of the adapter,
+// where it is read, tuned and tested in one place (see "Three forms, one implementation")
+export class SendReminder {
+  constructor(private readonly sms: SmsSender) {}
+
+  async execute(phone: string): Promise<void> {
+    await this.sms.send(phone, 'Your appointment is tomorrow.');
+  }
+}
+```
+
 ### Circuit breaker
 
 Counts consecutive failures of a dependency and, past a threshold, refuses calls at once for a
@@ -73,14 +127,7 @@ while instead of letting each one wait for its timeout. After the pause it lets 
 through (half-open) and closes again on success. It protects the caller (fast failure) and the
 callee (room to recover).
 
-```mermaid
-stateDiagram-v2
-  [*] --> Closed
-  Closed --> Open: consecutive failures reach the threshold
-  Open --> HalfOpen: the reset delay has passed
-  HalfOpen --> Closed: the trial call succeeds
-  HalfOpen --> Open: the trial call fails
-```
+![The three states of a circuit: closed lets calls through and counts consecutive failures; past the threshold it opens and refuses at once with CIRCUIT_OPEN; after the reset delay it is half-open and lets a trial call through, which closes it on success and opens it again on failure](../assets/diagrams/resilience-circuit-breaker-states.svg)
 
 **Failure modes.**
 - *A breaker that hides a real outage.* Calls are refused quickly and quietly, dashboards of
@@ -149,6 +196,8 @@ tracing, logged, timed, cached, retry, circuitBreaker, bulkhead, timeout, the ad
 - **Cache outside retry and breaker**: a hit costs nothing and is not refused by an open
   circuit.
 
+![Retry outside timeout gives each attempt its own two seconds, with a growing wait between attempts; timeout outside retry gives two seconds to all the attempts and the waits together, so the later attempts are cut short](../assets/diagrams/resilience-retry-and-timeout-order.svg)
+
 This is the order of [`@ddd-ts-kit/aspects`](../../packages/aspects/README.md), and it follows
 from the code: its `retry` does not repeat a `CircuitOpenError`. The other order exists in the
 literature (a breaker outside the retry sees one outcome per logical call); the kit does not
@@ -173,6 +222,92 @@ The kit applies the same policy in three ways, in this order of preference:
 3. **As a decorator on the adapter class**, in `infrastructure/` or the platform, when the
    policy is part of what the adapter is: a client of a provider that documents its own retry
    rules.
+
+The first form, in an explicit module, with the order of the page:
+
+<!-- checked sample -->
+```ts
+import { cached, circuitBreaker, circuitStateGauge, retry, timeout } from '@ddd-ts-kit/aspects';
+import { defineContextModule } from '@ddd-ts-kit/di';
+
+declare abstract class SmsSender {
+  abstract send(phone: string, text: string, signal?: AbortSignal): Promise<void>;
+}
+declare class HttpSmsSender implements SmsSender {
+  send(phone: string, text: string, signal?: AbortSignal): Promise<void>;
+}
+declare abstract class WorkingHours {
+  abstract findForDay(calendarId: string, day: string): Promise<readonly string[]>;
+}
+declare class CalendarsWorkingHours implements WorkingHours {
+  findForDay(calendarId: string, day: string): Promise<readonly string[]>;
+}
+
+export const notificationsModule = defineContextModule({
+  name: 'notifications',
+  register(builder) {
+    builder
+      .bind(SmsSender)
+      .toClass(HttpSmsSender)
+      .as('external')
+      .with(
+        retry({ attempts: 3 }), // 100 ms doubling, with full jitter; never after a DomainError
+        circuitBreaker({ failureThreshold: 5, resetAfterMs: 30_000, onStateChange: circuitStateGauge() }),
+        timeout(2000, { signal: true }), // each attempt, aborted through the signal
+      );
+
+    // a read of another context: how long may working hours be stale? the business says a minute
+    builder
+      .bind(WorkingHours)
+      .toClass(CalendarsWorkingHours)
+      .as('gateway')
+      .with(cached({ key: (method, args) => `${method}:${args.join(':')}`, ttlMs: 60_000 }), timeout(1000));
+  },
+});
+```
+
+The same policy in the declared style, where `generate adapter` writes the declaration, and as
+decorators of the class, the form for a policy that belongs to the adapter itself:
+
+<!-- checked sample -->
+```ts
+import { retry, timeout, type Aspect } from '@ddd-ts-kit/aspects';
+import { Retry, Timeout } from '@ddd-ts-kit/aspects/decorators';
+import { Adapter } from '@ddd-ts-kit/kernel/declarations';
+
+declare abstract class SmsSender {
+  abstract send(phone: string, text: string, signal?: AbortSignal): Promise<void>;
+}
+declare abstract class Mailer {
+  abstract deliver(address: string, body: string): Promise<void>;
+}
+// src/platform/resilience/own-policy.ts of a generated project: this policy, in place of the default one
+declare function ownPolicy(...policy: readonly Aspect[]): Aspect;
+declare function post(path: string, payload: object, signal?: AbortSignal): Promise<void>;
+
+// 1. declared style: the policy is part of the declaration, the methods hold none
+@Adapter(SmsSender, { kind: 'external', aspects: [ownPolicy(retry({ attempts: 3 }), timeout(2000, { signal: true }))] })
+export class HttpSmsSender implements SmsSender {
+  async send(phone: string, text: string, signal?: AbortSignal): Promise<void> {
+    await post('/messages', { to: phone, text }, signal);
+  }
+}
+
+// 3. decorators: the provider documents its own retry rules; ownPolicy() without argument
+//    tells the platform that the class carries its policy, so the default one is not added
+@Adapter(Mailer, { kind: 'external', aspects: [ownPolicy()] })
+export class ProviderMailer implements Mailer {
+  async deliver(address: string, body: string): Promise<void> {
+    await this.send({ to: address, body });
+  }
+
+  @Retry({ attempts: 3, backoff: { baseMs: 100 } })
+  @Timeout(2000, { signal: true })
+  async send(payload: object, signal?: AbortSignal): Promise<void> {
+    await post('/mails', payload, signal);
+  }
+}
+```
 
 Use cases get their cross-cutting behaviour from bus middlewares instead. None of the three
 forms is allowed in `domain/` or `application/`: rule

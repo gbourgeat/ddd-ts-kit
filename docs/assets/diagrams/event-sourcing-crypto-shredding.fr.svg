@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 500" width="960" height="500" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Crypto-shredding : des valeurs personnelles scellées avec une clé par personne concernée</title>
+  <desc id="desc">Quand un événement est stocké, le codec marque par personalData le motif donné par un patient ; PersonalDataCipher le scelle avec la clé de ce patient, AES-256-GCM avec un nonce neuf, et le store ne garde que la valeur scellée et l'identifiant de la clé. La clé vient du SubjectKeyStore, une clé par personne concernée. Un effacement supprime la clé du patient ; un rejeu lit alors '[erased]' à la place de la valeur, et l'événement stocké n'est jamais modifié. Les sauvegardes des événements contiennent les valeurs scellées sans leurs clés ; les clés sont gardées à part, avec une rétention plus courte, qui est le délai que promet l'effacement.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="500" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Crypto-shredding : oublier une personne sans modifier un événement</text>
+  <text x="32" y="76" font-size="14" font-weight="600" fill="#1f2328">stocker un événement</text>
+  <rect x="32" y="90" width="232" height="92" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="148" y="118" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">codec : encode</text>
+  <text x="148" y="142" font-size="13" fill="#1f2328" text-anchor="middle">reason: personalData(</text>
+  <text x="148" y="160" font-size="13" fill="#1f2328" text-anchor="middle">  'patient-1', 'Flu')</text>
+  <rect x="328" y="90" width="232" height="92" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="444" y="118" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">PersonalDataCipher</text>
+  <text x="444" y="142" font-size="13" fill="#1f2328" text-anchor="middle">la scelle avec la clé de</text>
+  <text x="444" y="160" font-size="13" fill="#1f2328" text-anchor="middle">sa personne, AES-256-GCM</text>
+  <rect x="624" y="90" width="304" height="92" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="776" y="118" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">event store</text>
+  <text x="776" y="142" font-size="13" fill="#1f2328" text-anchor="middle">reason: { $sealed: {</text>
+  <text x="776" y="160" font-size="13" fill="#1f2328" text-anchor="middle">key: &lt;key id&gt;, iv, data } }</text>
+  <line x1="266" y1="136" x2="326" y2="136" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="562" y1="136" x2="622" y2="136" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="32" y="224" font-size="14" font-weight="600" fill="#1f2328">effacer une personne, puis relire</text>
+  <rect x="32" y="238" width="232" height="84" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="148" y="266" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">effacement</text>
+  <text x="148" y="290" font-size="13" fill="#1f2328" text-anchor="middle">erase('patient-1')</text>
+  <text x="148" y="308" font-size="13" fill="#1f2328" text-anchor="middle">npm run erase:patient</text>
+  <rect x="328" y="238" width="232" height="84" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="444" y="266" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">SubjectKeyStore</text>
+  <text x="444" y="290" font-size="13" fill="#1f2328" text-anchor="middle">une clé par personne :</text>
+  <text x="444" y="308" font-size="13" fill="#1f2328" text-anchor="middle">la clé est détruite</text>
+  <rect x="624" y="238" width="304" height="84" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="776" y="266" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">rejeu</text>
+  <text x="776" y="290" font-size="13" fill="#1f2328" text-anchor="middle">reason se lit '[erased]' ;</text>
+  <text x="776" y="308" font-size="13" fill="#1f2328" text-anchor="middle">l'événement stocké est inchangé</text>
+  <line x1="444" y1="236" x2="444" y2="184" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="456" y="214" font-size="13" fill="#1f2328">keyFor(subject)</text>
+  <line x1="266" y1="280" x2="326" y2="280" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="562" y1="280" x2="622" y2="280" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <text x="592" y="270" font-size="13" fill="#1f2328" text-anchor="middle">sans clé</text>
+  <text x="32" y="366" font-size="14" font-weight="600" fill="#1f2328">sauvegardes : gardez les clés à part en production</text>
+  <rect x="32" y="380" width="436" height="92" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="250" y="408" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">sauvegardes des événements</text>
+  <text x="250" y="432" font-size="13" fill="#1f2328" text-anchor="middle">les valeurs scellées, jamais leurs clés :</text>
+  <text x="250" y="450" font-size="13" fill="#1f2328" text-anchor="middle">illisibles pour une personne dont la clé n'existe plus</text>
+  <rect x="492" y="380" width="436" height="92" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="710" y="408" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">sauvegardes des clés</text>
+  <text x="710" y="432" font-size="13" fill="#1f2328" text-anchor="middle">une autre base, une rétention plus courte :</text>
+  <text x="710" y="450" font-size="13" fill="#1f2328" text-anchor="middle">cette rétention est le délai que promet l'effacement</text>
+</svg>

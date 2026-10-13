@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 520" width="960" height="520" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">One action, one identifier, in every signal</title>
+  <desc id="desc">A client books an appointment. In appointments, the request opens the execution scope with correlation id c-1 and origin http, and the trace t-1 with its root span; the handler and the repositories add their spans, and the answer 201 carries the support reference c-1. The event appointments.appointment.booked waits in the outbox with c-1 and traceparent t-1 in its envelope; the relay publishes it later. In notifications, the consumer opens a scope with the same correlation id c-1, the event id as causation id and origin event, and its span continues trace t-1. Below, what each signal carries: log lines carry c-1 and trace_id t-1 on both sides, the trace t-1 holds both contexts, metrics carry names and outcomes but no identifier, an error report on either side carries c-1 and t-1.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="520" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">One action, one identifier, in every signal</text>
+  <!-- appointments -->
+  <rect x="24" y="64" width="300" height="200" rx="12" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="44" y="92" font-size="16" font-weight="700" fill="#2b5d8a">appointments (HTTP)</text>
+  <text x="44" y="116" font-size="13" fill="#1f2328">POST /appointments from the client</text>
+  <text x="44" y="140" font-size="13" fill="#1f2328">scope: correlationId c-1, origin http</text>
+  <text x="44" y="162" font-size="13" fill="#1f2328">trace t-1, its root span</text>
+  <text x="44" y="184" font-size="13" fill="#1f2328">spans of BookAppointment and</text>
+  <text x="44" y="204" font-size="13" fill="#1f2328">of the repositories</text>
+  <text x="44" y="240" font-size="13" font-weight="600" fill="#2b5d8a">201, support reference c-1</text>
+  <!-- outbox and relay -->
+  <rect x="368" y="64" width="224" height="200" rx="12" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="388" y="92" font-size="16" font-weight="700" fill="#7a4f9a">outbox and relay</text>
+  <text x="388" y="116" font-size="13" fill="#1f2328">event appointments.</text>
+  <text x="388" y="136" font-size="13" fill="#1f2328">appointment.booked</text>
+  <text x="388" y="162" font-size="13" fill="#1f2328">envelope: correlationId c-1,</text>
+  <text x="388" y="182" font-size="13" fill="#1f2328">traceparent t-1</text>
+  <text x="388" y="240" font-size="13" font-style="italic" fill="#5f6b73">published later by the relay</text>
+  <!-- notifications -->
+  <rect x="636" y="64" width="300" height="200" rx="12" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="656" y="92" font-size="16" font-weight="700" fill="#2b5d8a">notifications (consumer)</text>
+  <text x="656" y="116" font-size="13" fill="#1f2328">scope: correlationId c-1,</text>
+  <text x="656" y="138" font-size="13" fill="#1f2328">causationId = event id, origin event,</text>
+  <text x="656" y="160" font-size="13" fill="#1f2328">system actor of the consumer</text>
+  <text x="656" y="184" font-size="13" fill="#1f2328">span process … continues t-1</text>
+  <text x="656" y="206" font-size="13" fill="#1f2328">spans of its command, repositories</text>
+  <!-- flow -->
+  <line x1="326" y1="164" x2="364" y2="164" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <line x1="594" y1="164" x2="632" y2="164" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <!-- what each signal carries -->
+  <text x="32" y="310" font-size="16" font-weight="700" fill="#1f2328">What each signal carries, on both sides</text>
+  <rect x="24" y="328" width="213" height="112" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="40" y="354" font-size="16" font-weight="700" fill="#5f6b73">logs</text>
+  <text x="40" y="378" font-size="13" fill="#1f2328">correlationId c-1,</text>
+  <text x="40" y="398" font-size="13" fill="#1f2328">trace_id t-1, span_id</text>
+  <text x="40" y="418" font-size="13" fill="#1f2328">on every line</text>
+  <rect x="257" y="328" width="213" height="112" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="273" y="354" font-size="16" font-weight="700" fill="#5f6b73">trace</text>
+  <text x="273" y="378" font-size="13" fill="#1f2328">one trace t-1 with both</text>
+  <text x="273" y="398" font-size="13" fill="#1f2328">contexts in it; c-1 on</text>
+  <text x="273" y="418" font-size="13" fill="#1f2328">each root span</text>
+  <rect x="490" y="328" width="213" height="112" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="506" y="354" font-size="16" font-weight="700" fill="#5f6b73">metrics</text>
+  <text x="506" y="378" font-size="13" fill="#1f2328">message or class and</text>
+  <text x="506" y="398" font-size="13" fill="#1f2328">method, outcome, error</text>
+  <text x="506" y="418" font-size="13" fill="#1f2328">code: never an identifier</text>
+  <rect x="723" y="328" width="213" height="112" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="739" y="354" font-size="16" font-weight="700" fill="#5f6b73">error report</text>
+  <text x="739" y="378" font-size="13" fill="#1f2328">on either side:</text>
+  <text x="739" y="398" font-size="13" fill="#1f2328">correlationId c-1,</text>
+  <text x="739" y="418" font-size="13" fill="#1f2328">traceId t-1, the stack</text>
+  <!-- legend -->
+  <line x1="32" y1="478" x2="76" y2="478" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <text x="88" y="483" font-size="14" fill="#1f2328">an asynchronous message: the integration event, its envelope carrying c-1 and t-1</text>
+  <text x="32" y="506" font-size="14" fill="#1f2328">The support reference the client quotes is c-1: it finds the lines, the trace and the report.</text>
+</svg>

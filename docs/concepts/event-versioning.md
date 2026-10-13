@@ -23,6 +23,8 @@ So at any moment, events written by an old producer are read by a new consumer a
 Both directions must work: old data with new code (backward compatibility) and new data with old
 code (forward compatibility) (Kleppmann, chapter 4).
 
+![Both directions of compatibility: events written by the previous release wait in the outbox, a queue, a log or a dead-letter destination and are read by consumers of the new release (backward compatibility); events written by the new release are read by consumers still running the previous release (forward compatibility)](../assets/diagrams/event-versioning-compatibility.svg)
+
 ## The rule
 
 | Change to `appointments.appointment.booked` | Inside the version? |
@@ -45,25 +47,60 @@ is absent when the schema says it is optional (the tolerant reader). A consumer 
 strictly and rejects unknown properties turns every additive change of the producer into a
 breaking one.
 
+In the kit the consumer parses with the declaration the producer publishes, so the tolerance is
+decided where the payload is declared. Instead of a schema that refuses what it does not know:
+
+```ts
+payload: zodSchema(
+  z.strictObject({ appointmentId: z.string(), startsAt: z.iso.datetime() }),
+), // a consumer still on this release refuses every event that gained a field
+```
+
+write one that keeps what it knows and drops the rest, and make an addition optional:
+
+<!-- checked sample -->
+```ts
+import { defineIntegrationEvent } from '@ddd-ts-kit/events';
+import { zodSchema } from '@ddd-ts-kit/validation/zod';
+import { z } from 'zod';
+
+export const appointmentBookedV1 = defineIntegrationEvent({
+  type: 'appointments.appointment.booked',
+  version: 1,
+  description: 'An appointment was booked.',
+  payload: zodSchema(
+    z.object({
+      appointmentId: z.string(),
+      startsAt: z.iso.datetime().describe('Start of the appointment, ISO 8601, UTC.'),
+      endsAt: z.iso.datetime().describe('End of the appointment, ISO 8601, UTC.'),
+      locationId: z.string().optional().describe('Added later: absent from older events.'),
+    }),
+  ),
+});
+
+// an event from a newer producer, with a field this release does not know yet
+const parsed = appointmentBookedV1.parse({
+  id: 'e7',
+  type: 'appointments.appointment.booked',
+  version: 1,
+  occurredAt: '2026-10-13T08:00:00.000Z',
+  payload: {
+    appointmentId: 'a-17',
+    startsAt: '2026-11-02T09:00:00Z',
+    endsAt: '2026-11-02T09:30:00Z',
+    roomName: 'Room 2',
+  },
+});
+
+export const accepted = parsed.ok; // true: roomName is dropped, locationId may be absent
+```
+
 ## A breaking change, step by step
 
 The product decides that an appointment can span several consecutive slots. `startsAt` and
 `endsAt` become a list.
 
-```mermaid
-sequenceDiagram
-  participant P as appointments (producer)
-  participant N as notifications
-  participant A as analytics
-  Note over P: release 1: declare v2 next to v1, publish both
-  P-->>N: booked v1
-  P-->>N: booked v2
-  P-->>A: booked v1
-  P-->>A: booked v2
-  Note over N: release 2: notifications subscribes to v2, drops v1
-  Note over A: release 3: analytics subscribes to v2, drops v1
-  Note over P: release 4: no consumer of v1 left: mark deprecated, then stop publishing v1
-```
+![The migration from v1 to v2 over four releases: in release 1 appointments declares v2 and publishes both; notifications moves to v2 in release 2 and analytics in release 3; in release 4 no consumer of v1 is left, v1 is marked deprecated and stops being published; its declaration is removed once no v1 event is retained anywhere](../assets/diagrams/event-versioning-migration.svg)
 
 1. **Declare version 2** in the producer's `published-language/`, as a second declaration with
    the same `type` and `version: 2`. One declaration per event and version.
@@ -84,6 +121,127 @@ What v1 can still express during step 2 is a real question when the new model is
 multi-slot appointment has no faithful v1 form. Options: publish v1 with the first slot and
 accept the loss for old consumers, or do not publish v1 for the cases it cannot express, and say
 which in the event's description.
+
+Steps 1 to 3 in code: two declarations of the same type, one publisher that builds both from
+the same domain event, and a consumer that subscribes to the version it understands:
+
+<!-- checked sample -->
+```ts
+import { defineIntegrationEvent, type PayloadOf } from '@ddd-ts-kit/events';
+import {
+  Command,
+  CommandBus,
+  type DomainEvent,
+  type IdGenerator,
+  type IntegrationEvent,
+  type IntegrationEventPublisher,
+} from '@ddd-ts-kit/kernel';
+import { DomainEventHandler, IntegrationEventHandler } from '@ddd-ts-kit/kernel/declarations';
+import { zodSchema } from '@ddd-ts-kit/validation/zod';
+import { z } from 'zod';
+
+const instant = z.iso.datetime().describe('ISO 8601, UTC.');
+
+// appointments/published-language/appointment-booked.v1.integration-event.ts: unchanged except its
+// description, which says what v1 cannot express
+export const appointmentBookedV1 = defineIntegrationEvent({
+  type: 'appointments.appointment.booked',
+  version: 1,
+  description: 'An appointment was booked. For an appointment over several slots: its first slot only.',
+  payload: zodSchema(
+    z.object({
+      appointmentId: z.string(),
+      startsAt: z.iso.datetime().describe('Start of the appointment, ISO 8601, UTC.'),
+      endsAt: z.iso.datetime().describe('End of the appointment, ISO 8601, UTC.'),
+      locationId: z.string().optional().describe('Added later: absent from older events.'),
+    }),
+  ),
+});
+
+// appointments/published-language/appointment-booked.v2.integration-event.ts: the new contract
+export const appointmentBookedV2 = defineIntegrationEvent({
+  type: 'appointments.appointment.booked',
+  version: 2,
+  description: 'An appointment was booked, over one or several consecutive slots.',
+  payload: zodSchema(
+    z.object({
+      appointmentId: z.string(),
+      slots: z.array(z.object({ startsAt: instant, endsAt: instant })).min(1),
+    }),
+  ),
+});
+
+// appointments/domain/events/appointment-booked.event.ts
+export class AppointmentBooked implements DomainEvent {
+  static readonly eventName = 'appointments.appointment.booked';
+
+  readonly name = AppointmentBooked.eventName;
+
+  constructor(
+    readonly aggregateId: string,
+    readonly occurredAt: Date,
+    readonly slots: readonly { readonly startsAt: Date; readonly endsAt: Date }[],
+  ) {}
+}
+
+// appointments/application/integration/publishers/appointment-booked.publisher.ts
+@DomainEventHandler(AppointmentBooked, { name: AppointmentBooked.eventName })
+export class AppointmentBookedPublisher implements DomainEventHandler<AppointmentBooked> {
+  constructor(
+    private readonly publisher: IntegrationEventPublisher,
+    private readonly ids: IdGenerator,
+  ) {}
+
+  async handle(event: AppointmentBooked): Promise<void> {
+    const slots = event.slots.map(({ startsAt, endsAt }) => ({
+      startsAt: startsAt.toISOString(),
+      endsAt: endsAt.toISOString(),
+    }));
+    const [first] = slots;
+
+    if (first === undefined) {
+      return;
+    }
+
+    // two events with two ids: a consumer must subscribe to one version only
+    await this.publisher.publish([
+      appointmentBookedV1.create(
+        { appointmentId: event.aggregateId, ...first },
+        { id: this.ids.next(), occurredAt: event.occurredAt },
+      ),
+      appointmentBookedV2.create(
+        { appointmentId: event.aggregateId, slots },
+        { id: this.ids.next(), occurredAt: event.occurredAt },
+      ),
+    ]);
+  }
+}
+
+// notifications/application/integration/handlers/remind-on-appointment-booked.integration-handler.ts
+export class ScheduleReminder extends Command {
+  constructor(
+    readonly appointmentId: string,
+    readonly startsAt: string,
+  ) {
+    super();
+  }
+}
+
+@IntegrationEventHandler(appointmentBookedV2, { consumer: 'notifications.remind-on-appointment-booked' })
+export class RemindOnAppointmentBooked implements IntegrationEventHandler<PayloadOf<typeof appointmentBookedV2>> {
+  constructor(private readonly commands: CommandBus) {}
+
+  // a v1 event of the same type is skipped by this subscription
+  async handle(event: IntegrationEvent<PayloadOf<typeof appointmentBookedV2>>): Promise<void> {
+    for (const slot of event.payload.slots) {
+      await this.commands.execute(new ScheduleReminder(event.payload.appointmentId, slot.startsAt));
+    }
+  }
+}
+```
+
+Step 4 is one line on the old declaration, `deprecated: true`, which the catalog and the
+AsyncAPI document show; step 5 removes the v1 half of the publisher, then the declaration.
 
 ## Making the contract visible
 

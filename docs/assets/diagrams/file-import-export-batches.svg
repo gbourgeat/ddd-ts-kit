@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 430" width="960" height="430" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">A crash repeats at most one batch, and the repeat changes nothing</title>
+  <desc id="desc">A file of 1000 rows in five batches of 200. Attempt 1 commits batches 1, 2 and 3, saving a checkpoint after batches 1 and 2; the worker dies after the commit of batch 3 and before its checkpoint. Attempt 2 resumes from the checkpoint at row 400: batch 3 is sent again and changes nothing, because each row is idempotent by the key importId:row; batches 4 and 5 follow, then CompleteImport.</desc>
+  <defs>
+    <marker id="arrow-neutral" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+    <marker id="arrow-refused" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#b42318"/>
+    </marker>
+  </defs>
+  <rect width="960" height="430" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">A crash repeats at most one batch, and the repeat changes nothing</text>
+  <text x="32" y="120" font-size="15" font-weight="700" fill="#5f6b73">attempt 1</text>
+  <text x="32" y="274" font-size="15" font-weight="700" fill="#5f6b73">attempt 2</text>
+  <rect x="140" y="96" width="134" height="40" rx="6" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="207.0" y="121" font-size="13" fill="#1f2328" text-anchor="middle">rows 1 to 200</text>
+  <rect x="280" y="96" width="134" height="40" rx="6" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="347.0" y="121" font-size="13" fill="#1f2328" text-anchor="middle">rows 201 to 400</text>
+  <rect x="420" y="96" width="134" height="40" rx="6" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="487.0" y="121" font-size="13" fill="#1f2328" text-anchor="middle">rows 401 to 600</text>
+  <rect x="420" y="250" width="134" height="40" rx="6" fill="#ffffff" stroke="#2f6f4f" stroke-width="2" stroke-dasharray="5 4"/>
+  <text x="487.0" y="275" font-size="13" fill="#2f6f4f" text-anchor="middle">rows 401 to 600</text>
+  <rect x="560" y="96" width="134" height="40" rx="6" fill="#ffffff" stroke="#5f6b73" stroke-width="1" stroke-dasharray="4 4"/>
+  <rect x="560" y="250" width="134" height="40" rx="6" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="627.0" y="275" font-size="13" fill="#1f2328" text-anchor="middle">rows 601 to 800</text>
+  <rect x="700" y="96" width="134" height="40" rx="6" fill="#ffffff" stroke="#5f6b73" stroke-width="1" stroke-dasharray="4 4"/>
+  <rect x="700" y="250" width="134" height="40" rx="6" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="767.0" y="275" font-size="13" fill="#1f2328" text-anchor="middle">rows 801 to 1000</text>
+  <line x1="277" y1="86" x2="277" y2="146" stroke="#2b5d8a" stroke-width="3"/>
+  <text x="277" y="78" font-size="13" font-weight="600" fill="#2b5d8a" text-anchor="middle">{ row: 200 }</text>
+  <line x1="417" y1="86" x2="417" y2="146" stroke="#2b5d8a" stroke-width="3"/>
+  <text x="417" y="78" font-size="13" font-weight="600" fill="#2b5d8a" text-anchor="middle">{ row: 400 }</text>
+  <line x1="557" y1="86" x2="557" y2="146" stroke="#b42318" stroke-width="3"/>
+  <text x="565" y="164" font-size="13" fill="#b42318">the worker dies after</text>
+  <text x="565" y="182" font-size="13" fill="#b42318">the commit, before</text>
+  <text x="565" y="200" font-size="13" fill="#b42318">the checkpoint</text>
+  <line x1="417" y1="148" x2="417" y2="244" stroke="#2b5d8a" stroke-width="2" marker-end="url(#arrow-neutral)"/>
+  <text x="407" y="214" font-size="13" font-weight="600" fill="#1f2328" text-anchor="end">resumes from { row: 400 }</text>
+  <text x="487" y="312" font-size="13" fill="#2f6f4f" text-anchor="middle">repeated: rows already</text>
+  <text x="487" y="330" font-size="13" fill="#2f6f4f" text-anchor="middle">imported, nothing changes</text>
+  <text x="767" y="312" font-size="13" font-weight="600" fill="#2b5d8a" text-anchor="middle">then CompleteImport</text>
+  <rect x="32" y="368" width="40" height="20" rx="4" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="84" y="383" font-size="14" fill="#1f2328">committed batch</text>
+  <rect x="32" y="396" width="40" height="20" rx="4" fill="#ffffff" stroke="#2f6f4f" stroke-width="2" stroke-dasharray="5 4"/>
+  <text x="84" y="411" font-size="14" fill="#1f2328">repeated batch: idempotent by &lt;importId&gt;:&lt;row&gt;</text>
+  <line x1="520" y1="368" x2="520" y2="388" stroke="#2b5d8a" stroke-width="3"/>
+  <text x="534" y="383" font-size="14" fill="#1f2328">checkpoint saved</text>
+  <line x1="520" y1="396" x2="520" y2="416" stroke="#b42318" stroke-width="3"/>
+  <text x="534" y="411" font-size="14" fill="#1f2328">the worker stops</text>
+</svg>

@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 410" width="960" height="410" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">The order changes the meaning: retry and timeout</title>
+  <desc id="desc">Two timelines in seconds. Above, retry outside timeout, the order of the kit: each of the three attempts has its own limit of two seconds, the first two time out, a wait that grows separates the attempts, and the third succeeds. Below, timeout outside retry: one limit of two seconds covers all the attempts and the waits between them; the first attempt fails, the second is cut by the limit with TIMEOUT, and the third never runs.</desc>
+  <rect width="960" height="410" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">The order changes the meaning: retry and timeout</text>
+  <text x="32" y="102" font-size="14" font-weight="700" fill="#1f2328">retry outside timeout</text>
+  <text x="32" y="122" font-size="14" font-weight="700" fill="#1f2328">(the order of the kit)</text>
+  <text x="32" y="144" font-size="13" fill="#5f6b73">retry({ attempts: 3 }),</text>
+  <text x="32" y="162" font-size="13" fill="#5f6b73">timeout(2000)</text>
+  <rect x="236" y="84" width="200" height="56" rx="8" fill="none" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="430" y="78" font-size="13" fill="#5f6b73" text-anchor="end">2 s</text>
+  <rect x="466" y="84" width="200" height="56" rx="8" fill="none" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="660" y="78" font-size="13" fill="#5f6b73" text-anchor="end">2 s</text>
+  <rect x="726" y="84" width="200" height="56" rx="8" fill="none" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="920" y="78" font-size="13" fill="#5f6b73" text-anchor="end">2 s</text>
+  <rect x="236" y="106" width="200" height="26" rx="6" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="1.5"/>
+  <text x="336" y="124" font-size="13" fill="#1f2328" text-anchor="middle">1: no answer, TIMEOUT</text>
+  <line x1="438" y1="119" x2="464" y2="119" stroke="#5f6b73" stroke-width="2" stroke-dasharray="2 3"/>
+  <rect x="466" y="106" width="200" height="26" rx="6" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="1.5"/>
+  <text x="566" y="124" font-size="13" fill="#1f2328" text-anchor="middle">2: no answer, TIMEOUT</text>
+  <line x1="668" y1="119" x2="724" y2="119" stroke="#5f6b73" stroke-width="2" stroke-dasharray="2 3"/>
+  <rect x="726" y="106" width="80" height="26" rx="6" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="1.5"/>
+  <text x="766" y="124" font-size="13" fill="#1f2328" text-anchor="middle">3: succeeds</text>
+  <text x="32" y="218" font-size="14" font-weight="700" fill="#1f2328">timeout outside retry</text>
+  <text x="32" y="238" font-size="14" font-weight="700" fill="#1f2328"></text>
+  <text x="32" y="260" font-size="13" fill="#5f6b73">timeout(2000),</text>
+  <text x="32" y="278" font-size="13" fill="#5f6b73">retry({ attempts: 3 })</text>
+  <rect x="236" y="200" width="200" height="56" rx="8" fill="none" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="430" y="194" font-size="13" fill="#5f6b73" text-anchor="end">2 s for everything</text>
+  <rect x="236" y="222" width="100" height="26" rx="6" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="1.5"/>
+  <text x="286" y="240" font-size="13" fill="#1f2328" text-anchor="middle">1: fails</text>
+  <line x1="338" y1="235" x2="350" y2="235" stroke="#5f6b73" stroke-width="2" stroke-dasharray="2 3"/>
+  <rect x="352" y="222" width="84" height="26" rx="6" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="1.5"/>
+  <text x="394" y="240" font-size="13" fill="#1f2328" text-anchor="middle">2: cut</text>
+  <rect x="496" y="222" width="80" height="26" rx="6" fill="#ffffff" stroke="#7a4f9a" stroke-width="1.5" stroke-dasharray="4 4"/>
+  <text x="536" y="240" font-size="13" fill="#1f2328" text-anchor="middle">3: never</text>
+  <text x="444" y="270" font-size="13" font-weight="600" fill="#1f2328">TIMEOUT: the caller has its answer</text>
+  <line x1="236" y1="304" x2="936" y2="304" stroke="#3d4449" stroke-width="1.5"/>
+  <line x1="236" y1="299" x2="236" y2="309" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="236" y="326" font-size="13" fill="#1f2328" text-anchor="middle">0 s</text>
+  <line x1="336" y1="299" x2="336" y2="309" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="336" y="326" font-size="13" fill="#1f2328" text-anchor="middle">1 s</text>
+  <line x1="436" y1="299" x2="436" y2="309" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="436" y="326" font-size="13" fill="#1f2328" text-anchor="middle">2 s</text>
+  <line x1="536" y1="299" x2="536" y2="309" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="536" y="326" font-size="13" fill="#1f2328" text-anchor="middle">3 s</text>
+  <line x1="636" y1="299" x2="636" y2="309" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="636" y="326" font-size="13" fill="#1f2328" text-anchor="middle">4 s</text>
+  <line x1="736" y1="299" x2="736" y2="309" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="736" y="326" font-size="13" fill="#1f2328" text-anchor="middle">5 s</text>
+  <line x1="836" y1="299" x2="836" y2="309" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="836" y="326" font-size="13" fill="#1f2328" text-anchor="middle">6 s</text>
+  <line x1="936" y1="299" x2="936" y2="309" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="936" y="326" font-size="13" fill="#1f2328" text-anchor="middle">7 s</text>
+  <rect x="32" y="350" width="28" height="16" rx="4" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="1.5"/>
+  <text x="70" y="363" font-size="14" fill="#1f2328">an attempt: one call of the adapter</text>
+  <rect x="430" y="348" width="28" height="20" rx="4" fill="none" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="468" y="363" font-size="14" fill="#1f2328">the time limit of the timeout</text>
+  <line x1="32" y1="394" x2="60" y2="394" stroke="#5f6b73" stroke-width="2" stroke-dasharray="2 3"/>
+  <text x="70" y="399" font-size="14" fill="#1f2328">the wait of the backoff, which grows, with jitter</text>
+</svg>

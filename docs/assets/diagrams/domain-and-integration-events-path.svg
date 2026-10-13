@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 560" width="960" height="560" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">The path of one fact, from a domain event to another bounded context</title>
+  <desc id="desc">In the scheduling context, the command handler asks the Appointment aggregate to book, and the aggregate records the domain event AppointmentBooked. The handler saves the appointment; the save queues the event. Once the handler has returned, the event is dispatched, still in the transaction, to the publisher, which writes the integration event scheduling.appointment.booked version 1 as an outbox row. The appointment and the outbox row commit together. After the commit the relay publishes the row, at least once, to the integration event handler of the notification context, which sends a command of its own context.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="560" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">The path of one fact: from a domain event to another context</text>
+
+  <!-- legend -->
+  <line x1="580" y1="78" x2="624" y2="78" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="636" y="83" font-size="14" fill="#1f2328">a call, in process</text>
+  <line x1="580" y1="106" x2="624" y2="106" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <text x="636" y="111" font-size="14" fill="#1f2328">a message, after the commit</text>
+  <circle cx="602" cy="138" r="11" fill="#3d4449"/>
+  <text x="602" y="143" font-size="13" font-weight="700" fill="#ffffff" text-anchor="middle">1</text>
+  <text x="636" y="143" font-size="14" fill="#1f2328">a step of the list below the drawing</text>
+
+  <!-- scheduling context -->
+  <rect x="24" y="60" width="520" height="476" rx="12" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="44" y="88" font-size="14" font-weight="600" fill="#5f6b73">bounded context: scheduling</text>
+  <!-- transaction -->
+  <rect x="40" y="102" width="488" height="418" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="56" y="126" font-size="14" fill="#5f6b73">one transaction: the unit of work of the command</text>
+
+  <!-- A: command handler -->
+  <rect x="56" y="146" width="200" height="76" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="156" y="176" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">command handler</text>
+  <text x="156" y="200" font-size="13" fill="#1f2328" text-anchor="middle">BookAppointmentHandler</text>
+
+  <!-- B: aggregate -->
+  <rect x="312" y="146" width="200" height="76" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="412" y="176" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">Appointment</text>
+  <text x="412" y="200" font-size="13" fill="#1f2328" text-anchor="middle">records AppointmentBooked</text>
+
+  <!-- C: repository save -->
+  <rect x="56" y="282" width="200" height="76" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="156" y="312" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">repository save</text>
+  <text x="156" y="336" font-size="13" fill="#1f2328" text-anchor="middle">stores, queues the events</text>
+
+  <!-- D: publisher -->
+  <rect x="312" y="282" width="200" height="76" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="412" y="312" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">publisher</text>
+  <text x="412" y="336" font-size="13" fill="#1f2328" text-anchor="middle">a before-commit handler</text>
+
+  <!-- E: outbox row -->
+  <rect x="312" y="420" width="200" height="76" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="412" y="446" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">outbox row</text>
+  <text x="412" y="468" font-size="13" fill="#1f2328" text-anchor="middle">scheduling.appointment.</text>
+  <text x="412" y="486" font-size="13" fill="#1f2328" text-anchor="middle">booked v1</text>
+
+  <!-- A to B: book -->
+  <line x1="258" y1="184" x2="310" y2="184" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <circle cx="284" cy="160" r="11" fill="#3d4449"/>
+  <text x="284" y="165" font-size="13" font-weight="700" fill="#ffffff" text-anchor="middle">1</text>
+  <!-- A to C: save -->
+  <line x1="156" y1="224" x2="156" y2="280" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="168" y="256" font-size="13" fill="#1f2328">save(appointment)</text>
+  <!-- C to D: dispatched -->
+  <line x1="258" y1="320" x2="310" y2="320" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <circle cx="284" cy="296" r="11" fill="#3d4449"/>
+  <text x="284" y="301" font-size="13" font-weight="700" fill="#ffffff" text-anchor="middle">2</text>
+  <text x="56" y="384" font-size="13" fill="#1f2328">the queue is dispatched once the</text>
+  <text x="56" y="402" font-size="13" fill="#1f2328">command handler has returned,</text>
+  <text x="56" y="420" font-size="13" fill="#1f2328">before the commit</text>
+  <!-- D to E: appends -->
+  <line x1="412" y1="360" x2="412" y2="418" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <circle cx="436" cy="389" r="11" fill="#3d4449"/>
+  <text x="436" y="394" font-size="13" font-weight="700" fill="#ffffff" text-anchor="middle">3</text>
+  <text x="56" y="462" font-size="13" fill="#1f2328">the appointment and the outbox</text>
+  <text x="56" y="480" font-size="13" fill="#1f2328">row commit together, or neither</text>
+  <text x="56" y="498" font-size="13" fill="#1f2328">exists</text>
+
+  <!-- relay -->
+  <rect x="564" y="420" width="132" height="76" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="630" y="450" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">relay</text>
+  <text x="630" y="474" font-size="13" fill="#1f2328" text-anchor="middle">at least once</text>
+  <line x1="514" y1="458" x2="562" y2="458" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+
+  <!-- notification context -->
+  <rect x="716" y="196" width="220" height="340" rx="12" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="732" y="224" font-size="14" font-weight="600" fill="#5f6b73">bounded context:</text>
+  <text x="732" y="242" font-size="14" font-weight="600" fill="#5f6b73">notification</text>
+
+  <!-- I: own command -->
+  <rect x="728" y="282" width="196" height="76" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="826" y="312" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">SendNotification</text>
+  <text x="826" y="336" font-size="13" fill="#1f2328" text-anchor="middle">a command of its own</text>
+
+  <!-- H: integration handler -->
+  <rect x="728" y="420" width="196" height="76" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="826" y="450" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">integration handler</text>
+  <text x="826" y="474" font-size="13" fill="#1f2328" text-anchor="middle">idempotent consumer</text>
+
+  <line x1="698" y1="458" x2="726" y2="458" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <line x1="826" y1="418" x2="826" y2="360" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <circle cx="850" cy="389" r="11" fill="#3d4449"/>
+  <text x="850" y="394" font-size="13" font-weight="700" fill="#ffffff" text-anchor="middle">4</text>
+</svg>

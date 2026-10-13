@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 500" width="960" height="500" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Le fichier arrive avec la validation, ou retourne dans staging/</title>
+  <desc id="desc">Deux couloirs, l'unité de travail sur la base de données et le stockage de fichiers, sur trois étapes et deux issues. 1, mise en attente : avant toute transaction, le fichier est écrit sous staging/k et analysé. 2, enregistrement : la ligne est enregistrée avec document.key = k, pas encore validée. 3, promotion : en dernière étape de la transaction, le fichier passe de staging/k à k. Si la transaction est validée, la ligne et le fichier arrivent ensemble. Si elle est annulée, aucune ligne ne pointe vers k et le fichier retourne dans staging/k. Toutes les heures, files.purge-staged supprime les fichiers en attente depuis plus d'un jour, qui sont tous des orphelins.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="500" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Le fichier arrive avec la validation, ou retourne dans staging/</text>
+  <!-- column headers -->
+  <text x="222" y="80" font-size="14" font-weight="700" fill="#1f2328" text-anchor="middle">1. mise en attente</text>
+  <text x="384" y="80" font-size="14" font-weight="700" fill="#1f2328" text-anchor="middle">2. enregistrement</text>
+  <text x="546" y="80" font-size="14" font-weight="700" fill="#1f2328" text-anchor="middle">3. promotion</text>
+  <text x="798" y="80" font-size="14" font-weight="700" fill="#1f2328" text-anchor="middle">4. issue</text>
+  <text x="222" y="101" font-size="13" fill="#5f6b73" text-anchor="middle">après la permission</text>
+  <text x="384" y="101" font-size="13" fill="#5f6b73" text-anchor="middle">dans la transaction</text>
+  <text x="546" y="101" font-size="13" fill="#5f6b73" text-anchor="middle">avant la validation</text>
+  <text x="798" y="101" font-size="13" fill="#5f6b73" text-anchor="middle">l'une des deux</text>
+  <!-- lane labels -->
+  <rect x="24" y="116" width="116" height="120" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="82" y="170" font-size="14" font-weight="700" fill="#7a4f9a" text-anchor="middle">unité de travail</text>
+  <text x="82" y="190" font-size="13" fill="#7a4f9a" text-anchor="middle">(sur la base)</text>
+  <rect x="24" y="256" width="116" height="120" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="82" y="320" font-size="14" font-weight="700" fill="#5f6b73" text-anchor="middle">stockage</text>
+  <text x="82" y="340" font-size="14" font-weight="700" fill="#5f6b73" text-anchor="middle">de fichiers</text>
+  <!-- lane: database -->
+  <text x="222" y="150" font-size="13" font-style="italic" fill="#5f6b73" text-anchor="middle">pas encore de</text>
+  <text x="222" y="170" font-size="13" font-style="italic" fill="#5f6b73" text-anchor="middle">transaction : le</text>
+  <text x="222" y="190" font-size="13" font-style="italic" fill="#5f6b73" text-anchor="middle">client envoie</text>
+  <text x="222" y="210" font-size="13" font-style="italic" fill="#5f6b73" text-anchor="middle">peut-être encore</text>
+  <rect x="318" y="128" width="132" height="96" rx="8" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="1.5"/>
+  <text x="384" y="156" font-size="13" fill="#1f2328" text-anchor="middle">ligne enregistrée</text>
+  <text x="384" y="176" font-size="13" fill="#1f2328" text-anchor="middle">document.key = k</text>
+  <text x="384" y="196" font-size="13" fill="#1f2328" text-anchor="middle">non validée</text>
+  <rect x="480" y="128" width="132" height="96" rx="8" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="1.5"/>
+  <text x="546" y="156" font-size="13" fill="#1f2328" text-anchor="middle">encore ouverte :</text>
+  <text x="546" y="176" font-size="13" fill="#1f2328" text-anchor="middle">déplacement en</text>
+  <text x="546" y="196" font-size="13" fill="#1f2328" text-anchor="middle">dernière étape</text>
+  <line x1="290" y1="176" x2="314" y2="176" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="452" y1="176" x2="476" y2="176" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- lane: file storage -->
+  <rect x="156" y="268" width="132" height="96" rx="8" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="222" y="296" font-size="14" font-weight="700" fill="#5f6b73" text-anchor="middle">staging/k</text>
+  <text x="222" y="318" font-size="13" fill="#1f2328" text-anchor="middle">écrit en flux,</text>
+  <text x="222" y="338" font-size="13" fill="#1f2328" text-anchor="middle">puis analysé</text>
+  <rect x="318" y="268" width="132" height="96" rx="8" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="384" y="296" font-size="14" font-weight="700" fill="#5f6b73" text-anchor="middle">staging/k</text>
+  <text x="384" y="318" font-size="13" fill="#1f2328" text-anchor="middle">inchangé :</text>
+  <text x="384" y="338" font-size="13" fill="#1f2328" text-anchor="middle">rien ne le lit</text>
+  <rect x="480" y="268" width="132" height="96" rx="8" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="546" y="296" font-size="14" font-weight="700" fill="#5f6b73" text-anchor="middle">k</text>
+  <text x="546" y="318" font-size="13" fill="#1f2328" text-anchor="middle">déplacé depuis</text>
+  <text x="546" y="338" font-size="13" fill="#1f2328" text-anchor="middle">staging/k</text>
+  <line x1="290" y1="316" x2="314" y2="316" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="452" y1="316" x2="476" y2="316" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- outcomes -->
+  <rect x="660" y="116" width="276" height="120" rx="10" fill="#ffffff" stroke="#3d4449" stroke-width="2"/>
+  <text x="676" y="144" font-size="14" font-weight="700" fill="#1f2328">la transaction est validée</text>
+  <text x="676" y="170" font-size="13" fill="#1f2328">base : la ligne, document.key = k</text>
+  <text x="676" y="192" font-size="13" fill="#1f2328">stockage : le fichier sous k</text>
+  <text x="676" y="218" font-size="13" font-weight="600" fill="#1f2328">ils arrivent ensemble</text>
+  <rect x="660" y="256" width="276" height="120" rx="10" fill="#ffffff" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5"/>
+  <text x="676" y="284" font-size="14" font-weight="700" fill="#1f2328">la transaction est annulée</text>
+  <text x="676" y="310" font-size="13" fill="#1f2328">base : aucune ligne ne pointe vers k</text>
+  <text x="676" y="332" font-size="13" fill="#1f2328">stockage : k retourne dans staging/k</text>
+  <text x="676" y="358" font-size="13" font-weight="600" fill="#1f2328">un déplacement raté annule tout</text>
+  <path d="M614,176 H634 V316 H614" fill="none" stroke="#3d4449" stroke-width="2"/>
+  <line x1="634" y1="246" x2="646" y2="246" stroke="#3d4449" stroke-width="2"/>
+  <path d="M646,246 V176 H656" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <path d="M646,246 V316 H656" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- the purge -->
+  <rect x="24" y="404" width="912" height="72" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="44" y="433" font-size="14" font-weight="600" fill="#5f6b73">Toutes les heures, le job files.purge-staged supprime les fichiers en attente depuis plus d'un jour.</text>
+  <text x="44" y="456" font-size="13" fill="#1f2328">Tous orphelins (commande refusée, annulation, envoi jamais confirmé) : aucune ligne validée ne pointe dans staging/.</text>
+</svg>

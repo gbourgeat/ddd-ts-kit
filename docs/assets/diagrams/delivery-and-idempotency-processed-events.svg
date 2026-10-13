@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 470" width="960" height="470" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">The processed-event store in three cases</title>
+  <desc id="desc">Three panels. First delivery of e1: inside one unit of work the mark for the consumer and e1 is taken, the handler inserts the reminder, and both commit together; the event is then acknowledged. Redelivery of e1: the mark already exists, the handler is skipped, nothing changes, the event is acknowledged. The handler fails: the mark was taken, the handler throws, the rollback removes the mark with the rest, the event is not acknowledged and its redelivery is handled.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="470" rx="16" fill="#ffffff"/>
+  <text x="32" y="36" font-size="18" font-weight="600" fill="#1f2328">The mark and the work commit together</text>
+  <rect x="24" y="56" width="296" height="356" rx="14" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="40" y="82" font-size="16" font-weight="700" fill="#1f2328">First delivery of e1</text>
+  <text x="40" y="102" font-size="13" fill="#5f6b73">a new event</text>
+  <rect x="36" y="114" width="272" height="196" rx="10" fill="#ffffff" stroke="#2b5d8a" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="48" y="134" font-size="13" font-style="italic" fill="#2b5d8a">one unit of work</text>
+  <rect x="48" y="146" width="248" height="38" rx="8" fill="#e7eef5" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="172" y="170" font-size="13" fill="#1f2328" text-anchor="middle">mark (consumer, e1): taken</text>
+  <line x1="172" y1="186" x2="172" y2="198" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="48" y="200" width="248" height="38" rx="8" fill="#e7eef5" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="172" y="224" font-size="13" fill="#1f2328" text-anchor="middle">handler: insert the reminder</text>
+  <line x1="172" y1="240" x2="172" y2="252" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="48" y="254" width="248" height="38" rx="8" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="1.5"/>
+  <text x="172" y="278" font-size="13" fill="#1f2328" text-anchor="middle">commit: mark and reminder</text>
+  <line x1="172" y1="294" x2="172" y2="326" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="48" y="328" width="248" height="38" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="172" y="352" font-size="13" fill="#1f2328" text-anchor="middle">acknowledge to the broker</text>
+  <text x="172" y="396" font-size="14" font-weight="600" fill="#1f2328" text-anchor="middle">one reminder</text>
+  <rect x="332" y="56" width="296" height="356" rx="14" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="348" y="82" font-size="16" font-weight="700" fill="#1f2328">Redelivery of e1</text>
+  <text x="348" y="102" font-size="13" fill="#5f6b73">after a lost acknowledgement</text>
+  <rect x="344" y="114" width="272" height="196" rx="10" fill="#ffffff" stroke="#2b5d8a" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="356" y="134" font-size="13" font-style="italic" fill="#2b5d8a">one unit of work</text>
+  <rect x="356" y="146" width="248" height="38" rx="8" fill="#e7eef5" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="480" y="170" font-size="13" fill="#1f2328" text-anchor="middle">mark (consumer, e1): already there</text>
+  <line x1="480" y1="186" x2="480" y2="198" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="356" y="200" width="248" height="38" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="5 4"/>
+  <text x="480" y="224" font-size="13" fill="#1f2328" text-anchor="middle">handler skipped</text>
+  <line x1="480" y1="240" x2="480" y2="252" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="356" y="254" width="248" height="38" rx="8" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="1.5"/>
+  <text x="480" y="278" font-size="13" fill="#1f2328" text-anchor="middle">commit: nothing changed</text>
+  <line x1="480" y1="294" x2="480" y2="326" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="356" y="328" width="248" height="38" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="480" y="352" font-size="13" fill="#1f2328" text-anchor="middle">acknowledge to the broker</text>
+  <text x="480" y="396" font-size="14" font-weight="600" fill="#1f2328" text-anchor="middle">still one reminder</text>
+  <rect x="640" y="56" width="296" height="356" rx="14" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="656" y="82" font-size="16" font-weight="700" fill="#1f2328">The handler fails</text>
+  <text x="656" y="102" font-size="13" fill="#5f6b73">a bug, a timeout, a lock</text>
+  <rect x="652" y="114" width="272" height="196" rx="10" fill="#ffffff" stroke="#2b5d8a" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="664" y="134" font-size="13" font-style="italic" fill="#2b5d8a">one unit of work</text>
+  <rect x="664" y="146" width="248" height="38" rx="8" fill="#e7eef5" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="788" y="170" font-size="13" fill="#1f2328" text-anchor="middle">mark (consumer, e1): taken</text>
+  <line x1="788" y1="186" x2="788" y2="198" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="664" y="200" width="248" height="38" rx="8" fill="#e7eef5" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="788" y="224" font-size="13" fill="#1f2328" text-anchor="middle">handler throws</text>
+  <line x1="788" y1="240" x2="788" y2="252" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="664" y="254" width="248" height="38" rx="8" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="1.5"/>
+  <text x="788" y="278" font-size="13" fill="#1f2328" text-anchor="middle">rollback: the mark goes too</text>
+  <line x1="788" y1="294" x2="788" y2="326" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="664" y="328" width="248" height="38" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="788" y="352" font-size="13" fill="#1f2328" text-anchor="middle">not acknowledged: it comes back</text>
+  <text x="788" y="396" font-size="14" font-weight="600" fill="#1f2328" text-anchor="middle">no reminder, until the redelivery</text>
+  <text x="32" y="446" font-size="14" fill="#1f2328">The acknowledgement to the broker comes after the commit, never before.</text>
+</svg>

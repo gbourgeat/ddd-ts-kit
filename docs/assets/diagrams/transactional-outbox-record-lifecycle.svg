@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 440" width="960" height="440" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">The life of an outbox record: pending, published or dead</title>
+  <desc id="desc">A record is appended pending by the commit of the command. The relay claims it when it is due and publishes it; it is then marked published, and purgePublished removes it later. When a publication fails, the record stays pending and is retried after an exponential backoff: 1 second, 2, 4, and at most 5 minutes by default. After maxAttempts attempts, 8 by default, it is dead, and stays in the table until an operator calls retryDead, which puts it back pending with a fresh budget of attempts. store.stats() counts the pending records, the failed ones among them, and the dead ones.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="440" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">The life of an outbox record</text>
+  <!-- start -->
+  <circle cx="40" cy="180" r="8" fill="#3d4449"/>
+  <line x1="50" y1="180" x2="106" y2="180" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="78" y="170" font-size="13" fill="#1f2328" text-anchor="middle">append</text>
+  <!-- pending -->
+  <rect x="110" y="144" width="180" height="72" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="200" y="174" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">pending</text>
+  <text x="200" y="196" font-size="13" fill="#1f2328" text-anchor="middle">claimed when due</text>
+  <!-- retry loop -->
+  <path d="M170,144 V104 H250 V140" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="210" y="72" font-size="13" fill="#1f2328" text-anchor="middle">publication failed: retried after a backoff</text>
+  <text x="210" y="90" font-size="13" fill="#1f2328" text-anchor="middle">1 s, 2 s, 4 s, ... at most 5 min</text>
+  <!-- published -->
+  <rect x="430" y="144" width="180" height="72" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="520" y="174" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">published</text>
+  <text x="520" y="196" font-size="13" fill="#1f2328" text-anchor="middle">publishedAt is set</text>
+  <line x1="292" y1="180" x2="426" y2="180" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="359" y="170" font-size="13" fill="#1f2328" text-anchor="middle">the relay publishes</text>
+  <!-- purged -->
+  <rect x="750" y="144" width="180" height="72" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="840" y="174" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">purged</text>
+  <text x="840" y="196" font-size="13" fill="#1f2328" text-anchor="middle">the table stays small</text>
+  <line x1="612" y1="180" x2="746" y2="180" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="679" y="170" font-size="13" fill="#1f2328" text-anchor="middle">purgePublished</text>
+  <!-- dead -->
+  <rect x="430" y="292" width="180" height="72" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="520" y="322" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">dead</text>
+  <text x="520" y="344" font-size="13" fill="#1f2328" text-anchor="middle">waits for an operator</text>
+  <path d="M240,218 V328 H426" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="333" y="318" font-size="13" fill="#1f2328" text-anchor="middle">after maxAttempts (8)</text>
+  <path d="M520,366 V400 H160 V220" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="340" y="422" font-size="13" fill="#1f2328" text-anchor="middle">retryDead(ids): back to pending, a fresh budget</text>
+  <!-- what the store counts -->
+  <rect x="680" y="292" width="250" height="72" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="805" y="320" font-size="14" font-weight="600" fill="#1f2328" text-anchor="middle">store.stats()</text>
+  <text x="805" y="344" font-size="13" fill="#1f2328" text-anchor="middle">pending, failed among them, dead</text>
+</svg>

@@ -27,17 +27,7 @@ credential never travels inward: the boundary turns it into an `Actor` (subject,
 or attributes) and a `Session` (how and when the actor authenticated), and from there on only
 that data moves. The token itself is kept nowhere.
 
-```mermaid
-flowchart LR
-  R[HTTP request with a bearer token] --> A[Authenticator, platform]
-  A -->|Actor and Session| RT[Route]
-  RT -->|"BookAppointment(actor, ...)"| BUS[Command bus]
-  BUS --> G{Authorization middleware}
-  G -->|denied: FORBIDDEN| X[403, no transaction opened]
-  G -->|allowed| H[Handler]
-  H -->|needs the loaded appointment| P[Policy through the same port]
-  H --> D[Aggregate: invariants]
-```
+![The path of a request: the authenticator of the platform turns the bearer token into an Actor and a Session; the route builds the command with that actor; the authorization middleware of the command bus refuses with FORBIDDEN before any transaction, or lets the handler run; the handler loads the appointment and asks Access, which runs the policies then the authorizer; the aggregate holds the invariants](../assets/diagrams/authentication-and-authorization-request-flow.svg)
 
 ## Deny by default, declared per use case
 
@@ -59,6 +49,52 @@ In the running domain:
 | `SetWorkingHours` | `calendar.manage` | on the calendar of that practitioner, not on every calendar |
 | `FindOpenSlots` | public | declared public on purpose, not by omission |
 
+In code, the permissions are data of the context, and each message says what it requires or
+that it is public. The middleware reads these declarations; the handler does not repeat them.
+
+<!-- checked sample -->
+```ts
+import { definePermissions } from '@ddd-ts-kit/auth';
+import { AuthorizedCommand, Query, type Actor } from '@ddd-ts-kit/kernel';
+import { Public, Requires } from '@ddd-ts-kit/kernel/declarations';
+
+// application/authorization/appointments.permissions.ts: data owned by the context, in its words.
+export const appointmentsPermissions = definePermissions('appointments', {
+  'appointment.book': { description: 'Book an appointment for a client' },
+  'appointment.cancel': { description: 'Cancel a booked appointment' },
+});
+// appointmentsPermissions['appointment.cancel'].id is 'appointments:appointment.cancel'
+
+// Protected: only an actor holding the permission reaches the handler. The actor comes first.
+@Requires(appointmentsPermissions['appointment.cancel'], {
+  resource: (command: CancelAppointment) => ({ type: 'appointment', id: command.appointmentId }),
+})
+export class CancelAppointment extends AuthorizedCommand {
+  constructor(
+    actor: Actor,
+    readonly appointmentId: string,
+    readonly reason: string,
+  ) {
+    super(actor);
+  }
+}
+
+// Public on purpose: said, never implied.
+@Public()
+export class FindOpenSlots extends Query<readonly Date[]> {
+  constructor(
+    readonly practitionerId: string,
+    readonly day: string,
+  ) {
+    super();
+  }
+}
+```
+
+A project generated with the explicit style writes the same requirement next to the
+registration of the handler, `.requires(permission)` or `.public()`; see
+[`@ddd-ts-kit/auth`](../../packages/auth/README.md) for both styles.
+
 The decision is taken in the application layer, before the handler runs and before a
 transaction opens. A route builds the command and nothing else; a repository applies the scope
 it is handed and nothing else; the domain knows no actor. This is rule
@@ -71,25 +107,110 @@ appointment must be loaded first. Such a rule is a policy: a named, pure functio
 `application/authorization/`, with a spec of its own. The handler loads the aggregate and asks
 the authorizer with it.
 
+<!-- checked sample -->
 ```ts
-// appointments/application/commands/cancel-appointment/cancel-appointment.handler.ts
-async execute(command: CancelAppointment): Promise<void> {
-  const appointment = await this.appointments.findById(command.appointmentId);
-  if (appointment === undefined) {
-    throw new NotFoundError('Appointment not found');
-  }
+import { Access, definePermissions, definePolicy } from '@ddd-ts-kit/auth';
+import {
+  AggregateRoot,
+  AuthorizedCommand,
+  Clock,
+  NotFoundError,
+  Repository,
+  type Actor,
+  type CommandHandler,
+} from '@ddd-ts-kit/kernel';
 
-  await this.access.authorize(command.actor, permissions['appointment.cancel'], appointment);
-
-  appointment.cancel(command.reason, this.clock.now());
-  await this.appointments.save(appointment);
+// Declared here so that the sample compiles alone; in a project they are files of the context.
+declare class Appointment extends AggregateRoot {
+  readonly clientId: string;
+  readonly practiceId: string;
+  cancel(reason: string, at: Date): void;
 }
+declare abstract class AppointmentRepository extends Repository<Appointment> {}
+declare class CancelAppointment extends AuthorizedCommand {
+  readonly appointmentId: string;
+  readonly reason: string;
+}
+const appointmentsPermissions = definePermissions('appointments', {
+  'appointment.cancel': { description: 'Cancel a booked appointment' },
+});
+
+// appointments/application/authorization/only-the-client-or-the-practice-cancels.policy.ts
+export const onlyTheClientOrThePracticeCancels = definePolicy<Appointment>({
+  name: 'appointment.only-the-client-or-the-practice-cancels',
+  permission: appointmentsPermissions['appointment.cancel'],
+  appliesTo: (subject): subject is Appointment => subject instanceof Appointment,
+  allows: (actor: Actor, appointment) =>
+    actor.id === appointment.clientId || actor.attributes['practiceId'] === appointment.practiceId,
+});
+
+// appointments/application/commands/cancel-appointment/cancel-appointment.handler.ts
+export class CancelAppointmentHandler implements CommandHandler<CancelAppointment> {
+  constructor(
+    private readonly appointments: AppointmentRepository,
+    private readonly access: Access,
+    private readonly clock: Clock,
+  ) {}
+
+  async execute(command: CancelAppointment): Promise<void> {
+    const appointment = await this.appointments.findById(command.appointmentId);
+
+    if (appointment === undefined) {
+      throw new NotFoundError('Appointment not found');
+    }
+
+    await this.access.authorize(command.actor, appointmentsPermissions['appointment.cancel'], appointment);
+
+    appointment.cancel(command.reason, this.clock.now());
+    await this.appointments.save(appointment);
+  }
+}
+```
+
+`Access.authorize` runs every policy of the permission, then the authorizer, and raises
+`ForbiddenError` (code `FORBIDDEN`, answered 403) whose reason is the name of the policy that
+said no. A policy is a plain object, so its spec needs nothing else:
+
+<!-- checked sample -->
+```ts
+import type { Policy } from '@ddd-ts-kit/auth';
+import { anActor } from '@ddd-ts-kit/auth/testing';
+import { expect, it } from 'vitest';
+
+interface Appointment {
+  readonly clientId: string;
+  readonly practiceId: string;
+}
+declare const onlyTheClientOrThePracticeCancels: Policy<Appointment>;
+declare const appointment: Appointment; // booked by client-1 at practice-7
+
+const now = new Date('2026-03-01T09:00:00.000Z');
+
+it('lets the client who booked cancel, and nobody else outside the practice', () => {
+  const client = anActor().named('client-1').build();
+  const stranger = anActor().named('client-2').build();
+
+  expect(onlyTheClientOrThePracticeCancels.allows(client, appointment, { now })).toBe(true);
+  expect(onlyTheClientOrThePracticeCancels.allows(stranger, appointment, { now })).toBe(false);
+});
+```
+
+The same rule written by hand in the handler would work once and be found nowhere else:
+
+```ts
+// instead of: a rule about rights hidden in a handler, with its own error, invisible to the audit trail
+if (appointment.clientId !== command.actor.id) {
+  throw new Error('not your appointment');
+}
+
+// write: one call; the rule is a named policy with its spec, its refusal reason and its audit record
+await this.access.authorize(command.actor, appointmentsPermissions['appointment.cancel'], appointment);
 ```
 
 The test that separates a policy from an invariant: would the rule hold whoever asks? "Not
 after the cancellation window has passed" holds for everybody, so it is an invariant of the
-aggregate (`CancellationWindowPassed`). "Only the client who booked" depends on who asks, so it
-is a policy.
+aggregate (`AppointmentError.cancellationWindowPassed`, code `CANCELLATION_WINDOW_PASSED`).
+"Only the client who booked" depends on who asks, so it is a policy.
 
 ## Searches are filtered by the query
 
@@ -98,6 +219,66 @@ handler asks the authorizer for the access scope of the actor (everything, nothi
 ids or a filter) and hands it to the read port; the adapter turns it into the condition of the
 statement. `SearchAppointments` for a client therefore reads only that client's rows, and page 2
 is still page 2.
+
+<!-- checked sample -->
+```ts
+import { Access, definePermissions, type AccessScope } from '@ddd-ts-kit/auth';
+import { AuthorizedQuery, type Actor, type QueryHandler } from '@ddd-ts-kit/kernel';
+
+const appointmentsPermissions = definePermissions('appointments', {
+  'appointment.read': { description: 'Read appointments' },
+});
+
+export interface AppointmentRow {
+  readonly id: string;
+  readonly clientId: string;
+  readonly startsAt: string;
+}
+
+// application/ports/appointment-search.port.ts: the read port receives a scope, never an actor.
+export abstract class AppointmentSearch {
+  abstract search(scope: AccessScope, limit: number): Promise<readonly AppointmentRow[]>;
+}
+
+export class SearchAppointments extends AuthorizedQuery<readonly AppointmentRow[]> {
+  constructor(
+    actor: Actor,
+    readonly limit: number,
+  ) {
+    super(actor);
+  }
+}
+
+export class SearchAppointmentsHandler implements QueryHandler<SearchAppointments> {
+  constructor(
+    private readonly access: Access,
+    private readonly appointments: AppointmentSearch,
+  ) {}
+
+  async execute(query: SearchAppointments): Promise<readonly AppointmentRow[]> {
+    // { kind: 'all' }, { kind: 'none' }, { kind: 'ids', ids } or { kind: 'filter', filter }
+    const scope = await this.access.scope(query.actor, appointmentsPermissions['appointment.read'], 'appointment');
+
+    return this.appointments.search(scope, query.limit);
+  }
+}
+```
+
+The adapter of the port turns the scope into a condition of its statement (here with Knex):
+
+```ts
+function visibleTo(appointments: Knex.QueryBuilder, scope: AccessScope): Knex.QueryBuilder {
+  if (scope.kind === 'none') {
+    return appointments.whereRaw('false');
+  }
+
+  if (scope.kind === 'ids') {
+    return appointments.whereIn('id', [...scope.ids]);
+  }
+
+  return scope.kind === 'filter' ? appointments.where({ tenant_id: scope.filter['tenantId'] }) : appointments;
+}
+```
 
 ## Three models
 
@@ -111,6 +292,8 @@ cheap (no I/O per check) and easy to explain to an auditor.
 Its limit is the element. As soon as "may edit" depends on which calendar, RBAC answers with
 more roles (`practitioner-of-calendar-42`), which is the role explosion the literature warns
 about.
+
+![Three models side by side. Roles: the actor has roles, a role grants permissions, the same answer for every element. Attribute policies: the attributes of the actor, of the resource and of the moment feed permit and forbid rules, and a matching forbid wins. Relationships: stored tuples link calendar 42 to its owner Ada and to its parent clinic 7, of which Bob is a member, so a path of tuples grants Bob the calendar](../assets/diagrams/authentication-and-authorization-three-models.svg)
 
 ### Attribute policies (ABAC)
 
@@ -128,7 +311,7 @@ query, so listing "everything this actor may see" is not something a pure ABAC e
 Rights follow stored relationships between subjects and objects, written as tuples
 `object#relation@subject`: `calendar:42#owner@user:ada`, `clinic:7#member@user:bob`,
 `calendar:42#parent@clinic:7`. Permissions are derived by rewriting: "may manage a calendar:
-its owner, or whoever manages its parent clinic". The two core operations are check (is there a
+its owner, or a member of its parent clinic". The two core operations are check (is there a
 path from this object to this actor) and list (which objects can this actor reach).
 
 It fits when rights are per element and shared: ownership, teams, delegation ("my assistant
@@ -169,6 +352,59 @@ is the place to start in most projects, and it is what the running domain uses: 
 `appointment.book` and `calendar.manage`, one policy guards cancellation. If clients later
 delegate their bookings to relatives, or practitioners share calendars with assistants, the
 calendars context moves to relationships.
+
+Assembled by hand, that combination is two objects; `authorizationModule` of
+`@ddd-ts-kit/auth/di` binds the same `PolicyAccess` in a project:
+
+<!-- checked sample -->
+```ts
+import { definePermissions, definePolicy, PolicyAccess, RoleBasedAuthorizer } from '@ddd-ts-kit/auth';
+import { anActor } from '@ddd-ts-kit/auth/testing';
+import { FixedClock } from '@ddd-ts-kit/kernel';
+
+const appointmentsPermissions = definePermissions('appointments', {
+  'appointment.book': { description: 'Book an appointment for a client' },
+  'appointment.cancel': { description: 'Cancel a booked appointment' },
+});
+const calendarsPermissions = definePermissions('calendars', {
+  'calendar.manage': { description: 'Set the working hours of a calendar' },
+});
+
+interface BookedAppointment {
+  readonly clientId: string;
+  readonly practiceId: string;
+}
+
+const onlyTheClientOrThePracticeCancels = definePolicy<BookedAppointment>({
+  name: 'appointment.only-the-client-or-the-practice-cancels',
+  permission: appointmentsPermissions['appointment.cancel'],
+  allows: (actor, appointment) =>
+    actor.id === appointment.clientId || actor.attributes['practiceId'] === appointment.practiceId,
+});
+
+// Roles for the coarse rights: the same answer for every element.
+const authorizer = new RoleBasedAuthorizer({
+  roles: {
+    client: [appointmentsPermissions['appointment.book'], appointmentsPermissions['appointment.cancel']],
+    receptionist: ['appointments:*'],
+    practitioner: [calendarsPermissions['calendar.manage']],
+  },
+  inherits: { practitioner: ['receptionist'] },
+});
+
+// Access asks the policies of the permission first, then the authorizer.
+const access = new PolicyAccess({
+  authorizer,
+  policies: [onlyTheClientOrThePracticeCancels],
+  clock: new FixedClock(new Date('2026-03-01T09:00:00.000Z')),
+});
+
+const ada = anActor().named('client-ada').withRole('client').build();
+const appointmentOfBob: BookedAppointment = { clientId: 'client-bob', practiceId: 'practice-7' };
+
+// { allowed: false, reason: 'appointment.only-the-client-or-the-practice-cancels' }
+export const decision = await access.decide(ada, appointmentsPermissions['appointment.cancel'], appointmentOfBob);
+```
 
 The questions to ask, in order, and a worked preset for each model (typed permissions and roles,
 a policy on one element, a scoped search) are in the guide

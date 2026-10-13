@@ -25,6 +25,13 @@ shows that the time goes to the calendar gateway; a log line tells which instanc
 attempt; an error report holds the stack. None of them replaces another, and none of them is
 the [audit trail](audit-trail.md), which answers to people who do not trust the application.
 
+All four are produced at the edges of the business code, never inside it: the HTTP boundary,
+the middlewares of the buses, and the wrappers the platform puts around the adapters when it
+binds them. A handler, an aggregate or a repository port writes no span, no log line, no metric
+and no report.
+
+![Where each signal is produced: the HTTP boundary and the bus middlewares around the use case, the wrappers around the adapters; the handler and the domain in the middle produce none](../assets/diagrams/observability-capture-points.svg)
+
 ## The identifier that ties them
 
 Every unit of work runs in an execution scope holding a correlation id
@@ -34,22 +41,7 @@ including inside the envelope of an integration event. The kit names each in the
 root span of a unit of work carries the correlation id and the origin, and every log line
 carries the correlation id, the trace id and the span id.
 
-```mermaid
-sequenceDiagram
-  participant C as Client
-  participant A as appointments (HTTP)
-  participant O as Outbox and relay
-  participant N as notifications (consumer)
-  C->>A: POST /appointments
-  Note over A: scope: correlationId c-1, origin http<br/>trace t-1, root span
-  A->>A: BookAppointment handler, repository spans
-  A->>O: appointments.appointment.booked<br/>envelope: correlationId c-1, traceparent t-1
-  A-->>C: 201, with the support reference
-  O->>N: deliver the event
-  Note over N: scope: correlationId c-1, causationId = event id,<br/>origin event, system actor of the consumer<br/>span "process ..." continues trace t-1
-  N->>N: command, repository spans
-  Note over A,N: logs of both sides: correlationId c-1, trace_id t-1<br/>metrics: labelled by class, method, context, outcome<br/>an error report on either side: correlationId c-1, trace id t-1
-```
+![One booking followed across two bounded contexts: the request in appointments opens the scope c-1 and the trace t-1, the event carries both in its envelope through the outbox, the consumer in notifications continues them; logs, the trace and error reports carry c-1 and t-1, metrics carry no identifier](../assets/diagrams/observability-one-identifier.svg)
 
 In practice: a client reports that the confirmation never arrived and quotes the support
 reference shown on screen. That reference is the id above. It finds the request in the logs,
@@ -69,12 +61,48 @@ each job. Two more pieces complete it: `around: tracedRoutes()` on the HTTP boun
 continues the trace stored with its event. The repository class knows nothing about it. A kernel port
 rebound by a later module is not wrapped.
 
+The three hooks, in the composition root:
+
+<!-- checked sample -->
+```ts
+import { createApplication, kernelModule, type ContextModule } from '@ddd-ts-kit/di';
+import type { Route } from '@ddd-ts-kit/http';
+import { mountExpress } from '@ddd-ts-kit/http/express';
+import { ExecutionScope, type IntegrationEventPublisher } from '@ddd-ts-kit/kernel';
+import { traceApplication, tracedPublisher, tracedRoutes } from '@ddd-ts-kit/tracing';
+import express from 'express';
+
+declare const appointmentsModule: ContextModule;
+declare const routes: readonly Route[];
+declare const broker: IntegrationEventPublisher;
+
+// 1. use cases, bindings, domain events, consumers and jobs: one value for the kernel module
+const app = createApplication({
+  modules: [kernelModule({ instrumentation: traceApplication() }), appointmentsModule],
+});
+
+// 2. the HTTP boundary: one SERVER span per request, named after the route template
+const server = express();
+mountExpress(server, routes, { executionScope: app.resolve(ExecutionScope), around: tracedRoutes() });
+
+// 3. what the outbox relay publishes with: each publication continues the trace stored with its event
+export const relayPublisher = tracedPublisher(broker);
+```
+
+The SDK itself starts in a module of its own, imported before everything else
+(`initTracing` of `@ddd-ts-kit/tracing/node`): see the first consequence below.
+
 Span names are stable and low in cardinality: `command BookAppointment`,
 `repository AppointmentRepository.save` (`<kind> <Port>.<method>`),
 `process notifications.remind-on-appointment-booked` for a consumer. Under the span of a command
 the saves come first, then `unit-of-work before-commit` with the domain events and their
 handlers, then, when an event has a handler of that phase, `unit-of-work after-commit`: the
 trace shows that the handlers ran after every save, and on which side of the commit.
+
+![The trace of one booking as a tracing backend draws it: the request, the command, the repository calls, the domain event and its handler that appends to the outbox, then, a moment later, the publication by the relay and the consumer of notifications in the same trace](../assets/diagrams/observability-trace-of-a-booking.svg)
+
+This tree, with the names of its own example, is asserted span for span by the specs of
+[`@ddd-ts-kit/tracing`](../../packages/tracing/README.md#what-a-trace-looks-like).
 
 Three consequences are worth understanding:
 
@@ -99,19 +127,61 @@ A good line has a constant message and variable fields: `appointment reminder se
 identifiers in fields, never a sentence built by concatenation. Constant messages can be
 counted and searched; fields can be filtered.
 
+<!-- checked sample -->
+```ts
+import type { Logger } from '@ddd-ts-kit/kernel';
+
+declare const logger: Logger;
+declare const appointmentId: string;
+declare const channel: 'sms' | 'email';
+
+// Instead of: a sentence per appointment, which no query can count
+logger.info(`Reminder of appointment ${appointmentId} sent by ${channel}`);
+
+// Write: one constant message, the variable parts in fields
+logger.info('appointment reminder sent', { context: 'notifications', appointmentId, channel });
+```
+
+The correlation id, the actor, the tenant and the trace ids are not written by the caller: the
+logger adds them to every line from the execution scope and the active span
+(`traceLogFields(scope)` of the tracing package, given to the adapter as its `fields`).
+
 Three adapters implement the port: a dependency-free JSON logger, one on pino and one on
 winston. They are compared in [Observability tools](../tools/observability.md).
 
 ## Metrics
 
 Three instruments: a counter (how many), a histogram (a distribution, typically durations) and
-a gauge (a level, such as the depth of the outbox or the state of a circuit). The bus
-middleware and the `timed` aspect produce a duration histogram and a total counter for use
-cases and adapter calls, labelled by class, method, kind, context, outcome and error code.
+a gauge (a level, such as the depth of the outbox or the state of a circuit). Two sources
+produce a duration histogram (`<name>_duration_ms`) and a total counter (`<name>_total`):
+
+- the bus middleware (`metricsMiddleware`) times every command and query as `use_case_*`,
+  labelled by `message` and `kind`;
+- the `timed` aspect times every adapter call as `dependency_call_*`, labelled by `class`,
+  `method`, `kind` and `context`.
+
+Both add `outcome` (`success` or `failure`); the counter also carries `error_code` on a failure
+that has one.
 
 The rule that matters most for metrics is cardinality: **a label value comes from a small
 closed set, never an identifier**. A label holding an appointment id creates one time series
 per appointment and takes the metrics backend down. Identifiers belong to logs and traces.
+
+<!-- checked sample -->
+```ts
+import type { Metrics } from '@ddd-ts-kit/kernel';
+
+declare const metrics: Metrics;
+declare const appointmentId: string;
+
+const sent = metrics.counter('reminders_sent_total');
+
+// Instead of: one time series per appointment, created forever
+sent.increment({ appointmentId });
+
+// Write: labels from a small closed set; the appointment goes to the log line
+sent.increment({ context: 'notifications', channel: 'sms', outcome: 'success' });
+```
 
 Useful alerts are about symptoms and absences: the error ratio of `BookAppointment`, the age of
 the oldest pending outbox record, a dead-letter queue that is not empty, "no successful run of
@@ -126,6 +196,29 @@ An error tracker receives what nobody planned. The kit draws the line with one t
 
 Reports are made by what stands around the use cases, never by handlers, aggregates or
 repositories, which simply throw:
+
+<!-- checked sample -->
+```ts
+import type { ErrorReporter } from '@ddd-ts-kit/kernel';
+
+declare const reporter: ErrorReporter;
+declare const sms: { send(phone: string, text: string): Promise<void> };
+
+// Instead of: a handler that reports, then rethrows; the bus reports it again, two issues for one failure
+export async function remindReporting(phone: string): Promise<void> {
+  try {
+    await sms.send(phone, 'Your appointment is tomorrow.');
+  } catch (error) {
+    reporter.report(error, { origin: 'command', operation: 'SendReminder', severity: 'error' });
+    throw error;
+  }
+}
+
+// Write: let it throw; the bus middleware reports it once, with the correlation and trace ids
+export async function remind(phone: string): Promise<void> {
+  await sms.send(phone, 'Your appointment is tomorrow.');
+}
+```
 
 | Capture point | Reports |
 |---|---|

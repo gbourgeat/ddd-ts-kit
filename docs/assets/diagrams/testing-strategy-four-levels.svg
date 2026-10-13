@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 500" width="960" height="500" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">The four levels of tests</title>
+  <desc id="desc">Four rows, from the domain to the end to end level. Domain specs run aggregates and value objects alone, with no double, in milliseconds. Application specs run the real handlers through the buses, with fakes for every port and a fixed clock, in milliseconds. Adapter specs run one real adapter against its real dependency under its contract suite, in seconds. End to end specs run the whole application through HTTP, with real adapters and seeded data, in seconds. Each rule is proved at the lowest level that can prove it.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="500" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">The four levels of tests</text>
+  <text x="32" y="80" font-size="13" font-weight="600" fill="#5f6b73">level</text>
+  <text x="196" y="80" font-size="13" font-weight="600" fill="#5f6b73">what runs (dashed: a double)</text>
+  <text x="776" y="80" font-size="13" font-weight="600" fill="#5f6b73">speed, how many</text>
+  <line x1="24" y1="92" x2="936" y2="92" stroke="#5f6b73" stroke-opacity="0.25"/>
+  <text x="32" y="132" font-size="16" font-weight="700" fill="#2f6f4f">domain</text>
+  <text x="32" y="152" font-size="13" fill="#1f2328">no double</text>
+  <rect x="196" y="114" width="126" height="40" rx="8" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="259" y="139" font-size="13" font-weight="600" fill="#2f6f4f" text-anchor="middle">aggregate</text>
+  <rect x="338" y="114" width="126" height="40" rx="8" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="401" y="139" font-size="13" font-weight="600" fill="#2f6f4f" text-anchor="middle">value object</text>
+  <text x="776" y="132" font-size="14" font-weight="700" fill="#1f2328">milliseconds</text>
+  <text x="776" y="152" font-size="13" fill="#1f2328">every case of every rule</text>
+  <line x1="24" y1="180" x2="936" y2="180" stroke="#5f6b73" stroke-opacity="0.25"/>
+  <text x="32" y="220" font-size="16" font-weight="700" fill="#2b5d8a">application</text>
+  <text x="32" y="240" font-size="13" fill="#1f2328">fakes, fixed clock</text>
+  <rect x="196" y="202" width="126" height="40" rx="8" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="259" y="227" font-size="13" font-weight="600" fill="#2b5d8a" text-anchor="middle">in-memory buses</text>
+  <rect x="338" y="202" width="126" height="40" rx="8" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="401" y="227" font-size="13" font-weight="600" fill="#2b5d8a" text-anchor="middle">handler</text>
+  <line x1="324" y1="222" x2="336" y2="222" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="480" y="202" width="126" height="40" rx="8" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="543" y="227" font-size="13" font-weight="600" fill="#2f6f4f" text-anchor="middle">aggregate</text>
+  <line x1="466" y1="222" x2="478" y2="222" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="622" y="202" width="126" height="40" rx="8" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="685" y="227" font-size="13" font-weight="600" fill="#7a4f9a" text-anchor="middle">fakes of the ports</text>
+  <path d="M401,200 V190 H685 V200" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="776" y="220" font-size="14" font-weight="700" fill="#1f2328">milliseconds</text>
+  <text x="776" y="240" font-size="13" fill="#1f2328">each use case, each code</text>
+  <line x1="24" y1="268" x2="936" y2="268" stroke="#5f6b73" stroke-opacity="0.25"/>
+  <text x="32" y="308" font-size="16" font-weight="700" fill="#7a4f9a">adapter</text>
+  <text x="32" y="328" font-size="13" fill="#1f2328">none</text>
+  <rect x="196" y="290" width="126" height="40" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="259" y="315" font-size="13" font-weight="600" fill="#5f6b73" text-anchor="middle">contract suite</text>
+  <rect x="338" y="290" width="126" height="40" rx="8" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="401" y="315" font-size="13" font-weight="600" fill="#7a4f9a" text-anchor="middle">adapter</text>
+  <line x1="324" y1="310" x2="336" y2="310" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="480" y="290" width="126" height="40" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="543" y="315" font-size="13" font-weight="600" fill="#5f6b73" text-anchor="middle">PostgreSQL</text>
+  <line x1="466" y1="310" x2="478" y2="310" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="776" y="308" font-size="14" font-weight="700" fill="#1f2328">seconds</text>
+  <text x="776" y="328" font-size="13" fill="#1f2328">each adapter, its contract</text>
+  <line x1="24" y1="356" x2="936" y2="356" stroke="#5f6b73" stroke-opacity="0.25"/>
+  <text x="32" y="396" font-size="16" font-weight="700" fill="#9a5b2b">end to end</text>
+  <text x="32" y="416" font-size="13" fill="#1f2328">none; seeded data</text>
+  <rect x="196" y="378" width="100" height="40" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="246" y="403" font-size="13" font-weight="600" fill="#5f6b73" text-anchor="middle">HTTP client</text>
+  <rect x="314" y="378" width="100" height="40" rx="8" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="364" y="403" font-size="13" font-weight="600" fill="#9a5b2b" text-anchor="middle">routes</text>
+  <line x1="298" y1="398" x2="312" y2="398" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="432" y="378" width="100" height="40" rx="8" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="482" y="403" font-size="13" font-weight="600" fill="#2b5d8a" text-anchor="middle">application</text>
+  <line x1="416" y1="398" x2="430" y2="398" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="550" y="378" width="100" height="40" rx="8" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="600" y="403" font-size="13" font-weight="600" fill="#7a4f9a" text-anchor="middle">adapters</text>
+  <line x1="534" y1="398" x2="548" y2="398" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="668" y="378" width="100" height="40" rx="8" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="718" y="403" font-size="13" font-weight="600" fill="#5f6b73" text-anchor="middle">PostgreSQL</text>
+  <line x1="652" y1="398" x2="666" y2="398" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="776" y="396" font-size="14" font-weight="700" fill="#1f2328">seconds</text>
+  <text x="776" y="416" font-size="13" fill="#1f2328">one case per wiring</text>
+  <line x1="24" y1="444" x2="936" y2="444" stroke="#5f6b73" stroke-opacity="0.25"/>
+  <text x="32" y="478" font-size="13" font-style="italic" fill="#5f6b73">Push each rule to the lowest level that can prove it: ten cases of a cancellation window are ten domain specs, not ten HTTP round trips.</text>
+</svg>

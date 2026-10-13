@@ -16,7 +16,18 @@ A developer says "we update the status of the booking record"; the practitioner 
 client cancelled too late, so the appointment counts as a no-show". The second sentence holds
 two rules (a cancellation window, what a late cancellation becomes). The first holds none. Code
 written in the first vocabulary has `setStatus`; code written in the second has
-`appointment.cancel(reason, at)` and an error called `CancellationWindowPassed`.
+`appointment.cancel(reason, at)` and a refusal `AppointmentError.cancellationWindowPassed(...)`
+with the code `CANCELLATION_WINDOW_PASSED`.
+
+```ts
+// The developer's sentence, in code: nothing says what the business decided.
+booking.setStatus('CANCELLED');
+await bookingRecords.update(booking);
+
+// The practitioner's sentence, in code: the rule has a name, and so has its refusal.
+appointment.cancel(reason, clock.now()); // throws AppointmentError.cancellationWindowPassed(...) when too late
+await appointments.save(appointment);
+```
 
 The language is ubiquitous within a context, not across the company. "Slot" in `availability`
 is an interval a practitioner can still offer; in `appointments` it is the interval of one
@@ -24,17 +35,13 @@ appointment. Both definitions are right, each inside its
 [bounded context](bounded-context.md), and the glossary of each says what the word must not be
 confused with.
 
+![The word Slot in two bounded contexts: in availability, an interval a practitioner can still offer; in appointments, the interval one appointment occupies. Each glossary says what the word must not be confused with](../assets/diagrams/ubiquitous-language-same-word.svg)
+
 ## Glossary first
 
 The order is fixed in this kit: the term, then the name, then the code.
 
-```mermaid
-flowchart LR
-  T[Term agreed with the domain expert] --> G[Row in the glossary of CONTEXT.md]
-  G --> N[Class, method, event or use case name]
-  N --> C[Code and tests]
-  C -. a missing word sends you back .-> T
-```
+![The order of the work: a term agreed with the domain expert becomes a row of the glossary in CONTEXT.md, then the names of the code, then the code and its tests; the generator refuses a name whose words the glossary does not define, the checker reports it, and a missing word sends you back to the domain expert](../assets/diagrams/ubiquitous-language-glossary-first.svg)
 
 The glossary is the `## Ubiquitous language` table of the context's `CONTEXT.md`:
 
@@ -98,13 +105,67 @@ The language reaches further than class names:
 
 - **Methods** are what the business says happens: `appointment.cancel(reason, at)`, never
   `setStatus`, `update` or `process` ([Clean code](clean-code.md)).
-- **Errors** are named refusals with a stable code: `SlotAlreadyTaken`, `SLOT_ALREADY_TAKEN`.
+- **Errors** are named refusals with a stable code, built by a factory of their concept:
+  `AppointmentError.slotTaken(calendarId, startsAt)`, code `SLOT_TAKEN`
+  (`errors/through-factory`, `errors/factory-name`).
 - **Test names** read as business rules: `refuses to reschedule a cancelled appointment`.
 - **Builders** speak it too: `anAppointment().cancelled()`, not `withStatus('CANCELLED')`
   ([Testing strategy](testing-strategy.md)).
 - **Permissions** are named in it: `appointment.cancel`, not `admin.write`.
 - **Closed vocabularies** are declared once (see below): `AppointmentStatus.NoShow`, never
   `'no-show'` written in a handler.
+
+One slice of the `appointments` context, with every name taken from the glossary above: the
+permission, the command, the refusal and the event say "reschedule", "appointment" and "cancel",
+all words of the glossary above; none of them coins a business term of its own.
+
+<!-- checked sample -->
+```ts
+import { definePermissions } from '@ddd-ts-kit/auth';
+import { AuthorizedCommand, ConceptError, type Actor, type DomainEvent } from '@ddd-ts-kit/kernel';
+import { Requires } from '@ddd-ts-kit/kernel/declarations';
+
+export const appointmentsPermissions = definePermissions('appointments', {
+  'appointment.reschedule': { description: 'Move a booked appointment to another slot' },
+});
+
+@Requires(appointmentsPermissions['appointment.reschedule'], {
+  resource: (command: RescheduleAppointment) => ({ type: 'appointment', id: command.appointmentId }),
+})
+export class RescheduleAppointment extends AuthorizedCommand {
+  constructor(
+    actor: Actor,
+    readonly appointmentId: string,
+    readonly startsAt: Date,
+  ) {
+    super(actor);
+  }
+}
+
+export class AppointmentError extends ConceptError {
+  static cannotRescheduleCancelled(appointmentId: string) {
+    return AppointmentError.refusal(
+      'CANNOT_RESCHEDULE_CANCELLED',
+      `Appointment ${appointmentId} is cancelled: it cannot be rescheduled.`,
+      { appointmentId },
+    );
+  }
+}
+
+export class AppointmentRescheduled implements DomainEvent {
+  static readonly eventName = 'appointments.appointment.rescheduled';
+
+  readonly name = AppointmentRescheduled.eventName;
+
+  constructor(
+    readonly aggregateId: string,
+    readonly occurredAt: Date,
+    readonly startsAt: Date,
+  ) {}
+}
+```
+
+Its spec reads as the rule it holds: `it('refuses to reschedule a cancelled appointment')`.
 
 ## Closed vocabularies
 
@@ -113,6 +174,7 @@ as strings, each value is spelled again wherever it is compared, granted or stor
 compiles. The kit declares each list once, as an object `as const` and the union type of the same
 name:
 
+<!-- checked sample -->
 ```ts
 // contexts/scheduling/domain/vocabularies/appointment-status.vocabulary.ts
 export const AppointmentStatus = {
@@ -122,6 +184,31 @@ export const AppointmentStatus = {
 } as const;
 
 export type AppointmentStatus = (typeof AppointmentStatus)[keyof typeof AppointmentStatus];
+```
+
+Instead of spelling a value again, code reads it by its key:
+
+<!-- checked sample -->
+```ts
+// The vocabulary above, as an import gives it.
+declare const AppointmentStatus: {
+  readonly Requested: 'requested';
+  readonly Booked: 'booked';
+  readonly NoShow: 'no-show';
+};
+type AppointmentStatus = (typeof AppointmentStatus)[keyof typeof AppointmentStatus];
+
+// Instead of: status === 'no-show', which a typo ('no_show') still compiles and the rule reports.
+export function countsAsMissed(status: AppointmentStatus): boolean {
+  return status === AppointmentStatus.NoShow;
+}
+
+// A key of a record is read the same way.
+export const statusLabels: Record<AppointmentStatus, string> = {
+  [AppointmentStatus.Requested]: 'Waiting for confirmation',
+  [AppointmentStatus.Booked]: 'Booked',
+  [AppointmentStatus.NoShow]: 'No show',
+};
 ```
 
 Code reads `AppointmentStatus.NoShow`, completed by the editor; a parameter typed
@@ -153,9 +240,42 @@ report each of those homonyms. It stays a union of literal types, which the comp
 The names of the messages follow the same rule where the code can read them. A domain event
 declares its name once, `static readonly eventName = 'scheduling.appointment.booked'`, and every
 reaction reads it, `{ name: AppointmentBooked.eventName }`; an integration event handler reads the
-type it handles from the contract of its upstream, `appointmentBookedV1.type`. A job name and a
-consumer name are written in the decorator of their class, which cannot read a static of that
-class, and once more in its `systemActor(..)`: two literals of one file, held equal by
+type it handles from the contract of its upstream, `appointmentBookedV1.type`.
+
+<!-- checked sample -->
+```ts
+import type { DomainEvent } from '@ddd-ts-kit/kernel';
+import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
+
+export class AppointmentBooked implements DomainEvent {
+  static readonly eventName = 'scheduling.appointment.booked';
+
+  readonly name = AppointmentBooked.eventName;
+
+  constructor(
+    readonly aggregateId: string,
+    readonly occurredAt: Date,
+  ) {}
+}
+
+// A port of the context, declared here so that the sample compiles alone.
+export abstract class Agenda {
+  abstract hold(appointmentId: string, at: Date): Promise<void>;
+}
+
+// The reaction names the event by its declaration, never by a string written again.
+@DomainEventHandler(AppointmentBooked, { name: AppointmentBooked.eventName })
+export class AgendaOnAppointmentBooked implements DomainEventHandler<AppointmentBooked> {
+  constructor(private readonly agenda: Agenda) {}
+
+  async handle(event: AppointmentBooked): Promise<void> {
+    await this.agenda.hold(event.aggregateId, event.occurredAt);
+  }
+}
+```
+
+A job name and a consumer name are written in the decorator of their class, which cannot read a
+static of that class, and once more in its `systemActor(..)`: two literals of one file, held equal by
 `scheduling/job-name` for a job. The relations and resource types of the access model are
 declared by its relationship schema, in the platform, and written as strings where a context
 relates or guards something. The example lists every such category with its count
@@ -181,6 +301,51 @@ definition. Keep both, and translate at the edge:
 - When the upstream vocabulary is foreign or unstable (an email or SMS provider), the
   translation gets its own place, an anti-corruption layer
   ([Context map](context-map.md)).
+
+![Translation at the edge: appointments publishes appointments.appointment.booked in its published language; the integration event handler of notifications translates it into its own command, ScheduleReminder; the handler of ScheduleReminder sends through a port of notifications, and the anti-corruption layer that implements it translates into the vocabulary of an SMS provider](../assets/diagrams/ubiquitous-language-translation-at-the-edge.svg)
+
+The handler of `notifications` is a translation and nothing more: it reads the contract of its
+upstream and sends a command in its own words. When the reminder is due is a rule of the
+`Reminder`, not of the handler.
+
+<!-- checked sample -->
+```ts
+import { AuthorizedCommand, CommandBus, systemActor, type Actor, type IntegrationEvent } from '@ddd-ts-kit/kernel';
+import { IntegrationEventHandler, type EventContract } from '@ddd-ts-kit/kernel/declarations';
+
+// The contract of the upstream: in a project, imported from appointments/published-language.
+interface AppointmentBookedV1Payload {
+  readonly appointmentId: string;
+  readonly clientId: string;
+  readonly startsAt: string;
+}
+declare const appointmentBookedV1: EventContract<AppointmentBookedV1Payload>;
+
+// A command in the words of notifications.
+export class ScheduleReminder extends AuthorizedCommand {
+  constructor(
+    actor: Actor,
+    readonly recipientId: string,
+    readonly appointmentId: string,
+    readonly appointmentStartsAt: Date,
+  ) {
+    super(actor);
+  }
+}
+
+@IntegrationEventHandler(appointmentBookedV1, { consumer: 'notifications.reminder-on-appointment-booked' })
+export class ReminderOnAppointmentBookedHandler {
+  readonly actor = systemActor('notifications.reminder-on-appointment-booked');
+
+  constructor(private readonly commands: CommandBus) {}
+
+  async handle(event: IntegrationEvent<AppointmentBookedV1Payload>): Promise<void> {
+    const { appointmentId, clientId, startsAt } = event.payload;
+
+    await this.commands.execute(new ScheduleReminder(this.actor, clientId, appointmentId, new Date(startsAt)));
+  }
+}
+```
 
 A shared word with a shared meaning, used by two contexts or more (a `TimeSlot` value object,
 for example), may move to the shared kernel. Keep that rare: every shared type is a coupling

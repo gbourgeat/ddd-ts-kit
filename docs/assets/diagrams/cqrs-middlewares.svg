@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 400" width="960" height="400" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">The middlewares of the generated buses</title>
+  <desc id="desc">Each use case is wrapped by the middlewares of its bus, outermost first, from left to right. Around a command: error report, log, measure, permission, span, file staging, relay wake-up, audit entry, unit of work, then the handler. Around a query: error report, log, measure, permission, span, audit entry, then the handler. The steps marked with a star exist only when the stack of the project has them.</desc>
+  <rect width="960" height="400" rx="16" fill="#ffffff"/>
+  <text x="32" y="36" font-size="18" font-weight="600" fill="#1f2328">What wraps a handler, outermost first</text>
+  <text x="24" y="84" font-size="14" font-weight="600" fill="#5f6b73">Around a command (create-command-bus.ts)</text>
+  <polygon points="24,96 110,96 120,128 110,160 24,160 24,128" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2" stroke-dasharray="5 4"/>
+  <text x="71" y="124" font-size="13" fill="#5f6b73" text-anchor="middle">error</text>
+  <text x="71" y="142" font-size="13" fill="#5f6b73" text-anchor="middle">report *</text>
+  <polygon points="114,96 200,96 210,128 200,160 114,160 124,128" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="166" y="133" font-size="13" fill="#5f6b73" text-anchor="middle">log</text>
+  <polygon points="204,96 290,96 300,128 290,160 204,160 214,128" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="256" y="133" font-size="13" fill="#5f6b73" text-anchor="middle">measure</text>
+  <polygon points="294,96 380,96 390,128 380,160 294,160 304,128" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="346" y="133" font-size="13" fill="#5f6b73" text-anchor="middle">permission</text>
+  <polygon points="384,96 470,96 480,128 470,160 384,160 394,128" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="436" y="133" font-size="13" fill="#5f6b73" text-anchor="middle">span</text>
+  <polygon points="474,96 560,96 570,128 560,160 474,160 484,128" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2" stroke-dasharray="5 4"/>
+  <text x="526" y="124" font-size="13" fill="#5f6b73" text-anchor="middle">file</text>
+  <text x="526" y="142" font-size="13" fill="#5f6b73" text-anchor="middle">staging *</text>
+  <polygon points="564,96 650,96 660,128 650,160 564,160 574,128" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2" stroke-dasharray="5 4"/>
+  <text x="616" y="124" font-size="13" fill="#5f6b73" text-anchor="middle">relay</text>
+  <text x="616" y="142" font-size="13" fill="#5f6b73" text-anchor="middle">wake-up *</text>
+  <polygon points="654,96 740,96 750,128 740,160 654,160 664,128" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2" stroke-dasharray="5 4"/>
+  <text x="706" y="124" font-size="13" fill="#5f6b73" text-anchor="middle">audit</text>
+  <text x="706" y="142" font-size="13" fill="#5f6b73" text-anchor="middle">entry *</text>
+  <polygon points="744,96 830,96 840,128 830,160 744,160 754,128" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="796" y="124" font-size="13" fill="#5f6b73" text-anchor="middle">unit of</text>
+  <text x="796" y="142" font-size="13" fill="#5f6b73" text-anchor="middle">work</text>
+  <polygon points="834,96 936,96 936,160 834,160 844,128" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="890" y="133" font-size="13" fill="#2b5d8a" text-anchor="middle">handler</text>
+  <text x="24" y="210" font-size="14" font-weight="600" fill="#5f6b73">Around a query (create-query-bus.ts)</text>
+  <polygon points="24,222 110,222 120,254 110,286 24,286 24,254" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2" stroke-dasharray="5 4"/>
+  <text x="71" y="250" font-size="13" fill="#5f6b73" text-anchor="middle">error</text>
+  <text x="71" y="268" font-size="13" fill="#5f6b73" text-anchor="middle">report *</text>
+  <polygon points="114,222 200,222 210,254 200,286 114,286 124,254" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="166" y="259" font-size="13" fill="#5f6b73" text-anchor="middle">log</text>
+  <polygon points="204,222 290,222 300,254 290,286 204,286 214,254" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="256" y="259" font-size="13" fill="#5f6b73" text-anchor="middle">measure</text>
+  <polygon points="294,222 380,222 390,254 380,286 294,286 304,254" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="346" y="259" font-size="13" fill="#5f6b73" text-anchor="middle">permission</text>
+  <polygon points="384,222 470,222 480,254 470,286 384,286 394,254" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="436" y="259" font-size="13" fill="#5f6b73" text-anchor="middle">span</text>
+  <polygon points="474,222 560,222 570,254 560,286 474,286 484,254" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2" stroke-dasharray="5 4"/>
+  <text x="526" y="250" font-size="13" fill="#5f6b73" text-anchor="middle">audit</text>
+  <text x="526" y="268" font-size="13" fill="#5f6b73" text-anchor="middle">entry *</text>
+  <polygon points="564,222 666,222 666,286 564,286 574,254" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="620" y="259" font-size="13" fill="#2b5d8a" text-anchor="middle">handler</text>
+  <text x="24" y="330" font-size="13" fill="#1f2328">* only when the stack has it: an error tracker, file uploads, a Redis signal for the relay, the audit trail.</text>
+  <text x="24" y="352" font-size="13" fill="#1f2328">A refused permission stops the message before its span; for a command, before its transaction opens.</text>
+  <text x="24" y="374" font-size="13" fill="#1f2328">The log entry and the measure are outside the check: they see every outcome, refusals included.</text>
+</svg>

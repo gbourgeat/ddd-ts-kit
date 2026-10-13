@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 440" width="960" height="440" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Annuler un rendez-vous : quatre contrôles, de la frontière au domaine</title>
+  <desc id="desc">La requête HTTP passe quatre contrôles de gauche à droite avant que le rendez-vous soit enregistré. 1, validation, en présentation, avant qu'une commande existe : une requête mal formée est refusée en 422 avec ses problèmes. 2, permission, dans l'application, avant que le gestionnaire s'exécute : le bus interroge l'authorizer et refuse en 401 ou 403. 3, politique, dans l'application, une fois le rendez-vous chargé : un rendez-vous qui n'est pas le sien est refusé en 403. 4, invariants, dans le domaine, quand appointment.cancel s'exécute : une règle violée lève une DomainError dont le code stable est associé une seule fois à un statut, comme 409. Quand tout tient, le rendez-vous est enregistré et son événement consigné.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="440" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Annuler un rendez-vous : quatre contrôles, de la frontière au domaine</text>
+  <!-- when -->
+  <text x="100" y="74" font-size="13" fill="#5f6b73" text-anchor="middle">avant qu'une</text>
+  <text x="100" y="92" font-size="13" fill="#5f6b73" text-anchor="middle">commande existe</text>
+  <text x="290" y="74" font-size="13" fill="#5f6b73" text-anchor="middle">avant le gestionnaire</text>
+  <text x="290" y="92" font-size="13" fill="#5f6b73" text-anchor="middle">(handler)</text>
+  <text x="480" y="74" font-size="13" fill="#5f6b73" text-anchor="middle">une fois le rendez-vous</text>
+  <text x="480" y="92" font-size="13" fill="#5f6b73" text-anchor="middle">chargé</text>
+  <text x="670" y="74" font-size="13" fill="#5f6b73" text-anchor="middle">quand la méthode de</text>
+  <text x="670" y="92" font-size="13" fill="#5f6b73" text-anchor="middle">l'agrégat s'exécute</text>
+  <!-- checks -->
+  <rect x="24" y="108" width="152" height="124" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="100" y="134" font-size="16" font-weight="700" fill="#9a5b2b" text-anchor="middle">1. validation</text>
+  <text x="100" y="154" font-size="13" font-style="italic" fill="#9a5b2b" text-anchor="middle">présentation</text>
+  <line x1="40" y1="166" x2="160" y2="166" stroke="#9a5b2b" stroke-opacity="0.35"/>
+  <text x="100" y="188" font-size="13" fill="#1f2328" text-anchor="middle">le schéma de requête</text>
+  <text x="100" y="208" font-size="13" fill="#1f2328" text-anchor="middle">de la route</text>
+  <rect x="214" y="108" width="152" height="124" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="290" y="134" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">2. permission</text>
+  <text x="290" y="154" font-size="13" font-style="italic" fill="#2b5d8a" text-anchor="middle">application</text>
+  <line x1="230" y1="166" x2="350" y2="166" stroke="#2b5d8a" stroke-opacity="0.35"/>
+  <text x="290" y="184" font-size="13" fill="#1f2328" text-anchor="middle">exigée par le cas</text>
+  <text x="290" y="202" font-size="13" fill="#1f2328" text-anchor="middle">d'usage, vérifiée</text>
+  <text x="290" y="220" font-size="13" fill="#1f2328" text-anchor="middle">par le bus</text>
+  <rect x="404" y="108" width="152" height="124" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="480" y="134" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">3. politique</text>
+  <text x="480" y="154" font-size="13" font-style="italic" fill="#2b5d8a" text-anchor="middle">application</text>
+  <line x1="420" y1="166" x2="540" y2="166" stroke="#2b5d8a" stroke-opacity="0.35"/>
+  <text x="480" y="184" font-size="13" fill="#1f2328" text-anchor="middle">sur ce rendez-vous,</text>
+  <text x="480" y="202" font-size="13" fill="#1f2328" text-anchor="middle">vérifiée par le</text>
+  <text x="480" y="220" font-size="13" fill="#1f2328" text-anchor="middle">gestionnaire</text>
+  <rect x="594" y="108" width="152" height="124" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="670" y="134" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">4. invariants</text>
+  <text x="670" y="154" font-size="13" font-style="italic" fill="#2f6f4f" text-anchor="middle">domaine</text>
+  <line x1="610" y1="166" x2="730" y2="166" stroke="#2f6f4f" stroke-opacity="0.35"/>
+  <text x="670" y="188" font-size="13" fill="#1f2328" text-anchor="middle">dans</text>
+  <text x="670" y="208" font-size="13" fill="#1f2328" text-anchor="middle">appointment.cancel</text>
+  <rect x="784" y="108" width="152" height="124" rx="10" fill="#ffffff" stroke="#3d4449" stroke-width="2"/>
+  <text x="860" y="134" font-size="16" font-weight="700" fill="#1f2328" text-anchor="middle">acceptée</text>
+  <line x1="800" y1="166" x2="920" y2="166" stroke="#3d4449" stroke-opacity="0.35"/>
+  <text x="860" y="188" font-size="13" fill="#1f2328" text-anchor="middle">enregistrée, son</text>
+  <text x="860" y="208" font-size="13" fill="#1f2328" text-anchor="middle">événement consigné</text>
+  <!-- passes -->
+  <line x1="178" y1="170" x2="210" y2="170" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="368" y1="170" x2="400" y2="170" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="558" y1="170" x2="590" y2="170" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="748" y1="170" x2="780" y2="170" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- refused -->
+  <line x1="100" y1="234" x2="100" y2="290" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="108" y="266" font-size="13" fill="#1f2328">mal formée</text>
+  <line x1="290" y1="234" x2="290" y2="290" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="298" y="266" font-size="13" fill="#1f2328">non permise</text>
+  <line x1="480" y1="234" x2="480" y2="290" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="488" y="266" font-size="13" fill="#1f2328">pas le sien</text>
+  <line x1="670" y1="234" x2="670" y2="290" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="678" y="266" font-size="13" fill="#1f2328">violé</text>
+  <rect x="24" y="294" width="152" height="84" rx="10" fill="#ffffff" stroke="#3d4449" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="100" y="322" font-size="16" font-weight="700" fill="#1f2328" text-anchor="middle">422</text>
+  <text x="100" y="344" font-size="13" fill="#1f2328" text-anchor="middle">les problèmes, avec</text>
+  <text x="100" y="362" font-size="13" fill="#1f2328" text-anchor="middle">leurs chemins</text>
+  <rect x="214" y="294" width="152" height="84" rx="10" fill="#ffffff" stroke="#3d4449" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="290" y="322" font-size="16" font-weight="700" fill="#1f2328" text-anchor="middle">401 ou 403</text>
+  <text x="290" y="344" font-size="13" fill="#1f2328" text-anchor="middle">aucun gestionnaire</text>
+  <text x="290" y="362" font-size="13" fill="#1f2328" text-anchor="middle">ne s'exécute</text>
+  <rect x="404" y="294" width="152" height="84" rx="10" fill="#ffffff" stroke="#3d4449" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="480" y="322" font-size="16" font-weight="700" fill="#1f2328" text-anchor="middle">403</text>
+  <text x="480" y="344" font-size="13" fill="#1f2328" text-anchor="middle">rien ne change</text>
+  <rect x="594" y="294" width="152" height="84" rx="10" fill="#ffffff" stroke="#3d4449" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="670" y="322" font-size="16" font-weight="700" fill="#1f2328" text-anchor="middle">DomainError</text>
+  <text x="670" y="344" font-size="13" fill="#1f2328" text-anchor="middle">son code, associé</text>
+  <text x="670" y="362" font-size="13" fill="#1f2328" text-anchor="middle">une fois : 409, 422...</text>
+  <!-- legend -->
+  <text x="32" y="414" font-size="14" fill="#1f2328">De gauche à droite : le contrôle passe. Vers le bas : la requête est refusée, et rien de ce qui suit ne s'exécute.</text>
+</svg>

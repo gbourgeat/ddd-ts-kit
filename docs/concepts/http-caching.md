@@ -18,6 +18,8 @@ authorization made for one actor.
 | Application cache (`Cache` port) | values the application computed or fetched | the process, or a Redis protocol server | expiry, a deletion by key | the working hours a gateway read from another context |
 | Read model | rows shaped for a query, kept up to date by events | the database | the events of the aggregates it follows | the agenda of a practice, searched by day |
 
+![A request crosses the browser cache, the shared cache, the application with its application cache, then the database with its read models; a hit at each layer saves everything to its right](../assets/diagrams/http-caching-layers.svg)
+
 They answer different questions. A read model answers "what is the state, shaped for this
 question?" and is correct by construction, eventually. An application cache answers "have I
 computed this recently?" inside the process
@@ -44,6 +46,20 @@ The freshness directives say for how long: `max-age` for every cache, `s-maxage`
 caches, `stale-while-revalidate` and `stale-if-error` for how long a stale answer may still be
 served while the cache asks again or while the server fails.
 
+What the kit answers for the three kinds of read of the running example, the directives always
+in this order:
+
+```http
+# GET /calendars/c-1/opening-hours: the same for everybody (scope public)
+Cache-Control: public, max-age=60, s-maxage=3600, stale-while-revalidate=30, stale-if-error=86400
+
+# GET /calendars/c-1/days/2026-03-02: what this caller may see (scope private)
+Cache-Control: private, max-age=0, must-revalidate
+
+# a route that knows its caller and declares no policy; every refusal of a route that has one
+Cache-Control: no-store
+```
+
 ## Never cache a decision of authorization across actors
 
 What a caller may see is decided by the use case, for that caller: its permission, its access
@@ -53,14 +69,39 @@ under its URL alone, it is served to the next actor without the decision being m
 patient of one practice reads the agenda of another, a revoked delegation still reads what it
 read yesterday.
 
+![Above, a public answer without Vary: the shared cache keeps the agenda Ada was allowed to see and serves it to Bob without asking the application. Below, a private answer: each browser keeps its own copy, and the shared cache passes every request to the application](../assets/diagrams/http-caching-shared-cache-leak.svg)
+
 Hence the rule the kit holds: **a `public` answer of a route that knows its caller names in
 `vary` what says who calls, or its tenant**. Declared without any `vary`, the route is refused
-when it is declared; mounted with a `vary` that names neither `Authorization`, `Cookie` nor a
+when it is declared (`defineRoute`, or `controllerRoutes` for a controller); mounted with a `vary` that names neither `Authorization`, `Cookie` nor a
 header the tenant is read from (`vary: ['Accept-Language']` alone), it is refused when the routes
 are mounted, where the options of the application are known. With `vary: ['Authorization']` a
 shared cache keeps one answer per credential, which is rarely worth it; `private` is the usual
 answer. A route open to anybody (`Public`, `security: false`) shows the same thing to everybody
 and may be `public` as it is.
+
+<!-- checked sample -->
+```ts
+import { Authenticated, CacheScope, RouteGroup } from '@ddd-ts-kit/http';
+
+// instead of: a public answer behind Authenticated, with no vary. Every read of the group is
+// refused with a DeclarationError when its routes are built, and the ESLint rule
+// presentation/shared-cache-varies reports it in the editor.
+@RouteGroup({
+  prefix: '/agenda',
+  guards: [Authenticated],
+  cache: { scope: CacheScope.public, maxAge: '1m', sMaxAge: '5m' },
+})
+export class SharedAgendaRoutes {}
+
+// write: kept by the browser of the caller only, and revalidated with its ETag
+@RouteGroup({
+  prefix: '/agenda',
+  guards: [Authenticated],
+  cache: { scope: CacheScope.private, maxAge: '0s', mustRevalidate: true, etag: 'representation' },
+})
+export class AgendaRoutes {}
+```
 
 **`Vary` holds only where the cache honours it.** Varnish and Fastly keep one copy per value of
 the headers an answer varies on. Cloudflare ignores `Vary` (images aside) and Bunny keys on a
@@ -78,7 +119,8 @@ what every cache keys on.
 Two subtler leaks the declaration cannot see, and a reviewer must:
 
 - **A public route whose answer depends on something else than its URL**: a language read from
-  `Accept-Language`, a tenant read from a header or the host. Name it in `vary`.
+  `Accept-Language`, a header the code of the project reads itself. Name it in `vary`. The
+  headers the tenant resolver reads are added for you, and the host is part of every cache key.
 - **A shared answer that embeds the result of a permission**: a public list that leaves out
   what "the anonymous caller" may not see is fine, since every caller of it is anonymous; a
   list whose content changes with the token is not public.
@@ -90,6 +132,22 @@ it again: it asks whether its version is still the current one. The answer names
 in `ETag` (or the instant it last changed in `Last-Modified`), the caller sends it back in
 `If-None-Match` (or `If-Modified-Since`), and the server answers `304 Not Modified` without a
 body when nothing changed.
+
+```http
+GET /calendars/c-1/opening-hours
+
+HTTP/1.1 200 OK
+Cache-Control: public, max-age=60, s-maxage=3600, stale-while-revalidate=30, stale-if-error=86400
+ETag: W/"7"
+
+{ "calendarId": "c-1", "version": 7, "ranges": [ ... ] }
+
+GET /calendars/c-1/opening-hours
+If-None-Match: W/"7"
+
+HTTP/1.1 304 Not Modified
+ETag: W/"7"
+```
 
 Two ways to name a version, two costs:
 
@@ -107,6 +165,88 @@ between. This is optimistic concurrency stretched to the person: the version the
 screen, minutes ago, and not only the one the handler loaded a millisecond before saving, which
 the `version` column of the aggregate already protects. The decision stays in the use case,
 which knows the aggregate; the edge only reads the header and hands the version over.
+
+```http
+PUT /calendars/c-1/opening-hours
+If-Match: W/"7"
+
+HTTP/1.1 412 Precondition Failed
+Content-Type: application/problem+json
+Cache-Control: no-store
+
+{ "type": "urn:problem:precondition-failed", "title": "Precondition Failed", "status": 412,
+  "code": "PRECONDITION_FAILED", "detail": "c-1 is at version 8, and the change was made on version 7.", ... }
+```
+
+The controller declares `ifMatch` and passes `request.context.expectedVersion` into its
+command; the handler compares it with the version it loaded:
+
+<!-- checked sample -->
+```ts
+// scheduling/application/commands/set-opening-hours/set-opening-hours.handler.ts
+import { definePermissions } from '@ddd-ts-kit/auth';
+import {
+  AggregateRoot,
+  AuthorizedCommand,
+  Clock,
+  ConceptError,
+  expectVersion,
+  type Actor,
+} from '@ddd-ts-kit/kernel';
+import { CommandHandler, Requires } from '@ddd-ts-kit/kernel/declarations';
+
+// the aggregate, its repository port and its error, from the domain
+declare class Calendar extends AggregateRoot {
+  setOpeningHours(ranges: readonly string[], at: Date): void;
+}
+declare abstract class CalendarRepository {
+  findById(id: string): Promise<Calendar | undefined>;
+  save(calendar: Calendar): Promise<void>;
+}
+declare class CalendarError extends ConceptError {
+  static unknown(calendarId: string): CalendarError;
+}
+
+const permissions = definePermissions('scheduling', { 'calendar.set-opening-hours': { description: 'Set opening hours' } });
+
+@Requires(permissions['calendar.set-opening-hours'], {
+  resource: (command: SetOpeningHoursCommand) => ({ type: 'calendar', id: command.calendarId }),
+})
+export class SetOpeningHoursCommand extends AuthorizedCommand<string> {
+  constructor(
+    actor: Actor,
+    readonly calendarId: string,
+    readonly ranges: readonly string[],
+    /** The version the client read, from If-Match; undefined when it sent none. */
+    readonly expectedVersion?: number,
+  ) {
+    super(actor);
+  }
+}
+
+@CommandHandler(SetOpeningHoursCommand)
+export class SetOpeningHoursHandler implements CommandHandler<SetOpeningHoursCommand> {
+  constructor(
+    private readonly calendars: CalendarRepository,
+    private readonly clock: Clock,
+  ) {}
+
+  async execute(command: SetOpeningHoursCommand): Promise<string> {
+    const calendar = await this.calendars.findById(command.calendarId);
+
+    if (calendar === undefined) {
+      throw CalendarError.unknown(command.calendarId);
+    }
+
+    // PreconditionFailedError, answered 412, when somebody changed the calendar since that read
+    expectVersion(calendar, command.expectedVersion);
+    calendar.setOpeningHours(command.ranges, this.clock.now());
+    await this.calendars.save(calendar);
+
+    return calendar.id;
+  }
+}
+```
 
 ## Invalidation: purge after the commit, never before
 
@@ -127,6 +267,69 @@ When matters more than how:
   the outbox, written in the transaction of the command. A rollback removes it; a commit keeps
   it until the relay, in this process or the next one, hands it to the `CachePurger`, retrying
   while the cache does not answer.
+
+In code, the purge is one line in a handler of the domain event that changed what the answers
+show:
+
+<!-- checked sample -->
+```ts
+// scheduling/application/event-handlers/calendar-opening-hours-set.event-handler.ts
+import { CacheInvalidation, CachePurger, cacheTag, type DomainEvent } from '@ddd-ts-kit/kernel';
+import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
+
+export class CalendarOpeningHoursSet implements DomainEvent {
+  static readonly eventName = 'scheduling.calendar.opening-hours-set';
+
+  readonly name = CalendarOpeningHoursSet.eventName;
+
+  constructor(
+    readonly aggregateId: string,
+    readonly occurredAt: Date,
+  ) {}
+}
+
+// instead of: a purge sent after the commit, from the process: lost if it stops in between
+@DomainEventHandler(CalendarOpeningHoursSet, { name: CalendarOpeningHoursSet.eventName, phase: 'after-commit' })
+export class PurgeOpeningHoursAtOnce implements DomainEventHandler<CalendarOpeningHoursSet> {
+  constructor(private readonly purger: CachePurger) {}
+
+  async handle(event: CalendarOpeningHoursSet): Promise<void> {
+    await this.purger.purge([cacheTag('calendar', event.aggregateId)]);
+  }
+}
+
+// write: before-commit (the default phase), the request is a row of the outbox, in the
+// transaction of the command: a rollback purges nothing, a commit purges even after a crash
+@DomainEventHandler(CalendarOpeningHoursSet, { name: CalendarOpeningHoursSet.eventName })
+export class CalendarOpeningHoursSetEventHandler implements DomainEventHandler<CalendarOpeningHoursSet> {
+  constructor(private readonly cacheInvalidation: CacheInvalidation) {}
+
+  async handle(event: CalendarOpeningHoursSet): Promise<void> {
+    await this.cacheInvalidation.invalidate([cacheTag('calendar', event.aggregateId)]);
+  }
+}
+```
+
+The composition root gives the relay a publisher that hands the purge requests to the cache and
+every other event to the broker:
+
+<!-- checked sample -->
+```ts
+// platform: the publisher of the outbox relay
+import { VarnishCachePurger } from '@ddd-ts-kit/http/purgers';
+import { PurgingPublisher, RepeatedCachePurger, type IntegrationEventPublisher } from '@ddd-ts-kit/kernel';
+
+declare const broker: IntegrationEventPublisher;
+declare const config: { readonly varnishUrl: string; readonly varnishPurgeKey: string };
+
+export const publisher = new PurgingPublisher(
+  // purged again two seconds later: see "A read on its way when the purge runs" below
+  new RepeatedCachePurger(new VarnishCachePurger({ url: config.varnishUrl, key: config.varnishPurgeKey }), {
+    againAfterMs: 2_000,
+  }),
+  broker,
+);
+```
 
 A read model updated by a projection in the same transaction is purged by the same request; a
 read model updated later, by a consumer, asks for its own purge in the transaction of its
@@ -164,6 +367,8 @@ round. A public read that loaded the previous state just before the commit can r
 fast (woken at once when the command commits), so the window is the time of one read, but an hour
 of `s-maxage` turns it into an hour of a stale answer. Three ways to close it, from the cheapest:
 
+![A timeline: a read loads version 7 just before the command commits version 8; the relay purges; the read reaches the cache after the purge and is kept as fresh; a second purge, two seconds later, removes it](../assets/diagrams/http-caching-purge-race.svg)
+
 - **Purge twice**: `RepeatedCachePurger` purges, then purges the same tags again a little later
   (`againAfterMs`, longer than the slowest read). The second purge removes what arrived in
   between; it is best effort, lost if the process stops before it, which the first one is not.
@@ -184,13 +389,71 @@ a write of a cached group keeps the default of a write), or in the spec of a fun
 Validators (`etag`, `lastModified`) belong to the same policy, and `ifMatch` to the declaration
 of a write.
 
+<!-- checked sample -->
 ```ts
+import { CacheScope, Public, RouteGroup } from '@ddd-ts-kit/http';
+
 @RouteGroup({
   prefix: '/practices',
   guards: [Public],
   cache: { scope: CacheScope.public, maxAge: '1m', sMaxAge: '5m', staleWhileRevalidate: '30s' },
 })
 export class PracticeDirectoryRoutes {}
+```
+
+The read of the running example puts every piece of this page together on one controller: a
+public answer, kept an hour by the shared cache, revalidated by the version it shows, and filed
+under the tag of its calendar so that the command that changes the hours purges it.
+
+<!-- checked sample -->
+```ts
+// scheduling/presentation/http/calendars/get-opening-hours/get-opening-hours.controller.ts
+import { z } from 'zod';
+import { CacheScope, Controller, Public, type HttpRequest } from '@ddd-ts-kit/http';
+import { Query, type QueryBus } from '@ddd-ts-kit/kernel';
+import type { Infer } from '@ddd-ts-kit/validation';
+import { zodSchema } from '@ddd-ts-kit/validation/zod';
+
+const params = zodSchema(z.object({ calendarId: z.string() }));
+const answer = zodSchema(
+  z.object({
+    calendarId: z.string(),
+    version: z.number(),
+    ranges: z.array(z.object({ weekday: z.string(), start: z.string(), end: z.string() })),
+  }),
+  { io: 'output' },
+);
+
+// the query of the use case, declared @Public() in the application layer
+declare class GetOpeningHoursQuery extends Query<Infer<typeof answer>> {
+  constructor(calendarId: string);
+}
+
+@Controller({
+  tags: ['scheduling'],
+  guards: [Public],
+  method: 'GET',
+  path: '/calendars/:calendarId/opening-hours',
+  summary: 'Get opening hours',
+  params,
+  response: { status: 200, description: 'The weekly hours of the calendar.', body: answer },
+  cache: {
+    scope: CacheScope.public, // the same for everybody: Public, no vary needed
+    maxAge: '1m', // the browser asks again after a minute
+    sMaxAge: '1h', // Varnish keeps it an hour, unless a purge comes first
+    staleWhileRevalidate: '30s',
+    staleIfError: '1d', // served stale for a day if the API fails
+    etag: { version: 'version' }, // W/"7" from the version field of the body
+    tags: [{ resource: 'calendar', param: 'calendarId' }], // filed under calendar:c-1
+  },
+})
+export class GetOpeningHoursController {
+  constructor(private readonly queries: QueryBus) {}
+
+  async handle(request: HttpRequest<{ params: Infer<typeof params> }>): Promise<Infer<typeof answer>> {
+    return this.queries.execute(new GetOpeningHoursQuery(request.params.calendarId));
+  }
+}
 ```
 
 ## Limits

@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 480" width="960" height="480" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Les trois états d'un circuit</title>
+  <desc id="desc">Une machine à états de trois états. Fermé, l'état initial : les appels passent et les échecs consécutifs sont comptés ; une DomainError n'est pas un échec. Quand les échecs consécutifs atteignent failureThreshold, le circuit s'ouvre : les appels sont refusés aussitôt avec CIRCUIT_OPEN, sans appeler la dépendance. Une fois resetAfterMs écoulé, le circuit est semi-ouvert : un appel d'essai passe. S'il réussit, le circuit se ferme ; s'il échoue, il s'ouvre à nouveau. La jauge circuit_breaker_state publie 0 fermé, 1 semi-ouvert, 2 ouvert.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="480" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Les trois états d'un circuit</text>
+  <rect x="72" y="90" width="260" height="140" rx="12" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="202" y="118" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">fermé</text>
+  <line x1="88" y1="130" x2="316" y2="130" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text x="202" y="152" font-size="13" fill="#1f2328" text-anchor="middle">les appels passent ; échecs</text>
+  <text x="202" y="172" font-size="13" fill="#1f2328" text-anchor="middle">consécutifs comptés, hors DomainError</text>
+  <text x="202" y="218" font-size="13" font-style="italic" fill="#5f6b73" text-anchor="middle">circuit_breaker_state = 0</text>
+  <rect x="628" y="90" width="260" height="140" rx="12" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="758" y="118" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">ouvert</text>
+  <line x1="644" y1="130" x2="872" y2="130" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text x="758" y="152" font-size="13" fill="#1f2328" text-anchor="middle">refusés aussitôt : CIRCUIT_OPEN,</text>
+  <text x="758" y="172" font-size="13" fill="#1f2328" text-anchor="middle">la dépendance n'est pas appelée</text>
+  <text x="758" y="218" font-size="13" font-style="italic" fill="#5f6b73" text-anchor="middle">circuit_breaker_state = 2</text>
+  <rect x="350" y="300" width="260" height="140" rx="12" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="480" y="328" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">semi-ouvert</text>
+  <line x1="366" y1="340" x2="594" y2="340" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text x="480" y="362" font-size="13" fill="#1f2328" text-anchor="middle">un appel d'essai passe</text>
+  <text x="480" y="382" font-size="13" fill="#1f2328" text-anchor="middle">(halfOpenMax, un par défaut)</text>
+  <text x="480" y="428" font-size="13" font-style="italic" fill="#5f6b73" text-anchor="middle">circuit_breaker_state = 1</text>
+  <circle cx="40" cy="160" r="7" fill="#3d4449"/>
+  <line x1="47" y1="160" x2="68" y2="160" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="334" y1="130" x2="624" y2="130" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="479" y="118" font-size="13" fill="#1f2328" text-anchor="middle">les échecs consécutifs</text>
+  <text x="479" y="152" font-size="13" fill="#1f2328" text-anchor="middle">atteignent failureThreshold</text>
+  <line x1="700" y1="232" x2="560" y2="296" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="624" y="258" font-size="13" fill="#1f2328" text-anchor="end">resetAfterMs écoulé</text>
+  <path d="M612,380 H800 V234" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="808" y="330" font-size="13" fill="#1f2328">l'essai</text>
+  <text x="808" y="348" font-size="13" fill="#1f2328">échoue</text>
+  <path d="M348,380 H160 V234" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="168" y="330" font-size="13" fill="#1f2328">l'essai</text>
+  <text x="168" y="348" font-size="13" fill="#1f2328">réussit</text>
+  <text x="32" y="468" font-size="14" fill="#1f2328">Un circuit par instance et par méthode, dans le processus : chaque instance apprend seule que la dépendance est tombée.</text>
+</svg>

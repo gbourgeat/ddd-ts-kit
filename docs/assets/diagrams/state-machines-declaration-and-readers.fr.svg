@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 560" width="960" height="560" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Une seule déclaration du cycle de vie, et qui la lit</title>
+  <desc id="desc">La machine à états du rendez-vous est déclarée une fois, dans le domaine : ses états, ses états initiaux, ses transitions nommées d'après les méthodes d'intention, ses gardes et ses refus. L'agrégat l'appelle à l'exécution (start, next, can, isFinal), la spec de la machine aussi. ddd-ts-kit docs et ddd-ts-kit describe lisent son texte source pour la dessiner et la lister. La règle lifecycle/status-through-machine, tenue par ddd-ts-kit check et ESLint, lit le source de l'agrégat et vérifie chaque écriture de son statut.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="560" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Une seule déclaration du cycle de vie, et qui la lit</text>
+  <rect x="352" y="76" width="276" height="296" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="490" y="152" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">appointment.state-machine.ts</text>
+  <text x="490" y="180" font-size="13" fill="#1f2328" text-anchor="middle">defineStateMachine({</text>
+  <text x="490" y="202" font-size="13" fill="#1f2328" text-anchor="middle">states : le vocabulaire,</text>
+  <text x="490" y="224" font-size="13" fill="#1f2328" text-anchor="middle">les états initiaux,</text>
+  <text x="490" y="246" font-size="13" fill="#1f2328" text-anchor="middle">les transitions nommées</text>
+  <text x="490" y="268" font-size="13" fill="#1f2328" text-anchor="middle">d'après les méthodes</text>
+  <text x="490" y="290" font-size="13" fill="#1f2328" text-anchor="middle">d'intention, gardes, refused</text>
+  <text x="490" y="312" font-size="13" fill="#1f2328" text-anchor="middle">})</text>
+  <rect x="24" y="134" width="262" height="180" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="155" y="189" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">Agrégat Appointment</text>
+  <text x="155" y="215" font-size="13" fill="#1f2328" text-anchor="middle">start(..) à la création,</text>
+  <text x="155" y="235" font-size="13" fill="#1f2328" text-anchor="middle">next(..) dans chaque</text>
+  <text x="155" y="255" font-size="13" fill="#1f2328" text-anchor="middle">méthode d'intention,</text>
+  <text x="155" y="275" font-size="13" fill="#1f2328" text-anchor="middle">can(..), isFinal(..)</text>
+  <line x1="288" y1="224.0" x2="350" y2="224.0" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="319.0" y="214.0" font-size="13" fill="#1f2328" text-anchor="middle" font-style="italic">demande</text>
+  <rect x="24" y="396" width="262" height="84" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="155" y="423" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">ddd-ts-kit check, ESLint</text>
+  <text x="155" y="449" font-size="13" fill="#1f2328" text-anchor="middle">lifecycle/status-through-machine :</text>
+  <text x="155" y="469" font-size="13" fill="#1f2328" text-anchor="middle">chaque écriture du statut</text>
+  <line x1="155.0" y1="394" x2="155.0" y2="316" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <rect x="700" y="76" width="236" height="84" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="818" y="103" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">ddd-ts-kit docs</text>
+  <text x="818" y="129" font-size="13" fill="#1f2328" text-anchor="middle">le diagramme Mermaid</text>
+  <text x="818" y="149" font-size="13" fill="#1f2328" text-anchor="middle">de CONTEXT.md</text>
+  <rect x="700" y="182" width="236" height="84" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="818" y="209" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">ddd-ts-kit describe</text>
+  <text x="818" y="235" font-size="13" fill="#1f2328" text-anchor="middle">ses états et</text>
+  <text x="818" y="255" font-size="13" fill="#1f2328" text-anchor="middle">ses transitions</text>
+  <rect x="700" y="288" width="236" height="84" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="2"/>
+  <text x="818" y="315" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">Spec de la machine</text>
+  <text x="818" y="341" font-size="13" fill="#1f2328" text-anchor="middle">transitions et refus,</text>
+  <text x="818" y="361" font-size="13" fill="#1f2328" text-anchor="middle">par leur code</text>
+  <line x1="698" y1="118.0" x2="630" y2="118.0" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <line x1="698" y1="224.0" x2="630" y2="224.0" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <line x1="698" y1="330.0" x2="630" y2="330.0" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="32" y="520" width="22" height="16" rx="4" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="64" y="533" font-size="14" fill="#1f2328" text-anchor="start">couche domaine</text>
+  <rect x="206" y="520" width="22" height="16" rx="4" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="238" y="533" font-size="14" fill="#1f2328" text-anchor="start">outils du kit</text>
+  <rect x="380" y="520" width="22" height="16" rx="4" fill="#ffffff" stroke="#5f6b73" stroke-width="2"/>
+  <text x="412" y="533" font-size="14" fill="#1f2328" text-anchor="start">test</text>
+  <line x1="482" y1="528" x2="526" y2="528" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="538" y="533" font-size="14" fill="#1f2328" text-anchor="start">l'appelle à l'exécution</text>
+  <line x1="722" y1="528" x2="766" y2="528" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <text x="778" y="533" font-size="14" fill="#1f2328" text-anchor="start">lit son texte source</text>
+</svg>

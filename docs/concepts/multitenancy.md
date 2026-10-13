@@ -29,21 +29,58 @@ plans. It lives in tables without a tenant column, and the work that reads it na
 | Scheduled job | none for a `global` job; each tenant of the `TenantDirectory` in turn for a `per-tenant` one |
 | Platform staff | none of their own: they reach tenants through an explicit, audited elevation |
 
+![Three boundaries name the tenant (an HTTP request through a resolver checked against the memberships, a consumed event through its envelope, a per-tenant job once per tenant) and open the execution scope with it; repositories, the outbox and brokers, cache and lock keys, logs and the audit trail read it; handlers and the domain never do](../assets/diagrams/multitenancy-tenant-flow.svg)
+
 A tenant id has one grammar, `isTenantId`: letters, digits, `_` and `-`, at most 63 characters
 (a slug or a UUID). Every entry refuses any other: the edge answers 404 to a request that names
-one, a broker treats an envelope that carries one as poison, and `executionContext`,
-`acrossTenants`, `InMemoryTenantDirectory` and the settings of row-level security throw
-`InvalidTenantIdError`. Nothing a tenant id holds can then be read as a wildcard (`*`), a list
-(`a,b`) or a part of a key (`a:b`).
+one, a broker treats an envelope that carries one as poison, `executionContext`,
+`InMemoryTenantDirectory` and the settings of row-level security throw `InvalidTenantIdError`,
+and `acrossTenants` refuses an elevation that names one (`InvalidTenantElevationError`). Nothing
+a tenant id holds can then be read as a wildcard (`*`), a list (`a,b`) or a part of a key
+(`a:b`).
 
 `tenantScopeOf(scope)` answers the one tenant a write names and refuses work that names none
 (`NoCurrentTenantError`): a statement cannot run unscoped by omission. `tenantReachOf(scope)` is
-the read side: the tenant of the work, or the tenants of an elevation.
+the read side: the tenant of the work, or the tenants of an elevation. With the test double of
+the scope, what each answers:
+
+<!-- checked sample -->
+```ts
+import {
+  executionContext,
+  FixedExecutionScope,
+  NoCurrentTenantError,
+  systemActor,
+  tenantKey,
+  tenantReachOf,
+  tenantScopeOf,
+} from '@ddd-ts-kit/kernel';
+
+const inAcme = new FixedExecutionScope(
+  executionContext({ correlationId: 'req-42', actor: systemActor('demo'), origin: 'cli', tenantId: 'acme' }),
+);
+
+console.log(tenantScopeOf(inAcme)); // { tenantId: 'acme' }: the one tenant a write names
+console.log(tenantReachOf(inAcme)); // { kind: 'tenant', tenantId: 'acme' }: what a read may see
+console.log(tenantKey(inAcme, 'reminders', 'a:b')); // 'tenant:acme:reminders:a%3Ab'
+
+const inNoTenant = new FixedExecutionScope(
+  executionContext({ correlationId: 'req-43', actor: systemActor('demo'), origin: 'cli' }),
+);
+
+try {
+  tenantScopeOf(inNoTenant);
+} catch (error) {
+  console.log(error instanceof NoCurrentTenantError); // true: no tenant, no statement
+}
+```
 
 ## Isolation: four strategies
 
 The tenant reaches the storage through the execution scope; the strategy decides what stops a
 statement from crossing to another tenant.
+
+![Four isolation strategies side by side: shared tables with a tenant_id column, the same under row-level security, one schema per tenant in one database, one database per tenant; from left to right sharing decreases and separation grows](../assets/diagrams/multitenancy-isolation-strategies.svg)
 
 | Strategy | What isolates | Choose it when | It costs |
 |---|---|---|---|
@@ -66,6 +103,83 @@ on PostgreSQL:
 through the helpers, the outbox keeping the tenant, and the rule `tenancy/scoped-statement` of the
 checker reporting a statement that reaches a table straight from the executor. The three others
 are wired by hand from the packages for now; `init` refuses them and says what to add.
+
+A repository on shared tables, a simplified version of what the generator writes on Knex (the
+audit columns and the `Clock` they need are left out): every statement goes through
+a helper that reads the tenant from the scope, reads through `tenantTable`, writes through
+`ownTenantTable`, and an insert names its tenant with `tenantRow`:
+
+<!-- checked sample -->
+```ts
+// contexts/appointments/infrastructure/persistence/knex-appointment.repository.ts
+import { AggregateRoot, tenantScopeOf, type ExecutionScope } from '@ddd-ts-kit/kernel';
+import {
+  insertIgnoringConflict,
+  optimisticUpdate,
+  ownTenantTable,
+  tenantRow,
+  tenantTable,
+  type KnexContext,
+  type TenantRow,
+} from '@ddd-ts-kit/knex';
+
+interface AppointmentColumns {
+  readonly id: string;
+  readonly practitioner_id: string;
+  readonly status: 'booked' | 'cancelled';
+}
+type VersionedAppointment = AppointmentColumns & { readonly version: number };
+type AppointmentRow = VersionedAppointment & TenantRow;
+
+// The aggregate and its mapper, in domain/ and infrastructure/persistence/:
+declare class Appointment extends AggregateRoot<string> {
+  private constructor();
+}
+declare const AppointmentMapper: {
+  toDomain(row: AppointmentRow): Appointment;
+  toRow(appointment: Appointment): AppointmentColumns;
+};
+
+const TABLE = { schema: 'appointments', table: 'appointments' };
+
+export class KnexAppointmentRepository {
+  constructor(
+    private readonly database: KnexContext,
+    private readonly scope: ExecutionScope,
+  ) {}
+
+  async findById(id: string): Promise<Appointment | undefined> {
+    // Instead of: this.database.executor()<AppointmentRow, AppointmentRow[]>('appointments').where({ id }),
+    // which reads the rows of every tenant (tenancy/scoped-statement). Write:
+    const row = await tenantTable<AppointmentRow>(this.database, this.scope, TABLE).where({ id }).first();
+
+    return row === undefined ? undefined : AppointmentMapper.toDomain(row);
+  }
+
+  async save(appointment: Appointment): Promise<void> {
+    await optimisticUpdate(appointment, async ({ expected, next }) => {
+      const state = { ...AppointmentMapper.toRow(appointment), version: next };
+
+      return expected === 0 ? this.insert(state) : this.update(state, expected);
+    });
+  }
+
+  private async insert(state: VersionedAppointment): Promise<number> {
+    const row = { ...state, ...tenantRow(tenantScopeOf(this.scope)) }; // { tenant_id: 'acme' }
+    const table = ownTenantTable<AppointmentRow>(this.database, this.scope, TABLE);
+    const inserted = await insertIgnoringConflict(this.database.executor(), table, { row, conflict: 'id' });
+
+    return inserted ? 1 : 0;
+  }
+
+  private async update(state: VersionedAppointment, expected: number): Promise<number> {
+    // The one tenant of the work, even under an elevation: reads may widen, writes never.
+    return ownTenantTable<AppointmentRow>(this.database, this.scope, TABLE)
+      .where({ id: state.id, version: expected })
+      .update(state);
+  }
+}
+```
 
 The outbox keeps the tenant of each event on Knex (`tenant: true`) and Drizzle
 (`tenantOutboxTable`); the Prisma and TypeORM outboxes do not store it yet, so their consumers
@@ -136,6 +250,29 @@ every tenant. Instead:
 3. The elevation is written to the audit trail (action `tenancy:elevate`) **before** the work
    runs; a trail that cannot record it refuses it.
 4. Inside, reads see the tenants named; writes still name one tenant.
+
+<!-- checked sample -->
+```ts
+// platform/support/appointments-for-a-ticket.ts
+import { acrossTenants, type AuditTrail, type Clock, type ExecutionScope, type IdGenerator } from '@ddd-ts-kit/kernel';
+
+// Resolved from the container by the platform:
+declare const scope: ExecutionScope;
+declare const trail: AuditTrail;
+declare const clock: Clock;
+declare const ids: IdGenerator;
+// A read through tenantTable, which follows the reach of the scope:
+declare function searchAppointments(practitionerId: string): Promise<readonly { readonly id: string }[]>;
+
+export async function appointmentsForATicket(practitionerId: string, tenants: readonly string[]) {
+  // The permission to elevate was decided before this call, like any permission.
+  return acrossTenants(
+    { scope, trail, clock, ids },
+    { reason: 'SUPPORT_TICKET', tenants }, // a stable code, and the tenants reached ('all' or a list)
+    () => searchAppointments(practitionerId), // recorded as tenancy:elevate before it runs
+  );
+}
+```
 
 ## Limits and when not to use it
 

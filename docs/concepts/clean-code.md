@@ -100,18 +100,18 @@ cancel(reason: CancellationReason, at: Date): void {
   this.assertNotCancelled();
   this.assertWithinCancellationWindow(at);
 
-  this.status = AppointmentStatus.cancelled(reason, at);
-  this.record(new AppointmentCancelled(this.id, reason, at));
+  this.status = { kind: 'cancelled', at, reason };
+  this.record(new AppointmentCancelled(this.id, at, reason));
 }
 
 private assertNotCancelled(): void {
-  if (this.status.isCancelled) {
+  if (this.status.kind === 'cancelled') {
     throw AppointmentError.alreadyCancelled(this.id);
   }
 }
 
 private assertWithinCancellationWindow(at: Date): void {
-  if (!this.slot.startsAfter(at, CANCELLATION_NOTICE)) {
+  if (!this.slot.startsAtLeast(CANCELLATION_NOTICE_HOURS, at)) {
     throw AppointmentError.cancellationWindowPassed(this.id, this.slot.startsAt);
   }
 }
@@ -132,6 +132,151 @@ Four rules met at once:
 Guard clauses come first and the happy path stays unindented; there is no `else` after a
 `return` or a `throw`.
 
+```ts
+// refused: the rule is buried in an else, the happy path is indented
+if (this.status.kind !== 'cancelled') {
+  this.status = { kind: 'cancelled', at, reason };
+} else {
+  throw AppointmentError.alreadyCancelled(this.id);
+}
+
+// required: the guard first, then the happy path at the left margin
+if (this.status.kind === 'cancelled') {
+  throw AppointmentError.alreadyCancelled(this.id);
+}
+
+this.status = { kind: 'cancelled', at, reason };
+```
+
+Put together, the "after" version is a complete aggregate. The sample below compiles against the
+kit as it is; in a project, each class sits in its own file (see
+[One concept per file](#one-concept-per-file)), and the generator writes their skeletons.
+
+Its `AppointmentStatus` is not the vocabulary `AppointmentStatus.NoShow` of the paragraph on
+magic values: it is a discriminated union whose `kind` carries data of its own (the instant and
+the reason of a cancellation), and such a union stays a union of literal types, which the
+compiler checks at every `switch`. `CancellationReason` stays a union of two literals too, to
+keep the samples short and self-contained; in a project where other code compares, grants or
+stores the reasons, declare it as a vocabulary and write `CancellationReason.ClientRequest`
+([Ubiquitous language](ubiquitous-language.md#closed-vocabularies) weighs the same choice for
+`'patient' | 'practice'`).
+
+<!-- checked sample -->
+```ts
+import { AggregateRoot, ConceptError, ValueObject, type DomainEvent } from '@ddd-ts-kit/kernel';
+
+const CANCELLATION_NOTICE_HOURS = 24;
+const MILLISECONDS_PER_HOUR = 3_600_000;
+
+export type CancellationReason = 'client-request' | 'practitioner-unavailable';
+
+/** A cancelled appointment always has a reason and an instant: no other shape is possible. */
+export type AppointmentStatus =
+  | { readonly kind: 'booked' }
+  | { readonly kind: 'cancelled'; readonly at: Date; readonly reason: CancellationReason };
+
+export class TimeSlot extends ValueObject<{ startsAt: Date; endsAt: Date }> {
+  static of(startsAt: Date, endsAt: Date): TimeSlot {
+    return new TimeSlot({ startsAt, endsAt });
+  }
+
+  get startsAt(): Date {
+    return this.props.startsAt;
+  }
+
+  /** True when the slot starts `hours` or more after `at`. */
+  startsAtLeast(hours: number, at: Date): boolean {
+    return this.props.startsAt.getTime() - at.getTime() >= hours * MILLISECONDS_PER_HOUR;
+  }
+}
+
+export class AppointmentError extends ConceptError {
+  static alreadyCancelled(appointmentId: string) {
+    return AppointmentError.refusal(
+      'APPOINTMENT_ALREADY_CANCELLED',
+      `Appointment ${appointmentId} is already cancelled.`,
+      { appointmentId },
+    );
+  }
+
+  static cancellationWindowPassed(appointmentId: string, startsAt: Date) {
+    return AppointmentError.refusal(
+      'CANCELLATION_WINDOW_PASSED',
+      `Appointment ${appointmentId} starts too soon to be cancelled.`,
+      { appointmentId, startsAt },
+    );
+  }
+}
+
+export class AppointmentCancelled implements DomainEvent {
+  static readonly eventName = 'appointments.appointment.cancelled';
+
+  readonly name = AppointmentCancelled.eventName;
+
+  constructor(
+    readonly aggregateId: string,
+    readonly occurredAt: Date,
+    readonly reason: CancellationReason,
+  ) {}
+}
+
+export class Appointment extends AggregateRoot {
+  private constructor(
+    id: string,
+    private readonly slot: TimeSlot,
+    private status: AppointmentStatus,
+  ) {
+    super(id);
+  }
+
+  static book(id: string, slot: TimeSlot): Appointment {
+    return new Appointment(id, slot, { kind: 'booked' });
+  }
+
+  cancel(reason: CancellationReason, at: Date): void {
+    this.assertNotCancelled();
+    this.assertWithinCancellationWindow(at);
+
+    this.status = { kind: 'cancelled', at, reason };
+    this.record(new AppointmentCancelled(this.id, at, reason));
+  }
+
+  private assertNotCancelled(): void {
+    if (this.status.kind === 'cancelled') {
+      throw AppointmentError.alreadyCancelled(this.id);
+    }
+  }
+
+  private assertWithinCancellationWindow(at: Date): void {
+    if (!this.slot.startsAtLeast(CANCELLATION_NOTICE_HOURS, at)) {
+      throw AppointmentError.cancellationWindowPassed(this.id, this.slot.startsAt);
+    }
+  }
+}
+```
+
+A spec reads the refusal by its code, which is what the business and the API both see:
+
+<!-- checked sample -->
+```ts
+import { expectRefusal } from '@ddd-ts-kit/testing';
+import { it } from 'vitest';
+
+declare class Appointment {
+  cancel(reason: 'client-request', at: Date): void;
+}
+declare function aBookedAppointmentStartingAt(startsAt: Date): Appointment;
+
+it('refuses to cancel an appointment that starts in less than 24 hours', () => {
+  const appointment = aBookedAppointmentStartingAt(new Date('2026-03-02T10:00:00.000Z'));
+
+  expectRefusal(
+    () => appointment.cancel('client-request', new Date('2026-03-01T12:00:00.000Z')),
+    'CANCELLATION_WINDOW_PASSED',
+  );
+});
+```
+
 ## The stepdown rule
 
 A file reads like a newspaper article: the intention at the top, the details below. In a class:
@@ -149,6 +294,8 @@ export class Appointment extends AggregateRoot {
   private assertWithinCancellationWindow(at: Date)
 }
 ```
+
+![A class read from top to bottom: static factories first, then the public intentions, then each private helper below the method that calls it first; the first screen tells what an appointment can do](../assets/diagrams/clean-code-stepdown.svg)
 
 The payoff is in reading: opening the file answers "what can an appointment do" in the first
 screen, and a reader stops as soon as they know enough. It also makes files predictable for a
@@ -229,6 +376,40 @@ type AppointmentStatus =
   | { kind: 'cancelled'; at: Date; reason: CancellationReason };
 ```
 
+With the union, the compiler checks every `switch` over the status: a kind added later fails
+the build wherever it is not handled yet. And where a value arrives whose shape is not known
+(a parsed body, a stored JSON column), `unknown` and a test the compiler follows replace `any`:
+
+<!-- checked sample -->
+```ts
+type CancellationReason = 'client-request' | 'practitioner-unavailable';
+
+type AppointmentStatus =
+  | { readonly kind: 'booked' }
+  | { readonly kind: 'cancelled'; readonly at: Date; readonly reason: CancellationReason }
+  | { readonly kind: 'completed'; readonly at: Date };
+
+/** No default branch: a new kind of status does not compile until it is handled here. */
+export function isOpen(status: AppointmentStatus): boolean {
+  switch (status.kind) {
+    case 'booked':
+      return true;
+    case 'cancelled':
+    case 'completed':
+      return false;
+  }
+}
+
+/** Instead of `(row as any).reason`: `unknown`, narrowed by tests the compiler follows. */
+export function reasonOf(row: unknown): CancellationReason | undefined {
+  if (typeof row !== 'object' || row === null || !('reason' in row)) {
+    return undefined;
+  }
+
+  return row.reason === 'client-request' || row.reason === 'practitioner-unavailable' ? row.reason : undefined;
+}
+```
+
 A suppression is a deviation: it names its rule, gives a reason and points to a decision
 record (rule `governance/recorded-deviation`).
 
@@ -270,6 +451,104 @@ its result differs at every run. The second takes a fixed clock and sequential i
 a spec and asserts exact values. The SMS left the handler altogether: confirming a booking is
 a reaction of the `notifications` context to `appointments.appointment.booked`. Note that the
 aggregate receives the instant as an argument; aggregates do not hold a clock.
+
+![Before: the handler reaches a random generator, the system clock, the environment and an SMS module directly. After: it depends on the Clock and IdGenerator ports and on its repository port, each implemented by a real adapter in production and by a fake in a spec](../assets/diagrams/clean-code-testable-by-construction.svg)
+
+The whole handler of the second version, with what it receives:
+
+<!-- checked sample -->
+```ts
+import {
+  AggregateRoot,
+  AuthorizedCommand,
+  Clock,
+  IdGenerator,
+  Repository,
+  type Actor,
+  type CommandHandler,
+} from '@ddd-ts-kit/kernel';
+
+// Declared here so that the sample compiles alone; in a project they are files of the domain.
+declare class TimeSlot {
+  readonly startsAt: Date;
+}
+declare class Appointment extends AggregateRoot {
+  static book(id: string, clientId: string, slot: TimeSlot, at: Date): Appointment;
+}
+export abstract class AppointmentRepository extends Repository<Appointment> {}
+
+export class BookAppointment extends AuthorizedCommand<string> {
+  constructor(
+    actor: Actor,
+    readonly clientId: string,
+    readonly slot: TimeSlot,
+  ) {
+    super(actor);
+  }
+}
+
+export class BookAppointmentHandler implements CommandHandler<BookAppointment> {
+  constructor(
+    private readonly appointments: AppointmentRepository,
+    private readonly ids: IdGenerator,
+    private readonly clock: Clock,
+  ) {}
+
+  async execute(command: BookAppointment): Promise<string> {
+    const appointment = Appointment.book(this.ids.next(), command.clientId, command.slot, this.clock.now());
+
+    await this.appointments.save(appointment);
+
+    return appointment.id;
+  }
+}
+```
+
+And its spec, which gives it a fixed clock, sequential identifiers and the in-memory fake of
+the repository, then asserts exact values. The handler is built by hand here to show what it
+receives; [Testing strategy](testing-strategy.md) shows the test application that wires the same
+fakes for you.
+
+<!-- checked sample -->
+```ts
+import { AggregateRoot, Clock, FixedClock, IdGenerator, SequentialIdGenerator, type Actor } from '@ddd-ts-kit/kernel';
+import { anActor } from '@ddd-ts-kit/auth/testing';
+import { InMemoryRepository } from '@ddd-ts-kit/testing';
+import { describe, expect, it } from 'vitest';
+
+// What the spec imports from the context, declared here so that the sample compiles alone.
+declare class TimeSlot {
+  static of(startsAt: Date, endsAt: Date): TimeSlot;
+}
+declare class Appointment extends AggregateRoot {
+  readonly bookedAt: Date;
+}
+declare class FakeAppointmentRepository extends InMemoryRepository<Appointment> {
+  constructor();
+}
+declare class BookAppointment {
+  constructor(actor: Actor, clientId: string, slot: TimeSlot);
+}
+declare class BookAppointmentHandler {
+  constructor(appointments: FakeAppointmentRepository, ids: IdGenerator, clock: Clock);
+  execute(command: BookAppointment): Promise<string>;
+}
+
+describe('Booking an appointment', () => {
+  it('books the slot at the instant of the clock, under the next identifier', async () => {
+    const now = new Date('2026-03-02T09:00:00.000Z');
+    const appointments = new FakeAppointmentRepository();
+    const ids = new SequentialIdGenerator('appointment');
+    const handler = new BookAppointmentHandler(appointments, ids, new FixedClock(now));
+    const slot = TimeSlot.of(new Date('2026-03-04T10:00:00.000Z'), new Date('2026-03-04T10:30:00.000Z'));
+
+    const id = await handler.execute(new BookAppointment(anActor().named('client-1').build(), 'client-1', slot));
+
+    expect(id).toBe('appointment-1');
+    expect((await appointments.findById(id))?.bookedAt).toEqual(now);
+  });
+});
+```
 
 A class that needs a mock of a module to be tested is breaking one of these rules. That is the
 link between this page and [Testing strategy](testing-strategy.md).

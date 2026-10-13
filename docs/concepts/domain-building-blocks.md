@@ -11,16 +11,24 @@ assigning fields. In this kit a repository is an abstract class of the domain wi
 infrastructure, a domain service is stateless and performs no I/O, domain events stay inside
 their context, and factories are static methods on the aggregate.
 
+![The command handler asks a domain service, calls one intention of the aggregate and loads and saves it through the repository port; the aggregate records domain events, dispatched to the domain event handlers once the handler has returned; the repository adapter of infrastructure implements the port](../assets/diagrams/domain-building-blocks-overview.svg)
+
 ## Domain events
 
 A domain event states that something happened: `AppointmentBooked`,
 `AppointmentRescheduled`, `AppointmentCancelled`. It is named in the past tense, it is
 immutable, and it carries the facts a reaction needs, never the aggregate itself.
 
+<!-- checked sample -->
 ```ts
 // contexts/appointments/domain/events/appointment-cancelled.event.ts
 import type { DomainEvent } from '@ddd-ts-kit/kernel';
-import type { CancellationReason } from '@/contexts/appointments/domain/value-objects/cancellation-reason.vo';
+
+// a value object of the model, from domain/value-objects/: declared here so that the sample stands alone
+interface CancellationReason {
+  readonly by: 'client' | 'practice';
+  readonly late: boolean;
+}
 
 export class AppointmentCancelled implements DomainEvent {
   static readonly eventName = 'appointments.appointment.cancelled';
@@ -43,22 +51,54 @@ handler listening to the old name. `events/name-format` holds its form,
 handler that writes the name out are still read; `declarations/role-declared` then compares the
 two.
 
+The aggregate records the event in the method that changes its state, after the invariant and
+the change:
+
+<!-- checked sample -->
+```ts
+// contexts/appointments/domain/aggregates/appointment.aggregate.ts (an excerpt)
+import { AggregateRoot, ConceptError, type DomainEvent } from '@ddd-ts-kit/kernel';
+
+class AppointmentCancelled implements DomainEvent {
+  static readonly eventName = 'appointments.appointment.cancelled';
+
+  readonly name = AppointmentCancelled.eventName;
+
+  constructor(
+    readonly aggregateId: string,
+    readonly occurredAt: Date,
+    readonly reason: string,
+  ) {}
+}
+
+class AppointmentError extends ConceptError {
+  static alreadyCancelled(appointmentId: string) {
+    return AppointmentError.refusal('APPOINTMENT_ALREADY_CANCELLED', `Appointment ${appointmentId} is already cancelled.`, { appointmentId });
+  }
+}
+
+export class Appointment extends AggregateRoot<string> {
+  private constructor(
+    id: string,
+    private status: 'booked' | 'cancelled',
+  ) {
+    super(id);
+  }
+
+  cancel(reason: string, at: Date): void {
+    if (this.status === 'cancelled') {
+      throw AppointmentError.alreadyCancelled(this.id); // the invariant first
+    }
+
+    this.status = 'cancelled'; // then the change of state
+    this.record(new AppointmentCancelled(this.id, at, reason)); // then the fact, recorded, not published
+  }
+}
+```
+
 The life of a domain event:
 
-```mermaid
-sequenceDiagram
-  participant H as Command handler
-  participant A as Appointment
-  participant R as Repository
-  participant D as Domain event handlers
-  H->>A: cancel(reason, at)
-  A->>A: check invariants, change state, record AppointmentCancelled
-  H->>R: save(appointment), the recorded events are queued
-  H-->>D: once the handler has returned, the queue is dispatched, in recording order
-  D->>D: reactions inside the same context, before the commit
-  Note over H,D: all inside the unit of work of the command, which then commits or rolls back
-  Note over D: handlers declared after-commit run once it has committed
-```
+![The handler calls cancel on the appointment, which records AppointmentCancelled; save queues the recorded events; once the handler has returned they are dispatched in recording order to the handlers before the commit, inside the unit of work; handlers declared after-commit run once it has committed](../assets/diagrams/domain-building-blocks-event-life.svg)
 
 - The **aggregate records** the event in the method that made the change. It does not publish
   anything: it has no bus and no dependency.
@@ -77,7 +117,51 @@ sequenceDiagram
 - A **domain event handler** (`application/event-handlers/`) reacts inside the same context.
   A **publisher** (`application/integration/publishers/`) is a reaction whose job is to
   translate the domain event into an integration event for the other contexts.
-- The name follows `<context>.<aggregate>.<fact>` (`events/name-format`).
+
+Two reactions to the same event, one in each phase:
+
+<!-- checked sample -->
+```ts
+// contexts/appointments/application/event-handlers/appointment-cancelled.event-handler.ts
+import type { DomainEvent } from '@ddd-ts-kit/kernel';
+import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
+
+declare class AppointmentCancelled implements DomainEvent {
+  static readonly eventName: 'appointments.appointment.cancelled';
+  readonly name: 'appointments.appointment.cancelled';
+  readonly aggregateId: string;
+  readonly occurredAt: Date;
+}
+
+// ports of the application: what the reactions need, implemented in infrastructure
+export abstract class Waitlist {
+  abstract offerFreedSlot(appointmentId: string): Promise<void>;
+}
+
+export abstract class Mailer {
+  abstract sendCancellationNotice(appointmentId: string): Promise<void>;
+}
+
+// before the commit (the default): its writes commit or roll back with the cancellation
+@DomainEventHandler(AppointmentCancelled, { name: AppointmentCancelled.eventName })
+export class OfferFreedSlotOnCancellation implements DomainEventHandler<AppointmentCancelled> {
+  constructor(private readonly waitlist: Waitlist) {}
+
+  async handle(event: AppointmentCancelled): Promise<void> {
+    await this.waitlist.offerFreedSlot(event.aggregateId);
+  }
+}
+
+// after the commit: an effect no transaction covers, run at most once
+@DomainEventHandler(AppointmentCancelled, { name: AppointmentCancelled.eventName, phase: 'after-commit' })
+export class SendCancellationNotice implements DomainEventHandler<AppointmentCancelled> {
+  constructor(private readonly mailer: Mailer) {}
+
+  async handle(event: AppointmentCancelled): Promise<void> {
+    await this.mailer.sendCancellationNotice(event.aggregateId);
+  }
+}
+```
 
 A domain event is internal: it may carry value objects of the model and change shape freely
 with it. What crosses a context boundary is an integration event, a versioned contract with a
@@ -99,16 +183,32 @@ aggregate and a policy that has its own reasons to change. Forcing such logic in
 aggregate makes it reach for data it does not own; leaving it in the handler makes the
 application layer decide business matters. A domain service is the third place.
 
+<!-- checked sample -->
 ```ts
 // contexts/appointments/domain/services/booking-eligibility.service.ts
-import { OutsideWorkingHours } from '@/contexts/appointments/domain/errors/outside-working-hours.error';
-import type { PractitionerSchedule } from '@/contexts/appointments/domain/value-objects/practitioner-schedule.vo';
-import type { TimeSlot } from '@/contexts/appointments/domain/value-objects/time-slot.vo';
+import { ConceptError } from '@ddd-ts-kit/kernel';
+
+// value objects and errors of the model, declared here so that the sample stands alone
+interface TimeSlot {
+  readonly startsAt: Date;
+  readonly endsAt: Date;
+}
+
+interface PractitionerSchedule {
+  covers(slot: TimeSlot): boolean;
+  isOffDuring(slot: TimeSlot): boolean;
+}
+
+export class AppointmentError extends ConceptError {
+  static outsideWorkingHours(startsAt: Date) {
+    return AppointmentError.refusal('OUTSIDE_WORKING_HOURS', `The practitioner does not work at ${startsAt.toISOString()}.`, { startsAt });
+  }
+}
 
 export class BookingEligibilityService {
   assertBookable(slot: TimeSlot, schedule: PractitionerSchedule): void {
     if (!schedule.covers(slot) || schedule.isOffDuring(slot)) {
-      throw new OutsideWorkingHours();
+      throw AppointmentError.outsideWorkingHours(slot.startsAt);
     }
   }
 }
@@ -116,6 +216,24 @@ export class BookingEligibilityService {
 
 `PractitionerSchedule` here is the local projection `appointments` keeps of the working hours
 and time off published by `calendars`: the handler loads it through a port and hands it over.
+The example application has a fuller one, `SchedulerService`
+(`examples/scheduling/src/contexts/scheduling/domain/services/scheduler.service.ts`): given a
+calendar and the appointments already held, it checks the slot and the limit of the patient and
+returns the new `Appointment`, a domain service acting as a factory.
+
+Instead of the same decision in the handler:
+
+```ts
+// instead of: the application decides a business matter
+const schedule = await this.schedules.of(command.practitionerId);
+if (!schedule.covers(slot) || schedule.isOffDuring(slot)) {
+  throw AppointmentError.outsideWorkingHours(slot.startsAt);
+}
+
+// write: the handler loads, the domain decides
+const schedule = await this.schedules.of(command.practitionerId);
+this.eligibility.assertBookable(slot, schedule);
+```
 
 The rules for a domain service:
 
@@ -143,10 +261,12 @@ role.
 A repository makes aggregates look like an in-memory collection: find one, save one. The
 domain declares what it needs; infrastructure decides how it is stored.
 
+<!-- checked sample -->
 ```ts
 // contexts/appointments/domain/repositories/appointment.repository.ts
-import { Repository } from '@ddd-ts-kit/kernel';
-import type { Appointment } from '@/contexts/appointments/domain/aggregates/appointment.aggregate';
+import { AggregateRoot, Repository } from '@ddd-ts-kit/kernel';
+
+declare class Appointment extends AggregateRoot<string> {} // from domain/aggregates/
 
 export abstract class AppointmentRepository extends Repository<Appointment> {
   abstract findUpcomingOf(clientId: string, after: Date): Promise<readonly Appointment[]>;
@@ -178,20 +298,61 @@ contract spec run on both, and the registration.
 
 A handler then reads as the use case:
 
+<!-- checked sample -->
 ```ts
-async execute(command: CancelAppointment): Promise<void> {
-  const appointment = await this.appointments.findById(command.appointmentId);
-  if (appointment === undefined) {
-    throw AppointmentError.notFound(command.appointmentId);
+// contexts/appointments/application/commands/cancel-appointment/cancel-appointment.handler.ts
+import { AggregateRoot, AuthorizedCommand, ConceptError, Repository, type Actor, type Clock } from '@ddd-ts-kit/kernel';
+import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
+
+// from the domain and the command file of the use case, declared here so that the sample stands alone
+declare class Appointment extends AggregateRoot<string> {
+  cancel(reason: string, at: Date): void;
+}
+declare abstract class AppointmentRepository extends Repository<Appointment> {}
+declare class AppointmentError extends ConceptError {
+  static notFound(appointmentId: string): AppointmentError;
+}
+declare class CancelAppointment extends AuthorizedCommand<void> {
+  constructor(actor: Actor, appointmentId: string, reason: string);
+  readonly appointmentId: string;
+  readonly reason: string;
+}
+
+@CommandHandler(CancelAppointment)
+export class CancelAppointmentHandler implements CommandHandler<CancelAppointment> {
+  constructor(
+    private readonly appointments: AppointmentRepository,
+    private readonly clock: Clock,
+  ) {}
+
+  async execute(command: CancelAppointment): Promise<void> {
+    const appointment = await this.appointments.findById(command.appointmentId);
+    if (appointment === undefined) {
+      throw AppointmentError.notFound(command.appointmentId);
+    }
+
+    appointment.cancel(command.reason, this.clock.now());
+
+    await this.appointments.save(appointment);
   }
-
-  appointment.cancel(command.reason, this.clock.now());
-
-  await this.appointments.save(appointment);
 }
 ```
 
-Load, one intention, save. An `if` on business state in a handler belongs in the domain.
+Load, one intention, save. An `if` on business state in a handler belongs in the domain:
+
+```ts
+// instead of: the rule of the late cancellation, in the handler
+if (appointment.startsAt.getTime() - this.clock.now().getTime() < 24 * 60 * 60 * 1000) {
+  appointment.markLateCancellation();
+}
+appointment.cancel(command.reason, this.clock.now());
+
+// write: one intention; the aggregate knows what late means
+appointment.cancel(command.reason, this.clock.now());
+```
+
+The handler never calls `pullEvents()` and never publishes: the save hands the recorded events
+over, and the unit of work dispatches them.
 
 ## Factories
 
@@ -206,10 +367,72 @@ settles on the simplest form:
 | `create` on a value object | validates and returns the value, or the reason it is invalid |
 | a method on another aggregate | when one aggregate gives birth to another and supplies part of its state |
 
-The constructor is private so that these are the only ways in. A separate factory class is
-rarely needed; when construction needs data from several sources, the handler gathers it and
-passes it, or a domain service assembles it. Test data builders are the factories of tests:
-they go through the same public API, so a test cannot start from an invalid state.
+The constructor is private so that these are the only ways in:
+
+<!-- checked sample -->
+```ts
+// contexts/appointments/domain/aggregates/appointment.aggregate.ts (the ways in)
+import { AggregateRoot, ConceptError, type DomainEvent } from '@ddd-ts-kit/kernel';
+
+class AppointmentBooked implements DomainEvent {
+  static readonly eventName = 'appointments.appointment.booked';
+
+  readonly name = AppointmentBooked.eventName;
+
+  constructor(
+    readonly aggregateId: string,
+    readonly occurredAt: Date,
+  ) {}
+}
+
+class AppointmentError extends ConceptError {
+  static startsInThePast(startsAt: Date) {
+    return AppointmentError.refusal('STARTS_IN_THE_PAST', `An appointment cannot start at ${startsAt.toISOString()}, in the past.`, { startsAt });
+  }
+}
+
+export interface AppointmentState {
+  readonly clientId: string;
+  readonly startsAt: Date;
+  readonly status: 'booked' | 'cancelled';
+}
+
+export class Appointment extends AggregateRoot<string> {
+  // private: book and rehydrate are the only ways in
+  private constructor(
+    id: string,
+    private state: AppointmentState,
+  ) {
+    super(id);
+  }
+
+  /** The birth: checks the birth invariants, sets the initial state, records the birth event. */
+  static book(id: string, wish: { readonly clientId: string; readonly startsAt: Date }, now: Date): Appointment {
+    if (wish.startsAt.getTime() <= now.getTime()) {
+      throw AppointmentError.startsInThePast(wish.startsAt);
+    }
+
+    const appointment = new Appointment(id, { ...wish, status: 'booked' });
+    appointment.record(new AppointmentBooked(id, now));
+
+    return appointment;
+  }
+
+  /** Back from storage: checks nothing, records nothing. Called by the mapper only. */
+  static rehydrate(id: string, state: AppointmentState): Appointment {
+    return new Appointment(id, state);
+  }
+
+  toState(): AppointmentState {
+    return { ...this.state };
+  }
+}
+```
+
+A separate factory class is rarely needed; when construction needs data from several sources,
+the handler gathers it and passes it, or a domain service assembles it. Test data builders are
+the factories of tests: they go through the same public API, so a test cannot start from an
+invalid state.
 
 ## Limits and when not to use it
 
