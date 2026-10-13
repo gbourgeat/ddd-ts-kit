@@ -29,6 +29,9 @@ A credential is given per security scheme of the contract, as a value or as a fu
 | `cancelAppointment` | `POST /appointments/{appointmentId}/cancellation` | UNAUTHORIZED, FORBIDDEN, APPOINTMENT_NOT_FOUND, APPOINTMENT_ENDED, REASON_REQUIRED, VALIDATION_FAILED |
 | `completeAppointment` | `POST /appointments/{appointmentId}/completion` | UNAUTHORIZED, FORBIDDEN, APPOINTMENT_NOT_FOUND, APPOINTMENT_ENDED, APPOINTMENT_NOT_STARTED, VALIDATION_FAILED |
 | `confirmAppointment` | `POST /appointments/{appointmentId}/confirmation` | UNAUTHORIZED, FORBIDDEN, APPOINTMENT_NOT_FOUND, APPOINTMENT_ALREADY_CONFIRMED, APPOINTMENT_ENDED, VALIDATION_FAILED |
+| `getAppointmentDocument` | `GET /appointments/{appointmentId}/document` | UNAUTHORIZED, FORBIDDEN, APPOINTMENT_NOT_FOUND, NO_DOCUMENT, VALIDATION_FAILED |
+| `attachAppointmentDocument` | `POST /appointments/{appointmentId}/document` | UNAUTHORIZED, FORBIDDEN, APPOINTMENT_NOT_FOUND, FILE_TOO_LARGE, UNSUPPORTED_MEDIA_TYPE, DOCUMENT_NAME_TOO_LONG, FILE_REJECTED, VALIDATION_FAILED |
+| `removeAppointmentDocument` | `DELETE /appointments/{appointmentId}/document` | UNAUTHORIZED, FORBIDDEN, APPOINTMENT_NOT_FOUND, NO_DOCUMENT, VALIDATION_FAILED |
 | `markAppointmentNoShow` | `POST /appointments/{appointmentId}/no-show` | UNAUTHORIZED, FORBIDDEN, APPOINTMENT_NOT_FOUND, APPOINTMENT_ENDED, APPOINTMENT_NOT_STARTED, VALIDATION_FAILED |
 | `rescheduleAppointment` | `POST /appointments/{appointmentId}/reschedule` | UNAUTHORIZED, FORBIDDEN, APPOINTMENT_NOT_FOUND, UNKNOWN_CALENDAR, APPOINTMENT_ENDED, PATIENT_LIMIT_REACHED, SLOT_TAKEN, BOOKING_TOO_FAR, BOOKING_TOO_LATE, OFF_GRID, OUTSIDE_AVAILABILITY, UNKNOWN_APPOINTMENT_TYPE, VALIDATION_FAILED |
 | `searchAuditEntries` | `GET /audit/entries` | UNAUTHORIZED, FORBIDDEN, VALIDATION_FAILED |
@@ -63,6 +66,9 @@ A credential is given per security scheme of the contract, as a value or as a fu
 - `DELEGATION_ENDS_IN_THE_PAST`
 - `DELEGATION_NOT_ACTIVE`
 - `DELEGATION_NOT_FOUND`
+- `DOCUMENT_NAME_TOO_LONG`
+- `FILE_REJECTED`
+- `FILE_TOO_LARGE`
 - `FORBIDDEN`
 - `INVALID_APPOINTMENT_TYPE`
 - `INVALID_CRITERIA`
@@ -75,6 +81,7 @@ A credential is given per security scheme of the contract, as a value or as a fu
 - `NOT_AN_ASSISTANT`
 - `NOT_A_MEMBER`
 - `NOT_A_PRACTITIONER`
+- `NO_DOCUMENT`
 - `OFF_GRID`
 - `OUTSIDE_AVAILABILITY`
 - `PATIENT_LIMIT_REACHED`
@@ -89,6 +96,7 @@ A credential is given per security scheme of the contract, as a value or as a fu
 - `UNKNOWN_PRACTITIONER`
 - `UNKNOWN_ROLE`
 - `UNKNOWN_TIME_ZONE`
+- `UNSUPPORTED_MEDIA_TYPE`
 - `VALIDATION_FAILED`
 
 `ERROR_CODES` lists them, `ErrorCode` is their type.
