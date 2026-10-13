@@ -27,7 +27,6 @@ const STACK_FLAGS = [
   'dependencies',
   'refusals',
   'routes',
-  'tenancy',
   'literals',
   'tenancy',
 ] as const;
