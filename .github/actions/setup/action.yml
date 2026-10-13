@@ -26,7 +26,8 @@ runs:
           node_modules
           packages/*/node_modules
           examples/*/node_modules
-        key: modules-${{ runner.os }}-${{ runner.arch }}-node${{ inputs.node-version }}-${{ hashFiles('package-lock.json', 'package.json', 'packages/*/package.json', 'examples/*/package.json') }}
+          site/node_modules
+        key: modules-${{ runner.os }}-${{ runner.arch }}-node${{ inputs.node-version }}-${{ hashFiles('package-lock.json', 'package.json', 'packages/*/package.json', 'examples/*/package.json', 'site/package.json') }}
     - name: Install (no run installed this lockfile yet, or the cache was evicted)
       if: steps.modules.outputs.cache-hit != 'true'
       shell: bash

@@ -1,10 +1,13 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:6cdadd031e1dd033 -->
+<!-- translation-of: README.md sha256:06ad064539473090 -->
 
 # ddd-ts-kit
 
 Domain-Driven Design, Clean Architecture et Clean Code pour les backends TypeScript, tenus par
 des outils plutôt que par de bonnes intentions.
+
+**La documentation est aussi un site web**, avec une recherche, en français et en anglais :
+<https://gbourgeat.github.io/ddd-ts-kit/fr/>.
 
 C'est trois choses qui partagent une seule définition de l'architecture
 ([docs/ARCHITECTURE.fr.md](docs/ARCHITECTURE.fr.md)) :

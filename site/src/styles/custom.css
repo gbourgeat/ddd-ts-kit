@@ -1,0 +1,22 @@
+/* The diagrams are drawn on a white background of their own: they keep it in the dark theme. */
+.sl-markdown-content img[src*='/diagrams/'] {
+  display: block;
+  margin-inline: auto;
+  border-radius: 0.75rem;
+}
+
+/* A mermaid diagram is centred and scrolls sideways on a narrow screen instead of overflowing. */
+.sl-markdown-content pre.mermaid {
+  display: flex;
+  justify-content: center;
+  overflow-x: auto;
+  background: transparent;
+  border: 0;
+  padding: 0;
+}
+
+/* Wide reference tables scroll inside the page rather than widening it. */
+.sl-markdown-content table {
+  display: block;
+  overflow-x: auto;
+}

@@ -1,5 +1,5 @@
 [English](CONTRIBUTING.md) · **Français**
-<!-- translation-of: CONTRIBUTING.md sha256:82039d952cd0af47 -->
+<!-- translation-of: CONTRIBUTING.md sha256:811f970be50d93eb -->
 
 # Contribuer
 
@@ -39,6 +39,12 @@ node --test plugin/hooks/guard.test.mjs
   même pull request : voir [docs/translation.fr.md](docs/translation.fr.md) pour les conventions,
   le glossaire, le style des schémas et les exemples de code vérifiés
   (`npm run docs:translations` et `npm run docs:samples`, lancés par la CI).
+- Le site de la documentation (`site/`, publié à <https://gbourgeat.github.io/ddd-ts-kit/fr/>)
+  est construit à partir de ces mêmes pages, qui restent sa seule source. `npm run site:dev`
+  assemble les pages et sert le site sur `http://localhost:4321/ddd-ts-kit/` (relancez-le après
+  avoir changé une page) ; `npm run site:build` le construit comme la CI, et échoue sur un lien
+  ou une ancre qui ne mène nulle part. Une nouvelle page reçoit sa route dans
+  `site/scripts/routes.mjs`.
 - Ni tiret cadratin ni tiret demi-cadratin, dans aucune langue (`npm run check:dashes`, lancé
   par la CI).
 - Des commits conventionnels : `<type>(<scope>): <summary>`.
