@@ -31,7 +31,7 @@ export function classSchema<T extends object>(dto: DtoClass<T>, options: ClassSc
 
       return errors.length === 0 ? ok(instance) : err(flatten(errors, ''));
     },
-    toJsonSchema: () => selfContainedSchema(dto.name),
+    toJsonSchema: () => selfContainedSchema(dto),
   };
 }
 
