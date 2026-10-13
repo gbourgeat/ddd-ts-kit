@@ -162,10 +162,12 @@ const placeOrder = standardSchema(
 The adapter validates with `~standard.validate` of Standard Schema v1. The JSON Schema of the
 contract is the second argument when it is given (written by hand, or produced by the exporter of
 your library); otherwise the one the library converts itself when it implements the companion
-specification, Standard JSON Schema v1 (`~standard.jsonSchema`: zod 4, arktype, valibot through
-`toStandardJsonSchema` of `@valibot/to-json-schema`), input side by default and
-`standardSchema(schema, undefined, { io: 'output' })` for a response; otherwise `{}`, which the
-OpenAPI document shows as "any value". The specification carries no error code, so every issue
+specification, Standard JSON Schema v1 (`~standard.jsonSchema`; verified with zod 4, while arktype
+and valibot through `toStandardJsonSchema` of `@valibot/to-json-schema` announce it but are not
+verified here), input side by default and `standardSchema(schema, undefined, { io: 'output' })`
+for a response; otherwise `{}`, which the OpenAPI document shows as "any value". A schema the
+library cannot write as JSON Schema (zod refuses `z.date()`, `z.coerce.date()`, `z.custom`) is
+documented `{}` as well: pass its JSON Schema as the second argument. The specification carries no error code, so every issue
 has the code `invalid`. A schema that validates asynchronously makes
 `parse` throw: async schemas are not supported at the boundary.
 

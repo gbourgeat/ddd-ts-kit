@@ -10,7 +10,8 @@ import type { StandardSchemaIssue, StandardSchemaResult, StandardSchemaV1 } from
 /**
  * Validates with any Standard Schema library. The JSON Schema of the contract is the one given;
  * without it, the one the library converts itself when it implements Standard JSON Schema
- * (zod, arktype, valibot through `toStandardJsonSchema`), else `{}` (any value).
+ * (verified with zod 4), else `{}` (any value). A schema the library cannot write as JSON Schema
+ * (a date, a custom check) is documented `{}` as well, never a failure of the contract.
  */
 export function standardSchema<S extends StandardSchemaV1>(
   schema: S,
@@ -39,7 +40,15 @@ export function standardSchema<S extends StandardSchemaV1>(
 function converted(schema: StandardSchemaV1, { io = 'input' }: StandardSchemaOptions): JsonSchema {
   const converter = schema['~standard'].jsonSchema;
 
-  return converter === undefined ? {} : converter[io]({ target: 'draft-2020-12' });
+  if (converter === undefined) {
+    return {};
+  }
+
+  try {
+    return converter[io]({ target: 'draft-2020-12' });
+  } catch {
+    return {};
+  }
 }
 
 function verdictOf<Output>(result: StandardSchemaResult<Output>): Result<Output, ValidationIssue[]> {

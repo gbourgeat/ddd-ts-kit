@@ -57,7 +57,7 @@ Versions, licences and downloads checked on 2026-10-10 against the npm registry 
 | Weekly downloads | about 326 million | about 12 million | not checked | valibot about 22 million, arktype about 2 million |
 | Decorators | none | legacy mode required for the whole program | none | none |
 | Type from schema | yes, inferred | the class is the type, written by hand | yes, inferred (`Static`) | yes, inferred |
-| JSON Schema for the contract | built in (`z.toJSONSchema`, draft 2020-12) | through `class-validator-jsonschema`, a separate package | the schema is JSON Schema | the library's own when it implements Standard JSON Schema (zod, arktype, valibot through `@valibot/to-json-schema`), or the one you supply |
+| JSON Schema for the contract | built in (`z.toJSONSchema`, draft 2020-12) | through `class-validator-jsonschema`, a separate package | the schema is JSON Schema | the library's own when it implements Standard JSON Schema (verified with zod 4; arktype and valibot through `@valibot/to-json-schema` not verified), or the one you supply |
 | Shared once in the contract | `.meta({ id })`, kept when nested | `classSchema(Dto, { shared: true })`; a nested class always is | `$id` in the options, kept when nested | the library's ids, or `sharedSchema(name, schema)` |
 | Reuse in part | `.pick`, `.omit`, `.partial`, `.extend` | `pickClass`, `omitClass`, `partialClass` of the kit, `extends` | `Type.Pick`, `Type.Omit`, `Type.Partial`, `Type.Intersect` (keeps the reference) or `Type.Interface` (a flat copy) | the library's own (`v.pick`, `v.omit`, ...) |
 | Issue codes | the library's (`too_small`, ...) | the constraint name | the JSON Schema keyword (`minLength`, `format`) | always `invalid` |
@@ -92,7 +92,8 @@ From [`packages/validation/README.md`](../../packages/validation/README.md):
   and `reflect-metadata`, and `experimentalDecorators` in the project.
 - **Standard Schema.** `standardSchema(schema, jsonSchema?, { io? })` accepts any implementing
   library; without a JSON Schema it documents the one the library converts itself through
-  Standard JSON Schema, when it implements it.
+  Standard JSON Schema, when it implements it and can convert that schema (verified with zod 4),
+  else `{}`.
 - **Shared schemas.** A shape declared once is documented once: the OpenAPI generator writes it in
   `components.schemas` and every route refers to it, whole or nested. `sharedSchema(name,
   schema)` shares any `Schema`; the platform shares `acceptedSchema` (`Accepted`), the page of a

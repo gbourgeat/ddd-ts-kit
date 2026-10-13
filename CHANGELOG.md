@@ -12,10 +12,19 @@ contract and every route points at it with `$ref`: a zod schema with `.meta({ id
 `classSchema(Dto, { shared: true })`, or any schema through `sharedSchema(name, schema)` of
 `@ddd-ts-kit/validation`. class-validator gains `pickClass`, `omitClass` and `partialClass` to
 reuse a DTO class in part, and the Standard Schema adapter documents a schema its library
-converts itself (Standard JSON Schema: zod, arktype, valibot) when no JSON Schema is given. The
+converts itself (Standard JSON Schema, verified with zod 4) when no JSON Schema is given. The
 platform shares its own: `acceptedSchema` (`Accepted`, the `{ id }` a command route answers),
 the page of a shared item (`<Item>Page`) and the problem document. A shared `params`, `query`
 or `headers` schema still gives one parameter per property.
+
+**The contract of a project on the Standard Schema adapter can change.** `standardSchema(schema)`
+without a JSON Schema documented `{}` (any value); it now documents what the library converts
+itself, so a project on `"stack.validation": "standard-schema"` whose schemas implement Standard
+JSON Schema (zod 4 does) sees its OpenAPI contract and client SDK grow the real shapes, and
+`openapi --check` or `sdk --check` report drift until they are regenerated. To move: run
+`npm run docs:generate` and commit the contract and the client; to keep a schema documented as
+any value, pass `{}` as its second argument. A schema the library cannot convert (a date, a
+custom check) is still documented `{}`, never a failure.
 
 **A new project declares a shape once.** `init` writes `"stack.schemas": "shared"`: a generated
 command route answers its identifier with `acceptedSchema` instead of a schema of its own,
