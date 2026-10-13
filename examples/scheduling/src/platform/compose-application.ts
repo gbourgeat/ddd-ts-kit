@@ -39,7 +39,7 @@ import { authorization } from '@/platform/auth/authorization';
 import { securitySchemes } from '@/platform/auth/security-schemes';
 import { httpBoundary, type HttpBoundary } from '@/platform/auth/http-boundary';
 import { relateSystemActors } from '@/platform/auth/relate-system-actors';
-import { presentationOf } from '@/platform/http/presentation-of';
+import { presentationOf, type Presentation } from '@/platform/http/presentation-of';
 import { withForms } from '@/platform/http/with-forms';
 import { createCommandBus } from '@/platform/buses/create-command-bus';
 import { createQueryBus } from '@/platform/buses/create-query-bus';
@@ -177,20 +177,7 @@ function running(container: Container, options: ApplicationOptions, contexts: Co
 
   return {
     routes: withForms(routesOf(container, contexts), presentation),
-    boundary: httpBoundary({
-      authenticator: container.resolve(Authenticator),
-      executionScope: container.resolve(ExecutionScope),
-      errorMapper: container.resolve(ErrorMapper),
-      clock: container.resolve(Clock),
-      logger,
-      refusals: auditGuardRefusals(container.resolve(AuditTrail), {
-        clock: container.resolve(Clock),
-        ids: container.resolve(IdGenerator),
-      }),
-      errors: container.resolve(ErrorReporter),
-      networks: options.networks,
-      presentation,
-    }),
+    boundary: boundaryOf(container, options, presentation),
     fileRoutes: fileRoutes(container.resolve(FileStorage)),
     // What the outbox relay delivers with: each publication continues the trace stored with its event.
     eventBus: tracedPublisher(container.resolve(EventBus)),
@@ -207,6 +194,24 @@ function running(container: Container, options: ApplicationOptions, contexts: Co
     // The jobs, the consumers, the event provider (`onStop` of the platform module), then the error reporter and, last, the logger: whatever logs has closed before its final flush.
     stop: () => container.stop(),
   };
+}
+
+/** The edge of every request: who calls, in which network, what is refused and how the answers are presented. */
+function boundaryOf(container: Container, options: ApplicationOptions, presentation: Presentation): HttpBoundary {
+  return httpBoundary({
+    authenticator: container.resolve(Authenticator),
+    executionScope: container.resolve(ExecutionScope),
+    errorMapper: container.resolve(ErrorMapper),
+    clock: container.resolve(Clock),
+    logger: container.resolve(Logger),
+    refusals: auditGuardRefusals(container.resolve(AuditTrail), {
+      clock: container.resolve(Clock),
+      ids: container.resolve(IdGenerator),
+    }),
+    errors: container.resolve(ErrorReporter),
+    networks: options.networks,
+    presentation,
+  });
 }
 
 function routesOf(container: Container, contexts: ContextSelection): readonly Route[] {
