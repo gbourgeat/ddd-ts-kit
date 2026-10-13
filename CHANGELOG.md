@@ -4,7 +4,7 @@ What each version changes for someone who uses the kit. The packages of `package
 together, under one version; the notes of each [GitHub release](https://github.com/gbourgeat/ddd-ts-kit/releases)
 list the pull requests behind it.
 
-## Unreleased
+## 0.12.0
 
 **Cache policies on routes, and `no-store` for authenticated answers.** A controller, a route
 group or a function route declares `cache: { scope, maxAge, sMaxAge, staleWhileRevalidate,
