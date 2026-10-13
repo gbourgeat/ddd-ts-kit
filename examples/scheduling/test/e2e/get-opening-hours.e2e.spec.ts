@@ -175,8 +175,12 @@ describe('Get opening hours, end to end: the copy of one network is never the an
     await application.reset();
 
     const { calendarId } = await openStaffedPractice(application, riverside);
+    // Setting up the practice purged the calendar twice, after the commit: a copy kept before both would be purged under the test.
+    const calendar = calendarTag(calendarId);
 
     hoursPath = '/calendars/' + calendarId + '/opening-hours';
+    await eventually(() => expect(application.purges.purged.filter((tag) => tag === calendar)).toHaveLength(2));
+    application.purges.purged.splice(0);
   });
 
   afterAll(async () => {
