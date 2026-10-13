@@ -1,5 +1,5 @@
 [English](CONFIG.md) · **Français**
-<!-- translation-of: CONFIG.md sha256:186565c49e3bf007 -->
+<!-- translation-of: CONFIG.md sha256:be078d919fc14fa4 -->
 
 # `ddd-ts-kit.config.json`
 
@@ -536,6 +536,7 @@ projet, et une configuration sans *preset* se comporte comme avant. Voir
 | `limits` | `{ "maxParameters": 3, "maxFunctionLines": 30 }`, lu par `clean/function-size` ; `maxFunctionLines` vaut au plus 100, une valeur plus grande est lue comme 100 et signalée | comme montré |
 | `onePerFile.allow` | `[{ "file": "<path or glob>", "reason": "<why these exports are one thing>" }]` : exempte un fichier du décompte de `clean/one-export-per-file`, jamais de son contrôle du nom de fichier. Une entrée sans `file` ou sans `reason` n'autorise rien et est signalée | `[]` |
 | `standardInterfaces` | `{ "<DeclaredName>": "<kernel interface to use instead>" }`, fusionné par-dessus les noms par défaut de `standard/no-parallel-interface` ; `false` retire un nom par défaut | `{}` |
+| `businessNames` | `{ "words": ["<word>"], "allow": ["<word>"] }`, lu par `naming/business-name` (par `ddd-ts-kit check` et par ESLint, dont les options `words` et `allow` passent par-dessus) : `words` remplace les mots génériques que la règle signale, `allow` en retire ; une entrée qui n'est pas un mot est ignorée | les mots de la règle (`target`, `targets`, `data`, `item`, `items`, `obj`, `object`, `thing`, `things`, `stuff`, `info`, `element`, `el`, `tmp`, `temp`, `foo`, `bar`, `baz`), aucun autorisé |
 | `coverage` | `{ "<layer>": { "<rate>": <0 to 100> } }` pour les couches `domain`, `application`, `presentation`, `infrastructure` et les taux `statements`, `branches`, `functions`, `lines` : la couverture de tests minimale de chaque couche, appliquée à chaque contexte. Un taux omis vaut la référence ; un taux qui n'est pas un pourcentage, une couche inconnue ou un taux inconnu est signalé (`config/valid`). `init` n'écrit pas la clé : la référence s'applique jusqu'à ce qu'un projet change un taux | domain 90, 85, 90, 90 ; application 85, 80, 85, 85 ; presentation 80, 70, 80, 80 ; infrastructure 70, 60, 70, 70 |
 | `domainAllowedPackages` | les *packages* que `domain/` peut importer | `["@ddd-ts-kit/kernel"]` |
 | `applicationAllowedPackages` | les *packages* qu'`application/` peut importer | `["@ddd-ts-kit/kernel", "@ddd-ts-kit/auth"]` |

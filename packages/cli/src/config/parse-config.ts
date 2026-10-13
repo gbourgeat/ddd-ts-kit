@@ -3,6 +3,7 @@ import type { Config, Deviation } from './config.js';
 import { CONFIG_FILE } from './config-file.js';
 import { defaultAllowedPackages } from './default-allowed-packages.js';
 import { DEFAULT_IMPORT_ALIAS } from './default-import-alias.js';
+import { parseBusinessNames } from './parse-business-names.js';
 import { parseCi } from './parse-ci.js';
 import { parseCommitLimits } from './parse-commit-limits.js';
 import { parseContext } from './parse-context.js';
@@ -73,6 +74,7 @@ type Governance = Pick<
   | 'guard'
   | 'deviations'
   | 'standardInterfaces'
+  | 'businessNames'
   | 'worker'
   | 'ci'
   | 'openapi'
@@ -88,6 +90,7 @@ function parseGovernance(raw: Record<string, unknown>): Governance {
     guard: text(raw['guard'], 'enforce'),
     deviations: parseDeviations(raw['deviations']),
     standardInterfaces: parseStandardInterfaces(raw['standardInterfaces']),
+    businessNames: parseBusinessNames(raw['businessNames']),
     worker: raw['worker'] === true,
     ci: parseCi(raw['ci']),
     openapi: parseOpenApi(raw['openapi']),
