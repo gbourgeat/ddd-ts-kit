@@ -1,3 +1,5 @@
+**English** · [Français](README.fr.md)
+
 # Documentation
 
 **Summary.** This is the index of the long-form documentation of ddd-ts-kit. Two documents are
@@ -97,6 +99,7 @@ limits, and a recommendation by situation.
 | [When to extract microservices](guides/when-to-extract-microservices.md) | the signals, the costs, a readiness checklist, the steps, when to merge back |
 | [Choosing access control](guides/choosing-access-control.md) | five questions that pick roles, attributes or relationships (Zanzibar), worked presets for each, the combined model of the example, scopes and refusals at the edge |
 | [Token economy](guides/token-economy.md) | spending fewer tokens with coding agents, and complementary tools |
+| [The French documentation](translation.md) | contributors: how every page keeps its French translation current, the glossary, the style of the diagrams, the code samples the pipeline compiles |
 
 ## Proposals
 
@@ -143,6 +146,8 @@ at least sections 1 and 2, then:
    [Testing strategy](concepts/testing-strategy.md)
 5. the tools page of the area you touch: it states what was verified and what was not, which
    is where a contribution is most useful
+6. [The French documentation](translation.md), before changing a page: its French translation
+   changes in the same pull request
 
 ## See also
 
