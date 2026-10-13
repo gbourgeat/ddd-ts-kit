@@ -36,7 +36,7 @@ export function valuesDeclaredIn(file: Declaring, program: TSESTree.Program): [s
 
     return permissionIds(init).map(({ key, value }) => [
       value,
-      { written: `${name}['${key}']`, vocabulary: name, file: file.path, readBy: 'everywhere' },
+      { written: `${name}['${key}'].id`, vocabulary: name, file: file.path, readBy: 'everywhere' },
     ]);
   });
 }

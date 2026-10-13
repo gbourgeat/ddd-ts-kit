@@ -116,7 +116,7 @@ function permissionValues(file: SourceFile): DeclaredValue[] {
       ? []
       : keys.map(({ value: key }) => ({
           value: `${context}:${key}`,
-          written: `${found[1] ?? ''}['${key}']`,
+          written: `${found[1] ?? ''}['${key}'].id`,
           vocabulary: found[1] ?? '',
           file: file.path,
           readBy: 'everywhere' as const,

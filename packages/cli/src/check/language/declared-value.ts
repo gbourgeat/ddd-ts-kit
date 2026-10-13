@@ -1,7 +1,7 @@
 /** A value of a closed vocabulary of the project: where it is declared, and how code reads it instead of the string. */
 export interface DeclaredValue {
   readonly value: string;
-  /** `AppointmentStatus.NoShow`, `billingPermissions['invoice.issue']`. */
+  /** `AppointmentStatus.NoShow`, `billingPermissions['invoice.issue'].id`. */
   readonly written: string;
   /** The name of the vocabulary or of the permission set. */
   readonly vocabulary: string;
