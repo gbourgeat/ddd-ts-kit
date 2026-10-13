@@ -175,6 +175,8 @@ describe('init, the choices it records and the ones it refuses', () => {
       refusals: 'factories',
       routes: 'controllers',
       schemas: 'shared',
+      valueObjects: 'throwing',
+      literals: 'named',
       style: 'explicit',
       packageManager: 'pnpm',
     });

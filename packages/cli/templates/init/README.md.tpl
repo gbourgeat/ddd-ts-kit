@@ -51,6 +51,13 @@ production unless `API_DOCS=true`; a contract split into documents (`openapi.doc
 `ddd-ts-kit.config.json`) is served at `/openapi/<name>.json`, and the page offers each one.
 `npm run docs:generate` commits it as `openapi/openapi.yaml` (or one file per document).
 {{/if}}
+{{#if sdk.on}}
+
+A typed client of the contract is generated for its callers, one workspace package per document
+under `clients/` (`npx ddd-ts-kit sdk`, run by `npm run docs:generate`): typed errors keyed by
+the error codes of each operation, a credential per security scheme, no runtime dependency.
+`npm run sdk:build` compiles them; publishing one is a manual step, its README says how.
+{{/if}}
 
 ## How it is put together
 
@@ -290,5 +297,5 @@ for each moment of the project: https://github.com/gbourgeat/ddd-ts-kit/blob/mai
 | `npm test` | domain, application and adapter specs |
 | `npm run test:e2e` | the whole application through HTTP, on an in-process database unless `DATABASE_URL` is set |
 | `npm run check:arch` | `ddd-ts-kit check` |
-| `npm run docs:generate` | context map, OpenAPI, AsyncAPI and event catalog |
+| `npm run docs:generate` | context map, OpenAPI, AsyncAPI and event catalog{{#if sdk.on}}, the clients under `clients/`{{/if}} |
 | `npm run verify` | everything CI runs |

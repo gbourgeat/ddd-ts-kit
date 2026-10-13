@@ -80,6 +80,11 @@ audit columns and `tenant_id`; cursor and offset pages. The units of work pass
 `unitOfWorkContract`, the stores `outboxStoreContract` and `processedEventStoreContract`; your repositories are held to `repositoryContract` next to
 their in-memory fake. Delivery through the outbox is at least once and unordered.
 
+Tenant isolation is uneven across the four: Knex ships the four strategies (shared tables, row-level
+security, schema per tenant, database per tenant), Drizzle the first two, Prisma and TypeORM none
+beyond the `tenant_id` column. The table, and the `tenantIsolationContract` each strategy passes,
+are in [Multitenancy](../concepts/multitenancy.md#isolation-four-strategies).
+
 For the read side, each of the four also ships a translator of the kernel criteria into its
 query (`criteriaToDrizzle`, `criteriaToKnex`, `criteriaToPrisma`, `criteriaToTypeOrm`) and a
 read model store for projections, held to `criteriaContract` and `readModelStoreContract` on
@@ -107,8 +112,9 @@ From [`packages/cli/README.md`](../../packages/cli/README.md) and
 
 - The generated persistence of the four ORMs is written for PostgreSQL. `custom` starts on
   in-memory adapters held to the contract suites, for you to replace.
-- `generate repository --tenant-scoped` is implemented for Drizzle and Knex; with another ORM
-  the regular adapter is written and a note says what to add.
+- `generate repository --tenant-scoped`, and every repository of a project initialised with
+  `--tenancy shared-table`, is implemented for Drizzle and Knex; with another ORM the regular
+  adapter is written and a note says what to add, and `init` refuses the strategy.
 - The SQL audit trail exists for Knex and Drizzle, on PostgreSQL only. With Prisma, TypeORM,
   `custom` or no ORM the generated project starts on an in-memory trail behind a
   `TODO(platform)`.

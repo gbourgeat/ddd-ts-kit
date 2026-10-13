@@ -8,4 +8,6 @@ export interface JobExecution {
   readonly attempt: number;
   /** Aborted when the run exceeds its timeout or the scheduler stops: a long job checks it. */
   readonly signal: AbortSignal;
+  /** The tenant of this run, for a job declared `tenancy: 'per-tenant'`. */
+  readonly tenantId?: string;
 }

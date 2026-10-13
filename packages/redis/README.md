@@ -427,8 +427,8 @@ that came back without its data has lost them). For `forConsumer('billing')` sub
 | dead stream | `integration-events:ordering.order.placed:billing:dead` | one per consumer and type, created by the first dead letter; no group reads it |
 
 An entry holds the envelope as JSON in the field `envelope` (`id`, `type`, `version`,
-`occurredAt`, `payload`, `traceparent`, `correlationId`) and, beside it, the fields `id`,
-`type`, `version`, `traceparent` and `correlation-id`: an operator reads them with `XRANGE`
+`occurredAt`, `payload`, `traceparent`, `correlationId`, `tenantId`) and, beside it, the fields
+`id`, `type`, `version`, `traceparent`, `correlation-id` and `tenant-id`: an operator reads them with `XRANGE`
 without parsing the body, and any client of the protocol can consume the stream.
 
 Two consumers of one type have a group each and both receive every event. Two instances of one

@@ -4,7 +4,7 @@ import { AppointmentCancelled } from '@/contexts/scheduling/domain/events/appoin
 import { OfferFreedSlotCommand } from '@/contexts/scheduling/application/commands/offer-freed-slot/offer-freed-slot.command';
 
 /** When an appointment is cancelled, the slot it held is offered to the waitlist of its calendar and day. */
-@DomainEventHandler(AppointmentCancelled, { name: 'scheduling.appointment.cancelled' })
+@DomainEventHandler(AppointmentCancelled, { name: AppointmentCancelled.eventName })
 export class AppointmentCancelledEventHandler implements DomainEventHandler<AppointmentCancelled> {
   constructor(private readonly commands: CommandBus) {}
 

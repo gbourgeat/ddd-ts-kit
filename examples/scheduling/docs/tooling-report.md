@@ -930,6 +930,230 @@ own specs. `PersonError.invalidEmail` quotes the address it refuses in its messa
 now reads `Invalid email.` as `detail`, and the spec of the controller holds that the address
 does not leave.
 
+## 2026-10-13: refusals at the edge in the audit trail, and the tenancy of the application
+
+Two changes of the kit reached this application.
+
+**A caller refused by a guard leaves a denied decision.** The previous section noted it: since
+`PracticeOpeningRoutes` and `AuditRoutes` ask `HasRole('platform-admin')` at the edge, a caller
+without the role was refused before the bus, and the trail no longer recorded anything, since no
+decision was asked. The HTTP pipeline now reports every refusal of a guard to `onGuardRefusal`,
+and `auditGuardRefusals` of `@ddd-ts-kit/audit` records it: category `authorization`, action
+`http:<operationId>`, outcome `denied`, the code of the refusal as reason, and the actor, the
+session and the correlation of the request. Three files changed here, as `init` now writes them:
+`audit/create-audit.ts` (the hook, next to `decisions`), `auth/http-boundary.ts` (`refusals` in,
+`onGuardRefusal` out) and `compose-application.ts` (the hook built from the bound `AuditTrail`,
+`Clock` and `IdGenerator`). `identity-open-practice.e2e.spec.ts` now holds that the refusal of
+a person who is not a platform admin is in the trail, under `http:openPractice`.
+
+**The tenancy of this application is proposed, not yet decided.** The kit can now
+confine every statement to a tenant (`"stack.tenancy": "shared-table"`, row-level security, a
+schema or a database per tenant). The data here is grouped by practice, but a practice is not a
+tenant: a patient books in several practices with one account and lists their appointments across
+them, and the boundary between practices is the relationship model, decided per element and
+narrowing every search. ADR-0003 proposes it; the owner had asked for a tenancy made explicit
+and enforced, so the record stays `proposed` until the owner chooses between it and one network
+as a tenant on shared tables. Until then the config says nothing of tenancy, so the new rule
+`tenancy/scoped-statement` has nothing to judge: it is the one entry of `NOT_APPLICABLE` of the
+conformance suite, with that reason, and the kit proves the rule both ways in its own fixtures and
+on the shared-table stacks of its end-to-end matrix.
+
+Checked here: the type check of the application and `ddd-ts-kit check` (0 finding in 657 files).
+The end-to-end specs, `npm run verify` and the conformance run were left to the pipeline of the
+pull request, which runs them on a fresh clone.
+
+Frictions:
+
+1. **A refusal at the edge is recorded outside the unit of work of any command.** It is written
+   when the answer is built, after the request scope closed: the entry carries the execution
+   context the pipeline hands over, not one the trail reads from the scope. Same facts, another
+   path; a project that writes its own hook must use `GuardRefusal.execution`.
+2. **The tenant of the realm token is not the practice.** The `tenant_id` claim still names the
+   chain of the audit trail of an actor; a reader who expects it to bound what a user sees will
+   be surprised. ADR-0003 says where the boundary is instead.
+
+## 2026-10-13 (later): what a review of the tenancy changed here
+
+A review of the kit's multitenancy found holes the application does not reach, since its config
+says nothing of tenancy, and two that it does:
+
+- **A refusal of a caller without a credential is no longer recorded.** The trail of
+  `http:openPractice` keeps the refusal of an authenticated person who is not a platform admin
+  (what `identity-open-practice.e2e.spec.ts` holds); an anonymous request answered 401 writes
+  nothing, so unauthenticated traffic cannot grow the trail.
+- **A guard that fails is not a refusal.** A guard of this application that threw something other
+  than a `DomainError` would now answer 500 and leave no denied decision.
+
+ADR-0003 went back to `proposed`: the owner asked for an enforced tenancy, and the record says the
+opposite, so the owner decides. Nothing else changed in the code of the application.
+
+Frictions:
+
+1. **A tenant id has one grammar now** (letters, digits, `_`, `-`, at most 63). The `tenant_id`
+   claim of the realm names a practice by its id, which fits; a realm whose ids held a `.` would
+   be refused at the first request.
+
+## 2026-10-12: value objects that throw their refusals
+
+The value objects of the four contexts moved from a `Result` to factories that return the value
+or throw, with `ddd-ts-kit value-objects` alone: `"stack.valueObjects": "throwing"` is set, and
+nothing was left to a person.
+
+| | Before | After |
+|---|---|---|
+| Methods returning a `Result` | 18 (17 `create`, `Booking#movedTo`) | 0 |
+| `return err(..)` and `ok(..)`/`err(..)` ternaries | 25 and 3 | 28 `throw`, 3 of them after an `if` |
+| `unwrap(..)` of a value object | 168, in handlers, aggregates, a domain service, mappers, builders and specs | 0 |
+| Assertions on a `Result` in the specs | 31 (`.ok`, `toMatchObject({ ok: false, error })`, `expectRefusal(result, ..)`) | `expectRefusal(() => .., code)` and `expect(() => ..).not.toThrow()` |
+| Files | | 82 sources and the config, 389 lines added, 498 removed |
+
+The HTTP contract did not move: `npm run docs:generate` rewrote `openapi/openapi.yaml`
+byte for byte, since a request is still validated at the edge by its schema before any value
+object is built, and a refusal of a factory still reaches the error mapper as the same
+`ConceptError` with the same code. The 1004 unit tests pass unchanged in number.
+
+## 2026-10-12: closed vocabularies instead of magic strings, and numbers with a name
+
+The statuses, kinds and roles of the four contexts became closed vocabularies, each declared once
+by `ddd-ts-kit generate vocabulary` (an object `as const` and the union type of its name, under
+`domain/vocabularies/`), and the permission ids and realm roles of the platform are read from
+their declarations. `language/declared-vocabulary` listed every raw value before the change;
+none is left.
+
+| Vocabulary | Context | Raw values replaced |
+|---|---|---|
+| `AppointmentStatus` | scheduling | 71 |
+| `Weekday` | scheduling | 36 |
+| `OutcomeState` | analytics | 27 |
+| `NotificationKindName` | notification | 20 |
+| `RoleName` (the role of a member of a practice) | identity | 15 |
+| `ReminderStatus` | notification | 14 |
+| `DelegationEndCause` | identity | 9 |
+| `Role` (the realm roles a token carries) | platform | 5 |
+| permission ids, through the permission set of each context (`schedulingPermissions['appointment.book'].id`) | platform | 30 |
+| Total | | 227, in 37 files |
+
+The union types written next to the values (`'requested' | 'booked' | ...` in the aggregate, the
+port of the agenda, the row schema, the DTOs) became the type of the vocabulary; an `@IsIn([...])`
+of a DTO reads `Object.values(AppointmentStatus)`, in the same order, so the OpenAPI contract is
+regenerated byte for byte. The two-word list of who cancelled, `'patient' | 'practice'`, stays a
+union of literal types: both words also name a type of resource, a relation of the access model
+and a field of a read model, which a vocabulary would report. The published languages keep their
+literal values: a contract names them itself.
+
+`clean/no-magic-number` reported 8 numbers in `domain/` and `application/`, all in two value
+objects: the minutes of an hour and the two digits of `HH:MM` in `Range`, the minutes of an hour
+and the four digits of a year in `TimeZone`. Each is now a constant of its module
+(`MINUTES_PER_HOUR`, `TWO_DIGITS`, `YEAR_DIGITS`).
+
+## 2026-10-13: event names declared once, and the inventory of closed values
+
+Each of the 22 domain events now declares its name once, `static readonly eventName =
+'scheduling.appointment.expired'`, and carries it in `readonly name = AppointmentExpired.eventName`.
+The 33 reactions that repeated it (26 event handlers and publishers, 7 methods of the agenda
+projection) read it, `@DomainEventHandler(AppointmentExpired, { name: AppointmentExpired.eventName })`
+and `@On(AppointmentExpired, { name: AppointmentExpired.eventName })`, and the 5
+integration event handlers of `notification` read the type they handle from the declaration of
+`scheduling`, `static readonly eventType = appointmentExpiredV1.type`. The event catalog script
+resolves that reference through the names the published languages export: `docs:generate` wrote
+`event-catalog.md`, `asyncapi.yaml` and `openapi.yaml` byte for byte as before. The specs keep the
+names written out: a test spells what it expects.
+
+Before the change `scheduling.appointment.expired` was written six times in the sources: the
+domain event, the published-language declaration, the event handler, the publisher, the agenda
+projection and the consumer in `notification`. It is now written twice, once per language: the domain event of
+`scheduling` and its published contract, which names its own values.
+
+What else is a closed list of values in the example, with what holds it:
+
+| Category | Count | Declared in | Read as | State |
+|---|---|---|---|---|
+| Statuses and kinds of the model | 7 vocabularies, 33 values | `domain/vocabularies/*.vocabulary.ts` | `AppointmentStatus.NoShow` | typed, `language/declared-vocabulary` |
+| Realm roles | 1 vocabulary, 3 values | `src/platform/auth/role.ts` | `Role.Admin` | typed, same rule |
+| Permission ids | 31 | `definePermissions` of each context | `schedulingPermissions['appointment.book']` | typed, same rule |
+| Domain event names | 22 | `static readonly eventName` of the event class | `AppointmentExpired.eventName`, 33 reactions | typed, `events/name-format`, `declarations/role-declared` |
+| Integration event types | 14 declarations | `type` of the published-language declaration | `appointmentExpiredV1.type`, 5 handlers | typed |
+| Error codes | 43 | the factory of the concept | `errors: [..]` of a route | literal, each checked against a factory by `errors/known-code` |
+| Job names | 3 | `@Scheduled('notification.send-due-reminders')` | repeated once in `systemActor(..)` of the job | literal twice per job, held equal by `scheduling/job-name` |
+| Consumer names | 5 | `{ consumer: '..' }` of `@IntegrationEventHandler` | repeated once in `systemActor(..)` of the handler | literal twice per handler |
+| Other system actors | 5 | `systemActor('..')` of a domain event handler | once | literal, single site |
+| Projection and policy names | 4 and 2 | `@Projection('..')`, `@Policy(.., { name })` | once | literal, single site |
+| Route group tags | 5 tags on 8 root groups | `tags: ['scheduling']` | the name of the context | literal, `scheduling` 3 times and `identity` twice |
+| ReBAC resource types | 8 | `defineSchema` of the platform | `{ type: 'calendar', id }` in `@Requires`, 31 places | literal, not judged |
+| ReBAC relations | 13 | `defineSchema` of the platform | `relation: 'patient'` in 2 repositories, 9 places | literal, not judged |
+| Cache keys | 0 | none | the cache is bound in the platform; no context reads or writes a key | nothing to declare |
+
+Not done, and why. Job and consumer names: the decorator of a class cannot read a static of that
+class under standard decorators (its arguments are evaluated before the class exists), and
+`scheduling/job-name`, the generated lists and the docs read the literal of the decorator; the
+second copy, in `systemActor(..)`, stays. Route group tags are the name of the context and are
+not compared anywhere. ReBAC resource types and relations are declared by the relationship schema
+of the platform, which the application layer may not import; a typed form needs a vocabulary the
+contexts can read (the shared kernel, or one per context), not decided in this change.
+
+The enum measurement now covers each compiler a generated project runs, on Node 24.21, with a
+string `enum` and the object `as const` of the same values, each file compiled and run:
+
+| Compiler | Where a generated project runs it | `enum` | `as const` |
+|---|---|---|---|
+| `tsc` 6.0.3 | the build and the type check (a Nest project too) | accepted | accepted |
+| `tsc` under `erasableSyntaxOnly` | a project that opts in | refused, TS1294 | accepted |
+| Node's type stripping | a `.ts` file run by `node` | refused, `ERR_UNSUPPORTED_TYPESCRIPT_SYNTAX` | runs |
+| tsx 4.23.15 (esbuild 0.28.2) | `npm run dev` | runs | runs |
+| Oxc, through rolldown 1.2.13 | Vitest 5 (Vite 8.3.4) | runs | runs |
+| SWC 1.16.13 | Jest, through `@swc/jest` | runs | runs |
+
+SWC was measured with its WebAssembly build of the same version: the native one refused to load on
+this machine (`ERR_SWC_NATIVE_CACHE`, a permission check of its cache directory), which says
+nothing of the syntax. The transpilers accept both; what refuses the `enum` is the erasable
+subset, which Node runs and `tsc` can enforce. The object `as const` runs on every one of them,
+so the decision stands.
+
+## 2026-10-12: a typed client of the contract
+
+`node scripts/kit.mjs sdk` generated `clients/api`, the package `scheduling-api-client`, from
+`openapi/openapi.yaml`, and wired the example: `"sdk"` in the config, the workspace, the `paths`
+entry of the package in `tsconfig.json`, knip with the root as a workspace and the clients left
+out, and the scripts (`docs:generate` and `docs:check` end with the client, `ci:build` builds
+it). The scripts that call the CLI go through `scripts/kit.mjs` here, as the others do; the
+command leaves a script that already runs it.
+
+| | |
+|---|---|
+| Generated | 6 sources, 1 748 lines, for 25 operations and 39 error codes; a README of 100 lines; package.json and two tsconfig files |
+| Time of `sdk --check` | 0.18 s, the contract read back from YAML, no build |
+| Specs moved to the client | the specs of registering a person and of opening a practice, and `registerPeople` and `openStaffedPractice`, which four spec files set their people and practice up with: 131 lines added, 97 removed |
+| New helpers | `expectAnswer` and `expectRefusal`, typed by the outcome: a status or a code the operation does not declare does not compile (`'SLOT_TAKEN'` for the 404 of `openPractice` is refused, `418` too) |
+| End-to-end specs run after the change | the two that changed, the three journeys and the spec of adding a member, 36 tests, pass in process |
+| Left on the HTTP helpers | `VALIDATION_FAILED`: a body the contract does not describe cannot be written with the client, which is the point; the steps that wait for another context (`eventually`) |
+
+Frictions met while wiring it, each fixed in the kit before this commit: Biome lays out a
+package.json as npm does (every list expanded), so the command writes it that way; knip, once
+package.json declares workspaces, asks for the root to be a workspace of its own, so the command
+moves what knip.json said of the project under `workspaces["."]`; `imports/alias-declared`
+reported `sdk:build` as a compile without `build-aliases`, which a client does not need (its
+sources import relatively), so the rule leaves the build of `clients/`; and the CLAUDE.md of the
+project said never to add a `paths` entry, so it now says that the command writes the one of
+each client.
+
+The three generators the kit did not take were measured on this contract
+(`docs/tools/client-sdk.md`): none types `problem.code` by the codes the contract lists, so
+`expectRefusal` could not have been written on their output.
+
+## 2026-10-13: the typed client after its review
+
+A review of the client found what the first pass had not met on this example. Each fix was made
+in the kit, then `npm run docs:generate` rewrote `clients/api`:
+
+| | |
+|---|---|
+| A 500 of the application | thrown as `UnexpectedResponseError` with the raw body; it now reads the problem document, `code` `INTERNAL_ERROR` and `requestId`, the reference a caller quotes |
+| `operations.ts` | each operation holds its own description inside its function: no module-level constant, so no two operation ids can clash (`listItems` and `list_items` once both gave `LIST_ITEMS`) |
+| `apiAs(actor)` | gave the token as a raw `authorization` header; it now gives it as the `bearer` credential, a function asked before each request, so the specs prove the authentication of the client against the real server, and it no longer needs `await` |
+| Lockfile | none in this directory, which is a workspace of the kit; a generated npm project is told to run `npm install` when its lock misses a client |
+
+The two changed spec files and the three journeys pass again in process (30 tests).
+
 ## 2026-10-13: shapes declared once, and four contract pairs
 
 The example now says `"stack.schemas": "shared"`. The checker, run with the new rule

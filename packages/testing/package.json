@@ -1,6 +1,6 @@
 {
   "name": "@ddd-ts-kit/testing",
-  "version": "0.5.0",
+  "version": "0.8.0",
   "description": "Readable tests without mocks: test data builders, given/when/then scenarios and contract suites shared by fakes and real adapters.",
   "license": "MIT",
   "repository": {
@@ -46,11 +46,11 @@
     "dist"
   ],
   "dependencies": {
-    "@ddd-ts-kit/kernel": "0.5.0"
+    "@ddd-ts-kit/kernel": "0.8.0"
   },
   "devDependencies": {
-    "@ddd-ts-kit/aspects": "0.5.0",
-    "@ddd-ts-kit/events": "0.5.0",
+    "@ddd-ts-kit/aspects": "0.8.0",
+    "@ddd-ts-kit/events": "0.8.0",
     "@faker-js/faker": "^10.6.0"
   },
   "peerDependencies": {

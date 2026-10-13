@@ -1,4 +1,4 @@
-import { type Clock, type IdGenerator, unwrap } from '@ddd-ts-kit/kernel';
+import { type Clock, type IdGenerator } from '@ddd-ts-kit/kernel';
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
 import { Practice } from '@/contexts/identity/domain/aggregates/practice.aggregate';
 import { PersonError } from '@/contexts/identity/domain/errors/person.error';
@@ -18,7 +18,7 @@ export class OpenPracticeHandler implements CommandHandler<OpenPracticeCommand> 
 
   async execute(command: OpenPracticeCommand): Promise<string> {
     const { name, managerId } = command.opening;
-    const timeZone = unwrap(TimeZone.create(command.opening.timeZone));
+    const timeZone = TimeZone.create(command.opening.timeZone);
     const manager = await this.personRepository.findById(managerId);
 
     if (manager === undefined) {

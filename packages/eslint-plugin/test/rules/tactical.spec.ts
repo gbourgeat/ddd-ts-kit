@@ -284,6 +284,10 @@ ruleTester.run('test-no-mocks', testNoMocks, {
 ruleTester.run('events-name-format', eventsNameFormat, {
   valid: [
     at(EVENT, "export class InvoiceIssued { readonly name = 'billing.invoice.issued'; }"),
+    at(
+      EVENT,
+      "export class InvoiceIssued { static readonly eventName = 'billing.invoice.issued'; readonly name = InvoiceIssued.eventName; }",
+    ),
     at(EVENT, "export const invoiceMarkedAsOverdue = { name: 'billing.invoice.marked-as-overdue' };"),
     at(
       CONTRACT,
@@ -296,6 +300,10 @@ ruleTester.run('events-name-format', eventsNameFormat, {
   invalid: [
     {
       ...at(EVENT, "export class InvoiceIssued { readonly name = 'InvoiceIssued'; }"),
+      errors: [{ messageId: 'format', data: { value: 'InvoiceIssued', context: 'billing' } }],
+    },
+    {
+      ...at(EVENT, "export class InvoiceIssued { static readonly eventName = 'InvoiceIssued'; }"),
       errors: [{ messageId: 'format', data: { value: 'InvoiceIssued', context: 'billing' } }],
     },
     {

@@ -6,7 +6,7 @@ import type { DrizzleContext } from '../unit-of-work/drizzle-context.js';
 import { outboxTable, type OutboxTable } from './outbox-table.js';
 
 export interface DrizzleOutboxStoreOptions {
-  /** Default `outboxTable()`, in the `public` schema. */
+  /** Default `outboxTable()`, in the `public` schema. `tenantOutboxTable()` keeps the tenant of each event. */
   readonly table?: OutboxTable;
   /** How long a claimed record stays invisible to other claims. Default 30000. */
   readonly leaseMs?: number;
@@ -34,10 +34,13 @@ export class DrizzleOutboxStore<
 
   private readonly leaseDurationMs: number;
 
+  private readonly tenant: boolean;
+
   constructor(context: DrizzleContext<Q, F, S>, options: DrizzleOutboxStoreOptions = {}) {
     this.context = context;
     this.outbox = options.table ?? outboxTable();
     this.leaseDurationMs = options.leaseMs ?? 30_000;
+    this.tenant = 'tenantId' in this.outbox;
   }
 
   async append(events: readonly IntegrationEvent[]): Promise<void> {
@@ -57,6 +60,7 @@ export class DrizzleOutboxStore<
           payload: event.payload,
           traceparent: event.traceparent ?? null,
           correlationId: event.correlationId ?? null,
+          ...(this.tenant ? { tenantId: event.tenantId ?? null } : {}),
           nextAttemptAt: DUE_IMMEDIATELY,
         })),
       );
@@ -177,6 +181,7 @@ function toRecord(row: OutboxRow): OutboxRecord {
       payload: row.payload,
       ...(row.traceparent === null ? {} : { traceparent: row.traceparent }),
       ...(row.correlationId === null ? {} : { correlationId: row.correlationId }),
+      ...tenantOf(row),
     },
     status: row.status,
     attempts: row.attempts,
@@ -184,4 +189,11 @@ function toRecord(row: OutboxRow): OutboxRecord {
     ...(row.lastErrorCode === null ? {} : { lastErrorCode: row.lastErrorCode }),
     ...(row.publishedAt === null ? {} : { publishedAt: row.publishedAt }),
   };
+}
+
+/** The tenant a `tenantOutboxTable` row carries; a row of `outboxTable` has none. */
+function tenantOf(row: OutboxRow): { readonly tenantId?: string } {
+  const tenantId: unknown = Reflect.get(row, 'tenantId');
+
+  return typeof tenantId === 'string' ? { tenantId } : {};
 }

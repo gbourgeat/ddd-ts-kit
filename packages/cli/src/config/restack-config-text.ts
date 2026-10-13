@@ -3,7 +3,7 @@ import { editConfigText } from './edit-config-text.js';
 import { isRecord } from './values/is-record.js';
 import { writtenStack } from './written-stack.js';
 
-type Restacked = Pick<Config, 'importAlias' | 'importExtension' | 'stack' | 'deviations' | 'worker' | 'ci'>;
+type Restacked = Pick<Config, 'importAlias' | 'importExtension' | 'stack' | 'deviations' | 'worker' | 'ci' | 'sdk'>;
 
 /**
  * The config text of an initialised project after `init --force`: the stack and the spelling of
@@ -25,8 +25,8 @@ export function restackConfigText(content: string, config: Restacked): string {
   });
 }
 
-/** What the run added over the file: a deviation it just recorded, a worker it found on disk, the extra jobs of the pipeline. */
-function keepRecorded(raw: Record<string, unknown>, { deviations, worker, ci }: Restacked): void {
+/** What the run added over the file: a deviation it just recorded, a worker it found on disk, the extra jobs of the pipeline, the clients `--sdk` asked for. */
+function keepRecorded(raw: Record<string, unknown>, { deviations, worker, ci, sdk }: Restacked): void {
   const written: unknown[] = Array.isArray(raw['deviations']) ? raw['deviations'] : [];
 
   if (deviations.length > written.length) {
@@ -35,6 +35,10 @@ function keepRecorded(raw: Record<string, unknown>, { deviations, worker, ci }: 
 
   if (worker) {
     raw['worker'] = true;
+  }
+
+  if (sdk !== undefined && raw['sdk'] === undefined) {
+    raw['sdk'] = { name: sdk.name };
   }
 
   if (ci.extras.length > 0) {

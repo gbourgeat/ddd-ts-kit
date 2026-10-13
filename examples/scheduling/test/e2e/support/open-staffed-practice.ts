@@ -1,4 +1,5 @@
 import { eventually, expectStatus } from '@ddd-ts-kit/testing/e2e';
+import { unwrap } from 'scheduling-api-client';
 import { registerPeople } from '$test/e2e/support/register-people';
 import type { StaffedPractice } from '$test/e2e/support/staffed-practice';
 import type { RunningApplication } from '$test/e2e/support/start-application';
@@ -15,7 +16,8 @@ const weekdays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'satur
 const consultation = { name: 'Consultation', duration: 30, grid: 30, buffer: 0, needsConfirmation: false };
 
 /**
- * A practice set up through the public API alone, by who may do each step: the platform admin
+ * A practice set up through the public API alone (the typed client of the contract where it is
+ * enough, the HTTP client where a step has to wait for another context), by who may do each step: the platform admin
  * opens it, its manager adds a practitioner and an assistant, the practitioner creates a
  * calendar, opens it every day of the week around the clock and defines a consultation of
  * thirty minutes.
@@ -25,24 +27,12 @@ export async function openStaffedPractice(application: RunningApplication, staff
 
   await registerPeople(application, managerId, practitionerId, assistantId);
 
-  const root = await application.as({ id: 'root', roles: ['platform-admin'] });
+  const root = application.apiAs({ id: 'root', roles: ['platform-admin'] });
+  const { id: practiceId } = await unwrap(root.openPractice({ body: { name, timeZone: 'Europe/Paris', managerId } }));
+  const manager = application.apiAs({ id: managerId });
 
-  const practiceId = expectStatus(
-    await root.post<{ id: string }>('/practices', { name, timeZone: 'Europe/Paris', managerId }),
-    201,
-  ).body.id;
-
-  const manager = await application.as({ id: managerId });
-
-  expectStatus(
-    await manager.post('/practices/' + practiceId + '/members', { personId: practitionerId, role: 'practitioner' }),
-    201,
-  );
-
-  expectStatus(
-    await manager.post('/practices/' + practiceId + '/members', { personId: assistantId, role: 'assistant' }),
-    201,
-  );
+  await unwrap(manager.addMember({ path: { practiceId }, body: { personId: practitionerId, role: 'practitioner' } }));
+  await unwrap(manager.addMember({ path: { practiceId }, body: { personId: assistantId, role: 'assistant' } }));
 
   return {
     practiceId,

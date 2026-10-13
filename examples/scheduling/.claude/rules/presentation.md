@@ -3,6 +3,7 @@ paths:
   - "src/contexts/*/presentation/**"
   - "openapi/**"
   - "scripts/openapi.ts"
+  - "clients/**"
 ---
 
 # Presentation layer
@@ -19,5 +20,5 @@ paths:
 - A shape several routes use is declared once, in `presentation/http/shared/<name>.schema.ts` (`npx ddd-ts-kit generate schema <context> <Name>`), or in `presentation/` of the shared kernel when several contexts answer with it (`generate schema shared-kernel <Name>`), and shared: the contract documents it once and every route refers to it. A route takes the part it needs from it (pick, omit, partial, extend) instead of copying it, and answers an identifier with `acceptedSchema` of `@ddd-ts-kit/http` (`schema/no-duplicate-shape`). Only presentation layers import a schema (`schema/presentation-only`).
 - Never put the message of an unexpected failure in a response or a log.
 - Files: the canonical tree of `presentation/http/` (`naming/suffix`, `tree/closed`): a folder per controller, `*.routes.ts` for the groups, `guards/`, `shared/`; function routes stay flat (`*.route.ts`, `*.dto.ts`).
-- After a change, `npm run docs:generate` regenerates the contract, `openapi/openapi.yaml` (one file per document when `openapi.documents` of `ddd-ts-kit.config.json` splits it; JSON under `openapi.format: json`), committed with the route; CI fails on a difference. Never edit it by hand.
+- After a change, `npm run docs:generate` regenerates the contract, `openapi/openapi.yaml` (one file per document when `openapi.documents` of `ddd-ts-kit.config.json` splits it; JSON under `openapi.format: json`), committed with the route; CI fails on a difference. Never edit it by hand. It regenerates the typed clients under `clients/` too (`npx ddd-ts-kit sdk`), committed with it.
 - Contract with `/ddd-ts-kit:document`. Create with `npx ddd-ts-kit generate route <context> <UseCase> --method <M> --path <p> [--group <Name>] [--mapper] [--serializer] --json`, then `generate e2e <context> <UseCase>`; `generate route-group` and `generate guard` write a group and a guard.

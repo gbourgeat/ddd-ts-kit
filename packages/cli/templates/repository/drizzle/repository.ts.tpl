@@ -1,5 +1,10 @@
 import { and, eq } from 'drizzle-orm';
+{{#if tenant.scoped}}
+import { optimisticUpdate, ownTenantCondition, tenantCondition } from '@ddd-ts-kit/drizzle/postgres';
+{{/if}}
+{{#unless tenant.scoped}}
 import { optimisticUpdate } from '@ddd-ts-kit/drizzle/postgres';
+{{/unless}}
 {{#if tenant.scoped}}
 import { stampCreation, stampUpdate, tenantScopeOf, type Clock, type ExecutionScope } from '@ddd-ts-kit/kernel';
 {{/if}}
@@ -34,7 +39,7 @@ export class Drizzle{{aggregate.pascal}}Repository implements {{aggregate.pascal
 
   async findById(id: string): Promise<{{aggregate.pascal}} | undefined> {
 {{#if tenant.scoped}}
-    const mine = and(eq({{aggregate.tableCamel}}.id, id), this.ownTenant());
+    const mine = and(eq({{aggregate.tableCamel}}.id, id), tenantCondition({{aggregate.tableCamel}}.tenantId, this.scope));
     const [row] = await this.database.executor().select().from({{aggregate.tableCamel}}).where(mine);
 {{/if}}
 {{#unless tenant.scoped}}
@@ -70,13 +75,7 @@ export class Drizzle{{aggregate.pascal}}Repository implements {{aggregate.pascal
       .executor()
       .update({{aggregate.tableCamel}})
       .set({ ...state, ...stampUpdate(this.scope, this.clock) })
-      .where(and(sameId, sameVersion{{#if tenant.scoped}}, this.ownTenant(){{/if}}))
+      .where(and(sameId, sameVersion{{#if tenant.scoped}}, ownTenantCondition({{aggregate.tableCamel}}.tenantId, this.scope){{/if}}))
       .returning({ id: {{aggregate.tableCamel}}.id });
   }
-{{#if tenant.scoped}}
-
-  private ownTenant() {
-    return eq({{aggregate.tableCamel}}.tenantId, tenantScopeOf(this.scope).tenantId);
-  }
-{{/if}}
 }

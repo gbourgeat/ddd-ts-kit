@@ -43,13 +43,17 @@ npx ddd-ts-kit generate query <ctx> <UseCase> --public --json
 - Nothing else for a plain permission: no check in the controller, none in the handler. The
   generated handler spec already proves that an actor without it is refused.
 - A guard is another thing: a control at the edge over a set of routes, named in `guards` of
-  a `@RouteGroup` or of a controller (`Authenticated`, `HasRole('auditor')`, `Public`, or a
+  a `@RouteGroup` or of a controller (`Authenticated`, `HasRole(Role.Auditor)`, `HasScope('invoices:read')`, `TenantMember`, `Public`, or a
   guard of the project in `presentation/http/guards/*.guard.ts`). It reads the caller and the
   request, answers 401 or 403 before the controller runs, and never loads an element
   (`presentation/guard-at-the-edge`). It never replaces the permission: a job or an event
   handler sends the same command without passing any guard. Use a guard for what is true of
   the whole set of routes (signed in, a role, the tenant of the path), a permission or a policy
   for everything that depends on the element.
+- A role is never a string in code: it is a key of the vocabulary `Role` of the platform
+  (`<platformDir>/auth/role.ts`), and `generate route-group <ctx> <Name> --role <role>` adds
+  the role there. A grant names the permission through its set,
+  `billingPermissions['invoice.issue']`, never by its id `'billing:invoice.issue'`.
 - `npx ddd-ts-kit describe <ctx>` shows what each use case and route requires; the
   permissions of a context are listed in its `CONTEXT.md`.
 
@@ -85,7 +89,20 @@ port; the adapter turns it into the query.
 ## Choosing the model
 
 The owner's choice (`stack.authz`); all sit behind the one `Authorizer` port, so changing
-later replaces an adapter and the permission mapping, not the handlers.
+later replaces an adapter and the permission mapping, not the handlers. Ask, in order, and
+stop at the first answer that changes the model (the guide
+`docs/guides/choosing-access-control.md` of the kit has a worked preset for each):
+
+1. Does a right depend on **which element**? No: roles.
+2. Do users **share** elements, **delegate**, or inherit along a **hierarchy**, and must a list
+   show what each one reaches? Yes: relationships (Zanzibar), in the PostgreSQL tuple store of
+   the project, or OpenFGA once it outgrows it.
+3. Do rights follow **properties** or need **explicit refusals**? Yes: attribute policies over
+   roles. No: roles plus a policy per element rule.
+4. Do **third parties** act with a limited credential? Add scopes: `HasScope` on the routes,
+   the vocabulary in `SessionScopes`.
+5. Do **several customers** share the deployment? Add a tenancy strategy (skill
+   `ddd-ts-kit:persistence`), roles per tenant, `TenantMember` on the routes of tenant data.
 
 | Model | Fits when | Costs |
 |---|---|---|
@@ -97,7 +114,7 @@ later replaces an adapter and the permission mapping, not the handlers.
 
 | Shortcut | Instead |
 |---|---|
-| `if (user.role === 'admin')` in a controller or a handler | a permission required by the use case; `HasRole('admin')` on the route group when the whole set of routes is for admins |
+| `if (user.role === 'admin')` in a controller or a handler | a permission required by the use case; `HasRole(Role.Admin)` on the route group when the whole set of routes is for admins |
 | a guard that loads the appointment to see who owns it | a policy on the permission of the use case |
 | reading the user from a global or the request in a handler | `command.actor` |
 | passing the request or the token inward | an `Actor`, mapped at the boundary |
@@ -107,4 +124,5 @@ later replaces an adapter and the permission mapping, not the handlers.
 Finish with
 `npx ddd-ts-kit check --rule authz/declared --rule authz/in-application --rule authz/actor-explicit`.
 Every decision, denials included, is recorded by the audit trail (skill
-`ddd-ts-kit:cross-cutting`).
+`ddd-ts-kit:cross-cutting`), the refusals of the guards at the edge too (`onGuardRefusal` of the
+HTTP boundary, wired to `auditGuardRefusals`).

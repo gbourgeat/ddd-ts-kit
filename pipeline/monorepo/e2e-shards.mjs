@@ -29,7 +29,7 @@ export const ELSEWHERE = [
 /** One list per runner, with the seconds each file took on the machine that measured it (2026-10-12). */
 export const SHARDS = [
   { 'first-minute-two-contexts.spec.ts': 184, 'typecheck.spec.ts': 19 },
-  { 'first-minute-no-context.spec.ts': 181, 'error-rule-violations.spec.ts': 20 },
+  { 'first-minute-no-context.spec.ts': 181, 'error-rule-violations.spec.ts': 20, 'client-sdk.spec.ts': 8 },
   { 'proven-stacks.spec.ts': 106, 'coverage-gate.spec.ts': 88, 'dev-reload.spec.ts': 8 },
   {
     // Estimated (2026-10-13) from a run that stopped at its first assertion: four projects, installed and analyzed.

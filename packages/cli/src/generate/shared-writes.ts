@@ -42,6 +42,11 @@ export const SHARED_WRITES: Readonly<Record<string, SharedWrite>> = {
     when: 'the adapter is the first of a project wired on tsyringe to state its own policy (the helper joins the platform)',
     worker: 'once the project has its first adapter',
   },
+  'route-group': {
+    files: ['the role vocabulary of the platform (<platformDir>/auth/role.ts)'],
+    when: '--role names a role the vocabulary does not hold yet',
+    worker: 'without --role, or with a role the vocabulary already holds',
+  },
   job: { files: ['<platformDir>/job-settings.ts', 'the grant of its system actor (<platformDir>/auth/)'] },
   policy: {
     files: ['the access policies registry (<platformDir>/auth/access-policies.ts)'],

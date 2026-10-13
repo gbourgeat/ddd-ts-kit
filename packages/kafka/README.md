@@ -206,9 +206,9 @@ An existing topic is never altered: `topics` applies at creation only. With
 publication.
 
 A record is the envelope as JSON (`id`, `type`, `version`, `occurredAt`, `payload`,
-`traceparent`, `correlationId`), its key is `keyOf(event)`, and its headers are `x-event-id`,
-`x-event-type`, `x-event-version`, `traceparent` and `x-correlation-id`. Any Kafka client can
-consume it.
+`traceparent`, `correlationId`, `tenantId`), its key is `keyOf(event)`, and its headers are
+`x-event-id`, `x-event-type`, `x-event-version`, `traceparent`, `x-correlation-id` and
+`x-tenant-id`. Any Kafka client can consume it.
 
 Two consumers of one type are two groups and both receive every event. Two instances of one
 consumer are two members of its group: each partition, so each key, goes to one of them.

@@ -1,4 +1,14 @@
-import type { Upstream, ContextConfig, Style, Assembly, Stack, Limits, OnePerFile, Config } from './config.js';
+import type {
+  Upstream,
+  ContextConfig,
+  Style,
+  Assembly,
+  Stack,
+  Limits,
+  OnePerFile,
+  Config,
+  SdkConfig,
+} from './config.js';
 import { parseAllowedFile } from './parse-allowed-file.js';
 import { posix } from './posix.js';
 import { isRecord } from './is-record.js';
@@ -14,8 +24,12 @@ const ASSEMBLIES: readonly Assembly[] = ['barrel', 'discovery'];
 const DEPENDENCY_STATEMENTS: readonly Stack['dependencies'][] = ['signature', 'listed'];
 const REFUSAL_FORMS: readonly Stack['refusals'][] = ['factories', 'classes'];
 const SCHEMA_FORMS: readonly Stack['schemas'][] = ['shared', 'per-route'];
+const LITERAL_FORMS: readonly Stack['literals'][] = ['named', 'free'];
 
 const KERNEL = ['@ddd-ts-kit/kernel'];
+
+/** The package name of a client when "sdk" does not give one, as the CLI writes it. */
+const DEFAULT_SDK_NAME = '{project}-{document}-client';
 
 /** The application layer declares its permissions and policies with `@ddd-ts-kit/auth`, which imports the kernel only. */
 const APPLICATION = [...KERNEL, '@ddd-ts-kit/auth'];
@@ -57,7 +71,13 @@ export function parseConfig(raw: unknown): Config {
     onePerFile: parseOnePerFile(source['onePerFile']),
     stack: parseStack(source['stack']),
     standardInterfaces: parseStandardInterfaces(source['standardInterfaces']),
+    sdk: parseSdk(source['sdk']),
   };
+}
+
+/** A key that is not an object asks for no client, as in the CLI. */
+function parseSdk(value: unknown): SdkConfig | undefined {
+  return isRecord(value) ? { name: text(value['name'], DEFAULT_SDK_NAME) } : undefined;
 }
 
 function parseStack(value: unknown): Stack {
@@ -69,6 +89,7 @@ function parseStack(value: unknown): Stack {
     dependencies: oneOf(DEPENDENCY_STATEMENTS, raw['dependencies'], 'listed'),
     refusals: oneOf(REFUSAL_FORMS, raw['refusals'], 'classes'),
     schemas: oneOf(SCHEMA_FORMS, raw['schemas'], 'per-route'),
+    literals: oneOf(LITERAL_FORMS, raw['literals'], 'free'),
     orm: text(raw['orm'], 'drizzle'),
   };
 }

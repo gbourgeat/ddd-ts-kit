@@ -50,6 +50,22 @@ concept is not understood yet: add the term with its meaning first, or ask. See
 Smaller habits with large effects: one word per concept in a context (not `fetch` here and
 `retrieve` there), a boolean reads as a predicate (`isCancelled`), a collection is a plural.
 
+No magic value either. A status, a kind or a role is a closed vocabulary declared once and read
+by its key, `AppointmentStatus.NoShow`, never `'no-show'` written again
+(`language/declared-vocabulary`, see [Ubiquitous language](ubiquitous-language.md#closed-vocabularies)).
+A number in `domain/` or `application/` other than 0, 1, -1 or an index has a name where it is
+decided, a constant of the module or a value object (`clean/no-magic-number`):
+
+```ts
+// Before
+return Number(hours) * 60 + Number(minutes);
+
+// After
+const MINUTES_PER_HOUR = 60;
+
+return Number(hours) * MINUTES_PER_HOUR + Number(minutes);
+```
+
 ## Small functions, one thing, one level of abstraction
 
 A function has at most three parameters and stays short (rule `clean/function-size`, limits

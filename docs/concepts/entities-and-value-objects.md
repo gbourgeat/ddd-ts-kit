@@ -36,8 +36,8 @@ the rules that make it valid and the operations that belong to it.
 
 ```ts
 // contexts/appointments/domain/value-objects/time-slot.vo.ts
-import { ValueObject, err, ok, type Result } from '@ddd-ts-kit/kernel';
-import { InvalidTimeSlot } from '@/contexts/appointments/domain/errors/invalid-time-slot.error';
+import { ValueObject } from '@ddd-ts-kit/kernel';
+import { AppointmentError } from '@/contexts/appointments/domain/errors/appointment.error';
 
 export type TimeSlotProps = {
   readonly startsAt: Date;
@@ -49,12 +49,12 @@ export class TimeSlot extends ValueObject<TimeSlotProps> {
     super(props);
   }
 
-  static create(startsAt: Date, endsAt: Date): Result<TimeSlot, InvalidTimeSlot> {
+  static create(startsAt: Date, endsAt: Date): TimeSlot {
     if (endsAt.getTime() <= startsAt.getTime()) {
-      return err(new InvalidTimeSlot());
+      throw AppointmentError.invalidTimeSlot(startsAt, endsAt);
     }
 
-    return ok(new TimeSlot({ startsAt, endsAt }));
+    return new TimeSlot({ startsAt, endsAt });
   }
 
   overlaps(other: TimeSlot): boolean {
@@ -190,11 +190,13 @@ table of its own with a technical key the domain never sees.
 - **Not every string deserves a type.** A free-text note with no rule and no operation gains
   nothing from a wrapper class. Wrap what has validity rules, behaviour, or a real risk of
   confusion.
-- **`Result` or throw.** The generated value object returns a `Result` from `create`; an
-  aggregate method typically throws a `DomainError`. Both are accepted by the reference
-  ("exceptions or `Result`"); choose one convention per context and keep to it. Either way the
-  refusal is built by a factory of the error class of the concept the value describes:
-  `err(PersonError.invalidEmail(raw))` for the email of a person, not a class per value object.
+- **Throw, or `Result`.** The generated value object throws from `create`, as an aggregate
+  method does: `throw PersonError.invalidEmail(raw)`, and the caller takes the value with no
+  `unwrap`. A project that prefers expected failures as values says `"stack.valueObjects":
+  "result"`: `create` returns `err(PersonError.invalidEmail(raw))` and the caller unwraps it; a
+  config without the key is read that way, and `ddd-ts-kit value-objects` moves such a project to
+  throwing factories ([CONFIG.md](../CONFIG.md#stack)). Either way the refusal is built by a
+  factory of the error class of the concept the value describes, not a class per value object.
 - **Immutability is checked syntactically.** `domain/value-object-immutability` sees readonly
   properties and writes to `this`; it does not see a mutable object held in a readonly field
   (a `Date` can still be mutated through its methods, an array can be pushed to). Hold values

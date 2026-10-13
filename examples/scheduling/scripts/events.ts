@@ -13,6 +13,8 @@ const target = path.resolve('docs/integration');
 const format = contractFormat();
 const other = format === 'yaml' ? 'asyncapi.json' : 'asyncapi.yaml';
 
+/** The type of each declaration by the name its published language exports it under, `invoiceIssuedV1`: what a handler reads with `invoiceIssuedV1.type`. */
+const typesByName = new Map<string, string>();
 const registry = createEventRegistry(await declaredEvents());
 
 const generated: Readonly<Record<string, string>> = {
@@ -63,9 +65,16 @@ async function declaredEvents(): Promise<AnyIntegrationEventDefinition[]> {
   for (const context of contextNames()) {
     const index = new URL('../src/contexts/' + context + '/published-language/index.js', import.meta.url);
     const exported: unknown = await import(index.href);
-    const values: unknown[] = typeof exported === 'object' && exported !== null ? Object.values(exported) : [];
 
-    declarations.push(...values.filter(isDeclaration));
+    const entries: [string, unknown][] =
+      typeof exported === 'object' && exported !== null ? Object.entries(exported) : [];
+
+    for (const [name, value] of entries) {
+      if (isDeclaration(value)) {
+        declarations.push(value);
+        typesByName.set(name, value.type);
+      }
+    }
   }
 
   return declarations;
@@ -96,7 +105,7 @@ function isDeclaration(value: unknown): value is AnyIntegrationEventDefinition {
   );
 }
 
-/** Who consumes what, read from the sources: an integration event handler names the type it handles in `eventType`. */
+/** Who consumes what, read from the sources: an integration event handler names the type it handles in `eventType`, read from the declaration (`invoiceIssuedV1.type`) or written out. */
 function consumersByEventType(): Record<string, string[]> {
   const consumers: Record<string, string[]> = {};
 
@@ -114,7 +123,11 @@ function consumedBy(context: string): string[] {
   const files = fs.existsSync(directory) ? fs.readdirSync(directory) : [];
 
   return files.flatMap((file) => {
-    const type = /static readonly eventType = '([^']+)'/.exec(fs.readFileSync(path.join(directory, file), 'utf8'))?.[1];
+    const written = /static readonly eventType = (?:'([^']+)'|([A-Za-z_$][\w$]*)\.type\b)/.exec(
+      fs.readFileSync(path.join(directory, file), 'utf8'),
+    );
+
+    const type = written?.[1] ?? typesByName.get(written?.[2] ?? '');
 
     return type === undefined ? [] : [type];
   });

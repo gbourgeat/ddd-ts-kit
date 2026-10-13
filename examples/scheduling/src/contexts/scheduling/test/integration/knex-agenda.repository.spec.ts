@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { Criteria, offsetPage, scoped, unwrap } from '@ddd-ts-kit/kernel';
+import { Criteria, offsetPage, scoped } from '@ddd-ts-kit/kernel';
 import type { AgendaEntry } from '@/contexts/scheduling/application/ports/agenda.port';
 import { AgendaProjection } from '@/contexts/scheduling/application/projections/agenda.projection';
 import { AppointmentBooked } from '@/contexts/scheduling/domain/events/appointment-booked.event';
@@ -126,7 +126,7 @@ describe('KnexAgenda, written fact after fact', () => {
   it('follows the facts of an appointment the projection applies, milliseconds apart', async () => {
     const projection = new AgendaProjection(agenda);
     const { booking } = anAppointment().identifiedBy('appointment-1').build();
-    const cancellation = unwrap(Cancellation.create('patient'));
+    const cancellation = Cancellation.create('patient');
 
     const writes = [
       await projection.booked(
