@@ -80,35 +80,37 @@ of tools.
 
 22. [Authentication and authorization](authentication-and-authorization.md): roles,
     attributes, relationships, with a decision table.
-23. [Actor and execution scope](actor-and-execution-scope.md): who acts, explicitly, and what
+23. [Authorization in practice](authorization-in-practice.md): `@Requires`, the middleware,
+    the `Authorizer` port and policies, followed through one command.
+24. [Actor and execution scope](actor-and-execution-scope.md): who acts, explicitly, and what
     every unit of work carries.
-24. [Multitenancy](multitenancy.md): one deployment, many customers, and no read or write
+25. [Multitenancy](multitenancy.md): one deployment, many customers, and no read or write
     that crosses from one to another.
-25. [Audit trail](audit-trail.md): who did what, recorded from outside the use cases.
-26. [Observability](observability.md): tracing, logs, metrics, error reporting, and the
+26. [Audit trail](audit-trail.md): who did what, recorded from outside the use cases.
+27. [Observability](observability.md): tracing, logs, metrics, error reporting, and the
     correlation id that ties them.
-27. [Resilience](resilience.md): retry, timeout, circuit breaker, bulkhead, cache, and how
+28. [Resilience](resilience.md): retry, timeout, circuit breaker, bulkhead, cache, and how
     each one fails.
-28. [Scheduled jobs](scheduled-jobs.md): work triggered by time, and why it must be
+29. [Scheduled jobs](scheduled-jobs.md): work triggered by time, and why it must be
     idempotent.
-29. [File storage](file-storage.md): files in a storage and never in the database, the order
+30. [File storage](file-storage.md): files in a storage and never in the database, the order
     that keeps both consistent, signed links.
 
 ## 6. Code and tests
 
-30. [Clean code](clean-code.md): naming, small functions, stepdown, comments, testability by
+31. [Clean code](clean-code.md): naming, small functions, stepdown, comments, testability by
     construction.
-31. [Testing strategy](testing-strategy.md): fakes rather than mocks, builders, contract
+32. [Testing strategy](testing-strategy.md): fakes rather than mocks, builders, contract
     tests, the four levels.
 
 ## Shorter paths
 
 - **A product person or a newcomer to DDD:** 1, 2, 3, 5, then 18.
-- **Before writing a first use case:** 3, 7, 9, 11, 13, 31.
+- **Before writing a first use case:** 3, 7, 9, 11, 13, 32.
 - **Before making two contexts talk:** 4, 15, 16, 17, 20.
 - **Before keeping an aggregate as its events:** 7, 15, 16, 20, 21.
-- **Before serving several customers from one deployment:** 22, 23, 24.
-- **Before putting the system in production:** 22, 26, 27, 28, then the
+- **Before serving several customers from one deployment:** 22, 24, 25.
+- **Before putting the system in production:** 22, 23, 27, 28, 29, then the
   [tools pages](../README.md#tools-one-page-per-decision).
 
 ## Limits and when not to use it
