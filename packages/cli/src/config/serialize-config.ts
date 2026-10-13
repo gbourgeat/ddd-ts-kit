@@ -66,10 +66,13 @@ function optionalKeys(config: Config): Record<string, unknown> {
   };
 }
 
-/** The extra jobs of the pipeline and the form of the contracts, when they are not the defaults. */
-function pipelineKeys({ ci, openapi }: Config): Record<string, unknown> {
+/** The extra jobs of the pipeline, the form of the contracts when they are not the defaults, and their clients once asked for. */
+function pipelineKeys({ ci, openapi, sdk }: Config): Record<string, unknown> {
   return {
     ...(ci.extras.length > 0 ? { ci } : {}),
     ...(openapi.format !== 'yaml' || openapi.documents.length > 0 ? { openapi } : {}),
+    ...(sdk === undefined
+      ? {}
+      : { sdk: { name: sdk.name, ...(sdk.access === undefined ? {} : { access: sdk.access }) } }),
   };
 }

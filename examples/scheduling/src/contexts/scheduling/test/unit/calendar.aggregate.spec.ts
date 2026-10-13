@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import { unwrap } from '@ddd-ts-kit/kernel';
 import { given } from '@ddd-ts-kit/testing';
 import { Calendar } from '@/contexts/scheduling/domain/aggregates/calendar.aggregate';
 import { AppointmentType } from '@/contexts/scheduling/domain/value-objects/appointment-type.vo';
@@ -11,7 +10,7 @@ import { TimeOff } from '@/contexts/scheduling/domain/value-objects/time-off.vo'
 import { TimeZone } from '@/contexts/scheduling/domain/value-objects/time-zone.vo';
 import { aCalendar } from '@/contexts/scheduling/test/builders/calendar.builder';
 
-const paris = unwrap(TimeZone.create('Europe/Paris'));
+const paris = TimeZone.create('Europe/Paris');
 /** Long before every start of this spec and inside the horizon of all of them. */
 const now = instant('2026-02-20T08:00:00.000Z');
 
@@ -88,9 +87,7 @@ describe('Calendar', () => {
 describe('Calendar, its availability', () => {
   it('replaces its weekly hours when opening hours are set', () => {
     given(open())
-      .when((calendar) =>
-        calendar.setOpeningHours(unwrap(OpeningHours.create({ monday: [range('10:00', '11:00')] })), now),
-      )
+      .when((calendar) => calendar.setOpeningHours(OpeningHours.create({ monday: [range('10:00', '11:00')] }), now))
       .thenEvents([{ name: 'scheduling.calendar.opening-hours-set' }])
       .thenState((calendar) => {
         expect(calendar.rangesOn('2026-03-02').map((hours) => [hours.start, hours.end])).toEqual([['10:00', '11:00']]);
@@ -100,7 +97,7 @@ describe('Calendar, its availability', () => {
 
   it('replaces the hours of a day by those of its exception, and leaves the other days', () => {
     given(open())
-      .when((calendar) => calendar.addException(unwrap(Exception.create('2026-03-02', [range('20:00', '22:00')])), now))
+      .when((calendar) => calendar.addException(Exception.create('2026-03-02', [range('20:00', '22:00')]), now))
       .thenEvents([{ name: 'scheduling.calendar.exception-added', day: '2026-03-02' }])
       .thenState((calendar) => {
         expect(calendar.rangesOn('2026-03-02').map((hours) => hours.start)).toEqual(['20:00']);
@@ -110,7 +107,7 @@ describe('Calendar, its availability', () => {
 
   it('keeps one exception per day: the last one added', () => {
     given(open().withException('2026-03-02', ['20:00', '22:00']))
-      .when((calendar) => calendar.addException(unwrap(Exception.create('2026-03-02', [])), now))
+      .when((calendar) => calendar.addException(Exception.create('2026-03-02', []), now))
       .thenState((calendar) => expect(calendar.rangesOn('2026-03-02')).toEqual([]));
   });
 
@@ -125,7 +122,7 @@ describe('Calendar, its availability', () => {
     );
 
     given(open())
-      .when((calendar) => calendar.addTimeOff(unwrap(TimeOff.create(startsAt, endsAt)), [before], now))
+      .when((calendar) => calendar.addTimeOff(TimeOff.create(startsAt, endsAt), [before], now))
       .thenEvents([{ name: 'scheduling.calendar.time-off-added', startsAt, endsAt }])
       .thenState((calendar) => expect(calendar.timeOffs).toHaveLength(1));
   });
@@ -137,7 +134,7 @@ describe('Calendar, its availability', () => {
       instant('2026-03-02T08:30:00.000Z'),
     );
 
-    const timeOff = unwrap(TimeOff.create(instant('2026-03-02T08:15:00.000Z'), instant('2026-03-03T00:00:00.000Z')));
+    const timeOff = TimeOff.create(instant('2026-03-02T08:15:00.000Z'), instant('2026-03-03T00:00:00.000Z'));
 
     given(open())
       .when((calendar) => calendar.addTimeOff(timeOff, [held], now))
@@ -146,16 +143,14 @@ describe('Calendar, its availability', () => {
   });
 
   it('offers an appointment type once defined, and replaces it when defined again under the same identifier', () => {
-    const longer = unwrap(
-      AppointmentType.create({
-        id: 'consultation',
-        name: 'Long consultation',
-        duration: 60,
-        grid: 30,
-        buffer: 0,
-        needsConfirmation: false,
-      }),
-    );
+    const longer = AppointmentType.create({
+      id: 'consultation',
+      name: 'Long consultation',
+      duration: 60,
+      grid: 30,
+      buffer: 0,
+      needsConfirmation: false,
+    });
 
     given(open())
       .when((calendar) => calendar.defineAppointmentType(longer, now))
@@ -321,5 +316,5 @@ function instant(text: string): Date {
 }
 
 function range(start: string, end: string): Range {
-  return unwrap(Range.create(start, end));
+  return Range.create(start, end);
 }

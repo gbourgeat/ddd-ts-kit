@@ -159,8 +159,12 @@ the request. A permission answers "may this actor do this to this element", and 
 on the command or the query with `@Requires`, decided by the bus. A job, an event handler or
 another transport that sends the same command never passes a guard and is still held to the
 permission. So a guard never replaces a permission, and never loads an aggregate
-(`presentation/guard-at-the-edge`). `HasScope` is not shipped: the `Session` of the kernel
-carries no scope, and a guard that reads `session.extensions` is three lines in a project.
+(`presentation/guard-at-the-edge`). `HasScope('invoices:read')` keeps routes for a session
+granted every scope named: the JWT and Keycloak authenticators fill `Session.scopes` from the
+`scope` (or `scp`) claim, and a project declares its vocabulary by augmenting `SessionScopes`, so
+a misspelt scope does not compile. A scope bounds what a client application may do on behalf of
+the user, never what the user may do: the permission still decides. See
+[Choosing access control](../guides/choosing-access-control.md).
 
 ## Mapper and serializer
 

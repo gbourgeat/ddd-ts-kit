@@ -23,6 +23,10 @@ const OUTSIDE_CONCERNS: Readonly<Record<string, OutsideConcern>> = {
     why: 'Redis is a technology behind a port',
     fix: 'Depend on the port (`Cache` of @ddd-ts-kit/kernel, or a port in application/ports) and bind the Redis adapter in the platform.',
   },
+  '@ddd-ts-kit/s3': {
+    why: 'an object store is a technology behind the FileStorage port',
+    fix: 'Depend on `FileStorage` (or `FileStaging` and `FileKeys`) of @ddd-ts-kit/kernel and bind the S3 connector in the platform (`init --storage s3`).',
+  },
   '@ddd-ts-kit/scheduling': {
     why: 'the scheduler is a technology behind the `JobScheduler` port, and a job only declares its schedule',
     fix: 'Remove the import: declare the job with `@Scheduled` of @ddd-ts-kit/kernel/declarations (or `builder.job(..)` in the module file) and let the composition root bind the scheduler.',

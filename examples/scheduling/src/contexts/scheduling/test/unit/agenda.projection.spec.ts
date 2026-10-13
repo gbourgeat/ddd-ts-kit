@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import { RoleBasedAuthorizer } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { contextModule, createTestApplication, fake } from '@ddd-ts-kit/di';
-import { unwrap } from '@ddd-ts-kit/kernel';
 import * as schedulingDeclarations from '@/contexts/scheduling/scheduling.declarations';
 import { platformTestModule } from '@/platform/platform-test.module';
 import { schedulingPermissions } from '@/contexts/scheduling/application/authorization/scheduling.permissions';
@@ -135,7 +134,7 @@ describe('The agenda, kept from the facts of the appointments', () => {
 
     await appointments.save(appointment);
 
-    appointment.cancel(unwrap(Cancellation.create('practice', 'The practitioner is away.')), at('07:00'));
+    appointment.cancel(Cancellation.create('practice', 'The practitioner is away.'), at('07:00'));
     await appointments.save(appointment);
 
     expect(await agenda.get('appointment-1')).toMatchObject({
@@ -167,7 +166,7 @@ describe('The agenda, given facts twice or out of order', () => {
 
     const cancelled = new AppointmentCancelled('appointment-1', at('07:00'), {
       booking,
-      cancellation: unwrap(Cancellation.create('patient')),
+      cancellation: Cancellation.create('patient'),
     });
 
     const writes = [

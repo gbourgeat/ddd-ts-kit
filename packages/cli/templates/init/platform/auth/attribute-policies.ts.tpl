@@ -1,6 +1,7 @@
 import { permit, type AttributePolicy, type Condition } from '@ddd-ts-kit/auth';
+import { Role } from '{{alias.platform}}/auth/role{{alias.ext}}';
 
-const isAdministrator: Condition = ({ actor }) => actor.roles.includes('admin');
+const isAdministrator: Condition = ({ actor }) => actor.roles.includes(Role.Admin);
 
 /**
  * The rules, over `{ actor, permission, resource, attributes, context, now }`. A matching `forbid`

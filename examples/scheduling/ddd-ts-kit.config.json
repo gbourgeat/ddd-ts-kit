@@ -19,6 +19,7 @@
     "authz": "rebac",
     "broker": "redis",
     "cache": "redis",
+    "storage": "local",
     "audit": "on",
     "errors": "sentry",
     "logger": "pino",
@@ -27,6 +28,8 @@
     "dependencies": "signature",
     "refusals": "factories",
     "routes": "controllers",
+    "valueObjects": "throwing",
+    "literals": "named",
     "representations": "negotiated",
     "forms": "on"
   },
@@ -71,5 +74,8 @@
   "domainAllowedPackages": ["@ddd-ts-kit/kernel"],
   "applicationAllowedPackages": ["@ddd-ts-kit/kernel", "@ddd-ts-kit/auth"],
   "worker": true,
-  "deviations": []
+  "deviations": [],
+  "sdk": {
+    "name": "{project}-{document}-client"
+  }
 }

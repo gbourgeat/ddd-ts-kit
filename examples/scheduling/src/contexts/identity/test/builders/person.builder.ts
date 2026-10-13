@@ -1,4 +1,3 @@
-import { unwrap } from '@ddd-ts-kit/kernel';
 import { Builder, sequence, type Defaults } from '@ddd-ts-kit/testing';
 import { Person } from '@/contexts/identity/domain/aggregates/person.aggregate';
 import { DisplayName } from '@/contexts/identity/domain/value-objects/display-name.vo';
@@ -39,8 +38,8 @@ export class PersonBuilder extends Builder<PersonIngredients, Person> {
 
   protected construct(ingredients: PersonIngredients): Person {
     const contact = {
-      displayName: unwrap(DisplayName.create(ingredients.displayName)),
-      email: unwrap(Email.create(ingredients.email)),
+      displayName: DisplayName.create(ingredients.displayName),
+      email: Email.create(ingredients.email),
     };
 
     return Person.create(ingredients.id, contact, ingredients.bornAt);

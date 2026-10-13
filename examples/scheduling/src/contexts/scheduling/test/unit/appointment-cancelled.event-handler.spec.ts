@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { InMemoryCommandBus, unwrap } from '@ddd-ts-kit/kernel';
+import { InMemoryCommandBus } from '@ddd-ts-kit/kernel';
 import { OfferFreedSlotCommand } from '@/contexts/scheduling/application/commands/offer-freed-slot/offer-freed-slot.command';
 import { AppointmentCancelledEventHandler } from '@/contexts/scheduling/application/event-handlers/appointment-cancelled.event-handler';
 import { AppointmentCancelled } from '@/contexts/scheduling/domain/events/appointment-cancelled.event';
@@ -23,7 +23,7 @@ describe('When appointment cancelled', () => {
     await handler.handle(
       new AppointmentCancelled('appointment-1', occurredAt, {
         booking: held.booking,
-        cancellation: unwrap(Cancellation.create('patient')),
+        cancellation: Cancellation.create('patient'),
       }),
     );
 
@@ -38,7 +38,7 @@ describe('When appointment cancelled', () => {
     await handler.handle(
       new AppointmentCancelled('appointment-1', occurredAt, {
         booking: held.booking,
-        cancellation: unwrap(Cancellation.create('patient')),
+        cancellation: Cancellation.create('patient'),
       }),
     );
 

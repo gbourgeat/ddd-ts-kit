@@ -1,6 +1,7 @@
 import type { Schema } from '@ddd-ts-kit/validation';
 import type { FormHints } from '../forms/form-hints.js';
 import type { HttpMethod } from '../route/http-method.js';
+import type { UploadSpec } from '../route/upload-spec.js';
 import type { ControllerResponse } from './controller-response.js';
 import type { GuardReference } from './guard-reference.js';
 import type { RouteGroupClass } from './route-group-class.js';
@@ -22,6 +23,12 @@ export interface ControllerSpec {
   readonly query?: Schema<unknown>;
   readonly headers?: Schema<unknown>;
   readonly body?: Schema<unknown>;
+  /**
+   * A file received as `multipart/form-data`, its field, size and media types stated here and in
+   * the contract; `handle` then reads `upload`, and `body` describes the text fields. Send the
+   * text fields before the file: what follows it is not read.
+   */
+  readonly upload?: UploadSpec;
   readonly response: ControllerResponse;
   /** Domain error codes the route may answer, added to those of its group and of its guards. */
   readonly errors?: readonly string[];

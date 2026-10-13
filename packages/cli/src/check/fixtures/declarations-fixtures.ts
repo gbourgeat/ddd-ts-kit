@@ -31,6 +31,9 @@ const {
 
 const { SPEC } = SAMPLES;
 
+const STATIC_EVENT =
+  "export class InvoiceIssued {\n  static readonly eventName = 'billing.invoice.issued';\n\n  readonly name = InvoiceIssued.eventName;\n}\n";
+
 export const DECLARATIONS_FIXTURES: readonly Fixture[] = [
   {
     ruleId: 'declarations/role-declared',
@@ -93,6 +96,36 @@ export const DECLARATIONS_FIXTURES: readonly Fixture[] = [
       [INTEGRATION_HANDLER]:
         "import { IntegrationEventHandler } from '@ddd-ts-kit/kernel/declarations';\n\n@IntegrationEventHandler(productListedV1, options, [])\nexport class ProductListedIntegrationHandler {}\n",
       [INTEGRATION_HANDLER_SPEC]: SPEC,
+    }),
+  },
+  {
+    ruleId: 'declarations/role-declared',
+    name: 'a domain event handler reading the name its event class declares',
+    expect: 'pass',
+    files: declaredProject({
+      [EVENT]: STATIC_EVENT,
+      [EVENT_HANDLER]: DECLARED.eventHandler.replace("'billing.invoice.issued'", 'InvoiceIssued.eventName'),
+      [EVENT_HANDLER_SPEC]: SPEC,
+    }),
+  },
+  {
+    ruleId: 'declarations/role-declared',
+    name: 'a domain event handler reading the name of another event class',
+    expect: { file: EVENT_HANDLER },
+    files: declaredProject({
+      [EVENT]: STATIC_EVENT,
+      [EVENT_HANDLER]: DECLARED.eventHandler.replace("'billing.invoice.issued'", 'InvoiceSent.eventName'),
+      [EVENT_HANDLER_SPEC]: SPEC,
+    }),
+  },
+  {
+    ruleId: 'declarations/role-declared',
+    name: 'a domain event handler written under another name than the one its event class declares once',
+    expect: { file: EVENT_HANDLER },
+    files: declaredProject({
+      [EVENT]: STATIC_EVENT,
+      [EVENT_HANDLER]: DECLARED.eventHandler.replace('billing.invoice.issued', 'billing.invoice.sent'),
+      [EVENT_HANDLER_SPEC]: SPEC,
     }),
   },
   {

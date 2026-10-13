@@ -5,7 +5,7 @@ import { WithdrawReminderCommand } from '@/contexts/notification/application/com
 
 @IntegrationEventHandler(appointmentExpiredV1, { consumer: 'notification.scheduling-appointment-expired' })
 export class SchedulingAppointmentExpiredIntegrationHandler {
-  static readonly eventType = 'scheduling.appointment.expired';
+  static readonly eventType = appointmentExpiredV1.type;
 
   readonly actor = systemActor('notification.scheduling-appointment-expired');
 

@@ -2,7 +2,9 @@ import type { DomainEvent } from '@ddd-ts-kit/kernel';
 import type { NotificationKind } from '@/contexts/notification/domain/value-objects/notification-kind.vo';
 
 export class NotificationSent implements DomainEvent {
-  readonly name = 'notification.notification.sent';
+  static readonly eventName = 'notification.notification.sent';
+
+  readonly name = NotificationSent.eventName;
 
   constructor(
     readonly aggregateId: string,

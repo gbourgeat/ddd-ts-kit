@@ -2,6 +2,7 @@ import type { Config } from '../config/index.js';
 import { packageManagerVars } from '../package-manager/package-manager-vars.js';
 import { stackVars } from '../stack/stack-vars.js';
 import { WITH_DATABASE } from '../stack/with-database.js';
+import { AGENT_INSTRUCTION } from '../sdk/agent-instruction.js';
 import type { RenderContext } from '../templating/index.js';
 import { knipVars } from './knip-vars.js';
 
@@ -10,7 +11,7 @@ const KEYCLOAK_VERSION = '26.8.0';
 
 /** What the templates of `init` read: the variables of the stack, then the ones only a new project needs. */
 export function templateVars(config: Config, projectName: string): RenderContext {
-  const { database, docsUi, ci, cache, broker, errors } = config.stack;
+  const { database, docsUi, ci, cache, broker, errors, storage } = config.stack;
 
   return {
     ...stackVars(config),
@@ -22,13 +23,15 @@ export function templateVars(config: Config, projectName: string): RenderContext
     extras: extrasVars(config.ci.extras),
     needs: { url: readsUrl(config), text: readsText(config) },
     keycloak: { version: KEYCLOAK_VERSION },
+    sdk: { on: config.sdk !== undefined, instruction: AGENT_INSTRUCTION },
     compose: {
       volumes:
         database === 'postgres' ||
         database === 'mysql' ||
         cache === 'redis' ||
         ['redis', 'nats'].includes(broker) ||
-        errors === 'sentry',
+        errors === 'sentry' ||
+        storage === 's3',
     },
     database: {
       postgres: database === 'postgres',

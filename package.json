@@ -10,8 +10,8 @@
     "node": ">=22.12.0"
   },
   "scripts": {
-    "build": "node node_modules/@typescript/native/bin/tsc -b packages/kernel packages/validation packages/http packages/tracing packages/di packages/events packages/testing packages/drizzle packages/knex packages/prisma packages/typeorm packages/aspects packages/rabbitmq packages/auth packages/audit packages/redis packages/scheduling packages/pino packages/winston packages/sentry packages/kafka packages/nats packages/cli packages/eslint-plugin",
-    "build:tsc6": "node node_modules/typescript/bin/tsc -b packages/kernel packages/validation packages/http packages/tracing packages/di packages/events packages/testing packages/drizzle packages/knex packages/prisma packages/typeorm packages/aspects packages/rabbitmq packages/auth packages/audit packages/redis packages/scheduling packages/pino packages/winston packages/sentry packages/kafka packages/nats packages/cli packages/eslint-plugin",
+    "build": "node node_modules/@typescript/native/bin/tsc -b packages/kernel packages/validation packages/http packages/tracing packages/di packages/events packages/testing packages/s3 packages/drizzle packages/knex packages/prisma packages/typeorm packages/aspects packages/rabbitmq packages/auth packages/openfga packages/audit packages/redis packages/scheduling packages/pino packages/winston packages/sentry packages/kafka packages/nats packages/cli packages/eslint-plugin",
+    "build:tsc6": "node node_modules/typescript/bin/tsc -b packages/kernel packages/validation packages/http packages/tracing packages/di packages/events packages/testing packages/s3 packages/drizzle packages/knex packages/prisma packages/typeorm packages/aspects packages/rabbitmq packages/auth packages/openfga packages/audit packages/redis packages/scheduling packages/pino packages/winston packages/sentry packages/kafka packages/nats packages/cli packages/eslint-plugin",
     "test": "vitest run",
     "check:self": "node packages/cli/dist/bin.js check --self",
     "verify": "npm run ci:typecheck && npm run ci:lint && npm run ci:format && npm run ci:test:unit && npm run ci:arch && npm run ci:deadcode && npm run ci:docs && npm run ci:build",
@@ -30,10 +30,10 @@
     "ci:typecheck": "npm run build && npm run typecheck:tests",
     "ci:lint": "eslint --config eslint.config.mjs .",
     "ci:format": "npm run format:check",
-    "ci:arch": "npm run check:self && npm run depcruise && node --test plugin/hooks/guard.test.mjs pipeline/monorepo/affected-packages.test.mjs pipeline/monorepo/e2e-shards.test.mjs",
+    "ci:arch": "npm run release:version && npm run check:self && npm run depcruise && node --test plugin/hooks/guard.test.mjs pipeline/monorepo/affected-packages.test.mjs pipeline/monorepo/e2e-shards.test.mjs",
     "ci:deadcode": "knip",
     "ci:test:unit": "vitest run --coverage",
-    "ci:test:integration": "vitest run packages/drizzle packages/knex packages/prisma packages/typeorm packages/audit",
+    "ci:test:integration": "vitest run packages/drizzle packages/knex packages/prisma packages/typeorm packages/audit packages/openfga packages/s3",
     "ci:test:alias": "DDD_TS_KIT_E2E=1 vitest run --no-file-parallelism --hookTimeout=240000 packages/cli/test/e2e/alias-runtime.spec.ts packages/cli/test/e2e/alias-tools.spec.ts packages/cli/test/e2e/alias-fixes.spec.ts packages/cli/test/e2e/alias-example.spec.ts",
     "ci:test:e2e": "DDD_TS_KIT_E2E=1 vitest run --no-file-parallelism --hookTimeout=180000 packages/cli/test/e2e",
     "ci:test:e2e:stacks": "node pipeline/monorepo/e2e-shards.mjs",
@@ -41,14 +41,14 @@
     "ci:docs": "npm run check:dashes",
     "ci:audit": "npm audit --omit=dev --audit-level=high",
     "ci:build": "npm run package:check",
-    "typecheck:tests": "tsx packages/prisma/test/support/generate-client.ts && for p in kernel di kafka redis rabbitmq nats events auth aspects tracing audit drizzle knex prisma typeorm sentry scheduling http testing eslint-plugin pino winston; do node node_modules/@typescript/native/bin/tsc -p packages/$p/tsconfig.test.json || exit 1; done && for p in cli validation; do node node_modules/@typescript/native/bin/tsc -p packages/$p/test/tsconfig.json || exit 1; done"
+    "typecheck:tests": "tsx packages/prisma/test/support/generate-client.ts && for p in kernel di kafka redis rabbitmq nats s3 events auth openfga aspects tracing audit drizzle knex prisma typeorm sentry scheduling http testing eslint-plugin pino winston; do node node_modules/@typescript/native/bin/tsc -p packages/$p/tsconfig.test.json || exit 1; done && for p in cli validation; do node node_modules/@typescript/native/bin/tsc -p packages/$p/test/tsconfig.json || exit 1; done"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.5",
     "@biomejs/biome": "2.5.15",
     "@commitlint/cli": "^21.2.3",
     "@commitlint/config-conventional": "^21.2.3",
-    "@ddd-ts-kit/eslint-plugin": "0.5.0",
+    "@ddd-ts-kit/eslint-plugin": "0.9.0",
     "@electric-sql/pglite": "0.5.9",
     "@electric-sql/pglite-socket": "0.2.12",
     "@eslint/js": "^10.0.1",

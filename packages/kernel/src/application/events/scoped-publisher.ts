@@ -6,9 +6,10 @@ import { messagingSystemOf } from './messaging-system-of.js';
 
 /**
  * Decorates a publisher: an event published without `correlationId` takes the one of the work
- * in progress, so everything one stimulus causes can be found again. An event that names its
- * correlation keeps it, and outside of any execution context nothing is stamped. The name of
- * the transport (`messagingSystem`) is passed on.
+ * in progress, so everything one stimulus causes can be found again, and one without `tenantId`
+ * the tenant of that work, so its consumers run in the same tenant. What an event names is
+ * kept, and outside of any execution context nothing is stamped. The name of the transport
+ * (`messagingSystem`) is passed on.
  */
 export function scopedPublisher(
   publisher: IntegrationEventPublisher,
@@ -23,9 +24,15 @@ export function scopedPublisher(
 }
 
 function correlated(event: IntegrationEvent, context: ExecutionContext | undefined): IntegrationEvent {
-  if (event.correlationId !== undefined || context === undefined) {
+  if (context === undefined) {
     return event;
   }
 
-  return { ...event, correlationId: context.correlationId };
+  const { correlationId, tenantId } = context;
+
+  return {
+    ...event,
+    ...(event.correlationId === undefined ? { correlationId } : {}),
+    ...(event.tenantId === undefined && tenantId !== undefined ? { tenantId } : {}),
+  };
 }

@@ -57,7 +57,6 @@ async function createAppointmentTable(knex: Knex): Promise<void> {
     table.timestamp('confirm_before', { useTz: true });
     table.text('cancelled_by');
     table.text('cancellation_reason');
-    table.text('internal_note');
     keepAppointmentsConsistent(table);
     table.integer('version').notNullable();
     auditColumns(table);
@@ -133,7 +132,6 @@ function createAgendaTable(knex: Knex): Promise<void> {
     table.text('status').notNullable();
     table.datetime('confirm_before', { useTz: true, precision: 3 });
     table.text('cancelled_by');
-    table.text('internal_note');
     table.datetime('changed_at', { useTz: true, precision: 3 }).notNullable();
     table.index(['calendar_id', 'day']);
     table.index(['practice_id', 'day']);

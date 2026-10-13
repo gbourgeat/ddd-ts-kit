@@ -1,3 +1,5 @@
+import type { AppointmentStatus } from '@/contexts/scheduling/domain/vocabularies/appointment-status.vocabulary';
+
 /**
  * The shared view of one day of a calendar: when it is open, what it offers and what is held.
  * A held slot the asker may read carries its appointment; any other only says busy.
@@ -28,7 +30,7 @@ export interface GetCalendarDayResult {
       readonly id: string;
       readonly patientId: string;
       readonly appointmentTypeId: string;
-      readonly status: 'requested' | 'booked';
+      readonly status: typeof AppointmentStatus.Requested | typeof AppointmentStatus.Booked;
     };
   }[];
 }

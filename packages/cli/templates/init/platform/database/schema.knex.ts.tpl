@@ -18,7 +18,13 @@ export const AUDIT_SCHEMA = 'audit';
  * existing table goes into a migration of its own (`npm run db:generate <what-it-does>`).
  */
 export const createTables = async (knex: Knex): Promise<void> => {
+{{#if tenancy.any}}
+  // The tenant of each event, so that its consumers run in that tenant.
+  await createOutboxTables(knex, { schema: MESSAGING, tenant: true });
+{{/if}}
+{{#unless tenancy.any}}
   await createOutboxTables(knex, { schema: MESSAGING });
+{{/unless}}
   {{#if audit.on}}
   await createAuditTables(knex, { schema: AUDIT_SCHEMA });
   {{/if}}

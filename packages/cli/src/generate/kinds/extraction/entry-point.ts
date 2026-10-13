@@ -2,6 +2,7 @@ import type { Config } from '../../../config/index.js';
 import type { Workspace } from '../../../workspace/index.js';
 import { editJson } from './edit-json.js';
 import { recordOf } from './record-of.js';
+import { knipProject } from '../knip-project.js';
 
 /** An entry point under `apps/`: the source file, and the compiled one a start script and an image run. */
 export class EntryPoint {
@@ -25,7 +26,8 @@ export class EntryPoint {
       manifest['scripts'] = { ...recordOf(manifest['scripts']), [`start:${this.name}`]: `node ${this.compiled}` };
     });
 
-    editJson(ws, 'knip.json', (knip) => {
+    editJson(ws, 'knip.json', (file) => {
+      const knip = knipProject(file);
       const entries: unknown[] = Array.isArray(knip['entry']) ? knip['entry'] : [];
 
       if (!entries.includes(pattern)) {

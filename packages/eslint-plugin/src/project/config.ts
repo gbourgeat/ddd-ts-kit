@@ -25,6 +25,8 @@ export interface Stack {
   readonly dependencies: 'signature' | 'listed';
   /** How a domain error is written: static factories on one class per concept, or a class per error. A config that does not say is `classes`. */
   readonly refusals: 'factories' | 'classes';
+  /** `named`: a value of a declared vocabulary and a number of the model are read through a name. A config that does not say is `free`, and both rules are silent. */
+  readonly literals: 'named' | 'free';
   /** Kept as written: with `prisma` the generated client under `generated/` has an import alias of its own. */
   readonly orm: string;
 }
@@ -64,4 +66,11 @@ export interface Config {
   readonly stack: Stack;
   /** Names reported by `standard/no-parallel-interface`, over its defaults: the kernel interface to use instead, or `false` to drop a default. */
   readonly standardInterfaces: Readonly<Record<string, string | false>>;
+  /** The clients generated from the contract (`ddd-ts-kit sdk`), whose sources under `clients/` are not linted; none without the key. */
+  readonly sdk: SdkConfig | undefined;
+}
+
+/** Of the clients of the contract, the plugin reads that they are asked for and their package name. */
+export interface SdkConfig {
+  readonly name: string;
 }

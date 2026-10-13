@@ -19,6 +19,9 @@ import {
   ErrorReporter,
   EventBus,
   ExecutionScope,
+  FileStorage,
+  IdGenerator,
+  InMemoryFileStorage,
   Logger,
   Metrics,
   QueryBus,
@@ -28,6 +31,7 @@ import {
   type IntegrationEventSubscriber,
 } from '@ddd-ts-kit/kernel';
 import { tracedPublisher } from '@ddd-ts-kit/tracing';
+import { AuditTrail, auditGuardRefusals } from '@ddd-ts-kit/audit';
 import { auditModule } from '@/platform/audit/audit.module';
 import { SearchAuditEntriesController } from '@/platform/audit/search-audit-entries.controller';
 import { authorization } from '@/platform/auth/authorization';
@@ -39,6 +43,8 @@ import { withForms } from '@/platform/http/with-forms';
 import { createCommandBus } from '@/platform/buses/create-command-bus';
 import { createQueryBus } from '@/platform/buses/create-query-bus';
 import type { Persistence } from '@/platform/database/persistence';
+import { fileRoutes } from '@/platform/files/file-routes';
+import { filesModule } from '@/platform/files/files.module';
 import { layFoundations, type Foundations } from '@/platform/lay-foundations';
 import { platformModule, type PlatformOptions } from '@/platform/platform.module';
 // ddd-ts-kit:imports
@@ -51,12 +57,16 @@ import * as analyticsDeclarations from '@/contexts/analytics/analytics.declarati
 export interface ApplicationOptions extends PlatformOptions {
   /** Whether this process runs the scheduled jobs, and their settings; left out (the tools, the tests), no job runs by time. */
   readonly jobs?: JobsOptions;
+  /** Where the content of files lives: the storage of `main.ts`; left out (the tools, the tests), the memory of the process. */
+  readonly files?: FileStorage;
 }
 
 export interface Application {
   readonly routes: readonly Route[];
   /** Authenticates every request and runs it inside the execution scope. */
   readonly boundary: HttpBoundary;
+  /** The routes that answer the signed links of a storage the application serves itself; mounted before any body parser. */
+  readonly fileRoutes: readonly Route[];
   /** The provider integration events are delivered to. */
   readonly eventBus: IntegrationEventPublisher;
   /** Where another context, or a test, listens to what this application publishes. */
@@ -112,6 +122,7 @@ export function composeApplication(
       platformModule(persistence, options),
       guard,
       auditModule(foundations.audit),
+      filesModule(options.files ?? new InMemoryFileStorage()),
       ...contexts.modules,
     ],
     authorization: 'required',
@@ -170,9 +181,14 @@ function running(container: Container, options: ApplicationOptions, contexts: Co
       errorMapper: container.resolve(ErrorMapper),
       clock: container.resolve(Clock),
       logger,
+      refusals: auditGuardRefusals(container.resolve(AuditTrail), {
+        clock: container.resolve(Clock),
+        ids: container.resolve(IdGenerator),
+      }),
       errors: container.resolve(ErrorReporter),
       presentation,
     }),
+    fileRoutes: fileRoutes(container.resolve(FileStorage)),
     // What the outbox relay delivers with: each publication continues the trace stored with its event.
     eventBus: tracedPublisher(container.resolve(EventBus)),
     // Behind a broker a listener has queues of its own, under its own name.

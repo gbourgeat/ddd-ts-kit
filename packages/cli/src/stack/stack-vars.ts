@@ -10,11 +10,12 @@ import { eventVars } from './event-vars.js';
 import { one } from './one.js';
 import { persistenceVars } from './persistence-vars.js';
 import { redisVars } from './redis-vars.js';
+import { filesVars } from './files-vars.js';
 import { usesLegacyDecorators } from './uses-legacy-decorators.js';
 
 /** The choices of the stack as template variables: what every template of `init` and of `generate` reads. */
 export function stackVars(config: Config): RenderContext {
-  const { validation, di, tests, orm, authz, style, logger, refusals } = config.stack;
+  const { validation, di, tests, orm, authz, style, logger, tenancy } = config.stack;
   const legacy = usesLegacyDecorators(config);
 
   return {
@@ -30,10 +31,11 @@ export function stackVars(config: Config): RenderContext {
     authz: one(authz, ['rbac', 'abac', 'rebac', 'custom']),
     broker: brokerVars(config),
     cache: cacheVars(config),
+    files: filesVars(config),
     redis: redisVars(config),
     audit: auditVars(config),
     errors: errorVars(config),
-    refusals: one(refusals, ['factories', 'classes']),
+    ...modelWritingVars(config),
     routes: routeVars(config),
     presentation: presentationVars(config),
     logger: one(logger, ['stdout', 'pino', 'winston']),
@@ -42,6 +44,18 @@ export function stackVars(config: Config): RenderContext {
     config: platformPaths(config),
     alias: aliasVars(config),
     persistence: persistenceVars(config),
+    tenancy: { ...one(tenancy, ['none', 'shared-table']), any: tenancy !== 'none' },
+  };
+}
+
+/** How the code of the model is written: its refusals, its value objects, its closed values. */
+function modelWritingVars(config: Config): RenderContext {
+  const { refusals, valueObjects, literals } = config.stack;
+
+  return {
+    refusals: one(refusals, ['factories', 'classes']),
+    valueObjects: one(valueObjects, ['throwing', 'result']),
+    literals: one(literals, ['named', 'free']),
   };
 }
 
@@ -65,14 +79,16 @@ function routeVars(config: Config): RenderContext {
 /**
  * `negotiated`: the boundary registers the representations of the kit; `forms`: the composition
  * root serves the forms of the routes. Either one decides the restricted fields through the
- * `Access` of the application, which `presentation.ts` of the platform builds.
+ * `Access` of the application, which `presentation-of.ts` of the platform builds.
  */
 function presentationVars(config: Config): RenderContext {
-  const { http, representations, forms } = config.stack;
+  const { http, representations, forms, audit } = config.stack;
   const negotiated = http !== 'none' && representations === 'negotiated';
   const served = http !== 'none' && forms === 'on';
+  const any = negotiated || served;
 
-  return { negotiated, forms: served, any: negotiated || served };
+  // The HTTP boundary takes more than its five ports when the audit trail or the presentation joins them.
+  return { negotiated, forms: served, any, widensEdge: any || audit === 'on' };
 }
 
 function assemblyVars(config: Config): RenderContext {

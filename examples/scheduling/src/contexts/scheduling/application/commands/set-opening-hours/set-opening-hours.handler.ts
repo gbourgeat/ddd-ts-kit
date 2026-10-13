@@ -1,8 +1,9 @@
-import { type Clock, unwrap } from '@ddd-ts-kit/kernel';
+import { type Clock } from '@ddd-ts-kit/kernel';
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
 import { CalendarError } from '@/contexts/scheduling/domain/errors/calendar.error';
 import type { CalendarRepository } from '@/contexts/scheduling/domain/repositories/calendar.repository';
-import { OpeningHours, type Weekday } from '@/contexts/scheduling/domain/value-objects/opening-hours.vo';
+import { OpeningHours } from '@/contexts/scheduling/domain/value-objects/opening-hours.vo';
+import type { Weekday } from '@/contexts/scheduling/domain/vocabularies/weekday.vocabulary';
 import { Range } from '@/contexts/scheduling/domain/value-objects/range.vo';
 import { SetOpeningHoursCommand } from '@/contexts/scheduling/application/commands/set-opening-hours/set-opening-hours.command';
 
@@ -20,7 +21,7 @@ export class SetOpeningHoursHandler implements CommandHandler<SetOpeningHoursCom
       throw CalendarError.unknown(command.calendarId);
     }
 
-    target.setOpeningHours(unwrap(OpeningHours.create(weekOf(command))), this.clock.now());
+    target.setOpeningHours(OpeningHours.create(weekOf(command)), this.clock.now());
 
     await this.calendarRepository.save(target);
 
@@ -32,7 +33,7 @@ function weekOf({ ranges }: SetOpeningHoursCommand): Partial<Record<Weekday, rea
   const week: Partial<Record<Weekday, Range[]>> = {};
 
   for (const { weekday, start, end } of ranges) {
-    week[weekday] = [...(week[weekday] ?? []), unwrap(Range.create(start, end))];
+    week[weekday] = [...(week[weekday] ?? []), Range.create(start, end)];
   }
 
   return week;

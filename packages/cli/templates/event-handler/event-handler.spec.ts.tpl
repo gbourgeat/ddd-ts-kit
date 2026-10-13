@@ -25,7 +25,7 @@ describe('When {{event.words}}', () => {
       reactedAt.push(unitOfWorkStage());
     };
 
-    domainEvents.on('{{event.name}}', asSubscribed, { phase: '{{handler.phase}}' });
+    domainEvents.on({{event.reference}}, asSubscribed, { phase: '{{handler.phase}}' });
     await new InMemoryUnitOfWork().run(() => announceDomainEvents([event], domainEvents));
 
     expect(reactedAt).toEqual(['{{handler.phase}}']);

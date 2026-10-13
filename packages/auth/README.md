@@ -375,6 +375,7 @@ logging or serializing the object shows no key.
 | `authenticationStrength` | `mfa` when `amr` lists `mfa` (RFC 8176), `assuranceLevel` from `acr` |
 | `impersonatedBy` | the `sub` of the `act` claim (RFC 8693), or the claim named by `impersonatorClaim`: the id itself, or an object holding it under `sub` or `id` |
 | `locale`, `timeZone` | `locale`, `zoneinfo` |
+| `scopes` | `scope`, the space-separated list of OAuth 2.0, else `scp` as a list; absent when the token grants none. `HasScope` of `@ddd-ts-kit/http` reads them at the edge |
 | `extensions` | what `toSessionExtensions(claims)` answers |
 
 ```ts
@@ -615,52 +616,15 @@ dedicated service, or keep a projection of accessible ids.
   no watch API or changelog.
 - `expand` is the trace of one check for one actor, not the userset tree of Zanzibar's Expand.
 
-**Delegating to a dedicated service.** OpenFGA and SpiceDB implement the full model. They are
-adapters of the same `Authorizer` port, written in the platform, with their SDK as a dependency
-of the project and not of this package:
-
-```ts
-// platform/auth/openfga-authorizer.ts (outline)
-export class OpenFgaAuthorizer implements Authorizer {
-  constructor(
-    private readonly client: OpenFgaClient,
-    private readonly mapping: PermissionMapping,
-  ) {}
-
-  async check({ actor, permission, resource }: CheckRequest): Promise<Decision> {
-    if (isAnonymous(actor)) {
-      return deny(DenialReason.anonymous);
-    }
-    if (resource === undefined) {
-      return deny(DenialReason.resourceRequired);
-    }
-    const relation = this.mapping[resource.type]?.[permission.id];
-    if (relation === undefined) {
-      return deny(DenialReason.unmappedPermission);
-    }
-    const { allowed } = await this.client.check({
-      user: `${actor.type}:${actor.id}`,
-      relation,
-      object: `${resource.type}:${resource.id}`,
-    });
-    return allowed ? ALLOWED : deny(DenialReason.noRelation);
-  }
-
-  async listAccessible({ actor, permission, resourceType }: ListRequest): Promise<AccessScope> {
-    const relation = this.mapping[resourceType]?.[permission.id];
-    if (isAnonymous(actor) || relation === undefined) {
-      return { kind: 'none' };
-    }
-    const { objects } = await this.client.listObjects({ user: `${actor.type}:${actor.id}`, relation, type: resourceType });
-    return { kind: 'ids', ids: objects.map((object) => object.slice(resourceType.length + 1)) };
-  }
-}
-```
-
-With SpiceDB the same two methods call `CheckPermission` and `LookupResources`; the tuple
-writes of the next section become `WriteRelationships`, through the outbox when the service is
-remote, since a remote call cannot share the transaction. Hold the adapter to
-`authorizerContract` in an integration test, and carry the consistency token the service
+**Delegating to a dedicated service.** OpenFGA and SpiceDB implement the full model.
+[`@ddd-ts-kit/openfga`](../openfga/README.md) answers the `RelationTupleStore` and `Authorizer`
+ports on OpenFGA, with the authorization model generated from the same `defineSchema` and both
+adapters held to the contract suites of this package; a project moves from
+`RelationBasedAuthorizer` to `OpenFgaAuthorizer` by binding. SpiceDB maps the same two methods
+to `CheckPermission` and `LookupResources`, and the tuple writes of the next section to
+`WriteRelationships`; no adapter is shipped for it. With either service, a tuple write is a
+remote call that cannot share the transaction: it goes after the commit, retried. Hold an adapter
+to `authorizerContract` in an integration test, and carry the consistency token the service
 returns in the `context` of the request if you need read-your-writes.
 
 ### Keeping relationships in sync

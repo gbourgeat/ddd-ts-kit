@@ -176,6 +176,9 @@ describe('init, the choices it records and the ones it refuses', () => {
       routes: 'controllers',
       representations: 'negotiated',
       forms: 'on',
+      storage: 'local',
+      valueObjects: 'throwing',
+      literals: 'named',
       style: 'explicit',
       packageManager: 'pnpm',
     });

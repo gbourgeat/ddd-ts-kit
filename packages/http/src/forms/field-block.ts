@@ -1,10 +1,9 @@
 import type { FormCondition } from './form-condition.js';
 import type { FieldLookup } from './field-lookup.js';
-import type { FormBlock } from './form-block.js';
 import type { Widget } from './widget.js';
 
-/** One field of a form described by the server, as the caller may use it. */
-export interface FieldBlock {
+/** One field of a form described by the server, as the caller may use it: `Block` is what a nested object holds, a `FormBlock`. */
+export interface FieldBlock<Block = unknown> {
   readonly type: 'field';
   /** The path of the field in the body, dotted for a field of a nested object: `patient.phone`. */
   readonly name: string;
@@ -27,5 +26,5 @@ export interface FieldBlock {
   /** The value the request gave for it, when it gave one. */
   readonly value?: unknown;
   /** The fields of a nested object, for the widget `group`. */
-  readonly blocks?: readonly FormBlock[];
+  readonly blocks?: readonly Block[];
 }

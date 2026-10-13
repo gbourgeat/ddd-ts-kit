@@ -28,9 +28,10 @@ export type DomainEventHandler<E extends DomainEvent> = DomainEventHandlerShape<
 /**
  * A handler of a domain event of its own context, run at the end of the unit of work that
  * recorded the event, before the commit:
- * `@DomainEventHandler(OrderPaid, { name: 'ordering.order.paid' })`. One whose
+ * `@DomainEventHandler(OrderPaid, { name: OrderPaid.eventName })`, the name the event class
+ * declares once (`static readonly eventName = 'ordering.order.paid'`). One whose
  * effect is outside the transaction runs after it:
- * `@DomainEventHandler(OrderPaid, { name: 'ordering.order.paid', phase: 'after-commit' })`.
+ * `@DomainEventHandler(OrderPaid, { name: OrderPaid.eventName, phase: 'after-commit' })`.
  */
 export function DomainEventHandler<
   E extends DomainEvent,

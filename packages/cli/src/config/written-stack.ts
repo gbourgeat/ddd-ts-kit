@@ -6,7 +6,11 @@ import type { Stack } from './stack.js';
  * the context and lists what each class is given.
  */
 export function writtenStack(stack: Stack): Partial<Stack> {
-  const { assembly, dependencies, packageManager, ...rest } = stack;
+  const { assembly, dependencies, packageManager, tenancy, ...rest } = stack;
+  // A project of one customer says nothing of tenancy, as every project did before the choice existed.
+  const tenant = tenancy === 'none' ? {} : { tenancy };
 
-  return stack.style === 'declared' ? { ...rest, assembly, dependencies, packageManager } : { ...rest, packageManager };
+  return stack.style === 'declared'
+    ? { ...rest, assembly, dependencies, packageManager, ...tenant }
+    : { ...rest, packageManager, ...tenant };
 }

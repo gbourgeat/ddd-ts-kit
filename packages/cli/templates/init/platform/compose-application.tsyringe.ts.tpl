@@ -43,6 +43,17 @@ import {
 {{#if http.any}}
   ExecutionScope,
 {{/if}}
+{{#if files.http}}
+  FileStorage,
+{{/if}}
+{{#if audit.on}}
+{{#if http.any}}
+  IdGenerator,
+{{/if}}
+{{/if}}
+{{#if files.any}}
+  InMemoryFileStorage,
+{{/if}}
 {{#unless broker.external}}
   IntegrationEventSubscriber,
 {{/unless}}
@@ -55,6 +66,11 @@ import {
   RateLimiter,
 {{/if}}
   scopedPublisher,
+{{#if files.any}}
+{{#unless files.http}}
+  type FileStorage,
+{{/unless}}
+{{/if}}
   type IntegrationEventPublisher,
 {{#if broker.external}}
   type IntegrationEventSubscriber,
@@ -62,6 +78,9 @@ import {
 } from '@ddd-ts-kit/kernel';
 import { tracedPublisher } from '@ddd-ts-kit/tracing';
 {{#if audit.on}}
+{{#if http.any}}
+import { AuditTrail, auditGuardRefusals } from '@ddd-ts-kit/audit';
+{{/if}}
 import { auditModule } from '{{alias.platform}}/audit/audit.module{{alias.ext}}';
 {{/if}}
 {{#if audit.functionRoute}}
@@ -89,6 +108,12 @@ import { relateSystemActors } from '{{alias.platform}}/auth/relate-system-actors
 import { createCommandBus } from '{{alias.platform}}/buses/create-command-bus{{alias.ext}}';
 import { createQueryBus } from '{{alias.platform}}/buses/create-query-bus{{alias.ext}}';
 import type { Persistence } from '{{alias.platform}}/database/persistence{{alias.ext}}';
+{{#if files.http}}
+import { fileRoutes } from '{{alias.platform}}/files/file-routes{{alias.ext}}';
+{{/if}}
+{{#if files.any}}
+import { filesModule } from '{{alias.platform}}/files/files.module{{alias.ext}}';
+{{/if}}
 import { layFoundations, type Foundations } from '{{alias.platform}}/lay-foundations{{alias.ext}}';
 import { platformModule, type PlatformOptions } from '{{alias.platform}}/platform.module{{alias.ext}}';
 // ddd-ts-kit:imports
@@ -97,6 +122,10 @@ import { platformModule, type PlatformOptions } from '{{alias.platform}}/platfor
 export interface ApplicationOptions extends PlatformOptions {
   /** Whether this process runs the scheduled jobs, and their settings; left out (the tools, the tests), no job runs by time. */
   readonly jobs?: JobsOptions;
+{{#if files.any}}
+  /** Where the content of files lives: the storage of `main.ts`; left out (the tools, the tests), the memory of the process. */
+  readonly files?: FileStorage;
+{{/if}}
 }
 
 export interface Application {
@@ -104,6 +133,10 @@ export interface Application {
   readonly routes: readonly Route[];
   /** Authenticates every request and runs it inside the execution scope. */
   readonly boundary: HttpBoundary;
+{{/if}}
+{{#if files.http}}
+  /** The routes that answer the signed links of a storage the application serves itself; mounted before any body parser. */
+  readonly fileRoutes: readonly Route[];
 {{/if}}
 {{#unless http.any}}
   readonly routes: readonly never[];
@@ -173,6 +206,9 @@ export function composeApplication(
       guard,
 {{#if audit.on}}
       auditModule(foundations.audit),
+{{/if}}
+{{#if files.any}}
+      filesModule(options.files ?? new InMemoryFileStorage()),
 {{/if}}
       ...contexts.modules,
     ],
@@ -252,6 +288,12 @@ function running(container: Container, options: ApplicationOptions, contexts: Co
       errorMapper: container.resolve(ErrorMapper),
       clock: container.resolve(Clock),
       logger,
+{{#if audit.on}}
+      refusals: auditGuardRefusals(container.resolve(AuditTrail), {
+        clock: container.resolve(Clock),
+        ids: container.resolve(IdGenerator),
+      }),
+{{/if}}
 {{#if errors.sentry}}
       errors: container.resolve(ErrorReporter),
 {{/if}}
@@ -263,6 +305,9 @@ function running(container: Container, options: ApplicationOptions, contexts: Co
 {{#unless http.any}}
     routes: [],
 {{/unless}}
+{{#if files.http}}
+    fileRoutes: fileRoutes(container.resolve(FileStorage)),
+{{/if}}
     // What the outbox relay delivers with: each publication continues the trace stored with its event.
     eventBus: tracedPublisher(container.resolve(EventBus)),
 {{#if broker.external}}

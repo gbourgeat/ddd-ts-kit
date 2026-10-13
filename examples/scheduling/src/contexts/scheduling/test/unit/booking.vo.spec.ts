@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { unwrap } from '@ddd-ts-kit/kernel';
 import { Booking, type BookingProps } from '@/contexts/scheduling/domain/value-objects/booking.vo';
 import { Slot } from '@/contexts/scheduling/domain/value-objects/slot.vo';
+import { expectRefusal } from '@ddd-ts-kit/testing';
 
 const morning: BookingProps = {
   calendarId: 'calendar-1',
@@ -15,15 +15,15 @@ const morning: BookingProps = {
 
 describe('Booking', () => {
   it('is equal to another booking of the same slot for the same patient', () => {
-    const first = unwrap(Booking.create(morning));
-    const second = unwrap(Booking.create({ ...morning, slot: Slot.between(at('09:00'), at('09:30'), at('09:40')) }));
+    const first = Booking.create(morning);
+    const second = Booking.create({ ...morning, slot: Slot.between(at('09:00'), at('09:30'), at('09:40')) });
 
     expect(first.equals(second)).toBe(true);
   });
 
   it('differs from the booking of another patient', () => {
-    const first = unwrap(Booking.create(morning));
-    const second = unwrap(Booking.create({ ...morning, patientId: 'patient-2' }));
+    const first = Booking.create(morning);
+    const second = Booking.create({ ...morning, patientId: 'patient-2' });
 
     expect(first.equals(second)).toBe(false);
   });
@@ -31,18 +31,14 @@ describe('Booking', () => {
   it.each(['calendarId', 'practiceId', 'practitionerId', 'patientId', 'appointmentTypeId'] as const)(
     'refuses a booking whose %s is empty',
     (field) => {
-      const result = Booking.create({ ...morning, [field]: '  ' });
-
-      expect(result).toMatchObject({ ok: false, error: { code: 'INVALID_BOOKING' } });
+      expectRefusal(() => Booking.create({ ...morning, [field]: '  ' }), 'INVALID_BOOKING');
     },
   );
 
   it.each(['', '02/03/2026', '2026-3-2', '2026-03-02T09:00:00Z'])(
     'refuses the day "%s", which is no calendar date',
     (day) => {
-      const result = Booking.create({ ...morning, day });
-
-      expect(result).toMatchObject({ ok: false, error: { code: 'INVALID_BOOKING' } });
+      expectRefusal(() => Booking.create({ ...morning, day }), 'INVALID_BOOKING');
     },
   );
 
@@ -53,15 +49,15 @@ describe('Booking', () => {
       new Date('2026-03-03T00:10:00.000Z'),
     );
 
-    const moved = unwrap(unwrap(Booking.create(morning)).movedTo(afternoon, '2026-03-03'));
+    const moved = Booking.create(morning).movedTo(afternoon, '2026-03-03');
 
     expect(moved.slot.equals(afternoon)).toBe(true);
     expect(moved.day).toBe('2026-03-03');
-    expect(moved.equals(unwrap(Booking.create({ ...morning, slot: afternoon, day: '2026-03-03' })))).toBe(true);
+    expect(moved.equals(Booking.create({ ...morning, slot: afternoon, day: '2026-03-03' }))).toBe(true);
   });
 
   it('leaves the booking it moves from as it was', () => {
-    const booking = unwrap(Booking.create(morning));
+    const booking = Booking.create(morning);
 
     booking.movedTo(Slot.between(at('10:00'), at('10:30'), at('10:30')), '2026-03-02');
 

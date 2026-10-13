@@ -1,4 +1,5 @@
 import { IsISO8601, IsIn, IsOptional, IsString, Matches } from 'class-validator';
+import { AppointmentStatus } from '@/contexts/scheduling/domain/vocabularies/appointment-status.vocabulary';
 
 export class SearchAppointmentsLine {
   @IsString()
@@ -29,8 +30,8 @@ export class SearchAppointmentsLine {
   @Matches(/^\d{4}-\d{2}-\d{2}$/)
   day = '';
 
-  @IsIn(['requested', 'booked', 'cancelled', 'expired', 'completed', 'no-show'])
-  status: 'requested' | 'booked' | 'cancelled' | 'expired' | 'completed' | 'no-show' = 'booked';
+  @IsIn(Object.values(AppointmentStatus))
+  status: AppointmentStatus = AppointmentStatus.Booked;
 
   /** Only while requested: the instant before which the appointment must be confirmed. */
   @IsOptional()

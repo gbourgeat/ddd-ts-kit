@@ -9,6 +9,7 @@ export function logFieldsOf(context: ExecutionContext): LogFields {
     actorId: context.actor.id,
     ...(context.causationId === undefined ? {} : { causationId: context.causationId }),
     ...(context.tenantId === undefined ? {} : { tenantId: context.tenantId }),
+    ...(context.elevation === undefined ? {} : { elevation: context.elevation.reason }),
     ...(context.session?.impersonatedBy === undefined ? {} : { impersonatedBy: context.session.impersonatedBy }),
   };
 }

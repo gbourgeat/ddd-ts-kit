@@ -4,9 +4,11 @@
 in-process implementations: roles (RBAC), attribute policies (ABAC) and relationships in the
 manner of Zanzibar (ReBAC). Dedicated engines exist for the same job: OpenFGA and SpiceDB for
 relationships, Cedar and Open Policy Agent for policies. This page compares them and says when
-moving from the in-process authorizer to a service pays for its cost. The kit ships no adapter
-for any of these services: its README shows an outline for OpenFGA, and a contract suite to
-hold your adapter to.
+moving from the in-process authorizer to a service pays for its cost. For relationships the kit
+ships both ends: a tuple store in the PostgreSQL of the project, and
+[`@ddd-ts-kit/openfga`](../../packages/openfga/README.md), the same two ports on an OpenFGA
+server, its model generated from the same schema. The other services have a contract suite to
+hold an adapter to.
 
 ## What is being chosen
 
@@ -100,15 +102,42 @@ What the README states is **not** implemented, compared with Zanzibar:
   limit (10000 reached subjects by default) rather than return a partial list. It is not a
   search index.
 
-**Dedicated services.** A search of the repository finds OpenFGA and SpiceDB only in the
-README of the auth package and in the comment of a generated custom authorizer template: there
-is no adapter package and no SDK dependency. The README gives the outline of an
-`OpenFgaAuthorizer` (a check call and a list call behind the port), says SpiceDB maps to
-`CheckPermission` and `LookupResources`, that tuple writes go through the outbox when the
-service is remote, and that the adapter is held to `authorizerContract` in an integration
-test. `init --authz custom` generates the adapter skeleton, its contract spec and the
-permissions file. Cedar and OPA are not mentioned in the repository: plugging one is the same
-port, with nothing prepared.
+**OpenFGA.** [`@ddd-ts-kit/openfga`](../../packages/openfga/README.md) implements the tuple
+store and the authorizer on an OpenFGA server, with the official SDK (0.9.7) as an optional
+peer. The authorization model is generated from the relationship schema of the project
+(`authorizationModelOf`), written when it differs (`ensureAuthorizationModel`) and compared
+(`modelDrift`): one source of truth. Both adapters pass the contract suites of the in-process
+ones, in memory and against `openfga/openfga` v1.22.0 in the integration job. `init` does not
+wire it yet: bind the two adapters in the platform by hand, as the README of the package shows.
+
+**SpiceDB** maps to `CheckPermission`, `LookupResources` and `WriteRelationships` behind the
+same ports; no adapter is shipped. `init --authz custom` generates an adapter skeleton, its
+contract spec and the permissions file. Cedar and OPA are not mentioned in the repository:
+plugging one is the same port, with nothing prepared.
+
+## The PostgreSQL tuple store or OpenFGA
+
+Both hold the same tuples and answer the same ports; the schema of the project is the one source
+of both. What differs is where the evaluation runs and whether a tuple commits with the change it
+describes.
+
+| | Tuple store in PostgreSQL | OpenFGA (`@ddd-ts-kit/openfga`) |
+|---|---|---|
+| Where tuples live | a table of the project, written in the transaction of the command | the datastore of the OpenFGA server, through its API |
+| A tuple and its aggregate | commit together, or not at all | two steps: the aggregate commits, then the tuple is written (after commit, retried, idempotent) |
+| Evaluation | in the API process, sequential, bounded by a depth limit | in the server, parallel, with its caches |
+| Listing | reverse expansion, one read per reached subject, refused beyond 10000 | `ListObjects`, evaluated in the server; capped by `OPENFGA_LIST_OBJECTS_MAX_RESULTS` (1000) and `OPENFGA_LIST_OBJECTS_DEADLINE` (3 s), which cut the list without an error: the adapter refuses an answer at the cap, and a cut by the deadline is not visible |
+| Consistency | that of the database: what committed is seen | a preference per request; no token is carried by the kit |
+| Shared with other services | no: one application's data | yes: any service, any language, asks the same server |
+| Operations | nothing more to run | a stateful service on the path of every request, its datastore, its upgrades |
+| Model | the schema, in TypeScript | generated from the same schema; drift checked |
+
+Choose the PostgreSQL store first: it is consistent by construction and costs nothing to run.
+Move to OpenFGA when a measure says so: an actor reaching more tuples than reverse expansion
+should walk, lists that must be fast over large shared hierarchies, or a second service, in any
+language, that must ask the same questions about the same objects. The move is a binding and a
+migration of the tuples (read them from the table, write them to the store), not a change of the
+use cases.
 
 ## Limits and when not to use it
 
@@ -144,8 +173,8 @@ permission. See
 | New project, rights follow job functions (client, practitioner, administrator) | in-process roles, the default of `init` |
 | A few per-element rules: only the client who booked or the practitioner may cancel | roles plus instance policies; still no tuple store |
 | Sharing per element: delegated assistants, clinics owning calendars | in-process relationships with a SQL tuple store written in the handler |
-| Lists over large shared hierarchies, or reverse expansion hitting its limit | a projection of accessible ids first; then OpenFGA or SpiceDB behind the port |
-| Several services and languages asking about the same objects | OpenFGA or SpiceDB as a shared service; choose on consistency needs, datastore and governance |
+| Lists over large shared hierarchies, or reverse expansion hitting its limit | a projection of accessible ids first; then `@ddd-ts-kit/openfga` behind the port (its `ListObjects` is capped too, 1000 objects by default, refused at the cap) or SpiceDB by hand |
+| Several services and languages asking about the same objects | OpenFGA (`@ddd-ts-kit/openfga`) or SpiceDB as a shared service; choose on consistency needs, datastore and governance |
 | Attribute rules owned by a security team, reviewed as policy | Cedar (embedded) or OPA, behind the port, with attributes supplied by a projection |
 | Already on one cloud provider and wanting no engine to run | Amazon Verified Permissions, accepting the remote call and the vendor |
 
@@ -156,7 +185,7 @@ in a decision record: it changes failure modes.
 ## Sources
 
 - `packages/auth/README.md` of this repository: "Choosing a model", "Relationships",
-  "Keeping relationships in sync", "Testing".
+  "Keeping relationships in sync", "Testing"; `packages/openfga/README.md`.
 - Ruoming Pang et al., "Zanzibar: Google's Consistent, Global Authorization System", USENIX
   ATC 2019.
 - OpenFGA: https://openfga.dev/docs and https://github.com/openfga/openfga/releases (v1.22.0,

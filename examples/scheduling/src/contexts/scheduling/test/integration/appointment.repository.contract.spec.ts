@@ -3,7 +3,6 @@ import {
   FixedClock,
   FixedExecutionScope,
   executionContext,
-  unwrap,
   type Actor,
   type ExecutionContext,
 } from '@ddd-ts-kit/kernel';
@@ -14,6 +13,7 @@ import { Cancellation } from '@/contexts/scheduling/domain/value-objects/cancell
 import { KnexAppointmentRepository } from '@/contexts/scheduling/infrastructure/persistence/knex-appointment.repository';
 import { openTestDatabase, type TestDatabase } from '@/platform/database/open-test-database';
 import { anAppointment } from '@/contexts/scheduling/test/builders/appointment.builder';
+import { anAttachedDocument } from '@/contexts/scheduling/test/builders/attached-document.builder';
 import { FakeAppointmentRepository } from '@/contexts/scheduling/test/fakes/appointment.repository.fake';
 
 const runner = { describe, it, expect, beforeEach, afterEach };
@@ -21,10 +21,10 @@ const runner = { describe, it, expect, beforeEach, afterEach };
 const expectations = {
   createAggregate: () => anAppointment().build(),
   mutate: (changed: Appointment) => {
-    changed.cancel(
-      unwrap(Cancellation.create('practice', 'The practitioner is away.')),
-      new Date('2026-01-02T00:00:00.000Z'),
-    );
+    changed.cancel(Cancellation.create('practice', 'The practitioner is away.'), new Date('2026-01-02T00:00:00.000Z'));
+
+    // The reference of a stored file round trips with the row: never its content.
+    changed.attachDocument(anAttachedDocument(), new Date('2026-01-02T00:00:00.000Z'));
   },
   idOf: (subject: Appointment) => subject.id,
   stateOf: (subject: Appointment) => subject.toState(),
@@ -90,9 +90,7 @@ describe.each(REPOSITORIES)('%s (what a calendar holds)', (_name, create) => {
 
     expect(found?.status).toBe('cancelled');
 
-    expect(found?.cancellation?.equals(unwrap(Cancellation.create('practice', 'The practitioner is away.')))).toBe(
-      true,
-    );
+    expect(found?.cancellation?.equals(Cancellation.create('practice', 'The practitioner is away.'))).toBe(true);
   });
 
   it('refuses a second active appointment on a held time of the same calendar, buffer included', async () => {

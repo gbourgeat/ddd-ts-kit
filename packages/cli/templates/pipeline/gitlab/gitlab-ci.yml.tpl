@@ -205,6 +205,9 @@ build:
   stage: test
   needs: [install]
   script:
+{{#if sdk.on}}
+    # The production build, and the clients of the contract (sdk:build).
+{{/if}}
     - npm run ci:build
     # The generated documents and contracts, from that build.
     - npm run ci:docs

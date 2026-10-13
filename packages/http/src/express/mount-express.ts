@@ -1,3 +1,5 @@
+import { Readable } from 'node:stream';
+import { pipeline } from 'node:stream/promises';
 import express, { type IRouter, type Request, type RequestHandler, type Response } from 'express';
 import type { ExecuteOptions } from '../pipeline/execute-options.js';
 import { executeRoute } from '../pipeline/execute-route.js';
@@ -16,7 +18,10 @@ type Registrar = Record<HttpMethod, (path: string, ...handlers: RequestHandler[]
 /**
  * Registers the routes on an Express 5 application or router. A JSON body parser
  * (`express.json()`) must be installed before, otherwise bodies reach validation as `undefined`.
- * A route that consumes another media type (`consumes`) gets a text parser of its own for it.
+ * An upload and a raw body are read from the request stream, which that parser leaves alone
+ * unless the request is JSON; a route that consumes another media type (`consumes`) gets a text
+ * parser of its own for it. A body that is a stream is piped to the response, a streamed list
+ * written chunk by chunk.
  */
 export function mountExpress(target: IRouter, routes: readonly Route[], options: ExpressMountOptions = {}): void {
   assertUniqueRoutes(routes);
@@ -51,7 +56,7 @@ function handlerOf(route: Route, options: ExpressMountOptions): ExpressHandler {
   return async (request, response) => {
     const { params, query, headers } = request;
     const body: unknown = request.body;
-    const result = await executeRoute(route, { params, query, headers, body, raw: request }, options);
+    const result = await executeRoute(route, { params, query, headers, body, raw: request, stream: request }, options);
 
     response.status(result.status);
 
@@ -59,7 +64,9 @@ function handlerOf(route: Route, options: ExpressMountOptions): ExpressHandler {
       response.setHeader(name, value);
     }
 
-    if (result.stream === undefined) {
+    if (result.body instanceof Readable) {
+      await pipeline(result.body, response).catch(() => response.destroy());
+    } else if (result.stream === undefined) {
       response.end(serializeBody(result));
     } else {
       await writeStream(response, result.stream);

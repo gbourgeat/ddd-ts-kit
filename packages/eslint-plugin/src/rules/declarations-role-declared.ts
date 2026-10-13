@@ -14,6 +14,7 @@ import { WRITTEN_NAMES } from '../support/declarations/written-names.js';
 import { declaredRoleOf } from '../support/declarations/declared-role-of.js';
 import { isDeclaredStyle } from '../support/declarations/is-declared-style.js';
 import { writtenName } from '../support/declarations/written-name.js';
+import { propertyOf } from '../support/calls/property-of.js';
 import type { DeclaredRole } from '../support/declarations/declared-role.js';
 import { defineRule, type Report } from '../support/rule/define-rule.js';
 import { inContext } from '../support/imports/in-context.js';
@@ -33,7 +34,7 @@ export const declarationsRoleDeclared = defineRule<MessageId>({
     undeclared: `This file is a role file of the declared style (\`*.{{suffix}}.ts\` under {{folder}}/) but exports no class carrying \`@{{expected}}\`. Put \`@{{expected}}(...)\` from "${DECLARATIONS_ENTRY}" on the exported class: a class that does not say what it is is in no assembly and is never registered.`,
     wrongRole:
       '{{className}} carries `@{{actual}}` in a `*.{{suffix}}.ts` file under {{folder}}/, where a class is declared with `@{{expected}}`. Move the class to the file of its role, or declare it with `@{{expected}}(...)`: the file name, the folder and the decorator say the same thing.',
-    name: "`@{{decorator}}` of {{className}} has a `{{key}}` that is {{problem}}. Write `{ {{key}}: '{{context}}.<name>' }` as a string literal: the name is written once, never derived, and survives the renaming of the class.",
+    name: "`@{{decorator}}` of {{className}} has a `{{key}}` that is {{problem}}. Write `{ {{key}}: '{{context}}.<name>' }` as a string literal, or for a domain event handler the name its event class declares, `{ name: <Event>.eventName }`: the name is written once and survives the renaming of the class.",
     eventName:
       '`@DomainEventHandler` of {{className}} names "{{declared}}", but {{event}} is named "{{actual}}". Write `{ name: \'{{actual}}\' }`: a handler names the domain event it reacts to by the name the event carries.',
     inDomain:
@@ -129,7 +130,7 @@ function unwrittenName(node: ClassNode, declaration: Declaration, context: strin
   const key = WRITTEN_NAMES[declaration.name];
   const written = key === undefined ? undefined : writtenName(declaration.arguments[1], key);
 
-  if (key === undefined || written === undefined || 'value' in written) {
+  if (key === undefined || written === undefined || 'value' in written || readsEventName(declaration)) {
     return undefined;
   }
 
@@ -163,19 +164,47 @@ function renamedEvent(node: ClassNode, declaration: Declaration, findClass: Clas
   };
 }
 
-/** `readonly name = 'billing.invoice.issued';`, with or without `as const`. */
+/** `@DomainEventHandler(InvoiceIssued, { name: InvoiceIssued.eventName })`: the name the event class declares, read where it is written. */
+function readsEventName(declaration: Declaration): boolean {
+  const [event, options] = declaration.arguments;
+  const property = options?.type === AST_NODE_TYPES.ObjectExpression ? propertyOf(options, 'name') : undefined;
+
+  return (
+    declaration.name === 'DomainEventHandler' &&
+    event?.type === AST_NODE_TYPES.Identifier &&
+    property !== undefined &&
+    memberName(property.value) === `${event.name}.eventName`
+  );
+}
+
+/** `InvoiceIssued.eventName` for a member read on a name; undefined for anything else. */
+function memberName(node: TSESTree.Node): string | undefined {
+  if (node.type !== AST_NODE_TYPES.MemberExpression || node.computed) {
+    return undefined;
+  }
+
+  const { object, property } = node;
+
+  return object.type === AST_NODE_TYPES.Identifier && property.type === AST_NODE_TYPES.Identifier
+    ? `${object.name}.${property.name}`
+    : undefined;
+}
+
+/** `static readonly eventName = 'billing.invoice.issued';`, or `readonly name = '..'` as 0.5 wrote it, with or without `as const`. */
 function eventName(event: TSESTree.ClassDeclaration): string | undefined {
   for (const member of event.body.body) {
-    if (
-      member.type !== AST_NODE_TYPES.PropertyDefinition ||
-      member.computed ||
-      keyName(member.key) !== 'name' ||
-      member.value === null
-    ) {
-      continue;
-    }
+    const written =
+      member.type === AST_NODE_TYPES.PropertyDefinition &&
+      !member.computed &&
+      ['name', 'eventName'].includes(keyName(member.key) ?? '')
+        ? member.value
+        : null;
 
-    return staticString(unwrapped(member.value));
+    const value = written === null ? undefined : staticString(unwrapped(written));
+
+    if (value !== undefined) {
+      return value;
+    }
   }
 
   return undefined;

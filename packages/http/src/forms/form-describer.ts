@@ -50,7 +50,10 @@ export class FormDescriber {
     return [...this.grouped(hints.groups ?? [], described), ...ungrouped(hints.groups ?? [], described)];
   }
 
-  private grouped(groups: readonly FormGroupHint[], described: ReadonlyMap<string, FieldBlock>): FormBlock[] {
+  private grouped(
+    groups: readonly FormGroupHint[],
+    described: ReadonlyMap<string, FieldBlock<FormBlock>>,
+  ): FormBlock[] {
     return groups.map((group) => ({
       type: 'group',
       name: group.name,
@@ -67,9 +70,9 @@ export class FormDescriber {
   }
 
   /** Every field of one object the caller may see, by name, in the order of the schema. */
-  private async fieldsOf(level: Level): Promise<Map<string, FieldBlock>> {
+  private async fieldsOf(level: Level): Promise<Map<string, FieldBlock<FormBlock>>> {
     const required = new Set(level.node.required());
-    const blocks = new Map<string, FieldBlock>();
+    const blocks = new Map<string, FieldBlock<FormBlock>>();
 
     for (const [name, node] of level.node.properties()) {
       const block = await this.field({ name, node, required: required.has(name) }, level);
@@ -82,7 +85,7 @@ export class FormDescriber {
     return blocks;
   }
 
-  private async field(property: Property, level: Level): Promise<FieldBlock | undefined> {
+  private async field(property: Property, level: Level): Promise<FieldBlock<FormBlock> | undefined> {
     const rule = level.fields.own().find(([name]) => name === property.name)?.[1];
 
     if (rule !== undefined && !(await this.judge.reads(rule, level.values))) {
@@ -107,7 +110,7 @@ export class FormDescriber {
   private async shapeOf(
     { name, node }: Property,
     below: Level,
-  ): Promise<Omit<FieldBlock, 'name' | 'label' | 'required'>> {
+  ): Promise<Omit<FieldBlock<FormBlock>, 'name' | 'label' | 'required'>> {
     const path = below.prefix.slice(0, -1);
     const hint = this.hintOf(path) ?? {};
 
@@ -138,7 +141,7 @@ export class FormDescriber {
     };
   }
 
-  private choicesOf(path: string, node: SchemaNode, hint: FieldHint): Partial<FieldBlock> {
+  private choicesOf(path: string, node: SchemaNode, hint: FieldHint): Partial<FieldBlock<FormBlock>> {
     const listed = node.type() === 'array' ? node.items() : node;
     const values = enumerated(listed) ?? hint.options;
     const lookup = hint.lookup === undefined ? undefined : this.source.lookups.get(hint.lookup);
@@ -163,7 +166,10 @@ interface Property {
   readonly required: boolean;
 }
 
-function ungrouped(groups: readonly FormGroupHint[], described: ReadonlyMap<string, FieldBlock>): FieldBlock[] {
+function ungrouped(
+  groups: readonly FormGroupHint[],
+  described: ReadonlyMap<string, FieldBlock<FormBlock>>,
+): FieldBlock<FormBlock>[] {
   const placed = new Set(
     groups.flatMap(function names(group: FormGroupHint): string[] {
       return [...group.fields, ...(group.groups ?? []).flatMap(names)];
@@ -187,7 +193,7 @@ function isOption(value: unknown): value is string | number | boolean {
   return typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean';
 }
 
-function conditionsOf({ visibleWhen, requiredWhen }: FieldHint): Partial<FieldBlock> {
+function conditionsOf({ visibleWhen, requiredWhen }: FieldHint): Partial<FieldBlock<FormBlock>> {
   return {
     ...(visibleWhen === undefined ? {} : { visibleWhen }),
     ...(requiredWhen === undefined ? {} : { requiredWhen }),

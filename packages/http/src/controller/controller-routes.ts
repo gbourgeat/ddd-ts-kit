@@ -1,4 +1,5 @@
 import type { Schema } from '@ddd-ts-kit/validation';
+import { DomainError } from '@ddd-ts-kit/kernel';
 import { assertUniqueRoutes } from '../route/assert-unique-routes.js';
 import type { RequestSchemas } from '../route/request-schemas.js';
 import type { RouteInput } from '../route/route-input.js';
@@ -9,6 +10,7 @@ import type { ErasedController } from './erased-controller.js';
 import type { ControllerRoutesOptions } from './controller-routes-options.js';
 import type { ControllerSpec } from './controller-spec.js';
 import type { GuardRequest } from './guard-request.js';
+import { guardRefusals } from './guard-refusals.js';
 import type { Guard } from './guard.js';
 import { resolvedController, type ResolvedController } from './resolved-controller.js';
 
@@ -43,21 +45,39 @@ function routeOf(resolved: ResolvedController, options: ControllerRoutesOptions)
     ...(declared.tags.length === 0 ? {} : { tags: declared.tags }),
     ...(declared.groups.length === 0 ? {} : { groups: declared.groups }),
     ...requestOf(spec),
+    ...(spec.upload === undefined ? {} : { upload: spec.upload }),
     responses: { [status]: { description: description ?? defaultDescription(body), ...bodyOf(body) } },
     errors: [...new Set([...declared.errors, ...resolved.guards.flatMap((guard) => guard.documents?.errors ?? [])])],
     security: securityOf(resolved.guards, options.security ?? DEFAULT_SECURITY),
     ...(spec.deprecated === true ? { deprecated: true } : {}),
     ...presentationOf(spec),
     async handle(input: RouteInput): Promise<RouteOutput> {
-      for (const guard of guards) {
-        await guard.check(guardRequest(identity, input));
-      }
+      await passedGuards(guards, guardRequest(identity, input));
 
       const answer: unknown = await controller.handle({ ...input, actor: input.context.execution.actor });
 
       return body === undefined ? { status } : { status, body: answer };
     },
   };
+}
+
+/**
+ * Every guard, in order. A refusal one throws (a `DomainError`: `UnauthorizedError`,
+ * `ForbiddenError` or one of the project) is marked as a refusal at the edge before it goes on to
+ * the pipeline; a fault (a lookup that failed) is not, and is never audited as a decision.
+ */
+async function passedGuards(guards: readonly Guard[], request: GuardRequest): Promise<void> {
+  try {
+    for (const guard of guards) {
+      await guard.check(request);
+    }
+  } catch (error) {
+    if (error instanceof DomainError) {
+      guardRefusals.mark(error);
+    }
+
+    throw error;
+  }
 }
 
 function requestOf(parts: RequestSchemas): { request?: RequestSchemas } {

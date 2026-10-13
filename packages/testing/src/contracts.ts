@@ -16,6 +16,12 @@ export {
   type EventBusContractOptions,
   type EventBusUnderContract,
 } from './contracts/event-bus-contract.js';
+export { fileStorageContract } from './contracts/file-storage-contract.js';
+export type { FileStorageContractOptions } from './contracts/file-storage/file-storage-contract-options.js';
+export { followServed } from './contracts/file-storage/follow-served.js';
+export { followWithFetch } from './contracts/file-storage/follow-with-fetch.js';
+export type { FollowedResponse } from './contracts/file-storage/followed-response.js';
+export type { SignedRequest } from './contracts/file-storage/signed-request.js';
 export {
   jobSchedulerContract,
   type JobSchedulerContractOptions,
@@ -41,5 +47,9 @@ export { readModelStoreContract, type ReadModelStoreContractOptions } from './co
 export type { ReadModelStoreUnderContract } from './contracts/read-model/read-model-store-under-contract.js';
 export { SourceOfTruth } from './contracts/read-model/source-of-truth.js';
 export { repositoryContract, type RepositoryContractOptions } from './contracts/repository-contract.js';
+export {
+  tenantIsolationContract,
+  type TenantIsolationContractOptions,
+} from './contracts/tenant-isolation-contract.js';
 export { unitOfWorkContract, type UnitOfWorkContractOptions } from './contracts/unit-of-work-contract.js';
 export type { UnitOfWorkUnderContract } from './contracts/unit-of-work/unit-of-work-under-contract.js';

@@ -14,6 +14,9 @@ import { {{events.providerName}} } from '{{alias.platform}}/events/{{events.prov
 {{#if events.outbox}}
 import { startOutboxRelay } from '{{alias.platform}}/events/start-outbox-relay{{alias.ext}}';
 {{/if}}
+{{#if files.any}}
+import { openFiles } from '{{alias.platform}}/files/open-files{{alias.ext}}';
+{{/if}}
 {{#if http.any}}
 import { startHttpServer } from '{{alias.platform}}/http/start-http-server{{alias.ext}}';
 {{/if}}
@@ -47,6 +50,9 @@ const application = composeApplication(persistence, {
   jobs: { start: config.runJobs, settings: jobSettings(process.env) },
   {{#if cache.redis}}
   redis,
+  {{/if}}
+  {{#if files.any}}
+  files: openFiles(config.files),
   {{/if}}
 });
 

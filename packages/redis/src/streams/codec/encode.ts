@@ -5,6 +5,7 @@ import {
   EVENT_ID_FIELD,
   EVENT_TYPE_FIELD,
   EVENT_VERSION_FIELD,
+  TENANT_FIELD,
   TRACEPARENT_FIELD,
 } from './entry-fields.js';
 
@@ -22,6 +23,7 @@ export function encode(event: IntegrationEvent): string[] {
     String(event.version),
     ...(event.traceparent === undefined ? [] : [TRACEPARENT_FIELD, event.traceparent]),
     ...(event.correlationId === undefined ? [] : [CORRELATION_FIELD, event.correlationId]),
+    ...(event.tenantId === undefined ? [] : [TENANT_FIELD, event.tenantId]),
     ENVELOPE_FIELD,
     JSON.stringify(event),
   ];

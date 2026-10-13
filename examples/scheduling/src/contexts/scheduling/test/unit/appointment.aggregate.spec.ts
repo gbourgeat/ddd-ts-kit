@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import { unwrap } from '@ddd-ts-kit/kernel';
 import { given } from '@ddd-ts-kit/testing';
 import { Appointment } from '@/contexts/scheduling/domain/aggregates/appointment.aggregate';
 import { Cancellation } from '@/contexts/scheduling/domain/value-objects/cancellation.vo';
@@ -8,8 +7,8 @@ import { anAppointment } from '@/contexts/scheduling/test/builders/appointment.b
 
 const bornAt = new Date('2026-03-01T00:00:00.000Z');
 const deadline = new Date('2026-03-01T12:00:00.000Z');
-const byPatient = unwrap(Cancellation.create('patient'));
-const byPractice = unwrap(Cancellation.create('practice', 'The practitioner is away.'));
+const byPatient = Cancellation.create('patient');
+const byPractice = Cancellation.create('practice', 'The practitioner is away.');
 
 const ended = [
   ['cancelled', anAppointment().cancelledByPatient()],

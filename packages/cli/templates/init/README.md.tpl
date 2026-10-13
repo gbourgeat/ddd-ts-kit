@@ -51,6 +51,13 @@ production unless `API_DOCS=true`; a contract split into documents (`openapi.doc
 `ddd-ts-kit.config.json`) is served at `/openapi/<name>.json`, and the page offers each one.
 `npm run docs:generate` commits it as `openapi/openapi.yaml` (or one file per document).
 {{/if}}
+{{#if sdk.on}}
+
+A typed client of the contract is generated for its callers, one workspace package per document
+under `clients/` (`npx ddd-ts-kit sdk`, run by `npm run docs:generate`): typed errors keyed by
+the error codes of each operation, a credential per security scheme, no runtime dependency.
+`npm run sdk:build` compiles them; publishing one is a manual step, its README says how.
+{{/if}}
 
 ## How it is put together
 
@@ -156,6 +163,28 @@ and `execution.scheduledAt` says which period the work is for.
   on the API), or initialise the project with `--cache redis`, which binds `RedisLock`, or bind a
   lock between processes of your own to `Lock` in the platform.
 {{/unless}}
+{{#if files.any}}
+
+## Files
+
+The content of a file lives in a file storage, never in the database: {{#if files.local}}a directory
+(`FILES_DIRECTORY`, `.data/files` by default, kept out of version control) whose signed links the
+application answers under `/files`; before running several instances, move to an object store
+with `npx ddd-ts-kit init --force --storage s3`{{/if}}{{#if files.s3}}a bucket of the S3 protocol (`S3_*` variables), MinIO
+in `docker-compose.yml` while developing, which creates the bucket at its first start{{/if}}. The tests keep files in memory. An
+aggregate keeps the `StoredFile` reference (key, size, media type, checksum). The command bus
+stages a file a command carries before the transaction opens, `FileStaging` moves it to its key
+with the commit and, every hour, purges what refused or rolled-back commands left in `staging/`. `npx ddd-ts-kit generate file-upload <context> <UseCase>` writes an
+upload; see https://github.com/gbourgeat/ddd-ts-kit/blob/main/docs/concepts/file-storage.md.
+{{#if files.local}}
+
+| Variable | Says |
+|---|---|
+| `FILES_DIRECTORY` | the directory of the files, `.data/files` by default |
+| `FILES_PUBLIC_URL` | where clients reach `/files`, which signed links point to: required in production, `http://localhost:<PORT>/files` elsewhere |
+| `FILES_SIGNING_SECRET` | signs the links, 32 characters at least: required in production, even before the first file arrives; drawn at each start elsewhere |
+{{/if}}
+{{/if}}
 {{#if errors.sentry}}
 
 ## Error reporting
@@ -290,5 +319,5 @@ for each moment of the project: https://github.com/gbourgeat/ddd-ts-kit/blob/mai
 | `npm test` | domain, application and adapter specs |
 | `npm run test:e2e` | the whole application through HTTP, on an in-process database unless `DATABASE_URL` is set |
 | `npm run check:arch` | `ddd-ts-kit check` |
-| `npm run docs:generate` | context map, OpenAPI, AsyncAPI and event catalog |
+| `npm run docs:generate` | context map, OpenAPI, AsyncAPI and event catalog{{#if sdk.on}}, the clients under `clients/`{{/if}} |
 | `npm run verify` | everything CI runs |

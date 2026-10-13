@@ -54,7 +54,7 @@ function objectSchema(blocks: readonly FormBlock[], node: SchemaNode): JsonSchem
   };
 }
 
-function propertySchema(field: FieldBlock, node: SchemaNode | undefined): JsonSchema {
+function propertySchema(field: FieldBlock<FormBlock>, node: SchemaNode | undefined): JsonSchema {
   if (node === undefined) {
     return {};
   }
@@ -76,7 +76,7 @@ function propertySchema(field: FieldBlock, node: SchemaNode | undefined): JsonSc
 }
 
 /** A widget of an instant says the format a renderer picks its control by, whatever format the schema library wrote. */
-function formatOf({ widget }: FieldBlock): JsonSchema {
+function formatOf({ widget }: FieldBlock<FormBlock>): JsonSchema {
   const format = WIDGET_FORMATS[widget];
 
   return format === undefined ? {} : { format };
@@ -117,7 +117,7 @@ function elementsOf(blocks: readonly FormBlock[], scope: string): JsonSchema[] {
   });
 }
 
-function control(field: FieldBlock, scope: string): JsonSchema {
+function control(field: FieldBlock<FormBlock>, scope: string): JsonSchema {
   const options = {
     ...(field.widget === 'textarea' ? { multi: true } : {}),
     ...(field.widget === 'radio' ? { format: 'radio' } : {}),
@@ -141,7 +141,7 @@ function conditionOf(condition: FormCondition): JsonSchema {
   };
 }
 
-function requiredWhen(field: FieldBlock, condition: FormCondition): JsonSchema {
+function requiredWhen(field: FieldBlock<FormBlock>, condition: FormCondition): JsonSchema {
   const name = lastSegment(condition.field);
   const matching = 'equals' in condition ? { const: condition.equals } : { enum: [...condition.in] };
 
@@ -149,7 +149,7 @@ function requiredWhen(field: FieldBlock, condition: FormCondition): JsonSchema {
 }
 
 /** The fields of one level of the body, whatever group of the layout holds them. */
-function fieldsOf(blocks: readonly FormBlock[]): FieldBlock[] {
+function fieldsOf(blocks: readonly FormBlock[]): FieldBlock<FormBlock>[] {
   return blocks.flatMap((block) => (block.type === 'group' ? fieldsOf(block.blocks) : [block]));
 }
 

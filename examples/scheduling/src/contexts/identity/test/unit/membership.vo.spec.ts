@@ -1,9 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { unwrap } from '@ddd-ts-kit/kernel';
 import { Membership } from '@/contexts/identity/domain/value-objects/membership.vo';
 import { Role } from '@/contexts/identity/domain/value-objects/role.vo';
 
-const practitioner = unwrap(Role.create('practitioner'));
+const practitioner = Role.create('practitioner');
 
 describe('Membership', () => {
   it('is equal to another membership of the same person with the same role', () => {

@@ -28,6 +28,7 @@ import { domainEventsDispatchedOnSave } from '../rules/domain-events-dispatched-
 import { domainEventsTransactionalBeforeCommit } from '../rules/domain-events-transactional-before-commit.js';
 import { errorsCodeUnique } from '../rules/errors-code-unique.js';
 import { errorsKnownCode } from '../rules/errors-known-code.js';
+import { filesPortNotConnector } from '../rules/files-port-not-connector.js';
 import { eventsConsumerIdempotent } from '../rules/events-consumer-idempotent.js';
 import { eventsDefinedInPublishedLanguage } from '../rules/events-defined-in-published-language.js';
 import { eventsNameFormat } from '../rules/events-name-format.js';
@@ -36,6 +37,7 @@ import { governanceRecordedDeviation } from '../rules/governance-recorded-deviat
 import { importsAliasDeclared } from '../rules/imports-alias-declared.js';
 import { importsAliasOnly } from '../rules/imports-alias-only.js';
 import { importsExtension } from '../rules/imports-extension.js';
+import { languageDeclaredVocabulary } from '../rules/language-declared-vocabulary.js';
 import { languageGlossaryTerm } from '../rules/language-glossary-term.js';
 import { languageNoTechnicalName } from '../rules/language-no-technical-name.js';
 import { layerApplicationInward } from '../rules/layer-application-inward.js';
@@ -46,6 +48,7 @@ import { namingOneConceptPerFile } from '../rules/naming-one-concept-per-file.js
 import { namingSearchNotList } from '../rules/naming-search-not-list.js';
 import { namingSuffix } from '../rules/naming-suffix.js';
 import { persistenceMigrationHistory } from '../rules/persistence-migration-history.js';
+import { persistenceNoFileContent } from '../rules/persistence-no-file-content.js';
 import { portsAbstractClass } from '../rules/ports-abstract-class.js';
 import { portsImplementsNeverExtends } from '../rules/ports-implements-never-extends.js';
 import { portsNoConcreteDependency } from '../rules/ports-no-concrete-dependency.js';
@@ -57,6 +60,7 @@ import { purityNoSystemClock } from '../rules/purity-no-system-clock.js';
 import { schedulingJobName } from '../rules/scheduling-job-name.js';
 import { schedulingJobTriggersUseCase } from '../rules/scheduling-job-triggers-use-case.js';
 import { standardNoParallelInterface } from '../rules/standard-no-parallel-interface.js';
+import { tenancyScopedStatement } from '../rules/tenancy-scoped-statement.js';
 import { testBuilderRequired } from '../rules/test-builder-required.js';
 import { testCoverageGoverned } from '../rules/test-coverage-governed.js';
 import { testNoMocks } from '../rules/test-no-mocks.js';
@@ -88,6 +92,7 @@ export const ARCHITECTURE_RULES: readonly Rule[] = [
   testCoverageGoverned,
   languageGlossaryTerm,
   languageNoTechnicalName,
+  languageDeclaredVocabulary,
   purityNoSystemClock,
   purityNoAmbientRandomness,
   purityNoEnvironment,
@@ -113,6 +118,7 @@ export const ARCHITECTURE_RULES: readonly Rule[] = [
   authzFieldsBySchema,
   aspectsOutsideIn,
   tracingPlatformOnly,
+  tenancyScopedStatement,
   standardNoParallelInterface,
   governanceRecordedDeviation,
   compositionOnlyInModule,
@@ -132,4 +138,6 @@ export const ARCHITECTURE_RULES: readonly Rule[] = [
   errorsCodeUnique,
   errorsKnownCode,
   persistenceMigrationHistory,
+  persistenceNoFileContent,
+  filesPortNotConnector,
 ];

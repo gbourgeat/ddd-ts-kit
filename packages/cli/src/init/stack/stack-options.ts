@@ -15,6 +15,7 @@ export interface StackOptions {
   readonly authz?: string;
   readonly broker?: string;
   readonly cache?: string;
+  readonly storage?: string;
   readonly audit?: string;
   readonly errors?: string;
   readonly logger?: string;
@@ -25,6 +26,9 @@ export interface StackOptions {
   readonly routes?: string;
   readonly representations?: string;
   readonly forms?: string;
+  readonly valueObjects?: string;
+  readonly literals?: string;
+  readonly tenancy?: string;
   readonly packageManager?: string;
   /** The prefix of the source root in imports, when it is not the default. */
   readonly importAlias?: string;
@@ -32,5 +36,7 @@ export interface StackOptions {
   readonly importExtension?: string;
   /** The reason given for running an ORM without the transactional outbox. */
   readonly allowNoOutbox?: string;
+  /** `--sdk`: the typed clients of the contract are generated with the project. */
+  readonly sdk?: boolean;
   readonly force: boolean;
 }

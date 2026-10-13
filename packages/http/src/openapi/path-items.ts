@@ -1,8 +1,9 @@
-import type { JsonSchema, Schema } from '@ddd-ts-kit/validation';
+import type { JsonSchema } from '@ddd-ts-kit/validation';
 import type { Route } from '../route/route.js';
 import type { Documenting } from './documenting.js';
 import { openApiPath } from './open-api-path.js';
 import { pathParameters } from './path-parameters.js';
+import { requestBody } from './request-body.js';
 import { requirement } from './requirement.js';
 import { responses } from './responses.js';
 import { schemaParameters } from './schema-parameters.js';
@@ -43,15 +44,13 @@ function operation(route: Route, documenting: Documenting): JsonSchema {
     ...(route.deprecated === true ? { deprecated: true } : {}),
     security: route.security === false ? [] : requirement(route.security),
     ...(parameters.length === 0 ? {} : { parameters }),
-    ...(request.body === undefined ? {} : { requestBody: requestBody(route, request.body, documenting) }),
+    ...bodyOf(route, documenting),
     responses: responses(route, documenting),
   };
 }
 
-/** The body in JSON, and in every media type the route reads it in besides. */
-function requestBody(route: Route, body: Schema<unknown>, { definitions }: Documenting): JsonSchema {
-  const schema = definitions.embed(body);
-  const mediaTypes = ['application/json', ...(route.consumes ?? [])];
+function bodyOf(route: Route, documenting: Documenting): { requestBody?: JsonSchema } {
+  const body = requestBody(route, documenting);
 
-  return { required: true, content: Object.fromEntries(mediaTypes.map((mediaType) => [mediaType, { schema }])) };
+  return body === undefined ? {} : { requestBody: body };
 }

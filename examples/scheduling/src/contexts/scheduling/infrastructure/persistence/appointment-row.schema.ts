@@ -1,4 +1,5 @@
 import type { AuditRow } from '@ddd-ts-kit/knex';
+import type { AppointmentStatus } from '@/contexts/scheduling/domain/vocabularies/appointment-status.vocabulary';
 
 /** The exclusion constraint that holds a time on a calendar once, as PostgreSQL names it in a violation. */
 export const APPOINTMENT_SLOT_HELD_ONCE = 'appointments_slot_held_once';
@@ -16,11 +17,18 @@ export interface AppointmentColumns {
   readonly ends_at: Date;
   readonly held_until: Date;
   readonly day: string;
-  readonly status: 'requested' | 'booked' | 'cancelled' | 'expired' | 'completed' | 'no-show';
+  readonly status: AppointmentStatus;
   readonly confirm_before: Date | null;
   readonly cancelled_by: 'patient' | 'practice' | null;
   readonly cancellation_reason: string | null;
   readonly internal_note: string | null;
+  /** The reference of the attached document, its content being in the file storage: all six null without one. */
+  readonly document_key: string | null;
+  readonly document_size: number | null;
+  readonly document_media_type: string | null;
+  readonly document_checksum: string | null;
+  readonly document_name: string | null;
+  readonly document_attached_at: Date | null;
 }
 
 export interface AppointmentRow extends AppointmentColumns, AuditRow {

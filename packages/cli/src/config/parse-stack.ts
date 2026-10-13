@@ -23,9 +23,13 @@ import {
   ROUTE_FORMS,
   FORM_MODES,
   REPRESENTATION_MODES,
+  STORAGE_STACKS,
   STYLES,
+  TENANCY_STRATEGIES,
   TEST_STACKS,
   VALIDATION_STACKS,
+  VALUE_OBJECT_FORMS,
+  LITERAL_FORMS,
   type Stack,
 } from './stack.js';
 
@@ -52,13 +56,26 @@ export function parseStack(stack: Record<string, unknown>): Stack {
     routes: choose('routes', ROUTE_FORMS, 'functions'),
     representations: choose('representations', REPRESENTATION_MODES, 'json'),
     forms: choose('forms', FORM_MODES, 'off'),
+    valueObjects: choose('valueObjects', VALUE_OBJECT_FORMS, 'result'),
+    literals: choose('literals', LITERAL_FORMS, 'free'),
     packageManager: choose('packageManager', PACKAGE_MANAGERS, 'npm'),
+    tenancy: choose('tenancy', TENANCY_STRATEGIES, 'none'),
   };
 }
 
 type Choices = Pick<
   Stack,
-  'authn' | 'authz' | 'broker' | 'cache' | 'audit' | 'errors' | 'logger' | 'style' | 'assembly' | 'dependencies'
+  | 'authn'
+  | 'authz'
+  | 'broker'
+  | 'cache'
+  | 'storage'
+  | 'audit'
+  | 'errors'
+  | 'logger'
+  | 'style'
+  | 'assembly'
+  | 'dependencies'
 >;
 
 function parseChoices(choose: Choose, orm: Stack['orm']): Choices {
@@ -67,6 +84,7 @@ function parseChoices(choose: Choose, orm: Stack['orm']): Choices {
     authz: choose('authz', AUTHZ_STACKS, 'rbac'),
     broker: choose('broker', BROKER_STACKS, 'none'),
     cache: choose('cache', CACHE_STACKS, 'none'),
+    storage: choose('storage', STORAGE_STACKS, 'none'),
     audit: choose('audit', AUDIT_MODES, orm === 'none' ? 'off' : 'on'),
     errors: choose('errors', ERROR_REPORTERS, 'none'),
     logger: choose('logger', LOGGERS, 'stdout'),

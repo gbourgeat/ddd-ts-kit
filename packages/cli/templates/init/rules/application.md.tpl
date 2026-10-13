@@ -25,8 +25,14 @@ paths:
 - A dependency list names port classes, imported as values, in the order of the constructor: never an adapter or a fake (`ports/value-import`, `ports/no-concrete-dependency`).
 {{/if}}
 - A job (`scheduling/*.job.ts`) and an integration event handler (`integration/handlers/`) only build one command and send it as a system actor; both are safe to repeat (`scheduling/job-triggers-use-case`, `events/consumer-idempotent`).
+{{#if files.any}}
+- A file arrives in the command as a `FileUpload` of its area, which the bus stages before the transaction under a key of `FileKeys` (never a name or a path from the user) and scans; the handler records `upload.file`, its `StoredFile`, on the aggregate and calls `FileStaging.promoteOnCommit`, which moves it to its key with the commit. A direct upload is confirmed from the `PendingUpload` the aggregate kept, never from a key the client sends. The ports are named here, never a connector (`files/port-not-connector`); `npx ddd-ts-kit generate file-upload` writes the slice.
+{{/if}}
 - A query never saves, deletes or publishes (`application/command-query-separation`); it hands the access scope of the actor to its read port and never filters after loading.
 - A query answers every field its read model holds: a field reserved to some callers is marked on the response schema with `withFieldAccess` of `@ddd-ts-kit/http`, never removed by a test on the roles of the actor (`authz/fields-by-schema`).
 - A read that takes criteria, a scope or a page is a search, never a list (`naming/search-not-list`): `Search<Things>Query` in `queries/search-<things>/` (`generate query ... --search`), `search...` on the port, its adapters and its fakes; one element or none stays `findById` or `findBy...`.
+{{#if literals.named}}
+- A permission, a role or a status is read from its declaration, `billingPermissions['invoice.issue']`, `InvoiceStatus.Issued`, never written as a string (`language/declared-vocabulary`); a number has a name (`clean/no-magic-number`).
+{{/if}}
 - Time through `Clock`, identifiers through `IdGenerator`, no `process.env` (`purity/*`). No logging, tracing, retry or audit call: they are applied from outside (`aspects/outside-in`, `tracing/platform-only`).
 - A whole feature with `/ddd-ts-kit:use-case`. Create with `npx ddd-ts-kit generate command|query|port|policy|job|event-handler|integration-handler ... --json`, then fill the `TODO(domain)` places.

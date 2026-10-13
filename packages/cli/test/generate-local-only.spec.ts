@@ -17,6 +17,7 @@ const SHARED_KINDS = [
   'service',
   'worker',
   'adr',
+  'route-group',
 ];
 
 /** One run of every kind that declares it writes nothing shared, and of a command on an aggregate that has its repository. */
@@ -35,7 +36,21 @@ const LOCAL_RUNS: readonly (readonly string[])[] = [
   ['adapter', 'billing', 'PriceList'],
   ['route', 'billing', 'SearchInvoices', '--method', 'GET', '--path', '/stale-invoices', '--query', '--force'],
   ['controller', 'billing', 'SearchInvoices', '--method', 'GET', '--path', '/late-invoices', '--query', '--force'],
-  ['route-group', 'billing', 'InvoiceAdministration', '--prefix', '/administration', '--role', 'billing-admin'],
+  [
+    'file-upload',
+    'billing',
+    'AttachInvoiceScan',
+    '--path',
+    '/invoices/:invoiceId/scan',
+    '--permission',
+    'invoice.attach-scan',
+    '--term',
+    'Attach=to join a document to what it proves',
+    '--term',
+    'Scan=the image of a paper invoice',
+  ],
+  ['route-group', 'billing', 'InvoiceAdministration', '--prefix', '/administration'],
+  ['vocabulary', 'billing', 'InvoiceStatus', '--value', 'draft', '--value', 'issued'],
   ['guard', 'billing', 'OfficeHours'],
   ['representation', 'billing', 'IssueInvoice', 'xml'],
   ['form', 'billing', 'IssueInvoice'],

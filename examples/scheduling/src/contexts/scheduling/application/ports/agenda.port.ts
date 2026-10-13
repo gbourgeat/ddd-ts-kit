@@ -1,4 +1,5 @@
 import { ReadModelStore, defineCriteria } from '@ddd-ts-kit/kernel';
+import type { AppointmentStatus } from '@/contexts/scheduling/domain/vocabularies/appointment-status.vocabulary';
 
 /** One appointment as the agenda shows it: what it holds and where it stands, under the identifier of the appointment. */
 export type AgendaEntry = {
@@ -14,7 +15,7 @@ export type AgendaEntry = {
   readonly heldUntil: Date;
   /** The date of the start in the time zone of the practice, `YYYY-MM-DD`. */
   readonly day: string;
-  readonly status: 'requested' | 'booked' | 'cancelled' | 'expired' | 'completed' | 'no-show';
+  readonly status: AppointmentStatus;
   readonly confirmBefore: Date | null;
   readonly cancelledBy: 'patient' | 'practice' | null;
   /** What the staff of the practice keeps about the appointment: an answer shows it only to them. */

@@ -14,6 +14,7 @@
       "!**/coverage",
       "!**/reports",
       "!**/generated",
+      "!**/clients/*/src",
       "!**/package-lock.json",
       "!**/.dependency-cruiser.cjs",
       "!**/openapi/*.json",

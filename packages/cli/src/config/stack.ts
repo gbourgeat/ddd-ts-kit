@@ -17,11 +17,21 @@ export const REFUSAL_FORMS = ['factories', 'classes'] as const;
 export const ROUTE_FORMS = ['controllers', 'functions'] as const;
 export const REPRESENTATION_MODES = ['negotiated', 'json'] as const;
 export const FORM_MODES = ['on', 'off'] as const;
+export const VALUE_OBJECT_FORMS = ['throwing', 'result'] as const;
+export const LITERAL_FORMS = ['named', 'free'] as const;
 export const CACHE_STACKS = ['none', 'redis'] as const;
+export const STORAGE_STACKS = ['none', 'local', 's3'] as const;
 export const AUDIT_MODES = ['on', 'off'] as const;
 export const ERROR_REPORTERS = ['none', 'sentry'] as const;
 export const LOGGERS = ['stdout', 'pino', 'winston'] as const;
 export const PACKAGE_MANAGERS = ['npm', 'pnpm'] as const;
+export const TENANCY_STRATEGIES = [
+  'none',
+  'shared-table',
+  'row-level-security',
+  'schema-per-tenant',
+  'database-per-tenant',
+] as const;
 
 export type ValidationStack = (typeof VALIDATION_STACKS)[number];
 export type OrmStack = (typeof ORM_STACKS)[number];
@@ -46,6 +56,13 @@ export interface Stack {
   readonly broker: (typeof BROKER_STACKS)[number];
   /** What backs the kernel `Cache` port, the relay signal, the rate limiter and the lock of the jobs: the process itself, or a Redis protocol server. */
   readonly cache: (typeof CACHE_STACKS)[number];
+  /**
+   * Where the content of files lives, never in the database: `local`, a directory in development
+   * and the memory in the tests; `s3`, a bucket of any provider of the S3 protocol (MinIO in the
+   * compose stack); `none`, no file storage wired. A config that says nothing was written before
+   * the choice existed: it is `none`.
+   */
+  readonly storage: (typeof STORAGE_STACKS)[number];
   /** Whether the audit trail is wired: decisions, commands and integration events, recorded from outside the use cases. */
   readonly audit: (typeof AUDIT_MODES)[number];
   /** Where unexpected errors are reported: nowhere, or a Sentry protocol server (Sentry, GlitchTip). */
@@ -97,9 +114,32 @@ export interface Stack {
    */
   readonly forms: (typeof FORM_MODES)[number];
   /**
+   * How the factory of a value object refuses: `throwing`, `create` returns the value object or
+   * throws the refusal built by the static factory of its concept, as the rest of the domain
+   * refuses; `result`, `create` returns a `Result` of the kernel that the caller unwraps. A config
+   * that says nothing was written when every value object returned a `Result`: it is `result`.
+   */
+  readonly valueObjects: (typeof VALUE_OBJECT_FORMS)[number];
+  /**
+   * How the code writes a closed value and a number: `named`, a value a closed vocabulary of the
+   * project declares is read through it (`language/declared-vocabulary`) and a number of the
+   * domain or the application has a name (`clean/no-magic-number`, ESLint); `free`, both rules
+   * are silent. A config that says nothing was written before the rules existed: it is `free`.
+   */
+  readonly literals: (typeof LITERAL_FORMS)[number];
+  /**
    * What installs the dependencies and runs the scripts: every command the CLI writes (scripts,
    * pipelines, hooks, Dockerfile, guidance) is in its dialect. A config that says nothing was
    * written before the choice existed: it is npm.
    */
   readonly packageManager: (typeof PACKAGE_MANAGERS)[number];
+  /**
+   * How the data of one tenant is kept from the others: `none`, one customer; `shared-table`, a
+   * `tenant_id` column that every repository confines its statements to through the helpers of
+   * the ORM package (`tenancy/scoped-statement` holds it). `row-level-security`,
+   * `schema-per-tenant` and `database-per-tenant` are offered by the persistence packages and
+   * read here, but `init` does not generate them yet. A config that says nothing was written
+   * before the choice existed: it is `none`.
+   */
+  readonly tenancy: (typeof TENANCY_STRATEGIES)[number];
 }

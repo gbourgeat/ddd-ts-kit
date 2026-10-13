@@ -34,6 +34,7 @@ export function sessionOfClaims<C extends Claims>(claims: C, actor: Actor, optio
     ...optional('impersonatedBy', impersonatorOf(claims[options.impersonatorClaim ?? ACTOR_CLAIM])),
     ...optional('locale', textOf(claims['locale'])),
     ...optional('timeZone', textOf(claims['zoneinfo'])),
+    ...optional('scopes', scopesOf(claims)),
     extensions: options.toSessionExtensions?.(claims) ?? {},
   };
 }
@@ -104,4 +105,13 @@ function impersonatorOf(claim: unknown): string | undefined {
   const named: Claims = { ...claim };
 
   return textOf(named['sub']) ?? textOf(named['id']);
+}
+
+/** `scope`, the space-separated list of RFC 8693 and OAuth 2.0, or `scp`, the list some providers write instead. */
+function scopesOf(claims: Claims): readonly string[] | undefined {
+  const written: unknown = claims['scope'] ?? claims['scp'];
+  const scopes = typeof written === 'string' ? written.split(' ') : Array.isArray(written) ? written : [];
+  const kept = scopes.filter((scope): scope is string => typeof scope === 'string' && scope !== '');
+
+  return kept.length === 0 ? undefined : kept;
 }

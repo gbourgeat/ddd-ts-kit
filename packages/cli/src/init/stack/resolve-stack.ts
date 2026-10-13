@@ -10,6 +10,7 @@ import {
   CONFIG_FILE,
   DEFAULT_IMPORT_ALIAS,
   DEFAULT_IMPORT_EXTENSION,
+  DEFAULT_SDK_NAME,
   DI_STACKS,
   DOCS_UIS,
   ERROR_REPORTERS,
@@ -21,10 +22,13 @@ import {
   REPRESENTATION_MODES,
   ROUTE_FORMS,
   PACKAGE_MANAGERS,
+  STORAGE_STACKS,
   parseConfig,
   readConfig,
   TEST_STACKS,
   VALIDATION_STACKS,
+  VALUE_OBJECT_FORMS,
+  LITERAL_FORMS,
   type Config,
 } from '../../config/index.js';
 import { aliasProblem } from '../../alias/index.js';
@@ -35,6 +39,7 @@ import { recordedOptions } from './recorded-options.js';
 import { resolveCiExtras } from './resolve-ci-extras.js';
 import { resolvePersistence } from './resolve-persistence.js';
 import { resolveStyle } from './resolve-style.js';
+import { resolveTenancy } from './resolve-tenancy.js';
 import type { StackOptions } from './stack-options.js';
 
 export type { StackOptions } from './stack-options.js';
@@ -61,7 +66,23 @@ export function resolveStack(root: string, options: StackOptions): Config {
   const ci = { extras: resolveCiExtras(options.ciExtras, recorded, stack.ci) };
   const config = supportedAlias({ ...(recorded ?? fresh), importAlias, importExtension, stack, ci });
 
-  return { ...config, worker: config.worker || hasWorker(root, config) };
+  return { ...config, worker: config.worker || hasWorker(root, config), sdk: sdkOf(options, config) };
+}
+
+/** `--sdk` records the clients with their default name; a config that has them keeps its own. */
+function sdkOf(options: StackOptions, config: Config): Config['sdk'] {
+  if (options.sdk !== true || config.sdk !== undefined) {
+    return config.sdk;
+  }
+
+  if (config.stack.http === 'none') {
+    throw new CliError(
+      '--sdk cannot be combined with --http none.',
+      'A client is generated from the OpenAPI contract of the HTTP boundary: pick an HTTP framework, or leave --sdk out.',
+    );
+  }
+
+  return { name: DEFAULT_SDK_NAME, access: undefined };
 }
 
 /** Nothing for a new project, and for a config `--force` is about to replace because it cannot be read. */
@@ -110,8 +131,10 @@ function stackOf(options: StackOptions): Record<string, string> {
     ...resolveSecurity(options),
     broker,
     ...resolveOperations(options, persistence.orm),
+    ...resolveWriting(options),
     ...resolveStyle(options, di),
     ...resolvePresentation(options, http),
+    tenancy: resolveTenancy(options, persistence.orm),
   };
 }
 
@@ -135,7 +158,8 @@ function hasWorker(root: string, config: Config): boolean {
 }
 
 /**
- * The cache stays in the process unless asked otherwise; the audit trail is on as soon as there
+ * The cache stays in the process unless asked otherwise; files are kept in a local directory
+ * unless an object store is asked for; the audit trail is on as soon as there
  * is a database to keep it in; unexpected failures are reported nowhere unless asked; the logger
  * writes JSON lines on the standard output unless pino or winston is asked for. Error
  * reporting hangs on the buses, the HTTP boundary, the jobs and the process, which every stack
@@ -144,16 +168,28 @@ function hasWorker(root: string, config: Config): boolean {
 function resolveOperations(
   options: StackOptions,
   orm: string,
-): Record<'cache' | 'audit' | 'errors' | 'logger' | 'refusals' | 'routes', string> {
+): Record<'cache' | 'storage' | 'audit' | 'errors' | 'logger', string> {
   return {
     cache: choose(CACHE_STACKS, options.cache, 'cache') ?? 'none',
+    // A new project keeps the content of its files in a directory while it is developed, in memory in its tests; a recorded one says what it chose, or none.
+    storage: choose(STORAGE_STACKS, options.storage, 'storage') ?? 'local',
     audit: choose(AUDIT_MODES, options.audit, 'audit') ?? (orm === 'none' ? 'off' : 'on'),
     errors: choose(ERROR_REPORTERS, options.errors, 'errors') ?? 'none',
     logger: choose(LOGGERS, options.logger, 'logger') ?? 'stdout',
+  };
+}
+
+/** How the code is written: a new project takes the forms of the current version, a recorded one keeps the form it says. */
+function resolveWriting(options: StackOptions): Record<'refusals' | 'routes' | 'valueObjects' | 'literals', string> {
+  return {
     // A new project builds its domain errors through factories; a recorded one keeps the form it says, or the one of 0.2.
     refusals: choose(REFUSAL_FORMS, options.refusals, 'refusals') ?? 'factories',
     // A new project writes each route as a controller class; a recorded one keeps the form it says, or the functions of 0.3.
     routes: choose(ROUTE_FORMS, options.routes, 'routes') ?? 'controllers',
+    // A new project throws the refusals of its value objects; a recorded one keeps the form it says, or the Result of 0.5.
+    valueObjects: choose(VALUE_OBJECT_FORMS, options.valueObjects, 'value-objects') ?? 'throwing',
+    // A new project names its closed values and its numbers; a recorded one keeps the form it says, or the free literals of 0.5.
+    literals: choose(LITERAL_FORMS, options.literals, 'literals') ?? 'named',
   };
 }
 
