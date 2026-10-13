@@ -10,6 +10,28 @@ list the pull requests behind it.
 repository next to its `dist/`, and `npm run package:check` refuses a tarball without it, or with
 another text. Earlier versions were published without it.
 
+## 0.6.0
+
+**A typed client of the contract, for the callers of the API.** `npx ddd-ts-kit sdk` (or
+`init --sdk`) generates one client per document of the OpenAPI contract, a workspace package
+under `clients/<document>` with no runtime dependency: each operation answers its outcome typed
+by status, a refusal typed by the error codes its contract declares (`problem.code` is
+`'UNKNOWN_TIME_ZONE' | 'VALIDATION_FAILED'`, not `string`), credentials are given per security
+scheme, and `unwrap` with `isProblem` serve the code that prefers exceptions. A status the
+contract does not declare throws `UnexpectedResponseError`, which reads the problem document of
+a fault of the server: its `code` (`INTERNAL_ERROR`) and its `requestId`. An operation id that
+is a reserved word or a name of the client is renamed (`deleteOperation`, `send2`). The command
+records `"sdk"` in the config (`sdk.name`, `sdk.access`, see `docs/CONFIG.md`), tells the agents
+in CLAUDE.md never to edit a client, and wires the project: `docs:generate` regenerates the
+clients, `docs:check` fails while one differs from the contract, `ci:build` builds them, so the
+GitHub and GitLab pipelines check them; publishing stays a manual step. Under npm, while
+`package-lock.json` does not list a client, the command says to run `npm install` and
+`sdk --check` fails, before `npm ci` refuses the lock in the pipeline. openapi-typescript with
+openapi-fetch, hey-api and orval were measured on the example contract first: none reads the
+error codes, and the first refuses TypeScript 6 (`docs/tools/client-sdk.md`). A project without
+the key is unchanged: only with it does the ESLint preset leave out `clients/*/src/**`, and the
+command add `!**/clients/*/src` to Biome.
+
 ## 0.5.0
 
 **Migrations are named by a timestamp and what they do.** The generated `drizzle.config.ts`

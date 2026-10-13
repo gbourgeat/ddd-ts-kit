@@ -115,7 +115,7 @@ Twenty-two skills, in the order a project meets them:
 | `cross-cutting` | logging, metrics, tracing, error reporting, audit trail, resilience and caching from outside |
 | `testing` | fakes instead of mocks, builders, given / when / then, end to end |
 | `clean-code` | naming, function order, comments, testability |
-| `document` | OpenAPI contract, event catalog, AsyncAPI, generated lists, decision records |
+| `document` | OpenAPI contract and its typed clients, event catalog, AsyncAPI, generated lists, decision records |
 | `extract-service` | keep each context ready to run as its own service, and extract it |
 | `deviation` | what to do when asked to go around a rule |
 | `quality-gate` | run the checks at the right scope and fix at the root cause |
@@ -182,7 +182,7 @@ compiler in strict mode complete the gate.
 
 | Package | What it gives |
 |---|---|
-| [`ddd-ts-kit`](packages/cli) | the CLI: `init`, `generate`, `check`, `docs`, `list`, `describe`, `status`, `todo`, `worker-scope`, `depcruise-config`, `rules`, `explain` |
+| [`ddd-ts-kit`](packages/cli) | the CLI: `init`, `generate`, `check`, `docs`, `sdk` (a typed client of the OpenAPI contract, its refusals typed by their error codes), `list`, `describe`, `status`, `todo`, `worker-scope`, `depcruise-config`, `rules`, `explain` |
 | [`@ddd-ts-kit/kernel`](packages/kernel) | entities, aggregates, value objects, domain errors, `Result`; ports as abstract classes; the declarations (`@CommandHandler`, `@Repository`, ...); command, query and event buses with in-memory implementations; the standard extensible interfaces: `Actor`, `Session`, `ExecutionContext`, `Logger`, `Metrics`, `Cache`, `Page`, `Clock`, `IdGenerator`, `UnitOfWork`, `ErrorReporter`; the read side: criteria, hydration and read models |
 | [`@ddd-ts-kit/events`](packages/events) | typed integration event declarations, registry, transactional outbox and relay, AsyncAPI and event catalog generation |
 | [`@ddd-ts-kit/rabbitmq`](packages/rabbitmq), [`kafka`](packages/kafka), [`nats`](packages/nats), [`redis/event-bus`](packages/redis) | broker providers behind one contract: acknowledged publishing for the outbox relay, one durable subscription per consumer, bounded retries, dead letters |

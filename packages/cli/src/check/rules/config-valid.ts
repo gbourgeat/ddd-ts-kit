@@ -25,6 +25,7 @@ export const configValid: Rule = {
       ...inspection.coverageThresholds(),
       ...inspection.ciExtras(),
       ...inspection.openApiSettings(),
+      ...inspection.sdkSettings(),
     ];
   },
 };

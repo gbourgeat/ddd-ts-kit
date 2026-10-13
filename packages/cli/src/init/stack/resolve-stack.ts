@@ -10,6 +10,7 @@ import {
   CONFIG_FILE,
   DEFAULT_IMPORT_ALIAS,
   DEFAULT_IMPORT_EXTENSION,
+  DEFAULT_SDK_NAME,
   DI_STACKS,
   DOCS_UIS,
   ERROR_REPORTERS,
@@ -59,7 +60,23 @@ export function resolveStack(root: string, options: StackOptions): Config {
   const ci = { extras: resolveCiExtras(options.ciExtras, recorded, stack.ci) };
   const config = supportedAlias({ ...(recorded ?? fresh), importAlias, importExtension, stack, ci });
 
-  return { ...config, worker: config.worker || hasWorker(root, config) };
+  return { ...config, worker: config.worker || hasWorker(root, config), sdk: sdkOf(options, config) };
+}
+
+/** `--sdk` records the clients with their default name; a config that has them keeps its own. */
+function sdkOf(options: StackOptions, config: Config): Config['sdk'] {
+  if (options.sdk !== true || config.sdk !== undefined) {
+    return config.sdk;
+  }
+
+  if (config.stack.http === 'none') {
+    throw new CliError(
+      '--sdk cannot be combined with --http none.',
+      'A client is generated from the OpenAPI contract of the HTTP boundary: pick an HTTP framework, or leave --sdk out.',
+    );
+  }
+
+  return { name: DEFAULT_SDK_NAME, access: undefined };
 }
 
 /** Nothing for a new project, and for a config `--force` is about to replace because it cannot be read. */

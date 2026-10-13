@@ -45,7 +45,7 @@ export default dddTsKit({ tsconfigRootDir: import.meta.dirname });
 | `tsconfigRootDir` | the working directory | directory of the tsconfig and of `ddd-ts-kit.config.json` |
 | `typeChecked` | `true` | add the rules that read types; `false` is faster and needs no tsconfig |
 | `allowDefaultProject` | `['*.config.ts', '*.config.mts']` | files outside the tsconfig still linted with types |
-| `ignores` | none | added to `dist`, `coverage`, `node_modules`, `reports`, `*.d.ts` |
+| `ignores` | none | added to `dist`, `coverage`, `node_modules`, `reports`, `*.d.ts`, and `clients/*/src` when `ddd-ts-kit.config.json` has `"sdk"` (the clients the CLI generates) |
 
 To compose a config by hand, the plugin is the default export, with two presets that hold only
 its own rules, the three typescript-eslint rules they delegate to and the four layout rules of
