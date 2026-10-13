@@ -19,7 +19,7 @@ import { startOutboxRelay, type RunningRelay } from '@/platform/events/start-out
 import type { LogSettings } from '@/platform/observability/create-logger';
 import { startHttpServer, type HttpServer } from '@/platform/http/start-http-server';
 import { openRedis, type RedisServices } from '@/platform/redis/open-redis';
-import { createCredentials, type TestActor } from '$test/e2e/support/create-credentials';
+import { createCredentials, type Credentials, type TestActor } from '$test/e2e/support/create-credentials';
 import { noRedis, testEnvironment } from '$test/e2e/support/test-environment';
 
 /** The whole application, real adapters included, as a client and another context see it. */
@@ -90,22 +90,33 @@ export async function startApplication(options: StartOptions = {}): Promise<Runn
   const relay = relayOf(persistence, application);
   const server = await startHttpServer(application, config);
   const baseUrl = 'http://127.0.0.1:' + server.port;
-  const client = createHttpClient(baseUrl);
   // The store of the running application: what a test relates is what its authorizer reads.
   const tuples = application.container.resolve(RelationTupleStore);
 
   return {
-    client,
+    ...callersOf(baseUrl, credentials),
     url: baseUrl,
     filesDirectory,
-    api: createClient({ baseUrl }),
     events: application.eventSubscriber,
-    as: async (actor) => client.withHeaders(await credentials.headersOf(actor)),
-    headersOf: (actor) => credentials.headersOf(actor),
-    apiAs: (actor) => createClient({ baseUrl, credentials: { bearer: () => credentials.bearerOf(actor) } }),
     relate: (tuple) => tuples.write([tuple]),
     reset: () => relay.whileStopped(() => database.reset().then(() => relateSystemActors(tuples))),
     close: () => closeInOrder({ server, relay, application, redis, database, filesDirectory }),
+  };
+}
+
+/** Who calls the running application: anonymously or as an actor, by raw HTTP or through the typed client of its contract. */
+function callersOf(
+  baseUrl: string,
+  credentials: Credentials,
+): Pick<RunningApplication, 'client' | 'api' | 'as' | 'headersOf' | 'apiAs'> {
+  const client = createHttpClient(baseUrl);
+
+  return {
+    client,
+    api: createClient({ baseUrl }),
+    as: async (actor) => client.withHeaders(await credentials.headersOf(actor)),
+    headersOf: (actor) => credentials.headersOf(actor),
+    apiAs: (actor) => createClient({ baseUrl, credentials: { bearer: () => credentials.bearerOf(actor) } }),
   };
 }
 
