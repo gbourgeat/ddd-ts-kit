@@ -168,7 +168,10 @@ describe('fields reserved to some callers in a shared schema', () => {
 
 describe('a form of a shared body', () => {
   it('describes the fields of the definition the body refers to', async () => {
-    const booking = sharedSchema('Booking', zodSchema(z.object({ calendarId: z.string(), startsAt: z.iso.datetime() })));
+    const booking = sharedSchema(
+      'Booking',
+      zodSchema(z.object({ calendarId: z.string(), startsAt: z.iso.datetime() })),
+    );
 
     const book = defineRoute(
       {
