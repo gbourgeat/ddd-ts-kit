@@ -55,6 +55,10 @@ without fighting them. Reference: `docs/ARCHITECTURE.md` section 6.
 - One thing, one level of abstraction. If a blank line separates "steps", each step is a
   function whose name replaces the comment you were about to write.
 - Three parameters at most. More means a missing value object or command.
+- A function of `domain/` that answers a plain object of data, `({ amount, currency })`, is a value
+  object written as a function: make it a class, `npx ddd-ts-kit generate value-object <context> <Name>`,
+  with its rules in the static factory and its operations as methods (`domain/value-object-class`).
+  A function that takes and returns value objects, a specification and a state machine stay functions.
 - No boolean parameter: `publish(draft)` and `schedule(draft, date)`, not `publish(draft, true)`.
 - Either changes state or returns an answer.
 - Guard clauses first, happy path unindented. No `else` after a `return` or `throw`.
