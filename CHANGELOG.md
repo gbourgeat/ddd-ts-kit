@@ -4,7 +4,7 @@ What each version changes for someone who uses the kit. The packages of `package
 together, under one version; the notes of each [GitHub release](https://github.com/gbourgeat/ddd-ts-kit/releases)
 list the pull requests behind it.
 
-## Unreleased
+## 0.14.0
 
 **A route answers in JSON, XML or CSV, as the request asks.** `Representations.standard()` of
 `@ddd-ts-kit/http`, given to the adapters (`representations` of the mount options) and to
