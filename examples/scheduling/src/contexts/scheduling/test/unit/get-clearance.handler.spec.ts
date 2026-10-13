@@ -70,6 +70,14 @@ describe('Get clearance', () => {
     }
   });
 
+  it('refuses the clearance of another calendar, whoever knows its identifier', async () => {
+    const { application, clearance } = await arrange();
+
+    await expect(
+      application.queryBus.execute(new GetClearanceQuery(holder, 'calendar-2', clearance)),
+    ).rejects.toMatchObject({ code: 'UNKNOWN_CLEARANCE' });
+  });
+
   it('is refused to an actor who does not hold the permission calendar.clear', async () => {
     const { application, clearance } = await arrange();
 

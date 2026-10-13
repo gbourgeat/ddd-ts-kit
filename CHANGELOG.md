@@ -16,7 +16,9 @@ is built in this version; the page lists what would be added.
 calendar: `POST /calendars/:calendarId/clearances` (202, the identifier of the clearance) enqueues
 `ClearCalendarBackgroundJob` in the unit of work of the command, which cancels the appointments
 of the period one by one as the person who asked, with a checkpoint and its progress after each,
-and `GET /calendars/:calendarId/clearances/:clearanceId` answers its status and `{ done, total }`;
+and `GET /calendars/:calendarId/clearances/:clearanceId` answers its status (an enum of
+`QueuedJobStatus`) and `{ done, total }`, for a clearance of that calendar only (the subject of
+its job);
 then the time off is accepted. Both routes are new, with the permission `scheduling:calendar.clear`
 and the error code `UNKNOWN_CLEARANCE` (404); no existing route of the contract changes. The
 end-to-end support of the example can start the worker (`startApplication({ jobs: true })`).

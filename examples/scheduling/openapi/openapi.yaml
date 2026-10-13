@@ -1538,6 +1538,12 @@ paths:
                     type: string
                   status:
                     type: string
+                    enum:
+                      - waiting
+                      - running
+                      - succeeded
+                      - cancelled
+                      - dead
                   attempts:
                     minimum: 0
                     type: integer

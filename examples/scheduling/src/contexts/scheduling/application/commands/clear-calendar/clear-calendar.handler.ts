@@ -9,7 +9,10 @@ import { TimeOff } from '@/contexts/scheduling/domain/value-objects/time-off.vo'
 
 /**
  * Names the appointments a time off over the period would cover, and hands their cancellation
- * to a worker in the unit of work of the command: a request that fails leaves no clearance.
+ * to a worker in the unit of work of the command: a request that fails leaves no clearance. The
+ * calendar is the subject of the job, which ties the clearance to it when it is read. The list
+ * is fixed now and the period is not reserved: an appointment booked before the time off is
+ * added is neither cancelled nor blocked, and the time off is then refused again.
  */
 @CommandHandler(ClearCalendarCommand)
 export class ClearCalendarHandler implements CommandHandler<ClearCalendarCommand> {
@@ -30,11 +33,11 @@ export class ClearCalendarHandler implements CommandHandler<ClearCalendarCommand
     const held = await this.appointmentRepository.heldOn(calendar.id, period.startsAt, period.endsAt);
     const covered = held.filter(({ slot }) => period.covers(slot.startsAt, slot.endsAt));
 
-    const clearance = await this.jobs.enqueue(ClearCalendarBackgroundJob, {
-      calendarId: calendar.id,
-      appointmentIds: covered.map(({ id }) => id),
-      reason: command.reason,
-    });
+    const clearance = await this.jobs.enqueue(
+      ClearCalendarBackgroundJob,
+      { calendarId: calendar.id, appointmentIds: covered.map(({ id }) => id), reason: command.reason },
+      { subject: calendar.id },
+    );
 
     return clearance.id;
   }

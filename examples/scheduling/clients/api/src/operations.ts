@@ -668,7 +668,7 @@ export interface GetClearanceInput {
 export type GetClearanceResult =
   | Success<200, {
     clearanceId: string;
-    status: string;
+    status: 'waiting' | 'running' | 'succeeded' | 'cancelled' | 'dead';
     attempts: number;
     done: number;
     total?: number;

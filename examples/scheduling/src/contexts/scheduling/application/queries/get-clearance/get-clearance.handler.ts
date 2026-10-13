@@ -6,8 +6,9 @@ import type { GetClearanceResult } from '@/contexts/scheduling/application/queri
 import { CalendarError } from '@/contexts/scheduling/domain/errors/calendar.error';
 
 /**
- * Read from the queue, which keeps the progress of the job and never its payload: the identifier
- * of a clearance, answered to whoever asked for it, is what ties it to its calendar.
+ * Read from the queue, which keeps the progress of the job and never its payload: the subject of
+ * the job ties the clearance to its calendar, so a clearance of another calendar, or of another
+ * tenant, is unknown here, whoever knows its identifier.
  */
 @QueryHandler(GetClearanceQuery)
 export class GetClearanceHandler implements QueryHandler<GetClearanceQuery> {
@@ -16,7 +17,7 @@ export class GetClearanceHandler implements QueryHandler<GetClearanceQuery> {
   async execute(query: GetClearanceQuery): Promise<GetClearanceResult> {
     const job = await this.jobs.find(query.clearanceId);
 
-    if (job?.name !== ClearCalendarBackgroundJob.jobName) {
+    if (job?.name !== ClearCalendarBackgroundJob.jobName || job.subject !== query.calendarId) {
       throw CalendarError.unknownClearance(query.clearanceId);
     }
 

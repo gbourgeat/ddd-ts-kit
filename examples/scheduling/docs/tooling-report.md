@@ -1285,11 +1285,27 @@ Frictions met on the way:
   was then refused `appointment.cancel`. `application.as(holder, ...)` in the spec, as the HTTP
   boundary does, fixed it; the spec `generate background-job` writes enqueues the same way.
 - The first status list of the answer of `GetClearance` wrote `'cancelled'` as a literal:
-  `language/declared-vocabulary` reported it as a value of `AppointmentStatus`. The answer reads
-  the status as text, documented in the contract.
+  `language/declared-vocabulary` reported it as a value of `AppointmentStatus`. Since the review
+  below, the kit publishes `QueuedJobStatus` as a vocabulary and the contract has an enum.
 
 Proven: 16 unit tests for the clearance (the command, the job interrupted half-way and resumed,
 an appointment cancelled meanwhile, the query, both controllers), and an end-to-end journey of
 two tests on the application with its worker running, on PostgreSQL in process: the time off is
 refused, the clearance cancels both appointments and says `{ done: 2, total: 2 }`, then the
 time off is accepted. The unit suite (1 340 tests) and its coverage floors pass.
+
+### 2026-10-13, after review: a clearance belongs to its calendar
+
+A review of the lot found the query of a clearance trusting the secrecy of its identifier, its
+status published as free text, and the queue blind to tenants. What changed here:
+
+| | |
+|---|---|
+| Ownership | `ClearCalendar` enqueues its job with the calendar as its `subject`; `GetClearance` answers `UNKNOWN_CLEARANCE` (404) for a job whose subject is another calendar, and the queue hides the jobs of another tenant from `find` |
+| Contract | `GET /calendars/{calendarId}/clearances/{clearanceId}`: `status` is now an enum (`waiting`, `running`, `succeeded`, `cancelled`, `dead`) through `@IsIn(Object.values(QueuedJobStatus))`; the typed client narrows it the same way. No route was added or removed |
+| Proven | a unit case (the clearance of another calendar is unknown) and an end-to-end case (the practitioner of another practice gets 404 for the clearance of this one) |
+| Known gap | the clearance fixes its list when it is asked and does not reserve the period: an appointment booked before the time off is added is neither cancelled nor blocked, and the time off is refused again; a retried request starts a second clearance. Written in the handler, left as is |
+
+`generate background-job` now carries the inputs of a command in the payload (a `Date` as its
+ISO text): `--command CancelAppointment` would generate today, but the clearance still sends one
+command per appointment of its payload, with a checkpoint between two, which no template guesses.

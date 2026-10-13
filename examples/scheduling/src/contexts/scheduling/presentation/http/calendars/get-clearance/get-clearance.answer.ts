@@ -1,11 +1,12 @@
-import { IsInt, IsOptional, IsString, Min } from 'class-validator';
+import { QueuedJobStatus } from '@ddd-ts-kit/kernel';
+import { IsIn, IsInt, IsOptional, IsString, Min } from 'class-validator';
 
 export class GetClearanceAnswer {
   @IsString()
   clearanceId = '';
 
-  /** The status of its job: `waiting`, `running`, `succeeded`, `cancelled` or `dead` (every attempt failed). */
-  @IsString()
+  /** The status of its job; `dead` when every attempt failed. */
+  @IsIn(Object.values(QueuedJobStatus))
   status = '';
 
   @IsInt()

@@ -93,7 +93,17 @@ describe('A practitioner goes away: a worker clears the calendar, then the time 
       status: 404,
       code: 'UNKNOWN_CLEARANCE',
     });
+
+    const elsewhere = await openStaffedPractice(application, riverside);
+    const hedy = await application.as({ id: elsewhere.practitionerId });
+    const clearanceId = expectStatus(asked, 202).body.id;
+
+    expectProblem(await hedy.get('/calendars/' + elsewhere.calendarId + '/clearances/' + clearanceId), {
+      status: 404,
+      code: 'UNKNOWN_CLEARANCE',
+    });
   });
 });
 
 const hillside = { name: 'Hillside', managerId: 'ada', practitionerId: 'grace', assistantId: 'linus' };
+const riverside = { name: 'Riverside', managerId: 'barbara', practitionerId: 'hedy', assistantId: 'alan' };
