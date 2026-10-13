@@ -7,6 +7,7 @@ import type { ControllerPlan } from './controller-plan.js';
 import { controllerVars } from './controller-vars.js';
 import { dtoClasses } from './dto-classes.js';
 import { groupVars } from './group-vars.js';
+import { sharesSchemas } from './shares-schemas.js';
 
 /** Writes a controller in its folder, with its schemas, its mapper and serializer when asked, its spec and its group when it is new. */
 export function writeController(scope: Scope, plan: ControllerPlan): void {
@@ -53,7 +54,7 @@ function groupOutput(file: string): Output {
 function controllerOutputs(scope: Scope, plan: ControllerPlan): Output[] {
   const { name, endpoint, useCase, folder, withMapper, withSerializer } = plan;
   const { validation } = scope.config.stack;
-  const dtos = validation === 'class-validator' ? dtoClasses(endpoint, useCase) : [];
+  const dtos = validation === 'class-validator' ? dtoClasses(endpoint, useCase, sharesSchemas(scope.config)) : [];
   const beside = (role: string): string => `${folder}/${name.kebab}.${role}.ts`;
 
   return [

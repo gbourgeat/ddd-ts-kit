@@ -51,6 +51,7 @@ import { presentationGuardAtTheEdge } from './presentation-guard-at-the-edge.js'
 import { purityNoAmbientRandomness, purityNoEnvironment, purityNoSystemClock } from './purity.js';
 import { schedulingJobName } from './scheduling-job-name.js';
 import { schedulingJobTriggersUseCase } from './scheduling-job-triggers-use-case.js';
+import { schemaPresentationOnly } from './schema-presentation-only.js';
 import { standardNoParallelInterface } from './standard-no-parallel-interface.js';
 import { testNoMocks } from './test-no-mocks.js';
 import { tracingPlatformOnly } from './tracing-platform-only.js';
@@ -107,6 +108,7 @@ const ALL = [
   portsValueImport,
   schedulingJobTriggersUseCase,
   schedulingJobName,
+  schemaPresentationOnly,
   importsAliasOnly,
   importsExtension,
   presentationControllerShape,

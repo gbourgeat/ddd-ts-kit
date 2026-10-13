@@ -26,8 +26,15 @@ describe('a route of a new project', () => {
     );
 
     expect(controller).toContain(
-      'async handle(request: HttpRequest<{ body: Infer<typeof body> }>): Promise<Infer<typeof accepted>> {',
+      'async handle(request: HttpRequest<{ body: Infer<typeof body> }>): Promise<Accepted> {',
     );
+
+    expect(controller).toContain(
+      "import { acceptedSchema, Controller, type Accepted, type HttpRequest } from '@ddd-ts-kit/http';",
+    );
+
+    expect(controller).toContain("description: 'Done; the body carries the identifier.', body: acceptedSchema },");
+    expect(controller).not.toContain('const accepted');
 
     expect(controller).toContain('new IssueInvoiceCommand(request.actor)');
     expect(controller).not.toContain('security');
@@ -64,7 +71,7 @@ describe('a route of a new project', () => {
         useCase: 'IssueInvoice',
         permission: 'invoice.issue',
         request: [{ part: 'body', schema: 'body' }],
-        responses: [{ status: 201, schema: 'accepted' }],
+        responses: [{ status: 201, schema: 'acceptedSchema' }],
         errors: ['UNAUTHORIZED', 'FORBIDDEN'],
       }),
     );
@@ -263,5 +270,37 @@ describe('a controller of an explicit context', () => {
     );
 
     expect(read(listed, 'src/platform/compose-application.ts')).not.toContain('DeclaredEdges');
+  });
+});
+
+describe('a route of a project whose routes declare their own schemas ("stack.schemas": "per-route")', () => {
+  it('answers an identifier with a schema of its own, as before shared schemas', () => {
+    const root = initProject('--validation', 'class-validator', '--schemas', 'per-route', '--context', 'billing:core');
+    const issue = `${HTTP}/invoices/issue-invoice/issue-invoice`;
+
+    cli(root, 'generate', 'aggregate', 'billing', 'Invoice', '--allow-name');
+
+    cli(
+      root,
+      'generate',
+      'command',
+      'billing',
+      'IssueInvoice',
+      '--aggregate',
+      'Invoice',
+      '--permission',
+      'invoice.issue',
+      '--allow-name',
+    );
+
+    cli(root, 'generate', 'route', 'billing', 'IssueInvoice', '--method', 'POST', '--path', '/invoices');
+
+    const controller = read(root, `${issue}.controller.ts`);
+
+    expect(jsonAt(readJson(root, 'ddd-ts-kit.config.json'), 'stack', 'schemas')).toBe('per-route');
+    expect(exists(root, `${issue}.accepted.ts`)).toBe(true);
+    expect(controller).toContain('const accepted = classSchema(IssueInvoiceAccepted);');
+    expect(controller).toContain('Promise<IssueInvoiceAccepted>');
+    expect(controller).not.toContain('acceptedSchema');
   });
 });

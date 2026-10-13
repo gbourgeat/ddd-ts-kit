@@ -25,6 +25,7 @@ import { PERSISTENCE_FIXTURES } from './persistence-fixtures.js';
 import { PORTS_FIXTURES } from './ports-fixtures.js';
 import { PURITY_FIXTURES } from './purity-fixtures.js';
 import { SCHEDULING_FIXTURES } from './scheduling-fixtures.js';
+import { SCHEMA_FIXTURES } from './schema-fixtures.js';
 import { STANDARD_FIXTURES } from './standard-fixtures.js';
 import { TEST_FIXTURES } from './test-fixtures.js';
 import { TRACING_FIXTURES } from './tracing-fixtures.js';
@@ -50,6 +51,7 @@ export const FIXTURES: readonly Fixture[] = [
   ...DECLARATIONS_FIXTURES,
   ...DOMAIN_EVENTS_FIXTURES,
   ...ERRORS_FIXTURES,
+  ...SCHEMA_FIXTURES,
   ...EVENTS_FIXTURES,
   ...EXTENSION_FIXTURES,
   ...EXTRACTABLE_FIXTURES,

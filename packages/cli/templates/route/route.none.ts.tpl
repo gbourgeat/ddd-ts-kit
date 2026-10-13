@@ -1,7 +1,7 @@
 {{#if route.protected}}
 import { actorOf } from '@ddd-ts-kit/auth';
 {{/if}}
-import { defineRoute, type Route } from '@ddd-ts-kit/http';
+import { {{#if route.sharedAccepted}}acceptedSchema, {{/if}}defineRoute, type Route } from '@ddd-ts-kit/http';
 {{#if route.usesSchema}}
 import { err, ok, type {{route.busType}} } from '@ddd-ts-kit/kernel';
 import { customSchema } from '@ddd-ts-kit/validation';
@@ -26,7 +26,7 @@ const anyObject = customSchema<Record<string, unknown>>(
 const body = anyObject;
 
 {{/if}}
-{{#if route.returnsId}}
+{{#if route.ownAccepted}}
 const accepted = customSchema<{ readonly id: string }>(
   (input) =>
     typeof input === 'object' && input !== null && 'id' in input && typeof input.id === 'string'
@@ -53,7 +53,7 @@ export function {{name.camel}}Route({{route.bus}}: {{route.busType}}): Route {
       request: { body },
       {{/if}}
       {{#if route.returnsId}}
-      responses: { {{route.status}}: { description: 'Done; the body carries the identifier.', body: accepted } },
+      responses: { {{route.status}}: { description: 'Done; the body carries the identifier.', body: {{route.acceptedBody}} } },
       {{/if}}
       {{#if route.returnsNothing}}
       responses: { {{route.status}}: { description: 'Done.' } },

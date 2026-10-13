@@ -64,6 +64,7 @@ describe('shipped templates', () => {
         'architecture',
         'gateway',
         'policy',
+        'schema',
         'service',
         'aggregate',
         'builder',

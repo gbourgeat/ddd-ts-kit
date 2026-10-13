@@ -1,6 +1,7 @@
 import { IsISO8601, IsIn, IsOptional, IsString, Matches } from 'class-validator';
 
-export class SearchAppointmentsLine {
+/** One appointment as every search of the agenda answers it: declared once, documented once as AgendaLine. */
+export class AgendaLine {
   @IsString()
   id = '';
 

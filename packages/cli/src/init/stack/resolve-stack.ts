@@ -18,6 +18,7 @@ import {
   LOGGERS,
   REFUSAL_FORMS,
   ROUTE_FORMS,
+  SCHEMA_FORMS,
   PACKAGE_MANAGERS,
   parseConfig,
   readConfig,
@@ -141,7 +142,7 @@ function hasWorker(root: string, config: Config): boolean {
 function resolveOperations(
   options: StackOptions,
   orm: string,
-): Record<'cache' | 'audit' | 'errors' | 'logger' | 'refusals' | 'routes', string> {
+): Record<'cache' | 'audit' | 'errors' | 'logger' | 'refusals' | 'routes' | 'schemas', string> {
   return {
     cache: choose(CACHE_STACKS, options.cache, 'cache') ?? 'none',
     audit: choose(AUDIT_MODES, options.audit, 'audit') ?? (orm === 'none' ? 'off' : 'on'),
@@ -151,6 +152,8 @@ function resolveOperations(
     refusals: choose(REFUSAL_FORMS, options.refusals, 'refusals') ?? 'factories',
     // A new project writes each route as a controller class; a recorded one keeps the form it says, or the functions of 0.3.
     routes: choose(ROUTE_FORMS, options.routes, 'routes') ?? 'controllers',
+    // A new project declares a shape once and shares it; a recorded one keeps the form it says, or one schema per route as 0.5.
+    schemas: choose(SCHEMA_FORMS, options.schemas, 'schemas') ?? 'shared',
   };
 }
 

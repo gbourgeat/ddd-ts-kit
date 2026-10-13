@@ -3,6 +3,7 @@ import { BEHAVIOUR_INJECTIONS } from './injections/behaviour-injections.js';
 import { BOUNDARY_INJECTIONS } from './injections/boundary-injections.js';
 import { CLEAN_INJECTIONS } from './injections/clean-injections.js';
 import { ERROR_INJECTIONS } from './injections/error-injections.js';
+import { SCHEMA_INJECTIONS } from './injections/schema-injections.js';
 import { STRUCTURE_INJECTIONS } from './injections/structure-injections.js';
 import { WIRING_INJECTIONS } from './injections/wiring-injections.js';
 
@@ -13,5 +14,6 @@ export const INJECTIONS: readonly Injection[] = [
   ...CLEAN_INJECTIONS,
   ...BEHAVIOUR_INJECTIONS,
   ...ERROR_INJECTIONS,
+  ...SCHEMA_INJECTIONS,
   ...WIRING_INJECTIONS,
 ];

@@ -73,4 +73,9 @@ export const SHARED_WRITES: Readonly<Record<string, SharedWrite>> = {
     ],
   },
   adr: { files: ['docs/adr/', 'ddd-ts-kit.config.json (with --deviation)'] },
+  schema: {
+    files: ['<sharedKernelDir>/presentation/<name>.schema.ts'],
+    when: 'the first argument is shared-kernel: a schema several contexts answer with',
+    worker: 'in its own context: generate schema <context> <Name>',
+  },
 };

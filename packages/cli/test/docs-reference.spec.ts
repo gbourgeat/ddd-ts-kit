@@ -37,7 +37,7 @@ describe('docs: the reference of a CONTEXT.md', () => {
     );
 
     expect(doc).toContain(
-      '| POST | `/invoices` | `issueInvoice` | `IssueInvoice` | `invoice.issue` | body | 201: `accepted` | `UNAUTHORIZED`, `FORBIDDEN` |',
+      '| POST | `/invoices` | `issueInvoice` | `IssueInvoice` | `invoice.issue` | body | 201: `acceptedSchema` | `UNAUTHORIZED`, `FORBIDDEN` |',
     );
 
     expect(doc).toContain(

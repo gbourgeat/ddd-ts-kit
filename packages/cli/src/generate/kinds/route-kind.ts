@@ -9,6 +9,7 @@ import type { Scope } from '../scope.js';
 import { vars } from '../vars.js';
 import { wire } from '../wire.js';
 import { dtoClasses } from './route/dto-classes.js';
+import { sharesSchemas } from './route/shares-schemas.js';
 import { findUseCase } from './route/find-use-case.js';
 import { parseEndpoint } from './route/parse-endpoint.js';
 import { planController } from './route/plan-controller.js';
@@ -65,7 +66,7 @@ function assertHttpStack(scope: Scope): void {
 
 function routeOutputs(scope: Scope, { name, endpoint, useCase }: RouteParts): Output[] {
   const { validation } = scope.config.stack;
-  const dtos = validation === 'class-validator' ? dtoClasses(endpoint, useCase) : [];
+  const dtos = validation === 'class-validator' ? dtoClasses(endpoint, useCase, sharesSchemas(scope.config)) : [];
 
   return [
     [`route/route.${useCase.isSearch ? 'search' : validation}.ts.tpl`, `presentation/http/${name.kebab}.route.ts`],

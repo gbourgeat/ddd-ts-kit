@@ -38,7 +38,8 @@ deviation.
     "assembly": "barrel",
     "dependencies": "signature",
     "refusals": "factories",
-    "routes": "controllers"
+    "routes": "controllers",
+    "schemas": "shared"
   },
   "contexts": {
     "billing": { "classification": "core", "upstreams": [] },
@@ -136,8 +137,9 @@ outside the list stops every command with the list of accepted values.
 | `stack.dependencies` | `signature`, `listed`: where a declared class states what it depends on. `signature`: in its constructor and nowhere else; `ddd-ts-kit docs` reads the signatures into the generated file of each context, and a list left in a decorator is reported (`declarations/constructor-injection`, which ESLint fixes). `listed`: in the last argument of its decorator, as 0.1 wrote it. Both forms run in either: a class that lists is given its list, a class that does not is given what its constructor takes. `init` accepts the flag in the declared style only | `signature` |
 | `stack.refusals` | `factories`, `classes`: how a domain error is written. `factories`: one error class per concept of the model, each refusal built by a static factory named in the words of the business (`AppointmentError.slotTaken(..)`), held by the `errors/*` rules, and `generate error <context> <Concept> <refusal>` adds one. `classes`: one class per error, built with `new`, as 0.1 and 0.2 wrote them; `generate domain-error` writes one, and no `errors/*` rule judges. Both forms run in either: `ConceptError` and `DomainError` are one family | `factories` |
 | `stack.routes` | `controllers`, `functions`: how a route is written. `controllers`: one class per route carrying `@Controller` of `@ddd-ts-kit/http`, in a folder of its own under `presentation/http/<resource>/<use-case>/`, behind the guards of its `@RouteGroup`; `generate route` writes it, with `--mapper` and `--serializer` when asked. `functions`: one `defineRoute` function per route, listed in `<context>.routes.ts`, as 0.1 to 0.3 wrote them. Both forms run in either, and in one project during a migration: `generate controller` writes a controller whatever the key says, and `ddd-ts-kit controllers` turns the function routes of a context into controllers | `controllers` |
+| `stack.schemas` | `shared`, `per-route`: how the schemas of the HTTP contract are written. `shared`: a shape several routes use is declared once, `presentation/http/shared/<name>.schema.ts` of its context or `presentation/<name>.schema.ts` of the shared kernel (`generate schema`), shared (a zod `.meta({ id })`, `classSchema(Dto, { shared: true })`, `sharedSchema`), documented once in `components.schemas` and referenced by `$ref`; a command answers its identifier with `acceptedSchema` of `@ddd-ts-kit/http`; `schema/no-duplicate-shape` and `schema/presentation-only` judge. `per-route`: each route declares its own schemas, an identifier answer included (`<use-case>.accepted.ts` with class-validator), as 0.1 to 0.5 wrote them, and no `schema/*` rule judges | `shared` |
 
-A config file that omits a `stack` key is read with the same defaults, with four exceptions:
+A config file that omits a `stack` key is read with the same defaults, with five exceptions:
 without `stack.style` the project is read as `explicit`, whatever `stack.di` says, because
 such a file was written before the declared style existed; and without `stack.dependencies`
 a declared project is read as `listed`, because such a file was written when every decorator
@@ -173,6 +175,15 @@ What the command leaves to you is printed: run the formatter and `ddd-ts-kit doc
 helpers a controller kept to a mapper or a serializer, give the groups their guards, and, in a
 project initialised before 0.4, add the line that mounts the declared controllers to
 `compose-application.ts`.
+
+The fifth: without `stack.schemas` the project is read as `per-route`, because such a file was
+written when each route declared its own schemas. Nothing is reported there, and `generate
+route` keeps writing an identifier answer per route. To move it: set `"schemas": "shared"`, run
+`npx ddd-ts-kit check --rule schema/no-duplicate-shape`, and for each shape it reports keep one
+declaration (`generate schema` writes its file), share it and use it from every route; replace
+each `{ id }` answer by `acceptedSchema` of `@ddd-ts-kit/http` and delete its class; then
+`npm run docs:generate`. The wire format does not change; the contract then refers to one
+component per shape instead of a copy per route.
 
 ## Pipeline
 

@@ -57,7 +57,9 @@ Versions, licences and downloads checked on 2026-10-10 against the npm registry 
 | Weekly downloads | about 326 million | about 12 million | valibot about 22 million, arktype about 2 million |
 | Decorators | none | legacy mode required for the whole program | none |
 | Type from schema | yes, inferred | the class is the type, written by hand | yes, inferred |
-| JSON Schema for the contract | built in (`z.toJSONSchema`, draft 2020-12) | through `class-validator-jsonschema`, a separate package | not through the kit's adapter: you supply it (see limits) |
+| JSON Schema for the contract | built in (`z.toJSONSchema`, draft 2020-12) | through `class-validator-jsonschema`, a separate package | the library's own when it implements Standard JSON Schema (zod, arktype, valibot through `@valibot/to-json-schema`), or the one you supply |
+| Shared once in the contract | `.meta({ id })`, kept when nested | `classSchema(Dto, { shared: true })`; a nested class always is | the library's ids, or `sharedSchema(name, schema)` |
+| Reuse in part | `.pick`, `.omit`, `.partial`, `.extend` | `pickClass`, `omitClass`, `partialClass` of the kit, `extends` | the library's own (`v.pick`, `v.omit`, ...) |
 | Issue codes | the library's (`too_small`, ...) | the constraint name | always `invalid` |
 | Asynchronous schemas | not at the boundary | not at the boundary | `parse` throws |
 
@@ -87,7 +89,15 @@ From [`packages/validation/README.md`](../../packages/validation/README.md):
   issue; nested errors are flattened (`items.0.quantity`), one issue per failed constraint;
   nested classes land under `$defs`. Needs `class-transformer`, `class-validator-jsonschema`
   and `reflect-metadata`, and `experimentalDecorators` in the project.
-- **Standard Schema.** `standardSchema(schema, jsonSchema?)` accepts any implementing library.
+- **Standard Schema.** `standardSchema(schema, jsonSchema?, { io? })` accepts any implementing
+  library; without a JSON Schema it documents the one the library converts itself through
+  Standard JSON Schema, when it implements it.
+- **Shared schemas.** A shape declared once is documented once: the OpenAPI generator writes it in
+  `components.schemas` and every route refers to it, whole or nested. `sharedSchema(name,
+  schema)` shares any `Schema`; the platform shares `acceptedSchema` (`Accepted`), the page of a
+  shared item (`<Item>Page`) and the problem document. Under `"stack.schemas": "shared"` (a new
+  project), `generate schema` writes one and `schema/no-duplicate-shape` reports a shape
+  declared twice ([configuration](../CONFIG.md)).
 - `customSchema(parse, jsonSchema?)` builds a schema from a plain function, for the rare input
   no library describes.
 - The root entry imports no third-party package; each adapter is a subpath with its library as
@@ -99,12 +109,18 @@ From [`packages/validation/README.md`](../../packages/validation/README.md):
 
 ## Limits and when not to use it
 
-- **Standard Schema adapter and the contract.** The package README says the specification has
-  no JSON Schema export, so the second argument is yours to give and `toJsonSchema()` answers
-  `{}` without it. Checked today: standardschema.dev now also publishes a companion interface,
-  Standard JSON Schema (V1). The kit's adapter does not read it (its source relies on
-  `~standard.validate` only): with valibot or arktype, either pass the JSON Schema by hand or
-  accept an empty contract for that input.
+- **Standard Schema adapter and the contract.** Standard Schema itself has no JSON Schema
+  export; its companion specification, Standard JSON Schema (V1), has one, and the adapter reads
+  it when the library implements it (zod 4 does, checked with 4.6.5; valibot only through
+  `toStandardJsonSchema` of `@valibot/to-json-schema`). For any other library, pass the JSON
+  Schema by hand or accept an empty contract for that input.
+- **class-validator in part.** `pickClass`, `omitClass` and `partialClass` copy the metadata of
+  class-validator and class-transformer onto a new class meant to be extended. A derived class
+  nested in another through `@Type` declares a property of its own, because
+  class-validator-jsonschema documents a class from its own decorators only.
+- **Two shapes under one name.** zod documents the input and the output side of a schema with
+  defaults differently: a shared schema used as a body and as a response gets two components
+  (`Slot`, `Slot_2`). Give the response an id of its own.
 - **Standard Schema issue codes.** The specification carries none: every issue has the code
   `invalid`.
 - **No asynchronous validation at the boundary**: a schema that validates asynchronously makes
@@ -147,8 +163,9 @@ one API confuse its clients.
 - valibot: https://valibot.dev ; arktype: https://arktype.io
 - npm registry: versions, licences and weekly downloads read on 2026-10-10.
 - JSON Schema draft 2020-12: https://json-schema.org/draft/2020-12
-- Not verified: whether the kit's Standard Schema adapter can use Standard JSON Schema (the
-  README says it does not exist; the specification site says it does).
+- Standard JSON Schema read by the adapter: verified with zod 4.6.5, whose schemas implement
+  `~standard.jsonSchema` (`input` and `output`, target `draft-2020-12`); not verified with
+  arktype or with `@valibot/to-json-schema`.
 
 ## See also
 

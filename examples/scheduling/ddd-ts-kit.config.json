@@ -26,7 +26,8 @@
     "assembly": "barrel",
     "dependencies": "signature",
     "refusals": "factories",
-    "routes": "controllers"
+    "routes": "controllers",
+    "schemas": "shared"
   },
   "contexts": {
     "identity": {

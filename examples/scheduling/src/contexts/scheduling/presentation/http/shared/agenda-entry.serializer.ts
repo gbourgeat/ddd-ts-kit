@@ -1,11 +1,11 @@
 import { Serializer } from '@ddd-ts-kit/http';
 import type { AgendaEntry } from '@/contexts/scheduling/application/ports/agenda.port';
-import type { SearchAppointmentsLine } from '@/contexts/scheduling/presentation/http/appointments/search-appointments/search-appointments.line';
+import type { AgendaLine } from '@/contexts/scheduling/presentation/http/shared/agenda-line.schema';
 
 /** One appointment of the agenda as every search answers it: the public fields, instants as ISO 8601 text. */
 @Serializer()
-export class AgendaEntrySerializer implements Serializer<AgendaEntry, SearchAppointmentsLine> {
-  serialize(item: AgendaEntry): SearchAppointmentsLine {
+export class AgendaEntrySerializer implements Serializer<AgendaEntry, AgendaLine> {
+  serialize(item: AgendaEntry): AgendaLine {
     return {
       id: item.id,
       calendarId: item.calendarId,

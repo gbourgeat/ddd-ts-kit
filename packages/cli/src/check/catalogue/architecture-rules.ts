@@ -55,6 +55,8 @@ import { purityNoEnvironment } from '../rules/purity-no-environment.js';
 import { purityNoSystemClock } from '../rules/purity-no-system-clock.js';
 import { schedulingJobName } from '../rules/scheduling-job-name.js';
 import { schedulingJobTriggersUseCase } from '../rules/scheduling-job-triggers-use-case.js';
+import { schemaNoDuplicateShape } from '../rules/schema-no-duplicate-shape.js';
+import { schemaPresentationOnly } from '../rules/schema-presentation-only.js';
 import { standardNoParallelInterface } from '../rules/standard-no-parallel-interface.js';
 import { testBuilderRequired } from '../rules/test-builder-required.js';
 import { testCoverageGoverned } from '../rules/test-coverage-governed.js';
@@ -79,6 +81,8 @@ export const ARCHITECTURE_RULES: readonly Rule[] = [
   namingSuffix,
   namingOneConceptPerFile,
   namingSearchNotList,
+  schemaPresentationOnly,
+  schemaNoDuplicateShape,
   testSpecRequired,
   eventsNameFormat,
   eventsDefinedInPublishedLanguage,

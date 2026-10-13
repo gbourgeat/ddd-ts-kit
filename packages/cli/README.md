@@ -50,7 +50,7 @@ ddd-ts-kit init [--http express|fastify|nest|none]
                 [--errors none|sentry] [--logger stdout|pino|winston]
                 [--style declared|explicit] [--assembly barrel|discovery]
                 [--dependencies signature|listed] [--refusals factories|classes]
-                [--routes controllers|functions]
+                [--routes controllers|functions] [--schemas shared|per-route]
                 [--package-manager npm|pnpm]
                 [--allow-no-outbox "<reason>"] [--import-alias '$<name>/']
                 [--import-extension none|js]
@@ -163,6 +163,13 @@ file. `--routes functions`, or a config without the key, keeps one `defineRoute`
 route, listed in `<context>.routes.ts`, as 0.1 to 0.3 wrote them; `controllers` moves a
 project from one to the other, a context at a time.
 
+**A shape is declared once.** `init` writes `"stack.schemas": "shared"`: a command route answers
+its identifier with `acceptedSchema` of `@ddd-ts-kit/http`, one `Accepted` component in the
+contract, and `generate schema <context> <Name>` (or `schema shared-kernel <Name>`) writes a
+shape several routes use, which the contract documents once and every route refers to. The
+`schema/*` rules hold that form. `--schemas per-route`, or a config without the key, keeps one
+schema per route, an identifier answer included, as 0.1 to 0.5 wrote them.
+
 **Domain events leave with the save.** A generated command handler builds or loads its aggregate,
 calls one intention method, `await repository.save(aggregate)` and returns: no `pullEvents()`, and
 no `DomainEventDispatcher` in a handler or in a repository adapter, which only persists. The events
@@ -268,6 +275,7 @@ ddd-ts-kit generate --help --json
 | `controller` | the same arguments as `route` | the controller class, whatever `stack.routes` says: for a project of function routes that writes its next route as a class |
 | `route-group` (`group`) | `<context> <Name> [--prefix <path>] [--group <ParentName>] [--public \| --role <role>]` | `presentation/http/<name>.routes.ts`: an empty class carrying `@RouteGroup`, behind `Authenticated` unless `--public` or `--role` says otherwise; with `--group` it refines that group and inherits from it |
 | `guard` | `<context> <Name>` | `presentation/http/guards/<name>.guard.ts`: a declared guard class to fill, and its spec |
+| `schema` | `<context\|shared-kernel> <Name>` | `presentation/http/shared/<name>.schema.ts` of the context, or `presentation/<name>.schema.ts` of the shared kernel: one shape of the contract declared once (a zod schema with `.meta({ id })`, a class-validator class, or a schema wrapped by `sharedSchema`), to fill; the routes use it whole, nested or in part |
 | `integration-event` | `<context> <Aggregate> <Fact> [--version n]` | `defineIntegrationEvent` declaration in the published language (its payload in `<event>.v<n>.payload.ts` with class-validator or a schema of your own), index export, the publisher `application/integration/publishers/<event>.publisher.ts`, spec, registration, a line of `platform/audit/audited-events.ts` |
 | `integration-handler` (`consumer`) | `<context> <upstreamContext> <eventType>` | `application/integration/handlers/<name>.integration-handler.ts`, a class `<Name>IntegrationHandler` depending on `CommandBus`, its spec, its idempotent subscription under the consumer name `<context>.<name>`; refused unless the upstream is declared |
 | `event-handler` | `<context> <Aggregate> <Fact> [--phase after-commit]` | reaction to a domain event of the context, spec, subscription; before the commit of the unit of work by default, after it with `--phase after-commit` (an effect no transaction covers, at most once), and the spec runs the reaction in that phase |
@@ -740,6 +748,8 @@ saying what to do instead. Exit code 1 when there is at least one error.
 | `scheduling/job-triggers-use-case` | in `application/scheduling/*.job.ts`: an exported class that does not implement `ScheduledJob`; a `run` that sends no command (no `.execute(` call); a repository in the dependency list or the constructor; an import from `domain/aggregates/`, `domain/entities/`, `domain/services/` or `infrastructure/`. A `builder.job(..)` registration of a class that lives elsewhere |
 | `scheduling/job-name` | the first argument of `@Scheduled(..)` or `.job(..)` that is not a string literal `<context>.<job-name>` in lower-case kebab-case with the context of its file; a `systemActor(..)` of a job file passing another name; one job name used twice in the project |
 | `errors/code-unique` | under `"stack.refusals": "factories"`, in the `domain/errors/` of a context: a code set a second time, by a factory (`refusal('CODE', ..)`) or by a class (`readonly code = 'CODE'`), with the file and line of the first. The same code in two contexts is not reported |
+| `schema/presentation-only` | under `"stack.schemas": "shared"`: in the shared kernel outside `presentation/`, an import of a validation library; in `domain/`, `application/`, `infrastructure/`, `published-language/` and the shared kernel outside `presentation/`, an import of a file of `presentation/` of the shared kernel |
+| `schema/no-duplicate-shape` | under `"stack.schemas": "shared"`, in the presentation layers and `presentation/` of the shared kernel: a DTO class or an object schema (`z.object`, `v.object`, `Type.Object`) declaring the shape of another one, with the place of the first; request parameters are not judged |
 | `errors/known-code` | under `"stack.refusals": "factories"`, in a `*.route.ts`: a code of the `errors` list that no refusal of the context of the route sets, that no class outside the contexts sets, and that is not a code of the kit |
 
 Five more ids belong to `@ddd-ts-kit/eslint-plugin`, which reads the syntax tree where this

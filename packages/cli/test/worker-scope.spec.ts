@@ -106,6 +106,7 @@ describe('worker-scope', () => {
       'controller',
       'route-group',
       'guard',
+      'schema (in its own context: generate schema <context> <Name>)',
       'integration-handler',
       'event-handler',
       'projection',

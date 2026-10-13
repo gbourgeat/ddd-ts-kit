@@ -3,6 +3,7 @@ import { toName, type Name } from '../../../naming/index.js';
 import type { RenderContext } from '../../../templating/index.js';
 import type { Scope } from '../../scope.js';
 import { dtoClasses } from './dto-classes.js';
+import { sharesSchemas } from './shares-schemas.js';
 import type { Endpoint } from './endpoint.js';
 import type { UseCase } from './use-case.js';
 
@@ -16,6 +17,7 @@ export interface RouteParts {
 export function routeVars(scope: Scope, { name, endpoint, useCase }: RouteParts): RenderContext {
   const hasBody = ['POST', 'PUT', 'PATCH'].includes(endpoint.method);
   const { config, context } = scope;
+  const shared = sharesSchemas(config);
   const inContext = (file: string): string => specifierOf(config, `${config.contextsDir}/${context.kebab}/${file}`);
 
   return {
@@ -26,11 +28,12 @@ export function routeVars(scope: Scope, { name, endpoint, useCase }: RouteParts)
     isPlainQuery: useCase.isQuery && !useCase.isSearch,
     isSearch: useCase.isSearch,
     returnsId: useCase.returnsId,
+    ...acceptedVars(useCase, shared),
     returnsNothing: !useCase.isQuery && !useCase.returnsId,
     hasBody,
     usesAnyObject: hasBody || useCase.isQuery,
-    usesSchema: hasBody || useCase.isQuery || useCase.returnsId,
-    dtoImports: dtoClasses(endpoint, useCase)
+    usesSchema: hasBody || useCase.isQuery || (useCase.returnsId && !shared),
+    dtoImports: dtoClasses(endpoint, useCase, shared)
       .map(
         (role) =>
           `import { ${name.pascal}${toName(role).pascal} } from '${inContext(`presentation/http/${name.kebab}-${role}.dto.ts`)}';`,
@@ -40,6 +43,15 @@ export function routeVars(scope: Scope, { name, endpoint, useCase }: RouteParts)
     ...busVars(useCase, inContext(`${useCase.messageFile}.ts`)),
     ...securityVars(scope, useCase),
     ...parameterVars(endpoint.parameters),
+  };
+}
+
+/** An identifier answer: a schema of the route, or the `Accepted` schema of the platform when schemas are shared. */
+function acceptedVars(useCase: UseCase, shared: boolean): RenderContext {
+  return {
+    ownAccepted: useCase.returnsId && !shared,
+    sharedAccepted: useCase.returnsId && shared,
+    acceptedBody: shared ? 'acceptedSchema' : 'accepted',
   };
 }
 

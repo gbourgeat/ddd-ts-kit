@@ -26,7 +26,11 @@ documentation page offers a selector between them. `npx ddd-ts-kit docs` writes 
    group and its guards (`guards: [Public]` for an open route). For a function route, the
    `defineRoute` spec: `operationId`, one entry per response status, and `security` (the
    scheme of the project, or `false` for a public route).
-2. Schemas describe shape and format only. Business rules stay in the domain.
+2. Schemas describe shape and format only. Business rules stay in the domain. A shape two
+   routes use is declared once and shared (`npx ddd-ts-kit generate schema <ctx> <Name>`):
+   the contract holds it once in `components.schemas` and each route points at it with `$ref`;
+   a route derives the part it needs (pick, omit, partial, extend) instead of copying it. Under
+   `"stack.schemas": "shared"`, `schema/no-duplicate-shape` reports a shape declared twice.
 3. Response schemas are presentation types. Never return an aggregate or an application
    object as is: map it, so the contract does not move when the model does.
 4. A field with a fixed set of values is an enum in the schema, so clients get a type.

@@ -1,15 +1,13 @@
-import { Controller, type HttpRequest } from '@ddd-ts-kit/http';
+import { acceptedSchema, Controller, type Accepted, type HttpRequest } from '@ddd-ts-kit/http';
 import type { CommandBus } from '@ddd-ts-kit/kernel';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
 import { GrantDelegationCommand } from '@/contexts/identity/application/commands/grant-delegation/grant-delegation.command';
 import { GrantDelegationParams } from '@/contexts/identity/presentation/http/practices/grant-delegation/grant-delegation.params';
 import { GrantDelegationBody } from '@/contexts/identity/presentation/http/practices/grant-delegation/grant-delegation.body';
-import { GrantDelegationAccepted } from '@/contexts/identity/presentation/http/practices/grant-delegation/grant-delegation.accepted';
 import { PracticesRoutes } from '@/contexts/identity/presentation/http/practices.routes';
 
 const params = classSchema(GrantDelegationParams);
 const body = classSchema(GrantDelegationBody);
-const accepted = classSchema(GrantDelegationAccepted);
 
 @Controller({
   group: PracticesRoutes,
@@ -18,7 +16,7 @@ const accepted = classSchema(GrantDelegationAccepted);
   summary: 'Grant delegation',
   params,
   body,
-  response: { status: 201, description: 'Done; the body carries the identifier.', body: accepted },
+  response: { status: 201, description: 'Done; the body carries the identifier.', body: acceptedSchema },
   errors: [
     'PRACTICE_NOT_FOUND',
     'NOT_A_PRACTITIONER',
@@ -30,9 +28,7 @@ const accepted = classSchema(GrantDelegationAccepted);
 export class GrantDelegationController {
   constructor(private readonly commands: CommandBus) {}
 
-  async handle(
-    request: HttpRequest<{ params: GrantDelegationParams; body: GrantDelegationBody }>,
-  ): Promise<GrantDelegationAccepted> {
+  async handle(request: HttpRequest<{ params: GrantDelegationParams; body: GrantDelegationBody }>): Promise<Accepted> {
     const id = await this.commands.execute(
       new GrantDelegationCommand(request.actor, request.params, termsOf(request.body)),
     );

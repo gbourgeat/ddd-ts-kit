@@ -198,80 +198,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                required:
-                  - items
-                properties:
-                  items:
-                    type: array
-                    items:
-                      properties:
-                        id:
-                          type: string
-                        calendarId:
-                          type: string
-                        practiceId:
-                          type: string
-                        practitionerId:
-                          type: string
-                        patientId:
-                          type: string
-                        appointmentTypeId:
-                          type: string
-                        startsAt:
-                          oneOf:
-                            - format: date
-                              type: string
-                            - format: date-time
-                              type: string
-                        endsAt:
-                          oneOf:
-                            - format: date
-                              type: string
-                            - format: date-time
-                              type: string
-                        day:
-                          pattern: ^\d{4}-\d{2}-\d{2}$
-                          type: string
-                        status:
-                          type: string
-                          enum:
-                            - requested
-                            - booked
-                            - cancelled
-                            - expired
-                            - completed
-                            - no-show
-                        confirmBefore:
-                          oneOf:
-                            - format: date
-                              type: string
-                            - format: date-time
-                              type: string
-                        cancelledBy:
-                          type: string
-                          enum:
-                            - patient
-                            - practice
-                      type: object
-                      required:
-                        - id
-                        - calendarId
-                        - practiceId
-                        - practitionerId
-                        - patientId
-                        - appointmentTypeId
-                        - startsAt
-                        - endsAt
-                        - day
-                        - status
-                  total:
-                    type: integer
-                    minimum: 0
-                    description: Present when it is cheap to count.
-                  nextCursor:
-                    type: string
-                    description: Present when more items follow.
+                $ref: '#/components/schemas/AgendaLinePage'
         '401':
           description: 'Unauthorized. Error codes: UNAUTHORIZED.'
           content:
@@ -336,12 +263,7 @@ paths:
           content:
             application/json:
               schema:
-                properties:
-                  id:
-                    type: string
-                type: object
-                required:
-                  - id
+                $ref: '#/components/schemas/Accepted'
         '401':
           description: 'Unauthorized. Error codes: UNAUTHORIZED.'
           content:
@@ -532,12 +454,7 @@ paths:
           content:
             application/json:
               schema:
-                properties:
-                  id:
-                    type: string
-                type: object
-                required:
-                  - id
+                $ref: '#/components/schemas/Accepted'
         '401':
           description: 'Unauthorized. Error codes: UNAUTHORIZED.'
           content:
@@ -599,12 +516,7 @@ paths:
           content:
             application/json:
               schema:
-                properties:
-                  id:
-                    type: string
-                type: object
-                required:
-                  - id
+                $ref: '#/components/schemas/Accepted'
         '401':
           description: 'Unauthorized. Error codes: UNAUTHORIZED.'
           content:
@@ -666,12 +578,7 @@ paths:
           content:
             application/json:
               schema:
-                properties:
-                  id:
-                    type: string
-                type: object
-                required:
-                  - id
+                $ref: '#/components/schemas/Accepted'
         '401':
           description: 'Unauthorized. Error codes: UNAUTHORIZED.'
           content:
@@ -733,12 +640,7 @@ paths:
           content:
             application/json:
               schema:
-                properties:
-                  id:
-                    type: string
-                type: object
-                required:
-                  - id
+                $ref: '#/components/schemas/Accepted'
         '401':
           description: 'Unauthorized. Error codes: UNAUTHORIZED.'
           content:
@@ -815,12 +717,7 @@ paths:
           content:
             application/json:
               schema:
-                properties:
-                  id:
-                    type: string
-                type: object
-                required:
-                  - id
+                $ref: '#/components/schemas/Accepted'
         '401':
           description: 'Unauthorized. Error codes: UNAUTHORIZED.'
           content:
@@ -1079,12 +976,7 @@ paths:
           content:
             application/json:
               schema:
-                properties:
-                  id:
-                    type: string
-                type: object
-                required:
-                  - id
+                $ref: '#/components/schemas/Accepted'
         '401':
           description: 'Unauthorized. Error codes: UNAUTHORIZED.'
           content:
@@ -1156,12 +1048,7 @@ paths:
           content:
             application/json:
               schema:
-                properties:
-                  id:
-                    type: string
-                type: object
-                required:
-                  - id
+                $ref: '#/components/schemas/Accepted'
         '401':
           description: 'Unauthorized. Error codes: UNAUTHORIZED.'
           content:
@@ -1324,12 +1211,7 @@ paths:
           content:
             application/json:
               schema:
-                properties:
-                  id:
-                    type: string
-                type: object
-                required:
-                  - id
+                $ref: '#/components/schemas/Accepted'
         '401':
           description: 'Unauthorized. Error codes: UNAUTHORIZED.'
           content:
@@ -1398,12 +1280,7 @@ paths:
           content:
             application/json:
               schema:
-                properties:
-                  id:
-                    type: string
-                type: object
-                required:
-                  - id
+                $ref: '#/components/schemas/Accepted'
         '401':
           description: 'Unauthorized. Error codes: UNAUTHORIZED.'
           content:
@@ -1479,12 +1356,7 @@ paths:
           content:
             application/json:
               schema:
-                properties:
-                  id:
-                    type: string
-                type: object
-                required:
-                  - id
+                $ref: '#/components/schemas/Accepted'
         '401':
           description: 'Unauthorized. Error codes: UNAUTHORIZED.'
           content:
@@ -1566,12 +1438,7 @@ paths:
           content:
             application/json:
               schema:
-                properties:
-                  id:
-                    type: string
-                type: object
-                required:
-                  - id
+                $ref: '#/components/schemas/Accepted'
         '401':
           description: 'Unauthorized. Error codes: UNAUTHORIZED.'
           content:
@@ -1762,12 +1629,7 @@ paths:
           content:
             application/json:
               schema:
-                properties:
-                  id:
-                    type: string
-                type: object
-                required:
-                  - id
+                $ref: '#/components/schemas/Accepted'
         '401':
           description: 'Unauthorized. Error codes: UNAUTHORIZED.'
           content:
@@ -1828,12 +1690,7 @@ paths:
           content:
             application/json:
               schema:
-                properties:
-                  id:
-                    type: string
-                type: object
-                required:
-                  - id
+                $ref: '#/components/schemas/Accepted'
         '401':
           description: 'Unauthorized. Error codes: UNAUTHORIZED.'
           content:
@@ -2062,21 +1919,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                required:
-                  - items
-                properties:
-                  items:
-                    type: array
-                    items:
-                      type: object
-                  total:
-                    type: integer
-                    minimum: 0
-                    description: Present when it is cheap to count.
-                  nextCursor:
-                    type: string
-                    description: Present when more items follow.
+                $ref: '#/components/schemas/AgendaLinePage'
         '401':
           description: 'Unauthorized. Error codes: UNAUTHORIZED.'
           content:
@@ -2148,12 +1991,7 @@ paths:
           content:
             application/json:
               schema:
-                properties:
-                  id:
-                    type: string
-                type: object
-                required:
-                  - id
+                $ref: '#/components/schemas/Accepted'
         '401':
           description: 'Unauthorized. Error codes: UNAUTHORIZED.'
           content:
@@ -2227,12 +2065,7 @@ paths:
           content:
             application/json:
               schema:
-                properties:
-                  id:
-                    type: string
-                type: object
-                required:
-                  - id
+                $ref: '#/components/schemas/Accepted'
         '401':
           description: 'Unauthorized. Error codes: UNAUTHORIZED.'
           content:
@@ -2312,12 +2145,7 @@ paths:
           content:
             application/json:
               schema:
-                properties:
-                  id:
-                    type: string
-                type: object
-                required:
-                  - id
+                $ref: '#/components/schemas/Accepted'
         '401':
           description: 'Unauthorized. Error codes: UNAUTHORIZED.'
           content:
@@ -2385,12 +2213,7 @@ paths:
           content:
             application/json:
               schema:
-                properties:
-                  id:
-                    type: string
-                type: object
-                required:
-                  - id
+                $ref: '#/components/schemas/Accepted'
         '401':
           description: 'Unauthorized. Error codes: UNAUTHORIZED.'
           content:
@@ -2608,6 +2431,92 @@ paths:
             - VALIDATION_FAILED
 components:
   schemas:
+    Accepted:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string
+          description: The identifier of what the command created or changed.
+      additionalProperties: false
+    AgendaLine:
+      properties:
+        id:
+          type: string
+        calendarId:
+          type: string
+        practiceId:
+          type: string
+        practitionerId:
+          type: string
+        patientId:
+          type: string
+        appointmentTypeId:
+          type: string
+        startsAt:
+          oneOf:
+            - format: date
+              type: string
+            - format: date-time
+              type: string
+        endsAt:
+          oneOf:
+            - format: date
+              type: string
+            - format: date-time
+              type: string
+        day:
+          pattern: ^\d{4}-\d{2}-\d{2}$
+          type: string
+        status:
+          type: string
+          enum:
+            - requested
+            - booked
+            - cancelled
+            - expired
+            - completed
+            - no-show
+        confirmBefore:
+          oneOf:
+            - format: date
+              type: string
+            - format: date-time
+              type: string
+        cancelledBy:
+          type: string
+          enum:
+            - patient
+            - practice
+      type: object
+      required:
+        - id
+        - calendarId
+        - practiceId
+        - practitionerId
+        - patientId
+        - appointmentTypeId
+        - startsAt
+        - endsAt
+        - day
+        - status
+    AgendaLinePage:
+      type: object
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AgendaLine'
+        total:
+          type: integer
+          minimum: 0
+          description: Present when it is cheap to count.
+        nextCursor:
+          type: string
+          description: Present when more items follow.
     CalendarDayAppointmentDto:
       properties:
         id:

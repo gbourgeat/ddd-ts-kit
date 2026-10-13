@@ -25,6 +25,7 @@ import { queryKind } from './kinds/query-kind.js';
 import { repositoryKind } from './kinds/repository-kind.js';
 import { routeGroupKind } from './kinds/route-group-kind.js';
 import { controllerKind, routeKind } from './kinds/route-kind.js';
+import { schemaKind } from './kinds/schema-kind.js';
 import { serviceKind } from './kinds/service-kind.js';
 import { valueObjectKind } from './kinds/value-object-kind.js';
 import { workerKind } from './kinds/worker-kind.js';
@@ -48,6 +49,7 @@ export const KINDS: readonly Kind[] = [
   controllerKind,
   routeGroupKind,
   guardKind,
+  schemaKind,
   integrationEventKind,
   integrationHandlerKind,
   eventHandlerKind,

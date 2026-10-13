@@ -17,6 +17,18 @@ platform shares its own: `acceptedSchema` (`Accepted`, the `{ id }` a command ro
 the page of a shared item (`<Item>Page`) and the problem document. A shared `params`, `query`
 or `headers` schema still gives one parameter per property.
 
+**A new project declares a shape once.** `init` writes `"stack.schemas": "shared"`: a generated
+command route answers its identifier with `acceptedSchema` instead of a schema of its own,
+`generate schema <context> <Name>` writes a shape several routes use in
+`presentation/http/shared/<name>.schema.ts` (`generate schema shared-kernel <Name>` in
+`presentation/` of the shared kernel, for what several contexts answer with), and two rules hold
+it: `schema/no-duplicate-shape` reports a DTO class or an object schema that declares by hand
+the shape of another one, `schema/presentation-only` keeps every schema in a presentation layer
+(the second in ESLint too). A config without the key reads as `per-route`: nothing changes and
+nothing is reported; the steps to move are in `docs/CONFIG.md`. The example now shares its
+schemas: its eighteen identifier answers are the one `Accepted` component, its two agenda
+searches answer `AgendaLinePage` pages of one `AgendaLine`; the bytes on the wire are unchanged.
+
 **Every package carries the MIT notice.** Each published package now holds the `LICENSE` of the
 repository next to its `dist/`, and `npm run package:check` refuses a tarball without it, or with
 another text. Earlier versions were published without it.

@@ -25,6 +25,8 @@ export interface Stack {
   readonly dependencies: 'signature' | 'listed';
   /** How a domain error is written: static factories on one class per concept, or a class per error. A config that does not say is `classes`. */
   readonly refusals: 'factories' | 'classes';
+  /** How the schemas of the HTTP contract are written: a shape declared once and shared, or one per route. A config that does not say is `per-route`. */
+  readonly schemas: 'shared' | 'per-route';
   /** Kept as written: with `prisma` the generated client under `generated/` has an import alias of its own. */
   readonly orm: string;
 }

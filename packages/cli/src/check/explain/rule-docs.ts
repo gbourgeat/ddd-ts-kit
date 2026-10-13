@@ -11,6 +11,7 @@ import { LAYOUT_DOCS } from './layout-docs.js';
 import { PERSISTENCE_DOCS } from './persistence-docs.js';
 import { PORTS_DOCS } from './ports-docs.js';
 import { SCHEDULING_DOCS } from './scheduling-docs.js';
+import { SCHEMA_DOCS } from './schema-docs.js';
 import { STANDARD_DOCS } from './standard-docs.js';
 import { TREE_DOCS } from './tree-docs.js';
 import { WIRING_DOCS } from './wiring-docs.js';
@@ -29,6 +30,7 @@ export const RULE_DOCS: Readonly<Record<string, RuleDoc>> = {
   ...PERSISTENCE_DOCS,
   ...PORTS_DOCS,
   ...SCHEDULING_DOCS,
+  ...SCHEMA_DOCS,
   ...STANDARD_DOCS,
   ...TREE_DOCS,
   ...WIRING_DOCS,

@@ -4,6 +4,7 @@ import { controllerImports, type ControllerImports } from './controller-imports.
 import type { ControllerPlan } from './controller-plan.js';
 import { controllerTypes, type ControllerTypes } from './controller-types.js';
 import { routeVars } from './route-vars.js';
+import { sharesSchemas } from './shares-schemas.js';
 
 /** What the templates of a controller read, over what the templates of a route read: its group, its types and its neighbours. */
 export function controllerVars(scope: Scope, plan: ControllerPlan): RenderContext {
@@ -32,7 +33,7 @@ function handleVars(
   readsRequest: boolean,
 ): RenderContext {
   const message = `new ${useCase.message}(${useCase.isProtected ? 'request.actor' : ''})`;
-  const answers = useCase.isQuery || useCase.returnsId;
+  const answers = declaresAnswer(useCase, types);
 
   return {
     hasTypedParams: types.hasTypedParams,
@@ -45,12 +46,22 @@ function handleVars(
   };
 }
 
-function declarationVars(scope: Scope, { endpoint, group }: ControllerPlan, readsRequest: boolean): RenderContext {
+/** A shared identifier answer is a schema of the platform: the controller declares none for it. */
+function declaresAnswer(useCase: ControllerPlan['useCase'], types: ControllerTypes): boolean {
+  return useCase.isQuery || (useCase.returnsId && types.accepted !== 'Accepted');
+}
+
+function declarationVars(scope: Scope, plan: ControllerPlan, readsRequest: boolean): RenderContext {
+  const { endpoint, group } = plan;
   const rest = group === undefined ? endpoint.path : endpoint.path.slice(group.prefix.length);
 
+  const sharedAccepted = plan.useCase.returnsId && sharesSchemas(scope.config);
+
   const names = [
+    ...(sharedAccepted ? ['acceptedSchema'] : []),
     'Controller',
     ...(group === undefined ? ['Public'] : []),
+    ...(sharedAccepted ? ['type Accepted'] : []),
     ...(readsRequest ? ['type HttpRequest'] : []),
   ];
 

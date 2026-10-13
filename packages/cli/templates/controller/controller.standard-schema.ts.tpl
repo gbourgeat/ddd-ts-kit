@@ -26,7 +26,7 @@ const anyObject: StandardSchemaV1<unknown, Record<string, unknown>> = {
 const body = standardSchema(anyObject, { type: 'object' });
 
 {{/if}}
-{{#if route.returnsId}}
+{{#if route.ownAccepted}}
 const acceptedShape: StandardSchemaV1<unknown, { readonly id: string }> = {
   '~standard': {
     version: 1,
@@ -62,7 +62,7 @@ const answer = standardSchema(anyObject, { type: 'object' });
   body,
   {{/if}}
   {{#if route.returnsId}}
-  response: { status: {{route.status}}, description: 'Done; the body carries the identifier.', body: accepted },
+  response: { status: {{route.status}}, description: 'Done; the body carries the identifier.', body: {{route.acceptedBody}} },
   {{/if}}
   {{#if route.returnsNothing}}
   response: { status: {{route.status}}, description: 'Done.' },

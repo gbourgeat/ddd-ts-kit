@@ -68,19 +68,22 @@ describe('a context wired by hand', () => {
     );
   });
 
-  it('writes one class-validator class per file, each named after its class', () => {
+  it('writes one class-validator class per file, each named after its class, and answers an identifier with the shared schema', () => {
     const http = `${BILLING}/presentation/http`;
+    const issue = read(root, `${http}/issue-invoice.route.ts`);
 
     expect(walk(root, http).filter((file) => file.endsWith('.dto.ts'))).toEqual([
       `${http}/cancel-invoice-params.dto.ts`,
-      `${http}/issue-invoice-accepted.dto.ts`,
       `${http}/issue-invoice-body.dto.ts`,
       `${http}/search-invoices-line.dto.ts`,
     ]);
 
-    expect(read(root, `${http}/issue-invoice.route.ts`)).toContain(
-      "import { IssueInvoiceBody } from '@/contexts/billing/presentation/http/issue-invoice-body.dto';\nimport { IssueInvoiceAccepted } from '@/contexts/billing/presentation/http/issue-invoice-accepted.dto';",
+    expect(issue).toContain(
+      "import { IssueInvoiceBody } from '@/contexts/billing/presentation/http/issue-invoice-body.dto';\n\n",
     );
+
+    expect(issue).toContain("import { acceptedSchema, defineRoute, type Route } from '@ddd-ts-kit/http';");
+    expect(issue).toContain("description: 'Done; the body carries the identifier.', body: acceptedSchema } },");
 
     expect(read(root, `${BILLING}/published-language/invoice-issued.v1.payload.ts`)).toContain(
       'export class InvoiceIssuedV1Payload {',

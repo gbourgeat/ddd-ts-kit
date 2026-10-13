@@ -17,6 +17,7 @@ const SHARED_KINDS = [
   'service',
   'worker',
   'adr',
+  'schema',
 ];
 
 /** One run of every kind that declares it writes nothing shared, and of a command on an aggregate that has its repository. */
