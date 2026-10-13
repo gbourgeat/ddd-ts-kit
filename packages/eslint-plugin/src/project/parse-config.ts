@@ -1,4 +1,5 @@
 import type {
+  BusinessNames,
   Upstream,
   ContextConfig,
   Style,
@@ -72,8 +73,24 @@ export function parseConfig(raw: unknown): Config {
     onePerFile: parseOnePerFile(source['onePerFile']),
     stack: parseStack(source['stack']),
     standardInterfaces: parseStandardInterfaces(source['standardInterfaces']),
+    businessNames: parseBusinessNames(source['businessNames']),
     sdk: parseSdk(source['sdk']),
   };
+}
+
+/** As in the CLI: an entry that is not a word is left out, and a `words` that is not a list keeps the defaults. */
+function parseBusinessNames(value: unknown): BusinessNames {
+  const raw = isRecord(value) ? value : {};
+  const words = raw['words'];
+
+  return {
+    words: Array.isArray(words) ? wordsOf(words) : undefined,
+    allow: Array.isArray(raw['allow']) ? wordsOf(raw['allow']) : [],
+  };
+}
+
+function wordsOf(entries: readonly unknown[]): string[] {
+  return entries.filter((entry): entry is string => typeof entry === 'string' && entry.trim() !== '');
 }
 
 /** A key that is not an object asks for no client, as in the CLI. */

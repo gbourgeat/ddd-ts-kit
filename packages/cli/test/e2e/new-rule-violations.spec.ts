@@ -1,5 +1,7 @@
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { read } from '../helpers.js';
 import { EditedProject } from './edited-project.js';
+import { bin, runIn } from './run-in.js';
 import { SLOW } from './stacks.js';
 
 const BILLING = 'src/contexts/billing';
@@ -17,6 +19,16 @@ const BARE = '@CommandHandler(IssueInvoiceCommand)';
 /** The list a 0.1 project writes in the decorator: still read, and held to the same rules. */
 const listing = (first: string): string => `@CommandHandler(IssueInvoiceCommand, [${first}, IdGenerator, Clock])`;
 const SAVED = '    await this.invoiceRepository.save(invoice);\n';
+
+/** The body of the generated handler. */
+const ISSUED =
+  '    const invoice = Invoice.create(this.ids.next(), this.clock.now());\n\n    await this.invoiceRepository.save(invoice);\n\n    return invoice.id;';
+
+/** The same body as the templates wrote it until 0.17. */
+const TARGETED = ISSUED.replaceAll('(invoice)', '(target)')
+  .replace('const invoice', 'const target')
+  .replace('invoice.id', 'target.id');
+
 const SENT = "    await this.commands.execute(new CancelInvoiceCommand(systemActor('billing.cancel-stale-invoices')));";
 
 const ADAPTER_IMPORT =
@@ -210,6 +222,14 @@ const INJECTIONS: readonly Injection[] = [
     to: '\nexport const money = (amount: number, currency: string) => ({ amount, currency });\n',
   },
   {
+    rule: 'naming/business-name',
+    eslint: 'ddd-ts-kit/naming-business-name',
+    what: 'a variable of a handler named with a generic word',
+    file: HANDLER,
+    from: '    return invoice.id;',
+    to: '    const item = invoice;\n\n    return item.id;',
+  },
+  {
     rule: 'language/declared-vocabulary',
     eslint: 'ddd-ts-kit/language-declared-vocabulary',
     what: 'a role granted by its value in the platform, where the Role vocabulary of the platform declares it',
@@ -285,6 +305,17 @@ describe.runIf(SLOW)('a violation of a rule of this wave, written into a generat
     expect(project.checked().filter((violation) => violation.ruleId === 'naming/search-not-list')).toEqual([
       expect.objectContaining({ severity: 'error', file: READER }),
     ]);
+  }, 120_000);
+
+  it('ESLint renames the aggregate a handler of 0.16 named target, with every use of it, and the checker is satisfied', () => {
+    project.edit(HANDLER, ISSUED, TARGETED);
+
+    expect(project.checkedRules()).toContain('naming/business-name');
+
+    runIn(project.root, { command: bin('eslint'), args: ['--fix', HANDLER] });
+
+    expect(read(project.root, HANDLER)).toContain(ISSUED);
+    expect(project.checkedRules()).not.toContain('naming/business-name');
   }, 120_000);
 
   it('the checker catches two jobs under one name, project-wide', () => {
