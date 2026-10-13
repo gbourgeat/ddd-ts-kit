@@ -6,7 +6,12 @@ import { bin, findingsOf, runIn } from './run-in.js';
 import { SLOW } from './stacks.js';
 import { typeErrors } from './type-errors.js';
 
-/** The two families the identity preset is written for: the defaults of init, and Knex with class-validator, tenants and Keycloak. */
+/**
+ * The families the identity preset is written for: the defaults of init (roles); Knex with
+ * class-validator, relationships, tenants and Keycloak; attribute policies on Fastify with tenants
+ * and a JWT verifier. OpenFGA, and the preset generated into a project that exists, are proven by
+ * `preset-identity-generated.spec.ts`.
+ */
 const FLAVOURS: readonly (readonly [string, readonly string[]])[] = [
   ['drizzle, zod, rbac', []],
   [
@@ -24,6 +29,7 @@ const FLAVOURS: readonly (readonly [string, readonly string[]])[] = [
       'keycloak',
     ],
   ],
+  ['abac, fastify, shared tables, jwt', ['--authz', 'abac', '--http', 'fastify', '--tenancy', 'shared-table']],
 ];
 
 /**

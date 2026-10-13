@@ -35,8 +35,13 @@ export const SHARDS = [
     'formatted.spec.ts': 8,
     'client-sdk.spec.ts': 8,
   },
-  { 'first-minute-two-contexts.spec.ts': 184, 'preset-identity.spec.ts': 40 },
-  { 'proven-stacks.spec.ts': 106, 'first-class.spec.ts': 68, 'error-rule-violations.spec.ts': 20 },
+  { 'first-minute-two-contexts.spec.ts': 184, 'preset-identity.spec.ts': 60 },
+  {
+    'proven-stacks.spec.ts': 106,
+    'first-class.spec.ts': 68,
+    'error-rule-violations.spec.ts': 20,
+    'preset-identity-generated.spec.ts': 20,
+  },
   {
     'coverage-gate.spec.ts': 88,
     'file-uploads.spec.ts': 30,
