@@ -76,6 +76,13 @@ ruleTester.run('layer-domain-purity', layerDomainPurity, {
       ),
       errors: [{ messageId: 'outsideConcern' }, { messageId: 'outsideConcern' }],
     },
+    {
+      ...at(AGGREGATE, "import { S3FileStorage } from '@ddd-ts-kit/s3';", {
+        ...SAMPLE_CONFIG,
+        domainAllowedPackages: ['@ddd-ts-kit/kernel', '@ddd-ts-kit/s3'],
+      }),
+      errors: [{ messageId: 'outsideConcern' }],
+    },
     { ...at(AGGREGATE, "import { randomUUID } from 'node:crypto';"), errors: [{ messageId: 'builtin' }] },
     { ...at(AGGREGATE, "import path from 'path';"), errors: [{ messageId: 'builtin' }] },
     {

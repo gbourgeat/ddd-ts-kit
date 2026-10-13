@@ -4,6 +4,7 @@ import { project } from './project.js';
 
 const { BILLING, PORT, REPOSITORY_PORT } = PATHS;
 const SCHEMA = `${BILLING}/infrastructure/persistence/invoice.schema.ts`;
+const ADAPTER = `${BILLING}/infrastructure/persistence/drizzle-invoice.repository.ts`;
 const SPEC = `${BILLING}/test/unit/attach-receipt.handler.spec.ts`;
 
 export const FILES_FIXTURES: readonly Fixture[] = [
@@ -44,6 +45,25 @@ export const FILES_FIXTURES: readonly Fixture[] = [
       [SCHEMA]:
         "// No bytea here: the content is in the file storage.\nexport const invoices = pgTable('invoices', {\n  receiptKey: text('receipt_key'),\n  receiptSize: integer('receipt_size'),\n  receiptMediaType: text('receipt_media_type'),\n  receiptChecksum: text('receipt_checksum'),\n});\n",
       'migrations/20261012093000_add-receipts.sql': 'ALTER TABLE "invoices" ADD COLUMN "receipt_key" text;\n',
+    }),
+  },
+  {
+    ruleId: 'persistence/no-file-content',
+    name: 'a repository that encodes its keyset cursor in base64, and a link to a blob in a trailing comment',
+    expect: 'pass',
+    files: project({
+      [ADAPTER]:
+        "export class DrizzleInvoiceRepository {\n  cursorOf(id: string): string {\n    const documented = 'https://github.com/acme/app/blob/main/CURSORS.md';\n\n    return Buffer.from(`${id} ${documented}`).toString('base64url'); // https://github.com/acme/app/blob/main/README.md\n  }\n}\n",
+      'migrations/20261012093000_add-receipts.sql':
+        'ALTER TABLE "invoices" ADD COLUMN "receipt_key" text; -- not a blob: the key of the file\n',
+    }),
+  },
+  {
+    ruleId: 'persistence/no-file-content',
+    name: 'a SQL migration that adds a column of base64 text',
+    expect: { file: 'migrations/20261012093000_add-receipts.sql' },
+    files: project({
+      'migrations/20261012093000_add-receipts.sql': 'ALTER TABLE "invoices" ADD COLUMN "receipt_base64" text;\n',
     }),
   },
   {
