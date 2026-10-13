@@ -5,11 +5,12 @@ import { UnknownTenantError } from './unknown-tenant-error.js';
  * The tenant `resolver` names, when the deployment serves it: one it does not serve is answered
  * 404 before anything reads it, whoever calls, so that a credential or a header naming a tenant
  * left out of the directory never writes data its jobs and its operators know nothing of.
+ * It reads the headers `resolver` reads, so that a cached answer still varies on them.
  */
 export function servedTenantOf(resolver: TenantResolver, served: readonly string[]): TenantResolver {
   const tenants = new Set(served);
 
-  return (request) => {
+  const resolve: TenantResolver = (request) => {
     const tenantId = resolver(request);
 
     if (tenantId !== undefined && !tenants.has(tenantId)) {
@@ -18,4 +19,6 @@ export function servedTenantOf(resolver: TenantResolver, served: readonly string
 
     return tenantId;
   };
+
+  return resolver.headers === undefined ? resolve : Object.assign(resolve, { headers: resolver.headers });
 }

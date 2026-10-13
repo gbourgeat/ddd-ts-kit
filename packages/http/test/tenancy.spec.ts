@@ -176,6 +176,14 @@ describe('a request in the tenant it names', () => {
     expect(await answered(consultant, { 'x-tenant-id': 'globex' })).toEqual({ status: 204, tenantId: 'globex' });
     expect(await answered(staff, {})).toEqual({ status: 204, tenantId: undefined });
   });
+
+  it('reads the headers of the resolver it holds to the tenants served, so that a cached answer varies on them', () => {
+    expect(servedTenantOf(firstTenantOf(tenantFromHeader(), tenantFromClaim()), ['globex']).headers).toEqual([
+      'x-tenant-id',
+    ]);
+
+    expect(servedTenantOf(tenantFromClaim(), ['globex']).headers).toBeUndefined();
+  });
 });
 
 describe('TenantMember', () => {
