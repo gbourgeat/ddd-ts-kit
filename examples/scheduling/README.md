@@ -63,7 +63,8 @@ of each is its user name.
 
 | User | Role in the token | What makes their rights |
 |---|---|---|
-| `demo-admin` | `platform-admin` | the role: opens practices, reads the audit trail |
+| `demo-admin` | `network-admin`, network `north` | the role: opens the practices of its network |
+| `demo-ops` | `platform-admin`, no network | the role: reads the audit trail of every network, through an elevation the trail records |
 | `demo-manager`, `demo-manager-b` | none | the relationship `manager` of one practice each, written when the practice is opened |
 | `demo-practitioner` | none | `practitioner` of the practice, `holder` of their desk |
 | `demo-assistant` | none | `assistant` of the practice; `delegate` of a desk once delegated |
@@ -175,11 +176,26 @@ is the domain service `OccupancyMeasureService`; the statement is held to it by
 calendar and day, recounted at each event and verified nightly: see
 [docs/tooling-report.md](docs/tooling-report.md), "After delivery: analytics computed at read time".
 
+## Networks of practices: one tenant each
+
+The application serves several networks of practices from one deployment, and each network is a
+tenant ([ADR-0003](docs/adr/0003-one-network-is-one-tenant.md), `"stack.tenancy": "shared-table"`):
+every table of the contexts carries the network of its rows, every repository reaches it through
+`tenantTable` and `ownTenantTable`, the outbox keeps the network of each event so that its
+consumers run in it, and each scheduled job runs once per network of `NETWORKS`. The token names
+the network of its user (`tenant_id`); a request may name it in `x-tenant-id`, naming another
+network than the caller's is refused with 403 before anything runs, and a network missing from
+`NETWORKS` is not found (404), so that nothing is written where no job runs. A person belongs to
+one network: a second network needs a second account. Platform staff belong to no
+network: they read the audit trail of every network through an elevation that the trail records
+first. Practices stay relationships inside a network. `test/e2e/journey-tenancy.e2e.spec.ts`
+holds all of it; `tenantIsolationContract` holds it for every repository.
+
 ## The authorization model, with two worked cases
 
 Three questions, three places. Who is calling: Keycloak, verified at the boundary. May they do
 this, on this: decided before the handler by one authorizer that first looks at the roles of
-the token (`platform-admin`; `patient` for self-service; nothing for `support`), then at
+the token (`network-admin`, `platform-admin`; `patient` for self-service; nothing for `support`), then at
 relationships stored as tuples `object#relation@subject` and rewritten Zanzibar style. Is it
 valid at all: the domain. The contexts never name a role or a relation: they name permissions,
 and write relationships through a port of their own when a fact happens.

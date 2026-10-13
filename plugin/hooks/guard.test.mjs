@@ -279,6 +279,8 @@ test('every generated role of the canonical tree names its generator', () => {
   }
   const e2e = run('pre-write', write(join(root, 'test/e2e/place-order.e2e.spec.ts')));
   assert.match(reason(e2e), /generate e2e /);
+  // A journey crosses use cases and contexts: no generator writes it.
+  assert.equal(run('pre-write', write(join(root, 'test/e2e/journey-tenancy.e2e.spec.ts'))).output, undefined);
 });
 
 test('a file of tokens is refused: a port is an abstract class', () => {

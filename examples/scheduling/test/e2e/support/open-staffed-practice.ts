@@ -17,7 +17,7 @@ const consultation = { name: 'Consultation', duration: 30, grid: 30, buffer: 0, 
 
 /**
  * A practice set up through the public API alone (the typed client of the contract where it is
- * enough, the HTTP client where a step has to wait for another context), by who may do each step: the platform admin
+ * enough, the HTTP client where a step has to wait for another context), by who may do each step: the administrator of the network
  * opens it, its manager adds a practitioner and an assistant, the practitioner creates a
  * calendar, opens it every day of the week around the clock and defines a consultation of
  * thirty minutes.
@@ -27,7 +27,7 @@ export async function openStaffedPractice(application: RunningApplication, staff
 
   await registerPeople(application, managerId, practitionerId, assistantId);
 
-  const root = application.apiAs({ id: 'root', roles: ['platform-admin'] });
+  const root = application.apiAs({ id: 'root', roles: ['network-admin'] });
   const { id: practiceId } = await unwrap(root.openPractice({ body: { name, timeZone: 'Europe/Paris', managerId } }));
   const manager = application.apiAs({ id: managerId });
 

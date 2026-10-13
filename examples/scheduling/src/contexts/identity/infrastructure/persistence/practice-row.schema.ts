@@ -1,4 +1,4 @@
-import type { AuditRow } from '@ddd-ts-kit/knex';
+import type { AuditRow, TenantRow } from '@ddd-ts-kit/knex';
 
 export interface PracticeColumns {
   readonly id: string;
@@ -9,6 +9,6 @@ export interface PracticeColumns {
   readonly members: string;
 }
 
-export interface PracticeRow extends PracticeColumns, AuditRow {
+export interface PracticeRow extends PracticeColumns, TenantRow, AuditRow {
   readonly version: number;
 }

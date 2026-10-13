@@ -87,6 +87,7 @@ describe('shipped templates', () => {
         'job',
         'pipeline',
         'port',
+        'presets',
         'process',
         'projection',
         'query',

@@ -1,4 +1,4 @@
-import type { AuditRow } from '@ddd-ts-kit/knex';
+import type { AuditRow, TenantRow } from '@ddd-ts-kit/knex';
 
 export interface NotificationColumns {
   readonly id: string;
@@ -10,6 +10,6 @@ export interface NotificationColumns {
   readonly cause: string;
 }
 
-export interface NotificationRow extends NotificationColumns, AuditRow {
+export interface NotificationRow extends NotificationColumns, TenantRow, AuditRow {
   readonly version: number;
 }

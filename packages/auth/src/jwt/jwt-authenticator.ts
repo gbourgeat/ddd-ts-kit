@@ -8,7 +8,9 @@ import {
 import { createRemoteJWKSet, errors, jwtVerify, type JWTPayload, type JWTVerifyGetKey, type KeyInput } from 'jose';
 import type { SessionAuthenticator } from '../authentication/session-authenticator.js';
 import { InvalidCredentialError } from '../errors/invalid-credential-error.js';
+import { profileAttributesOf } from './profile-attributes-of.js';
 import { sessionOfClaims } from './session-of-claims.js';
+import { tenancyOfClaim } from './tenancy-of-claim.js';
 
 interface CommonOptions {
   readonly issuer: string;
@@ -17,7 +19,7 @@ interface CommonOptions {
   readonly algorithms?: readonly string[];
   /** Seconds of clock difference tolerated on `exp` and `nbf`. Default 0. */
   readonly clockTolerance?: number;
-  /** The claim holding the tenant of the default mapping. Default `tenant_id`. */
+  /** The claim holding the tenant of the default mapping. Default `tenant_id`; a list names the tenants of an actor of several. */
   readonly tenantClaim?: string;
   /** Replaces the default mapping. Must not keep the token: an actor is plain, loggable data. */
   readonly toActor?: (claims: JWTPayload) => Actor;
@@ -136,14 +138,14 @@ function actorOfClaims(claims: JWTPayload, tenantClaim: string): Actor {
     throw new InvalidCredentialError('NO_SUBJECT');
   }
 
-  const tenantId = claims[tenantClaim];
+  const { tenantId, tenants } = tenancyOfClaim(claims[tenantClaim]);
 
   return {
     id: claims.sub,
     type: 'user',
-    ...(typeof tenantId === 'string' ? { tenantId } : {}),
+    ...(tenantId === undefined ? {} : { tenantId }),
     roles: rolesOf(claims),
-    attributes: {},
+    attributes: { ...profileAttributesOf(claims), ...(tenants === undefined ? {} : { tenants }) },
   };
 }
 

@@ -303,6 +303,13 @@ project that rewrote one of those files by hand reapplies its change, as for any
 
 The contexts of the config and the directories of `contextsDir` must be the same set.
 
+No key records a preset. `init --preset identity` and `generate context <name> --preset identity`
+write a context once, as the generators would have written it piece by piece, then declare it
+here like any other (`generic` unless `--classification` or `--context <name>:<classification>`
+says otherwise); from then on its files are the code of the project, and a config without a
+preset behaves as before. See
+[Bootstrap with well-designed contexts](guides/bootstrap-with-well-designed-contexts.md).
+
 ## Rules and limits
 
 | Key | Values | Default |

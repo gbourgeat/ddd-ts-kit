@@ -28,11 +28,11 @@ import { openTestDatabase, type TestDatabase } from '@/platform/database/open-te
 import { anAppointment } from '@/contexts/scheduling/test/builders/appointment.builder';
 
 const PDF = '%PDF-1.7\n%%EOF\n';
-const holder = anActor().withRole('holder').build();
+const holder = anActor().withRole('holder').ofTenant('north').build();
 const clock = new FixedClock(new Date('2026-03-02T09:10:00.000Z'));
 
 const scope = new FixedExecutionScope(
-  executionContext({ correlationId: 'documents-spec', actor: holder, origin: 'test' }),
+  executionContext({ correlationId: 'documents-spec', actor: holder, origin: 'test', tenantId: 'north' }),
 );
 
 let database: TestDatabase;
@@ -88,7 +88,7 @@ async function arrange(...inside: readonly BusMiddleware[]) {
   const appointments = new KnexAppointmentRepository(context, scope, clock);
   const storage = new LocalFileStorage({ directory });
   const staging = new FileStaging(storage, new AcceptEveryFileScanner(), new InMemoryErrorReporter());
-  const keys = new TenantFileKeys(new SequentialIdGenerator('file'), clock);
+  const keys = new TenantFileKeys(new SequentialIdGenerator('file'), clock, scope);
 
   await unitOfWork.run(() => appointments.save(anAppointment().identifiedBy('appointment-1').build()));
 

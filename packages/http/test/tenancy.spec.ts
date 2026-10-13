@@ -13,6 +13,7 @@ import {
   defineRoute,
   executeRoute,
   firstTenantOf,
+  servedTenantOf,
   tenantFromClaim,
   tenantFromHeader,
   tenantFromPath,
@@ -155,6 +156,33 @@ describe('a request in the tenant it names', () => {
       expect(response.status).toBe(404);
       expect(seen.execution).toBeUndefined();
     }
+  });
+
+  it('answers 404 to a tenant the deployment does not serve, even to a caller of that tenant', async () => {
+    const resolveTenant = servedTenantOf(firstTenantOf(tenantFromHeader(), tenantFromClaim()), ['globex']);
+
+    const answered = async (principal: Actor, headers: RawRequest['headers']) => {
+      const { route, seen } = recordingRoute();
+
+      const response = await executeRoute(route, request(headers, { tenantId: 'x' }), {
+        resolvePrincipal: () => principal,
+        resolveTenant,
+      });
+
+      return { status: response.status, tenantId: seen.execution?.tenantId };
+    };
+
+    expect(await answered(ada, {})).toEqual({ status: 404, tenantId: undefined });
+    expect(await answered(consultant, { 'x-tenant-id': 'globex' })).toEqual({ status: 204, tenantId: 'globex' });
+    expect(await answered(staff, {})).toEqual({ status: 204, tenantId: undefined });
+  });
+
+  it('reads the headers of the resolver it holds to the tenants served, so that a cached answer varies on them', () => {
+    expect(servedTenantOf(firstTenantOf(tenantFromHeader(), tenantFromClaim()), ['globex']).headers).toEqual([
+      'x-tenant-id',
+    ]);
+
+    expect(servedTenantOf(tenantFromClaim(), ['globex']).headers).toBeUndefined();
   });
 });
 

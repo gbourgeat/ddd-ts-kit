@@ -1,7 +1,7 @@
 // ddd-ts-kit:imports
 import type { Knex } from 'knex';
 import { IDENTITY_SCHEMA } from '@/contexts/identity/infrastructure/persistence/identity.schema';
-import { auditColumns } from '@ddd-ts-kit/knex';
+import { auditColumns, tenantColumn } from '@ddd-ts-kit/knex';
 // /ddd-ts-kit:imports
 
 export async function createIdentityTables(knex: Knex): Promise<void> {
@@ -21,6 +21,8 @@ function createPersonTable(knex: Knex): Promise<void> {
     table.text('display_name').notNullable();
     table.text('email').notNullable();
     table.integer('version').notNullable();
+    tenantColumn(table);
+    table.index(['tenant_id', 'id'], 'persons_tenant_idx');
     auditColumns(table);
   });
 }
@@ -33,6 +35,8 @@ function createPracticeTable(knex: Knex): Promise<void> {
     table.text('time_zone').notNullable();
     table.jsonb('members').notNullable();
     table.integer('version').notNullable();
+    tenantColumn(table);
+    table.index(['tenant_id', 'id'], 'practices_tenant_idx');
     auditColumns(table);
   });
 }
@@ -51,6 +55,8 @@ function createDelegationTable(knex: Knex): Promise<void> {
     table.index(['practice_id', 'practitioner_id', 'assistant_id']);
     table.index(['ends_at']);
     table.integer('version').notNullable();
+    tenantColumn(table);
+    table.index(['tenant_id', 'id'], 'delegations_tenant_idx');
     auditColumns(table);
   });
 }

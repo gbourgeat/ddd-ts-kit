@@ -457,6 +457,7 @@ const options: ExecuteOptions = {
 | `tenantFromPath(parameter?)` | a path parameter, `tenantId` by default |
 | `tenantFromClaim()` | the tenant of the credential, `Actor.tenantId` |
 | `firstTenantOf(...resolvers)` | the first that names one |
+| `servedTenantOf(resolver, served)` | what `resolver` names, when it is among the tenants served; any other is answered 404 (`NOT_FOUND`), so a credential naming a tenant the deployment does not know (its jobs, its directory) reaches nothing |
 
 The pipeline then checks the membership itself, before any guard or handler: an authenticated
 caller that does not belong to the tenant named (its `tenantId`, or its `tenants` attribute for an

@@ -13,6 +13,12 @@ Bodies are cut after 700 characters.
 > when it is read, and that projection, its table and the job are gone. The run is kept as it
 > was; the last section, "Run again after analytics moved to read time", holds what a second
 > real run answered for these two steps.
+>
+> It also predates the networks of practices (ADR-0003, 2026-10-13). Since then `demo-admin` holds
+> `network-admin` and opens the practices of the network `north`, the audit trail of step 9 is
+> read by `demo-ops`, platform staff in no network, through an elevation the trail records, and
+> every entry carries the network of its actor. `scripts/demo.mjs` asks it that way; this run was
+> not recorded again.
 
 ## Commands
 

@@ -83,6 +83,7 @@ async function arrange() {
 
   const application = createTestApplication({
     modules: [platformTestModule, contextModule('notification', notificationDeclarations), holders],
+    tenants: ['north'],
     fakes: [
       fake(ReminderRepository, reminderRepository),
       fake(NotificationRepository, notificationRepository),

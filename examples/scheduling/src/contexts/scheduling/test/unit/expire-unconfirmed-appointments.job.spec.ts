@@ -54,6 +54,7 @@ describe('Expire unconfirmed appointments, when its time comes', () => {
 
     const application = createTestApplication({
       modules: [platformTestModule, contextModule('scheduling', schedulingDeclarations), authorization],
+      tenants: ['north'],
       fakes: [
         fake(Agenda, new FakeAgenda()),
         fake(AppointmentRepository, appointmentRepository),
@@ -82,6 +83,7 @@ describe('Expire unconfirmed appointments, when its time comes', () => {
 function arrange() {
   const application = createTestApplication({
     modules: [platformTestModule, contextModule('scheduling', schedulingDeclarations), authorization],
+    tenants: ['north'],
   });
 
   const sent: Message[] = [];

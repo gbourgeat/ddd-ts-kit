@@ -135,6 +135,7 @@ export type { Accepted } from './schemas/accepted.js';
 export { acceptedSchema } from './schemas/accepted-schema.js';
 export type { UploadSpec } from './route/upload-spec.js';
 export { firstTenantOf } from './tenancy/first-tenant-of.js';
+export { servedTenantOf } from './tenancy/served-tenant-of.js';
 export { tenantFromClaim } from './tenancy/tenant-from-claim.js';
 export { tenantFromHeader } from './tenancy/tenant-from-header.js';
 export { tenantFromPath } from './tenancy/tenant-from-path.js';

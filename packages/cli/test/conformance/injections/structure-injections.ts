@@ -4,7 +4,7 @@ import { SOURCE_ALIAS } from '../source-alias.js';
 import { SOURCE_SUFFIX } from '../source-suffix.js';
 
 const { AGGREGATE, BARREL, BUILDER, CONFIG, CONTEXT_DOC, EVENT, HANDLER, NOTIFICATION, READER } = PATHS;
-const { ROUTE, VALUE_OBJECT, VALUE_OBJECT_SPEC } = PATHS;
+const { ROUTE, SEARCH_READER, VALUE_OBJECT, VALUE_OBJECT_SPEC } = PATHS;
 const ERROR = `${NOTIFICATION}/domain/errors/contact-error.ts`;
 const CHANNEL = `${NOTIFICATION}/domain/value-objects/channel.vo.ts`;
 const CHANNEL_SPEC = `${NOTIFICATION}/test/unit/channel.vo.spec.ts`;
@@ -248,12 +248,38 @@ export const STRUCTURE_INJECTIONS: readonly Injection[] = [
     checker: true,
   },
   {
-    rule: 'persistence/no-file-content',
-    what: 'a migration that adds a column of bytes for the scan of an appointment',
-    file: 'migrations/20261013120000_add-appointment-scan.js',
+    rule: 'tenancy/scoped-statement',
+    what: 'a statement of a reader that reaches its table straight from the executor, outside the network of the work',
+    file: SEARCH_READER,
     changes: [
       {
-        file: 'migrations/20261013120000_add-appointment-scan.js',
+        file: SEARCH_READER,
+        from: '    private readonly execution: ExecutionScope,\n  ) {}\n',
+        to: [
+          '    private readonly execution: ExecutionScope,',
+          '  ) {}',
+          '',
+          '  async total(): Promise<number> {',
+          '    const rows = await this.database',
+          "      .executor()<NotificationRow, NotificationRow[]>('notifications')",
+          '      .withSchema(NOTIFICATION_SCHEMA);',
+          '',
+          '    return rows.length;',
+          '  }',
+          '',
+        ].join('\n'),
+      },
+    ],
+    checker: true,
+  },
+  {
+    rule: 'persistence/no-file-content',
+    // Numbered after every real migration, so that the history stays in order and only this rule speaks.
+    what: 'a migration that adds a column of bytes for the scan of an appointment',
+    file: 'migrations/29991231235959_add-appointment-scan.js',
+    changes: [
+      {
+        file: 'migrations/29991231235959_add-appointment-scan.js',
         to: [
           'export const up = async (knex) => {',
           "  await knex.schema.withSchema('scheduling').alterTable('appointments', (table) => {",

@@ -1,4 +1,5 @@
 import { declaredRoleOf } from './declared-role-of.js';
+import { laidOutCalls } from './injection/laid-out-calls.js';
 import type { RenderedInjections } from './injection/rendered-injections.js';
 
 const NOTHING: RenderedInjections = { imports: [], calls: [] };
@@ -28,7 +29,7 @@ export function renderBarrel(
     return `${exported}\n`;
   }
 
-  return `${injected.imports.join('\n')}\n\n${exported}\n\n${injected.calls.join('\n')}\n`;
+  return `${injected.imports.join('\n')}\n\n${exported}\n\n${laidOutCalls(injected.calls)}\n`;
 }
 
 function byPath(left: string, right: string): number {

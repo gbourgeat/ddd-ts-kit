@@ -11,6 +11,8 @@ import { inDialect } from '../package-manager/in-dialect.js';
 import { setUpSdk } from '../sdk/index.js';
 import { readTemplate, renderTemplate } from '../templating/index.js';
 import { Workspace, type WorkspaceReport } from '../workspace/index.js';
+import { applyPreset } from '../presets/apply-preset.js';
+import { presetNamed } from '../presets/preset-named.js';
 import { addContext } from './add-context.js';
 import { existingName } from './existing-name.js';
 import { initFiles } from './files/init-files.js';
@@ -31,6 +33,8 @@ const NEXT_STEP =
 export interface InitOptions extends StackOptions {
   /** `<name>:<classification>` entries. */
   readonly contexts: readonly string[];
+  /** Presets of the kit, each written into the context of its name (declared by the preset when no `--context` names it). */
+  readonly presets?: readonly string[];
   readonly dryRun: boolean;
 }
 
@@ -51,7 +55,8 @@ export function runInit(root: string, options: InitOptions): WorkspaceReport {
     rewireContexts(ws, config);
   }
 
-  const withContexts = addContexts(ws, config, options.contexts);
+  const declared = addContexts(ws, config, [...options.contexts, ...presetContexts(config, options)]);
+  const withContexts = addPresets(ws, declared, [...new Set(options.presets ?? [])]);
 
   writeDocs(ws, withContexts);
   writeContracts(ws, withContexts, projectName);
@@ -109,6 +114,23 @@ function addContexts(ws: Workspace, config: Config, entries: readonly string[]):
   ws.update(DEPCRUISE_FILE, renderCruiseFile(withContexts));
 
   return withContexts;
+}
+
+/** The context of each preset that no `--context` and no config declares yet, under the classification of the preset. */
+function presetContexts(config: Config, options: InitOptions): string[] {
+  const named = new Set(options.contexts.map((entry) => entry.split(':')[0]));
+
+  return (options.presets ?? [])
+    .filter((name) => !named.has(name) && config.contexts[name] === undefined)
+    .map((name) => `${name}:${presetNamed(name).classification}`);
+}
+
+/** Each preset is written into the context of its name, which `addContexts` declared. */
+function addPresets(ws: Workspace, config: Config, names: readonly string[]): Config {
+  return names.reduce(
+    (current, name) => applyPreset(ws, current, { context: name, preset: presetNamed(name) }),
+    config,
+  );
 }
 
 /** A template ending in `.tpl` is rendered; any other is copied as it is. */

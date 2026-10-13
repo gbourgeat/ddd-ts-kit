@@ -8,6 +8,7 @@ import {
   CheckpointStore,
   EventStore,
   EventSubscribers,
+  ExecutionScope,
   Lock,
   Metrics,
   PersonalDataCipher,
@@ -54,6 +55,8 @@ export interface PlatformOptions {
   readonly errors?: ErrorReporter;
   /** The Redis protocol server; left out, the cache, the lock and the limiter stay in the memory of the process. */
   readonly redis?: RedisServices;
+  /** The networks served, each a tenant (ADR-0003): a job declared per tenant runs once for each; left out (the tools), for none. */
+  readonly networks?: readonly string[];
 }
 
 /**
@@ -71,7 +74,7 @@ export function platformModule(persistence: Persistence, options: PlatformOption
       builder.bind(KnexContext).toValue(persistence.database);
       builder.bind(OutboxStore).toValue(persistence.outbox);
       builder.rebind(JobStore).toValue(persistence.jobs);
-      builder.rebind(ProcessStore).toValue(persistence.processes);
+      builder.rebind(ProcessStore).toFactory((resolve) => persistence.processes(resolve(ExecutionScope)));
       bindEventSourcing(builder, persistence);
       // One store for the authorizer and for the adapters that keep relationships in sync: an adapter names `RelationTupleStore` in its dependencies and writes in the unit of work of its command.
       builder.bind(RelationTupleStore).toValue(createTupleStore(persistence.database));
@@ -85,8 +88,13 @@ export function platformModule(persistence: Persistence, options: PlatformOption
       }
 
       // ddd-ts-kit:bindings
-      builder.bind(PersonDirectoryContract).toValue(new KnexPersonDirectory(persistence.database));
-      builder.bind(AppointmentExportContract).toValue(new KnexAppointmentExport(persistence.database));
+      builder
+        .bind(PersonDirectoryContract)
+        .toFactory((resolve) => new KnexPersonDirectory(persistence.database, resolve(ExecutionScope)));
+
+      builder
+        .bind(AppointmentExportContract)
+        .toFactory((resolve) => new KnexAppointmentExport(persistence.database, resolve(ExecutionScope)));
       // /ddd-ts-kit:bindings
     },
   });

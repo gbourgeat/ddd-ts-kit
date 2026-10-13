@@ -466,6 +466,8 @@ export interface SearchAuditEntriesInput {
     readonly outcome?: 'allowed' | 'denied' | 'succeeded' | 'failed';
     /** Everything one request or event caused. */
     readonly correlationId?: string;
+    /** The entries of one network of practices; left out, of every network. */
+    readonly network?: string;
   };
 }
 
