@@ -153,6 +153,19 @@ of a write.
 export class PracticeDirectoryRoutes {}
 ```
 
+## Limits
+
+- **A purge comes after the relay**: between the commit and the purge, a shared cache serves the
+  previous answer, for as long as the relay takes (its interval, or at once when it is woken). A
+  read that must show the write it follows is not served from a shared cache.
+- **A strong `ETag` saves the transfer, not the work**: the handler runs, then the answer is
+  hashed. A weak `ETag` from a version lets a handler that checks the version first skip the read;
+  the kit does not do it for you.
+- **`vary: ['Authorization']` keeps one answer per credential**: as many entries as callers, each
+  purged only by its tags. It is correct and rarely worth it.
+- **The cache in front decides what it honours**: the VCL the CLI writes passes every request with
+  `Authorization` or a cookie, whatever the policy says; a CDN may ignore `stale-if-error`.
+
 ## See also
 
 - [Resilience](resilience.md): a cache as a stability tool, and its failure modes

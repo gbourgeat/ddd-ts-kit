@@ -191,7 +191,7 @@ compiler in strict mode complete the gate.
 | [`@ddd-ts-kit/aspects`](packages/aspects) | logging, metrics, retry, timeout, circuit breaker, cache and bulkhead applied from outside: wrappers, bus middlewares, standard decorators |
 | [`@ddd-ts-kit/audit`](packages/audit) | hash-chained, append-only audit trail fed by authorization decisions, commands and integration events |
 | [`@ddd-ts-kit/redis`](packages/redis) | cache, lock, rate limiter and relay signal on Redis, Dragonfly or Valkey |
-| [`@ddd-ts-kit/http`](packages/http) | routes declared once, mounted on Express, Fastify or NestJS; RFC 9457 errors; OpenAPI 3.1 generation; Swagger UI, Scalar or Redoc |
+| [`@ddd-ts-kit/http`](packages/http) | routes declared once, mounted on Express, Fastify or NestJS; RFC 9457 errors; OpenAPI 3.1 generation; Swagger UI, Scalar or Redoc; cache policies, `ETag`, `If-Match` and cache tags, with purgers for Varnish, Fastly and Cloudflare (`/purgers`) |
 | [`@ddd-ts-kit/validation`](packages/validation) | one `Schema` port over zod, class-validator and Standard Schema |
 | [`@ddd-ts-kit/di`](packages/di) | context modules on tsyringe from the declarations of a context or from an explicit module, port classes as tokens, a test application with fakes |
 | [`@ddd-ts-kit/pino`](packages/pino), [`winston`](packages/winston) | the kernel `Logger` port on pino or winston, with the correlation fields on every line |
@@ -232,6 +232,7 @@ reading order for a newcomer to DDD, a tech lead adopting the kit and a contribu
   [dependency injection](docs/tools/dependency-injection.md),
   [persistence](docs/tools/persistence.md), [message brokers](docs/tools/message-brokers.md),
   [cache and coordination](docs/tools/cache-and-coordination.md),
+  [HTTP caches](docs/tools/http-caches.md),
   [identity](docs/tools/identity.md),
   [authorization engines](docs/tools/authorization-engines.md),
   [observability](docs/tools/observability.md),
