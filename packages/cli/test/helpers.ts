@@ -35,9 +35,10 @@ export function tempDir(label: string): string {
   return directory;
 }
 
+// A git process of a throwaway repository can still be writing its objects when the file ends.
 afterAll(() => {
   for (const directory of created.splice(0)) {
-    fs.rmSync(directory, { recursive: true, force: true });
+    fs.rmSync(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
   }
 });
 

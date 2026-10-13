@@ -69,5 +69,8 @@
   "domainAllowedPackages": ["@ddd-ts-kit/kernel"],
   "applicationAllowedPackages": ["@ddd-ts-kit/kernel", "@ddd-ts-kit/auth"],
   "worker": true,
-  "deviations": []
+  "deviations": [],
+  "sdk": {
+    "name": "{project}-{document}-client"
+  }
 }
