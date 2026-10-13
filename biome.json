@@ -21,9 +21,7 @@
       "!**/openapi/*.json",
       "!**/openapi/forms",
       "!**/asyncapi.json",
-      "!**/migrations/meta",
-      "!site/src/content/docs",
-      "!**/.astro"
+      "!**/migrations/meta"
     ]
   },
   "formatter": {
