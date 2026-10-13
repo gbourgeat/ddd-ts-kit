@@ -34,7 +34,7 @@ export async function startHttpServer(served: Served, config: AppConfig): Promis
 {{/if}}
   app.use(express.json());
 {{#if docs.any}}
-  mountExpress(app, withDocumentation(served.routes, config), served.boundary);
+  mountExpress(app, withDocumentation(served.routes, config, served.boundary), served.boundary);
 {{/if}}
 {{#unless docs.any}}
   mountExpress(app, served.routes, served.boundary);

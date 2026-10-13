@@ -1,7 +1,5 @@
-import { IsISO8601 } from 'class-validator';
+import { pickClass } from '@ddd-ts-kit/validation/class-validator';
+import { TimeSpan } from '@/contexts/scheduling/presentation/http/shared/time-span.schema';
 
-export class RescheduleAppointmentBody {
-  /** The instant the appointment starts from now on, ISO 8601 with its zone. */
-  @IsISO8601({ strict: true })
-  startsAt = '';
-}
+/** The instant the appointment starts from now on: its end follows from its type. */
+export class RescheduleAppointmentBody extends pickClass(TimeSpan, ['startsAt']) {}

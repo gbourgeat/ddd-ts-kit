@@ -1,16 +1,21 @@
 import { defaultMetadataStorage } from 'class-transformer/cjs/storage.js';
 import { validationMetadatasToSchemas } from 'class-validator-jsonschema';
 import type { JsonSchema } from '../json-schema.js';
+import { DEFINITIONS_POINTER } from '../shared/definitions-pointer.js';
+import type { DtoClass } from './dto-class.js';
 
 type SchemasByName = Record<string, JsonSchema>;
 
-const DEFS_POINTER = '#/$defs/';
-
-/** The JSON Schema of a class, carrying under `$defs` only the classes reachable from it. */
-export function selfContainedSchema(className: string): JsonSchema {
+/**
+ * The JSON Schema of a class, carrying under `$defs` only the classes reachable from it. A class
+ * that extends another one holds the properties of its ancestors too, as validation does: a class
+ * that declares nothing itself (`class Body extends pickClass(...) {}`) is described by them.
+ * Shared, the class itself is one of them and the schema is a reference to it.
+ */
+export function selfContainedSchema(dto: DtoClass<object>, shared: boolean): JsonSchema {
   const all = generatedSchemas();
-  const own = all[className] ?? { type: 'object' };
-  const defs: SchemasByName = {};
+  const own = ownSchema(dto, all);
+  const defs: SchemasByName = shared ? { [dto.name]: own } : {};
 
   collectDefs(own, all, defs);
 
@@ -18,7 +23,7 @@ export function selfContainedSchema(className: string): JsonSchema {
 
   return {
     $schema: 'https://json-schema.org/draft/2020-12/schema',
-    ...own,
+    ...(shared ? { $ref: `${DEFINITIONS_POINTER}${dto.name}` } : own),
     ...(names.length > 0 ? { $defs: Object.fromEntries(names.map((name) => [name, defs[name]])) } : {}),
   };
 }
@@ -26,10 +31,53 @@ export function selfContainedSchema(className: string): JsonSchema {
 function generatedSchemas(): SchemasByName {
   const generated = validationMetadatasToSchemas({
     classTransformerMetadataStorage: defaultMetadataStorage,
-    refPointerPrefix: DEFS_POINTER,
+    refPointerPrefix: DEFINITIONS_POINTER,
   });
 
   return Object.fromEntries(Object.entries(generated).map(([name, schema]) => [name, { ...schema }]));
+}
+
+/** The schemas of the class and of its ancestors as one. */
+function ownSchema(dto: DtoClass<object>, all: SchemasByName): JsonSchema {
+  return inherited(
+    lineageOf(dto)
+      .map((name) => all[name])
+      .filter((schema): schema is JsonSchema => schema !== undefined),
+  );
+}
+
+/** The names of the class and of its ancestors, the farthest first. */
+function lineageOf(dto: abstract new () => unknown): string[] {
+  const names: string[] = [];
+
+  for (
+    let current: unknown = dto;
+    typeof current === 'function' && current.name !== '';
+    current = Object.getPrototypeOf(current)
+  ) {
+    names.unshift(current.name);
+  }
+
+  return names;
+}
+
+/** The schemas of a lineage as one: the properties of each, the nearest class last, and every required name. */
+function inherited(schemas: readonly JsonSchema[]): JsonSchema {
+  if (schemas.length === 0) {
+    return { type: 'object' };
+  }
+
+  const merged: JsonSchema = {};
+  const properties: JsonSchema = {};
+  const required = new Set<unknown>();
+
+  for (const schema of schemas) {
+    Object.assign(merged, schema);
+    Object.assign(properties, schema['properties']);
+    (Array.isArray(schema['required']) ? schema['required'] : []).forEach((name: unknown) => required.add(name));
+  }
+
+  return { ...merged, properties, ...(required.size === 0 ? {} : { required: [...required] }) };
 }
 
 function collectDefs(node: unknown, all: SchemasByName, defs: SchemasByName): void {
@@ -57,8 +105,8 @@ function collectDefs(node: unknown, all: SchemasByName, defs: SchemasByName): vo
 }
 
 function referencedDefinition(key: string, value: unknown): string | undefined {
-  if (key === '$ref' && typeof value === 'string' && value.startsWith(DEFS_POINTER)) {
-    return value.slice(DEFS_POINTER.length);
+  if (key === '$ref' && typeof value === 'string' && value.startsWith(DEFINITIONS_POINTER)) {
+    return value.slice(DEFINITIONS_POINTER.length);
   }
 
   return undefined;

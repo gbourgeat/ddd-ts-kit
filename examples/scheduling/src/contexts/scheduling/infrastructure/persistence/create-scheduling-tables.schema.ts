@@ -62,10 +62,7 @@ async function createAppointmentTable(knex: Knex): Promise<void> {
     table.timestamp('confirm_before', { useTz: true });
     table.text('cancelled_by');
     table.text('cancellation_reason');
-
-    checkAppointmentRows(table);
-    table.index(['patient_id', 'practitioner_id', 'starts_at']);
-    table.index(['status', 'confirm_before']);
+    keepAppointmentsConsistent(table);
     table.integer('version').notNullable();
     tenantColumn(table);
     table.index(['tenant_id', 'id'], 'appointments_tenant_idx');
@@ -75,8 +72,8 @@ async function createAppointmentTable(knex: Knex): Promise<void> {
   await holdEachSlotOnce(knex);
 }
 
-/** A status the aggregate knows, and a slot that ends after it starts and is held at least as long. */
-function checkAppointmentRows(table: Knex.CreateTableBuilder): void {
+/** What a row of an appointment holds by construction: a known status, an ordered slot, and the indexes its reads use. */
+function keepAppointmentsConsistent(table: Knex.CreateTableBuilder): void {
   table.check(
     "status in ('requested', 'booked', 'cancelled', 'expired', 'completed', 'no-show')",
     [],
@@ -84,6 +81,8 @@ function checkAppointmentRows(table: Knex.CreateTableBuilder): void {
   );
 
   table.check('starts_at < ends_at and ends_at <= held_until', [], 'appointments_slot_ordered');
+  table.index(['patient_id', 'practitioner_id', 'starts_at']);
+  table.index(['status', 'confirm_before']);
 }
 
 /**

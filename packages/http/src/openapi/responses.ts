@@ -1,23 +1,40 @@
 import type { JsonSchema } from '@ddd-ts-kit/validation';
-import type { ErrorMapper } from '../error/error-mapper.js';
+import { IfMatch } from '../cache/if-match.js';
 import { statusTitle } from '../error/status-title.js';
+import { NOT_ACCEPTABLE } from '../representation/not-acceptable-error.js';
+import { UNSUPPORTED_MEDIA_TYPE } from '../representation/unsupported-media-type-error.js';
+import { answersWithSchema } from '../route/answers-with-schema.js';
 import type { ResponseSpec } from '../route/response-spec.js';
 import type { Route } from '../route/route.js';
 import { isRecord } from '../support/is-record.js';
+import { cacheResponseHeaders } from './cache-response-headers.js';
 import { compare } from './compare.js';
-import type { Definitions } from './definitions.js';
+import type { Documenting } from './documenting.js';
 
 const VALIDATION_FAILED = 'VALIDATION_FAILED';
+const PRECONDITION_FAILED = 'PRECONDITION_FAILED';
+const PRECONDITION_REQUIRED = 'PRECONDITION_REQUIRED';
+const NOT_MODIFIED = 304;
 /** What a route that declares an upload may answer besides its own codes: a file too large, of another type, or missing. */
 const UPLOAD_REFUSALS = ['FILE_TOO_LARGE', 'UNSUPPORTED_MEDIA_TYPE', VALIDATION_FAILED];
 const PROBLEM_REF = { $ref: '#/components/schemas/Problem' };
+const JSON_MEDIA_TYPE = 'application/json';
+const PROBLEM_MEDIA_TYPE = 'application/problem+json';
 
 /** The declared responses, plus one problem response per status of the declared error codes. */
-export function responses(route: Route, mapper: ErrorMapper, definitions: Definitions): JsonSchema {
-  const byStatus = declaredResponses(route, definitions);
+export function responses(route: Route, documenting: Documenting): JsonSchema {
+  const byStatus = declaredResponses(route, documenting);
+  const problemTypes = problemMediaTypes(route, documenting);
 
-  for (const [status, codes] of errorCodesByStatus(route, mapper)) {
-    byStatus.set(status, problemResponse(status, codes, byStatus.get(status)));
+  if (route.cache?.etag !== undefined || route.cache?.lastModified !== undefined) {
+    byStatus.set(NOT_MODIFIED, {
+      description:
+        'Not Modified: the version the caller holds (If-None-Match, If-Modified-Since) is still the current one.',
+    });
+  }
+
+  for (const [status, codes] of errorCodesByStatus(route, documenting)) {
+    byStatus.set(status, problemResponse({ status, codes, mediaTypes: problemTypes }, byStatus.get(status)));
   }
 
   const statuses = [...byStatus.keys()].sort((a, b) => a - b);
@@ -25,27 +42,52 @@ export function responses(route: Route, mapper: ErrorMapper, definitions: Defini
   return Object.fromEntries(statuses.map((status) => [String(status), byStatus.get(status)]));
 }
 
-function declaredResponses(route: Route, definitions: Definitions): Map<number, JsonSchema> {
+function declaredResponses(route: Route, { definitions, representations }: Documenting): Map<number, JsonSchema> {
   const byStatus = new Map<number, JsonSchema>();
+  const mediaTypes = representations?.offeredBy(route) ?? [JSON_MEDIA_TYPE];
+  // An answer chosen by Accept among several media types varies on it, as the pipeline says.
+  const varies = representations !== undefined && answersWithSchema(route) && mediaTypes.length > 1;
   // A copy has a string index, which is how the statuses are enumerated.
   const declaredByKey: Readonly<Record<string, ResponseSpec>> = { ...route.responses };
 
   for (const [key, declared] of Object.entries(declaredByKey)) {
     byStatus.set(Number(key), {
       description: declared.description,
-      ...(declared.body === undefined
-        ? {}
-        : { content: { 'application/json': { schema: definitions.embed(declared.body) } } }),
+      ...cacheResponseHeaders(route, Number(key), varies),
+      ...(declared.body === undefined ? {} : { content: contentOf(mediaTypes, definitions.embed(declared.body)) }),
     });
   }
 
   return byStatus;
 }
 
-function errorCodesByStatus(route: Route, mapper: ErrorMapper): Map<number, string[]> {
+function contentOf(mediaTypes: readonly string[], schema: JsonSchema): JsonSchema {
+  return Object.fromEntries(mediaTypes.map((mediaType) => [mediaType, { schema }]));
+}
+
+/** `application/problem+json`, and the problem type of every media type the route answers in that has one. */
+function problemMediaTypes(route: Route, { representations }: Documenting): readonly string[] {
+  if (representations === undefined) {
+    return [PROBLEM_MEDIA_TYPE];
+  }
+
+  const types = representations.offeredBy(route).map((mediaType) => representations.problemIn(mediaType).mediaType);
+
+  return [...new Set(types)];
+}
+
+function errorCodesByStatus(route: Route, { mapper, representations }: Documenting): Map<number, string[]> {
   const validatesInput = Object.values(route.request ?? {}).some((schema) => schema !== undefined);
   const uploads = route.upload === undefined ? [] : UPLOAD_REFUSALS;
-  const codes = new Set([...(route.errors ?? []), ...(validatesInput ? [VALIDATION_FAILED] : []), ...uploads]);
+
+  const codes = new Set([
+    ...(route.errors ?? []),
+    ...(validatesInput ? [VALIDATION_FAILED] : []),
+    ...uploads,
+    ...(representations === undefined ? [] : negotiationCodes(route)),
+    ...preconditionCodes(route),
+  ]);
+
   const codesByStatus = new Map<number, string[]>();
 
   for (const code of codes) {
@@ -57,7 +99,32 @@ function errorCodesByStatus(route: Route, mapper: ErrorMapper): Map<number, stri
   return codesByStatus;
 }
 
-function problemResponse(status: number, codes: readonly string[], declared: JsonSchema | undefined): JsonSchema {
+/**
+ * Under negotiation, a route whose answer a representation writes refuses an `Accept` header it
+ * cannot meet with 406, and a route that reads a body refuses a media type it does not read with
+ * 415, whatever it declares in `produces` and `consumes`.
+ */
+function negotiationCodes(route: Route): readonly string[] {
+  const readsBody = route.request?.body !== undefined && route.upload === undefined && route.rawBody !== true;
+
+  return [...(answersWithSchema(route) ? [NOT_ACCEPTABLE] : []), ...(readsBody ? [UNSUPPORTED_MEDIA_TYPE] : [])];
+}
+
+function preconditionCodes({ ifMatch }: Route): readonly string[] {
+  if (ifMatch === undefined) {
+    return [];
+  }
+
+  return ifMatch === IfMatch.required ? [PRECONDITION_FAILED, PRECONDITION_REQUIRED] : [PRECONDITION_FAILED];
+}
+
+interface Refusals {
+  readonly status: number;
+  readonly codes: readonly string[];
+  readonly mediaTypes: readonly string[];
+}
+
+function problemResponse({ status, codes, mediaTypes }: Refusals, declared: JsonSchema | undefined): JsonSchema {
   const sorted = [...codes].sort(compare);
 
   return {
@@ -65,7 +132,7 @@ function problemResponse(status: number, codes: readonly string[], declared: Jso
       declared === undefined ? `${statusTitle(status)}. Error codes: ${sorted.join(', ')}.` : declared['description'],
     content: {
       ...(isRecord(declared?.['content']) ? declared['content'] : {}),
-      'application/problem+json': { schema: PROBLEM_REF },
+      ...contentOf(mediaTypes, PROBLEM_REF),
     },
     'x-error-codes': sorted,
   };

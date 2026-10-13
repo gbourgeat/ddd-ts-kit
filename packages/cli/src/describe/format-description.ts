@@ -1,4 +1,5 @@
 import type { Upstream } from '../config/index.js';
+import type { StateMachineFacts } from '../docs/state-machine-facts.js';
 import type {
   ConsumedEventFact,
   ContextDescription,
@@ -32,7 +33,7 @@ export function formatDescription(context: ContextDescription): string {
       ),
     ],
     ['gateways', context.gateways.map(gatewayLine)],
-    ['scheduled jobs', context.jobs.map((job) => `${job.name} (${job.schedule}, sends ${job.command})`)],
+    ...workBlocks(context),
   ];
 
   return [
@@ -40,6 +41,20 @@ export function formatDescription(context: ContextDescription): string {
     ...blocks.flatMap(([label, values]) => blockLines(label, values)),
     `  contracts: ${context.contracts.openapi}, ${context.contracts.eventCatalog}`,
   ].join('\n');
+}
+
+/** What runs on its own: scheduled and background jobs, lifecycles and process managers. */
+function workBlocks(context: ContextDescription): (readonly [string, readonly string[]])[] {
+  return [
+    ['scheduled jobs', context.jobs.map((job) => `${job.name} (${job.schedule}, sends ${job.command})`)],
+    ['background jobs', context.backgroundJobs.map((job) => `${job.name} (${job.className})`)],
+    ['state machines', context.stateMachines.map(stateMachineLine)],
+    ['process managers', context.processes.map(({ name, className }) => `${name} (${className})`)],
+  ];
+}
+
+function stateMachineLine({ aggregate, states, transitions }: StateMachineFacts): string {
+  return `${aggregate} (${states.join(', ')}; ${transitions.map(({ name }) => name).join(', ')})`;
 }
 
 function errorLine({ errorClass, refusal, code, exposes }: ErrorFact): string {
@@ -74,7 +89,16 @@ function routeLine(route: RouteFact): string {
       ? ''
       : ` behind ${[route.group, route.guards.join(', ')].filter((part) => part !== '').join(': ')}`;
 
-  return `${route.method} ${route.path} ${route.operationId}${behind} -> ${known(route.useCase)} (${known(route.permission)}); request: ${request === '' ? 'none' : request}; responses: ${responses}; errors: ${route.errors.join(', ')}`;
+  return `${route.method} ${route.path} ${route.operationId}${behind} -> ${known(route.useCase)} (${known(route.permission)}); request: ${request === '' ? 'none' : request}; responses: ${responses}; errors: ${route.errors.join(', ')}${presentation(route)}`;
+}
+
+/** What a route answers and reads in besides JSON, and its form: said only when it declares them. */
+function presentation({ produces, consumes, form }: RouteFact): string {
+  return [
+    produces === undefined ? '' : `; answers also ${produces.join(', ')}`,
+    consumes === undefined ? '' : `; reads also ${consumes.join(', ')}`,
+    form === undefined ? '' : `; form: ${form}`,
+  ].join('');
 }
 
 function consumedEventLine(event: ConsumedEventFact): string {

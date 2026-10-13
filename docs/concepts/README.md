@@ -48,67 +48,80 @@ of tools.
 9. [Invariants, permissions, validation](invariants-permissions-validation.md): three
    different things, three places.
 10. [Anemic model](anemic-model.md): how to recognise one, and when a thin model is fine.
+11. [State machines](state-machines.md): the lifecycle of an aggregate declared once, asked by
+    the aggregate, drawn in its CONTEXT.md.
 
 ## 3. Architecture: how the code is arranged
 
-11. [Layers and the dependency rule](layers-and-dependency-rule.md): hexagonal, onion and
+12. [Layers and the dependency rule](layers-and-dependency-rule.md): hexagonal, onion and
     clean architecture, what they share and where they differ.
-12. [Ports and composition](ports-and-composition.md): ports as abstract classes, the
+13. [Ports and composition](ports-and-composition.md): ports as abstract classes, the
     composition root, declarations by decorators or explicit wiring.
-13. [CQRS](cqrs.md): command and query buses as used here; event sourcing is a separate
+14. [CQRS](cqrs.md): command and query buses as used here; event sourcing is a separate
     choice, per aggregate.
     [The presentation layer](presentation-layer.md) comes with it: one controller class per
-    route, route groups, guards at the edge and permissions on the use case.
-14. [Modular monolith](modular-monolith.md): one deployable, real modules.
+    route, route groups, guards at the edge and permissions on the use case; and
+    [representations, field access and forms](representations-and-forms.md): one schema
+    answered in JSON, XML or CSV, fields reserved to some callers, forms described by the
+    server.
+15. [Modular monolith](modular-monolith.md): one deployable, real modules.
 
 ## 4. Messaging and consistency: how contexts collaborate
 
-15. [Domain and integration events](domain-and-integration-events.md): the two kinds and what
+16. [Domain and integration events](domain-and-integration-events.md): the two kinds and what
     separates them.
-16. [Transactional outbox](transactional-outbox.md): why publishing straight to a broker loses
+17. [Transactional outbox](transactional-outbox.md): why publishing straight to a broker loses
     or invents events, and the relay strategies.
-17. [Delivery and idempotency](delivery-and-idempotency.md): at-least-once, idempotent
+18. [Delivery and idempotency](delivery-and-idempotency.md): at-least-once, idempotent
     consumers, the processed-event store, ordering.
-18. [Eventual consistency](eventual-consistency.md): explained to a product person.
-19. [Sagas and process managers](sagas-and-process-managers.md): what the kit provides and
+19. [Eventual consistency](eventual-consistency.md): explained to a product person.
+20. [Sagas and process managers](sagas-and-process-managers.md): what the kit provides and
     what it does not.
-20. [Event versioning](event-versioning.md): changing a contract that others consume.
-21. [Event sourcing, per aggregate](event-sourcing.md): when an aggregate keeps its events
+21. [Event versioning](event-versioning.md): changing a contract that others consume.
+22. [Event sourcing, per aggregate](event-sourcing.md): when an aggregate keeps its events
     instead of its state, what it costs, and how to move one to it and back.
 
 ## 5. Cross-cutting concerns: what surrounds the use cases
 
-22. [Authentication and authorization](authentication-and-authorization.md): roles,
+23. [Authentication and authorization](authentication-and-authorization.md): roles,
     attributes, relationships, with a decision table.
-23. [Actor and execution scope](actor-and-execution-scope.md): who acts, explicitly, and what
+24. [Authorization in practice](authorization-in-practice.md): `@Requires`, the middleware,
+    the `Authorizer` port and policies, followed through one command.
+25. [Actor and execution scope](actor-and-execution-scope.md): who acts, explicitly, and what
     every unit of work carries.
-24. [Multitenancy](multitenancy.md): one deployment, many customers, and no read or write
+26. [Multitenancy](multitenancy.md): one deployment, many customers, and no read or write
     that crosses from one to another.
-25. [Audit trail](audit-trail.md): who did what, recorded from outside the use cases.
-26. [Observability](observability.md): tracing, logs, metrics, error reporting, and the
+27. [Audit trail](audit-trail.md): who did what, recorded from outside the use cases.
+28. [Observability](observability.md): tracing, logs, metrics, error reporting, and the
     correlation id that ties them.
-27. [Resilience](resilience.md): retry, timeout, circuit breaker, bulkhead, cache, and how
+29. [Resilience](resilience.md): retry, timeout, circuit breaker, bulkhead, cache, and how
     each one fails.
-28. [Scheduled jobs](scheduled-jobs.md): work triggered by time, and why it must be
+30. [HTTP caching](http-caching.md): what to cache at which layer, who may keep an answer,
+    and never a decision of authorization across actors.
+31. [Scheduled jobs](scheduled-jobs.md): work triggered by time, and why it must be
     idempotent.
-29. [File storage](file-storage.md): files in a storage and never in the database, the order
+32. [Background jobs](background-jobs.md): work a use case hands to a worker, enqueued in its
+    transaction, run at least once.
+33. [File storage](file-storage.md): files in a storage and never in the database, the order
     that keeps both consistent, signed links.
+34. [File import and export](file-import-export.md): a design, not built yet: a large file
+    read or written by a background job, row by row, between the queue and the file storage.
 
 ## 6. Code and tests
 
-30. [Clean code](clean-code.md): naming, small functions, stepdown, comments, testability by
+35. [Clean code](clean-code.md): naming, small functions, stepdown, comments, testability by
     construction.
-31. [Testing strategy](testing-strategy.md): fakes rather than mocks, builders, contract
+36. [Testing strategy](testing-strategy.md): fakes rather than mocks, builders, contract
     tests, the four levels.
 
 ## Shorter paths
 
-- **A product person or a newcomer to DDD:** 1, 2, 3, 5, then 18.
-- **Before writing a first use case:** 3, 7, 9, 11, 13, 31.
-- **Before making two contexts talk:** 4, 15, 16, 17, 20.
-- **Before keeping an aggregate as its events:** 7, 15, 16, 20, 21.
-- **Before serving several customers from one deployment:** 22, 23, 24.
-- **Before putting the system in production:** 22, 26, 27, 28, then the
+- **A product person or a newcomer to DDD:** 1, 2, 3, 5, then 19.
+- **Before writing a first use case:** 3, 7, 9, 12, 14, 36.
+- **Before making two contexts talk:** 4, 16, 17, 18, 21.
+- **Before keeping an aggregate as its events:** 7, 16, 17, 21, 22.
+- **Before serving several customers from one deployment:** 23, 25, 26.
+- **Before putting the system in production:** 23, 24, 28, 29, 30, 31, 32, 33, then the
   [tools pages](../README.md#tools-one-page-per-decision).
 
 ## Limits and when not to use it

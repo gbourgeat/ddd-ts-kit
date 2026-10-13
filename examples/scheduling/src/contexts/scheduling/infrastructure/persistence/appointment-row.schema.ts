@@ -21,6 +21,7 @@ export interface AppointmentColumns {
   readonly confirm_before: Date | null;
   readonly cancelled_by: 'patient' | 'practice' | null;
   readonly cancellation_reason: string | null;
+  readonly internal_note: string | null;
   /** The reference of the attached document, its content being in the file storage: all six null without one. */
   readonly document_key: string | null;
   readonly document_size: number | null;

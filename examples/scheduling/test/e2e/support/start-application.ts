@@ -2,7 +2,14 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { RelationTupleStore, type RelationTuple } from '@ddd-ts-kit/auth/rebac';
-import type { ErrorReporter, IntegrationEventSubscriber } from '@ddd-ts-kit/kernel';
+import { VarnishCachePurger } from '@ddd-ts-kit/http/purgers';
+import {
+  InMemoryCachePurger,
+  PurgingPublisher,
+  type CachePurger,
+  type ErrorReporter,
+  type IntegrationEventSubscriber,
+} from '@ddd-ts-kit/kernel';
 import { createHttpClient, type HttpClient, type HttpHeaders } from '@ddd-ts-kit/testing/e2e';
 import { type Client, createClient } from 'scheduling-api-client';
 import { relateSystemActors } from '@/platform/auth/relate-system-actors';
@@ -29,6 +36,8 @@ export interface RunningApplication {
   readonly api: Client;
   /** Subscribe here (`collectEvents`) to assert the integration events the application publishes. */
   readonly events: IntegrationEventSubscriber;
+  /** What the relay purged from the shared caches, once each command committed: `purges.purged` lists the tags. */
+  readonly purges: InMemoryCachePurger;
 
   /** Where the server listens, `http://127.0.0.1:<port>`: for a request the JSON client does not send, a multipart upload. */
   readonly url: string;
@@ -61,6 +70,14 @@ export interface StartOptions {
   readonly errors?: ErrorReporter;
   /** Put around the storage before the application is composed on it: where a spec makes the infrastructure fail. */
   readonly storage?: (persistence: Persistence) => Persistence;
+  /**
+   * Listens on the port the VCL of docker/varnish names (`VARNISH_BACKEND_PORT`, 54300 by default)
+   * and purges the Varnish of `VARNISH_URL` too, for a spec that reads the API through it. Only
+   * one application at a time can listen there.
+   */
+  readonly behindVarnish?: boolean;
+  /** Starts the scheduled jobs and the worker of the queues, as a process of `RUN_JOBS=true` does: where a spec waits for a background job. */
+  readonly jobs?: boolean;
 }
 
 /**
@@ -72,7 +89,7 @@ export async function startApplication(options: StartOptions = {}): Promise<Runn
   // An empty variable (a blank line of .env) means the same as none.
   const url = process.env['DATABASE_URL'] === '' ? undefined : process.env['DATABASE_URL'];
   const database = await openTestDatabase(url);
-  const { config, filesDirectory } = configuredFor(url);
+  const { config, filesDirectory } = configuredFor(url, options);
   const credentials = await createCredentials();
   const redis = config.redisUrl === noRedis ? undefined : openRedis(config);
   const persistence = options.storage?.(database.persistence) ?? database.persistence;
@@ -88,7 +105,8 @@ export async function startApplication(options: StartOptions = {}): Promise<Runn
 
   await application.start();
 
-  const relay = relayOf(persistence, application);
+  const purges = new InMemoryCachePurger();
+  const relay = relayOf(persistence, application, purgerOf(purges, options, config));
   const server = await startHttpServer(application, config);
   const baseUrl = 'http://127.0.0.1:' + server.port;
   // The store of the running application: what a test relates is what its authorizer reads.
@@ -99,6 +117,7 @@ export async function startApplication(options: StartOptions = {}): Promise<Runn
     url: baseUrl,
     filesDirectory,
     events: application.eventSubscriber,
+    purges,
     relate: (tuple) => tuples.write([tuple]),
     reset: () => relay.whileStopped(() => database.reset().then(() => relateSystemActors(tuples))),
     close: () => closeInOrder({ server, relay, application, redis, database, filesDirectory }),
@@ -121,10 +140,18 @@ function callersOf(
   };
 }
 
-/** The configuration of a test run, its files in a directory of their own. */
-function configuredFor(url: string | undefined): { readonly config: AppConfig; readonly filesDirectory: string } {
+/** The configuration of a test run, its files in a directory of their own, on the port of the VCL behind Varnish. */
+function configuredFor(
+  url: string | undefined,
+  options: StartOptions,
+): { readonly config: AppConfig; readonly filesDirectory: string } {
   const filesDirectory = mkdtempSync(path.join(tmpdir(), 'scheduling-files-'));
-  const environment = { DATABASE_URL: url ?? 'postgres://in-process/tests', FILES_DIRECTORY: filesDirectory };
+
+  const environment = {
+    DATABASE_URL: url ?? 'postgres://in-process/tests',
+    FILES_DIRECTORY: filesDirectory,
+    ...backendPortOf(options),
+  };
 
   return { config: loadConfig(testEnvironment(environment)), filesDirectory };
 }
@@ -133,18 +160,39 @@ function eventsOf(config: AppConfig): EventProvider {
   return config.redisUrl === noRedis ? inProcessEvents() : createEventProvider(config);
 }
 
-function observedOf(options: StartOptions): Pick<StartOptions, 'log' | 'errors'> {
+function observedOf(options: StartOptions): Pick<StartOptions, 'log' | 'errors'> & { jobs?: { start: boolean } } {
   return {
     ...(options.log === undefined ? {} : { log: options.log }),
     ...(options.errors === undefined ? {} : { errors: options.errors }),
+    ...(options.jobs === true ? { jobs: { start: true } } : {}),
   };
 }
 
-function relayOf(persistence: Persistence, application: Application): PausableRelay {
+/** The port of the VCL, when the spec reads the API through Varnish; a free one otherwise. */
+function backendPortOf({ behindVarnish }: StartOptions): { PORT?: string } {
+  return behindVarnish === true ? { PORT: process.env['VARNISH_BACKEND_PORT'] ?? '54300' } : {};
+}
+
+/** The purges are recorded for the spec, and sent to Varnish as well when it reads through one. */
+function purgerOf(purges: InMemoryCachePurger, { behindVarnish }: StartOptions, config: AppConfig): CachePurger {
+  const varnish =
+    behindVarnish === true
+      ? new VarnishCachePurger({ url: config.varnishUrl, key: config.varnishPurgeKey })
+      : undefined;
+
+  return {
+    purge: async (tags) => {
+      await varnish?.purge(tags);
+      await purges.purge(tags);
+    },
+  };
+}
+
+function relayOf(persistence: Persistence, application: Application, purger: CachePurger): PausableRelay {
   return pausableRelay(() =>
     startOutboxRelay({
       store: persistence.outbox,
-      publisher: application.eventBus,
+      publisher: new PurgingPublisher(purger, application.eventBus),
       intervalMs: 20,
       logger: application.logger,
     }),

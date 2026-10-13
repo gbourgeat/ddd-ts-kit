@@ -1,4 +1,5 @@
 import type {
+  BackgroundJobExecution,
   BusMiddleware,
   DomainEventDispatcher,
   ErrorReporter,
@@ -53,6 +54,15 @@ export abstract class Instrumentation {
     run: (execution: JobExecution) => Promise<void>,
     job: InstrumentedJob,
   ) => (execution: JobExecution) => Promise<void>;
+
+  /** Around each attempt of a declared background job, inside its execution scope. */
+  abstract readonly backgroundJob?: (
+    run: (payload: unknown, execution: BackgroundJobExecution) => Promise<void>,
+    job: InstrumentedJob,
+  ) => (payload: unknown, execution: BackgroundJobExecution) => Promise<void>;
+
+  /** The W3C `traceparent` of the active span, stored with each job enqueued so that its run continues the trace. */
+  abstract readonly traceparent?: () => string | undefined;
 
   abstract readonly errorReporter?: (reporter: ErrorReporter) => ErrorReporter;
 

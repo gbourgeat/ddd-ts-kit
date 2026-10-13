@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { controllerRoute, executeRoute } from '@ddd-ts-kit/http';
-import { InMemoryCommandBus } from '@ddd-ts-kit/kernel';
+import { controllerRoute, executeRoute, type RawHeaders } from '@ddd-ts-kit/http';
+import { InMemoryCommandBus, expectVersion } from '@ddd-ts-kit/kernel';
 import { SetOpeningHoursCommand } from '@/contexts/scheduling/application/commands/set-opening-hours/set-opening-hours.command';
 import { CalendarError } from '@/contexts/scheduling/domain/errors/calendar.error';
 import { SetOpeningHoursController } from '@/contexts/scheduling/presentation/http/calendars/set-opening-hours/set-opening-hours.controller';
@@ -30,6 +30,27 @@ describe('PUT /calendars/:calendarId/opening-hours', () => {
     expect(received).toMatchObject([
       { calendarId: 'calendar-1', ranges: [{ weekday: 'monday', start: '09:00', end: '12:00' }] },
     ]);
+  });
+
+  it('hands the use case the version named in If-Match, and answers 412 when the calendar changed since', async () => {
+    const received: SetOpeningHoursCommand[] = [];
+
+    const commands = new InMemoryCommandBus().register(SetOpeningHoursCommand, {
+      execute: async (command) => {
+        received.push(command);
+        expectVersion({ id: 'calendar-1', version: 4 }, command.expectedVersion);
+
+        return 'calendar-1';
+      },
+    });
+
+    const route = controllerRoute(new SetOpeningHoursController(commands), { guards: 'skip' });
+    const current = await executeRoute(route, request(valid, { 'if-match': 'W/"4"' }), { validateResponses: true });
+    const stale = await executeRoute(route, request(valid, { 'if-match': 'W/"3"' }), { validateResponses: true });
+
+    expect(current.status).toBe(200);
+    expect(stale).toMatchObject({ status: 412, body: { code: 'PRECONDITION_FAILED' } });
+    expect(received.map((command) => command.expectedVersion)).toEqual([4, 3]);
   });
 
   it.each([
@@ -65,6 +86,6 @@ describe('PUT /calendars/:calendarId/opening-hours', () => {
   });
 });
 
-function request(body: unknown) {
-  return { params: { calendarId: 'calendar-1' }, query: {}, headers: {}, body, raw: undefined };
+function request(body: unknown, headers: RawHeaders = {}) {
+  return { params: { calendarId: 'calendar-1' }, query: {}, headers, body, raw: undefined };
 }

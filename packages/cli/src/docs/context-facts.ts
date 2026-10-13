@@ -1,5 +1,8 @@
 import type { Upstream } from '../config/index.js';
+import type { BackgroundJobFacts } from './background-job-facts.js';
 import type { DeclaredFacts } from './declared-facts.js';
+import type { ProcessFacts } from './process-facts.js';
+import type { StateMachineFacts } from './state-machine-facts.js';
 
 /** What the documentation and `list` say about one bounded context, read from the config and the files. */
 export interface ContextFacts {
@@ -27,6 +30,12 @@ export interface ContextFacts {
   readonly integrationEventHandlers: readonly string[];
   /** The jobs run by time, `application/scheduling/*.job.ts`. */
   readonly jobs: readonly JobFacts[];
+  /** The work its use cases enqueue, `application/background/*.background-job.ts`. */
+  readonly backgroundJobs: readonly BackgroundJobFacts[];
+  /** The lifecycles of its aggregates, `domain/state-machines/*.state-machine.ts`. */
+  readonly stateMachines: readonly StateMachineFacts[];
+  /** Its process managers, `application/processes/*.process.ts`. */
+  readonly processes: readonly ProcessFacts[];
   /** The context has its own entry point under `apps/`. */
   readonly deployable: boolean;
   /** What the decorators of the role files say, in a declared-style project. */

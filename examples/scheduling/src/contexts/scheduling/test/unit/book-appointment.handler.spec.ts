@@ -20,10 +20,17 @@ import { Agenda } from '@/contexts/scheduling/application/ports/agenda.port';
 import { FakeAgenda } from '@/contexts/scheduling/test/fakes/agenda.fake';
 
 const holders = authorizationModule({
-  authorizer: new RoleBasedAuthorizer({ roles: { holder: [schedulingPermissions['appointment.book']] } }),
+  authorizer: new RoleBasedAuthorizer({
+    roles: {
+      holder: [schedulingPermissions['appointment.book']],
+      runner: [schedulingPermissions['appointment.book'], schedulingPermissions['appointment.note.write']],
+    },
+  }),
 });
 
 const holder = anActor().withRole('holder').build();
+/** Who holds the desk of the calendar: books, and writes the internal note. */
+const runner = anActor().withRole('runner').build();
 // Monday 2 March 2026 in Europe/Paris is UTC+1: 09:00 on the wall clock is 08:00Z.
 const NOW = new Date('2026-03-01T08:00:00.000Z');
 
@@ -170,6 +177,28 @@ describe('Book appointment, within what the calendar allows', () => {
     await expect(
       application.commandBus.execute(new BookAppointmentCommand(holder, 'calendar-a', wish('08:00'))),
     ).rejects.toMatchObject({ code: 'PATIENT_LIMIT_REACHED' });
+  });
+});
+
+describe('Book appointment with an internal note', () => {
+  it('keeps the note of whoever may write it', async () => {
+    const { application, appointmentRepository } = await arrange();
+    const noted = { ...wish('08:00'), internalNote: 'Hard of hearing on the left' };
+
+    const id = await application.commandBus.execute(new BookAppointmentCommand(runner, 'calendar-a', noted));
+
+    expect((await appointmentRepository.findById(id))?.internalNote).toBe('Hard of hearing on the left');
+  });
+
+  it('refuses the note of whoever may book but not write it, and books nothing', async () => {
+    const { application, appointmentRepository } = await arrange();
+    const noted = { ...wish('08:00'), internalNote: 'Written by the patient' };
+
+    await expect(
+      application.commandBus.execute(new BookAppointmentCommand(holder, 'calendar-a', noted)),
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+
+    expect(await appointmentRepository.findById('appointment-1')).toBeUndefined();
   });
 });
 

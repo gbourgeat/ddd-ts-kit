@@ -12,7 +12,7 @@ export function schemaParameters(
     return [];
   }
 
-  const embedded = definitions.embed(schema);
+  const embedded = definitions.resolve(definitions.embed(schema));
   const properties = embedded['properties'];
 
   if (!isRecord(properties)) {

@@ -4,5 +4,8 @@ export type { Infer } from './infer.js';
 export type { JsonSchema } from './json-schema.js';
 export { parseOrThrow } from './parse-or-throw.js';
 export type { Schema } from './schema.js';
+export { schemaBehind } from './shared/schema-behind.js';
+export { sharedNameOf } from './shared/shared-name-of.js';
+export { sharedSchema } from './shared/shared-schema.js';
 export { ValidationError } from './validation-error.js';
 export type { ValidationIssue } from './validation-issue.js';

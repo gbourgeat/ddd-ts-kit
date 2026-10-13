@@ -23,7 +23,7 @@ const anyObject = customSchema<Record<string, unknown>>(
 const body = anyObject;
 
 {{/if}}
-{{#if route.returnsId}}
+{{#if route.ownAccepted}}
 const accepted = customSchema<{ readonly id: string }>(
   (input) =>
     typeof input === 'object' && input !== null && 'id' in input && typeof input.id === 'string'
@@ -50,7 +50,7 @@ const answer = anyObject;
   body,
   {{/if}}
   {{#if route.returnsId}}
-  response: { status: {{route.status}}, description: 'Done; the body carries the identifier.', body: accepted },
+  response: { status: {{route.status}}, description: 'Done; the body carries the identifier.', body: {{route.acceptedBody}} },
   {{/if}}
   {{#if route.returnsNothing}}
   response: { status: {{route.status}}, description: 'Done.' },
@@ -60,6 +60,9 @@ const answer = anyObject;
   {{/if}}
   // TODO(domain): list the codes of the refusals "{{name.words}}" can raise, as their factories set them, so that they appear in the contract with their status (`errors/known-code`).
   errors: [],
+  {{#if route.cached}}
+  cache: {{route.cache}},
+  {{/if}}
 })
 export class {{name.pascal}}Controller {
   constructor({{route.constructorParams}}) {}

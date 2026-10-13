@@ -32,6 +32,7 @@ const BY_CHOICE: Readonly<Record<string, readonly [readonly string[], readonly s
     ['@types/express', ...TRACE_ASSERTIONS],
   ],
   'http:fastify': [['@ddd-ts-kit/http', 'fastify'], TRACE_ASSERTIONS],
+  'http:hono': [['@ddd-ts-kit/http', 'hono', '@hono/node-server'], TRACE_ASSERTIONS],
   'http:nest': [
     ['@ddd-ts-kit/http', '@nestjs/common', '@nestjs/core', '@nestjs/platform-express', 'reflect-metadata', 'rxjs'],
     TRACE_ASSERTIONS,
@@ -41,6 +42,7 @@ const BY_CHOICE: Readonly<Record<string, readonly [readonly string[], readonly s
   'di:manual': [['@ddd-ts-kit/scheduling'], []],
   'di:nest': [['@ddd-ts-kit/scheduling'], []],
   'validation:zod': [['zod'], []],
+  'validation:typebox': [['typebox'], []],
   'validation:class-validator': [
     ['class-validator', 'class-transformer', 'class-validator-jsonschema', 'reflect-metadata'],
     [],
@@ -76,6 +78,8 @@ const BY_CHOICE: Readonly<Record<string, readonly [readonly string[], readonly s
   'broker:redis': [['@ddd-ts-kit/redis', 'ioredis'], []],
   'broker:kafka': [['@ddd-ts-kit/kafka', '@confluentinc/kafka-javascript'], []],
   'broker:nats': [['@ddd-ts-kit/nats', '@nats-io/jetstream', '@nats-io/transport-node'], []],
+  'queue:database': [['@ddd-ts-kit/scheduling'], []],
+  'queue:redis': [['@ddd-ts-kit/scheduling', '@ddd-ts-kit/redis', 'ioredis'], []],
   'tests:vitest': [[], ['vitest']],
   'tests:jest': [[], ['jest', '@jest/globals', '@swc/core', '@swc/jest']],
 };

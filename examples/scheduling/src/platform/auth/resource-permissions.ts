@@ -27,10 +27,13 @@ export const resourcePermissions: PermissionMapping = {
     [schedulingPermissions['calendar.add-exception'].id]: 'plan',
     [schedulingPermissions['calendar.add-time-off'].id]: 'plan',
     [schedulingPermissions['calendar.define-appointment-type'].id]: 'plan',
+    [schedulingPermissions['calendar.clear'].id]: 'run',
     [schedulingPermissions['appointment.book'].id]: 'run',
     [schedulingPermissions['waitlist.join'].id]: 'run',
     [schedulingPermissions['agenda.read'].id]: 'run',
     [analyticsPermissions['occupancy.read'].id]: 'measure',
+    [schedulingPermissions['appointment.note.read'].id]: 'staff',
+    [schedulingPermissions['appointment.note.write'].id]: 'own',
   },
   appointment: {
     [schedulingPermissions['appointment.read'].id]: 'read',

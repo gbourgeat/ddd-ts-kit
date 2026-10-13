@@ -1,5 +1,8 @@
 import type { Clock, ExecutionScope } from '@ddd-ts-kit/kernel';
+import type { CacheTagHeader } from '../cache/cache-tag-header.js';
 import type { ErrorMapper } from '../error/error-mapper.js';
+import type { FieldDecider } from '../field-access/field-decider.js';
+import type { Representations } from '../representation/representations.js';
 import type { TenantResolver } from '../tenancy/tenant-resolver.js';
 import type { ErrorContext } from './error-context.js';
 import type { GuardRefusal } from './guard-refusal.js';
@@ -54,6 +57,43 @@ export interface ExecuteOptions {
    * `@ddd-ts-kit/tracing` fits as it is.
    */
   readonly around?: RouteAround;
+  /**
+   * The media types the application answers and reads in (`Representations.standard()`): each
+   * request is answered in the one its `Accept` header prefers among those its route declares
+   * (406 when none fits), a refusal in the matching problem type, and a body sent in a media
+   * type the route consumes is read before its schema validates it (415 for another one). Left
+   * out, every answer is JSON whatever the request accepts, as before.
+   */
+  readonly representations?: Representations;
+  /**
+   * Decides the fields a schema reserves to some callers (`withFieldAccess`): left out of an
+   * answer for an actor who may not read them, refused in a body for one who may not set them.
+   * `fieldDeciderOf({ access, clock })` builds it from the `Access` of `@ddd-ts-kit/auth`. Left
+   * out, every restricted field is left out of every answer and refused in every body.
+   */
+  readonly fieldAccess?: FieldDecider;
+  /**
+   * The header the shared cache in front of the application reads the tags of an answer from:
+   * `xkey` for Varnish, `surrogate-key` for Fastly, `cache-tag` for Cloudflare, `cdn-tag` for
+   * Bunny. Left out, no answer carries tags: without a shared cache that strips them, they would
+   * only reach the client.
+   */
+  readonly cacheTags?: {
+    readonly header: CacheTagHeader;
+    /**
+     * Files the tags under the tenant of the request, for a multi-tenant application whose purges
+     * are filed per tenant too (`perTenant` of `PublishedCacheInvalidation`). Default `false`. A
+     * tagged answer to a request that names no tenant is then `no-store`: no purge could meet it.
+     */
+    readonly perTenant?: boolean;
+    /**
+     * Whether the cache in front keeps one copy per value of the headers an answer varies on
+     * (`Vary`). Default: `true` for `xkey` and `surrogate-key` (Varnish, Fastly), `false` for
+     * `cache-tag` and `cdn-tag` (Cloudflare and Bunny ignore `Vary`): a public answer that
+     * varies is then refused when the routes are mounted.
+     */
+    readonly honoursVary?: boolean;
+  };
   /** Reads the file of the routes that declare an upload: `multipartUploads()` of `@ddd-ts-kit/http/uploads`. */
   readonly uploads?: UploadReader;
 }

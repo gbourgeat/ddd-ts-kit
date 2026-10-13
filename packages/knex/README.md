@@ -628,6 +628,37 @@ side by side, whatever their streams. PostgreSQL only. The stores are the ones o
 (`PostgresEventStore` and its companions), held to `eventStoreContract` here; how an
 event-sourced aggregate uses them: the README of `@ddd-ts-kit/kernel`, section "Event sourcing".
 
+## Background jobs
+
+`KnexJobStore` is the `JobStore` of `@ddd-ts-kit/scheduling` on PostgreSQL: the background jobs
+of a context in a table of its schema, `createJobTable(knex, { schema })` called from a
+migration. `add` runs on the executor of the context, so a job enqueued by a command is written
+by the transaction of the command; claims select the due rows `FOR UPDATE SKIP LOCKED` in a
+short transaction of their own and lease them. Bind it in the composition root:
+
+```ts
+kernelModule({ unitOfWork, jobStore: new KnexJobStore(unitOfWork, { schema: 'scheduling' }) });
+```
+
+```ts
+// migrations/20261013090000_background-jobs.js
+export const up = (knex) => createJobTable(knex, { schema: 'scheduling' });
+export const down = (knex) => dropJobTable(knex, { schema: 'scheduling' });
+```
+
+The store passes `jobStoreContract`, its unit of work suite included, on PGlite and on
+PostgreSQL. MySQL and SQLite are not covered: the table uses `jsonb` and a partial index.
+What the jobs guarantee: [Background jobs](../../docs/concepts/background-jobs.md).
+
+## Process managers
+
+`KnexProcessStore` is the `ProcessStore` of the kernel: one row per process and correlation key
+in `process_instances`, created by `createProcessTable(knex, { schema })` from a migration
+(`dropProcessTable` is its `down`). A first save inserts, ignoring a row a concurrent first save
+wrote; a next one updates the row at the previous version; a save that changes no row throws
+`ConcurrencyError`. It runs on the executor of the context, in the transaction of the step, and
+passes `processStoreContract` with its unit of work.
+
 ## Dialect coverage
 
 What follows is about this package. The CLI generates for PostgreSQL only: `init --orm knex`

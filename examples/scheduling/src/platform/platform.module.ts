@@ -12,6 +12,7 @@ import {
   Lock,
   Metrics,
   PersonalDataCipher,
+  ProcessStore,
   ProcessedEventStore,
   RateLimiter,
   SnapshotStore,
@@ -20,6 +21,7 @@ import {
   type ErrorReporter,
 } from '@ddd-ts-kit/kernel';
 import { KnexContext } from '@ddd-ts-kit/knex';
+import { JobStore } from '@ddd-ts-kit/scheduling';
 import type { ConsumerTrace } from '@ddd-ts-kit/tracing';
 import { createTupleStore } from '@/platform/auth/create-tuple-store';
 import type { Persistence } from '@/platform/database/persistence';
@@ -71,6 +73,8 @@ export function platformModule(persistence: Persistence, options: PlatformOption
       builder.rebind(ProcessedEventStore).toValue(persistence.processedEvents);
       builder.bind(KnexContext).toValue(persistence.database);
       builder.bind(OutboxStore).toValue(persistence.outbox);
+      builder.rebind(JobStore).toValue(persistence.jobs);
+      builder.rebind(ProcessStore).toValue(persistence.processes);
       bindEventSourcing(builder, persistence);
       // One store for the authorizer and for the adapters that keep relationships in sync: an adapter names `RelationTupleStore` in its dependencies and writes in the unit of work of its command.
       builder.bind(RelationTupleStore).toValue(createTupleStore(persistence.database));

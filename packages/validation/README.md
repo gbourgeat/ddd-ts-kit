@@ -1,7 +1,7 @@
 # @ddd-ts-kit/validation
 
 One `Schema` contract for input validation at the boundary, with adapters for zod,
-class-validator and any Standard Schema library. Routes, DTOs and the OpenAPI generator depend
+class-validator, TypeBox and any Standard Schema library. Routes, DTOs and the OpenAPI generator depend
 on the contract, so the validation library can change without touching them.
 
 Business rules do not belong here: they live in the domain and never import a validation library.
@@ -28,6 +28,8 @@ class): there is nothing to declare in a composition root.
   with code `VALIDATION_FAILED` and the `issues`.
 - `Infer<typeof schema>` gives the parsed type.
 - `customSchema(parse, jsonSchema?)` builds a schema from a plain function.
+
+- `sharedSchema(name, schema)` documents a schema once, under `name` (see [shared schemas](#shared-schemas)).
 
 The root entry imports no third-party package. Each adapter lives in its own subpath and its
 library is an optional peer dependency: install only the one you use.
@@ -97,6 +99,53 @@ reachable from the class under `$defs`.
 
 Requires `experimentalDecorators` in the project's `tsconfig.json`.
 
+A DTO class declared once is reused whole (`classSchema(SlotDto, { shared: true })`, or nested
+with `@ValidateNested()` and `@Type`), extended (`class BookBody extends SlotDto { ... }`) or in
+part, through three helpers that copy the constraints, the nested types and the transformations
+of the properties they keep:
+
+```ts
+import { omitClass, partialClass, pickClass } from '@ddd-ts-kit/validation/class-validator';
+
+class RescheduleBody extends pickClass(AppointmentDto, ['startsAt', 'endsAt']) {}
+class BookBody extends omitClass(AppointmentDto, ['status']) {}
+class EditPatientBody extends partialClass(PatientDto) {} // every property optional, checked when present
+```
+
+The class that extends a helper names the shape in the contract. Picking a property that carries
+no constraint is refused: validation would strip it as unknown. A derived class nested in
+another one through `@Type` declares at least one property of its own: class-validator-jsonschema
+documents a class only from its own decorators.
+
+## TypeBox
+
+```sh
+npm i typebox
+```
+
+```ts
+import Type from 'typebox';
+import { typeboxSchema } from '@ddd-ts-kit/validation/typebox';
+
+const slot = Type.Object({ startsAt: Type.String({ format: 'date-time' }), minutes: Type.Integer({ default: 30 }) }, { $id: 'Slot' });
+const book = typeboxSchema(Type.Object({ patientId: Type.String({ minLength: 1 }), slot }));
+const page = typeboxSchema(Type.Object({ limit: Type.Integer() }), { coerce: true }); // query strings
+```
+
+The schema is compiled once (`typebox/compile`). `parse` fills the defaults and drops the
+properties the schema does not declare, as zod does, then checks; the issue code is the JSON
+Schema keyword that failed (`required`, `format`, `minLength`...). `{ coerce: true }` converts
+text to the declared types first, for path parameters and query strings. A TypeBox schema is
+JSON Schema already: `toJsonSchema()` returns it, a nested schema built with an `$id` moved
+under `$defs` and referenced, so it lands once in the contract; a schema with its own `$id` is
+shared. A missing property is reported at its own path (`slot.startsAt`), as zod reports it, and
+two different schemas under one `$id` are refused. `Type.Pick`, `Type.Omit` and `Type.Partial`
+reuse a schema in part, as a new shape; `Type.Intersect([slot, Type.Object({...})])` extends it
+and keeps the shared part a reference (`allOf: [{ $ref: Slot }, ...]`), while
+`Type.Interface([slot], {...})` writes a new flat shape. (`Type.Composite` belongs to
+`@sinclair/typebox` 0.34 and does not exist in TypeBox 1.)
+Written for the `typebox` package, version 1 (the successor of `@sinclair/typebox`).
+
 ## Standard Schema (valibot, arktype, ...)
 
 ```ts
@@ -110,10 +159,46 @@ const placeOrder = standardSchema(
 );
 ```
 
-The adapter reads `~standard.validate` of Standard Schema v1 and nothing else: it derives no
-JSON Schema, neither from the library's own exporter nor from the separate Standard JSON
-Schema specification. Give it as the second argument (written by hand, or produced by the
-exporter of your library); without it `toJsonSchema()` returns `{}`, which the OpenAPI
-document shows as "any value". The specification carries no error code, so every issue has
-the code `invalid`. A schema that validates asynchronously makes
+The adapter validates with `~standard.validate` of Standard Schema v1. The JSON Schema of the
+contract is the second argument when it is given (written by hand, or produced by the exporter of
+your library); otherwise the one the library converts itself when it implements the companion
+specification, Standard JSON Schema v1 (`~standard.jsonSchema`; verified with zod 4, while arktype
+and valibot through `toStandardJsonSchema` of `@valibot/to-json-schema` announce it but are not
+verified here), input side by default and `standardSchema(schema, undefined, { io: 'output' })`
+for a response; otherwise `{}`, which the OpenAPI document shows as "any value". A schema the
+library cannot write as JSON Schema (zod refuses `z.date()`, `z.coerce.date()`, `z.custom`) is
+documented `{}` as well: pass its JSON Schema as the second argument. The specification carries no error code, so every issue
+has the code `invalid`. A schema that validates asynchronously makes
 `parse` throw: async schemas are not supported at the boundary.
+
+## Shared schemas
+
+A schema several routes use is declared once and documented once: the OpenAPI generator of
+`@ddd-ts-kit/http` writes it in `components.schemas` and points at it with `$ref` from every
+route, whole or nested. A schema is shared when its JSON Schema is a reference to one of its own
+definitions (`{ $ref: '#/$defs/Slot', $defs: { Slot: ... } }`), the form each library reaches its
+own way:
+
+```ts
+// zod: an id in its metadata, kept when the schema is nested in another one
+const slot = z.object({ startsAt: z.iso.datetime(), endsAt: z.iso.datetime() }).meta({ id: 'Slot' });
+const reschedule = zodSchema(slot);
+const book = zodSchema(z.object({ patientId: z.uuid(), slot }));
+
+// class-validator: the name of the class
+const patient = classSchema(PatientDto, { shared: true });
+
+// TypeBox: an $id in its options, kept when the schema is nested in another one
+const money = Type.Object({ cents: Type.Integer(), currency: Type.String() }, { $id: 'Money' });
+
+// any schema, the Standard Schema ones included
+const amount = sharedSchema('Amount', standardSchema(amountSchema));
+```
+
+`sharedNameOf(jsonSchema)` answers the name a JSON Schema is shared under, if any.
+`schemaBehind.of(schema)` answers the schema `sharedSchema` was given, so that what another
+package attached to it (the fields `withFieldAccess` of `@ddd-ts-kit/http` reserves) holds for
+the shared one too. A shared
+schema of the presentation layer lives where `generate schema` writes it: under
+`presentation/http/schemas/` of its context, or under `presentation/` of the shared kernel when
+several contexts answer with it; never in the domain.

@@ -1,3 +1,4 @@
+import { assertCacheDeclaration } from '../cache/assert-cache-declaration.js';
 import type { RequestSchemas } from './request-schemas.js';
 import type { ResponsesSpec } from './responses-spec.js';
 import { ROUTE_PATH_PATTERN } from './route-path-pattern.js';
@@ -16,6 +17,7 @@ export function defineRoute<const Request extends RequestSchemas, const Response
   }
 
   assertSecurityDeclared(spec);
+  assertCacheDeclaration(spec);
 
   return { ...spec, handle: handler };
 }

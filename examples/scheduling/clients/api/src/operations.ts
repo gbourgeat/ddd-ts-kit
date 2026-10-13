@@ -41,34 +41,16 @@ export interface SearchAppointmentsInput {
 }
 
 export type SearchAppointmentsResult =
-  | Success<200, {
-    items: Array<{
-      id: string;
-      calendarId: string;
-      practiceId: string;
-      practitionerId: string;
-      patientId: string;
-      appointmentTypeId: string;
-      startsAt: string;
-      endsAt: string;
-      day: string;
-      status: 'requested' | 'booked' | 'cancelled' | 'expired' | 'completed' | 'no-show';
-      confirmBefore?: string;
-      cancelledBy?: 'patient' | 'practice';
-    }>;
-    /** Present when it is cheap to count. */
-    total?: number;
-    /** Present when more items follow. */
-    nextCursor?: string;
-  }>
+  | Success<200, Schemas.AgendaLinePage>
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
+  | Failure<406, 'NOT_ACCEPTABLE', Schemas.Problem>
   | Failure<422, 'INVALID_CRITERIA' | 'VALIDATION_FAILED', Schemas.Problem>;
 
 /**
  * Search appointments: `GET /appointments`.
  *
- * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), INVALID_CRITERIA (422), VALIDATION_FAILED (422).
+ * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), NOT_ACCEPTABLE (406), INVALID_CRITERIA (422), VALIDATION_FAILED (422).
  */
 export function searchAppointments(
   connection: Connection,
@@ -79,7 +61,7 @@ export function searchAppointments(
     method: 'GET',
     path: '/appointments',
     security: [['bearer']],
-    responses: { 200: 'json', 401: 'json', 403: 'json', 422: 'json' },
+    responses: { 200: 'json', 401: 'json', 403: 'json', 406: 'json', 422: 'json' },
   };
 
   return send<SearchAppointmentsResult>(connection, operation, { ...input, ...options });
@@ -87,27 +69,28 @@ export function searchAppointments(
 
 export interface BookAppointmentInput {
   readonly body: {
+    startsAt: string;
     calendarId: string;
     appointmentTypeId: string;
-    startsAt: string;
     patientId?: string;
+    internalNote?: string;
   };
 }
 
 export type BookAppointmentResult =
-  | Success<201, {
-    id: string;
-  }>
+  | Success<201, Schemas.Accepted>
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
   | Failure<404, 'UNKNOWN_CALENDAR', Schemas.Problem>
+  | Failure<406, 'NOT_ACCEPTABLE', Schemas.Problem>
   | Failure<409, 'PATIENT_LIMIT_REACHED' | 'SLOT_TAKEN', Schemas.Problem>
+  | Failure<415, 'UNSUPPORTED_MEDIA_TYPE', Schemas.Problem>
   | Failure<422, 'BOOKING_TOO_FAR' | 'BOOKING_TOO_LATE' | 'OFF_GRID' | 'OUTSIDE_AVAILABILITY' | 'UNKNOWN_APPOINTMENT_TYPE' | 'VALIDATION_FAILED', Schemas.Problem>;
 
 /**
  * Book appointment: `POST /appointments`.
  *
- * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), UNKNOWN_CALENDAR (404), PATIENT_LIMIT_REACHED (409), SLOT_TAKEN (409), BOOKING_TOO_FAR (422), BOOKING_TOO_LATE (422), OFF_GRID (422), OUTSIDE_AVAILABILITY (422), UNKNOWN_APPOINTMENT_TYPE (422), VALIDATION_FAILED (422).
+ * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), UNKNOWN_CALENDAR (404), NOT_ACCEPTABLE (406), PATIENT_LIMIT_REACHED (409), SLOT_TAKEN (409), UNSUPPORTED_MEDIA_TYPE (415), BOOKING_TOO_FAR (422), BOOKING_TOO_LATE (422), OFF_GRID (422), OUTSIDE_AVAILABILITY (422), UNKNOWN_APPOINTMENT_TYPE (422), VALIDATION_FAILED (422).
  */
 export function bookAppointment(
   connection: Connection,
@@ -118,7 +101,7 @@ export function bookAppointment(
     method: 'POST',
     path: '/appointments',
     security: [['bearer']],
-    responses: { 201: 'json', 401: 'json', 403: 'json', 404: 'json', 409: 'json', 422: 'json' },
+    responses: { 201: 'json', 401: 'json', 403: 'json', 404: 'json', 406: 'json', 409: 'json', 415: 'json', 422: 'json' },
   };
 
   return send<BookAppointmentResult>(connection, operation, { ...input, ...options });
@@ -132,7 +115,6 @@ export interface GetAppointmentInput {
 
 export type GetAppointmentResult =
   | Success<200, {
-    patientName?: string;
     id: string;
     calendarId: string;
     practiceId: string;
@@ -145,16 +127,19 @@ export type GetAppointmentResult =
     status: 'requested' | 'booked' | 'cancelled' | 'expired' | 'completed' | 'no-show';
     confirmBefore?: string;
     cancelledBy?: 'patient' | 'practice';
+    patientName?: string;
+    internalNote?: string;
   }>
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
   | Failure<404, 'APPOINTMENT_NOT_FOUND', Schemas.Problem>
+  | Failure<406, 'NOT_ACCEPTABLE', Schemas.Problem>
   | Failure<422, 'VALIDATION_FAILED', Schemas.Problem>;
 
 /**
  * Get appointment: `GET /appointments/{appointmentId}`.
  *
- * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), APPOINTMENT_NOT_FOUND (404), VALIDATION_FAILED (422).
+ * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), APPOINTMENT_NOT_FOUND (404), NOT_ACCEPTABLE (406), VALIDATION_FAILED (422).
  */
 export function getAppointment(
   connection: Connection,
@@ -165,7 +150,7 @@ export function getAppointment(
     method: 'GET',
     path: '/appointments/{appointmentId}',
     security: [['bearer']],
-    responses: { 200: 'json', 401: 'json', 403: 'json', 404: 'json', 422: 'json' },
+    responses: { 200: 'json', 401: 'json', 403: 'json', 404: 'json', 406: 'json', 422: 'json' },
   };
 
   return send<GetAppointmentResult>(connection, operation, { ...input, ...options });
@@ -181,19 +166,19 @@ export interface CancelAppointmentInput {
 }
 
 export type CancelAppointmentResult =
-  | Success<201, {
-    id: string;
-  }>
+  | Success<201, Schemas.Accepted>
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
   | Failure<404, 'APPOINTMENT_NOT_FOUND', Schemas.Problem>
+  | Failure<406, 'NOT_ACCEPTABLE', Schemas.Problem>
   | Failure<409, 'APPOINTMENT_ENDED', Schemas.Problem>
+  | Failure<415, 'UNSUPPORTED_MEDIA_TYPE', Schemas.Problem>
   | Failure<422, 'REASON_REQUIRED' | 'VALIDATION_FAILED', Schemas.Problem>;
 
 /**
  * Cancel appointment: `POST /appointments/{appointmentId}/cancellation`.
  *
- * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), APPOINTMENT_NOT_FOUND (404), APPOINTMENT_ENDED (409), REASON_REQUIRED (422), VALIDATION_FAILED (422).
+ * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), APPOINTMENT_NOT_FOUND (404), NOT_ACCEPTABLE (406), APPOINTMENT_ENDED (409), UNSUPPORTED_MEDIA_TYPE (415), REASON_REQUIRED (422), VALIDATION_FAILED (422).
  */
 export function cancelAppointment(
   connection: Connection,
@@ -204,7 +189,7 @@ export function cancelAppointment(
     method: 'POST',
     path: '/appointments/{appointmentId}/cancellation',
     security: [['bearer']],
-    responses: { 201: 'json', 401: 'json', 403: 'json', 404: 'json', 409: 'json', 422: 'json' },
+    responses: { 201: 'json', 401: 'json', 403: 'json', 404: 'json', 406: 'json', 409: 'json', 415: 'json', 422: 'json' },
   };
 
   return send<CancelAppointmentResult>(connection, operation, { ...input, ...options });
@@ -217,19 +202,18 @@ export interface CompleteAppointmentInput {
 }
 
 export type CompleteAppointmentResult =
-  | Success<201, {
-    id: string;
-  }>
+  | Success<201, Schemas.Accepted>
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
   | Failure<404, 'APPOINTMENT_NOT_FOUND', Schemas.Problem>
+  | Failure<406, 'NOT_ACCEPTABLE', Schemas.Problem>
   | Failure<409, 'APPOINTMENT_ENDED', Schemas.Problem>
   | Failure<422, 'APPOINTMENT_NOT_STARTED' | 'VALIDATION_FAILED', Schemas.Problem>;
 
 /**
  * Complete appointment: `POST /appointments/{appointmentId}/completion`.
  *
- * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), APPOINTMENT_NOT_FOUND (404), APPOINTMENT_ENDED (409), APPOINTMENT_NOT_STARTED (422), VALIDATION_FAILED (422).
+ * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), APPOINTMENT_NOT_FOUND (404), NOT_ACCEPTABLE (406), APPOINTMENT_ENDED (409), APPOINTMENT_NOT_STARTED (422), VALIDATION_FAILED (422).
  */
 export function completeAppointment(
   connection: Connection,
@@ -240,7 +224,7 @@ export function completeAppointment(
     method: 'POST',
     path: '/appointments/{appointmentId}/completion',
     security: [['bearer']],
-    responses: { 201: 'json', 401: 'json', 403: 'json', 404: 'json', 409: 'json', 422: 'json' },
+    responses: { 201: 'json', 401: 'json', 403: 'json', 404: 'json', 406: 'json', 409: 'json', 422: 'json' },
   };
 
   return send<CompleteAppointmentResult>(connection, operation, { ...input, ...options });
@@ -253,19 +237,18 @@ export interface ConfirmAppointmentInput {
 }
 
 export type ConfirmAppointmentResult =
-  | Success<201, {
-    id: string;
-  }>
+  | Success<201, Schemas.Accepted>
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
   | Failure<404, 'APPOINTMENT_NOT_FOUND', Schemas.Problem>
+  | Failure<406, 'NOT_ACCEPTABLE', Schemas.Problem>
   | Failure<409, 'APPOINTMENT_ALREADY_CONFIRMED' | 'APPOINTMENT_ENDED', Schemas.Problem>
   | Failure<422, 'VALIDATION_FAILED', Schemas.Problem>;
 
 /**
  * Confirm appointment: `POST /appointments/{appointmentId}/confirmation`.
  *
- * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), APPOINTMENT_NOT_FOUND (404), APPOINTMENT_ALREADY_CONFIRMED (409), APPOINTMENT_ENDED (409), VALIDATION_FAILED (422).
+ * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), APPOINTMENT_NOT_FOUND (404), NOT_ACCEPTABLE (406), APPOINTMENT_ALREADY_CONFIRMED (409), APPOINTMENT_ENDED (409), VALIDATION_FAILED (422).
  */
 export function confirmAppointment(
   connection: Connection,
@@ -276,7 +259,7 @@ export function confirmAppointment(
     method: 'POST',
     path: '/appointments/{appointmentId}/confirmation',
     security: [['bearer']],
-    responses: { 201: 'json', 401: 'json', 403: 'json', 404: 'json', 409: 'json', 422: 'json' },
+    responses: { 201: 'json', 401: 'json', 403: 'json', 404: 'json', 406: 'json', 409: 'json', 422: 'json' },
   };
 
   return send<ConfirmAppointmentResult>(connection, operation, { ...input, ...options });
@@ -299,12 +282,13 @@ export type GetAppointmentDocumentResult =
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
   | Failure<404, 'APPOINTMENT_NOT_FOUND' | 'NO_DOCUMENT', Schemas.Problem>
+  | Failure<406, 'NOT_ACCEPTABLE', Schemas.Problem>
   | Failure<422, 'VALIDATION_FAILED', Schemas.Problem>;
 
 /**
  * Get a link to the document of an appointment: `GET /appointments/{appointmentId}/document`.
  *
- * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), APPOINTMENT_NOT_FOUND (404), NO_DOCUMENT (404), VALIDATION_FAILED (422).
+ * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), APPOINTMENT_NOT_FOUND (404), NO_DOCUMENT (404), NOT_ACCEPTABLE (406), VALIDATION_FAILED (422).
  */
 export function getAppointmentDocument(
   connection: Connection,
@@ -315,7 +299,7 @@ export function getAppointmentDocument(
     method: 'GET',
     path: '/appointments/{appointmentId}/document',
     security: [['bearer']],
-    responses: { 200: 'json', 401: 'json', 403: 'json', 404: 'json', 422: 'json' },
+    responses: { 200: 'json', 401: 'json', 403: 'json', 404: 'json', 406: 'json', 422: 'json' },
   };
 
   return send<GetAppointmentDocumentResult>(connection, operation, { ...input, ...options });
@@ -328,12 +312,11 @@ export interface AttachAppointmentDocumentInput {
 }
 
 export type AttachAppointmentDocumentResult =
-  | Success<201, {
-    id: string;
-  }>
+  | Success<201, Schemas.Accepted>
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
   | Failure<404, 'APPOINTMENT_NOT_FOUND', Schemas.Problem>
+  | Failure<406, 'NOT_ACCEPTABLE', Schemas.Problem>
   | Failure<413, 'FILE_TOO_LARGE', Schemas.Problem>
   | Failure<415, 'UNSUPPORTED_MEDIA_TYPE', Schemas.Problem>
   | Failure<422, 'DOCUMENT_NAME_TOO_LONG' | 'FILE_REJECTED' | 'VALIDATION_FAILED', Schemas.Problem>;
@@ -341,7 +324,7 @@ export type AttachAppointmentDocumentResult =
 /**
  * Attach a document to an appointment: `POST /appointments/{appointmentId}/document`.
  *
- * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), APPOINTMENT_NOT_FOUND (404), FILE_TOO_LARGE (413), UNSUPPORTED_MEDIA_TYPE (415), DOCUMENT_NAME_TOO_LONG (422), FILE_REJECTED (422), VALIDATION_FAILED (422).
+ * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), APPOINTMENT_NOT_FOUND (404), NOT_ACCEPTABLE (406), FILE_TOO_LARGE (413), UNSUPPORTED_MEDIA_TYPE (415), DOCUMENT_NAME_TOO_LONG (422), FILE_REJECTED (422), VALIDATION_FAILED (422).
  */
 export function attachAppointmentDocument(
   connection: Connection,
@@ -352,7 +335,7 @@ export function attachAppointmentDocument(
     method: 'POST',
     path: '/appointments/{appointmentId}/document',
     security: [['bearer']],
-    responses: { 201: 'json', 401: 'json', 403: 'json', 404: 'json', 413: 'json', 415: 'json', 422: 'json' },
+    responses: { 201: 'json', 401: 'json', 403: 'json', 404: 'json', 406: 'json', 413: 'json', 415: 'json', 422: 'json' },
   };
 
   return send<AttachAppointmentDocumentResult>(connection, operation, { ...input, ...options });
@@ -365,18 +348,17 @@ export interface RemoveAppointmentDocumentInput {
 }
 
 export type RemoveAppointmentDocumentResult =
-  | Success<200, {
-    id: string;
-  }>
+  | Success<200, Schemas.Accepted>
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
   | Failure<404, 'APPOINTMENT_NOT_FOUND' | 'NO_DOCUMENT', Schemas.Problem>
+  | Failure<406, 'NOT_ACCEPTABLE', Schemas.Problem>
   | Failure<422, 'VALIDATION_FAILED', Schemas.Problem>;
 
 /**
  * Remove the document of an appointment: `DELETE /appointments/{appointmentId}/document`.
  *
- * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), APPOINTMENT_NOT_FOUND (404), NO_DOCUMENT (404), VALIDATION_FAILED (422).
+ * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), APPOINTMENT_NOT_FOUND (404), NO_DOCUMENT (404), NOT_ACCEPTABLE (406), VALIDATION_FAILED (422).
  */
 export function removeAppointmentDocument(
   connection: Connection,
@@ -387,7 +369,7 @@ export function removeAppointmentDocument(
     method: 'DELETE',
     path: '/appointments/{appointmentId}/document',
     security: [['bearer']],
-    responses: { 200: 'json', 401: 'json', 403: 'json', 404: 'json', 422: 'json' },
+    responses: { 200: 'json', 401: 'json', 403: 'json', 404: 'json', 406: 'json', 422: 'json' },
   };
 
   return send<RemoveAppointmentDocumentResult>(connection, operation, { ...input, ...options });
@@ -400,19 +382,18 @@ export interface MarkAppointmentNoShowInput {
 }
 
 export type MarkAppointmentNoShowResult =
-  | Success<201, {
-    id: string;
-  }>
+  | Success<201, Schemas.Accepted>
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
   | Failure<404, 'APPOINTMENT_NOT_FOUND', Schemas.Problem>
+  | Failure<406, 'NOT_ACCEPTABLE', Schemas.Problem>
   | Failure<409, 'APPOINTMENT_ENDED', Schemas.Problem>
   | Failure<422, 'APPOINTMENT_NOT_STARTED' | 'VALIDATION_FAILED', Schemas.Problem>;
 
 /**
  * Mark appointment no show: `POST /appointments/{appointmentId}/no-show`.
  *
- * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), APPOINTMENT_NOT_FOUND (404), APPOINTMENT_ENDED (409), APPOINTMENT_NOT_STARTED (422), VALIDATION_FAILED (422).
+ * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), APPOINTMENT_NOT_FOUND (404), NOT_ACCEPTABLE (406), APPOINTMENT_ENDED (409), APPOINTMENT_NOT_STARTED (422), VALIDATION_FAILED (422).
  */
 export function markAppointmentNoShow(
   connection: Connection,
@@ -423,7 +404,7 @@ export function markAppointmentNoShow(
     method: 'POST',
     path: '/appointments/{appointmentId}/no-show',
     security: [['bearer']],
-    responses: { 201: 'json', 401: 'json', 403: 'json', 404: 'json', 409: 'json', 422: 'json' },
+    responses: { 201: 'json', 401: 'json', 403: 'json', 404: 'json', 406: 'json', 409: 'json', 422: 'json' },
   };
 
   return send<MarkAppointmentNoShowResult>(connection, operation, { ...input, ...options });
@@ -439,19 +420,19 @@ export interface RescheduleAppointmentInput {
 }
 
 export type RescheduleAppointmentResult =
-  | Success<201, {
-    id: string;
-  }>
+  | Success<201, Schemas.Accepted>
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
   | Failure<404, 'APPOINTMENT_NOT_FOUND' | 'UNKNOWN_CALENDAR', Schemas.Problem>
+  | Failure<406, 'NOT_ACCEPTABLE', Schemas.Problem>
   | Failure<409, 'APPOINTMENT_ENDED' | 'PATIENT_LIMIT_REACHED' | 'SLOT_TAKEN', Schemas.Problem>
+  | Failure<415, 'UNSUPPORTED_MEDIA_TYPE', Schemas.Problem>
   | Failure<422, 'BOOKING_TOO_FAR' | 'BOOKING_TOO_LATE' | 'OFF_GRID' | 'OUTSIDE_AVAILABILITY' | 'UNKNOWN_APPOINTMENT_TYPE' | 'VALIDATION_FAILED', Schemas.Problem>;
 
 /**
  * Reschedule appointment: `POST /appointments/{appointmentId}/reschedule`.
  *
- * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), APPOINTMENT_NOT_FOUND (404), UNKNOWN_CALENDAR (404), APPOINTMENT_ENDED (409), PATIENT_LIMIT_REACHED (409), SLOT_TAKEN (409), BOOKING_TOO_FAR (422), BOOKING_TOO_LATE (422), OFF_GRID (422), OUTSIDE_AVAILABILITY (422), UNKNOWN_APPOINTMENT_TYPE (422), VALIDATION_FAILED (422).
+ * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), APPOINTMENT_NOT_FOUND (404), UNKNOWN_CALENDAR (404), NOT_ACCEPTABLE (406), APPOINTMENT_ENDED (409), PATIENT_LIMIT_REACHED (409), SLOT_TAKEN (409), UNSUPPORTED_MEDIA_TYPE (415), BOOKING_TOO_FAR (422), BOOKING_TOO_LATE (422), OFF_GRID (422), OUTSIDE_AVAILABILITY (422), UNKNOWN_APPOINTMENT_TYPE (422), VALIDATION_FAILED (422).
  */
 export function rescheduleAppointment(
   connection: Connection,
@@ -462,7 +443,7 @@ export function rescheduleAppointment(
     method: 'POST',
     path: '/appointments/{appointmentId}/reschedule',
     security: [['bearer']],
-    responses: { 201: 'json', 401: 'json', 403: 'json', 404: 'json', 409: 'json', 422: 'json' },
+    responses: { 201: 'json', 401: 'json', 403: 'json', 404: 'json', 406: 'json', 409: 'json', 415: 'json', 422: 'json' },
   };
 
   return send<RescheduleAppointmentResult>(connection, operation, { ...input, ...options });
@@ -521,12 +502,13 @@ export type SearchAuditEntriesResult =
   }>
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
+  | Failure<406, 'NOT_ACCEPTABLE', Schemas.Problem>
   | Failure<422, 'VALIDATION_FAILED', Schemas.Problem>;
 
 /**
  * Search the entries of the audit trail: `GET /audit/entries`.
  *
- * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), VALIDATION_FAILED (422).
+ * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), NOT_ACCEPTABLE (406), VALIDATION_FAILED (422).
  */
 export function searchAuditEntries(
   connection: Connection,
@@ -537,7 +519,7 @@ export function searchAuditEntries(
     method: 'GET',
     path: '/audit/entries',
     security: [['bearer']],
-    responses: { 200: 'json', 401: 'json', 403: 'json', 422: 'json' },
+    responses: { 200: 'json', 401: 'json', 403: 'json', 406: 'json', 422: 'json' },
   };
 
   return send<SearchAuditEntriesResult>(connection, operation, { ...input, ...options });
@@ -551,17 +533,17 @@ export interface CreateCalendarInput {
 }
 
 export type CreateCalendarResult =
-  | Success<201, {
-    id: string;
-  }>
+  | Success<201, Schemas.Accepted>
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
+  | Failure<406, 'NOT_ACCEPTABLE', Schemas.Problem>
+  | Failure<415, 'UNSUPPORTED_MEDIA_TYPE', Schemas.Problem>
   | Failure<422, 'UNKNOWN_PRACTITIONER' | 'UNKNOWN_TIME_ZONE' | 'VALIDATION_FAILED', Schemas.Problem>;
 
 /**
  * Create calendar: `POST /calendars`.
  *
- * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), UNKNOWN_PRACTITIONER (422), UNKNOWN_TIME_ZONE (422), VALIDATION_FAILED (422).
+ * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), NOT_ACCEPTABLE (406), UNSUPPORTED_MEDIA_TYPE (415), UNKNOWN_PRACTITIONER (422), UNKNOWN_TIME_ZONE (422), VALIDATION_FAILED (422).
  */
 export function createCalendar(
   connection: Connection,
@@ -572,7 +554,7 @@ export function createCalendar(
     method: 'POST',
     path: '/calendars',
     security: [['bearer']],
-    responses: { 201: 'json', 401: 'json', 403: 'json', 422: 'json' },
+    responses: { 201: 'json', 401: 'json', 403: 'json', 406: 'json', 415: 'json', 422: 'json' },
   };
 
   return send<CreateCalendarResult>(connection, operation, { ...input, ...options });
@@ -592,18 +574,18 @@ export interface DefineAppointmentTypeInput {
 }
 
 export type DefineAppointmentTypeResult =
-  | Success<201, {
-    id: string;
-  }>
+  | Success<201, Schemas.Accepted>
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
   | Failure<404, 'UNKNOWN_CALENDAR', Schemas.Problem>
+  | Failure<406, 'NOT_ACCEPTABLE', Schemas.Problem>
+  | Failure<415, 'UNSUPPORTED_MEDIA_TYPE', Schemas.Problem>
   | Failure<422, 'INVALID_APPOINTMENT_TYPE' | 'VALIDATION_FAILED', Schemas.Problem>;
 
 /**
  * Define appointment type: `POST /calendars/{calendarId}/appointment-types`.
  *
- * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), UNKNOWN_CALENDAR (404), INVALID_APPOINTMENT_TYPE (422), VALIDATION_FAILED (422).
+ * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), UNKNOWN_CALENDAR (404), NOT_ACCEPTABLE (406), UNSUPPORTED_MEDIA_TYPE (415), INVALID_APPOINTMENT_TYPE (422), VALIDATION_FAILED (422).
  */
 export function defineAppointmentType(
   connection: Connection,
@@ -614,16 +596,104 @@ export function defineAppointmentType(
     method: 'POST',
     path: '/calendars/{calendarId}/appointment-types',
     security: [['bearer']],
-    responses: { 201: 'json', 401: 'json', 403: 'json', 404: 'json', 422: 'json' },
+    responses: { 201: 'json', 401: 'json', 403: 'json', 404: 'json', 406: 'json', 415: 'json', 422: 'json' },
   };
 
   return send<DefineAppointmentTypeResult>(connection, operation, { ...input, ...options });
+}
+
+export interface ClearCalendarInput {
+  readonly path: {
+    readonly calendarId: string;
+  };
+  readonly body: {
+    startsAt: string;
+    endsAt: string;
+    reason: string;
+  };
+}
+
+export type ClearCalendarResult =
+  | Success<202, {
+    id: string;
+  }>
+  | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
+  | Failure<403, 'FORBIDDEN', Schemas.Problem>
+  | Failure<404, 'UNKNOWN_CALENDAR', Schemas.Problem>
+  | Failure<406, 'NOT_ACCEPTABLE', Schemas.Problem>
+  | Failure<415, 'UNSUPPORTED_MEDIA_TYPE', Schemas.Problem>
+  | Failure<422, 'INVALID_TIME_OFF' | 'VALIDATION_FAILED', Schemas.Problem>;
+
+/**
+ * Clear calendar: `POST /calendars/{calendarId}/clearances`.
+ *
+ * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), UNKNOWN_CALENDAR (404), NOT_ACCEPTABLE (406), UNSUPPORTED_MEDIA_TYPE (415), INVALID_TIME_OFF (422), VALIDATION_FAILED (422).
+ */
+export function clearCalendar(
+  connection: Connection,
+  input: ClearCalendarInput,
+  options: CallOptions = {},
+): Promise<ClearCalendarResult> {
+  const operation: Operation = {
+    method: 'POST',
+    path: '/calendars/{calendarId}/clearances',
+    security: [['bearer']],
+    responses: { 202: 'json', 401: 'json', 403: 'json', 404: 'json', 406: 'json', 415: 'json', 422: 'json' },
+  };
+
+  return send<ClearCalendarResult>(connection, operation, { ...input, ...options });
+}
+
+export interface GetClearanceInput {
+  readonly path: {
+    readonly calendarId: string;
+    readonly clearanceId: string;
+  };
+}
+
+export type GetClearanceResult =
+  | Success<200, {
+    clearanceId: string;
+    status: 'waiting' | 'running' | 'succeeded' | 'cancelled' | 'dead';
+    attempts: number;
+    done: number;
+    total?: number;
+    lastErrorCode?: string;
+  }>
+  | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
+  | Failure<403, 'FORBIDDEN', Schemas.Problem>
+  | Failure<404, 'UNKNOWN_CLEARANCE', Schemas.Problem>
+  | Failure<406, 'NOT_ACCEPTABLE', Schemas.Problem>
+  | Failure<422, 'VALIDATION_FAILED', Schemas.Problem>;
+
+/**
+ * Get clearance: `GET /calendars/{calendarId}/clearances/{clearanceId}`.
+ *
+ * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), UNKNOWN_CLEARANCE (404), NOT_ACCEPTABLE (406), VALIDATION_FAILED (422).
+ */
+export function getClearance(
+  connection: Connection,
+  input: GetClearanceInput,
+  options: CallOptions = {},
+): Promise<GetClearanceResult> {
+  const operation: Operation = {
+    method: 'GET',
+    path: '/calendars/{calendarId}/clearances/{clearanceId}',
+    security: [['bearer']],
+    responses: { 200: 'json', 401: 'json', 403: 'json', 404: 'json', 406: 'json', 422: 'json' },
+  };
+
+  return send<GetClearanceResult>(connection, operation, { ...input, ...options });
 }
 
 export interface GetCalendarDayInput {
   readonly path: {
     readonly calendarId: string;
     readonly day: string;
+  };
+  readonly header?: {
+    /** The ETag of the version the caller holds: 304 when it is still the current one. */
+    readonly 'If-None-Match'?: string;
   };
 }
 
@@ -637,15 +707,17 @@ export type GetCalendarDayResult =
     appointmentTypes: Array<Schemas.CalendarDayAppointmentTypeDto>;
     busy: Array<Schemas.CalendarDayBusyDto>;
   }>
+  | Success<304, undefined>
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
   | Failure<404, 'UNKNOWN_CALENDAR', Schemas.Problem>
+  | Failure<406, 'NOT_ACCEPTABLE', Schemas.Problem>
   | Failure<422, 'INVALID_DAY' | 'VALIDATION_FAILED', Schemas.Problem>;
 
 /**
  * Get calendar day: `GET /calendars/{calendarId}/days/{day}`.
  *
- * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), UNKNOWN_CALENDAR (404), INVALID_DAY (422), VALIDATION_FAILED (422).
+ * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), UNKNOWN_CALENDAR (404), NOT_ACCEPTABLE (406), INVALID_DAY (422), VALIDATION_FAILED (422).
  */
 export function getCalendarDay(
   connection: Connection,
@@ -656,7 +728,7 @@ export function getCalendarDay(
     method: 'GET',
     path: '/calendars/{calendarId}/days/{day}',
     security: [['bearer']],
-    responses: { 200: 'json', 401: 'json', 403: 'json', 404: 'json', 422: 'json' },
+    responses: { 200: 'json', 304: 'none', 401: 'json', 403: 'json', 404: 'json', 406: 'json', 422: 'json' },
   };
 
   return send<GetCalendarDayResult>(connection, operation, { ...input, ...options });
@@ -673,18 +745,18 @@ export interface AddExceptionInput {
 }
 
 export type AddExceptionResult =
-  | Success<201, {
-    id: string;
-  }>
+  | Success<201, Schemas.Accepted>
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
   | Failure<404, 'UNKNOWN_CALENDAR', Schemas.Problem>
+  | Failure<406, 'NOT_ACCEPTABLE', Schemas.Problem>
+  | Failure<415, 'UNSUPPORTED_MEDIA_TYPE', Schemas.Problem>
   | Failure<422, 'INVALID_DAY' | 'INVALID_RANGE' | 'VALIDATION_FAILED', Schemas.Problem>;
 
 /**
  * Add exception: `POST /calendars/{calendarId}/exceptions`.
  *
- * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), UNKNOWN_CALENDAR (404), INVALID_DAY (422), INVALID_RANGE (422), VALIDATION_FAILED (422).
+ * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), UNKNOWN_CALENDAR (404), NOT_ACCEPTABLE (406), UNSUPPORTED_MEDIA_TYPE (415), INVALID_DAY (422), INVALID_RANGE (422), VALIDATION_FAILED (422).
  */
 export function addException(
   connection: Connection,
@@ -695,15 +767,61 @@ export function addException(
     method: 'POST',
     path: '/calendars/{calendarId}/exceptions',
     security: [['bearer']],
-    responses: { 201: 'json', 401: 'json', 403: 'json', 404: 'json', 422: 'json' },
+    responses: { 201: 'json', 401: 'json', 403: 'json', 404: 'json', 406: 'json', 415: 'json', 422: 'json' },
   };
 
   return send<AddExceptionResult>(connection, operation, { ...input, ...options });
 }
 
+export interface GetOpeningHoursInput {
+  readonly path: {
+    readonly calendarId: string;
+  };
+  readonly header?: {
+    /** The ETag of the version the caller holds: 304 when it is still the current one. */
+    readonly 'If-None-Match'?: string;
+  };
+}
+
+export type GetOpeningHoursResult =
+  | Success<200, {
+    calendarId: string;
+    timeZone: string;
+    version: number;
+    ranges: Array<Schemas.OpeningRangeDto>;
+  }>
+  | Success<304, undefined>
+  | Failure<404, 'UNKNOWN_CALENDAR', Schemas.Problem>
+  | Failure<406, 'NOT_ACCEPTABLE', Schemas.Problem>
+  | Failure<422, 'VALIDATION_FAILED', Schemas.Problem>;
+
+/**
+ * Get opening hours: `GET /calendars/{calendarId}/opening-hours`.
+ *
+ * Error codes: UNKNOWN_CALENDAR (404), NOT_ACCEPTABLE (406), VALIDATION_FAILED (422).
+ */
+export function getOpeningHours(
+  connection: Connection,
+  input: GetOpeningHoursInput,
+  options: CallOptions = {},
+): Promise<GetOpeningHoursResult> {
+  const operation: Operation = {
+    method: 'GET',
+    path: '/calendars/{calendarId}/opening-hours',
+    security: [],
+    responses: { 200: 'json', 304: 'none', 404: 'json', 406: 'json', 422: 'json' },
+  };
+
+  return send<GetOpeningHoursResult>(connection, operation, { ...input, ...options });
+}
+
 export interface SetOpeningHoursInput {
   readonly path: {
     readonly calendarId: string;
+  };
+  readonly header?: {
+    /** The ETag of the version this change was made on: 412 when it is no longer the current one. */
+    readonly 'If-Match'?: string;
   };
   readonly body: {
     ranges: Array<Schemas.OpeningRangeDto>;
@@ -711,18 +829,19 @@ export interface SetOpeningHoursInput {
 }
 
 export type SetOpeningHoursResult =
-  | Success<200, {
-    id: string;
-  }>
+  | Success<200, Schemas.Accepted>
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
   | Failure<404, 'UNKNOWN_CALENDAR', Schemas.Problem>
+  | Failure<406, 'NOT_ACCEPTABLE', Schemas.Problem>
+  | Failure<412, 'PRECONDITION_FAILED', Schemas.Problem>
+  | Failure<415, 'UNSUPPORTED_MEDIA_TYPE', Schemas.Problem>
   | Failure<422, 'INVALID_RANGE' | 'VALIDATION_FAILED', Schemas.Problem>;
 
 /**
  * Set opening hours: `PUT /calendars/{calendarId}/opening-hours`.
  *
- * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), UNKNOWN_CALENDAR (404), INVALID_RANGE (422), VALIDATION_FAILED (422).
+ * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), UNKNOWN_CALENDAR (404), NOT_ACCEPTABLE (406), PRECONDITION_FAILED (412), UNSUPPORTED_MEDIA_TYPE (415), INVALID_RANGE (422), VALIDATION_FAILED (422).
  */
 export function setOpeningHours(
   connection: Connection,
@@ -733,7 +852,7 @@ export function setOpeningHours(
     method: 'PUT',
     path: '/calendars/{calendarId}/opening-hours',
     security: [['bearer']],
-    responses: { 200: 'json', 401: 'json', 403: 'json', 404: 'json', 422: 'json' },
+    responses: { 200: 'json', 401: 'json', 403: 'json', 404: 'json', 406: 'json', 412: 'json', 415: 'json', 422: 'json' },
   };
 
   return send<SetOpeningHoursResult>(connection, operation, { ...input, ...options });
@@ -743,26 +862,23 @@ export interface AddTimeOffInput {
   readonly path: {
     readonly calendarId: string;
   };
-  readonly body: {
-    startsAt: string;
-    endsAt: string;
-  };
+  readonly body: Schemas.TimeSpan;
 }
 
 export type AddTimeOffResult =
-  | Success<201, {
-    id: string;
-  }>
+  | Success<201, Schemas.Accepted>
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
   | Failure<404, 'UNKNOWN_CALENDAR', Schemas.Problem>
+  | Failure<406, 'NOT_ACCEPTABLE', Schemas.Problem>
   | Failure<409, 'TIME_OFF_OVER_APPOINTMENTS', Schemas.Problem>
+  | Failure<415, 'UNSUPPORTED_MEDIA_TYPE', Schemas.Problem>
   | Failure<422, 'INVALID_TIME_OFF' | 'VALIDATION_FAILED', Schemas.Problem>;
 
 /**
  * Add time off: `POST /calendars/{calendarId}/time-off`.
  *
- * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), UNKNOWN_CALENDAR (404), TIME_OFF_OVER_APPOINTMENTS (409), INVALID_TIME_OFF (422), VALIDATION_FAILED (422).
+ * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), UNKNOWN_CALENDAR (404), NOT_ACCEPTABLE (406), TIME_OFF_OVER_APPOINTMENTS (409), UNSUPPORTED_MEDIA_TYPE (415), INVALID_TIME_OFF (422), VALIDATION_FAILED (422).
  */
 export function addTimeOff(
   connection: Connection,
@@ -773,7 +889,7 @@ export function addTimeOff(
     method: 'POST',
     path: '/calendars/{calendarId}/time-off',
     security: [['bearer']],
-    responses: { 201: 'json', 401: 'json', 403: 'json', 404: 'json', 409: 'json', 422: 'json' },
+    responses: { 201: 'json', 401: 'json', 403: 'json', 404: 'json', 406: 'json', 409: 'json', 415: 'json', 422: 'json' },
   };
 
   return send<AddTimeOffResult>(connection, operation, { ...input, ...options });
@@ -791,19 +907,19 @@ export interface JoinWaitlistInput {
 }
 
 export type JoinWaitlistResult =
-  | Success<201, {
-    id: string;
-  }>
+  | Success<201, Schemas.Accepted>
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
   | Failure<404, 'UNKNOWN_CALENDAR', Schemas.Problem>
+  | Failure<406, 'NOT_ACCEPTABLE', Schemas.Problem>
   | Failure<409, 'ALREADY_WAITING', Schemas.Problem>
+  | Failure<415, 'UNSUPPORTED_MEDIA_TYPE', Schemas.Problem>
   | Failure<422, 'INVALID_DAY' | 'UNKNOWN_APPOINTMENT_TYPE' | 'VALIDATION_FAILED', Schemas.Problem>;
 
 /**
  * Join waitlist: `POST /calendars/{calendarId}/waitlist`.
  *
- * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), UNKNOWN_CALENDAR (404), ALREADY_WAITING (409), INVALID_DAY (422), UNKNOWN_APPOINTMENT_TYPE (422), VALIDATION_FAILED (422).
+ * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), UNKNOWN_CALENDAR (404), NOT_ACCEPTABLE (406), ALREADY_WAITING (409), UNSUPPORTED_MEDIA_TYPE (415), INVALID_DAY (422), UNKNOWN_APPOINTMENT_TYPE (422), VALIDATION_FAILED (422).
  */
 export function joinWaitlist(
   connection: Connection,
@@ -814,10 +930,66 @@ export function joinWaitlist(
     method: 'POST',
     path: '/calendars/{calendarId}/waitlist',
     security: [['bearer']],
-    responses: { 201: 'json', 401: 'json', 403: 'json', 404: 'json', 409: 'json', 422: 'json' },
+    responses: { 201: 'json', 401: 'json', 403: 'json', 404: 'json', 406: 'json', 409: 'json', 415: 'json', 422: 'json' },
   };
 
   return send<JoinWaitlistResult>(connection, operation, { ...input, ...options });
+}
+
+export interface BookAppointmentFormInput {
+  readonly query?: {
+    /** JSON Forms (schema, UI schema, data), or the neutral tree of blocks. */
+    readonly format?: 'json-forms' | 'blocks';
+    /** A value of startsAt known in advance: it prefills the form and names the element its rules are asked about. */
+    readonly startsAt?: string;
+    /** A value of calendarId known in advance: it prefills the form and names the element its rules are asked about. */
+    readonly calendarId?: string;
+    /** A value of appointmentTypeId known in advance: it prefills the form and names the element its rules are asked about. */
+    readonly appointmentTypeId?: string;
+    /** A value of patientId known in advance: it prefills the form and names the element its rules are asked about. */
+    readonly patientId?: string;
+    /** A value of internalNote known in advance: it prefills the form and names the element its rules are asked about. */
+    readonly internalNote?: string;
+  };
+}
+
+export type BookAppointmentFormResult =
+  | Success<200, {
+    schema: Record<string, unknown>;
+    uischema: Record<string, unknown>;
+    data: Record<string, unknown>;
+  } | {
+    type: 'form';
+    operation: string;
+    method: string;
+    path: string;
+    /** A translation key. */
+    label: string;
+    blocks: Array<Schemas.FormBlock>;
+  }>
+  | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
+  | Failure<403, 'FORBIDDEN', Schemas.Problem>
+  | Failure<406, 'NOT_ACCEPTABLE', Schemas.Problem>
+  | Failure<422, 'VALIDATION_FAILED', Schemas.Problem>;
+
+/**
+ * Form: Book appointment: `GET /forms/bookAppointment`.
+ *
+ * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), NOT_ACCEPTABLE (406), VALIDATION_FAILED (422).
+ */
+export function bookAppointmentForm(
+  connection: Connection,
+  input: BookAppointmentFormInput = {},
+  options: CallOptions = {},
+): Promise<BookAppointmentFormResult> {
+  const operation: Operation = {
+    method: 'GET',
+    path: '/forms/bookAppointment',
+    security: [['bearer']],
+    responses: { 200: 'json', 401: 'json', 403: 'json', 406: 'json', 422: 'json' },
+  };
+
+  return send<BookAppointmentFormResult>(connection, operation, { ...input, ...options });
 }
 
 export interface SearchNotificationsInput {
@@ -849,12 +1021,13 @@ export type SearchNotificationsResult =
   }>
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
+  | Failure<406, 'NOT_ACCEPTABLE', Schemas.Problem>
   | Failure<422, 'VALIDATION_FAILED', Schemas.Problem>;
 
 /**
  * Search notifications: `GET /notifications`.
  *
- * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), VALIDATION_FAILED (422).
+ * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), NOT_ACCEPTABLE (406), VALIDATION_FAILED (422).
  */
 export function searchNotifications(
   connection: Connection,
@@ -865,7 +1038,7 @@ export function searchNotifications(
     method: 'GET',
     path: '/notifications',
     security: [['bearer']],
-    responses: { 200: 'json', 401: 'json', 403: 'json', 422: 'json' },
+    responses: { 200: 'json', 401: 'json', 403: 'json', 406: 'json', 422: 'json' },
   };
 
   return send<SearchNotificationsResult>(connection, operation, { ...input, ...options });
@@ -879,17 +1052,17 @@ export interface RegisterPersonInput {
 }
 
 export type RegisterPersonResult =
-  | Success<200, {
-    id: string;
-  }>
+  | Success<200, Schemas.Accepted>
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
+  | Failure<406, 'NOT_ACCEPTABLE', Schemas.Problem>
+  | Failure<415, 'UNSUPPORTED_MEDIA_TYPE', Schemas.Problem>
   | Failure<422, 'INVALID_DISPLAY_NAME' | 'INVALID_EMAIL' | 'VALIDATION_FAILED', Schemas.Problem>;
 
 /**
  * Register person: `PUT /people/me`.
  *
- * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), INVALID_DISPLAY_NAME (422), INVALID_EMAIL (422), VALIDATION_FAILED (422).
+ * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), NOT_ACCEPTABLE (406), UNSUPPORTED_MEDIA_TYPE (415), INVALID_DISPLAY_NAME (422), INVALID_EMAIL (422), VALIDATION_FAILED (422).
  */
 export function registerPerson(
   connection: Connection,
@@ -900,7 +1073,7 @@ export function registerPerson(
     method: 'PUT',
     path: '/people/me',
     security: [['bearer']],
-    responses: { 200: 'json', 401: 'json', 403: 'json', 422: 'json' },
+    responses: { 200: 'json', 401: 'json', 403: 'json', 406: 'json', 415: 'json', 422: 'json' },
   };
 
   return send<RegisterPersonResult>(connection, operation, { ...input, ...options });
@@ -915,18 +1088,18 @@ export interface OpenPracticeInput {
 }
 
 export type OpenPracticeResult =
-  | Success<201, {
-    id: string;
-  }>
+  | Success<201, Schemas.Accepted>
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
   | Failure<404, 'PERSON_NOT_REGISTERED', Schemas.Problem>
+  | Failure<406, 'NOT_ACCEPTABLE', Schemas.Problem>
+  | Failure<415, 'UNSUPPORTED_MEDIA_TYPE', Schemas.Problem>
   | Failure<422, 'UNKNOWN_TIME_ZONE' | 'VALIDATION_FAILED', Schemas.Problem>;
 
 /**
  * Open practice: `POST /practices`.
  *
- * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), PERSON_NOT_REGISTERED (404), UNKNOWN_TIME_ZONE (422), VALIDATION_FAILED (422).
+ * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), PERSON_NOT_REGISTERED (404), NOT_ACCEPTABLE (406), UNSUPPORTED_MEDIA_TYPE (415), UNKNOWN_TIME_ZONE (422), VALIDATION_FAILED (422).
  */
 export function openPractice(
   connection: Connection,
@@ -937,7 +1110,7 @@ export function openPractice(
     method: 'POST',
     path: '/practices',
     security: [['bearer']],
-    responses: { 201: 'json', 401: 'json', 403: 'json', 404: 'json', 422: 'json' },
+    responses: { 201: 'json', 401: 'json', 403: 'json', 404: 'json', 406: 'json', 415: 'json', 422: 'json' },
   };
 
   return send<OpenPracticeResult>(connection, operation, { ...input, ...options });
@@ -984,21 +1157,16 @@ export interface SearchPracticeAgendaInput {
 }
 
 export type SearchPracticeAgendaResult =
-  | Success<200, {
-    items: Array<Record<string, unknown>>;
-    /** Present when it is cheap to count. */
-    total?: number;
-    /** Present when more items follow. */
-    nextCursor?: string;
-  }>
+  | Success<200, Schemas.AgendaLinePage>
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
+  | Failure<406, 'NOT_ACCEPTABLE', Schemas.Problem>
   | Failure<422, 'INVALID_CRITERIA' | 'VALIDATION_FAILED', Schemas.Problem>;
 
 /**
  * Search practice agenda: `GET /practices/{practiceId}/agenda`.
  *
- * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), INVALID_CRITERIA (422), VALIDATION_FAILED (422).
+ * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), NOT_ACCEPTABLE (406), INVALID_CRITERIA (422), VALIDATION_FAILED (422).
  */
 export function searchPracticeAgenda(
   connection: Connection,
@@ -1009,10 +1177,43 @@ export function searchPracticeAgenda(
     method: 'GET',
     path: '/practices/{practiceId}/agenda',
     security: [['bearer']],
-    responses: { 200: 'json', 401: 'json', 403: 'json', 422: 'json' },
+    responses: { 200: 'json', 401: 'json', 403: 'json', 406: 'json', 422: 'json' },
   };
 
   return send<SearchPracticeAgendaResult>(connection, operation, { ...input, ...options });
+}
+
+export interface ExportPracticeAgendaInput {
+  readonly path: {
+    readonly practiceId: string;
+  };
+}
+
+export type ExportPracticeAgendaResult =
+  | Success<200, Array<Schemas.AgendaLine>>
+  | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
+  | Failure<403, 'FORBIDDEN', Schemas.Problem>
+  | Failure<406, 'NOT_ACCEPTABLE', Schemas.Problem>
+  | Failure<422, 'VALIDATION_FAILED', Schemas.Problem>;
+
+/**
+ * Export practice agenda: `GET /practices/{practiceId}/agenda/export`.
+ *
+ * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), NOT_ACCEPTABLE (406), VALIDATION_FAILED (422).
+ */
+export function exportPracticeAgenda(
+  connection: Connection,
+  input: ExportPracticeAgendaInput,
+  options: CallOptions = {},
+): Promise<ExportPracticeAgendaResult> {
+  const operation: Operation = {
+    method: 'GET',
+    path: '/practices/{practiceId}/agenda/export',
+    security: [['bearer']],
+    responses: { 200: 'json', 401: 'json', 403: 'json', 406: 'json', 422: 'json' },
+  };
+
+  return send<ExportPracticeAgendaResult>(connection, operation, { ...input, ...options });
 }
 
 export interface GrantDelegationInput {
@@ -1028,19 +1229,19 @@ export interface GrantDelegationInput {
 }
 
 export type GrantDelegationResult =
-  | Success<201, {
-    id: string;
-  }>
+  | Success<201, Schemas.Accepted>
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
   | Failure<404, 'PRACTICE_NOT_FOUND', Schemas.Problem>
+  | Failure<406, 'NOT_ACCEPTABLE', Schemas.Problem>
   | Failure<409, 'DELEGATION_ALREADY_ACTIVE', Schemas.Problem>
+  | Failure<415, 'UNSUPPORTED_MEDIA_TYPE', Schemas.Problem>
   | Failure<422, 'DELEGATION_ENDS_IN_THE_PAST' | 'NOT_AN_ASSISTANT' | 'NOT_A_PRACTITIONER' | 'VALIDATION_FAILED', Schemas.Problem>;
 
 /**
  * Grant delegation: `POST /practices/{practiceId}/desks/{practitionerId}/delegations`.
  *
- * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), PRACTICE_NOT_FOUND (404), DELEGATION_ALREADY_ACTIVE (409), DELEGATION_ENDS_IN_THE_PAST (422), NOT_AN_ASSISTANT (422), NOT_A_PRACTITIONER (422), VALIDATION_FAILED (422).
+ * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), PRACTICE_NOT_FOUND (404), NOT_ACCEPTABLE (406), DELEGATION_ALREADY_ACTIVE (409), UNSUPPORTED_MEDIA_TYPE (415), DELEGATION_ENDS_IN_THE_PAST (422), NOT_AN_ASSISTANT (422), NOT_A_PRACTITIONER (422), VALIDATION_FAILED (422).
  */
 export function grantDelegation(
   connection: Connection,
@@ -1051,7 +1252,7 @@ export function grantDelegation(
     method: 'POST',
     path: '/practices/{practiceId}/desks/{practitionerId}/delegations',
     security: [['bearer']],
-    responses: { 201: 'json', 401: 'json', 403: 'json', 404: 'json', 409: 'json', 422: 'json' },
+    responses: { 201: 'json', 401: 'json', 403: 'json', 404: 'json', 406: 'json', 409: 'json', 415: 'json', 422: 'json' },
   };
 
   return send<GrantDelegationResult>(connection, operation, { ...input, ...options });
@@ -1066,19 +1267,18 @@ export interface RevokeDelegationInput {
 }
 
 export type RevokeDelegationResult =
-  | Success<200, {
-    id: string;
-  }>
+  | Success<200, Schemas.Accepted>
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
   | Failure<404, 'DELEGATION_NOT_FOUND', Schemas.Problem>
+  | Failure<406, 'NOT_ACCEPTABLE', Schemas.Problem>
   | Failure<409, 'DELEGATION_NOT_ACTIVE', Schemas.Problem>
   | Failure<422, 'VALIDATION_FAILED', Schemas.Problem>;
 
 /**
  * Revoke delegation: `DELETE /practices/{practiceId}/desks/{practitionerId}/delegations/{delegationId}`.
  *
- * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), DELEGATION_NOT_FOUND (404), DELEGATION_NOT_ACTIVE (409), VALIDATION_FAILED (422).
+ * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), DELEGATION_NOT_FOUND (404), NOT_ACCEPTABLE (406), DELEGATION_NOT_ACTIVE (409), VALIDATION_FAILED (422).
  */
 export function revokeDelegation(
   connection: Connection,
@@ -1089,7 +1289,7 @@ export function revokeDelegation(
     method: 'DELETE',
     path: '/practices/{practiceId}/desks/{practitionerId}/delegations/{delegationId}',
     security: [['bearer']],
-    responses: { 200: 'json', 401: 'json', 403: 'json', 404: 'json', 409: 'json', 422: 'json' },
+    responses: { 200: 'json', 401: 'json', 403: 'json', 404: 'json', 406: 'json', 409: 'json', 422: 'json' },
   };
 
   return send<RevokeDelegationResult>(connection, operation, { ...input, ...options });
@@ -1106,19 +1306,19 @@ export interface AddMemberInput {
 }
 
 export type AddMemberResult =
-  | Success<201, {
-    id: string;
-  }>
+  | Success<201, Schemas.Accepted>
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
   | Failure<404, 'PERSON_NOT_REGISTERED' | 'PRACTICE_NOT_FOUND', Schemas.Problem>
+  | Failure<406, 'NOT_ACCEPTABLE', Schemas.Problem>
   | Failure<409, 'ALREADY_MEMBER', Schemas.Problem>
+  | Failure<415, 'UNSUPPORTED_MEDIA_TYPE', Schemas.Problem>
   | Failure<422, 'UNKNOWN_ROLE' | 'VALIDATION_FAILED', Schemas.Problem>;
 
 /**
  * Add member: `POST /practices/{practiceId}/members`.
  *
- * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), PERSON_NOT_REGISTERED (404), PRACTICE_NOT_FOUND (404), ALREADY_MEMBER (409), UNKNOWN_ROLE (422), VALIDATION_FAILED (422).
+ * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), PERSON_NOT_REGISTERED (404), PRACTICE_NOT_FOUND (404), NOT_ACCEPTABLE (406), ALREADY_MEMBER (409), UNSUPPORTED_MEDIA_TYPE (415), UNKNOWN_ROLE (422), VALIDATION_FAILED (422).
  */
 export function addMember(
   connection: Connection,
@@ -1129,7 +1329,7 @@ export function addMember(
     method: 'POST',
     path: '/practices/{practiceId}/members',
     security: [['bearer']],
-    responses: { 201: 'json', 401: 'json', 403: 'json', 404: 'json', 409: 'json', 422: 'json' },
+    responses: { 201: 'json', 401: 'json', 403: 'json', 404: 'json', 406: 'json', 409: 'json', 415: 'json', 422: 'json' },
   };
 
   return send<AddMemberResult>(connection, operation, { ...input, ...options });
@@ -1143,19 +1343,18 @@ export interface RemoveMemberInput {
 }
 
 export type RemoveMemberResult =
-  | Success<200, {
-    id: string;
-  }>
+  | Success<200, Schemas.Accepted>
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
   | Failure<404, 'PRACTICE_NOT_FOUND', Schemas.Problem>
+  | Failure<406, 'NOT_ACCEPTABLE', Schemas.Problem>
   | Failure<409, 'LAST_MANAGER', Schemas.Problem>
   | Failure<422, 'NOT_A_MEMBER' | 'VALIDATION_FAILED', Schemas.Problem>;
 
 /**
  * Remove member: `DELETE /practices/{practiceId}/members/{personId}`.
  *
- * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), PRACTICE_NOT_FOUND (404), LAST_MANAGER (409), NOT_A_MEMBER (422), VALIDATION_FAILED (422).
+ * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), PRACTICE_NOT_FOUND (404), NOT_ACCEPTABLE (406), LAST_MANAGER (409), NOT_A_MEMBER (422), VALIDATION_FAILED (422).
  */
 export function removeMember(
   connection: Connection,
@@ -1166,7 +1365,7 @@ export function removeMember(
     method: 'DELETE',
     path: '/practices/{practiceId}/members/{personId}',
     security: [['bearer']],
-    responses: { 200: 'json', 401: 'json', 403: 'json', 404: 'json', 409: 'json', 422: 'json' },
+    responses: { 200: 'json', 401: 'json', 403: 'json', 404: 'json', 406: 'json', 409: 'json', 422: 'json' },
   };
 
   return send<RemoveMemberResult>(connection, operation, { ...input, ...options });
@@ -1214,12 +1413,13 @@ export type SearchOccupancyResult =
   }>
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
+  | Failure<406, 'NOT_ACCEPTABLE', Schemas.Problem>
   | Failure<422, 'VALIDATION_FAILED', Schemas.Problem>;
 
 /**
  * Search occupancy: `GET /practices/{practiceId}/occupancy`.
  *
- * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), VALIDATION_FAILED (422).
+ * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), NOT_ACCEPTABLE (406), VALIDATION_FAILED (422).
  */
 export function searchOccupancy(
   connection: Connection,
@@ -1230,7 +1430,7 @@ export function searchOccupancy(
     method: 'GET',
     path: '/practices/{practiceId}/occupancy',
     security: [['bearer']],
-    responses: { 200: 'json', 401: 'json', 403: 'json', 422: 'json' },
+    responses: { 200: 'json', 401: 'json', 403: 'json', 406: 'json', 422: 'json' },
   };
 
   return send<SearchOccupancyResult>(connection, operation, { ...input, ...options });
@@ -1276,12 +1476,13 @@ export type SearchAttendanceHistoryResult =
   }>
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
+  | Failure<406, 'NOT_ACCEPTABLE', Schemas.Problem>
   | Failure<422, 'INVALID_CRITERIA' | 'VALIDATION_FAILED', Schemas.Problem>;
 
 /**
  * Search attendance history: `GET /practices/{practiceId}/patients/{patientId}/attendance`.
  *
- * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), INVALID_CRITERIA (422), VALIDATION_FAILED (422).
+ * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), NOT_ACCEPTABLE (406), INVALID_CRITERIA (422), VALIDATION_FAILED (422).
  */
 export function searchAttendanceHistory(
   connection: Connection,
@@ -1292,7 +1493,7 @@ export function searchAttendanceHistory(
     method: 'GET',
     path: '/practices/{practiceId}/patients/{patientId}/attendance',
     security: [['bearer']],
-    responses: { 200: 'json', 401: 'json', 403: 'json', 422: 'json' },
+    responses: { 200: 'json', 401: 'json', 403: 'json', 406: 'json', 422: 'json' },
   };
 
   return send<SearchAttendanceHistoryResult>(connection, operation, { ...input, ...options });

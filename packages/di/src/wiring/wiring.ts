@@ -1,4 +1,5 @@
 import type { TokenMap } from '../token/token-map.js';
+import type { BackgroundJobRegistration } from './background-job-registration.js';
 import type { Binding } from './binding.js';
 import type { DomainEventHandling } from './domain-event-handling.js';
 import type { EdgeBinding } from './edge-binding.js';
@@ -18,6 +19,7 @@ export interface Wiring {
   readonly domainEventHandlers: readonly DomainEventHandling[];
   readonly policies: readonly PolicyBinding[];
   readonly jobs: readonly JobRegistration[];
+  readonly backgroundJobs: readonly BackgroundJobRegistration[];
   readonly projections: readonly ProjectionRegistration[];
   readonly edges: readonly EdgeBinding[];
   /** Outermost first. */

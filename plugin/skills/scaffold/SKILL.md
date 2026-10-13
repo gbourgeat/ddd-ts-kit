@@ -4,8 +4,8 @@ description: >-
   Creates ONE file of a ddd-ts-kit role from a template with `ddd-ts-kit generate`, with its
   spec, fake and registration, then lists the places where business logic is expected. Use
   whenever a single aggregate, entity, value object, domain event, error or service, port,
-  repository, adapter, gateway, policy, job, event handler, builder, end-to-end spec or
-  context is needed, instead of writing it by hand, or when the guard refuses a hand-written
+  repository, adapter, gateway, policy, job, background job, state machine, process manager,
+  event handler, builder, end-to-end spec or context is needed, instead of writing it by hand, or when the guard refuses a hand-written
   file. For a whole feature use use-case; for events between contexts use integration-event.
 argument-hint: "<kind> <context> <Name> [options]"
 allowed-tools:
@@ -60,7 +60,12 @@ the tree, so a generated file conforms by construction and costs no tokens.
   missing aggregate, port, use case or route stops the command with the one to run first.
 - `route` writes a controller class in its own folder (or a `defineRoute` function under
   `"stack.routes": "functions"`); `controller` always writes the class; `route-group` writes a
-  group with its prefix and guards, `guard` a guard of the project with its spec.
+  group with its prefix and guards, `guard` a guard of the project with its spec;
+  `representation <context> <UseCase> xml,csv` adds what a controller answers in besides JSON,
+  `form <context> <UseCase>` the hints of its form.
+- `schema` writes one shape of the HTTP contract several routes use, declared once and shared,
+  in `presentation/http/shared/` of the context, or in `presentation/` of the shared kernel with
+  `schema shared-kernel <Name>`; a command route answers an identifier with `acceptedSchema`.
 - **Documents.** The generated lists of `CONTEXT.md` and the generated documentation are
   refreshed.
 

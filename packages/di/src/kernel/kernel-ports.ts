@@ -1,6 +1,7 @@
 import {
   ActorContext,
   Cache,
+  CacheInvalidation,
   Clock,
   CommandBus,
   DomainEventDispatcher,
@@ -11,16 +12,20 @@ import {
   IdGenerator,
   IntegrationEventPublisher,
   IntegrationEventSubscriber,
+  JobQueue,
   JobScheduler,
   Lock,
   Logger,
   Metrics,
+  ProcessRunner,
+  ProcessStore,
   ProcessedEventStore,
   QueryBus,
   RateLimiter,
   UnitOfWork,
 } from '@ddd-ts-kit/kernel';
 import type { Token } from '@ddd-ts-kit/kernel/declarations';
+import { JobStore, QueueWorker } from '@ddd-ts-kit/scheduling';
 
 /** What `kernelModule()` binds: a test application gives each of them a deterministic stand-in. */
 export const KERNEL_PORTS: readonly Token<unknown>[] = [
@@ -41,7 +46,13 @@ export const KERNEL_PORTS: readonly Token<unknown>[] = [
   Metrics,
   ErrorReporter,
   Cache,
+  CacheInvalidation,
   Lock,
   RateLimiter,
   JobScheduler,
+  JobQueue,
+  JobStore,
+  QueueWorker,
+  ProcessStore,
+  ProcessRunner,
 ];

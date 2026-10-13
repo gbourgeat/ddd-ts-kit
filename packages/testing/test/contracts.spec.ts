@@ -2,6 +2,8 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
   FixedClock,
   InMemoryCache,
+  InMemoryCachePurger,
+  RepeatedCachePurger,
   InMemoryEventBus,
   InMemoryCheckpointStore,
   InMemoryEventStore,
@@ -18,6 +20,7 @@ import { InMemoryOutboxStore } from '@ddd-ts-kit/events';
 import { InMemoryRepository, resetSequences, snapshots } from '../src/index.js';
 import {
   cacheContract,
+  cachePurgerContract,
   criteriaContract,
   criteriaContractDefinition,
   eventBusContract,
@@ -118,6 +121,25 @@ const aClock = () => {
 const elapse = (ms: number) => clock.advance(ms);
 
 cacheContract(runner, { name: 'InMemoryCache', createCache: () => new InMemoryCache(aClock()), elapse });
+
+cachePurgerContract(runner, {
+  name: 'InMemoryCachePurger',
+  createCache: () => {
+    const purger = new InMemoryCachePurger();
+
+    return { purger, store: (key, tags) => purger.store(key, tags), holds: (key) => purger.holds(key) };
+  },
+});
+
+cachePurgerContract(runner, {
+  name: 'RepeatedCachePurger, around the in-memory one',
+  createCache: () => {
+    const purger = new InMemoryCachePurger();
+    const repeated = new RepeatedCachePurger(purger, { againAfterMs: 0 });
+
+    return { purger: repeated, store: (key, tags) => purger.store(key, tags), holds: (key) => purger.holds(key) };
+  },
+});
 
 lockContract(runner, { name: 'InMemoryLock', createLock: () => new InMemoryLock(aClock()), elapse });
 

@@ -11,6 +11,7 @@ export { isPermission } from './permissions/is-permission.js';
 export type { Permission } from './permissions/permission.js';
 export { PermissionRegistry } from './permissions/permission-registry.js';
 export { Access } from './authorization/access.js';
+export type { AccessQuestion } from './authorization/access-question.js';
 export type { AccessScope } from './authorization/access-scope.js';
 export type { AuthorizationContext } from './authorization/authorization-context.js';
 export { Authorizer } from './authorization/authorizer.js';

@@ -74,6 +74,316 @@ list the pull requests behind it.
   answered 404, and a person registered in one network who registers in another is refused
   (422, `CONCURRENCY_CONFLICT`).
 
+## 0.14.0
+
+**A route answers in JSON, XML or CSV, as the request asks.** `Representations.standard()` of
+`@ddd-ts-kit/http`, given to the adapters (`representations` of the mount options) and to
+`generateOpenApi`, chooses per request the media type the `Accept` header prefers among those
+the route declares in `produces` (on `@Controller` or `defineRoute`), JSON first; none
+acceptable is `406 NOT_ACCEPTABLE`, before the handler runs. A refusal is written as
+`application/problem+xml` when XML was negotiated. A route that declares `consumes:
+['application/xml']` reads an XML body into the value the JSON path produces, validated by the
+same schema; another media type is `415 UNSUPPORTED_MEDIA_TYPE`. XML follows one convention,
+the default of the XML object of OpenAPI, with a parser of the package's own that refuses any
+document type declaration (no new dependency). CSV is written for a page or a list of flat rows,
+and a handler that answers an `AsyncIterable` under `streamSchemaOf(item)` is streamed in every
+representation; one that fails once its status is sent is reported to `onError` with
+`interrupted: true`. `everyPage(readPage)` streams a search page after page, each page a query
+sent through the bus, so each one runs under the middlewares of the bus (transaction, tenant
+session, timeout, tracing). A route that declares no body schema (a file, a redirect, no
+content) is never refused 406 and its answer, a `Readable` included, goes out as the handler
+wrote it. The contract follows the representations it is given, which must be those the
+server is mounted with: every media type of each route, `406 NOT_ACCEPTABLE` on every route a
+representation writes, `415 UNSUPPORTED_MEDIA_TYPE` on every route that reads a body; without
+them, JSON only and neither status. Mounting a route that declares `produces` or `consumes`
+without representations is refused. Both codes join the default error mapping and the codes
+of the kit. Without the option nothing changes: every answer stays JSON. `money` and
+`decimalText` write money and decimals as strings, the rule every representation follows.
+The documentation page of a generated project (`withDocumentation`) is written with the error
+mapper and the representations of the boundary; the contract script looks for stale files in
+`openapi/` itself and, with forms, in `openapi/forms/` only.
+
+**A generated project negotiates its representations and serves its forms.** Two keys of
+`stack`, chosen at `init`: `representations` (`negotiated`, `json`) and `forms` (`on`, `off`),
+both on by default with an HTTP stack. `negotiated` writes `src/platform/http/presentation-of.ts`,
+which gives the HTTP boundary and the contract script `Representations.standard()` and a field
+decider over the `Access` of the application; `forms: on` writes `with-forms.ts`, which serves
+`GET /forms/<operationId>` for each route that declares `form`, and `npm run docs:generate`
+writes the forms to `openapi/forms/`. A config without the keys is read as `json` and `off`:
+nothing changes until `init --force --representations negotiated --forms on`. `generate
+representation <context> <UseCase> xml,csv` adds `produces` (and `consumes` of XML for a
+route with a body) to a controller, `generate form <context> <UseCase>` its `defineForm`
+hints, and `describe` lists the media types and the form of each route.
+
+**A route describes its body as a form.** A route that declares `form` (on `@Controller` or
+`defineRoute`, `defineForm<Body>(hints)` next to the schemas of the controller) is served by `formRoutes(routes,
+{ fieldAccess })` at `GET /forms/<operationId>`: JSON Forms by default (schema, UI schema,
+data), or a neutral tree of groups and fields with `?format=blocks`. Fields, constraints and
+options come from the request schema and its closed vocabularies, layout, widgets, lookups and
+conditions (`visibleWhen`, `requiredWhen`) from the hints, labels are translation keys, and
+values given in the query prefill it. The form respects the caller: given only to who may run
+its use case when it declares `requires` (the permission asked as `@Requires` asks it, from the
+values of the query; 403 otherwise), a field they may not see is absent (and not echoed in
+`data`), one they may not set is read-only, an object with every field it holds; the server
+still validates and the use case still decides. `formDocumentsOf(routes)` writes every form whole for the documentation.
+
+**A field of an answer can be reserved to some callers.** `withFieldAccess(schema, { field: {
+read, write, subject } })` of `@ddd-ts-kit/http` marks a field with a permission or a policy:
+the pipeline leaves it out of every representation (JSON, XML, CSV, streamed lists) for an actor
+who may not read it, refuses it with 403 in a request body from one who may not set it, and the
+contract marks it with `x-field-access` and no longer lists it as required. `fieldDeciderOf({
+access, clock })` decides through the `Access` of `@ddd-ts-kit/auth`, once per element and per
+request, remembering the last 256 elements per requirement; without a decider a restricted
+field is refused to everybody. A field shown or hidden is decided without being recorded, a
+field set in a body is recorded: `Access.decideOn({ actor, permission, subject, context,
+recorded })`, new and optional on `Access`, implemented by `PolicyAccess`. The new rule
+`authz/fields-by-schema` (checker and ESLint) refuses a test on the roles of the actor under
+`application/queries/`, the hand-written way of shaping an answer.
+
+**The JSON Schema of a class-validator class holds what it inherits.** A class that extends
+another one, `class SearchPracticeAgendaLine extends SearchAppointmentsLine {}`, was described as
+an empty object: the contract said nothing of its fields. `classSchema` now gives it the
+properties and the required names of its ancestors. A project with such classes sees its
+contract grow on the next `npm run docs:generate`. The end-to-end client of
+`@ddd-ts-kit/testing` sends a string body as it is when the call names another content type
+(`{ headers: { 'content-type': 'application/xml' } }`), as JSON otherwise.
+
+The concepts and the tools are explained in two new pages, `docs/concepts/representations-and-forms.md`
+and `docs/tools/representations-and-forms.md` (JSON Forms renderers for React, Angular and Vue,
+the alternatives, why no XML or CSV library), and parts 2 and 3 of `docs/proposals/read-side.md`
+are marked built.
+
+**Representations, caching and the four adapters together.** `mountHono` serves what
+`mountExpress` and `mountFastify` serve: a body in a media type the route consumes is read as
+text under `bodyLimit`, a streamed list is streamed, and the mount refuses `produces` or
+`consumes` without representations. A cached answer written in XML or CSV keeps the validators
+and tags of its policy: the version, the instant and the tags are read from what the handler
+answered, a strong `ETag` digests the bytes of the media type sent (none on a streamed list),
+and `Vary` holds the headers of the policy and `accept`, in the answer and in the contract. A
+public answer chosen by `Accept` is refused at the mount behind a cache that ignores `Vary`, and
+so is a public answer with fields reserved to some callers whose `vary` names neither
+`Authorization` nor `Cookie`, even on a route anybody may call: a shared cache would hand the
+fields one caller may read to the next. A shared schema keeps its restricted fields whichever
+wraps the other (`withFieldAccess(sharedSchema(...))` or `sharedSchema(name,
+withFieldAccess(...))`, through `schemaBehind` of `@ddd-ts-kit/validation`), in the definition it
+refers to and in the answer, and the page of a shared item keeps the restricted fields of the item.
+
+## 0.13.0
+
+**A schema shared by several routes is documented once.** Declared once, a schema used whole or
+inside other schemas by several routes lands once in `components.schemas` of the OpenAPI
+contract and every route points at it with `$ref`: a zod schema with `.meta({ id })`,
+`classSchema(Dto, { shared: true })`, or any schema through `sharedSchema(name, schema)` of
+`@ddd-ts-kit/validation`. class-validator gains `pickClass`, `omitClass` and `partialClass` to
+reuse a DTO class in part, and the Standard Schema adapter documents a schema its library
+converts itself (Standard JSON Schema, verified with zod 4) when no JSON Schema is given. The
+platform shares its own: `acceptedSchema` (`Accepted`, the `{ id }` a command route answers),
+the page of a shared item (`<Item>Page`) and the problem document. A shared `params`, `query`
+or `headers` schema still gives one parameter per property.
+
+**The contract of a project on the Standard Schema adapter can change.** `standardSchema(schema)`
+without a JSON Schema documented `{}` (any value); it now documents what the library converts
+itself, so a project on `"stack.validation": "standard-schema"` whose schemas implement Standard
+JSON Schema (zod 4 does) sees its OpenAPI contract and client SDK grow the real shapes, and
+`openapi --check` or `sdk --check` report drift until they are regenerated. To move: run
+`npm run docs:generate` and commit the contract and the client; to keep a schema documented as
+any value, pass `{}` as its second argument. A schema the library cannot convert (a date, a
+custom check) is still documented `{}`, never a failure.
+
+**A new project declares a shape once.** `init` writes `"stack.schemas": "shared"`: a generated
+command route answers its identifier with `acceptedSchema` instead of a schema of its own,
+`generate schema <context> <Name>` writes a shape several routes use in
+`presentation/http/shared/<name>.schema.ts` (`generate schema shared-kernel <Name>` in
+`presentation/` of the shared kernel, for what several contexts answer with), and two rules hold
+it: `schema/no-duplicate-shape` reports a DTO class or an object schema that declares by hand
+the shape of another one of its context or of the shared kernel (two contexts may say the same
+thing in their own words; a placeholder the generator left to fill is not judged), `schema/presentation-only` keeps every schema in a presentation layer
+(the second in ESLint too). A config without the key reads as `per-route`: nothing changes and
+nothing is reported; the steps to move are in `docs/CONFIG.md`. The example now shares its
+schemas: its twenty identifier answers are the one `Accepted` component, its two agenda
+searches answer `AgendaLinePage` pages of one `AgendaLine`, and one `TimeSpan` is the body of
+the time off route whole and the start of a booking or a rescheduling through
+`pickClass(TimeSpan, ['startsAt'])`; the bytes on the wire are unchanged.
+
+**Hono and TypeBox.** `@ddd-ts-kit/http/hono` mounts the routes on Hono 4 (`mountHono`), through
+the same pipeline and the same behaviour suite as Express, Fastify and NestJS, uploads and signed
+file links included. The adapter reads a JSON body chunk by chunk up to `bodyLimit` (1 MiB by
+default, as Fastify): a larger one is answered 413 `BODY_TOO_LARGE`, one that is not JSON 400
+`MALFORMED_BODY`, both as problems. `@ddd-ts-kit/validation/typebox` validates with TypeBox 1
+(`typeboxSchema`, compiled once, defaults filled, undeclared properties dropped, the failed
+keyword as the issue code and a missing property at its own path, `{ coerce: true }` for query
+strings) and documents the schema as it is, a nested schema with an `$id` shared once in the
+contract (`Type.Intersect` extends it and keeps the reference). Both libraries are optional peers.
+
+**Four contract pairs a project starts from.** `init --http hono` serves the routes with Hono on
+Node (`@hono/node-server`, the limiter and the readiness probe in front when the cache is
+shared), and `init --validation typebox` writes every schema of a route (the line of a search
+included), a function route and a shared schema with TypeBox. A new end-to-end spec,
+`contract-pairs.spec.ts`, generates one project per pair (Express and zod, Fastify and TypeBox,
+Hono and zod, NestJS and class-validator), shares one shape between two routes, adds a search,
+and holds each to zero finding, its specs and end-to-end specs (401, 403, 201 and the trace of
+the request), a current contract that documents the shape once, and a client generated from it
+that names `Money` and `Accepted` once and compiles. NestJS with class-validator, generated before but never run end to end, is now.
+
+**Which pair for which team.** `docs/tools/contract-pairs.md` compares the four pairs (type
+inference, composition of shapes, contract fidelity, issue codes, ecosystem, maintenance) with
+numbers measured by `pipeline/monorepo/measure-contract-pairs.mjs`: the pipeline of the kit costs
+about a microsecond per request before validation, zod parses in about half a microsecond,
+class-validator and TypeBox (through the adapter) in five to ten. oRPC was run and is documented
+as not fitting: its procedures, error format and second contract generator would sit next to the
+kit's, and the typed client it offers comes here from the generated contract.
+
+## 0.12.0
+
+**Cache policies on routes, and `no-store` for authenticated answers.** A controller, a route
+group or a function route declares `cache: { scope, maxAge, sMaxAge, staleWhileRevalidate,
+staleIfError, mustRevalidate, vary }` of `@ddd-ts-kit/http`: the pipeline answers its
+`Cache-Control` and `Vary`, the contract documents them, and a policy that would let a cache keep
+what it must not is refused when the route is declared, above all the `public` answer of a route
+that knows its caller without the request headers it varies on. When the routes are mounted, a
+public answer is held to the options of the application: on a route that knows its caller, `vary`
+names `Authorization`, `Cookie` or the header its tenant is read from; behind a cache that ignores
+`Vary` (Cloudflare, Bunny; `cacheTags.honoursVary` to say otherwise) a varying answer is refused;
+and every kept answer varies on the headers `resolveTenant` reads (`TenantResolver.headers`, set by
+`tenantFromHeader` and `firstTenantOf`). The policy of a route group reaches its reads only: a
+write of the group keeps the default of a write. A route that is not public and
+declares nothing now answers `Cache-Control: no-store`, refusals included (before, nothing): a
+generated contract gains that header on every authenticated operation, regenerate it with
+`npm run docs:generate`. The ESLint rule `presentation/shared-cache-varies` reports in the editor a
+public policy, without `vary`, on a declaration that writes guards or security schemes. See
+`docs/concepts/http-caching.md`.
+
+**Conditional requests.** A cache policy names the version of an answer, `etag: 'representation'`
+(a strong tag hashed from the bytes) or `etag: { version: 'version' }` (a weak tag from a field of
+the body), and `lastModified: 'changedAt'`: the pipeline answers `ETag` and `Last-Modified`, and
+`304 Not Modified` to `If-None-Match` and `If-Modified-Since`. A write declares
+`ifMatch: 'optional' | 'required'`: the version named in `If-Match` reaches the handler as
+`context.expectedVersion`, `expectVersion(aggregate, expected)` of the kernel refuses a stale one
+with `PreconditionFailedError` (`PRECONDITION_FAILED`, 412), and a required one that is missing
+answers `PRECONDITION_REQUIRED` (428). Both codes join the default error mapping and the codes a
+route may declare without a class of its own (`errors/known-code`). The contract documents the
+parameters, headers and answers.
+
+**Cache tags, purged after the commit.** A public policy names the resources its answer shows
+(`tags: [{ resource: 'calendar', param: 'calendarId' }]`), sent in the header the shared cache
+reads (`cacheTags: { header: CacheTagHeader.xkey }` of the options; `surrogate-key`, `cache-tag`,
+`cdn-tag`), filed under the tenant of the request when the application says so (`perTenant`, on
+the answers and on the purges). The kernel gains two ports: `CacheInvalidation`,
+which a `before-commit` handler asks and which `kernelModule()` binds to purge requests published
+on the outbox (a rollback purges nothing, a commit purges even across a crash), and `CachePurger`,
+which the relay calls through `new PurgingPublisher(purger, broker)` and which
+`domain-events/transactional-before-commit` now refuses before the commit. `@ddd-ts-kit/http/purgers`
+holds `VarnishCachePurger` (xkey or ban, with the purge `key` of the VCL), `FastlyCachePurger` and
+`CloudflareCachePurger`, all held to `cachePurgerContract` of `@ddd-ts-kit/testing/contracts` (the
+CDN ones on a fake of the purge API each documents); the test application exposes
+`cacheInvalidation`. `RepeatedCachePurger` purges once more a little later, for a read that reached
+the cache after the purge. Filed per tenant, a tagged answer to a request naming no tenant is
+`no-store`, a tagged public route anybody may call needs `resolveTenant`, and an invalidation asked
+without a tenant throws `NoCurrentTenantError`. `CacheInvalidation` and `CachePurger` join the
+standard interfaces (`standard/no-parallel-interface`: `CacheInvalidator`, `CdnPurger` and the
+like). Varnish 9.1.0 runs in the integration job. See `docs/tools/http-caches.md`.
+
+**Varnish in front of a generated project.** `init --http-cache varnish` (recorded as
+`stack.httpCache`; a config without it is `none`) adds the Varnish 9.1.0 service to the compose
+file with its VCL in `docker/varnish/default.vcl` (it keeps only what an answer allows by
+`max-age` or `s-maxage`, and lets a purge in from its machine or with `VARNISH_PURGE_KEY`),
+validates `VARNISH_URL` and `VARNISH_PURGE_KEY`, tags the public answers in `xkey` from the HTTP
+boundary, and has the outbox relay of `main.ts` and of every `generate service` entry point purge
+through `PurgingPublisher` and `VarnishCachePurger`; the end-to-end application records the purges
+(`purges.purged`). It needs an HTTP framework and `--events outbox`. On `--di manual` and `nest`
+the platform gains `cacheInvalidation`. With `--tenancy`, the answers and the purges are tagged
+per tenant and the HTTP boundary reads the tenant of a request from `x-tenant-id`.
+`generate controller --cache public|private|no-store` writes the cache policy of a controller.
+The generated presentation rules say when to cache, purge and condition a write.
+
+## 0.11.0
+
+**File import and export, designed.** `docs/concepts/file-import-export.md` says how a large
+file is to be processed on the job queue and the file storage: an import read as a stream and
+sent as commands batch by batch, with its checkpoint, its progress and a rejection report; an
+export written in parts; chunks followed by a process manager beyond one attempt. Nothing of it
+is built in this version; the page lists what would be added.
+
+**A long background job in the example.** A practitioner going away clears a period of their
+calendar: `POST /calendars/:calendarId/clearances` (202, the identifier of the clearance) enqueues
+`ClearCalendarBackgroundJob` in the unit of work of the command, which cancels the appointments
+of the period one by one as the person who asked, with a checkpoint and its progress after each,
+and `GET /calendars/:calendarId/clearances/:clearanceId` answers its status (an enum of
+`QueuedJobStatus`) and `{ done, total }`, for a clearance of that calendar only (the subject of
+its job);
+then the time off is accepted. Both routes are new, with the permission `scheduling:calendar.clear`
+and the error code `UNKNOWN_CLEARANCE` (404); no existing route of the contract changes. The
+end-to-end support of the example can start the worker (`startApplication({ jobs: true })`).
+
+**Generators for background work.** `ddd-ts-kit generate background-job <context> <Name>
+--command <UseCase>` writes a background job that sends its command as the actor that enqueued
+it (`execution.actor`, new on `BackgroundJobExecution`), with one field of its payload per other
+input of the command (a `Date` as its ISO text), registered by `@Background()` or on the builder
+of the module file, and a spec that enqueues a payload of every field and runs what is due. `generate
+state-machine <context> <Aggregate> --value <state>... --transition "<intention>:<from>>[<to>]"`
+writes the status vocabulary (or adds the values it misses), the machine and its spec; a machine
+without `refused` throws the new `TransitionError.forbidden` (code `FORBIDDEN_TRANSITION`), and
+`lifecycle/status-through-machine` asks an aggregate to import its machine once it writes a
+status. `generate process <context> <Name>` writes a process manager, the background job of its
+timeouts and their specs. The two that run on the queue need `--di tsyringe`. `init --queue
+database|redis|memory` chooses where jobs and process instances are kept (`stack.queue`):
+`database` by default on Knex or Drizzle with tsyringe, the jobs and processes tables created by
+the first migration and bound by the platform module; `redis` puts the jobs on the server of the
+cache, a write lost after the commit logged and reported (`reportLostJobs`); a config without
+the key is read as `memory`, as before. A queue kept in the memory of a process is consumed by
+that process even with its jobs off, so the API of a project with a worker still runs the jobs
+it enqueues. Under standard decorators,
+`@Background` records the job once the class is defined, when its static `jobName` exists.
+
+**Process managers.** A long-running process that reacts to events, keeps its own state and
+sends commands is a class of `application/processes/` whose steps decide (`ProcessDecision`: the
+next state, the commands, the timeouts armed or disarmed, the end). The new `ProcessRunner`
+port (runner in `@ddd-ts-kit/scheduling`) runs a step in one unit of work: it loads the instance
+an event correlates, saves its state with optimistic concurrency through `ProcessStore`
+(`InMemoryProcessStore` in the kernel, `KnexProcessStore` and `createProcessTable`,
+`DrizzleProcessStore` and `processesTable`, held by `processStoreContract`), arms its timeouts
+as delayed background jobs and sends the commands. `givenProcess` of `@ddd-ts-kit/testing`
+tests a step without infrastructure. The new rule `process/sends-commands-only` (checker and
+ESLint) refuses a process that imports an aggregate, a repository, a port or infrastructure;
+`CONTEXT.md` gains a `Process managers` section and `describe` lists them. In the example, the
+confirmation deadline of a requested appointment is a process manager; the booking trace gains
+one handler span, the HTTP contract is unchanged.
+
+**State machines.** `defineStateMachine` (kernel) declares the lifecycle of an aggregate once,
+in `domain/state-machines/<aggregate>.state-machine.ts`: its states, the states it starts in,
+transitions named after the intention methods, guards, and the refusal of a forbidden transition
+from a static factory of the concept error. The aggregate asks `machine.next(status, 'confirm',
+context)`; the new rule `lifecycle/status-through-machine` (checker and ESLint) refuses a status
+written by hand in an aggregate whose machine exists, and `ddd-ts-kit docs` draws each machine in
+a new `State machines` section of `CONTEXT.md` (and lists the background jobs in a
+`Background jobs` section); `describe` lists both. A CONTEXT.md written before gains the
+sections by hand: copy them from a context generated by this version. In the example, the
+appointment lifecycle is a state machine; its HTTP contract is unchanged.
+
+**Background jobs.** A use case hands work to a worker with the new `JobQueue` port of the
+kernel: `jobs.enqueue(CompileStatementsBackgroundJob, { month }, { delay, runAt, idempotencyKey, subject })`, the
+job a class with a static `jobName` declared with `@Background({ maxAttempts, backoff, timeout,
+lease })`, its payload typed by its `run`. With a database the job is a row of the jobs table of
+its context, written by the transaction of the command (`KnexJobStore` and `createJobTable` in
+`@ddd-ts-kit/knex`, `DrizzleJobStore` and `jobsTable` in `@ddd-ts-kit/drizzle`), so a command
+that rolls back leaves no job and one that commits loses none; `RedisJobStore` and
+`InMemoryJobStore` write it, and a cancellation or a revival, once the unit of work committed
+(`whenCommitted`, new in the kernel). An idempotency key is scoped by the tenant of the job, and
+work done for a tenant finds and cancels the jobs of that tenant only; `find` answers the tenant
+and the `subject` of a job, never its payload, and its status is the closed vocabulary
+`QueuedJobStatus`. The `QueueWorker` of `@ddd-ts-kit/scheduling` claims the jobs of the queues of its
+contexts with a lease it extends by heartbeats, at least once, with retries and an exponential
+backoff, dead jobs, cancellation, progress, checkpoints for long jobs, a concurrency per queue
+and a graceful stop; each attempt runs as the actor, in the correlation, the tenant and the
+trace of the work that enqueued it, is counted in `background_job_runs_total` and
+`background_job_duration_ms`, and reports an unexpected failure to the error reporter.
+`@ddd-ts-kit/di` registers the declared jobs and runs the worker in the processes that run the
+jobs; the test application gains `jobQueue` and `backgroundJobs.runDue()`. One contract,
+`jobStoreContract`, holds every store; the Knex and Drizzle stores are proven on PostgreSQL in
+CI behind a pool of several connections, the Redis store on Dragonfly. Prisma and TypeORM get no
+store yet. `givenProcess(..).thenState` fails a state that JSON would change, as the runner
+stores it. See [Background jobs](docs/concepts/background-jobs.md).
+
 ## 0.10.0
 
 **Event sourcing, chosen per aggregate.** `EventSourcedAggregate` in the kernel: a command

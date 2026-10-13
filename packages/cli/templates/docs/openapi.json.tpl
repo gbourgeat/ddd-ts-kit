@@ -117,6 +117,15 @@
         "responses": {
           "200": {
             "description": "A page of entries.",
+            "headers": {
+              "Cache-Control": {
+                "description": "How the caches on the way may keep this answer.",
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -253,6 +262,21 @@
               "FORBIDDEN"
             ]
           },
+{{#if presentation.negotiated}}
+          "406": {
+            "description": "Not Acceptable. Error codes: NOT_ACCEPTABLE.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "NOT_ACCEPTABLE"
+            ]
+          },
+{{/if}}
           "422": {
             "description": "Unprocessable Content. Error codes: VALIDATION_FAILED.",
             "content": {

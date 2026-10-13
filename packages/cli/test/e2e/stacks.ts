@@ -28,7 +28,7 @@ const REPORTED_BEHIND_NATS: StackFlags = { ...DISCOVERED_BEHIND_NATS, errors: 's
  * The stack of the example application: Keycloak, relationships, knex, the audit trail, classes
  * that declare themselves under the legacy decorator mode class-validator imposes, one Redis
  * protocol server for the cache and the event bus, or another broker next to the cache,
- * failures reported to Sentry or GlitchTip and pino for the logs.
+ * failures reported to Sentry or GlitchTip, pino for the logs and Varnish in front of the API.
  */
 export const FIRST_CLASS: StackFlags = {
   http: 'express',
@@ -41,6 +41,7 @@ export const FIRST_CLASS: StackFlags = {
   authz: 'rebac',
   broker: 'redis',
   cache: 'redis',
+  'http-cache': 'varnish',
   audit: 'on',
   errors: 'sentry',
   logger: 'pino',
@@ -48,6 +49,30 @@ export const FIRST_CLASS: StackFlags = {
 };
 
 export const FIRST_CLASS_BROKERS = ['redis', 'nats', 'kafka'] as const;
+
+export const MULTI_TENANT_BEHIND_VARNISH: readonly StackFlags[] = [
+  { ...DEFAULT_STACK, tenancy: 'shared-table', 'http-cache': 'varnish' },
+  {
+    http: 'fastify',
+    validation: 'zod',
+    di: 'manual',
+    tests: 'vitest',
+    orm: 'knex',
+    events: 'outbox',
+    tenancy: 'shared-table',
+    'http-cache': 'varnish',
+  },
+  {
+    http: 'nest',
+    validation: 'standard-schema',
+    di: 'nest',
+    tests: 'vitest',
+    orm: 'knex',
+    events: 'outbox',
+    tenancy: 'shared-table',
+    'http-cache': 'varnish',
+  },
+];
 
 /** Every combination the generator is held to: zero violation as generated, and a type check against the sources of the workspace. */
 export const STACKS: readonly StackFlags[] = [
@@ -99,6 +124,8 @@ export const STACKS: readonly StackFlags[] = [
   /** Shared tables on both ORMs that generate them: every repository confined to the tenant, the tenant kept in the outbox. */
   { ...DEFAULT_STACK, tenancy: 'shared-table' },
   { ...DISCOVERED_ON_KNEX, tenancy: 'shared-table' },
+  /** Varnish in front of a multi-tenant API, on each family of wiring: the answers and the purges filed per tenant. */
+  ...MULTI_TENANT_BEHIND_VARNISH,
   { ...DEFAULT_STACK, broker: 'nats', style: 'explicit' },
   { ...DEFAULT_STACK, broker: 'kafka', style: 'explicit', cache: 'redis' },
   {
@@ -130,7 +157,18 @@ export const STACKS: readonly StackFlags[] = [
     events: 'outbox',
     audit: 'off',
   },
-  { http: 'none', validation: 'zod', di: 'tsyringe', tests: 'vitest', orm: 'knex', events: 'outbox', cache: 'redis' },
+  // The background jobs on the server of the cache, a lost write reported to Sentry; the processes in the database.
+  {
+    http: 'none',
+    validation: 'zod',
+    di: 'tsyringe',
+    tests: 'vitest',
+    orm: 'knex',
+    events: 'outbox',
+    cache: 'redis',
+    queue: 'redis',
+    errors: 'sentry',
+  },
   {
     http: 'fastify',
     validation: 'zod',
@@ -140,6 +178,7 @@ export const STACKS: readonly StackFlags[] = [
     events: 'in-memory',
     audit: 'on',
     cache: 'redis',
+    queue: 'redis',
   },
   REPORTED_BY_HAND,
   { ...REPORTED_BY_HAND, logger: 'winston' },
@@ -155,6 +194,16 @@ export const STACKS: readonly StackFlags[] = [
     logger: 'pino',
     errors: 'sentry',
   },
+  {
+    http: 'hono',
+    validation: 'typebox',
+    di: 'tsyringe',
+    tests: 'vitest',
+    orm: 'drizzle',
+    events: 'outbox',
+    cache: 'redis',
+  },
+  { http: 'fastify', validation: 'typebox', di: 'manual', tests: 'vitest', orm: 'knex', events: 'outbox' },
 ];
 
 /** The stacks held to everything a project runs in its pipeline, as generated. */

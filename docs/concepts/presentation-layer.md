@@ -176,9 +176,15 @@ signature names HTTP beyond the type of the request, so another transport or ano
 writes its own next to them and the use case does not move. A controller that only forwards
 has neither (`presentation/controller-delegates` holds what a controller may be given).
 
+A serializer decides the fields of a body, never who sees them: a field reserved to some
+callers is marked on the response schema (`withFieldAccess`), and the media types a route
+answers in are `produces` of its declaration, both explained in
+[representations, field access and forms](representations-and-forms.md).
+
 ## When to keep a function route
 
 `defineRoute` stays supported and both forms run in one project. Keep a function when the
-route answers several success statuses, sets response headers (`Location`, a cache header),
-answers bytes or text, or is built from data at run time: a controller has one response and
-answers its body.
+route answers several success statuses, sets response headers of its own (`Location`), answers
+bytes or text, or is built from data at run time: a controller has one response and answers its
+body. Caching headers are not a reason: a controller declares its cache policy, its validators
+and its cache tags (`cache`), and the pipeline answers them ([HTTP caching](http-caching.md)).

@@ -18,7 +18,8 @@ export const AppointmentMapper = {
   },
 
   toRow(saved: Appointment): AppointmentColumns {
-    const { registeredAt, changedAt, booking, status, confirmBefore, cancellation, document } = saved.toState();
+    const { registeredAt, changedAt, booking, status, confirmBefore, cancellation, internalNote, document } =
+      saved.toState();
 
     return {
       id: saved.id,
@@ -37,6 +38,7 @@ export const AppointmentMapper = {
       confirm_before: confirmBefore ?? null,
       cancelled_by: cancellation?.by ?? null,
       cancellation_reason: cancellation?.reason ?? null,
+      internal_note: internalNote ?? null,
       ...documentColumnsOf(document),
     };
   },
@@ -99,6 +101,7 @@ function stateOf(row: AppointmentRow): AppointmentState {
       ? {}
       : { cancellation: Cancellation.create(row.cancelled_by, row.cancellation_reason ?? undefined) }),
     ...documentOf(row),
+    ...(row.internal_note === null ? {} : { internalNote: row.internal_note }),
   };
 }
 

@@ -22,8 +22,8 @@ export function stackVars(config: Config): RenderContext {
     style: one(style, ['declared', 'explicit']),
     assembly: assemblyVars(config),
     decorators: { legacy, standard: !legacy },
-    http: httpVars(config),
-    validation: one(validation, ['zod', 'class-validator', 'standard-schema', 'none']),
+    ...edgeVars(config),
+    validation: one(validation, ['zod', 'class-validator', 'typebox', 'standard-schema', 'none']),
     di: one(di, ['tsyringe', 'nest', 'manual']),
     orm: { ...one(orm, ['drizzle', 'knex', 'prisma', 'typeorm', 'custom', 'none']), any: orm !== 'none' },
     events: eventVars(config),
@@ -37,22 +37,43 @@ export function stackVars(config: Config): RenderContext {
     errors: errorVars(config),
     ...modelWritingVars(config),
     routes: routeVars(config),
+    presentation: presentationVars(config),
     logger: one(logger, ['stdout', 'pino', 'winston']),
     tests: { ...one(tests, ['vitest', 'jest']), module: tests === 'jest' ? '@jest/globals' : 'vitest' },
-    worker: { on: config.worker, off: !config.worker },
     config: platformPaths(config),
     alias: aliasVars(config),
     persistence: persistenceVars(config),
     tenancy: { ...one(tenancy, ['none', 'shared-table']), any: tenancy !== 'none' },
+    ...backgroundVars(config),
   };
 }
 
-/** How the code of the model is written: its refusals, its value objects, its closed values. */
+/** Where the background jobs run and are kept. */
+function backgroundVars(config: Config): RenderContext {
+  return { worker: { on: config.worker, off: !config.worker }, queue: queueVars(config) };
+}
+
+/**
+ * `stored`: the jobs leave the memory of the process. `processTable`: the instances of the
+ * process managers go to the database whenever the jobs leave memory and the ORM keeps them.
+ */
+function queueVars(config: Config): RenderContext {
+  const { queue, orm } = config.stack;
+
+  return {
+    ...one(queue, ['memory', 'database', 'redis']),
+    stored: queue !== 'memory',
+    processTable: queue !== 'memory' && (orm === 'knex' || orm === 'drizzle'),
+  };
+}
+
+/** How the code is written: its refusals, its shared schemas, its value objects, its closed values. */
 function modelWritingVars(config: Config): RenderContext {
-  const { refusals, valueObjects, literals } = config.stack;
+  const { refusals, schemas, valueObjects, literals } = config.stack;
 
   return {
     refusals: one(refusals, ['factories', 'classes']),
+    schemas: one(schemas, ['shared', 'per-route']),
     valueObjects: one(valueObjects, ['throwing', 'result']),
     literals: one(literals, ['named', 'free']),
   };
@@ -75,6 +96,21 @@ function routeVars(config: Config): RenderContext {
   };
 }
 
+/**
+ * `negotiated`: the boundary registers the representations of the kit; `forms`: the composition
+ * root serves the forms of the routes. Either one decides the restricted fields through the
+ * `Access` of the application, which `presentation-of.ts` of the platform builds.
+ */
+function presentationVars(config: Config): RenderContext {
+  const { http, representations, forms, audit } = config.stack;
+  const negotiated = http !== 'none' && representations === 'negotiated';
+  const served = http !== 'none' && forms === 'on';
+  const any = negotiated || served;
+
+  // The HTTP boundary takes more than its five ports when the audit trail or the presentation joins them.
+  return { negotiated, forms: served, any, widensEdge: any || audit === 'on' };
+}
+
 function assemblyVars(config: Config): RenderContext {
   const { style, assembly } = config.stack;
 
@@ -84,13 +120,22 @@ function assemblyVars(config: Config): RenderContext {
   };
 }
 
+/** The HTTP framework, and the shared cache in front of it. */
+function edgeVars(config: Config): RenderContext {
+  const { httpCache, tenancy } = config.stack;
+  // A multi-tenant application files its tags under the tenant, on the answers and on the purges alike.
+  const perTenant = httpCache !== 'none' && tenancy !== 'none';
+
+  return { http: httpVars(config), httpCache: { ...one(httpCache, ['none', 'varnish']), perTenant } };
+}
+
 function httpVars(config: Config): RenderContext {
   const { http } = config.stack;
 
   return {
-    ...one(http, ['express', 'fastify', 'nest', 'none']),
+    ...one(http, ['express', 'fastify', 'hono', 'nest', 'none']),
     any: http !== 'none',
-    plain: http === 'express' || http === 'fastify',
+    plain: http === 'express' || http === 'fastify' || http === 'hono',
   };
 }
 

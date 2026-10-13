@@ -16,7 +16,7 @@ The phase of a handler is `after-commit` when the options object of its `@Domain
 
 For a before-commit handler, a dependency that is:
 
-- `Cache`, `Lock`, `RateLimiter`, `JobScheduler` or `EventBus` of `@ddd-ts-kit/kernel`
+- `Cache`, `CachePurger`, `Lock`, `RateLimiter`, `JobScheduler` or `EventBus` of `@ddd-ts-kit/kernel`
 - imported from `infrastructure/` of its context
 - imported from another context
 - imported from the platform directory

@@ -17,6 +17,7 @@ export const anAgendaEntry = defineBuilder<AgendaEntry>({
     status: 'booked',
     confirmBefore: null,
     cancelledBy: null,
+    internalNote: null,
     changedAt: new Date('2026-03-01T00:00:00.000Z'),
   },
 });

@@ -744,6 +744,20 @@ ones the CLI generates, name `ExecutionScope`. `require()` throws `NoExecutionCo
 This is defence in depth, not authorization: the tenant filter of a repository stops a bug from
 leaking rows, the permission is still decided in the application layer.
 
+## Fields reserved to some callers
+
+A field of an answer or of a request body that only some callers may see or set is not a role
+test in a serializer: it is marked on its schema with `withFieldAccess` of `@ddd-ts-kit/http`,
+and decided by the `Access` of this package, as a use case is: `fieldDeciderOf({ access, clock })`
+takes an `Access` as it is, a permission is asked with `decideOn` (its policies, then the
+authorizer), and a policy written with `definePolicy` can be named on the field directly.
+`Access.decideOn({ actor, permission, subject, context, recorded })` is `decide` with what a
+use case adds through `@Requires` (`context`), and `recorded: false` for a decision that only
+shapes an answer, a field shown or left out, which then does not reach `onDecision`; a field set
+in a body and a form opened stay recorded. `decideOn` is optional on an `Access` of the project:
+the decider then asks `decide`, which records everything. The how-to is in the README of
+`@ddd-ts-kit/http` ("Fields reserved to some callers").
+
 ## Filtering lists
 
 A list is filtered by the query, never in memory after loading. The handler asks for a scope

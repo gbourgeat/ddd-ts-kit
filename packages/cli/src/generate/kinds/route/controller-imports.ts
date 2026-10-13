@@ -3,6 +3,7 @@ import { toName } from '../../../naming/index.js';
 import type { Scope } from '../../scope.js';
 import type { ControllerPlan } from './controller-plan.js';
 import { dtoClasses } from './dto-classes.js';
+import { sharesSchemas } from './shares-schemas.js';
 
 /** The files a controller stands with, each as the import of the class it exports. */
 export interface ControllerImports {
@@ -24,7 +25,9 @@ export function controllerImports(scope: Scope, plan: ControllerPlan): Controlle
   const inContext = (file: string): string => specifierOf(config, `${config.contextsDir}/${context.kebab}/${file}.ts`);
   const beside = (role: string): string => inContext(`${folder}/${name.kebab}.${role}`);
   const classOf = (role: string): string => `${name.pascal}${toName(role).pascal}`;
-  const roles = config.stack.validation === 'class-validator' ? dtoClasses(endpoint, useCase) : [];
+
+  const roles =
+    config.stack.validation === 'class-validator' ? dtoClasses(endpoint, useCase, sharesSchemas(config)) : [];
 
   return {
     message: `import { ${useCase.message} } from '${inContext(useCase.messageFile)}';`,

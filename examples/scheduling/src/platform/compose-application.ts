@@ -1,5 +1,5 @@
 import { installAspectRuntime } from '@ddd-ts-kit/aspects';
-import { Authenticator } from '@ddd-ts-kit/auth';
+import { Access, Authenticator } from '@ddd-ts-kit/auth';
 import { RelationTupleStore } from '@ddd-ts-kit/auth/rebac';
 import {
   DeclaredEdges,
@@ -39,6 +39,8 @@ import { authorization } from '@/platform/auth/authorization';
 import { securitySchemes } from '@/platform/auth/security-schemes';
 import { httpBoundary, type HttpBoundary } from '@/platform/auth/http-boundary';
 import { relateSystemActors } from '@/platform/auth/relate-system-actors';
+import { presentationOf } from '@/platform/http/presentation-of';
+import { withForms } from '@/platform/http/with-forms';
 import { createCommandBus } from '@/platform/buses/create-command-bus';
 import { createQueryBus } from '@/platform/buses/create-query-bus';
 import type { Persistence } from '@/platform/database/persistence';
@@ -170,9 +172,11 @@ function kernel(foundations: Foundations, persistence: Persistence, options: App
 
 function running(container: Container, options: ApplicationOptions, contexts: ContextSelection): Application {
   const logger = container.resolve(Logger);
+  // What the server answers in and which fields each caller sees: the forms and the contract are given the same.
+  const presentation = presentationOf(container.resolve(Access), container.resolve(Clock));
 
   return {
-    routes: routesOf(container, contexts),
+    routes: withForms(routesOf(container, contexts), presentation),
     boundary: httpBoundary({
       authenticator: container.resolve(Authenticator),
       executionScope: container.resolve(ExecutionScope),
@@ -185,6 +189,7 @@ function running(container: Container, options: ApplicationOptions, contexts: Co
       }),
       errors: container.resolve(ErrorReporter),
       networks: options.networks,
+      presentation,
     }),
     fileRoutes: fileRoutes(container.resolve(FileStorage)),
     // What the outbox relay delivers with: each publication continues the trace stored with its event.

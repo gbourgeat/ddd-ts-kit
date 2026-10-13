@@ -1,3 +1,4 @@
+import { presentationOfRoute } from './presentation-of-route.js';
 import type { RequestPart, RouteFact, RouteResponse, UseCaseFact } from './context-description.js';
 import type { ContextSources } from './context-sources.js';
 import { readControllers } from './read-controllers.js';
@@ -42,6 +43,7 @@ function routeOf(file: string, source: string, useCases: readonly UseCaseFact[])
     errors: [...(/\berrors:\s*\[([^\]]*)\]/.exec(source)?.[1] ?? '').matchAll(/'([^']+)'/g)].map(
       (match) => match[1] ?? '',
     ),
+    ...presentationOfRoute(source, field('operationId')),
     file,
   };
 }

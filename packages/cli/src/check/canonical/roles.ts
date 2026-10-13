@@ -12,6 +12,12 @@ export const ROLES: readonly Role[] = [
   { directory: 'domain/repositories', suffixes: ['.repository.ts'] },
   { directory: 'domain/services', suffixes: ['.service.ts'], specFor: ['.service.ts'] },
   {
+    directory: 'domain/state-machines',
+    suffixes: ['.state-machine.ts'],
+    oneConcept: true,
+    specFor: ['.state-machine.ts'],
+  },
+  {
     directory: 'application/commands/*',
     suffixes: ['.command.ts', '.handler.ts', '.result.ts'],
     oneConcept: true,
@@ -32,6 +38,18 @@ export const ROLES: readonly Role[] = [
     specFor: ['.event-handler.ts'],
   },
   { directory: 'application/scheduling', suffixes: ['.job.ts'], oneConcept: true, specFor: ['.job.ts'] },
+  {
+    directory: 'application/processes',
+    suffixes: ['.process.ts'],
+    oneConcept: true,
+    specFor: ['.process.ts'],
+  },
+  {
+    directory: 'application/background',
+    suffixes: ['.background-job.ts'],
+    oneConcept: true,
+    specFor: ['.background-job.ts'],
+  },
   {
     directory: 'application/projections',
     suffixes: ['.projection.ts'],

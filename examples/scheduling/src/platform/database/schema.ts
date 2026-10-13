@@ -1,6 +1,6 @@
 import type { Knex } from 'knex';
 import { createAuditTables } from '@ddd-ts-kit/audit/knex';
-import { createOutboxTables } from '@ddd-ts-kit/knex';
+import { createJobTable, createOutboxTables, createProcessTable } from '@ddd-ts-kit/knex';
 import { createRelationTupleTables } from '@/platform/auth/create-relation-tuple-tables';
 // ddd-ts-kit:imports
 import { createSchedulingTables } from '@/contexts/scheduling/infrastructure/persistence/create-scheduling-tables.schema';
@@ -23,6 +23,8 @@ export const AUTHORIZATION_SCHEMA = 'authorization';
 export const createTables = async (knex: Knex): Promise<void> => {
   // The tenant of each event, so that its consumers run in that tenant.
   await createOutboxTables(knex, { schema: MESSAGING, tenant: true });
+  await createJobTable(knex, { schema: MESSAGING });
+  await createProcessTable(knex, { schema: MESSAGING });
   await createAuditTables(knex, { schema: AUDIT_SCHEMA });
   await createRelationTupleTables(knex, { schema: AUTHORIZATION_SCHEMA });
   // ddd-ts-kit:schemas

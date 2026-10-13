@@ -1,15 +1,13 @@
-import { Controller, type HttpRequest } from '@ddd-ts-kit/http';
+import { acceptedSchema, Controller, type Accepted, type HttpRequest } from '@ddd-ts-kit/http';
 import type { Actor, CommandBus } from '@ddd-ts-kit/kernel';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
 import { RescheduleAppointmentCommand } from '@/contexts/scheduling/application/commands/reschedule-appointment/reschedule-appointment.command';
 import { RescheduleAppointmentParams } from '@/contexts/scheduling/presentation/http/appointments/reschedule-appointment/reschedule-appointment.params';
 import { RescheduleAppointmentBody } from '@/contexts/scheduling/presentation/http/appointments/reschedule-appointment/reschedule-appointment.body';
-import { RescheduleAppointmentAccepted } from '@/contexts/scheduling/presentation/http/appointments/reschedule-appointment/reschedule-appointment.accepted';
 import { AppointmentsRoutes } from '@/contexts/scheduling/presentation/http/appointments.routes';
 
 const params = classSchema(RescheduleAppointmentParams);
 const body = classSchema(RescheduleAppointmentBody);
-const accepted = classSchema(RescheduleAppointmentAccepted);
 
 @Controller({
   group: AppointmentsRoutes,
@@ -18,7 +16,7 @@ const accepted = classSchema(RescheduleAppointmentAccepted);
   summary: 'Reschedule appointment',
   params,
   body,
-  response: { status: 201, description: 'Done; the body carries the identifier.', body: accepted },
+  response: { status: 201, description: 'Done; the body carries the identifier.', body: acceptedSchema },
   errors: [
     'APPOINTMENT_NOT_FOUND',
     'APPOINTMENT_ENDED',
@@ -37,7 +35,7 @@ export class RescheduleAppointmentController {
 
   async handle(
     request: HttpRequest<{ params: RescheduleAppointmentParams; body: RescheduleAppointmentBody }>,
-  ): Promise<RescheduleAppointmentAccepted> {
+  ): Promise<Accepted> {
     const id = await this.commands.execute(moveOf(request.actor, request.params, request.body));
 
     return { id };
