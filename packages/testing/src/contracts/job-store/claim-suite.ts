@@ -10,6 +10,7 @@ export class ClaimSuite extends ContractSuite<JobStoreUnderContract> {
     this.handsOutWhatWasAdded();
     this.respectsTheInstant();
     this.dropsDuplicates();
+    this.keepsTheKeysOfTenantsApart();
     this.leasesWhatItHandsOut();
   }
 
@@ -80,6 +81,37 @@ export class ClaimSuite extends ContractSuite<JobStoreUnderContract> {
       this.expect(again).toEqual({ id: 'job-1', duplicate: true });
       this.expect(otherName).toEqual({ id: 'job-3', duplicate: false });
       this.expect(await this.subject.find('job-2')).toBe(undefined);
+    });
+  }
+
+  private keepsTheKeysOfTenantsApart(): void {
+    this.it('keeps the idempotency keys of two tenants, and of work without a tenant, apart', async () => {
+      await this.subject.add(aJob('job-1', { idempotencyKey: 'feb' }));
+
+      const otherTenant = await this.subject.add(aJob('job-2', { idempotencyKey: 'feb', tenantId: 'tenant-4' }));
+      const noTenant = await this.subject.add(aJob('job-3', { idempotencyKey: 'feb', tenantId: null }));
+      const noTenantAgain = await this.subject.add(aJob('job-4', { idempotencyKey: 'feb', tenantId: null }));
+
+      this.expect([otherTenant, noTenant, noTenantAgain]).toEqual([
+        { id: 'job-2', duplicate: false },
+        { id: 'job-3', duplicate: false },
+        { id: 'job-3', duplicate: true },
+      ]);
+    });
+
+    this.it('shows the tenant and the subject of a job, never its payload', async () => {
+      await this.subject.add(aJob('job-1', { subject: 'customer-9' }));
+      await this.subject.add(aJob('job-2', { tenantId: null }));
+
+      const [first, second] = [await this.subject.find('job-1'), await this.subject.find('job-2')];
+
+      this.expect([first?.tenantId, first?.subject, first !== undefined && 'payload' in first]).toEqual([
+        'tenant-3',
+        'customer-9',
+        false,
+      ]);
+
+      this.expect([second?.tenantId, second?.subject]).toEqual([undefined, undefined]);
     });
   }
 

@@ -7,6 +7,7 @@ import {
   type EnqueuedBy,
   type EnqueuedJob,
   type EnqueueOptions,
+  type ExecutionContext,
   type ExecutionScope,
   type IdGenerator,
   type JobQueue,
@@ -27,7 +28,9 @@ export interface StoredJobQueueOptions {
 
 /**
  * The `JobQueue` of the kernel on a `JobStore`: it names the job, captures what travels with it
- * and adds it to the store, in the transaction of the caller when the store shares it.
+ * and adds it to the store, in the transaction of the caller when the store shares it. `find`
+ * and `cancel` reach the jobs of the tenant of the work in progress only (the tenants of its
+ * elevation), every job when the work has no tenant.
  */
 export class StoredJobQueue implements JobQueue {
   constructor(private readonly options: StoredJobQueueOptions) {}
@@ -39,7 +42,7 @@ export class StoredJobQueue implements JobQueue {
   ): Promise<EnqueuedJob> {
     const name = nameOf(job);
     const enqueuedAt = this.options.clock.now();
-    const { idempotencyKey } = options;
+    const { idempotencyKey, subject } = options;
 
     return this.options.store.add({
       id: this.options.ids.next(),
@@ -50,15 +53,22 @@ export class StoredJobQueue implements JobQueue {
       enqueuedAt,
       runAt: runAtOf(options, enqueuedAt),
       ...(idempotencyKey === undefined ? {} : { idempotencyKey }),
+      ...(subject === undefined ? {} : { subject }),
     });
   }
 
-  cancel(id: string): Promise<boolean> {
+  async cancel(id: string): Promise<boolean> {
+    if ((await this.find(id)) === undefined) {
+      return false;
+    }
+
     return this.options.store.cancel(id, this.options.clock.now());
   }
 
-  find(id: string): Promise<QueuedJob | undefined> {
-    return this.options.store.find(id);
+  async find(id: string): Promise<QueuedJob | undefined> {
+    const job = await this.options.store.find(id);
+
+    return job !== undefined && isInReach(job, this.options.scope.current()) ? job : undefined;
   }
 
   /** Outside of any execution scope (a script, a test), the job acts as itself, under a correlation of its own. */
@@ -75,6 +85,16 @@ export class StoredJobQueue implements JobQueue {
 
     return { correlationId, actor, ...(tenantId === undefined ? {} : { tenantId }), ...traced };
   }
+}
+
+function isInReach(job: QueuedJob, context: ExecutionContext | undefined): boolean {
+  const elevated = context?.elevation?.tenants;
+
+  if (elevated !== undefined) {
+    return elevated === 'all' || (job.tenantId !== undefined && elevated.includes(job.tenantId));
+  }
+
+  return context?.tenantId === undefined || job.tenantId === context.tenantId;
 }
 
 function nameOf(job: { readonly jobName: string }): string {

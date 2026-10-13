@@ -536,7 +536,9 @@ export const schedulingJobs = jobsTable('scheduling');
 kernelModule({ unitOfWork, jobStore: new DrizzleJobStore(unitOfWork, schedulingJobs) });
 ```
 
-It passes `jobStoreContract`, its unit of work suite included, on PGlite. What the jobs
+It passes `jobStoreContract`, its unit of work suite included, on PGlite and, in the integration
+job of CI, on PostgreSQL behind a pool of five connections, where concurrent claims race for
+real. What the jobs
 guarantee: [Background jobs](../../docs/concepts/background-jobs.md).
 
 ## Process managers

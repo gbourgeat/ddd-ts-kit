@@ -899,11 +899,16 @@ abstract class JobQueue {
 }
 ```
 
-Where a use case hands work to a worker. `EnqueueOptions` are `delay` or `runAt`, and an
-`idempotencyKey` (a job of the same name and key already kept is answered, `duplicate: true`).
-Called inside a unit of work, the job is added with the business change: the stores of the ORM
-packages write it with the transaction, a store that cannot (Redis, memory) waits for the commit
-through `whenCommitted(write, failed?)`, the helper any such adapter uses. A run happens inside
+Where a use case hands work to a worker. `EnqueueOptions` are `delay` or `runAt`, an
+`idempotencyKey` (a job of the same name and key, enqueued for the same tenant and already kept,
+is answered, `duplicate: true`) and a `subject` (the id of what the job works on, which `find`
+answers next to the tenant: a query checks the job belongs to the element it was asked about).
+`QueuedJobStatus` is the closed vocabulary of the statuses (`waiting`, `running`, `succeeded`,
+`cancelled`, `dead`), to publish in a contract. Work done for a tenant finds and cancels the
+jobs of that tenant only (an elevation, those of the tenants it names). Called inside a unit of
+work, a job is added or cancelled with the business change: the stores of the ORM packages
+write with the transaction, a store that cannot (Redis, memory) waits for the commit through
+`whenCommitted(write, failed?)`, the helper any such adapter uses. A run happens inside
 `ExecutionScope`, in the context `executionContextOfBackgroundJob({ jobId, enqueuedBy, deadline? })`
 builds: origin `queue`, the correlation, actor and tenant of the work that enqueued it
 (`EnqueuedBy`), the job as the cause. `backgroundJobPolicy(options)` fills in the defaults and

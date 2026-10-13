@@ -26,6 +26,9 @@ export async function createJobTable(knex: Knex, options: JobTableOptions = {}):
     columns.jsonb('payload');
     columns.jsonb('enqueued_by').notNullable();
     columns.string('idempotency_key', INDEXABLE_LENGTH);
+    // The empty text outside any tenant: a null would make every such key distinct.
+    columns.string('tenant_id', INDEXABLE_LENGTH).notNullable().defaultTo('');
+    columns.string('subject', INDEXABLE_LENGTH);
     columns.string('status', 16).notNullable().defaultTo('waiting');
     columns.integer('attempts').notNullable().defaultTo(0);
     columns.datetime('run_at', INSTANT).notNullable();
@@ -35,7 +38,7 @@ export async function createJobTable(knex: Knex, options: JobTableOptions = {}):
     columns.text('last_error_code');
     columns.datetime('enqueued_at', INSTANT).notNullable();
     columns.datetime('finished_at', INSTANT);
-    columns.unique(['name', 'idempotency_key'], { indexName: `${table}_idempotency_key` });
+    columns.unique(['name', 'tenant_id', 'idempotency_key'], { indexName: `${table}_idempotency_key` });
 
     // Partial: a claim only ever looks at what is waiting or running, and finished jobs dominate.
     columns.index(['queue', 'run_at', 'sequence'], `${table}_due_idx`, {

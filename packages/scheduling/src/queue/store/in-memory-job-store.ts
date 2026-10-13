@@ -15,8 +15,9 @@ const FINISHED: readonly string[] = ['succeeded', 'cancelled'];
 
 /**
  * The queue in the memory of the process, for tests and a single process without a database.
- * Called inside a unit of work, `add` waits for the commit (`whenCommitted`): a command that
- * rolls back leaves no job. Payloads and checkpoints go through JSON, as in every other store.
+ * Called inside a unit of work, `add`, `cancel` and `retryDead` answer from what the store holds
+ * and write once it committed (`whenCommitted`): a command that rolls back leaves no job and
+ * cancels none. Payloads and checkpoints go through JSON, as in every other store.
  */
 export class InMemoryJobStore implements JobStore {
   private readonly jobs = new Map<string, StoredJob>();
@@ -96,13 +97,17 @@ export class InMemoryJobStore implements JobStore {
   }
 
   async cancel(id: string, at: Date): Promise<boolean> {
-    const job = this.jobs.get(id);
-
-    if (job === undefined || (job.status !== 'waiting' && job.status !== 'running')) {
+    if (!isCancellable(this.jobs.get(id))) {
       return false;
     }
 
-    finish(job, 'cancelled', at);
+    await whenCommitted(async () => {
+      const job = this.jobs.get(id);
+
+      if (isCancellable(job)) {
+        finish(job, 'cancelled', at);
+      }
+    });
 
     return true;
   }
@@ -114,15 +119,13 @@ export class InMemoryJobStore implements JobStore {
   }
 
   async retryDead(ids: readonly string[], now: Date): Promise<number> {
-    const dead = ids.flatMap((id) => {
-      const job = this.jobs.get(id);
+    const dead = this.dead(ids);
 
-      return job?.status === 'dead' ? [job] : [];
+    await whenCommitted(async () => {
+      for (const job of this.dead(ids)) {
+        Object.assign(job, { status: 'waiting', attempts: 0, runAt: now, finishedAt: undefined });
+      }
     });
-
-    for (const job of dead) {
-      Object.assign(job, { status: 'waiting', attempts: 0, runAt: now, finishedAt: undefined });
-    }
 
     return dead.length;
   }
@@ -151,12 +154,24 @@ export class InMemoryJobStore implements JobStore {
     return [...this.jobs.values()].map(queuedJobOf);
   }
 
-  private withKey({ name, idempotencyKey }: NewJob): StoredJob | undefined {
+  private dead(ids: readonly string[]): StoredJob[] {
+    return ids.flatMap((id) => {
+      const job = this.jobs.get(id);
+
+      return job?.status === 'dead' ? [job] : [];
+    });
+  }
+
+  /** The key is scoped by the tenant: two tenants never share one. */
+  private withKey({ name, idempotencyKey, enqueuedBy }: NewJob): StoredJob | undefined {
     if (idempotencyKey === undefined) {
       return undefined;
     }
 
-    return [...this.jobs.values()].find((job) => job.name === name && job.idempotencyKey === idempotencyKey);
+    return [...this.jobs.values()].find(
+      (job) =>
+        job.name === name && job.idempotencyKey === idempotencyKey && job.enqueuedBy.tenantId === enqueuedBy.tenantId,
+    );
   }
 
   /** A job of the same key may have committed while this one waited for its own commit. */
@@ -172,6 +187,7 @@ export class InMemoryJobStore implements JobStore {
       payload: plainJson(job.payload),
       enqueuedBy: structuredClone(job.enqueuedBy),
       idempotencyKey: job.idempotencyKey,
+      subject: job.subject,
       sequence: this.sequence,
       status: 'waiting',
       attempts: 0,
@@ -194,6 +210,10 @@ export class InMemoryJobStore implements JobStore {
 
     return true;
   }
+}
+
+function isCancellable(job: StoredJob | undefined): job is StoredJob {
+  return job?.status === 'waiting' || job?.status === 'running';
 }
 
 function isDue(job: StoredJob, now: Date): boolean {

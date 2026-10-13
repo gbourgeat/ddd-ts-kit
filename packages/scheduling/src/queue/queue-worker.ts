@@ -67,7 +67,9 @@ export class QueueWorker {
 
   /**
    * Stops claiming, waits for the attempts in progress up to the grace period, then aborts them:
-   * an aborted attempt gives its job back, uncounted, for the next worker.
+   * an aborted attempt gives its job back, uncounted, for the next worker. A claim in flight
+   * when it is called gives its jobs back the same way. Stopping is cooperative: a job that
+   * ignores its signal goes on behind, and is claimed again once its lease ends.
    */
   async stop(): Promise<void> {
     this.running = false;
@@ -82,7 +84,10 @@ export class QueueWorker {
       this.stopping.abort();
     });
 
-    await Promise.all([...this.queues.values()].flatMap((queue) => [...queue.active]));
+    const queues = [...this.queues.values()];
+
+    await Promise.all(queues.flatMap((queue) => (queue.filling === undefined ? [] : [queue.filling])));
+    await Promise.all(queues.flatMap((queue) => [...queue.active]));
     cancelAbort();
   }
 
@@ -111,7 +116,7 @@ export class QueueWorker {
       name,
       concurrency: this.concurrencyOf(name),
       active: new Set<Promise<BackgroundJobRun>>(),
-      pumping: false,
+      filling: undefined,
       cancelSleep: undefined,
     });
   }
@@ -128,19 +133,23 @@ export class QueueWorker {
 
   /** Claims while there is room and work; an idle queue sleeps, a full one waits for an attempt to end. */
   private async pump(queue: QueueState): Promise<void> {
-    if (queue.pumping || !this.running) {
+    if (queue.filling !== undefined || !this.running) {
       return;
     }
 
-    queue.pumping = true;
+    queue.filling = this.fillOrSleep(queue);
+    await queue.filling;
+  }
 
+  /** Never rejects: a fault of the store is recorded, and the queue asks again after a poll. */
+  private async fillOrSleep(queue: QueueState): Promise<void> {
     try {
       await this.fill(queue);
     } catch (error) {
       this.recorder.fault(queue.name, error);
       this.sleep(queue);
     } finally {
-      queue.pumping = false;
+      queue.filling = undefined;
     }
   }
 
@@ -153,6 +162,12 @@ export class QueueWorker {
       }
 
       const claimed = await this.claimed(queue, room);
+
+      if (this.stopped()) {
+        await this.giveBack(claimed);
+
+        return;
+      }
 
       for (const job of claimed) {
         this.launch(queue, job);
@@ -175,6 +190,18 @@ export class QueueWorker {
       now: this.options.clock.now(),
       leaseMs: Math.max(...leases),
     });
+  }
+
+  /** Read anew after an await: `stop()` may have been called while it waited. */
+  private stopped(): boolean {
+    return !this.running;
+  }
+
+  /** Jobs claimed while the worker stopped go back to the store, their attempt not counted. */
+  private async giveBack(claimed: readonly ClaimedJob[]): Promise<void> {
+    const now = this.options.clock.now();
+
+    await Promise.all(claimed.map((job) => this.options.store.release({ id: job.id, attempt: job.attempt }, now)));
   }
 
   private launch(queue: QueueState, job: ClaimedJob): void {

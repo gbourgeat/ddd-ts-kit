@@ -81,6 +81,19 @@ describe('a process manager run by the runner', () => {
     );
   });
 
+  it('keeps the timeout armed when the step that disarmed it rolls back', async () => {
+    const { runner, dunning, commands, store } = aProcessBench();
+
+    await runner.run(DunningProcess, 'invoice-1', (current) => dunning.issued('invoice-1', DUE, current));
+    commands.refusing = (command) => command instanceof CloseDunning;
+
+    await expect(runner.run(DunningProcess, 'invoice-1', (current) => dunning.paid(current))).rejects.toThrow(
+      'refused',
+    );
+
+    expect(store.list().map(({ id, status }) => [id, status])).toEqual([['job-1', 'waiting']]);
+  });
+
   it('refuses a step decided on a version another step saved in between', async () => {
     const { runner, dunning, processes } = aProcessBench();
 

@@ -9,6 +9,9 @@ export interface JobRow {
   payload: unknown;
   enqueued_by: EnqueuedBy;
   idempotency_key: string | null;
+  /** The empty text for a job enqueued outside any tenant. */
+  tenant_id: string;
+  subject: string | null;
   status: QueuedJobStatus;
   attempts: number;
   run_at: Date;

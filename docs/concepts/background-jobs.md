@@ -48,11 +48,19 @@ await this.jobs.enqueue(RescheduleAbsenceBackgroundJob, { calendarId, from, to }
 - **The payload** is plain JSON, typed by the class: `enqueue` refuses at compile time a payload
   that is not the one `run` takes. A date travels as its ISO text.
 - **Options**: `delay` or `runAt` (not before), `idempotencyKey` (a second job of the same name
-  and key is not added while the first is kept: `enqueue` answers its id with
-  `duplicate: true`). On the declaration: `maxAttempts` (default 5), `backoff` (exponential,
-  1 s doubled up to 5 min), `timeout` (none) and `lease` (30 s).
+  and key, enqueued for the same tenant, is not added while the first is kept: `enqueue` answers
+  its id with `duplicate: true`; two tenants never share a key) and `subject` (the id of what the
+  job works on, kept with it). On the declaration: `maxAttempts` (default 5), `backoff`
+  (exponential, 1 s doubled up to 5 min), `timeout` (none) and `lease` (30 s).
 - **`JobQueue`** is a port of the kernel: `enqueue`, `cancel` and `find`, which answers the
-  status, the attempts, the progress and the last error code of a job, never its payload.
+  status, the attempts, the progress, the last error code, the tenant and the subject of a job,
+  never its payload. The statuses are the closed vocabulary `QueuedJobStatus`, which a route
+  publishes as an enum (`@IsIn(Object.values(QueuedJobStatus))`). A query that reads a job
+  through an element (`GET /calendars/:id/clearances/:clearanceId`) checks that `subject` is
+  that element: a job id is no secret, it is the causation of everything the job does.
+- **Tenants.** Work done for a tenant finds and cancels the jobs of that tenant only, and those
+  of the tenants an elevation names; work without a tenant (a single-tenant project, a system
+  job) reaches every job.
 - **Generated**: `ddd-ts-kit generate background-job <context> <Name> --command <UseCase>` writes
   the class (`@Background()` in the declared style, `builder.backgroundJob(..)` in the module
   file otherwise), sending its command as `execution.actor`, and a spec that enqueues it as a
@@ -91,9 +99,12 @@ unit of work that rolls back is not there, one added in a unit of work that comm
 
 A store that cannot share the transaction (Redis, Dragonfly, the memory of the process) waits
 for the commit: the kernel helper `whenCommitted` runs the write once the unit of work
-committed, never when it rolled back. What it cannot cover is a crash between the commit and
-the write, which loses the job; the composition root is told (`onLostJob`) when the write
-fails. With a database, keep the jobs table.
+committed, never when it rolled back, for an enqueue, a cancellation and a revival alike. The
+contract proves it: a job cancelled or revived in a unit of work that rolls back is left as it
+was. What it cannot cover is a crash between the commit and the write, which loses that write;
+the composition root is told (`onLostJob`) when the write fails. Two jobs of one idempotency
+key staged before either committed both answer their own id, and only the first is kept. With
+a database, keep the jobs table.
 
 ## A worker runs them
 
@@ -118,11 +129,14 @@ queue is idle.
   checkpoint saved inside the unit of work of a step commits with that step.
 - **Timeout.** `timeout` aborts the signal and counts the attempt as failed. As for scheduled
   jobs, nothing kills a promise: a job that ignores its signal goes on behind.
-- **Cancellation.** `jobs.cancel(id)` ends a waiting job at once; a running one learns it at
-  its next heartbeat or report, and its signal is aborted.
-- **Graceful shutdown.** `stop()` stops claiming, waits for the attempts in progress up to its
-  grace period (30 s), then aborts them: an aborted attempt gives its job back without counting
-  it, for the next worker.
+- **Cancellation.** `jobs.cancel(id)` ends a waiting job once the unit of work it is called in
+  commits (at once outside of one); a running one learns it at its next heartbeat or report,
+  and its signal is aborted.
+- **Graceful shutdown.** `stop()` stops claiming, waits for a claim in flight (whose jobs go
+  back, uncounted) and for the attempts in progress up to its grace period (30 s), then aborts
+  them: an aborted attempt gives its job back without counting it, for the next worker.
+  Stopping, like a timeout or a cancellation, is cooperative: a job that ignores its signal
+  goes on behind, outside of the concurrency of its queue, until its body settles.
 
 ## In the example
 
@@ -151,7 +165,7 @@ service takes its jobs, its queue and its table with it: nothing is global.
 | Field of the execution context of a run | Value |
 |---|---|
 | `origin` | `queue` |
-| `actor` | the actor of the work that enqueued it (a system actor when nothing did), also `execution.actor` |
+| `actor` | the actor of the work that enqueued it (a system actor when nothing did), also `execution.actor`: a snapshot taken at the enqueue, roles and attributes included, used as is by a delayed run and by every retry |
 | `tenantId` | the tenant of that work, when it carried one |
 | `correlationId` | the correlation of that work: the request and its job are found together |
 | `causationId` | the id of the job |
@@ -171,12 +185,14 @@ the Sentry adapter included.
 |---|---|---|---|
 | `InMemoryJobStore` | `@ddd-ts-kit/scheduling` | waits for the commit | the contract, in the unit specs; tests and one process without a database |
 | `KnexJobStore`, `createJobTable` | `@ddd-ts-kit/knex` | yes | the contract on PGlite and on PostgreSQL in CI |
-| `DrizzleJobStore`, `jobsTable` | `@ddd-ts-kit/drizzle` | yes | the contract on PGlite |
-| `RedisJobStore` | `@ddd-ts-kit/redis` | waits for the commit | the contract on Dragonfly in CI, and on Redis |
+| `DrizzleJobStore`, `jobsTable` | `@ddd-ts-kit/drizzle` | yes | the contract on PGlite and on PostgreSQL in CI |
+| `RedisJobStore` | `@ddd-ts-kit/redis` | waits for the commit | the contract on Dragonfly in CI (run by hand on Redis 8) |
 | Prisma, TypeORM | none in this version | | a project writes a `JobStore` over its ORM, held by `jobStoreContract` with its unit of work (the Knex store is about two hundred lines to follow) |
 
 The SQL stores claim with `FOR UPDATE SKIP LOCKED` in a short transaction of their own, on
-PostgreSQL. The Redis store is a few Lua scripts on the client of the package, every key it
+PostgreSQL; in CI their contract runs on a server behind a pool of several connections, where
+two claims race for real. The idempotency key is unique per name, tenant and key (`tenant_id`
+holds the empty text for a job without a tenant, so that the index holds on every PostgreSQL). The Redis store is a few Lua scripts on the client of the package, every key it
 touches declared and in one hash slot: BullMQ was considered and not taken, because it brings a
 second client and its own worker model, which the contract of the store (claim, lease,
 heartbeat, reports by attempt) does not map onto without wrapping it whole, and it needs
@@ -200,7 +216,18 @@ of the handler that enqueues asserts the job through the same list. Time is move
 - **Polling.** An idle queue is asked once per poll interval: a job starts up to that late.
 - **No priority, no rate limit per job, no repeatable jobs.** Repeated work is a scheduled job
   that enqueues.
-- **The table grows**: purge what finished (`purgeFinished(before)`) from a scheduled job.
+- **The table grows**: `background_jobs` keeps payloads and the actor of each job, and the
+  idempotency key of a job holds as long as the job is kept. Purge what finished
+  (`purgeFinished(before)` of the `JobStore`) from a scheduled job of the project: neither the
+  kit nor a generated project schedules one, because how long to keep is the project's
+  decision. Dead jobs stay until an operator decides. `process_instances` grows the same way.
+- **Permissions are those of the enqueue.** A delayed run or a retry hours later acts with the
+  roles and attributes the actor had when the job was enqueued: a job that must see a revoked
+  right reads the actor again (by its id) before it acts.
+- **Every worker of a queue knows every job of its context.** A worker claims any due job of
+  the queues it consumes: one that does not know a job name (an older worker during a rolling
+  deploy) fails the attempt (`UNKNOWN_BACKGROUND_JOB`) and the job dies after its attempts.
+  Deploy the workers before the code that enqueues a new job.
 - **Redis loses a job** when the process dies between the commit and the write.
 - **Not a workflow engine.** Long, branching processes with human steps belong to a dedicated
   engine behind a port.

@@ -13,6 +13,10 @@ export interface QueuedJob {
   readonly enqueuedAt: Date;
   /** Not claimed before this instant. */
   readonly runAt: Date;
+  /** The tenant of the work that enqueued it, when that work had one. */
+  readonly tenantId?: string;
+  /** What the job works on, as `enqueue` named it (`EnqueueOptions.subject`). */
+  readonly subject?: string;
   readonly progress?: JobProgress;
   /** The `code` of the last failure, never a message. */
   readonly lastErrorCode?: string;

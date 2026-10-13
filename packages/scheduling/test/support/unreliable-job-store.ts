@@ -15,7 +15,12 @@ export class UnreliableJobStore extends InMemoryJobStore {
   /** A claim waits for it, then fails, when it is set. */
   stalledClaim: Promise<void> | undefined;
 
+  /** A claim waits for it, then claims, when it is set. */
+  heldClaim: Promise<void> | undefined;
+
   override async claim(request: ClaimRequest): Promise<ClaimedJob[]> {
+    await this.heldClaim;
+
     if (this.stalledClaim !== undefined) {
       await this.stalledClaim;
       throw 'claim refused';

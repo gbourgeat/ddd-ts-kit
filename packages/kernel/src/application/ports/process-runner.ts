@@ -14,8 +14,9 @@ export abstract class ProcessRunner {
 
   /**
    * The step of an event: `current` is undefined while the instance does not exist. An ended
-   * instance ignores it. A step decided concurrently fails with `ConcurrencyError`, and the
-   * redelivery of the event runs it again on the new state.
+   * instance ignores it. A step decided concurrently fails with `ConcurrencyError`: the
+   * redelivery of an integration event runs it again on the new state, and the caller of the
+   * command that raised a domain event retries that command.
    */
   abstract run<State>(
     process: ProcessType<State>,

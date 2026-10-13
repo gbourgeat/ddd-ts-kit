@@ -1,15 +1,16 @@
 import { and, eq, inArray, lt, lte, or, sql, type SQL, type TablesRelationalConfig } from 'drizzle-orm';
 import type { PgQueryResultHKT, PgUpdateSetSource } from 'drizzle-orm/pg-core';
 import type { EnqueuedJob, QueuedJob } from '@ddd-ts-kit/kernel';
-import type {
-  ClaimedJob,
-  ClaimRequest,
-  JobFailure,
-  JobLease,
-  JobStore,
-  JobStoreStats,
-  JobUpdate,
-  NewJob,
+import {
+  tenantKeyOf,
+  type ClaimedJob,
+  type ClaimRequest,
+  type JobFailure,
+  type JobLease,
+  type JobStore,
+  type JobStoreStats,
+  type JobUpdate,
+  type NewJob,
 } from '@ddd-ts-kit/scheduling';
 import type { DrizzleContext } from '../unit-of-work/drizzle-context.js';
 import { jobsTable, type JobsTable } from './jobs-table.js';
@@ -41,11 +42,12 @@ export class DrizzleJobStore<
   async add(job: NewJob): Promise<EnqueuedJob> {
     const { jobs } = this;
     const executor = this.context.executor();
+    const tenantId = tenantKeyOf(job.enqueuedBy);
 
     const inserted = await executor
       .insert(jobs)
-      .values({ ...job, idempotencyKey: job.idempotencyKey ?? null })
-      .onConflictDoNothing({ target: [jobs.name, jobs.idempotencyKey] })
+      .values({ ...job, tenantId, idempotencyKey: job.idempotencyKey ?? null, subject: job.subject ?? null })
+      .onConflictDoNothing({ target: [jobs.name, jobs.tenantId, jobs.idempotencyKey] })
       .returning({ id: jobs.id });
 
     if (inserted.length === 1 || job.idempotencyKey === undefined) {
@@ -55,7 +57,7 @@ export class DrizzleJobStore<
     const [kept] = await executor
       .select({ id: jobs.id })
       .from(jobs)
-      .where(and(eq(jobs.name, job.name), eq(jobs.idempotencyKey, job.idempotencyKey)));
+      .where(and(eq(jobs.name, job.name), eq(jobs.tenantId, tenantId), eq(jobs.idempotencyKey, job.idempotencyKey)));
 
     return { id: kept?.id ?? job.id, duplicate: true };
   }
@@ -237,6 +239,8 @@ function queuedOf(row: JobRow): QueuedJob {
     attempts: row.attempts,
     enqueuedAt: row.enqueuedAt,
     runAt: row.runAt,
+    ...(row.tenantId === '' ? {} : { tenantId: row.tenantId }),
+    ...(row.subject === null ? {} : { subject: row.subject }),
     ...(row.progress === null ? {} : { progress: row.progress }),
     ...(row.lastErrorCode === null ? {} : { lastErrorCode: row.lastErrorCode }),
     ...(row.finishedAt === null ? {} : { finishedAt: row.finishedAt }),

@@ -1,14 +1,15 @@
 import type { Knex } from 'knex';
 import type { EnqueuedJob, QueuedJob } from '@ddd-ts-kit/kernel';
-import type {
-  ClaimedJob,
-  ClaimRequest,
-  JobFailure,
-  JobLease,
-  JobStore,
-  JobStoreStats,
-  JobUpdate,
-  NewJob,
+import {
+  tenantKeyOf,
+  type ClaimedJob,
+  type ClaimRequest,
+  type JobFailure,
+  type JobLease,
+  type JobStore,
+  type JobStoreStats,
+  type JobUpdate,
+  type NewJob,
 } from '@ddd-ts-kit/scheduling';
 import type { KnexContext } from '../unit-of-work/knex-context.js';
 import { claimedOfRow } from './claimed-of-row.js';
@@ -43,7 +44,7 @@ export class KnexJobStore implements JobStore {
 
     const inserted: unknown[] = await this.rows(executor)
       .insert(rowOf(job))
-      .onConflict(['name', 'idempotency_key'])
+      .onConflict(['name', 'tenant_id', 'idempotency_key'])
       .ignore()
       .returning('id');
 
@@ -51,7 +52,9 @@ export class KnexJobStore implements JobStore {
       return { id: job.id, duplicate: false };
     }
 
-    const kept = await this.rows(executor).where({ name: job.name, idempotency_key: job.idempotencyKey }).first('id');
+    const kept = await this.rows(executor)
+      .where({ name: job.name, tenant_id: tenantKeyOf(job.enqueuedBy), idempotency_key: job.idempotencyKey })
+      .first('id');
 
     return { id: kept?.id ?? job.id, duplicate: true };
   }
@@ -201,6 +204,8 @@ function rowOf(job: NewJob): Readonly<Record<string, unknown>> {
     payload: jsonOrNull(job.payload),
     enqueued_by: JSON.stringify(job.enqueuedBy),
     idempotency_key: job.idempotencyKey ?? null,
+    tenant_id: tenantKeyOf(job.enqueuedBy),
+    subject: job.subject ?? null,
     run_at: job.runAt,
     enqueued_at: job.enqueuedAt,
   };

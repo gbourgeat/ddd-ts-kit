@@ -67,4 +67,12 @@ describe('a step of a process, given a state', () => {
     expect(() => ignored.thenEnded()).toThrow(/expected a decision/);
     expect(() => givenProcess<Dunning>(undefined).when(issued).thenEnded()).toThrow(/expected the process to end/);
   });
+
+  it('refuses a state that the JSON of the store would change', () => {
+    const dated = (): ProcessDecision<{ readonly since: Date }> => ({ state: { since: due } });
+
+    expect(() => givenProcess<{ readonly since: Date }>(undefined).when(dated).thenState({ since: due })).toThrow(
+      /read back as/,
+    );
+  });
 });

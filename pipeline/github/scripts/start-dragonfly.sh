@@ -1,11 +1,11 @@
 #!/bin/sh
 # Starts the Dragonfly the Redis adapter specs run against (the background job store) and waits
 # until it answers. Dragonfly rather than Redis: its scripts may only touch the keys they declare,
-# so a store that passes here passes on Redis and Valkey too. Pulled with retries, from the next
-# registry when one refuses.
+# so a store that passes here passes on Redis and Valkey too. Pinned by digest, pulled with
+# retries, from the next registry when one refuses.
 set -eu
 
-IMAGE="${DRAGONFLY_IMAGE:-dragonflydb/dragonfly:v2.0.2}"
+IMAGE="${DRAGONFLY_IMAGE:-dragonflydb/dragonfly:v2.0.2@sha256:061f00b201b58e12f974e4e96c761a881ee1c05e9d8ee967466a604b7299753b}"
 REGISTRIES="${DRAGONFLY_REGISTRIES:-docker.dragonflydb.io ghcr.io}"
 
 pulled=""

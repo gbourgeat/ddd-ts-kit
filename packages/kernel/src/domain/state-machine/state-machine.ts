@@ -12,7 +12,7 @@ import { TransitionError } from './transition-error.js';
  *
  * A transition the current state does not allow throws the refusal the declaration builds with
  * a static factory; a guard throws its own. The status field changes through it and nowhere
- * else (`domain/status-through-machine`).
+ * else (`lifecycle/status-through-machine`).
  */
 export class StateMachine<State extends string, Name extends string, Context = void> {
   constructor(private readonly declaration: StateMachineDeclaration<State, Name, Context>) {

@@ -8,7 +8,10 @@ import type { QueuedJob } from '../background/queued-job.js';
  * the business change: a command that rolls back leaves no job, and one that commits loses none
  * (a queue sharing the transaction, such as the jobs table of the ORM packages; a queue that
  * cannot share it, such as Redis, adds the job once the transaction committed and says what it
- * risks).
+ * risks). A cancellation inside a unit of work shares its fate the same way.
+ *
+ * Work done for a tenant only sees and cancels the jobs of that tenant (an elevation, the
+ * tenants it names); work without a tenant sees every job.
  */
 export abstract class JobQueue {
   static {
@@ -22,9 +25,12 @@ export abstract class JobQueue {
     options?: EnqueueOptions,
   ): Promise<EnqueuedJob>;
 
-  /** Answers false when the job is unknown or already over. A running job sees its signal aborted at its next heartbeat. */
+  /**
+   * Answers false when the job is unknown, out of reach or already over. A running job sees its
+   * signal aborted at its next heartbeat.
+   */
   abstract cancel(id: string): Promise<boolean>;
 
-  /** Where a job stands: status, attempts, progress. */
+  /** Where a job stands: status, attempts, progress. Undefined when unknown or out of reach. */
   abstract find(id: string): Promise<QueuedJob | undefined>;
 }

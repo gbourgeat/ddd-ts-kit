@@ -96,12 +96,42 @@ describe('a worker left to its defaults', () => {
     worker.register(new CompileStatementsJob().definition());
 
     const starting = worker.start();
+    const stopping = worker.stop();
 
-    await worker.stop();
     unstall();
-    await starting;
+    await Promise.all([starting, stopping]);
 
     expect(timers.pending).toBe(0);
     expect(logger.entries).toMatchObject([{ fields: { queue: 'billing', errorType: 'string' } }]);
+  });
+
+  it('waits for a claim in flight when it stops, and gives back what it brought, uncounted', async () => {
+    const { queue, worker, store } = aQueueBench();
+    const job = new CompileStatementsJob();
+    let open: () => void = () => undefined;
+
+    store.heldClaim = new Promise((resolve) => {
+      open = resolve;
+    });
+
+    worker.register(job.definition());
+    await queue.enqueue(CompileStatementsJob, FEBRUARY);
+
+    const starting = worker.start();
+    let stopped = false;
+
+    const stopping = worker.stop().then(() => {
+      stopped = true;
+    });
+
+    await Promise.resolve();
+    expect(stopped).toBe(false);
+
+    open();
+    await Promise.all([starting, stopping]);
+
+    const kept = await queue.find('job-1');
+
+    expect([job.runs.length, kept?.status, kept?.attempts]).toEqual([0, 'waiting', 0]);
   });
 });

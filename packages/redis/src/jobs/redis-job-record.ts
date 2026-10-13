@@ -8,8 +8,10 @@ export interface RedisJobRecord {
   readonly payload: string;
   /** A JSON text: an empty list would come back from the scripts as an empty object. */
   readonly enqueuedBy: string;
-  /** The idempotency field, name and key together. */
+  /** The idempotency field: name, tenant and key together. */
   readonly key?: string;
+  readonly tenantId?: string;
+  readonly subject?: string;
   readonly seq: number;
   readonly status: QueuedJobStatus;
   readonly attempts: number;

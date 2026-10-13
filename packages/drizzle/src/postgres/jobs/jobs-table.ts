@@ -23,6 +23,9 @@ export function jobsTable(schemaName?: string) {
       payload: jsonb('payload'),
       enqueuedBy: jsonb('enqueued_by').$type<EnqueuedBy>().notNull(),
       idempotencyKey: text('idempotency_key'),
+      /** The empty text outside any tenant: a null would make every such key distinct. */
+      tenantId: text('tenant_id').notNull().default(''),
+      subject: text('subject'),
       status: text('status').$type<QueuedJobStatus>().notNull().default('waiting'),
       attempts: integer('attempts').notNull().default(0),
       runAt: instant('run_at').notNull(),
@@ -34,7 +37,7 @@ export function jobsTable(schemaName?: string) {
       finishedAt: instant('finished_at'),
     },
     (table) => [
-      uniqueIndex('background_jobs_idempotency_key').on(table.name, table.idempotencyKey),
+      uniqueIndex('background_jobs_idempotency_key').on(table.name, table.tenantId, table.idempotencyKey),
       // Partial: a claim only ever looks at what is waiting or running, and finished jobs dominate.
       index('background_jobs_due_idx')
         .on(table.queue, table.runAt, table.sequence)

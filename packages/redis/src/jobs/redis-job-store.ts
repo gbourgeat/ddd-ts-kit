@@ -1,15 +1,16 @@
 import { inspect } from 'node:util';
 import type { Redis } from 'ioredis';
 import { whenCommitted, type EnqueuedJob, type QueuedJob } from '@ddd-ts-kit/kernel';
-import type {
-  ClaimedJob,
-  ClaimRequest,
-  JobFailure,
-  JobLease,
-  JobStore,
-  JobStoreStats,
-  JobUpdate,
-  NewJob,
+import {
+  tenantKeyOf,
+  type ClaimedJob,
+  type ClaimRequest,
+  type JobFailure,
+  type JobLease,
+  type JobStore,
+  type JobStoreStats,
+  type JobUpdate,
+  type NewJob,
 } from '@ddd-ts-kit/scheduling';
 import { listOf } from '../replies/list-of.js';
 import { conceal } from '../secrecy/conceal.js';
@@ -37,9 +38,10 @@ interface Transition {
 /**
  * The background jobs on Redis, Dragonfly or Valkey, in a few Lua scripts: no dependency but the
  * client of the package. Redis cannot join the transaction of the database: inside a unit of
- * work, `add` waits for the commit (`whenCommitted`), so a command that rolls back leaves no job,
- * and a crash between the commit and the write loses the job. Every key carries the namespace in
- * braces, so that a cluster keeps them in one slot.
+ * work, `add`, `cancel` and `retryDead` answer from what Redis holds and write once it committed
+ * (`whenCommitted`), so a command that rolls back leaves no job and cancels none, and a crash
+ * between the commit and the write loses that write. Every key carries the namespace in braces,
+ * so that a cluster keeps them in one slot.
  */
 export class RedisJobStore implements JobStore {
   private readonly client: Redis;
@@ -56,7 +58,11 @@ export class RedisJobStore implements JobStore {
   }
 
   async add(job: NewJob): Promise<EnqueuedJob> {
-    const field = job.idempotencyKey === undefined ? '' : `${job.name}\n${job.idempotencyKey}`;
+    const field =
+      job.idempotencyKey === undefined
+        ? ''
+        : JSON.stringify([job.name, tenantKeyOf(job.enqueuedBy), job.idempotencyKey]);
+
     const kept = field === '' ? null : await this.client.hget(this.key('keys'), field);
 
     if (kept !== null) {
@@ -114,12 +120,16 @@ export class RedisJobStore implements JobStore {
     return this.holding(lease, { status: 'waiting', runAt: runAt.getTime(), leaseUntil: false, attemptsDelta: -1 });
   }
 
-  cancel(id: string, at: Date): Promise<boolean> {
-    return this.transition({
-      id,
-      from: 'waiting running',
-      change: { status: 'cancelled', finishedAt: at.getTime(), leaseUntil: false },
-    });
+  async cancel(id: string, at: Date): Promise<boolean> {
+    const status = (await this.record(id))?.status;
+
+    if (status !== 'waiting' && status !== 'running') {
+      return false;
+    }
+
+    const change = { status: 'cancelled', finishedAt: at.getTime(), leaseUntil: false };
+
+    return this.afterCommit(true, [id], () => this.transition({ id, from: 'waiting running', change }));
   }
 
   async find(id: string): Promise<QueuedJob | undefined> {
@@ -129,15 +139,10 @@ export class RedisJobStore implements JobStore {
   }
 
   async retryDead(ids: readonly string[], now: Date): Promise<number> {
-    let revived = 0;
+    const records = await Promise.all(ids.map((id) => this.record(id)));
+    const dead = records.flatMap((record) => (record?.status === 'dead' ? [record.id] : []));
 
-    for (const id of ids) {
-      const change = { status: 'waiting', runAt: now.getTime(), finishedAt: false, attempts: 0 };
-
-      revived += (await this.transition({ id, from: 'dead', change })) ? 1 : 0;
-    }
-
-    return revived;
+    return this.afterCommit(dead.length, dead, () => this.revive(dead, now));
   }
 
   async purgeFinished(before: Date): Promise<number> {
@@ -175,6 +180,8 @@ export class RedisJobStore implements JobStore {
       payload: jsonOrFalse(job.payload) || 'null',
       enqueuedBy: JSON.stringify(job.enqueuedBy),
       ...(field === '' ? {} : { key: field }),
+      ...(job.enqueuedBy.tenantId === undefined ? {} : { tenantId: job.enqueuedBy.tenantId }),
+      ...(job.subject === undefined ? {} : { subject: job.subject }),
       status: 'waiting',
       attempts: 0,
       runAt,
@@ -182,6 +189,39 @@ export class RedisJobStore implements JobStore {
     };
 
     await this.client.eval(ADD_JOB, keys.length, ...keys, job.id, JSON.stringify(record), field, runAt);
+  }
+
+  /**
+   * Inside a unit of work, `write` waits for the commit and `expected` is the answer; anywhere
+   * else, it runs at once and its own answer is.
+   */
+  private async afterCommit<T>(expected: T, ids: readonly string[], write: () => Promise<T>): Promise<T> {
+    let answer = expected;
+
+    await whenCommitted(
+      async () => {
+        answer = await write();
+      },
+      (error) => {
+        for (const id of ids) {
+          this.onLostJob(error, id);
+        }
+      },
+    );
+
+    return answer;
+  }
+
+  private async revive(ids: readonly string[], now: Date): Promise<number> {
+    let revived = 0;
+
+    for (const id of ids) {
+      const change = { status: 'waiting', runAt: now.getTime(), finishedAt: false, attempts: 0 };
+
+      revived += (await this.transition({ id, from: 'dead', change })) ? 1 : 0;
+    }
+
+    return revived;
   }
 
   private holding(lease: JobLease, change: Change): Promise<boolean> {

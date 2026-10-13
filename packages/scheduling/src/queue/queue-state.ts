@@ -6,6 +6,7 @@ export interface QueueState {
   readonly concurrency: number;
   /** The attempts in progress. */
   readonly active: Set<Promise<BackgroundJobRun>>;
-  pumping: boolean;
+  /** The claim in progress and the launch of what it claimed, which `stop` waits for. */
+  filling: Promise<void> | undefined;
   cancelSleep: (() => void) | undefined;
 }

@@ -14,8 +14,15 @@ export class ProcessOutcome<State> {
     return this.holds(this.decision === undefined, `expected the step to ignore it, it decided ${show(this.decision)}`);
   }
 
+  /** Also asserts that the state survives the JSON the runner stores it as: a `Date` or a class instance does not. */
   thenState(expected: State): this {
     const state = this.decided().state;
+    const stored: unknown = state === undefined ? undefined : JSON.parse(JSON.stringify(state));
+
+    this.holds(
+      isDeepStrictEqual(stored, state),
+      `the state ${show(state)} is stored as JSON and read back as ${show(stored)}: keep it plain JSON data`,
+    );
 
     return this.holds(
       isDeepStrictEqual(state, expected),

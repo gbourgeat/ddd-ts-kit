@@ -30,6 +30,7 @@ export interface JobStoreUnderContract {
     readonly enqueuedAt: Date;
     readonly runAt: Date;
     readonly idempotencyKey?: string;
+    readonly subject?: string;
   }): Promise<EnqueuedJob>;
   claim(request: { queue: string; limit: number; now: Date; leaseMs: number }): Promise<Claimed[]>;
   heartbeat(lease: Lease, leaseUntil: Date): Promise<boolean>;

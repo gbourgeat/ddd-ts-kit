@@ -185,7 +185,7 @@ jobs:
       - name: MinIO for the S3 connector (pinned by digest, pulled with retries)
         if: ${{ needs.install.outputs.integration == 'true' }}
         run: sh pipeline/github/scripts/start-minio.sh
-      - name: Dragonfly (the background job store of the Redis package)
+      - name: Dragonfly for the background job store of the Redis package (pinned by digest, pulled with retries)
         if: ${{ needs.install.outputs.integration == 'true' }}
         run: sh pipeline/github/scripts/start-dragonfly.sh
       - name: OpenFGA (the image the specs of @ddd-ts-kit/openfga are held to, pinned by digest)

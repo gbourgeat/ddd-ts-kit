@@ -1,20 +1,20 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { jobStoreContract } from '@ddd-ts-kit/testing/contracts';
 import { DrizzleJobStore, createDrizzleUnitOfWork, jobsTable } from '../src/postgres.js';
-import { createDatabase } from './support/database.js';
+import { createStoreDatabase, type StoreDatabase } from './support/store-database.js';
 
 const runner = { describe, it, expect, beforeEach, afterEach };
 const jobs = jobsTable('billing');
 const publicJobs = jobsTable();
 
-let database: Awaited<ReturnType<typeof createDatabase>>;
+let database: StoreDatabase;
 
 beforeAll(async () => {
-  database = await createDatabase([jobs, publicJobs]);
+  database = await createStoreDatabase([jobs, publicJobs]);
 });
 
 afterAll(async () => {
-  await database.client.close();
+  await database.close();
 });
 
 const context = () => createDrizzleUnitOfWork(database.db);

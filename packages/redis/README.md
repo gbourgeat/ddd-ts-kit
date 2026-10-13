@@ -677,16 +677,18 @@ and Dragonfly sees every key a script touches declared.
 kernelModule({ jobStore: new RedisJobStore(redis, { namespace: 'jobs', onLostJob: (error, id) => report(error, id) }) });
 ```
 
-Redis cannot join the transaction of a database. Inside a unit of work, `add` waits for the
-commit (`whenCommitted` of the kernel): a command that rolls back leaves no job, but a process
-that dies between the commit and the write loses the job, and `onLostJob` is told when that
-write fails. With a database, prefer the jobs table of the ORM package. The idempotency key is
-checked before the job is staged, and again when it is written.
+Redis cannot join the transaction of a database. Inside a unit of work, `add`, `cancel` and
+`retryDead` answer from what Redis holds and write once it committed (`whenCommitted` of the
+kernel): a command that rolls back leaves no job and cancels none, but a process that dies
+between the commit and the write loses that write, and `onLostJob` is told when it fails. With
+a database, prefer the jobs table of the ORM package. The idempotency key, scoped by the tenant
+of the job, is checked before the job is staged and again when it is written: two jobs of one
+key staged before either committed both answer their own id, and only the first is kept.
 
 Not BullMQ: it would bring a second worker model that the store contract (claim, lease,
 heartbeat, reports by attempt) does not map onto, and emulated cluster mode on Dragonfly. The
-store passes `jobStoreContract` on Dragonfly in CI and on Redis 8 (last run: Dragonfly 2.0.2,
-Redis 8). What the jobs guarantee: [Background jobs](../../docs/concepts/background-jobs.md).
+store passes `jobStoreContract` on Dragonfly in the integration job of CI; it was also run by
+hand on Redis 8 (last run: Dragonfly 2.0.2, Redis 8.2, 2026-10-13). What the jobs guarantee: [Background jobs](../../docs/concepts/background-jobs.md).
 
 ## Contract suites
 

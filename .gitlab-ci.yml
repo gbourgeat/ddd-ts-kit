@@ -202,7 +202,7 @@ integration:
     - name: $MINIO_IMAGE
       alias: minio
       command: ['server', '/data']
-    - name: docker.dragonflydb.io/dragonflydb/dragonfly:v2.0.2
+    - name: docker.dragonflydb.io/dragonflydb/dragonfly:v2.0.2@sha256:061f00b201b58e12f974e4e96c761a881ee1c05e9d8ee967466a604b7299753b
       alias: dragonfly
       command: ['--proactor_threads=2', '--maxmemory=512mb']
   variables:

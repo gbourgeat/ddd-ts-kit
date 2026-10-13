@@ -9,6 +9,7 @@ export interface StoredJob {
   readonly enqueuedBy: EnqueuedBy;
   readonly enqueuedAt: Date;
   readonly idempotencyKey: string | undefined;
+  readonly subject: string | undefined;
   readonly sequence: number;
   status: QueuedJobStatus;
   attempts: number;

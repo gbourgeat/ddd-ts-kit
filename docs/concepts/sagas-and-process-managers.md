@@ -136,8 +136,12 @@ export class ConfirmationDeadlineProcess implements ProcessManager<ConfirmationD
   `event.payload.orderId`), and the runner loads the instance, or none when it does not exist.
 - **The runner** (`ProcessRunner`) runs a step in one unit of work: load, decide, disarm and arm
   the timeouts, save with optimistic concurrency, send the commands. Two steps that decide on
-  the same version: one wins, the other fails with `ConcurrencyError`, and the redelivery of its
-  event runs it again on the new state. An ended instance ignores every later event.
+  the same version: one wins, the other fails with `ConcurrencyError`. For a step called by an
+  integration event handler, the redelivery of its event runs it again on the new state; for a
+  step called by a domain event handler, in the unit of work of the command that raised the
+  event, the command fails and its caller retries it. An ended instance ignores every later
+  event. A timeout disarmed or armed by a step that rolls back stays as it was, in every store
+  of the queue.
 - **Wiring.** The steps are called by the handlers of the context: domain event handlers for its
   own events, integration event handlers for those of upstream contexts, each calling
   `processes.run(Process, key, (current) => process.step(event, current))`. A timeout is a

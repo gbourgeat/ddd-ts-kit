@@ -37,5 +37,6 @@ export type { JobLease } from './queue/store/job-lease.js';
 export type { JobStoreStats } from './queue/store/job-store-stats.js';
 export type { JobUpdate } from './queue/store/job-update.js';
 export type { NewJob } from './queue/store/new-job.js';
+export { tenantKeyOf } from './queue/store/tenant-key-of.js';
 export { StoredProcessRunner, type StoredProcessRunnerOptions } from './process/stored-process-runner.js';
 export { NoTimeoutJobError } from './process/no-timeout-job-error.js';
