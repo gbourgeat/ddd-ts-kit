@@ -86,6 +86,7 @@ limits, and a recommendation by situation.
 | [Parallel work](guides/parallel-work.md) | several people or agents at once: what is safe, what is sequenced, a concrete plan |
 | [Commit discipline](guides/commit-discipline.md) | commit and pull request size, generated files, what hooks and CI enforce |
 | [When to extract microservices](guides/when-to-extract-microservices.md) | the signals, the costs, a readiness checklist, the steps, when to merge back |
+| [Bootstrap with well-designed contexts](guides/bootstrap-with-well-designed-contexts.md) | a generic context written whole with `--preset identity`: what it writes, what it asks of the stack, how it composes with each access model and with tenants |
 | [Choosing access control](guides/choosing-access-control.md) | five questions that pick roles, attributes or relationships (Zanzibar), worked presets for each, the combined model of the example, scopes and refusals at the edge |
 | [Token economy](guides/token-economy.md) | spending fewer tokens with coding agents, and complementary tools |
 
@@ -93,6 +94,7 @@ limits, and a recommendation by situation.
 
 | Page | Status |
 |---|---|
+| [Which contexts deserve a preset](proposals/context-presets.md) | the criteria, then notification next, files later, personal data requests as a guide; audit, billing and settings no |
 | [The read side](proposals/read-side.md) | criteria, representations, read models and projections; the page says, part by part, what is built in the runtime packages, what the CLI does not generate yet and what is not built |
 
 ## Suggested reading order

@@ -6,6 +6,27 @@ list the pull requests behind it.
 
 ## Unreleased
 
+**A context written whole: the identity preset** ([Bootstrap with well-designed contexts](docs/guides/bootstrap-with-well-designed-contexts.md)).
+
+- `init --preset identity` and `generate context <name> --preset identity` write a generic
+  context instead of an empty one: accounts provisioned from the identity provider at the first
+  sign-in (no password kept), organisations (the tenants under `--tenancy shared-table`, their
+  tables then under a decision record), members with roles of a declared vocabulary, invitations
+  by token with an expiry, delegations of rights for ninety days at most; seven policies, the
+  published language (`member.joined`, `member.role-changed`, `account.deactivated`...), a
+  search, controllers, specs with builders and fakes, the Knex or Drizzle adapters, and the port
+  `IdentityProviderAdmin` with a Keycloak 26 adapter. Written for the declared style on Knex or
+  Drizzle, Zod or class-validator, Express or Fastify; another stack is refused with the flag to
+  change. Nothing is recorded in the config. Which other contexts deserve one:
+  [Context presets](docs/proposals/context-presets.md).
+- `@ddd-ts-kit/auth`: `SignedInGrantsAuthorizer({ grants, otherwise })` grants every signed-in
+  person (an actor of type `user`) the same permissions before the model of the project decides
+  the rest, whatever that model is. The preset wraps `createAuthorizer` in it, its grants in
+  `platform/auth/signed-in-grants.ts`.
+- The barrels and dependency files the CLI writes set a call that takes several lines apart by
+  blank lines, as `@stylistic/padding-line-between-statements` asks.
+- Plugin 0.16.0: the skill `bootstrap` proposes the preset for a generic identity context.
+
 **The example serves several networks of practices, one tenant each** (its ADR-0003, accepted).
 
 - `@ddd-ts-kit/knex`: `addTenantColumn(knex, { schema, table, tenantOfExistingRows })`, the

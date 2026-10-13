@@ -1202,3 +1202,30 @@ Frictions, each fixed in the kit rather than worked around here:
 7. **A spec that publishes an event by hand names no tenant.** The publisher of the application
    stamps it (`scopedPublisher`); a spec that writes the envelope itself spreads `tenantId` into
    it, or its consumers run in no network and are refused.
+
+## 2026-10-13 (night): the identity preset, measured against this identity context
+
+The kit gained `--preset identity`, a generic identity context written whole
+([Bootstrap with well-designed contexts](../../../docs/guides/bootstrap-with-well-designed-contexts.md)).
+The identity context of this example was compared with it, part by part, to take what improves
+it without changing its behaviour. Nothing was taken: each difference is either a model this
+example needs or a change of its contract.
+
+| Part | Here | The preset | Taken |
+|---|---|---|---|
+| Classification | `supporting`: delegations between a practitioner and an assistant on one desk | `generic` | no: the delegation here is the reason of the context |
+| Who | `Person`, registered at the first sign-in, email sent by the client | `Account`, email always read from the token | no: `PUT /people/me` would stop reading `email` from its body, a change of contract |
+| Groups | `Practice` with a time zone, managers, practitioners, assistants | `Organisation` with owners, admins, members | no: the time zone and the three roles are the language of scheduling |
+| Invitations | none: a manager adds a known person | issued by token, accepted signed in | no: a new feature, not an alignment |
+| Delegations | on a desk, with or without the right to change availability, expiring by a job | rights of a role lent for ninety days | no: another meaning under the same word |
+| Identity provider | read only (the token) | `IdentityProviderAdmin` told after each commit | no: nothing here needs the realm to follow |
+| Tenancy | the network is the tenant, practices inside it | the organisation is the tenant | no: ADR-0003 chose the network |
+
+What the comparison changed in the kit: the preset first answered `FORBIDDEN` to every signed-in
+person under `rbac` (no role grants its permissions), which a project of this shape would have
+met at its first request. `SignedInGrantsAuthorizer` of `@ddd-ts-kit/auth` now grants the
+permissions of the context to every signed-in person before the model decides, and the preset
+wraps `createAuthorizer` in it. Measured: five projects generated with the preset (rbac on
+Drizzle and Zod, rebac on Knex and class-validator with tenants and Keycloak, abac on Fastify
+with tenants, custom on Knex with JWT, rbac on class-validator and Fastify) have no finding,
+lint and format clean, type-check, and pass their specs.

@@ -124,6 +124,15 @@ sequenceDiagram
   Note over A,U: the token stops at the boundary
 ```
 
+**The people and organisations of the application.** The provider says who signed in; which
+organisation they belong to and what they may do there is the application's. `--preset identity`
+writes that context whole: accounts provisioned from the token at the first sign-in, never a
+password, organisations, members and roles, invitations, delegations, and the port
+`IdentityProviderAdmin` that tells Keycloak 26 (organizations API) what was decided, after the
+commit. The Keycloak adapter is specified against a local server, not run against a real
+Keycloak by the kit. See
+[Bootstrap with well-designed contexts](../guides/bootstrap-with-well-designed-contexts.md).
+
 ## Limits and when not to use it
 
 - **No call to the provider beyond the key set.** The README says it of the preset: a revoked

@@ -188,6 +188,11 @@ prints the two commands in the words of the package manager chosen, and the bare
 the whole gate before its first context). An existing project is adopted: existing files are skipped
 unless `--force` is given.
 
+A `generic` context the kit has a preset for is written whole at this step rather than built
+slice by slice: `--preset identity` writes accounts from the identity provider, organisations,
+members, invitations and delegations, green as written
+([Bootstrap with well-designed contexts](bootstrap-with-well-designed-contexts.md)).
+
 This step is the one that must be finished, merged and shared before any parallel work
 starts, because it creates the files everybody else's work is registered in
 ([Parallel work](parallel-work.md)).

@@ -56,6 +56,7 @@ ddd-ts-kit init [--http express|fastify|nest|none]
                 [--allow-no-outbox "<reason>"] [--import-alias '$<name>/']
                 [--import-extension none|js] [--sdk]
                 [--context <name>:<core|supporting|generic>]...
+                [--preset identity]...
                 [--dry-run] [--force]
 ```
 
@@ -250,6 +251,26 @@ and `@typescript/native` (`npm:typescript@~7.0.2`), which `build` and `typecheck
 `init` and `generate context` start with the language: the first entry of `next` is the glossary
 of the context to fill in.
 
+### Presets
+
+`--preset identity` (repeatable on `init`, once on `generate context`) writes a whole bounded
+context instead of an empty one: who the people of the application are, the organisations they
+belong to and in which role. Accounts are provisioned from the identity provider at the first
+sign-in (no password is kept), organisations (the tenants under `--tenancy shared-table`),
+members with roles of a declared vocabulary, invitations by token with an expiry, delegations of
+rights for a period; permissions, policies, the published language (member joined, role changed,
+account deactivated...), a search, controllers, specs with builders and fakes, the adapters of
+the ORM, and the port to the administration API of the identity provider with a Keycloak
+adapter. On `init` without a `--context` of its name, the context `identity` is declared
+`generic`. Every signed-in person holds the permissions of the context whatever `--authz` says:
+the grant `'identity:*'` of `platform/auth/signed-in-grants.ts`, answered by
+`SignedInGrantsAuthorizer` before the model in `createAuthorizer`. With tenants, the tables of
+the context belong to none, under a decision record the preset writes. The preset is written
+for `declared` with `signature` dependencies, `factories`, `throwing` value objects,
+`controllers`, Knex or Drizzle, Zod or class-validator, Express or Fastify; another stack is
+refused with what to change. Why, and which other contexts deserve one:
+[Bootstrap with well-designed contexts](../../docs/guides/bootstrap-with-well-designed-contexts.md).
+
 ## generate (alias g)
 
 ```
@@ -259,7 +280,7 @@ ddd-ts-kit generate --help --json
 
 | Kind | Arguments | Writes |
 |---|---|---|
-| `context` | `<name> --classification <c> [--purpose "<two sentences>"] [--term ...]... [--upstream <ctx>[:relationship]]...` | `CONTEXT.md` with its glossary, `published-language/index.ts`, config entry, registration in `platform/compose-application.ts` and in `test/architecture/extractable.spec.ts`; on tsyringe, with HTTP, `presentation/http/<name>.routes.ts` (a function of the two buses, in both styles); declared: the barrel `<name>.declarations.ts`; explicit and hand wiring: `<name>.module.ts`. `application/authorization/<name>.permissions.ts` is born with the first permission, or at once when `platform/auth/permissions.ts` lists the permission sets (rebac, custom) |
+| `context` | `<name> --classification <c> [--purpose "<two sentences>"] [--term ...]... [--upstream <ctx>[:relationship]]... [--preset identity]` | `CONTEXT.md` with its glossary, `published-language/index.ts`, config entry, registration in `platform/compose-application.ts` and in `test/architecture/extractable.spec.ts`; on tsyringe, with HTTP, `presentation/http/<name>.routes.ts` (a function of the two buses, in both styles); declared: the barrel `<name>.declarations.ts`; explicit and hand wiring: `<name>.module.ts`. `application/authorization/<name>.permissions.ts` is born with the first permission, or at once when `platform/auth/permissions.ts` lists the permission sets (rebac, custom). With `--preset`, the context is then written whole from that preset, its classification and purpose those of the preset unless the flags say otherwise ([Presets](#presets)) |
 | `aggregate` | `<context> <Name>` | aggregate, builder, spec in given / when / then |
 | `builder` | `<context> <Aggregate>` | `test/builders/<name>.builder.ts`, a class extending `Builder` |
 | `entity` | `<context> <Name>` | entity, spec |
