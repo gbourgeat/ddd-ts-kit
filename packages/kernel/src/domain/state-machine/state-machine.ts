@@ -2,6 +2,7 @@ import type { DomainError } from '../errors/domain-error.js';
 import { InvalidStateMachineError } from './invalid-state-machine-error.js';
 import type { StateMachineDeclaration } from './state-machine-declaration.js';
 import type { StateMachineDescription } from './state-machine-description.js';
+import { TransitionError } from './transition-error.js';
 
 /**
  * The lifecycle of an aggregate: its states, the transitions between them and what refuses
@@ -77,7 +78,11 @@ export class StateMachine<State extends string, Name extends string, Context = v
     const declared = this.declaration.transitions[transition];
 
     if (!declared.from.includes(from)) {
-      return this.declaration.refused({ from, transition }, context);
+      const { refused } = this.declaration;
+
+      return refused === undefined
+        ? TransitionError.forbidden(from, transition)
+        : refused({ from, transition }, context);
     }
 
     return declared.guard?.(context);

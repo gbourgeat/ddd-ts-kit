@@ -35,8 +35,17 @@ export const appointmentLifecycle = defineStateMachine({
 - **The refusal** of a transition the state does not allow is built by a static factory of the
   concept error, given the state, the transition and the context: the error codes of the model
   stay where they are, in `AppointmentError`.
+- Without `refused`, a forbidden transition throws `TransitionError.forbidden(from, transition)`
+  of the kernel, code `FORBIDDEN_TRANSITION`: a placeholder until the lifecycle has its own
+  refusals.
 - A declaration that names a state it does not list throws when the file loads
   (`InvalidStateMachineError`).
+
+`ddd-ts-kit generate state-machine <context> <Aggregate> --value requested --value booked
+--transition "confirm:requested>booked"` writes the vocabulary of the status (or adds the values
+it misses), the machine, the first value initial, and a spec of each transition and of a refusal.
+The aggregate is left as it is: the rule below asks it to use the machine once it writes a
+status.
 
 ## Using it in the aggregate
 
@@ -55,7 +64,7 @@ confirm(now: Date): void {
 status an aggregate is created in; `can` answers without throwing, for an operation that must be
 safe to repeat (`expire`); `isFinal` replaces a hand-written list of ends. The rule
 `lifecycle/status-through-machine` holds the aggregate to it: an aggregate whose machine exists
-imports it, and its status is written only from `next` or `start`, or copied from a status
+imports it as soon as it writes a status, and its status is written only from `next` or `start`, or copied from a status
 already read. Any other write of the status is a second, silent copy of the lifecycle.
 
 ## What it draws

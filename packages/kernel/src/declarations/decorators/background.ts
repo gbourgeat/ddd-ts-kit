@@ -12,22 +12,33 @@ import { record } from '../registry/record.js';
 /**
  * A background job, run by a worker after a use case enqueued it, named by the static `jobName`
  * of the class: `@Background({ maxAttempts: 3, timeout: '10m' })`. The name and the options are
- * checked when the file loads.
+ * checked when the file loads. Under standard decorators a class decorator runs before the
+ * static fields exist: the job is then recorded once the class is defined.
  */
 export function Background<const D extends DeclaredDependencies = DependenciesFromSignature>(
   options: BackgroundJobOptions = {},
   dependencies?: D,
 ): ClassDeclarator<BackgroundJob<unknown>, D> {
-  return (target) => {
-    const name = nameOf(target);
+  return (target, context) => {
+    const declare = (): void => {
+      const name = nameOf(target);
 
-    try {
-      backgroundJobPolicy(options);
-    } catch (error) {
-      throw error instanceof InvalidJobScheduleError ? new DeclarationError(`Job "${name}": ${error.message}`) : error;
+      try {
+        backgroundJobPolicy(options);
+      } catch (error) {
+        throw error instanceof InvalidJobScheduleError
+          ? new DeclarationError(`Job "${name}": ${error.message}`)
+          : error;
+      }
+
+      record(target, { role: 'background-job', name, options, implementation: target, dependencies });
+    };
+
+    if (context === undefined) {
+      declare();
+    } else {
+      context.addInitializer(declare);
     }
-
-    record(target, { role: 'background-job', name, options, implementation: target, dependencies });
   };
 }
 

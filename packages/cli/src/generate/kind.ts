@@ -9,6 +9,8 @@ export interface KindFlags {
   readonly term: readonly string[];
   /** The values of a closed vocabulary, one per `--value`. */
   readonly value: readonly string[];
+  /** The transitions of a state machine, one per `--transition "<intention>:<from>[,<from>]...[><to>]"`. */
+  readonly transition: readonly string[];
   readonly code?: string;
   readonly aggregate?: string;
   readonly method?: string;

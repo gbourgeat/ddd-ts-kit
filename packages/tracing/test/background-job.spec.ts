@@ -7,6 +7,7 @@ const execution = (traceparent: string | undefined): BackgroundJobExecution => (
   jobId: 'job-1',
   attempt: 2,
   enqueuedAt: new Date('2026-03-02T10:00:00.000Z'),
+  actor: { id: 'user-7', type: 'user', roles: [], attributes: {} },
   startedAt: new Date('2026-03-02T10:00:05.000Z'),
   checkpoint: undefined,
   signal: new AbortController().signal,

@@ -21,6 +21,9 @@ import {
   Lock,
   Metrics,
   ProcessedEventStore,
+  {{#if queue.processTable}}
+  ProcessStore,
+  {{/if}}
   RateLimiter,
   UnitOfWork,
   {{#if errors.sentry}}
@@ -35,19 +38,30 @@ import {
   Lock,
   Metrics,
   ProcessedEventStore,
+  {{#if queue.processTable}}
+  ProcessStore,
+  {{/if}}
   RateLimiter,
   UnitOfWork,
   type ErrorReporter,
 } from '@ddd-ts-kit/kernel';
 {{/if}}
 {{#unless errors.sentry}}
-import { Cache, Lock, Metrics, ProcessedEventStore, RateLimiter, UnitOfWork } from '@ddd-ts-kit/kernel';
+import { Cache, Lock, Metrics, ProcessedEventStore, {{#if queue.processTable}}ProcessStore, {{/if}}RateLimiter, UnitOfWork } from '@ddd-ts-kit/kernel';
 {{/unless}}
 {{/unless}}
 {{/if}}
 {{#unless cache.redis}}
 import { {{#if broker.external}}EventSubscribers, {{/if}}ProcessedEventStore, UnitOfWork{{#if errors.sentry}}, type ErrorReporter{{/if}} } from '@ddd-ts-kit/kernel';
 {{/unless}}
+{{#unless cache.redis}}
+{{#if queue.processTable}}
+import { ProcessStore } from '@ddd-ts-kit/kernel';
+{{/if}}
+{{/unless}}
+{{#if queue.stored}}
+import { JobStore } from '@ddd-ts-kit/scheduling';
+{{/if}}
 {{#if persistence.packagedToken}}
 import { {{persistence.token}} } from '{{persistence.tokenPackage}}';
 {{/if}}
@@ -111,6 +125,12 @@ export function platformModule(persistence: Persistence, options: PlatformOption
       {{#if events.outbox}}
       builder.bind(OutboxStore).toValue(persistence.outbox);
       {{/if}}
+      {{#if queue.database}}
+      builder.rebind(JobStore).toValue(persistence.jobs);
+      {{/if}}
+      {{#if queue.processTable}}
+      builder.rebind(ProcessStore).toValue(persistence.processes);
+      {{/if}}
       {{#if broker.external}}
       builder.rebind(EventSubscribers).toValue({ forContext: (name) => options.events.forConsumer(name) });
       {{/if}}
@@ -142,5 +162,8 @@ function bindRedis(builder: ModuleBuilder, redis: RedisServices): void {
   builder.rebind(Cache).toFactory((resolve) => redis.cache(resolve(Metrics)));
   builder.rebind(RateLimiter).toValue(redis.rateLimiter);
   builder.rebind(Lock).toValue(redis.lock);
+  {{#if queue.redis}}
+  builder.rebind(JobStore).toValue(redis.jobs);
+  {{/if}}
 }
 {{/if}}

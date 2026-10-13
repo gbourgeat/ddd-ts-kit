@@ -94,6 +94,18 @@ describe('a state machine', () => {
     );
   });
 
+  it('refuses with the transition error of the kernel when it names no refusal of its own', () => {
+    const plain = defineStateMachine({
+      states: ['open', 'closed'],
+      initial: ['open'],
+      transitions: { close: { from: ['open'], to: 'closed' } },
+    });
+
+    expect(() => plain.next('closed', 'close')).toThrow(
+      expect.objectContaining({ code: 'FORBIDDEN_TRANSITION', exposedFacts: { from: 'closed', transition: 'close' } }),
+    );
+  });
+
   it('is refused when it names a state it does not list', () => {
     const refused = ParcelError.cannot;
 

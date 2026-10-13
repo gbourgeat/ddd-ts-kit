@@ -13,7 +13,7 @@ const COPIED = /^(?:[\w$]+(?:\s*\.\s*[\w$]+)*\s*\.\s*)?status$/;
 export const lifecycleStatusThroughMachine: Rule = {
   id: 'lifecycle/status-through-machine',
   description:
-    'The status of an aggregate that has a state machine changes only through it: the aggregate imports domain/state-machines/<aggregate>.state-machine.ts and writes its status from machine.next(..) or machine.start(..), or copies a status already read.',
+    'The status of an aggregate that has a state machine changes only through it: an aggregate that writes a status imports domain/state-machines/<aggregate>.state-machine.ts and writes it from machine.next(..) or machine.start(..), or copies a status already read.',
   scope: 'file',
   run(project) {
     return perFile(project, this.id, (file) => (isAggregateFile(file) ? byHand(file) : []));
@@ -42,7 +42,10 @@ function byHand(file: SourceFile): Finding[] {
     }));
 }
 
-/** `domain/aggregates/appointment.aggregate.ts` and `domain/state-machines/appointment.state-machine.ts` go together. */
+/**
+ * `domain/aggregates/appointment.aggregate.ts` and `domain/state-machines/appointment.state-machine.ts`
+ * go together once the aggregate writes a status: a machine just generated waits for its field.
+ */
 function machineUnused(file: SourceFile, project: Project): Finding[] {
   const machine = file.path
     .replace('/domain/aggregates/', '/domain/state-machines/')
@@ -51,7 +54,8 @@ function machineUnused(file: SourceFile, project: Project): Finding[] {
   if (
     machine === file.path ||
     !project.files.some(({ path }) => path === machine) ||
-    machinesImported(file).length > 0
+    machinesImported(file).length > 0 ||
+    statusWrites(file).length === 0
   ) {
     return [];
   }

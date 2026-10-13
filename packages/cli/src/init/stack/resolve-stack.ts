@@ -35,6 +35,7 @@ import { choose } from './choose.js';
 import { recordedOptions } from './recorded-options.js';
 import { resolveCiExtras } from './resolve-ci-extras.js';
 import { resolvePersistence } from './resolve-persistence.js';
+import { resolveQueue } from './resolve-queue.js';
 import { resolveStyle } from './resolve-style.js';
 import { resolveTenancy } from './resolve-tenancy.js';
 import type { StackOptions } from './stack-options.js';
@@ -130,6 +131,7 @@ function stackOf(options: StackOptions): Record<string, string> {
     ...resolveOperations(options, persistence.orm),
     ...resolveStyle(options, di),
     tenancy: resolveTenancy(options, persistence.orm),
+    queue: resolveQueue(options, { orm: persistence.orm, di }),
   };
 }
 

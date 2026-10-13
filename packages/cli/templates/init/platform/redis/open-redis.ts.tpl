@@ -2,6 +2,9 @@ import type { Cache, Lock, Metrics, RateLimiter } from '@ddd-ts-kit/kernel';
 {{#if cache.relaySignal}}
 import {
   RedisCache,
+  {{#if queue.redis}}
+  RedisJobStore,
+  {{/if}}
   RedisLock,
   RedisRateLimiter,
   RedisRelaySignal,
@@ -10,8 +13,11 @@ import {
 } from '@ddd-ts-kit/redis';
 {{/if}}
 {{#unless cache.relaySignal}}
-import { RedisCache, RedisLock, RedisRateLimiter, connectRedis, redisHealth } from '@ddd-ts-kit/redis';
+import { RedisCache, {{#if queue.redis}}RedisJobStore, {{/if}}RedisLock, RedisRateLimiter, connectRedis, redisHealth } from '@ddd-ts-kit/redis';
 {{/unless}}
+{{#if queue.redis}}
+import type { JobStore } from '@ddd-ts-kit/scheduling';
+{{/if}}
 
 /**
  * What the platform puts on one connection to a Redis protocol server. The adapters use a common
@@ -25,6 +31,10 @@ export interface RedisServices {
   readonly rateLimiter: RateLimiter;
   /** Excludes between processes: what keeps an occurrence of a scheduled job to one instance, best effort. */
   readonly lock: Lock;
+  {{#if queue.redis}}
+  /** The background jobs: added once the command that enqueues them committed, claimed by every worker. */
+  readonly jobs: JobStore;
+  {{/if}}
   {{#if cache.relaySignal}}
   /** Wakes the outbox relay of every instance as soon as a command committed; the polling interval stays as the safety net. */
   readonly relaySignal: RedisRelaySignal;
@@ -53,6 +63,9 @@ export function openRedis({ redisUrl, serviceName }: RedisSettings): RedisServic
     // While the server is away the API keeps serving, without a limit: a limiter must not take the application down.
     rateLimiter: new RedisRateLimiter(connection.client, { namespace: serviceName + ':rate', onError: 'allow' }),
     lock: new RedisLock(connection.client, { namespace: serviceName + ':lock' }),
+    {{#if queue.redis}}
+    jobs: new RedisJobStore(connection.client, { namespace: serviceName + ':jobs' }),
+    {{/if}}
     {{#if cache.relaySignal}}
     relaySignal,
     {{/if}}

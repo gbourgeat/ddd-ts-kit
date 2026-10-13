@@ -14,7 +14,7 @@ import { usesLegacyDecorators } from './uses-legacy-decorators.js';
 
 /** The choices of the stack as template variables: what every template of `init` and of `generate` reads. */
 export function stackVars(config: Config): RenderContext {
-  const { validation, di, tests, orm, authz, style, logger, refusals, valueObjects, literals, tenancy } = config.stack;
+  const { validation, di, tests, orm, authz, style, logger, tenancy } = config.stack;
   const legacy = usesLegacyDecorators(config);
 
   return {
@@ -33,9 +33,7 @@ export function stackVars(config: Config): RenderContext {
     redis: redisVars(config),
     audit: auditVars(config),
     errors: errorVars(config),
-    refusals: one(refusals, ['factories', 'classes']),
-    valueObjects: one(valueObjects, ['throwing', 'result']),
-    literals: one(literals, ['named', 'free']),
+    ...modelVars(config),
     routes: routeVars(config),
     logger: one(logger, ['stdout', 'pino', 'winston']),
     tests: { ...one(tests, ['vitest', 'jest']), module: tests === 'jest' ? '@jest/globals' : 'vitest' },
@@ -44,6 +42,32 @@ export function stackVars(config: Config): RenderContext {
     alias: aliasVars(config),
     persistence: persistenceVars(config),
     tenancy: { ...one(tenancy, ['none', 'shared-table']), any: tenancy !== 'none' },
+    queue: queueVars(config),
+  };
+}
+
+/** How the model is written: its refusals, its value objects and its closed values. */
+function modelVars(config: Config): RenderContext {
+  const { refusals, valueObjects, literals } = config.stack;
+
+  return {
+    refusals: one(refusals, ['factories', 'classes']),
+    valueObjects: one(valueObjects, ['throwing', 'result']),
+    literals: one(literals, ['named', 'free']),
+  };
+}
+
+/**
+ * `stored`: the jobs leave the memory of the process. `processTable`: the instances of the
+ * process managers go to the database whenever the jobs leave memory and the ORM keeps them.
+ */
+function queueVars(config: Config): RenderContext {
+  const { queue, orm } = config.stack;
+
+  return {
+    ...one(queue, ['memory', 'database', 'redis']),
+    stored: queue !== 'memory',
+    processTable: queue !== 'memory' && (orm === 'knex' || orm === 'drizzle'),
   };
 }
 

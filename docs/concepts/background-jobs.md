@@ -53,6 +53,11 @@ await this.jobs.enqueue(RescheduleAbsenceBackgroundJob, { calendarId, from, to }
   1 s doubled up to 5 min), `timeout` (none) and `lease` (30 s).
 - **`JobQueue`** is a port of the kernel: `enqueue`, `cancel` and `find`, which answers the
   status, the attempts, the progress and the last error code of a job, never its payload.
+- **Generated**: `ddd-ts-kit generate background-job <context> <Name> --command <UseCase>` writes
+  the class (`@Background()` in the declared style, `builder.backgroundJob(..)` in the module
+  file otherwise), sending its command as `execution.actor`, and a spec that enqueues it as a
+  user and runs what is due. `init --queue database|redis|memory` chooses the store
+  ([`stack.queue`](../CONFIG.md)).
 
 ## The enqueue shares the transaction of the command
 
@@ -132,7 +137,7 @@ service takes its jobs, its queue and its table with it: nothing is global.
 | Field of the execution context of a run | Value |
 |---|---|
 | `origin` | `queue` |
-| `actor` | the actor of the work that enqueued it (a system actor when nothing did) |
+| `actor` | the actor of the work that enqueued it (a system actor when nothing did), also `execution.actor` |
 | `tenantId` | the tenant of that work, when it carried one |
 | `correlationId` | the correlation of that work: the request and its job are found together |
 | `causationId` | the id of the job |

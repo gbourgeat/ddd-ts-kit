@@ -3,6 +3,7 @@ import { aclKind } from './kinds/acl-kind.js';
 import { adapterKind } from './kinds/adapter-kind.js';
 import { adrKind } from './kinds/adr-kind.js';
 import { aggregateKind } from './kinds/aggregate-kind.js';
+import { backgroundJobKind } from './kinds/background-job-kind.js';
 import { builderKind } from './kinds/builder-kind.js';
 import { commandKind } from './kinds/command-kind.js';
 import { contextKind } from './kinds/context-kind.js';
@@ -20,12 +21,14 @@ import { integrationHandlerKind } from './kinds/integration-handler-kind.js';
 import { jobKind } from './kinds/job-kind.js';
 import { policyKind } from './kinds/policy-kind.js';
 import { portKind } from './kinds/port-kind.js';
+import { processKind } from './kinds/process-kind.js';
 import { projectionKind } from './kinds/projection-kind.js';
 import { queryKind } from './kinds/query-kind.js';
 import { repositoryKind } from './kinds/repository-kind.js';
 import { routeGroupKind } from './kinds/route-group-kind.js';
 import { controllerKind, routeKind } from './kinds/route-kind.js';
 import { serviceKind } from './kinds/service-kind.js';
+import { stateMachineKind } from './kinds/state-machine-kind.js';
 import { valueObjectKind } from './kinds/value-object-kind.js';
 import { vocabularyKind } from './kinds/vocabulary-kind.js';
 import { workerKind } from './kinds/worker-kind.js';
@@ -38,6 +41,7 @@ export const KINDS: readonly Kind[] = [
   entityKind,
   valueObjectKind,
   vocabularyKind,
+  stateMachineKind,
   domainEventKind,
   errorKind,
   domainErrorKind,
@@ -55,6 +59,8 @@ export const KINDS: readonly Kind[] = [
   eventHandlerKind,
   projectionKind,
   jobKind,
+  backgroundJobKind,
+  processKind,
   aclKind,
   e2eKind,
   policyKind,

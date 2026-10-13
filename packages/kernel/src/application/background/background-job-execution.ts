@@ -1,3 +1,4 @@
+import type { Actor } from '../actor/actor.js';
 import type { JobProgress } from './job-progress.js';
 
 /** What a run of a background job is told about itself, and how it reports back. */
@@ -7,6 +8,8 @@ export interface BackgroundJobExecution {
   /** 1 for the first run, counted at each claim: a retry, a crash or an expired lease adds one. */
   readonly attempt: number;
   readonly enqueuedAt: Date;
+  /** Who enqueued the job, whom its commands are sent as: a job acts for the work that asked for it. */
+  readonly actor: Actor;
   readonly startedAt: Date;
   /** What the last `saveCheckpoint` of an earlier attempt stored, to resume from. Absent on a fresh start. */
   readonly checkpoint: unknown;

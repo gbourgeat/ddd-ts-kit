@@ -25,6 +25,7 @@ export * from './domain/state-machine/state-machine-declaration.js';
 export * from './domain/state-machine/state-machine-description.js';
 export * from './domain/state-machine/state-machine.js';
 export * from './domain/state-machine/transition-declaration.js';
+export * from './domain/state-machine/transition-error.js';
 export * from './domain/value-object.js';
 export * from './application/actor/actor-attribute.js';
 export * from './application/actor/actor-extensions.js';

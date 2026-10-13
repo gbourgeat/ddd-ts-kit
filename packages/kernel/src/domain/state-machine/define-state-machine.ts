@@ -6,13 +6,15 @@ import { StateMachine } from './state-machine.js';
  *
  *     export const appointmentLifecycle = defineStateMachine({
  *       states: Object.values(AppointmentStatus),
- *       initial: [AppointmentStatus.requested, AppointmentStatus.booked],
+ *       initial: [AppointmentStatus.Requested, AppointmentStatus.Booked],
  *       transitions: {
- *         confirm: { from: [AppointmentStatus.requested], to: AppointmentStatus.booked },
- *         cancel: { from: [AppointmentStatus.requested, AppointmentStatus.booked], to: AppointmentStatus.cancelled },
+ *         confirm: { from: [AppointmentStatus.Requested], to: AppointmentStatus.Booked },
+ *         cancel: { from: [AppointmentStatus.Requested, AppointmentStatus.Booked], to: AppointmentStatus.Cancelled },
  *       },
  *       refused: ({ from }) => AppointmentError.ended(from),
  *     });
+ *
+ * Without `refused`, a forbidden transition throws `TransitionError.forbidden(from, transition)`.
  *
  * Throws `InvalidStateMachineError` when the file loads for a declaration that names an unknown
  * state. A guard receives the context the aggregate passes to `next`.

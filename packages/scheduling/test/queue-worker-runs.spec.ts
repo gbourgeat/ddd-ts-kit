@@ -33,7 +33,13 @@ describe('a worker running due jobs', () => {
     const runs = await worker.runDue();
 
     expect(job.runs.map((run) => run.payload)).toEqual([FEBRUARY]);
-    expect(job.runs[0]?.execution).toMatchObject({ jobId: 'job-1', attempt: 1, checkpoint: undefined });
+
+    expect(job.runs[0]?.execution).toMatchObject({
+      jobId: 'job-1',
+      attempt: 1,
+      checkpoint: undefined,
+      actor: ACCOUNTANT,
+    });
 
     expect(seen[0]).toMatchObject({
       origin: 'queue',

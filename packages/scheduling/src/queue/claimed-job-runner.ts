@@ -109,6 +109,7 @@ export class ClaimedJobRunner {
       jobId: job.id,
       attempt: job.attempt,
       enqueuedAt: job.enqueuedAt,
+      actor: job.enqueuedBy.actor,
       startedAt,
       checkpoint: job.checkpoint,
       signal: controller.signal,

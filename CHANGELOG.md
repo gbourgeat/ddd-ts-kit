@@ -6,6 +6,22 @@ list the pull requests behind it.
 
 ## Unreleased
 
+**Generators for background work.** `ddd-ts-kit generate background-job <context> <Name>
+--command <UseCase>` writes a background job that sends its command as the actor that enqueued
+it (`execution.actor`, new on `BackgroundJobExecution`), registered by `@Background()` or on the
+builder of the module file, and a spec that enqueues it and runs what is due. `generate
+state-machine <context> <Aggregate> --value <state>... --transition "<intention>:<from>>[<to>]"`
+writes the status vocabulary (or adds the values it misses), the machine and its spec; a machine
+without `refused` throws the new `TransitionError.forbidden` (code `FORBIDDEN_TRANSITION`), and
+`lifecycle/status-through-machine` asks an aggregate to import its machine once it writes a
+status. `generate process <context> <Name>` writes a process manager, the background job of its
+timeouts and their specs. The two that run on the queue need `--di tsyringe`. `init --queue
+database|redis|memory` chooses where jobs and process instances are kept (`stack.queue`):
+`database` by default on Knex or Drizzle with tsyringe, the jobs and processes tables created by
+the first migration and bound by the platform module; `redis` puts the jobs on the server of the
+cache; a config without the key is read as `memory`, as before. Under standard decorators,
+`@Background` records the job once the class is defined, when its static `jobName` exists.
+
 **Process managers.** A long-running process that reacts to events, keeps its own state and
 sends commands is a class of `application/processes/` whose steps decide (`ProcessDecision`: the
 next state, the commands, the timeouts armed or disarmed, the end). The new `ProcessRunner`

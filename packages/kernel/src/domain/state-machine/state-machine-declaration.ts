@@ -15,7 +15,8 @@ export interface StateMachineDeclaration<State extends string, Name extends stri
   readonly transitions: Readonly<Record<Name, TransitionDeclaration<State, Context>>>;
   /**
    * The refusal of a transition the current state does not allow, from a static factory of the
-   * concept error, given the context the aggregate passed (its identifier, typically).
+   * concept error, given the context the aggregate passed (its identifier, typically). Default:
+   * `TransitionError.forbidden(from, transition)`, code `FORBIDDEN_TRANSITION`.
    */
-  readonly refused: (forbidden: ForbiddenTransition<State, Name>, context: Context) => DomainError;
+  readonly refused?: (forbidden: ForbiddenTransition<State, Name>, context: Context) => DomainError;
 }

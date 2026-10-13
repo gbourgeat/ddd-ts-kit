@@ -23,6 +23,7 @@ import {
   ROUTE_FORMS,
   STYLES,
   TENANCY_STRATEGIES,
+  QUEUE_STORES,
   TEST_STACKS,
   VALIDATION_STACKS,
   VALUE_OBJECT_FORMS,
@@ -55,6 +56,7 @@ export function parseStack(stack: Record<string, unknown>): Stack {
     literals: choose('literals', LITERAL_FORMS, 'free'),
     packageManager: choose('packageManager', PACKAGE_MANAGERS, 'npm'),
     tenancy: choose('tenancy', TENANCY_STRATEGIES, 'none'),
+    queue: choose('queue', QUEUE_STORES, 'memory'),
   };
 }
 

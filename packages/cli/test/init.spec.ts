@@ -176,6 +176,7 @@ describe('init, the choices it records and the ones it refuses', () => {
       routes: 'controllers',
       valueObjects: 'throwing',
       literals: 'named',
+      queue: 'memory',
       style: 'explicit',
       packageManager: 'pnpm',
     });

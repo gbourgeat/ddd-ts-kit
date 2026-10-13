@@ -86,6 +86,28 @@ describe('a background job declared with @Background', () => {
     });
   });
 
+  it('is recorded once the class is defined under standard decorators, when its static fields exist', () => {
+    const initializers: (() => void)[] = [];
+
+    class SendRemindersJob implements BackgroundJob<unknown> {
+      static readonly jobName = 'billing.send-reminders';
+
+      async run(): Promise<void> {
+        return undefined;
+      }
+    }
+
+    const context = { kind: 'class', addInitializer: (initializer: () => void) => initializers.push(initializer) };
+
+    Background()(SendRemindersJob, context as unknown as ClassDecoratorContext);
+
+    expect(declarationOf(SendRemindersJob)).toBeUndefined();
+
+    initializers.forEach((initializer) => initializer());
+
+    expect(declarationOf(SendRemindersJob)).toMatchObject({ role: 'background-job', name: 'billing.send-reminders' });
+  });
+
   it('is refused without a jobName of the form <context>.<job-name>, or with options it cannot read', () => {
     const declare = (jobName: unknown, options = {}) => {
       class Job implements BackgroundJob<unknown> {

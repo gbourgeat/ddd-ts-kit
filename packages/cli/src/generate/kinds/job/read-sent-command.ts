@@ -9,8 +9,11 @@ import type { SentCommand } from './sent-command.js';
 const OPTIONAL = /^[^:=]*\?\s*:|=/;
 const INSTANT = /:\s*Date\b/;
 
+/** Who sends the command: a job knows its schedule, a background job the work that enqueued it. */
+export type CommandSender = 'job' | 'background job';
+
 /** The command `--command` names: it has to exist, and a job has to be able to build it from what it knows. */
-export function readSentCommand(scope: Scope, input: string): SentCommand {
+export function readSentCommand(scope: Scope, input: string, sender: CommandSender = 'job'): SentCommand {
   const name = concept({ ...scope, flags: { ...scope.flags, allowName: true } }, input, {
     what: 'use case',
     strip: ['command', 'handler'],
@@ -29,7 +32,7 @@ export function readSentCommand(scope: Scope, input: string): SentCommand {
   const [first = '', ...others] = constructorParameters(source).slice(isProtected ? 1 : 0);
   const takesInstant = INSTANT.test(first);
 
-  refuseUnknownInput(scope, name, [...(takesInstant ? [] : [first]), ...others]);
+  refuseUnknownInput({ scope, name, sender }, [...(takesInstant ? [] : [first]), ...others]);
 
   return {
     name,
@@ -47,16 +50,31 @@ function withoutComments(source: string): string {
     .join('\n');
 }
 
+interface Sent {
+  readonly scope: Scope;
+  readonly name: Name;
+  readonly sender: CommandSender;
+}
+
 /** A job knows its actor and the instant it was due, nothing else: a command that needs more cannot be built by it. */
-function refuseUnknownInput(scope: Scope, name: Name, parameters: readonly string[]): void {
+function refuseUnknownInput({ scope, name, sender }: Sent, parameters: readonly string[]): void {
   const unknown = parameters.filter((parameter) => parameter !== '' && !OPTIONAL.test(parameter)).map(nameOf);
 
   if (unknown.length === 0) {
     return;
   }
 
+  const needs = unknown.map((parameter) => `\`${parameter}\``).join(', ');
+
+  if (sender === 'background job') {
+    throw new CliError(
+      `The constructor of ${name.pascal}Command needs ${needs}, which a generated background job cannot know yet.`,
+      `A generated background job builds its command from the actor that enqueued it and, at most, the instant it was enqueued; its payload is declared afterwards. Make ${unknown.length === 1 ? 'this parameter' : 'these parameters'} optional, generate the job, then hand the command its payload; or pass a command that takes no more.`,
+    );
+  }
+
   throw new CliError(
-    `The constructor of ${name.pascal}Command needs ${unknown.map((parameter) => `\`${parameter}\``).join(', ')}, which a job cannot know.`,
+    `The constructor of ${name.pascal}Command needs ${needs}, which a job cannot know.`,
     `A job only says that the time has come: it sends a command that takes its actor and, at most, the instant the work is for (\`readonly dueBefore: Date\`), and the handler finds what to act on. Create that use case with \`ddd-ts-kit generate command ${scope.context.kebab} <UseCaseName>\` and pass it to --command, or make ${unknown.length === 1 ? 'this parameter' : 'these parameters'} optional.`,
   );
 }

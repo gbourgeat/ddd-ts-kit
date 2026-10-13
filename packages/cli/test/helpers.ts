@@ -4,6 +4,7 @@ import path from 'node:path';
 import { afterAll } from 'vitest';
 import { run } from '../src/run.js';
 import { initFlags } from './support/init-flags.js';
+import { scaffoldBillingLifecycle } from './support/scaffold-billing-lifecycle.js';
 import type { StackFlags } from './support/stack-flags.js';
 
 export type { StackFlags } from './support/stack-flags.js';
@@ -99,6 +100,7 @@ export function scaffoldEverything(root: string, stack = DEFAULT_STACK, more: re
   scaffoldDecoratedAdapter(step);
   scaffoldShipping(step, isDeclared(stack));
   scaffoldOrderFulfilment(step, withHttp);
+  scaffoldBillingLifecycle(step, stack);
   step('generate', 'worker');
 
   return results;

@@ -56,6 +56,15 @@ export const LIFECYCLE_FIXTURES: readonly Fixture[] = [
     }),
   },
   {
+    ruleId: 'lifecycle/status-through-machine',
+    name: 'an aggregate that writes no status yet next to its new state machine',
+    expect: 'pass',
+    files: project({
+      ...MACHINE_FILES,
+      ...aggregate(invoice('  total(): number {\n    return this.state.total;\n  }', '')),
+    }),
+  },
+  {
     ruleId: 'process/sends-commands-only',
     name: 'a process that decides commands from its state',
     expect: 'pass',
