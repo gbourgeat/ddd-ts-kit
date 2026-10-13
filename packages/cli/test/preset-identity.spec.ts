@@ -69,6 +69,24 @@ describe('init --preset identity', () => {
     );
   });
 
+  it('answers identifiers with the shared schema and shares the token of an invitation, unless each route keeps its own', () => {
+    const http = `${CONTEXT}/presentation/http`;
+    const shared = initProject('--validation', 'class-validator', '--preset', 'identity');
+    const perRoute = initProject('--validation', 'class-validator', '--schemas', 'per-route', '--preset', 'identity');
+    const exists = (root: string, file: string) => fs.existsSync(path.join(root, http, file));
+
+    expect(read(shared, `${http}/accounts/deactivate-account/deactivate-account.controller.ts`)).toContain(
+      'body: acceptedSchema',
+    );
+
+    expect(exists(shared, 'accounts/deactivate-account/deactivate-account.accepted.ts')).toBe(false);
+    expect(read(shared, `${http}/shared/invitation-token.schema.ts`)).toContain('export class InvitationToken');
+    expect(exists(shared, 'invitations/decline-invitation/decline-invitation.body.ts')).toBe(false);
+    expect(exists(perRoute, 'accounts/deactivate-account/deactivate-account.accepted.ts')).toBe(true);
+    expect(exists(perRoute, 'invitations/decline-invitation/decline-invitation.body.ts')).toBe(true);
+    expect(exists(perRoute, 'shared/invitation-token.schema.ts')).toBe(false);
+  });
+
   it('is refused on a stack it is not written for, with what to change', () => {
     const prisma = initFailure('--orm', 'prisma', '--preset', 'identity');
     const anonymous = initFailure('--authn', 'none', '--preset', 'identity');

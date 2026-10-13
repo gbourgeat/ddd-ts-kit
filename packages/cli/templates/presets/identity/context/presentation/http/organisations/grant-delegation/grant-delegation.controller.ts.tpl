@@ -1,16 +1,28 @@
 {{#if validation.classValidator}}
+{{#if schemas.shared}}
+import { acceptedSchema, Controller, type Accepted, type HttpRequest } from '@ddd-ts-kit/http';
+{{/if}}
+{{#if schemas.perRoute}}
 import { Controller, type HttpRequest } from '@ddd-ts-kit/http';
+{{/if}}
 import type { CommandBus } from '@ddd-ts-kit/kernel';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
 import { GrantDelegationCommand } from '{{alias.context}}/application/commands/grant-delegation/grant-delegation.command{{alias.ext}}';
 import { GrantDelegationParams } from '{{alias.context}}/presentation/http/organisations/grant-delegation/grant-delegation.params{{alias.ext}}';
 import { GrantDelegationBody } from '{{alias.context}}/presentation/http/organisations/grant-delegation/grant-delegation.body{{alias.ext}}';
+{{#if schemas.perRoute}}
 import { GrantDelegationAccepted } from '{{alias.context}}/presentation/http/organisations/grant-delegation/grant-delegation.accepted{{alias.ext}}';
+{{/if}}
 import { OrganisationsRoutes } from '{{alias.context}}/presentation/http/organisations.routes{{alias.ext}}';
 {{/if}}
 {{#if validation.zod}}
 import { z } from 'zod';
+{{#if schemas.shared}}
+import { acceptedSchema, Controller, type Accepted, type HttpRequest } from '@ddd-ts-kit/http';
+{{/if}}
+{{#if schemas.perRoute}}
 import { Controller, type HttpRequest } from '@ddd-ts-kit/http';
+{{/if}}
 import type { CommandBus } from '@ddd-ts-kit/kernel';
 import type { Infer } from '@ddd-ts-kit/validation';
 import { zodSchema } from '@ddd-ts-kit/validation/zod';
@@ -22,7 +34,9 @@ import { OrganisationsRoutes } from '{{alias.context}}/presentation/http/organis
 {{#if validation.classValidator}}
 const params = classSchema(GrantDelegationParams);
 const body = classSchema(GrantDelegationBody);
+{{#if schemas.perRoute}}
 const accepted = classSchema(GrantDelegationAccepted);
+{{/if}}
 {{/if}}
 {{#if validation.zod}}
 const params = zodSchema(
@@ -40,7 +54,9 @@ const body = zodSchema(
   }),
 );
 
+{{#if schemas.perRoute}}
 const accepted = zodSchema(z.object({ id: z.string() }), { io: 'output' });
+{{/if}}
 {{/if}}
 
 @Controller({
@@ -50,7 +66,7 @@ const accepted = zodSchema(z.object({ id: z.string() }), { io: 'output' });
   summary: 'Lend rights to a member',
   params,
   body,
-  response: { status: 201, description: 'Granted; the body carries the identifier of the delegation.', body: accepted },
+  response: { status: 201, description: 'Granted; the body carries the identifier of the delegation.', body: {{#if schemas.shared}}acceptedSchema{{/if}}{{#if schemas.perRoute}}accepted{{/if}} },
   errors: [
     'MEMBER_NOT_FOUND',
     'DELEGATION_TO_ONESELF',
@@ -64,10 +80,10 @@ export class GrantDelegationController {
   constructor(private readonly commands: CommandBus) {}
 
 {{#if validation.classValidator}}
-  async handle(request: HttpRequest<{ params: GrantDelegationParams; body: GrantDelegationBody }>): Promise<GrantDelegationAccepted> {
+  async handle(request: HttpRequest<{ params: GrantDelegationParams; body: GrantDelegationBody }>): Promise<{{#if schemas.shared}}Accepted{{/if}}{{#if schemas.perRoute}}GrantDelegationAccepted{{/if}}> {
 {{/if}}
 {{#if validation.zod}}
-  async handle(request: HttpRequest<{ params: Infer<typeof params>; body: Infer<typeof body> }>): Promise<Infer<typeof accepted>> {
+  async handle(request: HttpRequest<{ params: Infer<typeof params>; body: Infer<typeof body> }>): Promise<{{#if schemas.shared}}Accepted{{/if}}{{#if schemas.perRoute}}Infer<typeof accepted>{{/if}}> {
 {{/if}}
     const id = await this.commands.execute(new GrantDelegationCommand(request.actor, request.params.organisationId, termsOf(request.body)));
 

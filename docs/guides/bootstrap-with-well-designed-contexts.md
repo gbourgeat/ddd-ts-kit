@@ -81,12 +81,14 @@ refused before anything is written, with the flag that would fit:
 | `stack.routes` | `controllers` | one controller class per route |
 | `stack.orm` | `knex`, `drizzle` | the two adapters written; Prisma and TypeORM are not |
 | `stack.validation` | `zod`, `class-validator` | the two families of request schemas written |
+| `stack.schemas` | `shared`, `per-route` | shared: the identifier answers are the `Accepted` of `@ddd-ts-kit/http` and the token of an invitation one schema of `presentation/http/shared/`; per route: each route keeps its own |
 | `stack.http` | `express`, `fastify` | NestJS routes are written another way |
 | `stack.authn` | `jwt`, `keycloak` | an account is the subject of a token: without a verifier every caller is anonymous and the context would serve nobody |
 | `stack.database` | `postgres` | the tables keep one current membership per account with a partial unique index (`where removed_at is null`), which MySQL has not |
 
 Supporting another value is writing the variant of the files it changes
-(`*.knex.ts.tpl` beside `*.drizzle.ts.tpl` under `packages/cli/templates/presets/identity/`), not
+(`*.knex.ts.tpl` beside `*.drizzle.ts.tpl` under `packages/cli/templates/presets/identity/`, several
+variants in a row when a file depends on several keys: `*.class-validator.per-route.ts.tpl`), not
 a change of the model.
 
 ## Access models and tenants

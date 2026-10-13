@@ -6,7 +6,10 @@ import { bin, findingsOf, runIn } from './run-in.js';
 import { SLOW } from './stacks.js';
 import { typeErrors } from './type-errors.js';
 
-/** The project as a team left it: relationships decided by OpenFGA, Keycloak, Knex and tenants, before any identity context. */
+/**
+ * The project as a team left it: relationships decided by OpenFGA, Keycloak, Knex and tenants, the
+ * schemas of each route its own, before any identity context.
+ */
 const STACK = [
   '--orm',
   'knex',
@@ -18,6 +21,8 @@ const STACK = [
   'shared-table',
   '--authn',
   'keycloak',
+  '--schemas',
+  'per-route',
 ];
 
 /** The authorizer the team wrote: the OpenFGA server of the deployment decides on relationships. */
