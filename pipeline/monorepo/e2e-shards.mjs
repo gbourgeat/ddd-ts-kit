@@ -34,7 +34,7 @@ export const SHARDS = [
   {
     'coverage-gate.spec.ts': 88,
     'new-rule-violations.spec.ts': 25,
-    'event-sourced.spec.ts': 25,
+    'event-sourced.spec.ts': 19,
     'typecheck.spec.ts': 19,
     'error-reporting.spec.ts': 10,
     'formatted.spec.ts': 8,
