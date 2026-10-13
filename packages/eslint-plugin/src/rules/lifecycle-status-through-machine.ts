@@ -1,4 +1,4 @@
-import { AST_NODE_TYPES, type TSESTree } from '@typescript-eslint/utils';
+import { AST_NODE_TYPES, ASTUtils, type TSESLint, type TSESTree } from '@typescript-eslint/utils';
 import type { LintedFile } from '../project/linted-file.js';
 import { className } from '../support/classes/class-name.js';
 import { enclosingMember } from '../support/classes/enclosing-member.js';
@@ -31,7 +31,7 @@ export const lifecycleStatusThroughMachine = defineRule<MessageId>({
       const site = enclosingMember(node);
       const machine = [...machines][0];
 
-      if (site === undefined || machine === undefined || isThroughMachine(value, machines)) {
+      if (site === undefined || machine === undefined || isThroughMachine(value, { machines, sourceCode })) {
         return;
       }
 
@@ -47,7 +47,7 @@ export const lifecycleStatusThroughMachine = defineRule<MessageId>({
         }
       },
       Property(node) {
-        if (node.parent.type === AST_NODE_TYPES.ObjectExpression && !node.shorthand && keyIsStatus(node.key)) {
+        if (node.parent.type === AST_NODE_TYPES.ObjectExpression && keyIsStatus(node.key)) {
           judge(node, node.value);
         }
       },
@@ -75,16 +75,41 @@ function keyIsStatus(key: TSESTree.Node): boolean {
   );
 }
 
-/** A call of the machine, or a status copied from one already read (`this.state.status`, `status`). */
-function isThroughMachine(value: TSESTree.Node, machines: ReadonlySet<string>): boolean {
+interface Judged {
+  readonly machines: ReadonlySet<string>;
+  readonly sourceCode: Readonly<TSESLint.SourceCode>;
+}
+
+/**
+ * A call of the machine, or a status copied from one already read (`this.state.status`, a
+ * parameter named `status`, `const { status } = ...`). A local binding is followed back to its value:
+ * `const status = InvoiceStatus.Paid; this.state = { ...this.state, status }` is a write by hand.
+ */
+function isThroughMachine(value: TSESTree.Node, judged: Judged): boolean {
   if (value.type === AST_NODE_TYPES.Identifier) {
-    return value.name === STATUS;
+    return isBoundThroughMachine(value, judged);
   }
 
   if (value.type === AST_NODE_TYPES.MemberExpression) {
     return keyIsStatus(value.property);
   }
 
+  return isMachineCall(value, judged.machines);
+}
+
+function isBoundThroughMachine(identifier: TSESTree.Identifier, judged: Judged): boolean {
+  const definition = ASTUtils.findVariable(judged.sourceCode.getScope(identifier), identifier.name)?.defs[0];
+
+  if (definition?.node.type !== AST_NODE_TYPES.VariableDeclarator) {
+    return definition !== undefined && identifier.name === STATUS;
+  }
+
+  const { id, init } = definition.node;
+
+  return id.type !== AST_NODE_TYPES.Identifier || (init !== null && isThroughMachine(init, judged));
+}
+
+function isMachineCall(value: TSESTree.Node, machines: ReadonlySet<string>): boolean {
   if (value.type !== AST_NODE_TYPES.CallExpression || value.callee.type !== AST_NODE_TYPES.MemberExpression) {
     return false;
   }

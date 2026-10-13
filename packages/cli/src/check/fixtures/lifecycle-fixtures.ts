@@ -48,6 +48,30 @@ export const LIFECYCLE_FIXTURES: readonly Fixture[] = [
   },
   {
     ruleId: 'lifecycle/status-through-machine',
+    name: 'an aggregate that names the status its machine answers, then writes it as a shorthand',
+    expect: 'pass',
+    files: project({
+      ...MACHINE_FILES,
+      ...aggregate(
+        invoice(
+          "  issue(): void {\n    const status = invoiceLifecycle.next(this.state.status, 'issue');\n\n    this.state = { ...this.state, status };\n  }\n\n  isIssued(): boolean {\n    const { status } = this.state;\n\n    return status === 'issued';\n  }",
+        ),
+      ),
+    }),
+  },
+  {
+    ruleId: 'lifecycle/status-through-machine',
+    name: 'an aggregate that names a status by hand, then writes it as a shorthand',
+    expect: { file: AGGREGATE },
+    files: project({
+      ...MACHINE_FILES,
+      ...aggregate(
+        invoice("  issue(): void {\n    const status = 'issued';\n\n    this.state = { ...this.state, status };\n  }"),
+      ),
+    }),
+  },
+  {
+    ruleId: 'lifecycle/status-through-machine',
     name: 'an aggregate whose state machine exists and is not imported',
     expect: { file: AGGREGATE },
     files: project({

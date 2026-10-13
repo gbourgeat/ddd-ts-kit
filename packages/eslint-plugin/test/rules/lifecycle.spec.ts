@@ -27,6 +27,12 @@ ruleTester.run('lifecycle-status-through-machine', lifecycleStatusThroughMachine
         '  copy(state: InvoiceState): void {\n    this.state = { total: 0, status: state.status };\n    const status = state.status;\n    this.state = { ...this.state, status };\n  }',
       ),
     ),
+    at(
+      AGGREGATE,
+      invoice(
+        "  reschedule(): void {\n    const status = invoiceLifecycle.next(this.state.status, 'reschedule');\n    this.state = { ...this.state, status };\n  }",
+      ),
+    ),
     at(AGGREGATE, invoice("  void(): void {\n    this.state = { ...this.state, status: 'void' };\n  }", '')),
     at(
       `${BILLING}/test/unit/invoice.aggregate.spec.ts`,
@@ -39,6 +45,27 @@ ruleTester.run('lifecycle-status-through-machine', lifecycleStatusThroughMachine
     at(AGGREGATE, `${MACHINE}const defaults = { status: 'draft' };`),
   ],
   invalid: [
+    {
+      ...at(
+        AGGREGATE,
+        invoice(
+          '  void(): void {\n    const status = InvoiceStatus.void;\n    this.state = { ...this.state, status };\n  }',
+        ),
+      ),
+      errors: [
+        {
+          messageId: 'notThroughMachine',
+          data: { className: 'Invoice', value: 'status', machine: 'invoiceLifecycle' },
+        },
+      ],
+    },
+    {
+      ...at(
+        AGGREGATE,
+        invoice('  settle(next: InvoiceStatus): void {\n    this.state = { ...this.state, status: next };\n  }'),
+      ),
+      errors: [{ messageId: 'notThroughMachine' }],
+    },
     {
       ...at(AGGREGATE, invoice("  void(): void {\n    this.state = { ...this.state, status: 'void' };\n  }")),
       errors: [
