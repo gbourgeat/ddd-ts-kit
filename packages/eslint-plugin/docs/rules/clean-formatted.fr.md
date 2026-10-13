@@ -1,5 +1,5 @@
 [English](clean-formatted.md) · **Français**
-<!-- translation-of: clean-formatted.md sha256:6f5f2a7a5a1bd3b7 -->
+<!-- translation-of: clean-formatted.md sha256:b20158ee856c2488 -->
 
 # clean/formatted (mise en page)
 
@@ -27,7 +27,7 @@ Les *presets* n'activent aucune règle qui décide où va un jeton, si bien que 
 ## Limites
 
 - Le Markdown et le YAML ne sont pas formatés.
-- Les artefacts générés comparés octet par octet par leur propre vérification (`openapi/*.json`, `asyncapi.json`, `.dependency-cruiser.cjs`) et les sorties de build sont exclus dans `biome.json`.
+- Les artefacts générés comparés octet par octet par leur propre vérification (`openapi/*.json`, `openapi/forms/`, `asyncapi.json`, `.dependency-cruiser.cjs`) et les sorties de build sont exclus dans `biome.json`.
 - Un littéral de chaîne, une URL ou une expression régulière de plus de 120 colonnes reste sur sa ligne : un formateur ne coupe pas un jeton.
 
 ## Avec le checker de la CLI

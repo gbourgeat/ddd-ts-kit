@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:c21100132b9871d2 -->
+<!-- translation-of: README.md sha256:4832e6dc7c6f414e -->
 
 # @ddd-ts-kit/auth
 
@@ -507,6 +507,14 @@ new JwtAuthenticator({
 });
 ```
 
+La correspondance par défaut prend le sujet comme acteur, ses rôles (ci-dessous), le *claim* de
+*tenant* (un *claim* texte est le *tenant* ; une liste nomme le *tenant* quand elle en contient
+un seul, et forme l'attribut `tenants` d'un acteur qui en a plusieurs, parmi lesquels une
+requête HTTP nomme celui dans lequel elle travaille), et les *claims* standard d'OpenID Connect
+comme attributs : `username` (`preferred_username`), `email`, et `emailVerified`
+(`email_verified`), que lit un cas d'usage qui fait confiance à l'adresse (une invitation qui y
+est envoyée).
+
 `authenticate(undefined)` renvoie l'acteur anonyme. Un jeton expiré, pas encore valide, destiné
 à une autre audience ou à un autre émetteur, signé avec une autre clé, altéré, non signé
 (`alg: none`), ou utilisant un algorithme hors de la liste autorisée lève
@@ -545,8 +553,8 @@ et fait correspondre un jeton d'accès comme suit :
 | `actor.id` | `sub` |
 | `actor.type` | `service` quand `preferred_username` commence par `service-account-` (un client qui utilise le *grant* client credentials), sinon `user` |
 | `actor.roles` | `realm_access.roles`, plus `resource_access.<clientId>.roles` quand `clientId` est fourni, chacun une seule fois |
-| `actor.attributes` | `username` à partir de `preferred_username`, `email`, `groups` à partir du *claim* `groups` (ou `groupsClaim`) |
-| `actor.tenantId` | le *claim* nommé par `tenantClaim` : un *claim* texte, ou le *claim* `organization` (une liste d'alias, ou un objet indexé par alias) quand il nomme exactement une organisation |
+| `actor.attributes` | `username` à partir de `preferred_username`, `email`, `emailVerified` à partir de `email_verified`, `groups` à partir du *claim* `groups` (ou `groupsClaim`), et `tenants` quand le *claim* de *tenant* en nomme plusieurs |
+| `actor.tenantId` | le *claim* nommé par `tenantClaim` : un *claim* texte, ou le *claim* `organization` (une liste d'alias, ou un objet indexé par alias) quand il nomme exactement une organisation ; plusieurs forment l'attribut `tenants` |
 | `session.id` | `sid`, la session du *realm* ; `jti` pour un compte de service, qui n'en a pas |
 | `session.authenticationMethod` | `sso` pour une personne, `service` pour un compte de service |
 | `session.authenticationStrength` | `assuranceLevel` à partir de `acr` |
@@ -574,9 +582,10 @@ Ce qu'il faut configurer dans le *realm* pour que ces *claims* figurent dans le 
 5. **Le *tenant***, au choix : un *mapper* de type *User Attribute* qui écrit `tenant_id` à
    partir d'un attribut de l'utilisateur ; ou, avec Organizations activé dans le *realm*, le
    *client scope* `organization` demandé par le *front end*, et `tenantClaim: 'organization'`.
-   Un utilisateur qui appartient à plusieurs organisations n'obtient aucun *tenant* de ce
-   *claim* : en choisir un est une décision de votre projet, à prendre dans
-   `toSessionExtensions` ou dans un *mapper*.
+   Un utilisateur qui appartient à plusieurs organisations n'obtient aucun *tenant* par défaut
+   de ce *claim* : elles sont les `tenants` de l'acteur, et chaque requête HTTP nomme celui dans
+   lequel elle travaille (`x-tenant-id`, que l'adaptateur HTTP refuse par un 403 pour un *tenant*
+   que l'acteur ne détient pas).
 6. **L'emprunt d'identité** (impersonation), si le support se fait passer pour des
    utilisateurs depuis la console d'administration : Keycloak garde l'administrateur dans les
    notes de session de la session qui emprunte l'identité. Un *mapper* de type *User Session Note*,
@@ -616,6 +625,25 @@ faut commencer.
 
 Chaque autorisateur refuse l'acteur anonyme (`ANONYMOUS`), et un acteur de type `system` n'a
 aucun droit à moins que le modèle ne lui en donne un.
+
+**Ce que toute personne connectée peut faire.** Certaines permissions appartiennent à quiconque
+s'est connecté, quoi qu'en dise le modèle : provisionner son propre compte, ouvrir une
+organisation, accepter une invitation qui lui est adressée. Les politiques du contexte décident
+ensuite sur l'élément. `SignedInGrantsAuthorizer` y répond avant le modèle, quel que soit le
+modèle :
+
+```ts
+new SignedInGrantsAuthorizer({
+  grants: ['identity:*'],                        // les mêmes attributions qu'un rôle : permissions, identifiants, <context>:*, *
+  otherwise: new RoleBasedAuthorizer({ roles }), // décide de tout le reste, listes comprises
+});
+```
+
+Seul un acteur de type `user` détient ces attributions : un système, un service et l'acteur
+anonyme vont au modèle. Ce qu'elles couvrent liste `all` ; une autre liste relève du modèle, et
+un modèle qui ne sait pas lister la fait échouer avec `ListingNotSupportedError`. Le *preset*
+d'identité de la CLI écrit cette enveloppe dans `createAuthorizer` et son attribution dans
+`signed-in-grants.ts`.
 
 ### Rôles
 
@@ -932,6 +960,21 @@ qui ne nomme aucun *tenant* : des erreurs de câblage, trouvées par le premier 
 défense en profondeur, pas de l'autorisation : le filtre par *tenant* d'un *repository*
 empêche un bug de laisser fuiter des lignes, la permission reste décidée dans la couche
 application.
+
+## Champs réservés à certains appelants
+
+Un champ d'une réponse ou d'un corps de requête HTTP que seuls certains appelants peuvent voir ou
+poser n'est pas un test de rôle dans un sérialiseur : il est marqué sur son schéma avec
+`withFieldAccess` de `@ddd-ts-kit/http`, et décidé par l'`Access` de ce *package*, comme un cas
+d'usage l'est : `fieldDeciderOf({ access, clock })` prend un `Access` tel qu'il est, une
+permission est demandée avec `decideOn` (ses politiques, puis l'autorisateur), et une politique
+écrite avec `definePolicy` peut être nommée directement sur le champ.
+`Access.decideOn({ actor, permission, subject, context, recorded })` est `decide` avec ce qu'un
+cas d'usage ajoute par `@Requires` (`context`), et `recorded: false` pour une décision qui ne fait
+que façonner une réponse, un champ montré ou écarté, qui n'atteint alors pas `onDecision` ; un
+champ posé dans un corps et un formulaire ouvert restent enregistrés. `decideOn` est facultatif
+sur un `Access` du projet : le décideur demande alors `decide`, qui enregistre tout. Le mode
+d'emploi est dans le README de `@ddd-ts-kit/http` (« Champs réservés à certains appelants »).
 
 ## Filtrer les listes
 

@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:e01ffe7975d947bc -->
+<!-- translation-of: README.md sha256:065f9455ffa14618 -->
 
 # @ddd-ts-kit/eslint-plugin
 
@@ -250,6 +250,7 @@ chaque règle à `error`.
 | [`authz/declared`](docs/rules/authz-declared.fr.md) | `ddd-ts-kit/authz-declared` | une commande ou une requête enregistrée dit `.requires(...)` ou `.public()`, ou sa classe porte `@Requires` ou `@Public` (exigé sur chaque message du style déclaré), une route déclare `security`, un message autorisé transmet son acteur | `error` | maison |
 | [`authz/in-application`](docs/rules/authz-in-application.fr.md) | `ddd-ts-kit/authz-in-application` | aucun test de rôle dans `presentation/`, aucune autorisation dans `infrastructure/`, aucun acteur, aucune session, aucun contexte d'exécution ni droit dans `domain/` ; dans le style déclaré, `Requires`, `Public`, `Policy` et le port `Access` restent dans `application/` | `error` | maison |
 | [`authz/actor-explicit`](docs/rules/authz-actor-explicit.fr.md) | `ddd-ts-kit/authz-actor-explicit` | pas d'`ExecutionScope`, d'`ActorContext` (type ou valeur : la classe est le jeton) ni d'`AsyncLocalStorage`, aucune lecture du contexte ambiant, pas de `stampCreation`, `stampUpdate` ou `tenantScopeOf` dans `domain/` et `application/` | `error` | maison |
+| [`authz/fields-by-schema`](docs/rules/authz-fields-by-schema.fr.md) | `ddd-ts-kit/authz-fields-by-schema` | aucun test sur les rôles de l'acteur, aucune comparaison avec un rôle ni `isAdmin` sous `application/queries/` : un champ réservé à certains appelants est marqué avec `withFieldAccess` | `error` | maison |
 | [`aspects/outside-in`](docs/rules/aspects-outside-in.fr.md) | `ddd-ts-kit/aspects-outside-in` | `@ddd-ts-kit/aspects/decorators` n'est importé que dans `infrastructure/` et dans la plateforme | `error` | maison |
 | [`tracing/platform-only`](docs/rules/tracing-platform-only.fr.md) | `ddd-ts-kit/tracing-platform-only` | `@ddd-ts-kit/tracing` et `@opentelemetry/*` ne sont importés que par le répertoire de la plateforme, `main.ts` et `apps/` | `error` | maison |
 | [`standard/no-parallel-interface`](docs/rules/standard-no-parallel-interface.fr.md) | `ddd-ts-kit/standard-no-parallel-interface` | aucun `ILogger`, `UserContext`, `PaginatedResult`, `CronJob`, `ErrorTracker` ni semblable déclaré à côté des interfaces standard du kernel (`standardInterfaces` dans la config) | `warn` | maison |

@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:f6e272c251c007da -->
+<!-- translation-of: README.md sha256:a856ad78d158765f -->
 
 # @ddd-ts-kit/validation
 
@@ -362,6 +362,10 @@ const amount = sharedSchema('Amount', customSchema((input) => ({ ok: true, value
 export const jsonSchema = amount.toJsonSchema(); // { $ref: '#/$defs/Amount', $defs: { Amount: { type: 'integer' } } }
 export const name = sharedNameOf(jsonSchema); // 'Amount'
 ```
+
+`schemaBehind.of(schema)` renvoie le schéma qui a été donné à `sharedSchema`, pour que ce qu'un
+autre *package* y a attaché (les champs que réserve `withFieldAccess` de `@ddd-ts-kit/http`)
+vaille aussi pour le schéma partagé.
 
 Un schéma partagé de la couche présentation vit là où `generate schema` l'écrit : sous
 `presentation/http/schemas/` de son contexte, ou sous `presentation/` du noyau partagé quand

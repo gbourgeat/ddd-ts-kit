@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:c389bb7d87d6bd6a -->
+<!-- translation-of: README.md sha256:638096e9a00ef0af -->
 
 # @ddd-ts-kit/knex
 
@@ -138,8 +138,11 @@ compris.
 
 Un projet multitenant garde le *tenant* de chaque événement, pour que ses consommateurs
 s'exécutent dans ce *tenant* : `createOutboxTables(knex, { schema: 'messaging', tenant: true })`
-ajoute une colonne `tenant_id` nullable (`addOutboxTenantColumn(knex, { schema: 'messaging' })`
-est la migration d'un projet qui devient multitenant), et
+ajoute une colonne `tenant_id` nullable
+(`addOutboxTenantColumn(knex, { schema: 'messaging', tenantOfUnpublished: 'acme' })` est la
+migration d'un projet qui devient multitenant : les événements pas encore publiés vont au *tenant*
+que la base servait, ou n'en gardent aucun et sont refusés par les consommateurs restreints à un
+*tenant* si on l'omet), et
 `new KnexOutboxStore(context, { schema: 'messaging', tenant: true })` l'écrit. Une table qui a la
 colonne est relue dans les deux cas.
 
@@ -602,6 +605,14 @@ d'un *tenant* passe `tenant: scope` à `KnexReadModelTable` et à `KnexReadModel
 ligne est écrite avec le *tenant* du travail, et chaque lecture et chaque écriture y est
 restreinte (les clés restent uniques entre *tenants* ; une reconstruction, qui ne s'exécute dans
 aucun *tenant*, est refusée).
+
+Une mesure groupée par une requête restreinte au *tenant*, puis filtrée, triée et paginée sur ses
+colonnes de sortie, la sélectionne avec `derivedTable(context, grouped, 'occupancy')` : la requête
+groupée est celle qui atteint la table, par `tenantTable`. Un projet d'un seul client qui devient
+multitenant ajoute la colonne à chaque table de données de *tenant* dans une migration,
+`addTenantColumn(knex, { schema, table, tenantOfExistingRows: 'acme' })` : les lignes déjà
+présentes vont à ce *tenant* (refusé quand il y a des lignes et aucun *tenant*), puis la colonne
+devient obligatoire et indexée ; une table qui l'a déjà est laissée telle quelle.
 
 **Sécurité au niveau des lignes** (row-level security), une seconde ligne de défense sur les
 tables partagées : la base de données elle-même refuse une ligne d'un autre *tenant*, même à une

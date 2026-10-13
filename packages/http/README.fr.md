@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:28e9ea63962d60f0 -->
+<!-- translation-of: README.md sha256:87d20856ba52400a -->
 
 # @ddd-ts-kit/http
 
@@ -157,7 +157,7 @@ anonyme atteindre `handle`.
 
 | Export | Ce que c'est |
 |---|---|
-| `Controller(spec)` | le décorateur d'un contrôleur : `group`, `method`, `path` (après le préfixe du groupe), `operationId` (par défaut, le nom de la classe sans `Controller`), `summary`, `description`, `tags`, `params`, `query`, `headers`, `body`, `upload` (voir « Téléversements et fichiers »), `response: { status, description?, body? }`, `errors`, `guards`, `deprecated`, `cache` et `ifMatch` (voir « Cache HTTP ») |
+| `Controller(spec)` | le décorateur d'un contrôleur : `group`, `method`, `path` (après le préfixe du groupe), `operationId` (par défaut, le nom de la classe sans `Controller`), `summary`, `description`, `tags`, `params`, `query`, `headers`, `body`, `upload` (voir « Téléversements et fichiers »), `response: { status, description?, body? }`, `errors`, `guards`, `deprecated`, `cache` et `ifMatch` (voir « Cache HTTP »), `produces` et `consumes` (voir [Représentations](#représentations--json-xml-csv)), `form` (voir [Formulaires décrits par le serveur](#formulaires-décrits-par-le-serveur)) |
 | `RouteGroup({ parent, prefix, tags, guards, errors, cache })` | nomme un ensemble de routes sur une classe vide ; un enfant hérite de son `parent` et y ajoute ; le `cache` le plus proche l'emporte |
 | `Guard` | l'interface `{ documents?, check(request: GuardRequest) }`, et le décorateur d'une classe de garde qui prend des dépendances |
 | `Authenticated`, `Public`, `HasRole(...roles)`, `HasScope(...scopes)`, `TenantMember` | les gardes que livre le package, sur l'`Actor` et la `Session` de la requête HTTP : 401 à l'appelant anonyme, 403 sans l'un des rôles, sans chacun des scopes nommés (`Session.scopes`, typés par les `SessionScopes` du projet) ou hors du tenant de la requête HTTP ; `Public` laisse entrer tout le monde et s'emploie seule. Un refus d'une garde est signalé à `onGuardRefusal` |
@@ -307,9 +307,14 @@ de l'application sont connues, et une réponse publique y est tenue avec une `De
 
 - sur une route qui connaît son appelant, `vary` nomme `Authorization`, `Cookie`, ou un en-tête
   d'où le tenant est lu (`resolveTenant`) : `vary: ['Accept-Language']` seul est refusé ;
+- sur toute route, même une que tout le monde peut appeler, une réponse dont le schéma réserve
+  des champs à certains appelants (`withFieldAccess` avec une exigence `read`, sur la réponse, sa
+  page ou son flux) nomme `Authorization` ou `Cookie` dans `vary` : ce qu'elle montre dépend de
+  qui appelle ;
 - derrière un cache qui ignore `Vary` (`cacheTags.header` de Cloudflare ou de Bunny), une réponse
   publique qui varie est refusée, sauf si `cacheTags.honoursVary: true` dit que le cache range
-  ses réponses selon ces en-têtes ;
+  ses réponses selon ces en-têtes ; une réponse choisie par `Accept` parmi plusieurs types de
+  média (`produces`) varie sur lui ;
 - avec des tags rangés par tenant (`cacheTags.perTenant`), une route avec tags que tout le monde
   peut appeler a besoin de `resolveTenant` : sinon un appel anonyme ne nomme aucun tenant, et
   aucune purge n'atteindrait sa réponse.
@@ -349,7 +354,11 @@ corps à un appelant qui détient déjà cette version :
 `If-None-Match` est lu en premier et comparé faiblement, `If-Modified-Since` seulement en son
 absence. Un corps auquel manque le champ qu'il nomme répond 500, comme toute réponse que sa
 déclaration n'autorise pas. Le contrat gagne les paramètres `If-None-Match` et
-`If-Modified-Since`, les en-têtes `ETag` et `Last-Modified` et la réponse `304`.
+`If-Modified-Since`, les en-têtes `ETag` et `Last-Modified` et la réponse `304`. Sous les
+[représentations](#représentations--json-xml-csv), la version, l'instant et les étiquettes de
+cache sont lus dans ce qu'a répondu le gestionnaire, les mêmes en JSON, XML ou CSV ; une étiquette
+forte résume les octets du type de média envoyé, si bien que chaque représentation a la sienne, et
+une liste en flux, dont les octets ne sont pas connus quand ses en-têtes partent, n'en a aucune.
 
 Une écriture faite sur la version qu'un client a lue déclare `ifMatch` (`IfMatch.optional` ou
 `IfMatch.required`). Le pipeline lit la version nommée dans `If-Match` (le tag faible renvoyé
@@ -535,9 +544,10 @@ export function startsAtOf(problem: Problem): string | undefined {
 
 Valeurs par défaut : `VALIDATION_FAILED` 422 (avec `issues`, chemins préfixés par la partie :
 `body.items.0.sku`), `NOT_FOUND` 404, `CONFLICT` 409, `INVARIANT_VIOLATION` 422, `UNAUTHORIZED`
-401, `FORBIDDEN` 403, `PRECONDITION_FAILED` 412, `PRECONDITION_REQUIRED` 428, et pour les
-fichiers `FILE_NOT_FOUND` 404, `FILE_TOO_LARGE` 413, `UNSUPPORTED_MEDIA_TYPE` 415. Un code du
-domaine sans correspondance répond 422 (`fallbackStatus` du second argument le change).
+401, `FORBIDDEN` 403, `NOT_ACCEPTABLE` 406, `PRECONDITION_FAILED` 412,
+`UNSUPPORTED_MEDIA_TYPE` 415 (un corps ou un fichier d'un type que la route ne prend pas),
+`PRECONDITION_REQUIRED` 428, et pour les fichiers `FILE_NOT_FOUND` 404, `FILE_TOO_LARGE` 413. Un
+code du domaine sans correspondance répond 422 (`fallbackStatus` du second argument le change).
 
 <!-- checked sample -->
 ```ts
@@ -682,6 +692,7 @@ export const options: ExecuteOptions = {
 | `tenantFromPath(parameter?)` | un paramètre de chemin, `tenantId` par défaut |
 | `tenantFromClaim()` | le tenant de l'accréditation, `Actor.tenantId` |
 | `firstTenantOf(...resolvers)` | le premier qui en nomme un |
+| `servedTenantOf(resolver, served)` | ce que nomme `resolver`, quand il fait partie des *tenants* servis ; tout autre reçoit un 404 (`NOT_FOUND`), si bien qu'un justificatif qui nomme un *tenant* que le déploiement ne connaît pas (ses *jobs*, son annuaire) n'atteint rien |
 
 Le pipeline contrôle ensuite lui-même l'appartenance, avant toute garde et tout gestionnaire :
 un appelant authentifié qui n'appartient pas au tenant nommé (son `tenantId`, ou son attribut
@@ -873,6 +884,307 @@ erreur par faute, aucune ne citant une valeur :
 Le périmètre d'accès de l'acteur n'est pas un paramètre : le gestionnaire de la requête l'ajoute
 avec `scoped`, et rien dans une chaîne de requête ne peut le retirer.
 
+## Représentations : JSON, XML, CSV
+
+Une route continue de répondre une valeur typée que vérifie son schéma de réponse ; une
+`Representation` la transforme en texte d'un type de média, choisi pour chaque requête HTTP par
+l'en-tête `Accept` parmi ceux que la route déclare. L'application enregistre ses représentations
+une fois et donne le même ensemble aux adaptateurs et au générateur du contrat :
+
+![Un gestionnaire répond une valeur typée ; le schéma de réponse la vérifie ; l'accès aux champs écarte ce que l'appelant ne peut pas lire ; la négociation sur Accept choisit JSON, XML ou CSV parmi ce que produit la route, ou refuse par un 406 quand aucun n'est en commun](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/representations-and-forms-one-value.fr.svg)
+
+```ts
+import { Representations, type ExecuteOptions } from '@ddd-ts-kit/http';
+
+const representations = Representations.standard(); // JSON, XML et CSV
+const options: ExecuteOptions = { ...boundary, representations };
+const document = generateOpenApi({ info, routes, errorMapper, representations });
+```
+
+Une route dit dans quoi elle répond en plus de JSON (`produces`) et dans quoi elle lit un corps en
+plus de JSON (`consumes`), sur `@Controller` comme sur `defineRoute` :
+
+```ts
+@Controller({
+  group: PartnerRoutes, method: 'GET', path: '/:practiceId/appointments', summary: 'Export appointments',
+  params, response: { status: 200, body: streamSchemaOf(line) },
+  produces: ['text/csv', 'application/xml'],
+})
+```
+
+| Type de média | Répond | Lit | Remarques |
+|---|---|---|---|
+| `application/json` | toujours, et en premier : ce que reçoit une requête HTTP sans `Accept` | toujours | comme avant ; un grand entier est écrit en chaîne |
+| `application/problem+json` | un refus, sauf si XML a été négocié | | RFC 9457, comme avant |
+| `application/xml` | `XmlRepresentation` | `XmlRepresentation`, quand la route le `consumes` | la convention ci-dessous |
+| `application/problem+xml` | un refus d'une requête HTTP qui a négocié XML | | `<problem xmlns="urn:ietf:rfc:7807">` |
+| `text/csv` | `CsvRepresentation`, pour une page ou une liste de lignes plates | jamais | diffusé en flux ; RFC 4180 |
+
+- **Négociation** (RFC 9110) : le type de média de plus haute qualité parmi ceux que la route
+  offre, la plage la plus précise de l'en-tête décidant, l'ordre `application/json` puis
+  `produces` départageant les égalités. Aucun acceptable : `406 NOT_ACCEPTABLE` en
+  `application/problem+json`, avant que le gestionnaire ne s'exécute. Une route qui en offre plus
+  d'un répond avec `Vary: accept`, ajouté au `Vary` de sa politique de cache ou à celui que pose
+  son gestionnaire, et documenté dans le contrat. Une route qui ne déclare de schéma de corps
+  dans aucune réponse (un fichier, une redirection, aucun contenu) n'est jamais refusée par un
+  406 : sa réponse lui appartient, et un `Readable` ou des octets partent tels que le
+  gestionnaire les a écrits, sous son type de contenu.
+- **Corps** : un corps envoyé dans un type de média que la route consomme est lu par sa
+  représentation en la valeur que produit le chemin JSON, puis validé par le même schéma ; un
+  corps envoyé dans un type de média que la route ne lit pas est refusé par
+  `415 UNSUPPORTED_MEDIA_TYPE`. `mountExpress` installe un analyseur de texte sur chaque route qui
+  consomme un autre type de média, `mountFastify` un analyseur de type de contenu, `mountHono` le
+  lit comme du texte sous sa `bodyLimit` : rien à ajouter à l'application.
+- **Flux** : un gestionnaire qui répond un `AsyncIterable` sous une réponse `streamSchemaOf(item)`
+  est écrit élément par élément dans chaque représentation (un seul tableau JSON, une seule
+  racine XML, une ligne CSV par ligne), en respectant la contre-pression du client et en
+  s'arrêtant quand il s'en va. Chaque élément est lu dans la portée d'exécution de la requête
+  HTTP, comme l'a été le gestionnaire. Le premier élément est lu avant l'envoi du statut : un
+  curseur qui ne peut pas s'ouvrir reçoit une réponse sous forme de *problem*. Un échec après cela
+  coupe court la réponse et est signalé à `onError` avec la corrélation de la requête HTTP et
+  `interrupted: true`, pour compter comme une faute du serveur.
+- **Une liste en flux lue à travers le bus** : construisez-la avec `everyPage((cursor) =>
+  this.queries.execute(new SearchQuery(actor, ..., pageAt(cursor))))`, une requête par page.
+  Chaque page passe alors par les *middlewares* du bus : l'autorisation, l'unité de travail et
+  sa session de *tenant* limitée à la transaction (la sécurité au niveau des lignes de
+  `@ddd-ts-kit/knex` et de `@ddd-ts-kit/drizzle`), le délai d'expiration, le traçage, les
+  métriques, la remontée des erreurs. Un gestionnaire de requête qui répond un `AsyncIterable`
+  paresseux est lu après le retour du bus, hors de tous ces *middlewares* : ses lectures n'ont ni
+  transaction, ni session de *tenant*, ni *span*. L'échéance de la requête HTTP
+  (`requestTimeoutMs`) compte depuis son arrivée, si bien qu'un long export a besoin d'une route à
+  lui avec une échéance plus longue, ou d'un *job* qui écrit un fichier.
+- **Vérifications au montage** : un type de média qu'aucune représentation enregistrée ne
+  fournit, une réponse CSV dont les lignes contiennent une liste ou un objet, et un type de média
+  consommé que rien ne lit sont refusés par une `DeclarationError` quand les routes sont montées ;
+  de même pour une route qui déclare `produces` ou `consumes` quand aucune `representations`
+  n'est montée. Un corps dans un type de média consommé qu'un autre analyseur (un *plugin*, un
+  *middleware*) a déjà transformé en objet est un défaut, qui reçoit un 500.
+- **Le contrat** suit les représentations qu'on lui donne, qui doivent être celles avec lesquelles
+  le serveur est monté (`generateOpenApi({ representations })`) : chaque type de média dans
+  lequel répond une route est listé sous sa réponse, chaque type de média qu'elle lit sous son
+  corps de requête, les types de *problem* sous chaque refus, `406` sur chaque route dont une
+  représentation écrit la réponse et `415` sur chaque route qui lit un corps, déclarés dans
+  `produces` et `consumes` ou non. Sans `representations`, le contrat ne dit que JSON et aucun
+  des deux statuts, comme répond le serveur.
+- **Sans `representations`**, rien ne change : chaque réponse est en JSON, quoi que la requête
+  HTTP accepte. Avec elles, une réponse dans le JSON du kit reste une valeur dans la
+  `RouteResponse` (une *spec* qui appelle `executeRoute` la lit comme avant) ; une autre
+  représentation donne des octets dans `body`, ou des morceaux dans `stream`.
+
+### Les règles de sérialisation, les mêmes dans chaque représentation
+
+| Valeur | Écrite comme |
+|---|---|
+| un instant (`Date`) | ISO 8601 en UTC, `2026-10-13T07:05:00.000Z` |
+| un décimal | une chaîne, `decimalText(value)` : `'12.30'`, jamais un nombre binaire qu'un client arrondit |
+| un montant | `money(amount, currency)` : `{ amount: '12.30', currency: 'EUR' }`, le code ISO 4217 toujours à côté du montant |
+| un identifiant | une chaîne ; un `bigint` est écrit en entier |
+| un vocabulaire fermé | son code, la valeur de l'objet `as const` qui le déclare |
+| une liste | l'enveloppe de page `{ items, total?, nextCursor? }` de `pageResponse`, ou une liste en flux |
+
+`standard-serialization.spec.ts` tient les trois représentations à cette table.
+
+### La convention XML
+
+Une seule convention, celle par défaut de l'objet XML d'OpenAPI, pour que le contrat décrive le
+XML sans rien ajouter :
+
+- l'élément racine est `xml.name` du schéma de réponse, sinon l'identifiant d'opération de la
+  route (`<getAppointment>`), et déclare `xmlns:xsi` ;
+- une propriété est un élément de son nom, dans l'ordre du schéma ; `xml.name` le renomme,
+  `xml.attribute: true` fait d'un scalaire un attribut ; un nom qui ne peut pas être un nom
+  d'élément s'écrit `<entry key="two words">` ;
+- une liste est dépliée : un élément par item, nommé d'après la propriété (ou `items.xml.name`) ;
+  `xml.wrapped: true` les place dans un élément de la propriété, chacun nommé `items.xml.name`
+  ou `item` ; une liste à la racine contient des éléments `<item>` ;
+- `null` est un élément vide avec `xsi:nil="true"` ; une valeur absente n'est aucun élément ;
+- un scalaire est le texte que contiendrait le JSON : un instant en ISO 8601 UTC, `true` ou
+  `false`, un nombre tel que JavaScript l'écrit ; un caractère que XML 1.0 ne peut pas porter
+  devient U+FFFD.
+
+La lecture suit le schéma : le texte devient un nombre ou un booléen là où le schéma le dit, des
+éléments répétés une liste, un élément que le schéma ne déclare pas reste dans la valeur pour
+que le schéma le refuse comme il refuse une propriété JSON inconnue. L'analyseur est celui du
+*package* et lit les éléments, les attributs, les CDATA, les commentaires, les instructions de
+traitement, les entités prédéfinies et les références de caractères ; il refuse une déclaration
+de type de document, si bien qu'aucun corps ne peut déclarer d'entité (pas de XXE, pas de bombe
+d'expansion), et imbrique au plus 64 éléments de profondeur.
+
+### CSV
+
+Une ligne d'en-tête avec les propriétés d'une ligne dans l'ordre du schéma, puis une ligne par
+ligne de données, `\r\n` à la fin de chacune. Une cellule qui contient une virgule, un guillemet,
+un saut de ligne ou des espaces autour est mise entre guillemets ; un texte qui commence par `=`,
+`+`, `-`, `@`, une tabulation ou un retour chariot est préfixé par `'`, pour qu'un tableur ne
+l'exécute pas comme une formule (un nombre ne l'est jamais). `null` et une valeur absente sont
+une cellule vide. CSV n'est jamais lu : un import est une route à part, avec son propre schéma de
+corps.
+
+### Une représentation à vous
+
+```ts
+class YamlRepresentation implements Representation {
+  readonly mediaType = 'application/yaml';
+  readonly problemMediaType = undefined; // les refus restent en application/problem+json
+
+  write(body: unknown, shape: BodyShape): RepresentedBody { ... }
+}
+
+const representations = Representations.of(new XmlRepresentation(), new YamlRepresentation());
+```
+
+`write` reçoit la valeur et sa forme (le JSON Schema de la réponse et l'identifiant
+d'opération) ; `read`, quand il est présent, retransforme un corps en valeur ; `refuses`, quand
+il est présent, dit au montage pourquoi une forme ne peut pas être écrite. Une représentation
+donnée pour `application/json` remplace celle par défaut.
+
+## Champs réservés à certains appelants
+
+Un schéma de réponse ou de requête HTTP marque un champ comme exigeant une permission ou une
+politique ; le *pipeline* fait le reste, pour chaque représentation, au lieu d'un `if (admin)`
+dans un gestionnaire :
+
+```ts
+import { fieldDeciderOf, withFieldAccess } from '@ddd-ts-kit/http';
+
+const answer = withFieldAccess(classSchema(AppointmentAnswer), {
+  internalNote: {
+    read: { permission: schedulingPermissions['appointment.note.read'] },
+    write: { policy: notesOfTheirOwnCalendars }, // une politique de @ddd-ts-kit/auth convient telle quelle
+    subject: (row) => ({ type: 'calendar', id: row.calendarId }), // l'élément sur lequel porte l'exigence
+  },
+});
+
+const options: ExecuteOptions = { ...boundary, fieldAccess: fieldDeciderOf({ access: app.resolve(Access), clock }) };
+```
+
+| Où | Un champ que l'acteur ne peut pas lire | Un champ que l'acteur peut lire mais pas poser |
+|---|---|---|
+| une réponse (JSON, XML, CSV, une liste en flux) | écarté ; en CSV la colonne reste, ses cellules vides | gardé |
+| un corps de requête HTTP | refusé par `403 FORBIDDEN`, en nommant le chemin (`body.internalNote`) | refusé de la même façon |
+| un formulaire décrit par le serveur | absent | en lecture seule |
+| le contrat | `x-field-access: { read: { permission }, write: { policy } }` sur la propriété, qui n'est plus listée dans `required` | la même chose |
+
+- `read` absent : quiconque peut appeler la route voit le champ ; `write` absent : quiconque le
+  voit peut le poser. Un champ laissé hors d'un corps n'est jamais jugé.
+- Une permission est décidée par `access.decideOn(question)` de `@ddd-ts-kit/auth` (sinon
+  `access.decide`), les politiques de la permission puis l'autorisateur, comme pour un cas
+  d'usage ; une politique nommée sur le champ est interrogée directement, avec l'heure de
+  `clock`. `subject` nomme l'élément : omis, l'exigence ne porte sur rien, ce à quoi répond une
+  attribution de rôle et pas une relation.
+- **Ce qui est enregistré** : un champ posé dans un corps est un acte, et sa décision va au
+  journal d'audit (`onDecision`) avec qui a demandé et la corrélation ; un champ montré ou écarté
+  d'une réponse ou d'un formulaire ne fait que la façonner, et sa décision n'est pas
+  enregistrée. Le cas d'usage continue d'enregistrer sa propre décision.
+- **Coût** : chaque exigence est décidée une fois par élément et par requête HTTP, dans la portée
+  d'exécution de la requête. Une exigence qui ne porte sur aucun élément est demandée une fois ;
+  une page de cent lignes du même agenda demande une fois. Un export en flux dont la règle nomme
+  un sujet par ligne demande une décision par ligne distincte (une évaluation des politiques et
+  de l'autorisateur, une recherche de relations pour un modèle par relations) ; le juge retient
+  les 256 derniers éléments par exigence, si bien que sa mémoire reste bornée quelle que soit la
+  longueur de l'export. Pour un long export, préférez une règle sans sujet, ou un modèle de
+  lecture qui ne contient déjà que ce que l'appelant peut lire.
+- `pageSchemaOf(item)` et `streamSchemaOf(item)` portent les champs restreints de leur élément.
+  Un schéma partagé les porte dans un ordre comme dans l'autre :
+  `withFieldAccess(sharedSchema('Note', schema), rules)`,
+  `withFieldAccess(classSchema(NoteDto, { shared: true }), rules)` et
+  `sharedSchema('Note', withFieldAccess(schema, rules))` marquent la définition partagée et
+  filtrent la réponse de la même façon.
+- **Une politique de cache publique** : une réponse avec un champ que certains appelants ne
+  peuvent pas lire diffère selon l'appelant. Quand les routes sont montées, une politique
+  `public` sur une telle route est refusée à moins que son `vary` ne nomme `Authorization` ou
+  `Cookie`, quel que soit qui peut appeler la route (voir « Cache HTTP »). Les règles
+  s'appliquent aux propriétés du schéma donné à `withFieldAccess` ; un objet imbriqué se
+  restreint en enveloppant son propre schéma.
+- Sans `fieldAccess` dans les options, un champ restreint est écarté de chaque réponse et refusé
+  dans chaque corps : rien n'est montré par omission.
+- La règle `authz/fields-by-schema` du *checker* et du *plugin* ESLint refuse l'alternative
+  écrite à la main, un test sur les rôles de l'acteur sous `application/queries/` ;
+  `authz/in-application` en refuse déjà une dans `presentation/`.
+
+## Formulaires décrits par le serveur
+
+Une route qui déclare `form` est décrite comme un formulaire, à partir de ce qu'elle déclare
+déjà : son schéma de corps de requête, les champs restreints de ce schéma, et quelques
+indications de présentation. `formRoutes` sert un `GET /forms/<operationId>` par route de ce
+genre, monté et documenté comme toute route :
+
+![Le schéma du corps de la réservation réserve la note interne ; la route du formulaire demande la permission de réserver et interroge Access à propos de l'agenda ; le praticien titulaire du bureau peut poser chaque champ, un assistant sur un bureau délégué voit la note en lecture seule, un patient qui réserve pour lui-même ne la voit pas, et un assistant sans délégation est refusé par un 403](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/representations-and-forms-one-form-per-caller.fr.svg)
+
+```ts
+// presentation/http/appointments/book-appointment/book-appointment.controller.ts, à côté de ses schémas
+const form = defineForm<Infer<typeof body>>({
+  groups: [{ name: 'when', fields: ['startsAt', 'appointmentTypeId'] }],
+  fields: {
+    appointmentTypeId: { lookup: 'searchAppointmentTypes' }, // des options venues d'une route GET
+    reason: { widget: 'textarea', visibleWhen: { field: 'kind', equals: AppointmentKind.consultation } },
+  },
+});
+
+@Controller({ ..., body, form })
+
+// la racine de composition
+const routes = defineRoutes(appRoutes, formRoutes(appRoutes, { fieldAccess }));
+```
+
+`GET /forms/bookAppointment?calendarId=c-1` répond **JSON Forms** (le choix par défaut) :
+`schema`, `uischema` et `data`, que chaque moteur de rendu de JSON Forms prend tels quels.
+`?format=blocks` répond l'**arbre de blocs neutre** pour un front-end qui a son propre moteur :
+
+```json
+{ "type": "form", "operation": "bookAppointment", "method": "POST", "path": "/appointments", "label": "bookAppointment",
+  "blocks": [
+    { "type": "group", "name": "when", "label": "bookAppointment.when", "blocks": [
+      { "type": "field", "name": "startsAt", "label": "bookAppointment.startsAt", "widget": "datetime", "required": true,
+        "constraints": { "format": "date-time" } } ] },
+    { "type": "field", "name": "internalNote", "label": "bookAppointment.internalNote", "widget": "textarea",
+      "required": false, "readOnly": true } ] }
+```
+
+| Quoi | Tiré de | Dans l'arbre | Dans JSON Forms |
+|---|---|---|---|
+| les champs, leur ordre, `required` | le schéma de la requête HTTP | des blocs `field` | `schema` |
+| les contraintes | `minLength`, `maxLength`, `minimum`, `maximum`, `exclusiveMinimum`, `exclusiveMaximum`, `multipleOf`, `pattern`, `format`, `minItems`, `maxItems` | `constraints` | les mêmes mots-clés dans `schema` |
+| les options | un `enum` du schéma (un vocabulaire fermé), sinon `options` de l'indication | `options`, chacune avec une clé de traduction | `enum` |
+| une consultation | `lookup: '<operationId>'` d'une route `GET` | `lookup: { operation, method, path }` | `options.lookup` du contrôle |
+| le *widget* | l'indication, sinon le schéma : `select` pour une énumération, `checkbox`, `number`, `datetime`, `date`, `time`, `email`, `list`, `text` | `widget` | le contrôle, `options.multi` pour `textarea`, `options.format: 'radio'` |
+| les groupes | `groups` des indications, imbriqués ; un objet imbriqué du corps est un groupe à lui | des blocs `group` | des éléments `Group` |
+| un champ montré sous condition | `visibleWhen: { field, equals }` ou `{ field, in }` | `visibleWhen` | une règle `SHOW` |
+| un champ exigé sous condition | `requiredWhen` | `requiredWhen` | `allOf` de `if`/`then` dans `schema` |
+| les libellés | `<operationId>`, `<operationId>.<group>`, `<operationId>.<field>`, `<operationId>.<field>.<option>` ; `label` d'une indication en remplace un | `label` | `i18n` |
+| les valeurs connues d'avance | la chaîne de requête : `?calendarId=c-1`, typée par le schéma | `value` | `data` |
+
+**La description respecte l'appelant.** Un formulaire nomme la permission du cas d'usage qu'il
+décrit, demandée comme la demande son `@Requires`, à partir des valeurs de la chaîne de requête :
+
+```ts
+const form = defineForm<Infer<typeof body>>({
+  requires: {
+    permission: schedulingPermissions['appointment.book'],
+    subject: (values) => (values.calendarId === undefined ? undefined : { type: 'calendar', id: values.calendarId }),
+    context: (values, actor) => ({ selfService: (values.patientId ?? actor.id) === actor.id }),
+  },
+});
+```
+
+Un appelant qui ne peut pas exécuter le cas d'usage est refusé par un 403 (enregistré comme une
+décision) et n'apprend rien des champs ; sans `fieldAccess`, personne ne reçoit un formulaire qui
+déclare `requires`. Un formulaire sans `requires` est donné à quiconque peut appeler la route.
+Ensuite, un champ que l'acteur ne peut pas lire (`withFieldAccess`) est absent, un champ qu'il
+peut lire mais pas poser est `readOnly` (`readOnly` dans `schema`, `options.readonly` sur le
+contrôle), avec chacun des champs qu'il contient quand c'est un objet, chacun demandé à propos de
+l'élément que son `subject` nomme à partir des valeurs de la chaîne de requête ; une valeur de la
+chaîne de requête pour un champ que l'appelant ne voit pas n'est pas rendue dans `data`. Le
+formulaire d'une route qui n'est pas publique refuse l'appelant anonyme par un 401. Le serveur
+valide toujours le corps quand il est envoyé, refuse par un 403 un champ que l'appelant ne peut
+pas poser, et le cas d'usage applique toujours ses règles : un formulaire porte la forme et la
+présentation, jamais une règle métier.
+
+Des indications qui nomment un champ que le corps ne contient pas, ou une consultation qui n'est
+pas une route `GET`, arrêtent `formRoutes` avec une `DeclarationError`. `formDocumentsOf(routes)`
+donne chaque formulaire en entier, dans les deux formats, pour la documentation : un projet
+généré par la CLI les écrit dans `openapi/forms/<operationId>.json` à côté de son contrat.
+
 ## Express 5
 
 <!-- checked sample -->
@@ -927,9 +1239,12 @@ serve({ fetch: app.fetch, port: 3000 });
 L'adaptateur lit lui-même le corps JSON, morceau par morceau et jusqu'à `bodyLimit` octets
 (1 Mio par défaut, comme Fastify ; Express s'arrête à 100 ko) : un corps plus grand reçoit un 413
 sous forme de *problem* (`BODY_TOO_LARGE`), un corps qui n'est pas du JSON un 400
-(`MALFORMED_BODY`), les deux avant le pipeline et sans garder le corps en entier. Un
-téléversement et un corps brut sont lus depuis le flux de la requête HTTP, avec les limites que
-déclare leur route, et une réponse en flux est envoyée en flux. Une requête HTTP porte `HonoRaw`
+(`MALFORMED_BODY`), les deux avant le pipeline et sans garder le corps en entier. Un corps dans
+un type de média que la route consomme (`consumes`) est lu comme du texte sous la même limite,
+pour sa représentation ; un autre type de média n'est pas lu, et le pipeline répond 415 quand des
+représentations sont montées. Un téléversement et un corps brut sont lus depuis le flux de la
+requête HTTP, avec les limites que déclare leur route, et une réponse en flux ou une liste en flux
+est envoyée en flux. Une requête HTTP porte `HonoRaw`
 comme requête brute (ses en-têtes sous forme d'objet, que lisent les authentificateurs du kit,
 et le `Context` de Hono), et un paramètre de chaîne de requête répété est une liste, comme sur
 Express et Fastify. L'adaptateur n'importe rien de Hono à l'exécution, et `node:stream` pour les
@@ -1042,7 +1357,8 @@ La plateforme partage trois schémas qui lui sont propres :
 | le document *problem* | `Problem` | chaque refus, RFC 9457 avec le `code` stable |
 
 Une partie partagée de la requête HTTP (`params`, `query`, `headers`) donne toujours un paramètre
-par propriété.
+par propriété. Les champs réservés par `withFieldAccess` restent réservés, quel que soit celui des
+deux qui enveloppe l'autre.
 
 ## Servir le contrat et sa page
 
@@ -1211,7 +1527,9 @@ Express, montez-les avant `express.json()` : cet analyseur lit d'abord un corps 
 stockage objet répond à ses propres liens et n'a besoin d'aucune route.
 
 Un gestionnaire peut répondre un flux (`Readable`) comme corps : il est envoyé dans la réponse,
-avec son propre `content-type`.
+avec son propre `content-type`, quelles que soient les `representations` avec lesquelles les
+routes sont montées : aucune représentation n'écrit un fichier, et une route qui ne déclare aucun
+schéma de corps n'est jamais refusée par un 406.
 
 ## Limites
 
@@ -1220,6 +1538,26 @@ avec son propre `content-type`.
   pipeline s'exécute. L'adaptateur Hono lit lui-même le corps et répond aux deux cas par des
   *problems* (voir « Hono 4 »).
 - Les routes sont d'abord JSON. Un gestionnaire peut répondre un texte, des octets ou un flux en
-  fixant son propre en-tête `content-type`. Un corps de requête HTTP n'est reçu en flux que
-  comme téléversement déclaré ou comme corps brut (`rawBody`) : les server-sent events et les
-  WebSockets s'écrivent nativement dans le framework.
+  fixant son propre en-tête `content-type`, auquel aucune représentation ne touche. Un corps de
+  requête HTTP n'est reçu en flux que comme téléversement déclaré ou comme corps brut
+  (`rawBody`) : les server-sent events et les WebSockets s'écrivent nativement dans le
+  framework.
+- XML est un rendu fidèle du modèle JSON, pas un outil de conception de vocabulaires XML : aucun
+  espace de noms hormis celui par défaut de la racine, pas de contenu mixte, pas de XML Schema.
+  Un format de partenaire doté de son propre schéma est une couche anticorruption avec son
+  propre *mapper*.
+- Une liste en flux ne peut plus être refusée une fois son premier élément écrit : la connexion
+  est coupée, le client voit un corps tronqué, et `onError` est prévenu. Les éléments d'un flux
+  ne sont pas vérifiés un par un par `validateResponses`.
+- CSV est écrit, jamais lu, et ne contient que des lignes plates.
+- Un formulaire décrit des scalaires, des objets imbriqués et des listes d'un vocabulaire fermé ;
+  une liste d'objets est un champ `list` sans détail. La mise en page au-delà des groupes et de
+  l'ordre revient au front-end. Une consultation nomme la route des options ; la façon dont le
+  front-end l'appelle et libelle ses éléments lui appartient.
+- L'accès aux champs juge les champs qu'un schéma déclare, pas les lignes : quelles lignes un
+  acteur peut lire est le périmètre d'accès de la requête. Une exigence sur un élément est une
+  décision par élément de la réponse, non enregistrée ; il n'y a pas de décision groupée sur
+  plusieurs éléments à la fois.
+- Un formulaire n'est réservé à qui peut exécuter son cas d'usage que lorsqu'il déclare
+  `requires` ; les valeurs de sa chaîne de requête nomment l'élément et le contexte, que
+  l'appelant choisit, comme il le ferait dans le corps qu'il envoie.

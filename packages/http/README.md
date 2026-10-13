@@ -858,6 +858,8 @@ into the text of one media type, chosen per request by the `Accept` header among
 route declares. The application registers its representations once and gives the same set to
 the adapters and to the contract generator:
 
+![A handler answers a typed value; the response schema checks it; field access leaves out what the caller may not read; negotiation on Accept picks JSON, XML or CSV among what the route produces, or refuses with 406 when none is in common](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/representations-and-forms-one-value.svg)
+
 ```ts
 import { Representations, type ExecuteOptions } from '@ddd-ts-kit/http';
 
@@ -1059,6 +1061,8 @@ const options: ExecuteOptions = { ...boundary, fieldAccess: fieldDeciderOf({ acc
 A route that declares `form` is described as a form, from what it already declares: its request
 body schema, the restricted fields of that schema, and a few presentation hints. `formRoutes`
 serves one `GET /forms/<operationId>` per such route, mounted and documented like any route:
+
+![The body schema of the booking reserves the internal note; the form route asks the permission to book and Access about the calendar; the practitioner who holds the desk may set every field, an assistant on a delegated desk sees the note read-only, a patient booking for themselves does not see it, and an assistant without a delegation is refused with 403](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/representations-and-forms-one-form-per-caller.svg)
 
 ```ts
 // presentation/http/appointments/book-appointment/book-appointment.controller.ts, next to its schemas

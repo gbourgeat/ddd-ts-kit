@@ -1,5 +1,5 @@
 [English](presentation-shared-cache-varies.md) · **Français**
-<!-- translation-of: presentation-shared-cache-varies.md sha256:4631f45edeef3781 -->
+<!-- translation-of: presentation-shared-cache-varies.md sha256:4e54d42c456d0b5b -->
 
 # ddd-ts-kit/presentation-shared-cache-varies
 
@@ -44,7 +44,7 @@ export class AgendaRoutes {}
 
 Un contrôleur qui nomme son groupe et n'écrit pas de `guards` à lui prend les gardes du groupe, qu'un autre fichier déclare : il n'est pas jugé ici, et `@ddd-ts-kit/http` refuse la même déclaration par une `DeclarationError` quand les routes sont construites, pour chaque route quel que soit le fichier. La règle est la vue anticipée, dans l'éditeur, de ce refus.
 
-Ce que nomme un `vary` non vide est vérifié quand les routes sont montées, là où les options de l'application sont connues : il doit nommer `Authorization`, `Cookie` ou l'en-tête dans lequel est lu le *tenant* (`vary: ['Accept-Language']` seul est refusé), et un cache qui ignore `Vary` (Cloudflare, Bunny) refuse une réponse publique qui varie. La règle n'en juge pas : un seul fichier ne montre pas les options.
+Ce que nomme un `vary` non vide est vérifié quand les routes sont montées, là où les options de l'application sont connues : il doit nommer `Authorization`, `Cookie` ou l'en-tête dans lequel est lu le *tenant* (`vary: ['Accept-Language']` seul est refusé), et un cache qui ignore `Vary` (Cloudflare, Bunny) refuse une réponse publique qui varie. Une réponse dont le schéma réserve des champs à certains appelants (`withFieldAccess`) doit aussi y nommer `Authorization` ou `Cookie`, même sur une route que tout le monde peut appeler. La règle n'en juge pas : un seul fichier ne montre ni les options ni les marques du schéma.
 
 ## Options
 

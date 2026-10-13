@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:37e550d17e745a50 -->
+<!-- translation-of: README.md sha256:f48004e1f883e20c -->
 
 # @ddd-ts-kit/di
 
@@ -1104,6 +1104,7 @@ là où se trouve `RabbitMqEventBus`.
 | `Lock` | `InMemoryLock` sur `Clock` : ce processus seulement | `lock` |
 | `RateLimiter` | `InMemoryRateLimiter` sur `Clock` : ce processus seulement | `rateLimiter` |
 | `JobScheduler` | `InProcessJobScheduler` de `@ddd-ts-kit/scheduling` sur `Clock`, `Lock`, `ExecutionScope`, `IdGenerator`, `Logger`, `Metrics` et `ErrorReporter` | `jobScheduler` |
+| `TenantDirectory` | aucune : un *job* déclaré `tenancy: 'per-tenant'` est refusé quand il est enregistré. Fourni, le planificateur par défaut exécute un tel *job* une fois par *tenant* qu'il liste, dans la portée de ce *tenant* ; l'application de test prend `tenants` (par défaut le *tenant* de son contexte d'exécution) | `tenants` |
 
 Les ports sont les classes abstraites de `@ddd-ts-kit/kernel` : un gestionnaire type un
 paramètre de constructeur par `Clock` sans importer ce *package*.
