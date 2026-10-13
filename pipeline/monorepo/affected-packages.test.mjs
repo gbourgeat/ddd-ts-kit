@@ -78,7 +78,11 @@ test('a shared file, an unknown package or a path nobody listed selects everythi
   }
 });
 
-test('documents no spec reads select nothing', () => {
+test('documents no spec reads select nothing, the website neither', () => {
   assert.equal(select(graph, ['README.md', 'CONTRIBUTING.md', 'LICENSE']).scope, 'none');
+  assert.equal(
+    select(graph, ['site/astro.config.mjs', 'site/scripts/assemble.mjs', 'site/package.json']).scope,
+    'none',
+  );
   assert.equal(select(graph, []).scope, 'none');
 });

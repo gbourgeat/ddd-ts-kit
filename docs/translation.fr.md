@@ -1,5 +1,5 @@
 [English](translation.md) · **Français**
-<!-- translation-of: translation.md sha256:320b1f939636d60d -->
+<!-- translation-of: translation.md sha256:a9f6f98e6e62b54b -->
 
 # La documentation en français
 
@@ -25,6 +25,7 @@ elle : `README.md` et `README.fr.md`, `docs/concepts/aggregates.md` et
 | chaque `CONTEXT.md` | en partie généré par `ddd-ts-kit docs` |
 | tout ce qui est sous `.github/`, `.gitlab/`, `pipeline/`, `node_modules/` | l'outillage, et les copies faites pour les projets générés |
 | tout ce qui est sous `packages/cli/templates/` | les fichiers que `ddd-ts-kit init` et `generate` écrivent dans un projet |
+| tout ce qui est sous `site/` | le site de la documentation, qui copie ces pages à chacune de ses constructions |
 | `examples/scheduling/clients/api/README.md`, `examples/scheduling/docs/integration/event-catalog.md` | générés |
 
 La liste se trouve en tête de

@@ -7,7 +7,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const ROOT = path.resolve(import.meta.dirname, '../..');
-const SKIPPED_DIRECTORIES = new Set(['node_modules', 'dist', '.git', 'coverage', 'reports']);
+/** Generated, never tracked: `.astro` is the cache of the website (site/), rebuilt at each build. */
+const SKIPPED_DIRECTORIES = new Set(['node_modules', 'dist', '.git', 'coverage', 'reports', '.astro']);
 const DASH = new RegExp(`[${String.fromCharCode(0x2013, 0x2014)}]`);
 
 process.exit(main());
