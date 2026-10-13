@@ -221,7 +221,16 @@ export class Appointment extends AggregateRoot<string> {
     this.refuseWhenEnded();
 
     this.state = { ...this.state, changedAt: now, internalNote };
-    this.record(new AppointmentAnnotated(this.id, now, internalNote));
+
+    const { booking, confirmBefore } = this.state;
+
+    this.record(
+      new AppointmentAnnotated(this.id, now, {
+        internalNote,
+        booking,
+        ...(confirmBefore === undefined ? {} : { confirmBefore }),
+      }),
+    );
   }
 
   get status(): AppointmentState['status'] {

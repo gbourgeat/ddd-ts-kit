@@ -99,7 +99,11 @@ describe('Appointment, annotated by the staff', () => {
         appointment.cancel(byPractice, at('09:00'));
       })
       .thenEvents([
-        { name: 'scheduling.appointment.annotated', occurredAt: at('07:00'), internalNote: 'Prefers the morning' },
+        {
+          name: 'scheduling.appointment.annotated',
+          occurredAt: at('07:00'),
+          annotated: { internalNote: 'Prefers the morning', confirmBefore: deadline },
+        },
         { name: 'scheduling.appointment.confirmed' },
         { name: 'scheduling.appointment.cancelled' },
       ])

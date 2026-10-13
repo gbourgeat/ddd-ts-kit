@@ -195,13 +195,25 @@ describe('The agenda, given facts twice or out of order', () => {
     expect(await agenda.get('appointment-1')).toMatchObject({ status: 'expired' });
   });
 
-  it('ignores the note of an appointment it never saw', async () => {
+  it('keeps the note met before the booking of the same instant, whatever the order', async () => {
     const agenda = new FakeAgenda();
     const projection = new AgendaProjection(agenda);
+    const { booking } = planned().build();
+    const note = { internalNote: 'Prefers the morning', booking, confirmBefore: at('08:00') };
 
-    await projection.annotated(new AppointmentAnnotated('appointment-9', bornAt, 'Never booked here'));
+    const writes = [
+      await projection.annotated(new AppointmentAnnotated('appointment-1', bornAt, note)),
+      await projection.booked(new AppointmentBooked('appointment-1', bornAt, { booking, confirmBefore: at('08:00') })),
+    ];
 
-    expect(await agenda.get('appointment-9')).toBeUndefined();
+    expect(writes).toEqual(['applied', 'stale']);
+
+    expect(await agenda.get('appointment-1')).toMatchObject({
+      status: 'requested',
+      confirmBefore: at('08:00'),
+      calendarId: 'calendar-4',
+      internalNote: 'Prefers the morning',
+    });
   });
 
   it('ignores the move of an appointment it never saw', async () => {
