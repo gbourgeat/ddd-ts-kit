@@ -1153,3 +1153,36 @@ in the kit, then `npm run docs:generate` rewrote `clients/api`:
 | Lockfile | none in this directory, which is a workspace of the kit; a generated npm project is told to run `npm install` when its lock misses a client |
 
 The two changed spec files and the three journeys pass again in process (30 tests).
+
+## 2026-10-13: background jobs, a state machine and a process manager
+
+What this example gained, and how much of it a generator wrote:
+
+| | |
+|---|---|
+| The lifecycle of an appointment | `domain/state-machines/appointment.state-machine.ts`, written by hand before `generate state-machine` existed; the aggregate now asks it every status, and `CONTEXT.md` draws it |
+| The confirmation deadline | a process manager (`application/processes/confirmation-deadline.process.ts`), four event handlers and the background job of its timeouts, written by hand before `generate process` existed; its shape is the one the generator now writes |
+| The clearance of a calendar | `generate command` (`ClearCalendar`), `generate query` (`GetClearance`) and `generate route` twice wrote the skeletons; the background job was written by hand |
+| Stores | the jobs and the process instances in the `messaging` schema of PostgreSQL (`KnexJobStore`, `KnexProcessStore`), recorded as `"queue": "database"` |
+
+Frictions met on the way:
+
+- `generate background-job ... --command CancelAppointment` refuses the command: its constructor
+  needs `appointmentId`, which a generated job cannot know. Right for a generated job, which sends
+  one command from its actor; the clearance sends one command per element of its payload, a
+  loop with a checkpoint that no template guesses. Written by hand, 70 lines.
+- `generate query GetClearance` wrote a reader port, its in-memory adapter and its fake: the
+  answer comes from `JobQueue.find`, a port of the kernel, so the three files were deleted.
+- In a spec, a command executed with an actor that is not the one of the execution scope
+  enqueues its job as the scope's actor (`test-user`), not as the actor of the command: the job
+  was then refused `appointment.cancel`. `application.as(holder, ...)` in the spec, as the HTTP
+  boundary does, fixed it; the spec `generate background-job` writes enqueues the same way.
+- The first status list of the answer of `GetClearance` wrote `'cancelled'` as a literal:
+  `language/declared-vocabulary` reported it as a value of `AppointmentStatus`. The answer reads
+  the status as text, documented in the contract.
+
+Proven: 16 unit tests for the clearance (the command, the job interrupted half-way and resumed,
+an appointment cancelled meanwhile, the query, both controllers), and an end-to-end journey of
+two tests on the application with its worker running, on PostgreSQL in process: the time off is
+refused, the clearance cancels both appointments and says `{ done: 2, total: 2 }`, then the
+time off is accepted. The unit suite (1 340 tests) and its coverage floors pass.

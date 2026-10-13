@@ -69,6 +69,8 @@ This is why practices come: a time on a calendar is held once, under rules of av
 | Read | To see an appointment, or the agenda of a practice, as one is allowed to |  |
 | Get | To read one element one may see |  |
 | Browse | To look at the day of a calendar as anyone signed in may see it |  |
+| Clear | To cancel, through a worker, every appointment a calendar holds over a period, before an absence of its practitioner |  |
+| Clearance | One clearing of a calendar, followed while a worker cancels its appointments one by one |  |
 
 ## Aggregates
 
@@ -112,6 +114,7 @@ This is why practices come: a time on a calendar is held once, under rules of av
 - `scheduling:agenda.read`
 - `scheduling:appointment.read`
 - `scheduling:calendar.browse`
+- `scheduling:calendar.clear`
 <!-- /ddd-ts-kit:permissions -->
 
 ## Scheduled jobs
@@ -127,6 +130,7 @@ This is why practices come: a time on a calendar is held once, under rules of av
 <!-- ddd-ts-kit:background-jobs -->
 | Job | Class |
 |---|---|
+| `scheduling.clear-calendar` | `ClearCalendarBackgroundJob` |
 | `scheduling.confirmation-deadline-timeout` | `ConfirmationDeadlineTimeoutBackgroundJob` |
 <!-- /ddd-ts-kit:background-jobs -->
 
@@ -205,6 +209,7 @@ Generated from the code by `ddd-ts-kit docs`; the same facts as data: `ddd-ts-ki
 | `AddTimeOff` | command | `calendar.add-time-off` |
 | `BookAppointment` | command | `appointment.book` |
 | `CancelAppointment` | command | `appointment.cancel` |
+| `ClearCalendar` | command | `calendar.clear` |
 | `CompleteAppointment` | command | `appointment.complete` |
 | `ConfirmAppointment` | command | `appointment.confirm` |
 | `CreateCalendar` | command | `calendar.create` |
@@ -212,6 +217,7 @@ Generated from the code by `ddd-ts-kit docs`; the same facts as data: `ddd-ts-ki
 | `ExpireUnconfirmedAppointments` | command | `appointment.expire` |
 | `GetAppointment` | query | `appointment.read` |
 | `GetCalendarDay` | query | `calendar.browse` |
+| `GetClearance` | query | `calendar.clear` |
 | `JoinWaitlist` | command | `waitlist.join` |
 | `MarkAppointmentNoShow` | command | `appointment.mark-no-show` |
 | `OfferFreedSlot` | command | `waitlist.offer` |
@@ -234,6 +240,8 @@ Generated from the code by `ddd-ts-kit docs`; the same facts as data: `ddd-ts-ki
 | POST | `/appointments/:appointmentId/reschedule` | `rescheduleAppointment` | `AppointmentsRoutes` | `Authenticated` | `RescheduleAppointment` | `appointment.reschedule` | params: `RescheduleAppointmentParams`, body: `RescheduleAppointmentBody` | 201: `RescheduleAppointmentAccepted` | `UNAUTHORIZED`, `FORBIDDEN`, `APPOINTMENT_NOT_FOUND`, `APPOINTMENT_ENDED`, `UNKNOWN_CALENDAR`, `UNKNOWN_APPOINTMENT_TYPE`, `OUTSIDE_AVAILABILITY`, `OFF_GRID`, `BOOKING_TOO_LATE`, `BOOKING_TOO_FAR`, `SLOT_TAKEN`, `PATIENT_LIMIT_REACHED` |
 | POST | `/calendars` | `createCalendar` | `CalendarsRoutes` | `Authenticated` | `CreateCalendar` | `calendar.create` | body: `CreateCalendarBody` | 201: `CreateCalendarAccepted` | `UNAUTHORIZED`, `FORBIDDEN`, `UNKNOWN_PRACTITIONER`, `UNKNOWN_TIME_ZONE` |
 | POST | `/calendars/:calendarId/appointment-types` | `defineAppointmentType` | `CalendarsRoutes` | `Authenticated` | `DefineAppointmentType` | `calendar.define-appointment-type` | params: `DefineAppointmentTypeParams`, body: `DefineAppointmentTypeBody` | 201: `DefineAppointmentTypeAccepted` | `UNAUTHORIZED`, `FORBIDDEN`, `UNKNOWN_CALENDAR`, `INVALID_APPOINTMENT_TYPE` |
+| POST | `/calendars/:calendarId/clearances` | `clearCalendar` | `CalendarsRoutes` | `Authenticated` | `ClearCalendar` | `calendar.clear` | params: `ClearCalendarParams`, body: `ClearCalendarBody` | 202: `ClearCalendarAccepted` | `UNAUTHORIZED`, `FORBIDDEN`, `UNKNOWN_CALENDAR`, `INVALID_TIME_OFF` |
+| GET | `/calendars/:calendarId/clearances/:clearanceId` | `getClearance` | `CalendarsRoutes` | `Authenticated` | `GetClearance` | `calendar.clear` | params: `GetClearanceParams` | 200: `GetClearanceAnswer` | `UNAUTHORIZED`, `FORBIDDEN`, `UNKNOWN_CLEARANCE` |
 | GET | `/calendars/:calendarId/days/:day` | `getCalendarDay` | `CalendarsRoutes` | `Authenticated` | `GetCalendarDay` | `calendar.browse` | params: `GetCalendarDayParams` | 200: `GetCalendarDayAnswer` | `UNAUTHORIZED`, `FORBIDDEN`, `UNKNOWN_CALENDAR`, `INVALID_DAY` |
 | POST | `/calendars/:calendarId/exceptions` | `addException` | `CalendarsRoutes` | `Authenticated` | `AddException` | `calendar.add-exception` | params: `AddExceptionParams`, body: `AddExceptionBody` | 201: `AddExceptionAccepted` | `UNAUTHORIZED`, `FORBIDDEN`, `UNKNOWN_CALENDAR`, `INVALID_DAY`, `INVALID_RANGE` |
 | PUT | `/calendars/:calendarId/opening-hours` | `setOpeningHours` | `CalendarsRoutes` | `Authenticated` | `SetOpeningHours` | `calendar.set-opening-hours` | params: `SetOpeningHoursParams`, body: `SetOpeningHoursBody` | 200: `SetOpeningHoursAccepted` | `UNAUTHORIZED`, `FORBIDDEN`, `UNKNOWN_CALENDAR`, `INVALID_RANGE` |
@@ -304,6 +312,7 @@ Generated from the code by `ddd-ts-kit docs`; the same facts as data: `ddd-ts-ki
 | `CalendarError` | `invalidTimeOff` | `INVALID_TIME_OFF` | none |
 | `CalendarError` | `timeOffOverAppointments` | `TIME_OFF_OVER_APPOINTMENTS` | `held` |
 | `CalendarError` | `unknownAppointmentType` | `UNKNOWN_APPOINTMENT_TYPE` | none |
+| `CalendarError` | `unknownClearance` | `UNKNOWN_CLEARANCE` | none |
 | `CalendarError` | `unknown` | `UNKNOWN_CALENDAR` | none |
 | `CalendarError` | `unknownPractitioner` | `UNKNOWN_PRACTITIONER` | none |
 | `CalendarError` | `unknownTimeZone` | `UNKNOWN_TIME_ZONE` | none |

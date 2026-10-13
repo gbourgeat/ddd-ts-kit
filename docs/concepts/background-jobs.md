@@ -124,6 +124,20 @@ queue is idle.
   grace period (30 s), then aborts them: an aborted attempt gives its job back without counting
   it, for the next worker.
 
+## In the example
+
+A practitioner going away cannot add a time off over booked appointments
+(`TIME_OFF_OVER_APPOINTMENTS`). `POST /calendars/:calendarId/clearances` sends `ClearCalendar`:
+its handler names the appointments the time off would cover and enqueues
+`ClearCalendarBackgroundJob` in the same unit of work, answering `202` with the identifier of
+the clearance. The job cancels them one by one, each a `CancelAppointment` of its own sent as
+the person who asked, with the reason the patients read; it saves a checkpoint and reports its
+progress after each one, reads its signal between two, and takes an appointment cancelled
+meanwhile (`APPOINTMENT_ENDED`) as done. `GET /calendars/:calendarId/clearances/:clearanceId`
+answers its status and `{ done, total }` from `JobQueue.find`. Its specs interrupt an attempt
+half-way and watch the next one resume after the last appointment handled; an end-to-end
+journey runs it on the worker of the application, on PostgreSQL.
+
 ## Worker mode
 
 Every process that starts the application with its jobs on (`jobs: { start: true }`) runs the

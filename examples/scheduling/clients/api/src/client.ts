@@ -83,6 +83,18 @@ export interface Client {
    */
   defineAppointmentType(input: operations.DefineAppointmentTypeInput, options?: CallOptions): Promise<operations.DefineAppointmentTypeResult>;
   /**
+   * Clear calendar: `POST /calendars/{calendarId}/clearances`.
+   *
+   * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), UNKNOWN_CALENDAR (404), INVALID_TIME_OFF (422), VALIDATION_FAILED (422).
+   */
+  clearCalendar(input: operations.ClearCalendarInput, options?: CallOptions): Promise<operations.ClearCalendarResult>;
+  /**
+   * Get clearance: `GET /calendars/{calendarId}/clearances/{clearanceId}`.
+   *
+   * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), UNKNOWN_CLEARANCE (404), VALIDATION_FAILED (422).
+   */
+  getClearance(input: operations.GetClearanceInput, options?: CallOptions): Promise<operations.GetClearanceResult>;
+  /**
    * Get calendar day: `GET /calendars/{calendarId}/days/{day}`.
    *
    * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), UNKNOWN_CALENDAR (404), INVALID_DAY (422), VALIDATION_FAILED (422).
@@ -183,6 +195,8 @@ export function createClient(options: ClientOptions<SchemeName>): Client {
     searchAuditEntries: (input, call) => operations.searchAuditEntries(connection, input, call),
     createCalendar: (input, call) => operations.createCalendar(connection, input, call),
     defineAppointmentType: (input, call) => operations.defineAppointmentType(connection, input, call),
+    clearCalendar: (input, call) => operations.clearCalendar(connection, input, call),
+    getClearance: (input, call) => operations.getClearance(connection, input, call),
     getCalendarDay: (input, call) => operations.getCalendarDay(connection, input, call),
     addException: (input, call) => operations.addException(connection, input, call),
     setOpeningHours: (input, call) => operations.setOpeningHours(connection, input, call),

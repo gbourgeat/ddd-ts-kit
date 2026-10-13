@@ -1,10 +1,12 @@
 import { injected } from '@ddd-ts-kit/kernel/declarations';
 import { PersonDirectoryContract } from '@/contexts/identity/published-language/index';
+import { ClearCalendarBackgroundJob } from '@/contexts/scheduling/application/background/clear-calendar.background-job';
 import { ConfirmationDeadlineTimeoutBackgroundJob } from '@/contexts/scheduling/application/background/confirmation-deadline-timeout.background-job';
 import { AddExceptionHandler } from '@/contexts/scheduling/application/commands/add-exception/add-exception.handler';
 import { AddTimeOffHandler } from '@/contexts/scheduling/application/commands/add-time-off/add-time-off.handler';
 import { BookAppointmentHandler } from '@/contexts/scheduling/application/commands/book-appointment/book-appointment.handler';
 import { CancelAppointmentHandler } from '@/contexts/scheduling/application/commands/cancel-appointment/cancel-appointment.handler';
+import { ClearCalendarHandler } from '@/contexts/scheduling/application/commands/clear-calendar/clear-calendar.handler';
 import { CompleteAppointmentHandler } from '@/contexts/scheduling/application/commands/complete-appointment/complete-appointment.handler';
 import { ConfirmAppointmentHandler } from '@/contexts/scheduling/application/commands/confirm-appointment/confirm-appointment.handler';
 import { CreateCalendarHandler } from '@/contexts/scheduling/application/commands/create-calendar/create-calendar.handler';
@@ -40,6 +42,7 @@ import { AgendaProjection } from '@/contexts/scheduling/application/projections/
 import { PractitionersProjection } from '@/contexts/scheduling/application/projections/practitioners.projection';
 import { GetAppointmentHandler } from '@/contexts/scheduling/application/queries/get-appointment/get-appointment.handler';
 import { GetCalendarDayHandler } from '@/contexts/scheduling/application/queries/get-calendar-day/get-calendar-day.handler';
+import { GetClearanceHandler } from '@/contexts/scheduling/application/queries/get-clearance/get-clearance.handler';
 import { SearchAppointmentsHandler } from '@/contexts/scheduling/application/queries/search-appointments/search-appointments.handler';
 import { SearchPracticeAgendaHandler } from '@/contexts/scheduling/application/queries/search-practice-agenda/search-practice-agenda.handler';
 import { ExpireUnconfirmedAppointmentsJob } from '@/contexts/scheduling/application/scheduling/expire-unconfirmed-appointments.job';
@@ -65,10 +68,12 @@ import { RescheduleAppointmentController } from '@/contexts/scheduling/presentat
 import { SearchAppointmentsController } from '@/contexts/scheduling/presentation/http/appointments/search-appointments/search-appointments.controller';
 import { AddExceptionController } from '@/contexts/scheduling/presentation/http/calendars/add-exception/add-exception.controller';
 import { AddTimeOffController } from '@/contexts/scheduling/presentation/http/calendars/add-time-off/add-time-off.controller';
+import { ClearCalendarController } from '@/contexts/scheduling/presentation/http/calendars/clear-calendar/clear-calendar.controller';
 import { CreateCalendarController } from '@/contexts/scheduling/presentation/http/calendars/create-calendar/create-calendar.controller';
 import { DefineAppointmentTypeController } from '@/contexts/scheduling/presentation/http/calendars/define-appointment-type/define-appointment-type.controller';
 import { GetCalendarDayController } from '@/contexts/scheduling/presentation/http/calendars/get-calendar-day/get-calendar-day.controller';
 import { GetCalendarDaySerializer } from '@/contexts/scheduling/presentation/http/calendars/get-calendar-day/get-calendar-day.serializer';
+import { GetClearanceController } from '@/contexts/scheduling/presentation/http/calendars/get-clearance/get-clearance.controller';
 import { JoinWaitlistController } from '@/contexts/scheduling/presentation/http/calendars/join-waitlist/join-waitlist.controller';
 import { SetOpeningHoursController } from '@/contexts/scheduling/presentation/http/calendars/set-opening-hours/set-opening-hours.controller';
 import { SearchPracticeAgendaController } from '@/contexts/scheduling/presentation/http/practices/search-practice-agenda/search-practice-agenda.controller';
@@ -81,6 +86,7 @@ import {
   ExecutionScope,
   IdGenerator,
   IntegrationEventPublisher,
+  JobQueue,
   ProcessRunner,
   QueryBus,
 } from '@ddd-ts-kit/kernel';
@@ -88,6 +94,7 @@ import { KnexContext } from '@ddd-ts-kit/knex';
 
 export * from '@/contexts/scheduling/application/authorization/patient-cancels-until-notice.policy';
 export * from '@/contexts/scheduling/application/authorization/patient-reschedules-until-notice.policy';
+export * from '@/contexts/scheduling/application/background/clear-calendar.background-job';
 export * from '@/contexts/scheduling/application/background/confirmation-deadline-timeout.background-job';
 export * from '@/contexts/scheduling/application/commands/add-exception/add-exception.command';
 export * from '@/contexts/scheduling/application/commands/add-exception/add-exception.handler';
@@ -97,6 +104,8 @@ export * from '@/contexts/scheduling/application/commands/book-appointment/book-
 export * from '@/contexts/scheduling/application/commands/book-appointment/book-appointment.handler';
 export * from '@/contexts/scheduling/application/commands/cancel-appointment/cancel-appointment.command';
 export * from '@/contexts/scheduling/application/commands/cancel-appointment/cancel-appointment.handler';
+export * from '@/contexts/scheduling/application/commands/clear-calendar/clear-calendar.command';
+export * from '@/contexts/scheduling/application/commands/clear-calendar/clear-calendar.handler';
 export * from '@/contexts/scheduling/application/commands/complete-appointment/complete-appointment.command';
 export * from '@/contexts/scheduling/application/commands/complete-appointment/complete-appointment.handler';
 export * from '@/contexts/scheduling/application/commands/confirm-appointment/confirm-appointment.command';
@@ -140,6 +149,8 @@ export * from '@/contexts/scheduling/application/queries/get-appointment/get-app
 export * from '@/contexts/scheduling/application/queries/get-appointment/get-appointment.query';
 export * from '@/contexts/scheduling/application/queries/get-calendar-day/get-calendar-day.handler';
 export * from '@/contexts/scheduling/application/queries/get-calendar-day/get-calendar-day.query';
+export * from '@/contexts/scheduling/application/queries/get-clearance/get-clearance.handler';
+export * from '@/contexts/scheduling/application/queries/get-clearance/get-clearance.query';
 export * from '@/contexts/scheduling/application/queries/search-appointments/search-appointments.handler';
 export * from '@/contexts/scheduling/application/queries/search-appointments/search-appointments.query';
 export * from '@/contexts/scheduling/application/queries/search-practice-agenda/search-practice-agenda.handler';
@@ -164,20 +175,24 @@ export * from '@/contexts/scheduling/presentation/http/appointments/reschedule-a
 export * from '@/contexts/scheduling/presentation/http/appointments/search-appointments/search-appointments.controller';
 export * from '@/contexts/scheduling/presentation/http/calendars/add-exception/add-exception.controller';
 export * from '@/contexts/scheduling/presentation/http/calendars/add-time-off/add-time-off.controller';
+export * from '@/contexts/scheduling/presentation/http/calendars/clear-calendar/clear-calendar.controller';
 export * from '@/contexts/scheduling/presentation/http/calendars/create-calendar/create-calendar.controller';
 export * from '@/contexts/scheduling/presentation/http/calendars/define-appointment-type/define-appointment-type.controller';
 export * from '@/contexts/scheduling/presentation/http/calendars/get-calendar-day/get-calendar-day.controller';
 export * from '@/contexts/scheduling/presentation/http/calendars/get-calendar-day/get-calendar-day.serializer';
+export * from '@/contexts/scheduling/presentation/http/calendars/get-clearance/get-clearance.controller';
 export * from '@/contexts/scheduling/presentation/http/calendars/join-waitlist/join-waitlist.controller';
 export * from '@/contexts/scheduling/presentation/http/calendars/set-opening-hours/set-opening-hours.controller';
 export * from '@/contexts/scheduling/presentation/http/practices/search-practice-agenda/search-practice-agenda.controller';
 export * from '@/contexts/scheduling/presentation/http/shared/agenda-entry.serializer';
 
+injected(ClearCalendarBackgroundJob, [CommandBus]);
 injected(ConfirmationDeadlineTimeoutBackgroundJob, [ProcessRunner]);
 injected(AddExceptionHandler, [CalendarRepository, Clock]);
 injected(AddTimeOffHandler, [CalendarRepository, AppointmentRepository, Clock]);
 injected(BookAppointmentHandler, [AppointmentRepository, CalendarRepository, IdGenerator, Clock]);
 injected(CancelAppointmentHandler, [AppointmentRepository, Access, Clock]);
+injected(ClearCalendarHandler, [CalendarRepository, AppointmentRepository, JobQueue]);
 injected(CompleteAppointmentHandler, [AppointmentRepository, Clock]);
 injected(ConfirmAppointmentHandler, [AppointmentRepository, Clock]);
 injected(CreateCalendarHandler, [CalendarRepository, PractitionerDirectory, IdGenerator, Clock]);
@@ -209,6 +224,7 @@ injected(AgendaProjection, [Agenda]);
 injected(PractitionersProjection, [PractitionerDirectory]);
 injected(GetAppointmentHandler, [Agenda, PersonDirectoryGateway, Access]);
 injected(GetCalendarDayHandler, [CalendarRepository, Agenda, Access]);
+injected(GetClearanceHandler, [JobQueue]);
 injected(SearchAppointmentsHandler, [Agenda, Access]);
 injected(SearchPracticeAgendaHandler, [Agenda, Access]);
 injected(ExpireUnconfirmedAppointmentsJob, [CommandBus]);
@@ -230,9 +246,11 @@ injected(RescheduleAppointmentController, [CommandBus]);
 injected(SearchAppointmentsController, [QueryBus, AgendaEntrySerializer]);
 injected(AddExceptionController, [CommandBus]);
 injected(AddTimeOffController, [CommandBus]);
+injected(ClearCalendarController, [CommandBus]);
 injected(CreateCalendarController, [CommandBus]);
 injected(DefineAppointmentTypeController, [CommandBus]);
 injected(GetCalendarDayController, [QueryBus, GetCalendarDaySerializer]);
+injected(GetClearanceController, [QueryBus]);
 injected(JoinWaitlistController, [CommandBus]);
 injected(SetOpeningHoursController, [CommandBus]);
 injected(SearchPracticeAgendaController, [QueryBus, AgendaEntrySerializer]);

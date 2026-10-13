@@ -34,6 +34,8 @@ A credential is given per security scheme of the contract, as a value or as a fu
 | `searchAuditEntries` | `GET /audit/entries` | UNAUTHORIZED, FORBIDDEN, VALIDATION_FAILED |
 | `createCalendar` | `POST /calendars` | UNAUTHORIZED, FORBIDDEN, UNKNOWN_PRACTITIONER, UNKNOWN_TIME_ZONE, VALIDATION_FAILED |
 | `defineAppointmentType` | `POST /calendars/{calendarId}/appointment-types` | UNAUTHORIZED, FORBIDDEN, UNKNOWN_CALENDAR, INVALID_APPOINTMENT_TYPE, VALIDATION_FAILED |
+| `clearCalendar` | `POST /calendars/{calendarId}/clearances` | UNAUTHORIZED, FORBIDDEN, UNKNOWN_CALENDAR, INVALID_TIME_OFF, VALIDATION_FAILED |
+| `getClearance` | `GET /calendars/{calendarId}/clearances/{clearanceId}` | UNAUTHORIZED, FORBIDDEN, UNKNOWN_CLEARANCE, VALIDATION_FAILED |
 | `getCalendarDay` | `GET /calendars/{calendarId}/days/{day}` | UNAUTHORIZED, FORBIDDEN, UNKNOWN_CALENDAR, INVALID_DAY, VALIDATION_FAILED |
 | `addException` | `POST /calendars/{calendarId}/exceptions` | UNAUTHORIZED, FORBIDDEN, UNKNOWN_CALENDAR, INVALID_DAY, INVALID_RANGE, VALIDATION_FAILED |
 | `setOpeningHours` | `PUT /calendars/{calendarId}/opening-hours` | UNAUTHORIZED, FORBIDDEN, UNKNOWN_CALENDAR, INVALID_RANGE, VALIDATION_FAILED |
@@ -86,6 +88,7 @@ A credential is given per security scheme of the contract, as a value or as a fu
 - `UNAUTHORIZED`
 - `UNKNOWN_APPOINTMENT_TYPE`
 - `UNKNOWN_CALENDAR`
+- `UNKNOWN_CLEARANCE`
 - `UNKNOWN_PRACTITIONER`
 - `UNKNOWN_ROLE`
 - `UNKNOWN_TIME_ZONE`

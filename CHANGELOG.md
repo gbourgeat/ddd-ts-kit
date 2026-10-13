@@ -6,6 +6,15 @@ list the pull requests behind it.
 
 ## Unreleased
 
+**A long background job in the example.** A practitioner going away clears a period of their
+calendar: `POST /calendars/:calendarId/clearances` (202, the identifier of the clearance) enqueues
+`ClearCalendarBackgroundJob` in the unit of work of the command, which cancels the appointments
+of the period one by one as the person who asked, with a checkpoint and its progress after each,
+and `GET /calendars/:calendarId/clearances/:clearanceId` answers its status and `{ done, total }`;
+then the time off is accepted. Both routes are new, with the permission `scheduling:calendar.clear`
+and the error code `UNKNOWN_CLEARANCE` (404); no existing route of the contract changes. The
+end-to-end support of the example can start the worker (`startApplication({ jobs: true })`).
+
 **Generators for background work.** `ddd-ts-kit generate background-job <context> <Name>
 --command <UseCase>` writes a background job that sends its command as the actor that enqueued
 it (`execution.actor`, new on `BackgroundJobExecution`), registered by `@Background()` or on the

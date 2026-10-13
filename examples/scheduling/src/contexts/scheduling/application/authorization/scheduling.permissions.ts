@@ -20,5 +20,6 @@ export const schedulingPermissions = definePermissions('scheduling', {
   'agenda.read': { description: 'Search practice agenda' },
   'appointment.read': { description: 'Get appointment' },
   'calendar.browse': { description: 'Get calendar day' },
+  'calendar.clear': { description: 'Clear calendar' },
   // /ddd-ts-kit:permissions
 });
