@@ -9,6 +9,7 @@ import {
 } from '@/contexts/analytics/application/ports/occupancy-reader.port';
 import { OccupancyMeasureService } from '@/contexts/analytics/domain/services/occupancy-measure.service';
 import { ANALYTICS_SCHEMA } from '@/contexts/analytics/infrastructure/persistence/analytics.schema';
+import { OutcomeState } from '@/contexts/analytics/domain/vocabularies/outcome-state.vocabulary';
 
 /** What a line is grouped by, and so what a filter or a scope may name: each is a column of the outcomes. */
 const GROUPED = { practiceId: 'practice_id', calendarId: 'calendar_id', day: 'day' };
@@ -18,7 +19,7 @@ const MEASURED = {
   ...GROUPED,
   heldMinutes: 'held_minutes',
   appointmentsHeld: 'appointments_held',
-  completed: 'completed',
+  completed: OutcomeState.Completed,
   noShows: 'no_shows',
   cancelledByPatient: 'cancelled_by_patient',
   cancelledByPractice: 'cancelled_by_practice',
@@ -97,10 +98,10 @@ function measured(knex: Knex, plan: CriteriaPlan): Knex.QueryBuilder {
       holding,
     ),
     knex.raw(`(count(*) filter (where state in (${among})))::integer as appointments_held`, holding),
-    counted(knex, 'completed', 'completed'),
-    counted(knex, 'no-show', 'no_shows'),
-    counted(knex, 'cancelled-by-patient', 'cancelled_by_patient'),
-    counted(knex, 'cancelled-by-practice', 'cancelled_by_practice'),
+    counted(knex, OutcomeState.Completed, OutcomeState.Completed),
+    counted(knex, OutcomeState.NoShow, 'no_shows'),
+    counted(knex, OutcomeState.CancelledByPatient, 'cancelled_by_patient'),
+    counted(knex, OutcomeState.CancelledByPractice, 'cancelled_by_practice'),
     knex.raw('(count(*) over ())::integer as lines'),
   );
 }

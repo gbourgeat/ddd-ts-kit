@@ -71,6 +71,7 @@ the domain expert, not a placeholder name.
 | the generator | refuses a name with an undefined word, a technical word, or an event fact that does not read as past tense |
 | `--term "<Term>=<meaning>"` | adds the glossary rows in the same command that needs them, repeatable |
 | `events/name-format` | events are named `<context>.<aggregate>.<fact>` |
+| `language/declared-vocabulary` | a value of a closed vocabulary (a status, a role, a permission id) is read through its declaration, never written again as a string |
 | `tree/context-doc` | the `CONTEXT.md` and its sections exist |
 
 The exact lists and conditions are in [ARCHITECTURE.md](../ARCHITECTURE.md), section 3, and
@@ -100,6 +101,70 @@ The language reaches further than class names:
 - **Builders** speak it too: `anAppointment().cancelled()`, not `withStatus('CANCELLED')`
   ([Testing strategy](testing-strategy.md)).
 - **Permissions** are named in it: `appointment.cancel`, not `admin.write`.
+- **Closed vocabularies** are declared once (see below): `AppointmentStatus.NoShow`, never
+  `'no-show'` written in a handler.
+
+## Closed vocabularies
+
+A status, a kind, a role, a channel: a word of the language whose values are a closed list. Written
+as strings, each value is spelled again wherever it is compared, granted or stored, and a typo
+compiles. The kit declares each list once, as an object `as const` and the union type of the same
+name:
+
+```ts
+// contexts/scheduling/domain/vocabularies/appointment-status.vocabulary.ts
+export const AppointmentStatus = {
+  Requested: 'requested',
+  Booked: 'booked',
+  NoShow: 'no-show',
+} as const;
+
+export type AppointmentStatus = (typeof AppointmentStatus)[keyof typeof AppointmentStatus];
+```
+
+Code reads `AppointmentStatus.NoShow`, completed by the editor; a parameter typed
+`AppointmentStatus` accepts nothing else; the value stored and sent stays the string, so a
+database column, a payload and an OpenAPI enum do not change. `npx ddd-ts-kit generate vocabulary
+scheduling AppointmentStatus --value requested --value booked --value no-show` writes the file
+(`domain/vocabularies/`), and run again adds the values it does not hold yet. The roles a
+credential carries are the vocabulary `Role` of the platform (`<platformDir>/auth/role.ts`),
+written by `init` and completed by `generate route-group --role <role>`; a permission is read
+from the permission set of its context (`billingPermissions['invoice.issue']`), never by its id.
+
+`language/declared-vocabulary` holds it, in the checker and in ESLint: a string literal whose
+value a vocabulary declares is reported with the key to write instead, a quoted key included
+(`[AppointmentStatus.NoShow]: 'No show'`). A vocabulary of a context is judged in that context
+only, since each context speaks its own language; the vocabularies of the platform in the
+platform and in the route groups, where a guard names a role; a permission id and a vocabulary of
+the shared kernel everywhere. Tests, published languages and the relationship schema of the access
+model are not judged: they name their values on purpose. A value two vocabularies share is
+reported with both. A vocabulary is read when each entry is a key and a string literal, comments,
+either quote and `as const satisfies ..` allowed; the rule holds under `"stack.literals":
+"named"`, which `init` writes, and stays silent in a project whose config does not say, as 0.5
+wrote it ([Configuration](../CONFIG.md#stack)).
+
+A list of two common words is not always worth a vocabulary. In the example, who cancelled an
+appointment is `'patient' | 'practice'`, and both words are also the names of a type of resource
+and of a relation of the access model, and a field of a read model: declared, the vocabulary would
+report each of those homonyms. It stays a union of literal types, which the compiler holds.
+
+The names of the messages follow the same rule where the code can read them. A domain event
+declares its name once, `static readonly eventName = 'scheduling.appointment.booked'`, and every
+reaction reads it, `{ name: AppointmentBooked.eventName }`; an integration event handler reads the
+type it handles from the contract of its upstream, `appointmentBookedV1.type`. A job name and a
+consumer name are written in the decorator of their class, which cannot read a static of that
+class, and once more in its `systemActor(..)`: two literals of one file, held equal by
+`scheduling/job-name` for a job. The relations and resource types of the access model are
+declared by its relationship schema, in the platform, and written as strings where a context
+relates or guards something. The example lists every such category with its count
+([tooling report](../../examples/scheduling/docs/tooling-report.md)).
+
+Why not a TypeScript `enum`: it is not erasable syntax. Measured with each compiler a generated
+project runs, on Node 24.21: Node's own type stripping refuses it
+(`ERR_UNSUPPORTED_TYPESCRIPT_SYNTAX`), `tsc` refuses it under `erasableSyntaxOnly` (TS1294), and
+only the transpilers run it: `tsc` without that option, tsx (esbuild) for `npm run dev`, Oxc for
+Vitest, SWC for Jest. The object `as const` runs everywhere, adds no
+runtime of its own, and gives the same completion and the same narrowing.
 
 ## The same word in two contexts
 

@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import { unwrap } from '@ddd-ts-kit/kernel';
 import { Cancellation } from '@/contexts/scheduling/domain/value-objects/cancellation.vo';
 import { AppointmentCancelled } from '@/contexts/scheduling/domain/events/appointment-cancelled.event';
 import { anAppointment } from '@/contexts/scheduling/test/builders/appointment.builder';
@@ -10,7 +9,7 @@ describe('AppointmentCancelled', () => {
   it('is named after the context, the aggregate and the fact', () => {
     const event = new AppointmentCancelled('appointment-1', new Date('2026-01-01T00:00:00.000Z'), {
       booking: held.booking,
-      cancellation: unwrap(Cancellation.create('practice', 'The practitioner is away.')),
+      cancellation: Cancellation.create('practice', 'The practitioner is away.'),
     });
 
     expect(event.name).toBe('scheduling.appointment.cancelled');
@@ -20,7 +19,7 @@ describe('AppointmentCancelled', () => {
   it('carries what a reaction needs to know', () => {
     const event = new AppointmentCancelled('appointment-1', new Date('2026-01-01T00:00:00.000Z'), {
       booking: held.booking,
-      cancellation: unwrap(Cancellation.create('practice', 'The practitioner is away.')),
+      cancellation: Cancellation.create('practice', 'The practitioner is away.'),
     });
 
     expect(event).toMatchObject({ ended: { booking: held.booking } });

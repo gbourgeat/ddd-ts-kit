@@ -1,5 +1,5 @@
 import { Access } from '@ddd-ts-kit/auth';
-import { type Clock, unwrap } from '@ddd-ts-kit/kernel';
+import { type Clock } from '@ddd-ts-kit/kernel';
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
 import { AppointmentError } from '@/contexts/scheduling/domain/errors/appointment.error';
 import type { AppointmentRepository } from '@/contexts/scheduling/domain/repositories/appointment.repository';
@@ -25,7 +25,7 @@ export class CancelAppointmentHandler implements CommandHandler<CancelAppointmen
 
     await this.access.authorize(actor, schedulingPermissions['appointment.cancel'], target);
 
-    const cancellation = unwrap(Cancellation.create(actor.id === target.patientId ? 'patient' : 'practice', reason));
+    const cancellation = Cancellation.create(actor.id === target.patientId ? 'patient' : 'practice', reason);
 
     target.cancel(cancellation, this.clock.now());
 

@@ -1,11 +1,12 @@
 import path from 'node:path';
 import { DECLARED_ROLES, declaredRoleOf, type DeclaredRole } from '../../declared/index.js';
+import { argumentsOf } from '../declarations/arguments-of.js';
 import { classesOf } from '../declarations/classes-of.js';
 import { DECLARATIONS_ENTRY } from '../declarations/declarations-entry.js';
 import type { DeclaredClass } from '../declarations/declared-class.js';
 import { declaredEventHandlers } from '../declarations/declared-event-handlers.js';
 import type { Decoration } from '../declarations/decoration.js';
-import { optionOf } from '../declarations/option-of.js';
+import { optionOf, type OptionValue } from '../declarations/option-of.js';
 import { nameOfEventClass } from '../events/name-of-event-class.js';
 import type { Finding } from '../model/finding.js';
 import type { Project } from '../model/project.js';
@@ -36,7 +37,7 @@ interface Decorated {
 export const declarationsRoleDeclared: Rule = {
   id: 'declarations/role-declared',
   description:
-    'In the declared style, a role file exports a class carrying the decorator of its role, with its names written as string literals, and domain/ declares nothing.',
+    'In the declared style, a role file exports a class carrying the decorator of its role, with its names written as string literals (the name of a domain event handler may read the name its event class declares, `{ name: InvoiceIssued.eventName }`), and domain/ declares nothing.',
   scope: 'file',
   run(project) {
     if (!isDeclaredStyle(project)) {
@@ -142,7 +143,7 @@ function unwrittenNames(file: SourceFile): Finding[] {
     const key = WRITTEN_NAMES[decoration.name];
     const value = key === undefined ? undefined : optionOf(file.scan, decoration, key);
 
-    if (key === undefined || (value?.literal !== undefined && value.literal !== '')) {
+    if (key === undefined || isWritten(value) || readsEventName(file, decoration, value)) {
       return [];
     }
 
@@ -150,10 +151,28 @@ function unwrittenNames(file: SourceFile): Finding[] {
       {
         line: value?.line ?? decoration.line,
         message: `The ${key} of @${decoration.name} on ${declared.name} is ${value?.literal === '' ? 'empty' : 'not a string literal'}.`,
-        fix: `Write it in place as a string literal, { ${key}: '${context}.<name>' }: a name that is written survives the renaming of the class and is read without running the code.`,
+        fix: decoration.name === 'DomainEventHandler' ? READ_EVENT_NAME : writeInPlace(key, context),
       },
     ];
   });
+}
+
+const READ_EVENT_NAME =
+  'Read the name the event class declares, { name: <Event>.eventName }, or write it in place as a string literal: a handler is attached under the name its event carries.';
+
+function writeInPlace(key: string, context: string): string {
+  return `Write it in place as a string literal, { ${key}: '${context}.<name>' }: a name that is written survives the renaming of the class and is read without running the code.`;
+}
+
+function isWritten(value: OptionValue | undefined): boolean {
+  return value?.literal !== undefined && value.literal !== '';
+}
+
+/** `@DomainEventHandler(InvoiceIssued, { name: InvoiceIssued.eventName })`: the name the event class declares, read where it is written. */
+function readsEventName(file: SourceFile, decoration: Decoration, value: OptionValue | undefined): boolean {
+  const event = argumentsOf(file.scan, decoration)[0]?.code.trim();
+
+  return decoration.name === 'DomainEventHandler' && event !== undefined && value?.reference === `${event}.eventName`;
 }
 
 /** A domain event handler is attached under the name it writes: it has to be the name the event class carries. */

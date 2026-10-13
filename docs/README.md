@@ -46,6 +46,7 @@ Ordered as a reading path in [concepts/README.md](concepts/README.md).
 | [Event versioning](concepts/event-versioning.md) | evolving a published event |
 | [Authentication and authorization](concepts/authentication-and-authorization.md) | RBAC, ABAC, ReBAC compared, with a decision table |
 | [Actor and execution scope](concepts/actor-and-execution-scope.md) | the explicit actor, and what every unit of work carries |
+| [Multitenancy](concepts/multitenancy.md) | the tenant from the edge to the storage: isolation strategies, propagation, elevation of platform staff, the proof |
 | [Audit trail](concepts/audit-trail.md) | tamper-evident history recorded around the use cases |
 | [Observability](concepts/observability.md) | tracing, logs, metrics, error reporting, the correlation id |
 | [Resilience](concepts/resilience.md) | retry, timeout, circuit breaker, bulkhead, cache and their failure modes |
@@ -87,6 +88,7 @@ limits, and a recommendation by situation.
 | [Parallel work](guides/parallel-work.md) | several people or agents at once: what is safe, what is sequenced, a concrete plan |
 | [Commit discipline](guides/commit-discipline.md) | commit and pull request size, generated files, what hooks and CI enforce |
 | [When to extract microservices](guides/when-to-extract-microservices.md) | the signals, the costs, a readiness checklist, the steps, when to merge back |
+| [Choosing access control](guides/choosing-access-control.md) | five questions that pick roles, attributes or relationships (Zanzibar), worked presets for each, the combined model of the example, scopes and refusals at the edge |
 | [Token economy](guides/token-economy.md) | spending fewer tokens with coding agents, and complementary tools |
 
 ## Proposals

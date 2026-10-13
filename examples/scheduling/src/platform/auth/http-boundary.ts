@@ -3,6 +3,7 @@ import {
   reportHttpErrors,
   type ErrorContext,
   type ErrorMapper,
+  type GuardRefusal,
   type RouteAround,
   type UploadReader,
 } from '@ddd-ts-kit/http';
@@ -24,6 +25,8 @@ export interface HttpBoundary {
   readonly around: RouteAround;
   /** Reads the file of a controller that declares an upload, as it streams: its size and media types are checked on the way. */
   readonly uploads: UploadReader;
+  /** A request a guard refused at the edge, written to the audit trail as a denied decision. */
+  readonly onGuardRefusal: (refusal: GuardRefusal) => Promise<void>;
 }
 
 interface Edge {
@@ -32,6 +35,8 @@ interface Edge {
   readonly errorMapper: ErrorMapper;
   readonly clock: Clock;
   readonly logger: Logger;
+  /** Where a refusal at the edge is recorded: the audit trail. */
+  readonly refusals: (refusal: GuardRefusal) => Promise<void>;
   /** Where a request answered 5xx is reported, unless a bus already reported its failure. */
   readonly errors: ErrorReporter;
 }
@@ -43,6 +48,7 @@ export function httpBoundary({
   errorMapper,
   clock,
   logger,
+  refusals,
   errors,
 }: Edge): HttpBoundary {
   const report = reportHttpErrors(errors);
@@ -54,6 +60,7 @@ export function httpBoundary({
     clock,
     around: tracedRoutes(),
     uploads: multipartUploads(),
+    onGuardRefusal: refusals,
     // The message of the error may quote data: only the code and the route are logged.
     onError: (error, context) => {
       if (context.problem.status < 500) {

@@ -1,4 +1,3 @@
-import { unwrap } from '@ddd-ts-kit/kernel';
 import { Notification } from '@/contexts/notification/domain/aggregates/notification.aggregate';
 import { NotificationKind } from '@/contexts/notification/domain/value-objects/notification-kind.vo';
 import type {
@@ -11,7 +10,7 @@ export const NotificationMapper = {
     const loaded = Notification.rehydrate(row.id, {
       registeredAt: row.registered_at,
       recipientId: row.recipient_id,
-      kind: unwrap(NotificationKind.create(row.kind)),
+      kind: NotificationKind.create(row.kind),
       appointmentId: row.appointment_id,
       startsAt: row.starts_at,
       cause: row.cause,

@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
   OccupancyMeasureService,
   type MeasuredOutcome,
-  type OutcomeState,
 } from '@/contexts/analytics/domain/services/occupancy-measure.service';
+import type { OutcomeState } from '@/contexts/analytics/domain/vocabularies/outcome-state.vocabulary';
 
 const measure = new OccupancyMeasureService();
 

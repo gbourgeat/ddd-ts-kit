@@ -2,8 +2,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { AST_NODE_TYPES, type TSESLint, type TSESTree } from '@typescript-eslint/utils';
 import { resolveImport } from '../../project/resolve-import.js';
-import { isRecord } from '../../project/is-record.js';
 import type { LintedFile } from '../../project/linted-file.js';
+import { parseSource } from '../parse/parse-source.js';
 import { topLevelClasses } from './top-level-classes.js';
 
 type Parser = TSESLint.FlatConfig.Parser;
@@ -25,8 +25,6 @@ interface ReadSource {
   readonly modifiedAt: number;
   readonly program: TSESTree.Program | undefined;
 }
-
-const PARSER_OPTIONS = { sourceType: 'module', ecmaVersion: 'latest', range: true, loc: true };
 
 const sources = new Map<string, ReadSource>();
 
@@ -108,18 +106,8 @@ function readProgram(absolute: string, parser: Parser): TSESTree.Program | undef
 
 function parseFile(absolute: string, parser: Parser): TSESTree.Program | undefined {
   try {
-    const text = fs.readFileSync(absolute, 'utf8');
-    const options = { ...PARSER_OPTIONS, filePath: absolute };
-
-    const parsed: unknown =
-      'parseForESLint' in parser ? parser.parseForESLint(text, options).ast : parser.parse(text, options);
-
-    return isProgram(parsed) ? parsed : undefined;
+    return parseSource(fs.readFileSync(absolute, 'utf8'), absolute, parser);
   } catch {
     return undefined;
   }
-}
-
-function isProgram(value: unknown): value is TSESTree.Program {
-  return isRecord(value) && value['type'] === AST_NODE_TYPES.Program && Array.isArray(value['body']);
 }

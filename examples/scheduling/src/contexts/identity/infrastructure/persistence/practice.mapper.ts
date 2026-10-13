@@ -1,4 +1,3 @@
-import { unwrap } from '@ddd-ts-kit/kernel';
 import { Practice } from '@/contexts/identity/domain/aggregates/practice.aggregate';
 import { Membership } from '@/contexts/identity/domain/value-objects/membership.vo';
 import { Role } from '@/contexts/identity/domain/value-objects/role.vo';
@@ -15,9 +14,9 @@ export const PracticeMapper = {
     const loaded = Practice.rehydrate(row.id, {
       registeredAt: row.registered_at,
       name: row.name,
-      timeZone: unwrap(TimeZone.create(row.time_zone)),
+      timeZone: TimeZone.create(row.time_zone),
       members: storedMembersOf(row.members).map((member) =>
-        Membership.create(member.personId, unwrap(Role.create(member.role))),
+        Membership.create(member.personId, Role.create(member.role)),
       ),
     });
 

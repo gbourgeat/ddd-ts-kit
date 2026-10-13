@@ -1,6 +1,7 @@
 import { AggregateRoot } from '@ddd-ts-kit/kernel';
 import { ReminderError } from '@/contexts/notification/domain/errors/reminder.error';
 import { ReminderSent } from '@/contexts/notification/domain/events/reminder-sent.event';
+import { ReminderStatus } from '@/contexts/notification/domain/vocabularies/reminder-status.vocabulary';
 
 const NOTICE_MS = 24 * 60 * 60 * 1000;
 
@@ -12,7 +13,7 @@ export interface ReminderState {
   readonly startsAt: Date;
   /** 24 hours before the start. */
   readonly dueAt: Date;
-  readonly status: 'planned' | 'sent' | 'withdrawn';
+  readonly status: ReminderStatus;
 }
 
 export class Reminder extends AggregateRoot<string> {
@@ -32,7 +33,7 @@ export class Reminder extends AggregateRoot<string> {
       ...appointment,
       registeredAt: now,
       dueAt: dueFor(appointment.startsAt),
-      status: 'planned',
+      status: ReminderStatus.Planned,
     });
   }
 
@@ -42,26 +43,26 @@ export class Reminder extends AggregateRoot<string> {
 
   /** Plans the reminder for a start: the same start changes nothing, another one makes it due again, 24 hours before. */
   planFor(startsAt: Date): void {
-    if (this.state.status !== 'withdrawn' && this.state.startsAt.getTime() === startsAt.getTime()) {
+    if (this.state.status !== ReminderStatus.Withdrawn && this.state.startsAt.getTime() === startsAt.getTime()) {
       return;
     }
 
-    this.state = { ...this.state, startsAt, dueAt: dueFor(startsAt), status: 'planned' };
+    this.state = { ...this.state, startsAt, dueAt: dueFor(startsAt), status: ReminderStatus.Planned };
   }
 
   /** Drops the reminder while it is still planned; one already sent stays sent. */
   withdraw(): void {
-    if (this.state.status !== 'planned') {
+    if (this.state.status !== ReminderStatus.Planned) {
       return;
     }
 
-    this.state = { ...this.state, status: 'withdrawn' };
+    this.state = { ...this.state, status: ReminderStatus.Withdrawn };
   }
 
   /** Whether the reminder is to be sent at this instant: planned, 24 hours or less before a start still to come. */
   isDue(asOf: Date): boolean {
     return (
-      this.state.status === 'planned' &&
+      this.state.status === ReminderStatus.Planned &&
       this.state.dueAt.getTime() <= asOf.getTime() &&
       asOf.getTime() < this.state.startsAt.getTime()
     );
@@ -72,7 +73,7 @@ export class Reminder extends AggregateRoot<string> {
       throw ReminderError.notDue(this.id);
     }
 
-    this.state = { ...this.state, status: 'sent' };
+    this.state = { ...this.state, status: ReminderStatus.Sent };
 
     this.record(
       new ReminderSent(this.id, asOf, {

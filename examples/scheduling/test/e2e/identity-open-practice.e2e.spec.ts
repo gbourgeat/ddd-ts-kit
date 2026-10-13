@@ -1,5 +1,6 @@
+import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, onTestFailed } from 'vitest';
-import { collectEvents, expectProblem } from '@ddd-ts-kit/testing/e2e';
+import { collectEvents, expectProblem, expectStatus } from '@ddd-ts-kit/testing/e2e';
 import { unwrap } from 'scheduling-api-client';
 import { reportSeedOnFailure } from '@ddd-ts-kit/testing/faker';
 import { expectSpanTree, installTestTracing } from '@ddd-ts-kit/tracing/testing';
@@ -11,9 +12,17 @@ import {
 } from '@/contexts/identity/published-language/index';
 import { expectAnswer } from '$test/e2e/support/expect-answer';
 import { expectRefusal } from '$test/e2e/support/expect-refusal';
+import type { Listed } from '$test/e2e/support/listed';
 import { registerPeople } from '$test/e2e/support/register-people';
 import { startApplication, type RunningApplication } from '$test/e2e/support/start-application';
 import { storyOf } from '$test/e2e/support/story-of';
+
+/** What the trail says of a refusal at the edge. */
+interface RefusalLine {
+  readonly action: string;
+  readonly reason?: string;
+  readonly actorId: string;
+}
 
 describe('Open practice, end to end', () => {
   const tracing = installTestTracing();
@@ -38,11 +47,21 @@ describe('Open practice, end to end', () => {
     expectRefusal(await application.api.openPractice({ body: opening }), 401, 'UNAUTHORIZED');
   });
 
-  it('answers 403 to a signed-in person who is not a platform admin', async () => {
+  it('answers 403 to a signed-in person who is not a platform admin, and records the refusal in the audit trail', async () => {
     await registerPeople(application, 'ada');
-    const ada = application.apiAs({ id: 'ada' });
 
-    expectRefusal(await ada.openPractice({ body: opening }), 403, 'FORBIDDEN');
+    // The trail is append-only, a reset keeps it: the entry of this refusal is found by the correlation the caller gave.
+    const correlationId = randomUUID();
+    const ada = (await application.as({ id: 'ada' })).withHeaders({ 'x-correlation-id': correlationId });
+
+    expectStatus(await ada.post('/practices', opening), 403);
+
+    const root = await application.as({ id: 'root', roles: ['platform-admin'] });
+    const denied = await root.get<Listed<RefusalLine>>('/audit/entries?outcome=denied&correlationId=' + correlationId);
+
+    expect(
+      expectStatus(denied, 200).body.items.map(({ action, reason, actorId }) => ({ action, reason, actorId })),
+    ).toEqual([{ action: 'http:openPractice', reason: 'FORBIDDEN', actorId: 'ada' }]);
   });
 
   it('is one trace: the request, the use case, what it saves and what follows the facts', async () => {

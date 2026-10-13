@@ -1,4 +1,4 @@
-import { AggregateRoot, DomainError, unwrap } from '@ddd-ts-kit/kernel';
+import { AggregateRoot, DomainError } from '@ddd-ts-kit/kernel';
 import { WaitlistError } from '@/contexts/scheduling/domain/errors/waitlist.error';
 import { CalendarError } from '@/contexts/scheduling/domain/errors/calendar.error';
 import { WaitlistJoined } from '@/contexts/scheduling/domain/events/waitlist-joined.event';
@@ -125,7 +125,7 @@ function offerOf(waiter: Waiter, freed: FreedSlot, now: Date): Offer | undefined
 
   const expiresAt = new Date(Math.min(now.getTime() + HOLD * MINUTE, slot.startsAt.getTime()));
 
-  return unwrap(Offer.create({ waiter, slot, expiresAt }));
+  return Offer.create({ waiter, slot, expiresAt });
 }
 
 /** What the calendar would hold for the waiter from the start of the freed slot, when it can take it. */

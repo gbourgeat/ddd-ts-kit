@@ -187,8 +187,9 @@ shapes for one idea, and adapters that no longer fit. See rule
   authority.
 - **The explicit actor costs a parameter on every protected message.** In a tool with one user
   and no audit need it buys little; public use cases use the plain `Command` and `Query`.
-- **A job has no tenant.** Persistence helpers that need one are for the use case, which
-  receives the tenant in its command: one command per tenant when the work is per tenant.
+- **A global job has no tenant.** Persistence helpers that need one refuse it; a job declared
+  `tenancy: 'per-tenant'` runs once per tenant instead, each run in that tenant's scope. See
+  [Multitenancy](multitenancy.md).
 - **Impersonation is recorded, not prevented.** The session says who impersonates; deciding
   what an impersonator may do is a rule of the authorization model.
 
@@ -207,6 +208,7 @@ shapes for one idea, and adapters that no longer fit. See rule
 ## See also
 
 - [Authentication and authorization](authentication-and-authorization.md)
+- [Multitenancy](multitenancy.md)
 - [Audit trail](audit-trail.md)
 - [Observability](observability.md)
 - [Scheduled jobs](scheduled-jobs.md)

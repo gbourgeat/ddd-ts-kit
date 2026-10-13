@@ -11,6 +11,7 @@ import {
   type TouchedKey,
 } from '@ddd-ts-kit/kernel';
 import type { DrizzleContext } from '../unit-of-work/drizzle-context.js';
+import { tenantCondition } from '../tenancy/tenant-condition.js';
 import { criteriaToDrizzle } from './criteria-to-drizzle.js';
 import type { DrizzleReadModelOptions } from './drizzle-read-model-options.js';
 import { DrizzleStampedRows, type StampedTable } from './drizzle-stamped-rows.js';
@@ -44,7 +45,15 @@ export class DrizzleReadModelTable<
   ) {
     const { name, schema } = getTableConfig(options.table);
 
-    this.target = { schema, name, key: options.key, columns: options.columns, stamps: stampColumns(options.table) };
+    this.target = {
+      schema,
+      name,
+      key: options.key,
+      columns: options.columns,
+      stamps: stampColumns(options.table),
+      ...(options.tenant === undefined ? {} : { tenant: options.tenant }),
+    };
+
     this.rows = new DrizzleStampedRows(context, this.target);
     this.copy = new DrizzleStampedRows(context, { ...this.target, name: PostgresReadModelRebuild.shadowOf(name) });
 
@@ -69,7 +78,8 @@ export class DrizzleReadModelTable<
   async search(plan: CriteriaPlan): Promise<SearchedRows<Row>> {
     const { table, columns } = this.options;
     const { where, counted, orderBy, limit, offset } = criteriaToDrizzle(plan, columns);
-    const kept = eq(this.target.stamps.deleted, false);
+    const { tenant } = this.options;
+    const kept = and(eq(this.target.stamps.deleted, false), tenant && tenantCondition(tenant.column, tenant.scope));
     const db = this.context.executor();
     const mapper = new RowMapper<Row>(columns);
 

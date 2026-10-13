@@ -108,7 +108,7 @@ describe('integration events', () => {
 
 describe('authentication and authorization', () => {
   it.each([
-    ['rbac', 'roles.ts', "new RoleBasedAuthorizer({ roles, systemRole: 'system' })"],
+    ['rbac', 'roles.ts', 'new RoleBasedAuthorizer({ roles, systemRole: Role.System })'],
     ['abac', 'attribute-policies.ts', 'policies: attributePolicies'],
     [
       'rebac',

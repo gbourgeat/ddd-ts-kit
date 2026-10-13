@@ -54,9 +54,12 @@ export {
   LOGGERS,
   ORM_STACKS,
   PACKAGE_MANAGERS,
+  TENANCY_STRATEGIES,
   STYLES,
   TEST_STACKS,
   VALIDATION_STACKS,
+  VALUE_OBJECT_FORMS,
+  LITERAL_FORMS,
   type OrmStack,
   type Stack,
 } from './stack.js';

@@ -3,7 +3,6 @@ import { RoleBasedAuthorizer } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { AllowAll, anActor } from '@ddd-ts-kit/auth/testing';
 import { contextModule, createTestApplication, fake } from '@ddd-ts-kit/di';
-import { unwrap } from '@ddd-ts-kit/kernel';
 import * as schedulingDeclarations from '@/contexts/scheduling/scheduling.declarations';
 import { platformTestModule } from '@/platform/platform-test.module';
 import { schedulingPermissions } from '@/contexts/scheduling/application/authorization/scheduling.permissions';
@@ -155,7 +154,7 @@ describe('Offer freed slot, when an appointment frees what it held', () => {
     const booked = anAppointment().identifiedBy('booked').onCalendar('calendar-1').startingAt(paris('09:00')).build();
 
     await appointments.save(booked);
-    booked.cancel(unwrap(Cancellation.create('patient')), now);
+    booked.cancel(Cancellation.create('patient'), now);
     await appointments.save(booked);
 
     expect(appointmentRepository.all().filter((appointment) => appointment.isActive)).toMatchObject([

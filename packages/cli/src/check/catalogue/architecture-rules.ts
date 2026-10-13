@@ -36,6 +36,7 @@ import { governanceRecordedDeviation } from '../rules/governance-recorded-deviat
 import { importsAliasDeclared } from '../rules/imports-alias-declared.js';
 import { importsAliasOnly } from '../rules/imports-alias-only.js';
 import { importsExtension } from '../rules/imports-extension.js';
+import { languageDeclaredVocabulary } from '../rules/language-declared-vocabulary.js';
 import { languageGlossaryTerm } from '../rules/language-glossary-term.js';
 import { languageNoTechnicalName } from '../rules/language-no-technical-name.js';
 import { layerApplicationInward } from '../rules/layer-application-inward.js';
@@ -58,6 +59,7 @@ import { purityNoSystemClock } from '../rules/purity-no-system-clock.js';
 import { schedulingJobName } from '../rules/scheduling-job-name.js';
 import { schedulingJobTriggersUseCase } from '../rules/scheduling-job-triggers-use-case.js';
 import { standardNoParallelInterface } from '../rules/standard-no-parallel-interface.js';
+import { tenancyScopedStatement } from '../rules/tenancy-scoped-statement.js';
 import { testBuilderRequired } from '../rules/test-builder-required.js';
 import { testCoverageGoverned } from '../rules/test-coverage-governed.js';
 import { testNoMocks } from '../rules/test-no-mocks.js';
@@ -89,6 +91,7 @@ export const ARCHITECTURE_RULES: readonly Rule[] = [
   testCoverageGoverned,
   languageGlossaryTerm,
   languageNoTechnicalName,
+  languageDeclaredVocabulary,
   purityNoSystemClock,
   purityNoAmbientRandomness,
   purityNoEnvironment,
@@ -113,6 +116,7 @@ export const ARCHITECTURE_RULES: readonly Rule[] = [
   authzActorExplicit,
   aspectsOutsideIn,
   tracingPlatformOnly,
+  tenancyScopedStatement,
   standardNoParallelInterface,
   governanceRecordedDeviation,
   compositionOnlyInModule,

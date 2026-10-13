@@ -7,6 +7,9 @@ export const NOTES = `  affected         what a pull request has to run: the con
   error-factories  moves a project from one class per error to static factories on one error class per
                    concept: --plan writes error-factories.plan.json, where each class is given its concept;
                    --apply follows it (classes, specs, every usage, "stack.refusals" in the config)
+  value-objects    moves the value objects of a project from a Result to factories that return the value or
+                   throw: every create returning Result<T, E> returns T, err(..) is thrown, unwrap(..) of
+                   them goes, specs assert expectRefusal(() => ..), "stack.valueObjects" becomes throwing
   controllers      moves the function routes of a project, or of one context, to controller classes: each
                    <name>.route.ts becomes <resource>/<name>/<name>.controller.ts behind the route group of
                    its resource, its schema files and its spec follow; a context is turned whole or not at all

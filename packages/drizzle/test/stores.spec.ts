@@ -9,6 +9,7 @@ import {
   createDrizzleUnitOfWork,
   outboxTable,
   processedEventsTable,
+  tenantOutboxTable,
 } from '../src/postgres.js';
 import { createDatabase } from './support/database.js';
 
@@ -17,11 +18,12 @@ const outbox = outboxTable('messaging');
 const processed = processedEventsTable('messaging');
 const defaultOutbox = outboxTable();
 const defaultProcessed = processedEventsTable();
+const tenantOutbox = tenantOutboxTable('tenanted');
 
 let database: Awaited<ReturnType<typeof createDatabase>>;
 
 beforeAll(async () => {
-  database = await createDatabase([outbox, processed, defaultOutbox, defaultProcessed]);
+  database = await createDatabase([outbox, processed, defaultOutbox, defaultProcessed, tenantOutbox]);
 });
 
 afterAll(async () => {
@@ -56,6 +58,17 @@ outboxStoreContract(runner, {
     await database.truncate();
 
     return new DrizzleOutboxStore(context(), { leaseMs: 5_000 });
+  },
+});
+
+outboxStoreContract(runner, {
+  name: 'DrizzleOutboxStore keeping the tenant of each event',
+  leaseMs: 30_000,
+  carriesTenant: true,
+  createStore: async () => {
+    await database.truncate();
+
+    return new DrizzleOutboxStore(context(), { table: tenantOutbox });
   },
 });
 

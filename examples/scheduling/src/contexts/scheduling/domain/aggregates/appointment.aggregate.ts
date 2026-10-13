@@ -1,4 +1,4 @@
-import { AggregateRoot, unwrap, type StoredFile } from '@ddd-ts-kit/kernel';
+import { AggregateRoot, type StoredFile } from '@ddd-ts-kit/kernel';
 import { AppointmentError } from '@/contexts/scheduling/domain/errors/appointment.error';
 import { AppointmentBooked } from '@/contexts/scheduling/domain/events/appointment-booked.event';
 import { AppointmentCancelled } from '@/contexts/scheduling/domain/events/appointment-cancelled.event';
@@ -11,6 +11,7 @@ import type { AttachedDocument } from '@/contexts/scheduling/domain/value-object
 import type { Booking } from '@/contexts/scheduling/domain/value-objects/booking.vo';
 import type { Cancellation } from '@/contexts/scheduling/domain/value-objects/cancellation.vo';
 import type { Slot } from '@/contexts/scheduling/domain/value-objects/slot.vo';
+import { AppointmentStatus } from '@/contexts/scheduling/domain/vocabularies/appointment-status.vocabulary';
 
 export interface AppointmentState {
   readonly registeredAt: Date;
@@ -18,7 +19,7 @@ export interface AppointmentState {
   readonly changedAt: Date;
   readonly booking: Booking;
   /** `requested` and `booked` hold their slot; the four others are ends and hold nothing. */
-  readonly status: 'requested' | 'booked' | 'cancelled' | 'expired' | 'completed' | 'no-show';
+  readonly status: AppointmentStatus;
   /** Only while requested: the instant after which the appointment expires unless confirmed. */
   readonly confirmBefore?: Date;
   readonly cancellation?: Cancellation;
@@ -36,7 +37,12 @@ export class Appointment extends AggregateRoot<string> {
 
   /** Books: the slot is held and nothing is left to confirm. */
   static create(id: string, booking: Booking, now: Date): Appointment {
-    const created = new Appointment(id, { registeredAt: now, changedAt: now, booking, status: 'booked' });
+    const created = new Appointment(id, {
+      registeredAt: now,
+      changedAt: now,
+      booking,
+      status: AppointmentStatus.Booked,
+    });
 
     created.record(new AppointmentBooked(id, now, { booking }));
 
@@ -55,7 +61,7 @@ export class Appointment extends AggregateRoot<string> {
       registeredAt: now,
       changedAt: now,
       booking,
-      status: 'requested',
+      status: AppointmentStatus.Requested,
       confirmBefore,
     });
 
@@ -71,14 +77,14 @@ export class Appointment extends AggregateRoot<string> {
   confirm(now: Date): void {
     this.refuseWhenEnded();
 
-    if (this.state.status === 'booked') {
+    if (this.state.status === AppointmentStatus.Booked) {
       throw AppointmentError.alreadyConfirmed(this.id);
     }
 
     this.state = {
       ...this.carried(),
       changedAt: now,
-      status: 'booked',
+      status: AppointmentStatus.Booked,
     };
 
     this.record(new AppointmentConfirmed(this.id, now, this.state.booking));
@@ -90,7 +96,7 @@ export class Appointment extends AggregateRoot<string> {
     this.state = {
       ...this.carried(),
       changedAt: now,
-      status: 'cancelled',
+      status: AppointmentStatus.Cancelled,
       cancellation,
     };
 
@@ -102,7 +108,7 @@ export class Appointment extends AggregateRoot<string> {
     this.refuseWhenEnded();
 
     const previous = this.state.booking;
-    const booking = unwrap(previous.movedTo(slot, day));
+    const booking = previous.movedTo(slot, day);
 
     this.state = { ...this.state, changedAt: now, booking };
     this.record(new AppointmentRescheduled(this.id, now, { booking, previous }));
@@ -115,7 +121,7 @@ export class Appointment extends AggregateRoot<string> {
     this.state = {
       ...this.carried(),
       changedAt: now,
-      status: 'completed',
+      status: AppointmentStatus.Completed,
     };
 
     this.record(new AppointmentCompleted(this.id, now, this.state.booking));
@@ -128,7 +134,7 @@ export class Appointment extends AggregateRoot<string> {
     this.state = {
       ...this.carried(),
       changedAt: now,
-      status: 'no-show',
+      status: AppointmentStatus.NoShow,
     };
 
     this.record(new AppointmentMarkedNoShow(this.id, now, this.state.booking));
@@ -138,14 +144,18 @@ export class Appointment extends AggregateRoot<string> {
   expire(at: Date): void {
     const deadline = this.state.confirmBefore;
 
-    if (this.state.status !== 'requested' || deadline === undefined || deadline.getTime() > at.getTime()) {
+    if (
+      this.state.status !== AppointmentStatus.Requested ||
+      deadline === undefined ||
+      deadline.getTime() > at.getTime()
+    ) {
       return;
     }
 
     this.state = {
       ...this.carried(),
       changedAt: at,
-      status: 'expired',
+      status: AppointmentStatus.Expired,
     };
 
     this.record(new AppointmentExpired(this.id, at, this.state.booking));
@@ -184,7 +194,7 @@ export class Appointment extends AggregateRoot<string> {
   }
 
   get isActive(): boolean {
-    return this.state.status === 'requested' || this.state.status === 'booked';
+    return this.state.status === AppointmentStatus.Requested || this.state.status === AppointmentStatus.Booked;
   }
 
   get booking(): Booking {

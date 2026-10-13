@@ -38,6 +38,17 @@ without fighting them. Reference: `docs/ARCHITECTURE.md` section 6.
   (`SLOT_TAKEN`). Never `new SomethingError(...)`, never a factory named `create` or `of`
   (`errors/through-factory`, `errors/factory-name`). Add one with
   `npx ddd-ts-kit generate error <context> <Concept> <refusal>`.
+- No magic string: a status, a kind, a role is a vocabulary declared once
+  (`npx ddd-ts-kit generate vocabulary <context> <Name> --value <value>...`, an object `as const`
+  and its union type) and read by its key, `AppointmentStatus.NoShow`; a permission is read from
+  its set, `billingPermissions['invoice.issue']`, never by its id (`language/declared-vocabulary`).
+- No magic number in `domain/` and `application/`: 0, 1, -1 and an index only; a duration, a
+  limit or a rate is a constant of the module, `const MINUTES_PER_HOUR = 60;`, or a value object
+  of the business (`clean/no-magic-number`). Both rules hold under `"stack.literals": "named"`,
+  which `init` writes; a project whose config does not say keeps them silent.
+- A domain event declares its name once, `static readonly eventName = '<context>.<aggregate>.<fact>'`;
+  a reaction reads it, `{ name: InvoiceIssued.eventName }`, and an integration event handler reads
+  the type it handles from the contract, `invoiceIssuedV1.type`.
 
 ## Functions
 

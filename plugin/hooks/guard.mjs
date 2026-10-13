@@ -27,6 +27,7 @@ const GENERATORS = [
   [/\.aggregate\.ts$/, 'aggregate <context> <Name>'],
   [/\.entity\.ts$/, 'entity <context> <Name>'],
   [/\.vo\.ts$/, 'value-object <context> <Name>'],
+  [/\.vocabulary\.ts$/, 'vocabulary <context> <Name> --value <value>...'],
   [/\.event\.ts$/, 'domain-event <context> <Aggregate> <Fact>'],
   [/\.error\.ts$/, 'error <context> <Concept> <refusal>'],
   [/\/domain\/services\/[^/]+\.service\.ts$/, 'domain-service <context> <Name>'],

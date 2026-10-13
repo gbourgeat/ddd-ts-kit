@@ -53,6 +53,8 @@ import { schedulingJobName } from './scheduling-job-name.js';
 import { schedulingJobTriggersUseCase } from './scheduling-job-triggers-use-case.js';
 import { standardNoParallelInterface } from './standard-no-parallel-interface.js';
 import { testNoMocks } from './test-no-mocks.js';
+import { cleanNoMagicNumber } from './clean-no-magic-number.js';
+import { languageDeclaredVocabulary } from './language-declared-vocabulary.js';
 import { tracingPlatformOnly } from './tracing-platform-only.js';
 
 const ALL = [
@@ -63,6 +65,7 @@ const ALL = [
   contextPublishedLanguageOnly,
   contextDeclaredRelationship,
   contextPublishedLanguageIsAContract,
+  languageDeclaredVocabulary,
   purityNoSystemClock,
   purityNoAmbientRandomness,
   purityNoEnvironment,
@@ -76,6 +79,7 @@ const ALL = [
   cleanNoHashPrivate,
   cleanOneExportPerFile,
   cleanFileSize,
+  cleanNoMagicNumber,
   domainAggregateEncapsulation,
   domainValueObjectImmutability,
   domainNoGenericError,

@@ -27,7 +27,9 @@
     "assembly": "barrel",
     "dependencies": "signature",
     "refusals": "factories",
-    "routes": "controllers"
+    "routes": "controllers",
+    "valueObjects": "throwing",
+    "literals": "named"
   },
   "contexts": {
     "identity": {

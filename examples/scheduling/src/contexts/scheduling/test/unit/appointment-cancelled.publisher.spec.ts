@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { InMemoryEventBus, SequentialIdGenerator, unwrap } from '@ddd-ts-kit/kernel';
+import { InMemoryEventBus, SequentialIdGenerator } from '@ddd-ts-kit/kernel';
 import { AppointmentCancelledPublisher } from '@/contexts/scheduling/application/integration/publishers/appointment-cancelled.publisher';
 import { AppointmentCancelled } from '@/contexts/scheduling/domain/events/appointment-cancelled.event';
 import { Cancellation } from '@/contexts/scheduling/domain/value-objects/cancellation.vo';
@@ -24,7 +24,7 @@ describe('Publishing "appointment cancelled" to other contexts', () => {
     await publisher.handle(
       new AppointmentCancelled('appointment-1', new Date('2026-01-01T00:00:00.000Z'), {
         booking: held.booking,
-        cancellation: unwrap(Cancellation.create('practice', 'The practitioner is away.')),
+        cancellation: Cancellation.create('practice', 'The practitioner is away.'),
       }),
     );
 
@@ -40,7 +40,7 @@ describe('Publishing "appointment cancelled" to other contexts', () => {
     await publisher.handle(
       new AppointmentCancelled('appointment-1', new Date('2026-01-01T00:00:00.000Z'), {
         booking: held.booking,
-        cancellation: unwrap(Cancellation.create('practice', 'The practitioner is away.')),
+        cancellation: Cancellation.create('practice', 'The practitioner is away.'),
       }),
     );
 

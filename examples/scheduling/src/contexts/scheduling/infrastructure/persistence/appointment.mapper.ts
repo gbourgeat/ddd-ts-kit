@@ -1,4 +1,3 @@
-import { unwrap } from '@ddd-ts-kit/kernel';
 import { Appointment, type AppointmentState } from '@/contexts/scheduling/domain/aggregates/appointment.aggregate';
 import { AttachedDocument } from '@/contexts/scheduling/domain/value-objects/attached-document.vo';
 import { Booking } from '@/contexts/scheduling/domain/value-objects/booking.vo';
@@ -80,17 +79,15 @@ function documentColumnsOf(document: AttachedDocument | undefined): DocumentColu
 }
 
 function stateOf(row: AppointmentRow): AppointmentState {
-  const booking = unwrap(
-    Booking.create({
-      calendarId: row.calendar_id,
-      practiceId: row.practice_id,
-      practitionerId: row.practitioner_id,
-      patientId: row.patient_id,
-      appointmentTypeId: row.appointment_type_id,
-      slot: Slot.between(row.starts_at, row.ends_at, row.held_until),
-      day: row.day,
-    }),
-  );
+  const booking = Booking.create({
+    calendarId: row.calendar_id,
+    practiceId: row.practice_id,
+    practitionerId: row.practitioner_id,
+    patientId: row.patient_id,
+    appointmentTypeId: row.appointment_type_id,
+    slot: Slot.between(row.starts_at, row.ends_at, row.held_until),
+    day: row.day,
+  });
 
   return {
     registeredAt: row.registered_at,
@@ -100,7 +97,7 @@ function stateOf(row: AppointmentRow): AppointmentState {
     ...(row.confirm_before === null ? {} : { confirmBefore: row.confirm_before }),
     ...(row.cancelled_by === null
       ? {}
-      : { cancellation: unwrap(Cancellation.create(row.cancelled_by, row.cancellation_reason ?? undefined)) }),
+      : { cancellation: Cancellation.create(row.cancelled_by, row.cancellation_reason ?? undefined) }),
     ...documentOf(row),
   };
 }

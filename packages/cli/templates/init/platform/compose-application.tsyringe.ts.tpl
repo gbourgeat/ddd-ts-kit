@@ -41,6 +41,11 @@ import {
 {{#if files.http}}
   FileStorage,
 {{/if}}
+{{#if audit.on}}
+{{#if http.any}}
+  IdGenerator,
+{{/if}}
+{{/if}}
 {{#if files.any}}
   InMemoryFileStorage,
 {{/if}}
@@ -68,6 +73,9 @@ import {
 } from '@ddd-ts-kit/kernel';
 import { tracedPublisher } from '@ddd-ts-kit/tracing';
 {{#if audit.on}}
+{{#if http.any}}
+import { AuditTrail, auditGuardRefusals } from '@ddd-ts-kit/audit';
+{{/if}}
 import { auditModule } from '{{alias.platform}}/audit/audit.module{{alias.ext}}';
 {{/if}}
 {{#if audit.functionRoute}}
@@ -260,6 +268,12 @@ function running(container: Container, options: ApplicationOptions, contexts: Co
       errorMapper: container.resolve(ErrorMapper),
       clock: container.resolve(Clock),
       logger,
+{{#if audit.on}}
+      refusals: auditGuardRefusals(container.resolve(AuditTrail), {
+        clock: container.resolve(Clock),
+        ids: container.resolve(IdGenerator),
+      }),
+{{/if}}
 {{#if errors.sentry}}
       errors: container.resolve(ErrorReporter),
 {{/if}}

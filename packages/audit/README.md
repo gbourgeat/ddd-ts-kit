@@ -179,6 +179,23 @@ When the decision concerns another actor than the one of the execution context (
 sending a command on behalf of a user), the entry names the actor of the decision with type
 `unknown`: its type and tenant are not in what the hook receives.
 
+### a'. Refusals at the edge
+
+A request a guard refuses (`HasRole`, `HasScope`, `TenantMember`, a tenant the caller does not
+belong to) never reaches a use case, so the authorization middleware does not see it. The HTTP
+pipeline reports it to `onGuardRefusal`, and `auditGuardRefusals(trail, { clock, ids })` records
+it: category `authorization`, action `http:<operationId>`, outcome `denied`, the code of the
+refusal as `reason` (`FORBIDDEN`, `UNAUTHORIZED`), and the actor, session, tenant and correlation
+of the request. A caller without a credential is not recorded: it is no one to hold to account,
+the tenant it addressed is its own choice, and recording it would let unauthenticated traffic
+write to the trail (and open hash chains) without bound; those refusals belong to the access log
+and to rate limiting. A recorded refusal is in the tenant of the caller's credential. A guard
+that fails instead of refusing (a lookup that threw, not a `DomainError`) is not reported.
+
+```ts
+mountExpress(app, routes, { ...boundary, onGuardRefusal: auditGuardRefusals(trail, { clock, ids }) });
+```
+
 ### b. Commands, and the unit of work
 
 `auditMiddleware` records each command with outcome `succeeded` or `failed`, and the `code` of
@@ -534,6 +551,12 @@ Whoever reads the trail leaves an entry in it. The handler depends on `AuditRead
 kernel, which `application/` may import, and receives the store bound to it. It scopes the
 filter to the tenant of the actor (an access scope computed by the authorizer), so one tenant
 never lists another's entries.
+
+In a multi-tenant project, bind `new TenantAuditReader(store, executionScope)` to
+`AuditReader` instead of the store itself: every search is then confined to the tenant of the
+work whatever its filter says (a filter naming another tenant or another chain finds nothing),
+platform staff read across tenants only under an elevation (`acrossTenants` of the kernel, itself
+recorded), and work that names neither is refused (`NoCurrentTenantError`).
 
 ## Limits
 

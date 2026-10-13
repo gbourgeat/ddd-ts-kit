@@ -3,7 +3,9 @@ import type { Booking } from '@/contexts/scheduling/domain/value-objects/booking
 import type { Cancellation } from '@/contexts/scheduling/domain/value-objects/cancellation.vo';
 
 export class AppointmentCancelled implements DomainEvent {
-  readonly name = 'scheduling.appointment.cancelled';
+  static readonly eventName = 'scheduling.appointment.cancelled';
+
+  readonly name = AppointmentCancelled.eventName;
 
   constructor(
     readonly aggregateId: string,
