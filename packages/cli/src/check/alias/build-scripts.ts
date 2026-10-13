@@ -8,6 +8,8 @@ import { manifestScripts } from './manifest-scripts.js';
 const COMPILES = /(?:^|[\s/])tsc(?:\.[cm]?js)?(?=\s|$)/;
 const TYPE_CHECK_ONLY = /--noEmit(?:\s|$)/;
 const REWRITES = /(?:^|[\s/])(?:ddd-ts-kit|kit\.[cm]?js|bin\.js)\s+build-aliases(?:\s|$)/;
+/** The build of the clients `ddd-ts-kit sdk` generates: their sources import one another by relative paths, no alias. */
+const BUILDS_CLIENTS = /\s-[bp]\s+(?:\.\/)?clients(?:\/|\s|$)/;
 
 /** A script that compiles and does not rewrite the aliases afterwards: plain `node` could not load what it emits. */
 export function buildScripts(inspected: Inspected): Violation[] {
@@ -15,7 +17,10 @@ export function buildScripts(inspected: Inspected): Violation[] {
 
   return (read?.scripts ?? []).flatMap(([name, command]) => {
     const steps = command.split('&&').map((step) => step.trim());
-    const compiled = steps.findLastIndex((step) => COMPILES.test(step) && !TYPE_CHECK_ONLY.test(step));
+
+    const compiled = steps.findLastIndex(
+      (step) => COMPILES.test(step) && !TYPE_CHECK_ONLY.test(step) && !BUILDS_CLIENTS.test(step),
+    );
 
     if (compiled === -1 || steps.slice(compiled + 1).some((step) => REWRITES.test(step))) {
       return [];

@@ -1,6 +1,7 @@
 import { RelationTupleStore, type RelationTuple } from '@ddd-ts-kit/auth/rebac';
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
 import { IdentityRelationships } from '@/contexts/identity/application/ports/identity-relationships.port';
+import { RoleName } from '@/contexts/identity/domain/vocabularies/role-name.vocabulary';
 
 type Membership = Parameters<IdentityRelationships['recordMembership']>[0];
 type Delegation = Parameters<IdentityRelationships['forgetDelegation']>[0];
@@ -42,7 +43,7 @@ function tuplesOfMembership({ practiceId, personId, role }: Membership): readonl
   const practice = `practice:${practiceId}`;
   const member = { object: practice, relation: role, subject: userOf(personId) };
 
-  if (role !== 'practitioner') {
+  if (role !== RoleName.Practitioner) {
     return [member];
   }
 

@@ -17,4 +17,5 @@ export interface StackFlags {
   readonly logger?: string;
   readonly style?: string;
   readonly assembly?: string;
+  readonly tenancy?: string;
 }

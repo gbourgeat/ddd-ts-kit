@@ -171,6 +171,7 @@ jobs:
     timeout-minutes: 20
     env:
       DDD_TS_KIT_TEST_DATABASE_URL: postgres://app:app@localhost:5432/app
+      DDD_TS_KIT_OPENFGA_URL: http://localhost:8080
       DDD_TS_KIT_TEST_VARNISH_URL: http://127.0.0.1:16081
       DDD_TS_KIT_TEST_VARNISH_BACKEND_PORT: '18089'
     steps:
@@ -181,6 +182,21 @@ jobs:
       - name: PostgreSQL (pulled with retries, from the next registry when one refuses)
         if: ${{ needs.install.outputs.integration == 'true' }}
         run: sh pipeline/github/scripts/start-postgres.sh
+      - name: OpenFGA (the image the specs of @ddd-ts-kit/openfga are held to, pinned by digest)
+        if: ${{ needs.install.outputs.integration == 'true' }}
+        run: |
+          docker run --detach --name openfga --publish 8080:8080 \
+            openfga/openfga:v1.22.0@sha256:9cf9a20af32a40434cd3a788c429879439ee9ea9abf65c9c200ee17cd43f769e run > /dev/null
+          for second in $(seq 1 60); do
+            if curl --silent --fail http://localhost:8080/healthz > /dev/null; then
+              echo "OpenFGA is ready (${second}s)."
+              exit 0
+            fi
+            sleep 1
+          done
+          docker logs openfga >&2
+          echo "OpenFGA did not become healthy." >&2
+          exit 1
       - name: Varnish, with the VCL init --http-cache varnish writes, in front of the origin the purger spec starts
         if: ${{ needs.install.outputs.integration == 'true' }}
         run: sh pipeline/github/scripts/start-varnish.sh packages/cli/templates/init/docker/varnish.vcl.tpl 18089 16081

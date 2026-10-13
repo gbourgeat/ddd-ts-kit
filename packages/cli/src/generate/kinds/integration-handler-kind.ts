@@ -34,7 +34,7 @@ export const integrationHandlerKind: Kind = {
 
     const context = vars(scope, {
       name: named(name),
-      upstream: upstreamVars(upstream, eventType, declaration),
+      upstream: { ...upstreamVars(upstream, eventType, declaration), ...typeRead(scope, declaration, eventType) },
       consumer: subscriptionVars(scope, declaration !== undefined),
     });
 
@@ -112,6 +112,25 @@ function eventTypeOf(upstream: Name, input: string): string {
     `"${input}" is not an event type of "${upstream.kebab}".`,
     `Pass the type as published, <context>.<aggregate>.<fact> in kebab-case, for example ${upstream.kebab}.invoice.issued.`,
   );
+}
+
+/** The script that writes the event catalog before 0.6 found a consumer by the type written out: such a project keeps it written out. */
+const CATALOG_SCRIPT = 'scripts/events.ts';
+
+/**
+ * How the handler names the type it handles: read from the declaration of its upstream,
+ * `invoiceIssuedV1.type`, or written out when there is none here, or when the event catalog
+ * script of the project still reads it written out.
+ */
+function typeRead(
+  scope: Scope,
+  declaration: EventDeclaration | undefined,
+  eventType: string,
+): { readsType: boolean; typeRead: string } {
+  const script = scope.ws.read(CATALOG_SCRIPT);
+  const readsType = declaration !== undefined && (script === undefined || script.includes('typesByName'));
+
+  return { readsType, typeRead: readsType ? `${declaration.definition}.type` : `'${eventType}'` };
 }
 
 function upstreamVars(upstream: Name, eventType: string, declaration: EventDeclaration | undefined): RenderContext {

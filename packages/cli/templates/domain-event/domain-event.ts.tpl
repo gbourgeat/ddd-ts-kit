@@ -1,7 +1,9 @@
 import type { DomainEvent } from '@ddd-ts-kit/kernel';
 
 export class {{event.pascal}} implements DomainEvent {
-  readonly name = '{{event.name}}';
+  static readonly eventName = '{{event.name}}';
+
+  readonly name = {{event.pascal}}.eventName;
 
   constructor(
     readonly aggregateId: string,

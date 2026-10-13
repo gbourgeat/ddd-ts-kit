@@ -1,4 +1,3 @@
-import { unwrap } from '@ddd-ts-kit/kernel';
 import { Calendar } from '@/contexts/scheduling/domain/aggregates/calendar.aggregate';
 import {
   AppointmentType,
@@ -6,7 +5,8 @@ import {
 } from '@/contexts/scheduling/domain/value-objects/appointment-type.vo';
 import { BookingWindow } from '@/contexts/scheduling/domain/value-objects/booking-window.vo';
 import { Exception } from '@/contexts/scheduling/domain/value-objects/exception.vo';
-import { OpeningHours, type Weekday } from '@/contexts/scheduling/domain/value-objects/opening-hours.vo';
+import { OpeningHours } from '@/contexts/scheduling/domain/value-objects/opening-hours.vo';
+import type { Weekday } from '@/contexts/scheduling/domain/vocabularies/weekday.vocabulary';
 import { Range } from '@/contexts/scheduling/domain/value-objects/range.vo';
 import { TimeOff } from '@/contexts/scheduling/domain/value-objects/time-off.vo';
 import { TimeZone } from '@/contexts/scheduling/domain/value-objects/time-zone.vo';
@@ -26,18 +26,18 @@ export const CalendarMapper = {
       registeredAt: row.registered_at,
       practiceId: row.practice_id,
       practitionerId: row.practitioner_id,
-      timeZone: unwrap(TimeZone.create(row.time_zone)),
+      timeZone: TimeZone.create(row.time_zone),
       openingHours: openingHoursOf(JSON.parse(row.opening_hours) as StoredWeek),
       exceptions: (JSON.parse(row.exceptions) as StoredException[]).map(({ day, ranges }) =>
-        unwrap(Exception.create(day, ranges.map(rangeOf))),
+        Exception.create(day, ranges.map(rangeOf)),
       ),
       timeOffs: (JSON.parse(row.time_offs) as StoredTimeOff[]).map(({ startsAt, endsAt }) =>
-        unwrap(TimeOff.create(new Date(startsAt), new Date(endsAt))),
+        TimeOff.create(new Date(startsAt), new Date(endsAt)),
       ),
       appointmentTypes: (JSON.parse(row.appointment_types) as AppointmentTypeProps[]).map((facts) =>
-        unwrap(AppointmentType.create(facts)),
+        AppointmentType.create(facts),
       ),
-      bookingWindow: unwrap(BookingWindow.create(row.notice, row.horizon)),
+      bookingWindow: BookingWindow.create(row.notice, row.horizon),
       limit: row.patient_limit,
     });
 
@@ -76,7 +76,7 @@ export const CalendarMapper = {
 };
 
 function rangeOf([start, end]: StoredRange): Range {
-  return unwrap(Range.create(start, end));
+  return Range.create(start, end);
 }
 
 function storedRangeOf(range: Range): StoredRange {
@@ -84,17 +84,15 @@ function storedRangeOf(range: Range): StoredRange {
 }
 
 function openingHoursOf(week: StoredWeek): OpeningHours {
-  return unwrap(
-    OpeningHours.create({
-      monday: week.monday.map(rangeOf),
-      tuesday: week.tuesday.map(rangeOf),
-      wednesday: week.wednesday.map(rangeOf),
-      thursday: week.thursday.map(rangeOf),
-      friday: week.friday.map(rangeOf),
-      saturday: week.saturday.map(rangeOf),
-      sunday: week.sunday.map(rangeOf),
-    }),
-  );
+  return OpeningHours.create({
+    monday: week.monday.map(rangeOf),
+    tuesday: week.tuesday.map(rangeOf),
+    wednesday: week.wednesday.map(rangeOf),
+    thursday: week.thursday.map(rangeOf),
+    friday: week.friday.map(rangeOf),
+    saturday: week.saturday.map(rangeOf),
+    sunday: week.sunday.map(rangeOf),
+  });
 }
 
 function storedWeekOf({ week }: OpeningHours): StoredWeek {

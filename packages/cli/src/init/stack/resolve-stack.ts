@@ -10,6 +10,7 @@ import {
   CONFIG_FILE,
   DEFAULT_IMPORT_ALIAS,
   DEFAULT_IMPORT_EXTENSION,
+  DEFAULT_SDK_NAME,
   DI_STACKS,
   DOCS_UIS,
   ERROR_REPORTERS,
@@ -24,6 +25,8 @@ import {
   readConfig,
   TEST_STACKS,
   VALIDATION_STACKS,
+  VALUE_OBJECT_FORMS,
+  LITERAL_FORMS,
   type Config,
 } from '../../config/index.js';
 import { aliasProblem } from '../../alias/index.js';
@@ -34,6 +37,7 @@ import { recordedOptions } from './recorded-options.js';
 import { resolveCiExtras } from './resolve-ci-extras.js';
 import { resolvePersistence } from './resolve-persistence.js';
 import { resolveStyle } from './resolve-style.js';
+import { resolveTenancy } from './resolve-tenancy.js';
 import type { StackOptions } from './stack-options.js';
 
 export type { StackOptions } from './stack-options.js';
@@ -60,7 +64,23 @@ export function resolveStack(root: string, options: StackOptions): Config {
   const ci = { extras: resolveCiExtras(options.ciExtras, recorded, stack.ci) };
   const config = supportedAlias({ ...(recorded ?? fresh), importAlias, importExtension, stack, ci });
 
-  return { ...config, worker: config.worker || hasWorker(root, config) };
+  return { ...config, worker: config.worker || hasWorker(root, config), sdk: sdkOf(options, config) };
+}
+
+/** `--sdk` records the clients with their default name; a config that has them keeps its own. */
+function sdkOf(options: StackOptions, config: Config): Config['sdk'] {
+  if (options.sdk !== true || config.sdk !== undefined) {
+    return config.sdk;
+  }
+
+  if (config.stack.http === 'none') {
+    throw new CliError(
+      '--sdk cannot be combined with --http none.',
+      'A client is generated from the OpenAPI contract of the HTTP boundary: pick an HTTP framework, or leave --sdk out.',
+    );
+  }
+
+  return { name: DEFAULT_SDK_NAME, access: undefined };
 }
 
 /** Nothing for a new project, and for a config `--force` is about to replace because it cannot be read. */
@@ -111,6 +131,7 @@ function stackOf(options: StackOptions): Record<string, string> {
     httpCache: resolveHttpCache(options, http, persistence.events),
     ...resolveOperations(options, persistence.orm),
     ...resolveStyle(options, di),
+    tenancy: resolveTenancy(options, persistence.orm),
   };
 }
 
@@ -143,7 +164,7 @@ function hasWorker(root: string, config: Config): boolean {
 function resolveOperations(
   options: StackOptions,
   orm: string,
-): Record<'cache' | 'audit' | 'errors' | 'logger' | 'refusals' | 'routes', string> {
+): Record<'cache' | 'audit' | 'errors' | 'logger' | 'refusals' | 'routes' | 'valueObjects' | 'literals', string> {
   return {
     cache: choose(CACHE_STACKS, options.cache, 'cache') ?? 'none',
     audit: choose(AUDIT_MODES, options.audit, 'audit') ?? (orm === 'none' ? 'off' : 'on'),
@@ -153,6 +174,10 @@ function resolveOperations(
     refusals: choose(REFUSAL_FORMS, options.refusals, 'refusals') ?? 'factories',
     // A new project writes each route as a controller class; a recorded one keeps the form it says, or the functions of 0.3.
     routes: choose(ROUTE_FORMS, options.routes, 'routes') ?? 'controllers',
+    // A new project throws the refusals of its value objects; a recorded one keeps the form it says, or the Result of 0.5.
+    valueObjects: choose(VALUE_OBJECT_FORMS, options.valueObjects, 'value-objects') ?? 'throwing',
+    // A new project names its closed values and its numbers; a recorded one keeps the form it says, or the free literals of 0.5.
+    literals: choose(LITERAL_FORMS, options.literals, 'literals') ?? 'named',
   };
 }
 

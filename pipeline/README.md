@@ -48,9 +48,9 @@ not a benchmark.
 | 2 | unit tests | `ci:test:unit` | behaviour of the domain, the application and the routes; coverage thresholds of these three layers, per context (`--mode unit`) | seconds |
 | 3 | integration tests | `ci:test:integration` | adapters against a real PostgreSQL; coverage threshold of `infrastructure/`, per context (`--mode integration`) | tens of seconds |
 | 4 | end-to-end tests | `ci:test:e2e` | the whole application through HTTP and the event bus | tens of seconds |
-| 2 | docs and contract drift | `ci:docs` | a stale context map, `CONTEXT.md` list, OpenAPI document, AsyncAPI document or event catalog | a build |
+| 2 | docs and contract drift | `ci:docs` | a stale context map, `CONTEXT.md` list, OpenAPI document, AsyncAPI document or event catalog, and a client of the contract that differs from it when the config has `sdk` | a build |
 | 1 | security | `ci:audit`, gitleaks, and the opt-in scanners of the platform | a high or critical advisory in a production dependency, a committed secret | seconds |
-| 5 | build | `ci:build` | the production build | a build |
+| 5 | build | `ci:build` | the production build, and with `sdk` the clients of the contract, each compiled with its own options (`sdk:build`); publishing one stays manual ([client SDK](../docs/tools/client-sdk.md#publish)) | a build |
 | 6 | image | platform-native | the `Dockerfile` still builds; nothing is pushed | a minute |
 | last | gate | none | needs every job: the single required check | none |
 

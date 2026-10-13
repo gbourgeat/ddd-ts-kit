@@ -159,7 +159,7 @@ a repository adapter never call it. An aggregate is recognised by what it does (
 | `after-commit` | `dispatcher.on(name, callback, { phase: 'after-commit' })` | once the transaction has committed, never when it rolled back, in dispatch order, awaited before the command answers | never fails the command: reported, and the other handlers still run |
 
 With declarations the phase is an option of the decorator:
-`@DomainEventHandler(OrderPaid, { name: 'ordering.order.paid', phase: 'after-commit' })`.
+`@DomainEventHandler(OrderPaid, { name: OrderPaid.eventName, phase: 'after-commit' })`.
 
 The `after-commit` phase is at most once: a crash between the commit and the run loses it. What
 must not be lost goes through the outbox as an integration event. A `before-commit` handler
@@ -419,7 +419,7 @@ left alone.
 | `CommandHandler(Message)` | the one handler of a command | `@CommandHandler(PlaceOrder)` |
 | `QueryHandler(Message)` | the one handler of a query | `@QueryHandler(GetOrder)` |
 | `IntegrationEventHandler(definition, { consumer, actorOf? })` | the handler of an integration event of another context | `@IntegrationEventHandler(OrderPlaced, { consumer: 'billing.invoice-on-order-placed' })` |
-| `DomainEventHandler(Event, { name })` | a handler of a domain event of its own context | `@DomainEventHandler(OrderPaid, { name: 'ordering.order.paid' })` |
+| `DomainEventHandler(Event, { name })` | a handler of a domain event of its own context | `@DomainEventHandler(OrderPaid, { name: OrderPaid.eventName })`, the name the event class declares once in `static readonly eventName` |
 | `Scheduled(name, schedule and options)` | a job run by time, which triggers use cases | `@Scheduled('billing.send-reminders', { cron: '0 7 * * 1-5', timeZone: 'Europe/Paris' })` |
 | `Projection(name)` with `On(definition)` on its methods | a projector: the class that keeps one read model up to date | `@Projection('scheduling.appointment-list')`, `@On(PaymentCaptured)` |
 | `Repository(Port, options?)` | the adapter of a repository of the domain | `@Repository(OrderRepository)` |
@@ -552,7 +552,12 @@ The authenticated session of an actor, as plain data.
 | `authenticationStrength?` | `{ mfa?, assuranceLevel? }` |
 | `impersonatedBy?` | id of the support actor acting as `actor`; `logFieldsOf` carries it to every log line |
 | `locale?`, `timeZone?`, `client?` | BCP 47 tag, IANA zone, `{ ip?, userAgent? }` as opaque strings |
+| `scopes?` | what the credential allows whoever presents it (the OAuth 2.0 `scope`): a limit on the client, never what the actor may do |
 | `extensions` | the fields of the project |
+
+`hasScope(session, scope)` reads the scopes; a project names its scope vocabulary once by
+declaration merging of `SessionScopes` (`interface SessionScopes { readonly 'invoices:read': true }`),
+and `SessionScope`, the type a guard takes, is then that vocabulary instead of any string.
 
 `isExpired(session, clock.now())`, `isImpersonated(session)`, `anonymousSession()`,
 `systemSession(name, issuedAt?)`, and `isSession(value)`, the structural guard a boundary uses on
@@ -561,8 +566,8 @@ what it received as a principal.
 ### ExecutionContext and ExecutionScope
 
 What every unit of work carries, whatever started it: `correlationId`, `causationId?`, `actor`,
-`session?`, `tenantId?`, `locale?`, `deadline?`, `scheduledAt?` (for a scheduled job, the instant it
-was due), `origin` (`http`, `event`, `schedule`, `cli`, or a string of the project) and `extensions`. `executionContext(init)` builds one and takes the tenant
+`session?`, `tenantId?`, `elevation?` (platform staff reading over tenants, see "Tenancy"),
+`locale?`, `deadline?`, `scheduledAt?` (for a scheduled job, the instant it was due), `origin` (`http`, `event`, `schedule`, `cli`, or a string of the project) and `extensions`. `executionContext(init)` builds one and takes the tenant
 of the actor; `withActor(context, actor)` is the same work seen as another actor.
 
 `ExecutionScope` (`current()`, `require()`, `run(context, work)`) gives the context of the work
@@ -584,11 +589,13 @@ tenant scoping and outgoing headers.
 
 A consumed event opens its own context: `executionContextOfEvent(event, { consumer })` has
 origin `event`, the correlation of the event (its id when it names none), the event as
-`causationId` and `systemActor(consumer)` as actor; `inEventScope(scope, { consumer }, handler)`
+`causationId`, `systemActor(consumer)` as actor and the `tenantId` of the event, so the
+consumer reads and writes in that tenant only; `inEventScope(scope, { consumer }, handler)`
 wraps a handler with it. The standard envelope carries no actor, so that no personal data
 travels by default: a project whose envelopes name one passes `actorOf`. On the way out,
-`scopedPublisher(publisher, scope)` stamps the correlation of the work in progress on every
-event published without one, so everything one stimulus causes is found again across processes.
+`scopedPublisher(publisher, scope)` stamps the correlation and the tenant of the work in
+progress on every event published without them, so everything one stimulus causes is found
+again across processes and stays in its tenant.
 
 `ActorContext` stays, unchanged. `ScopedActorContext` implements it on top of a scope: the
 current actor is the actor of the current execution context, so the two cannot disagree.
@@ -701,7 +708,8 @@ const hit: Quote | undefined = await cache.get(quoteKey('EUR-USD'));
 ```
 
 The key carries the type of its value. `InMemoryCache(clock, { maxEntries? })` expires by the
-`Clock` and is bounded.
+`Clock` and is bounded. `tenantCacheKey<Quote>(scope, 'quote', pair)` is the same key confined to
+the tenant of the work in progress: what one tenant cached is never served to another.
 
 ### Purging the HTTP caches
 
@@ -768,9 +776,10 @@ instead of rejecting: only an unknown name rejects (`UnknownJobError`), and a na
 twice throws (`DuplicateJobError`).
 
 A run happens inside `ExecutionScope`, in the context `executionContextOfJob(name, { correlationId,
-scheduledAt, deadline? })` builds: origin `schedule`, `systemActor(name)`, a correlation of its
+scheduledAt, deadline?, tenantId? })` builds: origin `schedule`, `systemActor(name)`, a correlation of its
 own, and `scheduledAt`, the instant the run was due, which `ExecutionContext` carries for this
-origin.
+origin. A job is `global` by default and runs in no tenant; `tenancy: 'per-tenant'` makes the
+scheduler run it once per tenant of a `TenantDirectory`, each run in that tenant.
 
 `parseJobSchedule(schedule)` validates a schedule and answers the form occurrences are
 computed from (`InvalidJobScheduleError`, code `INVALID_JOB_SCHEDULE`, otherwise);
@@ -790,11 +799,35 @@ if (!decision.allowed) {
 
 A sliding window: at any instant, at most `limit` allowed calls in the `windowMs` before it. A
 `RateLimitDecision` is `{ allowed, remaining, retryAfterMs }`; a refused call is not counted.
-The key is whatever is limited: a client, a tenant, a route and an address together.
+The key is whatever is limited: a client, a tenant, a route and an address together. In a
+multi-tenant project, `tenantKey(scope, 'password-reset', accountId)` confines it to the tenant of
+the work in progress (`tenant:<id>:password-reset:<account>`) and refuses work that names none.
 
 `InMemoryRateLimiter(clock)` counts inside one process; the adapter shared by several instances
 is in `@ddd-ts-kit/redis`. `rateLimitDecisionOf(counted, limit)` turns what an adapter counted
 into the decision.
+
+### Tenancy
+
+The tenant of the work is `ExecutionContext.tenantId`, set at the boundary and read by
+infrastructure only, like the rest of the context. The kernel holds what every strategy shares;
+the isolation itself (tenant column, row-level security, schema or database per tenant) is in the
+persistence packages, and the whole picture in
+[Multitenancy](../../docs/concepts/multitenancy.md).
+
+| Concept | What it does |
+|---|---|
+| `isTenantId(value)`, `assertTenantId(id)`, `InvalidTenantIdError` | the one grammar of a tenant id (letters, digits, `_`, `-`, at most 63): `executionContext`, `executionContextOfEvent`, `acrossTenants`, `InMemoryTenantDirectory`, `tenantScopeOf`, `tenantReachOf` and the row-level security settings refuse any other, so that no tenant id can be read as a wildcard, a list or a key separator |
+| `tenantScopeOf(scope)` | the one tenant a write names; `NoCurrentTenantError` for work that names none |
+| `tenantReachOf(scope)` | what a read may see: `{ kind: 'tenant', tenantId }`, or `{ kind: 'elevated', tenants }` under an elevation |
+| `tenantsOf(actor)`, `isTenantMember(actor, tenantId)` | the tenants an actor belongs to: its `tenantId` and its `tenants` attribute |
+| `acrossTenants({ scope, trail, clock, ids }, { reason, tenants }, work)` | platform staff reading over tenants: refused without a reason or a tenant, recorded in the `AuditTrail` (action `tenancy:elevate`) before the work runs; writes still name one tenant |
+| `tenantKey(scope, ...segments)`, `tenantCacheKey(scope, ...segments)` | keys of rate limits, locks and caches confined to the tenant: `tenant:<id>:<segments>`, each segment percent-encoded, so that two lists of segments never give one key |
+| `TenantDirectory`, `InMemoryTenantDirectory` | the tenants that exist, for per-tenant jobs, provisioning and migrations |
+| `TENANT_SETTINGS`, `tenantSettingValues(context)`, `TENANT_ISOLATION_POLICIES`, `tenantPolicyExpressions(column)` | what the row-level security of the persistence packages shares: the three settings of a transaction (`ddd_ts_kit.tenant_id`, and for an elevation only `ddd_ts_kit.reach` and `ddd_ts_kit.every_tenant`), their values for the work in progress, the names of the four policies (one per command) and their `read` and `write` expressions |
+
+An elevation is never implied by a role: the platform decides the permission to elevate (a use
+case or a guard), then calls `acrossTenants`. A trail that fails to record it refuses it.
 
 ### Page and PageRequest
 

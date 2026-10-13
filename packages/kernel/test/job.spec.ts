@@ -175,6 +175,7 @@ describe('the options of a job', () => {
       jitterMs: 0,
       enabled: true,
       singleInstance: true,
+      tenancy: 'global',
     });
 
     expect(
@@ -185,6 +186,7 @@ describe('the options of a job', () => {
         jitterMs: 250,
         enabled: false,
         singleInstance: false,
+        tenancy: 'per-tenant',
       }),
     ).toEqual({
       overlap: 'queue',
@@ -193,6 +195,7 @@ describe('the options of a job', () => {
       jitterMs: 250,
       enabled: false,
       singleInstance: false,
+      tenancy: 'per-tenant',
     });
   });
 
@@ -205,6 +208,10 @@ describe('the options of a job', () => {
 
     expect(refusal(() => jobPolicy(fromConfiguration({ missed: 'all' })))).toBe(
       'missed is "all": one of skip, run-once is expected.',
+    );
+
+    expect(refusal(() => jobPolicy(fromConfiguration({ tenancy: 'each' })))).toBe(
+      'tenancy is "each": one of global, per-tenant is expected.',
     );
 
     expect(refusal(() => jobPolicy({ jitterMs: -1 }))).toContain('jitterMs is -1');

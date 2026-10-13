@@ -1,8 +1,8 @@
-import { unwrap } from '@ddd-ts-kit/kernel';
 import { Builder, sequence, type Defaults } from '@ddd-ts-kit/testing';
 import { Practice } from '@/contexts/identity/domain/aggregates/practice.aggregate';
 import { DisplayName } from '@/contexts/identity/domain/value-objects/display-name.vo';
-import { Role, type RoleName } from '@/contexts/identity/domain/value-objects/role.vo';
+import { Role } from '@/contexts/identity/domain/value-objects/role.vo';
+import type { RoleName } from '@/contexts/identity/domain/vocabularies/role-name.vocabulary';
 import { TimeZone } from '@/contexts/identity/domain/value-objects/time-zone.vo';
 
 interface PracticeIngredients {
@@ -60,13 +60,13 @@ export class PracticeBuilder extends Builder<PracticeIngredients, Practice> {
 
   protected construct(ingredients: PracticeIngredients): Practice {
     const manager = { personId: ingredients.managerId, displayName: nameOf(ingredients.managerId) };
-    const opening = { name: ingredients.name, timeZone: unwrap(TimeZone.create(ingredients.timeZone)), manager };
+    const opening = { name: ingredients.name, timeZone: TimeZone.create(ingredients.timeZone), manager };
     const opened = Practice.create(ingredients.id, opening, ingredients.bornAt);
 
     for (const joiner of ingredients.joiners) {
       const newcomer = {
         personId: joiner.personId,
-        role: unwrap(Role.create(joiner.role)),
+        role: Role.create(joiner.role),
         displayName: nameOf(joiner.personId),
       };
 
@@ -78,7 +78,7 @@ export class PracticeBuilder extends Builder<PracticeIngredients, Practice> {
 }
 
 function nameOf(personId: string): DisplayName {
-  return unwrap(DisplayName.create(`Name of ${personId}`));
+  return DisplayName.create(`Name of ${personId}`);
 }
 
 export function aPractice(): PracticeBuilder {

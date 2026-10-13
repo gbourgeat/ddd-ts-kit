@@ -7,7 +7,6 @@ import type { Route } from '../route/route.js';
 import { assertDeclaredResponse } from './assert-declared-response.js';
 import { cacheHeadersOf } from './cache-headers-of.js';
 import { conditionalAnswer } from './conditional-answer.js';
-import { taggedAnswer, type Tagging } from './tagged-answer.js';
 import { CORRELATION_HEADER } from './correlation-header.js';
 import { correlationIdOf } from './correlation-id-of.js';
 import type { ErrorContext } from './error-context.js';
@@ -16,6 +15,9 @@ import { executionOfRequest } from './execution-of-request.js';
 import { expectedVersionOf } from './expected-version-of.js';
 import type { RawRequest } from './raw-request.js';
 import type { RouteResponse } from './route-response.js';
+import { taggedAnswer, type Tagging } from './tagged-answer.js';
+import { resolvedTenant } from '../tenancy/resolved-tenant.js';
+import { guardRefusals } from '../controller/guard-refusals.js';
 import { validateRequest } from './validate-request.js';
 import { wellFormedIdentifier } from './well-formed-identifier.js';
 
@@ -53,7 +55,11 @@ async function responded(call: Call): Promise<RouteResponse> {
 
     return await conditionalAnswer(call.route, call.request.headers, tagged);
   } catch (error) {
-    return refusal(error, call);
+    const { response, context } = refusal(error, call);
+
+    await reportGuardRefusal(call.options, error, context);
+
+    return response;
   }
 }
 
@@ -68,17 +74,27 @@ function defaultRequestId(request: RawRequest): string {
 }
 
 async function handled(call: Call): Promise<RouteOutput> {
-  const { route, request, options } = call;
+  const { route, request, options, requestId } = call;
   const principal = await options.resolvePrincipal?.(request.raw);
   const input = validateRequest(route, request);
-  const context = requestContext(call, principal);
+  const { headers } = request;
+  const expectedVersion = expectedVersionOf(route, headers);
+  const execution = executionOf(call, principal, input.params);
 
-  call.reached.execution = context.execution;
   call.reached.params = input.params;
+
+  const context: RequestContext = {
+    requestId,
+    execution,
+    raw: request.raw,
+    rawHeaders: headers,
+    ...(principal === undefined ? {} : { principal }),
+    ...(expectedVersion === undefined ? {} : { expectedVersion }),
+  };
 
   const handle = async (): Promise<RouteOutput> => route.handle({ ...input, context });
   const asPrincipal = (): Promise<RouteOutput> => options.withPrincipal?.(principal, handle) ?? handle();
-  const result = await (options.executionScope?.run(context.execution, asPrincipal) ?? asPrincipal());
+  const result = await (options.executionScope?.run(execution, asPrincipal) ?? asPrincipal());
 
   if (options.validateResponses === true) {
     assertDeclaredResponse(route, result);
@@ -87,20 +103,21 @@ async function handled(call: Call): Promise<RouteOutput> {
   return result;
 }
 
-function requestContext(call: Call, principal: unknown): RequestContext {
-  const { route, request, options, requestId, correlationId } = call;
+/** The execution context of the request, in the tenant it names once the caller is known to belong to it. */
+function executionOf(call: Call, principal: unknown, params: unknown): ExecutionContext {
+  const { request, options, correlationId } = call;
   const { headers } = request;
-  const execution = executionOfRequest({ correlationId, headers, principal, deadline: deadlineOf(options) });
-  const expectedVersion = expectedVersionOf(route, headers);
+  const deadline = deadlineOf(options);
+  const execution = executionOfRequest({ correlationId, headers, principal, deadline });
 
-  return {
-    requestId,
-    execution,
-    raw: request.raw,
-    rawHeaders: headers,
-    ...(principal === undefined ? {} : { principal }),
-    ...(expectedVersion === undefined ? {} : { expectedVersion }),
-  };
+  call.reached.execution = execution;
+
+  const tenantId = resolvedTenant({ resolver: options.resolveTenant, headers, params, actor: execution.actor });
+  const named = tenantId === undefined || tenantId === execution.tenantId ? execution : undefined;
+
+  call.reached.execution = named ?? executionOfRequest({ correlationId, headers, principal, deadline, tenantId });
+
+  return call.reached.execution;
 }
 
 function deadlineOf(options: ExecuteOptions): Date | undefined {
@@ -142,12 +159,12 @@ function identifierHeaders({ requestId, correlationId }: Call): Record<string, s
   return { 'x-request-id': requestId, [CORRELATION_HEADER]: correlationId };
 }
 
-function refusal(error: unknown, call: Call): RouteResponse {
+function refusal(error: unknown, call: Call): { response: RouteResponse; context: ErrorContext } {
   const { route, options, requestId, correlationId } = call;
   const { execution } = call.reached;
   const problem = toProblem(error, options.errorMapper ?? defaultErrorMapper, requestId);
 
-  notify(options, error, {
+  const context: ErrorContext = {
     requestId,
     correlationId,
     operationId: route.operationId,
@@ -155,17 +172,31 @@ function refusal(error: unknown, call: Call): RouteResponse {
     path: route.path,
     problem,
     ...(execution === undefined ? {} : { execution }),
-  });
-
-  return {
-    status: problem.status,
-    headers: {
-      'content-type': PROBLEM_CONTENT_TYPE,
-      ...cacheHeadersOf(route, problem.status),
-      ...identifierHeaders(call),
-    },
-    body: problem,
   };
+
+  notify(options, error, context);
+
+  const headers = {
+    'content-type': PROBLEM_CONTENT_TYPE,
+    ...cacheHeadersOf(route, problem.status),
+    ...identifierHeaders(call),
+  };
+
+  return { response: { status: problem.status, headers, body: problem }, context };
+}
+
+async function reportGuardRefusal(options: ExecuteOptions, error: unknown, context: ErrorContext): Promise<void> {
+  const { execution } = context;
+
+  if (options.onGuardRefusal === undefined || execution === undefined || !guardRefusals.has(error)) {
+    return;
+  }
+
+  try {
+    await options.onGuardRefusal({ ...context, execution });
+  } catch {
+    // The request is refused either way: a failing hook must not turn the refusal into a fault.
+  }
 }
 
 function notify(options: ExecuteOptions, error: unknown, context: ErrorContext): void {

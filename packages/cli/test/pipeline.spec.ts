@@ -12,8 +12,8 @@ const source = (file: string): string => pipelineAsset('source', file);
 const template = (file: string): string => pipelineAsset('template', file);
 
 /** Without the architecture specs the unit project of the source is shorter: the formatter lays it out on fewer lines. */
-/** What a template adds for one package manager or one ORM, between its tags. */
-const OPTIONAL_STEPS = /\{\{#if (?:pm\.corepack|orm\.prisma)\}\}\n[\s\S]*?\{\{\/if\}\}\n/g;
+/** What a template adds for one package manager, one ORM or the clients of the contract, between its tags. */
+const OPTIONAL_STEPS = /\{\{#if (?:pm\.corepack|orm\.prisma|sdk\.on)\}\}\n[\s\S]*?\{\{\/if\}\}\n/g;
 
 /** An opt-in job of `--ci-extras`, innermost first: the source of a pipeline is what a project gets without any. */
 const EXTRA_BLOCK = /\{\{#if extras\.\w+\}\}\n(?:(?!\{\{#if)[\s\S])*?\{\{\/if\}\}\n/g;

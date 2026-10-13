@@ -8,4 +8,6 @@ export interface OutboxTablesOptions {
   readonly outboxTable?: string;
   /** Default `processed_events`. */
   readonly processedEventsTable?: string;
+  /** Adds `tenant_id` to the outbox, for a multi-tenant project: pair it with `KnexOutboxStore`'s `tenant`. Default false. */
+  readonly tenant?: boolean;
 }

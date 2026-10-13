@@ -39,6 +39,18 @@ describe('init --http-cache', () => {
     expect(read(root, 'test/e2e/support/test-environment.ts')).toContain("'http://varnish.e2e.test'");
   });
 
+  it('files the tags under the tenant on the answers and on the purges alike, in a multi-tenant project', () => {
+    const shared = initProject('--http-cache', 'varnish', '--tenancy', 'shared-table');
+    const single = initProject('--http-cache', 'varnish');
+
+    expect(read(shared, 'src/platform/auth/http-boundary.ts')).toContain(
+      'cacheTags: { header: CacheTagHeader.xkey, perTenant: true },',
+    );
+
+    expect(read(shared, 'src/platform/compose-application.ts')).toContain('perTenant: true,');
+    expect(read(single, 'src/platform/compose-application.ts')).not.toContain('perTenant');
+  });
+
   it('refuses a shared cache without an API, or without the outbox its purges ride on', () => {
     const inMemory = initFailure('--http-cache', 'varnish', '--orm', 'none');
     const unknown = initFailure('--http-cache', 'squid');

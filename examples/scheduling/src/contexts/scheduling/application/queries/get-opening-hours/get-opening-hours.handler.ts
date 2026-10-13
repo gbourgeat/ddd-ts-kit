@@ -2,11 +2,19 @@ import { QueryHandler } from '@ddd-ts-kit/kernel/declarations';
 import type { Calendar } from '@/contexts/scheduling/domain/aggregates/calendar.aggregate';
 import { CalendarError } from '@/contexts/scheduling/domain/errors/calendar.error';
 import type { CalendarRepository } from '@/contexts/scheduling/domain/repositories/calendar.repository';
-import type { Weekday } from '@/contexts/scheduling/domain/value-objects/opening-hours.vo';
+import { Weekday } from '@/contexts/scheduling/domain/vocabularies/weekday.vocabulary';
 import { GetOpeningHoursQuery } from '@/contexts/scheduling/application/queries/get-opening-hours/get-opening-hours.query';
 import type { GetOpeningHoursResult } from '@/contexts/scheduling/application/queries/get-opening-hours/get-opening-hours.result';
 
-const WEEK: readonly Weekday[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+const WEEK: readonly Weekday[] = [
+  Weekday.Monday,
+  Weekday.Tuesday,
+  Weekday.Wednesday,
+  Weekday.Thursday,
+  Weekday.Friday,
+  Weekday.Saturday,
+  Weekday.Sunday,
+];
 
 @QueryHandler(GetOpeningHoursQuery)
 export class GetOpeningHoursHandler implements QueryHandler<GetOpeningHoursQuery> {

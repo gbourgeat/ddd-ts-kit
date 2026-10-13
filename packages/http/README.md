@@ -87,7 +87,7 @@ const routes = controllerRoutes([PlaceOrderController], { resolve: application.r
 | `Controller(spec)` | the decorator of a controller: `group`, `method`, `path` (after the prefix of the group), `operationId` (the class name without `Controller` by default), `summary`, `description`, `tags`, `params`, `query`, `headers`, `body`, `response: { status, description?, body? }`, `errors`, `guards`, `deprecated`, `cache` and `ifMatch` (see "HTTP caching") |
 | `RouteGroup({ parent, prefix, tags, guards, errors, cache })` | names a set of routes on an empty class; a child inherits from its `parent` and adds; the nearest `cache` wins |
 | `Guard` | the interface `{ documents?, check(request: GuardRequest) }`, and the decorator of a guard class that takes dependencies |
-| `Authenticated`, `Public`, `HasRole(...roles)` | the guards the package ships, over the `Actor` of the request: 401 to the anonymous caller, 403 without one of the roles; `Public` lets everybody in and stands alone |
+| `Authenticated`, `Public`, `HasRole(...roles)`, `HasScope(...scopes)`, `TenantMember` | the guards the package ships, over the `Actor` and the `Session` of the request: 401 to the anonymous caller, 403 without one of the roles, without every scope named (`Session.scopes`, typed by the `SessionScopes` of the project) or outside the tenant of the request; `Public` lets everybody in and stands alone. A refusal of a guard is reported to `onGuardRefusal` |
 | `RequestMapper<Request, Message>`, `Serializer<Result, Body>` | the interfaces of the two optional translators (`map`, `serialize`), and the decorators that declare them |
 | `HttpRequest<{ params, query, headers, body }>` | the request as `handle`, a mapper or a guard names it, with `actor` and `context` |
 | `controllerRoutes(controllers, { resolve, security, guards })` | the `Route` of each controller, given as a class (built by `resolve`) or as an instance; `security` names the schemes of the application (`['bearer']` by default); `guards: 'skip'` is for the spec of a controller alone |
@@ -358,6 +358,16 @@ const options: ExecuteOptions = {
 };
 ```
 
+`onGuardRefusal(refusal)` is told, and awaited, every request a guard refused before its
+controller (`HasRole`, `HasScope`, `TenantMember`, a guard of the project, and a tenant the caller
+does not belong to): its operation, its problem and its execution context. Those refusals reach
+no use case, so the authorization hook of `@ddd-ts-kit/auth` never sees them;
+`auditGuardRefusals(trail, { clock, ids })` of `@ddd-ts-kit/audit` writes each one to the audit
+trail as a denied decision (an anonymous caller's excepted). Only a refusal is reported, a
+`DomainError` such as `UnauthorizedError` or `ForbiddenError`: a guard that fails with another
+error is a fault, answered 500 and not reported. A refusal of a handler is not reported there,
+and a hook that fails does not change the answer.
+
 `around(route, respond)` wraps the whole handling of a request, from authentication to the
 answer, refusals included, and is told the route that was matched (`method`, `path` as
 declared, `operationId`). It is where a tracer names a request `POST /orders/:id/lines` instead
@@ -376,7 +386,7 @@ as `context.execution`:
 | `correlationId` | the incoming `x-correlation-id` when well formed (letters, digits, `._:-`, at most 128), else the request id; echoed in the `x-correlation-id` response header, on problems too, and given to `onError` |
 | `origin` | `http` |
 | `actor`, `session` | from what `resolvePrincipal` answered, read structurally: a `Session` gives both, an `Actor` gives the actor, anything else is the anonymous actor |
-| `tenantId` | the tenant of the actor |
+| `tenantId` | the tenant `resolveTenant` names, once the caller is known to belong to it; the tenant of the actor otherwise |
 | `locale` | the locale of the session, else the preferred language of `Accept-Language` |
 | `deadline` | arrival plus `requestTimeoutMs`, when the option is set |
 
@@ -400,6 +410,36 @@ option that says when a request arrived, the system clock by default.
 
 Use cases still receive the actor explicitly: `new PlaceOrder(context.execution.actor, body)`,
 or `actorOf(context.principal)` of `@ddd-ts-kit/auth`, which reads the same actor.
+
+### The tenant of a request
+
+A multi-tenant application says where a request names its tenant with `resolveTenant`:
+
+```ts
+import { firstTenantOf, tenantFromClaim, tenantFromSubdomain } from '@ddd-ts-kit/http';
+
+const options: ExecuteOptions = {
+  resolveTenant: firstTenantOf(tenantFromSubdomain('app.example.com'), tenantFromClaim()),
+  // or tenantFromHeader('x-tenant-id'), tenantFromPath('tenantId')
+};
+```
+
+| Resolver | Names |
+|---|---|
+| `tenantFromSubdomain(baseDomain)` | the one label left of the base domain in `Host` (`acme.app.example.com`); behind a proxy, have it pass the original host |
+| `tenantFromHeader(name?)` | the value of a header, `x-tenant-id` by default |
+| `tenantFromPath(parameter?)` | a path parameter, `tenantId` by default |
+| `tenantFromClaim()` | the tenant of the credential, `Actor.tenantId` |
+| `firstTenantOf(...resolvers)` | the first that names one |
+
+The pipeline then checks the membership itself, before any guard or handler: an authenticated
+caller that does not belong to the tenant named (its `tenantId`, or its `tenants` attribute for an
+actor of several tenants) is answered 403, so a header or a subdomain chosen by a client never
+opens another tenant's data. An anonymous caller keeps the tenant it addressed, for the public
+routes of a tenant. The guard `TenantMember` puts a group of routes behind a tenant: 401 to the
+anonymous caller, 403 to a request in no tenant or of another tenant. Platform staff do not pass
+it: they reach tenants through an elevation of the kernel (`acrossTenants`), behind guards of their
+own.
 
 ## In the composition root
 

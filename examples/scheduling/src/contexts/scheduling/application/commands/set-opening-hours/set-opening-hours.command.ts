@@ -1,7 +1,7 @@
 import { AuthorizedCommand, type Actor } from '@ddd-ts-kit/kernel';
 import { Requires } from '@ddd-ts-kit/kernel/declarations';
 import { schedulingPermissions } from '@/contexts/scheduling/application/authorization/scheduling.permissions';
-import type { Weekday } from '@/contexts/scheduling/domain/value-objects/opening-hours.vo';
+import type { Weekday } from '@/contexts/scheduling/domain/vocabularies/weekday.vocabulary';
 
 @Requires(schedulingPermissions['calendar.set-opening-hours'], {
   resource: (command: SetOpeningHoursCommand) => ({ type: 'calendar', id: command.calendarId }),

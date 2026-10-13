@@ -19,6 +19,7 @@ import {
   ErrorReporter,
   EventBus,
   ExecutionScope,
+  IdGenerator,
   Logger,
   Metrics,
   QueryBus,
@@ -28,6 +29,7 @@ import {
   type IntegrationEventSubscriber,
 } from '@ddd-ts-kit/kernel';
 import { tracedPublisher } from '@ddd-ts-kit/tracing';
+import { AuditTrail, auditGuardRefusals } from '@ddd-ts-kit/audit';
 import { auditModule } from '@/platform/audit/audit.module';
 import { SearchAuditEntriesController } from '@/platform/audit/search-audit-entries.controller';
 import { authorization } from '@/platform/auth/authorization';
@@ -166,6 +168,10 @@ function running(container: Container, options: ApplicationOptions, contexts: Co
       errorMapper: container.resolve(ErrorMapper),
       clock: container.resolve(Clock),
       logger,
+      refusals: auditGuardRefusals(container.resolve(AuditTrail), {
+        clock: container.resolve(Clock),
+        ids: container.resolve(IdGenerator),
+      }),
       errors: container.resolve(ErrorReporter),
     }),
     // What the outbox relay delivers with: each publication continues the trace stored with its event.

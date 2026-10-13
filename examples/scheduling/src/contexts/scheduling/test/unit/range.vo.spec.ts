@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { unwrap } from '@ddd-ts-kit/kernel';
 import { Range } from '@/contexts/scheduling/domain/value-objects/range.vo';
+import { expectRefusal } from '@ddd-ts-kit/testing';
 
 describe('Range', () => {
   it('is equal to another range between the same times', () => {
@@ -24,10 +24,7 @@ describe('Range', () => {
     ['09:00', '24:30'],
     ['', '12:00'],
   ])('refuses %j to %j as an invalid range', (start, end) => {
-    expect(Range.create(start, end)).toMatchObject({
-      ok: false,
-      error: expect.objectContaining({ code: 'INVALID_RANGE' }),
-    });
+    expectRefusal(() => Range.create(start, end), 'INVALID_RANGE');
   });
 
   it('is written back as its two times', () => {
@@ -56,5 +53,5 @@ describe('Range', () => {
 });
 
 function range(start: string, end: string): Range {
-  return unwrap(Range.create(start, end));
+  return Range.create(start, end);
 }

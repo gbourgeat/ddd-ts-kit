@@ -97,6 +97,9 @@ export const STACKS: readonly StackFlags[] = [
   DISCOVERED_BEHIND_NATS,
   { ...DEFAULT_STACK, broker: 'redis' },
   { ...DEFAULT_STACK, broker: 'kafka', orm: 'knex' },
+  /** Shared tables on both ORMs that generate them: every repository confined to the tenant, the tenant kept in the outbox. */
+  { ...DEFAULT_STACK, tenancy: 'shared-table' },
+  { ...DISCOVERED_ON_KNEX, tenancy: 'shared-table' },
   { ...DEFAULT_STACK, broker: 'nats', style: 'explicit' },
   { ...DEFAULT_STACK, broker: 'kafka', style: 'explicit', cache: 'redis' },
   {

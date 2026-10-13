@@ -1,4 +1,4 @@
-import type { Weekday } from '@/contexts/scheduling/domain/value-objects/opening-hours.vo';
+import type { Weekday } from '@/contexts/scheduling/domain/vocabularies/weekday.vocabulary';
 
 /** The weekly hours of a calendar, each range on its weekday as two wall-clock times `HH:MM`, and the version they were read at. */
 export interface GetOpeningHoursResult {

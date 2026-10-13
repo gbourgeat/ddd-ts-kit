@@ -3,7 +3,7 @@ import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
 import { AppointmentCompleted } from '@/contexts/scheduling/domain/events/appointment-completed.event';
 import { appointmentCompletedV1 } from '@/contexts/scheduling/published-language/appointment-completed.v1.integration-event';
 
-@DomainEventHandler(AppointmentCompleted, { name: 'scheduling.appointment.completed' })
+@DomainEventHandler(AppointmentCompleted, { name: AppointmentCompleted.eventName })
 export class AppointmentCompletedPublisher implements DomainEventHandler<AppointmentCompleted> {
   constructor(
     private readonly publisher: IntegrationEventPublisher,

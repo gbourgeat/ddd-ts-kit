@@ -1,4 +1,4 @@
-import { AggregateRoot, unwrap } from '@ddd-ts-kit/kernel';
+import { AggregateRoot } from '@ddd-ts-kit/kernel';
 import { AppointmentError } from '@/contexts/scheduling/domain/errors/appointment.error';
 import { CalendarError } from '@/contexts/scheduling/domain/errors/calendar.error';
 import { CalendarAppointmentTypeDefined } from '@/contexts/scheduling/domain/events/calendar-appointment-type-defined.event';
@@ -148,7 +148,7 @@ export class Calendar extends AggregateRoot<string> {
 
   /** The patient as a waiter for a type the calendar offers. */
   admit(patientId: string, appointmentTypeId: string, now: Date): Waiter {
-    return unwrap(Waiter.create({ patientId, appointmentTypeId: this.typeOf(appointmentTypeId).id, joinedAt: now }));
+    return Waiter.create({ patientId, appointmentTypeId: this.typeOf(appointmentTypeId).id, joinedAt: now });
   }
 
   /** The ranges the calendar is open on, a day `YYYY-MM-DD` of the practice: those of its exception, or the weekly ones. */

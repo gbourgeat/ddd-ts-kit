@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { InMemoryCommandBus, unwrap } from '@ddd-ts-kit/kernel';
+import { InMemoryCommandBus } from '@ddd-ts-kit/kernel';
 import { OfferFreedSlotCommand } from '@/contexts/scheduling/application/commands/offer-freed-slot/offer-freed-slot.command';
 import { AppointmentRescheduledEventHandler } from '@/contexts/scheduling/application/event-handlers/appointment-rescheduled.event-handler';
 import { AppointmentRescheduled } from '@/contexts/scheduling/domain/events/appointment-rescheduled.event';
@@ -22,7 +22,7 @@ describe('When appointment rescheduled', () => {
 
     await handler.handle(
       new AppointmentRescheduled('appointment-1', occurredAt, {
-        booking: unwrap(held.booking.movedTo(Slot.between(at('14:00'), at('14:30'), at('14:30')), '2026-03-02')),
+        booking: held.booking.movedTo(Slot.between(at('14:00'), at('14:30'), at('14:30')), '2026-03-02'),
         previous: held.booking,
       }),
     );
@@ -37,7 +37,7 @@ describe('When appointment rescheduled', () => {
 
     await handler.handle(
       new AppointmentRescheduled('appointment-1', occurredAt, {
-        booking: unwrap(held.booking.movedTo(Slot.between(at('14:00'), at('14:30'), at('14:30')), '2026-03-02')),
+        booking: held.booking.movedTo(Slot.between(at('14:00'), at('14:30'), at('14:30')), '2026-03-02'),
         previous: held.booking,
       }),
     );

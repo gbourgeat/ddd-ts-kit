@@ -17,8 +17,8 @@ In a role file (the table below), other than `*.command.ts` and `*.query.ts`, wh
 
 On any class of `application/`, `infrastructure/`, `presentation/` or the context root:
 
-- `@IntegrationEventHandler(definition, { consumer })`, `@Policy(permission, { name })` or `@DomainEventHandler(Event, { name })` whose name is not a non-empty string literal: missing, empty, a variable, a template with a substitution, options held in a variable or only spread
-- `@DomainEventHandler(Event, { name })` whose `name` differs from the `name` literal of the event class, when that class is in view
+- `@IntegrationEventHandler(definition, { consumer })`, `@Policy(permission, { name })` or `@DomainEventHandler(Event, { name })` whose name is not a non-empty string literal: missing, empty, a variable, a template with a substitution, options held in a variable or only spread. A domain event handler may instead read the name its event class declares, `@DomainEventHandler(InvoiceIssued, { name: InvoiceIssued.eventName })`, the class being the one it is given
+- `@DomainEventHandler(Event, { name })` whose `name`, written out, differs from the name the event class declares, when that class is in view
 
 Under `domain/`:
 
@@ -92,7 +92,7 @@ A decorator counts when its name is one of the twelve declaration decorators and
 
 The role of a file is read from its suffix and its folder, as the generator writes them. A class is exported inline, by `export { A }` or by `export default A`. When a class carries another declaration decorator, only that is reported: fixing it also answers the missing one.
 
-The event class of `@DomainEventHandler` is in view when it is declared in the same file, or imported by name from a source of the project that exists on disk; that file is then parsed, syntax only, and its `readonly name = '...'` property is read (`as const` and `satisfies` are looked through). When the class cannot be found, or its name is not a literal, nothing is compared.
+The event class of `@DomainEventHandler` is in view when it is declared in the same file, or imported by name from a source of the project that exists on disk; that file is then parsed, syntax only, and its `static readonly eventName = '...'` (or, as 0.5 wrote it, its `readonly name = '...'`) is read (`as const` and `satisfies` are looked through). When the class cannot be found, or its name is not a literal, nothing is compared.
 
 ## Options
 

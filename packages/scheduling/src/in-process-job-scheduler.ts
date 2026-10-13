@@ -1,5 +1,6 @@
 import {
   DuplicateJobError,
+  InvalidJobScheduleError,
   NoopLogger,
   NoopMetrics,
   UnknownJobError,
@@ -13,6 +14,7 @@ import {
   type Lock,
   type Logger,
   type Metrics,
+  type TenantDirectory,
 } from '@ddd-ts-kit/kernel';
 import { JobAbortedError } from './errors/job-aborted-error.js';
 import type { JobCheckpoints } from './job-checkpoints.js';
@@ -52,9 +54,13 @@ export interface InProcessJobSchedulerOptions {
   /** How long the lock of an occurrence is kept for a job without `timeoutMs`. Default 900 000. */
   readonly lockTtlMs?: number;
   readonly onRun?: JobRunObserver;
+  /** The tenants a job declared `tenancy: 'per-tenant'` runs for, one run each. Required to register one. */
+  readonly tenants?: TenantDirectory;
 }
 
-type Settings = Required<Omit<InProcessJobSchedulerOptions, 'checkpoints' | 'onRun' | 'lock' | 'scope' | 'ids'>> &
+type Settings = Required<
+  Omit<InProcessJobSchedulerOptions, 'checkpoints' | 'onRun' | 'lock' | 'scope' | 'ids' | 'tenants'>
+> &
   Pick<InProcessJobSchedulerOptions, 'checkpoints'>;
 
 /*
@@ -113,7 +119,9 @@ export class InProcessJobScheduler implements JobScheduler {
     };
 
     this.recorder = new JobRecorder({ clock, logger, metrics, ...(onRun === undefined ? {} : { onRun }) });
-    this.runner = new JobRunner({ clock, lock, scope, ids, timers, lockTtlMs, lateAfterMs }, this.recorder);
+    const runner = { clock, lock, scope, ids, timers, lockTtlMs, lateAfterMs };
+
+    this.runner = new JobRunner({ ...runner, ...tenantsOf(options) }, this.recorder);
   }
 
   register(definition: JobDefinition): void {
@@ -122,6 +130,12 @@ export class InProcessJobScheduler implements JobScheduler {
     }
 
     const job = new RegisteredJob(definition);
+
+    if (job.policy.tenancy === 'per-tenant' && !this.runner.knowsTenants()) {
+      throw new InvalidJobScheduleError(
+        `${job.name} runs per tenant: give the scheduler a TenantDirectory (option tenants) to say which.`,
+      );
+    }
 
     this.jobs.set(job.name, job);
 
@@ -301,4 +315,8 @@ export class InProcessJobScheduler implements JobScheduler {
 
     return this.stopping ? this.recorder.notRun(job, occurrence, 'missed') : this.runner.run(job, occurrence);
   }
+}
+
+function tenantsOf({ tenants }: InProcessJobSchedulerOptions): { readonly tenants?: TenantDirectory } {
+  return tenants === undefined ? {} : { tenants };
 }

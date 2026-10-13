@@ -1,7 +1,9 @@
 import type { DomainEvent } from '@ddd-ts-kit/kernel';
 
 export class CalendarAppointmentTypeDefined implements DomainEvent {
-  readonly name = 'scheduling.calendar.appointment-type-defined';
+  static readonly eventName = 'scheduling.calendar.appointment-type-defined';
+
+  readonly name = CalendarAppointmentTypeDefined.eventName;
 
   constructor(
     readonly aggregateId: string,

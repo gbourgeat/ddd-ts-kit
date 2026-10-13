@@ -8,6 +8,7 @@ import {
   type IntegrationEventSubscriber,
 } from '@ddd-ts-kit/kernel';
 import { createHttpClient, type HttpClient } from '@ddd-ts-kit/testing/e2e';
+import { type Client, createClient } from 'scheduling-api-client';
 import { relateSystemActors } from '@/platform/auth/relate-system-actors';
 import { composeApplication, type Application } from '@/platform/compose-application';
 import type { AppConfig } from '@/platform/config/app-config';
@@ -27,6 +28,8 @@ import { noRedis, testEnvironment } from '$test/e2e/support/test-environment';
 /** The whole application, real adapters included, as a client and another context see it. */
 export interface RunningApplication {
   readonly client: HttpClient;
+  /** The typed client of the contract (`clients/api`), as a consumer of the API calls it; it presents no credential. */
+  readonly api: Client;
   /** Subscribe here (`collectEvents`) to assert the integration events the application publishes. */
   readonly events: IntegrationEventSubscriber;
   /** What the relay purged from the shared caches, once each command committed: `purges.purged` lists the tags. */
@@ -34,6 +37,9 @@ export interface RunningApplication {
 
   /** A client presenting the credential of `actor`; `client` itself presents none. */
   as(actor: TestActor): Promise<HttpClient>;
+
+  /** The typed client presenting the credential of `actor`, given as the client is given it: a function asked before each request. */
+  apiAs(actor: TestActor): Client;
 
   /** Stores a relationship, as the application does when an element is created or shared. */
   relate(tuple: RelationTuple): Promise<void>;
@@ -68,11 +74,7 @@ export async function startApplication(options: StartOptions = {}): Promise<Runn
   // An empty variable (a blank line of .env) means the same as none.
   const url = process.env['DATABASE_URL'] === '' ? undefined : process.env['DATABASE_URL'];
   const database = await openTestDatabase(url);
-
-  const config = loadConfig(
-    testEnvironment({ DATABASE_URL: url ?? 'postgres://in-process/tests', ...backendPortOf(options) }),
-  );
-
+  const config = configOf(url, options);
   const credentials = await createCredentials();
   const redis = config.redisUrl === noRedis ? undefined : openRedis(config);
   const persistence = options.storage?.(database.persistence) ?? database.persistence;
@@ -89,15 +91,18 @@ export async function startApplication(options: StartOptions = {}): Promise<Runn
   const purges = new InMemoryCachePurger();
   const relay = relayOf(persistence, application, purgerOf(purges, options, config));
   const server = await startHttpServer(application, config);
-  const client = createHttpClient('http://127.0.0.1:' + server.port);
+  const baseUrl = 'http://127.0.0.1:' + server.port;
+  const client = createHttpClient(baseUrl);
   // The store of the running application: what a test relates is what its authorizer reads.
   const tuples = application.container.resolve(RelationTupleStore);
 
   return {
     client,
+    api: createClient({ baseUrl }),
     events: application.eventSubscriber,
     purges,
     as: async (actor) => client.withHeaders(await credentials.headersOf(actor)),
+    apiAs: (actor) => createClient({ baseUrl, credentials: { bearer: () => credentials.bearerOf(actor) } }),
     relate: (tuple) => tuples.write([tuple]),
     reset: () => relay.whileStopped(() => database.reset().then(() => relateSystemActors(tuples))),
     close: () => closeInOrder({ server, relay, application, redis, database }),
@@ -113,6 +118,10 @@ function observedOf(options: StartOptions): Pick<StartOptions, 'log' | 'errors'>
     ...(options.log === undefined ? {} : { log: options.log }),
     ...(options.errors === undefined ? {} : { errors: options.errors }),
   };
+}
+
+function configOf(url: string | undefined, options: StartOptions): AppConfig {
+  return loadConfig(testEnvironment({ DATABASE_URL: url ?? 'postgres://in-process/tests', ...backendPortOf(options) }));
 }
 
 /** The port of the VCL, when the spec reads the API through Varnish; a free one otherwise. */

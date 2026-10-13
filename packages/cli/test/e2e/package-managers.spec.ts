@@ -19,9 +19,13 @@ const LOCKFILES: Readonly<Record<Manager, string>> = { npm: 'package-lock.json',
 const only = process.env['DDD_TS_KIT_PACKAGE_MANAGER'];
 const managers = (['npm', 'pnpm'] as const).filter((manager) => only === undefined || only === manager);
 
+/** The default stack carries the clients of its contract: workspace packages that the frozen install must accept. */
+const WITH_CLIENTS: readonly string[] = ['--sdk'];
+const WITHOUT: readonly string[] = [];
+
 const CASES = managers.flatMap((manager) => [
-  [manager, 'the default stack', DEFAULT_STACK] as const,
-  [manager, 'nest and prisma', HEAVY] as const,
+  [manager, 'the default stack with its clients', DEFAULT_STACK, WITH_CLIENTS] as const,
+  [manager, 'nest and prisma', HEAVY, WITHOUT] as const,
 ]);
 
 /**
@@ -32,7 +36,7 @@ const CASES = managers.flatMap((manager) => [
  * a pipeline, the build, and `verify`, which chains every gate of the baseline.
  * `DDD_TS_KIT_PACKAGE_MANAGER` narrows the run to one manager, which is how the pipeline splits it.
  */
-describe.runIf(SLOW).each(CASES)('a project on %s (%s)', (manager, _label, stack) => {
+describe.runIf(SLOW).each(CASES)('a project on %s (%s)', (manager, _label, stack, more) => {
   let root: string;
   let frozen: string;
 
@@ -40,7 +44,7 @@ describe.runIf(SLOW).each(CASES)('a project on %s (%s)', (manager, _label, stack
 
   beforeAll(() => {
     root = tempDir(`on-${manager}`);
-    scaffoldEverything(root, stack, ['--package-manager', manager, '--ci', 'both']);
+    scaffoldEverything(root, stack, ['--package-manager', manager, '--ci', 'both', ...more]);
     frozen = installForReal(root, manager);
   }, 600_000);
 
@@ -49,6 +53,7 @@ describe.runIf(SLOW).each(CASES)('a project on %s (%s)', (manager, _label, stack
     expect(exists(root, 'node_modules/ddd-ts-kit/dist/bin.js')).toBe(true);
     expect(exists(root, 'node_modules/@ddd-ts-kit/kernel/dist/index.js')).toBe(true);
     expect(frozen).not.toMatch(/ERR_|EUSAGE/);
+    expect(read(root, LOCKFILES[manager]).includes('clients/api')).toBe(more.includes('--sdk'));
 
     expect(read(root, 'package.json')).toContain(
       manager === 'npm' ? '"npm run typecheck' : `"${manager} run typecheck`,

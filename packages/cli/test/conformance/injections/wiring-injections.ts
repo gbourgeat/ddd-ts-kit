@@ -40,7 +40,7 @@ export const WIRING_INJECTIONS: readonly Injection[] = [
     changes: [
       {
         file: EVENT_HANDLER,
-        from: "{ name: 'notification.reminder.sent' }",
+        from: '{ name: ReminderSent.eventName }',
         to: "{ name: 'notification.reminder.planned' }",
       },
     ],

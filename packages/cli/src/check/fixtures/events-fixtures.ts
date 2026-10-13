@@ -28,6 +28,15 @@ export const EVENTS_FIXTURES: readonly Fixture[] = [
   },
   {
     ruleId: 'events/name-format',
+    name: 'a domain event declaring once a name like its class',
+    expect: { file: EVENT },
+    files: project({
+      [EVENT]:
+        "export class InvoiceIssued {\n  static readonly eventName = 'InvoiceIssued';\n\n  readonly name = InvoiceIssued.eventName;\n}\n",
+    }),
+  },
+  {
+    ruleId: 'events/name-format',
     name: 'an integration event carrying the prefix of another context',
     expect: { file: PUBLISHED },
     files: project({ [PUBLISHED]: `${DECLARE}${declaration('catalog.invoice.issued')}` }),

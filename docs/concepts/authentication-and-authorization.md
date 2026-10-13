@@ -168,6 +168,10 @@ is the place to start in most projects, and it is what the running domain uses: 
 delegate their bookings to relatives, or practitioners share calendars with assistants, the
 calendars context moves to relationships.
 
+The questions to ask, in order, and a worked preset for each model (typed permissions and roles,
+a policy on one element, a scoped search) are in the guide
+[Choosing access control](../guides/choosing-access-control.md).
+
 ## What changes when the model changes
 
 The adapter given to the authorization module, and the data that adapter needs. From roles to
@@ -223,6 +227,8 @@ short while without its relationship.
 - [Invariants, permissions and validation](invariants-permissions-validation.md)
 - [The actor and the execution scope](actor-and-execution-scope.md)
 - [Audit trail](audit-trail.md)
+- [Choosing access control](../guides/choosing-access-control.md): the decision guide and the worked presets
+- [Multitenancy](multitenancy.md)
 - [Identity providers](../tools/identity.md)
 - [Authorization engines](../tools/authorization-engines.md)
 - [Architecture reference](../ARCHITECTURE.md): rules `authz/declared`, `authz/in-application`,

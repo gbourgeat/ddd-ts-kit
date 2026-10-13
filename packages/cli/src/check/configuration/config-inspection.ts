@@ -1,6 +1,7 @@
 import {
   ciExtraProblems,
   openApiProblems,
+  sdkProblems,
   CLASSIFICATIONS,
   commitLimitProblems,
   coverageProblems,
@@ -148,6 +149,11 @@ export class ConfigInspection {
     return openApiProblems(rawConfig(this.project)['openapi'], contexts).map(({ key, message, fix }) =>
       this.inConfig(key, message, fix),
     );
+  }
+
+  /** A client the config asks for that npm would not publish as it says. */
+  sdkSettings(): Violation[] {
+    return sdkProblems(rawConfig(this.project)['sdk']).map(({ key, message, fix }) => this.inConfig(key, message, fix));
   }
 
   /** A threshold that is not a percentage is read as the reference: the config says something no run enforces. */

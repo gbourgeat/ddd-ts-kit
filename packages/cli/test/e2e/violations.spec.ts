@@ -56,7 +56,7 @@ describe.runIf(SLOW)('a violation written into a generated project', () => {
   }, 120_000);
 
   it('both analyzers catch a domain event handler named after another event than the one it handles', () => {
-    project.edit(EVENT_HANDLER, "{ name: 'billing.invoice.issued' }", "{ name: 'billing.invoice.sent' }");
+    project.edit(EVENT_HANDLER, '{ name: InvoiceIssued.eventName }', "{ name: 'billing.invoice.sent' }");
 
     expect(project.checkedRules()).toContain('declarations/role-declared');
     expect(project.linted(EVENT_HANDLER)).toContain('ddd-ts-kit/declarations-role-declared');

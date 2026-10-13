@@ -1,4 +1,3 @@
-import { unwrap } from '@ddd-ts-kit/kernel';
 import { Builder, sequence, type Defaults } from '@ddd-ts-kit/testing';
 import { Calendar } from '@/contexts/scheduling/domain/aggregates/calendar.aggregate';
 import {
@@ -6,7 +5,8 @@ import {
   type AppointmentTypeProps,
 } from '@/contexts/scheduling/domain/value-objects/appointment-type.vo';
 import { Exception } from '@/contexts/scheduling/domain/value-objects/exception.vo';
-import { OpeningHours, type Weekday } from '@/contexts/scheduling/domain/value-objects/opening-hours.vo';
+import { OpeningHours } from '@/contexts/scheduling/domain/value-objects/opening-hours.vo';
+import type { Weekday } from '@/contexts/scheduling/domain/vocabularies/weekday.vocabulary';
 import { Range } from '@/contexts/scheduling/domain/value-objects/range.vo';
 import { TimeOff } from '@/contexts/scheduling/domain/value-objects/time-off.vo';
 import { TimeZone } from '@/contexts/scheduling/domain/value-objects/time-zone.vo';
@@ -91,7 +91,7 @@ export class CalendarBuilder extends Builder<CalendarIngredients, Calendar> {
 
     const built = Calendar.create(
       id,
-      { practiceId, practitionerId, timeZone: unwrap(TimeZone.create(ingredients.timeZone)) },
+      { practiceId, practitionerId, timeZone: TimeZone.create(ingredients.timeZone) },
       bornAt,
     );
 
@@ -105,22 +105,20 @@ export class CalendarBuilder extends Builder<CalendarIngredients, Calendar> {
 function furnish(built: Calendar, { bornAt, week, exceptions, timeOffs, appointmentTypes }: CalendarIngredients): void {
   if (Object.keys(week).length > 0) {
     built.setOpeningHours(
-      unwrap(
-        OpeningHours.create(
-          Object.fromEntries(Object.entries(week).map(([weekday, hours]) => [weekday, rangesOf(hours)])),
-        ),
+      OpeningHours.create(
+        Object.fromEntries(Object.entries(week).map(([weekday, hours]) => [weekday, rangesOf(hours)])),
       ),
       bornAt,
     );
   }
 
-  exceptions.forEach(([day, hours]) => built.addException(unwrap(Exception.create(day, rangesOf(hours))), bornAt));
-  timeOffs.forEach(([startsAt, endsAt]) => built.addTimeOff(unwrap(TimeOff.create(startsAt, endsAt)), [], bornAt));
-  appointmentTypes.forEach((facts) => built.defineAppointmentType(unwrap(AppointmentType.create(facts)), bornAt));
+  exceptions.forEach(([day, hours]) => built.addException(Exception.create(day, rangesOf(hours)), bornAt));
+  timeOffs.forEach(([startsAt, endsAt]) => built.addTimeOff(TimeOff.create(startsAt, endsAt), [], bornAt));
+  appointmentTypes.forEach((facts) => built.defineAppointmentType(AppointmentType.create(facts), bornAt));
 }
 
 function rangesOf(hours: Hours): readonly Range[] {
-  return hours.map(([start, end]) => unwrap(Range.create(start, end)));
+  return hours.map(([start, end]) => Range.create(start, end));
 }
 
 export function aCalendar(): CalendarBuilder {

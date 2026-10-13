@@ -1,7 +1,12 @@
 import type { AuditEntry, AuditFilter, AuditSortField } from '@ddd-ts-kit/audit';
 import { AuthorizedQuery, type Actor, type Page, type PageRequest } from '@ddd-ts-kit/kernel';
 
+{{#if tenancy.any}}
+/** What a reader of the trail may narrow the search by. The tenant is the one of the work, never a filter. */
+{{/if}}
+{{#unless tenancy.any}}
 /** What a reader of the trail may narrow the search by. The tenant is not among them: it is the one of the actor. */
+{{/unless}}
 export type AuditEntriesFilter = Pick<AuditFilter, 'actorId' | 'action' | 'outcome' | 'correlationId'>;
 
 /** A page of the audit trail, for whoever holds `audit:trail.read`. */

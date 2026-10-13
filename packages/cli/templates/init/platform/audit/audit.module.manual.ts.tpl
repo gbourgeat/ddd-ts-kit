@@ -29,7 +29,12 @@ interface AuditWiring {
  * use case so that reading the trail is authorized and recorded.
  */
 export function auditModule(platform: Platform): AuditWiring {
+{{#if tenancy.any}}
+  platform.queries.register(SearchAuditEntriesQuery, new SearchAuditEntriesHandler(platform.audit.reader), {
+{{/if}}
+{{#unless tenancy.any}}
   platform.queries.register(SearchAuditEntriesQuery, new SearchAuditEntriesHandler(platform.audit.trail), {
+{{/unless}}
     context: 'audit',
   });
 

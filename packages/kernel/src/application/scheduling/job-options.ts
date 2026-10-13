@@ -21,4 +21,10 @@ export interface JobOptions {
    * an application running several runs it. Best effort: see the scheduler.
    */
   readonly singleInstance?: boolean;
+  /**
+   * `global` (default): one run per occurrence, in no tenant. `per-tenant`: one run per tenant
+   * of the `TenantDirectory` for each occurrence, each in that tenant's execution scope, so the
+   * job reads and writes one tenant at a time; one failing tenant does not stop the others.
+   */
+  readonly tenancy?: 'global' | 'per-tenant';
 }

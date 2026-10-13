@@ -38,11 +38,19 @@ import {
 {{#if http.any}}
   ExecutionScope,
 {{/if}}
+{{#if audit.on}}
+{{#if http.any}}
+  IdGenerator,
+{{/if}}
+{{/if}}
 {{#unless broker.external}}
   IntegrationEventSubscriber,
 {{/unless}}
   Logger,
   Metrics,
+{{#if httpCache.perTenant}}
+  PublishedCacheInvalidation,
+{{/if}}
 {{#if http.any}}
   QueryBus,
 {{/if}}
@@ -57,6 +65,9 @@ import {
 } from '@ddd-ts-kit/kernel';
 import { tracedPublisher } from '@ddd-ts-kit/tracing';
 {{#if audit.on}}
+{{#if http.any}}
+import { AuditTrail, auditGuardRefusals } from '@ddd-ts-kit/audit';
+{{/if}}
 import { auditModule } from '{{alias.platform}}/audit/audit.module{{alias.ext}}';
 {{/if}}
 {{#if audit.functionRoute}}
@@ -206,6 +217,16 @@ function kernel(foundations: Foundations, persistence: Persistence, options: App
     eventPublisher: scopedPublisher(bus, scope),
 {{/unless}}
     eventSubscriber: bus,
+{{#if httpCache.perTenant}}
+    // The purges of the outbox filed under the tenant of the work, as the answers are tagged (`cacheTags.perTenant`).
+    cacheInvalidation: new PublishedCacheInvalidation({
+      publisher: scopedPublisher(new OutboxPublisher(persistence.outbox), scope),
+      ids,
+      clock,
+      scope,
+      perTenant: true,
+    }),
+{{/if}}
 {{#if errors.sentry}}
     // The buses and the jobs report through it, and `container.stop()` flushes it; left out (the tools, the tests), nothing is reported.
     ...(options.errors === undefined ? {} : { errorReporter: options.errors }),
@@ -232,6 +253,12 @@ function running(container: Container, options: ApplicationOptions, contexts: Co
       errorMapper: container.resolve(ErrorMapper),
       clock: container.resolve(Clock),
       logger,
+{{#if audit.on}}
+      refusals: auditGuardRefusals(container.resolve(AuditTrail), {
+        clock: container.resolve(Clock),
+        ids: container.resolve(IdGenerator),
+      }),
+{{/if}}
 {{#if errors.sentry}}
       errors: container.resolve(ErrorReporter),
 {{/if}}

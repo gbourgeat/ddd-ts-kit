@@ -26,7 +26,16 @@ class OpenCarts extends Command<undefined> {
   }
 }
 
-const pause = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
+/** A step another command waits for: the order of two commands is told, never left to timers. */
+function signal(): { readonly promise: Promise<void>; readonly resolve: () => void } {
+  let resolve = (): void => undefined;
+
+  const promise = new Promise<void>((done) => {
+    resolve = done;
+  });
+
+  return { promise, resolve };
+}
 
 /** A command bus over a unit of work that notes its transaction, and a bench whose handlers note what they see. */
 function aShop() {
@@ -273,7 +282,14 @@ describe('the scope of a unit of work', () => {
     const seen = new Map<string, string[]>();
     const unitOfWork = new InMemoryUnitOfWork();
 
-    const command = async (name: string, ms: number): Promise<void> => {
+    const aSavedOnce = signal();
+    const bCommitted = signal();
+
+    const command = async (
+      name: string,
+      waits: readonly [Promise<void>, Promise<void>],
+      afterFirstSave = (): void => undefined,
+    ): Promise<void> => {
       const mine: string[] = [];
 
       seen.set(name, mine);
@@ -285,14 +301,20 @@ describe('the scope of a unit of work', () => {
           }
         });
 
+        await waits[0];
         await carts.save(Cart.open(`${name}1`));
-        await pause(ms);
+        afterFirstSave();
+        await waits[1];
         await carts.save(Cart.open(`${name}2`));
-        await pause(ms);
       });
     };
 
-    await Promise.all([command('a', 12), command('b', 3)]);
+    const now = Promise.resolve();
+
+    await Promise.all([
+      command('a', [now, bCommitted.promise], aSavedOnce.resolve),
+      command('b', [aSavedOnce.promise, now]).then(bCommitted.resolve),
+    ]);
 
     expect(carts.saved).toEqual(['a1', 'b1', 'b2', 'a2']);
     expect(seen.get('b')).toEqual(['b1 after 3 saves', 'b2 after 3 saves']);

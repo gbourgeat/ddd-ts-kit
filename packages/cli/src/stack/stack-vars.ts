@@ -14,14 +14,14 @@ import { usesLegacyDecorators } from './uses-legacy-decorators.js';
 
 /** The choices of the stack as template variables: what every template of `init` and of `generate` reads. */
 export function stackVars(config: Config): RenderContext {
-  const { validation, di, tests, orm, authz, style, logger, refusals, httpCache } = config.stack;
+  const { validation, di, tests, orm, authz, style, logger, refusals, valueObjects, literals, tenancy } = config.stack;
   const legacy = usesLegacyDecorators(config);
 
   return {
     style: one(style, ['declared', 'explicit']),
     assembly: assemblyVars(config),
     decorators: { legacy, standard: !legacy },
-    http: httpVars(config),
+    ...edgeVars(config),
     validation: one(validation, ['zod', 'class-validator', 'standard-schema', 'none']),
     di: one(di, ['tsyringe', 'nest', 'manual']),
     orm: { ...one(orm, ['drizzle', 'knex', 'prisma', 'typeorm', 'custom', 'none']), any: orm !== 'none' },
@@ -30,11 +30,12 @@ export function stackVars(config: Config): RenderContext {
     authz: one(authz, ['rbac', 'abac', 'rebac', 'custom']),
     broker: brokerVars(config),
     cache: cacheVars(config),
-    httpCache: one(httpCache, ['none', 'varnish']),
     redis: redisVars(config),
     audit: auditVars(config),
     errors: errorVars(config),
     refusals: one(refusals, ['factories', 'classes']),
+    valueObjects: one(valueObjects, ['throwing', 'result']),
+    literals: one(literals, ['named', 'free']),
     routes: routeVars(config),
     logger: one(logger, ['stdout', 'pino', 'winston']),
     tests: { ...one(tests, ['vitest', 'jest']), module: tests === 'jest' ? '@jest/globals' : 'vitest' },
@@ -42,6 +43,7 @@ export function stackVars(config: Config): RenderContext {
     config: platformPaths(config),
     alias: aliasVars(config),
     persistence: persistenceVars(config),
+    tenancy: { ...one(tenancy, ['none', 'shared-table']), any: tenancy !== 'none' },
   };
 }
 
@@ -69,6 +71,15 @@ function assemblyVars(config: Config): RenderContext {
     barrel: style === 'declared' && assembly === 'barrel',
     discovery: style === 'declared' && assembly === 'discovery',
   };
+}
+
+/** The HTTP framework, and the shared cache in front of it. */
+function edgeVars(config: Config): RenderContext {
+  const { httpCache, tenancy } = config.stack;
+  // A multi-tenant application files its tags under the tenant, on the answers and on the purges alike.
+  const perTenant = httpCache !== 'none' && tenancy !== 'none';
+
+  return { http: httpVars(config), httpCache: { ...one(httpCache, ['none', 'varnish']), perTenant } };
 }
 
 function httpVars(config: Config): RenderContext {

@@ -119,7 +119,7 @@ export class InvoiceOnOrderPlaced implements IntegrationEventHandler<OrderPlaced
 import { IdGenerator, IntegrationEventPublisher } from '@ddd-ts-kit/kernel';
 import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
 
-@DomainEventHandler(InvoiceIssued, { name: 'billing.invoice.issued' })
+@DomainEventHandler(InvoiceIssued, { name: InvoiceIssued.eventName })
 export class InvoiceIssuedPublisher implements DomainEventHandler<InvoiceIssued> {
   constructor(
     private readonly publisher: IntegrationEventPublisher,
@@ -1027,7 +1027,7 @@ the database is an `after-commit` handler when it may be lost, an integration ev
 outbox when it must not:
 
 ```ts
-@DomainEventHandler(InvoiceIssued, { name: 'billing.invoice.issued', phase: 'after-commit' })
+@DomainEventHandler(InvoiceIssued, { name: InvoiceIssued.eventName, phase: 'after-commit' })
 export class InvoiceIssuedEventHandler implements DomainEventHandler<InvoiceIssued> {
   constructor(private readonly cache: Cache) {}
 

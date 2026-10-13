@@ -1,4 +1,4 @@
-import { ValueObject, err, ok, type Result } from '@ddd-ts-kit/kernel';
+import { ValueObject } from '@ddd-ts-kit/kernel';
 import { WaitlistError } from '@/contexts/scheduling/domain/errors/waitlist.error';
 
 export type WaiterProps = {
@@ -13,26 +13,24 @@ export class Waiter extends ValueObject<WaiterProps> {
     super(props);
   }
 
-  static create(props: WaiterProps): Result<Waiter, WaitlistError> {
+  static create(props: WaiterProps): Waiter {
     if (props.patientId.trim().length === 0) {
-      return err(WaitlistError.invalidWaiter('names a patient'));
+      throw WaitlistError.invalidWaiter('names a patient');
     }
 
     if (props.appointmentTypeId.trim().length === 0) {
-      return err(WaitlistError.invalidWaiter('names an appointment type'));
+      throw WaitlistError.invalidWaiter('names an appointment type');
     }
 
     if (Number.isNaN(props.joinedAt.getTime())) {
-      return err(WaitlistError.invalidWaiter('joined at a real instant'));
+      throw WaitlistError.invalidWaiter('joined at a real instant');
     }
 
-    return ok(
-      new Waiter({
-        patientId: props.patientId.trim(),
-        appointmentTypeId: props.appointmentTypeId.trim(),
-        joinedAt: new Date(props.joinedAt),
-      }),
-    );
+    return new Waiter({
+      patientId: props.patientId.trim(),
+      appointmentTypeId: props.appointmentTypeId.trim(),
+      joinedAt: new Date(props.joinedAt),
+    });
   }
 
   get patientId(): string {

@@ -1,5 +1,5 @@
 import type { IntegrationEvent } from '@ddd-ts-kit/kernel';
-import { CORRELATION_HEADER, EVENT_VERSION_HEADER, TRACEPARENT_HEADER } from './headers.js';
+import { CORRELATION_HEADER, EVENT_VERSION_HEADER, TENANT_HEADER, TRACEPARENT_HEADER } from './headers.js';
 import type { Publication } from './publication.js';
 
 /**
@@ -19,6 +19,7 @@ export function encode(event: IntegrationEvent): Publication {
         [EVENT_VERSION_HEADER]: event.version,
         ...(event.traceparent === undefined ? {} : { [TRACEPARENT_HEADER]: event.traceparent }),
         ...(event.correlationId === undefined ? {} : { [CORRELATION_HEADER]: event.correlationId }),
+        ...(event.tenantId === undefined ? {} : { [TENANT_HEADER]: event.tenantId }),
       },
     },
   };

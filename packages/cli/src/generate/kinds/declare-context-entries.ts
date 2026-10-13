@@ -3,6 +3,7 @@ import { DISCOVERED_SUFFIXES, EDGE_SUFFIXES } from '../../declared/index.js';
 import type { Workspace } from '../../workspace/index.js';
 import { isDeclared } from '../is-declared.js';
 import { editJson } from './extraction/edit-json.js';
+import { knipProject } from './knip-project.js';
 
 const KNIP_FILE = 'knip.json';
 const PUBLISHED_LANGUAGE = 'published-language/index';
@@ -20,7 +21,8 @@ export function declareContextEntries(ws: Workspace, config: Config): void {
     return;
   }
 
-  editJson(ws, KNIP_FILE, (knip) => {
+  editJson(ws, KNIP_FILE, (file) => {
+    const knip = knipProject(file);
     const entries: unknown[] = Array.isArray(knip['entry']) ? knip['entry'] : [];
 
     if (!entries.some((entry) => typeof entry === 'string' && entry.includes(PUBLISHED_LANGUAGE))) {
