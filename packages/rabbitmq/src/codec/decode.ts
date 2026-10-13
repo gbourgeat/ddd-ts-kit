@@ -1,5 +1,5 @@
 import type { Message } from 'amqplib';
-import type { IntegrationEvent } from '@ddd-ts-kit/kernel';
+import { isTenantId, type IntegrationEvent } from '@ddd-ts-kit/kernel';
 
 /** The envelope exactly as published, or `undefined` for a body that is not one (poison). */
 export function decode(message: Message): IntegrationEvent | undefined {
@@ -17,6 +17,7 @@ export function decode(message: Message): IntegrationEvent | undefined {
     payload: body.payload,
     ...(typeof body.traceparent === 'string' ? { traceparent: body.traceparent } : {}),
     ...(typeof body.correlationId === 'string' ? { correlationId: body.correlationId } : {}),
+    ...(isTenantId(body.tenantId) ? { tenantId: body.tenantId } : {}),
   };
 }
 
@@ -28,6 +29,7 @@ interface Envelope {
   readonly payload?: unknown;
   readonly traceparent?: unknown;
   readonly correlationId?: unknown;
+  readonly tenantId?: unknown;
 }
 
 function parsed(content: Buffer): unknown {
@@ -48,7 +50,9 @@ function isEnvelope(body: unknown): body is Envelope {
     hasText(body, 'type') &&
     hasText(body, 'occurredAt') &&
     'version' in body &&
-    typeof body.version === 'number'
+    typeof body.version === 'number' &&
+    // A tenant outside the grammar could widen what the consumer reaches: the envelope is poison.
+    (!('tenantId' in body) || body.tenantId === undefined || isTenantId(body.tenantId))
   );
 }
 

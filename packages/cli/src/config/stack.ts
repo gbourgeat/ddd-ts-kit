@@ -22,6 +22,13 @@ export const AUDIT_MODES = ['on', 'off'] as const;
 export const ERROR_REPORTERS = ['none', 'sentry'] as const;
 export const LOGGERS = ['stdout', 'pino', 'winston'] as const;
 export const PACKAGE_MANAGERS = ['npm', 'pnpm'] as const;
+export const TENANCY_STRATEGIES = [
+  'none',
+  'shared-table',
+  'row-level-security',
+  'schema-per-tenant',
+  'database-per-tenant',
+] as const;
 
 export type ValidationStack = (typeof VALIDATION_STACKS)[number];
 export type OrmStack = (typeof ORM_STACKS)[number];
@@ -104,4 +111,13 @@ export interface Stack {
    * written before the choice existed: it is npm.
    */
   readonly packageManager: (typeof PACKAGE_MANAGERS)[number];
+  /**
+   * How the data of one tenant is kept from the others: `none`, one customer; `shared-table`, a
+   * `tenant_id` column that every repository confines its statements to through the helpers of
+   * the ORM package (`tenancy/scoped-statement` holds it). `row-level-security`,
+   * `schema-per-tenant` and `database-per-tenant` are offered by the persistence packages and
+   * read here, but `init` does not generate them yet. A config that says nothing was written
+   * before the choice existed: it is `none`.
+   */
+  readonly tenancy: (typeof TENANCY_STRATEGIES)[number];
 }

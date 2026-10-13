@@ -27,6 +27,7 @@ const STACK_FLAGS = [
   'refusals',
   'routes',
   'literals',
+  'tenancy',
 ] as const;
 
 const OTHER_TEXT_FLAGS = [

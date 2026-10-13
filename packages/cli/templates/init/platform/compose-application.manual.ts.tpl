@@ -120,6 +120,9 @@ export function composeApplication(
       errorMapper: createErrorMapper(),
       clock,
       logger,
+{{#if audit.on}}
+      refusals: platform.audit.refusals,
+{{/if}}
 {{#if errors.sentry}}
       errors: platform.errors,
 {{/if}}

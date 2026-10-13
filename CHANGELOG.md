@@ -4,6 +4,97 @@ What each version changes for someone who uses the kit. The packages of `package
 together, under one version; the notes of each [GitHub release](https://github.com/gbourgeat/ddd-ts-kit/releases)
 list the pull requests behind it.
 
+## 0.8.0
+
+**The tenant travels with every unit of work** ([Multitenancy](docs/concepts/multitenancy.md)).
+
+- `IntegrationEvent.tenantId`: `scopedPublisher` stamps the tenant of the work on every event
+  published without one, `executionContextOfEvent` runs the consumer in it, and the four brokers
+  carry it in the envelope and in a header (`x-tenant-id`; `tenant-id` for Redis Streams). The
+  outbox keeps it where asked: `createOutboxTables(knex, { tenant: true })` or
+  `addOutboxTenantColumn` with `KnexOutboxStore`'s `tenant: true`, `tenantOutboxTable()` for
+  Drizzle. Without them nothing changes: the tenant is not stored, as before.
+- Jobs state `tenancy: 'global'` (the default, as before) or `'per-tenant'`: the in-process
+  scheduler, given a `TenantDirectory` (`tenants`), runs a per-tenant job once per tenant, each
+  run in that tenant's scope, and `JobExecution.tenantId` says which.
+- One grammar for a tenant id, `isTenantId` (letters, digits, `_`, `-`, at most 63): the edge
+  answers 404 to any other, a broker treats an envelope carrying one as poison, and
+  `executionContext` throws `InvalidTenantIdError`. A project whose tenant ids hold other
+  characters (a `.`, a `:`) must map them before upgrading.
+- Kernel: `tenantReachOf`, `tenantsOf`, `isTenantMember`, `tenantKey`, `tenantCacheKey`,
+  `TenantDirectory` and `InMemoryTenantDirectory`, and `acrossTenants`, the explicit elevation of
+  platform staff over tenants, refused without a reason and written to the audit trail before
+  the work runs (`ExecutionContext.elevation`, logged as `elevation`).
+- `@ddd-ts-kit/testing`: `eventBusContract` checks that the tenant of an envelope arrives intact;
+  `outboxStoreContract` does with `carriesTenant: true`.
+
+**Tenant isolation, four strategies, proven by one contract.**
+
+- Shared tables: `tenantTable`, `ownTenantTable` and `whereTenant` (Knex), `tenantCondition` and
+  `ownTenantCondition` (Drizzle): reads reach the tenant of the work or the tenants of an
+  elevation, writes the one tenant of the work. The read model stores of both take `tenant`, and
+  `TenantAuditReader` (`@ddd-ts-kit/audit`) confines every search of the trail to the tenant.
+- Row-level security on PostgreSQL, the second line: `enableTenantIsolation` and
+  `tenantIsolationStatements` (Knex), `tenantPolicies` and `forceRowLevelSecurity` (Drizzle), and
+  `tenantSession(scope)`, the new `begin` option of `createKnexUnitOfWork` and
+  `createDrizzleUnitOfWork`, which sets the tenant of each transaction only. One policy per
+  command: an elevated update or delete still touches only the tenant of the work.
+- Schema per tenant (Knex): `tenantSchemaOf`, `tenantSchemaTable`, `migrateTenantSchema` with
+  `tenantOfMigration`, `tenantSearchPath`. Database per tenant (Knex): `TenantDatabases` (one
+  bounded pool per tenant held by a lease, at most `maxTenants` instances closing ones included,
+  an idle one closed first and work waiting rather than exceeding the bound),
+  `createTenantRoutedUnitOfWork` (statements inside the unit of work only, one tenant per
+  transaction), `migrateEveryTenant`.
+- `@ddd-ts-kit/testing`: `tenantIsolationContract`, run against every strategy above on PGlite
+  and PostgreSQL; `asTenant(scope, tenantId, work)` and `anExecutionContext().elevatedOver(...)`.
+- Prisma and TypeORM get the `tenant_id` column and the kernel helpers, applied by hand; no
+  helper, no row-level security, no contract run yet.
+
+**The tenant of a request is resolved at the edge** (`@ddd-ts-kit/http`): `resolveTenant` with
+`tenantFromSubdomain`, `tenantFromHeader`, `tenantFromPath`, `tenantFromClaim` or `firstTenantOf`;
+the pipeline answers 403 to an authenticated caller that does not belong to the tenant named,
+before any guard or handler. The guard `TenantMember` keeps routes for the members of the tenant
+of the request. Without `resolveTenant` the tenant is the actor's, as before.
+
+**`init --tenancy shared-table`** (Knex or Drizzle) records `"stack.tenancy"` and generates every
+repository confined to the tenant through the helpers above, the outbox keeping the tenant of each
+event, the search of the audit trail confined to the tenant of the work by `TenantAuditReader`; the new rule `tenancy/scoped-statement` reports a statement of a context that reaches a table
+straight from the executor. `init` refuses the strategy with Prisma, TypeORM, `custom` or no ORM,
+and refuses row-level security, schema per tenant and database per tenant, which are wired by hand
+for now. `generate repository --tenant-scoped` writes the same helpers. A config without the key is
+`none`: nothing changes for an existing project.
+
+**Access control: a decision guide, scopes, and the refusals at the edge in the audit trail.**
+
+- [Choosing access control](docs/guides/choosing-access-control.md): five questions that pick
+  roles, attribute policies or relationships (Zanzibar), a worked preset for each (typed
+  permissions and roles, a policy on one element, a scoped search), the combined model of the
+  example, and where relationships are evaluated.
+- `Session.scopes`, filled by the JWT and Keycloak authenticators from `scope` (or `scp`);
+  `hasScope`, and `SessionScopes` to declare the vocabulary of a project; the guard `HasScope`
+  (`@ddd-ts-kit/http`) refuses a request whose session lacks a scope named.
+- A request refused by a guard (`HasRole`, `HasScope`, `TenantMember`, a tenant the caller does
+  not belong to) is reported to the new `onGuardRefusal` of the HTTP pipeline, and
+  `auditGuardRefusals` (`@ddd-ts-kit/audit`) records it as a denied decision, except for a caller
+  without a credential, so that unauthenticated traffic cannot write to the trail without bound.
+  It is part of `--audit on` (`stack.audit`), with no key of its own. A generated project
+  with the audit trail wires it (`create-audit.ts`, `http-boundary.ts`, `compose-application.ts`);
+  a project initialised before adds `refusals: auditGuardRefusals(trail, { clock, ids })` to the
+  call of `httpBoundary` and `onGuardRefusal: refusals` to what it answers, as `init --force` writes.
+
+**`@ddd-ts-kit/openfga`, a new package: relationships on OpenFGA.** `OpenFgaRelationTupleStore`
+and `OpenFgaAuthorizer` answer the `RelationTupleStore` and `Authorizer` ports of
+`@ddd-ts-kit/auth` on an OpenFGA server (OpenFGA 1.10 or later), with the mapping and the denial
+codes of `RelationBasedAuthorizer`. The authorization model is generated from the relationship
+schema (`authorizationModelOf`), written when it differs (`ensureAuthorizationModel`) and
+compared (`modelDrift`): the schema stays the one source. `@openfga/sdk` 0.9.7 is an optional
+peer, imported by the `/sdk` entry (`openFgaClient`). Both adapters pass the contract suites of
+the in-process ones, in memory and against `openfga/openfga` v1.22.0 in the integration job. A
+`ListObjects` answer as long as the server's cap (`listObjectsLimit`, 1000 by default) is refused
+with `ReverseExpansionLimitError`, since the server cuts a longer list without an error.
+[Authorization engines](docs/tools/authorization-engines.md) says when to move from the
+PostgreSQL tuple store to OpenFGA.
+
 ## 0.7.0
 
 **A value object throws its refusals.** `init` writes `"stack.valueObjects": "throwing"`:

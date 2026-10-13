@@ -27,6 +27,7 @@ import { PORTS_FIXTURES } from './ports-fixtures.js';
 import { PURITY_FIXTURES } from './purity-fixtures.js';
 import { SCHEDULING_FIXTURES } from './scheduling-fixtures.js';
 import { STANDARD_FIXTURES } from './standard-fixtures.js';
+import { TENANCY_FIXTURES } from './tenancy-fixtures.js';
 import { TEST_FIXTURES } from './test-fixtures.js';
 import { TRACING_FIXTURES } from './tracing-fixtures.js';
 import { TREE_FIXTURES } from './tree-fixtures.js';
@@ -67,6 +68,7 @@ export const FIXTURES: readonly Fixture[] = [
   ...PURITY_FIXTURES,
   ...SCHEDULING_FIXTURES,
   ...STANDARD_FIXTURES,
+  ...TENANCY_FIXTURES,
   ...TEST_FIXTURES,
   ...TRACING_FIXTURES,
   ...TREE_FIXTURES,

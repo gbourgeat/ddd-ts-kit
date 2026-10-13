@@ -25,6 +25,12 @@ export interface KnexOutboxStoreOptions {
   readonly leaseMs?: number;
   /** Default: `skip-locked` on PostgreSQL and MySQL, `compare-and-set` elsewhere. */
   readonly claim?: OutboxClaimStrategy;
+  /**
+   * Writes the tenant of each event to `tenant_id`, which `createOutboxTables(knex, { tenant:
+   * true })` or `addOutboxTenantColumn` created: its consumers then run in that tenant. Default
+   * false, for a table without the column. A table that has it is read back either way.
+   */
+  readonly tenant?: boolean;
 }
 
 /** The outbox table as knex returns it. Instants are dates or, on SQLite, epoch milliseconds. */
@@ -37,6 +43,8 @@ interface OutboxRow {
   payload: unknown;
   traceparent: string | null;
   correlation_id: string | null;
+  /** Absent from a table created without it. */
+  tenant_id?: string | null;
   status: OutboxStatus;
   attempts: number;
   next_attempt_at: Date | number | string;
@@ -63,12 +71,15 @@ export class KnexOutboxStore implements OutboxStore {
 
   private readonly claimStrategy: OutboxClaimStrategy | undefined;
 
+  private readonly tenant: boolean;
+
   constructor(context: KnexContext, options: KnexOutboxStoreOptions = {}) {
     this.context = context;
     this.schemaName = options.schema;
     this.tableName = options.table ?? OUTBOX_TABLE;
     this.leaseDurationMs = options.leaseMs ?? 30_000;
     this.claimStrategy = options.claim;
+    this.tenant = options.tenant ?? false;
   }
 
   async append(events: readonly IntegrationEvent[]): Promise<void> {
@@ -86,6 +97,7 @@ export class KnexOutboxStore implements OutboxStore {
         payload: event.payload === undefined ? null : JSON.stringify(event.payload),
         traceparent: event.traceparent ?? null,
         correlation_id: event.correlationId ?? null,
+        ...(this.tenant ? { tenant_id: event.tenantId ?? null } : {}),
         next_attempt_at: DUE_IMMEDIATELY,
       })),
     );
@@ -273,6 +285,7 @@ function toRecord(row: OutboxRow, dialect: SqlDialect): OutboxRecord {
       payload,
       ...(row.traceparent === null ? {} : { traceparent: row.traceparent }),
       ...(row.correlation_id === null ? {} : { correlationId: row.correlation_id }),
+      ...(typeof row.tenant_id === 'string' ? { tenantId: row.tenant_id } : {}),
     },
     status: row.status,
     attempts: row.attempts,

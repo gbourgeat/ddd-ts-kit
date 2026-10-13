@@ -280,12 +280,14 @@ await scoped(executionScope, anExecutionContext().as(bob).ofTenant('globex'), ()
 | Builder | Default | Says |
 |---|---|---|
 | `aSession()` | a user of its own, opened with a password at the test epoch, never expiring | `of(actor)`, `identifiedBy`, `issuedAt`, `expiringAt`, `authenticatedBy`, `withSecondFactor`, `impersonatedBy`, `inLocale`, `inTimeZone`, `withExtensions` |
-| `anExecutionContext()` | the work of a user of its own, origin `test`, correlation of its own | `as(actor)`, `inSession(session)`, `ofTenant`, `correlatedBy`, `causedBy`, `from(origin)`, `dueBy`, `inLocale`, `withExtensions` |
+| `anExecutionContext()` | the work of a user of its own, origin `test`, correlation of its own | `as(actor)`, `inSession(session)`, `ofTenant`, `elevatedOver(tenants, reason?)`, `correlatedBy`, `causedBy`, `from(origin)`, `dueBy`, `inLocale`, `withExtensions` |
 
 Both are classes on `Builder`, immutable like every builder, and accept a builder wherever an
 actor or a session is expected (`aSession().of(anActor().withRole('accountant'))` with the
 actor builder of `@ddd-ts-kit/auth/testing`). `scoped(scope, context, work)` runs a block in a
-context given as a value or as a builder, with any `ExecutionScope`.
+context given as a value or as a builder, with any `ExecutionScope`; `asTenant(scope, 'acme',
+work)` runs it as a member of a tenant, and `elevatedOver('all')` builds the context of platform
+staff under an elevation, without the audit entry `acrossTenants` writes.
 
 ## End to end
 
@@ -429,9 +431,10 @@ repositoryContract(runner, { ...options, name: 'DrizzleOrderRepository', createR
 | Suite | Holds |
 |---|---|
 | `repositoryContract` | save then find, unknown id, update, isolation of the stored copy, optimistic concurrency (any error with code `CONCURRENCY_CONFLICT`) |
-| `eventBusContract` | any `EventBus` provider: routing by type, several subscribers, unsubscribe, exact envelope round trip (`traceparent`, `correlationId`), handler failure surfaces. Redeliveries are accepted; return `settle()` from `createBus` for providers that deliver asynchronously |
+| `tenantIsolationContract` | one repository under a strategy of tenant isolation: what a tenant saved is hidden from another; another tenant saving under the same id leaves it untouched, by an update or (given `recreate(aggregate)`, a new aggregate under the same id) by an insert; platform staff elevated over every tenant write nothing, and read the other tenant's aggregate when `elevatedReads` is true (shared tables, row-level security); a write of work that names no tenant is refused (`NoCurrentTenantError`) and a read is refused or finds nothing. `createRepository(scope)` reads the tenant from the scope it is given, on storage where the tenants `acme` and `globex` exist. To prove row-level security itself, run it against a repository that writes no tenant condition |
+| `eventBusContract` | any `EventBus` provider: routing by type, several subscribers, unsubscribe, exact envelope round trip (`traceparent`, `correlationId`, `tenantId`), handler failure surfaces. Redeliveries are accepted; return `settle()` from `createBus` for providers that deliver asynchronously |
 | `unitOfWorkContract` | any `UnitOfWork`, called through `run` without a command bus: domain events wait for the end and are dispatched before the commit, so handlers see every save and what they write, the outbox included, commits with it; a failure in a save, in the work, in a handler or in the commit (a deferred constraint) leaves nothing behind; `after-commit` handlers run once the rows are committed, never otherwise. An adapter not built on `withinUnitOfWork` fails here |
-| `outboxStoreContract` | any outbox store: order, limit, lease, concurrent claims, published, failed, dead, `retryDead`, purge |
+| `outboxStoreContract` | any outbox store: order, limit, lease, concurrent claims, published, failed, dead, `retryDead`, purge; with `carriesTenant: true`, the tenant of each event kept |
 | `processedEventStoreContract` | any `ProcessedEventStore`: once per consumer and event, also under concurrent deliveries |
 | `cacheContract` | any `Cache`: round trip of every shape of value, isolation of entries, deletion, time to live |
 | `lockContract` | any `Lock`: one holder at a time also under concurrent requests, release, expiry, a late release ignored, growing fencing token, `waitMs` |

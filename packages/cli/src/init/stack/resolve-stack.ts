@@ -36,6 +36,7 @@ import { recordedOptions } from './recorded-options.js';
 import { resolveCiExtras } from './resolve-ci-extras.js';
 import { resolvePersistence } from './resolve-persistence.js';
 import { resolveStyle } from './resolve-style.js';
+import { resolveTenancy } from './resolve-tenancy.js';
 import type { StackOptions } from './stack-options.js';
 
 export type { StackOptions } from './stack-options.js';
@@ -128,6 +129,7 @@ function stackOf(options: StackOptions): Record<string, string> {
     broker,
     ...resolveOperations(options, persistence.orm),
     ...resolveStyle(options, di),
+    tenancy: resolveTenancy(options, persistence.orm),
   };
 }
 

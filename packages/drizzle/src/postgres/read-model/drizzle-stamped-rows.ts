@@ -1,6 +1,8 @@
 import { sql, type SQL, type TablesRelationalConfig } from 'drizzle-orm';
 import type { PgColumn, PgQueryResultHKT } from 'drizzle-orm/pg-core';
-import type { EventStamp, ReadModelRows, StampedRow } from '@ddd-ts-kit/kernel';
+import { tenantScopeOf, type EventStamp, type ReadModelRows, type StampedRow } from '@ddd-ts-kit/kernel';
+import { reachCondition } from '../tenancy/reach-condition.js';
+import type { ReadModelTenant } from './read-model-tenant.js';
 import type { DrizzleContext } from '../unit-of-work/drizzle-context.js';
 import { RowMapper } from './row.mapper.js';
 import { rowsOf } from './rows-of.js';
@@ -12,6 +14,7 @@ export interface StampedTable {
   readonly key: PgColumn;
   readonly columns: Readonly<Record<string, PgColumn>>;
   readonly stamps: StampColumns;
+  readonly tenant?: ReadModelTenant;
 }
 
 /**
@@ -41,7 +44,9 @@ export class DrizzleStampedRows<
     const [record] = rowsOf(
       await this.context
         .executor()
-        .execute(sql`select * from ${this.table()} where ${named(this.target.key)} = ${key} limit 1`),
+        .execute(
+          sql`select * from ${this.table()} where ${named(this.target.key)} = ${key} and ${this.reach()} limit 1`,
+        ),
     );
 
     if (record === undefined) {
@@ -102,15 +107,32 @@ export class DrizzleStampedRows<
     const replaced = await this.context
       .executor()
       .execute(
-        sql`update ${this.table()} set ${changes} where ${key} = ${entry.key} and ${named(stamps.lastEventId)} = ${held.eventId} and ${named(stamps.lastEventAt)} = ${held.occurredAt.toISOString()} returning ${key}`,
+        sql`update ${this.table()} set ${changes} where ${key} = ${entry.key} and ${named(stamps.lastEventId)} = ${held.eventId} and ${named(stamps.lastEventAt)} = ${held.occurredAt.toISOString()} and ${this.own()} returning ${key}`,
       );
 
     return rowsOf(replaced).length === 1;
   }
 
+  /** What a read may reach: every row, or those of the tenants of the work for a read model of tenant data. */
+  private reach(): SQL {
+    const { tenant } = this.target;
+
+    return tenant === undefined ? sql`true` : reachCondition(named(tenant.column), tenant.scope);
+  }
+
+  private own(): SQL {
+    const { tenant } = this.target;
+
+    return tenant === undefined ? sql`true` : sql`${named(tenant.column)} = ${tenantScopeOf(tenant.scope).tenantId}`;
+  }
+
   private valuesOf({ key, row, stamp }: StampedRow<Row>): [PgColumn, unknown][] {
-    const { stamps } = this.target;
-    const written = row === undefined ? [] : this.mapper.toValues(row).filter(([column]) => column !== this.target.key);
+    const { stamps, tenant } = this.target;
+
+    const written =
+      row === undefined
+        ? []
+        : this.mapper.toValues(row).filter(([column]) => column !== this.target.key && column !== tenant?.column);
 
     return [
       ...written,
@@ -119,7 +141,15 @@ export class DrizzleStampedRows<
       [stamps.lastEventAt, stamp.occurredAt.toISOString()],
       [stamps.lastEventVersion, stamp.version ?? null],
       [stamps.deleted, row === undefined],
+      ...this.tenantValue(),
     ];
+  }
+
+  /** The tenant of a written row, for a read model of tenant data. */
+  private tenantValue(): [PgColumn, unknown][] {
+    const { tenant } = this.target;
+
+    return tenant === undefined ? [] : [[tenant.column, tenantScopeOf(tenant.scope).tenantId]];
   }
 
   private table(): SQL {

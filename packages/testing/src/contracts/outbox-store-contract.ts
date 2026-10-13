@@ -4,6 +4,7 @@ import type { ContractRunner } from './contract-runner.js';
 import { ContractSuite } from './contract-suite.js';
 import { failureOf } from './failure-of.js';
 import { fullEnvelope } from './full-envelope.js';
+import { tenantEnvelope } from './tenant-envelope.js';
 
 /**
  * The outbox store port of `@ddd-ts-kit/events`, restated structurally so that this package
@@ -35,6 +36,11 @@ export interface OutboxStoreContractOptions {
   createStore(): Awaitable<OutboxStoreUnderContract>;
   /** The lease the created store is configured with: how long a claim hides a record. */
   readonly leaseMs: number;
+  /**
+   * The store keeps the tenant of an event (`tenant_id`), as a multi-tenant project needs: its
+   * consumers then run in that tenant. Default false, for a store created without the column.
+   */
+  readonly carriesTenant?: boolean;
 }
 
 export function outboxStoreContract(runner: ContractRunner, options: OutboxStoreContractOptions): void {
@@ -81,7 +87,7 @@ class OutboxStoreSuite extends ContractSuite<OutboxStoreUnderContract> {
 
   private returnsTheEventAsAppended(): void {
     this.it('returns the event exactly as appended, trace and correlation included', async () => {
-      const appended = fullEnvelope(outboxEvent('evt-1'));
+      const appended = (this.options.carriesTenant === true ? tenantEnvelope : fullEnvelope)(outboxEvent('evt-1'));
 
       await this.subject.append([appended, outboxEvent('evt-2')]);
 
@@ -91,6 +97,7 @@ class OutboxStoreSuite extends ContractSuite<OutboxStoreUnderContract> {
       this.expect(claimed[1]?.event).toEqual(outboxEvent('evt-2'));
       this.expect(claimed[1]?.event.traceparent).toBe(undefined);
       this.expect(claimed[1]?.event.correlationId).toBe(undefined);
+      this.expect(claimed[1]?.event.tenantId).toBe(undefined);
     });
   }
 

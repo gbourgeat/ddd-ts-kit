@@ -13,4 +13,10 @@ export interface IntegrationEvent<Payload = unknown> {
   /** W3C traceparent captured at publication so consumers continue the same trace. */
   readonly traceparent?: string;
   readonly correlationId?: string;
+  /**
+   * The tenant the fact belongs to, stamped from the work that published it. A consumer handles
+   * the event in that tenant's scope, so its reads and writes stay in the tenant. Absent for a
+   * fact of no tenant (the platform's own).
+   */
+  readonly tenantId?: string;
 }
