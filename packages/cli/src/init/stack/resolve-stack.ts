@@ -20,6 +20,7 @@ import {
   LOGGERS,
   REFUSAL_FORMS,
   ROUTE_FORMS,
+  SCHEMA_FORMS,
   PACKAGE_MANAGERS,
   STORAGE_STACKS,
   parseConfig,
@@ -181,12 +182,16 @@ function resolveOperations(
 }
 
 /** How the code is written: a new project takes the forms of the current version, a recorded one keeps the form it says. */
-function resolveWriting(options: StackOptions): Record<'refusals' | 'routes' | 'valueObjects' | 'literals', string> {
+function resolveWriting(
+  options: StackOptions,
+): Record<'refusals' | 'routes' | 'schemas' | 'valueObjects' | 'literals', string> {
   return {
     // A new project builds its domain errors through factories; a recorded one keeps the form it says, or the one of 0.2.
     refusals: choose(REFUSAL_FORMS, options.refusals, 'refusals') ?? 'factories',
     // A new project writes each route as a controller class; a recorded one keeps the form it says, or the functions of 0.3.
     routes: choose(ROUTE_FORMS, options.routes, 'routes') ?? 'controllers',
+    // A new project declares a shape once and shares it; a recorded one keeps the form it says, or one schema per route as 0.5.
+    schemas: choose(SCHEMA_FORMS, options.schemas, 'schemas') ?? 'shared',
     // A new project throws the refusals of its value objects; a recorded one keeps the form it says, or the Result of 0.5.
     valueObjects: choose(VALUE_OBJECT_FORMS, options.valueObjects, 'value-objects') ?? 'throwing',
     // A new project names its closed values and its numbers; a recorded one keeps the form it says, or the free literals of 0.5.
@@ -246,6 +251,6 @@ function assertNestGoesWithNest(http: string, di: string): void {
 
   throw new CliError(
     `--http ${http} cannot be combined with --di ${di}.`,
-    'NestJS hosts the application as a whole: use --http nest together with --di nest, or pick express or fastify with tsyringe or manual.',
+    'NestJS hosts the application as a whole: use --http nest together with --di nest, or pick express, fastify or hono with tsyringe or manual.',
   );
 }

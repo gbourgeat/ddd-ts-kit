@@ -128,7 +128,8 @@ command or a flag is added without this part being regenerated.
 
 ```text
 Usage
-  ddd-ts-kit init [--http express|fastify|nest|none] [--validation zod|class-validator|standard-schema|none]
+  ddd-ts-kit init [--http express|fastify|hono|nest|none]
+                  [--validation zod|class-validator|typebox|standard-schema|none]
                   [--di tsyringe|nest|manual] [--tests vitest|jest]
                   [--orm drizzle|knex|prisma|typeorm|custom|none] [--database postgres|mysql|sqlite|none]
                   [--events in-memory|outbox] [--docs-ui swagger|scalar|redoc|none]
@@ -140,6 +141,7 @@ Usage
                   [--errors none|sentry] [--logger stdout|pino|winston] [--style declared|explicit] [--assembly barrel|discovery]
                   [--dependencies signature|listed] [--refusals factories|classes]
                   [--routes controllers|functions] [--value-objects throwing|result] [--literals named|free] [--tenancy none|shared-table] [--queue database|redis|memory]
+                  [--schemas shared|per-route]
                   [--package-manager npm|pnpm] [--allow-no-outbox "<reason>"] [--import-alias '$<name>/']
                   [--import-extension none|js] [--sdk]
                   [--context <name>:<core|supporting|generic>]... [--dry-run] [--force]
@@ -223,6 +225,7 @@ Kinds
   file-upload <context> <UseCaseName> --path <path> (--permission <aggregate>.<action> | --public) [--method <POST|PUT>] [--group <Name>]
   route-group <context> <Name> [--prefix <path>] [--group <ParentName>] [--public | --role <role>]   (alias: group)
   guard <context> <Name>
+  schema <context|shared-kernel> <Name>
   integration-event <context> <Aggregate> <Fact> [--version <n>] [--term "<Term>=<meaning>"]...
   integration-handler <context> <upstreamContext> <eventType>   (alias: consumer)
   event-handler <context> <Aggregate> <Fact> [--phase before-commit|after-commit] [--term "<Term>=<meaning>"]...

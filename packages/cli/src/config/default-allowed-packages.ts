@@ -9,6 +9,7 @@ import { VALIDATION_STACKS, type ValidationStack } from './stack.js';
 const SCHEMA_LIBRARIES: Readonly<Record<ValidationStack, readonly string[]>> = {
   zod: ['zod'],
   'class-validator': ['class-validator', 'class-transformer'],
+  typebox: ['typebox'],
   'standard-schema': [],
   none: [],
 };

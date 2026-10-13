@@ -41,26 +41,7 @@ export interface SearchAppointmentsInput {
 }
 
 export type SearchAppointmentsResult =
-  | Success<200, {
-    items: Array<{
-      id: string;
-      calendarId: string;
-      practiceId: string;
-      practitionerId: string;
-      patientId: string;
-      appointmentTypeId: string;
-      startsAt: string;
-      endsAt: string;
-      day: string;
-      status: 'requested' | 'booked' | 'cancelled' | 'expired' | 'completed' | 'no-show';
-      confirmBefore?: string;
-      cancelledBy?: 'patient' | 'practice';
-    }>;
-    /** Present when it is cheap to count. */
-    total?: number;
-    /** Present when more items follow. */
-    nextCursor?: string;
-  }>
+  | Success<200, Schemas.AgendaLinePage>
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
   | Failure<422, 'INVALID_CRITERIA' | 'VALIDATION_FAILED', Schemas.Problem>;
@@ -89,15 +70,13 @@ export interface BookAppointmentInput {
   readonly body: {
     calendarId: string;
     appointmentTypeId: string;
-    startsAt: string;
     patientId?: string;
+    startsAt: string;
   };
 }
 
 export type BookAppointmentResult =
-  | Success<201, {
-    id: string;
-  }>
+  | Success<201, Schemas.Accepted>
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
   | Failure<404, 'UNKNOWN_CALENDAR', Schemas.Problem>
@@ -181,9 +160,7 @@ export interface CancelAppointmentInput {
 }
 
 export type CancelAppointmentResult =
-  | Success<201, {
-    id: string;
-  }>
+  | Success<201, Schemas.Accepted>
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
   | Failure<404, 'APPOINTMENT_NOT_FOUND', Schemas.Problem>
@@ -217,9 +194,7 @@ export interface CompleteAppointmentInput {
 }
 
 export type CompleteAppointmentResult =
-  | Success<201, {
-    id: string;
-  }>
+  | Success<201, Schemas.Accepted>
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
   | Failure<404, 'APPOINTMENT_NOT_FOUND', Schemas.Problem>
@@ -253,9 +228,7 @@ export interface ConfirmAppointmentInput {
 }
 
 export type ConfirmAppointmentResult =
-  | Success<201, {
-    id: string;
-  }>
+  | Success<201, Schemas.Accepted>
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
   | Failure<404, 'APPOINTMENT_NOT_FOUND', Schemas.Problem>
@@ -328,9 +301,7 @@ export interface AttachAppointmentDocumentInput {
 }
 
 export type AttachAppointmentDocumentResult =
-  | Success<201, {
-    id: string;
-  }>
+  | Success<201, Schemas.Accepted>
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
   | Failure<404, 'APPOINTMENT_NOT_FOUND', Schemas.Problem>
@@ -365,9 +336,7 @@ export interface RemoveAppointmentDocumentInput {
 }
 
 export type RemoveAppointmentDocumentResult =
-  | Success<200, {
-    id: string;
-  }>
+  | Success<200, Schemas.Accepted>
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
   | Failure<404, 'APPOINTMENT_NOT_FOUND' | 'NO_DOCUMENT', Schemas.Problem>
@@ -400,9 +369,7 @@ export interface MarkAppointmentNoShowInput {
 }
 
 export type MarkAppointmentNoShowResult =
-  | Success<201, {
-    id: string;
-  }>
+  | Success<201, Schemas.Accepted>
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
   | Failure<404, 'APPOINTMENT_NOT_FOUND', Schemas.Problem>
@@ -439,9 +406,7 @@ export interface RescheduleAppointmentInput {
 }
 
 export type RescheduleAppointmentResult =
-  | Success<201, {
-    id: string;
-  }>
+  | Success<201, Schemas.Accepted>
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
   | Failure<404, 'APPOINTMENT_NOT_FOUND' | 'UNKNOWN_CALENDAR', Schemas.Problem>
@@ -549,9 +514,7 @@ export interface CreateCalendarInput {
 }
 
 export type CreateCalendarResult =
-  | Success<201, {
-    id: string;
-  }>
+  | Success<201, Schemas.Accepted>
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
   | Failure<422, 'UNKNOWN_PRACTITIONER' | 'UNKNOWN_TIME_ZONE' | 'VALIDATION_FAILED', Schemas.Problem>;
@@ -590,9 +553,7 @@ export interface DefineAppointmentTypeInput {
 }
 
 export type DefineAppointmentTypeResult =
-  | Success<201, {
-    id: string;
-  }>
+  | Success<201, Schemas.Accepted>
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
   | Failure<404, 'UNKNOWN_CALENDAR', Schemas.Problem>
@@ -757,9 +718,7 @@ export interface AddExceptionInput {
 }
 
 export type AddExceptionResult =
-  | Success<201, {
-    id: string;
-  }>
+  | Success<201, Schemas.Accepted>
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
   | Failure<404, 'UNKNOWN_CALENDAR', Schemas.Problem>
@@ -840,9 +799,7 @@ export interface SetOpeningHoursInput {
 }
 
 export type SetOpeningHoursResult =
-  | Success<200, {
-    id: string;
-  }>
+  | Success<200, Schemas.Accepted>
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
   | Failure<404, 'UNKNOWN_CALENDAR', Schemas.Problem>
@@ -873,16 +830,11 @@ export interface AddTimeOffInput {
   readonly path: {
     readonly calendarId: string;
   };
-  readonly body: {
-    startsAt: string;
-    endsAt: string;
-  };
+  readonly body: Schemas.TimeSpan;
 }
 
 export type AddTimeOffResult =
-  | Success<201, {
-    id: string;
-  }>
+  | Success<201, Schemas.Accepted>
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
   | Failure<404, 'UNKNOWN_CALENDAR', Schemas.Problem>
@@ -921,9 +873,7 @@ export interface JoinWaitlistInput {
 }
 
 export type JoinWaitlistResult =
-  | Success<201, {
-    id: string;
-  }>
+  | Success<201, Schemas.Accepted>
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
   | Failure<404, 'UNKNOWN_CALENDAR', Schemas.Problem>
@@ -1009,9 +959,7 @@ export interface RegisterPersonInput {
 }
 
 export type RegisterPersonResult =
-  | Success<200, {
-    id: string;
-  }>
+  | Success<200, Schemas.Accepted>
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
   | Failure<422, 'INVALID_DISPLAY_NAME' | 'INVALID_EMAIL' | 'VALIDATION_FAILED', Schemas.Problem>;
@@ -1045,9 +993,7 @@ export interface OpenPracticeInput {
 }
 
 export type OpenPracticeResult =
-  | Success<201, {
-    id: string;
-  }>
+  | Success<201, Schemas.Accepted>
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
   | Failure<404, 'PERSON_NOT_REGISTERED', Schemas.Problem>
@@ -1114,13 +1060,7 @@ export interface SearchPracticeAgendaInput {
 }
 
 export type SearchPracticeAgendaResult =
-  | Success<200, {
-    items: Array<Record<string, unknown>>;
-    /** Present when it is cheap to count. */
-    total?: number;
-    /** Present when more items follow. */
-    nextCursor?: string;
-  }>
+  | Success<200, Schemas.AgendaLinePage>
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
   | Failure<422, 'INVALID_CRITERIA' | 'VALIDATION_FAILED', Schemas.Problem>;
@@ -1158,9 +1098,7 @@ export interface GrantDelegationInput {
 }
 
 export type GrantDelegationResult =
-  | Success<201, {
-    id: string;
-  }>
+  | Success<201, Schemas.Accepted>
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
   | Failure<404, 'PRACTICE_NOT_FOUND', Schemas.Problem>
@@ -1196,9 +1134,7 @@ export interface RevokeDelegationInput {
 }
 
 export type RevokeDelegationResult =
-  | Success<200, {
-    id: string;
-  }>
+  | Success<200, Schemas.Accepted>
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
   | Failure<404, 'DELEGATION_NOT_FOUND', Schemas.Problem>
@@ -1236,9 +1172,7 @@ export interface AddMemberInput {
 }
 
 export type AddMemberResult =
-  | Success<201, {
-    id: string;
-  }>
+  | Success<201, Schemas.Accepted>
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
   | Failure<404, 'PERSON_NOT_REGISTERED' | 'PRACTICE_NOT_FOUND', Schemas.Problem>
@@ -1273,9 +1207,7 @@ export interface RemoveMemberInput {
 }
 
 export type RemoveMemberResult =
-  | Success<200, {
-    id: string;
-  }>
+  | Success<200, Schemas.Accepted>
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
   | Failure<404, 'PRACTICE_NOT_FOUND', Schemas.Problem>

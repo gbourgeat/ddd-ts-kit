@@ -4,6 +4,7 @@ import { controllerImports, type ControllerImports } from './controller-imports.
 import type { ControllerPlan } from './controller-plan.js';
 import { controllerTypes, type ControllerTypes } from './controller-types.js';
 import { routeVars } from './route-vars.js';
+import { sharesSchemas } from './shares-schemas.js';
 
 /** What the templates of a controller read, over what the templates of a route read: its group, its types and its neighbours. */
 export function controllerVars(scope: Scope, plan: ControllerPlan): RenderContext {
@@ -32,7 +33,7 @@ function handleVars(
   readsRequest: boolean,
 ): RenderContext {
   const message = `new ${useCase.message}(${useCase.isProtected ? 'request.actor' : ''})`;
-  const answers = useCase.isQuery || useCase.returnsId;
+  const answers = declaresAnswer(useCase, types);
 
   return {
     hasTypedParams: types.hasTypedParams,
@@ -45,19 +46,14 @@ function handleVars(
   };
 }
 
-function declarationVars(
-  scope: Scope,
-  { endpoint, group, cache }: ControllerPlan,
-  readsRequest: boolean,
-): RenderContext {
-  const rest = group === undefined ? endpoint.path : endpoint.path.slice(group.prefix.length);
+/** A shared identifier answer is a schema of the platform: the controller declares none for it. */
+function declaresAnswer(useCase: ControllerPlan['useCase'], types: ControllerTypes): boolean {
+  return useCase.isQuery || (useCase.returnsId && types.accepted !== 'Accepted');
+}
 
-  const names = [
-    ...(cache === undefined ? [] : ['CacheScope']),
-    'Controller',
-    ...(group === undefined ? ['Public'] : []),
-    ...(readsRequest ? ['type HttpRequest'] : []),
-  ];
+function declarationVars(scope: Scope, plan: ControllerPlan, readsRequest: boolean): RenderContext {
+  const { endpoint, group, cache } = plan;
+  const rest = group === undefined ? endpoint.path : endpoint.path.slice(group.prefix.length);
 
   return {
     access:
@@ -65,10 +61,24 @@ function declarationVars(
         ? `tags: ['${scope.context.kebab}'],\n  guards: [Public],`
         : `group: ${group.name.pascal}Routes,`,
     groupPath: rest === '' ? '/' : rest,
-    httpImports: names.join(', '),
+    httpImports: httpImports(scope, plan, readsRequest).join(', '),
     cached: cache !== undefined,
     cache: cache ?? '',
   };
+}
+
+/** What the controller imports from `@ddd-ts-kit/http`, in the order the formatter keeps. */
+function httpImports(scope: Scope, { useCase, group, cache }: ControllerPlan, readsRequest: boolean): string[] {
+  const sharedAccepted = useCase.returnsId && sharesSchemas(scope.config);
+
+  return [
+    ...(sharedAccepted ? ['acceptedSchema'] : []),
+    ...(cache === undefined ? [] : ['CacheScope']),
+    'Controller',
+    ...(group === undefined ? ['Public'] : []),
+    ...(sharedAccepted ? ['type Accepted'] : []),
+    ...(readsRequest ? ['type HttpRequest'] : []),
+  ];
 }
 
 function controllerFileImports({ withMapper, withSerializer }: ControllerPlan, imports: ControllerImports): string[] {

@@ -23,6 +23,7 @@ const STYLES: readonly Style[] = ['declared', 'explicit'];
 const ASSEMBLIES: readonly Assembly[] = ['barrel', 'discovery'];
 const DEPENDENCY_STATEMENTS: readonly Stack['dependencies'][] = ['signature', 'listed'];
 const REFUSAL_FORMS: readonly Stack['refusals'][] = ['factories', 'classes'];
+const SCHEMA_FORMS: readonly Stack['schemas'][] = ['shared', 'per-route'];
 const LITERAL_FORMS: readonly Stack['literals'][] = ['named', 'free'];
 
 const KERNEL = ['@ddd-ts-kit/kernel'];
@@ -36,6 +37,7 @@ const APPLICATION = [...KERNEL, '@ddd-ts-kit/auth'];
 const SCHEMA_LIBRARIES: Readonly<Record<string, readonly string[]>> = {
   zod: ['zod'],
   'class-validator': ['class-validator', 'class-transformer'],
+  typebox: ['typebox'],
   'standard-schema': [],
   none: [],
 };
@@ -86,6 +88,7 @@ function parseStack(value: unknown): Stack {
     assembly: oneOf(ASSEMBLIES, raw['assembly'], 'barrel'),
     dependencies: oneOf(DEPENDENCY_STATEMENTS, raw['dependencies'], 'listed'),
     refusals: oneOf(REFUSAL_FORMS, raw['refusals'], 'classes'),
+    schemas: oneOf(SCHEMA_FORMS, raw['schemas'], 'per-route'),
     literals: oneOf(LITERAL_FORMS, raw['literals'], 'free'),
     orm: text(raw['orm'], 'drizzle'),
   };

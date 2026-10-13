@@ -61,6 +61,9 @@ the tree, so a generated file conforms by construction and costs no tokens.
 - `route` writes a controller class in its own folder (or a `defineRoute` function under
   `"stack.routes": "functions"`); `controller` always writes the class; `route-group` writes a
   group with its prefix and guards, `guard` a guard of the project with its spec.
+- `schema` writes one shape of the HTTP contract several routes use, declared once and shared,
+  in `presentation/http/shared/` of the context, or in `presentation/` of the shared kernel with
+  `schema shared-kernel <Name>`; a command route answers an identifier with `acceptedSchema`.
 - **Documents.** The generated lists of `CONTEXT.md` and the generated documentation are
   refreshed.
 

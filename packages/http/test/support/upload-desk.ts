@@ -1,6 +1,8 @@
 import type { AddressInfo } from 'node:net';
+import { serve } from '@hono/node-server';
 import express from 'express';
 import Fastify from 'fastify';
+import { Hono } from 'hono';
 import { z } from 'zod';
 import { InMemoryFileStorage } from '@ddd-ts-kit/kernel';
 import { zodSchema } from '@ddd-ts-kit/validation/zod';
@@ -15,6 +17,7 @@ import {
 } from '../../src/index.js';
 import { mountExpress } from '../../src/express.js';
 import { mountFastify } from '../../src/fastify.js';
+import { mountHono, type HonoMountOptions } from '../../src/hono.js';
 import type { RunningServer } from './running-server.js';
 
 const fields = zodSchema(z.object({ title: z.string().min(1) }));
@@ -96,4 +99,19 @@ export async function onFastify(routes: readonly Route[], options: ExecuteOption
   const url = await app.listen({ port: 0, host: '127.0.0.1' });
 
   return { url, close: () => app.close() };
+}
+
+export async function onHono(routes: readonly Route[], options: HonoMountOptions): Promise<RunningServer> {
+  const app = new Hono();
+
+  mountHono(app, routes, options);
+
+  const server = serve({ fetch: app.fetch, port: 0, hostname: '127.0.0.1' });
+
+  await new Promise((resolve) => server.once('listening', resolve));
+
+  return {
+    url: `http://127.0.0.1:${String((server.address() as AddressInfo).port)}`,
+    close: () => new Promise<void>((resolve) => server.close(() => resolve())),
+  };
 }

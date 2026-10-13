@@ -194,6 +194,16 @@ export const STACKS: readonly StackFlags[] = [
     logger: 'pino',
     errors: 'sentry',
   },
+  {
+    http: 'hono',
+    validation: 'typebox',
+    di: 'tsyringe',
+    tests: 'vitest',
+    orm: 'drizzle',
+    events: 'outbox',
+    cache: 'redis',
+  },
+  { http: 'fastify', validation: 'typebox', di: 'manual', tests: 'vitest', orm: 'knex', events: 'outbox' },
 ];
 
 /** The stacks held to everything a project runs in its pipeline, as generated. */

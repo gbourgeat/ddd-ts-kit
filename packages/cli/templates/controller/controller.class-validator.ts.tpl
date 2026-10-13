@@ -12,7 +12,7 @@ const params = classSchema({{name.pascal}}Params);
 // TODO(domain): once {{name.pascal}}Body has its decorated fields, drop the second argument: it only lets a class without any decorated field through.
 const body = classSchema({{name.pascal}}Body, { validator: { forbidUnknownValues: false } });
 {{/if}}
-{{#if route.returnsId}}
+{{#if route.ownAccepted}}
 const accepted = classSchema({{name.pascal}}Accepted);
 {{/if}}
 {{#if route.isQuery}}
@@ -34,7 +34,7 @@ const answer = classSchema({{name.pascal}}Answer, { validator: { forbidUnknownVa
   body,
   {{/if}}
   {{#if route.returnsId}}
-  response: { status: {{route.status}}, description: 'Done; the body carries the identifier.', body: accepted },
+  response: { status: {{route.status}}, description: 'Done; the body carries the identifier.', body: {{route.acceptedBody}} },
   {{/if}}
   {{#if route.returnsNothing}}
   response: { status: {{route.status}}, description: 'Done.' },

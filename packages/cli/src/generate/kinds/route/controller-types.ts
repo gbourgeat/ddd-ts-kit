@@ -1,5 +1,6 @@
 import type { Scope } from '../../scope.js';
 import type { ControllerPlan } from './controller-plan.js';
+import { sharesSchemas } from './shares-schemas.js';
 
 const WITH_BODY = ['POST', 'PUT', 'PATCH'];
 
@@ -20,9 +21,12 @@ export interface ControllerTypes {
 
 export function controllerTypes(scope: Scope, { name, endpoint }: ControllerPlan): ControllerTypes {
   const { validation } = scope.config.stack;
+  const shared = sharesSchemas(scope.config);
   const usesClasses = validation === 'class-validator';
   const hasBody = WITH_BODY.includes(endpoint.method);
-  const hasTypedParams = endpoint.parameters.length > 0 && (validation === 'zod' || usesClasses);
+
+  const hasTypedParams =
+    endpoint.parameters.length > 0 && (validation === 'zod' || validation === 'typebox' || usesClasses);
 
   const typeOf = (part: string, role: string): string =>
     usesClasses ? `${name.pascal}${role}` : `Infer<typeof ${part}>`;
@@ -38,7 +42,7 @@ export function controllerTypes(scope: Scope, { name, endpoint }: ControllerPlan
     parts,
     request: narrowed(parts),
     mapperRequest: narrowed(usesClasses ? parts : looseParts),
-    accepted: typeOf('accepted', 'Accepted'),
+    accepted: shared ? 'Accepted' : typeOf('accepted', 'Accepted'),
     answer: typeOf('answer', 'Answer'),
     usesClasses,
     hasTypedParams,

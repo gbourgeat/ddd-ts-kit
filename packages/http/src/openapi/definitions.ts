@@ -2,9 +2,14 @@ import type { JsonSchema, Schema } from '@ddd-ts-kit/validation';
 import { isRecord } from '../support/is-record.js';
 import { compare } from './compare.js';
 
+const COMPONENT = /^#\/components\/schemas\/(.+)$/;
+
 /**
  * Local definitions (`$defs`) of the embedded JSON Schemas are moved to `components.schemas`,
- * because a `#/$defs/...` pointer means nothing once the schema sits inside a document.
+ * because a `#/$defs/...` pointer means nothing once the schema sits inside a document. A shared
+ * schema (`sharedSchema`, a class schema with `shared`, a zod schema with `.meta({ id })`) is a
+ * reference to one of its definitions: it lands once among the components and every route that
+ * uses it points at it.
  */
 export class Definitions {
   private readonly schemas = new Map<string, JsonSchema>();
@@ -31,6 +36,15 @@ export class Definitions {
 
   all(): Record<string, JsonSchema> {
     return Object.fromEntries(this.schemas);
+  }
+
+  /** The schema itself when it is a reference to a component: the parameters of a request part are its properties. */
+  resolve(schema: JsonSchema): JsonSchema {
+    const reference = schema['$ref'];
+    const component = typeof reference === 'string' ? COMPONENT.exec(reference)?.[1] : undefined;
+    const target = component === undefined ? undefined : this.schemas.get(component);
+
+    return target === undefined ? schema : this.resolve(target);
   }
 
   /** Two different definitions sharing a name get distinct component names. */

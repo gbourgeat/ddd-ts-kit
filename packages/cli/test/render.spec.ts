@@ -65,6 +65,7 @@ describe('shipped templates', () => {
         'background-job',
         'gateway',
         'policy',
+        'schema',
         'service',
         'aggregate',
         'builder',

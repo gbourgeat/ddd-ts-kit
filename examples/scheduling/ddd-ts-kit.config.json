@@ -29,6 +29,7 @@
     "dependencies": "signature",
     "refusals": "factories",
     "routes": "controllers",
+    "schemas": "shared",
     "valueObjects": "throwing",
     "literals": "named",
     "queue": "database"

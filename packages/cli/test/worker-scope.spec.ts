@@ -109,6 +109,7 @@ describe('worker-scope', () => {
       'file-upload',
       'route-group (without --role, or with a role the vocabulary already holds)',
       'guard',
+      'schema (in its own context: generate schema <context> <Name>)',
       'integration-handler',
       'event-handler',
       'projection',

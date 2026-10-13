@@ -1,7 +1,7 @@
 {
   "name": "@ddd-ts-kit/http",
-  "version": "0.12.0",
-  "description": "Framework-agnostic route definitions with Express, Fastify and NestJS adapters and OpenAPI 3.1 generation.",
+  "version": "0.13.0",
+  "description": "Framework-agnostic route definitions with Express, Fastify, Hono and NestJS adapters and OpenAPI 3.1 generation.",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -29,6 +29,10 @@
       "types": "./dist/fastify.d.ts",
       "default": "./dist/fastify.js"
     },
+    "./hono": {
+      "types": "./dist/hono.d.ts",
+      "default": "./dist/hono.js"
+    },
     "./nest": {
       "types": "./dist/nest.d.ts",
       "default": "./dist/nest.js"
@@ -54,14 +58,15 @@
     "dist"
   ],
   "dependencies": {
-    "@ddd-ts-kit/kernel": "0.12.0",
-    "@ddd-ts-kit/validation": "0.12.0"
+    "@ddd-ts-kit/kernel": "0.13.0",
+    "@ddd-ts-kit/validation": "0.13.0"
   },
   "peerDependencies": {
     "@nestjs/common": ">=11.0.0",
     "@nestjs/core": ">=11.0.0",
     "express": "^5.0.0",
     "fastify": "^5.0.0",
+    "hono": "^4.0.0",
     "busboy": "^1.6.0"
   },
   "peerDependenciesMeta": {
@@ -77,12 +82,16 @@
     "@nestjs/core": {
       "optional": true
     },
+    "hono": {
+      "optional": true
+    },
     "busboy": {
       "optional": true
     }
   },
   "devDependencies": {
-    "@ddd-ts-kit/testing": "0.12.0",
+    "@ddd-ts-kit/testing": "0.13.0",
+    "@hono/node-server": "^2.1.4",
     "@nestjs/common": "^12.1.2",
     "@nestjs/core": "^12.1.2",
     "@nestjs/platform-express": "^12.1.2",
@@ -92,6 +101,7 @@
     "busboy": "^1.6.0",
     "express": "^5.3.0",
     "fastify": "^5.12.5",
+    "hono": "^4.13.13",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.0",
     "zod": "^4.6.5"

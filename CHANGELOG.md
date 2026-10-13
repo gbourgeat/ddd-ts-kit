@@ -4,6 +4,71 @@ What each version changes for someone who uses the kit. The packages of `package
 together, under one version; the notes of each [GitHub release](https://github.com/gbourgeat/ddd-ts-kit/releases)
 list the pull requests behind it.
 
+## 0.13.0
+
+**A schema shared by several routes is documented once.** Declared once, a schema used whole or
+inside other schemas by several routes lands once in `components.schemas` of the OpenAPI
+contract and every route points at it with `$ref`: a zod schema with `.meta({ id })`,
+`classSchema(Dto, { shared: true })`, or any schema through `sharedSchema(name, schema)` of
+`@ddd-ts-kit/validation`. class-validator gains `pickClass`, `omitClass` and `partialClass` to
+reuse a DTO class in part, and the Standard Schema adapter documents a schema its library
+converts itself (Standard JSON Schema, verified with zod 4) when no JSON Schema is given. The
+platform shares its own: `acceptedSchema` (`Accepted`, the `{ id }` a command route answers),
+the page of a shared item (`<Item>Page`) and the problem document. A shared `params`, `query`
+or `headers` schema still gives one parameter per property.
+
+**The contract of a project on the Standard Schema adapter can change.** `standardSchema(schema)`
+without a JSON Schema documented `{}` (any value); it now documents what the library converts
+itself, so a project on `"stack.validation": "standard-schema"` whose schemas implement Standard
+JSON Schema (zod 4 does) sees its OpenAPI contract and client SDK grow the real shapes, and
+`openapi --check` or `sdk --check` report drift until they are regenerated. To move: run
+`npm run docs:generate` and commit the contract and the client; to keep a schema documented as
+any value, pass `{}` as its second argument. A schema the library cannot convert (a date, a
+custom check) is still documented `{}`, never a failure.
+
+**A new project declares a shape once.** `init` writes `"stack.schemas": "shared"`: a generated
+command route answers its identifier with `acceptedSchema` instead of a schema of its own,
+`generate schema <context> <Name>` writes a shape several routes use in
+`presentation/http/shared/<name>.schema.ts` (`generate schema shared-kernel <Name>` in
+`presentation/` of the shared kernel, for what several contexts answer with), and two rules hold
+it: `schema/no-duplicate-shape` reports a DTO class or an object schema that declares by hand
+the shape of another one of its context or of the shared kernel (two contexts may say the same
+thing in their own words; a placeholder the generator left to fill is not judged), `schema/presentation-only` keeps every schema in a presentation layer
+(the second in ESLint too). A config without the key reads as `per-route`: nothing changes and
+nothing is reported; the steps to move are in `docs/CONFIG.md`. The example now shares its
+schemas: its twenty identifier answers are the one `Accepted` component, its two agenda
+searches answer `AgendaLinePage` pages of one `AgendaLine`, and one `TimeSpan` is the body of
+the time off route whole and the start of a booking or a rescheduling through
+`pickClass(TimeSpan, ['startsAt'])`; the bytes on the wire are unchanged.
+
+**Hono and TypeBox.** `@ddd-ts-kit/http/hono` mounts the routes on Hono 4 (`mountHono`), through
+the same pipeline and the same behaviour suite as Express, Fastify and NestJS, uploads and signed
+file links included. The adapter reads a JSON body chunk by chunk up to `bodyLimit` (1 MiB by
+default, as Fastify): a larger one is answered 413 `BODY_TOO_LARGE`, one that is not JSON 400
+`MALFORMED_BODY`, both as problems. `@ddd-ts-kit/validation/typebox` validates with TypeBox 1
+(`typeboxSchema`, compiled once, defaults filled, undeclared properties dropped, the failed
+keyword as the issue code and a missing property at its own path, `{ coerce: true }` for query
+strings) and documents the schema as it is, a nested schema with an `$id` shared once in the
+contract (`Type.Intersect` extends it and keeps the reference). Both libraries are optional peers.
+
+**Four contract pairs a project starts from.** `init --http hono` serves the routes with Hono on
+Node (`@hono/node-server`, the limiter and the readiness probe in front when the cache is
+shared), and `init --validation typebox` writes every schema of a route (the line of a search
+included), a function route and a shared schema with TypeBox. A new end-to-end spec,
+`contract-pairs.spec.ts`, generates one project per pair (Express and zod, Fastify and TypeBox,
+Hono and zod, NestJS and class-validator), shares one shape between two routes, adds a search,
+and holds each to zero finding, its specs and end-to-end specs (401, 403, 201 and the trace of
+the request), a current contract that documents the shape once, and a client generated from it
+that names `Money` and `Accepted` once and compiles. NestJS with class-validator, generated before but never run end to end, is now.
+
+**Which pair for which team.** `docs/tools/contract-pairs.md` compares the four pairs (type
+inference, composition of shapes, contract fidelity, issue codes, ecosystem, maintenance) with
+numbers measured by `pipeline/monorepo/measure-contract-pairs.mjs`: the pipeline of the kit costs
+about a microsecond per request before validation, zod parses in about half a microsecond,
+class-validator and TypeBox (through the adapter) in five to ten. oRPC was run and is documented
+as not fitting: its procedures, error format and second contract generator would sit next to the
+kit's, and the typed client it offers comes here from the generated contract.
+
 ## 0.12.0
 
 **Cache policies on routes, and `no-store` for authenticated answers.** A controller, a route

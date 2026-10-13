@@ -31,6 +31,7 @@ export const NEW_ESLINT_RULES = [
   'ddd-ts-kit/errors-through-factory',
   'ddd-ts-kit/errors-constructor-not-public',
   'ddd-ts-kit/errors-factory-name',
+  'ddd-ts-kit/schema-presentation-only',
   'ddd-ts-kit/language-declared-vocabulary',
   'ddd-ts-kit/clean-no-magic-number',
   '@stylistic/padding-line-between-statements',

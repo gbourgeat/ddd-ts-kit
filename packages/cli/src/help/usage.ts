@@ -1,6 +1,7 @@
 /** Every command of the CLI and its flags, as `--help` prints them and docs/guides/commands.md shows them. */
 export const USAGE = `Usage
-  ddd-ts-kit init [--http express|fastify|nest|none] [--validation zod|class-validator|standard-schema|none]
+  ddd-ts-kit init [--http express|fastify|hono|nest|none]
+                  [--validation zod|class-validator|typebox|standard-schema|none]
                   [--di tsyringe|nest|manual] [--tests vitest|jest]
                   [--orm drizzle|knex|prisma|typeorm|custom|none] [--database postgres|mysql|sqlite|none]
                   [--events in-memory|outbox] [--docs-ui swagger|scalar|redoc|none]
@@ -12,6 +13,7 @@ export const USAGE = `Usage
                   [--errors none|sentry] [--logger stdout|pino|winston] [--style declared|explicit] [--assembly barrel|discovery]
                   [--dependencies signature|listed] [--refusals factories|classes]
                   [--routes controllers|functions] [--value-objects throwing|result] [--literals named|free] [--tenancy none|shared-table] [--queue database|redis|memory]
+                  [--schemas shared|per-route]
                   [--package-manager npm|pnpm] [--allow-no-outbox "<reason>"] [--import-alias '$<name>/']
                   [--import-extension none|js] [--sdk]
                   [--context <name>:<core|supporting|generic>]... [--dry-run] [--force]

@@ -23,7 +23,7 @@ export function stackVars(config: Config): RenderContext {
     assembly: assemblyVars(config),
     decorators: { legacy, standard: !legacy },
     ...edgeVars(config),
-    validation: one(validation, ['zod', 'class-validator', 'standard-schema', 'none']),
+    validation: one(validation, ['zod', 'class-validator', 'typebox', 'standard-schema', 'none']),
     di: one(di, ['tsyringe', 'nest', 'manual']),
     orm: { ...one(orm, ['drizzle', 'knex', 'prisma', 'typeorm', 'custom', 'none']), any: orm !== 'none' },
     events: eventVars(config),
@@ -62,12 +62,13 @@ function queueVars(config: Config): RenderContext {
   };
 }
 
-/** How the code of the model is written: its refusals, its value objects, its closed values. */
+/** How the code is written: its refusals, its shared schemas, its value objects, its closed values. */
 function modelWritingVars(config: Config): RenderContext {
-  const { refusals, valueObjects, literals } = config.stack;
+  const { refusals, schemas, valueObjects, literals } = config.stack;
 
   return {
     refusals: one(refusals, ['factories', 'classes']),
+    schemas: one(schemas, ['shared', 'per-route']),
     valueObjects: one(valueObjects, ['throwing', 'result']),
     literals: one(literals, ['named', 'free']),
   };
@@ -112,9 +113,9 @@ function httpVars(config: Config): RenderContext {
   const { http } = config.stack;
 
   return {
-    ...one(http, ['express', 'fastify', 'nest', 'none']),
+    ...one(http, ['express', 'fastify', 'hono', 'nest', 'none']),
     any: http !== 'none',
-    plain: http === 'express' || http === 'fastify',
+    plain: http === 'express' || http === 'fastify' || http === 'hono',
   };
 }
 

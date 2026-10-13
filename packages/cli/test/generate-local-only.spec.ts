@@ -17,6 +17,7 @@ const SHARED_KINDS = [
   'service',
   'worker',
   'adr',
+  'schema',
   'route-group',
 ];
 

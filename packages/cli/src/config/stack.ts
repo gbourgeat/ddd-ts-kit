@@ -1,5 +1,5 @@
-export const HTTP_STACKS = ['express', 'fastify', 'nest', 'none'] as const;
-export const VALIDATION_STACKS = ['zod', 'class-validator', 'standard-schema', 'none'] as const;
+export const HTTP_STACKS = ['express', 'fastify', 'hono', 'nest', 'none'] as const;
+export const VALIDATION_STACKS = ['zod', 'class-validator', 'typebox', 'standard-schema', 'none'] as const;
 export const DI_STACKS = ['tsyringe', 'nest', 'manual'] as const;
 export const EVENT_STACKS = ['in-memory', 'outbox', 'custom'] as const;
 export const ORM_STACKS = ['drizzle', 'knex', 'prisma', 'typeorm', 'custom', 'none'] as const;
@@ -15,6 +15,7 @@ export const ASSEMBLIES = ['barrel', 'discovery'] as const;
 export const DEPENDENCY_STATEMENTS = ['signature', 'listed'] as const;
 export const REFUSAL_FORMS = ['factories', 'classes'] as const;
 export const ROUTE_FORMS = ['controllers', 'functions'] as const;
+export const SCHEMA_FORMS = ['shared', 'per-route'] as const;
 export const VALUE_OBJECT_FORMS = ['throwing', 'result'] as const;
 export const LITERAL_FORMS = ['named', 'free'] as const;
 export const CACHE_STACKS = ['none', 'redis'] as const;
@@ -107,6 +108,14 @@ export interface Stack {
    * forms run in either.
    */
   readonly routes: (typeof ROUTE_FORMS)[number];
+  /**
+   * How the schemas of the HTTP contract are written: `shared`, a shape several routes use is
+   * declared once (`generate schema`), documented once in the contract and referenced, a command
+   * answers with the `Accepted` schema of the platform, and the `schema/*` rules hold it;
+   * `per-route`, each route declares its own schemas, an identifier answer included. A config
+   * that says nothing was written when every route declared its own: it is `per-route`.
+   */
+  readonly schemas: (typeof SCHEMA_FORMS)[number];
   /**
    * How the factory of a value object refuses: `throwing`, `create` returns the value object or
    * throws the refusal built by the static factory of its concept, as the rest of the domain

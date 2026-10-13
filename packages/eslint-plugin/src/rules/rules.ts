@@ -59,6 +59,7 @@ import { lifecycleStatusThroughMachine } from './lifecycle-status-through-machin
 import { processSendsCommandsOnly } from './process-sends-commands-only.js';
 import { schedulingJobName } from './scheduling-job-name.js';
 import { schedulingJobTriggersUseCase } from './scheduling-job-triggers-use-case.js';
+import { schemaPresentationOnly } from './schema-presentation-only.js';
 import { standardNoParallelInterface } from './standard-no-parallel-interface.js';
 import { testNoMocks } from './test-no-mocks.js';
 import { cleanNoMagicNumber } from './clean-no-magic-number.js';
@@ -126,6 +127,7 @@ const ALL = [
   lifecycleStatusThroughMachine,
   processSendsCommandsOnly,
   schedulingJobName,
+  schemaPresentationOnly,
   importsAliasOnly,
   importsExtension,
   presentationControllerShape,

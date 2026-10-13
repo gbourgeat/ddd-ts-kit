@@ -1,7 +1,7 @@
 {{#if route.protected}}
 import { actorOf } from '@ddd-ts-kit/auth';
 {{/if}}
-import { defineRoute, type Route } from '@ddd-ts-kit/http';
+import { {{#if route.sharedAccepted}}acceptedSchema, {{/if}}defineRoute, type Route } from '@ddd-ts-kit/http';
 import type { {{route.busType}} } from '@ddd-ts-kit/kernel';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
 {{route.useCaseImport}}
@@ -14,7 +14,7 @@ const params = classSchema({{name.pascal}}Params);
 // TODO(domain): once {{name.pascal}}Body has its decorated fields, drop the second argument: it only lets a class without any decorated field through.
 const body = classSchema({{name.pascal}}Body, { validator: { forbidUnknownValues: false } });
 {{/if}}
-{{#if route.returnsId}}
+{{#if route.ownAccepted}}
 const accepted = classSchema({{name.pascal}}Accepted);
 {{/if}}
 {{#if route.isQuery}}
@@ -34,7 +34,7 @@ export function {{name.camel}}Route({{route.bus}}: {{route.busType}}): Route {
       request: { {{route.requestParts}} },
       {{/if}}
       {{#if route.returnsId}}
-      responses: { {{route.status}}: { description: 'Done; the body carries the identifier.', body: accepted } },
+      responses: { {{route.status}}: { description: 'Done; the body carries the identifier.', body: {{route.acceptedBody}} } },
       {{/if}}
       {{#if route.returnsNothing}}
       responses: { {{route.status}}: { description: 'Done.' } },

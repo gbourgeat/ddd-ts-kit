@@ -63,7 +63,7 @@ describe.each(STYLES)('describe, in a %s project', (style, stack) => {
         useCase: 'IssueInvoice',
         permission: 'invoice.issue',
         request: [{ part: 'body', schema: 'body' }],
-        responses: [{ status: 201, schema: 'accepted' }],
+        responses: [{ status: 201, schema: 'acceptedSchema' }],
         errors: ['UNAUTHORIZED', 'FORBIDDEN'],
       }),
       expect.objectContaining({
@@ -166,7 +166,7 @@ describe.each(STYLES)('describe, in a %s project, beyond its use cases and event
     expect(text).toContain('    command IssueInvoice (invoice.issue)');
 
     expect(text).toContain(
-      '    POST /invoices issueInvoice -> IssueInvoice (invoice.issue); request: body; responses: 201 accepted; errors: UNAUTHORIZED, FORBIDDEN',
+      '    POST /invoices issueInvoice -> IssueInvoice (invoice.issue); request: body; responses: 201 acceptedSchema; errors: UNAUTHORIZED, FORBIDDEN',
     );
 
     expect(text).toContain('    billing.invoice.issued v1, v2, by InvoiceIssuedPublisher, InvoiceIssuedV2Publisher');

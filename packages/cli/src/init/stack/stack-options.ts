@@ -26,6 +26,7 @@ export interface StackOptions {
   readonly dependencies?: string;
   readonly refusals?: string;
   readonly routes?: string;
+  readonly schemas?: string;
   readonly valueObjects?: string;
   readonly literals?: string;
   readonly tenancy?: string;

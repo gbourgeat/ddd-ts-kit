@@ -1,6 +1,6 @@
 {
   "name": "ddd-ts-kit",
-  "version": "0.19.0",
+  "version": "0.20.0",
   "description": "DDD, Clean Architecture and Clean Code for TypeScript backends: a guided path from needs to bounded contexts (strategic design first), bootstrap, scaffolding from templates, collision-free parallel work, commit discipline and automated architecture checks. Framework-agnostic (Express, Fastify, NestJS).",
   "author": {
     "name": "Gary Bourgeat"
