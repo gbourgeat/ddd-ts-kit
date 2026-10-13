@@ -4,7 +4,7 @@ What each version changes for someone who uses the kit. The packages of `package
 together, under one version; the notes of each [GitHub release](https://github.com/gbourgeat/ddd-ts-kit/releases)
 list the pull requests behind it.
 
-## Unreleased
+## 0.10.0
 
 **Event sourcing, chosen per aggregate.** `EventSourcedAggregate` in the kernel: a command
 checks its invariants and records an event, the state changes only in the apply method of each
