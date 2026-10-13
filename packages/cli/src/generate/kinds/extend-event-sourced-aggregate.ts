@@ -26,7 +26,7 @@ export function extendEventSourcedAggregate(scope: Scope, names: EventNames): vo
 
   if (extended === undefined || extendedCodec === undefined) {
     scope.ws.note(
-      `${names.aggregate.pascal} is event-sourced: add ${names.event.pascal} to the union of its events, \`'${names.eventName}': (event) => this.apply${names.fact.pascal}(event)\` to its appliers(), the method apply${names.fact.pascal}, and its entry in ${codecFile}.`,
+      `${names.aggregate.pascal} is event-sourced: add ${names.event.pascal} to the union of its events, \`[${names.event.pascal}.eventName]: (event) => this.apply${names.fact.pascal}(event)\` to its appliers(), the method apply${names.fact.pascal}, and its entry in ${codecFile}.`,
     );
 
     return;
@@ -52,7 +52,7 @@ function extendedAggregate(source: string, names: EventNames, importLine: string
     return undefined;
   }
 
-  const entry = `\n      '${names.eventName}': (event) => this.apply${names.fact.pascal}(event),`;
+  const entry = `\n      [${names.event.pascal}.eventName]: (event) => this.apply${names.fact.pascal}(event),`;
   const method = `\n  private apply${names.fact.pascal}(event: ${names.event.pascal}): void {\n    // TODO(domain): change \`this.state\` from what "${names.event.words}" says, and nothing else.\n  }\n`;
   const withEntry = `${source.slice(0, entriesEnd)}${entry}${source.slice(entriesEnd, end).trimEnd()}\n${method}}\n`;
 
@@ -70,7 +70,7 @@ function withStoredEvent(source: string, names: EventNames, importLine: string):
   const data = `${names.event.pascal}Data`;
 
   const entry = [
-    `  '${names.eventName}': defineStoredEvent(${names.event.pascal}, {`,
+    `  [${names.event.pascal}.eventName]: defineStoredEvent(${names.event.pascal}, {`,
     '    version: 1,',
     `    encode: (): ${data} => ({}),`,
     `    decode: (_data, { aggregateId, occurredAt }) => new ${names.event.pascal}(aggregateId, occurredAt),`,

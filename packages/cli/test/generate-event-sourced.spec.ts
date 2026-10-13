@@ -62,8 +62,8 @@ describe('generate aggregate --event-sourced', () => {
       'export class Ledger extends EventSourcedAggregate<LedgerEvent, LedgerState> {',
     );
 
-    expect(read(root, AGGREGATE)).toContain("'billing.ledger.created': (event) => this.applyCreated(event),");
-    expect(read(root, CODEC)).toContain("'billing.ledger.created': defineStoredEvent(LedgerCreated, {");
+    expect(read(root, AGGREGATE)).toContain('[LedgerCreated.eventName]: (event) => this.applyCreated(event),');
+    expect(read(root, CODEC)).toContain('[LedgerCreated.eventName]: defineStoredEvent(LedgerCreated, {');
 
     expect(read(root, `${BILLING}/test/builders/ledger.builder.ts`)).toContain(
       'return Ledger.rehydrate(ingredients.id, {',
@@ -84,14 +84,14 @@ describe('generate aggregate --event-sourced', () => {
     );
 
     expect(aggregate).toContain(
-      "      'billing.ledger.created': (event) => this.applyCreated(event),\n      'billing.ledger.credited': (event) => this.applyCredited(event),\n    };",
+      '      [LedgerCreated.eventName]: (event) => this.applyCreated(event),\n      [LedgerCredited.eventName]: (event) => this.applyCredited(event),\n    };',
     );
 
     expect(aggregate).toContain('  private applyCredited(event: LedgerCredited): void {');
     expect(read(root, CODEC)).toContain('interface LedgerCreditedData {}');
 
     expect(read(root, CODEC)).toContain(
-      "  'billing.ledger.credited': defineStoredEvent(LedgerCredited, {\n    version: 1,",
+      '  [LedgerCredited.eventName]: defineStoredEvent(LedgerCredited, {\n    version: 1,',
     );
   });
 

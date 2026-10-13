@@ -7,7 +7,7 @@ interface {{event.pascal}}Data {}
 
 /** How the events of {{name.pascal}} are kept in its stream: one entry per event, read back by `decode`. */
 export const {{name.camel}}Events: StoredEventTypes<{{name.pascal}}Event> = {
-  '{{event.name}}': defineStoredEvent({{event.pascal}}, {
+  [{{event.pascal}}.eventName]: defineStoredEvent({{event.pascal}}, {
     version: 1,
     encode: (): {{event.pascal}}Data => ({}),
     decode: (_data, { aggregateId, occurredAt }) => new {{event.pascal}}(aggregateId, occurredAt),

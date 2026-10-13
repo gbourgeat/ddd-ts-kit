@@ -1223,8 +1223,8 @@ export class AttendanceRecord extends EventSourcedAggregate<AttendanceEvent, Att
 
   protected appliers(): Appliers<AttendanceEvent> {
     return {
-      'scheduling.attendance-record.opened': () => undefined,
-      'scheduling.attendance-record.no-show-noted': (event) => this.applyNoShowNoted(event),
+      [AttendanceRecordOpened.eventName]: () => undefined,
+      [NoShowNoted.eventName]: (event) => this.applyNoShowNoted(event),
     };
   }
 

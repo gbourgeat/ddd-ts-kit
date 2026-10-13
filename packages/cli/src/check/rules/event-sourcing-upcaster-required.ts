@@ -1,3 +1,4 @@
+import { eventNameResolver } from '../events/event-name-resolver.js';
 import { readStoredEventsLock, type StoredEventsLock } from '../event-sourcing/read-stored-events-lock.js';
 import type { StoredEventDeclaration } from '../event-sourcing/stored-event-declaration.js';
 import { storedEventDeclarations } from '../event-sourcing/stored-event-declarations.js';
@@ -15,9 +16,10 @@ export const eventSourcingUpcasterRequired: Rule = {
   scope: 'file',
   run(project) {
     const lock = readStoredEventsLock(project.root);
+    const eventNameOf = eventNameResolver(project.files);
 
     return perFile(project, this.id, (file) =>
-      storedEventDeclarations(file).flatMap((declaration) => [
+      storedEventDeclarations(file, eventNameOf).flatMap((declaration) => [
         ...unnamed(declaration),
         ...unresolved(declaration),
         ...missingUpcasters(declaration),

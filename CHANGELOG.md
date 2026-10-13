@@ -54,6 +54,8 @@ its birth event (`<Name>Created`) and its apply method, the codec of its stored 
 given-events spec; `generate domain-event` on such an aggregate adds the event to its union, to
 `appliers()` with an empty apply method, and to the codec. `CONTEXT.md`, `describe` and `list`
 mark the event-sourced aggregates. `ddd-ts-kit docs --stored-events` records the stored shapes.
+Like every reaction since 0.7.0, `appliers()` and the codec read the name an event declares
+once, `[LedgerCredited.eventName]: ...`; the checker and `docs --stored-events` resolve that key.
 
 **Documentation.** A concept page, [Event sourcing, per aggregate](docs/concepts/event-sourcing.md):
 when to choose it and when not, what it costs, crypto-shredding, projections fed by the store,

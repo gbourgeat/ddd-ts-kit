@@ -50,10 +50,10 @@ export class AttendanceHistoryProjection {
     why: "Stored events are never rewritten: an event stored years ago is read by today's code. Changing the type of the data of an event that is already stored breaks every replay of it, silently when the fields keep their names. The checkable criterion: the data of a stored event is a named type declared in its codec file with every named type it reaches (the kit's own PersonalValue aside), `encode` answers it, and its fingerprint (its fields and their types, the types it reaches included, layout and order aside) is recorded per version in stored-events.lock.json by `ddd-ts-kit docs --stored-events`, which never rewrites a recorded version. `ddd-ts-kit docs --check`, in the pipeline, fails while a declared version is not recorded, so no version reaches the main branch unrecorded. Reported: an encode that names no type, a type not declared in the file, a type it reaches that the file does not declare, a version above 1 without an upcaster from each version below it, a version below the last one recorded, and a recorded version whose shape changed. The lock is committed; until a version is recorded, its shape is free to change.",
     bad: `// infrastructure/persistence/attendance-record-events.mapper.ts
 interface NoShowNotedData { readonly appointmentId: string; readonly reason: string } // a field added in place
-'scheduling.attendance-record.no-show-noted': defineStoredEvent(NoShowNoted, { version: 1, encode: (event): NoShowNotedData => ({ ... }), decode }),`,
+[NoShowNoted.eventName]: defineStoredEvent(NoShowNoted, { version: 1, encode: (event): NoShowNotedData => ({ ... }), decode }),`,
     good: `// infrastructure/persistence/attendance-record-events.mapper.ts
 interface NoShowNotedData { readonly appointmentId: string; readonly reason: string }
-'scheduling.attendance-record.no-show-noted': defineStoredEvent(NoShowNoted, {
+[NoShowNoted.eventName]: defineStoredEvent(NoShowNoted, {
   version: 2,
   encode: (event): NoShowNotedData => ({ ... }),
   decode,

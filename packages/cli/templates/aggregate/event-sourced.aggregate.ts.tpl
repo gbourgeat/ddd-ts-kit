@@ -47,7 +47,7 @@ export class {{name.pascal}} extends EventSourcedAggregate<{{name.pascal}}Event,
 
   protected appliers(): Appliers<{{name.pascal}}Event> {
     return {
-      '{{event.name}}': (event) => this.apply{{event.fact}}(event),
+      [{{event.pascal}}.eventName]: (event) => this.apply{{event.fact}}(event),
     };
   }
 

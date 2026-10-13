@@ -182,6 +182,22 @@ const UPCASTER_REQUIRED: readonly Fixture[] = [
   },
   {
     ruleId: UPCASTER,
+    name: 'a field added to the shape of a recorded version, the codec keyed by the name its event class declares',
+    expect: { file: CODEC },
+    files: project({
+      ...EVENTS,
+      [EVENT]: source(
+        "export class InvoiceIssued {\n  static readonly eventName = 'billing.invoice.issued';\n\n  readonly name = InvoiceIssued.eventName;\n\n  constructor(\n    readonly aggregateId: string,\n    readonly amount: number,\n  ) {}\n}",
+      ),
+      [CODEC]: codec(`${AMOUNT}\n  readonly currency: string;`, ['version: 1,', ENCODE]).replace(
+        "'billing.invoice.issued': defineStoredEvent",
+        '[InvoiceIssued.eventName]: defineStoredEvent',
+      ),
+      ...locked({ 1: fingerprintOf(AMOUNT) }),
+    }),
+  },
+  {
+    ruleId: UPCASTER,
     name: 'an encode that names no stored type',
     expect: { file: CODEC },
     files: project({
