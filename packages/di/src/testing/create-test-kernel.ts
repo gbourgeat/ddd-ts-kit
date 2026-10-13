@@ -47,13 +47,6 @@ export function createTestKernel(options: TestApplicationOptions, resolve: Resol
   const executionScope = new FixedExecutionScope(context, actorContext);
   const observability = { logger: new InMemoryLogger(), metrics: new InMemoryMetrics(), lock: new InMemoryLock(clock) };
   const errors = new InMemoryErrorReporter();
-
-  const afterCommitFailed = reportAfterCommitFailures({
-    reporter: errors,
-    logger: observability.logger,
-    scope: executionScope,
-  });
-
   const tenants = new InMemoryTenantDirectory(options.tenants ?? tenantsOf(context));
   const scheduler = manualScheduler({ clock, scope: executionScope, tenants, ...observability }, errors);
 
@@ -61,7 +54,7 @@ export function createTestKernel(options: TestApplicationOptions, resolve: Resol
     commandBus: transactionalCommandBus(resolve),
     queryBus: guardedQueryBus(resolve),
     eventBus: new InMemoryEventBus(),
-    domainEvents: new InMemoryDomainEventDispatcher(afterCommitFailed),
+    domainEvents: domainEventsReportedTo(errors, observability.logger, executionScope),
     clock,
     ids: new SequentialIdGenerator(options.idPrefix),
     actorContext,
@@ -75,6 +68,15 @@ export function createTestKernel(options: TestApplicationOptions, resolve: Resol
     ...testQueue({ clock, scope: executionScope, ...observability }, errors),
     processes: new InMemoryProcessStore(),
   };
+}
+
+/** A failure after the commit is reported to the reporter the spec reads, and logged. */
+function domainEventsReportedTo(
+  reporter: InMemoryErrorReporter,
+  logger: InMemoryLogger,
+  scope: FixedExecutionScope,
+): InMemoryDomainEventDispatcher {
+  return new InMemoryDomainEventDispatcher(reportAfterCommitFailures({ reporter, logger, scope }));
 }
 
 function defaultExecutionContext({ session, actor }: TestApplicationOptions): ExecutionContext {
