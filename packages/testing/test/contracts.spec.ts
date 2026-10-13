@@ -3,6 +3,7 @@ import {
   FixedClock,
   InMemoryCache,
   InMemoryCachePurger,
+  RepeatedCachePurger,
   InMemoryEventBus,
   InMemoryLock,
   InMemoryProcessedEventStore,
@@ -105,6 +106,16 @@ cachePurgerContract(runner, {
     const purger = new InMemoryCachePurger();
 
     return { purger, store: (key, tags) => purger.store(key, tags), holds: (key) => purger.holds(key) };
+  },
+});
+
+cachePurgerContract(runner, {
+  name: 'RepeatedCachePurger, around the in-memory one',
+  createCache: () => {
+    const purger = new InMemoryCachePurger();
+    const repeated = new RepeatedCachePurger(purger, { againAfterMs: 0 });
+
+    return { purger: repeated, store: (key, tags) => purger.store(key, tags), holds: (key) => purger.holds(key) };
   },
 });
 

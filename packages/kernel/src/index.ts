@@ -275,6 +275,7 @@ export * from './infrastructure/context/fixed-execution-scope.js';
 export * from './infrastructure/context/scoped-actor-context.js';
 export * from './infrastructure/cache/published-cache-invalidation.js';
 export * from './infrastructure/cache/purging-publisher.js';
+export * from './infrastructure/cache/repeated-cache-purger.js';
 export * from './infrastructure/error-reporting/dead-letter-error.js';
 export * from './infrastructure/error-reporting/dead-letter-reports.js';
 export * from './infrastructure/error-reporting/report-process-failures.js';

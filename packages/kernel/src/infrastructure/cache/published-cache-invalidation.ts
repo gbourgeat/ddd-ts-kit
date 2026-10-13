@@ -1,4 +1,5 @@
 import { CachePurgeRequest } from '../../application/cache/cache-purge-request.js';
+import { NoCurrentTenantError } from '../../application/audit/no-current-tenant-error.js';
 import { tenantCacheTags } from '../../application/cache/tenant-cache-tags.js';
 import type { CacheInvalidation } from '../../application/ports/cache-invalidation.js';
 import type { Clock } from '../../application/ports/clock.js';
@@ -16,7 +17,8 @@ export interface PublishedCacheInvalidationOptions {
   /**
    * Files the tags under the tenant of the work, for a multi-tenant application whose answers are
    * tagged per tenant too (`cacheTags.perTenant` of `@ddd-ts-kit/http`). Default `false`: the two
-   * sides must agree, or the purges miss.
+   * sides must agree, or the purges miss. Work that names no tenant (a job, a system actor) is then
+   * refused (`NoCurrentTenantError`): its purge would meet no answer.
    */
   readonly perTenant?: boolean;
 }
@@ -37,9 +39,23 @@ export class PublishedCacheInvalidation implements CacheInvalidation {
       return;
     }
 
-    const { publisher, ids, clock, scope, perTenant } = this.options;
-    const filed = perTenant === true ? tenantCacheTags(distinct, scope.current()?.tenantId) : distinct;
+    const { publisher, ids, clock } = this.options;
+    const filed = this.filed(distinct);
 
     await publisher.publish([CachePurgeRequest.of(filed, { id: ids.next(), occurredAt: clock.now().toISOString() })]);
+  }
+
+  private filed(tags: readonly string[]): readonly string[] {
+    if (this.options.perTenant !== true) {
+      return tags;
+    }
+
+    const tenantId = this.options.scope.current()?.tenantId;
+
+    if (tenantId === undefined) {
+      throw new NoCurrentTenantError();
+    }
+
+    return tenantCacheTags(tags, tenantId);
   }
 }

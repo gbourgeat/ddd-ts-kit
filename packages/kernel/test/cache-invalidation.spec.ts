@@ -7,7 +7,9 @@ import {
   InMemoryCachePurger,
   InMemoryEventBus,
   PublishedCacheInvalidation,
+  NoCurrentTenantError,
   PurgingPublisher,
+  RepeatedCachePurger,
   SequentialIdGenerator,
   cacheTag,
   executionContext,
@@ -91,6 +93,13 @@ describe('PublishedCacheInvalidation', () => {
     expect(bus.published.map((event) => CachePurgeRequest.tagsOf(event))).toEqual([['calendar:c-1']]);
   });
 
+  it('refuses work that names no tenant when the tags are filed per tenant: its purge would meet no answer', async () => {
+    const { invalidation, bus } = invalidationIn(undefined);
+
+    await expect(invalidation.invalidate([cacheTag('calendar', 'c-1')])).rejects.toThrow(NoCurrentTenantError);
+    expect(bus.published).toEqual([]);
+  });
+
   it('publishes nothing when no tag is named', async () => {
     const { invalidation, bus } = invalidationIn(undefined);
 
@@ -142,6 +151,84 @@ describe('PurgingPublisher', () => {
     expect(
       CachePurgeRequest.tagsOf({ ...booked, type: CachePurgeRequest.type, payload: { tags: ['calendar', 7] } }),
     ).toEqual(['calendar']);
+  });
+});
+
+/** A wait the spec ends when it chooses, as the time between the two purges going by. */
+function releasableWait(): { wait: (ms: number) => Promise<void>; waited: number[]; release: () => Promise<void> } {
+  const waited: number[] = [];
+  let release = (): void => undefined;
+
+  const released = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+
+  return {
+    waited,
+    wait: (ms) => {
+      waited.push(ms);
+
+      return released;
+    },
+    release: async () => {
+      release();
+      await new Promise((resolve) => setImmediate(resolve));
+    },
+  };
+}
+
+describe('RepeatedCachePurger', () => {
+  it('purges at once, then the same tags again once the delay went by, for a read that was on its way', async () => {
+    const cache = new InMemoryCachePurger();
+    const time = releasableWait();
+    const purger = new RepeatedCachePurger(cache, { againAfterMs: 2_000, wait: time.wait });
+
+    await purger.purge(['calendar:c-1']);
+
+    expect(cache.purged).toEqual(['calendar:c-1']);
+    expect(time.waited).toEqual([2_000]);
+
+    cache.store('/calendars/c-1', ['calendar:c-1']);
+    await time.release();
+
+    expect(cache.purged).toEqual(['calendar:c-1', 'calendar:c-1']);
+    expect(cache.holds('/calendars/c-1')).toBe(false);
+  });
+
+  it('fails as its first purge fails, so the relay retries, and only reports a second one that fails', async () => {
+    const failures: string[] = [];
+    const time = releasableWait();
+    let calls = 0;
+
+    const flaky: CachePurger = {
+      purge: async () => {
+        calls += 1;
+
+        if (calls !== 2) {
+          throw new Error(`purge ${calls} refused`);
+        }
+      },
+    };
+
+    const purger = new RepeatedCachePurger(flaky, {
+      againAfterMs: 10,
+      wait: time.wait,
+      onFailure: (error, tags) => failures.push(`${String(error)} for ${tags.join(' ')}`),
+    });
+
+    await expect(purger.purge(['calendar'])).rejects.toThrow('purge 1 refused');
+    await purger.purge(['calendar']);
+    await time.release();
+
+    expect(failures).toEqual(['Error: purge 3 refused for calendar']);
+  });
+
+  it('waits for nothing when no tag was purged', async () => {
+    const time = releasableWait();
+
+    await new RepeatedCachePurger(new InMemoryCachePurger(), { againAfterMs: 10, wait: time.wait }).purge([]);
+
+    expect(time.waited).toEqual([]);
   });
 });
 
