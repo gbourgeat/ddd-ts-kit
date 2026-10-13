@@ -37,7 +37,9 @@ thing in their own words; a placeholder the generator left to fill is not judged
 (the second in ESLint too). A config without the key reads as `per-route`: nothing changes and
 nothing is reported; the steps to move are in `docs/CONFIG.md`. The example now shares its
 schemas: its twenty identifier answers are the one `Accepted` component, its two agenda
-searches answer `AgendaLinePage` pages of one `AgendaLine`; the bytes on the wire are unchanged.
+searches answer `AgendaLinePage` pages of one `AgendaLine`, and one `TimeSpan` is the body of
+the time off route whole and the start of a booking or a rescheduling through
+`pickClass(TimeSpan, ['startsAt'])`; the bytes on the wire are unchanged.
 
 **Hono and TypeBox.** `@ddd-ts-kit/http/hono` mounts the routes on Hono 4 (`mountHono`), through
 the same pipeline and the same behaviour suite as Express, Fastify and NestJS, uploads and signed
@@ -272,8 +274,6 @@ replaced 227 raw values and 8 numbers, its OpenAPI contract unchanged.
 **Every package carries the MIT notice.** Each published package now holds the `LICENSE` of the
 repository next to its `dist/`, and `npm run package:check` refuses a tarball without it, or with
 another text. Earlier versions were published without it.
-
-
 
 ## 0.6.0
 
