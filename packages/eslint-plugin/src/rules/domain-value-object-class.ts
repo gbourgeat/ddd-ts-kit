@@ -8,8 +8,10 @@ import { defineRule, type Report } from '../support/rule/define-rule.js';
 import { answeredObjects } from '../support/values/answered-objects.js';
 import { exportedBindings } from '../support/values/exported-bindings.js';
 import { extendsValueObject } from '../support/values/extends-value-object.js';
-import { holdsData } from '../support/values/holds-data.js';
+import { isModelPath } from '../support/values/is-model-path.js';
 import { isValueObjectPath } from '../support/values/is-value-object-path.js';
+import { returnsPackageType } from '../support/values/returns-package-type.js';
+import { standsForAValue } from '../support/values/stands-for-a-value.js';
 
 type MessageId =
   | 'noClass'
@@ -28,7 +30,7 @@ export const domainValueObjectClass = defineRule<MessageId>({
   type: 'problem',
   recommended: 'error',
   description:
-    'A value object is a class: a file of domain/value-objects/ (or a *.vo.ts of the shared kernel) exports one class extending ValueObject, with a private or protected constructor and static factories, and no function or object literal; no exported function of domain/ answers a plain object holding data.',
+    'Under "stack.values": "classes", a value object is a class: a file of domain/value-objects/ (or a *.vo.ts of the shared kernel) exports one class extending ValueObject, with a private or protected constructor and static factories, and no function or object literal; no exported function of domain/ or of the shared kernel answers a record of data (no spread, nothing a call of the model built).',
   messages: {
     noClass: `The value object file exports no class. Write the value as a class, \`export class <Name> extends ValueObject<<Name>Props>\`, with a private constructor and a static factory that checks its rules (${GENERATE} writes one): a function or an object literal gives no equality by value, no single place for the invariants and nothing \`instanceof\` can recognise.`,
     secondClass:
@@ -43,20 +45,22 @@ export const domainValueObjectClass = defineRule<MessageId>({
       'The value object file exports the function {{name}}. Make it a static factory or a method of the value object class: what builds or reads the value lives next to its data.',
     exportedLiteral:
       'The value object file exports the object literal {{name}}. Make it a static factory of the class, `static {{name}}()`, which builds a checked instance; a closed list of values is a vocabulary (domain/vocabularies/*.vocabulary.ts).',
-    plainValue: `{{name}} builds a plain object: a value of the model written as a function. Write it as a value object class (${GENERATE}): its rules checked once in a static factory, \`equals\` to compare two of them, its operations as methods next to its data. A domain service, a state machine, a specification or a function that takes and returns value objects stays as it is.`,
+    plainValue: `{{name}} builds a plain object: a value of the model written as a function. Write it as a value object class (${GENERATE}): its rules checked once in a static factory, \`equals\` to compare two of them, its operations as methods next to its data. A domain service, a state machine, a specification, a function that answers value objects it builds or derives a record with a spread stays as it is.`,
   },
   create({ file, report }) {
-    if (isValueObjectPath(file.path, file.location, file.config.sharedKernelDir)) {
-      return { Program: (program) => judgeValueObjectFile(file, program, report) };
-    }
+    const { path, location, config } = file;
 
-    const { location } = file;
-
-    if (location.area !== 'context' || location.layer !== 'domain' || file.isTest) {
+    if (config.stack.values !== 'classes') {
       return {};
     }
 
-    return { Program: (program) => judgeDomainFunctions(program, report) };
+    if (isValueObjectPath(path, location, config.sharedKernelDir)) {
+      return { Program: (program) => judgeValueObjectFile(file, program, report) };
+    }
+
+    return isModelPath(path, location, config.sharedKernelDir)
+      ? { Program: (program) => judgeModelFunctions(file, program, report) }
+      : {};
   },
 });
 
@@ -101,9 +105,13 @@ function isFactory(member: TSESTree.ClassElement): boolean {
   return member.type === AST_NODE_TYPES.MethodDefinition && member.static && visibilityOf(member) !== 'private';
 }
 
-function judgeDomainFunctions(program: TSESTree.Program, report: Report<MessageId>): void {
+function judgeModelFunctions(file: LintedFile, program: TSESTree.Program, report: Report<MessageId>): void {
   for (const binding of exportedBindings(program)) {
-    if (binding.kind === 'function' && answeredObjects(binding.node).some(holdsData)) {
+    if (binding.kind !== 'function' || returnsPackageType(file, program, binding.node)) {
+      continue;
+    }
+
+    if (answeredObjects(binding.node).some((object) => standsForAValue(object, program))) {
       report({ node: binding.at, messageId: 'plainValue', data: { name: binding.name } });
     }
   }

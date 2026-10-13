@@ -29,6 +29,8 @@ export interface Stack {
   readonly schemas: 'shared' | 'per-route';
   /** `named`: a value of a declared vocabulary and a number of the model are read through a name. A config that does not say is `free`, and both rules are silent. */
   readonly literals: 'named' | 'free';
+  /** `classes`: a value of the model is a value object class, never a function that builds a plain object. A config that does not say is `free`, and `domain/value-object-class` is silent. */
+  readonly values: 'classes' | 'free';
   /** Kept as written: with `prisma` the generated client under `generated/` has an import alias of its own. */
   readonly orm: string;
 }
