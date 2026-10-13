@@ -31,9 +31,8 @@ export const SHARDS = [
   { 'first-minute-no-context.spec.ts': 181, 'typecheck.spec.ts': 19 },
   {
     'first-minute-two-contexts.spec.ts': 184,
-    // Measured in CI (2026-10-13): 53 s on a runner where first-class.spec.ts took 169 s, scaled to the
-    // reference machine, plus the client SDK each pair now generates and compiles.
-    'contract-pairs.spec.ts': 35,
+    // Measured (2026-10-13) with the client SDK of each pair: 44 s here; 53 s in CI before the SDK.
+    'contract-pairs.spec.ts': 44,
   },
   { 'proven-stacks.spec.ts': 106, 'first-class.spec.ts': 68, 'error-rule-violations.spec.ts': 20 },
   {

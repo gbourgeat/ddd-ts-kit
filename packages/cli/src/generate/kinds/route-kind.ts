@@ -15,6 +15,7 @@ import { parseEndpoint } from './route/parse-endpoint.js';
 import { planController } from './route/plan-controller.js';
 import { routeVars, type RouteParts } from './route/route-vars.js';
 import { writeController } from './route/write-controller.js';
+import { SEARCH_LINE_LIBRARIES } from './route/search-line-libraries.js';
 
 const USAGE =
   '<context> <UseCaseName> --method <GET|POST|PUT|PATCH|DELETE> --path <path> [--command|--query] [--group <Name>] [--mapper] [--serializer]';
@@ -45,7 +46,7 @@ export const routeKind: Kind = {
     const context = vars(scope, {
       name: named(name),
       route: routeVars(scope, parts),
-      search: { customSchema: validation !== 'zod' && validation !== 'class-validator' },
+      search: { customSchema: !SEARCH_LINE_LIBRARIES.has(validation) },
     });
 
     emit(scope, context, routeOutputs(scope, parts));

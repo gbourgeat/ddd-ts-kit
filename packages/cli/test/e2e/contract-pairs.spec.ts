@@ -24,6 +24,7 @@ const TERMS = [
   ['Issue', 'To make an invoice final and send it'],
   ['Void', 'To cancel an invoice before it is paid'],
   ['Money', 'An amount in a currency'],
+  ['Search', 'To find invoices by criteria, one page at a time'],
 ].flatMap(([term, meaning]) => ['--term', `${term ?? ''}=${meaning ?? ''}`]);
 
 /** Each route nests the shared shape under a field of its own. */
@@ -32,8 +33,9 @@ const MONEY_REF = { $ref: '#/components/schemas/Money' };
 
 /**
  * Slow, opt-in (DDD_TS_KIT_E2E=1): one project per pair, a context with two command routes that
- * nest one shape declared once, installed as a published kit would be, held to its analyzers, its
- * specs, its end-to-end specs (401, 403, 201 and the trace of the request) and its contract.
+ * nest one shape declared once and a search, installed as a published kit would be, held to its
+ * analyzers, its specs, its end-to-end specs (401, 403, 201 and the trace of the request), its
+ * contract and the client generated from it.
  */
 describe.runIf(SLOW).each(PAIRS)('a project on a contract pair (%s)', (_label, stack) => {
   let root: string;
@@ -47,7 +49,7 @@ describe.runIf(SLOW).each(PAIRS)('a project on a contract pair (%s)', (_label, s
     installAsPublished(root);
   }, 120_000);
 
-  it('has no finding once a shape is shared by two routes', () => {
+  it('has no finding once a shape is shared by two routes and a search is added', () => {
     expectNoFinding(root);
   }, 480_000);
 
@@ -82,6 +84,20 @@ describe.runIf(SLOW).each(PAIRS)('a project on a contract pair (%s)', (_label, s
       expect(JSON.stringify(operation?.responses)).toContain('#/components/schemas/Accepted');
     }
   }, 240_000);
+
+  it('generates from that contract a client that compiles and names each shared type once', () => {
+    expect(cli(root, 'sdk').code).toBe(0);
+    expect(cli(root, 'sdk', '--check').code).toBe(0);
+
+    const types = readFile(root, 'clients/api/src/schemas.ts');
+
+    for (const name of ['Money', 'Accepted']) {
+      expect(types.match(new RegExp(`^export type ${name} =`, 'gm')), name).toHaveLength(1);
+    }
+
+    expect(readFile(root, 'clients/api/src/operations.ts')).toContain('export function searchInvoices(');
+    expect(node(NATIVE_COMPILER, '-b', 'clients')).toBe('');
+  }, 240_000);
 });
 
 interface Contract {
@@ -96,13 +112,15 @@ function scaffold(root: string, stack: StackFlags): void {
     expect(result.code, `${args.join(' ')}: ${result.stderr}`).toBe(0);
   };
 
-  run('init', ...initFlags(stack), '--context', 'billing:core');
+  run('init', ...initFlags(stack), '--package-manager', 'npm', '--sdk', '--context', 'billing:core');
   run('generate', 'aggregate', 'billing', 'Invoice', ...TERMS);
   run('generate', 'command', 'billing', 'IssueInvoice', '--aggregate', 'Invoice', '--permission', 'invoice.issue');
   run('generate', 'route', 'billing', 'IssueInvoice', '--method', 'POST', '--path', '/invoices');
   run('generate', 'e2e', 'billing', 'IssueInvoice');
   run('generate', 'command', 'billing', 'VoidInvoice', '--aggregate', 'Invoice', '--permission', 'invoice.void');
   run('generate', 'route', 'billing', 'VoidInvoice', '--method', 'POST', '--path', '/invoices/:invoiceId/void');
+  run('generate', 'query', 'billing', 'SearchInvoices', '--search', '--permission', 'invoice.search');
+  run('generate', 'route', 'billing', 'SearchInvoices', '--method', 'GET', '--path', '/invoices');
   run('generate', 'schema', 'billing', 'Money');
   shareMoney(root, stack.validation, ROUTES);
   run('docs');

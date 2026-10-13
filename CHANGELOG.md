@@ -51,12 +51,13 @@ contract (`Type.Intersect` extends it and keeps the reference). Both libraries a
 
 **Four contract pairs a project starts from.** `init --http hono` serves the routes with Hono on
 Node (`@hono/node-server`, the limiter and the readiness probe in front when the cache is
-shared), and `init --validation typebox` writes every schema of a route, a function route and a
-shared schema with TypeBox. A new end-to-end spec, `contract-pairs.spec.ts`, generates one project
-per pair (Express and zod, Fastify and TypeBox, Hono and zod, NestJS and class-validator), shares
-one shape between two routes, and holds each to zero finding, its specs and end-to-end specs
-(401, 403, 201 and the trace of the request) and a current contract that documents the shape
-once. NestJS with class-validator, generated before but never run end to end, is now.
+shared), and `init --validation typebox` writes every schema of a route (the line of a search
+included), a function route and a shared schema with TypeBox. A new end-to-end spec,
+`contract-pairs.spec.ts`, generates one project per pair (Express and zod, Fastify and TypeBox,
+Hono and zod, NestJS and class-validator), shares one shape between two routes, adds a search,
+and holds each to zero finding, its specs and end-to-end specs (401, 403, 201 and the trace of
+the request), a current contract that documents the shape once, and a client generated from it
+that names `Money` and `Accepted` once and compiles. NestJS with class-validator, generated before but never run end to end, is now.
 
 **Which pair for which team.** `docs/tools/contract-pairs.md` compares the four pairs (type
 inference, composition of shapes, contract fidelity, issue codes, ecosystem, maintenance) with

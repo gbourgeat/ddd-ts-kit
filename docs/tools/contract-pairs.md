@@ -22,7 +22,7 @@ of behaviour tests run on every adapter:
 | error codes in the contract | `errors` of the controller, one problem response per status in the OpenAPI document |
 | tracing | the request is the root span named after its route, the command, the repository and the events below it (asserted by the generated end-to-end spec) |
 | one contract | OpenAPI 3.1 generated from the declarations, committed, checked for drift in CI; a shape declared once lands once in `components.schemas` ([shared schemas](validation.md)) |
-| a typed client | `ddd-ts-kit sdk` writes it from the committed contract, whatever framework produced it ([client SDK](client-sdk.md)): a shared shape is one named type of the client, `Accepted` and `<Item>Page` included |
+| a typed client | `ddd-ts-kit sdk` writes it from the committed contract, whatever framework produced it ([client SDK](client-sdk.md)): a shared shape is one named type of the client, `Accepted` included; generated and compiled in each pair's project by `contract-pairs.spec.ts` |
 
 ## The pairs
 
@@ -33,11 +33,13 @@ of behaviour tests run on every adapter:
 | Hono on Node and zod | `--http hono` | `contract-pairs.spec.ts` |
 | NestJS and class-validator | `--http nest --di nest --validation class-validator` | `contract-pairs.spec.ts` |
 
-The end-to-end spec generates one project per pair, adds two command routes that nest one shape
-declared with `generate schema`, installs the kit as published, and holds the project to zero
-finding (the checker, ESLint, dependency-cruiser, knip), its unit specs, its end-to-end specs
-(401, 403, 201 and the span tree of the request) and a contract regenerated, current, holding
-the shared shape once and the `Accepted` answer of the platform. Other combinations are
+The end-to-end spec generates one project per pair (with `--sdk`), adds two command routes that
+nest one shape declared with `generate schema` (its generated file filled in, not replaced) and a
+search, installs the kit as published, and holds the project to zero finding (the checker,
+ESLint, dependency-cruiser, knip), its unit specs, its end-to-end specs (401, 403, 201 and the
+span tree of the request), a contract regenerated, current, holding the shared shape once and
+the `Accepted` answer of the platform, and the client generated from that contract: current,
+naming `Money` and `Accepted` once each, and compiling on its own. Other combinations are
 generated, checked and type-checked by the matrix of `stacks.ts` (Fastify with zod among them,
 and two added with this page: Hono with TypeBox and a Redis cache, Fastify with TypeBox on
 Knex); only these four are run end to end.

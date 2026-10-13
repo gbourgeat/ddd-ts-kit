@@ -1,6 +1,9 @@
 {{#if validation.zod}}
 import { z } from 'zod';
 {{/if}}
+{{#if validation.typebox}}
+import Type from 'typebox';
+{{/if}}
 import {
   Controller,
   pageQuerySchema,
@@ -23,6 +26,9 @@ import { zodSchema } from '@ddd-ts-kit/validation/zod';
 {{#if validation.classValidator}}
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
 {{/if}}
+{{#if validation.typebox}}
+import { typeboxSchema } from '@ddd-ts-kit/validation/typebox';
+{{/if}}
 {{route.imports}}
 
 // TODO(domain): list here the fields of {{name.pascal}}Sort a client may sort by, and bound the size of a page.
@@ -39,6 +45,14 @@ const line = zodSchema(
 {{/if}}
 {{#if validation.classValidator}}
 const line = classSchema({{name.pascal}}Line);
+{{/if}}
+{{#if validation.typebox}}
+const line = typeboxSchema(
+  Type.Object({
+    id: Type.String(),
+    // TODO(domain): declare the fields of {{name.pascal}}Item that are part of the public contract.
+  }),
+);
 {{/if}}
 {{#if search.customSchema}}
 interface {{name.pascal}}Line {

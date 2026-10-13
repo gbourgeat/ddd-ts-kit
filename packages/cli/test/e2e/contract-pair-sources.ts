@@ -5,27 +5,30 @@ const MONEY = `${HTTP}/shared/money.schema.ts`;
 const MONEY_IMPORT = "import { moneySchema } from '@/contexts/billing/presentation/http/shared/money.schema';\n";
 const TODO = /\n {4}\/\/ TODO\(domain\): declare the fields the client sends[^\n]*\n {2}/;
 
-/** The shape declared once by `generate schema billing Money`, and how a body nests it, in each library. */
-const BY_LIBRARY: Readonly<Record<string, { money: string; field: string }>> = {
+const SCHEMA_TODO = /\/\/ TODO\(domain\): declare the fields of "money"[^\n]*/;
+
+/** The fields `generate schema billing Money` leaves to write, in each library, and how a body nests the shape. */
+const BY_LIBRARY: Readonly<Record<string, { fields: string; field: string }>> = {
   zod: {
-    money:
-      "import { z } from 'zod';\n\nexport const moneySchema = z\n  .object({ cents: z.number().int(), currency: z.string().length(3) })\n  .meta({ id: 'Money' });\n",
+    fields: 'cents: z.number().int(),\n    currency: z.string().length(3),',
     field: ' {{field}}: moneySchema.optional() ',
   },
   typebox: {
-    money:
-      "import Type from 'typebox';\n\nexport const moneySchema = Type.Object(\n  { cents: Type.Integer(), currency: Type.String({ minLength: 3, maxLength: 3 }) },\n  { $id: 'Money' },\n);\n",
+    fields: 'cents: Type.Integer(),\n    currency: Type.String({ minLength: 3, maxLength: 3 }),',
     field: ' {{field}}: Type.Optional(moneySchema) ',
   },
 };
 
-const CLASS_MONEY =
-  "import { IsInt, Length } from 'class-validator';\n\nexport class Money {\n  @IsInt()\n  cents = 0;\n\n  @Length(3, 3)\n  currency = '';\n}\n";
+const CLASS_FIELDS = "@IsInt()\n  cents = 0;\n\n  @Length(3, 3)\n  currency = '';";
+const CLASS_IMPORT = "import { IsInt, Length } from 'class-validator';\n\n";
 
-/** The shared shape filled in, and nested in the body of each route under a field of its own: two bodies of one shape would be a duplicate. */
+/**
+ * The shared shape filled in where the generator left it to write, and nested in the body of each
+ * route under a field of its own: two bodies of one shape would be a duplicate.
+ */
 export function shareMoney(root: string, validation: string, uses: Readonly<Record<string, string>>): void {
   if (validation === 'class-validator') {
-    write(root, MONEY, CLASS_MONEY);
+    write(root, MONEY, `${CLASS_IMPORT}${filled(root, CLASS_FIELDS)}`);
     Object.entries(uses).forEach(([use, field]) => nestClass(root, use, field));
 
     return;
@@ -37,11 +40,22 @@ export function shareMoney(root: string, validation: string, uses: Readonly<Reco
     throw new Error(`No shared shape is written for ${validation}.`);
   }
 
-  write(root, MONEY, library.money);
+  write(root, MONEY, filled(root, library.fields));
 
   for (const [use, field] of Object.entries(uses)) {
     nestObject(root, `${HTTP}/invoices/${use}/${use}.controller.ts`, library.field.replace('{{field}}', field));
   }
+}
+
+/** The file `generate schema` wrote, its TODO replaced by the fields: the rest is analysed as generated. */
+function filled(root: string, fields: string): string {
+  const generated = read(root, MONEY);
+
+  if (!SCHEMA_TODO.test(generated)) {
+    throw new Error(`generate schema left no TODO to fill in ${MONEY}.`);
+  }
+
+  return generated.replace(SCHEMA_TODO, fields);
 }
 
 function nestObject(root: string, controller: string, field: string): void {
