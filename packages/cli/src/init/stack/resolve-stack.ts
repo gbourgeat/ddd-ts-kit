@@ -31,6 +31,7 @@ import {
   VALIDATION_STACKS,
   VALUE_OBJECT_FORMS,
   LITERAL_FORMS,
+  VALUE_FORMS,
   type Config,
 } from '../../config/index.js';
 import { aliasProblem } from '../../alias/index.js';
@@ -187,7 +188,7 @@ function resolveOperations(
 /** How the code is written: a new project takes the forms of the current version, a recorded one keeps the form it says. */
 function resolveWriting(
   options: StackOptions,
-): Record<'refusals' | 'routes' | 'schemas' | 'valueObjects' | 'literals', string> {
+): Record<'refusals' | 'routes' | 'schemas' | 'valueObjects' | 'literals' | 'values', string> {
   return {
     // A new project builds its domain errors through factories; a recorded one keeps the form it says, or the one of 0.2.
     refusals: choose(REFUSAL_FORMS, options.refusals, 'refusals') ?? 'factories',
@@ -199,6 +200,8 @@ function resolveWriting(
     valueObjects: choose(VALUE_OBJECT_FORMS, options.valueObjects, 'value-objects') ?? 'throwing',
     // A new project names its closed values and its numbers; a recorded one keeps the form it says, or the free literals of 0.5.
     literals: choose(LITERAL_FORMS, options.literals, 'literals') ?? 'named',
+    // A new project writes its values as value object classes; a recorded one keeps the form it says, or the free form of 0.15.
+    values: choose(VALUE_FORMS, options.values, 'values') ?? 'classes',
   };
 }
 

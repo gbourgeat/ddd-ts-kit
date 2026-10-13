@@ -1,5 +1,4 @@
 import type { Exported } from '../exports/exported.js';
-import { fileExports } from '../exports/file-exports.js';
 import type { Finding } from '../model/finding.js';
 import type { SourceFile } from '../model/source-file.js';
 import type { ClassShape } from '../structure/class-shape.js';
@@ -7,11 +6,13 @@ import type { MethodShape } from '../structure/method-shape.js';
 import { exportedFunctionBody } from './exported-function-body.js';
 import { extendsValueObject } from './extends-value-object.js';
 import { generateHint } from './generate-hint.js';
+import { exportedValues } from './exported-values.js';
 import { initializerOf } from './initializer-of.js';
+import { literalAt } from './literal-at.js';
 
 /** What a value object file says of itself: one class extending ValueObject, built by static factories, and nothing else that stands for a value. */
 export function valueObjectFileFindings(file: SourceFile, sharedKernelDir: string): Finding[] {
-  const exported = fileExports(file);
+  const exported = exportedValues(file);
   const classes = exported.filter(({ kind }) => kind === 'class');
   const [main, ...others] = classes;
 
@@ -111,5 +112,5 @@ function functionsAndLiterals(exported: readonly Exported[]): Finding[] {
 function isObjectLiteral({ kind, text }: Exported): boolean {
   const start = kind === 'const' ? initializerOf(text) : undefined;
 
-  return start !== undefined && text.charAt(start) === '{';
+  return start !== undefined && literalAt(text, start) !== undefined;
 }

@@ -31,6 +31,8 @@ export interface StackOptions {
   readonly schemas?: string;
   readonly valueObjects?: string;
   readonly literals?: string;
+  /** `classes` or `free`: whether a value of the model is held to a value object class. */
+  readonly values?: string;
   readonly tenancy?: string;
   /** `database`, `redis` or `memory`: where the background jobs wait. */
   readonly queue?: string;

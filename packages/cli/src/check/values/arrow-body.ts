@@ -7,7 +7,7 @@ const PARAMETERS = /^(?:async\s*)?(?:<[\s\S]*>\s*)?(?:\([\s\S]*\)|[\w$]+)(?:\s*:
 
 /** The body of the arrow function the expression at `from` is; undefined when the expression is not one. */
 export function arrowBody(code: string, from: number): FunctionBody | undefined {
-  const arrow = arrowAtDepthZero(code, from);
+  const arrow = arrowAtDepthZero(code, afterTypeParameters(code, from));
 
   if (arrow === undefined || !PARAMETERS.test(code.slice(from, arrow).trim())) {
     return undefined;
@@ -18,6 +18,23 @@ export function arrowBody(code: string, from: number): FunctionBody | undefined 
   return code.charAt(start) === '{'
     ? { kind: 'block', open: start, close: matchingBracket(code, start) }
     : { kind: 'expression', start };
+}
+
+/** Past the type parameters an arrow may open with, `<T,>` included, whose commas do not end the expression. */
+function afterTypeParameters(code: string, from: number): number {
+  const start = from + (/^(?:async\s*)?/.exec(code.slice(from))?.[0].length ?? 0);
+  let angles = 0;
+
+  for (let i = start; code.charAt(start) === '<' && i < code.length; i += 1) {
+    angles += code.charAt(i) === '<' ? 1 : 0;
+    angles -= code.charAt(i) === '>' && code.charAt(i - 1) !== '=' ? 1 : 0;
+
+    if (angles === 0) {
+      return i + 1;
+    }
+  }
+
+  return from;
 }
 
 /** The first `=>` outside any bracket before the expression ends. */

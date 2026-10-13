@@ -18,8 +18,7 @@ export const TEST_FIXTURES: readonly Fixture[] = [
       [AGGREGATE]: 'export class Invoice {}\n',
       [BUILDER]: 'export const anInvoice = 1;\n',
       [`${BILLING}/test/unit/domain/invoice.aggregate.spec.ts`]: SPEC,
-      [`${BILLING}/domain/value-objects/money.vo.ts`]:
-        "import { ValueObject } from '@ddd-ts-kit/kernel';\n\nexport class Money extends ValueObject<{ readonly cents: number }> {\n  static zero(): Money {\n    return new Money({ cents: 0 });\n  }\n}\n",
+      [`${BILLING}/domain/value-objects/money.vo.ts`]: 'export class Money {}\n',
       [`${BILLING}/test/unit/money.spec.ts`]: SPEC,
     }),
   },
