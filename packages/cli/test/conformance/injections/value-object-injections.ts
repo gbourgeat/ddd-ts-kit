@@ -3,6 +3,9 @@ import { PATHS } from '../paths.js';
 
 const { VALUE_OBJECT } = PATHS;
 
+const USELESS =
+  'A public constructor that only hands its props to super is what TypeScript would write: the compiler-side rule calls it useless, the value object rule calls it a way around the factory.';
+
 /** How a value of the model is written: a class extending ValueObject, built through static factories. */
 export const VALUE_OBJECT_INJECTIONS: readonly Injection[] = [
   {
@@ -18,5 +21,6 @@ export const VALUE_OBJECT_INJECTIONS: readonly Injection[] = [
     ],
     checker: true,
     eslint: 'ddd-ts-kit/domain-value-object-class',
+    alsoReports: [{ tool: 'eslint', rule: '@typescript-eslint/no-useless-constructor', reason: USELESS }],
   },
 ];
