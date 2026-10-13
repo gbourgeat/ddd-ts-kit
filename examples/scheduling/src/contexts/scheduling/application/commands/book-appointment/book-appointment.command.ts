@@ -11,7 +11,13 @@ export class BookAppointmentCommand extends AuthorizedCommand<string> {
   constructor(
     actor: Actor,
     readonly calendarId: string,
-    readonly wish: { readonly patientId: string; readonly appointmentTypeId: string; readonly startsAt: Date },
+    readonly wish: {
+      readonly patientId: string;
+      readonly appointmentTypeId: string;
+      readonly startsAt: Date;
+      /** Written by the staff of the practice for themselves, when they book: a patient may not. */
+      readonly internalNote?: string;
+    },
   ) {
     super(actor);
   }

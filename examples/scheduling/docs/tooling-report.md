@@ -929,3 +929,49 @@ No route of the application is public, so `Public` is not shown here: the kit ho
 own specs. `PersonError.invalidEmail` quotes the address it refuses in its message: the client
 now reads `Invalid email.` as `detail`, and the spec of the controller holds that the address
 does not leave.
+
+## 2026-10-13: media types, fields reserved to the staff, and a form described by the server
+
+The config says `"representations": "negotiated"` and `"forms": "on"`, and the platform has the
+two files `init` now writes for them (`http/presentation-of.ts`, `http/with-forms.ts`), with
+the boundary, the composition root and `scripts/openapi.ts` changed as the templates are.
+
+| | Before | After |
+|---|---|---|
+| Media types a route answers in | JSON | JSON, and what it declares: `application/xml` and `text/csv` for the agenda of a practice and its export, `application/xml` for a booking |
+| Bodies read | JSON | JSON, and XML on `POST /appointments` |
+| Export of an agenda | none | `GET /practices/{practiceId}/agenda/export`, streamed page after page of the read model (CSV or XML) |
+| Internal note | none | written at booking by whoever runs the calendar, read by its staff, refused (403) from and hidden from its patient: `withFieldAccess` on the body and on the detail, `Access.authorize` in the handler for every other caller |
+| Forms | none | `GET /forms/bookAppointment` (JSON Forms, or `?format=blocks`), `openapi/forms/bookAppointment.json` generated |
+| End-to-end specs | | `book-appointment.e2e.spec.ts` (XML booking, the form for the patient, the assistant and the practitioner, the note), `export-practice-agenda.e2e.spec.ts` (CSV, XML, 406) |
+
+What the generators wrote: the domain event `AppointmentAnnotated` (with its glossary term),
+the query and the controller of the export, the two end-to-end specs, the `produces` and
+`consumes` of three controllers (`generate representation`) and the hints of the booking form
+(`generate form`), which were then filled. What was done by hand: the note in the aggregate,
+its row, its column and the agenda, the projector of the annotation, the field rules, the
+permissions `appointment.note.read` and `appointment.note.write` with the relationship `staff`
+of a calendar (whoever works in its practice), and the export handler, which reads the agenda
+by cursor pages instead of the reader port the query generator proposes.
+
+Frictions met, fixed in the kit in the same change:
+
+- `scripts/kit.mjs` failed on every generator run that created a file: a constant was read
+  before its declaration. Fixed here.
+- The JSON Schema of a class-validator class that only extends another one was an empty object:
+  the agenda lines of the contract said nothing of their fields, and a CSV of them had no
+  column. `@ddd-ts-kit/validation` now gives a class the properties of its ancestors; the
+  contract of the agenda lists them.
+- A field decision ran outside the execution scope of the request, where the audit of the
+  decisions requires it: the pipeline now decides fields, and reads a streamed list, inside it.
+- The form generator imported `Infer` as a value in a class-validator controller.
+
+HTTP contract changes: the media types above under each route concerned, `406` with
+`NOT_ACCEPTABLE` on the routes that produce more than JSON, `415` with
+`UNSUPPORTED_MEDIA_TYPE` on the booking, `internalNote` (optional, marked `x-field-access`) in
+the body of `POST /appointments` and in the answer of `GET /appointments/{appointmentId}`, the
+new routes `GET /practices/{practiceId}/agenda/export` and `GET /forms/bookAppointment`, and
+the properties of the agenda lines, which were missing.
+
+The internal note is added to the first migration: no database of this application is shared.
+A shared one takes it in a migration of its own (`npm run db:generate add-internal-note`).

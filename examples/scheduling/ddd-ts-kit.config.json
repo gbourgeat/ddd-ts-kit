@@ -26,7 +26,9 @@
     "assembly": "barrel",
     "dependencies": "signature",
     "refusals": "factories",
-    "routes": "controllers"
+    "routes": "controllers",
+    "representations": "negotiated",
+    "forms": "on"
   },
   "contexts": {
     "identity": {

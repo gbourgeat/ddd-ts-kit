@@ -1,5 +1,6 @@
 import { AggregateRoot, unwrap } from '@ddd-ts-kit/kernel';
 import { AppointmentError } from '@/contexts/scheduling/domain/errors/appointment.error';
+import { AppointmentAnnotated } from '@/contexts/scheduling/domain/events/appointment-annotated.event';
 import { AppointmentBooked } from '@/contexts/scheduling/domain/events/appointment-booked.event';
 import { AppointmentCancelled } from '@/contexts/scheduling/domain/events/appointment-cancelled.event';
 import { AppointmentCompleted } from '@/contexts/scheduling/domain/events/appointment-completed.event';
@@ -21,6 +22,8 @@ export interface AppointmentState {
   /** Only while requested: the instant after which the appointment expires unless confirmed. */
   readonly confirmBefore?: Date;
   readonly cancellation?: Cancellation;
+  /** What the staff of the practice keeps about the appointment; its patient never sees it. */
+  readonly internalNote?: string;
 }
 
 export class Appointment extends AggregateRoot<string> {
@@ -76,6 +79,7 @@ export class Appointment extends AggregateRoot<string> {
       registeredAt: this.state.registeredAt,
       changedAt: now,
       booking: this.state.booking,
+      ...noteOf(this.state),
       status: 'booked',
     };
 
@@ -89,6 +93,7 @@ export class Appointment extends AggregateRoot<string> {
       registeredAt: this.state.registeredAt,
       changedAt: now,
       booking: this.state.booking,
+      ...noteOf(this.state),
       status: 'cancelled',
       cancellation,
     };
@@ -115,6 +120,7 @@ export class Appointment extends AggregateRoot<string> {
       registeredAt: this.state.registeredAt,
       changedAt: now,
       booking: this.state.booking,
+      ...noteOf(this.state),
       status: 'completed',
     };
 
@@ -129,6 +135,7 @@ export class Appointment extends AggregateRoot<string> {
       registeredAt: this.state.registeredAt,
       changedAt: now,
       booking: this.state.booking,
+      ...noteOf(this.state),
       status: 'no-show',
     };
 
@@ -147,6 +154,7 @@ export class Appointment extends AggregateRoot<string> {
       registeredAt: this.state.registeredAt,
       changedAt: at,
       booking: this.state.booking,
+      ...noteOf(this.state),
       status: 'expired',
     };
 
@@ -183,6 +191,14 @@ export class Appointment extends AggregateRoot<string> {
     return this.state.booking.slot;
   }
 
+  /** The staff writes what it keeps about the appointment, until its end. */
+  annotate(internalNote: string, now: Date): void {
+    this.refuseWhenEnded();
+
+    this.state = { ...this.state, changedAt: now, internalNote };
+    this.record(new AppointmentAnnotated(this.id, now, internalNote));
+  }
+
   get status(): AppointmentState['status'] {
     return this.state.status;
   }
@@ -203,6 +219,10 @@ export class Appointment extends AggregateRoot<string> {
     return this.state.changedAt;
   }
 
+  get internalNote(): string | undefined {
+    return this.state.internalNote;
+  }
+
   toState(): AppointmentState {
     return { ...this.state };
   }
@@ -218,4 +238,9 @@ export class Appointment extends AggregateRoot<string> {
       throw AppointmentError.notStarted(this.id, this.state.booking.slot.startsAt);
     }
   }
+}
+
+/** The note survives every change of standing: it is the staff's, not the slot's. */
+function noteOf(state: AppointmentState): Pick<AppointmentState, 'internalNote'> {
+  return state.internalNote === undefined ? {} : { internalNote: state.internalNote };
 }

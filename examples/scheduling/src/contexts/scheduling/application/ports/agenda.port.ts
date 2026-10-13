@@ -17,6 +17,8 @@ export type AgendaEntry = {
   readonly status: 'requested' | 'booked' | 'cancelled' | 'expired' | 'completed' | 'no-show';
   readonly confirmBefore: Date | null;
   readonly cancelledBy: 'patient' | 'practice' | null;
+  /** What the staff of the practice keeps about the appointment: an answer shows it only to them. */
+  readonly internalNote: string | null;
   readonly changedAt: Date;
 };
 

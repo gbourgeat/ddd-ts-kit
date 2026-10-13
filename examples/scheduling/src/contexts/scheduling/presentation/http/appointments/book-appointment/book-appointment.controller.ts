@@ -1,19 +1,41 @@
-import { Controller, type HttpRequest } from '@ddd-ts-kit/http';
+import { Controller, defineForm, withFieldAccess, type HttpRequest } from '@ddd-ts-kit/http';
 import type { CommandBus } from '@ddd-ts-kit/kernel';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
 import { BookAppointmentBody } from '@/contexts/scheduling/presentation/http/appointments/book-appointment/book-appointment.body';
 import { BookAppointmentAccepted } from '@/contexts/scheduling/presentation/http/appointments/book-appointment/book-appointment.accepted';
 import type { BookAppointmentMapper } from '@/contexts/scheduling/presentation/http/appointments/book-appointment/book-appointment.mapper';
 import { AppointmentsRoutes } from '@/contexts/scheduling/presentation/http/appointments.routes';
+import { schedulingPermissions } from '@/contexts/scheduling/application/authorization/scheduling.permissions';
 
-const body = classSchema(BookAppointmentBody);
+// The staff of the calendar sees the internal note, the one who runs it writes it; a patient neither sees nor sends it.
+const body = withFieldAccess(classSchema(BookAppointmentBody), {
+  internalNote: {
+    read: { permission: schedulingPermissions['appointment.note.read'] },
+    write: { permission: schedulingPermissions['appointment.note.write'] },
+    subject: (booking) => ({ type: 'calendar', id: booking.calendarId }),
+  },
+});
+
 const accepted = classSchema(BookAppointmentAccepted);
+
+/** How the body of the route is entered, served as a form at GET /forms/bookAppointment for the caller who asks. */
+const form = defineForm<BookAppointmentBody>({
+  groups: [{ name: 'when', fields: ['calendarId', 'appointmentTypeId', 'startsAt'] }],
+  fields: {
+    appointmentTypeId: { lookup: 'getCalendarDay' },
+    startsAt: { widget: 'datetime' },
+    internalNote: { widget: 'textarea' },
+  },
+});
 
 @Controller({
   group: AppointmentsRoutes,
   method: 'POST',
   path: '/',
   summary: 'Book appointment',
+  form,
+  consumes: ['application/xml'],
+  produces: ['application/xml'],
   body,
   response: { status: 201, description: 'Done; the body carries the identifier.', body: accepted },
   errors: [

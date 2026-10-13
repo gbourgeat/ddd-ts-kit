@@ -9,6 +9,7 @@ import { schedulingPermissions } from '@/contexts/scheduling/application/authori
 import { Agenda } from '@/contexts/scheduling/application/ports/agenda.port';
 import { SchedulingRelationships } from '@/contexts/scheduling/application/ports/scheduling-relationships.port';
 import { AgendaProjection } from '@/contexts/scheduling/application/projections/agenda.projection';
+import { AppointmentAnnotated } from '@/contexts/scheduling/domain/events/appointment-annotated.event';
 import { AppointmentBooked } from '@/contexts/scheduling/domain/events/appointment-booked.event';
 import { AppointmentCancelled } from '@/contexts/scheduling/domain/events/appointment-cancelled.event';
 import { AppointmentExpired } from '@/contexts/scheduling/domain/events/appointment-expired.event';
@@ -57,6 +58,7 @@ describe('The agenda, kept from the facts of the appointments', () => {
       status: 'booked',
       confirmBefore: null,
       cancelledBy: null,
+      internalNote: null,
       changedAt: bornAt,
     });
   });
@@ -112,6 +114,19 @@ describe('The agenda, kept from the facts of the appointments', () => {
       confirmBefore: at('08:00'),
       changedAt: at('07:00'),
     });
+  });
+
+  it('shows the internal note of the staff, and keeps it when the appointment changes its standing', async () => {
+    const { appointments, agenda } = arrange();
+    const appointment = planned().requestedUntil(at('08:00')).build();
+
+    appointment.annotate('Prefers the morning', bornAt);
+    await appointments.save(appointment);
+
+    appointment.confirm(at('07:00'));
+    await appointments.save(appointment);
+
+    expect(await agenda.get('appointment-1')).toMatchObject({ status: 'booked', internalNote: 'Prefers the morning' });
   });
 
   it('shows who cancelled an appointment, and keeps it in the agenda', async () => {
@@ -179,6 +194,15 @@ describe('The agenda, given facts twice or out of order', () => {
 
     expect(writes).toEqual(['applied', 'stale']);
     expect(await agenda.get('appointment-1')).toMatchObject({ status: 'expired' });
+  });
+
+  it('ignores the note of an appointment it never saw', async () => {
+    const agenda = new FakeAgenda();
+    const projection = new AgendaProjection(agenda);
+
+    await projection.annotated(new AppointmentAnnotated('appointment-9', bornAt, 'Never booked here'));
+
+    expect(await agenda.get('appointment-9')).toBeUndefined();
   });
 
   it('ignores the move of an appointment it never saw', async () => {

@@ -4,8 +4,8 @@ import { defineSchema, from, union } from '@ddd-ts-kit/auth/rebac';
  * Who is what to which element. A practice has its members; a desk is the post of one
  * practitioner in one practice (object id `<practiceId>.<practitionerId>`), held by the
  * practitioner, delegated in whole or for the availabilities only, and managed by whoever
- * manages the practice; a calendar belongs to a desk, an appointment to a calendar and to its
- * patient; a person is one user. A bounded context and who operates it stays the resource of
+ * manages the practice; a calendar belongs to a desk, and whoever works in its practice is its
+ * staff; an appointment belongs to a calendar and to its patient; a person is one user. A bounded context and who operates it stays the resource of
  * the use cases the application runs on its own behalf: a system actor (a scheduled job, an
  * integration event handler) is a subject of type `system`.
  */
@@ -30,7 +30,12 @@ export const relationshipSchema = defineSchema({
   },
   calendar: {
     relations: { desk: ['desk'], practice: ['practice'] },
-    permissions: { plan: from('desk', 'plan'), run: from('desk', 'run'), measure: union(from('desk', 'own')) },
+    permissions: {
+      plan: from('desk', 'plan'),
+      run: from('desk', 'run'),
+      measure: union(from('desk', 'own')),
+      staff: from('practice', 'work'),
+    },
   },
   appointment: {
     relations: { patient: ['user'], calendar: ['calendar'] },

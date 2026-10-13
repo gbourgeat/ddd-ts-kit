@@ -325,6 +325,47 @@ paths:
                 patientId:
                   minLength: 1
                   type: string
+                internalNote:
+                  maxLength: 2000
+                  type: string
+                  minLength: 1
+                  x-field-access:
+                    read:
+                      permission: scheduling:appointment.note.read
+                    write:
+                      permission: scheduling:appointment.note.write
+              type: object
+              required:
+                - calendarId
+                - appointmentTypeId
+                - startsAt
+          application/xml:
+            schema:
+              properties:
+                calendarId:
+                  minLength: 1
+                  type: string
+                appointmentTypeId:
+                  minLength: 1
+                  type: string
+                startsAt:
+                  oneOf:
+                    - format: date
+                      type: string
+                    - format: date-time
+                      type: string
+                patientId:
+                  minLength: 1
+                  type: string
+                internalNote:
+                  maxLength: 2000
+                  type: string
+                  minLength: 1
+                  x-field-access:
+                    read:
+                      permission: scheduling:appointment.note.read
+                    write:
+                      permission: scheduling:appointment.note.write
               type: object
               required:
                 - calendarId
@@ -342,10 +383,21 @@ paths:
                 type: object
                 required:
                   - id
+            application/xml:
+              schema:
+                properties:
+                  id:
+                    type: string
+                type: object
+                required:
+                  - id
         '401':
           description: 'Unauthorized. Error codes: UNAUTHORIZED.'
           content:
             application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+            application/problem+xml:
               schema:
                 $ref: '#/components/schemas/Problem'
           x-error-codes:
@@ -356,6 +408,9 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
+            application/problem+xml:
+              schema:
+                $ref: '#/components/schemas/Problem'
           x-error-codes:
             - FORBIDDEN
         '404':
@@ -364,21 +419,52 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
+            application/problem+xml:
+              schema:
+                $ref: '#/components/schemas/Problem'
           x-error-codes:
             - UNKNOWN_CALENDAR
+        '406':
+          description: 'Not Acceptable. Error codes: NOT_ACCEPTABLE.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+            application/problem+xml:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - NOT_ACCEPTABLE
         '409':
           description: 'Conflict. Error codes: PATIENT_LIMIT_REACHED, SLOT_TAKEN.'
           content:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
+            application/problem+xml:
+              schema:
+                $ref: '#/components/schemas/Problem'
           x-error-codes:
             - PATIENT_LIMIT_REACHED
             - SLOT_TAKEN
+        '415':
+          description: 'Unsupported Media Type. Error codes: UNSUPPORTED_MEDIA_TYPE.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+            application/problem+xml:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - UNSUPPORTED_MEDIA_TYPE
         '422':
           description: 'Unprocessable Content. Error codes: BOOKING_TOO_FAR, BOOKING_TOO_LATE, OFF_GRID, OUTSIDE_AVAILABILITY, UNKNOWN_APPOINTMENT_TYPE, VALIDATION_FAILED.'
           content:
             application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+            application/problem+xml:
               schema:
                 $ref: '#/components/schemas/Problem'
           x-error-codes:
@@ -409,8 +495,6 @@ paths:
             application/json:
               schema:
                 properties:
-                  patientName:
-                    type: string
                   id:
                     type: string
                   calendarId:
@@ -458,6 +542,13 @@ paths:
                     enum:
                       - patient
                       - practice
+                  patientName:
+                    type: string
+                  internalNote:
+                    type: string
+                    x-field-access:
+                      read:
+                        permission: scheduling:appointment.note.read
                 type: object
                 required:
                   - id
@@ -1614,6 +1705,122 @@ paths:
             - INVALID_DAY
             - UNKNOWN_APPOINTMENT_TYPE
             - VALIDATION_FAILED
+  /forms/bookAppointment:
+    get:
+      operationId: bookAppointmentForm
+      summary: 'Form: Book appointment'
+      description: 'The form of POST /appointments, for the caller: a field they may not see is absent, one they may not set is read-only.'
+      tags:
+        - scheduling
+      security:
+        - bearer: []
+      parameters:
+        - name: format
+          in: query
+          description: JSON Forms (schema, UI schema, data), or the neutral tree of blocks.
+          required: false
+          schema:
+            enum:
+              - json-forms
+              - blocks
+            default: json-forms
+            description: JSON Forms (schema, UI schema, data), or the neutral tree of blocks.
+        - name: calendarId
+          in: query
+          description: 'A value of calendarId known in advance: it prefills the form and names the element its rules are asked about.'
+          required: false
+          schema:
+            type: string
+            description: 'A value of calendarId known in advance: it prefills the form and names the element its rules are asked about.'
+        - name: appointmentTypeId
+          in: query
+          description: 'A value of appointmentTypeId known in advance: it prefills the form and names the element its rules are asked about.'
+          required: false
+          schema:
+            type: string
+            description: 'A value of appointmentTypeId known in advance: it prefills the form and names the element its rules are asked about.'
+        - name: startsAt
+          in: query
+          description: 'A value of startsAt known in advance: it prefills the form and names the element its rules are asked about.'
+          required: false
+          schema:
+            type: string
+            description: 'A value of startsAt known in advance: it prefills the form and names the element its rules are asked about.'
+        - name: patientId
+          in: query
+          description: 'A value of patientId known in advance: it prefills the form and names the element its rules are asked about.'
+          required: false
+          schema:
+            type: string
+            description: 'A value of patientId known in advance: it prefills the form and names the element its rules are asked about.'
+        - name: internalNote
+          in: query
+          description: 'A value of internalNote known in advance: it prefills the form and names the element its rules are asked about.'
+          required: false
+          schema:
+            type: string
+            description: 'A value of internalNote known in advance: it prefills the form and names the element its rules are asked about.'
+      responses:
+        '200':
+          description: The form, for the caller.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: object
+                    description: 'JSON Forms: give the three to a renderer for React, Angular or Vue.'
+                    required:
+                      - schema
+                      - uischema
+                      - data
+                    properties:
+                      schema:
+                        type: object
+                      uischema:
+                        type: object
+                      data:
+                        type: object
+                  - type: object
+                    description: The neutral tree of blocks, for a front end with its own rendering engine.
+                    required:
+                      - type
+                      - operation
+                      - method
+                      - path
+                      - label
+                      - blocks
+                    properties:
+                      type:
+                        const: form
+                      operation:
+                        type: string
+                      method:
+                        type: string
+                      path:
+                        type: string
+                      label:
+                        type: string
+                        description: A translation key.
+                      blocks:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/FormBlock'
+        '401':
+          description: 'Unauthorized. Error codes: UNAUTHORIZED.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - UNAUTHORIZED
+        '422':
+          description: 'Unprocessable Content. Error codes: VALIDATION_FAILED.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - VALIDATION_FAILED
   /notifications:
     get:
       operationId: searchNotifications
@@ -2069,7 +2276,218 @@ paths:
                   items:
                     type: array
                     items:
+                      properties:
+                        id:
+                          type: string
+                        calendarId:
+                          type: string
+                        practiceId:
+                          type: string
+                        practitionerId:
+                          type: string
+                        patientId:
+                          type: string
+                        appointmentTypeId:
+                          type: string
+                        startsAt:
+                          oneOf:
+                            - format: date
+                              type: string
+                            - format: date-time
+                              type: string
+                        endsAt:
+                          oneOf:
+                            - format: date
+                              type: string
+                            - format: date-time
+                              type: string
+                        day:
+                          pattern: ^\d{4}-\d{2}-\d{2}$
+                          type: string
+                        status:
+                          type: string
+                          enum:
+                            - requested
+                            - booked
+                            - cancelled
+                            - expired
+                            - completed
+                            - no-show
+                        confirmBefore:
+                          oneOf:
+                            - format: date
+                              type: string
+                            - format: date-time
+                              type: string
+                        cancelledBy:
+                          type: string
+                          enum:
+                            - patient
+                            - practice
                       type: object
+                      required:
+                        - id
+                        - calendarId
+                        - practiceId
+                        - practitionerId
+                        - patientId
+                        - appointmentTypeId
+                        - startsAt
+                        - endsAt
+                        - day
+                        - status
+                  total:
+                    type: integer
+                    minimum: 0
+                    description: Present when it is cheap to count.
+                  nextCursor:
+                    type: string
+                    description: Present when more items follow.
+            application/xml:
+              schema:
+                type: object
+                required:
+                  - items
+                properties:
+                  items:
+                    type: array
+                    items:
+                      properties:
+                        id:
+                          type: string
+                        calendarId:
+                          type: string
+                        practiceId:
+                          type: string
+                        practitionerId:
+                          type: string
+                        patientId:
+                          type: string
+                        appointmentTypeId:
+                          type: string
+                        startsAt:
+                          oneOf:
+                            - format: date
+                              type: string
+                            - format: date-time
+                              type: string
+                        endsAt:
+                          oneOf:
+                            - format: date
+                              type: string
+                            - format: date-time
+                              type: string
+                        day:
+                          pattern: ^\d{4}-\d{2}-\d{2}$
+                          type: string
+                        status:
+                          type: string
+                          enum:
+                            - requested
+                            - booked
+                            - cancelled
+                            - expired
+                            - completed
+                            - no-show
+                        confirmBefore:
+                          oneOf:
+                            - format: date
+                              type: string
+                            - format: date-time
+                              type: string
+                        cancelledBy:
+                          type: string
+                          enum:
+                            - patient
+                            - practice
+                      type: object
+                      required:
+                        - id
+                        - calendarId
+                        - practiceId
+                        - practitionerId
+                        - patientId
+                        - appointmentTypeId
+                        - startsAt
+                        - endsAt
+                        - day
+                        - status
+                  total:
+                    type: integer
+                    minimum: 0
+                    description: Present when it is cheap to count.
+                  nextCursor:
+                    type: string
+                    description: Present when more items follow.
+            text/csv:
+              schema:
+                type: object
+                required:
+                  - items
+                properties:
+                  items:
+                    type: array
+                    items:
+                      properties:
+                        id:
+                          type: string
+                        calendarId:
+                          type: string
+                        practiceId:
+                          type: string
+                        practitionerId:
+                          type: string
+                        patientId:
+                          type: string
+                        appointmentTypeId:
+                          type: string
+                        startsAt:
+                          oneOf:
+                            - format: date
+                              type: string
+                            - format: date-time
+                              type: string
+                        endsAt:
+                          oneOf:
+                            - format: date
+                              type: string
+                            - format: date-time
+                              type: string
+                        day:
+                          pattern: ^\d{4}-\d{2}-\d{2}$
+                          type: string
+                        status:
+                          type: string
+                          enum:
+                            - requested
+                            - booked
+                            - cancelled
+                            - expired
+                            - completed
+                            - no-show
+                        confirmBefore:
+                          oneOf:
+                            - format: date
+                              type: string
+                            - format: date-time
+                              type: string
+                        cancelledBy:
+                          type: string
+                          enum:
+                            - patient
+                            - practice
+                      type: object
+                      required:
+                        - id
+                        - calendarId
+                        - practiceId
+                        - practitionerId
+                        - patientId
+                        - appointmentTypeId
+                        - startsAt
+                        - endsAt
+                        - day
+                        - status
                   total:
                     type: integer
                     minimum: 0
@@ -2083,6 +2501,9 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
+            application/problem+xml:
+              schema:
+                $ref: '#/components/schemas/Problem'
           x-error-codes:
             - UNAUTHORIZED
         '403':
@@ -2091,16 +2512,288 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
+            application/problem+xml:
+              schema:
+                $ref: '#/components/schemas/Problem'
           x-error-codes:
             - FORBIDDEN
+        '406':
+          description: 'Not Acceptable. Error codes: NOT_ACCEPTABLE.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+            application/problem+xml:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - NOT_ACCEPTABLE
         '422':
           description: 'Unprocessable Content. Error codes: INVALID_CRITERIA, VALIDATION_FAILED.'
           content:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
+            application/problem+xml:
+              schema:
+                $ref: '#/components/schemas/Problem'
           x-error-codes:
             - INVALID_CRITERIA
+            - VALIDATION_FAILED
+  /practices/{practiceId}/agenda/export:
+    get:
+      operationId: exportPracticeAgenda
+      summary: Export practice agenda
+      tags:
+        - scheduling
+      security:
+        - bearer: []
+      parameters:
+        - name: practiceId
+          in: path
+          schema:
+            minLength: 1
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Every appointment of the agenda, streamed.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  properties:
+                    id:
+                      type: string
+                    calendarId:
+                      type: string
+                    practiceId:
+                      type: string
+                    practitionerId:
+                      type: string
+                    patientId:
+                      type: string
+                    appointmentTypeId:
+                      type: string
+                    startsAt:
+                      oneOf:
+                        - format: date
+                          type: string
+                        - format: date-time
+                          type: string
+                    endsAt:
+                      oneOf:
+                        - format: date
+                          type: string
+                        - format: date-time
+                          type: string
+                    day:
+                      pattern: ^\d{4}-\d{2}-\d{2}$
+                      type: string
+                    status:
+                      type: string
+                      enum:
+                        - requested
+                        - booked
+                        - cancelled
+                        - expired
+                        - completed
+                        - no-show
+                    confirmBefore:
+                      oneOf:
+                        - format: date
+                          type: string
+                        - format: date-time
+                          type: string
+                    cancelledBy:
+                      type: string
+                      enum:
+                        - patient
+                        - practice
+                  type: object
+                  required:
+                    - id
+                    - calendarId
+                    - practiceId
+                    - practitionerId
+                    - patientId
+                    - appointmentTypeId
+                    - startsAt
+                    - endsAt
+                    - day
+                    - status
+            text/csv:
+              schema:
+                type: array
+                items:
+                  properties:
+                    id:
+                      type: string
+                    calendarId:
+                      type: string
+                    practiceId:
+                      type: string
+                    practitionerId:
+                      type: string
+                    patientId:
+                      type: string
+                    appointmentTypeId:
+                      type: string
+                    startsAt:
+                      oneOf:
+                        - format: date
+                          type: string
+                        - format: date-time
+                          type: string
+                    endsAt:
+                      oneOf:
+                        - format: date
+                          type: string
+                        - format: date-time
+                          type: string
+                    day:
+                      pattern: ^\d{4}-\d{2}-\d{2}$
+                      type: string
+                    status:
+                      type: string
+                      enum:
+                        - requested
+                        - booked
+                        - cancelled
+                        - expired
+                        - completed
+                        - no-show
+                    confirmBefore:
+                      oneOf:
+                        - format: date
+                          type: string
+                        - format: date-time
+                          type: string
+                    cancelledBy:
+                      type: string
+                      enum:
+                        - patient
+                        - practice
+                  type: object
+                  required:
+                    - id
+                    - calendarId
+                    - practiceId
+                    - practitionerId
+                    - patientId
+                    - appointmentTypeId
+                    - startsAt
+                    - endsAt
+                    - day
+                    - status
+            application/xml:
+              schema:
+                type: array
+                items:
+                  properties:
+                    id:
+                      type: string
+                    calendarId:
+                      type: string
+                    practiceId:
+                      type: string
+                    practitionerId:
+                      type: string
+                    patientId:
+                      type: string
+                    appointmentTypeId:
+                      type: string
+                    startsAt:
+                      oneOf:
+                        - format: date
+                          type: string
+                        - format: date-time
+                          type: string
+                    endsAt:
+                      oneOf:
+                        - format: date
+                          type: string
+                        - format: date-time
+                          type: string
+                    day:
+                      pattern: ^\d{4}-\d{2}-\d{2}$
+                      type: string
+                    status:
+                      type: string
+                      enum:
+                        - requested
+                        - booked
+                        - cancelled
+                        - expired
+                        - completed
+                        - no-show
+                    confirmBefore:
+                      oneOf:
+                        - format: date
+                          type: string
+                        - format: date-time
+                          type: string
+                    cancelledBy:
+                      type: string
+                      enum:
+                        - patient
+                        - practice
+                  type: object
+                  required:
+                    - id
+                    - calendarId
+                    - practiceId
+                    - practitionerId
+                    - patientId
+                    - appointmentTypeId
+                    - startsAt
+                    - endsAt
+                    - day
+                    - status
+        '401':
+          description: 'Unauthorized. Error codes: UNAUTHORIZED.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+            application/problem+xml:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - UNAUTHORIZED
+        '403':
+          description: 'Forbidden. Error codes: FORBIDDEN.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+            application/problem+xml:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - FORBIDDEN
+        '406':
+          description: 'Not Acceptable. Error codes: NOT_ACCEPTABLE.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+            application/problem+xml:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - NOT_ACCEPTABLE
+        '422':
+          description: 'Unprocessable Content. Error codes: VALIDATION_FAILED.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+            application/problem+xml:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
             - VALIDATION_FAILED
   /practices/{practiceId}/desks/{practitionerId}/delegations:
     post:
@@ -2706,6 +3399,58 @@ components:
       required:
         - start
         - end
+    FormBlock:
+      type: object
+      description: 'A group (`type: group`, `blocks`) or a field (`type: field`, `widget`, `required`, `readOnly`, `constraints`, `options`, `lookup`, `visibleWhen`, `requiredWhen`, `value`). Labels are translation keys.'
+      required:
+        - type
+        - name
+        - label
+      properties:
+        type:
+          enum:
+            - group
+            - field
+        name:
+          type: string
+        label:
+          type: string
+        widget:
+          type: string
+        required:
+          type: boolean
+        readOnly:
+          type: boolean
+        constraints:
+          type: object
+        options:
+          type: array
+          items:
+            type: object
+            properties:
+              value: {}
+              label:
+                type: string
+        multiple:
+          type: boolean
+        lookup:
+          type: object
+          properties:
+            operation:
+              type: string
+            method:
+              type: string
+            path:
+              type: string
+        visibleWhen:
+          type: object
+        requiredWhen:
+          type: object
+        value: {}
+        blocks:
+          type: array
+          items:
+            $ref: '#/components/schemas/FormBlock'
     OpeningRangeDto:
       properties:
         weekday:

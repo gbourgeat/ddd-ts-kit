@@ -1,5 +1,6 @@
 import { stampOf, type DomainEvent, type EventStamp, type ReadModelWrite } from '@ddd-ts-kit/kernel';
 import { On, Projection } from '@ddd-ts-kit/kernel/declarations';
+import { AppointmentAnnotated } from '@/contexts/scheduling/domain/events/appointment-annotated.event';
 import { AppointmentBooked } from '@/contexts/scheduling/domain/events/appointment-booked.event';
 import { AppointmentCancelled } from '@/contexts/scheduling/domain/events/appointment-cancelled.event';
 import { AppointmentCompleted } from '@/contexts/scheduling/domain/events/appointment-completed.event';
@@ -16,6 +17,7 @@ const RANK: Readonly<Record<string, number>> = {
   'scheduling.appointment.booked': 0,
   'scheduling.appointment.confirmed': 1,
   'scheduling.appointment.rescheduled': 2,
+  'scheduling.appointment.annotated': 3,
 };
 
 const LAST_RANK = 9;
@@ -54,6 +56,13 @@ export class AgendaProjection {
     );
   }
 
+  @On(AppointmentAnnotated, { name: 'scheduling.appointment.annotated' })
+  async annotated(event: AppointmentAnnotated): Promise<ReadModelWrite> {
+    return this.agenda.upsertIfNewer(event.aggregateId, stampOfFact(event), (current) =>
+      current === undefined ? undefined : { ...current, internalNote: event.internalNote, changedAt: event.occurredAt },
+    );
+  }
+
   @On(AppointmentCancelled, { name: 'scheduling.appointment.cancelled' })
   async cancelled(event: AppointmentCancelled): Promise<ReadModelWrite> {
     return this.stands(event, event.ended.booking, { status: 'cancelled', cancelledBy: event.ended.cancellation.by });
@@ -75,7 +84,7 @@ export class AgendaProjection {
   }
 
   private async stands(event: DomainEvent, booking: Booking, standing: Standing): Promise<ReadModelWrite> {
-    const entry: AgendaEntry = {
+    const entry: Omit<AgendaEntry, 'internalNote'> = {
       ...placeOf(booking),
       id: event.aggregateId,
       confirmBefore: null,
@@ -84,11 +93,17 @@ export class AgendaProjection {
       changedAt: event.occurredAt,
     };
 
-    return this.agenda.upsertIfNewer(event.aggregateId, stampOfFact(event), () => entry);
+    // The note is the staff's, and no fact of the standing says it again: it is kept from the entry.
+    return this.agenda.upsertIfNewer(event.aggregateId, stampOfFact(event), (current) => ({
+      ...entry,
+      internalNote: current?.internalNote ?? null,
+    }));
   }
 }
 
-function placeOf(booking: Booking): Omit<AgendaEntry, 'id' | 'status' | 'confirmBefore' | 'cancelledBy' | 'changedAt'> {
+function placeOf(
+  booking: Booking,
+): Omit<AgendaEntry, 'id' | 'status' | 'confirmBefore' | 'cancelledBy' | 'internalNote' | 'changedAt'> {
   return {
     calendarId: booking.calendarId,
     practiceId: booking.practiceId,

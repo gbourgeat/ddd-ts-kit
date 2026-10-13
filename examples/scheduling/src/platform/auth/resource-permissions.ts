@@ -26,6 +26,8 @@ export const resourcePermissions: PermissionMapping = {
     'scheduling:waitlist.join': 'run',
     'scheduling:agenda.read': 'run',
     'analytics:occupancy.read': 'measure',
+    'scheduling:appointment.note.read': 'staff',
+    'scheduling:appointment.note.write': 'run',
   },
   appointment: {
     'scheduling:appointment.read': 'read',

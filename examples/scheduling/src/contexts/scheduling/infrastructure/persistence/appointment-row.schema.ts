@@ -20,6 +20,7 @@ export interface AppointmentColumns {
   readonly confirm_before: Date | null;
   readonly cancelled_by: 'patient' | 'practice' | null;
   readonly cancellation_reason: string | null;
+  readonly internal_note: string | null;
 }
 
 export interface AppointmentRow extends AppointmentColumns, AuditRow {

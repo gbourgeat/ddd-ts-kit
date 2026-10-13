@@ -33,6 +33,7 @@ import { PractitionerDirectory } from '@/contexts/scheduling/application/ports/p
 import { SchedulingRelationships } from '@/contexts/scheduling/application/ports/scheduling-relationships.port';
 import { AgendaProjection } from '@/contexts/scheduling/application/projections/agenda.projection';
 import { PractitionersProjection } from '@/contexts/scheduling/application/projections/practitioners.projection';
+import { ExportPracticeAgendaHandler } from '@/contexts/scheduling/application/queries/export-practice-agenda/export-practice-agenda.handler';
 import { GetAppointmentHandler } from '@/contexts/scheduling/application/queries/get-appointment/get-appointment.handler';
 import { GetCalendarDayHandler } from '@/contexts/scheduling/application/queries/get-calendar-day/get-calendar-day.handler';
 import { SearchAppointmentsHandler } from '@/contexts/scheduling/application/queries/search-appointments/search-appointments.handler';
@@ -66,6 +67,7 @@ import { GetCalendarDayController } from '@/contexts/scheduling/presentation/htt
 import { GetCalendarDaySerializer } from '@/contexts/scheduling/presentation/http/calendars/get-calendar-day/get-calendar-day.serializer';
 import { JoinWaitlistController } from '@/contexts/scheduling/presentation/http/calendars/join-waitlist/join-waitlist.controller';
 import { SetOpeningHoursController } from '@/contexts/scheduling/presentation/http/calendars/set-opening-hours/set-opening-hours.controller';
+import { ExportPracticeAgendaController } from '@/contexts/scheduling/presentation/http/practices/export-practice-agenda/export-practice-agenda.controller';
 import { SearchPracticeAgendaController } from '@/contexts/scheduling/presentation/http/practices/search-practice-agenda/search-practice-agenda.controller';
 import { AgendaEntrySerializer } from '@/contexts/scheduling/presentation/http/shared/agenda-entry.serializer';
 import { Access } from '@ddd-ts-kit/auth';
@@ -125,6 +127,8 @@ export * from '@/contexts/scheduling/application/integration/publishers/appointm
 export * from '@/contexts/scheduling/application/integration/publishers/calendar-created.publisher';
 export * from '@/contexts/scheduling/application/projections/agenda.projection';
 export * from '@/contexts/scheduling/application/projections/practitioners.projection';
+export * from '@/contexts/scheduling/application/queries/export-practice-agenda/export-practice-agenda.handler';
+export * from '@/contexts/scheduling/application/queries/export-practice-agenda/export-practice-agenda.query';
 export * from '@/contexts/scheduling/application/queries/get-appointment/get-appointment.handler';
 export * from '@/contexts/scheduling/application/queries/get-appointment/get-appointment.query';
 export * from '@/contexts/scheduling/application/queries/get-calendar-day/get-calendar-day.handler';
@@ -159,12 +163,13 @@ export * from '@/contexts/scheduling/presentation/http/calendars/get-calendar-da
 export * from '@/contexts/scheduling/presentation/http/calendars/get-calendar-day/get-calendar-day.serializer';
 export * from '@/contexts/scheduling/presentation/http/calendars/join-waitlist/join-waitlist.controller';
 export * from '@/contexts/scheduling/presentation/http/calendars/set-opening-hours/set-opening-hours.controller';
+export * from '@/contexts/scheduling/presentation/http/practices/export-practice-agenda/export-practice-agenda.controller';
 export * from '@/contexts/scheduling/presentation/http/practices/search-practice-agenda/search-practice-agenda.controller';
 export * from '@/contexts/scheduling/presentation/http/shared/agenda-entry.serializer';
 
 injected(AddExceptionHandler, [CalendarRepository, Clock]);
 injected(AddTimeOffHandler, [CalendarRepository, AppointmentRepository, Clock]);
-injected(BookAppointmentHandler, [AppointmentRepository, CalendarRepository, IdGenerator, Clock]);
+injected(BookAppointmentHandler, [AppointmentRepository, CalendarRepository, IdGenerator, Clock, Access]);
 injected(CancelAppointmentHandler, [AppointmentRepository, Access, Clock]);
 injected(CompleteAppointmentHandler, [AppointmentRepository, Clock]);
 injected(ConfirmAppointmentHandler, [AppointmentRepository, Clock]);
@@ -191,6 +196,7 @@ injected(AppointmentRescheduledPublisher, [IntegrationEventPublisher, IdGenerato
 injected(CalendarCreatedPublisher, [IntegrationEventPublisher, IdGenerator]);
 injected(AgendaProjection, [Agenda]);
 injected(PractitionersProjection, [PractitionerDirectory]);
+injected(ExportPracticeAgendaHandler, [Agenda, Access]);
 injected(GetAppointmentHandler, [Agenda, PersonDirectoryGateway, Access]);
 injected(GetCalendarDayHandler, [CalendarRepository, Agenda, Access]);
 injected(SearchAppointmentsHandler, [Agenda, Access]);
@@ -219,4 +225,5 @@ injected(DefineAppointmentTypeController, [CommandBus]);
 injected(GetCalendarDayController, [QueryBus, GetCalendarDaySerializer]);
 injected(JoinWaitlistController, [CommandBus]);
 injected(SetOpeningHoursController, [CommandBus]);
+injected(ExportPracticeAgendaController, [QueryBus, AgendaEntrySerializer]);
 injected(SearchPracticeAgendaController, [QueryBus, AgendaEntrySerializer]);

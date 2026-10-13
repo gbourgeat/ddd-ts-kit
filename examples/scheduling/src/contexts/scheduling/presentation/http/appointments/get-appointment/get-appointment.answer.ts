@@ -6,4 +6,9 @@ export class GetAppointmentAnswer extends SearchAppointmentsLine {
   @IsOptional()
   @IsString()
   patientName?: string;
+
+  /** Shown to the staff of the calendar only: the controller declares it reserved. */
+  @IsOptional()
+  @IsString()
+  internalNote?: string;
 }

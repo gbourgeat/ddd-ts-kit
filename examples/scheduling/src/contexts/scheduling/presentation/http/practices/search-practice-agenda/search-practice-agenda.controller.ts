@@ -27,6 +27,7 @@ const line = classSchema(SearchPracticeAgendaLine);
   method: 'GET',
   path: '/:practiceId/agenda',
   summary: 'Search practice agenda',
+  produces: ['application/xml', 'text/csv'],
   params,
   query,
   response: { status: 200, description: 'One page of the search.', body: pageSchemaOf(line) },
