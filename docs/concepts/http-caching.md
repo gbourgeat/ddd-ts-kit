@@ -58,7 +58,10 @@ header the tenant is read from (`vary: ['Accept-Language']` alone), it is refuse
 are mounted, where the options of the application are known. With `vary: ['Authorization']` a
 shared cache keeps one answer per credential, which is rarely worth it; `private` is the usual
 answer. A route open to anybody (`Public`, `security: false`) shows the same thing to everybody
-and may be `public` as it is.
+and may be `public` as it is, unless its answer reserves fields to some callers
+(`withFieldAccess` with a `read` requirement, [fields reserved to some callers](representations-and-forms.md#fields-reserved-to-some-callers)):
+the pipeline still knows who calls and leaves those fields out per caller, so such an answer is
+refused at the mount unless its `vary` names `Authorization` or `Cookie`.
 
 **`Vary` holds only where the cache honours it.** Varnish and Fastly keep one copy per value of
 the headers an answer varies on. Cloudflare ignores `Vary` (images aside) and Bunny keys on a

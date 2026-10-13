@@ -90,9 +90,13 @@ text under `bodyLimit`, a streamed list is streamed, and the mount refuses `prod
 and tags of its policy: the version, the instant and the tags are read from what the handler
 answered, a strong `ETag` digests the bytes of the media type sent (none on a streamed list),
 and `Vary` holds the headers of the policy and `accept`, in the answer and in the contract. A
-public answer chosen by `Accept` is refused at the mount behind a cache that ignores `Vary`.
-`withFieldAccess` over a shared schema marks the definition it refers to, and the page of a
-shared item keeps the restricted fields of the item.
+public answer chosen by `Accept` is refused at the mount behind a cache that ignores `Vary`, and
+so is a public answer with fields reserved to some callers whose `vary` names neither
+`Authorization` nor `Cookie`, even on a route anybody may call: a shared cache would hand the
+fields one caller may read to the next. A shared schema keeps its restricted fields whichever
+wraps the other (`withFieldAccess(sharedSchema(...))` or `sharedSchema(name,
+withFieldAccess(...))`, through `schemaBehind` of `@ddd-ts-kit/validation`), in the definition it
+refers to and in the answer, and the page of a shared item keeps the restricted fields of the item.
 
 ## 0.13.0
 

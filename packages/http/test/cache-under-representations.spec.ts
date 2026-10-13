@@ -131,6 +131,48 @@ describe('a public answer chosen by Accept', () => {
   });
 });
 
+describe('a public answer whose fields depend on who calls', () => {
+  const noteShape = z.object({ id: z.string(), note: z.string() });
+
+  function readNote(cache: CachePolicy, rule: Parameters<typeof withFieldAccess>[1]): Route {
+    return defineRoute(
+      {
+        method: 'GET',
+        path: '/notes/:noteId',
+        operationId: 'readNote',
+        summary: 'Read a note',
+        responses: { 200: { description: 'The note.', body: withFieldAccess(zodSchema(noteShape), rule) } },
+        security: false,
+        cache,
+      },
+      () => ({ status: 200, body: { id: 'n1', note: 'fragile' } }),
+    );
+  }
+
+  const readable = { note: { read: { permission: { id: 'care:note.read' } } } };
+
+  it('is refused when a shared cache would hand the answer of one caller to the next', () => {
+    const route = readNote({ scope: CacheScope.public, maxAge: '1m', vary: ['Accept-Language'] }, readable);
+
+    expect(() => mountExpress(express(), [route], tagged)).toThrow(DeclarationError);
+    expect(() => mountExpress(express(), [route], tagged)).toThrow(/some fields to some callers only/);
+  });
+
+  it('is accepted when it varies on who calls, when it is private, or when only writing is restricted', () => {
+    const varying = readNote({ scope: CacheScope.public, maxAge: '1m', vary: ['Authorization'] }, readable);
+    const kept = readNote({ scope: CacheScope.private, maxAge: '1m' }, readable);
+
+    const writing = readNote(
+      { scope: CacheScope.public, maxAge: '1m' },
+      { note: { write: { permission: { id: 'care:note.write' } } } },
+    );
+
+    for (const route of [varying, kept, writing]) {
+      expect(() => mountExpress(express(), [route], tagged)).not.toThrow();
+    }
+  });
+});
+
 describe('fields reserved to some callers in a shared schema', () => {
   const noteShape = z.object({ id: z.string(), note: z.string() });
   const reserved = { note: { read: { permission: { id: 'care:note.read' } } } };
@@ -141,6 +183,29 @@ describe('fields reserved to some callers in a shared schema', () => {
     const { $defs } = z.object({ $defs: z.object({ Note: definition }) }).parse(note.toJsonSchema());
 
     expect($defs.Note.properties.note['x-field-access']).toEqual({ read: { permission: 'care:note.read' } });
+  });
+
+  it('are kept when the schema is shared after it was marked, in the contract and in the answer', async () => {
+    const note = sharedSchema('Note', withFieldAccess(zodSchema(noteShape), reserved));
+    const definition = z.object({ properties: z.object({ note: z.record(z.string(), z.unknown()) }) });
+    const { $defs } = z.object({ $defs: z.object({ Note: definition }) }).parse(note.toJsonSchema());
+
+    const read = defineRoute(
+      {
+        method: 'GET',
+        path: '/notes/:noteId',
+        operationId: 'readNote',
+        summary: 'Read a note',
+        responses: { 200: { description: 'The note.', body: note } },
+        security: false,
+      },
+      () => ({ status: 200, body: { id: 'n1', note: 'fragile' } }),
+    );
+
+    const response = await executeRoute(read, request());
+
+    expect($defs.Note.properties.note['x-field-access']).toEqual({ read: { permission: 'care:note.read' } });
+    expect(response.body).toEqual({ id: 'n1' });
   });
 
   it('are left out of each item of a page shared under the name of its item', async () => {

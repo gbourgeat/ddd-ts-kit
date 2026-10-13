@@ -84,7 +84,7 @@ const routes = controllerRoutes([PlaceOrderController], { resolve: application.r
 
 | Export | What it is |
 |---|---|
-| `Controller(spec)` | the decorator of a controller: `group`, `method`, `path` (after the prefix of the group), `operationId` (the class name without `Controller` by default), `summary`, `description`, `tags`, `params`, `query`, `headers`, `body`, `response: { status, description?, body? }`, `errors`, `guards`, `deprecated`, `cache` and `ifMatch` (see "HTTP caching") |
+| `Controller(spec)` | the decorator of a controller: `group`, `method`, `path` (after the prefix of the group), `operationId` (the class name without `Controller` by default), `summary`, `description`, `tags`, `params`, `query`, `headers`, `body`, `response: { status, description?, body? }`, `errors`, `guards`, `deprecated`, `cache` and `ifMatch` (see "HTTP caching"), `produces` and `consumes` (see [Representations](#representations-json-xml-csv)), `form` (see [Forms described by the server](#forms-described-by-the-server)) |
 | `RouteGroup({ parent, prefix, tags, guards, errors, cache })` | names a set of routes on an empty class; a child inherits from its `parent` and adds; the nearest `cache` wins |
 | `Guard` | the interface `{ documents?, check(request: GuardRequest) }`, and the decorator of a guard class that takes dependencies |
 | `Authenticated`, `Public`, `HasRole(...roles)`, `HasScope(...scopes)`, `TenantMember` | the guards the package ships, over the `Actor` and the `Session` of the request: 401 to the anonymous caller, 403 without one of the roles, without every scope named (`Session.scopes`, typed by the `SessionScopes` of the project) or outside the tenant of the request; `Public` lets everybody in and stands alone. A refusal of a guard is reported to `onGuardRefusal` |
@@ -152,6 +152,9 @@ the application are known, and a public answer is held to them with a `Declarati
 
 - on a route that knows its caller, `vary` names `Authorization`, `Cookie`, or a header the tenant
   is read from (`resolveTenant`): `vary: ['Accept-Language']` alone is refused;
+- on any route, even one anybody may call, an answer whose schema reserves fields to some
+  callers (`withFieldAccess` with a `read` requirement, on the answer, its page or its stream)
+  names `Authorization` or `Cookie` in `vary`: what it shows depends on who calls;
 - behind a cache that ignores `Vary` (`cacheTags.header` of Cloudflare or Bunny), a public answer
   that varies is refused, unless `cacheTags.honoursVary: true` says the cache keys on those
   headers; an answer chosen by `Accept` among several media types (`produces`) varies on it;
@@ -338,7 +341,8 @@ message nor its facts.
 
 Defaults: `VALIDATION_FAILED` 422 (with `issues`, paths prefixed by the part:
 `body.items.0.sku`), `NOT_FOUND` 404, `CONFLICT` 409, `INVARIANT_VIOLATION` 422, `UNAUTHORIZED`
-401, `FORBIDDEN` 403, `PRECONDITION_FAILED` 412, `PRECONDITION_REQUIRED` 428. A domain code that is not mapped answers 422.
+401, `FORBIDDEN` 403, `NOT_ACCEPTABLE` 406, `PRECONDITION_FAILED` 412, `UNSUPPORTED_MEDIA_TYPE` 415,
+`PRECONDITION_REQUIRED` 428. A domain code that is not mapped answers 422.
 
 ```ts
 import { createErrorMapper } from '@ddd-ts-kit/http';
@@ -800,6 +804,13 @@ const options: ExecuteOptions = { ...boundary, fieldAccess: fieldDeciderOf({ acc
   prefer a rule without subject, or a read model that already holds only what the caller may
   read.
 - `pageSchemaOf(item)` and `streamSchemaOf(item)` carry the restricted fields of their item.
+  A shared schema carries them in either order: `withFieldAccess(sharedSchema('Note', schema),
+  rules)`, `withFieldAccess(classSchema(NoteDto, { shared: true }), rules)` and
+  `sharedSchema('Note', withFieldAccess(schema, rules))` mark the shared definition and filter
+  the answer alike.
+- **A public cache policy**: an answer with a field some callers may not read differs per caller.
+  When the routes are mounted, a `public` policy on such a route is refused unless its `vary`
+  names `Authorization` or `Cookie`, whoever may call the route (see "HTTP caching").
   The rules apply to the properties of the schema given to `withFieldAccess`; a nested object is
   restricted by wrapping its own schema.
 - Without `fieldAccess` in the options, a restricted field is left out of every answer and
@@ -1022,6 +1033,7 @@ The platform shares three schemas of its own:
 | the problem document | `Problem` | every refusal, RFC 9457 with the stable `code` |
 
 A shared request part (`params`, `query`, `headers`) still gives one parameter per property.
+Fields reserved by `withFieldAccess` stay reserved whichever of the two wraps the other.
 
 ## Serving the contract and its page
 

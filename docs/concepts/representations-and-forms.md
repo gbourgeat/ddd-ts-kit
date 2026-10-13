@@ -75,6 +75,12 @@ validation, and a business rule about it stays an invariant of the domain. The u
 checks the write permission itself (`Access.authorize` in the handler), because a job or another
 transport sends the same command without passing through HTTP.
 
+**An answer that hides fields differs per caller**, even on a route anybody may call: a shared
+cache that kept the answer of a member of staff under its URL would hand the note to the next
+anonymous caller. A `public` cache policy on such a route is refused when the routes are mounted
+unless its `vary` names `Authorization` or `Cookie`; `private` is the usual answer
+([HTTP caching](http-caching.md)).
+
 ## Forms described by the server
 
 A front end usually rebuilds, for every command, a form the server already describes: the
@@ -107,7 +113,10 @@ the client, never a check.
 - A streamed list cannot be refused once its first item is written: a failure later cuts the
   response short, and is reported as a fault.
 - Field access judges the fields of the schema it is declared on; a nested object is restricted
-  through its own schema. Each requirement is one decision per distinct element of the answer,
+  through its own schema. A shared schema keeps the marks whichever wraps the other
+  (`sharedSchema(name, withFieldAccess(...))` or `withFieldAccess(sharedSchema(...), ...)`); a
+  schema built from a marked one by another means (a part picked from it, a library's own
+  composition) is a new shape and is marked again. Each requirement is one decision per distinct element of the answer,
   remembered for the last few hundred elements: a long export with an element per row costs one
   decision per row.
 - A form names the permission of its use case (`requires`); one that does not is given to
