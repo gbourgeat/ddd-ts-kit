@@ -8,6 +8,7 @@ import type { RouteOutput } from '../route/route-output.js';
 import type { Route } from '../route/route.js';
 import { withoutTrailingSlashes } from '../route/without-trailing-slashes.js';
 import { isRecord } from '../support/is-record.js';
+import { assertOpens } from './assert-opens.js';
 import { FORM_SCHEMA } from './form-schema.js';
 import { FormFormat } from './form-format.js';
 import { FormOfRoute } from './form-of-route.js';
@@ -29,7 +30,8 @@ const FORM_RESPONSE = customSchema((input) => ok(input), FORM_SCHEMA);
  * One route per route that declares a `form`: `GET /forms/<operationId>` answers its form for
  * the caller, in JSON Forms or as a tree of blocks (`?format=blocks`). It is guarded as the
  * route it describes is documented: a form of a route that is not public refuses the
- * anonymous caller. Mounted and documented like any route:
+ * anonymous caller, and one that `requires` the permission of its use case refuses with 403 the
+ * caller who may not run it. Mounted and documented like any route:
  *
  *     const routes = defineRoutes(appRoutes, formRoutes(appRoutes, { fieldAccess }));
  */
@@ -55,7 +57,10 @@ function formRoute(route: Route, form: FormOfRoute, options: FormRoutesOptions &
     ...(route.groups === undefined ? {} : { groups: route.groups }),
     request: { query },
     responses: { 200: { description: 'The form, for the caller.', body: FORM_RESPONSE } },
-    errors: route.security === false ? [] : ['UNAUTHORIZED'],
+    errors: [
+      ...(route.security === false ? [] : ['UNAUTHORIZED']),
+      ...(route.form?.requires === undefined ? [] : ['FORBIDDEN']),
+    ],
     security: route.security,
     async handle(input: RouteInput): Promise<RouteOutput> {
       const { actor } = input.context.execution;
@@ -66,6 +71,8 @@ function formRoute(route: Route, form: FormOfRoute, options: FormRoutesOptions &
 
       // The pipeline read the query through its schema before the handler: what it hands over is a FormQuery.
       const asked = isFormQuery(input.query) ? input.query : parseOrThrow(query, input.query);
+
+      await assertOpens(route.form?.requires, { actor, decide: options.fieldAccess, values: asked.values });
 
       return { status: 200, body: await answer(form, new FieldJudge(actor, options.fieldAccess), asked) };
     },

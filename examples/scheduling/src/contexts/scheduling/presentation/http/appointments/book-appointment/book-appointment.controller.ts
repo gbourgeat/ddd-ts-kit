@@ -18,8 +18,17 @@ const body = withFieldAccess(classSchema(BookAppointmentBody), {
 
 const accepted = classSchema(BookAppointmentAccepted);
 
-/** How the body of the route is entered, served as a form at GET /forms/bookAppointment for the caller who asks. */
+/**
+ * How the body of the route is entered, served as a form at GET /forms/bookAppointment for the
+ * caller who asks: given to who may book on the calendar, as the command asks it (a patient for
+ * themselves, the staff of the calendar for anybody), refused with 403 to anybody else.
+ */
 const form = defineForm<BookAppointmentBody>({
+  requires: {
+    permission: schedulingPermissions['appointment.book'],
+    subject: (values) => (values.calendarId === undefined ? undefined : { type: 'calendar', id: values.calendarId }),
+    context: (values, actor) => ({ selfService: (values.patientId ?? actor.id) === actor.id }),
+  },
   groups: [{ name: 'when', fields: ['calendarId', 'appointmentTypeId', 'startsAt'] }],
   fields: {
     appointmentTypeId: { lookup: 'getCalendarDay' },

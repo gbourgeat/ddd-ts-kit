@@ -8,6 +8,7 @@ import { controllerSource } from './presentation/controller-source.js';
 
 const HINTS = `/** How the body of the route is entered, served as a form at GET /forms/<operationId> for the caller who asks. */
 const form = defineForm<Infer<typeof body>>({
+  // TODO(domain): name the permission of the use case as its @Requires does (requires: { permission, subject, context }), so that only who may run it reads the form.
   // TODO(domain): group the fields (groups), and say per field what the schema cannot: its widget, the GET route its options come from (lookup), when it shows (visibleWhen) and when it is required (requiredWhen).
 });
 `;

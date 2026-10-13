@@ -880,13 +880,14 @@ export type BookAppointmentFormResult =
     blocks: Array<Schemas.FormBlock>;
   }>
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
+  | Failure<403, 'FORBIDDEN', Schemas.Problem>
   | Failure<406, 'NOT_ACCEPTABLE', Schemas.Problem>
   | Failure<422, 'VALIDATION_FAILED', Schemas.Problem>;
 
 /**
  * Form: Book appointment: `GET /forms/bookAppointment`.
  *
- * Error codes: UNAUTHORIZED (401), NOT_ACCEPTABLE (406), VALIDATION_FAILED (422).
+ * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), NOT_ACCEPTABLE (406), VALIDATION_FAILED (422).
  */
 export function bookAppointmentForm(
   connection: Connection,
@@ -897,7 +898,7 @@ export function bookAppointmentForm(
     method: 'GET',
     path: '/forms/bookAppointment',
     security: [['bearer']],
-    responses: { 200: 'json', 401: 'json', 406: 'json', 422: 'json' },
+    responses: { 200: 'json', 401: 'json', 403: 'json', 406: 'json', 422: 'json' },
   };
 
   return send<BookAppointmentFormResult>(connection, operation, { ...input, ...options });

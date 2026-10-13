@@ -24,7 +24,12 @@ async function* visibleItems(
   }
 }
 
+/** A value that holds no restricted field, a class instance included, is left as it is: only the branches that lead to one are copied. */
 async function visible(value: unknown, tree: FieldTree, judge: FieldJudge): Promise<unknown> {
+  if (tree.isEmpty()) {
+    return value;
+  }
+
   if (Array.isArray(value)) {
     const items = tree.below(EVERY_ITEM);
 
@@ -44,8 +49,14 @@ async function visible(value: unknown, tree: FieldTree, judge: FieldJudge): Prom
   }
 
   const entries = Object.entries(value).filter(([name]) => !hidden.has(name));
+  const branches = new Set(tree.branches());
 
   return Object.fromEntries(
-    await Promise.all(entries.map(async ([name, field]) => [name, await visible(field, tree.below(name), judge)])),
+    await Promise.all(
+      entries.map(async ([name, field]) => [
+        name,
+        branches.has(name) ? await visible(field, tree.below(name), judge) : field,
+      ]),
+    ),
   );
 }

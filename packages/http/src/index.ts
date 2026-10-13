@@ -64,6 +64,7 @@ export { decimalText } from './serialization/decimal-text.js';
 export type { MoneyBody } from './serialization/money-body.js';
 export { money } from './serialization/money.js';
 export type { FieldDecider } from './field-access/field-decider.js';
+export type { FieldQuestion } from './field-access/field-question.js';
 export {
   fieldDeciderOf,
   type FieldAccessDecisions,
@@ -86,6 +87,7 @@ export { formDocumentsOf } from './forms/form-documents-of.js';
 export { FormFormat } from './forms/form-format.js';
 export type { FormGroupHint } from './forms/form-group-hint.js';
 export type { FormHints } from './forms/form-hints.js';
+export type { FormRequirement } from './forms/form-requirement.js';
 export { formRoutes, type FormRoutesOptions } from './forms/form-routes.js';
 export type { GroupBlock } from './forms/group-block.js';
 export type { JsonForm } from './forms/json-form.js';

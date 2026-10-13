@@ -35,6 +35,13 @@ export const representationKind: Kind = {
     const produced = controllerSource.withOption(source, `produces: [${media.map((type) => `'${type}'`).join(', ')}],`);
 
     scope.ws.update(file, receivesXml ? controllerSource.withOption(produced, `consumes: ['${XML}'],`) : produced);
+
+    if (receivesXml) {
+      scope.ws.note(
+        `The route now also reads its body in XML (\`consumes: ['${XML}']\`), and answers 415 to another media type: remove \`consumes\` from @Controller if only the answer was to be XML.`,
+      );
+    }
+
     tellWhatIsLeft(scope, { media, source });
   },
 };
@@ -44,7 +51,7 @@ function mediaTypesOf(written: string): string[] {
     .split(',')
     .map((part) => part.trim())
     .filter((part) => part !== '')
-    .map((part) => SHORT_NAMES[part] ?? part);
+    .map((part) => (Object.hasOwn(SHORT_NAMES, part) ? (SHORT_NAMES[part] ?? part) : part));
 
   const invalid = media.find((type) => !/^[a-z]+\/[a-z0-9.+-]+$/.test(type) || type === 'application/json');
 

@@ -75,6 +75,12 @@ describe('Booking: in XML for a partner, and a form that differs by role around 
     expect(ofThePractitioner.data).toEqual({ calendarId: practice.calendarId });
   });
 
+  it('refuses the form to whoever may not book what it would describe: a patient for somebody else', async () => {
+    const forSomebodyElse = await paul.get(`/forms/bookAppointment?calendarId=${practice.calendarId}&patientId=rosa`);
+
+    expect(forSomebodyElse.status).toBe(403);
+  });
+
   it('describes the same form as a tree of blocks, and refuses it to whoever presents no credential', async () => {
     const blocks = expectStatus(
       await assistant.get<{ type: string; blocks: unknown[] }>(

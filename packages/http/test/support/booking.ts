@@ -75,7 +75,7 @@ export const types = defineRoute(
 );
 
 /** What the relationships of the calendar `c-1` would answer: the practitioner reads and writes notes, the assistant reads them. */
-const decide: FieldDecider = async (actor, requirement, subject) => {
+const decide: FieldDecider = async ({ actor, requirement, subject }) => {
   const onCalendar = typeof subject === 'object' && subject !== null && 'id' in subject && subject.id === 'c-1';
   const allowed = { pia: [notes.read.id, notes.write.id], ana: [notes.read.id] }[actor.id] ?? [];
 

@@ -27,8 +27,24 @@ export function jsonFormsOf(
   return {
     schema: objectSchema(description.blocks, body),
     uischema: { type: 'VerticalLayout', elements: elementsOf(description.blocks, '#') },
-    data,
+    data: visibleData(description.blocks, data),
   };
+}
+
+/** The values the request gave, for the fields the caller sees only: a hidden field is not echoed back. */
+function visibleData(blocks: readonly FormBlock[], data: Readonly<Record<string, unknown>>): Record<string, unknown> {
+  return Object.fromEntries(
+    fieldsOf(blocks).flatMap((field) => {
+      const name = lastSegment(field.name);
+      const value = data[name];
+
+      if (value === undefined) {
+        return [];
+      }
+
+      return [[name, field.widget === 'group' && isRecord(value) ? visibleData(field.blocks ?? [], value) : value]];
+    }),
+  );
 }
 
 /** The schema of one object of the form, its properties in the order of the request schema whatever the layout. */
@@ -60,7 +76,7 @@ function propertySchema(field: FieldBlock<FormBlock>, node: SchemaNode | undefin
   }
 
   if (field.widget === 'group') {
-    return objectSchema(field.blocks ?? [], node);
+    return { ...objectSchema(field.blocks ?? [], node), ...(field.readOnly === true ? { readOnly: true } : {}) };
   }
 
   const own = inlined(node, 0);

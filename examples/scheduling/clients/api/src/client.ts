@@ -133,7 +133,7 @@ export interface Client {
   /**
    * Form: Book appointment: `GET /forms/bookAppointment`.
    *
-   * Error codes: UNAUTHORIZED (401), NOT_ACCEPTABLE (406), VALIDATION_FAILED (422).
+   * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), NOT_ACCEPTABLE (406), VALIDATION_FAILED (422).
    */
   bookAppointmentForm(input?: operations.BookAppointmentFormInput, options?: CallOptions): Promise<operations.BookAppointmentFormResult>;
   /**

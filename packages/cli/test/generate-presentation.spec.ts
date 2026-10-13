@@ -54,10 +54,16 @@ describe('the presentation of a new project', () => {
     expect(read(root, SEARCH)).toContain("produces: ['text/csv'],");
     expect(read(root, SEARCH)).not.toContain('consumes');
     expect(issued.stdout).toContain('CSV writes a list of flat rows');
+    expect(issued.stdout).toContain('also reads its body in XML');
+    expect(searched.stdout).not.toContain('also reads its body in XML');
   });
 
   it('refuses a second declaration of what a controller produces, and a media type that says nothing new', () => {
     expect(cli(root, 'generate', 'representation', 'billing', 'SearchInvoices', 'xml').code).not.toBe(0);
+
+    expect(cli(root, 'generate', 'representation', 'billing', 'PayInvoice', 'constructor').stderr).toContain(
+      'names no media type',
+    );
 
     expect(cli(root, 'generate', 'representation', 'billing', 'CancelInvoice', 'application/json').stderr).toContain(
       'names no media type besides JSON',
@@ -69,7 +75,12 @@ describe('the presentation of a new project', () => {
     const controller = read(root, ISSUE);
 
     expect(result.code).toBe(0);
-    expect(controller).toContain('const form = defineForm<Infer<typeof body>>({\n  // TODO(domain): group the fields');
+
+    expect(controller).toContain(
+      'const form = defineForm<Infer<typeof body>>({\n  // TODO(domain): name the permission of the use case',
+    );
+
+    expect(controller).toContain('// TODO(domain): group the fields');
     expect(controller).toMatch(/import \{ [^}]*\bdefineForm\b[^}]*\} from '@ddd-ts-kit\/http';/);
     expect(controller).toContain("import type { Infer } from '@ddd-ts-kit/validation';");
     expect(controller).toMatch(/summary: '[^']+',\n {2}form,\n/);

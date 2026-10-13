@@ -28,6 +28,8 @@ interface Level {
   readonly fields: FieldTree;
   readonly values: Readonly<Record<string, unknown>>;
   readonly prefix: string;
+  /** Set below a field the caller may not set: every field it holds is read-only too. */
+  readonly readOnly: boolean;
 }
 
 /**
@@ -44,7 +46,7 @@ export class FormDescriber {
 
   async blocks(values: Readonly<Record<string, unknown>>): Promise<FormBlock[]> {
     const { body, fields, hints } = this.source;
-    const level: Level = { node: body, fields, values, prefix: '' };
+    const level: Level = { node: body, fields, values, prefix: '', readOnly: false };
     const described = await this.fieldsOf(level);
 
     return [...this.grouped(hints.groups ?? [], described), ...ungrouped(hints.groups ?? [], described)];
@@ -92,12 +94,12 @@ export class FormDescriber {
       return undefined;
     }
 
-    const readOnly = rule !== undefined && !(await this.judge.writes(rule, level.values));
+    const readOnly = level.readOnly || (rule !== undefined && !(await this.judge.writes(rule, level.values)));
     const path = `${level.prefix}${property.name}`;
     const value = level.values[property.name];
 
     return {
-      ...(await this.shapeOf(property, { ...level, prefix: `${path}.` })),
+      ...(await this.shapeOf(property, { ...level, prefix: `${path}.`, readOnly })),
       name: path,
       label: this.hintOf(path)?.label ?? `${this.source.operation}.${path}`,
       required: property.required,
@@ -127,6 +129,7 @@ export class FormDescriber {
         fields: below.fields.below(name),
         values: isRecord(values) ? values : {},
         prefix: below.prefix,
+        readOnly: below.readOnly,
       };
 
       return { type: 'field', widget: 'group', blocks: [...(await this.fieldsOf(nested)).values()] };

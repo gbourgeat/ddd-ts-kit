@@ -88,7 +88,9 @@ async function handled(call: Call): Promise<RouteOutput> {
   const principal = await options.resolvePrincipal?.(request.raw);
   const input = await acceptedInput(call);
   const execution = executionOf(call, principal, input.params);
-  const judge = new FieldJudge(execution.actor, options.fieldAccess);
+  // A field set in a body is an act, recorded; a field shown or left out of the answer only shapes it.
+  const setting = new FieldJudge(execution.actor, options.fieldAccess, true);
+  const showing = new FieldJudge(execution.actor, options.fieldAccess);
   const context = requestContext(call, execution, principal);
 
   const within: Within = (work) => {
@@ -99,9 +101,9 @@ async function handled(call: Call): Promise<RouteOutput> {
 
   // The fields are decided in the scope of the request too: a decision is recorded with who asked and under which correlation.
   const result = await within(async () => {
-    await assertWritable(input.body, FieldTree.of(fieldAccess.of(route.request?.body)), judge);
+    await assertWritable(input.body, FieldTree.of(fieldAccess.of(route.request?.body)), setting);
 
-    return visibleOutput(route, await answered(call, { ...input, context }), judge);
+    return visibleOutput(route, await answered(call, { ...input, context }), showing);
   });
 
   return streamedWithin(result, within);

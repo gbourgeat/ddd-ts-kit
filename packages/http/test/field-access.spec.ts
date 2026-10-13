@@ -237,6 +237,34 @@ describe('a field reserved to some callers, in a request body', () => {
 describe('the decider built from the Access of the application', () => {
   const actor: Actor = { id: 'pia', type: 'user', roles: [], attributes: {} };
 
+  it('asks decideOn when the Access has it: an answer shaped unrecorded, a body set recorded', async () => {
+    const recorded: boolean[] = [];
+
+    const access: FieldAccessDecisions = {
+      decide: () => Promise.reject(new Error('decideOn is preferred')),
+      decideOn: async (question) => {
+        recorded.push(question.recorded);
+
+        return { allowed: true };
+      },
+    };
+
+    const decided = { ...options(), fieldAccess: fieldDeciderOf({ access, clock }) };
+
+    await executeRoute(routes.search, as('dora', 'doctor'), decided);
+    const answered = recorded.length;
+
+    await executeRoute(
+      routes.record,
+      { ...as('dora', 'doctor'), body: { id: 'v', practitionerId: 'dora', note: 'n' } },
+      decided,
+    );
+
+    expect(recorded.slice(0, answered).every((each) => !each)).toBe(true);
+    expect(answered).toBeGreaterThan(0);
+    expect(recorded.slice(answered)).toEqual([true]);
+  });
+
   it('asks a policy directly, with the time of the clock, and refuses a subject it does not apply to', async () => {
     const decide = fieldDeciderOf({ access: new RoleAccess({}), clock });
 
@@ -247,9 +275,12 @@ describe('the decider built from the Access of the application', () => {
 
     const picky: FieldPolicy = { name: 'picky', appliesTo: (subject) => subject === 'mine', allows: () => true };
 
-    expect(await decide(actor, { policy: dated }, undefined)).toBe(true);
-    expect(await decide(actor, { policy: picky }, 'yours')).toBe(false);
-    expect(await decide(actor, { policy: picky }, 'mine')).toBe(true);
+    const asked = (policy: FieldPolicy, subject: unknown) =>
+      decide({ actor, requirement: { policy }, subject, recorded: false });
+
+    expect(await asked(dated, undefined)).toBe(true);
+    expect(await asked(picky, 'yours')).toBe(false);
+    expect(await asked(picky, 'mine')).toBe(true);
   });
 });
 
@@ -282,7 +313,7 @@ describe('the decisions about the fields of a request', () => {
     const scope = new AsyncLocalStorageExecutionScope();
     const seen: string[] = [];
 
-    const recorded: FieldDecider = async (actor) => {
+    const recorded: FieldDecider = async ({ actor }) => {
       seen.push(scope.require().correlationId);
 
       return actor.id === 'dora';

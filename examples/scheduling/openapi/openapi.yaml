@@ -2249,6 +2249,14 @@ paths:
                 $ref: '#/components/schemas/Problem'
           x-error-codes:
             - UNAUTHORIZED
+        '403':
+          description: 'Forbidden. Error codes: FORBIDDEN.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - FORBIDDEN
         '406':
           description: 'Not Acceptable. Error codes: NOT_ACCEPTABLE.'
           content:
