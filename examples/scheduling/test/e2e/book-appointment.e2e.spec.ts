@@ -61,6 +61,8 @@ describe('Booking: in XML for a partner, and a form that differs by role around 
   });
 
   it('describes the booking form for each role: hidden from the patient, read-only for the assistant, editable by the practitioner', async () => {
+    await deskDelegatedToTheAssistant();
+
     const formOfTheCalendar = `/forms/bookAppointment?calendarId=${practice.calendarId}`;
 
     const ofPaul = expectStatus(await paul.get<JsonForm>(formOfTheCalendar), 200).body;
@@ -75,13 +77,25 @@ describe('Booking: in XML for a partner, and a form that differs by role around 
     expect(ofThePractitioner.data).toEqual({ calendarId: practice.calendarId });
   });
 
-  it('refuses the form to whoever may not book what it would describe: a patient for somebody else', async () => {
-    const forSomebodyElse = await paul.get(`/forms/bookAppointment?calendarId=${practice.calendarId}&patientId=rosa`);
+  it('refuses the form to whoever may not book what it would describe: a patient for somebody else, an assistant without the desk', async () => {
+    const formOfTheCalendar = `/forms/bookAppointment?calendarId=${practice.calendarId}`;
+    const forSomebodyElse = await paul.get(`${formOfTheCalendar}&patientId=rosa`);
+    const withoutTheDesk = await assistant.get(formOfTheCalendar);
 
-    expect(forSomebodyElse.status).toBe(403);
+    expect([forSomebodyElse.status, withoutTheDesk.status]).toEqual([403, 403]);
   });
 
+  /** The practitioner hands their desk to the assistant, who may then book on it, and still not write a note. */
+  async function deskDelegatedToTheAssistant(): Promise<void> {
+    const delegations = `/practices/${practice.practiceId}/desks/${practice.practitionerId}/delegations`;
+    const terms = { assistantId: practice.assistantId, availabilityIncluded: false };
+
+    expectStatus(await practitioner.post(delegations, terms), 201);
+  }
+
   it('describes the same form as a tree of blocks, and refuses it to whoever presents no credential', async () => {
+    await deskDelegatedToTheAssistant();
+
     const blocks = expectStatus(
       await assistant.get<{ type: string; blocks: unknown[] }>(
         `/forms/bookAppointment?format=blocks&calendarId=${practice.calendarId}`,

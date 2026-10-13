@@ -7,7 +7,8 @@ import type { BookAppointmentMapper } from '@/contexts/scheduling/presentation/h
 import { AppointmentsRoutes } from '@/contexts/scheduling/presentation/http/appointments.routes';
 import { schedulingPermissions } from '@/contexts/scheduling/application/authorization/scheduling.permissions';
 
-// The staff of the calendar sees the internal note, the one who runs it writes it; a patient neither sees nor sends it.
+// The staff of the practice sees the internal note, the holder of the desk (or the manager) writes it: an assistant who
+// books on a delegated desk reads it; a patient neither sees nor sends it.
 const body = withFieldAccess(classSchema(BookAppointmentBody), {
   internalNote: {
     read: { permission: schedulingPermissions['appointment.note.read'] },

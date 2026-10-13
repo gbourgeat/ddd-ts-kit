@@ -243,7 +243,7 @@ describe('the decider built from the Access of the application', () => {
     const access: FieldAccessDecisions = {
       decide: () => Promise.reject(new Error('decideOn is preferred')),
       decideOn: async (question) => {
-        recorded.push(question.recorded);
+        recorded.push(question.recorded === true);
 
         return { allowed: true };
       },

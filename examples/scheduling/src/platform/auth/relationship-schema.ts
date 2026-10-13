@@ -33,6 +33,7 @@ export const relationshipSchema = defineSchema({
     permissions: {
       plan: from('desk', 'plan'),
       run: from('desk', 'run'),
+      own: from('desk', 'own'),
       measure: union(from('desk', 'own')),
       staff: from('practice', 'work'),
     },

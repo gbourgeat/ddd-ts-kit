@@ -51,7 +51,7 @@ export class BookAppointmentHandler implements CommandHandler<BookAppointmentCom
     return target.id;
   }
 
-  /** Whoever sends the command, through HTTP or not, writes a note only where they run the calendar. */
+  /** Whoever sends the command, through HTTP or not, writes a note only on a calendar of their own desk, or of the practice they manage. */
   private async mayAnnotate(actor: Actor, calendarId: string): Promise<void> {
     await this.access.authorize(actor, schedulingPermissions['appointment.note.write'], {
       type: 'calendar',
