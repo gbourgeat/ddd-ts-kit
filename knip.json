@@ -19,6 +19,9 @@
     "packages/prisma": {
       "project": ["src/**/*.ts", "test/**/*.ts"],
       "ignoreDependencies": ["@prisma/client"]
+    },
+    "site": {
+      "ignoreDependencies": ["@fontsource-variable/ibm-plex-sans", "@fontsource/ibm-plex-mono"]
     }
   }
 }
