@@ -184,6 +184,22 @@ side, so they read well under any runner. An error raised by `when` is never swa
 assertion but `thenError` fails on it. When `when` (or the arrangement) is asynchronous, the
 chain is a promise: `await given(order).when(async (o) => ...).thenEventNames([...])`.
 
+### An event-sourced aggregate
+
+`givenEvents(rehydrate, events)` rebuilds the aggregate by replaying its history, without a
+database, and the scenario goes on as above: one command, then the events it recorded or the
+refusal.
+
+```ts
+givenEvents((id, history) => AttendanceRecord.rehydrate(id, history), [opened, noShowNoted, noShowNoted])
+  .when((record) => record.noteNoShow('appointment-9', now))
+  .thenEvents([NoShowNoted, AttendanceRecordBarred]);
+```
+
+`expectSnapshotEquivalence({ events, rehydrate, policy, state })` proves the snapshots of an
+aggregate: for every version of the history, the aggregate rebuilt from the snapshot its policy
+would store and the events after it has the state and the version of the full replay.
+
 ## Refusals
 
 A business refusal is known by its code, and carries its facts as data: a test asserts both,
@@ -436,6 +452,8 @@ repositoryContract(runner, { ...options, name: 'DrizzleOrderRepository', createR
 | `unitOfWorkContract` | any `UnitOfWork`, called through `run` without a command bus: domain events wait for the end and are dispatched before the commit, so handlers see every save and what they write, the outbox included, commits with it; a failure in a save, in the work, in a handler or in the commit (a deferred constraint) leaves nothing behind; `after-commit` handlers run once the rows are committed, never otherwise. An adapter not built on `withinUnitOfWork` fails here |
 | `outboxStoreContract` | any outbox store: order, limit, lease, concurrent claims, published, failed, dead, `retryDead`, purge; with `carriesTenant: true`, the tenant of each event kept |
 | `processedEventStoreContract` | any `ProcessedEventStore`: once per consumer and event, also under concurrent deliveries |
+| `eventStoreContract` | any `EventStore`: a stream created at version 0 and read back in order, numbered from 1, with its type, shape version, data, metadata and instant; an append at a version the stream no longer has (behind or ahead) refused with `CONCURRENCY_CONFLICT` and nothing kept of it; one of two appends at the same version through; streams numbered apart; the whole store read in the order of the appends, positions rising from 1, after a position and within a limit; `head()` |
+| `eventStoreUnitOfWorkContract` | a transactional `EventStore` with the outbox of its database under one `UnitOfWork`: the stream and the outbox records published for its events commit together; nothing left in the outbox for an append rolled back, nor for one refused by a concurrency conflict. `createSubject()` answers `{ unitOfWork, store, outbox }` |
 | `cacheContract` | any `Cache`: round trip of every shape of value, isolation of entries, deletion, time to live |
 | `cachePurgerContract` | any `CachePurger` with its shared cache (`store`, `holds`): a tag purges what it names and nothing else, a kind reaches each element, the tenants stay apart, purging is idempotent |
 | `lockContract` | any `Lock`: one holder at a time also under concurrent requests, release, expiry, a late release ignored, growing fencing token, `waitMs` |

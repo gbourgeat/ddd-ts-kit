@@ -325,8 +325,9 @@ calling back defeats the autonomy the event was meant to give.
   fails, the command fails and the state change is rolled back. A local effect that must not
   block the command is an `after-commit` handler, and may be lost; a reaction that must not be
   lost goes through the outbox as an integration event.
-- **The kit does not store domain events.** This is not event sourcing: see
-  [CQRS as used here](cqrs.md).
+- **The kit does not store the domain events of a state-persisted aggregate.** They are
+  dispatched with the save and gone. An aggregate chosen to be event-sourced keeps its events as
+  its stream: see [Event sourcing, per aggregate](event-sourcing.md).
 - **Event-driven designs are harder to follow.** No single place shows the whole flow. The
   generated catalog, the context map and a sequence diagram per cross-context flow in
   `docs/integration/README.md` are how the kit compensates.

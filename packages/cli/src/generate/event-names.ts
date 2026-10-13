@@ -5,6 +5,8 @@ import type { Scope } from './scope.js';
 export interface EventNames {
   readonly aggregate: Name;
   readonly event: Name;
+  /** What happened, alone: `Issued` of `InvoiceIssued`. */
+  readonly fact: Name;
   readonly eventName: string;
 }
 
@@ -18,6 +20,7 @@ export function eventNames(scope: Scope, aggregateInput: string, factInput: stri
   return {
     aggregate,
     event: toName(`${aggregate.words} ${fact.words}`),
+    fact,
     eventName: eventName(scope.context, aggregate, fact),
   };
 }

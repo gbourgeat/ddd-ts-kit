@@ -21,7 +21,7 @@ const logFile = path.join(stateDir, 'generator-log.jsonl');
 const lockFile = path.join(stateDir, 'generate.lock');
 const args = process.argv.slice(2);
 const command = args[0] === 'g' ? 'generate' : args[0];
-// Declared before `main()` runs: a file a generator is about to create does not exist yet.
+/** What `read` takes for a file that is not there yet, on a fresh clone: no cache, no snapshot. */
 const NOT_A_FILE = ['ENOENT', 'ENOTDIR', 'EISDIR'];
 
 main();

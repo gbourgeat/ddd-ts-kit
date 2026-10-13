@@ -12,6 +12,8 @@ export interface ContextFacts {
   readonly upstreams: readonly Upstream[];
   readonly downstreams: readonly Upstream[];
   readonly aggregates: readonly string[];
+  /** Those of `aggregates` that keep their state as a stream of events: they extend `EventSourcedAggregate`. */
+  readonly eventSourced: readonly string[];
   readonly commands: readonly string[];
   readonly queries: readonly string[];
   readonly domainEvents: readonly string[];

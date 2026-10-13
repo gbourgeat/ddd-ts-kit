@@ -52,6 +52,8 @@ export interface KindFlags {
   readonly serializer: boolean;
   /** The cache policy of a controller: `public`, `private` or `no-store`. */
   readonly cache?: string;
+  /** An aggregate keeps its state as the stream of its events. */
+  readonly eventSourced: boolean;
 }
 
 export interface KindRequest {

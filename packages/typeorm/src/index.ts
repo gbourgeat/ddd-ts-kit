@@ -7,6 +7,8 @@ export {
 } from '@ddd-ts-kit/kernel';
 export * from './unit-of-work/type-orm-context.js';
 export * from './unit-of-work/create-type-orm-unit-of-work.js';
+export * from './event-sourcing/create-type-orm-event-sourcing.js';
+export * from './event-sourcing/event-store-entities.js';
 export * from './outbox/entity-options.js';
 export * from './outbox/outbox-row.js';
 export * from './outbox/processed-event-row.js';

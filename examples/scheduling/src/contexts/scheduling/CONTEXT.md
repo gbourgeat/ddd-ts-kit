@@ -15,7 +15,7 @@ This is why practices come: a time on a calendar is held once, under rules of av
 | Term | Meaning | Not to be confused with |
 |---|---|---|
 | Calendar | The agenda a practitioner opens to booking in a practice, with its availability and its booking rules | analytics: a line that is measured |
-| Create | To open a new calendar for a practitioner |  |
+| Create | To open a new calendar for a practitioner, or the attendance record of a patient at its first fact |  |
 | Practitioner | The owner of calendars, known from identity | identity: a member with a role |
 | Patient | The person an appointment is for | identity: Person |
 | Availability | When a calendar can be booked: opening hours, exceptions and time off together |  |
@@ -67,6 +67,10 @@ This is why practices come: a time on a calendar is held once, under rules of av
 | Read | To see an appointment, or the agenda of a practice, as one is allowed to |  |
 | Get | To read one element one may see |  |
 | Browse | To look at the day of a calendar as anyone signed in may see it |  |
+| Attendance | Whether a patient came to the appointments they held with a practice |  |
+| Record | What a practice keeps of the attendance of one patient: the no-shows and cancellations noted, in order |  |
+| Note | To keep a fact in an attendance record, once per appointment |  |
+| History | The facts of an attendance record as they were noted, oldest first |  |
 | Document | A file attached to an appointment by the practice: a referral, a prescription, a report; its content lives in the file storage |  |
 | Attached | Joined to an appointment, kept as a reference to the stored file |  |
 | Remove | To take a document off an appointment, its file deleted once the change is committed |  |
@@ -76,6 +80,7 @@ This is why practices come: a time on a calendar is held once, under rules of av
 
 <!-- ddd-ts-kit:aggregates -->
 - `Appointment`
+- `AttendanceRecord` (event-sourced)
 - `Calendar`
 - `Waitlist`
 <!-- /ddd-ts-kit:aggregates -->
@@ -117,6 +122,8 @@ This is why practices come: a time on a calendar is held once, under rules of av
 - `scheduling:appointment.attach-document`
 - `scheduling:appointment.remove-document`
 - `scheduling:appointment.read-document`
+- `scheduling:attendance.note`
+- `scheduling:attendance.read`
 <!-- /ddd-ts-kit:permissions -->
 
 ## Scheduled jobs
@@ -174,10 +181,13 @@ Generated from the code by `ddd-ts-kit docs`; the same facts as data: `ddd-ts-ki
 | `GetOpeningHours` | query | `public` |
 | `JoinWaitlist` | command | `waitlist.join` |
 | `MarkAppointmentNoShow` | command | `appointment.mark-no-show` |
+| `NoteCancellation` | command | `attendance.note` |
+| `NoteNoShow` | command | `attendance.note` |
 | `OfferFreedSlot` | command | `waitlist.offer` |
 | `RemoveAppointmentDocument` | command | `appointment.remove-document` |
 | `RescheduleAppointment` | command | `appointment.reschedule` |
 | `SearchAppointments` | query | `appointment.search` |
+| `SearchAttendanceHistory` | query | `attendance.read` |
 | `SearchPracticeAgenda` | query | `agenda.read` |
 | `SetOpeningHours` | command | `calendar.set-opening-hours` |
 
@@ -205,6 +215,7 @@ Generated from the code by `ddd-ts-kit docs`; the same facts as data: `ddd-ts-ki
 | POST | `/calendars/:calendarId/time-off` | `addTimeOff` | `CalendarsRoutes` | `Authenticated` | `AddTimeOff` | `calendar.add-time-off` | params: `AddTimeOffParams`, body: `AddTimeOffBody` | 201: `AddTimeOffAccepted` | `UNAUTHORIZED`, `FORBIDDEN`, `UNKNOWN_CALENDAR`, `INVALID_TIME_OFF`, `TIME_OFF_OVER_APPOINTMENTS` |
 | POST | `/calendars/:calendarId/waitlist` | `joinWaitlist` | `CalendarsRoutes` | `Authenticated` | `JoinWaitlist` | `waitlist.join` | params: `JoinWaitlistParams`, body: `JoinWaitlistBody` | 201: `JoinWaitlistAccepted` | `UNAUTHORIZED`, `FORBIDDEN`, `UNKNOWN_CALENDAR`, `UNKNOWN_APPOINTMENT_TYPE`, `INVALID_DAY`, `ALREADY_WAITING` |
 | GET | `/practices/:practiceId/agenda` | `searchPracticeAgenda` | `PracticesRoutes` | `Authenticated` | `SearchPracticeAgenda` | `agenda.read` | params: `SearchPracticeAgendaParams`, query | 200: `page of SearchPracticeAgendaLine` | `UNAUTHORIZED`, `FORBIDDEN`, `INVALID_CRITERIA` |
+| GET | `/practices/:practiceId/patients/:patientId/attendance` | `searchAttendanceHistory` | `PracticesRoutes` | `Authenticated` | `SearchAttendanceHistory` | `attendance.read` | params: `SearchAttendanceHistoryParams`, query | 200: `page of SearchAttendanceHistoryLine` | `UNAUTHORIZED`, `FORBIDDEN`, `INVALID_CRITERIA` |
 
 ### Publishers
 
@@ -224,6 +235,7 @@ Generated from the code by `ddd-ts-kit docs`; the same facts as data: `ddd-ts-ki
 | Projection | Class | Applies |
 |---|---|---|
 | `scheduling.agenda` | `AgendaProjection` | `AppointmentBooked`, `AppointmentConfirmed`, `AppointmentRescheduled`, `AppointmentCancelled`, `AppointmentExpired`, `AppointmentCompleted`, `AppointmentMarkedNoShow` |
+| `scheduling.attendance-history` | `AttendanceHistoryProjection` | `AttendanceRecordCreated`, `AttendanceRecordNoShowNoted`, `AttendanceRecordCancellationNoted` |
 | `scheduling.practitioners` | `PractitionersProjection` | `practiceMemberAddedV1`, `practiceMemberRemovedV1` |
 
 ### Ports
@@ -232,6 +244,8 @@ Generated from the code by `ddd-ts-kit docs`; the same facts as data: `ddd-ts-ki
 |---|---|---|
 | `Agenda` | repository | `KnexAgenda` |
 | `AppointmentRepository` | repository | `KnexAppointmentRepository` |
+| `AttendanceHistory` | repository | `KnexAttendanceHistory` |
+| `AttendanceRecordRepository` | repository | `EventStoreAttendanceRecordRepository` |
 | `CalendarRepository` | repository | `KnexCalendarRepository` |
 | `PersonDirectoryGateway` | gateway | `InProcessPersonDirectoryGateway` |
 | `PractitionerDirectory` | repository | `KnexPractitionerDirectory` |
@@ -264,6 +278,7 @@ Generated from the code by `ddd-ts-kit docs`; the same facts as data: `ddd-ts-ki
 | `AppointmentError` | `slotTaken` | `SLOT_TAKEN` | `startsAt` |
 | `AppointmentError` | `noDocument` | `NO_DOCUMENT` | none |
 | `AppointmentError` | `documentNameTooLong` | `DOCUMENT_NAME_TOO_LONG` | `longest` |
+| `AttendanceRecordError` | `alreadyNoted` | `ALREADY_NOTED` | none |
 | `CalendarError` | `invalidAppointmentType` | `INVALID_APPOINTMENT_TYPE` | none |
 | `CalendarError` | `invalidBookingWindow` | `INVALID_BOOKING_WINDOW` | none |
 | `CalendarError` | `invalidDay` | `INVALID_DAY` | `day` |

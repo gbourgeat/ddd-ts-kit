@@ -20,7 +20,10 @@ import { FakeAgenda } from '@/contexts/scheduling/test/fakes/agenda.fake';
 
 const holders = authorizationModule({
   authorizer: new RoleBasedAuthorizer({
-    roles: { holder: [schedulingPermissions['appointment.cancel']], system: [schedulingPermissions['waitlist.offer']] },
+    roles: {
+      holder: [schedulingPermissions['appointment.cancel']],
+      system: [schedulingPermissions['waitlist.offer'], schedulingPermissions['attendance.note']],
+    },
     systemRole: 'system',
   }),
 });

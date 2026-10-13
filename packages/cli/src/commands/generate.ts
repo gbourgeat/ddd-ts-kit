@@ -73,6 +73,7 @@ const OPTIONS = {
   mapper: SWITCH,
   serializer: SWITCH,
   cache: TEXT,
+  'event-sourced': SWITCH,
   reason: TEXT,
   every: TEXT,
   cron: TEXT,
@@ -172,7 +173,8 @@ type Switch =
   | 'search'
   | 'decorators'
   | 'mapper'
-  | 'serializer';
+  | 'serializer'
+  | 'eventSourced';
 
 function switchesOf(args: Arguments): Pick<KindFlags, Switch> {
   return {
@@ -185,5 +187,6 @@ function switchesOf(args: Arguments): Pick<KindFlags, Switch> {
     decorators: args.flag('decorators'),
     mapper: args.flag('mapper'),
     serializer: args.flag('serializer'),
+    eventSourced: args.flag('event-sourced'),
   };
 }
