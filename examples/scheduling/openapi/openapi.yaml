@@ -195,6 +195,12 @@ paths:
       responses:
         '200':
           description: One page of the search.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
@@ -333,6 +339,12 @@ paths:
       responses:
         '201':
           description: Done; the body carries the identifier.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
@@ -405,6 +417,12 @@ paths:
       responses:
         '200':
           description: The answer.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
@@ -529,6 +547,12 @@ paths:
       responses:
         '201':
           description: Done; the body carries the identifier.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
@@ -596,6 +620,12 @@ paths:
       responses:
         '201':
           description: Done; the body carries the identifier.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
@@ -663,6 +693,12 @@ paths:
       responses:
         '201':
           description: Done; the body carries the identifier.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
@@ -730,6 +766,12 @@ paths:
       responses:
         '201':
           description: Done; the body carries the identifier.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
@@ -812,6 +854,12 @@ paths:
       responses:
         '201':
           description: Done; the body carries the identifier.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
@@ -945,6 +993,12 @@ paths:
       responses:
         '200':
           description: A page of entries.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
@@ -1076,6 +1130,12 @@ paths:
       responses:
         '201':
           description: Done; the body carries the identifier.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
@@ -1153,6 +1213,12 @@ paths:
       responses:
         '201':
           description: Done; the body carries the identifier.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
@@ -1218,6 +1284,12 @@ paths:
       responses:
         '200':
           description: The answer.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
@@ -1321,6 +1393,12 @@ paths:
       responses:
         '201':
           description: Done; the body carries the identifier.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
@@ -1395,6 +1473,12 @@ paths:
       responses:
         '200':
           description: Done; the body carries the identifier.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
@@ -1476,6 +1560,12 @@ paths:
       responses:
         '201':
           description: Done; the body carries the identifier.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
@@ -1563,6 +1653,12 @@ paths:
       responses:
         '201':
           description: Done; the body carries the identifier.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
@@ -1659,6 +1755,12 @@ paths:
       responses:
         '200':
           description: One page of the search.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
@@ -1759,6 +1861,12 @@ paths:
       responses:
         '200':
           description: Done; the body carries the identifier.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
@@ -1825,6 +1933,12 @@ paths:
       responses:
         '201':
           description: Done; the body carries the identifier.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
@@ -2059,6 +2173,12 @@ paths:
       responses:
         '200':
           description: One page of the search.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
@@ -2145,6 +2265,12 @@ paths:
       responses:
         '201':
           description: Done; the body carries the identifier.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
@@ -2224,6 +2350,12 @@ paths:
       responses:
         '200':
           description: Done; the body carries the identifier.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
@@ -2309,6 +2441,12 @@ paths:
       responses:
         '201':
           description: Done; the body carries the identifier.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
@@ -2382,6 +2520,12 @@ paths:
       responses:
         '200':
           description: Done; the body carries the identifier.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
@@ -2528,6 +2672,12 @@ paths:
       responses:
         '200':
           description: One page of the search.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:

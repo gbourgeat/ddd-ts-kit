@@ -1,4 +1,5 @@
 import { DeclarationError } from '@ddd-ts-kit/kernel/declarations';
+import type { CachePolicy } from '../cache/cache-policy.js';
 import { ROUTE_PATH_PATTERN } from '../route/route-path-pattern.js';
 import type { ControllerSpec } from './controller-spec.js';
 import type { GuardReference } from './guard-reference.js';
@@ -15,6 +16,8 @@ export interface DeclaredRoute {
   readonly errors: readonly string[];
   /** The class names of its route group and of every group above it, nearest first. */
   readonly groups: readonly string[];
+  /** The policy of the controller, else of the nearest group that declares one. */
+  readonly cache?: CachePolicy;
 }
 
 interface Inherited {
@@ -23,6 +26,7 @@ interface Inherited {
   readonly tags: readonly string[];
   readonly guards: readonly GuardReference[];
   readonly errors: readonly string[];
+  readonly cache?: CachePolicy;
 }
 
 const NOTHING: Inherited = { groups: [], prefix: '', tags: [], guards: [], errors: [] };
@@ -32,6 +36,7 @@ export function declaredRoute(className: string, spec: ControllerSpec): Declared
   const inherited = spec.group === undefined ? NOTHING : inheritedFrom(className, spec.group);
   const guards = [...inherited.guards, ...(spec.guards ?? [])];
   const path = `${inherited.prefix}${spec.path === '/' && inherited.prefix !== '' ? '' : spec.path}`;
+  const cache = spec.cache ?? inherited.cache;
 
   assertPath(className, spec.path, path);
   assertAccess(className, guards);
@@ -43,6 +48,7 @@ export function declaredRoute(className: string, spec: ControllerSpec): Declared
     guards,
     errors: distinct([...inherited.errors, ...(spec.errors ?? [])]),
     groups: inherited.groups,
+    ...(cache === undefined ? {} : { cache }),
   };
 }
 
@@ -54,6 +60,7 @@ function inheritedFrom(className: string, group: RouteGroupClass): Inherited {
   }
 
   const above = options.parent === undefined ? NOTHING : inheritedFrom(className, options.parent);
+  const cache = options.cache ?? above.cache;
 
   return {
     groups: [group.name, ...above.groups],
@@ -61,6 +68,7 @@ function inheritedFrom(className: string, group: RouteGroupClass): Inherited {
     tags: [...above.tags, ...(options.tags ?? [])],
     guards: [...above.guards, ...(options.guards ?? [])],
     errors: [...above.errors, ...(options.errors ?? [])],
+    ...(cache === undefined ? {} : { cache }),
   };
 }
 

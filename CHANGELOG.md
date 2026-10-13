@@ -6,6 +6,16 @@ list the pull requests behind it.
 
 ## Unreleased
 
+**Cache policies on routes, and `no-store` for authenticated answers.** A controller, a route
+group or a function route declares `cache: { scope, maxAge, sMaxAge, staleWhileRevalidate,
+staleIfError, mustRevalidate, vary }` of `@ddd-ts-kit/http`: the pipeline answers its
+`Cache-Control` and `Vary`, the contract documents them, and a policy that would let a cache keep
+what it must not is refused when the route is declared, above all the `public` answer of a route
+that knows its caller without the request headers it varies on. A route that is not public and
+declares nothing now answers `Cache-Control: no-store`, refusals included (before, nothing): a
+generated contract gains that header on every authenticated operation, regenerate it with
+`npm run docs:generate`. See `docs/concepts/http-caching.md`.
+
 **Every package carries the MIT notice.** Each published package now holds the `LICENSE` of the
 repository next to its `dist/`, and `npm run package:check` refuses a tarball without it, or with
 another text. Earlier versions were published without it.

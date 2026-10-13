@@ -84,8 +84,8 @@ const routes = controllerRoutes([PlaceOrderController], { resolve: application.r
 
 | Export | What it is |
 |---|---|
-| `Controller(spec)` | the decorator of a controller: `group`, `method`, `path` (after the prefix of the group), `operationId` (the class name without `Controller` by default), `summary`, `description`, `tags`, `params`, `query`, `headers`, `body`, `response: { status, description?, body? }`, `errors`, `guards`, `deprecated` |
-| `RouteGroup({ parent, prefix, tags, guards, errors })` | names a set of routes on an empty class; a child inherits from its `parent` and adds |
+| `Controller(spec)` | the decorator of a controller: `group`, `method`, `path` (after the prefix of the group), `operationId` (the class name without `Controller` by default), `summary`, `description`, `tags`, `params`, `query`, `headers`, `body`, `response: { status, description?, body? }`, `errors`, `guards`, `deprecated`, `cache` (see "HTTP caching") |
+| `RouteGroup({ parent, prefix, tags, guards, errors, cache })` | names a set of routes on an empty class; a child inherits from its `parent` and adds; the nearest `cache` wins |
 | `Guard` | the interface `{ documents?, check(request: GuardRequest) }`, and the decorator of a guard class that takes dependencies |
 | `Authenticated`, `Public`, `HasRole(...roles)` | the guards the package ships, over the `Actor` of the request: 401 to the anonymous caller, 403 without one of the roles; `Public` lets everybody in and stands alone |
 | `RequestMapper<Request, Message>`, `Serializer<Result, Body>` | the interfaces of the two optional translators (`map`, `serialize`), and the decorators that declare them |
@@ -102,6 +102,51 @@ it too. Controllers are declared classes of the edge (`Edge` of
 in `DeclaredEdges`. A controller has one response and answers its body: a route with several
 success statuses, response headers or a raw body stays a `defineRoute` function. The reasons
 are on the [presentation layer](../../docs/concepts/presentation-layer.md) page.
+
+## HTTP caching
+
+A read says how the caches on the way may keep its answer, on its controller, on its route
+group (every read of the group, unless a controller says otherwise) or on a function route
+(`cache` of the spec):
+
+```ts
+import { CacheScope, Public, RouteGroup } from '@ddd-ts-kit/http';
+
+@RouteGroup({
+  prefix: '/catalog',
+  guards: [Public],
+  cache: { scope: CacheScope.public, maxAge: '1m', sMaxAge: '5m', staleWhileRevalidate: '30s', staleIfError: '1d' },
+})
+export class CatalogRoutes {}
+```
+
+| Field | Answers |
+|---|---|
+| `scope` | `public` (every cache: a CDN, Varnish, the browser), `private` (the browser of the caller only), `no-store` (nobody) |
+| `maxAge`, `sMaxAge` | `max-age`, and `s-maxage` read by shared caches instead; whole seconds as text: `'0s'`, `'30s'`, `'5m'`, `'1h'`, `'1d'` |
+| `staleWhileRevalidate`, `staleIfError` | how long a stale answer may still be served while the cache asks again, or while the server fails |
+| `mustRevalidate` | `must-revalidate`: once stale, never served without asking |
+| `vary` | `Vary`: the request headers the answer depends on, besides the URL |
+
+The pipeline sends `Cache-Control` (and `Vary`) on a successful answer, `no-store` on every
+refusal of a route that declares a policy, and `no-store` on every answer of a route that knows
+its caller and declares none: an authenticated answer is never kept by default. A public route
+that declares nothing says nothing, as before. A header the handler of a function route answers
+itself wins. The contract documents the headers on the answer they apply to.
+
+A policy that cannot stand is refused when the route is declared, with a `DeclarationError`:
+
+- a policy other than `no-store` on a write (only `GET` and `HEAD` are kept by a cache);
+- `public` or `private` without `maxAge` (`'0s'` has the answer revalidated each time), a
+  duration that is not whole seconds, a duration on `no-store`, `sMaxAge` on a private answer;
+- **a `public` answer of a route that knows its caller** (a guard other than `Public`, a
+  function route with `security`) that does not name in `vary` what it depends on. A shared
+  cache keys an answer by its URL: without `vary: ['Authorization']` (or the header carrying the
+  tenant), it would hand the answer of one caller to the next. `private` is the usual answer.
+
+Never cache a decision of authorization across actors: what a caller may see is decided by the
+use case for that caller, and a shared cache only ever keeps what is the same for everybody
+(see [HTTP caching](../../docs/concepts/http-caching.md)).
 
 ## Errors
 

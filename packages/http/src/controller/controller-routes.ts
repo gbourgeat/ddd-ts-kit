@@ -1,8 +1,10 @@
 import type { Schema } from '@ddd-ts-kit/validation';
+import { assertCacheDeclaration } from '../cache/assert-cache-declaration.js';
 import { assertUniqueRoutes } from '../route/assert-unique-routes.js';
 import type { RequestSchemas } from '../route/request-schemas.js';
 import type { RouteInput } from '../route/route-input.js';
 import type { RouteOutput } from '../route/route-output.js';
+import type { RouteSpec } from '../route/route-spec.js';
 import type { Route } from '../route/route.js';
 import type { ControllerClass } from './controller-class.js';
 import type { ErasedController } from './erased-controller.js';
@@ -30,31 +32,56 @@ export function controllerRoutes(
 }
 
 function routeOf(resolved: ResolvedController, options: ControllerRoutesOptions): Route {
-  const { controller, spec, declared } = resolved;
-  const guards = options.guards === 'skip' ? [] : resolved.guards;
-  const { status, body, description } = spec.response;
+  const { spec, declared } = resolved;
   const identity = { method: spec.method, path: declared.path, operationId: declared.operationId };
+  const security = securityOf(resolved.guards, options.security ?? DEFAULT_SECURITY);
+  const cache = declared.cache === undefined ? {} : { cache: declared.cache };
+
+  assertCacheDeclaration({ ...identity, security, ...cache });
 
   return {
     ...identity,
+    ...documentationOf(resolved),
+    security,
+    ...cache,
+    handle: handlerOf(resolved, options, identity),
+  };
+}
+
+type Documentation = Omit<RouteSpec, 'method' | 'path' | 'operationId' | 'security' | 'cache'> & Pick<Route, 'groups'>;
+
+function documentationOf({ spec, declared, guards }: ResolvedController): Documentation {
+  const { status, body, description } = spec.response;
+
+  return {
     summary: spec.summary,
     ...(spec.description === undefined ? {} : { description: spec.description }),
     ...(declared.tags.length === 0 ? {} : { tags: declared.tags }),
     ...(declared.groups.length === 0 ? {} : { groups: declared.groups }),
     ...requestOf(spec),
     responses: { [status]: { description: description ?? defaultDescription(body), ...bodyOf(body) } },
-    errors: [...new Set([...declared.errors, ...resolved.guards.flatMap((guard) => guard.documents?.errors ?? [])])],
-    security: securityOf(resolved.guards, options.security ?? DEFAULT_SECURITY),
+    errors: [...new Set([...declared.errors, ...guards.flatMap((guard) => guard.documents?.errors ?? [])])],
     ...(spec.deprecated === true ? { deprecated: true } : {}),
-    async handle(input: RouteInput): Promise<RouteOutput> {
-      for (const guard of guards) {
-        await guard.check(guardRequest(identity, input));
-      }
+  };
+}
 
-      const answer: unknown = await controller.handle({ ...input, actor: input.context.execution.actor });
+function handlerOf(
+  resolved: ResolvedController,
+  options: ControllerRoutesOptions,
+  identity: Pick<GuardRequest, 'method' | 'path' | 'operationId'>,
+): Route['handle'] {
+  const { controller } = resolved;
+  const guards = options.guards === 'skip' ? [] : resolved.guards;
+  const { status, body } = resolved.spec.response;
 
-      return body === undefined ? { status } : { status, body: answer };
-    },
+  return async (input: RouteInput): Promise<RouteOutput> => {
+    for (const guard of guards) {
+      await guard.check(guardRequest(identity, input));
+    }
+
+    const answer: unknown = await controller.handle({ ...input, actor: input.context.execution.actor });
+
+    return body === undefined ? { status } : { status, body: answer };
   };
 }
 

@@ -49,6 +49,7 @@ Ordered as a reading path in [concepts/README.md](concepts/README.md).
 | [Audit trail](concepts/audit-trail.md) | tamper-evident history recorded around the use cases |
 | [Observability](concepts/observability.md) | tracing, logs, metrics, error reporting, the correlation id |
 | [Resilience](concepts/resilience.md) | retry, timeout, circuit breaker, bulkhead, cache and their failure modes |
+| [HTTP caching](concepts/http-caching.md) | what to cache at which layer, cache policies, never a decision of authorization across actors |
 | [Scheduled jobs](concepts/scheduled-jobs.md) | jobs that trigger use cases, several instances, idempotence |
 | [Clean code](concepts/clean-code.md) | naming, small functions, stepdown, comments, with before and after |
 | [Testing strategy](concepts/testing-strategy.md) | fakes versus mocks, builders, contract tests, the four levels |

@@ -5,6 +5,7 @@ import type { RequestContext } from '../route/request-context.js';
 import type { RouteOutput } from '../route/route-output.js';
 import type { Route } from '../route/route.js';
 import { assertDeclaredResponse } from './assert-declared-response.js';
+import { cacheHeadersOf } from './cache-headers-of.js';
 import { CORRELATION_HEADER } from './correlation-header.js';
 import { correlationIdOf } from './correlation-id-of.js';
 import type { ErrorContext } from './error-context.js';
@@ -97,6 +98,7 @@ function answer(result: RouteOutput, call: Call): RouteResponse {
     status: result.status,
     headers: {
       ...defaultContentType(result.body),
+      ...cacheHeadersOf(call.route, result.status),
       ...lowerCaseKeys(result.headers ?? {}),
       ...identifierHeaders(call),
     },
@@ -137,7 +139,11 @@ function refusal(error: unknown, call: Call): RouteResponse {
 
   return {
     status: problem.status,
-    headers: { 'content-type': PROBLEM_CONTENT_TYPE, ...identifierHeaders(call) },
+    headers: {
+      'content-type': PROBLEM_CONTENT_TYPE,
+      ...cacheHeadersOf(route, problem.status),
+      ...identifierHeaders(call),
+    },
     body: problem,
   };
 }

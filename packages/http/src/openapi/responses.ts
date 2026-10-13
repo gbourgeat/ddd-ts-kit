@@ -4,6 +4,7 @@ import { statusTitle } from '../error/status-title.js';
 import type { ResponseSpec } from '../route/response-spec.js';
 import type { Route } from '../route/route.js';
 import { isRecord } from '../support/is-record.js';
+import { cacheResponseHeaders } from './cache-response-headers.js';
 import { compare } from './compare.js';
 import type { Definitions } from './definitions.js';
 
@@ -31,6 +32,7 @@ function declaredResponses(route: Route, definitions: Definitions): Map<number, 
   for (const [key, declared] of Object.entries(declaredByKey)) {
     byStatus.set(Number(key), {
       description: declared.description,
+      ...cacheResponseHeaders(route, Number(key)),
       ...(declared.body === undefined
         ? {}
         : { content: { 'application/json': { schema: definitions.embed(declared.body) } } }),

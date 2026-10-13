@@ -1,3 +1,5 @@
+export type { CachePolicy } from './cache/cache-policy.js';
+export { CacheScope } from './cache/cache-scope.js';
 export type { ControllerClass } from './controller/controller-class.js';
 export type { ControllerRequest } from './controller/controller-request.js';
 export type { ControllerResponse } from './controller/controller-response.js';
