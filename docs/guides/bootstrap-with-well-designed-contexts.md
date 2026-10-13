@@ -153,8 +153,11 @@ Keycloak one. A provider that needs nothing from the application gets an adapter
 do nothing, which its class comment says.
 
 The Keycloak adapter is specified against the paths and bodies of the Keycloak 26 documentation
-by a local server; the pipeline of the kit does not run it against a real Keycloak. Before relying
-on it, run it once against your realm: start Keycloak (`npm run infra:up` with `--authn
+by a local server; the pipeline of the kit does not run it against a real Keycloak. It was run
+once by hand against Keycloak 26.8.0 (2026-10-13): every method, each twice, did what it says,
+a disabled user kept their profile, and that run corrected the search of an organization, which
+Keycloak finds by name and not by alias, so the adapter reads its pages. Before relying on it,
+run it once against your realm: start Keycloak (`npm run infra:up` with `--authn
 keycloak`), enable organizations in the realm, create the confidential client with the two roles,
 then call each method from a script and read the result in the administration console (the
 organization and its members, the user disabled with the attributes of their profile kept).

@@ -16,7 +16,8 @@ list the pull requests behind it.
   published language (`member.joined`, `member.role-changed`, `account.deactivated`...), a
   search, controllers, specs with builders and fakes, the Knex or Drizzle adapters, and the port
   `IdentityProviderAdmin`, kept in line at least once by consumers of the published facts, with a
-  Keycloak 26 adapter given as a recipe. Nobody changes their own role or acts above it, whatever
+  Keycloak 26 adapter given as a recipe (run once by hand against Keycloak 26.8.0, not in the
+  pipeline). Nobody changes their own role or acts above it, whatever
   a delegation lends, and a change decided under a delegation names it (`delegationId`); every
   change of a member saves its organisation, so two owners who remove each other at once cannot
   both commit; a deactivated account leaves its organisations; an address the provider did not

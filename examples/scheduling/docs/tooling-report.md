@@ -1374,3 +1374,10 @@ no organisation of its own, its roles are those of a practice, and its people re
 themselves. What the preset now does (delegations within the role of the delegate, the provider
 kept in line at least once, organisations read as tenants from the token) stays a comparison of
 the section above, not a change of this contract.
+
+The Keycloak adapter of the preset was run once by hand against Keycloak 26.8.0 (the image of
+`--authn keycloak`, in a container removed afterwards): open an organization twice, add, remove
+and add back a member, each twice, disable a user twice. The first run failed: the adapter looked
+an organization up with `search=<alias>&exact=true`, which Keycloak matches against the name.
+It now reads the pages of the organizations until the alias is found; the second run passed every
+step, and the disabled user kept their name and address.
