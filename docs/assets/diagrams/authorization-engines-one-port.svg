@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 660" width="960" height="660" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">One Authorizer port, three places where the decision is computed</title>
+  <desc id="desc">A use case requires a permission; the authorization middleware asks the Authorizer port before the handler runs. These do not change with the choice of engine. Behind the port, one adapter: the in-process authorizers of the kit reading roles and tuples of your own database, an adapter of a remote relationship engine (OpenFgaAuthorizer, or your own for SpiceDB) calling its server, or your adapter around an embedded policy engine (Cedar, Open Policy Agent) that evaluates the attributes passed with each request.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+    <marker id="arrow-infrastructure" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#7a4f9a"/>
+    </marker>
+  </defs>
+  <rect width="960" height="660" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">One Authorizer port, three places where the decision is computed</text>
+  <!-- what does not change -->
+  <rect x="24" y="56" width="912" height="276" rx="12" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="44" y="82" font-size="14" font-weight="600" fill="#5f6b73">the same whatever the choice</text>
+  <text x="44" y="102" font-size="13" fill="#5f6b73">permissions, use cases,</text>
+  <text x="44" y="120" font-size="13" fill="#5f6b73">handlers, routes, handler tests</text>
+  <rect x="330" y="92" width="300" height="56" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="480" y="116" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">a use case</text>
+  <text x="480" y="137" font-size="13" fill="#1f2328" text-anchor="middle">requires appointment.cancel</text>
+  <line x1="480" y1="148" x2="480" y2="170" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="330" y="174" width="300" height="56" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="480" y="198" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">authorization middleware</text>
+  <text x="480" y="219" font-size="13" fill="#1f2328" text-anchor="middle">asks before the handler runs</text>
+  <line x1="480" y1="230" x2="480" y2="252" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="330" y="256" width="300" height="56" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="3"/>
+  <text x="480" y="280" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">Authorizer port</text>
+  <text x="480" y="301" font-size="13" fill="#1f2328" text-anchor="middle">check(), listAccessible()</text>
+  <!-- the choice -->
+  <rect x="24" y="346" width="912" height="290" rx="12" fill="#ffffff" stroke="#7a4f9a" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="44" y="622" font-size="14" font-weight="600" fill="#7a4f9a">the choice: the adapter bound to the port, and the data it reads</text>
+  <!-- adapters -->
+  <rect x="40" y="384" width="280" height="100" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="180" y="410" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">in process</text>
+  <line x1="56" y1="420" x2="304" y2="420" stroke="#7a4f9a" stroke-opacity="0.35"/>
+  <text x="180" y="442" font-size="13" fill="#1f2328" text-anchor="middle">RoleBasedAuthorizer</text>
+  <text x="180" y="460" font-size="13" fill="#1f2328" text-anchor="middle">PolicyBasedAuthorizer</text>
+  <text x="180" y="478" font-size="13" fill="#1f2328" text-anchor="middle">RelationBasedAuthorizer</text>
+  <rect x="340" y="384" width="280" height="100" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="480" y="410" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">remote relationship engine</text>
+  <line x1="356" y1="420" x2="604" y2="420" stroke="#7a4f9a" stroke-opacity="0.35"/>
+  <text x="480" y="442" font-size="13" fill="#1f2328" text-anchor="middle">OpenFgaAuthorizer</text>
+  <text x="480" y="460" font-size="13" fill="#1f2328" text-anchor="middle">(@ddd-ts-kit/openfga)</text>
+  <text x="480" y="478" font-size="13" fill="#1f2328" text-anchor="middle">or your SpiceDB adapter</text>
+  <rect x="640" y="384" width="280" height="100" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="780" y="410" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">embedded policy engine</text>
+  <line x1="656" y1="420" x2="904" y2="420" stroke="#7a4f9a" stroke-opacity="0.35"/>
+  <text x="780" y="442" font-size="13" fill="#1f2328" text-anchor="middle">your adapter around</text>
+  <text x="780" y="460" font-size="13" fill="#1f2328" text-anchor="middle">Cedar (WebAssembly)</text>
+  <text x="780" y="478" font-size="13" fill="#1f2328" text-anchor="middle">or Open Policy Agent</text>
+  <!-- implements -->
+  <line x1="180" y1="382" x2="436" y2="316" stroke="#7a4f9a" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow-infrastructure)"/>
+  <line x1="480" y1="382" x2="480" y2="316" stroke="#7a4f9a" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow-infrastructure)"/>
+  <line x1="780" y1="382" x2="524" y2="316" stroke="#7a4f9a" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow-infrastructure)"/>
+  <!-- data -->
+  <rect x="40" y="522" width="280" height="64" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="180" y="548" font-size="14" font-weight="700" fill="#5f6b73" text-anchor="middle">your own data</text>
+  <text x="180" y="570" font-size="13" fill="#1f2328" text-anchor="middle">roles in the token, tuples in your DB</text>
+  <rect x="340" y="522" width="280" height="64" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="480" y="548" font-size="14" font-weight="700" fill="#5f6b73" text-anchor="middle">OpenFGA or SpiceDB server</text>
+  <text x="480" y="570" font-size="13" fill="#1f2328" text-anchor="middle">its own datastore, HTTP or gRPC</text>
+  <rect x="640" y="522" width="280" height="64" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="780" y="548" font-size="14" font-weight="700" fill="#5f6b73" text-anchor="middle">policies and attributes</text>
+  <text x="780" y="570" font-size="13" fill="#1f2328" text-anchor="middle">passed with each request</text>
+  <line x1="180" y1="484" x2="180" y2="518" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="480" y1="484" x2="480" y2="518" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="780" y1="484" x2="780" y2="518" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- legend -->
+  <line x1="690" y1="82" x2="734" y2="78" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="746" y="87" font-size="14" fill="#1f2328">calls, reads</text>
+  <line x1="690" y1="108" x2="734" y2="104" stroke="#7a4f9a" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow-infrastructure)"/>
+  <text x="746" y="113" font-size="14" fill="#1f2328">implements the port</text>
+</svg>

@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 410" width="960" height="410" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">When a wiring mistake is found, in the declared style</title>
+  <desc id="desc">Four moments in order. The compiler refuses a dependency list that does not match its constructor, a class that does not implement its port and a concrete class where a port is expected. Loading the classes raises a DeclarationError for a port with a body, an adapter that extends its port, or two declarations on one class. createApplication raises a WiringError for a missing or duplicate binding, a cycle, two handlers of one command, a constructor no list covers, and a use case without permission when authorization is required. The first message builds the handler; only a cycle or a missing port behind a factory waits until then.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="410" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">When a wiring mistake is found, in the declared style</text>
+  <!-- 1 compile -->
+  <rect x="24" y="64" width="210" height="282" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="129" y="92" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">1. compile</text>
+  <text x="129" y="114" font-size="13" fill="#5f6b73" text-anchor="middle">the compiler, in the editor</text>
+  <line x1="40" y1="126" x2="218" y2="126" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text font-size="13" fill="#1f2328">
+    <tspan x="40" y="150">a list in another order</tspan>
+    <tspan x="40" y="170">than the constructor</tspan>
+    <tspan x="40" y="198">a list one short, or one</tspan>
+    <tspan x="40" y="218">too many</tspan>
+    <tspan x="40" y="246">a class that does not</tspan>
+    <tspan x="40" y="266">implement its port</tspan>
+    <tspan x="40" y="294">a concrete class where</tspan>
+    <tspan x="40" y="314">a port is expected</tspan>
+  </text>
+  <!-- 2 load -->
+  <rect x="258" y="64" width="210" height="282" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="363" y="92" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">2. load the classes</text>
+  <text x="363" y="114" font-size="13" fill="#5f6b73" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">DeclarationError</text>
+  <line x1="274" y1="126" x2="452" y2="126" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text font-size="13" fill="#1f2328">
+    <tspan x="274" y="150">a port with a body</tspan>
+    <tspan x="274" y="178">an adapter that extends</tspan>
+    <tspan x="274" y="198">its port</tspan>
+    <tspan x="274" y="226">two declarations on</tspan>
+    <tspan x="274" y="246">one class</tspan>
+  </text>
+  <!-- 3 createApplication -->
+  <rect x="492" y="64" width="210" height="282" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="597" y="92" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">3. createApplication</text>
+  <text x="597" y="114" font-size="13" fill="#5f6b73" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">WiringError</text>
+  <line x1="508" y1="126" x2="686" y2="126" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text font-size="13" fill="#1f2328">
+    <tspan x="508" y="150">a binding missing, or twice</tspan>
+    <tspan x="508" y="178">a cycle between classes</tspan>
+    <tspan x="508" y="206">two handlers of a command,</tspan>
+    <tspan x="508" y="226">two consumers or jobs</tspan>
+    <tspan x="508" y="246">of one name</tspan>
+    <tspan x="508" y="274">a constructor no list covers</tspan>
+    <tspan x="508" y="302">a use case without its</tspan>
+    <tspan x="508" y="322">permission, when required</tspan>
+  </text>
+  <!-- 4 first message -->
+  <rect x="726" y="64" width="210" height="282" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="831" y="92" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">4. first message</text>
+  <text x="831" y="114" font-size="13" fill="#5f6b73" text-anchor="middle">the bus resolves</text>
+  <line x1="742" y1="126" x2="920" y2="126" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text font-size="13" fill="#1f2328">
+    <tspan x="742" y="150">the handler is built,</tspan>
+    <tspan x="742" y="170">then reused</tspan>
+    <tspan x="742" y="198">a cycle or a missing port</tspan>
+    <tspan x="742" y="218">behind a factory: found</tspan>
+    <tspan x="742" y="238">here only</tspan>
+  </text>
+  <!-- sequence arrows -->
+  <line x1="236" y1="205" x2="256" y2="205" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="470" y1="205" x2="490" y2="205" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="704" y1="205" x2="724" y2="205" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- before any request -->
+  <path d="M24,364 H702" fill="none" stroke="#2f6f4f" stroke-width="2"/>
+  <path d="M24,358 V370 M702,358 V370" fill="none" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="363" y="392" font-size="14" fill="#2f6f4f" text-anchor="middle">before the application serves its first request</text>
+</svg>

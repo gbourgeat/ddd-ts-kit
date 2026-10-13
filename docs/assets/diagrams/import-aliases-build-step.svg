@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 480" width="960" height="480" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">npm run build: compile, then rewrite the aliases</title>
+  <desc id="desc">One import of a handler in three forms. In the TypeScript source it names the aggregate by the alias, without extension, and every development tool resolves it through the paths of tsconfig.json. The compiler emits JavaScript and keeps the specifier as written, which plain node cannot load. ddd-ts-kit build-aliases then rewrites it into a relative path ending in .js, and node dist/src/main.js runs the output without a loader or a flag.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="480" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">npm run build: compile, then rewrite the aliases</text>
+  <!-- the source -->
+  <rect x="32" y="60" width="680" height="88" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="48" y="84" font-size="16" font-weight="700" fill="#2b5d8a">TypeScript source</text>
+  <text x="48" y="104" font-size="13" fill="#1f2328">src/contexts/billing/application/commands/issue-invoice/issue-invoice.handler.ts</text>
+  <text x="48" y="130" font-size="13" fill="#1f2328" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">import { Invoice } from '@/contexts/billing/domain/aggregates/invoice.aggregate';</text>
+  <!-- compile -->
+  <line x1="120" y1="150" x2="120" y2="198" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="136" y="172" font-size="14" font-weight="700" fill="#1f2328">tsc -p tsconfig.build.json</text>
+  <text x="136" y="190" font-size="13" fill="#1f2328">compiles, and keeps every specifier exactly as written</text>
+  <!-- compiled, not rewritten -->
+  <rect x="32" y="202" width="680" height="88" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="48" y="226" font-size="16" font-weight="700" fill="#5f6b73">Compiled output, before the rewrite</text>
+  <text x="48" y="246" font-size="13" fill="#1f2328">dist/src/contexts/billing/application/commands/issue-invoice/issue-invoice.handler.js</text>
+  <text x="48" y="272" font-size="13" fill="#1f2328" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">import { Invoice } from '@/contexts/billing/domain/aggregates/invoice.aggregate';</text>
+  <!-- rewrite -->
+  <line x1="120" y1="292" x2="120" y2="340" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="136" y="314" font-size="14" font-weight="700" fill="#1f2328">ddd-ts-kit build-aliases</text>
+  <text x="136" y="332" font-size="13" fill="#1f2328">rewrites each alias into the relative path of the emitted file, with .js</text>
+  <!-- compiled and rewritten -->
+  <rect x="32" y="344" width="680" height="88" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="48" y="368" font-size="16" font-weight="700" fill="#5f6b73">Compiled output, after the rewrite</text>
+  <text x="48" y="388" font-size="13" fill="#1f2328">dist/src/contexts/billing/application/commands/issue-invoice/issue-invoice.handler.js</text>
+  <text x="48" y="414" font-size="13" fill="#1f2328" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">import { Invoice } from '../../../domain/aggregates/invoice.aggregate.js';</text>
+  <!-- who can load each form -->
+  <g font-size="14" fill="#1f2328">
+    <rect x="736" y="72" width="4" height="64" rx="2" fill="#2b5d8a"/>
+    <text x="752" y="92" font-weight="700">every dev tool</text>
+    <text x="752" y="112" font-size="13">tsc, tsx, vitest, knip:</text>
+    <text x="752" y="130" font-size="13">through tsconfig paths</text>
+    <rect x="736" y="214" width="4" height="64" rx="2" fill="#5f6b73"/>
+    <text x="752" y="234" font-weight="700">plain node: stops</text>
+    <text x="752" y="254" font-size="13">at the first alias,</text>
+    <text x="752" y="272" font-size="13">ERR_MODULE_NOT_FOUND</text>
+    <rect x="736" y="356" width="4" height="64" rx="2" fill="#5f6b73"/>
+    <text x="752" y="376" font-weight="700">plain node: runs</text>
+    <text x="752" y="396" font-size="13">node dist/src/main.js,</text>
+    <text x="752" y="414" font-size="13">no loader, no flag</text>
+  </g>
+  <text x="32" y="464" font-size="13" fill="#1f2328">The rewrite is idempotent. When one alias cannot be rewritten, it writes nothing and exits 2.</text>
+</svg>

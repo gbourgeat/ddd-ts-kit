@@ -23,6 +23,23 @@ mistake is made: the type check passes on one file while production loads anothe
 boundary rule stops seeing an import. So the decision is less "which prefix" than "which
 mechanism lets every tool follow one declaration".
 
+![One declaration followed by every tool: ddd-ts-kit.config.json names the alias, init writes the paths of tsconfig.json from it, the compiler, tsx, vitest, knip, dependency-cruiser and drizzle-kit read those paths, jest receives a copy, the ESLint plugin, the checker and build-aliases read the config, and node reads nothing because the build rewrote every alias](../assets/diagrams/import-aliases-one-declaration.svg)
+
+In a handler of a generated project, every import of a file of the project starts with the
+alias and carries no extension:
+
+```ts
+// src/contexts/billing/application/commands/issue-invoice/issue-invoice.handler.ts
+import { CommandHandler } from '@ddd-ts-kit/kernel/declarations'; // a package: never rewritten
+import { Invoice } from '@/contexts/billing/domain/aggregates/invoice.aggregate';
+import type { InvoiceRepository } from '@/contexts/billing/domain/repositories/invoice.repository';
+import { IssueInvoiceCommand } from '@/contexts/billing/application/commands/issue-invoice/issue-invoice.command';
+```
+
+The path after `@/` is the path of the file under `src/`: moving a file changes its imports in
+the files that import it, never in the file itself, and the import says which context and which
+layer it reaches, which is what the boundary rules judge.
+
 ## Why `@/` cannot be a Node subpath import
 
 Node resolves one kind of alias by itself: a subpath import, declared under the `imports` field
@@ -76,6 +93,14 @@ names one file, a file `x.ts` next to a directory `x/` is never ambiguous, and t
 nothing to guess. `ddd-ts-kit check` reports a directory import (`imports/extension`: it is the
 one case that needs the disk, so ESLint does not see it) and `build-aliases` refuses it.
 
+```ts
+// Instead of: a directory, which the compiler resolves to its index.ts and Node does not.
+import { InvoiceIssued } from '@/contexts/billing/published-language';
+
+// Write: the file.
+import { InvoiceIssued } from '@/contexts/billing/published-language/index';
+```
+
 **A dot is not an extension.** `invoice.aggregate`, `issue-invoice.command` and `main` are all
 written as they are. Only `.js`, `.mjs`, `.cjs`, `.ts`, `.mts` and `.cts` are read as an
 extension, and only on a specifier that starts with an alias of the project: a package subpath
@@ -120,10 +145,10 @@ takes spellings that cannot be a package name at all:
   characters" for `$test`, for new and for old packages.
 
 SvelteKit spells its own aliases the same way (`$lib`, `$app`). `importAlias` accepts the two
-forms: `@/`, or `$`, one name in lower case (letters, digits, hyphens) and `/`. `init` and
-`check` refuse the rest and say why: `#name/` (a Node subpath import, another mechanism),
-`@name/` (the name of a scope), `name/` or `~/` (possible package names), and `$test/`,
-`$scripts/`, `$generated/` (already taken).
+forms: `@/`, or `$`, one name in lower case that starts with a letter (then letters, digits,
+hyphens) and `/`. `init` and `check` refuse the rest and say why: `#name/` (a Node subpath
+import, another mechanism), `@name/` (the name of a scope), `name/` or `~/` (possible package
+names), and `$test/`, `$scripts/`, `$generated/` (already taken).
 
 ## What each tool reads
 
@@ -143,11 +168,43 @@ forms: `@/`, or `$`, one name in lower case (letters, digits, hyphens) and `/`. 
 | ESLint with `@ddd-ts-kit/eslint-plugin`, `ddd-ts-kit check` | `importAlias`, `importExtension` and `sourceRoot` of the config | they classify an import by its path and never load a file: with or without its extension, a specifier names the same source, and the boundary rules judge it the same |
 | Biome | nothing | it formats; a fixed import that passes the line width is wrapped by `npm run format` |
 
+What the kit writes in the three tools that need to be told, as `init` generates it under
+`importExtension: "none"`:
+
+```ts
+// vitest.config.ts: the specs resolve an alias from the paths of tsconfig.json.
+export default defineConfig({
+  resolve: { tsconfigPaths: true },
+});
+```
+
+```js
+// jest.config.js: jest reads no tsconfig, so the mapping is repeated, each target a source.
+moduleNameMapper: {
+  '^@/(.*)$': '<rootDir>/src/$1.ts',
+  '^\\$test/(.*)$': '<rootDir>/test/$1.ts',
+  '^\\$scripts/(.*)$': '<rootDir>/scripts/$1.ts',
+},
+```
+
+```js
+// .dependency-cruiser.cjs, options: without it no boundary rule would see an alias import.
+tsConfig: { fileName: 'tsconfig.json' },
+```
+
+Under `js`, each jest pattern ends with `\\.js$` instead of `$`. `imports/alias-declared` holds
+all three (below).
+
 ## The build step
 
 ```
 npm run build   =   tsc -p tsconfig.build.json && ddd-ts-kit build-aliases
 ```
+
+(The generated script calls the native compiler,
+`node node_modules/@typescript/native/bin/tsc -p tsconfig.build.json`.)
+
+![The two steps of npm run build: the compiler turns the TypeScript source into JavaScript and keeps the alias specifier as written, which plain node cannot load; ddd-ts-kit build-aliases then rewrites it into a relative path ending in .js, which node dist/src/main.js loads without a loader or a flag](../assets/diagrams/import-aliases-build-step.svg)
 
 `ddd-ts-kit build-aliases [--project <tsconfig>]` (default `tsconfig.build.json`) reads the
 output directory of that tsconfig and, in every `.js`, `.mjs`, `.cjs`, `.d.ts`, `.d.mts` and
@@ -190,6 +247,16 @@ It fails, exits 2 and writes nothing when:
   file, and Node knows no alias. Build the path from `import.meta.url` instead, as the
   generated `scripts/events.ts` does (that path names a compiled file and keeps its `.js`);
 - the tsconfig names no output directory that exists.
+
+```ts
+// Instead of: an alias completed at run time; build-aliases refuses it.
+const exported = await import(`@/contexts/${context}/published-language/index`);
+
+// Write: a URL computed from the place of this file, naming the compiled file with its .js.
+// From scripts/events.ts, compiled to dist/scripts/events.js, ../src/ is dist/src/.
+const index = new URL(`../src/contexts/${context}/published-language/index.js`, import.meta.url);
+const exported: unknown = await import(index.href);
+```
 
 It is idempotent: a second run finds nothing to rewrite. A rewrite never adds or removes a
 line break and the source maps are not modified: every mapping keeps its line and `sources` is
@@ -240,9 +307,24 @@ well (`npm run ci:test:alias`).
 `export ... from` or an `import()` of a file of the project uses the alias. A relative
 specifier is refused, the same directory included, and so is an alias path with a `.` or `..`
 segment. `eslint --fix` rewrites a relative import: it computes the alias from the place of
-the file and the config. Not judged: a JavaScript file at the project root (a tool config, a
+the file and the config. An alias path with a `.` or `..` segment is reported without an
+automatic fix: you write the path from the alias directory by hand. Not judged: a JavaScript file at the project root (a tool config, a
 knex migration, which Node runs as written and which therefore uses relative paths), and the
 client under `generated/`. A directory given to `discoverContext` as a URL is not an import.
+
+```ts
+// src/contexts/billing/application/commands/issue-invoice/issue-invoice.handler.ts
+// Instead of: relative paths, which change when the file moves.
+import { Invoice } from '../../../domain/aggregates/invoice.aggregate';
+import { IssueInvoiceCommand } from './issue-invoice.command';
+import { Money } from '@/shared-kernel/../shared-kernel/money'; // a `..` segment in an alias
+
+// Write: the alias, computed from the place of the file (`eslint --fix` rewrites these two).
+import { Invoice } from '@/contexts/billing/domain/aggregates/invoice.aggregate';
+import { IssueInvoiceCommand } from '@/contexts/billing/application/commands/issue-invoice/issue-invoice.command';
+// The `..` segment has no automatic fix: rewrite it by hand, from the alias directory.
+import { Money } from '@/shared-kernel/money';
+```
 
 `imports/extension`: in the same three trees, an alias specifier ends as `importExtension`
 says. Under `none` it carries none of `.js`, `.mjs`, `.cjs`, `.ts`, `.mts`, `.cts`, and names
@@ -250,7 +332,34 @@ no directory (the checker alone sees that one); under `js` it ends with `.js`. `
 removes or writes the extension. Under `js` the compiler holds the same thing (`TS2835`); under
 `none` nothing else does before the build, since the bundler resolution accepts both.
 
-`imports/alias-declared`, held by `ddd-ts-kit check`:
+```ts
+// Instead of, under "importExtension": "none":
+import { Invoice } from '@/contexts/billing/domain/aggregates/invoice.aggregate.js';
+
+// Write:
+import { Invoice } from '@/contexts/billing/domain/aggregates/invoice.aggregate';
+
+// And under "importExtension": "js", the other way round:
+import { Invoice } from '@/contexts/billing/domain/aggregates/invoice.aggregate.js';
+```
+
+`imports/alias-declared`, held by `ddd-ts-kit check`, compares the declarations and every
+place that has to follow them. For instance, in `tsconfig.json`:
+
+```jsonc
+// Instead of: a baseUrl, and a target that names the compiled output.
+"baseUrl": ".",
+"paths": { "@/*": ["./dist/src/*"] }
+
+// Write: exactly what importAlias gives, and nothing else under an alias of the project.
+"paths": {
+  "@/*": ["./src/*"],
+  "$test/*": ["./test/*"],
+  "$scripts/*": ["./scripts/*"]
+}
+```
+
+What it reports:
 
 | It reports | Because |
 |---|---|

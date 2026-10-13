@@ -28,14 +28,82 @@ The list is written once, in the CLI (`BASELINE`, `packages/cli/src/init/manifes
 `verify` is built from it and a test of the CLI holds the two pipelines, for several stacks and
 for the example application, to every gate of it, so a gate cannot leave one place silently.
 
+![Two sources written once: the list BASELINE of the CLI, from which the verify script is built and to which a test holds the GitHub and GitLab pipelines; and biome.json at the root of the kit, which the template of the CLI copies under a test, byte for byte but for two exclusions of the kit, and which the example extends](../assets/diagrams/quality-baseline-one-source.svg)
+
+In a generated project and in the example application, `verify` is that list, in that order:
+
+```json
+{
+  "scripts": {
+    "verify": "npm run typecheck && npm run lint && npm run format:check && npm run test:coverage && npm run test:e2e && npm run check:arch && npm run depcruise && npm run deadcode && npm run docs:check"
+  }
+}
+```
+
+### One file, one question per tool
+
+Each tool sees something the others do not. This file of a domain breaks one thing for each of
+them:
+
+```ts
+// src/contexts/billing/domain/services/invoice-total.ts
+import type { InvoiceRow } from '@/contexts/billing/infrastructure/persistence/billing.schema';
+
+export function totalOf(rows: readonly InvoiceRow[]): number {
+  const amounts = rows.map((row) => row.amount_in_cents)
+  if (amounts.length === 0) return 0;
+  return amounts.reduce((sum, amount) => sum + amount, "0");
+}
+
+export function formatTotal(totalInCents: number): string {
+  return `${totalInCents / 100} EUR`;
+}
+```
+
+| Tool | What it reports in that file |
+|---|---|
+| TypeScript | `reduce` started with a string returns a `string`, where the function promises a `number` |
+| ESLint | `layer/domain-purity`: the domain imports a row of infrastructure; `clean/braces`: the `if` has no braces; `clean/blank-lines`: no blank line after the declaration, around the `if`, before the `return` |
+| Biome | the missing semicolon and the double quotes (`npm run format` rewrites them) |
+| knip | `formatTotal` is exported and nobody imports it |
+| dependency-cruiser | the import from `domain/` into `infrastructure/`, also when it goes through a barrel or a re-export |
+| `ddd-ts-kit check` | the same layer rule, read from the tree and the text of the file, and the rest of the reference (names, glossary) |
+| the specs and their coverage | whether `totalOf` was run at all, and whether the domain of `billing` stays above its threshold |
+
+The same file once every gate passes:
+
+<!-- checked sample -->
+```ts
+// src/contexts/billing/domain/services/invoice-total.ts
+export interface InvoiceLine {
+  readonly amountInCents: number;
+}
+
+export function totalOf(lines: readonly InvoiceLine[]): number {
+  const amounts = lines.map((line) => line.amountInCents);
+
+  if (amounts.length === 0) {
+    return 0;
+  }
+
+  return amounts.reduce((sum, amount) => sum + amount, 0);
+}
+```
+
+The domain now names its own line instead of a row, and the mapping from the row stays in
+`infrastructure/`.
+
 ## Where each gate runs
 
-Read from the files on 2026-10-10. "kit" is this repository, "example" is
-`examples/scheduling`, "project" is what `init` generates, on every stack.
+Read from the files on 2026-10-13. "kit" is this repository, "example" is
+`examples/scheduling`, "project" is what `init` generates, on every stack. The cheapest gates run
+first and on what changed; the wider ones run later, on every file:
+
+![Five moments from left to right: at every write the editor hook runs ddd-ts-kit check on the file; at a commit lefthook runs ESLint, the formatter and ddd-ts-kit check on the staged files, the commit size and commitlint; at a push the type check and the unit specs; npm run verify chains the nine gates; the pipeline runs them under their ci names, with the production build](../assets/diagrams/quality-baseline-when-gates-run.svg)
 
 | Gate | `verify` | GitHub and GitLab pipeline | Hooks |
 |---|---|---|---|
-| type check, sources | kit `ci:typecheck` (the build); example and project `typecheck` | kit, example, project: `ci:typecheck` | before a push |
+| type check, sources | kit `ci:typecheck` (the build, then the checked samples of the documentation); example and project `typecheck` | kit, example, project: `ci:typecheck` | before a push |
 | type check, tests | kit `typecheck:tests` (every package, through `ci:typecheck`); example and project: `tsconfig.json` includes `test/` and the specs | same script | before a push |
 | lint | kit `ci:lint`; example and project `lint` | `ci:lint` | staged files, before a commit |
 | format | kit `ci:format`; example and project `format:check` | `ci:format`, in the lint job | staged files, before a commit |
@@ -43,7 +111,7 @@ Read from the files on 2026-10-10. "kit" is this repository, "example" is
 | dependency graph | kit `depcruise` (in `ci:arch`); example and project `depcruise` | kit `ci:arch`; example and project `ci:arch:graph` | no |
 | architecture | kit `check:self`, the fixtures of every rule, and the guard tests (in `ci:arch`); example and project `check:arch` | kit `ci:arch`; example and project `ci:arch:check` | project and example: staged files, before a commit; at every write through the editor hook |
 | every rule proven on the example | kit: `example:verify` runs `example:conformance` after the example's own gate | kit: the `example` job | no |
-| documents drift | kit `ci:docs` (no em dash or en dash); example and project `docs:check` | `ci:docs` | kit: before a commit |
+| documents drift | kit `ci:docs` (no em dash or en dash, every French page in step with its English page); example and project `docs:check` | `ci:docs` | kit: the dash check (`check:dashes`), before a commit |
 | unit specs | kit `ci:test:unit`; example and project `test:coverage` | `ci:test:unit` | before a push |
 | integration specs | kit: the pipeline only (they need servers); example and project `test:coverage` (PostgreSQL in process) | `ci:test:integration` | no |
 | end-to-end specs | kit: the pipeline only (`ci:test:e2e`, every stack generated and run); example and project `test:e2e` | `ci:test:e2e` | no |
@@ -72,10 +140,13 @@ semicolons, parentheses around the parameter of an arrow function.
 
 - Formatted: `.ts`, `.mts`, `.cts`, `.js`, `.mjs`, `.cjs`, `.json`, `.jsonc`.
 - Not formatted: Markdown (a formatter would rewrap tables and prose) and YAML.
-- Left out in `biome.json`: build outputs, the lockfile, a `generated` directory, and the
+- Left out in `biome.json`: build outputs (`dist`, `coverage`, `reports`), the lockfile, a
+  `generated` directory, the snapshots of the migrations (`migrations/meta`), and the
   artifacts their own check compares byte for byte (`openapi/*.json` and `asyncapi.json` under
   `openapi.format: json`, `.dependency-cruiser.cjs`); the YAML contracts are not formatted
-  anyway.
+  anyway. Two more lines appear only where they apply: the sources of a generated client
+  (`clients/*/src`), which `ddd-ts-kit sdk` adds to a project that asks for clients, and, in the
+  kit alone, the compiled samples of its documentation (`.ddd-ts-kit`).
 
 What the CLI writes is already formatted: `npm run format:check` passes right after `init` and
 after every `generate`, and the end-to-end suite of the CLI holds that for every stack it
@@ -88,8 +159,32 @@ plugin enable no rule about where a token goes; they keep the two things a forma
 decide: the blank lines between statements (`clean/blank-lines`) and the braces of a branch
 (`clean/braces`). Run in either order, the second tool finds nothing to change.
 
+```ts
+// instead of: the formatter keeps both lines as they are, since neither breaks its layout
+if (wrapped.has(repository)) return repository;
+const next = steps.shift();
+
+// write: lint --fix adds the braces and the blank line, then the formatter breaks the block
+if (wrapped.has(repository)) {
+  return repository;
+}
+
+const next = steps.shift();
+```
+
 ## One configuration, three places
 
 `biome.json` at the root of the kit is the source. The template the CLI copies into a project
-is compared with it byte for byte by a test of the CLI, and the example application extends it
-instead of copying it, so the three cannot drift.
+is compared with it byte for byte by a test of the CLI, but for the two lines a new project
+does not need: the one that leaves out the generated client of the example (`ddd-ts-kit sdk`
+adds it to a project that asks for clients) and the one that leaves out the compiled doc samples
+of the kit. The example application extends it instead of copying it, so the three cannot drift
+(the right half of the drawing at the top of this page):
+
+```json
+{
+  "$schema": "https://biomejs.dev/schemas/2.5.15/schema.json",
+  "root": false,
+  "extends": "//"
+}
+```

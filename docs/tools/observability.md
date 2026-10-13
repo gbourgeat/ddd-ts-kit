@@ -12,20 +12,13 @@ generated project until you write the adapter.
 
 ## What the kit emits, and what you choose
 
-```mermaid
-flowchart LR
-  subgraph API process
-    T[tracing: spans] 
-    L[Logger port: JSON lines]
-    E[ErrorReporter port]
-    M[Metrics port: no exporter shipped]
-  end
-  T -- OTLP/HTTP --> COL[optional OpenTelemetry Collector]
-  COL --> J[Jaeger]
-  COL --> TP[Grafana Tempo]
-  L -- stdout --> LOGS[your log pipeline]
-  E --> S[Sentry or GlitchTip]
-```
+![The API process binds four things: traces leave over OTLP/HTTP through an optional collector to Jaeger or Grafana Tempo, log lines leave on the standard output for your log pipeline, error reports go to Sentry or GlitchTip, and metrics go nowhere until you write an adapter of the Metrics port](../assets/diagrams/observability-tools-signals.svg)
+
+Read the drawing from left to right. Each box on the left is an adapter the platform binds once,
+in `src/platform/`; no file of a bounded context knows any of them. Each box on the right is a
+tool you choose and run, and the rest of this page compares them. The only arrow you have to
+draw yourself is the last one: the kit measures durations and outcomes through the `Metrics`
+port, and sends them nowhere until a project binds an exporter.
 
 The concepts (what a span may carry, how the correlation id links a trace, its log lines, its
 audit entries and its error report) are on the [observability concept page](../concepts/observability.md).
@@ -63,6 +56,13 @@ Selection criteria:
   It is tail sampling, done by an OpenTelemetry Collector between the application and either
   backend. The tracing README gives a collector configuration for it.
 
+![Your service samples every trace; an OpenTelemetry Collector waits for the whole trace, keeps it when a span is in error or an event was dead-lettered, keeps ten percent of the rest, and sends the kept traces to Jaeger or Tempo](../assets/diagrams/observability-tools-tail-sampling.svg)
+
+The application then samples everything (no `sampleRatio`), and the policies live in the
+collector, next to the backend they feed. Without a collector, `initTracing({ sampleRatio: 0.2 })`
+keeps a fifth of the traces, decided where each trace starts: a trace in error is dropped as
+often as any other.
+
 A hosted backend that accepts OTLP is a third option; none was evaluated here.
 
 ## Loggers: StdoutLogger, pino, winston
@@ -84,7 +84,34 @@ on one machine, and are not a benchmark of the libraries.
 Selection criteria: volume first (winston's cost is "nothing at a few hundred lines per second
 and visible at tens of thousands", in the README's words), then what the team already
 operates. The three implement one port and pass one contract suite (`loggerContract`), so the
-choice is one line of the composition root and can be revisited.
+choice is one line of the composition root and can be revisited:
+
+<!-- checked sample -->
+```ts
+import { StdoutLogger } from '@ddd-ts-kit/aspects';
+import { AsyncLocalStorageExecutionScope, type Logger } from '@ddd-ts-kit/kernel';
+import { createPinoLogger } from '@ddd-ts-kit/pino';
+import { traceLogFields } from '@ddd-ts-kit/tracing';
+import { createWinstonLogger } from '@ddd-ts-kit/winston';
+
+declare const choice: 'stdout' | 'pino' | 'winston';
+
+const executionScope = new AsyncLocalStorageExecutionScope();
+
+// Read at each line: correlation id, origin, actor and tenant of the work in progress,
+// then trace_id and span_id of the active span. The same fields whatever the library.
+const fields = () => traceLogFields(executionScope);
+
+// Three adapters of one port, held to one contract suite: changing library is this line.
+export const logger: Logger = {
+  stdout: () => new StdoutLogger({ fields, base: { service: 'scheduling' } }),
+  pino: () => createPinoLogger({ service: 'scheduling', fields }),
+  winston: () => createWinstonLogger({ service: 'scheduling', fields }),
+}[choice]();
+```
+
+A generated project writes one of the three in `src/platform/observability/create-logger.ts`,
+after the `--logger` flag of `init`; the example application uses pino.
 
 ## Error tracking: Sentry, GlitchTip
 
@@ -104,7 +131,25 @@ documentation (https://develop.sentry.dev/self-hosted/), the Sentry product inde
 (https://glitchtip.com/documentation/install). They list what each project documents, not
 what was tried here. The GlitchTip pages read do not mention session replay or profiling.
 
-The kit's adapter is the same for both: only the DSN differs. **Not verified:** which of the
+The kit's adapter is the same for both: only the DSN differs.
+
+<!-- checked sample -->
+```ts
+import { reportProcessFailures } from '@ddd-ts-kit/kernel';
+import { initSentry } from '@ddd-ts-kit/sentry';
+
+// What the validated configuration read from SENTRY_DSN, SENTRY_ENVIRONMENT and SENTRY_RELEASE.
+declare const config: { readonly dsn: string; readonly environment: string; readonly release: string };
+
+// The DSN of a Sentry project or of a GlitchTip project: the same call, the same reports.
+// An empty DSN starts no SDK, and the reporter it answers reports nothing.
+export const errors = initSentry({ dsn: config.dsn, environment: config.environment, release: config.release });
+
+// uncaughtException and unhandledRejection: reported as fatal, then exit code 1.
+reportProcessFailures(errors);
+```
+
+**Not verified:** which of the
 fields and envelope types the Sentry SDK sends GlitchTip accepts or ignores. The GlitchTip
 pages read do not say, and nothing beyond the adapter's own suite was run against a GlitchTip
 server for this page.
@@ -132,6 +177,33 @@ server for this page.
 Tempo is not named in the package README. It receives OTLP, so the same exporter should reach
 it; this was not run in this repository.
 
+What `tracing/platform-only` refuses, and what to write instead. Instead of opening spans in a
+handler:
+
+```ts
+// contexts/scheduling/application/book-appointment.handler.ts: refused
+import { trace } from '@opentelemetry/api';
+
+const span = trace.getTracer('scheduling').startSpan('book appointment');
+span.setAttribute('client.email', command.clientEmail); // personal data on a span
+```
+
+write nothing in the handler, and wrap the application once, from the platform. The command
+then gets its span, `command BookAppointment`, with its context and its outcome, and its
+repositories, events and publications get theirs below it:
+
+<!-- checked sample -->
+```ts
+import { kernelModule } from '@ddd-ts-kit/di';
+import { traceApplication } from '@ddd-ts-kit/tracing';
+
+// src/platform/: one value, and every use case, adapter, event, consumer and job is traced.
+export const kernel = kernelModule({ instrumentation: traceApplication() });
+```
+
+If debugging needs the value, that is a log line with an identifier, written by an adapter,
+with the retention of your logs.
+
 **Logs**: `StdoutLogger` is what a generated project binds by default, with the trace ids and
 the correlation fields of the execution scope on every line. `init --logger pino` and
 `init --logger winston` generate `src/platform/observability/create-logger.ts` on
@@ -153,6 +225,124 @@ values from a small closed set) and the aspects package records durations and ou
 it. A generated project binds a `NoopMetrics` behind a `TODO(platform)`. A search of the
 repository finds no Prometheus or OpenTelemetry metrics exporter, and the tracing bootstrap
 turns off runtime and host metrics.
+
+What is measured, once an adapter is bound: `use_case_duration_ms` and `use_case_total` from
+`metricsMiddleware` on the buses (labels `message`, `kind` and `outcome`, plus `error_code` on
+the counter), `dependency_call_duration_ms` and `dependency_call_total` from the `timed` aspect
+on the adapters it wraps (the prefix is its `name` option), and `cache_errors_total` from
+`RedisCache`. An adapter of the port is three methods. This one sits on
+the OpenTelemetry metrics API; it compiles against the packages of the workspace, and was not
+run against a backend for this page:
+
+<!-- checked sample -->
+```ts
+import { Metrics, type Counter, type Gauge, type Histogram } from '@ddd-ts-kit/kernel';
+import type { Meter } from '@opentelemetry/api';
+import { PrometheusExporter } from '@opentelemetry/exporter-prometheus';
+import { MeterProvider } from '@opentelemetry/sdk-metrics';
+
+/** The Metrics port on OpenTelemetry instruments. Asking twice for a name answers the same series. */
+export class OpenTelemetryMetrics implements Metrics {
+  private readonly counters = new Map<string, Counter>();
+  private readonly histograms = new Map<string, Histogram>();
+  private readonly gauges = new Map<string, Gauge>();
+
+  constructor(private readonly meter: Meter) {}
+
+  counter(name: string): Counter {
+    return once(this.counters, name, () => {
+      const instrument = this.meter.createCounter(name);
+
+      return { increment: (labels, by = 1) => instrument.add(by, labels) };
+    });
+  }
+
+  histogram(name: string): Histogram {
+    return once(this.histograms, name, () => {
+      const instrument = this.meter.createHistogram(name);
+
+      return { record: (value, labels) => instrument.record(value, labels) };
+    });
+  }
+
+  gauge(name: string): Gauge {
+    return once(this.gauges, name, () => {
+      const instrument = this.meter.createGauge(name);
+
+      return { set: (value, labels) => instrument.record(value, labels) };
+    });
+  }
+}
+
+function once<T>(made: Map<string, T>, name: string, make: () => T): T {
+  const existing = made.get(name) ?? make();
+
+  made.set(name, existing);
+
+  return existing;
+}
+
+// src/platform/observability/create-metrics.ts: /metrics on port 9464, for Prometheus to scrape.
+const provider = new MeterProvider({ readers: [new PrometheusExporter({ port: 9464 })] });
+
+export const metrics: Metrics = new OpenTelemetryMetrics(provider.getMeter('scheduling'));
+```
+
+Label values come from a small closed set (`MetricLabels` of the kernel): never an identifier,
+never user input, so the number of series stays bounded.
+
+### The four, wired in the platform
+
+The sample condenses what the example application spreads over
+`src/platform/lay-foundations.ts` (the pino logger and the metrics), `src/platform/platform.module.ts`
+(the bindings) and `src/platform/errors.ts` (Sentry). A generated project has these files on the
+tsyringe family, `errors.ts` only with `--errors sentry`. The tracing bootstrap
+(`initTracing` of `@ddd-ts-kit/tracing/node`) is not in it: it lives in its own module,
+`src/platform/tracing.ts`, imported first by `main.ts`, because the instrumentations patch
+`http` and the drivers when they are loaded.
+
+<!-- checked sample -->
+```ts
+import { StdoutLogger } from '@ddd-ts-kit/aspects';
+import { kernelModule } from '@ddd-ts-kit/di';
+import { AsyncLocalStorageExecutionScope, NoopMetrics } from '@ddd-ts-kit/kernel';
+import { initSentry } from '@ddd-ts-kit/sentry';
+import { traceApplication, traceLogFields } from '@ddd-ts-kit/tracing';
+
+declare const sentryDsn: string;
+
+const executionScope = new AsyncLocalStorageExecutionScope();
+
+export const kernel = kernelModule({
+  // One scope for the buses, the logger and the spans: the correlation id is the same in all three.
+  executionScope,
+  logger: new StdoutLogger({ fields: () => traceLogFields(executionScope) }),
+  // TODO(platform): an adapter of the port, such as the one above.
+  metrics: new NoopMetrics(),
+  // Buses and jobs report through it; app.stop() flushes it.
+  errorReporter: initSentry({ dsn: sentryDsn }),
+  // Spans around every use case, adapter, event, consumer and job.
+  instrumentation: traceApplication(),
+});
+```
+
+Three places stay outside of the kernel module and take one wrapper each, as the
+[tracing README](../../packages/tracing/README.md) shows: the HTTP pipeline
+(`around: tracedRoutes()`, with `onError: reportHttpErrors(errors)` for the 5xx answers), the
+publisher of the outbox relay (`tracedPublisher(bus)`), and the dead letters of a broker
+(`DeadLetterReports`).
+
+### Following one action across the four
+
+![One user action carries a correlation id and a trace id: the root span of its trace carries the correlation id, its log lines the trace id and the correlation id, an error report the trace id and the correlation id, its audit entries the correlation id; from any of the four, the shared ids lead to the others](../assets/diagrams/observability-tools-pivot.svg)
+
+The tools are separate; the ids are not. An error report in GlitchTip carries the trace id of
+the span that was active when it failed (`contexts.trace`): paste it in Jaeger and the whole
+request opens, the consumers of its events included. Search the log pipeline for that
+`trace_id`, or for its `correlationId`, and the log lines of every bounded context the action
+reached come back. The audit entries of the action share its `correlationId`. This is why the
+choice of each tool is independent of the others: what ties them is written by the kit, not by
+the tools.
 
 ## Limits and when not to use it
 

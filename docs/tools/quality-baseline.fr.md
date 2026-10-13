@@ -1,0 +1,199 @@
+[English](quality-baseline.md) · **Français**
+<!-- translation-of: quality-baseline.md sha256:0746103dfdea24eb -->
+
+# Base de qualité
+
+**Résumé.** Chaque projet que génère la CLI, l'application d'exemple et le kit lui-même portent le
+même petit ensemble d'outils, chacun répondant à une question, chacun derrière un script npm.
+Aucun n'est facultatif et aucun n'empiète sur un autre : le vérificateur de types ne fait pas de
+lint, le linter ne formate pas, le formateur ne fait pas de lint. Cette page les liste avec leurs
+commandes ; la comparaison des analyseurs d'architecture est dans
+[L'analyse statique et le pipeline](static-analysis-and-pipeline.fr.md).
+
+## Ce à quoi répond chaque outil
+
+| Outil | La question à laquelle il répond | Script | Ce qui le règle |
+|---|---|---|---|
+| TypeScript, `strict` | est-ce sain : chaque valeur a-t-elle le type que dit le code | `npm run typecheck` | l'erreur du compilateur |
+| ESLint avec `@ddd-ts-kit/eslint-plugin` | est-ce idiomatique et dans les règles : couches, pureté, code propre, accolades, lignes vides | `npm run lint` | `npm run lint:fix` pour ce qui se corrige seul |
+| Biome, comme formateur seulement | est-ce mis en page d'une seule façon : largeur de ligne 120, guillemets, virgules, retours à la ligne | `npm run format:check` | `npm run format` |
+| knip | quelque chose est-il mort : un fichier, un export, une dépendance que personne n'utilise | `npm run deadcode` | le retirer |
+| dependency-cruiser | le graphe des imports respecte-t-il les frontières, à travers les *barrels* et les réexports | `npm run depcruise` | déplacer l'import |
+| `ddd-ts-kit check` | l'architecture est-elle intacte : l'arborescence, les noms, le glossaire, les règles de la référence | `npm run check:arch` | la phrase `fix` de chaque constat |
+| le lanceur de tests | est-ce que ça marche | `npm test`, `npm run test:e2e` | le code |
+| la couverture du lanceur de tests | y a-t-il du code qu'aucune *spec* n'a jamais exécuté, couche par couche | `npm run test:coverage` | la *spec* manquante |
+
+`npm run verify` les enchaîne tous, dans cet ordre : types, lint, format, chaque *spec* avec les
+seuils de couverture, *specs* de bout en bout, architecture, graphe, code mort, documents générés.
+Le *pipeline* lance les mêmes scripts sous leurs noms `ci:*`, sur GitHub Actions et sur GitLab CI.
+La liste est écrite une seule fois, dans la CLI (`BASELINE`,
+`packages/cli/src/init/manifest/baseline.ts`) : `verify` est construit à partir d'elle et un test
+de la CLI tient les deux *pipelines*, pour plusieurs *stacks* et pour l'application d'exemple, à
+chacune de ses portes, si bien qu'une porte ne peut pas quitter un endroit en silence.
+
+![Deux sources écrites une seule fois : la liste BASELINE de la CLI, à partir de laquelle le script verify est construit et à laquelle un test tient les pipelines GitHub et GitLab ; et biome.json à la racine du kit, que le template de la CLI copie sous un test, octet pour octet sauf deux exclusions du kit, et que l'exemple étend](../assets/diagrams/quality-baseline-one-source.fr.svg)
+
+Dans un projet généré et dans l'application d'exemple, `verify` est cette liste, dans cet ordre :
+
+```json
+{
+  "scripts": {
+    "verify": "npm run typecheck && npm run lint && npm run format:check && npm run test:coverage && npm run test:e2e && npm run check:arch && npm run depcruise && npm run deadcode && npm run docs:check"
+  }
+}
+```
+
+### Un fichier, une question par outil
+
+Chaque outil voit quelque chose que les autres ne voient pas. Ce fichier d'un domaine casse une
+chose pour chacun d'eux :
+
+```ts
+// src/contexts/billing/domain/services/invoice-total.ts
+import type { InvoiceRow } from '@/contexts/billing/infrastructure/persistence/billing.schema';
+
+export function totalOf(rows: readonly InvoiceRow[]): number {
+  const amounts = rows.map((row) => row.amount_in_cents)
+  if (amounts.length === 0) return 0;
+  return amounts.reduce((sum, amount) => sum + amount, "0");
+}
+
+export function formatTotal(totalInCents: number): string {
+  return `${totalInCents / 100} EUR`;
+}
+```
+
+| Outil | Ce qu'il signale dans ce fichier |
+|---|---|
+| TypeScript | `reduce` initialisé avec une chaîne renvoie une `string`, là où la fonction promet un `number` |
+| ESLint | `layer/domain-purity` : le domaine importe une ligne de l'infrastructure ; `clean/braces` : le `if` n'a pas d'accolades ; `clean/blank-lines` : pas de ligne vide après la déclaration, autour du `if`, avant le `return` |
+| Biome | le point-virgule manquant et les guillemets doubles (`npm run format` les réécrit) |
+| knip | `formatTotal` est exportée et personne ne l'importe |
+| dependency-cruiser | l'import de `domain/` vers `infrastructure/`, y compris quand il passe par un *barrel* ou un réexport |
+| `ddd-ts-kit check` | la même règle de couche, lue dans l'arborescence et le texte du fichier, et le reste de la référence (noms, glossaire) |
+| les *specs* et leur couverture | si `totalOf` a été exécutée ne serait-ce qu'une fois, et si le domaine de `billing` reste au-dessus de son seuil |
+
+Le même fichier une fois que chaque porte passe :
+
+<!-- checked sample -->
+```ts
+// src/contexts/billing/domain/services/invoice-total.ts
+export interface InvoiceLine {
+  readonly amountInCents: number;
+}
+
+export function totalOf(lines: readonly InvoiceLine[]): number {
+  const amounts = lines.map((line) => line.amountInCents);
+
+  if (amounts.length === 0) {
+    return 0;
+  }
+
+  return amounts.reduce((sum, amount) => sum + amount, 0);
+}
+```
+
+Le domaine nomme maintenant sa propre ligne au lieu d'une ligne de table, et la correspondance
+depuis la ligne de table reste dans `infrastructure/`.
+
+## Où tourne chaque porte
+
+Lu dans les fichiers le 2026-10-13. « kit » est ce dépôt, « exemple » est `examples/scheduling`,
+« projet » est ce que génère `init`, sur chaque *stack*. Les portes les moins coûteuses tournent
+d'abord et sur ce qui a changé ; les plus larges tournent plus tard, sur tous les fichiers :
+
+![Cinq moments de gauche à droite : à chaque écriture, le hook d'éditeur lance ddd-ts-kit check sur le fichier ; à un commit, lefthook lance ESLint, le formateur et ddd-ts-kit check sur les fichiers indexés, la taille du commit et commitlint ; à un push, la vérification des types et les specs unitaires ; npm run verify enchaîne les neuf portes ; le pipeline les lance sous leurs noms ci, avec le build de production](../assets/diagrams/quality-baseline-when-gates-run.fr.svg)
+
+| Porte | `verify` | *Pipeline* GitHub et GitLab | *Hooks* |
+|---|---|---|---|
+| vérification des types, sources | kit `ci:typecheck` (le build, puis les exemples vérifiés de la documentation) ; exemple et projet `typecheck` | kit, exemple, projet : `ci:typecheck` | avant un *push* |
+| vérification des types, tests | kit `typecheck:tests` (chaque *package*, par `ci:typecheck`) ; exemple et projet : `tsconfig.json` inclut `test/` et les *specs* | même script | avant un *push* |
+| lint | kit `ci:lint` ; exemple et projet `lint` | `ci:lint` | fichiers indexés, avant un *commit* |
+| format | kit `ci:format` ; exemple et projet `format:check` | `ci:format`, dans le *job* de lint | fichiers indexés, avant un *commit* |
+| code mort | kit `ci:deadcode` ; exemple et projet `deadcode` | `ci:deadcode` | non |
+| graphe des dépendances | kit `depcruise` (dans `ci:arch`) ; exemple et projet `depcruise` | kit `ci:arch` ; exemple et projet `ci:arch:graph` | non |
+| architecture | kit `check:self`, les *fixtures* de chaque règle, et les tests de la garde (dans `ci:arch`) ; exemple et projet `check:arch` | kit `ci:arch` ; exemple et projet `ci:arch:check` | projet et exemple : fichiers indexés, avant un *commit* ; à chaque écriture par le *hook* d'éditeur |
+| chaque règle prouvée sur l'exemple | kit : `example:verify` lance `example:conformance` après la porte propre à l'exemple | kit : le *job* `example` | non |
+| dérive des documents | kit `ci:docs` (ni tiret cadratin ni demi-cadratin, chaque page française au niveau de sa page anglaise) ; exemple et projet `docs:check` | `ci:docs` | kit : le contrôle des tirets (`check:dashes`), avant un *commit* |
+| *specs* unitaires | kit `ci:test:unit` ; exemple et projet `test:coverage` | `ci:test:unit` | avant un *push* |
+| *specs* d'intégration | kit : le *pipeline* seulement (elles ont besoin de serveurs) ; exemple et projet `test:coverage` (PostgreSQL dans le processus) | `ci:test:integration` | non |
+| *specs* de bout en bout | kit : le *pipeline* seulement (`ci:test:e2e`, chaque *stack* générée et exécutée) ; exemple et projet `test:e2e` | `ci:test:e2e` | non |
+| seuils de couverture | kit : un plancher par *package* dans `vitest.config.ts`, dans `ci:test:unit` ; exemple et projet : par contexte et par couche, depuis `ddd-ts-kit.config.json`, dans `test:coverage` | `ci:test:unit` et, pour l'exemple et un projet, `ci:test:integration` | avant un *push* (l'exécution unitaire) |
+| *packages* tels que publiés | kit `ci:build` (publint, Are the Types Wrong) | kit `ci:build` ; exemple et projet `ci:build` (le build de production) | non |
+
+Sans frontière HTTP, un projet n'a pas de script de bout en bout et son *job* de *pipeline* le
+dit ; sous jest, les *specs* des adaptateurs tournent avec les *specs* unitaires. Les *hooks* ne
+lancent jamais la couverture avant un *commit*.
+
+## Couverture
+
+Les seuils sont un réglage du projet, pas du lanceur de tests : la clé `coverage` de
+`ddd-ts-kit.config.json`, par couche, avec la référence comme valeur par défaut, appliquée à
+chaque contexte ([CONFIG.md](../CONFIG.fr.md#seuils-de-couverture)). La configuration du lanceur
+la lit ; baisser un taux est une dérogation enregistrée ; `test/coverage-governed` refuse une
+exclusion écrite à côté. Ce qu'un taux prouve et ce qu'il ne prouve pas :
+[Stratégie de test](../concepts/testing-strategy.fr.md#seuils-de-couverture). Le kit se tient
+lui-même à un plancher par *package*, le niveau mesuré quand le plancher a été écrit.
+
+## Le formateur
+
+Biome sert à une seule chose : `biome.json`, écrit par `ddd-ts-kit init`, active son formateur et
+désactive son linter et son organisateur d'imports. ESLint reste le seul linter, et aucun import
+n'est jamais réordonné par un outil. Les réglages sont les mêmes dans le kit, dans l'exemple et
+dans chaque projet généré : largeur de ligne 120, deux espaces, LF, guillemets simples, virgules
+finales, points-virgules, parenthèses autour du paramètre d'une fonction fléchée.
+
+- Formatés : `.ts`, `.mts`, `.cts`, `.js`, `.mjs`, `.cjs`, `.json`, `.jsonc`.
+- Non formatés : le Markdown (un formateur remettrait en forme les tableaux et la prose) et le
+  YAML.
+- Exclus dans `biome.json` : les sorties de build (`dist`, `coverage`, `reports`), le fichier de
+  verrouillage, un répertoire `generated`, les instantanés des migrations (`migrations/meta`), et
+  les artefacts que leur propre contrôle compare octet pour octet (`openapi/*.json` et
+  `asyncapi.json` sous `openapi.format: json`, `.dependency-cruiser.cjs`) ; les contrats YAML ne
+  sont de toute façon pas formatés. Deux lignes de plus n'apparaissent que là où elles servent :
+  les sources d'un client généré (`clients/*/src`), que `ddd-ts-kit sdk` ajoute à un projet qui
+  demande des clients, et, dans le kit seul, les exemples compilés de sa documentation
+  (`.ddd-ts-kit`).
+
+Ce qu'écrit la CLI est déjà formaté : `npm run format:check` passe juste après `init` et après
+chaque `generate`, et la suite de bout en bout de la CLI le tient pour chaque *stack* qu'elle
+construit. Le générateur n'a pas de formateur à lui : les *templates* sont écrits comme le
+formateur les imprime, avec des mises en page qui ne dépendent pas de la longueur d'un nom là où
+c'est possible, si bien qu'un nom très long peut encore laisser une ligne à replier par
+`npm run format`.
+
+ESLint et le formateur ne se battent jamais, parce qu'ils décident de choses différentes. Les
+préréglages du *plugin* n'activent aucune règle sur l'emplacement d'un jeton ; ils gardent les
+deux choses qu'un formateur ne décide pas : les lignes vides entre les instructions
+(`clean/blank-lines`) et les accolades d'une branche (`clean/braces`). Lancés dans un ordre ou
+dans l'autre, le second outil ne trouve rien à changer.
+
+```ts
+// au lieu de : le formateur garde les deux lignes telles quelles, puisque aucune ne casse sa mise en page
+if (wrapped.has(repository)) return repository;
+const next = steps.shift();
+
+// écrivez : lint --fix ajoute les accolades et la ligne vide, puis le formateur découpe le bloc
+if (wrapped.has(repository)) {
+  return repository;
+}
+
+const next = steps.shift();
+```
+
+## Une configuration, trois endroits
+
+`biome.json` à la racine du kit est la source. Le *template* que la CLI copie dans un projet est
+comparé avec lui octet pour octet par un test de la CLI, sauf les deux lignes dont un nouveau
+projet n'a pas besoin : celle qui exclut le client généré de l'exemple (`ddd-ts-kit sdk` l'ajoute
+à un projet qui demande des clients) et celle qui exclut les exemples compilés de la
+documentation du kit. L'application d'exemple l'étend au lieu de le copier, si bien que les trois
+ne peuvent pas dériver (la moitié droite du dessin en haut de cette page) :
+
+```json
+{
+  "$schema": "https://biomejs.dev/schemas/2.5.15/schema.json",
+  "root": false,
+  "extends": "//"
+}
+```

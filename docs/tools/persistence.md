@@ -21,15 +21,300 @@ The requirements come from the model, not from the library
 | load and save one whole aggregate | `Appointment` is a consistency boundary | a mapper, not an "entity" that is both row and model |
 | one transaction per command, opened by a bus middleware | the handler never sees it | an ambient transaction the repository picks up |
 | optimistic concurrency on `version` | two reschedules of one appointment | "update where version matches", count the rows |
-| the outbox row in the same transaction | `appointments.appointment.booked` exists if and only if the booking does | the outbox store joins the unit of work |
-| the processed-event mark with the consumer's change | `notifications` handles a redelivery once | same |
+| the outbox row in the same transaction | `scheduling.appointment.booked` exists if and only if the booking does | the outbox store joins the unit of work |
+| the processed-event mark with the consumer's change | `notification` handles a redelivery once | same |
 | a constraint the database enforces | no double booking, whatever any process believes | raw SQL in a migration (below) |
 | one schema per context, no cross-context join | `context/extractable` in [ARCHITECTURE.md](../ARCHITECTURE.md) | schema-qualified tables |
 
 The no-double-booking invariant shows what "raw SQL" means in practice. On PostgreSQL it is an
-exclusion constraint over the practitioner and the time range. None of the four libraries
-expresses it in its schema language as far as this page could establish: it is written by
-hand in a migration, and the repository adapter maps the violation to `SlotAlreadyTaken`.
+exclusion constraint over the calendar and the time an active appointment holds. None of the
+four libraries expresses it in its schema language as far as this page could establish: it is
+written by hand in a migration, and the repository adapter maps the violation to the refusal
+`SLOT_TAKEN` of the domain (`AppointmentError.slotTaken`). The example application declares it
+in `create-scheduling-tables.schema.ts`, after `create extension if not exists btree_gist`:
+
+```sql
+alter table scheduling.appointments add constraint appointments_slot_held_once
+  exclude using gist (calendar_id with =, tstzrange(starts_at, held_until, '[)') with &&)
+  where (status in ('requested', 'booked'));
+```
+
+Two transactions that both read a free slot cannot both write it: the second one fails on the
+constraint (SQLSTATE `23P01`), whatever each believed when it checked.
+
+## The pieces, in one command
+
+Four pieces do the work, and only the last one knows the library: the repository port of the
+domain, the unit of work the bus opens around each command, the repository adapter with its
+mapper, and the stores of the messaging (outbox, processed events). The sequence below follows
+one command, "pay an invoice", through them. Every statement runs in the transaction the unit of
+work opened, and the handler never touches it.
+
+![One command through the persistence: the unit of work middleware begins the transaction, the handler loads the invoice through the repository, pays it and saves it, the domain event is dispatched before the commit and appends an outbox row, and the commit writes both rows or neither](../assets/diagrams/persistence-one-command.svg)
+
+1. `unitOfWorkMiddleware` of the kernel wraps every command of the bus in `unitOfWork.run`. The
+   Knex unit of work opens `knex.transaction` and keeps it in an `AsyncLocalStorage`.
+2. The adapter asks `KnexContext.executor()` for its query handle: inside a run it is the
+   transaction, outside it the pool. No method takes a transaction as a parameter.
+3. The mapper turns the row into an `Invoice` and back. The aggregate carries the `version` it
+   was read at; the `UPDATE` only matches that version.
+4. When the handler has returned, the domain events the saves recorded are dispatched, still
+   inside the transaction. The handler of `InvoicePaid` publishes an integration event; the
+   `OutboxPublisher` of `@ddd-ts-kit/events` only appends it to the outbox store, which writes
+   through the same executor. A relay sends it to the broker later.
+5. The commit writes the invoice and the outbox row together; any failure rolls both back.
+
+### A repository adapter
+
+The port is declared in the domain, the adapter and its mapper in
+`infrastructure/persistence/`. The sample puts them in one module so that it compiles alone; in
+a project each part is a file of its own, named in the comments. It follows `KnexAppointmentRepository` of the example
+application.
+
+<!-- checked sample -->
+```ts
+import type { Knex } from 'knex';
+import { AggregateRoot, ConceptError, type DomainEvent, Repository } from '@ddd-ts-kit/kernel';
+import { type KnexContext, insertIgnoringConflict, optimisticUpdate } from '@ddd-ts-kit/knex';
+
+// domain/events/invoice-paid.event.ts: the domain knows no row, no SQL, no library.
+export class InvoicePaid implements DomainEvent {
+  readonly name = 'billing.invoice.paid';
+
+  constructor(
+    readonly aggregateId: string,
+    readonly occurredAt: Date,
+  ) {}
+}
+
+// domain/errors/invoice.error.ts
+export class InvoiceError extends ConceptError {
+  static alreadyPaid(invoiceId: string) {
+    return InvoiceError.refusal('INVOICE_ALREADY_PAID', `Invoice ${invoiceId} is already paid.`, { invoiceId });
+  }
+}
+
+// domain/aggregates/invoice.aggregate.ts
+export class Invoice extends AggregateRoot {
+  private constructor(
+    id: string,
+    readonly amountInCents: number,
+    private paidOn: Date | null,
+  ) {
+    super(id);
+  }
+
+  static issue(id: string, amountInCents: number): Invoice {
+    return new Invoice(id, amountInCents, null);
+  }
+
+  /** Rebuilds a stored invoice: used by the mapper only. */
+  static rehydrate(id: string, amountInCents: number, paidOn: Date | null): Invoice {
+    return new Invoice(id, amountInCents, paidOn);
+  }
+
+  get paidAt(): Date | null {
+    return this.paidOn;
+  }
+
+  pay(on: Date): void {
+    if (this.paidOn !== null) {
+      throw InvoiceError.alreadyPaid(this.id);
+    }
+
+    this.paidOn = on;
+    this.record(new InvoicePaid(this.id, on));
+  }
+}
+
+// domain/repositories/invoice.repository.ts: the port, findById and save come from Repository.
+export abstract class InvoiceRepository extends Repository<Invoice> {}
+
+// infrastructure/persistence/invoice-row.schema.ts: the row never leaves infrastructure.
+type InvoiceRow = {
+  readonly id: string;
+  readonly amount_in_cents: number;
+  readonly paid_at: Date | null;
+  readonly version: number;
+};
+
+// infrastructure/persistence/invoice.mapper.ts
+const InvoiceMapper = {
+  toDomain(row: InvoiceRow): Invoice {
+    const loaded = Invoice.rehydrate(row.id, row.amount_in_cents, row.paid_at);
+
+    loaded.version = row.version;
+
+    return loaded;
+  },
+
+  toRow(saved: Invoice, version: number): InvoiceRow {
+    return { id: saved.id, amount_in_cents: saved.amountInCents, paid_at: saved.paidAt, version };
+  },
+};
+
+// infrastructure/persistence/knex-invoice.repository.ts
+export class KnexInvoiceRepository implements InvoiceRepository {
+  constructor(private readonly database: KnexContext) {}
+
+  async findById(id: string): Promise<Invoice | undefined> {
+    const row = await invoicesOf(this.database).where({ id }).first();
+
+    return row === undefined ? undefined : InvoiceMapper.toDomain(row);
+  }
+
+  /** No row written means another transaction saved it first: optimisticUpdate throws ConcurrencyError. */
+  async save(saved: Invoice): Promise<void> {
+    await optimisticUpdate(saved, async ({ expected, next }) => {
+      const row = InvoiceMapper.toRow(saved, next);
+
+      if (expected === 0) {
+        const inserted = await insertIgnoringConflict(this.database.executor(), invoicesOf(this.database), {
+          row,
+          conflict: 'id',
+        });
+
+        return inserted ? 1 : 0;
+      }
+
+      return invoicesOf(this.database).where({ id: saved.id, version: expected }).update(row);
+    });
+  }
+}
+
+/** The transaction of the running unit of work, or the pool outside one. */
+function invoicesOf(database: KnexContext): Knex.QueryBuilder<InvoiceRow, InvoiceRow[]> {
+  return database.executor()<InvoiceRow, InvoiceRow[]>('invoices').withSchema('billing');
+}
+```
+
+What each part holds:
+
+| Part | Holds | Never holds |
+|---|---|---|
+| `Invoice` | the rules, the state, the events it records, and `version` (from `AggregateRoot`) | a column name, a query |
+| `InvoiceRepository` | what the application may ask: `findById`, `save`, the finders you add | a type of the library |
+| `InvoiceMapper` | the translation between the row and the aggregate, both ways | a query, a rule |
+| `KnexInvoiceRepository` | the queries, the schema, the concurrency check, the mapping of a database error to a refusal | the transaction itself (`executor()` gives it) |
+
+### Instead of handing rows to the handler
+
+The handler talks to the aggregate through the port; it never sees a row, a query builder or a
+transaction.
+
+```ts
+// Instead of: the handler edits a row, and the rule "an invoice is paid once" lives nowhere.
+const row = await db('billing.invoices').where({ id }).first();
+await db('billing.invoices').where({ id }).update({ paid_at: new Date() });
+
+// Write: the handler loads the aggregate, asks it (it refuses a second payment), saves it.
+const invoice = await invoices.findById(id);
+if (invoice === undefined) throw new NotFoundError(`Invoice ${id} does not exist.`); // NotFoundError: @ddd-ts-kit/kernel
+invoice.pay(clock.now());
+await invoices.save(invoice);
+```
+
+### Composing the unit of work
+
+One object answers both ports: the bus runs commands through `UnitOfWork`, the adapters and the
+stores query through `KnexContext`. The example application composes it this way in
+`platform/database/persistence-over.ts`.
+
+<!-- checked sample -->
+```ts
+import knex from 'knex';
+import { unitOfWorkMiddleware } from '@ddd-ts-kit/kernel';
+import { createKnexUnitOfWork, KnexOutboxStore, KnexProcessedEventStore } from '@ddd-ts-kit/knex';
+
+const db = knex({ client: 'pg', connection: 'postgres://localhost:5432/app' });
+
+// Bound to UnitOfWork (for the bus) and to KnexContext (for the adapters).
+export const unitOfWork = createKnexUnitOfWork(db);
+
+// The stores write through it too: their rows commit or roll back with the command.
+export const outbox = new KnexOutboxStore(unitOfWork, { schema: 'messaging' });
+export const processedEvents = new KnexProcessedEventStore(unitOfWork, { schema: 'messaging' });
+
+// The bus runs every command in unitOfWork.run; a query runs outside any transaction.
+export const transactional = unitOfWorkMiddleware(unitOfWork);
+
+await unitOfWork.run(async () => {
+  // Here unitOfWork.executor() is the transaction and unitOfWork.inTransaction() is true.
+  await unitOfWork.run(async () => {
+    // A nested run joins the outer one: one commit, or one rollback, for both.
+  });
+});
+```
+
+The same pieces, under the name each package gives them:
+
+| | Knex | Drizzle (`@ddd-ts-kit/drizzle/postgres`) | Prisma | TypeORM |
+|---|---|---|---|---|
+| Unit of work | `createKnexUnitOfWork` | `createDrizzleUnitOfWork` | `createPrismaUnitOfWork` | `createTypeOrmUnitOfWork` |
+| What adapters query through | `KnexContext` | `DrizzleContext` | `PrismaContext` | `TypeOrmContext` |
+| Outbox store | `KnexOutboxStore` | `DrizzleOutboxStore` | `PrismaOutboxStore` | `TypeOrmOutboxStore` |
+| Processed-event store | `KnexProcessedEventStore` | `DrizzleProcessedEventStore` | `PrismaProcessedEventStore` | `TypeOrmProcessedEventStore` |
+
+### Optimistic concurrency, and one contract for the fake and the adapter
+
+Two commands may load the same invoice at the same version. The first save matches the
+version and moves it on; the second matches no row, and `optimisticUpdate` throws
+`ConcurrencyError` (code `CONCURRENCY_CONFLICT`), which rolls its transaction back.
+
+![Two transactions load invoice inv-1 at version 3; the first update matches version 3 and writes version 4; the second update still expects version 3, writes no row and fails with ConcurrencyError](../assets/diagrams/persistence-optimistic-concurrency.svg)
+
+The fake of the unit specs and the real adapter keep that promise alike: the same
+`repositoryContract` runs against both, the fake in memory and the adapter on PGlite or a real
+server.
+
+<!-- checked sample -->
+```ts
+import { randomUUID } from 'node:crypto';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { AggregateRoot, type Repository } from '@ddd-ts-kit/kernel';
+import { InMemoryRepository } from '@ddd-ts-kit/testing';
+import { repositoryContract } from '@ddd-ts-kit/testing/contracts';
+
+// From the sample above, and from the test database of the project.
+declare class Invoice extends AggregateRoot {
+  static issue(id: string, amountInCents: number): Invoice;
+  static rehydrate(id: string, amountInCents: number, paidOn: Date | null): Invoice;
+  readonly amountInCents: number;
+  readonly paidAt: Date | null;
+  pay(on: Date): void;
+}
+declare function knexInvoiceRepositoryOnAnEmptyDatabase(): Promise<Repository<Invoice>>;
+
+const runner = { describe, it, expect, beforeEach, afterEach };
+
+const expectations = {
+  createAggregate: () => Invoice.issue(randomUUID(), 12_000),
+  mutate: (invoice: Invoice) => invoice.pay(new Date('2026-10-01T09:00:00.000Z')),
+  idOf: (invoice: Invoice) => invoice.id,
+  stateOf: (invoice: Invoice) => ({ amountInCents: invoice.amountInCents, paidAt: invoice.paidAt }),
+};
+
+// The fake the unit specs use: a Map that checks the version like the adapter.
+repositoryContract<Invoice>(runner, {
+  ...expectations,
+  name: 'InMemoryRepository<Invoice>',
+  createRepository: () =>
+    new InMemoryRepository<Invoice>({
+      clone: (invoice) => Invoice.rehydrate(invoice.id, invoice.amountInCents, invoice.paidAt),
+    }),
+});
+
+// The adapter, on a database emptied before each test.
+repositoryContract<Invoice>(runner, {
+  ...expectations,
+  name: 'KnexInvoiceRepository',
+  createRepository: knexInvoiceRepositoryOnAnEmptyDatabase,
+});
+```
+
+The contract checks that a saved aggregate is found with its state, that two aggregates stay
+apart, that later saves are stored, that a change not saved is not, and that a save over a
+version it did not read is refused with `CONCURRENCY_CONFLICT`.
 
 ## Comparison
 
@@ -201,6 +486,8 @@ project each generating a migration, as two branches would:
   entries whose `when` is newer than the last one it recorded. Measured on PGlite: after
   `add-payments`, then the merge of `add-invoices` generated three seconds before it, the
   database had `accounts, payments` and no `invoices`, without an error.
+
+![Two branches each generate a migration three seconds apart; the later one, add-payments, is merged and deployed first, so when add-invoices is merged the drizzle migrator skips it because it is older than the last one applied; deleting it and generating it again on top of the main branch gives it a later timestamp, and it is applied](../assets/diagrams/persistence-migration-merge.svg)
 
 The kit's answer is the rule `persistence/migration-history` of `ddd-ts-kit check` (so
 `npm run check:arch`, the guard of the plugin and the pipeline): every migration starts with the

@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 556" width="960" height="556" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Choisir un broker, question par question</title>
+  <desc id="desc">Si aucun consommateur ne tourne dans un autre processus, le bus en processus derrière l'outbox suffit. Si un consommateur doit voir dans l'ordre les événements d'un agrégat et que le payload ne porte aucune version, Kafka, avec un relais par clé et un seul relais. Si un consommateur ajouté plus tard doit lire les événements passés, Kafka ou NATS JetStream avec des limites de rétention. Si les événements tolèrent une perte rare quand le serveur tombe en panne, Redis Streams sur un serveur qui n'est pas le cache ; sinon RabbitMQ avec des files quorum. Entre deux qui conviennent, celui que l'équipe exploite déjà.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="556" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Choisir un broker, question par question</text>
+  <!-- questions -->
+  <rect x="32" y="64" width="480" height="60" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="2"/>
+  <text x="272" y="99" font-size="14" fill="#1f2328" text-anchor="middle">Un consommateur tourne-t-il dans un autre processus ?</text>
+  <rect x="32" y="164" width="480" height="60" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="2"/>
+  <text x="272" y="189" font-size="14" fill="#1f2328" text-anchor="middle">Un consommateur doit-il voir dans l'ordre les événements</text>
+  <text x="272" y="210" font-size="14" fill="#1f2328" text-anchor="middle">d'un agrégat, sans version dans le payload pour les trier ?</text>
+  <rect x="32" y="264" width="480" height="60" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="2"/>
+  <text x="272" y="299" font-size="14" fill="#1f2328" text-anchor="middle">Un consommateur ajouté plus tard doit-il lire le passé ?</text>
+  <rect x="32" y="364" width="480" height="60" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="2"/>
+  <text x="272" y="389" font-size="14" fill="#1f2328" text-anchor="middle">Les événements tolèrent-ils une perte rare</text>
+  <text x="272" y="410" font-size="14" fill="#1f2328" text-anchor="middle">quand le serveur tombe en panne ?</text>
+  <!-- down arrows -->
+  <line x1="272" y1="126" x2="272" y2="160" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="284" y="148" font-size="13" fill="#1f2328">oui</text>
+  <line x1="272" y1="226" x2="272" y2="260" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="284" y="248" font-size="13" fill="#1f2328">non</text>
+  <line x1="272" y1="326" x2="272" y2="360" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="284" y="348" font-size="13" fill="#1f2328">non</text>
+  <line x1="272" y1="426" x2="272" y2="460" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="284" y="448" font-size="13" fill="#1f2328">non</text>
+  <!-- answers -->
+  <rect x="592" y="64" width="336" height="60" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="760" y="90" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">bus en processus</text>
+  <text x="760" y="112" font-size="13" fill="#1f2328" text-anchor="middle">derrière le relais de l'outbox : aucun broker</text>
+  <rect x="592" y="164" width="336" height="60" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="760" y="190" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">Kafka</text>
+  <text x="760" y="212" font-size="13" fill="#1f2328" text-anchor="middle">keyOf = id de l'agrégat, un seul relais par clé</text>
+  <rect x="592" y="264" width="336" height="60" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="760" y="290" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">Kafka ou NATS JetStream</text>
+  <text x="760" y="312" font-size="13" fill="#1f2328" text-anchor="middle">avec des limites de rétention explicites</text>
+  <rect x="592" y="364" width="336" height="60" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="760" y="390" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">Redis Streams</text>
+  <text x="760" y="412" font-size="13" fill="#1f2328" text-anchor="middle">sur un serveur qui n'est pas le cache</text>
+  <rect x="32" y="464" width="480" height="60" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="272" y="490" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">RabbitMQ</text>
+  <text x="272" y="512" font-size="13" fill="#1f2328" text-anchor="middle">files quorum, le défaut du provider</text>
+  <line x1="514" y1="94" x2="588" y2="94" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="551" y="86" font-size="13" fill="#1f2328" text-anchor="middle">non</text>
+  <line x1="514" y1="194" x2="588" y2="194" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="551" y="186" font-size="13" fill="#1f2328" text-anchor="middle">oui</text>
+  <line x1="514" y1="294" x2="588" y2="294" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="551" y="286" font-size="13" fill="#1f2328" text-anchor="middle">oui</text>
+  <line x1="514" y1="394" x2="588" y2="394" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="551" y="386" font-size="13" fill="#1f2328" text-anchor="middle">oui</text>
+  <!-- tie-breaker -->
+  <text x="592" y="484" font-size="14" font-weight="600" fill="#1f2328">Entre deux qui conviennent :</text>
+  <text x="592" y="506" font-size="14" fill="#1f2328">celui que votre équipe exploite déjà</text>
+  <text x="592" y="528" font-size="14" fill="#1f2328">et sait déboguer en pleine nuit.</text>
+</svg>

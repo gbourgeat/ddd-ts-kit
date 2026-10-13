@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 560" width="960" height="560" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Quand chaque porte s'exécute, dans un projet généré</title>
+  <desc id="desc">Cinq moments de gauche à droite, chacun plus large et plus lent que le précédent. À chaque écriture, le hook d'éditeur du plugin lance ddd-ts-kit check sur le fichier. À un commit, lefthook lance ESLint, le formateur et ddd-ts-kit check sur les fichiers indexés, la taille du commit, et commitlint sur le message. À un push, la vérification des types et les specs unitaires avec leur couverture. npm run verify enchaîne dans l'ordre les neuf portes de la base : typecheck, lint, format:check, test:coverage, test:e2e, check:arch, depcruise, deadcode, docs:check. Le pipeline, sur GitHub Actions ou GitLab CI, lance les mêmes portes sous leurs noms ci, plus le build de production.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="560" rx="16" fill="#ffffff"/>
+  <text x="24" y="36" font-size="18" font-weight="600" fill="#1f2328">Quand chaque porte s'exécute, dans un projet généré</text>
+  <!-- direction -->
+  <line x1="24" y1="62" x2="934" y2="62" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="24" y="84" font-size="13" fill="#5f6b73">rapide, sur ce qui a changé</text>
+  <text x="936" y="84" font-size="13" fill="#5f6b73" text-anchor="end">plus lent, sur tous les fichiers</text>
+  <!-- moment headers -->
+  <g font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">
+    <rect x="24" y="96" width="168" height="58" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+    <text x="108" y="121">chaque écriture</text>
+    <rect x="210" y="96" width="168" height="58" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+    <text x="294" y="121">git commit</text>
+    <rect x="396" y="96" width="168" height="58" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+    <text x="480" y="121">git push</text>
+    <rect x="582" y="96" width="168" height="58" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+    <text x="666" y="121" fill="#2b5d8a">npm run verify</text>
+    <rect x="768" y="96" width="168" height="58" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+    <text x="852" y="121">pipeline</text>
+  </g>
+  <g font-size="13" fill="#1f2328" text-anchor="middle">
+    <text x="108" y="142">hook d'éditeur (plugin)</text>
+    <text x="294" y="142">lefthook pre-commit</text>
+    <text x="480" y="142">lefthook pre-push</text>
+    <text x="666" y="142">avant une merge request</text>
+    <text x="852" y="142">GitHub, GitLab</text>
+  </g>
+  <!-- gates -->
+  <g fill="#ffffff" stroke="#5f6b73" stroke-width="1.5">
+    <rect x="24" y="170" width="168" height="28" rx="6"/>
+    <rect x="210" y="170" width="168" height="28" rx="6"/>
+    <rect x="210" y="206" width="168" height="28" rx="6"/>
+    <rect x="210" y="242" width="168" height="28" rx="6"/>
+    <rect x="210" y="278" width="168" height="28" rx="6"/>
+    <rect x="210" y="314" width="168" height="28" rx="6"/>
+    <rect x="396" y="170" width="168" height="28" rx="6"/>
+    <rect x="396" y="206" width="168" height="28" rx="6"/>
+    <rect x="768" y="170" width="168" height="28" rx="6"/>
+    <rect x="768" y="206" width="168" height="28" rx="6"/>
+    <rect x="768" y="242" width="168" height="28" rx="6"/>
+    <rect x="768" y="278" width="168" height="28" rx="6"/>
+    <rect x="768" y="314" width="168" height="28" rx="6"/>
+    <rect x="768" y="350" width="168" height="28" rx="6"/>
+    <rect x="768" y="386" width="168" height="28" rx="6"/>
+    <rect x="768" y="422" width="168" height="28" rx="6"/>
+    <rect x="768" y="458" width="168" height="28" rx="6"/>
+  </g>
+  <g fill="#ffffff" stroke="#2b5d8a" stroke-width="1.5">
+    <rect x="582" y="170" width="168" height="28" rx="6"/>
+    <rect x="582" y="206" width="168" height="28" rx="6"/>
+    <rect x="582" y="242" width="168" height="28" rx="6"/>
+    <rect x="582" y="278" width="168" height="28" rx="6"/>
+    <rect x="582" y="314" width="168" height="28" rx="6"/>
+    <rect x="582" y="350" width="168" height="28" rx="6"/>
+    <rect x="582" y="386" width="168" height="28" rx="6"/>
+    <rect x="582" y="422" width="168" height="28" rx="6"/>
+    <rect x="582" y="458" width="168" height="28" rx="6"/>
+  </g>
+  <g font-size="13" fill="#1f2328" text-anchor="middle">
+    <text x="108" y="189">check, le fichier écrit</text>
+    <text x="294" y="189">eslint, fichiers indexés</text>
+    <text x="294" y="225">biome format, indexés</text>
+    <text x="294" y="261">check, fichiers indexés</text>
+    <text x="294" y="297">check --commit-size</text>
+    <text x="294" y="333">commitlint, message</text>
+    <text x="480" y="189">ci:typecheck</text>
+    <text x="480" y="225">ci:test:unit, couverture</text>
+    <text x="666" y="189">1 typecheck</text>
+    <text x="666" y="225">2 lint</text>
+    <text x="666" y="261">3 format:check</text>
+    <text x="666" y="297">4 test:coverage</text>
+    <text x="666" y="333">5 test:e2e</text>
+    <text x="666" y="369">6 check:arch</text>
+    <text x="666" y="405">7 depcruise</text>
+    <text x="666" y="441">8 deadcode</text>
+    <text x="666" y="477">9 docs:check</text>
+    <text x="852" y="189">ci:typecheck</text>
+    <text x="852" y="225">ci:lint, ci:format</text>
+    <text x="852" y="261">ci:test:unit</text>
+    <text x="852" y="297">ci:test:integration</text>
+    <text x="852" y="333">ci:test:e2e</text>
+    <text x="852" y="369">ci:arch:check</text>
+    <text x="852" y="405">ci:arch:graph</text>
+    <text x="852" y="441">ci:deadcode, ci:docs</text>
+    <text x="852" y="477">ci:build</text>
+  </g>
+  <!-- footer -->
+  <text x="24" y="520" font-size="14" fill="#1f2328">« check » est ddd-ts-kit check. Les hooks ne lancent jamais toute la suite : ce qu'ils laissent passer, verify et le pipeline l'arrêtent.</text>
+  <text x="24" y="542" font-size="14" fill="#1f2328">Les mêmes portes tournent sur l'application d'exemple ; le kit a sa propre liste (tableau ci-dessous).</text>
+</svg>

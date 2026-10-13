@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 480" width="960" height="480" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Deux branches, deux migrations : la plus ancienne, fusionnée en dernier, est ignorée</title>
+  <desc id="desc">La branche A génère la migration add-invoices à 09:30:00, la branche B génère add-payments à 09:30:03. B est fusionnée et déployée la première : la base applique add-payments et enregistre 09:30:03 comme dernière migration. A est fusionnée plus tard : le migrateur de drizzle n'applique que les entrées plus récentes que la dernière enregistrée, donc add-invoices est ignorée sans erreur et la table invoices n'existe jamais. La règle persistence/migration-history signale l'historique ; supprimer la migration de A et la générer de nouveau au-dessus de la branche principale lui donne un horodatage plus récent, et elle est appliquée.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="480" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Deux branches, deux migrations : la plus ancienne, fusionnée en dernier, est ignorée</text>
+  <!-- couloirs -->
+  <g font-size="14" font-weight="700" fill="#5f6b73">
+    <text x="32" y="101">branche A</text>
+    <text x="32" y="171">branche B</text>
+    <text x="32" y="241">main</text>
+    <text x="32" y="313">base</text>
+  </g>
+  <g stroke="#5f6b73" stroke-opacity="0.4" stroke-width="1" stroke-dasharray="4 4">
+    <line x1="150" y1="96" x2="936" y2="96"/>
+    <line x1="150" y1="166" x2="936" y2="166"/>
+    <line x1="150" y1="308" x2="936" y2="308"/>
+  </g>
+  <line x1="150" y1="236" x2="936" y2="236" stroke="#5f6b73" stroke-width="3"/>
+  <!-- les deux migrations -->
+  <rect x="168" y="72" width="248" height="50" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="292" y="93" font-size="14" font-weight="700" fill="#1f2328" text-anchor="middle">20261012093000_add-invoices</text>
+  <text x="292" y="112" font-size="13" fill="#1f2328" text-anchor="middle">générée à 09:30:00</text>
+  <rect x="228" y="142" width="248" height="50" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="352" y="163" font-size="14" font-weight="700" fill="#1f2328" text-anchor="middle">20261012093003_add-payments</text>
+  <text x="352" y="182" font-size="13" fill="#1f2328" text-anchor="middle">générée à 09:30:03</text>
+  <!-- fusions -->
+  <path d="M478,167 H540 V224" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <path d="M418,97 H750 V224" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <circle cx="540" cy="236" r="9" fill="#ffffff" stroke="#3d4449" stroke-width="2.5"/>
+  <circle cx="750" cy="236" r="9" fill="#ffffff" stroke="#3d4449" stroke-width="2.5"/>
+  <text x="556" y="216" font-size="13" fill="#1f2328">fusionnée d'abord</text>
+  <text x="766" y="216" font-size="13" fill="#1f2328">fusionnée ensuite</text>
+  <!-- déploiements -->
+  <line x1="540" y1="247" x2="540" y2="280" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="750" y1="247" x2="750" y2="280" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="436" y="284" width="208" height="50" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="540" y="305" font-size="14" font-weight="700" fill="#1f2328" text-anchor="middle">applique add-payments</text>
+  <text x="540" y="324" font-size="13" fill="#1f2328" text-anchor="middle">dernière enregistrée : 09:30:03</text>
+  <rect x="652" y="284" width="284" height="50" rx="10" fill="#ffffff" stroke="#3d4449" stroke-width="2.5" stroke-dasharray="6 4"/>
+  <text x="794" y="305" font-size="14" font-weight="700" fill="#1f2328" text-anchor="middle">add-invoices : 09:30:00, plus ancienne</text>
+  <text x="794" y="324" font-size="13" fill="#1f2328" text-anchor="middle">ignorée sans erreur, aucune table invoices</text>
+  <!-- la réponse du kit -->
+  <rect x="32" y="364" width="896" height="92" rx="12" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="52" y="390" font-size="16" font-weight="700" fill="#2b5d8a">À la place, sur la branche A une fois main fusionnée dedans : la règle, puis la procédure</text>
+  <text x="52" y="414" font-size="14" fill="#1f2328">ddd-ts-kit check (persistence/migration-history) signale l'historique divergent. Supprimez la migration de A,</text>
+  <text x="52" y="436" font-size="14" fill="#1f2328">lancez npm run db:generate add-invoices au-dessus de main : 20261012094500_add-invoices vient en dernier, et s'applique.</text>
+</svg>

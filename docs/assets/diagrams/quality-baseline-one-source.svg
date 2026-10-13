@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 400" width="960" height="400" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Each part of the baseline is written once</title>
+  <desc id="desc">Two panels. On the left, the list of gates BASELINE, in packages/cli/src/init/manifest/baseline.ts: the verify script of a project is built from it, and a test of the CLI holds the GitHub workflow and the GitLab pipeline to every gate of it. On the right, biome.json at the root of the kit: the template biome.json.tpl that init copies into a project is held identical to it by a test, byte for byte but for two exclusions of the kit (the sources of the generated clients and the compiled doc samples), and examples/scheduling/biome.json extends it. Every arrow runs from the source to what follows from it.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="400" rx="16" fill="#ffffff"/>
+  <text x="24" y="36" font-size="18" font-weight="600" fill="#1f2328">Each part of the baseline is written once</text>
+  <line x1="480" y1="60" x2="480" y2="320" stroke="#d0d7de" stroke-width="1.5"/>
+  <!-- left: the gates -->
+  <text x="24" y="74" font-size="16" font-weight="700" fill="#1f2328">One list of gates</text>
+  <rect x="56" y="92" width="380" height="64" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="246" y="118" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">BASELINE</text>
+  <text x="246" y="140" font-size="13" fill="#1f2328" text-anchor="middle">packages/cli/src/init/manifest/baseline.ts</text>
+  <rect x="24" y="228" width="140" height="62" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="94" y="254" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">verify</text>
+  <text x="94" y="276" font-size="13" fill="#1f2328" text-anchor="middle">npm script</text>
+  <rect x="178" y="228" width="140" height="62" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="248" y="254" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">GitHub</text>
+  <text x="248" y="276" font-size="13" fill="#1f2328" text-anchor="middle">the workflow</text>
+  <rect x="332" y="228" width="140" height="62" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="402" y="254" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">GitLab</text>
+  <text x="402" y="276" font-size="13" fill="#1f2328" text-anchor="middle">.gitlab-ci.yml</text>
+  <line x1="100" y1="158" x2="95" y2="226" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="248" y1="158" x2="248" y2="226" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <line x1="396" y1="158" x2="401" y2="226" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <text x="108" y="196" font-size="13" fill="#1f2328">built from it</text>
+  <text x="258" y="196" font-size="13" fill="#1f2328">every gate,</text>
+  <text x="258" y="212" font-size="13" fill="#1f2328">held by a test</text>
+  <!-- right: the formatter -->
+  <text x="504" y="74" font-size="16" font-weight="700" fill="#1f2328">One formatter configuration</text>
+  <rect x="580" y="92" width="280" height="64" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="720" y="118" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">biome.json</text>
+  <text x="720" y="140" font-size="13" fill="#1f2328" text-anchor="middle">at the root of the kit</text>
+  <rect x="504" y="228" width="196" height="62" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="602" y="254" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">biome.json.tpl</text>
+  <text x="602" y="276" font-size="13" fill="#1f2328" text-anchor="middle">copied by init</text>
+  <rect x="720" y="228" width="216" height="62" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="828" y="254" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">the example</text>
+  <text x="828" y="276" font-size="13" fill="#1f2328" text-anchor="middle">"extends": "//"</text>
+  <line x1="680" y1="158" x2="644" y2="226" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <line x1="780" y1="158" x2="800" y2="226" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="512" y="180" font-size="13" fill="#1f2328">byte for byte but for</text>
+  <text x="512" y="196" font-size="13" fill="#1f2328">two lines of the kit,</text>
+  <text x="512" y="212" font-size="13" fill="#1f2328">held by a test</text>
+  <text x="806" y="190" font-size="13" fill="#1f2328">extended by</text>
+  <text x="806" y="206" font-size="13" fill="#1f2328">the example</text>
+  <!-- legend -->
+  <line x1="24" y1="350" x2="68" y2="350" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="80" y="355" font-size="14" fill="#1f2328">built from the source, or reads it (every arrow runs from the source)</text>
+  <line x1="24" y1="376" x2="68" y2="376" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <text x="80" y="381" font-size="14" fill="#1f2328">written apart, and held to the source by a test of the CLI: it cannot drift silently</text>
+</svg>

@@ -15,7 +15,7 @@ how the generated client is used, checked and published.
 
 ## What a client of a kit contract has to do
 
-The contract of the example (`examples/scheduling/openapi/openapi.yaml`, 25 operations) shows
+The contract of the example (`examples/scheduling/openapi/openapi.yaml`, 32 operations) shows
 what a client must carry:
 
 - **Refusals as data.** Every refusal is a problem document (RFC 9457,
@@ -23,6 +23,20 @@ what a client must carry:
   in `x-error-codes`: `POST /practices` answers `404` with `PERSON_NOT_REGISTERED`, `422` with
   `UNKNOWN_TIME_ZONE` or `VALIDATION_FAILED`. A caller branches on the code, so the client should
   type `problem.code` as exactly those codes, per status.
+
+  ```yaml
+  # openapi/openapi.yaml: the 422 answer of POST /practices, as docs:generate writes it
+  '422':
+    description: 'Unprocessable Content. Error codes: UNKNOWN_TIME_ZONE, VALIDATION_FAILED.'
+    content:
+      application/problem+json:
+        schema:
+          $ref: '#/components/schemas/Problem'
+    x-error-codes:
+      - UNKNOWN_TIME_ZONE
+      - VALIDATION_FAILED
+  ```
+
 - **Security per operation.** Most operations require the `bearer` scheme, a few are public.
 - **Split documents.** With `openapi.documents`, a contract is several self-contained files: a
   public API and a back office get one client each.
@@ -32,7 +46,9 @@ what a client must carry:
 
 ## Comparison
 
-Measured on 2026-10-12 on the example contract, versions read from npm the same day, every
+Measured on 2026-10-12 on the example contract as it was then (25 operations, version 0.6.0 of
+the kit; it has 32 operations today, and its client 82 kB of sources), versions read from npm the
+same day, every
 generator with its documented defaults (`openapi-fetch` for openapi-typescript, the fetch client
 for orval). Sizes are minified with esbuild 0.28; "one operation" bundles `getAppointment` and
 what it needs. Install sizes include TypeScript 6 (24 MB), which every project of the kit
@@ -67,6 +83,18 @@ subset is a few hundred lines that the CLI, which has no runtime dependency, can
 `ddd-ts-kit sdk` generates the clients. It reads the committed contract (YAML or JSON, as
 `openapi.format` says), so it needs no build and no network, and the same command answers
 `--check` for the pipeline.
+
+![The routes write the contract with docs:generate, ddd-ts-kit sdk writes one client per document from it, a front end, a service and the end-to-end specs import the client, and the pipeline regenerates and compares both](../assets/diagrams/client-sdk-contract-to-client.svg)
+
+The loop, in commands:
+
+```bash
+npx ddd-ts-kit sdk          # once: records "sdk" in the config and writes clients/<document>
+npm install                 # npm lists the new workspace package in package-lock.json
+npm run docs:generate       # after a route changes: the contract, then the clients
+npm run docs:check          # what the pipeline runs: fails on a stale contract or client
+npm run sdk:build           # compiles every client, as ci:build does
+```
 
 When the contract comes from somewhere else, or when the team wants React Query hooks, Zod
 schemas or mocks generated with the client, orval and hey-api are the better tools: they cover
@@ -127,6 +155,39 @@ The command also wires the project, and running it again changes nothing:
 
 ### Use
 
+What the client changes, on one call. Written by hand, nothing ties the request or the code of
+the refusal to the contract:
+
+```ts
+// Instead of: a request written by hand
+const response = await fetch('https://api.example.com/practices', {
+  method: 'POST',
+  headers: { 'content-type': 'application/json', authorization: `Bearer ${session.token()}` },
+  body: JSON.stringify({ name: 'Riverside', timeZone: 'Europe/Paris', manager: 'ada' }), // the field is managerId
+});
+const problem = (await response.json()) as { code?: string };
+
+if (response.status === 422 && problem.code === 'UNKNOWN_TIMEZONE') {
+  // never true: the code is UNKNOWN_TIME_ZONE, and nothing says so before production
+}
+```
+
+Through the client, the same two mistakes do not compile:
+
+```ts
+// Write: the client of the contract
+const result = await api.openPractice({ body: { name: 'Riverside', timeZone: 'Europe/Paris', manager: 'ada' } });
+// error TS2561: Object literal may only specify known properties, but 'manager' does not exist
+// in type '{ name: string; timeZone: string; managerId: string; }'. Did you mean to write 'managerId'?
+
+if (!result.ok && result.status === 422 && result.problem.code === 'UNKNOWN_TIMEZONE') {
+  // error TS2367: This comparison appears to be unintentional because the types
+  // '"UNKNOWN_TIME_ZONE" | "VALIDATION_FAILED"' and '"UNKNOWN_TIMEZONE"' have no overlap.
+}
+```
+
+The whole use:
+
 ```ts
 import { createClient, isProblem, unwrap } from 'scheduling-api-client';
 
@@ -142,12 +203,15 @@ if (result.ok) {
 
 try {
   const page = await unwrap(api.searchAppointments({ query: { 'filter[status]': 'booked' } }));
+  console.log(page.items.length);
 } catch (error) {
   if (isProblem(error, 'INVALID_CRITERIA')) {
     // error.code is 'INVALID_CRITERIA'.
   }
 }
 ```
+
+![A call answers ok true with its data for a declared status below 400, ok false with a problem whose code is typed per status for a declared status of 400 and above, and throws an UnexpectedResponseError for a status the contract does not declare; unwrap gives the data or throws a ProblemError](../assets/diagrams/client-sdk-outcome.svg)
 
 - A method never throws for a status its contract declares: the outcome is a union keyed by
   `ok` and `status`. `unwrap` turns a refusal into a thrown `ProblemError`.
@@ -169,6 +233,64 @@ try {
   holds only the operations it calls.
 - The body is not validated against its schema: the client trusts the contract, and
   `docs:check` keeps the contract equal to the routes.
+
+**In a browser bundle**, import the functions of the operations it calls, not `createClient`,
+which holds them all. Same origin, the cookies of the browser as the credential:
+
+```ts
+import { connect, getAppointment } from 'scheduling-api-client';
+
+const connection = connect({ baseUrl: '/api', fetch: (request) => fetch(request, { credentials: 'include' }) });
+
+const appointment = await getAppointment(connection, { path: { appointmentId: 'appointment-42' } });
+```
+
+**When the server fails**, the error to report carries what the team of the API needs to find
+the request in its logs:
+
+```ts
+import { createClient, UnexpectedResponseError, unwrap } from 'scheduling-api-client';
+
+const api = createClient({ baseUrl: 'https://api.example.com', credentials: { bearer: 'token' } });
+
+try {
+  await unwrap(api.getAppointment({ path: { appointmentId: 'appointment-42' } }));
+} catch (error) {
+  if (error instanceof UnexpectedResponseError) {
+    console.error(`${error.status} ${error.code ?? ''}: quote ${error.requestId ?? 'the time of the call'} to the team of the API`);
+  }
+
+  throw error;
+}
+```
+
+**In the tests of a consumer**, `fetch` is the seam: give one that answers what the test needs
+and records what was sent, with no server and no mocking library:
+
+```ts
+import { createClient } from 'scheduling-api-client';
+
+const requests: Request[] = [];
+
+const api = createClient({
+  baseUrl: 'https://api.test',
+  credentials: { bearer: 'token-of-ada' },
+  fetch: async (request) => {
+    requests.push(request);
+    return Response.json({ id: 'practice-1' }, { status: 201 });
+  },
+});
+
+const opened = await api.openPractice({ body: { name: 'Riverside', timeZone: 'Europe/Paris', managerId: 'ada' } });
+
+console.log(opened.ok && opened.data.id); // practice-1
+console.log(requests[0]?.headers.get('authorization')); // Bearer token-of-ada
+```
+
+These samples import the client of the example by its package name, which resolves in a
+project that generated it, not in the repository of the kit, so the checked samples of this
+documentation skip them. They were compiled by hand against `examples/scheduling/clients/api`,
+and the compiler messages quoted above are its own; no gate keeps them so.
 
 ### Limits
 
@@ -223,7 +345,24 @@ clients/api` works. Its end-to-end specs
 of registering a person and opening a practice, and the helpers every journey sets its practice
 up with (`registerPeople`, `openStaffedPractice`), call the API through it
 (`application.apiAs(actor)` in `test/e2e/support/start-application.ts`, with `expectAnswer` and
-`expectRefusal`, which the compiler holds to the statuses and codes of each operation).
+`expectRefusal`, which the compiler holds to the statuses and codes of each operation):
+
+```ts
+// adapted from test/e2e/identity-open-practice.e2e.spec.ts: the comment after 'UNKNOWN_TIME_ZONE' is added
+it('answers the documented problem for each business refusal', async () => {
+  await registerPeople(application, 'ada');
+  const root = application.apiAs({ id: 'root', roles: ['platform-admin'] });
+
+  expectRefusal(
+    await root.openPractice({ body: { ...opening, timeZone: 'Europe/Atlantis' } }),
+    422,
+    'UNKNOWN_TIME_ZONE', // 'UNKNOWN_TIMEZONE', or 'PERSON_NOT_REGISTERED' with 422, would not compile
+  );
+
+  expectRefusal(await root.openPractice({ body: { ...opening, managerId: 'nobody' } }), 404, 'PERSON_NOT_REGISTERED');
+});
+```
+
 `apiAs` gives the token of the actor as the credential of the `bearer` scheme, a function asked
 before each request: the authentication of the client is proven against the real server. The other
 specs keep the HTTP helpers, which remain the tool for a request the contract does not describe:

@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 462" width="960" height="462" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Quand une erreur de câblage est trouvée, dans le style déclaré</title>
+  <desc id="desc">Quatre moments, dans l'ordre. Le compilateur refuse une liste de dépendances qui ne correspond pas à son constructeur, une classe qui n'implémente pas son port et une classe concrète là où un port est attendu. Le chargement des classes lève une DeclarationError pour un port qui a un corps, un adaptateur qui étend son port, ou deux déclarations sur une même classe. createApplication lève une WiringError pour une liaison absente ou en double, un cycle, deux gestionnaires d'une même commande, un constructeur qu'aucune liste ne couvre, et un cas d'usage sans permission quand l'autorisation est exigée. Le premier message construit le gestionnaire ; seuls un cycle ou un port absent derrière une fabrique attendent jusque-là.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="462" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Quand une erreur de câblage est trouvée, dans le style déclaré</text>
+  <!-- 1 compile -->
+  <rect x="24" y="64" width="210" height="334" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="129" y="92" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">1. compilation</text>
+  <text x="129" y="114" font-size="13" fill="#5f6b73" text-anchor="middle">le compilateur, dans l'éditeur</text>
+  <line x1="40" y1="126" x2="218" y2="126" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text font-size="13" fill="#1f2328">
+    <tspan x="40" y="150">une liste dans un autre</tspan>
+    <tspan x="40" y="170">ordre que le constructeur</tspan>
+    <tspan x="40" y="198">une liste avec un élément</tspan>
+    <tspan x="40" y="218">de moins, ou de trop</tspan>
+    <tspan x="40" y="246">une classe qui</tspan>
+    <tspan x="40" y="266">n'implémente pas son port</tspan>
+    <tspan x="40" y="294">une classe concrète là où</tspan>
+    <tspan x="40" y="314">un port est attendu</tspan>
+  </text>
+  <!-- 2 load -->
+  <rect x="258" y="64" width="210" height="334" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="363" y="92" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">2. import des classes</text>
+  <text x="363" y="114" font-size="13" fill="#5f6b73" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">DeclarationError</text>
+  <line x1="274" y1="126" x2="452" y2="126" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text font-size="13" fill="#1f2328">
+    <tspan x="274" y="150">un port qui a un corps</tspan>
+    <tspan x="274" y="178">un adaptateur qui étend</tspan>
+    <tspan x="274" y="198">son port</tspan>
+    <tspan x="274" y="226">deux déclarations sur</tspan>
+    <tspan x="274" y="246">une même classe</tspan>
+  </text>
+  <!-- 3 createApplication -->
+  <rect x="492" y="64" width="210" height="334" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="597" y="92" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">3. createApplication</text>
+  <text x="597" y="114" font-size="13" fill="#5f6b73" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">WiringError</text>
+  <line x1="508" y1="126" x2="686" y2="126" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text font-size="13" fill="#1f2328">
+    <tspan x="508" y="150">une liaison absente,</tspan>
+    <tspan x="508" y="170">ou en double</tspan>
+    <tspan x="508" y="198">un cycle entre classes</tspan>
+    <tspan x="508" y="226">deux gestionnaires d'une</tspan>
+    <tspan x="508" y="246">commande, deux</tspan>
+    <tspan x="508" y="266">consommateurs ou jobs</tspan>
+    <tspan x="508" y="286">du même nom</tspan>
+    <tspan x="508" y="314">un constructeur qu'aucune</tspan>
+    <tspan x="508" y="334">liste ne couvre</tspan>
+    <tspan x="508" y="362">un cas d'usage sans sa</tspan>
+    <tspan x="508" y="382">permission, si exigée</tspan>
+  </text>
+  <!-- 4 first message -->
+  <rect x="726" y="64" width="210" height="334" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="831" y="92" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">4. premier message</text>
+  <text x="831" y="114" font-size="13" fill="#5f6b73" text-anchor="middle">le bus résout</text>
+  <line x1="742" y1="126" x2="920" y2="126" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text font-size="13" fill="#1f2328">
+    <tspan x="742" y="150">le gestionnaire est</tspan>
+    <tspan x="742" y="170">construit, puis réutilisé</tspan>
+    <tspan x="742" y="198">un cycle ou un port absent</tspan>
+    <tspan x="742" y="218">derrière une fabrique :</tspan>
+    <tspan x="742" y="238">trouvé ici seulement</tspan>
+  </text>
+  <!-- sequence arrows -->
+  <line x1="236" y1="231" x2="256" y2="231" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="470" y1="231" x2="490" y2="231" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="704" y1="231" x2="724" y2="231" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- before any request -->
+  <path d="M24,416 H702" fill="none" stroke="#2f6f4f" stroke-width="2"/>
+  <path d="M24,410 V422 M702,410 V422" fill="none" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="363" y="444" font-size="14" fill="#2f6f4f" text-anchor="middle">avant que l'application ne serve sa première requête HTTP</text>
+</svg>

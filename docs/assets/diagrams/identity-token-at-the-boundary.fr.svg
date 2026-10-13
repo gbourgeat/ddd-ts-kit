@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 624" width="960" height="624" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Un jeton s'arrête à la frontière de l'API</title>
+  <desc id="desc">L'application cliente se connecte auprès du fournisseur d'identité et reçoit un jeton d'accès signé. Elle appelle POST /appointments avec le jeton comme identifiant bearer. La frontière de l'API récupère une fois le jeu de clés du fournisseur et le met en cache, vérifie la signature, l'émetteur, l'audience, l'expiration et l'algorithme, transforme les claims en un acteur et une session et oublie le jeton, puis envoie au cas d'usage la commande BookAppointment qui porte l'acteur. La réponse est 201, ou un problème 401 quand le jeton est refusé, auquel cas le cas d'usage n'est jamais appelé.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="624" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Un jeton s'arrête à la frontière de l'API</text>
+  <!-- participants -->
+  <rect x="20" y="58" width="200" height="48" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="120" y="88" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">application cliente</text>
+  <rect x="260" y="58" width="200" height="48" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="360" y="88" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">fournisseur d'identité</text>
+  <rect x="500" y="58" width="200" height="48" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="600" y="88" font-size="15" font-weight="700" fill="#9a5b2b" text-anchor="middle">frontière de l'API</text>
+  <rect x="740" y="58" width="200" height="48" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="840" y="88" font-size="15" font-weight="700" fill="#2b5d8a" text-anchor="middle">cas d'usage</text>
+  <!-- lifelines -->
+  <line x1="120" y1="106" x2="120" y2="568" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="4 4"/>
+  <line x1="360" y1="106" x2="360" y2="568" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="4 4"/>
+  <line x1="600" y1="106" x2="600" y2="568" stroke="#9a5b2b" stroke-width="1.5" stroke-dasharray="4 4"/>
+  <line x1="840" y1="106" x2="840" y2="568" stroke="#2b5d8a" stroke-width="1.5" stroke-dasharray="4 4"/>
+  <!-- 1 sign in -->
+  <line x1="122" y1="150" x2="356" y2="150" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="240" y="142" font-size="13" fill="#1f2328" text-anchor="middle">1. connexion</text>
+  <!-- 2 token -->
+  <line x1="358" y1="192" x2="124" y2="192" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <text x="240" y="184" font-size="13" fill="#1f2328" text-anchor="middle">2. jeton d'accès (JWT signé)</text>
+  <!-- 3 request -->
+  <line x1="122" y1="244" x2="596" y2="244" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="240" y="236" font-size="13" fill="#1f2328" text-anchor="middle">3. POST /appointments</text>
+  <text x="480" y="236" font-size="13" fill="#1f2328" text-anchor="middle">Authorization: Bearer &lt;token&gt;</text>
+  <!-- 4 key set -->
+  <line x1="598" y1="292" x2="364" y2="292" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="480" y="284" font-size="13" fill="#1f2328" text-anchor="middle">4. jeu de clés, lu une fois (cache)</text>
+  <!-- 5 verify -->
+  <rect x="468" y="316" width="264" height="52" rx="8" fill="#f6ede6" stroke="#9a5b2b" stroke-width="1.5"/>
+  <text x="600" y="337" font-size="13" fill="#1f2328" text-anchor="middle">5. vérifie signature, émetteur,</text>
+  <text x="600" y="356" font-size="13" fill="#1f2328" text-anchor="middle">audience, expiration et algorithme</text>
+  <!-- 6 map -->
+  <rect x="468" y="384" width="264" height="52" rx="8" fill="#f6ede6" stroke="#9a5b2b" stroke-width="1.5"/>
+  <text x="600" y="405" font-size="13" fill="#1f2328" text-anchor="middle">6. transforme les claims en Actor</text>
+  <text x="600" y="424" font-size="13" fill="#1f2328" text-anchor="middle">et en Session ; oublie le jeton</text>
+  <!-- 7 command -->
+  <line x1="602" y1="472" x2="836" y2="472" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="720" y="464" font-size="13" fill="#1f2328" text-anchor="middle">7. BookAppointment(actor, ...)</text>
+  <rect x="744" y="488" width="192" height="40" rx="8" fill="#e7eef5" stroke="#2b5d8a" stroke-width="1.5"/>
+  <text x="840" y="513" font-size="13" fill="#2b5d8a" text-anchor="middle">un Actor, jamais un jeton</text>
+  <!-- 8 answer -->
+  <line x1="598" y1="552" x2="124" y2="552" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <text x="240" y="544" font-size="13" fill="#1f2328" text-anchor="middle">8. 201, ou problème 401</text>
+  <text x="480" y="544" font-size="13" fill="#1f2328" text-anchor="middle">un jeton refusé n'atteint jamais 7</text>
+  <!-- legend -->
+  <line x1="40" y1="600" x2="76" y2="600" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="84" y="604" font-size="13" fill="#1f2328">appel</text>
+  <line x1="130" y1="600" x2="166" y2="600" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <text x="174" y="604" font-size="13" fill="#1f2328">réponse</text>
+</svg>

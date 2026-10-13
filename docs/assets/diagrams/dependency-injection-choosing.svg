@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 548" width="960" height="548" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Choosing how to wire the application</title>
+  <desc id="desc">A decision tree. If NestJS is already the framework, use its container, in the explicit style, with providers by factory. Otherwise, under a policy against low-activity dependencies or for a service of a few classes, wire by hand and give up the start-time checks. Otherwise use tsyringe and @ddd-ts-kit/di in the declared style, with an explicit module for a context whose wiring is unusual. A bundled or serverless application assembles each context from its generated barrel; otherwise the barrel is the default and discovery is the alternative.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="548" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Choosing how to wire the application</text>
+  <!-- Q1 -->
+  <rect x="32" y="64" width="420" height="64" rx="10" fill="#ffffff" stroke="#3d4449" stroke-width="2"/>
+  <text x="242" y="101" font-size="14" fill="#1f2328" text-anchor="middle">Is NestJS already the framework of the application?</text>
+  <line x1="454" y1="96" x2="518" y2="96" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="484" y="88" font-size="13" fill="#1f2328" text-anchor="middle">yes</text>
+  <rect x="520" y="64" width="408" height="64" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="724" y="91" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">NestJS container</text>
+  <text x="724" y="113" font-size="13" fill="#1f2328" text-anchor="middle">explicit style, providers by factory</text>
+  <line x1="242" y1="130" x2="242" y2="162" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="254" y="151" font-size="13" fill="#1f2328">no</text>
+  <!-- Q2 -->
+  <rect x="32" y="164" width="420" height="64" rx="10" fill="#ffffff" stroke="#3d4449" stroke-width="2"/>
+  <text x="242" y="191" font-size="14" fill="#1f2328" text-anchor="middle">A policy against low-activity dependencies,</text>
+  <text x="242" y="211" font-size="14" fill="#1f2328" text-anchor="middle">or a service of a few classes?</text>
+  <line x1="454" y1="196" x2="518" y2="196" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="484" y="188" font-size="13" fill="#1f2328" text-anchor="middle">yes</text>
+  <rect x="520" y="164" width="408" height="64" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="724" y="191" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">manual wiring</text>
+  <text x="724" y="213" font-size="13" fill="#1f2328" text-anchor="middle">the start-time checks are given up</text>
+  <line x1="242" y1="230" x2="242" y2="262" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="254" y="251" font-size="13" fill="#1f2328">no</text>
+  <!-- tsyringe -->
+  <rect x="32" y="264" width="420" height="64" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="242" y="291" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">tsyringe and @ddd-ts-kit/di</text>
+  <text x="242" y="313" font-size="13" fill="#1f2328" text-anchor="middle">declared style: the default, the most generated and checked</text>
+  <line x1="454" y1="296" x2="518" y2="296" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="520" y="264" width="408" height="64" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="724" y="291" font-size="14" fill="#1f2328" text-anchor="middle">a context with factories or conditional bindings:</text>
+  <text x="724" y="313" font-size="14" fill="#1f2328" text-anchor="middle">an explicit module, or include() in a mixed one</text>
+  <line x1="242" y1="330" x2="242" y2="354" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- Q3 -->
+  <rect x="32" y="356" width="420" height="64" rx="10" fill="#ffffff" stroke="#3d4449" stroke-width="2"/>
+  <text x="242" y="383" font-size="14" fill="#1f2328" text-anchor="middle">Is the application bundled,</text>
+  <text x="242" y="403" font-size="14" fill="#1f2328" text-anchor="middle">or run as a serverless function?</text>
+  <line x1="454" y1="388" x2="518" y2="388" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="484" y="380" font-size="13" fill="#1f2328" text-anchor="middle">yes</text>
+  <rect x="520" y="356" width="408" height="64" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="724" y="383" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">the generated barrel</text>
+  <text x="724" y="405" font-size="13" fill="#1f2328" text-anchor="middle">contextModule: a bundler follows every class; no discovery</text>
+  <line x1="242" y1="422" x2="242" y2="450" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="254" y="441" font-size="13" fill="#1f2328">no</text>
+  <!-- R3b -->
+  <rect x="32" y="452" width="420" height="64" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="242" y="479" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">the barrel, by default</text>
+  <text x="242" y="501" font-size="13" fill="#1f2328" text-anchor="middle">or discovery, when adding a file must be all it takes</text>
+</svg>

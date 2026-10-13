@@ -26,6 +26,13 @@ of behaviour tests run on every adapter:
 | one contract | OpenAPI 3.1 generated from the declarations, committed, checked for drift in CI; a shape declared once lands once in `components.schemas` ([shared schemas](validation.md)) |
 | a typed client | `ddd-ts-kit sdk` writes it from the committed contract, whatever framework produced it ([client SDK](client-sdk.md)): a shared shape is one named type of the client, `Accepted` included; generated and compiled in each pair's project by `contract-pairs.spec.ts` |
 
+![Schemas written with zod, TypeBox or class-validator feed a controller class that knows no framework; a framework adapter mounts it with the same executeRoute pipeline under each; the OpenAPI contract is generated from the same declarations and the typed client from the contract](../assets/diagrams/contract-pairs-one-declaration.svg)
+
+The framework sits at the right edge of the drawing and the validation library at the left
+edge; everything in between is the kit's. That is why a pair can be changed: a controller
+imports no framework, and its schemas are values it names in its declaration, wrapped in the one
+`Schema` interface of `@ddd-ts-kit/validation`.
+
 ## The pairs
 
 | Pair | `init` flags | Proven by |
@@ -45,6 +52,49 @@ naming `Money` and `Accepted` once each, and compiling on its own. Other combina
 generated, checked and type-checked by the matrix of `stacks.ts` (Fastify with zod among them,
 and two added with this page: Hono with TypeBox and a Redis cache, Fastify with TypeBox on
 Knex); only these four are run end to end.
+
+The routes are a list of plain values, whatever the pair: mounting them is one call of the
+adapter of the framework. The three adapters below receive the same `routes` and the same
+options, and answer the same way:
+
+<!-- checked sample -->
+```ts
+import { serve } from '@hono/node-server';
+import type { ExecuteOptions, Route } from '@ddd-ts-kit/http';
+import { mountExpress } from '@ddd-ts-kit/http/express';
+import { mountFastify } from '@ddd-ts-kit/http/fastify';
+import { mountHono } from '@ddd-ts-kit/http/hono';
+import express from 'express';
+import Fastify from 'fastify';
+import { Hono } from 'hono';
+
+declare const routes: readonly Route[]; // controllerRoutes([...], { resolve }): the same list for every pair
+declare const options: ExecuteOptions; // execution scope, authentication, error mapper, onError
+
+export async function listen(framework: 'express' | 'fastify' | 'hono'): Promise<void> {
+  if (framework === 'express') {
+    const app = express();
+
+    app.use(express.json()); // the adapter does not parse bodies
+    mountExpress(app, routes, options);
+    app.listen(3000);
+  } else if (framework === 'fastify') {
+    const app = Fastify();
+
+    mountFastify(app, routes, options);
+    await app.listen({ port: 3000 });
+  } else {
+    const app = new Hono();
+
+    mountHono(app, routes, options); // reads the JSON body itself, up to bodyLimit
+    serve({ fetch: app.fetch, port: 3000 });
+  }
+}
+```
+
+NestJS takes the same list through `createRoutesModule(routes, options)` of
+`@ddd-ts-kit/http/nest`, imported by the root module; the
+[`@ddd-ts-kit/http` README](../../packages/http/README.md) shows each mount.
 
 "zod-openapi" in the request that started this page: `zod-openapi` (6.0.2) and
 `@asteasolutions/zod-to-openapi` (9.1.0) exist to turn zod schemas into an OpenAPI document. The
@@ -68,6 +118,80 @@ document. That is the maintained equivalent, built into zod itself.
 Size of the application does not pick the pair: the tree, the rules and the shared schemas carry
 a large application the same way on all four. What grows with it is the number of schemas, so
 the composition of shapes and the issue codes clients read matter more than the framework.
+
+![A decision tree: an existing NestJS application takes NestJS and class-validator; a contract that should be the schema itself takes Fastify and TypeBox; a service that may move to another runtime takes Hono and zod; otherwise Express and zod, the default](../assets/diagrams/contract-pairs-choosing.svg)
+
+### The same body, in each library
+
+The body of "book an appointment", with a shared `Slot`, declared for each pair. The controller
+does not change: its `body` option names the schema, and `handle` reads the same type.
+
+<!-- checked sample -->
+```ts
+import type { Infer } from '@ddd-ts-kit/validation';
+import { typeboxSchema } from '@ddd-ts-kit/validation/typebox';
+import { zodSchema } from '@ddd-ts-kit/validation/zod';
+import Type from 'typebox';
+import { z } from 'zod';
+
+// Express + zod, Hono + zod: the id in the metadata makes Slot one component of the contract.
+const slot = z.object({ startsAt: z.iso.datetime(), endsAt: z.iso.datetime() }).meta({ id: 'Slot' });
+
+export const bookWithZod = zodSchema(z.object({ patientId: z.uuid(), slot }));
+
+// Fastify + TypeBox: the schema is JSON Schema already; the $id makes Slot one component.
+const slotSchema = Type.Object(
+  { startsAt: Type.String({ format: 'date-time' }), endsAt: Type.String({ format: 'date-time' }) },
+  { $id: 'Slot' },
+);
+
+export const bookWithTypeBox = typeboxSchema(Type.Object({ patientId: Type.String({ format: 'uuid' }), slot: slotSchema }));
+
+// What handle receives, either way: { patientId: string; slot: { startsAt: string; endsAt: string } }
+export type BookBody = Infer<typeof bookWithZod>;
+export const sameBody: Infer<typeof bookWithTypeBox> extends BookBody ? true : false = true;
+```
+
+NestJS + class-validator writes a class per shape, with decorators, and compiles in the legacy
+decorator mode:
+
+<!-- checked sample: legacy-decorators -->
+```ts
+import { classSchema } from '@ddd-ts-kit/validation/class-validator';
+import { Type } from 'class-transformer';
+import { IsISO8601, IsUUID, ValidateNested } from 'class-validator';
+
+// A nested class is always a component of the contract, named after the class.
+class SlotDto {
+  @IsISO8601() startsAt = '';
+  @IsISO8601() endsAt = '';
+}
+
+class BookBodyDto {
+  @IsUUID() patientId = '';
+
+  @ValidateNested()
+  @Type(() => SlotDto)
+  slot: SlotDto = new SlotDto();
+}
+
+export const bookWithClassValidator = classSchema(BookBodyDto);
+```
+
+Where the pairs differ for a client is the 422. The same invalid body,
+`{ "patientId": "p-1", "slot": { "startsAt": "tomorrow" } }`, is refused by each schema with these
+issues (run against the packages of this repository); the pipeline answers them under
+`issues` of a `VALIDATION_FAILED` problem, each path prefixed by `body.`:
+
+| Path | zod | TypeBox | class-validator |
+|---|---|---|---|
+| `patientId` | `invalid_format` | `format` | `isUuid` |
+| `slot.startsAt` | `invalid_format` | `format` | `isIso8601` |
+| `slot.endsAt` (missing) | `invalid_type` | `required` | `isIso8601` |
+
+A client that branches on issue codes is written for one library. Changing the pair later
+changes these codes and their messages; the status, the `code` of the problem and the paths
+stay.
 
 ## Measured
 
@@ -114,8 +238,9 @@ pays for its container, is the one framework difference the runs agree on.
 - **Hono + zod.** Proven on Node only. The adapter reads the body as JSON itself, up to
   `bodyLimit` (1 MiB by default, Fastify's bound; Express stops at 100 kB): it answers a larger
   body 413 (`BODY_TOO_LARGE`) and a malformed one 400 (`MALFORMED_BODY`), both as problems, where
-  Express and Fastify answer them with their own error handler. The raw request is `HonoRaw`, so code that
-  read `request.ip` of Express reads `getConnInfo(context)` of `@hono/node-server/conninfo`.
+  Express and Fastify answer them with their own error handler. The raw request is `HonoRaw`, so
+  code that read `request.ip` of Express reads `getConnInfo(context)` of
+  `@hono/node-server/conninfo`.
 - **NestJS + class-validator.** The legacy decorator mode, two containers' worth of concepts,
   and Nest's pipes, guards, interceptors, filters and `@nestjs/swagger` do not see the routes
   ([HTTP frameworks](http-frameworks.md)). class-transformer has had no release since 2021.

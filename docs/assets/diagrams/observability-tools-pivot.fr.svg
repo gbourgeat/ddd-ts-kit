@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 432" width="960" height="432" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Une action, suivie dans la trace, les journaux, le rapport d'erreur et le journal d'audit</title>
+  <desc id="desc">Une action d'utilisateur porte un identifiant de corrélation et un identifiant de trace. Le span racine de sa trace porte l'identifiant de corrélation, ses lignes de journal l'identifiant de trace et l'identifiant de corrélation, un rapport d'erreur l'identifiant de trace du span actif et l'identifiant de corrélation, et ses entrées d'audit l'identifiant de corrélation. Depuis n'importe lequel des quatre, les identifiants partagés mènent aux trois autres.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="432" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Une action, quatre enregistrements, deux identifiants partagés</text>
+  <!-- center -->
+  <rect x="350" y="178" width="260" height="88" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="480" y="206" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">une action d'utilisateur</text>
+  <text x="480" y="230" font-size="13" fill="#1f2328" text-anchor="middle">correlationId (portée d'exécution)</text>
+  <text x="480" y="250" font-size="13" fill="#1f2328" text-anchor="middle">trace_id (le span actif)</text>
+  <!-- trace -->
+  <rect x="32" y="64" width="290" height="100" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="50" y="92" font-size="16" font-weight="700" fill="#5f6b73">trace : Jaeger, Tempo</text>
+  <text x="50" y="118" font-size="13" fill="#1f2328">span racine : app.correlation_id</text>
+  <text x="50" y="140" font-size="13" fill="#1f2328">ouverte par son identifiant de trace</text>
+  <!-- logs -->
+  <rect x="638" y="64" width="290" height="100" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="656" y="92" font-size="16" font-weight="700" fill="#5f6b73">lignes de journal</text>
+  <text x="656" y="118" font-size="13" fill="#1f2328">trace_id, span_id</text>
+  <text x="656" y="140" font-size="13" fill="#1f2328">correlationId, actorId, tenantId</text>
+  <!-- error report -->
+  <rect x="32" y="280" width="290" height="100" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="50" y="308" font-size="16" font-weight="700" fill="#5f6b73">erreur : Sentry, GlitchTip</text>
+  <text x="50" y="334" font-size="13" fill="#1f2328">contexts.trace : l'identifiant de trace</text>
+  <text x="50" y="356" font-size="13" fill="#1f2328">correlationId de l'ErrorReport</text>
+  <!-- audit -->
+  <rect x="638" y="280" width="290" height="100" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="656" y="308" font-size="16" font-weight="700" fill="#5f6b73">entrées d'audit</text>
+  <text x="656" y="334" font-size="13" fill="#1f2328">correlationId de l'AuditEntry</text>
+  <text x="656" y="356" font-size="13" fill="#1f2328">chercher app.correlation_id (traces)</text>
+  <!-- links -->
+  <line x1="348" y1="196" x2="300" y2="168" stroke="#3d4449" stroke-width="2" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+  <line x1="612" y1="196" x2="660" y2="168" stroke="#3d4449" stroke-width="2" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+  <line x1="348" y1="248" x2="300" y2="276" stroke="#3d4449" stroke-width="2" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+  <line x1="612" y1="248" x2="660" y2="276" stroke="#3d4449" stroke-width="2" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+  <text x="480" y="412" font-size="14" fill="#1f2328" text-anchor="middle">Rien de personnel sur un span : l'acteur et le tenant restent dans les journaux, dont vous fixez la rétention.</text>
+</svg>

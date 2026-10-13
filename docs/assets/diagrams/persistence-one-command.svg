@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 620" width="960" height="620" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">One command through the persistence, in one transaction</title>
+  <desc id="desc">A sequence over six participants: the command bus with its unit of work middleware, the handler, the Invoice aggregate, the repository adapter with its mapper, the outbox store and PostgreSQL. The middleware begins the transaction; the handler loads the invoice through the repository, which selects through the executor of the unit of work; the handler pays the invoice, which records InvoicePaid; the handler saves it and the adapter updates the row where the version is still 3; the domain event is dispatched before the commit and the outbox store inserts its row; the commit writes both rows or neither.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="620" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">One command, one transaction: "pay invoice inv-1"</text>
+  <!-- participants -->
+  <rect x="10" y="60" width="166" height="74" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="92" y="86" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">command bus</text>
+  <text x="92" y="106" font-size="13" fill="#1f2328" text-anchor="middle">unitOfWorkMiddleware</text>
+  <text x="92" y="124" font-size="13" fill="#1f2328" text-anchor="middle">and the unit of work</text>
+  <rect x="184" y="60" width="128" height="74" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="248" y="86" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">handler</text>
+  <text x="248" y="106" font-size="13" fill="#1f2328" text-anchor="middle">PayInvoice</text>
+  <rect x="328" y="60" width="128" height="74" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="392" y="86" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">Invoice</text>
+  <text x="392" y="106" font-size="13" fill="#1f2328" text-anchor="middle">aggregate</text>
+  <rect x="472" y="60" width="168" height="74" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="556" y="86" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">repository</text>
+  <text x="556" y="106" font-size="13" fill="#1f2328" text-anchor="middle">KnexInvoiceRepository</text>
+  <text x="556" y="124" font-size="13" fill="#1f2328" text-anchor="middle">and InvoiceMapper</text>
+  <rect x="656" y="60" width="136" height="74" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="724" y="86" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">outbox store</text>
+  <text x="724" y="106" font-size="13" fill="#1f2328" text-anchor="middle">KnexOutboxStore</text>
+  <rect x="808" y="60" width="132" height="74" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="874" y="86" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">PostgreSQL</text>
+  <text x="874" y="106" font-size="13" fill="#1f2328" text-anchor="middle">the database</text>
+  <!-- lifelines -->
+  <g stroke="#5f6b73" stroke-opacity="0.55" stroke-width="1.5" stroke-dasharray="4 4">
+    <line x1="92" y1="134" x2="92" y2="566"/>
+    <line x1="248" y1="134" x2="248" y2="566"/>
+    <line x1="392" y1="134" x2="392" y2="566"/>
+    <line x1="556" y1="134" x2="556" y2="566"/>
+    <line x1="724" y1="134" x2="724" y2="566"/>
+    <line x1="874" y1="134" x2="874" y2="566"/>
+  </g>
+  <!-- the transaction, open on the database from BEGIN to COMMIT -->
+  <rect x="866" y="160" width="16" height="390" rx="3" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <!-- messages -->
+  <g stroke="#3d4449" stroke-width="2" fill="none" marker-end="url(#arrow)">
+    <line x1="92" y1="164" x2="864" y2="164"/>
+    <line x1="92" y1="204" x2="246" y2="204"/>
+    <line x1="248" y1="244" x2="554" y2="244"/>
+    <line x1="556" y1="280" x2="864" y2="280"/>
+    <line x1="248" y1="318" x2="390" y2="318"/>
+    <line x1="248" y1="358" x2="554" y2="358"/>
+    <line x1="556" y1="394" x2="864" y2="394"/>
+    <line x1="92" y1="446" x2="722" y2="446"/>
+    <line x1="724" y1="482" x2="864" y2="482"/>
+    <line x1="92" y1="536" x2="864" y2="536"/>
+  </g>
+  <!-- step numbers, as in the list of the page -->
+  <g font-size="13" font-weight="700" fill="#ffffff" text-anchor="middle">
+    <circle cx="114" cy="152" r="10" fill="#3d4449"/><text x="114" y="157">1</text>
+    <circle cx="270" cy="232" r="10" fill="#3d4449"/><text x="270" y="237">2</text>
+    <circle cx="270" cy="346" r="10" fill="#3d4449"/><text x="270" y="351">3</text>
+    <circle cx="114" cy="430" r="10" fill="#3d4449"/><text x="114" y="435">4</text>
+    <circle cx="114" cy="524" r="10" fill="#3d4449"/><text x="114" y="529">5</text>
+  </g>
+  <!-- labels, with a white halo where they pass a lifeline -->
+  <g font-size="13" fill="#1f2328" stroke="#ffffff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">
+    <text x="130" y="157">BEGIN: unitOfWork.run opens the transaction, kept in an AsyncLocalStorage</text>
+    <text x="104" y="196">handle(command)</text>
+    <text x="286" y="237">findById('inv-1'): an Invoice at version 3</text>
+    <text x="568" y="273">SELECT through executor()</text>
+    <text x="568" y="299" fill="#5f6b73">the mapper turns the row into an Invoice</text>
+    <text x="260" y="310">pay(on): records InvoicePaid</text>
+    <text x="286" y="351">save(invoice)</text>
+    <text x="568" y="387">UPDATE ... WHERE id = 'inv-1'</text>
+    <text x="568" y="413" fill="#5f6b73">AND version = 3, then version 4</text>
+    <text x="130" y="435">the handler returned: InvoicePaid is dispatched before the commit, its handler publishes</text>
+    <text x="736" y="462">INSERT</text>
+    <text x="736" y="476">the outbox row</text>
+    <text x="130" y="529">COMMIT: the invoice and the outbox row together, or neither (ROLLBACK)</text>
+  </g>
+  <text x="32" y="600" font-size="14" fill="#1f2328">The handler sees an Invoice, never a row, a query builder or the transaction.</text>
+</svg>

@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 396" width="960" height="396" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Three checks, three layers</title>
+  <desc id="desc">A request to book an appointment passes three checks in order. In the presentation layer, the schema of the route checks its shape, and refuses it with 422 VALIDATION_FAILED and one issue per path. In the application layer, the bus checks that the actor holds the permission, and refuses with 403 FORBIDDEN before the handler runs. In the domain, the value object and the aggregate check the invariants, and refuse with a code of the domain such as INVALID_TIME_SLOT or SLOT_TAKEN.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="396" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Three checks, three layers</text>
+  <!-- request -->
+  <rect x="24" y="70" width="196" height="150" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="122" y="98" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">the request</text>
+  <line x1="40" y1="110" x2="204" y2="110" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text font-size="13" fill="#1f2328" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">
+    <tspan x="40" y="134">POST /appointments</tspan>
+    <tspan x="40" y="156">{ practitionerId,</tspan>
+    <tspan x="40" y="176">  startsAt, endsAt }</tspan>
+    <tspan x="40" y="198">Bearer &lt;token&gt;</tspan>
+  </text>
+  <!-- check 1 -->
+  <rect x="250" y="70" width="206" height="150" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="353" y="92" font-size="13" fill="#9a5b2b" text-anchor="middle">presentation</text>
+  <text x="353" y="114" font-size="16" font-weight="700" fill="#9a5b2b" text-anchor="middle">1. shape</text>
+  <line x1="266" y1="126" x2="440" y2="126" stroke="#9a5b2b" stroke-opacity="0.35"/>
+  <text x="353" y="150" font-size="13" fill="#1f2328" text-anchor="middle">the Schema of the route:</text>
+  <text x="353" y="172" font-size="13" fill="#1f2328" text-anchor="middle">is startsAt a date-time?</text>
+  <text x="353" y="194" font-size="13" fill="#1f2328" text-anchor="middle">is practitionerId a UUID?</text>
+  <!-- check 2 -->
+  <rect x="486" y="70" width="206" height="150" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="589" y="92" font-size="13" fill="#2b5d8a" text-anchor="middle">application</text>
+  <text x="589" y="114" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">2. permission</text>
+  <line x1="502" y1="126" x2="676" y2="126" stroke="#2b5d8a" stroke-opacity="0.35"/>
+  <text x="589" y="150" font-size="13" fill="#1f2328" text-anchor="middle">the bus, before the handler:</text>
+  <text x="589" y="172" font-size="13" fill="#1f2328" text-anchor="middle">may this actor book</text>
+  <text x="589" y="194" font-size="13" fill="#1f2328" text-anchor="middle">an appointment?</text>
+  <!-- check 3 -->
+  <rect x="722" y="70" width="206" height="150" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="825" y="92" font-size="13" fill="#2f6f4f" text-anchor="middle">domain</text>
+  <text x="825" y="114" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">3. invariants</text>
+  <line x1="738" y1="126" x2="912" y2="126" stroke="#2f6f4f" stroke-opacity="0.35"/>
+  <text x="825" y="150" font-size="13" fill="#1f2328" text-anchor="middle">TimeSlot.create, the calendar:</text>
+  <text x="825" y="172" font-size="13" fill="#1f2328" text-anchor="middle">does the slot end after</text>
+  <text x="825" y="194" font-size="13" fill="#1f2328" text-anchor="middle">it starts? is it still free?</text>
+  <!-- flow -->
+  <line x1="222" y1="145" x2="247" y2="145" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="458" y1="145" x2="483" y2="145" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="694" y1="145" x2="719" y2="145" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- refusals -->
+  <line x1="353" y1="222" x2="353" y2="262" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <line x1="589" y1="222" x2="589" y2="262" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <line x1="825" y1="222" x2="825" y2="262" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <rect x="250" y="264" width="206" height="60" rx="10" fill="#ffffff" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="353" y="289" font-size="14" font-weight="600" fill="#1f2328" text-anchor="middle">422 VALIDATION_FAILED</text>
+  <text x="353" y="310" font-size="13" fill="#1f2328" text-anchor="middle">one issue per path</text>
+  <rect x="486" y="264" width="206" height="60" rx="10" fill="#ffffff" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="589" y="289" font-size="14" font-weight="600" fill="#1f2328" text-anchor="middle">403 FORBIDDEN</text>
+  <text x="589" y="310" font-size="13" fill="#1f2328" text-anchor="middle">the handler never runs</text>
+  <rect x="722" y="264" width="206" height="60" rx="10" fill="#ffffff" stroke="#3d4449" stroke-width="1.5"/>
+  <text x="825" y="289" font-size="14" font-weight="600" fill="#1f2328" text-anchor="middle">INVALID_TIME_SLOT</text>
+  <text x="825" y="310" font-size="13" fill="#1f2328" text-anchor="middle">or SLOT_TAKEN: its own code</text>
+  <!-- legend -->
+  <line x1="32" y1="358" x2="68" y2="358" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="76" y="362" font-size="13" fill="#1f2328">passed: on to the next check</text>
+  <line x1="300" y1="358" x2="336" y2="358" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <text x="344" y="362" font-size="13" fill="#1f2328">refused: answered as an RFC 9457 problem with that code</text>
+</svg>

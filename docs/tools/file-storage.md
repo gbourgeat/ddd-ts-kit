@@ -12,6 +12,13 @@ for anything deployed; keep the directory for one developer's machine.
 
 ## The connectors
 
+The use cases know one port, `FileStorage`; the platform binds one connector at start-up, and
+one contract suite holds every connector to the same behaviour. Changing the connector changes
+no row either: the aggregate keeps a `StoredFile` (key, size, media type, checksum), which names
+no provider, no bucket and no URL.
+
+![The use cases and FileStaging depend on the FileStorage port; InMemoryFileStorage, LocalFileStorage, S3FileStorage and a connector of your own implement it; the first two are served storages whose links the application answers through signedFileRoutes; S3FileStorage reaches AWS S3, MinIO, OVHcloud, Scaleway, Cloudflare R2 and Garage; fileStorageContract runs on every one](../assets/diagrams/file-storage-connectors-one-port.svg)
+
 | | `InMemoryFileStorage` | `LocalFileStorage` | `S3FileStorage` (`@ddd-ts-kit/s3`) |
 |---|---|---|---|
 | For | the tests, the tools | development, one machine | every deployment |
@@ -22,6 +29,52 @@ for anything deployed; keep the directory for one developer's machine.
 | Checksum kept | yes | yes | answered by `put`, not kept |
 | Copy, move | in memory | file system | `CopyObject`, 5 GiB per object |
 | Bound by `init` | in the tests and the tools, whatever `stack.storage` | `stack.storage: local` | `stack.storage: s3`, MinIO in the compose stack |
+
+The row "Signed links" is the difference that matters most once deployed. The memory and the
+directory are **served storages** (`ServedFileStorage`): a link they sign points at the
+application, which must answer it, so every byte passes through the API. A bucket answers its
+own presigned links: the API only signs, without any request to the bucket, and the client
+downloads or uploads straight to the store.
+
+![Left, a served storage: the client asks a use case for a link, which has LocalFileStorage sign a token, receives /files?token=..., and the GET of that link reaches signedFileRoutes, which reads the file from LocalFileStorage. Right, an object store: S3FileStorage presigns the URL without a request, and the client downloads straight from the bucket, which checks the signature and the expiry](../assets/diagrams/file-storage-connectors-signed-links.svg)
+
+`init` writes the platform files for the stack it was given; side by side, the two choices and
+the routes that answer the links of a served storage:
+
+<!-- checked sample -->
+```ts
+import { signedFileRoutes, type Route } from '@ddd-ts-kit/http';
+import { LocalFileStorage, ServedFileStorage, type FileStorage } from '@ddd-ts-kit/kernel';
+import { S3FileStorage, s3ClientOf, type S3Settings } from '@ddd-ts-kit/s3';
+
+// platform/files/open-files.ts with stack.storage: local (FILES_DIRECTORY, FILES_PUBLIC_URL, FILES_SIGNING_SECRET)
+export function openDirectory(config: {
+  readonly directory: string;
+  readonly publicUrl: string;
+  readonly signingSecret?: string;
+}): FileStorage {
+  const { directory, publicUrl, signingSecret } = config;
+
+  // without a secret one is drawn at each start, and the links die with the process
+  return new LocalFileStorage({
+    directory,
+    baseUrl: publicUrl,
+    ...(signingSecret === undefined ? {} : { secret: signingSecret }),
+  });
+}
+
+// platform/files/open-files.ts with stack.storage: s3 (the S3_* variables)
+export function openBucket(config: S3Settings & { readonly bucket: string }): FileStorage {
+  const { bucket, ...settings } = config;
+
+  return new S3FileStorage({ client: s3ClientOf(settings), bucket });
+}
+
+// platform/files/file-routes.ts: GET and PUT /files?token= for a served storage, nothing for a bucket
+export function fileRoutes(storage: FileStorage): readonly Route[] {
+  return storage instanceof ServedFileStorage ? signedFileRoutes(storage) : [];
+}
+```
 
 ## Providers of the S3 protocol
 
@@ -38,6 +91,41 @@ for anything deployed; keep the directory for one developer's machine.
 and checksums only when an operation requires one, since the default of recent SDKs (a
 checksum on every request) is refused by several providers that are not AWS and would bind a
 signed upload link to an empty body.
+
+Moving from one provider to another changes the environment, not the code. The platform of a
+project generated with `--storage s3` reads five variables; what changes is the endpoint and the
+region (the bucket and its access key are created by the infrastructure code of each):
+
+```ini
+# AWS S3: no endpoint, the region of the bucket
+S3_REGION=eu-west-3
+
+# MinIO of the compose stack, in development
+S3_ENDPOINT=http://localhost:9000
+S3_REGION=us-east-1
+
+# OVHcloud Object Storage, Gravelines
+S3_ENDPOINT=https://s3.gra.io.cloud.ovh.net
+S3_REGION=gra
+
+# Scaleway Object Storage, Paris
+S3_ENDPOINT=https://s3.fr-par.scw.cloud
+S3_REGION=fr-par
+
+# Cloudflare R2
+S3_ENDPOINT=https://<account>.r2.cloudflarestorage.com
+S3_REGION=auto
+
+# and, in every case
+S3_BUCKET=acme-files
+S3_ACCESS_KEY_ID=...
+S3_SECRET_ACCESS_KEY=...
+```
+
+What `put` does with the content on its way to a bucket: it is counted and hashed as it streams,
+sent in parts, and refused beyond its limit without leaving anything behind.
+
+![The FileSource stream goes through FileInspection, which counts and hashes it, then the Upload of @aws-sdk/lib-storage sends it in 8 MiB parts, one in memory at a time, and the bucket assembles the object after the last part; put answers the StoredFile with key, size, media type and checksum. Beyond maxBytes, FILE_TOO_LARGE: the upload is aborted, no part is left, and the previous object stays](../assets/diagrams/file-storage-connectors-s3-put.svg)
 
 ## Selection criteria
 
@@ -69,27 +157,58 @@ A connector is a class of the platform (or a package of your own) that extends `
 and passes the contract suite against the real service or its emulator:
 
 ```ts
-// platform/files/gcs-file-storage.ts
+// platform/files/gcs-file-storage.ts: put, written as S3FileStorage writes it
 export class GcsFileStorage extends FileStorage {
-  constructor(private readonly bucket: Bucket) { super(); }
+  constructor(private readonly bucket: Bucket) {
+    super();
+  }
 
   async put(key: string, content: FileSource, options: PutOptions): Promise<StoredFile> {
-    const inspection = new FileInspection({ maxBytes: options.maxBytes });   // counts, hashes, refuses
-    await pipeline(content, inspection, this.bucket.file(assertFileKey(key)).createWriteStream({ contentType: options.mediaType, resumable: true }));
-    return { key, size: inspection.size, mediaType: mediaTypeOf(options.mediaType), checksum: inspection.checksum };
+    const mediaType = mediaTypeOf(options.mediaType);
+    // counts and hashes the content on its way, and fails with FILE_TOO_LARGE beyond maxBytes
+    const inspection = new FileInspection(options.maxBytes === undefined ? {} : { maxBytes: options.maxBytes });
+    const target = this.bucket.file(assertFileKey(key)).createWriteStream({ contentType: mediaType, resumable: true });
+
+    await pipeline(content, inspection, target);
+
+    return { key, size: inspection.size, mediaType, checksum: inspection.checksum };
   }
+
   // get, stat, delete, copy, move, list, signedDownloadUrl (v4 signed URL), signedUploadUrl (v4, content-type signed)
 }
 ```
 
+`FileInspection`, `assertFileKey`, `assertExpiry`, `mediaTypeOf` and `contentDisposition` are
+exported by `@ddd-ts-kit/kernel` for connectors: the rules every connector shares are written
+once. Then the contract suite runs against the emulator, in the integration specs:
+
+<!-- checked sample -->
 ```ts
-// test/integration/gcs-file-storage.contract.spec.ts, against fake-gcs-server (Azurite for Azure)
-fileStorageContract({ describe, it, expect, beforeEach }, {
-  name: 'GcsFileStorage',
-  createStorage: () => new GcsFileStorage(freshBucket()),
-  elapse: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
-});
+import { beforeEach, describe, expect, it } from 'vitest';
+import type { FileStorage } from '@ddd-ts-kit/kernel';
+import { fileStorageContract } from '@ddd-ts-kit/testing/contracts';
+
+// platform/files/gcs-file-storage.ts, the connector above
+declare const GcsFileStorage: new (bucketName: string) => FileStorage;
+// a bucket of fake-gcs-server (Azurite for Azure), new for each test
+declare function freshBucket(): string;
+
+// test/integration/gcs-file-storage.contract.spec.ts
+fileStorageContract(
+  { describe, it, expect, beforeEach },
+  {
+    name: 'GcsFileStorage',
+    createStorage: () => new GcsFileStorage(freshBucket()),
+    // the links of a real service expire on its own clock: the suite really waits
+    elapse: (ms) => new Promise<void>((resolve) => setTimeout(resolve, ms)),
+  },
+);
 ```
+
+A connector whose links point at the application (a served storage) passes `follow:
+followServed(storage)` too, so that the suite follows its links through `openSigned` and
+`acceptSigned` instead of `fetch`; the kit runs its memory and directory connectors that way,
+with a `FixedClock` advanced by `elapse`.
 
 What the suite holds a connector to: a refused write (`FILE_TOO_LARGE`) leaves nothing new and
 keeps the previous content, so write to a temporary object or abort the upload; a missing file

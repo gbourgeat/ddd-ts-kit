@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 410" width="960" height="410" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Optimistic concurrency: two saves from version 3</title>
+  <desc id="desc">Two transactions, A and B, each load invoice inv-1 at version 3. A saves first: its update matches version 3, writes one row and the row moves to version 4. B saves after A has committed: its update still expects version 3, matches no row, and optimisticUpdate throws ConcurrencyError with the code CONCURRENCY_CONFLICT; the transaction of B rolls back.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="410" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Optimistic concurrency: two saves from version 3</text>
+  <!-- lane labels -->
+  <text x="32" y="98" font-size="14" font-weight="700" fill="#2b5d8a">transaction A</text>
+  <text x="32" y="116" font-size="13" fill="#1f2328">pay the invoice</text>
+  <text x="32" y="184" font-size="14" font-weight="700" fill="#5f6b73">row inv-1</text>
+  <text x="32" y="202" font-size="13" fill="#1f2328">table invoices</text>
+  <text x="32" y="258" font-size="14" font-weight="700" fill="#2b5d8a">transaction B</text>
+  <text x="32" y="276" font-size="13" fill="#1f2328">cancel the invoice</text>
+  <!-- transaction A -->
+  <rect x="170" y="74" width="180" height="56" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="260" y="98" font-size="14" font-weight="700" fill="#7a4f9a" text-anchor="middle">findById</text>
+  <text x="260" y="118" font-size="13" fill="#1f2328" text-anchor="middle">reads version 3</text>
+  <rect x="390" y="74" width="250" height="56" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="515" y="98" font-size="14" font-weight="700" fill="#7a4f9a" text-anchor="middle">UPDATE ... WHERE version = 3</text>
+  <text x="515" y="118" font-size="13" fill="#1f2328" text-anchor="middle">1 row written, then COMMIT</text>
+  <line x1="352" y1="102" x2="388" y2="102" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="660" y="98" font-size="13" fill="#1f2328">saved: the aggregate now</text>
+  <text x="660" y="116" font-size="13" fill="#1f2328">carries version 4</text>
+  <!-- the row -->
+  <rect x="170" y="168" width="470" height="40" rx="6" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="405" y="193" font-size="14" fill="#1f2328" text-anchor="middle">version 3</text>
+  <rect x="640" y="168" width="288" height="40" rx="6" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="784" y="193" font-size="14" font-weight="700" fill="#1f2328" text-anchor="middle">version 4</text>
+  <line x1="620" y1="132" x2="620" y2="166" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- transaction B -->
+  <rect x="170" y="244" width="180" height="56" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="260" y="268" font-size="14" font-weight="700" fill="#7a4f9a" text-anchor="middle">findById</text>
+  <text x="260" y="288" font-size="13" fill="#1f2328" text-anchor="middle">reads version 3</text>
+  <rect x="678" y="244" width="250" height="56" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="803" y="268" font-size="14" font-weight="700" fill="#7a4f9a" text-anchor="middle">UPDATE ... WHERE version = 3</text>
+  <text x="803" y="288" font-size="13" fill="#1f2328" text-anchor="middle">0 rows written</text>
+  <line x1="352" y1="272" x2="676" y2="272" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="514" y="264" font-size="13" fill="#1f2328" text-anchor="middle">meanwhile, A commits</text>
+  <line x1="803" y1="242" x2="803" y2="210" stroke="#3d4449" stroke-width="2" stroke-dasharray="4 4" marker-end="url(#arrow)"/>
+  <text x="793" y="231" font-size="13" fill="#1f2328" text-anchor="end">finds version 4: no match</text>
+  <text x="928" y="324" font-size="14" font-weight="700" fill="#1f2328" text-anchor="end">ConcurrencyError, code CONCURRENCY_CONFLICT</text>
+  <text x="928" y="344" font-size="13" fill="#1f2328" text-anchor="end">the transaction of B rolls back: nothing is written</text>
+  <!-- time -->
+  <line x1="170" y1="378" x2="926" y2="378" stroke="#5f6b73" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="170" y="398" font-size="13" fill="#5f6b73">time</text>
+</svg>

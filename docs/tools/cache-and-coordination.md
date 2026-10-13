@@ -3,7 +3,8 @@
 # Cache and coordination: Redis, Dragonfly, Valkey
 
 **Summary.** `@ddd-ts-kit/redis` implements three kernel ports on the Redis protocol: `Cache`,
-`RateLimiter` and `Lock`, plus a wake-up signal for the outbox relay. It uses a common subset
+`RateLimiter` and `Lock`, plus a wake-up signal for the outbox relay, a store of background jobs
+and an event bus on Redis Streams ([message brokers](message-brokers.md)). It uses a common subset
 of commands, so the same code runs on Redis, Valkey and Dragonfly, and the choice of server is
 operational and legal (the three have different licences), not architectural. The important
 part of this page is what these tools do not guarantee: a cache may be stale or absent, a rate
@@ -27,6 +28,32 @@ bound at the composition root. `@ddd-ts-kit/redis` is refused in `domain/` and `
 even when an allow-list names it (`layer/domain-purity`, `layer/application-inward` in
 [ARCHITECTURE.md](../ARCHITECTURE.md)). Without a server, `kernelModule()` binds in-memory
 implementations that are correct for one process and for tests.
+
+![A gateway through the cached aspect, a route or a use case that is rate limited, and the job scheduler depend on the Cache, RateLimiter and Lock ports of the kernel; the in-memory adapters bound by kernelModule or the adapters of @ddd-ts-kit/redis implement them, the latter on one connection to Redis, Valkey or Dragonfly](../assets/diagrams/cache-and-coordination-ports-and-adapters.svg)
+
+Moving from one instance to several changes the platform and nothing else. The example
+application binds the three Redis adapters on one connection, each under its own namespace, as
+`src/platform/redis/open-redis.ts` does:
+
+<!-- checked sample -->
+```ts
+import { kernelModule } from '@ddd-ts-kit/di';
+import { Metrics } from '@ddd-ts-kit/kernel';
+import { RedisCache, RedisLock, RedisRateLimiter, connectRedis } from '@ddd-ts-kit/redis';
+
+declare const redisUrl: string;
+
+// redis://..., the same for Redis, Valkey and Dragonfly. Commands time out after two seconds.
+const redis = connectRedis(redisUrl);
+
+// src/platform/: the in-memory defaults of kernelModule() replaced by adapters every instance shares.
+export const kernel = kernelModule({
+  cache: (resolve) => new RedisCache(redis.client, { namespace: 'scheduling', metrics: resolve(Metrics) }),
+  // A server that is away lets requests through rather than refusing them all.
+  rateLimiter: new RedisRateLimiter(redis.client, { namespace: 'scheduling:rate', onError: 'allow' }),
+  lock: new RedisLock(redis.client, { namespace: 'scheduling:lock' }),
+});
+```
 
 ## The three servers
 
@@ -79,21 +106,105 @@ From [`packages/redis/README.md`](../../packages/redis/README.md) and
   (one connection behind `REDIS_URL`) and rebinds the kernel `Cache`, `RateLimiter` and `Lock`
   to it in the platform module, with the relay signal for the outbox; the compose file runs
   Dragonfly 2.0.2 for local development. Without the option the three stay in the memory of
-  the process.
+  the process. `init --queue redis` binds `RedisJobStore` for the background jobs, and
+  `init --broker redis` the event bus on Redis Streams.
+- **Background jobs**: `RedisJobStore` is the `JobStore` of `@ddd-ts-kit/scheduling` on the
+  same servers. Redis cannot join the transaction of the database: a job added inside a unit
+  of work is written once it committed, and a process that dies in between loses that write
+  silently. A write Redis refuses after the commit is passed to `onLostJob`, which
+  `reportLostJobs(logger, errors)` logs and reports. With a database, the jobs table of the ORM
+  package is the safer store ([background jobs](../concepts/background-jobs.md)).
 
 **Cache.** Typed keys, a namespace per context or application, time to live in milliseconds.
 A failing server is a miss on read and a dropped write by default: the application runs as if
 it had no cache, and `cache_errors_total` is the signal to watch. `getOrLoad` protects against
 a stampede: callers of one process share a computation, and with a lock only one process
-computes while the others wait up to `waitMs`, then compute themselves. It never fails because
-of the lock. The `cached` aspect refuses to wrap a repository or a use case unless explicitly
-allowed: an aggregate served from a cache hides that it is stale, and the next command would
-decide on old state.
+computes while the others wait up to `waitMs` for the lock, then answer the value it stored, or
+compute it themselves when it is still missing. It never fails because of the lock. The
+`cached` aspect refuses to wrap a repository or a use case unless explicitly allowed: an
+aggregate served from a cache hides that it is stale, and the next command would decide on old
+state.
+
+![getOrLoad on a miss: a computation already running in this process is shared; otherwise, without the lock option of RedisCache, it runs load and stores the value with its time to live; with it, it takes the lock, waiting up to waitMs, reads the entry again and answers it when another process filled it meanwhile, or runs load, stores the value and releases the lock](../assets/diagrams/cache-and-coordination-get-or-load.svg)
+
+What to cache, and where. Instead of caching what a command decides on:
+
+```ts
+// AspectNotAllowedError as soon as the repository is wrapped
+builder.bind(AppointmentRepository).toClass(KnexAppointmentRepository).as('repository')
+  .with(cached({ key: (method, [id]) => `appointment:${String(id)}`, ttlMs: 60_000 }));
+```
+
+cache what is read from elsewhere and may be a little old, from the composition root, so that
+the gateway itself knows nothing of it:
+
+<!-- checked sample -->
+```ts
+import { cached } from '@ddd-ts-kit/aspects';
+import type { Cache } from '@ddd-ts-kit/kernel';
+
+interface WorkingHours {
+  readonly practitionerId: string;
+  readonly opensAt: string;
+  readonly closesAt: string;
+}
+
+// contexts/availability/application/ports/calendar.gateway.ts
+export abstract class CalendarGateway {
+  abstract workingHoursOf(practitionerId: string): Promise<WorkingHours>;
+}
+
+declare const httpCalendars: CalendarGateway; // the adapter that calls the calendars context
+declare const cache: Cache; // RedisCache with several instances, InMemoryCache with one
+
+// src/platform/: five minutes of staleness are acceptable for working hours.
+export const calendars = cached({
+  key: (method, [practitionerId]) => (method === 'workingHoursOf' ? `working-hours:${String(practitionerId)}` : undefined),
+  ttlMs: 5 * 60_000,
+  cache,
+})(httpCalendars, { kind: 'gateway', context: 'availability' });
+```
+
+Concurrent identical calls share one call to the calendars context; a failed call is not cached;
+a cache that fails is a miss. With a container, the same aspect goes on the binding:
+`.as('gateway').with(cached({ ... }))`.
 
 **Rate limiter.** An exact sliding window: one sorted-set member per allowed call, decided in
 one script, so concurrent instances cannot both take the last place. A refused call is not
 counted. `onError` chooses between `throw` (default), `allow` (usual in front of an API) and
 `deny` (for limits that are a security control).
+
+A limit that is a business rule ("three booking attempts a minute per client") belongs to the
+use case, which depends on the port and refuses with a code of its own:
+
+<!-- checked sample -->
+```ts
+import { ConceptError, RateLimiter } from '@ddd-ts-kit/kernel';
+
+export class BookingError extends ConceptError {
+  static tooManyAttempts(retryAfterMs: number) {
+    return BookingError.refusal('TOO_MANY_BOOKING_ATTEMPTS', 'Too many booking attempts, try again later.', {
+      retryAfterMs,
+    });
+  }
+}
+
+// contexts/appointments/application/: called by the handler of BookAppointment before anything else.
+export class BookingAttempts {
+  constructor(private readonly limiter: RateLimiter) {}
+
+  async admit(clientId: string): Promise<void> {
+    const decision = await this.limiter.consume(`booking:${clientId}`, { limit: 3, windowMs: 60_000 });
+
+    if (!decision.allowed) {
+      throw BookingError.tooManyAttempts(decision.retryAfterMs);
+    }
+  }
+}
+```
+
+In a spec, `InMemoryRateLimiter` on a `FixedClock` is its fake: advance the clock by a minute
+and the fourth attempt is admitted.
 
 **Lock.** The single-instance algorithm of the Redis documentation: `SET NX PX` with a random
 owner, release by compare-and-delete, a fencing token incremented in the same script.
@@ -113,20 +224,7 @@ exist at once:
 - the server restarts without persistence, or evicts the key under memory pressure;
 - clocks on the server side jump.
 
-```mermaid
-sequenceDiagram
-  participant A as Instance A
-  participant L as Lock server
-  participant B as Instance B
-  A->>L: acquire(job, ttl 60 s)
-  L-->>A: held, token 41
-  Note over A: paused 90 s
-  L-->>L: key expires
-  B->>L: acquire(job, ttl 60 s)
-  L-->>B: held, token 42
-  Note over A,B: both believe they hold the lock
-  A->>A: resumes and keeps working
-```
+![Instance A acquires the lock with a time to live of 60 seconds and gets token 41, then is paused for 90 seconds; the key expires; instance B acquires it and gets token 42 and writes with it; A resumes and writes with token 41, which a store that remembers the highest token refuses](../assets/diagrams/cache-and-coordination-two-holders.svg)
 
 The **fencing token** narrows this for resources able to compare: a store that remembers the
 highest token it has seen refuses the write carrying 41 after it saw 42. It is not a proof
@@ -135,8 +233,68 @@ lock is also **not re-entrant and not renewed**: choose `ttlMs` above the worst 
 work, or split the work. A server that is away makes `acquire` reject, since nobody can know
 whether the key is held.
 
+A store compares tokens with a condition on its write. Here the row of an export keeps the
+token of the holder that wrote it last, and a holder whose lock expired changes nothing:
+
+<!-- checked sample -->
+```ts
+import type { LockHandle } from '@ddd-ts-kit/kernel';
+
+interface Database {
+  execute(sql: string, values: readonly unknown[]): Promise<{ readonly rowCount: number }>;
+}
+
+/** Answers false when a newer holder of the lock already wrote: this one was paused past its ttlMs. */
+export async function writeExport(database: Database, holder: LockHandle, content: string): Promise<boolean> {
+  const { rowCount } = await database.execute(
+    'update exports set content = $1, fencing_token = $2 where id = $3 and fencing_token <= $2',
+    [content, holder.fencingToken, 'nightly'],
+  );
+
+  return rowCount === 1;
+}
+```
+
 Hence the rule the kernel states of `Lock` itself: an efficiency tool, never the guard of an
-invariant.
+invariant. Instead of guarding the no-double-booking invariant with it:
+
+```ts
+// a pause past five seconds, a failover, an eviction: and two bookings of one slot get in
+const handle = await lock.acquire(`slot:${practitionerId}:${startsAt}`, { ttlMs: 5_000 });
+if (handle === undefined) {
+  throw AppointmentError.slotTaken(practitionerId, startsAt);
+}
+await appointments.save(Appointment.book(practitionerId, startsAt));
+```
+
+leave the invariant to the aggregate and to a constraint of the database (the exclusion
+constraint of the [persistence page](persistence.md)), and keep the lock for work whose double
+run only costs work, such as sending this morning's reminders through a command that skips
+what was already sent:
+
+<!-- checked sample -->
+```ts
+import type { Lock } from '@ddd-ts-kit/kernel';
+
+declare function sendTodaysReminders(): Promise<void>; // idempotent: a reminder already sent is skipped
+
+export async function sendRemindersOnce(lock: Lock, day: string): Promise<void> {
+  const handle = await lock.acquire(`notifications.send-reminders:${day}`, { ttlMs: 15 * 60_000 });
+
+  if (handle === undefined) {
+    return; // another instance is sending them, or has sent them
+  }
+
+  // Not released at the end: an instance whose timer fires a little later finds the key still
+  // held and sends nothing. The lock frees itself after ttlMs.
+  await sendTodaysReminders();
+}
+```
+
+A scheduled job declared `singleInstance` gets this from the scheduler of
+`@ddd-ts-kit/scheduling`, which takes the lock under `job:<name>:<scheduled instant>` before each
+occurrence; the others record `skipped-locked`
+([scheduled jobs](../concepts/scheduled-jobs.md)).
 
 | Need | Right tool | Why |
 |---|---|---|
