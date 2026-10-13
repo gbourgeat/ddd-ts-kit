@@ -12,7 +12,7 @@ describe('init on Hono and TypeBox', () => {
     const root = initProject('--http', 'hono', '--validation', 'typebox', '--context', 'billing:core');
     const manifest = readJson(root, 'package.json');
 
-    expect(read(root, SERVER)).toContain('mountHono(app, withDocumentation(served.routes, config), served.boundary);');
+    expect(read(root, SERVER)).toContain('mountHono(app, withDocumentation(served.routes, config, served.boundary), served.boundary);');
     expect(read(root, SERVER)).toContain('const server = serve({ fetch: app.fetch, port }, () => resolve(server));');
 
     expect(jsonAt(manifest, 'dependencies')).toMatchObject({
