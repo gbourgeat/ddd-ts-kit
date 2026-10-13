@@ -97,6 +97,7 @@ The realistic sequence for an order-taking service, each line in the order it is
 |---|---|---|---|---|
 | `npm run build`, `npm start` | compiles, rewrites the aliases of `dist/`, runs it with plain Node | to ship | `dist/` | the image |
 | `docker build .` | the image of the `Dockerfile` that `init` wrote (the pipeline builds it without pushing) | to ship | an image | `npm run db:migrate` against the target database, then the deployment |
+| `npx ddd-ts-kit sdk` (or `init --sdk`) | generates the typed client of each document of the contract under `clients/<document>`, wires its scripts, and keeps it current (`docs:generate` runs it, `docs:check` compares it) | when another team, a front end or a test calls the API | one workspace package per document, built by `npm run sdk:build` | `npm publish --workspace clients/<document>` by hand, see [the client SDK](../tools/client-sdk.md) |
 | `npx ddd-ts-kit generate worker`, `generate service <context>` | a process for the jobs, or one context run alone | when the jobs or one context must scale apart | `src/apps/<name>/main.ts` | `/ddd-ts-kit:extract-service` |
 
 ## Migrate after a kit upgrade
@@ -105,7 +106,7 @@ The realistic sequence for an order-taking service, each line in the order it is
 |---|---|---|---|---|
 | read [CHANGELOG.md](../../CHANGELOG.md) | what changed and what to do | before upgrading | the steps of the version | update the `@ddd-ts-kit/*` and `ddd-ts-kit` versions |
 | `npx ddd-ts-kit init --force` | rewrites the files `init` owns, keeps the config and wires the contexts again | after the upgrade | the platform and pipeline files of the new version, and notes | `npm run verify` |
-| `npx ddd-ts-kit controllers`, `error-factories --plan` then `--apply` | moves function routes to controllers, error classes to factories | when the project adopts those forms | the rewritten files and the config key | `npx ddd-ts-kit docs`, `npm run verify` |
+| `npx ddd-ts-kit controllers`, `error-factories --plan` then `--apply`, `value-objects` | moves function routes to controllers, error classes to factories, value objects from a `Result` to factories that throw | when the project adopts those forms | the rewritten files and the config key | `npx ddd-ts-kit docs`, `npm run verify` |
 | `npx ddd-ts-kit depcruise-config --write`, `npx ddd-ts-kit docs` | regenerate what derives from the config | after any change of the config | `.dependency-cruiser.cjs`, the generated documents | `npm run verify` |
 
 ## When something is refused
@@ -136,9 +137,10 @@ Usage
                   [--broker none|rabbitmq|kafka|nats|redis|custom] [--cache none|redis] [--audit on|off]
                   [--errors none|sentry] [--logger stdout|pino|winston] [--style declared|explicit] [--assembly barrel|discovery]
                   [--dependencies signature|listed] [--refusals factories|classes]
-                  [--routes controllers|functions] [--tenancy none|shared-table]
+                  [--routes controllers|functions] [--value-objects throwing|result] [--literals named|free]
+                  [--tenancy none|shared-table]
                   [--package-manager npm|pnpm] [--allow-no-outbox "<reason>"] [--import-alias '$<name>/']
-                  [--import-extension none|js]
+                  [--import-extension none|js] [--sdk]
                   [--context <name>:<core|supporting|generic>]... [--dry-run] [--force]
   ddd-ts-kit generate <kind> ... [--term "<Term>=<meaning>"]... [--allow-name] [--local-only] [--dry-run] [--force]     (alias: g)
   ddd-ts-kit generate --help --json
@@ -148,10 +150,12 @@ Usage
   ddd-ts-kit todo [<context>]
   ddd-ts-kit worker-scope <context> [--worktree <path>] [--branch <name>] [--dry-run]
   ddd-ts-kit docs [--check]
+  ddd-ts-kit sdk [--check] [--dry-run]
   ddd-ts-kit depcruise-config [--check|--write]
   ddd-ts-kit build-aliases [--project <tsconfig>]
   ddd-ts-kit error-factories --plan | --apply [--dry-run]
   ddd-ts-kit controllers [<context>] [--dry-run]
+  ddd-ts-kit value-objects [--dry-run]
   ddd-ts-kit affected [--base <git-ref>] [--head <git-ref>] [--format text|json|github|env]
   ddd-ts-kit check [paths...] [--rule <id>]... [--format text|json|github|gitlab] [--changed-since <git-ref>] [--self]
   ddd-ts-kit check --clean-only <dir>... [--rule <id>]... [--format text|json|github]
@@ -170,18 +174,27 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
   error-factories  moves a project from one class per error to static factories on one error class per
                    concept: --plan writes error-factories.plan.json, where each class is given its concept;
                    --apply follows it (classes, specs, every usage, "stack.refusals" in the config)
+  value-objects    moves the value objects of a project from a Result to factories that return the value or
+                   throw: every create returning Result<T, E> returns T, err(..) is thrown, unwrap(..) of
+                   them goes, specs assert expectRefusal(() => ..), "stack.valueObjects" becomes throwing
   controllers      moves the function routes of a project, or of one context, to controller classes: each
                    <name>.route.ts becomes <resource>/<name>/<name>.controller.ts behind the route group of
                    its resource, its schema files and its spec follow; a context is turned whole or not at all
   describe         one context as facts: use cases, routes, events, ports, policies, gateways, dependencies
   status           the next step of docs/architecture/plan.md, the slices of docs/architecture/slices.md by
                    status and by owner, and the TODO(domain), TODO(platform) and it.todo left in each context
+  sdk              the typed client of each document of the contract, a workspace package under
+                   clients/<document> without runtime dependency: typed errors keyed by the error codes,
+                   credentials per security scheme; records "sdk" in the config the first time, wires the
+                   scripts (docs:generate regenerates it, docs:check compares it, ci:build builds it);
+                   --check writes nothing and exits 1 while a client differs from its contract
   todo             those markers as file:line, in the project or in one context
   worker-scope     a git worktree on the branch build/<context> (by default ../<project>-<context>), its
                    .ddd-ts-kit/worker.json, and the briefing of the worker of that context
   --commit-size    the files and lines about to be committed against "commit" in the config (20 files and
                    600 lines by default, generated files not counted); --staged reads the index only;
                    advisory, --strict exits 1 when over
+  --sdk            init records "sdk" in the config and generates the clients with the project
   --local-only     generate refuses, and writes nothing, when the kind would write outside its context;
                    "generate --help --json" says which kinds do
 
@@ -191,6 +204,7 @@ Kinds
   builder <context> <Aggregate>
   entity <context> <Name> [--term "<Term>=<meaning>"]...
   value-object <context> <Name> [--term "<Term>=<meaning>"]...   (alias: vo)
+  vocabulary <context> <Name> --value <value> [--value <value>]...
   domain-event <context> <Aggregate> <Fact> [--term "<Term>=<meaning>"]...
   error <context> <Concept> <refusal> [--code CODE] [--term "<Term>=<meaning>"]...   (alias: refusal)
   domain-error <context> <Name> [--code CODE]

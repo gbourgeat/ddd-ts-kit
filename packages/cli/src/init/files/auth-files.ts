@@ -6,8 +6,8 @@ import { when } from './when.js';
 
 /** What each authorization model needs next to its adapter of the `Authorizer` port. */
 const AUTHORIZATION_MODEL: Readonly<Record<string, readonly string[]>> = {
-  rbac: ['roles.ts'],
-  abac: ['attribute-policies.ts'],
+  rbac: ['role.ts', 'roles.ts'],
+  abac: ['role.ts', 'attribute-policies.ts'],
   rebac: [
     'relationship-schema.ts',
     'create-tuple-store.ts',

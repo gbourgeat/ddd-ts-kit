@@ -1,4 +1,4 @@
-import { type Clock, unwrap } from '@ddd-ts-kit/kernel';
+import { type Clock } from '@ddd-ts-kit/kernel';
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
 import { CalendarError } from '@/contexts/scheduling/domain/errors/calendar.error';
 import type { CalendarRepository } from '@/contexts/scheduling/domain/repositories/calendar.repository';
@@ -20,9 +20,9 @@ export class AddExceptionHandler implements CommandHandler<AddExceptionCommand> 
       throw CalendarError.unknown(command.calendarId);
     }
 
-    const ranges = command.ranges.map(({ start, end }) => unwrap(Range.create(start, end)));
+    const ranges = command.ranges.map(({ start, end }) => Range.create(start, end));
 
-    target.addException(unwrap(Exception.create(command.day, ranges)), this.clock.now());
+    target.addException(Exception.create(command.day, ranges), this.clock.now());
 
     await this.calendarRepository.save(target);
 

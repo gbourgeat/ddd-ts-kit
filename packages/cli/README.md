@@ -50,10 +50,11 @@ ddd-ts-kit init [--http express|fastify|nest|none]
                 [--errors none|sentry] [--logger stdout|pino|winston]
                 [--style declared|explicit] [--assembly barrel|discovery]
                 [--dependencies signature|listed] [--refusals factories|classes]
-                [--routes controllers|functions] [--tenancy none|shared-table]
+                [--routes controllers|functions] [--value-objects throwing|result]
+                [--tenancy none|shared-table]
                 [--package-manager npm|pnpm]
                 [--allow-no-outbox "<reason>"] [--import-alias '$<name>/']
-                [--import-extension none|js]
+                [--import-extension none|js] [--sdk]
                 [--context <name>:<core|supporting|generic>]...
                 [--dry-run] [--force]
 ```
@@ -163,6 +164,12 @@ file. `--routes functions`, or a config without the key, keeps one `defineRoute`
 route, listed in `<context>.routes.ts`, as 0.1 to 0.3 wrote them; `controllers` moves a
 project from one to the other, a context at a time.
 
+**A value object throws its refusals.** `init` writes `"stack.valueObjects": "throwing"`:
+`generate value-object` writes a `create` that returns the value object or throws the refusal of
+its concept, and a spec that asserts it with `expectRefusal(() => ..)`. `--value-objects result`,
+or a config without the key, keeps a `create` returning a `Result` that the caller unwraps, as 0.1
+to 0.5 wrote it; `value-objects` moves a project from one to the other.
+
 **Domain events leave with the save.** A generated command handler builds or loads its aggregate,
 calls one intention method, `await repository.save(aggregate)` and returns: no `pullEvents()`, and
 no `DomainEventDispatcher` in a handler or in a repository adapter, which only persists. The events
@@ -257,6 +264,7 @@ ddd-ts-kit generate --help --json
 | `builder` | `<context> <Aggregate>` | `test/builders/<name>.builder.ts`, a class extending `Builder` |
 | `entity` | `<context> <Name>` | entity, spec |
 | `value-object` (`vo`) | `<context> <Name>` | value object, spec |
+| `vocabulary` | `<context> <Name> --value <value> [--value <value>]...` | `domain/vocabularies/<name>.vocabulary.ts`: an object `as const` of the values, keyed by each value in PascalCase, and the union type of the same name; run again, adds the values the file does not hold |
 | `domain-event` | `<context> <Aggregate> <Fact>` | event named `<context>.<aggregate>.<fact>`, spec |
 | `error` (`refusal`) | `<context> <Concept> <refusal> [--code CODE] [--term ...]...` | a static factory `<refusal>` on `domain/errors/<concept>.error.ts`, the class of the errors of that concept (created when absent, extending `ConceptError`), and its case in `test/unit/<concept>.error.spec.ts`. The factory is added after the last one; run again, the command changes nothing. `<Concept>` is a term of the glossary (`--term` adds it). The code is the name of the refusal in constant case, with the concept before it when the name is one word or a code of the kit (`Appointment notFound` sets `APPOINTMENT_NOT_FOUND`); `--code` takes one of the forms `errors/factory-name` accepts. Refused: a name such as `create` or `error1`, and a code already set in the context |
 | `domain-error` | `<context> <Name> [--code CODE]` | one class per error with a stable code, spec: the form of a project whose config says `"stack.refusals": "classes"` or nothing. Refused under `factories`, with the `generate error` command to run instead |
@@ -267,7 +275,7 @@ ddd-ts-kit generate --help --json
 | `port` | `<context> <Name>` | `application/ports/<name>.port.ts`, one abstract class, and its fake |
 | `route` | `<context> <UseCaseName> --method <GET\|POST\|PUT\|PATCH\|DELETE> --path <p> [--command\|--query] [--group <Name>] [--mapper] [--serializer]` | under `"stack.routes": "controllers"`: a controller class in `presentation/http/<resource>/<use-case>/` (the resource is the first segment of the path), depending on `CommandBus` or `QueryBus`, behind the route group of its resource, written with it when it is new (`<resource>.routes.ts`: prefix, tag, `Authenticated`); a public use case stands in no group and says `guards: [Public]`; with class-validator one class per file (`<use-case>.params.ts`, `.body.ts`, `.answer.ts`, `.accepted.ts`, `.line.ts`); `--mapper` and `--serializer` add a request mapper and a serializer the controller is given; a spec; no registration in a declared project, a controller built by hand in `<context>.routes.ts` (the module file with hand wiring) in an explicit one. Under `"functions"`: a `defineRoute` function, its spec, its registration in `<context>.routes.ts`, and `<use-case>-<role>.dto.ts` classes |
 | `controller` | the same arguments as `route` | the controller class, whatever `stack.routes` says: for a project of function routes that writes its next route as a class |
-| `route-group` (`group`) | `<context> <Name> [--prefix <path>] [--group <ParentName>] [--public \| --role <role>]` | `presentation/http/<name>.routes.ts`: an empty class carrying `@RouteGroup`, behind `Authenticated` unless `--public` or `--role` says otherwise; with `--group` it refines that group and inherits from it |
+| `route-group` (`group`) | `<context> <Name> [--prefix <path>] [--group <ParentName>] [--public \| --role <role>]` | `presentation/http/<name>.routes.ts`: an empty class carrying `@RouteGroup`, behind `Authenticated` unless `--public` or `--role` says otherwise (`HasRole(Role.Admin)`, the role read from the vocabulary of the platform, `<platformDir>/auth/role.ts`, which gets it when it does not hold it); with `--group` it refines that group and inherits from it |
 | `guard` | `<context> <Name>` | `presentation/http/guards/<name>.guard.ts`: a declared guard class to fill, and its spec |
 | `integration-event` | `<context> <Aggregate> <Fact> [--version n]` | `defineIntegrationEvent` declaration in the published language (its payload in `<event>.v<n>.payload.ts` with class-validator or a schema of your own), index export, the publisher `application/integration/publishers/<event>.publisher.ts`, spec, registration, a line of `platform/audit/audited-events.ts` |
 | `integration-handler` (`consumer`) | `<context> <upstreamContext> <eventType>` | `application/integration/handlers/<name>.integration-handler.ts`, a class `<Name>IntegrationHandler` depending on `CommandBus`, its spec, its idempotent subscription under the consumer name `<context>.<name>`; refused unless the upstream is declared |
@@ -435,6 +443,27 @@ Regenerates what is derived from the config and the code, and nothing else:
 AsyncAPI document need the code of the project to run, so they are produced by
 `scripts/events.ts` (`npm run events:generate`, part of `npm run docs:generate`).
 
+## sdk
+
+```
+ddd-ts-kit sdk [--check] [--dry-run]
+```
+
+Generates the typed client of each document of the OpenAPI contract, read from the committed
+`openapi/*.yaml` (or `.json`): a workspace package under `clients/<document>` (`clients/api` for
+the whole contract), with no runtime dependency. Each operation is a method of `createClient()`
+and a function of its own; its outcome is typed by status, a refusal by the error codes the
+contract lists for it (`x-error-codes`); a credential is given per security scheme. The first
+run records `"sdk"` in the config (`init --sdk` does it for a new project) and wires the
+project: the workspace, the `paths` entry of each client in `tsconfig.json`, the exclusions of
+Biome and knip, the scripts `sdk:generate` and `sdk:build`, and `docs:generate`, `docs:check`,
+`ci:docs`, `ci:build` extended. The package.json of a client keeps its version and the keys a
+team adds. Under npm, while `package-lock.json` does not list a client yet, it says to run
+`npm install` and commit the lock, which `npm ci` would refuse. `--check` writes nothing, names
+each stale file (and a client the lock misses) and exits 1. The comparison with
+openapi-typescript, hey-api and orval, and how to publish a client:
+[docs/tools/client-sdk.md](../../docs/tools/client-sdk.md).
+
 ## depcruise-config
 
 ```
@@ -445,6 +474,16 @@ Prints the dependency-cruiser configuration derived from `ddd-ts-kit.config.json
 published languages, declared upstreams, allowed packages, cycles and orphans. `--write` saves
 it as `.dependency-cruiser.cjs`; `--check` exits 1 when the file is missing or stale, which is
 what `npm run depcruise` runs first. Edit the config, not the file.
+
+## value-objects
+
+```sh
+ddd-ts-kit value-objects [--dry-run]
+```
+
+Moves the value objects of a project from a `Result` to factories that return the value or
+throw (`"stack.valueObjects": "throwing"`). What it rewrites, and what it leaves to a person, is
+in [CONFIG.md](../../docs/CONFIG.md#stack).
 
 ## controllers
 
@@ -699,6 +738,7 @@ saying what to do instead. Exit code 1 when there is at least one error.
 | `events/name-format` | an event name that is not `<context>.<aggregate>.<fact>` in kebab-case with the right context |
 | `events/defined-in-published-language` | `defineIntegrationEvent` outside a published language, without a payload, twice for one version; an event described by hand |
 | `language/glossary-term` | a class of the model named with a word the glossary of its context does not define; an empty glossary; under `"stack.refusals": "factories"`, an error class of `domain/errors/` too |
+| `language/declared-vocabulary` | a string literal whose value is a value of a closed vocabulary the project declares (an object `as const` exported with the union type of its name, a permission set of `definePermissions`), outside the file that declares it, in the place that speaks its language (its context; the platform and the route groups for the platform; everywhere for a permission id or the shared kernel); tests, published languages and the relationship schema are not judged; under `"stack.literals": "named"` |
 | `language/no-technical-name` | `Manager`, `Helper`, `Util`, `Utils`, `Data`, `Info`, `Processor`, `Wrapper`, `Impl`, `Base`, `Abstract`, `Dto`, `Entity`, `Model` in a type declared under `domain/` or in a use case folder |
 | `purity/no-system-clock` | `new Date()` without argument, `Date.now()`, `performance.now()` in `domain/` or `application/` |
 | `purity/no-ambient-randomness` | `Math.random`, the random source of `crypto`, an id library |
@@ -746,10 +786,11 @@ saying what to do instead. Exit code 1 when there is at least one error.
 | `errors/code-unique` | under `"stack.refusals": "factories"`, in the `domain/errors/` of a context: a code set a second time, by a factory (`refusal('CODE', ..)`) or by a class (`readonly code = 'CODE'`), with the file and line of the first. The same code in two contexts is not reported |
 | `errors/known-code` | under `"stack.refusals": "factories"`, in a `*.route.ts`: a code of the `errors` list that no refusal of the context of the route sets, that no class outside the contexts sets, and that is not a code of the kit |
 
-Five more ids belong to `@ddd-ts-kit/eslint-plugin`, which reads the syntax tree where this
+More ids belong to `@ddd-ts-kit/eslint-plugin`, which reads the syntax tree where this
 checker reads text: `domain/aggregate-encapsulation`, `domain/value-object-immutability`,
-`domain/no-generic-error`, `application/handler-shape` and
-`application/command-query-separation`. `rules` and `explain` show them as "checked by
+`domain/no-generic-error`, `application/handler-shape`,
+`application/command-query-separation` and `clean/no-magic-number` among them (`ddd-ts-kit rules`
+lists them all). `rules` and `explain` show them as "checked by
 @ddd-ts-kit/eslint-plugin", the config accepts them under `rules`, and `check --rule` on one of
 them answers with `npm run lint`. One id, `clean/formatted`, belongs to the formatter: `rules`
 and `explain` show it as "checked by Biome", and `check --rule` on it answers with

@@ -16,6 +16,7 @@ import {
 } from '@/contexts/analytics/application/ports/occupancy-reader.port';
 import { OccupancyMeasureService } from '@/contexts/analytics/domain/services/occupancy-measure.service';
 import { ANALYTICS_SCHEMA } from '@/contexts/analytics/infrastructure/persistence/analytics.schema';
+import { OutcomeState } from '@/contexts/analytics/domain/vocabularies/outcome-state.vocabulary';
 
 /** The outcomes of the network of the work: the occupancy of another network is never measured here. */
 const OUTCOMES = { schema: ANALYTICS_SCHEMA, table: 'outcomes' };
@@ -28,7 +29,7 @@ const MEASURED = {
   ...GROUPED,
   heldMinutes: 'held_minutes',
   appointmentsHeld: 'appointments_held',
-  completed: 'completed',
+  completed: OutcomeState.Completed,
   noShows: 'no_shows',
   cancelledByPatient: 'cancelled_by_patient',
   cancelledByPractice: 'cancelled_by_practice',
@@ -112,10 +113,10 @@ function measured(database: KnexContext, scope: ExecutionScope, plan: CriteriaPl
         holding,
       ),
     database.executor().raw(`(count(*) filter (where state in (${among})))::integer as appointments_held`, holding),
-    counted(database, 'completed', 'completed'),
-    counted(database, 'no-show', 'no_shows'),
-    counted(database, 'cancelled-by-patient', 'cancelled_by_patient'),
-    counted(database, 'cancelled-by-practice', 'cancelled_by_practice'),
+    counted(database, OutcomeState.Completed, OutcomeState.Completed),
+    counted(database, OutcomeState.NoShow, 'no_shows'),
+    counted(database, OutcomeState.CancelledByPatient, 'cancelled_by_patient'),
+    counted(database, OutcomeState.CancelledByPractice, 'cancelled_by_practice'),
     database.executor().raw('(count(*) over ())::integer as lines'),
   );
 }

@@ -1,7 +1,9 @@
 import type { DomainEvent } from '@ddd-ts-kit/kernel';
 
 export class WaitlistJoined implements DomainEvent {
-  readonly name = 'scheduling.waitlist.joined';
+  static readonly eventName = 'scheduling.waitlist.joined';
+
+  readonly name = WaitlistJoined.eventName;
 
   constructor(
     readonly aggregateId: string,

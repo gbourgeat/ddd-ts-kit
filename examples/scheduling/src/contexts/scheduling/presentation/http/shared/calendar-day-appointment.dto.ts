@@ -1,4 +1,5 @@
 import { IsIn, IsString } from 'class-validator';
+import { AppointmentStatus } from '@/contexts/scheduling/domain/vocabularies/appointment-status.vocabulary';
 
 /** The appointment behind a held slot, for whoever may read it. */
 export class CalendarDayAppointmentDto {
@@ -11,6 +12,6 @@ export class CalendarDayAppointmentDto {
   @IsString()
   appointmentTypeId = '';
 
-  @IsIn(['requested', 'booked'])
-  status: 'requested' | 'booked' = 'booked';
+  @IsIn([AppointmentStatus.Requested, AppointmentStatus.Booked])
+  status: typeof AppointmentStatus.Requested | typeof AppointmentStatus.Booked = AppointmentStatus.Booked;
 }

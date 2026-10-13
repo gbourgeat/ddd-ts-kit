@@ -1,4 +1,3 @@
-import { unwrap } from '@ddd-ts-kit/kernel';
 import { Builder, sequence, type Defaults } from '@ddd-ts-kit/testing';
 import { Waitlist } from '@/contexts/scheduling/domain/aggregates/waitlist.aggregate';
 import { Waiter } from '@/contexts/scheduling/domain/value-objects/waiter.vo';
@@ -46,7 +45,7 @@ export class WaitlistBuilder extends Builder<WaitlistIngredients, Waitlist> {
     waiters.forEach(([patientId, appointmentTypeId], index) => {
       const joinedAt = new Date(bornAt.getTime() + (index + 1) * MINUTE);
 
-      built.join(unwrap(Waiter.create({ patientId, appointmentTypeId, joinedAt })), joinedAt);
+      built.join(Waiter.create({ patientId, appointmentTypeId, joinedAt }), joinedAt);
     });
 
     built.pullEvents();

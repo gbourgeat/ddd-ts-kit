@@ -1,4 +1,5 @@
 import type { AuditRow, TenantRow } from '@ddd-ts-kit/knex';
+import type { DelegationEndCause } from '@/contexts/identity/domain/vocabularies/delegation-end-cause.vocabulary';
 
 export interface DelegationColumns {
   readonly id: string;
@@ -9,7 +10,7 @@ export interface DelegationColumns {
   readonly availability_included: boolean;
   readonly ends_at: Date | null;
   readonly ended_at: Date | null;
-  readonly end_cause: 'revoked' | 'expired' | 'member-removed' | null;
+  readonly end_cause: DelegationEndCause | null;
 }
 
 export interface DelegationRow extends DelegationColumns, TenantRow, AuditRow {

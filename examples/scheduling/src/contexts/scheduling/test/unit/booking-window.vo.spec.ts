@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { unwrap } from '@ddd-ts-kit/kernel';
 import { BookingWindow } from '@/contexts/scheduling/domain/value-objects/booking-window.vo';
+import { expectRefusal } from '@ddd-ts-kit/testing';
 
 const now = new Date('2026-03-02T08:00:00.000Z');
 
 describe('BookingWindow', () => {
   it('is equal to another window with the same notice and horizon', () => {
-    expect(unwrap(BookingWindow.create(120, 129_600)).equals(BookingWindow.standard())).toBe(true);
-    expect(unwrap(BookingWindow.create(60, 129_600)).equals(BookingWindow.standard())).toBe(false);
+    expect(BookingWindow.create(120, 129_600).equals(BookingWindow.standard())).toBe(true);
+    expect(BookingWindow.create(60, 129_600).equals(BookingWindow.standard())).toBe(false);
   });
 
   it.each([
@@ -15,10 +15,7 @@ describe('BookingWindow', () => {
     ['a notice that is not whole minutes', 1.5, 60],
     ['a horizon that does not come after the notice', 60, 60],
   ])('refuses %s', (_case, notice, horizon) => {
-    expect(BookingWindow.create(notice, horizon)).toMatchObject({
-      ok: false,
-      error: expect.objectContaining({ code: 'INVALID_BOOKING_WINDOW' }),
-    });
+    expectRefusal(() => BookingWindow.create(notice, horizon), 'INVALID_BOOKING_WINDOW');
   });
 
   it('is by default a notice of two hours and a horizon of ninety days', () => {

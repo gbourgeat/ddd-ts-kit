@@ -7,6 +7,7 @@ import { label } from '../label.js';
 import { openScope } from '../open-scope.js';
 import type { Scope } from '../scope.js';
 import { vars } from '../vars.js';
+import { declareRole } from '../vocabulary/declare-role.js';
 import { groupFile } from './route/group-file.js';
 import { groupPrefix } from './route/group-prefix.js';
 import { groupVars, type GroupDeclaration } from './route/group-vars.js';
@@ -20,7 +21,7 @@ export const routeGroupKind: Kind = {
   summary:
     'A route group: an empty class carrying @RouteGroup with its path prefix, its tag and its guards (Authenticated unless --public or --role says otherwise); with --group, it refines that group and inherits from it.',
   positionals: ['context', 'Name'],
-  writesShared: false,
+  writesShared: true,
   run: (request) => {
     const scope = openScope(request);
     const name = label(scope, (request.args[1] ?? '').replace(/Routes$/, ''), { what: 'route group' });
@@ -42,7 +43,7 @@ export const routeGroupKind: Kind = {
       prefix,
       tag: scope.context.kebab,
       ...accessOf(scope),
-      ...(role === undefined ? {} : { role }),
+      ...(role === undefined ? {} : { role: declareRole(scope, role) }),
     };
 
     emit(scope, vars(scope, { group: groupVars(group) }), [['controller/group.ts.tpl', `${groupFile(name.kebab)}.ts`]]);

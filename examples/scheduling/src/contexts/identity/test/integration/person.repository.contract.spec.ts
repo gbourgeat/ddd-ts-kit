@@ -3,7 +3,6 @@ import {
   FixedClock,
   FixedExecutionScope,
   executionContext,
-  unwrap,
   type Actor,
   type ExecutionContext,
 } from '@ddd-ts-kit/kernel';
@@ -22,8 +21,8 @@ const expectations = {
   createAggregate: () => aPerson().build(),
   mutate: (changed: Person) => {
     changed.registerAgain({
-      displayName: unwrap(DisplayName.create('Renamed Person')),
-      email: unwrap(Email.create('renamed@example.com')),
+      displayName: DisplayName.create('Renamed Person'),
+      email: Email.create('renamed@example.com'),
     });
   },
   idOf: (subject: Person) => subject.id,

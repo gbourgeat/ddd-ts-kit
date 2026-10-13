@@ -1,4 +1,3 @@
-import { unwrap } from '@ddd-ts-kit/kernel';
 import { Person } from '@/contexts/identity/domain/aggregates/person.aggregate';
 import { DisplayName } from '@/contexts/identity/domain/value-objects/display-name.vo';
 import { Email } from '@/contexts/identity/domain/value-objects/email.vo';
@@ -8,8 +7,8 @@ export const PersonMapper = {
   toDomain(row: PersonRow): Person {
     const loaded = Person.rehydrate(row.id, {
       registeredAt: row.registered_at,
-      displayName: unwrap(DisplayName.create(row.display_name)),
-      email: unwrap(Email.create(row.email)),
+      displayName: DisplayName.create(row.display_name),
+      email: Email.create(row.email),
     });
 
     loaded.version = row.version;

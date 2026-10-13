@@ -10,13 +10,20 @@ import { textsAt } from './support/texts-at.js';
 const inRepository = (file: string): string => fs.readFileSync(path.join(REPO_ROOT, file), 'utf8');
 const FORMAT_GATE = 'npm run lint && npm run format:check';
 
+/** The kit holds the example, whose client is generated: `ddd-ts-kit sdk` adds this line to a project that asks for clients. */
+const CLIENT_SOURCES = '      "!**/clients/*/src",\n';
+
+/** The configuration of the kit as a project without clients receives it. */
+const kitFormatter = (): string => inRepository('biome.json').replace(CLIENT_SOURCES, '');
+
 /**
  * One formatter configuration in three places: the kit, the template a project receives and
  * the example. These tests are what keeps them from drifting.
  */
 describe('the formatter configuration', () => {
-  it('of the template is the one of the kit, byte for byte', () => {
-    expect(pipelineAsset('template', 'biome.json.tpl')).toBe(inRepository('biome.json'));
+  it('of the template is the one of the kit, byte for byte, but for the generated clients of the example', () => {
+    expect(inRepository('biome.json')).toContain(CLIENT_SOURCES);
+    expect(pipelineAsset('template', 'biome.json.tpl')).toBe(kitFormatter());
   });
 
   it('of the example extends the one of the kit instead of copying it', () => {
@@ -50,7 +57,7 @@ describe('a project init writes', () => {
     const root = initProject('--package-manager', 'npm');
     const scripts = textsAt(readJson(root, 'package.json'), 'scripts');
 
-    expect(read(root, 'biome.json')).toBe(inRepository('biome.json'));
+    expect(read(root, 'biome.json')).toBe(kitFormatter());
     expect(scripts).toMatchObject({ format: 'biome format --write .', 'format:check': 'biome format .' });
     expect(scripts['ci:format']).toBe('npm run format:check');
     expect(scripts['verify']).toContain(FORMAT_GATE);

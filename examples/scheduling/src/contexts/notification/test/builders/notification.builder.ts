@@ -1,4 +1,3 @@
-import { unwrap } from '@ddd-ts-kit/kernel';
 import { Builder, sequence, type Defaults } from '@ddd-ts-kit/testing';
 import { Notification } from '@/contexts/notification/domain/aggregates/notification.aggregate';
 import { NotificationKind } from '@/contexts/notification/domain/value-objects/notification-kind.vo';
@@ -53,7 +52,7 @@ export class NotificationBuilder extends Builder<NotificationIngredients, Notifi
   protected construct(ingredients: NotificationIngredients): Notification {
     const { id, bornAt, kind, ...facts } = ingredients;
 
-    return Notification.create(id, { ...facts, kind: unwrap(NotificationKind.create(kind)) }, bornAt);
+    return Notification.create(id, { ...facts, kind: NotificationKind.create(kind) }, bornAt);
   }
 }
 

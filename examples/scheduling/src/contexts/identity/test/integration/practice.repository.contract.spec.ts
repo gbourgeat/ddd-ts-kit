@@ -3,7 +3,6 @@ import {
   FixedClock,
   FixedExecutionScope,
   executionContext,
-  unwrap,
   type Actor,
   type ExecutionContext,
 } from '@ddd-ts-kit/kernel';
@@ -24,8 +23,8 @@ const expectations = {
     changed.addMember(
       {
         personId: 'person-joining',
-        role: unwrap(Role.create('assistant')),
-        displayName: unwrap(DisplayName.create('Joining Person')),
+        role: Role.create('assistant'),
+        displayName: DisplayName.create('Joining Person'),
       },
       new Date('2026-02-01T00:00:00.000Z'),
     );

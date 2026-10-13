@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, onTestFailed } from 'vitest';
 import { collectEvents, expectProblem, expectStatus } from '@ddd-ts-kit/testing/e2e';
+import { unwrap } from 'scheduling-api-client';
 import { reportSeedOnFailure } from '@ddd-ts-kit/testing/faker';
 import { expectSpanTree, installTestTracing } from '@ddd-ts-kit/tracing/testing';
 import {
@@ -10,6 +11,9 @@ import {
   type PracticeOpenedV1Payload,
 } from '@/contexts/identity/published-language/index';
 import type { Listed } from '$test/e2e/support/listed';
+import { expectAnswer } from '$test/e2e/support/expect-answer';
+import { expectRefusal } from '$test/e2e/support/expect-refusal';
+import { registerPeople } from '$test/e2e/support/register-people';
 import { startApplication, type RunningApplication } from '$test/e2e/support/start-application';
 import { storyOf } from '$test/e2e/support/story-of';
 
@@ -40,13 +44,11 @@ describe('Open practice, end to end', () => {
   reportSeedOnFailure({ beforeEach, onTestFailed });
 
   it('answers 401 to a caller who presents no credential', async () => {
-    const response = await application.client.post('/practices', opening);
-
-    expectStatus(response, 401);
+    expectRefusal(await application.api.openPractice({ body: opening }), 401, 'UNAUTHORIZED');
   });
 
   it('answers 403 to a signed-in person who is not the administrator of the network, and records the refusal in the audit trail', async () => {
-    await register(application, 'ada');
+    await registerPeople(application, 'ada');
 
     // The trail is append-only, a reset keeps it: the entry of this refusal is found by the correlation the caller gave.
     const correlationId = randomUUID();
@@ -63,11 +65,11 @@ describe('Open practice, end to end', () => {
   });
 
   it('is one trace: the request, the use case, what it saves and what follows the facts', async () => {
-    await register(application, 'ada');
-    const root = await application.as({ id: 'root', roles: ['network-admin'] });
+    await registerPeople(application, 'ada');
+    const root = application.apiAs({ id: 'root', roles: ['network-admin'] });
 
     const trace = await tracing.traceOf(async () => {
-      expectStatus(await root.post('/practices', opening), 201);
+      await unwrap(root.openPractice({ body: opening }));
     });
 
     // The relay is still publishing what the arrangement announced: only the trace of the request is told here.
@@ -78,15 +80,14 @@ describe('Open practice, end to end', () => {
   });
 
   it('answers 201 to POST /practices for the administrator of the network, and the first manager manages the practice at once', async () => {
-    await register(application, 'ada', 'grace');
-    const root = await application.as({ id: 'root', roles: ['network-admin'] });
+    await registerPeople(application, 'ada', 'grace');
+    const root = application.apiAs({ id: 'root', roles: ['network-admin'] });
 
-    const opened = expectStatus(await root.post<{ id: string }>('/practices', opening), 201);
+    const opened = expectAnswer(await root.openPractice({ body: opening }), 201);
+    const ada = application.apiAs({ id: 'ada' });
 
-    const ada = await application.as({ id: 'ada' });
-
-    expectStatus(
-      await ada.post('/practices/' + opened.body.id + '/members', { personId: 'grace', role: 'practitioner' }),
+    expectAnswer(
+      await ada.addMember({ path: { practiceId: opened.id }, body: { personId: 'grace', role: 'practitioner' } }),
       201,
     );
   });
@@ -94,19 +95,19 @@ describe('Open practice, end to end', () => {
   it('publishes that the practice is opened and that its first manager is a member', async () => {
     const events = collectEvents(application.events, [practiceOpenedV1, practiceMemberAddedV1]);
 
-    await register(application, 'ada');
-    const root = await application.as({ id: 'root', roles: ['network-admin'] });
+    await registerPeople(application, 'ada');
+    const root = application.apiAs({ id: 'root', roles: ['network-admin'] });
 
-    const opened = expectStatus(await root.post<{ id: string }>('/practices', opening), 201);
+    const opened = await unwrap(root.openPractice({ body: opening }));
 
     const announced = await events.waitFor<PracticeOpenedV1Payload>(
       practiceOpenedV1,
-      (event) => event.payload.practiceId === opened.body.id,
+      (event) => event.payload.practiceId === opened.id,
     );
 
     const joined = await events.waitFor<PracticeMemberAddedV1Payload>(
       practiceMemberAddedV1,
-      (event) => event.payload.practiceId === opened.body.id,
+      (event) => event.payload.practiceId === opened.id,
     );
 
     expect(announced.payload).toMatchObject({ name: 'Riverside', timeZone: 'Europe/Paris', managerId: 'ada' });
@@ -122,36 +123,26 @@ describe('Open practice, end to end', () => {
   });
 
   it('answers the documented problem for each business refusal', async () => {
-    await register(application, 'ada');
+    await registerPeople(application, 'ada');
+    const root = application.apiAs({ id: 'root', roles: ['network-admin'] });
+
+    expectRefusal(
+      await root.openPractice({ body: { ...opening, timeZone: 'Europe/Atlantis' } }),
+      422,
+      'UNKNOWN_TIME_ZONE',
+    );
+
+    expectRefusal(await root.openPractice({ body: { ...opening, managerId: 'nobody' } }), 404, 'PERSON_NOT_REGISTERED');
+  });
+
+  it('refuses a body its contract does not describe, which only the raw HTTP client can send', async () => {
     const root = await application.as({ id: 'root', roles: ['network-admin'] });
-
-    expectProblem(await root.post('/practices', { ...opening, timeZone: 'Europe/Atlantis' }), {
-      status: 422,
-      code: 'UNKNOWN_TIME_ZONE',
-    });
-
-    expectProblem(await root.post('/practices', { ...opening, managerId: 'nobody' }), {
-      status: 404,
-      code: 'PERSON_NOT_REGISTERED',
-    });
 
     expectProblem(await root.post('/practices', { name: 'Riverside' }), { status: 422, code: 'VALIDATION_FAILED' });
   });
 });
 
 const opening = { name: 'Riverside', timeZone: 'Europe/Paris', managerId: 'ada' };
-
-/** Each person registers themselves, as at their first sign-in. */
-async function register(application: RunningApplication, ...personIds: readonly string[]): Promise<void> {
-  for (const personId of personIds) {
-    const person = await application.as({ id: personId });
-
-    expectStatus(
-      await person.put('/people/me', { displayName: 'Name of ' + personId, email: personId + '@example.com' }),
-      200,
-    );
-  }
-}
 
 const storyOfTheRequest: Parameters<typeof expectSpanTree>[1] = [
   {

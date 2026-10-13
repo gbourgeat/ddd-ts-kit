@@ -14,7 +14,6 @@ import { FakeContacts } from '@/contexts/notification/test/fakes/contacts.fake';
 import { FakeMailer } from '@/contexts/notification/test/fakes/mailer.fake';
 import { FakeNotificationRepository } from '@/contexts/notification/test/fakes/notification.repository.fake';
 import { FakeReminderRepository } from '@/contexts/notification/test/fakes/reminder.repository.fake';
-import { unwrap } from '@ddd-ts-kit/kernel';
 import { NotificationSent } from '@/contexts/notification/domain/events/notification-sent.event';
 import { NotificationKind } from '@/contexts/notification/domain/value-objects/notification-kind.vo';
 
@@ -123,7 +122,7 @@ async function arrange() {
 function sent(kind: string, start: Date = startsAt): NotificationSent {
   return new NotificationSent('notification-1', new Date('2026-01-02T08:00:00.000Z'), {
     recipientId: 'patient-1',
-    kind: unwrap(NotificationKind.create(kind)),
+    kind: NotificationKind.create(kind),
     appointmentId: 'appointment-1',
     startsAt: start,
   });

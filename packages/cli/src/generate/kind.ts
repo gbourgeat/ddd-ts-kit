@@ -7,6 +7,8 @@ export interface KindFlags {
   readonly upstream: readonly string[];
   /** `<Term>=<meaning>` rows to add to the glossary of the context. */
   readonly term: readonly string[];
+  /** The values of a closed vocabulary, one per `--value`. */
+  readonly value: readonly string[];
   readonly code?: string;
   readonly aggregate?: string;
   readonly method?: string;

@@ -1,4 +1,3 @@
-import { unwrap } from '@ddd-ts-kit/kernel';
 import { Appointment } from '@/contexts/scheduling/domain/aggregates/appointment.aggregate';
 import type { Calendar } from '@/contexts/scheduling/domain/aggregates/calendar.aggregate';
 import { AppointmentError } from '@/contexts/scheduling/domain/errors/appointment.error';
@@ -32,17 +31,15 @@ export class SchedulerService {
     const { id, patientId, appointmentTypeId, now } = wish;
     const slot = this.freeSlot({ appointmentTypeId, patientId, startsAt: wish.startsAt, now }, calendar, held);
 
-    const booking = unwrap(
-      Booking.create({
-        calendarId: calendar.id,
-        practiceId: calendar.practiceId,
-        practitionerId: calendar.practitionerId,
-        patientId,
-        appointmentTypeId,
-        slot,
-        day: calendar.timeZone.dayOf(slot.startsAt),
-      }),
-    );
+    const booking = Booking.create({
+      calendarId: calendar.id,
+      practiceId: calendar.practiceId,
+      practitionerId: calendar.practitionerId,
+      patientId,
+      appointmentTypeId,
+      slot,
+      day: calendar.timeZone.dayOf(slot.startsAt),
+    });
 
     const confirmBefore = calendar.confirmationDeadlineFor(appointmentTypeId, now);
 

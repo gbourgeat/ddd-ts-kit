@@ -1,13 +1,20 @@
 {{#if upstream.known}}
 import { systemActor, type CommandBus } from '@ddd-ts-kit/kernel';
+{{/if}}
+{{#if upstream.readsType}}
+import { {{upstream.definition}}, type {{upstream.eventType}} } from '{{alias.contexts}}/{{upstream.kebab}}/published-language/index{{alias.ext}}';
+{{/if}}
+{{#unless upstream.readsType}}
+{{#if upstream.known}}
 import type { {{upstream.eventType}} } from '{{alias.contexts}}/{{upstream.kebab}}/published-language/index{{alias.ext}}';
 {{/if}}
+{{/unless}}
 {{#unless upstream.known}}
 import { systemActor, type CommandBus, type IntegrationEvent } from '@ddd-ts-kit/kernel';
 {{/unless}}
 
 export class {{name.pascal}}IntegrationHandler {
-  static readonly eventType = '{{upstream.eventName}}';
+  static readonly eventType = {{upstream.typeRead}};
 
   readonly actor = systemActor('{{context.kebab}}.{{name.kebab}}');
 
