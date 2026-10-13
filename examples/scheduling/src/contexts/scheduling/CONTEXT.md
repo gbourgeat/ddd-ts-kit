@@ -173,7 +173,6 @@ Generated from the code by `ddd-ts-kit docs`; the same facts as data: `ddd-ts-ki
 | `CreateCalendar` | command | `calendar.create` |
 | `DefineAppointmentType` | command | `calendar.define-appointment-type` |
 | `ExpireUnconfirmedAppointments` | command | `appointment.expire` |
-| `ExportPracticeAgenda` | query | `agenda.read` |
 | `GetAppointment` | query | `appointment.read` |
 | `GetAppointmentDocument` | query | `appointment.read-document` |
 | `GetCalendarDay` | query | `calendar.browse` |
@@ -209,7 +208,7 @@ Generated from the code by `ddd-ts-kit docs`; the same facts as data: `ddd-ts-ki
 | POST | `/calendars/:calendarId/time-off` | `addTimeOff` | `CalendarsRoutes` | `Authenticated` | `AddTimeOff` | `calendar.add-time-off` | params: `AddTimeOffParams`, body: `AddTimeOffBody` | 201: `AddTimeOffAccepted` | `UNAUTHORIZED`, `FORBIDDEN`, `UNKNOWN_CALENDAR`, `INVALID_TIME_OFF`, `TIME_OFF_OVER_APPOINTMENTS` |
 | POST | `/calendars/:calendarId/waitlist` | `joinWaitlist` | `CalendarsRoutes` | `Authenticated` | `JoinWaitlist` | `waitlist.join` | params: `JoinWaitlistParams`, body: `JoinWaitlistBody` | 201: `JoinWaitlistAccepted` | `UNAUTHORIZED`, `FORBIDDEN`, `UNKNOWN_CALENDAR`, `UNKNOWN_APPOINTMENT_TYPE`, `INVALID_DAY`, `ALREADY_WAITING` |
 | GET | `/practices/:practiceId/agenda` | `searchPracticeAgenda` | `PracticesRoutes` | `Authenticated` | `SearchPracticeAgenda` | `agenda.read` | params: `SearchPracticeAgendaParams`, query | 200: `page of SearchPracticeAgendaLine` | `UNAUTHORIZED`, `FORBIDDEN`, `INVALID_CRITERIA` |
-| GET | `/practices/:practiceId/agenda/export` | `exportPracticeAgenda` | `PracticesRoutes` | `Authenticated` | `ExportPracticeAgenda` | `agenda.read` | params: `ExportPracticeAgendaParams` | 200: `streamSchemaOf(line)` | `UNAUTHORIZED`, `FORBIDDEN` |
+| GET | `/practices/:practiceId/agenda/export` | `exportPracticeAgenda` | `PracticesRoutes` | `Authenticated` | `SearchPracticeAgenda` | `agenda.read` | params: `ExportPracticeAgendaParams` | 200: `streamSchemaOf(line)` | `UNAUTHORIZED`, `FORBIDDEN` |
 
 ### Publishers
 

@@ -1,8 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { Representations, controllerRoute, executeRoute, type RouteResponse } from '@ddd-ts-kit/http';
 import { InMemoryQueryBus, type Actor } from '@ddd-ts-kit/kernel';
-import type { AgendaEntry } from '@/contexts/scheduling/application/ports/agenda.port';
-import { ExportPracticeAgendaQuery } from '@/contexts/scheduling/application/queries/export-practice-agenda/export-practice-agenda.query';
+import { SearchPracticeAgendaQuery } from '@/contexts/scheduling/application/queries/search-practice-agenda/search-practice-agenda.query';
 import { ExportPracticeAgendaController } from '@/contexts/scheduling/presentation/http/practices/export-practice-agenda/export-practice-agenda.controller';
 import { AgendaEntrySerializer } from '@/contexts/scheduling/presentation/http/shared/agenda-entry.serializer';
 import { anAgendaEntry } from '@/contexts/scheduling/test/builders/agenda-entry.builder';
@@ -17,13 +16,17 @@ const entries = [
 ];
 
 describe('GET /practices/:practiceId/agenda/export', () => {
-  const asked: ExportPracticeAgendaQuery[] = [];
+  const asked: SearchPracticeAgendaQuery[] = [];
 
-  const queries = new InMemoryQueryBus().register(ExportPracticeAgendaQuery, {
+  // One appointment per page: the export asks the next page with the cursor of the one before, through the bus.
+  const queries = new InMemoryQueryBus().register(SearchPracticeAgendaQuery, {
     execute: async (query) => {
       asked.push(query);
 
-      return exported();
+      const page = query.criteria.pageRequest;
+      const at = page?.kind === 'cursor' && page.cursor !== undefined ? Number(page.cursor) : 0;
+
+      return { items: entries.slice(at, at + 1), ...(at + 1 < entries.length ? { nextCursor: String(at + 1) } : {}) };
     },
   });
 
@@ -46,7 +49,11 @@ describe('GET /practices/:practiceId/agenda/export', () => {
     const rows = (await text(response)).trimEnd().split('\r\n');
 
     expect(response.headers['content-type']).toBe('text/csv; charset=utf-8');
-    expect(asked.at(-1)).toMatchObject({ practiceId: 'practice-1', actor: caller });
+
+    expect(asked.map((query) => [query.practiceId, query.actor])).toEqual([
+      ['practice-1', caller],
+      ['practice-1', caller],
+    ]);
 
     expect(rows[0]).toBe(
       'id,calendarId,practiceId,practitionerId,patientId,appointmentTypeId,startsAt,endsAt,day,status,confirmBefore,cancelledBy',
@@ -75,10 +82,6 @@ describe('GET /practices/:practiceId/agenda/export', () => {
     expect(response.status).toBe(422);
   });
 });
-
-async function* exported(): AsyncIterable<AgendaEntry> {
-  yield* entries;
-}
 
 async function text(response: RouteResponse): Promise<string> {
   let written = '';

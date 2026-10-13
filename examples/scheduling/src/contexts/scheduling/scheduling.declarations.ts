@@ -35,7 +35,6 @@ import { PractitionerDirectory } from '@/contexts/scheduling/application/ports/p
 import { SchedulingRelationships } from '@/contexts/scheduling/application/ports/scheduling-relationships.port';
 import { AgendaProjection } from '@/contexts/scheduling/application/projections/agenda.projection';
 import { PractitionersProjection } from '@/contexts/scheduling/application/projections/practitioners.projection';
-import { ExportPracticeAgendaHandler } from '@/contexts/scheduling/application/queries/export-practice-agenda/export-practice-agenda.handler';
 import { GetAppointmentDocumentHandler } from '@/contexts/scheduling/application/queries/get-appointment-document/get-appointment-document.handler';
 import { GetAppointmentHandler } from '@/contexts/scheduling/application/queries/get-appointment/get-appointment.handler';
 import { GetCalendarDayHandler } from '@/contexts/scheduling/application/queries/get-calendar-day/get-calendar-day.handler';
@@ -139,8 +138,6 @@ export * from '@/contexts/scheduling/application/integration/publishers/appointm
 export * from '@/contexts/scheduling/application/integration/publishers/calendar-created.publisher';
 export * from '@/contexts/scheduling/application/projections/agenda.projection';
 export * from '@/contexts/scheduling/application/projections/practitioners.projection';
-export * from '@/contexts/scheduling/application/queries/export-practice-agenda/export-practice-agenda.handler';
-export * from '@/contexts/scheduling/application/queries/export-practice-agenda/export-practice-agenda.query';
 export * from '@/contexts/scheduling/application/queries/get-appointment-document/get-appointment-document.handler';
 export * from '@/contexts/scheduling/application/queries/get-appointment-document/get-appointment-document.query';
 export * from '@/contexts/scheduling/application/queries/get-appointment/get-appointment.handler';
@@ -215,7 +212,6 @@ injected(AppointmentRescheduledPublisher, [IntegrationEventPublisher, IdGenerato
 injected(CalendarCreatedPublisher, [IntegrationEventPublisher, IdGenerator]);
 injected(AgendaProjection, [Agenda]);
 injected(PractitionersProjection, [PractitionerDirectory]);
-injected(ExportPracticeAgendaHandler, [Agenda, Access]);
 injected(GetAppointmentDocumentHandler, [AppointmentRepository, FileStorage]);
 injected(GetAppointmentHandler, [Agenda, PersonDirectoryGateway, Access]);
 injected(GetCalendarDayHandler, [CalendarRepository, Agenda, Access]);

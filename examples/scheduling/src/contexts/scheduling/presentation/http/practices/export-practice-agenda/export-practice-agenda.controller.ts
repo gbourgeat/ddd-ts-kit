@@ -1,7 +1,8 @@
-import { Controller, streamSchemaOf, type HttpRequest } from '@ddd-ts-kit/http';
-import type { QueryBus } from '@ddd-ts-kit/kernel';
+import { Controller, everyPage, streamSchemaOf, type HttpRequest } from '@ddd-ts-kit/http';
+import { Criteria, cursorPage, type QueryBus } from '@ddd-ts-kit/kernel';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
-import { ExportPracticeAgendaQuery } from '@/contexts/scheduling/application/queries/export-practice-agenda/export-practice-agenda.query';
+import type { AgendaEntry } from '@/contexts/scheduling/application/ports/agenda.port';
+import { SearchPracticeAgendaQuery } from '@/contexts/scheduling/application/queries/search-practice-agenda/search-practice-agenda.query';
 import { PracticesRoutes } from '@/contexts/scheduling/presentation/http/practices.routes';
 import { ExportPracticeAgendaLine } from '@/contexts/scheduling/presentation/http/practices/export-practice-agenda/export-practice-agenda.line';
 import { ExportPracticeAgendaParams } from '@/contexts/scheduling/presentation/http/practices/export-practice-agenda/export-practice-agenda.params';
@@ -10,7 +11,14 @@ import type { AgendaEntrySerializer } from '@/contexts/scheduling/presentation/h
 const params = classSchema(ExportPracticeAgendaParams);
 const line = classSchema(ExportPracticeAgendaLine);
 
-/** The whole agenda of a practice for a spreadsheet or a partner: written row by row as it is read, in CSV or XML as the request accepts. */
+/** The largest page the agenda answers: the export reads it page after page, never more at once. */
+const PAGE = 100;
+
+/**
+ * The whole agenda of a practice for a spreadsheet or a partner: written row by row as it is read,
+ * in CSV or XML as the request accepts. Each page is a search sent through the bus, so each one is
+ * authorized, scoped to the calendars of the caller, timed and traced as any query.
+ */
 @Controller({
   group: PracticesRoutes,
   method: 'GET',
@@ -30,16 +38,24 @@ export class ExportPracticeAgendaController {
   async handle(
     request: HttpRequest<{ params: ExportPracticeAgendaParams }>,
   ): Promise<AsyncIterable<ExportPracticeAgendaLine>> {
-    const entries = await this.queries.execute(new ExportPracticeAgendaQuery(request.actor, request.params.practiceId));
+    const { actor, params: asked } = request;
+
+    const entries = everyPage((cursor) =>
+      this.queries.execute(new SearchPracticeAgendaQuery(actor, asked.practiceId, pageAt(cursor))),
+    );
 
     return this.lines(entries);
   }
 
-  private async *lines(
-    entries: AsyncIterable<Parameters<AgendaEntrySerializer['serialize']>[0]>,
-  ): AsyncIterable<ExportPracticeAgendaLine> {
+  private async *lines(entries: AsyncIterable<AgendaEntry>): AsyncIterable<ExportPracticeAgendaLine> {
     for await (const entry of entries) {
       yield this.serializer.serialize(entry);
     }
   }
+}
+
+function pageAt(cursor: string | undefined): Criteria<AgendaEntry> {
+  return Criteria.of<AgendaEntry>().page(
+    cursor === undefined ? cursorPage({ limit: PAGE }) : cursorPage({ cursor, limit: PAGE }),
+  );
 }

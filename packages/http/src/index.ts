@@ -41,6 +41,7 @@ export { ResponseContractError } from './error/response-contract-error.js';
 export { statusTitle } from './error/status-title.js';
 export { toProblem } from './error/to-problem.js';
 export { UnauthorizedError } from './error/unauthorized-error.js';
+export { everyPage } from './pagination/every-page.js';
 export type { PageBody } from './pagination/page-body.js';
 export type { PageQueryOptions } from './pagination/page-query-options.js';
 export { pageQuerySchema } from './pagination/page-query-schema.js';
