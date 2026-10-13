@@ -33,7 +33,7 @@ sequenceDiagram
 
 What stays the framework's: listening, body parsing, plugins or middlewares in front of the
 routes (compression, CORS, rate limiting), and its own answer to a body it refuses before the
-pipeline runs.
+pipeline runs (on Hono the adapter reads the body, and answers those refusals as problems).
 
 ## Comparison
 
@@ -112,7 +112,8 @@ From [`packages/http/README.md`](../../packages/http/README.md) and
 [`packages/cli/README.md`](../../packages/cli/README.md):
 
 - Adapters for Express 5, Fastify 5, Hono 4 and NestJS, all through one pipeline
-  (`executeRoute`); one test suite proves the behaviour is the same on the four.
+  (`executeRoute`); one test suite proves the behaviour of the routes is the same on the four,
+  and uploads and signed file links are proven on Express, Fastify and Hono.
 - Errors answered as `application/problem+json` (RFC 9457) from one error mapper; an
   unexpected error answers 500 without detail.
 - `security` is mandatory on every route; a route is never public by omission
@@ -129,8 +130,10 @@ From [`packages/http/README.md`](../../packages/http/README.md) and
 ## Limits and when not to use it
 
 - A body the framework itself refuses (malformed JSON, payload too large) is answered by the
-  framework's own error handler, before the pipeline: its format is not the problem format
-  unless you configure it.
+  framework's own error handler on Express (`express.json()`, 100 kB by default), Fastify (1 MiB)
+  and NestJS, before the pipeline: its format is not the problem format unless you configure it.
+  On Hono the adapter reads the body: a body beyond `bodyLimit` (1 MiB by default) is answered 413
+  `BODY_TOO_LARGE` and malformed JSON 400 `MALFORMED_BODY`, both as problems.
 - Routes are JSON first. A handler may answer a string, bytes or a stream with its own
   `content-type`. An upload is declared on its controller and streams to the handler
   (`multipart/form-data`, size and media types in the contract); a large download goes through a

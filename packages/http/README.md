@@ -443,11 +443,15 @@ mountHono(app, orderRoutes(orders), options);
 serve({ fetch: app.fetch, port: 3000 });
 ```
 
-The adapter reads the JSON body itself: a body that is not JSON is answered 400 as a problem
-(`MALFORMED_BODY`), before the pipeline. A request carries `HonoRaw` as its raw request (its
-headers as a record, which the authenticators of the kit read, and the `Context` of Hono), and
-a repeated query parameter is a list, as on Express and Fastify. The adapter imports nothing of
-Hono at run time; any runtime Hono serves works, and the kit proves Node with `@hono/node-server`.
+The adapter reads the JSON body itself, chunk by chunk and up to `bodyLimit` bytes (1 MiB by
+default, as Fastify; Express stops at 100 kB): a larger body is answered 413 as a problem
+(`BODY_TOO_LARGE`), a body that is not JSON 400 (`MALFORMED_BODY`), both before the pipeline and
+without holding the body whole. An upload and a raw body are read from the request stream, with
+the limits their route declares, and a stream answer is streamed. A request carries `HonoRaw` as
+its raw request (its headers as a record, which the authenticators of the kit read, and the
+`Context` of Hono), and a repeated query parameter is a list, as on Express and Fastify. The
+adapter imports nothing of Hono at run time and `node:stream` for the streams: the kit proves
+Node with `@hono/node-server`, not Bun, Deno or an edge runtime.
 
 ## NestJS
 

@@ -27,12 +27,14 @@ the shape of another one of its context or of the shared kernel (two contexts ma
 thing in their own words; a placeholder the generator left to fill is not judged), `schema/presentation-only` keeps every schema in a presentation layer
 (the second in ESLint too). A config without the key reads as `per-route`: nothing changes and
 nothing is reported; the steps to move are in `docs/CONFIG.md`. The example now shares its
-schemas: its eighteen identifier answers are the one `Accepted` component, its two agenda
+schemas: its twenty identifier answers are the one `Accepted` component, its two agenda
 searches answer `AgendaLinePage` pages of one `AgendaLine`; the bytes on the wire are unchanged.
 
 **Hono and TypeBox.** `@ddd-ts-kit/http/hono` mounts the routes on Hono 4 (`mountHono`), through
-the same pipeline and the same behaviour suite as Express, Fastify and NestJS; a body that is not
-JSON is answered 400 as a problem. `@ddd-ts-kit/validation/typebox` validates with TypeBox 1
+the same pipeline and the same behaviour suite as Express, Fastify and NestJS, uploads and signed
+file links included. The adapter reads a JSON body chunk by chunk up to `bodyLimit` (1 MiB by
+default, as Fastify): a larger one is answered 413 `BODY_TOO_LARGE`, one that is not JSON 400
+`MALFORMED_BODY`, both as problems. `@ddd-ts-kit/validation/typebox` validates with TypeBox 1
 (`typeboxSchema`, compiled once, defaults filled, undeclared properties dropped, the failed
 keyword as the issue code, `{ coerce: true }` for query strings) and documents the schema as it
 is, a nested schema with an `$id` shared once in the contract. Both libraries are optional peers.

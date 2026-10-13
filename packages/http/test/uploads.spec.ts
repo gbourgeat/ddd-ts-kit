@@ -3,7 +3,7 @@ import { InMemoryFileStorage } from '@ddd-ts-kit/kernel';
 import { executeRoute, type Route } from '../src/index.js';
 import { multipartUploads } from '../src/uploads.js';
 import type { RunningServer } from './support/running-server.js';
-import { onExpress, onFastify, uploadRoutes } from './support/upload-desk.js';
+import { onExpress, onFastify, onHono, uploadRoutes } from './support/upload-desk.js';
 
 const PDF = '%PDF-1.7\n%%EOF\n';
 
@@ -28,6 +28,7 @@ async function codeOf(response: Response): Promise<[number, unknown]> {
 describe.each([
   ['Express', onExpress],
   ['Fastify', onFastify],
+  ['Hono', onHono],
 ])('a controller that declares an upload, on %s', (_name, start) => {
   let server: RunningServer;
   let storage: InMemoryFileStorage;

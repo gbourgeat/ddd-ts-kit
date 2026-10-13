@@ -107,8 +107,10 @@ pays for its container, is the one framework difference the runs agree on.
   carry no Fastify schema, TypeBox validates in the pipeline. TypeBox 1 (`typebox`) is recent and
   ESM only; `@sinclair/typebox` 0.34 is its predecessor and is not supported by the adapter.
   `Type.Ref` is not resolved: share a schema by nesting the schema built with an `$id`.
-- **Hono + zod.** Proven on Node only. The adapter reads the body as JSON itself and answers a
-  malformed one 400 as a problem (`MALFORMED_BODY`); the raw request is `HonoRaw`, so code that
+- **Hono + zod.** Proven on Node only. The adapter reads the body as JSON itself, up to
+  `bodyLimit` (1 MiB by default, Fastify's bound; Express stops at 100 kB): it answers a larger
+  body 413 (`BODY_TOO_LARGE`) and a malformed one 400 (`MALFORMED_BODY`), both as problems, where
+  Express and Fastify answer them with their own error handler. The raw request is `HonoRaw`, so code that
   read `request.ip` of Express reads `getConnInfo(context)` of `@hono/node-server/conninfo`.
 - **NestJS + class-validator.** The legacy decorator mode, two containers' worth of concepts,
   and Nest's pipes, guards, interceptors, filters and `@nestjs/swagger` do not see the routes
