@@ -8,6 +8,8 @@ import type { RouteResponse } from './route-response.js';
 export interface Tagging extends Omit<TaggedParts, 'body'> {
   readonly route: Pick<Route, 'cache'>;
   readonly header: CacheTagHeader | undefined;
+  /** Whether the tags are filed under the tenant of the request (`cacheTags.perTenant`). */
+  readonly perTenant: boolean;
 }
 
 const SUCCESS_FROM = 200;
@@ -17,18 +19,19 @@ const COMMA_SEPARATED: readonly CacheTagHeader[] = [CacheTagHeader.cacheTag, Cac
 /**
  * A successful public answer that declares the resources it shows carries their tags, in the
  * header the shared cache of the application reads them from. Nothing when the application names
- * no header: a private or uncached answer never reaches a shared cache.
+ * no header: a private or uncached answer never reaches a shared cache. When the tags are filed
+ * per tenant and the request names none, no purge could ever meet the answer: nobody keeps it.
  */
 export function taggedAnswer(response: RouteResponse, tagging: Tagging): RouteResponse {
-  const { route, header, ...parts } = tagging;
+  const { route, header, perTenant, ...parts } = tagging;
   const { cache } = route;
 
-  if (header === undefined || cache?.scope !== CacheScope.public || cache.tags === undefined) {
+  if (header === undefined || cache?.scope !== CacheScope.public || cache.tags === undefined || !succeeded(response)) {
     return response;
   }
 
-  if (response.status < SUCCESS_FROM || response.status > SUCCESS_TO) {
-    return response;
+  if (perTenant && parts.tenantId === undefined) {
+    return { ...response, headers: { ...response.headers, 'cache-control': CacheScope.noStore } };
   }
 
   const tags = cacheTagsOf(cache.tags, { ...parts, body: response.body });
@@ -40,4 +43,8 @@ export function taggedAnswer(response: RouteResponse, tagging: Tagging): RouteRe
   const separator = COMMA_SEPARATED.includes(header) ? ',' : ' ';
 
   return { ...response, headers: { [header]: tags.join(separator), ...response.headers } };
+}
+
+function succeeded({ status }: RouteResponse): boolean {
+  return status >= SUCCESS_FROM && status <= SUCCESS_TO;
 }

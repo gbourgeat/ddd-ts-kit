@@ -64,8 +64,16 @@ export interface ExecuteOptions {
     readonly header: CacheTagHeader;
     /**
      * Files the tags under the tenant of the request, for a multi-tenant application whose purges
-     * are filed per tenant too (`perTenant` of `PublishedCacheInvalidation`). Default `false`.
+     * are filed per tenant too (`perTenant` of `PublishedCacheInvalidation`). Default `false`. A
+     * tagged answer to a request that names no tenant is then `no-store`: no purge could meet it.
      */
     readonly perTenant?: boolean;
+    /**
+     * Whether the cache in front keeps one copy per value of the headers an answer varies on
+     * (`Vary`). Default: `true` for `xkey` and `surrogate-key` (Varnish, Fastly), `false` for
+     * `cache-tag` and `cdn-tag` (Cloudflare and Bunny ignore `Vary`): a public answer that
+     * varies is then refused when the routes are mounted.
+     */
+    readonly honoursVary?: boolean;
   };
 }

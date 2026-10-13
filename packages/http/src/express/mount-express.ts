@@ -1,5 +1,6 @@
 import type { IRouter, Request, Response } from 'express';
 import type { ExecuteOptions } from '../pipeline/execute-options.js';
+import { assertCachedRoutes } from '../pipeline/assert-cached-routes.js';
 import { executeRoute } from '../pipeline/execute-route.js';
 import { serializeBody } from '../pipeline/serialize-body.js';
 import { assertUniqueRoutes } from '../route/assert-unique-routes.js';
@@ -18,6 +19,7 @@ type Registrar = Record<HttpMethod, (path: string, handler: ExpressHandler) => v
  */
 export function mountExpress(target: IRouter, routes: readonly Route[], options: ExpressMountOptions = {}): void {
   assertUniqueRoutes(routes);
+  assertCachedRoutes(routes, options);
 
   const register = registrarOf(target);
 

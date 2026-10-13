@@ -22,8 +22,9 @@ export interface CachePolicy {
   readonly mustRevalidate?: boolean;
   /**
    * The request headers the answer depends on, besides the URL: `Vary`. A public answer of a
-   * route that is not public names here what it varies on (`Authorization`, a tenant header):
-   * without it, a shared cache would hand the answer of one caller to the next.
+   * route that is not public names here what says who calls (`Authorization`, `Cookie`) or the
+   * header its tenant is read from: without it, a shared cache would hand the answer of one
+   * caller to the next, and the mount refuses it. The headers `resolveTenant` reads are added.
    */
   readonly vary?: readonly string[];
   /** Answers `ETag`, and `304 Not Modified` to a request whose `If-None-Match` names it. */
