@@ -81,14 +81,26 @@ export function writeBusinessDecisions(root: string): void {
   ]);
 
   edit(root, 'src/platform/auth/permission-mapping.ts', [
+    [/^import \{ permissions \}.*$/m, `$&\n${importOfBillingPermissions(root)}`],
     [
       "  return { context: Object.fromEntries(permissions.all().map((permission) => [permission.id, 'operate'])) };",
-      "  return { context: Object.fromEntries(permissions.all().map((permission) => [permission.id, 'operate'])), invoice: { 'billing:invoice.search': 'view' } };",
+      "  return {\n    context: Object.fromEntries(permissions.all().map((permission) => [permission.id, 'operate'])),\n    invoice: { [billingPermissions['invoice.search'].id]: 'view' },\n  };",
     ],
   ]);
 
   assertTheWholeTrace(root);
   write(root, 'test/e2e/first-class.e2e.spec.ts', PROOF_SPEC);
+}
+
+/** The import of the permission set of billing, as the generated registry of permissions writes it. */
+function importOfBillingPermissions(root: string): string {
+  const line = /^import \{ billingPermissions \}.*$/m.exec(read(root, 'src/platform/auth/permissions.ts'));
+
+  if (line === null) {
+    throw new Error('src/platform/auth/permissions.ts no longer imports the permission set of billing.');
+  }
+
+  return line[0];
 }
 
 function edit(root: string, file: string, replacements: readonly (readonly [string | RegExp, string])[]): void {
