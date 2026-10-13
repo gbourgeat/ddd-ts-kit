@@ -2,13 +2,20 @@
 
 # Documentation
 
-**Summary.** This is the index of the long-form documentation of ddd-ts-kit. Two documents are
-normative and short: the [architecture reference](ARCHITECTURE.md) (the canonical tree, the
-rule ids, the tactical and clean code conventions, the test levels) and the
-[configuration reference](CONFIG.md). Everything else explains and teaches: the concepts
+**Summary.** This is the index of the long-form documentation of ddd-ts-kit. Four entries are
+normative, two short reference documents first: the [architecture reference](ARCHITECTURE.md)
+(the canonical tree, the rule ids, the tactical and clean code conventions, the test levels) and
+the [configuration reference](CONFIG.md); then the [pipeline README](../pipeline/README.md) (the
+quality gates) and the README of each package. Everything else explains and teaches: the concepts
 behind the rules, the tool decisions with their comparisons and limits, and guides for working
 on such a project as a team and with coding agents. When a page here and the architecture
 reference disagree, the reference is right.
+
+**In French.** Every page listed here has a French translation next to it (`X.fr.md`), reached
+by the link on its first line; the French index is [README.fr.md](README.fr.md). Its diagrams
+have French labels, and its code samples are compiled by the pipeline like the English ones.
+
+![The normative reference at the top (ARCHITECTURE.md, CONFIG.md, the pipeline README, the package READMEs); under it the concepts that explain it, the tools pages that choose a stack value, the guides that apply it and the proposals that may change it](assets/diagrams/documentation-map.svg)
 
 ## Reference (normative)
 
@@ -106,6 +113,31 @@ limits, and a recommendation by situation.
 | Page | Status |
 |---|---|
 | [The read side](proposals/read-side.md) | criteria, representations, read models and projections; the page says, part by part, what is built in the runtime packages, what the CLI does not generate yet and what is not built |
+
+## Start from a question
+
+| Your question | Where the answer is |
+|---|---|
+| Where does this file go, and what may it import? | the [architecture reference](ARCHITECTURE.md), [2. Canonical tree](ARCHITECTURE.md#2-canonical-tree) and [3. Dependency rules](ARCHITECTURE.md#3-dependency-rules) |
+| Why was this reported, and how do I fix it? | `npx ddd-ts-kit explain <rule-id>`, then [When something is refused](guides/commands.md#when-something-is-refused) |
+| Which command, or which skill, now? | [Which command, when](guides/commands.md) |
+| Does this rule belong in the aggregate, the handler or the schema? | [Invariants, permissions, validation](concepts/invariants-permissions-validation.md) |
+| Why does the generator refuse my name? | [Ubiquitous language](concepts/ubiquitous-language.md): a name comes from the glossary of its context |
+| How does one context react to another? | [Domain and integration events](concepts/domain-and-integration-events.md), then [Transactional outbox](concepts/transactional-outbox.md) |
+| How do I test a handler without a mock? | [Testing strategy](concepts/testing-strategy.md) |
+| Which value for a `stack` key? | the tools page of the decision, then [Configuration](CONFIG.md#stack) |
+| A rule does not fit this project | [Deviations](CONFIG.md#deviations): a recorded decision, never a silent `off` |
+| What changes after an upgrade of the kit? | [Migrate after a kit upgrade](guides/commands.md#migrate-after-a-kit-upgrade) and [a key left out of `stack`](CONFIG.md#a-key-left-out-of-stack) |
+
+Part of the reference also answers in the terminal of a project, from the installed version of
+the kit, so it never disagrees with the code you run:
+
+```bash
+npx ddd-ts-kit rules                        # every rule id, its severity and what it holds
+npx ddd-ts-kit explain imports/alias-only   # why a rule exists, a bad and a good example, how to suppress it
+npx ddd-ts-kit generate --help              # every kind of file the generator writes, and its flags
+npx ddd-ts-kit describe billing             # one context as facts: use cases, routes, events, ports
+```
 
 ## Suggested reading order
 

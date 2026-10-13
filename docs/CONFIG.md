@@ -4,8 +4,23 @@
 
 Read by the CLI, the ESLint plugin, the editor hook and the skills. It lives at the root of
 the consuming project. `ddd-ts-kit init` writes it; `generate context`, `generate service`,
-`generate worker` and `generate adr --deviation` edit it; `ddd-ts-kit check` reports what is
-inconsistent in it as `config/valid`.
+`generate worker` and `generate adr --deviation` edit it, and so do `ddd-ts-kit sdk` and the
+commands that move a project from one form of code to another (`error-factories --apply`,
+`controllers`, `value-objects`), each setting the key it moves; `ddd-ts-kit check` reports what
+is inconsistent in it as `config/valid`.
+
+![The commands that write or edit ddd-ts-kit.config.json on the left, what reads it on the right (every command of the CLI, the ESLint plugin, the editor hook, the skills, the test runner config), and ddd-ts-kit check, which judges it](assets/diagrams/config-readers-and-writers.svg)
+
+It is the one place a decision of the project is written. A decision changes here first, then
+the files that follow from it are brought in line, and how depends on the file. Two are held by
+a rule of `ddd-ts-kit check`, which reports them when they no longer agree with their key: the
+`paths`, `module` and `moduleResolution` of `tsconfig.json` (`imports/alias-declared`, from
+`importAlias` and `importExtension`), and the coverage settings of the test runner, which read
+the measured layers and their floors from this file instead of repeating them
+(`test/coverage-governed`). The others are only rewritten by a command and are not checked: the
+scripts, pipelines and git hooks in the dialect of the package manager follow
+`stack.packageManager` when `init --force --package-manager <pm>` rewrites them, and a key
+changed by hand leaves them as they were.
 
 The example below is what `init --context billing:core --context catalog:supporting` writes,
 after `generate context shipping --classification supporting --upstream billing`. It holds no
@@ -39,13 +54,15 @@ deviation.
     "errors": "none",
     "logger": "stdout",
     "style": "declared",
-    "assembly": "barrel",
-    "dependencies": "signature",
     "refusals": "factories",
     "routes": "controllers",
     "schemas": "shared",
     "valueObjects": "throwing",
-    "literals": "named"
+    "literals": "named",
+    "queue": "database",
+    "assembly": "barrel",
+    "dependencies": "signature",
+    "packageManager": "pnpm"
   },
   "contexts": {
     "billing": { "classification": "core", "upstreams": [] },
@@ -60,6 +77,40 @@ deviation.
   "applicationAllowedPackages": ["@ddd-ts-kit/kernel", "@ddd-ts-kit/auth"]
 }
 ```
+
+`init` spells every default out, so that the file documents the project. Three keys are written
+only when they say something: `stack.assembly` and `stack.dependencies` in the declared style
+only, `stack.tenancy` when it is not `none`. The optional keys (`coverage`, `deviations`,
+`commit`, `worker`, `ci`, `openapi`, `sdk`, ...) appear once a project sets them.
+
+## How a key is read
+
+![A decision tree: an unknown key is ignored; a known key that is not written is read as its default, which for ten stack keys and importExtension is the default of an older file; an accepted value is read as written; a wrong stack value stops every command; any other wrong value is kept or defaulted and reported by check as config/valid](assets/diagrams/config-how-a-key-is-read.svg)
+
+A wrong `stack.*` value stops every command before it does anything, with the list of accepted
+values:
+
+```text
+$ npx ddd-ts-kit list
+Error: ddd-ts-kit.config.json: "stack.http" is "expres".
+  fix: Set "stack.http" to one of: express, fastify, hono, nest, none.
+```
+
+Any other wrong value lets the commands run, and `ddd-ts-kit check` reports it with its line in
+the file:
+
+```text
+$ npx ddd-ts-kit check --rule config/valid
+ddd-ts-kit.config.json:39  error  config/valid
+  The context "billing" has the classification "central".
+  fix: Set contexts.billing.classification to one of: core, supporting, generic.
+```
+
+A key that is not written is not always read as what `init` writes today: a file without the key
+was written by a version that did not know it, and the kit reads it the way that version
+worked, so that an upgrade of the packages changes nothing in an existing project. The ten keys
+concerned are in [the table of the Stack section](#a-key-left-out-of-stack), and `importExtension`
+below. The exact rules of the parser are in [Limits](#limits).
 
 ## Paths
 
@@ -83,6 +134,22 @@ taken: they name `test/`, `scripts/` and the client Prisma generates, and are no
 To rename the alias of an existing project: change the key, write the `paths` entry the finding
 gives, and replace the prefix in the sources. See [tools/import-aliases.md](tools/import-aliases.md).
 
+What `imports/alias-only` asks of a source, here in a handler of the billing context:
+
+```ts
+// src/contexts/billing/application/commands/issue-invoice/issue-invoice.handler.ts
+
+// Instead of: a relative path, which counts "../" and changes when the file moves
+import { Invoice } from '../../../domain/aggregates/invoice.aggregate';
+import { IssueInvoiceCommand } from './issue-invoice.command';
+
+// Write: the alias, which names the context and the layer from the root of the sources
+import { IssueInvoiceCommand } from '@/contexts/billing/application/commands/issue-invoice/issue-invoice.command';
+import { Invoice } from '@/contexts/billing/domain/aggregates/invoice.aggregate';
+```
+
+`eslint --fix` rewrites the first form into the second.
+
 `importExtension` is the one place a person says how an import ends. `init` writes `none`
 (flag `--import-extension none|js`) and derives three things from it, which
 `imports/alias-declared` holds to the key:
@@ -92,6 +159,20 @@ gives, and replace the prefix in the sources. See [tools/import-aliases.md](tool
 | `module`, `moduleResolution` and `customConditions` in `tsconfig.json` | `ESNext`, `Bundler`, `["node"]` | `NodeNext`, `NodeNext`, none |
 | each `moduleNameMapper` entry of a jest config | `'^@/(.*)$': '<rootDir>/src/$1.ts'` | `'^@/(.*)\\.js$': '<rootDir>/src/$1.ts'` |
 | what `ddd-ts-kit build-aliases` reads in the compiled output | `@/x`, which names `x.js` | `@/x.js` |
+
+The same import under each value, and what the build makes of it:
+
+```ts
+// importExtension "none": the source names the file, without an extension
+import { Invoice } from '@/contexts/billing/domain/aggregates/invoice.aggregate';
+
+// importExtension "js": the source names the file the compiler emits
+import { Invoice } from '@/contexts/billing/domain/aggregates/invoice.aggregate.js';
+
+// Either way, ddd-ts-kit build-aliases writes in
+// dist/src/contexts/billing/application/commands/issue-invoice/issue-invoice.handler.js:
+import { Invoice } from '../../../domain/aggregates/invoice.aggregate.js';
+```
 
 Either way the build writes a relative path ending in `.js`, which is what Node resolves. A
 config file without the key is read as `js`: a project generated by a version that did not
@@ -150,9 +231,30 @@ outside the list stops every command with the list of accepted values.
 | `stack.literals` | `named`, `free`: how the code writes a closed value and a number. `named`: a value a closed vocabulary of the project declares is read through it, `AppointmentStatus.NoShow`, `billingPermissions['invoice.issue']`, `Role.Admin`, never written again as a string (`language/declared-vocabulary`, checker and ESLint), and a number of `domain/` or `application/` other than 0, 1, -1 and an index has a name (`clean/no-magic-number`, ESLint). `free`: both rules are silent, as 0.1 to 0.5 wrote code. The rules templates `init` writes say the rules under `named` only | `named` |
 | `stack.tenancy` | `none`, `shared-table`; read also: `row-level-security`, `schema-per-tenant`, `database-per-tenant`. How the data of one tenant is kept from the others ([Multitenancy](concepts/multitenancy.md)). `shared-table`: every generated repository, on Knex or Drizzle, confines its statements to the tenant of the work through `tenantTable` and `ownTenantTable` or `tenantCondition` and `ownTenantCondition`, the outbox keeps the tenant of each event so that consumers run in it, and `tenancy/scoped-statement` reports a statement that bypasses the helpers. `init --tenancy` offers `none` and `shared-table`, and refuses `shared-table` with Prisma, TypeORM, `custom` or no ORM; the three other strategies are shipped by the persistence packages and wired by hand (`init` refuses them with what to add). Absent: `none`, and the file says nothing of tenancy | absent (`none`) |
 | `stack.queue` | `database`, `redis`, `memory`. Where the background jobs and the instances of the process managers are kept ([Background jobs](concepts/background-jobs.md), [Sagas and process managers](concepts/sagas-and-process-managers.md)). `database`: the `background_jobs` and `process_instances` tables of `@ddd-ts-kit/knex` or `@ddd-ts-kit/drizzle` in the `messaging` schema, created by the first migration, bound in place of the stores in memory by the platform module: a job enqueued by a command exists if and only if the command committed. `redis`: `RedisJobStore` on the server of the cache (`--cache redis`, Dragonfly in docker-compose and in CI), written once the command committed; the process instances stay in the database with Knex or Drizzle. `memory`: in the process, which a worker of another process does not see. `init --queue` defaults to `database` on Knex or Drizzle with `--di tsyringe`, `memory` otherwise; it refuses a store with another container than tsyringe, `database` with another ORM, and `redis` without `--cache redis`. `generate background-job` and `generate process` need `--di tsyringe`. With `memory` and a worker, each process consumes the queue in its own memory, its jobs on or off: the API runs the jobs it enqueues, the worker those its scheduled jobs enqueue, and a restart loses what waits. With `redis`, a job write lost after its command committed is logged and reported (`reportLostJobs` of `@ddd-ts-kit/redis`, bound by the platform module). Absent: `memory`, the store of a project initialised before background jobs existed | `database` on Knex or Drizzle with tsyringe, `memory` otherwise |
+| `stack.packageManager` | `npm`, `pnpm`: what installs the dependencies and runs the scripts. Every command the CLI writes is in its dialect: the scripts of `package.json`, the pipelines, the git hooks, the `Dockerfile`, the README and the notes `init` and `generate` print (`pnpm run verify` and `pnpm exec ddd-ts-kit`, or `npm run verify` and `npx ddd-ts-kit`). pnpm is pinned by the `packageManager` field of `package.json`, which corepack provides (`corepack enable`, once per machine); npm comes with Node and is not pinned. `init --package-manager npm\|pnpm` | `pnpm` in what `init` writes; `npm` when the key is absent |
 
-A config file that omits a `stack` key is read with the same defaults, with nine exceptions:
-without `stack.style` the project is read as `explicit`, whatever `stack.di` says, because
+### A key left out of `stack`
+
+A config file that omits a `stack` key is read with the defaults of the table above, except for
+ten keys. A file without one of them was written by a version that did not have the choice, and
+it is read the way that version worked:
+
+| Key | Left out, read as | What `init` writes | To move a project |
+|---|---|---|---|
+| `stack.style` | `explicit` | `declared` with tsyringe | no command moves it |
+| `stack.dependencies` | `listed`, in the declared style | `signature` | set the key, `eslint --fix`, then `ddd-ts-kit docs` |
+| `stack.refusals` | `classes` | `factories` | `error-factories --plan`, then `--apply` |
+| `stack.routes` | `functions` | `controllers` | `controllers`, or `controllers <context>` |
+| `stack.storage` | `none` | `local` | `init --force --storage local` (or `s3`) |
+| `stack.valueObjects` | `result` | `throwing` | `value-objects` |
+| `stack.literals` | `free` | `named` | set the key, then follow `check` and ESLint |
+| `stack.queue` | `memory` | `database` on Knex or Drizzle with tsyringe, `memory` otherwise | `init --force --queue database` |
+| `stack.schemas` | `per-route` | `shared` | set the key, then follow `check --rule schema/no-duplicate-shape` |
+| `stack.packageManager` | `npm` | `pnpm` | `init --force --package-manager pnpm` |
+
+The paragraphs below say why for each, and what each move leaves to a person.
+
+The first two: without `stack.style` the project is read as `explicit`, whatever `stack.di` says, because
 such a file was written before the declared style existed; and without `stack.dependencies`
 a declared project is read as `listed`, because such a file was written when every decorator
 listed its dependencies. A 0.1 project therefore keeps working untouched after it upgrades
@@ -195,6 +297,7 @@ written before the kit kept files: nothing is wired, nothing changes. To add fil
 `npx ddd-ts-kit generate file-upload <context> <UseCase>` writes the first upload. A project
 that keeps `local` sets `FILES_PUBLIC_URL` and `FILES_SIGNING_SECRET` in production, even before
 it receives a file: the start refuses without them.
+
 The sixth: without `stack.valueObjects` the project is read as `result`, because such a file was
 written when every value object returned a `Result`. Nothing changes there: `generate
 value-object` keeps writing a `Result`. To move it: `npx ddd-ts-kit value-objects --dry-run`
@@ -212,12 +315,74 @@ refusal asserted with its facts, a caller that branched on `.ok` or read `.error
 that was not returned. The example application was moved by it: 28 refusals thrown, 168
 `unwrap` removed, 31 assertions rewritten, nothing left by hand.
 
+The two forms side by side, on the `Email` of a person. Under `result`, `create` returns a
+`Result` that every caller unwraps:
+
+<!-- checked sample -->
+```ts
+import { ConceptError, err, ok, type Result, unwrap, ValueObject } from '@ddd-ts-kit/kernel';
+
+export class PersonError extends ConceptError {
+  static invalidEmail(value: string) {
+    return PersonError.refusal('INVALID_EMAIL', `"${value}" is not an address the platform can write to.`, { value });
+  }
+}
+
+const ADDRESS = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+export class Email extends ValueObject<{ readonly value: string }> {
+  // stack.valueObjects "result": the refusal is a value the caller has to unwrap
+  static create(value: string): Result<Email, PersonError> {
+    const normalized = value.trim().toLowerCase();
+
+    return ADDRESS.test(normalized) ? ok(new Email({ value: normalized })) : err(PersonError.invalidEmail(value));
+  }
+}
+
+const email = unwrap(Email.create('ada@example.com'));
+```
+
+Under `throwing`, the form `init` writes, `create` returns the value object or throws the refusal,
+as an aggregate refuses, and a spec asserts it with `expectRefusal`:
+
+<!-- checked sample -->
+```ts
+import { ConceptError, ValueObject } from '@ddd-ts-kit/kernel';
+import { expectRefusal } from '@ddd-ts-kit/testing';
+
+export class PersonError extends ConceptError {
+  static invalidEmail(value: string) {
+    return PersonError.refusal('INVALID_EMAIL', `"${value}" is not an address the platform can write to.`, { value });
+  }
+}
+
+const ADDRESS = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+export class Email extends ValueObject<{ readonly value: string }> {
+  // stack.valueObjects "throwing": the caller takes the value as it is
+  static create(value: string): Email {
+    const normalized = value.trim().toLowerCase();
+
+    if (!ADDRESS.test(normalized)) {
+      throw PersonError.invalidEmail(value);
+    }
+
+    return new Email({ value: normalized });
+  }
+}
+
+const email = Email.create('ada@example.com');
+
+// in a spec
+expectRefusal(() => Email.create('ada@'), 'INVALID_EMAIL');
+```
+
 The seventh: without `stack.literals` the project is read as `free`, because such a file was
 written before the two rules existed, and code the kit generated then spells some values raw:
 `generate job` wrote the grant of a system actor by its permission id (`'billing:invoice.cancel',`
 in `roles.ts`, `permit('system-..', ['billing:invoice.cancel'], ..)` in `attribute-policies.ts`).
 Nothing is reported there, and a job generated again finds that grant and does not add a second
-one. To name the literals: set `"stack.literals": "named"` and run `npx ddd-ts-kit check` and
+one. To name the literals: set `"literals": "named"` under `stack` and run `npx ddd-ts-kit check` and
 ESLint. Each value is reported with what to write instead (`billingPermissions['invoice.cancel']`,
 imported from the permissions file of the context); a closed list of your own becomes a
 vocabulary with `npx ddd-ts-kit generate vocabulary <context> <Name> --value ..`, and the roles
@@ -245,6 +410,13 @@ declaration (`generate schema` writes its file), share it and use it from every 
 each `{ id }` answer by `acceptedSchema` of `@ddd-ts-kit/http` and delete its class; then
 `npm run docs:generate`. The wire format does not change; the contract then refers to one
 component per shape instead of a copy per route.
+
+The tenth: without `stack.packageManager` the project is read as `npm`, because such a file was
+written before the choice existed, when the kit wrote npm commands. Nothing changes there: the scripts, the
+pipelines and the notes keep saying `npm run` and `npx`. To move it to pnpm:
+`npx ddd-ts-kit init --force --package-manager pnpm` records the key, pins pnpm in the
+`packageManager` field of `package.json` and rewrites the files `init` owns in its dialect; then
+`corepack enable`, `pnpm install` (which writes `pnpm-lock.yaml`) and `pnpm run verify`.
 
 ## Pipeline
 
@@ -334,11 +506,100 @@ has no entry in `deviations`:
 `npx ddd-ts-kit generate adr "<title>" --deviation <what> --reason "<why>"` writes the
 decision record and the entry together.
 
+![A deviation in three places: the setting written by a person, the entry of deviations whose what names the setting and whose adr names the record, and the decision record under docs/adr; generate adr writes the entry and the record, governance/recorded-deviation checks the three](assets/diagrams/config-recorded-deviation.svg)
+
+A worked example. A team turns `clean/function-size` off, and `check` asks why:
+
+```json
+"rules": { "clean/function-size": "off" }
+```
+
+```text
+$ npx ddd-ts-kit check --rule governance/recorded-deviation
+ddd-ts-kit.config.json:57  error  governance/recorded-deviation
+  The rule "clean/function-size" is lowered to "off", and no deviation records why.
+  fix: Restore the default, or add { "what": "rules.clean/function-size", "adr": "NNNN", "reason": "<why>" } to "deviations" in ddd-ts-kit.config.json and write docs/adr/NNNN-<slug>.md (context, what is deviated from, why, scope, condition for removing it).
+```
+
+One command records the decision:
+
+```bash
+npx ddd-ts-kit generate adr "Long mapping functions in the billing adapters" \
+  --deviation rules.clean/function-size \
+  --reason "The generated mappers of the legacy ledger are long and regenerated, never edited."
+```
+
+It writes `docs/adr/0001-long-mapping-functions-in-the-billing-adapters.md`, with its context
+opened with the reason, and a `TODO(domain)` in every section a person completes (the context
+included, then decision, consequences, alternatives, scope, removal condition), and adds the
+entry:
+
+```json
+"deviations": [
+  {
+    "what": "rules.clean/function-size",
+    "adr": "0001",
+    "reason": "The generated mappers of the legacy ledger are long and regenerated, never edited."
+  }
+]
+```
+
+`check --rule governance/recorded-deviation` then reports nothing. An entry without a reason, or whose `adr` names a record that
+`docs/adr/` does not hold, is reported too. A suppression comment in the code follows the same
+rule: `// ddd-ts-kit-disable-next-line <rule> -- ADR-0001: <reason>`.
+
 ## Coverage thresholds
 
 The test runner config writes no number: it spreads `governedCoverage(mode)` (`governedJestCoverage()`
 under jest) of `@ddd-ts-kit/testing/coverage`, which reads the `coverage` key each time a run
 starts. One place holds a threshold, and `check` holds that place.
+
+Instead of writing a number in the runner config, which `test/coverage-governed` refuses:
+
+```ts
+// vitest.config.ts
+export default defineConfig({
+  test: { coverage: { provider: 'v8', thresholds: { branches: 80 } } },
+});
+```
+
+write what `init` writes, the measure and the floors read from the config file:
+
+<!-- checked sample -->
+```ts
+// vitest.config.ts
+import { governedCoverage } from '@ddd-ts-kit/testing/coverage';
+import { defineConfig } from 'vitest/config';
+
+export default defineConfig(({ mode }) => ({
+  test: {
+    coverage: {
+      provider: 'v8',
+      // What is measured and the floor of each layer come from "coverage" in ddd-ts-kit.config.json.
+      ...governedCoverage(mode),
+    },
+  },
+}));
+```
+
+Under jest, `export default { coverageProvider: 'v8', ...governedJestCoverage() };`. In the
+example application, `governedCoverage('unit')` measures three layers of every context and gives
+one floor per context and layer that holds a source file; here those of its first context,
+`analytics`, at the reference, since the example sets no `coverage`:
+
+```json
+{
+  "include": ["src/contexts/*/domain/**/*.ts", "src/contexts/*/application/**/*.ts", "src/contexts/*/presentation/**/*.ts"],
+  "thresholds": {
+    "src/contexts/analytics/domain/**/*.ts": { "statements": 90, "branches": 85, "functions": 90, "lines": 90 },
+    "src/contexts/analytics/application/**/*.ts": { "statements": 85, "branches": 80, "functions": 85, "lines": 85 },
+    "src/contexts/analytics/presentation/**/*.ts": { "statements": 80, "branches": 70, "functions": 80, "lines": 80 }
+  }
+}
+```
+
+The `coverage` key raises or lowers a floor; a floor under the reference comes with its
+deviation:
 
 ```json
 "coverage": { "domain": { "branches": 95 }, "infrastructure": { "branches": 50 } },

@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 520" width="960" height="520" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">From a statement of needs to merged slices: the nine steps</title>
+  <desc id="desc">Four steps written in the words of the business under docs/architecture/: discover the domain, find the bounded contexts, write the glossaries, draw the context map. Then five steps with the generators: bootstrap the project, plan the slices, build a slice, pass the quality gate, document. Steps 7 and 8 repeat for every slice.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="520" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">From a statement of needs to merged slices: the nine steps</text>
+  <rect x="24" y="58" width="912" height="182" rx="14" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="44" y="84" font-size="14" font-weight="600" fill="#2f6f4f">Design, in the words of the business: docs/architecture/</text>
+  <rect x="48" y="98" width="190" height="126" rx="10" fill="#ffffff" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="143" y="120" font-size="13" font-weight="600" fill="#2f6f4f" text-anchor="middle">Step 1</text>
+  <text x="143" y="142" font-size="15" font-weight="700" fill="#2f6f4f" text-anchor="middle">Discover the domain</text>
+  <text x="143" y="190" font-size="13" fill="#1f2328" text-anchor="middle">discover-domain</text>
+  <text x="143" y="210" font-size="13" font-style="italic" fill="#1f2328" text-anchor="middle">discovery.md</text>
+  <rect x="268" y="98" width="190" height="126" rx="10" fill="#ffffff" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="363" y="120" font-size="13" font-weight="600" fill="#2f6f4f" text-anchor="middle">Step 2</text>
+  <text x="363" y="142" font-size="15" font-weight="700" fill="#2f6f4f" text-anchor="middle">Find the contexts</text>
+  <text x="363" y="190" font-size="13" fill="#1f2328" text-anchor="middle">bounded-contexts</text>
+  <text x="363" y="210" font-size="13" font-style="italic" fill="#1f2328" text-anchor="middle">contexts.md</text>
+  <rect x="488" y="98" width="190" height="126" rx="10" fill="#ffffff" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="583" y="120" font-size="13" font-weight="600" fill="#2f6f4f" text-anchor="middle">Step 3</text>
+  <text x="583" y="142" font-size="15" font-weight="700" fill="#2f6f4f" text-anchor="middle">Write the glossaries</text>
+  <text x="583" y="190" font-size="13" fill="#1f2328" text-anchor="middle">glossary</text>
+  <text x="583" y="210" font-size="13" font-style="italic" fill="#1f2328" text-anchor="middle">a glossary per context</text>
+  <rect x="708" y="98" width="190" height="126" rx="10" fill="#ffffff" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="803" y="120" font-size="13" font-weight="600" fill="#2f6f4f" text-anchor="middle">Step 4</text>
+  <text x="803" y="142" font-size="15" font-weight="700" fill="#2f6f4f" text-anchor="middle">Draw the context map</text>
+  <text x="803" y="190" font-size="13" fill="#1f2328" text-anchor="middle">context-map</text>
+  <text x="803" y="210" font-size="13" font-style="italic" fill="#1f2328" text-anchor="middle">who is upstream, and how</text>
+  <line x1="240" y1="161" x2="266" y2="161" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="460" y1="161" x2="486" y2="161" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="680" y1="161" x2="706" y2="161" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="24" y="272" width="912" height="190" rx="14" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="144" y="288" font-size="14" font-weight="600" fill="#5f6b73" dy="0">Build, with the generators and the gate: the project</text>
+  <rect x="48" y="296" width="152" height="126" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="2"/>
+  <text x="124" y="318" font-size="13" font-weight="600" fill="#5f6b73" text-anchor="middle">Step 5</text>
+  <text x="124" y="340" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">Bootstrap</text>
+  <text x="124" y="388" font-size="13" fill="#1f2328" text-anchor="middle">bootstrap, init</text>
+  <text x="124" y="408" font-size="13" font-style="italic" fill="#1f2328" text-anchor="middle">green on verify</text>
+  <rect x="226" y="296" width="152" height="126" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="2"/>
+  <text x="302" y="318" font-size="13" font-weight="600" fill="#5f6b73" text-anchor="middle">Step 6</text>
+  <text x="302" y="340" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">Plan the slices</text>
+  <text x="302" y="388" font-size="13" fill="#1f2328" text-anchor="middle">plan-slices</text>
+  <text x="302" y="408" font-size="13" font-style="italic" fill="#1f2328" text-anchor="middle">slices.md</text>
+  <rect x="404" y="296" width="152" height="126" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="2"/>
+  <text x="480" y="318" font-size="13" font-weight="600" fill="#5f6b73" text-anchor="middle">Step 7</text>
+  <text x="480" y="340" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">Build a slice</text>
+  <text x="480" y="388" font-size="13" fill="#1f2328" text-anchor="middle">use-case</text>
+  <text x="480" y="408" font-size="13" font-style="italic" fill="#1f2328" text-anchor="middle">code and tests</text>
+  <rect x="582" y="296" width="152" height="126" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="2"/>
+  <text x="658" y="318" font-size="13" font-weight="600" fill="#5f6b73" text-anchor="middle">Step 8</text>
+  <text x="658" y="340" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">Pass the gate</text>
+  <text x="658" y="388" font-size="13" fill="#1f2328" text-anchor="middle">quality-gate</text>
+  <text x="658" y="408" font-size="13" font-style="italic" fill="#1f2328" text-anchor="middle">npm run verify</text>
+  <rect x="760" y="296" width="152" height="126" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="2"/>
+  <text x="836" y="318" font-size="13" font-weight="600" fill="#5f6b73" text-anchor="middle">Step 9</text>
+  <text x="836" y="340" font-size="15" font-weight="700" fill="#5f6b73" text-anchor="middle">Document</text>
+  <text x="836" y="388" font-size="13" fill="#1f2328" text-anchor="middle">document</text>
+  <text x="836" y="408" font-size="13" font-style="italic" fill="#1f2328" text-anchor="middle">contracts, ADRs</text>
+  <line x1="202" y1="359" x2="224" y2="359" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="380" y1="359" x2="402" y2="359" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="558" y1="359" x2="580" y2="359" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="736" y1="359" x2="758" y2="359" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <path d="M658,424 V444 H480 V426" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="569" y="438" font-size="13" fill="#1f2328" text-anchor="middle">next slice</text>
+  <path d="M803,226 V256 H124 V294" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="32" y="490" font-size="14" fill="#1f2328">/ddd-ts-kit:start conducts steps 1 to 7 and records them in docs/architecture/plan.md;</text>
+  <text x="32" y="510" font-size="14" fill="#1f2328">npx ddd-ts-kit status says at any time which step is next.</text>
+</svg>

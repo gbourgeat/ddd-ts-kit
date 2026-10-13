@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 480" width="960" height="480" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Une dérogation s'enregistre en trois endroits qui se nomment</title>
+  <desc id="desc">Le réglage qui assouplit la référence, écrit par une personne dans la configuration ; l'entrée de deviations, dont what nomme le réglage et adr l'enregistrement de décision ; l'enregistrement de décision sous docs/adr. ddd-ts-kit generate adr avec --deviation et --reason écrit l'entrée et l'enregistrement ensemble. governance/recorded-deviation vérifie que les trois s'accordent.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="480" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Une dérogation s'enregistre en trois endroits qui se nomment</text>
+  <rect x="250" y="62" width="460" height="64" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="480" y="88" font-size="14" font-weight="700" fill="#5f6b73" text-anchor="middle">npx ddd-ts-kit generate adr "&lt;titre&gt;"</text>
+  <text x="480" y="110" font-size="13" fill="#1f2328" text-anchor="middle">--deviation rules.clean/function-size --reason "&lt;pourquoi&gt;"</text>
+  <rect x="24" y="200" width="284" height="150" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="40" y="226" font-size="16" font-weight="700" fill="#5f6b73">1. le réglage</text>
+  <text x="40" y="246" font-size="13" font-style="italic" fill="#5f6b73">écrit par une personne</text>
+  <text x="40" y="276" font-size="13" fill="#1f2328">"rules": {</text>
+  <text x="56" y="296" font-size="13" fill="#1f2328">"clean/function-size": "off"</text>
+  <text x="40" y="316" font-size="13" fill="#1f2328">}</text>
+  <rect x="338" y="200" width="284" height="150" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="354" y="226" font-size="16" font-weight="700" fill="#2b5d8a">2. l'entrée de deviations</text>
+  <text x="354" y="246" font-size="13" font-style="italic" fill="#5f6b73">what nomme 1, adr nomme 3</text>
+  <text x="354" y="276" font-size="13" fill="#1f2328">"what": "rules.clean/function-size",</text>
+  <text x="354" y="296" font-size="13" fill="#1f2328">"adr": "0001",</text>
+  <text x="354" y="316" font-size="13" fill="#1f2328">"reason": "..."</text>
+  <rect x="652" y="200" width="284" height="150" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="668" y="226" font-size="16" font-weight="700" fill="#5f6b73">3. l'enregistrement de décision</text>
+  <text x="668" y="246" font-size="13" font-style="italic" fill="#5f6b73">docs/adr/0001-&lt;slug&gt;.md</text>
+  <text x="668" y="276" font-size="13" fill="#1f2328">contexte, décision, conséquences,</text>
+  <text x="668" y="296" font-size="13" fill="#1f2328">alternatives, portée,</text>
+  <text x="668" y="316" font-size="13" fill="#1f2328">condition de retrait</text>
+  <path d="M420,128 V198" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <path d="M600,128 V150 H794 V198" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="430" y="170" font-size="13" font-weight="600" fill="#1f2328">écrit les deux</text>
+  <line x1="336" y1="300" x2="310" y2="300" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="624" y1="300" x2="650" y2="300" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <path d="M166,354 V392 H794 V354" fill="none" stroke="#3d4449" stroke-width="2" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+  <line x1="480" y1="392" x2="480" y2="354" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="480" y="418" font-size="15" font-weight="700" fill="#3d4449" text-anchor="middle">governance/recorded-deviation</text>
+  <text x="480" y="440" font-size="13" fill="#1f2328" text-anchor="middle">signale un réglage sans son entrée, une entrée sans raison,</text>
+  <text x="480" y="460" font-size="13" fill="#1f2328" text-anchor="middle">et une entrée dont l'enregistrement n'existe pas</text>
+</svg>

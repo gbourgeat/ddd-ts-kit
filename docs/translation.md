@@ -232,6 +232,11 @@ in the French column is kept in English, because French developers say it that w
 | lease, checkpoint | bail, point de reprise |
 | lock | verrou |
 | overlap, missed occurrence | chevauchement, occurrence manquée |
+| scheduler | planificateur |
+| claim (of outbox entries) | réclamation, réclamer |
+| acknowledgement, poison message | accusé de réception, message empoisonné |
+| backoff, jitter | *backoff*, gigue (jitter) |
+| fencing token | jeton de clôture (fencing token) |
 
 ### Cross-cutting concerns
 
@@ -246,9 +251,14 @@ in the French column is kept in English, because French developers say it that w
 | resilience | résilience |
 | retry, timeout | nouvelle tentative (retry), délai d'expiration (timeout) |
 | circuit breaker, bulkhead | disjoncteur (circuit breaker), cloison (bulkhead) |
+| aspect, advice, advised call | aspect, *advice*, appel intercepté (advised call) |
 | cache, HTTP cache, purge | cache, cache HTTP, purge |
+| cache miss, rate limiter | défaut de cache, limiteur de débit |
+| flush, redaction | vidage (flush), masquage |
 | file storage, signed link | stockage de fichiers, lien signé |
 | identity provider, token, claim | fournisseur d'identité, jeton, *claim* |
+| impersonation | emprunt d'identité (impersonation) |
+| authorizer | autorisateur |
 | RBAC, ABAC, ReBAC | contrôle d'accès par rôles (RBAC), par attributs (ABAC), par relations (ReBAC) |
 
 ### Tools, tests and workflow

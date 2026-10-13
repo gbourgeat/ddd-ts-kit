@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 496" width="960" height="496" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Un seul jeu de règles, vérifié à trois moments</title>
+  <desc id="desc">À chaque écriture de fichier, le hook du plugin Claude Code vérifie le fichier écrit et renvoie chaque violation avec sa correction. Avant chaque fusion, npm run verify lance le compilateur, ESLint avec le plugin du kit, le formateur, les tests, le checker, dependency-cruiser, knip et les contrôles de dérive. À chaque push, le pipeline de CI lance les mêmes scripts, plus les tests d'intégration, les analyses de sécurité et la construction de l'image, derrière une porte finale unique. Les trois appliquent les règles définies dans docs/ARCHITECTURE.md.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="496" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Un seul jeu de règles, vérifié à trois moments</text>
+  <rect x="32" y="62" width="272" height="330" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="50" y="92" font-size="16" font-weight="700" fill="#5f6b73">1. À chaque écriture</text>
+  <text x="50" y="114" font-size="13" font-style="italic" fill="#1f2328">le hook du plugin Claude Code</text>
+  <line x1="48" y1="128" x2="288" y2="128" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <circle cx="54" cy="149" r="2.5" fill="#5f6b73"/>
+  <text x="64" y="154" font-size="14" fill="#1f2328">check-file sur le fichier écrit</text>
+  <circle cx="54" cy="175" r="2.5" fill="#5f6b73"/>
+  <text x="64" y="180" font-size="14" fill="#1f2328">chaque violation renvoyée</text>
+  <text x="64" y="200" font-size="14" fill="#1f2328">avec sa correction</text>
+  <circle cx="54" cy="221" r="2.5" fill="#5f6b73"/>
+  <text x="64" y="226" font-size="14" fill="#1f2328">un fichier écrit à la main refusé</text>
+  <text x="64" y="246" font-size="14" fill="#1f2328">là où un générateur existe</text>
+  <circle cx="54" cy="267" r="2.5" fill="#5f6b73"/>
+  <text x="64" y="272" font-size="14" fill="#1f2328">pas de fin tant que des erreurs</text>
+  <text x="64" y="292" font-size="14" fill="#1f2328">d'architecture restent</text>
+  <rect x="344" y="62" width="272" height="330" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="362" y="92" font-size="16" font-weight="700" fill="#5f6b73">2. npm run verify</text>
+  <text x="362" y="114" font-size="13" font-style="italic" fill="#1f2328">sur votre poste, avant chaque fusion</text>
+  <line x1="360" y1="128" x2="600" y2="128" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <circle cx="366" cy="149" r="2.5" fill="#5f6b73"/>
+  <text x="376" y="154" font-size="14" fill="#1f2328">TypeScript, strict</text>
+  <circle cx="366" cy="175" r="2.5" fill="#5f6b73"/>
+  <text x="376" y="180" font-size="14" fill="#1f2328">ESLint et le plugin du kit</text>
+  <circle cx="366" cy="201" r="2.5" fill="#5f6b73"/>
+  <text x="376" y="206" font-size="14" fill="#1f2328">Biome : format</text>
+  <circle cx="366" cy="227" r="2.5" fill="#5f6b73"/>
+  <text x="376" y="232" font-size="14" fill="#1f2328">tests unitaires et de bout en bout</text>
+  <circle cx="366" cy="253" r="2.5" fill="#5f6b73"/>
+  <text x="376" y="258" font-size="14" fill="#1f2328">ddd-ts-kit check : structure</text>
+  <circle cx="366" cy="279" r="2.5" fill="#5f6b73"/>
+  <text x="376" y="284" font-size="14" fill="#1f2328">dependency-cruiser :</text>
+  <text x="376" y="304" font-size="14" fill="#1f2328">graphe des imports</text>
+  <circle cx="366" cy="325" r="2.5" fill="#5f6b73"/>
+  <text x="376" y="330" font-size="14" fill="#1f2328">knip : code mort</text>
+  <circle cx="366" cy="351" r="2.5" fill="#5f6b73"/>
+  <text x="376" y="356" font-size="14" fill="#1f2328">dérive de la documentation</text>
+  <text x="376" y="376" font-size="14" fill="#1f2328">et du contrat</text>
+  <rect x="656" y="62" width="272" height="330" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="674" y="92" font-size="16" font-weight="700" fill="#5f6b73">3. Le pipeline de CI</text>
+  <text x="674" y="114" font-size="13" font-style="italic" fill="#1f2328">GitHub ou GitLab, à chaque push</text>
+  <line x1="672" y1="128" x2="912" y2="128" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <circle cx="678" cy="149" r="2.5" fill="#5f6b73"/>
+  <text x="688" y="154" font-size="14" fill="#1f2328">les mêmes scripts npm</text>
+  <circle cx="678" cy="175" r="2.5" fill="#5f6b73"/>
+  <text x="688" y="180" font-size="14" fill="#1f2328">tests d'intégration sur PostgreSQL</text>
+  <circle cx="678" cy="201" r="2.5" fill="#5f6b73"/>
+  <text x="688" y="206" font-size="14" fill="#1f2328">sécurité : npm audit, gitleaks</text>
+  <circle cx="678" cy="227" r="2.5" fill="#5f6b73"/>
+  <text x="688" y="232" font-size="14" fill="#1f2328">construction de l'image</text>
+  <circle cx="678" cy="253" r="2.5" fill="#5f6b73"/>
+  <text x="688" y="258" font-size="14" fill="#1f2328">une porte finale unique,</text>
+  <text x="688" y="278" font-size="14" fill="#1f2328">à rendre obligatoire</text>
+  <line x1="306" y1="227" x2="342" y2="227" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="618" y1="227" x2="654" y2="227" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="32" y="424" width="896" height="52" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="480" y="446" font-size="14" font-weight="600" fill="#1f2328" text-anchor="middle">Une seule définition pour les trois : docs/ARCHITECTURE.md</text>
+  <text x="480" y="466" font-size="13" fill="#1f2328" text-anchor="middle">chaque règle a un identifiant, une raison et une correction : npx ddd-ts-kit explain &lt;rule-id&gt;</text>
+  <line x1="168" y1="422" x2="168" y2="396" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="480" y1="422" x2="480" y2="396" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="792" y1="422" x2="792" y2="396" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+</svg>

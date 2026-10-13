@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 536" width="960" height="536" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
   <title id="title">The layers of a bounded context, and the dependency rule</title>
-  <desc id="desc">Four layers inside a bounded context, inside the platform. Presentation imports application, application imports domain, infrastructure imports domain and implements the ports the application declares. The domain imports only the kernel. The platform around the context composes it: it binds each adapter to its port at start-up.</desc>
+  <desc id="desc">Four layers inside a bounded context, inside the platform. Presentation imports application, application imports domain, infrastructure imports domain and implements the ports the application declares. The domain imports only the kernels: @ddd-ts-kit/kernel and the shared kernel. The platform around the context composes it: it binds each adapter to its port at start-up.</desc>
   <defs>
     <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
       <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
@@ -39,7 +39,7 @@
   <text x="590" y="240" font-size="13" fill="#1f2328" text-anchor="middle">value objects</text>
   <text x="590" y="262" font-size="13" fill="#1f2328" text-anchor="middle">domain events</text>
   <text x="590" y="284" font-size="13" fill="#1f2328" text-anchor="middle">repository ports</text>
-  <text x="590" y="314" font-size="13" font-style="italic" font-weight="600" fill="#2f6f4f" text-anchor="middle">imports only the kernel</text>
+  <text x="590" y="314" font-size="13" font-style="italic" font-weight="600" fill="#2f6f4f" text-anchor="middle">imports only the kernels</text>
   <!-- infrastructure -->
   <rect x="718" y="152" width="176" height="176" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
   <text x="806" y="182" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">infrastructure</text>

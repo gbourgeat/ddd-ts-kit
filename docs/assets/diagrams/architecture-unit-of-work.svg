@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 580" width="960" height="580" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">One command, one unit of work</title>
+  <desc id="desc">Inside the transaction: first the work, where the command handler changes aggregates and each save queues the events they recorded; then the before-commit handlers, dispatched on the whole queue in recording order, whose saves and outbox rows join the work. Then the transaction commits. After the commit, the after-commit handlers run, awaited, in dispatch order, at most once, and their failure is reported, never thrown; then the command answers whoever sent it. Later, the relay publishes the outbox rows, and the consumers of the other contexts deduplicate them. When the work throws, a save rejects, a before-commit handler fails or the commit fails, everything rolls back: the queue is dropped, no after-commit handler runs and no outbox row remains.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="580" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">One command, one unit of work</text>
+  <!-- inside the transaction -->
+  <text x="40" y="74" font-size="14" font-weight="600" fill="#5f6b73">inside the transaction</text>
+  <rect x="24" y="86" width="400" height="256" rx="12" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <rect x="44" y="104" width="360" height="100" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="224" y="134" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">1. the work</text>
+  <text x="224" y="160" font-size="13" fill="#1f2328" text-anchor="middle">the command handler changes aggregates;</text>
+  <text x="224" y="182" font-size="13" fill="#1f2328" text-anchor="middle">each save queues the events they recorded</text>
+  <rect x="44" y="224" width="360" height="100" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="224" y="254" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">2. before-commit handlers</text>
+  <text x="224" y="280" font-size="13" fill="#1f2328" text-anchor="middle">dispatched on the whole queue, in order;</text>
+  <text x="224" y="302" font-size="13" fill="#1f2328" text-anchor="middle">their saves and outbox rows join the work</text>
+  <line x1="224" y1="206" x2="224" y2="220" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- commit -->
+  <rect x="444" y="86" width="56" height="256" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="472" y="214" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle" dominant-baseline="middle" transform="rotate(-90 472 214)">3. commit</text>
+  <line x1="406" y1="274" x2="440" y2="274" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- after the commit -->
+  <text x="520" y="74" font-size="14" font-weight="600" fill="#5f6b73">after the commit</text>
+  <rect x="520" y="104" width="416" height="100" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="728" y="134" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">4. after-commit handlers</text>
+  <text x="728" y="160" font-size="13" fill="#1f2328" text-anchor="middle">awaited, in dispatch order, at most once;</text>
+  <text x="728" y="182" font-size="13" fill="#1f2328" text-anchor="middle">a failure is reported, never thrown</text>
+  <rect x="520" y="224" width="416" height="100" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="728" y="254" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">5. the command answers</text>
+  <text x="728" y="280" font-size="13" fill="#1f2328" text-anchor="middle">to the controller, the job or the consumer</text>
+  <text x="728" y="302" font-size="13" fill="#1f2328" text-anchor="middle">that sent it</text>
+  <line x1="502" y1="154" x2="516" y2="154" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="728" y1="206" x2="728" y2="220" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- on failure -->
+  <rect x="24" y="384" width="400" height="110" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="224" y="412" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">rollback, on any failure</text>
+  <text x="224" y="438" font-size="13" fill="#1f2328" text-anchor="middle">the work throws, a save rejects, a before-commit</text>
+  <text x="224" y="460" font-size="13" fill="#1f2328" text-anchor="middle">handler or the commit fails: the queue is dropped,</text>
+  <text x="224" y="482" font-size="13" fill="#1f2328" text-anchor="middle">no after-commit handler, no outbox row</text>
+  <line x1="224" y1="344" x2="224" y2="380" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <!-- later -->
+  <rect x="520" y="384" width="196" height="110" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="618" y="412" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">6. the relay</text>
+  <text x="618" y="438" font-size="13" fill="#1f2328" text-anchor="middle">later, publishes</text>
+  <text x="618" y="460" font-size="13" fill="#1f2328" text-anchor="middle">the outbox rows</text>
+  <rect x="740" y="384" width="196" height="110" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="838" y="412" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">7. consumers</text>
+  <text x="838" y="438" font-size="13" fill="#1f2328" text-anchor="middle">in other contexts,</text>
+  <text x="838" y="460" font-size="13" fill="#1f2328" text-anchor="middle">deduplicate each event</text>
+  <path d="M472,344 V439 H516" fill="none" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <line x1="718" y1="439" x2="736" y2="439" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <!-- legend -->
+  <line x1="40" y1="526" x2="84" y2="526" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="96" y="531" font-size="14" fill="#1f2328">the next step of the same command</text>
+  <line x1="40" y1="552" x2="84" y2="552" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <text x="96" y="557" font-size="14" fill="#1f2328">on failure, or later and asynchronous</text>
+</svg>

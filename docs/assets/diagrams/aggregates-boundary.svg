@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 500" width="960" height="500" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">An aggregate: one root, one consistency boundary, other aggregates referenced by identifier</title>
+  <desc id="desc">The Appointment aggregate is a consistency boundary. Inside it, the root Appointment holds the identifiers of a calendar and a client, a status and a slot, and owns the value objects TimeSlot and CancellationReason. A handler of the application calls one intention method of the root, and loads and saves the whole aggregate through its repository. The root refers to the Calendar and Client aggregates by identifier only. Each intention records a domain event (AppointmentBooked, AppointmentRescheduled, AppointmentCancelled), handed over by the save and dispatched before the commit.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="500" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">An aggregate: one root, one boundary, references by identifier</text>
+  <!-- handler -->
+  <rect x="24" y="150" width="150" height="100" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="99" y="178" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">handler</text>
+  <line x1="38" y1="190" x2="160" y2="190" stroke="#2b5d8a" stroke-opacity="0.35"/>
+  <text x="99" y="212" font-size="13" fill="#1f2328" text-anchor="middle">loads, calls one</text>
+  <text x="99" y="232" font-size="13" fill="#1f2328" text-anchor="middle">intention, saves</text>
+  <!-- repository -->
+  <rect x="24" y="380" width="150" height="80" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="99" y="408" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">repository</text>
+  <text x="99" y="430" font-size="13" fill="#1f2328" text-anchor="middle">loads and saves</text>
+  <text x="99" y="448" font-size="13" fill="#1f2328" text-anchor="middle">the whole aggregate</text>
+  <line x1="99" y1="252" x2="99" y2="376" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="109" y="320" font-size="13" fill="#1f2328">findById, save</text>
+  <!-- consistency boundary -->
+  <rect x="232" y="70" width="420" height="270" rx="14" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2" stroke-dasharray="8 5"/>
+  <text x="250" y="96" font-size="14" font-weight="700" fill="#2f6f4f">Appointment aggregate: the consistency boundary</text>
+  <text x="250" y="116" font-size="13" fill="#1f2328">invariants hold after every method; saved in one transaction</text>
+  <!-- root -->
+  <rect x="250" y="136" width="200" height="186" rx="10" fill="#ffffff" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="350" y="162" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">Appointment</text>
+  <text x="350" y="180" font-size="13" fill="#2f6f4f" text-anchor="middle">aggregate root</text>
+  <line x1="264" y1="192" x2="436" y2="192" stroke="#2f6f4f" stroke-opacity="0.35"/>
+  <text x="350" y="214" font-size="13" fill="#1f2328" text-anchor="middle">practitionerId, clientId</text>
+  <text x="350" y="234" font-size="13" fill="#1f2328" text-anchor="middle">status, slot, version</text>
+  <line x1="264" y1="248" x2="436" y2="248" stroke="#2f6f4f" stroke-opacity="0.35"/>
+  <text x="350" y="270" font-size="13" fill="#1f2328" text-anchor="middle">reschedule(slot, at)</text>
+  <text x="350" y="292" font-size="13" fill="#1f2328" text-anchor="middle">cancel(reason, at)</text>
+  <!-- value objects -->
+  <rect x="466" y="150" width="174" height="64" rx="10" fill="#ffffff" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="553" y="178" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">TimeSlot</text>
+  <text x="553" y="200" font-size="13" fill="#1f2328" text-anchor="middle">value object</text>
+  <rect x="466" y="240" width="174" height="64" rx="10" fill="#ffffff" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="553" y="268" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">CancellationReason</text>
+  <text x="553" y="290" font-size="13" fill="#1f2328" text-anchor="middle">value object</text>
+  <!-- the handler calls the root -->
+  <line x1="176" y1="200" x2="246" y2="200" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="203" y="190" font-size="13" fill="#1f2328" text-anchor="middle">calls</text>
+  <!-- other aggregates -->
+  <rect x="790" y="120" width="146" height="70" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="863" y="150" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">Calendar</text>
+  <text x="863" y="172" font-size="13" fill="#1f2328" text-anchor="middle">another aggregate</text>
+  <rect x="790" y="230" width="146" height="70" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="863" y="260" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">Client</text>
+  <text x="863" y="282" font-size="13" fill="#1f2328" text-anchor="middle">another aggregate</text>
+  <line x1="654" y1="155" x2="786" y2="155" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="720" y="145" font-size="13" fill="#1f2328" text-anchor="middle">practitionerId</text>
+  <line x1="654" y1="265" x2="786" y2="265" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="720" y="255" font-size="13" fill="#1f2328" text-anchor="middle">clientId</text>
+  <text x="794" y="330" font-size="13" font-style="italic" fill="#2f6f4f" text-anchor="middle">by identifier, never an object</text>
+  <!-- domain events -->
+  <rect x="290" y="380" width="420" height="88" rx="10" fill="#ffffff" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="500" y="406" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">recorded domain events</text>
+  <text x="500" y="430" font-size="13" fill="#1f2328" text-anchor="middle">AppointmentBooked, ...Rescheduled, ...Cancelled</text>
+  <text x="500" y="452" font-size="13" fill="#1f2328" text-anchor="middle">handed over by the save, dispatched before the commit</text>
+  <line x1="350" y1="324" x2="350" y2="376" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="360" y="362" font-size="13" fill="#1f2328">records</text>
+</svg>

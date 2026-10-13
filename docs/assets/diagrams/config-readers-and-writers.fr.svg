@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 620" width="960" height="620" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Qui écrit ddd-ts-kit.config.json, et qui le lit</title>
+  <desc id="desc">À gauche, les commandes qui écrivent ou modifient le fichier : init, generate context, service et worker, generate adr avec une dérogation, sdk et les commandes de migration. À droite, ce qui le lit : toutes les commandes de la CLI, le plugin ESLint, le hook d'éditeur et les skills du plugin Claude Code, et la configuration du lanceur de tests. Les flèches vont de chaque écrivain vers le fichier, et du fichier vers chaque lecteur. Sous les écrivains, ddd-ts-kit check, qui signale ce que le fichier a d'incohérent.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="620" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Qui écrit ddd-ts-kit.config.json, et qui le lit</text>
+  <text x="24" y="80" font-size="14" font-weight="600" fill="#5f6b73">L'écrivent ou le modifient</text>
+  <text x="626" y="80" font-size="14" font-weight="600" fill="#5f6b73">Le lisent</text>
+  <rect x="24" y="96" width="310" height="84" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="40" y="122" font-size="16" font-weight="700" fill="#5f6b73">init</text>
+  <text x="40" y="144" font-size="13" fill="#1f2328">écrit le fichier d'un nouveau projet ;</text>
+  <text x="40" y="164" font-size="13" fill="#1f2328">--force change ce que ses options nomment</text>
+  <line x1="336" y1="138" x2="377" y2="138" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="24" y="192" width="310" height="84" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="40" y="218" font-size="16" font-weight="700" fill="#5f6b73">generate context, service, worker</text>
+  <text x="40" y="240" font-size="13" fill="#1f2328">ajoutent un contexte, posent</text>
+  <text x="40" y="260" font-size="13" fill="#1f2328">deployable, posent worker</text>
+  <line x1="336" y1="234" x2="377" y2="234" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="24" y="288" width="310" height="84" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="40" y="314" font-size="16" font-weight="700" fill="#5f6b73">generate adr --deviation</text>
+  <text x="40" y="336" font-size="13" fill="#1f2328">ajoute une entrée à deviations et</text>
+  <text x="40" y="356" font-size="13" fill="#1f2328">écrit son enregistrement de décision</text>
+  <line x1="336" y1="330" x2="377" y2="330" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="24" y="384" width="310" height="84" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="40" y="410" font-size="16" font-weight="700" fill="#5f6b73">sdk et les migrations</text>
+  <text x="40" y="432" font-size="13" fill="#1f2328">sdk, error-factories --apply, controllers,</text>
+  <text x="40" y="452" font-size="13" fill="#1f2328">value-objects : posent la clé migrée</text>
+  <line x1="336" y1="426" x2="377" y2="426" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="380" y="96" width="200" height="500" rx="10" fill="#ffffff" stroke="#3d4449" stroke-width="2.5"/>
+  <text x="480" y="126" font-size="15" font-weight="700" fill="#1f2328" text-anchor="middle">ddd-ts-kit.config.json</text>
+  <text x="480" y="148" font-size="13" fill="#5f6b73" text-anchor="middle">à la racine du projet</text>
+  <line x1="396" y1="164" x2="564" y2="164" stroke="#3d4449" stroke-opacity="0.3"/>
+  <text x="480" y="190" font-size="13" fill="#1f2328" text-anchor="middle">sourceRoot, contextsDir, ...</text>
+  <text x="480" y="208" font-size="13" fill="#1f2328" text-anchor="middle">importAlias, importExtension</text>
+  <text x="480" y="238" font-size="13" fill="#1f2328" text-anchor="middle">stack</text>
+  <text x="480" y="268" font-size="13" fill="#1f2328" text-anchor="middle">contexts</text>
+  <text x="480" y="298" font-size="13" fill="#1f2328" text-anchor="middle">rules, limits</text>
+  <text x="480" y="328" font-size="13" fill="#1f2328" text-anchor="middle">coverage</text>
+  <text x="480" y="358" font-size="13" fill="#1f2328" text-anchor="middle">commit, guard, worker</text>
+  <text x="480" y="388" font-size="13" fill="#1f2328" text-anchor="middle">ci, openapi, sdk</text>
+  <text x="480" y="418" font-size="13" fill="#1f2328" text-anchor="middle">deviations</text>
+  <rect x="626" y="96" width="310" height="84" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="642" y="126" font-size="16" font-weight="700" fill="#5f6b73">toutes les commandes de la CLI</text>
+  <text x="642" y="152" font-size="13" fill="#1f2328">generate, docs, build-aliases, check...</text>
+  <line x1="583" y1="138" x2="624" y2="138" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="626" y="192" width="310" height="84" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="642" y="220" font-size="16" font-weight="700" fill="#5f6b73">le plugin ESLint</text>
+  <text x="642" y="244" font-size="13" fill="#1f2328">sourceRoot, contextsDir, ..., stack, rules,</text>
+  <text x="642" y="264" font-size="13" fill="#1f2328">contexts, limits, sdk, les listes d'autorisation</text>
+  <line x1="583" y1="234" x2="624" y2="234" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="626" y="288" width="310" height="84" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="642" y="318" font-size="16" font-weight="700" fill="#5f6b73">le hook d'éditeur du plugin</text>
+  <text x="642" y="344" font-size="13" fill="#1f2328">guard, commit : il refuse ou rappelle</text>
+  <line x1="583" y1="330" x2="624" y2="330" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="626" y="384" width="310" height="84" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="642" y="414" font-size="16" font-weight="700" fill="#5f6b73">les skills du plugin</text>
+  <text x="642" y="440" font-size="13" fill="#1f2328">la stack et les contextes</text>
+  <line x1="583" y1="426" x2="624" y2="426" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="626" y="480" width="310" height="84" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="642" y="510" font-size="16" font-weight="700" fill="#5f6b73">la config du lanceur de tests</text>
+  <text x="642" y="536" font-size="13" fill="#1f2328">governedCoverage() : les planchers</text>
+  <line x1="583" y1="522" x2="624" y2="522" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="24" y="500" font-size="14" font-weight="600" fill="#5f6b73">Ce qui le juge</text>
+  <rect x="24" y="512" width="310" height="84" rx="10" fill="#ffffff" stroke="#3d4449" stroke-width="2"/>
+  <text x="40" y="538" font-size="16" font-weight="700" fill="#3d4449">ddd-ts-kit check</text>
+  <text x="40" y="560" font-size="13" fill="#1f2328">config/valid : ce qui est incohérent ;</text>
+  <text x="40" y="582" font-size="13" fill="#1f2328">governance/recorded-deviation</text>
+  <line x1="336" y1="554" x2="377" y2="554" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+</svg>

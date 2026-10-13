@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 480" width="960" height="480" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">How the documentation is organised</title>
+  <desc id="desc">At the top, the normative reference: ARCHITECTURE.md, CONFIG.md, the README of the pipeline and the READMEs of the packages. Under it, the pages that explain and teach: concepts (why, one page per idea), tools (which, one page per decision), guides (how, working on a project) and proposals (next, designs not all built). Each points to the reference it explains, chooses from, applies or may change. When a page and the reference disagree, the reference is right.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="480" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">How the documentation is organised</text>
+  <rect x="24" y="58" width="912" height="144" rx="10" fill="#ffffff" stroke="#3d4449" stroke-width="2.5"/>
+  <text x="44" y="86" font-size="16" font-weight="700" fill="#3d4449">Reference (normative)</text>
+  <text x="234" y="86" font-size="13" fill="#5f6b73">what the checker and the CLI hold</text>
+  <rect x="44" y="102" width="212" height="84" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="58" y="128" font-size="14" font-weight="700" fill="#1f2328">ARCHITECTURE.md</text>
+  <text x="58" y="150" font-size="13" fill="#1f2328">tree, rule ids, rules, tests</text>
+  <rect x="268" y="102" width="212" height="84" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="282" y="128" font-size="14" font-weight="700" fill="#1f2328">CONFIG.md</text>
+  <text x="282" y="150" font-size="13" fill="#1f2328">every key of the config file</text>
+  <rect x="492" y="102" width="212" height="84" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="506" y="128" font-size="14" font-weight="700" fill="#1f2328">pipeline/README.md</text>
+  <text x="506" y="150" font-size="13" fill="#1f2328">quality gates, git hooks</text>
+  <rect x="716" y="102" width="212" height="84" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="730" y="128" font-size="14" font-weight="700" fill="#1f2328">package READMEs</text>
+  <text x="730" y="150" font-size="13" fill="#1f2328">what each package does</text>
+  <rect x="24" y="266" width="216" height="148" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="40" y="294" font-size="16" font-weight="700" fill="#5f6b73">Concepts</text>
+  <text x="40" y="316" font-size="13" font-weight="600" fill="#1f2328">why: one page per idea</text>
+  <text x="40" y="342" font-size="13" fill="#1f2328">36 pages in a reading path:</text>
+  <text x="40" y="362" font-size="13" fill="#1f2328">aggregates, events, outbox,</text>
+  <text x="40" y="382" font-size="13" fill="#1f2328">access control, tests...</text>
+  <line x1="132" y1="264" x2="132" y2="205" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="122" y="232" font-size="13" font-weight="600" fill="#1f2328" text-anchor="end">explain</text>
+  <rect x="256" y="266" width="216" height="148" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="272" y="294" font-size="16" font-weight="700" fill="#5f6b73">Tools</text>
+  <text x="272" y="316" font-size="13" font-weight="600" fill="#1f2328">which: one page per decision</text>
+  <text x="272" y="342" font-size="13" fill="#1f2328">17 pages: comparisons,</text>
+  <text x="272" y="362" font-size="13" fill="#1f2328">criteria, what was verified,</text>
+  <text x="272" y="382" font-size="13" fill="#1f2328">limits, a recommendation</text>
+  <line x1="364" y1="264" x2="364" y2="205" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="354" y="232" font-size="13" font-weight="600" fill="#1f2328" text-anchor="end">choose a stack value</text>
+  <rect x="488" y="266" width="216" height="148" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="504" y="294" font-size="16" font-weight="700" fill="#5f6b73">Guides</text>
+  <text x="504" y="316" font-size="13" font-weight="600" fill="#1f2328">how: working on a project</text>
+  <text x="504" y="342" font-size="13" fill="#1f2328">method, commands, team,</text>
+  <text x="504" y="362" font-size="13" fill="#1f2328">parallel work, commits,</text>
+  <text x="504" y="382" font-size="13" fill="#1f2328">agents, translation</text>
+  <line x1="596" y1="264" x2="596" y2="205" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="586" y="232" font-size="13" font-weight="600" fill="#1f2328" text-anchor="end">apply</text>
+  <rect x="720" y="266" width="216" height="148" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="736" y="294" font-size="16" font-weight="700" fill="#5f6b73">Proposals</text>
+  <text x="736" y="316" font-size="13" font-weight="600" fill="#1f2328">next: not all built</text>
+  <text x="736" y="342" font-size="13" fill="#1f2328">the read side: what is</text>
+  <text x="736" y="362" font-size="13" fill="#1f2328">built, what the CLI does</text>
+  <text x="736" y="382" font-size="13" fill="#1f2328">not generate yet</text>
+  <line x1="828" y1="264" x2="828" y2="205" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="818" y="232" font-size="13" font-weight="600" fill="#1f2328" text-anchor="end">may change</text>
+  <text x="480" y="452" font-size="15" font-weight="700" fill="#3d4449" text-anchor="middle">When a page and the reference disagree, the reference is right.</text>
+</svg>

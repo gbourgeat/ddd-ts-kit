@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 556" width="960" height="556" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Deux contextes délimités qui collaborent</title>
+  <desc id="desc">Un contexte amont, scheduling, garde son modèle et ses tables privés et publie un dossier published-language. Le contexte aval, notification, n'importe que les types de ce langage publié. À l'exécution, le contexte amont écrit chaque événement d'intégration dans son outbox, dans la transaction de la commande ; un relais le publie après la validation, par le bus d'événements ou un broker, vers les gestionnaires d'événements d'intégration du contexte aval, qui le dédupliquent et envoient une commande. Une couche anticorruption facultative traduit le modèle du contexte amont. Aucune table, aucune jointure, aucune transaction n'est partagée.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="556" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Deux contextes délimités qui collaborent</text>
+  <!-- upstream context -->
+  <rect x="24" y="60" width="360" height="384" rx="12" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="44" y="88" font-size="14" font-weight="600" fill="#5f6b73">contexte amont : scheduling</text>
+  <rect x="44" y="104" width="320" height="120" rx="10" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="204" y="134" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">privé au contexte</text>
+  <line x1="60" y1="146" x2="348" y2="146" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text x="204" y="170" font-size="13" fill="#1f2328" text-anchor="middle">domaine, application, infrastructure</text>
+  <text x="204" y="192" font-size="13" fill="#1f2328" text-anchor="middle">ses tables, dans son propre schéma</text>
+  <text x="204" y="214" font-size="13" fill="#1f2328" text-anchor="middle">qu'aucun autre contexte n'importe</text>
+  <rect x="44" y="244" width="320" height="104" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="204" y="274" font-size="16" font-weight="700" fill="#5f6b73" text-anchor="middle">published-language/</text>
+  <line x1="60" y1="286" x2="348" y2="286" stroke="#5f6b73" stroke-opacity="0.35"/>
+  <text x="204" y="310" font-size="13" fill="#1f2328" text-anchor="middle">déclarations des événements d'intégration</text>
+  <text x="204" y="332" font-size="13" fill="#1f2328" text-anchor="middle">types de payload, contrats de lecture</text>
+  <rect x="44" y="368" width="220" height="60" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="154" y="394" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">outbox</text>
+  <text x="154" y="415" font-size="13" fill="#1f2328" text-anchor="middle">lignes validées avec l'état</text>
+  <!-- relay, between the two contexts -->
+  <rect x="400" y="368" width="160" height="60" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="480" y="394" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">relais</text>
+  <text x="480" y="415" font-size="13" fill="#1f2328" text-anchor="middle">vers le bus ou broker</text>
+  <!-- downstream context -->
+  <rect x="576" y="60" width="360" height="384" rx="12" fill="#ffffff" stroke="#5f6b73" stroke-width="1.5"/>
+  <text x="596" y="88" font-size="14" font-weight="600" fill="#5f6b73">contexte aval : notification</text>
+  <rect x="596" y="104" width="320" height="120" rx="10" fill="#f1ebf5" stroke="#7a4f9a" stroke-width="2"/>
+  <text x="756" y="134" font-size="16" font-weight="700" fill="#7a4f9a" text-anchor="middle">anti-corruption/ (facultatif)</text>
+  <line x1="612" y1="146" x2="900" y2="146" stroke="#7a4f9a" stroke-opacity="0.35"/>
+  <text x="756" y="170" font-size="13" fill="#1f2328" text-anchor="middle">traduit le modèle du contexte amont</text>
+  <text x="756" y="192" font-size="13" fill="#1f2328" text-anchor="middle">dans les mots de ce contexte</text>
+  <text x="756" y="214" font-size="13" fill="#1f2328" text-anchor="middle">sous infrastructure/</text>
+  <rect x="596" y="244" width="320" height="104" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="756" y="274" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">gestionnaires d'événements</text>
+  <line x1="612" y1="286" x2="900" y2="286" stroke="#2b5d8a" stroke-opacity="0.35"/>
+  <text x="756" y="310" font-size="13" fill="#1f2328" text-anchor="middle">un nom de consommateur chacun</text>
+  <text x="756" y="332" font-size="13" fill="#1f2328" text-anchor="middle">dédupliquent, puis envoient une commande</text>
+  <text x="800" y="404" font-size="13" font-style="italic" fill="#5f6b73" text-anchor="middle">ses propres tables, son propre schéma</text>
+  <!-- compile-time import: downstream handlers to the upstream published language -->
+  <line x1="594" y1="300" x2="368" y2="300" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="480" y="288" font-size="13" fill="#1f2328" text-anchor="middle">n'importe que ces types</text>
+  <!-- run time: outbox, relay, handlers -->
+  <line x1="266" y1="398" x2="396" y2="398" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <path d="M562,398 H660 V352" fill="none" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <!-- legend -->
+  <line x1="40" y1="478" x2="84" y2="478" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="96" y="483" font-size="14" fill="#1f2328">import à la compilation : seulement le langage publié d'un amont déclaré</text>
+  <line x1="40" y1="504" x2="84" y2="504" stroke="#3d4449" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+  <text x="96" y="509" font-size="14" fill="#1f2328">un événement d'intégration à l'exécution, livré au moins une fois</text>
+  <text x="40" y="537" font-size="14" fill="#1f2328">Les deux contextes ne partagent ni table, ni jointure, ni transaction.</text>
+</svg>

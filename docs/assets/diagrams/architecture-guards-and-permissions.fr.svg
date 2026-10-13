@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 500" width="960" height="500" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Les gardes à l'entrée, les permissions sur le cas d'usage</title>
+  <desc id="desc">Une requête HTTP passe d'abord les gardes de son groupe de routes, qui vérifient qui appelle et répondent 401 ou 403 sans rien charger. Le contrôleur traduit la requête et envoie une commande sur le bus de commandes. Le middleware d'autorisation du bus demande à l'Authorizer la permission que la commande déclare avec Requires, et refuse par défaut. Le gestionnaire charge l'agrégat et interroge une politique à son sujet par access.authorize. Un job planifié, un consommateur d'événements d'intégration et un autre transport comme une CLI envoient la même commande au bus sans passer aucune garde, et sont tenus par la même permission.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="500" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Les gardes à l'entrée, les permissions sur le cas d'usage</text>
+  <!-- the HTTP request -->
+  <text x="54" y="160" font-size="13" fill="#1f2328" text-anchor="middle">requête</text>
+  <text x="54" y="194" font-size="13" fill="#1f2328" text-anchor="middle">HTTP</text>
+  <line x1="22" y1="174" x2="92" y2="174" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- route group guards -->
+  <rect x="96" y="96" width="188" height="156" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="190" y="126" font-size="16" font-weight="700" fill="#9a5b2b" text-anchor="middle">gardes du groupe</text>
+  <line x1="110" y1="140" x2="270" y2="140" stroke="#9a5b2b" stroke-opacity="0.35"/>
+  <text x="190" y="164" font-size="13" fill="#1f2328" text-anchor="middle">qui appelle ?</text>
+  <text x="190" y="186" font-size="13" fill="#1f2328" text-anchor="middle">Authenticated, HasRole,</text>
+  <text x="190" y="208" font-size="13" fill="#1f2328" text-anchor="middle">TenantMember</text>
+  <text x="190" y="230" font-size="13" fill="#1f2328" text-anchor="middle">401 ou 403, rien de chargé</text>
+  <!-- controller -->
+  <rect x="312" y="96" width="188" height="156" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="406" y="126" font-size="16" font-weight="700" fill="#9a5b2b" text-anchor="middle">contrôleur</text>
+  <line x1="326" y1="140" x2="486" y2="140" stroke="#9a5b2b" stroke-opacity="0.35"/>
+  <text x="406" y="164" font-size="13" fill="#1f2328" text-anchor="middle">traduit la requête HTTP</text>
+  <text x="406" y="186" font-size="13" fill="#1f2328" text-anchor="middle">en commande</text>
+  <text x="406" y="208" font-size="13" fill="#1f2328" text-anchor="middle">l'envoie sur le bus</text>
+  <text x="406" y="230" font-size="13" fill="#1f2328" text-anchor="middle">ne décide rien</text>
+  <!-- command bus -->
+  <rect x="528" y="96" width="188" height="156" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="622" y="126" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">bus de commandes</text>
+  <line x1="542" y1="140" x2="702" y2="140" stroke="#2b5d8a" stroke-opacity="0.35"/>
+  <text x="622" y="164" font-size="13" fill="#1f2328" text-anchor="middle">middleware d'autorisation</text>
+  <text x="622" y="186" font-size="13" fill="#1f2328" text-anchor="middle">@Requires(permission)</text>
+  <text x="622" y="208" font-size="13" fill="#1f2328" text-anchor="middle">demandée à l'Authorizer</text>
+  <text x="622" y="230" font-size="13" fill="#1f2328" text-anchor="middle">refus par défaut</text>
+  <!-- handler -->
+  <rect x="744" y="96" width="188" height="156" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="838" y="126" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">gestionnaire</text>
+  <line x1="758" y1="140" x2="918" y2="140" stroke="#2b5d8a" stroke-opacity="0.35"/>
+  <text x="838" y="164" font-size="13" fill="#1f2328" text-anchor="middle">charge l'agrégat</text>
+  <text x="838" y="186" font-size="13" fill="#1f2328" text-anchor="middle">interroge une politique :</text>
+  <text x="838" y="208" font-size="13" fill="#1f2328" text-anchor="middle">access.authorize(...)</text>
+  <text x="838" y="230" font-size="13" fill="#1f2328" text-anchor="middle">puis enregistre</text>
+  <!-- the path of a request -->
+  <line x1="286" y1="174" x2="308" y2="174" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="502" y1="174" x2="524" y2="174" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="718" y1="174" x2="740" y2="174" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <!-- other senders of the same command -->
+  <rect x="312" y="340" width="188" height="64" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="406" y="367" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">job planifié</text>
+  <text x="406" y="390" font-size="13" fill="#1f2328" text-anchor="middle">en acteur système</text>
+  <rect x="528" y="340" width="188" height="64" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="622" y="367" font-size="16" font-weight="700" fill="#2b5d8a" text-anchor="middle">consommateur</text>
+  <text x="622" y="390" font-size="13" fill="#1f2328" text-anchor="middle">d'événements d'intégration</text>
+  <rect x="744" y="340" width="188" height="64" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="838" y="367" font-size="16" font-weight="700" fill="#9a5b2b" text-anchor="middle">CLI, autre transport</text>
+  <text x="838" y="390" font-size="13" fill="#1f2328" text-anchor="middle">en acteur de l'appelant</text>
+  <path d="M406,338 V296 H588 V256" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="622" y1="338" x2="622" y2="256" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <path d="M838,338 V296 H656 V256" fill="none" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="32" y="446" font-size="14" fill="#1f2328">Ces émetteurs ne passent aucune garde : la permission que la commande exige les tient tout autant.</text>
+  <!-- key -->
+  <rect x="32" y="466" width="16" height="16" rx="3" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="56" y="479" font-size="13" fill="#1f2328">présentation</text>
+  <rect x="160" y="466" width="16" height="16" rx="3" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="184" y="479" font-size="13" fill="#1f2328">application</text>
+</svg>

@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 604" width="960" height="604" role="img" aria-labelledby="title desc" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="title">Comment une clé de ddd-ts-kit.config.json est lue</title>
+  <desc id="desc">Un arbre de décision. Une clé que le kit ne connaît pas est ignorée sans message. Une clé connue mais absente est lue avec sa valeur par défaut : celle de sa table, sauf pour dix clés de stack et importExtension, lues avec la valeur par défaut d'un fichier écrit avant que la clé n'existe. Une valeur écrite que le kit accepte est lue telle quelle. Une valeur de stack erronée arrête toutes les commandes avec les valeurs acceptées. Toute autre valeur erronée est gardée ou lue comme sa valeur par défaut, et ddd-ts-kit check la signale en config/valid avec sa ligne.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3d4449"/>
+    </marker>
+  </defs>
+  <rect width="960" height="604" rx="16" fill="#ffffff"/>
+  <text x="32" y="38" font-size="18" font-weight="600" fill="#1f2328">Comment une clé de ddd-ts-kit.config.json est lue</text>
+  <rect x="40" y="70" width="320" height="60" rx="10" fill="#ffffff" stroke="#3d4449" stroke-width="2"/>
+  <text x="200" y="106" font-size="15" font-weight="700" fill="#1f2328" text-anchor="middle">Le kit connaît-il la clé ?</text>
+  <line x1="362" y1="100" x2="438" y2="100" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="400" y="92" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">non</text>
+  <rect x="440" y="68" width="480" height="64" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="456" y="93" font-size="14" font-weight="600" fill="#5f6b73">Ignorée, sans message</text>
+  <text x="456" y="115" font-size="13" fill="#1f2328">une clé mal orthographiée n'est pas signalée : relisez la table de sa section</text>
+  <line x1="200" y1="132" x2="200" y2="174" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="210" y="158" font-size="13" font-weight="600" fill="#1f2328">oui</text>
+  <rect x="40" y="176" width="320" height="60" rx="10" fill="#ffffff" stroke="#3d4449" stroke-width="2"/>
+  <text x="200" y="212" font-size="15" font-weight="700" fill="#1f2328" text-anchor="middle">La clé est-elle écrite ?</text>
+  <line x1="362" y1="206" x2="438" y2="206" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="400" y="198" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">non</text>
+  <rect x="440" y="166" width="480" height="80" rx="10" fill="#f3f4f5" stroke="#5f6b73" stroke-width="2"/>
+  <text x="456" y="189" font-size="14" font-weight="600" fill="#5f6b73">Lue avec sa valeur par défaut</text>
+  <text x="456" y="210" font-size="13" fill="#1f2328">celle de sa table ; pour dix clés de stack et importExtension,</text>
+  <text x="456" y="230" font-size="13" fill="#1f2328">celle d'un fichier plus ancien, pas ce qu'init écrit aujourd'hui</text>
+  <line x1="200" y1="238" x2="200" y2="280" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="210" y="264" font-size="13" font-weight="600" fill="#1f2328">oui</text>
+  <rect x="40" y="282" width="320" height="60" rx="10" fill="#ffffff" stroke="#3d4449" stroke-width="2"/>
+  <text x="200" y="318" font-size="15" font-weight="700" fill="#1f2328" text-anchor="middle">Le kit accepte-t-il la valeur ?</text>
+  <line x1="362" y1="312" x2="438" y2="312" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="400" y="304" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">oui</text>
+  <rect x="440" y="280" width="480" height="64" rx="10" fill="#e8f1ec" stroke="#2f6f4f" stroke-width="2"/>
+  <text x="456" y="305" font-size="14" font-weight="600" fill="#2f6f4f">Lue telle qu'écrite</text>
+  <text x="456" y="327" font-size="13" fill="#1f2328">check compare ce qui en découle, comme tsconfig.json</text>
+  <line x1="200" y1="344" x2="200" y2="386" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="210" y="370" font-size="13" font-weight="600" fill="#1f2328">non</text>
+  <rect x="40" y="388" width="320" height="60" rx="10" fill="#ffffff" stroke="#3d4449" stroke-width="2"/>
+  <text x="200" y="424" font-size="15" font-weight="700" fill="#1f2328" text-anchor="middle">Est-ce une clé stack.* ?</text>
+  <line x1="362" y1="418" x2="438" y2="418" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="400" y="410" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">oui</text>
+  <rect x="440" y="386" width="480" height="64" rx="10" fill="#f6ede6" stroke="#9a5b2b" stroke-width="2"/>
+  <text x="456" y="411" font-size="14" font-weight="600" fill="#9a5b2b">Toutes les commandes s'arrêtent</text>
+  <text x="456" y="433" font-size="13" fill="#1f2328">et listent les valeurs acceptées ; de même si le fichier n'est pas du JSON</text>
+  <line x1="200" y1="450" x2="200" y2="492" stroke="#3d4449" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="210" y="476" font-size="13" font-weight="600" fill="#1f2328">non</text>
+  <rect x="40" y="494" width="880" height="86" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>
+  <text x="56" y="519" font-size="14" font-weight="600" fill="#2b5d8a">Gardée, ou lue comme sa valeur par défaut : la commande continue</text>
+  <text x="56" y="541" font-size="13" fill="#1f2328">ddd-ts-kit check la signale en config/valid, avec sa ligne et la correction : par exemple une classification,</text>
+  <text x="56" y="563" font-size="13" fill="#1f2328">une relation, un identifiant de règle, un mode de garde, une extension d'import ou un taux de couverture erronés</text>
+</svg>

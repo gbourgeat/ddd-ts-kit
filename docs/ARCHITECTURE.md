@@ -31,6 +31,33 @@ A system is a set of **bounded contexts**. Each one owns a model, a vocabulary a
 - The shared kernel holds only what at least two contexts use. A file read by one context
   belongs to that context.
 
+![Two bounded contexts that collaborate: the downstream imports only the published language of its upstream, and reacts to its integration events, which leave through the outbox and a relay](assets/diagrams/architecture-contexts-collaboration.svg)
+
+The relationship is written down before the first import. In the example application,
+`notification` reacts to what `scheduling` and `identity` publish, and its entry in
+`ddd-ts-kit.config.json` says so:
+
+```json
+"notification": {
+  "classification": "supporting",
+  "upstreams": [
+    { "context": "scheduling", "relationship": "published-language" },
+    { "context": "identity", "relationship": "published-language" }
+  ]
+}
+```
+
+A file of `notification` then reaches `scheduling` through its published language, and nowhere
+else:
+
+```ts
+// Instead of: the model of another context (context/published-language-only)
+import { Appointment } from '@/contexts/scheduling/domain/aggregates/appointment.aggregate';
+
+// Write: the contract the upstream designed for the others, and react to its events
+import { appointmentCancelledV1, type AppointmentCancelledV1 } from '@/contexts/scheduling/published-language/index';
+```
+
 ## 2. Canonical tree
 
 ```
@@ -120,6 +147,39 @@ permission; none of them passes a guard. So a guard never replaces a permission,
 aggregate (`presentation/guard-at-the-edge`), and every use case still says who may send it
 (`authz/declared`).
 
+![A request passes the guards of its route group, then the controller sends a command; the command bus asks the Authorizer for the permission the command requires, and the handler asks a policy about the element it loaded. A scheduled job, an integration event handler or another transport sends the same command without any guard, and is held to the same permission](assets/diagrams/architecture-guards-and-permissions.svg)
+
+Each one is written where it belongs: the guard on the route group, the permission on the
+command.
+
+<!-- checked sample -->
+```ts
+import { definePermissions } from '@ddd-ts-kit/auth';
+import { Authenticated, RouteGroup } from '@ddd-ts-kit/http';
+import { AuthorizedCommand, type Actor } from '@ddd-ts-kit/kernel';
+import { Requires } from '@ddd-ts-kit/kernel/declarations';
+
+// presentation/http/invoices.routes.ts: runs before every controller of the group, answers 401
+@RouteGroup({ prefix: '/invoices', tags: ['billing'], guards: [Authenticated], errors: ['FORBIDDEN'] })
+export class InvoicesRoutes {}
+
+// application/authorization/billing.permissions.ts: the rights of the context, as data
+export const billingPermissions = definePermissions('billing', {
+  'invoice.pay': { description: 'Record the payment of an invoice' },
+});
+
+// application/commands/pay-invoice/pay-invoice.command.ts: whoever sends it needs the permission
+@Requires(billingPermissions['invoice.pay'])
+export class PayInvoiceCommand extends AuthorizedCommand<void> {
+  constructor(
+    actor: Actor,
+    readonly invoiceId: string,
+  ) {
+    super(actor);
+  }
+}
+```
+
 The tree is **closed**: a directory not listed here is a design decision, added to
 `extraDirectories` in the config with a reason, not created ad hoc. The levels named
 `<use-case>` are open, and so is everything below `test/unit/`, `test/integration/`,
@@ -128,11 +188,12 @@ The tree is **closed**: a directory not listed here is a design decision, added 
 
 ## 3. Dependency rules
 
-```
-presentation ──▶ application ──▶ domain ◀── infrastructure
-                      ▲                          │
-                      └──────────────────────────┘
-```
+![The four layers of a bounded context inside the platform: presentation, application and infrastructure point towards the domain, infrastructure implements the ports of the application](assets/diagrams/layers-dependency-rule.svg)
+
+Every source dependency points towards the domain. The one arrow that goes the other way is
+not an import: infrastructure implements a port the application or the domain declares, and
+the platform binds it at start-up. Why, and what each layer holds:
+[Layers and the dependency rule](concepts/layers-and-dependency-rule.md).
 
 | Id | Rule |
 |---|---|
@@ -257,16 +318,20 @@ explicit style) are allowed to know every layer.
 
 ### Who checks what
 
-Three analyzers and a formatter hold the rules, each where it is exact:
+Three analyzers and a formatter hold the rules, each where it is exact, and each at the moment
+it is cheap enough to run:
+
+![When each analyzer runs: the checker at every file write; the checker, ESLint and Biome on the staged files of a commit; the compiler and the unit tests before a push; all of them in the pipeline, with dependency-cruiser and knip](assets/diagrams/architecture-who-checks-what.svg)
 
 | Analyzer | Holds | When |
 |---|---|---|
-| `ddd-ts-kit check` (zero dependency, text level) | alone, structure and project-wide facts: `tree/*`, `naming/*`, `language/*`, `config/*`, `persistence/migration-history`, `tenancy/scoped-statement`, `context/no-cycle`, `test/spec-required`, `test/builder-required`, `test/coverage-governed`, `events/defined-in-published-language`, `composition/only-in-module`, `declarations/barrel-current`, `imports/alias-declared`, `imports/alias-only` and `imports/extension` in `test/` and `scripts/` as under the source root, the import that names a directory, the config side of `events/outbox-required` and of `governance/recorded-deviation` (decision records exist), and what must be unique in the project (consumer names, job names) or in a context (error codes, `errors/code-unique`), `errors/known-code` and `schema/no-duplicate-shape`, the lock of `event-sourcing/upcaster-required`. It also holds a fast approximation of every code rule below except `domain/*`, `application/*` and the three code rules of `errors/*`; of `clean/blank-lines` it holds the `return` and the padded block only, and it holds nothing of `clean/formatted` | at every file write (editor hook), in CI |
+| `ddd-ts-kit check` (zero dependency, text level) | alone, structure and project-wide facts: `tree/*`, `naming/*`, `language/*`, `config/*`, `persistence/migration-history`, `tenancy/scoped-statement`, `context/no-cycle`, `test/spec-required`, `test/builder-required`, `test/coverage-governed`, `events/defined-in-published-language`, `composition/only-in-module`, `declarations/barrel-current`, `imports/alias-declared`, `imports/alias-only` and `imports/extension` in `test/` and `scripts/` as under the source root, the import that names a directory, the config side of `events/outbox-required` and of `governance/recorded-deviation` (decision records exist), and what must be unique in the project (consumer names, job names) or in a context (error codes, `errors/code-unique`), `errors/known-code` and `schema/no-duplicate-shape`, the lock of `event-sourcing/upcaster-required`. It also holds a fast approximation of every code rule below except `domain/*`, `application/*` and the three code rules of `errors/*`; of `clean/blank-lines` it holds the `return` and the padded block only, and it holds nothing of `clean/formatted` | at every file write (editor hook), on staged files, in CI |
 | `@ddd-ts-kit/eslint-plugin` (syntax tree) | code: `layer/*`, the imports of `context/*` and `context/extractable`, `purity/*`, `clean/*` but `clean/formatted` (`clean/blank-lines` through two rules of `@stylistic/eslint-plugin` and `clean/braces` through `curly`, which its presets enable), `domain/*`, `application/*`, `errors/through-factory`, `errors/constructor-not-public`, `errors/factory-name`, `authz/*`, `events/name-format`, `events/outbox-required`, `events/consumer-idempotent`, `aspects/*`, `tracing/*`, `domain-events/*`, `event-sourcing/*` but the lock of `event-sourcing/upcaster-required`, `schema/presentation-only`, `standard/*`, `ports/*`, `scheduling/*`, `lifecycle/*` (of `lifecycle/status-through-machine`, the writes one file shows; the machine left unimported is read by `ddd-ts-kit check` alone), `process/*`, `declarations/role-declared`, `declarations/constructor-injection` (which it also fixes, removing a redundant list), `test/no-mocks`, `imports/alias-only` and `imports/extension` (which it also fixes), and the comment side of `governance/recorded-deviation`. `domain/*`, `application/*` and those three rules of `errors/*` are held by it alone. Of `declarations/constructor-injection` and of the constructor side of `ports/no-concrete-dependency` it holds what one file shows: an interface or a type alias declared in another file and a constructor inherited from another class are read by `ddd-ts-kit check`. Of `domain-events/transactional-before-commit` it holds what one declared class shows; where the adapters of an `application/ports/` port live and the phase an explicit-style module file registers a handler in are held by `ddd-ts-kit check` alone. Authoritative when the two disagree | on staged files, in CI |
 | Biome (formatter only: its linter and its import organiser are off) | `clean/formatted`: where every token goes, at a line width of 120, with the `biome.json` that `init` writes; it also removes the padding of a block and never leaves a body on the line of its braces, which completes `clean/blank-lines` and `clean/braces`. ESLint enables no rule that decides the same thing | on staged files, in CI |
 | dependency-cruiser (resolved import graph) | the same boundaries through barrels and re-exports, cycles between files, orphans, undeclared dependencies; its configuration is generated from the config by `ddd-ts-kit depcruise-config` | in CI |
 
-knip (dead code and unused dependencies) and the TypeScript compiler in `strict` mode complete the gate.
+knip (dead code and unused dependencies) and the TypeScript compiler in `strict` mode complete the gate;
+the compiler and the unit tests also run before every push.
 
 ## 4. Tactical rules
 
@@ -276,16 +341,130 @@ aggregate per transaction; another aggregate is referenced by id. Invariants are
 and a violated one raises a `DomainError` with a stable `code`, built by a factory of the error
 class of its concept: `throw AppointmentError.slotTaken(calendar.id, slot.startsAt)`.
 
+```ts
+// Instead of: a setter, and the rule lives in every caller that remembers it
+invoice.paidAt = new Date();
+
+// Write: an intention of the business, which guards the rule and records the fact
+invoice.pay(clock.now());
+```
+
+<!-- checked sample -->
+```ts
+import { AggregateRoot, ConceptError, type DomainEvent } from '@ddd-ts-kit/kernel';
+
+// domain/errors/invoice.error.ts: one class per concept, one factory per refusal
+export class InvoiceError extends ConceptError {
+  static alreadyPaid(invoiceId: string) {
+    return InvoiceError.refusal('INVOICE_ALREADY_PAID', `Invoice ${invoiceId} is already paid.`, { invoiceId });
+  }
+}
+
+// domain/events/invoice-paid.event.ts: a fact, in the past tense
+export class InvoicePaid implements DomainEvent {
+  static readonly eventName = 'billing.invoice.paid';
+
+  readonly name = InvoicePaid.eventName;
+
+  constructor(
+    readonly aggregateId: string,
+    readonly occurredAt: Date,
+  ) {}
+}
+
+// domain/aggregates/invoice.aggregate.ts
+export interface InvoiceState {
+  readonly customerId: string;
+  readonly paidAt: Date | null;
+}
+
+export class Invoice extends AggregateRoot<string> {
+  private constructor(
+    id: string,
+    private state: InvoiceState,
+  ) {
+    super(id);
+  }
+
+  /** Birth: the only way to a new invoice. */
+  static create(id: string, customerId: string): Invoice {
+    return new Invoice(id, { customerId, paidAt: null });
+  }
+
+  /** Loading: what the mapper of the repository adapter calls. */
+  static rehydrate(id: string, state: InvoiceState): Invoice {
+    return new Invoice(id, state);
+  }
+
+  pay(at: Date): void {
+    if (this.state.paidAt !== null) {
+      throw InvoiceError.alreadyPaid(this.id);
+    }
+
+    this.state = { ...this.state, paidAt: at };
+    this.record(new InvoicePaid(this.id, at));
+  }
+
+  get isPaid(): boolean {
+    return this.state.paidAt !== null;
+  }
+}
+```
+
 **Value objects.** Immutable, validated in `create`, compared with `equals`. Primitive obsession
 is a defect: an email, an amount, a period are types.
+
+<!-- checked sample -->
+```ts
+import { ConceptError, ValueObject } from '@ddd-ts-kit/kernel';
+
+export class PersonError extends ConceptError {
+  static invalidEmail(raw: string) {
+    return PersonError.refusal('INVALID_EMAIL', `"${raw}" is not an email address.`, { raw });
+  }
+}
+
+export class Email extends ValueObject<{ readonly address: string }> {
+  private constructor(address: string) {
+    super({ address });
+  }
+
+  static create(raw: string): Email {
+    const address = raw.trim().toLowerCase();
+
+    if (!/^[^\s@]+@[^\s@]+$/.test(address)) {
+      throw PersonError.invalidEmail(raw);
+    }
+
+    return new Email(address);
+  }
+
+  get address(): string {
+    return this.props.address;
+  }
+}
+
+Email.create(' Ada@Example.org ').equals(Email.create('ada@example.org')); // true: compared by value
+```
 
 **Domain events.** Past tense, immutable, recorded by the aggregate. A handler writes
 `await this.orders.save(order)` and nothing else: no `pullEvents()`, no dispatcher. A
 repository adapter only persists.
 
+```ts
+// Instead of: dispatching by hand (domain-events/dispatched-on-save)
+await this.invoices.save(invoice);
+await this.dispatcher.dispatch(invoice.pullEvents());
+
+// Write: the save hands the recorded events to the unit of work
+await this.invoices.save(invoice);
+```
+
 **An effect of a domain event exists only if the state change that recorded it is committed.**
 A `before-commit` handler commits with it, an `after-commit` handler runs only after it, an
 integration event is published only after it.
+
+![The timeline of a unit of work: the handler saves and each save queues events; the before-commit handlers run on the queue inside the transaction; the transaction commits; the after-commit handlers run, then the command answers; later the relay publishes the outbox rows to the consumers. Any failure before or at the commit rolls everything back](assets/diagrams/architecture-unit-of-work.svg)
 
 - **Timing.** Inside a unit of work a save only queues the events its aggregates recorded, in
   recording order across all the saves. Once the work (the command handler) has returned, still
@@ -330,6 +509,63 @@ integration event is published only after it.
   dispatches before it resolves, `before-commit` handlers then `after-commit` ones, and nothing
   is atomic.
 
+Two reactions to the same fact, one in each phase. The publisher only writes an outbox row, so
+it commits with the payment; the receipt goes to a mail provider no transaction covers, so it
+waits for the commit:
+
+<!-- checked sample -->
+```ts
+import type { IntegrationEventDefinition } from '@ddd-ts-kit/events';
+import { IdGenerator, IntegrationEventPublisher, type DomainEvent } from '@ddd-ts-kit/kernel';
+import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
+
+declare class InvoicePaid implements DomainEvent {
+  static readonly eventName: 'billing.invoice.paid';
+  readonly name: string;
+  readonly aggregateId: string;
+  readonly occurredAt: Date;
+}
+
+declare const invoicePaidV1: IntegrationEventDefinition<{ readonly invoiceId: string; readonly paidAt: string }>;
+
+// application/ports/receipt-mailer.port.ts: an effect outside the database
+export abstract class ReceiptMailer {
+  abstract sendFor(invoiceId: string): Promise<void>;
+}
+
+// application/integration/publishers/invoice-paid.publisher.ts: before-commit, the default
+@DomainEventHandler(InvoicePaid, { name: InvoicePaid.eventName })
+export class InvoicePaidPublisher implements DomainEventHandler<InvoicePaid> {
+  constructor(
+    private readonly publisher: IntegrationEventPublisher,
+    private readonly ids: IdGenerator,
+  ) {}
+
+  async handle(event: InvoicePaid): Promise<void> {
+    const published = invoicePaidV1.create(
+      { invoiceId: event.aggregateId, paidAt: event.occurredAt.toISOString() },
+      { id: this.ids.next(), occurredAt: event.occurredAt },
+    );
+
+    // With a database, the publisher bound here is the outbox: a row in the transaction of the command.
+    await this.publisher.publish([published]);
+  }
+}
+
+// application/event-handlers/invoice-paid-receipt.event-handler.ts: after the commit, at most once
+@DomainEventHandler(InvoicePaid, { name: InvoicePaid.eventName, phase: 'after-commit' })
+export class InvoicePaidReceiptEventHandler implements DomainEventHandler<InvoicePaid> {
+  constructor(private readonly receipts: ReceiptMailer) {}
+
+  async handle(event: InvoicePaid): Promise<void> {
+    await this.receipts.sendFor(event.aggregateId);
+  }
+}
+```
+
+A receipt that must never be lost is not sent from an `after-commit` handler: it is the
+reaction of a consumer to the integration event, which the outbox delivers at least once.
+
 **Event-sourced aggregates.** Chosen per aggregate, never per project: the other aggregates of
 the context keep their state in tables. The aggregate extends `EventSourcedAggregate`; a
 command checks its invariants on the state, then records the event of what it decided, and the
@@ -371,6 +607,58 @@ plain object fits as well, the type being structural. A repository port extends 
 `Repository<Aggregate>`. A value that is not a port (settings, a database handle) is carried
 the same way, by an abstract class with readonly members bound to a plain object.
 
+```ts
+// Instead of: an interface, which leaves nothing at run time, and a token beside it
+// (ports/abstract-class, ports/no-token-constant)
+export interface PaymentGateway {
+  charge(invoiceId: string, amountInCents: number): Promise<void>;
+}
+export const PAYMENT_GATEWAY = Symbol('PaymentGateway');
+```
+
+<!-- checked sample -->
+```ts
+import { Gateway } from '@ddd-ts-kit/kernel/declarations';
+
+// application/ports/payment-gateway.port.ts: the contract and the token at once
+export abstract class PaymentGateway {
+  abstract charge(invoiceId: string, amountInCents: number): Promise<void>;
+}
+
+// infrastructure/external/payment-settings.ts: a value, bound to a plain object by the platform
+export abstract class PaymentSettings {
+  abstract readonly apiUrl: string;
+  abstract readonly secretKey: string;
+}
+
+// infrastructure/external/http-payment.gateway.ts: implements the port, never extends it
+@Gateway(PaymentGateway)
+export class HttpPaymentGateway implements PaymentGateway {
+  constructor(private readonly settings: PaymentSettings) {}
+
+  async charge(invoiceId: string, amountInCents: number): Promise<void> {
+    const response = await fetch(`${this.settings.apiUrl}/charges`, {
+      method: 'POST',
+      headers: { authorization: `Bearer ${this.settings.secretKey}`, 'content-type': 'application/json' },
+      body: JSON.stringify({ reference: invoiceId, amount: amountInCents, currency: 'EUR' }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`The payment provider answered ${response.status}.`);
+    }
+  }
+}
+
+// test/fakes/payment-gateway.fake.ts: fits the same port, the type being structural
+export class PaymentGatewayFake implements PaymentGateway {
+  readonly charges: { readonly invoiceId: string; readonly amountInCents: number }[] = [];
+
+  async charge(invoiceId: string, amountInCents: number): Promise<void> {
+    this.charges.push({ invoiceId, amountInCents });
+  }
+}
+```
+
 **Declarations.** A class says what it is where it is written, and that is its
 registration: a command or a query carries `@Requires(permission)` or `@Public()`, its
 handler `@CommandHandler(Message)` or `@QueryHandler(Message)`, a reaction to an event
@@ -408,6 +696,54 @@ work in both decorator modes of TypeScript, so a project bound to the legacy mod
 class-validator or NestJS uses the same ones. The explicit style (`<context>.module.ts`
 listing the bindings) remains available and can be mixed in.
 
+The handler of the `PayInvoiceCommand` of [section 2](#2-canonical-tree): its decorator is its
+registration, its constructor is the list of what it is given, and it ends with the save.
+
+<!-- checked sample -->
+```ts
+import { AggregateRoot, AuthorizedCommand, Clock, ConceptError, Repository } from '@ddd-ts-kit/kernel';
+import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
+
+declare class Invoice extends AggregateRoot<string> {
+  pay(at: Date): void;
+}
+
+declare class PayInvoiceCommand extends AuthorizedCommand<void> {
+  readonly invoiceId: string;
+}
+
+declare class InvoiceError extends ConceptError {
+  static notFound(invoiceId: string): InvoiceError;
+}
+
+// domain/repositories/invoice.repository.ts: the port is the injection token
+export abstract class InvoiceRepository extends Repository<Invoice> {}
+
+// application/commands/pay-invoice/pay-invoice.handler.ts
+@CommandHandler(PayInvoiceCommand)
+export class PayInvoiceHandler implements CommandHandler<PayInvoiceCommand> {
+  constructor(
+    private readonly invoices: InvoiceRepository,
+    private readonly clock: Clock,
+  ) {}
+
+  async execute(command: PayInvoiceCommand): Promise<void> {
+    const invoice = await this.invoices.findById(command.invoiceId);
+
+    if (invoice === undefined) {
+      throw InvoiceError.notFound(command.invoiceId);
+    }
+
+    invoice.pay(this.clock.now());
+
+    await this.invoices.save(invoice);
+  }
+}
+```
+
+`ddd-ts-kit docs` reads that constructor and writes, in the generated file of the context,
+`injected(PayInvoiceHandler, [InvoiceRepository, Clock])`: nothing else repeats it.
+
 **Error reporting.** Unexpected failures go to the `ErrorReporter` port, from outside the
 use cases: a response answered 5xx, a command failing on something that is not a business
 refusal, an integration event buried after its retries, a failed job, a crash of the process.
@@ -424,6 +760,31 @@ instances a lock keeps an occurrence to one run, best effort: an occurrence may 
 not at all, so the job or its command is idempotent, and `execution.scheduledAt`, never the
 clock, says which period the work is for. Jobs can run in the API process or in a dedicated
 worker, and a context extracted as a service takes its jobs with it.
+
+The job of the example application that sends the reminders falling due, every 15 minutes:
+
+<!-- checked sample -->
+```ts
+import { AuthorizedCommand, systemActor, type Actor, type CommandBus } from '@ddd-ts-kit/kernel';
+import { Scheduled, type JobExecution, type ScheduledJob } from '@ddd-ts-kit/kernel/declarations';
+
+declare class SendDueRemindersCommand extends AuthorizedCommand<void> {
+  constructor(actor: Actor, asOf: Date);
+}
+
+// application/scheduling/send-due-reminders.job.ts
+@Scheduled('notification.send-due-reminders', { every: '15m' })
+export class SendDueRemindersJob implements ScheduledJob {
+  constructor(private readonly commands: CommandBus) {}
+
+  async run(execution: JobExecution): Promise<void> {
+    // The occurrence the run is for, never the clock: a late or repeated run sends the same reminders.
+    await this.commands.execute(
+      new SendDueRemindersCommand(systemActor('notification.send-due-reminders'), execution.scheduledAt),
+    );
+  }
+}
+```
 
 **Background jobs.** Work a use case hands to a worker, to run later and outside of its
 request, is a background job: a class with a static `jobName` (`<context>.<job>`), declared
@@ -500,6 +861,50 @@ writes the message, and sets one code.
   moves a project: `--plan` proposes a concept for each class, `--apply` writes the factories,
   merges the specs, rewrites every usage and sets the key.
 
+<!-- checked sample -->
+```ts
+import { ConceptError, type CodeOf } from '@ddd-ts-kit/kernel';
+
+// domain/errors/appointment.error.ts
+export class AppointmentError extends ConceptError {
+  static slotTaken(calendarId: string, startsAt: Date) {
+    return AppointmentError.refusal(
+      'SLOT_TAKEN',
+      `The slot starting at ${startsAt.toISOString()} is already held.`,
+      { calendarId, startsAt },
+    ).exposing('startsAt');
+  }
+
+  static ended(appointmentId: string, status: string) {
+    return AppointmentError.refusal(
+      'APPOINTMENT_ENDED',
+      `Appointment ${appointmentId} is ${status} and does not change any more.`,
+      { appointmentId, status },
+    ).exposing('status');
+  }
+}
+
+// The closed vocabulary of the concept: 'SLOT_TAKEN' | 'APPOINTMENT_ENDED'
+export type AppointmentCode = CodeOf<typeof AppointmentError>;
+
+// Code that catches a refusal keys on its code: the switch is exhaustive, each case knows its facts.
+export function nextStep(error: unknown): string | undefined {
+  if (!AppointmentError.is(error)) {
+    return undefined;
+  }
+
+  switch (error.code) {
+    case 'SLOT_TAKEN':
+      return `Choose a slot other than ${error.facts.startsAt.toISOString()}.`;
+    case 'APPOINTMENT_ENDED':
+      return `Book again: this appointment is ${error.facts.status}.`;
+  }
+}
+```
+
+Answered over HTTP, the refusal is a problem document that carries the code and the facts its
+factory exposed, and nothing else: `calendarId` stays in the process.
+
 **Integration events.** The only way two contexts communicate. Each event is declared once in
 the producer's `published-language/` with `defineIntegrationEvent({ type, version, payload })`:
 the declaration gives the payload type, validates what is published and consumed, and feeds
@@ -510,6 +915,45 @@ provider is technology-agnostic: any `EventBus` (`IntegrationEventPublisher` and
 adapter that passes the provider contract suite, chosen in the composition root. With a
 database, events leave through a transactional outbox: stored in the transaction of the
 command, relayed afterwards.
+
+<!-- checked sample -->
+```ts
+import { defineIntegrationEvent, type PayloadOf } from '@ddd-ts-kit/events';
+import { AuthorizedCommand, systemActor, type Actor, type CommandBus, type IntegrationEvent } from '@ddd-ts-kit/kernel';
+import { IntegrationEventHandler } from '@ddd-ts-kit/kernel/declarations';
+import { zodSchema } from '@ddd-ts-kit/validation/zod';
+import { z } from 'zod';
+
+// billing/published-language/invoice-paid.v1.integration-event.ts: declared once, by the producer
+export const invoicePaidV1 = defineIntegrationEvent({
+  type: 'billing.invoice.paid',
+  version: 1,
+  description: 'An invoice was paid in full.',
+  payload: zodSchema(z.object({ invoiceId: z.string(), orderId: z.string(), paidAt: z.iso.datetime() })),
+});
+
+export type InvoicePaidV1 = PayloadOf<typeof invoicePaidV1>;
+
+declare class ReleaseShipmentCommand extends AuthorizedCommand<void> {
+  constructor(actor: Actor, orderId: string, cause: string);
+}
+
+// shipping/application/integration/handlers/billing-invoice-paid.integration-handler.ts
+@IntegrationEventHandler(invoicePaidV1, { consumer: 'shipping.billing-invoice-paid' })
+export class BillingInvoicePaidIntegrationHandler {
+  // Read by the generated event catalog: who consumes what.
+  static readonly eventType = invoicePaidV1.type;
+
+  readonly actor = systemActor('shipping.billing-invoice-paid');
+
+  constructor(private readonly commands: CommandBus) {}
+
+  async handle(event: IntegrationEvent<InvoicePaidV1>): Promise<void> {
+    // Delivered at least once: the consumer name scopes the deduplication, the event id makes the command idempotent.
+    await this.commands.execute(new ReleaseShipmentCommand(this.actor, event.payload.orderId, event.id));
+  }
+}
+```
 
 **Outbox, by transport.** Publishing an integration event and committing the state change it
 describes must succeed or fail together. The rule is one: the handler writes the event to the
@@ -649,6 +1093,45 @@ Tests name behaviour in business language, with Vitest by default.
 mocking are avoided: they assert calls instead of outcomes and break on refactoring. Assert
 the state of the fake, the events on the in-memory bus, the returned value.
 
+```ts
+// Instead of: a mock, which checks that a call was made, and breaks when the call changes
+const charge = vi.fn();
+await new ChargeInvoiceHandler({ charge }).execute(command);
+expect(charge).toHaveBeenCalledWith('invoice-1', 12000); // test/no-mocks
+```
+
+<!-- checked sample -->
+```ts
+import { expect, it } from 'vitest';
+
+declare abstract class PaymentGateway {
+  abstract charge(invoiceId: string, amountInCents: number): Promise<void>;
+}
+
+declare class ChargeInvoiceHandler {
+  constructor(payments: PaymentGateway);
+  execute(command: { readonly invoiceId: string; readonly amountInCents: number }): Promise<void>;
+}
+
+// test/fakes/payment-gateway.fake.ts: a working implementation, held to the contract suite of the port
+class PaymentGatewayFake implements PaymentGateway {
+  readonly charges: { readonly invoiceId: string; readonly amountInCents: number }[] = [];
+
+  async charge(invoiceId: string, amountInCents: number): Promise<void> {
+    this.charges.push({ invoiceId, amountInCents });
+  }
+}
+
+// Write: assert the outcome, what the provider was left with
+it('charges the amount of the invoice', async () => {
+  const payments = new PaymentGatewayFake();
+
+  await new ChargeInvoiceHandler(payments).execute({ invoiceId: 'invoice-1', amountInCents: 12000 });
+
+  expect(payments.charges).toEqual([{ invoiceId: 'invoice-1', amountInCents: 12000 }]);
+});
+```
+
 **Builders.** Test data comes from builders in `test/builders/`: `anOrder().paid().withLine(aLine().of('sku-1')).build()`.
 A builder has valid defaults, intention-revealing methods in the ubiquitous language, and
 builds through the aggregate's public API so a test can never start from an invalid state.
@@ -656,6 +1139,67 @@ A test states only what matters to the rule it checks.
 
 **Scenarios.** Aggregate specs read given / when / then: past events or a built state, one
 intention, then the recorded events or the raised error.
+
+<!-- checked sample -->
+```ts
+import { AggregateRoot } from '@ddd-ts-kit/kernel';
+import { Builder, given, sequence, type Defaults } from '@ddd-ts-kit/testing';
+import { it } from 'vitest';
+
+declare class Invoice extends AggregateRoot<string> {
+  static create(id: string, customerId: string): Invoice;
+  pay(at: Date): void;
+}
+
+interface InvoiceIngredients {
+  readonly id: string;
+  readonly customerId: string;
+  readonly paidAt: Date | undefined;
+}
+
+// test/builders/invoice.builder.ts: valid defaults, methods in the words of the business
+export class InvoiceBuilder extends Builder<InvoiceIngredients, Invoice> {
+  ofCustomer(customerId: string): this {
+    return this.with('customerId', customerId);
+  }
+
+  paid(at: Date = new Date('2026-01-05T10:00:00.000Z')): this {
+    return this.with('paidAt', at);
+  }
+
+  protected defaults(): Defaults<InvoiceIngredients> {
+    return { id: sequence('invoice'), customerId: 'customer-1', paidAt: undefined };
+  }
+
+  // Through the public API of the aggregate: a test cannot start from a state the model refuses.
+  protected construct({ id, customerId, paidAt }: InvoiceIngredients): Invoice {
+    const invoice = Invoice.create(id, customerId);
+
+    if (paidAt !== undefined) {
+      invoice.pay(paidAt);
+    }
+
+    return invoice;
+  }
+}
+
+export function anInvoice(): InvoiceBuilder {
+  return new InvoiceBuilder();
+}
+
+// test/unit/invoice.aggregate.spec.ts: the events recorded while building are not asserted
+it('records the payment of an invoice', () => {
+  given(anInvoice())
+    .when((invoice) => invoice.pay(new Date('2026-01-05T10:00:00.000Z')))
+    .thenEventNames(['billing.invoice.paid']);
+});
+
+it('refuses to pay an invoice twice', () => {
+  given(anInvoice().paid())
+    .when((invoice) => invoice.pay(new Date('2026-01-06T10:00:00.000Z')))
+    .thenError('INVOICE_ALREADY_PAID');
+});
+```
 
 ## 6. Clean code
 
