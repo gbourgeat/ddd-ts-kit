@@ -171,6 +171,8 @@ jobs:
     timeout-minutes: 20
     env:
       DDD_TS_KIT_TEST_DATABASE_URL: postgres://app:app@localhost:5432/app
+      DDD_TS_KIT_TEST_VARNISH_URL: http://127.0.0.1:16081
+      DDD_TS_KIT_TEST_VARNISH_BACKEND_PORT: '18089'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -179,6 +181,9 @@ jobs:
       - name: PostgreSQL (pulled with retries, from the next registry when one refuses)
         if: ${{ needs.install.outputs.integration == 'true' }}
         run: sh pipeline/github/scripts/start-postgres.sh
+      - name: Varnish, with the VCL init --http-cache varnish writes, in front of the origin the purger spec starts
+        if: ${{ needs.install.outputs.integration == 'true' }}
+        run: sh pipeline/github/scripts/start-varnish.sh packages/cli/templates/init/docker/varnish.vcl.tpl 18089 16081
       - name: Adapter specs on a server (skipped when no adapter package is reached)
         if: ${{ needs.install.outputs.integration == 'true' }}
         run: npm run ci:test:integration

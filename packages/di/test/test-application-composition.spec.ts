@@ -104,6 +104,7 @@ describe('createTestApplication', () => {
       'actorContext',
       'as',
       'cache',
+      'cacheInvalidation',
       'clock',
       'commandBus',
       'container',

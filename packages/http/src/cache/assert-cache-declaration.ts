@@ -33,6 +33,7 @@ export function assertCacheDeclaration(route: CacheDeclaration): void {
   assertDurations(cache, refused);
   assertScope(cache, refused);
   assertSharedVaries(route, cache, refused);
+  assertTags(route, cache, refused);
 }
 
 function assertRead(route: CacheDeclaration, cache: CachePolicy, refused: Refusal): void {
@@ -96,4 +97,20 @@ function assertSharedVaries(route: CacheDeclaration, cache: CachePolicy, refused
   throw refused(
     'the route knows its caller, and a public answer is kept by shared caches that would hand it to the next caller. Declare scope private, or name in vary the request headers the answer depends on (Authorization, a tenant header).',
   );
+}
+
+function assertTags(route: CacheDeclaration, cache: CachePolicy, refused: Refusal): void {
+  const sources = cache.tags ?? [];
+
+  if (sources.length > 0 && cache.scope !== CacheScope.public) {
+    throw refused('tags file an answer in a shared cache, which a private or no-store answer never reaches.');
+  }
+
+  for (const source of sources) {
+    if ('param' in source && !route.path.split('/').includes(`:${source.param}`)) {
+      throw refused(
+        `the tag of ${source.resource} reads the parameter "${source.param}", which the path does not have.`,
+      );
+    }
+  }
 }

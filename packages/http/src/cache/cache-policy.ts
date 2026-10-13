@@ -1,5 +1,6 @@
 import type { DurationText } from '@ddd-ts-kit/kernel';
 import type { CacheScope } from './cache-scope.js';
+import type { CacheTagSource } from './cache-tag-source.js';
 import type { EntityTagSource } from './entity-tag-source.js';
 
 /**
@@ -29,4 +30,9 @@ export interface CachePolicy {
   readonly etag?: EntityTagSource;
   /** The field of the body holding the instant the resource last changed: `Last-Modified`, and `304` to `If-Modified-Since`. */
   readonly lastModified?: string;
+  /**
+   * The resources the answer shows, sent as cache tags in the header the application names
+   * (`cacheTags` of the options), so that a change of one of them purges the answer. Public only.
+   */
+  readonly tags?: readonly CacheTagSource[];
 }

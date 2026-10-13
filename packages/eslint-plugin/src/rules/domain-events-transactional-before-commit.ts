@@ -23,7 +23,7 @@ const DECORATOR = 'DomainEventHandler';
 const KERNEL = '@ddd-ts-kit/kernel';
 const TRUSTED_PACKAGES = new Set([KERNEL, '@ddd-ts-kit/auth']);
 /** The ports of the kernel whose effect no transaction covers. */
-const OUTSIDE_THE_TRANSACTION = new Set(['Cache', 'Lock', 'RateLimiter', 'JobScheduler', 'EventBus']);
+const OUTSIDE_THE_TRANSACTION = new Set(['Cache', 'CachePurger', 'Lock', 'RateLimiter', 'JobScheduler', 'EventBus']);
 const PUBLISHER = 'IntegrationEventPublisher';
 
 const ROLLED_BACK =
@@ -34,7 +34,7 @@ export const domainEventsTransactionalBeforeCommit = defineRule<MessageId>({
   type: 'problem',
   recommended: 'error',
   description:
-    'A declared domain event handler that runs before the commit has only effects the rollback undoes: no Cache, Lock, RateLimiter, JobScheduler or EventBus of the kernel, nothing from infrastructure/, another context, the platform or a foreign package; an after-commit handler never depends on IntegrationEventPublisher.',
+    'A declared domain event handler that runs before the commit has only effects the rollback undoes: no Cache, CachePurger, Lock, RateLimiter, JobScheduler or EventBus of the kernel, nothing from infrastructure/, another context, the platform or a foreign package; an after-commit handler never depends on IntegrationEventPublisher.',
   messages: {
     beforeCommit: `{{handler}} runs before the commit and depends on {{name}}, {{why}}: its effect would survive a rollback. ${ROLLED_BACK}`,
     afterCommit: `{{handler}} runs after the commit and depends on {{name}}: the event it publishes would be committed apart from the state change it announces. Send a command through the \`CommandBus\` port and let the publisher of the event that command records write to the outbox, or leave this handler before the commit.`,

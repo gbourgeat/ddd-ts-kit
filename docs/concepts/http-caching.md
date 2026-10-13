@@ -90,6 +90,48 @@ screen, minutes ago, and not only the one the handler loaded a millisecond befor
 the `version` column of the aggregate already protects. The decision stays in the use case,
 which knows the aggregate; the edge only reads the header and hands the version over.
 
+## Invalidation: purge after the commit, never before
+
+An answer kept for an hour is wrong for up to an hour after the change it shows, unless the
+change purges it. The kit purges by **tag**: an answer names the resources it shows
+(`calendar:c-1`), the shared cache files it under them, and the command that changes the
+calendar asks for that tag to be purged.
+
+When matters more than how:
+
+- **Before the commit** is wrong twice: a rollback leaves the cache emptied for nothing, and
+  worse, a reader arriving between the purge and the commit refills the cache with the old
+  state, which then stays for the whole `s-maxage`.
+- **After the commit, in the process** (an `after-commit` handler) is right until the process
+  stops between the commit and the purge: the change is saved, the cache never hears of it.
+- **After the commit, through the outbox** is what the kit does. The use case asks
+  `CacheInvalidation` from a `before-commit` handler of the domain event; the request is a row of
+  the outbox, written in the transaction of the command. A rollback removes it; a commit keeps
+  it until the relay, in this process or the next one, hands it to the `CachePurger`, retrying
+  while the cache does not answer.
+
+A read model updated by a projection in the same transaction is purged by the same request; a
+read model updated later, by a consumer, asks for its own purge in the transaction of its
+consumer, so that the purge never comes before the row it would refetch.
+
+```mermaid
+sequenceDiagram
+  participant C as Command
+  participant DB as Database (state + outbox)
+  participant R as Outbox relay
+  participant V as Varnish
+  C->>DB: save the calendar, append the purge request (one transaction)
+  DB-->>C: commit
+  Note over C: the process may stop here
+  R->>DB: claim the purge request
+  R->>V: PURGE xkey-purge: calendar:c-1
+  V-->>R: 200
+  R->>DB: mark it published
+```
+
+Tags carry the tenant of the request (`acme/calendar:c-1`) in a multi-tenant application, so a
+purge never reaches the answers of another tenant.
+
 ## How the kit declares it
 
 The policy is part of the declaration of the route, so the server and the OpenAPI contract say
@@ -112,6 +154,8 @@ export class PracticeDirectoryRoutes {}
 ## See also
 
 - [Resilience](resilience.md): a cache as a stability tool, and its failure modes
+- [HTTP caches](../tools/http-caches.md): Varnish, Souin, nginx and the CDNs compared, with their limits
 - [Cache and coordination](../tools/cache-and-coordination.md): the application cache on Redis, Valkey or Dragonfly
+- [Transactional outbox](transactional-outbox.md): the row that makes the purge survive a crash
 - [The presentation layer](presentation-layer.md): controllers, route groups and guards
 - [CQRS](cqrs.md): read models

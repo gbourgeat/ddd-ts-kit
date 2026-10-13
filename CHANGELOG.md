@@ -27,6 +27,18 @@ answers `PRECONDITION_REQUIRED` (428). Both codes join the default error mapping
 route may declare without a class of its own (`errors/known-code`). The contract documents the
 parameters, headers and answers.
 
+**Cache tags, purged after the commit.** A public policy names the resources its answer shows
+(`tags: [{ resource: 'calendar', param: 'calendarId' }]`), sent in the header the shared cache
+reads (`cacheTags: { header: CacheTagHeader.xkey }` of the options; `surrogate-key`, `cache-tag`,
+`cdn-tag`), filed under the tenant of the request. The kernel gains two ports: `CacheInvalidation`,
+which a `before-commit` handler asks and which `kernelModule()` binds to purge requests published
+on the outbox (a rollback purges nothing, a commit purges even across a crash), and `CachePurger`,
+which the relay calls through `new PurgingPublisher(purger, broker)` and which
+`domain-events/transactional-before-commit` now refuses before the commit. `@ddd-ts-kit/http/purgers`
+holds `VarnishCachePurger` (xkey or ban), `FastlyCachePurger` and `CloudflareCachePurger`, held to
+`cachePurgerContract` of `@ddd-ts-kit/testing/contracts`; the test application exposes
+`cacheInvalidation`. Varnish 9.1.0 runs in the integration job. See `docs/tools/http-caches.md`.
+
 **Every package carries the MIT notice.** Each published package now holds the `LICENSE` of the
 repository next to its `dist/`, and `npm run package:check` refuses a tarball without it, or with
 another text. Earlier versions were published without it.

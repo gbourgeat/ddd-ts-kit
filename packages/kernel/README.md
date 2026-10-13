@@ -18,12 +18,12 @@ npm i @ddd-ts-kit/kernel
 | Events | `IntegrationEvent`, `IntegrationEventPublisher`, `IntegrationEventSubscriber`, `EventBus` (both at once), `EventSubscribers` (the subscriber of each bounded context), `ProcessedEventStore`, `idempotent`, `InMemoryEventBus`, `DomainEventDispatcher`, `IntegrationEventCallback` and `DomainEventCallback` (the functions a subscriber and a dispatcher are given), `executionContextOfEvent`, `inEventScope`, `scopedPublisher`, `EventDelivery` (what a provider says of one delivery: attempt, last attempt, transport, source, consumer), `messagingSystemOf` |
 | Domain events and the unit of work | `dispatchingOnSave` (the wrapper that makes a repository hand over what the aggregates it is given recorded), `announceDomainEvents`, `withinUnitOfWork` (what every `UnitOfWork.run` is built on: queue, dispatch before the commit, `after-commit` phase), `unitOfWorkStage` and `UnitOfWorkStage`, `DomainEventPhase`, `DomainEventSubscription`, `SaveAfterCommitError`, `AfterCommitFailure`, `reportAfterCommitFailures`, `InMemoryDomainEventDispatcher` |
 | Actor | `Actor`, `AuthorizedCommand`, `AuthorizedQuery`, `ActorContext` |
-| Standard interfaces | `Session`, `ExecutionContext` and `ExecutionScope`, `Logger`, `Metrics`, `ErrorReporter`, `Cache`, `Lock`, `RateLimiter`, `Page` and `PageRequest`, `AuditStamp`, `TenantScoped`, `AuditTrail`, `AuditReader` and `AuditEntry` |
+| Standard interfaces | `Session`, `ExecutionContext` and `ExecutionScope`, `Logger`, `Metrics`, `ErrorReporter`, `Cache`, `CacheInvalidation` and `CachePurger` (with `cacheTag`, `tenantCacheTags`, `CachePurgeRequest`, `PublishedCacheInvalidation`, `PurgingPublisher`: see "Purging the HTTP caches"), `Lock`, `RateLimiter`, `Page` and `PageRequest`, `AuditStamp`, `TenantScoped`, `AuditTrail`, `AuditReader` and `AuditEntry` |
 | Scheduled jobs | `JobScheduler`, `ScheduledJob`, `JobExecution`, `JobSchedule`, `JobOptions`, `JobDefinition`, `JobRun`, `JobDescription`, `parseJobSchedule`, `describeJobSchedule`, `jobPolicy`, `executionContextOfJob` |
 | Read side | `Criteria`, `defineCriteria`, `validateCriteria`, `scoped`, `planCriteria`, `evaluateCriteria`, `pageOfPlan`, `hydrate`, `ReadModelStore`, `stampOf`, `TableReadModelStore`, `ProjectionRebuild`, `InMemoryReadModelStore` (see "Criteria", "Hydration" and "Projections") |
 | Persistence helpers | `optimisticUpdate`, `expectVersion` (the version a caller read, `If-Match` over HTTP, still the current one, else `PreconditionFailedError`: 412), `schemaNameOf`, `stampCreation`, `stampUpdate`, `tenantScopeOf`, `encodeCursor`, `decodeCursor` |
 | Error reporting | `ErrorReporter`, `ErrorReport`, `errorReportOf`, `reportOnce`, `isUnexpectedError`, `errorReportingMiddleware`, `DeadLetterReports`, `reportProcessFailures`, `NoopErrorReporter` |
-| Doubles | `FixedClock`, `SequentialIdGenerator`, `InMemoryUnitOfWork`, `FixedActorContext`, `FixedExecutionScope`, `InMemoryLogger`, `InMemoryMetrics`, `InMemoryErrorReporter`, `InMemoryCache`, `InMemoryLock`, `InMemoryRateLimiter` |
+| Doubles | `FixedClock`, `SequentialIdGenerator`, `InMemoryUnitOfWork`, `FixedActorContext`, `FixedExecutionScope`, `InMemoryLogger`, `InMemoryMetrics`, `InMemoryErrorReporter`, `InMemoryCache`, `InMemoryCacheInvalidation`, `InMemoryCachePurger`, `InMemoryLock`, `InMemoryRateLimiter` |
 | Declarations (`@ddd-ts-kit/kernel/declarations`) | `Requires`, `Public`, `CommandHandler`, `QueryHandler`, `IntegrationEventHandler`, `DomainEventHandler`, `Scheduled`, `Projection`, `On`, `Repository`, `Gateway`, `Adapter`, `Policy`, `injected`, `injectedDependencies`, `declarationOf`, `listDeclarations`, `Token`, `describeToken`, `tokenIdentity`, `portDefect` |
 
 The rules these blocks serve are in `docs/ARCHITECTURE.md`.
@@ -702,6 +702,25 @@ const hit: Quote | undefined = await cache.get(quoteKey('EUR-USD'));
 
 The key carries the type of its value. `InMemoryCache(clock, { maxEntries? })` expires by the
 `Clock` and is bounded.
+
+### Purging the HTTP caches
+
+Two ports, so that a use case can never purge before its commit:
+
+| Port | Called by | Does |
+|---|---|---|
+| `CacheInvalidation.invalidate(tags)` | a `before-commit` handler of the domain event that changed what the answers show | asks for the tags to be purged once the work commits; `domain-events/transactional-before-commit` allows it |
+| `CachePurger.purge(tags)` | the relay of the outbox, never a use case (refused before the commit) | purges a shared cache now: `InMemoryCachePurger` here, Varnish and the CDNs in `@ddd-ts-kit/http/purgers` |
+
+`cacheTag('calendar', id)` names a resource (`calendar:c-1`, the identifier percent-encoded),
+`cacheTag('calendar')` every resource of a kind; the routes of `@ddd-ts-kit/http` tag their
+answers with the same function. `PublishedCacheInvalidation({ publisher, ids, clock, scope })`,
+what `kernelModule()` of `@ddd-ts-kit/di` binds, files the tags under the tenant of the work
+(`tenantCacheTags`) and publishes one `CachePurgeRequest` on the publisher: behind an outbox it
+is a row of the transaction, gone with a rollback, kept across a crash after the commit.
+`new PurgingPublisher(purger, broker)` is what the relay publishes through: the purge requests
+go to the purger, the other events to the broker, and a failed purge throws so that the relay
+retries it. `InMemoryCacheInvalidation` remembers the tags asked for (`invalidated`), for specs.
 
 ### Lock
 

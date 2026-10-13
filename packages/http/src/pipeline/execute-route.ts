@@ -7,6 +7,7 @@ import type { Route } from '../route/route.js';
 import { assertDeclaredResponse } from './assert-declared-response.js';
 import { cacheHeadersOf } from './cache-headers-of.js';
 import { conditionalAnswer } from './conditional-answer.js';
+import { taggedAnswer, type Tagging } from './tagged-answer.js';
 import { CORRELATION_HEADER } from './correlation-header.js';
 import { correlationIdOf } from './correlation-id-of.js';
 import type { ErrorContext } from './error-context.js';
@@ -24,8 +25,8 @@ interface Call {
   readonly options: ExecuteOptions;
   readonly requestId: string;
   readonly correlationId: string;
-  /** Filled as the request advances, for the error hook to say how far it went. */
-  readonly reached: { execution?: ExecutionContext };
+  /** Filled as the request advances, for the error hook to say how far it went, and for the tags of the answer. */
+  readonly reached: { execution?: ExecutionContext; params?: unknown };
 }
 
 const defaultErrorMapper = createErrorMapper();
@@ -47,10 +48,17 @@ export async function executeRoute(
 
 async function responded(call: Call): Promise<RouteResponse> {
   try {
-    return await conditionalAnswer(call.route, call.request.headers, answer(await handled(call), call));
+    const answered = answer(await handled(call), call);
+    const tagged = taggedAnswer(answered, taggingOf(call));
+
+    return await conditionalAnswer(call.route, call.request.headers, tagged);
   } catch (error) {
     return refusal(error, call);
   }
+}
+
+function taggingOf({ route, options, reached }: Call): Tagging {
+  return { route, header: options.cacheTags?.header, params: reached.params, tenantId: reached.execution?.tenantId };
 }
 
 function defaultRequestId(request: RawRequest): string {
@@ -64,6 +72,7 @@ async function handled(call: Call): Promise<RouteOutput> {
   const context = requestContext(call, principal);
 
   call.reached.execution = context.execution;
+  call.reached.params = input.params;
 
   const handle = async (): Promise<RouteOutput> => route.handle({ ...input, context });
   const asPrincipal = (): Promise<RouteOutput> => options.withPrincipal?.(principal, handle) ?? handle();

@@ -202,6 +202,84 @@ one the handler loaded a millisecond earlier. Two writes at the same instant sti
 tag never matches: the kit compares versions instead, which is what both forms name here, and
 documents it. The contract gains the `If-Match` parameter and the `412` (and `428`) problems.
 
+### Cache tags and purge after the commit
+
+A public answer names the resources it shows, so that a shared cache files it under their tags
+and drops it when one of them changes, instead of waiting for `maxAge`:
+
+```ts
+cache: {
+  scope: CacheScope.public,
+  maxAge: '1m',
+  sMaxAge: '1h',
+  tags: [{ resource: 'calendar', param: 'calendarId' }, { resource: 'appointment', field: 'items.id' }],
+},
+```
+
+| Source | Tag |
+|---|---|
+| `{ resource, param }` | `<resource>:<value of the path parameter>` |
+| `{ resource, field }` | `<resource>:<value>` for each value at that dotted path of the body (a list is walked through) |
+| `{ resource }` | `<resource>`: a change of any element of that kind purges the answer (a list, a search) |
+
+Tags are made with `cacheTag(resource, id)` of the kernel, the identifier percent-encoded, and
+filed under the tenant of the request when it has one (`acme/calendar:c-1`). They are sent only
+when the application names the header its shared cache reads, `cacheTags: { header }` of the
+options: `CacheTagHeader.xkey` (Varnish), `surrogateKey` (Fastly), `cacheTag` (Cloudflare),
+`cdnTag` (Bunny); without it, no answer carries tags. The contract lists them as templates in
+`x-cache-tags`. Tags on a private answer, or reading a parameter the path does not have, are
+refused when the route is declared.
+
+The purge is asked by the use case and done after its commit:
+
+```ts
+// application/event-handlers/calendar-opening-hours-set.event-handler.ts: before-commit, the default phase
+@DomainEventHandler(CalendarOpeningHoursSet, { name: 'scheduling.calendar.opening-hours-set' })
+export class CalendarOpeningHoursSetEventHandler implements DomainEventHandler<CalendarOpeningHoursSet> {
+  constructor(private readonly cacheInvalidation: CacheInvalidation) {}
+
+  async handle(event: CalendarOpeningHoursSet): Promise<void> {
+    await this.cacheInvalidation.invalidate([cacheTag('calendar', event.aggregateId)]);
+  }
+}
+```
+
+`CacheInvalidation` of the kernel publishes a purge request on the publisher of the
+application, which `kernelModule()` binds by default: behind an outbox, the request is a row of
+the transaction of the command. A command that rolls back purges nothing; one that commits
+purges even when the process stops right after the commit, since the row waits for the next
+relay. The relay hands the requests to a `CachePurger` and every other event to the broker:
+
+```ts
+import { PurgingPublisher } from '@ddd-ts-kit/kernel';
+import { VarnishCachePurger } from '@ddd-ts-kit/http/purgers';
+
+const relay = new OutboxRelay({
+  store,
+  publisher: new PurgingPublisher(new VarnishCachePurger({ url: process.env.VARNISH_URL }), broker),
+  clock,
+});
+```
+
+A purge that fails throws: the relay retries it as it retries a publication, and a request
+delivered twice purges twice, which changes nothing. Without an outbox (`events: in-memory`) the
+request reaches the in-memory bus, where nothing purges: pass `cacheInvalidation` to
+`kernelModule` to purge otherwise.
+
+`@ddd-ts-kit/http/purgers` holds the adapters of the `CachePurger` port; they need no
+dependency (the `fetch` of Node) and are held to `cachePurgerContract` of
+`@ddd-ts-kit/testing/contracts`, which the in-memory one (`InMemoryCachePurger` of the kernel)
+passes too:
+
+| Adapter | Purges | Tag header | Verified |
+|---|---|---|---|
+| `VarnishCachePurger({ url, mode?, soft? })` | `PURGE` with `xkey-purge` (vmod_xkey), or `xkey-softpurge` with `soft`; `mode: 'ban'` sends one `x-ban-tag` per tag, which the VCL turns into a ban | `xkey` | the contract suite on Varnish 9.1.0 with the VCL `init --http-cache varnish` writes, in CI |
+| `FastlyCachePurger({ serviceId, token, soft? })` | `POST /service/<id>/purge`, 256 surrogate keys a request | `surrogate-key` | the requests it sends, against a recording server; never run against Fastly |
+| `CloudflareCachePurger({ zoneId, token })` | `POST /zones/<id>/purge_cache` with `tags`, 100 a request, on every plan | `cache-tag` | the requests it sends, against a recording server; never run against Cloudflare |
+
+A purge that the cache does not confirm with a 2xx is a `CachePurgeError`. Bunny and the other
+caches are compared on the [HTTP caches](../../docs/tools/http-caches.md) page.
+
 ## Errors
 
 A handler throws a `DomainError`; its `code` is mapped to a status in one place and answered as
@@ -272,6 +350,7 @@ const options: ExecuteOptions = {
   },
   validateResponses: process.env.NODE_ENV === 'test', // checks answers against the declaration
   around: tracedRoutes(), // of @ddd-ts-kit/tracing: the span of the request, named by its route template
+  cacheTags: { header: CacheTagHeader.xkey }, // the header the shared cache in front reads the tags from
 };
 ```
 

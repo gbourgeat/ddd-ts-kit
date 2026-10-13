@@ -2,6 +2,7 @@ import {
   ActorContext,
   AsyncLocalStorageExecutionScope,
   Cache,
+  CacheInvalidation,
   Clock,
   CommandBus,
   DomainEventDispatcher,
@@ -26,6 +27,7 @@ import {
   NoopErrorReporter,
   NoopLogger,
   NoopMetrics,
+  PublishedCacheInvalidation,
   ProcessedEventStore,
   QueryBus,
   RateLimiter,
@@ -171,6 +173,7 @@ function bindCrossCuttingPorts(builder: ModuleBuilder, options: KernelModuleOpti
   );
 
   builder.bind(Cache).toFactory(either(options.cache, (resolve) => new InMemoryCache(resolve(Clock))));
+  builder.bind(CacheInvalidation).toFactory(either(options.cacheInvalidation, publishedCacheInvalidation));
   builder.bind(Lock).toFactory(either(options.lock, (resolve) => new InMemoryLock(resolve(Clock))));
 
   builder
@@ -178,6 +181,16 @@ function bindCrossCuttingPorts(builder: ModuleBuilder, options: KernelModuleOpti
     .toFactory(either(options.rateLimiter, (resolve) => new InMemoryRateLimiter(resolve(Clock))));
 
   builder.bind(JobScheduler).toFactory(either(options.jobScheduler, inProcessJobScheduler));
+}
+
+/** A purge request rides on the publisher of the application: with an outbox, it commits with the work. */
+function publishedCacheInvalidation(resolve: Resolve): CacheInvalidation {
+  return new PublishedCacheInvalidation({
+    publisher: resolve(IntegrationEventPublisher),
+    ids: resolve(IdGenerator),
+    clock: resolve(Clock),
+    scope: resolve(ExecutionScope),
+  });
 }
 
 /** The logger, the reporter and the scope are resolved at each failure: a later module or a test may replace them. */

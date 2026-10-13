@@ -1,5 +1,7 @@
 export type { CachePolicy } from './cache/cache-policy.js';
 export { CacheScope } from './cache/cache-scope.js';
+export { CacheTagHeader } from './cache/cache-tag-header.js';
+export type { CacheTagSource } from './cache/cache-tag-source.js';
 export type { EntityTagSource } from './cache/entity-tag-source.js';
 export { IfMatch } from './cache/if-match.js';
 export type { ControllerClass } from './controller/controller-class.js';

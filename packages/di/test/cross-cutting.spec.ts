@@ -2,6 +2,9 @@ import { describe, expect, it } from 'vitest';
 import {
   ActorContext,
   Cache,
+  CacheInvalidation,
+  CachePurgeRequest,
+  InMemoryEventBus,
   ExecutionScope,
   FixedClock,
   FixedExecutionScope,
@@ -18,6 +21,7 @@ import {
   RateLimiter,
   ScopedActorContext,
   cacheKey,
+  cacheTag,
   executionContext,
   type Actor,
 } from '@ddd-ts-kit/kernel';
@@ -85,6 +89,20 @@ describe('kernelModule', () => {
   });
 });
 
+describe('kernelModule and the HTTP caches', () => {
+  it('binds the invalidation of cache tags to purge requests on the publisher of the application, under the tenant of the work', async () => {
+    const bus = new InMemoryEventBus();
+    const app = createApplication({ modules: [kernelModule({ eventPublisher: bus })] });
+    const request = executionContext({ correlationId: 'corr-1', actor: ada, origin: 'http' });
+
+    await app
+      .resolve(ExecutionScope)
+      .run(request, () => app.resolve(CacheInvalidation).invalidate([cacheTag('order', 7)]));
+
+    expect(bus.published.map((event) => CachePurgeRequest.tagsOf(event))).toEqual([['acme/order:7']]);
+  });
+});
+
 describe('createTestApplication', () => {
   it('exposes the in-memory fakes of the cross-cutting ports', async () => {
     const app = createTestApplication({ modules: [] });
@@ -97,6 +115,14 @@ describe('createTestApplication', () => {
     expect(app.logger.entries).toEqual([{ level: 'info', message: 'order shipped', fields: { context: 'shipping' } }]);
     expect(app.metrics.counterValue('orders_total')).toBe(1);
     expect(await app.cache.get(cacheKey<string>('greeting'))).toBeUndefined();
+  });
+
+  it('remembers the tags the use cases asked to purge after their commit', async () => {
+    const app = createTestApplication({ modules: [] });
+
+    await app.get(CacheInvalidation).invalidate([cacheTag('order', 7)]);
+
+    expect(app.cacheInvalidation.invalidated).toEqual(['order:7']);
   });
 
   it('exposes the lock and the rate limiter, which read the clock of the test', async () => {

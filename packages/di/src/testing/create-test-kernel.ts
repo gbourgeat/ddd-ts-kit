@@ -3,6 +3,7 @@ import {
   FixedClock,
   FixedExecutionScope,
   InMemoryCache,
+  InMemoryCacheInvalidation,
   InMemoryDomainEventDispatcher,
   reportAfterCommitFailures,
   InMemoryErrorReporter,
@@ -57,6 +58,7 @@ export function createTestKernel(options: TestApplicationOptions, resolve: Resol
     ...observability,
     errors,
     cache: new InMemoryCache(clock),
+    cacheInvalidation: new InMemoryCacheInvalidation(),
     rateLimiter: new InMemoryRateLimiter(clock),
     jobs: testJobs(scheduler),
   };

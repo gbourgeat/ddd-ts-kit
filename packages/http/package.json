@@ -40,6 +40,10 @@
     "./docs": {
       "types": "./dist/docs.d.ts",
       "default": "./dist/docs.js"
+    },
+    "./purgers": {
+      "types": "./dist/purgers.d.ts",
+      "default": "./dist/purgers.js"
     }
   },
   "files": [
@@ -70,6 +74,7 @@
     }
   },
   "devDependencies": {
+    "@ddd-ts-kit/testing": "0.5.0",
     "@nestjs/common": "^12.1.2",
     "@nestjs/core": "^12.1.2",
     "@nestjs/platform-express": "^12.1.2",

@@ -738,6 +738,7 @@ barrel instead of discovery the two lines become `contextModule('ordering', orde
 | `Metrics` | `NoopMetrics` | `metrics` |
 | `ErrorReporter` | `NoopErrorReporter`. The default buses and the default scheduler hand it their unexpected failures (never a `DomainError`), and `app.stop()` gives it two seconds to flush | `errorReporter` |
 | `Cache` | `InMemoryCache` on `Clock` | `cache` |
+| `CacheInvalidation` | `PublishedCacheInvalidation`: purge requests published on `IntegrationEventPublisher` (the outbox, when there is one), filed under the tenant of the work | `cacheInvalidation` |
 | `Lock` | `InMemoryLock` on `Clock`: this process only | `lock` |
 | `RateLimiter` | `InMemoryRateLimiter` on `Clock`: this process only | `rateLimiter` |
 | `JobScheduler` | `InProcessJobScheduler` of `@ddd-ts-kit/scheduling` on `Clock`, `Lock`, `ExecutionScope`, `IdGenerator`, `Logger`, `Metrics` and `ErrorReporter` | `jobScheduler` |
@@ -854,6 +855,7 @@ spec touches:
 | `logger`, `metrics` | `InMemoryLogger` and `InMemoryMetrics`: assert `logger.entries`, `metrics.samples` |
 | `errors` | `InMemoryErrorReporter`: `errors.reports` lists the unexpected failures of the commands, queries and jobs, as data |
 | `cache` | `InMemoryCache` on `clock` |
+| `cacheInvalidation` | `InMemoryCacheInvalidation`: `cacheInvalidation.invalidated` lists the tags the use cases asked to purge |
 | `lock`, `rateLimiter` | `InMemoryLock` and `InMemoryRateLimiter` on `clock` |
 | `jobs` | `runNow(name)` runs a declared job as the scheduler would and throws what it threw; `scheduler` is a `ManualJobScheduler` on `clock`, not started |
 | `get(Port)` | `resolve`, typed by the port |

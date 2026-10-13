@@ -2,6 +2,7 @@ import type { JsonSchema } from '@ddd-ts-kit/validation';
 import type { ErrorMapper } from '../error/error-mapper.js';
 import type { Route } from '../route/route.js';
 import type { Definitions } from './definitions.js';
+import { cacheTagsExtension } from './cache-tags-extension.js';
 import { conditionalParameters } from './conditional-parameters.js';
 import { openApiPath } from './open-api-path.js';
 import { pathParameters } from './path-parameters.js';
@@ -55,5 +56,6 @@ function operation(route: Route, mapper: ErrorMapper, definitions: Definitions):
           },
         }),
     responses: responses(route, mapper, definitions),
+    ...cacheTagsExtension(route),
   };
 }

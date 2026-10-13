@@ -150,7 +150,9 @@ therefore safe only because a `before-commit` handler can have transactional eff
 which is what `domain-events/transactional-before-commit` holds. Such a handler may depend on:
 
 - repository ports and the domain layer of its context;
-- kernel ports other than `Cache`, `Lock`, `RateLimiter`, `JobScheduler` and `EventBus`;
+- kernel ports other than `Cache`, `CachePurger`, `Lock`, `RateLimiter`, `JobScheduler` and `EventBus`
+  (`CacheInvalidation` is one: the purge it asks for commits with the work, see
+  [HTTP caching](http-caching.md));
 - ports of `application/ports/` whose adapters are all under `infrastructure/persistence/`.
 
 A gateway, an external port or an adapter of `infrastructure/external/` asks for a choice:

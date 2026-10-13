@@ -1,4 +1,5 @@
 import type { Clock, ExecutionScope } from '@ddd-ts-kit/kernel';
+import type { CacheTagHeader } from '../cache/cache-tag-header.js';
 import type { ErrorMapper } from '../error/error-mapper.js';
 import type { ErrorContext } from './error-context.js';
 import type { RawRequest } from './raw-request.js';
@@ -37,4 +38,11 @@ export interface ExecuteOptions {
    * `@ddd-ts-kit/tracing` fits as it is.
    */
   readonly around?: RouteAround;
+  /**
+   * The header the shared cache in front of the application reads the tags of an answer from:
+   * `xkey` for Varnish, `surrogate-key` for Fastly, `cache-tag` for Cloudflare, `cdn-tag` for
+   * Bunny. Left out, no answer carries tags: without a shared cache that strips them, they would
+   * only reach the client.
+   */
+  readonly cacheTags?: { readonly header: CacheTagHeader };
 }

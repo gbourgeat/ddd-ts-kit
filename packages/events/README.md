@@ -124,6 +124,11 @@ An adapter `implements OutboxStore` and never extends it: the port has abstract 
 Without a container the same objects are built by hand:
 `new OutboxPublisher(store)`, `new OutboxRelay({ store, publisher: broker, clock })`.
 
+The outbox also carries the purge requests of the HTTP caches (`CacheInvalidation` of the
+kernel): the relay publishes through `new PurgingPublisher(purger, broker)`, which hands them to
+the `CachePurger` instead of the broker. See "Cache tags and purge after the commit" in the
+README of `@ddd-ts-kit/http`.
+
 `relay.tick()` claims a batch, publishes each event, marks it published, or schedules a retry
 with an exponential backoff; after `maxAttempts` the record is `dead` until
 `store.retryDead(ids, now)`. `store.stats()` gives `{ pending, failed, dead }` for a health
