@@ -96,7 +96,12 @@ stays one job.
 The job runs as the actor that started the import or asked for the export, in its tenant and
 its correlation, so every command it sends is authorized as that person and audited under one
 correlation with the request that started it. Keys come from `FileKeys`, under the tenant of
-the work; the report and the export are files of that tenant.
+the work; the report and the export are files of that tenant. The job is enqueued with the
+import as its `subject` and the file as its idempotency key (scoped by the tenant by the queue):
+the query that shows the progress of an import checks the subject, as the clearance of the
+example does, and a second upload of the same file within one tenant answers the import already
+running. The actor is the one of the upload, captured then: a right revoked during a long import
+still applies to its last batches.
 
 ## What would be added
 

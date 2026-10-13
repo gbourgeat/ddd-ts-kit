@@ -20,7 +20,9 @@ export abstract class JobStore {
 
   /**
    * Adds the job, in the transaction of the caller when the store is transactional. A job of the
-   * same name and idempotency key already kept is answered instead, `duplicate: true`.
+   * same name, tenant and idempotency key already kept is answered instead, `duplicate: true`.
+   * A store that writes after the commit checks the key before: two jobs of one key staged
+   * before either committed both answer their own id, and only the first is kept.
    */
   abstract add(job: NewJob): Promise<EnqueuedJob>;
 
@@ -45,7 +47,10 @@ export abstract class JobStore {
   /** Gives a job back without counting the attempt: the worker stops before the run could end. */
   abstract release(lease: JobLease, runAt: Date): Promise<boolean>;
 
-  /** A waiting or running job is cancelled: a running one learns it at its next heartbeat. */
+  /**
+   * A waiting or running job is cancelled: a running one learns it at its next heartbeat. In
+   * the transaction of the caller, or once it committed for a store that cannot share it.
+   */
   abstract cancel(id: string, at: Date): Promise<boolean>;
 
   abstract find(id: string): Promise<QueuedJob | undefined>;
