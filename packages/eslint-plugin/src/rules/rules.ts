@@ -35,6 +35,7 @@ import { eventSourcingUpcasterRequired } from './event-sourcing-upcaster-require
 import { errorsConstructorNotPublic } from './errors-constructor-not-public.js';
 import { errorsFactoryName } from './errors-factory-name.js';
 import { errorsThroughFactory } from './errors-through-factory.js';
+import { domainValueObjectClass } from './domain-value-object-class.js';
 import { domainValueObjectImmutability } from './domain-value-object-immutability.js';
 import { eventsConsumerIdempotent } from './events-consumer-idempotent.js';
 import { eventsNameFormat } from './events-name-format.js';
@@ -91,6 +92,7 @@ const ALL = [
   cleanNoMagicNumber,
   domainAggregateEncapsulation,
   domainValueObjectImmutability,
+  domainValueObjectClass,
   domainNoGenericError,
   errorsThroughFactory,
   errorsConstructorNotPublic,
