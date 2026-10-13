@@ -61,8 +61,10 @@ talks to a database the framework is rarely where the time goes.
 
 1. **What the team already runs.** Operational knowledge (middlewares, plugins, error
    handling, graceful shutdown) is the real cost of a framework.
-2. **What surrounds the routes.** File uploads, server-side rendering, WebSockets, GraphQL:
-   these live outside `@ddd-ts-kit/http` and come from the framework's ecosystem.
+2. **What surrounds the routes.** Server-side rendering, WebSockets, GraphQL: these live outside
+   `@ddd-ts-kit/http` and come from the framework's ecosystem. File uploads do not: a controller
+   declares its upload, read the same way on the three frameworks (see
+   [file storage](file-storage.md)).
 3. **The logger.** Fastify speaks pino; the kit has a pino adapter of its `Logger` port
    ([observability tools](observability.md)).
 4. **Whether a second container is acceptable.** NestJS brings its own; see
@@ -129,9 +131,11 @@ From [`packages/http/README.md`](../../packages/http/README.md) and
 - A body the framework itself refuses (malformed JSON, payload too large) is answered by the
   framework's own error handler, before the pipeline: its format is not the problem format
   unless you configure it.
-- Routes are JSON first. A handler may answer a string or bytes with its own `content-type`;
-  **streaming is out of scope**. Server-sent events, large downloads and uploads are written
-  natively in the framework, outside the generated contract.
+- Routes are JSON first. A handler may answer a string, bytes or a stream with its own
+  `content-type`. An upload is declared on its controller and streams to the handler
+  (`multipart/form-data`, size and media types in the contract); a large download goes through a
+  signed link of the storage. Server-sent events and WebSockets are written natively in the
+  framework, outside the generated contract.
 - Express needs `express.json()` installed by you: the adapter does not parse bodies.
 - Paths are literal segments and `:name` parameters only, the form Express and Fastify share:
   no regular expression routes, no wildcards.

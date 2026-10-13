@@ -12,4 +12,30 @@ export const PERSISTENCE_DOCS: Readonly<Record<string, RuleDoc>> = {
   20261012093000_add-payments.sql   # generated again after main took add-invoices
   meta/_journal.json                # one entry each, in order, each snapshot from the one before`,
   },
+  'persistence/no-file-content': {
+    why: 'A file in a column is read whole into the memory of the application and of the database, travels in every backup, every replica and every dump, swells the table its rows share pages with, and cannot be handed out by a short signed link: an upload of a few megabytes becomes a transaction, a replication lag and a backup to restore. An object store is made for it: it streams, it is cheap per gigabyte, it has lifecycle rules and signed links. The row keeps what the domain needs to know about the file, its reference.',
+    bad: `export const invoices = pgTable('invoices', {
+  receipt: bytea('receipt'),                 // the content of the file
+  receiptBase64: text('receipt_base64'),     // the same, as text
+});`,
+    good: `export const invoices = pgTable('invoices', {
+  receiptKey: text('receipt_key'),           // where the file storage keeps it
+  receiptSize: integer('receipt_size'),
+  receiptMediaType: text('receipt_media_type'),
+  receiptChecksum: text('receipt_checksum'), // sha256 of the content
+});`,
+  },
+  'files/port-not-connector': {
+    why: 'Where files live is a choice of the platform: a directory in development, the memory in the tests, a bucket in a deployment. A handler or an aggregate that names a connector has made that choice for every environment, and its tests no longer run on the memory connector. The port says what is needed, streams in and out, signed links, and the platform binds the connector of each environment.',
+    bad: `import { LocalFileStorage } from '@ddd-ts-kit/kernel';
+
+export class AttachReceiptHandler {
+  private readonly files = new LocalFileStorage({ directory: 'files' });
+}`,
+    good: `import type { FileKeys, FileStaging } from '@ddd-ts-kit/kernel';
+
+export class AttachReceiptHandler {
+  constructor(private readonly staging: FileStaging, private readonly keys: FileKeys) {}
+}`,
+  },
 };

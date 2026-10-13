@@ -19,10 +19,10 @@ const snapshotDir = path.join(stateDir, 'generated');
 const logFile = path.join(stateDir, 'generator-log.jsonl');
 // With the rest of the state, not in the shared temporary directory: nothing is left behind there.
 const lockFile = path.join(stateDir, 'generate.lock');
-// Before `main()` runs: a constant declared below it would not be initialised yet.
-const NOT_A_FILE = ['ENOENT', 'ENOTDIR', 'EISDIR'];
 const args = process.argv.slice(2);
 const command = args[0] === 'g' ? 'generate' : args[0];
+// Declared before `main()` runs: a file a generator is about to create does not exist yet.
+const NOT_A_FILE = ['ENOENT', 'ENOTDIR', 'EISDIR'];
 
 main();
 

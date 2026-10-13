@@ -18,6 +18,7 @@ const STACK_FLAGS = [
   'authz',
   'broker',
   'cache',
+  'storage',
   'audit',
   'errors',
   'logger',

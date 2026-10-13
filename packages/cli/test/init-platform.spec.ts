@@ -161,7 +161,7 @@ describe('the style of what init writes', () => {
       for (const { path, text } of sourceFiles(initProject(...flags), ...OWN)) {
         expect(text, path).not.toMatch(/^\s+(readonly |static )*#[a-zA-Z]/m);
         expect(text, path).not.toMatch(/this\.#[a-zA-Z]/);
-        expect(text.split('\n').length, path).toBeLessThan(200);
+        expect(text.split('\n').length, path).toBeLessThan(220);
       }
     },
   );

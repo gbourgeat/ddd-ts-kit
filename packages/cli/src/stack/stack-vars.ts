@@ -10,6 +10,7 @@ import { eventVars } from './event-vars.js';
 import { one } from './one.js';
 import { persistenceVars } from './persistence-vars.js';
 import { redisVars } from './redis-vars.js';
+import { filesVars } from './files-vars.js';
 import { usesLegacyDecorators } from './uses-legacy-decorators.js';
 
 /** The choices of the stack as template variables: what every template of `init` and of `generate` reads. */
@@ -30,10 +31,11 @@ export function stackVars(config: Config): RenderContext {
     authz: one(authz, ['rbac', 'abac', 'rebac', 'custom']),
     broker: brokerVars(config),
     cache: cacheVars(config),
+    files: filesVars(config),
     redis: redisVars(config),
     audit: auditVars(config),
     errors: errorVars(config),
-    ...formVars(config),
+    ...modelWritingVars(config),
     routes: routeVars(config),
     logger: one(logger, ['stdout', 'pino', 'winston']),
     tests: { ...one(tests, ['vitest', 'jest']), module: tests === 'jest' ? '@jest/globals' : 'vitest' },
@@ -45,8 +47,8 @@ export function stackVars(config: Config): RenderContext {
   };
 }
 
-/** How the code of a project is written: refusals, schemas, value objects and literals. */
-function formVars(config: Config): RenderContext {
+/** How the code is written: its refusals, its shared schemas, its value objects, its closed values. */
+function modelWritingVars(config: Config): RenderContext {
   const { refusals, schemas, valueObjects, literals } = config.stack;
 
   return {

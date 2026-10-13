@@ -28,18 +28,24 @@ export const ELSEWHERE = [
 
 /** One list per runner, with the seconds each file took on the machine that measured it (2026-10-12). */
 export const SHARDS = [
-  { 'first-minute-two-contexts.spec.ts': 184, 'typecheck.spec.ts': 19 },
-  { 'first-minute-no-context.spec.ts': 181, 'error-rule-violations.spec.ts': 20, 'client-sdk.spec.ts': 8 },
-  { 'proven-stacks.spec.ts': 106, 'coverage-gate.spec.ts': 88, 'dev-reload.spec.ts': 8 },
+  { 'first-minute-no-context.spec.ts': 181, 'typecheck.spec.ts': 19 },
   {
-    // Estimated (2026-10-13) from a run that stopped at its first assertion: four projects, installed and analyzed.
-    'contract-pairs.spec.ts': 75,
-    'first-class.spec.ts': 68,
+    'first-minute-two-contexts.spec.ts': 184,
+    // Measured in CI (2026-10-13): 53 s on a runner where first-class.spec.ts took 169 s, scaled to the
+    // reference machine, plus the client SDK each pair now generates and compiles.
+    'contract-pairs.spec.ts': 35,
+  },
+  { 'proven-stacks.spec.ts': 106, 'first-class.spec.ts': 68, 'error-rule-violations.spec.ts': 20 },
+  {
+    'coverage-gate.spec.ts': 88,
     'new-rule-violations.spec.ts': 25,
+    'dev-reload.spec.ts': 8,
     'error-reporting.spec.ts': 10,
     'formatted.spec.ts': 8,
     'violations.spec.ts': 8,
     'zero-violation.spec.ts': 8,
+    'file-uploads.spec.ts': 30,
+    'client-sdk.spec.ts': 8,
   },
 ];
 
