@@ -62,9 +62,10 @@ the tree, so a generated file conforms by construction and costs no tokens.
   private constructor, a static factory that checks the rules (`create`, renamed after what it
   builds when there are several: `of`, `between`, `closed`) and the type of its props. A value
   is always this class, never a function answering a plain object nor an exported object
-  literal (`domain/value-object-class`): the class compares by value (`equals`), checks its
-  invariants once, keeps its operations next to its data and is recognised with `instanceof`
-  by a mapper.
+  literal (`domain/value-object-class`, under `"stack.values": "classes"`, which `init`
+  writes; `npx ddd-ts-kit explain domain/value-object-class` says what it reads): the class
+  compares by value (`equals`), checks its invariants once, keeps its operations next to its
+  data and is recognised with `instanceof` by a mapper.
 - `route` writes a controller class in its own folder (or a `defineRoute` function under
   `"stack.routes": "functions"`); `controller` always writes the class; `route-group` writes a
   group with its prefix and guards, `guard` a guard of the project with its spec;

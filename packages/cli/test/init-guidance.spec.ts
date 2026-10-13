@@ -191,6 +191,11 @@ describe('the rule files and the README init writes', () => {
     expect(rule('infrastructure')).toContain('`@Repository(InvoiceRepository)`');
     expect(rule('infrastructure')).toContain('typed by one class (`Database`, `ExecutionScope`, `Clock`');
 
+    expect(rule('domain')).toContain('nor an exported object literal (`domain/value-object-class`)');
+    expect(read(initProject(...NPM, '--values', 'free'), '.claude/rules/domain.md')).not.toContain(
+      '`domain/value-object-class`',
+    );
+
     expect(read(initProject(...NPM, '--orm', 'knex'), '.claude/rules/infrastructure.md')).toContain(
       'typed by one class (`KnexContext`, `ExecutionScope`, `Clock`',
     );
