@@ -4,7 +4,7 @@ What each version changes for someone who uses the kit. The packages of `package
 together, under one version; the notes of each [GitHub release](https://github.com/gbourgeat/ddd-ts-kit/releases)
 list the pull requests behind it.
 
-## Unreleased
+## 0.13.0
 
 **A schema shared by several routes is documented once.** Declared once, a schema used whole or
 inside other schemas by several routes lands once in `components.schemas` of the OpenAPI
@@ -68,6 +68,9 @@ about a microsecond per request before validation, zod parses in about half a mi
 class-validator and TypeBox (through the adapter) in five to ten. oRPC was run and is documented
 as not fitting: its procedures, error format and second contract generator would sit next to the
 kit's, and the typed client it offers comes here from the generated contract.
+
+## 0.12.0
+
 **Cache policies on routes, and `no-store` for authenticated answers.** A controller, a route
 group or a function route declares `cache: { scope, maxAge, sMaxAge, staleWhileRevalidate,
 staleIfError, mustRevalidate, vary }` of `@ddd-ts-kit/http`: the pipeline answers its
