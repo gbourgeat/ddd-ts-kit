@@ -2,6 +2,18 @@
   "name": "@ddd-ts-kit/testing",
   "version": "0.17.0",
   "description": "Readable tests without mocks: test data builders, given/when/then scenarios and contract suites shared by fakes and real adapters.",
+  "keywords": [
+    "ddd",
+    "domain-driven-design",
+    "clean-architecture",
+    "hexagonal-architecture",
+    "typescript",
+    "testing",
+    "test-data-builder",
+    "contract-testing",
+    "given-when-then",
+    "fakes"
+  ],
   "license": "MIT",
   "repository": {
     "type": "git",

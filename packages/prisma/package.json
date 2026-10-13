@@ -2,6 +2,18 @@
   "name": "@ddd-ts-kit/prisma",
   "version": "0.17.0",
   "description": "Prisma adapters for the kernel ports: unit of work, transactional outbox store, processed-event store, PostgreSQL event store.",
+  "keywords": [
+    "ddd",
+    "domain-driven-design",
+    "clean-architecture",
+    "hexagonal-architecture",
+    "typescript",
+    "prisma",
+    "postgresql",
+    "unit-of-work",
+    "transactional-outbox",
+    "repository-pattern"
+  ],
   "license": "MIT",
   "repository": {
     "type": "git",

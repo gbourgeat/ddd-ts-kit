@@ -1,23 +1,27 @@
 import type { Workspace } from '../workspace/index.js';
 import { AGENT_INSTRUCTION } from './agent-instruction.js';
 
-const INSTRUCTIONS = 'CLAUDE.md';
-const PRESENTATION_RULE = '.claude/rules/presentation.md';
+/** The guide of every agent; a project written before it kept its instructions in CLAUDE.md. */
+const GUIDES = ['AGENTS.md', 'CLAUDE.md'];
+const PRESENTATION_RULES = ['.claude/rules/presentation.md', '.github/instructions/presentation.instructions.md'];
 
 /**
  * What `init --sdk` writes for the agents of a project, in one that asks for clients later: the
- * instruction of CLAUDE.md, appended once, and a note for the paths of the presentation rule,
+ * instruction of its guide, appended once, and a note for the paths of the presentation rules,
  * which the team may have rewritten.
  */
 export function instructAgents(ws: Workspace): void {
-  const instructions = ws.read(INSTRUCTIONS);
+  const guide = GUIDES.find((file) => ws.exists(file));
+  const instructions = guide === undefined ? undefined : ws.read(guide);
   const instruction = ws.spoken(AGENT_INSTRUCTION);
 
-  if (instructions !== undefined && !instructions.includes(instruction)) {
-    ws.update(INSTRUCTIONS, `${instructions}${instructions.endsWith('\n') ? '' : '\n'}\n${instruction}\n`);
+  if (guide !== undefined && instructions !== undefined && !instructions.includes(instruction)) {
+    ws.update(guide, `${instructions}${instructions.endsWith('\n') ? '' : '\n'}\n${instruction}\n`);
   }
 
-  if (!(ws.read(PRESENTATION_RULE) ?? '"clients/**"').includes('"clients/**"')) {
-    ws.note(`${PRESENTATION_RULE}: add "clients/**" to its paths, so that an agent editing a client reads it.`);
+  for (const rule of PRESENTATION_RULES) {
+    if (!(ws.read(rule) ?? 'clients/**').includes('clients/**')) {
+      ws.note(`${rule}: add "clients/**" to its paths, so that an agent editing a client reads it.`);
+    }
   }
 }

@@ -1,5 +1,5 @@
 [English](translation.md) · **Français**
-<!-- translation-of: translation.md sha256:a9f6f98e6e62b54b -->
+<!-- translation-of: translation.md sha256:b2d1ec4f2a6570d4 -->
 
 # La documentation en français
 
@@ -21,7 +21,7 @@ elle : `README.md` et `README.fr.md`, `docs/concepts/aggregates.md` et
 |---|---|
 | `*.fr.md` | ce sont les traductions |
 | chaque `CHANGELOG.md` | les notes de version, écrites une fois, en anglais |
-| chaque `CLAUDE.md`, tout ce qui est sous `.claude/` et `plugin/` | des consignes pour les agents de code, lues par des agents |
+| chaque `AGENTS.md` et `CLAUDE.md`, tout ce qui est sous `.agents/`, `.claude/`, `.codex/` et `plugin/` | des consignes pour les agents de code, lues par des agents |
 | chaque `CONTEXT.md` | en partie généré par `ddd-ts-kit docs` |
 | tout ce qui est sous `.github/`, `.gitlab/`, `pipeline/`, `node_modules/` | l'outillage, et les copies faites pour les projets générés |
 | tout ce qui est sous `packages/cli/templates/` | les fichiers que `ddd-ts-kit init` et `generate` écrivent dans un projet |

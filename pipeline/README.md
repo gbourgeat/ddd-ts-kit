@@ -22,7 +22,7 @@ equivalent and cannot drift, and every gate runs on a laptop with the same comma
 | `commitlint.config.mjs` | `commitlint.config.mjs` | conventional commits, shared by the hook and both CI title checks |
 | `renovate.json` | `renovate.json` | dependency updates, on either platform |
 | `package-scripts.json` | merged into `package.json` | the `ci:*` scripts and the dev dependencies they need. In a project `ci:arch:graph` is `npm run depcruise`, that is `ddd-ts-kit depcruise-config --check && depcruise src --config .dependency-cruiser.cjs`; this file still names `depcruise-config.mjs` |
-| `github/workflows/*.yml` | `.github/workflows/` | `ci.yml` and `pr-title.yml`; `codeql.yml` with `--ci-extras codeql` only. `ci.yml` here is the default: the CLI's template adds the dependency review step under `--ci-extras dependency-review` |
+| `github/workflows/*.yml` | `.github/workflows/` | `ci.yml`, `pr-title.yml` and `copilot-setup-steps.yml` (the environment of the Copilot cloud agent); `codeql.yml` with `--ci-extras codeql` only. `ci.yml` here is the default: the CLI's template adds the dependency review step under `--ci-extras dependency-review` |
 | `github/dependabot.yml` | `.github/dependabot.yml` | GitHub-native alternative to Renovate |
 | `github/branch-protection.md` | read once | the settings that make the workflow binding |
 | `gitlab/.gitlab-ci.yml` | `.gitlab-ci.yml` | the same pipeline for GitLab, without the opt-in templates of GitLab's scanners (`--ci-extras gitlab-sast,...` adds them). The installed file writes the architecture report with `ddd-ts-kit check --format gitlab`; the file here still converts a JSON report in two steps |

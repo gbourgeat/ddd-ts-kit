@@ -2,6 +2,16 @@
   "name": "@ddd-ts-kit/di",
   "version": "0.17.0",
   "description": "Port classes and context modules on top of tsyringe, for projects without a heavy framework.",
+  "keywords": [
+    "ddd",
+    "domain-driven-design",
+    "clean-architecture",
+    "hexagonal-architecture",
+    "typescript",
+    "dependency-injection",
+    "tsyringe",
+    "ioc"
+  ],
   "license": "MIT",
   "repository": {
     "type": "git",

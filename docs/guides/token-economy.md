@@ -45,7 +45,7 @@ instead of 900 saves on every later turn of the session, not only on the turn th
 | **Generated boilerplate.** `generate` writes the file, its spec, its builder and its wiring | write, and get subtly wrong, the constructor visibility, the suffix, the registration |
 | **`--json` output with `next`**: the `file:line` of every `TODO(domain)` | open the generated files to find what is left to decide |
 | **Machine-readable maps.** `ddd-ts-kit list --json` gives contexts, aggregates, use cases, events, handlers, permissions; `describe <context> --json` gives one context as facts (use cases with their permission, routes, events, ports with their adapters, policies, gateways, dependencies); `status` and `todo` give the next step of the plan, the slices and the markers left as `file:line` | walk the tree to learn what exists and what is left |
-| **Path-scoped rules.** `init` writes `.claude/rules/*.md`, each scoped by a `paths` frontmatter, next to a short `CLAUDE.md` | carry the domain rules in context while editing a route, and the reverse |
+| **Path-scoped rules.** `init` writes `.claude/rules/*.md`, each scoped by a `paths` frontmatter, the same rules for Copilot in `.github/instructions/`, scoped by `applyTo`, next to a short `AGENTS.md` that every agent reads | carry the domain rules in context while editing a route, and the reverse |
 | **Generated per-context documentation.** `CONTEXT.md` with its generated lists and `## Reference`, `docs/context-map.md` | read the code of a neighbouring context to learn what it publishes |
 | **A fix sentence on every violation**, and `explain <rule-id>` | guess at a rule from a failing check |
 | **Checks at each write** (the plugin's hook runs the per-file check) | discover a layer violation after the whole feature is written |
@@ -433,7 +433,7 @@ definitions and its own failure modes.
 - typescript-language-server,
   https://github.com/typescript-language-server/typescript-language-server
 - This repository: the [CLI README](../../packages/cli/README.md) (`--json`, `list`, `describe`, `status`, `todo`, the
-  generated `CLAUDE.md` and `.claude/rules`), the root README (the hook).
+  generated `AGENTS.md`, `.claude/rules` and `.github/instructions`), the root README (the hook).
 
 ## See also
 

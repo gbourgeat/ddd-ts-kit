@@ -2,6 +2,18 @@
   "name": "@ddd-ts-kit/openfga",
   "version": "0.17.0",
   "description": "The relation tuple store and the authorizer of @ddd-ts-kit/auth on OpenFGA, with the authorization model generated from the relationship schema.",
+  "keywords": [
+    "ddd",
+    "domain-driven-design",
+    "clean-architecture",
+    "hexagonal-architecture",
+    "typescript",
+    "openfga",
+    "authorization",
+    "rebac",
+    "zanzibar",
+    "fine-grained-authorization"
+  ],
   "license": "MIT",
   "repository": {
     "type": "git",

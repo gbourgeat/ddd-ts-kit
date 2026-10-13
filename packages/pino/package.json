@@ -2,6 +2,17 @@
   "name": "@ddd-ts-kit/pino",
   "version": "0.17.0",
   "description": "Adapter of the kernel Logger port on pino, with trace and execution correlation on every line.",
+  "keywords": [
+    "ddd",
+    "domain-driven-design",
+    "clean-architecture",
+    "hexagonal-architecture",
+    "typescript",
+    "pino",
+    "logger",
+    "logging",
+    "opentelemetry"
+  ],
   "license": "MIT",
   "repository": {
     "type": "git",

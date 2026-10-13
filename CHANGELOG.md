@@ -12,6 +12,22 @@ Sans and Plex Mono served with the site (no request to a font service). Headings
 inline code, the current page of the sidebar and the cards of the home page are restyled; keyboard
 focus stays visible and reduced motion is respected.
 
+**Codex and GitHub Copilot, beside Claude Code.** `init` writes the guide of the project in
+`AGENTS.md`, which Codex, Copilot and most coding agents read, and `CLAUDE.md` imports it; a
+project initialised before keeps its `CLAUDE.md`, and `ddd-ts-kit sdk` writes in whichever of the
+two it has. The rules by layer of `.claude/rules/` are also written for Copilot in
+`.github/instructions/<layer>.instructions.md`, scoped by `applyTo`;
+`.github/copilot/settings.json` declares the plugin of the kit, which the Copilot cloud agent
+installs and VS Code recommends; with `--ci github`, `copilot-setup-steps.yml` installs the
+project before the cloud agent starts. The plugin installs in Codex
+(`codex plugin marketplace add gbourgeat/ddd-ts-kit`, from `.agents/plugins/marketplace.json`)
+and in the Copilot CLI (`copilot plugin marketplace add gbourgeat/ddd-ts-kit`). Its guard reads
+the patches of Codex and the tool calls of Copilot: a hand-written file of a generated role is
+refused there as in Claude Code, and a stop with architecture errors is refused once per session
+on a host that does not say it already was. Codex cannot ask the user, so a suppression or a
+change of the rules is announced there instead of put to the project owner. The agent
+configuration of Copilot and of Codex joins the files whose change the guard puts to the owner.
+
 ## 0.17.0
 
 **Names of the business, never `target`.** The command handler templates named the aggregate

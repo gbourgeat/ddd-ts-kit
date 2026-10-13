@@ -37,7 +37,8 @@
       "Edit(./lefthook.yml)",
       "Edit(./.gitlab-ci.yml)",
       "Edit(./.github/workflows/**)",
-      "Edit(./.claude/settings.json)"
+      "Edit(./.claude/settings.json)",
+      "Edit(./.github/copilot/settings.json)"
     ]
   }
 }

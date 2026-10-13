@@ -42,7 +42,7 @@ describe.runIf(SLOW).each(managers)('the quick start of the README, typed on %s'
     expect([install, verify]).toEqual([`${manager} install`, `${manager} run verify`]);
     expect(notes).toContain(`Run \`${install}\`, then \`${verify}\`.`);
     expect(read(root, 'README.md')).toContain(`\`\`\`bash\n${install}\n${verify} `);
-    expect(read(root, 'CLAUDE.md')).toContain(`- \`${verify}\`: types, lint, format, tests`);
+    expect(read(root, 'AGENTS.md')).toContain(`- \`${verify}\`: types, lint, format, tests`);
   });
 
   it('is green before anything is generated: init alone, with no context, then the whole gate', () => {

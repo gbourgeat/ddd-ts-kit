@@ -2,6 +2,17 @@
   "name": "@ddd-ts-kit/winston",
   "version": "0.17.0",
   "description": "Adapter of the kernel Logger port on winston, with trace and execution correlation on every line.",
+  "keywords": [
+    "ddd",
+    "domain-driven-design",
+    "clean-architecture",
+    "hexagonal-architecture",
+    "typescript",
+    "winston",
+    "logger",
+    "logging",
+    "opentelemetry"
+  ],
   "license": "MIT",
   "repository": {
     "type": "git",

@@ -2,6 +2,17 @@
   "name": "@ddd-ts-kit/tracing",
   "version": "0.17.0",
   "description": "Non-invasive OpenTelemetry tracing: adapters are wrapped at the composition root, the domain never knows.",
+  "keywords": [
+    "ddd",
+    "domain-driven-design",
+    "clean-architecture",
+    "hexagonal-architecture",
+    "typescript",
+    "opentelemetry",
+    "tracing",
+    "observability",
+    "distributed-tracing"
+  ],
   "license": "MIT",
   "repository": {
     "type": "git",

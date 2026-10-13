@@ -91,7 +91,7 @@ describe('init --package-manager', () => {
         'lefthook.yml',
         'Dockerfile',
         'README.md',
-        'CLAUDE.md',
+        'AGENTS.md',
         '.claude/settings.json',
         '.claude/rules/tests.md',
         'docs/context-map.md',
@@ -106,7 +106,7 @@ describe('init --package-manager', () => {
       expect(read(root, '.gitlab-ci.yml')).toContain(`        - ${lockfile}\n        - package.json`);
       expect(read(root, 'lefthook.yml')).toContain(`run: ${exec} eslint --no-warn-ignored {staged_files}`);
       expect(read(root, 'Dockerfile')).toContain(`COPY package.json ${lockfile}`);
-      expect(read(root, 'CLAUDE.md')).toContain(`\`${run} verify\``);
+      expect(read(root, 'AGENTS.md')).toContain(`\`${run} verify\``);
       expect(read(root, '.claude/settings.json')).toContain(`Bash(${run} verify)`);
 
       for (const text of manager === 'npm' ? [] : everything) {

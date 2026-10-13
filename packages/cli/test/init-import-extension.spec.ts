@@ -62,8 +62,8 @@ describe('init and the extension of an import', () => {
   ])('says the spelling in the guidance it writes (%j)', (flags, rule, key) => {
     const root = initProject(...flags);
 
-    expect(read(root, 'CLAUDE.md')).toContain(rule);
-    expect(read(root, 'CLAUDE.md')).toContain('`imports/extension`');
+    expect(read(root, 'AGENTS.md')).toContain(rule);
+    expect(read(root, 'AGENTS.md')).toContain('`imports/extension`');
     expect(read(root, 'README.md')).toContain(key);
     expect(read(root, 'README.md')).toContain('rewrites each alias of `dist/` into a relative path ending in\n`.js`');
   });

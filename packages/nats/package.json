@@ -2,6 +2,18 @@
   "name": "@ddd-ts-kit/nats",
   "version": "0.17.0",
   "description": "NATS JetStream provider for integration events: acknowledged publishing with message deduplication for the outbox relay, one durable consumer per consumer, explicit acknowledgement, bounded redelivery and a dead-letter subject.",
+  "keywords": [
+    "ddd",
+    "domain-driven-design",
+    "clean-architecture",
+    "hexagonal-architecture",
+    "typescript",
+    "nats",
+    "jetstream",
+    "integration-events",
+    "transactional-outbox",
+    "event-driven"
+  ],
   "license": "MIT",
   "repository": {
     "type": "git",

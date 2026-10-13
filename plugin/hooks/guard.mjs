@@ -70,6 +70,10 @@ const GOVERNED_FILES = [
   /^\.github\/workflows\//,
   /^\.claude\/settings\.json$/,
   /^\.claude\/rules\//,
+  /^\.github\/instructions\//,
+  /^\.github\/copilot\/settings\.json$/,
+  /^\.github\/hooks\//,
+  /^\.codex\//,
 ];
 
 const ESCAPES = [
@@ -119,14 +123,21 @@ function session(input) {
   emit({ hookSpecificOutput: { hookEventName: 'SessionStart', additionalContext: lines.join('\n') } });
 }
 
+// A patch of Codex can touch several files: a refusal of any of them wins over a question.
 function preWrite(input) {
-  const file = input.tool_input?.file_path;
-  if (typeof file !== 'string') {
-    return;
+  const verdicts = writesOf(input)
+    .map((written) => verdictOn(written, input))
+    .filter(Boolean);
+  const verdict = verdicts.find(({ decision }) => decision === 'deny') ?? verdicts[0];
+  if (verdict) {
+    decide(input, verdict.decision, verdict.reason);
   }
+}
+
+function verdictOn({ file, written, replaced }, input) {
   const project = findProject(dirname(file));
   if (!project || project.mode === 'off') {
-    return;
+    return undefined;
   }
   const refusal =
     generatedFileReason(project, file) ??
@@ -134,16 +145,14 @@ function preWrite(input) {
     workerScopeReason(project, file, input) ??
     handWrittenRoleReason(project, file);
   if (refusal) {
-    return refuse(project, refusal);
+    return { decision: project.mode === 'advise' ? 'ask' : 'deny', reason: refusal };
   }
-  const deviation = governedFileReason(project, file) ?? escapeReason(input.tool_input);
-  if (deviation) {
-    decide('ask', deviation);
-  }
+  const deviation = governedFileReason(project, file) ?? escapeReason(written, replaced);
+  return deviation ? { decision: 'ask', reason: deviation } : undefined;
 }
 
 function preBash(input) {
-  const command = input.tool_input?.command;
+  const command = toolInput(input).command;
   if (typeof command !== 'string') {
     return;
   }
@@ -157,27 +166,28 @@ function preBash(input) {
   }
   const refusal = sharedGeneratorReason(project, context, command) ?? dependencyChangeReason(command);
   if (refusal) {
-    refuse(project, refusal);
+    decide(input, project.mode === 'advise' ? 'ask' : 'deny', refusal);
   }
 }
 
 function postWrite(input) {
-  const file = input.tool_input?.file_path;
-  if (typeof file !== 'string' || !isChecked(file)) {
-    return;
-  }
-  const project = findProject(dirname(file));
-  if (!project?.cli || project.mode === 'off') {
-    return;
-  }
-  const report = runCli(project, ['check-file', file, '--json'], 12000);
-  const errors = errorsOf(report);
+  const errors = writesOf(input)
+    .filter(({ file }) => isChecked(file))
+    .flatMap(({ file }) => {
+      const project = findProject(dirname(file));
+      return project?.cli && project.mode !== 'off'
+        ? errorsOf(runCli(project, ['check-file', file, '--json'], 12000))
+        : [];
+    });
   if (errors.length === 0) {
     return;
   }
-  process.stderr.write(
-    `ddd-ts-kit: the file just written breaks ${errors.length} architecture rule(s). Fix them now, do not suppress.\n${describe(errors)}\n`,
-  );
+  const feedback = `ddd-ts-kit: the file just written breaks ${errors.length} architecture rule(s). Fix them now, do not suppress.\n${describe(errors)}`;
+  // Codex hands the reason of a block to the model in place of the result of the tool.
+  if (hostOf(input) === 'codex') {
+    return emit({ decision: 'block', reason: feedback });
+  }
+  process.stderr.write(`${feedback}\n`);
   process.exitCode = 2;
 }
 
@@ -191,7 +201,7 @@ function stop(input) {
   }
   const errors = remainingErrors(project);
   if (errors.length > 0) {
-    return blockStop(errors);
+    return stopAlreadyRefused(project, input, errors) ? undefined : blockStop(errors);
   }
   const reminder = commitReminder(project, input, { repeat: false });
   // A warning shown to the user, never a block: the size of a commit is advice.
@@ -208,6 +218,20 @@ function remainingErrors(project) {
   return errorsOf(runCli(project, ['check', '--format', 'json'], 60000));
 }
 
+// A host that does not say whether the stop was already refused (`stop_hook_active`) is refused
+// once per session for the same errors: a refusal it cannot get out of would never end.
+function stopAlreadyRefused(project, input, errors) {
+  if (typeof input.stop_hook_active === 'boolean') {
+    return false;
+  }
+  const key = createHash('sha256')
+    .update(`${project.root}\n${sessionOf(input)}\n${describe(errors)}`)
+    .digest('hex')
+    .slice(0, 24);
+
+  return alreadyRemembered(join(tmpdir(), `ddd-ts-kit-stop-${key}`));
+}
+
 function blockStop(errors) {
   emit({
     decision: 'block',
@@ -221,6 +245,80 @@ function readInput() {
   } catch {
     return {};
   }
+}
+
+// Claude Code, and Copilot or VS Code under the same event names, send `tool_name` and
+// `tool_input`; Codex adds a `turn_id` and edits through `apply_patch`; the hooks of Copilot
+// in its own format send `toolName`, `toolArgs` and `sessionId`.
+function hostOf(input) {
+  if ('toolName' in input || 'sessionId' in input) {
+    return 'copilot';
+  }
+
+  return input.tool_name === 'apply_patch' || 'turn_id' in input ? 'codex' : 'claude';
+}
+
+function toolInput(input) {
+  if (input.tool_input && typeof input.tool_input === 'object') {
+    return input.tool_input;
+  }
+  const args = typeof input.toolArgs === 'string' ? parseJson(input.toolArgs) : input.toolArgs;
+
+  return args && typeof args === 'object' ? args : {};
+}
+
+function parseJson(text) {
+  try {
+    return JSON.parse(text);
+  } catch {
+    return undefined;
+  }
+}
+
+function sessionOf(input) {
+  return input.session_id ?? input.sessionId ?? '';
+}
+
+// What one call of a write tool writes, file by file, with the text it adds and the text it replaces.
+function writesOf(input) {
+  const tool = toolInput(input);
+  const cwd = input.cwd ?? process.cwd();
+  // Codex documents the patch under `command`; the other fields are read in case it moves.
+  const patch = [tool.command, tool.patch, tool.input].find(
+    (text) => typeof text === 'string' && /^\s*\*\*\* Begin Patch/.test(text),
+  );
+  if (patch) {
+    return patchWrites(patch, cwd);
+  }
+  const file = tool.file_path ?? tool.path;
+  if (typeof file !== 'string') {
+    return [];
+  }
+
+  return [{ file: resolve(cwd, file), written: writtenText(tool), replaced: replacedText(tool) }];
+}
+
+// The patch of Codex: `*** Add File:`, `*** Update File:` (and `*** Move to:`), `*** Delete File:`,
+// each followed by its lines, `+` added and `-` removed. Its paths are relative to the session.
+function patchWrites(patch, cwd) {
+  const writes = [];
+  let current;
+  for (const line of patch.split('\n')) {
+    const header = /^\*\*\* (Add|Update|Delete) File: (.+)$/.exec(line);
+    const moved = /^\*\*\* Move to: (.+)$/.exec(line);
+    if (header) {
+      current = header[1] === 'Delete' ? undefined : { file: resolve(cwd, header[2].trim()), added: [], removed: [] };
+      writes.push(current);
+    } else if (moved && current) {
+      current.file = resolve(cwd, moved[1].trim());
+    } else if (current && /^[+-]/.test(line)) {
+      (line.startsWith('+') ? current.added : current.removed).push(line.slice(1));
+    }
+  }
+
+  return writes
+    .filter(Boolean)
+    .map(({ file, added, removed }) => ({ file, written: added.join('\n'), replaced: removed.join('\n') }));
 }
 
 function findProject(from) {
@@ -405,23 +503,22 @@ function governedFileReason(project, file) {
     : undefined;
 }
 
-function escapeReason(toolInput) {
-  const added = ESCAPES.find(
-    ([pattern]) => count(writtenText(toolInput), pattern) > count(replacedText(toolInput), pattern),
-  );
+function escapeReason(written, replaced) {
+  const added = ESCAPES.find(([pattern]) => count(written, pattern) > count(replaced, pattern));
   return added
     ? `This change adds ${added[1]}. Fix the cause instead; if the deviation is deliberate, the project owner confirms it and it carries a reason pointing to a decision record in docs/adr/.`
     : undefined;
 }
 
-function writtenText(toolInput) {
-  const edits = Array.isArray(toolInput.edits) ? toolInput.edits.map((edit) => edit.new_string ?? '') : [];
-  return [toolInput.content ?? '', toolInput.new_string ?? '', ...edits].join('\n');
+// The fields of Claude Code (`content`, `new_string`, `edits`), then those of Copilot (`file_text`, `new_str`).
+function writtenText(tool) {
+  const edits = Array.isArray(tool.edits) ? tool.edits.map((edit) => edit.new_string ?? '') : [];
+  return [tool.content ?? '', tool.new_string ?? '', tool.file_text ?? '', tool.new_str ?? '', ...edits].join('\n');
 }
 
-function replacedText(toolInput) {
-  const edits = Array.isArray(toolInput.edits) ? toolInput.edits.map((edit) => edit.old_string ?? '') : [];
-  return [toolInput.old_string ?? '', ...edits].join('\n');
+function replacedText(tool) {
+  const edits = Array.isArray(tool.edits) ? tool.edits.map((edit) => edit.old_string ?? '') : [];
+  return [tool.old_string ?? '', tool.old_str ?? '', ...edits].join('\n');
 }
 
 function count(text, pattern) {
@@ -476,18 +573,18 @@ function projectPath(project, file) {
   return relative(project.root, resolve(file)).split(sep).join('/');
 }
 
-function refuse(project, reason) {
-  decide(project.mode === 'advise' ? 'ask' : 'deny', reason);
-}
-
-function decide(permissionDecision, reason) {
-  emit({
-    hookSpecificOutput: {
-      hookEventName: 'PreToolUse',
-      permissionDecision,
-      permissionDecisionReason: `ddd-ts-kit: ${reason}`,
-    },
-  });
+// Each host reads the decision in its own shape. Codex cannot put a question to the user: what
+// Claude Code asks is said to the user there, and left to the checks of the pipeline.
+function decide(input, permissionDecision, reason) {
+  const permissionDecisionReason = `ddd-ts-kit: ${reason}`;
+  const host = hostOf(input);
+  if (host === 'copilot') {
+    return emit({ permissionDecision, permissionDecisionReason });
+  }
+  if (host === 'codex' && permissionDecision === 'ask') {
+    return emit({ systemMessage: permissionDecisionReason });
+  }
+  emit({ hookSpecificOutput: { hookEventName: 'PreToolUse', permissionDecision, permissionDecisionReason } });
 }
 
 function isChecked(file) {
@@ -622,7 +719,7 @@ function sliceOf(project, path) {
 
 function reminderMarker(project, input) {
   const key = createHash('sha256')
-    .update(`${project.root}\n${input.session_id ?? ''}`)
+    .update(`${project.root}\n${sessionOf(input)}`)
     .digest('hex')
     .slice(0, 24);
   return join(tmpdir(), `ddd-ts-kit-commit-reminder-${key}`);

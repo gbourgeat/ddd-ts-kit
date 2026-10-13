@@ -2,6 +2,17 @@
   "name": "@ddd-ts-kit/scheduling",
   "version": "0.17.0",
   "description": "Scheduled jobs that only trigger use cases: interval and cron schedules, one run across instances, no overlap, each run in its own execution scope.",
+  "keywords": [
+    "ddd",
+    "domain-driven-design",
+    "clean-architecture",
+    "hexagonal-architecture",
+    "typescript",
+    "scheduler",
+    "cron",
+    "scheduled-jobs",
+    "background-jobs"
+  ],
   "license": "MIT",
   "repository": {
     "type": "git",
