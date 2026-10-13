@@ -4,7 +4,7 @@ What each version changes for someone who uses the kit. The packages of `package
 together, under one version; the notes of each [GitHub release](https://github.com/gbourgeat/ddd-ts-kit/releases)
 list the pull requests behind it.
 
-## Unreleased
+## 0.16.1
 
 **The documentation is in French too.** Every reader-facing page of the repository (the root
 pages, `docs/`, the README of every package, the page of every ESLint rule and the docs of the
