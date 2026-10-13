@@ -1,0 +1,61 @@
+{
+  "name": "@ddd-ts-kit/s3",
+  "version": "0.9.0",
+  "description": "Adapter of the kernel FileStorage port on the S3 protocol (AWS S3, MinIO, OVHcloud, Scaleway, Cloudflare R2): streamed uploads, signed links, copy, move, listing.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gbourgeat/ddd-ts-kit.git",
+    "directory": "packages/s3"
+  },
+  "homepage": "https://github.com/gbourgeat/ddd-ts-kit/tree/main/packages/s3#readme",
+  "bugs": "https://github.com/gbourgeat/ddd-ts-kit/issues",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./testing": {
+      "types": "./dist/testing.d.ts",
+      "default": "./dist/testing.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "@ddd-ts-kit/kernel": "0.9.0"
+  },
+  "peerDependencies": {
+    "@aws-sdk/client-s3": "^3.1150.0",
+    "@aws-sdk/lib-storage": "^3.1150.0",
+    "@aws-sdk/s3-request-presigner": "^3.1150.0",
+    "@ddd-ts-kit/testing": "0.9.0"
+  },
+  "peerDependenciesMeta": {
+    "@aws-sdk/client-s3": {
+      "optional": true
+    },
+    "@aws-sdk/lib-storage": {
+      "optional": true
+    },
+    "@aws-sdk/s3-request-presigner": {
+      "optional": true
+    },
+    "@ddd-ts-kit/testing": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@aws-sdk/client-s3": "3.1150.0",
+    "@aws-sdk/lib-storage": "3.1150.0",
+    "@aws-sdk/s3-request-presigner": "3.1150.0",
+    "@ddd-ts-kit/testing": "0.9.0"
+  }
+}

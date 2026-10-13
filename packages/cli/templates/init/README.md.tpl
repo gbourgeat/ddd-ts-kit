@@ -163,6 +163,28 @@ and `execution.scheduledAt` says which period the work is for.
   on the API), or initialise the project with `--cache redis`, which binds `RedisLock`, or bind a
   lock between processes of your own to `Lock` in the platform.
 {{/unless}}
+{{#if files.any}}
+
+## Files
+
+The content of a file lives in a file storage, never in the database: {{#if files.local}}a directory
+(`FILES_DIRECTORY`, `.data/files` by default, kept out of version control) whose signed links the
+application answers under `/files`; before running several instances, move to an object store
+with `npx ddd-ts-kit init --force --storage s3`{{/if}}{{#if files.s3}}a bucket of the S3 protocol (`S3_*` variables), MinIO
+in `docker-compose.yml` while developing, which creates the bucket at its first start{{/if}}. The tests keep files in memory. An
+aggregate keeps the `StoredFile` reference (key, size, media type, checksum). The command bus
+stages a file a command carries before the transaction opens, `FileStaging` moves it to its key
+with the commit and, every hour, purges what refused or rolled-back commands left in `staging/`. `npx ddd-ts-kit generate file-upload <context> <UseCase>` writes an
+upload; see https://github.com/gbourgeat/ddd-ts-kit/blob/main/docs/concepts/file-storage.md.
+{{#if files.local}}
+
+| Variable | Says |
+|---|---|
+| `FILES_DIRECTORY` | the directory of the files, `.data/files` by default |
+| `FILES_PUBLIC_URL` | where clients reach `/files`, which signed links point to: required in production, `http://localhost:<PORT>/files` elsewhere |
+| `FILES_SIGNING_SECRET` | signs the links, 32 characters at least: required in production, even before the first file arrives; drawn at each start elsewhere |
+{{/if}}
+{{/if}}
 {{#if errors.sentry}}
 
 ## Error reporting

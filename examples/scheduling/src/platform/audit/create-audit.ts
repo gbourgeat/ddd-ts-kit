@@ -18,6 +18,10 @@ import { AUDIT_SCHEMA } from '@/platform/database/schema';
 import { auditPermissions } from '@/platform/audit/audit.permissions';
 import { auditedEvents } from '@/platform/audit/audited-events';
 import { SearchAuditEntriesQuery } from '@/platform/audit/search-audit-entries.query';
+import { schedulingPermissions } from '@/contexts/scheduling/application/authorization/scheduling.permissions';
+
+/** Reading the trail, and reading a document that may hold health data: every allowed access is recorded. */
+const SENSITIVE_READS = [auditPermissions['trail.read'].id, schedulingPermissions['appointment.read-document'].id];
 
 /** The name the audit trail consumes integration events under: its idempotency scope, and its queues behind a broker. */
 const consumer = 'audit';
@@ -60,7 +64,7 @@ export function createAudit(persistence: Persistence, source: AuditSource): Audi
     reader: new TenantAuditReader(trail, source.scope),
     elevate: (elevation, work) => acrossTenants({ ...source, trail }, elevation, work),
     refusals: auditGuardRefusals(trail, source),
-    decisions: auditDecisions(trail, { ...source, sensitivePermissions: [auditPermissions['trail.read'].id] }),
+    decisions: auditDecisions(trail, { ...source, sensitivePermissions: SENSITIVE_READS }),
     // TODO(platform): declare what may go into `changes` with `fields: [auditedFields(SomeCommand, ['status'])]`; by default an entry carries identifiers and codes only.
     commands: auditMiddleware(trail, { ...source, unitOfWork }),
     queries: auditMiddleware(trail, { ...source, queries: [SearchAuditEntriesQuery] }),

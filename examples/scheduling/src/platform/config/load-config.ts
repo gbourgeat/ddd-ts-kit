@@ -1,6 +1,7 @@
 import { LOG_LEVELS, type LogLevel } from '@ddd-ts-kit/kernel';
 import type { AppConfig } from '@/platform/config/app-config';
 import { ConfigError } from '@/platform/config/config-error';
+import { readFiles } from '@/platform/config/read-files';
 import { readNetworks } from '@/platform/config/read-networks';
 import { readTracing } from '@/platform/config/read-tracing';
 
@@ -42,6 +43,7 @@ export function loadConfig(env: Variables): AppConfig {
     redisUrl: readUrl(env, 'REDIS_URL', problems),
     rateLimit: readRateLimit(env, problems),
     errorReporting: readErrorReporting(env, environment, problems),
+    files: readFiles(env, environment, problems),
   };
 
   if (problems.length > 0) {

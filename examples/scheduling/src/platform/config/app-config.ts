@@ -1,5 +1,6 @@
 import type { LogLevel, RateLimit } from '@ddd-ts-kit/kernel';
 import type { ResilienceSettings } from '@/platform/resilience/resilience-settings';
+import type { FilesConfig } from '@/platform/config/read-files';
 import type { TracingConfig } from '@/platform/config/read-tracing';
 
 /** The validated configuration of the process: `loadConfig` is the only reader of the environment. */
@@ -26,6 +27,8 @@ export interface AppConfig {
   readonly rateLimit: RateLimit;
   /** Where unexpected failures are reported: a Sentry or a GlitchTip project. Without a DSN nothing is reported. */
   readonly errorReporting: ErrorReportingConfig;
+  /** Where the content of files lives (`files/open-files.ts`), never in the database. */
+  readonly files: FilesConfig;
 }
 
 /** `LOG_LEVEL`, `LOG_FORMAT` and `LOG_SCRUB_MESSAGES`. */

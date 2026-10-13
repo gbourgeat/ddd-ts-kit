@@ -126,6 +126,27 @@ KEYCLOAK_AUDIENCE={{project.name}}-api
 # SENTRY_SCRUB_MESSAGES=false
 GLITCHTIP_PORT=8000
 {{/if}}
+{{#if files.local}}
+
+# Files live in a directory, never in the database; the application answers their signed links under /files.
+# FILES_DIRECTORY=.data/files
+# Where clients reach /files: required in production, this value by default elsewhere.
+# FILES_PUBLIC_URL=http://localhost:3000/files
+# Signs the links, 32 characters at least: required in production (openssl rand -hex 32), drawn at each start elsewhere.
+# FILES_SIGNING_SECRET=
+{{/if}}
+{{#if files.s3}}
+
+# Files live in a bucket of the S3 protocol (MinIO in docker-compose.yml), never in the database.
+# For AWS leave S3_ENDPOINT out; OVHcloud, Scaleway and Cloudflare R2 give their own endpoint (S3_REGION=auto for R2).
+S3_ENDPOINT=http://localhost:9000
+S3_REGION=us-east-1
+S3_BUCKET={{project.name}}-files
+# The root account of the local MinIO, for local development ONLY: in a deployment, an access key allowed on this bucket only.
+S3_ACCESS_KEY_ID=minio-app
+S3_SECRET_ACCESS_KEY=minio-app-secret
+MINIO_PORT=9000
+{{/if}}
 
 # Traces: start Jaeger with `docker compose --profile observability up -d jaeger`, then open http://127.0.0.1:16686
 # Without an endpoint no span leaves the process.

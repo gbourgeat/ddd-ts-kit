@@ -10,7 +10,7 @@ only one ([Bootstrap with well-designed contexts](../guides/bootstrap-with-well-
 |---|---|---|
 | Identity | **built** | accounts from the identity provider, organisations, members, invitations, delegations |
 | Notification | **next** | the language is stable and every application rewrites it; the example already has one to learn from |
-| Files | **later** | generic, but needs an object storage port and adapter the kit does not have |
+| Files | **no, since 0.9.0** | a capability of the platform: the `FileStorage` port, its connectors, `init --storage`, `generate file-upload` |
 | Personal data requests | **a guide, not a preset** | it spans every context; a context of its own would hide that |
 | Audit | **no** | a capability of the platform (`@ddd-ts-kit/audit`, `--audit on`), not a context |
 | Billing, subscriptions | **no** | prices, plans and invoices are where businesses differ |
@@ -48,16 +48,17 @@ events of `scheduling`). What it costs: one email adapter at least (SMTP through
 client, or a documented recipe for a provider's HTTP API), and templates, which the kit has no
 convention for yet; a first version can take templates as code.
 
-## Files: later
+## Files: a capability of the platform
 
-What it would hold: an upload accepted only to a presigned URL, a file record with its owner,
-type, size and digest, a scan state before a file is served, retention and deletion with the
-element it belongs to.
-
-Why later: criterion 4 fails today. The kit has no object storage port nor an S3 compatible
-adapter, and a preset would have to bring both, with their contract suite and a local double
-(MinIO) in the compose file. Build the port and adapter in a package first; the preset then
-follows.
+What a preset would have held (an upload staged before the transaction, a file record with its
+key, size, type and checksum, a scan before a file is accepted, deletion with the element it
+belongs to) is what the kit gives every context since 0.9.0: the `FileStorage` port and its
+connectors (memory, local directory, S3 compatible), `init --storage`, and
+`generate file-upload <context> <UseCase>` for the use case that receives a file
+([File storage](../concepts/file-storage.md)). A file belongs to the aggregate that references
+it, in its own context; a context of files would take that reference away from it. What may
+still deserve a preset is a document library, where documents are the business (folders,
+versions, sharing): it would fail criterion 2 in most projects, so not now.
 
 ## Personal data requests: a guide
 

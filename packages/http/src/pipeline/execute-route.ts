@@ -1,3 +1,4 @@
+import { Readable } from 'node:stream';
 import type { ExecutionContext } from '@ddd-ts-kit/kernel';
 import { createErrorMapper } from '../error/create-error-mapper.js';
 import { toProblem } from '../error/to-problem.js';
@@ -11,6 +12,7 @@ import type { ErrorContext } from './error-context.js';
 import type { ExecuteOptions } from './execute-options.js';
 import { executionOfRequest } from './execution-of-request.js';
 import type { RawRequest } from './raw-request.js';
+import { receiveUpload } from './receive-upload.js';
 import type { RouteResponse } from './route-response.js';
 import { resolvedTenant } from '../tenancy/resolved-tenant.js';
 import { guardRefusals } from '../controller/guard-refusals.js';
@@ -63,7 +65,8 @@ function defaultRequestId(request: RawRequest): string {
 async function handled(call: Call): Promise<RouteOutput> {
   const { route, request, options, requestId } = call;
   const principal = await options.resolvePrincipal?.(request.raw);
-  const input = validateRequest(route, request);
+  const received = await receiveUpload(route, request, options);
+  const input = validateRequest(route, received.request);
   const { headers } = request;
   const execution = executionOf(call, principal, input.params);
 
@@ -73,9 +76,11 @@ async function handled(call: Call): Promise<RouteOutput> {
     raw: request.raw,
     rawHeaders: headers,
     ...(principal === undefined ? {} : { principal }),
+    ...(route.rawBody === true && request.stream !== undefined ? { stream: request.stream } : {}),
   };
 
-  const handle = async (): Promise<RouteOutput> => route.handle({ ...input, context });
+  const upload = received.upload === undefined ? {} : { upload: received.upload };
+  const handle = async (): Promise<RouteOutput> => route.handle({ ...input, ...upload, context });
   const asPrincipal = (): Promise<RouteOutput> => options.withPrincipal?.(principal, handle) ?? handle();
   const result = await (options.executionScope?.run(execution, asPrincipal) ?? asPrincipal());
 
@@ -130,7 +135,9 @@ function defaultContentType(body: unknown): Record<string, string> {
     return {};
   }
 
-  return { 'content-type': body instanceof Uint8Array ? 'application/octet-stream' : JSON_CONTENT_TYPE };
+  const binary = body instanceof Uint8Array || body instanceof Readable;
+
+  return { 'content-type': binary ? 'application/octet-stream' : JSON_CONTENT_TYPE };
 }
 
 function lowerCaseKeys(headers: Readonly<Record<string, string>>): Record<string, string> {

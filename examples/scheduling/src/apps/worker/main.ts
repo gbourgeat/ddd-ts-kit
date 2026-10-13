@@ -7,6 +7,7 @@ import { composeApplication } from '@/platform/compose-application';
 import { loadConfig } from '@/platform/config/load-config';
 import { openPersistence } from '@/platform/database/open-persistence';
 import { createEventProvider } from '@/platform/events/create-event-provider';
+import { openFiles } from '@/platform/files/open-files';
 import { jobSettings } from '@/platform/job-settings';
 import { openRedis } from '@/platform/redis/open-redis';
 
@@ -26,6 +27,7 @@ const application = composeApplication(persistence, {
   // This process is the one that runs the jobs, whatever `RUN_JOBS` says to the others.
   jobs: { start: true, settings: jobSettings(process.env) },
   redis,
+  files: openFiles(config.files),
 });
 
 await application.start();

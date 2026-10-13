@@ -9,8 +9,10 @@ import {
   type GuardRefusal,
   type RouteAround,
   type TenantResolver,
+  type UploadReader,
 } from '@ddd-ts-kit/http';
 import type { Clock, ErrorReporter, ExecutionScope, Logger, Session } from '@ddd-ts-kit/kernel';
+import { multipartUploads } from '@ddd-ts-kit/http/uploads';
 import { tracedRoutes } from '@ddd-ts-kit/tracing';
 import { principalOf } from '@/platform/auth/principal-of';
 
@@ -25,6 +27,8 @@ export interface HttpBoundary {
   readonly onError: (error: unknown, context: ErrorContext) => void;
   /** The span of a request, named by its route template; probes and documentation routes make none. */
   readonly around: RouteAround;
+  /** Reads the file of a controller that declares an upload, as it streams: its size and media types are checked on the way. */
+  readonly uploads: UploadReader;
   /** A request a guard refused at the edge, written to the audit trail as a denied decision. */
   readonly onGuardRefusal: (refusal: GuardRefusal) => Promise<void>;
   /**
@@ -65,6 +69,7 @@ export function httpBoundary({
     clock,
     around: tracedRoutes(),
     resolveTenant: firstTenantOf(tenantFromHeader(), tenantFromClaim()),
+    uploads: multipartUploads(),
     onGuardRefusal: refusals,
     // The message of the error may quote data: only the code and the route are logged.
     onError: (error, context) => {

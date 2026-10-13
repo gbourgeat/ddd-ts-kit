@@ -18,6 +18,7 @@ const STACK_FLAGS = [
   'authz',
   'broker',
   'cache',
+  'storage',
   'audit',
   'errors',
   'logger',
@@ -28,6 +29,7 @@ const STACK_FLAGS = [
   'routes',
   'tenancy',
   'literals',
+  'tenancy',
 ] as const;
 
 const OTHER_TEXT_FLAGS = [

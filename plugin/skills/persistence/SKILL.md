@@ -49,6 +49,11 @@ lookups of the port, the columns, the mapper.
 - **Audit and tenant columns are standard**: `created_at`, `created_by`, `updated_at`,
   `updated_by`, and `tenant_id` with `--tenant-scoped`, stamped by the adapter from the
   `ExecutionScope` and the `Clock` through the kernel helpers. The domain does not know them.
+- **Files never in a table.** No binary or base64 column (`persistence/no-file-content`): the
+  content lives in the `FileStorage` port (`stack.storage`), a row keeps the key, size, media
+  type and checksum of its `StoredFile`, and `FileStaging` orders the write (staged before the
+  transaction, recorded, moved to its key with the commit, an orphan in `staging/` purged a day
+  later). `docs/concepts/file-storage.md`.
 - **Multi-tenant** (`"stack.tenancy": "shared-table"`): every statement on tenant data goes
   through the helpers of the ORM package, `tenantTable` and `ownTenantTable` (Knex),
   `tenantCondition` and `ownTenantCondition` (Drizzle), never a table straight from the

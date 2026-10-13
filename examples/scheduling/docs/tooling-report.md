@@ -930,6 +930,191 @@ own specs. `PersonError.invalidEmail` quotes the address it refuses in its messa
 now reads `Invalid email.` as `detail`, and the spec of the controller holds that the address
 does not leave.
 
+## 2026-10-13: documents of appointments, kept in the file storage
+
+A practice attaches a document to an appointment (a referral, a prescription, a report), a
+patient or the practice fetches it through a link of five minutes, and the practice removes
+it. The content never reaches the database: the appointment keeps the reference of the stored
+file (key, size, media type, checksum), its name and when it was attached.
+
+| | |
+|---|---|
+| Config | `"storage": "local"`: a directory in development (`.data/files`), and in the end-to-end journey and the integration spec of the slice, each in a temporary directory; the memory in the handler specs. MinIO in `docker-compose.yml` behind the `files` profile is a recipe for moving to an object store (the comment of the service says the steps), not a storage the example runs on |
+| Platform | what `init --storage local` writes for this stack (`platform/files/`, `platform/config/read-files.ts`, the file routes mounted before `express.json()`, the upload reader of the HTTP boundary, the purge of staged files every hour), applied as the diff between `init --storage none` and `init --storage local` of the same stack, since `init --force` would have rewritten the hand-tuned files of the platform |
+| Generators | `generate value-object` (`AttachedDocument`), two `generate error` (`noDocument`, `documentNameTooLong`), `generate file-upload`, `generate command`, `generate query`, two `generate route`, then `docs` |
+| Written or rewritten by hand | the value object, the two refusals, the state and two methods of `Appointment`, the six columns of the mapper, the migration `20261013090000_add-appointment-documents.js` and `upgradeTables` for the in-process database of the tests, the three handlers, the three controllers, the specs, the end-to-end journey |
+| Routes added | `POST`, `GET` and `DELETE` `/appointments/{appointmentId}/document`; the rest of `openapi/openapi.yaml` is unchanged (228 lines added, none removed) |
+| Audit | `scheduling:appointment.read-document` is a sensitive permission of `auditDecisions`: every allowed read of a document is recorded |
+| Tests | 23 unit specs of the slice, the round trip of the reference in the contract of both appointment repositories, `document-lands-with-its-file.spec.ts` on the in-process database and the local storage (the row and the file land together; a commit refused after the file moved returns it to `staging/` and leaves the row without a document), and `test/e2e/journey-documents.e2e.spec.ts` on the local storage: an upload streamed through the multipart reader, the file under its final key on disk, a download through the link, a 415 for a disguised file, a 403 for another patient, the link that stops answering and the file gone once the document is removed |
+
+After the review of the lot, the order of a write changed in the kit and here with it. The
+command carries a `FileUpload` (`new FileUpload(file, 'appointment-documents')`), which the
+command bus stages after the permission and before the audit entry opens the transaction
+(`platform/files/staging-uploads.ts`, as `init` now writes it): no transaction waits on a
+client that uploads slowly. The handler reads `command.document.file` and calls
+`promoteOnCommit`, which moves the file inside the transaction, as its last step, so a committed
+row never points into `staging/` and the hourly purge only meets orphans. One behaviour moved:
+an upload to an appointment that does not exist is now received, then left in `staging/` for
+the purge, since the handler that finds the appointment runs after the staging. In production
+`FILES_PUBLIC_URL` is now required, like `FILES_SIGNING_SECRET`.
+
+What the generators did not fit, to change in the kit:
+
+- `generate file-upload` writes a controller without the schema of its path parameters: a
+  document attached to an appointment needs `appointmentId`, written by hand with its class
+  schema. The command it writes carries the file only; the identifier of the aggregate was added.
+- `generate query` wrote a reader port, its in-memory adapter and its fake: this query reads the
+  aggregate and signs a link, so the three files were removed.
+- `scripts/kit.mjs` of this example failed on any generator that creates a file (`NOT_A_FILE`
+  was declared after the call that read it); fixed here.
+- The integration specs of this example time out when vitest runs their files in parallel on a
+  loaded machine (PGlite per file); `npm run test:postgres` runs them one file at a time, and
+  passes.
+
+## 2026-10-13: refusals at the edge in the audit trail, and the tenancy of the application
+
+Two changes of the kit reached this application.
+
+**A caller refused by a guard leaves a denied decision.** The previous section noted it: since
+`PracticeOpeningRoutes` and `AuditRoutes` ask `HasRole('platform-admin')` at the edge, a caller
+without the role was refused before the bus, and the trail no longer recorded anything, since no
+decision was asked. The HTTP pipeline now reports every refusal of a guard to `onGuardRefusal`,
+and `auditGuardRefusals` of `@ddd-ts-kit/audit` records it: category `authorization`, action
+`http:<operationId>`, outcome `denied`, the code of the refusal as reason, and the actor, the
+session and the correlation of the request. Three files changed here, as `init` now writes them:
+`audit/create-audit.ts` (the hook, next to `decisions`), `auth/http-boundary.ts` (`refusals` in,
+`onGuardRefusal` out) and `compose-application.ts` (the hook built from the bound `AuditTrail`,
+`Clock` and `IdGenerator`). `identity-open-practice.e2e.spec.ts` now holds that the refusal of
+a person who is not a platform admin is in the trail, under `http:openPractice`.
+
+**The tenancy of this application is proposed, not yet decided.** The kit can now
+confine every statement to a tenant (`"stack.tenancy": "shared-table"`, row-level security, a
+schema or a database per tenant). The data here is grouped by practice, but a practice is not a
+tenant: a patient books in several practices with one account and lists their appointments across
+them, and the boundary between practices is the relationship model, decided per element and
+narrowing every search. ADR-0003 proposes it; the owner had asked for a tenancy made explicit
+and enforced, so the record stays `proposed` until the owner chooses between it and one network
+as a tenant on shared tables. Until then the config says nothing of tenancy, so the new rule
+`tenancy/scoped-statement` has nothing to judge: it is the one entry of `NOT_APPLICABLE` of the
+conformance suite, with that reason, and the kit proves the rule both ways in its own fixtures and
+on the shared-table stacks of its end-to-end matrix.
+
+Checked here: the type check of the application and `ddd-ts-kit check` (0 finding in 657 files).
+The end-to-end specs, `npm run verify` and the conformance run were left to the pipeline of the
+pull request, which runs them on a fresh clone.
+
+Frictions:
+
+1. **A refusal at the edge is recorded outside the unit of work of any command.** It is written
+   when the answer is built, after the request scope closed: the entry carries the execution
+   context the pipeline hands over, not one the trail reads from the scope. Same facts, another
+   path; a project that writes its own hook must use `GuardRefusal.execution`.
+2. **The tenant of the realm token is not the practice.** The `tenant_id` claim still names the
+   chain of the audit trail of an actor; a reader who expects it to bound what a user sees will
+   be surprised. ADR-0003 says where the boundary is instead.
+
+## 2026-10-13 (later): what a review of the tenancy changed here
+
+A review of the kit's multitenancy found holes the application does not reach, since its config
+says nothing of tenancy, and two that it does:
+
+- **A refusal of a caller without a credential is no longer recorded.** The trail of
+  `http:openPractice` keeps the refusal of an authenticated person who is not a platform admin
+  (what `identity-open-practice.e2e.spec.ts` holds); an anonymous request answered 401 writes
+  nothing, so unauthenticated traffic cannot grow the trail.
+- **A guard that fails is not a refusal.** A guard of this application that threw something other
+  than a `DomainError` would now answer 500 and leave no denied decision.
+
+ADR-0003 went back to `proposed`: the owner asked for an enforced tenancy, and the record says the
+opposite, so the owner decides. Nothing else changed in the code of the application.
+
+Frictions:
+
+1. **A tenant id has one grammar now** (letters, digits, `_`, `-`, at most 63). The `tenant_id`
+   claim of the realm names a practice by its id, which fits; a realm whose ids held a `.` would
+   be refused at the first request.
+
+## 2026-10-13 (evening): one network of practices is one tenant
+
+The owner chose the second alternative of ADR-0003, now accepted: one network of practices is
+one tenant, on shared tables, so that every tenancy rule of the kit is applied and tested here.
+`"stack.tenancy": "shared-table"`; every table of the four contexts carries `tenant_id` (twelve
+tables, each with a `(tenant_id, key)` index); every repository and read model reaches its table
+through `tenantTable`, `ownTenantTable` or the `tenant` option of its store; the outbox keeps the
+network of each event; the three jobs run once per network of `NETWORKS`; the read side of the
+audit trail is a `TenantAuditReader`; the edge reads the network from `x-tenant-id` or the
+token. `tenancy/scoped-statement` judges the adapters with no finding (`ddd-ts-kit check`: 0 in
+660 files), and its entry left `NOT_APPLICABLE` of the conformance suite for an injection.
+
+HTTP contract changes: `POST /practices` asks the role `network-admin` (it asked
+`platform-admin`); `GET /audit/entries` takes `network`, and is read by platform staff through an
+elevation over that network or every network, recorded first (`tenancy:elevate`, reason
+`AUDIT_TRAIL_SEARCH`); a request whose `x-tenant-id` names another network than the caller's is
+answered 403, one that names no possible network 404; every request of a user of the realm needs
+a `tenant_id` claim (the network) to reach data.
+
+Measured here: the integration project (26 files, 338 tests, among them `tenantIsolationContract`
+on the eight Knex repositories) and the unit project pass; `journey-tenancy.e2e.spec.ts` (5
+tests) passes; the other end-to-end specs and the conformance run were left to the pipeline.
+
+Frictions, each fixed in the kit rather than worked around here:
+
+1. **Raw expressions were reported as raw SQL.** The occupancy is measured by aggregates in the
+   select (`count(*) filter (where ...)`), and the schema adds an exclusion constraint: the rule
+   reported each `raw`. It now reads the literal text of a raw call and reports only SQL that
+   names a statement or a table (or is not a literal).
+2. **A select over a grouped query had no helper.** The occupancy pages its groups by their
+   output columns, so it selects from the grouped query: `derivedTable` of `@ddd-ts-kit/knex`
+   does it on the scoped query, without the executor in the adapter.
+3. **A per-tenant job could not be registered.** Neither `kernelModule` nor the test application
+   gave the scheduler a `TenantDirectory`: both take `tenants` now (the test application defaults
+   to the tenant of its execution context).
+4. **The migration of an existing database.** The first migration builds from the current
+   schema, so the second must add the column where it is missing and leave it where it is:
+   `addTenantColumn` of `@ddd-ts-kit/knex` does both, and gives the rows already there to the
+   network named (`NETWORK_OF_EXISTING_ROWS`), refusing rows without one.
+5. **A journey spec could not be written.** The guard of the plugin asked for `generate e2e`,
+   which needs one route; a journey crosses several. `test/e2e/journey-*.e2e.spec.ts` is now
+   written by hand.
+6. **`date_part` is not `extract`.** Rewriting the measure without the word `from` changed a
+   rounding: `date_part` answers a double, which PostgreSQL rounds half to even. The cast to
+   `numeric` keeps the rounding the contract spec holds.
+7. **A spec that publishes an event by hand names no tenant.** The publisher of the application
+   stamps it (`scopedPublisher`); a spec that writes the envelope itself spreads `tenantId` into
+   it, or its consumers run in no network and are refused.
+
+## 2026-10-13 (night): the identity preset, measured against this identity context
+
+The kit gained `--preset identity`, a generic identity context written whole
+([Bootstrap with well-designed contexts](../../../docs/guides/bootstrap-with-well-designed-contexts.md)).
+The identity context of this example was compared with it, part by part, to take what improves
+it without changing its behaviour. Nothing was taken: each difference is either a model this
+example needs or a change of its contract.
+
+| Part | Here | The preset | Taken |
+|---|---|---|---|
+| Classification | `supporting`: delegations between a practitioner and an assistant on one desk | `generic` | no: the delegation here is the reason of the context |
+| Who | `Person`, registered at the first sign-in, email sent by the client | `Account`, email always read from the token | no: `PUT /people/me` would stop reading `email` from its body, a change of contract |
+| Groups | `Practice` with a time zone, managers, practitioners, assistants | `Organisation` with owners, admins, members | no: the time zone and the three roles are the language of scheduling |
+| Invitations | none: a manager adds a known person | issued by token, accepted signed in | no: a new feature, not an alignment |
+| Delegations | on a desk, with or without the right to change availability, expiring by a job | rights of a role lent for ninety days | no: another meaning under the same word |
+| Identity provider | read only (the token) | `IdentityProviderAdmin` told after each commit | no: nothing here needs the realm to follow |
+| Tenancy | the network is the tenant, practices inside it | the organisation is the tenant | no: ADR-0003 chose the network |
+
+What the comparison changed in the kit: the preset first answered `FORBIDDEN` to every signed-in
+person under `rbac` (no role grants its permissions), which a project of this shape would have
+met at its first request. `SignedInGrantsAuthorizer` of `@ddd-ts-kit/auth` now grants the
+permissions of the context to every signed-in person before the model decides, and the preset
+wraps `createAuthorizer` in it. Measured: five projects generated with the preset (rbac on
+Drizzle and Zod, rebac on Knex and class-validator with tenants and Keycloak, abac on Fastify
+with tenants, custom on Knex with JWT, rbac on class-validator and Fastify) have no finding,
+lint and format clean, type-check, and pass their specs.
+
+The documents of appointments arrived from main at the same time. With the network as tenant,
+`TenantFileKeys` files each document under it (`tenants/<network>/appointment-documents/...`):
+`journey-documents.e2e.spec.ts` now expects that key, and the integration spec of the documents
+runs in a network, as every other spec of a repository here.
+
 ## 2026-10-12: value objects that throw their refusals
 
 The value objects of the four contexts moved from a `Result` to factories that return the value
@@ -1090,142 +1275,3 @@ in the kit, then `npm run docs:generate` rewrote `clients/api`:
 | Lockfile | none in this directory, which is a workspace of the kit; a generated npm project is told to run `npm install` when its lock misses a client |
 
 The two changed spec files and the three journeys pass again in process (30 tests).
-
-## 2026-10-13: refusals at the edge in the audit trail, and the tenancy of the application
-
-Two changes of the kit reached this application.
-
-**A caller refused by a guard leaves a denied decision.** The previous section noted it: since
-`PracticeOpeningRoutes` and `AuditRoutes` ask `HasRole('platform-admin')` at the edge, a caller
-without the role was refused before the bus, and the trail no longer recorded anything, since no
-decision was asked. The HTTP pipeline now reports every refusal of a guard to `onGuardRefusal`,
-and `auditGuardRefusals` of `@ddd-ts-kit/audit` records it: category `authorization`, action
-`http:<operationId>`, outcome `denied`, the code of the refusal as reason, and the actor, the
-session and the correlation of the request. Three files changed here, as `init` now writes them:
-`audit/create-audit.ts` (the hook, next to `decisions`), `auth/http-boundary.ts` (`refusals` in,
-`onGuardRefusal` out) and `compose-application.ts` (the hook built from the bound `AuditTrail`,
-`Clock` and `IdGenerator`). `identity-open-practice.e2e.spec.ts` now holds that the refusal of
-a person who is not a platform admin is in the trail, under `http:openPractice`.
-
-**The tenancy of this application is proposed, not yet decided.** The kit can now
-confine every statement to a tenant (`"stack.tenancy": "shared-table"`, row-level security, a
-schema or a database per tenant). The data here is grouped by practice, but a practice is not a
-tenant: a patient books in several practices with one account and lists their appointments across
-them, and the boundary between practices is the relationship model, decided per element and
-narrowing every search. ADR-0003 proposes it; the owner had asked for a tenancy made explicit
-and enforced, so the record stays `proposed` until the owner chooses between it and one network
-as a tenant on shared tables. Until then the config says nothing of tenancy, so the new rule
-`tenancy/scoped-statement` has nothing to judge: it is the one entry of `NOT_APPLICABLE` of the
-conformance suite, with that reason, and the kit proves the rule both ways in its own fixtures and
-on the shared-table stacks of its end-to-end matrix.
-
-Checked here: the type check of the application and `ddd-ts-kit check` (0 finding in 657 files).
-The end-to-end specs, `npm run verify` and the conformance run were left to the pipeline of the
-pull request, which runs them on a fresh clone.
-
-Frictions:
-
-1. **A refusal at the edge is recorded outside the unit of work of any command.** It is written
-   when the answer is built, after the request scope closed: the entry carries the execution
-   context the pipeline hands over, not one the trail reads from the scope. Same facts, another
-   path; a project that writes its own hook must use `GuardRefusal.execution`.
-2. **The tenant of the realm token is not the practice.** The `tenant_id` claim still names the
-   chain of the audit trail of an actor; a reader who expects it to bound what a user sees will
-   be surprised. ADR-0003 says where the boundary is instead.
-
-## 2026-10-13 (later): what a review of the tenancy changed here
-
-A review of the kit's multitenancy found holes the application does not reach, since its config
-says nothing of tenancy, and two that it does:
-
-- **A refusal of a caller without a credential is no longer recorded.** The trail of
-  `http:openPractice` keeps the refusal of an authenticated person who is not a platform admin
-  (what `identity-open-practice.e2e.spec.ts` holds); an anonymous request answered 401 writes
-  nothing, so unauthenticated traffic cannot grow the trail.
-- **A guard that fails is not a refusal.** A guard of this application that threw something other
-  than a `DomainError` would now answer 500 and leave no denied decision.
-
-ADR-0003 went back to `proposed`: the owner asked for an enforced tenancy, and the record says the
-opposite, so the owner decides. Nothing else changed in the code of the application.
-
-Frictions:
-
-1. **A tenant id has one grammar now** (letters, digits, `_`, `-`, at most 63). The `tenant_id`
-   claim of the realm names a practice by its id, which fits; a realm whose ids held a `.` would
-   be refused at the first request.
-
-## 2026-10-13 (evening): one network of practices is one tenant
-
-The owner chose the second alternative of ADR-0003, now accepted: one network of practices is
-one tenant, on shared tables, so that every tenancy rule of the kit is applied and tested here.
-`"stack.tenancy": "shared-table"`; every table of the four contexts carries `tenant_id` (twelve
-tables, each with a `(tenant_id, key)` index); every repository and read model reaches its table
-through `tenantTable`, `ownTenantTable` or the `tenant` option of its store; the outbox keeps the
-network of each event; the three jobs run once per network of `NETWORKS`; the read side of the
-audit trail is a `TenantAuditReader`; the edge reads the network from `x-tenant-id` or the
-token. `tenancy/scoped-statement` judges the adapters with no finding (`ddd-ts-kit check`: 0 in
-660 files), and its entry left `NOT_APPLICABLE` of the conformance suite for an injection.
-
-HTTP contract changes: `POST /practices` asks the role `network-admin` (it asked
-`platform-admin`); `GET /audit/entries` takes `network`, and is read by platform staff through an
-elevation over that network or every network, recorded first (`tenancy:elevate`, reason
-`AUDIT_TRAIL_SEARCH`); a request whose `x-tenant-id` names another network than the caller's is
-answered 403, one that names no possible network 404; every request of a user of the realm needs
-a `tenant_id` claim (the network) to reach data.
-
-Measured here: the integration project (26 files, 338 tests, among them `tenantIsolationContract`
-on the eight Knex repositories) and the unit project pass; `journey-tenancy.e2e.spec.ts` (5
-tests) passes; the other end-to-end specs and the conformance run were left to the pipeline.
-
-Frictions, each fixed in the kit rather than worked around here:
-
-1. **Raw expressions were reported as raw SQL.** The occupancy is measured by aggregates in the
-   select (`count(*) filter (where ...)`), and the schema adds an exclusion constraint: the rule
-   reported each `raw`. It now reads the literal text of a raw call and reports only SQL that
-   names a statement or a table (or is not a literal).
-2. **A select over a grouped query had no helper.** The occupancy pages its groups by their
-   output columns, so it selects from the grouped query: `derivedTable` of `@ddd-ts-kit/knex`
-   does it on the scoped query, without the executor in the adapter.
-3. **A per-tenant job could not be registered.** Neither `kernelModule` nor the test application
-   gave the scheduler a `TenantDirectory`: both take `tenants` now (the test application defaults
-   to the tenant of its execution context).
-4. **The migration of an existing database.** The first migration builds from the current
-   schema, so the second must add the column where it is missing and leave it where it is:
-   `addTenantColumn` of `@ddd-ts-kit/knex` does both, and gives the rows already there to the
-   network named (`NETWORK_OF_EXISTING_ROWS`), refusing rows without one.
-5. **A journey spec could not be written.** The guard of the plugin asked for `generate e2e`,
-   which needs one route; a journey crosses several. `test/e2e/journey-*.e2e.spec.ts` is now
-   written by hand.
-6. **`date_part` is not `extract`.** Rewriting the measure without the word `from` changed a
-   rounding: `date_part` answers a double, which PostgreSQL rounds half to even. The cast to
-   `numeric` keeps the rounding the contract spec holds.
-7. **A spec that publishes an event by hand names no tenant.** The publisher of the application
-   stamps it (`scopedPublisher`); a spec that writes the envelope itself spreads `tenantId` into
-   it, or its consumers run in no network and are refused.
-
-## 2026-10-13 (night): the identity preset, measured against this identity context
-
-The kit gained `--preset identity`, a generic identity context written whole
-([Bootstrap with well-designed contexts](../../../docs/guides/bootstrap-with-well-designed-contexts.md)).
-The identity context of this example was compared with it, part by part, to take what improves
-it without changing its behaviour. Nothing was taken: each difference is either a model this
-example needs or a change of its contract.
-
-| Part | Here | The preset | Taken |
-|---|---|---|---|
-| Classification | `supporting`: delegations between a practitioner and an assistant on one desk | `generic` | no: the delegation here is the reason of the context |
-| Who | `Person`, registered at the first sign-in, email sent by the client | `Account`, email always read from the token | no: `PUT /people/me` would stop reading `email` from its body, a change of contract |
-| Groups | `Practice` with a time zone, managers, practitioners, assistants | `Organisation` with owners, admins, members | no: the time zone and the three roles are the language of scheduling |
-| Invitations | none: a manager adds a known person | issued by token, accepted signed in | no: a new feature, not an alignment |
-| Delegations | on a desk, with or without the right to change availability, expiring by a job | rights of a role lent for ninety days | no: another meaning under the same word |
-| Identity provider | read only (the token) | `IdentityProviderAdmin` told after each commit | no: nothing here needs the realm to follow |
-| Tenancy | the network is the tenant, practices inside it | the organisation is the tenant | no: ADR-0003 chose the network |
-
-What the comparison changed in the kit: the preset first answered `FORBIDDEN` to every signed-in
-person under `rbac` (no role grants its permissions), which a project of this shape would have
-met at its first request. `SignedInGrantsAuthorizer` of `@ddd-ts-kit/auth` now grants the
-permissions of the context to every signed-in person before the model decides, and the preset
-wraps `createAuthorizer` in it. Measured: five projects generated with the preset (rbac on
-Drizzle and Zod, rebac on Knex and class-validator with tenants and Keycloak, abac on Fastify
-with tenants, custom on Knex with JWT, rbac on class-validator and Fastify) have no finding,
-lint and format clean, type-check, and pass their specs.

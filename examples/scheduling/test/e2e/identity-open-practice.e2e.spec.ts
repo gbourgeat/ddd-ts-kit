@@ -10,9 +10,9 @@ import {
   practiceOpenedV1,
   type PracticeOpenedV1Payload,
 } from '@/contexts/identity/published-language/index';
-import type { Listed } from '$test/e2e/support/listed';
 import { expectAnswer } from '$test/e2e/support/expect-answer';
 import { expectRefusal } from '$test/e2e/support/expect-refusal';
+import type { Listed } from '$test/e2e/support/listed';
 import { registerPeople } from '$test/e2e/support/register-people';
 import { startApplication, type RunningApplication } from '$test/e2e/support/start-application';
 import { storyOf } from '$test/e2e/support/story-of';

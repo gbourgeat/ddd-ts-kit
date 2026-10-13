@@ -21,6 +21,13 @@ export interface AppointmentColumns {
   readonly confirm_before: Date | null;
   readonly cancelled_by: 'patient' | 'practice' | null;
   readonly cancellation_reason: string | null;
+  /** The reference of the attached document, its content being in the file storage: all six null without one. */
+  readonly document_key: string | null;
+  readonly document_size: number | null;
+  readonly document_media_type: string | null;
+  readonly document_checksum: string | null;
+  readonly document_name: string | null;
+  readonly document_attached_at: Date | null;
 }
 
 export interface AppointmentRow extends AppointmentColumns, TenantRow, AuditRow {

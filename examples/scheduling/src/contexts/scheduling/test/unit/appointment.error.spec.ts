@@ -108,4 +108,22 @@ describe('AppointmentError', () => {
   it('gives each refusal a code of its own', () => {
     expect(new Set(refusals.map(({ code }) => code)).size).toBe(refusals.length);
   });
+
+  it('refuses to read or remove the document of an appointment that holds none, keeping which appointment to itself', () => {
+    const error = AppointmentError.noDocument('appointment-1');
+
+    expect(error).toBeInstanceOf(DomainError);
+    expect(error.code).toBe('NO_DOCUMENT');
+    expect(error.message).toBe('Appointment appointment-1 holds no document.');
+    expect([error.facts, error.exposedFacts]).toEqual([{ appointmentId: 'appointment-1' }, {}]);
+  });
+
+  it('refuses the name of a document longer than allowed, and says how long it may be', () => {
+    const error = AppointmentError.documentNameTooLong(200);
+
+    expect(error).toBeInstanceOf(DomainError);
+    expect(error.code).toBe('DOCUMENT_NAME_TOO_LONG');
+    expect(error.message).toBe('The name of a document holds at most 200 characters.');
+    expect(error.exposedFacts).toEqual({ longest: 200 });
+  });
 });

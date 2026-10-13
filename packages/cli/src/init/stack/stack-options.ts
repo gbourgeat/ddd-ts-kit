@@ -15,6 +15,7 @@ export interface StackOptions {
   readonly authz?: string;
   readonly broker?: string;
   readonly cache?: string;
+  readonly storage?: string;
   readonly audit?: string;
   readonly errors?: string;
   readonly logger?: string;
@@ -23,9 +24,9 @@ export interface StackOptions {
   readonly dependencies?: string;
   readonly refusals?: string;
   readonly routes?: string;
-  readonly tenancy?: string;
   readonly valueObjects?: string;
   readonly literals?: string;
+  readonly tenancy?: string;
   readonly packageManager?: string;
   /** The prefix of the source root in imports, when it is not the default. */
   readonly importAlias?: string;
