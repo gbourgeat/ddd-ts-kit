@@ -2,6 +2,7 @@ import type { JsonSchema } from '@ddd-ts-kit/validation';
 import type { ErrorMapper } from '../error/error-mapper.js';
 import type { Route } from '../route/route.js';
 import type { Definitions } from './definitions.js';
+import { conditionalParameters } from './conditional-parameters.js';
 import { openApiPath } from './open-api-path.js';
 import { pathParameters } from './path-parameters.js';
 import { requirement } from './requirement.js';
@@ -34,6 +35,7 @@ function operation(route: Route, mapper: ErrorMapper, definitions: Definitions):
     ...pathParameters(route.path, request.params, definitions),
     ...schemaParameters('query', request.query, definitions),
     ...schemaParameters('header', request.headers, definitions),
+    ...conditionalParameters(route),
   ];
 
   return {

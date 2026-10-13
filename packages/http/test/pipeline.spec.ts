@@ -137,6 +137,8 @@ describe('the error mapper', () => {
       INVARIANT_VIOLATION: 422,
       UNAUTHORIZED: 401,
       FORBIDDEN: 403,
+      PRECONDITION_FAILED: 412,
+      PRECONDITION_REQUIRED: 428,
     });
   });
 

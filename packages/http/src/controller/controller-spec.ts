@@ -1,5 +1,6 @@
 import type { Schema } from '@ddd-ts-kit/validation';
 import type { CachePolicy } from '../cache/cache-policy.js';
+import type { IfMatch } from '../cache/if-match.js';
 import type { HttpMethod } from '../route/http-method.js';
 import type { ControllerResponse } from './controller-response.js';
 import type { GuardReference } from './guard-reference.js';
@@ -30,4 +31,6 @@ export interface ControllerSpec {
   readonly deprecated?: boolean;
   /** How the caches on the way may keep the answer; replaces the policy of the group. */
   readonly cache?: CachePolicy;
+  /** A write conditional on the version the client read, handed to `handle` as `context.expectedVersion`. */
+  readonly ifMatch?: IfMatch;
 }

@@ -84,7 +84,7 @@ const routes = controllerRoutes([PlaceOrderController], { resolve: application.r
 
 | Export | What it is |
 |---|---|
-| `Controller(spec)` | the decorator of a controller: `group`, `method`, `path` (after the prefix of the group), `operationId` (the class name without `Controller` by default), `summary`, `description`, `tags`, `params`, `query`, `headers`, `body`, `response: { status, description?, body? }`, `errors`, `guards`, `deprecated`, `cache` (see "HTTP caching") |
+| `Controller(spec)` | the decorator of a controller: `group`, `method`, `path` (after the prefix of the group), `operationId` (the class name without `Controller` by default), `summary`, `description`, `tags`, `params`, `query`, `headers`, `body`, `response: { status, description?, body? }`, `errors`, `guards`, `deprecated`, `cache` and `ifMatch` (see "HTTP caching") |
 | `RouteGroup({ parent, prefix, tags, guards, errors, cache })` | names a set of routes on an empty class; a child inherits from its `parent` and adds; the nearest `cache` wins |
 | `Guard` | the interface `{ documents?, check(request: GuardRequest) }`, and the decorator of a guard class that takes dependencies |
 | `Authenticated`, `Public`, `HasRole(...roles)` | the guards the package ships, over the `Actor` of the request: 401 to the anonymous caller, 403 without one of the roles; `Public` lets everybody in and stands alone |
@@ -136,7 +136,8 @@ itself wins. The contract documents the headers on the answer they apply to.
 
 A policy that cannot stand is refused when the route is declared, with a `DeclarationError`:
 
-- a policy other than `no-store` on a write (only `GET` and `HEAD` are kept by a cache);
+- a policy other than `no-store` on a write (only `GET` and `HEAD` are kept by a cache), the
+  validators of a read (`etag`, `lastModified`) on a write, `ifMatch` on a read;
 - `public` or `private` without `maxAge` (`'0s'` has the answer revalidated each time), a
   duration that is not whole seconds, a duration on `no-store`, `sMaxAge` on a private answer;
 - **a `public` answer of a route that knows its caller** (a guard other than `Public`, a
@@ -147,6 +148,59 @@ A policy that cannot stand is refused when the route is declared, with a `Declar
 Never cache a decision of authorization across actors: what a caller may see is decided by the
 use case for that caller, and a shared cache only ever keeps what is the same for everybody
 (see [HTTP caching](../../docs/concepts/http-caching.md)).
+
+### Conditional requests
+
+A read that names its version answers `ETag` or `Last-Modified`, and `304 Not Modified`
+without a body to a caller that already holds that version:
+
+```ts
+@Controller({
+  group: CalendarsRoutes,
+  method: 'GET',
+  path: '/:calendarId/days/:day',
+  summary: 'Get calendar day',
+  params,
+  response: { status: 200, body: answer },
+  cache: { scope: CacheScope.private, maxAge: '0s', mustRevalidate: true, etag: 'representation' },
+})
+```
+
+| Field | Answers |
+|---|---|
+| `etag: 'representation'` | a strong tag, the SHA-256 of the bytes sent: right for any answer, and the handler still runs (it saves the transfer, not the work) |
+| `etag: { version: 'version' }` | a weak tag, `W/"7"`, from the version the body carries under that field (dotted: `calendar.version`): the version of the aggregate or of the read model shown |
+| `lastModified: 'changedAt'` | `Last-Modified`, from the instant under that field (a `Date` or ISO 8601 text), compared to `If-Modified-Since` to the second |
+
+`If-None-Match` is read first and compared weakly, `If-Modified-Since` only without it. A body
+that lacks the field it names answers 500, as any answer its declaration does not allow. The
+contract gains the `If-None-Match` and `If-Modified-Since` parameters, the `ETag` and
+`Last-Modified` headers and the `304` answer.
+
+A write made on the version a client read declares `ifMatch` (`IfMatch.optional` or
+`IfMatch.required`). The pipeline reads the version named in `If-Match` (the weak tag the read
+answered, or its strong form `"7"`) and hands it to the handler as `context.expectedVersion`; the
+use case compares it with the version of the aggregate it loaded:
+
+```ts
+// the controller: new SetOpeningHoursCommand(request.actor, calendarId, ranges, request.context.expectedVersion)
+// the handler of the command:
+const calendar = await this.calendars.findById(command.calendarId);
+expectVersion(calendar, command.expectedVersion); // PreconditionFailedError, 412, when it changed
+```
+
+| Request | Answer |
+|---|---|
+| `If-Match` names the current version, or `*` | the change runs |
+| `If-Match` names another version, or a tag that is no version | `412 PRECONDITION_FAILED` |
+| no `If-Match`, `ifMatch: 'optional'` | the change runs unconditionally, as before |
+| no `If-Match`, `ifMatch: 'required'` | `428 PRECONDITION_REQUIRED`, before the handler runs |
+
+This is optimistic concurrency at the edge: the version a person saw on the screen, not only the
+one the handler loaded a millisecond earlier. Two writes at the same instant still meet the
+`ConcurrencyError` of the repository. RFC 9110 compares `If-Match` strongly, under which a weak
+tag never matches: the kit compares versions instead, which is what both forms name here, and
+documents it. The contract gains the `If-Match` parameter and the `412` (and `428`) problems.
 
 ## Errors
 
@@ -181,7 +235,7 @@ message nor its facts.
 
 Defaults: `VALIDATION_FAILED` 422 (with `issues`, paths prefixed by the part:
 `body.items.0.sku`), `NOT_FOUND` 404, `CONFLICT` 409, `INVARIANT_VIOLATION` 422, `UNAUTHORIZED`
-401, `FORBIDDEN` 403. A domain code that is not mapped answers 422.
+401, `FORBIDDEN` 403, `PRECONDITION_FAILED` 412, `PRECONDITION_REQUIRED` 428. A domain code that is not mapped answers 422.
 
 ```ts
 import { createErrorMapper } from '@ddd-ts-kit/http';

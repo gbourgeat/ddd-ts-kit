@@ -7,21 +7,27 @@ import { cacheSeconds } from './cache-seconds.js';
 
 const READS: readonly string[] = ['GET', 'HEAD'];
 
+type Refusal = (reason: string) => DeclarationError;
+
 /**
  * Refuses a cache policy that would let a cache keep what it must not: a write, an answer with
  * no stated freshness, a directive of shared caches on a private answer, and above all the
  * answer of a route that knows its caller kept in a shared cache that does not know what the
- * answer varies on.
+ * answer varies on. Refuses `ifMatch` on a read, which changes nothing.
  */
 export function assertCacheDeclaration(route: CacheDeclaration): void {
+  const refused: Refusal = (reason) =>
+    new DeclarationError(`Route "${route.operationId}" (${route.method} ${route.path}): ${reason}`);
+
+  if (route.ifMatch !== undefined && READS.includes(route.method)) {
+    throw refused('If-Match conditions a change on the version the caller read: a read changes nothing.');
+  }
+
   const { cache } = route;
 
   if (cache === undefined) {
     return;
   }
-
-  const refused = (reason: string): DeclarationError =>
-    new DeclarationError(`Route "${route.operationId}" (${route.method} ${route.path}): ${reason}`);
 
   assertRead(route, cache, refused);
   assertDurations(cache, refused);
@@ -29,11 +35,19 @@ export function assertCacheDeclaration(route: CacheDeclaration): void {
   assertSharedVaries(route, cache, refused);
 }
 
-type Refusal = (reason: string) => DeclarationError;
-
 function assertRead(route: CacheDeclaration, cache: CachePolicy, refused: Refusal): void {
-  if (cache.scope !== CacheScope.noStore && !READS.includes(route.method)) {
+  if (READS.includes(route.method)) {
+    return;
+  }
+
+  if (cache.scope !== CacheScope.noStore) {
     throw refused('only the answer of a read (GET, HEAD) is kept by a cache: declare scope no-store, or no policy.');
+  }
+
+  if (cache.etag !== undefined || cache.lastModified !== undefined) {
+    throw refused(
+      'ETag and Last-Modified name the version of a read; a write names the version it changes with ifMatch.',
+    );
   }
 }
 

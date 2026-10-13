@@ -36,19 +36,22 @@ function routeOf(resolved: ResolvedController, options: ControllerRoutesOptions)
   const identity = { method: spec.method, path: declared.path, operationId: declared.operationId };
   const security = securityOf(resolved.guards, options.security ?? DEFAULT_SECURITY);
   const cache = declared.cache === undefined ? {} : { cache: declared.cache };
+  const ifMatch = spec.ifMatch === undefined ? {} : { ifMatch: spec.ifMatch };
 
-  assertCacheDeclaration({ ...identity, security, ...cache });
+  assertCacheDeclaration({ ...identity, security, ...cache, ...ifMatch });
 
   return {
     ...identity,
     ...documentationOf(resolved),
     security,
     ...cache,
+    ...ifMatch,
     handle: handlerOf(resolved, options, identity),
   };
 }
 
-type Documentation = Omit<RouteSpec, 'method' | 'path' | 'operationId' | 'security' | 'cache'> & Pick<Route, 'groups'>;
+type Documentation = Omit<RouteSpec, 'method' | 'path' | 'operationId' | 'security' | 'cache' | 'ifMatch'> &
+  Pick<Route, 'groups'>;
 
 function documentationOf({ spec, declared, guards }: ResolvedController): Documentation {
   const { status, body, description } = spec.response;

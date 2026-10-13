@@ -1,5 +1,6 @@
 import type { DurationText } from '@ddd-ts-kit/kernel';
 import type { CacheScope } from './cache-scope.js';
+import type { EntityTagSource } from './entity-tag-source.js';
 
 /**
  * How the answer of a read may be kept by the caches on the way, declared on a controller or a
@@ -24,4 +25,8 @@ export interface CachePolicy {
    * without it, a shared cache would hand the answer of one caller to the next.
    */
   readonly vary?: readonly string[];
+  /** Answers `ETag`, and `304 Not Modified` to a request whose `If-None-Match` names it. */
+  readonly etag?: EntityTagSource;
+  /** The field of the body holding the instant the resource last changed: `Last-Modified`, and `304` to `If-Modified-Since`. */
+  readonly lastModified?: string;
 }

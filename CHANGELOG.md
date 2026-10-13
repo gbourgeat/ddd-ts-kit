@@ -16,6 +16,17 @@ declares nothing now answers `Cache-Control: no-store`, refusals included (befor
 generated contract gains that header on every authenticated operation, regenerate it with
 `npm run docs:generate`. See `docs/concepts/http-caching.md`.
 
+**Conditional requests.** A cache policy names the version of an answer, `etag: 'representation'`
+(a strong tag hashed from the bytes) or `etag: { version: 'version' }` (a weak tag from a field of
+the body), and `lastModified: 'changedAt'`: the pipeline answers `ETag` and `Last-Modified`, and
+`304 Not Modified` to `If-None-Match` and `If-Modified-Since`. A write declares
+`ifMatch: 'optional' | 'required'`: the version named in `If-Match` reaches the handler as
+`context.expectedVersion`, `expectVersion(aggregate, expected)` of the kernel refuses a stale one
+with `PreconditionFailedError` (`PRECONDITION_FAILED`, 412), and a required one that is missing
+answers `PRECONDITION_REQUIRED` (428). Both codes join the default error mapping and the codes a
+route may declare without a class of its own (`errors/known-code`). The contract documents the
+parameters, headers and answers.
+
 **Every package carries the MIT notice.** Each published package now holds the `LICENSE` of the
 repository next to its `dist/`, and `npm run package:check` refuses a tarball without it, or with
 another text. Earlier versions were published without it.

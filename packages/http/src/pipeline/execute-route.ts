@@ -6,11 +6,13 @@ import type { RouteOutput } from '../route/route-output.js';
 import type { Route } from '../route/route.js';
 import { assertDeclaredResponse } from './assert-declared-response.js';
 import { cacheHeadersOf } from './cache-headers-of.js';
+import { conditionalAnswer } from './conditional-answer.js';
 import { CORRELATION_HEADER } from './correlation-header.js';
 import { correlationIdOf } from './correlation-id-of.js';
 import type { ErrorContext } from './error-context.js';
 import type { ExecuteOptions } from './execute-options.js';
 import { executionOfRequest } from './execution-of-request.js';
+import { expectedVersionOf } from './expected-version-of.js';
 import type { RawRequest } from './raw-request.js';
 import type { RouteResponse } from './route-response.js';
 import { validateRequest } from './validate-request.js';
@@ -45,7 +47,7 @@ export async function executeRoute(
 
 async function responded(call: Call): Promise<RouteResponse> {
   try {
-    return answer(await handled(call), call);
+    return await conditionalAnswer(call.route, call.request.headers, answer(await handled(call), call));
   } catch (error) {
     return refusal(error, call);
   }
@@ -56,31 +58,38 @@ function defaultRequestId(request: RawRequest): string {
 }
 
 async function handled(call: Call): Promise<RouteOutput> {
-  const { route, request, options, requestId, correlationId } = call;
+  const { route, request, options } = call;
   const principal = await options.resolvePrincipal?.(request.raw);
   const input = validateRequest(route, request);
-  const { headers } = request;
-  const execution = executionOfRequest({ correlationId, headers, principal, deadline: deadlineOf(options) });
+  const context = requestContext(call, principal);
 
-  call.reached.execution = execution;
-
-  const context: RequestContext = {
-    requestId,
-    execution,
-    raw: request.raw,
-    rawHeaders: headers,
-    ...(principal === undefined ? {} : { principal }),
-  };
+  call.reached.execution = context.execution;
 
   const handle = async (): Promise<RouteOutput> => route.handle({ ...input, context });
   const asPrincipal = (): Promise<RouteOutput> => options.withPrincipal?.(principal, handle) ?? handle();
-  const result = await (options.executionScope?.run(execution, asPrincipal) ?? asPrincipal());
+  const result = await (options.executionScope?.run(context.execution, asPrincipal) ?? asPrincipal());
 
   if (options.validateResponses === true) {
     assertDeclaredResponse(route, result);
   }
 
   return result;
+}
+
+function requestContext(call: Call, principal: unknown): RequestContext {
+  const { route, request, options, requestId, correlationId } = call;
+  const { headers } = request;
+  const execution = executionOfRequest({ correlationId, headers, principal, deadline: deadlineOf(options) });
+  const expectedVersion = expectedVersionOf(route, headers);
+
+  return {
+    requestId,
+    execution,
+    raw: request.raw,
+    rawHeaders: headers,
+    ...(principal === undefined ? {} : { principal }),
+    ...(expectedVersion === undefined ? {} : { expectedVersion }),
+  };
 }
 
 function deadlineOf(options: ExecuteOptions): Date | undefined {

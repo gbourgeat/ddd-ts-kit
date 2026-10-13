@@ -1,4 +1,5 @@
 import type { JsonSchema } from '@ddd-ts-kit/validation';
+import { IfMatch } from '../cache/if-match.js';
 import type { ErrorMapper } from '../error/error-mapper.js';
 import { statusTitle } from '../error/status-title.js';
 import type { ResponseSpec } from '../route/response-spec.js';
@@ -9,11 +10,21 @@ import { compare } from './compare.js';
 import type { Definitions } from './definitions.js';
 
 const VALIDATION_FAILED = 'VALIDATION_FAILED';
+const PRECONDITION_FAILED = 'PRECONDITION_FAILED';
+const PRECONDITION_REQUIRED = 'PRECONDITION_REQUIRED';
+const NOT_MODIFIED = 304;
 const PROBLEM_REF = { $ref: '#/components/schemas/Problem' };
 
 /** The declared responses, plus one problem response per status of the declared error codes. */
 export function responses(route: Route, mapper: ErrorMapper, definitions: Definitions): JsonSchema {
   const byStatus = declaredResponses(route, definitions);
+
+  if (route.cache?.etag !== undefined || route.cache?.lastModified !== undefined) {
+    byStatus.set(NOT_MODIFIED, {
+      description:
+        'Not Modified: the version the caller holds (If-None-Match, If-Modified-Since) is still the current one.',
+    });
+  }
 
   for (const [status, codes] of errorCodesByStatus(route, mapper)) {
     byStatus.set(status, problemResponse(status, codes, byStatus.get(status)));
@@ -44,7 +55,13 @@ function declaredResponses(route: Route, definitions: Definitions): Map<number, 
 
 function errorCodesByStatus(route: Route, mapper: ErrorMapper): Map<number, string[]> {
   const validatesInput = Object.values(route.request ?? {}).some((schema) => schema !== undefined);
-  const codes = new Set([...(route.errors ?? []), ...(validatesInput ? [VALIDATION_FAILED] : [])]);
+
+  const codes = new Set([
+    ...(route.errors ?? []),
+    ...(validatesInput ? [VALIDATION_FAILED] : []),
+    ...preconditionCodes(route),
+  ]);
+
   const codesByStatus = new Map<number, string[]>();
 
   for (const code of codes) {
@@ -54,6 +71,14 @@ function errorCodesByStatus(route: Route, mapper: ErrorMapper): Map<number, stri
   }
 
   return codesByStatus;
+}
+
+function preconditionCodes({ ifMatch }: Route): readonly string[] {
+  if (ifMatch === undefined) {
+    return [];
+  }
+
+  return ifMatch === IfMatch.required ? [PRECONDITION_FAILED, PRECONDITION_REQUIRED] : [PRECONDITION_FAILED];
 }
 
 function problemResponse(status: number, codes: readonly string[], declared: JsonSchema | undefined): JsonSchema {

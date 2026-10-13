@@ -1,4 +1,5 @@
 import type { CachePolicy } from '../cache/cache-policy.js';
+import type { IfMatch } from '../cache/if-match.js';
 import type { HttpMethod } from './http-method.js';
 import type { RequestSchemas } from './request-schemas.js';
 import type { ResponsesSpec } from './responses-spec.js';
@@ -29,4 +30,9 @@ export interface RouteSpec<
    * `Cache-Control: no-store`, and a public one says nothing.
    */
   readonly cache?: CachePolicy;
+  /**
+   * A write conditional on the version the client read: the version named in `If-Match` is
+   * handed to the handler as `context.expectedVersion`, for the use case to compare.
+   */
+  readonly ifMatch?: IfMatch;
 }

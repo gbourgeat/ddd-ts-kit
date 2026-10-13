@@ -65,12 +65,40 @@ Two subtler leaks the declaration cannot see, and a reviewer must:
   what "the anonymous caller" may not see is fine, since every caller of it is anonymous; a
   list whose content changes with the token is not public.
 
+## Revalidation instead of a new answer
+
+A cache that holds a stale answer, or a browser holding a private one, does not have to fetch
+it again: it asks whether its version is still the current one. The answer names its version
+in `ETag` (or the instant it last changed in `Last-Modified`), the caller sends it back in
+`If-None-Match` (or `If-Modified-Since`), and the server answers `304 Not Modified` without a
+body when nothing changed.
+
+Two ways to name a version, two costs:
+
+| Tag | Made from | Costs the server | Fits |
+|---|---|---|---|
+| strong, from the representation | a hash of the bytes answered | the whole read, then the hash: only the transfer is saved | any read, without knowing anything of the model |
+| weak, from a version | the version of the aggregate or of the read model the answer shows | the read, which could be skipped by a handler that checks the version first | a read of one element whose version is in the body |
+
+## The same version for a write: If-Match
+
+A version given out with a read can come back with a write: `If-Match: W/"7"` says "change it
+only if it is still version 7". The use case compares that version with the one of the
+aggregate it loaded and refuses with `412 Precondition Failed` when somebody else changed it in
+between. This is optimistic concurrency stretched to the person: the version they saw on the
+screen, minutes ago, and not only the one the handler loaded a millisecond before saving, which
+the `version` column of the aggregate already protects. The decision stays in the use case,
+which knows the aggregate; the edge only reads the header and hands the version over.
+
 ## How the kit declares it
 
 The policy is part of the declaration of the route, so the server and the OpenAPI contract say
 the same thing: on a controller, on its route group (every read of the group), or in the spec
 of a function route. The fields and the refusals are listed in the
 [`@ddd-ts-kit/http` README](../../packages/http/README.md#http-caching).
+
+Validators (`etag`, `lastModified`) belong to the same policy, and `ifMatch` to the declaration
+of a write.
 
 ```ts
 @RouteGroup({
