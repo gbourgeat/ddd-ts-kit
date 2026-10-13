@@ -17,10 +17,21 @@ same schema; another media type is `415 UNSUPPORTED_MEDIA_TYPE`. XML follows one
 the default of the XML object of OpenAPI, with a parser of the package's own that refuses any
 document type declaration (no new dependency). CSV is written for a page or a list of flat rows,
 and a handler that answers an `AsyncIterable` under `streamSchemaOf(item)` is streamed in every
-representation. The contract lists every media type of each route, and `NOT_ACCEPTABLE` and
-`UNSUPPORTED_MEDIA_TYPE` join the default error mapping and the codes of the kit. Without the
-option nothing changes: every answer stays JSON. `money` and `decimalText` write money and
-decimals as strings, the rule every representation follows.
+representation; one that fails once its status is sent is reported to `onError` with
+`interrupted: true`. `everyPage(readPage)` streams a search page after page, each page a query
+sent through the bus, so each one runs under the middlewares of the bus (transaction, tenant
+session, timeout, tracing). A route that declares no body schema (a file, a redirect, no
+content) is never refused 406 and its answer, a `Readable` included, goes out as the handler
+wrote it. The contract follows the representations it is given, which must be those the
+server is mounted with: every media type of each route, `406 NOT_ACCEPTABLE` on every route a
+representation writes, `415 UNSUPPORTED_MEDIA_TYPE` on every route that reads a body; without
+them, JSON only and neither status. Mounting a route that declares `produces` or `consumes`
+without representations is refused. Both codes join the default error mapping and the codes
+of the kit. Without the option nothing changes: every answer stays JSON. `money` and
+`decimalText` write money and decimals as strings, the rule every representation follows.
+The documentation page of a generated project (`withDocumentation`) is written with the error
+mapper and the representations of the boundary; the contract script looks for stale files in
+`openapi/` itself and, with forms, in `openapi/forms/` only.
 
 **A generated project negotiates its representations and serves its forms.** Two keys of
 `stack`, chosen at `init`: `representations` (`negotiated`, `json`) and `forms` (`on`, `off`),
@@ -40,9 +51,11 @@ hints, and `describe` lists the media types and the form of each route.
 data), or a neutral tree of groups and fields with `?format=blocks`. Fields, constraints and
 options come from the request schema and its closed vocabularies, layout, widgets, lookups and
 conditions (`visibleWhen`, `requiredWhen`) from the hints, labels are translation keys, and
-values given in the query prefill it. The form respects the caller: a field they may not see is
-absent, one they may not set is read-only; the server still validates and the use case still
-decides. `formDocumentsOf(routes)` writes every form whole for the documentation.
+values given in the query prefill it. The form respects the caller: given only to who may run
+its use case when it declares `requires` (the permission asked as `@Requires` asks it, from the
+values of the query; 403 otherwise), a field they may not see is absent (and not echoed in
+`data`), one they may not set is read-only, an object with every field it holds; the server
+still validates and the use case still decides. `formDocumentsOf(routes)` writes every form whole for the documentation.
 
 **A field of an answer can be reserved to some callers.** `withFieldAccess(schema, { field: {
 read, write, subject } })` of `@ddd-ts-kit/http` marks a field with a permission or a policy:
@@ -50,7 +63,10 @@ the pipeline leaves it out of every representation (JSON, XML, CSV, streamed lis
 who may not read it, refuses it with 403 in a request body from one who may not set it, and the
 contract marks it with `x-field-access` and no longer lists it as required. `fieldDeciderOf({
 access, clock })` decides through the `Access` of `@ddd-ts-kit/auth`, once per element and per
-request; without a decider a restricted field is refused to everybody. The new rule
+request, remembering the last 256 elements per requirement; without a decider a restricted
+field is refused to everybody. A field shown or hidden is decided without being recorded, a
+field set in a body is recorded: `Access.decideOn({ actor, permission, subject, context,
+recorded })`, new and optional on `Access`, implemented by `PolicyAccess`. The new rule
 `authz/fields-by-schema` (checker and ESLint) refuses a test on the roles of the actor under
 `application/queries/`, the hand-written way of shaping an answer.
 

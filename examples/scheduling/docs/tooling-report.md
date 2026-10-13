@@ -1238,3 +1238,19 @@ the properties of the agenda lines, which were missing.
 The internal note is a migration of its own, `20261013120000_add-internal-notes.js`, after the
 one of the documents: the tables are shared since then, and `upgrade-tables.ts` applies the same
 change to the in-process database of the tests.
+
+## 2026-10-13 (later): what a review of media types, field access and forms changed here
+
+| | Before | After |
+|---|---|---|
+| Downloads of documents (`/files?token=`) | under negotiation, a file went out as a JSON array of bytes, and `Accept: application/pdf` was refused 406: `journey-documents.e2e.spec.ts` failed | a route that declares no body schema is left out of negotiation; the file goes out as it was stored, and the journey passes again |
+| Export of an agenda | the query `ExportPracticeAgenda` answered a lazy list, read after the bus had returned: no unit of work, no tenant session, no span for its pages | the controller streams `everyPage` over `SearchPracticeAgendaQuery`, one query per page through the bus; the export query, its handler and its spec are removed |
+| A failure half way through an export | the connection was cut, nobody was told | `onError` is told, with the correlation and `interrupted: true` |
+| The booking form | given to any caller who presented a credential | `requires` the permission `appointment.book`, asked as the command asks it (the calendar of the query, `selfService` when the patient is the caller): a patient asking it for somebody else gets 403 |
+| A note met before its booking | the agenda lost it when the two facts of the same instant came in that order | `AppointmentAnnotated` carries the booking it leaves, as the other facts do: the agenda writes the whole entry with the note |
+| Field decisions | one recorded decision per field shown or hidden | recorded only when a field is set; a shown or hidden field only shapes the answer |
+
+HTTP contract changes: `406 NOT_ACCEPTABLE` on every route that answers a body, `415
+UNSUPPORTED_MEDIA_TYPE` on every route that reads one (the contract now follows the
+representations the server is mounted with, and the documentation page too), `FORBIDDEN` on
+`GET /forms/bookAppointment`. The typed client gains the same failures.

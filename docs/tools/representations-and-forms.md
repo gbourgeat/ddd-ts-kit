@@ -61,6 +61,8 @@ What maps to what:
 | a group | `Group` element, `i18n` key | a titled section |
 | a field | `Control` with a `scope`, `i18n` key | the control of its schema type |
 | read-only | `readOnly: true` in the schema and `options.readonly` | a disabled control |
+| a read-only object | `readOnly: true` on the object, and `options.readonly` on each of its controls | a group of disabled controls |
+| the form refused to the caller | `403` instead of the form | the front end's message: the user may not run the use case |
 | hidden for the caller | absent from both schemas | nothing |
 | `widget: 'textarea'`, `'radio'` | `options.multi`, `options.format: 'radio'` | a multi-line input, radio buttons |
 | `widget: 'datetime'`, `'date'`, `'time'` | `format` of the property | a date-time, date or time picker |
@@ -93,6 +95,8 @@ kit.
 - The XML of the kit has one default namespace at most, on the root, and no mixed content.
 - JSON Forms validates with AJV in the browser: what it accepts the server may still refuse, by
   a business rule or by a field the caller may not set.
+- A renderer that ignores `readOnly` on an object group (some vanilla sets) still disables its
+  controls, which carry `options.readonly` each.
 
 ## See also
 

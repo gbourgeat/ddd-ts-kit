@@ -445,29 +445,46 @@ JSON (`consumes`), on `@Controller` or on `defineRoute` alike:
 - **Negotiation** (RFC 9110): the media type of highest quality among those the route offers,
   the most specific range of the header deciding, the order `application/json` then `produces`
   breaking ties. None acceptable: `406 NOT_ACCEPTABLE` in `application/problem+json`, before
-  the handler runs. A route that offers more than one answers with `Vary: accept`.
+  the handler runs. A route that offers more than one answers with `Vary: accept`, added to the
+  `Vary` its handler sets. A route that declares no body schema in any response (a file, a
+  redirect, no content) is never refused 406: its answer is its own, and a `Readable` or bytes
+  go out as the handler wrote them, under its content type.
 - **Bodies**: a body sent in a media type the route consumes is read by its representation
   into the value the JSON path produces, then validated by the same schema; one sent in a media
   type the route does not read is refused with `415 UNSUPPORTED_MEDIA_TYPE`. `mountExpress`
   installs a text parser on each route that consumes another media type, `mountFastify` a
   content type parser: nothing to add to the application.
-- **Streaming**: a handler that answers an `AsyncIterable` (a cursor, a paged read) under a
-  `streamSchemaOf(item)` response is written item by item in every representation (one JSON
-  array, one XML root, one CSV line per row), honouring the back pressure of the client and
-  stopping when it leaves. Each item is read inside the execution scope of the request, as the
-  handler was. The first item is read before the status is sent: a cursor that cannot open is
-  answered as a problem. A failure after that can only cut the response short.
+- **Streaming**: a handler that answers an `AsyncIterable` under a `streamSchemaOf(item)`
+  response is written item by item in every representation (one JSON array, one XML root, one
+  CSV line per row), honouring the back pressure of the client and stopping when it leaves.
+  Each item is read inside the execution scope of the request, as the handler was. The first
+  item is read before the status is sent: a cursor that cannot open is answered as a problem. A
+  failure after that cuts the response short and is told to `onError` with the correlation of
+  the request and `interrupted: true`, to count as a server fault.
+- **A streamed list read through the bus**: build it with `everyPage((cursor) =>
+  this.queries.execute(new SearchQuery(actor, ..., pageAt(cursor))))`, one query per page. Each
+  page then goes through the middlewares of the bus: authorization, the unit of work and its
+  transaction-scoped tenant session (the row-level security of `@ddd-ts-kit/knex` and
+  `@ddd-ts-kit/drizzle`), timeout, tracing, metrics, error reporting. A query handler that
+  answers a lazy `AsyncIterable` is read after the bus has returned, outside all of them: its
+  reads have no transaction, no tenant session, no span. The deadline of the request
+  (`requestTimeoutMs`) counts from its arrival, so a long export needs a route of its own with a
+  longer one, or a job that writes a file.
 - **Mount-time checks**: a media type no registered representation provides, a CSV answer
   whose rows hold a list or an object, and a consumed media type nothing reads are refused with
-  a `DeclarationError` when the routes are mounted.
-- **The contract**: every media type a route answers in is listed under its response with the
-  schema of the response, every media type it reads under its request body, the problem types
-  under each refusal, and `406`, `415` with their codes when the route declares `produces` or
-  `consumes`.
+  a `DeclarationError` when the routes are mounted; so is a route that declares `produces` or
+  `consumes` when no `representations` are mounted. A body in a consumed media type that another
+  parser (a plugin, a middleware) already turned into an object is a defect, answered 500.
+- **The contract** follows the representations it is given, which must be those the server is
+  mounted with (`generateOpenApi({ representations })`): every media type a route answers in is
+  listed under its response, every media type it reads under its request body, the problem
+  types under each refusal, `406` on every route whose answer a representation writes and `415`
+  on every route that reads a body, declared in `produces` and `consumes` or not. Without
+  `representations`, the contract says JSON only and neither status, as the server answers.
 - **Without `representations`**, nothing changes: every answer is JSON, whatever the request
-  accepts, and `produces` and `consumes` are only documented. With them, an answer in the JSON of
-  the kit stays a value in the `RouteResponse` (a spec calling `executeRoute` reads it as
-  before); another representation gives bytes in `body`, or chunks in `stream`.
+  accepts. With them, an answer in the JSON of the kit stays a value in the `RouteResponse` (a
+  spec calling `executeRoute` reads it as before); another representation gives bytes in
+  `body`, or chunks in `stream`.
 
 ### The serialization rules, the same in every representation
 
@@ -560,14 +577,23 @@ const options: ExecuteOptions = { ...boundary, fieldAccess: fieldDeciderOf({ acc
 
 - `read` absent: whoever may call the route sees the field; `write` absent: whoever sees it may
   set it. A field left out of a body is never judged.
-- A permission is decided by `access.decide(actor, permission, subject)`, the policies of the
-  permission then the authorizer, as for a use case, and recorded as any decision; a policy
-  named on the field is asked directly, with the time of `clock`. `subject` names the element:
-  left out, the requirement is asked about nothing, which a role grant answers and a
+- A permission is decided by `access.decideOn(question)` of `@ddd-ts-kit/auth` (else
+  `access.decide`), the policies of the permission then the authorizer, as for a use case; a
+  policy named on the field is asked directly, with the time of `clock`. `subject` names the
+  element: left out, the requirement is asked about nothing, which a role grant answers and a
   relationship does not.
-- Each requirement is decided once per element and per request, inside the execution scope of
-  the request (a decision the `Access` records knows who asked, and under which correlation): a
-  page of a hundred rows of the same calendar asks once.
+- **What is recorded**: a field set in a body is an act, and its decision goes to the audit
+  trail (`onDecision`) with who asked and the correlation; a field shown or left out of an
+  answer or a form only shapes it, and its decision is not recorded. The use case keeps
+  recording its own decision.
+- **Cost**: each requirement is decided once per element and per request, inside the execution
+  scope of the request. A requirement about no element is asked once; a page of a hundred rows
+  of the same calendar asks once. A streamed export whose rule names a subject per row asks one
+  decision per distinct row (one evaluation of the policies and of the authorizer, a lookup of
+  relationships for a relationship model); the judge remembers the last 256 elements per
+  requirement, so its memory stays bounded whatever the length of the export. For a long export,
+  prefer a rule without subject, or a read model that already holds only what the caller may
+  read.
 - `pageSchemaOf(item)` and `streamSchemaOf(item)` carry the restricted fields of their item.
   The rules apply to the properties of the schema given to `withFieldAccess`; a nested object is
   restricted by wrapping its own schema.
@@ -626,13 +652,29 @@ const routes = defineRoutes(appRoutes, formRoutes(appRoutes, { fieldAccess }));
 | labels | `<operationId>`, `<operationId>.<group>`, `<operationId>.<field>`, `<operationId>.<field>.<option>`; `label` of a hint replaces one | `label` | `i18n` |
 | values known in advance | the query: `?calendarId=c-1`, typed by the schema | `value` | `data` |
 
-**The description respects the caller.** A field the actor may not read
-(`withFieldAccess`) is absent, one they may read but not set is `readOnly` (`readOnly` in
-`schema`, `options.readonly` on the control), each asked about the element its `subject` names
-from the values of the query. The form of a route that is not public refuses the anonymous
-caller with 401. The server still validates the body when it is sent, refuses a field the
-caller may not set with 403, and the use case still enforces its rules: a form carries shape
-and presentation, never a business rule.
+**The description respects the caller.** A form names the permission of the use case it
+describes, asked as its `@Requires` asks it, from the values of the query:
+
+```ts
+const form = defineForm<Infer<typeof body>>({
+  requires: {
+    permission: schedulingPermissions['appointment.book'],
+    subject: (values) => (values.calendarId === undefined ? undefined : { type: 'calendar', id: values.calendarId }),
+    context: (values, actor) => ({ selfService: (values.patientId ?? actor.id) === actor.id }),
+  },
+});
+```
+
+A caller who may not run the use case is refused with 403 (recorded as a decision) and learns
+nothing of the fields; without `fieldAccess`, nobody is given a form that declares `requires`.
+A form without `requires` is given to whoever may call the route. Then a field the actor may not
+read (`withFieldAccess`) is absent, one they may read but not set is `readOnly` (`readOnly` in
+`schema`, `options.readonly` on the control), with every field it holds when it is an object,
+each asked about the element its `subject` names from the values of the query; a value of the
+query for a field the caller does not see is not given back in `data`. The form of a route that
+is not public refuses the anonymous caller with 401. The server still validates the body when
+it is sent, refuses a field the caller may not set with 403, and the use case still enforces
+its rules: a form carries shape and presentation, never a business rule.
 
 Hints naming a field the body does not hold, or a lookup that is no `GET` route, stop
 `formRoutes` with a `DeclarationError`. `formDocumentsOf(routes)` gives every form whole, in
@@ -825,7 +867,8 @@ Express, mount them before `express.json()`: that parser reads a JSON body first
 store answers its own links and needs no route.
 
 A handler may answer a stream (`Readable`) as its body: it is piped to the response, with its
-own `content-type`.
+own `content-type`, whatever `representations` the routes are mounted with: no representation
+writes a file, and a route that declares no body schema is never refused 406.
 
 ## Limits
 
@@ -839,12 +882,15 @@ own `content-type`.
   namespaces but the default one of the root, no mixed content, no XML Schema. A partner format
   with a schema of its own is an anti-corruption layer with its own mapper.
 - A streamed list cannot be refused once its first item is written: the connection is cut,
-  and the client sees a truncated body. The items of a stream are not checked one by one by
-  `validateResponses`.
+  the client sees a truncated body, and `onError` is told. The items of a stream are not checked
+  one by one by `validateResponses`.
 - CSV is written, never read, and holds flat rows only.
 - A form describes scalars, nested objects and lists of a closed vocabulary; a list of objects
   is a `list` field with no detail. Layout beyond groups and order is the front end's. A lookup
   names the route of the options; how the front end calls it and labels its items is its own.
 - Field access judges the fields a schema declares, not the rows: which rows an actor may read is
   the access scope of the query. A requirement about an element is one decision per element of
-  the answer, recorded by the `onDecision` of the `Access` like any other.
+  the answer, not recorded; there is no batch decision of many elements at once.
+- A form is given to who may run its use case only when it declares `requires`; the values of
+  its query name the element and the context, which the caller chooses, as they would in the
+  body they send.

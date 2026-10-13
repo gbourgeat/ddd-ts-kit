@@ -35,6 +35,12 @@ Three consequences:
 - **Negotiation is a contract.** The route says what it produces; the request says what it
   accepts (RFC 9110); none in common is `406`. A body sent as XML is read into the value the JSON
   path would have produced and validated by the same schema: one set of rules, whatever the wire.
+  A file is no representation: a route that answers bytes or a stream of its own declares no
+  body schema, and no `Accept` header refuses it.
+- **A long list is read through the bus, page by page.** An export streams page after page,
+  each page a query sent through the bus, so each one is authorized, run in its transaction and
+  tenant session, timed and traced. A query that answers a lazy list would be read after the bus
+  has returned, outside all of that.
 - **Serialization rules are standard.** An instant is ISO 8601 in UTC, money a decimal string
   with its currency, an identifier a string, a closed vocabulary its code, a list a page envelope
   or a stream. A project does not decide them again for each format.
@@ -52,7 +58,9 @@ missing.
 The kit marks the field on the schema instead: a field requires a permission or a policy to be
 read, and possibly another one to be set. The permission is decided by the same `Access` as a use
 case, about the element the field belongs to (the calendar of the appointment), so roles,
-attribute policies and relationships all work, and the decision is recorded like any other.
+attribute policies and relationships all work. Setting a field is an act, and its decision is
+recorded like any other; showing or hiding one only shapes an answer, and is not recorded, so a
+page of a thousand rows does not write a thousand lines in the audit trail.
 
 | Where | A field the caller may not read | A field the caller may read but not set |
 |---|---|---|
@@ -77,9 +85,11 @@ route keeps one source:
   their options; a few presentation hints add what a schema cannot say: groups and order, the
   widget of a field, the route a field takes its options from, when a field shows or is
   required. Labels are translation keys, never text.
-- **For the caller.** The description is computed per request: hidden and read-only fields come
-  from the same field access as the answers, about the element the request names (the calendar
-  in `?calendarId=`).
+- **For the caller.** The form is given only to who may run its use case, the permission asked
+  as the command asks it, from the values of the request (the calendar in `?calendarId=`, who
+  books for whom); anybody else gets a 403 and learns nothing of its fields. Hidden and read-only
+  fields then come from the same field access as the answers, about the same element; an object
+  the caller may not set is read-only down to its last field.
 - **Two formats from one tree.** A neutral tree of groups and fields is the model of the kit; JSON
   Forms (a JSON Schema, a UI schema and the data) is produced from it, because maintained
   renderers exist for React, Angular and Vue.
@@ -95,9 +105,13 @@ the client, never a check.
 - CSV is written, never read, and holds flat rows: an import is a use case with a body schema of
   its own.
 - A streamed list cannot be refused once its first item is written: a failure later cuts the
-  response short.
+  response short, and is reported as a fault.
 - Field access judges the fields of the schema it is declared on; a nested object is restricted
-  through its own schema. Each requirement is one decision per element of the answer.
+  through its own schema. Each requirement is one decision per distinct element of the answer,
+  remembered for the last few hundred elements: a long export with an element per row costs one
+  decision per row.
+- A form names the permission of its use case (`requires`); one that does not is given to
+  whoever may call its route.
 - A form describes scalars, nested objects and lists of a closed vocabulary; layout beyond
   groups and order, and the behaviour of a lookup, are the front end's.
 

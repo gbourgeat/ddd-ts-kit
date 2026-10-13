@@ -85,7 +85,12 @@ the answer, and of the body when the caller sets it:
 of `@ddd-ts-kit/http`, decided through `Access` (`fieldDeciderOf`, which `presentation-of.ts`
 of the platform wires). It is left out of JSON, XML and CSV alike for a caller who may not read
 it, refused with 403 in a body from one who may not set it, absent or read-only in the form of
-the route. The handler still authorizes the write itself, for the callers that are not HTTP.
+the route. The handler still authorizes the write itself, for the callers that are not HTTP. A
+field shown or hidden is decided without being recorded; a field set is recorded.
+
+The form of a route (`defineForm`) names the permission of its use case, asked as its
+`@Requires` asks it: `requires: { permission, subject: (values) => ..., context: (values, actor)
+=> ... }`. A caller who may not run the use case gets 403 instead of the form.
 
 ## The current actor
 
