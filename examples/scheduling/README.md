@@ -86,6 +86,9 @@ of each is its user name.
 | Persistent relation tuples, written in the unit of work | `src/platform/auth/knex-relation-tuple-store.ts`; `*/application/ports/*-relationships.port.ts` and their adapters |
 | Searches narrowed in the statement by the access scope, with criteria | `scheduling/application/queries/search-appointments/`, `search-practice-agenda/`, `analytics/application/queries/search-occupancy/` |
 | Field-level difference: busy without the name | `scheduling/application/queries/get-calendar-day/` |
+| A field reserved to the staff, in every representation: the internal note, hidden from the patient, read-only for an assistant, written by whoever runs the calendar | `scheduling/presentation/http/appointments/book-appointment/book-appointment.controller.ts`, `get-appointment/get-appointment.controller.ts` (`withFieldAccess`), `test/e2e/book-appointment.e2e.spec.ts` |
+| One route in JSON, XML and CSV by the `Accept` header; an XML body read and validated as JSON; a list streamed page by page through the bus as it is read | `scheduling/presentation/http/practices/` (`produces`), `export-practice-agenda/`, `src/platform/http/presentation-of.ts`, `test/e2e/export-practice-agenda.e2e.spec.ts` |
+| A form described by the server, for the caller who asks (JSON Forms, or a tree of blocks) | `GET /forms/bookAppointment`, the `form` of `book-appointment.controller.ts`, `src/platform/http/with-forms.ts`, `openapi/forms/bookAppointment.json` |
 | Read-only impersonation, visible in the trail | `src/platform/buses/read-only-impersonation.ts`, `test/e2e/journey-authorization.e2e.spec.ts` |
 | Integration events, versioned, through the outbox | `src/contexts/*/published-language/`, `docs/integration/event-catalog.md` |
 | A projection of another context (decides, labels lists) | `scheduling/application/projections/practitioners.projection.ts` |

@@ -18,7 +18,9 @@ import {
   HTTP_STACKS,
   IMPORT_EXTENSIONS,
   LOGGERS,
+  FORM_MODES,
   REFUSAL_FORMS,
+  REPRESENTATION_MODES,
   ROUTE_FORMS,
   SCHEMA_FORMS,
   PACKAGE_MANAGERS,
@@ -135,6 +137,7 @@ function stackOf(options: StackOptions): Record<string, string> {
     ...resolveOperations(options, persistence.orm),
     ...resolveWriting(options),
     ...resolveStyle(options, di),
+    ...resolvePresentation(options, http),
     tenancy: resolveTenancy(options, persistence.orm),
     queue: resolveQueue(options, { orm: persistence.orm, di }),
   };
@@ -196,6 +199,21 @@ function resolveWriting(
     valueObjects: choose(VALUE_OBJECT_FORMS, options.valueObjects, 'value-objects') ?? 'throwing',
     // A new project names its closed values and its numbers; a recorded one keeps the form it says, or the free literals of 0.5.
     literals: choose(LITERAL_FORMS, options.literals, 'literals') ?? 'named',
+  };
+}
+
+/**
+ * A new project with an HTTP stack negotiates its representations and serves the forms its routes
+ * declare; one without HTTP has neither, and a recorded one keeps what it says, or JSON alone and
+ * no form when it says nothing.
+ */
+function resolvePresentation(options: StackOptions, http: string): Record<'representations' | 'forms', string> {
+  const representations = choose(REPRESENTATION_MODES, options.representations, 'representations');
+  const forms = choose(FORM_MODES, options.forms, 'forms');
+
+  return {
+    representations: representations ?? (http === 'none' ? 'json' : 'negotiated'),
+    forms: forms ?? (http === 'none' ? 'off' : 'on'),
   };
 }
 

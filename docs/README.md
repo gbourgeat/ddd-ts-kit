@@ -37,6 +37,7 @@ Ordered as a reading path in [concepts/README.md](concepts/README.md).
 | [Layers and the dependency rule](concepts/layers-and-dependency-rule.md) | hexagonal, onion, clean: what they share, where they differ |
 | [Ports and composition](concepts/ports-and-composition.md) | ports as abstract classes, the composition root, declared or explicit wiring |
 | [The presentation layer](concepts/presentation-layer.md) | one controller class per route, route groups, guards at the edge and permissions on the use case, mapper and serializer |
+| [Representations, field access and forms](concepts/representations-and-forms.md) | one schema in JSON, XML or CSV by content negotiation, fields reserved to a permission, forms described by the server for each caller |
 | [CQRS](concepts/cqrs.md) | command and query buses, and event sourcing as a separate choice: what it buys and what it does not |
 | [Modular monolith](concepts/modular-monolith.md) | one deployable, contexts kept extractable |
 | [Domain and integration events](concepts/domain-and-integration-events.md) | the two kinds of events and the translation between them |
@@ -71,6 +72,7 @@ limits, and a recommendation by situation.
 | [HTTP frameworks](tools/http-frameworks.md) | Express, Fastify, Hono or NestJS, and what framework-agnostic routes cost with Nest |
 | [Validation](tools/validation.md) | zod, class-validator, TypeBox or a Standard Schema library; shared schemas |
 | [Contract pairs](tools/contract-pairs.md) | which framework with which validation library, by team: the four pairs proven end to end, measured; why not oRPC |
+| [Representations and forms](tools/representations-and-forms.md) | XML and CSV without a library, and why; JSON Forms renderers for React, Angular and Vue, and the alternatives |
 | [Dependency injection](tools/dependency-injection.md) | tsyringe with the kit's declarations, NestJS, or manual wiring |
 | [Persistence](tools/persistence.md) | Drizzle, Knex, Prisma or TypeORM; PostgreSQL versus others |
 | [Message brokers](tools/message-brokers.md) | in-process, RabbitMQ, Kafka, NATS JetStream or Redis Streams |
@@ -103,7 +105,7 @@ limits, and a recommendation by situation.
 
 | Page | Status |
 |---|---|
-| [The read side](proposals/read-side.md) | criteria, representations, read models and projections; the page says, part by part, what is built in the runtime packages, what the CLI does not generate yet and what is not built |
+| [The read side](proposals/read-side.md) | criteria, representations, forms, read models and projections; the page says, part by part, what is built in the runtime packages, what the CLI does not generate yet and what is not built |
 
 ## Suggested reading order
 

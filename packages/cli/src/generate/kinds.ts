@@ -16,6 +16,7 @@ import { entityKind } from './kinds/entity-kind.js';
 import { eventHandlerKind } from './kinds/event-handler-kind.js';
 import { fileUploadKind } from './kinds/file-upload-kind.js';
 import { gatewayKind } from './kinds/gateway-kind.js';
+import { formKind } from './kinds/form-kind.js';
 import { guardKind } from './kinds/guard-kind.js';
 import { integrationEventKind } from './kinds/integration-event-kind.js';
 import { integrationHandlerKind } from './kinds/integration-handler-kind.js';
@@ -26,6 +27,7 @@ import { processKind } from './kinds/process-kind.js';
 import { projectionKind } from './kinds/projection-kind.js';
 import { queryKind } from './kinds/query-kind.js';
 import { repositoryKind } from './kinds/repository-kind.js';
+import { representationKind } from './kinds/representation-kind.js';
 import { routeGroupKind } from './kinds/route-group-kind.js';
 import { controllerKind, routeKind } from './kinds/route-kind.js';
 import { schemaKind } from './kinds/schema-kind.js';
@@ -57,6 +59,8 @@ export const KINDS: readonly Kind[] = [
   fileUploadKind,
   routeGroupKind,
   guardKind,
+  representationKind,
+  formKind,
   schemaKind,
   integrationEventKind,
   integrationHandlerKind,

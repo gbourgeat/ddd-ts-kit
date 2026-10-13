@@ -27,6 +27,8 @@ const STACK_FLAGS = [
   'dependencies',
   'refusals',
   'routes',
+  'representations',
+  'forms',
   'schemas',
   'literals',
   'tenancy',

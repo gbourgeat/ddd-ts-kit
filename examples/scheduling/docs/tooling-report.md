@@ -1260,7 +1260,6 @@ in the kit, then `npm run docs:generate` rewrote `clients/api`:
 | Lockfile | none in this directory, which is a workspace of the kit; a generated npm project is told to run `npm install` when its lock misses a client |
 
 The two changed spec files and the three journeys pass again in process (30 tests).
-
 ## 2026-10-13: shapes declared once, and four contract pairs
 
 The example now says `"stack.schemas": "shared"`. The checker, run with the new rule
@@ -1411,3 +1410,82 @@ status published as free text, and the queue blind to tenants. What changed here
 `generate background-job` now carries the inputs of a command in the payload (a `Date` as its
 ISO text): `--command CancelAppointment` would generate today, but the clearance still sends one
 command per appointment of its payload, with a checkpoint between two, which no template guesses.
+
+## 2026-10-13: media types, fields reserved to the staff, and a form described by the server
+
+The config says `"representations": "negotiated"` and `"forms": "on"`, and the platform has the
+two files `init` now writes for them (`http/presentation-of.ts`, `http/with-forms.ts`), with
+the boundary, the composition root and `scripts/openapi.ts` changed as the templates are.
+
+| | Before | After |
+|---|---|---|
+| Media types a route answers in | JSON | JSON, and what it declares: `application/xml` and `text/csv` for the agenda of a practice and its export, `application/xml` for a booking |
+| Bodies read | JSON | JSON, and XML on `POST /appointments` |
+| Export of an agenda | none | `GET /practices/{practiceId}/agenda/export`, streamed page after page of the read model (CSV or XML) |
+| Internal note | none | written at booking by whoever runs the calendar, read by its staff, refused (403) from and hidden from its patient: `withFieldAccess` on the body and on the detail, `Access.authorize` in the handler for every other caller |
+| Forms | none | `GET /forms/bookAppointment` (JSON Forms, or `?format=blocks`), `openapi/forms/bookAppointment.json` generated |
+| End-to-end specs | | `book-appointment.e2e.spec.ts` (XML booking, the form for the patient, the assistant and the practitioner, the note), `export-practice-agenda.e2e.spec.ts` (CSV, XML, 406) |
+
+What the generators wrote: the domain event `AppointmentAnnotated` (with its glossary term),
+the query and the controller of the export, the two end-to-end specs, the `produces` and
+`consumes` of three controllers (`generate representation`) and the hints of the booking form
+(`generate form`), which were then filled. What was done by hand: the note in the aggregate,
+its row, its column and the agenda, the projector of the annotation, the field rules, the
+permissions `appointment.note.read` and `appointment.note.write` with the relationship `staff`
+of a calendar (whoever works in its practice), and the export handler, which reads the agenda
+by cursor pages instead of the reader port the query generator proposes.
+
+Frictions met, fixed in the kit in the same change:
+
+- The JSON Schema of a class-validator class that only extends another one was an empty object:
+  the agenda lines of the contract said nothing of their fields, and a CSV of them had no
+  column. `@ddd-ts-kit/validation` now gives a class the properties of its ancestors; the
+  contract of the agenda lists them.
+- A field decision ran outside the execution scope of the request, where the audit of the
+  decisions requires it: the pipeline now decides fields, and reads a streamed list, inside it.
+- The form generator imported `Infer` as a value in a class-validator controller.
+
+HTTP contract changes: the media types above under each route concerned, `406` with
+`NOT_ACCEPTABLE` on the routes that produce more than JSON, `415` with
+`UNSUPPORTED_MEDIA_TYPE` on the booking, `internalNote` (optional, marked `x-field-access`) in
+the body of `POST /appointments` and in the answer of `GET /appointments/{appointmentId}`, the
+new routes `GET /practices/{practiceId}/agenda/export` and `GET /forms/bookAppointment`, and
+the properties of the agenda lines, which were missing.
+
+The internal note is a migration of its own, `20261013110000_add-internal-notes.js`, after the
+one of the documents: the tables are shared since then, and `upgrade-tables.ts` applies the same
+change to the in-process database of the tests.
+
+## 2026-10-13 (later): what a review of media types, field access and forms changed here
+
+| | Before | After |
+|---|---|---|
+| Downloads of documents (`/files?token=`) | under negotiation, a file went out as a JSON array of bytes, and `Accept: application/pdf` was refused 406: `journey-documents.e2e.spec.ts` failed | a route that declares no body schema is left out of negotiation; the file goes out as it was stored, and the journey passes again |
+| Export of an agenda | the query `ExportPracticeAgenda` answered a lazy list, read after the bus had returned: no unit of work, no tenant session, no span for its pages | the controller streams `everyPage` over `SearchPracticeAgendaQuery`, one query per page through the bus; the export query, its handler and its spec are removed |
+| A failure half way through an export | the connection was cut, nobody was told | `onError` is told, with the correlation and `interrupted: true` |
+| The booking form | given to any caller who presented a credential | `requires` the permission `appointment.book`, asked as the command asks it (the calendar of the query, `selfService` when the patient is the caller): a patient asking it for somebody else gets 403, and so does an assistant without a delegation of the desk, who may not book |
+| Who writes the note | whoever runs the calendar (`run`), so an assistant with a delegation would have edited it | the holder of the desk or the manager of the practice (`own`, a new permission of the calendar in the relationship schema): an assistant who books on a delegated desk sees the note read-only, which is what the end-to-end spec of the form now shows after a delegation |
+| A note met before its booking | the agenda lost it when the two facts of the same instant came in that order | `AppointmentAnnotated` carries the booking it leaves, as the other facts do: the agenda writes the whole entry with the note |
+| Field decisions | one recorded decision per field shown or hidden | recorded only when a field is set; a shown or hidden field only shapes the answer |
+
+HTTP contract changes: `406 NOT_ACCEPTABLE` on every route that answers a body, `415
+UNSUPPORTED_MEDIA_TYPE` on every route that reads one (the contract now follows the
+representations the server is mounted with, and the documentation page too), `FORBIDDEN` on
+`GET /forms/bookAppointment`. The typed client gains the same failures.
+
+## 2026-10-13: the media types meet the shared shapes, the cache and the jobs
+
+The two lots were merged into one tree. What the merge changed here, beyond taking both sides:
+
+| | |
+|---|---|
+| Export of an agenda | its own line class extended a line class the shared shapes removed: the export now answers `AgendaLine` (`classSchema(AgendaLine, { shared: true })`), the component the two searches already point at |
+| Booking body | `startsAt` picked from `TimeSpan`, the internal note and its field rules kept: the JSON Schema of a class that extends a picked class holds the properties of both |
+| Internal note | `annotate` asked the aggregate a guard the state machine replaced: it is now a transition of `appointmentLifecycle` (`annotate`, from requested or booked, the status unchanged) |
+| Contract | the media types, `406` and `415` of the representations next to the `Cache-Control`, `ETag`, `If-Match` and `304` of the caching; `Vary` documents `accept` on the routes that answer in several media types |
+
+Frictions met in the kit, fixed in the same change: the cache tags, the weak `ETag` and
+`Last-Modified` were read from the bytes of an XML answer, where no field is found; `Vary: accept`
+replaced the `Vary` of a cache policy instead of joining it; a public answer chosen by `Accept`
+was accepted behind a cache that ignores `Vary`; Hono neither read an XML body nor streamed a
+list; and `withFieldAccess` over a shared schema left the contract without its `x-field-access`.

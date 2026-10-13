@@ -140,7 +140,8 @@ Usage
                   [--audit on|off]
                   [--errors none|sentry] [--logger stdout|pino|winston] [--style declared|explicit] [--assembly barrel|discovery]
                   [--dependencies signature|listed] [--refusals factories|classes]
-                  [--routes controllers|functions] [--value-objects throwing|result] [--literals named|free] [--tenancy none|shared-table] [--queue database|redis|memory]
+                  [--routes controllers|functions] [--representations negotiated|json] [--forms on|off]
+                  [--value-objects throwing|result] [--literals named|free] [--tenancy none|shared-table] [--queue database|redis|memory]
                   [--schemas shared|per-route]
                   [--package-manager npm|pnpm] [--allow-no-outbox "<reason>"] [--import-alias '$<name>/']
                   [--import-extension none|js] [--sdk]
@@ -225,6 +226,8 @@ Kinds
   file-upload <context> <UseCaseName> --path <path> (--permission <aggregate>.<action> | --public) [--method <POST|PUT>] [--group <Name>]
   route-group <context> <Name> [--prefix <path>] [--group <ParentName>] [--public | --role <role>]   (alias: group)
   guard <context> <Name>
+  representation <context> <UseCase> <xml|csv|media/type>[,...]
+  form <context> <UseCase>
   schema <context|shared-kernel> <Name>
   integration-event <context> <Aggregate> <Fact> [--version <n>] [--term "<Term>=<meaning>"]...
   integration-handler <context> <upstreamContext> <eventType>   (alias: consumer)

@@ -1,6 +1,6 @@
 {
   "name": "@ddd-ts-kit/openfga",
-  "version": "0.13.0",
+  "version": "0.14.0",
   "description": "The relation tuple store and the authorizer of @ddd-ts-kit/auth on OpenFGA, with the authorization model generated from the relationship schema.",
   "license": "MIT",
   "repository": {
@@ -30,8 +30,8 @@
     "dist"
   ],
   "dependencies": {
-    "@ddd-ts-kit/auth": "0.13.0",
-    "@ddd-ts-kit/kernel": "0.13.0"
+    "@ddd-ts-kit/auth": "0.14.0",
+    "@ddd-ts-kit/kernel": "0.14.0"
   },
   "peerDependencies": {
     "@openfga/sdk": "^0.9.7"
@@ -42,7 +42,7 @@
     }
   },
   "devDependencies": {
-    "@ddd-ts-kit/testing": "0.13.0",
+    "@ddd-ts-kit/testing": "0.14.0",
     "@openfga/sdk": "0.9.7"
   }
 }

@@ -12,9 +12,10 @@ import type { Clock, ErrorReporter, ExecutionScope, Logger, Session } from '@ddd
 import { multipartUploads } from '@ddd-ts-kit/http/uploads';
 import { tracedRoutes } from '@ddd-ts-kit/tracing';
 import { principalOf } from '@/platform/auth/principal-of';
+import type { Presentation } from '@/platform/http/presentation-of';
 
 /** What the HTTP adapter needs at the edge of the application: spread into its mount options, for every route. */
-export interface HttpBoundary {
+export interface HttpBoundary extends Presentation {
   readonly resolvePrincipal: (raw: unknown) => Promise<Session>;
   /** Every handler runs inside it, with the correlation id, the actor and the session of its request. */
   readonly executionScope: ExecutionScope;
@@ -42,6 +43,7 @@ interface Edge {
   readonly refusals: (refusal: GuardRefusal) => Promise<void>;
   /** Where a request answered 5xx is reported, unless a bus already reported its failure. */
   readonly errors: ErrorReporter;
+  readonly presentation: Presentation;
 }
 
 /** A request is authenticated once, then handled inside the execution scope, so infrastructure sees who acts and under which correlation. */
@@ -53,10 +55,12 @@ export function httpBoundary({
   logger,
   refusals,
   errors,
+  presentation,
 }: Edge): HttpBoundary {
   const report = reportHttpErrors(errors);
 
   return {
+    ...presentation,
     resolvePrincipal: principalOf(authenticator),
     executionScope,
     errorMapper,

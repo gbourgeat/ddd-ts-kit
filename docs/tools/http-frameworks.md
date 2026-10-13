@@ -119,6 +119,11 @@ From [`packages/http/README.md`](../../packages/http/README.md) and
 - `security` is mandatory on every route; a route is never public by omission
   (`authz/declared`).
 - OpenAPI 3.1 generated from the same declarations, deterministic, with a drift check for CI.
+- Content negotiation (JSON, XML, CSV, streamed lists) and XML bodies the same way on the four:
+  `mountExpress` puts a text parser on each route that `consumes` another media type,
+  `mountFastify` registers a content type parser, `mountHono` reads such a body as text under
+  its `bodyLimit`, Nest goes through Express or Fastify; the shared suite of the adapters holds
+  it ([representations and forms](representations-and-forms.md)).
 - Every request runs inside the execution scope with its correlation id when the scope is
   given in the options.
 - The CLI's end-to-end proofs install and run generated projects: `proven-stacks.spec.ts`

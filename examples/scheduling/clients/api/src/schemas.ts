@@ -61,6 +61,31 @@ export type DayRangeDto = {
   end: string;
 };
 
+/** A group (`type: group`, `blocks`) or a field (`type: field`, `widget`, `required`, `readOnly`, `constraints`, `options`, `lookup`, `visibleWhen`, `requiredWhen`, `value`). Labels are translation keys. */
+export type FormBlock = {
+  type: 'group' | 'field';
+  name: string;
+  label: string;
+  widget?: string;
+  required?: boolean;
+  readOnly?: boolean;
+  constraints?: Record<string, unknown>;
+  options?: Array<{
+    value?: unknown;
+    label?: string;
+  }>;
+  multiple?: boolean;
+  lookup?: {
+    operation?: string;
+    method?: string;
+    path?: string;
+  };
+  visibleWhen?: Record<string, unknown>;
+  requiredWhen?: Record<string, unknown>;
+  value?: unknown;
+  blocks?: Array<FormBlock>;
+};
+
 export type OpeningRangeDto = {
   weekday: 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
   start: string;

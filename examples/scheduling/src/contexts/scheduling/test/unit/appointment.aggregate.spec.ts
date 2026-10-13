@@ -90,6 +90,36 @@ describe('Appointment', () => {
   });
 });
 
+describe('Appointment, annotated by the staff', () => {
+  it('records the internal note, and keeps it whatever its standing becomes', () => {
+    given(anAppointment().requestedUntil(deadline))
+      .when((appointment) => {
+        appointment.annotate('Prefers the morning', at('07:00'));
+        appointment.confirm(at('08:00'));
+        appointment.cancel(byPractice, at('09:00'));
+      })
+      .thenEvents([
+        {
+          name: 'scheduling.appointment.annotated',
+          occurredAt: at('07:00'),
+          annotated: { internalNote: 'Prefers the morning', confirmBefore: deadline },
+        },
+        { name: 'scheduling.appointment.confirmed' },
+        { name: 'scheduling.appointment.cancelled' },
+      ])
+      .thenState((appointment) => {
+        expect(appointment.internalNote).toBe('Prefers the morning');
+        expect(appointment.toState().internalNote).toBe('Prefers the morning');
+      });
+  });
+
+  it('refuses a note on an appointment that has ended', () => {
+    given(anAppointment().completed())
+      .when((appointment) => appointment.annotate('Too late', at('08:00')))
+      .thenError('APPOINTMENT_ENDED');
+  });
+});
+
 describe('Appointment, from confirmation to its end', () => {
   it('is booked once its request is confirmed, and has no deadline any more', () => {
     given(anAppointment().requestedUntil(deadline))

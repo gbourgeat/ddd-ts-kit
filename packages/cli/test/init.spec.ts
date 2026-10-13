@@ -114,6 +114,38 @@ describe('init', () => {
   });
 });
 
+/** What `init` records for a Fastify, class-validator, manual and Jest project, every other choice its default. */
+const FASTIFY_STACK = {
+  http: 'fastify',
+  validation: 'class-validator',
+  di: 'manual',
+  events: 'outbox',
+  orm: 'drizzle',
+  database: 'postgres',
+  tests: 'jest',
+  docsUi: 'swagger',
+  ci: 'github',
+  authn: 'jwt',
+  authz: 'rbac',
+  broker: 'none',
+  cache: 'none',
+  httpCache: 'none',
+  audit: 'on',
+  errors: 'none',
+  logger: 'stdout',
+  refusals: 'factories',
+  routes: 'controllers',
+  representations: 'negotiated',
+  forms: 'on',
+  schemas: 'shared',
+  storage: 'local',
+  valueObjects: 'throwing',
+  literals: 'named',
+  queue: 'memory',
+  style: 'explicit',
+  packageManager: 'pnpm',
+};
+
 describe('init, the choices it records and the ones it refuses', () => {
   it('refuses to leave the outbox out with a database unless the decision is recorded', () => {
     const refused = cli(tempDir('init'), 'init', '--events', 'in-memory');
@@ -155,34 +187,7 @@ describe('init, the choices it records and the ones it refuses', () => {
 
     const config = readJson(root, 'ddd-ts-kit.config.json');
 
-    expect(jsonAt(config, 'stack')).toEqual({
-      http: 'fastify',
-      validation: 'class-validator',
-      di: 'manual',
-      events: 'outbox',
-      orm: 'drizzle',
-      database: 'postgres',
-      tests: 'jest',
-      docsUi: 'swagger',
-      ci: 'github',
-      authn: 'jwt',
-      authz: 'rbac',
-      broker: 'none',
-      cache: 'none',
-      httpCache: 'none',
-      audit: 'on',
-      errors: 'none',
-      logger: 'stdout',
-      refusals: 'factories',
-      routes: 'controllers',
-      schemas: 'shared',
-      storage: 'local',
-      valueObjects: 'throwing',
-      literals: 'named',
-      queue: 'memory',
-      style: 'explicit',
-      packageManager: 'pnpm',
-    });
+    expect(jsonAt(config, 'stack')).toEqual(FASTIFY_STACK);
 
     expect(jsonAt(config, 'contexts')).toMatchObject({
       billing: { classification: 'core' },

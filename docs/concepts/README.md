@@ -60,7 +60,10 @@ of tools.
 14. [CQRS](cqrs.md): command and query buses as used here; event sourcing is a separate
     choice, per aggregate.
     [The presentation layer](presentation-layer.md) comes with it: one controller class per
-    route, route groups, guards at the edge and permissions on the use case.
+    route, route groups, guards at the edge and permissions on the use case; and
+    [representations, field access and forms](representations-and-forms.md): one schema
+    answered in JSON, XML or CSV, fields reserved to some callers, forms described by the
+    server.
 15. [Modular monolith](modular-monolith.md): one deployable, real modules.
 
 ## 4. Messaging and consistency: how contexts collaborate

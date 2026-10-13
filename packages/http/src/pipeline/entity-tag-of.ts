@@ -6,15 +6,19 @@ import { serializeBody } from './serialize-body.js';
 
 /**
  * The `ETag` of an answer: strong, the SHA-256 of the bytes sent, for `representation`; weak,
- * the version the body carries, for `{ version }`. A body without that version is an answer its
- * declaration does not allow.
+ * the version the value answered carries, for `{ version }`, the same in every representation.
+ * A value without that version is an answer its declaration does not allow.
  */
-export async function entityTagOf(source: EntityTagSource, response: RouteResponse): Promise<string> {
+export async function entityTagOf(
+  source: EntityTagSource,
+  response: RouteResponse,
+  value: unknown = response.body,
+): Promise<string> {
   if (source === 'representation') {
     return `"${await digestOf(serializeBody(response) ?? '')}"`;
   }
 
-  const [version] = valuesAt(response.body, source.version);
+  const [version] = valuesAt(value, source.version);
 
   if (typeof version !== 'number' && typeof version !== 'string') {
     throw new ResponseContractError(`The answer carries no version under "${source.version}" for its ETag.`);

@@ -166,6 +166,31 @@ describe('PolicyAccess with an authorizer', () => {
   });
 });
 
+describe('PolicyAccess asked a question', () => {
+  it('gives the authorizer the context of the question, and records the decision unless told not to', async () => {
+    const audit: DecisionRecord[] = [];
+    const authorizer = new RecordingAuthorizer();
+
+    const access = new PolicyAccess({
+      authorizer,
+      clock: new FixedClock(NOON),
+      onDecision: (record) => void audit.push(record),
+    });
+
+    const article = { type: 'article', id: 'article-9' };
+
+    await access.decideOn({ actor: author, permission: read, subject: article, context: { selfService: true } });
+    await access.decideOn({ actor: author, permission: read, subject: article, recorded: false });
+
+    expect(authorizer.checks.map((check) => check.context)).toEqual([
+      { selfService: true, subject: article },
+      { subject: article },
+    ]);
+
+    expect(audit).toHaveLength(1);
+  });
+});
+
 describe('PolicyAccess.scope', () => {
   const clock = new FixedClock(NOON);
 

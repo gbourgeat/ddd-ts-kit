@@ -57,6 +57,12 @@ file and is part of `npm run verify`.
 ## The HTTP contract
 
 Routes, schemas, error codes, what is breaking, the typed clients (`ddd-ts-kit sdk`): [openapi.md](openapi.md).
+Under `"stack.representations": "negotiated"` the contract lists every media type of a route
+(`produces`, `consumes`), `406` on every route that answers a body and `415` on every route that
+reads one; a field marked with `withFieldAccess` carries `x-field-access`. The contract script and
+the documentation page take the representations of the boundary: never generate it with other
+ones than the server is mounted with. Under `"stack.forms": "on"`, `npm run docs:generate` also writes each form whole
+to `openapi/forms/<operationId>.json`, checked like the contract: commit them with the route.
 
 ## Integration notes (`docs/integration/README.md`)
 

@@ -69,6 +69,9 @@ This is why practices come: a time on a calendar is held once, under rules of av
 | Read | To see an appointment, or the agenda of a practice, as one is allowed to |  |
 | Get | To read one element one may see |  |
 | Browse | To look at the day of a calendar as anyone signed in may see it |  |
+| Annotate | To write an internal note on an appointment, for the staff of its practice |  |
+| Internal note | What the staff of a practice writes about an appointment for themselves: its practitioner writes it, its assistants read it, its patient never sees it | Reason, which the canceller gives |
+| Export | To hand over every appointment of an agenda at once, read as it is written |  |
 | Attendance | Whether a patient came to the appointments they held with a practice |  |
 | Record | What a practice keeps of the attendance of one patient: the no-shows and cancellations noted, in order |  |
 | Note | To keep a fact in an attendance record, once per appointment |  |
@@ -126,6 +129,8 @@ This is why practices come: a time on a calendar is held once, under rules of av
 - `scheduling:appointment.attach-document`
 - `scheduling:appointment.remove-document`
 - `scheduling:appointment.read-document`
+- `scheduling:appointment.note.read`
+- `scheduling:appointment.note.write`
 - `scheduling:attendance.note`
 - `scheduling:attendance.read`
 - `scheduling:calendar.clear`
@@ -161,6 +166,8 @@ stateDiagram-v2
   requested --> booked: confirm
   requested --> requested: reschedule
   booked --> booked: reschedule
+  requested --> requested: annotate
+  booked --> booked: annotate
   requested --> cancelled: cancel
   booked --> cancelled: cancel
   requested --> expired: expire
@@ -252,8 +259,8 @@ Generated from the code by `ddd-ts-kit docs`; the same facts as data: `ddd-ts-ki
 | Method | Path | Operation | Group | Guards | Use case | Permission | Request | Responses | Errors |
 |---|---|---|---|---|---|---|---|---|---|
 | GET | `/appointments` | `searchAppointments` | `AppointmentsRoutes` | `Authenticated` | `SearchAppointments` | `appointment.search` | query | 200: `page of AgendaLine` | `UNAUTHORIZED`, `FORBIDDEN`, `INVALID_CRITERIA` |
-| POST | `/appointments` | `bookAppointment` | `AppointmentsRoutes` | `Authenticated` | `BookAppointment` | `appointment.book` | body: `BookAppointmentBody` | 201: `acceptedSchema` | `UNAUTHORIZED`, `FORBIDDEN`, `UNKNOWN_CALENDAR`, `UNKNOWN_APPOINTMENT_TYPE`, `OUTSIDE_AVAILABILITY`, `OFF_GRID`, `BOOKING_TOO_LATE`, `BOOKING_TOO_FAR`, `SLOT_TAKEN`, `PATIENT_LIMIT_REACHED` |
-| GET | `/appointments/:appointmentId` | `getAppointment` | `AppointmentsRoutes` | `Authenticated` | `GetAppointment` | `appointment.read` | params: `GetAppointmentParams` | 200: `GetAppointmentAnswer` | `UNAUTHORIZED`, `FORBIDDEN`, `APPOINTMENT_NOT_FOUND` |
+| POST | `/appointments` | `bookAppointment` | `AppointmentsRoutes` | `Authenticated` | `BookAppointment` | `appointment.book` | body | 201: `acceptedSchema` | `UNAUTHORIZED`, `FORBIDDEN`, `UNKNOWN_CALENDAR`, `UNKNOWN_APPOINTMENT_TYPE`, `OUTSIDE_AVAILABILITY`, `OFF_GRID`, `BOOKING_TOO_LATE`, `BOOKING_TOO_FAR`, `SLOT_TAKEN`, `PATIENT_LIMIT_REACHED` |
+| GET | `/appointments/:appointmentId` | `getAppointment` | `AppointmentsRoutes` | `Authenticated` | `GetAppointment` | `appointment.read` | params: `GetAppointmentParams` | 200: `answer` | `UNAUTHORIZED`, `FORBIDDEN`, `APPOINTMENT_NOT_FOUND` |
 | POST | `/appointments/:appointmentId/cancellation` | `cancelAppointment` | `AppointmentsRoutes` | `Authenticated` | `CancelAppointment` | `appointment.cancel` | params: `CancelAppointmentParams`, body: `CancelAppointmentBody` | 201: `acceptedSchema` | `UNAUTHORIZED`, `FORBIDDEN`, `APPOINTMENT_NOT_FOUND`, `APPOINTMENT_ENDED`, `REASON_REQUIRED` |
 | POST | `/appointments/:appointmentId/completion` | `completeAppointment` | `AppointmentsRoutes` | `Authenticated` | `CompleteAppointment` | `appointment.complete` | params: `CompleteAppointmentParams` | 201: `acceptedSchema` | `UNAUTHORIZED`, `FORBIDDEN`, `APPOINTMENT_NOT_FOUND`, `APPOINTMENT_ENDED`, `APPOINTMENT_NOT_STARTED` |
 | POST | `/appointments/:appointmentId/confirmation` | `confirmAppointment` | `AppointmentsRoutes` | `Authenticated` | `ConfirmAppointment` | `appointment.confirm` | params: `ConfirmAppointmentParams` | 201: `acceptedSchema` | `UNAUTHORIZED`, `FORBIDDEN`, `APPOINTMENT_NOT_FOUND`, `APPOINTMENT_ENDED`, `APPOINTMENT_ALREADY_CONFIRMED` |
@@ -273,6 +280,7 @@ Generated from the code by `ddd-ts-kit docs`; the same facts as data: `ddd-ts-ki
 | POST | `/calendars/:calendarId/time-off` | `addTimeOff` | `CalendarsRoutes` | `Authenticated` | `AddTimeOff` | `calendar.add-time-off` | params: `AddTimeOffParams`, body: `TimeSpan` | 201: `acceptedSchema` | `UNAUTHORIZED`, `FORBIDDEN`, `UNKNOWN_CALENDAR`, `INVALID_TIME_OFF`, `TIME_OFF_OVER_APPOINTMENTS` |
 | POST | `/calendars/:calendarId/waitlist` | `joinWaitlist` | `CalendarsRoutes` | `Authenticated` | `JoinWaitlist` | `waitlist.join` | params: `JoinWaitlistParams`, body: `JoinWaitlistBody` | 201: `acceptedSchema` | `UNAUTHORIZED`, `FORBIDDEN`, `UNKNOWN_CALENDAR`, `UNKNOWN_APPOINTMENT_TYPE`, `INVALID_DAY`, `ALREADY_WAITING` |
 | GET | `/practices/:practiceId/agenda` | `searchPracticeAgenda` | `PracticesRoutes` | `Authenticated` | `SearchPracticeAgenda` | `agenda.read` | params: `SearchPracticeAgendaParams`, query | 200: `page of AgendaLine` | `UNAUTHORIZED`, `FORBIDDEN`, `INVALID_CRITERIA` |
+| GET | `/practices/:practiceId/agenda/export` | `exportPracticeAgenda` | `PracticesRoutes` | `Authenticated` | `SearchPracticeAgenda` | `agenda.read` | params: `ExportPracticeAgendaParams` | 200: `streamSchemaOf(line)` | `UNAUTHORIZED`, `FORBIDDEN` |
 | GET | `/practices/:practiceId/patients/:patientId/attendance` | `searchAttendanceHistory` | `PracticesRoutes` | `Authenticated` | `SearchAttendanceHistory` | `attendance.read` | params: `SearchAttendanceHistoryParams`, query | 200: `page of SearchAttendanceHistoryLine` | `UNAUTHORIZED`, `FORBIDDEN`, `INVALID_CRITERIA` |
 
 ### Publishers
@@ -292,7 +300,7 @@ Generated from the code by `ddd-ts-kit docs`; the same facts as data: `ddd-ts-ki
 
 | Projection | Class | Applies |
 |---|---|---|
-| `scheduling.agenda` | `AgendaProjection` | `AppointmentBooked`, `AppointmentConfirmed`, `AppointmentRescheduled`, `AppointmentCancelled`, `AppointmentExpired`, `AppointmentCompleted`, `AppointmentMarkedNoShow` |
+| `scheduling.agenda` | `AgendaProjection` | `AppointmentBooked`, `AppointmentConfirmed`, `AppointmentRescheduled`, `AppointmentAnnotated`, `AppointmentCancelled`, `AppointmentExpired`, `AppointmentCompleted`, `AppointmentMarkedNoShow` |
 | `scheduling.attendance-history` | `AttendanceHistoryProjection` | `AttendanceRecordCreated`, `AttendanceRecordNoShowNoted`, `AttendanceRecordCancellationNoted` |
 | `scheduling.practitioners` | `PractitionersProjection` | `practiceMemberAddedV1`, `practiceMemberRemovedV1` |
 

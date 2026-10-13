@@ -29,7 +29,7 @@ export async function startHttpServer(served: Served, config: AppConfig): Promis
   mountFastify(app, served.fileRoutes, served.boundary);
 {{/if}}
 {{#if docs.any}}
-  mountFastify(app, withDocumentation(served.routes, config), served.boundary);
+  mountFastify(app, withDocumentation(served.routes, config, served.boundary), served.boundary);
 {{/if}}
 {{#unless docs.any}}
   mountFastify(app, served.routes, served.boundary);

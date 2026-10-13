@@ -23,6 +23,7 @@ export class KnexAgenda extends KnexReadModelStore<AgendaEntry> implements Agend
         status: 'status',
         confirmBefore: 'confirm_before',
         cancelledBy: 'cancelled_by',
+        internalNote: 'internal_note',
         changedAt: 'changed_at',
       },
       definition: agendaCriteria,
