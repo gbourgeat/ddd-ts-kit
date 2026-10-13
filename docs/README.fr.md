@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:27f2a245a2c7cf85 -->
+<!-- translation-of: README.md sha256:d6c88a616b3e8641 -->
 
 # Documentation
 
@@ -17,6 +17,11 @@ Quand une page d'ici et la référence d'architecture divergent, la référence 
 à laquelle mène le lien de sa première ligne ; cet index est celui de la documentation en
 français. Ses diagrammes portent des libellés en français, et ses exemples de code sont
 compilés par le *pipeline* comme ceux de l'anglais.
+
+**Sur le web.** Ces pages, le README de chaque *package* et les documents de l'exemple sont
+aussi publiés sous la forme d'un site, avec une recherche, en français et en anglais :
+<https://gbourgeat.github.io/ddd-ts-kit/fr/>. Les fichiers Markdown d'ici restent sa seule
+source.
 
 ![La référence normative en haut (ARCHITECTURE.md, CONFIG.md, le README du pipeline, les README des packages) ; en dessous, les concepts qui l'expliquent, les pages d'outils qui choisissent une valeur de la stack, les guides qui l'appliquent et les propositions qui pourraient la changer](assets/diagrams/documentation-map.fr.svg)
 

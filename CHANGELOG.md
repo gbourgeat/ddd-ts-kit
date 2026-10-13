@@ -4,6 +4,17 @@ What each version changes for someone who uses the kit. The packages of `package
 together, under one version; the notes of each [GitHub release](https://github.com/gbourgeat/ddd-ts-kit/releases)
 list the pull requests behind it.
 
+## Unreleased
+
+**The documentation is a website.** Every page of the documentation, the README of every package,
+the page of every ESLint rule and the documents of the example are published at
+<https://gbourgeat.github.io/ddd-ts-kit/>, in English and in French under `/fr/`, with search,
+a sidebar that follows the reading path of the concepts, a dark theme and the diagrams of the
+pages. The Markdown files of the repository stay the only source: `site/` assembles them at each
+build (a private workspace, never published), `npm run site:dev` previews it, and the site is
+deployed to GitHub Pages from `main`. A link or an anchor that leads nowhere fails its build,
+which the CI runs on every pull request that touches the documentation.
+
 ## 0.16.1
 
 **The documentation is in French too.** Every reader-facing page of the repository (the root
