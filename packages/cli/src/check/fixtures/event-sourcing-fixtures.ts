@@ -205,7 +205,7 @@ const UPCASTER_REQUIRED: readonly Fixture[] = [
     expect: { file: CODEC },
     files: project({
       ...EVENTS,
-      [CODEC]: codec(LINE, ['version: 1,', ENCODE], LINE_DATA.replace('}', '  readonly currency: string;\n}')),
+      [CODEC]: codec(LINE, ['version: 1,', ENCODE], LINE_DATA.replace(/}$/, '  readonly currency: string;\n}')),
       ...locked({ 1: fingerprintOf(LINE, LINE_DATA) }),
     }),
   },
