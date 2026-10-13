@@ -5,6 +5,7 @@ import { eventually, expectProblem, expectStatus, type HttpClient } from '@ddd-t
 import { expectSpanTree, installTestTracing, type ExpectedSpan, type SpanNode } from '@ddd-ts-kit/tracing/testing';
 import type { LogSettings } from '@/platform/observability/create-logger';
 import { bookAppointment } from '$test/e2e/support/book-appointment';
+import { NETWORK } from '$test/e2e/support/create-credentials';
 import type { Listed } from '$test/e2e/support/listed';
 import { LogLines } from '$test/e2e/support/log-lines';
 import { openStaffedPractice } from '$test/e2e/support/open-staffed-practice';
@@ -97,6 +98,7 @@ describe('One booking, followed from outside: its trace, its log lines, its erro
         origin: 'http',
         operation: 'BookAppointmentCommand',
         actorId: 'paul',
+        tenantId: NETWORK,
         correlationId,
         traceId: request?.traceId,
       },
