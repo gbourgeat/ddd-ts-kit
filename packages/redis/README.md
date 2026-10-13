@@ -1,7 +1,8 @@
 # @ddd-ts-kit/redis
 
 Adapters of kernel ports on the Redis protocol: the `Cache`, `Lock` and `RateLimiter` ports,
-the wake-up signal of the outbox relay, and an integration event provider on Redis Streams.
+the wake-up signal of the outbox relay, a store of background jobs, and an integration event
+provider on Redis Streams.
 They use a common subset of the protocol, so the same code runs on Redis, Dragonfly and
 Valkey: the choice of server is an operational one, made in the composition root by a
 connection URL.
@@ -12,7 +13,7 @@ npm i @ddd-ts-kit/redis ioredis
 
 | Entry | Holds | Imports |
 |---|---|---|
-| `@ddd-ts-kit/redis` | `connectRedis`, `redisHealth`, `RedisCache`, `RedisLock`, `RedisRateLimiter`, `RedisRelaySignal`, `relayWakeUpMiddleware`; re-exported from the kernel: the `Lock` and `RateLimiter` ports, `InMemoryLock`, `InMemoryRateLimiter` | the kernel, `ioredis` (peer) |
+| `@ddd-ts-kit/redis` | `connectRedis`, `redisHealth`, `RedisCache`, `RedisLock`, `RedisRateLimiter`, `RedisRelaySignal`, `relayWakeUpMiddleware`, `RedisJobStore`, `reportLostJobs`; re-exported from the kernel: the `Lock` and `RateLimiter` ports, `InMemoryLock`, `InMemoryRateLimiter` | the kernel, `@ddd-ts-kit/scheduling`, `ioredis` (peer) |
 | `@ddd-ts-kit/redis/event-bus` | `RedisStreamsEventBus`, its options, topology and error types, the names of the entry fields | the kernel, `ioredis` (peer) |
 | `@ddd-ts-kit/redis/testing` | `cacheContract`, `lockContract`, `rateLimiterContract`, re-exported from `@ddd-ts-kit/testing/contracts` | `@ddd-ts-kit/testing` (optional peer), the runner you pass |
 
@@ -664,6 +665,36 @@ dead-lettering, replay, poison, competing and separate consumers, takeover after
 timeout, groups lost and created again, reconnection through a TCP relay the test cuts,
 graceful close) and the whole chain from the outbox to an idempotent consumer. Each test works
 under a prefix of its own and deletes its keys.
+
+## Background job store
+
+`RedisJobStore` is the `JobStore` of `@ddd-ts-kit/scheduling` on Redis, Dragonfly or Valkey,
+for a project without a database or a queue it wants out of it: a few Lua scripts on the
+client of the package, every key under `{<namespace>}` so that a cluster keeps them in one slot
+and Dragonfly sees every key a script touches declared.
+
+```ts
+const jobStore = new RedisJobStore(redis, { namespace: 'jobs', onLostJob: reportLostJobs(logger, errors) });
+
+kernelModule({ jobStore });
+```
+
+`reportLostJobs(logger, errors?)` logs a write lost after its unit of work committed (the id of
+the job, the class and code of the error) and hands the error to the `ErrorReporter`, origin
+`queue`; a project initialised with `--queue redis` has it bound by its platform module.
+
+Redis cannot join the transaction of a database. Inside a unit of work, `add`, `cancel` and
+`retryDead` answer from what Redis holds and write once it committed (`whenCommitted` of the
+kernel): a command that rolls back leaves no job and cancels none, but a process that dies
+between the commit and the write loses that write, and `onLostJob` is told when it fails. With
+a database, prefer the jobs table of the ORM package. The idempotency key, scoped by the tenant
+of the job, is checked before the job is staged and again when it is written: two jobs of one
+key staged before either committed both answer their own id, and only the first is kept.
+
+Not BullMQ: it would bring a second worker model that the store contract (claim, lease,
+heartbeat, reports by attempt) does not map onto, and emulated cluster mode on Dragonfly. The
+store passes `jobStoreContract` on Dragonfly in the integration job of CI; it was also run by
+hand on Redis 8 (last run: Dragonfly 2.0.2, Redis 8.2, 2026-10-13). What the jobs guarantee: [Background jobs](../../docs/concepts/background-jobs.md).
 
 ## Contract suites
 

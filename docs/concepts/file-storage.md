@@ -163,17 +163,17 @@ whom, on which resource, under which correlation, without the content or the lin
 - **The file name is data.** It is shown back to people, escaped in `Content-Disposition`, and
   never used to decide anything.
 
-## Import and export in the background: the next step
+## Import and export in the background
 
 Importing a spreadsheet of ten thousand rows, validating each row, writing an error report and
-resuming after a crash is work for a job queue: one job per file, retried, observable, with its
-progress kept. The kit has no job queue yet (its scheduler runs work by time, not by demand), so
-it does not ship this processing. The pieces are ready for it: the file arrives through an
-upload and is staged and scanned like any other; a reader of the stream yields rows without
-holding the file; the error report is itself a file written with `put` and offered through a
-signed link; an export is a stream written with `put`. Until the queue exists, a command that
-validates a small file inline, or a scheduled job that processes the staged imports, is the
-honest way.
+resuming after a crash is work for the [job queue](background-jobs.md): one background job per
+file, retried, observable, with its progress and its checkpoint kept. The kit does not ship this
+processing yet; [File import and export](file-import-export.md) is its design, on the pieces
+that exist: the file arrives through an upload and is staged and scanned like any other, a
+reader of the stream yields rows without holding the file, the error report is itself a file
+written with `put` and offered through a signed link, an export is written in parts with `put`.
+Until it is built, a command that validates a small file inline, or a background job written by
+hand on these ports, is the honest way.
 
 ## Limits
 
@@ -198,6 +198,7 @@ honest way.
 
 ## See also
 
+- [File import and export](file-import-export.md): the design of the processing in the background.
 - [Connectors of the file storage](../tools/file-storage.md): memory, local, S3 compatible, and
   how to write one for Google Cloud Storage or Azure.
 - [Audit trail](audit-trail.md): recording the access to files that hold personal data.

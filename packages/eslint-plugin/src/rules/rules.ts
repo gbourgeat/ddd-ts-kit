@@ -55,6 +55,8 @@ import { presentationControllerShape } from './presentation-controller-shape.js'
 import { presentationGuardAtTheEdge } from './presentation-guard-at-the-edge.js';
 import { presentationSharedCacheVaries } from './presentation-shared-cache-varies.js';
 import { purityNoAmbientRandomness, purityNoEnvironment, purityNoSystemClock } from './purity.js';
+import { lifecycleStatusThroughMachine } from './lifecycle-status-through-machine.js';
+import { processSendsCommandsOnly } from './process-sends-commands-only.js';
 import { schedulingJobName } from './scheduling-job-name.js';
 import { schedulingJobTriggersUseCase } from './scheduling-job-triggers-use-case.js';
 import { standardNoParallelInterface } from './standard-no-parallel-interface.js';
@@ -121,6 +123,8 @@ const ALL = [
   portsNoConcreteDependency,
   portsValueImport,
   schedulingJobTriggersUseCase,
+  lifecycleStatusThroughMachine,
+  processSendsCommandsOnly,
   schedulingJobName,
   importsAliasOnly,
   importsExtension,

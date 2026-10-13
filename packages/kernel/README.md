@@ -115,6 +115,33 @@ A project says which form it writes with `"stack.refusals"` in `ddd-ts-kit.confi
 `errors/*` rules hold the first, and `ddd-ts-kit error-factories` moves a project from the
 second. Both forms can live in one project.
 
+## State machines
+
+```ts
+export const parcelLifecycle = defineStateMachine({
+  states: Object.values(ParcelStatus),
+  initial: [ParcelStatus.Registered],
+  transitions: {
+    ship: { from: [ParcelStatus.Registered], to: ParcelStatus.Shipped, guard: ({ paid }) => (paid ? undefined : ParcelError.unpaid()) },
+    reroute: { from: [ParcelStatus.Shipped] },
+    deliver: { from: [ParcelStatus.Shipped], to: ParcelStatus.Delivered },
+  },
+  refused: ({ from, transition }) => ParcelError.cannot(from, transition),
+});
+
+this.state = { ...this.state, status: parcelLifecycle.next(this.state.status, 'ship', { paid }) };
+```
+
+The lifecycle of an aggregate, in `domain/state-machines/<aggregate>.state-machine.ts`.
+`next(from, transition, context)` answers the next status or throws: the refusal `refused` builds
+from a static factory for a transition the state does not allow, or the refusal of a guard.
+`start(state)` checks an initial state, `can(...)` answers without throwing, `allowedFrom(state)`
+and `isFinal(state)` read the graph, `describe()` gives it as data and
+`mermaidOfStateMachine(description)` as a Mermaid diagram. A transition without `to` keeps the
+state. A declaration naming an unknown state throws `InvalidStateMachineError` when the file
+loads. Why, and the rule that holds the aggregate to it:
+[State machines](../../docs/concepts/state-machines.md).
+
 ## Domain events and the unit of work
 
 An effect of a domain event exists only if the state change that recorded it is committed.
@@ -516,6 +543,31 @@ receives: `scheduledAt`, `startedAt`, `attempt` and an abort `signal`. What the 
 across a change of clocks, what one instance among several guarantees and how a job is tested
 are in the README of `@ddd-ts-kit/scheduling`.
 
+### Background
+
+```ts
+// contexts/billing/application/background/compile-statements.background-job.ts
+@Background({ maxAttempts: 3, timeout: '10m' })
+export class CompileStatementsBackgroundJob implements BackgroundJob<CompileStatementsPayload> {
+  static readonly jobName = 'billing.compile-statements';
+
+  constructor(private readonly commands: CommandBus) {}
+
+  async run(payload: CompileStatementsPayload, execution: BackgroundJobExecution): Promise<void> {
+    await this.commands.execute(new CompileStatements(execution.jobId, payload.month));
+  }
+}
+```
+
+A background job is named by its static `jobName`, which is how a use case enqueues it
+(`jobs.enqueue(CompileStatementsBackgroundJob, { month })`, the payload typed by `run`). The decorator
+takes the options, all optional: `maxAttempts` (5), `backoff` (`{ baseMs: 1000, factor: 2,
+maxMs: 300000 }`), `timeout` and `lease` (30 s), as milliseconds or `'10m'`. A name that is not
+`<context>.<job-name>` and options it cannot read throw a `DeclarationError` when the file
+loads. `BackgroundJobExecution` is what `run` receives: `jobId`, `attempt`, `enqueuedAt`,
+`startedAt`, the `checkpoint` an earlier attempt saved, an abort `signal`, `saveCheckpoint(value)`
+and `reportProgress({ done, total })`.
+
 ### Decorator modes
 
 Every decorator of this entry works under both decorator modes of TypeScript, and the same
@@ -860,6 +912,55 @@ computed from (`InvalidJobScheduleError`, code `INVALID_JOB_SCHEDULE`, otherwise
 fills in the defaults. The kernel holds no scheduler: the in-process one, the computation of
 occurrences and the manual one for tests are `@ddd-ts-kit/scheduling`, and the contract of the
 port is `jobSchedulerContract` of `@ddd-ts-kit/testing/contracts`.
+
+### JobQueue
+
+```ts
+abstract class JobQueue {
+  abstract enqueue<P>(job: BackgroundJobType<P>, payload: P, options?: EnqueueOptions): Promise<EnqueuedJob>;
+  abstract cancel(id: string): Promise<boolean>;
+  abstract find(id: string): Promise<QueuedJob | undefined>; // status, attempts, progress, last error code
+}
+```
+
+Where a use case hands work to a worker. `EnqueueOptions` are `delay` or `runAt`, an
+`idempotencyKey` (a job of the same name and key, enqueued for the same tenant and already kept,
+is answered, `duplicate: true`) and a `subject` (the id of what the job works on, which `find`
+answers next to the tenant: a query checks the job belongs to the element it was asked about).
+`QueuedJobStatus` is the closed vocabulary of the statuses (`waiting`, `running`, `succeeded`,
+`cancelled`, `dead`), to publish in a contract. Work done for a tenant finds and cancels the
+jobs of that tenant only (an elevation, those of the tenants it names). Called inside a unit of
+work, a job is added or cancelled with the business change: the stores of the ORM packages
+write with the transaction, a store that cannot (Redis, memory) waits for the commit through
+`whenCommitted(write, failed?)`, the helper any such adapter uses. A run happens inside
+`ExecutionScope`, in the context `executionContextOfBackgroundJob({ jobId, enqueuedBy, deadline? })`
+builds: origin `queue`, the correlation, actor and tenant of the work that enqueued it
+(`EnqueuedBy`), the job as the cause. `backgroundJobPolicy(options)` fills in the defaults and
+`retryDelayMs(policy, attempt)` is the backoff. The queue, its worker and its stores are
+`@ddd-ts-kit/scheduling` and the ORM packages; why and how:
+[Background jobs](../../docs/concepts/background-jobs.md).
+
+### ProcessRunner and ProcessStore
+
+```ts
+abstract class ProcessRunner {
+  abstract run<State>(process: ProcessType<State>, id: string, step: (current: State | undefined) => ProcessDecision<State> | undefined): Promise<void>;
+  abstract timeout<State>(process: ProcessType<State>, due: ProcessTimeoutDue & { jobId: string }, step: (current: State) => ProcessDecision<State> | undefined): Promise<void>;
+}
+
+abstract class ProcessStore {
+  abstract load(name: string, id: string): Promise<StoredProcess | undefined>;
+  abstract save(process: StoredProcess): Promise<void>; // ConcurrencyError unless version is the stored one plus 1
+}
+```
+
+Process managers: a class of `application/processes/` (`ProcessManager<State>`) with a static
+`processName`, an optional static `timeoutJob` and a static `isState` guard; its steps answer a
+`ProcessDecision` (`state`, `commands`, `timeouts` as `{ name, at }`, `cancel`, `ended`). A state
+the guard does not recognise throws `UnreadableProcessStateError`. `InMemoryProcessStore` keeps
+the instances as JSON, for tests and one process. The runner is `StoredProcessRunner` of
+`@ddd-ts-kit/scheduling`; why and how:
+[Sagas and process managers](../../docs/concepts/sagas-and-process-managers.md).
 
 ### RateLimiter
 

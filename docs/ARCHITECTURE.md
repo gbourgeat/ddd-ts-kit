@@ -53,6 +53,7 @@ src/
       errors/                    *.error.ts        (one class per concept; each refusal is a static factory)
       repositories/              *.repository.ts   (ports: abstract classes)
       services/                  *.service.ts      (stateless domain logic over several aggregates)
+      state-machines/            *.state-machine.ts (the lifecycle of an aggregate: states, transitions, refusals)
     application/
       commands/<use-case>/       *.command.ts, *.handler.ts
       queries/<use-case>/        *.query.ts, *.result.ts, *.handler.ts
@@ -60,6 +61,8 @@ src/
       authorization/             <context>.permissions.ts, *.policy.ts (who may do what, here)
       event-handlers/            *.event-handler.ts (reactions to this context's domain events)
       scheduling/                *.job.ts          (jobs run by time: schedule to command)
+      background/                *.background-job.ts (work enqueued by a use case, run by a worker)
+      processes/                 *.process.ts      (process managers: state, decisions, timeouts)
       projections/               *.projection.ts   (projectors: events to one read model)
       integration/
         publishers/              *.publisher.ts    (domain event to integration event)
@@ -193,6 +196,8 @@ presentation ──▶ application ──▶ domain ◀── infrastructure
 | `clean/file-size` | A file is at most 350 lines, tests included, and the limit is not configurable; files under a directory named `generated` and `.d.ts` files are exempt. |
 | `scheduling/job-triggers-use-case` | A job lives in `application/scheduling/*.job.ts`, implements `ScheduledJob` and only sends commands: no repository among its dependencies, no import of aggregates, entities, domain services or `infrastructure/`. |
 | `scheduling/job-name` | A job is named `<context>.<job-name>` by a string literal in lower-case kebab-case, the context being its own; its `systemActor` carries the same name; the name is unique in the project. |
+| `lifecycle/status-through-machine` | The status of an aggregate that has a state machine changes only through it: an aggregate of `domain/aggregates/<name>.aggregate.ts` whose `domain/state-machines/<name>.state-machine.ts` exists imports it as soon as it writes a status (a machine just generated waits for the field), and inside the members of its classes every `status: <value>` of an object, every `<target>.status = <value>` and every shorthand `{ ...this.state, status }` (the value of its local `const status = ..`) takes its value from `<machine>.next(..)` or `<machine>.start(..)` of an imported machine, or copies a status already read (`state.status`, a parameter `status`, `const { status } = ..`). |
+| `process/sends-commands-only` | A process manager of `application/processes/*.process.ts` changes the world only through the commands its steps decide: it imports no aggregate, entity, repository or domain service (`domain/aggregates/`, `domain/entities/`, `domain/repositories/`, `domain/services/`), no port (`application/ports/`) and nothing of `infrastructure/`, of its context or another. |
 | `domain-events/dispatched-on-save` | Domain events leave with the save: no `pullEvents()` call in `application/` or `infrastructure/` of a context, and no `DomainEventDispatcher` imported, named in a dependency list or received by a constructor in `application/commands/`, `application/queries/` or a repository adapter. A handler writes `await repository.save(aggregate)` and nothing else; a removal that announces an event takes the aggregate. |
 | `domain-events/transactional-before-commit` | A domain event handler that runs before the commit has only transactional effects: the commit can still fail after the handlers ran (a deferred constraint, a serialization failure, a lost connection), so a before-commit handler may only have effects the rollback undoes. Judged: every production domain event handler of a context, that is a class of `application/event-handlers/*.event-handler.ts` or `application/integration/publishers/*.publisher.ts`, and any class carrying `@DomainEventHandler`. Its phase is `after-commit` when the options of its `@DomainEventHandler` write `phase: 'after-commit'`, or, for a class without the decorator, when every `.on(` registration of `<context>.module.ts` whose callback mentions it (the class name, or the variable assigned from `new <Class>(`) has a third argument holding `phase: 'after-commit'`; otherwise it is `before-commit`. Its dependencies are the names of the dependency list of its decorator, the types of its constructor parameters and the list of `.toClass(Handler, [..])`, each resolved through the imports of the file that writes it. A before-commit handler may depend on a repository port and anything else of the `domain/` layer of its context; on the ports of `@ddd-ts-kit/kernel` except `Cache`, `CachePurger`, `Lock`, `RateLimiter`, `JobScheduler` and `EventBus`; on `@ddd-ts-kit/auth`; on the files of its context outside `infrastructure/` and `application/ports/`; and on a port of `application/ports/` of its context only when it is a persistence port: at least one production class of the context implements it under `infrastructure/persistence/` and none anywhere else under `infrastructure/`. Refused before the commit: those six kernel ports, any other port of `application/ports/`, anything imported from `infrastructure/`, from another context, from the platform or from a package other than `@ddd-ts-kit/kernel` and `@ddd-ts-kit/auth`. An after-commit handler is refused `IntegrationEventPublisher` alone (after the commit nothing makes the outbox row atomic with a state change: it sends a command through `CommandBus`). |
 | `event-sourcing/state-in-apply` | An event-sourced aggregate (a class of `domain/aggregates/` that extends `EventSourcedAggregate`) changes its state only in its apply methods, `apply<Fact>` for each event and `restore` for a snapshot: outside them, the constructor and static methods, no assignment, increment or mutating call writes something of `this`. An apply method records no event, which a replay would record again. |
@@ -241,7 +246,7 @@ Three analyzers and a formatter hold the rules, each where it is exact:
 | Analyzer | Holds | When |
 |---|---|---|
 | `ddd-ts-kit check` (zero dependency, text level) | alone, structure and project-wide facts: `tree/*`, `naming/*`, `language/*`, `config/*`, `persistence/migration-history`, `tenancy/scoped-statement`, `context/no-cycle`, `test/spec-required`, `test/builder-required`, `test/coverage-governed`, `events/defined-in-published-language`, `composition/only-in-module`, `declarations/barrel-current`, `imports/alias-declared`, `imports/alias-only` and `imports/extension` in `test/` and `scripts/` as under the source root, the import that names a directory, the config side of `events/outbox-required` and of `governance/recorded-deviation` (decision records exist), and what must be unique in the project (consumer names, job names) or in a context (error codes, `errors/code-unique`), and `errors/known-code`, the lock of `event-sourcing/upcaster-required`. It also holds a fast approximation of every code rule below except `domain/*`, `application/*` and the three code rules of `errors/*`; of `clean/blank-lines` it holds the `return` and the padded block only, and it holds nothing of `clean/formatted` | at every file write (editor hook), in CI |
-| `@ddd-ts-kit/eslint-plugin` (syntax tree) | code: `layer/*`, the imports of `context/*` and `context/extractable`, `purity/*`, `clean/*` but `clean/formatted` (`clean/blank-lines` through two rules of `@stylistic/eslint-plugin` and `clean/braces` through `curly`, which its presets enable), `domain/*`, `application/*`, `errors/through-factory`, `errors/constructor-not-public`, `errors/factory-name`, `authz/*`, `events/name-format`, `events/outbox-required`, `events/consumer-idempotent`, `aspects/*`, `tracing/*`, `domain-events/*`, `event-sourcing/*` but the lock of `event-sourcing/upcaster-required`, `standard/*`, `ports/*`, `scheduling/*`, `declarations/role-declared`, `declarations/constructor-injection` (which it also fixes, removing a redundant list), `test/no-mocks`, `imports/alias-only` and `imports/extension` (which it also fixes), and the comment side of `governance/recorded-deviation`. `domain/*`, `application/*` and those three rules of `errors/*` are held by it alone. Of `declarations/constructor-injection` and of the constructor side of `ports/no-concrete-dependency` it holds what one file shows: an interface or a type alias declared in another file and a constructor inherited from another class are read by `ddd-ts-kit check`. Of `domain-events/transactional-before-commit` it holds what one declared class shows; where the adapters of an `application/ports/` port live and the phase an explicit-style module file registers a handler in are held by `ddd-ts-kit check` alone. Authoritative when the two disagree | on staged files, in CI |
+| `@ddd-ts-kit/eslint-plugin` (syntax tree) | code: `layer/*`, the imports of `context/*` and `context/extractable`, `purity/*`, `clean/*` but `clean/formatted` (`clean/blank-lines` through two rules of `@stylistic/eslint-plugin` and `clean/braces` through `curly`, which its presets enable), `domain/*`, `application/*`, `errors/through-factory`, `errors/constructor-not-public`, `errors/factory-name`, `authz/*`, `events/name-format`, `events/outbox-required`, `events/consumer-idempotent`, `aspects/*`, `tracing/*`, `domain-events/*`, `event-sourcing/*` but the lock of `event-sourcing/upcaster-required`, `standard/*`, `ports/*`, `scheduling/*`, `lifecycle/*` (of `lifecycle/status-through-machine`, the writes one file shows; the machine left unimported is read by `ddd-ts-kit check` alone), `process/*`, `declarations/role-declared`, `declarations/constructor-injection` (which it also fixes, removing a redundant list), `test/no-mocks`, `imports/alias-only` and `imports/extension` (which it also fixes), and the comment side of `governance/recorded-deviation`. `domain/*`, `application/*` and those three rules of `errors/*` are held by it alone. Of `declarations/constructor-injection` and of the constructor side of `ports/no-concrete-dependency` it holds what one file shows: an interface or a type alias declared in another file and a constructor inherited from another class are read by `ddd-ts-kit check`. Of `domain-events/transactional-before-commit` it holds what one declared class shows; where the adapters of an `application/ports/` port live and the phase an explicit-style module file registers a handler in are held by `ddd-ts-kit check` alone. Authoritative when the two disagree | on staged files, in CI |
 | Biome (formatter only: its linter and its import organiser are off) | `clean/formatted`: where every token goes, at a line width of 120, with the `biome.json` that `init` writes; it also removes the padding of a block and never leaves a body on the line of its braces, which completes `clean/blank-lines` and `clean/braces`. ESLint enables no rule that decides the same thing | on staged files, in CI |
 | dependency-cruiser (resolved import graph) | the same boundaries through barrels and re-exports, cycles between files, orphans, undeclared dependencies; its configuration is generated from the config by `ddd-ts-kit depcruise-config` | in CI |
 
@@ -404,6 +409,38 @@ not at all, so the job or its command is idempotent, and `execution.scheduledAt`
 clock, says which period the work is for. Jobs can run in the API process or in a dedicated
 worker, and a context extracted as a service takes its jobs with it.
 
+**Background jobs.** Work a use case hands to a worker, to run later and outside of its
+request, is a background job: a class with a static `jobName` (`<context>.<job>`), declared
+with `@Background({ maxAttempts, timeout, lease })`, that triggers use cases like a scheduled
+job. A use case enqueues it on the `JobQueue` port of the kernel, in its unit of work: with a
+database the job is a row of the jobs table of its context, written by the transaction of the
+command, so a command that rolls back leaves no job and one that commits loses none. The queue
+of a job is its context, and a worker consumes the queues of the contexts it is given. Delivery
+is at least once (a lease that the worker extends by heartbeats brings back the job of a worker
+that died), so the job is idempotent and a long one saves a checkpoint to resume from. The run
+continues the correlation, the actor, the tenant and the trace of the work that enqueued it.
+See [Background jobs](concepts/background-jobs.md).
+
+**State machines.** The lifecycle of an aggregate with a status is declared once, in
+`domain/state-machines/<aggregate>.state-machine.ts`, with `defineStateMachine` of the kernel:
+its states (the values of a closed vocabulary), the states it is created in, the transitions
+named after the intention methods, their guards, and the refusal of a forbidden transition from
+a static factory of the concept error. The aggregate asks it the next status
+(`lifecycle.next(this.state.status, 'confirm')`) instead of testing its status by hand
+(`lifecycle/status-through-machine`), and `CONTEXT.md` shows the diagram drawn from it.
+See [State machines](concepts/state-machines.md).
+
+**Process managers.** A long-running process that reacts to events, keeps a state of its own
+and sends commands is a class of `application/processes/<name>.process.ts` with a static
+`processName` and `isState`: each step is a function of its state and of what happened that
+answers a decision (the next state, the commands, the timeouts armed or disarmed, its end). The
+`ProcessRunner` port runs a step in one unit of work: it loads the instance the event correlates,
+saves its state with optimistic concurrency (`ProcessStore`), arms each timeout as a delayed
+background job of the context, and sends the commands. Event handlers of the context call it;
+the timeout job of the process calls it with the job id, so a disarmed or replaced timeout never
+runs. A process never writes an aggregate itself (`process/sends-commands-only`).
+See [Sagas and process managers](concepts/sagas-and-process-managers.md).
+
 **Ports and adapters.** A port is named for what the application needs
 (`PaymentGateway`), not for the technology (`StripeClient`). Each port has a fake in `test/fakes/`.
 
@@ -517,7 +554,7 @@ every query, log fields, the correlation id stamped on published events) reads t
 
 **Standard interfaces.** The kernel defines the shapes every project shares, so adapters and
 tooling interoperate: `Actor`, `Session`, `ExecutionContext`, `Logger`, `Metrics`, `Cache`,
-`Lock`, `RateLimiter`, `JobScheduler`, `ErrorReporter`, `CacheInvalidation` and `CachePurger`, `Page` and `PageRequest`, `AuditStamp`, `TenantScoped`, the audit
+`Lock`, `RateLimiter`, `JobScheduler`, `JobQueue`, `ErrorReporter`, `CacheInvalidation` and `CachePurger`, `Page` and `PageRequest`, `AuditStamp`, `TenantScoped`, the audit
 ports `AuditTrail` and `AuditReader` with their `AuditEntry`, next to `Clock`, `IdGenerator`
 and `UnitOfWork`. A project extends them without forking, by augmenting the extension interfaces
 the kernel leaves open (`SessionExtensions`, `ExecutionContextExtensions`, ...). A project
@@ -569,7 +606,8 @@ wires it once. One action is one trace: the request, the use case, each call to 
 a gateway or an outside system, the domain events dispatched at the end of the unit of work
 and their handlers (before the commit, then after it), the outbox append, then, later and in
 the same trace, the publication by the relay and each consuming
-context with the commands it sends. A scheduled job is a trace of its own. Span names are
+context with the commands it sends. A scheduled job is a trace of its own; a background job
+continues the trace of the work that enqueued it, one `job <name>` span per attempt. Span names are
 stable and low in cardinality (`command BookAppointment`, `repository
 AppointmentRepository.save`, `process notification.appointment-booked`: `<kind> <Name>` for a
 use case, `<kind> <Port>.<method>` for a binding, `process <consumer>` for a consumed event); health, readiness

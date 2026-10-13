@@ -523,10 +523,34 @@ side by side, whatever their streams. PostgreSQL only. The stores are the ones o
 (`PostgresEventStore` and its companions), held to `eventStoreContract` here; how an
 event-sourced aggregate uses them: the README of `@ddd-ts-kit/kernel`, section "Event sourcing".
 
+## Background jobs
+
+`DrizzleJobStore` is the `JobStore` of `@ddd-ts-kit/scheduling`: the background jobs of a
+context in `jobsTable('scheduling')`, which the schema files of drizzle-kit include so that a
+migration creates it. `add` runs on the executor of the context, inside the transaction of the
+command that enqueues; claims select the due rows `FOR UPDATE SKIP LOCKED` and lease them.
+
+```ts
+export const schedulingJobs = jobsTable('scheduling');
+
+kernelModule({ unitOfWork, jobStore: new DrizzleJobStore(unitOfWork, schedulingJobs) });
+```
+
+It passes `jobStoreContract`, its unit of work suite included, on PGlite and, in the integration
+job of CI, on PostgreSQL behind a pool of five connections, where concurrent claims race for
+real. What the jobs
+guarantee: [Background jobs](../../docs/concepts/background-jobs.md).
+
+## Process managers
+
+`DrizzleProcessStore` is the `ProcessStore` of the kernel, on `processesTable(schema)`: a first
+save inserts, a next one updates at the previous version, and a save that changes no row throws
+`ConcurrencyError`, in the transaction of the step. It passes `processStoreContract`.
+
 ## Testing an adapter
 
 The unit of work of this package passes `unitOfWorkContract`, and its stores
-`outboxStoreContract` and `processedEventStoreContract`, of `@ddd-ts-kit/testing/contracts` on
+`outboxStoreContract`, `processedEventStoreContract` and `jobStoreContract`, of `@ddd-ts-kit/testing/contracts` on
 PGlite (PostgreSQL in process, no container). Hold your repositories to `repositoryContract`
 the same way, next to their in-memory fake.
 

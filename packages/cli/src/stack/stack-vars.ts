@@ -44,6 +44,21 @@ export function stackVars(config: Config): RenderContext {
     alias: aliasVars(config),
     persistence: persistenceVars(config),
     tenancy: { ...one(tenancy, ['none', 'shared-table']), any: tenancy !== 'none' },
+    queue: queueVars(config),
+  };
+}
+
+/**
+ * `stored`: the jobs leave the memory of the process. `processTable`: the instances of the
+ * process managers go to the database whenever the jobs leave memory and the ORM keeps them.
+ */
+function queueVars(config: Config): RenderContext {
+  const { queue, orm } = config.stack;
+
+  return {
+    ...one(queue, ['memory', 'database', 'redis']),
+    stored: queue !== 'memory',
+    processTable: queue !== 'memory' && (orm === 'knex' || orm === 'drizzle'),
   };
 }
 

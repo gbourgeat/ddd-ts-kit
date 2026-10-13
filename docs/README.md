@@ -31,6 +31,7 @@ Ordered as a reading path in [concepts/README.md](concepts/README.md).
 | [Entities and value objects](concepts/entities-and-value-objects.md) | identity versus value, and primitive obsession |
 | [Aggregates](concepts/aggregates.md) | consistency boundary, one transaction, reference by id, sizing |
 | [Domain building blocks](concepts/domain-building-blocks.md) | domain event, domain service, repository, factory |
+| [State machines](concepts/state-machines.md) | the lifecycle of an aggregate: states, transitions, guards, refusals, its diagram |
 | [Invariants, permissions, validation](concepts/invariants-permissions-validation.md) | three different things in three places |
 | [Anemic model](concepts/anemic-model.md) | how to recognise one, and when a thin model is fine |
 | [Layers and the dependency rule](concepts/layers-and-dependency-rule.md) | hexagonal, onion, clean: what they share, where they differ |
@@ -54,6 +55,8 @@ Ordered as a reading path in [concepts/README.md](concepts/README.md).
 | [HTTP caching](concepts/http-caching.md) | what to cache at which layer, cache policies, never a decision of authorization across actors |
 | [File storage](concepts/file-storage.md) | files in a storage, never in the database: staged before the transaction, moved to their key with the commit, served by short signed links |
 | [Scheduled jobs](concepts/scheduled-jobs.md) | jobs that trigger use cases, several instances, idempotence |
+| [Background jobs](concepts/background-jobs.md) | work enqueued in the transaction of a command, run by a worker at least once, leases, checkpoints |
+| [File import and export](concepts/file-import-export.md) | a design, not built: a large file read or written by a background job, batch by batch, between the queue and the file storage |
 | [Clean code](concepts/clean-code.md) | naming, small functions, stepdown, comments, with before and after |
 | [Testing strategy](concepts/testing-strategy.md) | fakes versus mocks, builders, contract tests, the four levels |
 

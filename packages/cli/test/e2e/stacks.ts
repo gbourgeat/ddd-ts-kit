@@ -157,7 +157,18 @@ export const STACKS: readonly StackFlags[] = [
     events: 'outbox',
     audit: 'off',
   },
-  { http: 'none', validation: 'zod', di: 'tsyringe', tests: 'vitest', orm: 'knex', events: 'outbox', cache: 'redis' },
+  // The background jobs on the server of the cache, a lost write reported to Sentry; the processes in the database.
+  {
+    http: 'none',
+    validation: 'zod',
+    di: 'tsyringe',
+    tests: 'vitest',
+    orm: 'knex',
+    events: 'outbox',
+    cache: 'redis',
+    queue: 'redis',
+    errors: 'sentry',
+  },
   {
     http: 'fastify',
     validation: 'zod',
@@ -167,6 +178,7 @@ export const STACKS: readonly StackFlags[] = [
     events: 'in-memory',
     audit: 'on',
     cache: 'redis',
+    queue: 'redis',
   },
   REPORTED_BY_HAND,
   { ...REPORTED_BY_HAND, logger: 'winston' },

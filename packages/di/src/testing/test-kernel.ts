@@ -11,10 +11,13 @@ import type {
   InMemoryLock,
   InMemoryLogger,
   InMemoryMetrics,
+  InMemoryProcessStore,
   InMemoryQueryBus,
   InMemoryRateLimiter,
   SequentialIdGenerator,
 } from '@ddd-ts-kit/kernel';
+import type { StoredJobQueue } from '@ddd-ts-kit/scheduling';
+import type { TestBackgroundJobs } from './test-background-jobs.js';
 import type { TestJobs } from './test-jobs.js';
 
 export interface TestKernel {
@@ -54,4 +57,10 @@ export interface TestKernel {
   readonly rateLimiter: InMemoryRateLimiter;
   /** The declared jobs, which no time starts: a spec runs one, then asserts its fakes. */
   readonly jobs: TestJobs;
+  /** The `JobQueue` the use cases enqueue on, in memory: a job of a rolled back command is not kept. */
+  readonly jobQueue: StoredJobQueue;
+  /** The enqueued background jobs, which no worker runs by itself: a spec runs what is due, then asserts its fakes. */
+  readonly backgroundJobs: TestBackgroundJobs;
+  /** The instances of the process managers: `processes.list()` shows their state, version, end and armed timeouts. */
+  readonly processes: InMemoryProcessStore;
 }

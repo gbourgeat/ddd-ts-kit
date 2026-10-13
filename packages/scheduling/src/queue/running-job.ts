@@ -1,0 +1,14 @@
+import type { JobLease } from './store/job-lease.js';
+import type { ClaimedJob } from './store/claimed-job.js';
+import type { RegisteredBackgroundJob } from './registered-background-job.js';
+
+/** One attempt in progress: what it runs, what it holds, and how to stop it. */
+export interface RunningJob {
+  readonly job: ClaimedJob;
+  readonly registered: RegisteredBackgroundJob;
+  readonly lease: JobLease;
+  readonly controller: AbortController;
+  readonly startedAt: Date;
+  /** Cancels the next heartbeat. */
+  stopBeating: () => void;
+}

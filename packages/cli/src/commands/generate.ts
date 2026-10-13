@@ -51,6 +51,7 @@ const OPTIONS = {
   upstream: TEXTS,
   term: TEXTS,
   value: TEXTS,
+  transition: TEXTS,
   code: TEXT,
   aggregate: TEXT,
   method: TEXT,
@@ -160,6 +161,7 @@ function flagsOf(args: Arguments): KindFlags {
     upstream: args.many('upstream'),
     term: args.many('term'),
     value: args.many('value'),
+    transition: args.many('transition'),
     ...switchesOf(args),
   };
 }

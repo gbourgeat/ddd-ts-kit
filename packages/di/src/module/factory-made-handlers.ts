@@ -1,4 +1,4 @@
-import type { JobExecution, Message, ScheduledJob } from '@ddd-ts-kit/kernel';
+import type { BackgroundJob, BackgroundJobExecution, JobExecution, Message, ScheduledJob } from '@ddd-ts-kit/kernel';
 import type { IntegrationEventHandler, MessageHandler, Token } from '@ddd-ts-kit/kernel/declarations';
 
 /*
@@ -25,6 +25,14 @@ export function integrationEventHandlerOf<Payload>(statement: string): Token<Int
 export function jobOf(statement: string): Token<ScheduledJob> {
   abstract class FactoryMade implements ScheduledJob {
     abstract run(execution: JobExecution): Promise<void>;
+  }
+
+  return named(FactoryMade, statement);
+}
+
+export function backgroundJobOf(statement: string): Token<BackgroundJob<unknown>> {
+  abstract class FactoryMade implements BackgroundJob<unknown> {
+    abstract run(payload: unknown, execution: BackgroundJobExecution): Promise<void>;
   }
 
   return named(FactoryMade, statement);

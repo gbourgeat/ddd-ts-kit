@@ -76,6 +76,8 @@ export interface StartOptions {
    * one application at a time can listen there.
    */
   readonly behindVarnish?: boolean;
+  /** Starts the scheduled jobs and the worker of the queues, as a process of `RUN_JOBS=true` does: where a spec waits for a background job. */
+  readonly jobs?: boolean;
 }
 
 /**
@@ -157,10 +159,11 @@ function eventsOf(config: AppConfig): EventProvider {
   return config.redisUrl === noRedis ? inProcessEvents() : createEventProvider(config);
 }
 
-function observedOf(options: StartOptions): Pick<StartOptions, 'log' | 'errors'> {
+function observedOf(options: StartOptions): Pick<StartOptions, 'log' | 'errors'> & { jobs?: { start: boolean } } {
   return {
     ...(options.log === undefined ? {} : { log: options.log }),
     ...(options.errors === undefined ? {} : { errors: options.errors }),
+    ...(options.jobs === true ? { jobs: { start: true } } : {}),
   };
 }
 

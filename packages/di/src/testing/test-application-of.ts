@@ -44,6 +44,9 @@ function membersOf(kernel: TestKernel): TestKernel {
     lock: kernel.lock,
     rateLimiter: kernel.rateLimiter,
     jobs: kernel.jobs,
+    jobQueue: kernel.jobQueue,
+    backgroundJobs: kernel.backgroundJobs,
+    processes: kernel.processes,
   };
 }
 

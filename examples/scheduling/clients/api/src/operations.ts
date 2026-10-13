@@ -618,6 +618,87 @@ export function defineAppointmentType(
   return send<DefineAppointmentTypeResult>(connection, operation, { ...input, ...options });
 }
 
+export interface ClearCalendarInput {
+  readonly path: {
+    readonly calendarId: string;
+  };
+  readonly body: {
+    startsAt: string;
+    endsAt: string;
+    reason: string;
+  };
+}
+
+export type ClearCalendarResult =
+  | Success<202, {
+    id: string;
+  }>
+  | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
+  | Failure<403, 'FORBIDDEN', Schemas.Problem>
+  | Failure<404, 'UNKNOWN_CALENDAR', Schemas.Problem>
+  | Failure<422, 'INVALID_TIME_OFF' | 'VALIDATION_FAILED', Schemas.Problem>;
+
+/**
+ * Clear calendar: `POST /calendars/{calendarId}/clearances`.
+ *
+ * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), UNKNOWN_CALENDAR (404), INVALID_TIME_OFF (422), VALIDATION_FAILED (422).
+ */
+export function clearCalendar(
+  connection: Connection,
+  input: ClearCalendarInput,
+  options: CallOptions = {},
+): Promise<ClearCalendarResult> {
+  const operation: Operation = {
+    method: 'POST',
+    path: '/calendars/{calendarId}/clearances',
+    security: [['bearer']],
+    responses: { 202: 'json', 401: 'json', 403: 'json', 404: 'json', 422: 'json' },
+  };
+
+  return send<ClearCalendarResult>(connection, operation, { ...input, ...options });
+}
+
+export interface GetClearanceInput {
+  readonly path: {
+    readonly calendarId: string;
+    readonly clearanceId: string;
+  };
+}
+
+export type GetClearanceResult =
+  | Success<200, {
+    clearanceId: string;
+    status: 'waiting' | 'running' | 'succeeded' | 'cancelled' | 'dead';
+    attempts: number;
+    done: number;
+    total?: number;
+    lastErrorCode?: string;
+  }>
+  | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
+  | Failure<403, 'FORBIDDEN', Schemas.Problem>
+  | Failure<404, 'UNKNOWN_CLEARANCE', Schemas.Problem>
+  | Failure<422, 'VALIDATION_FAILED', Schemas.Problem>;
+
+/**
+ * Get clearance: `GET /calendars/{calendarId}/clearances/{clearanceId}`.
+ *
+ * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), UNKNOWN_CLEARANCE (404), VALIDATION_FAILED (422).
+ */
+export function getClearance(
+  connection: Connection,
+  input: GetClearanceInput,
+  options: CallOptions = {},
+): Promise<GetClearanceResult> {
+  const operation: Operation = {
+    method: 'GET',
+    path: '/calendars/{calendarId}/clearances/{clearanceId}',
+    security: [['bearer']],
+    responses: { 200: 'json', 401: 'json', 403: 'json', 404: 'json', 422: 'json' },
+  };
+
+  return send<GetClearanceResult>(connection, operation, { ...input, ...options });
+}
+
 export interface GetCalendarDayInput {
   readonly path: {
     readonly calendarId: string;

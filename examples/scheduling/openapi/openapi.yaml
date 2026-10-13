@@ -1,7 +1,7 @@
 openapi: '3.1.0'
 info:
   title: scheduling
-  version: '0.10.0'
+  version: '0.11.0'
 tags:
   - name: analytics
   - name: audit
@@ -1506,6 +1506,176 @@ paths:
                 $ref: '#/components/schemas/Problem'
           x-error-codes:
             - INVALID_APPOINTMENT_TYPE
+            - VALIDATION_FAILED
+  /calendars/{calendarId}/clearances:
+    post:
+      operationId: clearCalendar
+      summary: Clear calendar
+      tags:
+        - scheduling
+      security:
+        - bearer: []
+      parameters:
+        - name: calendarId
+          in: path
+          schema:
+            type: string
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              properties:
+                startsAt:
+                  oneOf:
+                    - format: date
+                      type: string
+                    - format: date-time
+                      type: string
+                endsAt:
+                  oneOf:
+                    - format: date
+                      type: string
+                    - format: date-time
+                      type: string
+                reason:
+                  minLength: 1
+                  type: string
+              type: object
+              required:
+                - startsAt
+                - endsAt
+                - reason
+      responses:
+        '202':
+          description: 'Accepted: a worker cancels the appointments of the period; the body carries the clearance to follow.'
+          content:
+            application/json:
+              schema:
+                properties:
+                  id:
+                    type: string
+                type: object
+                required:
+                  - id
+        '401':
+          description: 'Unauthorized. Error codes: UNAUTHORIZED.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - UNAUTHORIZED
+        '403':
+          description: 'Forbidden. Error codes: FORBIDDEN.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - FORBIDDEN
+        '404':
+          description: 'Not Found. Error codes: UNKNOWN_CALENDAR.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - UNKNOWN_CALENDAR
+        '422':
+          description: 'Unprocessable Content. Error codes: INVALID_TIME_OFF, VALIDATION_FAILED.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - INVALID_TIME_OFF
+            - VALIDATION_FAILED
+  /calendars/{calendarId}/clearances/{clearanceId}:
+    get:
+      operationId: getClearance
+      summary: Get clearance
+      tags:
+        - scheduling
+      security:
+        - bearer: []
+      parameters:
+        - name: calendarId
+          in: path
+          schema:
+            type: string
+          required: true
+        - name: clearanceId
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: How far the clearance went.
+          content:
+            application/json:
+              schema:
+                properties:
+                  clearanceId:
+                    type: string
+                  status:
+                    type: string
+                    enum:
+                      - waiting
+                      - running
+                      - succeeded
+                      - cancelled
+                      - dead
+                  attempts:
+                    minimum: 0
+                    type: integer
+                  done:
+                    minimum: 0
+                    type: integer
+                  total:
+                    minimum: 0
+                    type: integer
+                  lastErrorCode:
+                    type: string
+                type: object
+                required:
+                  - clearanceId
+                  - status
+                  - attempts
+                  - done
+        '401':
+          description: 'Unauthorized. Error codes: UNAUTHORIZED.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - UNAUTHORIZED
+        '403':
+          description: 'Forbidden. Error codes: FORBIDDEN.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - FORBIDDEN
+        '404':
+          description: 'Not Found. Error codes: UNKNOWN_CLEARANCE.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - UNKNOWN_CLEARANCE
+        '422':
+          description: 'Unprocessable Content. Error codes: VALIDATION_FAILED.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
             - VALIDATION_FAILED
   /calendars/{calendarId}/days/{day}:
     get:

@@ -14,7 +14,7 @@ export function connect(options: ClientOptions<SchemeName>): Connection {
   return openConnection(options, SCHEMES);
 }
 
-/** scheduling 0.10.0, every operation of its contract as a method. */
+/** scheduling 0.11.0, every operation of its contract as a method. */
 export interface Client {
   /**
    * Search appointments: `GET /appointments`.
@@ -100,6 +100,18 @@ export interface Client {
    * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), UNKNOWN_CALENDAR (404), INVALID_APPOINTMENT_TYPE (422), VALIDATION_FAILED (422).
    */
   defineAppointmentType(input: operations.DefineAppointmentTypeInput, options?: CallOptions): Promise<operations.DefineAppointmentTypeResult>;
+  /**
+   * Clear calendar: `POST /calendars/{calendarId}/clearances`.
+   *
+   * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), UNKNOWN_CALENDAR (404), INVALID_TIME_OFF (422), VALIDATION_FAILED (422).
+   */
+  clearCalendar(input: operations.ClearCalendarInput, options?: CallOptions): Promise<operations.ClearCalendarResult>;
+  /**
+   * Get clearance: `GET /calendars/{calendarId}/clearances/{clearanceId}`.
+   *
+   * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), UNKNOWN_CLEARANCE (404), VALIDATION_FAILED (422).
+   */
+  getClearance(input: operations.GetClearanceInput, options?: CallOptions): Promise<operations.GetClearanceResult>;
   /**
    * Get calendar day: `GET /calendars/{calendarId}/days/{day}`.
    *
@@ -216,6 +228,8 @@ export function createClient(options: ClientOptions<SchemeName>): Client {
     searchAuditEntries: (input, call) => operations.searchAuditEntries(connection, input, call),
     createCalendar: (input, call) => operations.createCalendar(connection, input, call),
     defineAppointmentType: (input, call) => operations.defineAppointmentType(connection, input, call),
+    clearCalendar: (input, call) => operations.clearCalendar(connection, input, call),
+    getClearance: (input, call) => operations.getClearance(connection, input, call),
     getCalendarDay: (input, call) => operations.getCalendarDay(connection, input, call),
     addException: (input, call) => operations.addException(connection, input, call),
     getOpeningHours: (input, call) => operations.getOpeningHours(connection, input, call),
