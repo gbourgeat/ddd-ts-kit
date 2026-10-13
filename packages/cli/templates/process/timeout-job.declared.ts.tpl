@@ -11,8 +11,8 @@ export class {{name.pascal}}TimeoutBackgroundJob implements BackgroundJob<Proces
   constructor(private readonly processes: ProcessRunner) {}
 
   async run(due: ProcessTimeoutDue, execution: BackgroundJobExecution): Promise<void> {
-    await this.processes.timeout({{name.pascal}}Process, { ...due, jobId: execution.jobId }, (current) =>
-      this.process.timedOut(due.timeout, current),
-    );
+    const delivered = { ...due, jobId: execution.jobId };
+
+    await this.processes.timeout({{name.pascal}}Process, delivered, (current) => this.process.timedOut(due.timeout, current));
   }
 }

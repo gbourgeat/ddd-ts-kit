@@ -7,7 +7,7 @@ import type { Actor, Message } from '@ddd-ts-kit/kernel';
 import { platformTestModule } from '{{alias.platform}}/platform-test.module{{alias.ext}}';
 {{job.permissionsImport}}
 import { {{job.command}}Command } from '{{alias.context}}/application/commands/{{job.commandKebab}}/{{job.commandKebab}}.command{{alias.ext}}';
-import { {{name.pascal}}BackgroundJob } from '{{alias.context}}/application/background/{{name.kebab}}.background-job{{alias.ext}}';
+{{job.specImport}}
 
 const clerk: Actor = { id: 'clerk-1', type: 'user', roles: ['clerk'], attributes: {} };
 
@@ -19,7 +19,16 @@ describe('{{name.title}}, once enqueued', () => {
   it('sends {{job.commandWords}}{{job.asActor}}', async () => {
     const { application, sent } = {{spec.await}}arrange();
 
+{{#if job.hasPayload}}
+    const payload: {{name.pascal}}Payload = {
+{{job.payloadSample}}
+    };
+
+    await application.as(clerk, () => application.jobQueue.enqueue({{name.pascal}}BackgroundJob, payload));
+{{/if}}
+{{#unless job.hasPayload}}
     await application.as(clerk, () => application.jobQueue.enqueue({{name.pascal}}BackgroundJob, {}));
+{{/unless}}
 
     expect(await application.backgroundJobs.runDue()).toMatchObject([{ job: '{{job.name}}', outcome: 'succeeded' }]);
 

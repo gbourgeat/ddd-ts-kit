@@ -43,11 +43,23 @@ describe('init --queue', () => {
     const root = initProject('--cache', 'redis', '--queue', 'redis');
     const redis = read(root, 'src/platform/redis/open-redis.ts');
 
-    expect(redis).toContain("jobs: new RedisJobStore(connection.client, { namespace: serviceName + ':jobs' }),");
-    expect(read(root, PLATFORM)).toContain('builder.rebind(JobStore).toValue(redis.jobs);');
+    expect(redis).toContain('onLostJob: reportLostJobs(logger, errors),');
+
+    expect(read(root, PLATFORM)).toContain(
+      'builder.rebind(JobStore).toFactory((resolve) => redis.jobs(resolve(Logger)));',
+    );
+
     expect(read(root, PLATFORM)).toContain('builder.rebind(ProcessStore).toValue(persistence.processes);');
     expect(read(root, SCHEMA)).not.toContain('jobsTable');
     expect(read(root, 'docker-compose.yml')).toContain('dragonfly');
+  });
+
+  it('logs and reports a job Redis lost after its command committed, to Sentry when the project has it', () => {
+    const root = initProject('--cache', 'redis', '--queue', 'redis', '--errors', 'sentry');
+    const platform = read(root, PLATFORM);
+
+    expect(platform).toContain('bindRedis(builder, options.redis, options.errors);');
+    expect(platform).toContain('builder.rebind(JobStore).toFactory((resolve) => redis.jobs(resolve(Logger), errors));');
   });
 
   it('writes nothing of a store in memory', () => {

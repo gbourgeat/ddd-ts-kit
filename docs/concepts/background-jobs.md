@@ -63,9 +63,10 @@ await this.jobs.enqueue(RescheduleAbsenceBackgroundJob, { calendarId, from, to }
   job) reaches every job.
 - **Generated**: `ddd-ts-kit generate background-job <context> <Name> --command <UseCase>` writes
   the class (`@Background()` in the declared style, `builder.backgroundJob(..)` in the module
-  file otherwise), sending its command as `execution.actor`, and a spec that enqueues it as a
-  user and runs what is due. `init --queue database|redis|memory` chooses the store
-  ([`stack.queue`](../CONFIG.md)).
+  file otherwise), sending its command as `execution.actor` with one field of its payload per
+  other input of the command (a `Date` travels as its ISO text, a value object is refused: a
+  command takes primitives and ids), and a spec that enqueues it as a user and runs what is
+  due. `init --queue database|redis|memory` chooses the store ([`stack.queue`](../CONFIG.md)).
 
 ## The enqueue shares the transaction of the command
 
@@ -158,7 +159,11 @@ Every process that starts the application with its jobs on (`jobs: { start: true
 scheduled jobs and consumes the queues of the contexts whose modules it is given. With
 `apps/worker` (`ddd-ts-kit generate worker`), the API starts with its jobs off, enqueues, and
 the worker runs: the same composition root, another entry point. A context extracted as a
-service takes its jobs, its queue and its table with it: nothing is global.
+service takes its jobs, its queue and its table with it: nothing is global. A queue kept in the
+memory of a process (`InMemoryJobStore`, `stack.queue` `memory`, the store of a project
+initialised before background jobs existed) is seen by no other process: that process consumes it even with its
+jobs off, so the API next to a worker still runs what it enqueues, and loses what waits when
+it restarts. Share the queue (the jobs table, Redis) to let the worker run it.
 
 ## What travels with the job
 

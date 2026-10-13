@@ -13,7 +13,7 @@ npm i @ddd-ts-kit/redis ioredis
 
 | Entry | Holds | Imports |
 |---|---|---|
-| `@ddd-ts-kit/redis` | `connectRedis`, `redisHealth`, `RedisCache`, `RedisLock`, `RedisRateLimiter`, `RedisRelaySignal`, `relayWakeUpMiddleware`, `RedisJobStore`; re-exported from the kernel: the `Lock` and `RateLimiter` ports, `InMemoryLock`, `InMemoryRateLimiter` | the kernel, `@ddd-ts-kit/scheduling`, `ioredis` (peer) |
+| `@ddd-ts-kit/redis` | `connectRedis`, `redisHealth`, `RedisCache`, `RedisLock`, `RedisRateLimiter`, `RedisRelaySignal`, `relayWakeUpMiddleware`, `RedisJobStore`, `reportLostJobs`; re-exported from the kernel: the `Lock` and `RateLimiter` ports, `InMemoryLock`, `InMemoryRateLimiter` | the kernel, `@ddd-ts-kit/scheduling`, `ioredis` (peer) |
 | `@ddd-ts-kit/redis/event-bus` | `RedisStreamsEventBus`, its options, topology and error types, the names of the entry fields | the kernel, `ioredis` (peer) |
 | `@ddd-ts-kit/redis/testing` | `cacheContract`, `lockContract`, `rateLimiterContract`, re-exported from `@ddd-ts-kit/testing/contracts` | `@ddd-ts-kit/testing` (optional peer), the runner you pass |
 
@@ -674,8 +674,14 @@ client of the package, every key under `{<namespace>}` so that a cluster keeps t
 and Dragonfly sees every key a script touches declared.
 
 ```ts
-kernelModule({ jobStore: new RedisJobStore(redis, { namespace: 'jobs', onLostJob: (error, id) => report(error, id) }) });
+const jobStore = new RedisJobStore(redis, { namespace: 'jobs', onLostJob: reportLostJobs(logger, errors) });
+
+kernelModule({ jobStore });
 ```
+
+`reportLostJobs(logger, errors?)` logs a write lost after its unit of work committed (the id of
+the job, the class and code of the error) and hands the error to the `ErrorReporter`, origin
+`queue`; a project initialised with `--queue redis` has it bound by its platform module.
 
 Redis cannot join the transaction of a database. Inside a unit of work, `add`, `cancel` and
 `retryDead` answer from what Redis holds and write once it committed (`whenCommitted` of the

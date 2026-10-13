@@ -16,3 +16,4 @@ export { InMemoryLock, Lock, type AcquireOptions, type LockHandle, type WaitingO
 export { InMemoryRateLimiter, RateLimiter, type RateLimit, type RateLimitDecision } from '@ddd-ts-kit/kernel';
 export { RedisJobStore } from './jobs/redis-job-store.js';
 export type { RedisJobStoreOptions } from './jobs/redis-job-store-options.js';
+export { reportLostJobs } from './jobs/report-lost-jobs.js';

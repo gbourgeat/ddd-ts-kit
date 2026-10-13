@@ -816,7 +816,7 @@ createApplication({
 
 | Option | |
 |---|---|
-| `start: false` | the jobs are registered and described, `runNow` runs one, and `start()` never starts the scheduler: the process that serves requests next to a worker process that runs the jobs |
+| `start: false` | the jobs are registered and described, `runNow` runs one, and `start()` never starts the scheduler, nor the worker of a shared queue (a queue in the memory of the process is still consumed): the process that serves requests next to a worker process that runs the jobs |
 | `settings['<job name>']` | `enabled`, `schedule` and any option of the declaration (`overlap`, `missed`, `timeoutMs`, `jitterMs`, `singleInstance`), which win over what the class wrote. A key left undefined changes nothing |
 
 `app.resolve(JobScheduler)` is the port: `runNow(name)` for an operations endpoint,
@@ -851,7 +851,8 @@ refused (`INVALID_JOB_SETTINGS`), a name declared twice too (`DUPLICATE_JOB`).
 - **Consumed while the process runs the jobs**: `start()` starts the worker after the scheduler
   when `jobs.start` is not `false`, `stop()` stops it with the scheduler, waiting for the
   attempts in progress, then aborting them. A process started with `jobs: { start: false }`
-  enqueues and runs nothing.
+  enqueues and leaves the shared queue to the worker; a queue kept in its own memory
+  (`InMemoryJobStore`, the default) is still consumed, since no other process sees it.
 - **`kernelModule()`** binds `JobStore` (in memory by default: bind `KnexJobStore`,
   `DrizzleJobStore` or `RedisJobStore` with `jobStore`, or no job reaches a worker of another
   process), `JobQueue` (a `StoredJobQueue` on it, which stores the `traceparent` given by the

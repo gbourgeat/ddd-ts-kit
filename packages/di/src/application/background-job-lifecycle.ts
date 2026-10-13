@@ -1,4 +1,4 @@
-import { QueueWorker, type BackgroundJobDefinition } from '@ddd-ts-kit/scheduling';
+import { InMemoryJobStore, JobStore, QueueWorker, type BackgroundJobDefinition } from '@ddd-ts-kit/scheduling';
 import { Instrumentation } from '../kernel/instrumentation.js';
 import type { BackgroundJobRegistration } from '../wiring/background-job-registration.js';
 import type { BoundPorts } from './bound-ports.js';
@@ -6,7 +6,9 @@ import type { BoundPorts } from './bound-ports.js';
 /**
  * The declared background jobs on the queue worker: registered at creation, consumed while the
  * application runs in a process that runs the jobs. The worker consumes the queues of the
- * contexts whose modules it is given, and no other.
+ * contexts whose modules it is given, and no other. A queue kept in the memory of the process
+ * is seen by no other process: this one consumes it even with its jobs off, so that the jobs the
+ * API enqueues next to a worker still run.
  */
 export class BackgroundJobLifecycle {
   private started = false;
@@ -31,7 +33,7 @@ export class BackgroundJobLifecycle {
   }
 
   async start(): Promise<void> {
-    if (!this.consumes || this.jobs.length === 0 || this.started) {
+    if (this.jobs.length === 0 || this.started || !(this.consumes || this.keptInMemory())) {
       return;
     }
 
@@ -54,6 +56,10 @@ export class BackgroundJobLifecycle {
     } catch (error) {
       return [error];
     }
+  }
+
+  private keptInMemory(): boolean {
+    return this.ports.isBound(JobStore) && this.ports.resolve(JobStore) instanceof InMemoryJobStore;
   }
 
   /** The job is built on its first attempt, so a job that cannot be built fails that attempt. */

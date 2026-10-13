@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { cli, read } from './helpers.js';
+import { cli, read, write } from './helpers.js';
 import { failure, report } from './reports.js';
 import { jobProject } from './support/job-project.js';
 
@@ -84,6 +84,82 @@ describe('generate background-job, in the declared style', () => {
   });
 });
 
+const REMIND_COMMAND = `${BILLING}/application/commands/remind-invoices/remind-invoices.command.ts`;
+
+const REMIND_WITH_INPUTS = `import { Command } from '@ddd-ts-kit/kernel';
+
+export class RemindInvoicesCommand extends Command<void> {
+  constructor(
+    readonly customerId: string,
+    readonly dueBefore: Date,
+    readonly channel: 'mail' | 'sms',
+    readonly invoiceIds: readonly string[],
+    readonly limit?: number,
+  ) {
+    super();
+  }
+}
+`;
+
+const REMIND = [
+  'generate',
+  'background-job',
+  'billing',
+  'RemindCustomer',
+  '--command',
+  'RemindInvoices',
+  '--term',
+  'Customer=Who is invoiced',
+];
+
+describe('generate background-job, for a command that takes inputs', () => {
+  let root: string;
+
+  beforeAll(() => {
+    root = jobProject();
+    write(root, REMIND_COMMAND, REMIND_WITH_INPUTS);
+    expect(cli(root, ...REMIND).code).toBe(0);
+  });
+
+  it('carries each input in the payload, an instant as its ISO text, and hands them to the command in order', () => {
+    const job = read(root, `${BILLING}/application/background/remind-customer.background-job.ts`);
+
+    expect(job).toContain(
+      "export interface RemindCustomerPayload {\n  readonly customerId: string;\n  readonly dueBefore: string;\n  readonly channel: 'mail' | 'sms';\n  readonly invoiceIds: readonly string[];\n  readonly limit?: number;\n}",
+    );
+
+    expect(job).toContain(
+      '      new RemindInvoicesCommand(\n        payload.customerId,\n        new Date(payload.dueBefore),\n        payload.channel,\n        payload.invoiceIds,\n        payload.limit,\n      ),',
+    );
+  });
+
+  it('enqueues a payload of every field in its spec', () => {
+    const spec = read(root, `${BILLING}/test/unit/remind-customer.background-job.spec.ts`);
+
+    expect(spec).toContain('type RemindCustomerPayload');
+
+    expect(spec).toContain(
+      "      dueBefore: '2026-03-02T09:00:00.000Z',\n      channel: 'mail',\n      invoiceIds: [],",
+    );
+
+    expect(spec).toContain('application.jobQueue.enqueue(RemindCustomerBackgroundJob, payload)');
+  });
+
+  it('refuses an input a payload of plain JSON cannot carry', () => {
+    write(
+      root,
+      REMIND_COMMAND,
+      REMIND_WITH_INPUTS.replace('readonly customerId: string', 'readonly customer: Customer'),
+    );
+
+    const refused = failure(cli(root, ...REMIND, '--json'));
+
+    expect(refused.message).toBe(
+      'The constructor of RemindInvoicesCommand takes `customer: Customer`, which the payload of a background job cannot carry.',
+    );
+  });
+});
+
 describe('generate background-job and process, where the wiring is written in the module file', () => {
   let root: string;
 
@@ -125,7 +201,7 @@ describe('generate process', () => {
     expect(process).toContain("import type { ProcessDecision, ProcessManager } from '@ddd-ts-kit/kernel';");
 
     expect(read(root, TIMEOUT_JOB)).toContain(
-      'await this.processes.timeout(DunningProcess, { ...due, jobId: execution.jobId }, (current) =>',
+      'await this.processes.timeout(DunningProcess, delivered, (current) => this.process.timedOut(due.timeout, current));',
     );
   });
 

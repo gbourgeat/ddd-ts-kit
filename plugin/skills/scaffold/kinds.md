@@ -27,7 +27,7 @@ shared files each kind writes (`writesShared`, `shared`, `sharedWhen`).
 | `event-handler` | `<ctx> <Aggregate> <Fact> [--phase after-commit]` | `application/event-handlers/`, spec; default phase `before-commit` |
 | `projection` (`projector`) | `<ctx> <Name> <event-type>` | `application/projections/<name>.projection.ts` with `@Projection('<ctx>.<name>')` and one `@On` method for the event (of the context itself or of a declared upstream), spec; declared style only |
 | `job` | `<ctx> <Name> (--every <duration> \| --cron "<expression>" [--time-zone <zone>]) --command <UseCase>` | `application/scheduling/<name>.job.ts`, spec |
-| `background-job` | `<ctx> <Name> --command <UseCase>` | `application/background/<name>.background-job.ts`, named `<ctx>.<name>` by its static `jobName`, spec through the queue of the test application; `--di tsyringe` only |
+| `background-job` | `<ctx> <Name> --command <UseCase>` | `application/background/<name>.background-job.ts`, named `<ctx>.<name>` by its static `jobName`, its payload one field per input of the command (a `Date` as ISO text), spec through the queue of the test application; `--di tsyringe` only |
 | `process` (`process-manager`) | `<ctx> <Name>` | `application/processes/<name>.process.ts`, its timeout job `application/background/<name>-timeout.background-job.ts`, specs (`givenProcess`); `--di tsyringe` only |
 | `integration-event` | `<ctx> <Aggregate> <Fact> [--version <n>]` | declaration in `published-language/`, publisher, spec |
 | `integration-handler` (`consumer`) | `<ctx> <upstream> <event-type>` | `application/integration/handlers/<name>.integration-handler.ts`, consumer `<ctx>.<name>`, spec |

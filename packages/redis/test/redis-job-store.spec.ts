@@ -1,8 +1,8 @@
 import type { Redis } from 'ioredis';
 import { afterAll, afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { InMemoryUnitOfWork } from '@ddd-ts-kit/kernel';
+import { InMemoryErrorReporter, InMemoryLogger, InMemoryUnitOfWork } from '@ddd-ts-kit/kernel';
 import { jobStoreContract } from '@ddd-ts-kit/testing/contracts';
-import { RedisJobStore } from '../src/index.js';
+import { RedisJobStore, reportLostJobs } from '../src/index.js';
 import { REAL_SERVER, aNamespace, closeAll, connect, connectToNothing } from './support/server.js';
 
 const runner = { describe, it, expect, beforeEach, afterEach };
@@ -57,5 +57,15 @@ describe('RedisJobStore whose server is away', () => {
     await new InMemoryUnitOfWork().run(() => store.add(job));
 
     expect(lost).toEqual(['job-1']);
+  });
+
+  it('logs and reports a lost write through the reporter a platform wires', async () => {
+    const [logger, errors] = [new InMemoryLogger(), new InMemoryErrorReporter()];
+    const store = new RedisJobStore(connectToNothing(), { onLostJob: reportLostJobs(logger, errors) });
+
+    await new InMemoryUnitOfWork().run(() => store.add(job));
+
+    expect(logger.entries).toMatchObject([{ level: 'error', fields: { jobId: 'job-1' } }]);
+    expect(errors.reports).toMatchObject([{ report: { origin: 'queue', operation: 'background job write' } }]);
   });
 });

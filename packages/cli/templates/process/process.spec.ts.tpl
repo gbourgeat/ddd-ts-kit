@@ -36,7 +36,7 @@ describe('{{name.title}}', () => {
 
   it('recognises the state it saved', () => {
     expect({{name.pascal}}Process.isState(waiting)).toBe(true);
-    expect({{name.pascal}}Process.isState({ id: '{{name.kebab}}-1' })).toBe(false);
+    expect({{name.pascal}}Process.isState({ id: 'unknown-1' })).toBe(false);
   });
 
   // TODO(domain): one case per step, and the commands a missed deadline sends.

@@ -17,12 +17,14 @@ export function scaffoldBillingLifecycle(step: (...args: string[]) => void, stac
     'generate',
     'background-job',
     'billing',
-    'CompileStatements',
+    'CompileOverdueStatements',
     '--command',
     'CancelInvoice',
     ...term('Compile=To gather the invoices of a period'),
+    ...term('Overdue=Not paid by its due date'),
     ...term('Statement=What a customer owes at the end of a month'),
   );
 
-  step('generate', 'process', 'billing', 'Dunning', ...term('Dunning=Asking a customer to pay, again'));
+  // A long name on purpose: what the templates write has to fit the line width of the formatter.
+  step('generate', 'process', 'billing', 'OverdueInvoiceDunning', ...term('Dunning=Asking a customer to pay, again'));
 }

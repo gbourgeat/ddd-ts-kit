@@ -164,11 +164,13 @@ describe('the worker of an application', () => {
     expect(app.resolve(JobStore)).toBe(store);
   });
 
-  it('leaves the queue alone in a process that does not run the jobs', async () => {
+  it('leaves a shared queue to the worker in a process that does not run the jobs', async () => {
     const store = new InMemoryJobStore();
+    // Not an InMemoryJobStore to the application: a store other processes could reach.
+    const shared = lazyJobStore(createApplication({ modules: [kernelModule({ jobStore: store })] }).resolve);
 
     const app = createApplication({
-      modules: [kernelModule({ jobStore: store }), billing((builder) => builder.include([CompileStatementsJob]))],
+      modules: [kernelModule({ jobStore: shared }), billing((builder) => builder.include([CompileStatementsJob]))],
       jobs: { start: false },
     });
 
@@ -177,6 +179,25 @@ describe('the worker of an application', () => {
     await app.stop();
 
     expect(store.list()).toMatchObject([{ status: 'waiting' }]);
+  });
+
+  it('consumes a queue kept in its own memory even with its jobs off: no other process sees it', async () => {
+    months.length = 0;
+
+    const app = createApplication({
+      modules: [
+        kernelModule({ queues: { pollIntervalMs: 20 }, logger: new InMemoryLogger() }),
+        billing((builder) => builder.include([CompileStatementsJob])),
+      ],
+      jobs: { start: false },
+    });
+
+    await app.start();
+    await app.resolve(JobQueue).enqueue(CompileStatementsJob, { month: '2026-06' });
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    await app.stop();
+
+    expect(months).toEqual(['2026-06 #1']);
   });
 });
 

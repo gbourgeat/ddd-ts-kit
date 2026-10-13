@@ -23,8 +23,9 @@ end-to-end support of the example can start the worker (`startApplication({ jobs
 
 **Generators for background work.** `ddd-ts-kit generate background-job <context> <Name>
 --command <UseCase>` writes a background job that sends its command as the actor that enqueued
-it (`execution.actor`, new on `BackgroundJobExecution`), registered by `@Background()` or on the
-builder of the module file, and a spec that enqueues it and runs what is due. `generate
+it (`execution.actor`, new on `BackgroundJobExecution`), with one field of its payload per other
+input of the command (a `Date` as its ISO text), registered by `@Background()` or on the builder
+of the module file, and a spec that enqueues a payload of every field and runs what is due. `generate
 state-machine <context> <Aggregate> --value <state>... --transition "<intention>:<from>>[<to>]"`
 writes the status vocabulary (or adds the values it misses), the machine and its spec; a machine
 without `refused` throws the new `TransitionError.forbidden` (code `FORBIDDEN_TRANSITION`), and
@@ -34,7 +35,10 @@ timeouts and their specs. The two that run on the queue need `--di tsyringe`. `i
 database|redis|memory` chooses where jobs and process instances are kept (`stack.queue`):
 `database` by default on Knex or Drizzle with tsyringe, the jobs and processes tables created by
 the first migration and bound by the platform module; `redis` puts the jobs on the server of the
-cache; a config without the key is read as `memory`, as before. Under standard decorators,
+cache, a write lost after the commit logged and reported (`reportLostJobs`); a config without
+the key is read as `memory`, as before. A queue kept in the memory of a process is consumed by
+that process even with its jobs off, so the API of a project with a worker still runs the jobs
+it enqueues. Under standard decorators,
 `@Background` records the job once the class is defined, when its static `jobName` exists.
 
 **Process managers.** A long-running process that reacts to events, keeps its own state and
