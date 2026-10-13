@@ -1,10 +1,10 @@
 # @ddd-ts-kit/http
 
-Declare a route once, without a framework. Mount it on Express 5, Fastify 5 or NestJS, and
-generate the OpenAPI 3.1 contract from the same declaration.
+Declare a route once, without a framework. Mount it on Express 5, Fastify 5, Hono 4 (on Node)
+or NestJS, and generate the OpenAPI 3.1 contract from the same declaration.
 
 Every adapter goes through one pipeline (`executeRoute`): validation, handler, error mapping.
-The behaviour is therefore the same on the three frameworks, and one test suite proves it.
+The behaviour is therefore the same on the four frameworks, and one test suite proves it.
 
 ## Declare
 
@@ -391,6 +391,24 @@ mountFastify(app, orderRoutes(orders), options);
 await app.register(fastifyRoutes(orderRoutes(orders), options), { prefix: '/api' });
 ```
 
+## Hono 4
+
+```ts
+import { serve } from '@hono/node-server';
+import { Hono } from 'hono';
+import { mountHono } from '@ddd-ts-kit/http/hono';
+
+const app = new Hono();
+mountHono(app, orderRoutes(orders), options);
+serve({ fetch: app.fetch, port: 3000 });
+```
+
+The adapter reads the JSON body itself: a body that is not JSON is answered 400 as a problem
+(`MALFORMED_BODY`), before the pipeline. A request carries `HonoRaw` as its raw request (its
+headers as a record, which the authenticators of the kit read, and the `Context` of Hono), and
+a repeated query parameter is a list, as on Express and Fastify. The adapter imports nothing of
+Hono at run time; any runtime Hono serves works, and the kit proves Node with `@hono/node-server`.
+
 ## NestJS
 
 No decorator per route: a module mounts the routes on the underlying HTTP server at module
@@ -461,6 +479,7 @@ when its JSON Schema is a reference to one of its own definitions, which every a
 |---|---|
 | zod | `.meta({ id: 'Slot' })` on the zod schema, used whole or nested |
 | class-validator | `classSchema(SlotDto, { shared: true })`; a nested class is always a component |
+| TypeBox | `{ $id: 'Slot' }` in the options of the schema, used whole or nested |
 | Standard Schema | the library's own ids through Standard JSON Schema, or `sharedSchema('Slot', schema)` |
 | any `Schema` | `sharedSchema(name, schema)` of `@ddd-ts-kit/validation` |
 

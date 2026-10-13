@@ -1,7 +1,7 @@
 # @ddd-ts-kit/validation
 
 One `Schema` contract for input validation at the boundary, with adapters for zod,
-class-validator and any Standard Schema library. Routes, DTOs and the OpenAPI generator depend
+class-validator, TypeBox and any Standard Schema library. Routes, DTOs and the OpenAPI generator depend
 on the contract, so the validation library can change without touching them.
 
 Business rules do not belong here: they live in the domain and never import a validation library.
@@ -117,6 +117,30 @@ no constraint is refused: validation would strip it as unknown. A derived class 
 another one through `@Type` declares at least one property of its own: class-validator-jsonschema
 documents a class only from its own decorators.
 
+## TypeBox
+
+```sh
+npm i typebox
+```
+
+```ts
+import Type from 'typebox';
+import { typeboxSchema } from '@ddd-ts-kit/validation/typebox';
+
+const slot = Type.Object({ startsAt: Type.String({ format: 'date-time' }), minutes: Type.Integer({ default: 30 }) }, { $id: 'Slot' });
+const book = typeboxSchema(Type.Object({ patientId: Type.String({ minLength: 1 }), slot }));
+const page = typeboxSchema(Type.Object({ limit: Type.Integer() }), { coerce: true }); // query strings
+```
+
+The schema is compiled once (`typebox/compile`). `parse` fills the defaults and drops the
+properties the schema does not declare, as zod does, then checks; the issue code is the JSON
+Schema keyword that failed (`required`, `format`, `minLength`...). `{ coerce: true }` converts
+text to the declared types first, for path parameters and query strings. A TypeBox schema is
+JSON Schema already: `toJsonSchema()` returns it, a nested schema built with an `$id` moved
+under `$defs` and referenced, so it lands once in the contract; a schema with its own `$id` is
+shared. `Type.Pick`, `Type.Omit`, `Type.Partial` and `Type.Composite` reuse a schema in part.
+Written for the `typebox` package, version 1 (the successor of `@sinclair/typebox`).
+
 ## Standard Schema (valibot, arktype, ...)
 
 ```ts
@@ -157,8 +181,11 @@ const book = zodSchema(z.object({ patientId: z.uuid(), slot }));
 // class-validator: the name of the class
 const patient = classSchema(PatientDto, { shared: true });
 
+// TypeBox: an $id in its options, kept when the schema is nested in another one
+const money = Type.Object({ cents: Type.Integer(), currency: Type.String() }, { $id: 'Money' });
+
 // any schema, the Standard Schema ones included
-const money = sharedSchema('Money', standardSchema(moneySchema));
+const amount = sharedSchema('Amount', standardSchema(amountSchema));
 ```
 
 `sharedNameOf(jsonSchema)` answers the name a JSON Schema is shared under, if any. A shared

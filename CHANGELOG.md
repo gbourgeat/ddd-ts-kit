@@ -29,6 +29,13 @@ nothing is reported; the steps to move are in `docs/CONFIG.md`. The example now 
 schemas: its eighteen identifier answers are the one `Accepted` component, its two agenda
 searches answer `AgendaLinePage` pages of one `AgendaLine`; the bytes on the wire are unchanged.
 
+**Hono and TypeBox.** `@ddd-ts-kit/http/hono` mounts the routes on Hono 4 (`mountHono`), through
+the same pipeline and the same behaviour suite as Express, Fastify and NestJS; a body that is not
+JSON is answered 400 as a problem. `@ddd-ts-kit/validation/typebox` validates with TypeBox 1
+(`typeboxSchema`, compiled once, defaults filled, undeclared properties dropped, the failed
+keyword as the issue code, `{ coerce: true }` for query strings) and documents the schema as it
+is, a nested schema with an `$id` shared once in the contract. Both libraries are optional peers.
+
 **Every package carries the MIT notice.** Each published package now holds the `LICENSE` of the
 repository next to its `dist/`, and `npm run package:check` refuses a tarball without it, or with
 another text. Earlier versions were published without it.
