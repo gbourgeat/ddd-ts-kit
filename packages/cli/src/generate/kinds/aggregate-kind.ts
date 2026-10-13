@@ -6,12 +6,14 @@ import { learnTerms } from '../learn-terms.js';
 import { named } from '../named.js';
 import { openScope } from '../open-scope.js';
 import { vars } from '../vars.js';
+import { writeEventSourcedAggregate } from './write-event-sourced-aggregate.js';
 
 export const aggregateKind: Kind = {
   name: 'aggregate',
   aliases: [],
-  usage: 'aggregate <context> <Name> [--term "<Term>=<meaning>"]...',
-  summary: 'An aggregate root with create and rehydrate factories, its test data builder and its spec.',
+  usage: 'aggregate <context> <Name> [--event-sourced] [--term "<Term>=<meaning>"]...',
+  summary:
+    'An aggregate root with create and rehydrate factories, its test data builder and its spec; with --event-sourced, its state is the replay of its events, with its birth event and the codec of its stored events.',
   positionals: ['context', 'Name'],
   writesShared: false,
   run: (request) => {
@@ -20,6 +22,13 @@ export const aggregateKind: Kind = {
     learnTerms(scope);
 
     const name = concept(scope, request.args[1] ?? '', { what: 'aggregate', strip: ['aggregate'] });
+
+    if (scope.flags.eventSourced) {
+      writeEventSourcedAggregate(scope, name);
+      refreshContextDoc(scope.ws, scope.config, scope.context.kebab);
+
+      return;
+    }
 
     emit(scope, vars(scope, { name: named(name), aggregate: named(name) }), [
       ['aggregate/aggregate.ts.tpl', `domain/aggregates/${name.kebab}.aggregate.ts`],

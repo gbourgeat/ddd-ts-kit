@@ -4,8 +4,9 @@
 the code that answers questions. This kit applies the light form: every use case is either a
 command or a query, each with one handler, reached through a command bus or a query bus. A
 command goes through the aggregate and returns at most an identifier; a query never changes
-state and may read a projection through a port without loading aggregates. There is no event
-sourcing and no second database by default. This page says what that buys, what it does not, and
+state and may read a projection through a port without loading aggregates. Aggregates keep their
+state in tables unless one is chosen to be event-sourced, and there is no second database by
+default. This page says what that buys, what it does not, and
 when the split is not worth having.
 
 ## From a method rule to an architecture rule
@@ -103,9 +104,11 @@ found.
 
 ## What it does not buy, and what the kit does not do
 
-- **No event sourcing.** Aggregates are stored as state. Domain events are recorded to be
-  dispatched at the end of the unit of work, not to rebuild the aggregate. CQRS and event sourcing are
-  independent patterns that are often presented together; the kit provides the first only.
+- **Event sourcing is a choice per aggregate, not part of CQRS.** Aggregates are stored as
+  state by default, and their domain events are recorded to be dispatched at the end of the unit
+  of work, not to rebuild them. CQRS and event sourcing are independent patterns that are often
+  presented together: one aggregate whose history is the business can be event-sourced while
+  the others keep their rows ([Event sourcing, per aggregate](event-sourcing.md)).
 - **No separate read database, and no generated projection.** A projection is a table of the
   consuming context. The runtime packages carry the read side: `Criteria` (filters, sort and
   page of a list, checked against a definition), hydration, the `ReadModelStore` port with a

@@ -488,6 +488,26 @@ column through the same query builder.
   `(consumer, event_id)`. Run the consumer inside the unit of work: the mark then commits with
   the effects of the handler, and disappears with them if it fails.
 
+## Event store
+
+```ts
+const dataSource = new DataSource({ type: 'postgres', entities: [...eventStoreEntities({ schema: 'scheduling' })] });
+
+const { events, snapshots, checkpoints, subjectKeys } = createTypeOrmEventSourcing(unitOfWork, { schema: 'scheduling' });
+```
+
+`eventStoreEntities` declares the tables as `EntitySchema`s, so `typeorm migration:generate`
+creates them with the columns of `eventStoreTablesSql` of the kernel. The stores never load them
+as entities. `createTypeOrmEventSourcing` refuses a data source that is not PostgreSQL.
+
+Each statement runs on the executor of the context: an append joins the transaction of the
+unit of work, so the stream and the outbox records its events publish commit together
+(`eventStoreUnitOfWorkContract`). Appends take the head of the store, a row locked until their
+transaction ends: positions are given in commit order, without gaps, and two appends never run
+side by side, whatever their streams. PostgreSQL only. The stores are the ones of the kernel
+(`PostgresEventStore` and its companions), held to `eventStoreContract` here; how an
+event-sourced aggregate uses them: the README of `@ddd-ts-kit/kernel`, section "Event sourcing".
+
 ## Dialect coverage
 
 What follows is about this package. The CLI generates for PostgreSQL only: `init --orm typeorm`
