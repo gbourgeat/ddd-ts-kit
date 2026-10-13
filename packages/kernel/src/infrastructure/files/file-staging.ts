@@ -2,12 +2,14 @@ import { Writable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
 import { errorReportOf } from '../../application/error-reporting/error-report-of.js';
 import { reportOnce } from '../../application/error-reporting/report-once.js';
-import type { ConfirmOptions } from '../../application/files/confirm-options.js';
+import { assertFinalKey } from '../../application/files/assert-final-key.js';
+import type { ContentExpectation } from '../../application/files/content-expectation.js';
 import { FileError } from '../../application/files/file-error.js';
 import type { FileSource } from '../../application/files/file-source.js';
 import { mediaTypeOf } from '../../application/files/media-type-of.js';
+import type { PendingUpload } from '../../application/files/pending-upload.js';
+import type { PendingUploadLink } from '../../application/files/pending-upload-link.js';
 import type { PutOptions } from '../../application/files/put-options.js';
-import type { SignedUpload } from '../../application/files/signed-upload.js';
 import { STAGING_PREFIX, stagedKeyOf } from '../../application/files/staged-key-of.js';
 import type { StoredFile } from '../../application/files/stored-file.js';
 import type { UploadUrlOptions } from '../../application/files/upload-url-options.js';
@@ -15,14 +17,17 @@ import type { ErrorReporter } from '../../application/ports/error-reporter.js';
 import type { FileScanner } from '../../application/ports/file-scanner.js';
 import type { FileStorage } from '../../application/ports/file-storage.js';
 import { afterCommit } from '../domain-events/after-commit.js';
+import { atCommit } from '../domain-events/at-commit.js';
 import { FileInspection } from './file-inspection.js';
 
 /**
  * Keeps the storage consistent with the database, which a write to the storage cannot join in a
- * transaction. A handler stages the file (under `staging/`, scanned, invisible), records its
- * reference in the aggregate it saves, and asks for the promotion after the commit: a command
- * that rolls back leaves its file in `staging/` only, where nothing reads, and `purge` removes it
- * on a schedule. The aggregate holds the final key from the start.
+ * transaction. A file is staged first (under `staging/`, scanned, where nothing reads), before
+ * the unit of work opens when it comes from a client. The handler records its reference, under
+ * its final key, in the aggregate it saves, and asks for `promoteOnCommit`: the file moves to its
+ * key as the last step of the transaction, and back to `staging/` if the transaction rolls back.
+ * So a committed row never points into `staging/`, and every staged file is an orphan (a refused
+ * command, a rollback, an upload never confirmed) that `purge` removes on a schedule.
  */
 export class FileStaging {
   static {
@@ -37,30 +42,44 @@ export class FileStaging {
 
   /** Writes the content under the staged key, then has it scanned; a refused file is removed and `FILE_REJECTED` thrown. */
   async stage(key: string, content: FileSource, options: PutOptions): Promise<StoredFile> {
-    const staged = await this.storage.put(stagedKeyOf(key), content, options);
+    const staged = await this.storage.put(stagedKeyOf(assertFinalKey(key)), content, options);
 
     return this.scanned({ ...staged, key });
   }
 
-  /** A request the client sends the file with, straight to the staged key; `confirm` then checks what arrived. */
-  uploadUrl(key: string, options: UploadUrlOptions): Promise<SignedUpload> {
-    return this.storage.signedUploadUrl(stagedKeyOf(key), options);
+  /**
+   * A request the client sends the file with, straight to the staged key, and the grant to keep
+   * on the server (on the aggregate that awaits the file) for `confirm` to read back.
+   */
+  async uploadUrl(
+    key: string,
+    options: UploadUrlOptions & Pick<ContentExpectation, 'accepted'>,
+  ): Promise<PendingUploadLink> {
+    const { expiresInSeconds, mediaType, maxBytes, accepted } = options;
+
+    const link = await this.storage.signedUploadUrl(stagedKeyOf(assertFinalKey(key)), {
+      expiresInSeconds,
+      mediaType,
+      maxBytes,
+    });
+
+    return { link, pending: { key, mediaType: mediaTypeOf(mediaType), accepted, maxBytes } };
   }
 
-  /** Reads a file uploaded straight to the staged key: its size, its media type on its bytes, its checksum, the scan. */
-  async confirm(key: string, options: ConfirmOptions): Promise<StoredFile> {
-    const content = await this.storage.get(stagedKeyOf(key));
+  /**
+   * Reads a file uploaded straight to the staged key of a grant the server kept: its size against
+   * the cap of the grant, its media type on its bytes, its checksum, the scan. A file that fails
+   * is discarded.
+   */
+  async confirm(pending: PendingUpload): Promise<StoredFile> {
+    const { key, maxBytes, mediaType, accepted } = pending;
+    const content = await this.storage.get(stagedKeyOf(assertFinalKey(key)));
 
     if (content === undefined) {
       throw FileError.notFound(key);
     }
 
-    const { maxBytes, mediaType, accepted } = options;
-
-    const inspection = new FileInspection({
-      ...(maxBytes === undefined ? {} : { maxBytes }),
-      expected: { mediaType, accepted },
-    });
+    const inspection = new FileInspection({ maxBytes, expected: { mediaType, accepted } });
 
     await pipeline(content.stream, inspection, sink()).catch(async (error: unknown) => {
       await this.discard(key);
@@ -75,18 +94,18 @@ export class FileStaging {
     });
   }
 
-  /** Promotes the staged file once the unit of work in progress has committed; a failure is reported, the staged file stays for the purge. */
-  promoteAfterCommit(key: string): Promise<void> {
-    return afterCommit(async () => {
-      await this.promote(key).catch((error: unknown) => {
-        reportOnce(this.reporter, error, errorReportOf(error, { origin: 'process', operation: 'promote staged file' }));
-      });
-    });
+  /**
+   * Moves the staged file to its key as the last step of the unit of work in progress, so that
+   * the commit and the file land together: a promotion that fails rolls the command back, and a
+   * transaction that rolls back after it returns the file to `staging/`. At once outside of any.
+   */
+  promoteOnCommit(key: string): Promise<void> {
+    return atCommit({ apply: () => this.promote(key), undo: () => this.returnToStaging(key) });
   }
 
   /** Moves the staged file to its key. Promoting twice is not an error; a key staged nowhere and stored nowhere is `FILE_NOT_FOUND`. */
   async promote(key: string): Promise<void> {
-    if ((await this.storage.stat(stagedKeyOf(key))) !== undefined) {
+    if ((await this.storage.stat(stagedKeyOf(assertFinalKey(key)))) !== undefined) {
       await this.storage.move(stagedKeyOf(key), key);
 
       return;
@@ -106,11 +125,15 @@ export class FileStaging {
     });
   }
 
+  /** Removes a staged file, one a command will not record. */
   discard(key: string): Promise<void> {
     return this.storage.delete(stagedKeyOf(key));
   }
 
-  /** Removes the staged files older than the instant, those of the commands that rolled back or crashed; answers how many. */
+  /**
+   * Removes the staged files older than the instant; answers how many. Each is an orphan: no
+   * committed row points into `staging/`, since a promotion lands with its commit.
+   */
   async purge(olderThan: Date): Promise<number> {
     let purged = 0;
 
@@ -122,6 +145,17 @@ export class FileStaging {
     }
 
     return purged;
+  }
+
+  /** A transaction rolled back after the promotion: the file goes back where the purge finds it; a failure is reported. */
+  private async returnToStaging(key: string): Promise<void> {
+    await this.storage.move(key, stagedKeyOf(key)).catch((error: unknown) => {
+      reportOnce(
+        this.reporter,
+        error,
+        errorReportOf(error, { origin: 'process', operation: 'return file to staging' }),
+      );
+    });
   }
 
   private async scanned(file: StoredFile): Promise<StoredFile> {

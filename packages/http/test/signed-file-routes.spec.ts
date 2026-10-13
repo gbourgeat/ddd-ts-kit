@@ -41,8 +41,12 @@ describe.each([
     expect(response.headers.get('cache-control')).toBe('private, no-store');
   });
 
-  it('stores the file sent through an upload link, and refuses another media type', async () => {
-    const upload = await storage.signedUploadUrl('staging/rows.csv', { expiresInSeconds: 60, mediaType: 'text/csv' });
+  it('stores the file sent through an upload link, and refuses another media type or a larger size', async () => {
+    const upload = await storage.signedUploadUrl('staging/rows.csv', {
+      expiresInSeconds: 60,
+      mediaType: 'text/csv',
+      maxBytes: 8,
+    });
 
     const send = (type: string) =>
       fetch(onServer(upload.url), { method: 'PUT', headers: { 'content-type': type }, body: 'a;b\n1;2\n' });
@@ -50,6 +54,14 @@ describe.each([
     expect((await send('text/plain')).status).toBe(403);
     expect((await send('text/csv')).status).toBe(200);
     expect((await storage.stat('staging/rows.csv'))?.size).toBe(8);
+
+    const tooLarge = await fetch(onServer(upload.url), {
+      method: 'PUT',
+      headers: { 'content-type': 'text/csv' },
+      body: 'a;b\n1;2\n3;4\n',
+    });
+
+    expect(tooLarge.status).toBe(413);
   });
 
   it('answers 403 to a forged link, or to none', async () => {
@@ -67,6 +79,7 @@ describe('the signed file routes on Express, mounted before the JSON parser', ()
     const upload = await storage.signedUploadUrl('staging/data.json', {
       expiresInSeconds: 60,
       mediaType: 'application/json',
+      maxBytes: 1_000,
     });
 
     const response = await fetch(upload.url.replace('http://placeholder', server.url), {

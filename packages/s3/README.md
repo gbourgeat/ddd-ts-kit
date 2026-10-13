@@ -43,7 +43,7 @@ which would bind a signed upload link to an empty body. A client built by hand w
 | `delete` | `DeleteObject`, idempotent |
 | `copy`, `move` | `CopyObject` done by the service (and `DeleteObject` for a move), up to 5 GiB per object |
 | `list(prefix)` | `ListObjectsV2`, page after page |
-| `signedDownloadUrl` | a presigned `GetObject`, with `Content-Disposition: attachment` when a file name is given |
+| `signedDownloadUrl` | a presigned `GetObject` answered with `Content-Disposition: attachment`, with the file name when one is given |
 | `signedUploadUrl` | a presigned `PutObject` whose signature covers the `content-type`: another media type is refused by the service |
 
 The checksum (`sha256:<hex>`) is answered by `put`, computed while the content streams; the
@@ -53,7 +53,8 @@ is measured, checked and hashed by `FileStaging.confirm` of the kernel, which re
 ## Limits
 
 - A signed upload link cannot cap the size of what is sent (only a presigned POST policy can):
-  `FileStaging.confirm` measures the file and discards it beyond the limit.
+  its `maxBytes` is not enforced by the service, and `FileStaging.confirm` measures the file
+  against the cap of the grant the server kept and discards it beyond.
 - Copy and move go through `CopyObject`, limited to 5 GiB per object by the protocol.
 - Lifecycle rules, versioning, object lock and the encryption of the bucket are settings of the
   bucket, made by the infrastructure code of the deployment, not by this adapter.

@@ -23,6 +23,9 @@ import {
 {{#if errors.sentry}}
   errorReportingMiddleware,
 {{/if}}
+{{#if files.any}}
+  fileUploadsMiddleware,
+{{/if}}
   scopedPublisher,
   dispatchingOnSave,
   reportAfterCommitFailures,
@@ -65,7 +68,7 @@ import { UseCaseProtection } from '{{alias.platform}}/auth/use-case-protection{{
 import type { Persistence } from '{{alias.platform}}/database/persistence{{alias.ext}}';
 import type { EventProvider } from '{{alias.platform}}/events/event-provider{{alias.ext}}';
 {{#if files.any}}
-import { createFiles } from '{{alias.platform}}/files/create-files{{alias.ext}}';
+import { createFiles, type Files } from '{{alias.platform}}/files/create-files{{alias.ext}}';
 {{/if}}
 import { ConfiguredJobScheduler } from '{{alias.platform}}/jobs/configured-job-scheduler{{alias.ext}}';
 import { createLogger, type LogSettings } from '{{alias.platform}}/observability/create-logger{{alias.ext}}';
@@ -134,13 +137,19 @@ export function createPlatform(persistence: Persistence, options: PlatformOption
   const protection = new UseCaseProtection(authorizer, onDecision);
   const adapter = adapterOf(options.resilience ?? defaultResilience, { traced, domainEvents });
   const observed = observing(foundations, protection.guard, traced.useCase);
+{{#if files.any}}
+  const files = filesOf(options, foundations);
+{{/if}}
 
   return {
     ...foundations,
     ...eventsOn(persistence, options, { scope, traced }),
-    // Around every use case, outermost first: {{#if errors.sentry}}the report of an unexpected failure, {{/if}}its log entry, its measure, the permission, its span; a command then runs in the unit of work.
+    // Around every use case, outermost first: {{#if errors.sentry}}the report of an unexpected failure, {{/if}}its log entry, its measure, the permission, its span; a command then {{#if files.any}}has the file it carries staged, out of any transaction, and {{/if}}runs in the unit of work.
     commands: chain(new InMemoryCommandBus(), [
       ...observed,
+{{#if files.any}}
+      fileUploadsMiddleware(() => files),
+{{/if}}
       ...beforeTheTransaction(foundations, options),
       unitOfWorkMiddleware(persistence.unitOfWork),
     ]),
@@ -153,16 +162,23 @@ export function createPlatform(persistence: Persistence, options: PlatformOption
     selfGoverned: (instance, info) => adapter(ownPolicy()(instance, info), info),
     protection,
 {{#if files.any}}
-{{#if errors.none}}
-    files: createFiles(options.files ?? new InMemoryFileStorage(), { ...foundations, errors: new NoopErrorReporter() }),
-{{/if}}
-{{#if errors.sentry}}
-    files: createFiles(options.files ?? new InMemoryFileStorage(), foundations),
-{{/if}}
+    files,
 {{/if}}
   };
 }
 
+{{#if files.any}}
+/** Where the content of files lives: the storage of `main.ts`; left out (the tools, the tests), the memory of the process. */
+function filesOf(options: PlatformOptions, foundations: Foundations): Files {
+{{#if errors.none}}
+  return createFiles(options.files ?? new InMemoryFileStorage(), { ...foundations, errors: new NoopErrorReporter() });
+{{/if}}
+{{#if errors.sentry}}
+  return createFiles(options.files ?? new InMemoryFileStorage(), foundations);
+{{/if}}
+}
+
+{{/if}}
 /** What surrounds every use case on both buses, outermost first, before what each bus adds. */
 function observing(foundations: Foundations, guard: BusMiddleware, span: BusMiddleware): readonly BusMiddleware[] {
 {{#if errors.none}}

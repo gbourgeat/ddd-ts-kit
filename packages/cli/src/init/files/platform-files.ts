@@ -45,7 +45,11 @@ function fileStorageFiles(config: Config): InitFile[] {
     file('config/read-files.ts', storage),
     file('files/open-files.ts', storage),
     ...(family === 'tsyringe'
-      ? [file('files/bind-files.ts', family), file('files/files.module.ts', family)]
+      ? [
+          file('files/bind-files.ts', family),
+          file('files/files.module.ts', family),
+          file('files/staging-uploads.ts', family),
+        ]
       : [file('files/create-files.ts')]),
     ...when(http !== 'none', [file('files/file-routes.ts')]),
   ];

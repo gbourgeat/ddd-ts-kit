@@ -80,7 +80,6 @@ import {
   Clock,
   CommandBus,
   ExecutionScope,
-  FileKeys,
   FileStaging,
   FileStorage,
   IdGenerator,
@@ -182,7 +181,7 @@ export * from '@/contexts/scheduling/presentation/http/shared/agenda-entry.seria
 
 injected(AddExceptionHandler, [CalendarRepository, Clock]);
 injected(AddTimeOffHandler, [CalendarRepository, AppointmentRepository, Clock]);
-injected(AttachAppointmentDocumentHandler, [AppointmentRepository, FileStaging, FileKeys, Clock]);
+injected(AttachAppointmentDocumentHandler, [AppointmentRepository, FileStaging, Clock]);
 injected(BookAppointmentHandler, [AppointmentRepository, CalendarRepository, IdGenerator, Clock]);
 injected(CancelAppointmentHandler, [AppointmentRepository, Access, Clock]);
 injected(CompleteAppointmentHandler, [AppointmentRepository, Clock]);

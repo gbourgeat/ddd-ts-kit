@@ -730,11 +730,14 @@ the guard of an invariant: what must not happen twice is refused by a database c
 ### FileStorage, StoredFile, FileScanner
 
 ```ts
-const key = fileKeys.next('appointment-documents');           // generated, never from the user
-const file: StoredFile = await staging.stage(key, upload.stream, { mediaType: 'application/pdf', maxBytes: 10_000_000 });
-appointment.attachDocument(file);                             // the aggregate keeps the reference
+// The command wraps what the controller received: the bus stages it before the transaction opens.
+this.document = new FileUpload(received, 'appointment-documents');
+
+// The handler, inside the unit of work:
+const { file, fileName } = command.document;                     // a StoredFile, staged and scanned
+appointment.attachDocument(unwrap(AttachedDocument.create(file, fileName, now)), now);
 await appointments.save(appointment);
-await staging.promoteAfterCommit(file.key);                   // visible once the transaction committed
+await staging.promoteOnCommit(file.key);                         // moved to its key with the commit
 ```
 
 `FileStorage` holds the content of files, never the database: `put` (a stream in, measured and
@@ -744,7 +747,9 @@ hashed, refused with `FILE_TOO_LARGE` beyond `maxBytes`, leaving nothing), `get`
 whole file. A key is checked by `isFileKey` (segments of letters, digits, `.`, `-` and `_`, none
 starting with a dot) before anything is touched, and `FileKeys` generates it on the server:
 `TenantFileKeys(ids, clock, scope)` writes `tenants/<tenant>/<area>/<year>/<month>/<id>`, the
-tenant segment only when the work in progress names one.
+tenant segment only when the work in progress names one (a tenant id other than letters,
+digits, `-` and `_` is encoded as `hex.<hex>`, so two tenants never share a prefix). The links of
+`signedUploadUrl` carry a `maxBytes`, which the storages the application serves enforce.
 
 `StoredFile` is what an aggregate keeps: `key`, `size`, `mediaType`, `checksum` (`sha256:<hex>`),
 never the provider. `FileScanner` is the hook of an antivirus or a content check, called on the
@@ -753,13 +758,29 @@ none yet. `FileError` carries the refusals: `FILE_TOO_LARGE`, `UNSUPPORTED_MEDIA
 `FILE_NOT_FOUND`, `INVALID_FILE_KEY`, `FILE_REJECTED`, `INVALID_FILE_URL_EXPIRY`.
 
 A write to the storage is not rolled back with a transaction. `FileStaging(storage, scanner,
-reporter)` gives the order that keeps both consistent: `stage` writes under `staging/<key>` and
-scans; the aggregate records the final key; `promoteAfterCommit` moves the file once the unit of
-work has committed (`afterCommit`, never on a rollback, a failure reported); `purge(olderThan)`,
-`deleteAfterCommit(key)` deletes, once committed, a file the aggregate no longer references (replaced or removed); `purge(olderThan)`, run by `PurgeStagedFiles` (the platform registers it as `files.purge-staged`, every hour), removes what a rolled-back or crashed command left in `staging/`. A file received from a client travels in a command as a `ReceivedFile` (its name, its declared media type, its stream). For a
-large file the client uploads straight to the storage: `uploadUrl(key, options)` signs the
-staged key, and `confirm(key, { mediaType, accepted, maxBytes })` reads what arrived, checks its
-media type on its bytes (`contentMatches`) and its size, scans it, and answers the `StoredFile`.
+reporter)` gives the order that keeps both consistent, each step once:
+
+- `stage(key, content, options)` writes under `staging/<key>` and scans; a refused file is
+  removed (`FILE_REJECTED`). A file from a client travels in its command as a `FileUpload`
+  (the `ReceivedFile` and the area of its key), staged by `fileUploadsMiddleware(desk)`, a bus
+  middleware placed after the permission and before the unit of work, so no transaction waits
+  on an upload. `upload.file` is the staged `StoredFile`.
+- `promoteOnCommit(key)` moves the file to its key as the last step of the unit of work
+  (`atCommit`, a `CommitStep` of `apply` and `undo`): a promotion that fails rolls the command
+  back, and a transaction that rolls back after it returns the file to `staging/`. A committed
+  row never points into `staging/`.
+- `deleteAfterCommit(key)` deletes, once committed, a file the aggregate no longer references
+  (`afterCommit`, at most once: a failure or a crash leaves an unreferenced file, reported).
+- `purge(olderThan)` removes the staged files older than the instant, all orphans; the job
+  `PurgeStagedFiles` runs it (the platform registers it as `files.purge-staged`, every hour,
+  for files staged a day ago or more).
+
+For a large file the client uploads straight to the storage: `uploadUrl(key, { expiresInSeconds,
+mediaType, accepted, maxBytes })` answers the `link` for the client and the `pending` grant
+(`PendingUpload`: key, size cap, media types) that the command records on the aggregate;
+`confirm(pending)`, called by a command that reads the grant back from the aggregate, never
+from the client, checks what arrived against the cap and on its bytes (`contentMatches`), scans
+it, and answers the `StoredFile`. No final key may start with `staging/` (`assertFinalKey`).
 
 `FileInspection` is the pass-through every connector streams through: it counts, hashes, and
 with an expectation holds back the first bytes until they prove the declared media type

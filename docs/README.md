@@ -49,7 +49,7 @@ Ordered as a reading path in [concepts/README.md](concepts/README.md).
 | [Audit trail](concepts/audit-trail.md) | tamper-evident history recorded around the use cases |
 | [Observability](concepts/observability.md) | tracing, logs, metrics, error reporting, the correlation id |
 | [Resilience](concepts/resilience.md) | retry, timeout, circuit breaker, bulkhead, cache and their failure modes |
-| [File storage](concepts/file-storage.md) | files in a storage, never in the database: staged, promoted after the commit, served by short signed links |
+| [File storage](concepts/file-storage.md) | files in a storage, never in the database: staged before the transaction, moved to their key with the commit, served by short signed links |
 | [Scheduled jobs](concepts/scheduled-jobs.md) | jobs that trigger use cases, several instances, idempotence |
 | [Clean code](concepts/clean-code.md) | naming, small functions, stepdown, comments, with before and after |
 | [Testing strategy](concepts/testing-strategy.md) | fakes versus mocks, builders, contract tests, the four levels |

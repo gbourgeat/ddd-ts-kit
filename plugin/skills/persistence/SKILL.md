@@ -51,8 +51,9 @@ lookups of the port, the columns, the mapper.
   `ExecutionScope` and the `Clock` through the kernel helpers. The domain does not know them.
 - **Files never in a table.** No binary or base64 column (`persistence/no-file-content`): the
   content lives in the `FileStorage` port (`stack.storage`), a row keeps the key, size, media
-  type and checksum of its `StoredFile`, and `FileStaging` orders the write (staged, recorded,
-  promoted after the commit, purged on rollback). `docs/concepts/file-storage.md`.
+  type and checksum of its `StoredFile`, and `FileStaging` orders the write (staged before the
+  transaction, recorded, moved to its key with the commit, an orphan in `staging/` purged a day
+  later). `docs/concepts/file-storage.md`.
 - **Outbox in the same transaction** as the business write (`events/outbox-required`).
 - **Searches** use the kernel `Page` and `PageRequest`; a cursor ends on a unique tie-breaker.
 - **Queries may skip aggregates**: `generate query` writes a read port and an in-memory

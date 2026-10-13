@@ -11,9 +11,16 @@ list the pull requests behind it.
 links), `FileKeys` (keys generated on the server, under the tenant when there is one) and
 `FileScanner` (an antivirus or content check before a file is accepted), the reference an
 aggregate keeps, `StoredFile` (key, size, media type, checksum), and `FileStaging`, which stages a
-file, promotes it after the commit (`afterCommit`) and purges what a rolled-back command left.
-Media types are checked on the bytes. `InMemoryFileStorage` and `LocalFileStorage` pass the new
-`fileStorageContract` of `@ddd-ts-kit/testing/contracts`.
+file, moves it to its key as the last step of the transaction that records it
+(`promoteOnCommit`, on the new `atCommit` step of the unit of work, undone on a rollback) and
+purges the staged files, every one an orphan since no committed row points into `staging/`. A
+command carries a client's file as a `FileUpload`, which `fileUploadsMiddleware` stages after
+the permission and before the unit of work, so no transaction waits on an upload. A direct
+upload is confirmed from the `PendingUpload` grant the server kept (`uploadUrl` answers the link
+and the grant, `confirm(pending)` checks the size cap it carries), and the upload links of the
+storages the application serves enforce that cap. Media types are checked on the bytes.
+`InMemoryFileStorage` and `LocalFileStorage` pass the new `fileStorageContract` of
+`@ddd-ts-kit/testing/contracts`; a signed download link is an attachment on every connector.
 
 **`@ddd-ts-kit/s3`, the connector of a deployment.** `S3FileStorage` holds files in a bucket of
 any provider of the S3 protocol (AWS, MinIO, OVHcloud, Scaleway, Cloudflare R2): multipart
@@ -33,12 +40,15 @@ storages, and a handler may answer a stream.
 
 **A generated project keeps files, from its first day.** `init --storage local|s3|none` (new key
 `stack.storage`, `local` in what `init` writes, `none` when a config does not say it, so an
-existing project changes nothing) writes `platform/files/` and `platform/config/read-files.ts`:
+existing project changes nothing) writes `platform/files/` and `platform/config/read-files.ts`
+(with `local`, `FILES_PUBLIC_URL` and `FILES_SIGNING_SECRET` are required in production, even
+before the first file arrives):
 a local directory in development, a bucket of the S3 protocol with a MinIO service in
 `docker-compose.yml` for `s3`, the memory in the tests; the ports bound, the hourly purge of
 staged files, the routes that answer the links of a served storage and the upload reader.
 `generate file-upload <context> <UseCase> --path ...` writes the controller that declares the
-file, the command that carries it, the handler that stages and promotes it, and their specs.
+file, the command that carries it as a `FileUpload`, the handler that records and promotes it,
+and their specs.
 Two rules: `persistence/no-file-content` (no binary or base64 column in a schema or a
 migration) and `files/port-not-connector` (the model and the use cases name the port, never a
 connector); `@ddd-ts-kit/s3` is refused in `domain/` and `application/`. To add files to an

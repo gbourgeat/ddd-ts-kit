@@ -8,15 +8,18 @@ import {
   InMemoryFileStorage,
   InMemoryUnitOfWork,
   PurgeStagedFiles,
+  atCommit,
   stagedKeyOf,
   type FileScanner,
+  type FileStorage,
   type ScanVerdict,
 } from '../src/index.js';
+import { FailingFileStorage } from './support/failing-file-storage.js';
 
 const NOW = new Date('2026-03-01T10:00:00.000Z');
 const PDF = new Uint8Array(Buffer.from('%PDF-1.7\n%%EOF\n'));
 const KEY = 'appointment-documents/2026/03/doc-1';
-const PDF_ONLY = { mediaType: 'application/pdf', accepted: ['application/pdf'] };
+const A_DAY_MS = 86_400_000;
 
 class RefusingScanner implements FileScanner {
   readonly read: number[] = [];
@@ -48,29 +51,48 @@ function aDesk(scanner: FileScanner = { scan: async () => ({ accepted: true }) }
   };
 }
 
+function onFailing(storage: FileStorage) {
+  const reporter = new InMemoryErrorReporter();
+
+  return { reporter, staging: new FileStaging(storage, { scan: async () => ({ accepted: true }) }, reporter) };
+}
+
 const codeOf = (work: Promise<unknown>) =>
   work.then(
     () => 'resolved',
     (error: unknown) => (FileError.is(error) ? error.code : String(error)),
   );
 
+const aPdf = () => Readable.from([PDF]);
+
 describe('FileStaging', () => {
   it('stages a file under staging/, invisible under its key, and answers the reference with the final key', async () => {
     const { staging, storage } = aDesk();
 
-    const file = await staging.stage(KEY, Readable.from([PDF]), { mediaType: 'application/pdf' });
+    const file = await staging.stage(KEY, aPdf(), { mediaType: 'application/pdf' });
 
     expect(file).toMatchObject({ key: KEY, size: PDF.length, mediaType: 'application/pdf' });
     expect(storage.keys()).toEqual([stagedKeyOf(KEY)]);
   });
 
-  it('promotes the file once the unit of work has committed, and not before', async () => {
+  it('refuses a final key under staging/, which the purge would remove', async () => {
+    const { staging } = aDesk();
+
+    expect(await codeOf(staging.stage('staging/doc-1', aPdf(), { mediaType: 'application/pdf' }))).toBe(
+      'INVALID_FILE_KEY',
+    );
+
+    expect(await codeOf(staging.promote('staging/doc-1'))).toBe('INVALID_FILE_KEY');
+  });
+
+  it('promotes the file as the last step of the unit of work, after its work, so that both land together', async () => {
     const { staging, storage, unitOfWork } = aDesk();
     const seenInside: string[][] = [];
 
+    await staging.stage(KEY, aPdf(), { mediaType: 'application/pdf' });
+
     await unitOfWork.run(async () => {
-      await staging.stage(KEY, Readable.from([PDF]), { mediaType: 'application/pdf' });
-      await staging.promoteAfterCommit(KEY);
+      await staging.promoteOnCommit(KEY);
       seenInside.push([...storage.keys()]);
     });
 
@@ -78,86 +100,89 @@ describe('FileStaging', () => {
     expect(storage.keys()).toEqual([KEY]);
   });
 
-  it('leaves no visible file when the command rolls back, and the purge removes what it staged', async () => {
+  it('leaves the file staged when the command rolls back, and the purge removes it a day later', async () => {
     const { staging, storage, unitOfWork, clock } = aDesk();
 
+    await staging.stage(KEY, aPdf(), { mediaType: 'application/pdf' });
+
     const failure = unitOfWork.run(async () => {
-      await staging.stage(KEY, Readable.from([PDF]), { mediaType: 'application/pdf' });
-      await staging.promoteAfterCommit(KEY);
+      await staging.promoteOnCommit(KEY);
       throw new Error('the appointment was cancelled meanwhile');
     });
 
     await expect(failure).rejects.toThrow('cancelled meanwhile');
-    expect(await storage.stat(KEY)).toBeUndefined();
+    expect(storage.keys()).toEqual([stagedKeyOf(KEY)]);
 
-    expect(await staging.purge(new Date(clock.now().getTime() - 60_000))).toBe(0);
-    clock.advance(3_600_000);
-    expect(await staging.purge(new Date(clock.now().getTime() - 60_000))).toBe(1);
+    expect(await staging.purge(new Date(clock.now().getTime() - A_DAY_MS))).toBe(0);
+    clock.advance(A_DAY_MS + 1);
+    expect(await staging.purge(new Date(clock.now().getTime() - A_DAY_MS))).toBe(1);
     expect(storage.keys()).toEqual([]);
+  });
+
+  it('returns a promoted file to staging/ when the transaction rolls back after the promotion', async () => {
+    const { staging, storage, unitOfWork } = aDesk();
+
+    await staging.stage(KEY, aPdf(), { mediaType: 'application/pdf' });
+
+    const failure = unitOfWork.run(async () => {
+      await staging.promoteOnCommit(KEY);
+      await atCommit({ apply: () => Promise.reject(new Error('commit refused')), undo: async () => undefined });
+    });
+
+    await expect(failure).rejects.toThrow('commit refused');
+    expect(storage.keys()).toEqual([stagedKeyOf(KEY)]);
+  });
+
+  it('fails the command when the promotion fails: no row commits that points to a missing file', async () => {
+    const { staging, unitOfWork } = aDesk();
+
+    expect(await codeOf(unitOfWork.run(() => staging.promoteOnCommit(KEY)))).toBe('FILE_NOT_FOUND');
+  });
+
+  it('keeps a committed file out of the purge, however long after', async () => {
+    const { staging, storage, unitOfWork, clock } = aDesk();
+
+    await staging.stage(KEY, aPdf(), { mediaType: 'application/pdf' });
+    await unitOfWork.run(() => staging.promoteOnCommit(KEY));
+    clock.advance(30 * A_DAY_MS);
+
+    await new PurgeStagedFiles(staging, clock).run();
+    expect(storage.keys()).toEqual([KEY]);
   });
 
   it('promotes at once outside of a unit of work, and promoting twice is not an error', async () => {
     const { staging, storage } = aDesk();
 
-    await staging.stage(KEY, Readable.from([PDF]), { mediaType: 'application/pdf' });
-    await staging.promoteAfterCommit(KEY);
+    await staging.stage(KEY, aPdf(), { mediaType: 'application/pdf' });
+    await staging.promoteOnCommit(KEY);
     await staging.promote(KEY);
 
     expect(storage.keys()).toEqual([KEY]);
     expect(await codeOf(staging.promote('appointment-documents/never'))).toBe('FILE_NOT_FOUND');
   });
 
-  it('reports a promotion that fails after the commit, and does not fail the command', async () => {
-    const { staging, reporter, unitOfWork } = aDesk();
+  it('reports a promoted file it could not return to staging/', async () => {
+    const { staging, reporter } = onFailing(new FailingFileStorage({ movesInto: 'staging/' }));
 
-    await unitOfWork.run(() => staging.promoteAfterCommit(KEY));
+    await staging.stage(KEY, aPdf(), { mediaType: 'application/pdf' });
 
-    expect(reporter.reports.map(({ report }) => [report.operation, report.errorCode])).toEqual([
-      ['promote staged file', 'FILE_NOT_FOUND'],
-    ]);
+    await new InMemoryUnitOfWork()
+      .run(async () => {
+        await staging.promoteOnCommit(KEY);
+        await atCommit({ apply: () => Promise.reject(new Error('commit refused')), undo: async () => undefined });
+      })
+      .catch(() => undefined);
+
+    expect(reporter.reports.map(({ report }) => report.operation)).toEqual(['return file to staging']);
   });
 
   it('removes a file its scanner refuses, after letting it read the content', async () => {
     const scanner = new RefusingScanner();
     const { staging, storage } = aDesk(scanner);
 
-    expect(await codeOf(staging.stage(KEY, Readable.from([PDF]), { mediaType: 'application/pdf' }))).toBe(
-      'FILE_REJECTED',
-    );
-
+    expect(await codeOf(staging.stage(KEY, aPdf(), { mediaType: 'application/pdf' }))).toBe('FILE_REJECTED');
     expect(scanner.read).toEqual([PDF.length]);
     expect(storage.keys()).toEqual([]);
-  });
-});
-
-describe('FileStaging, for a file sent straight to the storage', () => {
-  it('confirms a file uploaded through its link: measured, checked on its bytes, still staged', async () => {
-    const { staging, storage } = aDesk();
-    const upload = await staging.uploadUrl(KEY, { expiresInSeconds: 300, mediaType: 'application/pdf' });
-
-    await storage.acceptSigned(
-      new URL(upload.url).searchParams.get('token') ?? '',
-      Readable.from([PDF]),
-      'application/pdf',
-    );
-
-    const file = await staging.confirm(KEY, { ...PDF_ONLY, maxBytes: 1_000 });
-
-    expect(file).toMatchObject({ key: KEY, size: PDF.length, mediaType: 'application/pdf' });
-    expect(file.checksum).toMatch(/^sha256:/);
-    expect(storage.keys()).toEqual([stagedKeyOf(KEY)]);
-  });
-
-  it('discards an uploaded file that is not what it declared, or larger than allowed, or missing', async () => {
-    const { staging, storage } = aDesk();
-
-    await storage.put(stagedKeyOf(KEY), Readable.from([Buffer.from('<html>')]), { mediaType: 'application/pdf' });
-    expect(await codeOf(staging.confirm(KEY, PDF_ONLY))).toBe('UNSUPPORTED_MEDIA_TYPE');
-    expect(storage.keys()).toEqual([]);
-
-    await storage.put(stagedKeyOf(KEY), Readable.from([PDF]), { mediaType: 'application/pdf' });
-    expect(await codeOf(staging.confirm(KEY, { ...PDF_ONLY, maxBytes: 4 }))).toBe('FILE_TOO_LARGE');
-    expect(await codeOf(staging.confirm(KEY, PDF_ONLY))).toBe('FILE_NOT_FOUND');
   });
 });
 
@@ -166,18 +191,19 @@ describe('FileStaging, after the commit', () => {
     const { staging, storage, clock } = aDesk();
     const job = new PurgeStagedFiles(staging, clock);
 
-    await staging.stage(KEY, Readable.from([PDF]), { mediaType: 'application/pdf' });
+    await staging.stage(KEY, aPdf(), { mediaType: 'application/pdf' });
     await job.run();
-    clock.advance(86_400_001);
-    await job.run();
+    expect(storage.keys()).toEqual([stagedKeyOf(KEY)]);
 
+    clock.advance(A_DAY_MS + 1);
+    await job.run();
     expect(storage.keys()).toEqual([]);
   });
 
   it('deletes a file the aggregate no longer references once the command has committed, never on a rollback', async () => {
     const { staging, storage, unitOfWork } = aDesk();
 
-    await storage.put(KEY, Readable.from([PDF]), { mediaType: 'application/pdf' });
+    await storage.put(KEY, aPdf(), { mediaType: 'application/pdf' });
 
     await unitOfWork
       .run(async () => {
@@ -194,11 +220,8 @@ describe('FileStaging, after the commit', () => {
   });
 
   it('reports a deletion that fails after the commit', async () => {
-    const reporter = new InMemoryErrorReporter();
-    const failing = new InMemoryFileStorage();
-    const staging = new FileStaging(failing, { scan: async () => ({ accepted: true }) }, reporter);
+    const { staging, reporter } = onFailing(new FailingFileStorage({ deletes: true }));
 
-    failing.delete = () => Promise.reject(new Error('storage away'));
     await new InMemoryUnitOfWork().run(() => staging.deleteAfterCommit(KEY));
 
     expect(reporter.reports.map(({ report }) => report.operation)).toEqual(['delete stored file']);

@@ -14,8 +14,8 @@ describe('{{route.method}} {{route.path}}', () => {
     const received: string[] = [];
 
     const commands = new InMemoryCommandBus().register({{route.input}}, {
-      execute: async ({ file }) => {
-        received.push(file.fileName);
+      execute: async ({ upload }) => {
+        received.push(upload.fileName);
 
         return 'file-1';
       },

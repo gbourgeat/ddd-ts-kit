@@ -1,4 +1,4 @@
-import { unwrap, type Clock, type FileKeys, type FileStaging } from '@ddd-ts-kit/kernel';
+import { unwrap, type Clock, type FileStaging } from '@ddd-ts-kit/kernel';
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
 import { AppointmentError } from '@/contexts/scheduling/domain/errors/appointment.error';
 import type { AppointmentRepository } from '@/contexts/scheduling/domain/repositories/appointment.repository';
@@ -10,11 +10,10 @@ export class AttachAppointmentDocumentHandler implements CommandHandler<AttachAp
   constructor(
     private readonly appointmentRepository: AppointmentRepository,
     private readonly staging: FileStaging,
-    private readonly keys: FileKeys,
     private readonly clock: Clock,
   ) {}
 
-  /** The file is staged and scanned, its reference saved with the appointment, and it becomes visible once that commits; the file it replaces is deleted then. */
+  /** The file arrives staged and scanned; its reference is saved with the appointment and the file reaches its key with the commit; the file it replaces is deleted once committed. */
   async execute(command: AttachAppointmentDocumentCommand): Promise<string> {
     const appointment = await this.appointmentRepository.findById(command.appointmentId);
 
@@ -22,13 +21,12 @@ export class AttachAppointmentDocumentHandler implements CommandHandler<AttachAp
       throw AppointmentError.notFound(command.appointmentId);
     }
 
-    const { stream, mediaType, fileName } = command.file;
-    const file = await this.staging.stage(this.keys.next('appointment-documents'), stream, { mediaType });
+    const { file, fileName } = command.document;
     const now = this.clock.now();
     const replaced = appointment.attachDocument(unwrap(AttachedDocument.create(file, fileName, now)), now);
 
     await this.appointmentRepository.save(appointment);
-    await this.staging.promoteAfterCommit(file.key);
+    await this.staging.promoteOnCommit(file.key);
 
     if (replaced !== undefined) {
       await this.staging.deleteAfterCommit(replaced.key);

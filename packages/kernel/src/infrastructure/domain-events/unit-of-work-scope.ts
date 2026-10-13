@@ -1,6 +1,7 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
 import type { DomainEventDispatcher } from '../../application/ports/domain-event-dispatcher.js';
 import type { DomainEvent } from '../../domain/domain-event.js';
+import type { CommitStep } from './commit-step.js';
 
 /** One event waiting for the end of its scope: who dispatches it, and in which asynchronous context. */
 export interface QueuedDomainEvent {
@@ -22,6 +23,8 @@ export interface UnitOfWorkScope {
   readonly dispatched: QueuedDomainEvent[];
   /** What `afterCommit` was handed in a unit of work: run after the `after-commit` handlers, never on a rollback. */
   readonly committed?: (() => Promise<void>)[];
+  /** What `atCommit` was handed in a unit of work: applied last, inside the transaction. */
+  readonly atCommit?: CommitStep[];
 }
 
 // Follows the asynchronous call chain of what opened it: concurrent commands never share a scope.

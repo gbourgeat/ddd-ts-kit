@@ -12,7 +12,8 @@ export function isFileGrant(value: unknown): value is FileGrant {
     typeof grant.key === 'string' &&
     typeof grant.expiresAt === 'number' &&
     optionalString(grant.fileName) &&
-    optionalString(grant.mediaType)
+    optionalString(grant.mediaType) &&
+    (grant.maxBytes === undefined || typeof grant.maxBytes === 'number')
   );
 }
 

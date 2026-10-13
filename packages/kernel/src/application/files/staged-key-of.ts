@@ -1,4 +1,4 @@
-/** Where a file waits until the transaction that references it has committed: nothing reads there. */
+/** Where a file waits until the transaction that references it commits: nothing reads there, and no final key starts with it. */
 export const STAGING_PREFIX = 'staging/';
 
 /** The staged key of a final key. */

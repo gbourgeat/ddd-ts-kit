@@ -5,4 +5,6 @@ export interface FileGrant {
   readonly expiresAt: number;
   readonly fileName?: string;
   readonly mediaType?: string;
+  /** The size an upload may not exceed, in bytes. */
+  readonly maxBytes?: number;
 }

@@ -63,7 +63,7 @@ function downloaded(download: SignedDownload | undefined): RouteOutput {
       'content-length': String(metadata.size),
       'cache-control': 'private, no-store',
       'x-content-type-options': 'nosniff',
-      'content-disposition': fileName === undefined ? 'attachment' : contentDisposition(fileName),
+      'content-disposition': contentDisposition(fileName),
     },
   };
 }

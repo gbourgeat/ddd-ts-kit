@@ -42,7 +42,7 @@ export abstract class SelfSignedFileStorage extends ServedFileStorage {
 
   signedUploadUrl(key: string, options: UploadUrlOptions): Promise<SignedUpload> {
     const mediaType = mediaTypeOf(options.mediaType);
-    const grant = { action: 'upload' as const, key: assertFileKey(key), mediaType };
+    const grant = { action: 'upload' as const, key: assertFileKey(key), mediaType, maxBytes: options.maxBytes };
     const { token, expiresAt } = this.tokens.sign(grant, assertExpiry(options.expiresInSeconds));
 
     return Promise.resolve({
@@ -64,6 +64,7 @@ export abstract class SelfSignedFileStorage extends ServedFileStorage {
     return { ...content, fileName: grant.fileName };
   }
 
+  /** Stores what a signed upload link sends, refused beyond the size the link was signed for (`FILE_TOO_LARGE`). */
   async acceptSigned(token: string, content: FileSource, mediaType: string): Promise<StoredFile | undefined> {
     const grant = this.tokens.verify(token, 'upload');
 
@@ -71,7 +72,9 @@ export abstract class SelfSignedFileStorage extends ServedFileStorage {
       return undefined;
     }
 
-    return this.put(grant.key, content, { mediaType: grant.mediaType });
+    const { key, maxBytes } = grant;
+
+    return this.put(key, content, { mediaType: grant.mediaType, ...(maxBytes === undefined ? {} : { maxBytes }) });
   }
 
   /** The token travels in the query, where no router limits its length the way it limits a path parameter. */

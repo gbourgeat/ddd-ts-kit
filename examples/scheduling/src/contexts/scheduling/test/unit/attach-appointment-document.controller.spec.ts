@@ -12,8 +12,8 @@ describe('POST /appointments/:appointmentId/document', () => {
     const received: string[] = [];
 
     const commands = new InMemoryCommandBus().register(AttachAppointmentDocumentCommand, {
-      execute: async ({ appointmentId, file }) => {
-        received.push(`${appointmentId} ${file.fileName}`);
+      execute: async ({ appointmentId, document }) => {
+        received.push(`${appointmentId} ${document.fileName}`);
 
         return 'file-1';
       },

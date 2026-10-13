@@ -20,7 +20,7 @@ function upload(root: string, ...access: readonly string[]) {
 }
 
 describe('generate file-upload', () => {
-  it('writes the command that carries the file, the handler that stages it, the controller that declares it, and their specs', () => {
+  it('writes the command that carries the file, the handler that promotes it, the controller that declares it, and their specs', () => {
     const root = initProject('--context', 'billing:core');
 
     expect(upload(root, '--permission', 'invoice.attach-scan').code).toBe(0);
@@ -33,16 +33,16 @@ describe('generate file-upload', () => {
     );
 
     expect(read(root, `${BILLING}/application/commands/attach-invoice-scan/attach-invoice-scan.command.ts`)).toContain(
-      'readonly file: ReceivedFile,',
+      "this.upload = new FileUpload(file, 'attach-invoice-scan');",
     );
 
-    expect(handler).toContain("this.staging.stage(this.keys.next('attach-invoice-scan'), stream, { mediaType })");
-    expect(handler).toContain('await this.staging.promoteAfterCommit(file.key);');
+    expect(handler).toContain('const { file } = command.upload;');
+    expect(handler).toContain('await this.staging.promoteOnCommit(file.key);');
     expect(controller).toContain("upload: { field: 'file', maxBytes: 10_485_760,");
     expect(controller).toContain('new AttachInvoiceScanCommand(request.actor, request.upload)');
 
     expect(read(root, `${BILLING}/billing.declarations.ts`)).toContain(
-      'injected(AttachInvoiceScanHandler, [FileStaging, FileKeys]);',
+      'injected(AttachInvoiceScanHandler, [FileStaging]);',
     );
 
     expect(exists(root, `${BILLING}/test/unit/attach-invoice-scan.handler.spec.ts`)).toBe(true);
@@ -55,7 +55,7 @@ describe('generate file-upload', () => {
     expect(upload(root, '--public').code).toBe(0);
 
     expect(read(root, `${BILLING}/billing.module.ts`)).toContain(
-      'new AttachInvoiceScanHandler(platform.files.staging, platform.files.keys)',
+      'new AttachInvoiceScanHandler(platform.files.staging)',
     );
 
     expect(read(root, `${BILLING}/application/commands/attach-invoice-scan/attach-invoice-scan.command.ts`)).toContain(
@@ -69,7 +69,7 @@ describe('generate file-upload', () => {
     expect(upload(root, '--permission', 'invoice.attach-scan').code).toBe(0);
 
     expect(read(root, `${BILLING}/billing.module.ts`)).toContain(
-      '.handledBy(AttachInvoiceScanHandler, [FileStaging, FileKeys]);',
+      '.handledBy(AttachInvoiceScanHandler, [FileStaging]);',
     );
   });
 
@@ -97,6 +97,7 @@ describe('init --storage', () => {
     );
 
     expect(read(root, 'src/platform/auth/http-boundary.ts')).toContain('uploads: multipartUploads(),');
+    expect(read(root, 'src/platform/buses/create-command-bus.ts')).toContain('.use(stagingUploads(resolve))');
     expect(read(root, '.gitignore')).toContain('.data/');
     expect(read(root, 'package.json')).toContain('"busboy"');
   });
@@ -111,5 +112,6 @@ describe('init --storage', () => {
     expect(read(s3, 'package.json')).toContain('"@ddd-ts-kit/s3"');
     expect(exists(none, 'src/platform/files')).toBe(false);
     expect(read(none, 'package.json')).not.toContain('"busboy"');
+    expect(read(none, 'src/platform/buses/create-command-bus.ts')).not.toContain('stagingUploads');
   });
 });

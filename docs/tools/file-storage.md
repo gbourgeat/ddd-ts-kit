@@ -93,7 +93,8 @@ What the suite holds a connector to: a refused write (`FILE_TOO_LARGE`) leaves n
 keeps the previous content, so write to a temporary object or abort the upload; a missing file
 answers `undefined` on `get` and `stat`, and `FILE_NOT_FOUND` on `copy` and `move`; an invalid
 key is refused before any request (`assertFileKey`); links last at most an hour
-(`assertExpiry`); an upload link is bound to its media type. Azure signs with a SAS whose
+(`assertExpiry`); an upload link is bound to its media type; a download link is an attachment,
+named or not. Azure signs with a SAS whose
 `content-type` cannot be bound: check the type at `FileStaging.confirm`, which every direct
 upload goes through anyway.
 

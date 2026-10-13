@@ -41,16 +41,30 @@ describe('TenantFileKeys', () => {
     );
 
     expect(new TenantFileKeys(ids, clock, scopeOf('a/b')).next('documents')).toBe(
-      'tenants/612f62/documents/2026/03/file-2',
+      'tenants/hex.612f62/documents/2026/03/file-2',
     );
 
     expect(new TenantFileKeys(ids, clock, scopeOf()).next('documents')).toBe('documents/2026/03/file-3');
   });
 
-  it('refuses an area that would make an invalid key', () => {
+  it('never gives two tenants one prefix, even when a plain id spells the encoding of another', () => {
+    const ids = new SequentialIdGenerator('file');
+    const encoded = new TenantFileKeys(ids, clock, scopeOf('a/b')).next('documents');
+    const plain = new TenantFileKeys(ids, clock, scopeOf('612f62')).next('documents');
+    const dotted = new TenantFileKeys(ids, clock, scopeOf('hex.612f62')).next('documents');
+
+    expect([encoded, plain, dotted].map((key) => key.split('/')[1])).toEqual([
+      'hex.612f62',
+      '612f62',
+      'hex.6865782e363132663632',
+    ]);
+  });
+
+  it('refuses an area that would make an invalid key, or one the purge would take for a staged file', () => {
     const keys = new TenantFileKeys(new SequentialIdGenerator('file'), clock);
 
     expect(() => keys.next('../outside')).toThrow(FileError);
+    expect(() => keys.next('staging')).toThrow(FileError);
     expect(isFileKey('a'.repeat(1_025))).toBe(false);
   });
 });

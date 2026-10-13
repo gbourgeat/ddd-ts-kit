@@ -32,5 +32,5 @@ function refused(): FollowedResponse {
 }
 
 function dispositionOf(fileName: string | undefined): Record<string, string> {
-  return fileName === undefined ? {} : { 'content-disposition': contentDisposition(fileName) };
+  return { 'content-disposition': contentDisposition(fileName) };
 }

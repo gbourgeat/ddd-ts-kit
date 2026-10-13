@@ -29,10 +29,17 @@ describe('S3FileStorage without a server', () => {
     );
   });
 
+  it('signs a download link without a name as an attachment all the same', async () => {
+    const link = await storage.signedDownloadUrl('reports/march.pdf', { expiresInSeconds: 300 });
+
+    expect(new URL(link.url).searchParams.get('response-content-disposition')).toBe('attachment');
+  });
+
   it('signs an upload link bound to its media type, with no checksum a client could not send', async () => {
     const upload = await storage.signedUploadUrl('staging/notes.txt', {
       expiresInSeconds: 60,
       mediaType: 'Text/Plain',
+      maxBytes: 1_000,
     });
 
     const url = new URL(upload.url);

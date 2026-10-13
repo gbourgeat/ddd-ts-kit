@@ -515,7 +515,7 @@ export class AttachDocumentController {
   constructor(private readonly commands: CommandBus) {}
 
   async handle({ params, upload, actor }: HttpRequest<{ params: Params; upload: IncomingFile }>) {
-    return this.commands.execute(new AttachDocument(params.appointmentId, upload.stream, upload.mediaType, upload.fileName));
+    return this.commands.execute(new AttachDocument(actor, params.appointmentId, upload));
   }
 }
 ```
@@ -529,8 +529,9 @@ import { multipartUploads } from '@ddd-ts-kit/http/uploads';
 mountExpress(app, routes, { ...options, uploads: multipartUploads() });
 ```
 
-The file reaches `handle` while it still streams, never held whole: the handler hands
-`upload.stream` to the storage (`FileStaging.stage` of the kernel). On its way the content is
+The file reaches `handle` while it still streams, never held whole: the command wraps it in a
+`FileUpload` of the kernel, which `fileUploadsMiddleware` of the command bus stages before the
+transaction opens. On its way the content is
 counted, and refused with `FILE_TOO_LARGE` (413) beyond `maxBytes`; its first bytes must prove
 the media type the client declared and that type must be accepted, or it is refused with
 `UNSUPPORTED_MEDIA_TYPE` (415), before a byte reaches the storage. A request announcing a body
@@ -539,13 +540,16 @@ Text fields sent after the file are not read. `fileName` is shown back to people
 a key: the key is generated on the server.
 
 For a large file, the client uploads straight to the storage instead: a command signs an upload
-link (`FileStaging.uploadUrl`), the client sends the file to it, and a second command confirms
-(`FileStaging.confirm`, which checks the size and the media type on what arrived).
+link (`FileStaging.uploadUrl`) and records the grant it answers on the aggregate, the client
+sends the file to the link, and a second command confirms from that grant
+(`FileStaging.confirm(pending)`, which checks the size and the media type on what arrived). A
+client that drops the connection part-way fails the file stream, so a handler waiting on it
+rejects instead of waiting forever.
 
 `signedFileRoutes(storage, { prefix: '/files' })` answers the signed links of a storage the
 application serves itself, the local directory of development or the memory of the tests:
 `GET /files?token=` downloads (as an attachment, `nosniff`, `no-store`), `PUT /files?token=`
-uploads. They are public, the token being the grant, and are not part of the contract. With
+uploads, refused with 413 beyond the size the link was signed for. They are public, the token being the grant, and are not part of the contract. With
 Express, mount them before `express.json()`: that parser reads a JSON body first. An object
 store answers its own links and needs no route.
 

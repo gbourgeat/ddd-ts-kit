@@ -26,7 +26,7 @@ paths:
 {{/if}}
 - A job (`scheduling/*.job.ts`) and an integration event handler (`integration/handlers/`) only build one command and send it as a system actor; both are safe to repeat (`scheduling/job-triggers-use-case`, `events/consumer-idempotent`).
 {{#if files.any}}
-- A file arrives in the command as a `ReceivedFile` and is handed to `FileStaging`: staged under a key of `FileKeys` (never a name or a path from the user), scanned, recorded on the aggregate as its `StoredFile`, promoted after the commit (`promoteAfterCommit`). The ports are named here, never a connector (`files/port-not-connector`); `npx ddd-ts-kit generate file-upload` writes the slice.
+- A file arrives in the command as a `FileUpload` of its area, which the bus stages before the transaction under a key of `FileKeys` (never a name or a path from the user) and scans; the handler records `upload.file`, its `StoredFile`, on the aggregate and calls `FileStaging.promoteOnCommit`, which moves it to its key with the commit. A direct upload is confirmed from the `PendingUpload` the aggregate kept, never from a key the client sends. The ports are named here, never a connector (`files/port-not-connector`); `npx ddd-ts-kit generate file-upload` writes the slice.
 {{/if}}
 - A query never saves, deletes or publishes (`application/command-query-separation`); it hands the access scope of the actor to its read port and never filters after loading.
 - A read that takes criteria, a scope or a page is a search, never a list (`naming/search-not-list`): `Search<Things>Query` in `queries/search-<things>/` (`generate query ... --search`), `search...` on the port, its adapters and its fakes; one element or none stays `findById` or `findBy...`.

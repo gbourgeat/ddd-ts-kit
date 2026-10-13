@@ -138,10 +138,11 @@ export class S3FileStorage extends FileStorage {
   async signedDownloadUrl(key: string, options: DownloadUrlOptions): Promise<SignedUrl> {
     const expiresIn = assertExpiry(options.expiresInSeconds);
 
-    const disposition =
-      options.fileName === undefined ? {} : { ResponseContentDisposition: contentDisposition(options.fileName) };
-
-    const command = new GetObjectCommand({ Bucket: this.bucket, Key: this.keys.of(key), ...disposition });
+    const command = new GetObjectCommand({
+      Bucket: this.bucket,
+      Key: this.keys.of(key),
+      ResponseContentDisposition: contentDisposition(options.fileName),
+    });
 
     return { url: await getSignedUrl(this.client, command, { expiresIn }), expiresAt: this.expiry(expiresIn) };
   }

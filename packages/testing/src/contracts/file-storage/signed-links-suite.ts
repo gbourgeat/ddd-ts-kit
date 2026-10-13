@@ -1,4 +1,4 @@
-import { MAX_SIGNED_URL_SECONDS } from '@ddd-ts-kit/kernel';
+import { MAX_SIGNED_URL_SECONDS, type SignedUpload } from '@ddd-ts-kit/kernel';
 import { PDF, TEXT } from './contents.js';
 import { tampered } from './tampered.js';
 import { followWithFetch } from './follow-with-fetch.js';
@@ -31,6 +31,14 @@ export class SignedLinksSuite extends FileStorageSuite {
       this.expect(Math.abs(longer.expiresAt.getTime() - link.expiresAt.getTime() - 300_000) < 5_000).toBe(true);
     });
 
+    this.it('serves a link signed without a name as an attachment all the same, never inline', async () => {
+      await this.write('documents/report.pdf', PDF);
+      const link = await this.subject.signedDownloadUrl('documents/report.pdf', { expiresInSeconds: 300 });
+      const response = await this.follow({ url: link.url, method: 'GET' });
+
+      this.expect(response.headers['content-disposition']?.startsWith('attachment')).toBe(true);
+    });
+
     this.it('refuses a download link once it has expired', async () => {
       await this.write('documents/report.pdf', PDF);
       const link = await this.subject.signedDownloadUrl('documents/report.pdf', { expiresInSeconds: 1 });
@@ -43,10 +51,7 @@ export class SignedLinksSuite extends FileStorageSuite {
 
   private uploads(): void {
     this.it('stores what is sent through an upload link, with the media type it was signed for', async () => {
-      const upload = await this.subject.signedUploadUrl('staging/documents/notes.txt', {
-        expiresInSeconds: 300,
-        mediaType: 'text/plain',
-      });
+      const upload = await this.textUpload();
 
       const response = await this.follow({
         url: upload.url,
@@ -63,10 +68,7 @@ export class SignedLinksSuite extends FileStorageSuite {
     });
 
     this.it('refuses an upload sent with another media type than the one signed', async () => {
-      const upload = await this.subject.signedUploadUrl('staging/documents/notes.txt', {
-        expiresInSeconds: 300,
-        mediaType: 'text/plain',
-      });
+      const upload = await this.textUpload();
 
       const response = await this.follow({
         url: upload.url,
@@ -100,10 +102,18 @@ export class SignedLinksSuite extends FileStorageSuite {
 
     this.it('refuses to sign a link for a key that could leave its place', async () => {
       const code = await this.codeOf(() =>
-        this.subject.signedUploadUrl('../outside', { expiresInSeconds: 60, mediaType: 'text/plain' }),
+        this.subject.signedUploadUrl('../outside', { expiresInSeconds: 60, mediaType: 'text/plain', maxBytes: 1_000 }),
       );
 
       this.expect(code).toBe('INVALID_FILE_KEY');
+    });
+  }
+
+  private textUpload(): Promise<SignedUpload> {
+    return this.subject.signedUploadUrl('staging/documents/notes.txt', {
+      expiresInSeconds: 300,
+      mediaType: 'text/plain',
+      maxBytes: 1_000,
     });
   }
 

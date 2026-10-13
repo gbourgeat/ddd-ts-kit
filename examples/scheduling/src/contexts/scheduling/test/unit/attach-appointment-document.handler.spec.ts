@@ -65,23 +65,26 @@ describe('Attach appointment document', () => {
     expect(files.keys().every((key) => key.startsWith('staging/'))).toBe(true);
   });
 
-  it('refuses an appointment that does not exist, before reading the file', async () => {
+  it('refuses an appointment that does not exist: the file, received before the transaction, stays staged', async () => {
     const { application, files } = await arrange();
 
     await expect(
       application.commandBus.execute(new AttachAppointmentDocumentCommand(holder, 'appointment-unknown', aScan())),
     ).rejects.toMatchObject({ code: 'APPOINTMENT_NOT_FOUND' });
 
-    expect(files.keys()).toEqual([]);
+    expect(files.keys()).toHaveLength(1);
+    expect(files.keys().every((key) => key.startsWith('staging/'))).toBe(true);
   });
 
-  it('is refused to an actor who does not hold the permission appointment.attach-document', async () => {
+  it('is refused to an actor who does not hold the permission appointment.attach-document, and stores nothing', async () => {
     const appointment = anAppointment().build();
-    const { application } = await arrange(appointment);
+    const { application, files } = await arrange(appointment);
 
     await expect(
       application.commandBus.execute(new AttachAppointmentDocumentCommand(anActor().build(), appointment.id, aScan())),
     ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+
+    expect(files.keys()).toEqual([]);
   });
 });
 

@@ -10,6 +10,7 @@ import {
   InMemoryErrorReporter,
   InMemoryFileStorage,
   TenantFileKeys,
+  fileUploadsMiddleware,
 } from '@ddd-ts-kit/kernel';
 import { createTestBuses } from '@ddd-ts-kit/testing';
 {{#if access.protected}}
@@ -65,7 +66,14 @@ function arrange() {
   const storage = new InMemoryFileStorage({ clock });
   const staging = new FileStaging(storage, new AcceptEveryFileScanner(), new InMemoryErrorReporter());
 
-  commandBus{{spec.guard}}.register({{name.pascal}}Command, new {{name.pascal}}Handler(staging, new TenantFileKeys(ids, clock)));
+  const keys = new TenantFileKeys(ids, clock);
+
+  commandBus
+{{#if access.protected}}
+    .use(holders)
+{{/if}}
+    .use(fileUploadsMiddleware(() => ({ keys, staging })))
+    .register({{name.pascal}}Command, new {{name.pascal}}Handler(staging));
 
   return { commandBus, storage };
 }
