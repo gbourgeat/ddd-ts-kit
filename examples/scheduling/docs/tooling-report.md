@@ -1301,7 +1301,7 @@ the body of `POST /appointments` and in the answer of `GET /appointments/{appoin
 new routes `GET /practices/{practiceId}/agenda/export` and `GET /forms/bookAppointment`, and
 the properties of the agenda lines, which were missing.
 
-The internal note is a migration of its own, `20261013120000_add-internal-notes.js`, after the
+The internal note is a migration of its own, `20261013110000_add-internal-notes.js`, after the
 one of the documents: the tables are shared since then, and `upgrade-tables.ts` applies the same
 change to the in-process database of the tests.
 

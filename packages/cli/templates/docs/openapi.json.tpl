@@ -253,6 +253,21 @@
               "FORBIDDEN"
             ]
           },
+{{#if presentation.negotiated}}
+          "406": {
+            "description": "Not Acceptable. Error codes: NOT_ACCEPTABLE.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "x-error-codes": [
+              "NOT_ACCEPTABLE"
+            ]
+          },
+{{/if}}
           "422": {
             "description": "Unprocessable Content. Error codes: VALIDATION_FAILED.",
             "content": {
