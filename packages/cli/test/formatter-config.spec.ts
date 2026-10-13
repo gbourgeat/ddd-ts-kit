@@ -13,16 +13,20 @@ const FORMAT_GATE = 'npm run lint && npm run format:check';
 /** The kit holds the example, whose client is generated: `ddd-ts-kit sdk` adds this line to a project that asks for clients. */
 const CLIENT_SOURCES = '      "!**/clients/*/src",\n';
 
+/** The kit compiles the checked samples of its documentation there: a project has no such directory. */
+const DOC_SAMPLES = '      "!.ddd-ts-kit",\n';
+
 /** The configuration of the kit as a project without clients receives it. */
-const kitFormatter = (): string => inRepository('biome.json').replace(CLIENT_SOURCES, '');
+const kitFormatter = (): string => inRepository('biome.json').replace(CLIENT_SOURCES, '').replace(DOC_SAMPLES, '');
 
 /**
  * One formatter configuration in three places: the kit, the template a project receives and
  * the example. These tests are what keeps them from drifting.
  */
 describe('the formatter configuration', () => {
-  it('of the template is the one of the kit, byte for byte, but for the generated clients of the example', () => {
+  it('of the template is the one of the kit, byte for byte, but for the generated clients and the doc samples', () => {
     expect(inRepository('biome.json')).toContain(CLIENT_SOURCES);
+    expect(inRepository('biome.json')).toContain(DOC_SAMPLES);
     expect(pipelineAsset('template', 'biome.json.tpl')).toBe(kitFormatter());
   });
 
