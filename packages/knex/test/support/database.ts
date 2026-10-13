@@ -3,6 +3,10 @@ import { startPostgres } from './postgres.js';
 
 export interface TestDatabase {
   readonly knex: Knex;
+  /** Where it is, for a second connection (another role, another pool). */
+  readonly url: string;
+  /** How many connections the endpoint takes: one on PGlite, several on a real server. */
+  readonly poolSize: number;
   /** True on a real server, where several connections make real concurrency possible. */
   readonly real: boolean;
   /** The SQL knex sent since the last truncate, to assert what really reached the database. */
@@ -34,6 +38,8 @@ export async function createDatabase(
 
   return {
     knex: db,
+    url: postgres.url,
+    poolSize: postgres.poolSize,
     real: postgres.real,
     queries,
     truncate: async () => {

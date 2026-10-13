@@ -1,4 +1,4 @@
-import { ValueObject, err, ok, type Result } from '@ddd-ts-kit/kernel';
+import { ValueObject } from '@ddd-ts-kit/kernel';
 import { PracticeError } from '@/contexts/identity/domain/errors/practice.error';
 
 export type TimeZoneProps = {
@@ -10,14 +10,14 @@ export class TimeZone extends ValueObject<TimeZoneProps> {
     super(props);
   }
 
-  static create(value: string): Result<TimeZone, PracticeError> {
+  static create(value: string): TimeZone {
     const canonical = canonicalZoneOf(value.trim());
 
     if (canonical === undefined) {
-      return err(PracticeError.unknownTimeZone(value));
+      throw PracticeError.unknownTimeZone(value);
     }
 
-    return ok(new TimeZone({ value: canonical }));
+    return new TimeZone({ value: canonical });
   }
 
   get value(): string {

@@ -1,4 +1,4 @@
-import { ValueObject, err, ok, type Result } from '@ddd-ts-kit/kernel';
+import { ValueObject } from '@ddd-ts-kit/kernel';
 import { CalendarError } from '@/contexts/scheduling/domain/errors/calendar.error';
 
 export type BookingWindowProps = {
@@ -18,16 +18,16 @@ export class BookingWindow extends ValueObject<BookingWindowProps> {
     super(props);
   }
 
-  static create(notice: number, horizon: number): Result<BookingWindow, CalendarError> {
+  static create(notice: number, horizon: number): BookingWindow {
     if (!Number.isInteger(notice) || notice < 0) {
-      return err(CalendarError.invalidBookingWindow('has a notice of whole minutes'));
+      throw CalendarError.invalidBookingWindow('has a notice of whole minutes');
     }
 
     if (!Number.isInteger(horizon) || horizon <= notice) {
-      return err(CalendarError.invalidBookingWindow('has a horizon after its notice'));
+      throw CalendarError.invalidBookingWindow('has a horizon after its notice');
     }
 
-    return ok(new BookingWindow({ notice, horizon }));
+    return new BookingWindow({ notice, horizon });
   }
 
   /** What a calendar is born with: a notice of two hours, a horizon of ninety days. */

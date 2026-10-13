@@ -6,6 +6,7 @@ export const ROLES: readonly Role[] = [
   { directory: 'domain/aggregates', suffixes: ['.aggregate.ts'], oneConcept: true, specFor: ['.aggregate.ts'] },
   { directory: 'domain/entities', suffixes: ['.entity.ts'], oneConcept: true },
   { directory: 'domain/value-objects', suffixes: ['.vo.ts'], oneConcept: true, specFor: ['.vo.ts'] },
+  { directory: 'domain/vocabularies', suffixes: ['.vocabulary.ts'], oneConcept: true },
   { directory: 'domain/events', suffixes: ['.event.ts'], oneConcept: true },
   { directory: 'domain/errors', suffixes: ['.error.ts'] },
   { directory: 'domain/repositories', suffixes: ['.repository.ts'] },

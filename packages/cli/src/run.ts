@@ -12,8 +12,10 @@ import { errorFactoriesCommand } from './commands/error-factories.js';
 import { generateCommand } from './commands/generate.js';
 import { initCommand } from './commands/init.js';
 import { listCommand } from './commands/list.js';
+import { sdkCommand } from './commands/sdk.js';
 import { statusCommand } from './commands/status.js';
 import { todoCommand } from './commands/todo.js';
+import { valueObjectsCommand } from './commands/value-objects.js';
 import { workerScopeCommand } from './commands/worker-scope.js';
 import { CliError } from './cli-error.js';
 import { KINDS } from './generate/kinds.js';
@@ -32,9 +34,11 @@ const COMMANDS: Readonly<Record<string, Command>> = {
   todo: todoCommand,
   'worker-scope': workerScopeCommand,
   docs: docsCommand,
+  sdk: sdkCommand,
   'depcruise-config': depcruiseConfigCommand,
   'build-aliases': buildAliasesCommand,
   'error-factories': errorFactoriesCommand,
+  'value-objects': valueObjectsCommand,
   controllers: controllersCommand,
   check: checksCommand,
   'check-file': checkFileCommand,

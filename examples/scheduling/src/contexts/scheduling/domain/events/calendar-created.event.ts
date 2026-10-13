@@ -1,7 +1,9 @@
 import type { DomainEvent } from '@ddd-ts-kit/kernel';
 
 export class CalendarCreated implements DomainEvent {
-  readonly name = 'scheduling.calendar.created';
+  static readonly eventName = 'scheduling.calendar.created';
+
+  readonly name = CalendarCreated.eventName;
 
   constructor(
     readonly aggregateId: string,

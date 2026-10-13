@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { unwrap } from '@ddd-ts-kit/kernel';
 import { AppointmentType } from '@/contexts/scheduling/domain/value-objects/appointment-type.vo';
+import { expectRefusal } from '@ddd-ts-kit/testing';
 
 const consultation = {
   id: 'type-1',
@@ -13,10 +13,10 @@ const consultation = {
 
 describe('AppointmentType', () => {
   it('is equal to another type with the same facts', () => {
-    const first = unwrap(AppointmentType.create(consultation));
+    const first = AppointmentType.create(consultation);
 
-    expect(first.equals(unwrap(AppointmentType.create({ ...consultation, name: ' Consultation ' })))).toBe(true);
-    expect(first.equals(unwrap(AppointmentType.create({ ...consultation, needsConfirmation: true })))).toBe(false);
+    expect(first.equals(AppointmentType.create({ ...consultation, name: ' Consultation ' }))).toBe(true);
+    expect(first.equals(AppointmentType.create({ ...consultation, needsConfirmation: true }))).toBe(false);
   });
 
   it.each([
@@ -28,17 +28,15 @@ describe('AppointmentType', () => {
     ['an empty name', { name: '  ' }],
     ['an empty identifier', { id: '' }],
   ])('refuses %s', (_case, facts) => {
-    const result = AppointmentType.create({ ...consultation, ...facts });
-
-    expect(result).toMatchObject({ ok: false, error: expect.objectContaining({ code: 'INVALID_APPOINTMENT_TYPE' }) });
+    expectRefusal(() => AppointmentType.create({ ...consultation, ...facts }), 'INVALID_APPOINTMENT_TYPE');
   });
 
   it.each([5, 15, 20, 30, 45, 60, 90, 1440])('accepts a grid of %i minutes, which divides a day', (grid) => {
-    expect(AppointmentType.create({ ...consultation, grid }).ok).toBe(true);
+    expect(() => AppointmentType.create({ ...consultation, grid })).not.toThrow();
   });
 
   it('holds its duration, then its buffer, from the start', () => {
-    const slot = unwrap(AppointmentType.create(consultation)).slotAt(new Date('2026-03-02T09:00:00.000Z'));
+    const slot = AppointmentType.create(consultation).slotAt(new Date('2026-03-02T09:00:00.000Z'));
 
     expect(slot.endsAt).toEqual(new Date('2026-03-02T09:30:00.000Z'));
     expect(slot.heldUntil).toEqual(new Date('2026-03-02T09:40:00.000Z'));
@@ -49,6 +47,6 @@ describe('AppointmentType', () => {
     [9 * 60 + 15, true],
     [9 * 60 + 20, false],
   ])('says whether minute %i from midnight is on its grid', (minute, expected) => {
-    expect(unwrap(AppointmentType.create(consultation)).startsOn(minute)).toBe(expected);
+    expect(AppointmentType.create(consultation).startsOn(minute)).toBe(expected);
   });
 });

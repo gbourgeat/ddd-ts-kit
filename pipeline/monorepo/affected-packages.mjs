@@ -21,8 +21,8 @@ const READ_BY_THE_CLI_SPECS = ['docs/', 'pipeline/', 'examples/', 'plugin/', '.c
 /** Read by no spec: only the gates that always run (dashes, plugin validation) look at them. */
 const DOCUMENTS = /^[^/]+\.md$|^LICENSE$/;
 
-/** The packages whose adapter specs need the PostgreSQL or the Dragonfly server of the integration job. */
-const ON_A_SERVER = ['drizzle', 'knex', 'prisma', 'typeorm', 'audit', 'redis'];
+/** The packages whose adapter specs need a server of the integration job: PostgreSQL, OpenFGA or Dragonfly. */
+const ON_A_SERVER = ['drizzle', 'knex', 'prisma', 'typeorm', 'audit', 'openfga', 'redis'];
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   main(process.argv.slice(2));

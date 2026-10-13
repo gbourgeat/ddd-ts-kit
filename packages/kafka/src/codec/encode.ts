@@ -4,6 +4,7 @@ import {
   EVENT_ID_HEADER,
   EVENT_TYPE_HEADER,
   EVENT_VERSION_HEADER,
+  TENANT_HEADER,
   TRACEPARENT_HEADER,
 } from './headers.js';
 import type { OutgoingRecord } from './outgoing-record.js';
@@ -25,6 +26,7 @@ export function encode(event: IntegrationEvent, routing: Routing): OutgoingRecor
         [EVENT_VERSION_HEADER]: String(event.version),
         ...(event.traceparent === undefined ? {} : { [TRACEPARENT_HEADER]: event.traceparent }),
         ...(event.correlationId === undefined ? {} : { [CORRELATION_HEADER]: event.correlationId }),
+        ...(event.tenantId === undefined ? {} : { [TENANT_HEADER]: event.tenantId }),
       },
     },
   };

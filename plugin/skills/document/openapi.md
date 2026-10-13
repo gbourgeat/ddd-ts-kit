@@ -48,6 +48,19 @@ deployed API breaks clients that sent what used to be tolerated.
 
 ## Clients
 
-Generate clients from the committed file (or one client per document) with the tool of your choice
-(`openapi-typescript`, `orval`, `openapi-generator`): generation is deterministic, so the
-file is a stable input.
+`npx ddd-ts-kit sdk` (or `init --sdk`) generates a typed client per document of the contract,
+a workspace package under `clients/<document>` with no runtime dependency: each operation
+answers `{ ok, status, data | problem }`, `problem.code` typed as the codes `x-error-codes`
+declares for that status, credentials given per security scheme. It records `"sdk"` in
+`ddd-ts-kit.config.json` and wires the scripts: `docs:generate` regenerates the clients after
+the contract, `docs:check` fails while one differs from it, `ci:build` builds them.
+
+- After a route, a schema or an error code changes: `npm run docs:generate`, and commit the
+  contract and `clients/` together. Never edit `clients/*/src` or a client README.
+- An end-to-end spec may call the API through the client, by its package name, as a consumer
+  does; the HTTP helpers stay for requests the contract does not describe.
+- A new error code on a route changes the type of its outcome: a consumer with an exhaustive
+  `switch` on `problem.code` fails to compile, which is the signal the table above calls breaking.
+- Publishing is manual (`npm publish --workspace clients/<document>` after raising its
+  version); set `sdk.name` and `sdk.access` first. The comparison with openapi-typescript, hey-api
+  and orval, and the limits: https://github.com/gbourgeat/ddd-ts-kit/blob/main/docs/tools/client-sdk.md.

@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import { unwrap } from '@ddd-ts-kit/kernel';
 import { given } from '@ddd-ts-kit/testing';
 import { Person } from '@/contexts/identity/domain/aggregates/person.aggregate';
 import { DisplayName } from '@/contexts/identity/domain/value-objects/display-name.vo';
@@ -47,8 +46,8 @@ describe('Person', () => {
 
   it('takes the new name and the new address of a person who registers again, and announces nothing new', () => {
     const contact = {
-      displayName: unwrap(DisplayName.create('Ada King')),
-      email: unwrap(Email.create('ada.king@example.com')),
+      displayName: DisplayName.create('Ada King'),
+      email: Email.create('ada.king@example.com'),
     };
 
     given(aPerson().named('Ada Lovelace').reachedAt('ada@example.com'))
@@ -64,8 +63,8 @@ describe('Person', () => {
     const first = new Date('2026-03-01T00:00:00.000Z');
 
     const contact = {
-      displayName: unwrap(DisplayName.create('Ada King')),
-      email: unwrap(Email.create('ada.king@example.com')),
+      displayName: DisplayName.create('Ada King'),
+      email: Email.create('ada.king@example.com'),
     };
 
     given(aPerson().bornAt(first))

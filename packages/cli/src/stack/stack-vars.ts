@@ -14,7 +14,7 @@ import { usesLegacyDecorators } from './uses-legacy-decorators.js';
 
 /** The choices of the stack as template variables: what every template of `init` and of `generate` reads. */
 export function stackVars(config: Config): RenderContext {
-  const { validation, di, tests, orm, authz, style, logger, refusals } = config.stack;
+  const { validation, di, tests, orm, authz, style, logger, refusals, valueObjects, literals, tenancy } = config.stack;
   const legacy = usesLegacyDecorators(config);
 
   return {
@@ -34,6 +34,8 @@ export function stackVars(config: Config): RenderContext {
     audit: auditVars(config),
     errors: errorVars(config),
     refusals: one(refusals, ['factories', 'classes']),
+    valueObjects: one(valueObjects, ['throwing', 'result']),
+    literals: one(literals, ['named', 'free']),
     routes: routeVars(config),
     logger: one(logger, ['stdout', 'pino', 'winston']),
     tests: { ...one(tests, ['vitest', 'jest']), module: tests === 'jest' ? '@jest/globals' : 'vitest' },
@@ -41,6 +43,7 @@ export function stackVars(config: Config): RenderContext {
     config: platformPaths(config),
     alias: aliasVars(config),
     persistence: persistenceVars(config),
+    tenancy: { ...one(tenancy, ['none', 'shared-table']), any: tenancy !== 'none' },
   };
 }
 

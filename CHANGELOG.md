@@ -25,9 +25,174 @@ jobs; the test application gains `jobQueue` and `backgroundJobs.runDue()`. One c
 `jobStoreContract`, holds every store; the Redis store is proven on Dragonfly in CI. Prisma and
 TypeORM get no store yet. See [Background jobs](docs/concepts/background-jobs.md).
 
+## 0.8.0
+
+**The tenant travels with every unit of work** ([Multitenancy](docs/concepts/multitenancy.md)).
+
+- `IntegrationEvent.tenantId`: `scopedPublisher` stamps the tenant of the work on every event
+  published without one, `executionContextOfEvent` runs the consumer in it, and the four brokers
+  carry it in the envelope and in a header (`x-tenant-id`; `tenant-id` for Redis Streams). The
+  outbox keeps it where asked: `createOutboxTables(knex, { tenant: true })` or
+  `addOutboxTenantColumn` with `KnexOutboxStore`'s `tenant: true`, `tenantOutboxTable()` for
+  Drizzle. Without them nothing changes: the tenant is not stored, as before.
+- Jobs state `tenancy: 'global'` (the default, as before) or `'per-tenant'`: the in-process
+  scheduler, given a `TenantDirectory` (`tenants`), runs a per-tenant job once per tenant, each
+  run in that tenant's scope, and `JobExecution.tenantId` says which.
+- One grammar for a tenant id, `isTenantId` (letters, digits, `_`, `-`, at most 63): the edge
+  answers 404 to any other, a broker treats an envelope carrying one as poison, and
+  `executionContext` throws `InvalidTenantIdError`. A project whose tenant ids hold other
+  characters (a `.`, a `:`) must map them before upgrading.
+- Kernel: `tenantReachOf`, `tenantsOf`, `isTenantMember`, `tenantKey`, `tenantCacheKey`,
+  `TenantDirectory` and `InMemoryTenantDirectory`, and `acrossTenants`, the explicit elevation of
+  platform staff over tenants, refused without a reason and written to the audit trail before
+  the work runs (`ExecutionContext.elevation`, logged as `elevation`).
+- `@ddd-ts-kit/testing`: `eventBusContract` checks that the tenant of an envelope arrives intact;
+  `outboxStoreContract` does with `carriesTenant: true`.
+
+**Tenant isolation, four strategies, proven by one contract.**
+
+- Shared tables: `tenantTable`, `ownTenantTable` and `whereTenant` (Knex), `tenantCondition` and
+  `ownTenantCondition` (Drizzle): reads reach the tenant of the work or the tenants of an
+  elevation, writes the one tenant of the work. The read model stores of both take `tenant`, and
+  `TenantAuditReader` (`@ddd-ts-kit/audit`) confines every search of the trail to the tenant.
+- Row-level security on PostgreSQL, the second line: `enableTenantIsolation` and
+  `tenantIsolationStatements` (Knex), `tenantPolicies` and `forceRowLevelSecurity` (Drizzle), and
+  `tenantSession(scope)`, the new `begin` option of `createKnexUnitOfWork` and
+  `createDrizzleUnitOfWork`, which sets the tenant of each transaction only. One policy per
+  command: an elevated update or delete still touches only the tenant of the work.
+- Schema per tenant (Knex): `tenantSchemaOf`, `tenantSchemaTable`, `migrateTenantSchema` with
+  `tenantOfMigration`, `tenantSearchPath`. Database per tenant (Knex): `TenantDatabases` (one
+  bounded pool per tenant held by a lease, at most `maxTenants` instances closing ones included,
+  an idle one closed first and work waiting rather than exceeding the bound),
+  `createTenantRoutedUnitOfWork` (statements inside the unit of work only, one tenant per
+  transaction), `migrateEveryTenant`.
+- `@ddd-ts-kit/testing`: `tenantIsolationContract`, run against every strategy above on PGlite
+  and PostgreSQL; `asTenant(scope, tenantId, work)` and `anExecutionContext().elevatedOver(...)`.
+- Prisma and TypeORM get the `tenant_id` column and the kernel helpers, applied by hand; no
+  helper, no row-level security, no contract run yet.
+
+**The tenant of a request is resolved at the edge** (`@ddd-ts-kit/http`): `resolveTenant` with
+`tenantFromSubdomain`, `tenantFromHeader`, `tenantFromPath`, `tenantFromClaim` or `firstTenantOf`;
+the pipeline answers 403 to an authenticated caller that does not belong to the tenant named,
+before any guard or handler. The guard `TenantMember` keeps routes for the members of the tenant
+of the request. Without `resolveTenant` the tenant is the actor's, as before.
+
+**`init --tenancy shared-table`** (Knex or Drizzle) records `"stack.tenancy"` and generates every
+repository confined to the tenant through the helpers above, the outbox keeping the tenant of each
+event, the search of the audit trail confined to the tenant of the work by `TenantAuditReader`; the new rule `tenancy/scoped-statement` reports a statement of a context that reaches a table
+straight from the executor. `init` refuses the strategy with Prisma, TypeORM, `custom` or no ORM,
+and refuses row-level security, schema per tenant and database per tenant, which are wired by hand
+for now. `generate repository --tenant-scoped` writes the same helpers. A config without the key is
+`none`: nothing changes for an existing project.
+
+**Access control: a decision guide, scopes, and the refusals at the edge in the audit trail.**
+
+- [Choosing access control](docs/guides/choosing-access-control.md): five questions that pick
+  roles, attribute policies or relationships (Zanzibar), a worked preset for each (typed
+  permissions and roles, a policy on one element, a scoped search), the combined model of the
+  example, and where relationships are evaluated.
+- `Session.scopes`, filled by the JWT and Keycloak authenticators from `scope` (or `scp`);
+  `hasScope`, and `SessionScopes` to declare the vocabulary of a project; the guard `HasScope`
+  (`@ddd-ts-kit/http`) refuses a request whose session lacks a scope named.
+- A request refused by a guard (`HasRole`, `HasScope`, `TenantMember`, a tenant the caller does
+  not belong to) is reported to the new `onGuardRefusal` of the HTTP pipeline, and
+  `auditGuardRefusals` (`@ddd-ts-kit/audit`) records it as a denied decision, except for a caller
+  without a credential, so that unauthenticated traffic cannot write to the trail without bound.
+  It is part of `--audit on` (`stack.audit`), with no key of its own. A generated project
+  with the audit trail wires it (`create-audit.ts`, `http-boundary.ts`, `compose-application.ts`);
+  a project initialised before adds `refusals: auditGuardRefusals(trail, { clock, ids })` to the
+  call of `httpBoundary` and `onGuardRefusal: refusals` to what it answers, as `init --force` writes.
+
+**`@ddd-ts-kit/openfga`, a new package: relationships on OpenFGA.** `OpenFgaRelationTupleStore`
+and `OpenFgaAuthorizer` answer the `RelationTupleStore` and `Authorizer` ports of
+`@ddd-ts-kit/auth` on an OpenFGA server (OpenFGA 1.10 or later), with the mapping and the denial
+codes of `RelationBasedAuthorizer`. The authorization model is generated from the relationship
+schema (`authorizationModelOf`), written when it differs (`ensureAuthorizationModel`) and
+compared (`modelDrift`): the schema stays the one source. `@openfga/sdk` 0.9.7 is an optional
+peer, imported by the `/sdk` entry (`openFgaClient`). Both adapters pass the contract suites of
+the in-process ones, in memory and against `openfga/openfga` v1.22.0 in the integration job. A
+`ListObjects` answer as long as the server's cap (`listObjectsLimit`, 1000 by default) is refused
+with `ReverseExpansionLimitError`, since the server cuts a longer list without an error.
+[Authorization engines](docs/tools/authorization-engines.md) says when to move from the
+PostgreSQL tuple store to OpenFGA.
+
+## 0.7.0
+
+**A value object throws its refusals.** `init` writes `"stack.valueObjects": "throwing"`:
+`generate value-object` writes a `create` that returns the value object or throws the refusal
+built by the static factory of its concept (`throw PersonError.invalidEmail(raw)`), as the rest
+of the domain refuses, and a spec that asserts it with `expectRefusal(() => Email.create(raw),
+code)`; a caller no longer unwraps anything. `Result`, `ok`, `err` and `unwrap` stay in the
+kernel: `--value-objects result`, or a config without the key, keeps the form of 0.5, so an
+existing project upgrades without a change. `ddd-ts-kit value-objects` moves a project from one
+to the other: it rewrites the factories, removes every `unwrap(..)` of them, turns the assertions
+on a `Result` into assertions on the factory, tidies the imports, sets the key, and prints what
+is left to a person.
+
+**Closed vocabularies are declared once.** A status, a kind or a role is an object `as const`
+and the union type of the same name (`AppointmentStatus.NoShow`), not an `enum`: Node's type
+stripping and `erasableSyntaxOnly` refuse an `enum`, measured on Node 24. `generate vocabulary
+<context> <Name> --value <value>...` writes one under `domain/vocabularies/`, a new canonical
+role, and adds the values a file does not hold yet. `init` writes the roles a credential carries
+as the vocabulary `Role` of the platform (`<platformDir>/auth/role.ts`), read by the grants
+(`[Role.Admin]: ['*']`, `systemRole: Role.System`) and the attribute policies;
+`generate route-group --role <role>` writes `HasRole(Role.<Key>)` and adds the role to it; the
+grant `generate job` gives a system actor names the permission through its set
+(`billingPermissions['invoice.cancel']`) instead of its id.
+
+**A domain event names itself once.** `generate domain-event` writes `static readonly eventName =
+'billing.invoice.issued'` and `readonly name = InvoiceIssued.eventName`; the reactions
+`generate event-handler` and `generate integration-event` write read it,
+`@DomainEventHandler(InvoiceIssued, { name: InvoiceIssued.eventName })` and
+`domainEvents.on(InvoiceIssued.eventName, ..)` in a module file, so a renamed event cannot leave a
+handler on the old name. An integration event handler reads the type it handles from the
+declaration of its upstream, `static readonly eventType = invoiceIssuedV1.type`, which the event
+catalog script resolves. `events/name-format` judges `eventName`, and `declarations/role-declared`
+accepts `{ name: <Event>.eventName }` when `<Event>` is the class the decorator is given. An event
+written before, `readonly name = '..'`, and a handler that writes the name out are still read and
+compared; a reaction generated for such an event writes the name out, so it compiles.
+
+**Two rules against magic values.** `language/declared-vocabulary` (checker and ESLint) reports a
+string literal whose value a vocabulary of the project declares, an object `as const` with the
+union type of its name or a permission set of `definePermissions`, and names the key to write
+instead: a vocabulary of a context in that context, the one of the platform in the platform and
+in the route groups, a permission id and a vocabulary of the shared kernel everywhere; tests,
+published languages and the relationship schema are not judged. A vocabulary is parsed, so a
+documented entry, double quotes and `as const satisfies ..` are read. `clean/no-magic-number`
+(ESLint) reports a number in `domain/` and `application/` other than 0, 1, -1, an index, a type or
+the initializer of a module constant or a `static readonly`; the `allow` option changes the list.
+Both rules hold under `"stack.literals": "named"`, which `init` writes (`--literals free` leaves
+them out). A config without the key reads as `free`: an existing project upgrades without a
+change, including the grants `generate job` wrote by their permission id, which a job generated
+again recognises instead of granting twice. To turn the rules on, set the key and follow the fix
+each finding gives ([Configuration](docs/CONFIG.md#stack)). The example declares 8 vocabularies and
+replaced 227 raw values and 8 numbers, its OpenAPI contract unchanged.
+
 **Every package carries the MIT notice.** Each published package now holds the `LICENSE` of the
 repository next to its `dist/`, and `npm run package:check` refuses a tarball without it, or with
 another text. Earlier versions were published without it.
+
+## 0.6.0
+
+**A typed client of the contract, for the callers of the API.** `npx ddd-ts-kit sdk` (or
+`init --sdk`) generates one client per document of the OpenAPI contract, a workspace package
+under `clients/<document>` with no runtime dependency: each operation answers its outcome typed
+by status, a refusal typed by the error codes its contract declares (`problem.code` is
+`'UNKNOWN_TIME_ZONE' | 'VALIDATION_FAILED'`, not `string`), credentials are given per security
+scheme, and `unwrap` with `isProblem` serve the code that prefers exceptions. A status the
+contract does not declare throws `UnexpectedResponseError`, which reads the problem document of
+a fault of the server: its `code` (`INTERNAL_ERROR`) and its `requestId`. An operation id that
+is a reserved word or a name of the client is renamed (`deleteOperation`, `send2`). The command
+records `"sdk"` in the config (`sdk.name`, `sdk.access`, see `docs/CONFIG.md`), tells the agents
+in CLAUDE.md never to edit a client, and wires the project: `docs:generate` regenerates the
+clients, `docs:check` fails while one differs from the contract, `ci:build` builds them, so the
+GitHub and GitLab pipelines check them; publishing stays a manual step. Under npm, while
+`package-lock.json` does not list a client, the command says to run `npm install` and
+`sdk --check` fails, before `npm ci` refuses the lock in the pipeline. openapi-typescript with
+openapi-fetch, hey-api and orval were measured on the example contract first: none reads the
+error codes, and the first refuses TypeScript 6 (`docs/tools/client-sdk.md`). A project without
+the key is unchanged: only with it does the ESLint preset leave out `clients/*/src/**`, and the
+command add `!**/clients/*/src` to Biome.
 
 ## 0.5.0
 

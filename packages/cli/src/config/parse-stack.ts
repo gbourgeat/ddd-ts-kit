@@ -22,8 +22,11 @@ import {
   REFUSAL_FORMS,
   ROUTE_FORMS,
   STYLES,
+  TENANCY_STRATEGIES,
   TEST_STACKS,
   VALIDATION_STACKS,
+  VALUE_OBJECT_FORMS,
+  LITERAL_FORMS,
   type Stack,
 } from './stack.js';
 
@@ -48,7 +51,10 @@ export function parseStack(stack: Record<string, unknown>): Stack {
     ...parseChoices(choose, orm),
     refusals: choose('refusals', REFUSAL_FORMS, 'classes'),
     routes: choose('routes', ROUTE_FORMS, 'functions'),
+    valueObjects: choose('valueObjects', VALUE_OBJECT_FORMS, 'result'),
+    literals: choose('literals', LITERAL_FORMS, 'free'),
     packageManager: choose('packageManager', PACKAGE_MANAGERS, 'npm'),
+    tenancy: choose('tenancy', TENANCY_STRATEGIES, 'none'),
   };
 }
 

@@ -4,6 +4,7 @@ export const EVENT_TYPE_FIELD = 'type';
 export const EVENT_VERSION_FIELD = 'version';
 export const TRACEPARENT_FIELD = 'traceparent';
 export const CORRELATION_FIELD = 'correlation-id';
+export const TENANT_FIELD = 'tenant-id';
 export const REPLAY_FOR_FIELD = 'replay-for';
 export const ERROR_CODE_FIELD = 'error-code';
 export const DEAD_REASON_FIELD = 'dead-reason';

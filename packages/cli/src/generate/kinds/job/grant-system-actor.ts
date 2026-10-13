@@ -1,4 +1,7 @@
+import { escapeRegExp } from '../../../check/text/escape-reg-exp.js';
 import { insertInRegion } from '../../../markers/index.js';
+import { withImport } from '../../with-import.js';
+import { permissionOf, type PermissionReference } from './permission-of.js';
 import type { Scope } from '../../scope.js';
 import type { SentCommand } from './sent-command.js';
 
@@ -19,6 +22,10 @@ interface Placement {
   /** What names the grant in the file, however the line was laid out there. */
   readonly anchor: string;
   readonly check: string;
+  /** The import the line needs, added to the file when it does not have it. */
+  readonly needs?: string;
+  /** The same grant as 0.5 wrote it, the permission by its id: a file that holds it already has the grant. */
+  readonly writtenBefore?: RegExp;
 }
 
 /**
@@ -43,20 +50,25 @@ export function grantSystemActor(scope: Scope, job: string, command: SentCommand
 function placementOf(scope: Scope, job: string, permission: string): Placement | undefined {
   const auth = `${scope.config.platformDir}/auth`;
   const actor = `system:${job}`;
+  const read: PermissionReference = permissionOf(scope.config, permission);
 
   switch (scope.config.stack.authz) {
     case 'rbac':
       return {
         file: `${auth}/roles.ts`,
-        line: `'${permission}',`,
-        anchor: `'${permission}',`,
+        line: `${read.written},`,
+        anchor: `${read.written},`,
+        needs: read.importLine,
+        writtenBefore: new RegExp(`'${escapeRegExp(permission)}',`),
         check: `check this grant: the role \`system\`, which every system actor holds, now gives \`${actor}\` the permission \`${permission}\` its command requires.`,
       };
     case 'abac':
       return {
         file: `${auth}/attribute-policies.ts`,
-        line: `permit('system-${job}', ['${permission}'], ({ actor }) => actor.id === '${actor}'),`,
+        line: `permit('system-${job}', [${read.written}], ({ actor }) => actor.id === '${actor}'),`,
         anchor: `'system-${job}',`,
+        needs: read.importLine,
+        writtenBefore: new RegExp(`'system-${escapeRegExp(job)}',\\s*\\['${escapeRegExp(permission)}'\\]`),
         check: `check this rule: it permits \`${actor}\`, and nobody else, the permission \`${permission}\` its command requires.`,
       };
     case 'rebac':
@@ -83,9 +95,9 @@ function operatorOfContext(scope: Scope, actor: string, permission: string): Pla
   };
 }
 
-function written(scope: Scope, { file, line, anchor, check }: Placement): boolean {
-  const content = scope.ws.read(file);
-  const next = content === undefined ? undefined : insertInRegion(content, REGION, line);
+function written(scope: Scope, placement: Placement): boolean {
+  const { file, anchor, check } = placement;
+  const next = withGrant(scope.ws.read(file), placement);
 
   if (next === undefined) {
     return false;
@@ -95,4 +107,14 @@ function written(scope: Scope, { file, line, anchor, check }: Placement): boolea
   scope.ws.step({ file, anchor, text: check });
 
   return true;
+}
+
+function withGrant(content: string | undefined, { line, needs, writtenBefore }: Placement): string | undefined {
+  if (content !== undefined && writtenBefore?.test(content) === true) {
+    return content;
+  }
+
+  const inserted = content === undefined ? undefined : insertInRegion(content, REGION, line);
+
+  return inserted === undefined || needs === undefined ? inserted : withImport(inserted, needs);
 }

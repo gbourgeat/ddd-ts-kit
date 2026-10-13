@@ -82,9 +82,26 @@ The scheduler opens an `ExecutionScope` around each run, so the job writes none 
 | `deadline` | the start plus `timeoutMs`, when the job has one |
 
 Audit columns, the audit trail, log fields, tracing and the correlation stamped on published
-events therefore work as for a request. A job has no tenant: persistence helpers that need
-one (`tenantScopeOf`) are for the use case, which receives the tenant in its command, one
-command per tenant when the work is per tenant.
+events therefore work as for a request.
+
+### Global or per tenant
+
+A job says which, explicitly. `tenancy: 'global'` (the default) runs once per occurrence in no
+tenant: persistence helpers that need one (`tenantScopeOf`) refuse it, and a use case that works
+per tenant receives the tenant in its command. `tenancy: 'per-tenant'` runs once per tenant of
+the `TenantDirectory` given to the scheduler (`tenants` option; registering such a job without
+it throws `InvalidJobScheduleError`):
+
+```ts
+const scheduler = new InProcessJobScheduler({ clock, lock, scope, ids, tenants: new InMemoryTenantDirectory(['acme', 'globex']) });
+
+scheduler.register({ name: 'billing.close-month', schedule: { cron: '0 2 1 * *' }, tenancy: 'per-tenant', run });
+```
+
+Each tenant's run happens in its own execution scope, `tenantId` set, and `execution.tenantId`
+tells the job which; the runs of one occurrence share its correlation id and run one after the
+other. A tenant that fails does not stop the others: the occurrence fails with the first error
+once every tenant had its run. An aborted signal (timeout, stop) stops before the next tenant.
 
 ## Schedules
 

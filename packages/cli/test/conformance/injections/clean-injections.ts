@@ -2,7 +2,7 @@ import type { Injection } from '../injection.js';
 import { PATHS } from '../paths.js';
 
 const { AGGREGATE, DUE_HANDLER, EVENT_HANDLER, HANDLER, POLICY, QUERY_HANDLER, ROUTE, SEND_HANDLER } = PATHS;
-const WITHDRAWN = "    this.state = { ...this.state, status: 'withdrawn' };\n";
+const WITHDRAWN = '    this.state = { ...this.state, status: ReminderStatus.Withdrawn };\n';
 const GUARD = '    if (target === undefined) {\n      return;\n    }\n';
 
 const TO_LINE = `function toLine(item: SearchNotificationsItem): SearchNotificationsLine {
@@ -117,6 +117,14 @@ export const CLEAN_INJECTIONS: readonly Injection[] = [
     changes: [{ file: QUERY_HANDLER, from: "'person');\n\n    return", to: "'person');\n    return" }],
     checker: true,
     eslint: '@stylistic/padding-line-between-statements',
+  },
+  {
+    rule: 'clean/no-magic-number',
+    what: 'a notice doubled by a number without a name in the aggregate',
+    file: AGGREGATE,
+    changes: [{ file: AGGREGATE, from: 'getTime() - NOTICE_MS);', to: 'getTime() - NOTICE_MS * 2);' }],
+    checker: false,
+    eslint: 'ddd-ts-kit/clean-no-magic-number',
   },
   {
     rule: 'clean/braces',

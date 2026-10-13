@@ -3,6 +3,7 @@ import { DelegationError } from '@/contexts/identity/domain/errors/delegation.er
 import { DelegationGranted } from '@/contexts/identity/domain/events/delegation-granted.event';
 import { DelegationRevoked } from '@/contexts/identity/domain/events/delegation-revoked.event';
 import type { Desk } from '@/contexts/identity/domain/value-objects/desk.vo';
+import { DelegationEndCause } from '@/contexts/identity/domain/vocabularies/delegation-end-cause.vocabulary';
 
 /** Why a delegation ended: withdrawn by hand, its end date passed, or one of its two members left the practice. */
 type EndCause = DelegationRevoked['facts']['cause'];
@@ -58,20 +59,20 @@ export class Delegation extends AggregateRoot<string> {
       throw DelegationError.notActive(this.id);
     }
 
-    this.end('revoked', now);
+    this.end(DelegationEndCause.Revoked, now);
   }
 
   /** Ends once its end date is reached at the given instant; asked again, or too early, it changes nothing. */
   expire(at: Date): void {
     if (this.isActive && this.state.endsAt !== undefined && this.state.endsAt.getTime() <= at.getTime()) {
-      this.end('expired', at);
+      this.end(DelegationEndCause.Expired, at);
     }
   }
 
   /** Ends because the practitioner or the assistant is no longer a member of the practice; already ended, it changes nothing. */
   endWithMembership(now: Date): void {
     if (this.isActive) {
-      this.end('member-removed', now);
+      this.end(DelegationEndCause.MemberRemoved, now);
     }
   }
 

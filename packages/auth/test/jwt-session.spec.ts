@@ -45,6 +45,17 @@ describe('JwtAuthenticator session', () => {
     });
   });
 
+  it('reads the scopes the token grants, from scope or from scp, and none when it names none', async () => {
+    expect((await sessionOf({ scope: 'invoices:read  invoices:write' })).scopes).toEqual([
+      'invoices:read',
+      'invoices:write',
+    ]);
+
+    expect((await sessionOf({ scp: ['invoices:read', 7, ''] })).scopes).toEqual(['invoices:read']);
+    expect((await sessionOf({ scope: '' })).scopes).toBeUndefined();
+    expect(await sessionOf({})).not.toHaveProperty('scopes');
+  });
+
   it('keeps nothing of the token in the session', async () => {
     const credential = await token({ sid: 'session-42' });
 

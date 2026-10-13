@@ -1,4 +1,4 @@
-import { type Clock, unwrap } from '@ddd-ts-kit/kernel';
+import { type Clock } from '@ddd-ts-kit/kernel';
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
 import { PersonError } from '@/contexts/identity/domain/errors/person.error';
 import { PracticeError } from '@/contexts/identity/domain/errors/practice.error';
@@ -17,7 +17,7 @@ export class AddMemberHandler implements CommandHandler<AddMemberCommand> {
 
   /** Answers the identifier of the person who is now a member. */
   async execute(command: AddMemberCommand): Promise<string> {
-    const role = unwrap(Role.create(command.member.role));
+    const role = Role.create(command.member.role);
     const target = await this.practiceRepository.findById(command.practiceId);
     const person = await this.personRepository.findById(command.member.personId);
 
