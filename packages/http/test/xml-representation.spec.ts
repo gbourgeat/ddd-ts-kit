@@ -110,8 +110,22 @@ describe('the XML convention of the kit', () => {
     expect(() => xml.read(attack, { name: 'r', schema: {} })).toThrow('The request is not valid.');
   });
 
+  it('reads names an object inherits as names of the document, never as what the object inherits', () => {
+    const shape = { name: 'r', schema: { type: 'object', properties: { b: { type: 'boolean' } } } };
+
+    const read = xml.read(
+      '<r constructor="c"><b>constructor</b><__proto__><polluted>yes</polluted></__proto__></r>',
+      shape,
+    );
+
+    expect(read).toEqual({ b: 'constructor', constructor: 'c', ['__proto__']: { polluted: 'yes' } });
+    expect(Object.getPrototypeOf(read)).toBe(Object.prototype);
+    expect(Object.keys(read as object)).toEqual(['b', '__proto__', 'constructor']);
+  });
+
   it.each([
     ['an undeclared entity', '<r>&x;</r>'],
+    ['an entity named after what an object inherits', '<r>&constructor;&toString;</r>'],
     ['a lone ampersand', '<r>a & b</r>'],
     ['an element left open', '<r><a></r>'],
     ['content after the root', '<r/><s/>'],

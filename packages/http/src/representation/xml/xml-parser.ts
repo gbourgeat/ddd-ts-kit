@@ -105,11 +105,17 @@ export class XmlParser {
 
       const value = this.match(ATTRIBUTE_VALUE);
 
-      if (value === undefined || name in attributes) {
+      if (value === undefined || Object.hasOwn(attributes, name)) {
         throw new XmlSyntaxError(`the attribute ${name} is malformed or repeated`);
       }
 
-      attributes[name] = decodeEntities(value[1] ?? value[2] ?? '');
+      // Defined, not assigned: an attribute named __proto__ is an attribute like any other.
+      Object.defineProperty(attributes, name, {
+        value: decodeEntities(value[1] ?? value[2] ?? ''),
+        enumerable: true,
+        writable: true,
+        configurable: true,
+      });
     }
   }
 

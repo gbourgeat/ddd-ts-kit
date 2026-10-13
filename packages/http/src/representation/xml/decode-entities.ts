@@ -1,6 +1,14 @@
 import { XmlSyntaxError } from './xml-syntax-error.js';
 
-const PREDEFINED: Readonly<Record<string, string>> = { lt: '<', gt: '>', amp: '&', quot: '"', apos: "'" };
+// A map, not an object: `&constructor;` names no entity, whatever an object inherits.
+const PREDEFINED: ReadonlyMap<string, string> = new Map([
+  ['lt', '<'],
+  ['gt', '>'],
+  ['amp', '&'],
+  ['quot', '"'],
+  ['apos', "'"],
+]);
+
 const REFERENCE = /&(#x[0-9A-Fa-f]+|#[0-9]+|[A-Za-z]+);|&/g;
 const HEXADECIMAL = 16;
 const DECIMAL = 10;
@@ -18,7 +26,7 @@ export function decodeEntities(raw: string): string {
 }
 
 function characterOf(reference: string, whole: string): string {
-  const predefined = PREDEFINED[reference];
+  const predefined = PREDEFINED.get(reference);
 
   if (predefined !== undefined) {
     return predefined;

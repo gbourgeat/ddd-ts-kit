@@ -3,7 +3,14 @@ import { ENTRY_ELEMENT, KEY_ATTRIBUTE } from './xml-convention.js';
 import type { XmlElement } from './xml-element.js';
 
 const NUMBER = /^\s*-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?\s*$/;
-const BOOLEANS: Readonly<Record<string, boolean>> = { true: true, false: false, 1: true, 0: false };
+
+const BOOLEANS: ReadonlyMap<string, boolean> = new Map([
+  ['true', true],
+  ['false', false],
+  ['1', true],
+  ['0', false],
+]);
+
 /** What a document declares about itself, never a value: namespaces and the attributes of the XSI namespace. */
 const DECLARATION = /^(?:xmlns(?::|$)|xsi:)/;
 /** A schema that declares nothing, for what the schema of the body does not describe. */
@@ -42,7 +49,7 @@ export class XmlValueReader {
       const read = this.member(element, { key, node: child }, claimed);
 
       if (read !== undefined) {
-        record[key] = read;
+        setOwn(record, key, read);
       }
     }
 
@@ -56,7 +63,7 @@ export class XmlValueReader {
     const name = hints.name ?? key;
 
     if (hints.attribute === true) {
-      const text = element.attributes[name];
+      const text = ownOf(element.attributes, name);
 
       return text === undefined ? undefined : scalar(text, node);
     }
@@ -76,14 +83,14 @@ export class XmlValueReader {
     for (const child of element.children.filter((candidate) => !claimed.has(candidate))) {
       const key = keyOf(child);
       const value: unknown = child.children.length > 0 ? this.record(child, NOTHING) : child.text;
-      const earlier = record[key];
+      const earlier = ownOf(record, key);
 
-      record[key] = earlier === undefined ? value : [earlier, value].flat();
+      setOwn(record, key, earlier === undefined ? value : [earlier, value].flat());
     }
 
     for (const [name, text] of Object.entries(element.attributes)) {
-      if (!DECLARATION.test(name) && !(name in record)) {
-        record[name] = text;
+      if (!DECLARATION.test(name) && !Object.hasOwn(record, name)) {
+        setOwn(record, name, text);
       }
     }
   }
@@ -101,11 +108,11 @@ function isNil(element: XmlElement): boolean {
 }
 
 function isNamed(element: XmlElement, name: string): boolean {
-  return element.name === name || (element.name === ENTRY_ELEMENT && element.attributes[KEY_ATTRIBUTE] === name);
+  return element.name === name || (element.name === ENTRY_ELEMENT && ownOf(element.attributes, KEY_ATTRIBUTE) === name);
 }
 
 function keyOf(element: XmlElement): string {
-  return element.name === ENTRY_ELEMENT ? (element.attributes[KEY_ATTRIBUTE] ?? element.name) : element.name;
+  return element.name === ENTRY_ELEMENT ? (ownOf(element.attributes, KEY_ATTRIBUTE) ?? element.name) : element.name;
 }
 
 function scalar(text: string, node: SchemaNode): unknown {
@@ -116,8 +123,18 @@ function scalar(text: string, node: SchemaNode): unknown {
   }
 
   if (type === 'boolean') {
-    return BOOLEANS[text.trim()] ?? text;
+    return BOOLEANS.get(text.trim()) ?? text;
   }
 
   return text;
+}
+
+/** The value a record holds itself under `key`, never one it inherits: `constructor` or `__proto__` is no member of a document. */
+function ownOf<T>(record: Readonly<Record<string, T>>, key: string): T | undefined {
+  return Object.hasOwn(record, key) ? record[key] : undefined;
+}
+
+/** Defined, not assigned: an element named `__proto__` becomes a key the schema then refuses, never the prototype of the record. */
+function setOwn(record: Record<string, unknown>, key: string, value: unknown): void {
+  Object.defineProperty(record, key, { value, enumerable: true, writable: true, configurable: true });
 }

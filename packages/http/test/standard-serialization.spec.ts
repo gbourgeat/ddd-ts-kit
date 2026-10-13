@@ -101,6 +101,20 @@ describe('the serialization rules every representation follows, held once', () =
     expect(() => decimalText('1,5')).toThrow(RangeError);
   });
 
+  it('writes a negative amount in CSV as the number it is, and still guards a text a spreadsheet would run', async () => {
+    const shape = {
+      name: 'ledger',
+      schema: { type: 'array', items: { type: 'object', properties: { amount: {}, label: {} } } },
+    };
+
+    const rows = [
+      { amount: money('-12.50', 'EUR').amount, label: '-2+3' },
+      { amount: '+4', label: '=1+1' },
+    ];
+
+    expect(await text(new CsvRepresentation().write(rows, shape))).toBe("amount,label\r\n-12.50,'-2+3\r\n+4,'=1+1\r\n");
+  });
+
   it('never writes money without an ISO 4217 currency', () => {
     expect(money('9.99', 'USD')).toEqual({ amount: '9.99', currency: 'USD' });
     expect(() => money('9.99', 'usd')).toThrow(RangeError);
