@@ -197,11 +197,15 @@ integration:
   services:
     - name: $POSTGRES_IMAGE
       alias: postgres
+    - name: docker.dragonflydb.io/dragonflydb/dragonfly:v2.0.2
+      alias: dragonfly
+      command: ['--proactor_threads=2', '--maxmemory=512mb']
   variables:
     POSTGRES_USER: app
     POSTGRES_PASSWORD: app
     POSTGRES_DB: app
     DDD_TS_KIT_TEST_DATABASE_URL: postgres://app:app@postgres:5432/app
+    DDD_TS_KIT_TEST_REDIS_URL: redis://dragonfly:6379
   script:
     - if [ "$AFFECTED_integration" != "true" ]; then echo "No adapter package is reached, no spec to run."; exit 0; fi
     - npm run ci:test:integration -- --reporter=default --reporter=junit --outputFile.junit=reports/junit.xml

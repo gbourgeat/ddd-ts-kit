@@ -75,7 +75,7 @@ Provided, as building blocks:
 - **the correlation id and causation id** carried by the execution context and stamped on
   published events, so every step of one process can be found again in logs, traces and the
   audit trail;
-- **scheduled jobs**, which can drive timeouts (below);
+- **scheduled jobs** and **delayed background jobs**, which can drive timeouts (below);
 - **dead letters and error reporting** for a step that fails for good.
 
 Not provided (checked against the packages of this repository on 2026-10-10: no package, port
@@ -83,7 +83,8 @@ or generator for it):
 
 - no saga or process manager base class, DSL or framework;
 - no persisted state machine or workflow engine;
-- no timeout manager or delayed message: no "deliver this event in fifteen minutes";
+- no timeout manager of its own: a deadline is a [background job](background-jobs.md) enqueued
+  with a delay, or a scheduled job that derives the overdue work from the state (below);
 - no automatic compensation: undoing is code the project writes;
 - no command sent to another context: a context only reacts to events or answers through a
   gateway port.

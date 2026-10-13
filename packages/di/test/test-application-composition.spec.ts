@@ -103,6 +103,7 @@ describe('createTestApplication', () => {
     expect(Object.keys(app).sort()).toEqual([
       'actorContext',
       'as',
+      'backgroundJobs',
       'cache',
       'clock',
       'commandBus',
@@ -114,6 +115,7 @@ describe('createTestApplication', () => {
       'executionScope',
       'get',
       'ids',
+      'jobQueue',
       'jobs',
       'lock',
       'logger',

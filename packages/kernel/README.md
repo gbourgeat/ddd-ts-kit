@@ -516,6 +516,31 @@ receives: `scheduledAt`, `startedAt`, `attempt` and an abort `signal`. What the 
 across a change of clocks, what one instance among several guarantees and how a job is tested
 are in the README of `@ddd-ts-kit/scheduling`.
 
+### Background
+
+```ts
+// contexts/billing/application/background/compile-statements.background-job.ts
+@Background({ maxAttempts: 3, timeout: '10m' })
+export class CompileStatementsJob implements BackgroundJob<CompileStatementsPayload> {
+  static readonly jobName = 'billing.compile-statements';
+
+  constructor(private readonly commands: CommandBus) {}
+
+  async run(payload: CompileStatementsPayload, execution: BackgroundJobExecution): Promise<void> {
+    await this.commands.execute(new CompileStatements(execution.jobId, payload.month));
+  }
+}
+```
+
+A background job is named by its static `jobName`, which is how a use case enqueues it
+(`jobs.enqueue(CompileStatementsJob, { month })`, the payload typed by `run`). The decorator
+takes the options, all optional: `maxAttempts` (5), `backoff` (`{ baseMs: 1000, factor: 2,
+maxMs: 300000 }`), `timeout` and `lease` (30 s), as milliseconds or `'10m'`. A name that is not
+`<context>.<job-name>` and options it cannot read throw a `DeclarationError` when the file
+loads. `BackgroundJobExecution` is what `run` receives: `jobId`, `attempt`, `enqueuedAt`,
+`startedAt`, the `checkpoint` an earlier attempt saved, an abort `signal`, `saveCheckpoint(value)`
+and `reportProgress({ done, total })`.
+
 ### Decorator modes
 
 Every decorator of this entry works under both decorator modes of TypeScript, and the same
@@ -758,6 +783,28 @@ computed from (`InvalidJobScheduleError`, code `INVALID_JOB_SCHEDULE`, otherwise
 fills in the defaults. The kernel holds no scheduler: the in-process one, the computation of
 occurrences and the manual one for tests are `@ddd-ts-kit/scheduling`, and the contract of the
 port is `jobSchedulerContract` of `@ddd-ts-kit/testing/contracts`.
+
+### JobQueue
+
+```ts
+abstract class JobQueue {
+  abstract enqueue<P>(job: BackgroundJobType<P>, payload: P, options?: EnqueueOptions): Promise<EnqueuedJob>;
+  abstract cancel(id: string): Promise<boolean>;
+  abstract find(id: string): Promise<QueuedJob | undefined>; // status, attempts, progress, last error code
+}
+```
+
+Where a use case hands work to a worker. `EnqueueOptions` are `delay` or `runAt`, and an
+`idempotencyKey` (a job of the same name and key already kept is answered, `duplicate: true`).
+Called inside a unit of work, the job is added with the business change: the stores of the ORM
+packages write it with the transaction, a store that cannot (Redis, memory) waits for the commit
+through `whenCommitted(write, failed?)`, the helper any such adapter uses. A run happens inside
+`ExecutionScope`, in the context `executionContextOfBackgroundJob({ jobId, enqueuedBy, deadline? })`
+builds: origin `queue`, the correlation, actor and tenant of the work that enqueued it
+(`EnqueuedBy`), the job as the cause. `backgroundJobPolicy(options)` fills in the defaults and
+`retryDelayMs(policy, attempt)` is the backoff. The queue, its worker and its stores are
+`@ddd-ts-kit/scheduling` and the ORM packages; why and how:
+[Background jobs](../../docs/concepts/background-jobs.md).
 
 ### RateLimiter
 

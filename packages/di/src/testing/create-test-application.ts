@@ -13,6 +13,7 @@ import {
   InMemoryUnitOfWork,
   IntegrationEventPublisher,
   IntegrationEventSubscriber,
+  JobQueue,
   JobScheduler,
   Lock,
   Logger,
@@ -24,6 +25,7 @@ import {
   dispatchingOnSave,
 } from '@ddd-ts-kit/kernel';
 import { describeToken } from '@ddd-ts-kit/kernel/declarations';
+import { JobStore, QueueWorker } from '@ddd-ts-kit/scheduling';
 import type { Application } from '../application/application.js';
 import { assemble } from '../application/assemble.js';
 import { override, type Override } from '../application/override.js';
@@ -128,6 +130,9 @@ function kernelOverrides(kernel: TestKernel): Override[] {
     override(Lock, kernel.lock),
     override(RateLimiter, kernel.rateLimiter),
     override(JobScheduler, kernel.jobs.scheduler),
+    override(JobQueue, kernel.jobQueue),
+    override(JobStore, kernel.backgroundJobs.store),
+    override(QueueWorker, kernel.backgroundJobs.worker),
   ];
 }
 

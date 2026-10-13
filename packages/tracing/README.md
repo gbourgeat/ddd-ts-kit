@@ -153,6 +153,7 @@ This tree is asserted by `test/unit-of-work-phases.spec.ts`.
 | `publish <type>` | PRODUCER | `tracedPublisher()` around a bus | `messaging.system`, `messaging.operation.name` (`publish`), `messaging.operation.type` (`send`), `messaging.destination.name`, `messaging.message.id` |
 | `process <consumer>` | CONSUMER | `tracedConsumer()`, one per delivery | `messaging.system`, `messaging.operation.*` (`process`), `messaging.destination.name`, `messaging.message.id`, `messaging.consumer.group.name`, `app.messaging.source`, `app.messaging.attempt`, `app.messaging.redelivered`, `app.context`, `app.correlation_id`, `app.origin`, `app.outcome` |
 | `job <name>` | INTERNAL, always a root | `tracedJob()` | `app.job.name`, `app.job.scheduled_at`, `app.job.attempt`, `app.context`, `app.correlation_id`, `app.origin`, `app.outcome` |
+| `job <name>` of a background job | CONSUMER, child of the span that enqueued it | `tracedBackgroundJob()`, one per attempt; `traceparent()` (`captureTraceparent`) is stored with the job when it is enqueued | `app.job.name`, `app.job.id`, `app.job.attempt`, `app.context`, `app.correlation_id`, `app.origin` (`queue`), `app.outcome` |
 
 - Names are stable and of low cardinality: a route template, never a URL; a class, a port, an
   event type or a consumer name, never an identifier.

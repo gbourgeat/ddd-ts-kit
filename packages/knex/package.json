@@ -1,7 +1,7 @@
 {
   "name": "@ddd-ts-kit/knex",
   "version": "0.5.0",
-  "description": "Knex adapters for the kernel ports: unit of work, transactional outbox store, processed-event store.",
+  "description": "Knex adapters for the kernel ports: unit of work, transactional outbox store, processed-event store, background job store.",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -27,7 +27,8 @@
   ],
   "dependencies": {
     "@ddd-ts-kit/kernel": "0.5.0",
-    "@ddd-ts-kit/events": "0.5.0"
+    "@ddd-ts-kit/events": "0.5.0",
+    "@ddd-ts-kit/scheduling": "0.5.0"
   },
   "peerDependencies": {
     "knex": "^3.0.0"

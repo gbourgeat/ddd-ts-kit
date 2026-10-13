@@ -506,6 +506,28 @@ Criteria and read models were never run on MySQL or SQLite.
   `(consumer, event_id)`. Run the consumer inside the unit of work: the mark then commits with
   the effects of the handler, and disappears with them if it fails.
 
+## Background jobs
+
+`KnexJobStore` is the `JobStore` of `@ddd-ts-kit/scheduling` on PostgreSQL: the background jobs
+of a context in a table of its schema, `createJobTable(knex, { schema })` called from a
+migration. `add` runs on the executor of the context, so a job enqueued by a command is written
+by the transaction of the command; claims select the due rows `FOR UPDATE SKIP LOCKED` in a
+short transaction of their own and lease them. Bind it in the composition root:
+
+```ts
+kernelModule({ unitOfWork, jobStore: new KnexJobStore(unitOfWork, { schema: 'scheduling' }) });
+```
+
+```ts
+// migrations/20261013090000_background-jobs.js
+export const up = (knex) => createJobTable(knex, { schema: 'scheduling' });
+export const down = (knex) => dropJobTable(knex, { schema: 'scheduling' });
+```
+
+The store passes `jobStoreContract`, its unit of work suite included, on PGlite and on
+PostgreSQL. MySQL and SQLite are not covered: the table uses `jsonb` and a partial index.
+What the jobs guarantee: [Background jobs](../../docs/concepts/background-jobs.md).
+
 ## Dialect coverage
 
 What follows is about this package. The CLI generates for PostgreSQL only: `init --orm knex`

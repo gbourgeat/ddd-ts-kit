@@ -50,6 +50,7 @@ Ordered as a reading path in [concepts/README.md](concepts/README.md).
 | [Observability](concepts/observability.md) | tracing, logs, metrics, error reporting, the correlation id |
 | [Resilience](concepts/resilience.md) | retry, timeout, circuit breaker, bulkhead, cache and their failure modes |
 | [Scheduled jobs](concepts/scheduled-jobs.md) | jobs that trigger use cases, several instances, idempotence |
+| [Background jobs](concepts/background-jobs.md) | work enqueued in the transaction of a command, run by a worker at least once, leases, checkpoints |
 | [Clean code](concepts/clean-code.md) | naming, small functions, stepdown, comments, with before and after |
 | [Testing strategy](concepts/testing-strategy.md) | fakes versus mocks, builders, contract tests, the four levels |
 

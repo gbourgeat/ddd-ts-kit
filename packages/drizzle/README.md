@@ -461,10 +461,26 @@ and on PostgreSQL 18.
   the consumer inside the unit of work: the mark then commits with the effects of the handler,
   and disappears with them if it fails.
 
+## Background jobs
+
+`DrizzleJobStore` is the `JobStore` of `@ddd-ts-kit/scheduling`: the background jobs of a
+context in `jobsTable('scheduling')`, which the schema files of drizzle-kit include so that a
+migration creates it. `add` runs on the executor of the context, inside the transaction of the
+command that enqueues; claims select the due rows `FOR UPDATE SKIP LOCKED` and lease them.
+
+```ts
+export const schedulingJobs = jobsTable('scheduling');
+
+kernelModule({ unitOfWork, jobStore: new DrizzleJobStore(unitOfWork, schedulingJobs) });
+```
+
+It passes `jobStoreContract`, its unit of work suite included, on PGlite. What the jobs
+guarantee: [Background jobs](../../docs/concepts/background-jobs.md).
+
 ## Testing an adapter
 
 The unit of work of this package passes `unitOfWorkContract`, and its stores
-`outboxStoreContract` and `processedEventStoreContract`, of `@ddd-ts-kit/testing/contracts` on
+`outboxStoreContract`, `processedEventStoreContract` and `jobStoreContract`, of `@ddd-ts-kit/testing/contracts` on
 PGlite (PostgreSQL in process, no container). Hold your repositories to `repositoryContract`
 the same way, next to their in-memory fake.
 

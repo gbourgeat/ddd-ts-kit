@@ -823,6 +823,47 @@ createApplication({
 `describe()` for the next run and the last outcome of each job. A context extracted as its own
 service takes its jobs with it: they belong to its module, and nothing is global.
 
+## Background jobs
+
+A class of `application/background/` that carries `@Background` is a background job of its
+context, named by its static `jobName`:
+
+```ts
+// contexts/billing/application/background/compile-statements.background-job.ts
+@Background({ maxAttempts: 3, timeout: '10m' })
+export class CompileStatementsJob implements BackgroundJob<CompileStatementsPayload> {
+  static readonly jobName = 'billing.compile-statements';
+
+  constructor(private readonly commands: CommandBus) {}
+
+  async run(payload: CompileStatementsPayload, execution: BackgroundJobExecution): Promise<void> {
+    await this.commands.execute(new CompileStatements(execution.jobId, payload.month));
+  }
+}
+```
+
+An explicit module writes `builder.backgroundJob('billing.compile-statements', { maxAttempts: 3 })
+.handledBy(CompileStatementsJob, [CommandBus])`; a name other than the `jobName` of the class is
+refused (`INVALID_JOB_SETTINGS`), a name declared twice too (`DUPLICATE_JOB`).
+
+- **Registered when the application is created** on the `QueueWorker` of `@ddd-ts-kit/scheduling`,
+  which then consumes the queue of the context. The class is built on its first attempt.
+- **Consumed while the process runs the jobs**: `start()` starts the worker after the scheduler
+  when `jobs.start` is not `false`, `stop()` stops it with the scheduler, waiting for the
+  attempts in progress, then aborting them. A process started with `jobs: { start: false }`
+  enqueues and runs nothing.
+- **`kernelModule()`** binds `JobStore` (in memory by default: bind `KnexJobStore`,
+  `DrizzleJobStore` or `RedisJobStore` with `jobStore`, or no job reaches a worker of another
+  process), `JobQueue` (a `StoredJobQueue` on it, which stores the `traceparent` given by the
+  instrumentation) and `QueueWorker` (tuned by `queues: { concurrency, pollIntervalMs, graceMs }`,
+  failures to the `ErrorReporter`).
+- **`describe().backgroundJobs`** lists each job, its queue and its options, defaults filled in.
+
+In a test application, `app.jobQueue` is the queue the use cases enqueue on, in memory, and
+`app.backgroundJobs.runDue()` runs what is due on `app.clock` and throws what an attempt threw;
+`app.backgroundJobs.store.list()` shows what was enqueued. What the jobs guarantee:
+[Background jobs](../../docs/concepts/background-jobs.md).
+
 ## Tests
 
 A declared context is tested like an explicit one: the module is the unit, the fakes replace

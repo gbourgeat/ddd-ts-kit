@@ -24,3 +24,8 @@ export * from './read-model/criteria-to-knex.js';
 export * from './read-model/knex-read-model-options.js';
 export * from './read-model/knex-read-model-table.js';
 export * from './read-model/knex-read-model-store.js';
+export * from './jobs/job-table-name.js';
+export * from './jobs/job-table-options.js';
+export * from './jobs/create-job-table.js';
+export * from './jobs/drop-job-table.js';
+export * from './jobs/knex-job-store.js';

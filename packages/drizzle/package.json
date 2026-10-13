@@ -1,7 +1,7 @@
 {
   "name": "@ddd-ts-kit/drizzle",
   "version": "0.5.0",
-  "description": "Drizzle adapters for the kernel ports on PostgreSQL: unit of work, transactional outbox store, processed-event store, one schema per context.",
+  "description": "Drizzle adapters for the kernel ports on PostgreSQL: unit of work, transactional outbox store, processed-event store, background job store, one schema per context.",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -27,7 +27,8 @@
   ],
   "dependencies": {
     "@ddd-ts-kit/kernel": "0.5.0",
-    "@ddd-ts-kit/events": "0.5.0"
+    "@ddd-ts-kit/events": "0.5.0",
+    "@ddd-ts-kit/scheduling": "0.5.0"
   },
   "peerDependencies": {
     "drizzle-orm": ">=0.40.0"

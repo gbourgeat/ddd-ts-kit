@@ -6,6 +6,25 @@ list the pull requests behind it.
 
 ## Unreleased
 
+**Background jobs.** A use case hands work to a worker with the new `JobQueue` port of the
+kernel: `jobs.enqueue(CompileStatementsJob, { month }, { delay, runAt, idempotencyKey })`, the
+job a class with a static `jobName` declared with `@Background({ maxAttempts, backoff, timeout,
+lease })`, its payload typed by its `run`. With a database the job is a row of the jobs table of
+its context, written by the transaction of the command (`KnexJobStore` and `createJobTable` in
+`@ddd-ts-kit/knex`, `DrizzleJobStore` and `jobsTable` in `@ddd-ts-kit/drizzle`), so a command
+that rolls back leaves no job and one that commits loses none; `RedisJobStore` and
+`InMemoryJobStore` write it once the unit of work committed (`whenCommitted`, new in the
+kernel). The `QueueWorker` of `@ddd-ts-kit/scheduling` claims the jobs of the queues of its
+contexts with a lease it extends by heartbeats, at least once, with retries and an exponential
+backoff, dead jobs, cancellation, progress, checkpoints for long jobs, a concurrency per queue
+and a graceful stop; each attempt runs as the actor, in the correlation, the tenant and the
+trace of the work that enqueued it, is counted in `background_job_runs_total` and
+`background_job_duration_ms`, and reports an unexpected failure to the error reporter.
+`@ddd-ts-kit/di` registers the declared jobs and runs the worker in the processes that run the
+jobs; the test application gains `jobQueue` and `backgroundJobs.runDue()`. One contract,
+`jobStoreContract`, holds every store; the Redis store is proven on Dragonfly in CI. Prisma and
+TypeORM get no store yet. See [Background jobs](docs/concepts/background-jobs.md).
+
 **Every package carries the MIT notice.** Each published package now holds the `LICENSE` of the
 repository next to its `dist/`, and `npm run package:check` refuses a tarball without it, or with
 another text. Earlier versions were published without it.

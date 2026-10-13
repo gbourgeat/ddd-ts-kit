@@ -1,7 +1,7 @@
 {
   "name": "@ddd-ts-kit/redis",
   "version": "0.5.0",
-  "description": "Adapters of the kernel ports on the Redis protocol (Redis, Dragonfly, Valkey): cache, distributed lock, rate limiter, relay wake-up signal, and an integration event provider on Redis Streams.",
+  "description": "Adapters of the kernel ports on the Redis protocol (Redis, Dragonfly, Valkey): cache, distributed lock, rate limiter, relay wake-up signal, a background job store, and an integration event provider on Redis Streams.",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -34,7 +34,8 @@
     "dist"
   ],
   "dependencies": {
-    "@ddd-ts-kit/kernel": "0.5.0"
+    "@ddd-ts-kit/kernel": "0.5.0",
+    "@ddd-ts-kit/scheduling": "0.5.0"
   },
   "peerDependencies": {
     "ioredis": "^5.0.0 || ^6.0.0",

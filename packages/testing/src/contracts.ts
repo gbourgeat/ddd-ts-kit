@@ -21,6 +21,8 @@ export {
   type JobSchedulerContractOptions,
   type JobSchedulerUnderContract,
 } from './contracts/job-scheduler-contract.js';
+export { jobStoreContract, type JobStoreContractOptions } from './contracts/job-store-contract.js';
+export type { JobStoreUnderContract } from './contracts/job-store/job-store-under-contract.js';
 export { lockContract, type LockContractOptions } from './contracts/lock-contract.js';
 export { loggerContract, type LoggerContractOptions } from './contracts/logger-contract.js';
 export type { CreateLogger } from './contracts/logger/create-logger.js';

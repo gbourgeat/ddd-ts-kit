@@ -14,3 +14,5 @@ export { RedisRelaySignal, type RedisRelaySignalOptions } from './relay/redis-re
 export { relayWakeUpMiddleware } from './relay/relay-wake-up-middleware.js';
 export { InMemoryLock, Lock, type AcquireOptions, type LockHandle, type WaitingOptions } from '@ddd-ts-kit/kernel';
 export { InMemoryRateLimiter, RateLimiter, type RateLimit, type RateLimitDecision } from '@ddd-ts-kit/kernel';
+export { RedisJobStore } from './jobs/redis-job-store.js';
+export type { RedisJobStoreOptions } from './jobs/redis-job-store-options.js';

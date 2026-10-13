@@ -1,5 +1,6 @@
 import { dispatchAfterCommit } from './dispatch-after-commit.js';
 import { dispatchBeforeCommit } from './dispatch-before-commit.js';
+import { runStagedWrites } from './run-staged-writes.js';
 import { unitOfWorkScope, type UnitOfWorkScope } from './unit-of-work-scope.js';
 
 /**
@@ -11,7 +12,8 @@ import { unitOfWorkScope, type UnitOfWorkScope } from './unit-of-work-scope.js';
  * inside `transaction`: the handlers see every save, and what they save or append to the outbox
  * commits with the rest. A handler that fails, like `work` that fails, rejects the whole: the
  * transaction rolls back, the waiting events are dropped and never come back on the aggregates.
- * Once `transaction` has resolved, and only then, the `after-commit` handlers run.
+ * Once `transaction` has resolved, and only then, the writes staged by `whenCommitted` run, then
+ * the `after-commit` handlers.
  *
  * Called inside a unit of work already running on the same asynchronous call chain it joins it:
  * `transaction(work)` and nothing else, so one dispatch, at the end of the outermost. Two
@@ -34,6 +36,7 @@ export async function withinUnitOfWork<T>(
       scope.queue.length = 0;
     });
 
+  await runStagedWrites(scope);
   await dispatchAfterCommit(scope);
 
   return result;

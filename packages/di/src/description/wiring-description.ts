@@ -1,4 +1,4 @@
-import type { DependencyKind, JobPolicy } from '@ddd-ts-kit/kernel';
+import type { BackgroundJobPolicy, DependencyKind, JobPolicy } from '@ddd-ts-kit/kernel';
 import type { BindingSource } from '../wiring/binding-source.js';
 import type { Lifetime } from '../wiring/lifetime.js';
 
@@ -71,6 +71,15 @@ export interface ScheduledJobDescription extends OriginDescription, JobPolicy {
   readonly module: string;
 }
 
+/** A background job as the worker will run it: the defaults of its options filled in. */
+export interface BackgroundJobDescription extends OriginDescription, BackgroundJobPolicy {
+  readonly name: string;
+  /** The queue it is enqueued on: its context. */
+  readonly queue: string;
+  readonly job: string;
+  readonly module: string;
+}
+
 /** One event a projection applies: an integration event with its version, or a domain event of its own context. */
 export interface AppliedEventDescription {
   readonly kind: 'integration' | 'domain';
@@ -100,6 +109,8 @@ export interface WiringDescription {
   readonly policies: readonly PolicyDescription[];
   /** The declared jobs. What they did last and when they run next is asked to the job scheduler. */
   readonly jobs: readonly ScheduledJobDescription[];
+  /** The declared background jobs. What a queue holds is asked to the job store. */
+  readonly backgroundJobs: readonly BackgroundJobDescription[];
   /** The declared projections, each with the events it applies. */
   readonly projections: readonly ProjectionDescription[];
   /** Every overridden token, including those no module binds. */

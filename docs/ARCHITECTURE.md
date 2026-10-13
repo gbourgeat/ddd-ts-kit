@@ -59,6 +59,7 @@ src/
       authorization/             <context>.permissions.ts, *.policy.ts (who may do what, here)
       event-handlers/            *.event-handler.ts (reactions to this context's domain events)
       scheduling/                *.job.ts          (jobs run by time: schedule to command)
+      background/                *.background-job.ts (work enqueued by a use case, run by a worker)
       projections/               *.projection.ts   (projectors: events to one read model)
       integration/
         publishers/              *.publisher.ts    (domain event to integration event)
@@ -371,6 +372,18 @@ not at all, so the job or its command is idempotent, and `execution.scheduledAt`
 clock, says which period the work is for. Jobs can run in the API process or in a dedicated
 worker, and a context extracted as a service takes its jobs with it.
 
+**Background jobs.** Work a use case hands to a worker, to run later and outside of its
+request, is a background job: a class with a static `jobName` (`<context>.<job>`), declared
+with `@Background({ maxAttempts, timeout, lease })`, that triggers use cases like a scheduled
+job. A use case enqueues it on the `JobQueue` port of the kernel, in its unit of work: with a
+database the job is a row of the jobs table of its context, written by the transaction of the
+command, so a command that rolls back leaves no job and one that commits loses none. The queue
+of a job is its context, and a worker consumes the queues of the contexts it is given. Delivery
+is at least once (a lease that the worker extends by heartbeats brings back the job of a worker
+that died), so the job is idempotent and a long one saves a checkpoint to resume from. The run
+continues the correlation, the actor, the tenant and the trace of the work that enqueued it.
+See [Background jobs](concepts/background-jobs.md).
+
 **Ports and adapters.** A port is named for what the application needs
 (`PaymentGateway`), not for the technology (`StripeClient`). Each port has a fake in `test/fakes/`.
 
@@ -482,7 +495,7 @@ every query, log fields, the correlation id stamped on published events) reads t
 
 **Standard interfaces.** The kernel defines the shapes every project shares, so adapters and
 tooling interoperate: `Actor`, `Session`, `ExecutionContext`, `Logger`, `Metrics`, `Cache`,
-`Lock`, `RateLimiter`, `JobScheduler`, `ErrorReporter`, `Page` and `PageRequest`, `AuditStamp`, `TenantScoped`, the audit
+`Lock`, `RateLimiter`, `JobScheduler`, `JobQueue`, `ErrorReporter`, `Page` and `PageRequest`, `AuditStamp`, `TenantScoped`, the audit
 ports `AuditTrail` and `AuditReader` with their `AuditEntry`, next to `Clock`, `IdGenerator`
 and `UnitOfWork`. A project extends them without forking, by augmenting the extension interfaces
 the kernel leaves open (`SessionExtensions`, `ExecutionContextExtensions`, ...). A project
@@ -534,7 +547,8 @@ wires it once. One action is one trace: the request, the use case, each call to 
 a gateway or an outside system, the domain events dispatched at the end of the unit of work
 and their handlers (before the commit, then after it), the outbox append, then, later and in
 the same trace, the publication by the relay and each consuming
-context with the commands it sends. A scheduled job is a trace of its own. Span names are
+context with the commands it sends. A scheduled job is a trace of its own; a background job
+continues the trace of the work that enqueued it, one `job <name>` span per attempt. Span names are
 stable and low in cardinality (`command BookAppointment`, `repository
 AppointmentRepository.save`, `process notification.appointment-booked`: `<kind> <Name>` for a
 use case, `<kind> <Port>.<method>` for a binding, `process <consumer>` for a consumed event); health, readiness

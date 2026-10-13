@@ -20,3 +20,5 @@ export * from './postgres/read-model/criteria-to-drizzle.js';
 export * from './postgres/read-model/drizzle-read-model-options.js';
 export * from './postgres/read-model/drizzle-read-model-table.js';
 export * from './postgres/read-model/drizzle-read-model-store.js';
+export * from './postgres/jobs/jobs-table.js';
+export * from './postgres/jobs/drizzle-job-store.js';

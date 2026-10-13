@@ -22,6 +22,7 @@ export { isNoiseRoute } from './http/is-noise-route.js';
 export { NOISE_PATHS } from './http/noise-paths.js';
 export { tracedRoutes, type TracedResponse, type TracedRoute, type TracedRoutesOptions } from './http/traced-routes.js';
 export { tracedJob, type TracedJobOptions } from './jobs/traced-job.js';
+export { tracedBackgroundJob } from './jobs/traced-background-job.js';
 export { DROPPED_SPANS_ATTRIBUTE } from './local-root/admit-dependency-span.js';
 export { CORRELATION_ID_ATTRIBUTE, ORIGIN_ATTRIBUTE } from './local-root/correlate.js';
 export { LocalRootTracker } from './local-root/local-root-tracker.js';
