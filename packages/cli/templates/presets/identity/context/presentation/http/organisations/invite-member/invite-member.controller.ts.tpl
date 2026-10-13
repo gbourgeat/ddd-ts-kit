@@ -49,7 +49,7 @@ const accepted = zodSchema(z.object({ id: z.string(), token: z.string() }), { io
   params,
   body,
   response: { status: 201, description: 'Issued; the body carries the token to send to the person, given once and never stored.', body: accepted },
-  errors: ['INVALID_EMAIL_ADDRESS', 'OWNERS_ONLY'],
+  errors: ['INVALID_EMAIL_ADDRESS', 'ABOVE_OWN_ROLE', 'OWNERS_ONLY'],
 })
 export class InviteMemberController {
   constructor(private readonly commands: CommandBus) {}

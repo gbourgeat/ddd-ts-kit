@@ -20,6 +20,14 @@ export class AccountError extends ConceptError {
     });
   }
 
+  static emailNotVerified(accountId: string) {
+    return AccountError.refusal(
+      'EMAIL_NOT_VERIFIED',
+      'The identity provider has not verified the email address of this person: they verify it, then sign in again.',
+      { accountId },
+    );
+  }
+
   static invalidEmailAddress(raw: string) {
     return AccountError.refusal('INVALID_EMAIL_ADDRESS', 'An email address is a local part, an @ and a domain.', {
       raw,

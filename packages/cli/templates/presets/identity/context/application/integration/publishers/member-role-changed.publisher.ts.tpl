@@ -19,6 +19,7 @@ export class MemberRoleChangedPublisher implements DomainEventHandler<MemberRole
         accountId: event.facts.accountId,
         from: event.facts.from,
         to: event.facts.to,
+        ...(event.facts.delegationId === undefined ? {} : { delegationId: event.facts.delegationId }),
       },
       { id: this.ids.next(), occurredAt: event.occurredAt },
     );

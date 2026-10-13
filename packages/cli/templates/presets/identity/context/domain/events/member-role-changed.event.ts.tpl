@@ -15,6 +15,8 @@ export class MemberRoleChanged implements DomainEvent {
       readonly accountId: string;
       readonly from: MemberRole;
       readonly to: MemberRole;
+      /** The delegation that lent the right to decide it, when the role of who decided did not grant it. */
+      readonly delegationId?: string;
     },
   ) {}
 }

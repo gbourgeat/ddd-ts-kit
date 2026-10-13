@@ -3,13 +3,13 @@ import { MemberRole } from '{{alias.context}}/domain/vocabularies/member-role.vo
 import { OpenOrganisationCommand } from '{{alias.context}}/application/commands/open-organisation/open-organisation.command{{alias.ext}}';
 import { anAccount } from '{{alias.context}}/test/builders/account.builder{{alias.ext}}';
 import { anOrganisation } from '{{alias.context}}/test/builders/organisation.builder{{alias.ext}}';
-import { arrangeIdentity } from '{{alias.context}}/test/unit/identity-application{{alias.ext}}';
+import { arrangeIdentity, startedIdentity } from '{{alias.context}}/test/unit/identity-application{{alias.ext}}';
 
 const acme = { slug: 'acme', name: 'Acme' };
 
 describe('Open organisation', () => {
   it('opens the organisation under its slug, its opener its first owner, and tells the provider and the other contexts', async () => {
-    const { application, accounts, members, identityProvider, as } = arrangeIdentity();
+    const { application, accounts, members, identityProvider, as } = await startedIdentity();
 
     await accounts.save(anAccount().identifiedBy('subject-ada').build());
 

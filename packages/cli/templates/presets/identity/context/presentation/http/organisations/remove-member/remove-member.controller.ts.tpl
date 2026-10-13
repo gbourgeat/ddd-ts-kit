@@ -39,7 +39,7 @@ const accepted = zodSchema(z.object({ id: z.string() }), { io: 'output' });
   summary: 'Remove a member',
   params,
   response: { status: 200, description: 'Removed; the body carries the identifier of the membership.', body: accepted },
-  errors: ['MEMBER_NOT_FOUND', 'OWNERS_ONLY', 'LAST_OWNER'],
+  errors: ['ORGANISATION_NOT_FOUND', 'MEMBER_NOT_FOUND', 'ABOVE_OWN_ROLE', 'OWNERS_ONLY', 'LAST_OWNER'],
 })
 export class RemoveMemberController {
   constructor(private readonly commands: CommandBus) {}

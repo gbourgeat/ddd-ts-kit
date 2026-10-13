@@ -31,6 +31,13 @@ export class DrizzleMemberRepository implements MemberRepository {
     return row === undefined ? undefined : MemberMapper.toDomain(row);
   }
 
+  async searchCurrentOf(accountId: string): Promise<readonly Member[]> {
+    const ofAccount = and(eq(members.accountId, accountId), isNull(members.removedAt));
+    const rows = await executorOf(this.database).select().from(members).where(ofAccount).orderBy(members.id);
+
+    return rows.map((row) => MemberMapper.toDomain(row));
+  }
+
   async countOwners(organisationId: string): Promise<number> {
     const owners = and(eq(members.organisationId, organisationId), eq(members.role, MemberRole.Owner), isNull(members.removedAt));
     const [counted] = await executorOf(this.database).select({ total: count() }).from(members).where(owners);

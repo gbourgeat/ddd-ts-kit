@@ -12,6 +12,8 @@ export class MemberRemoved implements DomainEvent {
     readonly facts: {
       readonly organisationId: string;
       readonly accountId: string;
+      /** The delegation that lent the right to decide it, when the role of who decided did not grant it. */
+      readonly delegationId?: string;
     },
   ) {}
 }

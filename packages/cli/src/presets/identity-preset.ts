@@ -44,5 +44,7 @@ export const identityPreset: Preset = {
     ...PUBLISHED.map((fact) => ({ kind: integrationEventKind, args: fact })),
   ],
   grantsEverySignedInPerson: true,
+  organisationsAreTenants: true,
+  signature: 'domain/services/role-rights.service.ts',
   files: (config) => presetFiles('identity', config, AFTER_STEPS),
 };

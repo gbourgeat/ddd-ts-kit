@@ -47,7 +47,7 @@ export class MemberBuilder extends Builder<MemberIngredients, Member> {
     const member = Member.join(id, { organisationId, accountId, role }, joinedAt);
 
     if (removedAt !== undefined) {
-      member.remove({ by: MemberRole.Owner, owners: 2 }, removedAt);
+      member.remove({ by: MemberRole.Owner, byAccount: 'subject-owner', delegationId: undefined, owners: 2 }, removedAt);
     }
 
     return member;

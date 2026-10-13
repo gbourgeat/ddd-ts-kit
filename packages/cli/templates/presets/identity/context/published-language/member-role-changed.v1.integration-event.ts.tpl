@@ -23,6 +23,7 @@ export const memberRoleChangedV1 = defineIntegrationEvent({
       accountId: z.string(),
       from: z.string(),
       to: z.string(),
+      delegationId: z.string().optional(),
     }),
   ),
 {{/if}}

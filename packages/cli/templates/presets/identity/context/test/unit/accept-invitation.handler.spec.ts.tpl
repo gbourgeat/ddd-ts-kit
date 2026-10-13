@@ -5,11 +5,11 @@ import { AcceptInvitationCommand } from '{{alias.context}}/application/commands/
 import { anAccount } from '{{alias.context}}/test/builders/account.builder{{alias.ext}}';
 import { anInvitation } from '{{alias.context}}/test/builders/invitation.builder{{alias.ext}}';
 import { aMember } from '{{alias.context}}/test/builders/member.builder{{alias.ext}}';
-import { arrangeIdentity } from '{{alias.context}}/test/unit/identity-application{{alias.ext}}';
+import { arrangeIdentity, startedIdentity } from '{{alias.context}}/test/unit/identity-application{{alias.ext}}';
 
 describe('Accept invitation', () => {
   it('makes the person it was sent to a member, in its role, and tells the provider and the other contexts', async () => {
-    const { application, accounts, invitations, members, identityProvider, tokens, as } = arrangeIdentity();
+    const { application, accounts, invitations, members, identityProvider, tokens, as } = await startedIdentity();
     const token = tokens.issue();
 
     await accounts.save(anAccount().identifiedBy('subject-grace').reachedAt('grace@example.test').build());

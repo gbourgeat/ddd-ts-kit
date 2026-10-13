@@ -40,4 +40,15 @@ describe('RoleRightsService', () => {
 
     expect(rights.rights).toEqual([MemberRight.InviteMembers, MemberRight.ReadMembers]);
   });
+
+  it('names the delegation a right is used under when the role does not grant it, and none otherwise', () => {
+    const deputy = aMember().of('acme', 'account-deputy').build();
+    const admin = aMember().of('acme', 'account-admin').as(MemberRole.Admin).build();
+    const lent = [aDelegation().identifiedBy('delegation-1').lending(MemberRight.InviteMembers).build()];
+    const rights = new RoleRightsService();
+
+    expect(rights.delegationUsedFor(MemberRight.InviteMembers, { member: deputy, lent, now })).toBe('delegation-1');
+    expect(rights.delegationUsedFor(MemberRight.InviteMembers, { member: admin, lent, now })).toBeUndefined();
+    expect(rights.delegationUsedFor(MemberRight.ManageMembers, { member: deputy, lent, now })).toBeUndefined();
+  });
 });

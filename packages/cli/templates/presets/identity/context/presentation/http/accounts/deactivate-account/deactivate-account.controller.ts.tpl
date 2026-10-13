@@ -29,7 +29,7 @@ const accepted = zodSchema(z.object({ id: z.string() }), { io: 'output' });
   path: '/me/deactivation',
   summary: 'Deactivate my account',
   response: { status: 200, description: 'The account is deactivated; the body carries its identifier.', body: accepted },
-  errors: ['ACCOUNT_NOT_FOUND', 'ACCOUNT_ALREADY_DEACTIVATED'],
+  errors: ['ACCOUNT_NOT_FOUND', 'ACCOUNT_ALREADY_DEACTIVATED', 'ORGANISATION_NOT_FOUND', 'LAST_OWNER'],
 })
 export class DeactivateAccountController {
   constructor(private readonly commands: CommandBus) {}

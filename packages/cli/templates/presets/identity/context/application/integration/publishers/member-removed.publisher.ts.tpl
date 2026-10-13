@@ -17,6 +17,7 @@ export class MemberRemovedPublisher implements DomainEventHandler<MemberRemoved>
         memberId: event.aggregateId,
         organisationId: event.facts.organisationId,
         accountId: event.facts.accountId,
+        ...(event.facts.delegationId === undefined ? {} : { delegationId: event.facts.delegationId }),
       },
       { id: this.ids.next(), occurredAt: event.occurredAt },
     );

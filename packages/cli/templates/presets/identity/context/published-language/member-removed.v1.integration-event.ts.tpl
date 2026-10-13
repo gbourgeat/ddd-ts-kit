@@ -21,6 +21,7 @@ export const memberRemovedV1 = defineIntegrationEvent({
       memberId: z.string(),
       organisationId: z.string(),
       accountId: z.string(),
+      delegationId: z.string().optional(),
     }),
   ),
 {{/if}}

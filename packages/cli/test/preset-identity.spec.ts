@@ -71,11 +71,40 @@ describe('init --preset identity', () => {
 
   it('is refused on a stack it is not written for, with what to change', () => {
     const prisma = initFailure('--orm', 'prisma', '--preset', 'identity');
+    const anonymous = initFailure('--authn', 'none', '--preset', 'identity');
     const unknown = initFailure('--preset', 'billing');
 
     expect(prisma.message).toBe('The identity preset is not written for "stack.orm": "prisma".');
     expect(prisma.fix).toContain('--orm knex or --orm drizzle');
+    expect(anonymous.message).toBe('The identity preset is not written for "stack.authn": "none".');
+    expect(anonymous.fix).toContain('--authn jwt or --authn keycloak');
     expect(unknown.message).toBe('Unknown preset "billing".');
+  });
+
+  it('is written once when it is named twice', () => {
+    const root = initProject('--preset', 'identity', '--preset', 'identity');
+
+    expect(read(root, 'src/platform/auth/signed-in-grants.ts').match(/'identity:\*'/g)).toHaveLength(1);
+  });
+
+  it('with tenants, reads the organisations of a Keycloak token as the tenants of the person', () => {
+    const keycloak = initProject(
+      '--authn',
+      'keycloak',
+      '--tenancy',
+      'shared-table',
+      '--orm',
+      'knex',
+      '--preset',
+      'identity',
+    );
+
+    const jwt = initProject('--tenancy', 'shared-table', '--orm', 'knex', '--preset', 'identity');
+    const alone = initProject('--authn', 'keycloak', '--preset', 'identity');
+
+    expect(read(keycloak, 'src/platform/auth/create-authenticator.ts')).toContain("tenantClaim: 'organization'");
+    expect(read(alone, 'src/platform/auth/create-authenticator.ts')).not.toContain('tenantClaim');
+    expect(read(jwt, 'src/platform/auth/create-authenticator.ts')).not.toContain('tenantClaim');
   });
 });
 
@@ -94,13 +123,13 @@ describe('the grant of the preset to every signed-in person', () => {
     }
   });
 
-  it('is added once per preset context, and an authorizer the generator did not write is left to the team', () => {
-    const root = initProject('--preset', 'identity');
+  it('leaves an authorizer the generator did not write to the team, with what to do', () => {
+    const root = initProject();
 
     fs.writeFileSync(path.join(root, AUTHORIZER), 'export { createAuthorizer } from "./elsewhere";\n');
     const result = cli(root, 'generate', 'context', 'people', '--preset', 'identity', '--json');
 
-    expect(read(root, 'src/platform/auth/signed-in-grants.ts')).toContain("  'identity:*',\n  'people:*',\n");
+    expect(read(root, 'src/platform/auth/signed-in-grants.ts')).toContain("  'people:*',\n");
     expect(result.stdout).toContain('wrap the authorizer of create-authorizer.ts');
   });
 });
@@ -119,5 +148,26 @@ describe('generate context --preset identity', () => {
 
     expect(read(root, 'src/contexts/people/domain/events/member-joined.event.ts')).toContain("'people.member.joined'");
     expect(cli(root, 'check').stdout).toContain('0 errors');
+  });
+
+  it('is refused on a database its tables are not written for, in a config edited by hand', () => {
+    const root = initProject('--orm', 'knex');
+    const config = path.join(root, 'ddd-ts-kit.config.json');
+
+    fs.writeFileSync(config, fs.readFileSync(config, 'utf8').replace('"database": "postgres"', '"database": "mysql"'));
+
+    const result = cli(root, 'generate', 'context', 'people', '--preset', 'identity');
+
+    expect(result.code).not.toBe(0);
+    expect(result.stderr).toContain('The identity preset is not written for "stack.database": "mysql".');
+  });
+
+  it('is refused in a project that holds a context of the same preset already, and changes nothing', () => {
+    const root = initProject('--preset', 'identity');
+    const result = cli(root, 'generate', 'context', 'people', '--preset', 'identity');
+
+    expect(result.code).not.toBe(0);
+    expect(result.stderr).toContain('The context identity is written from the identity preset already');
+    expect(fs.existsSync(path.join(root, 'src/contexts/people'))).toBe(false);
   });
 });

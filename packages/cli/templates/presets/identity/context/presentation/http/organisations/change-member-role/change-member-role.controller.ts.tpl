@@ -49,7 +49,7 @@ const accepted = zodSchema(z.object({ id: z.string() }), { io: 'output' });
   params,
   body,
   response: { status: 200, description: 'Changed; the body carries the identifier of the membership.', body: accepted },
-  errors: ['MEMBER_NOT_FOUND', 'OWNERS_ONLY', 'LAST_OWNER'],
+  errors: ['ORGANISATION_NOT_FOUND', 'MEMBER_NOT_FOUND', 'OWN_ROLE', 'ABOVE_OWN_ROLE', 'OWNERS_ONLY', 'LAST_OWNER'],
 })
 export class ChangeMemberRoleController {
   constructor(private readonly commands: CommandBus) {}

@@ -13,6 +13,10 @@ export class FakeMemberRepository extends InMemoryRepository<Member> implements 
     return this.all().find((stored) => stored.isActive && isOf(stored, organisationId, accountId));
   }
 
+  async searchCurrentOf(accountId: string): Promise<readonly Member[]> {
+    return this.all().filter((stored) => stored.isActive && stored.accountId === accountId);
+  }
+
   async countOwners(organisationId: string): Promise<number> {
     return this.all().filter(
       (stored) => stored.isActive && stored.organisationId === organisationId && stored.role === MemberRole.Owner,

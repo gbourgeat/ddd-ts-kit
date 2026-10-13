@@ -1,4 +1,6 @@
 import { describe, expect, it } from '{{tests.module}}';
+import type { DomainEvent } from '@ddd-ts-kit/kernel';
+import { InvitationIssued } from '{{alias.context}}/domain/events/invitation-issued.event{{alias.ext}}';
 import { MemberRight } from '{{alias.context}}/domain/vocabularies/member-right.vocabulary{{alias.ext}}';
 import { MemberRole } from '{{alias.context}}/domain/vocabularies/member-role.vocabulary{{alias.ext}}';
 import { InviteMemberCommand } from '{{alias.context}}/application/commands/invite-member/invite-member.command{{alias.ext}}';
@@ -26,7 +28,38 @@ describe('Invite member', () => {
     });
   });
 
-  it('lets a delegate invite with the right lent to them, while the delegation holds', async () => {
+  it('lets a delegate invite with the right lent to them, in their own role, and names the delegation used', async () => {
+    const { application, members, delegations, invitations, as } = arrangeIdentity();
+    const now = application.clock.now();
+
+    await members.save(aMember().of('acme', 'subject-grace').build());
+
+    await delegations.save(
+      aDelegation()
+        .identifiedBy('delegation-1')
+        .to('subject-grace')
+        .lending(MemberRight.InviteMembers)
+        .between(now, new Date(now.getTime() + 86_400_000))
+        .build(),
+    );
+
+    const issued: DomainEvent[] = [];
+
+    application.domainEvents.on(InvitationIssued.eventName, async (event) => {
+      issued.push(event);
+    });
+
+    await expect(
+      application.commandBus.execute(
+        new InviteMemberCommand(as('subject-grace'), 'acme', { ...grace, email: 'alan@example.test' }),
+      ),
+    ).resolves.toMatchObject({ token: 'token-1' });
+
+    expect(invitations.count()).toBe(1);
+    expect(issued).toMatchObject([{ facts: { organisationId: 'acme', delegationId: 'delegation-1' } }]);
+  });
+
+  it('never lets a delegation lift whom a member invites above their own role', async () => {
     const { application, members, delegations, as } = arrangeIdentity();
     const now = application.clock.now();
 
@@ -42,9 +75,9 @@ describe('Invite member', () => {
 
     await expect(
       application.commandBus.execute(
-        new InviteMemberCommand(as('subject-grace'), 'acme', { ...grace, email: 'alan@example.test' }),
+        new InviteMemberCommand(as('subject-grace'), 'acme', { email: 'grace.second@example.test', role: MemberRole.Admin }),
       ),
-    ).resolves.toMatchObject({ token: 'token-1' });
+    ).rejects.toMatchObject({ code: 'ABOVE_OWN_ROLE' });
   });
 
   it('is refused to a member whose role does not invite, and to a stranger to the organisation', async () => {
@@ -63,7 +96,7 @@ describe('Invite member', () => {
     expect(invitations.all()).toEqual([]);
   });
 
-  it('lets an owner only invite an owner', async () => {
+  it('lets an owner only invite an owner, and an admin no one above admin', async () => {
     const { application, members, as } = arrangeIdentity();
 
     await members.save(aMember().of('acme', 'subject-ada').as(MemberRole.Admin).build());

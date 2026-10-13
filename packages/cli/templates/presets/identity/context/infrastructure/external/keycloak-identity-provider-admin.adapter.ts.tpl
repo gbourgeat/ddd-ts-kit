@@ -19,10 +19,13 @@ interface KeycloakOrganisation {
 }
 
 /**
- * The administration REST API of Keycloak (26 and later, which has organizations): the client of
- * `IdentityProviderConnection` takes a token by the client credentials grant, then asks. An
- * organisation is known there under its slug as alias, so that the `organization` claim of a
- * token names it; every change is idempotent, so that the retries of the platform are safe.
+ * A recipe for the administration REST API of Keycloak (26 and later, which has organizations):
+ * the client of `IdentityProviderConnection` takes a token by the client credentials grant, then
+ * asks. An organisation is known there under its slug as alias, so that the `organization` claim
+ * of a token names it. Every change is idempotent, since the consumers that call it are delivered
+ * at least once (`application/integration/handlers/`). Its spec runs it against a local server
+ * that answers as Keycloak does, not against Keycloak itself: run it once against your realm
+ * before relying on it (docs/guides/bootstrap-with-well-designed-contexts.md says how).
  */
 @Adapter(IdentityProviderAdmin, { kind: 'external' })
 export class KeycloakIdentityProviderAdmin implements IdentityProviderAdmin {

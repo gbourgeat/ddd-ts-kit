@@ -32,6 +32,12 @@ export class KnexMemberRepository implements MemberRepository {
     return row === undefined ? undefined : MemberMapper.toDomain(row);
   }
 
+  async searchCurrentOf(accountId: string): Promise<readonly Member[]> {
+    const rows = await tableOf(this.database).where({ account_id: accountId }).whereNull('removed_at').orderBy('id');
+
+    return rows.map((row) => MemberMapper.toDomain(row));
+  }
+
   async countOwners(organisationId: string): Promise<number> {
     const owners = { organisation_id: organisationId, role: MemberRole.Owner };
     const counted = await tableOf(this.database).where(owners).whereNull('removed_at').count({ total: '*' }).first();

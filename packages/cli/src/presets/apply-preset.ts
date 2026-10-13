@@ -10,6 +10,7 @@ import { renderTemplate } from '../templating/index.js';
 import type { Workspace } from '../workspace/index.js';
 import { grantToSignedIn } from './grant-to-signed-in.js';
 import { NO_FLAGS } from './no-flags.js';
+import { organisationsAsTenants } from './organisations-as-tenants.js';
 import type { PresetFile } from './preset-file.js';
 import type { Preset } from './preset.js';
 import { presetDecision } from './preset-decision.js';
@@ -32,6 +33,8 @@ export function applyPreset(ws: Workspace, config: Config, request: PresetReques
   if (refusal !== undefined) {
     throw new CliError(refusal.message, refusal.fix);
   }
+
+  assertNoTwin(ws, config, request);
 
   const scope = scopeOf(ws, config, request);
   const adr = presetDecision(scope, preset.name);
@@ -56,6 +59,20 @@ export function applyPreset(ws: Workspace, config: Config, request: PresetReques
   describeContext(scope, preset, rendering);
 
   return wired;
+}
+
+/** One context of each preset kind: two would declare the same facts, routes and platform files, and could not live together. */
+function assertNoTwin(ws: Workspace, config: Config, { context, preset }: PresetRequest): void {
+  const own = parseContextName(context).kebab;
+  const holds = (other: string) => ws.read(`${config.contextsDir}/${other}/${preset.signature}`) !== undefined;
+  const twin = Object.keys(config.contexts).find((other) => other !== own && holds(other));
+
+  if (twin !== undefined) {
+    throw new CliError(
+      `The context ${twin} is written from the ${preset.name} preset already: a project holds one context of each preset.`,
+      `Extend ${twin} instead (its CONTEXT.md says how it is designed), or generate ${own} empty and build it with the generators.`,
+    );
+  }
 }
 
 interface Rendering {
@@ -97,12 +114,16 @@ function writeFiles(scope: Scope, files: readonly PresetFile[], rendering: Rende
   }
 }
 
-/** Each generator sees the config as the one before it left it; then the platform grants what the preset asks to every signed-in person. */
+/** Each generator sees the config as the one before it left it; then the platform grants what the preset asks to every signed-in person, and reads its organisations as tenants. */
 function runSteps(scope: Scope, preset: Preset): Config {
   const config = generated(scope, preset);
 
   if (preset.grantsEverySignedInPerson) {
     grantToSignedIn({ ...scope, config });
+  }
+
+  if (preset.organisationsAreTenants) {
+    organisationsAsTenants({ ...scope, config });
   }
 
   return config;

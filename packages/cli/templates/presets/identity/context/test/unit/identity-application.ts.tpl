@@ -65,3 +65,15 @@ export function arrangeIdentity() {
 
   return { application, ...ports, as, stranger: anActor().named('stranger').build() };
 }
+
+/**
+ * The same, started: its consumers listen, among them those that bring the identity provider in
+ * line with the facts the context publishes (`application/integration/handlers/`).
+ */
+export async function startedIdentity(): Promise<ReturnType<typeof arrangeIdentity>> {
+  const arranged = arrangeIdentity();
+
+  await arranged.application.start();
+
+  return arranged;
+}

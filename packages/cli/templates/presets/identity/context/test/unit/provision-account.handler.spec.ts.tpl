@@ -3,7 +3,7 @@ import { ProvisionAccountCommand } from '{{alias.context}}/application/commands/
 import { anAccount } from '{{alias.context}}/test/builders/account.builder{{alias.ext}}';
 import { arrangeIdentity } from '{{alias.context}}/test/unit/identity-application{{alias.ext}}';
 
-const profile = { email: 'Ada@Example.test', displayName: 'Ada Lovelace' };
+const profile = { email: 'Ada@Example.test', emailVerified: true, displayName: 'Ada Lovelace' };
 
 describe('Provision account', () => {
   it('provisions the account of a person at their first sign-in, under their subject', async () => {
@@ -36,6 +36,23 @@ describe('Provision account', () => {
     await expect(
       application.commandBus.execute(new ProvisionAccountCommand(as('subject-alan'), profile)),
     ).rejects.toMatchObject({ code: 'ACCOUNT_DEACTIVATED' });
+  });
+
+  it('refuses an address the provider has not verified, at the first sign-in as at a later one', async () => {
+    const { application, accounts, as } = arrangeIdentity();
+    const unverified = { ...profile, emailVerified: false };
+
+    await expect(
+      application.commandBus.execute(new ProvisionAccountCommand(as('subject-ada'), unverified)),
+    ).rejects.toMatchObject({ code: 'EMAIL_NOT_VERIFIED' });
+
+    await accounts.save(anAccount().identifiedBy('subject-alan').reachedAt('alan@example.test').build());
+
+    await expect(
+      application.commandBus.execute(new ProvisionAccountCommand(as('subject-alan'), unverified)),
+    ).rejects.toMatchObject({ code: 'EMAIL_NOT_VERIFIED' });
+
+    expect(accounts.all().map((account) => account.email.value)).toEqual(['alan@example.test']);
   });
 
   it('is refused to an actor the platform grants nothing', async () => {

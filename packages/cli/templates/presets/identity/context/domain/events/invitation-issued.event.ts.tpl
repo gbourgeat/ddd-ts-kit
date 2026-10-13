@@ -15,6 +15,8 @@ export class InvitationIssued implements DomainEvent {
       readonly email: string;
       readonly role: MemberRole;
       readonly expiresAt: Date;
+      /** The delegation that lent the right to invite, when the role of the inviter did not grant it. */
+      readonly delegationId?: string;
     },
   ) {}
 }

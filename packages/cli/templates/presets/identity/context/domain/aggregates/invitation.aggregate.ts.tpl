@@ -24,6 +24,11 @@ export interface InvitationState {
   readonly answeredAt: Date | undefined;
 }
 
+/** What an invitation is issued with. */
+export type InvitationTerms = Pick<InvitationState, 'organisationId' | 'email' | 'role' | 'tokenHash' | 'invitedBy'> & {
+  readonly delegationId?: string;
+};
+
 /** The person who answers an invitation: an account, with the email address its provider knows. */
 export interface Invitee {
   readonly id: string;
@@ -39,17 +44,15 @@ export class Invitation extends AggregateRoot<string> {
     super(id);
   }
 
-  static issue(
-    id: string,
-    terms: Pick<InvitationState, 'organisationId' | 'email' | 'role' | 'tokenHash' | 'invitedBy'>,
-    now: Date,
-  ): Invitation {
+  /** `delegationId` names the delegation that lent the right to invite, when the role of the inviter does not grant it. */
+  static issue(id: string, terms: InvitationTerms, now: Date): Invitation {
     const expiresAt = new Date(now.getTime() + VALIDITY_MS);
     const pending = { status: InvitationStatus.Pending, issuedAt: now, expiresAt, answeredAt: undefined };
-    const issued = new Invitation(id, { ...terms, ...pending });
-    const { organisationId, role } = terms;
+    const { organisationId, email, role, tokenHash, invitedBy, delegationId } = terms;
+    const issued = new Invitation(id, { organisationId, email, role, tokenHash, invitedBy, ...pending });
+    const under = delegationId === undefined ? {} : { delegationId };
 
-    issued.record(new InvitationIssued(id, now, { organisationId, email: terms.email.value, role, expiresAt }));
+    issued.record(new InvitationIssued(id, now, { organisationId, email: email.value, role, expiresAt, ...under }));
 
     return issued;
   }

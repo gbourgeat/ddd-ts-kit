@@ -9,7 +9,7 @@ const caller: Actor = {
   id: 'subject-ada',
   type: 'user',
   roles: [],
-  attributes: { email: 'ada@example.test', username: 'ada' },
+  attributes: { email: 'ada@example.test', emailVerified: true, username: 'ada' },
 };
 
 describe('PUT /accounts/me', () => {
@@ -24,7 +24,23 @@ describe('PUT /accounts/me', () => {
 
     expect(route.path).toBe('/accounts/me');
     expect([response.status, response.body]).toEqual([200, { id: 'subject-ada' }]);
-    expect(sent).toMatchObject([{ actor: { id: 'subject-ada' }, profile: { email: 'ada@example.test', displayName: 'Ada L.' } }]);
+
+    expect(sent).toMatchObject([
+      { actor: { id: 'subject-ada' }, profile: { email: 'ada@example.test', emailVerified: true, displayName: 'Ada L.' } },
+    ]);
+  });
+
+  it('says the address is not verified unless the token says it is', async () => {
+    const { route, sent } = arrange();
+    const unverified: Actor = { ...caller, attributes: { email: 'ada@example.test' } };
+
+    await executeRoute(
+      route,
+      { params: {}, query: {}, headers: {}, body: {}, raw: undefined },
+      { resolvePrincipal: () => unverified },
+    );
+
+    expect(sent).toMatchObject([{ profile: { email: 'ada@example.test', emailVerified: false, displayName: 'ada@example.test' } }]);
   });
 
   it('refuses with 422 a request its contract does not describe, and sends nothing', async () => {

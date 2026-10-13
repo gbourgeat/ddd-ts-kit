@@ -17,7 +17,7 @@ const scope = new FixedExecutionScope(executionContext({ correlationId: 'contrac
 const expectations = {
   createAggregate: () => aMember().build(),
   mutate: (changed: Member) => {
-    changed.changeRole(MemberRole.Admin, { by: MemberRole.Owner, owners: 2 }, new Date('2026-02-01T00:00:00.000Z'));
+    changed.changeRole(MemberRole.Admin, { by: MemberRole.Owner, byAccount: 'subject-owner', delegationId: undefined, owners: 2 }, new Date('2026-02-01T00:00:00.000Z'));
   },
   idOf: (subject: Member) => subject.id,
   stateOf: (subject: Member) => subject.toState(),
@@ -60,6 +60,19 @@ describe.each(adapters())('%s, read by what a use case needs', (_name, create) =
     expect((await repository.findOf('acme', 'subject-ada'))?.role).toBe(MemberRole.Owner);
     expect(await repository.findOf('acme', 'subject-grace')).toBeUndefined();
     expect(await repository.countOwners('acme')).toBe(1);
+  });
+
+  it('searches the current memberships of an account across organisations', async () => {
+    const repository = await create();
+
+    await repository.save(aMember().of('acme', 'subject-ada').build());
+    await repository.save(aMember().of('globex', 'subject-ada').as(MemberRole.Admin).build());
+    await repository.save(aMember().of('initech', 'subject-ada').removedAt(new Date('2026-02-01T00:00:00.000Z')).build());
+    await repository.save(aMember().of('acme', 'subject-alan').build());
+
+    const current = await repository.searchCurrentOf('subject-ada');
+
+    expect(current.map((member) => member.organisationId).sort()).toEqual(['acme', 'globex']);
   });
 });
 

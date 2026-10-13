@@ -27,4 +27,24 @@ export class MemberError extends ConceptError {
       organisationId,
     });
   }
+
+  static ownRole(organisationId: string) {
+    return MemberError.refusal(
+      'OWN_ROLE',
+      `A member of ${organisationId} does not change their own role: another member does.`,
+      {
+        organisationId,
+      },
+    );
+  }
+
+  static aboveOwnRole(organisationId: string) {
+    return MemberError.refusal(
+      'ABOVE_OWN_ROLE',
+      `A member of ${organisationId} appoints, changes or removes no one above their own role.`,
+      {
+        organisationId,
+      },
+    );
+  }
 }

@@ -56,7 +56,7 @@ export function runInit(root: string, options: InitOptions): WorkspaceReport {
   }
 
   const declared = addContexts(ws, config, [...options.contexts, ...presetContexts(config, options)]);
-  const withContexts = addPresets(ws, declared, options.presets ?? []);
+  const withContexts = addPresets(ws, declared, [...new Set(options.presets ?? [])]);
 
   writeDocs(ws, withContexts);
   writeContracts(ws, withContexts, projectName);

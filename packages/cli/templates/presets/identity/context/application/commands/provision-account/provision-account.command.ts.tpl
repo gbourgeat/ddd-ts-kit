@@ -7,7 +7,7 @@ import { {{context.camel}}Permissions } from '{{alias.context}}/application/auth
 export class ProvisionAccountCommand extends AuthorizedCommand<string> {
   constructor(
     actor: Actor,
-    readonly profile: { readonly email: string; readonly displayName: string },
+    readonly profile: { readonly email: string; readonly emailVerified: boolean; readonly displayName: string },
   ) {
     super(actor);
   }

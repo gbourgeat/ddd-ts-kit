@@ -38,7 +38,7 @@ const accepted = zodSchema(z.object({ id: z.string() }), { io: 'output' });
   summary: 'Provision my account',
   body,
   response: { status: 200, description: 'The account, provisioned or refreshed; the body carries its identifier.', body: accepted },
-  errors: ['INVALID_EMAIL_ADDRESS', 'INVALID_DISPLAY_NAME', 'ACCOUNT_DEACTIVATED'],
+  errors: ['EMAIL_NOT_VERIFIED', 'INVALID_EMAIL_ADDRESS', 'INVALID_DISPLAY_NAME', 'ACCOUNT_DEACTIVATED'],
 })
 export class ProvisionAccountController {
   constructor(private readonly commands: CommandBus) {}
@@ -55,10 +55,15 @@ export class ProvisionAccountController {
   }
 }
 
-/** The token is the authority on who the person is: their address comes from it, never from the body, so that nobody accepts an invitation sent to someone else. */
+/**
+ * The token is the authority on who the person is: their address comes from it, never from the
+ * body, and with whether the provider verified it (`email_verified`), so that nobody accepts an
+ * invitation sent to someone else by registering their address unverified.
+ */
 function profileOf(actor: Actor, displayName: string | undefined): ProvisionAccountCommand['profile'] {
-  const { email, username } = actor.attributes;
+  const { email, emailVerified, username } = actor.attributes;
   const address = typeof email === 'string' ? email : '';
+  const named = displayName ?? (typeof username === 'string' ? username : address);
 
-  return { email: address, displayName: displayName ?? (typeof username === 'string' ? username : address) };
+  return { email: address, emailVerified: emailVerified === true, displayName: named };
 }

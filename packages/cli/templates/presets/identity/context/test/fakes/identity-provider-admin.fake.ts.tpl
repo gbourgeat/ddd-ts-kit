@@ -1,6 +1,6 @@
 import type { IdentityProviderAdmin } from '{{alias.context}}/application/ports/identity-provider-admin.port{{alias.ext}}';
 
-/** The identity provider as a list of what it was asked, in order, failing on demand. */
+/** The identity provider as a list of what it was asked, in order, failing on demand until it answers again. */
 export class FakeIdentityProviderAdmin implements IdentityProviderAdmin {
   readonly asked: string[] = [];
 
@@ -8,6 +8,11 @@ export class FakeIdentityProviderAdmin implements IdentityProviderAdmin {
 
   failWith(failure: Error): void {
     this.failure = failure;
+  }
+
+  /** The provider is reachable again: what the platform delivers again now reaches it. */
+  answerAgain(): void {
+    this.failure = undefined;
   }
 
   async openOrganisation(organisation: { readonly id: string; readonly name: string }): Promise<void> {

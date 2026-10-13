@@ -27,6 +27,10 @@ export interface Preset {
    * element: the platform grants them whatever its access model.
    */
   readonly grantsEverySignedInPerson: boolean;
+  /** With tenants, the organisations of the context are the tenants: the authenticator reads them from the token. */
+  readonly organisationsAreTenants: boolean;
+  /** A file only this preset writes in a context: another context holding it was written from the same preset. */
+  readonly signature: string;
   /** The files of the context, rendered from `templates/presets/<name>/`. */
   files(config: Config): readonly PresetFile[];
 }

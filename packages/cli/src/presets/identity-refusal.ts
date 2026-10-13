@@ -15,6 +15,12 @@ const NEEDED: readonly {
   { key: 'orm', values: ['knex', 'drizzle'], flag: '--orm knex or --orm drizzle' },
   { key: 'validation', values: ['zod', 'class-validator'], flag: '--validation zod or --validation class-validator' },
   { key: 'http', values: ['express', 'fastify'], flag: '--http express or --http fastify' },
+  {
+    key: 'authn',
+    values: ['jwt', 'keycloak'],
+    flag: '--authn jwt or --authn keycloak (an account is the subject of a token)',
+  },
+  { key: 'database', values: ['postgres'], flag: '--database postgres (its tables use partial unique indexes)' },
 ];
 
 /** The identity preset is written for the defaults of `init` and their nearest variants; another stack is refused with what to change. */

@@ -6,8 +6,9 @@ import { aMember } from '{{alias.context}}/test/builders/member.builder{{alias.e
 
 const joinedAt = new Date('2026-02-01T00:00:00.000Z');
 const later = new Date('2026-02-02T00:00:00.000Z');
-const byAnOwner = { by: MemberRole.Owner, owners: 2 };
-const byAnAdmin = { by: MemberRole.Admin, owners: 2 };
+const byAnOwner = { by: MemberRole.Owner, byAccount: 'subject-owner', delegationId: undefined, owners: 2 };
+const byAnAdmin = { by: MemberRole.Admin, byAccount: 'subject-admin', delegationId: undefined, owners: 2 };
+const byAMember = { by: MemberRole.Member, byAccount: 'subject-member', delegationId: 'delegation-1', owners: 2 };
 
 describe('Member', () => {
   it('joins an organisation in a role, and announces it', () => {
@@ -73,8 +74,22 @@ describe('The role of a member', () => {
 
   it('stays owner when the organisation has no other owner', () => {
     given(aMember().as(MemberRole.Owner))
-      .when((member) => member.changeRole(MemberRole.Admin, { by: MemberRole.Owner, owners: 1 }, later))
+      .when((member) => member.changeRole(MemberRole.Admin, { ...byAnOwner, owners: 1 }, later))
       .thenError('LAST_OWNER');
+  });
+
+  it('is never changed by the member themselves, nor above the role of who decides', () => {
+    given(aMember().of('acme', 'subject-ada').as(MemberRole.Admin))
+      .when((member) => member.changeRole(MemberRole.Member, { ...byAnOwner, byAccount: 'subject-ada' }, later))
+      .thenError('OWN_ROLE');
+
+    given(aMember())
+      .when((member) => member.changeRole(MemberRole.Admin, byAMember, later))
+      .thenError('ABOVE_OWN_ROLE');
+
+    given(aMember().as(MemberRole.Admin))
+      .when((member) => member.changeRole(MemberRole.Member, byAMember, later))
+      .thenError('ABOVE_OWN_ROLE');
   });
 });
 
@@ -92,8 +107,27 @@ describe('A member', () => {
       .thenError('OWNERS_ONLY');
 
     given(aMember().as(MemberRole.Owner))
-      .when((member) => member.remove({ by: MemberRole.Owner, owners: 1 }, later))
+      .when((member) => member.remove({ ...byAnOwner, owners: 1 }, later))
       .thenError('LAST_OWNER');
+  });
+
+  it('leaves by themselves, and is removed by no one below their role; the delegation used is named', () => {
+    given(aMember().of('acme', 'subject-ada').as(MemberRole.Admin))
+      .when((member) => member.remove({ ...byAMember, byAccount: 'subject-ada', by: MemberRole.Admin }, later))
+      .thenEventNames(['{{context.kebab}}.member.removed']);
+
+    given(aMember().as(MemberRole.Admin))
+      .when((member) => member.remove(byAMember, later))
+      .thenError('ABOVE_OWN_ROLE');
+
+    given(aMember().of('acme', 'subject-irene'))
+      .when((member) => member.remove(byAMember, later))
+      .thenEvents([
+        {
+          name: '{{context.kebab}}.member.removed',
+          facts: { organisationId: 'acme', accountId: 'subject-irene', delegationId: 'delegation-1' },
+        },
+      ]);
   });
 
   it('who was removed is not found any more', () => {
