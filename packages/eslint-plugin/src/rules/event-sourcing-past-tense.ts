@@ -1,8 +1,8 @@
 import { AST_NODE_TYPES } from '@typescript-eslint/utils';
 import { isAggregateFile } from '../support/event-sourcing/is-aggregate-file.js';
 import { isEventSourcedClass } from '../support/event-sourcing/is-event-sourced-class.js';
-import { isPastParticiple } from '../support/event-sourcing/is-past-participle.js';
-import { wordsOf } from '../support/event-sourcing/words-of.js';
+import { factWords } from '../support/event-sourcing/fact-words.js';
+import { isPastFact } from '../support/event-sourcing/is-past-fact.js';
 import { importListener, type ImportedName } from '../support/imports/import-listener.js';
 import { defineRule } from '../support/rule/define-rule.js';
 
@@ -11,7 +11,7 @@ export const eventSourcingPastTense = defineRule<'presentTense'>({
   type: 'suggestion',
   recommended: 'error',
   description:
-    'The events an event-sourced aggregate imports from domain/events/ are named in the past tense: one word of the class name is a past participle.',
+    'The events an event-sourced aggregate imports from domain/events/ are named in the past tense: one word of the fact, the name after the aggregate, is a past participle that does not read as a command at its head.',
   messages: {
     presentTense:
       'The event {{name}} is not named in the past tense. Name it after what happened (`InvoiceIssued`, `NoShowNoted`, `AmountWithdrawn`): a stored event is a fact replayed for years, a name in the present reads as a command.',
@@ -22,7 +22,7 @@ export const eventSourcingPastTense = defineRule<'presentTense'>({
     }
 
     const events: ImportedName[] = [];
-    let eventSourced = false;
+    const aggregates: string[] = [];
 
     return {
       ...importListener(file, ({ target, names }) => {
@@ -37,13 +37,15 @@ export const eventSourcingPastTense = defineRule<'presentTense'>({
         }
       }),
       ClassDeclaration(node) {
-        eventSourced ||= isEventSourcedClass(node);
+        if (isEventSourcedClass(node) && node.id !== null) {
+          aggregates.push(node.id.name);
+        }
       },
       'Program:exit'() {
-        for (const imported of eventSourced ? events : []) {
+        for (const imported of aggregates.length > 0 ? events : []) {
           const name = localName(imported);
 
-          if (!wordsOf(name).some(isPastParticiple)) {
+          if (!isPastFact(factWords(name, aggregates))) {
             report({ node: imported.node, messageId: 'presentTense', data: { name } });
           }
         }

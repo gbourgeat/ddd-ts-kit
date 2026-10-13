@@ -1,9 +1,9 @@
 import { eventSourcedClasses } from '../event-sourcing/event-sourced-classes.js';
-import { wordsOf } from '../event-sourcing/words-of.js';
+import { factWords } from '../event-sourcing/fact-words.js';
 import type { Finding } from '../model/finding.js';
 import type { Rule } from '../model/rule.js';
 import type { SourceFile } from '../model/source-file.js';
-import { isPastWord } from '../../naming/index.js';
+import { isPastFact } from '../../naming/index.js';
 import { perFile } from '../support/per-file.js';
 
 const FIX =
@@ -12,14 +12,18 @@ const FIX =
 export const eventSourcingPastTense: Rule = {
   id: 'event-sourcing/past-tense',
   description:
-    'The events an event-sourced aggregate imports from domain/events/ are named in the past tense: one word of the class name is a past participle.',
+    'The events an event-sourced aggregate imports from domain/events/ are named in the past tense: one word of the fact, the name after the aggregate, is a past participle that does not read as a command at its head.',
   scope: 'file',
   run(project) {
-    return perFile(project, this.id, (file) => (eventSourcedClasses(file).length === 0 ? [] : misnamed(file)));
+    return perFile(project, this.id, (file) => {
+      const aggregates = eventSourcedClasses(file).map(({ name }) => name);
+
+      return aggregates.length === 0 ? [] : misnamed(file, aggregates);
+    });
   },
 };
 
-function misnamed(file: SourceFile): Finding[] {
+function misnamed(file: SourceFile, aggregates: readonly string[]): Finding[] {
   return file.imports.flatMap(({ target, names, line }) => {
     const fromEvents =
       target.kind === 'file' &&
@@ -32,7 +36,7 @@ function misnamed(file: SourceFile): Finding[] {
     }
 
     return names
-      .filter((name) => !wordsOf(name).some(isPastWord))
+      .filter((name) => !isPastFact(factWords(name, aggregates)))
       .map((name) => ({ line, message: `The event ${name} is not named in the past tense.`, fix: FIX }));
   });
 }

@@ -54,6 +54,10 @@ ruleTester.run('event-sourcing-past-tense', eventSourcingPastTense, {
       AGGREGATE,
       "import { PayInvoice } from '@/contexts/billing/domain/events/pay-invoice.event';\nexport class Invoice extends AggregateRoot {}",
     ),
+    at(
+      AGGREGATE,
+      "import { InvoicePriceSet } from '@/contexts/billing/domain/events/invoice-price-set.event';\nexport class Invoice extends EventSourcedAggregate<InvoicePriceSet> {}",
+    ),
   ],
   invalid: [
     {
@@ -62,6 +66,20 @@ ruleTester.run('event-sourcing-past-tense', eventSourcingPastTense, {
         "import { PayInvoice } from '@/contexts/billing/domain/events/pay-invoice.event';\nexport class Invoice extends EventSourcedAggregate<PayInvoice> {}",
       ),
       errors: [{ messageId: 'presentTense', data: { name: 'PayInvoice' } }],
+    },
+    {
+      ...at(
+        `${BILLING}/domain/aggregates/scheduled-visit.aggregate.ts`,
+        "import { ScheduledVisitCancel } from '@/contexts/billing/domain/events/scheduled-visit-cancel.event';\nexport class ScheduledVisit extends EventSourcedAggregate<ScheduledVisitCancel> {}",
+      ),
+      errors: [{ messageId: 'presentTense', data: { name: 'ScheduledVisitCancel' } }],
+    },
+    {
+      ...at(
+        AGGREGATE,
+        "import { SetPrice } from '@/contexts/billing/domain/events/set-price.event';\nexport class Invoice extends EventSourcedAggregate<SetPrice> {}",
+      ),
+      errors: [{ messageId: 'presentTense', data: { name: 'SetPrice' } }],
     },
     {
       ...at(

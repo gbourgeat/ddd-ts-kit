@@ -10,7 +10,7 @@ A stored event is a fact, kept and replayed for as long as the aggregate lives, 
 
 ## Reported
 
-- a name imported from `domain/events/`, as the file writes it (the local name of a renamed import), none of whose words is a past participle: a word ending in `-ed`, or a common irregular one (`paid`, `held`, `taken`, `withdrawn`, `set`, `made`, `done`, `lost`, `won`...)
+- a name imported from `domain/events/`, as the file writes it (the local name of a renamed import), whose fact holds no past participle. The fact is the name after the name of the aggregate (`ScheduledVisitCancel` of `ScheduledVisit`: `Cancel`), or the whole name when it does not start with it. A past participle is a word ending in `-ed`, or a common irregular one (`paid`, `held`, `taken`, `withdrawn`, `set`, `made`, `done`, `lost`, `won`...); one spelled like its imperative (`set`, `put`, `read`, `run`, `cut`, `found`, `left`...) does not count at the head of the fact, where it reads as a command (`SetPrice`, `ReadInvoice`), and counts after a noun (`InvoicePriceSet`)
 
 Incorrect:
 
@@ -37,4 +37,4 @@ None.
 
 ## With the CLI checker
 
-`ddd-ts-kit check` reports the same id, from the names the import statements bind. Both hold the same list of participles.
+`ddd-ts-kit check` reports the same id, from the names the import statements bind. Both hold the same lists of participles, and so does `generate domain-event`; a test of the CLI holds the copies equal.

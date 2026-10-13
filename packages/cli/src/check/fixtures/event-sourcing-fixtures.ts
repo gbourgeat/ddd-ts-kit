@@ -2,11 +2,14 @@ import { readStoredShape } from '../event-sourcing/read-stored-shape.js';
 import { STORED_EVENTS_LOCK } from '../event-sourcing/stored-events-lock-file.js';
 import { scan } from '../scan/scan.js';
 import { aggregate } from './aggregate.js';
+import { contextDoc } from './context-doc.js';
+import { EVENT_SOURCING_PROJECTION_FIXTURES } from './event-sourcing-projection-fixtures.js';
 import type { Fixture } from './fixture.js';
 import type { FixtureFiles } from './fixture-files.js';
 import { handler } from './handler.js';
 import { PATHS } from './paths.js';
 import { project } from './project.js';
+import { SAMPLES } from './samples.js';
 import { source } from './source.js';
 
 const { AGGREGATE, BILLING, EVENT, HANDLER } = PATHS;
@@ -14,14 +17,12 @@ const { AGGREGATE, BILLING, EVENT, HANDLER } = PATHS;
 const STATE = 'event-sourcing/state-in-apply';
 const PAST = 'event-sourcing/past-tense';
 const STORE = 'event-sourcing/store-behind-repository';
-const PROJECTION_RULE = 'event-sourcing/projection-never-appends';
 const UPCASTER = 'event-sourcing/upcaster-required';
 
 const KERNEL = "'@ddd-ts-kit/kernel'";
 const ISSUED_EVENT = "import { InvoiceIssued } from '@/contexts/billing/domain/events/invoice-issued.event.js';";
 const PRESENT_EVENT = `${BILLING}/domain/events/issue-invoice.event.ts`;
 const CODEC = `${BILLING}/infrastructure/persistence/invoice-events.mapper.ts`;
-const PROJECTION = `${BILLING}/application/projections/invoice-list.projection.ts`;
 const STORE_ADAPTER = `${BILLING}/infrastructure/persistence/event-store-invoice.repository.ts`;
 
 const EVENTS: FixtureFiles = {
@@ -57,6 +58,8 @@ const STATE_IN_APPLY: readonly Fixture[] = [
   },
 ];
 
+const PRICED_GLOSSARY = `${SAMPLES.GLOSSARY}\n| Price | What an invoice asks. |\n| Set | To give a value. |`;
+
 const PAST_TENSE: readonly Fixture[] = [
   {
     ruleId: PAST,
@@ -77,7 +80,30 @@ const PAST_TENSE: readonly Fixture[] = [
       ),
     }),
   },
+  namedEvent('a command whose verb is spelled like its participle, at the head', 'SetPrice', { file: AGGREGATE }),
+  namedEvent('the same participle after the noun, a fact', 'InvoicePriceSet', 'pass'),
 ];
+
+/** An event-sourced invoice recording an event of this name, declared in `domain/events/`. */
+function namedEvent(name: string, eventClass: string, expect: Fixture['expect']): Fixture {
+  const file = eventClass.replace(/(?<=[a-z])(?=[A-Z])/g, '-').toLowerCase();
+  const imported = `import { ${eventClass} } from '@/contexts/billing/domain/events/${file}.event.js';`;
+
+  return {
+    ruleId: PAST,
+    name,
+    expect,
+    files: project(
+      {
+        [`${BILLING}/domain/events/${file}.event.ts`]: source(
+          `export class ${eventClass} {\n  readonly name = 'billing.invoice.price-set';\n\n  constructor(readonly aggregateId: string) {}\n}`,
+        ),
+        ...invoice([`this.record(new ${eventClass}(this.id));`], APPLYING, imported),
+      },
+      { [`${BILLING}/CONTEXT.md`]: contextDoc('core', undefined, PRICED_GLOSSARY) },
+    ),
+  };
+}
 
 const STORE_BEHIND_REPOSITORY: readonly Fixture[] = [
   {
@@ -117,46 +143,6 @@ const STORE_BEHIND_REPOSITORY: readonly Fixture[] = [
           '}',
         ),
       ),
-    ),
-  },
-];
-
-const LIST_PORT = "import { InvoiceList } from '@/contexts/billing/application/ports/invoice-list.port.js';";
-
-const INVOICE_REPOSITORY =
-  "import { InvoiceRepository } from '@/contexts/billing/domain/repositories/invoice.repository.js';";
-
-const PROJECTION_NEVER_APPENDS: readonly Fixture[] = [
-  {
-    ruleId: PROJECTION_RULE,
-    name: 'a projection writing its read model only',
-    expect: 'pass',
-    files: project(projection([LIST_PORT], ['private readonly invoices: InvoiceList'])),
-  },
-  {
-    ruleId: PROJECTION_RULE,
-    name: 'a projection given the event store',
-    expect: { file: PROJECTION },
-    also: [STORE],
-    files: project(
-      projection(
-        [LIST_PORT, `import { EventStore } from ${KERNEL};`],
-        ['private readonly invoices: InvoiceList', 'private readonly store: EventStore'],
-      ),
-    ),
-  },
-  {
-    ruleId: PROJECTION_RULE,
-    name: 'a projection fed by the dispatcher that names a repository, as before event sourcing',
-    expect: 'pass',
-    files: project(projection([INVOICE_REPOSITORY], ['private readonly invoices: InvoiceRepository'])),
-  },
-  {
-    ruleId: PROJECTION_RULE,
-    name: 'a projection fed by the event store given a repository',
-    expect: { file: PROJECTION },
-    files: project(
-      projection([INVOICE_REPOSITORY], ['private readonly invoices: InvoiceRepository'], "{ feed: 'event-store' }"),
     ),
   },
 ];
@@ -235,7 +221,7 @@ export const EVENT_SOURCING_FIXTURES: readonly Fixture[] = [
   ...STATE_IN_APPLY,
   ...PAST_TENSE,
   ...STORE_BEHIND_REPOSITORY,
-  ...PROJECTION_NEVER_APPENDS,
+  ...EVENT_SOURCING_PROJECTION_FIXTURES,
   ...UPCASTER_REQUIRED,
 ];
 
@@ -271,30 +257,6 @@ function invoice(command: readonly string[], apply: readonly string[], event = I
       '}',
     ),
   );
-}
-
-/** A projection under `application/projections/`; declared with `@Projection` and these options when some are given. */
-function projection(imports: readonly string[], parameters: readonly string[], options?: string): FixtureFiles {
-  const decorator = options === undefined ? [] : [`@Projection('billing.invoice-list', ${options})`];
-  const imported = options === undefined ? [] : ["import { Projection } from '@ddd-ts-kit/kernel/declarations';"];
-
-  return {
-    [PROJECTION]: source(
-      ...imports,
-      ...imported,
-      '',
-      ...decorator,
-      'export class InvoiceListProjection {',
-      `  constructor(${parameters.join(', ')}) {}`,
-      '}',
-    ),
-    [`${BILLING}/test/unit/invoice-list.projection.spec.ts`]: source(
-      "import { it } from 'vitest';",
-      '',
-      "it.todo('lists');",
-    ),
-    [`${BILLING}/application/ports/invoice-list.port.ts`]: 'export abstract class InvoiceList {}\n',
-  };
 }
 
 /** The codec of the invoice: its data and the types it declares beside, then the entry of `billing.invoice.issued` with what the fixture declares. */
