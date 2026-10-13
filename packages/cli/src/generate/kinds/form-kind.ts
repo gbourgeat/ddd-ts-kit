@@ -40,7 +40,7 @@ export const formKind: Kind = {
 
     const imported = controllerSource.withImport(
       controllerSource.withImport(hinted, 'defineForm', '@ddd-ts-kit/http'),
-      'Infer',
+      'type Infer',
       '@ddd-ts-kit/validation',
     );
 

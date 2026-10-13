@@ -3,7 +3,7 @@
  * name in an import, one more option of `@Controller`, a declaration before the class.
  */
 export const controllerSource = {
-  /** Adds `name` to the import of `module`, or a new import line after the last one. */
+  /** Adds `name` (`type Name` for a type) to the import of `module`, or a new import line after the last one. */
   withImport(source: string, name: string, module: string): string {
     const written = new RegExp(
       String.raw`import\s*(type\s*)?\{([^}]*)\}\s*from\s*'${module.replaceAll('/', '\\/')}';`,
@@ -13,7 +13,9 @@ export const controllerSource = {
       const lastImport = [...source.matchAll(/^import .*;$/gm)].at(-1);
       const at = lastImport === undefined ? 0 : lastImport.index + lastImport[0].length + 1;
 
-      return `${source.slice(0, at)}import { ${name} } from '${module}';\n${source.slice(at)}`;
+      const typeOnly = name.startsWith('type ') ? 'type ' : '';
+
+      return `${source.slice(0, at)}import ${typeOnly}{ ${name.replace(/^type\s+/, '')} } from '${module}';\n${source.slice(at)}`;
     }
 
     const names = (written[2] ?? '')
