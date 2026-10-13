@@ -251,8 +251,7 @@ export class Appointment extends AggregateRoot<string> {
     return { ...this.state };
   }
 
-  /** What a change of status keeps: when the appointment was registered, its booking, its document. */
-  /** What every change of standing keeps: the note is the staff's and the document the practice's, not the slot's. */
+  /** What every change of status keeps: when it was registered, its booking, the practice's document and the staff's note. */
   private carried(): Pick<AppointmentState, 'registeredAt' | 'booking' | 'document' | 'internalNote'> {
     const { registeredAt, booking, document, internalNote } = this.state;
 
