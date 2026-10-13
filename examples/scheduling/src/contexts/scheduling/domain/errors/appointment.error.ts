@@ -90,4 +90,18 @@ export class AppointmentError extends ConceptError {
       { calendarId, startsAt },
     ).exposing('startsAt');
   }
+
+  static noDocument(appointmentId: string) {
+    return AppointmentError.refusal('NO_DOCUMENT', `Appointment ${appointmentId} holds no document.`, {
+      appointmentId,
+    });
+  }
+
+  static documentNameTooLong(longest: number) {
+    return AppointmentError.refusal(
+      'DOCUMENT_NAME_TOO_LONG',
+      `The name of a document holds at most ${longest} characters.`,
+      { longest },
+    ).exposing('longest');
+  }
 }

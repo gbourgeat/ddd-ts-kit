@@ -19,7 +19,7 @@ export interface HttpServer {
 }
 
 /** What the server needs of the application: its routes and what stands at its edge. */
-type Served = Pick<Application, 'routes' | 'boundary'{{#if cache.rateLimit}} | 'rateLimiter' | 'ready'{{/if}}>;
+type Served = Pick<Application, 'routes' | 'boundary'{{#if cache.rateLimit}} | 'rateLimiter' | 'ready'{{/if}}{{#if files.http}} | 'fileRoutes'{{/if}}>;
 {{#if cache.rateLimit}}
 
 /** The part of the incoming request and of its response the limiter and the probe need, whatever Nest runs on. */
@@ -36,6 +36,16 @@ interface Outgoing {
 {{/if}}
 
 export async function startHttpServer(served: Served, config: AppConfig): Promise<HttpServer> {
+{{#if files.http}}
+{{#if docs.any}}
+  const routes = [...withDocumentation(served.routes, config), ...served.fileRoutes];
+{{/if}}
+{{#unless docs.any}}
+  const routes = [...served.routes, ...served.fileRoutes];
+{{/unless}}
+  const app = await NestFactory.create(createAppModule(routes, served.boundary), { logger: ['error', 'warn'] });
+{{/if}}
+{{#unless files.http}}
 {{#if docs.any}}
   const app = await NestFactory.create(createAppModule(withDocumentation(served.routes, config), served.boundary), {
     logger: ['error', 'warn'],
@@ -43,6 +53,7 @@ export async function startHttpServer(served: Served, config: AppConfig): Promis
 {{/if}}
 {{#unless docs.any}}
   const app = await NestFactory.create(createAppModule(served.routes, served.boundary), { logger: ['error', 'warn'] });
+{{/unless}}
 {{/unless}}
 
 {{#if cache.rateLimit}}

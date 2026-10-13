@@ -88,6 +88,8 @@ of tools.
     each one fails.
 27. [Scheduled jobs](scheduled-jobs.md): work triggered by time, and why it must be
     idempotent.
+27. [File storage](file-storage.md): files in a storage and never in the database, the order
+    that keeps both consistent, signed links.
 
 ## 6. Code and tests
 

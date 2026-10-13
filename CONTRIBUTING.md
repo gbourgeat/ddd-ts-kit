@@ -75,13 +75,18 @@ publication. The job keeps `id-token: write` and `environment: npm`, and needs n
 later, which it checks. No `NPM_TOKEN` is stored anywhere.
 
 **A new package.** Trust is declared per package, and only for a package that exists on the
-registry. A package added to `packages/` is therefore published once by a maintainer (or by a
-run given a short-lived granular token), then trusted:
+registry. Before the first release that contains a package added to `packages/`, a maintainer
+reserves its name with a placeholder `0.0.0`, deprecated, and declares the workflow as its
+trusted publisher; the real versions are then published by the workflow, with provenance:
 
 ```bash
+mkdir /tmp/reserve && cd /tmp/reserve
+npm init -y --scope=@ddd-ts-kit && npm pkg set name=<package> version=0.0.0 license=MIT
+npm publish --access public --tag reserved
+npm deprecate <package>@0.0.0 "Placeholder that reserves the name: install a released version."
 npm trust github <package> --file release.yml --repository gbourgeat/ddd-ts-kit --environment npm --allow-publish
 ```
 
-From then on the workflow publishes it like the others. Until that is done the release fails on
-that package alone, and running it again after the declaration finishes it.
+Until that is done the release fails on that package alone, and the publish step names it;
+running the failed job again after the declaration publishes it and skips the others.
 

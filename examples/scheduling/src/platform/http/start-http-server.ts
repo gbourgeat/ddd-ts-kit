@@ -15,13 +15,15 @@ export interface HttpServer {
 }
 
 /** What the server needs of the application: its routes and what stands at its edge. */
-type Served = Pick<Application, 'routes' | 'boundary' | 'rateLimiter' | 'ready'>;
+type Served = Pick<Application, 'routes' | 'boundary' | 'rateLimiter' | 'ready' | 'fileRoutes'>;
 
 export async function startHttpServer(served: Served, config: AppConfig): Promise<HttpServer> {
   const app = express();
 
   app.disable('x-powered-by');
   guardTheDoor(app, served, config);
+  // Before the JSON parser, which would read first a JSON file sent through a signed link.
+  mountExpress(app, served.fileRoutes, served.boundary);
   app.use(express.json());
   mountExpress(app, withDocumentation(served.routes, config), served.boundary);
 

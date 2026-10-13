@@ -134,7 +134,8 @@ Usage
                   [--events in-memory|outbox] [--docs-ui swagger|scalar|redoc|none]
                   [--ci github|gitlab|both|none] [--ci-extras <extra>,...|none]
                   [--authn jwt|keycloak|none] [--authz rbac|abac|rebac|custom]
-                  [--broker none|rabbitmq|kafka|nats|redis|custom] [--cache none|redis] [--audit on|off]
+                  [--broker none|rabbitmq|kafka|nats|redis|custom] [--cache none|redis] [--storage local|s3|none]
+                  [--audit on|off]
                   [--errors none|sentry] [--logger stdout|pino|winston] [--style declared|explicit] [--assembly barrel|discovery]
                   [--dependencies signature|listed] [--refusals factories|classes]
                   [--routes controllers|functions] [--value-objects throwing|result] [--literals named|free] [--tenancy none|shared-table]
@@ -214,6 +215,7 @@ Kinds
   port <context> <Name>
   route <context> <UseCaseName> --method <GET|POST|PUT|PATCH|DELETE> --path <path> [--command|--query] [--group <Name>] [--mapper] [--serializer]
   controller <context> <UseCaseName> --method <GET|POST|PUT|PATCH|DELETE> --path <path> [--command|--query] [--group <Name>] [--mapper] [--serializer]
+  file-upload <context> <UseCaseName> --path <path> (--permission <aggregate>.<action> | --public) [--method <POST|PUT>] [--group <Name>]
   route-group <context> <Name> [--prefix <path>] [--group <ParentName>] [--public | --role <role>]   (alias: group)
   guard <context> <Name>
   integration-event <context> <Aggregate> <Fact> [--version <n>] [--term "<Term>=<meaning>"]...

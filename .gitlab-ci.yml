@@ -26,6 +26,8 @@ variables:
   # Behind the dependency proxy of a group, a registry that rate-limits is never asked twice:
   # POSTGRES_IMAGE: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/postgres:18
   POSTGRES_IMAGE: postgres:18
+  # The upstream MinIO project stopped publishing images in 2025; pgsty/minio builds the same server.
+  MINIO_IMAGE: pgsty/minio:RELEASE.2026-08-04T00-00-00Z@sha256:b6bfe7239bfc83fb90d31612d9704d86039dd714f7904b3f1ad68f211e602372
 
 default:
   # A newer commit of a merge request supersedes the pipeline in progress; the default branch finishes every pipeline.
@@ -197,11 +199,17 @@ integration:
   services:
     - name: $POSTGRES_IMAGE
       alias: postgres
+    - name: $MINIO_IMAGE
+      alias: minio
+      command: ['server', '/data']
   variables:
     POSTGRES_USER: app
     POSTGRES_PASSWORD: app
     POSTGRES_DB: app
+    MINIO_ROOT_USER: ddd-ts-kit
+    MINIO_ROOT_PASSWORD: ddd-ts-kit-secret
     DDD_TS_KIT_TEST_DATABASE_URL: postgres://app:app@postgres:5432/app
+    DDD_TS_KIT_TEST_S3_ENDPOINT: http://minio:9000
   script:
     - if [ "$AFFECTED_integration" != "true" ]; then echo "No adapter package is reached, no spec to run."; exit 0; fi
     - npm run ci:test:integration -- --reporter=default --reporter=junit --outputFile.junit=reports/junit.xml
