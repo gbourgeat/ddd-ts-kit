@@ -32,7 +32,7 @@ type Standing = Pick<AgendaEntry, 'status'> & Partial<Pick<AgendaEntry, 'confirm
 export class AgendaProjection {
   constructor(private readonly agenda: Agenda) {}
 
-  @On(AppointmentBooked, { name: 'scheduling.appointment.booked' })
+  @On(AppointmentBooked, { name: AppointmentBooked.eventName })
   async booked(event: AppointmentBooked): Promise<ReadModelWrite> {
     const { booking, confirmBefore } = event.held;
 
@@ -45,19 +45,19 @@ export class AgendaProjection {
     );
   }
 
-  @On(AppointmentConfirmed, { name: 'scheduling.appointment.confirmed' })
+  @On(AppointmentConfirmed, { name: AppointmentConfirmed.eventName })
   async confirmed(event: AppointmentConfirmed): Promise<ReadModelWrite> {
     return this.stands(event, event.booking, { status: AppointmentStatus.Booked });
   }
 
-  @On(AppointmentRescheduled, { name: 'scheduling.appointment.rescheduled' })
+  @On(AppointmentRescheduled, { name: AppointmentRescheduled.eventName })
   async rescheduled(event: AppointmentRescheduled): Promise<ReadModelWrite> {
     return this.agenda.upsertIfNewer(event.aggregateId, stampOfFact(event), (current) =>
       current === undefined ? undefined : { ...current, ...placeOf(event.moved.booking), changedAt: event.occurredAt },
     );
   }
 
-  @On(AppointmentCancelled, { name: 'scheduling.appointment.cancelled' })
+  @On(AppointmentCancelled, { name: AppointmentCancelled.eventName })
   async cancelled(event: AppointmentCancelled): Promise<ReadModelWrite> {
     return this.stands(event, event.ended.booking, {
       status: AppointmentStatus.Cancelled,
@@ -65,17 +65,17 @@ export class AgendaProjection {
     });
   }
 
-  @On(AppointmentExpired, { name: 'scheduling.appointment.expired' })
+  @On(AppointmentExpired, { name: AppointmentExpired.eventName })
   async expired(event: AppointmentExpired): Promise<ReadModelWrite> {
     return this.stands(event, event.booking, { status: AppointmentStatus.Expired });
   }
 
-  @On(AppointmentCompleted, { name: 'scheduling.appointment.completed' })
+  @On(AppointmentCompleted, { name: AppointmentCompleted.eventName })
   async completed(event: AppointmentCompleted): Promise<ReadModelWrite> {
     return this.stands(event, event.booking, { status: AppointmentStatus.Completed });
   }
 
-  @On(AppointmentMarkedNoShow, { name: 'scheduling.appointment.marked-no-show' })
+  @On(AppointmentMarkedNoShow, { name: AppointmentMarkedNoShow.eventName })
   async markedNoShow(event: AppointmentMarkedNoShow): Promise<ReadModelWrite> {
     return this.stands(event, event.booking, { status: AppointmentStatus.NoShow });
   }

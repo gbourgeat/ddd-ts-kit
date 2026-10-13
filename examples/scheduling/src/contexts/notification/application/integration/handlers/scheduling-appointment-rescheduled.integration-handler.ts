@@ -9,7 +9,7 @@ import { NotificationKindName } from '@/contexts/notification/domain/vocabularie
 
 @IntegrationEventHandler(appointmentRescheduledV1, { consumer: 'notification.scheduling-appointment-rescheduled' })
 export class SchedulingAppointmentRescheduledIntegrationHandler {
-  static readonly eventType = 'scheduling.appointment.rescheduled';
+  static readonly eventType = appointmentRescheduledV1.type;
 
   readonly actor = systemActor('notification.scheduling-appointment-rescheduled');
 

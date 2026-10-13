@@ -1,7 +1,9 @@
 import type { DomainEvent } from '@ddd-ts-kit/kernel';
 
 export class ReminderSent implements DomainEvent {
-  readonly name = 'notification.reminder.sent';
+  static readonly eventName = 'notification.reminder.sent';
+
+  readonly name = ReminderSent.eventName;
 
   constructor(
     readonly aggregateId: string,

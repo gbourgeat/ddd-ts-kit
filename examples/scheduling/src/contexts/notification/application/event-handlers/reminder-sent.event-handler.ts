@@ -5,7 +5,7 @@ import { SendNotificationCommand } from '@/contexts/notification/application/com
 import { NotificationKindName } from '@/contexts/notification/domain/vocabularies/notification-kind-name.vocabulary';
 
 /** When a reminder is sent, its recipient is notified, once per reminder and start. */
-@DomainEventHandler(ReminderSent, { name: 'notification.reminder.sent' })
+@DomainEventHandler(ReminderSent, { name: ReminderSent.eventName })
 export class ReminderSentEventHandler implements DomainEventHandler<ReminderSent> {
   readonly actor = systemActor('notification.reminder-sent');
 

@@ -6,7 +6,7 @@ import { NotificationKindName } from '@/contexts/notification/domain/vocabularie
 
 @IntegrationEventHandler(appointmentCancelledV1, { consumer: 'notification.scheduling-appointment-cancelled' })
 export class SchedulingAppointmentCancelledIntegrationHandler {
-  static readonly eventType = 'scheduling.appointment.cancelled';
+  static readonly eventType = appointmentCancelledV1.type;
 
   readonly actor = systemActor('notification.scheduling-appointment-cancelled');
 

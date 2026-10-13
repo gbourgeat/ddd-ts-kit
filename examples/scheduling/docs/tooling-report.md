@@ -982,3 +982,66 @@ literal values: a contract names them itself.
 objects: the minutes of an hour and the two digits of `HH:MM` in `Range`, the minutes of an hour
 and the four digits of a year in `TimeZone`. Each is now a constant of its module
 (`MINUTES_PER_HOUR`, `TWO_DIGITS`, `YEAR_DIGITS`).
+
+## 2026-10-13: event names declared once, and the inventory of closed values
+
+Each of the 22 domain events now declares its name once, `static readonly eventName =
+'scheduling.appointment.expired'`, and carries it in `readonly name = AppointmentExpired.eventName`.
+The 33 reactions that repeated it (26 event handlers and publishers, 7 methods of the agenda
+projection) read it, `@DomainEventHandler(AppointmentExpired, { name: AppointmentExpired.eventName })`
+and `@On(AppointmentExpired, { name: AppointmentExpired.eventName })`, and the 5
+integration event handlers of `notification` read the type they handle from the declaration of
+`scheduling`, `static readonly eventType = appointmentExpiredV1.type`. The event catalog script
+resolves that reference through the names the published languages export: `docs:generate` wrote
+`event-catalog.md`, `asyncapi.yaml` and `openapi.yaml` byte for byte as before. The specs keep the
+names written out: a test spells what it expects.
+
+Before the change `scheduling.appointment.expired` was written six times in the sources: the
+domain event, the published-language declaration, the event handler, the publisher, the agenda
+projection and the consumer in `notification`. It is now written twice, once per language: the domain event of
+`scheduling` and its published contract, which names its own values.
+
+What else is a closed list of values in the example, with what holds it:
+
+| Category | Count | Declared in | Read as | State |
+|---|---|---|---|---|
+| Statuses and kinds of the model | 7 vocabularies, 33 values | `domain/vocabularies/*.vocabulary.ts` | `AppointmentStatus.NoShow` | typed, `language/declared-vocabulary` |
+| Realm roles | 1 vocabulary, 3 values | `src/platform/auth/role.ts` | `Role.Admin` | typed, same rule |
+| Permission ids | 31 | `definePermissions` of each context | `schedulingPermissions['appointment.book']` | typed, same rule |
+| Domain event names | 22 | `static readonly eventName` of the event class | `AppointmentExpired.eventName`, 33 reactions | typed, `events/name-format`, `declarations/role-declared` |
+| Integration event types | 14 declarations | `type` of the published-language declaration | `appointmentExpiredV1.type`, 5 handlers | typed |
+| Error codes | 43 | the factory of the concept | `errors: [..]` of a route | literal, each checked against a factory by `errors/known-code` |
+| Job names | 3 | `@Scheduled('notification.send-due-reminders')` | repeated once in `systemActor(..)` of the job | literal twice per job, held equal by `scheduling/job-name` |
+| Consumer names | 5 | `{ consumer: '..' }` of `@IntegrationEventHandler` | repeated once in `systemActor(..)` of the handler | literal twice per handler |
+| Other system actors | 5 | `systemActor('..')` of a domain event handler | once | literal, single site |
+| Projection and policy names | 4 and 2 | `@Projection('..')`, `@Policy(.., { name })` | once | literal, single site |
+| Route group tags | 5 tags on 8 root groups | `tags: ['scheduling']` | the name of the context | literal, `scheduling` 3 times and `identity` twice |
+| ReBAC resource types | 8 | `defineSchema` of the platform | `{ type: 'calendar', id }` in `@Requires`, 31 places | literal, not judged |
+| ReBAC relations | 13 | `defineSchema` of the platform | `relation: 'patient'` in 2 repositories, 9 places | literal, not judged |
+| Cache keys | 0 | none | the cache is bound in the platform; no context reads or writes a key | nothing to declare |
+
+Not done, and why. Job and consumer names: the decorator of a class cannot read a static of that
+class under standard decorators (its arguments are evaluated before the class exists), and
+`scheduling/job-name`, the generated lists and the docs read the literal of the decorator; the
+second copy, in `systemActor(..)`, stays. Route group tags are the name of the context and are
+not compared anywhere. ReBAC resource types and relations are declared by the relationship schema
+of the platform, which the application layer may not import; a typed form needs a vocabulary the
+contexts can read (the shared kernel, or one per context), not decided in this change.
+
+The enum measurement now covers each compiler a generated project runs, on Node 24.21, with a
+string `enum` and the object `as const` of the same values, each file compiled and run:
+
+| Compiler | Where a generated project runs it | `enum` | `as const` |
+|---|---|---|---|
+| `tsc` 6.0.3 | the build and the type check (a Nest project too) | accepted | accepted |
+| `tsc` under `erasableSyntaxOnly` | a project that opts in | refused, TS1294 | accepted |
+| Node's type stripping | a `.ts` file run by `node` | refused, `ERR_UNSUPPORTED_TYPESCRIPT_SYNTAX` | runs |
+| tsx 4.23.15 (esbuild 0.28.2) | `npm run dev` | runs | runs |
+| Oxc, through rolldown 1.2.13 | Vitest 5 (Vite 8.3.4) | runs | runs |
+| SWC 1.16.13 | Jest, through `@swc/jest` | runs | runs |
+
+SWC was measured with its WebAssembly build of the same version: the native one refused to load on
+this machine (`ERR_SWC_NATIVE_CACHE`, a permission check of its cache directory), which says
+nothing of the syntax. The transpilers accept both; what refuses the `enum` is the erasable
+subset, which Node runs and `tsc` can enforce. The object `as const` runs on every one of them,
+so the decision stands.

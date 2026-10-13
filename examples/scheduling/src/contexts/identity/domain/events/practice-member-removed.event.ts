@@ -2,7 +2,9 @@ import type { DomainEvent } from '@ddd-ts-kit/kernel';
 import type { RoleName } from '@/contexts/identity/domain/vocabularies/role-name.vocabulary';
 
 export class PracticeMemberRemoved implements DomainEvent {
-  readonly name = 'identity.practice.member-removed';
+  static readonly eventName = 'identity.practice.member-removed';
+
+  readonly name = PracticeMemberRemoved.eventName;
 
   constructor(
     readonly aggregateId: string,

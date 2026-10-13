@@ -2,7 +2,9 @@ import type { DomainEvent } from '@ddd-ts-kit/kernel';
 import type { Booking } from '@/contexts/scheduling/domain/value-objects/booking.vo';
 
 export class AppointmentExpired implements DomainEvent {
-  readonly name = 'scheduling.appointment.expired';
+  static readonly eventName = 'scheduling.appointment.expired';
+
+  readonly name = AppointmentExpired.eventName;
 
   constructor(
     readonly aggregateId: string,

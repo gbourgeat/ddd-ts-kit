@@ -2,7 +2,9 @@ import type { DomainEvent } from '@ddd-ts-kit/kernel';
 import type { DelegationEndCause } from '@/contexts/identity/domain/vocabularies/delegation-end-cause.vocabulary';
 
 export class DelegationRevoked implements DomainEvent {
-  readonly name = 'identity.delegation.revoked';
+  static readonly eventName = 'identity.delegation.revoked';
+
+  readonly name = DelegationRevoked.eventName;
 
   constructor(
     readonly aggregateId: string,

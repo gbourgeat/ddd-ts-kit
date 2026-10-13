@@ -4,7 +4,7 @@ import { AppointmentBooked } from '@/contexts/scheduling/domain/events/appointme
 import { appointmentBookedV1 } from '@/contexts/scheduling/published-language/appointment-booked.v1.integration-event';
 import { AppointmentStatus } from '@/contexts/scheduling/domain/vocabularies/appointment-status.vocabulary';
 
-@DomainEventHandler(AppointmentBooked, { name: 'scheduling.appointment.booked' })
+@DomainEventHandler(AppointmentBooked, { name: AppointmentBooked.eventName })
 export class AppointmentBookedPublisher implements DomainEventHandler<AppointmentBooked> {
   constructor(
     private readonly publisher: IntegrationEventPublisher,
