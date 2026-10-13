@@ -184,6 +184,7 @@ function running(container: Container, options: ApplicationOptions, contexts: Co
         ids: container.resolve(IdGenerator),
       }),
       errors: container.resolve(ErrorReporter),
+      networks: options.networks,
     }),
     fileRoutes: fileRoutes(container.resolve(FileStorage)),
     // What the outbox relay delivers with: each publication continues the trace stored with its event.

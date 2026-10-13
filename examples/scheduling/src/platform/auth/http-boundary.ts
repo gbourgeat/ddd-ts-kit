@@ -2,6 +2,7 @@ import type { Authenticator } from '@ddd-ts-kit/auth';
 import {
   firstTenantOf,
   reportHttpErrors,
+  servedTenantOf,
   tenantFromClaim,
   tenantFromHeader,
   type ErrorContext,
@@ -33,7 +34,8 @@ export interface HttpBoundary {
   readonly onGuardRefusal: (refusal: GuardRefusal) => Promise<void>;
   /**
    * The network of a request: the one it names in `x-tenant-id`, else the one of the token. A
-   * caller that names a network it does not belong to is refused (403) before anything runs.
+   * caller that names a network it does not belong to is refused (403) before anything runs, and
+   * a network this deployment does not serve (`NETWORKS`) is not found (404), whoever names it.
    */
   readonly resolveTenant: TenantResolver;
 }
@@ -48,6 +50,8 @@ interface Edge {
   readonly refusals: (refusal: GuardRefusal) => Promise<void>;
   /** Where a request answered 5xx is reported, unless a bus already reported its failure. */
   readonly errors: ErrorReporter;
+  /** The networks served (`NETWORKS`): left out (the tools), any network may be named. */
+  readonly networks: readonly string[] | undefined;
 }
 
 /** A request is authenticated once, then handled inside the execution scope, so infrastructure sees who acts and under which correlation. */
@@ -59,6 +63,7 @@ export function httpBoundary({
   logger,
   refusals,
   errors,
+  networks,
 }: Edge): HttpBoundary {
   const report = reportHttpErrors(errors);
 
@@ -68,7 +73,7 @@ export function httpBoundary({
     errorMapper,
     clock,
     around: tracedRoutes(),
-    resolveTenant: firstTenantOf(tenantFromHeader(), tenantFromClaim()),
+    resolveTenant: networkOf(networks),
     uploads: multipartUploads(),
     onGuardRefusal: refusals,
     // The message of the error may quote data: only the code and the route are logged.
@@ -87,4 +92,11 @@ export function httpBoundary({
       report(error, context);
     },
   };
+}
+
+/** The network named by the request or the token, held to the networks served when they are known. */
+function networkOf(networks: readonly string[] | undefined): TenantResolver {
+  const named = firstTenantOf(tenantFromHeader(), tenantFromClaim());
+
+  return networks === undefined ? named : servedTenantOf(named, networks);
 }

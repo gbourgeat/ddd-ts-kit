@@ -25,6 +25,8 @@ interface AuditLine {
 
 /** The second network of the test environment (`NETWORKS`): its people, its practice, its patient. */
 const OTHER_NETWORK = 'south';
+/** A network missing from `NETWORKS`: its jobs never run, so the edge serves nothing of it. */
+const UNSERVED_NETWORK = 'east';
 const startsAt = slotStarting({ days: 7 });
 
 let application: RunningApplication;
@@ -82,6 +84,25 @@ describe('Two networks of practices served by one application', () => {
     expectStatus(await asking(NETWORK), 200);
     expectProblem(await asking(OTHER_NETWORK), { status: 403, code: 'FORBIDDEN' });
     expectStatus(await asking('north,south'), 404);
+  });
+
+  it('holds a person to one network: the subject known in one is refused in the other, and kept where it was', async () => {
+    const registering = { displayName: 'Paul', email: 'paul@example.com' };
+    const paulInSouth = await inNetwork(application, OTHER_NETWORK).as({ id: 'paul', roles: ['patient'] });
+
+    expectProblem(await paulInSouth.put('/people/me', registering), { status: 422, code: 'CONCURRENCY_CONFLICT' });
+    expect(expectStatus(await paul.put<Identified>('/people/me', registering), 200).body).toEqual({ id: 'paul' });
+  });
+
+  it('finds nothing of a network the deployment does not serve, even for a token that names it', async () => {
+    const stranger = await application.as({ id: 'paul', roles: ['patient'], tenantId: UNSERVED_NETWORK });
+
+    expectProblem(await stranger.get('/appointments'), { status: 404, code: 'NOT_FOUND' });
+
+    expectProblem(await stranger.put('/people/me', { displayName: 'Paul', email: 'paul@example.com' }), {
+      status: 404,
+      code: 'NOT_FOUND',
+    });
   });
 });
 

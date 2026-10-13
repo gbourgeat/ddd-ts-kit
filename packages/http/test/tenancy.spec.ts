@@ -13,6 +13,7 @@ import {
   defineRoute,
   executeRoute,
   firstTenantOf,
+  servedTenantOf,
   tenantFromClaim,
   tenantFromHeader,
   tenantFromPath,
@@ -155,6 +156,25 @@ describe('a request in the tenant it names', () => {
       expect(response.status).toBe(404);
       expect(seen.execution).toBeUndefined();
     }
+  });
+
+  it('answers 404 to a tenant the deployment does not serve, even to a caller of that tenant', async () => {
+    const resolveTenant = servedTenantOf(firstTenantOf(tenantFromHeader(), tenantFromClaim()), ['globex']);
+
+    const answered = async (principal: Actor, headers: RawRequest['headers']) => {
+      const { route, seen } = recordingRoute();
+
+      const response = await executeRoute(route, request(headers, { tenantId: 'x' }), {
+        resolvePrincipal: () => principal,
+        resolveTenant,
+      });
+
+      return { status: response.status, tenantId: seen.execution?.tenantId };
+    };
+
+    expect(await answered(ada, {})).toEqual({ status: 404, tenantId: undefined });
+    expect(await answered(consultant, { 'x-tenant-id': 'globex' })).toEqual({ status: 204, tenantId: 'globex' });
+    expect(await answered(staff, {})).toEqual({ status: 204, tenantId: undefined });
   });
 });
 

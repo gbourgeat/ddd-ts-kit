@@ -175,8 +175,10 @@ tenant ([ADR-0003](docs/adr/0003-one-network-is-one-tenant.md), `"stack.tenancy"
 every table of the contexts carries the network of its rows, every repository reaches it through
 `tenantTable` and `ownTenantTable`, the outbox keeps the network of each event so that its
 consumers run in it, and each scheduled job runs once per network of `NETWORKS`. The token names
-the network of its user (`tenant_id`); a request may name it in `x-tenant-id`, and naming another
-network than the caller's is refused with 403 before anything runs. Platform staff belong to no
+the network of its user (`tenant_id`); a request may name it in `x-tenant-id`, naming another
+network than the caller's is refused with 403 before anything runs, and a network missing from
+`NETWORKS` is not found (404), so that nothing is written where no job runs. A person belongs to
+one network: a second network needs a second account. Platform staff belong to no
 network: they read the audit trail of every network through an elevation that the trail records
 first. Practices stay relationships inside a network. `test/e2e/journey-tenancy.e2e.spec.ts`
 holds all of it; `tenantIsolationContract` holds it for every repository.

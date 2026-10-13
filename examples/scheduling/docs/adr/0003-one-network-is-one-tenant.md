@@ -37,8 +37,8 @@ One network of practices is one tenant, on shared tables (`"stack.tenancy": "sha
   audit trail keeps one chain per network, and its read side is confined to the network of the
   work (`TenantAuditReader`);
 - the `tenant_id` claim of the token names the network of the user; a request may name it in
-  `x-tenant-id`, and a caller that names a network it does not belong to is refused with 403
-  before anything runs;
+  `x-tenant-id`, a caller that names a network it does not belong to is refused with 403 before
+  anything runs, and a network missing from `NETWORKS` is not found (404);
 - the administrator of a network (`network-admin`) opens its practices; platform staff
   (`platform-admin`) belong to no network and read the audit trail of every network only
   through an elevation (`acrossTenants`, reason `AUDIT_TRAIL_SEARCH`), which the trail records
@@ -57,8 +57,19 @@ keeps a tenant: ADR-0004.
   one session. No statement can reach another network: forgetting a condition is reported by
   the checker, and the isolation of each repository is proven by `tenantIsolationContract`.
 - Harder: a column and a condition on every table; every unit of work names a network, so a
-  job, a consumer or a tool that names none is refused (`NoCurrentTenantError`); a user who
-  works for two networks needs two accounts, or a token listing both (`tenants`).
+  job, a consumer or a tool that names none is refused (`NoCurrentTenantError`).
+- A person belongs to one network. The realm gives each user one `tenant_id` (a single-valued
+  attribute), and the keys of the tables stay `id` alone, unique across networks: identifiers the
+  application generates, and subjects of one realm for people. A token whose claim names several
+  networks (`north,south`) names none that can exist and is answered 404 at the edge; a subject
+  already registered in one network that registers in another is refused (422,
+  `CONCURRENCY_CONFLICT`, the key being taken) and stays where it was, so no projection of the
+  second network silently misses it. A person who works for two networks has two accounts. Serving
+  one account in several networks would make every key and unique constraint lead with `tenant_id`
+  (`(tenant_id, id)`), a migration of every table.
+- A network is served only when it is listed in `NETWORKS`, the directory the per-network jobs
+  run for: a token or a header naming another one is answered 404 at the edge
+  (`servedTenantOf`), so that no data is written where no job would ever run.
 - The relation tuples of the authorization model (`authorization.relation_tuples`) are not
   confined to a network: the elements they name have identifiers unique across networks, and
   every element a use case reads is confined by its repository. Confining them too is the next
