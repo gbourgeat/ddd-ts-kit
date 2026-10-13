@@ -1,5 +1,7 @@
 export type { InferStandardOutput } from './standard-schema/infer-standard-output.js';
+export type { StandardSchemaOptions } from './standard-schema/standard-schema-options.js';
 export type {
+  StandardJsonSchemaConverter,
   StandardSchemaIssue,
   StandardSchemaResult,
   StandardSchemaV1,

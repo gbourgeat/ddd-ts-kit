@@ -87,3 +87,30 @@ describe('the Standard Schema adapter, with a hand-written schema', () => {
     expect(standardSchema(even).parse(4)).toEqual({ ok: true, value: 4 });
   });
 });
+
+describe('the Standard Schema adapter, with a library that converts its own JSON Schema', () => {
+  const converting: StandardSchemaV1<unknown, string> = {
+    '~standard': {
+      version: 1,
+      vendor: 'test',
+      validate: (value) => (typeof value === 'string' ? { value } : { issues: [{ message: 'A string.' }] }),
+      jsonSchema: {
+        input: ({ target }) => ({ type: 'string', description: `input, ${target}` }),
+        output: ({ target }) => ({ type: 'string', description: `output, ${target}` }),
+      },
+    },
+  };
+
+  it('documents the input side in draft 2020-12 unless told otherwise', () => {
+    expect(standardSchema(converting).toJsonSchema()).toEqual({ type: 'string', description: 'input, draft-2020-12' });
+
+    expect(standardSchema(converting, undefined, { io: 'output' }).toJsonSchema()).toEqual({
+      type: 'string',
+      description: 'output, draft-2020-12',
+    });
+  });
+
+  it('prefers the JSON Schema given by the caller', () => {
+    expect(standardSchema(converting, { type: 'string' }).toJsonSchema()).toEqual({ type: 'string' });
+  });
+});

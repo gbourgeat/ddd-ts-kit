@@ -6,6 +6,17 @@ list the pull requests behind it.
 
 ## Unreleased
 
+**A schema shared by several routes is documented once.** Declared once, a schema used whole or
+inside other schemas by several routes lands once in `components.schemas` of the OpenAPI
+contract and every route points at it with `$ref`: a zod schema with `.meta({ id })`,
+`classSchema(Dto, { shared: true })`, or any schema through `sharedSchema(name, schema)` of
+`@ddd-ts-kit/validation`. class-validator gains `pickClass`, `omitClass` and `partialClass` to
+reuse a DTO class in part, and the Standard Schema adapter documents a schema its library
+converts itself (Standard JSON Schema: zod, arktype, valibot) when no JSON Schema is given. The
+platform shares its own: `acceptedSchema` (`Accepted`, the `{ id }` a command route answers),
+the page of a shared item (`<Item>Page`) and the problem document. A shared `params`, `query`
+or `headers` schema still gives one parameter per property.
+
 **Every package carries the MIT notice.** Each published package now holds the `LICENSE` of the
 repository next to its `dist/`, and `npm run package:check` refuses a tarball without it, or with
 another text. Earlier versions were published without it.

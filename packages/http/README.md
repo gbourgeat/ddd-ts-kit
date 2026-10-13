@@ -286,7 +286,7 @@ const searchOrders = defineRoute(
 | `pageQuerySchema(options?)` | the same reading as a `Schema`, for a route whose whole query is the page |
 | `pageResponse(page, map)` | the JSON body `{ items, total?, nextCursor? }`, each item through `map` |
 | `pageRequestParameters(options?)` | the JSON Schema of the query (one OpenAPI parameter per property); `properties` merges into a wider schema |
-| `pageSchemaOf(itemSchema)` | the `Schema` of a page of items: validates the envelope and each item, describes both in the contract |
+| `pageSchemaOf(itemSchema)` | the `Schema` of a page of items: validates the envelope and each item, describes both in the contract; shared as `<Item>Page` when the item is shared ([shared schemas](#shared-schemas)) |
 
 `options` are the `PageLimits` of the kernel (`defaultSize` 20, `maxSize` 100) plus `sortable`,
 the closed list of fields a client may sort by, and `kind`, the variant of a query that names
@@ -449,6 +449,35 @@ status of the declared `errors` (codes listed in the description and in `x-error
 whenever the route validates input, a shared `Problem` schema. Local `$defs` of the schemas are
 moved to `components.schemas`. Paths, statuses and component keys are sorted: the output does
 not depend on the order of the routes, so the committed file diffs cleanly.
+
+### Shared schemas
+
+A schema several routes use is declared once and lands once in `components.schemas`; each route
+points at it with `$ref`, whether it uses it whole or inside another schema. A schema is shared
+when its JSON Schema is a reference to one of its own definitions, which every adapter of
+`@ddd-ts-kit/validation` can produce:
+
+| Library | Shared by |
+|---|---|
+| zod | `.meta({ id: 'Slot' })` on the zod schema, used whole or nested |
+| class-validator | `classSchema(SlotDto, { shared: true })`; a nested class is always a component |
+| Standard Schema | the library's own ids through Standard JSON Schema, or `sharedSchema('Slot', schema)` |
+| any `Schema` | `sharedSchema(name, schema)` of `@ddd-ts-kit/validation` |
+
+A part of a shared schema (`slot.pick(...)`, `pickClass(SlotDto, [...])`) is a new shape: it is
+written where it is used unless it is shared under a name of its own. Two different shapes under
+one name get distinct components (`Slot`, `Slot_2`): for zod, the input and the output side of a
+schema with defaults are two shapes, so a response gets an id of its own.
+
+The platform shares three schemas of its own:
+
+| Schema | Component | For |
+|---|---|---|
+| `acceptedSchema` | `Accepted`, `{ id }` | the answer of every command route that returns the identifier of what it created or changed |
+| `pageSchemaOf(item)` | `<Item>Page` when the item is shared | the envelope of a search answer (`items`, `total`, `nextCursor`) |
+| the problem document | `Problem` | every refusal, RFC 9457 with the stable `code` |
+
+A shared request part (`params`, `query`, `headers`) still gives one parameter per property.
 
 ## Serving the contract and its page
 

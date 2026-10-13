@@ -29,6 +29,8 @@ class): there is nothing to declare in a composition root.
 - `Infer<typeof schema>` gives the parsed type.
 - `customSchema(parse, jsonSchema?)` builds a schema from a plain function.
 
+- `sharedSchema(name, schema)` documents a schema once, under `name` (see [shared schemas](#shared-schemas)).
+
 The root entry imports no third-party package. Each adapter lives in its own subpath and its
 library is an optional peer dependency: install only the one you use.
 
@@ -97,6 +99,24 @@ reachable from the class under `$defs`.
 
 Requires `experimentalDecorators` in the project's `tsconfig.json`.
 
+A DTO class declared once is reused whole (`classSchema(SlotDto, { shared: true })`, or nested
+with `@ValidateNested()` and `@Type`), extended (`class BookBody extends SlotDto { ... }`) or in
+part, through three helpers that copy the constraints, the nested types and the transformations
+of the properties they keep:
+
+```ts
+import { omitClass, partialClass, pickClass } from '@ddd-ts-kit/validation/class-validator';
+
+class RescheduleBody extends pickClass(AppointmentDto, ['startsAt', 'endsAt']) {}
+class BookBody extends omitClass(AppointmentDto, ['status']) {}
+class EditPatientBody extends partialClass(PatientDto) {} // every property optional, checked when present
+```
+
+The class that extends a helper names the shape in the contract. Picking a property that carries
+no constraint is refused: validation would strip it as unknown. A derived class nested in
+another one through `@Type` declares at least one property of its own: class-validator-jsonschema
+documents a class only from its own decorators.
+
 ## Standard Schema (valibot, arktype, ...)
 
 ```ts
@@ -110,10 +130,38 @@ const placeOrder = standardSchema(
 );
 ```
 
-The adapter reads `~standard.validate` of Standard Schema v1 and nothing else: it derives no
-JSON Schema, neither from the library's own exporter nor from the separate Standard JSON
-Schema specification. Give it as the second argument (written by hand, or produced by the
-exporter of your library); without it `toJsonSchema()` returns `{}`, which the OpenAPI
-document shows as "any value". The specification carries no error code, so every issue has
-the code `invalid`. A schema that validates asynchronously makes
+The adapter validates with `~standard.validate` of Standard Schema v1. The JSON Schema of the
+contract is the second argument when it is given (written by hand, or produced by the exporter of
+your library); otherwise the one the library converts itself when it implements the companion
+specification, Standard JSON Schema v1 (`~standard.jsonSchema`: zod 4, arktype, valibot through
+`toStandardJsonSchema` of `@valibot/to-json-schema`), input side by default and
+`standardSchema(schema, undefined, { io: 'output' })` for a response; otherwise `{}`, which the
+OpenAPI document shows as "any value". The specification carries no error code, so every issue
+has the code `invalid`. A schema that validates asynchronously makes
 `parse` throw: async schemas are not supported at the boundary.
+
+## Shared schemas
+
+A schema several routes use is declared once and documented once: the OpenAPI generator of
+`@ddd-ts-kit/http` writes it in `components.schemas` and points at it with `$ref` from every
+route, whole or nested. A schema is shared when its JSON Schema is a reference to one of its own
+definitions (`{ $ref: '#/$defs/Slot', $defs: { Slot: ... } }`), the form each library reaches its
+own way:
+
+```ts
+// zod: an id in its metadata, kept when the schema is nested in another one
+const slot = z.object({ startsAt: z.iso.datetime(), endsAt: z.iso.datetime() }).meta({ id: 'Slot' });
+const reschedule = zodSchema(slot);
+const book = zodSchema(z.object({ patientId: z.uuid(), slot }));
+
+// class-validator: the name of the class
+const patient = classSchema(PatientDto, { shared: true });
+
+// any schema, the Standard Schema ones included
+const money = sharedSchema('Money', standardSchema(moneySchema));
+```
+
+`sharedNameOf(jsonSchema)` answers the name a JSON Schema is shared under, if any. A shared
+schema of the presentation layer lives where `generate schema` writes it: under
+`presentation/http/schemas/` of its context, or under `presentation/` of the shared kernel when
+several contexts answer with it; never in the domain.

@@ -71,3 +71,5 @@ export type { RouteInput } from './route/route-input.js';
 export type { RouteOutput } from './route/route-output.js';
 export type { RouteSpec } from './route/route-spec.js';
 export type { Route } from './route/route.js';
+export type { Accepted } from './schemas/accepted.js';
+export { acceptedSchema } from './schemas/accepted-schema.js';
