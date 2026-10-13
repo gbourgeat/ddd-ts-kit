@@ -1228,3 +1228,26 @@ The four contract pairs (Express and zod, Fastify and TypeBox, Hono on Node and 
 class-validator) were each generated with two routes sharing one shape, and held to zero
 finding, their specs, their end-to-end specs and a current contract; the numbers and the
 decision table are in `docs/tools/contract-pairs.md` of the kit.
+
+## 2026-10-13: the shapes after their review, and a part of a shape reused
+
+The review of the shared schemas asked for five things the example shows or is held by:
+
+| | Before | After |
+|---|---|---|
+| Identifier answers | 18 `Accepted`; the two document routes merged from main answered their own `*.accepted.ts` | 20 routes on `acceptedSchema`, the two `*.accepted.ts` removed |
+| `startsAt`, ISO 8601 with its zone | declared by hand in `BookAppointmentBody`, `RescheduleAppointmentBody` and `AddTimeOffBody` | declared once in `shared/time-span.schema.ts` (`generate schema scheduling TimeSpan`): the time off route answers to `TimeSpan` whole, the two appointment bodies extend `pickClass(TimeSpan, ['startsAt'])` |
+| `openapi/openapi.yaml` (with the three document routes of main) | 2908 lines, 149 `$ref` | 2910 lines, 150 `$ref` |
+| `components.schemas` | 10 | 11: `TimeSpan` added |
+| Findings of `check` | 0 | 0 |
+
+The bytes on the wire did not change: `POST /calendars/{calendarId}/time-off` takes the same two
+instants, now a reference to `TimeSpan`; the bodies of booking and rescheduling are documented
+as before, `patientId` now listed before `startsAt`, because a derived class declares the
+picked property first. The rule `schema/no-duplicate-shape` now judges a context and the shared
+kernel only, not two contexts, and leaves alone a shape that still carries a `TODO(domain)` of
+the generator: two searches generated in a row no longer report each other's `{ id }` line.
+`shared/` still holds the `*.dto.ts` parts of the calendar answers next to the new `*.schema.ts`
+files: those classes are nested parts of one answer each, documented as components by
+class-validator, and renaming them would change their component names in the contract for no
+reader's gain.

@@ -243,15 +243,15 @@ paths:
                 appointmentTypeId:
                   minLength: 1
                   type: string
+                patientId:
+                  minLength: 1
+                  type: string
                 startsAt:
                   oneOf:
                     - format: date
                       type: string
                     - format: date-time
                       type: string
-                patientId:
-                  minLength: 1
-                  type: string
               type: object
               required:
                 - calendarId
@@ -1551,23 +1551,7 @@ paths:
         content:
           application/json:
             schema:
-              properties:
-                startsAt:
-                  oneOf:
-                    - format: date
-                      type: string
-                    - format: date-time
-                      type: string
-                endsAt:
-                  oneOf:
-                    - format: date
-                      type: string
-                    - format: date-time
-                      type: string
-              type: object
-              required:
-                - startsAt
-                - endsAt
+              $ref: '#/components/schemas/TimeSpan'
       responses:
         '201':
           description: Done; the body carries the identifier.
@@ -2901,6 +2885,24 @@ components:
           additionalProperties: true
         requestId:
           type: string
+    TimeSpan:
+      properties:
+        startsAt:
+          oneOf:
+            - format: date
+              type: string
+            - format: date-time
+              type: string
+        endsAt:
+          oneOf:
+            - format: date
+              type: string
+            - format: date-time
+              type: string
+      type: object
+      required:
+        - startsAt
+        - endsAt
   securitySchemes:
     bearer:
       type: http

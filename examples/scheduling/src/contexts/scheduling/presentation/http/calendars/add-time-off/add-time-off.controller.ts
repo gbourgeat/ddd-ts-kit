@@ -3,11 +3,11 @@ import type { CommandBus } from '@ddd-ts-kit/kernel';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
 import { AddTimeOffCommand } from '@/contexts/scheduling/application/commands/add-time-off/add-time-off.command';
 import { AddTimeOffParams } from '@/contexts/scheduling/presentation/http/calendars/add-time-off/add-time-off.params';
-import { AddTimeOffBody } from '@/contexts/scheduling/presentation/http/calendars/add-time-off/add-time-off.body';
 import { CalendarsRoutes } from '@/contexts/scheduling/presentation/http/calendars.routes';
+import { TimeSpan } from '@/contexts/scheduling/presentation/http/shared/time-span.schema';
 
 const params = classSchema(AddTimeOffParams);
-const body = classSchema(AddTimeOffBody);
+const body = classSchema(TimeSpan, { shared: true });
 
 @Controller({
   group: CalendarsRoutes,
@@ -22,7 +22,7 @@ const body = classSchema(AddTimeOffBody);
 export class AddTimeOffController {
   constructor(private readonly commands: CommandBus) {}
 
-  async handle(request: HttpRequest<{ params: AddTimeOffParams; body: AddTimeOffBody }>): Promise<Accepted> {
+  async handle(request: HttpRequest<{ params: AddTimeOffParams; body: TimeSpan }>): Promise<Accepted> {
     const { startsAt, endsAt } = request.body;
 
     const id = await this.commands.execute(

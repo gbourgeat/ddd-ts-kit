@@ -70,8 +70,8 @@ export interface BookAppointmentInput {
   readonly body: {
     calendarId: string;
     appointmentTypeId: string;
-    startsAt: string;
     patientId?: string;
+    startsAt: string;
   };
 }
 
@@ -698,10 +698,7 @@ export interface AddTimeOffInput {
   readonly path: {
     readonly calendarId: string;
   };
-  readonly body: {
-    startsAt: string;
-    endsAt: string;
-  };
+  readonly body: Schemas.TimeSpan;
 }
 
 export type AddTimeOffResult =

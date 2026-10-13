@@ -87,3 +87,8 @@ export type Problem = {
   facts?: Record<string, unknown>;
   requestId: string;
 };
+
+export type TimeSpan = {
+  startsAt: string;
+  endsAt: string;
+};
