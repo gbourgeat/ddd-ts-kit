@@ -4,6 +4,35 @@ What each version changes for someone who uses the kit. The packages of `package
 together, under one version; the notes of each [GitHub release](https://github.com/gbourgeat/ddd-ts-kit/releases)
 list the pull requests behind it.
 
+## Unreleased
+
+**A value object is a class, and the kit checks it.** A new rule, `domain/value-object-class`,
+held by `ddd-ts-kit check` and by `@ddd-ts-kit/eslint-plugin` (`ddd-ts-kit/domain-value-object-class`):
+a file of `domain/value-objects/` (or a `*.vo.ts` of the shared kernel) exports exactly one class
+extending `ValueObject`, directly or through another value object of the project, with a private
+or protected constructor and static factories, and no function, arrow constant or object literal;
+the types of its props may sit next to it. Anywhere in `domain/`, an exported function that answers
+an object literal holding data, `export const money = (amount, currency) => ({ amount, currency })`,
+is reported with the command that writes the class (`npx ddd-ts-kit generate value-object`). A
+domain service, a state machine, a specification answering a boolean or an object of functions,
+and a function that takes and returns value objects are not concerned. What the generator writes
+already passes; a project with a hand-written value in function form sees it reported until it
+is moved to a class. `ddd-ts-kit explain domain/value-object-class` gives the reason and both forms.
+
+**The text checker reads a class whose heritage holds an object type.** `class Money extends
+ValueObject<{ readonly cents: number }> {` was read as a class whose body was the object type:
+its methods and constructor are now found, for every rule that reads them.
+
+**Why a value object is a class.** `docs/concepts/entities-and-value-objects.md` explains it with
+two diagrams and both forms side by side: equality without identity, invariants checked once in
+the factory, behaviour next to the data, refusals from static factories, immutability and
+`instanceof` in the boundary mappers. The domain rules `init` writes and the `scaffold` and
+`clean-code` skills say the same.
+
+**The example models its values as classes.** In the analytics context, the outcome the occupancy
+measure reads and the figures it answers are value objects, `MeasuredOutcome` and
+`OccupancyFigures`, each with its spec; `CalendarDesk` and `FreedSlot` stay parameter objects.
+
 ## 0.13.0
 
 **A schema shared by several routes is documented once.** Declared once, a schema used whole or
