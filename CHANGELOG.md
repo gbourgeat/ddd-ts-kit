@@ -4,7 +4,7 @@ What each version changes for someone who uses the kit. The packages of `package
 together, under one version; the notes of each [GitHub release](https://github.com/gbourgeat/ddd-ts-kit/releases)
 list the pull requests behind it.
 
-## Unreleased
+## 0.11.0
 
 **File import and export, designed.** `docs/concepts/file-import-export.md` says how a large
 file is to be processed on the job queue and the file storage: an import read as a stream and
