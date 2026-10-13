@@ -6,6 +6,12 @@ list the pull requests behind it.
 
 ## Unreleased
 
+**File import and export, designed.** `docs/concepts/file-import-export.md` says how a large
+file is to be processed on the job queue and the file storage: an import read as a stream and
+sent as commands batch by batch, with its checkpoint, its progress and a rejection report; an
+export written in parts; chunks followed by a process manager beyond one attempt. Nothing of it
+is built in this version; the page lists what would be added.
+
 **A long background job in the example.** A practitioner going away clears a period of their
 calendar: `POST /calendars/:calendarId/clearances` (202, the identifier of the clearance) enqueues
 `ClearCalendarBackgroundJob` in the unit of work of the command, which cancels the appointments

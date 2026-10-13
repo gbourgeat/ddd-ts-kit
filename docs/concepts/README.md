@@ -97,18 +97,20 @@ of tools.
     transaction, run at least once.
 31. [File storage](file-storage.md): files in a storage and never in the database, the order
     that keeps both consistent, signed links.
+32. [File import and export](file-import-export.md): a design, not built yet: a large file
+    read or written by a background job, row by row, between the queue and the file storage.
 
 ## 6. Code and tests
 
-32. [Clean code](clean-code.md): naming, small functions, stepdown, comments, testability by
+33. [Clean code](clean-code.md): naming, small functions, stepdown, comments, testability by
     construction.
-33. [Testing strategy](testing-strategy.md): fakes rather than mocks, builders, contract
+34. [Testing strategy](testing-strategy.md): fakes rather than mocks, builders, contract
     tests, the four levels.
 
 ## Shorter paths
 
 - **A product person or a newcomer to DDD:** 1, 2, 3, 5, then 19.
-- **Before writing a first use case:** 3, 7, 9, 12, 14, 33.
+- **Before writing a first use case:** 3, 7, 9, 12, 14, 34.
 - **Before making two contexts talk:** 4, 16, 17, 18, 21.
 - **Before keeping an aggregate as its events:** 7, 16, 17, 21, 22.
 - **Before serving several customers from one deployment:** 23, 24, 25.

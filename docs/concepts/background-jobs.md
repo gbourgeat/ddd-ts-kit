@@ -223,6 +223,7 @@ of the handler that enqueues asserts the job through the same list. Time is move
 - [Transactional outbox](transactional-outbox.md)
 - [Delivery and idempotency](delivery-and-idempotency.md)
 - [Sagas and process managers](sagas-and-process-managers.md)
+- [File import and export](file-import-export.md): a design on the queue and the file storage
 - [Actor and execution scope](actor-and-execution-scope.md)
 - [Observability](observability.md)
 - [`@ddd-ts-kit/scheduling`](../../packages/scheduling/README.md)
