@@ -1,4 +1,4 @@
-import { type Clock, unwrap } from '@ddd-ts-kit/kernel';
+import { type Clock, expectVersion, unwrap } from '@ddd-ts-kit/kernel';
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
 import { CalendarError } from '@/contexts/scheduling/domain/errors/calendar.error';
 import type { CalendarRepository } from '@/contexts/scheduling/domain/repositories/calendar.repository';
@@ -19,6 +19,8 @@ export class SetOpeningHoursHandler implements CommandHandler<SetOpeningHoursCom
     if (target === undefined) {
       throw CalendarError.unknown(command.calendarId);
     }
+
+    expectVersion(target, command.expectedVersion);
 
     target.setOpeningHours(unwrap(OpeningHours.create(weekOf(command))), this.clock.now());
 

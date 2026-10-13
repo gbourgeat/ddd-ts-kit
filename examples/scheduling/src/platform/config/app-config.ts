@@ -20,6 +20,8 @@ export interface AppConfig {
   readonly docsEnabled: boolean;
   readonly keycloak: KeycloakConfig;
   readonly redisUrl: string;
+  /** Varnish as the API reaches it (`VARNISH_URL`): where the relay of the outbox sends the purges of the tags. */
+  readonly varnishUrl: string;
   /** How many requests one caller address may send in a sliding window, before the HTTP layer answers 429. */
   readonly rateLimit: RateLimit;
   /** Where unexpected failures are reported: a Sentry or a GlitchTip project. Without a DSN nothing is reported. */

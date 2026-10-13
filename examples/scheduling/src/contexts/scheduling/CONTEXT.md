@@ -162,6 +162,7 @@ Generated from the code by `ddd-ts-kit docs`; the same facts as data: `ddd-ts-ki
 | `ExpireUnconfirmedAppointments` | command | `appointment.expire` |
 | `GetAppointment` | query | `appointment.read` |
 | `GetCalendarDay` | query | `calendar.browse` |
+| `GetOpeningHours` | query | `public` |
 | `JoinWaitlist` | command | `waitlist.join` |
 | `MarkAppointmentNoShow` | command | `appointment.mark-no-show` |
 | `OfferFreedSlot` | command | `waitlist.offer` |
@@ -186,6 +187,7 @@ Generated from the code by `ddd-ts-kit docs`; the same facts as data: `ddd-ts-ki
 | POST | `/calendars/:calendarId/appointment-types` | `defineAppointmentType` | `CalendarsRoutes` | `Authenticated` | `DefineAppointmentType` | `calendar.define-appointment-type` | params: `DefineAppointmentTypeParams`, body: `DefineAppointmentTypeBody` | 201: `DefineAppointmentTypeAccepted` | `UNAUTHORIZED`, `FORBIDDEN`, `UNKNOWN_CALENDAR`, `INVALID_APPOINTMENT_TYPE` |
 | GET | `/calendars/:calendarId/days/:day` | `getCalendarDay` | `CalendarsRoutes` | `Authenticated` | `GetCalendarDay` | `calendar.browse` | params: `GetCalendarDayParams` | 200: `GetCalendarDayAnswer` | `UNAUTHORIZED`, `FORBIDDEN`, `UNKNOWN_CALENDAR`, `INVALID_DAY` |
 | POST | `/calendars/:calendarId/exceptions` | `addException` | `CalendarsRoutes` | `Authenticated` | `AddException` | `calendar.add-exception` | params: `AddExceptionParams`, body: `AddExceptionBody` | 201: `AddExceptionAccepted` | `UNAUTHORIZED`, `FORBIDDEN`, `UNKNOWN_CALENDAR`, `INVALID_DAY`, `INVALID_RANGE` |
+| GET | `/calendars/:calendarId/opening-hours` | `getOpeningHours` |  | `Public` | `GetOpeningHours` | `public` | params: `GetOpeningHoursParams` | 200: `GetOpeningHoursAnswer` | `UNKNOWN_CALENDAR` |
 | PUT | `/calendars/:calendarId/opening-hours` | `setOpeningHours` | `CalendarsRoutes` | `Authenticated` | `SetOpeningHours` | `calendar.set-opening-hours` | params: `SetOpeningHoursParams`, body: `SetOpeningHoursBody` | 200: `SetOpeningHoursAccepted` | `UNAUTHORIZED`, `FORBIDDEN`, `UNKNOWN_CALENDAR`, `INVALID_RANGE` |
 | POST | `/calendars/:calendarId/time-off` | `addTimeOff` | `CalendarsRoutes` | `Authenticated` | `AddTimeOff` | `calendar.add-time-off` | params: `AddTimeOffParams`, body: `AddTimeOffBody` | 201: `AddTimeOffAccepted` | `UNAUTHORIZED`, `FORBIDDEN`, `UNKNOWN_CALENDAR`, `INVALID_TIME_OFF`, `TIME_OFF_OVER_APPOINTMENTS` |
 | POST | `/calendars/:calendarId/waitlist` | `joinWaitlist` | `CalendarsRoutes` | `Authenticated` | `JoinWaitlist` | `waitlist.join` | params: `JoinWaitlistParams`, body: `JoinWaitlistBody` | 201: `JoinWaitlistAccepted` | `UNAUTHORIZED`, `FORBIDDEN`, `UNKNOWN_CALENDAR`, `UNKNOWN_APPOINTMENT_TYPE`, `INVALID_DAY`, `ALREADY_WAITING` |

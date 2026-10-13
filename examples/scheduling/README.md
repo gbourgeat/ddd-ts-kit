@@ -12,7 +12,8 @@ Four bounded contexts in one deployable application and a worker process: `sched
 `identity`, `notification`, `analytics`. Express, class-validator, tsyringe in the declared
 style, Knex on PostgreSQL, the transactional outbox, one Redis protocol server (Dragonfly) for
 the cache, the rate limiter, the job lock and the event streams, Keycloak, relationship-based
-authorization combined with roles, the audit trail, pino, OpenTelemetry, the Sentry protocol.
+authorization combined with roles, the audit trail, pino, OpenTelemetry, the Sentry protocol,
+and Varnish in front of the API.
 
 ## Headline numbers of the build
 
@@ -45,7 +46,10 @@ real tokens of the local Keycloak. For traces, set
 `OTEL_EXPORTER_OTLP_ENDPOINT=http://127.0.0.1:54318` in `.env` and open
 `http://127.0.0.1:54686`; for the error tracker add `--profile errors` and put the DSN that
 `docker compose logs glitchtip | grep 'DSN:'` prints in `SENTRY_DSN`. The API documentation is
-at `http://127.0.0.1:54300/docs`. Everything listens on 127.0.0.1, on ports 54xxx chosen not to
+at `http://127.0.0.1:54300/docs`. Varnish answers the same API at `http://127.0.0.1:54081`: the
+opening hours of a calendar (`GET /calendars/:calendarId/opening-hours`, public) come from its
+cache (`x-cache: HIT`) until `PUT` on them commits and the relay purges them; an authenticated
+read passes through to the API. Everything listens on 127.0.0.1, on ports 54xxx chosen not to
 meet another stack. The gate is `npm run verify` (types, lint with the kit's preset, format, tests, end
 to end, architecture rules, import graph, dead code, documentation drift); it needs no
 container. Stop with `docker compose --profile identity --profile observability --profile

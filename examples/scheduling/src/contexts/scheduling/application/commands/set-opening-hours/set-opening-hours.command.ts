@@ -12,6 +12,8 @@ export class SetOpeningHoursCommand extends AuthorizedCommand<string> {
     readonly calendarId: string,
     /** The ranges of the week, each on its weekday, as their two wall-clock times `HH:MM`. */
     readonly ranges: readonly { readonly weekday: Weekday; readonly start: string; readonly end: string }[],
+    /** The version of the calendar the change was made on (`If-Match`): refused when the calendar changed since. */
+    readonly expectedVersion?: number,
   ) {
     super(actor);
   }

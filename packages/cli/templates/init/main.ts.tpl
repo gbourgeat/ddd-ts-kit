@@ -1,12 +1,12 @@
 // Imported first on purpose: instrumentation has to be installed before any module it patches is loaded.
 import { tracing } from '{{alias.platform}}/tracing{{alias.ext}}';
-{{#if httpCache.varnish}}
-import { VarnishCachePurger } from '@ddd-ts-kit/http/purgers';
-import { PurgingPublisher } from '@ddd-ts-kit/kernel';
-{{/if}}
 {{#if errors.sentry}}
 // Imported second on purpose: a failure while the rest of the application loads is already reported.
 import { errors } from '{{alias.platform}}/errors{{alias.ext}}';
+{{/if}}
+{{#if httpCache.varnish}}
+import { VarnishCachePurger } from '@ddd-ts-kit/http/purgers';
+import { PurgingPublisher } from '@ddd-ts-kit/kernel';
 {{/if}}
 {{#if http.any}}
 import { createAuthenticator } from '{{alias.platform}}/auth/create-authenticator{{alias.ext}}';

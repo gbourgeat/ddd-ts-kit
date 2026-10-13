@@ -238,6 +238,13 @@ jobs:
       - uses: ./.github/actions/setup
       - name: The example's own gate (types, lint, format, tests with the coverage thresholds, end to end, architecture, graph, dead code, documents)
         run: npm run verify --workspace examples/scheduling
+      - name: Varnish in front of the example (the VCL of its docker/varnish), and the end-to-end spec that reads the API through it
+        env:
+          VARNISH_URL: http://127.0.0.1:54081
+          VARNISH_BACKEND_PORT: '54300'
+        run: |
+          sh pipeline/github/scripts/start-varnish.sh examples/scheduling/docker/varnish/default.vcl 54300 54081
+          npm run test:e2e --workspace examples/scheduling -- test/e2e/get-opening-hours.e2e.spec.ts
       - name: PostgreSQL (pulled with retries, from the next registry when one refuses)
         run: sh pipeline/github/scripts/start-postgres.sh
       - name: The example's adapter specs on a PostgreSQL server (two concurrent bookings meet real transactions)

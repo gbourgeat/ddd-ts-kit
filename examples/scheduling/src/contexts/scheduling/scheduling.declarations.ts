@@ -19,6 +19,7 @@ import { AppointmentCancelledEventHandler } from '@/contexts/scheduling/applicat
 import { AppointmentExpiredEventHandler } from '@/contexts/scheduling/application/event-handlers/appointment-expired.event-handler';
 import { AppointmentRescheduledEventHandler } from '@/contexts/scheduling/application/event-handlers/appointment-rescheduled.event-handler';
 import { CalendarCreatedEventHandler } from '@/contexts/scheduling/application/event-handlers/calendar-created.event-handler';
+import { CalendarOpeningHoursSetEventHandler } from '@/contexts/scheduling/application/event-handlers/calendar-opening-hours-set.event-handler';
 import { AppointmentBookedPublisher } from '@/contexts/scheduling/application/integration/publishers/appointment-booked.publisher';
 import { AppointmentCancelledPublisher } from '@/contexts/scheduling/application/integration/publishers/appointment-cancelled.publisher';
 import { AppointmentCompletedPublisher } from '@/contexts/scheduling/application/integration/publishers/appointment-completed.publisher';
@@ -35,6 +36,7 @@ import { AgendaProjection } from '@/contexts/scheduling/application/projections/
 import { PractitionersProjection } from '@/contexts/scheduling/application/projections/practitioners.projection';
 import { GetAppointmentHandler } from '@/contexts/scheduling/application/queries/get-appointment/get-appointment.handler';
 import { GetCalendarDayHandler } from '@/contexts/scheduling/application/queries/get-calendar-day/get-calendar-day.handler';
+import { GetOpeningHoursHandler } from '@/contexts/scheduling/application/queries/get-opening-hours/get-opening-hours.handler';
 import { SearchAppointmentsHandler } from '@/contexts/scheduling/application/queries/search-appointments/search-appointments.handler';
 import { SearchPracticeAgendaHandler } from '@/contexts/scheduling/application/queries/search-practice-agenda/search-practice-agenda.handler';
 import { ExpireUnconfirmedAppointmentsJob } from '@/contexts/scheduling/application/scheduling/expire-unconfirmed-appointments.job';
@@ -64,6 +66,7 @@ import { CreateCalendarController } from '@/contexts/scheduling/presentation/htt
 import { DefineAppointmentTypeController } from '@/contexts/scheduling/presentation/http/calendars/define-appointment-type/define-appointment-type.controller';
 import { GetCalendarDayController } from '@/contexts/scheduling/presentation/http/calendars/get-calendar-day/get-calendar-day.controller';
 import { GetCalendarDaySerializer } from '@/contexts/scheduling/presentation/http/calendars/get-calendar-day/get-calendar-day.serializer';
+import { GetOpeningHoursController } from '@/contexts/scheduling/presentation/http/calendars/get-opening-hours/get-opening-hours.controller';
 import { JoinWaitlistController } from '@/contexts/scheduling/presentation/http/calendars/join-waitlist/join-waitlist.controller';
 import { SetOpeningHoursController } from '@/contexts/scheduling/presentation/http/calendars/set-opening-hours/set-opening-hours.controller';
 import { SearchPracticeAgendaController } from '@/contexts/scheduling/presentation/http/practices/search-practice-agenda/search-practice-agenda.controller';
@@ -71,6 +74,7 @@ import { AgendaEntrySerializer } from '@/contexts/scheduling/presentation/http/s
 import { Access } from '@ddd-ts-kit/auth';
 import { RelationTupleStore } from '@ddd-ts-kit/auth/rebac';
 import {
+  CacheInvalidation,
   Clock,
   CommandBus,
   ExecutionScope,
@@ -115,6 +119,7 @@ export * from '@/contexts/scheduling/application/event-handlers/appointment-canc
 export * from '@/contexts/scheduling/application/event-handlers/appointment-expired.event-handler';
 export * from '@/contexts/scheduling/application/event-handlers/appointment-rescheduled.event-handler';
 export * from '@/contexts/scheduling/application/event-handlers/calendar-created.event-handler';
+export * from '@/contexts/scheduling/application/event-handlers/calendar-opening-hours-set.event-handler';
 export * from '@/contexts/scheduling/application/integration/publishers/appointment-booked.publisher';
 export * from '@/contexts/scheduling/application/integration/publishers/appointment-cancelled.publisher';
 export * from '@/contexts/scheduling/application/integration/publishers/appointment-completed.publisher';
@@ -129,6 +134,8 @@ export * from '@/contexts/scheduling/application/queries/get-appointment/get-app
 export * from '@/contexts/scheduling/application/queries/get-appointment/get-appointment.query';
 export * from '@/contexts/scheduling/application/queries/get-calendar-day/get-calendar-day.handler';
 export * from '@/contexts/scheduling/application/queries/get-calendar-day/get-calendar-day.query';
+export * from '@/contexts/scheduling/application/queries/get-opening-hours/get-opening-hours.handler';
+export * from '@/contexts/scheduling/application/queries/get-opening-hours/get-opening-hours.query';
 export * from '@/contexts/scheduling/application/queries/search-appointments/search-appointments.handler';
 export * from '@/contexts/scheduling/application/queries/search-appointments/search-appointments.query';
 export * from '@/contexts/scheduling/application/queries/search-practice-agenda/search-practice-agenda.handler';
@@ -157,6 +164,7 @@ export * from '@/contexts/scheduling/presentation/http/calendars/create-calendar
 export * from '@/contexts/scheduling/presentation/http/calendars/define-appointment-type/define-appointment-type.controller';
 export * from '@/contexts/scheduling/presentation/http/calendars/get-calendar-day/get-calendar-day.controller';
 export * from '@/contexts/scheduling/presentation/http/calendars/get-calendar-day/get-calendar-day.serializer';
+export * from '@/contexts/scheduling/presentation/http/calendars/get-opening-hours/get-opening-hours.controller';
 export * from '@/contexts/scheduling/presentation/http/calendars/join-waitlist/join-waitlist.controller';
 export * from '@/contexts/scheduling/presentation/http/calendars/set-opening-hours/set-opening-hours.controller';
 export * from '@/contexts/scheduling/presentation/http/practices/search-practice-agenda/search-practice-agenda.controller';
@@ -181,6 +189,7 @@ injected(AppointmentCancelledEventHandler, [CommandBus]);
 injected(AppointmentExpiredEventHandler, [CommandBus]);
 injected(AppointmentRescheduledEventHandler, [CommandBus]);
 injected(CalendarCreatedEventHandler, [SchedulingRelationships]);
+injected(CalendarOpeningHoursSetEventHandler, [CacheInvalidation]);
 injected(AppointmentBookedPublisher, [IntegrationEventPublisher, IdGenerator]);
 injected(AppointmentCancelledPublisher, [IntegrationEventPublisher, IdGenerator]);
 injected(AppointmentCompletedPublisher, [IntegrationEventPublisher, IdGenerator]);
@@ -193,6 +202,7 @@ injected(AgendaProjection, [Agenda]);
 injected(PractitionersProjection, [PractitionerDirectory]);
 injected(GetAppointmentHandler, [Agenda, PersonDirectoryGateway, Access]);
 injected(GetCalendarDayHandler, [CalendarRepository, Agenda, Access]);
+injected(GetOpeningHoursHandler, [CalendarRepository]);
 injected(SearchAppointmentsHandler, [Agenda, Access]);
 injected(SearchPracticeAgendaHandler, [Agenda, Access]);
 injected(ExpireUnconfirmedAppointmentsJob, [CommandBus]);
@@ -217,6 +227,7 @@ injected(AddTimeOffController, [CommandBus]);
 injected(CreateCalendarController, [CommandBus]);
 injected(DefineAppointmentTypeController, [CommandBus]);
 injected(GetCalendarDayController, [QueryBus, GetCalendarDaySerializer]);
+injected(GetOpeningHoursController, [QueryBus]);
 injected(JoinWaitlistController, [CommandBus]);
 injected(SetOpeningHoursController, [CommandBus]);
 injected(SearchPracticeAgendaController, [QueryBus, AgendaEntrySerializer]);

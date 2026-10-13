@@ -2,6 +2,8 @@
 import { tracing } from '@/platform/tracing';
 // Imported second on purpose: a failure while the rest of the application loads is already reported.
 import { errors } from '@/platform/errors';
+import { VarnishCachePurger } from '@ddd-ts-kit/http/purgers';
+import { PurgingPublisher } from '@ddd-ts-kit/kernel';
 import { createAuthenticator } from '@/platform/auth/create-authenticator';
 import { composeApplication } from '@/platform/compose-application';
 import { loadConfig } from '@/platform/config/load-config';
@@ -31,7 +33,8 @@ await application.start();
 
 const relay = startOutboxRelay({
   store: persistence.outbox,
-  publisher: application.eventBus,
+  // The purge requests the use cases wrote with their commands go to Varnish, every other event to the provider.
+  publisher: new PurgingPublisher(new VarnishCachePurger({ url: config.varnishUrl }), application.eventBus),
   intervalMs: config.outboxRelayIntervalMs,
   logger: application.logger,
   errors,

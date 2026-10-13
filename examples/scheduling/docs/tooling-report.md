@@ -929,3 +929,32 @@ No route of the application is public, so `Public` is not shown here: the kit ho
 own specs. `PersonError.invalidEmail` quotes the address it refuses in its message: the client
 now reads `Invalid email.` as `detail`, and the spec of the controller holds that the address
 does not leave.
+
+## 2026-10-13: HTTP caching, Varnish in front of the API
+
+The application gained a shared cache in front of its API, the first public route, a private
+read revalidated with an `ETag`, and a write conditioned by `If-Match`.
+
+| | |
+|---|---|
+| Config | `"httpCache": "varnish"` in `ddd-ts-kit.config.json` |
+| Generator runs | 4: `generate query scheduling GetOpeningHours --public`, `generate controller ... --cache public`, `generate event-handler scheduling Calendar OpeningHoursSet`, `generate e2e scheduling GetOpeningHours` |
+| New route | `GET /calendars/:calendarId/opening-hours`, public: `public, max-age=60, s-maxage=3600, stale-while-revalidate=30, stale-if-error=86400`, a weak `ETag` from the version of the calendar, tagged `calendar:<id>` |
+| Changed routes | `GET /calendars/:calendarId/days/:day`: `private, max-age=0, must-revalidate` and a strong `ETag`; `PUT /calendars/:calendarId/opening-hours`: `If-Match` optional, 412 `PRECONDITION_FAILED` on a stale version |
+| Every other authenticated route | answers `Cache-Control: no-store` (refusals included), documented in the contract |
+| Purge | `CalendarOpeningHoursSetEventHandler`, before the commit, asks `CacheInvalidation` for `calendar:<id>`; the relay of `main.ts` publishes through `PurgingPublisher` and `VarnishCachePurger` |
+| Infrastructure | a `varnish` service (Varnish 9.1.0) in `docker-compose.yml`, its VCL in `docker/varnish/default.vcl` (the one `init --http-cache varnish` writes, backend port 54300), `VARNISH_URL` and `VARNISH_PORT` in `.env.example` |
+| End to end | `test/e2e/get-opening-hours.e2e.spec.ts`: five specs in process (headers, 304, a purge after the committed command and none for the refused one, 412, 404 kept by nobody), a sixth through Varnish when `VARNISH_URL` is set (a `HIT`, then the new hours after the purge); CI starts Varnish for it |
+
+What the generators left by hand: the query generator wrote a reader port, its in-memory
+adapter and its fake, removed since the hours are read from the `CalendarRepository` (a getter
+`openingHours` on the aggregate); the generated controller of a public query takes no request
+and builds its query without arguments, filled by hand; the event handler and the e2e spec are
+filled from their markers. The platform files (`main.ts`, the HTTP boundary, the configuration,
+the compose file) were written by hand after the templates `init --http-cache varnish` uses, since
+`init` is not run again on this application.
+
+One defect of the example's own tooling was found and fixed: `scripts/kit.mjs` read
+`NOT_A_FILE` before its declaration whenever a `generate` was about to create a file that did not
+exist yet, so every generator run that created a file crashed with a `ReferenceError` (the
+declaration moved above `main()`).
