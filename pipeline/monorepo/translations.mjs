@@ -48,6 +48,12 @@ const RAW = 'https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/';
 const TRANSLATION_OF = /^<!-- translation-of: (\S+) sha256:([0-9a-f]{16}) -->$/;
 const MAX_DIAGRAM_WIDTH = 960;
 const MIN_FONT_SIZE = 13;
+/** Where each kind of markup that holds no element ends: comments, character data, instructions. */
+const NON_ELEMENTS = [
+  ['<!--', '-->'],
+  ['<![CDATA[', ']]>'],
+  ['<?', '?>'],
+];
 
 if (process.argv[1] !== undefined && path.resolve(process.argv[1]) === import.meta.filename) {
   process.exit(main(process.argv.slice(2)));
@@ -488,13 +494,33 @@ export function anchorsOf(text) {
 
 /** The slug GitHub derives from a heading: its text, lower case, punctuation removed, spaces as hyphens. */
 export function githubSlug(heading) {
-  return heading
-    .replace(/!?\[([^\]]*)\]\([^)]*\)/g, '$1')
-    .replace(/<[^>]+>/g, '')
+  return withoutTags(heading.replace(/!?\[([^\]]*)\]\([^)]*\)/g, '$1'))
     .replace(/[*`]/g, '')
     .toLowerCase()
     .replace(/[^\p{L}\p{M}\p{N}\p{Pc} -]/gu, '')
     .replaceAll(' ', '-');
+}
+
+/**
+ * The text without its HTML tags, read once from the left: what is left when
+ * a tag is removed is never read again as a tag, so nothing is stripped twice.
+ */
+function withoutTags(text) {
+  let kept = '';
+  let index = 0;
+
+  while (index < text.length) {
+    const end = text[index] === '<' ? text.indexOf('>', index + 1) : -1;
+
+    if (end > index + 1) {
+      index = end + 1;
+    } else {
+      kept += text[index];
+      index += 1;
+    }
+  }
+
+  return kept;
 }
 
 function diagramFiles(root) {
@@ -558,10 +584,7 @@ export function svgProblems(text) {
 /** The first tag that is not closed in order, a stray `<` or an unescaped `&`. */
 function malformation(text) {
   const tag = /<(\/?)([A-Za-z][\w:.-]*)((?:[^>"']|"[^"]*"|'[^']*')*?)(\/?)>/g;
-  const body = text
-    .replace(/<!--[\s\S]*?-->/g, '')
-    .replace(/<!\[CDATA\[[\s\S]*?\]\]>/g, '')
-    .replace(/<\?[\s\S]*?\?>/g, '');
+  const body = withoutMarkup(text);
   const open = [];
 
   for (const [, closing, name, , selfClosing] of body.matchAll(tag)) {
@@ -583,6 +606,30 @@ function malformation(text) {
   }
 
   return /&(?![a-zA-Z]+;|#\d+;|#x[0-9a-fA-F]+;)/.test(body) ? ['holds an unescaped &: write &amp;'] : [];
+}
+
+/**
+ * The text without its comments, character data and processing instructions, read once from the
+ * left as an XML parser does: a `<!--` that appears once a comment is removed stays, and is then
+ * reported as a stray `<`, instead of being removed by a second pass.
+ */
+function withoutMarkup(text) {
+  let kept = '';
+  let index = 0;
+
+  while (index < text.length) {
+    const kind = NON_ELEMENTS.find(([start]) => text.startsWith(start, index));
+    const end = kind === undefined ? -1 : text.indexOf(kind[1], index + kind[0].length);
+
+    if (kind !== undefined && end !== -1) {
+      index = end + kind[1].length;
+    } else {
+      kept += text[index];
+      index += 1;
+    }
+  }
+
+  return kept;
 }
 
 function toPosix(file) {

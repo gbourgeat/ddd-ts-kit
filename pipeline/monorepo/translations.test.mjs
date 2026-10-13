@@ -175,6 +175,12 @@ test('the anchors are the slugs GitHub gives headings, accents kept and repeats 
   assert.deepEqual([...anchorsOf('# Usage\n\n## Usage\n\n<a id="here"></a>\n')], ['usage', 'usage-1', 'here']);
 });
 
+test('a tag is removed from a heading once, and what it leaves is not read again as a tag', () => {
+  assert.equal(githubSlug('Read <code>Clock</code> first'), 'read-clock-first');
+  assert.equal(githubSlug('<scr<script>ipt>alert</script>'), 'iptalert');
+  assert.equal(githubSlug('<scr<script>ipt'), 'ipt');
+});
+
 test('the French page shows the French drawing of each diagram, at the same place', () => {
   const english =
     '**English** · [Français](guide.fr.md)\n\n# Guide\n\n![The layers](assets/diagrams/guide-layers.svg)\n';
@@ -233,4 +239,13 @@ test('a diagram is self-contained, titled, readable and well formed', () => {
     'has no viewBox',
     'is 1200 wide: at most 960',
   ]);
+});
+
+test('a comment is removed once: a comment hidden inside another token leaves a stray <', () => {
+  const withMarkup = (markup) => DIAGRAM.replace('</svg>', `${markup}\n</svg>`);
+
+  assert.deepEqual(svgProblems(withMarkup('<!-- a <g> in a comment --><![CDATA[ a < b ]]><?note ?>')), []);
+  assert.deepEqual(svgProblems(withMarkup('<!<!---->--')), ['holds a stray <: write &lt;']);
+  assert.deepEqual(svgProblems(withMarkup('<!-- <!-- -->-->')), []);
+  assert.deepEqual(svgProblems(withMarkup('<!-- never closed')), ['holds a stray <: write &lt;']);
 });
