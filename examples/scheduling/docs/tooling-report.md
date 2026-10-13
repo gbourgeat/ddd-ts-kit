@@ -1175,6 +1175,8 @@ AgendaLine`) and the regenerated documents:
 The bytes on the wire did not change. The contract did where sharing is the point: the answer
 of the 18 command routes is a reference to `Accepted` (`{ id }`, now described and closed with
 `additionalProperties: false`), and the two searches answer a reference to `AgendaLinePage`.
+The typed client of the example, written again by `ddd-ts-kit sdk` from that contract, names
+each of them once: `Accepted`, `AgendaLine` and `AgendaLinePage` in `clients/api/src/schemas.ts`.
 
 Two things met on the way. `scripts/kit.mjs` declared a constant below the call of its main
 function: any `generate` that created a file failed before running the CLI; the constant now

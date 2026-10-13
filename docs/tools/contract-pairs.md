@@ -22,7 +22,7 @@ of behaviour tests run on every adapter:
 | error codes in the contract | `errors` of the controller, one problem response per status in the OpenAPI document |
 | tracing | the request is the root span named after its route, the command, the repository and the events below it (asserted by the generated end-to-end spec) |
 | one contract | OpenAPI 3.1 generated from the declarations, committed, checked for drift in CI; a shape declared once lands once in `components.schemas` ([shared schemas](validation.md)) |
-| a typed client | generated from the committed contract, whatever produced it |
+| a typed client | `ddd-ts-kit sdk` writes it from the committed contract, whatever framework produced it ([client SDK](client-sdk.md)): a shared shape is one named type of the client, `Accepted` and `<Item>Page` included |
 
 ## The pairs
 
@@ -37,9 +37,10 @@ The end-to-end spec generates one project per pair, adds two command routes that
 declared with `generate schema`, installs the kit as published, and holds the project to zero
 finding (the checker, ESLint, dependency-cruiser, knip), its unit specs, its end-to-end specs
 (401, 403, 201 and the span tree of the request) and a contract regenerated, current, holding
-the shared shape once and the `Accepted` answer of the platform. Other combinations (Fastify
-with zod, Hono with TypeBox, ...) are generated, checked and type-checked by the matrix of
-`stacks.ts`, which lists them by name; only these four are run end to end.
+the shared shape once and the `Accepted` answer of the platform. Other combinations are
+generated, checked and type-checked by the matrix of `stacks.ts` (Fastify with zod among them,
+and two added with this page: Hono with TypeBox and a Redis cache, Fastify with TypeBox on
+Knex); only these four are run end to end.
 
 "zod-openapi" in the request that started this page: `zod-openapi` (6.0.2) and
 `@asteasolutions/zod-to-openapi` (9.1.0) exist to turn zod schemas into an OpenAPI document. The
@@ -130,8 +131,8 @@ procedures, served over HTTP by an `OpenAPIHandler`, and turned into an OpenAPI 
 
 Integrating it as a pair would give a project two ways to declare a route, two error formats and
 two contract generators, which is what the kit exists to avoid. What oRPC offers that a team may
-want, an end-to-end typed client, the kit gets from the contract it already generates: a client
-SDK generated from `openapi/*.yaml`. Use oRPC on its own, outside the bounded contexts, for an
+want, an end-to-end typed client, the kit gets from the contract it already generates: `ddd-ts-kit sdk`
+writes a typed client from `openapi/*.yaml` ([client SDK](client-sdk.md)). Use oRPC on its own, outside the bounded contexts, for an
 internal RPC between a front end and its backend-for-frontend; use the kit's controllers for
 the API of the contexts.
 

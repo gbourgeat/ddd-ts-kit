@@ -163,15 +163,21 @@ function hasWorker(root: string, config: Config): boolean {
 function resolveOperations(
   options: StackOptions,
   orm: string,
-): Record<
-  'cache' | 'audit' | 'errors' | 'logger' | 'refusals' | 'routes' | 'schemas' | 'valueObjects' | 'literals',
-  string
-> {
+): Record<'cache' | 'audit' | 'errors' | 'logger' | keyof Forms, string> {
   return {
     cache: choose(CACHE_STACKS, options.cache, 'cache') ?? 'none',
     audit: choose(AUDIT_MODES, options.audit, 'audit') ?? (orm === 'none' ? 'off' : 'on'),
     errors: choose(ERROR_REPORTERS, options.errors, 'errors') ?? 'none',
     logger: choose(LOGGERS, options.logger, 'logger') ?? 'stdout',
+    ...resolveForms(options),
+  };
+}
+
+type Forms = Record<'refusals' | 'routes' | 'schemas' | 'valueObjects' | 'literals', string>;
+
+/** How the code is written: a new project gets the forms of today, a recorded one the form it says. */
+function resolveForms(options: StackOptions): Forms {
+  return {
     // A new project builds its domain errors through factories; a recorded one keeps the form it says, or the one of 0.2.
     refusals: choose(REFUSAL_FORMS, options.refusals, 'refusals') ?? 'factories',
     // A new project writes each route as a controller class; a recorded one keeps the form it says, or the functions of 0.3.

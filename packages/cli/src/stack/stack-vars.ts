@@ -14,8 +14,7 @@ import { usesLegacyDecorators } from './uses-legacy-decorators.js';
 
 /** The choices of the stack as template variables: what every template of `init` and of `generate` reads. */
 export function stackVars(config: Config): RenderContext {
-  const { validation, di, tests, orm, authz, style, logger, refusals, schemas, valueObjects, literals, tenancy } =
-    config.stack;
+  const { validation, di, tests, orm, authz, style, logger, tenancy } = config.stack;
   const legacy = usesLegacyDecorators(config);
 
   return {
@@ -34,10 +33,7 @@ export function stackVars(config: Config): RenderContext {
     redis: redisVars(config),
     audit: auditVars(config),
     errors: errorVars(config),
-    refusals: one(refusals, ['factories', 'classes']),
-    schemas: one(schemas, ['shared', 'per-route']),
-    valueObjects: one(valueObjects, ['throwing', 'result']),
-    literals: one(literals, ['named', 'free']),
+    ...formVars(config),
     routes: routeVars(config),
     logger: one(logger, ['stdout', 'pino', 'winston']),
     tests: { ...one(tests, ['vitest', 'jest']), module: tests === 'jest' ? '@jest/globals' : 'vitest' },
@@ -46,6 +42,18 @@ export function stackVars(config: Config): RenderContext {
     alias: aliasVars(config),
     persistence: persistenceVars(config),
     tenancy: { ...one(tenancy, ['none', 'shared-table']), any: tenancy !== 'none' },
+  };
+}
+
+/** How the code of a project is written: refusals, schemas, value objects and literals. */
+function formVars(config: Config): RenderContext {
+  const { refusals, schemas, valueObjects, literals } = config.stack;
+
+  return {
+    refusals: one(refusals, ['factories', 'classes']),
+    schemas: one(schemas, ['shared', 'per-route']),
+    valueObjects: one(valueObjects, ['throwing', 'result']),
+    literals: one(literals, ['named', 'free']),
   };
 }
 
