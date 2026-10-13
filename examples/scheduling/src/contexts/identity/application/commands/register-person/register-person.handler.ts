@@ -1,4 +1,4 @@
-import { type Clock, unwrap } from '@ddd-ts-kit/kernel';
+import { type Clock } from '@ddd-ts-kit/kernel';
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
 import { Person } from '@/contexts/identity/domain/aggregates/person.aggregate';
 import type { PersonRepository } from '@/contexts/identity/domain/repositories/person.repository';
@@ -15,8 +15,8 @@ export class RegisterPersonHandler implements CommandHandler<RegisterPersonComma
 
   async execute(command: RegisterPersonCommand): Promise<string> {
     const contact = {
-      displayName: unwrap(DisplayName.create(command.displayName)),
-      email: unwrap(Email.create(command.email)),
+      displayName: DisplayName.create(command.displayName),
+      email: Email.create(command.email),
     };
 
     const known = await this.personRepository.findById(command.actor.id);

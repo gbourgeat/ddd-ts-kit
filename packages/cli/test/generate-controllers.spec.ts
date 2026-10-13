@@ -212,8 +212,11 @@ describe('generate route-group and guard, and a controller next to function rout
     );
 
     expect(read(root, `${HTTP}/invoice-admin.routes.ts`)).toContain(
-      "@RouteGroup({ parent: InvoicesRoutes, prefix: '/admin', guards: [HasRole('admin')] })\nexport class InvoiceAdminRoutes {}",
+      "@RouteGroup({ parent: InvoicesRoutes, prefix: '/admin', guards: [HasRole(Role.Admin)] })\nexport class InvoiceAdminRoutes {}",
     );
+
+    expect(read(root, `${HTTP}/invoice-admin.routes.ts`)).toContain("import { Role } from '@/platform/auth/role';");
+    expect(read(root, 'src/platform/auth/role.ts')).toContain("  Admin: 'admin',\n");
 
     expect(read(root, `${HTTP}/guards/office-hours.guard.ts`)).toContain(
       '@Guard()\nexport class OfficeHoursGuard implements Guard {',

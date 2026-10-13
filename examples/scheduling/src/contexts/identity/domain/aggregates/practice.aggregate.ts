@@ -8,6 +8,7 @@ import type { DisplayName } from '@/contexts/identity/domain/value-objects/displ
 import { Membership } from '@/contexts/identity/domain/value-objects/membership.vo';
 import { Role } from '@/contexts/identity/domain/value-objects/role.vo';
 import type { TimeZone } from '@/contexts/identity/domain/value-objects/time-zone.vo';
+import { RoleName } from '@/contexts/identity/domain/vocabularies/role-name.vocabulary';
 
 export interface PracticeState {
   readonly registeredAt: Date;
@@ -85,7 +86,7 @@ export class Practice extends AggregateRoot<string> {
 
     const remaining = this.state.members.filter((member) => !member.isOf(personId));
 
-    if (leaving.has('manager') && !remaining.some((member) => member.has('manager'))) {
+    if (leaving.has(RoleName.Manager) && !remaining.some((member) => member.has(RoleName.Manager))) {
       throw PracticeError.lastManager();
     }
 
@@ -95,7 +96,7 @@ export class Practice extends AggregateRoot<string> {
 
   /** The desk a delegation is given on: the post of one of the practitioners of this practice. */
   deskOf(practitionerId: string): Desk {
-    if (this.membershipOf(practitionerId)?.has('practitioner') !== true) {
+    if (this.membershipOf(practitionerId)?.has(RoleName.Practitioner) !== true) {
       throw PracticeError.notAPractitioner(practitionerId);
     }
 
@@ -106,7 +107,7 @@ export class Practice extends AggregateRoot<string> {
   assistant(assistantId: string): Membership {
     const membership = this.membershipOf(assistantId);
 
-    if (membership?.has('assistant') !== true) {
+    if (membership?.has(RoleName.Assistant) !== true) {
       throw PracticeError.notAnAssistant(assistantId);
     }
 

@@ -124,6 +124,20 @@ export const STRUCTURE_INJECTIONS: readonly Injection[] = [
     checker: true,
   },
   {
+    rule: 'language/declared-vocabulary',
+    what: 'a status of the reminder written as a string where its vocabulary declares it',
+    file: AGGREGATE,
+    changes: [
+      {
+        file: AGGREGATE,
+        from: 'status: ReminderStatus.Withdrawn };',
+        to: "status: 'withdrawn' };",
+      },
+    ],
+    checker: true,
+    eslint: 'ddd-ts-kit/language-declared-vocabulary',
+  },
+  {
     rule: 'language/no-technical-name',
     what: 'a domain service named Manager',
     file: MANAGER,

@@ -15,7 +15,8 @@ interface Attempt {
  * at. Returns the error; an action that returns a promise gives a promise to await.
  *
  *     expectRefusal(() => appointment.cancel(at), 'APPOINTMENT_ENDED', { status: 'cancelled' });
- *     expectRefusal(Email.create('nope'), 'INVALID_EMAIL');
+ *     expectRefusal(() => Email.create('nope'), 'INVALID_EMAIL');
+ *     expectRefusal(Email.create('nope'), 'INVALID_EMAIL'); // a factory that returns a Result
  *     await expectRefusal(() => bus.execute(command), 'SLOT_TAKEN');
  */
 export function expectRefusal(

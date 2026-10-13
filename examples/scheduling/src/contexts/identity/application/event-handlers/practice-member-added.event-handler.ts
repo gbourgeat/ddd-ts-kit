@@ -3,7 +3,7 @@ import { PracticeMemberAdded } from '@/contexts/identity/domain/events/practice-
 import type { IdentityRelationships } from '@/contexts/identity/application/ports/identity-relationships.port';
 
 /** When a member is added, the platform learns their role in the practice and, for a practitioner, the desk they hold. */
-@DomainEventHandler(PracticeMemberAdded, { name: 'identity.practice.member-added' })
+@DomainEventHandler(PracticeMemberAdded, { name: PracticeMemberAdded.eventName })
 export class PracticeMemberAddedEventHandler implements DomainEventHandler<PracticeMemberAdded> {
   constructor(private readonly relationships: IdentityRelationships) {}
 

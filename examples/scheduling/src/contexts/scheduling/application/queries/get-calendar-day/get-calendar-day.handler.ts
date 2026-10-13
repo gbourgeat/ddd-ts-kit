@@ -9,6 +9,7 @@ import { schedulingPermissions } from '@/contexts/scheduling/application/authori
 import type { Agenda, AgendaEntry } from '@/contexts/scheduling/application/ports/agenda.port';
 import { GetCalendarDayQuery } from '@/contexts/scheduling/application/queries/get-calendar-day/get-calendar-day.query';
 import type { GetCalendarDayResult } from '@/contexts/scheduling/application/queries/get-calendar-day/get-calendar-day.result';
+import { AppointmentStatus } from '@/contexts/scheduling/domain/vocabularies/appointment-status.vocabulary';
 
 const PAGE = 100;
 const END_OF_DAY = 24 * 60;
@@ -53,7 +54,7 @@ export class GetCalendarDayHandler implements QueryHandler<GetCalendarDayQuery> 
     const active = Criteria.of<AgendaEntry>()
       .where('calendarId', 'eq', place.calendarId)
       .where('day', 'eq', place.day)
-      .where('status', 'in', ['requested', 'booked']);
+      .where('status', 'in', [AppointmentStatus.Requested, AppointmentStatus.Booked]);
 
     const page = await this.agenda.search(
       scoped(active.page(offsetPage({ offset, limit: PAGE })), scope, { ids: 'id' }),
@@ -86,7 +87,10 @@ function availabilityOf(calendar: Calendar, day: string): Omit<GetCalendarDayRes
 function busyOf(entry: AgendaEntry, readable: AgendaEntry | undefined): GetCalendarDayResult['busy'][number] {
   const span = { startsAt: entry.startsAt, endsAt: entry.endsAt, heldUntil: entry.heldUntil };
 
-  if (readable === undefined || (readable.status !== 'requested' && readable.status !== 'booked')) {
+  if (
+    readable === undefined ||
+    (readable.status !== AppointmentStatus.Requested && readable.status !== AppointmentStatus.Booked)
+  ) {
     return span;
   }
 

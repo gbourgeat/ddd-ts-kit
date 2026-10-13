@@ -8,7 +8,8 @@ export interface GroupDeclaration {
   /** The class and the import of the parent group, when the group refines one. */
   readonly parent?: { readonly className: string; readonly specifier: string };
   readonly access: 'authenticated' | 'public' | 'inherited';
-  readonly role?: string;
+  /** The role the group requires, as a key of the role vocabulary of the platform and the import of it. */
+  readonly role?: { readonly key: string; readonly specifier: string };
 }
 
 /** What the template of a route group reads: its imports and the options of its decorator. */
@@ -27,17 +28,22 @@ export function groupVars(group: GroupDeclaration): RenderContext {
   return {
     pascal: group.name.pascal,
     words: group.name.words,
-    imports: [
-      `import { ${[...(guard === undefined ? [] : [guard.name]), 'RouteGroup'].join(', ')} } from '@ddd-ts-kit/http';`,
-      ...(parent === undefined ? [] : [`import { ${parent.className} } from '${parent.specifier}';`]),
-    ].join('\n'),
+    imports: importsOf(group, guard?.name).join('\n'),
     options: options.join(', '),
   };
 }
 
+function importsOf({ parent, role }: GroupDeclaration, guard: string | undefined): string[] {
+  return [
+    `import { ${[...(guard === undefined ? [] : [guard]), 'RouteGroup'].join(', ')} } from '@ddd-ts-kit/http';`,
+    ...(parent === undefined ? [] : [`import { ${parent.className} } from '${parent.specifier}';`]),
+    ...(role === undefined ? [] : [`import { Role } from '${role.specifier}';`]),
+  ];
+}
+
 function guardOf({ access, role }: GroupDeclaration): { name: string; written: string } | undefined {
   if (role !== undefined) {
-    return { name: 'HasRole', written: `HasRole('${role}')` };
+    return { name: 'HasRole', written: `HasRole(Role.${role.key})` };
   }
 
   if (access === 'inherited') {

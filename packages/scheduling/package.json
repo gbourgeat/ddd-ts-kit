@@ -1,6 +1,6 @@
 {
   "name": "@ddd-ts-kit/scheduling",
-  "version": "0.6.0",
+  "version": "0.8.0",
   "description": "Scheduled jobs that only trigger use cases: interval and cron schedules, one run across instances, no overlap, each run in its own execution scope.",
   "license": "MIT",
   "repository": {
@@ -30,9 +30,9 @@
     "dist"
   ],
   "dependencies": {
-    "@ddd-ts-kit/kernel": "0.6.0"
+    "@ddd-ts-kit/kernel": "0.8.0"
   },
   "devDependencies": {
-    "@ddd-ts-kit/testing": "0.6.0"
+    "@ddd-ts-kit/testing": "0.8.0"
   }
 }

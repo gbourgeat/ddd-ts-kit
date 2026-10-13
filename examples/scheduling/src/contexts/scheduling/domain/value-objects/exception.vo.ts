@@ -1,4 +1,4 @@
-import { ValueObject, err, ok, type Result } from '@ddd-ts-kit/kernel';
+import { ValueObject } from '@ddd-ts-kit/kernel';
 import { CalendarError } from '@/contexts/scheduling/domain/errors/calendar.error';
 import { Range } from '@/contexts/scheduling/domain/value-objects/range.vo';
 import { TimeZone } from '@/contexts/scheduling/domain/value-objects/time-zone.vo';
@@ -14,16 +14,16 @@ export class Exception extends ValueObject<ExceptionProps> {
     super(props);
   }
 
-  static create(day: string, ranges: readonly Range[]): Result<Exception, CalendarError> {
+  static create(day: string, ranges: readonly Range[]): Exception {
     if (!TimeZone.isDay(day)) {
-      return err(CalendarError.invalidDay(day));
+      throw CalendarError.invalidDay(day);
     }
 
     if (!Range.disjoint(ranges)) {
-      return err(CalendarError.invalidRange(`shares no minute with another range of ${day}`));
+      throw CalendarError.invalidRange(`shares no minute with another range of ${day}`);
     }
 
-    return ok(new Exception({ day, ranges: [...ranges].sort((left, right) => left.startMinute - right.startMinute) }));
+    return new Exception({ day, ranges: [...ranges].sort((left, right) => left.startMinute - right.startMinute) });
   }
 
   isOn(day: string): boolean {

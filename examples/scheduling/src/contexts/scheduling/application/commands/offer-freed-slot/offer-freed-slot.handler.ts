@@ -1,4 +1,4 @@
-import { type Clock, type IdGenerator, unwrap } from '@ddd-ts-kit/kernel';
+import { type Clock, type IdGenerator } from '@ddd-ts-kit/kernel';
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
 import { Appointment } from '@/contexts/scheduling/domain/aggregates/appointment.aggregate';
 import type { Calendar } from '@/contexts/scheduling/domain/aggregates/calendar.aggregate';
@@ -61,15 +61,13 @@ export class OfferFreedSlotHandler implements CommandHandler<OfferFreedSlotComma
 }
 
 function bookingOf({ waiter, slot }: Offer, calendar: Calendar): Booking {
-  return unwrap(
-    Booking.create({
-      calendarId: calendar.id,
-      practiceId: calendar.practiceId,
-      practitionerId: calendar.practitionerId,
-      patientId: waiter.patientId,
-      appointmentTypeId: waiter.appointmentTypeId,
-      slot,
-      day: calendar.timeZone.dayOf(slot.startsAt),
-    }),
-  );
+  return Booking.create({
+    calendarId: calendar.id,
+    practiceId: calendar.practiceId,
+    practitionerId: calendar.practitionerId,
+    patientId: waiter.patientId,
+    appointmentTypeId: waiter.appointmentTypeId,
+    slot,
+    day: calendar.timeZone.dayOf(slot.startsAt),
+  });
 }

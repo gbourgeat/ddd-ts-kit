@@ -3,7 +3,6 @@ import {
   FixedClock,
   FixedExecutionScope,
   executionContext,
-  unwrap,
   type Actor,
   type ExecutionContext,
 } from '@ddd-ts-kit/kernel';
@@ -28,7 +27,7 @@ const expectations = {
       .build(),
   mutate: (changed: Calendar) => {
     changed.addException(
-      unwrap(Exception.create('2026-05-01', [unwrap(Range.create('10:00', '12:00'))])),
+      Exception.create('2026-05-01', [Range.create('10:00', '12:00')]),
       new Date('2026-01-02T00:00:00.000Z'),
     );
   },

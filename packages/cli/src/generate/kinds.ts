@@ -27,6 +27,7 @@ import { routeGroupKind } from './kinds/route-group-kind.js';
 import { controllerKind, routeKind } from './kinds/route-kind.js';
 import { serviceKind } from './kinds/service-kind.js';
 import { valueObjectKind } from './kinds/value-object-kind.js';
+import { vocabularyKind } from './kinds/vocabulary-kind.js';
 import { workerKind } from './kinds/worker-kind.js';
 
 /** Every kind `generate` knows, in the order the help lists them. */
@@ -36,6 +37,7 @@ export const KINDS: readonly Kind[] = [
   builderKind,
   entityKind,
   valueObjectKind,
+  vocabularyKind,
   domainEventKind,
   errorKind,
   domainErrorKind,

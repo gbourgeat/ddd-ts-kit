@@ -1,10 +1,11 @@
 import { IsISO8601, IsIn, IsString } from 'class-validator';
+import { NotificationKindName } from '@/contexts/notification/domain/vocabularies/notification-kind-name.vocabulary';
 
 export class SearchNotificationsLine {
   @IsString()
   id = '';
 
-  @IsIn(['request', 'confirmation', 'rescheduling', 'cancellation', 'reminder'])
+  @IsIn(Object.values(NotificationKindName))
   kind = '';
 
   @IsString()

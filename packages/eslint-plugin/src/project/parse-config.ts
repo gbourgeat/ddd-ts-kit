@@ -23,6 +23,7 @@ const STYLES: readonly Style[] = ['declared', 'explicit'];
 const ASSEMBLIES: readonly Assembly[] = ['barrel', 'discovery'];
 const DEPENDENCY_STATEMENTS: readonly Stack['dependencies'][] = ['signature', 'listed'];
 const REFUSAL_FORMS: readonly Stack['refusals'][] = ['factories', 'classes'];
+const LITERAL_FORMS: readonly Stack['literals'][] = ['named', 'free'];
 
 const KERNEL = ['@ddd-ts-kit/kernel'];
 
@@ -85,6 +86,7 @@ function parseStack(value: unknown): Stack {
     assembly: oneOf(ASSEMBLIES, raw['assembly'], 'barrel'),
     dependencies: oneOf(DEPENDENCY_STATEMENTS, raw['dependencies'], 'listed'),
     refusals: oneOf(REFUSAL_FORMS, raw['refusals'], 'classes'),
+    literals: oneOf(LITERAL_FORMS, raw['literals'], 'free'),
     orm: text(raw['orm'], 'drizzle'),
   };
 }

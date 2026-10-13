@@ -1,7 +1,7 @@
 import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
 import { {{event.pascal}} } from '{{alias.context}}/domain/events/{{event.kebab}}.event{{alias.ext}}';
 
-@DomainEventHandler({{event.pascal}}, { name: '{{event.name}}'{{#if handler.afterCommit}}, phase: 'after-commit'{{/if}} })
+@DomainEventHandler({{event.pascal}}, { name: {{event.reference}}{{#if handler.afterCommit}}, phase: 'after-commit'{{/if}} })
 export class {{event.pascal}}EventHandler implements DomainEventHandler<{{event.pascal}}> {
   async handle(event: {{event.pascal}}): Promise<void> {
 {{#unless handler.afterCommit}}

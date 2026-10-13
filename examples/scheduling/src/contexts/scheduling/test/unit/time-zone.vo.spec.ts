@@ -1,23 +1,21 @@
 import { describe, expect, it } from 'vitest';
-import { unwrap } from '@ddd-ts-kit/kernel';
 import { TimeZone } from '@/contexts/scheduling/domain/value-objects/time-zone.vo';
+import { expectRefusal } from '@ddd-ts-kit/testing';
 
-const paris = unwrap(TimeZone.create('Europe/Paris'));
+const paris = TimeZone.create('Europe/Paris');
 
 describe('TimeZone', () => {
   it('is equal to another time zone with the same name', () => {
-    expect(paris.equals(unwrap(TimeZone.create('Europe/Paris')))).toBe(true);
-    expect(paris.equals(unwrap(TimeZone.create('America/New_York')))).toBe(false);
+    expect(paris.equals(TimeZone.create('Europe/Paris'))).toBe(true);
+    expect(paris.equals(TimeZone.create('America/New_York'))).toBe(false);
   });
 
   it.each(['  ', 'Mars/Olympus', 'Paris'])('refuses %j, which is not a known zone', (name) => {
-    const result = TimeZone.create(name);
-
-    expect(result).toMatchObject({ ok: false, error: expect.objectContaining({ code: 'UNKNOWN_TIME_ZONE' }) });
+    expectRefusal(() => TimeZone.create(name), 'UNKNOWN_TIME_ZONE');
   });
 
   it('writes a zone the way the zone database does, whatever the case it was given in', () => {
-    expect(unwrap(TimeZone.create(' europe/paris ')).name).toBe('Europe/Paris');
+    expect(TimeZone.create(' europe/paris ').name).toBe('Europe/Paris');
   });
 
   it.each([

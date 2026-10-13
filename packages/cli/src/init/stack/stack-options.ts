@@ -23,6 +23,8 @@ export interface StackOptions {
   readonly dependencies?: string;
   readonly refusals?: string;
   readonly routes?: string;
+  readonly valueObjects?: string;
+  readonly literals?: string;
   readonly tenancy?: string;
   readonly packageManager?: string;
   /** The prefix of the source root in imports, when it is not the default. */

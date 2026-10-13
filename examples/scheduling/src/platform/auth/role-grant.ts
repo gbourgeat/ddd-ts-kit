@@ -1,9 +1,10 @@
 import type { AuthorizationContext } from '@ddd-ts-kit/auth';
+import type { Role } from '@/platform/auth/role';
 
 /** What the token alone grants, whatever the element: a line of `role-grants.ts`. */
 export interface RoleGrant {
   /** The realm role that grants; left out, every authenticated actor of type `user`. */
-  readonly role?: string;
+  readonly role?: Role;
   /** Permission ids, `<context>:<name>`. */
   readonly permissions: readonly string[];
   /**

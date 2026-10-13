@@ -17,8 +17,8 @@ import {
   type AppointmentRescheduledV1,
 } from '@/contexts/scheduling/published-language/index';
 import { storableStamp } from '@/shared-kernel/storable-stamp';
-import type { OutcomeState } from '@/contexts/analytics/domain/services/occupancy-measure.service';
 import type { OutcomeRegister } from '@/contexts/analytics/application/ports/outcome-register.port';
+import { OutcomeState } from '@/contexts/analytics/domain/vocabularies/outcome-state.vocabulary';
 
 /** What every fact scheduling announces of an appointment says of it. */
 type Announced = {
@@ -37,37 +37,40 @@ export class OutcomesProjection {
 
   @On(appointmentBookedV1)
   async booked(event: AppointmentBookedV1): Promise<ReadModelWrite> {
-    return this.set(event, 'held');
+    return this.set(event, OutcomeState.Held);
   }
 
   @On(appointmentConfirmedV1)
   async confirmed(event: AppointmentConfirmedV1): Promise<ReadModelWrite> {
-    return this.set(event, 'held');
+    return this.set(event, OutcomeState.Held);
   }
 
   @On(appointmentRescheduledV1)
   async rescheduled(event: AppointmentRescheduledV1): Promise<ReadModelWrite> {
-    return this.set(event, 'held');
+    return this.set(event, OutcomeState.Held);
   }
 
   @On(appointmentCancelledV1)
   async cancelled(event: AppointmentCancelledV1): Promise<ReadModelWrite> {
-    return this.set(event, event.payload.cancelledBy === 'patient' ? 'cancelled-by-patient' : 'cancelled-by-practice');
+    return this.set(
+      event,
+      event.payload.cancelledBy === 'patient' ? OutcomeState.CancelledByPatient : OutcomeState.CancelledByPractice,
+    );
   }
 
   @On(appointmentExpiredV1)
   async expired(event: AppointmentExpiredV1): Promise<ReadModelWrite> {
-    return this.set(event, 'expired');
+    return this.set(event, OutcomeState.Expired);
   }
 
   @On(appointmentCompletedV1)
   async completed(event: AppointmentCompletedV1): Promise<ReadModelWrite> {
-    return this.set(event, 'completed');
+    return this.set(event, OutcomeState.Completed);
   }
 
   @On(appointmentMarkedNoShowV1)
   async markedNoShow(event: AppointmentMarkedNoShowV1): Promise<ReadModelWrite> {
-    return this.set(event, 'no-show');
+    return this.set(event, OutcomeState.NoShow);
   }
 
   private set(event: IntegrationEvent<Announced>, state: OutcomeState): Promise<ReadModelWrite> {
