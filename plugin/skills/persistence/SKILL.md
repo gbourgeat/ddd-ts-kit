@@ -64,6 +64,12 @@ lookups of the port, the columns, the mapper.
   names a table is not. A project that becomes multi-tenant migrates with `addTenantColumn`.
   See `docs/concepts/multitenancy.md`.
 - **Outbox in the same transaction** as the business write (`events/outbox-required`).
+- **An event-sourced aggregate** (chosen per aggregate, `generate aggregate ... --event-sourced`)
+  keeps the same port; its adapter delegates to `EventSourcedRepository` over the `EventStore`
+  of the ORM package (`create<Orm>EventSourcing`), its stored events are declared in
+  `<aggregate>-events.mapper.ts` with a named data type, and a change of that type is a new
+  version with its upcaster (`event-sourcing/*`; `ddd-ts-kit docs --stored-events` records a
+  version once its shape is final, and `docs --check` fails while one is unrecorded). When to choose it: `docs/concepts/event-sourcing.md` of the kit.
 - **Searches** use the kernel `Page` and `PageRequest`; a cursor ends on a unique tie-breaker.
 - **Queries may skip aggregates**: `generate query` writes a read port and an in-memory
   reader; replace the reader by an adapter that queries the tables and returns the shape of

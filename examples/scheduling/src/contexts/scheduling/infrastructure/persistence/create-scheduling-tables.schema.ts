@@ -2,7 +2,7 @@
 import type { Knex } from 'knex';
 import { SCHEDULING_SCHEMA } from '@/contexts/scheduling/infrastructure/persistence/scheduling.schema';
 import { APPOINTMENT_SLOT_HELD_ONCE } from '@/contexts/scheduling/infrastructure/persistence/appointment-row.schema';
-import { auditColumns, readModelColumns, tenantColumn } from '@ddd-ts-kit/knex';
+import { auditColumns, createEventStoreTables, readModelColumns, tenantColumn } from '@ddd-ts-kit/knex';
 // /ddd-ts-kit:imports
 
 export async function createSchedulingTables(knex: Knex): Promise<void> {
@@ -14,6 +14,9 @@ export async function createSchedulingTables(knex: Knex): Promise<void> {
   // /ddd-ts-kit:tables
   await createAgendaTable(knex);
   await createPractitionerTable(knex);
+  // The attendance records are event-sourced: their streams, snapshots, the checkpoints of the subscriptions and the keys of the patients.
+  await createEventStoreTables(knex, { schema: SCHEDULING_SCHEMA });
+  await createAttendanceHistoryTable(knex);
 }
 
 // ddd-ts-kit:definitions
@@ -147,6 +150,21 @@ function createAgendaTable(knex: Knex): Promise<void> {
     table.index(['patient_id', 'starts_at']);
     tenantColumn(table);
     table.index(['tenant_id', 'id'], 'agenda_tenant_idx');
+    readModelColumns(table);
+  });
+}
+
+function createAttendanceHistoryTable(knex: Knex): Promise<void> {
+  return knex.schema.withSchema(SCHEDULING_SCHEMA).createTable('attendance_history', (table) => {
+    table.text('id').primary();
+    table.text('record_id').notNullable();
+    table.integer('version').notNullable();
+    table.text('fact').notNullable();
+    table.text('appointment_id');
+    table.datetime('starts_at', { useTz: true, precision: 3 });
+    table.text('reason');
+    table.datetime('noted_at', { useTz: true, precision: 3 }).notNullable();
+    table.index(['record_id', 'version']);
     readModelColumns(table);
   });
 }

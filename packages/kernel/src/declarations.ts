@@ -13,6 +13,8 @@ export { type PolicyOptions, Policy } from './declarations/decorators/policy.js'
 export type { PortOptions } from './declarations/decorators/port-options.js';
 export type { ProjectionMethodDecorator } from './declarations/decorators/projection-method-decorator.js';
 export { Projection } from './declarations/decorators/projection.js';
+export { applyingProjection } from './declarations/projection/applying-projection.js';
+export type { ProjectionOptions } from './declarations/decorators/projection-options.js';
 export { type PublicOptions, Public } from './declarations/decorators/public.js';
 export { QueryHandler } from './declarations/decorators/query-handler.js';
 export { Repository } from './declarations/decorators/repository.js';
@@ -58,6 +60,7 @@ export type {
   ProjectionApplication,
 } from './declarations/model/projection-application.js';
 export type { ProjectionDeclaration } from './declarations/model/projection-declaration.js';
+export type { ProjectionFeed } from './declarations/model/projection-feed.js';
 export type { ResourcePointer } from './declarations/model/resource-pointer.js';
 export { DeclarationError } from './declarations/registry/declaration-error.js';
 export { declarationOf } from './declarations/registry/declaration-of.js';

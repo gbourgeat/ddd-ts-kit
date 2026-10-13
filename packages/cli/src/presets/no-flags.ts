@@ -14,4 +14,5 @@ export const NO_FLAGS: KindFlags = {
   decorators: false,
   mapper: false,
   serializer: false,
+  eventSourced: false,
 };

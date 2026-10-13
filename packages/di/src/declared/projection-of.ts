@@ -32,13 +32,14 @@ export interface WiredProjection {
  */
 export function projectionOf(declared: Declared): WiredProjection {
   const { declaration, module, declaredBy } = declared;
-  const { name, implementation, applies } = declaration;
+  const { name, implementation, applies, feed } = declaration;
 
   return {
     registration: {
       name,
       projection: implementation,
       module,
+      feed,
       declaredBy,
       applies: applies.map((application) =>
         application.kind === 'integration'
@@ -54,8 +55,9 @@ export function projectionOf(declared: Declared): WiredProjection {
     consumptions: applies.flatMap((application) =>
       application.kind === 'integration' ? [consumptionOf(declared, application)] : [],
     ),
+    // Fed by the event store: a catch-up subscription applies its domain events, the dispatcher does not.
     domainEventHandlers: applies.flatMap((application) =>
-      application.kind === 'domain' ? [handlingOf(declared, application)] : [],
+      application.kind === 'domain' && feed === 'dispatch' ? [handlingOf(declared, application)] : [],
     ),
   };
 }

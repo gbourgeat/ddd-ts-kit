@@ -225,8 +225,9 @@ handlers, each with its own answer to idempotence, rebuild and lag; and some rea
   (`TableReadModelStore`) over a table an adapter gives: in memory for the fakes, Knex,
   Drizzle, Prisma and TypeORM for a SQL table in the context's schema, written in the unit of
   work that holds the processed-event mark.
-- **Rebuild.** The kit has no event store, so a read model is rebuilt from the source of
-  truth: the owning context exposes a paged export of stamped rows through its published
+- **Rebuild.** A read model fed by events no store keeps is rebuilt from the source of
+  truth (a read model of event-sourced aggregates is rebuilt from the event store instead,
+  `EventStoreProjectionRebuild`): the owning context exposes a paged export of stamped rows through its published
   language, `ProjectionRebuild` copies it into a new table while events keep being applied,
   then swaps the two in one transaction. PostgreSQL only.
 - **Observability.** `projection_events_total` by result (`applied`, `stale`, `ignored`,

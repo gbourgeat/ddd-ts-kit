@@ -15,7 +15,13 @@ import { Agenda } from '@/contexts/scheduling/application/ports/agenda.port';
 import { FakeAgenda } from '@/contexts/scheduling/test/fakes/agenda.fake';
 
 const holders = authorizationModule({
-  authorizer: new RoleBasedAuthorizer({ roles: { holder: [schedulingPermissions['appointment.mark-no-show']] } }),
+  authorizer: new RoleBasedAuthorizer({
+    roles: {
+      holder: [schedulingPermissions['appointment.mark-no-show']],
+      system: [schedulingPermissions['attendance.note']],
+    },
+    systemRole: 'system',
+  }),
 });
 
 const holder = anActor().withRole('holder').build();

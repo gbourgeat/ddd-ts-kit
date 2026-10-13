@@ -25,7 +25,7 @@ list the pull requests behind it.
   `platform/auth/signed-in-grants.ts`.
 - The barrels and dependency files the CLI writes set a call that takes several lines apart by
   blank lines, as `@stylistic/padding-line-between-statements` asks.
-- Plugin 0.17.0: the skill `bootstrap` proposes the preset for a generic identity context.
+- Plugin 0.18.0: the skill `bootstrap` proposes the preset for a generic identity context.
 
 **The example serves several networks of practices, one tenant each** (its ADR-0003, accepted).
 
@@ -40,7 +40,7 @@ list the pull requests behind it.
 - `tenancy/scoped-statement` reads the literal text of a raw call: an expression that names no
   statement and no table (an aggregate of a select, a constraint of the schema) is no longer
   reported; raw SQL that names one, or whose text is not a literal, still is.
-- Plugin 0.17.0: the guard lets `test/e2e/journey-*.e2e.spec.ts` be written by hand, since a
+- Plugin 0.18.0: the guard lets `test/e2e/journey-*.e2e.spec.ts` be written by hand, since a
   journey crosses several routes and no generator writes it.
 - Example: `"stack.tenancy": "shared-table"`, a tenant column on its twelve tables and the
   migration that adds it to an existing database, `tenantIsolationContract` on every Knex
@@ -48,6 +48,68 @@ list the pull requests behind it.
   through a recorded elevation, and `x-tenant-id` refused at the edge for another network than
   the caller's. Its HTTP contract changed: `POST /practices` asks the role `network-admin`,
   `GET /audit/entries` takes `network`.
+
+## 0.10.0
+
+**Event sourcing, chosen per aggregate.** `EventSourcedAggregate` in the kernel: a command
+checks its invariants and records an event, the state changes only in the apply method of each
+event, and the aggregate is rebuilt by replaying its stream, from a snapshot when one was
+taken. An `EventStore` port (append at an expected version, a concurrency conflict otherwise,
+each stream in order, the whole store by position), `InMemoryEventStore`, stored events
+declared with `defineStoredEvent` and read back through upcasters (a stored event is never
+rewritten), `EventSourcedRepository` for the adapters, snapshots per aggregate, and
+crypto-shredding of personal data (`personalData`, `PersonalDataCipher`, `SubjectKeyStore`).
+`@ddd-ts-kit/testing` adds `eventStoreContract`, `eventStoreUnitOfWorkContract` (nothing is
+published for an append rolled back), `givenEvents` (given events, when a command, then events,
+without a database) and `expectSnapshotEquivalence`. The other aggregates of a context keep
+their state in tables: nothing changes for a project that does not opt in.
+
+**An event store on PostgreSQL through every ORM adapter.** One implementation in the kernel
+(`PostgresEventStore`, with the snapshot, checkpoint and data-subject key stores), run by
+`createKnexEventSourcing`, `createDrizzleEventSourcing`, `createPrismaEventSourcing` and
+`createTypeOrmEventSourcing`, each held to `eventStoreContract` and to
+`eventStoreUnitOfWorkContract`. The tables come with the migrations of the project:
+`createEventStoreTables` (knex), `eventStoreTables` (drizzle-kit), the models of
+`prisma/event-store.postgresql.prisma`, `eventStoreEntities` (TypeORM), or the statements of
+`eventStoreTablesSql`. An append locks the head of the store until its transaction ends, so
+positions follow the commits without gaps; two appends never run side by side.
+
+**Projections fed by the event store.** `@Projection(name, { feed: 'event-store' })` is applied
+by a `CatchUpSubscription` with a stored checkpoint (one batch and its checkpoint per unit of
+work), never by the dispatcher, and rebuilt from position zero by
+`EventStoreProjectionRebuild` into a copy that takes the place of the table.
+
+**Five rules for event-sourced aggregates**, in `ddd-ts-kit check` and in the ESLint plugin:
+`event-sourcing/state-in-apply` (the state changes only in apply methods, which record nothing),
+`event-sourcing/past-tense`, `event-sourcing/store-behind-repository` (the domain and the use
+cases never read the store), `event-sourcing/projection-never-appends` (no projection names the
+event store; one declared `{ feed: 'event-store' }` names no repository either) and
+`event-sourcing/upcaster-required`: the data of a stored event is a named type declared in its
+codec file with every named type it reaches, a version above 1 has an upcaster from each
+version below, and the shape of each version is recorded by `ddd-ts-kit docs --stored-events`
+in `stored-events.lock.json`, so a shape changed in place is refused. `ddd-ts-kit docs --check`
+(`npm run docs:check` in the generated pipeline) fails while a declared version is not
+recorded. The rules judge event-sourced code, the kernel's event store and projections declared
+`{ feed: 'event-store' }`, all new in this release: a project that has none sees no new finding,
+and a projection fed by the dispatcher may still name a repository port.
+
+**`ddd-ts-kit generate aggregate <context> <Name> --event-sourced`** writes the aggregate with
+its birth event (`<Name>Created`) and its apply method, the codec of its stored events
+(`infrastructure/persistence/<name>-events.mapper.ts`), a builder that replays a history and a
+given-events spec; `generate domain-event` on such an aggregate adds the event to its union, to
+`appliers()` with an empty apply method, and to the codec. `CONTEXT.md`, `describe` and `list`
+mark the event-sourced aggregates. `ddd-ts-kit docs --stored-events` records the stored shapes.
+Like every reaction since 0.7.0, `appliers()` and the codec read the name an event declares
+once, `[LedgerCredited.eventName]: ...`; the checker and `docs --stored-events` resolve that key.
+
+**Documentation.** A concept page, [Event sourcing, per aggregate](docs/concepts/event-sourcing.md):
+when to choose it and when not, what it costs, crypto-shredding, projections fed by the store,
+and how to move an aggregate to it and back. The example keeps the attendance record of a
+patient as its events (scheduling), with a history rebuilt from the store and the erasure of a
+patient (`npm run erase:patient`: the key destroyed, the projections fed by the store rebuilt);
+its only change of
+HTTP contract is the additive route `GET /practices/{practiceId}/patients/{patientId}/attendance`.
+Plugin 0.13.0: the persistence, testing and scaffold skills say how.
 
 ## 0.9.0
 

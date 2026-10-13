@@ -88,6 +88,8 @@ of each is its user name.
 | A gateway with hydration (one fresh element) | `scheduling/application/queries/get-appointment/`, `infrastructure/external/in-process-person-directory.gateway.ts` |
 | A projection of the context's own events | `scheduling/application/projections/agenda.projection.ts` |
 | Read models and their rebuild | `analytics/application/projections/`, `analytics/test/integration/outcome-register.rebuild.spec.ts` |
+| One aggregate kept as its events, beside aggregates kept as rows: its history is the business | `scheduling/domain/aggregates/attendance-record.aggregate.ts` (apply methods), `infrastructure/persistence/attendance-record-events.mapper.ts` (stored shapes, a reason sealed per patient), `event-store-attendance-record.repository.ts` (snapshots every 20 events), `stored-events.lock.json` |
+| A projection fed by the event store: catch-up with a checkpoint, rebuild from position zero, an erased patient | `scheduling/application/projections/attendance-history.projection.ts`, `src/platform/events/store-fed-projections.ts`, `test/integration/attendance-history.rebuild.spec.ts`, `test/integration/appointment-journey.spec.ts`; an erasure by `npm run erase:patient` |
 | One row per fact, computed at read time: figures grouped in one statement when they are read, instead of counters kept by events (nothing to drift, nothing to verify at night) | `analytics/CONTEXT.md` ("How occupancy is measured"), `analytics/infrastructure/persistence/knex-occupancy-reader.repository.ts` |
 | A business definition and its SQL held equal by one contract | `analytics/domain/services/occupancy-measure.service.ts`, `analytics/test/integration/occupancy-reader.contract.spec.ts` |
 | A consumer with an outbound port, retry then dead letter | `notification/application/integration/handlers/`, `infrastructure/external/remote-mailer.adapter.ts`, `test/integration/mailer-outage.spec.ts` |
@@ -234,6 +236,29 @@ asserts the span tree; the real run reads the trace back from Jaeger.
    the generator commands and the rules. `briefings/` holds what each parallel worker was given.
 5. `docs/tooling/generator-log.jsonl` lists every generator run of the build, in order, with
    its arguments; `docs/commit-plan.md` cuts the result into commits.
+
+## Event sourcing: the catch-up, an erasure, the keys
+
+The attendance record of a patient is kept as its events; its history
+(`scheduling.attendance-history`) is a projection fed by the event store.
+
+- **Where the catch-up runs.** In the API process (`src/main.ts`), at the pace of the outbox
+  relay, and not in the worker: the history is read by the API, and a reader sees it current
+  within one relay interval. With several replicas, each one polls, and the compare-and-set of
+  the checkpoint lets one of them apply each batch; the others skip that round (a debug line,
+  not an error). A tick that comes while a round runs is skipped.
+- **An erasure.** `DATABASE_URL=<url> npm run erase:patient -- <patientId>` destroys the key the
+  words of the patient were sealed with, then rebuilds every projection fed by the store
+  (`src/platform/events/erase-data-subject.ts`, `scripts/erase-patient.ts`): the stream and the
+  snapshots read `[erased]` at once, and so does the history once rebuilt. A rebuild never stops
+  the catch-up, so the API may keep running. Running it again completes an erasure whose
+  rebuild failed.
+- **The keys.** `PostgresSubjectKeyStore`, in the `scheduling` schema of the one database, next
+  to the events, so that the example runs with one PostgreSQL. A backup of that database taken
+  before an erasure still holds the key and the sealed words until it expires. A deployment
+  that promises erasure gives the key store a database of its own, backed up with a shorter
+  retention, or a key management service behind `SubjectKeyStore`:
+  [Event sourcing, per aggregate](../../docs/concepts/event-sourcing.md#personal-data-crypto-shredding).
 
 ## Working in this repository
 

@@ -27,7 +27,7 @@ import { FakeSchedulingRelationships } from '@/contexts/scheduling/test/fakes/sc
 // The use cases of the context ask `Access`, and a freed slot is offered to the waitlist by the context itself.
 const authorization = authorizationModule({
   authorizer: new RoleBasedAuthorizer({
-    roles: { system: [schedulingPermissions['waitlist.offer']] },
+    roles: { system: [schedulingPermissions['waitlist.offer'], schedulingPermissions['attendance.note']] },
     systemRole: 'system',
   }),
 });
