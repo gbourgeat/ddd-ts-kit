@@ -142,6 +142,18 @@ ruleTester.run('standard-no-parallel-interface', standardNoParallelInterface, {
     {
       ...at(
         PORT,
+        'export interface CacheInvalidator {}\nexport class CacheInvalidationService {}\nexport abstract class ICachePurger {}\nexport class CdnPurger {}',
+      ),
+      errors: [
+        { messageId: 'parallel' as const, data: { name: 'CacheInvalidator', instead: 'CacheInvalidation' } },
+        { messageId: 'parallel' as const, data: { name: 'CacheInvalidationService', instead: 'CacheInvalidation' } },
+        { messageId: 'parallel' as const, data: { name: 'ICachePurger', instead: 'CachePurger' } },
+        { messageId: 'parallel' as const, data: { name: 'CdnPurger', instead: 'CachePurger' } },
+      ],
+    },
+    {
+      ...at(
+        PORT,
         'export interface AppLogger extends Logger {}\nexport type LoggerService = Logger;\nabstract class LoggerInterface {}',
       ),
       errors: [{ messageId: 'parallel' }, { messageId: 'parallel' }, { messageId: 'parallel' }],

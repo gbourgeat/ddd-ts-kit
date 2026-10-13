@@ -41,26 +41,7 @@ export interface SearchAppointmentsInput {
 }
 
 export type SearchAppointmentsResult =
-  | Success<200, {
-    items: Array<{
-      id: string;
-      calendarId: string;
-      practiceId: string;
-      practitionerId: string;
-      patientId: string;
-      appointmentTypeId: string;
-      startsAt: string;
-      endsAt: string;
-      day: string;
-      status: 'requested' | 'booked' | 'cancelled' | 'expired' | 'completed' | 'no-show';
-      confirmBefore?: string;
-      cancelledBy?: 'patient' | 'practice';
-    }>;
-    /** Present when it is cheap to count. */
-    total?: number;
-    /** Present when more items follow. */
-    nextCursor?: string;
-  }>
+  | Success<200, Schemas.AgendaLinePage>
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
   | Failure<422, 'INVALID_CRITERIA' | 'VALIDATION_FAILED', Schemas.Problem>;
@@ -89,15 +70,13 @@ export interface BookAppointmentInput {
   readonly body: {
     calendarId: string;
     appointmentTypeId: string;
-    startsAt: string;
     patientId?: string;
+    startsAt: string;
   };
 }
 
 export type BookAppointmentResult =
-  | Success<201, {
-    id: string;
-  }>
+  | Success<201, Schemas.Accepted>
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
   | Failure<404, 'UNKNOWN_CALENDAR', Schemas.Problem>
@@ -181,9 +160,7 @@ export interface CancelAppointmentInput {
 }
 
 export type CancelAppointmentResult =
-  | Success<201, {
-    id: string;
-  }>
+  | Success<201, Schemas.Accepted>
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
   | Failure<404, 'APPOINTMENT_NOT_FOUND', Schemas.Problem>
@@ -217,9 +194,7 @@ export interface CompleteAppointmentInput {
 }
 
 export type CompleteAppointmentResult =
-  | Success<201, {
-    id: string;
-  }>
+  | Success<201, Schemas.Accepted>
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
   | Failure<404, 'APPOINTMENT_NOT_FOUND', Schemas.Problem>
@@ -253,9 +228,7 @@ export interface ConfirmAppointmentInput {
 }
 
 export type ConfirmAppointmentResult =
-  | Success<201, {
-    id: string;
-  }>
+  | Success<201, Schemas.Accepted>
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
   | Failure<404, 'APPOINTMENT_NOT_FOUND', Schemas.Problem>
@@ -328,9 +301,7 @@ export interface AttachAppointmentDocumentInput {
 }
 
 export type AttachAppointmentDocumentResult =
-  | Success<201, {
-    id: string;
-  }>
+  | Success<201, Schemas.Accepted>
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
   | Failure<404, 'APPOINTMENT_NOT_FOUND', Schemas.Problem>
@@ -365,9 +336,7 @@ export interface RemoveAppointmentDocumentInput {
 }
 
 export type RemoveAppointmentDocumentResult =
-  | Success<200, {
-    id: string;
-  }>
+  | Success<200, Schemas.Accepted>
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
   | Failure<404, 'APPOINTMENT_NOT_FOUND' | 'NO_DOCUMENT', Schemas.Problem>
@@ -400,9 +369,7 @@ export interface MarkAppointmentNoShowInput {
 }
 
 export type MarkAppointmentNoShowResult =
-  | Success<201, {
-    id: string;
-  }>
+  | Success<201, Schemas.Accepted>
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
   | Failure<404, 'APPOINTMENT_NOT_FOUND', Schemas.Problem>
@@ -439,9 +406,7 @@ export interface RescheduleAppointmentInput {
 }
 
 export type RescheduleAppointmentResult =
-  | Success<201, {
-    id: string;
-  }>
+  | Success<201, Schemas.Accepted>
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
   | Failure<404, 'APPOINTMENT_NOT_FOUND' | 'UNKNOWN_CALENDAR', Schemas.Problem>
@@ -549,9 +514,7 @@ export interface CreateCalendarInput {
 }
 
 export type CreateCalendarResult =
-  | Success<201, {
-    id: string;
-  }>
+  | Success<201, Schemas.Accepted>
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
   | Failure<422, 'UNKNOWN_PRACTITIONER' | 'UNKNOWN_TIME_ZONE' | 'VALIDATION_FAILED', Schemas.Problem>;
@@ -590,9 +553,7 @@ export interface DefineAppointmentTypeInput {
 }
 
 export type DefineAppointmentTypeResult =
-  | Success<201, {
-    id: string;
-  }>
+  | Success<201, Schemas.Accepted>
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
   | Failure<404, 'UNKNOWN_CALENDAR', Schemas.Problem>
@@ -618,10 +579,95 @@ export function defineAppointmentType(
   return send<DefineAppointmentTypeResult>(connection, operation, { ...input, ...options });
 }
 
+export interface ClearCalendarInput {
+  readonly path: {
+    readonly calendarId: string;
+  };
+  readonly body: {
+    startsAt: string;
+    endsAt: string;
+    reason: string;
+  };
+}
+
+export type ClearCalendarResult =
+  | Success<202, {
+    id: string;
+  }>
+  | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
+  | Failure<403, 'FORBIDDEN', Schemas.Problem>
+  | Failure<404, 'UNKNOWN_CALENDAR', Schemas.Problem>
+  | Failure<422, 'INVALID_TIME_OFF' | 'VALIDATION_FAILED', Schemas.Problem>;
+
+/**
+ * Clear calendar: `POST /calendars/{calendarId}/clearances`.
+ *
+ * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), UNKNOWN_CALENDAR (404), INVALID_TIME_OFF (422), VALIDATION_FAILED (422).
+ */
+export function clearCalendar(
+  connection: Connection,
+  input: ClearCalendarInput,
+  options: CallOptions = {},
+): Promise<ClearCalendarResult> {
+  const operation: Operation = {
+    method: 'POST',
+    path: '/calendars/{calendarId}/clearances',
+    security: [['bearer']],
+    responses: { 202: 'json', 401: 'json', 403: 'json', 404: 'json', 422: 'json' },
+  };
+
+  return send<ClearCalendarResult>(connection, operation, { ...input, ...options });
+}
+
+export interface GetClearanceInput {
+  readonly path: {
+    readonly calendarId: string;
+    readonly clearanceId: string;
+  };
+}
+
+export type GetClearanceResult =
+  | Success<200, {
+    clearanceId: string;
+    status: 'waiting' | 'running' | 'succeeded' | 'cancelled' | 'dead';
+    attempts: number;
+    done: number;
+    total?: number;
+    lastErrorCode?: string;
+  }>
+  | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
+  | Failure<403, 'FORBIDDEN', Schemas.Problem>
+  | Failure<404, 'UNKNOWN_CLEARANCE', Schemas.Problem>
+  | Failure<422, 'VALIDATION_FAILED', Schemas.Problem>;
+
+/**
+ * Get clearance: `GET /calendars/{calendarId}/clearances/{clearanceId}`.
+ *
+ * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), UNKNOWN_CLEARANCE (404), VALIDATION_FAILED (422).
+ */
+export function getClearance(
+  connection: Connection,
+  input: GetClearanceInput,
+  options: CallOptions = {},
+): Promise<GetClearanceResult> {
+  const operation: Operation = {
+    method: 'GET',
+    path: '/calendars/{calendarId}/clearances/{clearanceId}',
+    security: [['bearer']],
+    responses: { 200: 'json', 401: 'json', 403: 'json', 404: 'json', 422: 'json' },
+  };
+
+  return send<GetClearanceResult>(connection, operation, { ...input, ...options });
+}
+
 export interface GetCalendarDayInput {
   readonly path: {
     readonly calendarId: string;
     readonly day: string;
+  };
+  readonly header?: {
+    /** The ETag of the version the caller holds: 304 when it is still the current one. */
+    readonly 'If-None-Match'?: string;
   };
 }
 
@@ -635,6 +681,7 @@ export type GetCalendarDayResult =
     appointmentTypes: Array<Schemas.CalendarDayAppointmentTypeDto>;
     busy: Array<Schemas.CalendarDayBusyDto>;
   }>
+  | Success<304, undefined>
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
   | Failure<404, 'UNKNOWN_CALENDAR', Schemas.Problem>
@@ -654,7 +701,7 @@ export function getCalendarDay(
     method: 'GET',
     path: '/calendars/{calendarId}/days/{day}',
     security: [['bearer']],
-    responses: { 200: 'json', 401: 'json', 403: 'json', 404: 'json', 422: 'json' },
+    responses: { 200: 'json', 304: 'none', 401: 'json', 403: 'json', 404: 'json', 422: 'json' },
   };
 
   return send<GetCalendarDayResult>(connection, operation, { ...input, ...options });
@@ -671,9 +718,7 @@ export interface AddExceptionInput {
 }
 
 export type AddExceptionResult =
-  | Success<201, {
-    id: string;
-  }>
+  | Success<201, Schemas.Accepted>
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
   | Failure<404, 'UNKNOWN_CALENDAR', Schemas.Problem>
@@ -699,9 +744,54 @@ export function addException(
   return send<AddExceptionResult>(connection, operation, { ...input, ...options });
 }
 
+export interface GetOpeningHoursInput {
+  readonly path: {
+    readonly calendarId: string;
+  };
+  readonly header?: {
+    /** The ETag of the version the caller holds: 304 when it is still the current one. */
+    readonly 'If-None-Match'?: string;
+  };
+}
+
+export type GetOpeningHoursResult =
+  | Success<200, {
+    calendarId: string;
+    timeZone: string;
+    version: number;
+    ranges: Array<Schemas.OpeningRangeDto>;
+  }>
+  | Success<304, undefined>
+  | Failure<404, 'UNKNOWN_CALENDAR', Schemas.Problem>
+  | Failure<422, 'VALIDATION_FAILED', Schemas.Problem>;
+
+/**
+ * Get opening hours: `GET /calendars/{calendarId}/opening-hours`.
+ *
+ * Error codes: UNKNOWN_CALENDAR (404), VALIDATION_FAILED (422).
+ */
+export function getOpeningHours(
+  connection: Connection,
+  input: GetOpeningHoursInput,
+  options: CallOptions = {},
+): Promise<GetOpeningHoursResult> {
+  const operation: Operation = {
+    method: 'GET',
+    path: '/calendars/{calendarId}/opening-hours',
+    security: [],
+    responses: { 200: 'json', 304: 'none', 404: 'json', 422: 'json' },
+  };
+
+  return send<GetOpeningHoursResult>(connection, operation, { ...input, ...options });
+}
+
 export interface SetOpeningHoursInput {
   readonly path: {
     readonly calendarId: string;
+  };
+  readonly header?: {
+    /** The ETag of the version this change was made on: 412 when it is no longer the current one. */
+    readonly 'If-Match'?: string;
   };
   readonly body: {
     ranges: Array<Schemas.OpeningRangeDto>;
@@ -709,18 +799,17 @@ export interface SetOpeningHoursInput {
 }
 
 export type SetOpeningHoursResult =
-  | Success<200, {
-    id: string;
-  }>
+  | Success<200, Schemas.Accepted>
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
   | Failure<404, 'UNKNOWN_CALENDAR', Schemas.Problem>
+  | Failure<412, 'PRECONDITION_FAILED', Schemas.Problem>
   | Failure<422, 'INVALID_RANGE' | 'VALIDATION_FAILED', Schemas.Problem>;
 
 /**
  * Set opening hours: `PUT /calendars/{calendarId}/opening-hours`.
  *
- * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), UNKNOWN_CALENDAR (404), INVALID_RANGE (422), VALIDATION_FAILED (422).
+ * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), UNKNOWN_CALENDAR (404), PRECONDITION_FAILED (412), INVALID_RANGE (422), VALIDATION_FAILED (422).
  */
 export function setOpeningHours(
   connection: Connection,
@@ -731,7 +820,7 @@ export function setOpeningHours(
     method: 'PUT',
     path: '/calendars/{calendarId}/opening-hours',
     security: [['bearer']],
-    responses: { 200: 'json', 401: 'json', 403: 'json', 404: 'json', 422: 'json' },
+    responses: { 200: 'json', 401: 'json', 403: 'json', 404: 'json', 412: 'json', 422: 'json' },
   };
 
   return send<SetOpeningHoursResult>(connection, operation, { ...input, ...options });
@@ -741,16 +830,11 @@ export interface AddTimeOffInput {
   readonly path: {
     readonly calendarId: string;
   };
-  readonly body: {
-    startsAt: string;
-    endsAt: string;
-  };
+  readonly body: Schemas.TimeSpan;
 }
 
 export type AddTimeOffResult =
-  | Success<201, {
-    id: string;
-  }>
+  | Success<201, Schemas.Accepted>
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
   | Failure<404, 'UNKNOWN_CALENDAR', Schemas.Problem>
@@ -789,9 +873,7 @@ export interface JoinWaitlistInput {
 }
 
 export type JoinWaitlistResult =
-  | Success<201, {
-    id: string;
-  }>
+  | Success<201, Schemas.Accepted>
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
   | Failure<404, 'UNKNOWN_CALENDAR', Schemas.Problem>
@@ -877,9 +959,7 @@ export interface RegisterPersonInput {
 }
 
 export type RegisterPersonResult =
-  | Success<200, {
-    id: string;
-  }>
+  | Success<200, Schemas.Accepted>
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
   | Failure<422, 'INVALID_DISPLAY_NAME' | 'INVALID_EMAIL' | 'VALIDATION_FAILED', Schemas.Problem>;
@@ -913,9 +993,7 @@ export interface OpenPracticeInput {
 }
 
 export type OpenPracticeResult =
-  | Success<201, {
-    id: string;
-  }>
+  | Success<201, Schemas.Accepted>
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
   | Failure<404, 'PERSON_NOT_REGISTERED', Schemas.Problem>
@@ -982,13 +1060,7 @@ export interface SearchPracticeAgendaInput {
 }
 
 export type SearchPracticeAgendaResult =
-  | Success<200, {
-    items: Array<Record<string, unknown>>;
-    /** Present when it is cheap to count. */
-    total?: number;
-    /** Present when more items follow. */
-    nextCursor?: string;
-  }>
+  | Success<200, Schemas.AgendaLinePage>
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
   | Failure<422, 'INVALID_CRITERIA' | 'VALIDATION_FAILED', Schemas.Problem>;
@@ -1026,9 +1098,7 @@ export interface GrantDelegationInput {
 }
 
 export type GrantDelegationResult =
-  | Success<201, {
-    id: string;
-  }>
+  | Success<201, Schemas.Accepted>
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
   | Failure<404, 'PRACTICE_NOT_FOUND', Schemas.Problem>
@@ -1064,9 +1134,7 @@ export interface RevokeDelegationInput {
 }
 
 export type RevokeDelegationResult =
-  | Success<200, {
-    id: string;
-  }>
+  | Success<200, Schemas.Accepted>
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
   | Failure<404, 'DELEGATION_NOT_FOUND', Schemas.Problem>
@@ -1104,9 +1172,7 @@ export interface AddMemberInput {
 }
 
 export type AddMemberResult =
-  | Success<201, {
-    id: string;
-  }>
+  | Success<201, Schemas.Accepted>
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
   | Failure<404, 'PERSON_NOT_REGISTERED' | 'PRACTICE_NOT_FOUND', Schemas.Problem>
@@ -1141,9 +1207,7 @@ export interface RemoveMemberInput {
 }
 
 export type RemoveMemberResult =
-  | Success<200, {
-    id: string;
-  }>
+  | Success<200, Schemas.Accepted>
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
   | Failure<404, 'PRACTICE_NOT_FOUND', Schemas.Problem>

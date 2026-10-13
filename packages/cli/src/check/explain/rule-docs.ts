@@ -9,9 +9,11 @@ import { IMPORTS_DOCS } from './imports-docs.js';
 import { LANGUAGE_DOCS } from './language-docs.js';
 import { LAYER_DOCS } from './layer-docs.js';
 import { LAYOUT_DOCS } from './layout-docs.js';
+import { LIFECYCLE_DOCS } from './lifecycle-docs.js';
 import { PERSISTENCE_DOCS } from './persistence-docs.js';
 import { PORTS_DOCS } from './ports-docs.js';
 import { SCHEDULING_DOCS } from './scheduling-docs.js';
+import { SCHEMA_DOCS } from './schema-docs.js';
 import { STANDARD_DOCS } from './standard-docs.js';
 import { TENANCY_DOCS } from './tenancy-docs.js';
 import { TREE_DOCS } from './tree-docs.js';
@@ -29,9 +31,11 @@ export const RULE_DOCS: Readonly<Record<string, RuleDoc>> = {
   ...LANGUAGE_DOCS,
   ...LAYER_DOCS,
   ...LAYOUT_DOCS,
+  ...LIFECYCLE_DOCS,
   ...PERSISTENCE_DOCS,
   ...PORTS_DOCS,
   ...SCHEDULING_DOCS,
+  ...SCHEMA_DOCS,
   ...STANDARD_DOCS,
   ...TENANCY_DOCS,
   ...TREE_DOCS,

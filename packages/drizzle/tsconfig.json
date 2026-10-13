@@ -2,5 +2,5 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": { "outDir": "dist", "rootDir": "src" },
   "include": ["src"],
-  "references": [{ "path": "../kernel" }, { "path": "../events" }]
+  "references": [{ "path": "../kernel" }, { "path": "../events" }, { "path": "../scheduling" }]
 }

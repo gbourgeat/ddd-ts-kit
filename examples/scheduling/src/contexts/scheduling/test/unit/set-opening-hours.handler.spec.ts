@@ -85,6 +85,18 @@ describe('Set opening hours', () => {
     ).toEqual(['08:00']);
   });
 
+  it('refuses a change made on a version of the calendar that is no longer the current one, and makes one on the current version', async () => {
+    const { application, calendarRepository } = await arrange();
+
+    await expect(
+      application.commandBus.execute(new SetOpeningHoursCommand(holder, 'calendar-1', week, 0)),
+    ).rejects.toMatchObject({ code: 'PRECONDITION_FAILED' });
+
+    await application.commandBus.execute(new SetOpeningHoursCommand(holder, 'calendar-1', week, 1));
+
+    expect((await calendarRepository.findById('calendar-1'))?.version).toBe(2);
+  });
+
   it('refuses a calendar that does not exist', async () => {
     const { application } = await arrange();
 

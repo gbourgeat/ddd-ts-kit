@@ -2,6 +2,7 @@ import { authzDeclared } from '../../src/rules/authz-declared.js';
 import { presentationControllerDelegates } from '../../src/rules/presentation-controller-delegates.js';
 import { presentationControllerShape } from '../../src/rules/presentation-controller-shape.js';
 import { presentationGuardAtTheEdge } from '../../src/rules/presentation-guard-at-the-edge.js';
+import { presentationSharedCacheVaries } from '../../src/rules/presentation-shared-cache-varies.js';
 import { at, BILLING, ruleTester } from '../support/rule-tester.js';
 
 const CONTROLLER = `${BILLING}/presentation/http/invoices/issue-invoice/issue-invoice.controller.ts`;
@@ -167,6 +168,59 @@ ruleTester.run('authz-declared, on a controller', authzDeclared, {
     {
       ...at(CONTROLLER, `${HTTP}${declared("method: 'GET', path: '/rates'")}\nexport class GetRatesController {}`),
       errors: [{ messageId: 'controller' }],
+    },
+  ],
+});
+
+const GROUP = `${BILLING}/presentation/http/invoices.routes.ts`;
+const ROUTE_FILE = `${BILLING}/presentation/http/rates.route.ts`;
+const SHARED = "cache: { scope: CacheScope.public, maxAge: '1m' }";
+
+ruleTester.run('presentation-shared-cache-varies', presentationSharedCacheVaries, {
+  valid: [
+    at(
+      CONTROLLER,
+      `${HTTP}${declared(`method: 'GET', path: '/rates', guards: [Public], ${SHARED}`)}\nexport class GetRatesController {}`,
+    ),
+    at(
+      CONTROLLER,
+      `${HTTP}${declared(`group: InvoicesRoutes, method: 'GET', path: '/', ${SHARED}`)}\nexport class ListInvoicesController {}`,
+    ),
+    at(
+      GROUP,
+      `${HTTP}@RouteGroup({ prefix: '/invoices', guards: [Authenticated], cache: { scope: CacheScope.public, maxAge: '1m', vary: ['Authorization'] } })\nexport class InvoicesRoutes {}`,
+    ),
+    at(
+      GROUP,
+      `${HTTP}@RouteGroup({ prefix: '/invoices', guards: [Authenticated], cache: { scope: CacheScope.private, maxAge: '0s' } })\nexport class InvoicesRoutes {}`,
+    ),
+    at(ROUTE_FILE, `defineRoute({ operationId: 'readRates', security: false, ${SHARED} }, handler);`),
+    at(ROUTE_FILE, `defineRoute({ operationId: 'readRates', security: ['bearer'], cache }, handler);`),
+    at(
+      `${BILLING}/test/unit/invoices.routes.spec.ts`,
+      `RouteGroup({ guards: [Authenticated], ${SHARED} })(InvoicesRoutes);`,
+    ),
+  ],
+  invalid: [
+    {
+      ...at(
+        GROUP,
+        `${HTTP}@RouteGroup({ prefix: '/invoices', guards: [Authenticated], ${SHARED} })\nexport class InvoicesRoutes {}`,
+      ),
+      errors: [
+        { messageId: 'sharedWithoutVary', data: { what: 'route group', why: 'it stands behind Authenticated' } },
+      ],
+    },
+    {
+      ...at(
+        CONTROLLER,
+        `${HTTP}${declared("group: InvoicesRoutes, method: 'GET', path: '/', guards: [HasRole('auditor')], cache: { scope: 'public', maxAge: '1m', vary: [] }")}\nexport class ListInvoicesController {}`,
+      ),
+      errors: [{ messageId: 'sharedWithoutVary', data: { what: 'controller', why: 'it stands behind a guard' } }],
+    },
+    {
+      ...at(ROUTE_FILE, `defineRoute({ operationId: 'readRates', security: ['bearer'], ${SHARED} }, handler);`),
+      errors: [{ messageId: 'sharedWithoutVary', data: { what: 'route', why: 'it names security schemes' } }],
     },
   ],
 });

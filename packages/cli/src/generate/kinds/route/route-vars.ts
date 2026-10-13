@@ -3,8 +3,12 @@ import { toName, type Name } from '../../../naming/index.js';
 import type { RenderContext } from '../../../templating/index.js';
 import type { Scope } from '../../scope.js';
 import { dtoClasses } from './dto-classes.js';
+import { sharesSchemas } from './shares-schemas.js';
 import type { Endpoint } from './endpoint.js';
 import type { UseCase } from './use-case.js';
+
+/** The validation libraries whose templates declare a schema for the path parameters. */
+const TYPES_PARAMETERS: readonly string[] = ['zod', 'class-validator', 'typebox'];
 
 export interface RouteParts {
   readonly name: Name;
@@ -16,6 +20,7 @@ export interface RouteParts {
 export function routeVars(scope: Scope, { name, endpoint, useCase }: RouteParts): RenderContext {
   const hasBody = ['POST', 'PUT', 'PATCH'].includes(endpoint.method);
   const { config, context } = scope;
+  const shared = sharesSchemas(config);
   const inContext = (file: string): string => specifierOf(config, `${config.contextsDir}/${context.kebab}/${file}`);
 
   return {
@@ -26,11 +31,12 @@ export function routeVars(scope: Scope, { name, endpoint, useCase }: RouteParts)
     isPlainQuery: useCase.isQuery && !useCase.isSearch,
     isSearch: useCase.isSearch,
     returnsId: useCase.returnsId,
+    ...acceptedVars(useCase, shared),
     returnsNothing: !useCase.isQuery && !useCase.returnsId,
     hasBody,
     usesAnyObject: hasBody || useCase.isQuery,
-    usesSchema: hasBody || useCase.isQuery || useCase.returnsId,
-    dtoImports: dtoClasses(endpoint, useCase)
+    usesSchema: hasBody || useCase.isQuery || (useCase.returnsId && !shared),
+    dtoImports: dtoClasses(endpoint, useCase, shared)
       .map(
         (role) =>
           `import { ${name.pascal}${toName(role).pascal} } from '${inContext(`presentation/http/${name.kebab}-${role}.dto.ts`)}';`,
@@ -43,10 +49,18 @@ export function routeVars(scope: Scope, { name, endpoint, useCase }: RouteParts)
   };
 }
 
+/** An identifier answer: a schema of the route, or the `Accepted` schema of the platform when schemas are shared. */
+function acceptedVars(useCase: UseCase, shared: boolean): RenderContext {
+  return {
+    ownAccepted: useCase.returnsId && !shared,
+    sharedAccepted: useCase.returnsId && shared,
+    acceptedBody: shared ? 'acceptedSchema' : 'accepted',
+  };
+}
+
 function requestVars(scope: Scope, { parameters }: Endpoint, hasBody: boolean): RenderContext {
   const { validation } = scope.config.stack;
-  // Only the zod and class-validator variants declare a schema for path parameters.
-  const typedParameters = parameters.length > 0 && (validation === 'zod' || validation === 'class-validator');
+  const typedParameters = parameters.length > 0 && TYPES_PARAMETERS.includes(validation);
 
   return {
     hasParams: parameters.length > 0,
@@ -97,6 +111,7 @@ function parameterVars(parameters: readonly string[]): RenderContext {
 
   return {
     zodParams: parameters.map((parameter) => `${parameter}: z.string().min(1)`).join(', '),
+    typeboxParams: parameters.map((parameter) => `${parameter}: Type.String({ minLength: 1 })`).join(', '),
     dtoParams: parameters.map((parameter) => `@IsString()\n  ${parameter} = '';`).join('\n\n  '),
     sampleParams: parameters.length > 0 ? `{ ${sample} }` : '{}',
   };

@@ -1,13 +1,11 @@
-import { Controller, type HttpRequest, type IncomingFile } from '@ddd-ts-kit/http';
+import { acceptedSchema, Controller, type Accepted, type HttpRequest, type IncomingFile } from '@ddd-ts-kit/http';
 import type { CommandBus } from '@ddd-ts-kit/kernel';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
 import { AttachAppointmentDocumentCommand } from '@/contexts/scheduling/application/commands/attach-appointment-document/attach-appointment-document.command';
 import { AppointmentsRoutes } from '@/contexts/scheduling/presentation/http/appointments.routes';
-import { AttachAppointmentDocumentAccepted } from '@/contexts/scheduling/presentation/http/appointments/attach-appointment-document/attach-appointment-document.accepted';
 import { AttachAppointmentDocumentParams } from '@/contexts/scheduling/presentation/http/appointments/attach-appointment-document/attach-appointment-document.params';
 
 const params = classSchema(AttachAppointmentDocumentParams);
-const accepted = classSchema(AttachAppointmentDocumentAccepted);
 
 @Controller({
   group: AppointmentsRoutes,
@@ -21,7 +19,7 @@ const accepted = classSchema(AttachAppointmentDocumentAccepted);
   response: {
     status: 201,
     description: 'Attached; the body carries the identifier of the appointment.',
-    body: accepted,
+    body: acceptedSchema,
   },
   errors: ['APPOINTMENT_NOT_FOUND', 'DOCUMENT_NAME_TOO_LONG', 'FILE_REJECTED'],
 })
@@ -30,7 +28,7 @@ export class AttachAppointmentDocumentController {
 
   async handle(
     request: HttpRequest<{ params: AttachAppointmentDocumentParams; upload: IncomingFile }>,
-  ): Promise<AttachAppointmentDocumentAccepted> {
+  ): Promise<Accepted> {
     const { actor, params: path, upload } = request;
 
     await this.commands.execute(new AttachAppointmentDocumentCommand(actor, path.appointmentId, upload));

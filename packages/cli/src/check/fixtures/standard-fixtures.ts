@@ -98,6 +98,14 @@ export const STANDARD_FIXTURES: readonly Fixture[] = [
   },
   {
     ruleId: 'standard/no-parallel-interface',
+    name: 'a home-made purger of the shared cache, next to the kernel port',
+    expect: { file: 'src/platform/cdn-purger.ts' },
+    files: project({
+      'src/platform/cdn-purger.ts': 'export class CdnPurger {\n  purge(tags: readonly string[]): void {}\n}\n',
+    }),
+  },
+  {
+    ruleId: 'standard/no-parallel-interface',
     name: 'a home-made scheduler, and an error reporter behind an I',
     expect: { file: 'src/platform/cron-scheduler.ts' },
     files: project({

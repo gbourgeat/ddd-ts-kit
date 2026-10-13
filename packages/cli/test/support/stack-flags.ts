@@ -11,6 +11,7 @@ export interface StackFlags {
   readonly broker?: string;
   readonly ci?: string;
   readonly cache?: string;
+  readonly 'http-cache'?: string;
   readonly audit?: string;
   readonly errors?: string;
   readonly logger?: string;
@@ -18,4 +19,5 @@ export interface StackFlags {
   readonly assembly?: string;
   readonly storage?: string;
   readonly tenancy?: string;
+  readonly queue?: string;
 }

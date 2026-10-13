@@ -1,10 +1,10 @@
 # @ddd-ts-kit/http
 
-Declare a route once, without a framework. Mount it on Express 5, Fastify 5 or NestJS, and
-generate the OpenAPI 3.1 contract from the same declaration.
+Declare a route once, without a framework. Mount it on Express 5, Fastify 5, Hono 4 (on Node)
+or NestJS, and generate the OpenAPI 3.1 contract from the same declaration.
 
 Every adapter goes through one pipeline (`executeRoute`): validation, handler, error mapping.
-The behaviour is therefore the same on the three frameworks, and one test suite proves it.
+The behaviour is therefore the same on the four frameworks, and one test suite proves it.
 
 ## Declare
 
@@ -84,8 +84,8 @@ const routes = controllerRoutes([PlaceOrderController], { resolve: application.r
 
 | Export | What it is |
 |---|---|
-| `Controller(spec)` | the decorator of a controller: `group`, `method`, `path` (after the prefix of the group), `operationId` (the class name without `Controller` by default), `summary`, `description`, `tags`, `params`, `query`, `headers`, `body`, `response: { status, description?, body? }`, `errors`, `guards`, `deprecated` |
-| `RouteGroup({ parent, prefix, tags, guards, errors })` | names a set of routes on an empty class; a child inherits from its `parent` and adds |
+| `Controller(spec)` | the decorator of a controller: `group`, `method`, `path` (after the prefix of the group), `operationId` (the class name without `Controller` by default), `summary`, `description`, `tags`, `params`, `query`, `headers`, `body`, `response: { status, description?, body? }`, `errors`, `guards`, `deprecated`, `cache` and `ifMatch` (see "HTTP caching") |
+| `RouteGroup({ parent, prefix, tags, guards, errors, cache })` | names a set of routes on an empty class; a child inherits from its `parent` and adds; the nearest `cache` wins |
 | `Guard` | the interface `{ documents?, check(request: GuardRequest) }`, and the decorator of a guard class that takes dependencies |
 | `Authenticated`, `Public`, `HasRole(...roles)`, `HasScope(...scopes)`, `TenantMember` | the guards the package ships, over the `Actor` and the `Session` of the request: 401 to the anonymous caller, 403 without one of the roles, without every scope named (`Session.scopes`, typed by the `SessionScopes` of the project) or outside the tenant of the request; `Public` lets everybody in and stands alone. A refusal of a guard is reported to `onGuardRefusal` |
 | `RequestMapper<Request, Message>`, `Serializer<Result, Body>` | the interfaces of the two optional translators (`map`, `serialize`), and the decorators that declare them |
@@ -102,6 +102,205 @@ it too. Controllers are declared classes of the edge (`Edge` of
 in `DeclaredEdges`. A controller has one response and answers its body: a route with several
 success statuses, response headers or a raw body stays a `defineRoute` function. The reasons
 are on the [presentation layer](../../docs/concepts/presentation-layer.md) page.
+
+## HTTP caching
+
+A read says how the caches on the way may keep its answer, on its controller, on its route
+group (every read of the group, `GET` and `HEAD`, unless a controller says otherwise: a write of
+the group keeps the default of a write) or on a function route (`cache` of the spec):
+
+```ts
+import { CacheScope, Public, RouteGroup } from '@ddd-ts-kit/http';
+
+@RouteGroup({
+  prefix: '/catalog',
+  guards: [Public],
+  cache: { scope: CacheScope.public, maxAge: '1m', sMaxAge: '5m', staleWhileRevalidate: '30s', staleIfError: '1d' },
+})
+export class CatalogRoutes {}
+```
+
+| Field | Answers |
+|---|---|
+| `scope` | `public` (every cache: a CDN, Varnish, the browser), `private` (the browser of the caller only), `no-store` (nobody) |
+| `maxAge`, `sMaxAge` | `max-age`, and `s-maxage` read by shared caches instead; whole seconds as text: `'0s'`, `'30s'`, `'5m'`, `'1h'`, `'1d'` |
+| `staleWhileRevalidate`, `staleIfError` | how long a stale answer may still be served while the cache asks again, or while the server fails |
+| `mustRevalidate` | `must-revalidate`: once stale, never served without asking |
+| `vary` | `Vary`: the request headers the answer depends on, besides the URL |
+
+The pipeline sends `Cache-Control` (and `Vary`) on a successful answer, `no-store` on every
+refusal of a route that declares a policy, and `no-store` on every answer of a route that knows
+its caller and declares none: an authenticated answer is never kept by default. A public route
+that declares nothing says nothing, as before. A header the handler of a function route answers
+itself wins. The contract documents the headers on the answer they apply to.
+
+A policy that cannot stand is refused when the route is declared, with a `DeclarationError`:
+
+- a policy other than `no-store` on a write (only `GET` and `HEAD` are kept by a cache), the
+  validators of a read (`etag`, `lastModified`) on a write, `ifMatch` on a read;
+- `public` or `private` without `maxAge` (`'0s'` has the answer revalidated each time), a
+  duration that is not whole seconds, a duration on `no-store`, `sMaxAge` on a private answer;
+- **a `public` answer of a route that knows its caller** (a guard other than `Public`, a
+  function route with `security`) that does not name in `vary` what it depends on. A shared
+  cache keys an answer by its URL: without `vary: ['Authorization']` (or the header carrying the
+  tenant), it would hand the answer of one caller to the next. `private` is the usual answer.
+  The ESLint rule `presentation/shared-cache-varies` reports the same declaration in the editor,
+  for what one file shows.
+
+When the routes are mounted (`mountExpress`, `mountFastify`, `createRoutesModule`), the options of
+the application are known, and a public answer is held to them with a `DeclarationError`:
+
+- on a route that knows its caller, `vary` names `Authorization`, `Cookie`, or a header the tenant
+  is read from (`resolveTenant`): `vary: ['Accept-Language']` alone is refused;
+- behind a cache that ignores `Vary` (`cacheTags.header` of Cloudflare or Bunny), a public answer
+  that varies is refused, unless `cacheTags.honoursVary: true` says the cache keys on those
+  headers;
+- with tags filed per tenant (`cacheTags.perTenant`), a tagged route anybody may call needs
+  `resolveTenant`: an anonymous call names no tenant otherwise, and no purge would meet its answer.
+
+Every answer a cache may keep varies on the headers the tenant is read from (`TenantResolver.headers`:
+`tenantFromHeader` names its header, `firstTenantOf` the headers of its resolvers), added to `Vary`
+by the pipeline. A tagged answer filed per tenant to a request that names no tenant is `no-store`.
+
+Never cache a decision of authorization across actors: what a caller may see is decided by the
+use case for that caller, and a shared cache only ever keeps what is the same for everybody
+(see [HTTP caching](../../docs/concepts/http-caching.md)).
+
+### Conditional requests
+
+A read that names its version answers `ETag` or `Last-Modified`, and `304 Not Modified`
+without a body to a caller that already holds that version:
+
+```ts
+@Controller({
+  group: CalendarsRoutes,
+  method: 'GET',
+  path: '/:calendarId/days/:day',
+  summary: 'Get calendar day',
+  params,
+  response: { status: 200, body: answer },
+  cache: { scope: CacheScope.private, maxAge: '0s', mustRevalidate: true, etag: 'representation' },
+})
+```
+
+| Field | Answers |
+|---|---|
+| `etag: 'representation'` | a strong tag, the SHA-256 of the bytes sent: right for any answer, and the handler still runs (it saves the transfer, not the work) |
+| `etag: { version: 'version' }` | a weak tag, `W/"7"`, from the version the body carries under that field (dotted: `calendar.version`): the version of the aggregate or of the read model shown |
+| `lastModified: 'changedAt'` | `Last-Modified`, from the instant under that field (a `Date` or ISO 8601 text), compared to `If-Modified-Since` to the second |
+
+`If-None-Match` is read first and compared weakly, `If-Modified-Since` only without it. A body
+that lacks the field it names answers 500, as any answer its declaration does not allow. The
+contract gains the `If-None-Match` and `If-Modified-Since` parameters, the `ETag` and
+`Last-Modified` headers and the `304` answer.
+
+A write made on the version a client read declares `ifMatch` (`IfMatch.optional` or
+`IfMatch.required`). The pipeline reads the version named in `If-Match` (the weak tag the read
+answered, or its strong form `"7"`) and hands it to the handler as `context.expectedVersion`; the
+use case compares it with the version of the aggregate it loaded:
+
+```ts
+// the controller: new SetOpeningHoursCommand(request.actor, calendarId, ranges, request.context.expectedVersion)
+// the handler of the command:
+const calendar = await this.calendars.findById(command.calendarId);
+expectVersion(calendar, command.expectedVersion); // PreconditionFailedError, 412, when it changed
+```
+
+| Request | Answer |
+|---|---|
+| `If-Match` names the current version, or `*` | the change runs |
+| `If-Match` names another version, or a tag that is no version | `412 PRECONDITION_FAILED` |
+| no `If-Match`, `ifMatch: 'optional'` | the change runs unconditionally, as before |
+| no `If-Match`, `ifMatch: 'required'` | `428 PRECONDITION_REQUIRED`, before the handler runs |
+
+This is optimistic concurrency at the edge: the version a person saw on the screen, not only the
+one the handler loaded a millisecond earlier. Two writes at the same instant still meet the
+`ConcurrencyError` of the repository. RFC 9110 compares `If-Match` strongly, under which a weak
+tag never matches: the kit compares versions instead, which is what both forms name here, and
+documents it. The contract gains the `If-Match` parameter and the `412` (and `428`) problems.
+
+### Cache tags and purge after the commit
+
+A public answer names the resources it shows, so that a shared cache files it under their tags
+and drops it when one of them changes, instead of waiting for `maxAge`:
+
+```ts
+cache: {
+  scope: CacheScope.public,
+  maxAge: '1m',
+  sMaxAge: '1h',
+  tags: [{ resource: 'calendar', param: 'calendarId' }, { resource: 'appointment', field: 'items.id' }],
+},
+```
+
+| Source | Tag |
+|---|---|
+| `{ resource, param }` | `<resource>:<value of the path parameter>` |
+| `{ resource, field }` | `<resource>:<value>` for each value at that dotted path of the body (a list is walked through) |
+| `{ resource }` | `<resource>`: a change of any element of that kind purges the answer (a list, a search) |
+
+Tags are made with `cacheTag(resource, id)` of the kernel, the identifier percent-encoded. A
+multi-tenant application files them under the tenant of the request (`acme/calendar:c-1`) with
+`cacheTags: { header, perTenant: true }`, and its purges with `perTenant: true` of
+`PublishedCacheInvalidation`: both sides or neither, or the purges miss. Tags are sent only
+when the application names the header its shared cache reads, `cacheTags: { header }` of the
+options: `CacheTagHeader.xkey` (Varnish), `surrogateKey` (Fastly), `cacheTag` (Cloudflare),
+`cdnTag` (Bunny); without it, no answer carries tags. The contract lists them as templates in
+`x-cache-tags`. Tags on a private answer, or reading a parameter the path does not have, are
+refused when the route is declared.
+
+The purge is asked by the use case and done after its commit:
+
+```ts
+// application/event-handlers/calendar-opening-hours-set.event-handler.ts: before-commit, the default phase
+@DomainEventHandler(CalendarOpeningHoursSet, { name: CalendarOpeningHoursSet.eventName })
+export class CalendarOpeningHoursSetEventHandler implements DomainEventHandler<CalendarOpeningHoursSet> {
+  constructor(private readonly cacheInvalidation: CacheInvalidation) {}
+
+  async handle(event: CalendarOpeningHoursSet): Promise<void> {
+    await this.cacheInvalidation.invalidate([cacheTag('calendar', event.aggregateId)]);
+  }
+}
+```
+
+`CacheInvalidation` of the kernel publishes a purge request on the publisher of the
+application, which `kernelModule()` binds by default: behind an outbox, the request is a row of
+the transaction of the command. A command that rolls back purges nothing; one that commits
+purges even when the process stops right after the commit, since the row waits for the next
+relay. The relay hands the requests to a `CachePurger` and every other event to the broker:
+
+```ts
+import { PurgingPublisher } from '@ddd-ts-kit/kernel';
+import { VarnishCachePurger } from '@ddd-ts-kit/http/purgers';
+
+const relay = new OutboxRelay({
+  store,
+  publisher: new PurgingPublisher(new VarnishCachePurger({ url: varnishUrl, key: varnishPurgeKey }), broker),
+  clock,
+});
+```
+
+A purge that fails throws: the relay retries it as it retries a publication, and a request
+delivered twice purges twice, which changes nothing. A read that loaded the previous state just
+before the commit can still reach the cache after the purge and stay for its `s-maxage`:
+`RepeatedCachePurger` of the kernel purges once more a little later (`new
+RepeatedCachePurger(varnish, { againAfterMs: 2_000 })`), best effort. Without an outbox (`events: in-memory`) the
+request reaches the in-memory bus, where nothing purges: pass `cacheInvalidation` to
+`kernelModule` to purge otherwise.
+
+`@ddd-ts-kit/http/purgers` holds the adapters of the `CachePurger` port; they need no
+dependency (the `fetch` of Node) and are held to `cachePurgerContract` of
+`@ddd-ts-kit/testing/contracts`, which the in-memory one (`InMemoryCachePurger` of the kernel)
+passes too:
+
+| Adapter | Purges | Tag header | Verified |
+|---|---|---|---|
+| `VarnishCachePurger({ url, key?, mode?, soft? })` | `PURGE` with `xkey-purge` (vmod_xkey), or `xkey-softpurge` with `soft`; `mode: 'ban'` sends one `x-ban-tag` per tag, its pattern characters escaped, which the VCL turns into a ban; `key` goes in `x-purge-key`, which the VCL asks of a purge from another machine | `xkey` | the contract suite on Varnish 9.1.0 with the VCL `init --http-cache varnish` writes, in CI |
+| `FastlyCachePurger({ serviceId, token, soft? })` | `POST /service/<id>/purge`, 256 surrogate keys a request | `surrogate-key` | the contract suite on a fake of the documented purge API, and the requests it sends; never run against Fastly |
+| `CloudflareCachePurger({ zoneId, token })` | `POST /zones/<id>/purge_cache` with `tags`, 100 a request, on every plan | `cache-tag` | the contract suite on a fake of the documented purge API, and the requests it sends; never run against Cloudflare |
+
+A purge that the cache does not confirm with a 2xx is a `CachePurgeError`. Bunny and the other
+caches are compared on the [HTTP caches](../../docs/tools/http-caches.md) page.
 
 ## Errors
 
@@ -136,7 +335,7 @@ message nor its facts.
 
 Defaults: `VALIDATION_FAILED` 422 (with `issues`, paths prefixed by the part:
 `body.items.0.sku`), `NOT_FOUND` 404, `CONFLICT` 409, `INVARIANT_VIOLATION` 422, `UNAUTHORIZED`
-401, `FORBIDDEN` 403. A domain code that is not mapped answers 422.
+401, `FORBIDDEN` 403, `PRECONDITION_FAILED` 412, `PRECONDITION_REQUIRED` 428. A domain code that is not mapped answers 422.
 
 ```ts
 import { createErrorMapper } from '@ddd-ts-kit/http';
@@ -173,6 +372,8 @@ const options: ExecuteOptions = {
   },
   validateResponses: process.env.NODE_ENV === 'test', // checks answers against the declaration
   around: tracedRoutes(), // of @ddd-ts-kit/tracing: the span of the request, named by its route template
+  // the header the shared cache in front reads the tags from; honoursVary and perTenant: see HTTP caching
+  cacheTags: { header: CacheTagHeader.xkey },
 };
 ```
 
@@ -326,7 +527,7 @@ const searchOrders = defineRoute(
 | `pageQuerySchema(options?)` | the same reading as a `Schema`, for a route whose whole query is the page |
 | `pageResponse(page, map)` | the JSON body `{ items, total?, nextCursor? }`, each item through `map` |
 | `pageRequestParameters(options?)` | the JSON Schema of the query (one OpenAPI parameter per property); `properties` merges into a wider schema |
-| `pageSchemaOf(itemSchema)` | the `Schema` of a page of items: validates the envelope and each item, describes both in the contract |
+| `pageSchemaOf(itemSchema)` | the `Schema` of a page of items: validates the envelope and each item, describes both in the contract; shared as `<Item>Page` when the item is shared ([shared schemas](#shared-schemas)) |
 
 `options` are the `PageLimits` of the kernel (`defaultSize` 20, `maxSize` 100) plus `sortable`,
 the closed list of fields a client may sort by, and `kind`, the variant of a query that names
@@ -431,6 +632,28 @@ mountFastify(app, orderRoutes(orders), options);
 await app.register(fastifyRoutes(orderRoutes(orders), options), { prefix: '/api' });
 ```
 
+## Hono 4
+
+```ts
+import { serve } from '@hono/node-server';
+import { Hono } from 'hono';
+import { mountHono } from '@ddd-ts-kit/http/hono';
+
+const app = new Hono();
+mountHono(app, orderRoutes(orders), options);
+serve({ fetch: app.fetch, port: 3000 });
+```
+
+The adapter reads the JSON body itself, chunk by chunk and up to `bodyLimit` bytes (1 MiB by
+default, as Fastify; Express stops at 100 kB): a larger body is answered 413 as a problem
+(`BODY_TOO_LARGE`), a body that is not JSON 400 (`MALFORMED_BODY`), both before the pipeline and
+without holding the body whole. An upload and a raw body are read from the request stream, with
+the limits their route declares, and a stream answer is streamed. A request carries `HonoRaw` as
+its raw request (its headers as a record, which the authenticators of the kit read, and the
+`Context` of Hono), and a repeated query parameter is a list, as on Express and Fastify. The
+adapter imports nothing of Hono at run time and `node:stream` for the streams: the kit proves
+Node with `@hono/node-server`, not Bun, Deno or an edge runtime.
+
 ## NestJS
 
 No decorator per route: a module mounts the routes on the underlying HTTP server at module
@@ -489,6 +712,36 @@ status of the declared `errors` (codes listed in the description and in `x-error
 whenever the route validates input, a shared `Problem` schema. Local `$defs` of the schemas are
 moved to `components.schemas`. Paths, statuses and component keys are sorted: the output does
 not depend on the order of the routes, so the committed file diffs cleanly.
+
+### Shared schemas
+
+A schema several routes use is declared once and lands once in `components.schemas`; each route
+points at it with `$ref`, whether it uses it whole or inside another schema. A schema is shared
+when its JSON Schema is a reference to one of its own definitions, which every adapter of
+`@ddd-ts-kit/validation` can produce:
+
+| Library | Shared by |
+|---|---|
+| zod | `.meta({ id: 'Slot' })` on the zod schema, used whole or nested |
+| class-validator | `classSchema(SlotDto, { shared: true })`; a nested class is always a component |
+| TypeBox | `{ $id: 'Slot' }` in the options of the schema, used whole or nested |
+| Standard Schema | the library's own ids through Standard JSON Schema, or `sharedSchema('Slot', schema)` |
+| any `Schema` | `sharedSchema(name, schema)` of `@ddd-ts-kit/validation` |
+
+A part of a shared schema (`slot.pick(...)`, `pickClass(SlotDto, [...])`) is a new shape: it is
+written where it is used unless it is shared under a name of its own. Two different shapes under
+one name get distinct components (`Slot`, `Slot_2`): for zod, the input and the output side of a
+schema with defaults are two shapes, so a response gets an id of its own.
+
+The platform shares three schemas of its own:
+
+| Schema | Component | For |
+|---|---|---|
+| `acceptedSchema` | `Accepted`, `{ id }` | the answer of every command route that returns the identifier of what it created or changed |
+| `pageSchemaOf(item)` | `<Item>Page` when the item is shared | the envelope of a search answer (`items`, `total`, `nextCursor`) |
+| the problem document | `Problem` | every refusal, RFC 9457 with the stable `code` |
+
+A shared request part (`params`, `query`, `headers`) still gives one parameter per property.
 
 ## Serving the contract and its page
 

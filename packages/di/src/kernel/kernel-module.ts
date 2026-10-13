@@ -2,6 +2,7 @@ import {
   ActorContext,
   AsyncLocalStorageExecutionScope,
   Cache,
+  CacheInvalidation,
   Clock,
   CommandBus,
   DomainEventDispatcher,
@@ -19,6 +20,8 @@ import {
   InMemoryUnitOfWork,
   IntegrationEventPublisher,
   IntegrationEventSubscriber,
+  InMemoryProcessStore,
+  JobQueue,
   JobScheduler,
   Lock,
   Logger,
@@ -26,6 +29,9 @@ import {
   NoopErrorReporter,
   NoopLogger,
   NoopMetrics,
+  ProcessRunner,
+  ProcessStore,
+  PublishedCacheInvalidation,
   ProcessedEventStore,
   QueryBus,
   RateLimiter,
@@ -37,7 +43,16 @@ import {
   reportAfterCommitFailures,
   type DependencyKind,
 } from '@ddd-ts-kit/kernel';
-import { InProcessJobScheduler, reportFailedRuns } from '@ddd-ts-kit/scheduling';
+import {
+  InMemoryJobStore,
+  InProcessJobScheduler,
+  JobStore,
+  QueueWorker,
+  StoredJobQueue,
+  StoredProcessRunner,
+  reportFailedBackgroundJobs,
+  reportFailedRuns,
+} from '@ddd-ts-kit/scheduling';
 import type { ContextModule } from '../module/context-module.js';
 import { defineContextModule } from '../module/define-context-module.js';
 import type { ModuleBuilder } from '../module/module-builder.js';
@@ -46,6 +61,7 @@ import { guardedQueryBus } from './guarded-query-bus.js';
 import { Instrumentation } from './instrumentation.js';
 import type { KernelModuleOptions } from './kernel-module-options.js';
 import { lazyErrorReporter } from './lazy-error-reporter.js';
+import { lazyJobStore } from './lazy-job-store.js';
 import type { Provided } from './provided.js';
 import { transactionalCommandBus } from './transactional-command-bus.js';
 
@@ -171,6 +187,7 @@ function bindCrossCuttingPorts(builder: ModuleBuilder, options: KernelModuleOpti
   );
 
   builder.bind(Cache).toFactory(either(options.cache, (resolve) => new InMemoryCache(resolve(Clock))));
+  builder.bind(CacheInvalidation).toFactory(either(options.cacheInvalidation, publishedCacheInvalidation));
   builder.bind(Lock).toFactory(either(options.lock, (resolve) => new InMemoryLock(resolve(Clock))));
 
   builder
@@ -178,6 +195,63 @@ function bindCrossCuttingPorts(builder: ModuleBuilder, options: KernelModuleOpti
     .toFactory(either(options.rateLimiter, (resolve) => new InMemoryRateLimiter(resolve(Clock))));
 
   builder.bind(JobScheduler).toFactory(either(options.jobScheduler, inProcessJobScheduler));
+  bindQueuePorts(builder, options);
+}
+
+function bindQueuePorts(builder: ModuleBuilder, options: KernelModuleOptions): void {
+  const { traceparent } = options.instrumentation ?? {};
+
+  builder.bind(JobStore).toFactory(either(options.jobStore, () => new InMemoryJobStore()));
+
+  builder.bind(JobQueue).toFactory(
+    either(
+      options.jobQueue,
+      (resolve) =>
+        new StoredJobQueue({
+          store: resolve(JobStore),
+          clock: resolve(Clock),
+          ids: resolve(IdGenerator),
+          scope: resolve(ExecutionScope),
+          ...(traceparent === undefined ? {} : { traceparent }),
+        }),
+    ),
+  );
+
+  builder.bind(QueueWorker).toFactory(either(options.queueWorker, (resolve) => queueWorker(resolve, options)));
+  builder.bind(ProcessStore).toFactory(either(options.processStore, () => new InMemoryProcessStore()));
+
+  builder.bind(ProcessRunner).toFactory(
+    (resolve) =>
+      new StoredProcessRunner({
+        store: resolve(ProcessStore),
+        jobs: resolve(JobQueue),
+        commands: resolve(CommandBus),
+        unitOfWork: resolve(UnitOfWork),
+      }),
+  );
+}
+
+/** Like the scheduler, the store is resolved when the worker first claims, not when the application registers the jobs. */
+function queueWorker(resolve: Resolve, { queues = {} }: KernelModuleOptions): QueueWorker {
+  return new QueueWorker({
+    ...queues,
+    store: lazyJobStore(resolve),
+    clock: resolve(Clock),
+    scope: resolve(ExecutionScope),
+    logger: resolve(Logger),
+    metrics: resolve(Metrics),
+    onRun: reportFailedBackgroundJobs(lazyErrorReporter(resolve)),
+  });
+}
+
+/** A purge request rides on the publisher of the application: with an outbox, it commits with the work. */
+function publishedCacheInvalidation(resolve: Resolve): CacheInvalidation {
+  return new PublishedCacheInvalidation({
+    publisher: resolve(IntegrationEventPublisher),
+    ids: resolve(IdGenerator),
+    clock: resolve(Clock),
+    scope: resolve(ExecutionScope),
+  });
 }
 
 /** The logger, the reporter and the scope are resolved at each failure: a later module or a test may replace them. */

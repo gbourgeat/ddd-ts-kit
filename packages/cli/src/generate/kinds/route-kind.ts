@@ -9,14 +9,16 @@ import type { Scope } from '../scope.js';
 import { vars } from '../vars.js';
 import { wire } from '../wire.js';
 import { dtoClasses } from './route/dto-classes.js';
+import { sharesSchemas } from './route/shares-schemas.js';
 import { findUseCase } from './route/find-use-case.js';
 import { parseEndpoint } from './route/parse-endpoint.js';
 import { planController } from './route/plan-controller.js';
 import { routeVars, type RouteParts } from './route/route-vars.js';
 import { writeController } from './route/write-controller.js';
+import { SEARCH_LINE_LIBRARIES } from './route/search-line-libraries.js';
 
 const USAGE =
-  '<context> <UseCaseName> --method <GET|POST|PUT|PATCH|DELETE> --path <path> [--command|--query] [--group <Name>] [--mapper] [--serializer]';
+  '<context> <UseCaseName> --method <GET|POST|PUT|PATCH|DELETE> --path <path> [--command|--query] [--group <Name>] [--mapper] [--serializer] [--cache public|private|no-store]';
 
 export const routeKind: Kind = {
   name: 'route',
@@ -41,16 +43,29 @@ export const routeKind: Kind = {
       return;
     }
 
+    assertNoCachePolicy(scope);
+
     const context = vars(scope, {
       name: named(name),
       route: routeVars(scope, parts),
-      search: { customSchema: validation !== 'zod' && validation !== 'class-validator' },
+      search: { customSchema: !SEARCH_LINE_LIBRARIES.has(validation) },
     });
 
     emit(scope, context, routeOutputs(scope, parts));
     wire(scope, 'route', context);
   },
 };
+
+function assertNoCachePolicy(scope: Scope): void {
+  if (scope.flags.cache === undefined) {
+    return;
+  }
+
+  throw new CliError(
+    '--cache writes the cache policy of a controller, and this project writes its routes as functions.',
+    'Write `cache` in the spec of the route, or generate it as a controller: `ddd-ts-kit generate controller ...`.',
+  );
+}
 
 function assertHttpStack(scope: Scope): void {
   if (scope.config.stack.http !== 'none') {
@@ -65,7 +80,7 @@ function assertHttpStack(scope: Scope): void {
 
 function routeOutputs(scope: Scope, { name, endpoint, useCase }: RouteParts): Output[] {
   const { validation } = scope.config.stack;
-  const dtos = validation === 'class-validator' ? dtoClasses(endpoint, useCase) : [];
+  const dtos = validation === 'class-validator' ? dtoClasses(endpoint, useCase, sharesSchemas(scope.config)) : [];
 
   return [
     [`route/route.${useCase.isSearch ? 'search' : validation}.ts.tpl`, `presentation/http/${name.kebab}.route.ts`],

@@ -1,6 +1,7 @@
 import { describeToken } from '@ddd-ts-kit/kernel/declarations';
 import { WiringError } from '../errors/wiring-error.js';
 import { TokenMap } from '../token/token-map.js';
+import type { BackgroundJobRegistration } from './background-job-registration.js';
 import type { Binding } from './binding.js';
 import type { DomainEventHandling } from './domain-event-handling.js';
 import type { EdgeBinding } from './edge-binding.js';
@@ -26,6 +27,8 @@ export class WiringDraft {
   private readonly policies: PolicyBinding[] = [];
 
   private readonly jobs: JobRegistration[] = [];
+
+  private readonly backgroundJobs: BackgroundJobRegistration[] = [];
 
   private readonly projections: ProjectionRegistration[] = [];
 
@@ -100,6 +103,19 @@ export class WiringDraft {
     this.jobs.push(registration);
   }
 
+  addBackgroundJob(registration: BackgroundJobRegistration): void {
+    const existing = this.backgroundJobs.find((other) => other.name === registration.name);
+
+    if (existing !== undefined) {
+      throw new WiringError(
+        'DUPLICATE_JOB',
+        `Background job "${registration.name}" is declared twice: in ${whereOf(existing)} and in ${whereOf(registration)}. The name of a background job is how it is enqueued: it is unique in an application.`,
+      );
+    }
+
+    this.backgroundJobs.push(registration);
+  }
+
   addProjection(registration: ProjectionRegistration): void {
     const existing = this.projections.find((other) => other.name === registration.name);
 
@@ -138,6 +154,7 @@ export class WiringDraft {
       domainEventHandlers: this.domainEventHandlers,
       policies: this.policies,
       jobs: this.jobs,
+      backgroundJobs: this.backgroundJobs,
       projections: this.projections,
       edges: this.edges,
       kindAspects: this.kindAspects,

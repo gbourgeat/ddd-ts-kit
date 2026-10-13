@@ -189,10 +189,10 @@ Stated by [`@ddd-ts-kit/scheduling`](../../packages/scheduling/README.md):
 - **One process, one event loop.** A job that blocks the loop delays every other job.
 - **Time zone rules are those of the runtime**: a zone whose rules changed needs an updated
   Node.
-- **Not a queue.** A job does a bounded amount of work on a schedule. Work that arrives, must
-  not be lost and must be retried belongs to the outbox and to integration events. Work that
-  must happen exactly once and survive a crash is a row in a table, processed by a job that is
-  safe to repeat.
+- **Not a queue.** A job does a bounded amount of work on a schedule. Work a command asks for,
+  which must not be lost and must be retried, is a [background job](background-jobs.md),
+  enqueued in the transaction of the command; a fact other contexts react to is an integration
+  event, through the outbox.
 - **Not a workflow engine.** A multi-step process with waits and compensation is a saga or a
   process manager ([Sagas and process managers](sagas-and-process-managers.md)), which the kit
   does not provide as a runtime.
@@ -221,6 +221,7 @@ Stated by [`@ddd-ts-kit/scheduling`](../../packages/scheduling/README.md):
 - [Resilience](resilience.md)
 - [Delivery and idempotency](delivery-and-idempotency.md)
 - [Sagas and process managers](sagas-and-process-managers.md)
+- [Background jobs](background-jobs.md)
 - [Observability](observability.md)
 - [Cache and coordination tools](../tools/cache-and-coordination.md)
 - [Architecture reference](../ARCHITECTURE.md): "Scheduled jobs"

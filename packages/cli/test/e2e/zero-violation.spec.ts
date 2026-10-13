@@ -27,6 +27,11 @@ const BILLING = [
   'application/integration/publishers/invoice-issued.publisher.ts',
   'application/scheduling/cancel-stale-invoices.job.ts',
   'application/scheduling/issue-invoices-monthly.job.ts',
+  'application/background/compile-overdue-statements.background-job.ts',
+  'application/background/overdue-invoice-dunning-timeout.background-job.ts',
+  'application/processes/overdue-invoice-dunning.process.ts',
+  'domain/state-machines/invoice.state-machine.ts',
+  'domain/vocabularies/invoice-status.vocabulary.ts',
   'domain/aggregates/invoice.aggregate.ts',
   'domain/entities/invoice-line.entity.ts',
   'domain/value-objects/money.vo.ts',
@@ -55,6 +60,10 @@ const BILLING = [
   'test/unit/issue-invoice.controller.spec.ts',
   'test/unit/cancel-stale-invoices.job.spec.ts',
   'test/unit/issue-invoices-monthly.job.spec.ts',
+  'test/unit/compile-overdue-statements.background-job.spec.ts',
+  'test/unit/overdue-invoice-dunning.process.spec.ts',
+  'test/unit/overdue-invoice-dunning-timeout.background-job.spec.ts',
+  'test/unit/invoice.state-machine.spec.ts',
 ];
 
 const SHIPPING = [

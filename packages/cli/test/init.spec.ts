@@ -93,7 +93,7 @@ describe('init', () => {
     const root = initProject('--assembly', 'discovery', '--context', 'billing:core');
 
     const suffixes =
-      'command,query,handler,integration-handler,event-handler,publisher,policy,job,projection,repository,gateway,adapter';
+      'command,query,handler,integration-handler,event-handler,publisher,policy,job,background-job,projection,repository,gateway,adapter';
 
     expect(jsonAt(readJson(root, 'ddd-ts-kit.config.json'), 'stack')).toMatchObject({
       style: 'declared',
@@ -169,14 +169,17 @@ describe('init, the choices it records and the ones it refuses', () => {
       authz: 'rbac',
       broker: 'none',
       cache: 'none',
+      httpCache: 'none',
       audit: 'on',
       errors: 'none',
       logger: 'stdout',
       refusals: 'factories',
       routes: 'controllers',
+      schemas: 'shared',
       storage: 'local',
       valueObjects: 'throwing',
       literals: 'named',
+      queue: 'memory',
       style: 'explicit',
       packageManager: 'pnpm',
     });
@@ -191,7 +194,7 @@ describe('init, the choices it records and the ones it refuses', () => {
 
   it('refuses inconsistent or unknown options with a fix, and writes nothing', () => {
     expect(initFailure('--http', 'nest', '--di', 'tsyringe').fix).toContain('--http nest together with --di nest');
-    expect(initFailure('--http', 'koa').fix).toContain('express, fastify, nest, none');
+    expect(initFailure('--http', 'koa').fix).toContain('express, fastify, hono, nest, none');
     expect(initFailure('--context', 'billing').fix).toContain('billing:core');
     expect(initFailure('--context', 'billing:central').fix).toContain('core, supporting, generic');
 

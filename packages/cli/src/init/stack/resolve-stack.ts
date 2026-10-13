@@ -14,11 +14,13 @@ import {
   DI_STACKS,
   DOCS_UIS,
   ERROR_REPORTERS,
+  HTTP_CACHE_STACKS,
   HTTP_STACKS,
   IMPORT_EXTENSIONS,
   LOGGERS,
   REFUSAL_FORMS,
   ROUTE_FORMS,
+  SCHEMA_FORMS,
   PACKAGE_MANAGERS,
   STORAGE_STACKS,
   parseConfig,
@@ -36,6 +38,7 @@ import { choose } from './choose.js';
 import { recordedOptions } from './recorded-options.js';
 import { resolveCiExtras } from './resolve-ci-extras.js';
 import { resolvePersistence } from './resolve-persistence.js';
+import { resolveQueue } from './resolve-queue.js';
 import { resolveStyle } from './resolve-style.js';
 import { resolveTenancy } from './resolve-tenancy.js';
 import type { StackOptions } from './stack-options.js';
@@ -128,10 +131,12 @@ function stackOf(options: StackOptions): Record<string, string> {
     docsUi,
     ...resolveSecurity(options),
     broker,
+    httpCache: resolveHttpCache(options, http, persistence.events),
     ...resolveOperations(options, persistence.orm),
     ...resolveWriting(options),
     ...resolveStyle(options, di),
     tenancy: resolveTenancy(options, persistence.orm),
+    queue: resolveQueue(options, { orm: persistence.orm, di }),
   };
 }
 
@@ -177,17 +182,35 @@ function resolveOperations(
 }
 
 /** How the code is written: a new project takes the forms of the current version, a recorded one keeps the form it says. */
-function resolveWriting(options: StackOptions): Record<'refusals' | 'routes' | 'valueObjects' | 'literals', string> {
+function resolveWriting(
+  options: StackOptions,
+): Record<'refusals' | 'routes' | 'schemas' | 'valueObjects' | 'literals', string> {
   return {
     // A new project builds its domain errors through factories; a recorded one keeps the form it says, or the one of 0.2.
     refusals: choose(REFUSAL_FORMS, options.refusals, 'refusals') ?? 'factories',
     // A new project writes each route as a controller class; a recorded one keeps the form it says, or the functions of 0.3.
     routes: choose(ROUTE_FORMS, options.routes, 'routes') ?? 'controllers',
+    // A new project declares a shape once and shares it; a recorded one keeps the form it says, or one schema per route as 0.5.
+    schemas: choose(SCHEMA_FORMS, options.schemas, 'schemas') ?? 'shared',
     // A new project throws the refusals of its value objects; a recorded one keeps the form it says, or the Result of 0.5.
     valueObjects: choose(VALUE_OBJECT_FORMS, options.valueObjects, 'value-objects') ?? 'throwing',
     // A new project names its closed values and its numbers; a recorded one keeps the form it says, or the free literals of 0.5.
     literals: choose(LITERAL_FORMS, options.literals, 'literals') ?? 'named',
   };
+}
+
+/** A shared cache purged after the commit needs an API to put it in front of, and the outbox its purge requests ride on. */
+function resolveHttpCache(options: StackOptions, http: string, events: string): string {
+  const httpCache = choose(HTTP_CACHE_STACKS, options.httpCache, 'http-cache') ?? 'none';
+
+  if (httpCache === 'none' || (http !== 'none' && events === 'outbox')) {
+    return httpCache;
+  }
+
+  throw new CliError(
+    `--http-cache ${httpCache} cannot be combined with --http ${http} --events ${events}.`,
+    'The purge of the shared cache is a row of the outbox, written with the command and sent after its commit: keep an HTTP framework and --events outbox, or --http-cache none.',
+  );
 }
 
 function resolveSecurity(options: StackOptions): { authn: string; authz: string } {
@@ -228,6 +251,6 @@ function assertNestGoesWithNest(http: string, di: string): void {
 
   throw new CliError(
     `--http ${http} cannot be combined with --di ${di}.`,
-    'NestJS hosts the application as a whole: use --http nest together with --di nest, or pick express or fastify with tsyringe or manual.',
+    'NestJS hosts the application as a whole: use --http nest together with --di nest, or pick express, fastify or hono with tsyringe or manual.',
   );
 }

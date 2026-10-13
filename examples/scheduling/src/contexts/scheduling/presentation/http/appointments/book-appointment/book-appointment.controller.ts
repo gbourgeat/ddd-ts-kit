@@ -1,13 +1,11 @@
-import { Controller, type HttpRequest } from '@ddd-ts-kit/http';
+import { acceptedSchema, Controller, type Accepted, type HttpRequest } from '@ddd-ts-kit/http';
 import type { CommandBus } from '@ddd-ts-kit/kernel';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
 import { BookAppointmentBody } from '@/contexts/scheduling/presentation/http/appointments/book-appointment/book-appointment.body';
-import { BookAppointmentAccepted } from '@/contexts/scheduling/presentation/http/appointments/book-appointment/book-appointment.accepted';
 import type { BookAppointmentMapper } from '@/contexts/scheduling/presentation/http/appointments/book-appointment/book-appointment.mapper';
 import { AppointmentsRoutes } from '@/contexts/scheduling/presentation/http/appointments.routes';
 
 const body = classSchema(BookAppointmentBody);
-const accepted = classSchema(BookAppointmentAccepted);
 
 @Controller({
   group: AppointmentsRoutes,
@@ -15,7 +13,7 @@ const accepted = classSchema(BookAppointmentAccepted);
   path: '/',
   summary: 'Book appointment',
   body,
-  response: { status: 201, description: 'Done; the body carries the identifier.', body: accepted },
+  response: { status: 201, description: 'Done; the body carries the identifier.', body: acceptedSchema },
   errors: [
     'UNKNOWN_CALENDAR',
     'UNKNOWN_APPOINTMENT_TYPE',
@@ -33,7 +31,7 @@ export class BookAppointmentController {
     private readonly mapper: BookAppointmentMapper,
   ) {}
 
-  async handle(request: HttpRequest<{ body: BookAppointmentBody }>): Promise<BookAppointmentAccepted> {
+  async handle(request: HttpRequest<{ body: BookAppointmentBody }>): Promise<Accepted> {
     const id = await this.commands.execute(this.mapper.map(request));
 
     return { id };

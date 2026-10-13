@@ -31,6 +31,7 @@ Ordered as a reading path in [concepts/README.md](concepts/README.md).
 | [Entities and value objects](concepts/entities-and-value-objects.md) | identity versus value, and primitive obsession |
 | [Aggregates](concepts/aggregates.md) | consistency boundary, one transaction, reference by id, sizing |
 | [Domain building blocks](concepts/domain-building-blocks.md) | domain event, domain service, repository, factory |
+| [State machines](concepts/state-machines.md) | the lifecycle of an aggregate: states, transitions, guards, refusals, its diagram |
 | [Invariants, permissions, validation](concepts/invariants-permissions-validation.md) | three different things in three places |
 | [Anemic model](concepts/anemic-model.md) | how to recognise one, and when a thin model is fine |
 | [Layers and the dependency rule](concepts/layers-and-dependency-rule.md) | hexagonal, onion, clean: what they share, where they differ |
@@ -52,8 +53,11 @@ Ordered as a reading path in [concepts/README.md](concepts/README.md).
 | [Audit trail](concepts/audit-trail.md) | tamper-evident history recorded around the use cases |
 | [Observability](concepts/observability.md) | tracing, logs, metrics, error reporting, the correlation id |
 | [Resilience](concepts/resilience.md) | retry, timeout, circuit breaker, bulkhead, cache and their failure modes |
+| [HTTP caching](concepts/http-caching.md) | what to cache at which layer, cache policies, never a decision of authorization across actors |
 | [File storage](concepts/file-storage.md) | files in a storage, never in the database: staged before the transaction, moved to their key with the commit, served by short signed links |
 | [Scheduled jobs](concepts/scheduled-jobs.md) | jobs that trigger use cases, several instances, idempotence |
+| [Background jobs](concepts/background-jobs.md) | work enqueued in the transaction of a command, run by a worker at least once, leases, checkpoints |
+| [File import and export](concepts/file-import-export.md) | a design, not built: a large file read or written by a background job, batch by batch, between the queue and the file storage |
 | [Clean code](concepts/clean-code.md) | naming, small functions, stepdown, comments, with before and after |
 | [Testing strategy](concepts/testing-strategy.md) | fakes versus mocks, builders, contract tests, the four levels |
 
@@ -64,12 +68,14 @@ limits, and a recommendation by situation.
 
 | Page | The decision |
 |---|---|
-| [HTTP frameworks](tools/http-frameworks.md) | Express, Fastify or NestJS, and what framework-agnostic routes cost with Nest |
-| [Validation](tools/validation.md) | zod, class-validator or a Standard Schema library |
+| [HTTP frameworks](tools/http-frameworks.md) | Express, Fastify, Hono or NestJS, and what framework-agnostic routes cost with Nest |
+| [Validation](tools/validation.md) | zod, class-validator, TypeBox or a Standard Schema library; shared schemas |
+| [Contract pairs](tools/contract-pairs.md) | which framework with which validation library, by team: the four pairs proven end to end, measured; why not oRPC |
 | [Dependency injection](tools/dependency-injection.md) | tsyringe with the kit's declarations, NestJS, or manual wiring |
 | [Persistence](tools/persistence.md) | Drizzle, Knex, Prisma or TypeORM; PostgreSQL versus others |
 | [Message brokers](tools/message-brokers.md) | in-process, RabbitMQ, Kafka, NATS JetStream or Redis Streams |
 | [Cache and coordination](tools/cache-and-coordination.md) | Redis, Dragonfly or Valkey; what the lock does and does not guarantee |
+| [HTTP caches](tools/http-caches.md) | Varnish, Souin, nginx, Fastly, Cloudflare or Bunny in front of the API: how each purges by tag, what the kit verified |
 | [File storage connectors](tools/file-storage.md) | memory, local directory or S3 compatible (AWS, MinIO, OVHcloud, Scaleway, R2); how to write one for Google Cloud Storage or Azure |
 | [Identity](tools/identity.md) | Keycloak or plain OIDC and JWT |
 | [Authorization engines](tools/authorization-engines.md) | in-process models versus OpenFGA, SpiceDB, Cedar, OPA |

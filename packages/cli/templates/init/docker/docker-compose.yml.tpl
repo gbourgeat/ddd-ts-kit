@@ -119,6 +119,26 @@ services:
       retries: 30
 
 {{/if}}
+{{#if httpCache.varnish}}
+  # Varnish in front of the API (`npm run dev` on the port of .env), with the VCL of docker/varnish: it keeps the public
+  # answers, files them under the tags of their xkey header and lets the API purge them. Read the API through it at VARNISH_PORT.
+  varnish:
+    image: varnish:9.1.0
+    ulimits:
+      memlock: -1
+    tmpfs:
+      - /var/lib/varnish/varnishd:exec
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "127.0.0.1:${VARNISH_PORT:-6081}:80"
+    environment:
+      # The purges of the API reach it through the published port, from another address: they send this key.
+      VARNISH_PURGE_KEY: ${VARNISH_PURGE_KEY:-}
+    volumes:
+      - ./docker/varnish/default.vcl:/etc/varnish/default.vcl:ro
+
+{{/if}}
 {{#if files.s3}}
   # MinIO, an S3 server for local use (pgsty/minio builds it from the upstream sources, which no longer publish images).
   # The bucket of S3_BUCKET is created at the first start; its root account is for local development ONLY.

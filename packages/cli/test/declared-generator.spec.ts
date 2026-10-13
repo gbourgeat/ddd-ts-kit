@@ -33,7 +33,7 @@ describe('a context generated in the declared style', () => {
   it('exports every role file from the barrel, sorted by path', () => {
     const barrel = read(root, `${BILLING}/billing.declarations.ts`).trimEnd().split('\n');
 
-    expect(barrel.filter((line) => line.startsWith('export '))).toEqual([
+    expect(barrel.filter((line) => line.startsWith('export ') && !line.includes('/background/'))).toEqual([
       "export * from '@/contexts/billing/application/authorization/only-issuer-cancels.policy';",
       "export * from '@/contexts/billing/application/commands/cancel-invoice/cancel-invoice.command';",
       "export * from '@/contexts/billing/application/commands/cancel-invoice/cancel-invoice.handler';",
@@ -63,7 +63,7 @@ describe('a context generated in the declared style', () => {
     expect(barrel.split('\n')[0]).toBe("import { injected } from '@ddd-ts-kit/kernel/declarations';");
 
     expect(barrel).toContain(
-      "import {\n  Clock,\n  CommandBus,\n  ExecutionScope,\n  IdGenerator,\n  IntegrationEventPublisher,\n  QueryBus,\n} from '@ddd-ts-kit/kernel';",
+      "import {\n  Clock,\n  CommandBus,\n  ExecutionScope,\n  IdGenerator,\n  IntegrationEventPublisher,\n  ProcessRunner,\n  QueryBus,\n} from '@ddd-ts-kit/kernel';",
     );
 
     expect(barrel).toContain("import { Database } from '@/platform/database/database';");

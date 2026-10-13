@@ -27,12 +27,15 @@ const STACK_FLAGS = [
   'dependencies',
   'refusals',
   'routes',
+  'schemas',
   'literals',
   'tenancy',
+  'queue',
 ] as const;
 
 const OTHER_TEXT_FLAGS = [
   'docs-ui',
+  'http-cache',
   'ci-extras',
   'allow-no-outbox',
   'import-alias',
@@ -75,6 +78,7 @@ export const initCommand: Command = (argv, io) => {
 
 function stackOptions(args: Arguments) {
   const docsUi = args.text('docs-ui');
+  const httpCache = args.text('http-cache');
   const ciExtras = args.text('ci-extras');
   const allowNoOutbox = args.text('allow-no-outbox');
   const importAlias = args.text('import-alias');
@@ -85,6 +89,7 @@ function stackOptions(args: Arguments) {
   return {
     ...args.texts(STACK_FLAGS),
     ...(docsUi === undefined ? {} : { docsUi }),
+    ...(httpCache === undefined ? {} : { httpCache }),
     ...(ciExtras === undefined ? {} : { ciExtras }),
     ...(allowNoOutbox === undefined ? {} : { allowNoOutbox }),
     ...(importAlias === undefined ? {} : { importAlias }),

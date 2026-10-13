@@ -1,5 +1,16 @@
 import type { Knex } from 'knex';
-import { createKnexUnitOfWork, KnexOutboxStore, KnexProcessedEventStore } from '@ddd-ts-kit/knex';
+{{#if queue.database}}
+import {
+  createKnexUnitOfWork,
+  KnexJobStore,
+  KnexOutboxStore,
+  KnexProcessedEventStore,
+  KnexProcessStore,
+} from '@ddd-ts-kit/knex';
+{{/if}}
+{{#unless queue.database}}
+import { createKnexUnitOfWork, KnexOutboxStore, KnexProcessedEventStore{{#if queue.processTable}}, KnexProcessStore{{/if}} } from '@ddd-ts-kit/knex';
+{{/unless}}
 import type { Persistence } from '{{alias.platform}}/database/persistence{{alias.ext}}';
 import { MESSAGING } from '{{alias.platform}}/database/schema{{alias.ext}}';
 
@@ -17,6 +28,12 @@ export function persistenceOver(db: Knex, close: () => Promise<void>): Persisten
     outbox: new KnexOutboxStore(unitOfWork, { schema: MESSAGING }),
 {{/unless}}
     processedEvents: new KnexProcessedEventStore(unitOfWork, { schema: MESSAGING }),
+    {{#if queue.database}}
+    jobs: new KnexJobStore(unitOfWork, { schema: MESSAGING }),
+    {{/if}}
+    {{#if queue.processTable}}
+    processes: new KnexProcessStore(unitOfWork, { schema: MESSAGING }),
+    {{/if}}
     close,
   };
 }

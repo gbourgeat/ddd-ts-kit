@@ -9,7 +9,7 @@ const HANDLER = `${BILLING}/application/commands/issue-invoice/issue-invoice.han
 const DECLARATIONS = "import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';\n";
 
 const KERNEL =
-  "import { ActorContext, Cache, Clock, CommandBus, EventBus, ExecutionScope, IdGenerator, IntegrationEventPublisher, JobScheduler, Lock, Logger, Metrics, QueryBus, RateLimiter } from '@ddd-ts-kit/kernel';\n";
+  "import { ActorContext, Cache, CacheInvalidation, CachePurger, Clock, CommandBus, EventBus, ExecutionScope, IdGenerator, IntegrationEventPublisher, JobScheduler, Lock, Logger, Metrics, QueryBus, RateLimiter } from '@ddd-ts-kit/kernel';\n";
 
 const AFTER_COMMIT = ", phase: 'after-commit'";
 const UNCOVERED = 'a port of the kernel no transaction covers';
@@ -56,6 +56,7 @@ ruleTester.run('domain-events-transactional-before-commit', domainEventsTransact
       EVENT_HANDLER,
       `import type { Redis } from 'ioredis';\nimport { SmtpMailer } from '../../infrastructure/external/smtp-mailer.adapter.js';\n${declared('CommandBus')}`,
     ),
+    at(EVENT_HANDLER, declared('CacheInvalidation, CommandBus')),
     at(
       EVENT_HANDLER,
       `import { Mailer } from '../ports/mailer.port.js';\nimport { Redis } from 'ioredis';\n${declared('Cache, Lock, RateLimiter, JobScheduler, EventBus, Mailer, Redis', AFTER_COMMIT, '\n  constructor(private readonly cache: Cache) {}\n')}`,
@@ -77,9 +78,10 @@ ruleTester.run('domain-events-transactional-before-commit', domainEventsTransact
   ],
   invalid: [
     {
-      ...at(EVENT_HANDLER, declared('Cache, Lock, RateLimiter, JobScheduler, EventBus, CommandBus')),
+      ...at(EVENT_HANDLER, declared('Cache, CachePurger, Lock, RateLimiter, JobScheduler, EventBus, CommandBus')),
       errors: [
         before('Cache', UNCOVERED),
+        before('CachePurger', UNCOVERED),
         before('Lock', UNCOVERED),
         before('RateLimiter', UNCOVERED),
         before('JobScheduler', UNCOVERED),

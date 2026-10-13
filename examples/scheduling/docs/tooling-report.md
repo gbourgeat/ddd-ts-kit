@@ -1260,3 +1260,154 @@ in the kit, then `npm run docs:generate` rewrote `clients/api`:
 | Lockfile | none in this directory, which is a workspace of the kit; a generated npm project is told to run `npm install` when its lock misses a client |
 
 The two changed spec files and the three journeys pass again in process (30 tests).
+
+## 2026-10-13: shapes declared once, and four contract pairs
+
+The example now says `"stack.schemas": "shared"`. The checker, run with the new rule
+`schema/no-duplicate-shape` on the tree as it was, reported 17 findings, all of one shape: the
+eighteen `<use-case>.accepted.ts` classes, each `{ @IsString() id }`. The two agenda searches
+shared one line class through `extends`, which the rule does not count but the contract
+documented twice. What changed, all by hand but the schema file (`generate schema scheduling
+AgendaLine`) and the regenerated documents:
+
+| | Before | After |
+|---|---|---|
+| Schema files under `presentation/` | 96 | 77 (18 `*.accepted.ts` and 2 `*.line.ts` removed, `shared/agenda-line.schema.ts` added) |
+| Identifier answers | 18 classes, 18 copies in the contract | `acceptedSchema` of `@ddd-ts-kit/http`, one `Accepted` component |
+| Lines of an agenda search | 2 classes, 2 copies of the page in the contract | `AgendaLine` (`classSchema(AgendaLine, { shared: true })`), one `AgendaLinePage` |
+| `openapi/openapi.yaml` | 2781 lines, 90,367 bytes, 112 `$ref` | 2690 lines, 87,262 bytes, 133 `$ref` |
+| `components.schemas` | 7 | 10: `Accepted`, `AgendaLine`, `AgendaLinePage` added |
+| Findings of `check` | 0 | 0 |
+
+The bytes on the wire did not change. The contract did where sharing is the point: the answer
+of the 18 command routes is a reference to `Accepted` (`{ id }`, now described and closed with
+`additionalProperties: false`), and the two searches answer a reference to `AgendaLinePage`.
+The typed client of the example, written again by `ddd-ts-kit sdk` from that contract, names
+each of them once: `Accepted`, `AgendaLine` and `AgendaLinePage` in `clients/api/src/schemas.ts`.
+
+Two things met on the way. `scripts/kit.mjs` declared a constant below the call of its main
+function: any `generate` that created a file failed before running the CLI; the constant now
+comes first. And the rule caught a mistake in its own end-to-end spec, where two routes had been
+given the same body: the spec now nests the shared shape under a field of its own in each.
+
+The four contract pairs (Express and zod, Fastify and TypeBox, Hono on Node and zod, NestJS and
+class-validator) were each generated with two routes sharing one shape, and held to zero
+finding, their specs, their end-to-end specs and a current contract; the numbers and the
+decision table are in `docs/tools/contract-pairs.md` of the kit.
+
+## 2026-10-13: the shapes after their review, and a part of a shape reused
+
+The review of the shared schemas asked for five things the example shows or is held by:
+
+| | Before | After |
+|---|---|---|
+| Identifier answers | 18 `Accepted`; the two document routes merged from main answered their own `*.accepted.ts` | 20 routes on `acceptedSchema`, the two `*.accepted.ts` removed |
+| `startsAt`, ISO 8601 with its zone | declared by hand in `BookAppointmentBody`, `RescheduleAppointmentBody` and `AddTimeOffBody` | declared once in `shared/time-span.schema.ts` (`generate schema scheduling TimeSpan`): the time off route answers to `TimeSpan` whole, the two appointment bodies extend `pickClass(TimeSpan, ['startsAt'])` |
+| `openapi/openapi.yaml` (with the three document routes of main) | 2908 lines, 149 `$ref` | 2910 lines, 150 `$ref` |
+| `components.schemas` | 10 | 11: `TimeSpan` added |
+| Findings of `check` | 0 | 0 |
+
+The bytes on the wire did not change: `POST /calendars/{calendarId}/time-off` takes the same two
+instants, now a reference to `TimeSpan`; the bodies of booking and rescheduling are documented
+as before, `patientId` now listed before `startsAt`, because a derived class declares the
+picked property first. The rule `schema/no-duplicate-shape` now judges a context and the shared
+kernel only, not two contexts, and leaves alone a shape that still carries a `TODO(domain)` of
+the generator: two searches generated in a row no longer report each other's `{ id }` line.
+`shared/` still holds the `*.dto.ts` parts of the calendar answers next to the new `*.schema.ts`
+files: those classes are nested parts of one answer each, documented as components by
+class-validator, and renaming them would change their component names in the contract for no
+reader's gain.
+
+## 2026-10-13: HTTP caching, Varnish in front of the API
+
+The application gained a shared cache in front of its API, the first public route, a private
+read revalidated with an `ETag`, and a write conditioned by `If-Match`.
+
+| | |
+|---|---|
+| Config | `"httpCache": "varnish"` in `ddd-ts-kit.config.json` |
+| Generator runs | 4: `generate query scheduling GetOpeningHours --public`, `generate controller ... --cache public`, `generate event-handler scheduling Calendar OpeningHoursSet`, `generate e2e scheduling GetOpeningHours` |
+| New route | `GET /calendars/:calendarId/opening-hours`, public: `public, max-age=60, s-maxage=3600, stale-while-revalidate=30, stale-if-error=86400`, a weak `ETag` from the version of the calendar, tagged `calendar:<id>` |
+| Changed routes | `GET /calendars/:calendarId/days/:day`: `private, max-age=0, must-revalidate` and a strong `ETag`; `PUT /calendars/:calendarId/opening-hours`: `If-Match` optional, 412 `PRECONDITION_FAILED` on a stale version |
+| Every other authenticated route | answers `Cache-Control: no-store` (refusals included), documented in the contract |
+| Purge | `CalendarOpeningHoursSetEventHandler`, before the commit, asks `CacheInvalidation` for `calendar:<id>`; the relay of `main.ts` publishes through `PurgingPublisher` and `VarnishCachePurger` |
+| Infrastructure | a `varnish` service (Varnish 9.1.0) in `docker-compose.yml`, its VCL in `docker/varnish/default.vcl` (the one `init --http-cache varnish` writes, backend port 54300), `VARNISH_URL` and `VARNISH_PORT` in `.env.example` |
+| End to end | `test/e2e/get-opening-hours.e2e.spec.ts`: five specs in process (headers, 304, a purge after the committed command and none for the refused one, 412, 404 kept by nobody), a sixth through Varnish when `VARNISH_URL` is set (a `HIT`, then the new hours after the purge); CI starts Varnish for it |
+
+What the generators left by hand: the query generator wrote a reader port, its in-memory
+adapter and its fake, removed since the hours are read from the `CalendarRepository` (a getter
+`openingHours` on the aggregate); the generated controller of a public query takes no request
+and builds its query without arguments, filled by hand; the event handler and the e2e spec are
+filled from their markers. The platform files (`main.ts`, the HTTP boundary, the configuration,
+the compose file) were written by hand after the templates `init --http-cache varnish` uses, since
+`init` is not run again on this application.
+
+One defect of the example's own tooling was found and fixed: `scripts/kit.mjs` read
+`NOT_A_FILE` before its declaration whenever a `generate` was about to create a file that did not
+exist yet, so every generator run that created a file crashed with a `ReferenceError` (the
+declaration moved above `main()`).
+
+## 2026-10-13 (later): what a review of the HTTP caching changed here
+
+A review found the cached hours stale after three of the four changes of a calendar, and the
+generated VCL keeping answers no route allowed.
+
+| | |
+|---|---|
+| Generator runs | 3: `generate event-handler scheduling Calendar ExceptionAdded`, `... TimeOffAdded`, `... AppointmentTypeDefined`, filled from their markers |
+| Purge | every event that changes the version of a calendar now purges `calendar:<id>`: before, only `CalendarOpeningHoursSet` did, and after an exception, a time off or an appointment type Varnish served for up to an hour a version every `If-Match` built on was refused with 412 |
+| Relay | `main.ts` purges through `RepeatedCachePurger` (two seconds apart, `PURGE_AGAIN_AFTER_MS`), for a read that loaded the hours before the commit and reached Varnish after the first purge |
+| VCL | `docker/varnish/default.vcl`, written again from the template: an answer without `max-age` or `s-maxage` is never kept (the 404 of an unknown calendar, a probe), a purge comes from the machine of Varnish or carries `VARNISH_PURGE_KEY`, a refused ban answers 500 |
+| Configuration | `VARNISH_PURGE_KEY` in `.env.example`, in the environment of the `varnish` service and in `loadConfig` (`varnishPurgeKey`, sent by `VarnishCachePurger`) |
+| End to end | `get-opening-hours.e2e.spec.ts`: a change of the calendar other than its hours purges them and a write made on the version read afterwards succeeds, in process and through Varnish (8 specs, passed through Varnish 9.1.0 on this machine); the setup waits for the two purges of the practice it opens |
+
+Contract: unchanged.
+
+## 2026-10-13: background jobs, a state machine and a process manager
+
+What this example gained, and how much of it a generator wrote:
+
+| | |
+|---|---|
+| The lifecycle of an appointment | `domain/state-machines/appointment.state-machine.ts`, written by hand before `generate state-machine` existed; the aggregate now asks it every status, and `CONTEXT.md` draws it |
+| The confirmation deadline | a process manager (`application/processes/confirmation-deadline.process.ts`), four event handlers and the background job of its timeouts, written by hand before `generate process` existed; its shape is the one the generator now writes |
+| The clearance of a calendar | `generate command` (`ClearCalendar`), `generate query` (`GetClearance`) and `generate route` twice wrote the skeletons; the background job was written by hand |
+| Stores | the jobs and the process instances in the `messaging` schema of PostgreSQL (`KnexJobStore`, `KnexProcessStore`), recorded as `"queue": "database"` |
+
+Frictions met on the way:
+
+- `generate background-job ... --command CancelAppointment` refuses the command: its constructor
+  needs `appointmentId`, which a generated job cannot know. Right for a generated job, which sends
+  one command from its actor; the clearance sends one command per element of its payload, a
+  loop with a checkpoint that no template guesses. Written by hand, 70 lines.
+- `generate query GetClearance` wrote a reader port, its in-memory adapter and its fake: the
+  answer comes from `JobQueue.find`, a port of the kernel, so the three files were deleted.
+- In a spec, a command executed with an actor that is not the one of the execution scope
+  enqueues its job as the scope's actor (`test-user`), not as the actor of the command: the job
+  was then refused `appointment.cancel`. `application.as(holder, ...)` in the spec, as the HTTP
+  boundary does, fixed it; the spec `generate background-job` writes enqueues the same way.
+- The first status list of the answer of `GetClearance` wrote `'cancelled'` as a literal:
+  `language/declared-vocabulary` reported it as a value of `AppointmentStatus`. Since the review
+  below, the kit publishes `QueuedJobStatus` as a vocabulary and the contract has an enum.
+
+Proven: 16 unit tests for the clearance (the command, the job interrupted half-way and resumed,
+an appointment cancelled meanwhile, the query, both controllers), and an end-to-end journey of
+two tests on the application with its worker running, on PostgreSQL in process: the time off is
+refused, the clearance cancels both appointments and says `{ done: 2, total: 2 }`, then the
+time off is accepted. The unit suite (1 340 tests) and its coverage floors pass.
+
+### 2026-10-13, after review: a clearance belongs to its calendar
+
+A review of the lot found the query of a clearance trusting the secrecy of its identifier, its
+status published as free text, and the queue blind to tenants. What changed here:
+
+| | |
+|---|---|
+| Ownership | `ClearCalendar` enqueues its job with the calendar as its `subject`; `GetClearance` answers `UNKNOWN_CLEARANCE` (404) for a job whose subject is another calendar, and the queue hides the jobs of another tenant from `find` |
+| Contract | `GET /calendars/{calendarId}/clearances/{clearanceId}`: `status` is now an enum (`waiting`, `running`, `succeeded`, `cancelled`, `dead`) through `@IsIn(Object.values(QueuedJobStatus))`; the typed client narrows it the same way. No route was added or removed |
+| Proven | a unit case (the clearance of another calendar is unknown) and an end-to-end case (the practitioner of another practice gets 404 for the clearance of this one) |
+| Known gap | the clearance fixes its list when it is asked and does not reserve the period: an appointment booked before the time off is added is neither cancelled nor blocked, and the time off is refused again; a retried request starts a second clearance. Written in the handler, left as is |
+
+`generate background-job` now carries the inputs of a command in the payload (a `Date` as its
+ISO text): `--command CancelAppointment` would generate today, but the clearance still sends one
+command per appointment of its payload, with a checkpoint between two, which no template guesses.
