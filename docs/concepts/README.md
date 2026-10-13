@@ -72,7 +72,10 @@ of tools.
 14. [CQRS](cqrs.md): command and query buses as used here; event sourcing is a separate
     choice, per aggregate.
     [The presentation layer](presentation-layer.md) comes with it: one controller class per
-    route, route groups, guards at the edge and permissions on the use case.
+    route, route groups, guards at the edge and permissions on the use case; and
+    [representations, field access and forms](representations-and-forms.md): one schema
+    answered in JSON, XML or CSV, fields reserved to some callers, forms described by the
+    server.
 15. [Modular monolith](modular-monolith.md): one deployable, real modules.
 
 ## 4. Messaging and consistency: how contexts collaborate
@@ -94,41 +97,43 @@ of tools.
 
 23. [Authentication and authorization](authentication-and-authorization.md): roles,
     attributes, relationships, with a decision table.
-24. [Actor and execution scope](actor-and-execution-scope.md): who acts, explicitly, and what
+24. [Authorization in practice](authorization-in-practice.md): `@Requires`, the middleware,
+    the `Authorizer` port and policies, followed through one command.
+25. [Actor and execution scope](actor-and-execution-scope.md): who acts, explicitly, and what
     every unit of work carries.
-25. [Multitenancy](multitenancy.md): one deployment, many customers, and no read or write
+26. [Multitenancy](multitenancy.md): one deployment, many customers, and no read or write
     that crosses from one to another.
-26. [Audit trail](audit-trail.md): who did what, recorded from outside the use cases.
-27. [Observability](observability.md): tracing, logs, metrics, error reporting, and the
+27. [Audit trail](audit-trail.md): who did what, recorded from outside the use cases.
+28. [Observability](observability.md): tracing, logs, metrics, error reporting, and the
     correlation id that ties them.
-28. [Resilience](resilience.md): retry, timeout, circuit breaker, bulkhead, cache, and how
+29. [Resilience](resilience.md): retry, timeout, circuit breaker, bulkhead, cache, and how
     each one fails.
-29. [HTTP caching](http-caching.md): what to cache at which layer, who may keep an answer,
+30. [HTTP caching](http-caching.md): what to cache at which layer, who may keep an answer,
     and never a decision of authorization across actors.
-30. [Scheduled jobs](scheduled-jobs.md): work triggered by time, and why it must be
+31. [Scheduled jobs](scheduled-jobs.md): work triggered by time, and why it must be
     idempotent.
-31. [Background jobs](background-jobs.md): work a use case hands to a worker, enqueued in its
+32. [Background jobs](background-jobs.md): work a use case hands to a worker, enqueued in its
     transaction, run at least once.
-32. [File storage](file-storage.md): files in a storage and never in the database, the order
+33. [File storage](file-storage.md): files in a storage and never in the database, the order
     that keeps both consistent, signed links.
-33. [File import and export](file-import-export.md): a design, not built yet: a large file
+34. [File import and export](file-import-export.md): a design, not built yet: a large file
     read or written by a background job, row by row, between the queue and the file storage.
 
 ## 6. Code and tests
 
-34. [Clean code](clean-code.md): naming, small functions, stepdown, comments, testability by
+35. [Clean code](clean-code.md): naming, small functions, stepdown, comments, testability by
     construction.
-35. [Testing strategy](testing-strategy.md): fakes rather than mocks, builders, contract
+36. [Testing strategy](testing-strategy.md): fakes rather than mocks, builders, contract
     tests, the four levels.
 
 ## Shorter paths
 
 - **A product person or a newcomer to DDD:** 1, 2, 3, 5, then 19.
-- **Before writing a first use case:** 3, 7, 9, 12, 14, 35.
+- **Before writing a first use case:** 3, 7, 9, 12, 14, 36.
 - **Before making two contexts talk:** 4, 16, 17, 18, 21.
 - **Before keeping an aggregate as its events:** 7, 16, 17, 21, 22.
-- **Before serving several customers from one deployment:** 23, 24, 25.
-- **Before putting the system in production:** 23, 27, 28, 29, 30, 31, 32, then the
+- **Before serving several customers from one deployment:** 23, 25, 26.
+- **Before putting the system in production:** 23, 24, 28, 29, 30, 31, 32, 33, then the
   [tools pages](../README.md#tools-one-page-per-decision).
 
 ## Limits and when not to use it

@@ -3,8 +3,8 @@ import { CliError } from '../../cli-error.js';
 import { toName } from '../../naming/index.js';
 import { renderTemplate } from '../../templating/index.js';
 import type { Workspace } from '../../workspace/index.js';
-
-const ADR_DIRECTORY = 'docs/adr';
+import { ADR_DIRECTORY } from '../../check/governance/adr-directory.js';
+import { nextAdrNumber } from './next-adr-number.js';
 
 export interface AdrRequest {
   readonly title: string;
@@ -23,7 +23,7 @@ export function writeAdr(ws: Workspace, request: AdrRequest): string {
     );
   }
 
-  const number = nextNumber(ws);
+  const number = nextAdrNumber(ws);
   const { deviation } = request;
 
   const adr = {
@@ -38,12 +38,6 @@ export function writeAdr(ws: Workspace, request: AdrRequest): string {
   ws.create(`${ADR_DIRECTORY}/${number}-${slug}.md`, renderTemplate('adr/adr.md.tpl', { adr }));
 
   return number;
-}
-
-function nextNumber(ws: Workspace): string {
-  const taken = ws.list(ADR_DIRECTORY).map((file) => Number(/^(\d+)-/.exec(file)?.[1] ?? '0'));
-
-  return String(Math.max(0, ...taken) + 1).padStart(4, '0');
 }
 
 function today(): string {

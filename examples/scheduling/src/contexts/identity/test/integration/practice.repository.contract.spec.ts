@@ -6,7 +6,7 @@ import {
   type Actor,
   type ExecutionContext,
 } from '@ddd-ts-kit/kernel';
-import { repositoryContract } from '@ddd-ts-kit/testing/contracts';
+import { repositoryContract, tenantIsolationContract } from '@ddd-ts-kit/testing/contracts';
 import type { Practice } from '@/contexts/identity/domain/aggregates/practice.aggregate';
 import { DisplayName } from '@/contexts/identity/domain/value-objects/display-name.vo';
 import { Role } from '@/contexts/identity/domain/value-objects/role.vo';
@@ -58,6 +58,19 @@ repositoryContract<Practice>(runner, {
 
     return new KnexPracticeRepository(database.persistence.database, new FixedExecutionScope(workOf('acme')), clock);
   },
+});
+
+/** No read and no write of one network reaches another, whatever the work in progress asks. */
+tenantIsolationContract<Practice>(runner, {
+  ...expectations,
+  name: 'KnexPracticeRepository',
+  createRepository: async (scope) => {
+    await database.reset();
+
+    return new KnexPracticeRepository(database.persistence.database, scope, clock);
+  },
+  recreate: (practice: Practice) => aPractice().identifiedBy(practice.id).build(),
+  elevatedReads: true,
 });
 
 function workOf(tenantId: string): ExecutionContext {

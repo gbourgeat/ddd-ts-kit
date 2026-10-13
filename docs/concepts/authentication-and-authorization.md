@@ -462,6 +462,7 @@ short while without its relationship.
 
 ## See also
 
+- [Authorization in practice](authorization-in-practice.md): one command followed through the machinery
 - [Invariants, permissions and validation](invariants-permissions-validation.md)
 - [The actor and the execution scope](actor-and-execution-scope.md)
 - [Audit trail](audit-trail.md)

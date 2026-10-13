@@ -64,6 +64,12 @@ export interface RouteFact {
   readonly request: readonly RequestPart[];
   readonly responses: readonly RouteResponse[];
   readonly errors: readonly string[];
+  /** The media types it answers in besides JSON (`produces`), when it declares some. */
+  readonly produces?: readonly string[];
+  /** The media types it reads a body in besides JSON (`consumes`), when it declares some. */
+  readonly consumes?: readonly string[];
+  /** Where its form is served, when it declares one: `GET /forms/<operationId>`. */
+  readonly form?: string;
   readonly file: string;
 }
 

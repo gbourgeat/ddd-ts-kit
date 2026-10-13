@@ -2,6 +2,7 @@ import { LOG_LEVELS, type LogLevel } from '@ddd-ts-kit/kernel';
 import type { AppConfig } from '@/platform/config/app-config';
 import { ConfigError } from '@/platform/config/config-error';
 import { readFiles } from '@/platform/config/read-files';
+import { readNetworks } from '@/platform/config/read-networks';
 import { readTracing } from '@/platform/config/read-tracing';
 
 const environments = ['development', 'test', 'production'] as const;
@@ -30,12 +31,9 @@ export function loadConfig(env: Variables): AppConfig {
     tracing: readTracing(env, problems),
     resilience: readResilience(env, problems),
     runJobs: readFlag(env, { name: 'RUN_JOBS', fallback: runJobsByDefault }, problems),
+    networks: readNetworks(env, problems),
     databaseUrl: readUrl(env, 'DATABASE_URL', problems),
-    outboxRelayIntervalMs: readInteger(
-      env,
-      { name: 'OUTBOX_RELAY_INTERVAL_MS', fallback: 500, min: 10, max: 60000 },
-      problems,
-    ),
+    outboxRelayIntervalMs: readOutboxRelayInterval(env, problems),
     docsEnabled: readFlag(env, { name: 'API_DOCS', fallback: environment !== 'production' }, problems),
     keycloak: readKeycloak(env, problems),
     redisUrl: readUrl(env, 'REDIS_URL', problems),
@@ -51,6 +49,10 @@ export function loadConfig(env: Variables): AppConfig {
   }
 
   return config;
+}
+
+function readOutboxRelayInterval(env: Variables, problems: string[]): number {
+  return readInteger(env, { name: 'OUTBOX_RELAY_INTERVAL_MS', fallback: 500, min: 10, max: 60000 }, problems);
 }
 
 function readEnvironment(env: Variables, problems: string[]): AppConfig['environment'] {

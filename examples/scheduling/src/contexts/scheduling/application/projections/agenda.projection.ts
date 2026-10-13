@@ -1,5 +1,6 @@
 import { stampOf, type DomainEvent, type EventStamp, type ReadModelWrite } from '@ddd-ts-kit/kernel';
 import { On, Projection } from '@ddd-ts-kit/kernel/declarations';
+import { AppointmentAnnotated } from '@/contexts/scheduling/domain/events/appointment-annotated.event';
 import { AppointmentBooked } from '@/contexts/scheduling/domain/events/appointment-booked.event';
 import { AppointmentCancelled } from '@/contexts/scheduling/domain/events/appointment-cancelled.event';
 import { AppointmentCompleted } from '@/contexts/scheduling/domain/events/appointment-completed.event';
@@ -17,11 +18,13 @@ const RANK: Readonly<Record<string, number>> = {
   'scheduling.appointment.booked': 0,
   'scheduling.appointment.confirmed': 1,
   'scheduling.appointment.rescheduled': 2,
+  'scheduling.appointment.annotated': 3,
 };
 
 const LAST_RANK = 9;
 
-type Standing = Pick<AgendaEntry, 'status'> & Partial<Pick<AgendaEntry, 'confirmBefore' | 'cancelledBy'>>;
+type Standing = Pick<AgendaEntry, 'status'> &
+  Partial<Pick<AgendaEntry, 'confirmBefore' | 'cancelledBy' | 'internalNote'>>;
 
 /**
  * Keeps the agenda from the facts of the appointments of this context. Every fact but a move
@@ -36,13 +39,7 @@ export class AgendaProjection {
   async booked(event: AppointmentBooked): Promise<ReadModelWrite> {
     const { booking, confirmBefore } = event.held;
 
-    return this.stands(
-      event,
-      booking,
-      confirmBefore === undefined
-        ? { status: AppointmentStatus.Booked }
-        : { status: AppointmentStatus.Requested, confirmBefore },
-    );
+    return this.stands(event, booking, heldStanding(confirmBefore));
   }
 
   @On(AppointmentConfirmed, { name: AppointmentConfirmed.eventName })
@@ -55,6 +52,14 @@ export class AgendaProjection {
     return this.agenda.upsertIfNewer(event.aggregateId, stampOfFact(event), (current) =>
       current === undefined ? undefined : { ...current, ...placeOf(event.moved.booking), changedAt: event.occurredAt },
     );
+  }
+
+  /** The note carries the whole entry: met before the booking of the same instant, it writes the entry the booking would, with the note. */
+  @On(AppointmentAnnotated, { name: AppointmentAnnotated.eventName })
+  async annotated(event: AppointmentAnnotated): Promise<ReadModelWrite> {
+    const { internalNote, booking, confirmBefore } = event.annotated;
+
+    return this.stands(event, booking, { ...heldStanding(confirmBefore), internalNote });
   }
 
   @On(AppointmentCancelled, { name: AppointmentCancelled.eventName })
@@ -81,20 +86,35 @@ export class AgendaProjection {
   }
 
   private async stands(event: DomainEvent, booking: Booking, standing: Standing): Promise<ReadModelWrite> {
-    const entry: AgendaEntry = {
+    const { internalNote, ...stood } = standing;
+
+    const entry: Omit<AgendaEntry, 'internalNote'> = {
       ...placeOf(booking),
       id: event.aggregateId,
       confirmBefore: null,
       cancelledBy: null,
-      ...standing,
+      ...stood,
       changedAt: event.occurredAt,
     };
 
-    return this.agenda.upsertIfNewer(event.aggregateId, stampOfFact(event), () => entry);
+    // The note is the staff's, and no fact of the standing says it again: it is kept from the entry.
+    return this.agenda.upsertIfNewer(event.aggregateId, stampOfFact(event), (current) => ({
+      ...entry,
+      internalNote: internalNote ?? current?.internalNote ?? null,
+    }));
   }
 }
 
-function placeOf(booking: Booking): Omit<AgendaEntry, 'id' | 'status' | 'confirmBefore' | 'cancelledBy' | 'changedAt'> {
+/** Where the appointment stands once booked or requested: a deadline to confirm says it is only requested. */
+function heldStanding(confirmBefore: Date | undefined): Standing {
+  return confirmBefore === undefined
+    ? { status: AppointmentStatus.Booked }
+    : { status: AppointmentStatus.Requested, confirmBefore };
+}
+
+function placeOf(
+  booking: Booking,
+): Omit<AgendaEntry, 'id' | 'status' | 'confirmBefore' | 'cancelledBy' | 'internalNote' | 'changedAt'> {
   return {
     calendarId: booking.calendarId,
     practiceId: booking.practiceId,

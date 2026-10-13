@@ -1,5 +1,6 @@
 import { isAnonymous, type Actor, type Clock } from '@ddd-ts-kit/kernel';
 import type { Access } from '../authorization/access.js';
+import type { AccessQuestion } from '../authorization/access-question.js';
 import type { AccessScope } from '../authorization/access-scope.js';
 import type { Authorizer } from '../authorization/authorizer.js';
 import type { CheckRequest } from '../authorization/check-request.js';
@@ -52,11 +53,18 @@ export class PolicyAccess implements Access {
   }
 
   async decide(actor: Actor, permission: Permission, subject: unknown): Promise<Decision> {
+    return this.decideOn({ actor, permission, subject });
+  }
+
+  async decideOn({ actor, permission, subject, context, recorded }: AccessQuestion): Promise<Decision> {
     const resource = this.resourceOf(subject);
-    const request = { actor, permission, ...(resource === undefined ? {} : { resource }), context: { subject } };
+    const asked = { ...context, subject };
+    const request = { actor, permission, ...(resource === undefined ? {} : { resource }), context: asked };
     const decision = isAnonymous(actor) ? deny(DenialReason.anonymous) : await this.evaluate(request, subject);
 
-    await this.options.onDecision?.(decisionRecordOf(request, decision));
+    if (recorded !== false) {
+      await this.options.onDecision?.(decisionRecordOf(request, decision));
+    }
 
     return decision;
   }

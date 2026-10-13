@@ -47,7 +47,7 @@ describe('Open practice, end to end', () => {
     expectRefusal(await application.api.openPractice({ body: opening }), 401, 'UNAUTHORIZED');
   });
 
-  it('answers 403 to a signed-in person who is not a platform admin, and records the refusal in the audit trail', async () => {
+  it('answers 403 to a signed-in person who is not the administrator of the network, and records the refusal in the audit trail', async () => {
     await registerPeople(application, 'ada');
 
     // The trail is append-only, a reset keeps it: the entry of this refusal is found by the correlation the caller gave.
@@ -56,8 +56,8 @@ describe('Open practice, end to end', () => {
 
     expectStatus(await ada.post('/practices', opening), 403);
 
-    const root = await application.as({ id: 'root', roles: ['platform-admin'] });
-    const denied = await root.get<Listed<RefusalLine>>('/audit/entries?outcome=denied&correlationId=' + correlationId);
+    const ops = await application.as({ id: 'ops', roles: ['platform-admin'], tenantId: null });
+    const denied = await ops.get<Listed<RefusalLine>>('/audit/entries?outcome=denied&correlationId=' + correlationId);
 
     expect(
       expectStatus(denied, 200).body.items.map(({ action, reason, actorId }) => ({ action, reason, actorId })),
@@ -66,7 +66,7 @@ describe('Open practice, end to end', () => {
 
   it('is one trace: the request, the use case, what it saves and what follows the facts', async () => {
     await registerPeople(application, 'ada');
-    const root = application.apiAs({ id: 'root', roles: ['platform-admin'] });
+    const root = application.apiAs({ id: 'root', roles: ['network-admin'] });
 
     const trace = await tracing.traceOf(async () => {
       await unwrap(root.openPractice({ body: opening }));
@@ -79,9 +79,9 @@ describe('Open practice, end to end', () => {
     );
   });
 
-  it('answers 201 to POST /practices for the platform admin, and the first manager manages the practice at once', async () => {
+  it('answers 201 to POST /practices for the administrator of the network, and the first manager manages the practice at once', async () => {
     await registerPeople(application, 'ada', 'grace');
-    const root = application.apiAs({ id: 'root', roles: ['platform-admin'] });
+    const root = application.apiAs({ id: 'root', roles: ['network-admin'] });
 
     const opened = expectAnswer(await root.openPractice({ body: opening }), 201);
     const ada = application.apiAs({ id: 'ada' });
@@ -96,7 +96,7 @@ describe('Open practice, end to end', () => {
     const events = collectEvents(application.events, [practiceOpenedV1, practiceMemberAddedV1]);
 
     await registerPeople(application, 'ada');
-    const root = application.apiAs({ id: 'root', roles: ['platform-admin'] });
+    const root = application.apiAs({ id: 'root', roles: ['network-admin'] });
 
     const opened = await unwrap(root.openPractice({ body: opening }));
 
@@ -124,7 +124,7 @@ describe('Open practice, end to end', () => {
 
   it('answers the documented problem for each business refusal', async () => {
     await registerPeople(application, 'ada');
-    const root = application.apiAs({ id: 'root', roles: ['platform-admin'] });
+    const root = application.apiAs({ id: 'root', roles: ['network-admin'] });
 
     expectRefusal(
       await root.openPractice({ body: { ...opening, timeZone: 'Europe/Atlantis' } }),
@@ -136,7 +136,7 @@ describe('Open practice, end to end', () => {
   });
 
   it('refuses a body its contract does not describe, which only the raw HTTP client can send', async () => {
-    const root = await application.as({ id: 'root', roles: ['platform-admin'] });
+    const root = await application.as({ id: 'root', roles: ['network-admin'] });
 
     expectProblem(await root.post('/practices', { name: 'Riverside' }), { status: 422, code: 'VALIDATION_FAILED' });
   });

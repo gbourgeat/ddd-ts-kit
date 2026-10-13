@@ -25,7 +25,8 @@ const docHoldsTheDesk: RelationTuple = { object: 'desk:practice-1.doc', relation
 
 const doc = anActor().named('doc').build();
 const patient = anActor().named('pat').withRole('patient').build();
-const admin = anActor().named('root').withRole('platform-admin').build();
+const admin = anActor().named('root').withRole('network-admin').build();
+const staff = anActor().named('ops').withRole('platform-admin').build();
 const support = anActor().named('sam').withRole('support').build();
 
 let store: SchemaCheckedTupleStore;
@@ -141,7 +142,7 @@ describe('The authorizer of roles and relationships, deciding on the relationshi
 
   describe('listing', () => {
     it('answers everything to a role whose grant says so', async () => {
-      expect(await authorizer.listAccessible({ actor: admin, permission: readTrail, resourceType: 'context' })).toEqual(
+      expect(await authorizer.listAccessible({ actor: staff, permission: readTrail, resourceType: 'context' })).toEqual(
         { kind: 'all' },
       );
     });

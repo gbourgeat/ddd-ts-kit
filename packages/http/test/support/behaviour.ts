@@ -5,6 +5,7 @@ import { mountsControllers } from './behaviour-controllers.js';
 import { refusesDuplicates } from './behaviour-duplicates.js';
 import { carriesIdentifiers } from './behaviour-identifiers.js';
 import { answersProblems } from './behaviour-problems.js';
+import { answersInSeveralMediaTypes } from './behaviour-representations.js';
 import type { ReadAuthorization, StartServer } from './running-server.js';
 
 /** The one suite every adapter must pass: the behaviour belongs to the pipeline, not the framework. */
@@ -17,5 +18,6 @@ export function describeAdapter(name: string, start: StartServer, readAuthorizat
     answersProblems(client);
     refusesDuplicates(start);
     mountsControllers(start, readAuthorization);
+    answersInSeveralMediaTypes(start);
   });
 }

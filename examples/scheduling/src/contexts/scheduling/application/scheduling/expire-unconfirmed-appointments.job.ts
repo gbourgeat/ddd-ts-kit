@@ -2,7 +2,7 @@ import { type CommandBus, systemActor } from '@ddd-ts-kit/kernel';
 import { Scheduled, type JobExecution, type ScheduledJob } from '@ddd-ts-kit/kernel/declarations';
 import { ExpireUnconfirmedAppointmentsCommand } from '@/contexts/scheduling/application/commands/expire-unconfirmed-appointments/expire-unconfirmed-appointments.command';
 
-@Scheduled('scheduling.expire-unconfirmed-appointments', { every: '5m' })
+@Scheduled('scheduling.expire-unconfirmed-appointments', { every: '5m', tenancy: 'per-tenant' })
 export class ExpireUnconfirmedAppointmentsJob implements ScheduledJob {
   constructor(private readonly commands: CommandBus) {}
 

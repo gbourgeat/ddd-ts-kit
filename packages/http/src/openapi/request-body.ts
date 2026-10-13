@@ -1,10 +1,13 @@
 import type { JsonSchema } from '@ddd-ts-kit/validation';
 import type { Route } from '../route/route.js';
 import type { UploadSpec } from '../route/upload-spec.js';
-import type { Definitions } from './definitions.js';
+import type { Documenting } from './documenting.js';
 
-/** The request body of an operation: JSON, or for an upload the multipart form with its file, its size and its media types. */
-export function requestBody(route: Route, definitions: Definitions): JsonSchema | undefined {
+/**
+ * The request body of an operation: JSON and, under negotiation, every media type the route reads it in besides, or
+ * for an upload the multipart form with its file, its size and its media types.
+ */
+export function requestBody(route: Route, { definitions, representations }: Documenting): JsonSchema | undefined {
   const body = route.request?.body;
   const fields = body === undefined ? undefined : definitions.embed(body);
 
@@ -12,7 +15,16 @@ export function requestBody(route: Route, definitions: Definitions): JsonSchema 
     return multipartBody(route.upload, fields);
   }
 
-  return fields === undefined ? undefined : { required: true, content: { 'application/json': { schema: fields } } };
+  if (fields === undefined) {
+    return undefined;
+  }
+
+  const mediaTypes = ['application/json', ...(representations === undefined ? [] : (route.consumes ?? []))];
+
+  return {
+    required: true,
+    content: Object.fromEntries(mediaTypes.map((mediaType) => [mediaType, { schema: fields }])),
+  };
 }
 
 function multipartBody(upload: UploadSpec, fields: JsonSchema | undefined): JsonSchema {

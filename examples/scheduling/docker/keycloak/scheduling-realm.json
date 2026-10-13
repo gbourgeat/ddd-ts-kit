@@ -9,8 +9,12 @@
   "roles": {
     "realm": [
       {
+        "name": "network-admin",
+        "description": "Opens the practices of the network named by the tenant_id of the user."
+      },
+      {
         "name": "platform-admin",
-        "description": "Opens practices and reads the audit trail."
+        "description": "Platform staff, in no network: reads the audit trail of every network through an elevation the trail records."
       },
       {
         "name": "patient",
@@ -122,6 +126,26 @@
           "temporary": false
         }
       ],
+      "realmRoles": ["network-admin"],
+      "attributes": {
+        "tenant_id": ["north"]
+      }
+    },
+    {
+      "id": "00000000-0000-4000-8000-00000000a009",
+      "username": "demo-ops",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "demo-ops@example.test",
+      "firstName": "Otto Ops",
+      "lastName": "Local Development Only",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "demo-ops",
+          "temporary": false
+        }
+      ],
       "realmRoles": ["platform-admin"]
     },
     {
@@ -139,7 +163,10 @@
           "temporary": false
         }
       ],
-      "realmRoles": []
+      "realmRoles": [],
+      "attributes": {
+        "tenant_id": ["north"]
+      }
     },
     {
       "id": "00000000-0000-4000-8000-00000000a003",
@@ -156,7 +183,10 @@
           "temporary": false
         }
       ],
-      "realmRoles": []
+      "realmRoles": [],
+      "attributes": {
+        "tenant_id": ["north"]
+      }
     },
     {
       "id": "00000000-0000-4000-8000-00000000a004",
@@ -173,7 +203,10 @@
           "temporary": false
         }
       ],
-      "realmRoles": []
+      "realmRoles": [],
+      "attributes": {
+        "tenant_id": ["north"]
+      }
     },
     {
       "id": "00000000-0000-4000-8000-00000000a005",
@@ -190,7 +223,10 @@
           "temporary": false
         }
       ],
-      "realmRoles": ["patient"]
+      "realmRoles": ["patient"],
+      "attributes": {
+        "tenant_id": ["north"]
+      }
     },
     {
       "id": "00000000-0000-4000-8000-00000000a006",
@@ -207,7 +243,10 @@
           "temporary": false
         }
       ],
-      "realmRoles": ["patient"]
+      "realmRoles": ["patient"],
+      "attributes": {
+        "tenant_id": ["north"]
+      }
     },
     {
       "id": "00000000-0000-4000-8000-00000000a007",
@@ -224,7 +263,10 @@
           "temporary": false
         }
       ],
-      "realmRoles": []
+      "realmRoles": [],
+      "attributes": {
+        "tenant_id": ["north"]
+      }
     },
     {
       "id": "00000000-0000-4000-8000-00000000a008",
@@ -244,6 +286,9 @@
       "realmRoles": ["support"],
       "clientRoles": {
         "realm-management": ["impersonation", "view-users", "query-users"]
+      },
+      "attributes": {
+        "tenant_id": ["north"]
       }
     }
   ]

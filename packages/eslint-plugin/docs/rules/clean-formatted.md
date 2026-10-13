@@ -26,7 +26,7 @@ The presets enable no rule that decides where a token goes, so the two never fig
 ## Limits
 
 - Markdown and YAML are not formatted.
-- Generated artifacts compared byte for byte by their own check (`openapi/*.json`, `asyncapi.json`, `.dependency-cruiser.cjs`) and build outputs are left out in `biome.json`.
+- Generated artifacts compared byte for byte by their own check (`openapi/*.json`, `openapi/forms/`, `asyncapi.json`, `.dependency-cruiser.cjs`) and build outputs are left out in `biome.json`.
 - A string literal, a URL or a regular expression longer than 120 columns stays on its line: a formatter does not cut a token.
 
 ## With the CLI checker

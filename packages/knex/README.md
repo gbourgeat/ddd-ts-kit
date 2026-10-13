@@ -134,8 +134,9 @@ purpose: the envelope comes back exactly as published, offset included.
 
 A multi-tenant project keeps the tenant of each event, so that its consumers run in that tenant:
 `createOutboxTables(knex, { schema: 'messaging', tenant: true })` adds a nullable `tenant_id`
-(`addOutboxTenantColumn(knex, { schema: 'messaging' })` is the migration of a project that becomes
-multi-tenant), and `new KnexOutboxStore(context, { schema: 'messaging', tenant: true })` writes
+(`addOutboxTenantColumn(knex, { schema: 'messaging', tenantOfUnpublished: 'acme' })` is the
+migration of a project that becomes multi-tenant: the events not published yet go to the tenant
+the database served, or keep none and are refused by tenant-scoped consumers if it is left out), and `new KnexOutboxStore(context, { schema: 'messaging', tenant: true })` writes
 it. A table that has the column is read back either way.
 
 One schema per bounded context: `schemaNameOf('order-management')` gives `order_management`,
@@ -581,6 +582,14 @@ no tenant raises `NoCurrentTenantError` before any SQL. A read model of tenant d
 `tenant: scope` to `KnexReadModelTable` and `KnexReadModelStore`: each row is written with the
 tenant of the work and every read and write is confined to it (keys stay unique across tenants;
 a rebuild, which runs in no tenant, is refused).
+
+A measure grouped by a scoped query, then filtered, sorted and paged by its output columns,
+selects from it with `derivedTable(context, grouped, 'occupancy')`: the grouped query is the one
+that reaches the table, through `tenantTable`. A project of one customer that becomes
+multi-tenant adds the column to each table of tenant data in a migration,
+`addTenantColumn(knex, { schema, table, tenantOfExistingRows: 'acme' })`: the rows already there
+go to that tenant (refused when there are rows and no tenant), then the column is required and
+indexed; a table that already has it is left alone.
 
 **Row-level security**, a second line on shared tables: the database itself refuses a row of
 another tenant, even to a statement that forgot its condition.

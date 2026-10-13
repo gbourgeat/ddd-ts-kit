@@ -1,5 +1,6 @@
 import { AggregateRoot, type StoredFile } from '@ddd-ts-kit/kernel';
 import { AppointmentError } from '@/contexts/scheduling/domain/errors/appointment.error';
+import { AppointmentAnnotated } from '@/contexts/scheduling/domain/events/appointment-annotated.event';
 import { AppointmentBooked } from '@/contexts/scheduling/domain/events/appointment-booked.event';
 import { AppointmentCancelled } from '@/contexts/scheduling/domain/events/appointment-cancelled.event';
 import { AppointmentCompleted } from '@/contexts/scheduling/domain/events/appointment-completed.event';
@@ -24,6 +25,8 @@ export interface AppointmentState {
   /** Only while requested: the instant after which the appointment expires unless confirmed. */
   readonly confirmBefore?: Date;
   readonly cancellation?: Cancellation;
+  /** What the staff of the practice keeps about the appointment; its patient never sees it. */
+  readonly internalNote?: string;
   /** The document the practice attached, whatever the status: its reference, never its content. */
   readonly document?: AttachedDocument;
 }
@@ -199,6 +202,23 @@ export class Appointment extends AggregateRoot<string> {
     return this.state.booking.slot;
   }
 
+  /** The staff writes what it keeps about the appointment, until its end. */
+  annotate(internalNote: string, now: Date): void {
+    const status = appointmentLifecycle.next(this.state.status, 'annotate', this.moment(now));
+
+    this.state = { ...this.state, changedAt: now, internalNote, status };
+
+    const { booking, confirmBefore } = this.state;
+
+    this.record(
+      new AppointmentAnnotated(this.id, now, {
+        internalNote,
+        booking,
+        ...(confirmBefore === undefined ? {} : { confirmBefore }),
+      }),
+    );
+  }
+
   get status(): AppointmentState['status'] {
     return this.state.status;
   }
@@ -219,6 +239,10 @@ export class Appointment extends AggregateRoot<string> {
     return this.state.changedAt;
   }
 
+  get internalNote(): string | undefined {
+    return this.state.internalNote;
+  }
+
   get document(): AttachedDocument | undefined {
     return this.state.document;
   }
@@ -227,11 +251,16 @@ export class Appointment extends AggregateRoot<string> {
     return { ...this.state };
   }
 
-  /** What a change of status keeps: when the appointment was registered, its booking, its document. */
-  private carried(): Pick<AppointmentState, 'registeredAt' | 'booking' | 'document'> {
-    const { registeredAt, booking, document } = this.state;
+  /** What every change of status keeps: when it was registered, its booking, the practice's document and the staff's note. */
+  private carried(): Pick<AppointmentState, 'registeredAt' | 'booking' | 'document' | 'internalNote'> {
+    const { registeredAt, booking, document, internalNote } = this.state;
 
-    return { registeredAt, booking, ...(document === undefined ? {} : { document }) };
+    return {
+      registeredAt,
+      booking,
+      ...(document === undefined ? {} : { document }),
+      ...(internalNote === undefined ? {} : { internalNote }),
+    };
   }
 
   /** What the lifecycle judges a transition with. */

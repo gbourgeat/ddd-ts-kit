@@ -143,10 +143,10 @@ semicolons, parentheses around the parameter of an arrow function.
 - Left out in `biome.json`: build outputs (`dist`, `coverage`, `reports`), the lockfile, a
   `generated` directory, the snapshots of the migrations (`migrations/meta`), and the
   artifacts their own check compares byte for byte (`openapi/*.json` and `asyncapi.json` under
-  `openapi.format: json`, `.dependency-cruiser.cjs`); the YAML contracts are not formatted
-  anyway. Two more lines appear only where they apply: the sources of a generated client
-  (`clients/*/src`), which `ddd-ts-kit sdk` adds to a project that asks for clients, and, in the
-  kit alone, the compiled samples of its documentation (`.ddd-ts-kit`).
+  `openapi.format: json`, the forms of `openapi/forms/`, `.dependency-cruiser.cjs`); the YAML
+  contracts are not formatted anyway. Two more lines appear only where they apply: the sources of
+  a generated client (`clients/*/src`), which `ddd-ts-kit sdk` adds to a project that asks for
+  clients, and, in the kit alone, the compiled samples of its documentation (`.ddd-ts-kit`).
 
 What the CLI writes is already formatted: `npm run format:check` passes right after `init` and
 after every `generate`, and the end-to-end suite of the CLI holds that for every stack it

@@ -7,8 +7,10 @@ import type { DtoClass } from './dto-class.js';
 type SchemasByName = Record<string, JsonSchema>;
 
 /**
- * The JSON Schema of a class, carrying under `$defs` only the classes reachable from it. Shared,
- * the class itself is one of them and the schema is a reference to it.
+ * The JSON Schema of a class, carrying under `$defs` only the classes reachable from it. A class
+ * that extends another one holds the properties of its ancestors too, as validation does: a class
+ * that declares nothing itself (`class Body extends pickClass(...) {}`) is described by them.
+ * Shared, the class itself is one of them and the schema is a reference to it.
  */
 export function selfContainedSchema(dto: DtoClass<object>, shared: boolean): JsonSchema {
   const all = generatedSchemas();
@@ -35,21 +37,47 @@ function generatedSchemas(): SchemasByName {
   return Object.fromEntries(Object.entries(generated).map(([name, schema]) => [name, { ...schema }]));
 }
 
-/** A class that declares nothing itself (`class Body extends pickClass(...) {}`) is described by its nearest described ancestor. */
+/** The schemas of the class and of its ancestors as one. */
 function ownSchema(dto: DtoClass<object>, all: SchemasByName): JsonSchema {
-  let ancestor: unknown = dto;
+  return inherited(
+    lineageOf(dto)
+      .map((name) => all[name])
+      .filter((schema): schema is JsonSchema => schema !== undefined),
+  );
+}
 
-  while (typeof ancestor === 'function' && ancestor.name !== '') {
-    const described = all[ancestor.name];
+/** The names of the class and of its ancestors, the farthest first. */
+function lineageOf(dto: abstract new () => unknown): string[] {
+  const names: string[] = [];
 
-    if (described !== undefined) {
-      return described;
-    }
-
-    ancestor = Object.getPrototypeOf(ancestor);
+  for (
+    let current: unknown = dto;
+    typeof current === 'function' && current.name !== '';
+    current = Object.getPrototypeOf(current)
+  ) {
+    names.unshift(current.name);
   }
 
-  return { type: 'object' };
+  return names;
+}
+
+/** The schemas of a lineage as one: the properties of each, the nearest class last, and every required name. */
+function inherited(schemas: readonly JsonSchema[]): JsonSchema {
+  if (schemas.length === 0) {
+    return { type: 'object' };
+  }
+
+  const merged: JsonSchema = {};
+  const properties: JsonSchema = {};
+  const required = new Set<unknown>();
+
+  for (const schema of schemas) {
+    Object.assign(merged, schema);
+    Object.assign(properties, schema['properties']);
+    (Array.isArray(schema['required']) ? schema['required'] : []).forEach((name: unknown) => required.add(name));
+  }
+
+  return { ...merged, properties, ...(required.size === 0 ? {} : { required: [...required] }) };
 }
 
 function collectDefs(node: unknown, all: SchemasByName, defs: SchemasByName): void {

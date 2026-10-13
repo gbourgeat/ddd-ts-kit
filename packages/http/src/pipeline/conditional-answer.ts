@@ -14,20 +14,23 @@ const READS: readonly string[] = ['GET', 'HEAD'];
 /**
  * A successful read that declares validators answers its `ETag` and `Last-Modified`, and
  * `304 Not Modified` without a body when the caller already holds that version. A header the
- * handler answered itself wins.
+ * handler answered itself wins. A version and an instant are read from `value`, what the handler
+ * answered, whatever representation wrote it; a strong `ETag` digests the bytes sent, so an
+ * answer streamed as it is written, whose bytes are not known when its headers go, has none.
  */
 export async function conditionalAnswer(
   route: Pick<Route, 'method' | 'cache'>,
   request: Readonly<RawHeaders>,
-  response: RouteResponse,
+  answered: { readonly response: RouteResponse; readonly value: unknown },
 ): Promise<RouteResponse> {
   const { cache } = route;
+  const { response, value } = answered;
 
   if (cache === undefined || response.status < SUCCESS_FROM || response.status > SUCCESS_TO) {
     return response;
   }
 
-  const headers = { ...(await validatorsOf(cache, response)), ...response.headers };
+  const headers = { ...(await validatorsOf(cache, response, value)), ...response.headers };
 
   if (!READS.includes(route.method) || !isNotModified(request, headers)) {
     return { ...response, headers };
@@ -39,9 +42,15 @@ export async function conditionalAnswer(
   };
 }
 
-async function validatorsOf(cache: CachePolicy, response: RouteResponse): Promise<Record<string, string>> {
+async function validatorsOf(
+  cache: CachePolicy,
+  response: RouteResponse,
+  value: unknown,
+): Promise<Record<string, string>> {
+  const streamed = response.stream !== undefined && cache.etag === 'representation';
+
   return {
-    ...(cache.etag === undefined ? {} : { etag: await entityTagOf(cache.etag, response) }),
-    ...(cache.lastModified === undefined ? {} : { 'last-modified': lastModifiedOf(cache.lastModified, response.body) }),
+    ...(cache.etag === undefined || streamed ? {} : { etag: await entityTagOf(cache.etag, response, value) }),
+    ...(cache.lastModified === undefined ? {} : { 'last-modified': lastModifiedOf(cache.lastModified, value) }),
   };
 }

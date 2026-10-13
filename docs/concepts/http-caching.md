@@ -78,7 +78,10 @@ header the tenant is read from (`vary: ['Accept-Language']` alone), it is refuse
 are mounted, where the options of the application are known. With `vary: ['Authorization']` a
 shared cache keeps one answer per credential, which is rarely worth it; `private` is the usual
 answer. A route open to anybody (`Public`, `security: false`) shows the same thing to everybody
-and may be `public` as it is.
+and may be `public` as it is, unless its answer reserves fields to some callers
+(`withFieldAccess` with a `read` requirement, [fields reserved to some callers](representations-and-forms.md#fields-reserved-to-some-callers)):
+the pipeline still knows who calls and leaves those fields out per caller, so such an answer is
+refused at the mount unless its `vary` names `Authorization` or `Cookie`.
 
 <!-- checked sample -->
 ```ts
@@ -108,7 +111,9 @@ the headers an answer varies on. Cloudflare ignores `Vary` (images aside) and Bu
 fixed set of its own: behind them, `vary: ['Authorization']` hands the answer of one actor to the
 next. The kit knows the cache from the tag header the application names (`cacheTags.header`), and
 refuses at the mount a public answer that varies behind a cache that ignores `Vary`, unless the
-application says it made the cache key on those headers (`cacheTags.honoursVary`).
+application says it made the cache key on those headers (`cacheTags.honoursVary`). An answer
+chosen by `Accept` among JSON, XML and CSV varies on `Accept`: behind such a cache, it would
+hand the XML of one caller to the next asking JSON, and is refused the same way.
 
 **The tenant is a dimension too.** A request whose tenant is read from a header
 (`tenantFromHeader`) shows that tenant's data under the same URL as another's: every answer a

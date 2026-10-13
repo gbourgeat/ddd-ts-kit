@@ -351,6 +351,10 @@ export const jsonSchema = amount.toJsonSchema(); // { $ref: '#/$defs/Amount', $d
 export const name = sharedNameOf(jsonSchema); // 'Amount'
 ```
 
+`schemaBehind.of(schema)` answers the schema `sharedSchema` was given, so that what another
+package attached to it (the fields `withFieldAccess` of `@ddd-ts-kit/http` reserves) holds for
+the shared one too.
+
 A shared schema of the presentation layer lives where `generate schema` writes it: under
 `presentation/http/schemas/` of its context, or under `presentation/` of the shared kernel when
 several contexts answer with it; never in the domain.

@@ -1,4 +1,4 @@
-import type { AuditRow } from '@ddd-ts-kit/knex';
+import type { AuditRow, TenantRow } from '@ddd-ts-kit/knex';
 
 export interface WaitlistColumns {
   readonly id: string;
@@ -10,6 +10,6 @@ export interface WaitlistColumns {
   readonly waiters: string;
 }
 
-export interface WaitlistRow extends WaitlistColumns, AuditRow {
+export interface WaitlistRow extends WaitlistColumns, TenantRow, AuditRow {
   readonly version: number;
 }

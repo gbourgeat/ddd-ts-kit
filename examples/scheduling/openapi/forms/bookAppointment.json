@@ -1,0 +1,155 @@
+{
+  "jsonForms": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "startsAt": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "calendarId": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "appointmentTypeId": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "patientId": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "internalNote": {
+          "maxLength": 2000,
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "startsAt",
+        "calendarId",
+        "appointmentTypeId"
+      ]
+    },
+    "uischema": {
+      "type": "VerticalLayout",
+      "elements": [
+        {
+          "type": "Group",
+          "label": "bookAppointment.when",
+          "i18n": "bookAppointment.when",
+          "elements": [
+            {
+              "type": "Control",
+              "scope": "#/properties/calendarId",
+              "i18n": "bookAppointment.calendarId"
+            },
+            {
+              "type": "Control",
+              "scope": "#/properties/appointmentTypeId",
+              "i18n": "bookAppointment.appointmentTypeId",
+              "options": {
+                "lookup": {
+                  "operation": "getCalendarDay",
+                  "method": "GET",
+                  "path": "/calendars/:calendarId/days/:day"
+                }
+              }
+            },
+            {
+              "type": "Control",
+              "scope": "#/properties/startsAt",
+              "i18n": "bookAppointment.startsAt"
+            }
+          ]
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/patientId",
+          "i18n": "bookAppointment.patientId"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/internalNote",
+          "i18n": "bookAppointment.internalNote",
+          "options": {
+            "multi": true
+          }
+        }
+      ]
+    },
+    "data": {}
+  },
+  "blocks": {
+    "type": "form",
+    "operation": "bookAppointment",
+    "method": "POST",
+    "path": "/appointments",
+    "label": "bookAppointment",
+    "blocks": [
+      {
+        "type": "group",
+        "name": "when",
+        "label": "bookAppointment.when",
+        "blocks": [
+          {
+            "type": "field",
+            "widget": "text",
+            "constraints": {
+              "minLength": 1
+            },
+            "name": "calendarId",
+            "label": "bookAppointment.calendarId",
+            "required": true
+          },
+          {
+            "type": "field",
+            "widget": "text",
+            "constraints": {
+              "minLength": 1
+            },
+            "lookup": {
+              "operation": "getCalendarDay",
+              "method": "GET",
+              "path": "/calendars/:calendarId/days/:day"
+            },
+            "name": "appointmentTypeId",
+            "label": "bookAppointment.appointmentTypeId",
+            "required": true
+          },
+          {
+            "type": "field",
+            "widget": "datetime",
+            "constraints": {
+              "format": "date"
+            },
+            "name": "startsAt",
+            "label": "bookAppointment.startsAt",
+            "required": true
+          }
+        ]
+      },
+      {
+        "type": "field",
+        "widget": "text",
+        "constraints": {
+          "minLength": 1
+        },
+        "name": "patientId",
+        "label": "bookAppointment.patientId",
+        "required": false
+      },
+      {
+        "type": "field",
+        "widget": "textarea",
+        "constraints": {
+          "minLength": 1,
+          "maxLength": 2000
+        },
+        "name": "internalNote",
+        "label": "bookAppointment.internalNote",
+        "required": false
+      }
+    ]
+  }
+}

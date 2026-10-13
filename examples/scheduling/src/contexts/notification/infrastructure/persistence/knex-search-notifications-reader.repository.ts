@@ -6,12 +6,13 @@ import {
   encodeCursor,
   pageOf,
   type CursorPageRequest,
+  type ExecutionScope,
   type OffsetPageRequest,
   type PageRequest,
   type SortDirection,
 } from '@ddd-ts-kit/kernel';
 import { Repository } from '@ddd-ts-kit/kernel/declarations';
-import { KnexContext } from '@ddd-ts-kit/knex';
+import { KnexContext, tenantTable } from '@ddd-ts-kit/knex';
 import { SearchNotificationsReader } from '@/contexts/notification/application/ports/search-notifications-reader.port';
 import type {
   SearchNotificationsItem,
@@ -21,6 +22,9 @@ import type {
 import { NOTIFICATION_SCHEMA } from '@/contexts/notification/infrastructure/persistence/notification.schema';
 import type { NotificationRow } from '@/contexts/notification/infrastructure/persistence/notification-row.schema';
 
+/** The notifications of the network of the work, before any narrowing by recipient. */
+const NOTIFICATIONS = { schema: NOTIFICATION_SCHEMA, table: 'notifications' };
+
 interface Position {
   readonly sentAt: Date;
   readonly id: string;
@@ -28,7 +32,10 @@ interface Position {
 
 @Repository(SearchNotificationsReader)
 export class KnexSearchNotificationsReader implements SearchNotificationsReader {
-  constructor(private readonly database: KnexContext) {}
+  constructor(
+    private readonly database: KnexContext,
+    private readonly execution: ExecutionScope,
+  ) {}
 
   async search(scope: AccessScope, page: PageRequest<SearchNotificationsSort>): Promise<SearchNotificationsResult> {
     if (scope.kind === 'none' || (scope.kind === 'ids' && scope.ids.length === 0)) {
@@ -42,11 +49,13 @@ export class KnexSearchNotificationsReader implements SearchNotificationsReader 
     scope: AccessScope,
     page: OffsetPageRequest<SearchNotificationsSort>,
   ): Promise<SearchNotificationsResult> {
-    const rows = await inOrder(visibleTo(this.database, scope), directionOf(page))
+    const rows = await inOrder(visibleTo(notificationsOf(this.database, this.execution), scope), directionOf(page))
       .limit(page.limit)
       .offset(page.offset);
 
-    const counted = await visibleTo(this.database, scope).count<{ total: string | number }[]>({ total: '*' }).first();
+    const counted = await visibleTo(notificationsOf(this.database, this.execution), scope)
+      .count<{ total: string | number }[]>({ total: '*' })
+      .first();
 
     return pageOf(rows.map(toItem), { total: Number(counted?.total ?? 0) });
   }
@@ -56,7 +65,7 @@ export class KnexSearchNotificationsReader implements SearchNotificationsReader 
     page: CursorPageRequest<SearchNotificationsSort>,
   ): Promise<SearchNotificationsResult> {
     const direction = directionOf(page);
-    const ordered = inOrder(visibleTo(this.database, scope), direction);
+    const ordered = inOrder(visibleTo(notificationsOf(this.database, this.execution), scope), direction);
 
     const rows = await (page.cursor === undefined
       ? ordered
@@ -86,12 +95,13 @@ function inOrder(notifications: Notifications, direction: SortDirection): Notifi
   ]);
 }
 
-/** The notifications of the recipients the scope names: the restriction is part of the statement, never applied after loading. */
-function visibleTo(database: KnexContext, scope: AccessScope): Notifications {
-  const notifications = database
-    .executor()<NotificationRow, NotificationRow[]>('notifications')
-    .withSchema(NOTIFICATION_SCHEMA);
+/** A function and not a method: a query builder is thenable, and a method that answers one is read as asynchronous by whatever wraps the adapter (tracing), which then answers a promise. */
+function notificationsOf(database: KnexContext, execution: ExecutionScope): Notifications {
+  return tenantTable<NotificationRow>(database, execution, NOTIFICATIONS);
+}
 
+/** The notifications of the recipients the scope names: the restriction is part of the statement, never applied after loading. */
+function visibleTo(notifications: Notifications, scope: AccessScope): Notifications {
   if (scope.kind === 'ids') {
     return notifications.whereIn('recipient_id', [...scope.ids]);
   }

@@ -2,9 +2,21 @@ import { Readable } from 'node:stream';
 import type { ExecutionContext } from '@ddd-ts-kit/kernel';
 import { createErrorMapper } from '../error/create-error-mapper.js';
 import { toProblem } from '../error/to-problem.js';
+import type { Problem } from '../error/problem.js';
+import { assertWritable } from '../field-access/assert-writable.js';
+import { fieldAccess } from '../field-access/field-access.js';
+import { FieldJudge } from '../field-access/field-judge.js';
+import { FieldTree } from '../field-access/field-tree.js';
+import { visibleBody } from '../field-access/visible-body.js';
+import { NotAcceptableError } from '../representation/not-acceptable-error.js';
+import { PROBLEM_SHAPE } from '../representation/problem-shape.js';
 import type { RequestContext } from '../route/request-context.js';
+import type { RouteInput } from '../route/route-input.js';
 import type { RouteOutput } from '../route/route-output.js';
 import type { Route } from '../route/route.js';
+import { isAsyncIterable } from '../support/is-async-iterable.js';
+import { resolvedTenant } from '../tenancy/resolved-tenant.js';
+import { guardRefusals } from '../controller/guard-refusals.js';
 import { assertDeclaredResponse } from './assert-declared-response.js';
 import { cacheHeadersOf } from './cache-headers-of.js';
 import { conditionalAnswer } from './conditional-answer.js';
@@ -14,14 +26,20 @@ import type { ErrorContext } from './error-context.js';
 import type { ExecuteOptions } from './execute-options.js';
 import { executionOfRequest } from './execution-of-request.js';
 import { expectedVersionOf } from './expected-version-of.js';
+import { iteratedWithin, type Within } from './iterated-within.js';
+import { negotiatedVary } from './negotiated-vary.js';
+import { negotiation, type Negotiation } from './negotiation.js';
 import type { RawRequest } from './raw-request.js';
+import { readBody } from './read-body.js';
 import { receiveUpload } from './receive-upload.js';
+import type { RepresentedAnswer } from './represented-answer.js';
+import { represented } from './represented.js';
+import { reportedStream } from './reported-stream.js';
 import type { RouteResponse } from './route-response.js';
 import { taggedAnswer, type Tagging } from './tagged-answer.js';
-import { resolvedTenant } from '../tenancy/resolved-tenant.js';
-import { guardRefusals } from '../controller/guard-refusals.js';
 import { validateRequest } from './validate-request.js';
 import { wellFormedIdentifier } from './well-formed-identifier.js';
+import { writtenIn } from './written-in.js';
 
 interface Call {
   readonly route: Route;
@@ -29,6 +47,8 @@ interface Call {
   readonly options: ExecuteOptions;
   readonly requestId: string;
   readonly correlationId: string;
+  /** Present when the application registers representations: what the `Accept` header chose. */
+  readonly negotiated: Negotiation | undefined;
   /** Filled as the request advances, for the error hook to say how far it went, and for the tags of the answer. */
   readonly reached: { execution?: ExecutionContext; params?: unknown };
 }
@@ -44,7 +64,9 @@ export async function executeRoute(
 ): Promise<RouteResponse> {
   const requestId = (options.requestId ?? defaultRequestId)(request);
   const correlationId = correlationIdOf(request.headers, requestId);
-  const call: Call = { route, request, options, requestId, correlationId, reached: {} };
+  const { representations } = options;
+  const negotiated = representations === undefined ? undefined : negotiation(route, request.headers, representations);
+  const call: Call = { route, request, options, requestId, correlationId, negotiated, reached: {} };
   const respond = (): Promise<RouteResponse> => responded(call);
 
   return options.around === undefined ? respond() : options.around(route, respond);
@@ -52,10 +74,10 @@ export async function executeRoute(
 
 async function responded(call: Call): Promise<RouteResponse> {
   try {
-    const answered = answer(await handled(call), call);
-    const tagged = taggedAnswer(answered, taggingOf(call));
+    const result = await handled(call);
+    const tagged = taggedAnswer(await answer(result, call), taggingOf(call, result.body));
 
-    return await conditionalAnswer(call.route, call.request.headers, tagged);
+    return await conditionalAnswer(call.route, call.request.headers, { response: tagged, value: result.body });
   } catch (error) {
     const { response, context } = refusal(error, call);
 
@@ -65,11 +87,12 @@ async function responded(call: Call): Promise<RouteResponse> {
   }
 }
 
-function taggingOf({ route, options, reached }: Call): Tagging {
+/** The tags are read from the value the handler answered, whatever representation writes it. */
+function taggingOf({ route, options, reached }: Call, body: unknown): Tagging {
   const perTenant = options.cacheTags?.perTenant === true;
   const tenantId = perTenant ? reached.execution?.tenantId : undefined;
 
-  return { route, header: options.cacheTags?.header, perTenant, params: reached.params, tenantId };
+  return { route, header: options.cacheTags?.header, perTenant, params: reached.params, body, tenantId };
 }
 
 function defaultRequestId(request: RawRequest): string {
@@ -77,36 +100,99 @@ function defaultRequestId(request: RawRequest): string {
 }
 
 async function handled(call: Call): Promise<RouteOutput> {
-  const { route, request, options, requestId } = call;
+  const { route, request, options } = call;
   const principal = await options.resolvePrincipal?.(request.raw);
-  const received = await receiveUpload(route, request, options);
-  const input = validateRequest(route, received.request);
-  const { headers } = request;
-  const expectedVersion = expectedVersionOf(route, headers);
+  const input = await acceptedInput(call);
+  const expectedVersion = expectedVersionOf(route, request.headers);
   const execution = executionOf(call, principal, input.params);
+  // A field set in a body is an act, recorded; a field shown or left out of the answer only shapes it.
+  const setting = new FieldJudge(execution.actor, options.fieldAccess, true);
+  const showing = new FieldJudge(execution.actor, options.fieldAccess);
+  const context = requestContext(call, { execution, principal, expectedVersion });
 
   call.reached.params = input.params;
 
-  const context: RequestContext = {
-    requestId,
-    execution,
-    raw: request.raw,
-    rawHeaders: headers,
-    ...(principal === undefined ? {} : { principal }),
-    ...(expectedVersion === undefined ? {} : { expectedVersion }),
-    ...(route.rawBody === true && request.stream !== undefined ? { stream: request.stream } : {}),
+  const within: Within = (work) => {
+    const asPrincipal = (): ReturnType<typeof work> => options.withPrincipal?.(principal, work) ?? work();
+
+    return options.executionScope?.run(execution, asPrincipal) ?? asPrincipal();
   };
 
-  const upload = received.upload === undefined ? {} : { upload: received.upload };
-  const handle = async (): Promise<RouteOutput> => route.handle({ ...input, ...upload, context });
-  const asPrincipal = (): Promise<RouteOutput> => options.withPrincipal?.(principal, handle) ?? handle();
-  const result = await (options.executionScope?.run(execution, asPrincipal) ?? asPrincipal());
+  // The fields are decided in the scope of the request too: a decision is recorded with who asked and under which correlation.
+  const result = await within(async () => {
+    await assertWritable(input.body, FieldTree.of(fieldAccess.of(route.request?.body)), setting);
+
+    return visibleOutput(route, await answered(call, { ...input, context }), showing);
+  });
+
+  return streamedWithin(result, within);
+}
+
+/** What the handler answers, checked against the declaration when the options ask for it. */
+async function answered({ route, options }: Call, input: RouteInput): Promise<RouteOutput> {
+  const result = await route.handle(input);
 
   if (options.validateResponses === true) {
     assertDeclaredResponse(route, result);
   }
 
   return result;
+}
+
+/** A list streamed after the handler returned is still read inside the scope of the request; a file is the handler's own. */
+function streamedWithin(result: RouteOutput, within: Within): RouteOutput {
+  const listed = isAsyncIterable(result.body) && !(result.body instanceof Readable);
+
+  return listed ? { ...result, body: iteratedWithin(result.body, within) } : result;
+}
+
+/** What the context of a request is made of once its caller and its tenant are known. */
+interface Reached {
+  readonly execution: ExecutionContext;
+  readonly principal: unknown;
+  readonly expectedVersion: number | undefined;
+}
+
+function requestContext(
+  { request, requestId, route }: Call,
+  { execution, principal, expectedVersion }: Reached,
+): RequestContext {
+  return {
+    requestId,
+    execution,
+    raw: request.raw,
+    rawHeaders: request.headers,
+    ...(principal === undefined ? {} : { principal }),
+    ...(expectedVersion === undefined ? {} : { expectedVersion }),
+    ...(route.rawBody === true && request.stream !== undefined ? { stream: request.stream } : {}),
+  };
+}
+
+/** The answer without the fields its schema reserves to callers this one is not. */
+async function visibleOutput(route: Route, result: RouteOutput, judge: FieldJudge): Promise<RouteOutput> {
+  const tree = FieldTree.of(fieldAccess.of(route.responses[result.status]?.body));
+
+  return tree.isEmpty() ? result : { ...result, body: await visibleBody(result.body, tree, judge) };
+}
+
+/**
+ * The parts of the request through their schemas, once the request accepts an answer and its
+ * body is read: an upload gives its fields, a body sent in another media type is read by its
+ * representation, a raw body is the handler's.
+ */
+async function acceptedInput(call: Call): Promise<Omit<RouteInput, 'context'>> {
+  const { route, request, options, negotiated } = call;
+  const received = await receiveUpload(route, request, options);
+  const upload = received.upload === undefined ? {} : { upload: received.upload };
+
+  if (negotiated?.refused === true) {
+    throw new NotAcceptableError('The route answers in none of the media types the request accepts.');
+  }
+
+  const readable = negotiated !== undefined && route.upload === undefined && route.rawBody !== true;
+  const read = readable ? readBody(route, received.request, negotiated.representations) : received.request;
+
+  return { ...validateRequest(route, read), ...upload };
 }
 
 /** The execution context of the request, in the tenant it names once the caller is known to belong to it. */
@@ -136,17 +222,48 @@ function deadlineOf(options: ExecuteOptions): Date | undefined {
   return new Date(arrivedAt.getTime() + options.requestTimeoutMs);
 }
 
-function answer(result: RouteOutput, call: Call): RouteResponse {
+async function answer(result: RouteOutput, call: Call): Promise<RouteResponse> {
+  const chosen = call.negotiated?.answer;
+
+  const written = reportingFailures(
+    chosen === undefined ? asItIs(result) : await represented(call.route, result, chosen),
+    call,
+  );
+
+  const kept = {
+    ...cacheHeadersOf(call.route, result.status, call.options.resolveTenant?.headers),
+    ...lowerCaseKeys(result.headers ?? {}),
+  };
+
   return {
+    ...written,
     status: result.status,
     headers: {
       ...defaultContentType(result.body),
-      ...cacheHeadersOf(call.route, result.status, call.options.resolveTenant?.headers),
-      ...lowerCaseKeys(result.headers ?? {}),
+      ...written.headers,
+      ...kept,
+      ...negotiatedVary(call.negotiated?.varies === true, kept['vary']),
       ...identifierHeaders(call),
     },
-    ...(result.body === undefined ? {} : { body: result.body }),
   };
+}
+
+/** A streamed list that fails after its status is told to the error hook, as a fault, before the response is cut short. */
+function reportingFailures(written: RepresentedAnswer, call: Call): RepresentedAnswer {
+  if (written.stream === undefined) {
+    return written;
+  }
+
+  const report = (error: unknown): void => {
+    notify(call.options, error, { ...contextOf(error, call), interrupted: true });
+  };
+
+  return { ...written, stream: reportedStream(written.stream, report) };
+}
+
+/** An answer no representation writes: the value of the handler, for the adapter to serialize. */
+function asItIs({ body }: RouteOutput): RepresentedAnswer {
+  return body === undefined ? { headers: {} } : { headers: {}, body };
 }
 
 function defaultContentType(body: unknown): Record<string, string> {
@@ -168,29 +285,40 @@ function identifierHeaders({ requestId, correlationId }: Call): Record<string, s
 }
 
 function refusal(error: unknown, call: Call): { response: RouteResponse; context: ErrorContext } {
+  const context = contextOf(error, call);
+  const { problem } = context;
+
+  notify(call.options, error, context);
+
+  return { response: { status: problem.status, ...problemBody(problem, call) }, context };
+}
+
+function contextOf(error: unknown, call: Call): ErrorContext {
   const { route, options, requestId, correlationId } = call;
   const { execution } = call.reached;
-  const problem = toProblem(error, options.errorMapper ?? defaultErrorMapper, requestId);
 
-  const context: ErrorContext = {
+  return {
     requestId,
     correlationId,
     operationId: route.operationId,
     method: route.method,
     path: route.path,
-    problem,
+    problem: toProblem(error, options.errorMapper ?? defaultErrorMapper, requestId),
     ...(execution === undefined ? {} : { execution }),
   };
+}
 
-  notify(options, error, context);
+function problemBody(problem: Problem, call: Call): Omit<RouteResponse, 'status'> {
+  const chosen = call.negotiated?.problem;
+  const kept = { ...cacheHeadersOf(call.route, problem.status), ...identifierHeaders(call) };
 
-  const headers = {
-    'content-type': PROBLEM_CONTENT_TYPE,
-    ...cacheHeadersOf(route, problem.status),
-    ...identifierHeaders(call),
-  };
+  if (chosen === undefined) {
+    return { headers: { 'content-type': PROBLEM_CONTENT_TYPE, ...kept }, body: problem };
+  }
 
-  return { response: { status: problem.status, headers, body: problem }, context };
+  const written = writtenIn(problem, chosen, PROBLEM_SHAPE);
+
+  return { ...written, headers: { ...written.headers, ...kept } };
 }
 
 async function reportGuardRefusal(options: ExecuteOptions, error: unknown, context: ErrorContext): Promise<void> {

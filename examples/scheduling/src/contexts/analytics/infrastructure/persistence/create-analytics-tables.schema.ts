@@ -1,5 +1,5 @@
 import type { Knex } from 'knex';
-import { readModelColumns } from '@ddd-ts-kit/knex';
+import { readModelColumns, tenantColumn } from '@ddd-ts-kit/knex';
 import { ANALYTICS_SCHEMA } from '@/contexts/analytics/infrastructure/persistence/analytics.schema';
 
 /** Sorted and compared by range as a read orders strings: by code point. */
@@ -20,6 +20,8 @@ function createOutcomeTable(knex: Knex): Promise<void> {
     table.datetime('ends_at', { useTz: true, precision: 3 }).notNullable();
     table.text('state').notNullable();
     table.datetime('changed_at', { useTz: true, precision: 3 }).notNullable();
+    tenantColumn(table);
+    table.index(['tenant_id', 'id'], 'outcomes_tenant_idx');
     readModelColumns(table);
     table.index(['calendar_id', 'day']);
     // The occupancy is measured when it is read: a read costs the outcomes of the practice over the

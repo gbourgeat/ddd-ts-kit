@@ -89,7 +89,16 @@ function routeLine(route: RouteFact): string {
       ? ''
       : ` behind ${[route.group, route.guards.join(', ')].filter((part) => part !== '').join(': ')}`;
 
-  return `${route.method} ${route.path} ${route.operationId}${behind} -> ${known(route.useCase)} (${known(route.permission)}); request: ${request === '' ? 'none' : request}; responses: ${responses}; errors: ${route.errors.join(', ')}`;
+  return `${route.method} ${route.path} ${route.operationId}${behind} -> ${known(route.useCase)} (${known(route.permission)}); request: ${request === '' ? 'none' : request}; responses: ${responses}; errors: ${route.errors.join(', ')}${presentation(route)}`;
+}
+
+/** What a route answers and reads in besides JSON, and its form: said only when it declares them. */
+function presentation({ produces, consumes, form }: RouteFact): string {
+  return [
+    produces === undefined ? '' : `; answers also ${produces.join(', ')}`,
+    consumes === undefined ? '' : `; reads also ${consumes.join(', ')}`,
+    form === undefined ? '' : `; form: ${form}`,
+  ].join('');
 }
 
 function consumedEventLine(event: ConsumedEventFact): string {

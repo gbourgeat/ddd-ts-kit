@@ -3,6 +3,7 @@
  * `Role.PlatformAdmin`, never as a string.
  */
 export const Role = {
+  NetworkAdmin: 'network-admin',
   PlatformAdmin: 'platform-admin',
   Patient: 'patient',
   Support: 'support',

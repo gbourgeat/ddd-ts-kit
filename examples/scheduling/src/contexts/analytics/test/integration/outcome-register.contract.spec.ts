@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { Criteria, scoped } from '@ddd-ts-kit/kernel';
+import { anExecutionContext } from '@ddd-ts-kit/testing';
+import { Criteria, scoped, FixedExecutionScope } from '@ddd-ts-kit/kernel';
 import { storableStamp } from '@/shared-kernel/storable-stamp';
 import { openTestDatabase, type TestDatabase } from '@/platform/database/open-test-database';
 import type { Outcome, OutcomeRegister } from '@/contexts/analytics/application/ports/outcome-register.port';
@@ -8,6 +9,9 @@ import { createAnalyticsTables } from '@/contexts/analytics/infrastructure/persi
 import { KnexOutcomeRegister } from '@/contexts/analytics/infrastructure/persistence/knex-outcome-register.repository';
 import { anOutcome } from '@/contexts/analytics/test/builders/outcome.builder';
 import { FakeOutcomeRegister } from '@/contexts/analytics/test/fakes/outcome-register.fake';
+
+/** The work of these specs runs in one network: every table here holds tenant data. */
+const north = new FixedExecutionScope(anExecutionContext().ofTenant('north').build());
 
 let database: TestDatabase;
 
@@ -32,7 +36,7 @@ const ADAPTERS: readonly (readonly [string, () => Promise<OutcomeRegister>])[] =
     async () => {
       await database.reset();
 
-      return new KnexOutcomeRegister(database.persistence.database);
+      return new KnexOutcomeRegister(database.persistence.database, north);
     },
   ],
 ];

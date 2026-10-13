@@ -17,6 +17,7 @@ export function testEnvironment(overrides: Variables = {}): Variables {
     VARNISH_URL: (process.env['VARNISH_URL'] ?? '') || 'http://varnish.e2e.test',
     VARNISH_PURGE_KEY: (process.env['VARNISH_PURGE_KEY'] ?? '') || 'e2e-purge-key',
     RATE_LIMIT_MAX: process.env['RATE_LIMIT_MAX'] ?? '1000000',
+    NETWORKS: process.env['NETWORKS'] ?? 'north,south',
     ...overrides,
   };
 }

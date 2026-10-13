@@ -125,7 +125,12 @@ async function knexReader(): Promise<SearchNotificationsReader> {
   await database.reset();
 
   const scope = new FixedExecutionScope(
-    executionContext({ correlationId: 'reader-spec', actor: systemActor('notification.spec'), origin: 'test' }),
+    executionContext({
+      correlationId: 'reader-spec',
+      actor: systemActor('notification.spec'),
+      origin: 'test',
+      tenantId: 'north',
+    }),
   );
 
   const repository = new KnexNotificationRepository(
@@ -139,7 +144,7 @@ async function knexReader(): Promise<SearchNotificationsReader> {
   await repository.save(sentNotifications()[2] ?? aNotification().build());
   await repository.save(sentNotifications()[3] ?? aNotification().build());
 
-  return new KnexSearchNotificationsReader(database.persistence.database);
+  return new KnexSearchNotificationsReader(database.persistence.database, scope);
 }
 
 /** Three notifications of one patient, two of them sent at the same instant, and one of another patient. */

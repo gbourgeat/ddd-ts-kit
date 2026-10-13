@@ -28,6 +28,181 @@ drawing or malformed. `npm run docs:samples` (in `ci:typecheck`) compiles every 
 [docs/translation.md](docs/translation.md) says what is translated, the shape of a French page,
 the glossary, the style of the diagrams and how to keep it all current.
 
+## 0.15.0
+
+**A context written whole: the identity preset** ([Bootstrap with well-designed contexts](docs/guides/bootstrap-with-well-designed-contexts.md)).
+
+- `init --preset identity` and `generate context <name> --preset identity` write a generic
+  context instead of an empty one: accounts provisioned from the identity provider at the first
+  sign-in (no password kept), organisations (the tenants under `--tenancy shared-table`, their
+  tables then under a decision record), members with roles of a declared vocabulary, invitations
+  by token with an expiry, delegations of rights for ninety days at most; seven policies, the
+  published language (`member.joined`, `member.role-changed`, `account.deactivated`...), a
+  search, controllers, specs with builders and fakes, the Knex or Drizzle adapters, and the port
+  `IdentityProviderAdmin`, kept in line at least once by consumers of the published facts, with a
+  Keycloak 26 adapter given as a recipe (run once by hand against Keycloak 26.8.0, not in the
+  pipeline). Nobody changes their own role or acts above it, whatever
+  a delegation lends, and a change decided under a delegation names it (`delegationId`); every
+  change of a member saves its organisation, so two owners who remove each other at once cannot
+  both commit; a deactivated account leaves its organisations; an address the provider did not
+  verify (`email_verified`) provisions no account. With tenants and Keycloak, the authenticator
+  reads the `organization` claim as the tenants of the person. Written for the declared style on
+  Knex or Drizzle on PostgreSQL, Zod or class-validator, Express or Fastify, with a token
+  verifier, and for both `stack.schemas`: shared, its identifier answers are `acceptedSchema` and
+  the token of an invitation one shared schema; per route, each route keeps its own; another stack is refused with the flag to change, and so is a second context of the
+  same preset. Nothing is recorded in the config. Which other contexts deserve one:
+  [Context presets](docs/proposals/context-presets.md).
+- `@ddd-ts-kit/auth`: `SignedInGrantsAuthorizer({ grants, otherwise })` grants every signed-in
+  person (an actor of type `user`) the same permissions before the model of the project decides
+  the rest, whatever that model is. The preset wraps `createAuthorizer` in it, its grants in
+  `platform/auth/signed-in-grants.ts`.
+- `@ddd-ts-kit/auth`: the default mappings of `JwtAuthenticator` and `keycloakAuthenticator` read
+  a tenant claim that lists several tenants (the `organization` claim of a member of several
+  organizations) as the `tenants` attribute of the actor, among which a request names one, where
+  they gave no tenant; and both give the attributes `username`, `email` and `emailVerified`
+  (`email_verified`), where `JwtAuthenticator` gave none.
+- The barrels and dependency files the CLI writes set a call that takes several lines apart by
+  blank lines, as `@stylistic/padding-line-between-statements` asks.
+- Plugin 0.22.0: the skill `bootstrap` proposes the preset for a generic identity context.
+
+**The example serves several networks of practices, one tenant each** (its ADR-0003, accepted).
+
+- `@ddd-ts-kit/knex`: `addTenantColumn(knex, { schema, table, tenantOfExistingRows })`, the
+  migration of a table of a project that becomes multi-tenant: the rows already there go to the
+  tenant named (refused when there are rows and none), then the column is required and indexed; a
+  table that has the column is left alone. `derivedTable(context, query, alias)` selects from a
+  query confined by `tenantTable`, for a measure grouped then paged by its output columns.
+- `@ddd-ts-kit/knex`: `addOutboxTenantColumn(knex, { schema, tenantOfUnpublished })` gives the
+  events not published yet (pending or dead) the tenant the database served, so that their
+  consumers run in it.
+- `@ddd-ts-kit/http`: `servedTenantOf(resolver, served)` answers 404 to a tenant the deployment
+  does not serve, whoever names it, and reads the headers its resolver reads, so that a cached
+  answer still varies on them.
+- `@ddd-ts-kit/knex`: `createProcessTable(knex, { tenant: true })` adds `tenant_id` to the
+  instances of the process managers, and `KnexProcessStore(context, { tenant: scope })` keeps each
+  one in the tenant of the work that saves it: an instance of another tenant is neither found nor
+  changed, and work that names no tenant is refused (`NoCurrentTenantError`).
+- `@ddd-ts-kit/di`: `kernelModule({ tenants })` binds a `TenantDirectory` and gives it to the
+  default scheduler, so that a job declared `tenancy: 'per-tenant'` can be registered; the test
+  application takes `tenants` too, by default the tenant of its execution context, and composes
+  with none named (such a job then runs for no tenant), where it refused the job before.
+- `tenancy/scoped-statement` reads the literal text of a raw call: a statement of the schema with
+  no word of rows, and an expression that holds no word reading or writing rows or starting a
+  statement (`table`, `with`, `values`, `call`, `do`...) and calls only known expression
+  functions (aggregates, casts, arithmetic, text), are no longer reported; raw SQL whose text is
+  not a literal, or a template that interpolates, still is. Bind a list as one value
+  (`state = any(?)`) instead of interpolating its placeholders.
+- Plugin 0.22.0: the guard lets `test/e2e/journey-*.e2e.spec.ts` be written by hand, since a
+  journey crosses several routes and no generator writes it.
+- Example: `"stack.tenancy": "shared-table"`, a tenant column on its twelve tables and the
+  migration that adds it to an existing database, `tenantIsolationContract` on every Knex
+  repository, the jobs run per network (`NETWORKS`), the audit trail read by platform staff
+  through a recorded elevation, `x-tenant-id` refused at the edge for another network than the
+  caller's, and a network missing from `NETWORKS` not found. Its HTTP contract changed: `POST
+  /practices` asks the role `network-admin`, `GET /audit/entries` takes `network`, every request
+  that reaches data needs the `tenant_id` claim, a token or header naming a network not served is
+  answered 404, and a person registered in one network who registers in another is refused
+  (422, `CONCURRENCY_CONFLICT`). What 0.11 to 0.14 added to it is confined the same way: the
+  instances of the confirmation deadline keep their network, the migration gives the network to
+  the instances and the unfinished background jobs already there, a clearance is read in the
+  network of its job, and the public opening hours are tagged and purged per network
+  (`cacheTags.perTenant`, `PublishedCacheInvalidation` with `perTenant`), named by `x-tenant-id`
+  for an anonymous caller and varying on it; their tags read `<network>/calendar:<id>`.
+
+## 0.14.0
+
+**A route answers in JSON, XML or CSV, as the request asks.** `Representations.standard()` of
+`@ddd-ts-kit/http`, given to the adapters (`representations` of the mount options) and to
+`generateOpenApi`, chooses per request the media type the `Accept` header prefers among those
+the route declares in `produces` (on `@Controller` or `defineRoute`), JSON first; none
+acceptable is `406 NOT_ACCEPTABLE`, before the handler runs. A refusal is written as
+`application/problem+xml` when XML was negotiated. A route that declares `consumes:
+['application/xml']` reads an XML body into the value the JSON path produces, validated by the
+same schema; another media type is `415 UNSUPPORTED_MEDIA_TYPE`. XML follows one convention,
+the default of the XML object of OpenAPI, with a parser of the package's own that refuses any
+document type declaration (no new dependency). CSV is written for a page or a list of flat rows,
+and a handler that answers an `AsyncIterable` under `streamSchemaOf(item)` is streamed in every
+representation; one that fails once its status is sent is reported to `onError` with
+`interrupted: true`. `everyPage(readPage)` streams a search page after page, each page a query
+sent through the bus, so each one runs under the middlewares of the bus (transaction, tenant
+session, timeout, tracing). A route that declares no body schema (a file, a redirect, no
+content) is never refused 406 and its answer, a `Readable` included, goes out as the handler
+wrote it. The contract follows the representations it is given, which must be those the
+server is mounted with: every media type of each route, `406 NOT_ACCEPTABLE` on every route a
+representation writes, `415 UNSUPPORTED_MEDIA_TYPE` on every route that reads a body; without
+them, JSON only and neither status. Mounting a route that declares `produces` or `consumes`
+without representations is refused. Both codes join the default error mapping and the codes
+of the kit. Without the option nothing changes: every answer stays JSON. `money` and
+`decimalText` write money and decimals as strings, the rule every representation follows.
+The documentation page of a generated project (`withDocumentation`) is written with the error
+mapper and the representations of the boundary; the contract script looks for stale files in
+`openapi/` itself and, with forms, in `openapi/forms/` only.
+
+**A generated project negotiates its representations and serves its forms.** Two keys of
+`stack`, chosen at `init`: `representations` (`negotiated`, `json`) and `forms` (`on`, `off`),
+both on by default with an HTTP stack. `negotiated` writes `src/platform/http/presentation-of.ts`,
+which gives the HTTP boundary and the contract script `Representations.standard()` and a field
+decider over the `Access` of the application; `forms: on` writes `with-forms.ts`, which serves
+`GET /forms/<operationId>` for each route that declares `form`, and `npm run docs:generate`
+writes the forms to `openapi/forms/`. A config without the keys is read as `json` and `off`:
+nothing changes until `init --force --representations negotiated --forms on`. `generate
+representation <context> <UseCase> xml,csv` adds `produces` (and `consumes` of XML for a
+route with a body) to a controller, `generate form <context> <UseCase>` its `defineForm`
+hints, and `describe` lists the media types and the form of each route.
+
+**A route describes its body as a form.** A route that declares `form` (on `@Controller` or
+`defineRoute`, `defineForm<Body>(hints)` next to the schemas of the controller) is served by `formRoutes(routes,
+{ fieldAccess })` at `GET /forms/<operationId>`: JSON Forms by default (schema, UI schema,
+data), or a neutral tree of groups and fields with `?format=blocks`. Fields, constraints and
+options come from the request schema and its closed vocabularies, layout, widgets, lookups and
+conditions (`visibleWhen`, `requiredWhen`) from the hints, labels are translation keys, and
+values given in the query prefill it. The form respects the caller: given only to who may run
+its use case when it declares `requires` (the permission asked as `@Requires` asks it, from the
+values of the query; 403 otherwise), a field they may not see is absent (and not echoed in
+`data`), one they may not set is read-only, an object with every field it holds; the server
+still validates and the use case still decides. `formDocumentsOf(routes)` writes every form whole for the documentation.
+
+**A field of an answer can be reserved to some callers.** `withFieldAccess(schema, { field: {
+read, write, subject } })` of `@ddd-ts-kit/http` marks a field with a permission or a policy:
+the pipeline leaves it out of every representation (JSON, XML, CSV, streamed lists) for an actor
+who may not read it, refuses it with 403 in a request body from one who may not set it, and the
+contract marks it with `x-field-access` and no longer lists it as required. `fieldDeciderOf({
+access, clock })` decides through the `Access` of `@ddd-ts-kit/auth`, once per element and per
+request, remembering the last 256 elements per requirement; without a decider a restricted
+field is refused to everybody. A field shown or hidden is decided without being recorded, a
+field set in a body is recorded: `Access.decideOn({ actor, permission, subject, context,
+recorded })`, new and optional on `Access`, implemented by `PolicyAccess`. The new rule
+`authz/fields-by-schema` (checker and ESLint) refuses a test on the roles of the actor under
+`application/queries/`, the hand-written way of shaping an answer.
+
+**The JSON Schema of a class-validator class holds what it inherits.** A class that extends
+another one, `class SearchPracticeAgendaLine extends SearchAppointmentsLine {}`, was described as
+an empty object: the contract said nothing of its fields. `classSchema` now gives it the
+properties and the required names of its ancestors. A project with such classes sees its
+contract grow on the next `npm run docs:generate`. The end-to-end client of
+`@ddd-ts-kit/testing` sends a string body as it is when the call names another content type
+(`{ headers: { 'content-type': 'application/xml' } }`), as JSON otherwise.
+
+The concepts and the tools are explained in two new pages, `docs/concepts/representations-and-forms.md`
+and `docs/tools/representations-and-forms.md` (JSON Forms renderers for React, Angular and Vue,
+the alternatives, why no XML or CSV library), and parts 2 and 3 of `docs/proposals/read-side.md`
+are marked built.
+
+**Representations, caching and the four adapters together.** `mountHono` serves what
+`mountExpress` and `mountFastify` serve: a body in a media type the route consumes is read as
+text under `bodyLimit`, a streamed list is streamed, and the mount refuses `produces` or
+`consumes` without representations. A cached answer written in XML or CSV keeps the validators
+and tags of its policy: the version, the instant and the tags are read from what the handler
+answered, a strong `ETag` digests the bytes of the media type sent (none on a streamed list),
+and `Vary` holds the headers of the policy and `accept`, in the answer and in the contract. A
+public answer chosen by `Accept` is refused at the mount behind a cache that ignores `Vary`, and
+so is a public answer with fields reserved to some callers whose `vary` names neither
+`Authorization` nor `Cookie`, even on a route anybody may call: a shared cache would hand the
+fields one caller may read to the next. A shared schema keeps its restricted fields whichever
+wraps the other (`withFieldAccess(sharedSchema(...))` or `sharedSchema(name,
+withFieldAccess(...))`, through `schemaBehind` of `@ddd-ts-kit/validation`), in the definition it
+refers to and in the answer, and the page of a shared item keeps the restricted fields of the item.
+
 ## 0.13.0
 
 **A schema shared by several routes is documented once.** Declared once, a schema used whole or

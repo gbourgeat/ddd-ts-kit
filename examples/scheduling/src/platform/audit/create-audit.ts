@@ -1,4 +1,5 @@
 import {
+  TenantAuditReader,
   auditDecisions,
   auditGuardRefusals,
   auditIntegrationEvents,
@@ -11,7 +12,7 @@ import {
 import { KnexAuditTrail } from '@ddd-ts-kit/audit/knex';
 import type { OnDecision } from '@ddd-ts-kit/auth';
 import type { EventSubscription } from '@ddd-ts-kit/events';
-import type { BusMiddleware } from '@ddd-ts-kit/kernel';
+import { acrossTenants, type BusMiddleware, type TenantElevation } from '@ddd-ts-kit/kernel';
 import type { Persistence } from '@/platform/database/persistence';
 import { AUDIT_SCHEMA } from '@/platform/database/schema';
 import { auditPermissions } from '@/platform/audit/audit.permissions';
@@ -32,6 +33,14 @@ const consumer = 'audit';
  */
 export interface Audit {
   readonly trail: AuditTrail & AuditReader;
+  /**
+   * The trail as the read side searches it: confined to the network of the work in progress,
+   * whatever the filter or the actor says. Platform staff read across networks only inside
+   * `elevate`; work in no network reads nothing.
+   */
+  readonly reader: AuditReader;
+  /** How platform staff reach networks that are not theirs: the elevation is written to the trail before the work runs. */
+  readonly elevate: <T>(elevation: TenantElevation, work: () => Promise<T>) => Promise<T>;
   /** The `onDecision` hook of the authorization: who was allowed or refused what. */
   readonly decisions: OnDecision;
   /** The `onGuardRefusal` hook of the HTTP pipeline: who a guard refused at the edge, before any use case. */
@@ -52,6 +61,8 @@ export function createAudit(persistence: Persistence, source: AuditSource): Audi
 
   return {
     trail,
+    reader: new TenantAuditReader(trail, source.scope),
+    elevate: (elevation, work) => acrossTenants({ ...source, trail }, elevation, work),
     refusals: auditGuardRefusals(trail, source),
     decisions: auditDecisions(trail, { ...source, sensitivePermissions: SENSITIVE_READS }),
     // TODO(platform): declare what may go into `changes` with `fields: [auditedFields(SomeCommand, ['status'])]`; by default an entry carries identifiers and codes only.

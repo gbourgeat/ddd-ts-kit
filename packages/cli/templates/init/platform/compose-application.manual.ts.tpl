@@ -26,6 +26,12 @@ import { auditModule } from '{{alias.platform}}/audit/audit.module{{alias.ext}}'
 {{#if http.any}}
 import { httpBoundary, type HttpBoundary } from '{{alias.platform}}/auth/http-boundary{{alias.ext}}';
 {{/if}}
+{{#if presentation.any}}
+import { presentationOf } from '{{alias.platform}}/http/presentation-of{{alias.ext}}';
+{{/if}}
+{{#if presentation.forms}}
+import { withForms } from '{{alias.platform}}/http/with-forms{{alias.ext}}';
+{{/if}}
 {{#if authz.rebac}}
 import { relateSystemActors } from '{{alias.platform}}/auth/relate-system-actors{{alias.ext}}';
 {{/if}}
@@ -123,10 +129,19 @@ export function composeApplication(
 {{/unless}}
 
   platform.protection.declare(contexts.flatMap((context) => context.useCases));
+{{#if presentation.any}}
+  // What the server answers in and which fields each caller sees: the forms and the contract are given the same.
+  const presentation = presentationOf(platform.access, clock);
+{{/if}}
 
   return {
 {{#if http.any}}
+{{#if presentation.forms}}
+    routes: withForms(defineRoutes(...contexts.map((context) => context.routes)), presentation),
+{{/if}}
+{{#unless presentation.forms}}
     routes: defineRoutes(...contexts.map((context) => context.routes)),
+{{/unless}}
     boundary: httpBoundary({
       authenticator: options.authenticator,
       executionScope: platform.scope,
@@ -138,6 +153,9 @@ export function composeApplication(
 {{/if}}
 {{#if errors.sentry}}
       errors: platform.errors,
+{{/if}}
+{{#if presentation.any}}
+      presentation,
 {{/if}}
     }),
 {{/if}}

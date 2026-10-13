@@ -18,6 +18,8 @@ interface DocumentLink {
 }
 
 const PDF = '%PDF-1.7\n1 0 obj << /Type /Catalog >> endobj\n%%EOF\n';
+/** Where the storage keeps a document: under the network of the practice, then the area and the month. */
+const STORED_KEY = /^tenants\/north\/appointment-documents\/\d{4}\/\d{2}\/[\w-]+$/;
 const riverside = { name: 'Riverside', managerId: 'ada', practitionerId: 'grace', assistantId: 'linus' };
 
 describe('A document attached to an appointment: sent as it streams, fetched through a short link, removed', () => {
@@ -48,7 +50,7 @@ describe('A document attached to an appointment: sent as it streams, fetched thr
 
   it('keeps the document of the patient, serves it through a link that names it, and forgets it once removed', async () => {
     expect((await send('paul', PDF, 'application/pdf')).status).toBe(201);
-    expect(storedFiles()).toEqual([expect.stringMatching(/^appointment-documents\/\d{4}\/\d{2}\/[\w-]+$/)]);
+    expect(storedFiles()).toEqual([expect.stringMatching(STORED_KEY)]);
 
     const link = expectStatus(await paul.get<DocumentLink>(`/appointments/${appointmentId}/document`), 200).body;
     const file = await fetch(onServer(link.url));

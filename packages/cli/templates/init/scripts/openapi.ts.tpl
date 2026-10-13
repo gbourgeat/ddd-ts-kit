@@ -1,5 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
+{{#if presentation.forms}}
+import { formDocumentsOf } from '@ddd-ts-kit/http';
+{{/if}}
 import { generateOpenApi, routesByDocument } from '@ddd-ts-kit/http/openapi';
 import { contractFormat, stringifyContract } from 'ddd-ts-kit/dist/contracts.js';
 import { offlineAuthenticator } from '{{alias.platform}}/auth/offline-authenticator{{alias.ext}}';
@@ -11,6 +14,9 @@ import { OPENAPI_DOCUMENTS } from '{{alias.platform}}/http/openapi-documents{{al
 
 // Generates the contract from the route definitions: openapi/openapi.yaml, or one file per
 // document of "openapi.documents" in ddd-ts-kit.config.json, in the format of "openapi.format";
+{{#if presentation.forms}}
+// the form of every route that declares one, whole, in openapi/forms/<operationId>.json;
+{{/if}}
 // with --check, fails when a committed file differs. Build products: never edit them by hand.
 const directory = path.resolve('openapi');
 const format = contractFormat();
@@ -20,8 +26,8 @@ const application = composeApplication(inertPersistence(), {
   authenticator: offlineAuthenticator,
 });
 
-const generated = new Map(
-  routesByDocument(application.routes, OPENAPI_DOCUMENTS).map(({ name, title, routes }) => [
+const generated = new Map([
+  ...routesByDocument(application.routes, OPENAPI_DOCUMENTS).map(({ name, title, routes }): [string, string] => [
     `${name}.${format}`,
     stringifyContract(
       generateOpenApi({
@@ -29,22 +35,30 @@ const generated = new Map(
         routes,
         securitySchemes,
         errorMapper: application.boundary.errorMapper,
+{{#if presentation.negotiated}}
+        representations: application.boundary.representations,
+{{/if}}
       }),
       format,
     ),
   ]),
-);
+{{#if presentation.forms}}
+  ...(await formDocumentsOf(application.routes)).map((form): [string, string] => [
+    `forms/${form.operation}.json`,
+    `${JSON.stringify({ jsonForms: form.jsonForms, blocks: form.blocks }, null, 2)}\n`,
+  ]),
+{{/if}}
+]);
 
 if (process.argv.includes('--check')) {
   reportDrift();
 } else {
-  fs.mkdirSync(directory, { recursive: true });
-
   for (const file of staleFiles()) {
     fs.rmSync(path.join(directory, file));
   }
 
   for (const [file, content] of generated) {
+    fs.mkdirSync(path.dirname(path.join(directory, file)), { recursive: true });
     fs.writeFileSync(path.join(directory, file), content);
   }
 }
@@ -66,9 +80,16 @@ function reportDrift(): void {
   }
 }
 
-/** The contracts left by another format or by a document that is gone. */
+/** The contracts left by another format or by a document that is gone{{#if presentation.forms}}, and the forms of routes that declare none any more{{/if}}: what else the folder holds is left alone. */
 function staleFiles(): string[] {
+{{#if presentation.forms}}
+  const forms = path.join(directory, 'forms');
+  const formFiles = fs.existsSync(forms) ? fs.readdirSync(forms).map((file) => `forms/${file}`) : [];
+  const present = [...(fs.existsSync(directory) ? fs.readdirSync(directory) : []), ...formFiles];
+{{/if}}
+{{#unless presentation.forms}}
   const present = fs.existsSync(directory) ? fs.readdirSync(directory) : [];
+{{/unless}}
 
   return present.filter((file) => /\.(?:json|yaml)$/.test(file) && !generated.has(file));
 }

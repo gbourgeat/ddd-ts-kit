@@ -438,17 +438,18 @@ port turns into `id in (...)`. Delegation is one more relation (`delegate`), and
 ## The combined model of the example
 
 `examples/scheduling` layers two models behind the one port
-(`RolesAndRelationshipsAuthorizer`): a short list of role grants decides first (the platform
-administrator, the self-service of a patient), then the relationships decide the rest, a practice
-with its managers and practitioners, a desk held or delegated, a calendar of a desk, an
-appointment of a calendar and of its patient. A right over one element is always a relationship,
-never a role; a list is `all` only for an unconditional grant, otherwise the ids the relationships
-reach. A system actor (a scheduled job, an integration event handler, named
-`<context>.<what it does>`) holds no role: it may use the permissions of its own context on that
-context, and anything else it asks goes to the relationships. The practice is not a tenant there:
-patients book in several practices, so the boundary between practices is a relationship decided
-per element, not a storage boundary
-([ADR 0003 of the example](../../examples/scheduling/docs/adr/0003-a-practice-is-not-a-tenant.md)).
+(`RolesAndRelationshipsAuthorizer`): a short list of role grants decides first (the
+administrator of a network, platform staff, the self-service of a patient), then the
+relationships decide the rest, a practice with its managers and practitioners, a desk held or
+delegated, a calendar of a desk, an appointment of a calendar and of its patient. A right over one
+element is always a relationship, never a role; a list is `all` only for an unconditional grant,
+otherwise the ids the relationships reach. A system actor (a scheduled job, an integration
+event handler, named `<context>.<what it does>`) holds no role: it may use the permissions of
+its own context on that context, and anything else it asks goes to the relationships. The
+practice is not a tenant there: patients book in
+several practices, so the boundary between practices is a relationship decided per element. The
+network of practices is the tenant, a storage boundary under every relationship
+([ADR 0003 of the example](../../examples/scheduling/docs/adr/0003-one-network-is-one-tenant.md)).
 
 | Who asks | What decides | Example |
 |---|---|---|

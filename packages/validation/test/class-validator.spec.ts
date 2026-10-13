@@ -41,6 +41,22 @@ class PlaceOrderDto {
 
 const order = classSchema(PlaceOrderDto);
 
+/** The same fields under another name, as a presentation type often does. */
+class RushOrderDto extends PlaceOrderDto {}
+
+class OptionalNoteDto {
+  @IsOptional()
+  @IsString()
+  note?: string;
+}
+
+class LaterNoteDto extends OptionalNoteDto {}
+
+class GiftOrderDto extends PlaceOrderDto {
+  @IsString()
+  message = '';
+}
+
 describe('the class-validator adapter', () => {
   it('returns an instance of the class with nested instances', () => {
     const result = order.parse({
@@ -128,5 +144,29 @@ describe('the class-validator adapter', () => {
 
   it('carries no definitions when the class has no nested class', () => {
     expect(classSchema(OrderItemDto).toJsonSchema()).not.toHaveProperty('$defs');
+  });
+});
+
+describe('the JSON Schema of a class that extends another', () => {
+  it('holds the properties of the class it extends, when it declares none of its own', () => {
+    expect(classSchema(RushOrderDto).toJsonSchema()).toMatchObject({
+      type: 'object',
+      properties: { customerId: {}, note: {}, items: {} },
+      required: expect.arrayContaining(['customerId', 'items']),
+    });
+  });
+
+  it('requires nothing when no class of its lineage does, and is an object when none declares a field', () => {
+    class NothingDto {}
+
+    expect(classSchema(LaterNoteDto).toJsonSchema()).not.toHaveProperty('required');
+    expect(classSchema(NothingDto).toJsonSchema()).toMatchObject({ type: 'object' });
+  });
+
+  it('holds its own properties next to those it inherits', () => {
+    const schema = classSchema(GiftOrderDto).toJsonSchema();
+
+    expect(Object.keys(schema['properties'] as object).sort()).toEqual(['customerId', 'items', 'message', 'note']);
+    expect(schema['required']).toEqual(expect.arrayContaining(['customerId', 'items', 'message']));
   });
 });

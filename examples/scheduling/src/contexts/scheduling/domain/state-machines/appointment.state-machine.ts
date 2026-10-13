@@ -18,6 +18,7 @@ export const appointmentLifecycle = defineStateMachine({
   transitions: {
     confirm: { from: [AppointmentStatus.Requested], to: AppointmentStatus.Booked },
     reschedule: { from: [AppointmentStatus.Requested, AppointmentStatus.Booked] },
+    annotate: { from: [AppointmentStatus.Requested, AppointmentStatus.Booked] },
     cancel: { from: [AppointmentStatus.Requested, AppointmentStatus.Booked], to: AppointmentStatus.Cancelled },
     expire: { from: [AppointmentStatus.Requested], to: AppointmentStatus.Expired },
     complete: {

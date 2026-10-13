@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { Criteria, offsetPage, scoped } from '@ddd-ts-kit/kernel';
+import { anExecutionContext } from '@ddd-ts-kit/testing';
+import { Criteria, offsetPage, scoped, FixedExecutionScope } from '@ddd-ts-kit/kernel';
 import type { AgendaEntry } from '@/contexts/scheduling/application/ports/agenda.port';
 import { AgendaProjection } from '@/contexts/scheduling/application/projections/agenda.projection';
 import { AppointmentBooked } from '@/contexts/scheduling/domain/events/appointment-booked.event';
@@ -9,6 +10,9 @@ import { KnexAgenda } from '@/contexts/scheduling/infrastructure/persistence/kne
 import { openTestDatabase, type TestDatabase } from '@/platform/database/open-test-database';
 import { anAgendaEntry } from '@/contexts/scheduling/test/builders/agenda-entry.builder';
 import { anAppointment } from '@/contexts/scheduling/test/builders/appointment.builder';
+
+/** The work of these specs runs in one network: every table here holds tenant data. */
+const north = new FixedExecutionScope(anExecutionContext().ofTenant('north').build());
 
 const everything = Criteria.of<AgendaEntry>();
 
@@ -25,7 +29,7 @@ afterAll(async () => {
 
 beforeEach(async () => {
   await database.reset();
-  agenda = new KnexAgenda(database.persistence.database);
+  agenda = new KnexAgenda(database.persistence.database, north);
 });
 
 describe('KnexAgenda', () => {

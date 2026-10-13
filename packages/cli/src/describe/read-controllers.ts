@@ -3,6 +3,7 @@ import type { RequestPart, RouteFact, RouteResponse, UseCaseFact } from './conte
 import type { ContextSources } from './context-sources.js';
 import { decoratorOptions } from './decorator-options.js';
 import { listedIn } from './listed-in.js';
+import { presentationOfRoute } from './presentation-of-route.js';
 import { readRouteGroups } from './read-route-groups.js';
 import type { RouteGroupFact } from './route-group-fact.js';
 
@@ -46,11 +47,12 @@ function routeOf(read: Read, groups: ReadonlyMap<string, RouteGroupFact>, useCas
   const guards = [...group.guards, ...listedIn(options, 'guards')];
   const { kind, useCase } = sentBy(read);
   const sent = useCases.find((candidate) => candidate.kind === kind && candidate.name === useCase);
+  const operationId = field(options, 'operationId') || operationIdOf(source);
 
   return {
     method: field(options, 'method'),
     path: pathOf(field(options, 'path'), group.prefix),
-    operationId: field(options, 'operationId') || operationIdOf(source),
+    operationId,
     group: group.name,
     guards,
     useCase,
@@ -58,6 +60,7 @@ function routeOf(read: Read, groups: ReadonlyMap<string, RouteGroupFact>, useCas
     request: requestOf(source, options),
     responses: responsesOf(source, options),
     errors: errorsOf(options, group, guards),
+    ...presentationOfRoute(options, operationId),
     file,
   };
 }

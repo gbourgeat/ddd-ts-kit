@@ -32,7 +32,10 @@
     "schemas": "shared",
     "valueObjects": "throwing",
     "literals": "named",
-    "queue": "database"
+    "tenancy": "shared-table",
+    "queue": "database",
+    "representations": "negotiated",
+    "forms": "on"
   },
   "contexts": {
     "identity": {

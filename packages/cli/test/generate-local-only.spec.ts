@@ -54,6 +54,8 @@ const LOCAL_RUNS: readonly (readonly string[])[] = [
   ['vocabulary', 'billing', 'InvoiceChannel', '--value', 'email', '--value', 'post', '--allow-name'],
   ['state-machine', 'billing', 'Invoice', '--value', 'paid', '--transition', 'pay:issued>paid', '--force'],
   ['guard', 'billing', 'OfficeHours'],
+  ['representation', 'billing', 'IssueInvoice', 'xml'],
+  ['form', 'billing', 'IssueInvoice'],
   ['integration-handler', 'shipping', 'billing', 'billing.invoice.issued', '--force'],
   ['event-handler', 'billing', 'Invoice', 'Cancelled'],
   ['projection', 'shipping', 'InvoicesToShip', 'billing.invoice.issued'],

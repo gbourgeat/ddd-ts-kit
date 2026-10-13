@@ -447,6 +447,11 @@ export class GetAppointmentSerializer implements Serializer<AppointmentView, App
 }
 ```
 
+A serializer decides the fields of a body, never who sees them: a field reserved to some
+callers is marked on the response schema (`withFieldAccess`), and the media types a route
+answers in are `produces` of its declaration, both explained in
+[representations, field access and forms](representations-and-forms.md).
+
 ## When to keep a function route
 
 `defineRoute` stays supported and both forms run in one project. Keep a function when the

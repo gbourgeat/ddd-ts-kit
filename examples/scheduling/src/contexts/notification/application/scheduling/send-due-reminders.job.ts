@@ -2,7 +2,7 @@ import { type CommandBus, systemActor } from '@ddd-ts-kit/kernel';
 import { Scheduled, type JobExecution, type ScheduledJob } from '@ddd-ts-kit/kernel/declarations';
 import { SendDueRemindersCommand } from '@/contexts/notification/application/commands/send-due-reminders/send-due-reminders.command';
 
-@Scheduled('notification.send-due-reminders', { every: '15m' })
+@Scheduled('notification.send-due-reminders', { every: '15m', tenancy: 'per-tenant' })
 export class SendDueRemindersJob implements ScheduledJob {
   constructor(private readonly commands: CommandBus) {}
 
