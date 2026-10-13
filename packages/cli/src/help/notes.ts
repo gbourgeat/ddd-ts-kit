@@ -13,11 +13,17 @@ export const NOTES = `  affected         what a pull request has to run: the con
   describe         one context as facts: use cases, routes, events, ports, policies, gateways, dependencies
   status           the next step of docs/architecture/plan.md, the slices of docs/architecture/slices.md by
                    status and by owner, and the TODO(domain), TODO(platform) and it.todo left in each context
+  sdk              the typed client of each document of the contract, a workspace package under
+                   clients/<document> without runtime dependency: typed errors keyed by the error codes,
+                   credentials per security scheme; records "sdk" in the config the first time, wires the
+                   scripts (docs:generate regenerates it, docs:check compares it, ci:build builds it);
+                   --check writes nothing and exits 1 while a client differs from its contract
   todo             those markers as file:line, in the project or in one context
   worker-scope     a git worktree on the branch build/<context> (by default ../<project>-<context>), its
                    .ddd-ts-kit/worker.json, and the briefing of the worker of that context
   --commit-size    the files and lines about to be committed against "commit" in the config (20 files and
                    600 lines by default, generated files not counted); --staged reads the index only;
                    advisory, --strict exits 1 when over
+  --sdk            init records "sdk" in the config and generates the clients with the project
   --local-only     generate refuses, and writes nothing, when the kind would write outside its context;
                    "generate --help --json" says which kinds do`;

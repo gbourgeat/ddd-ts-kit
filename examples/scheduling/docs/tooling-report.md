@@ -970,3 +970,48 @@ What the generators did not fit, to change in the kit:
 - The integration specs of this example time out when vitest runs their files in parallel on a
   loaded machine (PGlite per file); `npm run test:postgres` runs them one file at a time, and
   passes.
+
+## 2026-10-12: a typed client of the contract
+
+`node scripts/kit.mjs sdk` generated `clients/api`, the package `scheduling-api-client`, from
+`openapi/openapi.yaml`, and wired the example: `"sdk"` in the config, the workspace, the `paths`
+entry of the package in `tsconfig.json`, knip with the root as a workspace and the clients left
+out, and the scripts (`docs:generate` and `docs:check` end with the client, `ci:build` builds
+it). The scripts that call the CLI go through `scripts/kit.mjs` here, as the others do; the
+command leaves a script that already runs it.
+
+| | |
+|---|---|
+| Generated | 6 sources, 1 748 lines, for 25 operations and 39 error codes; a README of 100 lines; package.json and two tsconfig files |
+| Time of `sdk --check` | 0.18 s, the contract read back from YAML, no build |
+| Specs moved to the client | the specs of registering a person and of opening a practice, and `registerPeople` and `openStaffedPractice`, which four spec files set their people and practice up with: 131 lines added, 97 removed |
+| New helpers | `expectAnswer` and `expectRefusal`, typed by the outcome: a status or a code the operation does not declare does not compile (`'SLOT_TAKEN'` for the 404 of `openPractice` is refused, `418` too) |
+| End-to-end specs run after the change | the two that changed, the three journeys and the spec of adding a member, 36 tests, pass in process |
+| Left on the HTTP helpers | `VALIDATION_FAILED`: a body the contract does not describe cannot be written with the client, which is the point; the steps that wait for another context (`eventually`) |
+
+Frictions met while wiring it, each fixed in the kit before this commit: Biome lays out a
+package.json as npm does (every list expanded), so the command writes it that way; knip, once
+package.json declares workspaces, asks for the root to be a workspace of its own, so the command
+moves what knip.json said of the project under `workspaces["."]`; `imports/alias-declared`
+reported `sdk:build` as a compile without `build-aliases`, which a client does not need (its
+sources import relatively), so the rule leaves the build of `clients/`; and the CLAUDE.md of the
+project said never to add a `paths` entry, so it now says that the command writes the one of
+each client.
+
+The three generators the kit did not take were measured on this contract
+(`docs/tools/client-sdk.md`): none types `problem.code` by the codes the contract lists, so
+`expectRefusal` could not have been written on their output.
+
+## 2026-10-13: the typed client after its review
+
+A review of the client found what the first pass had not met on this example. Each fix was made
+in the kit, then `npm run docs:generate` rewrote `clients/api`:
+
+| | |
+|---|---|
+| A 500 of the application | thrown as `UnexpectedResponseError` with the raw body; it now reads the problem document, `code` `INTERNAL_ERROR` and `requestId`, the reference a caller quotes |
+| `operations.ts` | each operation holds its own description inside its function: no module-level constant, so no two operation ids can clash (`listItems` and `list_items` once both gave `LIST_ITEMS`) |
+| `apiAs(actor)` | gave the token as a raw `authorization` header; it now gives it as the `bearer` credential, a function asked before each request, so the specs prove the authentication of the client against the real server, and it no longer needs `await` |
+| Lockfile | none in this directory, which is a workspace of the kit; a generated npm project is told to run `npm install` when its lock misses a client |
+
+The two changed spec files and the three journeys pass again in process (30 tests).

@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
  * Packs every publishable workspace package the way `npm publish` would and checks the tarball:
- * publint for the manifest (exports, files, types), Are the Types Wrong for type resolution.
+ * publint for the manifest (exports, files, types), Are the Types Wrong for type resolution, and
+ * the MIT notice, which travels in each package as the LICENSE of the repository.
  * Build first: the tarballs hold `dist/`.
  */
 import { spawnSync } from 'node:child_process';
@@ -12,6 +13,7 @@ import path from 'node:path';
 const ROOT = path.resolve(import.meta.dirname, '../..');
 const PACKAGES = path.join(ROOT, 'packages');
 const BIN = path.join(ROOT, 'node_modules/.bin');
+const LICENSE = fs.readFileSync(path.join(ROOT, 'LICENSE'), 'utf8');
 
 process.exit(main());
 
@@ -21,7 +23,7 @@ function main() {
     const failures = publishablePackages().flatMap((entry) => check(entry, destination));
     console.log(
       failures.length === 0
-        ? '\nEvery package passes publint and attw.'
+        ? '\nEvery package passes publint and attw, and carries the LICENSE.'
         : `\n${failures.length} failed check(s):\n${failures.map((failure) => `  ${failure}`).join('\n')}`,
     );
     return failures.length === 0 ? 0 : 1;
@@ -47,10 +49,12 @@ function check({ directory, manifest }, destination) {
   if (!fs.existsSync(path.join(directory, 'dist'))) {
     return [`${manifest.name}: no dist/ directory, run the build first`];
   }
-  const tarball = pack(directory, destination);
-  if (tarball === undefined) {
+  const packed = pack(directory, destination);
+  if (packed === undefined) {
     return [`${manifest.name}: npm pack failed`];
   }
+  const { tarball, files } = packed;
+  const licensed = files.includes('LICENSE') && fs.readFileSync(path.join(directory, 'LICENSE'), 'utf8') === LICENSE;
   const tools = [
     { name: 'publint', args: ['run', tarball, '--strict'] },
     // A package without typed exports (the CLI: a binary only) has no type resolution to check.
@@ -58,7 +62,10 @@ function check({ directory, manifest }, destination) {
       ? [{ name: 'attw', args: [tarball, '--profile', 'esm-only', '--format', 'ascii', '--no-emoji', '--no-color'] }]
       : []),
   ];
-  return tools.filter((tool) => !passes(tool)).map((tool) => `${manifest.name}: ${tool.name}`);
+  return [
+    ...(licensed ? [] : [`${manifest.name}: no LICENSE identical to the one of the repository in the tarball`]),
+    ...tools.filter((tool) => !passes(tool)).map((tool) => `${manifest.name}: ${tool.name}`),
+  ];
 }
 
 function pack(directory, destination) {
@@ -70,8 +77,8 @@ function pack(directory, destination) {
     console.error(result.stderr);
     return undefined;
   }
-  const [{ filename }] = JSON.parse(result.stdout);
-  return path.join(destination, filename);
+  const [{ filename, files }] = JSON.parse(result.stdout);
+  return { tarball: path.join(destination, filename), files: files.map((file) => file.path) };
 }
 
 function hasTypedExports(manifest) {

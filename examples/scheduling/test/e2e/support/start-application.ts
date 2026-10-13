@@ -4,6 +4,7 @@ import path from 'node:path';
 import { RelationTupleStore, type RelationTuple } from '@ddd-ts-kit/auth/rebac';
 import type { ErrorReporter, IntegrationEventSubscriber } from '@ddd-ts-kit/kernel';
 import { createHttpClient, type HttpClient, type HttpHeaders } from '@ddd-ts-kit/testing/e2e';
+import { type Client, createClient } from 'scheduling-api-client';
 import { relateSystemActors } from '@/platform/auth/relate-system-actors';
 import { composeApplication, type Application } from '@/platform/compose-application';
 import type { AppConfig } from '@/platform/config/app-config';
@@ -24,6 +25,8 @@ import { noRedis, testEnvironment } from '$test/e2e/support/test-environment';
 /** The whole application, real adapters included, as a client and another context see it. */
 export interface RunningApplication {
   readonly client: HttpClient;
+  /** The typed client of the contract (`clients/api`), as a consumer of the API calls it; it presents no credential. */
+  readonly api: Client;
   /** Subscribe here (`collectEvents`) to assert the integration events the application publishes. */
   readonly events: IntegrationEventSubscriber;
 
@@ -38,6 +41,8 @@ export interface RunningApplication {
 
   /** The headers that carry the credential of `actor`, for a request sent with `fetch`. */
   headersOf(actor: TestActor): Promise<HttpHeaders>;
+  /** The typed client presenting the credential of `actor`, given as the client is given it: a function asked before each request. */
+  apiAs(actor: TestActor): Client;
 
   /** Stores a relationship, as the application does when an element is created or shared. */
   relate(tuple: RelationTuple): Promise<void>;
@@ -84,18 +89,20 @@ export async function startApplication(options: StartOptions = {}): Promise<Runn
 
   const relay = relayOf(persistence, application);
   const server = await startHttpServer(application, config);
-  const address = 'http://127.0.0.1:' + server.port;
-  const client = createHttpClient(address);
+  const baseUrl = 'http://127.0.0.1:' + server.port;
+  const client = createHttpClient(baseUrl);
   // The store of the running application: what a test relates is what its authorizer reads.
   const tuples = application.container.resolve(RelationTupleStore);
 
   return {
     client,
-    url: address,
+    url: baseUrl,
     filesDirectory,
+    api: createClient({ baseUrl }),
     events: application.eventSubscriber,
     as: async (actor) => client.withHeaders(await credentials.headersOf(actor)),
     headersOf: (actor) => credentials.headersOf(actor),
+    apiAs: (actor) => createClient({ baseUrl, credentials: { bearer: () => credentials.bearerOf(actor) } }),
     relate: (tuple) => tuples.write([tuple]),
     reset: () => relay.whileStopped(() => database.reset().then(() => relateSystemActors(tuples))),
     close: () => closeInOrder({ server, relay, application, redis, database, filesDirectory }),

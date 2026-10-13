@@ -40,6 +40,7 @@ export const SHARDS = [
     'violations.spec.ts': 8,
     'zero-violation.spec.ts': 8,
     'file-uploads.spec.ts': 30,
+    'client-sdk.spec.ts': 8,
   },
 ];
 

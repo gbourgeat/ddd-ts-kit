@@ -8,6 +8,7 @@ import { wireContext } from '../generate/kinds/wire-context.js';
 import { formatJson } from '../json/format-json.js';
 import { parseContextName, toName } from '../naming/index.js';
 import { inDialect } from '../package-manager/in-dialect.js';
+import { setUpSdk } from '../sdk/index.js';
 import { readTemplate, renderTemplate } from '../templating/index.js';
 import { Workspace, type WorkspaceReport } from '../workspace/index.js';
 import { addContext } from './add-context.js';
@@ -54,6 +55,7 @@ export function runInit(root: string, options: InitOptions): WorkspaceReport {
 
   writeDocs(ws, withContexts);
   writeContracts(ws, withContexts, projectName);
+  setUpSdk(ws, withContexts);
 
   const report = ws.commit(options.dryRun);
 

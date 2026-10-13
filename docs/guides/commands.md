@@ -97,6 +97,7 @@ The realistic sequence for an order-taking service, each line in the order it is
 |---|---|---|---|---|
 | `npm run build`, `npm start` | compiles, rewrites the aliases of `dist/`, runs it with plain Node | to ship | `dist/` | the image |
 | `docker build .` | the image of the `Dockerfile` that `init` wrote (the pipeline builds it without pushing) | to ship | an image | `npm run db:migrate` against the target database, then the deployment |
+| `npx ddd-ts-kit sdk` (or `init --sdk`) | generates the typed client of each document of the contract under `clients/<document>`, wires its scripts, and keeps it current (`docs:generate` runs it, `docs:check` compares it) | when another team, a front end or a test calls the API | one workspace package per document, built by `npm run sdk:build` | `npm publish --workspace clients/<document>` by hand, see [the client SDK](../tools/client-sdk.md) |
 | `npx ddd-ts-kit generate worker`, `generate service <context>` | a process for the jobs, or one context run alone | when the jobs or one context must scale apart | `src/apps/<name>/main.ts` | `/ddd-ts-kit:extract-service` |
 
 ## Migrate after a kit upgrade
@@ -139,7 +140,7 @@ Usage
                   [--dependencies signature|listed] [--refusals factories|classes]
                   [--routes controllers|functions]
                   [--package-manager npm|pnpm] [--allow-no-outbox "<reason>"] [--import-alias '$<name>/']
-                  [--import-extension none|js]
+                  [--import-extension none|js] [--sdk]
                   [--context <name>:<core|supporting|generic>]... [--dry-run] [--force]
   ddd-ts-kit generate <kind> ... [--term "<Term>=<meaning>"]... [--allow-name] [--local-only] [--dry-run] [--force]     (alias: g)
   ddd-ts-kit generate --help --json
@@ -149,6 +150,7 @@ Usage
   ddd-ts-kit todo [<context>]
   ddd-ts-kit worker-scope <context> [--worktree <path>] [--branch <name>] [--dry-run]
   ddd-ts-kit docs [--check]
+  ddd-ts-kit sdk [--check] [--dry-run]
   ddd-ts-kit depcruise-config [--check|--write]
   ddd-ts-kit build-aliases [--project <tsconfig>]
   ddd-ts-kit error-factories --plan | --apply [--dry-run]
@@ -177,12 +179,18 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
   describe         one context as facts: use cases, routes, events, ports, policies, gateways, dependencies
   status           the next step of docs/architecture/plan.md, the slices of docs/architecture/slices.md by
                    status and by owner, and the TODO(domain), TODO(platform) and it.todo left in each context
+  sdk              the typed client of each document of the contract, a workspace package under
+                   clients/<document> without runtime dependency: typed errors keyed by the error codes,
+                   credentials per security scheme; records "sdk" in the config the first time, wires the
+                   scripts (docs:generate regenerates it, docs:check compares it, ci:build builds it);
+                   --check writes nothing and exits 1 while a client differs from its contract
   todo             those markers as file:line, in the project or in one context
   worker-scope     a git worktree on the branch build/<context> (by default ../<project>-<context>), its
                    .ddd-ts-kit/worker.json, and the briefing of the worker of that context
   --commit-size    the files and lines about to be committed against "commit" in the config (20 files and
                    600 lines by default, generated files not counted); --staged reads the index only;
                    advisory, --strict exits 1 when over
+  --sdk            init records "sdk" in the config and generates the clients with the project
   --local-only     generate refuses, and writes nothing, when the kind would write outside its context;
                    "generate --help --json" says which kinds do
 

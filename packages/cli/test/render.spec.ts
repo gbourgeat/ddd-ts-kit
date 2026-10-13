@@ -89,6 +89,7 @@ describe('shipped templates', () => {
         'query',
         'repository',
         'route',
+        'sdk',
         'value-object',
         'worker',
       ].sort(),

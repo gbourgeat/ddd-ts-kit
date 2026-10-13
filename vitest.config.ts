@@ -44,9 +44,23 @@ const FLOORS: Readonly<Record<string, readonly [number, number, number, number]>
 const AFFECTED = (process.env['KIT_AFFECTED'] ?? '').split(',').filter((name) => name !== '');
 const MEASURED = Object.entries(FLOORS).filter(([name]) => AFFECTED.length === 0 || AFFECTED.includes(name));
 
+/**
+ * Git hands its hooks the repository they run for: in a worktree, a pre-push hook gets GIT_DIR. Inherited
+ * by the specs, every git command they run in a throwaway repository would act on this one instead.
+ */
+const REPOSITORY_OF_THE_CALLER = ['GIT_DIR', 'GIT_WORK_TREE', 'GIT_INDEX_FILE', 'GIT_COMMON_DIR', 'GIT_PREFIX'];
+
+for (const name of REPOSITORY_OF_THE_CALLER) {
+  Reflect.deleteProperty(process.env, name);
+}
+
 export default defineConfig({
   test: {
     include: ['packages/*/test/**/*.spec.ts'],
+    // Every file runs at once on a laptop, its PGlite databases and child compilers included: a
+    // spec slowed by its neighbours is not a failing one, and a spec that hangs still fails.
+    testTimeout: 30_000,
+    hookTimeout: 60_000,
     coverage: {
       provider: 'v8',
       include: AFFECTED.length === 0 ? ['packages/*/src/**'] : AFFECTED.map((name) => `packages/${name}/src/**`),
