@@ -1,5 +1,5 @@
 [English](ARCHITECTURE.md) · **Français**
-<!-- translation-of: ARCHITECTURE.md sha256:44eb558faa2afb6e -->
+<!-- translation-of: ARCHITECTURE.md sha256:dcc68555aad761b2 -->
 
 # Référence de l'architecture
 
@@ -1041,7 +1041,7 @@ test d'architecture généré démarre chaque contexte seul pour prouver que cel
   (seul l'auteur peut modifier, pas après la clôture) sont des politiques dans
   `application/authorization/*.policy.ts` ; le gestionnaire les interroge, une fois l'agrégat
   chargé, par le port `Access` de `@ddd-ts-kit/auth`
-  (`access.authorize(command.actor, permission, element)`).
+  (`access.authorize(command.actor, permission, appointment)`).
 - *Les invariants* restent dans le domaine : « une facture ne peut pas être payée deux fois »
   n'est pas une permission.
 

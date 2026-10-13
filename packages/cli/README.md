@@ -188,11 +188,11 @@ export class IssueInvoiceHandler implements CommandHandler<IssueInvoiceCommand> 
   ) {}
 
   async execute(command: IssueInvoiceCommand): Promise<string> {
-    const target = Invoice.create(this.ids.next(), this.clock.now());
+    const invoice = Invoice.create(this.ids.next(), this.clock.now());
 
-    await this.invoiceRepository.save(target);
+    await this.invoiceRepository.save(invoice);
 
-    return target.id;
+    return invoice.id;
   }
 }
 ```

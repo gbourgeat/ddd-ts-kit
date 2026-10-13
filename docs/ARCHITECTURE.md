@@ -999,7 +999,7 @@ a generated architecture test boots every context alone to prove it stays true.
   aggregate (only the author may edit, not after closing) are policies in
   `application/authorization/*.policy.ts`; the handler asks them, once the aggregate is
   loaded, through the `Access` port of `@ddd-ts-kit/auth`
-  (`access.authorize(command.actor, permission, element)`).
+  (`access.authorize(command.actor, permission, appointment)`).
 - *Invariants* stay in the domain: "an invoice cannot be paid twice" is not a permission.
 
 The authorization model is the project's choice, behind the one port: roles (RBAC), policies

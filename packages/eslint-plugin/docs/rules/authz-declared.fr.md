@@ -1,5 +1,5 @@
 [English](authz-declared.md) · **Français**
-<!-- translation-of: authz-declared.md sha256:45bde1afe67f1b4c -->
+<!-- translation-of: authz-declared.md sha256:38d77053454decf3 -->
 
 # ddd-ts-kit/authz-declared
 
@@ -79,7 +79,7 @@ Aucune.
 - Un message enregistré atteint par un *barrel*, un export qui renomme, un import par défaut ou un espace de noms n'est pas suivi jusqu'à sa classe : son décorateur n'est pas vu et l'enregistrement est signalé.
 - Dans un projet de style déclaré qui garde un `<context>.module.ts`, un message qui y est enregistré avec `.requires(...)` et écrit sans décorateur est quand même signalé dans son propre fichier : mettez le décorateur sur la classe.
 - Un fichier `*.command.ts` ou `*.query.ts` qui n'exporte aucune classe n'est pas signalé ici.
-- Un enregistrement réparti sur plusieurs instructions (`const target = builder.command(X); target.handledBy(H);`) n'est pas suivi.
+- Un enregistrement réparti sur plusieurs instructions (`const registration = builder.command(X); registration.handledBy(H);`) n'est pas suivi.
 - Un câblage écrit à la main avec `AuthorizationMap.of(requires(...), publicUseCase(...))` n'est pas lu : `authorizationMiddleware` refuse un cas d'usage non déclaré à l'exécution, et `createApplication({ authorization: 'required' })` au démarrage.
 - Un message qui étend simplement `Command` ou `Query` alors que son enregistrement appelle `.requires(...)` s'étend sur deux fichiers et n'est pas vu ici ; le compilateur le refuse, puisque `requires` n'existe que pour un message qui porte un acteur.
 - Une spécification de route qui n'est pas un littéral d'objet, ou qui étale un autre objet, n'est pas jugée.

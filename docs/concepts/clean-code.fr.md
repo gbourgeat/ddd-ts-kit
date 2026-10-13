@@ -1,5 +1,5 @@
 [English](clean-code.md) · **Français**
-<!-- translation-of: clean-code.md sha256:c68747a88bff63b7 -->
+<!-- translation-of: clean-code.md sha256:f7877baed63a6639 -->
 
 # Le code propre, tel que le kit l'applique
 
@@ -73,6 +73,72 @@ const MINUTES_PER_HOUR = 60;
 
 return Number(hours) * MINUTES_PER_HOUR + Number(minutes);
 ```
+
+## Nommer d'après le métier, jamais avec un mot générique
+
+Il en va de même pour les noms à l'intérieur d'une fonction. Une variable, un paramètre, une
+propriété, un nom déstructuré et une variable de boucle de `domain/` et `application/` portent le
+nom du concept qu'ils désignent : `appointment`, `reminder`, `delegation`, jamais `target`,
+`data`, `item`, `obj`, `info`, `tmp` et leurs semblables. Un mot générique dit qu'une valeur est
+là, et rien de ce qu'elle est : `target` pourrait être un rendez-vous, un agenda ou un cabinet, et
+le lecteur doit remonter jusqu'à la ligne qui l'a chargé ; `data` et `item` en disent encore moins.
+Le langage omniprésent s'arrête alors aux noms des classes, et un gestionnaire ne se lit plus comme
+l'expert du domaine le raconterait. Un nom générique se propage aussi, parce que la ligne suivante
+s'écrit en copiant la précédente : les gabarits de gestionnaire de commande du kit écrivaient
+`const target = X.create(..)` jusqu'à la 0.17, et l'application d'exemple en a hérité à quarante
+endroits.
+
+Règle `naming/business-name`, tenue par `ddd-ts-kit check` et par ESLint. `npx eslint --fix`
+renomme une variable dont l'initialiseur nomme le concept (`X.create(..)`, `new X(..)`, une lecture
+d'un *repository*, `found ?? X.create(..)`), avec chacun de ses usages ; une variable de boucle est
+signalée avec le singulier de sa collection. La liste des mots est `businessNames` de la
+configuration ([Configuration](../CONFIG.fr.md)).
+
+<!-- checked sample -->
+```ts
+export class Reminder {
+  private sentAt: Date | undefined;
+
+  constructor(
+    readonly id: string,
+    readonly dueAt: Date,
+  ) {}
+
+  get isSent(): boolean {
+    return this.sentAt !== undefined;
+  }
+
+  send(at: Date): void {
+    this.sentAt = at;
+  }
+}
+
+export abstract class ReminderRepository {
+  abstract findDue(at: Date): Promise<readonly Reminder[]>;
+
+  abstract save(reminder: Reminder): Promise<void>;
+}
+
+// Avant : quelque chose est envoyé, et le lecteur doit chercher quoi.
+export async function sendDue(repository: ReminderRepository, at: Date): Promise<void> {
+  for (const target of await repository.findDue(at)) {
+    target.send(at);
+    await repository.save(target);
+  }
+}
+
+// Après : la boucle se lit comme le métier la dit.
+export async function sendDueReminders(reminderRepository: ReminderRepository, at: Date): Promise<void> {
+  for (const reminder of await reminderRepository.findDue(at)) {
+    reminder.send(at);
+    await reminderRepository.save(reminder);
+  }
+}
+```
+
+Un mot à l'intérieur d'un nom plus long est qualifié et reste (`targetDate`, `itemCount`) ;
+l'infrastructure, la présentation et les tests ne sont pas jugés, même si un *serializer* gagne
+toujours à être nommé d'après ce qu'il sérialise.
 
 ## De petites fonctions, une seule chose, un seul niveau d'abstraction
 

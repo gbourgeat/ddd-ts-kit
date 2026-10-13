@@ -1,5 +1,5 @@
 [English](file-storage.md) · **Français**
-<!-- translation-of: file-storage.md sha256:5dca8f258a3e33ca -->
+<!-- translation-of: file-storage.md sha256:ac3c3c709ea1a662 -->
 
 # Connecteurs de stockage de fichiers
 
@@ -172,9 +172,9 @@ export class GcsFileStorage extends FileStorage {
     const mediaType = mediaTypeOf(options.mediaType);
     // compte et hache le contenu au passage, et échoue avec FILE_TOO_LARGE au-delà de maxBytes
     const inspection = new FileInspection(options.maxBytes === undefined ? {} : { maxBytes: options.maxBytes });
-    const target = this.bucket.file(assertFileKey(key)).createWriteStream({ contentType: mediaType, resumable: true });
+    const upload = this.bucket.file(assertFileKey(key)).createWriteStream({ contentType: mediaType, resumable: true });
 
-    await pipeline(content, inspection, target);
+    await pipeline(content, inspection, upload);
 
     return { key, size: inspection.size, mediaType, checksum: inspection.checksum };
   }

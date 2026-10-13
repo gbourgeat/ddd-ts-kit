@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:f80ea7b67af13810 -->
+<!-- translation-of: README.md sha256:0380d292b64e3212 -->
 
 # ddd-ts-kit
 
@@ -200,11 +200,11 @@ export class IssueInvoiceHandler implements CommandHandler<IssueInvoiceCommand> 
   ) {}
 
   async execute(command: IssueInvoiceCommand): Promise<string> {
-    const target = Invoice.create(this.ids.next(), this.clock.now());
+    const invoice = Invoice.create(this.ids.next(), this.clock.now());
 
-    await this.invoiceRepository.save(target);
+    await this.invoiceRepository.save(invoice);
 
-    return target.id;
+    return invoice.id;
   }
 }
 ```

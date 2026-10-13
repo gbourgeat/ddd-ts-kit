@@ -30,6 +30,12 @@ without fighting them. Reference: `docs/ARCHITECTURE.md` section 6.
   `Abstract`, `Dto`, `Entity`, `Model` in a name of the domain or of a use case
   (`language/no-technical-name`). A technical suffix is allowed only where it names the architectural role outside the
   domain (`OrderRepository`, `PlaceOrderHandler`).
+- A variable, a parameter, a property, a destructured name and a loop variable name the concept
+  they hold, from the glossary: `const appointment = await this.appointmentRepository.findById(id)`,
+  `for (const reminder of due)`. Never `target`, `data`, `item`, `obj`, `info`, `element`, `tmp`
+  and the like in `domain/` and `application/` (`naming/business-name`): they hide which concept a
+  line handles. `npx eslint --fix` renames a binding built by `X.create(..)`, `new X(..)` or read
+  from a repository; rename a loop variable and the others yourself, after the message.
 - One word per concept in a context: not `fetch` here and `retrieve` there.
 - A boolean reads as a predicate (`isOverdue`), a collection as a plural, a function that
   answers as a question, a function that acts as a verb.

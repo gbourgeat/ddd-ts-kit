@@ -67,7 +67,7 @@ npx ddd-ts-kit generate policy <ctx> <Name> --permission <aggregate>.<action> --
 
 A policy is a named, pure, unit-tested class in `application/authorization/*.policy.ts`
 (`@Policy(permission, { name: '<context>.<name>' })`); the handler loads the aggregate and
-asks `Access.authorize(command.actor, permission, element)`. A rule that holds whoever asks ("not after publication") is an invariant: it goes in
+asks `Access.authorize(command.actor, permission, appointment)`, the loaded aggregate named after its concept. A rule that holds whoever asks ("not after publication") is an invariant: it goes in
 the aggregate.
 
 ## Searches

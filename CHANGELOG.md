@@ -4,6 +4,36 @@ What each version changes for someone who uses the kit. The packages of `package
 together, under one version; the notes of each [GitHub release](https://github.com/gbourgeat/ddd-ts-kit/releases)
 list the pull requests behind it.
 
+## Unreleased
+
+**Names of the business, never `target`.** The command handler templates named the aggregate
+they load or build `target`, and every project generated from them inherited the word. A
+generated handler now names it after its concept, `const invoice = Invoice.create(..)`, and a
+generated search names its lines after what it searches (`invoice`, `invoices`, never `item`).
+A new rule, `naming/business-name`, held by `ddd-ts-kit check` and by `@ddd-ts-kit/eslint-plugin`
+(`ddd-ts-kit/naming-business-name`), reports a variable, a loop variable, a destructured binding,
+a parameter or a property of `domain/`, `application/` and the shared kernel named `target`,
+`targets`, `data`, `item`, `items`, `obj`, `object`, `thing`, `things`, `stuff`, `info`,
+`element`, `el`, `tmp`, `temp`, `foo`, `bar` or `baz`. ESLint fixes what it can name: a variable
+built by `X.create(..)` or `new X(..)`, read from a repository (by the type of the call when the
+parser has types, as the presets give it, by `xRepository.findById(..)` otherwise), or both
+(`found ?? X.create(..)`) is renamed with every use to the camel name of the concept, unless that
+name is taken; a loop variable is reported with the singular of its collection. The list is
+`businessNames` of the config (`{ "words": [..], "allow": [..] }`), which the `words` and `allow`
+options of the ESLint rule come over. `ddd-ts-kit explain naming/business-name` gives the reason
+and both forms; the clean code and ubiquitous language pages say why `target`, `data` and `item`
+hide the language.
+
+The rule is on in every project, new or existing: a config without `businessNames` reads the
+default list. To move:
+
+1. `npx eslint . --fix` renames the bindings whose initializer names the concept (in the example
+   application, 23 of 27);
+2. `npx eslint .` and `npx ddd-ts-kit check` list what is left, each message with the name to
+   write when the code says it (a loop variable, the result of a domain service): rename them;
+3. a word that is the term of your business (`item` of a catalogue, `object` of a relationship
+   model) goes in `businessNames.allow` of the config.
+
 ## 0.16.1
 
 **The documentation is in French too.** Every reader-facing page of the repository (the root

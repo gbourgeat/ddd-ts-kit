@@ -52,6 +52,10 @@ the tree, so a generated file conforms by construction and costs no tokens.
   parameter typed by a port, and its decorator lists nothing: the generator reads the
   signature into the generated file of the context. Add a dependency by adding a parameter,
   then `npx ddd-ts-kit docs` (skill `ddd-ts-kit:wiring`).
+- **Names.** A generated handler names the aggregate after its concept,
+  `const invoice = Invoice.create(..)`, and a generated search names its lines after what it
+  searches (`invoice`, `invoices`). Keep the business word when you fill the `TODO(domain)`:
+  never `target`, `data` or `item` (`naming/business-name`).
 - **Access.** `command` and `query` are refused without `--permission <aggregate>.<action>`
   or `--public`; the permission joins `<context>.permissions.ts`.
 - **Ports.** A port is an abstract class, used as its own injection token: no constant, no
