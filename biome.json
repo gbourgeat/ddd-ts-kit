@@ -19,7 +19,8 @@
       "!**/.dependency-cruiser.cjs",
       "!**/openapi/*.json",
       "!**/asyncapi.json",
-      "!**/migrations/meta"
+      "!**/migrations/meta",
+      "!.ddd-ts-kit"
     ]
   },
   "formatter": {
