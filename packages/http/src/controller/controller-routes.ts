@@ -7,6 +7,7 @@ import type { Route } from '../route/route.js';
 import type { ControllerClass } from './controller-class.js';
 import type { ErasedController } from './erased-controller.js';
 import type { ControllerRoutesOptions } from './controller-routes-options.js';
+import type { ControllerSpec } from './controller-spec.js';
 import type { GuardRequest } from './guard-request.js';
 import type { Guard } from './guard.js';
 import { resolvedController, type ResolvedController } from './resolved-controller.js';
@@ -46,6 +47,7 @@ function routeOf(resolved: ResolvedController, options: ControllerRoutesOptions)
     errors: [...new Set([...declared.errors, ...resolved.guards.flatMap((guard) => guard.documents?.errors ?? [])])],
     security: securityOf(resolved.guards, options.security ?? DEFAULT_SECURITY),
     ...(spec.deprecated === true ? { deprecated: true } : {}),
+    ...mediaTypesOf(spec),
     async handle(input: RouteInput): Promise<RouteOutput> {
       for (const guard of guards) {
         await guard.check(guardRequest(identity, input));
@@ -67,6 +69,13 @@ function requestOf(parts: RequestSchemas): { request?: RequestSchemas } {
   }).filter(([, schema]) => schema !== undefined);
 
   return declared.length === 0 ? {} : { request: Object.fromEntries(declared) };
+}
+
+function mediaTypesOf({ produces, consumes }: ControllerSpec): Pick<Route, 'produces' | 'consumes'> {
+  return {
+    ...(produces === undefined ? {} : { produces: [...produces] }),
+    ...(consumes === undefined ? {} : { consumes: [...consumes] }),
+  };
 }
 
 function bodyOf(body: Schema<unknown> | undefined): { body?: Schema<unknown> } {

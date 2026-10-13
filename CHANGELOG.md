@@ -6,6 +6,22 @@ list the pull requests behind it.
 
 ## Unreleased
 
+**A route answers in JSON, XML or CSV, as the request asks.** `Representations.standard()` of
+`@ddd-ts-kit/http`, given to the adapters (`representations` of the mount options) and to
+`generateOpenApi`, chooses per request the media type the `Accept` header prefers among those
+the route declares in `produces` (on `@Controller` or `defineRoute`), JSON first; none
+acceptable is `406 NOT_ACCEPTABLE`, before the handler runs. A refusal is written as
+`application/problem+xml` when XML was negotiated. A route that declares `consumes:
+['application/xml']` reads an XML body into the value the JSON path produces, validated by the
+same schema; another media type is `415 UNSUPPORTED_MEDIA_TYPE`. XML follows one convention,
+the default of the XML object of OpenAPI, with a parser of the package's own that refuses any
+document type declaration (no new dependency). CSV is written for a page or a list of flat rows,
+and a handler that answers an `AsyncIterable` under `streamSchemaOf(item)` is streamed in every
+representation. The contract lists every media type of each route, and `NOT_ACCEPTABLE` and
+`UNSUPPORTED_MEDIA_TYPE` join the default error mapping and the codes of the kit. Without the
+option nothing changes: every answer stays JSON. `money` and `decimalText` write money and
+decimals as strings, the rule every representation follows.
+
 **Every package carries the MIT notice.** Each published package now holds the `LICENSE` of the
 repository next to its `dist/`, and `npm run package:check` refuses a tarball without it, or with
 another text. Earlier versions were published without it.

@@ -1,6 +1,7 @@
 import type { JsonSchema } from '@ddd-ts-kit/validation';
 import { createErrorMapper } from '../error/create-error-mapper.js';
 import type { ErrorMapper } from '../error/error-mapper.js';
+import { Representations } from '../representation/representations.js';
 import { assertUniqueRoutes } from '../route/assert-unique-routes.js';
 import type { HttpMethod } from '../route/http-method.js';
 import type { Route } from '../route/route.js';
@@ -26,6 +27,8 @@ export interface GenerateOpenApiOptions {
   readonly security?: readonly string[];
   /** Must be the mapper the server runs with, or the documented statuses lie. */
   readonly errorMapper?: ErrorMapper;
+  /** Must be the representations the server runs with: they say the problem type of each media type. Default: `Representations.standard()`. */
+  readonly representations?: Representations;
 }
 
 // The order OpenAPI tooling conventionally prints operations in.
@@ -36,7 +39,13 @@ export function generateOpenApi(options: GenerateOpenApiOptions): OpenApiDocumen
 
   const definitions = new Definitions();
   const routes = sortedRoutes(options.routes);
-  const paths = pathItems(routes, options.errorMapper ?? createErrorMapper(), definitions);
+
+  const paths = pathItems(routes, {
+    mapper: options.errorMapper ?? createErrorMapper(),
+    definitions,
+    representations: options.representations ?? Representations.standard(),
+  });
+
   const tags = [...new Set(routes.flatMap((route) => route.tags ?? []))].sort(compare);
   const securitySchemes = options.securitySchemes;
 

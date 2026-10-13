@@ -23,4 +23,12 @@ export interface RouteSpec<
    */
   readonly security: readonly string[] | false;
   readonly deprecated?: boolean;
+  /**
+   * The media types the route answers in besides `application/json`, chosen per request by its
+   * `Accept` header among the representations of the platform: `['application/xml', 'text/csv']`.
+   * Each one is documented in the contract with the schema of the response.
+   */
+  readonly produces?: readonly string[];
+  /** The media types the route reads a body in besides `application/json`: `['application/xml']`. */
+  readonly consumes?: readonly string[];
 }

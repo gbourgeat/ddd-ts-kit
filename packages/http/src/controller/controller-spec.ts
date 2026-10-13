@@ -27,4 +27,8 @@ export interface ControllerSpec {
   /** Run after the guards of the group. With no group, at least one is required: `[Public]` says the route is open. */
   readonly guards?: readonly GuardReference[];
   readonly deprecated?: boolean;
+  /** Media types answered besides `application/json`, chosen by `Accept`: `['application/xml', 'text/csv']`. */
+  readonly produces?: readonly string[];
+  /** Media types a body is read in besides `application/json`: `['application/xml']`. */
+  readonly consumes?: readonly string[];
 }

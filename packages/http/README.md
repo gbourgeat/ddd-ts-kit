@@ -368,6 +368,127 @@ issue per mistake, none quoting a value:
 The scope of the actor is not a parameter: the handler of the query joins it with `scoped`,
 and nothing in a query string can remove it.
 
+## Representations: JSON, XML, CSV
+
+A route keeps answering a typed value its response schema checks; a `Representation` turns it
+into the text of one media type, chosen per request by the `Accept` header among those the
+route declares. The application registers its representations once and gives the same set to
+the adapters and to the contract generator:
+
+```ts
+import { Representations, type ExecuteOptions } from '@ddd-ts-kit/http';
+
+const representations = Representations.standard(); // JSON, XML and CSV
+const options: ExecuteOptions = { ...boundary, representations };
+const document = generateOpenApi({ info, routes, errorMapper, representations });
+```
+
+A route says what it answers in besides JSON (`produces`) and what it reads a body in besides
+JSON (`consumes`), on `@Controller` or on `defineRoute` alike:
+
+```ts
+@Controller({
+  group: PartnerRoutes, method: 'GET', path: '/:practiceId/appointments', summary: 'Export appointments',
+  params, response: { status: 200, body: streamSchemaOf(line) },
+  produces: ['text/csv', 'application/xml'],
+})
+```
+
+| Media type | Answers | Reads | Notes |
+|---|---|---|---|
+| `application/json` | always, and first: what a request without `Accept` gets | always | as before; a big integer is written as a string |
+| `application/problem+json` | a refusal, unless XML was negotiated | | RFC 9457, as before |
+| `application/xml` | `XmlRepresentation` | `XmlRepresentation`, when the route `consumes` it | the convention below |
+| `application/problem+xml` | a refusal of a request that negotiated XML | | `<problem xmlns="urn:ietf:rfc:7807">` |
+| `text/csv` | `CsvRepresentation`, for a page or a list of flat rows | never | streamed; RFC 4180 |
+
+- **Negotiation** (RFC 9110): the media type of highest quality among those the route offers,
+  the most specific range of the header deciding, the order `application/json` then `produces`
+  breaking ties. None acceptable: `406 NOT_ACCEPTABLE` in `application/problem+json`, before
+  the handler runs. A route that offers more than one answers with `Vary: accept`.
+- **Bodies**: a body sent in a media type the route consumes is read by its representation
+  into the value the JSON path produces, then validated by the same schema; one sent in a media
+  type the route does not read is refused with `415 UNSUPPORTED_MEDIA_TYPE`. `mountExpress`
+  installs a text parser on each route that consumes another media type, `mountFastify` a
+  content type parser: nothing to add to the application.
+- **Streaming**: a handler that answers an `AsyncIterable` (a cursor, a paged read) under a
+  `streamSchemaOf(item)` response is written item by item in every representation (one JSON
+  array, one XML root, one CSV line per row), honouring the back pressure of the client and
+  stopping when it leaves. The first item is read before the status is sent: a cursor that
+  cannot open is answered as a problem. A failure after that can only cut the response short.
+- **Mount-time checks**: a media type no registered representation provides, a CSV answer
+  whose rows hold a list or an object, and a consumed media type nothing reads are refused with
+  a `DeclarationError` when the routes are mounted.
+- **The contract**: every media type a route answers in is listed under its response with the
+  schema of the response, every media type it reads under its request body, the problem types
+  under each refusal, and `406`, `415` with their codes when the route declares `produces` or
+  `consumes`.
+- **Without `representations`**, nothing changes: every answer is JSON, whatever the request
+  accepts, and `produces` and `consumes` are only documented.
+
+### The serialization rules, the same in every representation
+
+| Value | Written as |
+|---|---|
+| an instant (`Date`) | ISO 8601 in UTC, `2026-10-13T07:05:00.000Z` |
+| a decimal | a string, `decimalText(value)`: `'12.30'`, never a binary number a client rounds |
+| money | `money(amount, currency)`: `{ amount: '12.30', currency: 'EUR' }`, the ISO 4217 code always next to the amount |
+| an identifier | a string; a `bigint` is written in full |
+| a closed vocabulary | its code, the value of the object `as const` that declares it |
+| a list | the page envelope `{ items, total?, nextCursor? }` of `pageResponse`, or a streamed list |
+
+`standard-serialization.spec.ts` holds the three representations to this table.
+
+### The XML convention
+
+One convention, the default of the XML object of OpenAPI, so the contract describes the XML
+with nothing added:
+
+- the root element is `xml.name` of the response schema, else the operation id of the route
+  (`<getAppointment>`), and declares `xmlns:xsi`;
+- a property is an element of its name, in the order of the schema; `xml.name` renames it,
+  `xml.attribute: true` makes a scalar an attribute; a name that cannot be an element name is
+  written `<entry key="two words">`;
+- a list is unwrapped: one element per item, named after the property (or `items.xml.name`);
+  `xml.wrapped: true` puts them in an element of the property, each named `items.xml.name` or
+  `item`; a list at the root holds `<item>` elements;
+- `null` is an empty element with `xsi:nil="true"`; a missing value is no element at all;
+- a scalar is the text JSON would hold: an instant in ISO 8601 UTC, `true` or `false`, a
+  number as JavaScript writes it; a character XML 1.0 cannot carry becomes U+FFFD.
+
+Reading follows the schema: text becomes a number or a boolean where the schema says so,
+repeated elements a list, an element the schema does not declare stays in the value so the
+schema refuses it as it refuses an unknown JSON property. The parser is the package's own and
+reads elements, attributes, CDATA, comments, processing instructions, the predefined entities
+and character references; it refuses a document type declaration, so no body can declare an
+entity (no XXE, no expansion bomb), and nests at most 64 elements deep.
+
+### CSV
+
+One header line with the properties of a row in the order of the schema, then one line per
+row, `\r\n` at the end of each. A cell holding a comma, a quote, a line break or surrounding
+spaces is quoted; a text that starts with `=`, `+`, `-`, `@`, a tab or a carriage return is
+prefixed with `'`, so a spreadsheet does not run it as a formula (a number never is). `null`
+and a missing value are an empty cell. CSV is never read: an import is a route of its own,
+with a body schema of its own.
+
+### A representation of your own
+
+```ts
+class YamlRepresentation implements Representation {
+  readonly mediaType = 'application/yaml';
+  readonly problemMediaType = undefined; // refusals stay application/problem+json
+
+  write(body: unknown, shape: BodyShape): RepresentedBody { ... }
+}
+
+const representations = Representations.of(new XmlRepresentation(), new YamlRepresentation());
+```
+
+`write` gets the value and its shape (the JSON Schema of the response and the operation id);
+`read`, when present, turns a body back into the value; `refuses`, when present, says at mount
+time why a shape cannot be written. One given for `application/json` replaces the default.
+
 ## Express 5
 
 ```ts
@@ -499,4 +620,11 @@ one document at a time: `/docs` lists their pages); one document is served as
 - A body the framework itself refuses (malformed JSON, payload too large) is answered by the
   framework's own error handler, before the pipeline runs.
 - Routes are JSON first. A handler may answer a string or bytes by setting its own
-  `content-type` header; streaming is out of scope.
+  `content-type` header, which no representation touches.
+- XML is a faithful rendering of the JSON model, not a design tool for XML vocabularies: no
+  namespaces but the default one of the root, no mixed content, no XML Schema. A partner format
+  with a schema of its own is an anti-corruption layer with its own mapper.
+- A streamed list cannot be refused once its first item is written: the connection is cut,
+  and the client sees a truncated body. The items of a stream are not checked one by one by
+  `validateResponses`.
+- CSV is written, never read, and holds flat rows only.

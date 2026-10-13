@@ -1,5 +1,6 @@
 import type { Clock, ExecutionScope } from '@ddd-ts-kit/kernel';
 import type { ErrorMapper } from '../error/error-mapper.js';
+import type { Representations } from '../representation/representations.js';
 import type { ErrorContext } from './error-context.js';
 import type { RawRequest } from './raw-request.js';
 import type { RouteAround } from './route-around.js';
@@ -37,4 +38,12 @@ export interface ExecuteOptions {
    * `@ddd-ts-kit/tracing` fits as it is.
    */
   readonly around?: RouteAround;
+  /**
+   * The media types the application answers and reads in (`Representations.standard()`): each
+   * request is answered in the one its `Accept` header prefers among those its route declares
+   * (406 when none fits), a refusal in the matching problem type, and a body sent in a media
+   * type the route consumes is read before its schema validates it (415 for another one). Left
+   * out, every answer is JSON whatever the request accepts, as before.
+   */
+  readonly representations?: Representations;
 }
