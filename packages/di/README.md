@@ -738,7 +738,7 @@ barrel instead of discovery the two lines become `contextModule('ordering', orde
 | `Metrics` | `NoopMetrics` | `metrics` |
 | `ErrorReporter` | `NoopErrorReporter`. The default buses and the default scheduler hand it their unexpected failures (never a `DomainError`), and `app.stop()` gives it two seconds to flush | `errorReporter` |
 | `Cache` | `InMemoryCache` on `Clock` | `cache` |
-| `CacheInvalidation` | `PublishedCacheInvalidation`: purge requests published on `IntegrationEventPublisher` (the outbox, when there is one), filed under the tenant of the work | `cacheInvalidation` |
+| `CacheInvalidation` | `PublishedCacheInvalidation`: purge requests published on `IntegrationEventPublisher` (the outbox, when there is one); a multi-tenant application passes its own with `perTenant: true` | `cacheInvalidation` |
 | `Lock` | `InMemoryLock` on `Clock`: this process only | `lock` |
 | `RateLimiter` | `InMemoryRateLimiter` on `Clock`: this process only | `rateLimiter` |
 | `JobScheduler` | `InProcessJobScheduler` of `@ddd-ts-kit/scheduling` on `Clock`, `Lock`, `ExecutionScope`, `IdGenerator`, `Logger`, `Metrics` and `ErrorReporter` | `jobScheduler` |

@@ -30,7 +30,8 @@ parameters, headers and answers.
 **Cache tags, purged after the commit.** A public policy names the resources its answer shows
 (`tags: [{ resource: 'calendar', param: 'calendarId' }]`), sent in the header the shared cache
 reads (`cacheTags: { header: CacheTagHeader.xkey }` of the options; `surrogate-key`, `cache-tag`,
-`cdn-tag`), filed under the tenant of the request. The kernel gains two ports: `CacheInvalidation`,
+`cdn-tag`), filed under the tenant of the request when the application says so (`perTenant`, on
+the answers and on the purges). The kernel gains two ports: `CacheInvalidation`,
 which a `before-commit` handler asks and which `kernelModule()` binds to purge requests published
 on the outbox (a rollback purges nothing, a commit purges even across a crash), and `CachePurger`,
 which the relay calls through `new PurgingPublisher(purger, broker)` and which

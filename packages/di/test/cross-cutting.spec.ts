@@ -90,7 +90,7 @@ describe('kernelModule', () => {
 });
 
 describe('kernelModule and the HTTP caches', () => {
-  it('binds the invalidation of cache tags to purge requests on the publisher of the application, under the tenant of the work', async () => {
+  it('binds the invalidation of cache tags to purge requests on the publisher of the application, the tags as they are', async () => {
     const bus = new InMemoryEventBus();
     const app = createApplication({ modules: [kernelModule({ eventPublisher: bus })] });
     const request = executionContext({ correlationId: 'corr-1', actor: ada, origin: 'http' });
@@ -99,7 +99,7 @@ describe('kernelModule and the HTTP caches', () => {
       .resolve(ExecutionScope)
       .run(request, () => app.resolve(CacheInvalidation).invalidate([cacheTag('order', 7)]));
 
-    expect(bus.published.map((event) => CachePurgeRequest.tagsOf(event))).toEqual([['acme/order:7']]);
+    expect(bus.published.map((event) => CachePurgeRequest.tagsOf(event))).toEqual([['order:7']]);
   });
 });
 

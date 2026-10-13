@@ -129,8 +129,10 @@ sequenceDiagram
   R->>DB: mark it published
 ```
 
-Tags carry the tenant of the request (`acme/calendar:c-1`) in a multi-tenant application, so a
-purge never reaches the answers of another tenant.
+A multi-tenant application files the tags under the tenant (`acme/calendar:c-1`) on both sides,
+the answers (`cacheTags.perTenant`) and the purges (`perTenant` of the invalidation), so a purge
+never reaches the answers of another tenant; a public answer then needs its tenant resolved from
+the host or the path, or it carries no tenant and its purges never meet it.
 
 ## How the kit declares it
 

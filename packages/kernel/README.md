@@ -714,9 +714,10 @@ Two ports, so that a use case can never purge before its commit:
 
 `cacheTag('calendar', id)` names a resource (`calendar:c-1`, the identifier percent-encoded),
 `cacheTag('calendar')` every resource of a kind; the routes of `@ddd-ts-kit/http` tag their
-answers with the same function. `PublishedCacheInvalidation({ publisher, ids, clock, scope })`,
-what `kernelModule()` of `@ddd-ts-kit/di` binds, files the tags under the tenant of the work
-(`tenantCacheTags`) and publishes one `CachePurgeRequest` on the publisher: behind an outbox it
+answers with the same function. `PublishedCacheInvalidation({ publisher, ids, clock, scope, perTenant? })`,
+what `kernelModule()` of `@ddd-ts-kit/di` binds, publishes one `CachePurgeRequest` on the
+publisher, the tags under the tenant of the work (`tenantCacheTags`) when `perTenant` is set, as
+a multi-tenant application whose answers are tagged per tenant sets it: behind an outbox it
 is a row of the transaction, gone with a rollback, kept across a crash after the commit.
 `new PurgingPublisher(purger, broker)` is what the relay publishes through: the purge requests
 go to the purger, the other events to the broker, and a failed purge throws so that the relay

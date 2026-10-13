@@ -222,8 +222,10 @@ cache: {
 | `{ resource, field }` | `<resource>:<value>` for each value at that dotted path of the body (a list is walked through) |
 | `{ resource }` | `<resource>`: a change of any element of that kind purges the answer (a list, a search) |
 
-Tags are made with `cacheTag(resource, id)` of the kernel, the identifier percent-encoded, and
-filed under the tenant of the request when it has one (`acme/calendar:c-1`). They are sent only
+Tags are made with `cacheTag(resource, id)` of the kernel, the identifier percent-encoded. A
+multi-tenant application files them under the tenant of the request (`acme/calendar:c-1`) with
+`cacheTags: { header, perTenant: true }`, and its purges with `perTenant: true` of
+`PublishedCacheInvalidation`: both sides or neither, or the purges miss. Tags are sent only
 when the application names the header its shared cache reads, `cacheTags: { header }` of the
 options: `CacheTagHeader.xkey` (Varnish), `surrogateKey` (Fastly), `cacheTag` (Cloudflare),
 `cdnTag` (Bunny); without it, no answer carries tags. The contract lists them as templates in

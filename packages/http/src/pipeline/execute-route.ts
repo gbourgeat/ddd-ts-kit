@@ -58,7 +58,9 @@ async function responded(call: Call): Promise<RouteResponse> {
 }
 
 function taggingOf({ route, options, reached }: Call): Tagging {
-  return { route, header: options.cacheTags?.header, params: reached.params, tenantId: reached.execution?.tenantId };
+  const tenantId = options.cacheTags?.perTenant === true ? reached.execution?.tenantId : undefined;
+
+  return { route, header: options.cacheTags?.header, params: reached.params, tenantId };
 }
 
 function defaultRequestId(request: RawRequest): string {

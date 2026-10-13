@@ -18,7 +18,10 @@ import {
 
 const now = new Date('2026-03-02T09:00:00.000Z');
 
-function invalidationIn(tenantId: string | undefined): {
+function invalidationIn(
+  tenantId: string | undefined,
+  perTenant = true,
+): {
   invalidation: PublishedCacheInvalidation;
   bus: InMemoryEventBus;
 } {
@@ -35,6 +38,7 @@ function invalidationIn(tenantId: string | undefined): {
     ids: new SequentialIdGenerator('purge'),
     clock: new FixedClock(now),
     scope: new FixedExecutionScope(context),
+    perTenant,
   });
 
   return { invalidation, bus };
@@ -77,6 +81,14 @@ describe('PublishedCacheInvalidation', () => {
         payload: { tags: ['acme/calendar:c-1', 'acme/calendar'] },
       },
     ]);
+  });
+
+  it('keeps the tags as they are when the application does not file them per tenant', async () => {
+    const { invalidation, bus } = invalidationIn('acme', false);
+
+    await invalidation.invalidate([cacheTag('calendar', 'c-1')]);
+
+    expect(bus.published.map((event) => CachePurgeRequest.tagsOf(event))).toEqual([['calendar:c-1']]);
   });
 
   it('publishes nothing when no tag is named', async () => {

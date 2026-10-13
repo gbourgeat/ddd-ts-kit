@@ -44,5 +44,12 @@ export interface ExecuteOptions {
    * Bunny. Left out, no answer carries tags: without a shared cache that strips them, they would
    * only reach the client.
    */
-  readonly cacheTags?: { readonly header: CacheTagHeader };
+  readonly cacheTags?: {
+    readonly header: CacheTagHeader;
+    /**
+     * Files the tags under the tenant of the request, for a multi-tenant application whose purges
+     * are filed per tenant too (`perTenant` of `PublishedCacheInvalidation`). Default `false`.
+     */
+    readonly perTenant?: boolean;
+  };
 }

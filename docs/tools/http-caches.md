@@ -78,9 +78,10 @@ kit did not run it on Vinyl Cache, whose packages of vmod_xkey were not checked.
   ['Authorization']` is cached only once the VCL hashes that header: write it on purpose.
 - **Rate limits of the CDNs**: Cloudflare allows 5 purge requests a minute on its free plan,
   shared by every zone of the account. A burst of commands meets that limit; the relay retries.
-- **Tenants**: tags carry the tenant of the request (`acme/calendar:c-1`). A public route of a
-  multi-tenant application only gets one when its execution context names the tenant (from the
-  host or the path): otherwise its tags and the purges of the commands never meet.
+- **Tenants**: a multi-tenant application files tags under the tenant (`acme/calendar:c-1`), on
+  the answers and on the purges, both or neither. A public route then only gets its tenant when
+  its execution context names it (from the host or the path): otherwise its tags and the purges of
+  the commands never meet.
 
 ## Recommendation by situation
 

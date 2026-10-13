@@ -80,15 +80,22 @@ describe('the tags of a public answer', () => {
     expect(fastly.headers['surrogate-key']).toBe('calendar:c-1 appointment:a-1 appointment:a%202 appointment');
   });
 
-  it('are filed under the tenant of the request', async () => {
-    const response = await executeRoute(readDay(tagged), request(), {
+  it('are filed under the tenant of the request when the application tags per tenant', async () => {
+    const perTenant = await executeRoute(readDay(tagged), request(), {
+      cacheTags: { header: CacheTagHeader.xkey, perTenant: true },
+      resolvePrincipal: () => ofAcme,
+    });
+
+    const shared = await executeRoute(readDay(tagged), request(), {
       ...behind(CacheTagHeader.xkey),
       resolvePrincipal: () => ofAcme,
     });
 
-    expect(response.headers['xkey']).toBe(
+    expect(perTenant.headers['xkey']).toBe(
       'acme/calendar:c-1 acme/appointment:a-1 acme/appointment:a%202 acme/appointment',
     );
+
+    expect(shared.headers['xkey']).toBe('calendar:c-1 appointment:a-1 appointment:a%202 appointment');
   });
 
   it('stay on a 304, which a shared cache merges into what it keeps', async () => {
