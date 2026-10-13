@@ -4,7 +4,7 @@ What each version changes for someone who uses the kit. The packages of `package
 together, under one version; the notes of each [GitHub release](https://github.com/gbourgeat/ddd-ts-kit/releases)
 list the pull requests behind it.
 
-## Unreleased
+## 0.17.0
 
 **Names of the business, never `target`.** The command handler templates named the aggregate
 they load or build `target`, and every project generated from them inherited the word. A
