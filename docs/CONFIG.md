@@ -44,6 +44,7 @@ deviation.
     "schemas": "shared",
     "valueObjects": "throwing",
     "literals": "named",
+    "values": "classes",
     "representations": "negotiated",
     "forms": "on"
   },
@@ -148,12 +149,13 @@ outside the list stops every command with the list of accepted values.
 | `stack.schemas` | `shared`, `per-route`: how the schemas of the HTTP contract are written. `shared`: a shape several routes use is declared once, `presentation/http/shared/<name>.schema.ts` of its context or `presentation/<name>.schema.ts` of the shared kernel (`generate schema`), shared (a zod `.meta({ id })`, `classSchema(Dto, { shared: true })`, `sharedSchema`), documented once in `components.schemas` and referenced by `$ref`; a command answers its identifier with `acceptedSchema` of `@ddd-ts-kit/http`; `schema/no-duplicate-shape` and `schema/presentation-only` judge. `per-route`: each route declares its own schemas, an identifier answer included (`<use-case>.accepted.ts` with class-validator), as 0.1 to 0.5 wrote them, and no `schema/*` rule judges | `shared` |
 | `stack.valueObjects` | `throwing`, `result`: how the factory of a value object refuses. `throwing`: `create` returns the value object or throws the refusal built by the static factory of its concept (`throw PersonError.invalidEmail(raw)`), as an aggregate refuses; a caller takes the value as it is, and a spec asserts `expectRefusal(() => Email.create(raw), 'INVALID_EMAIL')`. `result`: `create` returns a `Result` of the kernel, `err(PersonError.invalidEmail(raw))`, that a caller unwraps with `unwrap(..)`, as 0.1 to 0.5 wrote them. `generate value-object` writes the form the key says; `Result`, `ok`, `err` and `unwrap` stay in the kernel for a project that keeps them. Validation at the edge (the schema of a request) is not concerned: a value refused there never reaches the factory | `throwing` |
 | `stack.literals` | `named`, `free`: how the code writes a closed value and a number. `named`: a value a closed vocabulary of the project declares is read through it, `AppointmentStatus.NoShow`, `billingPermissions['invoice.issue']`, `Role.Admin`, never written again as a string (`language/declared-vocabulary`, checker and ESLint), and a number of `domain/` or `application/` other than 0, 1, -1 and an index has a name (`clean/no-magic-number`, ESLint). `free`: both rules are silent, as 0.1 to 0.5 wrote code. The rules templates `init` writes say the rules under `named` only | `named` |
+| `stack.values` | `classes`, `free`: how a value of the model is written. `classes`: a value object class extending `ValueObject`, built through static factories (`generate value-object` writes one), and never a function that builds a plain object; `domain/value-object-class` (checker and ESLint) holds the files of `domain/value-objects/` and the functions of `domain/` and of the shared kernel ([Entities and value objects](concepts/entities-and-value-objects.md#why-a-value-object-is-a-class)). `free`: the rule is silent, as 0.1 to 0.15 wrote code. The rules template `init` writes names the rule under `classes` only | `classes` |
 | `stack.tenancy` | `none`, `shared-table`; read also: `row-level-security`, `schema-per-tenant`, `database-per-tenant`. How the data of one tenant is kept from the others ([Multitenancy](concepts/multitenancy.md)). `shared-table`: every generated repository, on Knex or Drizzle, confines its statements to the tenant of the work through `tenantTable` and `ownTenantTable` or `tenantCondition` and `ownTenantCondition`, the outbox keeps the tenant of each event so that consumers run in it, and `tenancy/scoped-statement` reports a statement that bypasses the helpers. `init --tenancy` offers `none` and `shared-table`, and refuses `shared-table` with Prisma, TypeORM, `custom` or no ORM; the three other strategies are shipped by the persistence packages and wired by hand (`init` refuses them with what to add). Absent: `none`, and the file says nothing of tenancy | absent (`none`) |
 | `stack.representations` | `negotiated`, `json`: what a route answers in. `negotiated`: `src/platform/http/presentation-of.ts` registers `Representations.standard()` of `@ddd-ts-kit/http` in the HTTP boundary and the contract script, so each request is answered in the media type its `Accept` header prefers among JSON and what its route declares in `produces` (XML, CSV, `406` when none fits), an XML body is read on a route that declares `consumes`, and the fields a schema reserves with `withFieldAccess` are decided through the `Access` of the application; `generate representation` adds `produces` to a controller. `json`: JSON whatever the request accepts, as before the key existed. `init` writes `json` without an HTTP stack | `negotiated` (`json` with `http: none`) |
 | `stack.forms` | `on`, `off`: whether a route that declares `form` is served as a form. `on`: `src/platform/http/with-forms.ts` adds `formRoutes` of `@ddd-ts-kit/http` to the routes, one `GET /forms/<operationId>` per such route (JSON Forms, or `?format=blocks`), fields hidden or read-only for each caller by the same field access, and `npm run docs:generate` writes each form whole to `openapi/forms/<operationId>.json`; `generate form` gives a controller its hints. `off`: no form is served | `on` (`off` with `http: none`) |
 | `stack.queue` | `database`, `redis`, `memory`. Where the background jobs and the instances of the process managers are kept ([Background jobs](concepts/background-jobs.md), [Sagas and process managers](concepts/sagas-and-process-managers.md)). `database`: the `background_jobs` and `process_instances` tables of `@ddd-ts-kit/knex` or `@ddd-ts-kit/drizzle` in the `messaging` schema, created by the first migration, bound in place of the stores in memory by the platform module: a job enqueued by a command exists if and only if the command committed. `redis`: `RedisJobStore` on the server of the cache (`--cache redis`, Dragonfly in docker-compose and in CI), written once the command committed; the process instances stay in the database with Knex or Drizzle. `memory`: in the process, which a worker of another process does not see. `init --queue` defaults to `database` on Knex or Drizzle with `--di tsyringe`, `memory` otherwise; it refuses a store with another container than tsyringe, `database` with another ORM, and `redis` without `--cache redis`. `generate background-job` and `generate process` need `--di tsyringe`. With `memory` and a worker, each process consumes the queue in its own memory, its jobs on or off: the API runs the jobs it enqueues, the worker those its scheduled jobs enqueue, and a restart loses what waits. With `redis`, a job write lost after its command committed is logged and reported (`reportLostJobs` of `@ddd-ts-kit/redis`, bound by the platform module). Absent: `memory`, the store of a project initialised before background jobs existed | `database` on Knex or Drizzle with tsyringe, `memory` otherwise |
 
-A config file that omits a `stack` key is read with the same defaults, with eleven exceptions:
+A config file that omits a `stack` key is read with the same defaults, with twelve exceptions:
 without `stack.style` the project is read as `explicit`, whatever `stack.di` says, because
 such a file was written before the declared style existed; and without `stack.dependencies`
 a declared project is read as `listed`, because such a file was written when every decorator
@@ -257,6 +259,25 @@ rewrites the files `init` owns (`http-boundary.ts`, `compose-application.ts`,
 `scripts/openapi.ts`, with the new `presentation-of.ts` and `with-forms.ts`); then
 `npm run docs:generate`, which lists the media types of every route and writes the forms. A
 project that rewrote one of those files by hand reapplies its change, as for any `init --force`.
+
+The twelfth: without `stack.values` the project is read as `free`, because such a file was
+written before `domain/value-object-class` existed, and a hand-written value may be a function
+that builds a plain object. Nothing is reported there. To move it:
+
+1. Set `"stack.values": "classes"` and run `npx ddd-ts-kit check --rule domain/value-object-class`
+   and ESLint: each value written as a function, each value object class with a public
+   constructor or no factory, and each helper a value object file exports is reported.
+2. For a value written as a function, `npx ddd-ts-kit generate value-object <context> <Name>`
+   writes the class and its spec; move the checks the callers made into its static factory,
+   the helpers that took the record into methods, and replace `money(a, c)` by `Money.of(a, c)`,
+   a field-by-field comparison by `equals`, and a mapper that read the fields by `instanceof`
+   and `toJSON()`.
+3. For a value object class, make the constructor private (protected on a base) and add the
+   static factory the rule names; a helper exported next to it becomes a static factory or a
+   method.
+
+Until it is done, the rule can stay at `warn` under `rules`, recorded in `deviations` with the
+ADR that says when it goes, as any other relaxed rule (`governance/recorded-deviation`).
 
 ## Pipeline
 
