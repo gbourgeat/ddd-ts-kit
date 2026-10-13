@@ -14,6 +14,9 @@ import {
   InMemoryRateLimiter,
 {{/if}}
   NoopErrorReporter,
+{{#if httpCache.varnish}}
+  PublishedCacheInvalidation,
+{{/if}}
   ScopedActorContext,
   SystemClock,
   UuidGenerator,
@@ -25,9 +28,15 @@ import {
   reportAfterCommitFailures,
   unitOfWorkMiddleware,
   type BusMiddleware,
+{{#if httpCache.varnish}}
+  type CacheInvalidation,
+{{/if}}
   type DomainEventDispatcher,
 {{#if errors.sentry}}
   type ErrorReporter,
+{{/if}}
+{{#if httpCache.varnish}}
+  type IntegrationEventPublisher,
 {{/if}}
   type JobSettings,
 } from '@ddd-ts-kit/kernel';
@@ -121,10 +130,19 @@ export function createPlatform(persistence: Persistence, options: PlatformOption
   const protection = new UseCaseProtection(authorizer, onDecision);
   const adapter = adapterOf(options.resilience ?? defaultResilience, { traced, domainEvents });
   const observed = observing(foundations, protection.guard, traced.useCase);
+{{#if httpCache.varnish}}
+  const events = eventsOn(persistence, options, { scope, traced });
+{{/if}}
 
   return {
     ...foundations,
+{{#if httpCache.varnish}}
+    ...events,
+    cacheInvalidation: cacheInvalidationOf(events.publisher, foundations),
+{{/if}}
+{{#unless httpCache.varnish}}
     ...eventsOn(persistence, options, { scope, traced }),
+{{/unless}}
     // Around every use case, outermost first: {{#if errors.sentry}}the report of an unexpected failure, {{/if}}its log entry, its measure, the permission, its span; a command then runs in the unit of work.
     commands: chain(new InMemoryCommandBus(), [
       ...observed,
@@ -250,6 +268,24 @@ function eventsOn(
   };
 }
 
+{{#if httpCache.varnish}}
+/**
+ * The purges a change asks for, written to the outbox with it: a rollback takes them away, the relay sends them to
+ * Varnish once committed{{#if httpCache.perTenant}}. Filed under the tenant of the work, as the answers are tagged{{/if}}.
+ */
+function cacheInvalidationOf(
+  publisher: IntegrationEventPublisher,
+  { ids, clock, scope }: Foundations,
+): CacheInvalidation {
+{{#if httpCache.perTenant}}
+  return new PublishedCacheInvalidation({ publisher, ids, clock, scope, perTenant: true });
+{{/if}}
+{{#unless httpCache.perTenant}}
+  return new PublishedCacheInvalidation({ publisher, ids, clock, scope });
+{{/unless}}
+}
+
+{{/if}}
 interface Observation {
   readonly scope: Platform['scope'];
   readonly traced: TracedApplication;

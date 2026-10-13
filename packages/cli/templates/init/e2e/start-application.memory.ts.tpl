@@ -1,7 +1,12 @@
 {{#if authz.rebac}}
 import type { RelationTuple } from '@ddd-ts-kit/auth/rebac';
 {{/if}}
+{{#if httpCache.varnish}}
+import { InMemoryCachePurger, PurgingPublisher, type IntegrationEventSubscriber } from '@ddd-ts-kit/kernel';
+{{/if}}
+{{#unless httpCache.varnish}}
 import type { IntegrationEventSubscriber } from '@ddd-ts-kit/kernel';
+{{/unless}}
 import { createHttpClient, type HttpClient } from '@ddd-ts-kit/testing/e2e';
 {{#if authz.rebac}}
 import { relationTuples } from '{{alias.platform}}/auth/relation-tuples{{alias.ext}}';
@@ -48,6 +53,10 @@ export interface RunningApplication {
   readonly client: HttpClient;
   /** Subscribe here (`collectEvents`) to assert the integration events the application publishes. */
   readonly events: IntegrationEventSubscriber;
+{{#if httpCache.varnish}}
+  /** What the relay purged from the shared cache once each command committed: `purges.purged` lists the tags. */
+  readonly purges: InMemoryCachePurger;
+{{/if}}
 
   /** A client presenting the credential of `actor`; `client` itself presents none. */
   as(actor: TestActor): Promise<HttpClient>;
@@ -75,6 +84,11 @@ export async function startApplication(): Promise<RunningApplication> {
     get events() {
       return current.events;
     },
+{{#if httpCache.varnish}}
+    get purges() {
+      return current.purges;
+    },
+{{/if}}
     as: async (actor) => current.client.withHeaders(await credentials.headersOf(actor)),
 {{#if authz.rebac}}
     relate: (tuple) => relationTuples.write([tuple]),
@@ -90,6 +104,9 @@ export async function startApplication(): Promise<RunningApplication> {
 interface Started {
   readonly client: HttpClient;
   readonly events: IntegrationEventSubscriber;
+{{#if httpCache.varnish}}
+  readonly purges: InMemoryCachePurger;
+{{/if}}
 
   close(): Promise<void>;
 }
@@ -111,10 +128,19 @@ async function start(credentials: Credentials): Promise<Started> {
 
   await application.start();
 
+{{#if httpCache.varnish}}
+  const purges = new InMemoryCachePurger();
+{{/if}}
 {{#if events.outbox}}
   const relay = startOutboxRelay({
     store: persistence.outbox,
+{{#if httpCache.varnish}}
+    // The purge requests of the commands are recorded instead of sent to Varnish, every other event goes to the bus.
+    publisher: new PurgingPublisher(purges, application.eventBus),
+{{/if}}
+{{#unless httpCache.varnish}}
     publisher: application.eventBus,
+{{/unless}}
     intervalMs: 20,
     logger: application.logger,
   });
@@ -125,6 +151,9 @@ async function start(credentials: Credentials): Promise<Started> {
   return {
     client: createHttpClient('http://127.0.0.1:' + server.port),
     events: application.eventSubscriber,
+{{#if httpCache.varnish}}
+    purges,
+{{/if}}
     close: async () => {
       await server.close();
 {{#if events.outbox}}

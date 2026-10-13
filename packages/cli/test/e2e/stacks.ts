@@ -50,6 +50,30 @@ export const FIRST_CLASS: StackFlags = {
 
 export const FIRST_CLASS_BROKERS = ['redis', 'nats', 'kafka'] as const;
 
+export const MULTI_TENANT_BEHIND_VARNISH: readonly StackFlags[] = [
+  { ...DEFAULT_STACK, tenancy: 'shared-table', 'http-cache': 'varnish' },
+  {
+    http: 'fastify',
+    validation: 'zod',
+    di: 'manual',
+    tests: 'vitest',
+    orm: 'knex',
+    events: 'outbox',
+    tenancy: 'shared-table',
+    'http-cache': 'varnish',
+  },
+  {
+    http: 'nest',
+    validation: 'standard-schema',
+    di: 'nest',
+    tests: 'vitest',
+    orm: 'knex',
+    events: 'outbox',
+    tenancy: 'shared-table',
+    'http-cache': 'varnish',
+  },
+];
+
 /** Every combination the generator is held to: zero violation as generated, and a type check against the sources of the workspace. */
 export const STACKS: readonly StackFlags[] = [
   DEFAULT_STACK,
@@ -100,6 +124,8 @@ export const STACKS: readonly StackFlags[] = [
   /** Shared tables on both ORMs that generate them: every repository confined to the tenant, the tenant kept in the outbox. */
   { ...DEFAULT_STACK, tenancy: 'shared-table' },
   { ...DISCOVERED_ON_KNEX, tenancy: 'shared-table' },
+  /** Varnish in front of a multi-tenant API, on each family of wiring: the answers and the purges filed per tenant. */
+  ...MULTI_TENANT_BEHIND_VARNISH,
   { ...DEFAULT_STACK, broker: 'nats', style: 'explicit' },
   { ...DEFAULT_STACK, broker: 'kafka', style: 'explicit', cache: 'redis' },
   {

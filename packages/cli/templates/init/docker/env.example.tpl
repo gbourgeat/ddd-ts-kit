@@ -96,6 +96,9 @@ REDIS_URL=redis://localhost:6379
 # Its VCL (docker/varnish/default.vcl) reaches the API on host.docker.internal:3000: change both when PORT changes.
 VARNISH_PORT=6081
 VARNISH_URL=http://localhost:6081
+# The key a purge sends: Varnish lets in a purge from another address than its own machine only with it.
+# This one is for local development ONLY: production sets a secret of its own, on Varnish and on the API.
+VARNISH_PURGE_KEY=local-purge-key
 {{/if}}
 {{#if cache.rateLimit}}
 # Requests one caller address may send per window before the HTTP layer answers 429.

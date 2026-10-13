@@ -1,6 +1,11 @@
 import type { Authenticator } from '@ddd-ts-kit/auth';
 {{#if httpCache.varnish}}
+{{#unless httpCache.perTenant}}
 import { CacheTagHeader } from '@ddd-ts-kit/http';
+{{/unless}}
+{{#if httpCache.perTenant}}
+import { CacheTagHeader, tenantFromHeader, type TenantResolver } from '@ddd-ts-kit/http';
+{{/if}}
 {{/if}}
 {{#if errors.none}}
 import type { ErrorContext, ErrorMapper, {{#if audit.on}}GuardRefusal, {{/if}}RouteAround } from '@ddd-ts-kit/http';
@@ -38,6 +43,13 @@ export interface HttpBoundary {
 {{#if httpCache.varnish}}
   /** The header Varnish files a public answer under the tags of its resources from. */
   readonly cacheTags: { readonly header: CacheTagHeader; readonly perTenant?: boolean };
+{{/if}}
+{{#if httpCache.perTenant}}
+  /**
+   * The tenant of a request that names one in `x-tenant-id`, an anonymous one on a public route included: its
+   * answers are then filed under that tenant, and vary on the header. Without it, the tenant of the caller.
+   */
+  readonly resolveTenant: TenantResolver;
 {{/if}}
 {{#if audit.on}}
   /** A request a guard refused at the edge, written to the audit trail as a denied decision. */
@@ -102,6 +114,7 @@ export function httpBoundary({
 {{#if httpCache.perTenant}}
     // Filed under the tenant of the request, as the purges of the outbox are.
     cacheTags: { header: CacheTagHeader.xkey, perTenant: true },
+    resolveTenant: tenantFromHeader(),
 {{/if}}
 {{#unless httpCache.perTenant}}
     cacheTags: { header: CacheTagHeader.xkey },

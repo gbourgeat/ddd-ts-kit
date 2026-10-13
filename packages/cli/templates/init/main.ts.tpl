@@ -61,7 +61,10 @@ const relay = startOutboxRelay({
   store: persistence.outbox,
   {{#if httpCache.varnish}}
   // The purge requests the use cases wrote with their commands go to Varnish, every other event to the provider.
-  publisher: new PurgingPublisher(new VarnishCachePurger({ url: config.varnishUrl }), application.eventBus),
+  publisher: new PurgingPublisher(
+    new VarnishCachePurger({ url: config.varnishUrl, key: config.varnishPurgeKey }),
+    application.eventBus,
+  ),
   {{/if}}
   {{#unless httpCache.varnish}}
   publisher: application.eventBus,

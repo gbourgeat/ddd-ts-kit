@@ -61,6 +61,7 @@ export function loadConfig(env: Variables): AppConfig {
     {{/if}}
     {{#if httpCache.varnish}}
     varnishUrl: readUrl(env, 'VARNISH_URL', problems),
+    varnishPurgeKey: readText(env, 'VARNISH_PURGE_KEY', problems),
     {{/if}}
     {{#if cache.rateLimit}}
     rateLimit: readRateLimit(env, problems),

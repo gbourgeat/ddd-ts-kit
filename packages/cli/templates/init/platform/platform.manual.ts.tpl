@@ -3,6 +3,9 @@ import type { Access } from '@ddd-ts-kit/auth';
 import type {
   ActorContext,
   Cache,
+  {{#if httpCache.varnish}}
+  CacheInvalidation,
+  {{/if}}
   Clock,
   DomainEventDispatcher,
   {{#if errors.sentry}}
@@ -66,6 +69,10 @@ export interface Platform {
   readonly errors: ErrorReporter;
   {{/if}}
   readonly cache: Cache;
+  {{#if httpCache.varnish}}
+  /** What a before-commit handler asks to purge from Varnish: the purge runs after the commit, through the outbox. */
+  readonly cacheInvalidation: CacheInvalidation;
+  {{/if}}
   {{#if cache.rateLimit}}
   readonly rateLimiter: RateLimiter;
   {{/if}}

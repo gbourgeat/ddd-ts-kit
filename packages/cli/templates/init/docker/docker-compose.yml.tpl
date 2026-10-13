@@ -132,6 +132,9 @@ services:
       - "host.docker.internal:host-gateway"
     ports:
       - "127.0.0.1:${VARNISH_PORT:-6081}:80"
+    environment:
+      # The purges of the API reach it through the published port, from another address: they send this key.
+      VARNISH_PURGE_KEY: ${VARNISH_PURGE_KEY:-}
     volumes:
       - ./docker/varnish/default.vcl:/etc/varnish/default.vcl:ro
 

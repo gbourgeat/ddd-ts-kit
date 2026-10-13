@@ -23,20 +23,52 @@ describe('init --http-cache', () => {
     const root = initProject('--http-cache', 'varnish');
 
     expect(read(root, 'docker-compose.yml')).toContain('  varnish:\n    image: varnish:9.1.0');
+    expect(read(root, 'docker-compose.yml')).toContain('VARNISH_PURGE_KEY: ${VARNISH_PURGE_KEY:-}');
     expect(read(root, 'docker/varnish/default.vcl')).toContain('xkey.purge(req.http.xkey-purge)');
     expect(read(root, '.env.example')).toContain('VARNISH_URL=http://localhost:6081');
+    expect(read(root, '.env.example')).toContain('VARNISH_PURGE_KEY=local-purge-key');
 
     expect(read(root, 'src/platform/config/load-config.ts')).toContain(
-      "varnishUrl: readUrl(env, 'VARNISH_URL', problems),",
+      "varnishUrl: readUrl(env, 'VARNISH_URL', problems),\n    varnishPurgeKey: readText(env, 'VARNISH_PURGE_KEY', problems),",
     );
 
     expect(read(root, 'src/platform/auth/http-boundary.ts')).toContain('cacheTags: { header: CacheTagHeader.xkey },');
+    expect(read(root, 'src/platform/auth/http-boundary.ts')).not.toContain('resolveTenant');
 
-    expect(read(root, 'src/main.ts')).toContain(
-      'publisher: new PurgingPublisher(new VarnishCachePurger({ url: config.varnishUrl }), application.eventBus),',
+    expect(read(root, 'src/main.ts').replace(/\s+/g, ' ')).toContain(
+      'publisher: new PurgingPublisher( new VarnishCachePurger({ url: config.varnishUrl, key: config.varnishPurgeKey }), application.eventBus, ),',
     );
 
     expect(read(root, 'test/e2e/support/test-environment.ts')).toContain("'http://varnish.e2e.test'");
+    expect(read(root, 'test/e2e/support/test-environment.ts')).toContain("'e2e-purge-key'");
+  });
+
+  it('keeps only what an answer allows by name, and lets a purge in from this machine or with the key alone', () => {
+    const vcl = read(initProject('--http-cache', 'varnish'), 'docker/varnish/default.vcl');
+
+    expect(vcl).toContain('set beresp.uncacheable = true;');
+    expect(vcl).toContain('req.http.x-purge-key == std.getenv("VARNISH_PURGE_KEY")');
+    expect(vcl).not.toContain('"10.0.0.0"/8');
+    expect(vcl).toContain('if (!std.ban(');
+  });
+
+  it('records the purges of the relay in the end-to-end application instead of sending them to Varnish', () => {
+    const root = initProject('--http-cache', 'varnish');
+    const started = read(root, 'test/e2e/support/start-application.ts');
+
+    expect(started).toContain('readonly purges: InMemoryCachePurger;');
+    expect(started).toContain('publisher: new PurgingPublisher(purges, application.eventBus),');
+    expect(read(initProject(), 'test/e2e/support/start-application.ts')).not.toContain('Purg');
+  });
+
+  it('hands the purges of a context run alone to Varnish too', () => {
+    const root = initProject('--http-cache', 'varnish', '--context', 'billing:core');
+
+    expect(cli(root, 'generate', 'service', 'billing').code).toBe(0);
+
+    expect(read(root, 'src/apps/billing/main.ts').replace(/\s+/g, ' ')).toContain(
+      'publisher: new PurgingPublisher( new VarnishCachePurger({ url: config.varnishUrl, key: config.varnishPurgeKey }),',
+    );
   });
 
   it('files the tags under the tenant on the answers and on the purges alike, in a multi-tenant project', () => {
@@ -44,11 +76,31 @@ describe('init --http-cache', () => {
     const single = initProject('--http-cache', 'varnish');
 
     expect(read(shared, 'src/platform/auth/http-boundary.ts')).toContain(
-      'cacheTags: { header: CacheTagHeader.xkey, perTenant: true },',
+      'cacheTags: { header: CacheTagHeader.xkey, perTenant: true },\n    resolveTenant: tenantFromHeader(),',
     );
 
     expect(read(shared, 'src/platform/compose-application.ts')).toContain('perTenant: true,');
     expect(read(single, 'src/platform/compose-application.ts')).not.toContain('perTenant');
+  });
+
+  it('gives a project wired by hand, or by Nest, the invalidation its handlers ask, per tenant when it is multi-tenant', () => {
+    const byHand = initProject('--http-cache', 'varnish', '--di', 'manual', '--tenancy', 'shared-table');
+    const nest = initProject('--http-cache', 'varnish', '--di', 'nest', '--http', 'nest');
+    const without = initProject('--di', 'manual');
+
+    expect(read(byHand, 'src/platform/platform.ts')).toContain('readonly cacheInvalidation: CacheInvalidation;');
+
+    expect(read(byHand, 'src/platform/create-platform.ts')).toContain(
+      'return new PublishedCacheInvalidation({ publisher, ids, clock, scope, perTenant: true });',
+    );
+
+    expect(read(byHand, 'src/platform/auth/http-boundary.ts')).toContain('resolveTenant: tenantFromHeader(),');
+
+    expect(read(nest, 'src/platform/create-platform.ts')).toContain(
+      'return new PublishedCacheInvalidation({ publisher, ids, clock, scope });',
+    );
+
+    expect(read(without, 'src/platform/platform.ts')).not.toContain('CacheInvalidation');
   });
 
   it('refuses a shared cache without an API, or without the outbox its purges ride on', () => {
