@@ -74,11 +74,11 @@ function reportDrift(): void {
 
 /** The contracts left by another format or by a document that is gone, and the forms of routes that declare none any more. */
 function staleFiles(): string[] {
-  const present = fs.existsSync(directory) ? fs.readdirSync(directory, { recursive: true, encoding: 'utf8' }) : [];
+  const forms = path.join(directory, 'forms');
+  const formFiles = fs.existsSync(forms) ? fs.readdirSync(forms).map((file) => `forms/${file}`) : [];
+  const present = [...(fs.existsSync(directory) ? fs.readdirSync(directory) : []), ...formFiles];
 
-  return present
-    .map((file) => file.split(path.sep).join('/'))
-    .filter((file) => /\.(?:json|yaml)$/.test(file) && !generated.has(file));
+  return present.filter((file) => /\.(?:json|yaml)$/.test(file) && !generated.has(file));
 }
 
 function manifestField(name: string, fallback: string): string {

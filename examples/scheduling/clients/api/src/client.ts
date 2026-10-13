@@ -19,7 +19,7 @@ export interface Client {
   /**
    * Search appointments: `GET /appointments`.
    *
-   * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), INVALID_CRITERIA (422), VALIDATION_FAILED (422).
+   * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), NOT_ACCEPTABLE (406), INVALID_CRITERIA (422), VALIDATION_FAILED (422).
    */
   searchAppointments(input?: operations.SearchAppointmentsInput, options?: CallOptions): Promise<operations.SearchAppointmentsResult>;
   /**
@@ -31,127 +31,127 @@ export interface Client {
   /**
    * Get appointment: `GET /appointments/{appointmentId}`.
    *
-   * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), APPOINTMENT_NOT_FOUND (404), VALIDATION_FAILED (422).
+   * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), APPOINTMENT_NOT_FOUND (404), NOT_ACCEPTABLE (406), VALIDATION_FAILED (422).
    */
   getAppointment(input: operations.GetAppointmentInput, options?: CallOptions): Promise<operations.GetAppointmentResult>;
   /**
    * Cancel appointment: `POST /appointments/{appointmentId}/cancellation`.
    *
-   * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), APPOINTMENT_NOT_FOUND (404), APPOINTMENT_ENDED (409), REASON_REQUIRED (422), VALIDATION_FAILED (422).
+   * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), APPOINTMENT_NOT_FOUND (404), NOT_ACCEPTABLE (406), APPOINTMENT_ENDED (409), UNSUPPORTED_MEDIA_TYPE (415), REASON_REQUIRED (422), VALIDATION_FAILED (422).
    */
   cancelAppointment(input: operations.CancelAppointmentInput, options?: CallOptions): Promise<operations.CancelAppointmentResult>;
   /**
    * Complete appointment: `POST /appointments/{appointmentId}/completion`.
    *
-   * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), APPOINTMENT_NOT_FOUND (404), APPOINTMENT_ENDED (409), APPOINTMENT_NOT_STARTED (422), VALIDATION_FAILED (422).
+   * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), APPOINTMENT_NOT_FOUND (404), NOT_ACCEPTABLE (406), APPOINTMENT_ENDED (409), APPOINTMENT_NOT_STARTED (422), VALIDATION_FAILED (422).
    */
   completeAppointment(input: operations.CompleteAppointmentInput, options?: CallOptions): Promise<operations.CompleteAppointmentResult>;
   /**
    * Confirm appointment: `POST /appointments/{appointmentId}/confirmation`.
    *
-   * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), APPOINTMENT_NOT_FOUND (404), APPOINTMENT_ALREADY_CONFIRMED (409), APPOINTMENT_ENDED (409), VALIDATION_FAILED (422).
+   * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), APPOINTMENT_NOT_FOUND (404), NOT_ACCEPTABLE (406), APPOINTMENT_ALREADY_CONFIRMED (409), APPOINTMENT_ENDED (409), VALIDATION_FAILED (422).
    */
   confirmAppointment(input: operations.ConfirmAppointmentInput, options?: CallOptions): Promise<operations.ConfirmAppointmentResult>;
   /**
    * Get a link to the document of an appointment: `GET /appointments/{appointmentId}/document`.
    *
-   * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), APPOINTMENT_NOT_FOUND (404), NO_DOCUMENT (404), VALIDATION_FAILED (422).
+   * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), APPOINTMENT_NOT_FOUND (404), NO_DOCUMENT (404), NOT_ACCEPTABLE (406), VALIDATION_FAILED (422).
    */
   getAppointmentDocument(input: operations.GetAppointmentDocumentInput, options?: CallOptions): Promise<operations.GetAppointmentDocumentResult>;
   /**
    * Attach a document to an appointment: `POST /appointments/{appointmentId}/document`.
    *
-   * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), APPOINTMENT_NOT_FOUND (404), FILE_TOO_LARGE (413), UNSUPPORTED_MEDIA_TYPE (415), DOCUMENT_NAME_TOO_LONG (422), FILE_REJECTED (422), VALIDATION_FAILED (422).
+   * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), APPOINTMENT_NOT_FOUND (404), NOT_ACCEPTABLE (406), FILE_TOO_LARGE (413), UNSUPPORTED_MEDIA_TYPE (415), DOCUMENT_NAME_TOO_LONG (422), FILE_REJECTED (422), VALIDATION_FAILED (422).
    */
   attachAppointmentDocument(input: operations.AttachAppointmentDocumentInput, options?: CallOptions): Promise<operations.AttachAppointmentDocumentResult>;
   /**
    * Remove the document of an appointment: `DELETE /appointments/{appointmentId}/document`.
    *
-   * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), APPOINTMENT_NOT_FOUND (404), NO_DOCUMENT (404), VALIDATION_FAILED (422).
+   * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), APPOINTMENT_NOT_FOUND (404), NO_DOCUMENT (404), NOT_ACCEPTABLE (406), VALIDATION_FAILED (422).
    */
   removeAppointmentDocument(input: operations.RemoveAppointmentDocumentInput, options?: CallOptions): Promise<operations.RemoveAppointmentDocumentResult>;
   /**
    * Mark appointment no show: `POST /appointments/{appointmentId}/no-show`.
    *
-   * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), APPOINTMENT_NOT_FOUND (404), APPOINTMENT_ENDED (409), APPOINTMENT_NOT_STARTED (422), VALIDATION_FAILED (422).
+   * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), APPOINTMENT_NOT_FOUND (404), NOT_ACCEPTABLE (406), APPOINTMENT_ENDED (409), APPOINTMENT_NOT_STARTED (422), VALIDATION_FAILED (422).
    */
   markAppointmentNoShow(input: operations.MarkAppointmentNoShowInput, options?: CallOptions): Promise<operations.MarkAppointmentNoShowResult>;
   /**
    * Reschedule appointment: `POST /appointments/{appointmentId}/reschedule`.
    *
-   * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), APPOINTMENT_NOT_FOUND (404), UNKNOWN_CALENDAR (404), APPOINTMENT_ENDED (409), PATIENT_LIMIT_REACHED (409), SLOT_TAKEN (409), BOOKING_TOO_FAR (422), BOOKING_TOO_LATE (422), OFF_GRID (422), OUTSIDE_AVAILABILITY (422), UNKNOWN_APPOINTMENT_TYPE (422), VALIDATION_FAILED (422).
+   * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), APPOINTMENT_NOT_FOUND (404), UNKNOWN_CALENDAR (404), NOT_ACCEPTABLE (406), APPOINTMENT_ENDED (409), PATIENT_LIMIT_REACHED (409), SLOT_TAKEN (409), UNSUPPORTED_MEDIA_TYPE (415), BOOKING_TOO_FAR (422), BOOKING_TOO_LATE (422), OFF_GRID (422), OUTSIDE_AVAILABILITY (422), UNKNOWN_APPOINTMENT_TYPE (422), VALIDATION_FAILED (422).
    */
   rescheduleAppointment(input: operations.RescheduleAppointmentInput, options?: CallOptions): Promise<operations.RescheduleAppointmentResult>;
   /**
    * Search the entries of the audit trail: `GET /audit/entries`.
    *
-   * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), VALIDATION_FAILED (422).
+   * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), NOT_ACCEPTABLE (406), VALIDATION_FAILED (422).
    */
   searchAuditEntries(input?: operations.SearchAuditEntriesInput, options?: CallOptions): Promise<operations.SearchAuditEntriesResult>;
   /**
    * Create calendar: `POST /calendars`.
    *
-   * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), UNKNOWN_PRACTITIONER (422), UNKNOWN_TIME_ZONE (422), VALIDATION_FAILED (422).
+   * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), NOT_ACCEPTABLE (406), UNSUPPORTED_MEDIA_TYPE (415), UNKNOWN_PRACTITIONER (422), UNKNOWN_TIME_ZONE (422), VALIDATION_FAILED (422).
    */
   createCalendar(input: operations.CreateCalendarInput, options?: CallOptions): Promise<operations.CreateCalendarResult>;
   /**
    * Define appointment type: `POST /calendars/{calendarId}/appointment-types`.
    *
-   * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), UNKNOWN_CALENDAR (404), INVALID_APPOINTMENT_TYPE (422), VALIDATION_FAILED (422).
+   * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), UNKNOWN_CALENDAR (404), NOT_ACCEPTABLE (406), UNSUPPORTED_MEDIA_TYPE (415), INVALID_APPOINTMENT_TYPE (422), VALIDATION_FAILED (422).
    */
   defineAppointmentType(input: operations.DefineAppointmentTypeInput, options?: CallOptions): Promise<operations.DefineAppointmentTypeResult>;
   /**
    * Get calendar day: `GET /calendars/{calendarId}/days/{day}`.
    *
-   * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), UNKNOWN_CALENDAR (404), INVALID_DAY (422), VALIDATION_FAILED (422).
+   * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), UNKNOWN_CALENDAR (404), NOT_ACCEPTABLE (406), INVALID_DAY (422), VALIDATION_FAILED (422).
    */
   getCalendarDay(input: operations.GetCalendarDayInput, options?: CallOptions): Promise<operations.GetCalendarDayResult>;
   /**
    * Add exception: `POST /calendars/{calendarId}/exceptions`.
    *
-   * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), UNKNOWN_CALENDAR (404), INVALID_DAY (422), INVALID_RANGE (422), VALIDATION_FAILED (422).
+   * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), UNKNOWN_CALENDAR (404), NOT_ACCEPTABLE (406), UNSUPPORTED_MEDIA_TYPE (415), INVALID_DAY (422), INVALID_RANGE (422), VALIDATION_FAILED (422).
    */
   addException(input: operations.AddExceptionInput, options?: CallOptions): Promise<operations.AddExceptionResult>;
   /**
    * Set opening hours: `PUT /calendars/{calendarId}/opening-hours`.
    *
-   * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), UNKNOWN_CALENDAR (404), INVALID_RANGE (422), VALIDATION_FAILED (422).
+   * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), UNKNOWN_CALENDAR (404), NOT_ACCEPTABLE (406), UNSUPPORTED_MEDIA_TYPE (415), INVALID_RANGE (422), VALIDATION_FAILED (422).
    */
   setOpeningHours(input: operations.SetOpeningHoursInput, options?: CallOptions): Promise<operations.SetOpeningHoursResult>;
   /**
    * Add time off: `POST /calendars/{calendarId}/time-off`.
    *
-   * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), UNKNOWN_CALENDAR (404), TIME_OFF_OVER_APPOINTMENTS (409), INVALID_TIME_OFF (422), VALIDATION_FAILED (422).
+   * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), UNKNOWN_CALENDAR (404), NOT_ACCEPTABLE (406), TIME_OFF_OVER_APPOINTMENTS (409), UNSUPPORTED_MEDIA_TYPE (415), INVALID_TIME_OFF (422), VALIDATION_FAILED (422).
    */
   addTimeOff(input: operations.AddTimeOffInput, options?: CallOptions): Promise<operations.AddTimeOffResult>;
   /**
    * Join waitlist: `POST /calendars/{calendarId}/waitlist`.
    *
-   * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), UNKNOWN_CALENDAR (404), ALREADY_WAITING (409), INVALID_DAY (422), UNKNOWN_APPOINTMENT_TYPE (422), VALIDATION_FAILED (422).
+   * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), UNKNOWN_CALENDAR (404), NOT_ACCEPTABLE (406), ALREADY_WAITING (409), UNSUPPORTED_MEDIA_TYPE (415), INVALID_DAY (422), UNKNOWN_APPOINTMENT_TYPE (422), VALIDATION_FAILED (422).
    */
   joinWaitlist(input: operations.JoinWaitlistInput, options?: CallOptions): Promise<operations.JoinWaitlistResult>;
   /**
    * Form: Book appointment: `GET /forms/bookAppointment`.
    *
-   * Error codes: UNAUTHORIZED (401), VALIDATION_FAILED (422).
+   * Error codes: UNAUTHORIZED (401), NOT_ACCEPTABLE (406), VALIDATION_FAILED (422).
    */
   bookAppointmentForm(input?: operations.BookAppointmentFormInput, options?: CallOptions): Promise<operations.BookAppointmentFormResult>;
   /**
    * Search notifications: `GET /notifications`.
    *
-   * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), VALIDATION_FAILED (422).
+   * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), NOT_ACCEPTABLE (406), VALIDATION_FAILED (422).
    */
   searchNotifications(input?: operations.SearchNotificationsInput, options?: CallOptions): Promise<operations.SearchNotificationsResult>;
   /**
    * Register person: `PUT /people/me`.
    *
-   * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), INVALID_DISPLAY_NAME (422), INVALID_EMAIL (422), VALIDATION_FAILED (422).
+   * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), NOT_ACCEPTABLE (406), UNSUPPORTED_MEDIA_TYPE (415), INVALID_DISPLAY_NAME (422), INVALID_EMAIL (422), VALIDATION_FAILED (422).
    */
   registerPerson(input: operations.RegisterPersonInput, options?: CallOptions): Promise<operations.RegisterPersonResult>;
   /**
    * Open practice: `POST /practices`.
    *
-   * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), PERSON_NOT_REGISTERED (404), UNKNOWN_TIME_ZONE (422), VALIDATION_FAILED (422).
+   * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), PERSON_NOT_REGISTERED (404), NOT_ACCEPTABLE (406), UNSUPPORTED_MEDIA_TYPE (415), UNKNOWN_TIME_ZONE (422), VALIDATION_FAILED (422).
    */
   openPractice(input: operations.OpenPracticeInput, options?: CallOptions): Promise<operations.OpenPracticeResult>;
   /**
@@ -169,31 +169,31 @@ export interface Client {
   /**
    * Grant delegation: `POST /practices/{practiceId}/desks/{practitionerId}/delegations`.
    *
-   * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), PRACTICE_NOT_FOUND (404), DELEGATION_ALREADY_ACTIVE (409), DELEGATION_ENDS_IN_THE_PAST (422), NOT_AN_ASSISTANT (422), NOT_A_PRACTITIONER (422), VALIDATION_FAILED (422).
+   * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), PRACTICE_NOT_FOUND (404), NOT_ACCEPTABLE (406), DELEGATION_ALREADY_ACTIVE (409), UNSUPPORTED_MEDIA_TYPE (415), DELEGATION_ENDS_IN_THE_PAST (422), NOT_AN_ASSISTANT (422), NOT_A_PRACTITIONER (422), VALIDATION_FAILED (422).
    */
   grantDelegation(input: operations.GrantDelegationInput, options?: CallOptions): Promise<operations.GrantDelegationResult>;
   /**
    * Revoke delegation: `DELETE /practices/{practiceId}/desks/{practitionerId}/delegations/{delegationId}`.
    *
-   * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), DELEGATION_NOT_FOUND (404), DELEGATION_NOT_ACTIVE (409), VALIDATION_FAILED (422).
+   * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), DELEGATION_NOT_FOUND (404), NOT_ACCEPTABLE (406), DELEGATION_NOT_ACTIVE (409), VALIDATION_FAILED (422).
    */
   revokeDelegation(input: operations.RevokeDelegationInput, options?: CallOptions): Promise<operations.RevokeDelegationResult>;
   /**
    * Add member: `POST /practices/{practiceId}/members`.
    *
-   * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), PERSON_NOT_REGISTERED (404), PRACTICE_NOT_FOUND (404), ALREADY_MEMBER (409), UNKNOWN_ROLE (422), VALIDATION_FAILED (422).
+   * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), PERSON_NOT_REGISTERED (404), PRACTICE_NOT_FOUND (404), NOT_ACCEPTABLE (406), ALREADY_MEMBER (409), UNSUPPORTED_MEDIA_TYPE (415), UNKNOWN_ROLE (422), VALIDATION_FAILED (422).
    */
   addMember(input: operations.AddMemberInput, options?: CallOptions): Promise<operations.AddMemberResult>;
   /**
    * Remove member: `DELETE /practices/{practiceId}/members/{personId}`.
    *
-   * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), PRACTICE_NOT_FOUND (404), LAST_MANAGER (409), NOT_A_MEMBER (422), VALIDATION_FAILED (422).
+   * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), PRACTICE_NOT_FOUND (404), NOT_ACCEPTABLE (406), LAST_MANAGER (409), NOT_A_MEMBER (422), VALIDATION_FAILED (422).
    */
   removeMember(input: operations.RemoveMemberInput, options?: CallOptions): Promise<operations.RemoveMemberResult>;
   /**
    * Search occupancy: `GET /practices/{practiceId}/occupancy`.
    *
-   * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), VALIDATION_FAILED (422).
+   * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), NOT_ACCEPTABLE (406), VALIDATION_FAILED (422).
    */
   searchOccupancy(input: operations.SearchOccupancyInput, options?: CallOptions): Promise<operations.SearchOccupancyResult>;
 }

@@ -25,7 +25,7 @@ export async function startHttpServer(served: Served, config: AppConfig): Promis
   // Before the JSON parser, which would read first a JSON file sent through a signed link.
   mountExpress(app, served.fileRoutes, served.boundary);
   app.use(express.json());
-  mountExpress(app, withDocumentation(served.routes, config), served.boundary);
+  mountExpress(app, withDocumentation(served.routes, config, served.boundary), served.boundary);
 
   const server = await listen(app, config.port);
 

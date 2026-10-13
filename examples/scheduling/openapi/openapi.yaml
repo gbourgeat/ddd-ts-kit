@@ -288,6 +288,14 @@ paths:
                 $ref: '#/components/schemas/Problem'
           x-error-codes:
             - FORBIDDEN
+        '406':
+          description: 'Not Acceptable. Error codes: NOT_ACCEPTABLE.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - NOT_ACCEPTABLE
         '422':
           description: 'Unprocessable Content. Error codes: INVALID_CRITERIA, VALIDATION_FAILED.'
           content:
@@ -585,6 +593,14 @@ paths:
                 $ref: '#/components/schemas/Problem'
           x-error-codes:
             - APPOINTMENT_NOT_FOUND
+        '406':
+          description: 'Not Acceptable. Error codes: NOT_ACCEPTABLE.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - NOT_ACCEPTABLE
         '422':
           description: 'Unprocessable Content. Error codes: VALIDATION_FAILED.'
           content:
@@ -653,6 +669,14 @@ paths:
                 $ref: '#/components/schemas/Problem'
           x-error-codes:
             - APPOINTMENT_NOT_FOUND
+        '406':
+          description: 'Not Acceptable. Error codes: NOT_ACCEPTABLE.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - NOT_ACCEPTABLE
         '409':
           description: 'Conflict. Error codes: APPOINTMENT_ENDED.'
           content:
@@ -661,6 +685,14 @@ paths:
                 $ref: '#/components/schemas/Problem'
           x-error-codes:
             - APPOINTMENT_ENDED
+        '415':
+          description: 'Unsupported Media Type. Error codes: UNSUPPORTED_MEDIA_TYPE.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - UNSUPPORTED_MEDIA_TYPE
         '422':
           description: 'Unprocessable Content. Error codes: REASON_REQUIRED, VALIDATION_FAILED.'
           content:
@@ -720,6 +752,14 @@ paths:
                 $ref: '#/components/schemas/Problem'
           x-error-codes:
             - APPOINTMENT_NOT_FOUND
+        '406':
+          description: 'Not Acceptable. Error codes: NOT_ACCEPTABLE.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - NOT_ACCEPTABLE
         '409':
           description: 'Conflict. Error codes: APPOINTMENT_ENDED.'
           content:
@@ -787,6 +827,14 @@ paths:
                 $ref: '#/components/schemas/Problem'
           x-error-codes:
             - APPOINTMENT_NOT_FOUND
+        '406':
+          description: 'Not Acceptable. Error codes: NOT_ACCEPTABLE.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - NOT_ACCEPTABLE
         '409':
           description: 'Conflict. Error codes: APPOINTMENT_ALREADY_CONFIRMED, APPOINTMENT_ENDED.'
           content:
@@ -868,6 +916,14 @@ paths:
           x-error-codes:
             - APPOINTMENT_NOT_FOUND
             - NO_DOCUMENT
+        '406':
+          description: 'Not Acceptable. Error codes: NOT_ACCEPTABLE.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - NOT_ACCEPTABLE
         '422':
           description: 'Unprocessable Content. Error codes: VALIDATION_FAILED.'
           content:
@@ -948,6 +1004,14 @@ paths:
                 $ref: '#/components/schemas/Problem'
           x-error-codes:
             - APPOINTMENT_NOT_FOUND
+        '406':
+          description: 'Not Acceptable. Error codes: NOT_ACCEPTABLE.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - NOT_ACCEPTABLE
         '413':
           description: 'Content Too Large. Error codes: FILE_TOO_LARGE.'
           content:
@@ -1024,6 +1088,14 @@ paths:
           x-error-codes:
             - APPOINTMENT_NOT_FOUND
             - NO_DOCUMENT
+        '406':
+          description: 'Not Acceptable. Error codes: NOT_ACCEPTABLE.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - NOT_ACCEPTABLE
         '422':
           description: 'Unprocessable Content. Error codes: VALIDATION_FAILED.'
           content:
@@ -1082,6 +1154,14 @@ paths:
                 $ref: '#/components/schemas/Problem'
           x-error-codes:
             - APPOINTMENT_NOT_FOUND
+        '406':
+          description: 'Not Acceptable. Error codes: NOT_ACCEPTABLE.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - NOT_ACCEPTABLE
         '409':
           description: 'Conflict. Error codes: APPOINTMENT_ENDED.'
           content:
@@ -1165,6 +1245,14 @@ paths:
           x-error-codes:
             - APPOINTMENT_NOT_FOUND
             - UNKNOWN_CALENDAR
+        '406':
+          description: 'Not Acceptable. Error codes: NOT_ACCEPTABLE.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - NOT_ACCEPTABLE
         '409':
           description: 'Conflict. Error codes: APPOINTMENT_ENDED, PATIENT_LIMIT_REACHED, SLOT_TAKEN.'
           content:
@@ -1175,6 +1263,14 @@ paths:
             - APPOINTMENT_ENDED
             - PATIENT_LIMIT_REACHED
             - SLOT_TAKEN
+        '415':
+          description: 'Unsupported Media Type. Error codes: UNSUPPORTED_MEDIA_TYPE.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - UNSUPPORTED_MEDIA_TYPE
         '422':
           description: 'Unprocessable Content. Error codes: BOOKING_TOO_FAR, BOOKING_TOO_LATE, OFF_GRID, OUTSIDE_AVAILABILITY, UNKNOWN_APPOINTMENT_TYPE, VALIDATION_FAILED.'
           content:
@@ -1360,6 +1456,14 @@ paths:
                 $ref: '#/components/schemas/Problem'
           x-error-codes:
             - FORBIDDEN
+        '406':
+          description: 'Not Acceptable. Error codes: NOT_ACCEPTABLE.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - NOT_ACCEPTABLE
         '422':
           description: 'Unprocessable Content. Error codes: VALIDATION_FAILED.'
           content:
@@ -1420,6 +1524,22 @@ paths:
                 $ref: '#/components/schemas/Problem'
           x-error-codes:
             - FORBIDDEN
+        '406':
+          description: 'Not Acceptable. Error codes: NOT_ACCEPTABLE.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - NOT_ACCEPTABLE
+        '415':
+          description: 'Unsupported Media Type. Error codes: UNSUPPORTED_MEDIA_TYPE.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - UNSUPPORTED_MEDIA_TYPE
         '422':
           description: 'Unprocessable Content. Error codes: UNKNOWN_PRACTITIONER, UNKNOWN_TIME_ZONE, VALIDATION_FAILED.'
           content:
@@ -1505,6 +1625,22 @@ paths:
                 $ref: '#/components/schemas/Problem'
           x-error-codes:
             - UNKNOWN_CALENDAR
+        '406':
+          description: 'Not Acceptable. Error codes: NOT_ACCEPTABLE.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - NOT_ACCEPTABLE
+        '415':
+          description: 'Unsupported Media Type. Error codes: UNSUPPORTED_MEDIA_TYPE.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - UNSUPPORTED_MEDIA_TYPE
         '422':
           description: 'Unprocessable Content. Error codes: INVALID_APPOINTMENT_TYPE, VALIDATION_FAILED.'
           content:
@@ -1596,6 +1732,14 @@ paths:
                 $ref: '#/components/schemas/Problem'
           x-error-codes:
             - UNKNOWN_CALENDAR
+        '406':
+          description: 'Not Acceptable. Error codes: NOT_ACCEPTABLE.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - NOT_ACCEPTABLE
         '422':
           description: 'Unprocessable Content. Error codes: INVALID_DAY, VALIDATION_FAILED.'
           content:
@@ -1673,6 +1817,22 @@ paths:
                 $ref: '#/components/schemas/Problem'
           x-error-codes:
             - UNKNOWN_CALENDAR
+        '406':
+          description: 'Not Acceptable. Error codes: NOT_ACCEPTABLE.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - NOT_ACCEPTABLE
+        '415':
+          description: 'Unsupported Media Type. Error codes: UNSUPPORTED_MEDIA_TYPE.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - UNSUPPORTED_MEDIA_TYPE
         '422':
           description: 'Unprocessable Content. Error codes: INVALID_DAY, INVALID_RANGE, VALIDATION_FAILED.'
           content:
@@ -1747,6 +1907,22 @@ paths:
                 $ref: '#/components/schemas/Problem'
           x-error-codes:
             - UNKNOWN_CALENDAR
+        '406':
+          description: 'Not Acceptable. Error codes: NOT_ACCEPTABLE.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - NOT_ACCEPTABLE
+        '415':
+          description: 'Unsupported Media Type. Error codes: UNSUPPORTED_MEDIA_TYPE.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - UNSUPPORTED_MEDIA_TYPE
         '422':
           description: 'Unprocessable Content. Error codes: INVALID_RANGE, VALIDATION_FAILED.'
           content:
@@ -1828,6 +2004,14 @@ paths:
                 $ref: '#/components/schemas/Problem'
           x-error-codes:
             - UNKNOWN_CALENDAR
+        '406':
+          description: 'Not Acceptable. Error codes: NOT_ACCEPTABLE.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - NOT_ACCEPTABLE
         '409':
           description: 'Conflict. Error codes: TIME_OFF_OVER_APPOINTMENTS.'
           content:
@@ -1836,6 +2020,14 @@ paths:
                 $ref: '#/components/schemas/Problem'
           x-error-codes:
             - TIME_OFF_OVER_APPOINTMENTS
+        '415':
+          description: 'Unsupported Media Type. Error codes: UNSUPPORTED_MEDIA_TYPE.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - UNSUPPORTED_MEDIA_TYPE
         '422':
           description: 'Unprocessable Content. Error codes: INVALID_TIME_OFF, VALIDATION_FAILED.'
           content:
@@ -1915,6 +2107,14 @@ paths:
                 $ref: '#/components/schemas/Problem'
           x-error-codes:
             - UNKNOWN_CALENDAR
+        '406':
+          description: 'Not Acceptable. Error codes: NOT_ACCEPTABLE.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - NOT_ACCEPTABLE
         '409':
           description: 'Conflict. Error codes: ALREADY_WAITING.'
           content:
@@ -1923,6 +2123,14 @@ paths:
                 $ref: '#/components/schemas/Problem'
           x-error-codes:
             - ALREADY_WAITING
+        '415':
+          description: 'Unsupported Media Type. Error codes: UNSUPPORTED_MEDIA_TYPE.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - UNSUPPORTED_MEDIA_TYPE
         '422':
           description: 'Unprocessable Content. Error codes: INVALID_DAY, UNKNOWN_APPOINTMENT_TYPE, VALIDATION_FAILED.'
           content:
@@ -2041,6 +2249,14 @@ paths:
                 $ref: '#/components/schemas/Problem'
           x-error-codes:
             - UNAUTHORIZED
+        '406':
+          description: 'Not Acceptable. Error codes: NOT_ACCEPTABLE.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - NOT_ACCEPTABLE
         '422':
           description: 'Unprocessable Content. Error codes: VALIDATION_FAILED.'
           content:
@@ -2159,6 +2375,14 @@ paths:
                 $ref: '#/components/schemas/Problem'
           x-error-codes:
             - FORBIDDEN
+        '406':
+          description: 'Not Acceptable. Error codes: NOT_ACCEPTABLE.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - NOT_ACCEPTABLE
         '422':
           description: 'Unprocessable Content. Error codes: VALIDATION_FAILED.'
           content:
@@ -2219,6 +2443,22 @@ paths:
                 $ref: '#/components/schemas/Problem'
           x-error-codes:
             - FORBIDDEN
+        '406':
+          description: 'Not Acceptable. Error codes: NOT_ACCEPTABLE.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - NOT_ACCEPTABLE
+        '415':
+          description: 'Unsupported Media Type. Error codes: UNSUPPORTED_MEDIA_TYPE.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - UNSUPPORTED_MEDIA_TYPE
         '422':
           description: 'Unprocessable Content. Error codes: INVALID_DISPLAY_NAME, INVALID_EMAIL, VALIDATION_FAILED.'
           content:
@@ -2293,6 +2533,22 @@ paths:
                 $ref: '#/components/schemas/Problem'
           x-error-codes:
             - PERSON_NOT_REGISTERED
+        '406':
+          description: 'Not Acceptable. Error codes: NOT_ACCEPTABLE.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - NOT_ACCEPTABLE
+        '415':
+          description: 'Unsupported Media Type. Error codes: UNSUPPORTED_MEDIA_TYPE.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - UNSUPPORTED_MEDIA_TYPE
         '422':
           description: 'Unprocessable Content. Error codes: UNKNOWN_TIME_ZONE, VALIDATION_FAILED.'
           content:
@@ -3099,6 +3355,14 @@ paths:
                 $ref: '#/components/schemas/Problem'
           x-error-codes:
             - PRACTICE_NOT_FOUND
+        '406':
+          description: 'Not Acceptable. Error codes: NOT_ACCEPTABLE.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - NOT_ACCEPTABLE
         '409':
           description: 'Conflict. Error codes: DELEGATION_ALREADY_ACTIVE.'
           content:
@@ -3107,6 +3371,14 @@ paths:
                 $ref: '#/components/schemas/Problem'
           x-error-codes:
             - DELEGATION_ALREADY_ACTIVE
+        '415':
+          description: 'Unsupported Media Type. Error codes: UNSUPPORTED_MEDIA_TYPE.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - UNSUPPORTED_MEDIA_TYPE
         '422':
           description: 'Unprocessable Content. Error codes: DELEGATION_ENDS_IN_THE_PAST, NOT_AN_ASSISTANT, NOT_A_PRACTITIONER, VALIDATION_FAILED.'
           content:
@@ -3178,6 +3450,14 @@ paths:
                 $ref: '#/components/schemas/Problem'
           x-error-codes:
             - DELEGATION_NOT_FOUND
+        '406':
+          description: 'Not Acceptable. Error codes: NOT_ACCEPTABLE.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - NOT_ACCEPTABLE
         '409':
           description: 'Conflict. Error codes: DELEGATION_NOT_ACTIVE.'
           content:
@@ -3264,6 +3544,14 @@ paths:
           x-error-codes:
             - PERSON_NOT_REGISTERED
             - PRACTICE_NOT_FOUND
+        '406':
+          description: 'Not Acceptable. Error codes: NOT_ACCEPTABLE.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - NOT_ACCEPTABLE
         '409':
           description: 'Conflict. Error codes: ALREADY_MEMBER.'
           content:
@@ -3272,6 +3560,14 @@ paths:
                 $ref: '#/components/schemas/Problem'
           x-error-codes:
             - ALREADY_MEMBER
+        '415':
+          description: 'Unsupported Media Type. Error codes: UNSUPPORTED_MEDIA_TYPE.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - UNSUPPORTED_MEDIA_TYPE
         '422':
           description: 'Unprocessable Content. Error codes: UNKNOWN_ROLE, VALIDATION_FAILED.'
           content:
@@ -3336,6 +3632,14 @@ paths:
                 $ref: '#/components/schemas/Problem'
           x-error-codes:
             - PRACTICE_NOT_FOUND
+        '406':
+          description: 'Not Acceptable. Error codes: NOT_ACCEPTABLE.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - NOT_ACCEPTABLE
         '409':
           description: 'Conflict. Error codes: LAST_MANAGER.'
           content:
@@ -3519,6 +3823,14 @@ paths:
                 $ref: '#/components/schemas/Problem'
           x-error-codes:
             - FORBIDDEN
+        '406':
+          description: 'Not Acceptable. Error codes: NOT_ACCEPTABLE.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - NOT_ACCEPTABLE
         '422':
           description: 'Unprocessable Content. Error codes: VALIDATION_FAILED.'
           content:

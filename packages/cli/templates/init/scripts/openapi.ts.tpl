@@ -80,13 +80,18 @@ function reportDrift(): void {
   }
 }
 
-/** The contracts left by another format or by a document that is gone{{#if presentation.forms}}, and the forms of routes that declare none any more{{/if}}. */
+/** The contracts left by another format or by a document that is gone{{#if presentation.forms}}, and the forms of routes that declare none any more{{/if}}: what else the folder holds is left alone. */
 function staleFiles(): string[] {
-  const present = fs.existsSync(directory) ? fs.readdirSync(directory, { recursive: true, encoding: 'utf8' }) : [];
+{{#if presentation.forms}}
+  const forms = path.join(directory, 'forms');
+  const formFiles = fs.existsSync(forms) ? fs.readdirSync(forms).map((file) => `forms/${file}`) : [];
+  const present = [...(fs.existsSync(directory) ? fs.readdirSync(directory) : []), ...formFiles];
+{{/if}}
+{{#unless presentation.forms}}
+  const present = fs.existsSync(directory) ? fs.readdirSync(directory) : [];
+{{/unless}}
 
-  return present
-    .map((file) => file.split(path.sep).join('/'))
-    .filter((file) => /\.(?:json|yaml)$/.test(file) && !generated.has(file));
+  return present.filter((file) => /\.(?:json|yaml)$/.test(file) && !generated.has(file));
 }
 
 function manifestField(name: string, fallback: string): string {
