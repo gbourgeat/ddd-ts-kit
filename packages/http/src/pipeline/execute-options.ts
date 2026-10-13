@@ -1,4 +1,5 @@
 import type { Clock, ExecutionScope } from '@ddd-ts-kit/kernel';
+import type { CacheTagHeader } from '../cache/cache-tag-header.js';
 import type { ErrorMapper } from '../error/error-mapper.js';
 import type { FieldDecider } from '../field-access/field-decider.js';
 import type { Representations } from '../representation/representations.js';
@@ -71,6 +72,28 @@ export interface ExecuteOptions {
    * out, every restricted field is left out of every answer and refused in every body.
    */
   readonly fieldAccess?: FieldDecider;
+  /**
+   * The header the shared cache in front of the application reads the tags of an answer from:
+   * `xkey` for Varnish, `surrogate-key` for Fastly, `cache-tag` for Cloudflare, `cdn-tag` for
+   * Bunny. Left out, no answer carries tags: without a shared cache that strips them, they would
+   * only reach the client.
+   */
+  readonly cacheTags?: {
+    readonly header: CacheTagHeader;
+    /**
+     * Files the tags under the tenant of the request, for a multi-tenant application whose purges
+     * are filed per tenant too (`perTenant` of `PublishedCacheInvalidation`). Default `false`. A
+     * tagged answer to a request that names no tenant is then `no-store`: no purge could meet it.
+     */
+    readonly perTenant?: boolean;
+    /**
+     * Whether the cache in front keeps one copy per value of the headers an answer varies on
+     * (`Vary`). Default: `true` for `xkey` and `surrogate-key` (Varnish, Fastly), `false` for
+     * `cache-tag` and `cdn-tag` (Cloudflare and Bunny ignore `Vary`): a public answer that
+     * varies is then refused when the routes are mounted.
+     */
+    readonly honoursVary?: boolean;
+  };
   /** Reads the file of the routes that declare an upload: `multipartUploads()` of `@ddd-ts-kit/http/uploads`. */
   readonly uploads?: UploadReader;
 }

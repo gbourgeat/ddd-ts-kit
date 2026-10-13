@@ -204,3 +204,4 @@ When not to use the lock: whenever the sentence describing the need contains "ne
 - [Delivery and idempotency](../concepts/delivery-and-idempotency.md)
 - [Message brokers](message-brokers.md)
 - [Persistence](persistence.md)
+- [HTTP caches](http-caches.md): the shared cache in front of the API, Varnish and the CDNs

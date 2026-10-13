@@ -76,6 +76,23 @@ describe('GET /calendars/:calendarId/days/:day', () => {
     });
   });
 
+  it('is kept by the browser of its caller only, asked again each time, and answers 304 when nothing changed', async () => {
+    const queries = new InMemoryQueryBus().register(GetCalendarDayQuery, { execute: async () => shown });
+    const route = routeOf(queries);
+
+    const first = await executeRoute(route, request('2026-03-02'), { validateResponses: true });
+
+    const again = await executeRoute(
+      route,
+      { ...request('2026-03-02'), headers: { 'if-none-match': first.headers['etag'] ?? '' } },
+      { validateResponses: true },
+    );
+
+    expect(first.headers['cache-control']).toBe('private, max-age=0, must-revalidate');
+    expect(first.headers['etag']).toMatch(/^"[A-Za-z0-9_-]+"$/);
+    expect(again.status).toBe(304);
+  });
+
   it('refuses a day that is not written YYYY-MM-DD with 422', async () => {
     const queries = new InMemoryQueryBus().register(GetCalendarDayQuery, { execute: async () => shown });
 

@@ -1,5 +1,6 @@
 import type { Authenticator } from '@ddd-ts-kit/auth';
 import {
+  CacheTagHeader,
   reportHttpErrors,
   type ErrorContext,
   type ErrorMapper,
@@ -28,6 +29,8 @@ export interface HttpBoundary extends Presentation {
   readonly uploads: UploadReader;
   /** A request a guard refused at the edge, written to the audit trail as a denied decision. */
   readonly onGuardRefusal: (refusal: GuardRefusal) => Promise<void>;
+  /** The header Varnish files a public answer under the tags of its resources from. */
+  readonly cacheTags: { readonly header: CacheTagHeader };
 }
 
 interface Edge {
@@ -65,6 +68,7 @@ export function httpBoundary({
     around: tracedRoutes(),
     uploads: multipartUploads(),
     onGuardRefusal: refusals,
+    cacheTags: { header: CacheTagHeader.xkey },
     // The message of the error may quote data: only the code and the route are logged.
     onError: (error, context) => {
       if (context.problem.status < 500) {

@@ -4,15 +4,19 @@ import type { JsonSchema } from '../json-schema.js';
 import type { Schema } from '../schema.js';
 import type { ValidationIssue } from '../validation-issue.js';
 import type { InferStandardOutput } from './infer-standard-output.js';
+import type { StandardSchemaOptions } from './standard-schema-options.js';
 import type { StandardSchemaIssue, StandardSchemaResult, StandardSchemaV1 } from './standard-schema-v1.js';
 
 /**
- * Standard Schema has no JSON Schema export, so the contract side is supplied by the caller
- * and defaults to `{}` (any value).
+ * Validates with any Standard Schema library. The JSON Schema of the contract is the one given;
+ * without it, the one the library converts itself when it implements Standard JSON Schema
+ * (verified with zod 4), else `{}` (any value). A schema the library cannot write as JSON Schema
+ * (a date, a custom check) is documented `{}` as well, never a failure of the contract.
  */
 export function standardSchema<S extends StandardSchemaV1>(
   schema: S,
-  jsonSchema: JsonSchema = {},
+  jsonSchema?: JsonSchema,
+  options: StandardSchemaOptions = {},
 ): Schema<InferStandardOutput<S>> {
   return {
     parse(input) {
@@ -29,8 +33,22 @@ export function standardSchema<S extends StandardSchemaV1>(
 
       return verdictOf(result);
     },
-    toJsonSchema: () => jsonSchema,
+    toJsonSchema: () => jsonSchema ?? converted(schema, options),
   };
+}
+
+function converted(schema: StandardSchemaV1, { io = 'input' }: StandardSchemaOptions): JsonSchema {
+  const converter = schema['~standard'].jsonSchema;
+
+  if (converter === undefined) {
+    return {};
+  }
+
+  try {
+    return converter[io]({ target: 'draft-2020-12' });
+  } catch {
+    return {};
+  }
 }
 
 function verdictOf<Output>(result: StandardSchemaResult<Output>): Result<Output, ValidationIssue[]> {

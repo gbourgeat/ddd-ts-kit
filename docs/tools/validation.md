@@ -1,9 +1,9 @@
-# Validation libraries: zod, class-validator, Standard Schema
+# Validation libraries: zod, class-validator, TypeBox, Standard Schema
 
 **Summary.** Validation in this kit means one thing: checking the shape of what crosses a
 boundary (an HTTP request, an integration event payload). It is done behind a small `Schema`
-port of `@ddd-ts-kit/validation`, with adapters for zod, class-validator and any library that
-implements Standard Schema (valibot, arktype and others). Because routes, events and the
+port of `@ddd-ts-kit/validation`, with adapters for zod, class-validator, TypeBox and any
+library that implements Standard Schema (valibot, arktype and others). Because routes, events and the
 OpenAPI generator depend on the port, the library is replaceable; what differs between the
 three adapters is the quality of the generated contract, the error codes and the decorator
 mode they impose. Business rules are not validation and never use these libraries.
@@ -49,17 +49,20 @@ pipeline answers as a 422 problem with one issue per path.
 
 Versions, licences and downloads checked on 2026-10-10 against the npm registry and GitHub.
 
-| | zod | class-validator | Standard Schema (valibot, arktype, ...) |
-|---|---|---|---|
-| What it is | schema builder, types inferred from the schema | decorators on DTO classes, with class-transformer | a common interface that schema libraries implement, not a library |
-| Current version | 4.6.5 | 0.15.1 (February 2026); class-transformer 0.5.1 dates from November 2021 | spec 1.1.0; valibot 1.5.0, arktype 2.2.8 |
-| Licence | MIT | MIT | MIT |
-| Weekly downloads | about 326 million | about 12 million | valibot about 22 million, arktype about 2 million |
-| Decorators | none | legacy mode required for the whole program | none |
-| Type from schema | yes, inferred | the class is the type, written by hand | yes, inferred |
-| JSON Schema for the contract | built in (`z.toJSONSchema`, draft 2020-12) | through `class-validator-jsonschema`, a separate package | not through the kit's adapter: you supply it (see limits) |
-| Issue codes | the library's (`too_small`, ...) | the constraint name | always `invalid` |
-| Asynchronous schemas | not at the boundary | not at the boundary | `parse` throws |
+| | zod | class-validator | TypeBox | Standard Schema (valibot, arktype, ...) |
+|---|---|---|---|---|
+| What it is | schema builder, types inferred from the schema | decorators on DTO classes, with class-transformer | JSON Schema builder with static types, compiled validators | a common interface that schema libraries implement, not a library |
+| Current version | 4.6.5 | 0.15.1 (February 2026); class-transformer 0.5.1 dates from November 2021 | `typebox` 1.3.37 (2026-10-12; `@sinclair/typebox` 0.34 is its predecessor) | spec 1.1.0; valibot 1.5.0, arktype 2.2.8 |
+| Licence | MIT | MIT | MIT | MIT |
+| Weekly downloads | about 326 million | about 12 million | not checked | valibot about 22 million, arktype about 2 million |
+| Decorators | none | legacy mode required for the whole program | none | none |
+| Type from schema | yes, inferred | the class is the type, written by hand | yes, inferred (`Static`) | yes, inferred |
+| JSON Schema for the contract | built in (`z.toJSONSchema`, draft 2020-12) | through `class-validator-jsonschema`, a separate package | the schema is JSON Schema | the library's own when it implements Standard JSON Schema (verified with zod 4; arktype and valibot through `@valibot/to-json-schema` not verified), or the one you supply |
+| Shared once in the contract | `.meta({ id })`, kept when nested | `classSchema(Dto, { shared: true })`; a nested class always is | `$id` in the options, kept when nested | the library's ids, or `sharedSchema(name, schema)` |
+| Reuse in part | `.pick`, `.omit`, `.partial`, `.extend` | `pickClass`, `omitClass`, `partialClass` of the kit, `extends` | `Type.Pick`, `Type.Omit`, `Type.Partial`, `Type.Intersect` (keeps the reference) or `Type.Interface` (a flat copy) | the library's own (`v.pick`, `v.omit`, ...) |
+| Issue codes | the library's (`too_small`, ...) | the constraint name | the JSON Schema keyword (`minLength`, `format`) | always `invalid` |
+| Cost of one parse, measured ([contract pairs](contract-pairs.md)) | about 0.5 µs | about 5 to 9 µs | about 6 to 11 µs (its own check alone, 0.75 µs) | not measured |
+| Asynchronous schemas | not at the boundary | not at the boundary | not at the boundary | `parse` throws |
 
 ## Selection criteria
 
@@ -87,7 +90,16 @@ From [`packages/validation/README.md`](../../packages/validation/README.md):
   issue; nested errors are flattened (`items.0.quantity`), one issue per failed constraint;
   nested classes land under `$defs`. Needs `class-transformer`, `class-validator-jsonschema`
   and `reflect-metadata`, and `experimentalDecorators` in the project.
-- **Standard Schema.** `standardSchema(schema, jsonSchema?)` accepts any implementing library.
+- **Standard Schema.** `standardSchema(schema, jsonSchema?, { io? })` accepts any implementing
+  library; without a JSON Schema it documents the one the library converts itself through
+  Standard JSON Schema, when it implements it and can convert that schema (verified with zod 4),
+  else `{}`.
+- **Shared schemas.** A shape declared once is documented once: the OpenAPI generator writes it in
+  `components.schemas` and every route refers to it, whole or nested. `sharedSchema(name,
+  schema)` shares any `Schema`; the platform shares `acceptedSchema` (`Accepted`), the page of a
+  shared item (`<Item>Page`) and the problem document. Under `"stack.schemas": "shared"` (a new
+  project), `generate schema` writes one and `schema/no-duplicate-shape` reports a shape
+  declared twice in one context ([configuration](../CONFIG.md)).
 - `customSchema(parse, jsonSchema?)` builds a schema from a plain function, for the rare input
   no library describes.
 - The root entry imports no third-party package; each adapter is a subpath with its library as
@@ -99,12 +111,18 @@ From [`packages/validation/README.md`](../../packages/validation/README.md):
 
 ## Limits and when not to use it
 
-- **Standard Schema adapter and the contract.** The package README says the specification has
-  no JSON Schema export, so the second argument is yours to give and `toJsonSchema()` answers
-  `{}` without it. Checked today: standardschema.dev now also publishes a companion interface,
-  Standard JSON Schema (V1). The kit's adapter does not read it (its source relies on
-  `~standard.validate` only): with valibot or arktype, either pass the JSON Schema by hand or
-  accept an empty contract for that input.
+- **Standard Schema adapter and the contract.** Standard Schema itself has no JSON Schema
+  export; its companion specification, Standard JSON Schema (V1), has one, and the adapter reads
+  it when the library implements it (zod 4 does, checked with 4.6.5; valibot only through
+  `toStandardJsonSchema` of `@valibot/to-json-schema`). For any other library, pass the JSON
+  Schema by hand or accept an empty contract for that input.
+- **class-validator in part.** `pickClass`, `omitClass` and `partialClass` copy the metadata of
+  class-validator and class-transformer onto a new class meant to be extended. A derived class
+  nested in another through `@Type` declares a property of its own, because
+  class-validator-jsonschema documents a class from its own decorators only.
+- **Two shapes under one name.** zod documents the input and the output side of a schema with
+  defaults differently: a shared schema used as a body and as a response gets two components
+  (`Slot`, `Slot_2`). Give the response an id of its own.
 - **Standard Schema issue codes.** The specification carries none: every issue has the code
   `invalid`.
 - **No asynchronous validation at the boundary**: a schema that validates asynchronously makes
@@ -130,6 +148,7 @@ it, with a `DomainError` and a stable code, and it holds for every caller.
 |---|---|
 | New project, no constraint | zod: the default of the kit, inferred types, the contract generated without a second description |
 | NestJS, or an existing base of decorated DTO classes | class-validator: keep the DTOs, accept the legacy decorator mode |
+| The contract must be exactly the schema, or Fastify is already in place | TypeBox: the schema is JSON Schema, composed with `Type.Pick`, `Type.Omit`, `Type.Intersect` |
 | The team already standardised on valibot or arktype, or bundle size at the edge matters | Standard Schema adapter, with the JSON Schema supplied for every public input |
 | Integration event payloads | the same library as the routes: one vocabulary of schemas for both contracts |
 | An input no library fits | `customSchema`, with its JSON Schema |
@@ -145,10 +164,12 @@ one API confuse its clients.
   2026-10-10)
 - Standard Schema and Standard JSON Schema: https://standardschema.dev
 - valibot: https://valibot.dev ; arktype: https://arktype.io
+- TypeBox: https://github.com/sinclairzx81/typebox
 - npm registry: versions, licences and weekly downloads read on 2026-10-10.
 - JSON Schema draft 2020-12: https://json-schema.org/draft/2020-12
-- Not verified: whether the kit's Standard Schema adapter can use Standard JSON Schema (the
-  README says it does not exist; the specification site says it does).
+- Standard JSON Schema read by the adapter: verified with zod 4.6.5, whose schemas implement
+  `~standard.jsonSchema` (`input` and `output`, target `draft-2020-12`); not verified with
+  arktype or with `@valibot/to-json-schema`.
 
 ## See also
 

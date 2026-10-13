@@ -62,6 +62,9 @@ export function loadConfig(env: Variables): AppConfig {
     {{#if redis.server}}
     redisUrl: readUrl(env, 'REDIS_URL', problems),
     {{/if}}
+    {{#if httpCache.varnish}}
+    ...readVarnish(env, problems),
+    {{/if}}
     {{#if cache.rateLimit}}
     rateLimit: readRateLimit(env, problems),
     {{/if}}
@@ -143,6 +146,15 @@ function readResilience(env: Variables, problems: string[]): AppConfig['resilien
     timeoutMs: readInteger(env, { name: 'OUTBOUND_TIMEOUT_MS', fallback: 2000, min: 1, max: 600000 }, problems),
   };
 }
+{{#if httpCache.varnish}}
+
+function readVarnish(env: Variables, problems: string[]): Pick<AppConfig, 'varnishUrl' | 'varnishPurgeKey'> {
+  return {
+    varnishUrl: readUrl(env, 'VARNISH_URL', problems),
+    varnishPurgeKey: readText(env, 'VARNISH_PURGE_KEY', problems),
+  };
+}
+{{/if}}
 {{#if cache.rateLimit}}
 
 function readRateLimit(env: Variables, problems: string[]): AppConfig['rateLimit'] {

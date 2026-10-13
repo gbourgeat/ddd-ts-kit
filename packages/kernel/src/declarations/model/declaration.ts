@@ -1,3 +1,4 @@
+import type { BackgroundJobDeclaration } from './background-job-declaration.js';
 import type { DomainEventHandlerDeclaration } from './domain-event-handler-declaration.js';
 import type { EdgeDeclaration } from './edge-declaration.js';
 import type { HandlerDeclaration } from './handler-declaration.js';
@@ -10,6 +11,7 @@ import type { ProjectionDeclaration } from './projection-declaration.js';
 
 /** What a class said about itself. Plain data: reading it instantiates and resolves nothing. */
 export type Declaration =
+  | BackgroundJobDeclaration
   | MessageDeclaration
   | HandlerDeclaration
   | IntegrationEventHandlerDeclaration

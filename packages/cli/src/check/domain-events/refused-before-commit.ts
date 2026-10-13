@@ -3,7 +3,7 @@ import type { HandlerDependency } from './handler-dependency.js';
 const KERNEL = '@ddd-ts-kit/kernel';
 const TRUSTED_PACKAGES = [KERNEL, '@ddd-ts-kit/auth'];
 /** The ports of the kernel whose effect no transaction covers. */
-const OUTSIDE_THE_TRANSACTION = ['Cache', 'Lock', 'RateLimiter', 'JobScheduler', 'EventBus'];
+const OUTSIDE_THE_TRANSACTION = ['Cache', 'CachePurger', 'Lock', 'RateLimiter', 'JobScheduler', 'EventBus'];
 
 /**
  * Why a handler of `context` that runs before the commit may not depend on this, in the words

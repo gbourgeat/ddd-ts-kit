@@ -174,6 +174,10 @@ export class Calendar extends AggregateRoot<string> {
     return this.state.timeZone;
   }
 
+  get openingHours(): OpeningHours {
+    return this.state.openingHours;
+  }
+
   get limit(): number {
     return this.state.limit;
   }

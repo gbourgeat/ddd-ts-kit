@@ -8,6 +8,7 @@ import {
   type MessageInfo,
 } from '@ddd-ts-kit/kernel';
 import { describeToken, tokenIdentity, type BindingAspect, type Token } from '@ddd-ts-kit/kernel/declarations';
+import { QueueWorker } from '@ddd-ts-kit/scheduling';
 import { container as rootContainer, instanceCachingFactory } from 'tsyringe';
 import { DeclaredPolicies } from '../authorization/declared-policies.js';
 import { declarationsOf } from '../authorization/declarations-of.js';
@@ -31,6 +32,7 @@ import type { Resolve } from '../wiring/resolve.js';
 import type { Wiring } from '../wiring/wiring.js';
 import type { ApplicationOptions } from './application-options.js';
 import type { Application } from './application.js';
+import { BackgroundJobLifecycle } from './background-job-lifecycle.js';
 import type { BindingInfo } from './binding-info.js';
 import { ConsumerSubscriptions } from './consumer-subscriptions.js';
 import { isHandlerRegistry } from './is-handler-registry.js';
@@ -59,6 +61,8 @@ export class ContainerApplication implements Application {
 
   private readonly jobLifecycle: JobLifecycle;
 
+  private readonly backgroundJobLifecycle: BackgroundJobLifecycle;
+
   constructor(
     private readonly wiring: Wiring,
     private readonly options: ApplicationOptions,
@@ -68,6 +72,13 @@ export class ContainerApplication implements Application {
 
     this.consumerSubscriptions = new ConsumerSubscriptions(wiring.consumptions, ports);
     this.jobLifecycle = new JobLifecycle(effectiveJobs, ports, options.jobs?.start !== false);
+
+    this.backgroundJobLifecycle = new BackgroundJobLifecycle(
+      wiring.backgroundJobs,
+      ports,
+      options.jobs?.start !== false,
+    );
+
     // Registered first: a module binding or an override of the guard comes later and wins.
     this.provide(UseCaseGuard, passEveryMessage);
     this.provide(UseCaseDeclarations, { list: declarationsOf(wiring) });
@@ -86,6 +97,7 @@ export class ContainerApplication implements Application {
     this.registerHandlers('query');
     this.attachDomainEventHandlers();
     this.jobLifecycle.register();
+    this.backgroundJobLifecycle.register();
   }
 
   // Arrow properties, here and below: callers destructure them and pass them around.
@@ -109,7 +121,7 @@ export class ContainerApplication implements Application {
     }
   };
 
-  /** The jobs come after the consumers: a job sends commands whose events must find their handlers subscribed. */
+  /** The jobs come after the consumers: a job sends commands whose events must find their handlers subscribed. Background jobs come last. */
   readonly start = async (): Promise<void> => {
     for (const module of this.options.modules) {
       if (this.started.includes(module)) {
@@ -123,6 +135,7 @@ export class ContainerApplication implements Application {
 
     this.consumerSubscriptions.subscribe();
     await this.jobLifecycle.start();
+    await this.backgroundJobLifecycle.start();
   };
 
   /**
@@ -133,6 +146,7 @@ export class ContainerApplication implements Application {
   readonly stop = async (): Promise<void> => {
     const failures = [
       ...(await this.jobLifecycle.stop()),
+      ...(await this.backgroundJobLifecycle.stop()),
       ...this.consumerSubscriptions.unsubscribe(),
       ...(await this.stopModules()),
     ];
@@ -164,6 +178,10 @@ export class ContainerApplication implements Application {
 
     if (sameToken(target, JobScheduler)) {
       this.jobLifecycle.register();
+    }
+
+    if (sameToken(target, QueueWorker)) {
+      this.backgroundJobLifecycle.register();
     }
   }
 

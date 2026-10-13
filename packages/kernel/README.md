@@ -12,18 +12,18 @@ npm i @ddd-ts-kit/kernel
 
 | Area | Exports |
 |---|---|
-| Domain | `Entity`, `AggregateRoot` (version, recorded events), `ValueObject`, `DomainEvent`, `DomainError` with a stable `code`, `ConceptError` (the errors of one concept, each built by a static factory: see "Domain errors"), `isRefusal`, `CodeOf`, `RefusalOf`, `Refusal`, `RefusalFacts`, the generic `InvariantViolation`, `NotFoundError`, `ConflictError`, `ConcurrencyError`, `Result` with `ok`, `err`, `unwrap` |
+| Domain | `Entity`, `AggregateRoot` (version, recorded events), `ValueObject`, `DomainEvent`, `DomainError` with a stable `code`, `ConceptError` (the errors of one concept, each built by a static factory: see "Domain errors"), `isRefusal`, `CodeOf`, `RefusalOf`, `Refusal`, `RefusalFacts`, the generic `InvariantViolation`, `NotFoundError`, `ConflictError`, `ConcurrencyError`, `PreconditionFailedError`, `Result` with `ok`, `err`, `unwrap` |
 | Ports | `Clock`, `IdGenerator`, `UnitOfWork`, `Repository` (abstract classes: each one is its own injection token), `UseCase`, `DependencyKind` (the roles a binding declares, read by di, tracing and aspects: `repository`, `gateway`, `external`, `use-case`, `publisher`, `consumer`, `domain-event-handler`, `job`) |
 | Buses | `Command`, `Query`, `CommandBus`, `QueryBus`, `BusMiddleware`, the in-process `InMemoryCommandBus` and `InMemoryQueryBus` (`register(type, handler, { context })` names the bounded context in `MessageInfo`), `unitOfWorkMiddleware` |
 | Events | `IntegrationEvent`, `IntegrationEventPublisher`, `IntegrationEventSubscriber`, `EventBus` (both at once), `EventSubscribers` (the subscriber of each bounded context), `ProcessedEventStore`, `idempotent`, `InMemoryEventBus`, `DomainEventDispatcher`, `IntegrationEventCallback` and `DomainEventCallback` (the functions a subscriber and a dispatcher are given), `executionContextOfEvent`, `inEventScope`, `scopedPublisher`, `EventDelivery` (what a provider says of one delivery: attempt, last attempt, transport, source, consumer), `messagingSystemOf` |
 | Domain events and the unit of work | `dispatchingOnSave` (the wrapper that makes a repository hand over what the aggregates it is given recorded), `announceDomainEvents`, `withinUnitOfWork` (what every `UnitOfWork.run` is built on: queue, dispatch before the commit, `after-commit` phase), `unitOfWorkStage` and `UnitOfWorkStage`, `DomainEventPhase`, `DomainEventSubscription`, `SaveAfterCommitError`, `AfterCommitFailure`, `reportAfterCommitFailures`, `InMemoryDomainEventDispatcher` |
 | Actor | `Actor`, `AuthorizedCommand`, `AuthorizedQuery`, `ActorContext` |
-| Standard interfaces | `Session`, `ExecutionContext` and `ExecutionScope`, `Logger`, `Metrics`, `ErrorReporter`, `Cache`, `Lock`, `RateLimiter`, `Page` and `PageRequest`, `AuditStamp`, `TenantScoped`, `AuditTrail`, `AuditReader` and `AuditEntry` |
+| Standard interfaces | `Session`, `ExecutionContext` and `ExecutionScope`, `Logger`, `Metrics`, `ErrorReporter`, `Cache`, `CacheInvalidation` and `CachePurger` (with `cacheTag`, `tenantCacheTags`, `CachePurgeRequest`, `PublishedCacheInvalidation`, `PurgingPublisher`, `RepeatedCachePurger`: see "Purging the HTTP caches"), `Lock`, `RateLimiter`, `Page` and `PageRequest`, `AuditStamp`, `TenantScoped`, `AuditTrail`, `AuditReader` and `AuditEntry` |
 | Scheduled jobs | `JobScheduler`, `ScheduledJob`, `JobExecution`, `JobSchedule`, `JobOptions`, `JobDefinition`, `JobRun`, `JobDescription`, `parseJobSchedule`, `describeJobSchedule`, `jobPolicy`, `executionContextOfJob` |
 | Read side | `Criteria`, `defineCriteria`, `validateCriteria`, `scoped`, `planCriteria`, `evaluateCriteria`, `pageOfPlan`, `hydrate`, `ReadModelStore`, `stampOf`, `TableReadModelStore`, `ProjectionRebuild`, `InMemoryReadModelStore` (see "Criteria", "Hydration" and "Projections") |
-| Persistence helpers | `optimisticUpdate`, `schemaNameOf`, `stampCreation`, `stampUpdate`, `tenantScopeOf`, `encodeCursor`, `decodeCursor` |
+| Persistence helpers | `optimisticUpdate`, `expectVersion` (the version a caller read, `If-Match` over HTTP, still the current one, else `PreconditionFailedError`: 412), `schemaNameOf`, `stampCreation`, `stampUpdate`, `tenantScopeOf`, `encodeCursor`, `decodeCursor` |
 | Error reporting | `ErrorReporter`, `ErrorReport`, `errorReportOf`, `reportOnce`, `isUnexpectedError`, `errorReportingMiddleware`, `DeadLetterReports`, `reportProcessFailures`, `NoopErrorReporter` |
-| Doubles | `FixedClock`, `SequentialIdGenerator`, `InMemoryUnitOfWork`, `FixedActorContext`, `FixedExecutionScope`, `InMemoryLogger`, `InMemoryMetrics`, `InMemoryErrorReporter`, `InMemoryCache`, `InMemoryLock`, `InMemoryRateLimiter` |
+| Doubles | `FixedClock`, `SequentialIdGenerator`, `InMemoryUnitOfWork`, `FixedActorContext`, `FixedExecutionScope`, `InMemoryLogger`, `InMemoryMetrics`, `InMemoryErrorReporter`, `InMemoryCache`, `InMemoryCacheInvalidation`, `InMemoryCachePurger`, `InMemoryLock`, `InMemoryRateLimiter` |
 | Declarations (`@ddd-ts-kit/kernel/declarations`) | `Requires`, `Public`, `CommandHandler`, `QueryHandler`, `IntegrationEventHandler`, `DomainEventHandler`, `Scheduled`, `Projection`, `On`, `Repository`, `Gateway`, `Adapter`, `Policy`, `injected`, `injectedDependencies`, `declarationOf`, `listDeclarations`, `Token`, `describeToken`, `tokenIdentity`, `portDefect` |
 
 The rules these blocks serve are in `docs/ARCHITECTURE.md`.
@@ -114,6 +114,33 @@ A project says which form it writes with `"stack.refusals"` in `ddd-ts-kit.confi
 (`factories`, what `init` writes, or `classes`, what a config without the key means); the
 `errors/*` rules hold the first, and `ddd-ts-kit error-factories` moves a project from the
 second. Both forms can live in one project.
+
+## State machines
+
+```ts
+export const parcelLifecycle = defineStateMachine({
+  states: Object.values(ParcelStatus),
+  initial: [ParcelStatus.Registered],
+  transitions: {
+    ship: { from: [ParcelStatus.Registered], to: ParcelStatus.Shipped, guard: ({ paid }) => (paid ? undefined : ParcelError.unpaid()) },
+    reroute: { from: [ParcelStatus.Shipped] },
+    deliver: { from: [ParcelStatus.Shipped], to: ParcelStatus.Delivered },
+  },
+  refused: ({ from, transition }) => ParcelError.cannot(from, transition),
+});
+
+this.state = { ...this.state, status: parcelLifecycle.next(this.state.status, 'ship', { paid }) };
+```
+
+The lifecycle of an aggregate, in `domain/state-machines/<aggregate>.state-machine.ts`.
+`next(from, transition, context)` answers the next status or throws: the refusal `refused` builds
+from a static factory for a transition the state does not allow, or the refusal of a guard.
+`start(state)` checks an initial state, `can(...)` answers without throwing, `allowedFrom(state)`
+and `isFinal(state)` read the graph, `describe()` gives it as data and
+`mermaidOfStateMachine(description)` as a Mermaid diagram. A transition without `to` keeps the
+state. A declaration naming an unknown state throws `InvalidStateMachineError` when the file
+loads. Why, and the rule that holds the aggregate to it:
+[State machines](../../docs/concepts/state-machines.md).
 
 ## Domain events and the unit of work
 
@@ -516,6 +543,31 @@ receives: `scheduledAt`, `startedAt`, `attempt` and an abort `signal`. What the 
 across a change of clocks, what one instance among several guarantees and how a job is tested
 are in the README of `@ddd-ts-kit/scheduling`.
 
+### Background
+
+```ts
+// contexts/billing/application/background/compile-statements.background-job.ts
+@Background({ maxAttempts: 3, timeout: '10m' })
+export class CompileStatementsBackgroundJob implements BackgroundJob<CompileStatementsPayload> {
+  static readonly jobName = 'billing.compile-statements';
+
+  constructor(private readonly commands: CommandBus) {}
+
+  async run(payload: CompileStatementsPayload, execution: BackgroundJobExecution): Promise<void> {
+    await this.commands.execute(new CompileStatements(execution.jobId, payload.month));
+  }
+}
+```
+
+A background job is named by its static `jobName`, which is how a use case enqueues it
+(`jobs.enqueue(CompileStatementsBackgroundJob, { month })`, the payload typed by `run`). The decorator
+takes the options, all optional: `maxAttempts` (5), `backoff` (`{ baseMs: 1000, factor: 2,
+maxMs: 300000 }`), `timeout` and `lease` (30 s), as milliseconds or `'10m'`. A name that is not
+`<context>.<job-name>` and options it cannot read throw a `DeclarationError` when the file
+loads. `BackgroundJobExecution` is what `run` receives: `jobId`, `attempt`, `enqueuedAt`,
+`startedAt`, the `checkpoint` an earlier attempt saved, an abort `signal`, `saveCheckpoint(value)`
+and `reportProgress({ done, total })`.
+
 ### Decorator modes
 
 Every decorator of this entry works under both decorator modes of TypeScript, and the same
@@ -711,6 +763,30 @@ The key carries the type of its value. `InMemoryCache(clock, { maxEntries? })` e
 `Clock` and is bounded. `tenantCacheKey<Quote>(scope, 'quote', pair)` is the same key confined to
 the tenant of the work in progress: what one tenant cached is never served to another.
 
+### Purging the HTTP caches
+
+Two ports, so that a use case can never purge before its commit:
+
+| Port | Called by | Does |
+|---|---|---|
+| `CacheInvalidation.invalidate(tags)` | a `before-commit` handler of the domain event that changed what the answers show | asks for the tags to be purged once the work commits; `domain-events/transactional-before-commit` allows it |
+| `CachePurger.purge(tags)` | the relay of the outbox, never a use case (refused before the commit) | purges a shared cache now: `InMemoryCachePurger` here, Varnish and the CDNs in `@ddd-ts-kit/http/purgers` |
+
+`cacheTag('calendar', id)` names a resource (`calendar:c-1`, the identifier percent-encoded),
+`cacheTag('calendar')` every resource of a kind; the routes of `@ddd-ts-kit/http` tag their
+answers with the same function. `PublishedCacheInvalidation({ publisher, ids, clock, scope, perTenant? })`,
+what `kernelModule()` of `@ddd-ts-kit/di` binds, publishes one `CachePurgeRequest` on the
+publisher, the tags under the tenant of the work (`tenantCacheTags`) when `perTenant` is set, as
+a multi-tenant application whose answers are tagged per tenant sets it (work that names no tenant
+is then refused with `NoCurrentTenantError`: its purge would meet no answer): behind an outbox it
+is a row of the transaction, gone with a rollback, kept across a crash after the commit.
+`new PurgingPublisher(purger, broker)` is what the relay publishes through: the purge requests
+go to the purger, the other events to the broker, and a failed purge throws so that the relay
+retries it. `new RepeatedCachePurger(purger, { againAfterMs, onFailure? })` purges, then the same
+tags once more `againAfterMs` later, for a read that loaded the previous state before the commit
+and reached the cache after the first purge; the second purge is best effort, reported to
+`onFailure`. `InMemoryCacheInvalidation` remembers the tags asked for (`invalidated`), for specs.
+
 ### Lock
 
 ```ts
@@ -836,6 +912,55 @@ computed from (`InvalidJobScheduleError`, code `INVALID_JOB_SCHEDULE`, otherwise
 fills in the defaults. The kernel holds no scheduler: the in-process one, the computation of
 occurrences and the manual one for tests are `@ddd-ts-kit/scheduling`, and the contract of the
 port is `jobSchedulerContract` of `@ddd-ts-kit/testing/contracts`.
+
+### JobQueue
+
+```ts
+abstract class JobQueue {
+  abstract enqueue<P>(job: BackgroundJobType<P>, payload: P, options?: EnqueueOptions): Promise<EnqueuedJob>;
+  abstract cancel(id: string): Promise<boolean>;
+  abstract find(id: string): Promise<QueuedJob | undefined>; // status, attempts, progress, last error code
+}
+```
+
+Where a use case hands work to a worker. `EnqueueOptions` are `delay` or `runAt`, an
+`idempotencyKey` (a job of the same name and key, enqueued for the same tenant and already kept,
+is answered, `duplicate: true`) and a `subject` (the id of what the job works on, which `find`
+answers next to the tenant: a query checks the job belongs to the element it was asked about).
+`QueuedJobStatus` is the closed vocabulary of the statuses (`waiting`, `running`, `succeeded`,
+`cancelled`, `dead`), to publish in a contract. Work done for a tenant finds and cancels the
+jobs of that tenant only (an elevation, those of the tenants it names). Called inside a unit of
+work, a job is added or cancelled with the business change: the stores of the ORM packages
+write with the transaction, a store that cannot (Redis, memory) waits for the commit through
+`whenCommitted(write, failed?)`, the helper any such adapter uses. A run happens inside
+`ExecutionScope`, in the context `executionContextOfBackgroundJob({ jobId, enqueuedBy, deadline? })`
+builds: origin `queue`, the correlation, actor and tenant of the work that enqueued it
+(`EnqueuedBy`), the job as the cause. `backgroundJobPolicy(options)` fills in the defaults and
+`retryDelayMs(policy, attempt)` is the backoff. The queue, its worker and its stores are
+`@ddd-ts-kit/scheduling` and the ORM packages; why and how:
+[Background jobs](../../docs/concepts/background-jobs.md).
+
+### ProcessRunner and ProcessStore
+
+```ts
+abstract class ProcessRunner {
+  abstract run<State>(process: ProcessType<State>, id: string, step: (current: State | undefined) => ProcessDecision<State> | undefined): Promise<void>;
+  abstract timeout<State>(process: ProcessType<State>, due: ProcessTimeoutDue & { jobId: string }, step: (current: State) => ProcessDecision<State> | undefined): Promise<void>;
+}
+
+abstract class ProcessStore {
+  abstract load(name: string, id: string): Promise<StoredProcess | undefined>;
+  abstract save(process: StoredProcess): Promise<void>; // ConcurrencyError unless version is the stored one plus 1
+}
+```
+
+Process managers: a class of `application/processes/` (`ProcessManager<State>`) with a static
+`processName`, an optional static `timeoutJob` and a static `isState` guard; its steps answer a
+`ProcessDecision` (`state`, `commands`, `timeouts` as `{ name, at }`, `cancel`, `ended`). A state
+the guard does not recognise throws `UnreadableProcessStateError`. `InMemoryProcessStore` keeps
+the instances as JSON, for tests and one process. The runner is `StoredProcessRunner` of
+`@ddd-ts-kit/scheduling`; why and how:
+[Sagas and process managers](../../docs/concepts/sagas-and-process-managers.md).
 
 ### RateLimiter
 

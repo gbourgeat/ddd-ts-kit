@@ -59,6 +59,9 @@ import {
 {{/unless}}
   Logger,
   Metrics,
+{{#if httpCache.perTenant}}
+  PublishedCacheInvalidation,
+{{/if}}
 {{#if http.any}}
   QueryBus,
 {{/if}}
@@ -253,6 +256,16 @@ function kernel(foundations: Foundations, persistence: Persistence, options: App
     eventPublisher: scopedPublisher(bus, scope),
 {{/unless}}
     eventSubscriber: bus,
+{{#if httpCache.perTenant}}
+    // The purges of the outbox filed under the tenant of the work, as the answers are tagged (`cacheTags.perTenant`).
+    cacheInvalidation: new PublishedCacheInvalidation({
+      publisher: scopedPublisher(new OutboxPublisher(persistence.outbox), scope),
+      ids,
+      clock,
+      scope,
+      perTenant: true,
+    }),
+{{/if}}
 {{#if errors.sentry}}
     // The buses and the jobs report through it, and `container.stop()` flushes it; left out (the tools, the tests), nothing is reported.
     ...(options.errors === undefined ? {} : { errorReporter: options.errors }),

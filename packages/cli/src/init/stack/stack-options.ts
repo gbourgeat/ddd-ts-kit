@@ -15,6 +15,8 @@ export interface StackOptions {
   readonly authz?: string;
   readonly broker?: string;
   readonly cache?: string;
+  /** `none` or `varnish`: the shared HTTP cache in front of the API. */
+  readonly httpCache?: string;
   readonly storage?: string;
   readonly audit?: string;
   readonly errors?: string;
@@ -26,9 +28,12 @@ export interface StackOptions {
   readonly routes?: string;
   readonly representations?: string;
   readonly forms?: string;
+  readonly schemas?: string;
   readonly valueObjects?: string;
   readonly literals?: string;
   readonly tenancy?: string;
+  /** `database`, `redis` or `memory`: where the background jobs wait. */
+  readonly queue?: string;
   readonly packageManager?: string;
   /** The prefix of the source root in imports, when it is not the default. */
   readonly importAlias?: string;

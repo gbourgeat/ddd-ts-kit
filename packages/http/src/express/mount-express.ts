@@ -2,6 +2,7 @@ import { Readable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
 import express, { type IRouter, type Request, type RequestHandler, type Response } from 'express';
 import type { ExecuteOptions } from '../pipeline/execute-options.js';
+import { assertCachedRoutes } from '../pipeline/assert-cached-routes.js';
 import { executeRoute } from '../pipeline/execute-route.js';
 import { serializeBody } from '../pipeline/serialize-body.js';
 import { writeStream } from '../pipeline/write-stream.js';
@@ -27,6 +28,7 @@ type Registrar = Record<HttpMethod, (path: string, ...handlers: RequestHandler[]
 export function mountExpress(target: IRouter, routes: readonly Route[], options: ExpressMountOptions = {}): void {
   assertUniqueRoutes(routes);
   assertServed(routes, options.representations);
+  assertCachedRoutes(routes, options);
 
   const register = registrarOf(target);
 

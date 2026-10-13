@@ -1,7 +1,7 @@
 {
   "name": "@ddd-ts-kit/validation",
-  "version": "0.10.0",
-  "description": "One Schema contract for input validation, with adapters for zod, class-validator and Standard Schema.",
+  "version": "0.11.0",
+  "description": "One Schema contract for input validation, with adapters for zod, class-validator, TypeBox and Standard Schema.",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -32,20 +32,25 @@
     "./standard-schema": {
       "types": "./dist/standard-schema.d.ts",
       "default": "./dist/standard-schema.js"
+    },
+    "./typebox": {
+      "types": "./dist/typebox.d.ts",
+      "default": "./dist/typebox.js"
     }
   },
   "files": [
     "dist"
   ],
   "dependencies": {
-    "@ddd-ts-kit/kernel": "0.10.0"
+    "@ddd-ts-kit/kernel": "0.11.0"
   },
   "peerDependencies": {
-    "zod": "^4.0.0",
-    "class-validator": ">=0.14.0",
     "class-transformer": ">=0.5.0",
+    "class-validator": ">=0.14.0",
     "class-validator-jsonschema": ">=5.0.0",
-    "reflect-metadata": ">=0.2.0"
+    "reflect-metadata": ">=0.2.0",
+    "zod": "^4.0.0",
+    "typebox": "^1.0.0"
   },
   "peerDependenciesMeta": {
     "zod": {
@@ -62,14 +67,18 @@
     },
     "reflect-metadata": {
       "optional": true
+    },
+    "typebox": {
+      "optional": true
     }
   },
   "devDependencies": {
-    "zod": "^4.6.5",
-    "class-validator": "^0.15.1",
     "class-transformer": "^0.5.1",
+    "class-validator": "^0.15.1",
     "class-validator-jsonschema": "^5.0.0",
     "reflect-metadata": "^0.2.2",
-    "valibot": "^1.0.0"
+    "typebox": "^1.3.37",
+    "valibot": "^1.0.0",
+    "zod": "^4.6.5"
   }
 }

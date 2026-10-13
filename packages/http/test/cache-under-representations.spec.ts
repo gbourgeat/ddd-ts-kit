@@ -1,0 +1,160 @@
+import express from 'express';
+import { describe, expect, it } from 'vitest';
+import { z } from 'zod';
+import { DeclarationError } from '@ddd-ts-kit/kernel/declarations';
+import { sharedSchema } from '@ddd-ts-kit/validation';
+import { zodSchema } from '@ddd-ts-kit/validation/zod';
+import {
+  CacheScope,
+  CacheTagHeader,
+  Representations,
+  defineRoute,
+  executeRoute,
+  pageSchemaOf,
+  withFieldAccess,
+  type CachePolicy,
+  type ExecuteOptions,
+  type RawHeaders,
+  type RawRequest,
+  type Route,
+} from '../src/index.js';
+import { mountExpress } from '../src/express.js';
+import { generateOpenApi } from '../src/openapi.js';
+
+const representations = Representations.standard();
+
+const calendarShape = z.object({ id: z.string(), version: z.number(), changedAt: z.string() });
+const SEVENTH = { id: 'calendar-1', version: 7, changedAt: '2026-03-02T09:00:00.000Z' };
+
+const request = (headers: RawHeaders = {}): RawRequest => ({
+  params: { calendarId: 'calendar-1' },
+  query: {},
+  headers,
+  raw: null,
+});
+
+function readCalendar(cache: CachePolicy, produces: readonly string[] = ['application/xml']): Route {
+  return defineRoute(
+    {
+      method: 'GET',
+      path: '/calendars/:calendarId',
+      operationId: 'readCalendar',
+      summary: 'Read a calendar',
+      responses: { 200: { description: 'The calendar.', body: zodSchema(calendarShape) } },
+      security: false,
+      produces,
+      cache,
+    },
+    () => ({ status: 200, body: SEVENTH }),
+  );
+}
+
+const described = readCalendar({
+  scope: CacheScope.public,
+  maxAge: '1m',
+  vary: ['Accept-Language'],
+  etag: { version: 'version' },
+  lastModified: 'changedAt',
+  tags: [{ resource: 'calendar', field: 'id' }],
+});
+
+const hashed = readCalendar({ scope: CacheScope.private, maxAge: '0s', etag: 'representation' });
+
+const tagged: ExecuteOptions = { representations, cacheTags: { header: CacheTagHeader.xkey } };
+
+describe('a cached answer written in another media type', () => {
+  it('varies on the headers of its policy and on Accept', async () => {
+    const response = await executeRoute(described, request({ accept: 'application/xml' }), tagged);
+
+    expect(response.headers['content-type']).toBe('application/xml; charset=utf-8');
+    expect(response.headers['vary']).toBe('Accept-Language, accept');
+    expect(response.headers['cache-control']).toBe('public, max-age=60');
+  });
+
+  it('reads its version, its instant and its tags from what the handler answered, not from the bytes', async () => {
+    const response = await executeRoute(described, request({ accept: 'application/xml' }), tagged);
+
+    expect(response.headers['etag']).toBe('W/"7"');
+    expect(response.headers['last-modified']).toBe('Mon, 02 Mar 2026 09:00:00 GMT');
+    expect(response.headers['xkey']).toBe('calendar:calendar-1');
+  });
+
+  it('answers 304 to a caller that holds the version, whatever the media type', async () => {
+    const response = await executeRoute(
+      described,
+      request({ accept: 'application/xml', 'if-none-match': 'W/"7"' }),
+      tagged,
+    );
+
+    expect(response.status).toBe(304);
+    expect(response).not.toHaveProperty('body');
+  });
+
+  it('gives each representation a strong ETag of its own bytes', async () => {
+    const json = await executeRoute(hashed, request({ accept: 'application/json' }), { representations });
+    const xml = await executeRoute(hashed, request({ accept: 'application/xml' }), { representations });
+
+    expect(json.headers['etag']).toMatch(/^"[\w-]+"$/);
+    expect(xml.headers['etag']).toMatch(/^"[\w-]+"$/);
+    expect(xml.headers['etag']).not.toBe(json.headers['etag']);
+  });
+
+  it('documents Vary with Accept in the contract, next to the headers of its policy', () => {
+    const document = generateOpenApi({ info: { title: 'Calendars', version: '1' }, routes: [described], representations });
+
+    expect(JSON.stringify(document)).toContain('"const":"Accept-Language, accept"');
+  });
+});
+
+describe('a public answer chosen by Accept', () => {
+  const shared = readCalendar({ scope: CacheScope.public, maxAge: '1m' });
+  const jsonOnly = readCalendar({ scope: CacheScope.public, maxAge: '1m' }, []);
+
+  it('is refused behind a cache that ignores Vary, which would hand one media type to every caller', () => {
+    const options = { representations, cacheTags: { header: CacheTagHeader.cacheTag } };
+
+    expect(() => mountExpress(express(), [shared], options)).toThrow(DeclarationError);
+    expect(() => mountExpress(express(), [shared], options)).toThrow(/ignores Vary/);
+  });
+
+  it('is accepted behind a cache that keys on Vary, and when it answers JSON only', () => {
+    expect(() => mountExpress(express(), [shared], tagged)).not.toThrow();
+    expect(() =>
+      mountExpress(express(), [jsonOnly], { representations, cacheTags: { header: CacheTagHeader.cacheTag } }),
+    ).not.toThrow();
+  });
+});
+
+describe('fields reserved to some callers in a shared schema', () => {
+  const noteShape = z.object({ id: z.string(), note: z.string() });
+  const reserved = { note: { read: { permission: { id: 'care:note.read' } } } };
+
+  it('are marked in the definition the shared schema refers to', () => {
+    const note = withFieldAccess(sharedSchema('Note', zodSchema(noteShape)), reserved);
+    const definition = z.object({ properties: z.object({ note: z.record(z.string(), z.unknown()) }) });
+    const { $defs } = z.object({ $defs: z.object({ Note: definition }) }).parse(note.toJsonSchema());
+
+    expect($defs.Note.properties.note['x-field-access']).toEqual({ read: { permission: 'care:note.read' } });
+  });
+
+  it('are left out of each item of a page shared under the name of its item', async () => {
+    const item = withFieldAccess(sharedSchema('Note', zodSchema(noteShape)), reserved);
+
+    const search = defineRoute(
+      {
+        method: 'GET',
+        path: '/notes',
+        operationId: 'searchNotes',
+        summary: 'Search notes',
+        responses: { 200: { description: 'One page.', body: pageSchemaOf(item) } },
+        security: false,
+      },
+      () => ({ status: 200, body: { items: [{ id: 'n1', note: 'fragile' }] } }),
+    );
+
+    const response = await executeRoute(search, request());
+
+    expect(pageSchemaOf(item).toJsonSchema()['$ref']).toBe('#/$defs/NotePage');
+    expect(response.body).toEqual({ items: [{ id: 'n1' }] });
+  });
+});

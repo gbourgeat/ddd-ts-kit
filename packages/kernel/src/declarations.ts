@@ -1,3 +1,4 @@
+export { Background } from './declarations/decorators/background.js';
 export { type AdapterOptions, Adapter } from './declarations/decorators/adapter.js';
 export { CommandHandler } from './declarations/decorators/command-handler.js';
 export { type DomainEventHandlerOptions, DomainEventHandler } from './declarations/decorators/domain-event-handler.js';
@@ -34,6 +35,7 @@ export { injectedDependencies } from './declarations/injection/injected-dependen
 export { injected } from './declarations/injection/injected.js';
 export type { AccessDeclaration } from './declarations/model/access-declaration.js';
 export type { AuditedFieldHint } from './declarations/model/audited-field-hint.js';
+export type { BackgroundJobDeclaration } from './declarations/model/background-job-declaration.js';
 export type { BindingAspectInfo } from './declarations/model/binding-aspect-info.js';
 export type { BindingAspect } from './declarations/model/binding-aspect.js';
 export type { Declaration } from './declarations/model/declaration.js';
@@ -76,3 +78,6 @@ export type { JobExecution } from './application/scheduling/job-execution.js';
 export type { JobOptions } from './application/scheduling/job-options.js';
 export type { IntervalSchedule, CronSchedule, JobSchedule } from './application/scheduling/job-schedule.js';
 export type { ScheduledJob } from './application/scheduling/scheduled-job.js';
+export type { BackgroundJob } from './application/background/background-job.js';
+export type { BackgroundJobExecution } from './application/background/background-job-execution.js';
+export type { BackgroundJobOptions } from './application/background/background-job-options.js';

@@ -68,7 +68,11 @@ goes in a table. A download is a query answering a short signed link (`signedDow
 A read is `generate query ... (--permission ... | --public)`; a search adds `--search` (paged,
 narrowed in the query by the caller's access scope). A reaction inside the context is
 `generate event-handler` (phase below); work started by time is
-`generate job ... --command <UseCase>`, which only sends the command.
+`generate job ... --command <UseCase>`, which only sends the command; work a command hands to a
+worker, later and outside the request, is `generate background-job ... --command <UseCase>`,
+enqueued through `JobQueue` in the unit of work of the command; a process that waits for
+events and deadlines is `generate process`, its steps run by event handlers through
+`ProcessRunner`.
 
 **Phase of a domain event handler.** Pick by what the effect is:
 

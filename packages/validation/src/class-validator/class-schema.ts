@@ -11,6 +11,11 @@ export interface ClassSchemaOptions {
   /** Merged over the defaults `{ whitelist: true, forbidNonWhitelisted: true }`. */
   readonly validator?: ValidatorOptions;
   readonly transform?: ClassTransformOptions;
+  /**
+   * Documented once, under the name of the class: the contract holds it in `components.schemas`
+   * and every route that uses it refers to it, as it already does for a nested class.
+   */
+  readonly shared?: boolean;
 }
 
 export function classSchema<T extends object>(dto: DtoClass<T>, options: ClassSchemaOptions = {}): Schema<T> {
@@ -31,7 +36,7 @@ export function classSchema<T extends object>(dto: DtoClass<T>, options: ClassSc
 
       return errors.length === 0 ? ok(instance) : err(flatten(errors, ''));
     },
-    toJsonSchema: () => selfContainedSchema(dto),
+    toJsonSchema: () => selfContainedSchema(dto, options.shared === true),
   };
 }
 

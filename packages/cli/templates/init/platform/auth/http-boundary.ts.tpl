@@ -1,4 +1,12 @@
 import type { Authenticator } from '@ddd-ts-kit/auth';
+{{#if httpCache.varnish}}
+{{#unless httpCache.perTenant}}
+import { CacheTagHeader } from '@ddd-ts-kit/http';
+{{/unless}}
+{{#if httpCache.perTenant}}
+import { CacheTagHeader, tenantFromHeader, type TenantResolver } from '@ddd-ts-kit/http';
+{{/if}}
+{{/if}}
 {{#if errors.none}}
 import type { ErrorContext, ErrorMapper, {{#if audit.on}}GuardRefusal, {{/if}}RouteAround{{#if files.http}}, UploadReader{{/if}} } from '@ddd-ts-kit/http';
 import type { Clock, ExecutionScope, Logger, Session } from '@ddd-ts-kit/kernel';
@@ -52,6 +60,17 @@ export interface HttpBoundary{{#if presentation.any}} extends Presentation{{/if}
   readonly onError: (error: unknown, context: ErrorContext) => void;
   /** The span of a request, named by its route template; probes and documentation routes make none. */
   readonly around: RouteAround;
+{{#if httpCache.varnish}}
+  /** The header Varnish files a public answer under the tags of its resources from. */
+  readonly cacheTags: { readonly header: CacheTagHeader; readonly perTenant?: boolean };
+{{/if}}
+{{#if httpCache.perTenant}}
+  /**
+   * The tenant of a request that names one in `x-tenant-id`, an anonymous one on a public route included: its
+   * answers are then filed under that tenant, and vary on the header. Without it, the tenant of the caller.
+   */
+  readonly resolveTenant: TenantResolver;
+{{/if}}
 {{#if files.http}}
   /** Reads the file of a controller that declares an upload, as it streams: its size and media types are checked on the way. */
   readonly uploads: UploadReader;
@@ -129,6 +148,16 @@ export function httpBoundary({
     errorMapper,
     clock,
     around: tracedRoutes(),
+{{#if httpCache.varnish}}
+{{#if httpCache.perTenant}}
+    // Filed under the tenant of the request, as the purges of the outbox are.
+    cacheTags: { header: CacheTagHeader.xkey, perTenant: true },
+    resolveTenant: tenantFromHeader(),
+{{/if}}
+{{#unless httpCache.perTenant}}
+    cacheTags: { header: CacheTagHeader.xkey },
+{{/unless}}
+{{/if}}
 {{#if files.http}}
     uploads: multipartUploads(),
 {{/if}}

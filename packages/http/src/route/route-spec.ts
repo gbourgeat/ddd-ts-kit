@@ -1,4 +1,6 @@
 import type { FormHints } from '../forms/form-hints.js';
+import type { CachePolicy } from '../cache/cache-policy.js';
+import type { IfMatch } from '../cache/if-match.js';
 import type { HttpMethod } from './http-method.js';
 import type { RequestSchemas } from './request-schemas.js';
 import type { ResponsesSpec } from './responses-spec.js';
@@ -39,4 +41,14 @@ export interface RouteSpec<
   readonly consumes?: readonly string[];
   /** Describes the body of the route as a form, served by `formRoutes` at `GET /forms/<operationId>`: `{}` for the body as it is. */
   readonly form?: FormHints;
+  /**
+   * How the caches on the way may keep the answer. Left out, a route that is not public answers
+   * `Cache-Control: no-store`, and a public one says nothing.
+   */
+  readonly cache?: CachePolicy;
+  /**
+   * A write conditional on the version the client read: the version named in `If-Match` is
+   * handed to the handler as `context.expectedVersion`, for the use case to compare.
+   */
+  readonly ifMatch?: IfMatch;
 }

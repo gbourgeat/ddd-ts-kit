@@ -46,6 +46,7 @@ import { languageDeclaredVocabulary } from '../rules/language-declared-vocabular
 import { languageGlossaryTerm } from '../rules/language-glossary-term.js';
 import { languageNoTechnicalName } from '../rules/language-no-technical-name.js';
 import { layerApplicationInward } from '../rules/layer-application-inward.js';
+import { lifecycleStatusThroughMachine } from '../rules/lifecycle-status-through-machine.js';
 import { layerDomainPurity } from '../rules/layer-domain-purity.js';
 import { layerInfrastructureNoPresentation } from '../rules/layer-infrastructure-no-presentation.js';
 import { layerPresentationNoInfrastructure } from '../rules/layer-presentation-no-infrastructure.js';
@@ -59,11 +60,14 @@ import { portsImplementsNeverExtends } from '../rules/ports-implements-never-ext
 import { portsNoConcreteDependency } from '../rules/ports-no-concrete-dependency.js';
 import { portsNoTokenConstant } from '../rules/ports-no-token-constant.js';
 import { portsValueImport } from '../rules/ports-value-import.js';
+import { processSendsCommandsOnly } from '../rules/process-sends-commands-only.js';
 import { purityNoAmbientRandomness } from '../rules/purity-no-ambient-randomness.js';
 import { purityNoEnvironment } from '../rules/purity-no-environment.js';
 import { purityNoSystemClock } from '../rules/purity-no-system-clock.js';
 import { schedulingJobName } from '../rules/scheduling-job-name.js';
 import { schedulingJobTriggersUseCase } from '../rules/scheduling-job-triggers-use-case.js';
+import { schemaNoDuplicateShape } from '../rules/schema-no-duplicate-shape.js';
+import { schemaPresentationOnly } from '../rules/schema-presentation-only.js';
 import { standardNoParallelInterface } from '../rules/standard-no-parallel-interface.js';
 import { tenancyScopedStatement } from '../rules/tenancy-scoped-statement.js';
 import { testBuilderRequired } from '../rules/test-builder-required.js';
@@ -89,6 +93,8 @@ export const ARCHITECTURE_RULES: readonly Rule[] = [
   namingSuffix,
   namingOneConceptPerFile,
   namingSearchNotList,
+  schemaPresentationOnly,
+  schemaNoDuplicateShape,
   testSpecRequired,
   eventsNameFormat,
   eventsDefinedInPublishedLanguage,
@@ -141,6 +147,8 @@ export const ARCHITECTURE_RULES: readonly Rule[] = [
   portsNoConcreteDependency,
   portsValueImport,
   schedulingJobTriggersUseCase,
+  lifecycleStatusThroughMachine,
+  processSendsCommandsOnly,
   schedulingJobName,
   importsAliasOnly,
   importsExtension,

@@ -23,7 +23,7 @@ const body = zodSchema(
 );
 
 {{/if}}
-{{#if route.returnsId}}
+{{#if route.ownAccepted}}
 const accepted = zodSchema(z.object({ id: z.string() }), { io: 'output' });
 
 {{/if}}
@@ -48,7 +48,7 @@ const answer = zodSchema(
   body,
   {{/if}}
   {{#if route.returnsId}}
-  response: { status: {{route.status}}, description: 'Done; the body carries the identifier.', body: accepted },
+  response: { status: {{route.status}}, description: 'Done; the body carries the identifier.', body: {{route.acceptedBody}} },
   {{/if}}
   {{#if route.returnsNothing}}
   response: { status: {{route.status}}, description: 'Done.' },
@@ -58,6 +58,9 @@ const answer = zodSchema(
   {{/if}}
   // TODO(domain): list the codes of the refusals "{{name.words}}" can raise, as their factories set them, so that they appear in the contract with their status (`errors/known-code`).
   errors: [],
+  {{#if route.cached}}
+  cache: {{route.cache}},
+  {{/if}}
 })
 export class {{name.pascal}}Controller {
   constructor({{route.constructorParams}}) {}

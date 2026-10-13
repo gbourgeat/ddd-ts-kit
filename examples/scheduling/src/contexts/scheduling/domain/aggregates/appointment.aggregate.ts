@@ -8,6 +8,7 @@ import { AppointmentConfirmed } from '@/contexts/scheduling/domain/events/appoin
 import { AppointmentExpired } from '@/contexts/scheduling/domain/events/appointment-expired.event';
 import { AppointmentMarkedNoShow } from '@/contexts/scheduling/domain/events/appointment-marked-no-show.event';
 import { AppointmentRescheduled } from '@/contexts/scheduling/domain/events/appointment-rescheduled.event';
+import { appointmentLifecycle } from '@/contexts/scheduling/domain/state-machines/appointment.state-machine';
 import type { AttachedDocument } from '@/contexts/scheduling/domain/value-objects/attached-document.vo';
 import type { Booking } from '@/contexts/scheduling/domain/value-objects/booking.vo';
 import type { Cancellation } from '@/contexts/scheduling/domain/value-objects/cancellation.vo';
@@ -44,7 +45,7 @@ export class Appointment extends AggregateRoot<string> {
       registeredAt: now,
       changedAt: now,
       booking,
-      status: AppointmentStatus.Booked,
+      status: appointmentLifecycle.start(AppointmentStatus.Booked),
     });
 
     created.record(new AppointmentBooked(id, now, { booking }));
@@ -64,7 +65,7 @@ export class Appointment extends AggregateRoot<string> {
       registeredAt: now,
       changedAt: now,
       booking,
-      status: AppointmentStatus.Requested,
+      status: appointmentLifecycle.start(AppointmentStatus.Requested),
       confirmBefore,
     });
 
@@ -78,28 +79,20 @@ export class Appointment extends AggregateRoot<string> {
   }
 
   confirm(now: Date): void {
-    this.refuseWhenEnded();
-
-    if (this.state.status === AppointmentStatus.Booked) {
-      throw AppointmentError.alreadyConfirmed(this.id);
-    }
-
     this.state = {
       ...this.carried(),
       changedAt: now,
-      status: AppointmentStatus.Booked,
+      status: appointmentLifecycle.next(this.state.status, 'confirm', this.moment(now)),
     };
 
     this.record(new AppointmentConfirmed(this.id, now, this.state.booking));
   }
 
   cancel(cancellation: Cancellation, now: Date): void {
-    this.refuseWhenEnded();
-
     this.state = {
       ...this.carried(),
       changedAt: now,
-      status: AppointmentStatus.Cancelled,
+      status: appointmentLifecycle.next(this.state.status, 'cancel', this.moment(now)),
       cancellation,
     };
 
@@ -108,36 +101,29 @@ export class Appointment extends AggregateRoot<string> {
 
   /** Moves to another slot of the same calendar in one step: the previous slot is free as soon as this one is held. */
   reschedule(slot: Slot, day: string, now: Date): void {
-    this.refuseWhenEnded();
-
+    const status = appointmentLifecycle.next(this.state.status, 'reschedule', this.moment(now));
     const previous = this.state.booking;
     const booking = previous.movedTo(slot, day);
 
-    this.state = { ...this.state, changedAt: now, booking };
+    this.state = { ...this.state, changedAt: now, booking, status };
     this.record(new AppointmentRescheduled(this.id, now, { booking, previous }));
   }
 
   complete(now: Date): void {
-    this.refuseWhenEnded();
-    this.refuseBeforeStart(now);
-
     this.state = {
       ...this.carried(),
       changedAt: now,
-      status: AppointmentStatus.Completed,
+      status: appointmentLifecycle.next(this.state.status, 'complete', this.moment(now)),
     };
 
     this.record(new AppointmentCompleted(this.id, now, this.state.booking));
   }
 
   markNoShow(now: Date): void {
-    this.refuseWhenEnded();
-    this.refuseBeforeStart(now);
-
     this.state = {
       ...this.carried(),
       changedAt: now,
-      status: AppointmentStatus.NoShow,
+      status: appointmentLifecycle.next(this.state.status, 'markNoShow', this.moment(now)),
     };
 
     this.record(new AppointmentMarkedNoShow(this.id, now, this.state.booking));
@@ -148,7 +134,7 @@ export class Appointment extends AggregateRoot<string> {
     const deadline = this.state.confirmBefore;
 
     if (
-      this.state.status !== AppointmentStatus.Requested ||
+      !appointmentLifecycle.can(this.state.status, 'expire', this.moment(at)) ||
       deadline === undefined ||
       deadline.getTime() > at.getTime()
     ) {
@@ -158,7 +144,7 @@ export class Appointment extends AggregateRoot<string> {
     this.state = {
       ...this.carried(),
       changedAt: at,
-      status: AppointmentStatus.Expired,
+      status: appointmentLifecycle.next(this.state.status, 'expire', this.moment(at)),
     };
 
     this.record(new AppointmentExpired(this.id, at, this.state.booking));
@@ -197,7 +183,7 @@ export class Appointment extends AggregateRoot<string> {
   }
 
   get isActive(): boolean {
-    return this.state.status === AppointmentStatus.Requested || this.state.status === AppointmentStatus.Booked;
+    return !appointmentLifecycle.isFinal(this.state.status);
   }
 
   get booking(): Booking {
@@ -218,9 +204,9 @@ export class Appointment extends AggregateRoot<string> {
 
   /** The staff writes what it keeps about the appointment, until its end. */
   annotate(internalNote: string, now: Date): void {
-    this.refuseWhenEnded();
+    const status = appointmentLifecycle.next(this.state.status, 'annotate', this.moment(now));
 
-    this.state = { ...this.state, changedAt: now, internalNote };
+    this.state = { ...this.state, changedAt: now, internalNote, status };
 
     const { booking, confirmBefore } = this.state;
 
@@ -278,15 +264,8 @@ export class Appointment extends AggregateRoot<string> {
     };
   }
 
-  private refuseWhenEnded(): void {
-    if (!this.isActive) {
-      throw AppointmentError.ended(this.id, this.state.status);
-    }
-  }
-
-  private refuseBeforeStart(now: Date): void {
-    if (this.state.booking.slot.startsAfter(now)) {
-      throw AppointmentError.notStarted(this.id, this.state.booking.slot.startsAt);
-    }
+  /** What the lifecycle judges a transition with. */
+  private moment(at: Date): { readonly appointmentId: string; readonly at: Date; readonly startsAt: Date } {
+    return { appointmentId: this.id, at, startsAt: this.state.booking.slot.startsAt };
   }
 }

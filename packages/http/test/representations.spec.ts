@@ -1,5 +1,6 @@
 import express from 'express';
 import Fastify from 'fastify';
+import { Hono } from 'hono';
 import { describe, expect, it } from 'vitest';
 import { DeclarationError } from '@ddd-ts-kit/kernel/declarations';
 import { z } from 'zod';
@@ -19,6 +20,7 @@ import {
 } from '../src/index.js';
 import { mountExpress } from '../src/express.js';
 import { mountFastify } from '../src/fastify.js';
+import { mountHono } from '../src/hono.js';
 import { catalogRoutes } from './support/catalog.js';
 
 const representations = Representations.standard();
@@ -251,6 +253,8 @@ describe('the representations of the platform', () => {
 
     expect(() => mountExpress(app, catalogRoutes)).toThrow(/declares produces or consumes, and no representations/);
     expect(() => mountFastify(Fastify(), catalogRoutes)).toThrow(DeclarationError);
+    expect(() => mountHono(new Hono(), catalogRoutes)).toThrow(DeclarationError);
+    expect(() => mountHono(new Hono(), catalogRoutes, { representations })).not.toThrow();
     expect(() => mountExpress(app, catalogRoutes, { representations })).not.toThrow();
   });
 

@@ -44,6 +44,12 @@ export interface AppConfig {
   {{#if redis.server}}
   readonly redisUrl: string;
   {{/if}}
+  {{#if httpCache.varnish}}
+  /** Varnish as the API reaches it (`VARNISH_URL`): where the relay of the outbox sends the purges of the tags. */
+  readonly varnishUrl: string;
+  /** The key Varnish lets a purge from another machine in with (`VARNISH_PURGE_KEY`): a secret in production. */
+  readonly varnishPurgeKey: string;
+  {{/if}}
   {{#if cache.rateLimit}}
   /** How many requests one caller address may send in a sliding window, before the HTTP layer answers 429. */
   readonly rateLimit: RateLimit;

@@ -35,6 +35,10 @@ export class CalendarError extends ConceptError {
     );
   }
 
+  static unknownClearance(clearanceId: string) {
+    return CalendarError.refusal('UNKNOWN_CLEARANCE', `There is no clearance ${clearanceId}.`, { clearanceId });
+  }
+
   static unknown(calendarId: string) {
     return CalendarError.refusal('UNKNOWN_CALENDAR', `There is no calendar ${calendarId}.`, { calendarId });
   }

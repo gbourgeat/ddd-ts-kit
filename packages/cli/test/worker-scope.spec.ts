@@ -96,6 +96,7 @@ describe('worker-scope', () => {
       'entity',
       'value-object',
       'vocabulary',
+      'state-machine',
       'domain-event',
       'error',
       'domain-error',
@@ -110,16 +111,19 @@ describe('worker-scope', () => {
       'guard',
       'representation',
       'form',
+      'schema (in its own context: generate schema <context> <Name>)',
       'integration-handler',
       'event-handler',
       'projection',
+      'background-job',
+      'process',
       'acl',
       'e2e',
       'adapter (once the project has its first adapter)',
     ]);
 
     expect(String(jsonAt(scope, 'briefing'))).toContain(
-      '- Generators you may run: aggregate, builder, entity, value-object, vocabulary, domain-event',
+      '- Generators you may run: aggregate, builder, entity, value-object, vocabulary, state-machine, domain-event',
     );
   });
 });

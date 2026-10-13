@@ -3,16 +3,16 @@
     "schema": {
       "type": "object",
       "properties": {
+        "startsAt": {
+          "format": "date-time",
+          "type": "string"
+        },
         "calendarId": {
           "minLength": 1,
           "type": "string"
         },
         "appointmentTypeId": {
           "minLength": 1,
-          "type": "string"
-        },
-        "startsAt": {
-          "format": "date-time",
           "type": "string"
         },
         "patientId": {
@@ -26,9 +26,9 @@
         }
       },
       "required": [
+        "startsAt",
         "calendarId",
-        "appointmentTypeId",
-        "startsAt"
+        "appointmentTypeId"
       ]
     },
     "uischema": {

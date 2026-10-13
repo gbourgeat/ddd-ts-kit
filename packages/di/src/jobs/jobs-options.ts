@@ -3,8 +3,10 @@ import type { JobSettings } from '@ddd-ts-kit/kernel';
 export interface JobsOptions {
   /**
    * `false`: the jobs are registered, described and run on demand with `runNow`, and
-   * `start()` never starts the scheduler. For the process that serves requests next to a worker
-   * that runs the jobs. Default `true`.
+   * `start()` never starts the scheduler, nor the worker of a queue other processes share. For
+   * the process that serves requests next to a worker that runs the jobs. A queue kept in the
+   * memory of the process (`InMemoryJobStore`) is still consumed: no other process sees it.
+   * Default `true`.
    */
   readonly start?: boolean;
   /**

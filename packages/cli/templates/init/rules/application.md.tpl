@@ -11,7 +11,7 @@ paths:
 - Nothing here reads the event store: an event-sourced aggregate is loaded and saved through its repository port like any other (`event-sourcing/store-behind-repository`). A projection writes its read model and never a stream (`event-sourcing/projection-never-appends`); one fed by the store is declared `@Projection(name, { feed: 'event-store' })`.
 {{#if style.declared}}
 - Every command and query carries `@Requires(permission)` or `@Public()` (`authz/declared`), and the actor is in the message (`authz/actor-explicit`). Permissions live in `authorization/<context>.permissions.ts`, rules that need loaded state in `authorization/*.policy.ts`.
-- The decorator is the registration (`declarations/role-declared`): `@CommandHandler(Message)`, `@QueryHandler(Message)`, `@DomainEventHandler(Event, { name })`, `@IntegrationEventHandler(definition, { consumer })`, `@Scheduled('<context>.<job>', schedule)`, `@Projection('<context>.<name>')`, `@Policy(permission, { name })`. Names are string literals.
+- The decorator is the registration (`declarations/role-declared`): `@CommandHandler(Message)`, `@QueryHandler(Message)`, `@DomainEventHandler(Event, { name })`, `@IntegrationEventHandler(definition, { consumer })`, `@Scheduled('<context>.<job>', schedule)`, `@Background(options)` (the name is the static `jobName`), `@Projection('<context>.<name>')`, `@Policy(permission, { name })`. Names are string literals.
 - The constructor is the one statement of what a class depends on (`declarations/constructor-injection`): each parameter is typed by one port class, with no `?`, default value, rest or destructuring, and no list repeats it in the decorator. To add a dependency, add the parameter: `npx ddd-ts-kit docs` reads the signature into the generated file of the context (`npm run dev` does it on every change), never edit that file.
 {{/if}}
 {{#if style.explicit}}
@@ -26,6 +26,7 @@ paths:
 - A dependency list names port classes, imported as values, in the order of the constructor: never an adapter or a fake (`ports/value-import`, `ports/no-concrete-dependency`).
 {{/if}}
 - A job (`scheduling/*.job.ts`) and an integration event handler (`integration/handlers/`) only build one command and send it as a system actor; both are safe to repeat (`scheduling/job-triggers-use-case`, `events/consumer-idempotent`).
+- Work a use case hands to a worker is a background job (`background/*.background-job.ts`, `generate background-job ... --command <UseCase>`): enqueued through `JobQueue` in the unit of work of the command, run later as the actor that enqueued it, at least once, so it sends commands safe to repeat and a long one reports its progress and saves a checkpoint. A process that waits for events and has deadlines is a process manager (`processes/*.process.ts`, `generate process`): its steps decide from its state alone and answer commands and timeouts, never write an aggregate (`process/sends-commands-only`); an event handler runs each step through `ProcessRunner`.
 {{#if files.any}}
 - A file arrives in the command as a `FileUpload` of its area, which the bus stages before the transaction under a key of `FileKeys` (never a name or a path from the user) and scans; the handler records `upload.file`, its `StoredFile`, on the aggregate and calls `FileStaging.promoteOnCommit`, which moves it to its key with the commit. A direct upload is confirmed from the `PendingUpload` the aggregate kept, never from a key the client sends. The ports are named here, never a connector (`files/port-not-connector`); `npx ddd-ts-kit generate file-upload` writes the slice.
 {{/if}}
@@ -36,4 +37,4 @@ paths:
 - A permission, a role or a status is read from its declaration, `billingPermissions['invoice.issue']`, `InvoiceStatus.Issued`, never written as a string (`language/declared-vocabulary`); a number has a name (`clean/no-magic-number`).
 {{/if}}
 - Time through `Clock`, identifiers through `IdGenerator`, no `process.env` (`purity/*`). No logging, tracing, retry or audit call: they are applied from outside (`aspects/outside-in`, `tracing/platform-only`).
-- A whole feature with `/ddd-ts-kit:use-case`. Create with `npx ddd-ts-kit generate command|query|port|policy|job|event-handler|integration-handler ... --json`, then fill the `TODO(domain)` places.
+- A whole feature with `/ddd-ts-kit:use-case`. Create with `npx ddd-ts-kit generate command|query|port|policy|job|background-job|process|event-handler|integration-handler ... --json`, then fill the `TODO(domain)` places.

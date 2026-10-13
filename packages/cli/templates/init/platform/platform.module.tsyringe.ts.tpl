@@ -21,6 +21,9 @@ import {
   Lock,
   Metrics,
   ProcessedEventStore,
+  {{#if queue.processTable}}
+  ProcessStore,
+  {{/if}}
   RateLimiter,
   UnitOfWork,
   {{#if errors.sentry}}
@@ -35,19 +38,33 @@ import {
   Lock,
   Metrics,
   ProcessedEventStore,
+  {{#if queue.processTable}}
+  ProcessStore,
+  {{/if}}
   RateLimiter,
   UnitOfWork,
   type ErrorReporter,
 } from '@ddd-ts-kit/kernel';
 {{/if}}
 {{#unless errors.sentry}}
-import { Cache, Lock, Metrics, ProcessedEventStore, RateLimiter, UnitOfWork } from '@ddd-ts-kit/kernel';
+import { Cache, Lock, Metrics, ProcessedEventStore, {{#if queue.processTable}}ProcessStore, {{/if}}RateLimiter, UnitOfWork } from '@ddd-ts-kit/kernel';
 {{/unless}}
 {{/unless}}
 {{/if}}
 {{#unless cache.redis}}
 import { {{#if broker.external}}EventSubscribers, {{/if}}ProcessedEventStore, UnitOfWork{{#if errors.sentry}}, type ErrorReporter{{/if}} } from '@ddd-ts-kit/kernel';
 {{/unless}}
+{{#unless cache.redis}}
+{{#if queue.processTable}}
+import { ProcessStore } from '@ddd-ts-kit/kernel';
+{{/if}}
+{{/unless}}
+{{#if queue.redis}}
+import { Logger } from '@ddd-ts-kit/kernel';
+{{/if}}
+{{#if queue.stored}}
+import { JobStore } from '@ddd-ts-kit/scheduling';
+{{/if}}
 {{#if persistence.packagedToken}}
 import { {{persistence.token}} } from '{{persistence.tokenPackage}}';
 {{/if}}
@@ -88,7 +105,16 @@ export interface PlatformOptions {
   readonly errors?: ErrorReporter;
   {{/if}}
   {{#if cache.redis}}
+  {{#if queue.redis}}
+  /**
+   * The Redis protocol server, which `main.ts` and the worker always give; left out (the tools,
+   * the tests), the cache, the lock, the limiter and the background jobs stay in the memory of
+   * the process, whose jobs only this process runs.
+   */
+  {{/if}}
+  {{#unless queue.redis}}
   /** The Redis protocol server; left out, the cache, the lock and the limiter stay in the memory of the process. */
+  {{/unless}}
   readonly redis?: RedisServices;
   {{/if}}
 }
@@ -111,6 +137,12 @@ export function platformModule(persistence: Persistence, options: PlatformOption
       {{#if events.outbox}}
       builder.bind(OutboxStore).toValue(persistence.outbox);
       {{/if}}
+      {{#if queue.database}}
+      builder.rebind(JobStore).toValue(persistence.jobs);
+      {{/if}}
+      {{#if queue.processTable}}
+      builder.rebind(ProcessStore).toValue(persistence.processes);
+      {{/if}}
       {{#if broker.external}}
       builder.rebind(EventSubscribers).toValue({ forContext: (name) => options.events.forConsumer(name) });
       {{/if}}
@@ -122,7 +154,7 @@ export function platformModule(persistence: Persistence, options: PlatformOption
       {{#if cache.redis}}
 
       if (options.redis !== undefined) {
-        bindRedis(builder, options.redis);
+        bindRedis(builder, options.redis{{#if queue.redis}}{{#if errors.sentry}}, options.errors{{/if}}{{/if}});
       }
       {{/if}}
       {{#if style.declared}}
@@ -137,10 +169,18 @@ export function platformModule(persistence: Persistence, options: PlatformOption
 }
 {{#if cache.redis}}
 
+{{#if queue.redis}}
+/** One server for the cache, the limiter in front of HTTP, the lock of the scheduled jobs and the background jobs. */
+{{/if}}
+{{#unless queue.redis}}
 /** One server for the cache, the limiter in front of HTTP and the lock that keeps a scheduled job to one instance. */
-function bindRedis(builder: ModuleBuilder, redis: RedisServices): void {
+{{/unless}}
+function bindRedis(builder: ModuleBuilder, redis: RedisServices{{#if queue.redis}}{{#if errors.sentry}}, errors?: ErrorReporter{{/if}}{{/if}}): void {
   builder.rebind(Cache).toFactory((resolve) => redis.cache(resolve(Metrics)));
   builder.rebind(RateLimiter).toValue(redis.rateLimiter);
   builder.rebind(Lock).toValue(redis.lock);
+  {{#if queue.redis}}
+  builder.rebind(JobStore).toFactory((resolve) => redis.jobs(resolve(Logger){{#if errors.sentry}}, errors{{/if}}));
+  {{/if}}
 }
 {{/if}}

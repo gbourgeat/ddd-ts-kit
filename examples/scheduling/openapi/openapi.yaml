@@ -1,7 +1,7 @@
 openapi: '3.1.0'
 info:
   title: scheduling
-  version: '0.10.0'
+  version: '0.11.0'
 tags:
   - name: analytics
   - name: audit
@@ -195,83 +195,16 @@ paths:
       responses:
         '200':
           description: One page of the search.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
-                type: object
-                required:
-                  - items
-                properties:
-                  items:
-                    type: array
-                    items:
-                      properties:
-                        id:
-                          type: string
-                        calendarId:
-                          type: string
-                        practiceId:
-                          type: string
-                        practitionerId:
-                          type: string
-                        patientId:
-                          type: string
-                        appointmentTypeId:
-                          type: string
-                        startsAt:
-                          oneOf:
-                            - format: date
-                              type: string
-                            - format: date-time
-                              type: string
-                        endsAt:
-                          oneOf:
-                            - format: date
-                              type: string
-                            - format: date-time
-                              type: string
-                        day:
-                          pattern: ^\d{4}-\d{2}-\d{2}$
-                          type: string
-                        status:
-                          type: string
-                          enum:
-                            - requested
-                            - booked
-                            - cancelled
-                            - expired
-                            - completed
-                            - no-show
-                        confirmBefore:
-                          oneOf:
-                            - format: date
-                              type: string
-                            - format: date-time
-                              type: string
-                        cancelledBy:
-                          type: string
-                          enum:
-                            - patient
-                            - practice
-                      type: object
-                      required:
-                        - id
-                        - calendarId
-                        - practiceId
-                        - practitionerId
-                        - patientId
-                        - appointmentTypeId
-                        - startsAt
-                        - endsAt
-                        - day
-                        - status
-                  total:
-                    type: integer
-                    minimum: 0
-                    description: Present when it is cheap to count.
-                  nextCursor:
-                    type: string
-                    description: Present when more items follow.
+                $ref: '#/components/schemas/AgendaLinePage'
         '401':
           description: 'Unauthorized. Error codes: UNAUTHORIZED.'
           content:
@@ -318,18 +251,18 @@ paths:
           application/json:
             schema:
               properties:
-                calendarId:
-                  minLength: 1
-                  type: string
-                appointmentTypeId:
-                  minLength: 1
-                  type: string
                 startsAt:
                   oneOf:
                     - format: date
                       type: string
                     - format: date-time
                       type: string
+                calendarId:
+                  minLength: 1
+                  type: string
+                appointmentTypeId:
+                  minLength: 1
+                  type: string
                 patientId:
                   minLength: 1
                   type: string
@@ -344,24 +277,24 @@ paths:
                       permission: scheduling:appointment.note.write
               type: object
               required:
+                - startsAt
                 - calendarId
                 - appointmentTypeId
-                - startsAt
           application/xml:
             schema:
               properties:
-                calendarId:
-                  minLength: 1
-                  type: string
-                appointmentTypeId:
-                  minLength: 1
-                  type: string
                 startsAt:
                   oneOf:
                     - format: date
                       type: string
                     - format: date-time
                       type: string
+                calendarId:
+                  minLength: 1
+                  type: string
+                appointmentTypeId:
+                  minLength: 1
+                  type: string
                 patientId:
                   minLength: 1
                   type: string
@@ -376,29 +309,30 @@ paths:
                       permission: scheduling:appointment.note.write
               type: object
               required:
+                - startsAt
                 - calendarId
                 - appointmentTypeId
-                - startsAt
       responses:
         '201':
           description: Done; the body carries the identifier.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
+            Vary:
+              description: The request headers this answer depends on, besides the URL.
+              schema:
+                type: string
+                const: accept
           content:
             application/json:
               schema:
-                properties:
-                  id:
-                    type: string
-                type: object
-                required:
-                  - id
+                $ref: '#/components/schemas/Accepted'
             application/xml:
               schema:
-                properties:
-                  id:
-                    type: string
-                type: object
-                required:
-                  - id
+                $ref: '#/components/schemas/Accepted'
         '401':
           description: 'Unauthorized. Error codes: UNAUTHORIZED.'
           content:
@@ -499,6 +433,12 @@ paths:
       responses:
         '200':
           description: The answer.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
@@ -636,15 +576,16 @@ paths:
       responses:
         '201':
           description: Done; the body carries the identifier.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
-                properties:
-                  id:
-                    type: string
-                type: object
-                required:
-                  - id
+                $ref: '#/components/schemas/Accepted'
         '401':
           description: 'Unauthorized. Error codes: UNAUTHORIZED.'
           content:
@@ -719,15 +660,16 @@ paths:
       responses:
         '201':
           description: Done; the body carries the identifier.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
-                properties:
-                  id:
-                    type: string
-                type: object
-                required:
-                  - id
+                $ref: '#/components/schemas/Accepted'
         '401':
           description: 'Unauthorized. Error codes: UNAUTHORIZED.'
           content:
@@ -794,15 +736,16 @@ paths:
       responses:
         '201':
           description: Done; the body carries the identifier.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
-                properties:
-                  id:
-                    type: string
-                type: object
-                required:
-                  - id
+                $ref: '#/components/schemas/Accepted'
         '401':
           description: 'Unauthorized. Error codes: UNAUTHORIZED.'
           content:
@@ -870,6 +813,12 @@ paths:
       responses:
         '200':
           description: The link to the document.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
@@ -971,15 +920,16 @@ paths:
       responses:
         '201':
           description: Attached; the body carries the identifier of the appointment.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
-                properties:
-                  id:
-                    type: string
-                type: object
-                required:
-                  - id
+                $ref: '#/components/schemas/Accepted'
         '401':
           description: 'Unauthorized. Error codes: UNAUTHORIZED.'
           content:
@@ -1054,15 +1004,16 @@ paths:
       responses:
         '200':
           description: Done; the body carries the identifier.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
-                properties:
-                  id:
-                    type: string
-                type: object
-                required:
-                  - id
+                $ref: '#/components/schemas/Accepted'
         '401':
           description: 'Unauthorized. Error codes: UNAUTHORIZED.'
           content:
@@ -1121,15 +1072,16 @@ paths:
       responses:
         '201':
           description: Done; the body carries the identifier.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
-                properties:
-                  id:
-                    type: string
-                type: object
-                required:
-                  - id
+                $ref: '#/components/schemas/Accepted'
         '401':
           description: 'Unauthorized. Error codes: UNAUTHORIZED.'
           content:
@@ -1211,15 +1163,16 @@ paths:
       responses:
         '201':
           description: Done; the body carries the identifier.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
-                properties:
-                  id:
-                    type: string
-                type: object
-                required:
-                  - id
+                $ref: '#/components/schemas/Accepted'
         '401':
           description: 'Unauthorized. Error codes: UNAUTHORIZED.'
           content:
@@ -1360,6 +1313,12 @@ paths:
       responses:
         '200':
           description: A page of entries.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
@@ -1499,15 +1458,16 @@ paths:
       responses:
         '201':
           description: Done; the body carries the identifier.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
-                properties:
-                  id:
-                    type: string
-                type: object
-                required:
-                  - id
+                $ref: '#/components/schemas/Accepted'
         '401':
           description: 'Unauthorized. Error codes: UNAUTHORIZED.'
           content:
@@ -1592,6 +1552,114 @@ paths:
       responses:
         '201':
           description: Done; the body carries the identifier.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Accepted'
+        '401':
+          description: 'Unauthorized. Error codes: UNAUTHORIZED.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - UNAUTHORIZED
+        '403':
+          description: 'Forbidden. Error codes: FORBIDDEN.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - FORBIDDEN
+        '404':
+          description: 'Not Found. Error codes: UNKNOWN_CALENDAR.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - UNKNOWN_CALENDAR
+        '406':
+          description: 'Not Acceptable. Error codes: NOT_ACCEPTABLE.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - NOT_ACCEPTABLE
+        '415':
+          description: 'Unsupported Media Type. Error codes: UNSUPPORTED_MEDIA_TYPE.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - UNSUPPORTED_MEDIA_TYPE
+        '422':
+          description: 'Unprocessable Content. Error codes: INVALID_APPOINTMENT_TYPE, VALIDATION_FAILED.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - INVALID_APPOINTMENT_TYPE
+            - VALIDATION_FAILED
+  /calendars/{calendarId}/clearances:
+    post:
+      operationId: clearCalendar
+      summary: Clear calendar
+      tags:
+        - scheduling
+      security:
+        - bearer: []
+      parameters:
+        - name: calendarId
+          in: path
+          schema:
+            type: string
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              properties:
+                startsAt:
+                  oneOf:
+                    - format: date
+                      type: string
+                    - format: date-time
+                      type: string
+                endsAt:
+                  oneOf:
+                    - format: date
+                      type: string
+                    - format: date-time
+                      type: string
+                reason:
+                  minLength: 1
+                  type: string
+              type: object
+              required:
+                - startsAt
+                - endsAt
+                - reason
+      responses:
+        '202':
+          description: 'Accepted: a worker cancels the appointments of the period; the body carries the clearance to follow.'
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
@@ -1642,13 +1710,112 @@ paths:
           x-error-codes:
             - UNSUPPORTED_MEDIA_TYPE
         '422':
-          description: 'Unprocessable Content. Error codes: INVALID_APPOINTMENT_TYPE, VALIDATION_FAILED.'
+          description: 'Unprocessable Content. Error codes: INVALID_TIME_OFF, VALIDATION_FAILED.'
           content:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
           x-error-codes:
-            - INVALID_APPOINTMENT_TYPE
+            - INVALID_TIME_OFF
+            - VALIDATION_FAILED
+  /calendars/{calendarId}/clearances/{clearanceId}:
+    get:
+      operationId: getClearance
+      summary: Get clearance
+      tags:
+        - scheduling
+      security:
+        - bearer: []
+      parameters:
+        - name: calendarId
+          in: path
+          schema:
+            type: string
+          required: true
+        - name: clearanceId
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: How far the clearance went.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                properties:
+                  clearanceId:
+                    type: string
+                  status:
+                    type: string
+                    enum:
+                      - waiting
+                      - running
+                      - succeeded
+                      - cancelled
+                      - dead
+                  attempts:
+                    minimum: 0
+                    type: integer
+                  done:
+                    minimum: 0
+                    type: integer
+                  total:
+                    minimum: 0
+                    type: integer
+                  lastErrorCode:
+                    type: string
+                type: object
+                required:
+                  - clearanceId
+                  - status
+                  - attempts
+                  - done
+        '401':
+          description: 'Unauthorized. Error codes: UNAUTHORIZED.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - UNAUTHORIZED
+        '403':
+          description: 'Forbidden. Error codes: FORBIDDEN.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - FORBIDDEN
+        '404':
+          description: 'Not Found. Error codes: UNKNOWN_CLEARANCE.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - UNKNOWN_CLEARANCE
+        '406':
+          description: 'Not Acceptable. Error codes: NOT_ACCEPTABLE.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - NOT_ACCEPTABLE
+        '422':
+          description: 'Unprocessable Content. Error codes: VALIDATION_FAILED.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
             - VALIDATION_FAILED
   /calendars/{calendarId}/days/{day}:
     get:
@@ -1670,9 +1837,25 @@ paths:
             pattern: ^\d{4}-\d{2}-\d{2}$
             type: string
           required: true
+        - name: If-None-Match
+          in: header
+          description: 'The ETag of the version the caller holds: 304 when it is still the current one.'
+          required: false
+          schema:
+            type: string
       responses:
         '200':
           description: The answer.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: private, max-age=0, must-revalidate
+            ETag:
+              description: The version of this answer, to send back in If-None-Match.
+              schema:
+                type: string
           content:
             application/json:
               schema:
@@ -1708,6 +1891,8 @@ paths:
                   - timeOff
                   - appointmentTypes
                   - busy
+        '304':
+          description: 'Not Modified: the version the caller holds (If-None-Match, If-Modified-Since) is still the current one.'
         '401':
           description: 'Unauthorized. Error codes: UNAUTHORIZED.'
           content:
@@ -1784,15 +1969,16 @@ paths:
       responses:
         '201':
           description: Done; the body carries the identifier.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
-                properties:
-                  id:
-                    type: string
-                type: object
-                required:
-                  - id
+                $ref: '#/components/schemas/Accepted'
         '401':
           description: 'Unauthorized. Error codes: UNAUTHORIZED.'
           content:
@@ -1844,6 +2030,86 @@ paths:
             - INVALID_RANGE
             - VALIDATION_FAILED
   /calendars/{calendarId}/opening-hours:
+    get:
+      operationId: getOpeningHours
+      summary: Get opening hours
+      tags:
+        - scheduling
+      security: []
+      parameters:
+        - name: calendarId
+          in: path
+          schema:
+            type: string
+          required: true
+        - name: If-None-Match
+          in: header
+          description: 'The ETag of the version the caller holds: 304 when it is still the current one.'
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The weekly hours of the calendar.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: public, max-age=60, s-maxage=3600, stale-while-revalidate=30, stale-if-error=86400
+            ETag:
+              description: The version of this answer, to send back in If-None-Match.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                properties:
+                  calendarId:
+                    type: string
+                  timeZone:
+                    type: string
+                  version:
+                    minimum: 0
+                    type: integer
+                  ranges:
+                    items:
+                      $ref: '#/components/schemas/OpeningRangeDto'
+                    type: array
+                type: object
+                required:
+                  - calendarId
+                  - timeZone
+                  - version
+                  - ranges
+        '304':
+          description: 'Not Modified: the version the caller holds (If-None-Match, If-Modified-Since) is still the current one.'
+        '404':
+          description: 'Not Found. Error codes: UNKNOWN_CALENDAR.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - UNKNOWN_CALENDAR
+        '406':
+          description: 'Not Acceptable. Error codes: NOT_ACCEPTABLE.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - NOT_ACCEPTABLE
+        '422':
+          description: 'Unprocessable Content. Error codes: VALIDATION_FAILED.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - VALIDATION_FAILED
+      x-cache-tags:
+        - calendar:{calendarId}
     put:
       operationId: setOpeningHours
       summary: Set opening hours
@@ -1857,6 +2123,12 @@ paths:
           schema:
             type: string
           required: true
+        - name: If-Match
+          in: header
+          description: 'The ETag of the version this change was made on: 412 when it is no longer the current one.'
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -1874,15 +2146,16 @@ paths:
       responses:
         '200':
           description: Done; the body carries the identifier.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
-                properties:
-                  id:
-                    type: string
-                type: object
-                required:
-                  - id
+                $ref: '#/components/schemas/Accepted'
         '401':
           description: 'Unauthorized. Error codes: UNAUTHORIZED.'
           content:
@@ -1915,6 +2188,14 @@ paths:
                 $ref: '#/components/schemas/Problem'
           x-error-codes:
             - NOT_ACCEPTABLE
+        '412':
+          description: 'Precondition Failed. Error codes: PRECONDITION_FAILED.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - PRECONDITION_FAILED
         '415':
           description: 'Unsupported Media Type. Error codes: UNSUPPORTED_MEDIA_TYPE.'
           content:
@@ -1951,35 +2232,20 @@ paths:
         content:
           application/json:
             schema:
-              properties:
-                startsAt:
-                  oneOf:
-                    - format: date
-                      type: string
-                    - format: date-time
-                      type: string
-                endsAt:
-                  oneOf:
-                    - format: date
-                      type: string
-                    - format: date-time
-                      type: string
-              type: object
-              required:
-                - startsAt
-                - endsAt
+              $ref: '#/components/schemas/TimeSpan'
       responses:
         '201':
           description: Done; the body carries the identifier.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
-                properties:
-                  id:
-                    type: string
-                type: object
-                required:
-                  - id
+                $ref: '#/components/schemas/Accepted'
         '401':
           description: 'Unauthorized. Error codes: UNAUTHORIZED.'
           content:
@@ -2074,15 +2340,16 @@ paths:
       responses:
         '201':
           description: Done; the body carries the identifier.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
-                properties:
-                  id:
-                    type: string
-                type: object
-                required:
-                  - id
+                $ref: '#/components/schemas/Accepted'
         '401':
           description: 'Unauthorized. Error codes: UNAUTHORIZED.'
           content:
@@ -2161,6 +2428,13 @@ paths:
               - blocks
             default: json-forms
             description: JSON Forms (schema, UI schema, data), or the neutral tree of blocks.
+        - name: startsAt
+          in: query
+          description: 'A value of startsAt known in advance: it prefills the form and names the element its rules are asked about.'
+          required: false
+          schema:
+            type: string
+            description: 'A value of startsAt known in advance: it prefills the form and names the element its rules are asked about.'
         - name: calendarId
           in: query
           description: 'A value of calendarId known in advance: it prefills the form and names the element its rules are asked about.'
@@ -2175,13 +2449,6 @@ paths:
           schema:
             type: string
             description: 'A value of appointmentTypeId known in advance: it prefills the form and names the element its rules are asked about.'
-        - name: startsAt
-          in: query
-          description: 'A value of startsAt known in advance: it prefills the form and names the element its rules are asked about.'
-          required: false
-          schema:
-            type: string
-            description: 'A value of startsAt known in advance: it prefills the form and names the element its rules are asked about.'
         - name: patientId
           in: query
           description: 'A value of patientId known in advance: it prefills the form and names the element its rules are asked about.'
@@ -2199,6 +2466,12 @@ paths:
       responses:
         '200':
           description: The form, for the caller.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
@@ -2318,6 +2591,12 @@ paths:
       responses:
         '200':
           description: One page of the search.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
@@ -2426,15 +2705,16 @@ paths:
       responses:
         '200':
           description: Done; the body carries the identifier.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
-                properties:
-                  id:
-                    type: string
-                type: object
-                required:
-                  - id
+                $ref: '#/components/schemas/Accepted'
         '401':
           description: 'Unauthorized. Error codes: UNAUTHORIZED.'
           content:
@@ -2508,15 +2788,16 @@ paths:
       responses:
         '201':
           description: Done; the body carries the identifier.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
-                properties:
-                  id:
-                    type: string
-                type: object
-                required:
-                  - id
+                $ref: '#/components/schemas/Accepted'
         '401':
           description: 'Unauthorized. Error codes: UNAUTHORIZED.'
           content:
@@ -2758,235 +3039,27 @@ paths:
       responses:
         '200':
           description: One page of the search.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
+            Vary:
+              description: The request headers this answer depends on, besides the URL.
+              schema:
+                type: string
+                const: accept
           content:
             application/json:
               schema:
-                type: object
-                required:
-                  - items
-                properties:
-                  items:
-                    type: array
-                    items:
-                      properties:
-                        id:
-                          type: string
-                        calendarId:
-                          type: string
-                        practiceId:
-                          type: string
-                        practitionerId:
-                          type: string
-                        patientId:
-                          type: string
-                        appointmentTypeId:
-                          type: string
-                        startsAt:
-                          oneOf:
-                            - format: date
-                              type: string
-                            - format: date-time
-                              type: string
-                        endsAt:
-                          oneOf:
-                            - format: date
-                              type: string
-                            - format: date-time
-                              type: string
-                        day:
-                          pattern: ^\d{4}-\d{2}-\d{2}$
-                          type: string
-                        status:
-                          type: string
-                          enum:
-                            - requested
-                            - booked
-                            - cancelled
-                            - expired
-                            - completed
-                            - no-show
-                        confirmBefore:
-                          oneOf:
-                            - format: date
-                              type: string
-                            - format: date-time
-                              type: string
-                        cancelledBy:
-                          type: string
-                          enum:
-                            - patient
-                            - practice
-                      type: object
-                      required:
-                        - id
-                        - calendarId
-                        - practiceId
-                        - practitionerId
-                        - patientId
-                        - appointmentTypeId
-                        - startsAt
-                        - endsAt
-                        - day
-                        - status
-                  total:
-                    type: integer
-                    minimum: 0
-                    description: Present when it is cheap to count.
-                  nextCursor:
-                    type: string
-                    description: Present when more items follow.
+                $ref: '#/components/schemas/AgendaLinePage'
             application/xml:
               schema:
-                type: object
-                required:
-                  - items
-                properties:
-                  items:
-                    type: array
-                    items:
-                      properties:
-                        id:
-                          type: string
-                        calendarId:
-                          type: string
-                        practiceId:
-                          type: string
-                        practitionerId:
-                          type: string
-                        patientId:
-                          type: string
-                        appointmentTypeId:
-                          type: string
-                        startsAt:
-                          oneOf:
-                            - format: date
-                              type: string
-                            - format: date-time
-                              type: string
-                        endsAt:
-                          oneOf:
-                            - format: date
-                              type: string
-                            - format: date-time
-                              type: string
-                        day:
-                          pattern: ^\d{4}-\d{2}-\d{2}$
-                          type: string
-                        status:
-                          type: string
-                          enum:
-                            - requested
-                            - booked
-                            - cancelled
-                            - expired
-                            - completed
-                            - no-show
-                        confirmBefore:
-                          oneOf:
-                            - format: date
-                              type: string
-                            - format: date-time
-                              type: string
-                        cancelledBy:
-                          type: string
-                          enum:
-                            - patient
-                            - practice
-                      type: object
-                      required:
-                        - id
-                        - calendarId
-                        - practiceId
-                        - practitionerId
-                        - patientId
-                        - appointmentTypeId
-                        - startsAt
-                        - endsAt
-                        - day
-                        - status
-                  total:
-                    type: integer
-                    minimum: 0
-                    description: Present when it is cheap to count.
-                  nextCursor:
-                    type: string
-                    description: Present when more items follow.
+                $ref: '#/components/schemas/AgendaLinePage'
             text/csv:
               schema:
-                type: object
-                required:
-                  - items
-                properties:
-                  items:
-                    type: array
-                    items:
-                      properties:
-                        id:
-                          type: string
-                        calendarId:
-                          type: string
-                        practiceId:
-                          type: string
-                        practitionerId:
-                          type: string
-                        patientId:
-                          type: string
-                        appointmentTypeId:
-                          type: string
-                        startsAt:
-                          oneOf:
-                            - format: date
-                              type: string
-                            - format: date-time
-                              type: string
-                        endsAt:
-                          oneOf:
-                            - format: date
-                              type: string
-                            - format: date-time
-                              type: string
-                        day:
-                          pattern: ^\d{4}-\d{2}-\d{2}$
-                          type: string
-                        status:
-                          type: string
-                          enum:
-                            - requested
-                            - booked
-                            - cancelled
-                            - expired
-                            - completed
-                            - no-show
-                        confirmBefore:
-                          oneOf:
-                            - format: date
-                              type: string
-                            - format: date-time
-                              type: string
-                        cancelledBy:
-                          type: string
-                          enum:
-                            - patient
-                            - practice
-                      type: object
-                      required:
-                        - id
-                        - calendarId
-                        - practiceId
-                        - practitionerId
-                        - patientId
-                        - appointmentTypeId
-                        - startsAt
-                        - endsAt
-                        - day
-                        - status
-                  total:
-                    type: integer
-                    minimum: 0
-                    description: Present when it is cheap to count.
-                  nextCursor:
-                    type: string
-                    description: Present when more items follow.
+                $ref: '#/components/schemas/AgendaLinePage'
         '401':
           description: 'Unauthorized. Error codes: UNAUTHORIZED.'
           content:
@@ -3050,199 +3123,33 @@ paths:
       responses:
         '200':
           description: Every appointment of the agenda, streamed.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
+            Vary:
+              description: The request headers this answer depends on, besides the URL.
+              schema:
+                type: string
+                const: accept
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  properties:
-                    id:
-                      type: string
-                    calendarId:
-                      type: string
-                    practiceId:
-                      type: string
-                    practitionerId:
-                      type: string
-                    patientId:
-                      type: string
-                    appointmentTypeId:
-                      type: string
-                    startsAt:
-                      oneOf:
-                        - format: date
-                          type: string
-                        - format: date-time
-                          type: string
-                    endsAt:
-                      oneOf:
-                        - format: date
-                          type: string
-                        - format: date-time
-                          type: string
-                    day:
-                      pattern: ^\d{4}-\d{2}-\d{2}$
-                      type: string
-                    status:
-                      type: string
-                      enum:
-                        - requested
-                        - booked
-                        - cancelled
-                        - expired
-                        - completed
-                        - no-show
-                    confirmBefore:
-                      oneOf:
-                        - format: date
-                          type: string
-                        - format: date-time
-                          type: string
-                    cancelledBy:
-                      type: string
-                      enum:
-                        - patient
-                        - practice
-                  type: object
-                  required:
-                    - id
-                    - calendarId
-                    - practiceId
-                    - practitionerId
-                    - patientId
-                    - appointmentTypeId
-                    - startsAt
-                    - endsAt
-                    - day
-                    - status
+                  $ref: '#/components/schemas/AgendaLine'
             text/csv:
               schema:
                 type: array
                 items:
-                  properties:
-                    id:
-                      type: string
-                    calendarId:
-                      type: string
-                    practiceId:
-                      type: string
-                    practitionerId:
-                      type: string
-                    patientId:
-                      type: string
-                    appointmentTypeId:
-                      type: string
-                    startsAt:
-                      oneOf:
-                        - format: date
-                          type: string
-                        - format: date-time
-                          type: string
-                    endsAt:
-                      oneOf:
-                        - format: date
-                          type: string
-                        - format: date-time
-                          type: string
-                    day:
-                      pattern: ^\d{4}-\d{2}-\d{2}$
-                      type: string
-                    status:
-                      type: string
-                      enum:
-                        - requested
-                        - booked
-                        - cancelled
-                        - expired
-                        - completed
-                        - no-show
-                    confirmBefore:
-                      oneOf:
-                        - format: date
-                          type: string
-                        - format: date-time
-                          type: string
-                    cancelledBy:
-                      type: string
-                      enum:
-                        - patient
-                        - practice
-                  type: object
-                  required:
-                    - id
-                    - calendarId
-                    - practiceId
-                    - practitionerId
-                    - patientId
-                    - appointmentTypeId
-                    - startsAt
-                    - endsAt
-                    - day
-                    - status
+                  $ref: '#/components/schemas/AgendaLine'
             application/xml:
               schema:
                 type: array
                 items:
-                  properties:
-                    id:
-                      type: string
-                    calendarId:
-                      type: string
-                    practiceId:
-                      type: string
-                    practitionerId:
-                      type: string
-                    patientId:
-                      type: string
-                    appointmentTypeId:
-                      type: string
-                    startsAt:
-                      oneOf:
-                        - format: date
-                          type: string
-                        - format: date-time
-                          type: string
-                    endsAt:
-                      oneOf:
-                        - format: date
-                          type: string
-                        - format: date-time
-                          type: string
-                    day:
-                      pattern: ^\d{4}-\d{2}-\d{2}$
-                      type: string
-                    status:
-                      type: string
-                      enum:
-                        - requested
-                        - booked
-                        - cancelled
-                        - expired
-                        - completed
-                        - no-show
-                    confirmBefore:
-                      oneOf:
-                        - format: date
-                          type: string
-                        - format: date-time
-                          type: string
-                    cancelledBy:
-                      type: string
-                      enum:
-                        - patient
-                        - practice
-                  type: object
-                  required:
-                    - id
-                    - calendarId
-                    - practiceId
-                    - practitionerId
-                    - patientId
-                    - appointmentTypeId
-                    - startsAt
-                    - endsAt
-                    - day
-                    - status
+                  $ref: '#/components/schemas/AgendaLine'
         '401':
           description: 'Unauthorized. Error codes: UNAUTHORIZED.'
           content:
@@ -3330,15 +3237,16 @@ paths:
       responses:
         '201':
           description: Done; the body carries the identifier.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
-                properties:
-                  id:
-                    type: string
-                type: object
-                required:
-                  - id
+                $ref: '#/components/schemas/Accepted'
         '401':
           description: 'Unauthorized. Error codes: UNAUTHORIZED.'
           content:
@@ -3425,15 +3333,16 @@ paths:
       responses:
         '200':
           description: Done; the body carries the identifier.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
-                properties:
-                  id:
-                    type: string
-                type: object
-                required:
-                  - id
+                $ref: '#/components/schemas/Accepted'
         '401':
           description: 'Unauthorized. Error codes: UNAUTHORIZED.'
           content:
@@ -3518,15 +3427,16 @@ paths:
       responses:
         '201':
           description: Done; the body carries the identifier.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
-                properties:
-                  id:
-                    type: string
-                type: object
-                required:
-                  - id
+                $ref: '#/components/schemas/Accepted'
         '401':
           description: 'Unauthorized. Error codes: UNAUTHORIZED.'
           content:
@@ -3607,15 +3517,16 @@ paths:
       responses:
         '200':
           description: Done; the body carries the identifier.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
-                properties:
-                  id:
-                    type: string
-                type: object
-                required:
-                  - id
+                $ref: '#/components/schemas/Accepted'
         '401':
           description: 'Unauthorized. Error codes: UNAUTHORIZED.'
           content:
@@ -3761,6 +3672,12 @@ paths:
       responses:
         '200':
           description: One page of the search.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
@@ -3942,6 +3859,12 @@ paths:
       responses:
         '200':
           description: One page of the history, oldest fact first.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
@@ -4024,6 +3947,92 @@ paths:
             - VALIDATION_FAILED
 components:
   schemas:
+    Accepted:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string
+          description: The identifier of what the command created or changed.
+      additionalProperties: false
+    AgendaLine:
+      properties:
+        id:
+          type: string
+        calendarId:
+          type: string
+        practiceId:
+          type: string
+        practitionerId:
+          type: string
+        patientId:
+          type: string
+        appointmentTypeId:
+          type: string
+        startsAt:
+          oneOf:
+            - format: date
+              type: string
+            - format: date-time
+              type: string
+        endsAt:
+          oneOf:
+            - format: date
+              type: string
+            - format: date-time
+              type: string
+        day:
+          pattern: ^\d{4}-\d{2}-\d{2}$
+          type: string
+        status:
+          type: string
+          enum:
+            - requested
+            - booked
+            - cancelled
+            - expired
+            - completed
+            - no-show
+        confirmBefore:
+          oneOf:
+            - format: date
+              type: string
+            - format: date-time
+              type: string
+        cancelledBy:
+          type: string
+          enum:
+            - patient
+            - practice
+      type: object
+      required:
+        - id
+        - calendarId
+        - practiceId
+        - practitionerId
+        - patientId
+        - appointmentTypeId
+        - startsAt
+        - endsAt
+        - day
+        - status
+    AgendaLinePage:
+      type: object
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AgendaLine'
+        total:
+          type: integer
+          minimum: 0
+          description: Present when it is cheap to count.
+        nextCursor:
+          type: string
+          description: Present when more items follow.
     CalendarDayAppointmentDto:
       properties:
         id:
@@ -4242,6 +4251,24 @@ components:
           additionalProperties: true
         requestId:
           type: string
+    TimeSpan:
+      properties:
+        startsAt:
+          oneOf:
+            - format: date
+              type: string
+            - format: date-time
+              type: string
+        endsAt:
+          oneOf:
+            - format: date
+              type: string
+            - format: date-time
+              type: string
+      type: object
+      required:
+        - startsAt
+        - endsAt
   securitySchemes:
     bearer:
       type: http

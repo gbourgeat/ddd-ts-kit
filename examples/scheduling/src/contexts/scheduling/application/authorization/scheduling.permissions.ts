@@ -27,5 +27,6 @@ export const schedulingPermissions = definePermissions('scheduling', {
   'appointment.note.write': { description: 'Write the internal note of an appointment' },
   'attendance.note': { description: 'Note attendance' },
   'attendance.read': { description: 'Search attendance history' },
+  'calendar.clear': { description: 'Clear calendar' },
   // /ddd-ts-kit:permissions
 });

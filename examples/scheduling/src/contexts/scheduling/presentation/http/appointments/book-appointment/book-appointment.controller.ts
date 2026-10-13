@@ -1,8 +1,7 @@
-import { Controller, defineForm, withFieldAccess, type HttpRequest } from '@ddd-ts-kit/http';
+import { acceptedSchema, Controller, defineForm, withFieldAccess, type Accepted, type HttpRequest } from '@ddd-ts-kit/http';
 import type { CommandBus } from '@ddd-ts-kit/kernel';
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
 import { BookAppointmentBody } from '@/contexts/scheduling/presentation/http/appointments/book-appointment/book-appointment.body';
-import { BookAppointmentAccepted } from '@/contexts/scheduling/presentation/http/appointments/book-appointment/book-appointment.accepted';
 import type { BookAppointmentMapper } from '@/contexts/scheduling/presentation/http/appointments/book-appointment/book-appointment.mapper';
 import { AppointmentsRoutes } from '@/contexts/scheduling/presentation/http/appointments.routes';
 import { schedulingPermissions } from '@/contexts/scheduling/application/authorization/scheduling.permissions';
@@ -16,8 +15,6 @@ const body = withFieldAccess(classSchema(BookAppointmentBody), {
     subject: (booking) => ({ type: 'calendar', id: booking.calendarId }),
   },
 });
-
-const accepted = classSchema(BookAppointmentAccepted);
 
 /**
  * How the body of the route is entered, served as a form at GET /forms/bookAppointment for the
@@ -47,7 +44,7 @@ const form = defineForm<BookAppointmentBody>({
   consumes: ['application/xml'],
   produces: ['application/xml'],
   body,
-  response: { status: 201, description: 'Done; the body carries the identifier.', body: accepted },
+  response: { status: 201, description: 'Done; the body carries the identifier.', body: acceptedSchema },
   errors: [
     'UNKNOWN_CALENDAR',
     'UNKNOWN_APPOINTMENT_TYPE',
@@ -65,7 +62,7 @@ export class BookAppointmentController {
     private readonly mapper: BookAppointmentMapper,
   ) {}
 
-  async handle(request: HttpRequest<{ body: BookAppointmentBody }>): Promise<BookAppointmentAccepted> {
+  async handle(request: HttpRequest<{ body: BookAppointmentBody }>): Promise<Accepted> {
     const id = await this.commands.execute(this.mapper.map(request));
 
     return { id };

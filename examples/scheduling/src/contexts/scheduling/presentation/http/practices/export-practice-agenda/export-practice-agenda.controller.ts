@@ -4,12 +4,12 @@ import { classSchema } from '@ddd-ts-kit/validation/class-validator';
 import type { AgendaEntry } from '@/contexts/scheduling/application/ports/agenda.port';
 import { SearchPracticeAgendaQuery } from '@/contexts/scheduling/application/queries/search-practice-agenda/search-practice-agenda.query';
 import { PracticesRoutes } from '@/contexts/scheduling/presentation/http/practices.routes';
-import { ExportPracticeAgendaLine } from '@/contexts/scheduling/presentation/http/practices/export-practice-agenda/export-practice-agenda.line';
 import { ExportPracticeAgendaParams } from '@/contexts/scheduling/presentation/http/practices/export-practice-agenda/export-practice-agenda.params';
 import type { AgendaEntrySerializer } from '@/contexts/scheduling/presentation/http/shared/agenda-entry.serializer';
+import { AgendaLine } from '@/contexts/scheduling/presentation/http/shared/agenda-line.schema';
 
 const params = classSchema(ExportPracticeAgendaParams);
-const line = classSchema(ExportPracticeAgendaLine);
+const line = classSchema(AgendaLine, { shared: true });
 
 /** The largest page the agenda answers: the export reads it page after page, never more at once. */
 const PAGE = 100;
@@ -37,7 +37,7 @@ export class ExportPracticeAgendaController {
 
   async handle(
     request: HttpRequest<{ params: ExportPracticeAgendaParams }>,
-  ): Promise<AsyncIterable<ExportPracticeAgendaLine>> {
+  ): Promise<AsyncIterable<AgendaLine>> {
     const { actor, params: asked } = request;
 
     const entries = everyPage((cursor) =>
@@ -47,7 +47,7 @@ export class ExportPracticeAgendaController {
     return this.lines(entries);
   }
 
-  private async *lines(entries: AsyncIterable<AgendaEntry>): AsyncIterable<ExportPracticeAgendaLine> {
+  private async *lines(entries: AsyncIterable<AgendaEntry>): AsyncIterable<AgendaLine> {
     for await (const entry of entries) {
       yield this.serializer.serialize(entry);
     }

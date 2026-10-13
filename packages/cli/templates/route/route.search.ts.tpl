@@ -1,6 +1,9 @@
 {{#if validation.zod}}
 import { z } from 'zod';
 {{/if}}
+{{#if validation.typebox}}
+import Type from 'typebox';
+{{/if}}
 import { actorOf } from '@ddd-ts-kit/auth';
 import { defineRoute, pageQuerySchema, pageResponse, pageSchemaOf, type Route } from '@ddd-ts-kit/http';
 {{#if search.customSchema}}
@@ -15,6 +18,9 @@ import { zodSchema } from '@ddd-ts-kit/validation/zod';
 {{/if}}
 {{#if validation.classValidator}}
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
+{{/if}}
+{{#if validation.typebox}}
+import { typeboxSchema } from '@ddd-ts-kit/validation/typebox';
 {{/if}}
 {{route.useCaseImport}}
 {{#if validation.classValidator}}
@@ -35,6 +41,14 @@ const line = zodSchema(
 {{/if}}
 {{#if validation.classValidator}}
 const line = classSchema({{name.pascal}}Line);
+{{/if}}
+{{#if validation.typebox}}
+const line = typeboxSchema(
+  Type.Object({
+    id: Type.String(),
+    // TODO(domain): declare the fields of {{name.pascal}}Item that are part of the public contract.
+  }),
+);
 {{/if}}
 {{#if search.customSchema}}
 interface {{name.pascal}}Line {

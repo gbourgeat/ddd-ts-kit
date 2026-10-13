@@ -1,5 +1,10 @@
 export type { Awaitable } from './contracts/awaitable.js';
 export { cacheContract, type CacheContractOptions } from './contracts/cache-contract.js';
+export {
+  cachePurgerContract,
+  type CachePurgerContractOptions,
+  type CachePurgerUnderContract,
+} from './contracts/cache-purger-contract.js';
 export type { ContractRunner } from './contracts/contract-runner.js';
 export { ContractSuite } from './contracts/contract-suite.js';
 export {
@@ -33,6 +38,8 @@ export {
   eventStoreUnitOfWorkContract,
   type EventStoreUnitOfWorkContractOptions,
 } from './contracts/event-store-unit-of-work-contract.js';
+export { jobStoreContract, type JobStoreContractOptions } from './contracts/job-store-contract.js';
+export type { JobStoreUnderContract } from './contracts/job-store/job-store-under-contract.js';
 export { lockContract, type LockContractOptions } from './contracts/lock-contract.js';
 export { loggerContract, type LoggerContractOptions } from './contracts/logger-contract.js';
 export type { CreateLogger } from './contracts/logger/create-logger.js';
@@ -44,6 +51,11 @@ export {
   type OutboxStoreContractOptions,
   type OutboxStoreUnderContract,
 } from './contracts/outbox-store-contract.js';
+export {
+  processStoreContract,
+  type ProcessStoreContractOptions,
+  type ProcessStoreUnderContract,
+} from './contracts/process-store-contract.js';
 export {
   processedEventStoreContract,
   type ProcessedEventStoreContractOptions,

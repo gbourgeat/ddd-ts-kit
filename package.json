@@ -33,7 +33,7 @@
     "ci:arch": "npm run release:version && npm run check:self && npm run depcruise && node --test plugin/hooks/guard.test.mjs pipeline/monorepo/affected-packages.test.mjs pipeline/monorepo/e2e-shards.test.mjs",
     "ci:deadcode": "knip",
     "ci:test:unit": "vitest run --coverage",
-    "ci:test:integration": "vitest run packages/drizzle packages/knex packages/prisma packages/typeorm packages/audit packages/openfga packages/s3",
+    "ci:test:integration": "vitest run packages/drizzle packages/knex packages/prisma packages/typeorm packages/audit packages/openfga packages/s3 packages/http/test/varnish-cache-purger.spec.ts packages/redis/test/redis-job-store.spec.ts",
     "ci:test:alias": "DDD_TS_KIT_E2E=1 vitest run --no-file-parallelism --hookTimeout=240000 packages/cli/test/e2e/alias-runtime.spec.ts packages/cli/test/e2e/alias-tools.spec.ts packages/cli/test/e2e/alias-fixes.spec.ts packages/cli/test/e2e/alias-example.spec.ts",
     "ci:test:e2e": "DDD_TS_KIT_E2E=1 vitest run --no-file-parallelism --hookTimeout=180000 packages/cli/test/e2e",
     "ci:test:e2e:stacks": "node pipeline/monorepo/e2e-shards.mjs",
@@ -48,7 +48,7 @@
     "@biomejs/biome": "2.5.15",
     "@commitlint/cli": "^21.2.3",
     "@commitlint/config-conventional": "^21.2.3",
-    "@ddd-ts-kit/eslint-plugin": "0.10.0",
+    "@ddd-ts-kit/eslint-plugin": "0.11.0",
     "@electric-sql/pglite": "0.5.9",
     "@electric-sql/pglite-socket": "0.2.12",
     "@eslint/js": "^10.0.1",
@@ -56,6 +56,8 @@
     "@types/node": "^24.19.2",
     "@typescript/native": "npm:typescript@~7.0.2",
     "@vitest/coverage-v8": "^5.0.3",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.15.1",
     "dependency-cruiser": "^18.5.0",
     "eslint": "^10.12.0",
     "eslint-formatter-gitlab": "^7.2.0",
@@ -63,10 +65,13 @@
     "knip": "^6.41.0",
     "lefthook": "^2.2.1",
     "publint": "^0.3.25",
+    "reflect-metadata": "^0.2.2",
     "tsx": "^4.23.15",
+    "typebox": "^1.3.37",
     "typescript": "~6.0.3",
     "typescript-eslint": "^8.71.1",
-    "vitest": "^5.0.3"
+    "vitest": "^5.0.3",
+    "zod": "^4.6.7"
   },
   "overrides": {
     "@types/pg": "8.23.1"

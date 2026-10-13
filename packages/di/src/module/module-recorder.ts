@@ -1,4 +1,6 @@
 import type {
+  BackgroundJob,
+  BackgroundJobOptions,
   Command,
   DependencyKind,
   Message,
@@ -24,6 +26,7 @@ import { consumptionOf } from '../declared/consumption-of.js';
 import type { DeclaredSource } from '../declared/declared-source.js';
 import { includeDeclared } from '../declared/include-declared.js';
 import { WiringError } from '../errors/wiring-error.js';
+import { writtenBackgroundJob } from '../jobs/written-background-job.js';
 import { writtenJob } from '../jobs/written-job.js';
 import { assertPort } from '../wiring/assert-port.js';
 import type { Binding } from '../wiring/binding.js';
@@ -33,7 +36,7 @@ import type { WiringDraft } from '../wiring/wiring-draft.js';
 import { bindingOptionsOf } from './binding-options-of.js';
 import type { BindingOptions } from './binding-options.js';
 import type { BindingTarget } from './binding-target.js';
-import { integrationEventHandlerOf, jobOf, messageHandlerOf } from './factory-made-handlers.js';
+import { backgroundJobOf, integrationEventHandlerOf, jobOf, messageHandlerOf } from './factory-made-handlers.js';
 import type { HandlerTarget } from './handler-target.js';
 import type { ModuleBuilder } from './module-builder.js';
 import type { ProtectedUseCaseTarget } from './protected-use-case-target.js';
@@ -87,6 +90,16 @@ export class ModuleRecorder implements ModuleBuilder {
       factoryMade: jobOf(`job(${name})`),
       record: (job) => {
         this.draft.addJob(writtenJob(name, settings, { job, module: this.module }));
+      },
+    });
+
+  readonly backgroundJob = (name: string, options: BackgroundJobOptions = {}): HandlerTarget<BackgroundJob<unknown>> =>
+    this.handlerTarget<BackgroundJob<unknown>>({
+      statement: `backgroundJob(${name})`,
+      kind: 'job',
+      factoryMade: backgroundJobOf(`backgroundJob(${name})`),
+      record: (job) => {
+        this.draft.addBackgroundJob(writtenBackgroundJob(name, options, { job, module: this.module }));
       },
     });
 

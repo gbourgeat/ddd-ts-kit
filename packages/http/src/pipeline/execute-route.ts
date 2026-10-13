@@ -18,12 +18,16 @@ import { isAsyncIterable } from '../support/is-async-iterable.js';
 import { resolvedTenant } from '../tenancy/resolved-tenant.js';
 import { guardRefusals } from '../controller/guard-refusals.js';
 import { assertDeclaredResponse } from './assert-declared-response.js';
+import { cacheHeadersOf } from './cache-headers-of.js';
+import { conditionalAnswer } from './conditional-answer.js';
 import { CORRELATION_HEADER } from './correlation-header.js';
 import { correlationIdOf } from './correlation-id-of.js';
 import type { ErrorContext } from './error-context.js';
 import type { ExecuteOptions } from './execute-options.js';
 import { executionOfRequest } from './execution-of-request.js';
+import { expectedVersionOf } from './expected-version-of.js';
 import { iteratedWithin, type Within } from './iterated-within.js';
+import { negotiatedVary } from './negotiated-vary.js';
 import { negotiation, type Negotiation } from './negotiation.js';
 import type { RawRequest } from './raw-request.js';
 import { readBody } from './read-body.js';
@@ -32,6 +36,7 @@ import type { RepresentedAnswer } from './represented-answer.js';
 import { represented } from './represented.js';
 import { reportedStream } from './reported-stream.js';
 import type { RouteResponse } from './route-response.js';
+import { taggedAnswer, type Tagging } from './tagged-answer.js';
 import { validateRequest } from './validate-request.js';
 import { wellFormedIdentifier } from './well-formed-identifier.js';
 import { writtenIn } from './written-in.js';
@@ -44,8 +49,8 @@ interface Call {
   readonly correlationId: string;
   /** Present when the application registers representations: what the `Accept` header chose. */
   readonly negotiated: Negotiation | undefined;
-  /** Filled as the request advances, for the error hook to say how far it went. */
-  readonly reached: { execution?: ExecutionContext };
+  /** Filled as the request advances, for the error hook to say how far it went, and for the tags of the answer. */
+  readonly reached: { execution?: ExecutionContext; params?: unknown };
 }
 
 const defaultErrorMapper = createErrorMapper();
@@ -69,7 +74,10 @@ export async function executeRoute(
 
 async function responded(call: Call): Promise<RouteResponse> {
   try {
-    return await answer(await handled(call), call);
+    const result = await handled(call);
+    const tagged = taggedAnswer(await answer(result, call), taggingOf(call, result.body));
+
+    return await conditionalAnswer(call.route, call.request.headers, tagged, result.body);
   } catch (error) {
     const { response, context } = refusal(error, call);
 
@@ -77,6 +85,14 @@ async function responded(call: Call): Promise<RouteResponse> {
 
     return response;
   }
+}
+
+/** The tags are read from the value the handler answered, whatever representation writes it. */
+function taggingOf({ route, options, reached }: Call, body: unknown): Tagging {
+  const perTenant = options.cacheTags?.perTenant === true;
+  const tenantId = perTenant ? reached.execution?.tenantId : undefined;
+
+  return { route, header: options.cacheTags?.header, perTenant, params: reached.params, body, tenantId };
 }
 
 function defaultRequestId(request: RawRequest): string {
@@ -87,11 +103,14 @@ async function handled(call: Call): Promise<RouteOutput> {
   const { route, request, options } = call;
   const principal = await options.resolvePrincipal?.(request.raw);
   const input = await acceptedInput(call);
+  const expectedVersion = expectedVersionOf(route, request.headers);
   const execution = executionOf(call, principal, input.params);
   // A field set in a body is an act, recorded; a field shown or left out of the answer only shapes it.
   const setting = new FieldJudge(execution.actor, options.fieldAccess, true);
   const showing = new FieldJudge(execution.actor, options.fieldAccess);
-  const context = requestContext(call, execution, principal);
+  const context = requestContext(call, { execution, principal, expectedVersion });
+
+  call.reached.params = input.params;
 
   const within: Within = (work) => {
     const asPrincipal = (): ReturnType<typeof work> => options.withPrincipal?.(principal, work) ?? work();
@@ -127,10 +146,16 @@ function streamedWithin(result: RouteOutput, within: Within): RouteOutput {
   return listed ? { ...result, body: iteratedWithin(result.body, within) } : result;
 }
 
+/** What the context of a request is made of once its caller and its tenant are known. */
+interface Reached {
+  readonly execution: ExecutionContext;
+  readonly principal: unknown;
+  readonly expectedVersion: number | undefined;
+}
+
 function requestContext(
   { request, requestId, route }: Call,
-  execution: ExecutionContext,
-  principal: unknown,
+  { execution, principal, expectedVersion }: Reached,
 ): RequestContext {
   return {
     requestId,
@@ -138,6 +163,7 @@ function requestContext(
     raw: request.raw,
     rawHeaders: request.headers,
     ...(principal === undefined ? {} : { principal }),
+    ...(expectedVersion === undefined ? {} : { expectedVersion }),
     ...(route.rawBody === true && request.stream !== undefined ? { stream: request.stream } : {}),
   };
 }
@@ -204,7 +230,10 @@ async function answer(result: RouteOutput, call: Call): Promise<RouteResponse> {
     call,
   );
 
-  const own = lowerCaseKeys(result.headers ?? {});
+  const kept = {
+    ...cacheHeadersOf(call.route, result.status, call.options.resolveTenant?.headers),
+    ...lowerCaseKeys(result.headers ?? {}),
+  };
 
   return {
     ...written,
@@ -212,26 +241,11 @@ async function answer(result: RouteOutput, call: Call): Promise<RouteResponse> {
     headers: {
       ...defaultContentType(result.body),
       ...written.headers,
-      ...own,
-      ...varyOf(call.negotiated?.varies === true, own['vary']),
+      ...kept,
+      ...negotiatedVary(call.negotiated?.varies === true, kept['vary']),
       ...identifierHeaders(call),
     },
   };
-}
-
-/** `Vary: accept` for an answer negotiated among several media types, added to the one the handler sets. */
-function varyOf(varies: boolean, own: string | undefined): Record<string, string> {
-  if (!varies) {
-    return {};
-  }
-
-  const names = (own ?? '').split(',').map((name) => name.trim().toLowerCase());
-
-  if (own === undefined || own.trim() === '') {
-    return { vary: 'accept' };
-  }
-
-  return names.includes('accept') || names.includes('*') ? {} : { vary: `${own}, accept` };
 }
 
 /** A streamed list that fails after its status is told to the error hook, as a fault, before the response is cut short. */
@@ -296,14 +310,15 @@ function contextOf(error: unknown, call: Call): ErrorContext {
 
 function problemBody(problem: Problem, call: Call): Omit<RouteResponse, 'status'> {
   const chosen = call.negotiated?.problem;
+  const kept = { ...cacheHeadersOf(call.route, problem.status), ...identifierHeaders(call) };
 
   if (chosen === undefined) {
-    return { headers: { 'content-type': PROBLEM_CONTENT_TYPE, ...identifierHeaders(call) }, body: problem };
+    return { headers: { 'content-type': PROBLEM_CONTENT_TYPE, ...kept }, body: problem };
   }
 
   const written = writtenIn(problem, chosen, PROBLEM_SHAPE);
 
-  return { ...written, headers: { ...written.headers, ...identifierHeaders(call) } };
+  return { ...written, headers: { ...written.headers, ...kept } };
 }
 
 async function reportGuardRefusal(options: ExecuteOptions, error: unknown, context: ErrorContext): Promise<void> {

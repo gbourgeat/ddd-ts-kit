@@ -1,6 +1,9 @@
 {{#if validation.zod}}
 import { z } from 'zod';
 {{/if}}
+{{#if validation.typebox}}
+import Type from 'typebox';
+{{/if}}
 import {
   Controller,
   pageQuerySchema,
@@ -23,6 +26,9 @@ import { zodSchema } from '@ddd-ts-kit/validation/zod';
 {{#if validation.classValidator}}
 import { classSchema } from '@ddd-ts-kit/validation/class-validator';
 {{/if}}
+{{#if validation.typebox}}
+import { typeboxSchema } from '@ddd-ts-kit/validation/typebox';
+{{/if}}
 {{route.imports}}
 
 // TODO(domain): list here the fields of {{name.pascal}}Sort a client may sort by, and bound the size of a page.
@@ -39,6 +45,14 @@ const line = zodSchema(
 {{/if}}
 {{#if validation.classValidator}}
 const line = classSchema({{name.pascal}}Line);
+{{/if}}
+{{#if validation.typebox}}
+const line = typeboxSchema(
+  Type.Object({
+    id: Type.String(),
+    // TODO(domain): declare the fields of {{name.pascal}}Item that are part of the public contract.
+  }),
+);
 {{/if}}
 {{#if search.customSchema}}
 interface {{name.pascal}}Line {
@@ -65,6 +79,9 @@ const line = customSchema<{{name.pascal}}Line>(
   response: { status: 200, description: 'One page of the search.', body: pageSchemaOf(line) },
   // TODO(domain): list the codes of the refusals "{{name.words}}" can raise, as their factories set them, so that they appear in the contract with their status (`errors/known-code`).
   errors: [],
+  {{#if route.cached}}
+  cache: {{route.cache}},
+  {{/if}}
 })
 export class {{name.pascal}}Controller {
   constructor({{route.constructorParams}}) {}

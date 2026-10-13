@@ -2,7 +2,7 @@ import { z } from 'zod';
 {{#if route.protected}}
 import { actorOf } from '@ddd-ts-kit/auth';
 {{/if}}
-import { defineRoute, type Route } from '@ddd-ts-kit/http';
+import { {{#if route.sharedAccepted}}acceptedSchema, {{/if}}defineRoute, type Route } from '@ddd-ts-kit/http';
 import type { {{route.busType}} } from '@ddd-ts-kit/kernel';
 import { zodSchema } from '@ddd-ts-kit/validation/zod';
 {{route.useCaseImport}}
@@ -19,7 +19,7 @@ const body = zodSchema(
 );
 
 {{/if}}
-{{#if route.returnsId}}
+{{#if route.ownAccepted}}
 const accepted = zodSchema(z.object({ id: z.string() }), { io: 'output' });
 
 {{/if}}
@@ -44,7 +44,7 @@ export function {{name.camel}}Route({{route.bus}}: {{route.busType}}): Route {
       request: { {{route.requestParts}} },
       {{/if}}
       {{#if route.returnsId}}
-      responses: { {{route.status}}: { description: 'Done; the body carries the identifier.', body: accepted } },
+      responses: { {{route.status}}: { description: 'Done; the body carries the identifier.', body: {{route.acceptedBody}} } },
       {{/if}}
       {{#if route.returnsNothing}}
       responses: { {{route.status}}: { description: 'Done.' } },

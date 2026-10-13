@@ -1,6 +1,8 @@
 import type { JsonSchema } from '@ddd-ts-kit/validation';
 import type { Route } from '../route/route.js';
 import type { Documenting } from './documenting.js';
+import { cacheTagsExtension } from './cache-tags-extension.js';
+import { conditionalParameters } from './conditional-parameters.js';
 import { openApiPath } from './open-api-path.js';
 import { pathParameters } from './path-parameters.js';
 import { requestBody } from './request-body.js';
@@ -34,6 +36,7 @@ function operation(route: Route, documenting: Documenting): JsonSchema {
     ...pathParameters(route.path, request.params, definitions),
     ...schemaParameters('query', request.query, definitions),
     ...schemaParameters('header', request.headers, definitions),
+    ...conditionalParameters(route),
   ];
 
   return {
@@ -46,6 +49,7 @@ function operation(route: Route, documenting: Documenting): JsonSchema {
     ...(parameters.length === 0 ? {} : { parameters }),
     ...bodyOf(route, documenting),
     responses: responses(route, documenting),
+    ...cacheTagsExtension(route),
   };
 }
 

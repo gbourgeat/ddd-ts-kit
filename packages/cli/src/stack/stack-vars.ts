@@ -22,8 +22,8 @@ export function stackVars(config: Config): RenderContext {
     style: one(style, ['declared', 'explicit']),
     assembly: assemblyVars(config),
     decorators: { legacy, standard: !legacy },
-    http: httpVars(config),
-    validation: one(validation, ['zod', 'class-validator', 'standard-schema', 'none']),
+    ...edgeVars(config),
+    validation: one(validation, ['zod', 'class-validator', 'typebox', 'standard-schema', 'none']),
     di: one(di, ['tsyringe', 'nest', 'manual']),
     orm: { ...one(orm, ['drizzle', 'knex', 'prisma', 'typeorm', 'custom', 'none']), any: orm !== 'none' },
     events: eventVars(config),
@@ -45,15 +45,31 @@ export function stackVars(config: Config): RenderContext {
     alias: aliasVars(config),
     persistence: persistenceVars(config),
     tenancy: { ...one(tenancy, ['none', 'shared-table']), any: tenancy !== 'none' },
+    queue: queueVars(config),
   };
 }
 
-/** How the code of the model is written: its refusals, its value objects, its closed values. */
+/**
+ * `stored`: the jobs leave the memory of the process. `processTable`: the instances of the
+ * process managers go to the database whenever the jobs leave memory and the ORM keeps them.
+ */
+function queueVars(config: Config): RenderContext {
+  const { queue, orm } = config.stack;
+
+  return {
+    ...one(queue, ['memory', 'database', 'redis']),
+    stored: queue !== 'memory',
+    processTable: queue !== 'memory' && (orm === 'knex' || orm === 'drizzle'),
+  };
+}
+
+/** How the code is written: its refusals, its shared schemas, its value objects, its closed values. */
 function modelWritingVars(config: Config): RenderContext {
-  const { refusals, valueObjects, literals } = config.stack;
+  const { refusals, schemas, valueObjects, literals } = config.stack;
 
   return {
     refusals: one(refusals, ['factories', 'classes']),
+    schemas: one(schemas, ['shared', 'per-route']),
     valueObjects: one(valueObjects, ['throwing', 'result']),
     literals: one(literals, ['named', 'free']),
   };
@@ -100,13 +116,22 @@ function assemblyVars(config: Config): RenderContext {
   };
 }
 
+/** The HTTP framework, and the shared cache in front of it. */
+function edgeVars(config: Config): RenderContext {
+  const { httpCache, tenancy } = config.stack;
+  // A multi-tenant application files its tags under the tenant, on the answers and on the purges alike.
+  const perTenant = httpCache !== 'none' && tenancy !== 'none';
+
+  return { http: httpVars(config), httpCache: { ...one(httpCache, ['none', 'varnish']), perTenant } };
+}
+
 function httpVars(config: Config): RenderContext {
   const { http } = config.stack;
 
   return {
-    ...one(http, ['express', 'fastify', 'nest', 'none']),
+    ...one(http, ['express', 'fastify', 'hono', 'nest', 'none']),
     any: http !== 'none',
-    plain: http === 'express' || http === 'fastify',
+    plain: http === 'express' || http === 'fastify' || http === 'hono',
   };
 }
 

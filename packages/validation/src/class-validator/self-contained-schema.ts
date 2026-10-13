@@ -1,25 +1,21 @@
 import { defaultMetadataStorage } from 'class-transformer/cjs/storage.js';
 import { validationMetadatasToSchemas } from 'class-validator-jsonschema';
 import type { JsonSchema } from '../json-schema.js';
+import { DEFINITIONS_POINTER } from '../shared/definitions-pointer.js';
+import type { DtoClass } from './dto-class.js';
 
 type SchemasByName = Record<string, JsonSchema>;
 
-const DEFS_POINTER = '#/$defs/';
-
 /**
  * The JSON Schema of a class, carrying under `$defs` only the classes reachable from it. A class
- * that extends another one holds the properties of its ancestors too, as validation does.
+ * that extends another one holds the properties of its ancestors too, as validation does: a class
+ * that declares nothing itself (`class Body extends pickClass(...) {}`) is described by them.
+ * Shared, the class itself is one of them and the schema is a reference to it.
  */
-export function selfContainedSchema(dto: abstract new () => unknown): JsonSchema {
+export function selfContainedSchema(dto: DtoClass<object>, shared: boolean): JsonSchema {
   const all = generatedSchemas();
-
-  const own = inherited(
-    lineageOf(dto)
-      .map((name) => all[name])
-      .filter((schema): schema is JsonSchema => schema !== undefined),
-  );
-
-  const defs: SchemasByName = {};
+  const own = ownSchema(dto, all);
+  const defs: SchemasByName = shared ? { [dto.name]: own } : {};
 
   collectDefs(own, all, defs);
 
@@ -27,9 +23,27 @@ export function selfContainedSchema(dto: abstract new () => unknown): JsonSchema
 
   return {
     $schema: 'https://json-schema.org/draft/2020-12/schema',
-    ...own,
+    ...(shared ? { $ref: `${DEFINITIONS_POINTER}${dto.name}` } : own),
     ...(names.length > 0 ? { $defs: Object.fromEntries(names.map((name) => [name, defs[name]])) } : {}),
   };
+}
+
+function generatedSchemas(): SchemasByName {
+  const generated = validationMetadatasToSchemas({
+    classTransformerMetadataStorage: defaultMetadataStorage,
+    refPointerPrefix: DEFINITIONS_POINTER,
+  });
+
+  return Object.fromEntries(Object.entries(generated).map(([name, schema]) => [name, { ...schema }]));
+}
+
+/** The schemas of the class and of its ancestors as one. */
+function ownSchema(dto: DtoClass<object>, all: SchemasByName): JsonSchema {
+  return inherited(
+    lineageOf(dto)
+      .map((name) => all[name])
+      .filter((schema): schema is JsonSchema => schema !== undefined),
+  );
 }
 
 /** The names of the class and of its ancestors, the farthest first. */
@@ -66,15 +80,6 @@ function inherited(schemas: readonly JsonSchema[]): JsonSchema {
   return { ...merged, properties, ...(required.size === 0 ? {} : { required: [...required] }) };
 }
 
-function generatedSchemas(): SchemasByName {
-  const generated = validationMetadatasToSchemas({
-    classTransformerMetadataStorage: defaultMetadataStorage,
-    refPointerPrefix: DEFS_POINTER,
-  });
-
-  return Object.fromEntries(Object.entries(generated).map(([name, schema]) => [name, { ...schema }]));
-}
-
 function collectDefs(node: unknown, all: SchemasByName, defs: SchemasByName): void {
   if (Array.isArray(node)) {
     for (const item of node) {
@@ -100,8 +105,8 @@ function collectDefs(node: unknown, all: SchemasByName, defs: SchemasByName): vo
 }
 
 function referencedDefinition(key: string, value: unknown): string | undefined {
-  if (key === '$ref' && typeof value === 'string' && value.startsWith(DEFS_POINTER)) {
-    return value.slice(DEFS_POINTER.length);
+  if (key === '$ref' && typeof value === 'string' && value.startsWith(DEFINITIONS_POINTER)) {
+    return value.slice(DEFINITIONS_POINTER.length);
   }
 
   return undefined;

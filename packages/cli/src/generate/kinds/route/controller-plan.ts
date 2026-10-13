@@ -9,4 +9,6 @@ export interface ControllerPlan extends RouteParts {
   readonly withMapper: boolean;
   /** Only the controller of a plain query answers through a serializer. */
   readonly withSerializer: boolean;
+  /** The text of its cache policy, as `--cache` asked it. */
+  readonly cache?: string;
 }

@@ -9,6 +9,8 @@ export interface KindFlags {
   readonly term: readonly string[];
   /** The values of a closed vocabulary, one per `--value`. */
   readonly value: readonly string[];
+  /** The transitions of a state machine, one per `--transition "<intention>:<from>[,<from>]...[><to>]"`. */
+  readonly transition: readonly string[];
   readonly code?: string;
   readonly aggregate?: string;
   readonly method?: string;
@@ -50,6 +52,8 @@ export interface KindFlags {
   readonly mapper: boolean;
   /** A controller of a query gets a serializer of its own. */
   readonly serializer: boolean;
+  /** The cache policy of a controller: `public`, `private` or `no-store`. */
+  readonly cache?: string;
   /** An aggregate keeps its state as the stream of its events. */
   readonly eventSourced: boolean;
 }

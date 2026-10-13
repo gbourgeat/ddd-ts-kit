@@ -1,5 +1,7 @@
 import type { Schema } from '@ddd-ts-kit/validation';
 import type { FormHints } from '../forms/form-hints.js';
+import type { CachePolicy } from '../cache/cache-policy.js';
+import type { IfMatch } from '../cache/if-match.js';
 import type { HttpMethod } from '../route/http-method.js';
 import type { UploadSpec } from '../route/upload-spec.js';
 import type { ControllerResponse } from './controller-response.js';
@@ -41,4 +43,8 @@ export interface ControllerSpec {
   readonly consumes?: readonly string[];
   /** Describes the body as a form at `GET /forms/<operationId>` (`formRoutes`): `defineForm(...)` next to the schemas, or `{}`. */
   readonly form?: FormHints;
+  /** How the caches on the way may keep the answer; replaces the policy of the group. */
+  readonly cache?: CachePolicy;
+  /** A write conditional on the version the client read, handed to `handle` as `context.expectedVersion`. */
+  readonly ifMatch?: IfMatch;
 }

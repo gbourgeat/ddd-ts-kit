@@ -1,5 +1,6 @@
 import { Readable } from 'node:stream';
 import type { FastifyInstance } from 'fastify';
+import { assertCachedRoutes } from '../pipeline/assert-cached-routes.js';
 import { executeRoute } from '../pipeline/execute-route.js';
 import type { RouteResponse } from '../pipeline/route-response.js';
 import { serializeBody } from '../pipeline/serialize-body.js';
@@ -21,6 +22,7 @@ export function mountFastify(
 ): void {
   assertUniqueRoutes(routes);
   assertServed(routes, options.representations);
+  assertCachedRoutes(routes, options);
 
   const streamed = routes.filter(readsItsStream);
   const parsed = routes.filter((route) => !readsItsStream(route));
