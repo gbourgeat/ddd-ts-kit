@@ -1,7 +1,7 @@
 openapi: '3.1.0'
 info:
   title: scheduling
-  version: '0.11.0'
+  version: '0.12.0'
 tags:
   - name: analytics
   - name: audit
@@ -195,6 +195,12 @@ paths:
       responses:
         '200':
           description: One page of the search.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
@@ -333,6 +339,12 @@ paths:
       responses:
         '201':
           description: Done; the body carries the identifier.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
@@ -405,6 +417,12 @@ paths:
       responses:
         '200':
           description: The answer.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
@@ -529,6 +547,12 @@ paths:
       responses:
         '201':
           description: Done; the body carries the identifier.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
@@ -596,6 +620,12 @@ paths:
       responses:
         '201':
           description: Done; the body carries the identifier.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
@@ -663,6 +693,12 @@ paths:
       responses:
         '201':
           description: Done; the body carries the identifier.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
@@ -731,6 +767,12 @@ paths:
       responses:
         '200':
           description: The link to the document.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
@@ -824,6 +866,12 @@ paths:
       responses:
         '201':
           description: Attached; the body carries the identifier of the appointment.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
@@ -899,6 +947,12 @@ paths:
       responses:
         '200':
           description: Done; the body carries the identifier.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
@@ -958,6 +1012,12 @@ paths:
       responses:
         '201':
           description: Done; the body carries the identifier.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
@@ -1040,6 +1100,12 @@ paths:
       responses:
         '201':
           description: Done; the body carries the identifier.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
@@ -1173,6 +1239,12 @@ paths:
       responses:
         '200':
           description: A page of entries.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
@@ -1304,6 +1376,12 @@ paths:
       responses:
         '201':
           description: Done; the body carries the identifier.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
@@ -1381,6 +1459,12 @@ paths:
       responses:
         '201':
           description: Done; the body carries the identifier.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
@@ -1466,6 +1550,12 @@ paths:
       responses:
         '202':
           description: 'Accepted: a worker cancels the appointments of the period; the body carries the clearance to follow.'
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
@@ -1530,6 +1620,12 @@ paths:
       responses:
         '200':
           description: How far the clearance went.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
@@ -1613,9 +1709,25 @@ paths:
             pattern: ^\d{4}-\d{2}-\d{2}$
             type: string
           required: true
+        - name: If-None-Match
+          in: header
+          description: 'The ETag of the version the caller holds: 304 when it is still the current one.'
+          required: false
+          schema:
+            type: string
       responses:
         '200':
           description: The answer.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: private, max-age=0, must-revalidate
+            ETag:
+              description: The version of this answer, to send back in If-None-Match.
+              schema:
+                type: string
           content:
             application/json:
               schema:
@@ -1651,6 +1763,8 @@ paths:
                   - timeOff
                   - appointmentTypes
                   - busy
+        '304':
+          description: 'Not Modified: the version the caller holds (If-None-Match, If-Modified-Since) is still the current one.'
         '401':
           description: 'Unauthorized. Error codes: UNAUTHORIZED.'
           content:
@@ -1719,6 +1833,12 @@ paths:
       responses:
         '201':
           description: Done; the body carries the identifier.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
@@ -1763,6 +1883,78 @@ paths:
             - INVALID_RANGE
             - VALIDATION_FAILED
   /calendars/{calendarId}/opening-hours:
+    get:
+      operationId: getOpeningHours
+      summary: Get opening hours
+      tags:
+        - scheduling
+      security: []
+      parameters:
+        - name: calendarId
+          in: path
+          schema:
+            type: string
+          required: true
+        - name: If-None-Match
+          in: header
+          description: 'The ETag of the version the caller holds: 304 when it is still the current one.'
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The weekly hours of the calendar.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: public, max-age=60, s-maxage=3600, stale-while-revalidate=30, stale-if-error=86400
+            ETag:
+              description: The version of this answer, to send back in If-None-Match.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                properties:
+                  calendarId:
+                    type: string
+                  timeZone:
+                    type: string
+                  version:
+                    minimum: 0
+                    type: integer
+                  ranges:
+                    items:
+                      $ref: '#/components/schemas/OpeningRangeDto'
+                    type: array
+                type: object
+                required:
+                  - calendarId
+                  - timeZone
+                  - version
+                  - ranges
+        '304':
+          description: 'Not Modified: the version the caller holds (If-None-Match, If-Modified-Since) is still the current one.'
+        '404':
+          description: 'Not Found. Error codes: UNKNOWN_CALENDAR.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - UNKNOWN_CALENDAR
+        '422':
+          description: 'Unprocessable Content. Error codes: VALIDATION_FAILED.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - VALIDATION_FAILED
+      x-cache-tags:
+        - calendar:{calendarId}
     put:
       operationId: setOpeningHours
       summary: Set opening hours
@@ -1776,6 +1968,12 @@ paths:
           schema:
             type: string
           required: true
+        - name: If-Match
+          in: header
+          description: 'The ETag of the version this change was made on: 412 when it is no longer the current one.'
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -1793,6 +1991,12 @@ paths:
       responses:
         '200':
           description: Done; the body carries the identifier.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
@@ -1826,6 +2030,14 @@ paths:
                 $ref: '#/components/schemas/Problem'
           x-error-codes:
             - UNKNOWN_CALENDAR
+        '412':
+          description: 'Precondition Failed. Error codes: PRECONDITION_FAILED.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+          x-error-codes:
+            - PRECONDITION_FAILED
         '422':
           description: 'Unprocessable Content. Error codes: INVALID_RANGE, VALIDATION_FAILED.'
           content:
@@ -1874,6 +2086,12 @@ paths:
       responses:
         '201':
           description: Done; the body carries the identifier.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
@@ -1961,6 +2179,12 @@ paths:
       responses:
         '201':
           description: Done; the body carries the identifier.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
@@ -2057,6 +2281,12 @@ paths:
       responses:
         '200':
           description: One page of the search.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
@@ -2157,6 +2387,12 @@ paths:
       responses:
         '200':
           description: Done; the body carries the identifier.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
@@ -2223,6 +2459,12 @@ paths:
       responses:
         '201':
           description: Done; the body carries the identifier.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
@@ -2457,6 +2699,12 @@ paths:
       responses:
         '200':
           description: One page of the search.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
@@ -2543,6 +2791,12 @@ paths:
       responses:
         '201':
           description: Done; the body carries the identifier.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
@@ -2622,6 +2876,12 @@ paths:
       responses:
         '200':
           description: Done; the body carries the identifier.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
@@ -2707,6 +2967,12 @@ paths:
       responses:
         '201':
           description: Done; the body carries the identifier.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
@@ -2780,6 +3046,12 @@ paths:
       responses:
         '200':
           description: Done; the body carries the identifier.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
@@ -2926,6 +3198,12 @@ paths:
       responses:
         '200':
           description: One page of the search.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
@@ -3099,6 +3377,12 @@ paths:
       responses:
         '200':
           description: One page of the history, oldest fact first.
+          headers:
+            Cache-Control:
+              description: How the caches on the way may keep this answer.
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:

@@ -1261,6 +1261,51 @@ in the kit, then `npm run docs:generate` rewrote `clients/api`:
 
 The two changed spec files and the three journeys pass again in process (30 tests).
 
+## 2026-10-13: HTTP caching, Varnish in front of the API
+
+The application gained a shared cache in front of its API, the first public route, a private
+read revalidated with an `ETag`, and a write conditioned by `If-Match`.
+
+| | |
+|---|---|
+| Config | `"httpCache": "varnish"` in `ddd-ts-kit.config.json` |
+| Generator runs | 4: `generate query scheduling GetOpeningHours --public`, `generate controller ... --cache public`, `generate event-handler scheduling Calendar OpeningHoursSet`, `generate e2e scheduling GetOpeningHours` |
+| New route | `GET /calendars/:calendarId/opening-hours`, public: `public, max-age=60, s-maxage=3600, stale-while-revalidate=30, stale-if-error=86400`, a weak `ETag` from the version of the calendar, tagged `calendar:<id>` |
+| Changed routes | `GET /calendars/:calendarId/days/:day`: `private, max-age=0, must-revalidate` and a strong `ETag`; `PUT /calendars/:calendarId/opening-hours`: `If-Match` optional, 412 `PRECONDITION_FAILED` on a stale version |
+| Every other authenticated route | answers `Cache-Control: no-store` (refusals included), documented in the contract |
+| Purge | `CalendarOpeningHoursSetEventHandler`, before the commit, asks `CacheInvalidation` for `calendar:<id>`; the relay of `main.ts` publishes through `PurgingPublisher` and `VarnishCachePurger` |
+| Infrastructure | a `varnish` service (Varnish 9.1.0) in `docker-compose.yml`, its VCL in `docker/varnish/default.vcl` (the one `init --http-cache varnish` writes, backend port 54300), `VARNISH_URL` and `VARNISH_PORT` in `.env.example` |
+| End to end | `test/e2e/get-opening-hours.e2e.spec.ts`: five specs in process (headers, 304, a purge after the committed command and none for the refused one, 412, 404 kept by nobody), a sixth through Varnish when `VARNISH_URL` is set (a `HIT`, then the new hours after the purge); CI starts Varnish for it |
+
+What the generators left by hand: the query generator wrote a reader port, its in-memory
+adapter and its fake, removed since the hours are read from the `CalendarRepository` (a getter
+`openingHours` on the aggregate); the generated controller of a public query takes no request
+and builds its query without arguments, filled by hand; the event handler and the e2e spec are
+filled from their markers. The platform files (`main.ts`, the HTTP boundary, the configuration,
+the compose file) were written by hand after the templates `init --http-cache varnish` uses, since
+`init` is not run again on this application.
+
+One defect of the example's own tooling was found and fixed: `scripts/kit.mjs` read
+`NOT_A_FILE` before its declaration whenever a `generate` was about to create a file that did not
+exist yet, so every generator run that created a file crashed with a `ReferenceError` (the
+declaration moved above `main()`).
+
+## 2026-10-13 (later): what a review of the HTTP caching changed here
+
+A review found the cached hours stale after three of the four changes of a calendar, and the
+generated VCL keeping answers no route allowed.
+
+| | |
+|---|---|
+| Generator runs | 3: `generate event-handler scheduling Calendar ExceptionAdded`, `... TimeOffAdded`, `... AppointmentTypeDefined`, filled from their markers |
+| Purge | every event that changes the version of a calendar now purges `calendar:<id>`: before, only `CalendarOpeningHoursSet` did, and after an exception, a time off or an appointment type Varnish served for up to an hour a version every `If-Match` built on was refused with 412 |
+| Relay | `main.ts` purges through `RepeatedCachePurger` (two seconds apart, `PURGE_AGAIN_AFTER_MS`), for a read that loaded the hours before the commit and reached Varnish after the first purge |
+| VCL | `docker/varnish/default.vcl`, written again from the template: an answer without `max-age` or `s-maxage` is never kept (the 404 of an unknown calendar, a probe), a purge comes from the machine of Varnish or carries `VARNISH_PURGE_KEY`, a refused ban answers 500 |
+| Configuration | `VARNISH_PURGE_KEY` in `.env.example`, in the environment of the `varnish` service and in `loadConfig` (`varnishPurgeKey`, sent by `VarnishCachePurger`) |
+| End to end | `get-opening-hours.e2e.spec.ts`: a change of the calendar other than its hours purges them and a write made on the version read afterwards succeeds, in process and through Varnish (8 specs, passed through Varnish 9.1.0 on this machine); the setup waits for the two purges of the practice it opens |
+
+Contract: unchanged.
+
 ## 2026-10-13: background jobs, a state machine and a process manager
 
 What this example gained, and how much of it a generator wrote:

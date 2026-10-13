@@ -12,6 +12,7 @@ const CONSUMER =
 
 const { PUBLISHED, ROUTE, SCHEDULING, VALUE_OBJECT } = PATHS;
 const CALENDAR_DAY = `${SCHEDULING}/application/queries/get-calendar-day/get-calendar-day.handler.ts`;
+const CALENDARS_GROUP = `${SCHEDULING}/presentation/http/calendars.routes.ts`;
 const DUE = '  return new Date(startsAt.getTime() - NOTICE_MS);';
 const SAVED = '    await this.reminderRepository.save(target);\n';
 const TAKEN = '  constructor(private readonly commands: CommandBus) {}';
@@ -203,6 +204,20 @@ export const BEHAVIOUR_INJECTIONS: readonly Injection[] = [
         reason: 'the guard is a new role file the generated file of its context does not export yet',
       },
     ],
+  },
+  {
+    rule: 'presentation/shared-cache-varies',
+    what: 'a route group behind Authenticated whose answers shared caches would keep, whatever the caller',
+    file: CALENDARS_GROUP,
+    changes: [
+      {
+        file: CALENDARS_GROUP,
+        from: "guards: [Authenticated], errors: ['FORBIDDEN'] })",
+        to: "guards: [Authenticated], errors: ['FORBIDDEN'], cache: { scope: 'public', maxAge: '1m' } })",
+      },
+    ],
+    checker: false,
+    eslint: 'ddd-ts-kit/presentation-shared-cache-varies',
   },
   {
     rule: 'authz/in-application',

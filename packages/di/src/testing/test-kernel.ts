@@ -3,6 +3,7 @@ import type {
   FixedClock,
   FixedExecutionScope,
   InMemoryCache,
+  InMemoryCacheInvalidation,
   InMemoryCommandBus,
   InMemoryDomainEventDispatcher,
   InMemoryErrorReporter,
@@ -48,6 +49,8 @@ export interface TestKernel {
   readonly errors: InMemoryErrorReporter;
   /** Expires by `clock`. */
   readonly cache: InMemoryCache;
+  /** `cacheInvalidation.invalidated` lists the tags the use cases asked to purge after their commit. */
+  readonly cacheInvalidation: InMemoryCacheInvalidation;
   /** Frees a key by `clock`; a wait for a held key really waits. */
   readonly lock: InMemoryLock;
   /** Counts by `clock`. */

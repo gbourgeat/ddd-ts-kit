@@ -174,6 +174,11 @@ jobs:
       DDD_TS_KIT_TEST_S3_ENDPOINT: http://localhost:9000
       DDD_TS_KIT_TEST_REDIS_URL: redis://localhost:6379
       DDD_TS_KIT_OPENFGA_URL: http://localhost:8080
+      DDD_TS_KIT_TEST_VARNISH_URL: http://127.0.0.1:16081
+      DDD_TS_KIT_TEST_VARNISH_BACKEND_PORT: '18089'
+      # The purges reach the container through its published port, from another address: Varnish lets them in with it.
+      VARNISH_PURGE_KEY: ci-purge-key
+      DDD_TS_KIT_TEST_VARNISH_PURGE_KEY: ci-purge-key
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -203,6 +208,9 @@ jobs:
           docker logs openfga >&2
           echo "OpenFGA did not become healthy." >&2
           exit 1
+      - name: Varnish, with the VCL init --http-cache varnish writes, in front of the origin the purger spec starts
+        if: ${{ needs.install.outputs.integration == 'true' }}
+        run: sh pipeline/github/scripts/start-varnish.sh packages/cli/templates/init/docker/varnish.vcl.tpl 18089 16081
       - name: Adapter specs on a server (skipped when no adapter package is reached)
         if: ${{ needs.install.outputs.integration == 'true' }}
         run: npm run ci:test:integration
@@ -257,6 +265,14 @@ jobs:
       - uses: ./.github/actions/setup
       - name: The example's own gate (types, lint, format, tests with the coverage thresholds, end to end, architecture, graph, dead code, documents)
         run: npm run verify --workspace examples/scheduling
+      - name: Varnish in front of the example (the VCL of its docker/varnish), and the end-to-end spec that reads the API through it
+        env:
+          VARNISH_URL: http://127.0.0.1:54081
+          VARNISH_BACKEND_PORT: '54300'
+          VARNISH_PURGE_KEY: ci-purge-key
+        run: |
+          sh pipeline/github/scripts/start-varnish.sh examples/scheduling/docker/varnish/default.vcl 54300 54081
+          npm run test:e2e --workspace examples/scheduling -- test/e2e/get-opening-hours.e2e.spec.ts
       - name: PostgreSQL (pulled with retries, from the next registry when one refuses)
         run: sh pipeline/github/scripts/start-postgres.sh
       - name: The example's adapter specs on a PostgreSQL server (two concurrent bookings meet real transactions)

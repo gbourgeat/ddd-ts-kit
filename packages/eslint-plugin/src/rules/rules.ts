@@ -53,6 +53,7 @@ import { portsValueImport } from './ports-value-import.js';
 import { presentationControllerDelegates } from './presentation-controller-delegates.js';
 import { presentationControllerShape } from './presentation-controller-shape.js';
 import { presentationGuardAtTheEdge } from './presentation-guard-at-the-edge.js';
+import { presentationSharedCacheVaries } from './presentation-shared-cache-varies.js';
 import { purityNoAmbientRandomness, purityNoEnvironment, purityNoSystemClock } from './purity.js';
 import { lifecycleStatusThroughMachine } from './lifecycle-status-through-machine.js';
 import { processSendsCommandsOnly } from './process-sends-commands-only.js';
@@ -130,6 +131,7 @@ const ALL = [
   presentationControllerShape,
   presentationControllerDelegates,
   presentationGuardAtTheEdge,
+  presentationSharedCacheVaries,
 ];
 
 /** Keyed by ESLint name: the id of docs/ARCHITECTURE.md with its slash replaced by a dash, or the name of a companion rule. */

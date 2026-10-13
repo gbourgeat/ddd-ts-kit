@@ -73,6 +73,7 @@ const OPTIONS = {
   role: TEXT,
   mapper: SWITCH,
   serializer: SWITCH,
+  cache: TEXT,
   'event-sourced': SWITCH,
   reason: TEXT,
   every: TEXT,
@@ -130,30 +131,34 @@ function requestedKind(name: string | undefined, rest: readonly string[]): Kind 
   return kind;
 }
 
+/** The flags of `generate` that take one word. */
+const TEXT_FLAGS = [
+  'classification',
+  'purpose',
+  'code',
+  'aggregate',
+  'method',
+  'path',
+  'version',
+  'permission',
+  'deviation',
+  'reason',
+  'kind',
+  'every',
+  'cron',
+  'phase',
+  'group',
+  'prefix',
+  'role',
+  'cache',
+] as const;
+
 function flagsOf(args: Arguments): KindFlags {
   const timeZone = args.text('time-zone');
   const commandName = args.text('command');
 
   return {
-    ...args.texts([
-      'classification',
-      'purpose',
-      'code',
-      'aggregate',
-      'method',
-      'path',
-      'version',
-      'permission',
-      'deviation',
-      'reason',
-      'kind',
-      'every',
-      'cron',
-      'phase',
-      'group',
-      'prefix',
-      'role',
-    ]),
+    ...args.texts(TEXT_FLAGS),
     ...(timeZone === undefined ? {} : { timeZone }),
     ...(commandName === undefined ? {} : { commandName }),
     upstream: args.many('upstream'),

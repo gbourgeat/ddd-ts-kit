@@ -39,6 +39,10 @@ const PARALLEL_NAMES: Readonly<Record<string, string>> = {
   ErrorTracker: 'ErrorReporter',
   ExceptionReporter: 'ErrorReporter',
   CrashReporter: 'ErrorReporter',
+  CacheInvalidator: 'CacheInvalidation',
+  CacheInvalidationService: 'CacheInvalidation',
+  CachePurgeService: 'CachePurger',
+  CdnPurger: 'CachePurger',
 };
 
 /** The standard names themselves: the same name behind an `I` is the same interface declared twice. */
@@ -59,6 +63,8 @@ const STANDARD_NAMES = [
   'JobScheduler',
   'ScheduledJob',
   'ErrorReporter',
+  'CacheInvalidation',
+  'CachePurger',
 ];
 
 const DEFAULTS: Readonly<Record<string, string>> = {

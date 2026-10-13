@@ -1,5 +1,10 @@
 export type { Awaitable } from './contracts/awaitable.js';
 export { cacheContract, type CacheContractOptions } from './contracts/cache-contract.js';
+export {
+  cachePurgerContract,
+  type CachePurgerContractOptions,
+  type CachePurgerUnderContract,
+} from './contracts/cache-purger-contract.js';
 export type { ContractRunner } from './contracts/contract-runner.js';
 export { ContractSuite } from './contracts/contract-suite.js';
 export {

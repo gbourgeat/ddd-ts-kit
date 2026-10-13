@@ -4,6 +4,69 @@ What each version changes for someone who uses the kit. The packages of `package
 together, under one version; the notes of each [GitHub release](https://github.com/gbourgeat/ddd-ts-kit/releases)
 list the pull requests behind it.
 
+## 0.12.0
+
+**Cache policies on routes, and `no-store` for authenticated answers.** A controller, a route
+group or a function route declares `cache: { scope, maxAge, sMaxAge, staleWhileRevalidate,
+staleIfError, mustRevalidate, vary }` of `@ddd-ts-kit/http`: the pipeline answers its
+`Cache-Control` and `Vary`, the contract documents them, and a policy that would let a cache keep
+what it must not is refused when the route is declared, above all the `public` answer of a route
+that knows its caller without the request headers it varies on. When the routes are mounted, a
+public answer is held to the options of the application: on a route that knows its caller, `vary`
+names `Authorization`, `Cookie` or the header its tenant is read from; behind a cache that ignores
+`Vary` (Cloudflare, Bunny; `cacheTags.honoursVary` to say otherwise) a varying answer is refused;
+and every kept answer varies on the headers `resolveTenant` reads (`TenantResolver.headers`, set by
+`tenantFromHeader` and `firstTenantOf`). The policy of a route group reaches its reads only: a
+write of the group keeps the default of a write. A route that is not public and
+declares nothing now answers `Cache-Control: no-store`, refusals included (before, nothing): a
+generated contract gains that header on every authenticated operation, regenerate it with
+`npm run docs:generate`. The ESLint rule `presentation/shared-cache-varies` reports in the editor a
+public policy, without `vary`, on a declaration that writes guards or security schemes. See
+`docs/concepts/http-caching.md`.
+
+**Conditional requests.** A cache policy names the version of an answer, `etag: 'representation'`
+(a strong tag hashed from the bytes) or `etag: { version: 'version' }` (a weak tag from a field of
+the body), and `lastModified: 'changedAt'`: the pipeline answers `ETag` and `Last-Modified`, and
+`304 Not Modified` to `If-None-Match` and `If-Modified-Since`. A write declares
+`ifMatch: 'optional' | 'required'`: the version named in `If-Match` reaches the handler as
+`context.expectedVersion`, `expectVersion(aggregate, expected)` of the kernel refuses a stale one
+with `PreconditionFailedError` (`PRECONDITION_FAILED`, 412), and a required one that is missing
+answers `PRECONDITION_REQUIRED` (428). Both codes join the default error mapping and the codes a
+route may declare without a class of its own (`errors/known-code`). The contract documents the
+parameters, headers and answers.
+
+**Cache tags, purged after the commit.** A public policy names the resources its answer shows
+(`tags: [{ resource: 'calendar', param: 'calendarId' }]`), sent in the header the shared cache
+reads (`cacheTags: { header: CacheTagHeader.xkey }` of the options; `surrogate-key`, `cache-tag`,
+`cdn-tag`), filed under the tenant of the request when the application says so (`perTenant`, on
+the answers and on the purges). The kernel gains two ports: `CacheInvalidation`,
+which a `before-commit` handler asks and which `kernelModule()` binds to purge requests published
+on the outbox (a rollback purges nothing, a commit purges even across a crash), and `CachePurger`,
+which the relay calls through `new PurgingPublisher(purger, broker)` and which
+`domain-events/transactional-before-commit` now refuses before the commit. `@ddd-ts-kit/http/purgers`
+holds `VarnishCachePurger` (xkey or ban, with the purge `key` of the VCL), `FastlyCachePurger` and
+`CloudflareCachePurger`, all held to `cachePurgerContract` of `@ddd-ts-kit/testing/contracts` (the
+CDN ones on a fake of the purge API each documents); the test application exposes
+`cacheInvalidation`. `RepeatedCachePurger` purges once more a little later, for a read that reached
+the cache after the purge. Filed per tenant, a tagged answer to a request naming no tenant is
+`no-store`, a tagged public route anybody may call needs `resolveTenant`, and an invalidation asked
+without a tenant throws `NoCurrentTenantError`. `CacheInvalidation` and `CachePurger` join the
+standard interfaces (`standard/no-parallel-interface`: `CacheInvalidator`, `CdnPurger` and the
+like). Varnish 9.1.0 runs in the integration job. See `docs/tools/http-caches.md`.
+
+**Varnish in front of a generated project.** `init --http-cache varnish` (recorded as
+`stack.httpCache`; a config without it is `none`) adds the Varnish 9.1.0 service to the compose
+file with its VCL in `docker/varnish/default.vcl` (it keeps only what an answer allows by
+`max-age` or `s-maxage`, and lets a purge in from its machine or with `VARNISH_PURGE_KEY`),
+validates `VARNISH_URL` and `VARNISH_PURGE_KEY`, tags the public answers in `xkey` from the HTTP
+boundary, and has the outbox relay of `main.ts` and of every `generate service` entry point purge
+through `PurgingPublisher` and `VarnishCachePurger`; the end-to-end application records the purges
+(`purges.purged`). It needs an HTTP framework and `--events outbox`. On `--di manual` and `nest`
+the platform gains `cacheInvalidation`. With `--tenancy`, the answers and the purges are tagged
+per tenant and the HTTP boundary reads the tenant of a request from `x-tenant-id`.
+`generate controller --cache public|private|no-store` writes the cache policy of a controller.
+The generated presentation rules say when to cache, purge and condition a write.
+
 ## 0.11.0
 
 **File import and export, designed.** `docs/concepts/file-import-export.md` says how a large

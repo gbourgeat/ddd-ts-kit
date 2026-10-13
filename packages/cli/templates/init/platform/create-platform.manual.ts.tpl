@@ -17,6 +17,9 @@ import {
   InMemoryRateLimiter,
 {{/if}}
   NoopErrorReporter,
+{{#if httpCache.varnish}}
+  PublishedCacheInvalidation,
+{{/if}}
   ScopedActorContext,
   SystemClock,
   UuidGenerator,
@@ -143,7 +146,12 @@ export function createPlatform(persistence: Persistence, options: PlatformOption
 
   return {
     ...foundations,
+{{#if httpCache.varnish}}
+    ...withCacheInvalidation(eventsOn(persistence, options, { scope, traced }), foundations),
+{{/if}}
+{{#unless httpCache.varnish}}
     ...eventsOn(persistence, options, { scope, traced }),
+{{/unless}}
     // Around every use case, outermost first: {{#if errors.sentry}}the report of an unexpected failure, {{/if}}its log entry, its measure, the permission, its span; a command then {{#if files.any}}has the file it carries staged, out of any transaction, and {{/if}}runs in the unit of work.
     commands: chain(new InMemoryCommandBus(), [
       ...observed,
@@ -287,6 +295,29 @@ function eventsOn(
   };
 }
 
+{{#if httpCache.varnish}}
+/**
+ * The events, and the purges a change asks for, written to the outbox with it through the same publisher: a rollback
+ * takes them away, the relay sends them to Varnish once committed.{{#if httpCache.perTenant}} Filed under the tenant
+ * of the work, as the answers are tagged.{{/if}}
+ */
+function withCacheInvalidation(events: Events, { ids, clock, scope }: Foundations): Events & CacheInvalidating {
+  const { publisher } = events;
+
+{{#if httpCache.perTenant}}
+  return {
+    ...events,
+    cacheInvalidation: new PublishedCacheInvalidation({ publisher, ids, clock, scope, perTenant: true }),
+  };
+{{/if}}
+{{#unless httpCache.perTenant}}
+  return { ...events, cacheInvalidation: new PublishedCacheInvalidation({ publisher, ids, clock, scope }) };
+{{/unless}}
+}
+
+type CacheInvalidating = Pick<Platform, 'cacheInvalidation'>;
+
+{{/if}}
 interface Observation {
   readonly scope: Platform['scope'];
   readonly traced: TracedApplication;

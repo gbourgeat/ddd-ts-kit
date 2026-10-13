@@ -704,6 +704,10 @@ export interface GetCalendarDayInput {
     readonly calendarId: string;
     readonly day: string;
   };
+  readonly header?: {
+    /** The ETag of the version the caller holds: 304 when it is still the current one. */
+    readonly 'If-None-Match'?: string;
+  };
 }
 
 export type GetCalendarDayResult =
@@ -716,6 +720,7 @@ export type GetCalendarDayResult =
     appointmentTypes: Array<Schemas.CalendarDayAppointmentTypeDto>;
     busy: Array<Schemas.CalendarDayBusyDto>;
   }>
+  | Success<304, undefined>
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
   | Failure<404, 'UNKNOWN_CALENDAR', Schemas.Problem>
@@ -735,7 +740,7 @@ export function getCalendarDay(
     method: 'GET',
     path: '/calendars/{calendarId}/days/{day}',
     security: [['bearer']],
-    responses: { 200: 'json', 401: 'json', 403: 'json', 404: 'json', 422: 'json' },
+    responses: { 200: 'json', 304: 'none', 401: 'json', 403: 'json', 404: 'json', 422: 'json' },
   };
 
   return send<GetCalendarDayResult>(connection, operation, { ...input, ...options });
@@ -780,9 +785,54 @@ export function addException(
   return send<AddExceptionResult>(connection, operation, { ...input, ...options });
 }
 
+export interface GetOpeningHoursInput {
+  readonly path: {
+    readonly calendarId: string;
+  };
+  readonly header?: {
+    /** The ETag of the version the caller holds: 304 when it is still the current one. */
+    readonly 'If-None-Match'?: string;
+  };
+}
+
+export type GetOpeningHoursResult =
+  | Success<200, {
+    calendarId: string;
+    timeZone: string;
+    version: number;
+    ranges: Array<Schemas.OpeningRangeDto>;
+  }>
+  | Success<304, undefined>
+  | Failure<404, 'UNKNOWN_CALENDAR', Schemas.Problem>
+  | Failure<422, 'VALIDATION_FAILED', Schemas.Problem>;
+
+/**
+ * Get opening hours: `GET /calendars/{calendarId}/opening-hours`.
+ *
+ * Error codes: UNKNOWN_CALENDAR (404), VALIDATION_FAILED (422).
+ */
+export function getOpeningHours(
+  connection: Connection,
+  input: GetOpeningHoursInput,
+  options: CallOptions = {},
+): Promise<GetOpeningHoursResult> {
+  const operation: Operation = {
+    method: 'GET',
+    path: '/calendars/{calendarId}/opening-hours',
+    security: [],
+    responses: { 200: 'json', 304: 'none', 404: 'json', 422: 'json' },
+  };
+
+  return send<GetOpeningHoursResult>(connection, operation, { ...input, ...options });
+}
+
 export interface SetOpeningHoursInput {
   readonly path: {
     readonly calendarId: string;
+  };
+  readonly header?: {
+    /** The ETag of the version this change was made on: 412 when it is no longer the current one. */
+    readonly 'If-Match'?: string;
   };
   readonly body: {
     ranges: Array<Schemas.OpeningRangeDto>;
@@ -796,12 +846,13 @@ export type SetOpeningHoursResult =
   | Failure<401, 'UNAUTHORIZED', Schemas.Problem>
   | Failure<403, 'FORBIDDEN', Schemas.Problem>
   | Failure<404, 'UNKNOWN_CALENDAR', Schemas.Problem>
+  | Failure<412, 'PRECONDITION_FAILED', Schemas.Problem>
   | Failure<422, 'INVALID_RANGE' | 'VALIDATION_FAILED', Schemas.Problem>;
 
 /**
  * Set opening hours: `PUT /calendars/{calendarId}/opening-hours`.
  *
- * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), UNKNOWN_CALENDAR (404), INVALID_RANGE (422), VALIDATION_FAILED (422).
+ * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), UNKNOWN_CALENDAR (404), PRECONDITION_FAILED (412), INVALID_RANGE (422), VALIDATION_FAILED (422).
  */
 export function setOpeningHours(
   connection: Connection,
@@ -812,7 +863,7 @@ export function setOpeningHours(
     method: 'PUT',
     path: '/calendars/{calendarId}/opening-hours',
     security: [['bearer']],
-    responses: { 200: 'json', 401: 'json', 403: 'json', 404: 'json', 422: 'json' },
+    responses: { 200: 'json', 401: 'json', 403: 'json', 404: 'json', 412: 'json', 422: 'json' },
   };
 
   return send<SetOpeningHoursResult>(connection, operation, { ...input, ...options });

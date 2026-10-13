@@ -105,6 +105,7 @@ describe('createTestApplication', () => {
       'as',
       'backgroundJobs',
       'cache',
+      'cacheInvalidation',
       'clock',
       'commandBus',
       'container',

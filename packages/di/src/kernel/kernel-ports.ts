@@ -1,6 +1,7 @@
 import {
   ActorContext,
   Cache,
+  CacheInvalidation,
   Clock,
   CommandBus,
   DomainEventDispatcher,
@@ -45,6 +46,7 @@ export const KERNEL_PORTS: readonly Token<unknown>[] = [
   Metrics,
   ErrorReporter,
   Cache,
+  CacheInvalidation,
   Lock,
   RateLimiter,
   JobScheduler,

@@ -1,6 +1,7 @@
 import {
   ActorContext,
   Cache,
+  CacheInvalidation,
   Clock,
   CommandBus,
   DomainEventDispatcher,
@@ -129,6 +130,7 @@ function kernelOverrides(kernel: TestKernel): Override[] {
     override(Metrics, kernel.metrics),
     override(ErrorReporter, kernel.errors),
     override(Cache, kernel.cache),
+    override(CacheInvalidation, kernel.cacheInvalidation),
     override(Lock, kernel.lock),
     override(RateLimiter, kernel.rateLimiter),
     override(JobScheduler, kernel.jobs.scheduler),

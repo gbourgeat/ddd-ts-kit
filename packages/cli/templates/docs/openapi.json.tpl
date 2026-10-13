@@ -117,6 +117,15 @@
         "responses": {
           "200": {
             "description": "A page of entries.",
+            "headers": {
+              "Cache-Control": {
+                "description": "How the caches on the way may keep this answer.",
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {

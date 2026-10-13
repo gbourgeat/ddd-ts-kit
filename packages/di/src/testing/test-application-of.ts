@@ -40,6 +40,7 @@ function membersOf(kernel: TestKernel): TestKernel {
     metrics: kernel.metrics,
     errors: kernel.errors,
     cache: kernel.cache,
+    cacheInvalidation: kernel.cacheInvalidation,
     lock: kernel.lock,
     rateLimiter: kernel.rateLimiter,
     jobs: kernel.jobs,

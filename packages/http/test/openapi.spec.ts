@@ -54,6 +54,12 @@ describe('generateOpenApi', () => {
       responses: {
         '201': {
           description: 'The order was placed.',
+          headers: {
+            'Cache-Control': {
+              description: 'How the caches on the way may keep this answer.',
+              schema: { type: 'string', const: 'no-store' },
+            },
+          },
           content: {
             'application/json': {
               schema: {

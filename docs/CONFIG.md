@@ -31,6 +31,7 @@ deviation.
     "authz": "rbac",
     "broker": "none",
     "cache": "none",
+    "httpCache": "none",
     "storage": "local",
     "audit": "on",
     "errors": "none",
@@ -131,8 +132,8 @@ outside the list stops every command with the list of accepted values.
 | `stack.authz` | `rbac`, `abac`, `rebac`, `custom` | `rbac` |
 | `stack.broker` | `none`, `rabbitmq`, `kafka`, `nats`, `redis` (Redis Streams), `custom`; `init` refuses a broker without an ORM, since a broker is reached through the outbox | `none` |
 | `stack.cache` | `none`, `redis`: what backs the kernel `Cache` port, the wake-up of the outbox relay, the rate limiter and the lock of the scheduled jobs | `none` |
+| `stack.httpCache` | `none`, `varnish`: the shared HTTP cache in front of the API. `varnish` (`init --http-cache varnish`, with an HTTP framework and `events: outbox`) adds the Varnish 9.1.0 service to the compose file with its VCL in `docker/varnish/default.vcl` (it keeps only an answer whose `Cache-Control` allows it by `max-age` or `s-maxage`, and lets a purge in from its machine or with `VARNISH_PURGE_KEY`), reads `VARNISH_URL` and `VARNISH_PURGE_KEY`, tags the public answers in `xkey` (`cacheTags` of the HTTP boundary), and hands the purge requests of the outbox to `VarnishCachePurger` in `main.ts` and in every entry point `generate service` writes; the end-to-end application records them instead (`purges.purged`). On `di: manual` and `nest`, the platform gains `cacheInvalidation`, what a before-commit handler asks to purge. With `stack.tenancy` other than `none`, the tags of the answers and of the purges are filed under the tenant (`perTenant`), and the HTTP boundary reads the tenant of a request from `x-tenant-id` (`resolveTenant: tenantFromHeader()`), so that a public call names its tenant and its answers vary on it. A config without the key is `none`: nothing changes. See [HTTP caches](tools/http-caches.md) | `none` |
 | `stack.storage` | `local`, `s3`, `none`: where the content of files lives, never in the database. `local`: a directory in development (`FILES_DIRECTORY`, `.data/files`), the memory of the process in the tests and the tools, the signed links answered by the application under `/files`; `s3`: a bucket of any provider of the S3 protocol (`@ddd-ts-kit/s3`, MinIO in the compose stack, `S3_*` variables), the memory in the tests; `none`: no file storage wired. Either way `platform/files/` binds `FileStorage`, `FileKeys`, `FileScanner` and `FileStaging`, registers the hourly purge of staged files, stages the file a command carries on the command bus before the transaction, and mounts the upload reader; `generate file-upload` needs it. With `local`, `FILES_PUBLIC_URL` and `FILES_SIGNING_SECRET` are required in production. See [file storage](concepts/file-storage.md) | `local` in what `init` writes; `none` when the key is absent |
-| `stack.audit` | `on`, `off`: whether the audit trail is wired | `on` when an ORM is set, `off` otherwise |
 | `stack.audit` | `on`, `off`: whether the audit trail is wired; `on` also records the refusals of the guards at the edge of authenticated callers (`onGuardRefusal`), never those of a caller without a credential | `on` when an ORM is set, `off` otherwise |
 | `stack.errors` | `none`, `sentry`: where unexpected failures are reported; `sentry` binds the kernel `ErrorReporter` to `@ddd-ts-kit/sentry` (Sentry or GlitchTip) | `none` |
 | `stack.logger` | `stdout`, `pino`, `winston`: what implements the kernel `Logger` port | `stdout` |

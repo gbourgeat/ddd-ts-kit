@@ -26,7 +26,11 @@ import { AppointmentCancelledEventHandler } from '@/contexts/scheduling/applicat
 import { AppointmentExpiredEventHandler } from '@/contexts/scheduling/application/event-handlers/appointment-expired.event-handler';
 import { AppointmentMarkedNoShowEventHandler } from '@/contexts/scheduling/application/event-handlers/appointment-marked-no-show.event-handler';
 import { AppointmentRescheduledEventHandler } from '@/contexts/scheduling/application/event-handlers/appointment-rescheduled.event-handler';
+import { CalendarAppointmentTypeDefinedEventHandler } from '@/contexts/scheduling/application/event-handlers/calendar-appointment-type-defined.event-handler';
 import { CalendarCreatedEventHandler } from '@/contexts/scheduling/application/event-handlers/calendar-created.event-handler';
+import { CalendarExceptionAddedEventHandler } from '@/contexts/scheduling/application/event-handlers/calendar-exception-added.event-handler';
+import { CalendarOpeningHoursSetEventHandler } from '@/contexts/scheduling/application/event-handlers/calendar-opening-hours-set.event-handler';
+import { CalendarTimeOffAddedEventHandler } from '@/contexts/scheduling/application/event-handlers/calendar-time-off-added.event-handler';
 import { ConfirmationDeadlineOnBookedEventHandler } from '@/contexts/scheduling/application/event-handlers/confirmation-deadline-on-booked.event-handler';
 import { ConfirmationDeadlineOnCancelledEventHandler } from '@/contexts/scheduling/application/event-handlers/confirmation-deadline-on-cancelled.event-handler';
 import { ConfirmationDeadlineOnConfirmedEventHandler } from '@/contexts/scheduling/application/event-handlers/confirmation-deadline-on-confirmed.event-handler';
@@ -51,6 +55,7 @@ import { GetAppointmentDocumentHandler } from '@/contexts/scheduling/application
 import { GetAppointmentHandler } from '@/contexts/scheduling/application/queries/get-appointment/get-appointment.handler';
 import { GetCalendarDayHandler } from '@/contexts/scheduling/application/queries/get-calendar-day/get-calendar-day.handler';
 import { GetClearanceHandler } from '@/contexts/scheduling/application/queries/get-clearance/get-clearance.handler';
+import { GetOpeningHoursHandler } from '@/contexts/scheduling/application/queries/get-opening-hours/get-opening-hours.handler';
 import { SearchAppointmentsHandler } from '@/contexts/scheduling/application/queries/search-appointments/search-appointments.handler';
 import { SearchAttendanceHistoryHandler } from '@/contexts/scheduling/application/queries/search-attendance-history/search-attendance-history.handler';
 import { SearchPracticeAgendaHandler } from '@/contexts/scheduling/application/queries/search-practice-agenda/search-practice-agenda.handler';
@@ -89,6 +94,7 @@ import { DefineAppointmentTypeController } from '@/contexts/scheduling/presentat
 import { GetCalendarDayController } from '@/contexts/scheduling/presentation/http/calendars/get-calendar-day/get-calendar-day.controller';
 import { GetCalendarDaySerializer } from '@/contexts/scheduling/presentation/http/calendars/get-calendar-day/get-calendar-day.serializer';
 import { GetClearanceController } from '@/contexts/scheduling/presentation/http/calendars/get-clearance/get-clearance.controller';
+import { GetOpeningHoursController } from '@/contexts/scheduling/presentation/http/calendars/get-opening-hours/get-opening-hours.controller';
 import { JoinWaitlistController } from '@/contexts/scheduling/presentation/http/calendars/join-waitlist/join-waitlist.controller';
 import { SetOpeningHoursController } from '@/contexts/scheduling/presentation/http/calendars/set-opening-hours/set-opening-hours.controller';
 import { SearchAttendanceHistoryController } from '@/contexts/scheduling/presentation/http/practices/search-attendance-history/search-attendance-history.controller';
@@ -97,6 +103,7 @@ import { AgendaEntrySerializer } from '@/contexts/scheduling/presentation/http/s
 import { Access } from '@ddd-ts-kit/auth';
 import { RelationTupleStore } from '@ddd-ts-kit/auth/rebac';
 import {
+  CacheInvalidation,
   Clock,
   CommandBus,
   EventStore,
@@ -160,7 +167,11 @@ export * from '@/contexts/scheduling/application/event-handlers/appointment-canc
 export * from '@/contexts/scheduling/application/event-handlers/appointment-expired.event-handler';
 export * from '@/contexts/scheduling/application/event-handlers/appointment-marked-no-show.event-handler';
 export * from '@/contexts/scheduling/application/event-handlers/appointment-rescheduled.event-handler';
+export * from '@/contexts/scheduling/application/event-handlers/calendar-appointment-type-defined.event-handler';
 export * from '@/contexts/scheduling/application/event-handlers/calendar-created.event-handler';
+export * from '@/contexts/scheduling/application/event-handlers/calendar-exception-added.event-handler';
+export * from '@/contexts/scheduling/application/event-handlers/calendar-opening-hours-set.event-handler';
+export * from '@/contexts/scheduling/application/event-handlers/calendar-time-off-added.event-handler';
 export * from '@/contexts/scheduling/application/event-handlers/confirmation-deadline-on-booked.event-handler';
 export * from '@/contexts/scheduling/application/event-handlers/confirmation-deadline-on-cancelled.event-handler';
 export * from '@/contexts/scheduling/application/event-handlers/confirmation-deadline-on-confirmed.event-handler';
@@ -184,6 +195,8 @@ export * from '@/contexts/scheduling/application/queries/get-calendar-day/get-ca
 export * from '@/contexts/scheduling/application/queries/get-calendar-day/get-calendar-day.query';
 export * from '@/contexts/scheduling/application/queries/get-clearance/get-clearance.handler';
 export * from '@/contexts/scheduling/application/queries/get-clearance/get-clearance.query';
+export * from '@/contexts/scheduling/application/queries/get-opening-hours/get-opening-hours.handler';
+export * from '@/contexts/scheduling/application/queries/get-opening-hours/get-opening-hours.query';
 export * from '@/contexts/scheduling/application/queries/search-appointments/search-appointments.handler';
 export * from '@/contexts/scheduling/application/queries/search-appointments/search-appointments.query';
 export * from '@/contexts/scheduling/application/queries/search-attendance-history/search-attendance-history.handler';
@@ -221,6 +234,7 @@ export * from '@/contexts/scheduling/presentation/http/calendars/define-appointm
 export * from '@/contexts/scheduling/presentation/http/calendars/get-calendar-day/get-calendar-day.controller';
 export * from '@/contexts/scheduling/presentation/http/calendars/get-calendar-day/get-calendar-day.serializer';
 export * from '@/contexts/scheduling/presentation/http/calendars/get-clearance/get-clearance.controller';
+export * from '@/contexts/scheduling/presentation/http/calendars/get-opening-hours/get-opening-hours.controller';
 export * from '@/contexts/scheduling/presentation/http/calendars/join-waitlist/join-waitlist.controller';
 export * from '@/contexts/scheduling/presentation/http/calendars/set-opening-hours/set-opening-hours.controller';
 export * from '@/contexts/scheduling/presentation/http/practices/search-attendance-history/search-attendance-history.controller';
@@ -253,7 +267,11 @@ injected(AppointmentCancelledEventHandler, [CommandBus]);
 injected(AppointmentExpiredEventHandler, [CommandBus]);
 injected(AppointmentMarkedNoShowEventHandler, [CommandBus]);
 injected(AppointmentRescheduledEventHandler, [CommandBus]);
+injected(CalendarAppointmentTypeDefinedEventHandler, [CacheInvalidation]);
 injected(CalendarCreatedEventHandler, [SchedulingRelationships]);
+injected(CalendarExceptionAddedEventHandler, [CacheInvalidation]);
+injected(CalendarOpeningHoursSetEventHandler, [CacheInvalidation]);
+injected(CalendarTimeOffAddedEventHandler, [CacheInvalidation]);
 injected(ConfirmationDeadlineOnBookedEventHandler, [ProcessRunner]);
 injected(ConfirmationDeadlineOnCancelledEventHandler, [ProcessRunner]);
 injected(ConfirmationDeadlineOnConfirmedEventHandler, [ProcessRunner]);
@@ -273,6 +291,7 @@ injected(GetAppointmentDocumentHandler, [AppointmentRepository, FileStorage]);
 injected(GetAppointmentHandler, [Agenda, PersonDirectoryGateway, Access]);
 injected(GetCalendarDayHandler, [CalendarRepository, Agenda, Access]);
 injected(GetClearanceHandler, [JobQueue]);
+injected(GetOpeningHoursHandler, [CalendarRepository]);
 injected(SearchAppointmentsHandler, [Agenda, Access]);
 injected(SearchAttendanceHistoryHandler, [AttendanceHistory]);
 injected(SearchPracticeAgendaHandler, [Agenda, Access]);
@@ -305,6 +324,7 @@ injected(CreateCalendarController, [CommandBus]);
 injected(DefineAppointmentTypeController, [CommandBus]);
 injected(GetCalendarDayController, [QueryBus, GetCalendarDaySerializer]);
 injected(GetClearanceController, [QueryBus]);
+injected(GetOpeningHoursController, [QueryBus]);
 injected(JoinWaitlistController, [CommandBus]);
 injected(SetOpeningHoursController, [CommandBus]);
 injected(SearchAttendanceHistoryController, [QueryBus]);

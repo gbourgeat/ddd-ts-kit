@@ -1,6 +1,7 @@
 import type {
   ActorContext,
   Cache,
+  CacheInvalidation,
   Clock,
   CommandBus,
   DomainEventDispatcher,
@@ -61,6 +62,12 @@ export interface KernelModuleOptions {
   readonly errorReporter?: Provided<ErrorReporter>;
   /** Defaults to a bounded cache in the memory of the process, expiring by `Clock`. */
   readonly cache?: Provided<Cache>;
+  /**
+   * Defaults to purge requests published on `eventPublisher`: behind an outbox they commit with the
+   * work, and the relay hands them to a `CachePurger` through `PurgingPublisher`. Without one, the
+   * requests reach the event bus, where nothing purges.
+   */
+  readonly cacheInvalidation?: Provided<CacheInvalidation>;
   /** Defaults to a lock inside this process, expiring by `Clock`: several instances exclude nothing between them. */
   readonly lock?: Provided<Lock>;
   /** Defaults to a limiter inside this process, counting by `Clock`: several instances each allow the limit. */

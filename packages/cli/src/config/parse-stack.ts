@@ -15,6 +15,7 @@ import {
   DOCS_UIS,
   ERROR_REPORTERS,
   EVENT_STACKS,
+  HTTP_CACHE_STACKS,
   HTTP_STACKS,
   LOGGERS,
   ORM_STACKS,
@@ -67,6 +68,7 @@ type Choices = Pick<
   | 'authz'
   | 'broker'
   | 'cache'
+  | 'httpCache'
   | 'storage'
   | 'audit'
   | 'errors'
@@ -82,6 +84,7 @@ function parseChoices(choose: Choose, orm: Stack['orm']): Choices {
     authz: choose('authz', AUTHZ_STACKS, 'rbac'),
     broker: choose('broker', BROKER_STACKS, 'none'),
     cache: choose('cache', CACHE_STACKS, 'none'),
+    httpCache: choose('httpCache', HTTP_CACHE_STACKS, 'none'),
     storage: choose('storage', STORAGE_STACKS, 'none'),
     audit: choose('audit', AUDIT_MODES, orm === 'none' ? 'off' : 'on'),
     errors: choose('errors', ERROR_REPORTERS, 'none'),

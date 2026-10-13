@@ -1,3 +1,9 @@
+export type { CachePolicy } from './cache/cache-policy.js';
+export { CacheScope } from './cache/cache-scope.js';
+export { CacheTagHeader } from './cache/cache-tag-header.js';
+export type { CacheTagSource } from './cache/cache-tag-source.js';
+export type { EntityTagSource } from './cache/entity-tag-source.js';
+export { IfMatch } from './cache/if-match.js';
 export type { ControllerClass } from './controller/controller-class.js';
 export type { ControllerRequest } from './controller/controller-request.js';
 export type { ControllerResponse } from './controller/controller-response.js';
@@ -35,6 +41,7 @@ export { DEFAULT_ERROR_MAPPING } from './error/default-error-mapping.js';
 export { ErrorMapper } from './error/error-mapper.js';
 export type { ErrorMapping } from './error/error-mapping.js';
 export { ForbiddenError } from './error/forbidden-error.js';
+export { PRECONDITION_REQUIRED, PreconditionRequiredError } from './error/precondition-required-error.js';
 export { INTERNAL_ERROR_CODE } from './error/internal-error-code.js';
 export type { Problem } from './error/problem.js';
 export { ResponseContractError } from './error/response-contract-error.js';

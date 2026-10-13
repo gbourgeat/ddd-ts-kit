@@ -14,7 +14,7 @@ export function connect(options: ClientOptions<SchemeName>): Connection {
   return openConnection(options, SCHEMES);
 }
 
-/** scheduling 0.11.0, every operation of its contract as a method. */
+/** scheduling 0.12.0, every operation of its contract as a method. */
 export interface Client {
   /**
    * Search appointments: `GET /appointments`.
@@ -125,9 +125,15 @@ export interface Client {
    */
   addException(input: operations.AddExceptionInput, options?: CallOptions): Promise<operations.AddExceptionResult>;
   /**
+   * Get opening hours: `GET /calendars/{calendarId}/opening-hours`.
+   *
+   * Error codes: UNKNOWN_CALENDAR (404), VALIDATION_FAILED (422).
+   */
+  getOpeningHours(input: operations.GetOpeningHoursInput, options?: CallOptions): Promise<operations.GetOpeningHoursResult>;
+  /**
    * Set opening hours: `PUT /calendars/{calendarId}/opening-hours`.
    *
-   * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), UNKNOWN_CALENDAR (404), INVALID_RANGE (422), VALIDATION_FAILED (422).
+   * Error codes: UNAUTHORIZED (401), FORBIDDEN (403), UNKNOWN_CALENDAR (404), PRECONDITION_FAILED (412), INVALID_RANGE (422), VALIDATION_FAILED (422).
    */
   setOpeningHours(input: operations.SetOpeningHoursInput, options?: CallOptions): Promise<operations.SetOpeningHoursResult>;
   /**
@@ -226,6 +232,7 @@ export function createClient(options: ClientOptions<SchemeName>): Client {
     getClearance: (input, call) => operations.getClearance(connection, input, call),
     getCalendarDay: (input, call) => operations.getCalendarDay(connection, input, call),
     addException: (input, call) => operations.addException(connection, input, call),
+    getOpeningHours: (input, call) => operations.getOpeningHours(connection, input, call),
     setOpeningHours: (input, call) => operations.setOpeningHours(connection, input, call),
     addTimeOff: (input, call) => operations.addTimeOff(connection, input, call),
     joinWaitlist: (input, call) => operations.joinWaitlist(connection, input, call),

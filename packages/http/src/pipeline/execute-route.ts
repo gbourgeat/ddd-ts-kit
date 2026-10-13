@@ -6,14 +6,18 @@ import type { RequestContext } from '../route/request-context.js';
 import type { RouteOutput } from '../route/route-output.js';
 import type { Route } from '../route/route.js';
 import { assertDeclaredResponse } from './assert-declared-response.js';
+import { cacheHeadersOf } from './cache-headers-of.js';
+import { conditionalAnswer } from './conditional-answer.js';
 import { CORRELATION_HEADER } from './correlation-header.js';
 import { correlationIdOf } from './correlation-id-of.js';
 import type { ErrorContext } from './error-context.js';
 import type { ExecuteOptions } from './execute-options.js';
 import { executionOfRequest } from './execution-of-request.js';
+import { expectedVersionOf } from './expected-version-of.js';
 import type { RawRequest } from './raw-request.js';
 import { receiveUpload } from './receive-upload.js';
 import type { RouteResponse } from './route-response.js';
+import { taggedAnswer, type Tagging } from './tagged-answer.js';
 import { resolvedTenant } from '../tenancy/resolved-tenant.js';
 import { guardRefusals } from '../controller/guard-refusals.js';
 import { validateRequest } from './validate-request.js';
@@ -25,8 +29,8 @@ interface Call {
   readonly options: ExecuteOptions;
   readonly requestId: string;
   readonly correlationId: string;
-  /** Filled as the request advances, for the error hook to say how far it went. */
-  readonly reached: { execution?: ExecutionContext };
+  /** Filled as the request advances, for the error hook to say how far it went, and for the tags of the answer. */
+  readonly reached: { execution?: ExecutionContext; params?: unknown };
 }
 
 const defaultErrorMapper = createErrorMapper();
@@ -48,7 +52,10 @@ export async function executeRoute(
 
 async function responded(call: Call): Promise<RouteResponse> {
   try {
-    return answer(await handled(call), call);
+    const answered = answer(await handled(call), call);
+    const tagged = taggedAnswer(answered, taggingOf(call));
+
+    return await conditionalAnswer(call.route, call.request.headers, tagged);
   } catch (error) {
     const { response, context } = refusal(error, call);
 
@@ -56,6 +63,13 @@ async function responded(call: Call): Promise<RouteResponse> {
 
     return response;
   }
+}
+
+function taggingOf({ route, options, reached }: Call): Tagging {
+  const perTenant = options.cacheTags?.perTenant === true;
+  const tenantId = perTenant ? reached.execution?.tenantId : undefined;
+
+  return { route, header: options.cacheTags?.header, perTenant, params: reached.params, tenantId };
 }
 
 function defaultRequestId(request: RawRequest): string {
@@ -68,7 +82,10 @@ async function handled(call: Call): Promise<RouteOutput> {
   const received = await receiveUpload(route, request, options);
   const input = validateRequest(route, received.request);
   const { headers } = request;
+  const expectedVersion = expectedVersionOf(route, headers);
   const execution = executionOf(call, principal, input.params);
+
+  call.reached.params = input.params;
 
   const context: RequestContext = {
     requestId,
@@ -76,6 +93,7 @@ async function handled(call: Call): Promise<RouteOutput> {
     raw: request.raw,
     rawHeaders: headers,
     ...(principal === undefined ? {} : { principal }),
+    ...(expectedVersion === undefined ? {} : { expectedVersion }),
     ...(route.rawBody === true && request.stream !== undefined ? { stream: request.stream } : {}),
   };
 
@@ -123,6 +141,7 @@ function answer(result: RouteOutput, call: Call): RouteResponse {
     status: result.status,
     headers: {
       ...defaultContentType(result.body),
+      ...cacheHeadersOf(call.route, result.status, call.options.resolveTenant?.headers),
       ...lowerCaseKeys(result.headers ?? {}),
       ...identifierHeaders(call),
     },
@@ -165,7 +184,11 @@ function refusal(error: unknown, call: Call): { response: RouteResponse; context
 
   notify(options, error, context);
 
-  const headers = { 'content-type': PROBLEM_CONTENT_TYPE, ...identifierHeaders(call) };
+  const headers = {
+    'content-type': PROBLEM_CONTENT_TYPE,
+    ...cacheHeadersOf(route, problem.status),
+    ...identifierHeaders(call),
+  };
 
   return { response: { status: problem.status, headers, body: problem }, context };
 }

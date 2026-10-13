@@ -91,30 +91,32 @@ of tools.
     correlation id that ties them.
 28. [Resilience](resilience.md): retry, timeout, circuit breaker, bulkhead, cache, and how
     each one fails.
-29. [Scheduled jobs](scheduled-jobs.md): work triggered by time, and why it must be
+29. [HTTP caching](http-caching.md): what to cache at which layer, who may keep an answer,
+    and never a decision of authorization across actors.
+30. [Scheduled jobs](scheduled-jobs.md): work triggered by time, and why it must be
     idempotent.
-30. [Background jobs](background-jobs.md): work a use case hands to a worker, enqueued in its
+31. [Background jobs](background-jobs.md): work a use case hands to a worker, enqueued in its
     transaction, run at least once.
-31. [File storage](file-storage.md): files in a storage and never in the database, the order
+32. [File storage](file-storage.md): files in a storage and never in the database, the order
     that keeps both consistent, signed links.
-32. [File import and export](file-import-export.md): a design, not built yet: a large file
+33. [File import and export](file-import-export.md): a design, not built yet: a large file
     read or written by a background job, row by row, between the queue and the file storage.
 
 ## 6. Code and tests
 
-33. [Clean code](clean-code.md): naming, small functions, stepdown, comments, testability by
+34. [Clean code](clean-code.md): naming, small functions, stepdown, comments, testability by
     construction.
-34. [Testing strategy](testing-strategy.md): fakes rather than mocks, builders, contract
+35. [Testing strategy](testing-strategy.md): fakes rather than mocks, builders, contract
     tests, the four levels.
 
 ## Shorter paths
 
 - **A product person or a newcomer to DDD:** 1, 2, 3, 5, then 19.
-- **Before writing a first use case:** 3, 7, 9, 12, 14, 34.
+- **Before writing a first use case:** 3, 7, 9, 12, 14, 35.
 - **Before making two contexts talk:** 4, 16, 17, 18, 21.
 - **Before keeping an aggregate as its events:** 7, 16, 17, 21, 22.
 - **Before serving several customers from one deployment:** 23, 24, 25.
-- **Before putting the system in production:** 23, 27, 28, 29, 30, 31, then the
+- **Before putting the system in production:** 23, 27, 28, 29, 30, 31, 32, then the
   [tools pages](../README.md#tools-one-page-per-decision).
 
 ## Limits and when not to use it

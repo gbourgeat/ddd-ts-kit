@@ -22,7 +22,7 @@ export function stackVars(config: Config): RenderContext {
     style: one(style, ['declared', 'explicit']),
     assembly: assemblyVars(config),
     decorators: { legacy, standard: !legacy },
-    http: httpVars(config),
+    ...edgeVars(config),
     validation: one(validation, ['zod', 'class-validator', 'standard-schema', 'none']),
     di: one(di, ['tsyringe', 'nest', 'manual']),
     orm: { ...one(orm, ['drizzle', 'knex', 'prisma', 'typeorm', 'custom', 'none']), any: orm !== 'none' },
@@ -97,6 +97,15 @@ function assemblyVars(config: Config): RenderContext {
     barrel: style === 'declared' && assembly === 'barrel',
     discovery: style === 'declared' && assembly === 'discovery',
   };
+}
+
+/** The HTTP framework, and the shared cache in front of it. */
+function edgeVars(config: Config): RenderContext {
+  const { httpCache, tenancy } = config.stack;
+  // A multi-tenant application files its tags under the tenant, on the answers and on the purges alike.
+  const perTenant = httpCache !== 'none' && tenancy !== 'none';
+
+  return { http: httpVars(config), httpCache: { ...one(httpCache, ['none', 'varnish']), perTenant } };
 }
 
 function httpVars(config: Config): RenderContext {
