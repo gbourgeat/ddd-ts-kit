@@ -489,7 +489,7 @@ every query, log fields, the correlation id stamped on published events) reads t
 
 **Standard interfaces.** The kernel defines the shapes every project shares, so adapters and
 tooling interoperate: `Actor`, `Session`, `ExecutionContext`, `Logger`, `Metrics`, `Cache`,
-`Lock`, `RateLimiter`, `JobScheduler`, `ErrorReporter`, `Page` and `PageRequest`, `AuditStamp`, `TenantScoped`, the audit
+`Lock`, `RateLimiter`, `JobScheduler`, `ErrorReporter`, `CacheInvalidation` and `CachePurger`, `Page` and `PageRequest`, `AuditStamp`, `TenantScoped`, the audit
 ports `AuditTrail` and `AuditReader` with their `AuditEntry`, next to `Clock`, `IdGenerator`
 and `UnitOfWork`. A project extends them without forking, by augmenting the extension interfaces
 the kernel leaves open (`SessionExtensions`, `ExecutionContextExtensions`, ...). A project

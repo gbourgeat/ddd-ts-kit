@@ -26,6 +26,8 @@ A class, an interface or a type alias declared under one of these names:
 | `IJobScheduler`, `JobSchedulerService`, `CronScheduler`, `TaskScheduler` | `JobScheduler` |
 | `IScheduledJob`, `CronJob`, `ScheduledTask`, `BackgroundJob` | `ScheduledJob` |
 | `IErrorReporter`, `ErrorReporterService`, `ErrorTracker`, `ExceptionReporter`, `CrashReporter` | `ErrorReporter` |
+| `ICacheInvalidation`, `CacheInvalidator`, `CacheInvalidationService` | `CacheInvalidation` |
+| `ICachePurger`, `CachePurgeService`, `CdnPurger` | `CachePurger` |
 
 Incorrect:
 
