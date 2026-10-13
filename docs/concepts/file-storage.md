@@ -154,8 +154,8 @@ whom, on which resource, under which correlation, without the content or the lin
   a key the client sends back.
 - **One prefix per tenant.** In a multi-tenant project the key starts with
   `tenants/<tenant>/`, so a bucket policy, an export or an erasure addresses a tenant by prefix.
-  A tenant id made of letters, digits, `-` and `_` is the segment itself; any other is encoded
-  as `hex.<hex>`, which a plain id never spells, so two tenants never share a prefix.
+  The tenant id is the segment itself: the kernel accepts no other than letters, digits, `-`
+  and `_` (see [Multitenancy](multitenancy.md)), so two tenants never share a prefix.
 - **Short links.** A signed link is a bearer token: it leaks with the page, the log or the mail
   that holds it. The kit refuses one that lives more than an hour.
 - **Checked on the bytes, scanned before acceptance.** `FileScanner` runs on the staged file; a

@@ -7,7 +7,8 @@ import { assertFinalKey } from '../../application/files/assert-final-key.js';
 /**
  * Keys of the form `tenants/<tenant>/<area>/<year>/<month>/<id>`, the tenant segment only when
  * the work in progress names a tenant: the files of a tenant then share a prefix that a bucket
- * policy, an export or an erasure can address. An area that would put the key under `staging/`
+ * policy, an export or an erasure can address. A tenant id is a key segment as it is: the kernel
+ * refuses any other at every entry (`isTenantId`), so two tenants never share a prefix. An area that would put the key under `staging/`
  * is refused (`INVALID_FILE_KEY`). The id comes from the `IdGenerator`, so a key is
  * not guessable when the generator is not.
  */
@@ -24,13 +25,6 @@ export class TenantFileKeys implements FileKeys {
     const key = `${area}/${String(now.getUTCFullYear())}/${month}/${this.ids.next()}`;
     const tenantId = this.scope?.current()?.tenantId;
 
-    return assertFinalKey(tenantId === undefined ? key : `tenants/${segmentOf(tenantId)}/${key}`);
+    return assertFinalKey(tenantId === undefined ? key : `tenants/${tenantId}/${key}`);
   }
-}
-
-const PLAIN_TENANT = /^[A-Za-z0-9_-]+$/;
-
-/** The tenant id as it is when plain, encoded otherwise: an encoded segment holds a dot, which a plain one never does, so two tenants never share one. */
-function segmentOf(tenantId: string): string {
-  return PLAIN_TENANT.test(tenantId) ? tenantId : `hex.${Buffer.from(tenantId).toString('hex')}`;
 }

@@ -755,8 +755,8 @@ hashed, refused with `FILE_TOO_LARGE` beyond `maxBytes`, leaving nothing), `get`
 whole file. A key is checked by `isFileKey` (segments of letters, digits, `.`, `-` and `_`, none
 starting with a dot) before anything is touched, and `FileKeys` generates it on the server:
 `TenantFileKeys(ids, clock, scope)` writes `tenants/<tenant>/<area>/<year>/<month>/<id>`, the
-tenant segment only when the work in progress names one (a tenant id other than letters,
-digits, `-` and `_` is encoded as `hex.<hex>`, so two tenants never share a prefix). The links of
+tenant segment only when the work in progress names one (the tenant id as it is: the kernel
+refuses any other than letters, digits, `-` and `_`, so two tenants never share a prefix). The links of
 `signedUploadUrl` carry a `maxBytes`, which the storages the application serves enforce.
 
 `StoredFile` is what an aggregate keeps: `key`, `size`, `mediaType`, `checksum` (`sha256:<hex>`),

@@ -3,6 +3,7 @@ import {
   FileError,
   FixedClock,
   FixedExecutionScope,
+  InvalidTenantIdError,
   SequentialIdGenerator,
   TenantFileKeys,
   executionContext,
@@ -33,31 +34,19 @@ describe('TenantFileKeys', () => {
     ]);
   });
 
-  it('puts the files of a tenant under its own prefix, encoding a tenant id that is not a key segment', () => {
+  it('puts the files of a tenant under its own prefix', () => {
     const ids = new SequentialIdGenerator('file');
 
     expect(new TenantFileKeys(ids, clock, scopeOf('clinic-7')).next('documents')).toBe(
       'tenants/clinic-7/documents/2026/03/file-1',
     );
 
-    expect(new TenantFileKeys(ids, clock, scopeOf('a/b')).next('documents')).toBe(
-      'tenants/hex.612f62/documents/2026/03/file-2',
-    );
-
-    expect(new TenantFileKeys(ids, clock, scopeOf()).next('documents')).toBe('documents/2026/03/file-3');
+    expect(new TenantFileKeys(ids, clock, scopeOf()).next('documents')).toBe('documents/2026/03/file-2');
   });
 
-  it('never gives two tenants one prefix, even when a plain id spells the encoding of another', () => {
-    const ids = new SequentialIdGenerator('file');
-    const encoded = new TenantFileKeys(ids, clock, scopeOf('a/b')).next('documents');
-    const plain = new TenantFileKeys(ids, clock, scopeOf('612f62')).next('documents');
-    const dotted = new TenantFileKeys(ids, clock, scopeOf('hex.612f62')).next('documents');
-
-    expect([encoded, plain, dotted].map((key) => key.split('/')[1])).toEqual([
-      'hex.612f62',
-      '612f62',
-      'hex.6865782e363132663632',
-    ]);
+  it('never meets a tenant id that is not a key segment: the execution context refuses it first', () => {
+    expect(() => scopeOf('a/b')).toThrow(InvalidTenantIdError);
+    expect(() => scopeOf('hex.612f62')).toThrow(InvalidTenantIdError);
   });
 
   it('refuses an area that would make an invalid key, or one the purge would take for a staged file', () => {
