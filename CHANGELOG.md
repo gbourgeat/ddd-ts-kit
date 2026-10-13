@@ -4,7 +4,7 @@ What each version changes for someone who uses the kit. The packages of `package
 together, under one version; the notes of each [GitHub release](https://github.com/gbourgeat/ddd-ts-kit/releases)
 list the pull requests behind it.
 
-## Unreleased
+## 0.16.0
 
 **A new project writes its values as classes, and the kit checks it.** `init` writes
 `"stack.values": "classes"` (`--values classes|free`), under which a new rule,
