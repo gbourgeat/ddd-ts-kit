@@ -188,6 +188,19 @@ describe('what the generated file of a context holds', () => {
     expect(renderInjections([far], specifier).imports.at(-1)).toMatch(/^import \{ Clock \} from '.{120,}';$/);
   });
 
+  it('sets a call the width broke apart from its neighbours by a blank line, as the layout rules of a project want', () => {
+    const broken = 'injected(Invite, [\n  Members,\n  Tokens,\n]);';
+
+    const injected = {
+      imports: ["import { injected } from 'k';"],
+      calls: ['injected(Accept, [Clock]);', broken, 'injected(Open, [Ids]);'],
+    };
+
+    expect(renderDependenciesFile(injected)).toBe(
+      `import { injected } from 'k';\n\ninjected(Accept, [Clock]);\n\n${broken}\n\ninjected(Open, [Ids]);\n`,
+    );
+  });
+
   it('follows the exports of the barrel, and says in words what tells a written file from the expected one', () => {
     const files = [
       'application/commands/issue/issue.handler.ts',
