@@ -39,6 +39,7 @@ import { languageDeclaredVocabulary } from '../rules/language-declared-vocabular
 import { languageGlossaryTerm } from '../rules/language-glossary-term.js';
 import { languageNoTechnicalName } from '../rules/language-no-technical-name.js';
 import { layerApplicationInward } from '../rules/layer-application-inward.js';
+import { lifecycleStatusThroughMachine } from '../rules/lifecycle-status-through-machine.js';
 import { layerDomainPurity } from '../rules/layer-domain-purity.js';
 import { layerInfrastructureNoPresentation } from '../rules/layer-infrastructure-no-presentation.js';
 import { layerPresentationNoInfrastructure } from '../rules/layer-presentation-no-infrastructure.js';
@@ -127,6 +128,7 @@ export const ARCHITECTURE_RULES: readonly Rule[] = [
   portsNoConcreteDependency,
   portsValueImport,
   schedulingJobTriggersUseCase,
+  lifecycleStatusThroughMachine,
   schedulingJobName,
   importsAliasOnly,
   importsExtension,

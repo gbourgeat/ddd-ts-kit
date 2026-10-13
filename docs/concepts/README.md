@@ -48,63 +48,65 @@ of tools.
 9. [Invariants, permissions, validation](invariants-permissions-validation.md): three
    different things, three places.
 10. [Anemic model](anemic-model.md): how to recognise one, and when a thin model is fine.
+11. [State machines](state-machines.md): the lifecycle of an aggregate declared once, asked by
+    the aggregate, drawn in its CONTEXT.md.
 
 ## 3. Architecture: how the code is arranged
 
-11. [Layers and the dependency rule](layers-and-dependency-rule.md): hexagonal, onion and
+12. [Layers and the dependency rule](layers-and-dependency-rule.md): hexagonal, onion and
     clean architecture, what they share and where they differ.
-12. [Ports and composition](ports-and-composition.md): ports as abstract classes, the
+13. [Ports and composition](ports-and-composition.md): ports as abstract classes, the
     composition root, declarations by decorators or explicit wiring.
-13. [CQRS](cqrs.md): command and query buses as used here, without event sourcing.
+14. [CQRS](cqrs.md): command and query buses as used here, without event sourcing.
     [The presentation layer](presentation-layer.md) comes with it: one controller class per
     route, route groups, guards at the edge and permissions on the use case.
-14. [Modular monolith](modular-monolith.md): one deployable, real modules.
+15. [Modular monolith](modular-monolith.md): one deployable, real modules.
 
 ## 4. Messaging and consistency: how contexts collaborate
 
-15. [Domain and integration events](domain-and-integration-events.md): the two kinds and what
+16. [Domain and integration events](domain-and-integration-events.md): the two kinds and what
     separates them.
-16. [Transactional outbox](transactional-outbox.md): why publishing straight to a broker loses
+17. [Transactional outbox](transactional-outbox.md): why publishing straight to a broker loses
     or invents events, and the relay strategies.
-17. [Delivery and idempotency](delivery-and-idempotency.md): at-least-once, idempotent
+18. [Delivery and idempotency](delivery-and-idempotency.md): at-least-once, idempotent
     consumers, the processed-event store, ordering.
-18. [Eventual consistency](eventual-consistency.md): explained to a product person.
-19. [Sagas and process managers](sagas-and-process-managers.md): what the kit provides and
+19. [Eventual consistency](eventual-consistency.md): explained to a product person.
+20. [Sagas and process managers](sagas-and-process-managers.md): what the kit provides and
     what it does not.
-20. [Event versioning](event-versioning.md): changing a contract that others consume.
+21. [Event versioning](event-versioning.md): changing a contract that others consume.
 
 ## 5. Cross-cutting concerns: what surrounds the use cases
 
-21. [Authentication and authorization](authentication-and-authorization.md): roles,
+22. [Authentication and authorization](authentication-and-authorization.md): roles,
     attributes, relationships, with a decision table.
-22. [Actor and execution scope](actor-and-execution-scope.md): who acts, explicitly, and what
+23. [Actor and execution scope](actor-and-execution-scope.md): who acts, explicitly, and what
     every unit of work carries.
-23. [Multitenancy](multitenancy.md): one deployment, many customers, and no read or write
+24. [Multitenancy](multitenancy.md): one deployment, many customers, and no read or write
     that crosses from one to another.
-24. [Audit trail](audit-trail.md): who did what, recorded from outside the use cases.
-25. [Observability](observability.md): tracing, logs, metrics, error reporting, and the
+25. [Audit trail](audit-trail.md): who did what, recorded from outside the use cases.
+26. [Observability](observability.md): tracing, logs, metrics, error reporting, and the
     correlation id that ties them.
-26. [Resilience](resilience.md): retry, timeout, circuit breaker, bulkhead, cache, and how
+27. [Resilience](resilience.md): retry, timeout, circuit breaker, bulkhead, cache, and how
     each one fails.
-27. [Scheduled jobs](scheduled-jobs.md): work triggered by time, and why it must be
+28. [Scheduled jobs](scheduled-jobs.md): work triggered by time, and why it must be
     idempotent.
-28. [Background jobs](background-jobs.md): work a use case hands to a worker, enqueued in its
+29. [Background jobs](background-jobs.md): work a use case hands to a worker, enqueued in its
     transaction, run at least once.
 
 ## 6. Code and tests
 
-29. [Clean code](clean-code.md): naming, small functions, stepdown, comments, testability by
+30. [Clean code](clean-code.md): naming, small functions, stepdown, comments, testability by
     construction.
-30. [Testing strategy](testing-strategy.md): fakes rather than mocks, builders, contract
+31. [Testing strategy](testing-strategy.md): fakes rather than mocks, builders, contract
     tests, the four levels.
 
 ## Shorter paths
 
-- **A product person or a newcomer to DDD:** 1, 2, 3, 5, then 18.
-- **Before writing a first use case:** 3, 7, 9, 11, 13, 30.
-- **Before making two contexts talk:** 4, 15, 16, 17, 20.
-- **Before serving several customers from one deployment:** 21, 22, 23.
-- **Before putting the system in production:** 21, 25, 26, 27, 28, then the
+- **A product person or a newcomer to DDD:** 1, 2, 3, 5, then 19.
+- **Before writing a first use case:** 3, 7, 9, 12, 14, 31.
+- **Before making two contexts talk:** 4, 16, 17, 18, 21.
+- **Before serving several customers from one deployment:** 22, 23, 24.
+- **Before putting the system in production:** 22, 26, 27, 28, 29, then the
   [tools pages](../README.md#tools-one-page-per-decision).
 
 ## Limits and when not to use it

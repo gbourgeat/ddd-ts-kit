@@ -31,6 +31,7 @@ Ordered as a reading path in [concepts/README.md](concepts/README.md).
 | [Entities and value objects](concepts/entities-and-value-objects.md) | identity versus value, and primitive obsession |
 | [Aggregates](concepts/aggregates.md) | consistency boundary, one transaction, reference by id, sizing |
 | [Domain building blocks](concepts/domain-building-blocks.md) | domain event, domain service, repository, factory |
+| [State machines](concepts/state-machines.md) | the lifecycle of an aggregate: states, transitions, guards, refusals, its diagram |
 | [Invariants, permissions, validation](concepts/invariants-permissions-validation.md) | three different things in three places |
 | [Anemic model](concepts/anemic-model.md) | how to recognise one, and when a thin model is fine |
 | [Layers and the dependency rule](concepts/layers-and-dependency-rule.md) | hexagonal, onion, clean: what they share, where they differ |

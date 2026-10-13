@@ -115,6 +115,33 @@ A project says which form it writes with `"stack.refusals"` in `ddd-ts-kit.confi
 `errors/*` rules hold the first, and `ddd-ts-kit error-factories` moves a project from the
 second. Both forms can live in one project.
 
+## State machines
+
+```ts
+export const parcelLifecycle = defineStateMachine({
+  states: Object.values(ParcelStatus),
+  initial: [ParcelStatus.Registered],
+  transitions: {
+    ship: { from: [ParcelStatus.Registered], to: ParcelStatus.Shipped, guard: ({ paid }) => (paid ? undefined : ParcelError.unpaid()) },
+    reroute: { from: [ParcelStatus.Shipped] },
+    deliver: { from: [ParcelStatus.Shipped], to: ParcelStatus.Delivered },
+  },
+  refused: ({ from, transition }) => ParcelError.cannot(from, transition),
+});
+
+this.state = { ...this.state, status: parcelLifecycle.next(this.state.status, 'ship', { paid }) };
+```
+
+The lifecycle of an aggregate, in `domain/state-machines/<aggregate>.state-machine.ts`.
+`next(from, transition, context)` answers the next status or throws: the refusal `refused` builds
+from a static factory for a transition the state does not allow, or the refusal of a guard.
+`start(state)` checks an initial state, `can(...)` answers without throwing, `allowedFrom(state)`
+and `isFinal(state)` read the graph, `describe()` gives it as data and
+`mermaidOfStateMachine(description)` as a Mermaid diagram. A transition without `to` keeps the
+state. A declaration naming an unknown state throws `InvalidStateMachineError` when the file
+loads. Why, and the rule that holds the aggregate to it:
+[State machines](../../docs/concepts/state-machines.md).
+
 ## Domain events and the unit of work
 
 An effect of a domain event exists only if the state change that recorded it is committed.

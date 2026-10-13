@@ -12,6 +12,7 @@ const CONSUMER =
 
 const { PUBLISHED, ROUTE, SCHEDULING, VALUE_OBJECT } = PATHS;
 const CALENDAR_DAY = `${SCHEDULING}/application/queries/get-calendar-day/get-calendar-day.handler.ts`;
+const APPOINTMENT = `${SCHEDULING}/domain/aggregates/appointment.aggregate.ts`;
 const DUE = '  return new Date(startsAt.getTime() - NOTICE_MS);';
 const SAVED = '    await this.reminderRepository.save(target);\n';
 const TAKEN = '  constructor(private readonly commands: CommandBus) {}';
@@ -324,5 +325,19 @@ export const BEHAVIOUR_INJECTIONS: readonly Injection[] = [
     ],
     checker: true,
     eslint: 'ddd-ts-kit/test-no-mocks',
+  },
+  {
+    rule: 'lifecycle/status-through-machine',
+    what: 'an appointment that writes its status by hand next to its state machine',
+    file: APPOINTMENT,
+    changes: [
+      {
+        file: APPOINTMENT,
+        from: "      status: appointmentLifecycle.next(this.state.status, 'cancel', this.moment(now)),",
+        to: '      status: AppointmentStatus.Cancelled,',
+      },
+    ],
+    checker: true,
+    eslint: 'ddd-ts-kit/lifecycle-status-through-machine',
   },
 ];

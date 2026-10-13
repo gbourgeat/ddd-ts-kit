@@ -20,6 +20,7 @@ import { LANGUAGE_FIXTURES } from './language-fixtures.js';
 import { VOCABULARY_FIXTURES } from './vocabulary-fixtures.js';
 import { LAYER_FIXTURES } from './layer-fixtures.js';
 import { LAYOUT_FIXTURES } from './layout-fixtures.js';
+import { LIFECYCLE_FIXTURES } from './lifecycle-fixtures.js';
 import { NAMING_FIXTURES } from './naming-fixtures.js';
 import { OUTBOX_FIXTURES } from './outbox-fixtures.js';
 import { PERSISTENCE_FIXTURES } from './persistence-fixtures.js';
@@ -61,6 +62,7 @@ export const FIXTURES: readonly Fixture[] = [
   ...VOCABULARY_FIXTURES,
   ...LAYER_FIXTURES,
   ...LAYOUT_FIXTURES,
+  ...LIFECYCLE_FIXTURES,
   ...NAMING_FIXTURES,
   ...OUTBOX_FIXTURES,
   ...PERSISTENCE_FIXTURES,

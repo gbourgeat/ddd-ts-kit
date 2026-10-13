@@ -12,6 +12,12 @@ export const ROLES: readonly Role[] = [
   { directory: 'domain/repositories', suffixes: ['.repository.ts'] },
   { directory: 'domain/services', suffixes: ['.service.ts'], specFor: ['.service.ts'] },
   {
+    directory: 'domain/state-machines',
+    suffixes: ['.state-machine.ts'],
+    oneConcept: true,
+    specFor: ['.state-machine.ts'],
+  },
+  {
     directory: 'application/commands/*',
     suffixes: ['.command.ts', '.handler.ts', '.result.ts'],
     oneConcept: true,

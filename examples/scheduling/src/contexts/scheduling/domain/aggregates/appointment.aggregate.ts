@@ -1,5 +1,4 @@
 import { AggregateRoot } from '@ddd-ts-kit/kernel';
-import { AppointmentError } from '@/contexts/scheduling/domain/errors/appointment.error';
 import { AppointmentBooked } from '@/contexts/scheduling/domain/events/appointment-booked.event';
 import { AppointmentCancelled } from '@/contexts/scheduling/domain/events/appointment-cancelled.event';
 import { AppointmentCompleted } from '@/contexts/scheduling/domain/events/appointment-completed.event';
@@ -9,6 +8,7 @@ import { AppointmentMarkedNoShow } from '@/contexts/scheduling/domain/events/app
 import { AppointmentRescheduled } from '@/contexts/scheduling/domain/events/appointment-rescheduled.event';
 import type { Booking } from '@/contexts/scheduling/domain/value-objects/booking.vo';
 import type { Cancellation } from '@/contexts/scheduling/domain/value-objects/cancellation.vo';
+import { appointmentLifecycle } from '@/contexts/scheduling/domain/state-machines/appointment.state-machine';
 import type { Slot } from '@/contexts/scheduling/domain/value-objects/slot.vo';
 import { AppointmentStatus } from '@/contexts/scheduling/domain/vocabularies/appointment-status.vocabulary';
 
@@ -38,7 +38,7 @@ export class Appointment extends AggregateRoot<string> {
       registeredAt: now,
       changedAt: now,
       booking,
-      status: AppointmentStatus.Booked,
+      status: appointmentLifecycle.start(AppointmentStatus.Booked),
     });
 
     created.record(new AppointmentBooked(id, now, { booking }));
@@ -58,7 +58,7 @@ export class Appointment extends AggregateRoot<string> {
       registeredAt: now,
       changedAt: now,
       booking,
-      status: AppointmentStatus.Requested,
+      status: appointmentLifecycle.start(AppointmentStatus.Requested),
       confirmBefore,
     });
 
@@ -72,30 +72,22 @@ export class Appointment extends AggregateRoot<string> {
   }
 
   confirm(now: Date): void {
-    this.refuseWhenEnded();
-
-    if (this.state.status === AppointmentStatus.Booked) {
-      throw AppointmentError.alreadyConfirmed(this.id);
-    }
-
     this.state = {
       registeredAt: this.state.registeredAt,
       changedAt: now,
       booking: this.state.booking,
-      status: AppointmentStatus.Booked,
+      status: appointmentLifecycle.next(this.state.status, 'confirm', this.moment(now)),
     };
 
     this.record(new AppointmentConfirmed(this.id, now, this.state.booking));
   }
 
   cancel(cancellation: Cancellation, now: Date): void {
-    this.refuseWhenEnded();
-
     this.state = {
       registeredAt: this.state.registeredAt,
       changedAt: now,
       booking: this.state.booking,
-      status: AppointmentStatus.Cancelled,
+      status: appointmentLifecycle.next(this.state.status, 'cancel', this.moment(now)),
       cancellation,
     };
 
@@ -104,38 +96,31 @@ export class Appointment extends AggregateRoot<string> {
 
   /** Moves to another slot of the same calendar in one step: the previous slot is free as soon as this one is held. */
   reschedule(slot: Slot, day: string, now: Date): void {
-    this.refuseWhenEnded();
-
+    const status = appointmentLifecycle.next(this.state.status, 'reschedule', this.moment(now));
     const previous = this.state.booking;
     const booking = previous.movedTo(slot, day);
 
-    this.state = { ...this.state, changedAt: now, booking };
+    this.state = { ...this.state, changedAt: now, booking, status };
     this.record(new AppointmentRescheduled(this.id, now, { booking, previous }));
   }
 
   complete(now: Date): void {
-    this.refuseWhenEnded();
-    this.refuseBeforeStart(now);
-
     this.state = {
       registeredAt: this.state.registeredAt,
       changedAt: now,
       booking: this.state.booking,
-      status: AppointmentStatus.Completed,
+      status: appointmentLifecycle.next(this.state.status, 'complete', this.moment(now)),
     };
 
     this.record(new AppointmentCompleted(this.id, now, this.state.booking));
   }
 
   markNoShow(now: Date): void {
-    this.refuseWhenEnded();
-    this.refuseBeforeStart(now);
-
     this.state = {
       registeredAt: this.state.registeredAt,
       changedAt: now,
       booking: this.state.booking,
-      status: AppointmentStatus.NoShow,
+      status: appointmentLifecycle.next(this.state.status, 'markNoShow', this.moment(now)),
     };
 
     this.record(new AppointmentMarkedNoShow(this.id, now, this.state.booking));
@@ -146,7 +131,7 @@ export class Appointment extends AggregateRoot<string> {
     const deadline = this.state.confirmBefore;
 
     if (
-      this.state.status !== AppointmentStatus.Requested ||
+      !appointmentLifecycle.can(this.state.status, 'expire', this.moment(at)) ||
       deadline === undefined ||
       deadline.getTime() > at.getTime()
     ) {
@@ -157,7 +142,7 @@ export class Appointment extends AggregateRoot<string> {
       registeredAt: this.state.registeredAt,
       changedAt: at,
       booking: this.state.booking,
-      status: AppointmentStatus.Expired,
+      status: appointmentLifecycle.next(this.state.status, 'expire', this.moment(at)),
     };
 
     this.record(new AppointmentExpired(this.id, at, this.state.booking));
@@ -174,7 +159,7 @@ export class Appointment extends AggregateRoot<string> {
   }
 
   get isActive(): boolean {
-    return this.state.status === AppointmentStatus.Requested || this.state.status === AppointmentStatus.Booked;
+    return !appointmentLifecycle.isFinal(this.state.status);
   }
 
   get booking(): Booking {
@@ -217,15 +202,8 @@ export class Appointment extends AggregateRoot<string> {
     return { ...this.state };
   }
 
-  private refuseWhenEnded(): void {
-    if (!this.isActive) {
-      throw AppointmentError.ended(this.id, this.state.status);
-    }
-  }
-
-  private refuseBeforeStart(now: Date): void {
-    if (this.state.booking.slot.startsAfter(now)) {
-      throw AppointmentError.notStarted(this.id, this.state.booking.slot.startsAt);
-    }
+  /** What the lifecycle judges a transition with. */
+  private moment(at: Date): { readonly appointmentId: string; readonly at: Date; readonly startsAt: Date } {
+    return { appointmentId: this.id, at, startsAt: this.state.booking.slot.startsAt };
   }
 }

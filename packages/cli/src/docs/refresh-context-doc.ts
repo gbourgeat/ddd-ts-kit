@@ -6,13 +6,18 @@ import type { Workspace } from '../workspace/index.js';
 import type { ContextFacts } from './context-facts.js';
 import { ensureReferenceRegion } from './ensure-reference-region.js';
 import { readContext } from './read-context.js';
+import { stateMachineLines } from './state-machine-lines.js';
 
 /** The regions a CONTEXT.md written before the kit knew them may lack without being told: they are refreshed when present. */
-const LATER_REGIONS = ['jobs'];
+const LATER_REGIONS: Readonly<Record<string, (facts: ContextFacts) => number>> = {
+  jobs: (facts) => facts.jobs.length,
+  'background-jobs': (facts) => facts.backgroundJobs.length,
+  'state-machines': (facts) => facts.stateMachines.length,
+};
 
 /**
  * Rewrites the generated lists of a CONTEXT.md (aggregates, published events, permissions,
- * scheduled jobs, relationships) and its reference (use cases, routes, events, ports, policies,
+ * scheduled jobs, background jobs, state machines, relationships) and its reference (use cases, routes, events, ports, policies,
  * gateways) from what is on disk and in the config. The generator and
  * `docs` both go through here, so `docs --check` is clean right after a `generate`.
  */
@@ -32,7 +37,7 @@ export function refreshContextDoc(ws: Workspace, config: Config, context: string
 
     if (next !== undefined) {
       content = next;
-    } else if (!LATER_REGIONS.includes(region) || facts.jobs.length > 0) {
+    } else if ((LATER_REGIONS[region]?.(facts) ?? 1) > 0) {
       ws.note(`${file} has no "ddd-ts-kit:${region}" region: its generated list is not kept up to date.`);
     }
   }
@@ -53,6 +58,8 @@ function generatedLists(facts: ContextFacts): Record<string, string[]> {
         ? facts.permissions.map((name) => `- \`${facts.name}:${name}\``)
         : ['No permission declared.'],
     jobs: jobLines(facts),
+    'background-jobs': backgroundJobLines(facts),
+    'state-machines': stateMachineLines(facts.stateMachines),
     relationships: relationshipLines(facts),
   };
 }
@@ -66,6 +73,18 @@ function jobLines(facts: ContextFacts): string[] {
     '| Job | Schedule | Command |',
     '|---|---|---|',
     ...facts.jobs.map((job) => `| \`${job.name}\` | \`${job.schedule}\` | \`${job.command}\` |`),
+  ];
+}
+
+function backgroundJobLines(facts: ContextFacts): string[] {
+  if (facts.backgroundJobs.length === 0) {
+    return ['No background job.'];
+  }
+
+  return [
+    '| Job | Class |',
+    '|---|---|',
+    ...facts.backgroundJobs.map((job) => `| \`${job.name}\` | \`${job.className}\` |`),
   ];
 }
 

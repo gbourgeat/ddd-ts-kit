@@ -1,5 +1,7 @@
 import type { Upstream } from '../config/index.js';
+import type { BackgroundJobFacts } from '../docs/background-job-facts.js';
 import type { JobFacts } from '../docs/context-facts.js';
+import type { StateMachineFacts } from '../docs/state-machine-facts.js';
 
 /**
  * One bounded context as facts, read from the config and from the source text: what `describe`
@@ -30,6 +32,8 @@ export interface ContextDescription {
   readonly projections: readonly ProjectionFact[];
   readonly gateways: readonly GatewayFact[];
   readonly jobs: readonly JobFacts[];
+  readonly backgroundJobs: readonly BackgroundJobFacts[];
+  readonly stateMachines: readonly StateMachineFacts[];
   /** The generated contracts that hold what the source text does not say: the fields of each schema. */
   readonly contracts: Contracts;
 }

@@ -34,6 +34,7 @@ This is why practices come: a time on a calendar is held once, under rules of av
 | Slot | A span of time on a calendar that an appointment holds or could hold | Range |
 | Scheduler | The rule keeper that says whether a slot can be taken on a calendar, given what the calendar already holds |  |
 | Appointment | The hold of a slot on a calendar for a patient, from booking to its end |  |
+| Lifecycle | The statuses an appointment goes through, and which change leads from one to the next |  |
 | Book | To take a free slot for a patient | Request |
 | Request | To take a slot that the patient must still confirm |  |
 | Confirm | To say that a requested appointment will be honoured |  |
@@ -119,6 +120,39 @@ This is why practices come: a time on a calendar is held once, under rules of av
 |---|---|---|
 | `scheduling.expire-unconfirmed-appointments` | `every 5m` | `ExpireUnconfirmedAppointments` |
 <!-- /ddd-ts-kit:jobs -->
+
+## Background jobs
+
+<!-- ddd-ts-kit:background-jobs -->
+No background job.
+<!-- /ddd-ts-kit:background-jobs -->
+
+## State machines
+
+<!-- ddd-ts-kit:state-machines -->
+Lifecycle of `appointment` (`domain/state-machines/appointment.state-machine.ts`):
+
+```mermaid
+stateDiagram-v2
+  state "no-show" as no_show
+  [*] --> requested
+  [*] --> booked
+  requested --> booked: confirm
+  requested --> requested: reschedule
+  booked --> booked: reschedule
+  requested --> cancelled: cancel
+  booked --> cancelled: cancel
+  requested --> expired: expire
+  requested --> completed: complete [guarded]
+  booked --> completed: complete [guarded]
+  requested --> no_show: markNoShow [guarded]
+  booked --> no_show: markNoShow [guarded]
+  cancelled --> [*]
+  expired --> [*]
+  completed --> [*]
+  no_show --> [*]
+```
+<!-- /ddd-ts-kit:state-machines -->
 
 ## Relationships
 

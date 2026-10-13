@@ -5,7 +5,9 @@ import type { Workspace } from '../workspace/index.js';
 import type { ContextFacts, PublishedEvent } from './context-facts.js';
 import type { DeclaredFacts, DeclaredUseCase } from './declared-facts.js';
 import { readDeclarations } from './read-declarations.js';
+import { readBackgroundJobs } from './read-background-jobs.js';
 import { readJobs } from './read-jobs.js';
+import { readStateMachines } from './read-state-machines.js';
 import { withoutComments } from './without-comments.js';
 
 type RoleNames = Pick<ContextFacts, 'commands' | 'queries' | 'policies' | 'gateways' | 'integrationEventHandlers'>;
@@ -35,7 +37,14 @@ export function readContext(ws: Workspace, config: Config, name: string): Contex
 
 type TreeFacts = Pick<
   ContextFacts,
-  'aggregates' | 'domainEvents' | 'publishedEvents' | 'builders' | 'permissions' | 'jobs'
+  | 'aggregates'
+  | 'domainEvents'
+  | 'publishedEvents'
+  | 'builders'
+  | 'permissions'
+  | 'jobs'
+  | 'backgroundJobs'
+  | 'stateMachines'
 >;
 
 /** What the folders of the context hold, whatever the style of the project. */
@@ -47,6 +56,8 @@ function treeFacts(ws: Workspace, directory: string, name: string): TreeFacts {
     builders: namesBySuffix(ws, `${directory}/test/builders`, '.builder.ts'),
     permissions: permissionsOf(ws.read(`${directory}/application/authorization/${name}.permissions.ts`) ?? ''),
     jobs: readJobs(ws, directory, name),
+    backgroundJobs: readBackgroundJobs(ws, directory),
+    stateMachines: readStateMachines(ws, directory),
   };
 }
 
