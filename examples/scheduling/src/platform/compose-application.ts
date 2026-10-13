@@ -25,6 +25,7 @@ import {
   InMemoryTenantDirectory,
   Logger,
   Metrics,
+  PublishedCacheInvalidation,
   QueryBus,
   RateLimiter,
   scopedPublisher,
@@ -162,6 +163,14 @@ function kernel(foundations: Foundations, persistence: Persistence, options: App
     // Use cases publish to the outbox, in the transaction of their command; the relay of `main.ts` delivers to the provider.
     eventPublisher: scopedPublisher(new OutboxPublisher(persistence.outbox), scope),
     eventSubscriber: bus,
+    // The purges of the outbox filed under the network of the work, as the answers are tagged (`cacheTags.perTenant`).
+    cacheInvalidation: new PublishedCacheInvalidation({
+      publisher: scopedPublisher(new OutboxPublisher(persistence.outbox), scope),
+      ids,
+      clock,
+      scope,
+      perTenant: true,
+    }),
     // The buses and the jobs report through it, and `container.stop()` flushes it; left out (the tools, the tests), nothing is reported.
     ...(options.errors === undefined ? {} : { errorReporter: options.errors }),
     commandBus: (resolve) => createCommandBus(resolve, foundations, options),

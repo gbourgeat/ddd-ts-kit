@@ -40,8 +40,8 @@ export interface HttpBoundary extends Presentation {
    * a network this deployment does not serve (`NETWORKS`) is not found (404), whoever names it.
    */
   readonly resolveTenant: TenantResolver;
-  /** The header Varnish files a public answer under the tags of its resources from. */
-  readonly cacheTags: { readonly header: CacheTagHeader };
+  /** The header Varnish files a public answer under the tags of its resources from, each tag under the network of the request. */
+  readonly cacheTags: { readonly header: CacheTagHeader; readonly perTenant: boolean };
 }
 
 interface Edge {
@@ -83,7 +83,8 @@ export function httpBoundary({
     resolveTenant: networkOf(networks),
     uploads: multipartUploads(),
     onGuardRefusal: refusals,
-    cacheTags: { header: CacheTagHeader.xkey },
+    // Filed under the network of the request, as the purges of the outbox are: a purge in one network leaves the others' copies.
+    cacheTags: { header: CacheTagHeader.xkey, perTenant: true },
     // The message of the error may quote data: only the code and the route are logged.
     onError: (error, context) => {
       if (context.problem.status < 500) {
