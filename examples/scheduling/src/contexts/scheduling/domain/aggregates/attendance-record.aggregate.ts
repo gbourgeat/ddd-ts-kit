@@ -37,9 +37,13 @@ export class AttendanceRecord extends EventSourcedAggregate<AttendanceRecordEven
     super(id);
   }
 
-  /** The identifier of the one record of a patient in a practice. */
+  /**
+   * The identifier of the one record of a patient in a practice, `<practice>.<patient>`. The
+   * practice part has its `%` and `.` escaped, so the first `.` always ends it: two pairs never
+   * share an identifier, and the history of one practice is never read under another.
+   */
   static idOf(practiceId: string, patientId: string): string {
-    return `${practiceId}.${patientId}`;
+    return `${practiceId.replaceAll('%', '%25').replaceAll('.', '%2E')}.${patientId}`;
   }
 
   static create(held: { readonly practiceId: string; readonly patientId: string }, now: Date): AttendanceRecord {
@@ -72,7 +76,7 @@ export class AttendanceRecord extends EventSourcedAggregate<AttendanceRecordEven
     now: Date,
   ): void {
     this.refuseNotedTwice(cancelled.appointmentId);
-    this.record(new AttendanceRecordCancellationNoted(this.id, now, cancelled));
+    this.record(new AttendanceRecordCancellationNoted(this.id, now, { ...cancelled, patientId: this.state.patientId }));
   }
 
   get registeredAt(): Date {

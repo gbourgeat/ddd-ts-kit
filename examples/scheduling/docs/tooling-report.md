@@ -973,3 +973,26 @@ Frictions, for the owner of the kit:
 7. The integration specs, run in parallel on twenty cores beside other workloads, timed out
    while starting PGlite (a hook limit of 10 s); they pass serially and with four workers.
 
+### 2026-10-13, after review: the gates of the stored shapes, an erasure
+
+A review of the lot found the lock of the stored shapes held by memory alone, and no way to run
+the erasure the documentation prescribes. What changed in the example:
+
+| | |
+|---|---|
+| Stored shapes | `npm run docs:check` (`ddd-ts-kit docs --check`) now fails while a version declared in a codec is not recorded in `stored-events.lock.json`; the fingerprint of a shape includes the types of the codec it reaches |
+| Data subject | the cancellation event carries the patient it seals the reason for (`cancelled.patientId`), instead of reading it from the identifier of the record; the practice part of that identifier is escaped, so two pairs never share one |
+| Erasure | `npm run erase:patient -- <patientId>`: the key is destroyed, then every projection fed by the store is rebuilt |
+| Catch-up | a tick that comes while a round runs is skipped; a checkpoint moved first by another replica is a skipped round, not an error |
+
+Frictions, for the owner of the kit:
+
+1. The shape of `scheduling.attendance-record.cancellation-noted` changed in version 1, which
+   was recorded but never stored outside the tests and is not merged: its line was removed from
+   the lock and recorded again, the path `docs/concepts/event-sourcing.md` describes. Once
+   merged, the same change is a version 2 with its upcaster.
+2. `docs --check` reported the unrecorded version at once, with the command to run: the gate
+   did what the review asked of it.
+3. The catch-up and the rebuild of a projection fed by the store are still written by hand in
+   the platform (`store-fed-projections.ts`): `generate projection` has no event-store form.
+

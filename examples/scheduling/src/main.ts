@@ -2,6 +2,7 @@
 import { tracing } from '@/platform/tracing';
 // Imported second on purpose: a failure while the rest of the application loads is already reported.
 import { errors } from '@/platform/errors';
+import { PersonalDataCipher } from '@ddd-ts-kit/kernel';
 import { createAuthenticator } from '@/platform/auth/create-authenticator';
 import { composeApplication } from '@/platform/compose-application';
 import { loadConfig } from '@/platform/config/load-config';
@@ -40,9 +41,12 @@ const relay = startOutboxRelay({
   wakeOn: redis.relaySignal,
 });
 
-// The projections fed by the event store catch up in this process too, at the pace of the relay.
+// The projections fed by the event store catch up in this process too, at the pace of the relay:
+// with several replicas, the checkpoint lets one of them apply each batch (README, Event sourcing).
 const catchUp = startCatchUp({
-  subscriptions: storeFedProjections(application.container, persistence),
+  subscriptions: storeFedProjections(persistence, application.container.resolve(PersonalDataCipher)).map(
+    ({ subscription }) => subscription,
+  ),
   intervalMs: config.outboxRelayIntervalMs,
   logger: application.logger,
 });

@@ -15,6 +15,8 @@ interface AttendanceRecordNoShowNotedData {
 }
 
 interface AttendanceRecordCancellationNotedData {
+  /** The data subject the reason is sealed for, carried by the event rather than read from the identifier of the record. */
+  readonly patientId: string;
   readonly appointmentId: string;
   readonly startsAt: Date;
   /** The words of the patient, sealed with the key of the patient: erased with it. */
@@ -43,21 +45,18 @@ export const attendanceRecordEvents: StoredEventTypes<AttendanceRecordEvent> = {
   }),
   'scheduling.attendance-record.cancellation-noted': defineStoredEvent(AttendanceRecordCancellationNoted, {
     version: 1,
-    encode: (event): AttendanceRecordCancellationNotedData => ({
-      appointmentId: event.cancelled.appointmentId,
-      startsAt: event.cancelled.startsAt,
-      reason: event.cancelled.reason === undefined ? null : personalData(patientOf(event), event.cancelled.reason),
+    encode: ({ cancelled }): AttendanceRecordCancellationNotedData => ({
+      patientId: cancelled.patientId,
+      appointmentId: cancelled.appointmentId,
+      startsAt: cancelled.startsAt,
+      reason: cancelled.reason === undefined ? null : personalData(cancelled.patientId, cancelled.reason),
     }),
     decode: (data, { aggregateId, occurredAt }) =>
       new AttendanceRecordCancellationNoted(aggregateId, occurredAt, {
+        patientId: data.text('patientId'),
         appointmentId: data.text('appointmentId'),
         startsAt: data.instant('startsAt'),
         reason: data.optionalText('reason'),
       }),
   }),
 };
-
-/** The data subject of a record is its patient, the second part of its identifier. */
-function patientOf(event: AttendanceRecordCancellationNoted): string {
-  return event.aggregateId.slice(event.aggregateId.indexOf('.') + 1);
-}

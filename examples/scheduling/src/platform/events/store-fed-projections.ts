@@ -1,29 +1,49 @@
-import type { Application as Container } from '@ddd-ts-kit/di';
-import { CatchUpSubscription, EventSerializer, PersonalDataCipher } from '@ddd-ts-kit/kernel';
+import {
+  CatchUpSubscription,
+  EventSerializer,
+  EventStoreProjectionRebuild,
+  type EventStoreRebuildReport,
+  type PersonalDataCipher,
+} from '@ddd-ts-kit/kernel';
 import { applyingProjection } from '@ddd-ts-kit/kernel/declarations';
 import type { Persistence } from '@/platform/database/persistence';
 import type { AttendanceRecordEvent } from '@/contexts/scheduling/domain/aggregates/attendance-record.aggregate';
 import { AttendanceHistoryProjection } from '@/contexts/scheduling/application/projections/attendance-history.projection';
 import { attendanceRecordEvents } from '@/contexts/scheduling/infrastructure/persistence/attendance-record-events.mapper';
+import { KnexAttendanceHistory } from '@/contexts/scheduling/infrastructure/persistence/knex-attendance-history.repository';
+
+/** A projection declared `{ feed: 'event-store' }`: how it catches up, and how it is rebuilt from position zero. */
+export interface StoreFedProjection {
+  readonly name: string;
+  readonly subscription: CatchUpSubscription;
+  rebuild(): Promise<EventStoreRebuildReport>;
+}
 
 /**
- * The catch-up subscription of each projection declared `{ feed: 'event-store' }`: under its name,
- * from the store of the event-sourced aggregates, the batch and its checkpoint in one unit of work.
+ * Each projection fed by the store of the event-sourced aggregates, under its name: its catch-up
+ * subscription (the batch and its checkpoint in one unit of work) and its rebuild, which replays
+ * the store into a copy of its table and swaps it in without stopping the subscription.
  */
-export function storeFedProjections(container: Container, persistence: Persistence): CatchUpSubscription[] {
+export function storeFedProjections(persistence: Persistence, cipher: PersonalDataCipher): StoreFedProjection[] {
   const { events, checkpoints } = persistence.eventSourcing;
-  const cipher = container.resolve(PersonalDataCipher);
+  const serializer = new EventSerializer<AttendanceRecordEvent>(attendanceRecordEvents, { cipher });
+  const history = new KnexAttendanceHistory(persistence.database);
+  const name = 'scheduling.attendance-history';
 
-  return [
-    new CatchUpSubscription({
-      name: 'scheduling.attendance-history',
-      store: events,
-      checkpoints,
-      unitOfWork: persistence.unitOfWork,
-      apply: applyingProjection(
-        container.resolve(AttendanceHistoryProjection),
-        new EventSerializer<AttendanceRecordEvent>(attendanceRecordEvents, { cipher }),
-      ),
-    }),
-  ];
+  const rebuild = new EventStoreProjectionRebuild({
+    table: history.table,
+    store: events,
+    unitOfWork: persistence.unitOfWork,
+    applierOn: (copy) => applyingProjection(new AttendanceHistoryProjection(copy), serializer),
+  });
+
+  const subscription = new CatchUpSubscription({
+    name,
+    store: events,
+    checkpoints,
+    unitOfWork: persistence.unitOfWork,
+    apply: applyingProjection(new AttendanceHistoryProjection(history), serializer),
+  });
+
+  return [{ name, subscription, rebuild: () => rebuild.run() }];
 }

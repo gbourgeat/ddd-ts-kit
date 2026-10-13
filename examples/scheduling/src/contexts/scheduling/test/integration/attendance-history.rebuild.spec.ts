@@ -1,23 +1,12 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import {
-  CatchUpSubscription,
-  Criteria,
-  EventSerializer,
-  EventStoreProjectionRebuild,
-  PersonalDataCipher,
-  scoped,
-} from '@ddd-ts-kit/kernel';
-import { applyingProjection } from '@ddd-ts-kit/kernel/declarations';
+import { Criteria, PersonalDataCipher, scoped } from '@ddd-ts-kit/kernel';
 import type { AttendanceEntry } from '@/contexts/scheduling/application/ports/attendance-history.port';
-import { AttendanceHistoryProjection } from '@/contexts/scheduling/application/projections/attendance-history.projection';
-import {
-  AttendanceRecord,
-  type AttendanceRecordEvent,
-} from '@/contexts/scheduling/domain/aggregates/attendance-record.aggregate';
-import { attendanceRecordEvents } from '@/contexts/scheduling/infrastructure/persistence/attendance-record-events.mapper';
+import { AttendanceRecord } from '@/contexts/scheduling/domain/aggregates/attendance-record.aggregate';
 import { EventStoreAttendanceRecordRepository } from '@/contexts/scheduling/infrastructure/persistence/event-store-attendance-record.repository';
 import { KnexAttendanceHistory } from '@/contexts/scheduling/infrastructure/persistence/knex-attendance-history.repository';
 import { openTestDatabase, type TestDatabase } from '@/platform/database/open-test-database';
+import { eraseDataSubject } from '@/platform/events/erase-data-subject';
+import { storeFedProjections } from '@/platform/events/store-fed-projections';
 
 const at = new Date('2026-03-02T09:00:00.000Z');
 
@@ -39,50 +28,29 @@ describe('the attendance history, fed by the event store', () => {
   it('catches up from position zero, moving its checkpoint with what it applied', async () => {
     await noted();
 
-    const { persistence, serializer, history } = parts();
+    const { persistence, projections, history } = parts();
+    const read = await Promise.all(projections.map(({ subscription }) => subscription.catchUp()));
 
-    const read = await new CatchUpSubscription({
-      name: 'scheduling.attendance-history',
-      store: persistence.eventSourcing.events,
-      checkpoints: persistence.eventSourcing.checkpoints,
-      unitOfWork: persistence.unitOfWork,
-      apply: applyingProjection(new AttendanceHistoryProjection(history), serializer),
-    }).catchUp();
-
-    expect(read).toBe(6);
+    expect(read).toEqual([6]);
     expect(await persistence.eventSourcing.checkpoints.position('scheduling.attendance-history')).toBe(6);
     expect(await rows(history)).toContain('practice-1.patient-2#3 cancellation Words of patient-2');
   });
 
-  it('is rebuilt from position zero into the same rows, and an erased patient reads erased afterwards', async () => {
+  it('is rebuilt from position zero into the same rows, and a patient erased reads erased afterwards', async () => {
     await noted();
 
-    const { persistence, serializer, history } = parts();
+    const { persistence, projections, history } = parts();
 
-    const rebuild = () =>
-      new EventStoreProjectionRebuild<AttendanceEntry>({
-        table: history.table,
-        store: persistence.eventSourcing.events,
-        unitOfWork: persistence.unitOfWork,
-        applierOn: (copy) => applyingProjection(new AttendanceHistoryProjection(copy), serializer),
-      }).run();
-
-    await new CatchUpSubscription({
-      name: 'scheduling.attendance-history',
-      store: persistence.eventSourcing.events,
-      checkpoints: persistence.eventSourcing.checkpoints,
-      unitOfWork: persistence.unitOfWork,
-      apply: applyingProjection(new AttendanceHistoryProjection(history), serializer),
-    }).catchUp();
+    await Promise.all(projections.map(({ subscription }) => subscription.catchUp()));
 
     const caughtUp = await rows(history);
 
-    expect(await rebuild()).toEqual({ replayed: 6 });
+    expect(await Promise.all(projections.map((projection) => projection.rebuild()))).toEqual([{ replayed: 6 }]);
     expect(await rows(history)).toEqual(caughtUp);
 
-    await persistence.eventSourcing.subjectKeys.erase('patient-1');
-    await rebuild();
+    const erasure = await eraseDataSubject('patient-1', { keys: persistence.eventSourcing.subjectKeys, projections });
 
+    expect(erasure).toEqual({ erased: true, rebuilt: { 'scheduling.attendance-history': 6 } });
     expect(await rows(history)).toContain('practice-1.patient-1#3 cancellation [erased]');
     expect(await rows(history)).toContain('practice-1.patient-2#3 cancellation Words of patient-2');
   });
@@ -119,13 +87,12 @@ async function noted(): Promise<void> {
   }
 }
 
+/** The projections fed by the store as the application runs them, and the history they keep. */
 function parts() {
   const { persistence } = database;
-  const cipher = new PersonalDataCipher(persistence.eventSourcing.subjectKeys);
-  const serializer = new EventSerializer<AttendanceRecordEvent>(attendanceRecordEvents, { cipher });
-  const history = new KnexAttendanceHistory(persistence.database);
+  const projections = storeFedProjections(persistence, new PersonalDataCipher(persistence.eventSourcing.subjectKeys));
 
-  return { persistence, serializer, history };
+  return { persistence, projections, history: new KnexAttendanceHistory(persistence.database) };
 }
 
 async function rows(history: KnexAttendanceHistory): Promise<string[]> {

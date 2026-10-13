@@ -6,8 +6,9 @@ export class AttendanceRecordCancellationNoted implements DomainEvent {
   constructor(
     readonly aggregateId: string,
     readonly occurredAt: Date,
-    /** The appointment the patient cancelled, when it was to start, and the words they gave, if any: personal data. */
+    /** The patient who cancelled, the appointment, when it was to start, and the words they gave, if any: personal data of that patient. */
     readonly cancelled: {
+      readonly patientId: string;
       readonly appointmentId: string;
       readonly startsAt: Date;
       readonly reason: string | undefined;

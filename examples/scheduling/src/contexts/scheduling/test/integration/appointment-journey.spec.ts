@@ -2,7 +2,15 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { FakeAuthenticator, anActor } from '@ddd-ts-kit/auth/testing';
 import { contextModule } from '@ddd-ts-kit/di';
 import { executeRoute, type RouteResponse } from '@ddd-ts-kit/http';
-import { Criteria, FixedExecutionScope, SystemClock, executionContext, scoped, systemActor } from '@ddd-ts-kit/kernel';
+import {
+  Criteria,
+  FixedExecutionScope,
+  PersonalDataCipher,
+  SystemClock,
+  executionContext,
+  scoped,
+  systemActor,
+} from '@ddd-ts-kit/kernel';
 import * as schedulingDeclarations from '@/contexts/scheduling/scheduling.declarations';
 import { composeApplication, type Application } from '@/platform/compose-application';
 import { openTestDatabase, type TestDatabase } from '@/platform/database/open-test-database';
@@ -120,7 +128,9 @@ describe('An appointment, from its booking on, through the application', () => {
 
     await call('ada', 'cancelAppointment', { params: { appointmentId }, body: { reason: 'A fever.' } });
 
-    for (const subscription of storeFedProjections(application.container, database.persistence)) {
+    const cipher = application.container.resolve(PersonalDataCipher);
+
+    for (const { subscription } of storeFedProjections(database.persistence, cipher)) {
       await subscription.catchUp();
     }
 

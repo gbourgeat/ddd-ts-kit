@@ -24,6 +24,11 @@ describe('AttendanceRecord', () => {
     expect(record.pullEvents()).toEqual([created]);
   });
 
+  it('never gives two pairs of practice and patient the same identifier, even with a dot in an identifier', () => {
+    expect(AttendanceRecord.idOf('practice.1', 'patient')).not.toBe(AttendanceRecord.idOf('practice', '1.patient'));
+    expect(AttendanceRecord.idOf('practice%2E1', 'patient')).not.toBe(AttendanceRecord.idOf('practice.1', 'patient'));
+  });
+
   it('notes a no-show and counts it as missed', () => {
     givenEvents(rehydrate, [created, missed('appointment-1', 2)])
       .when((record) => record.noteNoShow({ appointmentId: 'appointment-2', startsAt: bornAt }, now))
@@ -36,7 +41,13 @@ describe('AttendanceRecord', () => {
       .when((record) =>
         record.noteCancellation({ appointmentId: 'appointment-1', startsAt: bornAt, reason: 'Flu' }, now),
       )
-      .thenEvents([{ name: 'scheduling.attendance-record.cancellation-noted', aggregateId: ID }])
+      .thenEvents([
+        {
+          name: 'scheduling.attendance-record.cancellation-noted',
+          aggregateId: ID,
+          cancelled: { patientId: 'patient-1', appointmentId: 'appointment-1', startsAt: bornAt, reason: 'Flu' },
+        },
+      ])
       .thenState((record) => expect(record.missed).toBe(1));
   });
 
@@ -61,6 +72,7 @@ describe('AttendanceRecord', () => {
       created,
       missed('appointment-1', 2),
       new AttendanceRecordCancellationNoted(ID, new Date(Date.UTC(2026, 2, 3)), {
+        patientId: 'patient-1',
         appointmentId: 'appointment-2',
         startsAt: new Date(Date.UTC(2026, 2, 4)),
         reason: 'Away',

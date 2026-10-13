@@ -1,4 +1,4 @@
-import type { CatchUpSubscription, Logger } from '@ddd-ts-kit/kernel';
+import { ConcurrencyError, type CatchUpSubscription, type Logger } from '@ddd-ts-kit/kernel';
 
 export interface CatchUpOptions {
   readonly subscriptions: readonly CatchUpSubscription[];
@@ -11,29 +11,24 @@ export interface RunningCatchUp {
 }
 
 /**
- * Polls each subscription until it has applied the whole store, then again every interval. A
- * failed batch is logged and read again at the next round: its checkpoint did not move.
+ * Polls each subscription until it has applied the whole store, then again every interval; a
+ * tick that comes while a round is still running is skipped, so rounds never pile up. A failed
+ * batch is logged and read again at the next round: its checkpoint did not move. A batch refused
+ * because another process moved the checkpoint first is no failure: with several replicas, one
+ * of them applies each batch.
  */
 export function startCatchUp(options: CatchUpOptions): RunningCatchUp {
-  let running: Promise<void> = Promise.resolve();
+  let running: Promise<void> | undefined;
 
-  const round = async (): Promise<void> => {
-    for (const subscription of options.subscriptions) {
-      try {
-        await subscription.catchUp();
-      } catch (error) {
-        options.logger.error('projection catch-up failure', {
-          error: error instanceof Error ? error : new Error(String(error)),
-        });
-      }
-    }
+  const tick = (): void => {
+    running ??= catchUpAll(options).finally(() => {
+      running = undefined;
+    });
   };
 
-  const timer = setInterval(() => {
-    running = running.then(round);
-  }, options.intervalMs);
+  const timer = setInterval(tick, options.intervalMs);
 
-  running = round();
+  tick();
 
   return {
     stop: async () => {
@@ -41,4 +36,20 @@ export function startCatchUp(options: CatchUpOptions): RunningCatchUp {
       await running;
     },
   };
+}
+
+async function catchUpAll({ subscriptions, logger }: CatchUpOptions): Promise<void> {
+  for (const subscription of subscriptions) {
+    try {
+      await subscription.catchUp();
+    } catch (error) {
+      if (error instanceof ConcurrencyError) {
+        logger.debug('projection catch-up skipped: another process moved the checkpoint first');
+      } else {
+        logger.error('projection catch-up failure', {
+          error: error instanceof Error ? error : new Error(String(error)),
+        });
+      }
+    }
+  }
 }

@@ -41,6 +41,7 @@
     "openapi:check": "npm run build && node dist/scripts/openapi.js --check",
     "events:generate": "npm run build && node dist/scripts/events.js",
     "events:check": "npm run build && node dist/scripts/events.js --check",
+    "erase:patient": "npm run build && node --env-file-if-exists=.env dist/scripts/erase-patient.js",
     "docs:generate": "node scripts/kit.mjs docs && npm run build && node dist/scripts/openapi.js && node dist/scripts/events.js",
     "docs:check": "node scripts/kit.mjs docs --check && npm run build && node dist/scripts/openapi.js --check && node dist/scripts/events.js --check",
     "db:generate": "knex migrate:make",
