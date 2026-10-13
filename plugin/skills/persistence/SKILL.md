@@ -60,8 +60,10 @@ lookups of the port, the columns, the mapper.
   executor (`tenancy/scoped-statement`); reads may widen under an audited elevation, writes
   never. Row-level security, schema and database per tenant are in the packages, wired by
   hand; prove the adapter with `tenantIsolationContract`. A measure grouped then paged selects
-  from the scoped query with `derivedTable`; a raw expression is fine in its select, raw SQL that
-  names a table is not. A project that becomes multi-tenant migrates with `addTenantColumn`.
+  from the scoped query with `derivedTable`; a raw aggregate is fine in its select as a literal
+  (bind a list as one value, `state = any(?)`, rather than interpolating placeholders), raw SQL
+  that names a table, calls an unknown function or interpolates is not. A project that becomes
+  multi-tenant migrates with `addTenantColumn` and `addOutboxTenantColumn(..., { tenantOfUnpublished })`.
   See `docs/concepts/multitenancy.md`.
 - **Outbox in the same transaction** as the business write (`events/outbox-required`).
 - **An event-sourced aggregate** (chosen per aggregate, `generate aggregate ... --event-sourced`)

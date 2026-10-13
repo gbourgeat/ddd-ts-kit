@@ -128,7 +128,14 @@ of the request.
 
 Which to choose: the claim alone when a user belongs to one tenant; a subdomain when tenants
 have their own address (and their own cookies); a path segment or a header when one user works in
-several tenants and picks one per request, the token then listing every membership.
+several tenants and picks one per request, the token then listing every membership (a tenant
+claim holding a list, or the `organization` claim of Keycloak, gives the actor its `tenants`).
+
+A tenant the deployment does not serve, one its directory of tenants (the tenants its jobs run
+for) does not list, is best not found at all: `servedTenantOf(resolver, served)` answers 404
+whoever names it, so that a credential issued for a tenant the deployment knows nothing of never
+writes data no job and no operator would see. The example application serves the networks of
+`NETWORKS` this way.
 
 ## Platform staff: elevation, never implicit
 

@@ -39,25 +39,30 @@ events), then lays out the files those generators keep adding to.
 
 A project holds one context written from a preset of a kind: two identity contexts would declare
 the same integration events and tables in the files of the platform (the audited events, the
-schema), which do not compile together.
+schema), which do not compile together. `generate context --preset` refuses a second one, naming
+the context that holds the first, and `init` writes a preset named twice once.
 
-The result is green as it is: no finding of `check`, lint and format clean, typed, and its
-specs pass, unit and integration (the adapters of the ORM against PostgreSQL in process). The
-end-to-end spec `packages/cli/test/e2e/preset-identity.spec.ts` proves it on two stacks.
+The result is green as it is: no finding of `check`, ESLint, dependency-cruiser and knip, format
+clean, typed, and its specs pass, unit and integration (the adapters of the ORM against
+PostgreSQL in process). The end-to-end specs prove it on four stacks: roles on Drizzle and Zod;
+relationships on Knex and class-validator with tenants and Keycloak; attribute policies on
+Fastify with tenants and a JWT verifier (`packages/cli/test/e2e/preset-identity.spec.ts`); and
+generated into a project that exists and decides with OpenFGA
+(`preset-identity-generated.spec.ts`).
 
 ## What it writes
 
 | Part | What |
 |---|---|
-| Accounts | an account per person, under the subject their identity provider gives them (`actor.id`): provisioned at the first sign-in from what their token says (`PUT /accounts/me`), refreshed at each later one, deactivated by its owner (`POST /accounts/me/deactivation`). No password, no secret of the provider. The email address is always the one of the token |
+| Accounts | an account per person, under the subject their identity provider gives them (`actor.id`): provisioned at the first sign-in from what their token says (`PUT /accounts/me`), refreshed at each later one, deactivated by its owner (`POST /accounts/me/deactivation`). No password, no secret of the provider. The email address is always the one of the token, and one the provider verified (`email_verified`, read as the actor attribute `emailVerified`; `EMAIL_NOT_VERIFIED` otherwise), since invitations are matched on it. A deactivated account leaves every organisation and ends every delegation in the same unit of work; the last owner of an organisation appoints another owner first (`LAST_OWNER`) |
 | Organisations | opened under a slug that is their identity for good (`POST /organisations`); the opener is the first owner. With tenants, an organisation is a tenant and its slug the tenant id |
-| Members | one role each, from the vocabulary `MemberRole` (`owner`, `admin`, `member`); what a role grants is one table, `RoleRightsService`. An organisation keeps one owner at least, and only an owner appoints one (`PUT /organisations/:organisationId/members/:accountId/role`, `DELETE` of the member) |
+| Members | one role each, from the vocabulary `MemberRole` (`owner`, `admin`, `member`); what a role grants is one table, `RoleRightsService` (`PUT /organisations/:organisationId/members/:accountId/role`, `DELETE` of the member). Nobody changes their own role (`OWN_ROLE`), and nobody appoints, invites, changes or removes anyone above their own role (`ABOVE_OWN_ROLE`, `OWNERS_ONLY` for an owner). An organisation keeps one owner at least: each change of a member saves the organisation with it, so that its version orders the changes of its owners and two owners who remove each other at once cannot both commit |
 | Invitations | issued to an email address in a role for seven days (`POST /organisations/:organisationId/invitations`); the token is answered once and only its SHA-256 digest is kept; accepted or declined signed in, with the address it was sent to (`POST /invitations/acceptance`, `/invitations/declination`); revoked by who may invite |
-| Delegations | a member lends some rights of their role to another member for ninety days at most (`POST /organisations/:organisationId/delegations`, `DELETE` to revoke); never more than the role of the delegator, never what was lent to them; ended when either member leaves or the delegator changes role |
+| Delegations | a member lends some rights of their role to another member for ninety days at most (`POST /organisations/:organisationId/delegations`, `DELETE` to revoke); never more than the role of the delegator, never what was lent to them, never the power to act above the delegate's own role; ended when either member leaves or the delegator changes role. A change decided under a delegation names it in its fact (`delegationId` of `member.role-changed`, `member.removed` and of the issued invitation) |
 | Search | the members of an organisation, paged, narrowed to what the actor may read (`GET /organisations/:organisationId/members`) |
 | Authorization | `identityPermissions`, seven policies over `OrganisationRights` (the rights of the actor in one organisation: their role and what active delegations lend them) |
 | Published language | `organisation.opened`, `member.joined`, `member.role-changed`, `member.removed`, `delegation.granted`, `delegation.revoked`, `account.deactivated`, through the outbox |
-| Identity provider | the port `IdentityProviderAdmin`, told after each commit (organisation known, member added or removed, account disabled), with an in-memory fake and `KeycloakIdentityProviderAdmin` for Keycloak 26 or later |
+| Identity provider | the port `IdentityProviderAdmin`, kept in line by four consumers of the published facts, delivered at least once (organisation known, member added or removed, account disabled), with an in-memory fake and `KeycloakIdentityProviderAdmin`, a recipe for Keycloak 26 or later |
 | Adapters | Knex or Drizzle repositories, mappers, tables and the search reader, each with its contract spec |
 | Tests | builders, fakes, unit specs of the model and of every handler and controller, contract specs of the repositories, the spec of the Keycloak adapter against a local HTTP server |
 | Documentation | the purpose, the classification, the glossary and a `## Design` section in `CONTEXT.md`; with tenants, a decision record |
@@ -77,6 +82,8 @@ refused before anything is written, with the flag that would fit:
 | `stack.orm` | `knex`, `drizzle` | the two adapters written; Prisma and TypeORM are not |
 | `stack.validation` | `zod`, `class-validator` | the two families of request schemas written |
 | `stack.http` | `express`, `fastify` | NestJS routes are written another way |
+| `stack.authn` | `jwt`, `keycloak` | an account is the subject of a token: without a verifier every caller is anonymous and the context would serve nobody |
+| `stack.database` | `postgres` | the tables keep one current membership per account with a partial unique index (`where removed_at is null`), which MySQL has not |
 
 Supporting another value is writing the variant of the files it changes
 (`*.knex.ts.tpl` beside `*.drizzle.ts.tpl` under `packages/cli/templates/presets/identity/`), not
@@ -109,16 +116,35 @@ control plane of the tenants, read across them under a decision record the prese
 (`docs/adr/NNNN-identity-is-the-control-plane-of-the-tenants.md`), the suppressions of
 `tenancy/scoped-statement` pointing to it. See [Multitenancy](../concepts/multitenancy.md).
 
+The token says which organisations a person belongs to, so that every other context knows its
+tenant from it. With `--authn keycloak` the preset sets `tenantClaim: 'organization'` in
+`createAuthenticator`: Keycloak writes the `organization` claim of the organizations the
+provider adapter keeps in line (the client scope `organization` added to the client). A person of
+one organisation works in it on every request; a person of several holds them as the `tenants`
+attribute, and each request names the one it works in with `x-tenant-id` (refused with 403 if
+they are not a member of it, `tenantFromHeader` then `tenantFromClaim` in `resolveTenant`).
+Removed from an organisation, they lose it at their next token, and the identity context already
+refuses them its use cases. With `--authn jwt` the preset leaves a next step: map the claim your
+provider writes (`tenantClaim` when it is a list or an object keyed by organisation, `toActor`
+otherwise).
+
 ## The identity provider
 
-The provider authenticates, the context authorizes ([Identity](../tools/identity.md)). After a
-decision is committed, `IdentityProviderAdmin` tells the provider, at most once, in an
-after-commit handler. `KeycloakIdentityProviderAdmin` calls the administration API of Keycloak
-26 or later, the realm having organizations enabled, as a confidential client holding the roles
+The provider authenticates, the context authorizes ([Identity](../tools/identity.md)). The
+provider follows the decisions of the context through four consumers of its own published facts
+(`application/integration/handlers/`): delivered through the outbox, at least once, so a provider
+that is down when a member is removed or an account deactivated is asked again by the relay or
+the broker until it answers, and the revocation is never lost. They arrive in no guaranteed
+order, so each consumer brings the provider in line with what the context holds now (a late
+retry of `member.joined` for a member removed since takes them out again), and every method of
+the port is idempotent.
+
+`KeycloakIdentityProviderAdmin` is a recipe for the administration API of Keycloak 26 or later,
+the realm having organizations enabled, as a confidential client holding the roles
 `manage-users` and `manage-realm` of `realm-management` (the organizations endpoints ask the
-second). It reads `KEYCLOAK_URL`,
-`KEYCLOAK_REALM`, `IDENTITY_PROVIDER_ADMIN_CLIENT_ID` and `IDENTITY_PROVIDER_ADMIN_CLIENT_SECRET`
-when a call is made, so a project that does not use it starts without them.
+second). It reads `KEYCLOAK_URL`, `KEYCLOAK_REALM`, `IDENTITY_PROVIDER_ADMIN_CLIENT_ID` and
+`IDENTITY_PROVIDER_ADMIN_CLIENT_SECRET` when a call is made, so a project that does not use it
+starts without them.
 
 Another provider (Zitadel, Auth0, Entra ID) is another adapter of the same port: four methods
 (`openOrganisation`, `addMember`, `removeMember`, `disableAccount`), its spec run against a local
@@ -127,7 +153,11 @@ Keycloak one. A provider that needs nothing from the application gets an adapter
 do nothing, which its class comment says.
 
 The Keycloak adapter is specified against the paths and bodies of the Keycloak 26 documentation
-by a local server; it was not run against a real Keycloak by the kit.
+by a local server; the pipeline of the kit does not run it against a real Keycloak. Before relying
+on it, run it once against your realm: start Keycloak (`npm run infra:up` with `--authn
+keycloak`), enable organizations in the realm, create the confidential client with the two roles,
+then call each method from a script and read the result in the administration console (the
+organization and its members, the user disabled with the attributes of their profile kept).
 
 ## After it is written
 

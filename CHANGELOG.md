@@ -15,14 +15,26 @@ list the pull requests behind it.
   by token with an expiry, delegations of rights for ninety days at most; seven policies, the
   published language (`member.joined`, `member.role-changed`, `account.deactivated`...), a
   search, controllers, specs with builders and fakes, the Knex or Drizzle adapters, and the port
-  `IdentityProviderAdmin` with a Keycloak 26 adapter. Written for the declared style on Knex or
-  Drizzle, Zod or class-validator, Express or Fastify; another stack is refused with the flag to
-  change. Nothing is recorded in the config. Which other contexts deserve one:
+  `IdentityProviderAdmin`, kept in line at least once by consumers of the published facts, with a
+  Keycloak 26 adapter given as a recipe. Nobody changes their own role or acts above it, whatever
+  a delegation lends, and a change decided under a delegation names it (`delegationId`); every
+  change of a member saves its organisation, so two owners who remove each other at once cannot
+  both commit; a deactivated account leaves its organisations; an address the provider did not
+  verify (`email_verified`) provisions no account. With tenants and Keycloak, the authenticator
+  reads the `organization` claim as the tenants of the person. Written for the declared style on
+  Knex or Drizzle on PostgreSQL, Zod or class-validator, Express or Fastify, with a token
+  verifier; another stack is refused with the flag to change, and so is a second context of the
+  same preset. Nothing is recorded in the config. Which other contexts deserve one:
   [Context presets](docs/proposals/context-presets.md).
 - `@ddd-ts-kit/auth`: `SignedInGrantsAuthorizer({ grants, otherwise })` grants every signed-in
   person (an actor of type `user`) the same permissions before the model of the project decides
   the rest, whatever that model is. The preset wraps `createAuthorizer` in it, its grants in
   `platform/auth/signed-in-grants.ts`.
+- `@ddd-ts-kit/auth`: the default mappings of `JwtAuthenticator` and `keycloakAuthenticator` read
+  a tenant claim that lists several tenants (the `organization` claim of a member of several
+  organizations) as the `tenants` attribute of the actor, among which a request names one, where
+  they gave no tenant; and both give the attributes `username`, `email` and `emailVerified`
+  (`email_verified`), where `JwtAuthenticator` gave none.
 - The barrels and dependency files the CLI writes set a call that takes several lines apart by
   blank lines, as `@stylistic/padding-line-between-statements` asks.
 - Plugin 0.18.0: the skill `bootstrap` proposes the preset for a generic identity context.
@@ -34,20 +46,32 @@ list the pull requests behind it.
   tenant named (refused when there are rows and none), then the column is required and indexed; a
   table that has the column is left alone. `derivedTable(context, query, alias)` selects from a
   query confined by `tenantTable`, for a measure grouped then paged by its output columns.
+- `@ddd-ts-kit/knex`: `addOutboxTenantColumn(knex, { schema, tenantOfUnpublished })` gives the
+  events not published yet (pending or dead) the tenant the database served, so that their
+  consumers run in it.
+- `@ddd-ts-kit/http`: `servedTenantOf(resolver, served)` answers 404 to a tenant the deployment
+  does not serve, whoever names it.
 - `@ddd-ts-kit/di`: `kernelModule({ tenants })` binds a `TenantDirectory` and gives it to the
   default scheduler, so that a job declared `tenancy: 'per-tenant'` can be registered; the test
-  application takes `tenants` too, by default the tenant of its execution context.
-- `tenancy/scoped-statement` reads the literal text of a raw call: an expression that names no
-  statement and no table (an aggregate of a select, a constraint of the schema) is no longer
-  reported; raw SQL that names one, or whose text is not a literal, still is.
+  application takes `tenants` too, by default the tenant of its execution context, and composes
+  with none named (such a job then runs for no tenant), where it refused the job before.
+- `tenancy/scoped-statement` reads the literal text of a raw call: a statement of the schema with
+  no word of rows, and an expression that holds no word reading or writing rows or starting a
+  statement (`table`, `with`, `values`, `call`, `do`...) and calls only known expression
+  functions (aggregates, casts, arithmetic, text), are no longer reported; raw SQL whose text is
+  not a literal, or a template that interpolates, still is. Bind a list as one value
+  (`state = any(?)`) instead of interpolating its placeholders.
 - Plugin 0.18.0: the guard lets `test/e2e/journey-*.e2e.spec.ts` be written by hand, since a
   journey crosses several routes and no generator writes it.
 - Example: `"stack.tenancy": "shared-table"`, a tenant column on its twelve tables and the
   migration that adds it to an existing database, `tenantIsolationContract` on every Knex
   repository, the jobs run per network (`NETWORKS`), the audit trail read by platform staff
-  through a recorded elevation, and `x-tenant-id` refused at the edge for another network than
-  the caller's. Its HTTP contract changed: `POST /practices` asks the role `network-admin`,
-  `GET /audit/entries` takes `network`.
+  through a recorded elevation, `x-tenant-id` refused at the edge for another network than the
+  caller's, and a network missing from `NETWORKS` not found. Its HTTP contract changed: `POST
+  /practices` asks the role `network-admin`, `GET /audit/entries` takes `network`, every request
+  that reaches data needs the `tenant_id` claim, a token or header naming a network not served is
+  answered 404, and a person registered in one network who registers in another is refused
+  (422, `CONCURRENCY_CONFLICT`).
 
 ## 0.10.0
 

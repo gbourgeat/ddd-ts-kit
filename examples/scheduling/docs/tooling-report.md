@@ -1164,7 +1164,7 @@ example needs or a change of its contract.
 | Groups | `Practice` with a time zone, managers, practitioners, assistants | `Organisation` with owners, admins, members | no: the time zone and the three roles are the language of scheduling |
 | Invitations | none: a manager adds a known person | issued by token, accepted signed in | no: a new feature, not an alignment |
 | Delegations | on a desk, with or without the right to change availability, expiring by a job | rights of a role lent for ninety days | no: another meaning under the same word |
-| Identity provider | read only (the token) | `IdentityProviderAdmin` told after each commit | no: nothing here needs the realm to follow |
+| Identity provider | read only (the token) | `IdentityProviderAdmin` kept in line at least once by consumers of its facts | no: nothing here needs the realm to follow |
 | Tenancy | the network is the tenant, practices inside it | the organisation is the tenant | no: ADR-0003 chose the network |
 
 What the comparison changed in the kit: the preset first answered `FORBIDDEN` to every signed-in
@@ -1349,3 +1349,28 @@ in the kit, then `npm run docs:generate` rewrote `clients/api`:
 | Lockfile | none in this directory, which is a workspace of the kit; a generated npm project is told to run `npm install` when its lock misses a client |
 
 The two changed spec files and the three journeys pass again in process (30 tests).
+
+## 2026-10-13 (late night): what a review of the tenancy and of the identity preset changed here
+
+The pipeline of the pull request was red on this example, and the review found why:
+
+| Found | Changed |
+|---|---|
+| `journey-tenancy` failed 5 times out of 5 (`422 UNKNOWN_PRACTITIONER`): `inNetwork` gave its network to `as` only, so the practice of `south` was opened by the typed client in `north` | `inNetwork` gives the network to every credential it builds (`as`, `headersOf`, `apiAs`); the journey passes, 7 tests |
+| `journey-observability` expected the error report of before the networks | the report names the network (`tenantId: 'north'`), which is itself a proof |
+| The conformance suite excused `tenancy/scoped-statement` ("the example says nothing of tenancy"), and its injected migration took the number of the real one | the excuse is gone, the injection alone breaks the rule; the injected migration of `persistence/no-file-content` is numbered after every real one |
+| A token naming a network missing from `NETWORKS` reached data that no job would ever process | `servedTenantOf` answers 404 at the edge, and a spec proves it |
+| A subject registered in two networks collided on a key unique across networks | ADR-0003 holds a person to one network (one `tenant_id` per user of the realm); the second registration is refused and the first kept, as a spec proves |
+| Events in the outbox at the time of the migration had no network | the migration gives the unpublished ones `NETWORK_OF_EXISTING_ROWS` (`tenantOfUnpublished`) |
+
+The checker now judges raw SQL by what may reach rows, and refuses a template that interpolates:
+two raw aggregates of the occupancy reader bound their list of states as one value
+(`state = any(?)`) instead of interpolated placeholders, and the constraint of the schema binds
+its name (`??`) instead of interpolating it. `check` reports 0 errors and 1 suppression
+(ADR-0004).
+
+The identity context of this example was not changed by the corrections of the preset: it has
+no organisation of its own, its roles are those of a practice, and its people register
+themselves. What the preset now does (delegations within the role of the delegate, the provider
+kept in line at least once, organisations read as tenants from the token) stays a comparison of
+the section above, not a change of this contract.

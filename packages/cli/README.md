@@ -253,22 +253,28 @@ of the context to fill in.
 
 ### Presets
 
-`--preset identity` (repeatable on `init`, once on `generate context`) writes a whole bounded
+`--preset identity` (on `init`, or on `generate context`; once per project) writes a whole bounded
 context instead of an empty one: who the people of the application are, the organisations they
 belong to and in which role. Accounts are provisioned from the identity provider at the first
 sign-in (no password is kept), organisations (the tenants under `--tenancy shared-table`),
 members with roles of a declared vocabulary, invitations by token with an expiry, delegations of
 rights for a period; permissions, policies, the published language (member joined, role changed,
 account deactivated...), a search, controllers, specs with builders and fakes, the adapters of
-the ORM, and the port to the administration API of the identity provider with a Keycloak
-adapter. On `init` without a `--context` of its name, the context `identity` is declared
+the ORM, and the port to the administration API of the identity provider, kept in line at least
+once by the consumers of the published facts, with a Keycloak adapter given as a recipe (proven
+against a server that answers as Keycloak does, not against Keycloak in the pipeline). Nobody
+changes their own role or acts above it, whatever a delegation lends; a deactivated account
+leaves its organisations; an address the provider did not verify provisions no account. On `init` without a `--context` of its name, the context `identity` is declared
 `generic`. Every signed-in person holds the permissions of the context whatever `--authz` says:
 the grant `'identity:*'` of `platform/auth/signed-in-grants.ts`, answered by
 `SignedInGrantsAuthorizer` before the model in `createAuthorizer`. With tenants, the tables of
-the context belong to none, under a decision record the preset writes. The preset is written
-for `declared` with `signature` dependencies, `factories`, `throwing` value objects,
-`controllers`, Knex or Drizzle, Zod or class-validator, Express or Fastify; another stack is
-refused with what to change. Why, and which other contexts deserve one:
+the context belong to none, under a decision record the preset writes, and with `--authn
+keycloak` the authenticator reads the `organization` claim as the tenants of the person
+(another authenticator gets a next step saying what to map). The preset is written for
+`declared` with `signature` dependencies, `factories`, `throwing` value objects, `controllers`,
+Knex or Drizzle on PostgreSQL, Zod or class-validator, Express or Fastify, and a token verifier
+(`jwt` or `keycloak`); another stack is refused with what to change, and so is a second context
+written from the same preset. Why, and which other contexts deserve one:
 [Bootstrap with well-designed contexts](../../docs/guides/bootstrap-with-well-designed-contexts.md).
 
 ## generate (alias g)

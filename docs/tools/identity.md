@@ -31,7 +31,7 @@ Facts about third-party products were checked on 2026-10-10 against the sources 
 | Configuration in the kit | base URL, realm, audience, optional client id and tenant claim | key set URL or a key, issuer, audience, allowed algorithms, optional `toActor` | none |
 | Issuer and key set | derived from the base URL and the realm | given explicitly | not applicable |
 | Roles | realm roles, plus the client roles of one client when it is named | the first claim present among `realm_access.roles`, `roles`, `scope`, never merged; or your `toActor` | whatever the header says |
-| Tenant | a text claim, or the `organization` claim when it names exactly one organization | a text claim (`tenant_id` by default) | whatever the header says |
+| Tenant | a text claim; a list or the `organization` claim: one names the tenant, several are the `tenants` attribute, among which a request names one | the same, from the tenant claim (`tenant_id` by default) | whatever the header says |
 | Service accounts | recognised (`preferred_username` starting with `service-account-`) | mapped by your `toActor` | not applicable |
 | Local development | `init --authn keycloak` adds a compose service and a realm file with demo users | you bring the provider, or sign test tokens yourself | immediate |
 | You operate | a Keycloak server, its database, its upgrades | what the provider asks: nothing for a hosted one | nothing |
@@ -78,8 +78,8 @@ impersonator from the `act` claim (RFC 8693) or a claim you name, the locale and
 | `actor.id` | `sub` |
 | `actor.type` | `service` for a service account (client credentials grant), else `user` |
 | `actor.roles` | `realm_access.roles`, plus `resource_access.<clientId>.roles` when a client id is given, each once |
-| `actor.attributes` | `username` from `preferred_username`, `email`, `groups` from the groups claim |
-| `actor.tenantId` | the tenant claim: a text claim, or the `organization` claim when it names exactly one organization |
+| `actor.attributes` | `username` from `preferred_username`, `email`, `emailVerified` from `email_verified`, `groups` from the groups claim, `tenants` when the tenant claim names several |
+| `actor.tenantId` | the tenant claim: a text claim, or a list (the `organization` claim) when it names exactly one |
 | `session.id` | `sid`; `jti` for a service account, which has no session |
 | `session.authenticationMethod` | `sso` for a person, `service` for a service account |
 | `session.authenticationStrength` | the assurance level from `acr` |
@@ -128,9 +128,10 @@ sequenceDiagram
 organisation they belong to and what they may do there is the application's. `--preset identity`
 writes that context whole: accounts provisioned from the token at the first sign-in, never a
 password, organisations, members and roles, invitations, delegations, and the port
-`IdentityProviderAdmin` that tells Keycloak 26 (organizations API) what was decided, after the
-commit. The Keycloak adapter is specified against a local server, not run against a real
-Keycloak by the kit. See
+`IdentityProviderAdmin` that tells Keycloak 26 (organizations API) what was decided, at least
+once, from the consumers of its published facts. With tenants, the authenticator reads the
+`organization` claim as the tenants of the person. The Keycloak adapter is a recipe: specified
+against a local server, not run against a real Keycloak by the pipeline of the kit. See
 [Bootstrap with well-designed contexts](../guides/bootstrap-with-well-designed-contexts.md).
 
 ## Limits and when not to use it
@@ -143,8 +144,9 @@ Keycloak by the kit. See
   handling, no cookie session, no password reset, no user provisioning. Those belong to the
   provider and to the front end.
 - **Opaque tokens are not supported** by the shipped authenticators: they verify JWTs.
-- **Several organizations per user give no tenant** with the `organization` claim: choosing one
-  is a decision of the project.
+- **Several organizations per user give no default tenant** with the `organization` claim: they
+  are the `tenants` of the actor, and each request names the one it works in (`x-tenant-id`);
+  one without it works in no tenant.
 - **A scope is not a role.** The default mapping never merges `scope` with roles; do not work
   around it, write a `toActor`.
 - **The generated realm and the development header authenticator are for local use.** The
