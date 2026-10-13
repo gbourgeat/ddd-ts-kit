@@ -5,6 +5,7 @@ export const NO_FLAGS: KindFlags = {
   upstream: [],
   term: [],
   value: [],
+  transition: [],
   command: false,
   query: false,
   allowName: false,
