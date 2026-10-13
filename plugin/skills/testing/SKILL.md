@@ -76,8 +76,8 @@ expectSnapshotEquivalence({ events, rehydrate, policy: orderSnapshots, state: (o
 
 One intention per test. Assert events, errors, and state through the public API only. A
 refusal is asserted by its code and its facts, never by a message or the class of one error:
-`thenError(code, facts)` on an aggregate, `expectRefusal(subject, code, facts)` on an action, a
-`Result` or a caught error, `expectProblem(response, { status, code, facts })` end to end.
+`thenError(code, facts)` on an aggregate, `expectRefusal(subject, code, facts)` on an action
+(`() => Email.create(raw)`, the factory of a value object that throws), a `Result` or a caught error, `expectProblem(response, { status, code, facts })` end to end.
 
 ## Handler specs
 

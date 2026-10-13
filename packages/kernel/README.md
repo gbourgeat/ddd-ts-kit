@@ -159,7 +159,7 @@ a repository adapter never call it. An aggregate is recognised by what it does (
 | `after-commit` | `dispatcher.on(name, callback, { phase: 'after-commit' })` | once the transaction has committed, never when it rolled back, in dispatch order, awaited before the command answers | never fails the command: reported, and the other handlers still run |
 
 With declarations the phase is an option of the decorator:
-`@DomainEventHandler(OrderPaid, { name: 'ordering.order.paid', phase: 'after-commit' })`.
+`@DomainEventHandler(OrderPaid, { name: OrderPaid.eventName, phase: 'after-commit' })`.
 
 The `after-commit` phase is at most once: a crash between the commit and the run loses it. What
 must not be lost goes through the outbox as an integration event. A `before-commit` handler
@@ -419,7 +419,7 @@ left alone.
 | `CommandHandler(Message)` | the one handler of a command | `@CommandHandler(PlaceOrder)` |
 | `QueryHandler(Message)` | the one handler of a query | `@QueryHandler(GetOrder)` |
 | `IntegrationEventHandler(definition, { consumer, actorOf? })` | the handler of an integration event of another context | `@IntegrationEventHandler(OrderPlaced, { consumer: 'billing.invoice-on-order-placed' })` |
-| `DomainEventHandler(Event, { name })` | a handler of a domain event of its own context | `@DomainEventHandler(OrderPaid, { name: 'ordering.order.paid' })` |
+| `DomainEventHandler(Event, { name })` | a handler of a domain event of its own context | `@DomainEventHandler(OrderPaid, { name: OrderPaid.eventName })`, the name the event class declares once in `static readonly eventName` |
 | `Scheduled(name, schedule and options)` | a job run by time, which triggers use cases | `@Scheduled('billing.send-reminders', { cron: '0 7 * * 1-5', timeZone: 'Europe/Paris' })` |
 | `Projection(name)` with `On(definition)` on its methods | a projector: the class that keeps one read model up to date | `@Projection('scheduling.appointment-list')`, `@On(PaymentCaptured)` |
 | `Repository(Port, options?)` | the adapter of a repository of the domain | `@Repository(OrderRepository)` |

@@ -7,7 +7,7 @@ builder.bind({{event.pascal}}EventHandler).toClass({{event.pascal}}EventHandler)
 @@start
 {{#if handler.afterCommit}}
 resolve(DomainEventDispatcher).on(
-  '{{event.name}}',
+  {{event.reference}},
   async (event) => {
     if (event instanceof {{event.pascal}}) {
       await resolve({{event.pascal}}EventHandler).handle(event);
@@ -17,7 +17,7 @@ resolve(DomainEventDispatcher).on(
 );
 {{/if}}
 {{#unless handler.afterCommit}}
-resolve(DomainEventDispatcher).on('{{event.name}}', async (event) => {
+resolve(DomainEventDispatcher).on({{event.reference}}, async (event) => {
   if (event instanceof {{event.pascal}}) {
     await resolve({{event.pascal}}EventHandler).handle(event);
   }

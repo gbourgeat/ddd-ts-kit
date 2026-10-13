@@ -58,7 +58,7 @@ describe('When appointment cancelled', () => {
     await handler.handle(
       new AppointmentCancelled('appointment-1', occurredAt, {
         booking: held.booking,
-        cancellation: unwrap(Cancellation.create('patient')),
+        cancellation: Cancellation.create('patient'),
       }),
     );
 
@@ -73,7 +73,7 @@ describe('When appointment cancelled', () => {
     await handler.handle(
       new AppointmentCancelled('appointment-1', occurredAt, {
         booking: held.booking,
-        cancellation: unwrap(Cancellation.create('patient')),
+        cancellation: Cancellation.create('patient'),
       }),
     );
 

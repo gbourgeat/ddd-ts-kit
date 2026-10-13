@@ -1,6 +1,7 @@
 /**
- * Immutable, compared by value, valid at construction. Subclass with a private
- * constructor and a `create` factory that validates and returns a Result or throws.
+ * Immutable, compared by value, valid at construction. Subclass with a private constructor and
+ * a `create` factory that validates, then returns the value object or throws the refusal of its
+ * concept (or returns a `Result`, in a project that says `"stack.valueObjects": "result"`).
  */
 export abstract class ValueObject<Props extends Record<string, unknown>> {
   protected readonly props: Readonly<Props>;

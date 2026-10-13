@@ -7,7 +7,7 @@ import type { IdentityRelationships } from '@/contexts/identity/application/port
  * When a member is removed, the platform forgets their role and their desk, and the delegations
  * they gave or received in that practice end with the membership.
  */
-@DomainEventHandler(PracticeMemberRemoved, { name: 'identity.practice.member-removed' })
+@DomainEventHandler(PracticeMemberRemoved, { name: PracticeMemberRemoved.eventName })
 export class PracticeMemberRemovedEventHandler implements DomainEventHandler<PracticeMemberRemoved> {
   constructor(
     private readonly relationships: IdentityRelationships,

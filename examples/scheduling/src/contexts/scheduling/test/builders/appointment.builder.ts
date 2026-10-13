@@ -1,4 +1,3 @@
-import { unwrap } from '@ddd-ts-kit/kernel';
 import { Builder, sequence, type Defaults } from '@ddd-ts-kit/testing';
 import { Appointment } from '@/contexts/scheduling/domain/aggregates/appointment.aggregate';
 import { Booking } from '@/contexts/scheduling/domain/value-objects/booking.vo';
@@ -127,17 +126,15 @@ function bornFrom(ingredients: AppointmentIngredients): Appointment {
   const endsAt = new Date(startsAt.getTime() + ingredients.minutes * MINUTE);
   const slot = Slot.between(startsAt, endsAt, new Date(endsAt.getTime() + ingredients.bufferMinutes * MINUTE));
 
-  const booking = unwrap(
-    Booking.create({
-      calendarId: ingredients.calendarId,
-      practiceId: ingredients.practiceId,
-      practitionerId: ingredients.practitionerId,
-      patientId: ingredients.patientId,
-      appointmentTypeId: ingredients.appointmentTypeId,
-      slot,
-      day: ingredients.day ?? startsAt.toISOString().slice(0, 10),
-    }),
-  );
+  const booking = Booking.create({
+    calendarId: ingredients.calendarId,
+    practiceId: ingredients.practiceId,
+    practitionerId: ingredients.practitionerId,
+    patientId: ingredients.patientId,
+    appointmentTypeId: ingredients.appointmentTypeId,
+    slot,
+    day: ingredients.day ?? startsAt.toISOString().slice(0, 10),
+  });
 
   const confirmBefore =
     ingredients.confirmBefore ?? (ingredients.end === 'expired' ? new Date(bornAt.getTime() + 60 * MINUTE) : undefined);
@@ -151,9 +148,9 @@ function bornFrom(ingredients: AppointmentIngredients): Appointment {
 const ENDINGS: Record<AppointmentIngredients['end'], (born: Appointment, ingredients: AppointmentIngredients) => void> =
   {
     none: () => undefined,
-    'cancelled-by-patient': (born, { bornAt }) => born.cancel(unwrap(Cancellation.create('patient')), bornAt),
+    'cancelled-by-patient': (born, { bornAt }) => born.cancel(Cancellation.create('patient'), bornAt),
     'cancelled-by-practice': (born, { bornAt }) =>
-      born.cancel(unwrap(Cancellation.create('practice', 'The practitioner is away.')), bornAt),
+      born.cancel(Cancellation.create('practice', 'The practitioner is away.'), bornAt),
     expired: (born) => born.expire(born.confirmBefore ?? born.registeredAt),
     completed: (born, { startsAt }) => born.complete(startsAt),
     'no-show': (born, { startsAt }) => born.markNoShow(startsAt),

@@ -1,7 +1,9 @@
 import type { DomainEvent } from '@ddd-ts-kit/kernel';
 
 export class DelegationGranted implements DomainEvent {
-  readonly name = 'identity.delegation.granted';
+  static readonly eventName = 'identity.delegation.granted';
+
+  readonly name = DelegationGranted.eventName;
 
   constructor(
     readonly aggregateId: string,

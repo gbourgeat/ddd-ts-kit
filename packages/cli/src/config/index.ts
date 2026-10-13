@@ -26,6 +26,8 @@ export { IMPORT_EXTENSIONS } from './import-extensions.js';
 export { isOneOf } from './is-one-of.js';
 export { openApiProblems } from './open-api-problems.js';
 export { parseConfig } from './parse-config.js';
+export { DEFAULT_SDK_NAME } from './default-sdk-name.js';
+export { sdkProblems } from './sdk-problems.js';
 export { readConfig } from './read-config.js';
 export { REFERENCE_COVERAGE } from './reference-coverage.js';
 export { RELATIONSHIPS } from './relationships.js';
@@ -54,6 +56,8 @@ export {
   STYLES,
   TEST_STACKS,
   VALIDATION_STACKS,
+  VALUE_OBJECT_FORMS,
+  LITERAL_FORMS,
   type OrmStack,
   type Stack,
 } from './stack.js';

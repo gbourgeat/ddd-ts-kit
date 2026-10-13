@@ -26,6 +26,7 @@ const STACK_FLAGS = [
   'dependencies',
   'refusals',
   'routes',
+  'literals',
 ] as const;
 
 const OTHER_TEXT_FLAGS = [
@@ -35,6 +36,7 @@ const OTHER_TEXT_FLAGS = [
   'import-alias',
   'import-extension',
   'package-manager',
+  'value-objects',
 ];
 
 export const initCommand: Command = (argv, io) => {
@@ -43,6 +45,7 @@ export const initCommand: Command = (argv, io) => {
     context: { type: 'string', multiple: true },
     'dry-run': { type: 'boolean', default: false },
     force: { type: 'boolean', default: false },
+    sdk: { type: 'boolean', default: false },
   });
 
   if (args.positionals.length > 0) {
@@ -75,6 +78,7 @@ function stackOptions(args: Arguments) {
   const importAlias = args.text('import-alias');
   const importExtension = args.text('import-extension');
   const packageManager = args.text('package-manager');
+  const valueObjects = args.text('value-objects');
 
   return {
     ...args.texts(STACK_FLAGS),
@@ -84,5 +88,7 @@ function stackOptions(args: Arguments) {
     ...(importAlias === undefined ? {} : { importAlias }),
     ...(importExtension === undefined ? {} : { importExtension }),
     ...(packageManager === undefined ? {} : { packageManager }),
+    ...(valueObjects === undefined ? {} : { valueObjects }),
+    ...(args.flag('sdk') ? { sdk: true } : {}),
   };
 }

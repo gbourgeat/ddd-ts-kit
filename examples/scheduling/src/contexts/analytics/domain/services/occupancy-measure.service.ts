@@ -1,11 +1,4 @@
-/** How an appointment stands for measurement. */
-export type OutcomeState =
-  | 'held'
-  | 'completed'
-  | 'no-show'
-  | 'cancelled-by-patient'
-  | 'cancelled-by-practice'
-  | 'expired';
+import { OutcomeState } from '@/contexts/analytics/domain/vocabularies/outcome-state.vocabulary';
 
 /** What the measure reads of the outcome of one appointment. */
 export type MeasuredOutcome = {
@@ -34,7 +27,7 @@ const MILLISECONDS_A_MINUTE = 60_000;
  */
 export class OccupancyMeasureService {
   /** The outcomes that hold their time: a cancelled or an expired appointment frees it. */
-  static readonly HOLDING: readonly OutcomeState[] = ['held', 'completed', 'no-show'];
+  static readonly HOLDING: readonly OutcomeState[] = [OutcomeState.Held, OutcomeState.Completed, OutcomeState.NoShow];
 
   /** Counts from nothing each time: the same outcomes always give the same figures. */
   measure(outcomes: readonly MeasuredOutcome[]): OccupancyFigures {
@@ -44,10 +37,10 @@ export class OccupancyMeasureService {
     return {
       heldMinutes: holding.reduce((minutes, outcome) => minutes + minutesOf(outcome), 0),
       appointmentsHeld: holding.length,
-      completed: count('completed'),
-      noShows: count('no-show'),
-      cancelledByPatient: count('cancelled-by-patient'),
-      cancelledByPractice: count('cancelled-by-practice'),
+      completed: count(OutcomeState.Completed),
+      noShows: count(OutcomeState.NoShow),
+      cancelledByPatient: count(OutcomeState.CancelledByPatient),
+      cancelledByPractice: count(OutcomeState.CancelledByPractice),
     };
   }
 }

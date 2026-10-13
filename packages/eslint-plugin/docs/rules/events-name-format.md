@@ -10,14 +10,16 @@ An event name is a public address: consumers subscribe to it, the catalog lists 
 
 ## Reported
 
-- in `domain/events/`: a `name` property or object key whose string is not `<this context>.<aggregate>.<fact>` in kebab-case
+- in `domain/events/`: an `eventName` or `name` property or object key whose string is not `<this context>.<aggregate>.<fact>` in kebab-case
 - in `published-language/`: the `type` given to `defineIntegrationEvent`, and any other `type` holding a dotted string
 
 Incorrect:
 
 ```ts
 export class InvoiceIssued implements DomainEvent {
-  readonly name = 'InvoiceIssued';
+  static readonly eventName = 'InvoiceIssued';
+
+  readonly name = InvoiceIssued.eventName;
 }
 ```
 
@@ -25,13 +27,15 @@ Correct:
 
 ```ts
 export class InvoiceIssued implements DomainEvent {
-  readonly name = 'billing.invoice.issued';
+  static readonly eventName = 'billing.invoice.issued';
+
+  readonly name = InvoiceIssued.eventName;
 }
 ```
 
 ## Details
 
-Template literals without interpolation are read like strings.
+Template literals without interpolation are read like strings. The name is declared once, in `eventName`, which the event carries in `name` and its reactions read (`{ name: InvoiceIssued.eventName }`); a `readonly name = '..'` written out, as before 0.6, is judged the same way.
 
 ## Options
 

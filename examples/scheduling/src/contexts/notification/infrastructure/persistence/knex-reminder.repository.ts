@@ -10,6 +10,7 @@ import type {
   ReminderColumns,
   ReminderRow,
 } from '@/contexts/notification/infrastructure/persistence/reminder-row.schema';
+import { ReminderStatus } from '@/contexts/notification/domain/vocabularies/reminder-status.vocabulary';
 
 type VersionedReminder = ReminderColumns & { readonly version: number };
 
@@ -35,7 +36,7 @@ export class KnexReminderRepository implements ReminderRepository {
 
   async findDue(asOf: Date): Promise<readonly Reminder[]> {
     const rows = await tableOf(this.database)
-      .where({ status: 'planned' })
+      .where({ status: ReminderStatus.Planned })
       .where('due_at', '<=', asOf)
       .where('starts_at', '>', asOf)
       .orderBy('due_at')

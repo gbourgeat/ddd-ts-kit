@@ -13,6 +13,16 @@ export class IssueInvoiceCommand {}`,
     bad: `export class InvoiceManager {}`,
     good: `export class InvoiceNumbering {}`,
   },
+  'language/declared-vocabulary': {
+    why: 'A status, a kind, a role or a permission is a word of the language whose values are a closed list. Spelled again as a string wherever it is compared, granted or stored, each copy can drift: a typo compiles, a renamed value leaves its old spelling behind, and nothing completes it in the editor. Declared once, as an object `as const` and the union type of its name (a permission set for permissions), it is read by its key, completed by the editor, and a parameter typed with it accepts nothing else. The value stays the same string on the wire and in the database. A quoted key counts, and is written as a computed key, `[AppointmentStatus.NoShow]: ..`. Tests and published languages are not judged: a test sends the values a client sends, and a published language names the values of its contract itself; nor is the relationship schema of the access model, which declares its relations. Where: the vocabulary of a context in that context only (the same word may mean something else next door), one of the platform (the roles) in the platform and in the route groups `*.routes.ts`, a permission id and a vocabulary of the shared kernel everywhere. What is read as a vocabulary: every entry a key and a string literal, comments, either quote and `as const satisfies ..` allowed; a number, a spread or a computed entry leaves the object unread, and so does a union type written otherwise than `(typeof X)[keyof typeof X]`. The rule holds under "stack.literals": "named", which `init` writes; a config that does not say keeps the free literals of 0.5.',
+    bad: `// domain/vocabularies/appointment-status.vocabulary.ts declares AppointmentStatus
+if (appointment.status === 'no-show') {
+  grants.push('billing:invoice.issue');
+}`,
+    good: `if (appointment.status === AppointmentStatus.NoShow) {
+  grants.push(billingPermissions['invoice.issue']);
+}`,
+  },
   'purity/no-system-clock': {
     why: 'Code that reads the clock gives a different answer every time it runs, so its tests are either flaky or need a mocked module. Passing the instant in, from the Clock port, makes every rule about time testable with a fixed date and replayable in production.',
     bad: `isOverdue(): boolean { return this.dueDate < new Date(); }`,

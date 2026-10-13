@@ -112,7 +112,7 @@ to the outbox. Then the transaction commits, and the handlers of the `after-comm
 
 ```ts
 // contexts/appointments/application/event-handlers/appointment-booked.event-handler.ts
-@DomainEventHandler(AppointmentBooked, { name: 'appointments.appointment.booked', phase: 'after-commit' })
+@DomainEventHandler(AppointmentBooked, { name: AppointmentBooked.eventName, phase: 'after-commit' })
 export class AppointmentBookedEventHandler implements DomainEventHandler<AppointmentBooked> {
   constructor(private readonly board: AvailabilityBoard) {}
 
@@ -123,7 +123,7 @@ export class AppointmentBookedEventHandler implements DomainEventHandler<Appoint
 ```
 
 In the explicit style the phase is given at registration:
-`dispatcher.on('appointments.appointment.booked', callback, { phase: 'after-commit' })`.
+`dispatcher.on(AppointmentBooked.eventName, callback, { phase: 'after-commit' })`.
 The generator writes either: `npx ddd-ts-kit generate event-handler appointments Appointment
 Booked --phase after-commit`.
 

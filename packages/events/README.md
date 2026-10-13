@@ -53,7 +53,7 @@ never declared `phase: 'after-commit'`: the transaction that would hold its outb
 import { IdGenerator, IntegrationEventPublisher } from '@ddd-ts-kit/kernel';
 import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
 
-@DomainEventHandler(OrderPlacedEvent, { name: 'ordering.order.placed' })
+@DomainEventHandler(OrderPlacedEvent, { name: OrderPlacedEvent.eventName })
 export class OrderPlacedPublisher implements DomainEventHandler<OrderPlacedEvent> {
   constructor(
     private readonly publisher: IntegrationEventPublisher,

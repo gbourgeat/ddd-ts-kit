@@ -19,7 +19,7 @@ type Applied =
 /**
  * On a method of a `@Projection` class: this method applies that event.
  * `@On(PractitionerRenamed)` for an integration event of an upstream context,
- * `@On(AppointmentBooked, { name: 'scheduling.appointment.booked' })` for a domain event of
+ * `@On(AppointmentBooked, { name: AppointmentBooked.eventName })` for a domain event of
  * the projection's own context. The method receives the event and answers what its store
  * answered.
  */

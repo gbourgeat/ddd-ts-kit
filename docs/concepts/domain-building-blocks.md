@@ -21,7 +21,9 @@ import type { DomainEvent } from '@ddd-ts-kit/kernel';
 import type { CancellationReason } from '@/contexts/appointments/domain/value-objects/cancellation-reason.vo';
 
 export class AppointmentCancelled implements DomainEvent {
-  readonly name = 'appointments.appointment.cancelled';
+  static readonly eventName = 'appointments.appointment.cancelled';
+
+  readonly name = AppointmentCancelled.eventName;
 
   constructor(
     readonly aggregateId: string,
@@ -30,6 +32,14 @@ export class AppointmentCancelled implements DomainEvent {
   ) {}
 }
 ```
+
+The name is written once, in `eventName`: the event carries it in `name`, and every reaction is
+attached by it, `@DomainEventHandler(AppointmentCancelled, { name: AppointmentCancelled.eventName })`
+or `domainEvents.on(AppointmentCancelled.eventName, ..)`, so a renamed event cannot leave a
+handler listening to the old name. `events/name-format` holds its form,
+`<context>.<aggregate>.<fact>`. An event written before 0.6, `readonly name = '..'`, and a
+handler that writes the name out are still read; `declarations/role-declared` then compares the
+two.
 
 The life of a domain event:
 

@@ -2,7 +2,9 @@ import type { DomainEvent } from '@ddd-ts-kit/kernel';
 import type { Offer } from '@/contexts/scheduling/domain/value-objects/offer.vo';
 
 export class WaitlistSlotOffered implements DomainEvent {
-  readonly name = 'scheduling.waitlist.slot-offered';
+  static readonly eventName = 'scheduling.waitlist.slot-offered';
+
+  readonly name = WaitlistSlotOffered.eventName;
 
   constructor(
     readonly aggregateId: string,

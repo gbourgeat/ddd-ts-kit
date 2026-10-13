@@ -19,7 +19,8 @@
     "paths": {
       "@/*": ["./src/*"],
       "$test/*": ["./test/*"],
-      "$scripts/*": ["./scripts/*"]
+      "$scripts/*": ["./scripts/*"],
+      "scheduling-api-client": ["./clients/api/src/index.ts"]
     }
   },
   "include": ["src", "scripts", "test"]

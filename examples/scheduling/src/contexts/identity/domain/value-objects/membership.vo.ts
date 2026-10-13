@@ -1,5 +1,6 @@
 import { ValueObject } from '@ddd-ts-kit/kernel';
-import type { Role, RoleName } from '@/contexts/identity/domain/value-objects/role.vo';
+import type { Role } from '@/contexts/identity/domain/value-objects/role.vo';
+import type { RoleName } from '@/contexts/identity/domain/vocabularies/role-name.vocabulary';
 
 export type MembershipProps = {
   readonly personId: string;

@@ -64,6 +64,84 @@ its only change of
 HTTP contract is the additive route `GET /practices/{practiceId}/patients/{patientId}/attendance`.
 Plugin 0.13.0: the persistence, testing and scaffold skills say how.
 
+## 0.7.0
+
+**A value object throws its refusals.** `init` writes `"stack.valueObjects": "throwing"`:
+`generate value-object` writes a `create` that returns the value object or throws the refusal
+built by the static factory of its concept (`throw PersonError.invalidEmail(raw)`), as the rest
+of the domain refuses, and a spec that asserts it with `expectRefusal(() => Email.create(raw),
+code)`; a caller no longer unwraps anything. `Result`, `ok`, `err` and `unwrap` stay in the
+kernel: `--value-objects result`, or a config without the key, keeps the form of 0.5, so an
+existing project upgrades without a change. `ddd-ts-kit value-objects` moves a project from one
+to the other: it rewrites the factories, removes every `unwrap(..)` of them, turns the assertions
+on a `Result` into assertions on the factory, tidies the imports, sets the key, and prints what
+is left to a person.
+
+**Closed vocabularies are declared once.** A status, a kind or a role is an object `as const`
+and the union type of the same name (`AppointmentStatus.NoShow`), not an `enum`: Node's type
+stripping and `erasableSyntaxOnly` refuse an `enum`, measured on Node 24. `generate vocabulary
+<context> <Name> --value <value>...` writes one under `domain/vocabularies/`, a new canonical
+role, and adds the values a file does not hold yet. `init` writes the roles a credential carries
+as the vocabulary `Role` of the platform (`<platformDir>/auth/role.ts`), read by the grants
+(`[Role.Admin]: ['*']`, `systemRole: Role.System`) and the attribute policies;
+`generate route-group --role <role>` writes `HasRole(Role.<Key>)` and adds the role to it; the
+grant `generate job` gives a system actor names the permission through its set
+(`billingPermissions['invoice.cancel']`) instead of its id.
+
+**A domain event names itself once.** `generate domain-event` writes `static readonly eventName =
+'billing.invoice.issued'` and `readonly name = InvoiceIssued.eventName`; the reactions
+`generate event-handler` and `generate integration-event` write read it,
+`@DomainEventHandler(InvoiceIssued, { name: InvoiceIssued.eventName })` and
+`domainEvents.on(InvoiceIssued.eventName, ..)` in a module file, so a renamed event cannot leave a
+handler on the old name. An integration event handler reads the type it handles from the
+declaration of its upstream, `static readonly eventType = invoiceIssuedV1.type`, which the event
+catalog script resolves. `events/name-format` judges `eventName`, and `declarations/role-declared`
+accepts `{ name: <Event>.eventName }` when `<Event>` is the class the decorator is given. An event
+written before, `readonly name = '..'`, and a handler that writes the name out are still read and
+compared; a reaction generated for such an event writes the name out, so it compiles.
+
+**Two rules against magic values.** `language/declared-vocabulary` (checker and ESLint) reports a
+string literal whose value a vocabulary of the project declares, an object `as const` with the
+union type of its name or a permission set of `definePermissions`, and names the key to write
+instead: a vocabulary of a context in that context, the one of the platform in the platform and
+in the route groups, a permission id and a vocabulary of the shared kernel everywhere; tests,
+published languages and the relationship schema are not judged. A vocabulary is parsed, so a
+documented entry, double quotes and `as const satisfies ..` are read. `clean/no-magic-number`
+(ESLint) reports a number in `domain/` and `application/` other than 0, 1, -1, an index, a type or
+the initializer of a module constant or a `static readonly`; the `allow` option changes the list.
+Both rules hold under `"stack.literals": "named"`, which `init` writes (`--literals free` leaves
+them out). A config without the key reads as `free`: an existing project upgrades without a
+change, including the grants `generate job` wrote by their permission id, which a job generated
+again recognises instead of granting twice. To turn the rules on, set the key and follow the fix
+each finding gives ([Configuration](docs/CONFIG.md#stack)). The example declares 8 vocabularies and
+replaced 227 raw values and 8 numbers, its OpenAPI contract unchanged.
+
+**Every package carries the MIT notice.** Each published package now holds the `LICENSE` of the
+repository next to its `dist/`, and `npm run package:check` refuses a tarball without it, or with
+another text. Earlier versions were published without it.
+
+## 0.6.0
+
+**A typed client of the contract, for the callers of the API.** `npx ddd-ts-kit sdk` (or
+`init --sdk`) generates one client per document of the OpenAPI contract, a workspace package
+under `clients/<document>` with no runtime dependency: each operation answers its outcome typed
+by status, a refusal typed by the error codes its contract declares (`problem.code` is
+`'UNKNOWN_TIME_ZONE' | 'VALIDATION_FAILED'`, not `string`), credentials are given per security
+scheme, and `unwrap` with `isProblem` serve the code that prefers exceptions. A status the
+contract does not declare throws `UnexpectedResponseError`, which reads the problem document of
+a fault of the server: its `code` (`INTERNAL_ERROR`) and its `requestId`. An operation id that
+is a reserved word or a name of the client is renamed (`deleteOperation`, `send2`). The command
+records `"sdk"` in the config (`sdk.name`, `sdk.access`, see `docs/CONFIG.md`), tells the agents
+in CLAUDE.md never to edit a client, and wires the project: `docs:generate` regenerates the
+clients, `docs:check` fails while one differs from the contract, `ci:build` builds them, so the
+GitHub and GitLab pipelines check them; publishing stays a manual step. Under npm, while
+`package-lock.json` does not list a client, the command says to run `npm install` and
+`sdk --check` fails, before `npm ci` refuses the lock in the pipeline. openapi-typescript with
+openapi-fetch, hey-api and orval were measured on the example contract first: none reads the
+error codes, and the first refuses TypeScript 6 (`docs/tools/client-sdk.md`). A project without
+the key is unchanged: only with it does the ESLint preset leave out `clients/*/src/**`, and the
+command add `!**/clients/*/src` to Biome.
+
 ## 0.5.0
 
 **Migrations are named by a timestamp and what they do.** The generated `drizzle.config.ts`

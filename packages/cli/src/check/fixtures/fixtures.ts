@@ -18,6 +18,7 @@ import { EXTRACTABLE_FIXTURES } from './extractable-fixtures.js';
 import { GOVERNANCE_FIXTURES } from './governance-fixtures.js';
 import { IMPORTS_FIXTURES } from './imports-fixtures.js';
 import { LANGUAGE_FIXTURES } from './language-fixtures.js';
+import { VOCABULARY_FIXTURES } from './vocabulary-fixtures.js';
 import { LAYER_FIXTURES } from './layer-fixtures.js';
 import { LAYOUT_FIXTURES } from './layout-fixtures.js';
 import { NAMING_FIXTURES } from './naming-fixtures.js';
@@ -58,6 +59,7 @@ export const FIXTURES: readonly Fixture[] = [
   ...GOVERNANCE_FIXTURES,
   ...IMPORTS_FIXTURES,
   ...LANGUAGE_FIXTURES,
+  ...VOCABULARY_FIXTURES,
   ...LAYER_FIXTURES,
   ...LAYOUT_FIXTURES,
   ...NAMING_FIXTURES,

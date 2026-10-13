@@ -4,7 +4,7 @@ import { {{upstream.definition}}, type {{upstream.eventType}} } from '{{alias.co
 
 @IntegrationEventHandler({{upstream.definition}}, { consumer: '{{context.kebab}}.{{name.kebab}}' })
 export class {{name.pascal}}IntegrationHandler {
-  static readonly eventType = '{{upstream.eventName}}';
+  static readonly eventType = {{upstream.typeRead}};
 
   readonly actor = systemActor('{{context.kebab}}.{{name.kebab}}');
 

@@ -1,20 +1,36 @@
 import { describe, expect, it } from '{{tests.module}}';
+{{#if valueObjects.throwing}}
+import { expectRefusal } from '@ddd-ts-kit/testing';
+{{/if}}
+{{#if valueObjects.result}}
 import { unwrap } from '@ddd-ts-kit/kernel';
+{{/if}}
 import { {{name.pascal}} } from '{{alias.context}}/domain/value-objects/{{name.kebab}}.vo{{alias.ext}}';
 
 describe('{{name.pascal}}', () => {
   it('is equal to another {{name.words}} with the same value', () => {
+{{#if valueObjects.throwing}}
+    const first = {{name.pascal}}.create('sample');
+    const second = {{name.pascal}}.create('sample');
+{{/if}}
+{{#if valueObjects.result}}
     const first = unwrap({{name.pascal}}.create('sample'));
     const second = unwrap({{name.pascal}}.create('sample'));
+{{/if}}
 
     expect(first.equals(second)).toBe(true);
     expect(first.value).toBe('sample');
   });
 
   it('refuses an empty value with a coded error', () => {
+{{#if valueObjects.throwing}}
+    expectRefusal(() => {{name.pascal}}.create('  '), 'INVARIANT_VIOLATION');
+{{/if}}
+{{#if valueObjects.result}}
     const result = {{name.pascal}}.create('  ');
 
     expect(result.ok).toBe(false);
+{{/if}}
   });
 
   // TODO(domain): replace each entry below by a test named after the validity rule it proves, with real examples from the domain.

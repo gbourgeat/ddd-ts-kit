@@ -91,4 +91,14 @@ export interface Config {
   readonly worker: boolean;
   readonly ci: CiConfig;
   readonly openapi: OpenApiConfig;
+  /** The typed clients generated from the contract (`ddd-ts-kit sdk`); none without the key. */
+  readonly sdk: SdkConfig | undefined;
+}
+
+/** How the clients of the contract are published: one package per document of the contract, under `clients/<document>`. */
+export interface SdkConfig {
+  /** The package name, `{project}` the name of the project and `{document}` the document (`api` for the whole contract). */
+  readonly name: string;
+  /** `public` or `restricted`, written to `publishConfig.access`; none: npm decides (scoped packages are restricted). Kept as written, `check` reports a wrong value. */
+  readonly access: string | undefined;
 }

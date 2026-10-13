@@ -40,6 +40,7 @@ export const SHARDS = [
     'formatted.spec.ts': 8,
     'violations.spec.ts': 8,
     'zero-violation.spec.ts': 8,
+    'client-sdk.spec.ts': 8,
   },
 ];
 
