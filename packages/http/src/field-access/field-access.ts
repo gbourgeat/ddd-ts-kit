@@ -1,4 +1,4 @@
-import type { Schema } from '@ddd-ts-kit/validation';
+import { schemaBehind, type Schema } from '@ddd-ts-kit/validation';
 import type { FieldAccessEntry } from './field-access-entry.js';
 
 interface Registry {
@@ -11,10 +11,17 @@ interface Registry {
  */
 const REGISTRY = Symbol.for('@ddd-ts-kit/http/field-access/v1');
 
-/** The restricted fields of a schema: those `withFieldAccess` marked, and those of the items of a page or a stream. */
+/**
+ * The restricted fields of a schema: those `withFieldAccess` marked, those of the items of a page
+ * or a stream, and those of the schema it was built from (`sharedSchema` over a marked schema).
+ */
 export const fieldAccess = {
   of(schema: Schema<unknown> | undefined): readonly FieldAccessEntry[] {
-    return schema === undefined ? [] : (registry().fields.get(schema) ?? []);
+    if (schema === undefined) {
+      return [];
+    }
+
+    return registry().fields.get(schema) ?? fieldAccess.of(schemaBehind.of(schema));
   },
 
   /** What a schema built from another one (a page, a stream) carries of it, under `prefix`. */
