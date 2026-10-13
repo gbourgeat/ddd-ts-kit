@@ -124,6 +124,7 @@ async function start(database: TestDatabase, config: AppConfig, credentials: Cre
 
 {{#if httpCache.varnish}}
   const purges = new InMemoryCachePurger();
+
 {{/if}}
 {{#if events.outbox}}
   const relay = startOutboxRelay({

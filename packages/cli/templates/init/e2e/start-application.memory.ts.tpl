@@ -130,6 +130,7 @@ async function start(credentials: Credentials): Promise<Started> {
 
 {{#if httpCache.varnish}}
   const purges = new InMemoryCachePurger();
+
 {{/if}}
 {{#if events.outbox}}
   const relay = startOutboxRelay({
