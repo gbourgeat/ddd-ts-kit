@@ -47,7 +47,7 @@ function routeOf(resolved: ResolvedController, options: ControllerRoutesOptions)
     errors: [...new Set([...declared.errors, ...resolved.guards.flatMap((guard) => guard.documents?.errors ?? [])])],
     security: securityOf(resolved.guards, options.security ?? DEFAULT_SECURITY),
     ...(spec.deprecated === true ? { deprecated: true } : {}),
-    ...mediaTypesOf(spec),
+    ...presentationOf(spec),
     async handle(input: RouteInput): Promise<RouteOutput> {
       for (const guard of guards) {
         await guard.check(guardRequest(identity, input));
@@ -71,10 +71,11 @@ function requestOf(parts: RequestSchemas): { request?: RequestSchemas } {
   return declared.length === 0 ? {} : { request: Object.fromEntries(declared) };
 }
 
-function mediaTypesOf({ produces, consumes }: ControllerSpec): Pick<Route, 'produces' | 'consumes'> {
+function presentationOf({ produces, consumes, form }: ControllerSpec): Pick<Route, 'produces' | 'consumes' | 'form'> {
   return {
     ...(produces === undefined ? {} : { produces: [...produces] }),
     ...(consumes === undefined ? {} : { consumes: [...consumes] }),
+    ...(form === undefined ? {} : { form }),
   };
 }
 

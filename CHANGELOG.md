@@ -22,6 +22,16 @@ representation. The contract lists every media type of each route, and `NOT_ACCE
 option nothing changes: every answer stays JSON. `money` and `decimalText` write money and
 decimals as strings, the rule every representation follows.
 
+**A route describes its body as a form.** A route that declares `form` (on `@Controller` or
+`defineRoute`, `defineForm<Body>(hints)` in a `.form.ts` file) is served by `formRoutes(routes,
+{ fieldAccess })` at `GET /forms/<operationId>`: JSON Forms by default (schema, UI schema,
+data), or a neutral tree of groups and fields with `?format=blocks`. Fields, constraints and
+options come from the request schema and its closed vocabularies, layout, widgets, lookups and
+conditions (`visibleWhen`, `requiredWhen`) from the hints, labels are translation keys, and
+values given in the query prefill it. The form respects the caller: a field they may not see is
+absent, one they may not set is read-only; the server still validates and the use case still
+decides. `formDocumentsOf(routes)` writes every form whole for the documentation.
+
 **A field of an answer can be reserved to some callers.** `withFieldAccess(schema, { field: {
 read, write, subject } })` of `@ddd-ts-kit/http` marks a field with a permission or a policy:
 the pipeline leaves it out of every representation (JSON, XML, CSV, streamed lists) for an actor

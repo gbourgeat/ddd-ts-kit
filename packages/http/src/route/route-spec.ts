@@ -1,3 +1,4 @@
+import type { FormHints } from '../forms/form-hints.js';
 import type { HttpMethod } from './http-method.js';
 import type { RequestSchemas } from './request-schemas.js';
 import type { ResponsesSpec } from './responses-spec.js';
@@ -31,4 +32,6 @@ export interface RouteSpec<
   readonly produces?: readonly string[];
   /** The media types the route reads a body in besides `application/json`: `['application/xml']`. */
   readonly consumes?: readonly string[];
+  /** Describes the body of the route as a form, served by `formRoutes` at `GET /forms/<operationId>`: `{}` for the body as it is. */
+  readonly form?: FormHints;
 }
