@@ -98,7 +98,7 @@ From [`packages/validation/README.md`](../../packages/validation/README.md):
   schema)` shares any `Schema`; the platform shares `acceptedSchema` (`Accepted`), the page of a
   shared item (`<Item>Page`) and the problem document. Under `"stack.schemas": "shared"` (a new
   project), `generate schema` writes one and `schema/no-duplicate-shape` reports a shape
-  declared twice ([configuration](../CONFIG.md)).
+  declared twice in one context ([configuration](../CONFIG.md)).
 - `customSchema(parse, jsonSchema?)` builds a schema from a plain function, for the rare input
   no library describes.
 - The root entry imports no third-party package; each adapter is a subpath with its library as

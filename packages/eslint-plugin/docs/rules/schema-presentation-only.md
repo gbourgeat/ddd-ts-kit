@@ -42,4 +42,4 @@ None.
 
 ## With the CLI checker
 
-`ddd-ts-kit check` holds the same rule on the text of the imports; `schema/no-duplicate-shape`, which compares the shapes of the whole project, is held by the checker alone.
+`ddd-ts-kit check` holds the same rule on the text of the imports; `schema/no-duplicate-shape`, which compares the shapes of a context with each other and with the shared kernel, is held by the checker alone.

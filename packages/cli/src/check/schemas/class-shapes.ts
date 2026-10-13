@@ -2,6 +2,7 @@ import type { SourceFile } from '../model/source-file.js';
 import type { ClassShape } from '../structure/class-shape.js';
 import { matchingBracket } from '../text/matching-bracket.js';
 import type { DeclaredShape } from './declared-shape.js';
+import { stillGenerated } from './still-generated.js';
 import { topLevelStatements } from './top-level-statements.js';
 
 const DECORATOR_NAME = /@[A-Za-z_$][\w$]*\s*/y;
@@ -10,13 +11,13 @@ const PROPERTY = /^(?:(?:readonly|public|declare)\s+)*([A-Za-z_$][\w$]*)\s*([?!]
 /**
  * The DTO classes of a source: a class of the module that extends nothing, has no method and
  * gives a decorator to each of its properties. Its shape is its properties, by name, each with
- * its decorators and whether it is optional.
+ * its decorators and whether it is optional. A class the generator left to fill is not one yet.
  */
 export function classShapes(file: SourceFile, code: string): DeclaredShape[] {
   return file.structure.classes.flatMap((shape) => {
     const members = dtoMembers(shape, code);
 
-    return members === undefined
+    return members === undefined || stillGenerated(file, shape.bodyStart, shape.end)
       ? []
       : [{ key: `class{${members.join(';')}}`, line: shape.line, what: `The class ${shape.name}` }];
   });

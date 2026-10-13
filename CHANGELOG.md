@@ -23,7 +23,8 @@ command route answers its identifier with `acceptedSchema` instead of a schema o
 `presentation/http/shared/<name>.schema.ts` (`generate schema shared-kernel <Name>` in
 `presentation/` of the shared kernel, for what several contexts answer with), and two rules hold
 it: `schema/no-duplicate-shape` reports a DTO class or an object schema that declares by hand
-the shape of another one, `schema/presentation-only` keeps every schema in a presentation layer
+the shape of another one of its context or of the shared kernel (two contexts may say the same
+thing in their own words; a placeholder the generator left to fill is not judged), `schema/presentation-only` keeps every schema in a presentation layer
 (the second in ESLint too). A config without the key reads as `per-route`: nothing changes and
 nothing is reported; the steps to move are in `docs/CONFIG.md`. The example now shares its
 schemas: its eighteen identifier answers are the one `Accepted` component, its two agenda
