@@ -36,7 +36,13 @@ export default defineConfig({
       editLink: { baseUrl: `${REPOSITORY}/edit/main/` },
       lastUpdated: false,
       sidebar: sidebar(REPOSITORY_ROOT),
-      customCss: ['./src/styles/custom.css'],
+      customCss: [
+        '@fontsource-variable/ibm-plex-sans',
+        '@fontsource/ibm-plex-mono/400.css',
+        '@fontsource/ibm-plex-mono/500.css',
+        './src/styles/theme.css',
+        './src/styles/custom.css',
+      ],
       components: { Head: './src/components/Head.astro' },
       // A broken link or anchor between pages fails the build. A package README shows the
       // address of a local tool (http://localhost:8000): that one is meant.

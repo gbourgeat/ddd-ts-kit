@@ -4,6 +4,14 @@ What each version changes for someone who uses the kit. The packages of `package
 together, under one version; the notes of each [GitHub release](https://github.com/gbourgeat/ddd-ts-kit/releases)
 list the pull requests behind it.
 
+## Unreleased
+
+**A quieter, more legible documentation website.** The site takes the pine green of the domain
+layer of its diagrams as its accent instead of the default blue, cool slate greys, and IBM Plex
+Sans and Plex Mono served with the site (no request to a font service). Headings, links, tables,
+inline code, the current page of the sidebar and the cards of the home page are restyled; keyboard
+focus stays visible and reduced motion is respected.
+
 ## 0.17.0
 
 **Names of the business, never `target`.** The command handler templates named the aggregate
