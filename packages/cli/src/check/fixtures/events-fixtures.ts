@@ -53,6 +53,12 @@ export const EVENTS_FIXTURES: readonly Fixture[] = [
   },
   {
     ruleId: 'events/name-declared-once',
+    name: 'a domain event that names itself nowhere',
+    expect: { file: EVENT },
+    files: project({ [EVENT]: 'export class InvoiceIssued {\n  readonly total: number = 0;\n}\n' }),
+  },
+  {
+    ruleId: 'events/name-declared-once',
     name: 'a domain event naming itself in readonly name alone, as 0.5 wrote it',
     expect: { file: EVENT },
     files: project({ [EVENT]: "export class InvoiceIssued {\n  readonly name = 'billing.invoice.issued';\n}\n" }),
