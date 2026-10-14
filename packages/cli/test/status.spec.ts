@@ -106,6 +106,26 @@ describe('status', () => {
     expect(status).not.toContain('#1 billing skeleton');
   });
 
+  it('reads every slices table of the file, in order, and says which row numbers are used twice', () => {
+    write(
+      root,
+      'docs/architecture/slices.md',
+      `${SLICES}\n## Milestone 2\n\n| # | Context | Kind | Slice | Start with | Depends on | Owner | Status |\n|---|---|---|---|---|---|---|---|\n| 5 | billing | slice | Cancel invoice | \`generate command billing CancelInvoice --aggregate Invoice --permission invoice.cancel\` | 3 | billing | todo |\n| 3 | shipping | slice | Track a shipment | \`generate query shipping TrackShipment --permission shipment.track\` | 4 | shipping | todo |\n`,
+    );
+
+    const slices = jsonAt(cli(root, 'status', '--json').json(), 'slices');
+
+    expect(slices).toMatchObject({
+      byStatus: { done: ['1'], 'in progress': ['2'], todo: ['3', '4', '5', '3'] },
+      byOwner: { billing: { todo: ['3', '5'] }, shipping: { todo: ['4', '3'] } },
+      duplicates: ['3'],
+    });
+
+    expect(cli(root, 'status').stdout).toContain(
+      'Slices (docs/architecture/slices.md): 6, 1 in progress, 4 todo, 1 done\n  row numbers used more than once: 3 (give each row its own number)',
+    );
+  });
+
   it('reads a slices file without the table as a project without slices', () => {
     write(root, 'docs/architecture/slices.md', '# Slices\n\nNothing cut yet.\n');
 

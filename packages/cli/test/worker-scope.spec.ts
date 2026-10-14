@@ -14,6 +14,12 @@ const SLICES = `# Slices
 | 2 | billing | slice | Issue invoice | \`generate command billing IssueInvoice --aggregate Invoice --permission invoice.issue\` | 1 | billing | todo |
 | 3 | billing | slice | Cancel invoice | \`generate command billing CancelInvoice --permission invoice.cancel\` | 1 | billing | done |
 | 4 | shipping | slice | Ship | \`generate command shipping Ship --public\` | | shipping | todo |
+
+## Milestone 2
+
+| # | Context | Kind | Slice | Start with | Depends on | Owner | Status |
+|---|---|---|---|---|---|---|---|
+| 5 | billing | slice | Refund invoice | \`generate command billing RefundInvoice --aggregate Invoice --permission invoice.refund\` | 2 | billing | todo |
 `;
 
 let root: string;
@@ -129,11 +135,12 @@ describe('worker-scope', () => {
 });
 
 describe('worker-scope, on slices, an existing worktree and other places', () => {
-  it('lists the slices of the context that are still to do', () => {
+  it('lists the slices of the context that are still to do, from every table of the file', () => {
     const scope = cli(root, 'worker-scope', 'billing', '--json').json();
 
     expect(jsonAt(scope, 'slices')).toEqual([
       expect.objectContaining({ id: '2', slice: 'Issue invoice', owner: 'billing', status: 'todo' }),
+      expect.objectContaining({ id: '5', slice: 'Refund invoice', owner: 'billing', status: 'todo' }),
     ]);
 
     expect(String(jsonAt(scope, 'briefing'))).toContain(
