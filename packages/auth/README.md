@@ -627,7 +627,12 @@ import { RoleBasedAuthorizer, tenantOfContext, type PermissionSet } from '@ddd-t
 declare const billingPermissions: PermissionSet<'billing', 'invoice.read' | 'invoice.void'>;
 
 export const authorizer = new RoleBasedAuthorizer({
-  roles: { admin: ['*'], controller: ['billing:*'], clerk: [billingPermissions['invoice.read']] },
+  roles: {
+    admin: ['*'],
+    controller: ['billing:*'],
+    clerk: [billingPermissions['invoice.read']],
+    automation: [billingPermissions['invoice.read']],
+  },
   inherits: { controller: ['clerk'] },          // a controller has all a clerk has
   tenantOf: tenantOfContext,                    // turns the tenant check on
   crossTenantRoles: ['admin'],                  // may act in every tenant
@@ -636,10 +641,23 @@ export const authorizer = new RoleBasedAuthorizer({
 ```
 
 A grant is a permission, its id, `<context>:*` or `*`. A grant that could never match, an
-unknown inherited role and a cycle in the hierarchy are refused at construction. With
-`tenantOf`, a request that targets another tenant than the actor's is refused; the tenant is
-read from the `context` of the requirement: `requires(X, permission, { context: (command) =>
-({ tenantId: command.tenantId }) })`.
+unknown inherited role and a cycle in the hierarchy are refused at construction, and so are a
+cross-tenant role or a system role that no role declares and `crossTenantRoles` without
+`tenantOf`: each would silently do nothing.
+
+With `tenantOf`, the tenant a request targets is read from the `context` of the requirement:
+`requires(X, permission, { context: (command) => ({ tenantId: command.tenantId }) })`. It is
+refused when the actor does not belong to it (its `tenantId`, or its `tenants` for an actor of
+several), when it is not a tenant id at all, and when it is another tenant than the one the work
+runs in. The guard of the bus and `Access` give the authorizer that tenant of the work
+(`workTenantId`) from the execution scope, which `authorizationModule` wires on its own. A system
+actor belongs to the tenant its work runs in (a per-tenant job, the event of a tenant) and to
+none outside of one. A request that targets no tenant passes: the repositories keep it to the
+tenant of the work (see [Multitenancy](../../docs/concepts/multitenancy.md)).
+
+A list is filtered on the tenant of the work, when the actor belongs to it, else on the one
+tenant of an actor that has one; an actor of several tenants outside of a tenant's work lists
+nothing.
 
 ### Attribute policies
 

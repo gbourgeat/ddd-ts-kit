@@ -1,10 +1,18 @@
-import { isActored, isAnonymous, type BusMiddleware, type Message, type MessageInfo } from '@ddd-ts-kit/kernel';
+import {
+  isActored,
+  isAnonymous,
+  type BusMiddleware,
+  type ExecutionScope,
+  type Message,
+  type MessageInfo,
+} from '@ddd-ts-kit/kernel';
 import type { Authorizer } from '../authorization/authorizer.js';
 import type { CheckRequest } from '../authorization/check-request.js';
 import { deny, type Decision } from '../authorization/decision.js';
 import { decisionRecordOf } from '../authorization/decision-record-of.js';
 import { DenialReason } from '../authorization/denial-reason.js';
 import type { OnDecision } from '../authorization/on-decision.js';
+import { workTenantOf } from '../authorization/work-tenant-of.js';
 import { ForbiddenError } from '../errors/forbidden-error.js';
 import { MissingActorError } from '../errors/missing-actor-error.js';
 import { UnauthenticatedError } from '../errors/unauthenticated-error.js';
@@ -17,6 +25,8 @@ export interface AuthorizationMiddlewareOptions {
   readonly map: AuthorizationMap;
   /** The audit hook: called once per protected message, whether allowed or refused. */
   readonly onDecision?: OnDecision;
+  /** Gives the authorizer the tenant of the work (`workTenantId`); `authorizationModule` passes the one of the kernel. */
+  readonly scope?: ExecutionScope;
 }
 
 /**
@@ -46,11 +56,11 @@ interface Sending {
 }
 
 async function assertAllowed(
-  { authorizer, onDecision }: AuthorizationMiddlewareOptions,
+  { authorizer, onDecision, scope }: AuthorizationMiddlewareOptions,
   declaration: ProtectedUseCase,
   { message, info }: Sending,
 ): Promise<void> {
-  const request = requestOf(declaration, message, info);
+  const request = { ...requestOf(declaration, message, info), ...workTenantOf(scope) };
   const anonymous = isAnonymous(request.actor);
   const decision: Decision = anonymous ? deny(DenialReason.anonymous) : await authorizer.check(request);
 

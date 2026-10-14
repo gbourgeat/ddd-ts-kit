@@ -4,7 +4,9 @@ import {
   InMemoryCommandBus,
   InMemoryQueryBus,
   InMemoryUnitOfWork,
+  FixedExecutionScope,
   anonymousActor,
+  executionContext,
   unitOfWorkMiddleware,
 } from '@ddd-ts-kit/kernel';
 import {
@@ -91,6 +93,21 @@ describe('authorizationMiddleware', () => {
         resource: { type: 'invoice', id: 'inv-7' },
         context: { tenantId: 'globex' },
       },
+    ]);
+  });
+
+  it('tells the authorizer the tenant of the work when it is given the execution scope', async () => {
+    const authorizer = new RecordingAuthorizer();
+    const scope = new FixedExecutionScope(executionContext({ correlationId: 'req-1', actor: ada, origin: 'http' }));
+
+    const commands = new InMemoryCommandBus()
+      .use(authorizationMiddleware({ authorizer, map, scope }))
+      .register(IssueInvoice, { execute: async () => 'issued' });
+
+    await commands.execute(new IssueInvoice(ada, 'customer-1'));
+
+    expect(authorizer.checks).toEqual([
+      { actor: ada, permission: billingPermissions['invoice.issue'], workTenantId: 'acme' },
     ]);
   });
 

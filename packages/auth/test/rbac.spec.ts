@@ -164,6 +164,94 @@ describe('RoleBasedAuthorizer tenant check', () => {
   });
 });
 
+describe('RoleBasedAuthorizer tenant check, for an actor of several tenants and in the work of a tenant', () => {
+  const authorizer = new RoleBasedAuthorizer({
+    roles: { ...roles, operator: ['*'], automation: [read] },
+    tenantOf: tenantOfContext,
+    crossTenantRoles: ['operator'],
+    systemRole: 'automation',
+  });
+
+  const consultant: Actor = { id: 'cleo', type: 'user', roles: ['clerk'], attributes: { tenants: ['acme', 'globex'] } };
+  const job = systemActor('invoice-reminder');
+
+  const about = (actor: Actor, tenantId: string, workTenantId?: string) =>
+    authorizer.check({
+      actor,
+      permission: read,
+      context: { tenantId },
+      ...(workTenantId === undefined ? {} : { workTenantId }),
+    });
+
+  const scope = (actor: Actor, workTenantId?: string) =>
+    authorizer.listAccessible({
+      actor,
+      permission: read,
+      resourceType: 'invoice',
+      ...(workTenantId === undefined ? {} : { workTenantId }),
+    });
+
+  it('lets an actor act in each tenant it belongs to, and in no other', async () => {
+    expect(await about(consultant, 'acme')).toEqual({ allowed: true });
+    expect(await about(consultant, 'globex')).toEqual({ allowed: true });
+    expect(await about(consultant, 'initech')).toEqual({ allowed: false, reason: 'TENANT_MISMATCH' });
+  });
+
+  it('refuses a message that targets another tenant than the one the work runs in, even one the actor belongs to', async () => {
+    expect(await about(consultant, 'globex', 'globex')).toEqual({ allowed: true });
+    expect(await about(consultant, 'acme', 'globex')).toEqual({ allowed: false, reason: 'TENANT_MISMATCH' });
+    expect(await about(ada, 'acme', 'globex')).toEqual({ allowed: false, reason: 'TENANT_MISMATCH' });
+  });
+
+  it('refuses a target that cannot be a tenant id, whatever the credential lists', async () => {
+    const forged: Actor = { ...consultant, attributes: { tenants: ['*', 'acme,globex'] } };
+
+    expect(await about(forged, '*')).toEqual({ allowed: false, reason: 'TENANT_MISMATCH' });
+    expect(await about(forged, 'acme,globex')).toEqual({ allowed: false, reason: 'TENANT_MISMATCH' });
+  });
+
+  it('lets the system act in the tenant its work runs in, and nowhere outside of one', async () => {
+    expect(await about(job, 'acme', 'acme')).toEqual({ allowed: true });
+    expect(await about(job, 'globex', 'acme')).toEqual({ allowed: false, reason: 'TENANT_MISMATCH' });
+    expect(await about(job, 'acme')).toEqual({ allowed: false, reason: 'TENANT_MISMATCH' });
+  });
+
+  it('keeps the cross-tenant roles above the tenant of the work', async () => {
+    const operator: Actor = { id: 'ops', type: 'user', roles: ['operator'], attributes: {} };
+
+    expect(await about(operator, 'globex', 'acme')).toEqual({ allowed: true });
+  });
+
+  it('scopes a list to the tenant of the work the actor belongs to', async () => {
+    expect(await scope(consultant, 'globex')).toEqual({ kind: 'filter', filter: { tenantId: 'globex' } });
+    expect(await scope(ada, 'acme')).toEqual({ kind: 'filter', filter: { tenantId: 'acme' } });
+    expect(await scope(ada, 'globex')).toEqual({ kind: 'none' });
+    expect(await scope(job, 'acme')).toEqual({ kind: 'filter', filter: { tenantId: 'acme' } });
+  });
+
+  it('outside of a tenant work, scopes a list to the one tenant of the actor, and to nothing for several', async () => {
+    expect(await scope(ada)).toEqual({ kind: 'filter', filter: { tenantId: 'acme' } });
+    expect(await scope(consultant)).toEqual({ kind: 'none' });
+    expect(await scope(job)).toEqual({ kind: 'none' });
+  });
+});
+
+describe('RoleBasedAuthorizer tenancy options', () => {
+  it('refuses a cross-tenant role or a system role that no role declares', () => {
+    expect(() => new RoleBasedAuthorizer({ roles, tenantOf: tenantOfContext, crossTenantRoles: ['amdin'] })).toThrow(
+      new AuthorizationSetupError('Role "amdin" is named in the options but declared in no role.'),
+    );
+
+    expect(() => new RoleBasedAuthorizer({ roles, systemRole: 'automation' })).toThrow(AuthorizationSetupError);
+  });
+
+  it('refuses cross-tenant roles without the tenant check they would bypass', () => {
+    expect(() => new RoleBasedAuthorizer({ roles, crossTenantRoles: ['admin'] })).toThrow(
+      'crossTenantRoles has no effect without tenantOf',
+    );
+  });
+});
+
 describe('RoleBasedAuthorizer and the system actor', () => {
   const job = systemActor('invoice-reminder');
 

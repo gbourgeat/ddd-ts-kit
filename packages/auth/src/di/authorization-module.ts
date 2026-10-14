@@ -8,7 +8,7 @@ import {
   type Provided,
   type Resolve,
 } from '@ddd-ts-kit/di';
-import { Clock } from '@ddd-ts-kit/kernel';
+import { Clock, ExecutionScope } from '@ddd-ts-kit/kernel';
 import { Authenticator } from '../authentication/authenticator.js';
 import { Access } from '../authorization/access.js';
 import { Authorizer } from '../authorization/authorizer.js';
@@ -76,6 +76,7 @@ function accessOf(options: AuthorizationModuleOptions, resolve: Resolve): Access
   return new PolicyAccess({
     authorizer: resolve(Authorizer),
     clock: resolve(Clock),
+    scope: resolve(ExecutionScope),
     policies: [...(options.policies ?? []), ...declared],
     ...(resourceOf === undefined ? {} : { resourceOf }),
     ...(onDecision === undefined ? {} : { onDecision }),
@@ -104,6 +105,7 @@ function guardOf({ onDecision }: AuthorizationModuleOptions, resolve: Resolve): 
   const check = authorizationMiddleware({
     authorizer: resolve(Authorizer),
     map: resolve(AuthorizationMap),
+    scope: resolve(ExecutionScope),
     ...(onDecision === undefined ? {} : { onDecision }),
   });
 

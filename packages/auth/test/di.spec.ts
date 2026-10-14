@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { Clock, CommandBus, FixedClock, QueryBus, anonymousActor, type Actor } from '@ddd-ts-kit/kernel';
+import {
+  Clock,
+  CommandBus,
+  ExecutionScope,
+  FixedClock,
+  QueryBus,
+  anonymousActor,
+  executionContext,
+  type Actor,
+} from '@ddd-ts-kit/kernel';
 import {
   WiringError,
   createApplication,
@@ -151,6 +160,23 @@ describe('authorizationModule', () => {
     ]);
 
     expect(audit).toMatchObject([{ useCase: 'VoidInvoice', actorId: 'ada', decision: { allowed: true } }]);
+  });
+
+  it('tells the authorizer the tenant of the work the execution scope of the kernel runs', async () => {
+    const authorizer = new RecordingAuthorizer();
+    const app = createTestApplication({ modules: [billingModule, authorizationModule({ authorizer })] });
+    const inGlobex = executionContext({ correlationId: 'req-1', actor: ada, origin: 'http', tenantId: 'globex' });
+
+    await app
+      .resolve(ExecutionScope)
+      .run(inGlobex, () => app.commandBus.execute(new VoidInvoice(ada, 'inv-7', 'globex')));
+
+    await app
+      .resolve(ExecutionScope)
+      .run(inGlobex, () => app.resolve(Access).scope(ada, billingPermissions['invoice.read'], 'invoice'));
+
+    expect(authorizer.checks).toMatchObject([{ context: { tenantId: 'globex' }, workTenantId: 'globex' }]);
+    expect(authorizer.listings).toMatchObject([{ resourceType: 'invoice', workTenantId: 'globex' }]);
   });
 
   it('refuses at run time a use case that declared nothing, when wiring was left optional', async () => {
