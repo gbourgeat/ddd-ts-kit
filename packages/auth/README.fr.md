@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:4832e6dc7c6f414e -->
+<!-- translation-of: README.md sha256:36b1e0982f9d2a98 -->
 
 # @ddd-ts-kit/auth
 
@@ -654,7 +654,12 @@ import { RoleBasedAuthorizer, tenantOfContext, type PermissionSet } from '@ddd-t
 declare const billingPermissions: PermissionSet<'billing', 'invoice.read' | 'invoice.void'>;
 
 export const authorizer = new RoleBasedAuthorizer({
-  roles: { admin: ['*'], controller: ['billing:*'], clerk: [billingPermissions['invoice.read']] },
+  roles: {
+    admin: ['*'],
+    controller: ['billing:*'],
+    clerk: [billingPermissions['invoice.read']],
+    automation: [billingPermissions['invoice.read']],
+  },
   inherits: { controller: ['clerk'] },          // un controller a tout ce qu'a un clerk
   tenantOf: tenantOfContext,                    // active le contrôle du tenant
   crossTenantRoles: ['admin'],                  // peut agir dans tous les tenants
@@ -664,9 +669,23 @@ export const authorizer = new RoleBasedAuthorizer({
 
 Un droit accordé est une permission, son identifiant, `<context>:*` ou `*`. Un droit qui ne
 pourrait jamais correspondre, un rôle hérité inconnu et un cycle dans la hiérarchie sont refusés
-à la construction. Avec `tenantOf`, une requête qui vise un autre *tenant* que celui de
-l'acteur est refusée ; le *tenant* est lu dans le `context` de l'exigence :
-`requires(X, permission, { context: (command) => ({ tenantId: command.tenantId }) })`.
+à la construction, de même qu'un rôle multi-*tenant* ou un rôle système qu'aucun rôle ne déclare,
+et `crossTenantRoles` sans `tenantOf` : chacun ne ferait rien, sans le dire.
+
+Avec `tenantOf`, le *tenant* que vise une requête est lu dans le `context` de l'exigence :
+`requires(X, permission, { context: (command) => ({ tenantId: command.tenantId }) })`. Elle est
+refusée quand l'acteur n'y appartient pas (son `tenantId`, ou ses `tenants` pour un acteur de
+plusieurs), quand ce n'est pas un identifiant de *tenant*, et quand c'est un autre *tenant* que
+celui où s'exécute le travail. La garde du bus et `Access` donnent à l'autorisateur ce *tenant* du
+travail (`workTenantId`), lu dans la portée d'exécution, ce que `authorizationModule` câble de
+lui-même. Un acteur système appartient au *tenant* où s'exécute son travail (une tâche par
+*tenant*, l'événement d'un *tenant*) et à aucun en dehors. Une requête qui ne vise aucun *tenant*
+passe : les dépôts la limitent au *tenant* du travail (voir
+[Multitenancy](../../docs/concepts/multitenancy.fr.md)).
+
+Une liste est filtrée sur le *tenant* du travail quand l'acteur y appartient, sinon sur le seul
+*tenant* d'un acteur qui n'en a qu'un ; un acteur de plusieurs *tenants* hors du travail d'un
+*tenant* ne liste rien.
 
 ### Politiques sur des attributs
 

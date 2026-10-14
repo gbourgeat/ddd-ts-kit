@@ -1,5 +1,5 @@
 [English](authorization-in-practice.md) · **Français**
-<!-- translation-of: authorization-in-practice.md sha256:03bc713a73a1c331 -->
+<!-- translation-of: authorization-in-practice.md sha256:1885b77d010438c3 -->
 
 # L'autorisation en pratique
 
@@ -125,14 +125,19 @@ modèle qui ne sait pas énumérer le laisse de côté, et demander un périmèt
 permet à un rôle d'en inclure d'autres (`{ admin: ['receptionist'] }`). Les attributions
 effectives de chaque rôle sont calculées une fois, dans le constructeur, et un rôle inconnu ou un
 cycle dans la hiérarchie lève `AuthorizationSetupError` au démarrage plutôt qu'à la première
-requête.
+requête, comme un rôle multi-*tenant* ou un rôle système qu'aucun rôle ne déclare et
+`crossTenantRoles` sans `tenantOf`.
 
 Une vérification refuse l'acteur anonyme, puis cherche un rôle de l'acteur qui couvre la
-permission, puis, quand `tenantOf` est configuré, refuse une demande qui vise un autre *tenant*
-que celui de l'acteur, sauf si l'un de ses rôles figure dans `crossTenantRoles`. Les acteurs de
-type `system` ne portent aucun rôle ; `systemRole` leur en donne un. La liste vaut `none` sans le
-droit, `all` quand les *tenants* ne sont pas gérés ou que l'acteur les traverse, et
-`filter: { tenantId }` sinon.
+permission, puis, quand `tenantOf` est configuré, refuse une demande qui vise un *tenant* auquel
+l'acteur n'appartient pas (son `tenantId` ou ses `tenants`), qui n'est pas un identifiant de
+*tenant*, ou qui est un autre *tenant* que celui où s'exécute le travail (`workTenantId`, donné
+par la garde et `Access` depuis la portée d'exécution), sauf si l'un de ses rôles figure dans
+`crossTenantRoles`. Les acteurs de type `system` ne portent aucun rôle ; `systemRole` leur en
+donne un, et ils appartiennent au *tenant* où s'exécute leur travail. La liste vaut `none` sans le
+droit, `all` quand les *tenants* ne sont pas gérés ou que l'acteur les traverse,
+`filter: { tenantId }` sur le *tenant* du travail ou le seul *tenant* de l'acteur sinon, et
+`none` pour un acteur de plusieurs *tenants* hors du travail d'un *tenant*.
 
 ### Politiques par attributs
 

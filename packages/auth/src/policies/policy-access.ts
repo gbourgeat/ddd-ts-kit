@@ -1,4 +1,4 @@
-import { isAnonymous, type Actor, type Clock } from '@ddd-ts-kit/kernel';
+import { isAnonymous, type Actor, type Clock, type ExecutionScope } from '@ddd-ts-kit/kernel';
 import type { Access } from '../authorization/access.js';
 import type { AccessQuestion } from '../authorization/access-question.js';
 import type { AccessScope } from '../authorization/access-scope.js';
@@ -10,6 +10,7 @@ import { DenialReason } from '../authorization/denial-reason.js';
 import { isResourceRef } from '../authorization/is-resource-ref.js';
 import type { OnDecision } from '../authorization/on-decision.js';
 import type { ResourceRef } from '../authorization/resource-ref.js';
+import { workTenantOf } from '../authorization/work-tenant-of.js';
 import { ForbiddenError } from '../errors/forbidden-error.js';
 import { ListingNotSupportedError } from '../errors/listing-not-supported-error.js';
 import { UnauthenticatedError } from '../errors/unauthenticated-error.js';
@@ -25,6 +26,8 @@ export interface PolicyAccessOptions {
   /** How a subject (an aggregate, a read model) names its resource. Default: a `ResourceRef` is itself. */
   readonly resourceOf?: (subject: unknown) => ResourceRef | undefined;
   readonly onDecision?: OnDecision;
+  /** Gives the authorizer the tenant of the work (`workTenantId`); `authorizationModule` passes the one of the kernel. */
+  readonly scope?: ExecutionScope;
 }
 
 /** No policy and no authorizer can answer for the permission: refused, as everything undeclared. */
@@ -59,7 +62,15 @@ export class PolicyAccess implements Access {
   async decideOn({ actor, permission, subject, context, recorded }: AccessQuestion): Promise<Decision> {
     const resource = this.resourceOf(subject);
     const asked = { ...context, subject };
-    const request = { actor, permission, ...(resource === undefined ? {} : { resource }), context: asked };
+
+    const request = {
+      actor,
+      permission,
+      ...(resource === undefined ? {} : { resource }),
+      context: asked,
+      ...workTenantOf(this.options.scope),
+    };
+
     const decision = isAnonymous(actor) ? deny(DenialReason.anonymous) : await this.evaluate(request, subject);
 
     if (recorded !== false) {
@@ -80,7 +91,7 @@ export class PolicyAccess implements Access {
       throw new ListingNotSupportedError();
     }
 
-    return authorizer.listAccessible({ actor, permission, resourceType });
+    return authorizer.listAccessible({ actor, permission, resourceType, ...workTenantOf(this.options.scope) });
   }
 
   private resourceOf(subject: unknown): ResourceRef | undefined {

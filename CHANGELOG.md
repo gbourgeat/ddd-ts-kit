@@ -6,6 +6,22 @@ list the pull requests behind it.
 
 ## Unreleased
 
+**The tenant check of `RoleBasedAuthorizer` follows memberships and the tenant of the work.**
+With `tenantOf`, an actor of several tenants (its `tenants`, from a list claim or the
+`organization` claim of Keycloak) was refused in each of its own tenants and listed nothing, and
+a system actor of a per-tenant job was refused in the tenant it ran for. The guard of the bus and
+`PolicyAccess` now give the authorizer the tenant of the work (`workTenantId` on `CheckRequest`
+and `ListRequest`), read from the execution scope that `authorizationModule` wires. A request is
+refused when the actor does not belong to the tenant it targets, when that target is not a tenant
+id, and when it is another tenant than the one the work runs in; a system actor belongs to the
+tenant its work runs in. A list is filtered on the tenant of the work, and is empty for an actor
+of several tenants outside of a tenant's work. `RoleBasedAuthorizer` now refuses at construction
+a cross-tenant role or a system role that no role declares, and `crossTenantRoles` without
+`tenantOf`: each silently did nothing. To move, declare the role named by `systemRole` or
+`crossTenantRoles` in `roles`, and give `tenantOf: tenantOfContext` where `crossTenantRoles` is
+set. `authorizationMiddleware` and `PolicyAccess` built by hand take the `scope` option to do the
+same.
+
 **A domain event handler names its event once.** `@DomainEventHandler` and `@On` no longer take
 the name of the event: they read the one its class declares, `static readonly eventName`. A
 handler is now `@DomainEventHandler(InvoiceIssued)`, `@DomainEventHandler(InvoiceIssued, { phase:

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { FixedClock, anonymousActor } from '@ddd-ts-kit/kernel';
+import { FixedClock, FixedExecutionScope, anonymousActor, executionContext } from '@ddd-ts-kit/kernel';
 import {
   PolicyAccess,
   AuthorizationSetupError,
@@ -208,6 +208,25 @@ describe('PolicyAccess.scope', () => {
     ).toEqual({
       kind: 'none',
     });
+  });
+
+  it('tells the authorizer the tenant of the work, for a check as for a list', async () => {
+    const authorizer = new RecordingAuthorizer();
+
+    const scope = new FixedExecutionScope(
+      executionContext({ correlationId: 'req-1', actor: author, origin: 'http', tenantId: 'acme' }),
+    );
+
+    const access = new PolicyAccess({ authorizer, clock, scope });
+
+    await access.decide(author, read, { type: 'article', id: 'article-1' });
+    await access.scope(author, read, 'article');
+
+    expect(authorizer.checks).toMatchObject([{ workTenantId: 'acme' }]);
+
+    expect(authorizer.listings).toEqual([
+      { actor: author, permission: read, resourceType: 'article', workTenantId: 'acme' },
+    ]);
   });
 
   it('fails loudly when the model cannot enumerate, instead of guessing', async () => {

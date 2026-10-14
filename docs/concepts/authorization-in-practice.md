@@ -120,13 +120,18 @@ cannot enumerate leaves it out, and asking for a scope then fails with
 `scheduling:*` for a whole context, or `*` for everything. `inherits` lets a role include
 others (`{ admin: ['receptionist'] }`). The effective grants of every role are computed once,
 in the constructor, and an unknown role or a cycle in the hierarchy raises
-`AuthorizationSetupError` at start rather than at the first request.
+`AuthorizationSetupError` at start rather than at the first request, as do a cross-tenant role
+or a system role no role declares and `crossTenantRoles` without `tenantOf`.
 
 A check refuses the anonymous actor, then looks for a role of the actor that covers the
-permission, then, when `tenantOf` is configured, refuses a request that targets another tenant
-than the actor's unless one of its roles is in `crossTenantRoles`. Actors of type `system` carry
-no roles; `systemRole` gives them one. The list is `none` without the right, `all` when tenants
-are not managed or the actor crosses them, and `filter: { tenantId }` otherwise.
+permission, then, when `tenantOf` is configured, refuses a request that targets a tenant the
+actor does not belong to (its `tenantId` or its `tenants`), that is not a tenant id, or that is
+another tenant than the one the work runs in (`workTenantId`, given by the guard and `Access`
+from the execution scope), unless one of its roles is in `crossTenantRoles`. Actors of type
+`system` carry no roles; `systemRole` gives them one, and they belong to the tenant their work
+runs in. The list is `none` without the right, `all` when tenants are not managed or the actor
+crosses them, `filter: { tenantId }` on the tenant of the work or the one tenant of the actor
+otherwise, and `none` for an actor of several tenants outside of a tenant's work.
 
 ### Attribute policies
 
