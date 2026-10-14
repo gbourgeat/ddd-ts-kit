@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:58e12799dab22299 -->
+<!-- translation-of: README.md sha256:3415256529eeab38 -->
 
 # ddd-ts-kit
 
@@ -298,7 +298,7 @@ Quatre agents : `domain-explorer` (réponses en lecture seule sur ce qui existe 
 
 Le hook est la partie qui rend le reste contraignant. Dans un projet qui a un
 `ddd-ts-kit.config.json`, il rappelle la démarche et la carte des contextes au début de la
-session, refuse un fichier écrit à la main là où un générateur existe ainsi que toute
+session, signale quand les packages installés ne sont pas la version que décrivent les skills, refuse un fichier écrit à la main là où un générateur existe ainsi que toute
 modification d'un contrat généré, demande l'avis du propriétaire du projet avant qu'une
 désactivation, un test sauté ou un changement des règles soit écrit, vérifie chaque fichier
 écrit et renvoie les violations avec leur correction, et refuse de terminer tant que des

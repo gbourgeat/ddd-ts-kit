@@ -7,6 +7,9 @@ import { tmpdir } from 'node:os';
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 
 const CONFIG = 'ddd-ts-kit.config.json';
+// The version of the packages the skills of this plugin describe. `release-version.mjs` keeps it
+// the version of the kit: setting a new version of the packages rewrites it.
+const KIT_VERSION = '0.18.0';
 const PLAN = 'docs/architecture/plan.md';
 const WORKER_SCOPE = '.ddd-ts-kit/worker.json';
 const WORKER_AGENT = 'context-builder';
@@ -369,6 +372,7 @@ function projectBriefing(project, input) {
     'Order of work: glossary of the context (CONTEXT.md), `npx ddd-ts-kit generate <kind> ... --json`, fill only the TODO(domain) places it lists, tests, `npx ddd-ts-kit check --changed-since <ref>`, then commit the slice.',
     'Never write by hand a file a generator produces; never edit a generated file (declaration barrels, contracts).',
     'Read `npx ddd-ts-kit list --json` and the CONTEXT.md of one context instead of browsing the tree.',
+    ...(project.mode === 'off' ? [] : versionGap(project)),
     ...planPointer(project.root),
     ...workerNotice(project, input),
   ];
@@ -380,6 +384,38 @@ function projectBriefing(project, input) {
   const reminder = project.mode === 'off' ? undefined : commitReminder(project, input, { repeat: true });
 
   return reminder ? [...lines, reminder] : lines;
+}
+
+// The skills describe KIT_VERSION while the checks run the CLI the project installed, and the
+// plugin is updated apart from the lockfile. A gap is said at session start, never blocked.
+function versionGap(project) {
+  const installed = readJson(join(project.root, 'node_modules', 'ddd-ts-kit', 'package.json'))?.version;
+  if (typeof installed !== 'string' || compatible(installed, KIT_VERSION)) {
+    return [];
+  }
+  const move = isOlder(installed, KIT_VERSION)
+    ? `upgrade \`ddd-ts-kit\` and every \`@ddd-ts-kit/*\` package together (the steps: node_modules/ddd-ts-kit/CHANGELOG.md), or use the plugin release written for ${installed}`
+    : 'update the plugin';
+
+  return [
+    `Version gap: this plugin describes ddd-ts-kit ${KIT_VERSION}, the project has ${installed} installed. A skill may name an API or a rule that ${installed} does not have, and the checks follow ${installed}: ${move}.`,
+  ];
+}
+
+// As a caret range: below 1.0.0 a minor version may break, from 1.0.0 a major one.
+function compatible(installed, described) {
+  const [have, want] = [releaseOf(installed), releaseOf(described)];
+  return have[0] === want[0] && (have[0] !== 0 || have[1] === want[1]);
+}
+
+function isOlder(installed, described) {
+  const [have, want] = [releaseOf(installed), releaseOf(described)];
+  const differs = have.findIndex((part, index) => part !== want[index]);
+  return differs !== -1 && have[differs] < want[differs];
+}
+
+function releaseOf(version) {
+  return version.split(/[.+-]/, 3).map(Number);
 }
 
 function planPointer(root) {

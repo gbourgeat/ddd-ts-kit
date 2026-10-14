@@ -8,3 +8,5 @@ dist
 /site/src/content/docs/
 /site/public/diagrams/
 /site/.astro/
+# The notes of the repository, copied into the CLI package when it is packed.
+/packages/cli/CHANGELOG.md

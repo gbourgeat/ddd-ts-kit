@@ -2,7 +2,8 @@
 /**
  * Packs every publishable workspace package the way `npm publish` would and checks the tarball:
  * publint for the manifest (exports, files, types), Are the Types Wrong for type resolution, and
- * the MIT notice, which travels in each package as the LICENSE of the repository.
+ * the MIT notice, which travels in each package as the LICENSE of the repository, and the notes of
+ * the CLI: its CHANGELOG.md, which an agent reads in node_modules to move past a version.
  * Build first: the tarballs hold `dist/`.
  */
 import { spawnSync } from 'node:child_process';
@@ -14,6 +15,8 @@ const ROOT = path.resolve(import.meta.dirname, '../..');
 const PACKAGES = path.join(ROOT, 'packages');
 const BIN = path.join(ROOT, 'node_modules/.bin');
 const LICENSE = fs.readFileSync(path.join(ROOT, 'LICENSE'), 'utf8');
+const CHANGELOG = fs.readFileSync(path.join(ROOT, 'CHANGELOG.md'), 'utf8');
+const CLI = 'ddd-ts-kit';
 
 process.exit(main());
 
@@ -23,7 +26,7 @@ function main() {
     const failures = publishablePackages().flatMap((entry) => check(entry, destination));
     console.log(
       failures.length === 0
-        ? '\nEvery package passes publint and attw, and carries the LICENSE.'
+        ? '\nEvery package passes publint and attw, and carries the LICENSE; the CLI carries the CHANGELOG.'
         : `\n${failures.length} failed check(s):\n${failures.map((failure) => `  ${failure}`).join('\n')}`,
     );
     return failures.length === 0 ? 0 : 1;
@@ -55,6 +58,9 @@ function check({ directory, manifest }, destination) {
   }
   const { tarball, files } = packed;
   const licensed = files.includes('LICENSE') && fs.readFileSync(path.join(directory, 'LICENSE'), 'utf8') === LICENSE;
+  const noted =
+    manifest.name !== CLI ||
+    (files.includes('CHANGELOG.md') && fs.readFileSync(path.join(directory, 'CHANGELOG.md'), 'utf8') === CHANGELOG);
   const tools = [
     { name: 'publint', args: ['run', tarball, '--strict'] },
     // A package without typed exports (the CLI: a binary only) has no type resolution to check.
@@ -64,6 +70,7 @@ function check({ directory, manifest }, destination) {
   ];
   return [
     ...(licensed ? [] : [`${manifest.name}: no LICENSE identical to the one of the repository in the tarball`]),
+    ...(noted ? [] : [`${manifest.name}: no CHANGELOG.md identical to the one of the repository in the tarball`]),
     ...tools.filter((tool) => !passes(tool)).map((tool) => `${manifest.name}: ${tool.name}`),
   ];
 }
