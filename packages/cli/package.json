@@ -29,7 +29,7 @@
     "url": "git+https://github.com/gbourgeat/ddd-ts-kit.git",
     "directory": "packages/cli"
   },
-  "homepage": "https://github.com/gbourgeat/ddd-ts-kit/tree/main/packages/cli#readme",
+  "homepage": "https://gbourgeat.github.io/ddd-ts-kit/",
   "bugs": "https://github.com/gbourgeat/ddd-ts-kit/issues",
   "publishConfig": {
     "access": "public",

@@ -21,7 +21,7 @@
     "url": "git+https://github.com/gbourgeat/ddd-ts-kit.git",
     "directory": "packages/aspects"
   },
-  "homepage": "https://github.com/gbourgeat/ddd-ts-kit/tree/main/packages/aspects#readme",
+  "homepage": "https://gbourgeat.github.io/ddd-ts-kit/packages/aspects/",
   "bugs": "https://github.com/gbourgeat/ddd-ts-kit/issues",
   "publishConfig": {
     "access": "public",

@@ -22,7 +22,7 @@
     "url": "git+https://github.com/gbourgeat/ddd-ts-kit.git",
     "directory": "packages/redis"
   },
-  "homepage": "https://github.com/gbourgeat/ddd-ts-kit/tree/main/packages/redis#readme",
+  "homepage": "https://gbourgeat.github.io/ddd-ts-kit/packages/redis/",
   "bugs": "https://github.com/gbourgeat/ddd-ts-kit/issues",
   "publishConfig": {
     "access": "public",

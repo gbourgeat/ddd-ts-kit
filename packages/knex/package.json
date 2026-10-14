@@ -20,7 +20,7 @@
     "url": "git+https://github.com/gbourgeat/ddd-ts-kit.git",
     "directory": "packages/knex"
   },
-  "homepage": "https://github.com/gbourgeat/ddd-ts-kit/tree/main/packages/knex#readme",
+  "homepage": "https://gbourgeat.github.io/ddd-ts-kit/packages/knex/",
   "bugs": "https://github.com/gbourgeat/ddd-ts-kit/issues",
   "publishConfig": {
     "access": "public",
