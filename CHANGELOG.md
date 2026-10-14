@@ -22,6 +22,27 @@ a cross-tenant role or a system role that no role declares, and `crossTenantRole
 set. `authorizationMiddleware` and `PolicyAccess` built by hand take the `scope` option to do the
 same.
 
+**A policy is asked, or the use case fails.** The bus decides the permission of a use case before
+its handler runs, with the identifier of the element at most; a policy, the part of the right
+that needs the element, applies only when the handler asks `Access` once the element is loaded.
+Forgetting to ask is now caught twice. `authz/policy-asked` (`ddd-ts-kit check`) reports the
+handler of a command or query whose permission a policy refines (`@Policy` or `definePolicy`)
+when it never asks `Access` about that permission. At run time, `authorizationModule` refuses the
+result of such a handler with `PolicyNotAskedError`, inside the unit of work, so that its change
+is rolled back: the guard gains a step that wraps the handler alone, `UseCaseGuard.within`, which
+the buses of `kernelModule()` run last. Without the container, `policiesAskedMiddleware({ map,
+refined })` is the same check. `generate policy` leaves a `TODO(domain)` in the handler of every
+use case requiring the permission, where the policy is asked, and `generate command` and
+`generate query` do the same when the policy exists already; the rule accepts that marker, which
+`ddd-ts-kit todo` lists.
+
+To move: a handler whose permission a policy refines calls `await this.access.authorize(actor,
+permission, element)` before its change; `npx ddd-ts-kit check --rule authz/policy-asked` lists
+the ones that do not. A project that binds its own `Access` instead of `PolicyAccess` passes
+`policiesAsked: false` to `authorizationModule`, since only `PolicyAccess` records the questions.
+A bus of your own, given through `kernelModule({ commandBus })`, runs `UseCaseGuard.within` last,
+after its unit of work.
+
 **A domain event handler names its event once.** `@DomainEventHandler` and `@On` no longer take
 the name of the event: they read the one its class declares, `static readonly eventName`. A
 handler is now `@DomainEventHandler(InvoiceIssued)`, `@DomainEventHandler(InvoiceIssued, { phase:

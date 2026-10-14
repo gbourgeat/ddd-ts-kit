@@ -67,7 +67,9 @@ npx ddd-ts-kit generate policy <ctx> <Name> --permission <aggregate>.<action> --
 
 A policy is a named, pure, unit-tested class in `application/authorization/*.policy.ts`
 (`@Policy(permission, { name: '<context>.<name>' })`); the handler loads the aggregate and
-asks `Access.authorize(command.actor, permission, appointment)`, the loaded aggregate named after its concept. A rule that holds whoever asks ("not after publication") is an invariant: it goes in
+asks `Access.authorize(command.actor, permission, appointment)`, the loaded aggregate named after its concept. Every
+handler of a use case requiring that permission must ask it: `authz/policy-asked` reports one that
+does not, and at run time its result is refused with `PolicyNotAskedError` and rolled back. A rule that holds whoever asks ("not after publication") is an invariant: it goes in
 the aggregate.
 
 ## Searches
@@ -132,6 +134,7 @@ stop at the first answer that changes the model (the guide
 |---|---|
 | `if (user.role === 'admin')` in a controller or a handler | a permission required by the use case; `HasRole(Role.Admin)` on the route group when the whole set of routes is for admins |
 | a guard that loads the appointment to see who owns it | a policy on the permission of the use case |
+| a policy declared and a handler that never asks it | `Access.authorize` in every handler of that permission |
 | reading the user from a global or the request in a handler | `command.actor` |
 | passing the request or the token inward | an `Actor`, mapped at the boundary |
 | an `isAdmin` flag on an entity deciding access | roles or relations in the authorizer |
@@ -139,7 +142,7 @@ stop at the first answer that changes the model (the guide
 | authorization in a repository | tenant scoping only there; rights in the application |
 
 Finish with
-`npx ddd-ts-kit check --rule authz/declared --rule authz/in-application --rule authz/actor-explicit --rule authz/fields-by-schema`.
+`npx ddd-ts-kit check --rule authz/declared --rule authz/in-application --rule authz/actor-explicit --rule authz/fields-by-schema --rule authz/policy-asked`.
 Every decision, denials included, is recorded by the audit trail (skill
 `ddd-ts-kit:cross-cutting`), the refusals of the guards at the edge too (`onGuardRefusal` of the
 HTTP boundary, wired to `auditGuardRefusals`).

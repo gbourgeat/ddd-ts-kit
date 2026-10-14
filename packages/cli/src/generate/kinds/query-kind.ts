@@ -7,6 +7,7 @@ import { emit, type Output } from '../emit.js';
 import { isDeclared } from '../is-declared.js';
 import type { Kind } from '../kind.js';
 import { learnTerms } from '../learn-terms.js';
+import { markPolicyQuestions } from '../mark-policy-questions.js';
 import { named } from '../named.js';
 import { openScope } from '../open-scope.js';
 import type { Scope } from '../scope.js';
@@ -45,6 +46,10 @@ export const queryKind: Kind = {
     });
 
     writeQuery(scope, { name, variant, reader: reader.file }, context);
+
+    if (scope.flags.permission !== undefined) {
+      markPolicyQuestions(scope, scope.flags.permission);
+    }
   },
 };
 

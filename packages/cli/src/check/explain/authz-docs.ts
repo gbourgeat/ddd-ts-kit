@@ -30,10 +30,23 @@ await this.access.authorize(command.actor, billingPermissions['invoice.void'], i
 @Policy(billingPermissions['invoice.void'], { name: 'billing.only-issuer-voids' })
 export class OnlyIssuerVoidsPolicy {}`,
   },
+  'authz/policy-asked': {
+    why: 'The bus checks the permission of a use case before its handler runs, with the identifier of the element at most: it cannot read the element. A policy is the part of the right that needs the element (only the issuer, not after closing), and it is evaluated only when the handler asks Access once the element is loaded. A handler that forgets to ask leaves the policy declared, tested and never applied, and nothing at run time says so. Judged: for every permission refined by a policy (@Policy or definePolicy in application/authorization/), the handlers in the folder of each command or query that requires it (@Requires, .requires(...) or requires(X, ...)) call authorize, decide or decideOn and name that permission in their code. The TODO(domain) the generator leaves in such a handler, naming the permission, is accepted: `ddd-ts-kit todo` lists it, and until it is done the authorization module refuses the result of the handler at run time (PolicyNotAskedError).',
+    bad: `// application/authorization/only-issuer-voids.policy.ts
+@Policy(billingPermissions['invoice.void'], { name: 'billing.only-issuer-voids' })
+export class OnlyIssuerVoidsPolicy {}
+// application/commands/void-invoice/void-invoice.handler.ts
+const invoice = await this.invoices.get(command.invoiceId);
+invoice.void(this.clock.now());`,
+    good: `// application/commands/void-invoice/void-invoice.handler.ts
+const invoice = await this.invoices.get(command.invoiceId);
+await this.access.authorize(command.actor, billingPermissions['invoice.void'], invoice);
+invoice.void(this.clock.now());`,
+  },
   'authz/actor-explicit': {
     why: 'A handler that reads "the current user" from an ambient context depends on something no signature shows: a consumer or a job that forgot to set it fails at run time, and a test has to set a global. With the actor as data of the command, the use case says who acts, and any caller can send it. The ExecutionScope port (and ActorContext, a view of it) is named and read by infrastructure and the platform alone, as a type or as a value in a dependency list, for audit columns, tenant scoping and correlation: stampCreation, stampUpdate and tenantScopeOf belong in a repository adapter.',
     bad: `// application/commands/void-invoice/void-invoice.handler.ts
-@CommandHandler(VoidInvoiceCommand, [InvoiceRepository, ExecutionScope])
+constructor(private readonly invoices: InvoiceRepository, private readonly scope: ExecutionScope) {}
 const actor = this.actors.require();
 const { tenantId } = this.scope.require();
 const stamp = stampCreation(this.scope, this.clock);`,
