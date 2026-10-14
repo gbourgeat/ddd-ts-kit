@@ -22,6 +22,12 @@ test('reads the dependency graph of the workspace from the manifests', () => {
   assert.deepEqual(graph.kernel, []);
 });
 
+test('a package whose specs replay the sources of another is selected when those sources change', () => {
+  // The classification spec of the ESLint plugin imports the classification of the CLI checker.
+  assert.ok(graph['eslint-plugin'].includes('cli'));
+  assert.ok(select(graph, ['packages/cli/src/check/project/locate.ts']).packages.includes('eslint-plugin'));
+});
+
 test('a changed package is selected with every package that depends on it, whichever package changes', () => {
   for (const name of names) {
     const { packages } = select(graph, [`packages/${name}/src/index.ts`]);
@@ -43,13 +49,11 @@ test('a leaf is selected alone, the kernel selects every package that is built o
     packages: ['winston'],
   });
 
-  assert.deepEqual(
-    select(graph, ['packages/kernel/src/index.ts']).packages,
-    names.filter((name) => name !== 'eslint-plugin'),
-  );
+  // The ESLint plugin does not build on the kernel, but its specs replay the checker of the CLI, which does.
+  assert.deepEqual(select(graph, ['packages/kernel/src/index.ts']).packages, names);
 });
 
-test('what the specs of the CLI read outside their package selects the CLI', () => {
+test('what the specs of the CLI read outside their package selects the CLI and what replays it', () => {
   for (const file of [
     'docs/ARCHITECTURE.md',
     'pipeline/lefthook.yml',
@@ -57,7 +61,7 @@ test('what the specs of the CLI read outside their package selects the CLI', () 
     'plugin/skills/start/SKILL.md',
     'biome.json',
   ]) {
-    assert.deepEqual(select(graph, [file]).packages, ['cli'], file);
+    assert.deepEqual(select(graph, [file]).packages, ['cli', 'eslint-plugin'], file);
   }
 });
 
