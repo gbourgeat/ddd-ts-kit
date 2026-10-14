@@ -20,8 +20,8 @@ Incorrect:
 ```ts
 import type { Clock } from '@ddd-ts-kit/kernel';
 
-@CommandHandler(IssueInvoiceCommand, [Clock])
-export class IssueInvoiceHandler {}
+// billing.module.ts, explicit style
+builder.command(IssueInvoiceCommand).handledBy(IssueInvoiceHandler, [Clock]);
 ```
 
 Correct:
@@ -29,8 +29,8 @@ Correct:
 ```ts
 import { Clock } from '@ddd-ts-kit/kernel';
 
-@CommandHandler(IssueInvoiceCommand, [Clock])
-export class IssueInvoiceHandler {}
+// billing.module.ts, explicit style
+builder.command(IssueInvoiceCommand).handledBy(IssueInvoiceHandler, [Clock]);
 ```
 
 ## Details

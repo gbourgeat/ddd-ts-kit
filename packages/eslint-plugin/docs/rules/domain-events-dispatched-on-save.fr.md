@@ -1,5 +1,5 @@
 [English](domain-events-dispatched-on-save.md) · **Français**
-<!-- translation-of: domain-events-dispatched-on-save.md sha256:d2a6b9135e82644d -->
+<!-- translation-of: domain-events-dispatched-on-save.md sha256:815a6be7014d66ca -->
 
 # ddd-ts-kit/domain-events-dispatched-on-save
 
@@ -22,7 +22,7 @@ Incorrect :
 // src/contexts/billing/application/commands/issue-invoice/issue-invoice.handler.ts
 import { Clock, DomainEventDispatcher } from '@ddd-ts-kit/kernel';
 
-@CommandHandler(IssueInvoice, [InvoiceRepository, Clock, DomainEventDispatcher])
+@CommandHandler(IssueInvoice)
 export class IssueInvoiceHandler {
   constructor(
     private readonly invoices: InvoiceRepository,
@@ -47,7 +47,7 @@ Correct :
 // src/contexts/billing/application/commands/issue-invoice/issue-invoice.handler.ts
 import { Clock } from '@ddd-ts-kit/kernel';
 
-@CommandHandler(IssueInvoice, [InvoiceRepository, Clock])
+@CommandHandler(IssueInvoice)
 export class IssueInvoiceHandler {
   constructor(
     private readonly invoices: InvoiceRepository,

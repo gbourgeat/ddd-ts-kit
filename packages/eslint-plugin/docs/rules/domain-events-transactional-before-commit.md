@@ -34,7 +34,7 @@ import { Cache } from '@ddd-ts-kit/kernel';
 import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
 import { InvoiceRepository } from '@/contexts/billing/domain/repositories/invoice.repository';
 
-@DomainEventHandler(InvoiceIssued, [InvoiceRepository, Cache])
+@DomainEventHandler(InvoiceIssued)
 export class InvoiceIssuedEventHandler {
   constructor(
     private readonly invoices: InvoiceRepository,
@@ -44,28 +44,42 @@ export class InvoiceIssuedEventHandler {
 ```
 
 ```ts
-@DomainEventHandler(InvoiceIssued, { phase: 'after-commit' }, [IntegrationEventPublisher])
-export class InvoiceIssuedEventHandler {}
+@DomainEventHandler(InvoiceIssued, { phase: 'after-commit' })
+export class InvoiceIssuedEventHandler {
+  constructor(private readonly integrationEventPublisher: IntegrationEventPublisher) {}
+}
 ```
 
 Correct:
 
 ```ts
 // the state the handler changes commits or rolls back with the command
-@DomainEventHandler(InvoiceIssued, [InvoiceRepository, CommandBus])
-export class InvoiceIssuedEventHandler {}
+@DomainEventHandler(InvoiceIssued)
+export class InvoiceIssuedEventHandler {
+  constructor(
+    private readonly invoiceRepository: InvoiceRepository,
+    private readonly commandBus: CommandBus,
+  ) {}
+}
 ```
 
 ```ts
 // an effect no transaction covers runs once the transaction has committed, at most once
-@DomainEventHandler(InvoiceIssued, { phase: 'after-commit' }, [Cache])
-export class InvoiceIssuedEventHandler {}
+@DomainEventHandler(InvoiceIssued, { phase: 'after-commit' })
+export class InvoiceIssuedEventHandler {
+  constructor(private readonly cache: Cache) {}
+}
 ```
 
 ```ts
 // an effect that must not be lost goes through the outbox: the handler of the integration event does the work
-@DomainEventHandler(InvoiceIssued, [IntegrationEventPublisher, IdGenerator])
-export class InvoiceIssuedPublisher {}
+@DomainEventHandler(InvoiceIssued)
+export class InvoiceIssuedPublisher {
+  constructor(
+    private readonly integrationEventPublisher: IntegrationEventPublisher,
+    private readonly idGenerator: IdGenerator,
+  ) {}
+}
 ```
 
 ## Details

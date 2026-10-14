@@ -1,5 +1,5 @@
 [English](layer-application-inward.md) · **Français**
-<!-- translation-of: layer-application-inward.md sha256:03b6d93f13ce9469 -->
+<!-- translation-of: layer-application-inward.md sha256:6e16bc8f73e2aef0 -->
 
 # ddd-ts-kit/layer-application-inward
 
@@ -40,8 +40,14 @@ import { PaymentGateway } from '@/contexts/billing/application/ports/payment-gat
 // style déclaré
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
 
-@CommandHandler(IssueInvoiceCommand, [InvoiceRepository, PaymentGateway, Clock])
-export class IssueInvoiceHandler implements CommandHandler<IssueInvoiceCommand> {}
+@CommandHandler(IssueInvoiceCommand)
+export class IssueInvoiceHandler implements CommandHandler<IssueInvoiceCommand> {
+  constructor(
+    private readonly invoiceRepository: InvoiceRepository,
+    private readonly paymentGateway: PaymentGateway,
+    private readonly clock: Clock,
+  ) {}
+}
 ```
 
 ## Détails

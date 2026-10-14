@@ -1,5 +1,5 @@
 [English](events-consumer-idempotent.md) · **Français**
-<!-- translation-of: events-consumer-idempotent.md sha256:1b3f1042f11ef75d -->
+<!-- translation-of: events-consumer-idempotent.md sha256:03b7477d9bda7e88 -->
 
 # ddd-ts-kit/events-consumer-idempotent
 
@@ -28,8 +28,10 @@ subscribeAll(platform.subscriber, [on(productListedV1, (event) => consumer.handl
 resolve(IntegrationEventSubscriber).subscribe('catalog.product.listed', (event) => consumer.handle(event));
 
 // style déclaré
-@IntegrationEventHandler(productListedV1, { consumer: consumerName }, [CommandBus])
-export class CatalogProductListedHandler {}
+@IntegrationEventHandler(productListedV1, { consumer: consumerName })
+export class CatalogProductListedHandler {
+  constructor(private readonly commandBus: CommandBus) {}
+}
 ```
 
 Correct :
@@ -42,8 +44,10 @@ subscribeAll(platform.subscriber, [
 ]);
 
 // style déclaré
-@IntegrationEventHandler(productListedV1, { consumer: 'billing.catalog-product-listed' }, [CommandBus])
-export class CatalogProductListedHandler {}
+@IntegrationEventHandler(productListedV1, { consumer: 'billing.catalog-product-listed' })
+export class CatalogProductListedHandler {
+  constructor(private readonly commandBus: CommandBus) {}
+}
 ```
 
 ## Détails

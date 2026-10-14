@@ -1,5 +1,5 @@
 [English](context-extractable.md) · **Français**
-<!-- translation-of: context-extractable.md sha256:1fef5c4577e579cd -->
+<!-- translation-of: context-extractable.md sha256:9c8ef03d79be6af4 -->
 
 # ddd-ts-kit/context-extractable
 
@@ -50,8 +50,10 @@ builder.query(GetPrice).public().handledBy(GetPriceHandler, [ProductReader]);
 // style déclaré : billing/application/queries/get-price/get-price.handler.ts
 import { ProductReader } from '@/contexts/catalog/application/ports/product-reader.port';
 
-@QueryHandler(GetPriceQuery, [ProductReader])
-export class GetPriceHandler {}
+@QueryHandler(GetPriceQuery)
+export class GetPriceHandler {
+  constructor(private readonly productReader: ProductReader) {}
+}
 ```
 
 Correct :
@@ -67,8 +69,10 @@ builder.query(GetPrice).public().handledBy(GetPriceHandler, [PriceSource]);
 // style déclaré : le port appartient à billing, sa gateway appelle catalog
 import { PriceCatalog } from '@/contexts/billing/application/ports/price-catalog.port';
 
-@QueryHandler(GetPriceQuery, [PriceCatalog])
-export class GetPriceHandler {}
+@QueryHandler(GetPriceQuery)
+export class GetPriceHandler {
+  constructor(private readonly priceCatalog: PriceCatalog) {}
+}
 ```
 
 ## Détails

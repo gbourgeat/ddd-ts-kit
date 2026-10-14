@@ -1,5 +1,5 @@
 [English](ports-value-import.md) · **Français**
-<!-- translation-of: ports-value-import.md sha256:84a37501770a4462 -->
+<!-- translation-of: ports-value-import.md sha256:56fe341111170bd1 -->
 
 # ddd-ts-kit/ports-value-import
 
@@ -21,8 +21,8 @@ Incorrect :
 ```ts
 import type { Clock } from '@ddd-ts-kit/kernel';
 
-@CommandHandler(IssueInvoiceCommand, [Clock])
-export class IssueInvoiceHandler {}
+// billing.module.ts, style explicite
+builder.command(IssueInvoiceCommand).handledBy(IssueInvoiceHandler, [Clock]);
 ```
 
 Correct :
@@ -30,8 +30,8 @@ Correct :
 ```ts
 import { Clock } from '@ddd-ts-kit/kernel';
 
-@CommandHandler(IssueInvoiceCommand, [Clock])
-export class IssueInvoiceHandler {}
+// billing.module.ts, style explicite
+builder.command(IssueInvoiceCommand).handledBy(IssueInvoiceHandler, [Clock]);
 ```
 
 ## Détails

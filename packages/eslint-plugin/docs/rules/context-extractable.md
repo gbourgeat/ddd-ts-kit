@@ -49,8 +49,10 @@ builder.query(GetPrice).public().handledBy(GetPriceHandler, [ProductReader]);
 // declared style: billing/application/queries/get-price/get-price.handler.ts
 import { ProductReader } from '@/contexts/catalog/application/ports/product-reader.port';
 
-@QueryHandler(GetPriceQuery, [ProductReader])
-export class GetPriceHandler {}
+@QueryHandler(GetPriceQuery)
+export class GetPriceHandler {
+  constructor(private readonly productReader: ProductReader) {}
+}
 ```
 
 Correct:
@@ -66,8 +68,10 @@ builder.query(GetPrice).public().handledBy(GetPriceHandler, [PriceSource]);
 // declared style: the port is one of billing, its gateway calls catalog
 import { PriceCatalog } from '@/contexts/billing/application/ports/price-catalog.port';
 
-@QueryHandler(GetPriceQuery, [PriceCatalog])
-export class GetPriceHandler {}
+@QueryHandler(GetPriceQuery)
+export class GetPriceHandler {
+  constructor(private readonly priceCatalog: PriceCatalog) {}
+}
 ```
 
 ## Details
