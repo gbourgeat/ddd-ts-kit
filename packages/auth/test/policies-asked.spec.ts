@@ -54,16 +54,20 @@ function ledger() {
 
 type VoidHandler = (command: VoidInvoice, access: PolicyAccess) => Promise<void>;
 
-function application(voids: VoidHandler) {
+function application(voids: VoidHandler, answering?: () => Promise<unknown>) {
   const access = new PolicyAccess({ policies: [onlyIssuerVoids], clock: new FixedClock(new Date(0)) });
   const unitOfWork = ledger();
 
   const commands = new InMemoryCommandBus()
     .use(authorizationMiddleware({ authorizer: new AllowAll(), map }))
     .use(unitOfWorkMiddleware({ run: unitOfWork.run }))
-    .use(policiesAskedMiddleware({ map, refined: [onlyIssuerVoids.permission] }))
+    .aroundHandler(policiesAskedMiddleware({ map, refined: [onlyIssuerVoids.permission] }))
     .register(IssueInvoice, { execute: async (command) => `invoice for ${command.customerId}` })
     .register(VoidInvoice, { execute: (command) => voids(command, access) });
+
+  if (answering !== undefined) {
+    commands.use(answering);
+  }
 
   return { commands, unitOfWork };
 }
@@ -105,6 +109,15 @@ describe('policiesAskedMiddleware', () => {
     });
 
     await expect(commands.execute(new VoidInvoice(ada, 'inv-1'))).rejects.toBeInstanceOf(PolicyNotAskedError);
+  });
+
+  it('leaves alone a middleware that answers in place of the handler, added after it', async () => {
+    const { commands } = application(
+      async () => undefined,
+      async () => 'recorded',
+    );
+
+    expect(await commands.execute(new VoidInvoice(ada, 'inv-1'))).toBe('recorded');
   });
 
   it('leaves alone a use case whose permission no policy refines', async () => {

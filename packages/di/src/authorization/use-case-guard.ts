@@ -10,8 +10,9 @@ export abstract class UseCaseGuard {
   abstract check(message: Message, next: () => Promise<unknown>, info: MessageInfo): Promise<unknown>;
 
   /**
-   * Run closest to the handler, inside the unit of work: what has to hold once the handler
-   * returned, so that a failure here rolls the change back. Absent, the handler runs alone.
+   * Run right around the handler, inside the unit of work and every other middleware: what has
+   * to hold once the handler returned, so that a failure here rolls the change back. A
+   * middleware that answers in place of the handler skips it. Absent, the handler runs alone.
    */
   abstract within?(message: Message, next: () => Promise<unknown>, info: MessageInfo): Promise<unknown>;
 }

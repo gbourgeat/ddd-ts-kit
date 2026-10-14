@@ -13,8 +13,9 @@ export interface PoliciesAskedMiddlewareOptions {
 /**
  * Refuses the result of a handler that never asked `Access` about the permission of its use case
  * when a policy refines it: the bus checked the permission without the element, and the rule of
- * the policy would be skipped. Install it last, inside the unit of work, so that the refusal
- * rolls the change back. Only the questions put to `PolicyAccess` are seen.
+ * the policy would be skipped. Install it with `aroundHandler` of the bus, inside the unit of
+ * work, so that the refusal rolls the change back and a middleware that answers in place of the
+ * handler is not judged. Only the questions put to `PolicyAccess` are seen.
  */
 export function policiesAskedMiddleware({ map, refined }: PoliciesAskedMiddlewareOptions): BusMiddleware {
   const ids = new Set(refined.map((permission) => permission.id));

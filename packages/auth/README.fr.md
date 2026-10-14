@@ -368,8 +368,8 @@ Quand une politique affine la permission d'un cas d'usage, la garde enveloppe au
 gestionnaire, en dernier sur le bus et à l'intérieur de l'unité de travail : un gestionnaire qui
 rend la main sans interroger `Access` sur cette permission voit son résultat refusé par
 `PolicyNotAskedError` et sa modification annulée, puisque la règle de la politique n'a jamais été
-appliquée. Un bus à vous exécute cette partie en dernier, après son unité de travail :
-`.use((message, next, info) => resolve(UseCaseGuard).within?.(message, next, info) ?? next())`.
+appliquée. Un bus à vous exécute cette partie autour de son gestionnaire, avec
+`.aroundHandler((message, next, info) => resolve(UseCaseGuard).within?.(message, next, info) ?? next())`.
 Sans le conteneur, `policiesAskedMiddleware({ map, refined })` fait la même vérification. Seules
 les questions posées à `PolicyAccess` sont vues : un projet qui lie son propre `Access` passe
 `policiesAsked: false`.
