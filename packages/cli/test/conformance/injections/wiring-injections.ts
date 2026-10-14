@@ -35,17 +35,22 @@ const SECOND_STATEMENT = [
 export const WIRING_INJECTIONS: readonly Injection[] = [
   {
     rule: 'declarations/role-declared',
-    what: 'a domain event handler named after another event than the one it handles',
+    what: 'a domain event handler that no longer declares itself',
     file: EVENT_HANDLER,
     changes: [
-      {
-        file: EVENT_HANDLER,
-        from: '{ name: ReminderSent.eventName }',
-        to: "{ name: 'notification.reminder.planned' }",
-      },
+      { file: EVENT_HANDLER, from: '@DomainEventHandler(ReminderSent)\n', to: '' },
+      { file: EVENT_HANDLER, from: 'import { DomainEventHandler }', to: 'import type { DomainEventHandler }' },
+      { file: EVENT_HANDLER, from: 'import { ReminderSent }', to: 'import type { ReminderSent }' },
     ],
     checker: true,
     eslint: 'ddd-ts-kit/declarations-role-declared',
+    alsoReports: [
+      {
+        tool: 'checker',
+        rule: 'declarations/barrel-current',
+        reason: 'the generated file of the context still registers the dependencies of the class it no longer reads',
+      },
+    ],
   },
   {
     rule: 'ports/abstract-class',
