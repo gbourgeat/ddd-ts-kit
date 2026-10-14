@@ -99,6 +99,25 @@ test('session start hands the workflow and the context map over as additional co
   assert.match(output.hookSpecificOutput.additionalContext, /ordering \[core\]/);
 });
 
+test('session start says when the installed packages are not the version the skills describe', () => {
+  // The guard states the version of the CLI: `release-version.mjs` checks that they agree.
+  const described = JSON.parse(readFileSync(join(here, '..', '..', 'packages', 'cli', 'package.json'), 'utf8')).version;
+  const [major, minor, patch] = described.split('.').map(Number);
+  const breaking = (step) => (major === 0 ? `0.${minor + step}.0` : `${major + step}.0.0`);
+  const briefing = (installed) => {
+    const root = project();
+    if (installed !== undefined) {
+      put(root, 'node_modules/ddd-ts-kit/package.json', JSON.stringify({ name: 'ddd-ts-kit', version: installed }));
+    }
+    return run('session', { cwd: root }).output.hookSpecificOutput.additionalContext;
+  };
+
+  assert.doesNotMatch(briefing(undefined), /Version gap/);
+  assert.doesNotMatch(briefing(`${major}.${minor}.${patch + 1}`), /Version gap/);
+  assert.match(briefing(breaking(1)), /Version gap: .* update the plugin/);
+  assert.match(briefing(`${breaking(-1)}-rc.1`), /Version gap: .* node_modules\/ddd-ts-kit\/CHANGELOG\.md/);
+});
+
 test('outside a ddd-ts-kit project every mode stays silent', () => {
   const elsewhere = directory('none');
   for (const mode of ['session', 'pre-write', 'post-write', 'stop']) {

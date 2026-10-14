@@ -16,6 +16,8 @@ const SOURCES = [
   'packages/cli/src/version.ts',
   'packages/cli/src/init/manifest/versions.ts',
   'packages/eslint-plugin/src/version.ts',
+  // The version the skills of the plugin describe: a new version of the packages changes the plugin.
+  'plugin/hooks/guard.mjs',
 ];
 const MANIFESTS = [
   'package.json',

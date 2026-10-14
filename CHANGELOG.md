@@ -4,6 +4,14 @@ What each version changes for someone who uses the kit. The packages of `package
 together, under one version; the notes of each [GitHub release](https://github.com/gbourgeat/ddd-ts-kit/releases)
 list the pull requests behind it.
 
+## Unreleased
+
+**The notes travel with the CLI, and a version gap is said.** The `ddd-ts-kit` package ships this
+file, so an agent finds the steps of a version in `node_modules/ddd-ts-kit/CHANGELOG.md`, offline.
+The plugin states the version of the packages its skills describe: when the installed
+`ddd-ts-kit` is another one (below 1.0.0, another minor version), the session start says so and
+what to do, upgrade the packages together or update the plugin. It never blocks.
+
 ## 0.18.0
 
 **The tenant check of `RoleBasedAuthorizer` follows memberships and the tenant of the work.**

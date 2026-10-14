@@ -80,7 +80,9 @@ and creates the GitHub release. A version with a pre-release part (`0.2.0-rc.1`)
 under the `next` tag. A run that stopped half-way is run again: what is already published is
 skipped. The notes of the GitHub release are generated from the merged pull requests;
 `CHANGELOG.md` at the root says in a few lines what a version changes for a user, and is
-written in the pull request that sets the version.
+written in the pull request that sets the version; the CLI package ships a copy, which agents read
+in `node_modules`. Setting the version also rewrites the version the skills describe, in
+`plugin/hooks/guard.mjs`: the same pull request bumps the version of the plugin.
 
 **No secret.** The workflow publishes through trusted publishing (OIDC): each package names
 `release.yml` of this repository, in its `npm` environment, as its trusted publisher, and

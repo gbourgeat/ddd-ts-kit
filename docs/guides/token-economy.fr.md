@@ -1,5 +1,5 @@
 [English](token-economy.md) · **Français**
-<!-- translation-of: token-economy.md sha256:3566b978786aa336 -->
+<!-- translation-of: token-economy.md sha256:21273b4b739a4f7f -->
 
 # Économie de tokens : dépenser moins avec les agents de code
 
@@ -60,7 +60,8 @@ La même tâche, faite des deux façons :
 
 Le *hook* de début de session du *plugin* rappelle aussi l'ordre de travail, la prochaine étape du
 plan et une carte d'une ligne par contexte, de taille plafonnée, si bien qu'une nouvelle session ne
-commence pas par les redécouvrir. Sur l'[application d'exemple](../../examples/scheduling/README.fr.md),
+commence pas par les redécouvrir. Quand le `ddd-ts-kit` installé n'est pas la version que décrivent
+les skills du *plugin*, une ligne le dit d'abord, avec ce qu'il faut faire. Sur l'[application d'exemple](../../examples/scheduling/README.fr.md),
 avec la CLI installée, une session commence par :
 
 ```text

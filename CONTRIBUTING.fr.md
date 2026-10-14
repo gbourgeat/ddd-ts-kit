@@ -1,5 +1,5 @@
 [English](CONTRIBUTING.md) · **Français**
-<!-- translation-of: CONTRIBUTING.md sha256:811f970be50d93eb -->
+<!-- translation-of: CONTRIBUTING.md sha256:36d9f7df57407145 -->
 
 # Contribuer
 
@@ -85,7 +85,9 @@ sa provenance et crée la release GitHub. Une version qui a une partie de préve
 (`0.2.0-rc.1`) est publiée sous l'étiquette `next`. Une exécution arrêtée à mi-chemin se
 relance : ce qui est déjà publié est sauté. Les notes de la release GitHub sont générées à
 partir des pull requests fusionnées ; `CHANGELOG.md` à la racine dit en quelques lignes ce qu'une version change pour un utilisateur, et s'écrit dans la pull request
-qui fixe la version.
+qui fixe la version ; le package de la CLI en livre une copie, que les agents lisent dans
+`node_modules`. Fixer la version réécrit aussi la version que décrivent les skills, dans
+`plugin/hooks/guard.mjs` : la même pull request augmente la version du *plugin*.
 
 **Aucun secret.** Le workflow publie par la publication de confiance (trusted publishing,
 OIDC) : chaque package désigne `release.yml` de ce dépôt, dans son environnement `npm`, comme

@@ -57,7 +57,8 @@ The same task, walked both ways:
 
 The session start hook of the plugin also reminds the order of work, the next step of the plan
 and a one-line map per context, capped in size, so a new session does not begin by
-rediscovering them. On the [example application](../../examples/scheduling/README.md), with
+rediscovering them. When the installed `ddd-ts-kit` is not the version the skills of the plugin
+describe, a line says so first, with the move to make. On the [example application](../../examples/scheduling/README.md), with
 the CLI installed, a session starts with:
 
 ```text
