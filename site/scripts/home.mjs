@@ -5,7 +5,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { BASE, hrefOf, REPOSITORY } from './routes.mjs';
+import { BASE, hrefOf, REPOSITORY, SITE } from './routes.mjs';
 
 const WORKFLOW_DIAGRAM = /^!\[([^\]]+)\]\(\S*\/(ddd-ts-kit-workflow(?:\.fr)?\.svg)\)$/m;
 
@@ -81,6 +81,15 @@ const CARDS = {
   ],
 };
 
+/**
+ * The title a search engine shows for the home page: the name alone says nothing to someone who
+ * looks for the subject, so it carries the words they type.
+ */
+const SEARCH_TITLES = {
+  en: 'ddd-ts-kit: Domain-Driven Design and Clean Architecture for TypeScript',
+  fr: 'ddd-ts-kit : Domain-Driven Design et Clean Architecture pour TypeScript',
+};
+
 const ACTIONS = {
   en: { start: 'Get started', source: 'View on GitHub' },
   fr: { start: 'Démarrer', source: 'Voir sur GitHub' },
@@ -119,6 +128,7 @@ function frontmatter(pitch, locale) {
     `description: ${JSON.stringify(pitch)}`,
     'template: splash',
     'editUrl: false',
+    ...head(pitch, locale),
     'hero:',
     `  tagline: ${JSON.stringify(pitch)}`,
     '  actions:',
@@ -130,6 +140,37 @@ function frontmatter(pitch, locale) {
     '      icon: external',
     '      variant: minimal',
     '---',
+  ];
+}
+
+/** The title of the search result and of a shared link, and what the project is, as structured data. */
+function head(pitch, locale) {
+  const project = {
+    '@context': 'https://schema.org',
+    '@type': 'SoftwareSourceCode',
+    name: 'ddd-ts-kit',
+    description: pitch,
+    url: `${SITE}${hrefOf('', locale)}`,
+    codeRepository: REPOSITORY,
+    programmingLanguage: 'TypeScript',
+    runtimePlatform: 'Node.js',
+    license: 'https://opensource.org/licenses/MIT',
+    keywords:
+      'Domain-Driven Design, DDD, Clean Architecture, hexagonal architecture, ports and adapters, TypeScript, Node.js, CQRS, event sourcing, Claude Code, Codex, GitHub Copilot',
+  };
+
+  return [
+    'head:',
+    '  - tag: title',
+    `    content: ${JSON.stringify(SEARCH_TITLES[locale])}`,
+    '  - tag: meta',
+    '    attrs:',
+    '      property: og:title',
+    `      content: ${JSON.stringify(SEARCH_TITLES[locale])}`,
+    '  - tag: script',
+    '    attrs:',
+    '      type: application/ld+json',
+    `    content: ${JSON.stringify(JSON.stringify(project))}`,
   ];
 }
 

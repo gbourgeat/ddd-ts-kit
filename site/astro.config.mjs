@@ -32,6 +32,19 @@ export default defineConfig({
         fr: { label: 'Français', lang: 'fr' },
       },
       social: [{ icon: 'github', label: 'GitHub', href: REPOSITORY }],
+      // The card a link to any page shows when it is shared (site/src/assets/social-card.svg, rendered
+      // to public/social-card.png by scripts/social-card.mjs).
+      head: [
+        { tag: 'meta', attrs: { property: 'og:image', content: `${SITE}${BASE}/social-card.png` } },
+        { tag: 'meta', attrs: { property: 'og:image:width', content: '1200' } },
+        { tag: 'meta', attrs: { property: 'og:image:height', content: '630' } },
+        { tag: 'meta', attrs: { name: 'twitter:image', content: `${SITE}${BASE}/social-card.png` } },
+        // The ownership of the site in Google Search Console, where its sitemap is submitted.
+        {
+          tag: 'meta',
+          attrs: { name: 'google-site-verification', content: 'd_NfmltQINr6iabzRlEDWMJCqDYjPeSQA_nC3n08Ns0' },
+        },
+      ],
       // Every page names its source file with `editUrl`: the content of the site is generated.
       editLink: { baseUrl: `${REPOSITORY}/edit/main/` },
       lastUpdated: false,

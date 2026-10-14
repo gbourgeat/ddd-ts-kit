@@ -21,7 +21,7 @@
     "url": "git+https://github.com/gbourgeat/ddd-ts-kit.git",
     "directory": "packages/kernel"
   },
-  "homepage": "https://github.com/gbourgeat/ddd-ts-kit/tree/main/packages/kernel#readme",
+  "homepage": "https://gbourgeat.github.io/ddd-ts-kit/packages/kernel/",
   "bugs": "https://github.com/gbourgeat/ddd-ts-kit/issues",
   "publishConfig": {
     "access": "public",

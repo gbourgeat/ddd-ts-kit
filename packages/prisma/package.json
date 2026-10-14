@@ -20,7 +20,7 @@
     "url": "git+https://github.com/gbourgeat/ddd-ts-kit.git",
     "directory": "packages/prisma"
   },
-  "homepage": "https://github.com/gbourgeat/ddd-ts-kit/tree/main/packages/prisma#readme",
+  "homepage": "https://gbourgeat.github.io/ddd-ts-kit/packages/prisma/",
   "bugs": "https://github.com/gbourgeat/ddd-ts-kit/issues",
   "publishConfig": {
     "access": "public",

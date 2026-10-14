@@ -21,7 +21,7 @@
     "url": "git+https://github.com/gbourgeat/ddd-ts-kit.git",
     "directory": "packages/drizzle"
   },
-  "homepage": "https://github.com/gbourgeat/ddd-ts-kit/tree/main/packages/drizzle#readme",
+  "homepage": "https://gbourgeat.github.io/ddd-ts-kit/packages/drizzle/",
   "bugs": "https://github.com/gbourgeat/ddd-ts-kit/issues",
   "publishConfig": {
     "access": "public",

@@ -1,5 +1,5 @@
 [English](CONTRIBUTING.md) · **Français**
-<!-- translation-of: CONTRIBUTING.md sha256:36d9f7df57407145 -->
+<!-- translation-of: CONTRIBUTING.md sha256:2f59ec613690a994 -->
 
 # Contribuer
 
@@ -44,7 +44,9 @@ node --test plugin/hooks/guard.test.mjs
   assemble les pages et sert le site sur `http://localhost:4321/ddd-ts-kit/` (relancez-le après
   avoir changé une page) ; `npm run site:build` le construit comme la CI, et échoue sur un lien
   ou une ancre qui ne mène nulle part. Une nouvelle page reçoit sa route dans
-  `site/scripts/routes.mjs`.
+  `site/scripts/routes.mjs`. La carte qu'affiche un lien partagé est dessinée dans
+  `site/src/assets/social-card.svg` ; `npm run social-card --workspace site` la rend dans
+  `site/public/social-card.png`, versionné.
 - Ni tiret cadratin ni tiret demi-cadratin, dans aucune langue (`npm run check:dashes`, lancé
   par la CI).
 - Des commits conventionnels : `<type>(<scope>): <summary>`.

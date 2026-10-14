@@ -18,7 +18,7 @@
     "url": "git+https://github.com/gbourgeat/ddd-ts-kit.git",
     "directory": "packages/di"
   },
-  "homepage": "https://github.com/gbourgeat/ddd-ts-kit/tree/main/packages/di#readme",
+  "homepage": "https://gbourgeat.github.io/ddd-ts-kit/packages/di/",
   "bugs": "https://github.com/gbourgeat/ddd-ts-kit/issues",
   "publishConfig": {
     "access": "public",

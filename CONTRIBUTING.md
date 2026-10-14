@@ -41,7 +41,9 @@ node --test plugin/hooks/guard.test.mjs
   is built from these same pages, which stay its only source. `npm run site:dev` assembles the
   pages and serves the site at `http://localhost:4321/ddd-ts-kit/` (run it again after changing
   a page); `npm run site:build` builds it as CI does, and fails on a link or an anchor that
-  leads nowhere. A new page gets its route in `site/scripts/routes.mjs`.
+  leads nowhere. A new page gets its route in `site/scripts/routes.mjs`. The card a shared link
+  shows is drawn in `site/src/assets/social-card.svg`; `npm run social-card --workspace site`
+  renders it to the committed `site/public/social-card.png`.
 - No em dash or en dash, in any language (`npm run check:dashes`, run by CI).
 - Conventional commits: `<type>(<scope>): <summary>`.
 - A pull request that changes the plugin (skills, agents, hooks) bumps `version` in

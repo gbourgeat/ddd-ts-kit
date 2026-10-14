@@ -19,7 +19,7 @@
     "url": "git+https://github.com/gbourgeat/ddd-ts-kit.git",
     "directory": "packages/winston"
   },
-  "homepage": "https://github.com/gbourgeat/ddd-ts-kit/tree/main/packages/winston#readme",
+  "homepage": "https://gbourgeat.github.io/ddd-ts-kit/packages/winston/",
   "bugs": "https://github.com/gbourgeat/ddd-ts-kit/issues",
   "publishConfig": {
     "access": "public",
