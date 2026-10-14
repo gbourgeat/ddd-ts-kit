@@ -16,7 +16,8 @@ export const LANGUAGE_FIXTURES: readonly Fixture[] = [
     expect: 'pass',
     files: project({
       ...aggregate('export class Invoice {}\n'),
-      [EVENT]: "export class InvoiceIssued {\n  readonly name = 'billing.invoice.issued';\n}\n",
+      [EVENT]:
+        "export class InvoiceIssued {\n  static readonly eventName = 'billing.invoice.issued';\n\n  readonly name = InvoiceIssued.eventName;\n}\n",
       [`${BILLING}/application/commands/issue-invoice/issue-invoice.command.ts`]:
         'export class IssueInvoiceCommand {}\n',
       [`${BILLING}/application/queries/invoices-issued-for-money/invoices-issued-for-money.query.ts`]:

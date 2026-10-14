@@ -52,8 +52,8 @@ without fighting them. Reference: `docs/ARCHITECTURE.md` section 6.
   limit or a rate is a constant of the module, `const MINUTES_PER_HOUR = 60;`, or a value object
   of the business (`clean/no-magic-number`). Both rules hold under `"stack.literals": "named"`,
   which `init` writes; a project whose config does not say keeps them silent.
-- A domain event declares its name once, `static readonly eventName = '<context>.<aggregate>.<fact>'`;
-  a reaction reads it, `@DomainEventHandler(InvoiceIssued)`, and an integration event handler reads
+- A domain event declares its name once, `static readonly eventName = '<context>.<aggregate>.<fact>'`,
+  and its `readonly name` reads it (`events/name-declared-once`); a reaction reads it too, `@DomainEventHandler(InvoiceIssued)`, and an integration event handler reads
   the type it handles from the contract, `invoiceIssuedV1.type`.
 
 ## Functions

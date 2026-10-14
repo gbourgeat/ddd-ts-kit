@@ -79,7 +79,9 @@ import { type KnexContext, insertIgnoringConflict, optimisticUpdate } from '@ddd
 
 // domain/events/invoice-paid.event.ts: the domain knows no row, no SQL, no library.
 export class InvoicePaid implements DomainEvent {
-  readonly name = 'billing.invoice.paid';
+  static readonly eventName = 'billing.invoice.paid';
+
+  readonly name = InvoicePaid.eventName;
 
   constructor(
     readonly aggregateId: string,

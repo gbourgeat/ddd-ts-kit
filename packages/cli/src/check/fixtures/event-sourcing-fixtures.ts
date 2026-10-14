@@ -27,10 +27,10 @@ const STORE_ADAPTER = `${BILLING}/infrastructure/persistence/event-store-invoice
 
 const EVENTS: FixtureFiles = {
   [EVENT]: source(
-    "export class InvoiceIssued {\n  readonly name = 'billing.invoice.issued';\n\n  constructor(\n    readonly aggregateId: string,\n    readonly amount: number,\n  ) {}\n}",
+    "export class InvoiceIssued {\n  static readonly eventName = 'billing.invoice.issued';\n\n  readonly name = InvoiceIssued.eventName;\n\n  constructor(\n    readonly aggregateId: string,\n    readonly amount: number,\n  ) {}\n}",
   ),
   [PRESENT_EVENT]: source(
-    "export class IssueInvoice {\n  readonly name = 'billing.invoice.issued';\n\n  constructor(readonly aggregateId: string) {}\n}",
+    "export class IssueInvoice {\n  static readonly eventName = 'billing.invoice.issued';\n\n  readonly name = IssueInvoice.eventName;\n\n  constructor(readonly aggregateId: string) {}\n}",
   ),
 };
 
@@ -96,7 +96,7 @@ function namedEvent(name: string, eventClass: string, expect: Fixture['expect'])
     files: project(
       {
         [`${BILLING}/domain/events/${file}.event.ts`]: source(
-          `export class ${eventClass} {\n  readonly name = 'billing.invoice.price-set';\n\n  constructor(readonly aggregateId: string) {}\n}`,
+          `export class ${eventClass} {\n  static readonly eventName = 'billing.invoice.price-set';\n\n  readonly name = ${eventClass}.eventName;\n\n  constructor(readonly aggregateId: string) {}\n}`,
         ),
         ...invoice([`this.record(new ${eventClass}(this.id));`], APPLYING, imported),
       },

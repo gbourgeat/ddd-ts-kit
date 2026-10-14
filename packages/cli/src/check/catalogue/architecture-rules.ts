@@ -38,6 +38,7 @@ import { errorsKnownCode } from '../rules/errors-known-code.js';
 import { filesPortNotConnector } from '../rules/files-port-not-connector.js';
 import { eventsConsumerIdempotent } from '../rules/events-consumer-idempotent.js';
 import { eventsDefinedInPublishedLanguage } from '../rules/events-defined-in-published-language.js';
+import { eventsNameDeclaredOnce } from '../rules/events-name-declared-once.js';
 import { eventsNameFormat } from '../rules/events-name-format.js';
 import { eventsOutboxRequired } from '../rules/events-outbox-required.js';
 import { governanceRecordedDeviation } from '../rules/governance-recorded-deviation.js';
@@ -101,6 +102,7 @@ export const ARCHITECTURE_RULES: readonly Rule[] = [
   schemaNoDuplicateShape,
   testSpecRequired,
   eventsNameFormat,
+  eventsNameDeclaredOnce,
   eventsDefinedInPublishedLanguage,
   testNoMocks,
   testBuilderRequired,

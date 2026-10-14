@@ -3,8 +3,19 @@ import type { RuleDoc } from '../model/rule-doc.js';
 export const EVENTS_DOCS: Readonly<Record<string, RuleDoc>> = {
   'events/name-format': {
     why: 'Event names are routing keys and part of the public contract. A uniform <context>.<aggregate>.<fact> name tells who owns the event and what happened, and never collides across contexts.',
-    bad: `readonly name = 'InvoiceIssued';`,
-    good: `readonly name = 'billing.invoice.issued';`,
+    bad: `static readonly eventName = 'InvoiceIssued';`,
+    good: `static readonly eventName = 'billing.invoice.issued';`,
+  },
+  'events/name-declared-once': {
+    why: 'A domain event handler and a projection are attached under the name the event class declares, static readonly eventName: the compiler refuses a reaction to an event class without it. Checked on every domain event, a missing name is found when the event is written, not later when someone first reacts to it. A name written a second time, as a literal in readonly name, drifts from the one the reactions read.',
+    bad: `export class InvoiceIssued implements DomainEvent {
+  readonly name = 'billing.invoice.issued';
+}`,
+    good: `export class InvoiceIssued implements DomainEvent {
+  static readonly eventName = 'billing.invoice.issued';
+
+  readonly name = InvoiceIssued.eventName;
+}`,
   },
   'events/defined-in-published-language': {
     why: 'Integration events are the only way two contexts communicate, so their shape is a public contract. One declaration with a payload schema gives the type, validates what is published and consumed, and feeds the generated catalog and AsyncAPI document. An event described by hand, or declared twice, drifts from what is really sent.',

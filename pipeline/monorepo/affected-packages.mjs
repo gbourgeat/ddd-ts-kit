@@ -58,7 +58,12 @@ function sinceBase(base) {
   return select(readGraph(ROOT), diff.stdout.split('\0').filter(Boolean));
 }
 
-/** The packages of the workspace, each with the packages of the workspace it depends on, development and peer dependencies included. */
+/**
+ * The packages of the workspace, each with the packages of the workspace it depends on, development
+ * and peer dependencies included, and the packages whose sources its specs import by a relative path:
+ * a spec that replays the code of another package must run when that code changes, and counts in
+ * the coverage of that package.
+ */
 export function readGraph(root) {
   const directories = fs.readdirSync(path.join(root, 'packages'));
   const manifests = directories.map((directory) => [directory, readManifest(root, directory)]);
@@ -67,15 +72,37 @@ export function readGraph(root) {
   return Object.fromEntries(
     manifests.map(([directory, manifest]) => [
       directory,
-      Object.keys({ ...manifest.dependencies, ...manifest.devDependencies, ...manifest.peerDependencies })
-        .map((name) => byName.get(name))
-        .filter((dependency) => dependency !== undefined),
+      [
+        ...new Set([
+          ...Object.keys({ ...manifest.dependencies, ...manifest.devDependencies, ...manifest.peerDependencies })
+            .map((name) => byName.get(name))
+            .filter((dependency) => dependency !== undefined),
+          ...sourcesReadBySpecs(root, directory).filter((name) => name !== directory && directories.includes(name)),
+        ]),
+      ],
     ]),
   );
 }
 
 function readManifest(root, directory) {
   return JSON.parse(fs.readFileSync(path.join(root, 'packages', directory, 'package.json'), 'utf8'));
+}
+
+/** `'../../cli/src/...'` in a spec or a support file of `test/`: the name of the package it reaches into. */
+function sourcesReadBySpecs(root, directory) {
+  const tests = path.join(root, 'packages', directory, 'test');
+
+  if (!fs.existsSync(tests)) {
+    return [];
+  }
+
+  return fs
+    .readdirSync(tests, { recursive: true, withFileTypes: true })
+    .filter((entry) => entry.isFile() && /\.[cm]?ts$/.test(entry.name))
+    .flatMap((entry) => [
+      ...fs.readFileSync(path.join(entry.parentPath, entry.name), 'utf8').matchAll(/['"](?:\.\.\/)+([\w-]+)\/src\//g),
+    ])
+    .map(([, name]) => name);
 }
 
 /** `graph` maps a package to what it depends on; `changed` are paths from the root of the repository. */

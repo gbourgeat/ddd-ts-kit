@@ -1,7 +1,9 @@
 import { EventSourcedAggregate, type AggregateHistory, type Appliers, type DomainEvent } from '@ddd-ts-kit/kernel';
 
 export class TallyCounted implements DomainEvent {
-  readonly name = 'votes.tally.counted';
+  static readonly eventName = 'votes.tally.counted';
+
+  readonly name = TallyCounted.eventName;
 
   constructor(
     readonly aggregateId: string,
@@ -11,7 +13,9 @@ export class TallyCounted implements DomainEvent {
 }
 
 export class TallyClosed implements DomainEvent {
-  readonly name = 'votes.tally.closed';
+  static readonly eventName = 'votes.tally.closed';
+
+  readonly name = TallyClosed.eventName;
 
   constructor(
     readonly aggregateId: string,

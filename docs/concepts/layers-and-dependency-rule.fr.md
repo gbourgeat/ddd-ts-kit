@@ -1,5 +1,5 @@
 [English](layers-and-dependency-rule.md) · **Français**
-<!-- translation-of: layers-and-dependency-rule.md sha256:7041acc3f2e75d95 -->
+<!-- translation-of: layers-and-dependency-rule.md sha256:35bb10aacf73d557 -->
 
 # Les couches et la règle de dépendance
 
@@ -63,7 +63,9 @@ import { CommandHandler, Requires } from '@ddd-ts-kit/kernel/declarations';
 
 // domain/ : n'importe rien d'autre que le noyau
 export class AppointmentBooked implements DomainEvent {
-  readonly name = 'appointments.appointment.booked';
+  static readonly eventName = 'appointments.appointment.booked';
+
+  readonly name = AppointmentBooked.eventName;
 
   constructor(
     readonly aggregateId: string,

@@ -1,5 +1,5 @@
 [English](methodology.md) · **Français**
-<!-- translation-of: methodology.md sha256:01abe0a1e7c7d42e -->
+<!-- translation-of: methodology.md sha256:4a0c87212d8129de -->
 
 # Méthodologie : d'une expression des besoins au code qui tourne
 
@@ -304,7 +304,9 @@ export class AppointmentError extends ConceptError {
 
 // Le fait, au passé.
 export class AppointmentCancelled implements DomainEvent {
-  readonly name = 'appointments.appointment.cancelled';
+  static readonly eventName = 'appointments.appointment.cancelled';
+
+  readonly name = AppointmentCancelled.eventName;
 
   constructor(
     readonly aggregateId: string,
