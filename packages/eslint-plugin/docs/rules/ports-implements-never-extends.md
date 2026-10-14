@@ -19,8 +19,10 @@ An adapter honours a contract; it does not inherit from it. `implements` lets th
 Incorrect:
 
 ```ts
-@Repository(InvoiceRepository, [Database])
-export class KnexInvoiceRepository extends InvoiceRepository {}
+@Repository(InvoiceRepository)
+export class KnexInvoiceRepository extends InvoiceRepository {
+  constructor(private readonly database: Database) {}
+}
 
 builder.bind(PaymentGateway).toClass(StripePaymentGateway, [PaymentSettings]);
 // where: export class StripePaymentGateway {}
@@ -29,8 +31,10 @@ builder.bind(PaymentGateway).toClass(StripePaymentGateway, [PaymentSettings]);
 Correct:
 
 ```ts
-@Repository(InvoiceRepository, [Database])
-export class KnexInvoiceRepository implements InvoiceRepository {}
+@Repository(InvoiceRepository)
+export class KnexInvoiceRepository implements InvoiceRepository {
+  constructor(private readonly database: Database) {}
+}
 
 export class StripePaymentGateway implements PaymentGateway {}
 ```

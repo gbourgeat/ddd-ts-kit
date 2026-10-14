@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:36b1e0982f9d2a98 -->
+<!-- translation-of: README.md sha256:25f674ba6b7de953 -->
 
 # @ddd-ts-kit/auth
 
@@ -194,7 +194,9 @@ export const billingModule = defineContextModule({
 });
 ```
 
-Le gestionnaire n'est pas touché. `resource` nomme l'élément sur lequel porte le droit,
+Le gestionnaire ne vérifie rien pour la permission : la garde du bus la décide avant qu'il
+s'exécute. Il ne demande `Access` que lorsqu'une politique affine cette permission, une fois
+l'élément chargé (section 4). `resource` nomme l'élément sur lequel porte le droit,
 `context` transmet les faits du message dont l'autorisateur peut avoir besoin (le *tenant*
 qu'il vise).
 
@@ -361,6 +363,16 @@ exécutent avant tout le reste, unité de travail comprise : une commande refus�
 transaction. Un bus à vous, fourni par `kernelModule({ commandBus })`, doit exécuter la garde
 lui-même : `.use((message, next, info) => resolve(UseCaseGuard).check(message, next, info))`,
 `UseCaseGuard` étant le port de `@ddd-ts-kit/di` que le module lie.
+
+Quand une politique affine la permission d'un cas d'usage, la garde enveloppe aussi son
+gestionnaire, en dernier sur le bus et à l'intérieur de l'unité de travail : un gestionnaire qui
+rend la main sans interroger `Access` sur cette permission voit son résultat refusé par
+`PolicyNotAskedError` et sa modification annulée, puisque la règle de la politique n'a jamais été
+appliquée. Un bus à vous exécute cette partie autour de son gestionnaire, avec
+`.aroundHandler((message, next, info) => resolve(UseCaseGuard).within?.(message, next, info) ?? next())`.
+Sans le conteneur, `policiesAskedMiddleware({ map, refined })` fait la même vérification. Seules
+les questions posées à `PolicyAccess` sont vues : un projet qui lie son propre `Access` passe
+`policiesAsked: false`.
 `authorization: 'required'` fait lever à `createApplication` une `WiringError`
 (`UNDECLARED_AUTHORIZATION`) qui nomme chaque commande et chaque requête qui n'a ni
 `.requires(...)` ni `.public()`, et une autre (`AUTHORIZATION_NOT_ENFORCED`) quand aucun module

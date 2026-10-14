@@ -19,12 +19,12 @@ export abstract class InvoiceRepository extends Repository<Invoice> {}`,
   'ports/implements-never-extends': {
     why: 'An adapter says which contract it honours with `implements`, and the compiler holds it to that contract. Extending the port instead would inherit from a class that holds nothing, make the adapter a second port for the container, and is refused when the binding is registered. The rule reads the class behind @Repository, @Gateway and @Adapter, the class given to bind(P).toClass(C) or rebind(P).toClass(C), and every class of infrastructure/ that extends a class of a port file. A class bound to itself is no port and is left alone.',
     bad: `// infrastructure/persistence/knex-invoice.repository.ts
-@Repository(InvoiceRepository, [Database, ExecutionScope, Clock])
+@Repository(InvoiceRepository)
 export class KnexInvoiceRepository extends InvoiceRepository {}
 // billing.module.ts
 builder.bind(PaymentGateway).toClass(StripePaymentGateway, [PaymentSettings]);   // class StripePaymentGateway {}`,
     good: `// infrastructure/persistence/knex-invoice.repository.ts
-@Repository(InvoiceRepository, [Database, ExecutionScope, Clock])
+@Repository(InvoiceRepository)
 export class KnexInvoiceRepository implements InvoiceRepository {}
 // infrastructure/external/stripe-payment.gateway.ts
 export class StripePaymentGateway implements PaymentGateway {}`,
@@ -33,15 +33,15 @@ export class StripePaymentGateway implements PaymentGateway {}`,
     why: 'The abstract class of a port is its injection token: it names the dependency, carries its type and lets the compiler check a dependency list against a constructor. A constant beside it (a token() call, a Symbol, a string, an UPPER_SNAKE_CASE name in a list) is a second name for the same thing that nothing ties to the type, and a file of tokens is one more place to keep in step with the ports. There is one way to name a dependency: the class.',
     bad: `// application/ports/billing.ports.ts
 export const INVOICE_REPOSITORY = token<InvoiceRepository>('billing.InvoiceRepository');
-// application/commands/issue-invoice/issue-invoice.handler.ts
-@CommandHandler(IssueInvoiceCommand, [INVOICE_REPOSITORY, CLOCK])
-// billing.module.ts
+// billing.module.ts, explicit style
+builder.command(IssueInvoiceCommand).handledBy(IssueInvoiceHandler, [INVOICE_REPOSITORY, CLOCK]);
 builder.bind(Symbol.for('billing.PaymentGateway')).toClass(StripePaymentGateway, []);`,
     good: `// domain/repositories/invoice.repository.ts
 export abstract class InvoiceRepository extends Repository<Invoice> {}
 // application/commands/issue-invoice/issue-invoice.handler.ts
-@CommandHandler(IssueInvoiceCommand, [InvoiceRepository, Clock])
-// billing.module.ts
+@CommandHandler(IssueInvoiceCommand)
+constructor(private readonly invoices: InvoiceRepository, private readonly clock: Clock) {}
+// billing.module.ts, explicit style
 builder.bind(PaymentGateway).toClass(StripePaymentGateway, [PaymentSettings]);`,
   },
   'ports/no-concrete-dependency': {
@@ -68,10 +68,12 @@ export class IssueInvoiceHandler {
     bad: `import type { InvoiceRepository } from '@/contexts/billing/domain/repositories/invoice.repository';
 import { type Clock } from '@ddd-ts-kit/kernel';
 
-@CommandHandler(IssueInvoiceCommand, [InvoiceRepository, Clock])`,
+// billing.module.ts, explicit style
+builder.command(IssueInvoiceCommand).handledBy(IssueInvoiceHandler, [InvoiceRepository, Clock]);`,
     good: `import { Clock } from '@ddd-ts-kit/kernel';
 import { InvoiceRepository } from '@/contexts/billing/domain/repositories/invoice.repository';
 
-@CommandHandler(IssueInvoiceCommand, [InvoiceRepository, Clock])`,
+// billing.module.ts, explicit style
+builder.command(IssueInvoiceCommand).handledBy(IssueInvoiceHandler, [InvoiceRepository, Clock]);`,
   },
 };

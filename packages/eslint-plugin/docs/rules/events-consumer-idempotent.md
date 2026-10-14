@@ -27,8 +27,10 @@ subscribeAll(platform.subscriber, [on(productListedV1, (event) => consumer.handl
 resolve(IntegrationEventSubscriber).subscribe('catalog.product.listed', (event) => consumer.handle(event));
 
 // declared style
-@IntegrationEventHandler(productListedV1, { consumer: consumerName }, [CommandBus])
-export class CatalogProductListedHandler {}
+@IntegrationEventHandler(productListedV1, { consumer: consumerName })
+export class CatalogProductListedHandler {
+  constructor(private readonly commandBus: CommandBus) {}
+}
 ```
 
 Correct:
@@ -41,8 +43,10 @@ subscribeAll(platform.subscriber, [
 ]);
 
 // declared style
-@IntegrationEventHandler(productListedV1, { consumer: 'billing.catalog-product-listed' }, [CommandBus])
-export class CatalogProductListedHandler {}
+@IntegrationEventHandler(productListedV1, { consumer: 'billing.catalog-product-listed' })
+export class CatalogProductListedHandler {
+  constructor(private readonly commandBus: CommandBus) {}
+}
 ```
 
 ## Details

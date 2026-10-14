@@ -188,8 +188,10 @@ export const billingModule = defineContextModule({
 });
 ```
 
-The handler is not touched. `resource` names the element the right bears on, `context` passes
-facts of the message the authorizer may need (the tenant it targets).
+The handler checks nothing for the permission: the guard of the bus decides it before the
+handler runs. It asks `Access` only when a policy refines that permission, once it holds the
+element (section 4). `resource` names the element the right bears on, `context` passes facts of
+the message the authorizer may need (the tenant it targets).
 
 The same requirement said on the message itself, with the declarations of the kernel, for a
 declared context:
@@ -352,6 +354,15 @@ before anything else, the unit of work included: a refused command opens no tran
 of your own, given through `kernelModule({ commandBus })`, has to run the guard itself:
 `.use((message, next, info) => resolve(UseCaseGuard).check(message, next, info))`, `UseCaseGuard`
 being the port of `@ddd-ts-kit/di` the module binds.
+
+When a policy refines the permission of a use case, the guard also wraps its handler, last on the
+bus and inside the unit of work: a handler that returns without asking `Access` about that
+permission has its result refused with `PolicyNotAskedError` and its change rolled back, since the
+rule of the policy was never applied. A bus of your own runs that part around its handler, with
+`.aroundHandler((message, next, info) => resolve(UseCaseGuard).within?.(message, next, info) ?? next())`.
+Without the container, `policiesAskedMiddleware({ map, refined })` is the same check. Only the
+questions put to `PolicyAccess` are seen: a project that binds its own `Access` passes
+`policiesAsked: false`.
 `authorization: 'required'` makes `createApplication` throw a `WiringError`
 (`UNDECLARED_AUTHORIZATION`) naming every command and query that has neither `.requires(...)`
 nor `.public()`, and another (`AUTHORIZATION_NOT_ENFORCED`) when no module binds a guard. The

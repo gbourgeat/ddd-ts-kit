@@ -6,6 +6,7 @@ import {
   AuthorizationMap,
   AuthorizationSetupError,
   ForbiddenError,
+  PolicyNotAskedError,
   RoleBasedAuthorizer,
   UnauthenticatedError,
 } from '../src/index.js';
@@ -13,10 +14,12 @@ import { authorizationModule } from '../src/di.js';
 import { AnybodyAudits } from './fixtures/declared/ledger/application/authorization/anybody-audits.policy.js';
 import { ledgerPermissions } from './fixtures/declared/ledger/application/authorization/ledger.permissions.js';
 import { EntryRepository } from './fixtures/declared/ledger/domain/repositories/entry.repository.js';
+import * as forgetfulDeclared from './fixtures/declared/ledger/forgetful.declarations.js';
 import * as declared from './fixtures/declared/ledger/ledger.declarations.js';
 import { ada, bob } from './support/billing.js';
 
 const { CountEntries, OnlyPosterReverses, PostEntry, ReverseEntry } = declared;
+const { ForgetfulReverseEntry } = forgetfulDeclared;
 
 const ledgerModule = contextModule('ledger', [declared]);
 
@@ -31,6 +34,15 @@ const accountants = () =>
 const application = () =>
   createTestApplication({
     modules: [ledgerModule, authorizationModule({ authorizer: accountants() })],
+    authorization: 'required',
+  });
+
+const forgetful = (policiesAsked?: boolean) =>
+  createTestApplication({
+    modules: [
+      contextModule('ledger', [declared, forgetfulDeclared]),
+      authorizationModule({ authorizer: accountants(), ...(policiesAsked === undefined ? {} : { policiesAsked }) }),
+    ],
     authorization: 'required',
   });
 
@@ -88,6 +100,24 @@ describe('a context whose classes declare their access', () => {
     });
 
     expect(OnlyPosterReverses.built).toBe(built + 1);
+  });
+
+  it('refuses the result of a handler that never asks the policy of its permission', async () => {
+    const app = forgetful();
+    const entryId = await app.commandBus.execute(new PostEntry(ada, 'cash'));
+
+    await expect(app.commandBus.execute(new ForgetfulReverseEntry(bob, entryId))).rejects.toBeInstanceOf(
+      PolicyNotAskedError,
+    );
+  });
+
+  it('lets a project whose own Access records nothing turn the check off', async () => {
+    const app = forgetful(false);
+    const entryId = await app.commandBus.execute(new PostEntry(ada, 'cash'));
+
+    await app.commandBus.execute(new ForgetfulReverseEntry(bob, entryId));
+
+    expect(await app.get(EntryRepository).count()).toBe(0);
   });
 
   it('refuses a policy declared for something that is not a permission', () => {

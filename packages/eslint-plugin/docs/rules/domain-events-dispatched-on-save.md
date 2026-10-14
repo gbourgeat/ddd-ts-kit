@@ -21,7 +21,7 @@ Incorrect:
 // src/contexts/billing/application/commands/issue-invoice/issue-invoice.handler.ts
 import { Clock, DomainEventDispatcher } from '@ddd-ts-kit/kernel';
 
-@CommandHandler(IssueInvoice, [InvoiceRepository, Clock, DomainEventDispatcher])
+@CommandHandler(IssueInvoice)
 export class IssueInvoiceHandler {
   constructor(
     private readonly invoices: InvoiceRepository,
@@ -46,7 +46,7 @@ Correct:
 // src/contexts/billing/application/commands/issue-invoice/issue-invoice.handler.ts
 import { Clock } from '@ddd-ts-kit/kernel';
 
-@CommandHandler(IssueInvoice, [InvoiceRepository, Clock])
+@CommandHandler(IssueInvoice)
 export class IssueInvoiceHandler {
   constructor(
     private readonly invoices: InvoiceRepository,

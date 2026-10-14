@@ -69,6 +69,28 @@ describe('InMemoryCommandBus', () => {
     expect(trace).toEqual(['a>', 'CancelOrder', 'handler', '<a']);
   });
 
+  it('runs what wraps the handler inside every middleware, even one added after it, and not when a middleware answers', async () => {
+    const trace: string[] = [];
+
+    const bus = new InMemoryCommandBus()
+      .aroundHandler(async (_m, next) => {
+        trace.push('around');
+
+        return next();
+      })
+      .use(async (message, next) => {
+        trace.push('use');
+
+        return message instanceof CancelOrder && message.orderId === 'answered' ? undefined : next();
+      })
+      .register(CancelOrder, { execute: async () => void trace.push('handler') });
+
+    await bus.execute(new CancelOrder('o1'));
+    await bus.execute(new CancelOrder('answered'));
+
+    expect(trace).toEqual(['use', 'around', 'handler', 'use']);
+  });
+
   it('opens a unit of work for commands only', async () => {
     let opened = 0;
 

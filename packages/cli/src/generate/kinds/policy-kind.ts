@@ -6,6 +6,7 @@ import { emit } from '../emit.js';
 import { isDeclared } from '../is-declared.js';
 import type { Kind } from '../kind.js';
 import { label } from '../label.js';
+import { markPolicyQuestions } from '../mark-policy-questions.js';
 import { named } from '../named.js';
 import { openScope } from '../open-scope.js';
 import { permissionNamed } from '../permission-named.js';
@@ -39,6 +40,8 @@ export const policyKind: Kind = {
       ['policy/policy.ts.tpl', `application/authorization/${name.kebab}.policy.ts`],
       ['policy/policy.spec.ts.tpl', `test/unit/${name.kebab}.policy.spec.ts`],
     ]);
+
+    markPolicyQuestions(scope, permission);
 
     // A declared policy is found through its decorator: only a policy written as a value is listed for `Access`.
     if (!isDeclared(scope.config)) {

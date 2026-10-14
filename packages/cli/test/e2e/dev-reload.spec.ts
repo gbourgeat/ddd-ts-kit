@@ -11,6 +11,19 @@ const BILLING = 'src/contexts/billing';
 const BARREL = `${BILLING}/billing.declarations.ts`;
 const HANDLER = `${BILLING}/application/commands/cancel-invoice/cancel-invoice.handler.ts`;
 const HANDLER_ALIAS = '@/contexts/billing/application/commands/cancel-invoice/cancel-invoice.handler';
+
+/** The cancel-invoice handler with no constructor: generated, it asks the policy of its permission through `Access`. */
+const TAKING_NOTHING = [
+  "import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';",
+  "import { CancelInvoiceCommand } from '@/contexts/billing/application/commands/cancel-invoice/cancel-invoice.command';",
+  '',
+  '@CommandHandler(CancelInvoiceCommand)',
+  'export class CancelInvoiceHandler implements CommandHandler<CancelInvoiceCommand> {',
+  '  async execute(): Promise<void> {}',
+  '}',
+  '',
+].join('\n');
+
 const PATIENCE_MS = 60_000;
 const SETTLE_MS = 3_000;
 /**
@@ -74,7 +87,7 @@ describe.runIf(SLOW)('npm run dev, when a dependency is added to a constructor',
   it(
     'reloads with the port injected, the generated barrel rewritten by the reload itself',
     async () => {
-      const generated = read(root, HANDLER);
+      const generated = TAKING_NOTHING;
 
       write(root, HANDLER, probed(generated, '', "'given nothing'"));
       watched = watch(root, sockets ?? os.tmpdir());
@@ -137,7 +150,7 @@ async function printed(watched: Watched, text: string): Promise<void> {
   }
 }
 
-/** The handler as generated, with a method the probe of `main.ts` calls, and what it is given. */
+/** The handler, with a method the probe of `main.ts` calls, and what it is given. */
 function probed(handler: string, constructorLines: string, answer: string): string {
   return handler.replace(
     /(export class CancelInvoiceHandler [^{]*\{\n)/,

@@ -1,5 +1,5 @@
 [English](authorization-in-practice.md) · **Français**
-<!-- translation-of: authorization-in-practice.md sha256:1885b77d010438c3 -->
+<!-- translation-of: authorization-in-practice.md sha256:09e1d6ec2ff8905c -->
 
 # L'autorisation en pratique
 
@@ -273,7 +273,7 @@ les pièces :
 | `Authorizer` | l'instance ou la fabrique donnée dans `authorizer` : l'endroit où le modèle est choisi |
 | `AuthorizationMap` | construite à partir des déclarations de chaque module |
 | `Access` | un `PolicyAccess` sur l'autorisateur, l'horloge, l'option `policies` et chaque classe déclarée avec `@Policy` |
-| `UseCaseGuard` | le *middleware* que les bus du noyau exécutent en premier |
+| `UseCaseGuard` | le *middleware* que les bus du noyau exécutent en premier, et, en dernier sur le bus, la vérification qu'un gestionnaire a interrogé la politique de sa permission |
 
 La garde est résolue au démarrage. Une déclaration qui n'est pas une vraie permission, ou une
 politique liée à quelque chose qui n'en est pas une, fait refuser le démarrage à l'application
@@ -296,9 +296,16 @@ adaptateur pour un service dédié est le sujet de
 ## Limites, et quand ne pas l'utiliser
 
 - **Le *middleware* ne voit pas l'état.** Il connaît l'identifiant de l'élément, pas l'élément.
-  Une règle sur l'état est une politique, vérifiée par le gestionnaire ; oublier d'appeler
-  `access.authorize` n'est pas détecté par les règles, si bien que la *spec* générée du
-  gestionnaire, qui prouve que le refus a lieu, est le filet de sécurité.
+  Une règle sur l'état est une politique, vérifiée par le gestionnaire. Un oubli d'appeler
+  `access.authorize` est rattrapé deux fois : `authz/policy-asked` signale le gestionnaire d'un
+  cas d'usage dont une politique affine la permission quand il ne nomme jamais cette permission
+  dans une question à `Access`, et à l'exécution le module d'autorisation refuse son résultat
+  par `PolicyNotAskedError`, à l'intérieur de l'unité de travail, si bien que rien n'est validé.
+  Les générateurs écrivent la question : un cas d'usage généré une fois qu'une politique affine
+  sa permission reçoit `Access` et l'interroge sur le message, avec un `TODO(domain)` pour
+  l'interroger plutôt sur l'élément chargé.
+  Seules les questions posées à `PolicyAccess` sont vues : un projet qui lie son propre `Access`
+  coupe la vérification à l'exécution avec `policiesAsked: false`.
 - **Une politique est évaluée dans le processus du gestionnaire.** Au-delà d'une certaine
   échelle, les règles par élément passent dans un moteur dédié derrière le même port.
 - **Deux décisions par commande coûtent deux vérifications.** Avec des rôles, elles sont

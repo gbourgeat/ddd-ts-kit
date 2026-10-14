@@ -21,8 +21,13 @@ Incorrect:
 ```ts
 import { KnexInvoiceRepository } from '@/contexts/billing/infrastructure/persistence/knex-invoice.repository';
 
-@CommandHandler(IssueInvoiceCommand, [KnexInvoiceRepository, Clock])
-export class IssueInvoiceHandler {}
+@CommandHandler(IssueInvoiceCommand)
+export class IssueInvoiceHandler {
+  constructor(
+    private readonly knexInvoiceRepository: KnexInvoiceRepository,
+    private readonly clock: Clock,
+  ) {}
+}
 ```
 
 Correct:
@@ -30,8 +35,13 @@ Correct:
 ```ts
 import { InvoiceRepository } from '@/contexts/billing/domain/repositories/invoice.repository';
 
-@CommandHandler(IssueInvoiceCommand, [InvoiceRepository, Clock])
-export class IssueInvoiceHandler {}
+@CommandHandler(IssueInvoiceCommand)
+export class IssueInvoiceHandler {
+  constructor(
+    private readonly invoiceRepository: InvoiceRepository,
+    private readonly clock: Clock,
+  ) {}
+}
 ```
 
 ## Details

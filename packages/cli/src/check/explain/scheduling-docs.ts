@@ -6,8 +6,13 @@ export const SCHEDULING_DOCS: Readonly<Record<string, RuleDoc>> = {
     bad: `// application/scheduling/send-reminders.job.ts
 import { Invoice } from '@/contexts/billing/domain/aggregates/invoice.aggregate';
 
-@Scheduled('billing.send-reminders', { every: '15m' }, [InvoiceRepository, Mailer])
+@Scheduled('billing.send-reminders', { every: '15m' })
 export class SendRemindersJob {
+  constructor(
+    private readonly invoices: InvoiceRepository,
+    private readonly mailer: Mailer,
+  ) {}
+
   async run(): Promise<void> {
     for (const invoice of await this.invoices.findOverdue()) {
       await this.mailer.remind(invoice);
@@ -15,7 +20,7 @@ export class SendRemindersJob {
   }
 }`,
     good: `// application/scheduling/send-reminders.job.ts
-@Scheduled('billing.send-reminders', { every: '15m' }, [CommandBus])
+@Scheduled('billing.send-reminders', { every: '15m' })
 export class SendRemindersJob implements ScheduledJob {
   constructor(private readonly commands: CommandBus) {}
 
@@ -26,12 +31,12 @@ export class SendRemindersJob implements ScheduledJob {
   },
   'scheduling/job-name': {
     why: 'The name of a job is its identity everywhere a run leaves a trace: the scheduler and its lock, the settings that enable or reschedule it, the logs, the metrics and the audit trail, where the job is the system actor of the command it sends. It is written once as a string literal, `<context>.<job-name>` in lower-case kebab-case, so that it survives the renaming of a class and tells which context owns the job. Two jobs under one name share a lock and overwrite each other, so a name is unique in the project.',
-    bad: `@Scheduled(JOB_NAME, { every: '15m' }, [CommandBus])
-@Scheduled('SendReminders', { every: '15m' }, [CommandBus])
+    bad: `@Scheduled(JOB_NAME, { every: '15m' })
+@Scheduled('SendReminders', { every: '15m' })
 // in contexts/billing
 builder.job('shipping.send-reminders', { every: '15m' }).handledBy(SendRemindersJob, [CommandBus]);
 new SendRemindersCommand(systemActor('billing.reminders'), execution.scheduledAt);`,
-    good: `@Scheduled('billing.send-reminders', { every: '15m' }, [CommandBus])
+    good: `@Scheduled('billing.send-reminders', { every: '15m' })
 builder.job('billing.send-reminders', { every: '15m' }).handledBy(SendRemindersJob, [CommandBus]);
 new SendRemindersCommand(systemActor('billing.send-reminders'), execution.scheduledAt);`,
   },

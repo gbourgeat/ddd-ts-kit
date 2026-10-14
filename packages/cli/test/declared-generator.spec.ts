@@ -73,7 +73,7 @@ describe('a context generated in the declared style', () => {
     expect(barrel).toContain('injected(CancelStaleInvoicesJob, [CommandBus]);');
     expect(barrel).toContain('injected(SearchInvoicesController, [QueryBus]);');
     expect(barrel).toContain('injected(DrizzleInvoiceRepository, [Database, ExecutionScope, Clock]);');
-    expect(barrel).not.toContain('injected(CancelInvoiceHandler');
+    expect(barrel).toContain('injected(CancelInvoiceHandler, [Access]);');
     expect(barrel).not.toContain('injected(OnlyIssuerCancelsPolicy');
     expect(barrel.trimEnd().split('\n').at(-1)).toMatch(/^injected\(/);
   });

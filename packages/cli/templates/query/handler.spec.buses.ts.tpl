@@ -1,6 +1,11 @@
 import { describe, expect, it } from '{{tests.module}}';
 {{#if access.protected}}
+{{#if access.policy}}
+import { AuthorizationMap, PolicyAccess, RoleBasedAuthorizer, authorizationMiddleware, requires } from '@ddd-ts-kit/auth';
+{{/if}}
+{{#unless access.policy}}
 import { AuthorizationMap, RoleBasedAuthorizer, authorizationMiddleware, requires } from '@ddd-ts-kit/auth';
+{{/unless}}
 import { anActor } from '@ddd-ts-kit/auth/testing';
 {{/if}}
 import { createTestBuses } from '@ddd-ts-kit/testing';
@@ -13,12 +18,22 @@ import type { {{name.pascal}}Result } from '{{alias.context}}/application/querie
 import { Fake{{name.pascal}}Reader } from '{{alias.context}}/test/fakes/{{name.kebab}}-reader.fake{{alias.ext}}';
 {{#if access.protected}}
 
+{{#if access.policy}}
+const authorizer = new RoleBasedAuthorizer({ roles: { holder: [{{context.camel}}Permissions['{{access.permission}}']] } });
+
+const holders = authorizationMiddleware({
+  authorizer,
+  map: AuthorizationMap.of(requires({{name.pascal}}Query, {{context.camel}}Permissions['{{access.permission}}'])),
+});
+{{/if}}
+{{#unless access.policy}}
 const holders = authorizationMiddleware({
   authorizer: new RoleBasedAuthorizer({
     roles: { holder: [{{context.camel}}Permissions['{{access.permission}}']] },
   }),
   map: AuthorizationMap.of(requires({{name.pascal}}Query, {{context.camel}}Permissions['{{access.permission}}'])),
 });
+{{/unless}}
 
 const holder = anActor().withRole('holder').build();
 {{/if}}
@@ -47,8 +62,14 @@ describe('{{name.title}}', () => {
 });
 
 function arrange(answer: {{name.pascal}}Result) {
+{{#if access.policy}}
+  const { queryBus, clock } = createTestBuses();
+  const handler = new {{name.pascal}}Handler(new Fake{{name.pascal}}Reader(answer), new PolicyAccess({ authorizer, clock }));
+{{/if}}
+{{#unless access.policy}}
   const { queryBus } = createTestBuses();
   const handler = new {{name.pascal}}Handler(new Fake{{name.pascal}}Reader(answer));
+{{/unless}}
 
   return queryBus{{spec.guard}}.register({{name.pascal}}Query, handler);
 }

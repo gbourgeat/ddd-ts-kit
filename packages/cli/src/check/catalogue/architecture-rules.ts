@@ -4,6 +4,7 @@ import { authzActorExplicit } from '../rules/authz-actor-explicit.js';
 import { authzFieldsBySchema } from '../rules/authz-fields-by-schema.js';
 import { authzDeclared } from '../rules/authz-declared.js';
 import { authzInApplication } from '../rules/authz-in-application.js';
+import { authzPolicyAsked } from '../rules/authz-policy-asked.js';
 import { cleanBlankLines } from '../rules/clean-blank-lines.js';
 import { cleanBraces } from '../rules/clean-braces.js';
 import { cleanFileSize } from '../rules/clean-file-size.js';
@@ -136,6 +137,7 @@ export const ARCHITECTURE_RULES: readonly Rule[] = [
   authzInApplication,
   authzActorExplicit,
   authzFieldsBySchema,
+  authzPolicyAsked,
   aspectsOutsideIn,
   tracingPlatformOnly,
   tenancyScopedStatement,

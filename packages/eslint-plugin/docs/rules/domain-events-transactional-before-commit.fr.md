@@ -1,5 +1,5 @@
 [English](domain-events-transactional-before-commit.md) · **Français**
-<!-- translation-of: domain-events-transactional-before-commit.md sha256:7bb7a7ff29cc5e9a -->
+<!-- translation-of: domain-events-transactional-before-commit.md sha256:9a978f4c0a72e179 -->
 
 # ddd-ts-kit/domain-events-transactional-before-commit
 
@@ -35,7 +35,7 @@ import { Cache } from '@ddd-ts-kit/kernel';
 import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
 import { InvoiceRepository } from '@/contexts/billing/domain/repositories/invoice.repository';
 
-@DomainEventHandler(InvoiceIssued, [InvoiceRepository, Cache])
+@DomainEventHandler(InvoiceIssued)
 export class InvoiceIssuedEventHandler {
   constructor(
     private readonly invoices: InvoiceRepository,
@@ -45,28 +45,42 @@ export class InvoiceIssuedEventHandler {
 ```
 
 ```ts
-@DomainEventHandler(InvoiceIssued, { phase: 'after-commit' }, [IntegrationEventPublisher])
-export class InvoiceIssuedEventHandler {}
+@DomainEventHandler(InvoiceIssued, { phase: 'after-commit' })
+export class InvoiceIssuedEventHandler {
+  constructor(private readonly integrationEventPublisher: IntegrationEventPublisher) {}
+}
 ```
 
 Correct :
 
 ```ts
 // l'état que change le gestionnaire est validé ou annulé avec la commande
-@DomainEventHandler(InvoiceIssued, [InvoiceRepository, CommandBus])
-export class InvoiceIssuedEventHandler {}
+@DomainEventHandler(InvoiceIssued)
+export class InvoiceIssuedEventHandler {
+  constructor(
+    private readonly invoiceRepository: InvoiceRepository,
+    private readonly commandBus: CommandBus,
+  ) {}
+}
 ```
 
 ```ts
 // un effet qu'aucune transaction ne couvre s'exécute une fois la transaction validée, au plus une fois
-@DomainEventHandler(InvoiceIssued, { phase: 'after-commit' }, [Cache])
-export class InvoiceIssuedEventHandler {}
+@DomainEventHandler(InvoiceIssued, { phase: 'after-commit' })
+export class InvoiceIssuedEventHandler {
+  constructor(private readonly cache: Cache) {}
+}
 ```
 
 ```ts
 // un effet qui ne doit pas être perdu passe par l'outbox : le gestionnaire de l'événement d'intégration fait le travail
-@DomainEventHandler(InvoiceIssued, [IntegrationEventPublisher, IdGenerator])
-export class InvoiceIssuedPublisher {}
+@DomainEventHandler(InvoiceIssued)
+export class InvoiceIssuedPublisher {
+  constructor(
+    private readonly integrationEventPublisher: IntegrationEventPublisher,
+    private readonly idGenerator: IdGenerator,
+  ) {}
+}
 ```
 
 ## Détails

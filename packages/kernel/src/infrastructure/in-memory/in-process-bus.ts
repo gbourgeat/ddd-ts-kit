@@ -15,10 +15,23 @@ export class InProcessBus {
 
   private readonly middlewares: BusMiddleware[] = [];
 
+  private readonly aroundHandlers: BusMiddleware[] = [];
+
   constructor(private readonly kind: MessageInfo['kind']) {}
 
   use(middleware: BusMiddleware): this {
     this.middlewares.push(middleware);
+
+    return this;
+  }
+
+  /**
+   * Runs `middleware` right around the handler, inside every middleware given to `use`, whenever
+   * those were added: what has to see the handler itself run, never a middleware that answers
+   * in its place.
+   */
+  aroundHandler(middleware: BusMiddleware): this {
+    this.aroundHandlers.push(middleware);
 
     return this;
   }
@@ -45,7 +58,7 @@ export class InProcessBus {
       return Promise.reject(new HandlerNotFoundError(info));
     }
 
-    const run = this.middlewares.reduceRight<() => Promise<unknown>>(
+    const run = [...this.middlewares, ...this.aroundHandlers].reduceRight<() => Promise<unknown>>(
       (next, middleware) => () => middleware(message, next, info),
       () => handler.execute(message),
     );

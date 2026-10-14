@@ -19,6 +19,7 @@ const CONSUMER =
   'The consumer name is held twice, as part of the declaration of the role and as the idempotency scope: both rules report its absence.';
 
 const AGENDA_HANDLER = `${SCHEDULING}/application/queries/search-practice-agenda/search-practice-agenda.handler.ts`;
+const CANCEL_HANDLER = `${SCHEDULING}/application/commands/cancel-appointment/cancel-appointment.handler.ts`;
 const SAVED = '    await this.reminderRepository.save(reminder);\n';
 const TAKEN = '  constructor(private readonly commands: CommandBus) {}';
 
@@ -56,6 +57,19 @@ export const AUTHZ_AND_EVENT_INJECTIONS: readonly Injection[] = [
     ],
     checker: true,
     eslint: 'ddd-ts-kit/authz-fields-by-schema',
+  },
+  {
+    rule: 'authz/policy-asked',
+    what: 'a handler of cancel-appointment that asks Access about another permission than the one its policy refines',
+    file: CANCEL_HANDLER,
+    changes: [
+      {
+        file: CANCEL_HANDLER,
+        from: "schedulingPermissions['appointment.cancel'], appointment);",
+        to: "schedulingPermissions['appointment.read'], appointment);",
+      },
+    ],
+    checker: true,
   },
   {
     rule: 'authz/actor-explicit',

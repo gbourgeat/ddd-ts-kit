@@ -1,9 +1,7 @@
-import { routesFile } from '../declared/index.js';
 import type { RenderContext } from '../templating/index.js';
-import { renderTemplate, templateExists } from '../templating/index.js';
 import { applyWiring } from './apply-wiring.js';
 import type { Scope } from './scope.js';
-import { wiringFamily, type WiringFamily } from './wiring-family.js';
+import { wirings } from './wirings.js';
 
 /**
  * Registers a new element where the wiring of the project is written. A kind says what each
@@ -14,32 +12,7 @@ import { wiringFamily, type WiringFamily } from './wiring-family.js';
  * cannot say.
  */
 export function wire(scope: Scope, kind: string, context: RenderContext): void {
-  const base = kind.includes('/') ? `${kind}.` : `${kind}/`;
-  const family = wiringFamily(scope.config);
-
-  for (const [target, file] of Object.entries(targetsOf(scope, family))) {
-    const template = [family, ...(family === 'manual' ? [] : ['on-tsyringe'])]
-      .map((variant) => `${base}${target}.${variant}.tpl`)
-      .find(templateExists);
-
-    if (template !== undefined) {
-      applyWiring(scope.ws, file, renderTemplate(template, context));
-    }
+  for (const { file, wiring } of wirings(scope, kind, context)) {
+    applyWiring(scope.ws, file, wiring);
   }
-}
-
-function targetsOf(scope: Scope, family: WiringFamily): Record<string, string> {
-  const { config, context, dir } = scope;
-  const module = `${dir}/${context.kebab}.module.ts`;
-
-  if (family === 'manual') {
-    return { wiring: module };
-  }
-
-  return {
-    ...(family === 'tsyringe' ? { wiring: module } : {}),
-    routes: `${dir}/${routesFile(context.kebab)}`,
-    platform: `${config.platformDir}/platform.module.ts`,
-    'platform-test': `${config.platformDir}/platform-test.module.ts`,
-  };
 }

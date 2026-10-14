@@ -4,6 +4,7 @@ export { InvalidCredentialError } from './errors/invalid-credential-error.js';
 export { ListingNotSupportedError } from './errors/listing-not-supported-error.js';
 export { MissingActorError } from './errors/missing-actor-error.js';
 export { UNAUTHORIZED, UnauthenticatedError } from './errors/unauthenticated-error.js';
+export { PolicyNotAskedError } from './errors/policy-not-asked-error.js';
 export { UndeclaredUseCaseError } from './errors/undeclared-use-case-error.js';
 export { definePermissions, type PermissionDeclaration, type PermissionSet } from './permissions/define-permissions.js';
 export type { Grant } from './permissions/grant.js';
@@ -25,6 +26,10 @@ export type { OnDecision } from './authorization/on-decision.js';
 export type { ResourceRef } from './authorization/resource-ref.js';
 export { AuthorizationMap } from './use-cases/authorization-map.js';
 export { authorizationMiddleware, type AuthorizationMiddlewareOptions } from './use-cases/authorization-middleware.js';
+export {
+  policiesAskedMiddleware,
+  type PoliciesAskedMiddlewareOptions,
+} from './use-cases/policies-asked-middleware.js';
 export { publicUseCase } from './use-cases/public-use-case.js';
 export { requires, type RequirementOptions } from './use-cases/requires.js';
 export type { ProtectedUseCase, PublicUseCase, UseCaseDeclaration } from './use-cases/use-case-declaration.js';

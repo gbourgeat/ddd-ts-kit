@@ -28,8 +28,13 @@ Incorrect:
 
 ```ts
 // application/scheduling/send-reminders.job.ts
-@Scheduled('billing.send-reminders', { every: '15m' }, [InvoiceRepository, Mailer])
+@Scheduled('billing.send-reminders', { every: '15m' })
 export class SendRemindersJob implements ScheduledJob {
+  constructor(
+    private readonly invoices: InvoiceRepository,
+    private readonly mailer: Mailer,
+  ) {}
+
   async run(): Promise<void> {
     for (const invoice of await this.invoices.overdue()) {
       await this.mailer.remind(invoice);
@@ -42,7 +47,7 @@ Correct:
 
 ```ts
 // application/scheduling/send-reminders.job.ts
-@Scheduled('billing.send-reminders', { every: '15m' }, [CommandBus])
+@Scheduled('billing.send-reminders', { every: '15m' })
 export class SendRemindersJob implements ScheduledJob {
   constructor(private readonly commands: CommandBus) {}
 

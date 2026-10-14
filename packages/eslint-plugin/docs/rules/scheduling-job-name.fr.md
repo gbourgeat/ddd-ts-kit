@@ -1,5 +1,5 @@
 [English](scheduling-job-name.md) · **Français**
-<!-- translation-of: scheduling-job-name.md sha256:de37d4172a90474e -->
+<!-- translation-of: scheduling-job-name.md sha256:fcce14a1f2803f23 -->
 
 # ddd-ts-kit/scheduling-job-name
 
@@ -21,8 +21,10 @@ Le nom d'un *job* est son identité : le verrou qui limite une occurrence à une
 Incorrect :
 
 ```ts
-@Scheduled('SendReminders', { every: '15m' }, [CommandBus])
+@Scheduled('SendReminders', { every: '15m' })
 export class SendRemindersJob implements ScheduledJob {
+  constructor(private readonly commands: CommandBus) {}
+
   async run(execution: JobExecution): Promise<void> {
     await this.commands.execute(new SendRemindersCommand(systemActor('reminders'), execution.scheduledAt));
   }
@@ -32,8 +34,10 @@ export class SendRemindersJob implements ScheduledJob {
 Correct :
 
 ```ts
-@Scheduled('billing.send-reminders', { every: '15m' }, [CommandBus])
+@Scheduled('billing.send-reminders', { every: '15m' })
 export class SendRemindersJob implements ScheduledJob {
+  constructor(private readonly commands: CommandBus) {}
+
   async run(execution: JobExecution): Promise<void> {
     await this.commands.execute(new SendRemindersCommand(systemActor('billing.send-reminders'), execution.scheduledAt));
   }

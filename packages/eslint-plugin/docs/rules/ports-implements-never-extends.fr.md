@@ -1,5 +1,5 @@
 [English](ports-implements-never-extends.md) · **Français**
-<!-- translation-of: ports-implements-never-extends.md sha256:2a318e3c9e3a8f11 -->
+<!-- translation-of: ports-implements-never-extends.md sha256:00a3d609e321314e -->
 
 # ddd-ts-kit/ports-implements-never-extends
 
@@ -20,8 +20,10 @@ Un adaptateur honore un contrat ; il n'en hérite pas. `implements` laisse le co
 Incorrect :
 
 ```ts
-@Repository(InvoiceRepository, [Database])
-export class KnexInvoiceRepository extends InvoiceRepository {}
+@Repository(InvoiceRepository)
+export class KnexInvoiceRepository extends InvoiceRepository {
+  constructor(private readonly database: Database) {}
+}
 
 builder.bind(PaymentGateway).toClass(StripePaymentGateway, [PaymentSettings]);
 // où : export class StripePaymentGateway {}
@@ -30,8 +32,10 @@ builder.bind(PaymentGateway).toClass(StripePaymentGateway, [PaymentSettings]);
 Correct :
 
 ```ts
-@Repository(InvoiceRepository, [Database])
-export class KnexInvoiceRepository implements InvoiceRepository {}
+@Repository(InvoiceRepository)
+export class KnexInvoiceRepository implements InvoiceRepository {
+  constructor(private readonly database: Database) {}
+}
 
 export class StripePaymentGateway implements PaymentGateway {}
 ```
