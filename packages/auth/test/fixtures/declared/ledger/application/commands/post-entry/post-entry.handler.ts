@@ -1,8 +1,8 @@
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
-import { EntryRepository } from '../../../domain/repositories/entry.repository.js';
+import type { EntryRepository } from '../../../domain/repositories/entry.repository.js';
 import { PostEntry } from './post-entry.command.js';
 
-@CommandHandler(PostEntry, [EntryRepository])
+@CommandHandler(PostEntry)
 export class PostEntryHandler implements CommandHandler<PostEntry> {
   constructor(private readonly entries: EntryRepository) {}
 

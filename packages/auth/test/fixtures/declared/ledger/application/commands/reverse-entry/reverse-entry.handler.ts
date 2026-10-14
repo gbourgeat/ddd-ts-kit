@@ -1,10 +1,10 @@
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
-import { Access } from '../../../../../../../src/index.js';
-import { EntryRepository } from '../../../domain/repositories/entry.repository.js';
+import type { Access } from '../../../../../../../src/index.js';
+import type { EntryRepository } from '../../../domain/repositories/entry.repository.js';
 import { ledgerPermissions } from '../../authorization/ledger.permissions.js';
 import { ReverseEntry } from './reverse-entry.command.js';
 
-@CommandHandler(ReverseEntry, [EntryRepository, Access])
+@CommandHandler(ReverseEntry)
 export class ReverseEntryHandler implements CommandHandler<ReverseEntry> {
   constructor(
     private readonly entries: EntryRepository,

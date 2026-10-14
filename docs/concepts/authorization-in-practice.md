@@ -263,7 +263,7 @@ the pieces:
 | `Authorizer` | the instance or the factory given in `authorizer`: the place where the model is chosen |
 | `AuthorizationMap` | built from the declarations of every module |
 | `Access` | a `PolicyAccess` over the authorizer, the clock, the `policies` option and every class declared with `@Policy` |
-| `UseCaseGuard` | the middleware the kernel buses run first |
+| `UseCaseGuard` | the middleware the kernel buses run first, and, last on the bus, the check that a handler asked the policy of its permission |
 
 The guard is resolved at start. A declaration that is not a real permission, or a policy bound
 to something that is not one, makes the application refuse to boot with
@@ -285,9 +285,12 @@ dedicated service is the subject of [Authorization engines](../tools/authorizati
 ## Limits and when not to use it
 
 - **The middleware cannot see state.** It knows the identifier of the element, not the element.
-  A rule on state is a policy, checked by the handler; forgetting to call `access.authorize` is
-  not detected by the rules, so the generated handler spec, which proves that the refusal
-  happens, is the safety net.
+  A rule on state is a policy, checked by the handler. Forgetting to call `access.authorize` is
+  caught twice: `authz/policy-asked` reports the handler of a use case whose permission a policy
+  refines when it never names that permission in a question to `Access`, and at run time the
+  authorization module refuses its result with `PolicyNotAskedError`, inside the unit of work,
+  so that nothing is committed. Only the questions put to `PolicyAccess` are seen: a project
+  that binds its own `Access` turns the run-time check off with `policiesAsked: false`.
 - **A policy is evaluated in the process of the handler.** Past a certain scale, per-element
   rules move to a dedicated engine behind the same port.
 - **Two decisions per command cost two checks.** With roles they are free; with a remote

@@ -2,6 +2,7 @@ import { isAnonymous, type Actor, type Clock, type ExecutionScope } from '@ddd-t
 import type { Access } from '../authorization/access.js';
 import type { AccessQuestion } from '../authorization/access-question.js';
 import type { AccessScope } from '../authorization/access-scope.js';
+import { recordAsked } from '../authorization/asked-permissions.js';
 import type { Authorizer } from '../authorization/authorizer.js';
 import type { CheckRequest } from '../authorization/check-request.js';
 import { ALLOWED, deny, type Decision } from '../authorization/decision.js';
@@ -60,6 +61,8 @@ export class PolicyAccess implements Access {
   }
 
   async decideOn({ actor, permission, subject, context, recorded }: AccessQuestion): Promise<Decision> {
+    recordAsked(permission);
+
     const resource = this.resourceOf(subject);
     const asked = { ...context, subject };
 

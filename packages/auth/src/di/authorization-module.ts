@@ -20,6 +20,7 @@ import type { Policy } from '../policies/policy.js';
 import { PolicyAccess, type PolicyAccessOptions } from '../policies/policy-access.js';
 import { AuthorizationMap } from '../use-cases/authorization-map.js';
 import { authorizationMiddleware } from '../use-cases/authorization-middleware.js';
+import { policiesAskedMiddleware } from '../use-cases/policies-asked-middleware.js';
 import { authorizationMapOf } from './authorization-map-of.js';
 
 export interface AuthorizationModuleOptions {
@@ -31,13 +32,20 @@ export interface AuthorizationModuleOptions {
   readonly resourceOf?: PolicyAccessOptions['resourceOf'];
   /** The audit hook, called for every decision of the buses and of `Access`. */
   readonly onDecision?: OnDecision;
+  /**
+   * Whether a handler whose permission a policy refines has to ask `Access` about it before it
+   * returns; otherwise its result is refused with `PolicyNotAskedError` and its change rolled
+   * back. On by default; turn it off only for an `Access` of the project other than `PolicyAccess`.
+   */
+  readonly policiesAsked?: boolean;
 }
 
 /**
  * Turns the declarations of the modules into enforcement: binds the use case guard the kernel
  * buses run first, so a command or query that declared no access is refused, and a protected
- * one reaches its handler only when the authorizer allows the actor it carries. Starting the
- * application builds the guard, so a declaration that is not a permission fails the start.
+ * one reaches its handler only when the authorizer allows the actor it carries. When a policy
+ * refines the permission, the handler has to ask `Access` about it before it returns. Starting
+ * the application builds the guard, so a declaration that is not a permission fails the start.
  */
 export function authorizationModule(options: AuthorizationModuleOptions): ContextModule {
   const { authenticator } = options;
@@ -71,16 +79,22 @@ function isFactory<T>(value: Provided<T>): value is (resolve: Resolve) => T {
 
 function accessOf(options: AuthorizationModuleOptions, resolve: Resolve): Access {
   const { resourceOf, onDecision } = options;
-  const declared = resolve(DeclaredPolicies).list.map((binding) => policyOf(binding, resolve));
 
   return new PolicyAccess({
     authorizer: resolve(Authorizer),
     clock: resolve(Clock),
     scope: resolve(ExecutionScope),
-    policies: [...(options.policies ?? []), ...declared],
+    policies: policiesOf(options, resolve),
     ...(resourceOf === undefined ? {} : { resourceOf }),
     ...(onDecision === undefined ? {} : { onDecision }),
   });
+}
+
+/** The policies given to the module, then the classes the contexts declared with `@Policy`. */
+function policiesOf(options: AuthorizationModuleOptions, resolve: Resolve): Policy<unknown>[] {
+  const declared = resolve(DeclaredPolicies).list.map((binding) => policyOf(binding, resolve));
+
+  return [...(options.policies ?? []), ...declared];
 }
 
 /** A class a context declared with `@Policy`, built by its binding the first time it is asked. */
@@ -101,13 +115,22 @@ function policyOf(binding: PolicyBinding, resolve: Resolve): Policy<unknown> {
   });
 }
 
-function guardOf({ onDecision }: AuthorizationModuleOptions, resolve: Resolve): UseCaseGuard {
+function guardOf(options: AuthorizationModuleOptions, resolve: Resolve): UseCaseGuard {
+  const { onDecision, policiesAsked } = options;
+  const map = resolve(AuthorizationMap);
+
   const check = authorizationMiddleware({
     authorizer: resolve(Authorizer),
-    map: resolve(AuthorizationMap),
+    map,
     scope: resolve(ExecutionScope),
     ...(onDecision === undefined ? {} : { onDecision }),
   });
 
-  return { check };
+  if (policiesAsked === false) {
+    return { check };
+  }
+
+  const refined = policiesOf(options, resolve).map((policy) => policy.permission);
+
+  return { check, within: policiesAskedMiddleware({ map, refined }) };
 }
