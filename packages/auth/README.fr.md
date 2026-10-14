@@ -194,7 +194,9 @@ export const billingModule = defineContextModule({
 });
 ```
 
-Le gestionnaire n'est pas touché. `resource` nomme l'élément sur lequel porte le droit,
+Le gestionnaire ne vérifie rien pour la permission : la garde du bus la décide avant qu'il
+s'exécute. Il ne demande `Access` que lorsqu'une politique affine cette permission, une fois
+l'élément chargé (section 4). `resource` nomme l'élément sur lequel porte le droit,
 `context` transmet les faits du message dont l'autorisateur peut avoir besoin (le *tenant*
 qu'il vise).
 

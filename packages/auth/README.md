@@ -188,8 +188,10 @@ export const billingModule = defineContextModule({
 });
 ```
 
-The handler is not touched. `resource` names the element the right bears on, `context` passes
-facts of the message the authorizer may need (the tenant it targets).
+The handler checks nothing for the permission: the guard of the bus decides it before the
+handler runs. It asks `Access` only when a policy refines that permission, once it holds the
+element (section 4). `resource` names the element the right bears on, `context` passes facts of
+the message the authorizer may need (the tenant it targets).
 
 The same requirement said on the message itself, with the declarations of the kernel, for a
 declared context:
