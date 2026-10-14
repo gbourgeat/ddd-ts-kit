@@ -4,7 +4,7 @@ What each version changes for someone who uses the kit. The packages of `package
 together, under one version; the notes of each [GitHub release](https://github.com/gbourgeat/ddd-ts-kit/releases)
 list the pull requests behind it.
 
-## Unreleased
+## 0.18.0
 
 **The tenant check of `RoleBasedAuthorizer` follows memberships and the tenant of the work.**
 With `tenantOf`, an actor of several tenants (its `tenants`, from a list claim or the
