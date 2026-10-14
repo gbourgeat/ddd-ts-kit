@@ -15,7 +15,9 @@ import {
 import { defineContextModule } from '@ddd-ts-kit/di';
 
 export class AppointmentBooked implements DomainEvent {
-  readonly name = 'scheduling.appointment.booked';
+  static readonly eventName = 'scheduling.appointment.booked';
+
+  readonly name = AppointmentBooked.eventName;
 
   constructor(
     readonly aggregateId: string,

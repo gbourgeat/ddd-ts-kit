@@ -1,5 +1,5 @@
 [English](domain-building-blocks.md) · **Français**
-<!-- translation-of: domain-building-blocks.md sha256:2ffb30f2d904f4f3 -->
+<!-- translation-of: domain-building-blocks.md sha256:031d0b05a29bd0d0 -->
 
 # Événements du domaine, services du domaine, repositories et fabriques
 
@@ -50,10 +50,11 @@ Le nom s'écrit une seule fois, dans `eventName` : l'événement le porte dans `
 réaction s'y rattache par lui, `@DomainEventHandler(AppointmentCancelled)` le lit sur la classe
 qu'il reçoit et `domainEvents.on(AppointmentCancelled.eventName, ..)` le nomme, si bien qu'un
 événement renommé ne peut pas laisser un gestionnaire à l'écoute de l'ancien nom.
-`events/name-format` en tient la forme, `<context>.<aggregate>.<fact>`. Un événement écrit avant
-la 0.7, avec `readonly name = '..'` seul, est encore lu par le *checker*, mais
-`@DomainEventHandler` et `@On` le refusent à la compilation : ajoutez `static readonly eventName`
-à la classe.
+`events/name-format` en tient la forme, `<context>.<aggregate>.<fact>`, et
+`events/name-declared-once` la place : chaque classe de `domain/events/` déclare
+`static readonly eventName`, consommée ou non, et son `name` le lit. Un événement écrit avant la
+0.7, avec `readonly name = '..'` seul, est signalé par cette règle, et `@DomainEventHandler` et
+`@On` le refusent à la compilation : ajoutez `static readonly eventName` à la classe.
 
 L'agrégat enregistre l'événement dans la méthode qui change son état, après l'invariant et le
 changement :

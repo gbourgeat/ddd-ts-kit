@@ -46,7 +46,9 @@ class OrderError extends ConceptError {
 }
 
 class OrderPaid implements DomainEvent {
-  readonly name = 'ordering.order.paid';
+  static readonly eventName = 'ordering.order.paid';
+
+  readonly name = OrderPaid.eventName;
 
   constructor(
     readonly aggregateId: string,

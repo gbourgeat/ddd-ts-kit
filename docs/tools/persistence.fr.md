@@ -1,5 +1,5 @@
 [English](persistence.md) · **Français**
-<!-- translation-of: persistence.md sha256:cb817daf5f1d91c4 -->
+<!-- translation-of: persistence.md sha256:247938ed9ea6201d -->
 
 # Persistance : Drizzle, Knex, Prisma, TypeORM, et quelle base de données
 
@@ -88,7 +88,9 @@ import { type KnexContext, insertIgnoringConflict, optimisticUpdate } from '@ddd
 
 // domain/events/invoice-paid.event.ts : le domaine ne connaît ni ligne, ni SQL, ni bibliothèque.
 export class InvoicePaid implements DomainEvent {
-  readonly name = 'billing.invoice.paid';
+  static readonly eventName = 'billing.invoice.paid';
+
+  readonly name = InvoicePaid.eventName;
 
   constructor(
     readonly aggregateId: string,

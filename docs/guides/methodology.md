@@ -290,7 +290,9 @@ export class AppointmentError extends ConceptError {
 
 // The fact, in the past tense.
 export class AppointmentCancelled implements DomainEvent {
-  readonly name = 'appointments.appointment.cancelled';
+  static readonly eventName = 'appointments.appointment.cancelled';
+
+  readonly name = AppointmentCancelled.eventName;
 
   constructor(
     readonly aggregateId: string,

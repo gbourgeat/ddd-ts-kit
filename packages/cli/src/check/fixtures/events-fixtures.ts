@@ -14,7 +14,7 @@ export const EVENTS_FIXTURES: readonly Fixture[] = [
     expect: 'pass',
     files: project({
       [EVENT]:
-        "export class InvoiceIssued {\n  readonly name = 'billing.invoice.issued';\n  readonly label: string = 'Invoice issued';\n}\n",
+        "export class InvoiceIssued {\n  static readonly eventName = 'billing.invoice.issued';\n\n  readonly name = InvoiceIssued.eventName;\n  readonly label: string = 'Invoice issued';\n}\n",
       [PUBLISHED]: `${DECLARE}${declaration('billing.invoice.marked-as-paid')}`,
       [`${BILLING}/published-language/invoice-summary.ts`]:
         "export interface InvoiceSummary { readonly type: 'standard' | 'credit-note' }\n",
@@ -24,6 +24,7 @@ export const EVENTS_FIXTURES: readonly Fixture[] = [
     ruleId: 'events/name-format',
     name: 'a domain event named like its class',
     expect: { file: EVENT },
+    also: ['events/name-declared-once'],
     files: project({ [EVENT]: "export class InvoiceIssued {\n  readonly name = 'InvoiceIssued';\n}\n" }),
   },
   {
@@ -40,6 +41,30 @@ export const EVENTS_FIXTURES: readonly Fixture[] = [
     name: 'an integration event carrying the prefix of another context',
     expect: { file: PUBLISHED },
     files: project({ [PUBLISHED]: `${DECLARE}${declaration('catalog.invoice.issued')}` }),
+  },
+  {
+    ruleId: 'events/name-declared-once',
+    name: 'a domain event declaring its name once, read by its name property',
+    expect: 'pass',
+    files: project({
+      [EVENT]:
+        "export class InvoiceIssued {\n  static readonly eventName = 'billing.invoice.issued';\n\n  readonly name = InvoiceIssued.eventName;\n}\n",
+    }),
+  },
+  {
+    ruleId: 'events/name-declared-once',
+    name: 'a domain event naming itself in readonly name alone, as 0.5 wrote it',
+    expect: { file: EVENT },
+    files: project({ [EVENT]: "export class InvoiceIssued {\n  readonly name = 'billing.invoice.issued';\n}\n" }),
+  },
+  {
+    ruleId: 'events/name-declared-once',
+    name: 'a domain event writing its name twice',
+    expect: { file: EVENT },
+    files: project({
+      [EVENT]:
+        "export class InvoiceIssued {\n  static readonly eventName = 'billing.invoice.issued';\n\n  readonly name = 'billing.invoice.issued';\n}\n",
+    }),
   },
   {
     ruleId: 'events/defined-in-published-language',

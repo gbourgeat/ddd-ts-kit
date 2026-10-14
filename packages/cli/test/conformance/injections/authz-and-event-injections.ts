@@ -3,6 +3,7 @@ import { PATHS } from '../paths.js';
 
 const {
   DUE_HANDLER,
+  EVENT,
   EVENT_HANDLER,
   HANDLER_SPEC,
   INTEGRATION_HANDLER,
@@ -109,6 +110,19 @@ export const AUTHZ_AND_EVENT_INJECTIONS: readonly Injection[] = [
     ],
     checker: true,
     eslint: 'ddd-ts-kit/events-name-format',
+  },
+  {
+    rule: 'events/name-declared-once',
+    what: 'a domain event that writes its name a second time instead of reading its eventName',
+    file: EVENT,
+    changes: [
+      {
+        file: EVENT,
+        from: '  readonly name = ReminderSent.eventName;',
+        to: "  readonly name = 'notification.reminder.sent';",
+      },
+    ],
+    checker: true,
   },
   {
     rule: 'events/outbox-required',

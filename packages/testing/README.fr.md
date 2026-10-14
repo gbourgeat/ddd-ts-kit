@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:b6220dff0e77027d -->
+<!-- translation-of: README.md sha256:1b19da8b009fd33b -->
 
 # @ddd-ts-kit/testing
 
@@ -47,7 +47,9 @@ class OrderError extends ConceptError {
 }
 
 class OrderPaid implements DomainEvent {
-  readonly name = 'ordering.order.paid';
+  static readonly eventName = 'ordering.order.paid';
+
+  readonly name = OrderPaid.eventName;
 
   constructor(
     readonly aggregateId: string,

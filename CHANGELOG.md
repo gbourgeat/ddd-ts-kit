@@ -12,6 +12,13 @@ The plugin states the version of the packages its skills describe: when the inst
 `ddd-ts-kit` is another one (below 1.0.0, another minor version), the session start says so and
 what to do, upgrade the packages together or update the plugin. It never blocks.
 
+**Every domain event declares its name once, consumed or not.** `events/name-declared-once`
+(`ddd-ts-kit check`) reports a class of `domain/events/` without `static readonly eventName`, and
+one whose `readonly name` writes the name again instead of reading it. Until now an event that no
+handler or projection reacted to could keep the form 0.5 wrote, `readonly name = '..'` alone, and
+the first reaction attached to it failed to compile. To move, give each reported class
+`static readonly eventName = '<context>.<aggregate>.<fact>'` and `readonly name = <Event>.eventName`.
+
 ## 0.18.0
 
 **The tenant check of `RoleBasedAuthorizer` follows memberships and the tenant of the work.**

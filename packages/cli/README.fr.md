@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:bed804ca4ed40c91 -->
+<!-- translation-of: README.md sha256:fa841c4ea81f2c5d -->
 
 # ddd-ts-kit
 
@@ -1265,6 +1265,7 @@ règle.
 | `test/no-mocks` | `vi.mock`, `vi.fn`, `vi.spyOn`, leurs jumeaux `jest`, ou une bibliothèque de *mocks* dans les tests d'un contexte |
 | `test/builder-required` | un agrégat sans `test/builders/<name>.builder.ts` |
 | `events/name-format` | un nom d'événement qui n'est pas `<context>.<aggregate>.<fact>` en kebab-case avec le bon contexte |
+| `events/name-declared-once` | une classe de `domain/events/` sans `static readonly eventName`, ou dont le `readonly name` écrit le nom une seconde fois au lieu de le lire |
 | `events/defined-in-published-language` | `defineIntegrationEvent` hors d'un langage publié, sans charge utile, deux fois pour une même version ; un événement décrit à la main |
 | `language/glossary-term` | une classe du modèle nommée avec un mot que le glossaire de son contexte ne définit pas ; un glossaire vide ; sous `"stack.refusals": "factories"`, une classe d'erreur de `domain/errors/` aussi |
 | `language/declared-vocabulary` | une chaîne littérale dont la valeur est une valeur d'un vocabulaire fermé que le projet déclare (un objet `as const` exporté avec le type union de son nom, un ensemble de permissions de `definePermissions`), hors du fichier qui le déclare, à l'endroit qui parle son langage (son contexte ; la plateforme et les groupes de routes pour la plateforme ; partout pour un identifiant de permission ou le noyau partagé) ; les tests, les langages publiés et le schéma de relations ne sont pas jugés ; sous `"stack.literals": "named"` |

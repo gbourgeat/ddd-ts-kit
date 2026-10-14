@@ -1208,6 +1208,7 @@ const due = handler.isDueNow(new Reminder(new Date('2026-03-01T09:00:00Z'))); //
 | `test/no-mocks` | `vi.mock`, `vi.fn`, `vi.spyOn`, their `jest` twins, or a mocking library in a context's tests |
 | `test/builder-required` | an aggregate without `test/builders/<name>.builder.ts` |
 | `events/name-format` | an event name that is not `<context>.<aggregate>.<fact>` in kebab-case with the right context |
+| `events/name-declared-once` | a class of `domain/events/` without `static readonly eventName`, or whose `readonly name` writes the name again instead of reading it |
 | `events/defined-in-published-language` | `defineIntegrationEvent` outside a published language, without a payload, twice for one version; an event described by hand |
 | `language/glossary-term` | a class of the model named with a word the glossary of its context does not define; an empty glossary; under `"stack.refusals": "factories"`, an error class of `domain/errors/` too |
 | `language/declared-vocabulary` | a string literal whose value is a value of a closed vocabulary the project declares (an object `as const` exported with the union type of its name, a permission set of `definePermissions`), outside the file that declares it, in the place that speaks its language (its context; the platform and the route groups for the platform; everywhere for a permission id or the shared kernel); tests, published languages and the relationship schema are not judged; under `"stack.literals": "named"` |

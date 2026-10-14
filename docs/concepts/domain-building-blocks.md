@@ -47,9 +47,11 @@ The name is written once, in `eventName`: the event carries it in `name`, and ev
 attached by it, `@DomainEventHandler(AppointmentCancelled)` reads it from the class it is given
 and `domainEvents.on(AppointmentCancelled.eventName, ..)` names it, so a renamed event cannot
 leave a handler listening to the old name. `events/name-format` holds its form,
-`<context>.<aggregate>.<fact>`. An event written before 0.7, `readonly name = '..'` alone, is
-still read by the checker, but `@DomainEventHandler` and `@On` refuse it at compile time: add
-`static readonly eventName` to the class.
+`<context>.<aggregate>.<fact>`, and `events/name-declared-once` its place: every class of
+`domain/events/` declares `static readonly eventName`, consumed or not, and its `name` reads it.
+An event written before 0.7, `readonly name = '..'` alone, is reported by that rule, and
+`@DomainEventHandler` and `@On` refuse it at compile time: add `static readonly eventName` to the
+class.
 
 The aggregate records the event in the method that changes its state, after the invariant and
 the change:

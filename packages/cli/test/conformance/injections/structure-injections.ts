@@ -59,7 +59,7 @@ export const STRUCTURE_INJECTIONS: readonly Injection[] = [
       {
         file: EVENT,
         where: 'end',
-        to: "\nexport class ReminderWithdrawn implements DomainEvent {\n  readonly name = 'notification.reminder.withdrawn';\n\n  constructor(\n    readonly aggregateId: string,\n    readonly occurredAt: Date,\n  ) {}\n}\n",
+        to: "\nexport class ReminderWithdrawn implements DomainEvent {\n  static readonly eventName = 'notification.reminder.withdrawn';\n\n  readonly name = ReminderWithdrawn.eventName;\n\n  constructor(\n    readonly aggregateId: string,\n    readonly occurredAt: Date,\n  ) {}\n}\n",
       },
     ],
     checker: true,

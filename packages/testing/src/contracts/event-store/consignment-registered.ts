@@ -1,7 +1,9 @@
 import type { DomainEvent } from '@ddd-ts-kit/kernel';
 
 export class ConsignmentRegistered implements DomainEvent {
-  readonly name = 'shipping.consignment.registered';
+  static readonly eventName = 'shipping.consignment.registered';
+
+  readonly name = ConsignmentRegistered.eventName;
 
   constructor(
     readonly aggregateId: string,

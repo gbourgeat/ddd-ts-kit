@@ -57,7 +57,9 @@ import { CommandHandler, Requires } from '@ddd-ts-kit/kernel/declarations';
 
 // domain/: imports nothing but the kernel
 export class AppointmentBooked implements DomainEvent {
-  readonly name = 'appointments.appointment.booked';
+  static readonly eventName = 'appointments.appointment.booked';
+
+  readonly name = AppointmentBooked.eventName;
 
   constructor(
     readonly aggregateId: string,
