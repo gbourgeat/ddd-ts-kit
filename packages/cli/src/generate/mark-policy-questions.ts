@@ -1,9 +1,11 @@
 import { escapeRegExp } from '../check/text/escape-reg-exp.js';
 import { filesUnder } from './files-under.js';
+import { askPolicyInGeneratedUseCase } from './kinds/ask-policy-in-generated-use-case.js';
+import { permissionPattern } from './permission-pattern.js';
+import { refinedByPolicy } from './refined-by-policy.js';
 import type { Scope } from './scope.js';
 
 const MESSAGE_FILE = /^(application\/(?:commands|queries)\/([^/]+))\/\2\.(command|query)\.ts$/;
-const POLICY_FILE = /^application\/authorization\/[^/]+\.policy\.ts$/;
 const MESSAGE_CLASS = /(?<![\w$.])export\s+class\s+([\w$]+)/;
 const EXECUTE = /^([ \t]*)(?:public\s+)?async\s+execute\s*\([^)]*\)[^{\n]*\{[ \t]*$/m;
 
@@ -16,41 +18,47 @@ interface Refinement {
   readonly named: RegExp;
 }
 
-/** A use case folder: its message file, its handler and whether it is a command or a query. */
+/** A use case folder: its name, its message file, its handler and whether it is a command or a query. */
 interface UseCase {
+  readonly name: string;
   readonly message: string;
   readonly handler: string;
   readonly kind: string;
 }
 
 /**
- * When a policy of the context refines `permission`, marks, in the handler of every use case of
- * the context that requires it, where it asks that policy: a `TODO(domain)`, since which element
- * to load is a decision of the business. A handler that already names the permission is left as
- * it is. Run by the policy and by the use cases, whichever comes second finds the other.
+ * When a policy of the context refines `permission`, makes the handler of every use case of the
+ * context that requires it ask that policy. A command or a plain query still as the generator wrote
+ * it is written again asking it; any other handler gets a `TODO(domain)` where it asks, since which element to
+ * load is a decision of the business, and the authorization module refuses its result until it
+ * does. A handler that already names the permission is left as it is.
  */
 export function markPolicyQuestions(scope: Scope, permission: string): void {
-  const refinement = refinementOf(scope, permission);
-
-  if (!refinement.files.some((file) => POLICY_FILE.test(file) && refinement.named.test(source(refinement, file)))) {
+  if (!refinedByPolicy(scope, permission)) {
     return;
   }
 
+  const refinement = refinementOf(scope, permission);
+
   for (const useCase of useCasesOf(refinement.files)) {
-    if (requires(refinement, useCase.message)) {
+    const asked = refinement.named.test(source(refinement, useCase.handler));
+
+    if (asked || !requires(refinement, useCase.message)) {
+      continue;
+    }
+
+    if (!askPolicyInGeneratedUseCase(scope, useCase.name, useCase.kind)) {
       mark(refinement, useCase);
     }
   }
 }
 
 function refinementOf(scope: Scope, permission: string): Refinement {
-  const set = `${scope.context.camel}Permissions`;
-
   return {
     scope,
     files: filesUnder(scope.ws, scope.dir).filter((file) => file.endsWith('.ts') && !file.startsWith('test/')),
-    reference: `${set}['${permission}']`,
-    named: new RegExp(`${escapeRegExp(set)}\\s*\\[\\s*['"\`]${escapeRegExp(permission)}['"\`]\\s*\\]`),
+    reference: `${scope.context.camel}Permissions['${permission}']`,
+    named: permissionPattern(scope, permission),
   };
 }
 
@@ -64,7 +72,7 @@ function useCasesOf(files: readonly string[]): UseCase[] {
 
     return folder === undefined || name === undefined || kind === undefined
       ? []
-      : [{ message: file, handler: `${folder}/${name}.handler.ts`, kind }];
+      : [{ name, message: file, handler: `${folder}/${name}.handler.ts`, kind }];
   });
 }
 

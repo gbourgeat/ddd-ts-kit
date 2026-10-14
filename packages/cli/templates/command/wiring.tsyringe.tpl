@@ -1,4 +1,7 @@
 @@imports
+{{#if access.policy}}
+import { Access } from '@ddd-ts-kit/auth';
+{{/if}}
 {{#if command.hasAggregate}}
 import { Clock, IdGenerator } from '@ddd-ts-kit/kernel';
 import { {{aggregate.pascal}}Repository } from '{{alias.context}}/domain/repositories/{{aggregate.kebab}}.repository{{alias.ext}}';
@@ -8,8 +11,8 @@ import { {{name.pascal}}Command } from '{{alias.context}}/application/commands/{
 import { {{name.pascal}}Handler } from '{{alias.context}}/application/commands/{{name.kebab}}/{{name.kebab}}.handler{{alias.ext}}';
 @@registrations
 {{#if command.hasAggregate}}
-builder.command({{name.pascal}}Command){{access.declaration}}.handledBy({{name.pascal}}Handler, [{{aggregate.pascal}}Repository, IdGenerator, Clock]);
+builder.command({{name.pascal}}Command){{access.declaration}}.handledBy({{name.pascal}}Handler, [{{aggregate.pascal}}Repository, IdGenerator, Clock{{#if access.policy}}, Access{{/if}}]);
 {{/if}}
 {{#unless command.hasAggregate}}
-builder.command({{name.pascal}}Command){{access.declaration}}.handledBy({{name.pascal}}Handler);
+builder.command({{name.pascal}}Command){{access.declaration}}.handledBy({{name.pascal}}Handler{{#if access.policy}}, [Access]{{/if}});
 {{/unless}}

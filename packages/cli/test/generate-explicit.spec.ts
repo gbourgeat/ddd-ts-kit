@@ -106,7 +106,7 @@ describe('the module file of an explicit context', () => {
     );
 
     expect(module).toContain(
-      "builder\n      .command(CancelInvoiceCommand)\n      .requires(billingPermissions['invoice.cancel'])\n      .handledBy(CancelInvoiceHandler);",
+      "builder\n      .command(CancelInvoiceCommand)\n      .requires(billingPermissions['invoice.cancel'])\n      .handledBy(CancelInvoiceHandler, [Access]);",
     );
 
     expect(module).toContain(

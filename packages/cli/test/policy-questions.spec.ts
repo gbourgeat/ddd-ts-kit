@@ -27,27 +27,55 @@ function generate(project: string, ...args: string[]): void {
 }
 
 describe('a policy and the use cases of its permission', () => {
-  it('marks the handler of an existing use case where it asks the policy, and the checker accepts it', () => {
+  it('writes a generated command again asking the policy, and the checker accepts it', () => {
     const project = billing();
 
     generate(project, 'command', 'billing', 'CancelInvoice', '--permission', 'invoice.cancel', ...TERMS);
     generate(project, 'policy', 'billing', 'OnlyIssuerCancels', '--permission', 'invoice.cancel');
 
-    expect(read(project, HANDLER)).toContain(
-      `  async execute(command: CancelInvoiceCommand): Promise<void> {\n    ${MARKER}: load the element this command acts on, then ask it before the change, \`await this.access.authorize(command.actor, billingPermissions['invoice.cancel'], <element>)\``,
+    const handler = read(project, HANDLER);
+
+    expect(handler).toContain('  constructor(private readonly access: Access) {}');
+    expect(handler).toContain(MARKER);
+
+    expect(handler).toContain(
+      "    await this.access.authorize(command.actor, billingPermissions['invoice.cancel'], command);",
     );
 
+    expect(read(project, `${BILLING}/billing.declarations.ts`)).toContain('injected(CancelInvoiceHandler, [Access]);');
     expect(cli(project, 'check', '--rule', 'authz/policy-asked').code).toBe(0);
   });
 
-  it('marks the handler of a use case generated after the policy of its permission', () => {
+  it('leaves only a marker in a handler the team already changed', () => {
+    const project = billing();
+
+    generate(project, 'command', 'billing', 'CancelInvoice', '--permission', 'invoice.cancel', ...TERMS);
+
+    write(
+      project,
+      HANDLER,
+      read(project, HANDLER).replace('// TODO(domain): receive the repository', '// receive the repository'),
+    );
+
+    generate(project, 'policy', 'billing', 'OnlyIssuerCancels', '--permission', 'invoice.cancel');
+
+    const handler = read(project, HANDLER);
+
+    expect(handler).toContain(`${MARKER}: load the element this command acts on, then ask it before the change`);
+    expect(handler).not.toContain('\n    await this.access.authorize(');
+    expect(cli(project, 'check', '--rule', 'authz/policy-asked').code).toBe(0);
+  });
+
+  it('generates a command asking the policy of its permission when the policy exists already', () => {
     const project = billing();
 
     generate(project, 'entity', 'billing', 'InvoiceLine', ...TERMS, '--term', 'Line=One billed item of an invoice');
     generate(project, 'policy', 'billing', 'OnlyIssuerCancels', '--permission', 'invoice.cancel');
     generate(project, 'command', 'billing', 'CancelInvoice', '--permission', 'invoice.cancel', ...TERMS);
 
-    expect(read(project, HANDLER)).toContain(MARKER);
+    expect(read(project, HANDLER)).toContain(
+      "    await this.access.authorize(command.actor, billingPermissions['invoice.cancel'], command);",
+    );
   });
 
   it('leaves alone a handler that already asks, and reports one that stopped asking', () => {

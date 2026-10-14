@@ -7,6 +7,6 @@ import { InMemory{{name.pascal}}Reader } from '{{alias.context}}/infrastructure/
 @@registrations
 const {{name.camel}}Reader = platform.adapter(new InMemory{{name.pascal}}Reader(), { kind: 'repository', context: '{{context.kebab}}' });
 
-platform.queries.register({{name.pascal}}Query, new {{name.pascal}}Handler({{name.camel}}Reader), { context: '{{context.kebab}}' });
+platform.queries.register({{name.pascal}}Query, new {{name.pascal}}Handler({{name.camel}}Reader{{#if access.policy}}, platform.access{{/if}}), { context: '{{context.kebab}}' });
 @@authorization
 {{access.manualDeclaration}}

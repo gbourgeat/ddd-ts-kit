@@ -1,6 +1,11 @@
 import { describe, expect, it } from '{{tests.module}}';
 {{#if access.protected}}
+{{#if access.policy}}
+import { AuthorizationMap, PolicyAccess, RoleBasedAuthorizer, authorizationMiddleware, requires } from '@ddd-ts-kit/auth';
+{{/if}}
+{{#unless access.policy}}
 import { AuthorizationMap, RoleBasedAuthorizer, authorizationMiddleware, requires } from '@ddd-ts-kit/auth';
+{{/unless}}
 import { anActor } from '@ddd-ts-kit/auth/testing';
 {{/if}}
 import { createTestBuses } from '@ddd-ts-kit/testing';
@@ -14,12 +19,22 @@ import { Fake{{aggregate.pascal}}Repository } from '{{alias.context}}/test/fakes
 {{/if}}
 {{#if access.protected}}
 
+{{#if access.policy}}
+const authorizer = new RoleBasedAuthorizer({ roles: { holder: [{{context.camel}}Permissions['{{access.permission}}']] } });
+
+const holders = authorizationMiddleware({
+  authorizer,
+  map: AuthorizationMap.of(requires({{name.pascal}}Command, {{context.camel}}Permissions['{{access.permission}}'])),
+});
+{{/if}}
+{{#unless access.policy}}
 const holders = authorizationMiddleware({
   authorizer: new RoleBasedAuthorizer({
     roles: { holder: [{{context.camel}}Permissions['{{access.permission}}']] },
   }),
   map: AuthorizationMap.of(requires({{name.pascal}}Command, {{context.camel}}Permissions['{{access.permission}}'])),
 });
+{{/unless}}
 
 const holder = anActor().withRole('holder').build();
 {{/if}}
@@ -71,16 +86,24 @@ function arrange() {
   // As the application hands it to the handler: the save announces the events of the {{aggregate.words}} to `domainEvents`.
   const {{aggregate.camel}}Repository = dispatching(new Fake{{aggregate.pascal}}Repository());
 
-  const handler = new {{name.pascal}}Handler({{aggregate.camel}}Repository, ids, clock);
+  const handler = new {{name.pascal}}Handler({{aggregate.camel}}Repository, ids, clock{{#if access.policy}}, new PolicyAccess({ authorizer, clock }){{/if}});
 
   commandBus{{spec.guard}}.register({{name.pascal}}Command, handler);
 
   return { commandBus, {{aggregate.camel}}Repository, domainEvents };
   {{/if}}
   {{#unless command.hasAggregate}}
+{{#if access.policy}}
+  const { commandBus, clock } = createTestBuses();
+  const handler = new {{name.pascal}}Handler(new PolicyAccess({ authorizer, clock }));
+
+  commandBus{{spec.guard}}.register({{name.pascal}}Command, handler);
+{{/if}}
+{{#unless access.policy}}
   const { commandBus } = createTestBuses();
 
   commandBus{{spec.guard}}.register({{name.pascal}}Command, new {{name.pascal}}Handler());
+{{/unless}}
 
   return { commandBus };
   {{/unless}}

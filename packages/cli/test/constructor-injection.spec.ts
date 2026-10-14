@@ -10,9 +10,23 @@ const RULE = 'declarations/constructor-injection';
 
 let root: string;
 
+/** The cancel-invoice handler with no constructor: generated, it asks the policy of its permission through `Access`. */
+const TAKING_NOTHING = [
+  "import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';",
+  "import { CancelInvoiceCommand } from '@/contexts/billing/application/commands/cancel-invoice/cancel-invoice.command';",
+  '',
+  '@CommandHandler(CancelInvoiceCommand)',
+  'export class CancelInvoiceHandler implements CommandHandler<CancelInvoiceCommand> {',
+  '  async execute(): Promise<void> {}',
+  '}',
+  '',
+].join('\n');
+
 beforeAll(() => {
   root = tempDir('constructor-injection');
   scaffoldEverything(root);
+  write(root, HANDLER, TAKING_NOTHING);
+  cli(root, 'docs');
 });
 
 describe('the generated list of a constructor follows the code, and a gate says when it does not', () => {
@@ -139,7 +153,7 @@ describe('what a constructor may say', () => {
   });
 });
 
-/** The cancel-invoice handler, which takes nothing as generated, given a constructor. */
+/** The cancel-invoice handler, which takes nothing here, given a constructor. */
 function taking(...parameters: string[]): string {
   const imports = [
     "import type { Clock, IdGenerator } from '@ddd-ts-kit/kernel';",

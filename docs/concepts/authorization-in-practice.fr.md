@@ -301,6 +301,9 @@ adaptateur pour un service dédié est le sujet de
   cas d'usage dont une politique affine la permission quand il ne nomme jamais cette permission
   dans une question à `Access`, et à l'exécution le module d'autorisation refuse son résultat
   par `PolicyNotAskedError`, à l'intérieur de l'unité de travail, si bien que rien n'est validé.
+  Les générateurs écrivent la question : un cas d'usage généré une fois qu'une politique affine
+  sa permission reçoit `Access` et l'interroge sur le message, avec un `TODO(domain)` pour
+  l'interroger plutôt sur l'élément chargé.
   Seules les questions posées à `PolicyAccess` sont vues : un projet qui lie son propre `Access`
   coupe la vérification à l'exécution avec `policiesAsked: false`.
 - **Une politique est évaluée dans le processus du gestionnaire.** Au-delà d'une certaine

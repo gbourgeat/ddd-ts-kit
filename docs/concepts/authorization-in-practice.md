@@ -289,7 +289,10 @@ dedicated service is the subject of [Authorization engines](../tools/authorizati
   caught twice: `authz/policy-asked` reports the handler of a use case whose permission a policy
   refines when it never names that permission in a question to `Access`, and at run time the
   authorization module refuses its result with `PolicyNotAskedError`, inside the unit of work,
-  so that nothing is committed. Only the questions put to `PolicyAccess` are seen: a project
+  so that nothing is committed. The generators write the question: a use case generated once a
+  policy refines its permission receives `Access` and asks it about the message, with a
+  `TODO(domain)` to ask about the loaded element instead. Only the questions put to
+  `PolicyAccess` are seen: a project
   that binds its own `Access` turns the run-time check off with `policiesAsked: false`.
 - **A policy is evaluated in the process of the handler.** Past a certain scale, per-element
   rules move to a dedicated engine behind the same port.
