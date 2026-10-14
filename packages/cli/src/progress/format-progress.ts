@@ -35,8 +35,14 @@ function sliceLines(slices: SlicesProgress): string[] {
     ([owner, byStatus]) => `    ${owner}: ${counts(byStatus, statuses)}`,
   );
 
+  const duplicated =
+    slices.duplicates.length === 0
+      ? []
+      : [`  row numbers used more than once: ${slices.duplicates.join(', ')} (give each row its own number)`];
+
   return [
     `Slices (${slices.file}): ${slices.rows.length}, ${counts(slices.byStatus, statuses)}`,
+    ...duplicated,
     ...open,
     '  by owner',
     ...owners,

@@ -6,6 +6,12 @@ list the pull requests behind it.
 
 ## Unreleased
 
+**`status` and `worker-scope` read every slices table.** `docs/architecture/slices.md` may plan
+the work in several tables, one per milestone or story, under the same header: only the first was
+read, so `status` counted a part of the plan and a worker started on a later table got an empty
+briefing. Every table is now read, in the order of the file, and `status` names a row number that
+more than one row carries (`duplicates` in `--json`).
+
 **The notes travel with the CLI, and a version gap is said.** The `ddd-ts-kit` package ships this
 file, so an agent finds the steps of a version in `node_modules/ddd-ts-kit/CHANGELOG.md`, offline.
 The plugin states the version of the packages its skills describe: when the installed

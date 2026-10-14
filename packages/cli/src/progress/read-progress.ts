@@ -27,6 +27,7 @@ function slicesProgress(rows: readonly Slice[]): SlicesProgress {
     rows,
     byStatus: idsByStatus(rows),
     byOwner: Object.fromEntries(owners.map((owner) => [owner, idsByStatus(rows.filter((row) => row.owner === owner))])),
+    duplicates: [...new Set(rows.map((row) => row.id).filter((id, index, ids) => ids.indexOf(id) !== index))],
   };
 }
 

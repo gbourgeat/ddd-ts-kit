@@ -70,8 +70,10 @@ missing. Rows with no path between them can be built in parallel.
 - `Owner` is `conductor`, the name of a context (one worker per context) or a person.
 - `Status` is `todo`, `in progress`, `done`. Only the conductor edits this file: a worker
   reports, the conductor marks the row at the merge.
-- Keep the eight column names as they are: `npx ddd-ts-kit status` reads this table (slices
-  by status and by owner) and `worker-scope` puts the `todo` rows of an owner in its briefing.
+- Keep the eight column names as they are: `npx ddd-ts-kit status` reads every table with this
+  header, in the order of the file (slices by status and by owner), and `worker-scope` puts the
+  `todo` rows of an owner in its briefing. One table per milestone is fine; number the rows
+  across the file, never twice (`status` names a number used twice).
 - Keep rule details out: one line under the table per slice that needs it, with the
   invariants and the failures by name ("refuses an order without lines").
 
