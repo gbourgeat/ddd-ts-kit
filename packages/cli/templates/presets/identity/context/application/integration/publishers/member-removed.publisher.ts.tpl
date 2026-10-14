@@ -4,7 +4,7 @@ import { MemberRemoved } from '{{alias.context}}/domain/events/member-removed.ev
 import { memberRemovedV1 } from '{{alias.context}}/published-language/member-removed.v1.integration-event{{alias.ext}}';
 
 /** Tells the other contexts, through the outbox, in the transaction of the fact. */
-@DomainEventHandler(MemberRemoved, { name: MemberRemoved.eventName })
+@DomainEventHandler(MemberRemoved)
 export class MemberRemovedPublisher implements DomainEventHandler<MemberRemoved> {
   constructor(
     private readonly publisher: IntegrationEventPublisher,

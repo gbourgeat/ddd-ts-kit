@@ -499,7 +499,7 @@ a repository adapter never call it. An aggregate is recognised by what it does (
 | `after-commit` | `dispatcher.on(name, callback, { phase: 'after-commit' })` | once the transaction has committed, never when it rolled back, in dispatch order, awaited before the command answers | never fails the command: reported, and the other handlers still run |
 
 With declarations the phase is an option of the decorator:
-`@DomainEventHandler(OrderPaid, { name: OrderPaid.eventName, phase: 'after-commit' })`.
+`@DomainEventHandler(OrderPaid, { phase: 'after-commit' })`.
 
 The `after-commit` phase is at most once: a crash between the commit and the run loses it. What
 must not be lost goes through the outbox as an integration event. A `before-commit` handler
@@ -838,7 +838,7 @@ left alone.
 | `CommandHandler(Message)` | the one handler of a command | `@CommandHandler(PlaceOrder)` |
 | `QueryHandler(Message)` | the one handler of a query | `@QueryHandler(GetOrder)` |
 | `IntegrationEventHandler(definition, { consumer, actorOf? })` | the handler of an integration event of another context | `@IntegrationEventHandler(OrderPlaced, { consumer: 'billing.invoice-on-order-placed' })` |
-| `DomainEventHandler(Event, { name })` | a handler of a domain event of its own context | `@DomainEventHandler(OrderPaid, { name: OrderPaid.eventName })`, the name the event class declares once in `static readonly eventName` |
+| `DomainEventHandler(Event)` | a handler of a domain event of its own context | `@DomainEventHandler(OrderPaid)`, attached under the name the event class declares once in `static readonly eventName` |
 | `Scheduled(name, schedule and options)` | a job run by time, which triggers use cases | `@Scheduled('billing.send-reminders', { cron: '0 7 * * 1-5', timeZone: 'Europe/Paris' })` |
 | `Projection(name)` with `On(definition)` on its methods | a projector: the class that keeps one read model up to date | `@Projection('scheduling.appointment-list')`, `@On(PaymentCaptured)` |
 | `Repository(Port, options?)` | the adapter of a repository of the domain | `@Repository(OrderRepository)` |
@@ -866,6 +866,9 @@ left alone.
   `implements IntegrationEventHandler<OrderPlacedPayload>`. A job implements `ScheduledJob`.
 - **Names are written, not derived**: the consumer name, the policy name, the job name and the
   name of the domain event survive the renaming of a class, and the empty string is refused.
+  The name of a domain event is written once, in `static readonly eventName` on its class: its
+  handlers and projections read it there (`NamedDomainEventType`), and a class without it is
+  refused by the compiler.
 - **A declared class is its own token**: `@ddd-ts-kit/di` binds a handler, a job or a policy
   under its class.
 
@@ -1792,7 +1795,7 @@ import { On, Projection } from '@ddd-ts-kit/kernel/declarations';
 export class AppointmentListProjection {
   constructor(private readonly appointments: AppointmentList) {}
 
-  @On(AppointmentBooked, { name: 'scheduling.appointment.booked' })
+  @On(AppointmentBooked)
   booked(event: AppointmentBooked) {
     return this.appointments.upsertIfNewer(event.aggregateId, stampOf(event), () => rowOf(event));
   }
@@ -1804,7 +1807,7 @@ export class AppointmentListProjection {
     );
   }
 
-  @On(AppointmentCancelled, { name: 'scheduling.appointment.cancelled' })
+  @On(AppointmentCancelled)
   cancelled(event: AppointmentCancelled) {
     return this.appointments.delete(event.aggregateId, stampOf(event));
   }
@@ -1814,9 +1817,9 @@ export class AppointmentListProjection {
 `@Projection('<context>.<name>')` is a declaration like the others: both decorator
 modes, its dependencies stated by its constructor, one class per file, in
 `application/projections/`, in a `*.projection.ts` file. `@On(definition)` on a method says
-"this method applies that integration event"; `@On(EventClass, { name })` says it for a domain
-event of the projection's own context. A method that takes another event is refused by the
-compiler, a projection without any `@On` and an `@On` on a class without `@Projection` throw
+"this method applies that integration event"; `@On(EventClass)` says it for a domain event of the
+projection's own context, under the name its class declares once, `static readonly eventName`.
+A method that takes another event is refused by the compiler, a projection without any `@On` and an `@On` on a class without `@Projection` throw
 when the file loads. A method answers what its store answered, which is how the application
 counts what was applied and what was stale.
 

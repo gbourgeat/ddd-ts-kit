@@ -3,7 +3,7 @@ import { CalendarCreated } from '@/contexts/scheduling/domain/events/calendar-cr
 import type { SchedulingRelationships } from '@/contexts/scheduling/application/ports/scheduling-relationships.port';
 
 /** When a calendar is created, the platform learns whose desk and which practice it belongs to: rights on it follow. */
-@DomainEventHandler(CalendarCreated, { name: CalendarCreated.eventName })
+@DomainEventHandler(CalendarCreated)
 export class CalendarCreatedEventHandler implements DomainEventHandler<CalendarCreated> {
   constructor(private readonly relationships: SchedulingRelationships) {}
 

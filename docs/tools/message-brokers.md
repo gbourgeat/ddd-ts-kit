@@ -50,7 +50,9 @@ import { z } from 'zod';
 
 // contexts/appointments/domain/events/appointment-booked.event.ts
 export class AppointmentBooked implements DomainEvent {
-  readonly name = 'appointments.appointment.booked';
+  static readonly eventName = 'appointments.appointment.booked';
+
+  readonly name = AppointmentBooked.eventName;
 
   constructor(
     readonly aggregateId: string,
@@ -86,8 +88,8 @@ export class AppointmentBookedPublisher {
 }
 ```
 
-In a project the publisher is declared with `@DomainEventHandler` and the
-generator writes it ([domain and integration events](../concepts/domain-and-integration-events.md)).
+In a project the publisher is declared with `@DomainEventHandler(AppointmentBooked)`, attached
+under the `eventName` the event class declares, and the generator writes it ([domain and integration events](../concepts/domain-and-integration-events.md)).
 
 ## Comparison
 

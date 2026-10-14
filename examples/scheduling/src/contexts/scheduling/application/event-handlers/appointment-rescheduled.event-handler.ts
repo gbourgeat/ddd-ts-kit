@@ -4,7 +4,7 @@ import { AppointmentRescheduled } from '@/contexts/scheduling/domain/events/appo
 import { OfferFreedSlotCommand } from '@/contexts/scheduling/application/commands/offer-freed-slot/offer-freed-slot.command';
 
 /** When an appointment moves, the slot it held before is offered to the waitlist of its calendar and day. */
-@DomainEventHandler(AppointmentRescheduled, { name: AppointmentRescheduled.eventName })
+@DomainEventHandler(AppointmentRescheduled)
 export class AppointmentRescheduledEventHandler implements DomainEventHandler<AppointmentRescheduled> {
   constructor(private readonly commands: CommandBus) {}
 

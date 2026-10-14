@@ -11,12 +11,12 @@ const DECLARATIONS = "import { DomainEventHandler } from '@ddd-ts-kit/kernel/dec
 const KERNEL =
   "import { ActorContext, Cache, CacheInvalidation, CachePurger, Clock, CommandBus, EventBus, ExecutionScope, IdGenerator, IntegrationEventPublisher, JobScheduler, Lock, Logger, Metrics, QueryBus, RateLimiter } from '@ddd-ts-kit/kernel';\n";
 
-const AFTER_COMMIT = ", phase: 'after-commit'";
+const AFTER_COMMIT = "{ phase: 'after-commit' }, ";
 const UNCOVERED = 'a port of the kernel no transaction covers';
 
-/** A handler declared with the dependency list given, after the options that follow the name of its event. */
+/** A handler declared with the dependency list given, after the options that follow its event. */
 const declared = (list: string, options = '', body = ''): string =>
-  `${DECLARATIONS}${KERNEL}@DomainEventHandler(InvoiceIssued, { name: 'billing.invoice.issued'${options} }, [${list}])\nexport class InvoiceIssuedEventHandler {${body}}`;
+  `${DECLARATIONS}${KERNEL}@DomainEventHandler(InvoiceIssued, ${options}[${list}])\nexport class InvoiceIssuedEventHandler {${body}}`;
 
 const before = (name: string, why: string) => ({
   messageId: 'beforeCommit' as const,
@@ -115,12 +115,12 @@ ruleTester.run('domain-events-transactional-before-commit', domainEventsTransact
     {
       ...at(
         EVENT_HANDLER,
-        `import { Cache as Entries } from '@ddd-ts-kit/kernel';\n${DECLARATIONS}@DomainEventHandler(InvoiceIssued, { name: 'billing.invoice.issued' }, [Entries])\nexport class InvoiceIssuedEventHandler {}`,
+        `import { Cache as Entries } from '@ddd-ts-kit/kernel';\n${DECLARATIONS}@DomainEventHandler(InvoiceIssued, [Entries])\nexport class InvoiceIssuedEventHandler {}`,
       ),
       errors: [before('Entries', UNCOVERED)],
     },
-    { ...at(HANDLER, declared('Cache', ", phase: 'before-commit'")), errors: [before('Cache', UNCOVERED)] },
-    { ...at(EVENT_HANDLER, declared('Cache', ', phase: PHASE')), errors: [before('Cache', UNCOVERED)] },
+    { ...at(HANDLER, declared('Cache', "{ phase: 'before-commit' }, ")), errors: [before('Cache', UNCOVERED)] },
+    { ...at(EVENT_HANDLER, declared('Cache', '{ phase: PHASE }, ')), errors: [before('Cache', UNCOVERED)] },
     {
       ...at(EVENT_HANDLER, declared('Cache, IntegrationEventPublisher', AFTER_COMMIT)),
       errors: [after('IntegrationEventPublisher')],

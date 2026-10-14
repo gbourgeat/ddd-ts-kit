@@ -5,12 +5,8 @@ import type { Decoration } from './decoration.js';
 export interface OptionValue {
   /** Undefined when the value is a variable, a template with substitutions, a concatenation or a shorthand. */
   readonly literal: string | undefined;
-  /** The value when it reads a member of a name, `InvoiceIssued.eventName`; undefined otherwise. */
-  readonly reference?: string;
   readonly line: number;
 }
-
-const MEMBER = /^\s*([A-Za-z_$][\w$]*\.[A-Za-z_$][\w$]*)\s*[,}]/;
 
 /** The value of `key` in an options object given directly to the decorator, or undefined when no such key is written. */
 export function optionOf(scan: Scan, decoration: Decoration, key: string): OptionValue | undefined {
@@ -28,13 +24,7 @@ export function optionOf(scan: Scan, decoration: Decoration, key: string): Optio
     const literal = scan.strings.find((candidate) => candidate.start === valueStart);
     const complete = literal !== undefined && /^\s*[,}]/.test(code.slice(literal.end, decoration.close + 1));
 
-    const reference = MEMBER.exec(code.slice(valueStart, decoration.close + 1))?.[1];
-
-    return {
-      literal: complete ? literal.value : undefined,
-      line: scan.lineAt(match.index),
-      ...(reference === undefined ? {} : { reference }),
-    };
+    return { literal: complete ? literal.value : undefined, line: scan.lineAt(match.index) };
   }
 
   return undefined;

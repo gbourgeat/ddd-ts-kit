@@ -241,7 +241,7 @@ declare class ConfirmationDeadlineProcess {
 }
 
 /** The step of the deadline of an appointment that is booked, in the unit of work that booked it. */
-@DomainEventHandler(AppointmentBooked, { name: AppointmentBooked.eventName })
+@DomainEventHandler(AppointmentBooked)
 export class ConfirmationDeadlineOnBookedEventHandler implements DomainEventHandler<AppointmentBooked> {
   private readonly process = new ConfirmationDeadlineProcess();
 

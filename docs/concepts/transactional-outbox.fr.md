@@ -1,5 +1,5 @@
 [English](transactional-outbox.md) · **Français**
-<!-- translation-of: transactional-outbox.md sha256:ed46fffa553112c8 -->
+<!-- translation-of: transactional-outbox.md sha256:45add3dcc78322f2 -->
 
 # Outbox transactionnelle
 
@@ -101,7 +101,7 @@ declare const appointmentBookedV1: IntegrationEventDefinition<{
 }>;
 
 // Aucune phase donnée : 'before-commit', dans la transaction de la commande.
-@DomainEventHandler(AppointmentBooked, { name: AppointmentBooked.eventName })
+@DomainEventHandler(AppointmentBooked)
 export class AppointmentBookedPublisher implements DomainEventHandler<AppointmentBooked> {
   constructor(
     private readonly publisher: IntegrationEventPublisher,

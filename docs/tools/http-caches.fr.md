@@ -1,5 +1,5 @@
 [English](http-caches.md) · **Français**
-<!-- translation-of: http-caches.md sha256:55ed7fbe489e067b -->
+<!-- translation-of: http-caches.md sha256:cb8ef99ce0261bfe -->
 
 # Caches HTTP : Varnish, Souin, nginx, Fastly, Cloudflare, Bunny
 
@@ -199,7 +199,7 @@ export class CalendarOpeningHoursSet implements DomainEvent {
 }
 
 // application : demandée avant la validation (la phase par défaut), purgée après, par l'outbox
-@DomainEventHandler(CalendarOpeningHoursSet, { name: CalendarOpeningHoursSet.eventName })
+@DomainEventHandler(CalendarOpeningHoursSet)
 export class CalendarOpeningHoursSetEventHandler implements DomainEventHandler<CalendarOpeningHoursSet> {
   constructor(private readonly cacheInvalidation: CacheInvalidation) {}
 

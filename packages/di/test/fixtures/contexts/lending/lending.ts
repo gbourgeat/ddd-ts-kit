@@ -8,7 +8,9 @@ import {
 import { CommandHandler, DomainEventHandler, Repository } from '@ddd-ts-kit/kernel/declarations';
 
 export class LoanOpened implements DomainEvent {
-  readonly name = 'lending.loan.opened';
+  static readonly eventName = 'lending.loan.opened';
+
+  readonly name = LoanOpened.eventName;
 
   readonly occurredAt = new Date(0);
 
@@ -77,7 +79,7 @@ export class OpenLoanHandler implements CommandHandler<OpenLoan> {
   }
 }
 
-@DomainEventHandler(LoanOpened, { name: 'lending.loan.opened' }, [IntegrationEventPublisher])
+@DomainEventHandler(LoanOpened, [IntegrationEventPublisher])
 export class LoanOpenedPublisher implements DomainEventHandler<LoanOpened> {
   static failure: Error | undefined;
 
@@ -101,7 +103,7 @@ export class LoanOpenedPublisher implements DomainEventHandler<LoanOpened> {
 }
 
 /** An effect no transaction covers: it notes what is committed when it runs. */
-@DomainEventHandler(LoanOpened, { name: 'lending.loan.opened', phase: 'after-commit' })
+@DomainEventHandler(LoanOpened, { phase: 'after-commit' })
 export class LoanOpenedNotice implements DomainEventHandler<LoanOpened> {
   static committed: () => readonly string[] = () => [];
 

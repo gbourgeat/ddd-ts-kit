@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:f2b47e191525fef0 -->
+<!-- translation-of: README.md sha256:8153d64fe01ece8e -->
 
 # Scheduling : l'application d'exemple de ddd-ts-kit
 
@@ -485,7 +485,7 @@ export class CalendarOpeningHoursSet implements DomainEvent {
 }
 
 // S'exécute avant la validation, dans l'unité de travail du changement : la purge est écrite avec lui, et envoyée après lui.
-@DomainEventHandler(CalendarOpeningHoursSet, { name: CalendarOpeningHoursSet.eventName })
+@DomainEventHandler(CalendarOpeningHoursSet)
 export class CalendarOpeningHoursSetEventHandler implements DomainEventHandler<CalendarOpeningHoursSet> {
   constructor(private readonly cacheInvalidation: CacheInvalidation) {}
 

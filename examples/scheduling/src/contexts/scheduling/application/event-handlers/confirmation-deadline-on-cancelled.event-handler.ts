@@ -4,7 +4,7 @@ import { ConfirmationDeadlineProcess } from '@/contexts/scheduling/application/p
 import { AppointmentCancelled } from '@/contexts/scheduling/domain/events/appointment-cancelled.event';
 
 /** The step of the confirmation deadline of an appointment that is cancelled, in the unit of work that cancelled it. */
-@DomainEventHandler(AppointmentCancelled, { name: AppointmentCancelled.eventName })
+@DomainEventHandler(AppointmentCancelled)
 export class ConfirmationDeadlineOnCancelledEventHandler implements DomainEventHandler<AppointmentCancelled> {
   private readonly process = new ConfirmationDeadlineProcess();
 

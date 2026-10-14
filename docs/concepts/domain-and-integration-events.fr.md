@@ -1,5 +1,5 @@
 [English](domain-and-integration-events.md) · **Français**
-<!-- translation-of: domain-and-integration-events.md sha256:be7440223af56ef1 -->
+<!-- translation-of: domain-and-integration-events.md sha256:069a1bfb9f7b93a2 -->
 
 # Événements du domaine et événements d'intégration
 
@@ -227,7 +227,7 @@ La déclaration complète est dans [Concevoir la charge utile](#concevoir-la-cha
    // la déclaration du langage publié, montrée dans « Concevoir la charge utile »
    declare const appointmentBookedV1: IntegrationEventDefinition<AppointmentBookedV1Payload>;
 
-   @DomainEventHandler(AppointmentBooked, { name: AppointmentBooked.eventName })
+   @DomainEventHandler(AppointmentBooked)
    export class AppointmentBookedPublisher implements DomainEventHandler<AppointmentBooked> {
      constructor(
        private readonly publisher: IntegrationEventPublisher,
@@ -352,7 +352,7 @@ export abstract class AvailabilityBoard {
   abstract refresh(appointmentId: string): Promise<void>;
 }
 
-@DomainEventHandler(AppointmentBooked, { name: AppointmentBooked.eventName, phase: 'after-commit' })
+@DomainEventHandler(AppointmentBooked, { phase: 'after-commit' })
 export class AppointmentBookedEventHandler implements DomainEventHandler<AppointmentBooked> {
   constructor(private readonly board: AvailabilityBoard) {}
 

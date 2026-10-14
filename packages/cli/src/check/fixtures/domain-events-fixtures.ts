@@ -33,7 +33,7 @@ const PULLING_EVENT_HANDLER = source(
   `import { DomainEventHandler } from ${DECLARATIONS};`,
   "import { InvoiceIssued } from '@/contexts/billing/domain/events/invoice-issued.event.js';",
   '',
-  "@DomainEventHandler(InvoiceIssued, { name: 'billing.invoice.issued' }, [DomainEventDispatcher])",
+  '@DomainEventHandler(InvoiceIssued, [DomainEventDispatcher])',
   'export class InvoiceIssuedEventHandler {',
   '  async handle(event: InvoiceIssued): Promise<void> {',
   '    await this.dispatcher.dispatch(event.invoice.pullEvents());',

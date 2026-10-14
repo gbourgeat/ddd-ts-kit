@@ -1,5 +1,5 @@
 [English](ARCHITECTURE.md) · **Français**
-<!-- translation-of: ARCHITECTURE.md sha256:dcc68555aad761b2 -->
+<!-- translation-of: ARCHITECTURE.md sha256:290497d21b2b531d -->
 
 # Référence de l'architecture
 
@@ -269,7 +269,7 @@ et la plateforme le lie au démarrage. Pourquoi, et ce que contient chaque couch
 | `governance/recorded-deviation` | Une désactivation, une sévérité abaissée, un seuil de couverture abaissé sous la référence, un répertoire supplémentaire ou un *package* autorisé supplémentaire porte une raison et renvoie à un enregistrement de décision dans `docs/adr/`. Relever un seuil est libre. |
 | `aspects/outside-in` | Les aspects s'appliquent de l'extérieur. Les décorateurs de `@ddd-ts-kit/aspects/decorators` ne sont importés que par un adaptateur de `infrastructure/` ou par la plateforme ; partout ailleurs, un aspect est une enveloppe donnée à une liaison ou à une déclaration (`.with(...)`, `aspects` de `@Adapter`), posée autour de chaque liaison d'un genre par la plateforme (`builder.around(...)`), ou un *middleware* de bus. |
 | `standard/no-parallel-interface` | Aucune copie maison d'une interface standard du noyau : aucun `ILogger`, `AppLogger`, `UserContext`, `CurrentUser`, `UserSession`, `PaginatedResult`, `AuditLog` ou semblable déclaré. Utiliser l'interface du noyau et l'étendre par fusion de déclarations ; la liste est `standardInterfaces` dans la config. Sévérité par défaut `warn`. |
-| `declarations/role-declared` | Dans le style déclaré, un fichier de rôle exporte une classe qui porte le décorateur de son rôle, et une classe déclarée vit dans un fichier de rôle. Les noms de consommateur, de politique et d'événement du domaine sont des littéraux de chaîne non vides, ou, pour un gestionnaire d'événements du domaine, le nom que sa classe d'événement déclare une fois, `{ name: InvoiceIssued.eventName }` ; un littéral est comparé à ce nom. Aucune classe sous `domain/` ne porte de déclaration. |
+| `declarations/role-declared` | Dans le style déclaré, un fichier de rôle exporte une classe qui porte le décorateur de son rôle, et une classe déclarée vit dans un fichier de rôle. Les noms de consommateur et de politique sont des littéraux de chaîne non vides ; un gestionnaire d'événements du domaine n'écrit aucun nom, `@DomainEventHandler(InvoiceIssued)`, et est rattaché à celui que sa classe d'événement déclare une fois, `static readonly eventName`. Aucune classe sous `domain/` ne porte de déclaration. |
 | `declarations/barrel-current` | Dans le style déclaré, le fichier généré d'un contexte est ce que dit son arborescence. Avec un barrel, `<context>.declarations.ts` contient exactement un `export *` par fichier de rôle de son contexte, triés par chemin, puis un `injected(Class, [Tokens])` par classe déclarée dont le constructeur prend quelque chose et dont le décorateur ne liste rien, avec les imports dont ils ont besoin : un fichier de rôle ne peut pas rester non enregistré en silence, et un constructeur ne peut pas changer sans sa liste. Sous découverte, `<context>.dependencies.ts` ne contient que les instructions `injected`, peut être absent tant qu'il n'en contiendrait aucune, et un barrel resté en place est signalé. Le message nomme le fichier de rôle qui manque ou la classe dont la liste est périmée ; `ddd-ts-kit docs` réécrit le fichier. |
 | `declarations/constructor-injection` | Dans le style déclaré, le constructeur d'une classe déclarée est la seule déclaration de ce dont elle dépend. Une classe dont le décorateur ne liste aucune dépendance (tout décorateur sauf `@Requires` et `@Public`, qui déclarent des messages) type chaque paramètre de constructeur par exactement une classe, arguments de type mis à part (`Cache<Session>` nomme `Cache`) : un port, un port du noyau, une autre classe déclarée, ou une classe abstraite qui type une valeur liée dans la plateforme. Refusés : un paramètre facultatif, avec une valeur par défaut, un paramètre du reste (rest) ou déstructuré ; un paramètre sans type, ou typé par une union, une intersection, un tableau, une fonction, un littéral, un type objet, un nom qualifié ou un type du langage ; un paramètre typé par une interface, un alias de type, une énumération ou une classe que son fichier n'exporte pas, dans le fichier ou dans le fichier du projet d'où il est importé (un nom importé d'un *package* fait foi : le compilateur juge le fichier généré, qui l'importe comme valeur) ; une classe qui hérite son constructeur d'une classe que le projet ne peut pas lire, une classe d'un *package* (un constructeur hérité d'une classe du projet est suivi et lu là-bas). Sous `"stack.dependencies": "signature"`, ce qu'écrit `init`, un décorateur ne porte aucune liste de dépendances quand le constructeur peut être lu : une liste qui répète le constructeur est signalée et ESLint la retire ; une liste qui diffère est signalée, puisqu'elle l'emporte à l'exécution. Sous `"stack.dependencies": "listed"`, ce que signifie une config sans la clé, les listes ne sont jamais signalées, et une classe qui hérite un constructeur que rien ne peut lire et ne liste rien ne prend rien, comme toujours. |
 | `ports/abstract-class` | Un port (`domain/repositories/*.repository.ts`, `application/ports/*.port.ts`) est une classe abstraite aux membres abstraits seulement : pas de constructeur, pas de membre privé ou protégé, pas de corps, pas d'initialiseur, `static readonly tokenKey` excepté. Jamais une interface. |
@@ -557,7 +557,7 @@ export abstract class ReceiptMailer {
 }
 
 // application/integration/publishers/invoice-paid.publisher.ts : before-commit, la phase par défaut
-@DomainEventHandler(InvoicePaid, { name: InvoicePaid.eventName })
+@DomainEventHandler(InvoicePaid)
 export class InvoicePaidPublisher implements DomainEventHandler<InvoicePaid> {
   constructor(
     private readonly publisher: IntegrationEventPublisher,
@@ -576,7 +576,7 @@ export class InvoicePaidPublisher implements DomainEventHandler<InvoicePaid> {
 }
 
 // application/event-handlers/invoice-paid-receipt.event-handler.ts : après la validation, au plus une fois
-@DomainEventHandler(InvoicePaid, { name: InvoicePaid.eventName, phase: 'after-commit' })
+@DomainEventHandler(InvoicePaid, { phase: 'after-commit' })
 export class InvoicePaidReceiptEventHandler implements DomainEventHandler<InvoicePaid> {
   constructor(private readonly receipts: ReceiptMailer) {}
 

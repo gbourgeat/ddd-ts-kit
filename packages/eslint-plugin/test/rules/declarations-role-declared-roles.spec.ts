@@ -200,7 +200,7 @@ ruleTester.run(
           INTEGRATION_HANDLER,
           declaring(
             'DomainEventHandler',
-            "@DomainEventHandler(InvoiceIssued, { name: 'billing.invoice.issued' })\nexport class CatalogProductListedHandler {}",
+            '@DomainEventHandler(InvoiceIssued)\nexport class CatalogProductListedHandler {}',
           ),
           DECLARED,
         ),

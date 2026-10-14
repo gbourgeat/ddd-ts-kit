@@ -3,7 +3,7 @@ import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
 import { {{event.pascal}} } from '{{alias.context}}/domain/events/{{event.kebab}}.event{{alias.ext}}';
 import { {{event.camel}}V{{event.version}} } from '{{alias.context}}/published-language/{{event.kebab}}.v{{event.version}}.integration-event{{alias.ext}}';
 
-@DomainEventHandler({{event.pascal}}, { name: {{event.reference}} })
+@DomainEventHandler({{event.pascal}})
 export class {{publisher.pascal}}Publisher implements DomainEventHandler<{{event.pascal}}> {
   constructor(
     private readonly publisher: IntegrationEventPublisher,

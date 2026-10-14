@@ -1,22 +1,15 @@
 import { declarationsRoleDeclared } from '../../src/rules/declarations-role-declared.js';
-import { inProject } from '../support/declared-project.js';
 import {
   DECLARED,
   DECLARATIONS,
   declaring,
   INTEGRATION_HANDLER,
   EVENT_HANDLER,
-  PUBLISHER,
   POLICY,
   MAPPER,
   AGGREGATE,
 } from '../support/declared-style.js';
 import { at, BILLING, ruleTester } from '../support/rule-tester.js';
-
-const ISSUED =
-  "@DomainEventHandler(InvoiceIssued, { name: 'billing.invoice.issued' })\nexport class InvoiceIssuedEventHandler { async handle(event: InvoiceIssued): Promise<void> {} }";
-
-const ISSUED_EVENT = "import { InvoiceIssued } from '../../domain/events/invoice-issued.event.js';";
 
 ruleTester.run('declarations-role-declared, the names of a declaration and the domain', declarationsRoleDeclared, {
   valid: [
@@ -24,55 +17,12 @@ ruleTester.run('declarations-role-declared, the names of a declaration and the d
       EVENT_HANDLER,
       declaring(
         'DomainEventHandler',
-        "class InvoiceIssued { static readonly eventName = 'billing.invoice.issued'; readonly name = InvoiceIssued.eventName; }\n@DomainEventHandler(InvoiceIssued, { name: InvoiceIssued.eventName })\nexport class InvoiceIssuedEventHandler {}",
+        "class InvoiceIssued { static readonly eventName = 'billing.invoice.issued'; readonly name = InvoiceIssued.eventName; }\n@DomainEventHandler(InvoiceIssued)\nexport class InvoiceIssuedEventHandler {}",
       ),
       DECLARED,
     ),
   ],
   invalid: [
-    {
-      ...at(
-        EVENT_HANDLER,
-        declaring(
-          'DomainEventHandler',
-          '@DomainEventHandler(InvoiceIssued, { name: InvoiceSent.eventName })\nexport class InvoiceIssuedEventHandler {}',
-        ),
-        DECLARED,
-      ),
-      errors: [
-        {
-          messageId: 'name',
-          data: {
-            decorator: 'DomainEventHandler',
-            className: 'InvoiceIssuedEventHandler',
-            key: 'name',
-            problem: 'not a string literal',
-            context: 'billing',
-          },
-        },
-      ],
-    },
-    {
-      ...at(
-        EVENT_HANDLER,
-        declaring(
-          'DomainEventHandler',
-          `class InvoiceIssued { static readonly eventName = 'billing.invoice.paid'; readonly name = InvoiceIssued.eventName; }\n${ISSUED}`,
-        ),
-        DECLARED,
-      ),
-      errors: [
-        {
-          messageId: 'eventName',
-          data: {
-            className: 'InvoiceIssuedEventHandler',
-            declared: 'billing.invoice.issued',
-            event: 'InvoiceIssued',
-            actual: 'billing.invoice.paid',
-          },
-        },
-      ],
-    },
     {
       ...at(
         INTEGRATION_HANDLER,
@@ -130,28 +80,6 @@ ruleTester.run('declarations-role-declared, the names of a declaration and the d
       ],
     },
     {
-      ...at(
-        EVENT_HANDLER,
-        declaring(
-          'DomainEventHandler',
-          "@DomainEventHandler(InvoiceIssued, { name: '' })\nexport class InvoiceIssuedEventHandler {}",
-        ),
-        DECLARED,
-      ),
-      errors: [
-        {
-          messageId: 'name',
-          data: {
-            decorator: 'DomainEventHandler',
-            className: 'InvoiceIssuedEventHandler',
-            key: 'name',
-            problem: 'empty',
-            context: 'billing',
-          },
-        },
-      ],
-    },
-    {
       ...at(MAPPER, declaring('Policy', 'const inline = @Policy(permission, options) class {};'), DECLARED),
       errors: [
         {
@@ -162,64 +90,6 @@ ruleTester.run('declarations-role-declared, the names of a declaration and the d
             key: 'name',
             problem: 'not a string literal',
             context: 'billing',
-          },
-        },
-      ],
-    },
-    {
-      ...at(
-        EVENT_HANDLER,
-        declaring('DomainEventHandler', `class InvoiceIssued { readonly name = 'billing.invoice.paid'; }\n${ISSUED}`),
-        DECLARED,
-      ),
-      errors: [
-        {
-          messageId: 'eventName',
-          data: {
-            className: 'InvoiceIssuedEventHandler',
-            declared: 'billing.invoice.issued',
-            event: 'InvoiceIssued',
-            actual: 'billing.invoice.paid',
-          },
-        },
-      ],
-    },
-    {
-      ...inProject(
-        PUBLISHER,
-        declaring(
-          'DomainEventHandler',
-          `${ISSUED_EVENT.replace('../../', '../../../')}\n@DomainEventHandler(InvoiceIssued, { name: 'billing.invoice.sent' }, [IntegrationEventPublisher])\nexport class InvoiceIssuedPublisher {}`,
-        ),
-      ),
-      errors: [
-        {
-          messageId: 'eventName',
-          data: {
-            className: 'InvoiceIssuedPublisher',
-            declared: 'billing.invoice.sent',
-            event: 'InvoiceIssued',
-            actual: 'billing.invoice.issued',
-          },
-        },
-      ],
-    },
-    {
-      ...inProject(
-        EVENT_HANDLER,
-        declaring(
-          'DomainEventHandler',
-          `import { InvoiceIssued as Issued } from '@/contexts/billing/domain/events/invoice-issued.event.js';\n@DomainEventHandler(Issued, { name: 'billing.invoice.sent' })\nexport class InvoiceIssuedEventHandler {}`,
-        ),
-      ),
-      errors: [
-        {
-          messageId: 'eventName',
-          data: {
-            className: 'InvoiceIssuedEventHandler',
-            declared: 'billing.invoice.sent',
-            event: 'Issued',
-            actual: 'billing.invoice.issued',
           },
         },
       ],
@@ -245,7 +115,7 @@ ruleTester.run('declarations-role-declared, the names of a declaration and the d
     {
       ...at(
         `${BILLING}/domain/events/invoice-issued.event.ts`,
-        `import * as declarations from '${DECLARATIONS}';\n@declarations.DomainEventHandler(InvoiceIssued, { name: NAME })\nexport class InvoiceIssued {}`,
+        `import * as declarations from '${DECLARATIONS}';\n@declarations.DomainEventHandler(InvoiceIssued)\nexport class InvoiceIssued {}`,
         DECLARED,
       ),
       errors: [{ messageId: 'inDomain', data: { className: 'InvoiceIssued', decorator: 'DomainEventHandler' } }],

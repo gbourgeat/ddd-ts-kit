@@ -1,5 +1,5 @@
 [English](ubiquitous-language.md) · **Français**
-<!-- translation-of: ubiquitous-language.md sha256:e59c242d4b143ea5 -->
+<!-- translation-of: ubiquitous-language.md sha256:6a22870a90689674 -->
 
 # Langage omniprésent
 
@@ -305,7 +305,7 @@ littéraux, que le compilateur vérifie.
 
 Les noms des messages suivent la même règle là où le code peut les lire. Un événement du domaine
 déclare son nom une fois, `static readonly eventName = 'scheduling.appointment.booked'`, et
-chaque réaction le lit, `{ name: AppointmentBooked.eventName }` ; un gestionnaire d'événement
+chaque réaction le lit, `@DomainEventHandler(AppointmentBooked)` ; un gestionnaire d'événement
 d'intégration lit le type qu'il traite dans le contrat de son contexte amont,
 `appointmentBookedV1.type`.
 
@@ -331,7 +331,7 @@ export abstract class Agenda {
 }
 
 // La réaction nomme l'événement par sa déclaration, jamais par une chaîne réécrite.
-@DomainEventHandler(AppointmentBooked, { name: AppointmentBooked.eventName })
+@DomainEventHandler(AppointmentBooked)
 export class AgendaOnAppointmentBooked implements DomainEventHandler<AppointmentBooked> {
   constructor(private readonly agenda: Agenda) {}
 

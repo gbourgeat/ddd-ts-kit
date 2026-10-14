@@ -292,7 +292,7 @@ report each of those homonyms. It stays a union of literal types, which the comp
 
 The names of the messages follow the same rule where the code can read them. A domain event
 declares its name once, `static readonly eventName = 'scheduling.appointment.booked'`, and every
-reaction reads it, `{ name: AppointmentBooked.eventName }`; an integration event handler reads the
+reaction reads it, `@DomainEventHandler(AppointmentBooked)`; an integration event handler reads the
 type it handles from the contract of its upstream, `appointmentBookedV1.type`.
 
 <!-- checked sample -->
@@ -317,7 +317,7 @@ export abstract class Agenda {
 }
 
 // The reaction names the event by its declaration, never by a string written again.
-@DomainEventHandler(AppointmentBooked, { name: AppointmentBooked.eventName })
+@DomainEventHandler(AppointmentBooked)
 export class AgendaOnAppointmentBooked implements DomainEventHandler<AppointmentBooked> {
   constructor(private readonly agenda: Agenda) {}
 

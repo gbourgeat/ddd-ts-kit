@@ -8,7 +8,7 @@ import { OfferFreedSlotCommand } from '@/contexts/scheduling/application/command
  * When an appointment is cancelled, the slot it held is offered to the waitlist of its calendar
  * and day; when the patient cancelled it, their attendance record notes it, with their words.
  */
-@DomainEventHandler(AppointmentCancelled, { name: AppointmentCancelled.eventName })
+@DomainEventHandler(AppointmentCancelled)
 export class AppointmentCancelledEventHandler implements DomainEventHandler<AppointmentCancelled> {
   constructor(private readonly commands: CommandBus) {}
 

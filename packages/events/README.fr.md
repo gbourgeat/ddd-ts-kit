@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:2e352f4884684a2a -->
+<!-- translation-of: README.md sha256:28f5c2a64aed638c -->
 
 # @ddd-ts-kit/events
 
@@ -182,7 +182,7 @@ après la validation, jamais pour une commande annulée. Un *publisher* n'est ja
 import { IdGenerator, IntegrationEventPublisher } from '@ddd-ts-kit/kernel';
 import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
 
-@DomainEventHandler(OrderPlacedEvent, { name: OrderPlacedEvent.eventName })
+@DomainEventHandler(OrderPlacedEvent)
 export class OrderPlacedPublisher implements DomainEventHandler<OrderPlacedEvent> {
   constructor(
     private readonly publisher: IntegrationEventPublisher,

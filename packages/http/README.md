@@ -397,7 +397,7 @@ The purge is asked by the use case and done after its commit:
 
 ```ts
 // application/event-handlers/calendar-opening-hours-set.event-handler.ts: before-commit, the default phase
-@DomainEventHandler(CalendarOpeningHoursSet, { name: CalendarOpeningHoursSet.eventName })
+@DomainEventHandler(CalendarOpeningHoursSet)
 export class CalendarOpeningHoursSetEventHandler implements DomainEventHandler<CalendarOpeningHoursSet> {
   constructor(private readonly cacheInvalidation: CacheInvalidation) {}
 

@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:51c59b20157d2e3a -->
+<!-- translation-of: README.md sha256:297709003d7940b5 -->
 
 # @ddd-ts-kit/eslint-plugin
 
@@ -257,7 +257,7 @@ chaque règle à `error`.
 | [`tracing/platform-only`](docs/rules/tracing-platform-only.fr.md) | `ddd-ts-kit/tracing-platform-only` | `@ddd-ts-kit/tracing` et `@opentelemetry/*` ne sont importés que par le répertoire de la plateforme, `main.ts` et `apps/` | `error` | maison |
 | [`standard/no-parallel-interface`](docs/rules/standard-no-parallel-interface.fr.md) | `ddd-ts-kit/standard-no-parallel-interface` | aucun `ILogger`, `UserContext`, `PaginatedResult`, `CronJob`, `ErrorTracker` ni semblable déclaré à côté des interfaces standard du kernel (`standardInterfaces` dans la config) | `warn` | maison |
 | [`governance/recorded-deviation`](docs/rules/governance-recorded-deviation.fr.md) | `ddd-ts-kit/governance-recorded-deviation` | chaque désactivation nomme ses règles et renvoie à `ADR-<number>` après `--` | `error` | maison |
-| [`declarations/role-declared`](docs/rules/declarations-role-declared.fr.md) | `ddd-ts-kit/declarations-role-declared` | style déclaré seulement : un fichier de rôle exporte une classe portant le décorateur de son rôle, le `consumer` et le `name` d'une déclaration sont des chaînes littérales, un gestionnaire d'événement du domaine nomme son événement comme le fait l'événement, `domain/` ne porte aucun décorateur de déclaration | `error` | maison |
+| [`declarations/role-declared`](docs/rules/declarations-role-declared.fr.md) | `ddd-ts-kit/declarations-role-declared` | style déclaré seulement : un fichier de rôle exporte une classe portant le décorateur de son rôle, le `consumer` et le `name` d'une déclaration sont des chaînes littérales, `domain/` ne porte aucun décorateur de déclaration | `error` | maison |
 | [`declarations/constructor-injection`](docs/rules/declarations-constructor-injection.fr.md) | `ddd-ts-kit/declarations-constructor-injection` | style déclaré seulement : une classe dont le décorateur ne liste aucune dépendance type chaque paramètre de son constructeur par une classe, sans `?`, valeur par défaut, paramètre rest ni déstructuration ; sous `stack.dependencies: signature`, un décorateur ne porte aucune liste (une liste qui répète le constructeur est retirée par la correction, une liste qui en diffère est signalée) | `error` | maison |
 | [`ports/abstract-class`](docs/rules/ports-abstract-class.fr.md) | `ddd-ts-kit/ports-abstract-class` | un port (`domain/repositories/*.repository.ts`, `application/ports/*.port.ts`) est une classe abstraite aux seuls membres abstraits, jamais une interface | `error` | maison |
 | [`ports/implements-never-extends`](docs/rules/ports-implements-never-extends.fr.md) | `ddd-ts-kit/ports-implements-never-extends` | un adaptateur (`@Repository`, `@Gateway`, `@Adapter`, `bind(Port).toClass(Class)`) implémente son port et ne l'étend jamais | `error` | maison |
@@ -303,9 +303,9 @@ signalé.
 
 Un décorateur est lu dans l'arbre syntaxique et compte quand son nom est importé de
 `@ddd-ts-kit/kernel/declarations` dans le fichier, y compris sous un alias
-(`{ Repository as Repo }`) ou un espace de noms (`declarations.Repository`). Trois vérifications
-regardent une classe d'un autre fichier (le message qu'enregistre un module, l'événement que nomme
-un `@DomainEventHandler`, la classe donnée à `toClass`) : l'import est résolu comme tout autre, le
+(`{ Repository as Repo }`) ou un espace de noms (`declarations.Repository`). Deux vérifications
+regardent une classe d'un autre fichier (le message qu'enregistre un module, la classe donnée à
+`toClass`) : l'import est résolu comme tout autre, le
 fichier est lu sur le disque et analysé sans types, et rien n'est conclu quand cela échoue.
 `stack.assembly` (`barrel` ou `discovery`) est lu avec le style ; aucune règle de ce plugin n'en
 dépend, puisque le barrel est un fait du projet que tient `ddd-ts-kit check`

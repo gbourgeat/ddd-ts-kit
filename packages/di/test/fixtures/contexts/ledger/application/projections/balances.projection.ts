@@ -7,7 +7,7 @@ import { Balances } from '../ports/balances.port.js';
 export class BalancesProjection {
   constructor(private readonly balances: Balances) {}
 
-  @On(MoneyMoved, { name: 'ledger.account.money-moved' })
+  @On(MoneyMoved)
   async moved(event: MoneyMoved): Promise<ReadModelWrite> {
     return this.balances.upsertIfNewer(event.aggregateId, storedStampOf(event) ?? stampOf(event), (row) => ({
       accountId: event.aggregateId,

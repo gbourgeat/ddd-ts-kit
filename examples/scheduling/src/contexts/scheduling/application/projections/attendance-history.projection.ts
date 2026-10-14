@@ -21,19 +21,19 @@ type Fact = Omit<AttendanceEntry, 'id' | 'recordId' | 'version' | 'notedAt'>;
 export class AttendanceHistoryProjection {
   constructor(private readonly history: AttendanceHistory) {}
 
-  @On(AttendanceRecordCreated, { name: AttendanceRecordCreated.eventName })
+  @On(AttendanceRecordCreated)
   async created(event: AttendanceRecordCreated): Promise<ReadModelWrite> {
     return this.noted(event, { fact: AttendanceFact.Opened, appointmentId: null, startsAt: null, reason: null });
   }
 
-  @On(AttendanceRecordNoShowNoted, { name: AttendanceRecordNoShowNoted.eventName })
+  @On(AttendanceRecordNoShowNoted)
   async noShowNoted(event: AttendanceRecordNoShowNoted): Promise<ReadModelWrite> {
     const { appointmentId, startsAt } = event.missed;
 
     return this.noted(event, { fact: AttendanceFact.NoShow, appointmentId, startsAt, reason: null });
   }
 
-  @On(AttendanceRecordCancellationNoted, { name: AttendanceRecordCancellationNoted.eventName })
+  @On(AttendanceRecordCancellationNoted)
   async cancellationNoted(event: AttendanceRecordCancellationNoted): Promise<ReadModelWrite> {
     const { appointmentId, startsAt, reason } = event.cancelled;
 

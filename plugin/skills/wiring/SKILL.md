@@ -45,7 +45,7 @@ A class says what it is on its own file, and that is its registration. There is 
 |---|---|
 | command, query | `@Requires(permission)` or `@Public()` |
 | handler | `@CommandHandler(Message)`, `@QueryHandler(Message)` |
-| reaction to a domain event, publisher | `@DomainEventHandler(Event, { name })`; `{ name, phase: 'after-commit' }` for an effect outside the transaction (never a publisher) |
+| reaction to a domain event, publisher | `@DomainEventHandler(Event)`, attached under the `static readonly eventName` of the event class; `{ phase: 'after-commit' }` for an effect outside the transaction (never a publisher) |
 | integration event handler | `@IntegrationEventHandler(definition, { consumer })` |
 | scheduled job | `@Scheduled('<context>.<job>', { every } or { cron, timeZone })` |
 | projector of a read model | `@Projection('<context>.<name>')`, with `@On(definition)` on each method that applies an event |

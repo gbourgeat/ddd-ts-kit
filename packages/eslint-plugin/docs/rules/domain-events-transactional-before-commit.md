@@ -34,7 +34,7 @@ import { Cache } from '@ddd-ts-kit/kernel';
 import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
 import { InvoiceRepository } from '@/contexts/billing/domain/repositories/invoice.repository';
 
-@DomainEventHandler(InvoiceIssued, { name: 'billing.invoice.issued' }, [InvoiceRepository, Cache])
+@DomainEventHandler(InvoiceIssued, [InvoiceRepository, Cache])
 export class InvoiceIssuedEventHandler {
   constructor(
     private readonly invoices: InvoiceRepository,
@@ -44,7 +44,7 @@ export class InvoiceIssuedEventHandler {
 ```
 
 ```ts
-@DomainEventHandler(InvoiceIssued, { name: 'billing.invoice.issued', phase: 'after-commit' }, [IntegrationEventPublisher])
+@DomainEventHandler(InvoiceIssued, { phase: 'after-commit' }, [IntegrationEventPublisher])
 export class InvoiceIssuedEventHandler {}
 ```
 
@@ -52,19 +52,19 @@ Correct:
 
 ```ts
 // the state the handler changes commits or rolls back with the command
-@DomainEventHandler(InvoiceIssued, { name: 'billing.invoice.issued' }, [InvoiceRepository, CommandBus])
+@DomainEventHandler(InvoiceIssued, [InvoiceRepository, CommandBus])
 export class InvoiceIssuedEventHandler {}
 ```
 
 ```ts
 // an effect no transaction covers runs once the transaction has committed, at most once
-@DomainEventHandler(InvoiceIssued, { name: 'billing.invoice.issued', phase: 'after-commit' }, [Cache])
+@DomainEventHandler(InvoiceIssued, { phase: 'after-commit' }, [Cache])
 export class InvoiceIssuedEventHandler {}
 ```
 
 ```ts
 // an effect that must not be lost goes through the outbox: the handler of the integration event does the work
-@DomainEventHandler(InvoiceIssued, { name: 'billing.invoice.issued' }, [IntegrationEventPublisher, IdGenerator])
+@DomainEventHandler(InvoiceIssued, [IntegrationEventPublisher, IdGenerator])
 export class InvoiceIssuedPublisher {}
 ```
 

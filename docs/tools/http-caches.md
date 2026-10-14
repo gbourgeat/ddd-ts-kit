@@ -192,7 +192,7 @@ export class CalendarOpeningHoursSet implements DomainEvent {
 }
 
 // application: asked before the commit (the default phase), purged after it, through the outbox
-@DomainEventHandler(CalendarOpeningHoursSet, { name: CalendarOpeningHoursSet.eventName })
+@DomainEventHandler(CalendarOpeningHoursSet)
 export class CalendarOpeningHoursSetEventHandler implements DomainEventHandler<CalendarOpeningHoursSet> {
   constructor(private readonly cacheInvalidation: CacheInvalidation) {}
 

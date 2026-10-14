@@ -1,7 +1,6 @@
-import { AST_NODE_TYPES, type TSESLint, type TSESTree } from '@typescript-eslint/utils';
+import type { TSESLint, TSESTree } from '@typescript-eslint/utils';
 import { className, type ClassNode } from '../support/classes/class-name.js';
 import { exportedClasses } from '../support/classes/exported-classes.js';
-import { keyName } from '../support/classes/key-name.js';
 import { topLevelClasses } from '../support/classes/top-level-classes.js';
 import { ACCESS_DECORATORS } from '../support/declarations/access-decorators.js';
 import {
@@ -14,14 +13,11 @@ import { WRITTEN_NAMES } from '../support/declarations/written-names.js';
 import { declaredRoleOf } from '../support/declarations/declared-role-of.js';
 import { isDeclaredStyle } from '../support/declarations/is-declared-style.js';
 import { writtenName } from '../support/declarations/written-name.js';
-import { propertyOf } from '../support/calls/property-of.js';
 import type { DeclaredRole } from '../support/declarations/declared-role.js';
 import { defineRule, type Report } from '../support/rule/define-rule.js';
 import { inContext } from '../support/imports/in-context.js';
-import { staticString } from '../support/imports/static-string.js';
-import { classFinder, type ClassFinder } from '../support/classes/class-finder.js';
 
-type MessageId = 'undeclared' | 'wrongRole' | 'name' | 'eventName' | 'inDomain';
+type MessageId = 'undeclared' | 'wrongRole' | 'name' | 'inDomain';
 type Finding = TSESLint.ReportDescriptor<MessageId>;
 
 export const declarationsRoleDeclared = defineRule<MessageId>({
@@ -34,13 +30,11 @@ export const declarationsRoleDeclared = defineRule<MessageId>({
     undeclared: `This file is a role file of the declared style (\`*.{{suffix}}.ts\` under {{folder}}/) but exports no class carrying \`@{{expected}}\`. Put \`@{{expected}}(...)\` from "${DECLARATIONS_ENTRY}" on the exported class: a class that does not say what it is is in no assembly and is never registered.`,
     wrongRole:
       '{{className}} carries `@{{actual}}` in a `*.{{suffix}}.ts` file under {{folder}}/, where a class is declared with `@{{expected}}`. Move the class to the file of its role, or declare it with `@{{expected}}(...)`: the file name, the folder and the decorator say the same thing.',
-    name: "`@{{decorator}}` of {{className}} has a `{{key}}` that is {{problem}}. Write `{ {{key}}: '{{context}}.<name>' }` as a string literal, or for a domain event handler the name its event class declares, `{ name: <Event>.eventName }`: the name is written once and survives the renaming of the class.",
-    eventName:
-      '`@DomainEventHandler` of {{className}} names "{{declared}}", but {{event}} is named "{{actual}}". Write `{ name: \'{{actual}}\' }`: a handler names the domain event it reacts to by the name the event carries.',
+    name: "`@{{decorator}}` of {{className}} has a `{{key}}` that is {{problem}}. Write `{ {{key}}: '{{context}}.<name>' }` as a string literal: the name is written once and survives the renaming of the class.",
     inDomain:
       '{{className}} carries `@{{decorator}}` under domain/: the domain declares nothing. Aggregates, entities, value objects, events, services and repository ports carry no decorator and no dependency list. Remove the decorator and declare the class of application/ or infrastructure/ that plays the role.',
   },
-  create({ file, sourceCode, context, report }) {
+  create({ file, sourceCode, report }) {
     const here = inContext(file);
 
     if (here === undefined || file.isTest || !isDeclaredStyle(file)) {
@@ -53,12 +47,11 @@ export const declarationsRoleDeclared = defineRule<MessageId>({
       return domain(declarationsOf, report);
     }
 
-    const findClass = classFinder(file, sourceCode.ast, context.languageOptions.parser);
     const role = declaredRoleOf(file);
 
     const judgeClass = (node: ClassNode): void => {
       for (const declaration of declarationsOf(node)) {
-        const finding = unwrittenName(node, declaration, here.context) ?? renamedEvent(node, declaration, findClass);
+        const finding = unwrittenName(node, declaration, here.context);
 
         if (finding !== undefined) {
           report(finding);
@@ -130,7 +123,7 @@ function unwrittenName(node: ClassNode, declaration: Declaration, context: strin
   const key = WRITTEN_NAMES[declaration.name];
   const written = key === undefined ? undefined : writtenName(declaration.arguments[1], key);
 
-  if (key === undefined || written === undefined || 'value' in written || readsEventName(declaration)) {
+  if (key === undefined || written === undefined || 'value' in written) {
     return undefined;
   }
 
@@ -139,79 +132,4 @@ function unwrittenName(node: ClassNode, declaration: Declaration, context: strin
     messageId: 'name',
     data: { decorator: declaration.name, className: className(node), key, problem: written.problem, context },
   };
-}
-
-/** Compared only when the event class is in view: declared in this file, or imported by name from a file read from disk. */
-function renamedEvent(node: ClassNode, declaration: Declaration, findClass: ClassFinder): Finding | undefined {
-  const [event, options] = declaration.arguments;
-
-  if (declaration.name !== 'DomainEventHandler' || event?.type !== AST_NODE_TYPES.Identifier) {
-    return undefined;
-  }
-
-  const declared = writtenName(options, 'name');
-  const site = findClass(event.name);
-  const actual = site === undefined ? undefined : eventName(site.node);
-
-  if (!('value' in declared) || actual === undefined || actual === declared.value) {
-    return undefined;
-  }
-
-  return {
-    node: declaration.node,
-    messageId: 'eventName',
-    data: { className: className(node), declared: declared.value, event: event.name, actual },
-  };
-}
-
-/** `@DomainEventHandler(InvoiceIssued, { name: InvoiceIssued.eventName })`: the name the event class declares, read where it is written. */
-function readsEventName(declaration: Declaration): boolean {
-  const [event, options] = declaration.arguments;
-  const property = options?.type === AST_NODE_TYPES.ObjectExpression ? propertyOf(options, 'name') : undefined;
-
-  return (
-    declaration.name === 'DomainEventHandler' &&
-    event?.type === AST_NODE_TYPES.Identifier &&
-    property !== undefined &&
-    memberName(property.value) === `${event.name}.eventName`
-  );
-}
-
-/** `InvoiceIssued.eventName` for a member read on a name; undefined for anything else. */
-function memberName(node: TSESTree.Node): string | undefined {
-  if (node.type !== AST_NODE_TYPES.MemberExpression || node.computed) {
-    return undefined;
-  }
-
-  const { object, property } = node;
-
-  return object.type === AST_NODE_TYPES.Identifier && property.type === AST_NODE_TYPES.Identifier
-    ? `${object.name}.${property.name}`
-    : undefined;
-}
-
-/** `static readonly eventName = 'billing.invoice.issued';`, or `readonly name = '..'` as 0.5 wrote it, with or without `as const`. */
-function eventName(event: TSESTree.ClassDeclaration): string | undefined {
-  for (const member of event.body.body) {
-    const written =
-      member.type === AST_NODE_TYPES.PropertyDefinition &&
-      !member.computed &&
-      ['name', 'eventName'].includes(keyName(member.key) ?? '')
-        ? member.value
-        : null;
-
-    const value = written === null ? undefined : staticString(unwrapped(written));
-
-    if (value !== undefined) {
-      return value;
-    }
-  }
-
-  return undefined;
-}
-
-function unwrapped(value: TSESTree.Expression): TSESTree.Expression {
-  return value.type === AST_NODE_TYPES.TSAsExpression || value.type === AST_NODE_TYPES.TSSatisfiesExpression
-    ? unwrapped(value.expression)
-    : value;
 }

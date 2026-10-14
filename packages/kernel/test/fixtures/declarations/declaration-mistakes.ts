@@ -6,6 +6,7 @@ import {
   Query,
   type Actor,
   type CommandBus,
+  type DomainEvent,
   type IntegrationEvent,
 } from '../../../src/index.js';
 import {
@@ -177,11 +178,39 @@ IntegrationEventHandler(PatientRegistered, { consumer: '' });
 // @ts-expect-error -- the consumer name is mandatory
 IntegrationEventHandler(PatientRegistered, {});
 
+/** An event class written as 0.5 did, without the name it carries declared once. */
+class VisitCancelled implements DomainEvent {
+  readonly name = 'clinic.visit.cancelled';
+
+  constructor(
+    readonly aggregateId: string,
+    readonly occurredAt: Date,
+  ) {}
+}
+
+class VisitBlanked implements DomainEvent {
+  static readonly eventName = '';
+
+  readonly name = VisitBlanked.eventName;
+
+  constructor(
+    readonly aggregateId: string,
+    readonly occurredAt: Date,
+  ) {}
+}
+
 // @ts-expect-error -- a handler of another domain event
-@DomainEventHandler(VisitScheduled, { name: 'clinic.visit.scheduled' })
+@DomainEventHandler(VisitScheduled)
 export class HandlerOfAnotherDomainEvent {
   readonly handle = async (_event: { readonly name: 'clinic.visit.cancelled' }): Promise<void> => {};
 }
+
+// @ts-expect-error -- the event class declares the name its events carry, static readonly eventName
+DomainEventHandler(VisitCancelled);
+// @ts-expect-error -- the name the event class declares cannot be empty
+DomainEventHandler(VisitBlanked);
+// @ts-expect-error -- the name is read from the event class, never written again
+DomainEventHandler(VisitScheduled, { name: 'clinic.visit.scheduled' });
 
 // @ts-expect-error -- a policy answers a boolean or a verdict
 @Policy(scheduleVisits, { name: 'clinic.answers-nothing' })
@@ -241,12 +270,16 @@ export class ProjectionOfAnotherEvent {
   async registered(_event: IntegrationEvent<{ readonly visitId: number }>): Promise<void> {}
 
   // @ts-expect-error -- the method applies an integration event, VisitScheduled is a domain event
-  @On(VisitScheduled, { name: 'clinic.visit.scheduled' })
+  @On(VisitScheduled)
   async scheduled(_event: IntegrationEvent<{ readonly visitId: number }>): Promise<void> {}
 
-  // @ts-expect-error -- a domain event is named
-  @On(VisitScheduled)
-  async unnamed(_event: VisitScheduled): Promise<void> {}
+  // @ts-expect-error -- the event class declares the name its events carry
+  @On(VisitCancelled)
+  async cancelled(_event: VisitCancelled): Promise<void> {}
+
+  // @ts-expect-error -- the name is read from the event class, never written again
+  @On(VisitScheduled, { name: 'clinic.visit.scheduled' })
+  async named(_event: VisitScheduled): Promise<void> {}
 }
 
 // @ts-expect-error -- the wrong port: Clock is not the read model of the projection

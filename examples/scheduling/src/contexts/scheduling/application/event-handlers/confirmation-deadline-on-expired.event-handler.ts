@@ -4,7 +4,7 @@ import { ConfirmationDeadlineProcess } from '@/contexts/scheduling/application/p
 import { AppointmentExpired } from '@/contexts/scheduling/domain/events/appointment-expired.event';
 
 /** The step of the confirmation deadline of an appointment that is expired, in the unit of work that expired it. */
-@DomainEventHandler(AppointmentExpired, { name: AppointmentExpired.eventName })
+@DomainEventHandler(AppointmentExpired)
 export class ConfirmationDeadlineOnExpiredEventHandler implements DomainEventHandler<AppointmentExpired> {
   private readonly process = new ConfirmationDeadlineProcess();
 

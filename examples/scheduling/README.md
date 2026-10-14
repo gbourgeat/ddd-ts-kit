@@ -471,7 +471,7 @@ export class CalendarOpeningHoursSet implements DomainEvent {
 }
 
 // Runs before the commit, in the unit of work of the change: the purge is written with it, and sent after it.
-@DomainEventHandler(CalendarOpeningHoursSet, { name: CalendarOpeningHoursSet.eventName })
+@DomainEventHandler(CalendarOpeningHoursSet)
 export class CalendarOpeningHoursSetEventHandler implements DomainEventHandler<CalendarOpeningHoursSet> {
   constructor(private readonly cacheInvalidation: CacheInvalidation) {}
 

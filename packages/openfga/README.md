@@ -236,7 +236,7 @@ relationship:
 ```ts
 // Instead of: a handler of the default phase (before-commit) runs inside the transaction,
 // so a rollback after it leaves on the server a tuple for an appointment that does not exist.
-@DomainEventHandler(AppointmentBooked, { name: AppointmentBooked.eventName })
+@DomainEventHandler(AppointmentBooked)
 export class RelationshipsOnAppointmentBooked { /* ... */ }
 ```
 
@@ -263,7 +263,7 @@ export abstract class SchedulingRelationships {
 }
 
 // Write: after the commit, never when the transaction rolled back.
-@DomainEventHandler(AppointmentBooked, { name: AppointmentBooked.eventName, phase: 'after-commit' })
+@DomainEventHandler(AppointmentBooked, { phase: 'after-commit' })
 export class RelationshipsOnAppointmentBooked implements DomainEventHandler<AppointmentBooked> {
   constructor(private readonly relationships: SchedulingRelationships) {}
 

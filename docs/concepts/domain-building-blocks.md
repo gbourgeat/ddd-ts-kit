@@ -44,12 +44,12 @@ export class AppointmentCancelled implements DomainEvent {
 ```
 
 The name is written once, in `eventName`: the event carries it in `name`, and every reaction is
-attached by it, `@DomainEventHandler(AppointmentCancelled, { name: AppointmentCancelled.eventName })`
-or `domainEvents.on(AppointmentCancelled.eventName, ..)`, so a renamed event cannot leave a
-handler listening to the old name. `events/name-format` holds its form,
-`<context>.<aggregate>.<fact>`. An event written before 0.6, `readonly name = '..'`, and a
-handler that writes the name out are still read; `declarations/role-declared` then compares the
-two.
+attached by it, `@DomainEventHandler(AppointmentCancelled)` reads it from the class it is given
+and `domainEvents.on(AppointmentCancelled.eventName, ..)` names it, so a renamed event cannot
+leave a handler listening to the old name. `events/name-format` holds its form,
+`<context>.<aggregate>.<fact>`. An event written before 0.7, `readonly name = '..'` alone, is
+still read by the checker, but `@DomainEventHandler` and `@On` refuse it at compile time: add
+`static readonly eventName` to the class.
 
 The aggregate records the event in the method that changes its state, after the invariant and
 the change:
@@ -143,7 +143,7 @@ export abstract class Mailer {
 }
 
 // before the commit (the default): its writes commit or roll back with the cancellation
-@DomainEventHandler(AppointmentCancelled, { name: AppointmentCancelled.eventName })
+@DomainEventHandler(AppointmentCancelled)
 export class OfferFreedSlotOnCancellation implements DomainEventHandler<AppointmentCancelled> {
   constructor(private readonly waitlist: Waitlist) {}
 
@@ -153,7 +153,7 @@ export class OfferFreedSlotOnCancellation implements DomainEventHandler<Appointm
 }
 
 // after the commit: an effect no transaction covers, run at most once
-@DomainEventHandler(AppointmentCancelled, { name: AppointmentCancelled.eventName, phase: 'after-commit' })
+@DomainEventHandler(AppointmentCancelled, { phase: 'after-commit' })
 export class SendCancellationNotice implements DomainEventHandler<AppointmentCancelled> {
   constructor(private readonly mailer: Mailer) {}
 

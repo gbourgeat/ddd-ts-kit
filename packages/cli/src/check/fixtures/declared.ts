@@ -45,12 +45,18 @@ export const DECLARED = {
     ')',
     'export class ProductListedIntegrationHandler {}',
   ),
-  event: source('export class InvoiceIssued {', "  readonly name = 'billing.invoice.issued';", '}'),
+  event: source(
+    'export class InvoiceIssued {',
+    "  static readonly eventName = 'billing.invoice.issued';",
+    '',
+    '  readonly name = InvoiceIssued.eventName;',
+    '}',
+  ),
   eventHandler: source(
     `import { DomainEventHandler } from ${DECLARATIONS};`,
     "import { InvoiceIssued } from '@/contexts/billing/domain/events/invoice-issued.event.js';",
     '',
-    "@DomainEventHandler(InvoiceIssued, { name: 'billing.invoice.issued' })",
+    '@DomainEventHandler(InvoiceIssued)',
     'export class InvoiceIssuedEventHandler {}',
   ),
   publisher: source(
@@ -58,7 +64,7 @@ export const DECLARED = {
     `import { DomainEventHandler } from ${DECLARATIONS};`,
     "import { InvoiceIssued } from '@/contexts/billing/domain/events/invoice-issued.event.js';",
     '',
-    "@DomainEventHandler(InvoiceIssued, { name: 'billing.invoice.issued' }, [IntegrationEventPublisher])",
+    '@DomainEventHandler(InvoiceIssued, [IntegrationEventPublisher])',
     'export class InvoiceIssuedPublisher {}',
   ),
   policy: source(

@@ -13,6 +13,7 @@ import type { Scope } from '../scope.js';
 import { vars } from '../vars.js';
 import { wire } from '../wire.js';
 import { ensureDomainEvent } from './ensure-domain-event.js';
+import { assertDeclaresItsName } from './assert-declares-its-name.js';
 import { eventNameReference } from './event-name-reference.js';
 import { publishInIndex } from './publish-in-index.js';
 
@@ -30,6 +31,9 @@ export const integrationEventKind: Kind = {
 
     const version = parseVersion(request.flags.version);
     const names = ensureDomainEvent(scope, request.args[1] ?? '', request.args[2] ?? '');
+
+    assertDeclaresItsName(scope, names);
+
     const publisher = toName(version === 1 ? names.event.words : `${names.event.words} v${version}`);
     const reference = eventNameReference(scope, names);
     const event = { ...named(names.event), name: names.eventName, reference, version };

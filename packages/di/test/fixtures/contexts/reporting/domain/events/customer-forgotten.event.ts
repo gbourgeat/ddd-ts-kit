@@ -1,7 +1,9 @@
 import type { DomainEvent } from '@ddd-ts-kit/kernel';
 
 export class CustomerForgotten implements DomainEvent {
-  readonly name = 'reporting.customer.forgotten';
+  static readonly eventName = 'reporting.customer.forgotten';
+
+  readonly name = CustomerForgotten.eventName;
 
   constructor(
     readonly aggregateId: string,

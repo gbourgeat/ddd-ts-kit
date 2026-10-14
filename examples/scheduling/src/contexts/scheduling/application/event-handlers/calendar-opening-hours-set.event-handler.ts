@@ -7,7 +7,7 @@ import { CalendarOpeningHoursSet } from '@/contexts/scheduling/domain/events/cal
  * caches. Asked before the commit, done after it: the request is written with the change, so a
  * refused change purges nothing and a committed one is purged even if the process stops.
  */
-@DomainEventHandler(CalendarOpeningHoursSet, { name: CalendarOpeningHoursSet.eventName })
+@DomainEventHandler(CalendarOpeningHoursSet)
 export class CalendarOpeningHoursSetEventHandler implements DomainEventHandler<CalendarOpeningHoursSet> {
   constructor(private readonly cacheInvalidation: CacheInvalidation) {}
 

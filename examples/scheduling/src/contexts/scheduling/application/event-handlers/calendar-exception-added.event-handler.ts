@@ -6,7 +6,7 @@ import { CalendarExceptionAdded } from '@/contexts/scheduling/domain/events/cale
  * When an exception is added to a calendar, its version changes: the answers filed under the calendar name the version
  * a write is made on (If-Match), so they are purged from the shared caches after the commit.
  */
-@DomainEventHandler(CalendarExceptionAdded, { name: CalendarExceptionAdded.eventName })
+@DomainEventHandler(CalendarExceptionAdded)
 export class CalendarExceptionAddedEventHandler implements DomainEventHandler<CalendarExceptionAdded> {
   constructor(private readonly cacheInvalidation: CacheInvalidation) {}
 

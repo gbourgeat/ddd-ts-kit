@@ -1,5 +1,5 @@
 [English](event-versioning.md) · **Français**
-<!-- translation-of: event-versioning.md sha256:9394984abaf73be6 -->
+<!-- translation-of: event-versioning.md sha256:27a680a1e449fa46 -->
 
 # Versionner un événement d'intégration
 
@@ -199,7 +199,7 @@ export class AppointmentBooked implements DomainEvent {
 }
 
 // appointments/application/integration/publishers/appointment-booked.publisher.ts
-@DomainEventHandler(AppointmentBooked, { name: AppointmentBooked.eventName })
+@DomainEventHandler(AppointmentBooked)
 export class AppointmentBookedPublisher implements DomainEventHandler<AppointmentBooked> {
   constructor(
     private readonly publisher: IntegrationEventPublisher,

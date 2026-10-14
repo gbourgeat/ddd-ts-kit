@@ -253,7 +253,7 @@ is an error whatever the configured limit). `strict` sets every rule to `error`.
 | [`tracing/platform-only`](docs/rules/tracing-platform-only.md) | `ddd-ts-kit/tracing-platform-only` | `@ddd-ts-kit/tracing` and `@opentelemetry/*` are imported only by the platform directory, `main.ts` and `apps/` | `error` | custom |
 | [`standard/no-parallel-interface`](docs/rules/standard-no-parallel-interface.md) | `ddd-ts-kit/standard-no-parallel-interface` | no declared `ILogger`, `UserContext`, `PaginatedResult`, `CronJob`, `ErrorTracker` and the like next to the standard interfaces of the kernel (`standardInterfaces` in the config) | `warn` | custom |
 | [`governance/recorded-deviation`](docs/rules/governance-recorded-deviation.md) | `ddd-ts-kit/governance-recorded-deviation` | every suppression names its rules and points to `ADR-<number>` after `--` | `error` | custom |
-| [`declarations/role-declared`](docs/rules/declarations-role-declared.md) | `ddd-ts-kit/declarations-role-declared` | declared style only: a role file exports a class carrying the decorator of its role, the `consumer` and `name` of a declaration are string literals, a domain event handler names its event as the event does, `domain/` carries no declaration decorator | `error` | custom |
+| [`declarations/role-declared`](docs/rules/declarations-role-declared.md) | `ddd-ts-kit/declarations-role-declared` | declared style only: a role file exports a class carrying the decorator of its role, the `consumer` and `name` of a declaration are string literals, `domain/` carries no declaration decorator | `error` | custom |
 | [`declarations/constructor-injection`](docs/rules/declarations-constructor-injection.md) | `ddd-ts-kit/declarations-constructor-injection` | declared style only: a class whose decorator lists no dependency types each constructor parameter by one class, with no `?`, default value, rest or destructuring; under `stack.dependencies: signature` a decorator carries no list (a list that repeats the constructor is removed by the fix, one that differs is reported) | `error` | custom |
 | [`ports/abstract-class`](docs/rules/ports-abstract-class.md) | `ddd-ts-kit/ports-abstract-class` | a port (`domain/repositories/*.repository.ts`, `application/ports/*.port.ts`) is an abstract class with abstract members only, never an interface | `error` | custom |
 | [`ports/implements-never-extends`](docs/rules/ports-implements-never-extends.md) | `ddd-ts-kit/ports-implements-never-extends` | an adapter (`@Repository`, `@Gateway`, `@Adapter`, `bind(Port).toClass(Class)`) implements its port and never extends it | `error` | custom |
@@ -297,8 +297,8 @@ so a module that registers it without `.requires(...)` or `.public()` is not rep
 
 A decorator is read from the syntax tree and counts when its name is imported from
 `@ddd-ts-kit/kernel/declarations` in the file, under an alias (`{ Repository as Repo }`) or a
-namespace (`declarations.Repository`) too. Three checks look at a class of another file (the
-message a module registers, the event a `@DomainEventHandler` names, the class given to `toClass`): the import is resolved
+namespace (`declarations.Repository`) too. Two checks look at a class of another file (the
+message a module registers, the class given to `toClass`): the import is resolved
 like any other, the file is read from disk and parsed without types, and nothing is concluded
 when it cannot be. `stack.assembly` (`barrel` or `discovery`) is read with the style; no rule of
 this plugin depends on it, since the barrel is a fact of the project that `ddd-ts-kit check`

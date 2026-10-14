@@ -20,7 +20,7 @@ export class PatientListProjection {
     }));
   }
 
-  @On(VisitScheduled, { name: 'clinic.visit.scheduled' })
+  @On(VisitScheduled)
   async visitScheduled(event: VisitScheduled): Promise<ReadModelWrite> {
     return this.patients.upsertIfNewer(event.aggregateId, stampOf(event), (patient) =>
       patient === undefined ? undefined : { ...patient, visits: patient.visits + 1 },

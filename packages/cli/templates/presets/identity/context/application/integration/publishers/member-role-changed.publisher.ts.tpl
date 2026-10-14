@@ -4,7 +4,7 @@ import { MemberRoleChanged } from '{{alias.context}}/domain/events/member-role-c
 import { memberRoleChangedV1 } from '{{alias.context}}/published-language/member-role-changed.v1.integration-event{{alias.ext}}';
 
 /** Tells the other contexts, through the outbox, in the transaction of the fact. */
-@DomainEventHandler(MemberRoleChanged, { name: MemberRoleChanged.eventName })
+@DomainEventHandler(MemberRoleChanged)
 export class MemberRoleChangedPublisher implements DomainEventHandler<MemberRoleChanged> {
   constructor(
     private readonly publisher: IntegrationEventPublisher,

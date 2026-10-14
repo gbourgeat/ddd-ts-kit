@@ -97,7 +97,7 @@ declare const appointmentBookedV1: IntegrationEventDefinition<{
 }>;
 
 // No phase given: 'before-commit', inside the transaction of the command.
-@DomainEventHandler(AppointmentBooked, { name: AppointmentBooked.eventName })
+@DomainEventHandler(AppointmentBooked)
 export class AppointmentBookedPublisher implements DomainEventHandler<AppointmentBooked> {
   constructor(
     private readonly publisher: IntegrationEventPublisher,

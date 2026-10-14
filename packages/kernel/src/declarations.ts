@@ -44,6 +44,7 @@ export type { DeclaredPolicy } from './declarations/model/declared-policy.js';
 export type { DomainEventHandlerDeclaration } from './declarations/model/domain-event-handler-declaration.js';
 export type { DomainEventHandlerUse } from './declarations/model/domain-event-handler-use.js';
 export type { DomainEventType } from './declarations/model/domain-event-type.js';
+export type { NamedDomainEventType } from './declarations/model/named-domain-event-type.js';
 export type { EdgeDeclaration } from './declarations/model/edge-declaration.js';
 export type { EventContract } from './declarations/model/event-contract.js';
 export type { HandlerDeclaration } from './declarations/model/handler-declaration.js';

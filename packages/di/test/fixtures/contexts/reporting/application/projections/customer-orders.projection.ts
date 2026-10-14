@@ -19,7 +19,7 @@ export class CustomerOrdersProjection {
     }));
   }
 
-  @On(CustomerForgotten, { name: 'reporting.customer.forgotten' })
+  @On(CustomerForgotten)
   async forgotten(event: CustomerForgotten): Promise<ReadModelWrite> {
     return this.customers.delete(event.aggregateId, stampOf(event));
   }

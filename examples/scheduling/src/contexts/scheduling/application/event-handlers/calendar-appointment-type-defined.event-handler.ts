@@ -6,7 +6,7 @@ import { CalendarAppointmentTypeDefined } from '@/contexts/scheduling/domain/eve
  * When an appointment type is defined on a calendar, its version changes: the answers filed under the calendar name the version
  * a write is made on (If-Match), so they are purged from the shared caches after the commit.
  */
-@DomainEventHandler(CalendarAppointmentTypeDefined, { name: CalendarAppointmentTypeDefined.eventName })
+@DomainEventHandler(CalendarAppointmentTypeDefined)
 export class CalendarAppointmentTypeDefinedEventHandler implements DomainEventHandler<CalendarAppointmentTypeDefined> {
   constructor(private readonly cacheInvalidation: CacheInvalidation) {}
 

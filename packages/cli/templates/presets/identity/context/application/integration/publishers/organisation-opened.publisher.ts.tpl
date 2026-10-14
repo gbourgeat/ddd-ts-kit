@@ -4,7 +4,7 @@ import { OrganisationOpened } from '{{alias.context}}/domain/events/organisation
 import { organisationOpenedV1 } from '{{alias.context}}/published-language/organisation-opened.v1.integration-event{{alias.ext}}';
 
 /** Tells the other contexts, through the outbox, in the transaction of the fact. */
-@DomainEventHandler(OrganisationOpened, { name: OrganisationOpened.eventName })
+@DomainEventHandler(OrganisationOpened)
 export class OrganisationOpenedPublisher implements DomainEventHandler<OrganisationOpened> {
   constructor(
     private readonly publisher: IntegrationEventPublisher,
