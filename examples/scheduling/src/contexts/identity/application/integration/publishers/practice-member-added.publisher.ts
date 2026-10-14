@@ -3,7 +3,7 @@ import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
 import { PracticeMemberAdded } from '@/contexts/identity/domain/events/practice-member-added.event';
 import { practiceMemberAddedV1 } from '@/contexts/identity/published-language/practice-member-added.v1.integration-event';
 
-@DomainEventHandler(PracticeMemberAdded, { name: PracticeMemberAdded.eventName })
+@DomainEventHandler(PracticeMemberAdded)
 export class PracticeMemberAddedPublisher implements DomainEventHandler<PracticeMemberAdded> {
   constructor(
     private readonly publisher: IntegrationEventPublisher,

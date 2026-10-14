@@ -235,7 +235,7 @@ export class InvoiceOnOrderPlaced implements IntegrationEventHandler<OrderPlaced
 import { IdGenerator, IntegrationEventPublisher } from '@ddd-ts-kit/kernel';
 import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
 
-@DomainEventHandler(InvoiceIssued, { name: InvoiceIssued.eventName })
+@DomainEventHandler(InvoiceIssued)
 export class InvoiceIssuedPublisher implements DomainEventHandler<InvoiceIssued> {
   constructor(
     private readonly publisher: IntegrationEventPublisher,
@@ -535,8 +535,8 @@ The full list, with the options of each, is in the README of `@ddd-ts-kit/kernel
 | `@Requires(permission, options?)` / `@Public()` on a command or a query | the access of the use case: what `.requires(...)` and `.public()` say in an explicit module, read by `authorization: 'required'` and by the authorization module |
 | `@CommandHandler(Message)`, `@QueryHandler(Message)` | a singleton of kind `use-case`, registered on `CommandBus` or `QueryBus` |
 | `@IntegrationEventHandler(contract, { consumer })` | a singleton of kind `consumer`, subscribed by `start()` on the subscriber of its context, idempotent per consumer name, run in the execution context of the event, its mark and its work in one unit of work |
-| `@DomainEventHandler(Event, { name, phase? })` | a singleton of kind `domain-event-handler`, attached to `DomainEventDispatcher` when the application is created, in its phase: `before-commit` (default), at the end of the unit of work and inside its transaction, or `after-commit`, once it has committed; an event dispatched under the name and built from another class is left alone |
-| `@Projection(name)`, with `@On(definition)` or `@On(Event, { name })` on its methods | a singleton of kind `consumer`. Each integration event it applies is subscribed by `start()` under the name of the projection, exactly as a handler of integration events is: its own execution context, idempotent per name, its mark and its write in one unit of work. Each domain event of its own context is attached to `DomainEventDispatcher` and applied inside the save. See "Projections" |
+| `@DomainEventHandler(Event, { phase? })` | a singleton of kind `domain-event-handler`, attached to `DomainEventDispatcher` under the `eventName` its event class declares when the application is created, in its phase: `before-commit` (default), at the end of the unit of work and inside its transaction, or `after-commit`, once it has committed; an event dispatched under the name and built from another class is left alone |
+| `@Projection(name)`, with `@On(definition)` or `@On(Event)` on its methods | a singleton of kind `consumer`. Each integration event it applies is subscribed by `start()` under the name of the projection, exactly as a handler of integration events is: its own execution context, idempotent per name, its mark and its write in one unit of work. Each domain event of its own context is attached to `DomainEventDispatcher` and applied inside the save. See "Projections" |
 | `@Scheduled(name, schedule and options)` | a singleton of kind `job`, registered on `JobScheduler` when the application is created, started by `start()` after the consumers and stopped first by `stop()`; see "Scheduled jobs" |
 | `@Repository(Port, options?)` | the binding of the port, kind `repository`: its save hands the domain events of the aggregate to the unit of work, which dispatches them at its end |
 | `@Gateway(Port, options?)` | the binding of the port, kind `gateway` |
@@ -1473,7 +1473,7 @@ the database is an `after-commit` handler when it may be lost, an integration ev
 outbox when it must not:
 
 ```ts
-@DomainEventHandler(InvoiceIssued, { name: InvoiceIssued.eventName, phase: 'after-commit' })
+@DomainEventHandler(InvoiceIssued, { phase: 'after-commit' })
 export class InvoiceIssuedEventHandler implements DomainEventHandler<InvoiceIssued> {
   constructor(private readonly cache: Cache) {}
 

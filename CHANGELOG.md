@@ -6,6 +6,32 @@ list the pull requests behind it.
 
 ## Unreleased
 
+**A domain event handler names its event once.** `@DomainEventHandler` and `@On` no longer take
+the name of the event: they read the one its class declares, `static readonly eventName`. A
+handler is now `@DomainEventHandler(InvoiceIssued)`, `@DomainEventHandler(InvoiceIssued, { phase:
+'after-commit' })` or, with a dependency list, `@DomainEventHandler(InvoiceIssued, [Mailer])`; a
+method of a projection applies a domain event with `@On(AppointmentBooked)`, as it already did an
+integration event. The compiler refuses an event class without a `static readonly eventName`, or
+one that declares it empty, and the decorator refuses at declaration a name that is empty when it
+is read. `NamedDomainEventType` (`@ddd-ts-kit/kernel/declarations`) is the type of such a class.
+Since a handler can no longer be written under another name than the one its event carries,
+`declarations/role-declared` (in `ddd-ts-kit check` and `@ddd-ts-kit/eslint-plugin`) no longer
+judges that name. In the declared style, `generate event-handler` and `generate integration-event`
+refuse an event class that does not declare its name, and say the two lines to write.
+`@IntegrationEventHandler(definition, { consumer })` is unchanged: the consumer name is the
+identity of the handler, not of the event.
+
+To move:
+
+1. give every domain event class that declares only `readonly name = '..'` its
+   `static readonly eventName = '..'` and `readonly name = <Event>.eventName` (the classes
+   generated since 0.7 already have them);
+2. remove `name: ..` from the options of `@DomainEventHandler` and `@On`, and the options object
+   when nothing is left in it: `@DomainEventHandler(X, { name: X.eventName })` becomes
+   `@DomainEventHandler(X)`, `@DomainEventHandler(X, { name: X.eventName }, [Mailer])` becomes
+   `@DomainEventHandler(X, [Mailer])`;
+3. `npx tsc --noEmit` lists what is left.
+
 **A quieter, more legible documentation website.** The site takes the pine green of the domain
 layer of its diagrams as its accent instead of the default blue, cool slate greys, and IBM Plex
 Sans and Plex Mono served with the site (no request to a font service). Headings, links, tables,

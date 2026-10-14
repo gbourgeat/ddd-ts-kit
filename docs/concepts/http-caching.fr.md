@@ -1,5 +1,5 @@
 [English](http-caching.md) · **Français**
-<!-- translation-of: http-caching.md sha256:43a2614d81c8725d -->
+<!-- translation-of: http-caching.md sha256:ca8f99ca9d991af0 -->
 
 # Cache HTTP
 
@@ -304,7 +304,7 @@ export class CalendarOpeningHoursSet implements DomainEvent {
 }
 
 // au lieu de : une purge envoyée après la validation, depuis le processus : perdue s'il s'arrête entre les deux
-@DomainEventHandler(CalendarOpeningHoursSet, { name: CalendarOpeningHoursSet.eventName, phase: 'after-commit' })
+@DomainEventHandler(CalendarOpeningHoursSet, { phase: 'after-commit' })
 export class PurgeOpeningHoursAtOnce implements DomainEventHandler<CalendarOpeningHoursSet> {
   constructor(private readonly purger: CachePurger) {}
 
@@ -315,7 +315,7 @@ export class PurgeOpeningHoursAtOnce implements DomainEventHandler<CalendarOpeni
 
 // écrivez : before-commit (la phase par défaut), la demande est une ligne de l'outbox, dans la
 // transaction de la commande : une annulation ne purge rien, une validation purge même après un arrêt brutal
-@DomainEventHandler(CalendarOpeningHoursSet, { name: CalendarOpeningHoursSet.eventName })
+@DomainEventHandler(CalendarOpeningHoursSet)
 export class CalendarOpeningHoursSetEventHandler implements DomainEventHandler<CalendarOpeningHoursSet> {
   constructor(private readonly cacheInvalidation: CacheInvalidation) {}
 

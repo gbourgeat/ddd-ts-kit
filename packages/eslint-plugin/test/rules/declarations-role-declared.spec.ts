@@ -26,7 +26,7 @@ import {
 import { at, BILLING, ruleTester } from '../support/rule-tester.js';
 
 const ISSUED =
-  "@DomainEventHandler(InvoiceIssued, { name: 'billing.invoice.issued' })\nexport class InvoiceIssuedEventHandler { async handle(event: InvoiceIssued): Promise<void> {} }";
+  '@DomainEventHandler(InvoiceIssued)\nexport class InvoiceIssuedEventHandler { async handle(event: InvoiceIssued): Promise<void> {} }';
 
 const ISSUED_EVENT = "import { InvoiceIssued } from '../../domain/events/invoice-issued.event.js';";
 
@@ -61,7 +61,7 @@ ruleTester.run('declarations-role-declared', declarationsRoleDeclared, {
       PUBLISHER,
       declaring(
         'DomainEventHandler as Reacts',
-        "@Reacts(InvoiceIssued, { name: 'billing.invoice.issued' }, [IntegrationEventPublisher, IdGenerator])\nexport class InvoiceIssuedPublisher {}",
+        '@Reacts(InvoiceIssued, [IntegrationEventPublisher, IdGenerator])\nexport class InvoiceIssuedPublisher {}',
       ),
       DECLARED,
     ),
@@ -146,10 +146,7 @@ ruleTester.run('declarations-role-declared', declarationsRoleDeclared, {
     at(AGGREGATE, declaring('Repository', '@Repository(X)\nexport class Invoice {}'), EXPLICIT),
     at(
       EVENT_HANDLER,
-      declaring(
-        'DomainEventHandler',
-        "@DomainEventHandler(InvoiceIssued, { name: 'billing.invoice.paid' })\nexport class InvoiceIssuedEventHandler {}",
-      ),
+      declaring('DomainEventHandler', '@DomainEventHandler(InvoiceIssued)\nexport class InvoiceIssuedEventHandler {}'),
       EXPLICIT,
     ),
     at(HANDLER, 'export class IssueInvoiceHandler {}', { ...DECLARED, rules: { 'declarations/role-declared': 'off' } }),

@@ -1,5 +1,5 @@
 [English](sagas-and-process-managers.md) · **Français**
-<!-- translation-of: sagas-and-process-managers.md sha256:41ba0c01c9cdddde -->
+<!-- translation-of: sagas-and-process-managers.md sha256:43d153de10ce89d2 -->
 
 # Sagas et gestionnaires de processus
 
@@ -260,7 +260,7 @@ declare class ConfirmationDeadlineProcess {
 }
 
 /** L'étape de l'échéance d'un rendez-vous réservé, dans l'unité de travail qui l'a réservé. */
-@DomainEventHandler(AppointmentBooked, { name: AppointmentBooked.eventName })
+@DomainEventHandler(AppointmentBooked)
 export class ConfirmationDeadlineOnBookedEventHandler implements DomainEventHandler<AppointmentBooked> {
   private readonly process = new ConfirmationDeadlineProcess();
 

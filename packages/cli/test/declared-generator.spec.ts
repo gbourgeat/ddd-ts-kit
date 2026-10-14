@@ -168,15 +168,15 @@ describe('a context generated in the declared style, towards the outside', () =>
 
   it('declares reactions: to a domain event, to publish it, to an integration event of an upstream, and a policy as a class', () => {
     expect(read(root, `${BILLING}/application/event-handlers/invoice-issued.event-handler.ts`)).toContain(
-      '@DomainEventHandler(InvoiceIssued, { name: InvoiceIssued.eventName })\nexport class InvoiceIssuedEventHandler implements DomainEventHandler<InvoiceIssued> {',
+      '@DomainEventHandler(InvoiceIssued)\nexport class InvoiceIssuedEventHandler implements DomainEventHandler<InvoiceIssued> {',
     );
 
     expect(read(root, `${BILLING}/application/event-handlers/invoice-marked-as-paid.event-handler.ts`)).toContain(
-      "@DomainEventHandler(InvoiceMarkedAsPaid, { name: InvoiceMarkedAsPaid.eventName, phase: 'after-commit' })\nexport class InvoiceMarkedAsPaidEventHandler implements DomainEventHandler<InvoiceMarkedAsPaid> {",
+      "@DomainEventHandler(InvoiceMarkedAsPaid, { phase: 'after-commit' })\nexport class InvoiceMarkedAsPaidEventHandler implements DomainEventHandler<InvoiceMarkedAsPaid> {",
     );
 
     expect(read(root, `${BILLING}/application/integration/publishers/invoice-issued.publisher.ts`)).toContain(
-      '@DomainEventHandler(InvoiceIssued, { name: InvoiceIssued.eventName })\nexport class InvoiceIssuedPublisher implements DomainEventHandler<InvoiceIssued> {\n  constructor(\n    private readonly publisher: IntegrationEventPublisher,',
+      '@DomainEventHandler(InvoiceIssued)\nexport class InvoiceIssuedPublisher implements DomainEventHandler<InvoiceIssued> {\n  constructor(\n    private readonly publisher: IntegrationEventPublisher,',
     );
 
     expect(

@@ -222,7 +222,7 @@ The full declaration is in [Designing the payload](#designing-the-payload).
    // the declaration of the published language, shown in "Designing the payload"
    declare const appointmentBookedV1: IntegrationEventDefinition<AppointmentBookedV1Payload>;
 
-   @DomainEventHandler(AppointmentBooked, { name: AppointmentBooked.eventName })
+   @DomainEventHandler(AppointmentBooked)
    export class AppointmentBookedPublisher implements DomainEventHandler<AppointmentBooked> {
      constructor(
        private readonly publisher: IntegrationEventPublisher,
@@ -344,7 +344,7 @@ export abstract class AvailabilityBoard {
   abstract refresh(appointmentId: string): Promise<void>;
 }
 
-@DomainEventHandler(AppointmentBooked, { name: AppointmentBooked.eventName, phase: 'after-commit' })
+@DomainEventHandler(AppointmentBooked, { phase: 'after-commit' })
 export class AppointmentBookedEventHandler implements DomainEventHandler<AppointmentBooked> {
   constructor(private readonly board: AvailabilityBoard) {}
 

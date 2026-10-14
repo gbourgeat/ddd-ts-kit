@@ -33,8 +33,9 @@ const SOURCES = {
   [HANDLER]: `import { CommandHandler } from ${DECLARATIONS};\n\n@CommandHandler(IssueInvoiceCommand, [])\nexport class IssueInvoiceHandler {}\n`,
   [QUERY]: `import { Public } from ${DECLARATIONS};\n\n@Public()\nexport class SearchInvoicesQuery {}\n`,
   [INTEGRATION_HANDLER]: `import { IntegrationEventHandler } from ${DECLARATIONS};\n\n@IntegrationEventHandler(\n  productListedV1,\n  { consumer: 'billing.product-listed' },\n  [],\n)\nexport class ProductListedIntegrationHandler {}\n`,
-  [EVENT]: "export class InvoiceIssued {\n  readonly name = 'billing.invoice.issued';\n}\n",
-  [EVENT_HANDLER]: `import { DomainEventHandler } from ${DECLARATIONS};\nimport { InvoiceIssued } from '@/contexts/billing/domain/events/invoice-issued.event';\n\n@DomainEventHandler(InvoiceIssued, { name: 'billing.invoice.issued' })\nexport class InvoiceIssuedEventHandler {}\n`,
+  [EVENT]:
+    "export class InvoiceIssued {\n  static readonly eventName = 'billing.invoice.issued';\n\n  readonly name = InvoiceIssued.eventName;\n}\n",
+  [EVENT_HANDLER]: `import { DomainEventHandler } from ${DECLARATIONS};\nimport { InvoiceIssued } from '@/contexts/billing/domain/events/invoice-issued.event';\n\n@DomainEventHandler(InvoiceIssued)\nexport class InvoiceIssuedEventHandler {}\n`,
   [POLICY]: `import { Policy } from ${DECLARATIONS};\n\n@Policy(billingPermissions['invoice.void'], { name: 'billing.only-issuer-voids' })\nexport class OnlyIssuerVoidsPolicy {}\n`,
   [REPOSITORY]: `import { Repository } from ${DECLARATIONS};\n\n@Repository(InvoiceRepository, [Database])\nexport class KnexInvoiceRepository implements InvoiceRepository {}\n`,
   [GATEWAY]: `import { Gateway } from ${DECLARATIONS};\n\n@Gateway(PriceCatalogGateway, [PriceCatalogUpstream])\nexport class InProcessPriceCatalogGateway implements PriceCatalogGateway {}\n`,
@@ -143,24 +144,6 @@ describe('the declared style in check and check-file', () => {
     expect(reported(root).filter((line) => line.startsWith('declarations/barrel-current'))).toEqual([
       `declarations/barrel-current ${BARREL}:1`,
     ]);
-  });
-
-  it('follows the import of the event class in check-file to compare the two names', () => {
-    const root = declaredProject({
-      ...SOURCES,
-      [EVENT_HANDLER]: SOURCES[EVENT_HANDLER].replace('billing.invoice.issued', 'billing.invoice.sent'),
-    });
-
-    const [violation] = runCheck(loadProject(root, { onlyFile: EVENT_HANDLER }), { fileScopeOnly: true }).violations;
-
-    expect(violation).toMatchObject({
-      ruleId: 'declarations/role-declared',
-      line: 4,
-      message:
-        '@DomainEventHandler is named "billing.invoice.sent" but InvoiceIssued is named "billing.invoice.issued".',
-    });
-
-    expect(reported(declaredProject(SOURCES), EVENT_HANDLER)).toEqual([]);
   });
 
   it('reports an empty name, and a name it cannot read once per rule that holds it', () => {

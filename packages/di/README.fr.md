@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:f48004e1f883e20c -->
+<!-- translation-of: README.md sha256:9180cec683a60db3 -->
 
 # @ddd-ts-kit/di
 
@@ -239,7 +239,7 @@ export class InvoiceOnOrderPlaced implements IntegrationEventHandler<OrderPlaced
 import { IdGenerator, IntegrationEventPublisher } from '@ddd-ts-kit/kernel';
 import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
 
-@DomainEventHandler(InvoiceIssued, { name: InvoiceIssued.eventName })
+@DomainEventHandler(InvoiceIssued)
 export class InvoiceIssuedPublisher implements DomainEventHandler<InvoiceIssued> {
   constructor(
     private readonly publisher: IntegrationEventPublisher,
@@ -545,8 +545,8 @@ La liste complète, avec les options de chacune, est dans le README de `@ddd-ts-
 | `@Requires(permission, options?)` / `@Public()` sur une commande ou une requête | l'accès du cas d'usage : ce que disent `.requires(...)` et `.public()` dans un module explicite, lu par `authorization: 'required'` et par le module d'autorisation |
 | `@CommandHandler(Message)`, `@QueryHandler(Message)` | un singleton de nature `use-case`, enregistré sur `CommandBus` ou `QueryBus` |
 | `@IntegrationEventHandler(contract, { consumer })` | un singleton de nature `consumer`, abonné par `start()` sur l'abonné de son contexte, idempotent par nom de consommateur, exécuté dans le contexte d'exécution de l'événement, sa marque et son travail dans une seule unité de travail |
-| `@DomainEventHandler(Event, { name, phase? })` | un singleton de nature `domain-event-handler`, rattaché à `DomainEventDispatcher` à la création de l'application, dans sa phase : `before-commit` (par défaut), à la fin de l'unité de travail et dans sa transaction, ou `after-commit`, une fois qu'elle a été validée ; un événement distribué sous ce nom et construit à partir d'une autre classe est laissé de côté |
-| `@Projection(name)`, avec `@On(definition)` ou `@On(Event, { name })` sur ses méthodes | un singleton de nature `consumer`. Chaque événement d'intégration qu'elle applique est abonné par `start()` sous le nom de la projection, exactement comme l'est un gestionnaire d'événements d'intégration : son propre contexte d'exécution, idempotent par nom, sa marque et son écriture dans une seule unité de travail. Chaque événement du domaine de son propre contexte est rattaché à `DomainEventDispatcher` et appliqué pendant l'enregistrement. Voir « Projections » |
+| `@DomainEventHandler(Event, { phase? })` | un singleton de nature `domain-event-handler`, rattaché à `DomainEventDispatcher` sous le `eventName` que déclare sa classe d'événement à la création de l'application, dans sa phase : `before-commit` (par défaut), à la fin de l'unité de travail et dans sa transaction, ou `after-commit`, une fois qu'elle a été validée ; un événement distribué sous ce nom et construit à partir d'une autre classe est laissé de côté |
+| `@Projection(name)`, avec `@On(definition)` ou `@On(Event)` sur ses méthodes | un singleton de nature `consumer`. Chaque événement d'intégration qu'elle applique est abonné par `start()` sous le nom de la projection, exactement comme l'est un gestionnaire d'événements d'intégration : son propre contexte d'exécution, idempotent par nom, sa marque et son écriture dans une seule unité de travail. Chaque événement du domaine de son propre contexte est rattaché à `DomainEventDispatcher` et appliqué pendant l'enregistrement. Voir « Projections » |
 | `@Scheduled(name, schedule and options)` | un singleton de nature `job`, enregistré sur `JobScheduler` à la création de l'application, démarré par `start()` après les consommateurs et arrêté en premier par `stop()` ; voir « Jobs planifiés » |
 | `@Repository(Port, options?)` | la liaison du port, nature `repository` : son enregistrement remet les événements du domaine de l'agrégat à l'unité de travail, qui les distribue à sa fin |
 | `@Gateway(Port, options?)` | la liaison du port, nature `gateway` |
@@ -1532,7 +1532,7 @@ y veille. Un effet hors de la base de données est un gestionnaire `after-commit
 être perdu, un événement d'intégration par l'outbox quand il ne le doit pas :
 
 ```ts
-@DomainEventHandler(InvoiceIssued, { name: InvoiceIssued.eventName, phase: 'after-commit' })
+@DomainEventHandler(InvoiceIssued, { phase: 'after-commit' })
 export class InvoiceIssuedEventHandler implements DomainEventHandler<InvoiceIssued> {
   constructor(private readonly cache: Cache) {}
 

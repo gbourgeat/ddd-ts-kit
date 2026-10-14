@@ -4,7 +4,7 @@ import { DelegationGranted } from '{{alias.context}}/domain/events/delegation-gr
 import { delegationGrantedV1 } from '{{alias.context}}/published-language/delegation-granted.v1.integration-event{{alias.ext}}';
 
 /** Tells the other contexts, through the outbox, in the transaction of the fact. */
-@DomainEventHandler(DelegationGranted, { name: DelegationGranted.eventName })
+@DomainEventHandler(DelegationGranted)
 export class DelegationGrantedPublisher implements DomainEventHandler<DelegationGranted> {
   constructor(
     private readonly publisher: IntegrationEventPublisher,

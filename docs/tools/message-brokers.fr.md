@@ -1,5 +1,5 @@
 [English](message-brokers.md) · **Français**
-<!-- translation-of: message-brokers.md sha256:1614b210a11d5f2f -->
+<!-- translation-of: message-brokers.md sha256:0a941a00b5cdabfc -->
 
 # Brokers de messages : en processus, RabbitMQ, Kafka, NATS JetStream, Redis Streams
 
@@ -55,7 +55,9 @@ import { z } from 'zod';
 
 // contexts/appointments/domain/events/appointment-booked.event.ts
 export class AppointmentBooked implements DomainEvent {
-  readonly name = 'appointments.appointment.booked';
+  static readonly eventName = 'appointments.appointment.booked';
+
+  readonly name = AppointmentBooked.eventName;
 
   constructor(
     readonly aggregateId: string,
@@ -91,7 +93,8 @@ export class AppointmentBookedPublisher {
 }
 ```
 
-Dans un projet, le *publisher* est déclaré avec `@DomainEventHandler` et le générateur l'écrit
+Dans un projet, le *publisher* est déclaré avec `@DomainEventHandler(AppointmentBooked)`,
+rattaché au `eventName` que déclare la classe d'événement, et le générateur l'écrit
 ([événements du domaine et d'intégration](../concepts/domain-and-integration-events.fr.md)).
 
 ## Comparaison

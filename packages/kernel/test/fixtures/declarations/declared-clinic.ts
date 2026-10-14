@@ -34,6 +34,7 @@ export * from './refused-when-declared/declare-an-adapter-of-a-port-with-a-body.
 export * from './refused-when-declared/declare-an-adapter-that-extends-its-port.js';
 export * from './refused-when-declared/declare-a-stranger.js';
 export * from './refused-when-declared/declare-a-projection.js';
+export * from './refused-when-declared/declare-a-reader-of-an-unnamed-event.js';
 
 // As the generated file of a context does, for a class whose decorator lists nothing: read from its constructor.
 injected(WelcomeOnPatientRegistered, [CommandBus]);

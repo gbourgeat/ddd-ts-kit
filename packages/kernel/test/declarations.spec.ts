@@ -141,6 +141,16 @@ function messagesAndTheirHandlers(clinic: () => Clinic): void {
         RemindOnVisitScheduled,
       ]);
     });
+
+    it('a reader of a domain event is refused when the event class declares no name', () => {
+      expect(() => clinic().declareAHandlerOfAnUnnamedEvent()).toThrow(
+        /A handler of VisitWithoutAName is attached under the name its events carry: declare it once on the event class/,
+      );
+
+      expect(() => clinic().declareAProjectionOfAnUnnamedEvent()).toThrow(
+        /A projection of VisitWithoutAName is attached under the name its events carry/,
+      );
+    });
   });
 }
 

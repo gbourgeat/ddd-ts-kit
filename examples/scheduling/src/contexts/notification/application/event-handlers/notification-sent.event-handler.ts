@@ -8,7 +8,7 @@ import { WithdrawReminderCommand } from '@/contexts/notification/application/com
  * When a notification told of an appointment to come, its reminder is planned for the start it
  * named; when it told of its end, the reminder is withdrawn. A reminder itself calls for nothing.
  */
-@DomainEventHandler(NotificationSent, { name: NotificationSent.eventName })
+@DomainEventHandler(NotificationSent)
 export class NotificationSentEventHandler implements DomainEventHandler<NotificationSent> {
   readonly actor = systemActor('notification.notification-sent');
 

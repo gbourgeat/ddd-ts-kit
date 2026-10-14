@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:0f2ab9b4e83a48cd -->
+<!-- translation-of: README.md sha256:f823ab9a2902ff87 -->
 
 # @ddd-ts-kit/kernel
 
@@ -509,7 +509,7 @@ aussi.
 | `after-commit` | `dispatcher.on(name, callback, { phase: 'after-commit' })` | une fois la transaction validée, jamais quand elle a été annulée, dans l'ordre de distribution, attendue avant que la commande réponde | ne fait jamais échouer la commande : remonté, et les autres gestionnaires s'exécutent quand même |
 
 Avec les déclarations, la phase est une option du décorateur :
-`@DomainEventHandler(OrderPaid, { name: OrderPaid.eventName, phase: 'after-commit' })`.
+`@DomainEventHandler(OrderPaid, { phase: 'after-commit' })`.
 
 La phase `after-commit` vaut au plus une fois : un crash entre la validation et l'exécution la
 perd. Ce qui ne doit pas se perdre passe par l'outbox sous forme d'événement d'intégration. Un
@@ -863,7 +863,7 @@ port et n'est pas vérifiée.
 | `CommandHandler(Message)` | l'unique gestionnaire d'une commande | `@CommandHandler(PlaceOrder)` |
 | `QueryHandler(Message)` | l'unique gestionnaire d'une requête | `@QueryHandler(GetOrder)` |
 | `IntegrationEventHandler(definition, { consumer, actorOf? })` | le gestionnaire d'un événement d'intégration d'un autre contexte | `@IntegrationEventHandler(OrderPlaced, { consumer: 'billing.invoice-on-order-placed' })` |
-| `DomainEventHandler(Event, { name })` | un gestionnaire d'un événement du domaine de son propre contexte | `@DomainEventHandler(OrderPaid, { name: OrderPaid.eventName })`, le nom que la classe de l'événement déclare une fois dans `static readonly eventName` |
+| `DomainEventHandler(Event)` | un gestionnaire d'un événement du domaine de son propre contexte | `@DomainEventHandler(OrderPaid)`, rattaché au nom que la classe de l'événement déclare une fois dans `static readonly eventName` |
 | `Scheduled(name, schedule and options)` | un *job* déclenché par le temps, qui déclenche des cas d'usage | `@Scheduled('billing.send-reminders', { cron: '0 7 * * 1-5', timeZone: 'Europe/Paris' })` |
 | `Projection(name)` avec `On(definition)` sur ses méthodes | un projecteur : la classe qui tient un modèle de lecture à jour | `@Projection('scheduling.appointment-list')`, `@On(PaymentCaptured)` |
 | `Repository(Port, options?)` | l'adaptateur d'un *repository* du domaine | `@Repository(OrderRepository)` |
@@ -894,7 +894,9 @@ port et n'est pas vérifiée.
   `implements IntegrationEventHandler<OrderPlacedPayload>`. Un *job* implémente `ScheduledJob`.
 - **Les noms sont écrits, pas déduits** : le nom du consommateur, celui de la politique, celui du
   *job* et celui de l'événement du domaine survivent au renommage d'une classe, et la chaîne
-  vide est refusée.
+  vide est refusée. Le nom d'un événement du domaine s'écrit une fois, dans
+  `static readonly eventName` sur sa classe : ses gestionnaires et ses projections l'y lisent
+  (`NamedDomainEventType`), et une classe qui ne le déclare pas est refusée par le compilateur.
 - **Une classe déclarée est son propre jeton** : `@ddd-ts-kit/di` lie un gestionnaire, un *job*
   ou une politique sous sa classe.
 
@@ -1872,7 +1874,7 @@ import { On, Projection } from '@ddd-ts-kit/kernel/declarations';
 export class AppointmentListProjection {
   constructor(private readonly appointments: AppointmentList) {}
 
-  @On(AppointmentBooked, { name: 'scheduling.appointment.booked' })
+  @On(AppointmentBooked)
   booked(event: AppointmentBooked) {
     return this.appointments.upsertIfNewer(event.aggregateId, stampOf(event), () => rowOf(event));
   }
@@ -1884,7 +1886,7 @@ export class AppointmentListProjection {
     );
   }
 
-  @On(AppointmentCancelled, { name: 'scheduling.appointment.cancelled' })
+  @On(AppointmentCancelled)
   cancelled(event: AppointmentCancelled) {
     return this.appointments.delete(event.aggregateId, stampOf(event));
   }
@@ -1894,11 +1896,11 @@ export class AppointmentListProjection {
 `@Projection('<context>.<name>')` est une déclaration comme les autres : les deux modes de
 décorateurs, ses dépendances dites par son constructeur, une classe par fichier, dans
 `application/projections/`, dans un fichier `*.projection.ts`. `@On(definition)` sur une méthode
-dit « cette méthode applique cet événement d'intégration » ; `@On(EventClass, { name })` le dit
-pour un événement du domaine du contexte propre de la projection. Une méthode qui prend un autre
-événement est refusée par le compilateur, une projection sans aucun `@On` et un `@On` sur une
-classe sans `@Projection` lèvent au chargement du fichier. Une méthode renvoie ce qu'a renvoyé son
-store, ce qui permet à l'application de compter ce qui a été appliqué et ce qui était périmé.
+dit « cette méthode applique cet événement d'intégration » ; `@On(EventClass)` le dit pour un
+événement du domaine du contexte propre de la projection, sous le nom que sa classe déclare une
+fois, `static readonly eventName`. Une méthode qui prend un autre événement est refusée par le
+compilateur, une projection sans aucun `@On` et un `@On` sur une classe sans `@Projection`
+lèvent au chargement du fichier. Une méthode renvoie ce qu'a renvoyé son store, ce qui permet à l'application de compter ce qui a été appliqué et ce qui était périmé.
 
 **Un rôle de la CLI.** `application/projections/` est un répertoire de l'arborescence canonique,
 `ddd-ts-kit generate projection <context> <Name> <event-type>` écrit un projecteur avec sa spec,

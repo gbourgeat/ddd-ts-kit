@@ -6,7 +6,7 @@ import { CalendarTimeOffAdded } from '@/contexts/scheduling/domain/events/calend
  * When time off is added to a calendar, its version changes: the answers filed under the calendar name the version
  * a write is made on (If-Match), so they are purged from the shared caches after the commit.
  */
-@DomainEventHandler(CalendarTimeOffAdded, { name: CalendarTimeOffAdded.eventName })
+@DomainEventHandler(CalendarTimeOffAdded)
 export class CalendarTimeOffAddedEventHandler implements DomainEventHandler<CalendarTimeOffAdded> {
   constructor(private readonly cacheInvalidation: CacheInvalidation) {}
 

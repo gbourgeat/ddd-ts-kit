@@ -3,7 +3,7 @@ import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
 import { AppointmentExpired } from '@/contexts/scheduling/domain/events/appointment-expired.event';
 import { appointmentExpiredV1 } from '@/contexts/scheduling/published-language/appointment-expired.v1.integration-event';
 
-@DomainEventHandler(AppointmentExpired, { name: AppointmentExpired.eventName })
+@DomainEventHandler(AppointmentExpired)
 export class AppointmentExpiredPublisher implements DomainEventHandler<AppointmentExpired> {
   constructor(
     private readonly publisher: IntegrationEventPublisher,

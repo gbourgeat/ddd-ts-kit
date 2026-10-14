@@ -1,5 +1,5 @@
 [English](event-sourcing.md) · **Français**
-<!-- translation-of: event-sourcing.md sha256:1c55ed18fa5ba377 -->
+<!-- translation-of: event-sourcing.md sha256:8ccf6d428ceca3b1 -->
 
 # Event sourcing, par agrégat
 
@@ -481,7 +481,7 @@ Le modèle de lecture de l'historique de l'exemple est une telle projection (un 
 export class AttendanceHistoryProjection {
   constructor(private readonly history: AttendanceHistory) {}
 
-  @On(AttendanceRecordNoShowNoted, { name: AttendanceRecordNoShowNoted.eventName })
+  @On(AttendanceRecordNoShowNoted)
   async noShowNoted(event: AttendanceRecordNoShowNoted): Promise<ReadModelWrite> {
     const stamp = storedStampOf(event) ?? stampOf(event); // la version du flux : appliqué deux fois, ne change rien
     // ... insère ou met à jour l'entrée `${event.aggregateId}#${stamp.version}` si elle est plus récente

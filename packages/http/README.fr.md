@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:87d20856ba52400a -->
+<!-- translation-of: README.md sha256:fa5bdfd59abf43b7 -->
 
 # @ddd-ts-kit/http
 
@@ -420,7 +420,7 @@ La purge est demandée par le cas d'usage et faite après le commit de sa transa
 
 ```ts
 // application/event-handlers/calendar-opening-hours-set.event-handler.ts : before-commit, la phase par défaut
-@DomainEventHandler(CalendarOpeningHoursSet, { name: CalendarOpeningHoursSet.eventName })
+@DomainEventHandler(CalendarOpeningHoursSet)
 export class CalendarOpeningHoursSetEventHandler implements DomainEventHandler<CalendarOpeningHoursSet> {
   constructor(private readonly cacheInvalidation: CacheInvalidation) {}
 

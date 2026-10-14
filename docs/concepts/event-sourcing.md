@@ -469,7 +469,7 @@ The history read model of the example is such a projection (an excerpt):
 export class AttendanceHistoryProjection {
   constructor(private readonly history: AttendanceHistory) {}
 
-  @On(AttendanceRecordNoShowNoted, { name: AttendanceRecordNoShowNoted.eventName })
+  @On(AttendanceRecordNoShowNoted)
   async noShowNoted(event: AttendanceRecordNoShowNoted): Promise<ReadModelWrite> {
     const stamp = storedStampOf(event) ?? stampOf(event); // the version of the stream: applied twice, changes nothing
     // ... upserts the entry `${event.aggregateId}#${stamp.version}` if it is newer

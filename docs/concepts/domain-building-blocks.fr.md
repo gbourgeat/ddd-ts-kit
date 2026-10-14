@@ -1,5 +1,5 @@
 [English](domain-building-blocks.md) · **Français**
-<!-- translation-of: domain-building-blocks.md sha256:039e1d1dc8255987 -->
+<!-- translation-of: domain-building-blocks.md sha256:2ffb30f2d904f4f3 -->
 
 # Événements du domaine, services du domaine, repositories et fabriques
 
@@ -47,13 +47,13 @@ export class AppointmentCancelled implements DomainEvent {
 ```
 
 Le nom s'écrit une seule fois, dans `eventName` : l'événement le porte dans `name`, et chaque
-réaction s'y rattache par lui,
-`@DomainEventHandler(AppointmentCancelled, { name: AppointmentCancelled.eventName })` ou
-`domainEvents.on(AppointmentCancelled.eventName, ..)`, si bien qu'un événement renommé ne peut
-pas laisser un gestionnaire à l'écoute de l'ancien nom. `events/name-format` en tient la forme,
-`<context>.<aggregate>.<fact>`. Un événement écrit avant la 0.6, `readonly name = '..'`, et un
-gestionnaire qui écrit le nom en toutes lettres sont encore lus ; `declarations/role-declared`
-compare alors les deux.
+réaction s'y rattache par lui, `@DomainEventHandler(AppointmentCancelled)` le lit sur la classe
+qu'il reçoit et `domainEvents.on(AppointmentCancelled.eventName, ..)` le nomme, si bien qu'un
+événement renommé ne peut pas laisser un gestionnaire à l'écoute de l'ancien nom.
+`events/name-format` en tient la forme, `<context>.<aggregate>.<fact>`. Un événement écrit avant
+la 0.7, avec `readonly name = '..'` seul, est encore lu par le *checker*, mais
+`@DomainEventHandler` et `@On` le refusent à la compilation : ajoutez `static readonly eventName`
+à la classe.
 
 L'agrégat enregistre l'événement dans la méthode qui change son état, après l'invariant et le
 changement :
@@ -150,7 +150,7 @@ export abstract class Mailer {
 }
 
 // avant la validation (par défaut) : ses écritures sont validées ou annulées avec l'annulation du rendez-vous
-@DomainEventHandler(AppointmentCancelled, { name: AppointmentCancelled.eventName })
+@DomainEventHandler(AppointmentCancelled)
 export class OfferFreedSlotOnCancellation implements DomainEventHandler<AppointmentCancelled> {
   constructor(private readonly waitlist: Waitlist) {}
 
@@ -160,7 +160,7 @@ export class OfferFreedSlotOnCancellation implements DomainEventHandler<Appointm
 }
 
 // après la validation : un effet qu'aucune transaction ne couvre, exécuté au plus une fois
-@DomainEventHandler(AppointmentCancelled, { name: AppointmentCancelled.eventName, phase: 'after-commit' })
+@DomainEventHandler(AppointmentCancelled, { phase: 'after-commit' })
 export class SendCancellationNotice implements DomainEventHandler<AppointmentCancelled> {
   constructor(private readonly mailer: Mailer) {}
 

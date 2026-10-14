@@ -1,5 +1,5 @@
 [English](declarations-role-declared.md) · **Français**
-<!-- translation-of: declarations-role-declared.md sha256:d6c86f0b480155cb -->
+<!-- translation-of: declarations-role-declared.md sha256:a325a3f29d8ff0b1 -->
 
 # ddd-ts-kit/declarations-role-declared
 
@@ -20,8 +20,7 @@ Dans un fichier de rôle (le tableau ci-dessous), hors `*.command.ts` et `*.quer
 
 Sur toute classe de `application/`, `infrastructure/`, `presentation/` ou de la racine du contexte :
 
-- `@IntegrationEventHandler(definition, { consumer })`, `@Policy(permission, { name })` ou `@DomainEventHandler(Event, { name })` dont le nom n'est pas un littéral de chaîne non vide : absent, vide, une variable, un gabarit avec une substitution, des options contenues dans une variable ou seulement étalées. Un gestionnaire d'événement du domaine peut à la place lire le nom que déclare sa classe d'événement, `@DomainEventHandler(InvoiceIssued, { name: InvoiceIssued.eventName })`, la classe étant celle qu'il reçoit
-- `@DomainEventHandler(Event, { name })` dont le `name`, écrit en toutes lettres, diffère du nom que déclare la classe d'événement, quand cette classe est en vue
+- `@IntegrationEventHandler(definition, { consumer })` ou `@Policy(permission, { name })` dont le nom n'est pas un littéral de chaîne non vide : absent, vide, une variable, un gabarit avec une substitution, des options contenues dans une variable ou seulement étalées. `@DomainEventHandler(Event)` n'écrit aucun nom : il est rattaché à celui que sa classe d'événement déclare une fois, `static readonly eventName`, que le compilateur exige
 
 Sous `domain/` :
 
@@ -55,10 +54,6 @@ export class SearchInvoicesHandler {}
 @Policy(billingPermissions['invoice.void'], { name: policyName })
 export class OnlyIssuerVoidsPolicy {}
 
-// application/event-handlers/invoice-issued.event-handler.ts, où InvoiceIssued s'appelle 'billing.invoice.issued'
-@DomainEventHandler(InvoiceIssued, { name: 'billing.invoice.sent' })
-export class InvoiceIssuedEventHandler {}
-
 // domain/aggregates/invoice.aggregate.ts
 @Repository(InvoiceRepository)
 export class Invoice {}
@@ -85,7 +80,7 @@ export class IssueInvoiceHandler implements CommandHandler<IssueInvoiceCommand> 
 export class OnlyIssuerVoidsPolicy {}
 
 // application/event-handlers/invoice-issued.event-handler.ts
-@DomainEventHandler(InvoiceIssued, { name: 'billing.invoice.issued' })
+@DomainEventHandler(InvoiceIssued)
 export class InvoiceIssuedEventHandler {}
 ```
 
@@ -95,8 +90,6 @@ Un décorateur compte quand son nom est l'un des douze décorateurs de déclarat
 
 Le rôle d'un fichier se lit à son suffixe et à son dossier, tels que le générateur les écrit. Une classe est exportée en ligne, par `export { A }` ou par `export default A`. Quand une classe porte un autre décorateur de déclaration, seul celui-ci est signalé : le corriger répond aussi au décorateur manquant.
 
-La classe d'événement de `@DomainEventHandler` est en vue quand elle est déclarée dans le même fichier, ou importée par son nom depuis une source du projet qui existe sur le disque ; ce fichier est alors analysé, syntaxe seulement, et son `static readonly eventName = '...'` (ou, comme l'écrivait la 0.5, son `readonly name = '...'`) est lu (`as const` et `satisfies` sont traversés). Quand la classe est introuvable, ou que son nom n'est pas un littéral, rien n'est comparé.
-
 ## Options
 
 Aucune.
@@ -105,7 +98,6 @@ Aucune.
 
 ## Limites
 
-- Une classe d'événement atteinte par un *barrel* (`@/contexts/billing/domain/events/index`), un export qui renomme, un import par défaut ou un espace de noms n'est pas suivie : son nom n'est pas comparé. `ddd-ts-kit check` résout le même import dans le projet.
 - Un décorateur appliqué par une variable (`const declare = Repository(InvoiceRepository); @declare class ...`) n'est pas reconnu.
 - Ce qu'une classe reçoit relève de `declarations/constructor-injection` ; qu'une liste corresponde au constructeur et qu'un gestionnaire traite son message est vérifié par le compilateur, pas ici ; qu'un adaptateur implémente son port relève de `ports/implements-never-extends`, et l'endroit où vit un *job* et son nom relèvent de `scheduling/job-triggers-use-case` et de `scheduling/job-name`.
 - Que chaque fichier de rôle contienne une seule classe déclarée relève de `naming/one-concept-per-file` de `ddd-ts-kit check`.

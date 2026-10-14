@@ -63,10 +63,10 @@ describe('the name of a domain event', () => {
     );
 
     expect(cli(root, 'generate', 'event-handler', 'billing', 'Invoice', 'Issued').code).toBe(0);
-    expect(read(root, HANDLER)).toContain('@DomainEventHandler(InvoiceIssued, { name: InvoiceIssued.eventName })');
+    expect(read(root, HANDLER)).toContain('@DomainEventHandler(InvoiceIssued)\n');
   });
 
-  it('stays written out in a reaction to an event class 0.5 wrote, which declares no eventName', () => {
+  it('is declared first when an event class 0.5 wrote declares no eventName, before a reaction is attached under it', () => {
     write(
       root,
       EVENT,
@@ -77,8 +77,11 @@ describe('the name of a domain event', () => {
     );
 
     removed(HANDLER, `${UNITS.billing}/invoice-issued.event-handler.spec.ts`);
-    expect(cli(root, 'generate', 'event-handler', 'billing', 'Invoice', 'Issued').code).toBe(0);
-    expect(read(root, HANDLER)).toContain("@DomainEventHandler(InvoiceIssued, { name: 'billing.invoice.issued' })");
+    const refused = cli(root, 'generate', 'event-handler', 'billing', 'Invoice', 'Issued');
+
+    expect(refused.code).toBe(2);
+    expect(refused.stderr).toContain("write `static readonly eventName = 'billing.invoice.issued';`");
+    expect(fs.existsSync(path.join(root, HANDLER))).toBe(false);
   });
 });
 

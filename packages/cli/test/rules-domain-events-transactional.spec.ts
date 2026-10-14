@@ -165,7 +165,7 @@ describe('domain-events/transactional-before-commit, ports, phases and where a d
       "import { Cache, type Lock } from '@ddd-ts-kit/kernel';",
       DECLARATIONS,
       '',
-      "@DomainEventHandler(InvoiceIssued, { name: 'billing.invoice.issued' }, [Cache])",
+      '@DomainEventHandler(InvoiceIssued, [Cache])',
       'export class InvoiceIssuedReaction {',
       '  constructor(',
       '    private readonly cache: Cache,',

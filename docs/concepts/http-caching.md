@@ -294,7 +294,7 @@ export class CalendarOpeningHoursSet implements DomainEvent {
 }
 
 // instead of: a purge sent after the commit, from the process: lost if it stops in between
-@DomainEventHandler(CalendarOpeningHoursSet, { name: CalendarOpeningHoursSet.eventName, phase: 'after-commit' })
+@DomainEventHandler(CalendarOpeningHoursSet, { phase: 'after-commit' })
 export class PurgeOpeningHoursAtOnce implements DomainEventHandler<CalendarOpeningHoursSet> {
   constructor(private readonly purger: CachePurger) {}
 
@@ -305,7 +305,7 @@ export class PurgeOpeningHoursAtOnce implements DomainEventHandler<CalendarOpeni
 
 // write: before-commit (the default phase), the request is a row of the outbox, in the
 // transaction of the command: a rollback purges nothing, a commit purges even after a crash
-@DomainEventHandler(CalendarOpeningHoursSet, { name: CalendarOpeningHoursSet.eventName })
+@DomainEventHandler(CalendarOpeningHoursSet)
 export class CalendarOpeningHoursSetEventHandler implements DomainEventHandler<CalendarOpeningHoursSet> {
   constructor(private readonly cacheInvalidation: CacheInvalidation) {}
 

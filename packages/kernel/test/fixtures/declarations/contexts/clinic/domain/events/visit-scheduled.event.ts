@@ -1,7 +1,9 @@
 import type { DomainEvent } from '../../../../../../../src/index.js';
 
 export class VisitScheduled implements DomainEvent {
-  readonly name = 'clinic.visit.scheduled';
+  static readonly eventName = 'clinic.visit.scheduled';
+
+  readonly name = VisitScheduled.eventName;
 
   constructor(
     readonly aggregateId: string,

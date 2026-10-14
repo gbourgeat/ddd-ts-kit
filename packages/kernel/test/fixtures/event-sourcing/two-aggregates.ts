@@ -1,12 +1,25 @@
+import type { DomainEvent } from '../../../src/index.js';
 import { On, Projection } from '../../../src/declarations.js';
 import { MoneyDeposited } from '../../support/bank/account.js';
+
+/** An event of another aggregate than the account. */
+export class LoanRepaid implements DomainEvent {
+  static readonly eventName = 'bank.loan.repaid';
+
+  readonly name = LoanRepaid.eventName;
+
+  constructor(
+    readonly aggregateId: string,
+    readonly occurredAt: Date,
+  ) {}
+}
 
 /** Follows the events of the account and of another aggregate, whose serializer it is not given. */
 @Projection('bank.two-aggregates', { feed: 'event-store' })
 export class TwoAggregatesProjection {
-  @On(MoneyDeposited, { name: 'bank.account.deposited' })
+  @On(MoneyDeposited)
   async deposited(): Promise<void> {}
 
-  @On(MoneyDeposited, { name: 'bank.loan.repaid' })
+  @On(LoanRepaid)
   async repaid(): Promise<void> {}
 }

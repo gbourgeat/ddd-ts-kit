@@ -23,12 +23,12 @@ export class BalancesProjection {
 
   constructor(private readonly balances: ReadModelStore<BalanceRow>) {}
 
-  @On(MoneyDeposited, { name: 'bank.account.deposited' })
+  @On(MoneyDeposited)
   async deposited(event: MoneyDeposited): Promise<ReadModelWrite> {
     return this.moved(event, event.cents);
   }
 
-  @On(MoneyWithdrawn, { name: 'bank.account.withdrawn' })
+  @On(MoneyWithdrawn)
   async withdrawn(event: MoneyWithdrawn): Promise<ReadModelWrite> {
     return this.moved(event, -event.cents);
   }

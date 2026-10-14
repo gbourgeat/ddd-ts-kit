@@ -35,9 +35,9 @@ const ADAPTER_IMPORT =
   "import { DrizzleInvoiceRepository } from '@/contexts/billing/infrastructure/persistence/drizzle-invoice.repository';\n";
 
 const DECLARED =
-  "import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';\nimport { InvoiceIssued } from '@/contexts/billing/domain/events/invoice-issued.event';\n\n@DomainEventHandler(InvoiceIssued, { name: InvoiceIssued.eventName })";
+  "import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';\nimport { InvoiceIssued } from '@/contexts/billing/domain/events/invoice-issued.event';\n\n@DomainEventHandler(InvoiceIssued)";
 
-const CACHING = `import { Cache } from '@ddd-ts-kit/kernel';\n${DECLARED.replace(' })', ' }, [Cache])')}`;
+const CACHING = `import { Cache } from '@ddd-ts-kit/kernel';\n${DECLARED.replace(/\)$/, ', [Cache])')}`;
 const SPRAWL = `\nexport function sprawl(): number {\n  let total = 0;\n\n${'  total += 1;\n'.repeat(101)}\n  return total;\n}\n`;
 
 interface Injection {

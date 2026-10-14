@@ -1,7 +1,9 @@
 import { EventSourcedAggregate, type AggregateHistory, type Appliers, type DomainEvent } from '../../../src/index.js';
 
 export class AccountOpened implements DomainEvent {
-  readonly name = 'bank.account.opened';
+  static readonly eventName = 'bank.account.opened';
+
+  readonly name = AccountOpened.eventName;
 
   constructor(
     readonly aggregateId: string,
@@ -11,7 +13,9 @@ export class AccountOpened implements DomainEvent {
 }
 
 export class MoneyDeposited implements DomainEvent {
-  readonly name = 'bank.account.deposited';
+  static readonly eventName = 'bank.account.deposited';
+
+  readonly name = MoneyDeposited.eventName;
 
   constructor(
     readonly aggregateId: string,
@@ -21,7 +25,9 @@ export class MoneyDeposited implements DomainEvent {
 }
 
 export class MoneyWithdrawn implements DomainEvent {
-  readonly name = 'bank.account.withdrawn';
+  static readonly eventName = 'bank.account.withdrawn';
+
+  readonly name = MoneyWithdrawn.eventName;
 
   constructor(
     readonly aggregateId: string,

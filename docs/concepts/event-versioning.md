@@ -185,7 +185,7 @@ export class AppointmentBooked implements DomainEvent {
 }
 
 // appointments/application/integration/publishers/appointment-booked.publisher.ts
-@DomainEventHandler(AppointmentBooked, { name: AppointmentBooked.eventName })
+@DomainEventHandler(AppointmentBooked)
 export class AppointmentBookedPublisher implements DomainEventHandler<AppointmentBooked> {
   constructor(
     private readonly publisher: IntegrationEventPublisher,

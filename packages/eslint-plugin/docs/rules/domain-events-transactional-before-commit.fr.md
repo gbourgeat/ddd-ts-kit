@@ -1,5 +1,5 @@
 [English](domain-events-transactional-before-commit.md) · **Français**
-<!-- translation-of: domain-events-transactional-before-commit.md sha256:4d31ba97cc3e8f7c -->
+<!-- translation-of: domain-events-transactional-before-commit.md sha256:7bb7a7ff29cc5e9a -->
 
 # ddd-ts-kit/domain-events-transactional-before-commit
 
@@ -35,7 +35,7 @@ import { Cache } from '@ddd-ts-kit/kernel';
 import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
 import { InvoiceRepository } from '@/contexts/billing/domain/repositories/invoice.repository';
 
-@DomainEventHandler(InvoiceIssued, { name: 'billing.invoice.issued' }, [InvoiceRepository, Cache])
+@DomainEventHandler(InvoiceIssued, [InvoiceRepository, Cache])
 export class InvoiceIssuedEventHandler {
   constructor(
     private readonly invoices: InvoiceRepository,
@@ -45,7 +45,7 @@ export class InvoiceIssuedEventHandler {
 ```
 
 ```ts
-@DomainEventHandler(InvoiceIssued, { name: 'billing.invoice.issued', phase: 'after-commit' }, [IntegrationEventPublisher])
+@DomainEventHandler(InvoiceIssued, { phase: 'after-commit' }, [IntegrationEventPublisher])
 export class InvoiceIssuedEventHandler {}
 ```
 
@@ -53,19 +53,19 @@ Correct :
 
 ```ts
 // l'état que change le gestionnaire est validé ou annulé avec la commande
-@DomainEventHandler(InvoiceIssued, { name: 'billing.invoice.issued' }, [InvoiceRepository, CommandBus])
+@DomainEventHandler(InvoiceIssued, [InvoiceRepository, CommandBus])
 export class InvoiceIssuedEventHandler {}
 ```
 
 ```ts
 // un effet qu'aucune transaction ne couvre s'exécute une fois la transaction validée, au plus une fois
-@DomainEventHandler(InvoiceIssued, { name: 'billing.invoice.issued', phase: 'after-commit' }, [Cache])
+@DomainEventHandler(InvoiceIssued, { phase: 'after-commit' }, [Cache])
 export class InvoiceIssuedEventHandler {}
 ```
 
 ```ts
 // un effet qui ne doit pas être perdu passe par l'outbox : le gestionnaire de l'événement d'intégration fait le travail
-@DomainEventHandler(InvoiceIssued, { name: 'billing.invoice.issued' }, [IntegrationEventPublisher, IdGenerator])
+@DomainEventHandler(InvoiceIssued, [IntegrationEventPublisher, IdGenerator])
 export class InvoiceIssuedPublisher {}
 ```
 

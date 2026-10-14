@@ -3,7 +3,7 @@ import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
 import { AppointmentRescheduled } from '@/contexts/scheduling/domain/events/appointment-rescheduled.event';
 import { appointmentRescheduledV1 } from '@/contexts/scheduling/published-language/appointment-rescheduled.v1.integration-event';
 
-@DomainEventHandler(AppointmentRescheduled, { name: AppointmentRescheduled.eventName })
+@DomainEventHandler(AppointmentRescheduled)
 export class AppointmentRescheduledPublisher implements DomainEventHandler<AppointmentRescheduled> {
   constructor(
     private readonly publisher: IntegrationEventPublisher,

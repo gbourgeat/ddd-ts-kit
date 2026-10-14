@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:6f08f173a0b20f1f -->
+<!-- translation-of: README.md sha256:a99cc5ff12d3495a -->
 
 # @ddd-ts-kit/openfga
 
@@ -239,7 +239,7 @@ où l'agrégat existe sans sa relation :
 ```ts
 // À éviter : un gestionnaire de la phase par défaut (before-commit) s'exécute dans la transaction,
 // si bien qu'une annulation après lui laisse sur le serveur un tuple pour un rendez-vous qui n'existe pas.
-@DomainEventHandler(AppointmentBooked, { name: AppointmentBooked.eventName })
+@DomainEventHandler(AppointmentBooked)
 export class RelationshipsOnAppointmentBooked { /* ... */ }
 ```
 
@@ -266,7 +266,7 @@ export abstract class SchedulingRelationships {
 }
 
 // Écrire : après la validation, jamais quand la transaction a été annulée.
-@DomainEventHandler(AppointmentBooked, { name: AppointmentBooked.eventName, phase: 'after-commit' })
+@DomainEventHandler(AppointmentBooked, { phase: 'after-commit' })
 export class RelationshipsOnAppointmentBooked implements DomainEventHandler<AppointmentBooked> {
   constructor(private readonly relationships: SchedulingRelationships) {}
 

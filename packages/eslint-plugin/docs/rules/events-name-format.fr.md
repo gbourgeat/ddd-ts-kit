@@ -1,5 +1,5 @@
 [English](events-name-format.md) · **Français**
-<!-- translation-of: events-name-format.md sha256:3696b2ab4eae3dd8 -->
+<!-- translation-of: events-name-format.md sha256:282199502c3aaecf -->
 
 # ddd-ts-kit/events-name-format
 
@@ -38,7 +38,7 @@ export class InvoiceIssued implements DomainEvent {
 
 ## Détails
 
-Les littéraux de gabarit (template literals) sans interpolation sont lus comme des chaînes. Le nom est déclaré une fois, dans `eventName`, que l'événement porte dans `name` et que ses réactions lisent (`{ name: InvoiceIssued.eventName }`) ; un `readonly name = '..'` écrit en toutes lettres, comme avant la 0.6, est jugé de la même façon.
+Les littéraux de gabarit (template literals) sans interpolation sont lus comme des chaînes. Le nom est déclaré une fois, dans `eventName`, que l'événement porte dans `name` et que ses réactions lisent (`@DomainEventHandler(InvoiceIssued)`) ; un `readonly name = '..'` écrit en toutes lettres, comme avant la 0.6, est jugé de la même façon.
 
 ## Options
 

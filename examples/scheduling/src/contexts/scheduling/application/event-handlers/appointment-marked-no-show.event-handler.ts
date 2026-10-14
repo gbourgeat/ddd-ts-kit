@@ -4,7 +4,7 @@ import { AppointmentMarkedNoShow } from '@/contexts/scheduling/domain/events/app
 import { NoteNoShowCommand } from '@/contexts/scheduling/application/commands/note-no-show/note-no-show.command';
 
 /** When an appointment is marked as a no-show, the attendance record of its patient notes it, in the same unit of work. */
-@DomainEventHandler(AppointmentMarkedNoShow, { name: 'scheduling.appointment.marked-no-show' })
+@DomainEventHandler(AppointmentMarkedNoShow)
 export class AppointmentMarkedNoShowEventHandler implements DomainEventHandler<AppointmentMarkedNoShow> {
   constructor(private readonly commands: CommandBus) {}
 

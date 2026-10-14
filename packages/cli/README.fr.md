@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:5ff5301f859a2d44 -->
+<!-- translation-of: README.md sha256:bed804ca4ed40c91 -->
 
 # ddd-ts-kit
 
@@ -679,7 +679,7 @@ Next, in this order: the language of the context first, then the business decisi
   avec `@Repository(<UseCase>Reader)` ; `integration-handler` écrit
   `@IntegrationEventHandler(definition, { consumer })` et est refusé quand l'amont ne déclare pas
   l'événement ; `event-handler` et le *publisher* de `integration-event` écrivent
-  `@DomainEventHandler(Event, { name })` (le *publisher* avec
+  `@DomainEventHandler(Event)`, rattaché au `eventName` que déclare la classe d'événement (le *publisher* avec
   `[IntegrationEventPublisher, IdGenerator]`), et tous deux sont trouvés comme n'importe quel
   fichier de rôle : la racine de composition ne liste aucun *publisher* ; `job` écrit
   `@Scheduled('<context>.<name>', schedule)` ; `policy` écrit une classe avec
@@ -1308,7 +1308,7 @@ règle.
 | `event-sourcing/upcaster-required` | un `defineStoredEvent` dont `encode` ne nomme aucun type, ou un type non déclaré dans le fichier, ou un type qu'il atteint et que le fichier ne déclare pas ; une version au-dessus de 1 sans *upcaster* depuis chaque version inférieure ; une version en dessous de la dernière enregistrée dans `stored-events.lock.json`, ou une version enregistrée dont la forme a changé. `ddd-ts-kit docs --stored-events` enregistre les nouvelles versions et n'en réécrit jamais une ; `docs --check` échoue tant qu'une version déclarée n'est pas enregistrée |
 | `context/extractable` | un fichier de module qui importe un autre contexte hors de son langage publié ; une persistance qui importe l'infrastructure d'un autre contexte ou nomme son schéma ; un gestionnaire qui importe le *repository* d'un autre contexte ; `export let` ou un `new Map`, `Set`, `WeakMap` exporté au niveau du module ; `deployable: true` sans `apps/<context>/main.ts` ; dans le style déclaré, un fichier de rôle qui importe quoi que ce soit d'un fichier de port d'un autre contexte |
 | `governance/recorded-deviation` | un commentaire `ddd-ts-kit-disable` ou `eslint-disable` dont la raison ne nomme aucun `ADR-<number>` avec un fichier `docs/adr/<number>-*.md` ; une règle mise à `off` (ou à `warn` en dessous de sa valeur par défaut), un répertoire supplémentaire, un *package* autorisé supplémentaire, un `guard` autre que `enforce` ou `stack.events` hors de l'outbox, sans entrée `deviations` `{ what, adr, reason }` qui pointe vers un enregistrement existant |
-| `declarations/role-declared` | style déclaré seulement : un fichier de rôle (autre que `*.command.ts` et `*.query.ts`, tenus par `authz/declared` ; `*.job.ts` sous `application/scheduling/` avec `@Scheduled` et `*.publisher.ts` avec `@DomainEventHandler` sont des rôles) qui n'exporte aucune classe portant le décorateur de son suffixe et de son dossier, ou une classe qui en porte une autre ; une classe déclarée dans un fichier qui n'est pas un fichier de rôle ; une option `consumer` ou `name` manquante, vide, une variable, une concaténation ou un template literal avec une substitution ; un nom de `@DomainEventHandler` qui diffère du littéral `name` de la classe d'événement importée ; tout décorateur de déclaration sur une classe sous `domain/` |
+| `declarations/role-declared` | style déclaré seulement : un fichier de rôle (autre que `*.command.ts` et `*.query.ts`, tenus par `authz/declared` ; `*.job.ts` sous `application/scheduling/` avec `@Scheduled` et `*.publisher.ts` avec `@DomainEventHandler` sont des rôles) qui n'exporte aucune classe portant le décorateur de son suffixe et de son dossier, ou une classe qui en porte une autre ; une classe déclarée dans un fichier qui n'est pas un fichier de rôle ; une option `consumer` ou `name` manquante, vide, une variable, une concaténation ou un template literal avec une substitution ; tout décorateur de déclaration sur une classe sous `domain/` |
 | `declarations/barrel-current` | style déclaré seulement : avec `stack.assembly: barrel`, un `<context>.declarations.ts` manquant ou qui diffère d'un `export *` par fichier de rôle trié par chemin, suivi d'un `injected(Class, [Tokens])` par classe dont le constructeur reçoit quelque chose (lu depuis les signatures, avec leurs imports) ; avec `discovery`, un barrel qui existe encore, et un `<context>.dependencies.ts` qui diffère de ces instructions `injected` (son absence est acceptée tant qu'il n'en contiendrait aucune). Le message nomme le fichier de rôle manquant ou la classe dont la liste est périmée. Elle a besoin de l'arbre, c'est pourquoi `check-file` ne l'exécute pas |
 | `declarations/constructor-injection` | style déclaré seulement, dans un fichier de rôle : sur une classe dont le décorateur ne liste rien, un paramètre de constructeur optionnel, qui a une valeur par défaut, est un paramètre du reste ou est déstructuré, n'a pas de type, ou est typé par autre chose qu'un nom de classe (arguments de type mis à part) : une union, une intersection, un tableau, un nom qualifié, un type du langage, une interface, un alias de type, une enum ou une classe non exportée du fichier ou du fichier du projet d'où elle est importée ; une classe qui hérite son constructeur d'une classe que le projet ne sait pas lire. Sous `stack.dependencies: signature`, un décorateur qui porte une liste alors que le constructeur peut être lu : une liste qui le répète, une qui en diffère |
 | `ports/abstract-class` | dans un fichier de port (`domain/repositories/*.repository.ts`, `application/ports/*.port.ts`) : une classe qui n'est pas `abstract` ; un membre qui n'est pas une méthode ou une propriété abstraite (`static readonly tokenKey = '<text>'` mis à part) : un constructeur, un corps, un initialiseur, un membre `private`, `protected` ou `#` ; une `interface` exportée (un alias `type`, une forme de données, n'est pas signalé) |
@@ -1414,11 +1414,7 @@ exactement comme le chemin relatif vers le même fichier.
   et les espaces de noms). Les options `consumer` et `name` ne sont lues que dans un littéral
   d'objet écrit dans l'appel du décorateur : gardées dans une variable, étalées ou construites par
   une fonction, elles sont signalées comme n'étant pas une chaîne littérale.
-- `declarations/role-declared` compare un nom de `@DomainEventHandler` avec `name = '...'` dans
-  le corps de la classe d'événement, trouvée par un import direct relatif ou par alias : un nom
-  posé dans un constructeur, un accesseur ou une classe de base, ou un événement atteint par un
-  barrel, n'est pas comparé. `authz/declared` suit un import direct du message depuis un fichier
-  de module.
+- `authz/declared` suit un import direct du message depuis un fichier de module.
 - `context/extractable` reconnaît un port à son fichier (`domain/repositories/*.repository.ts`,
   `application/ports/*.port.ts`) : un port d'un autre contexte atteint par un réexport n'est pas
   vu.

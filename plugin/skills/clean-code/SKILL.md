@@ -53,7 +53,7 @@ without fighting them. Reference: `docs/ARCHITECTURE.md` section 6.
   of the business (`clean/no-magic-number`). Both rules hold under `"stack.literals": "named"`,
   which `init` writes; a project whose config does not say keeps them silent.
 - A domain event declares its name once, `static readonly eventName = '<context>.<aggregate>.<fact>'`;
-  a reaction reads it, `{ name: InvoiceIssued.eventName }`, and an integration event handler reads
+  a reaction reads it, `@DomainEventHandler(InvoiceIssued)`, and an integration event handler reads
   the type it handles from the contract, `invoiceIssuedV1.type`.
 
 ## Functions

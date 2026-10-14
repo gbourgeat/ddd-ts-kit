@@ -1,13 +1,10 @@
 import path from 'node:path';
 import { DECLARED_ROLES, declaredRoleOf, type DeclaredRole } from '../../declared/index.js';
-import { argumentsOf } from '../declarations/arguments-of.js';
 import { classesOf } from '../declarations/classes-of.js';
 import { DECLARATIONS_ENTRY } from '../declarations/declarations-entry.js';
 import type { DeclaredClass } from '../declarations/declared-class.js';
-import { declaredEventHandlers } from '../declarations/declared-event-handlers.js';
 import type { Decoration } from '../declarations/decoration.js';
 import { optionOf, type OptionValue } from '../declarations/option-of.js';
-import { nameOfEventClass } from '../events/name-of-event-class.js';
 import type { Finding } from '../model/finding.js';
 import type { Project } from '../model/project.js';
 import type { Rule } from '../model/rule.js';
@@ -16,18 +13,15 @@ import { inContext } from '../support/in-context.js';
 import { isDeclaredStyle } from '../support/is-declared-style.js';
 import { pathInContext } from '../support/path-in-context.js';
 import { perFile } from '../support/per-file.js';
-import { sourceDeclaring } from '../support/source-declaring.js';
 
 /** The option of each decorator that names what it declares, written once and never derived. */
 const WRITTEN_NAMES: Readonly<Record<string, string>> = {
   IntegrationEventHandler: 'consumer',
-  DomainEventHandler: 'name',
   Policy: 'name',
 };
 
 /** `authz/declared` holds the messages: a command or a query says who may send it, or is reported there. */
 const MESSAGE_SUFFIXES = ['command', 'query'];
-const IDENTIFIER = /^[A-Za-z_$][\w$]*$/;
 
 interface Decorated {
   readonly declared: DeclaredClass;
@@ -37,7 +31,7 @@ interface Decorated {
 export const declarationsRoleDeclared: Rule = {
   id: 'declarations/role-declared',
   description:
-    'In the declared style, a role file exports a class carrying the decorator of its role, with its names written as string literals (the name of a domain event handler may read the name its event class declares, `{ name: InvoiceIssued.eventName }`), and domain/ declares nothing.',
+    'In the declared style, a role file exports a class carrying the decorator of its role, with its names written as string literals (a domain event handler writes none: it is attached under the name its event class declares), and domain/ declares nothing.',
   scope: 'file',
   run(project) {
     if (!isDeclaredStyle(project)) {
@@ -73,7 +67,7 @@ function outsideTheDomain(file: SourceFile, project: Project): Finding[] {
   const role = declaredRoleOf(inside);
   const place = role === undefined ? misplaced(file) : undeclaredRole(file, role, inside);
 
-  return [...place, ...unwrittenNames(file), ...renamedEvents(file, project)];
+  return [...place, ...unwrittenNames(file)];
 }
 
 /** A declared class outside a role file is read by neither the barrel nor discovery; the module file may hold what it wants. */
@@ -143,7 +137,7 @@ function unwrittenNames(file: SourceFile): Finding[] {
     const key = WRITTEN_NAMES[decoration.name];
     const value = key === undefined ? undefined : optionOf(file.scan, decoration, key);
 
-    if (key === undefined || isWritten(value) || readsEventName(file, decoration, value)) {
+    if (key === undefined || isWritten(value)) {
       return [];
     }
 
@@ -151,45 +145,12 @@ function unwrittenNames(file: SourceFile): Finding[] {
       {
         line: value?.line ?? decoration.line,
         message: `The ${key} of @${decoration.name} on ${declared.name} is ${value?.literal === '' ? 'empty' : 'not a string literal'}.`,
-        fix: decoration.name === 'DomainEventHandler' ? READ_EVENT_NAME : writeInPlace(key, context),
+        fix: `Write it in place as a string literal, { ${key}: '${context}.<name>' }: a name that is written survives the renaming of the class and is read without running the code.`,
       },
     ];
   });
-}
-
-const READ_EVENT_NAME =
-  'Read the name the event class declares, { name: <Event>.eventName }, or write it in place as a string literal: a handler is attached under the name its event carries.';
-
-function writeInPlace(key: string, context: string): string {
-  return `Write it in place as a string literal, { ${key}: '${context}.<name>' }: a name that is written survives the renaming of the class and is read without running the code.`;
 }
 
 function isWritten(value: OptionValue | undefined): boolean {
   return value?.literal !== undefined && value.literal !== '';
-}
-
-/** `@DomainEventHandler(InvoiceIssued, { name: InvoiceIssued.eventName })`: the name the event class declares, read where it is written. */
-function readsEventName(file: SourceFile, decoration: Decoration, value: OptionValue | undefined): boolean {
-  const event = argumentsOf(file.scan, decoration)[0]?.code.trim();
-
-  return decoration.name === 'DomainEventHandler' && event !== undefined && value?.reference === `${event}.eventName`;
-}
-
-/** A domain event handler is attached under the name it writes: it has to be the name the event class carries. */
-function renamedEvents(file: SourceFile, project: Project): Finding[] {
-  return declaredEventHandlers(file.scan, 'DomainEventHandler').flatMap(({ event, name }) => {
-    const carried = IDENTIFIER.test(event) ? nameOfEventClass(sourceDeclaring(project, file, event), event) : undefined;
-
-    if (carried === undefined || name?.literal === undefined || name.literal === '' || name.literal === carried) {
-      return [];
-    }
-
-    return [
-      {
-        line: name.line,
-        message: `@DomainEventHandler is named "${name.literal}" but ${event} is named "${carried}".`,
-        fix: `Write { name: '${carried}' }, the name ${event} carries: a handler attached under another name is never called.`,
-      },
-    ];
-  });
 }

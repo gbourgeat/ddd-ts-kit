@@ -6,6 +6,7 @@ import { openScope } from '../open-scope.js';
 import type { Scope } from '../scope.js';
 import { wire } from '../wire.js';
 import { ensureDomainEvent } from './ensure-domain-event.js';
+import { assertDeclaresItsName } from './assert-declares-its-name.js';
 import { eventVars } from './event-vars.js';
 
 export const eventHandlerKind: Kind = {
@@ -23,6 +24,9 @@ export const eventHandlerKind: Kind = {
     learnTerms(scope);
 
     const names = ensureDomainEvent(scope, request.args[1] ?? '', request.args[2] ?? '');
+
+    assertDeclaresItsName(scope, names);
+
     const context = { ...eventVars(scope, names), handler: phaseVars(scope) };
 
     emit(scope, context, [

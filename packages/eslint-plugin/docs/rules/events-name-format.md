@@ -37,7 +37,7 @@ export class InvoiceIssued implements DomainEvent {
 
 ## Details
 
-Template literals without interpolation are read like strings. The name is declared once, in `eventName`, which the event carries in `name` and its reactions read (`{ name: InvoiceIssued.eventName }`); a `readonly name = '..'` written out, as before 0.6, is judged the same way.
+Template literals without interpolation are read like strings. The name is declared once, in `eventName`, which the event carries in `name` and its reactions read (`@DomainEventHandler(InvoiceIssued)`); a `readonly name = '..'` written out, as before 0.6, is judged the same way.
 
 ## Options
 

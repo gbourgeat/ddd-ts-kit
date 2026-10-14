@@ -70,7 +70,7 @@ function consumerNames(file: SourceFile): ConsumerName[] {
     name === undefined ? [] : [{ name, line: nameLine }],
   );
 
-  const declared = declaredEventHandlers(file.scan, 'IntegrationEventHandler').flatMap(({ name }) =>
+  const declared = declaredEventHandlers(file.scan).flatMap(({ name }) =>
     name?.literal === undefined ? [] : [{ name: name.literal, line: name.line }],
   );
 
@@ -81,7 +81,7 @@ function consumerNames(file: SourceFile): ConsumerName[] {
 function unnamedHandlers(file: SourceFile): Finding[] {
   const context = inContext(file.location) ? file.location.context : '<context>';
 
-  return declaredEventHandlers(file.scan, 'IntegrationEventHandler')
+  return declaredEventHandlers(file.scan)
     .filter(({ name }) => name?.literal === undefined || name.literal === '')
     .map(({ className, line, name }) => ({
       line: name?.line ?? line,
@@ -113,7 +113,7 @@ function unregistered(file: SourceFile, project: Project): Finding[] {
   }
 
   // A handler that declares itself needs no registration: its decorator carries the name.
-  if (declaredEventHandlers(file.scan, 'IntegrationEventHandler').length > 0) {
+  if (declaredEventHandlers(file.scan).length > 0) {
     return [];
   }
 

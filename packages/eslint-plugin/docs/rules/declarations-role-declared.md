@@ -19,8 +19,7 @@ In a role file (the table below), other than `*.command.ts` and `*.query.ts`, wh
 
 On any class of `application/`, `infrastructure/`, `presentation/` or the context root:
 
-- `@IntegrationEventHandler(definition, { consumer })`, `@Policy(permission, { name })` or `@DomainEventHandler(Event, { name })` whose name is not a non-empty string literal: missing, empty, a variable, a template with a substitution, options held in a variable or only spread. A domain event handler may instead read the name its event class declares, `@DomainEventHandler(InvoiceIssued, { name: InvoiceIssued.eventName })`, the class being the one it is given
-- `@DomainEventHandler(Event, { name })` whose `name`, written out, differs from the name the event class declares, when that class is in view
+- `@IntegrationEventHandler(definition, { consumer })` or `@Policy(permission, { name })` whose name is not a non-empty string literal: missing, empty, a variable, a template with a substitution, options held in a variable or only spread. `@DomainEventHandler(Event)` writes no name: it is attached under the one its event class declares once, `static readonly eventName`, which the compiler requires
 
 Under `domain/`:
 
@@ -54,10 +53,6 @@ export class SearchInvoicesHandler {}
 @Policy(billingPermissions['invoice.void'], { name: policyName })
 export class OnlyIssuerVoidsPolicy {}
 
-// application/event-handlers/invoice-issued.event-handler.ts, where InvoiceIssued is named 'billing.invoice.issued'
-@DomainEventHandler(InvoiceIssued, { name: 'billing.invoice.sent' })
-export class InvoiceIssuedEventHandler {}
-
 // domain/aggregates/invoice.aggregate.ts
 @Repository(InvoiceRepository)
 export class Invoice {}
@@ -84,7 +79,7 @@ export class IssueInvoiceHandler implements CommandHandler<IssueInvoiceCommand> 
 export class OnlyIssuerVoidsPolicy {}
 
 // application/event-handlers/invoice-issued.event-handler.ts
-@DomainEventHandler(InvoiceIssued, { name: 'billing.invoice.issued' })
+@DomainEventHandler(InvoiceIssued)
 export class InvoiceIssuedEventHandler {}
 ```
 
@@ -94,8 +89,6 @@ A decorator counts when its name is one of the twelve declaration decorators and
 
 The role of a file is read from its suffix and its folder, as the generator writes them. A class is exported inline, by `export { A }` or by `export default A`. When a class carries another declaration decorator, only that is reported: fixing it also answers the missing one.
 
-The event class of `@DomainEventHandler` is in view when it is declared in the same file, or imported by name from a source of the project that exists on disk; that file is then parsed, syntax only, and its `static readonly eventName = '...'` (or, as 0.5 wrote it, its `readonly name = '...'`) is read (`as const` and `satisfies` are looked through). When the class cannot be found, or its name is not a literal, nothing is compared.
-
 ## Options
 
 None.
@@ -104,7 +97,6 @@ None.
 
 ## Limits
 
-- An event class reached through a barrel (`@/contexts/billing/domain/events/index`), a renaming export, a default import or a namespace is not followed: its name is not compared. `ddd-ts-kit check` resolves the same import in the project.
 - A decorator applied through a variable (`const declare = Repository(InvoiceRepository); @declare class ...`) is not recognised.
 - What a class is given is `declarations/constructor-injection`; that a list matches the constructor and that a handler handles its message is checked by the compiler, not here; that an adapter implements its port is `ports/implements-never-extends`, and where a job lives and what it is named are `scheduling/job-triggers-use-case` and `scheduling/job-name`.
 - That each role file holds a single declared class is `naming/one-concept-per-file` of `ddd-ts-kit check`.
