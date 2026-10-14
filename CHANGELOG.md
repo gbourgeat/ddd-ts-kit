@@ -4,7 +4,7 @@ What each version changes for someone who uses the kit. The packages of `package
 together, under one version; the notes of each [GitHub release](https://github.com/gbourgeat/ddd-ts-kit/releases)
 list the pull requests behind it.
 
-## Unreleased
+## 0.19.0
 
 **`status` and `worker-scope` read every slices table.** `docs/architecture/slices.md` may plan
 the work in several tables, one per milestone or story, under the same header: only the first was
