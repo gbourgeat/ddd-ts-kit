@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:06ad7094fb01f263 -->
+<!-- translation-of: README.md sha256:81b2225885401fd2 -->
 
 <div align="center">
 
@@ -299,9 +299,20 @@ départ :
 d'un changement jusqu'à `main`. Si ddd-ts-kit vous est utile, une étoile sur GitHub aide d'autres
 personnes à le trouver.
 
-<a href="https://github.com/gbourgeat/ddd-ts-kit/graphs/contributors"><img src="https://contrib.rocks/image?repo=gbourgeat/ddd-ts-kit" alt="Les contributeurs de ddd-ts-kit"></a>
-
 [![Historique des étoiles de ddd-ts-kit](https://api.star-history.com/svg?repos=gbourgeat/ddd-ts-kit&type=Date)](https://star-history.com/#gbourgeat/ddd-ts-kit&Date)
+
+## Contributeurs
+
+Les personnes qui construisent ddd-ts-kit, puis toutes celles dont les commits sont arrivés sur `main`.
+
+<table>
+  <tr>
+    <td align="center"><a href="https://github.com/gbourgeat"><img src="https://github.com/gbourgeat.png?size=160" width="80" alt=""><br><sub><b>Gary Bourgeat</b></sub></a><br><sub>mainteneur</sub></td>
+    <td align="center"><a href="https://github.com/jd-bargy"><img src="https://github.com/jd-bargy.png?size=160" width="80" alt=""><br><sub><b>Jean-Daniel Bargy</b></sub></a></td>
+  </tr>
+</table>
+
+<a href="https://github.com/gbourgeat/ddd-ts-kit/graphs/contributors"><img src="https://contrib.rocks/image?repo=gbourgeat/ddd-ts-kit" alt="Les contributeurs de ddd-ts-kit"></a>
 
 ## Licence
 
