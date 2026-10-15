@@ -483,6 +483,13 @@ read two ways: add the new column in one migration and drop the old one in a lat
 write the statements in a custom migration. Prisma 7 does not wait either: where
 `prisma migrate dev` would ask (a warning of data loss), it stops with an error in a
 non-interactive environment (read in its code, not measured); knex and TypeORM ask nothing.
+**A changed primary key.** A project reported that drizzle-kit wrote the statement that adds the
+new primary key of a table before the one that drops the old key, so the migration failed on the
+database (a table has one primary key); not measured here. Read the generated SQL of a migration
+that changes a primary key before committing it: the `DROP CONSTRAINT` of the old key comes
+first. When it does not, reorder the two statements by hand in that new migration, which is still
+unapplied.
+
 The first knex migration that `init` writes is `00000000000000_initial.js`: it sorts before any
 timestamp; a project created before 0.5 keeps its `0001_initial.js`, since an applied
 migration is never renamed.

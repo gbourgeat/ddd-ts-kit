@@ -117,7 +117,8 @@ say what it does, extract it and name it.
 ## Files and layout
 
 One exported class, interface or function per file, named after it in kebab-case; at most
-350 lines. A type or a function of the domain with no role directory is a concept not named
+350 lines, reached by extracting a responsibility (a value object, a domain service, a policy,
+a file of its own), never by shortening or deleting a comment, a test or a written rule. A type or a function of the domain with no role directory is a concept not named
 yet: its home is in the table "a concept with no role of its own" of `docs/ARCHITECTURE.md`,
 never a `types/` or `utils/` folder. Members are `private`, never `#name`. A blank line before a
 `return` that is not alone in its block and around `if`, `for`, `try`. Every `if`, `else`, `for`, `while` and `do`

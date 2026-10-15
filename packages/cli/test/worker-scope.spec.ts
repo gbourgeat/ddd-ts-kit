@@ -89,7 +89,18 @@ describe('worker-scope', () => {
     );
 
     expect(briefing).toContain('`npx ddd-ts-kit check --changed-since main`');
-    expect(briefing).toContain('commit: `feat(billing): <slice in business words>`.');
+
+    expect(briefing).toContain(
+      'then one commit, with the files regenerate rewrote: `feat(billing): <slice in business words>`.',
+    );
+  });
+
+  it('asks the worker to regenerate the derived files with each slice and to keep its report in the worktree', () => {
+    const briefing = String(jsonAt(cli(root, 'worker-scope', 'billing', '--json').json(), 'briefing'));
+
+    expect(briefing).toContain('`npm run regenerate`, `npx ddd-ts-kit check --changed-since main`');
+    expect(briefing).toContain('written by `npm run regenerate`, never by hand.');
+    expect(briefing).toContain('After each step, rewrite .ddd-ts-kit/report.md in the worktree');
   });
 
   it('lists the generators that write nothing shared, from what each kind declares', () => {

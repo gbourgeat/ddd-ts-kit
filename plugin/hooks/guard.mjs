@@ -12,6 +12,8 @@ const CONFIG = 'ddd-ts-kit.config.json';
 const KIT_VERSION = '0.21.0';
 const PLAN = 'docs/architecture/plan.md';
 const WORKER_SCOPE = '.ddd-ts-kit/worker.json';
+// The report a worker keeps current after each step, ignored by git: what the conductor reads when it stops.
+const WORKER_REPORT = '.ddd-ts-kit/report.md';
 const WORKER_AGENT = 'context-builder';
 // The host caps SessionStart context at 10 000 characters; a session should start far below it.
 const SESSION_CONTEXT_LIMIT = 3000;
@@ -512,6 +514,7 @@ function workerScopeReason(project, file, input) {
   if (
     path.startsWith(`${project.contextsDir}/${context}/`) ||
     /^test\/e2e\/[^/]+\.e2e\.spec\.ts$/.test(path) ||
+    path === WORKER_REPORT ||
     isWorkingMigration(project, path)
   ) {
     return undefined;

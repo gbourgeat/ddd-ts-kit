@@ -455,6 +455,7 @@ test('a context worker writes inside its bounded context and its end-to-end spec
     undefined,
   );
   assert.equal(run('pre-write', write(join(root, 'test/e2e/place-order.e2e.spec.ts'), agent)).output, undefined);
+  assert.equal(run('pre-write', write(join(root, '.ddd-ts-kit/report.md'), agent)).output, undefined);
   const neighbour = run('pre-write', write(join(root, 'src/contexts/billing/CONTEXT.md'), agent));
   assert.equal(decision(neighbour), 'deny');
   assert.match(reason(neighbour), /another bounded context/);

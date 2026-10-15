@@ -9,7 +9,7 @@ description: >-
   another context: it reports the need instead.
 tools: Read, Grep, Glob, Edit, Write, Bash
 model: inherit
-maxTurns: 80
+maxTurns: 150
 ---
 
 You build one bounded context, in one worktree, from a briefing. If the briefing lacks the
@@ -20,8 +20,11 @@ worktree (`cd <worktree> && ...`).
 
 - Build two slices at most. A briefing with more: build the first two, and list the others
   as not done, "past the two slices of one agent". The conductor launches the next agent.
-- About ten turns before your limit, or when your context grows long (many files read, long
-  outputs): start no new step. Commit what is green, then write the report.
+- After each step of a slice (generated, domain, tests, route and end-to-end spec, commit),
+  rewrite `.ddd-ts-kit/report.md` in the worktree, in the form of the report below. It is
+  ignored by git; if you stop before the end, the conductor reads it there.
+- About fifteen turns before your limit, or when your context grows long (many files read,
+  long outputs): start no new step. Commit what is green, then write the report.
 - A slice that is not green is not committed: name it in the report with the files it left
   modified, so that the next agent resumes from them instead of starting over.
 - Never end without the report, even a partial one: work without a report is lost.
@@ -30,8 +33,12 @@ worktree (`cd <worktree> && ...`).
 
 - You write only `src/contexts/<your context>/**` and the end-to-end specs of your slices.
 - Shared files are not yours: the config, `src/main.ts`, `src/platform/**`, `package.json`,
-  the lockfile, migrations, everything under `docs/`, generated documents. Another context
-  is not yours either; its `published-language/` is read-only.
+  the lockfile, migrations (but your working migration, `npm run db:generate working-<what>`),
+  what you would write by hand under `docs/`. Another context is not yours either; its
+  `published-language/` is read-only.
+- The derived files (generated documents, barrels, context map, dependency rules) are never
+  written by hand: `npm run regenerate` rewrites them, and you commit them with the slice that
+  changed them. At the merge they are regenerated, never merged.
 - You run the generators that stay inside your context, always with `--local-only`:
   `aggregate`, `builder`, `entity`, `value-object`, `domain-event`, `error`,
   `domain-service`, `command` (on an aggregate whose repository exists), `query`, `port`,
@@ -65,10 +72,13 @@ worktree (`cd <worktree> && ...`).
    intention method, the handler spec then the handler, then the route. Replace every
    `it.todo`. Fakes and builders, never mocks. Do not change what the generator structured,
    and never edit `<context>.declarations.ts`: it is regenerated.
-4. `npx ddd-ts-kit check --changed-since <trunk>` and `npm test -- <context>`. Fix causes:
-   no suppression, no skipped test, no lowered severity.
-5. Commit the slice alone, staging its paths one by one (never everything at once):
-   `feat(<context>): <the slice in business words>`. The hooks run; never bypass them.
+4. `npm run regenerate`, then `npx ddd-ts-kit check --changed-since <trunk>` and
+   `npm test -- <context>`. Fix causes: no suppression, no skipped test, no lowered severity.
+   A size limit is met by extracting (a value object, a domain service, a policy, a file per
+   responsibility), never by shortening or deleting a comment, a test or a written rule.
+5. Commit the slice alone, staging its paths one by one (never everything at once), with
+   the derived files regenerate rewrote: `feat(<context>): <the slice in business words>`.
+   The hooks run; never bypass them.
 
 When all slices are committed: `npx ddd-ts-kit todo <context>` lists nothing, then
 `npm run verify` once in the worktree. Do not merge, do not push unless the briefing says
