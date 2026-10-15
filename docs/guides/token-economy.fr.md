@@ -1,5 +1,5 @@
 [English](token-economy.md) · **Français**
-<!-- translation-of: token-economy.md sha256:21273b4b739a4f7f -->
+<!-- translation-of: token-economy.md sha256:93fcde280d5bb645 -->
 
 # Économie de tokens : dépenser moins avec les agents de code
 
@@ -92,7 +92,7 @@ listés sous `next`, implémentez chaque `TODO(domain)`, remplacez chaque `it.to
 décisions qu'il liste.
 
 ```bash
-npx ddd-ts-kit generate command ordering PlaceOrder --permission order.place --aggregate Order --json
+npx ddd-ts-kit generate command ordering PlaceOrder --permission order.place --grant customer --aggregate Order --json
 ```
 
 répond, en abrégé (`todos` reprend chaque endroit de `next` avec la décision à y prendre) :
@@ -107,6 +107,8 @@ répond, en abrégé (`todos` reprend chaque endroit de `next` avec la décision
     "src/contexts/ordering/test/unit/place-order.handler.spec.ts"
   ],
   "updated": [
+    "src/platform/auth/role.ts",
+    "src/platform/auth/roles.ts",
     "src/contexts/ordering/ordering.declarations.ts",
     "src/contexts/ordering/CONTEXT.md"
   ],
@@ -114,15 +116,16 @@ répond, en abrégé (`todos` reprend chaque endroit de `next` avec la décision
   "next": [
     "src/contexts/ordering/application/commands/place-order/place-order.command.ts:7",
     "src/contexts/ordering/application/commands/place-order/place-order.handler.ts:16",
-    "src/contexts/ordering/test/unit/place-order.handler.spec.ts:38"
+    "src/contexts/ordering/test/unit/place-order.handler.spec.ts:38",
+    "src/platform/auth/roles.ts:15"
   ]
 }
 ```
 
-Trois emplacements `file:line` forment toute la liste de lecture de la tâche : l'entrée de la
-commande, la décision du gestionnaire, les tests à écrire. L'agent lit ces lignes et leurs
-voisines, pas les quatre fichiers depuis le début, et jamais les fichiers que le générateur a
-câblés pour lui.
+Quatre emplacements `file:line` forment toute la liste de lecture de la tâche : l'entrée de la
+commande, la décision du gestionnaire, les tests à écrire, l'attribution au rôle à vérifier.
+L'agent lit ces lignes et leurs voisines, pas les quatre fichiers depuis le début, et jamais
+les fichiers que le générateur a câblés pour lui.
 
 **Lire la carte, pas l'arborescence.** Commencez par `npx ddd-ts-kit describe <context> --json`
 (ou `list --json` pour tout le projet) et le `CONTEXT.md` du contexte en cours ;

@@ -80,7 +80,7 @@ pnpm exec ddd-ts-kit generate context ordering --classification core \
 pnpm exec ddd-ts-kit generate context billing --classification supporting --upstream ordering:customer-supplier
 pnpm exec ddd-ts-kit generate aggregate ordering Order
 pnpm exec ddd-ts-kit generate repository ordering Order
-pnpm exec ddd-ts-kit generate command ordering PlaceOrder --permission order.place --aggregate Order
+pnpm exec ddd-ts-kit generate command ordering PlaceOrder --permission order.place --grant customer --aggregate Order
 pnpm exec ddd-ts-kit generate route ordering PlaceOrder --method POST --path /orders
 pnpm run docs:generate    # the OpenAPI contract follows the new route
 pnpm run verify
@@ -97,8 +97,10 @@ run: `cp .env.example .env`, `pnpm run infra:up` (PostgreSQL, in Docker), `pnpm 
 Each `generate` writes the file, its spec, its fake or builder and its registration, and lists
 the `TODO(domain)` places where a business decision is expected. A name that is not in the
 context's glossary is refused, and so is a command or a query that declares neither a
-permission nor `--public`. `pnpm exec ddd-ts-kit generate --help` lists the 36 kinds. What
-changes from one version to the next: [CHANGELOG.md](CHANGELOG.md).
+permission nor `--public`. `--grant customer` gives the permission to the role `customer` in the
+roles of the platform: without it, only the super-admin reaches the use case and `check` warns
+(`authz/granted`). `pnpm exec ddd-ts-kit generate --help` lists the 36 kinds. What changes
+from one version to the next: [CHANGELOG.md](CHANGELOG.md).
 
 ### One slice, end to end
 

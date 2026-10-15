@@ -133,6 +133,15 @@ runs in. The list is `none` without the right, `all` when tenants are not manage
 crosses them, `filter: { tenantId }` on the tenant of the work or the one tenant of the actor
 otherwise, and `none` for an actor of several tenants outside of a tenant's work.
 
+In a generated project, the roles live in `platform/auth/roles.ts`, and the super-admin holds
+`*`. A new permission is therefore reached by administrators only until a role holds it by
+name: `generate command|query|file-upload ... --permission <p> --grant <role>` writes the grant
+(and adds the role to `platform/auth/role.ts` when it is new), and without `--grant` the `next`
+steps of the generator point at the roles to edit.
+[`authz/granted`](../ARCHITECTURE.md#3-dependency-rules) warns on a permission that only the
+bare `*` reaches; a permission meant for administrators only is granted to `Role.Admin` by
+name, so that review reads the intent.
+
 ### Attribute policies
 
 `policies` is a list of rules with an effect (`permit` or `forbid`), the grants they bear on and
@@ -314,4 +323,4 @@ dedicated service is the subject of [Authorization engines](../tools/authorizati
 - [Authorization engines](../tools/authorization-engines.md)
 - [`@ddd-ts-kit/auth`](../../packages/auth/README.md): the API reference
 - [Architecture reference](../ARCHITECTURE.md): rules `authz/declared`, `authz/in-application`,
-  `authz/actor-explicit`
+  `authz/actor-explicit`, `authz/granted`
