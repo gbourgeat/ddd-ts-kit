@@ -74,8 +74,9 @@ missing. Rows with no path between them can be built in parallel.
   header, in the order of the file (slices by status and by owner), and `worker-scope` puts the
   `todo` rows of an owner in its briefing. One table per milestone is fine; number the rows
   across the file, never twice (`status` names a number used twice).
-- Keep rule details out: one line under the table per slice that needs it, with the
-  invariants and the failures by name ("refuses an order without lines").
+- Keep rule details out of the table: under it, one line per slice that needs it,
+  `- #<n>: <invariants and failures by name>` (`- #3: refuses an order without lines`).
+  `worker-scope` puts that line in the briefing of the row.
 
 Aim for slices of half a day at most. A slice with more than two failures to handle, two
 aggregates or two routes is two slices.

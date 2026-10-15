@@ -1,4 +1,4 @@
-import type { Slice } from '../progress/slice.js';
+import type { BriefedSlice } from './briefed-slice.js';
 import type { WorkerPlace } from './worker-place.js';
 
 /**
@@ -32,9 +32,10 @@ export function briefingOf(place: WorkerPlace): string {
     'Done when: every slice is committed, `npm run verify` is green in the worktree, and',
     `\`npx ddd-ts-kit todo ${context}\` lists nothing.`,
     '',
-    'Report, in under 200 words: slices done (commit hashes), slices not done and why, needs on',
-    "shared files or on another context's contract, glossary terms added, open business",
-    'questions. No code, no file contents.',
+    'Report, always, even when you stop early, in under 200 words: slices done (commit hashes),',
+    'slices not done and why, with the files left modified by an unfinished one, needs on shared',
+    "files or on another context's contract, glossary terms added, open business questions. No",
+    'code, no file contents.',
   ].join('\n');
 }
 
@@ -50,12 +51,14 @@ function scopeLines({ config, generators }: WorkerPlace, directory: string): str
   ];
 }
 
-function sliceLines(slices: readonly Slice[]): string[] {
+function sliceLines(slices: readonly BriefedSlice[]): string[] {
   if (slices.length === 0) {
     return ['- #<n> <slice>: <generator commands of the row> ; rules: <invariants and failures by name>'];
   }
 
-  return slices.map((row) => `- #${row.id} ${row.slice}: ${row.startWith} ; rules: <invariants and failures by name>`);
+  return slices.map(
+    (row) => `- #${row.id} ${row.slice}: ${row.startWith}${row.rules === undefined ? '' : ` ; rules: ${row.rules}`}`,
+  );
 }
 
 function contractsOf({ config, context }: WorkerPlace): string {

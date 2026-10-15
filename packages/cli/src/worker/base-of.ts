@@ -1,0 +1,51 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import { CliError } from '../cli-error.js';
+import { runGit } from '../commit/run-git.js';
+import { WORKER_SCOPE_FILE } from '../commit/worker-scope-file.js';
+import type { Config } from '../config/index.js';
+
+/**
+ * The ref a worker's worktree is cut from and checked against: `--base` when given, which must
+ * name a commit, or else the current branch. Without `--base`, refuses to run from the worktree
+ * of a worker: its branch would become the trunk of the new one.
+ */
+export function baseOf(root: string, config: Config, base: string | undefined): string {
+  if (base !== undefined) {
+    return knownRef(root, base);
+  }
+
+  const current = runGit(root, ['branch', '--show-current'])?.trim() || 'HEAD';
+  const worker = workerBranch(root, config, current);
+
+  if (worker !== undefined) {
+    throw new CliError(
+      `${root} is the worktree of a worker (${worker}): its branch ${current} would be the trunk of the new worker.`,
+      'Run worker-scope from the checkout of the trunk, or name the base: `--base origin/main`.',
+    );
+  }
+
+  return current;
+}
+
+function knownRef(root: string, base: string): string {
+  if (runGit(root, ['rev-parse', '--verify', '--quiet', `${base}^{commit}`]) === undefined) {
+    throw new CliError(
+      `The base ${base} is not a commit of this repository.`,
+      'Fetch it first (`git fetch origin`), or pass a branch, a tag or a commit: `--base origin/main`.',
+    );
+  }
+
+  return base;
+}
+
+/** What makes the current checkout a worker's: its scope file, or a branch named `build/<context>`. */
+function workerBranch(root: string, config: Config, current: string): string | undefined {
+  if (fs.existsSync(path.join(root, WORKER_SCOPE_FILE))) {
+    return `${WORKER_SCOPE_FILE} is present`;
+  }
+
+  const context = Object.keys(config.contexts).find((name) => current === `build/${name}`);
+
+  return context === undefined ? undefined : `the branch of the worker of ${context}`;
+}

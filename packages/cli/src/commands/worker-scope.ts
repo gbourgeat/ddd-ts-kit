@@ -10,6 +10,8 @@ export const workerScopeCommand: Command = (argv, io) => {
   const args = Arguments.parse(argv, {
     worktree: { type: 'string' },
     branch: { type: 'string' },
+    base: { type: 'string' },
+    rows: { type: 'string' },
     'dry-run': { type: 'boolean', default: false },
   });
 
@@ -19,7 +21,8 @@ export const workerScopeCommand: Command = (argv, io) => {
 
   const scope = openWorkerScope(root, config, {
     context,
-    ...args.texts(['worktree', 'branch']),
+    ...args.texts(['worktree', 'branch', 'base']),
+    ...rowsOf(args.text('rows')),
     dryRun: args.flag('dry-run'),
   });
 
@@ -28,12 +31,26 @@ export const workerScopeCommand: Command = (argv, io) => {
   return 0;
 };
 
+/** `--rows 4.15,4.16`: the ids of the # column, as written. */
+function rowsOf(rows: string | undefined): { rows?: string[] } {
+  if (rows === undefined) {
+    return {};
+  }
+
+  return {
+    rows: rows
+      .split(',')
+      .map((id) => id.trim().replace(/^#/, ''))
+      .filter((id) => id !== ''),
+  };
+}
+
 function formatScope(scope: WorkerScope): string {
   const would = scope.dryRun ? 'would be ' : '';
   const worktree = scope.created ? `${would}created` : 'kept';
 
   return [
-    `worktree ${worktree}: ${scope.worktree} (branch ${scope.branch}, from ${scope.trunk})`,
+    `worktree ${worktree}: ${scope.worktree} (branch ${scope.branch}, base ${scope.trunk})`,
     `scope ${would}written: ${scope.scopeFile}`,
     ...scope.notes.map((note) => `note: ${note}`),
     '',

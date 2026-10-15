@@ -144,7 +144,7 @@ describe('worker-scope, on slices, an existing worktree and other places', () =>
     ]);
 
     expect(String(jsonAt(scope, 'briefing'))).toContain(
-      '- #2 Issue invoice: `generate command billing IssueInvoice --aggregate Invoice --permission invoice.issue` ; rules: <invariants and failures by name>',
+      '- #2 Issue invoice: `generate command billing IssueInvoice --aggregate Invoice --permission invoice.issue`\n',
     );
 
     expect(String(jsonAt(scope, 'briefing'))).not.toContain('Cancel invoice');

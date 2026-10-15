@@ -1034,15 +1034,23 @@ context; `--json` prints `{ count, remaining: [{ kind, context, file, line, text
 ## worker-scope
 
 ```
-ddd-ts-kit worker-scope <context> [--worktree <path>] [--branch <name>] [--dry-run]
+ddd-ts-kit worker-scope <context> [--base <ref>] [--rows <id,...>] [--worktree <path>] [--branch <name>] [--dry-run]
 ```
 
 Prepares the place of one worker of a build split by context: creates a git worktree of the
-project (`../<project>-<context>` by default) on the branch `build/<context>`, writes
+project (`../<project>-<context>` by default) on the branch `build/<context>`, cut from
+`--base` (a branch, a tag or a commit: `origin/main`; by default the current branch), writes
 `.ddd-ts-kit/worker.json` in it (`{ "context": "<context>" }`; `init` ignores `.ddd-ts-kit/`), and
 prints the briefing of the worker: its scope, the generators it may run, its slices still to do
-from `docs/architecture/slices.md`, the published languages it consumes. An existing worktree is
-kept and only the file is written again; `--dry-run` creates and writes nothing. It needs a git
+from `docs/architecture/slices.md`, the published languages it consumes, and the base as the
+trunk of its checks (`check --changed-since <base>`). `--rows 4.15,4.16` briefs those rows only,
+in that order: an id is read as written, and a row the file does not have, has twice or gives to
+another owner is refused. Each row carries its rules, from a line `- #<id>: <rules>` under the
+tables; more than two rows get a note, since an agent holds one or two. An existing worktree, or
+an existing branch, is kept when it contains the base and refused when it does not, so that no
+worker builds on a stale trunk; only the file is written again. Without `--base`, run from a
+worker's worktree (its `.ddd-ts-kit/worker.json`, or a branch `build/<context>`), it refuses:
+that branch would become the trunk. `--dry-run` creates and writes nothing. It needs a git
 repository with one commit at least. The worker then generates with `--local-only`.
 
 ## affected
