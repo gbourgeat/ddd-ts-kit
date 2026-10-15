@@ -29,6 +29,8 @@ the tree, so a generated file conforms by construction and costs no tokens.
    same command with `--term "<Term>=<meaning>"`. Technical words (`Manager`, `Helper`,
    `Data`, `Info`, `Impl`, `Model`, ...) are refused (`language/no-technical-name`):
    find the business word; `--allow-name` only when the word really is the business term.
+   A generator that derives its name from another argument (`event-handler`,
+   `integration-handler`) takes `--name <Name>` when the design names it otherwise.
 2. **Run with `--json`** (`--dry-run` first when unsure):
    ```bash
    npx ddd-ts-kit generate <kind> ... --json
