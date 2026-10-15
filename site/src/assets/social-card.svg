@@ -1,12 +1,19 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
   <rect width="1200" height="630" fill="#14181a"/>
   <rect x="0" y="0" width="16" height="630" fill="#3f9a77"/>
+  <!-- The logo of docs/assets/logo.svg, its greens lightened for the dark background. -->
+  <g transform="translate(64.7 86.4) scale(0.614)">
+    <path d="M62.63 131.26 A68 68 0 1 1 62.63 168.74" fill="none" stroke="#4fb38a" stroke-width="22" stroke-linecap="round"/>
+    <rect x="185" y="27" width="22" height="202" rx="11" fill="#4fb38a"/>
+    <circle cx="128" cy="150" r="37" fill="none" stroke="#bfe6d4" stroke-width="14"/>
+    <circle cx="128" cy="150" r="15" fill="#4fb38a"/>
+  </g>
   <g font-family="DejaVu Sans, Helvetica, Arial, sans-serif">
-    <text x="96" y="200" font-size="92" font-weight="bold" fill="#ffffff">ddd-ts-kit</text>
-    <text x="96" y="290" font-size="44" fill="#bfe6d4">Domain-Driven Design and Clean Architecture</text>
-    <text x="96" y="348" font-size="44" fill="#bfe6d4">for TypeScript and Node.js backends</text>
-    <text x="96" y="440" font-size="30" fill="#c4cdd2">CLI to bootstrap, scaffold and check · runtime packages</text>
-    <text x="96" y="484" font-size="30" fill="#c4cdd2">ESLint plugin · plugin for Claude Code, Codex and Copilot</text>
-    <text x="96" y="568" font-size="28" fill="#7cc7a6">gbourgeat.github.io/ddd-ts-kit</text>
+    <text x="222" y="200" font-size="92" font-weight="bold" fill="#ffffff">ddd-ts-kit</text>
+    <text x="96" y="310" font-size="44" fill="#bfe6d4">Domain-Driven Design and Clean Architecture</text>
+    <text x="96" y="368" font-size="44" fill="#bfe6d4">for TypeScript and Node.js backends</text>
+    <text x="96" y="452" font-size="30" fill="#c4cdd2">CLI to bootstrap, scaffold and check · runtime packages</text>
+    <text x="96" y="496" font-size="30" fill="#c4cdd2">ESLint plugin · plugin for Claude Code, Codex and Copilot</text>
+    <text x="96" y="572" font-size="28" fill="#7cc7a6">gbourgeat.github.io/ddd-ts-kit</text>
   </g>
 </svg>
