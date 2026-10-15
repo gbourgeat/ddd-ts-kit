@@ -54,12 +54,14 @@ export class ConfigInspection {
   }
 
   ruleSettings(known: readonly string[]): Violation[] {
-    return Object.entries(this.project.config.rules).flatMap(([id, severity]) => {
+    return Object.entries(this.project.config.rules).flatMap(([id, setting]) => {
       if (!known.includes(id)) {
         return [
           this.inConfig(id, `The rule "${id}" does not exist.`, 'Fix the id; `ddd-ts-kit rules` lists the valid ones.'),
         ];
       }
+
+      const severity = typeof setting === 'string' ? setting : setting.severity;
 
       if (!isOneOf(SEVERITIES, severity)) {
         return [
@@ -67,6 +69,16 @@ export class ConfigInspection {
             id,
             `The rule "${id}" has the severity "${severity}".`,
             `Use one of: ${SEVERITIES.join(', ')}.`,
+          ),
+        ];
+      }
+
+      if (typeof setting !== 'string' && setting.files.length === 0) {
+        return [
+          this.inConfig(
+            id,
+            `The rule "${id}" is set for some files, but "files" names none.`,
+            'List the files it is for in "files", as globs relative to the project root (`src/contexts/*/*.declarations.ts`), or write the severity alone for the whole project.',
           ),
         ];
       }

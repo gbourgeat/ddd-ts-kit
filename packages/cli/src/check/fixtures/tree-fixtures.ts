@@ -129,7 +129,7 @@ export const TREE_FIXTURES: readonly Fixture[] = [
       aggregate(
         'class Money {}\n\nexport interface InvoiceState {\n  readonly total: Money;\n}\n\nexport class Invoice {\n  constructor(readonly state: InvoiceState) {}\n}\n// export class Ghost {}\n',
       ),
-      { [CONFIG_FILE]: config({ rules: { 'clean/no-commented-out-code': 'off' } }) },
+      { [CONFIG_FILE]: config({ rules: { 'clean/no-commented-out-code': { severity: 'off', files: [AGGREGATE] } } }) },
     ),
   },
   {

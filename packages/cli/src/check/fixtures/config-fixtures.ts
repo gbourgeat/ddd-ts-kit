@@ -6,8 +6,10 @@ import type { Fixture } from './fixture.js';
 import { PATHS } from './paths.js';
 import { project } from './project.js';
 import { SAMPLES } from './samples.js';
+import { source } from './source.js';
 
 const { AGGREGATE, DECIMAL_ADR } = PATHS;
+const LONG_FILE = 'src/platform/ledger-import.ts';
 const { RECORD } = SAMPLES;
 
 export const CONFIG_FIXTURES: readonly Fixture[] = [
@@ -19,7 +21,11 @@ export const CONFIG_FIXTURES: readonly Fixture[] = [
       {},
       {
         [CONFIG_FILE]: config({
-          rules: { 'naming/suffix': 'warn', 'test/spec-required': 'off', 'domain/no-generic-error': 'warn' },
+          rules: {
+            'naming/suffix': 'warn',
+            'test/spec-required': { severity: 'off', files: ['src/contexts/catalog/**'] },
+            'domain/no-generic-error': 'warn',
+          },
           guard: 'advise',
           limits: { maxFunctionLines: 100 },
           onePerFile: {
@@ -120,4 +126,57 @@ export const CONFIG_FIXTURES: readonly Fixture[] = [
       ),
     ),
   },
+  {
+    ruleId: 'config/valid',
+    name: 'a rule set for some files that names none',
+    expect: { file: CONFIG_FILE },
+    files: project({}, { [CONFIG_FILE]: config({ rules: { 'clean/file-size': { severity: 'off', files: [] } } }) }),
+  },
+  {
+    ruleId: 'config/rule-off-everywhere',
+    name: 'a rule off for the files it is meant for, and one off on purpose everywhere',
+    expect: 'pass',
+    files: project(
+      {},
+      {
+        [CONFIG_FILE]: config({
+          rules: {
+            'clean/function-size': { severity: 'off', files: ['src/platform/legacy/**'] },
+            'test/builder-required': { severity: 'off', files: ['**'] },
+          },
+        }),
+      },
+    ),
+  },
+  {
+    ruleId: 'config/rule-off-everywhere',
+    name: 'a rule off for the whole project',
+    expect: { file: CONFIG_FILE },
+    files: project({}, { [CONFIG_FILE]: config({ rules: { 'clean/function-size': 'off' } }) }),
+  },
+  {
+    ruleId: 'clean/file-size',
+    name: 'a long file among the files the rule is off for',
+    expect: 'pass',
+    files: project(
+      { [LONG_FILE]: longFile() },
+      { [CONFIG_FILE]: config({ rules: { 'clean/file-size': { severity: 'off', files: ['src/platform/*.ts'] } } }) },
+    ),
+  },
+  {
+    ruleId: 'clean/file-size',
+    name: 'a long file outside the files the rule is off for',
+    expect: { file: LONG_FILE },
+    files: project(
+      { [LONG_FILE]: longFile() },
+      {
+        [CONFIG_FILE]: config({ rules: { 'clean/file-size': { severity: 'off', files: ['src/platform/legacy/**'] } } }),
+      },
+    ),
+  },
 ];
+
+/** A source of 351 lines, one past the limit of clean/file-size. */
+function longFile(): string {
+  return source('export const lines = [', ...Array.from({ length: 349 }, (_, index) => `  ${index},`), '];');
+}

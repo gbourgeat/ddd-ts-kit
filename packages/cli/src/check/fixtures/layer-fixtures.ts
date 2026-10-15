@@ -32,7 +32,7 @@ export const LAYER_FIXTURES: readonly Fixture[] = [
           'export { note, template, pattern };',
         ].join('\n'),
       ),
-      { [CONFIG_FILE]: config({ rules: { 'clean/no-commented-out-code': 'off' } }) },
+      { [CONFIG_FILE]: config({ rules: { 'clean/no-commented-out-code': { severity: 'off', files: [AGGREGATE] } } }) },
     ),
   },
   {

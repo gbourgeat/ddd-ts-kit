@@ -143,16 +143,21 @@ function unrecordedRelaxations(config: Config): ConfigFinding[] {
 }
 
 function loweredRules({ rules }: Config): Relaxation[] {
-  return Object.entries(rules)
-    .filter(
-      ([id, severity]) =>
-        severity === 'off' || (severity === 'warn' && (DEFAULT_SEVERITIES[id] ?? 'error') === 'error'),
-    )
-    .map(([id, severity]) => ({
-      what: `rules.${id}`,
-      said: `The rule "${id}" is lowered to "${severity}"`,
-      where: ['"rules"', `"${id}":`],
-    }));
+  return Object.entries(rules).flatMap(([id, setting]) => {
+    const severity = typeof setting === 'string' ? setting : setting.severity;
+    const lowered = severity === 'off' || (severity === 'warn' && (DEFAULT_SEVERITIES[id] ?? 'error') === 'error');
+    const scope = typeof setting === 'string' ? '' : ' for some files';
+
+    return lowered
+      ? [
+          {
+            what: `rules.${id}`,
+            said: `The rule "${id}" is lowered to "${severity}"${scope}`,
+            where: ['"rules"', `"${id}":`],
+          },
+        ]
+      : [];
+  });
 }
 
 /** Raising a threshold is free; a rate under the reference accepts code no test has run. */

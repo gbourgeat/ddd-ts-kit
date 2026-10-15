@@ -1,5 +1,6 @@
 import type { CommitLimits } from './commit-limits.js';
 import type { Coverage } from './coverage.js';
+import type { RuleSetting } from './rule-setting.js';
 import type { Stack } from './stack.js';
 
 export interface Upstream {
@@ -79,7 +80,7 @@ export interface Config {
   readonly importExtension: string;
   readonly stack: Stack;
   readonly contexts: Readonly<Record<string, ContextConfig>>;
-  readonly rules: Readonly<Record<string, string>>;
+  readonly rules: Readonly<Record<string, RuleSetting>>;
   readonly domainAllowedPackages: readonly string[];
   readonly applicationAllowedPackages: readonly string[];
   readonly publishedLanguageAllowedPackages: readonly string[];

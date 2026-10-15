@@ -25,7 +25,11 @@ export const GOVERNANCE_FIXTURES: readonly Fixture[] = [
       },
       {
         [CONFIG_FILE]: config({
-          rules: { 'test/builder-required': 'off', 'naming/suffix': 'warn', 'test/no-mocks': 'error' },
+          rules: {
+            'test/builder-required': { severity: 'off', files: ['src/contexts/billing/**'] },
+            'naming/suffix': 'warn',
+            'test/no-mocks': 'error',
+          },
           guard: 'advise',
           domainAllowedPackages: ['@ddd-ts-kit/kernel', 'decimal.js'],
           deviations: [
@@ -81,9 +85,17 @@ export const GOVERNANCE_FIXTURES: readonly Fixture[] = [
   },
   {
     ruleId: 'governance/recorded-deviation',
-    name: 'a rule switched off without a deviation',
+    name: 'a rule switched off for some files without a deviation',
     expect: { file: CONFIG_FILE },
-    files: project({}, { [CONFIG_FILE]: config({ rules: { 'test/spec-required': 'off' }, deviations: [] }) }),
+    files: project(
+      {},
+      {
+        [CONFIG_FILE]: config({
+          rules: { 'test/spec-required': { severity: 'off', files: ['src/contexts/catalog/**'] } },
+          deviations: [],
+        }),
+      },
+    ),
   },
   {
     ruleId: 'governance/recorded-deviation',

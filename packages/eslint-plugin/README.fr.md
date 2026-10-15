@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:297709003d7940b5 -->
+<!-- translation-of: README.md sha256:989ceeb1b4dabe43 -->
 
 # @ddd-ts-kit/eslint-plugin
 
@@ -113,6 +113,12 @@ export default [...dddTsKit(), { rules: { 'ddd-ts-kit/test-no-mocks': 'off' } }]
 sévérité est libre ; en abaisser une sous sa valeur par défaut (`off`, ou `warn` pour une règle à
 `error`) est une dérogation, et `ddd-ts-kit check` demande son enregistrement de décision : voir
 [Dérogations](../../docs/CONFIG.fr.md#dérogations).
+
+Une sévérité pour certains fichiers seulement s'écrit de la même façon, avec les fichiers qu'elle
+vise : `"clean/stepdown": { "severity": "off", "files": ["src/contexts/ledger/infrastructure/legacy/**"] }`.
+Le préréglage lui donne un bloc à elle après `ddd-ts-kit/architecture`, nommé
+`ddd-ts-kit/rules/<id>`, dont les `files` sont ces motifs : tous les autres fichiers gardent la
+sévérité du projet, dans ESLint comme dans `ddd-ts-kit check`.
 
 ## Un rapport, et quoi écrire à la place
 

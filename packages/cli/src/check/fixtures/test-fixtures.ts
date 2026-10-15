@@ -83,7 +83,9 @@ export const TEST_FIXTURES: readonly Fixture[] = [
         [HANDLER_SPEC]:
           "import { it } from 'vitest';\nconst note = 'no vi.fn() here';\n// jest.mock('x')\nit.todo(note);\n",
       },
-      { [CONFIG_FILE]: config({ rules: { 'clean/no-commented-out-code': 'off' } }) },
+      {
+        [CONFIG_FILE]: config({ rules: { 'clean/no-commented-out-code': { severity: 'off', files: [HANDLER_SPEC] } } }),
+      },
     ),
   },
   {

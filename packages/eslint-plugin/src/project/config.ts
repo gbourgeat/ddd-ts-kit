@@ -1,5 +1,15 @@
 export type Severity = 'error' | 'warn' | 'off';
 
+/** A severity for some files only, as `ddd-ts-kit check` reads it: the other files keep the severity of the project. */
+interface FileRuleSetting {
+  readonly severity: string;
+  /** Globs relative to the project root. */
+  readonly files: readonly string[];
+}
+
+/** What `rules.<id>` holds: a severity for the whole project, or one for some files. */
+export type RuleSetting = string | FileRuleSetting;
+
 export interface Upstream {
   readonly context: string;
   readonly relationship: string;
@@ -67,7 +77,7 @@ export interface Config {
   /** `none` or `js`: whether an import of a file of the project ends with the extension of the emitted file. */
   readonly importExtension: string;
   readonly contexts: Readonly<Record<string, ContextConfig>>;
-  readonly rules: Readonly<Record<string, string>>;
+  readonly rules: Readonly<Record<string, RuleSetting>>;
   readonly domainAllowedPackages: readonly string[];
   readonly applicationAllowedPackages: readonly string[];
   readonly publishedLanguageAllowedPackages: readonly string[];
