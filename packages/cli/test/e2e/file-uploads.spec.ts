@@ -1,5 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { cli, DEFAULT_STACK, EXPLICIT_STACK, tempDir, type StackFlags } from '../helpers.js';
+import { grantOf } from '../support/grant-of.js';
 import { initFlags } from '../support/init-flags.js';
 import { expectNoFinding } from './expect-no-finding.js';
 import { installAsPublished } from './install-as-published.js';
@@ -60,6 +61,7 @@ describe.runIf(SLOW).each(FILE_STACKS)('a project that receives files (%s)', (_l
       '--path',
       '/invoices/:invoiceId/scan',
       ...PROTECTED,
+      ...grantOf(stack)('accountant'),
     );
 
     step(root, 'generate', 'file-upload', 'billing', 'ImportPriceList', '--path', '/price-lists/import', '--public');

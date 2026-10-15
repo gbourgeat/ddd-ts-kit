@@ -85,7 +85,7 @@ describe('init and the extension of an import', () => {
     expect(read(root, CONFIG)).not.toContain('importExtension');
     expect(checkJsonOf(cli(root, 'check', '--json')).violations).toEqual([]);
     expect(cli(root, 'generate', 'value-object', 'billing', 'Discount', '--term', 'Discount=A reduction').code).toBe(0);
-    const refund = ['command', 'billing', 'RefundInvoice', '--permission', 'invoice.refund'];
+    const refund = ['command', 'billing', 'RefundInvoice', '--permission', 'invoice.refund', '--grant', 'accountant'];
 
     expect(cli(root, 'generate', ...refund, '--term', 'Refund=To give the money back').stderr).toBe('');
     expect(cli(root, 'init').code).toBe(0);

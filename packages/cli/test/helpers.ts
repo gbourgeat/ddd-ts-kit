@@ -3,7 +3,9 @@ import os from 'node:os';
 import path from 'node:path';
 import { afterAll } from 'vitest';
 import { run } from '../src/run.js';
+import { grantOf } from './support/grant-of.js';
 import { initFlags } from './support/init-flags.js';
+import { scaffoldBillingJobs } from './support/scaffold-billing-jobs.js';
 import { scaffoldBillingLifecycle } from './support/scaffold-billing-lifecycle.js';
 import type { StackFlags } from './support/stack-flags.js';
 
@@ -105,10 +107,10 @@ export function scaffoldEverything(root: string, stack = DEFAULT_STACK, more: re
   const withHttp = stack.http !== 'none';
 
   step('init', ...initFlags(stack), ...more);
-  scaffoldBilling(step, withHttp);
+  scaffoldBilling(step, withHttp, grantOf(stack, more));
   scaffoldDecoratedAdapter(step);
   scaffoldShipping(step, isDeclared(stack));
-  scaffoldOrderFulfilment(step, withHttp);
+  scaffoldOrderFulfilment(step, withHttp, grantOf(stack, more));
   scaffoldBillingLifecycle(step, stack);
   step('generate', 'worker');
 
@@ -133,7 +135,7 @@ function scaffoldDecoratedAdapter(step: Step): void {
 
 const term = (row: string): string[] => ['--term', row];
 
-function scaffoldBilling(step: Step, withHttp: boolean): void {
+function scaffoldBilling(step: Step, withHttp: boolean, grant: (role: string) => string[]): void {
   const purpose = 'Bills customers for what they bought. Owns invoices from draft to payment.';
 
   const terms = [
@@ -150,8 +152,20 @@ function scaffoldBilling(step: Step, withHttp: boolean): void {
   step('generate', 'error', 'billing', 'Invoice', 'alreadyIssued', '--code', 'INVOICE_ALREADY_ISSUED');
   step('generate', 'domain-service', 'billing', 'Pricing', ...term('Price=What a customer pays for one item'));
   step('generate', 'repository', 'billing', 'Invoice');
-  step('generate', 'command', 'billing', 'IssueInvoice', '--aggregate', 'Invoice', '--permission', 'invoice.issue');
-  step('generate', 'command', 'billing', 'CancelInvoice', '--permission', 'invoice.cancel');
+
+  step(
+    'generate',
+    'command',
+    'billing',
+    'IssueInvoice',
+    '--aggregate',
+    'Invoice',
+    '--permission',
+    'invoice.issue',
+    ...grant('accountant'),
+  );
+
+  step('generate', 'command', 'billing', 'CancelInvoice', '--permission', 'invoice.cancel', ...grant('accountant'));
 
   step(
     'generate',
@@ -161,6 +175,7 @@ function scaffoldBilling(step: Step, withHttp: boolean): void {
     '--permission',
     'invoice.search',
     '--search',
+    ...grant('accountant'),
     ...term('Search=To show invoices to their customer'),
   );
 
@@ -191,35 +206,6 @@ function scaffoldBilling(step: Step, withHttp: boolean): void {
   );
 
   scaffoldBillingJobs(step);
-}
-
-/** One job on an interval and one on a cron expression read in a time zone, each sending a protected command as its own system actor. */
-function scaffoldBillingJobs(step: Step): void {
-  step(
-    'generate',
-    'job',
-    'billing',
-    'CancelStaleInvoices',
-    '--every',
-    '15m',
-    '--command',
-    'CancelInvoice',
-    ...term('Stale=Left unpaid for too long'),
-  );
-
-  step(
-    'generate',
-    'job',
-    'billing',
-    'IssueInvoicesMonthly',
-    '--cron',
-    '0 6 1 * *',
-    '--time-zone',
-    'Europe/Paris',
-    '--command',
-    'IssueInvoice',
-    ...term('Monthly=On the first day of each month'),
-  );
 }
 
 function scaffoldBillingRoutes(step: Step): void {
@@ -276,7 +262,7 @@ function scaffoldShipping(step: Step, declared: boolean): void {
 }
 
 /** A context name in several words, a repository created by its command, a query behind a parameterised route. */
-function scaffoldOrderFulfilment(step: Step, withHttp: boolean): void {
+function scaffoldOrderFulfilment(step: Step, withHttp: boolean, grant: (role: string) => string[]): void {
   const terms = [
     'Purchase order=What a customer asked to receive',
     'Place=To submit a purchase order',
@@ -297,6 +283,7 @@ function scaffoldOrderFulfilment(step: Step, withHttp: boolean): void {
     'PurchaseOrder',
     '--permission',
     'purchase-order.place',
+    ...grant('buyer'),
   );
 
   step('generate', 'query', 'order-fulfilment', 'TrackPurchaseOrder', '--public');

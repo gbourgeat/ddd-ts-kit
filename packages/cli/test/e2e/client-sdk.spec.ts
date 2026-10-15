@@ -65,7 +65,17 @@ function addRoute(root: string): void {
   const steps = [
     ['context', 'billing', '--classification', 'core', '--purpose', 'Bills customers for what they bought.'],
     ['aggregate', 'billing', 'Invoice'],
-    ['command', 'billing', 'IssueInvoice', '--aggregate', 'Invoice', '--permission', 'invoice.issue'],
+    [
+      'command',
+      'billing',
+      'IssueInvoice',
+      '--aggregate',
+      'Invoice',
+      '--permission',
+      'invoice.issue',
+      '--grant',
+      'accountant',
+    ],
     ['route', 'billing', 'IssueInvoice', '--method', 'POST', '--path', '/invoices'],
   ];
 
