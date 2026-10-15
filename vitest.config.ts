@@ -17,7 +17,7 @@ const FLOORS: Readonly<Record<string, readonly [number, number, number, number]>
   'eslint-plugin': [98, 91, 99, 98],
   events: [98, 91, 99, 98],
   http: [98, 93, 97, 98],
-  kafka: [24, 24, 25, 24],
+  kafka: [40, 53, 44, 40],
   kernel: [85, 78, 87, 85],
   knex: [90, 77, 98, 90],
   nats: [32, 36, 39, 32],
