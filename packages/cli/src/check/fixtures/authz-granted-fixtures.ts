@@ -10,6 +10,7 @@ const { BILLING } = PATHS;
 const PERMISSIONS = `${BILLING}/application/authorization/billing.permissions.ts`;
 const ROLES = 'src/platform/auth/roles.ts';
 const ROLE = 'src/platform/auth/role.ts';
+const SIGNED_IN = 'src/platform/auth/signed-in-grants.ts';
 
 const DECLARED = source(
   "import { definePermissions } from '@ddd-ts-kit/auth';",
@@ -48,6 +49,21 @@ export const AUTHZ_GRANTED_FIXTURES: readonly Fixture[] = [
     name: 'a permission granted by its id',
     expect: 'pass',
     files: granting("[Role.Accountant]: ['billing:invoice.issue'],"),
+  },
+  {
+    ruleId: rule,
+    name: 'a permission every signed-in person holds through the wildcard of its context',
+    expect: 'pass',
+    files: {
+      ...granting(),
+      [SIGNED_IN]: source(
+        'export const signedInGrants: readonly string[] = [',
+        '  // ddd-ts-kit:signed-in-grants',
+        "  'billing:*',",
+        '  // /ddd-ts-kit:signed-in-grants',
+        '];',
+      ),
+    },
   },
   {
     ruleId: rule,

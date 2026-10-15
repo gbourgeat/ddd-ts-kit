@@ -1,6 +1,9 @@
 import { specifierOf } from '../alias/index.js';
+import { isGranted } from '../check/authz/is-granted.js';
+import { scan } from '../check/scan/scan.js';
 import { matchingBracket } from '../check/text/matching-bracket.js';
 import { CliError } from '../cli-error.js';
+import { fitStatement } from '../layout/index.js';
 import { permissionsFile } from './permissions-file.js';
 import type { Scope } from './scope.js';
 import { declareRole } from './vocabulary/declare-role.js';
@@ -41,7 +44,9 @@ export function grantPermission(scope: Scope, permission: string): void {
   }
 
   if (role === undefined) {
-    if (!isGranted(content, { context: scope.context.kebab, permission, entry })) {
+    const holders = [content, scope.ws.read(`${scope.config.platformDir}/auth/signed-in-grants.ts`) ?? ''];
+
+    if (!holders.some((holder) => isGranted(scan(holder), { set, context: scope.context.kebab }, permission))) {
       scope.ws.step({
         file,
         anchor: 'export const roles',
@@ -63,15 +68,6 @@ function refuseGrantOutsideRoles(scope: Scope, role: string | undefined): void {
   throw new CliError(
     `--grant writes a grant of the roles of the platform, and the rights of this project are not roles (stack.authz is "${scope.config.stack.authz}").`,
     'Give the right in the model of the project (the attribute policies, a relationship, or the authorizer of the project), and run the command again without --grant.',
-  );
-}
-
-function isGranted(
-  content: string,
-  { context, permission, entry }: { context: string; permission: string; entry: string },
-): boolean {
-  return (
-    content.includes(entry) || content.includes(`'${context}:${permission}'`) || content.includes(`'${context}:*'`)
   );
 }
 
@@ -138,9 +134,10 @@ function withGrant(content: string, key: string, entry: string): string | undefi
 
   const indent = /^[ \t]*/.exec(content.slice(before))?.[0] || '  ';
 
-  return `${content.slice(0, before)}${indent}${key}: [${entry}],\n${content.slice(before)}`;
+  return `${content.slice(0, before)}${fitStatement(`${key}: [${entry}],`, indent).join('\n')}\n${content.slice(before)}`;
 }
 
+/** The list with the entry last: on a line of its own when the list already takes several, else on its line, laid out again when it no longer fits. */
 function inList(content: string, open: number, entry: string): string {
   const close = matchingBracket(content, open);
   const inside = content.slice(open + 1, close);
@@ -150,13 +147,18 @@ function inList(content: string, open: number, entry: string): string {
   }
 
   if (inside.includes('\n')) {
-    const lineStart = content.lastIndexOf('\n', open) + 1;
-    const indent = /^[ \t]*/.exec(content.slice(lineStart))?.[0] ?? '';
+    const closeLine = content.lastIndexOf('\n', close) + 1;
+    const indent = /^[ \t]*/.exec(content.slice(closeLine))?.[0] ?? '';
 
-    return `${content.slice(0, open + 1)}\n${indent}  ${entry},${content.slice(open + 1)}`;
+    return `${content.slice(0, closeLine)}${indent}  ${entry},\n${content.slice(closeLine)}`;
   }
 
   const items = inside.trim().replace(/,\s*$/, '');
+  const lineStart = content.lastIndexOf('\n', open) + 1;
+  const lineEnd = content.indexOf('\n', close);
+  const end = lineEnd === -1 ? content.length : lineEnd;
+  const indent = /^[ \t]*/.exec(content.slice(lineStart))?.[0] ?? '';
+  const line = `${content.slice(lineStart, open + 1)}${items === '' ? entry : `${items}, ${entry}`}${content.slice(close, end)}`;
 
-  return `${content.slice(0, open + 1)}${items === '' ? entry : `${items}, ${entry}`}${content.slice(close)}`;
+  return `${content.slice(0, lineStart)}${fitStatement(line.trim(), indent).join('\n')}${content.slice(end)}`;
 }
