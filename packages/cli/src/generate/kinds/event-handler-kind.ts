@@ -1,7 +1,9 @@
 import { CliError } from '../../cli-error.js';
 import { emit } from '../emit.js';
+import { givenName } from '../given-name.js';
 import type { Kind } from '../kind.js';
 import { learnTerms } from '../learn-terms.js';
+import { named } from '../named.js';
 import { openScope } from '../open-scope.js';
 import type { Scope } from '../scope.js';
 import { wire } from '../wire.js';
@@ -13,7 +15,7 @@ export const eventHandlerKind: Kind = {
   name: 'event-handler',
   aliases: [],
   usage:
-    'event-handler <context> <Aggregate> <Fact> [--phase before-commit|after-commit] [--term "<Term>=<meaning>"]...',
+    'event-handler <context> <Aggregate> <Fact> [--phase before-commit|after-commit] [--name <Name>] [--term "<Term>=<meaning>"]...',
   summary:
     'A reaction to a domain event of the same context, its spec and its subscription: before the commit of the unit of work by default, after it with --phase after-commit, for an effect no transaction covers.',
   positionals: ['context', 'Aggregate', 'Fact'],
@@ -27,11 +29,12 @@ export const eventHandlerKind: Kind = {
 
     assertDeclaresItsName(scope, names);
 
-    const context = { ...eventVars(scope, names), handler: phaseVars(scope) };
+    const handler = givenName(scope, names.event, { what: 'event handler', suffix: ['event', 'handler'] });
+    const context = { ...eventVars(scope, names), handler: { ...named(handler), ...phaseVars(scope) } };
 
     emit(scope, context, [
-      ['event-handler/event-handler.ts.tpl', `application/event-handlers/${names.event.kebab}.event-handler.ts`],
-      ['event-handler/event-handler.spec.ts.tpl', `test/unit/${names.event.kebab}.event-handler.spec.ts`],
+      ['event-handler/event-handler.ts.tpl', `application/event-handlers/${handler.kebab}.event-handler.ts`],
+      ['event-handler/event-handler.spec.ts.tpl', `test/unit/${handler.kebab}.event-handler.spec.ts`],
     ]);
 
     wire(scope, 'event-handler', context);

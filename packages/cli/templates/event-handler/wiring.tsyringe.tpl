@@ -1,16 +1,16 @@
 @@imports
 import { DomainEventDispatcher } from '@ddd-ts-kit/kernel';
-import { {{event.pascal}}EventHandler } from '{{alias.context}}/application/event-handlers/{{event.kebab}}.event-handler{{alias.ext}}';
+import { {{handler.pascal}}EventHandler } from '{{alias.context}}/application/event-handlers/{{handler.kebab}}.event-handler{{alias.ext}}';
 import { {{event.pascal}} } from '{{alias.context}}/domain/events/{{event.kebab}}.event{{alias.ext}}';
 @@registrations
-builder.bind({{event.pascal}}EventHandler).toClass({{event.pascal}}EventHandler).as('domain-event-handler');
+builder.bind({{handler.pascal}}EventHandler).toClass({{handler.pascal}}EventHandler).as('domain-event-handler');
 @@start
 {{#if handler.afterCommit}}
 resolve(DomainEventDispatcher).on(
   {{event.reference}},
   async (event) => {
     if (event instanceof {{event.pascal}}) {
-      await resolve({{event.pascal}}EventHandler).handle(event);
+      await resolve({{handler.pascal}}EventHandler).handle(event);
     }
   },
   { phase: 'after-commit' },
@@ -19,7 +19,7 @@ resolve(DomainEventDispatcher).on(
 {{#unless handler.afterCommit}}
 resolve(DomainEventDispatcher).on({{event.reference}}, async (event) => {
   if (event instanceof {{event.pascal}}) {
-    await resolve({{event.pascal}}EventHandler).handle(event);
+    await resolve({{handler.pascal}}EventHandler).handle(event);
   }
 });
 {{/unless}}

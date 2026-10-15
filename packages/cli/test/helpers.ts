@@ -7,6 +7,7 @@ import { grantOf } from './support/grant-of.js';
 import { initFlags } from './support/init-flags.js';
 import { scaffoldBillingJobs } from './support/scaffold-billing-jobs.js';
 import { scaffoldBillingLifecycle } from './support/scaffold-billing-lifecycle.js';
+import { scaffoldNamedReactions } from './support/scaffold-named-reactions.js';
 import type { StackFlags } from './support/stack-flags.js';
 
 export type { StackFlags } from './support/stack-flags.js';
@@ -112,6 +113,7 @@ export function scaffoldEverything(root: string, stack = DEFAULT_STACK, more: re
   scaffoldShipping(step, isDeclared(stack));
   scaffoldOrderFulfilment(step, withHttp, grantOf(stack, more));
   scaffoldBillingLifecycle(step, stack);
+  scaffoldNamedReactions(step);
   step('generate', 'worker');
 
   return results;
