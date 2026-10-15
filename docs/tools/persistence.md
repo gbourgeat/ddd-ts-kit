@@ -526,6 +526,18 @@ not merged yet:
 A migration already merged on the main branch is never edited or regenerated: a correction is a
 new migration.
 
+**In a parallel build**, a worker whose slice changes the stored state generates a working
+migration in its worktree, `npm run db:generate working-<what-it-does>`, so that the specs of its
+branch run against the tables they need; the guard refuses it any other migration. The name is
+the marker because every tool above keeps it after its number (`20261015101500_working-add-claims.sql`,
+`20261015101500_working_add_claims/` under Prisma, `1791829645467-working-add-claims.ts` under
+TypeORM): the migrator applies it like any other, and nothing in the configuration of the tool
+changes. `persistence/migration-history` accepts it where the worker scope file
+`.ddd-ts-kit/worker.json` exists, and reports it everywhere else. When the conductor merges the
+branch, it deletes the working migration (and, under drizzle-kit, its snapshot and its journal
+entry), runs `npm run db:generate <what-it-does>` on the trunk, after the branches merged before
+it, and commits the real migration with the merge.
+
 **Not chosen: one migrations folder per context.** drizzle-kit can run one config per context
 (its own `schema`, `out` and migrations table), so it would work, but it solves the wrong half:
 two people on one context still collide, the platform tables (outbox, audit trail) belong to no

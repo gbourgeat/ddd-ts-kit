@@ -45,7 +45,8 @@ function scopeLines({ config, generators }: WorkerPlace, directory: string): str
     `- You may write: ${directory}/** and test/e2e/<use-case>.e2e.spec.ts of your slices.`,
     `- You may not write anything else. Shared files (config, ${config.platformDir}, ${config.sourceRoot}/main.ts,`,
     '  package.json, lockfile, migrations, docs/) and other contexts are refused by the guard:',
-    '  report the need, do not work around it.',
+    '  report the need, do not work around it. A slice that changes the stored state generates a',
+    '  working migration only: `npm run db:generate working-<what-it-does>`.',
     `- Generators you may run: ${generators.join(', ')}.`,
     '  The others are run by the conductor.',
   ];

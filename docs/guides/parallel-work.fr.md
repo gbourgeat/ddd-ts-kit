@@ -1,5 +1,5 @@
 [English](parallel-work.md) · **Français**
-<!-- translation-of: parallel-work.md sha256:ec578496459f1aae -->
+<!-- translation-of: parallel-work.md sha256:c62999e03ae15602 -->
 
 # Travailler en parallèle sans collisions
 
@@ -44,7 +44,7 @@ est intestable tant que l'autre n'existe pas, et les deux se rencontrent dans ch
 | `docs/context-map.md`, les listes générées de chaque `CONTEXT.md` | `ddd-ts-kit docs`, chaque `generate` | **non**, mais peu coûteux | dérivés : régénérer après la fusion |
 | `openapi/*.yaml`, `docs/integration/asyncapi.yaml`, `docs/integration/event-catalog.md` | `npm run docs:generate` | **non**, mais peu coûteux | dérivés et déterministes : régénérer après la fusion |
 | `.dependency-cruiser.cjs` | `depcruise-config --write`, `generate context` | **non**, mais peu coûteux | dérivé de la configuration : régénérer |
-| les migrations de base de données | l'outillage de l'ORM | **non** | un schéma par contexte garde les tables séparées, mais la séquence des migrations est une seule liste : numérotez au moment de la fusion |
+| les migrations de base de données | l'outillage de l'ORM | **non** | un schéma par contexte garde les tables séparées, mais la séquence des migrations est une seule liste : un *worker* génère une migration de travail, le chef d'orchestre la vraie au moment de la fusion |
 | le `published-language/` d'un amont | le propriétaire de l'amont, et `generate gateway` lancé pour un consommateur (le contrat de lecture) | **non** pour ses consommateurs | fusionnez d'abord le contrat ; les consommateurs partent de lui |
 | `src/shared-kernel/` | les copropriétaires | **non** | rare par conception ; un changement à la fois |
 | `package.json`, le fichier de verrouillage | quiconque ajoute une dépendance | **non** | ajoutez les dépendances à l'amorçage ou dans un changement dédié |
@@ -107,6 +107,12 @@ fichiers de migration. Générez la migration en dernier, juste avant la fusion,
 branche par défaut à jour ; si deux branches ont chacune ajouté « la prochaine » migration, la
 seconde régénère la sienne. Ne modifiez jamais une migration qui a été exécutée quelque part.
 
+Un *worker* dont la *slice* change l'état stocké a quand même besoin de la table pour ses
+*specs* : il génère une migration de travail, `npm run db:generate working-<what-it-does>`, la
+seule migration que la garde le laisse écrire. `persistence/migration-history` l'admet dans le
+*worktree* et la signale sur le tronc : le chef d'orchestre la supprime donc à la fusion et y
+génère la vraie ([persistance](../tools/persistence.fr.md#migrations--noms-fusions-et-ordre)).
+
 ### Le langage publié d'un amont
 
 Un consommateur ne peut pas être construit contre un contrat qui bouge encore. Fusionnez d'abord
@@ -165,7 +171,8 @@ Scope
 - You may write: src/contexts/notification/** and test/e2e/<use-case>.e2e.spec.ts of your slices.
 - You may not write anything else. Shared files (config, src/platform, src/main.ts,
   package.json, lockfile, migrations, docs/) and other contexts are refused by the guard:
-  report the need, do not work around it.
+  report the need, do not work around it. A slice that changes the stored state generates a
+  working migration only: `npm run db:generate working-<what-it-does>`.
 
 Slices, in this order (rows of docs/architecture/slices.md)
 - #31 Contacts known from identity (projection): `@Projection` over `identity.person.registered` ; ...

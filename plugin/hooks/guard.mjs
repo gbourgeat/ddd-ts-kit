@@ -102,6 +102,9 @@ const SHARED_GENERATORS = [
   'worker',
   'adr',
 ];
+// The migration a worker generates in its worktree, `npm run db:generate working-<what>`, as each
+// migration tool writes it; the conductor generates the real one on the trunk at merge.
+const WORKING_MIGRATION = /(^|\/)migrations\/(.+\/)?\d+[_-]working[_-][\w-]*(\.(sql|[cm]?[jt]s)|\/migration\.sql)$/;
 const REPORT_TO_CONDUCTOR = 'Do not work around it: finish what you can and report the need to the conductor.';
 
 const MODES = { session, 'pre-write': preWrite, 'pre-bash': preBash, 'post-write': postWrite, stop };
@@ -170,7 +173,10 @@ function preBash(input) {
   if (!context) {
     return;
   }
-  const refusal = sharedGeneratorReason(project, context, command) ?? dependencyChangeReason(command);
+  const refusal =
+    sharedGeneratorReason(project, context, command) ??
+    dependencyChangeReason(command) ??
+    workingMigrationReason(command);
   if (refusal) {
     decide(input, project.mode === 'advise' ? 'ask' : 'deny', refusal);
   }
@@ -503,7 +509,11 @@ function workerScopeReason(project, file, input) {
     return undefined;
   }
   const path = projectPath(project, file);
-  if (path.startsWith(`${project.contextsDir}/${context}/`) || /^test\/e2e\/[^/]+\.e2e\.spec\.ts$/.test(path)) {
+  if (
+    path.startsWith(`${project.contextsDir}/${context}/`) ||
+    /^test\/e2e\/[^/]+\.e2e\.spec\.ts$/.test(path) ||
+    isWorkingMigration(project, path)
+  ) {
     return undefined;
   }
   const owner = insideContexts(project, path)
@@ -511,6 +521,10 @@ function workerScopeReason(project, file, input) {
     : 'is a shared file (config, composition root, platform, generated documents, migrations, dependencies) that only the conductor or a generator changes';
 
   return `You build the context "${context}": writes are limited to ${project.contextsDir}/${context}/ and its end-to-end specs. ${path} ${owner}. ${REPORT_TO_CONDUCTOR}`;
+}
+
+function isWorkingMigration(project, path) {
+  return !insideContexts(project, path) && !path.startsWith(`${project.platformDir}/`) && WORKING_MIGRATION.test(path);
 }
 
 function workerContext(project, input) {
@@ -600,6 +614,14 @@ function hasRepository(project, context, aggregate) {
   return existsSync(
     join(project.root, project.contextsDir, context, 'domain', 'repositories', `${name}.repository.ts`),
   );
+}
+
+// TypeORM takes the path of the migration (`migrations/working-add-claims`): its last segment is the name.
+function workingMigrationReason(command) {
+  const name = /\bdb:generate(?:\s+--)?\s+([^\s;&|]+)/.exec(command)?.[1]?.split('/').pop();
+  return name && !/^working[_-]/.test(name)
+    ? `A worker generates a working migration only: \`npm run db:generate working-${name}\`. It lets the specs of the branch run; the conductor deletes it and generates the real one on the trunk at merge.`
+    : undefined;
 }
 
 function dependencyChangeReason(command) {

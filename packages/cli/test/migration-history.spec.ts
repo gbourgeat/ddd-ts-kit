@@ -3,6 +3,7 @@ import { drizzleHistoryFindings } from '../src/check/migrations/drizzle-history-
 import { migrationNameFindings } from '../src/check/migrations/migration-name-findings.js';
 import { readDrizzleMigrations } from '../src/check/migrations/read-drizzle-migrations.js';
 import { readMigrationFolder } from '../src/check/migrations/read-migration-folder.js';
+import { workingMigrationFindings } from '../src/check/migrations/working-migration-findings.js';
 import { tempDir, write } from './helpers.js';
 
 const ORIGIN = '00000000-0000-0000-0000-000000000000';
@@ -84,6 +85,22 @@ describe('the names of the migrations', () => {
     expect(
       migrationNameFindings(named('add-invoices', '0002_a', '0002_b')).map(([migration]) => migration.name),
     ).toEqual(['add-invoices', '0002_b']);
+  });
+
+  it('knows a working migration as each tool writes its name, and nothing else', () => {
+    const named = (...names: string[]) => names.map((name) => ({ name, file: `migrations/${name}` }));
+
+    const working = named(
+      '20261015101500_working-add-claims',
+      '20261015101500_working_add_claims',
+      '1791829645467-working-add-claims',
+    );
+
+    expect(workingMigrationFindings(working).map(([migration]) => migration.name)).toEqual(
+      working.map((migration) => migration.name),
+    );
+
+    expect(workingMigrationFindings(named('20261015101500_add-working-hours', '20261015101500_workings'))).toEqual([]);
   });
 });
 

@@ -547,6 +547,45 @@ test('a context worker generates freely inside its context, and reads anywhere',
   }
 });
 
+test('a context worker writes its working migration, and no other migration', () => {
+  const root = project();
+  const agent = worker(root);
+  for (const path of [
+    'migrations/20261015101500_working-add-orders.sql',
+    'migrations/20261015101500_working-add-orders.ts',
+    'migrations/1791829645467-working-add-orders.ts',
+    'prisma/migrations/20261015101500_working_add_orders/migration.sql',
+    'db/migrations/20261015101500_working-add-orders.sql',
+  ]) {
+    assert.equal(run('pre-write', write(join(root, path), agent)).output, undefined, path);
+  }
+  for (const path of [
+    'migrations/20261015101500_add-orders.sql',
+    'migrations/meta/_journal.json',
+    'src/platform/migrations/20261015101500_working-add-orders.ts',
+    'src/contexts/billing/migrations/20261015101500_working-add-orders.ts',
+  ]) {
+    assert.equal(decision(run('pre-write', write(join(root, path), agent))), 'deny', path);
+  }
+});
+
+test('a context worker generates a working migration only', () => {
+  const root = project();
+  const agent = worker(root);
+  for (const command of [
+    'npm run db:generate working-add-orders',
+    'npm run db:generate -- working_add_orders',
+    'npm run db:generate migrations/working-add-orders',
+    'npm run db:migrate',
+  ]) {
+    assert.equal(run('pre-bash', bash(root, command, agent)).output, undefined, command);
+  }
+  const real = run('pre-bash', bash(root, 'npm run db:generate add-orders', agent));
+  assert.equal(decision(real), 'deny');
+  assert.match(reason(real), /db:generate working-add-orders/);
+  assert.equal(run('pre-bash', bash(root, 'npm run db:generate add-orders')).output, undefined);
+});
+
 test('a context worker does not change the dependencies', () => {
   const root = project();
   const result = run('pre-bash', bash(root, 'npm install dayjs', worker(root)));
