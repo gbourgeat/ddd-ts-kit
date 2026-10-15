@@ -1,5 +1,5 @@
 import { ADR_DIRECTORY } from '../check/governance/adr-directory.js';
-import { nextAdrNumber } from '../generate/kinds/next-adr-number.js';
+import { adrNumber } from '../generate/kinds/adr-number.js';
 import type { Scope } from '../generate/scope.js';
 import { vars } from '../generate/vars.js';
 import { renderTemplate } from '../templating/index.js';
@@ -14,7 +14,7 @@ export function presetDecision(scope: Scope, preset: string): string {
     return '';
   }
 
-  const number = nextAdrNumber(scope.ws);
+  const number = adrNumber(scope.ws, undefined);
   const adr = { number, date: new Date().toISOString().slice(0, 10) };
 
   scope.ws.create(

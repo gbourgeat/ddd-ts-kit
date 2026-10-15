@@ -80,7 +80,8 @@ the catalog and the AsyncAPI document.
 A choice that constrains the future (a boundary, a relationship pattern, a provider, an
 exception to a rule) gets a record: context, decision, consequences, alternatives rejected,
 half a page. `npx ddd-ts-kit generate adr "<title>" [--deviation <what>] [--reason "<why>"]`
-numbers it, and with `--deviation` writes the config entry that points to it. An accepted
+numbers it (after the highest, or `--number <n>` when the project numbers by block, so that
+parallel branches never collide), and with `--deviation` writes the config entry that points to it. An accepted
 record is never rewritten: it is superseded by a new one.
 
 Style everywhere: present tense, business vocabulary, no history of how the code got there,

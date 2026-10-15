@@ -312,6 +312,12 @@ writes `docs/adr/0009-no-spec-for-generated-adapters.md` (the next free number) 
 ]
 ```
 
+A project whose teams work in parallel numbers its records by block (`0401`, `0402` for one
+story, `0701` for another), so that two branches never take the same number: `--number 401`
+writes `docs/adr/0401-<slug>.md`, its title `# ADR-0401` and the `adr` of its `deviations`
+entry, and refuses a number already in `docs/adr/`. Without it, the record takes the number
+after the highest.
+
 The rule itself is relaxed in the same pull request, in the `rules` of the config, where the
 reviewers see the exception and its record side by side.
 
