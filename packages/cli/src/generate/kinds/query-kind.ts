@@ -15,11 +15,11 @@ export const queryKind: Kind = {
   name: 'query',
   aliases: [],
   usage:
-    'query <context> <UseCaseName> (--permission <aggregate>.<action> | --public) [--search] [--term "<Term>=<meaning>"]...',
+    'query <context> <UseCaseName> (--permission <aggregate>.<action> [--grant <role>] | --public) [--search] [--term "<Term>=<meaning>"]...',
   summary:
     'A query, its result, its handler, its read port with an in-memory adapter and a fake, its spec and its registration on the query bus; with --search, one page of a search filtered by the access scope of the actor.',
   positionals: ['context', 'UseCaseName'],
-  writesShared: false,
+  writesShared: true,
   run: (request) => {
     const scope = openScope(request);
 

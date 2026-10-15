@@ -99,7 +99,11 @@ describe('init --force and the spelling of the imports, the settings of the agen
     expect(config(root, 'importExtension')).toBe('js');
     expect(jsonAt(readJson(root, 'tsconfig.json'), 'compilerOptions', 'moduleResolution')).toBe('NodeNext');
     expect(read(root, 'src/main.ts')).toContain("from '@/platform/compose-application.js';");
-    expect(checkJsonOf(cli(root, 'check', '--json')).violations).toEqual([]);
+
+    // The roles of the platform are written from their template again: the grants the generators had added are gone, and said.
+    expect([...new Set(checkJsonOf(cli(root, 'check', '--json')).violations.map(({ ruleId }) => ruleId))]).toEqual([
+      'authz/granted',
+    ]);
   });
 
   it('moves the declarations to the other spelling when asked, and leaves the imports of the contexts to the rule and its fix', () => {
@@ -113,7 +117,7 @@ describe('init --force and the spelling of the imports, the settings of the agen
     expect(jsonAt(readJson(root, 'tsconfig.json'), 'compilerOptions', 'moduleResolution')).toBe('Bundler');
     expect(read(root, 'src/main.ts')).toContain("from '@/platform/compose-application';");
     expect(found.length).toBeGreaterThan(50);
-    expect([...new Set(found.map(({ ruleId }) => ruleId))]).toEqual(['imports/extension']);
+    expect([...new Set(found.map(({ ruleId }) => ruleId))].sort()).toEqual(['authz/granted', 'imports/extension']);
 
     // What init does not write keeps its imports: the contexts, the entry points and the specs generators wrote.
     expect([...new Set(found.map(({ file }) => file.split('/').slice(0, 2).join('/')))].sort()).toEqual([

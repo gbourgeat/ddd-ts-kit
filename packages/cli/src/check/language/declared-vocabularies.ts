@@ -1,5 +1,5 @@
+import { permissionSets } from '../authz/permission-sets.js';
 import type { SourceFile } from '../model/source-file.js';
-import { BRACKETS } from '../text/brackets.js';
 import { matchingBracket } from '../text/matching-bracket.js';
 import type { DeclaredValue } from './declared-value.js';
 
@@ -7,7 +7,6 @@ const AS_CONST = /export\s+const\s+([A-Z][\w$]*)\s*=\s*\{/g;
 const CONST_ASSERTION = /^\s*as\s+const\b/;
 const ENTRY = /^\s*(?:([A-Za-z_$][\w$]*)|#(\d+)#)\s*:\s*#(\d+)#\s*$/;
 const IDENTIFIER = /^[A-Za-z_$][\w$]*$/;
-const PERMISSION_SET = /export\s+const\s+([a-z][\w$]*)\s*=\s*definePermissions\(\s*/g;
 
 /**
  * The closed vocabularies the project declares, by value: every object `as const` of string
@@ -99,40 +98,13 @@ function hasUnionType(text: string, name: string): boolean {
 }
 
 function permissionValues(file: SourceFile): DeclaredValue[] {
-  const { code, strings } = file.scan;
-
-  return [...code.matchAll(PERMISSION_SET)].flatMap((found) => {
-    const at = found.index + found[0].length;
-    const context = strings.find(({ start }) => start === at)?.value;
-    const open = code.indexOf('{', at);
-    const close = matchingBracket(code, open);
-
-    const keys = strings.filter(
-      ({ start, end }) =>
-        start > open && end < close && /^\s*:/.test(code.slice(end)) && depthAt(code, open, start) === 1,
-    );
-
-    return context === undefined || open === -1
-      ? []
-      : keys.map(({ value: key }) => ({
-          value: `${context}:${key}`,
-          written: `${found[1] ?? ''}['${key}'].id`,
-          vocabulary: found[1] ?? '',
-          file: file.path,
-          readBy: 'everywhere' as const,
-        }));
-  });
-}
-
-/** How many brackets are open at an offset, counted from the one at `from`. */
-function depthAt(code: string, from: number, offset: number): number {
-  let depth = 0;
-
-  for (let i = from; i < offset; i += 1) {
-    const char = code.charAt(i);
-
-    depth += BRACKETS.openers.includes(char) ? 1 : BRACKETS.closers.includes(char) ? -1 : 0;
-  }
-
-  return depth;
+  return permissionSets(file).flatMap(({ set, context, keys }) =>
+    keys.map(({ value: key }) => ({
+      value: `${context}:${key}`,
+      written: `${set}['${key}'].id`,
+      vocabulary: set,
+      file: file.path,
+      readBy: 'everywhere' as const,
+    })),
+  );
 }

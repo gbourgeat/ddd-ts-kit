@@ -104,6 +104,8 @@ export const VOCABULARY_FIXTURES: readonly Fixture[] = [
     ruleId: rule,
     name: 'a role of the platform written in a file of the platform',
     expect: { file: GRANTS },
+    // This roles file grants nothing by name: the permission of billing is reached by no role.
+    also: ['authz/granted'],
     files: named({ [GRANTS]: raw('ISSUER', 'admin') }),
   },
   {
@@ -128,6 +130,8 @@ export const VOCABULARY_FIXTURES: readonly Fixture[] = [
     ruleId: rule,
     name: 'a value of a vocabulary of the shared kernel, in the platform',
     expect: { file: GRANTS },
+    // This roles file grants nothing by name: the permission of billing is reached by no role.
+    also: ['authz/granted'],
     files: named({ [GRANTS]: raw('PRICED_IN', 'EUR') }),
   },
 ];

@@ -1,5 +1,5 @@
 [English](authorization-in-practice.md) · **Français**
-<!-- translation-of: authorization-in-practice.md sha256:09e1d6ec2ff8905c -->
+<!-- translation-of: authorization-in-practice.md sha256:57791a2567218b58 -->
 
 # L'autorisation en pratique
 
@@ -138,6 +138,16 @@ donne un, et ils appartiennent au *tenant* où s'exécute leur travail. La liste
 droit, `all` quand les *tenants* ne sont pas gérés ou que l'acteur les traverse,
 `filter: { tenantId }` sur le *tenant* du travail ou le seul *tenant* de l'acteur sinon, et
 `none` pour un acteur de plusieurs *tenants* hors du travail d'un *tenant*.
+
+Dans un projet généré, les rôles vivent dans `platform/auth/roles.ts`, et le
+super-administrateur détient `*`. Une nouvelle permission n'est donc atteinte que par les
+administrateurs tant qu'aucun rôle ne la détient par son nom : `generate
+command|query|file-upload ... --permission <p> --grant <role>` écrit l'attribution (et ajoute
+le rôle à `platform/auth/role.ts` s'il est nouveau), et sans `--grant` les étapes `next` du
+générateur désignent les rôles à modifier.
+[`authz/granted`](../ARCHITECTURE.fr.md#3-règles-de-dépendance) avertit sur une permission que
+seul le `*` nu atteint ; une permission réservée aux administrateurs est accordée à
+`Role.Admin` par son nom, pour que la revue lise l'intention.
 
 ### Politiques par attributs
 
@@ -326,4 +336,4 @@ adaptateur pour un service dédié est le sujet de
 - [Moteurs d'autorisation](../tools/authorization-engines.fr.md)
 - [`@ddd-ts-kit/auth`](../../packages/auth/README.fr.md) : la référence de l'API
 - [Référence d'architecture](../ARCHITECTURE.fr.md) : règles `authz/declared`, `authz/in-application`,
-  `authz/actor-explicit`
+  `authz/actor-explicit`, `authz/granted`

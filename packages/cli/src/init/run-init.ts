@@ -102,7 +102,7 @@ function rewireContexts(ws: Workspace, config: Config): void {
 
   if (present.length > 0) {
     ws.note(
-      `--force rewrote the files of the platform from their templates and wired the declared contexts again (${present.map(([name]) => name).join(', ')}). What a generator had added to one of those files besides (the value of a gateway, the settings of a job, a policy of its own) is gone: run \`npm run verify\`, and generate again what it reports missing.`,
+      `--force rewrote the files of the platform from their templates and wired the declared contexts again (${present.map(([name]) => name).join(', ')}). What a generator had added to one of those files besides (the value of a gateway, the settings of a job, the grant of a role, a policy of its own) is gone: run \`npm run verify\`, and generate again what it reports missing.`,
     );
   }
 }

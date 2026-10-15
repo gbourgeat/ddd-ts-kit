@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:3415256529eeab38 -->
+<!-- translation-of: README.md sha256:a8bf732e6ef21db7 -->
 
 # ddd-ts-kit
 
@@ -84,7 +84,7 @@ pnpm exec ddd-ts-kit generate context ordering --classification core \
 pnpm exec ddd-ts-kit generate context billing --classification supporting --upstream ordering:customer-supplier
 pnpm exec ddd-ts-kit generate aggregate ordering Order
 pnpm exec ddd-ts-kit generate repository ordering Order
-pnpm exec ddd-ts-kit generate command ordering PlaceOrder --permission order.place --aggregate Order
+pnpm exec ddd-ts-kit generate command ordering PlaceOrder --permission order.place --grant customer --aggregate Order
 pnpm exec ddd-ts-kit generate route ordering PlaceOrder --method POST --path /orders
 pnpm run docs:generate    # le contrat OpenAPI suit la nouvelle route
 pnpm run verify
@@ -102,8 +102,10 @@ paquets choisi. Pour voir l'application tourner : `cp .env.example .env`, `pnpm 
 Chaque `generate` écrit le fichier, sa spec, son fake ou son builder et son enregistrement, et
 liste les endroits `TODO(domain)` où une décision métier est attendue. Un nom absent du
 glossaire du contexte est refusé, tout comme une commande ou une requête qui ne déclare ni
-permission ni `--public`. `pnpm exec ddd-ts-kit generate --help` liste les 36 types de
-fichiers. Ce qui change d'une version à l'autre : [CHANGELOG.md](CHANGELOG.md).
+permission ni `--public`. `--grant customer` accorde la permission au rôle `customer` dans les
+rôles de la plateforme : sans lui, seul le super-administrateur atteint le cas d'usage et
+`check` avertit (`authz/granted`). `pnpm exec ddd-ts-kit generate --help` liste les 36 types
+de fichiers. Ce qui change d'une version à l'autre : [CHANGELOG.md](CHANGELOG.md).
 
 ### Une tranche, de bout en bout
 

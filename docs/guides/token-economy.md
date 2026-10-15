@@ -88,7 +88,7 @@ the kit's plugin targets it.
 an aggregate": ask it to run the generator and fill the three decisions it lists.
 
 ```bash
-npx ddd-ts-kit generate command ordering PlaceOrder --permission order.place --aggregate Order --json
+npx ddd-ts-kit generate command ordering PlaceOrder --permission order.place --grant customer --aggregate Order --json
 ```
 
 answers, abbreviated (`todos` repeats each place of `next` with the decision to make there):
@@ -103,6 +103,8 @@ answers, abbreviated (`todos` repeats each place of `next` with the decision to 
     "src/contexts/ordering/test/unit/place-order.handler.spec.ts"
   ],
   "updated": [
+    "src/platform/auth/role.ts",
+    "src/platform/auth/roles.ts",
     "src/contexts/ordering/ordering.declarations.ts",
     "src/contexts/ordering/CONTEXT.md"
   ],
@@ -110,14 +112,16 @@ answers, abbreviated (`todos` repeats each place of `next` with the decision to 
   "next": [
     "src/contexts/ordering/application/commands/place-order/place-order.command.ts:7",
     "src/contexts/ordering/application/commands/place-order/place-order.handler.ts:16",
-    "src/contexts/ordering/test/unit/place-order.handler.spec.ts:38"
+    "src/contexts/ordering/test/unit/place-order.handler.spec.ts:38",
+    "src/platform/auth/roles.ts:15"
   ]
 }
 ```
 
-Three `file:line` locations are the whole reading list of the task: the input of the command,
-the decision of the handler, the tests to write. The agent reads those lines and their
-neighbours, not the four files from the top, and never the files the generator wired for it.
+Four `file:line` locations are the whole reading list of the task: the input of the command,
+the decision of the handler, the tests to write, the grant of the role to check. The agent
+reads those lines and their neighbours, not the four files from the top, and never the files
+the generator wired for it.
 
 **Read the map, not the tree.** Start with `npx ddd-ts-kit describe <context> --json` (or
 `list --json` for the whole project) and the `CONTEXT.md` of the context in hand;

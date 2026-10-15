@@ -3,6 +3,7 @@ import { CliError } from '../cli-error.js';
 import { fitStatement } from '../layout/index.js';
 import type { RenderContext } from '../templating/index.js';
 import { declarePermission } from './declare-permission.js';
+import { grantPermission } from './grant-permission.js';
 import { permissionNamed } from './permission-named.js';
 import { permissionsFile } from './permissions-file.js';
 import type { Scope } from './scope.js';
@@ -21,6 +22,7 @@ export function accessVars(scope: Scope, useCase: UseCaseMessage): RenderContext
   }
 
   declarePermission(scope, permission, useCase.name);
+  grantPermission(scope, permission);
 
   return protectedAccess(scope, useCase, permission);
 }
@@ -32,6 +34,13 @@ function requestedPermission(scope: Scope, useCase: UseCaseMessage): string | un
     throw new CliError(
       '--permission and --public exclude each other.',
       'Keep --permission for a use case with a right to hold, or --public for one anybody may reach.',
+    );
+  }
+
+  if (scope.flags.grant !== undefined && isPublic) {
+    throw new CliError(
+      '--grant and --public exclude each other.',
+      'A public use case needs no role to hold it: keep --public alone, or give --permission with --grant <role>.',
     );
   }
 

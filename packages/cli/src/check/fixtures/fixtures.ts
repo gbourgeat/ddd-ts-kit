@@ -2,6 +2,7 @@ import { ALIAS_DECLARED_FIXTURES } from './alias-declared-fixtures.js';
 import { BUSINESS_NAME_FIXTURES } from './business-name-fixtures.js';
 import { AUTHZ_DECLARED_FIXTURES } from './authz-declared-fixtures.js';
 import { AUTHZ_FIXTURES } from './authz-fixtures.js';
+import { AUTHZ_GRANTED_FIXTURES } from './authz-granted-fixtures.js';
 import { AUTHZ_POLICY_FIXTURES } from './authz-policy-fixtures.js';
 import { CLEAN_FIXTURES } from './clean-fixtures.js';
 import { COMPOSITION_FIXTURES } from './composition-fixtures.js';
@@ -51,6 +52,7 @@ export const FIXTURES: readonly Fixture[] = [
   ...AUTHZ_DECLARED_FIXTURES,
   ...AUTHZ_FIXTURES,
   ...AUTHZ_POLICY_FIXTURES,
+  ...AUTHZ_GRANTED_FIXTURES,
   ...CLEAN_FIXTURES,
   ...COMPOSITION_FIXTURES,
   ...CONFIG_FIXTURES,

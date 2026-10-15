@@ -1,5 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { cli, DEFAULT_STACK, exists, read, tempDir, walk } from '../helpers.js';
+import { grantOf } from '../support/grant-of.js';
 import { initFlags } from '../support/init-flags.js';
 import { installForReal, type Manager } from './install-for-real.js';
 import { runIn } from './run-in.js';
@@ -65,7 +66,18 @@ describe.runIf(SLOW).each(CASES)(
       generate('context', 'shipping', '--classification', 'supporting', '--upstream', 'billing:customer-supplier');
       verified(root, manager);
       generate('aggregate', 'billing', 'Invoice');
-      generate('command', 'billing', 'IssueInvoice', '--aggregate', 'Invoice', '--permission', 'invoice.issue');
+
+      generate(
+        'command',
+        'billing',
+        'IssueInvoice',
+        '--aggregate',
+        'Invoice',
+        '--permission',
+        'invoice.issue',
+        ...grantOf(stack)('accountant'),
+      );
+
       verified(root, manager);
     }, 1_200_000);
 

@@ -28,7 +28,9 @@ worktree (`cd <worktree> && ...`).
   `route`, `integration-handler`, `event-handler`, `projection`, `acl`, `e2e`, `adapter` (once the project
   has its first adapter: the first one brings a helper to the platform). The conductor
   runs `context`, `repository`, `integration-event`, `job`, `gateway`, `policy`, the first
-  `adapter` of the project, and adds dependencies.
+  `adapter` of the project, and adds dependencies. Never pass `--grant`: the roles are a
+  file of the platform. Who holds each new permission is a need of your report, and the
+  `authz/granted` warning it leaves in your worktree is that need, not a cause to fix.
 - When you need something outside your scope (a field in an upstream contract, a new
   aggregate, a dependency, a platform binding): do not work around it and do not retry a
   refused write. Finish the slices that do not depend on it and put the need in your report.

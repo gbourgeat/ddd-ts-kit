@@ -73,6 +73,19 @@ export const AUTHZ_AND_EVENT_INJECTIONS: readonly Injection[] = [
     checker: true,
   },
   {
+    rule: 'authz/granted',
+    what: 'the example moved to roles, with roles that hold every context but scheduling by name',
+    file: `${SCHEDULING}/application/authorization/scheduling.permissions.ts`,
+    changes: [
+      { file: 'ddd-ts-kit.config.json', from: '"authz": "rebac"', to: '"authz": "rbac"' },
+      {
+        file: 'src/platform/auth/roles.ts',
+        to: "/** What each role may do: every context but scheduling, whose permissions nobody holds by name. */\nexport const roles: Readonly<Record<string, readonly string[]>> = {\n  admin: ['*'],\n  staff: ['identity:*', 'notification:*', 'analytics:*'],\n};\n",
+      },
+    ],
+    checker: true,
+  },
+  {
     rule: 'authz/actor-explicit',
     what: 'a handler that reads the ambient actor instead of the one its command carries',
     file: DUE_HANDLER,

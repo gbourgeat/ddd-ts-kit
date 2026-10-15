@@ -17,8 +17,8 @@ shared files each kind writes (`writesShared`, `shared`, `sharedWhen`).
 | `domain-service` | `<ctx> <Name>` | `domain/services/`, spec |
 | `state-machine` | `<ctx> <Aggregate> [--value <state>]... [--transition "<intention>:<from>[,<from>]...[><to>]"]...` | `domain/state-machines/<aggregate>.state-machine.ts`, the vocabulary `<Aggregate>Status` (created, or extended), spec; the first state is initial |
 | `repository` | `<ctx> <Aggregate> [--tenant-scoped]` | port in `domain/repositories/`, adapter and mapper in `infrastructure/persistence/`, fake, contract suite |
-| `command` | `<ctx> <UseCase> (--permission <aggregate>.<action> \| --public) [--aggregate <Name>]` | `application/commands/<use-case>/`, handler spec |
-| `query` | `<ctx> <UseCase> (--permission <aggregate>.<action> \| --public) [--search]` | `application/queries/<use-case>/`, read port, in-memory reader, fake, spec |
+| `command` | `<ctx> <UseCase> (--permission <aggregate>.<action> [--grant <role>] \| --public) [--aggregate <Name>]` | `application/commands/<use-case>/`, handler spec |
+| `query` | `<ctx> <UseCase> (--permission <aggregate>.<action> [--grant <role>] \| --public) [--search]` | `application/queries/<use-case>/`, read port, in-memory reader, fake, spec |
 | `port` | `<ctx> <Name>` | `application/ports/<name>.port.ts`, fake |
 | `adapter` | `<ctx> <Port> [--kind external\|gateway] [--decorators]` | `infrastructure/external/remote-<port>.adapter.ts`, spec |
 | `gateway` | `<ctx> <upstream> <Name>` | read contract in the upstream's published language, port, in-process adapter, fake, contract suite |

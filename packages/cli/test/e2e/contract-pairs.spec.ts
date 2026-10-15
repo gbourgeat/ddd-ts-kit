@@ -1,5 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { cli, DEFAULT_STACK, read as readFile, tempDir, type StackFlags } from '../helpers.js';
+import { grantOf } from '../support/grant-of.js';
 import { initFlags } from '../support/init-flags.js';
 import { readYaml } from '../support/read-yaml.js';
 import { shareMoney } from './contract-pair-sources.js';
@@ -112,14 +113,40 @@ function scaffold(root: string, stack: StackFlags): void {
     expect(result.code, `${args.join(' ')}: ${result.stderr}`).toBe(0);
   };
 
+  const grant = grantOf(stack)('accountant');
+
   run('init', ...initFlags(stack), '--package-manager', 'npm', '--sdk', '--context', 'billing:core');
   run('generate', 'aggregate', 'billing', 'Invoice', ...TERMS);
-  run('generate', 'command', 'billing', 'IssueInvoice', '--aggregate', 'Invoice', '--permission', 'invoice.issue');
+
+  run(
+    'generate',
+    'command',
+    'billing',
+    'IssueInvoice',
+    '--aggregate',
+    'Invoice',
+    '--permission',
+    'invoice.issue',
+    ...grant,
+  );
+
   run('generate', 'route', 'billing', 'IssueInvoice', '--method', 'POST', '--path', '/invoices');
   run('generate', 'e2e', 'billing', 'IssueInvoice');
-  run('generate', 'command', 'billing', 'VoidInvoice', '--aggregate', 'Invoice', '--permission', 'invoice.void');
+
+  run(
+    'generate',
+    'command',
+    'billing',
+    'VoidInvoice',
+    '--aggregate',
+    'Invoice',
+    '--permission',
+    'invoice.void',
+    ...grant,
+  );
+
   run('generate', 'route', 'billing', 'VoidInvoice', '--method', 'POST', '--path', '/invoices/:invoiceId/void');
-  run('generate', 'query', 'billing', 'SearchInvoices', '--search', '--permission', 'invoice.search');
+  run('generate', 'query', 'billing', 'SearchInvoices', '--search', '--permission', 'invoice.search', ...grant);
   run('generate', 'route', 'billing', 'SearchInvoices', '--method', 'GET', '--path', '/invoices');
   run('generate', 'schema', 'billing', 'Money');
   shareMoney(root, stack.validation, ROUTES);

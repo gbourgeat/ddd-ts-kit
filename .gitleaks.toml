@@ -1,0 +1,10 @@
+# The secrets scan of the CI (the Security job) runs gitleaks with its default rules, and these
+# exceptions. Each one is a pattern of this repository that is known not to be a secret.
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "The translation-of stamp of a French page holds the sha256 of its English page, written by pipeline/monorepo/translations.mjs: a hash of public text, whose entropy can look like a key."
+condition = "AND"
+regexes = ['''^[0-9a-f]+$''']
+paths = ['''(^|/)[^/]+\.fr\.md$''']
