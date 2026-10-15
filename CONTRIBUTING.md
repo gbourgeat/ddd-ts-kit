@@ -2,6 +2,42 @@
 
 # Contributing
 
+Thank you for taking the time. ddd-ts-kit is built in the open, and every contribution counts: a
+bug report with a reproduction, a typo, a translation, a test, an adapter, a rule. This page says
+how to start, then the rules every change follows.
+
+## Your first contribution
+
+1. **Pick something.** Issues labelled
+   [good first issue](https://github.com/gbourgeat/ddd-ts-kit/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)
+   need no deep knowledge of the checker; those labelled
+   [help wanted](https://github.com/gbourgeat/ddd-ts-kit/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22)
+   are larger. Say on the issue that you take it, so that two people do not do the same work. For
+   an idea that has no issue yet, open a
+   [discussion](https://github.com/gbourgeat/ddd-ts-kit/discussions) or a proposal first.
+2. **Set up.** Fork the repository, clone it, and run the commands below: they are what CI runs.
+   Node 22.12 or later.
+3. **Change, then check what you touched.** A documentation change needs `npm run check:dashes`,
+   `npm run docs:translations` and, if it has a checked code sample, `npm run docs:samples`; a
+   code change needs the build, the tests and the lint. Each package is held to a coverage floor
+   (`vitest.config.ts`): new code comes with its specs.
+4. **Open a pull request.** Its title is a conventional commit subject; its template asks what
+   changes, why, and how it was verified. Every pull request is reviewed by the maintainer.
+
+Kinds of contribution that are especially welcome:
+
+- an adapter for a broker, an ORM, an HTTP framework or a validation library the kit does not
+  support yet: it implements the port and passes the contract suite of that port;
+- tests for the parts of a package that run without a server, where its coverage floor is low;
+- documentation: a page that was unclear to you, a missing example, a translation;
+- feedback from a real project: what held, what got in the way, in
+  [Discussions](https://github.com/gbourgeat/ddd-ts-kit/discussions).
+
+You do not write French? Say so in the pull request: the French page can be written in the same
+pull request by the maintainer.
+
+## Commands
+
 ```bash
 npm ci
 npm run build

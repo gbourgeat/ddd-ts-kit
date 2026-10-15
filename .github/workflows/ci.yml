@@ -127,6 +127,34 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
+  coverage:
+    name: Coverage report (Codecov)
+    # The measure of a whole run only: a pull request measures the packages it reaches, which would read as a drop.
+    # Not a gate: the floors of vitest.config.ts are. The report feeds the badge of the README and the history.
+    if: ${{ github.event_name != 'pull_request' && needs.install.outputs.scope == 'all' && needs.unit.result == 'success' }}
+    needs: [install, unit]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      # Codecov authenticates the upload by the OIDC token of the run: no secret to store.
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: coverage
+          path: coverage
+      - uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
+        with:
+          use_oidc: true
+          files: coverage/lcov.info
+          disable_search: true
+          flags: unit
+          fail_ci_if_error: false
+
   unit-oldest:
     name: Unit tests (Node 22)
     needs: install

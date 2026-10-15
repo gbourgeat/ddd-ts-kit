@@ -11,6 +11,7 @@ import {
   rewriteLinks,
   sitePages,
   splitTitle,
+  withoutBanner,
   withoutHead,
 } from './assemble.mjs';
 import { builtProblems } from './check-built.mjs';
@@ -120,6 +121,35 @@ test('the switcher and the translation-of line are dropped, and the first headin
   assert.equal(plainText('`ddd-ts-kit.config.json` and [a *link*](x.md)'), 'ddd-ts-kit.config.json and a link');
   assert.equal(plainText('a <scr<script>ipt> b'), 'a ipt> b');
   assert.equal(plainText('<b>bold</b> text'), 'bold text');
+});
+
+test('the banner of a README on GitHub keeps its title and its pitch on the site, and drops the rest', () => {
+  const readme = [
+    '**English** · [Français](README.fr.md)',
+    '',
+    '<div align="center">',
+    '',
+    '<img src="docs/assets/logo.svg" alt="" width="128" height="128">',
+    '',
+    '# ddd-ts-kit',
+    '',
+    'The pitch, on',
+    'two lines.',
+    '',
+    '[![CI](https://example.com/badge.svg)](https://example.com)',
+    '',
+    '</div>',
+    '',
+    '## Why',
+    '',
+  ].join('\n');
+
+  assert.deepEqual(splitTitle('README.md', withoutHead(readme)), {
+    title: 'ddd-ts-kit',
+    body: 'The pitch, on two lines.\n\n## Why\n',
+  });
+  assert.equal(withoutBanner('# Title\n\nBody.\n'), '# Title\n\nBody.\n');
+  assert.throws(() => withoutBanner('<div align="center">\n\n# Title\n'), /without its <\/div> line/);
 });
 
 test('a link to a page leads to its route in the language of the page linked, its anchor kept', () => {

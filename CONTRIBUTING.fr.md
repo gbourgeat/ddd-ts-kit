@@ -1,7 +1,47 @@
 [English](CONTRIBUTING.md) · **Français**
-<!-- translation-of: CONTRIBUTING.md sha256:2f59ec613690a994 -->
+<!-- translation-of: CONTRIBUTING.md sha256:fbf7a67826b32298 -->
 
 # Contribuer
+
+Merci de prendre ce temps. ddd-ts-kit se construit en public, et chaque contribution compte : un
+signalement de bug avec sa reproduction, une coquille, une traduction, un test, un adaptateur,
+une règle. Cette page dit comment commencer, puis les règles que suit chaque changement.
+
+## Votre première contribution
+
+1. **Choisir un sujet.** Les issues étiquetées
+   [good first issue](https://github.com/gbourgeat/ddd-ts-kit/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)
+   ne demandent pas de connaître le checker en profondeur ; celles étiquetées
+   [help wanted](https://github.com/gbourgeat/ddd-ts-kit/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22)
+   sont plus grandes. Dites sur l'issue que vous la prenez, pour que deux personnes ne fassent
+   pas le même travail. Pour une idée qui n'a pas encore d'issue, ouvrez d'abord une
+   [discussion](https://github.com/gbourgeat/ddd-ts-kit/discussions) ou une proposition.
+2. **Installer.** Forkez le dépôt, clonez-le, et lancez les commandes ci-dessous : ce sont
+   celles que lance la CI. Node 22.12 ou ultérieur.
+3. **Changer, puis vérifier ce que vous avez touché.** Un changement de documentation demande
+   `npm run check:dashes`, `npm run docs:translations` et, s'il contient un exemple de code
+   vérifié, `npm run docs:samples` ; un changement de code demande la construction, les tests et
+   le lint. Chaque package est tenu à un seuil de couverture (`vitest.config.ts`) : le nouveau
+   code vient avec ses specs.
+4. **Ouvrir une pull request.** Son titre est un sujet de commit conventionnel ; son modèle
+   demande ce qui change, pourquoi, et comment cela a été vérifié. Chaque pull request est relue
+   par le mainteneur.
+
+Les contributions particulièrement bienvenues :
+
+- un adaptateur pour un broker, un ORM, un framework HTTP ou une bibliothèque de validation que
+  le kit ne prend pas encore en charge : il implémente le port et passe la suite de contrat de
+  ce port ;
+- des tests pour les parties d'un package qui tournent sans serveur, là où son seuil de
+  couverture est bas ;
+- la documentation : une page qui vous a paru obscure, un exemple qui manque, une traduction ;
+- un retour d'un vrai projet : ce qui a tenu, ce qui a gêné, dans les
+  [Discussions](https://github.com/gbourgeat/ddd-ts-kit/discussions).
+
+Vous n'écrivez pas le français ? Dites-le dans la pull request : le mainteneur peut écrire la
+page française dans la même pull request.
+
+## Commandes
 
 ```bash
 npm ci

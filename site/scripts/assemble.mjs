@@ -18,7 +18,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { englishPages, frenchOf, githubSlug, withoutTags } from '../../pipeline/monorepo/translations.mjs';
-import { homePage } from './home.mjs';
+import { homePage, pitchOf } from './home.mjs';
 import {
   BASE,
   contentFileOf,
@@ -39,6 +39,8 @@ const ENGLISH_SWITCHER = /^\*\*English\*\* · \[Français\]\(.*\)$/;
 const FRENCH_SWITCHER = /^\[English\]\(.*\) · \*\*Français\*\*$/;
 const TRANSLATION_OF = /^<!-- translation-of: .* -->$/;
 const DESCRIPTION_LENGTH = 200;
+const BANNER_OPEN = '<div align="center">';
+const BANNER_CLOSE = '</div>';
 
 if (process.argv[1] !== undefined && path.resolve(process.argv[1]) === import.meta.filename) {
   try {
@@ -119,7 +121,10 @@ function renderPage(repository, page) {
   return { file: page.file, text: `${yamlFrontmatter(frontmatter)}\n${rewritten}` };
 }
 
-/** The text without its language switcher and its translation-of line, nor the blank lines after them. */
+/**
+ * The text without its language switcher and its translation-of line, nor the blank lines after them,
+ * and without the banner of a README on GitHub.
+ */
 export function withoutHead(text) {
   const lines = text.split('\n');
   let start = 0;
@@ -132,7 +137,31 @@ export function withoutHead(text) {
     start += 1;
   }
 
-  return lines.slice(start).join('\n');
+  return withoutBanner(lines.slice(start).join('\n'));
+}
+
+/**
+ * A README opens on GitHub with a centered banner, `<div align="center">` to `</div>`: the logo, the
+ * title, the pitch, the badges and the links. The site has its own header, so only the title and
+ * the pitch, the first paragraph after it, are kept.
+ */
+export function withoutBanner(text) {
+  const lines = text.split('\n');
+  const open = lines.findIndex((line) => line.trim() !== '');
+
+  if (lines[open]?.trim() !== BANNER_OPEN) {
+    return text;
+  }
+
+  const close = lines.findIndex((line, index) => index > open && line.trim() === BANNER_CLOSE);
+  const banner = lines.slice(open + 1, close).join('\n');
+  const title = /^# \S.*$/m.exec(banner)?.[0];
+
+  if (close === -1 || title === undefined) {
+    throw new Error(`a banner (${BANNER_OPEN}) without its ${BANNER_CLOSE} line or its "# Title" line.`);
+  }
+
+  return [title, '', pitchOf(banner), ...lines.slice(close + 1)].join('\n');
 }
 
 /** The first level-one heading as the title, and what follows it as the body. */
