@@ -2,7 +2,7 @@
 
 # One slice, end to end
 
-The `generate` lines of the [quick start](../../README.md#quick-start) build a vertical slice of
+The `generate` lines of the [commands the agent runs](../../README.md#what-the-agent-runs) build a vertical slice of
 the `ordering` context: the request `POST /orders` crosses the four layers. The controller, the handler, the `Order` aggregate and
 its repository are classes the generators wrote; the command bus comes from the platform that
 `init` wrote.

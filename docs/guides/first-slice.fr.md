@@ -1,9 +1,9 @@
 [English](first-slice.md) · **Français**
-<!-- translation-of: first-slice.md sha256:4caf28da8f04bb6a -->
+<!-- translation-of: first-slice.md sha256:881baca31d5e2b43 -->
 
 # Une tranche, de bout en bout
 
-Les lignes `generate` du [démarrage rapide](../../README.fr.md#démarrage-rapide) construisent une
+Les lignes `generate` des [commandes que l'agent exécute](../../README.fr.md#ce-que-lagent-exécute) construisent une
 tranche verticale du contexte `ordering` : la requête HTTP `POST /orders` traverse les quatre
 couches. Le contrôleur, le gestionnaire,
 l'agrégat `Order` et son repository sont des classes que les générateurs ont écrites ; le bus
