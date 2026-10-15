@@ -1,5 +1,4 @@
 import path from 'node:path';
-import { barrelFile, dependenciesFile } from '../../declared/index.js';
 import type { ExportVerdict } from '../exports/export-verdict.js';
 import { judgeExports } from '../exports/judge-exports.js';
 import { kebabCaseOf } from '../exports/kebab-case-of.js';
@@ -9,6 +8,7 @@ import type { Finding } from '../model/finding.js';
 import type { Project } from '../model/project.js';
 import type { Rule } from '../model/rule.js';
 import type { SourceFile } from '../model/source-file.js';
+import { isGeneratedContextFile } from '../support/is-generated-context-file.js';
 import { perFile } from '../support/per-file.js';
 import { braceDepthAt } from '../text/brace-depth-at.js';
 
@@ -34,7 +34,7 @@ export const cleanOneExportPerFile: Rule = {
         return [];
       }
 
-      if (isGenerated(file)) {
+      if (isGeneratedContextFile(file)) {
         return [];
       }
 
@@ -53,18 +53,6 @@ function isJudged(file: SourceFile, project: Project): boolean {
   }
 
   return file.path.startsWith(`${root}/`) || segments.slice(0, -1).includes(path.posix.basename(root));
-}
-
-/** The generated files of a declared context: `declarations/barrel-current` holds every line of them. */
-function isGenerated(file: SourceFile): boolean {
-  const name = path.posix.basename(file.path);
-  const { location } = file;
-
-  if (location.area !== 'context' || location.layer !== 'root' || location.inside.length > 0) {
-    return false;
-  }
-
-  return name === barrelFile(location.context) || name === dependenciesFile(location.context);
 }
 
 /** `index.ts` at any depth. */

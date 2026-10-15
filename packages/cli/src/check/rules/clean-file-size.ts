@@ -1,4 +1,6 @@
 import type { Rule } from '../model/rule.js';
+import type { SourceFile } from '../model/source-file.js';
+import { isGeneratedContextFile } from '../support/is-generated-context-file.js';
 import { perFile } from '../support/per-file.js';
 
 const MAX_FILE_LINES = 350;
@@ -11,7 +13,7 @@ export const cleanFileSize: Rule = {
     return perFile(project, this.id, (file) => {
       const lines = file.text.split('\n').length - (file.text.endsWith('\n') ? 1 : 0);
 
-      if (lines <= MAX_FILE_LINES || file.path.split('/').includes('generated')) {
+      if (lines <= MAX_FILE_LINES || isGenerated(file)) {
         return [];
       }
 
@@ -25,3 +27,8 @@ export const cleanFileSize: Rule = {
     });
   },
 };
+
+/** A file written by a tool: under a directory named `generated`, or the barrel or dependency file of a context. */
+function isGenerated(file: SourceFile): boolean {
+  return file.path.split('/').includes('generated') || isGeneratedContextFile(file);
+}
