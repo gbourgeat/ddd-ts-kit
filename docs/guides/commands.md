@@ -96,7 +96,7 @@ The slice is finished when `todo ordering` no longer lists anything of it.
 |---|---|---|---|---|
 | `/ddd-ts-kit:integration-event` | a versioned event in the producer's published language, its consumer downstream | a context must react to another | the declaration, the outbox publication, an idempotent handler | `npm run docs:generate` |
 | `npx ddd-ts-kit generate integration-event <context> <Aggregate> <Fact>` | declares the event | in the upstream slice | `published-language/*.integration-event.ts` and its payload | `generate integration-handler` downstream |
-| `npx ddd-ts-kit generate integration-handler <context> <upstream> <eventType>` | the consumer | in the downstream slice | the handler, its spec, its registration | `npm run docs:generate` |
+| `npx ddd-ts-kit generate integration-handler <context> <upstream> <eventType>` | the consumer, named after the event, or as the design calls it with `--name <Name>` (the consumer name follows) | in the downstream slice | the handler, its spec, its registration | `npm run docs:generate` |
 | `npx ddd-ts-kit generate acl` or `gateway` | an anti-corruption layer, or a synchronous need behind a port | a downstream that must not take the upstream's model | the port and its adapter | the context map note |
 
 ## Persistence
@@ -322,8 +322,8 @@ Kinds
   form <context> <UseCase>
   schema <context|shared-kernel> <Name>
   integration-event <context> <Aggregate> <Fact> [--version <n>] [--term "<Term>=<meaning>"]...
-  integration-handler <context> <upstreamContext> <eventType>   (alias: consumer)
-  event-handler <context> <Aggregate> <Fact> [--phase before-commit|after-commit] [--term "<Term>=<meaning>"]...
+  integration-handler <context> <upstreamContext> <eventType> [--name <Name>] [--term "<Term>=<meaning>"]...   (alias: consumer)
+  event-handler <context> <Aggregate> <Fact> [--phase before-commit|after-commit] [--name <Name>] [--term "<Term>=<meaning>"]...
   projection <context> <Name> <eventType> [--term "<Term>=<meaning>"]...   (alias: projector)
   job <context> <Name> (--every <duration> | --cron "<expression>" [--time-zone <zone>]) --command <UseCaseName> [--term "<Term>=<meaning>"]...
   background-job <context> <Name> --command <UseCaseName> [--term "<Term>=<meaning>"]...

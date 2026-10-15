@@ -12,20 +12,30 @@ import { vars } from '../vars.js';
 import { wire } from '../wire.js';
 import type { EventDeclaration } from './event-declaration.js';
 import { findEventDeclaration } from './find-event-declaration.js';
+import { givenName } from '../given-name.js';
+import { learnTerms } from '../learn-terms.js';
 
 export const integrationHandlerKind: Kind = {
   name: 'integration-handler',
   aliases: ['consumer'],
-  usage: 'integration-handler <context> <upstreamContext> <eventType>',
+  usage: 'integration-handler <context> <upstreamContext> <eventType> [--name <Name>] [--term "<Term>=<meaning>"]...',
   summary:
     'An idempotent handler of an integration event of a declared upstream, its spec and its subscription under a consumer name.',
   positionals: ['context', 'upstreamContext', 'eventType'],
   writesShared: false,
   run: (request) => {
     const scope = openScope(request);
+
+    learnTerms(scope);
+
     const upstream = declaredUpstream(scope, request.args[1] ?? '');
     const eventType = eventTypeOf(upstream, request.args[2] ?? '');
-    const name = toName(eventType.split('.').join(' '));
+
+    const name = givenName(scope, toName(eventType.split('.').join(' ')), {
+      what: 'integration handler',
+      suffix: ['integration', 'handler'],
+    });
+
     const declaration = findEventDeclaration(scope, upstream.kebab, eventType);
 
     if (declaration === undefined && isDeclared(scope.config)) {

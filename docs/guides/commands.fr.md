@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:690af2f30c5905cf -->
+<!-- translation-of: commands.md sha256:5c1c975165be9980 -->
 
 # Quelle commande, quand
 
@@ -99,7 +99,7 @@ La tranche est finie quand `todo ordering` n'en liste plus rien.
 |---|---|---|---|---|
 | `/ddd-ts-kit:integration-event` | un événement versionné dans le langage publié du producteur, son consommateur en aval | un contexte doit réagir à un autre | la déclaration, la publication par l'outbox, un gestionnaire idempotent | `npm run docs:generate` |
 | `npx ddd-ts-kit generate integration-event <context> <Aggregate> <Fact>` | déclare l'événement | dans la tranche amont | `published-language/*.integration-event.ts` et sa charge utile | `generate integration-handler` en aval |
-| `npx ddd-ts-kit generate integration-handler <context> <upstream> <eventType>` | le consommateur | dans la tranche aval | le gestionnaire, sa *spec*, son enregistrement | `npm run docs:generate` |
+| `npx ddd-ts-kit generate integration-handler <context> <upstream> <eventType>` | le consommateur, nommé d'après l'événement, ou comme la conception l'appelle avec `--name <Name>` (le nom du consommateur suit) | dans la tranche aval | le gestionnaire, sa *spec*, son enregistrement | `npm run docs:generate` |
 | `npx ddd-ts-kit generate acl` ou `gateway` | une couche anticorruption, ou un besoin synchrone derrière un port | un aval qui ne doit pas prendre le modèle de l'amont | le port et son adaptateur | la note de la carte des contextes |
 
 ## Persistance
@@ -327,8 +327,8 @@ Kinds
   form <context> <UseCase>
   schema <context|shared-kernel> <Name>
   integration-event <context> <Aggregate> <Fact> [--version <n>] [--term "<Term>=<meaning>"]...
-  integration-handler <context> <upstreamContext> <eventType>   (alias: consumer)
-  event-handler <context> <Aggregate> <Fact> [--phase before-commit|after-commit] [--term "<Term>=<meaning>"]...
+  integration-handler <context> <upstreamContext> <eventType> [--name <Name>] [--term "<Term>=<meaning>"]...   (alias: consumer)
+  event-handler <context> <Aggregate> <Fact> [--phase before-commit|after-commit] [--name <Name>] [--term "<Term>=<meaning>"]...
   projection <context> <Name> <eventType> [--term "<Term>=<meaning>"]...   (alias: projector)
   job <context> <Name> (--every <duration> | --cron "<expression>" [--time-zone <zone>]) --command <UseCaseName> [--term "<Term>=<meaning>"]...
   background-job <context> <Name> --command <UseCaseName> [--term "<Term>=<meaning>"]...

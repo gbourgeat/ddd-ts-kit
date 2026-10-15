@@ -1,6 +1,6 @@
 import type { {{event.pascal}} } from '{{alias.context}}/domain/events/{{event.kebab}}.event{{alias.ext}}';
 
-export class {{event.pascal}}EventHandler {
+export class {{handler.pascal}}EventHandler {
   async handle(event: {{event.pascal}}): Promise<void> {
     {{#unless handler.afterCommit}}
     // TODO(domain): state the policy "when {{event.words}}, then ..." and carry it out by executing a command handler of this context (inject it through the constructor). It runs at the end of the unit of work, before the commit: depend only on what the transaction covers; an effect outside the database belongs in the after-commit phase or, when it must not be lost, behind an integration event, where a reaction in another context goes too.

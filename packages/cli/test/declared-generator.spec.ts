@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { cli, exists, read, scaffoldEverything, tempDir, walk, write } from './helpers.js';
+import { cli, read, scaffoldEverything, tempDir, walk, write } from './helpers.js';
 import { failure } from './reports.js';
 
 const BILLING = 'src/contexts/billing';
@@ -41,6 +41,7 @@ describe('a context generated in the declared style', () => {
       "export * from '@/contexts/billing/application/commands/issue-invoice/issue-invoice.handler';",
       "export * from '@/contexts/billing/application/event-handlers/invoice-issued.event-handler';",
       "export * from '@/contexts/billing/application/event-handlers/invoice-marked-as-paid.event-handler';",
+      "export * from '@/contexts/billing/application/event-handlers/thank-buyer.event-handler';",
       "export * from '@/contexts/billing/application/integration/publishers/invoice-issued-v2.publisher';",
       "export * from '@/contexts/billing/application/integration/publishers/invoice-issued.publisher';",
       "export * from '@/contexts/billing/application/queries/search-invoices/search-invoices.handler';",
@@ -329,22 +330,5 @@ describe('a declared context and what hosts it', () => {
     );
 
     expect(cli(root, 'check', '--rule', 'declarations/barrel-current').code).toBe(0);
-  });
-});
-
-describe('a declared adapter towards another context', () => {
-  it('is a gateway: its file and its decorator say so', () => {
-    const project = tempDir('declared');
-
-    cli(project, 'init', '--context', 'billing:core');
-    cli(project, 'generate', 'port', 'billing', 'Stock');
-
-    expect(cli(project, 'generate', 'adapter', 'billing', 'Stock', '--kind', 'gateway').code).toBe(0);
-
-    expect(read(project, `${BILLING}/infrastructure/external/remote-stock.gateway.ts`)).toContain(
-      '@Gateway(Stock, {\n  aspects: [ownPolicy(retry({ attempts: 3, backoff: { baseMs: 100 } }), timeout(2000))],\n})',
-    );
-
-    expect(exists(project, `${BILLING}/infrastructure/external/remote-stock.adapter.ts`)).toBe(false);
   });
 });

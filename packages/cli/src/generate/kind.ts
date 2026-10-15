@@ -46,6 +46,8 @@ export interface KindFlags {
   readonly reason?: string;
   /** The number of a decision record, as `--number <n>`, when the project numbers by block. */
   readonly number?: string;
+  /** The name of an element its generator would otherwise derive from another argument, as `--name <Name>`. */
+  readonly name?: string;
   /** When a domain event handler runs: `before-commit`, the default, or `after-commit`. */
   readonly phase?: string;
   /** The route group of a controller, or the parent of a group, by its name. */

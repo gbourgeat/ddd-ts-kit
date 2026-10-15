@@ -5,7 +5,7 @@ import {
   announceDomainEvents,
   unitOfWorkStage,
 } from '@ddd-ts-kit/kernel';
-import { {{event.pascal}}EventHandler } from '{{alias.context}}/application/event-handlers/{{event.kebab}}.event-handler{{alias.ext}}';
+import { {{handler.pascal}}EventHandler } from '{{alias.context}}/application/event-handlers/{{handler.kebab}}.event-handler{{alias.ext}}';
 import { {{event.pascal}} } from '{{alias.context}}/domain/events/{{event.kebab}}.event{{alias.ext}}';
 
 describe('When {{event.words}}', () => {
@@ -15,7 +15,7 @@ describe('When {{event.words}}', () => {
 {{#if handler.afterCommit}}
   it('reacts once the unit of work has committed, without failing', async () => {
 {{/if}}
-    const handler = new {{event.pascal}}EventHandler();
+    const handler = new {{handler.pascal}}EventHandler();
     const event = new {{event.pascal}}('{{aggregate.kebab}}-1', new Date('2026-01-01T00:00:00.000Z'));
     const domainEvents = new InMemoryDomainEventDispatcher();
     const reactedAt: string[] = [];
