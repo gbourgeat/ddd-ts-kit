@@ -60,7 +60,9 @@ otherwise.
 npx ddd-ts-kit generate integration-handler <ctx> <upstream> <event-type> --json
 ```
 
-writes `application/integration/handlers/<name>.integration-handler.ts` and its spec.
+writes `application/integration/handlers/<name>.integration-handler.ts` and its spec. The name
+comes from the event; when the design names the handler after what it does here, pass
+`--name <Name>`: the file, the class, the consumer name and the system actor follow it.
 
 - The handler translates the event into **one command of its own context** and sends it on
   the `CommandBus`, as `systemActor('<context>.<name>')`. No business logic in it.
