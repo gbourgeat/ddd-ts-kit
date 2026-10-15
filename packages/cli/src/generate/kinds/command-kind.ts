@@ -14,7 +14,7 @@ export const commandKind: Kind = {
   name: 'command',
   aliases: [],
   usage:
-    'command <context> <UseCaseName> (--permission <aggregate>.<action> | --public) [--aggregate <Name>] [--term "<Term>=<meaning>"]...',
+    'command <context> <UseCaseName> (--permission <aggregate>.<action> [--grant <role>] | --public) [--aggregate <Name>] [--term "<Term>=<meaning>"]...',
   summary: 'A command, its handler with injected ports, its spec and its registration on the command bus.',
   positionals: ['context', 'UseCaseName'],
   writesShared: true,

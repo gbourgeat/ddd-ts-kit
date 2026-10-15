@@ -30,6 +30,8 @@ export interface KindFlags {
   readonly allowName: boolean;
   /** The permission a use case requires, as `<aggregate>.<action>`. */
   readonly permission?: string;
+  /** The role that holds the new permission, written in the roles of the platform. */
+  readonly grant?: string;
   /** The use case is reachable by anybody, on purpose. */
   readonly public: boolean;
   readonly tenantScoped: boolean;

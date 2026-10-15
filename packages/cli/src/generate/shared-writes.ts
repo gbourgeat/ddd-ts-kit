@@ -10,6 +10,13 @@ export interface SharedWrite {
 
 const STORAGE = ['the schema index of the platform (<platformDir>/database/schema.ts)', 'prisma/schema.prisma'];
 
+const GRANTS = [
+  'the roles of the platform (<platformDir>/auth/roles.ts)',
+  'the role vocabulary of the platform (<platformDir>/auth/role.ts)',
+];
+
+const GRANTED = '--grant <role> names the role that holds the permission (stack.authz rbac)';
+
 const STORED =
   'the repository is the first of its context with drizzle, knex or typeorm (the tables file of the context joins the schema index), or stack.orm is prisma (every model joins the one schema)';
 
@@ -29,10 +36,12 @@ export const SHARED_WRITES: Readonly<Record<string, SharedWrite>> = {
   },
   repository: { files: STORAGE, when: STORED },
   command: {
-    files: STORAGE,
-    when: `--aggregate names an aggregate without a repository, which is created with the command, and ${STORED}`,
-    worker: 'on an aggregate that has its repository',
+    files: [...STORAGE, ...GRANTS],
+    when: `--aggregate names an aggregate without a repository, which is created with the command, and ${STORED}; or ${GRANTED}`,
+    worker: 'on an aggregate that has its repository, without --grant',
   },
+  query: { files: GRANTS, when: GRANTED, worker: 'without --grant' },
+  'file-upload': { files: GRANTS, when: GRANTED, worker: 'without --grant' },
   'integration-event': {
     files: ['the audited events registry (<platformDir>/audit/audited-events.ts)', 'docs/context-map.md'],
     when: 'the audit trail is wired, or the event type is new',

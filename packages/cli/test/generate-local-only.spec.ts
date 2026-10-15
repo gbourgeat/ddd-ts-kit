@@ -10,6 +10,8 @@ const SHARED_KINDS = [
   'context',
   'repository',
   'command',
+  'query',
+  'file-upload',
   'integration-event',
   'job',
   'policy',
