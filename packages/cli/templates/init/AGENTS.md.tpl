@@ -8,7 +8,7 @@ A ddd-ts-kit project: one bounded context per directory of `{{config.contextsDir
 - `npx ddd-ts-kit check --changed-since <ref>`: the architecture rules on what changed; `npx ddd-ts-kit explain <rule-id>` gives the reason and an example.
 - `npx ddd-ts-kit list --json`: the map of the contexts. `npx ddd-ts-kit describe <context> --json`: one context as data (use cases, routes, events, ports, dependencies).
 - `npx ddd-ts-kit status`: the next step of the plan, the slices by status, the markers left per context. `npx ddd-ts-kit todo [<context>]`: each remaining `TODO(domain)` and `it.todo` as `file:line`.
-- `npx ddd-ts-kit docs`: regenerates the context map and the generated sections of each `CONTEXT.md`; `npm run docs:generate` the OpenAPI contract, the forms and the event catalog.
+- `npm run regenerate`: every derived file in one step, after a change of route, schema, event or config: `.dependency-cruiser.cjs`, then `npm run docs:generate`, which runs `npx ddd-ts-kit docs` (the context map, the barrels, the generated sections of each `CONTEXT.md`) and writes the OpenAPI contract, the forms and the event catalog.
 
 ## Read less
 
@@ -29,7 +29,7 @@ Never edit `<context>.declarations.ts`: `generate`, `docs` and `npm run dev` rew
 {{#if assembly.discovery}}
 Never edit `<context>.dependencies.ts`: `generate`, `docs` and `npm run dev` rewrite it from the constructor signatures (it registers what each constructor is injected). After changing a constructor by hand, `npx ddd-ts-kit docs`.
 {{/if}}
-Never edit the contracts under `openapi/` (`openapi/openapi.yaml`, one file per document when `openapi.documents` splits it, the forms of `openapi/forms/`), `docs/integration/asyncapi.yaml`, `docs/integration/event-catalog.md`, `{{config.platformDir}}/http/openapi-documents.ts`, `.dependency-cruiser.cjs` or the generated sections of a `CONTEXT.md`: change the code or the config, then `npm run docs:generate`, `npx ddd-ts-kit docs` and `npx ddd-ts-kit depcruise-config --write`. `stored-events.lock.json` is written by `npx ddd-ts-kit docs --stored-events` once the shape of a version is final (`docs --check` fails while one is unrecorded), never by hand: a stored shape changes only by a new version with its upcaster (`event-sourcing/upcaster-required`).
+Never edit the contracts under `openapi/` (`openapi/openapi.yaml`, one file per document when `openapi.documents` splits it, the forms of `openapi/forms/`), `docs/integration/asyncapi.yaml`, `docs/integration/event-catalog.md`, `{{config.platformDir}}/http/openapi-documents.ts`, `.dependency-cruiser.cjs` or the generated sections of a `CONTEXT.md`: change the code or the config, then `npm run regenerate`. `stored-events.lock.json` is written by `npx ddd-ts-kit docs --stored-events` once the shape of a version is final (`docs --check` fails while one is unrecorded), never by hand: a stored shape changes only by a new version with its upcaster (`event-sourcing/upcaster-required`).
 {{#if sdk.on}}
 {{sdk.instruction}}
 {{/if}}

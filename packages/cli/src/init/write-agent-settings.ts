@@ -24,6 +24,7 @@ const PERMISSIONS: Permissions = {
     'Bash(npm run lint *)',
     'Bash(npm test *)',
     'Bash(npm run test:e2e *)',
+    'Bash(npm run regenerate)',
     'Bash(npm run docs:generate)',
     'Bash(npm run docs:check)',
     'Bash(npm run openapi:generate)',

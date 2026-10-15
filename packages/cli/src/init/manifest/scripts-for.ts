@@ -34,6 +34,8 @@ function scriptsOf(config: Config): Record<string, string> {
     quality: 'npm run format:check && npm run lint && npm run check:arch && npm run depcruise && npm run deadcode',
     ...testScripts(config),
     ...documentationScripts(config),
+    // Every derived file in one step after a change: the dependency rules from the config, then what `docs:generate` writes.
+    regenerate: 'ddd-ts-kit depcruise-config --write && npm run docs:generate',
     ...databaseScripts(config),
     'infra:up': 'docker compose up -d --wait',
     'infra:down': 'docker compose down',

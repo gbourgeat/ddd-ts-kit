@@ -22,6 +22,7 @@ const DEFAULT_SCRIPTS = {
   'docs:generate': 'ddd-ts-kit docs && npm run build && node dist/scripts/openapi.js && node dist/scripts/events.js',
   'docs:check':
     'ddd-ts-kit docs --check && npm run build && node dist/scripts/openapi.js --check && node dist/scripts/events.js --check',
+  regenerate: 'ddd-ts-kit depcruise-config --write && npm run docs:generate',
   'db:generate': 'drizzle-kit generate --name',
   'db:migrate': 'drizzle-kit migrate',
   'infra:up': 'docker compose up -d --wait',
