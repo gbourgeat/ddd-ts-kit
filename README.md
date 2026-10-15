@@ -286,9 +286,20 @@ translation, a test, an adapter or a new rule. Good places to start:
 [CONTRIBUTING.md](CONTRIBUTING.md) gives the setup, the ground rules and how a change reaches
 `main`. If ddd-ts-kit helps you, a star on GitHub helps others find it.
 
-<a href="https://github.com/gbourgeat/ddd-ts-kit/graphs/contributors"><img src="https://contrib.rocks/image?repo=gbourgeat/ddd-ts-kit" alt="The contributors of ddd-ts-kit"></a>
-
 [![Star history of ddd-ts-kit](https://api.star-history.com/svg?repos=gbourgeat/ddd-ts-kit&type=Date)](https://star-history.com/#gbourgeat/ddd-ts-kit&Date)
+
+## Contributors
+
+The people who build ddd-ts-kit, then everyone whose commits reached `main`.
+
+<table>
+  <tr>
+    <td align="center"><a href="https://github.com/gbourgeat"><img src="https://github.com/gbourgeat.png?size=160" width="80" alt=""><br><sub><b>Gary Bourgeat</b></sub></a><br><sub>maintainer</sub></td>
+    <td align="center"><a href="https://github.com/jd-bargy"><img src="https://github.com/jd-bargy.png?size=160" width="80" alt=""><br><sub><b>Jean-Daniel Bargy</b></sub></a></td>
+  </tr>
+</table>
+
+<a href="https://github.com/gbourgeat/ddd-ts-kit/graphs/contributors"><img src="https://contrib.rocks/image?repo=gbourgeat/ddd-ts-kit" alt="The contributors of ddd-ts-kit"></a>
 
 ## License
 
