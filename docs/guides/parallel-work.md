@@ -60,8 +60,7 @@ When two branches changed one of them, the conflict carries no information. Take
 then:
 
 ```bash
-npx ddd-ts-kit docs          # context map, CONTEXT.md lists, barrels
-npm run docs:generate        # OpenAPI, AsyncAPI, event catalog
+npm run regenerate           # dependency rules, then docs:generate: context map, CONTEXT.md lists, barrels, OpenAPI, AsyncAPI, event catalog
 npm run verify
 ```
 
@@ -75,8 +74,7 @@ git fetch origin
 git merge origin/main
 # CONFLICT (content): Merge conflict in openapi/openapi.yaml
 git checkout --theirs openapi/openapi.yaml   # either side: the file is rewritten below
-npx ddd-ts-kit docs
-npm run docs:generate
+npm run regenerate
 npm run verify
 git status --short                           # every file the generators rewrote
 git add openapi/openapi.yaml                 # file by file, then read the staged diff

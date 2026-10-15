@@ -17,6 +17,7 @@ allowed-tools:
   - Bash(npx ddd-ts-kit todo *)
   - Bash(npx ddd-ts-kit explain *)
   - Bash(npm test *)
+  - Bash(npm run regenerate)
   - Bash(npm run docs:generate)
 ---
 
@@ -131,7 +132,7 @@ npm test -- <ctx>
 npx ddd-ts-kit check --changed-since HEAD
 npx ddd-ts-kit todo <ctx>    # every TODO(domain) and it.todo left, as file:line
 npx ddd-ts-kit check --commit-size
-npm run docs:generate        # only when a route or an integration event changed
+npm run regenerate           # only when a route, a schema, an event or the config changed
 ```
 
 Then one commit for the slice (skill `ddd-ts-kit:commit-discipline`), and its row marked in

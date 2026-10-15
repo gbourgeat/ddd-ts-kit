@@ -15,6 +15,7 @@ allowed-tools:
   - Bash(npx ddd-ts-kit docs)
   - Bash(npx ddd-ts-kit docs --check)
   - Bash(npx ddd-ts-kit generate adr *)
+  - Bash(npm run regenerate)
   - Bash(npm run docs:generate)
   - Bash(npm run docs:check)
   - Bash(npm run openapi:generate)
@@ -42,13 +43,15 @@ a command, checked for drift in the pipeline, never edited by hand: the guard re
 | `docs/adr/NNNN-<slug>.md` | written, one decision each | `npx ddd-ts-kit generate adr "<title>"` |
 
 `npm run docs:generate` runs the three generators; `npm run docs:check` fails on a stale
-file and is part of `npm run verify`.
+file and is part of `npm run verify`. `npm run regenerate` is the one step after a change of
+route, schema, event or config: `depcruise-config --write`, then `docs:generate`, which already
+runs `npx ddd-ts-kit docs` (a project without the script gets it from `npx ddd-ts-kit init --force`).
 
 ## Procedure
 
 1. Change the source: the route definition, the event declaration, the config. Never the
    generated file.
-2. Regenerate, then read `git diff -- openapi docs`: it is the summary of what the change
+2. Regenerate (`npm run regenerate`), then read `git diff -- openapi docs`: it is the summary of what the change
    did to the contracts. A diff you did not expect is a breaking change you did not intend.
 3. Update the written parts the diff makes stale. If nothing is stale, write nothing.
 4. Commit the generated files with the code that changed them (skill

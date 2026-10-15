@@ -16,6 +16,7 @@ allowed-tools:
   - Bash(npm run test:coverage)
   - Bash(npm run test:e2e *)
   - Bash(npm run docs:check)
+  - Bash(npm run regenerate)
   - Bash(npm run docs:generate)
   - Bash(npm run depcruise)
   - Bash(npm run deadcode)
@@ -81,7 +82,7 @@ line only. `npx ddd-ts-kit explain <rule-id>` gives the reason and a good and a 
 | `aspects/*`, `tracing/*`, `standard/*` | a technical concern inside business code | skill `ddd-ts-kit:cross-cutting` |
 | `governance/*`, `config/*` | a suppression or a config entry without its reason or record | skill `ddd-ts-kit:deviation` |
 | `test/*` | behaviour without a test, or a mock | skill `ddd-ts-kit:testing` |
-| documentation drift | generated files not regenerated | `npx ddd-ts-kit docs`, `npm run docs:generate`, commit them with the code |
+| documentation drift | generated files not regenerated | `npm run regenerate`, commit them with the code |
 | `event-sourcing/*`, `unrecorded ... in stored-events.lock.json` from `docs:check` | a state change outside an apply method, a stored shape changed in place, a stored version not recorded | skill `ddd-ts-kit:persistence`; a changed stored shape is a new version with its upcaster, and an unrecorded one is recorded by `npx ddd-ts-kit docs --stored-events` once final, never by hand |
 
 Five ids are held by ESLint (`domain/*`, `application/*`): `npm run lint` reports them.

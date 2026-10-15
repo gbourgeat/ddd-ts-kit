@@ -66,8 +66,8 @@ describe.runIf(SLOW).each(CASES)('a project on %s (%s)', (manager, _label, stack
     expect(exists(root, 'dist/src/main.js')).toBe(true);
   }, 240_000);
 
-  it('passes verify, once its documents are generated: types, lint, format, every spec with the coverage thresholds, end to end, architecture, graph, dead code, documents', () => {
-    script('docs:generate');
+  it('passes verify, once its derived files are regenerated in one step: types, lint, format, every spec with the coverage thresholds, end to end, architecture, graph, dead code, documents', () => {
+    script('regenerate');
 
     const verified = script('verify');
 

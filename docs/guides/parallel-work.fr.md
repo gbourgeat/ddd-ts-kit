@@ -1,5 +1,5 @@
 [English](parallel-work.md) · **Français**
-<!-- translation-of: parallel-work.md sha256:8f096d9647e9e1c0 -->
+<!-- translation-of: parallel-work.md sha256:8bd04120cdea5509 -->
 
 # Travailler en parallèle sans collisions
 
@@ -63,8 +63,7 @@ tous des fonctions des sources. Quand deux branches ont modifié l'un d'eux, le 
 aucune information. Prenez l'un ou l'autre côté, puis :
 
 ```bash
-npx ddd-ts-kit docs          # carte des contextes, listes des CONTEXT.md, barrels
-npm run docs:generate        # OpenAPI, AsyncAPI, catalogue des événements
+npm run regenerate           # règles de dépendances, puis docs:generate : carte des contextes, listes des CONTEXT.md, barrels, OpenAPI, AsyncAPI, catalogue des événements
 npm run verify
 ```
 
@@ -79,8 +78,7 @@ git fetch origin
 git merge origin/main
 # CONFLICT (content): Merge conflict in openapi/openapi.yaml
 git checkout --theirs openapi/openapi.yaml   # n'importe quel côté : le fichier est réécrit ci-dessous
-npx ddd-ts-kit docs
-npm run docs:generate
+npm run regenerate
 npm run verify
 git status --short                           # chaque fichier que les générateurs ont réécrit
 git add openapi/openapi.yaml                 # fichier par fichier, puis relire le diff indexé
