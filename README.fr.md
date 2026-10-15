@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:81b2225885401fd2 -->
+<!-- translation-of: README.md sha256:1ff27c2e42874190 -->
 
 <div align="center">
 
@@ -9,8 +9,8 @@
 
 Domain-Driven Design (DDD), Clean Architecture (hexagonale, ports et adaptateurs) et Clean Code
 pour les backends TypeScript et Node.js, tenus par des outils plutôt que par de bonnes
-intentions, pour les développeurs et pour les agents de code avec lesquels ils travaillent :
-Claude Code, Codex et GitHub Copilot.
+intentions. Vous décrivez le métier ; votre agent de code (Claude Code, Codex ou GitHub Copilot)
+le construit avec le kit, et le kit le tient à l'architecture.
 
 [![CI](https://github.com/gbourgeat/ddd-ts-kit/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/gbourgeat/ddd-ts-kit/actions/workflows/ci.yml)
 [![Couverture](https://codecov.io/gh/gbourgeat/ddd-ts-kit/graph/badge.svg?branch=main)](https://codecov.io/gh/gbourgeat/ddd-ts-kit)
@@ -69,6 +69,65 @@ laquelle mène le lien de sa première ligne.
 
 ## Démarrage rapide
 
+Vous ne lancez pas ddd-ts-kit vous-même : votre agent de code le fait. Vous décrivez le métier,
+répondez à ses questions et relisez ce qu'il écrit ; l'agent lance les générateurs, les
+vérifications et la porte de qualité, et le hook du plugin refuse une écriture qui enfreint une
+règle.
+
+**1. Installez le plugin** dans l'agent que vous utilisez. Ce dépôt est sa marketplace :
+
+| Agent | Installation | La skill `start` |
+|---|---|---|
+| Claude Code | `/plugin marketplace add gbourgeat/ddd-ts-kit`, puis `/plugin install ddd-ts-kit@ddd-ts-kit` | `/ddd-ts-kit:start` |
+| Codex | `codex plugin marketplace add gbourgeat/ddd-ts-kit`, puis installer `ddd-ts-kit` depuis `/plugins` et approuver ses hooks dans `/hooks` | `$start` |
+| Copilot CLI | `copilot plugin marketplace add gbourgeat/ddd-ts-kit`, puis `copilot plugin install ddd-ts-kit@ddd-ts-kit` | par son nom, `start` |
+| Agent cloud de Copilot, VS Code | déclaré par le `.github/copilot/settings.json` que le projet reçoit à son amorçage | par son nom, `start` |
+
+**2. Ouvrez une session dans un dossier vide, et donnez-lui vos besoins :**
+
+```text
+/ddd-ts-kit:start Une API pour une boutique : les clients passent des commandes, chaque commande est facturée, puis expédiée.
+```
+
+L'agent conduit les [neuf étapes](#démarrer-un-projet) une à une et s'arrête pour votre
+décision à chaque choix stratégique. Il écrit la découverte, les contextes délimités et leurs
+glossaires sous `docs/architecture/` pour que vous les relisiez, puis amorce le projet, planifie
+les tranches et les construit un commit à la fois, vert sur toute la porte à chaque étape. Une
+session ultérieure reprend depuis `docs/architecture/plan.md` : la même skill, sans argument.
+
+La machine a besoin de Node 22.12 ou ultérieur : l'agent lance la CLI par `npx`. Sans le plugin,
+l'`AGENTS.md` et les règles par couche qu'écrit l'amorçage guident tout de même chaque agent.
+
+## Démarrer un projet
+
+Suivez ces étapes dans l'ordre : c'est le chemin pris en charge, et les outils sont faits pour
+le tenir. Chaque étape est une skill du plugin (`/ddd-ts-kit:<skill>`), ou une commande, et
+laisse un fichier que la suivante lit. `/ddd-ts-kit:start` conduit les étapes 1 à 7 une à une,
+et `npx ddd-ts-kit status` dit à tout moment quelle étape vient ensuite.
+
+| # | Étape | Skill ou commande | Produit |
+|---|---|---|---|
+| 1 | Découvrir le domaine | `discover-domain` | `docs/architecture/discovery.md` : acteurs, commandes, événements, politiques |
+| 2 | Trouver les contextes délimités | `bounded-contexts` | `docs/architecture/contexts.md` : chaque frontière et sa raison |
+| 3 | Écrire les glossaires | `glossary` | le langage omniprésent de chaque contexte |
+| 4 | Dessiner la carte des contextes | `context-map` | qui est en amont de qui, et selon quel patron |
+| 5 | Choisir la stack et démarrer | `bootstrap`, `ddd-ts-kit init`, `generate context` | le projet, vert sur `verify`, un `CONTEXT.md` par contexte |
+| 6 | Planifier les tranches | `plan-slices` | `docs/architecture/slices.md` : un cas d'usage par tranche, dans l'ordre |
+| 7 | Construire tranche par tranche | `use-case` (`parallel-work` pour plusieurs workers) | le code et ses tests, un commit par tranche |
+| 8 | Passer la porte de qualité | `quality-gate`, `npm run verify` | une porte verte avant chaque fusion |
+| 9 | Documenter | `document`, `npm run docs:generate` | des contrats, une carte des contextes et des enregistrements de décision à jour |
+
+![Les neuf étapes : quatre écrites dans les mots du métier sous docs/architecture/ (découvrir le domaine, trouver les contextes, écrire les glossaires, dessiner la carte des contextes), puis cinq avec les générateurs (démarrer, planifier les tranches, construire une tranche, passer la porte, documenter) ; les étapes 7 et 8 se répètent pour chaque tranche](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/ddd-ts-kit-workflow.fr.svg)
+
+La [méthodologie](docs/guides/methodology.fr.md) est la référence de chaque étape et dit ce que
+coûte d'en sauter une ; [quelle commande, quand](docs/guides/commands.fr.md) donne la commande
+de chaque moment d'un projet.
+
+## Ce que l'agent exécute
+
+Derrière chaque étape, l'agent tape les commandes de la CLI : vous les voyez dans sa session,
+vous pouvez les taper vous-même, et le pipeline lance les mêmes. Un nouveau projet commence par :
+
 ```bash
 mkdir orders-api && cd orders-api
 npx ddd-ts-kit init
@@ -105,31 +164,6 @@ Un nom absent du glossaire du contexte est refusé, tout comme une commande ou u
 déclare ni permission ni `--public`. [Une tranche, de bout en bout](docs/guides/first-slice.fr.md)
 suit la requête HTTP `POST /orders` à travers les quatre couches et montre le code une fois les
 endroits `TODO(domain)` remplis.
-
-## Démarrer un projet
-
-Suivez ces étapes dans l'ordre : c'est le chemin pris en charge, et les outils sont faits pour
-le tenir. Chaque étape est une skill du plugin (`/ddd-ts-kit:<skill>`), ou une commande, et
-laisse un fichier que la suivante lit. `/ddd-ts-kit:start` conduit les étapes 1 à 7 une à une,
-et `npx ddd-ts-kit status` dit à tout moment quelle étape vient ensuite.
-
-| # | Étape | Skill ou commande | Produit |
-|---|---|---|---|
-| 1 | Découvrir le domaine | `discover-domain` | `docs/architecture/discovery.md` : acteurs, commandes, événements, politiques |
-| 2 | Trouver les contextes délimités | `bounded-contexts` | `docs/architecture/contexts.md` : chaque frontière et sa raison |
-| 3 | Écrire les glossaires | `glossary` | le langage omniprésent de chaque contexte |
-| 4 | Dessiner la carte des contextes | `context-map` | qui est en amont de qui, et selon quel patron |
-| 5 | Choisir la stack et démarrer | `bootstrap`, `ddd-ts-kit init`, `generate context` | le projet, vert sur `verify`, un `CONTEXT.md` par contexte |
-| 6 | Planifier les tranches | `plan-slices` | `docs/architecture/slices.md` : un cas d'usage par tranche, dans l'ordre |
-| 7 | Construire tranche par tranche | `use-case` (`parallel-work` pour plusieurs workers) | le code et ses tests, un commit par tranche |
-| 8 | Passer la porte de qualité | `quality-gate`, `npm run verify` | une porte verte avant chaque fusion |
-| 9 | Documenter | `document`, `npm run docs:generate` | des contrats, une carte des contextes et des enregistrements de décision à jour |
-
-![Les neuf étapes : quatre écrites dans les mots du métier sous docs/architecture/ (découvrir le domaine, trouver les contextes, écrire les glossaires, dessiner la carte des contextes), puis cinq avec les générateurs (démarrer, planifier les tranches, construire une tranche, passer la porte, documenter) ; les étapes 7 et 8 se répètent pour chaque tranche](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/ddd-ts-kit-workflow.fr.svg)
-
-La [méthodologie](docs/guides/methodology.fr.md) est la référence de chaque étape et dit ce que
-coûte d'en sauter une ; [quelle commande, quand](docs/guides/commands.fr.md) donne la commande
-de chaque moment d'un projet.
 
 ## Ce qui est imposé
 
@@ -192,16 +226,8 @@ autres :
 
 ## Le plugin pour agents de code
 
-Ce dépôt est la marketplace du plugin pour Claude Code, Codex et GitHub Copilot :
-
-| Agent | Installation | Une skill s'appelle |
-|---|---|---|
-| Claude Code | `/plugin marketplace add gbourgeat/ddd-ts-kit`, puis `/plugin install ddd-ts-kit@ddd-ts-kit` | `/ddd-ts-kit:start` |
-| Codex | `codex plugin marketplace add gbourgeat/ddd-ts-kit`, puis installer `ddd-ts-kit` depuis `/plugins` et approuver ses hooks dans `/hooks` | `$start` |
-| Copilot CLI | `copilot plugin marketplace add gbourgeat/ddd-ts-kit`, puis `copilot plugin install ddd-ts-kit@ddd-ts-kit` | par son nom, `start` |
-| Agent cloud de Copilot, VS Code | déclaré par le `.github/copilot/settings.json` qu'écrit `init` | par son nom, `start` |
-
-Vingt-deux skills conduisent un projet d'une expression des besoins jusqu'à des contextes qui
+Ce dépôt est la marketplace du plugin pour Claude Code, Codex et GitHub Copilot ; le
+[démarrage rapide](#démarrage-rapide) dit comment chaque agent l'installe. Vingt-deux skills conduisent un projet d'une expression des besoins jusqu'à des contextes qui
 fonctionnent, quatre agents explorent, construisent un contexte dans son propre worktree,
 écrivent les specs et relisent, et le hook refuse un fichier écrit à la main là où un générateur
 existe et vérifie chaque fichier écrit. Même sans plugin, l'`AGENTS.md` et les règles par couche
