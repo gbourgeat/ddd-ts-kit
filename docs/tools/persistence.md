@@ -463,13 +463,26 @@ refuses to run without the description: two branches never write the same file.
 
 | Tool | `db:generate` | Writes | A migration merged older than one already applied |
 |---|---|---|---|
-| drizzle-kit 0.31 | `drizzle-kit generate --name` (`migrations.prefix: 'timestamp'` in `drizzle.config.ts`) | `migrations/20261012093000_add-invoices.sql`, its snapshot `meta/20261012093000_snapshot.json`, one entry of `meta/_journal.json` | **skipped without a word**: the migrator applies the entries newer than the last one recorded |
+| drizzle-kit 0.31 | `ddd-ts-kit drizzle-generate --name`, which runs `drizzle-kit generate --name` (`migrations.prefix: 'timestamp'` in `drizzle.config.ts`) | `migrations/20261012093000_add-invoices.sql`, its snapshot `meta/20261012093000_snapshot.json`, one entry of `meta/_journal.json` | **skipped without a word**: the migrator applies the entries newer than the last one recorded |
 | knex 3 | `knex migrate:make` (the ES module stub of knex, set in `knexfile.js`) | `migrations/20261012093000_add-invoices.js` | applied: knex runs every file it has not recorded |
 | Prisma 7 | `prisma migrate dev --create-only --name` | `prisma/migrations/20261012093000_add_invoices/migration.sql` (Prisma turns `-` into `_`) | applied by `migrate deploy`, which runs every migration it has not recorded (its documentation; not measured here) |
 | TypeORM 1.1 | `typeorm migration:generate -d <data source>`, given the path: `npm run db:generate migrations/add-invoices` | `migrations/1791829645467-add-invoices.ts` (milliseconds, and a `-`: TypeORM fixes both) | applied: TypeORM runs every migration it has not recorded |
 
 The command takes the description after the script: `npm run db:generate add-invoices`
 (`npm run db:generate -- audit-guard --custom` for a hand-written drizzle-kit migration).
+
+**Without a terminal.** When a change of the schema could be a rename (a column or a table gone
+and another one added), drizzle-kit asks on a terminal whether it is created or renamed.
+Measured with drizzle-kit 0.31.11 (2026-10-15): without a terminal, as an agent or a pipeline
+runs it, it prints `Interactive prompts require a TTY terminal`, writes nothing and exits 0;
+under a pseudo-terminal (`script -qec`) it asks and waits for an answer nobody gives. It has no
+option to answer in advance. So the script goes through `ddd-ts-kit drizzle-generate`: in a
+terminal it is `drizzle-kit generate` as is; without one, that output, and the forked snapshot
+below, become an error that names the fix (exit code 2). The fix is a change that cannot be
+read two ways: add the new column in one migration and drop the old one in a later one, or
+write the statements in a custom migration. Prisma 7 does not wait either: where
+`prisma migrate dev` would ask (a warning of data loss), it stops with an error in a
+non-interactive environment (read in its code, not measured); knex and TypeORM ask nothing.
 The first knex migration that `init` writes is `00000000000000_initial.js`: it sorts before any
 timestamp; a project created before 0.5 keeps its `0001_initial.js`, since an applied
 migration is never renamed.
@@ -482,7 +495,8 @@ project each generating a migration, as two branches would:
 - with `prefix: 'timestamp'`, the files and the snapshots no longer collide, but
   `meta/_journal.json` still conflicts (each branch appends an entry at the same place), and
   once merged by hand two snapshots name the same parent: `drizzle-kit check` exits 1 and
-  `drizzle-kit generate` prints the collision and writes nothing (with exit code 0);
+  `drizzle-kit generate` prints the collision and writes nothing (with exit code 0, which
+  `ddd-ts-kit drizzle-generate` turns into exit code 2);
 - worse, a database that applied the later migration first (the other branch was merged and
   deployed before) skips the earlier one for good: drizzle-orm's migrator applies only the
   entries whose `when` is newer than the last one it recorded. Measured on PGlite: after

@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:d1ffd1e79d9330f0 -->
+<!-- translation-of: commands.md sha256:690af2f30c5905cf -->
 
 # Quelle commande, quand
 
@@ -247,6 +247,7 @@ Usage
   ddd-ts-kit sdk [--check] [--dry-run]
   ddd-ts-kit depcruise-config [--check|--write]
   ddd-ts-kit build-aliases [--project <tsconfig>]
+  ddd-ts-kit drizzle-generate --name <what-it-does> [--custom]
   ddd-ts-kit error-factories --plan | --apply [--dry-run]
   ddd-ts-kit controllers [<context>] [--dry-run]
   ddd-ts-kit value-objects [--dry-run]
@@ -265,6 +266,9 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
                    runner and the linter; everything when a shared path changed or without --base
   build-aliases    after the compiler: rewrites the import aliases left in the emitted .js and .d.ts files
                    into relative paths, so that plain node runs the output (tsconfig.build.json by default)
+  drizzle-generate the db:generate of a Drizzle project: drizzle-kit generate --name, which without a terminal
+                   fails and names the fix when drizzle-kit would ask whether a column or table is renamed,
+                   where drizzle-kit alone writes nothing and exits 0
   error-factories  moves a project from one class per error to static factories on one error class per
                    concept: --plan writes error-factories.plan.json, where each class is given its concept;
                    --apply follows it (classes, specs, every usage, "stack.refusals" in the config)

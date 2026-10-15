@@ -6,7 +6,8 @@ const DATABASE_SCRIPTS: Readonly<Record<string, Record<string, string>>> = {
   custom: { 'db:migrate': 'echo "Custom persistence: run your own migrations here."' },
   // drizzle-kit loads the TypeScript schema, which re-exports the tables of each context by their alias: it reads the `paths` of tsconfig.json itself.
   // Every `db:generate` takes what the migration does (`npm run db:generate add-invoices`) and refuses to run without it: the tool prefixes it with a timestamp.
-  drizzle: { 'db:generate': 'drizzle-kit generate --name', 'db:migrate': 'drizzle-kit migrate' },
+  // Through the CLI: without a terminal drizzle-kit cannot ask whether a column is renamed, writes nothing and exits 0; `drizzle-generate` fails then, with the fix.
+  drizzle: { 'db:generate': 'ddd-ts-kit drizzle-generate --name', 'db:migrate': 'drizzle-kit migrate' },
   knex: { 'db:generate': 'knex migrate:make', 'db:migrate': 'npm run build && knex migrate:latest' },
   // The client and the schema of the tests are build products of prisma/schema.prisma: every entry point refreshes them.
   prisma: {
