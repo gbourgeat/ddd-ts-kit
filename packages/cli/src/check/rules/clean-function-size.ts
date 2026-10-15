@@ -20,7 +20,7 @@ interface Measured {
 }
 
 const SPLIT_FIX =
-  'Extract each step into a function named after what it does, placed below this one, until the body reads as a list of intentions; a test suite is split into one `describe` or one spec file per behaviour.';
+  'Extract each step into a function named after what it does, placed below this one, until the body reads as a list of intentions; a test suite is split into several top-level `describe` blocks of the same spec file, one per behaviour (a nested `describe` counts in its parent), and into a second spec file only past the 350 lines of clean/file-size.';
 
 export const cleanFunctionSize: Rule = {
   id: 'clean/function-size',
@@ -109,7 +109,7 @@ function tooManyParameters(shape: Measured, limits: Limits): Flaw[] {
   return [
     {
       message: `${shape.label} takes ${shape.parameters} parameters (limit ${limits.maxParameters}).`,
-      fix: 'Group the parameters that travel together into a value object or a named parameter object: they are a concept that has no name yet.',
+      fix: 'Group the parameters that travel together into a typed props object or a value object (`Contestation.create({ claim, reason, raisedBy, raisedAt })`): they are a concept that has no name yet. Never add one more parameter, nor split the function only to get under the limit.',
     },
   ];
 }

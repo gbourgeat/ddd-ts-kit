@@ -9,7 +9,7 @@ export function parseFile(text: string) { return text.split('\\n').map(parseLine
 function parseLine(line: string) {}`,
   },
   'clean/function-size': {
-    why: 'A long function mixes several levels of abstraction, and its parts can be neither named nor tested alone. More than three parameters usually travel together because they are one concept without a type. Small functions with few arguments are what makes the stepdown order readable. The limits are configurable under `limits`, up to a ceiling: no function is longer than 100 lines, describe callbacks, module files and tests included, and that ceiling is an error whatever the severity of the rule.',
+    why: 'A long function mixes several levels of abstraction, and its parts can be neither named nor tested alone. More than three parameters usually travel together because they are one concept without a type: name it, as a typed props object or a value object (`Contestation.create({ claim, reason, raisedBy, raisedAt })`), rather than adding a fourth parameter. Small functions with few arguments are what makes the stepdown order readable. The limits are configurable under `limits`, up to a ceiling: no function is longer than 100 lines, describe callbacks, module files and tests included, and that ceiling is an error whatever the severity of the rule. A `describe` longer than that covers several behaviours: the spec file holds one top-level `describe` per behaviour (a nested one counts in its parent), and a second spec file is needed only past the 350 lines of `clean/file-size`.',
     bad: `function issue(id: string, customer: string, amount: number, currency: string, dueOn: Date) {}`,
     good: `function issue(id: string, customer: CustomerId, total: Money) {}`,
   },

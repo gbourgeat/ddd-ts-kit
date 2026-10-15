@@ -12,6 +12,20 @@ interface Options {
 
 const GROUPING_CALLS = new Set(['describe', 'suite', 'context']);
 
+/** What a test runner chains on a grouping call (`describe.each`, `describe.skip`): `context.run` is not one. */
+const RUNNER_MODIFIERS = new Set([
+  'each',
+  'skip',
+  'only',
+  'todo',
+  'concurrent',
+  'sequential',
+  'shuffle',
+  'skipIf',
+  'runIf',
+  'fails',
+]);
+
 export const cleanFunctionSize = defineRule<'parameters' | 'lines', [Options]>({
   id: 'clean/function-size',
   type: 'suggestion',
@@ -20,7 +34,7 @@ export const cleanFunctionSize = defineRule<'parameters' | 'lines', [Options]>({
     'A function has at most 3 parameters and 30 lines (configurable, never above 100 lines); a longer one is doing more than one thing.',
   messages: {
     parameters:
-      '{{name}} takes {{count}} parameters (limit {{limit}}). Group the parameters that travel together into a value object or a named parameter object: they are a concept that has no name yet.',
+      '{{name}} takes {{count}} parameters (limit {{limit}}). Group the parameters that travel together into a typed props object or a value object (`Contestation.create({ claim, reason, raisedBy, raisedAt })`): they are a concept that has no name yet. Never add one more parameter, nor split the function only to get under the limit.',
     lines:
       '{{name}} is {{count}} lines long (limit {{limit}}). Extract each step into a function named after what it does, placed below this one, until the body reads as a list of intentions.',
   },
@@ -80,11 +94,22 @@ function isGroupingCallback(node: FunctionNode): boolean {
     return true;
   }
 
+  const chained: string[] = [];
+
   while (callee.type === AST_NODE_TYPES.MemberExpression || callee.type === AST_NODE_TYPES.CallExpression) {
-    callee = callee.type === AST_NODE_TYPES.MemberExpression ? callee.object : callee.callee;
+    if (callee.type === AST_NODE_TYPES.MemberExpression) {
+      chained.push(callee.property.type === AST_NODE_TYPES.Identifier ? callee.property.name : '');
+      callee = callee.object;
+    } else {
+      callee = callee.callee;
+    }
   }
 
-  return callee.type === AST_NODE_TYPES.Identifier && GROUPING_CALLS.has(callee.name);
+  return (
+    callee.type === AST_NODE_TYPES.Identifier &&
+    GROUPING_CALLS.has(callee.name) &&
+    chained.every((modifier) => RUNNER_MODIFIERS.has(modifier))
+  );
 }
 
 /** `runner.describe(...)`: a contract suite receives its test runner instead of importing it. */
