@@ -6,14 +6,20 @@ import { writeAdr } from './write-adr.js';
 export const adrKind: Kind = {
   name: 'adr',
   aliases: [],
-  usage: 'adr "<title>" [--deviation <what>] [--reason "<why>"]',
-  summary: 'A decision record in docs/adr/; with --deviation, the entry of the config that points to it.',
+  usage: 'adr "<title>" [--number <n>] [--deviation <what>] [--reason "<why>"]',
+  summary:
+    'A decision record in docs/adr/, numbered after the highest or by --number; with --deviation, the entry of the config that points to it.',
   positionals: ['title'],
   writesShared: true,
   run: ({ ws, args, flags }) => {
     const title = (args[0] ?? '').trim();
-    const { deviation: what, reason = title } = flags;
-    const number = writeAdr(ws, { title, ...(what === undefined ? {} : { deviation: { what, reason } }) });
+    const { deviation: what, reason = title, number: asked } = flags;
+
+    const number = writeAdr(ws, {
+      title,
+      ...(asked === undefined ? {} : { number: asked }),
+      ...(what === undefined ? {} : { deviation: { what, reason } }),
+    });
 
     if (what !== undefined) {
       declareDeviation(ws, { what, adr: number, reason });

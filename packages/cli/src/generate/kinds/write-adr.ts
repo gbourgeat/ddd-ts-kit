@@ -4,15 +4,17 @@ import { toName } from '../../naming/index.js';
 import { renderTemplate } from '../../templating/index.js';
 import type { Workspace } from '../../workspace/index.js';
 import { ADR_DIRECTORY } from '../../check/governance/adr-directory.js';
-import { nextAdrNumber } from './next-adr-number.js';
+import { adrNumber } from './adr-number.js';
 
 export interface AdrRequest {
   readonly title: string;
   /** What the decision relaxes, as the key the config names it by, and why. */
   readonly deviation?: Pick<Deviation, 'what' | 'reason'>;
+  /** The number asked with `--number`; by default, one after the highest in `docs/adr/`. */
+  readonly number?: string;
 }
 
-/** Writes the record under the next free number and answers that number. */
+/** Writes the record under the number asked, or the next free one, and answers that number. */
 export function writeAdr(ws: Workspace, request: AdrRequest): string {
   const slug = toName(request.title).kebab;
 
@@ -23,7 +25,7 @@ export function writeAdr(ws: Workspace, request: AdrRequest): string {
     );
   }
 
-  const number = nextAdrNumber(ws);
+  const number = adrNumber(ws, request.number);
   const { deviation } = request;
 
   const adr = {

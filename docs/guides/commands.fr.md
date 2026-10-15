@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:c62df6aa5dc16bdd -->
+<!-- translation-of: commands.md sha256:514c5b8446b53c17 -->
 
 # Quelle commande, quand
 
@@ -333,7 +333,7 @@ Kinds
   adapter <context> <Port> [--kind external|gateway] [--decorators]
   service <context>
   worker
-  adr "<title>" [--deviation <what>] [--reason "<why>"]
+  adr "<title>" [--number <n>] [--deviation <what>] [--reason "<why>"]
 ```
 <!-- /ddd-ts-kit:commands -->
 

@@ -328,7 +328,7 @@ Kinds
   adapter <context> <Port> [--kind external|gateway] [--decorators]
   service <context>
   worker
-  adr "<title>" [--deviation <what>] [--reason "<why>"]
+  adr "<title>" [--number <n>] [--deviation <what>] [--reason "<why>"]
 ```
 <!-- /ddd-ts-kit:commands -->
 

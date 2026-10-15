@@ -44,6 +44,8 @@ export interface KindFlags {
   /** What an ADR deviates from, as a config key such as `rules.clean/stepdown`. */
   readonly deviation?: string;
   readonly reason?: string;
+  /** The number of a decision record, as `--number <n>`, when the project numbers by block. */
+  readonly number?: string;
   /** When a domain event handler runs: `before-commit`, the default, or `after-commit`. */
   readonly phase?: string;
   /** The route group of a controller, or the parent of a group, by its name. */

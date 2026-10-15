@@ -1,5 +1,5 @@
 [English](team-workflow.md) · **Français**
-<!-- translation-of: team-workflow.md sha256:9396b523718bd10e -->
+<!-- translation-of: team-workflow.md sha256:3461bbf3f711c226 -->
 
 # Travailler en équipe sur un projet DDD
 
@@ -325,6 +325,12 @@ npx ddd-ts-kit generate adr "No spec for generated adapters" \
   { "what": "rules.test/spec-required", "adr": "0009", "reason": "Generated adapters are covered by the contract suite." }
 ]
 ```
+
+Un projet dont les équipes travaillent en parallèle numérote ses enregistrements par bloc
+(`0401`, `0402` pour une story, `0701` pour une autre), pour que deux branches ne prennent
+jamais le même numéro : `--number 401` écrit `docs/adr/0401-<slug>.md`, son titre
+`# ADR-0401` et l'`adr` de son entrée `deviations`, et refuse un numéro déjà présent dans
+`docs/adr/`. Sans lui, l'enregistrement prend le numéro qui suit le plus grand.
 
 La règle elle-même est assouplie dans la même *pull request*, dans les `rules` de la
 configuration, là où les relecteurs voient l'exception et son enregistrement côte à côte.
