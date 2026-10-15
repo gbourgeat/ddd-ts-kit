@@ -20,7 +20,16 @@ export default defineConfig(({ mode }) => ({
         extends: true,
         test: { name: 'unit', include: ['src/**/*.spec.ts'], exclude: [INTEGRATION_SPECS, ...NOT_AFFECTED] },
       },
-      { extends: true, test: { name: INTEGRATION_MODE, include: [INTEGRATION_SPECS], exclude: NOT_AFFECTED } },
+      {
+        extends: true,
+        test: {
+          name: INTEGRATION_MODE,
+          include: [INTEGRATION_SPECS],
+          exclude: NOT_AFFECTED,
+          // A hook opens the test database (PGlite started and its tables created, or a server reached): under coverage on a busy machine it outlasts the default 10 seconds.
+          hookTimeout: 60_000,
+        },
+      },
     ],
     coverage: {
       provider: 'v8',
