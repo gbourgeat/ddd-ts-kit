@@ -4,7 +4,7 @@ What each version changes for someone who uses the kit. The packages of `package
 together, under one version; the notes of each [GitHub release](https://github.com/gbourgeat/ddd-ts-kit/releases)
 list the pull requests behind it.
 
-## Unreleased
+## 0.20.0
 
 **A permission no role holds is said.** In a project whose rights are roles (`stack.authz`
 `rbac`), `authz/granted` (`ddd-ts-kit check`) reports each permission a context declares that no
