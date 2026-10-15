@@ -4,6 +4,66 @@ What each version changes for someone who uses the kit. The packages of `package
 together, under one version; the notes of each [GitHub release](https://github.com/gbourgeat/ddd-ts-kit/releases)
 list the pull requests behind it.
 
+## 0.21.0
+
+**A rule can be set for some files only, and a rule off everywhere is said.** `rules.<id>` in
+`ddd-ts-kit.config.json` also takes `{ "severity": "error" | "warn" | "off", "files": ["<glob>"] }`:
+a finding on a matching file takes that severity, every other file keeps the one of the project.
+The ESLint preset applies the same setting to the same files. A lowered setting still needs its
+`deviations` entry. The new rule `config/rule-off-everywhere` (a warning) reports a bare `"off"`,
+which hides every finding of the rule and not only the ones its exception was about. To move,
+narrow each reported rule to the files it is about, or write `"files": ["**"]` when the whole
+project is meant.
+
+**The generated barrel of a context is not judged by `clean/file-size`.** `<context>.declarations.ts`
+and `<context>.dependencies.ts`, at the root of their context, are written by the kit and may grow
+past 350 lines; a project no longer has to turn the rule off for them. A file of the same name
+elsewhere is still judged. To move, remove an exception you wrote for them.
+
+**`worker-scope` briefs one batch, from a checked base.** `--base <ref>` cuts the worktree from
+that ref (`origin/main`) and gives it as the trunk of the checks; `--rows <id,...>` limits the
+briefing to those rows of `slices.md`, in that order. Without `--base`, the command refuses to run
+from a worker's worktree, and an existing worktree or branch that does not contain the base is
+refused with the fix. The `rules:` of a row is filled from the line of rules that `plan-slices`
+writes under the table. The `context-builder` agent takes one or two rows, keeps its last turns for
+its report and never ends without it; `architecture-reviewer` keeps turns for its verdict.
+
+**A worker may generate a working migration.** `npm run db:generate working-<what>` in a worker's
+worktree is allowed by the guard, and `persistence/migration-history` accepts it there, so a branch
+that changes the stored state is green alone. On the trunk the same file is reported: at the merge
+the conductor deletes it and generates the real one (`parallel-work`, merge step). Any other
+migration stays refused to a worker.
+
+**`db:generate` under drizzle-kit no longer waits or pretends.** Without a terminal, drizzle-kit
+refused its rename question, wrote no migration and exited 0; under a pseudo-terminal it waited
+for an answer. `db:generate` is now `ddd-ts-kit drizzle-generate --name`: in a terminal it is
+`drizzle-kit generate` as before; without one, those two silent failures exit 2 with the fix (split
+the rename, or write a custom migration). To move, in a Drizzle project, set the `db:generate`
+script to `ddd-ts-kit drizzle-generate --name`, or run `npx ddd-ts-kit init --force`.
+
+**One `regenerate` script for every derived file.** `npm run regenerate` runs
+`ddd-ts-kit depcruise-config --write` then `npm run docs:generate` (the context documents, the
+barrels, the OpenAPI and event documents, the clients): the one step after a change of route,
+schema, event or config. To move, run `npx ddd-ts-kit init --force` after the upgrade, which adds
+the script and allows it to agents.
+
+**`generate adr` takes `--number <n>`.** A team that numbers its decision records by block
+(`0401` for one story, `0701` for another) chooses the number instead of taking the highest plus
+one. The number goes to the file, the `# ADR-NNNN` title and the `deviations` entry; a number
+already taken, or one that is not a number, is refused.
+
+**Where a shared type, a pure function and a strategy live in the domain.** `docs/ARCHITECTURE.md`
+says it, with no new directory: a side-effect-free function on one value is a method of that value
+object, a computation over several is a domain service, a shape of business data is a value object,
+an interchangeable rule is an abstract class of `domain/services/` with its implementations.
+`test/spec-required` no longer asks a spec of a file that exports abstract classes only; each
+implementation keeps its own.
+
+**The integration specs of a generated project give the test database a minute to open.** Their
+hooks had the default 10 seconds of Vitest, which opening PGlite outlasted under coverage on a busy
+machine. To move, add `hookTimeout: 60_000` to the `integration` project of `vitest.config.ts`, or
+run `npx ddd-ts-kit init --force`.
+
 ## 0.20.0
 
 **A permission no role holds is said.** In a project whose rights are roles (`stack.authz`
