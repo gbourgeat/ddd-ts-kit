@@ -49,6 +49,10 @@ the merges become the bottleneck. Inside one context, two workers only on two di
 aggregates, and expect to merge its route list and its permissions file by keeping both
 sides' lines; otherwise, one context, one worker, slices in sequence.
 
+A worker is one context and its worktree; an agent holds **one row, two at most**, before its
+turns or its context run out. Inside a worktree, launch one `context-builder` agent per row,
+in sequence, each on the commits of the previous one.
+
 ## 2. Prepare the trunk (conductor, before any worker starts)
 
 1. **Contracts first.** For every `contract` row a worker depends on: generate it
@@ -69,11 +73,13 @@ sides' lines; otherwise, one context, one worker, slices in sequence.
 ## 3. One worktree and one scope per worker
 
 ```bash
-npx ddd-ts-kit worker-scope <context>    # --dry-run to read it first; --worktree, --branch
+npx ddd-ts-kit worker-scope <context> --base origin/main --rows <id>   # --dry-run to read it first; --worktree, --branch
 ```
 
-From the committed trunk, it adds the git worktree `../<project>-<context>` on the branch
-`build/<context>`, writes `.ddd-ts-kit/worker.json` (`{ "context": "<context>" }`) in it,
+Run it from the checkout of the trunk. From the base (by default the current branch; it
+refuses a worker's worktree), it adds the git worktree `../<project>-<context>` on the branch
+`build/<context>`, or keeps it when it contains the base and refuses it when it does not,
+writes `.ddd-ts-kit/worker.json` (`{ "context": "<context>" }`) in it,
 and prints the briefing of that worker. Then `npm ci` in the worktree. With that file, the
 guard refuses any write of a `context-builder` agent outside `src/contexts/<context>/` and
 its end-to-end specs, any generator that writes a shared file and any dependency change.
@@ -94,11 +100,17 @@ reported, agreed, and added on the trunk.
 
 ## 5. Brief and launch
 
-`worker-scope` printed each briefing, with the `todo` rows of `slices.md` the context owns:
-fill what is left between angle brackets (the rules of each slice), nothing more
+`worker-scope` prints the briefing of the rows of `--rows` (by default every `todo` row the
+context owns, and a note past two), each with its rules from `slices.md`: send it as it is
 ([briefing-template.md](briefing-template.md) is the same text, to write one by hand).
-Launch the `context-builder` agents in one message so they run together, each with its
-briefing, without the isolation option (the worktree already exists). A host without the
+Launch the `context-builder` agents of different contexts in one message so they run
+together, without the isolation option (the worktree already exists). In one context, launch
+the next row's agent once the previous one reported; a report naming an unfinished slice and
+its files goes to the next agent, which resumes from them.
+
+Each agent commits its rows. When the rows of a branch are committed: one review of the batch
+(`architecture-reviewer`, `--changed-since <base>`), `npm run verify`, then the branch merges
+or opens its pull request. A host without the
 agents of the plugin (Codex) runs one session per worktree, its briefing as the first prompt:
 the guard does not hold that session to its context, the briefing and the review do. A person
 takes the same briefing and the same branch.

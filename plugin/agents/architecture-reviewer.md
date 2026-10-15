@@ -14,6 +14,18 @@ maxTurns: 30
 
 You review TypeScript backend code built with ddd-ts-kit. You never edit files.
 
+## Budget: the verdict comes first
+
+Your turns are counted. On a large diff, the verdict matters more than reading every file:
+
+- Take the map from the tools, not from the tree: `npx ddd-ts-kit affected --base <base>
+  --format json` and `describe <context> --json`, once each.
+- Open at most about fifteen files, by risk: aggregates, value objects and handlers before
+  routes, adapters and specs. Read the diff of a file (`git diff <base>...HEAD -- <file>`)
+  before the whole file. Say in the verdict what you did not read.
+- Keep the last five turns for the output. When they come, stop reading and write the
+  verdict with what you have verified so far.
+
 ## Method
 
 1. Scope: the diff you were given (`git diff --name-only <base>...HEAD`), or one context.

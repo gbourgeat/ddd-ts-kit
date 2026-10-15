@@ -1,5 +1,5 @@
 [English](parallel-work.md) · **Français**
-<!-- translation-of: parallel-work.md sha256:8bd04120cdea5509 -->
+<!-- translation-of: parallel-work.md sha256:ec578496459f1aae -->
 
 # Travailler en parallèle sans collisions
 
@@ -128,16 +128,22 @@ git worktree add ../scheduling-calendars -b feat/calendars-working-hours
 Pour un *worker* par contexte, la CLI le fait en une commande :
 
 ```bash
-npx ddd-ts-kit worker-scope appointments
+npx ddd-ts-kit worker-scope appointments --base origin/main --rows 12
 ```
 
 Elle ajoute un *worktree* sur la branche `build/appointments` (par défaut dans
 `../<project>-appointments` ; `--worktree <path>` et `--branch <name>` changent l'un et l'autre),
-y écrit `.ddd-ts-kit/worker.json` qui nomme le contexte, et affiche la consigne de ce *worker* :
-le répertoire qu'il peut écrire, les générateurs qu'il peut lancer, ses lignes de
-`docs/architecture/slices.md`, les contrats qu'il consomme. `--dry-run` affiche la même chose sans
-rien toucher. Elle a besoin d'un dépôt avec au moins un *commit*, et un *worktree* existant est
-conservé : seul le fichier est réécrit. `init` liste `.ddd-ts-kit/` dans `.gitignore`, si bien que
+à partir de `--base` (par défaut la branche courante), y écrit `.ddd-ts-kit/worker.json` qui
+nomme le contexte, et affiche la consigne de ce *worker* : le répertoire qu'il peut écrire, les
+générateurs qu'il peut lancer, ses lignes de `docs/architecture/slices.md` avec les règles écrites
+sous les tableaux (`- #12: refuses a booking outside working hours`), les contrats qu'il consomme,
+et la base comme tronc de ses vérifications. `--rows` réduit la consigne à ces lignes, dans cet
+ordre ; sans lui, toutes les lignes du contexte encore à faire sont listées, avec une note
+au-delà de deux. `--dry-run` affiche la même chose sans rien toucher. Elle a besoin d'un dépôt
+avec au moins un *commit*. Un *worktree*, ou une branche, qui existe déjà est conservé quand il
+contient la base, et refusé sinon : un *worker* ne part jamais d'un tronc périmé. Sans `--base`,
+lancée depuis le *worktree* d'un *worker*, elle refuse aussi, car la branche de ce *worker*
+deviendrait le tronc. Quand elle conserve un *worktree*, seul le fichier est réécrit. `init` liste `.ddd-ts-kit/` dans `.gitignore`, si bien que
 le fichier n'est jamais commité. Le fichier tient en une ligne utile :
 
 ```json
@@ -311,6 +317,13 @@ reste.
 - **À l'intérieur d'un contexte, le gain est faible.** Les cas d'usage partagent l'agrégat ;
   au-delà de deux *workers*, les fusions coûtent plus que ce que le parallélisme rapporte.
 - **Un contexte dont le contrat de l'amont n'est pas stable ne peut pas commencer.** Séquencez-le.
+- **Un agent tient une ligne, deux au plus.** Avec une douzaine, un agent de code épuise ses
+  tours ou son contexte au milieu de l'une d'elles, et laisse un *worktree* à moitié modifié,
+  sans rapport. Donnez une ligne par agent (`--rows`), lancez-les en séquence dans le *worktree*
+  du contexte, chacun commitant sa ligne, puis relisez le lot une fois, `npm run verify`, et
+  ouvrez la *pull request*. L'agent `context-builder` du *plugin* garde ses derniers tours pour
+  son rapport et nomme les fichiers qu'une tranche inachevée a laissés, pour que l'agent suivant
+  reprenne à partir d'eux.
 - **Les agents multiplient le coût autant que la vitesse.** Chacun porte sa propre fenêtre de
   contexte ; quatre *workers* dépensent environ quatre fois les *tokens* d'un seul, voir
   [Économie de tokens](token-economy.fr.md). Sur une même machine, ils partagent aussi la

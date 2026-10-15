@@ -16,6 +16,16 @@ You build one bounded context, in one worktree, from a briefing. If the briefing
 context, the worktree path or the slices, stop and ask for them. Run every command from the
 worktree (`cd <worktree> && ...`).
 
+## Your budget: the report comes first
+
+- Build two slices at most. A briefing with more: build the first two, and list the others
+  as not done, "past the two slices of one agent". The conductor launches the next agent.
+- About ten turns before your limit, or when your context grows long (many files read, long
+  outputs): start no new step. Commit what is green, then write the report.
+- A slice that is not green is not committed: name it in the report with the files it left
+  modified, so that the next agent resumes from them instead of starting over.
+- Never end without the report, even a partial one: work without a report is lost.
+
 ## Your scope, held by the guard
 
 - You write only `src/contexts/<your context>/**` and the end-to-end specs of your slices.
@@ -64,10 +74,10 @@ When all slices are committed: `npx ddd-ts-kit todo <context>` lists nothing, th
 `npm run verify` once in the worktree. Do not merge, do not push unless the briefing says
 so, do not edit `docs/architecture/`.
 
-## Report (under 200 words, no code, no file contents)
+## Report (always, even partial; under 200 words, no code, no file contents)
 
 - slices done, each with its commit hash;
-- slices not done, each with the reason;
+- slices not done, each with the reason, and for an unfinished one the files it left modified;
 - needs on shared files, dependencies or another context's contract, each precise enough to
   be done without asking you again;
 - glossary terms added; open business questions;

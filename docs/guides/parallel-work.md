@@ -121,16 +121,22 @@ git worktree add ../scheduling-calendars -b feat/calendars-working-hours
 For one worker per context the CLI does it in one command:
 
 ```bash
-npx ddd-ts-kit worker-scope appointments
+npx ddd-ts-kit worker-scope appointments --base origin/main --rows 12
 ```
 
 It adds a worktree on the branch `build/appointments` (by default in
-`../<project>-appointments`; `--worktree <path>` and `--branch <name>` change both), writes
-`.ddd-ts-kit/worker.json` naming the context in it, and prints the briefing of that worker:
-the directory it may write, the generators it may run, its rows of
-`docs/architecture/slices.md`, the contracts it consumes. `--dry-run` prints the same without
-touching anything. It needs a repository with at least one commit, and an existing worktree is
-kept: only the file is written again. `init` lists `.ddd-ts-kit/` in `.gitignore`, so the file
+`../<project>-appointments`; `--worktree <path>` and `--branch <name>` change both), cut from
+`--base` (by default the current branch), writes `.ddd-ts-kit/worker.json` naming the context in
+it, and prints the briefing of that worker: the directory it may write, the generators it may
+run, its rows of `docs/architecture/slices.md` with the rules written under the tables
+(`- #12: refuses a booking outside working hours`), the contracts it consumes, and the base as
+the trunk of its checks. `--rows` narrows the briefing to those rows, in that order; without
+it, every row of the context still to do is listed, with a note past two. `--dry-run` prints
+the same without touching anything. It needs a repository with at least one commit. An
+existing worktree, or branch, is kept when it contains the base, and refused when it does not:
+a worker never starts from a stale trunk. Without `--base`, run from a worker's worktree, it
+refuses too, since that worker's branch would become the trunk. When it keeps a worktree, only
+the file is written again. `init` lists `.ddd-ts-kit/` in `.gitignore`, so the file
 is never committed. The file is one line of meaning:
 
 ```json
@@ -290,6 +296,12 @@ small fraction of the total time and remove nearly every collision from the rest
 - **Inside one context the gain is small.** Use cases share the aggregate; past two workers
   the merges cost more than the parallelism returns.
 - **A context whose upstream contract is not stable cannot start.** Sequence it.
+- **An agent holds one row, two at most.** Given a dozen, a coding agent runs out of turns
+  or context in the middle of one, and leaves a half-modified worktree with no report. Brief
+  one agent per row (`--rows`), launch them in sequence in the context's worktree, each
+  committing its row, then review the batch once, `npm run verify`, and open the pull request.
+  The plugin's `context-builder` agent keeps its last turns for its report and names the files
+  an unfinished slice left, so that the next agent resumes from them.
 - **Agents multiply cost as well as speed.** Each one carries its own context window; four
   workers spend roughly four times the tokens of one, see
   [Token economy](token-economy.md). On one machine they also share memory, CPU, ports and the

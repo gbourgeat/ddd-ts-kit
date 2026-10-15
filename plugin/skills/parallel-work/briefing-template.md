@@ -1,8 +1,8 @@
 # Briefing of a context worker
 
-`npx ddd-ts-kit worker-scope <context>` prints this briefing with the paths, the branch,
-the contracts and the slices of the project filled in. Complete the brackets, delete what
-does not apply, send it as the prompt of a `context-builder` agent or hand it to a
+`npx ddd-ts-kit worker-scope <context> --base <trunk> --rows <id>` prints this briefing with
+the paths, the branch, the contracts, the rows and their rules filled in. Written by hand,
+complete the brackets, delete what does not apply, send it as the prompt of a `context-builder` agent or hand it to a
 developer. Keep it under 300 words: the worker reads the rest itself.
 
 ```text
@@ -21,9 +21,8 @@ Scope
   port, route, integration-handler, event-handler, acl, e2e, adapter.
   The others are run by the conductor.
 
-Slices, in this order (rows of docs/architecture/slices.md)
+Slices, in this order (rows of docs/architecture/slices.md, one or two per agent)
 - #<n> <slice>: <generator commands of the row> ; rules: <invariants and failures by name>
-- #<n> ...
 
 Contracts you consume (read-only): src/contexts/<upstream>/published-language/
 
@@ -37,7 +36,8 @@ commit: `feat(<context>): <slice in business words>`.
 Done when: every slice is committed, `npm run verify` is green in the worktree, and
 `npx ddd-ts-kit todo <context>` lists nothing.
 
-Report, in under 200 words: slices done (commit hashes), slices not done and why, needs on
-shared files or on another context's contract, glossary terms added, open business
-questions. No code, no file contents.
+Report, always, even when you stop early, in under 200 words: slices done (commit hashes),
+slices not done and why, with the files left modified by an unfinished one, needs on shared
+files or on another context's contract, glossary terms added, open business questions. No
+code, no file contents.
 ```
