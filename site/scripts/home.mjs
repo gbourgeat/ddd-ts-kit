@@ -1,5 +1,5 @@
 /**
- * The home page of the site, in English and in French: the pitch of the root README as the hero,
+ * The home page of the site, in English and in French: the pitch of the root README as the hero, beside the logo,
  * a card per way in, and the diagram of the nine steps the README shows. The pitch, the diagram
  * and its description are read from README.md and README.fr.md; only the cards are written here.
  */
@@ -122,6 +122,9 @@ export function pitchOf(readme) {
 
 /** The splash template of Starlight, the pitch as its tagline, and two actions: start, and the repository. */
 function frontmatter(pitch, locale) {
+  // The content file of the home page is index.mdx, or fr/index.mdx: one directory deeper.
+  const logo = `${locale === 'fr' ? '../' : ''}../../../../docs/assets/logo.svg`;
+
   return [
     '---',
     'title: "ddd-ts-kit"',
@@ -131,6 +134,9 @@ function frontmatter(pitch, locale) {
     ...head(pitch, locale),
     'hero:',
     `  tagline: ${JSON.stringify(pitch)}`,
+    '  image:',
+    `    file: ${JSON.stringify(logo)}`,
+    '    alt: ""',
     '  actions:',
     `    - text: ${JSON.stringify(ACTIONS[locale].start)}`,
     `      link: ${JSON.stringify(hrefOf('start', locale))}`,

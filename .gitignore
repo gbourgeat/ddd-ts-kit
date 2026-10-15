@@ -7,6 +7,7 @@ dist
 # The documentation website: its content is assembled from the Markdown pages at each build.
 /site/src/content/docs/
 /site/public/diagrams/
+/site/public/favicon.svg
 /site/.astro/
 # The notes of the repository, copied into the CLI package when it is packed.
 /packages/cli/CHANGELOG.md
