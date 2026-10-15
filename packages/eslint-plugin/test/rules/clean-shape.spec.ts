@@ -19,6 +19,9 @@ ruleTester.run('clean-function-size', cleanFunctionSize, {
     at(`${BILLING}/billing.module.ts`, `export function register(): void {\n${body(40)}\n}`),
     `describe('an invoice', () => {\n${body(40)}\n});`,
     `describe.each([1, 2])('an invoice %s', () => {\n${body(40)}\n});`,
+    `describe.skip('an invoice', () => {\n${body(40)}\n});`,
+    `context('an issued invoice', () => {\n${body(40)}\n});`,
+    `runner.describe('a repository', () => {\n${body(40)}\n});`,
   ],
   invalid: [
     {
@@ -48,6 +51,7 @@ ruleTester.run('clean-function-size', cleanFunctionSize, {
       errors: [{ messageId: 'lines' }],
     },
     { code: `it('issues', () => {\n${body(31)}\n});`, errors: [{ messageId: 'lines' }] },
+    { code: `context.run(scope, () => {\n${body(31)}\n});`, errors: [{ messageId: 'lines' }] },
   ],
 });
 

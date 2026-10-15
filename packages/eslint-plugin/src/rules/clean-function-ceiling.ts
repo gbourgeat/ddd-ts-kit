@@ -17,7 +17,7 @@ export const cleanFunctionCeiling = defineRule<'ceiling'>({
     'No function is longer than 100 lines of code, whatever the configured limit: not a test suite, not a module file.',
   messages: {
     ceiling:
-      '{{name}} is {{count}} lines long: no function goes past {{limit}} lines, a `describe` callback and a module file included. Split it by responsibility: one function per step, one `describe` (or one spec file) per behaviour, one registration function per group of bindings.',
+      '{{name}} is {{count}} lines long: no function goes past {{limit}} lines, a `describe` callback and a module file included. Split it by responsibility: one function per step, several top-level `describe` blocks of the same spec file, one per behaviour (a nested `describe` counts in its parent), one registration function per group of bindings.',
   },
   create({ sourceCode, report }) {
     const judge = (node: FunctionNode): void => {
