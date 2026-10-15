@@ -23,7 +23,7 @@ const DEFAULT_SCRIPTS = {
   'docs:check':
     'ddd-ts-kit docs --check && npm run build && node dist/scripts/openapi.js --check && node dist/scripts/events.js --check',
   regenerate: 'ddd-ts-kit depcruise-config --write && npm run docs:generate',
-  'db:generate': 'drizzle-kit generate --name',
+  'db:generate': 'ddd-ts-kit drizzle-generate --name',
   'db:migrate': 'drizzle-kit migrate',
   'infra:up': 'docker compose up -d --wait',
   'infra:down': 'docker compose down',
@@ -133,7 +133,7 @@ describe('the package.json init writes', () => {
     const generate = (orm: string): string | undefined =>
       textsAt(manifest(initProject(...NPM, '--orm', orm)), 'scripts')['db:generate'];
 
-    expect(generate('drizzle')).toBe('drizzle-kit generate --name');
+    expect(generate('drizzle')).toBe('ddd-ts-kit drizzle-generate --name');
     expect(generate('knex')).toBe('knex migrate:make');
     expect(generate('prisma')).toBe('prisma migrate dev --create-only --name');
     expect(read(initProject(...NPM), 'drizzle.config.ts')).toContain("migrations: { prefix: 'timestamp' },");

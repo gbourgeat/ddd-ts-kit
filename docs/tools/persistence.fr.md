@@ -1,5 +1,5 @@
 [English](persistence.md) · **Français**
-<!-- translation-of: persistence.md sha256:247938ed9ea6201d -->
+<!-- translation-of: persistence.md sha256:a4e17a1047ea9a20 -->
 
 # Persistance : Drizzle, Knex, Prisma, TypeORM, et quelle base de données
 
@@ -485,13 +485,28 @@ le même fichier.
 
 | Outil | `db:generate` | Écrit | Une migration fusionnée plus ancienne qu'une migration déjà appliquée |
 |---|---|---|---|
-| drizzle-kit 0.31 | `drizzle-kit generate --name` (`migrations.prefix: 'timestamp'` dans `drizzle.config.ts`) | `migrations/20261012093000_add-invoices.sql`, son *snapshot* `meta/20261012093000_snapshot.json`, une entrée de `meta/_journal.json` | **ignorée sans un mot** : le migrateur applique les entrées plus récentes que la dernière enregistrée |
+| drizzle-kit 0.31 | `ddd-ts-kit drizzle-generate --name`, qui lance `drizzle-kit generate --name` (`migrations.prefix: 'timestamp'` dans `drizzle.config.ts`) | `migrations/20261012093000_add-invoices.sql`, son *snapshot* `meta/20261012093000_snapshot.json`, une entrée de `meta/_journal.json` | **ignorée sans un mot** : le migrateur applique les entrées plus récentes que la dernière enregistrée |
 | knex 3 | `knex migrate:make` (le gabarit module ES de knex, fixé dans `knexfile.js`) | `migrations/20261012093000_add-invoices.js` | appliquée : knex exécute chaque fichier qu'il n'a pas enregistré |
 | Prisma 7 | `prisma migrate dev --create-only --name` | `prisma/migrations/20261012093000_add_invoices/migration.sql` (Prisma transforme `-` en `_`) | appliquée par `migrate deploy`, qui exécute chaque migration qu'il n'a pas enregistrée (d'après sa documentation ; non mesuré ici) |
 | TypeORM 1.1 | `typeorm migration:generate -d <data source>`, à qui l'on donne le chemin : `npm run db:generate migrations/add-invoices` | `migrations/1791829645467-add-invoices.ts` (des millisecondes, et un `-` : TypeORM fixe les deux) | appliquée : TypeORM exécute chaque migration qu'il n'a pas enregistrée |
 
 La commande prend la description après le script : `npm run db:generate add-invoices`
 (`npm run db:generate -- audit-guard --custom` pour une migration drizzle-kit écrite à la main).
+
+**Sans terminal.** Quand un changement du schéma pourrait être un renommage (une colonne ou une
+table disparaît et une autre apparaît), drizzle-kit demande sur un terminal s'il s'agit d'une
+création ou d'un renommage. Mesuré avec drizzle-kit 0.31.11 (2026-10-15) : sans terminal, comme
+le lance un agent ou un pipeline, il affiche `Interactive prompts require a TTY terminal`,
+n'écrit rien et sort avec le code 0 ; sous un pseudo-terminal (`script -qec`), il pose la
+question et attend une réponse que personne ne donne. Il n'a aucune option pour répondre
+d'avance. Le script passe donc par `ddd-ts-kit drizzle-generate` : dans un terminal, c'est
+`drizzle-kit generate` tel quel ; sans terminal, cette sortie, et le *snapshot* fourché décrit
+plus bas, deviennent une erreur qui nomme la correction (code de sortie 2). La correction est un
+changement qui ne se lit pas de deux façons : ajouter la nouvelle colonne dans une migration et
+supprimer l'ancienne dans une suivante, ou écrire les instructions dans une migration
+personnalisée. Prisma 7 n'attend pas non plus : là où `prisma migrate dev` poserait une question
+(un avertissement de perte de données), il s'arrête sur une erreur dans un environnement non
+interactif (lu dans son code, non mesuré) ; knex et TypeORM ne demandent rien.
 La première migration knex qu'écrit `init` est `00000000000000_initial.js` : elle se trie avant
 tout horodatage ; un projet créé avant la 0.5 garde son `0001_initial.js`, puisqu'une migration
 appliquée n'est jamais renommée.
@@ -505,7 +520,7 @@ projet générant chacune une migration, comme le feraient deux branches :
   `meta/_journal.json` reste en conflit (chaque branche ajoute une entrée au même endroit), et une
   fois la fusion faite à la main, deux *snapshots* nomment le même parent : `drizzle-kit check`
   sort avec le code 1 et `drizzle-kit generate` affiche la collision et n'écrit rien (avec le code
-  de sortie 0) ;
+  de sortie 0, dont `ddd-ts-kit drizzle-generate` fait le code 2) ;
 - pire, une base de données qui a appliqué d'abord la migration la plus récente (l'autre branche a
   été fusionnée et déployée avant) ignore définitivement la plus ancienne : le migrateur de
   drizzle-orm n'applique que les entrées dont le `when` est plus récent que le dernier qu'il a

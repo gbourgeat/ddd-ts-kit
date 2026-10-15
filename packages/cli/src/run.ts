@@ -8,6 +8,7 @@ import { controllersCommand } from './commands/controllers.js';
 import { depcruiseConfigCommand } from './commands/depcruise-config.js';
 import { describeCommand } from './commands/describe.js';
 import { docsCommand } from './commands/docs.js';
+import { drizzleGenerateCommand } from './commands/drizzle-generate.js';
 import { errorFactoriesCommand } from './commands/error-factories.js';
 import { generateCommand } from './commands/generate.js';
 import { initCommand } from './commands/init.js';
@@ -37,6 +38,7 @@ const COMMANDS: Readonly<Record<string, Command>> = {
   sdk: sdkCommand,
   'depcruise-config': depcruiseConfigCommand,
   'build-aliases': buildAliasesCommand,
+  'drizzle-generate': drizzleGenerateCommand,
   'error-factories': errorFactoriesCommand,
   'value-objects': valueObjectsCommand,
   controllers: controllersCommand,

@@ -29,6 +29,7 @@ export const USAGE = `Usage
   ddd-ts-kit sdk [--check] [--dry-run]
   ddd-ts-kit depcruise-config [--check|--write]
   ddd-ts-kit build-aliases [--project <tsconfig>]
+  ddd-ts-kit drizzle-generate --name <what-it-does> [--custom]
   ddd-ts-kit error-factories --plan | --apply [--dry-run]
   ddd-ts-kit controllers [<context>] [--dry-run]
   ddd-ts-kit value-objects [--dry-run]

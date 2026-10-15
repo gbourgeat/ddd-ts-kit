@@ -78,10 +78,12 @@ lookups of the port, the columns, the mapper.
   the port.
 - **Migrations** are generated from the schema with the ORM's own tool, named by what they
   do (`npm run db:generate add-invoices`, which writes `<timestamp>_add-invoices`; it refuses
-  to run without the name), applied with `npm run db:migrate`, committed, forward-only, and
-  compatible with the version still running. When a merge brings a migration from the main
-  branch before yours is merged, delete yours (and, under drizzle-kit, its snapshot and journal
-  entry) and generate it again on top: `persistence/migration-history` reports the forked or
+  to run without the name; under drizzle-kit a rename is never left for it to guess, since
+  without a terminal it fails: add then drop in a later migration, or `-- <name> --custom`;
+  never under `script` or another pseudo-terminal, where it waits), applied with
+  `npm run db:migrate`, committed, forward-only, and compatible with the version still running.
+  When a merge brings a migration from the main branch before yours is merged, delete yours
+  (and, under drizzle-kit, its snapshot and journal entry) and generate it again on top: `persistence/migration-history` reports the forked or
   unordered history otherwise, which drizzle's migrator would skip silently. Procedure and
   measurements: `docs/tools/persistence.md`, "Migrations: names, merges and order".
 

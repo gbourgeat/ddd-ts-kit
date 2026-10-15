@@ -4,6 +4,9 @@ export const NOTES = `  affected         what a pull request has to run: the con
                    runner and the linter; everything when a shared path changed or without --base
   build-aliases    after the compiler: rewrites the import aliases left in the emitted .js and .d.ts files
                    into relative paths, so that plain node runs the output (tsconfig.build.json by default)
+  drizzle-generate the db:generate of a Drizzle project: drizzle-kit generate --name, which without a terminal
+                   fails and names the fix when drizzle-kit would ask whether a column or table is renamed,
+                   where drizzle-kit alone writes nothing and exits 0
   error-factories  moves a project from one class per error to static factories on one error class per
                    concept: --plan writes error-factories.plan.json, where each class is given its concept;
                    --apply follows it (classes, specs, every usage, "stack.refusals" in the config)

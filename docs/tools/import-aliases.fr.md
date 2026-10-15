@@ -1,5 +1,5 @@
 [English](import-aliases.md) · **Français**
-<!-- translation-of: import-aliases.md sha256:e374ae6bbe45f06e -->
+<!-- translation-of: import-aliases.md sha256:1037cd49eb55bd83 -->
 
 # Alias d'import : les `paths` de tsconfig, réécrits à la construction
 
@@ -171,7 +171,7 @@ d'un *scope*), `name/` ou `~/` (des noms de *package* possibles), et `$test/`, `
 | jest | rien de tsconfig | `moduleNameMapper`, les mêmes entrées, chaque motif se terminant comme les imports : `'^@/(.*)$': '<rootDir>/src/$1.ts'` sous `none`, `'^@/(.*)\\.js$': '<rootDir>/src/$1.ts'` sous `js`. La cible est toujours la source TypeScript |
 | dependency-cruiser | `paths`, une fois qu'on le lui dit | `tsConfig: { fileName: 'tsconfig.json' }` dans le `.dependency-cruiser.cjs` généré |
 | knip | `paths`, de lui-même | rien |
-| drizzle-kit (`npm run db:generate <what-it-does>`) | `paths`, de lui-même, quand il charge le schéma TypeScript | rien : le script est un simple `drizzle-kit generate --name` |
+| drizzle-kit (`npm run db:generate <what-it-does>`) | `paths`, de lui-même, quand il charge le schéma TypeScript | rien : le script est `ddd-ts-kit drizzle-generate --name`, qui lance `drizzle-kit generate --name` à la racine du projet |
 | CLI de knex et de TypeORM | la sortie compilée (`npm run build` d'abord) | une migration knex est un fichier JavaScript à la racine du projet : elle nomme le schéma compilé par son chemin relatif sous `dist/` |
 | CLI de Prisma | `prisma.config.ts`, qui n'importe aucun fichier du projet | rien |
 | ESLint avec `@ddd-ts-kit/eslint-plugin`, `ddd-ts-kit check` | `importAlias`, `importExtension` et `sourceRoot` de la configuration | ils classent un import par son chemin et ne chargent jamais de fichier : avec ou sans son extension, un spécificateur nomme la même source, et les règles de frontière le jugent de la même façon |
