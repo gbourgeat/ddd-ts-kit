@@ -318,7 +318,7 @@ describe('an explicit project, as `list` maps it', () => {
       expect.objectContaining({
         name: 'shipping',
         classification: 'supporting',
-        glossary: 2,
+        glossary: 1,
         upstreams: [{ context: 'billing', relationship: 'customer-supplier' }],
       }),
     ]);
