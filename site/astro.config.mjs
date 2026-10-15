@@ -31,6 +31,9 @@ export default defineConfig({
         root: { label: 'English', lang: 'en' },
         fr: { label: 'Français', lang: 'fr' },
       },
+      // The logo of the README, next to the title in the header of every page; it is the favicon too
+      // (scripts/assemble.mjs copies it to public/favicon.svg).
+      logo: { src: '../docs/assets/logo.svg', alt: '' },
       social: [{ icon: 'github', label: 'GitHub', href: REPOSITORY }],
       // The card a link to any page shows when it is shared (site/src/assets/social-card.svg, rendered
       // to public/social-card.png by scripts/social-card.mjs).

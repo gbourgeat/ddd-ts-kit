@@ -204,10 +204,11 @@ test('a mermaid block becomes an escaped <pre class="mermaid">, and the summary 
   );
 });
 
-test('the assembly writes every page in both languages with its frontmatter, the home pages and the diagrams', () => {
-  const root = repository(SMALL);
+test('the assembly writes every page in both languages with its frontmatter, the home pages, the diagrams and the favicon', () => {
+  const root = repository({ ...SMALL, 'docs/assets/logo.svg': '<svg/>' });
   const content = path.join(root, 'out/content');
-  const written = assemble(root, { content, diagrams: path.join(root, 'out/diagrams') });
+  const favicon = path.join(root, 'out/public/favicon.svg');
+  const written = assemble(root, { content, diagrams: path.join(root, 'out/diagrams'), favicon });
   const aggregates = fs.readFileSync(path.join(content, 'concepts/aggregates.md'), 'utf8');
 
   assert.deepEqual(written, { pages: 10, diagrams: 2 });
@@ -220,9 +221,10 @@ test('the assembly writes every page in both languages with its frontmatter, the
   assert.match(fs.readFileSync(path.join(content, 'start.md'), 'utf8'), /sidebar:\n {2}label: "Overview"/);
   assert.match(
     fs.readFileSync(path.join(content, 'fr/index.mdx'), 'utf8'),
-    /tagline: "Le pitch\."[\s\S]*\(\/ddd-ts-kit\/diagrams\/ddd-ts-kit-workflow\.fr\.svg\)/,
+    /tagline: "Le pitch\."\n {2}image:\n {4}file: "\.\.\/\.\.\/\.\.\/\.\.\/\.\.\/docs\/assets\/logo\.svg"[\s\S]*\(\/ddd-ts-kit\/diagrams\/ddd-ts-kit-workflow\.fr\.svg\)/,
   );
   assert.ok(fs.existsSync(path.join(root, 'out/diagrams/ddd-ts-kit-workflow.fr.svg')));
+  assert.equal(fs.readFileSync(favicon, 'utf8'), '<svg/>');
 });
 
 test('the sidebar of the repository links every page once, the concepts in the order of their reading path', () => {

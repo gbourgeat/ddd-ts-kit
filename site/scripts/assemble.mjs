@@ -11,7 +11,7 @@
  * fails the assembly, so a broken link fails the build of the site. A mermaid block becomes a
  * <pre class="mermaid"> that the browser draws (src/components/Head.astro).
  *
- *   node site/scripts/assemble.mjs     writes site/src/content/docs/ and site/public/diagrams/
+ *   node site/scripts/assemble.mjs     writes site/src/content/docs/, site/public/diagrams/ and site/public/favicon.svg
  *
  * Plain Node, no dependency.
  */
@@ -34,6 +34,7 @@ import {
 const SITE_ROOT = path.resolve(import.meta.dirname, '..');
 const REPOSITORY_ROOT = path.resolve(SITE_ROOT, '..');
 const DIAGRAMS = 'docs/assets/diagrams/';
+const LOGO = 'docs/assets/logo.svg';
 const RAW = 'https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/';
 const ENGLISH_SWITCHER = /^\*\*English\*\* · \[Français\]\(.*\)$/;
 const FRENCH_SWITCHER = /^\[English\]\(.*\) · \*\*Français\*\*$/;
@@ -47,6 +48,7 @@ if (process.argv[1] !== undefined && path.resolve(process.argv[1]) === import.me
     const written = assemble(REPOSITORY_ROOT, {
       content: path.join(SITE_ROOT, 'src/content/docs'),
       diagrams: path.join(SITE_ROOT, 'public/diagrams'),
+      favicon: path.join(SITE_ROOT, 'public/favicon.svg'),
     });
 
     console.log(`Assembled ${written.pages} pages and ${written.diagrams} diagrams.`);
@@ -56,8 +58,11 @@ if (process.argv[1] !== undefined && path.resolve(process.argv[1]) === import.me
   }
 }
 
-/** Writes the whole content of the site from the repository at `root`; answers what it wrote. */
-export function assemble(root, { content, diagrams }) {
+/**
+ * Writes the whole content of the site from the repository at `root`; answers what it wrote. With
+ * `favicon`, the logo of the repository is copied there, the icon Starlight gives every page.
+ */
+export function assemble(root, { content, diagrams, favicon }) {
   const pages = sitePages(root);
   const files = [...pages.values()].map((page) => renderPage({ root, pages }, page));
 
@@ -67,6 +72,11 @@ export function assemble(root, { content, diagrams }) {
   for (const { file, text } of [...files, ...homePages(root)]) {
     fs.mkdirSync(path.dirname(path.join(content, file)), { recursive: true });
     fs.writeFileSync(path.join(content, file), text);
+  }
+
+  if (favicon !== undefined) {
+    fs.mkdirSync(path.dirname(favicon), { recursive: true });
+    fs.copyFileSync(path.join(root, LOGO), favicon);
   }
 
   return { pages: files.length + 2, diagrams: copyDiagrams(root, diagrams) };
