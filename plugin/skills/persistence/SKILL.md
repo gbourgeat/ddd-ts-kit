@@ -85,7 +85,9 @@ lookups of the port, the columns, the mapper.
   When a merge brings a migration from the main branch before yours is merged, delete yours
   (and, under drizzle-kit, its snapshot and journal entry) and generate it again on top: `persistence/migration-history` reports the forked or
   unordered history otherwise, which drizzle's migrator would skip silently. Procedure and
-  measurements: `docs/tools/persistence.md`, "Migrations: names, merges and order".
+  measurements: `docs/tools/persistence.md`, "Migrations: names, merges and order". A worker
+  of a parallel build generates a working migration only, `npm run db:generate working-<what>`,
+  which the conductor replaces on the trunk at merge.
 
 ## By ORM
 

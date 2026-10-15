@@ -1,5 +1,5 @@
 [English](persistence.md) · **Français**
-<!-- translation-of: persistence.md sha256:a4e17a1047ea9a20 -->
+<!-- translation-of: persistence.md sha256:0fb23c9c7b63e387 -->
 
 # Persistance : Drizzle, Knex, Prisma, TypeORM, et quelle base de données
 
@@ -552,6 +552,19 @@ la vôtre n'est pas encore fusionnée :
 
 Une migration déjà fusionnée sur la branche principale n'est jamais modifiée ni régénérée : une
 correction est une nouvelle migration.
+
+**Dans un travail en parallèle**, un *worker* dont la *slice* change l'état stocké génère une
+migration de travail dans son *worktree*, `npm run db:generate working-<what-it-does>`, pour que
+les *specs* de sa branche tournent sur les tables dont elles ont besoin ; la garde lui refuse
+toute autre migration. Le nom sert de marque parce que chaque outil ci-dessus le garde après son
+numéro (`20261015101500_working-add-claims.sql`, `20261015101500_working_add_claims/` sous
+Prisma, `1791829645467-working-add-claims.ts` sous TypeORM) : le *migrator* l'applique comme les
+autres, et rien ne change dans la configuration de l'outil. `persistence/migration-history`
+l'admet là où existe le fichier de périmètre du *worker*, `.ddd-ts-kit/worker.json`, et le
+signale partout ailleurs. Quand le *conductor* fusionne la branche, il supprime la migration de
+travail (et, sous drizzle-kit, son *snapshot* et son entrée du journal), lance
+`npm run db:generate <what-it-does>` sur le tronc, après les branches fusionnées avant elle, et
+commite la vraie migration avec la fusion.
 
 **Écarté : un dossier de migrations par contexte.** drizzle-kit peut faire tourner une
 configuration par contexte (son propre `schema`, son `out` et sa table de migrations) : cela

@@ -42,7 +42,7 @@ until the other exists, and the two meet in every file.
 | `docs/context-map.md`, the generated lists of each `CONTEXT.md` | `ddd-ts-kit docs`, every `generate` | **no**, but cheap | derived: regenerate after merging |
 | `openapi/*.yaml`, `docs/integration/asyncapi.yaml`, `docs/integration/event-catalog.md` | `npm run docs:generate` | **no**, but cheap | derived and deterministic: regenerate after merging |
 | `.dependency-cruiser.cjs` | `depcruise-config --write`, `generate context` | **no**, but cheap | derived from the config: regenerate |
-| database migrations | the ORM's tooling | **no** | one schema per context keeps tables apart, but the migration sequence is one list: number at merge time |
+| database migrations | the ORM's tooling | **no** | one schema per context keeps tables apart, but the migration sequence is one list: a worker generates a working migration, the conductor the real one at merge time |
 | the `published-language/` of an upstream | the upstream's owner, and `generate gateway` run for a consumer (the read contract) | **no** for its consumers | merge the contract first; consumers branch from it |
 | `src/shared-kernel/` | co-owners | **no** | rare by design; one change at a time |
 | `package.json`, the lockfile | anyone adding a dependency | **no** | add dependencies in the bootstrap or in a dedicated change |
@@ -101,6 +101,12 @@ just before merging, on top of the current default branch; if two branches each 
 next" migration, the second one regenerates its own. Never edit a migration that has run
 somewhere.
 
+A worker whose slice changes the stored state still needs the table for its specs: it generates
+a working migration, `npm run db:generate working-<what-it-does>`, the only migration the guard
+lets it write. `persistence/migration-history` accepts it in the worktree and reports it on the
+trunk, so the conductor deletes it at the merge and generates the real one there
+([persistence](../tools/persistence.md#migrations-names-merges-and-order)).
+
 ### The published language of an upstream
 
 A consumer cannot be built against a contract that is still moving. Merge the upstream's
@@ -158,7 +164,8 @@ Scope
 - You may write: src/contexts/notification/** and test/e2e/<use-case>.e2e.spec.ts of your slices.
 - You may not write anything else. Shared files (config, src/platform, src/main.ts,
   package.json, lockfile, migrations, docs/) and other contexts are refused by the guard:
-  report the need, do not work around it.
+  report the need, do not work around it. A slice that changes the stored state generates a
+  working migration only: `npm run db:generate working-<what-it-does>`.
 
 Slices, in this order (rows of docs/architecture/slices.md)
 - #31 Contacts known from identity (projection): `@Projection` over `identity.person.registered` ; ...

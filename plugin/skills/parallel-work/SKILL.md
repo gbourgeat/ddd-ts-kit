@@ -92,7 +92,7 @@ its end-to-end specs, any generator that writes a shared file and any dependency
 | registries the generators fill between markers (composition root, database schema index, audited events, job settings, access policies) | generators, run by the conductor | skeleton first; at a merge, keep both sides' lines |
 | `<context>.declarations.ts`, `docs/context-map.md`, `openapi/*`, `docs/integration/*`, `.dependency-cruiser.cjs` | generators only | never merged by hand: take either side, then `npm run regenerate` |
 | `package.json`, the lockfile | conductor | a worker asks for a dependency; after a conflict, `npm install` rewrites the lockfile |
-| migrations and their order | conductor | generated on the trunk after each merge, never in a worktree |
+| migrations and their order | conductor | a worker generates a working one only (`db:generate working-<what>`); at the merge the conductor deletes it and generates the real one on the trunk |
 | `docs/architecture/plan.md`, `slices.md` | conductor | workers report, the conductor marks |
 
 Another context's `published-language/` is read-only for a worker: a missing field is
@@ -119,7 +119,9 @@ takes the same briefing and the same branch.
 
 Upstream contexts first, then by the dependency order of the slices. For each branch:
 
-1. merge it into the trunk; resolve only as the table says (regenerate, never hand-merge);
+1. merge it into the trunk; resolve only as the table says (regenerate, never hand-merge); a
+   working migration of the branch is deleted (under drizzle-kit, with its snapshot and journal
+   entry) and generated again on the trunk, `npm run db:generate <what-it-does>`;
 2. `npm run verify` on the trunk; a red trunk is fixed before the next merge;
 3. mark its rows `done` in `slices.md`, commit (`npx ddd-ts-kit status` shows what is left);
 4. the other workers merge the trunk into their branch before their next slice.

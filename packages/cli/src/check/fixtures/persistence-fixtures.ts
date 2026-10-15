@@ -1,3 +1,4 @@
+import { WORKER_SCOPE_FILE } from '../../commit/worker-scope-file.js';
 import { CONFIG_FILE } from '../../config/index.js';
 import { config } from './config.js';
 import type { Fixture } from './fixture.js';
@@ -45,6 +46,21 @@ export const PERSISTENCE_FIXTURES: readonly Fixture[] = [
     name: 'two knex migrations numbered by the same index on two branches',
     expect: { file: 'migrations/0002_add-payments.js' },
     files: knex(['0001_initial', '0002_add-invoices', '0002_add-payments']),
+  },
+  {
+    ruleId: 'persistence/migration-history',
+    name: 'a working migration in the worktree of the worker that generated it',
+    expect: 'pass',
+    files: {
+      ...knex(['20261012093000_initial', '20261015101500_working-add-claims']),
+      [WORKER_SCOPE_FILE]: '{ "context": "claims" }\n',
+    },
+  },
+  {
+    ruleId: 'persistence/migration-history',
+    name: 'a working migration merged into the trunk without being generated again',
+    expect: { file: 'migrations/20261015101500_working-add-claims.js' },
+    files: knex(['20261012093000_initial', '20261015101500_working-add-claims']),
   },
 ];
 
