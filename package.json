@@ -80,6 +80,12 @@
     "zod": "^4.6.7"
   },
   "overrides": {
-    "@types/pg": "8.23.1"
+    "@types/pg": "8.23.1",
+    "axios": "^1.20.0",
+    "mysql2": "^3.22.0",
+    "postcss-nested": {
+      "postcss-selector-parser": "^7.1.6"
+    },
+    "deepmerge-ts": "^8.0.2"
   }
 }
