@@ -186,6 +186,43 @@ The tree is **closed**: a directory not listed here is a design decision, added 
 `test/fakes/` and `test/builders/`. End-to-end specs (`test/e2e/`) and the architecture test
 (`test/architecture/`) live at the project root, outside the contexts.
 
+**A concept with no role of its own still has a home.** The domain has no `types/`,
+`functions/` or `utils/` directory: each would hold concepts nobody named. A type alone or a
+function alone is a sign that a concept of the model is missing, and it goes where that
+concept lives:
+
+| What it is | Where it goes | Why |
+|---|---|---|
+| a function without side effect that reads one value (a total, a conversion, a comparison) | a method of that value object | the value answers about itself (side-effect-free functions); a function next to it would leave the value anemic |
+| a decision over several aggregates or values that belongs to none of them | a domain service, `domain/services/*.service.ts`, with its spec | the name is then accurate: a stateless business decision, no I/O |
+| a shape of data the model shares (thresholds, a business setting) | a value object, `domain/value-objects/*.vo.ts`; the types of its props are exported from the same file | a named value checks its invariants once, where a bare type checks nothing |
+| an interchangeable rule (a strategy: the way a threshold, a price or a delay is decided) | an abstract class in `domain/services/` and one concrete service per variant, each in its file with its spec; the abstract base needs no spec of its own | the model picks the variant and calls it through the base; nothing outside the domain knows the variants |
+| a reshaping of a value for reading or display | not the domain: the result of a query (`*.result.ts`) or a mapper of `presentation/` | the domain decides, it does not format |
+
+A strategy is not a port: the model chooses the implementation from its own data, and nothing
+is wired. A rule whose variant comes from the outside (a setting, a provider) is a port of
+`application/ports/`. `*.policy.ts` stays the suffix of the authorization policies of
+`application/authorization/`.
+
+<!-- checked sample -->
+```ts
+// domain/services/approval-threshold.service.ts: the rule, with a name of the business
+export abstract class ApprovalThresholdService {
+  abstract requiresApproval(amountInCents: number): boolean;
+}
+
+// domain/services/fixed-approval-threshold.service.ts: one variant, with its spec
+export class FixedApprovalThresholdService extends ApprovalThresholdService {
+  constructor(private readonly ceilingInCents: number) {
+    super();
+  }
+
+  requiresApproval(amountInCents: number): boolean {
+    return amountInCents > this.ceilingInCents;
+  }
+}
+```
+
 ## 3. Dependency rules
 
 ![The four layers of a bounded context inside the platform: presentation, application and infrastructure point towards the domain, infrastructure implements the ports of the application](assets/diagrams/layers-dependency-rule.svg)
@@ -211,7 +248,7 @@ the platform binds it at start-up. Why, and what each layer holds:
 | `naming/one-concept-per-file` | One exported aggregate, entity, value object, event, handler, job or projection per file, and one declared class per role file. |
 | `naming/search-not-list` | A read that takes criteria, a scope or a page is a search. In a context, no method is named `list`, or `list` followed by an upper-case letter (`listByCustomer`), in a port (`domain/repositories/*.repository.ts`, `application/ports/*.port.ts`) nor in a class of `infrastructure/` or `test/fakes/`: it is named `search...`. Under `application/queries/`, no folder or file is named `list` or starts with `list-` or `list.`, and no class is named `List` or starts with `List` followed by an upper-case letter: the query is `Search<Things>Query` in `search-<things>/`. A property is not judged, nor `listAccessible`, which the `Authorizer` port of the kit requires; a read of one element or none stays `findById` or `findBy...`. |
 | `naming/business-name` | A variable, a loop variable, a destructured binding, a parameter (of a function, a method, a signature or an arrow) and a property (of a class, an interface or a type of an object) of `domain/` and `application/` of a context, and of the shared kernel outside `presentation/`, is named after the concept it holds, never by a generic word: `target`, `targets`, `data`, `item`, `items`, `obj`, `object`, `thing`, `things`, `stuff`, `info`, `element`, `el`, `tmp`, `temp`, `foo`, `bar`, `baz`. `businessNames.words` of the config replaces the list, `businessNames.allow` removes words from it. A key of an object literal follows the type it is written for and is not judged, nor the tests. ESLint fixes a variable built by `X.create(..)` or `new X(..)`, or read from a repository, renaming it with every use to the camel name of `X` (`appointment`) unless that name is taken; a loop variable is reported with the singular of its collection. |
-| `test/spec-required` | Every aggregate, value object, domain service, command handler, query handler, domain event handler, integration event handler, job and projection has a `*.spec.ts` in the context's `test/`. |
+| `test/spec-required` | Every aggregate, value object, domain service, command handler, query handler, domain event handler, integration event handler, job and projection has a `*.spec.ts` in the context's `test/`. A file whose exported classes are all abstract and that exports no function is a base held by the specs of its implementations, and needs none. |
 | `events/name-format` | Domain and integration event names follow `<context>.<aggregate>.<fact-in-past-tense>`: the `static readonly eventName` a domain event declares once (or its `readonly name`, as 0.5 wrote it) and the `type` of an integration event declaration. |
 | `events/name-declared-once` | Every class of `domain/events/` but an abstract one declares its name once, `static readonly eventName = '<context>.<aggregate>.<fact>'`, which handlers and projections are attached under; its `readonly name` reads it (`readonly name = InvoiceIssued.eventName`) instead of writing the name a second time. Checked on every domain event, consumed or not. |
 | `events/defined-in-published-language` | An integration event is declared once with `defineIntegrationEvent` in the producer's `published-language/`, with a payload schema. Catalog and AsyncAPI document are generated from these declarations. |

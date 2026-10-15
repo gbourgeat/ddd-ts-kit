@@ -8,6 +8,7 @@ import { SAMPLES } from './samples.js';
 
 const { AGGREGATE, AGGREGATE_SPEC, BILLING, BUILDER, CATALOG, HANDLER, HANDLER_SPEC } = PATHS;
 const { SPEC } = SAMPLES;
+const REMINDER_SERVICE = `${BILLING}/domain/services/reminder.service.ts`;
 
 export const TEST_FIXTURES: readonly Fixture[] = [
   {
@@ -21,6 +22,41 @@ export const TEST_FIXTURES: readonly Fixture[] = [
       [`${BILLING}/domain/value-objects/money.vo.ts`]: 'export class Money {}\n',
       [`${BILLING}/test/unit/money.spec.ts`]: SPEC,
     }),
+  },
+  {
+    ruleId: 'test/spec-required',
+    name: 'an abstract strategy of the domain, held by the spec of its implementation',
+    expect: 'pass',
+    files: project({
+      [REMINDER_SERVICE]: 'export abstract class ReminderService {\n  abstract isDue(daysLate: number): boolean;\n}\n',
+      [`${BILLING}/domain/services/invoice-reminder.service.ts`]: [
+        "import { ReminderService } from '@/contexts/billing/domain/services/reminder.service.js';",
+        '',
+        'export class InvoiceReminderService extends ReminderService {',
+        '  isDue(daysLate: number): boolean {',
+        '    return daysLate > 0;',
+        '  }',
+        '}',
+        '',
+      ].join('\n'),
+      [`${BILLING}/test/unit/invoice-reminder.service.spec.ts`]: SPEC,
+    }),
+  },
+  {
+    ruleId: 'test/spec-required',
+    name: 'an abstract class next to an exported function still needs its spec',
+    expect: { file: REMINDER_SERVICE },
+    files: project(
+      {
+        [REMINDER_SERVICE]:
+          'export abstract class ReminderService {}\n\nexport function reminderService(): number {\n  return 1;\n}\n',
+      },
+      {
+        [CONFIG_FILE]: config({
+          onePerFile: { allow: [{ file: REMINDER_SERVICE, reason: 'The base and its default are one rule.' }] },
+        }),
+      },
+    ),
   },
   {
     ruleId: 'test/spec-required',
