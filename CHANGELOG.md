@@ -4,6 +4,29 @@ What each version changes for someone who uses the kit. The packages of `package
 together, under one version; the notes of each [GitHub release](https://github.com/gbourgeat/ddd-ts-kit/releases)
 list the pull requests behind it.
 
+## 0.22.0
+
+**A context builder keeps its report current and regenerates with each slice.** The
+`context-builder` agent has 150 turns instead of 80, and after each step of a slice it rewrites
+`.ddd-ts-kit/report.md` in its worktree, in the form of its final report: an agent that stops
+early leaves its state there, and `parallel-work` tells the conductor to read it. The guard lets a
+worker write that one file. After each slice the worker runs `npm run regenerate` and commits the
+derived files with it, as the briefing of `worker-scope` now says: they were left to the conductor,
+so a worker stopped on "regenerate" and the run stopped with it. The agent never shortens a
+comment, a test or a written rule to stay under a size limit: it extracts instead.
+
+**`generate event-handler` and `generate integration-handler` take `--name <Name>`.** A reaction
+was named after the event it handles; when the design names it after what it does in its context,
+`--name` gives that name to the file, the class, the spec and the registration, and for an
+integration handler to its consumer name and its system actor. The name passes the same checks
+as any concept of the context (`--term`, `--allow-name`). Without it, nothing changes.
+
+**`clean/function-size` names the fix.** More than three parameters: group them in a typed props
+object or a value object (`Contestation.create({ ... })`), never a fourth parameter. A `describe`
+past the 100-line ceiling: one top-level `describe` per behaviour, in the same file. The ESLint
+rule no longer takes production code such as `context.run(callback)` for a group of tests: such a
+callback is now held to the limit of a function, and may be reported where it was not.
+
 ## 0.21.0
 
 **A rule can be set for some files only, and a rule off everywhere is said.** `rules.<id>` in
