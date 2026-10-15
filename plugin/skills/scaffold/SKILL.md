@@ -72,6 +72,9 @@ the tree, so a generated file conforms by construction and costs no tokens.
   writes; `npx ddd-ts-kit explain domain/value-object-class` says what it reads): the class
   compares by value (`equals`), checks its invariants once, keeps its operations next to its
   data and is recognised with `instanceof` by a mapper.
+- **No role fits?** A type or a function alone is a missing concept, never a new folder: a
+  method of the value object, a `domain-service`, a `value-object`, or an abstract service with
+  one `domain-service` per variant (`docs/ARCHITECTURE.md`, a concept with no role of its own).
 - `route` writes a controller class in its own folder (or a `defineRoute` function under
   `"stack.routes": "functions"`); `controller` always writes the class; `route-group` writes a
   group with its prefix and guards, `guard` a guard of the project with its spec;

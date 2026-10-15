@@ -2,7 +2,7 @@ import type { RuleDoc } from '../model/rule-doc.js';
 
 export const TREE_DOCS: Readonly<Record<string, RuleDoc>> = {
   'tree/closed': {
-    why: 'A fixed tree means every concept has one obvious place, so people and tools find it without reading the code. An ad hoc folder (utils, helpers, common) is where unnamed concepts go to hide; a real new need is declared in extraDirectories with its reason. In the declared style the generated barrel <context>.declarations.ts lives at the root of the context, next to CONTEXT.md; a module file may stay there when the wiring of a context is unusual.',
+    why: 'A fixed tree means every concept has one obvious place, so people and tools find it without reading the code. An ad hoc folder (utils, helpers, common, types, functions) is where unnamed concepts go to hide: a function that reads a value is a method of that value object, a decision over several objects a domain service, a shared shape of data a value object, an interchangeable rule an abstract class of domain/services with one service per variant (docs/ARCHITECTURE.md, a concept with no role of its own). A real new need is declared in extraDirectories with its reason. In the declared style the generated barrel <context>.declarations.ts lives at the root of the context, next to CONTEXT.md; a module file may stay there when the wiring of a context is unusual.',
     bad: `contexts/billing/domain/utils/rounding.ts`,
     good: `contexts/billing/domain/value-objects/money.vo.ts
 contexts/billing/billing.declarations.ts   // declared style only`,
@@ -62,7 +62,7 @@ export class Invoice {}
 export class InvoiceLine {}`,
   },
   'test/spec-required': {
-    why: 'Aggregates, value objects, domain services, handlers and jobs hold the business behaviour and what triggers it; an untested one is an unverified rule. Requiring the spec file makes the missing test visible at the moment the code is written.',
+    why: 'Aggregates, value objects, domain services, handlers and jobs hold the business behaviour and what triggers it; an untested one is an unverified rule. Requiring the spec file makes the missing test visible at the moment the code is written. An abstract base (every exported class abstract, no exported function), such as a strategy of domain/services, needs none: the specs of its implementations hold its behaviour.',
     bad: `domain/aggregates/invoice.aggregate.ts with no test/**/invoice.aggregate.spec.ts`,
     good: `test/unit/invoice.aggregate.spec.ts`,
   },

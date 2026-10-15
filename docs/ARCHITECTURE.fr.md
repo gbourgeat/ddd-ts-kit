@@ -1,5 +1,5 @@
 [English](ARCHITECTURE.md) · **Français**
-<!-- translation-of: ARCHITECTURE.md sha256:e46ad50b3c6eaea3 -->
+<!-- translation-of: ARCHITECTURE.md sha256:a7ff8ffcb44cda32 -->
 
 # Référence de l'architecture
 
@@ -195,6 +195,43 @@ cas. Les niveaux nommés `<use-case>` sont ouverts, de même que tout ce qui se 
 (`test/e2e/`) et le test d'architecture (`test/architecture/`) vivent à la racine du projet, hors
 des contextes.
 
+**Un concept sans rôle à lui a quand même sa place.** Le domaine n'a pas de répertoire
+`types/`, `functions/` ni `utils/` : chacun accueillerait des concepts que personne n'a nommés.
+Un type seul ou une fonction seule signale qu'un concept du modèle manque, et il va là où vit
+ce concept :
+
+| Ce que c'est | Où ça va | Pourquoi |
+|---|---|---|
+| une fonction sans effet de bord qui lit une valeur (un total, une conversion, une comparaison) | une méthode de cet objet-valeur | la valeur répond sur elle-même (fonctions sans effet de bord) ; une fonction à côté la laisserait anémique |
+| une décision sur plusieurs agrégats ou valeurs qui n'appartient à aucun | un service du domaine, `domain/services/*.service.ts`, avec sa *spec* | le nom est alors juste : une décision métier sans état, sans entrée-sortie |
+| une forme de données que le modèle partage (des seuils, un réglage métier) | un objet-valeur, `domain/value-objects/*.vo.ts` ; les types de ses *props* s'exportent du même fichier | une valeur nommée vérifie ses invariants une fois, là où un type nu ne vérifie rien |
+| une règle interchangeable (une stratégie : la façon de décider un seuil, un prix ou un délai) | une classe abstraite dans `domain/services/` et un service concret par variante, chacun dans son fichier avec sa *spec* ; la base abstraite n'a pas besoin de *spec* à elle | le modèle choisit la variante et l'appelle à travers la base ; rien hors du domaine ne connaît les variantes |
+| une mise en forme d'une valeur pour la lecture ou l'affichage | pas le domaine : le résultat d'une requête (`*.result.ts`) ou un *mapper* de `presentation/` | le domaine décide, il ne formate pas |
+
+Une stratégie n'est pas un port : le modèle choisit l'implémentation à partir de ses propres
+données, et rien n'est câblé. Une règle dont la variante vient de l'extérieur (un réglage, un
+fournisseur) est un port de `application/ports/`. `*.policy.ts` reste le suffixe des politiques
+d'autorisation de `application/authorization/`.
+
+<!-- checked sample -->
+```ts
+// domain/services/approval-threshold.service.ts : la règle, avec un nom du métier
+export abstract class ApprovalThresholdService {
+  abstract requiresApproval(amountInCents: number): boolean;
+}
+
+// domain/services/fixed-approval-threshold.service.ts : une variante, avec sa spec
+export class FixedApprovalThresholdService extends ApprovalThresholdService {
+  constructor(private readonly ceilingInCents: number) {
+    super();
+  }
+
+  requiresApproval(amountInCents: number): boolean {
+    return amountInCents > this.ceilingInCents;
+  }
+}
+```
+
 ## 3. Règles de dépendance
 
 ![Les quatre couches d'un contexte délimité dans la plateforme : la présentation, l'application et l'infrastructure pointent vers le domaine, l'infrastructure implémente les ports de l'application](assets/diagrams/layers-dependency-rule.fr.svg)
@@ -220,7 +257,7 @@ et la plateforme le lie au démarrage. Pourquoi, et ce que contient chaque couch
 | `naming/one-concept-per-file` | Un seul agrégat, entité, objet-valeur, événement, gestionnaire, *job* ou projection exporté par fichier, et une seule classe déclarée par fichier de rôle. |
 | `naming/search-not-list` | Une lecture qui prend des critères, un périmètre ou une page est une recherche. Dans un contexte, aucune méthode ne s'appelle `list`, ou `list` suivi d'une majuscule (`listByCustomer`), ni dans un port (`domain/repositories/*.repository.ts`, `application/ports/*.port.ts`) ni dans une classe de `infrastructure/` ou de `test/fakes/` : elle s'appelle `search...`. Sous `application/queries/`, aucun dossier ni fichier ne s'appelle `list` ni ne commence par `list-` ou `list.`, et aucune classe ne s'appelle `List` ni ne commence par `List` suivi d'une majuscule : la requête est `Search<Things>Query` dans `search-<things>/`. Une propriété n'est pas jugée, ni `listAccessible`, que le port `Authorizer` du kit exige ; une lecture d'un seul élément ou d'aucun reste `findById` ou `findBy...`. |
 | `naming/business-name` | Une variable, une variable de boucle, un nom déstructuré, un paramètre (d'une fonction, d'une méthode, d'une signature ou d'une fonction fléchée) et une propriété (d'une classe, d'une interface ou d'un type objet) de `domain/` et `application/` d'un contexte, et du noyau partagé hors de `presentation/`, portent le nom du concept qu'ils désignent, jamais un mot générique : `target`, `targets`, `data`, `item`, `items`, `obj`, `object`, `thing`, `things`, `stuff`, `info`, `element`, `el`, `tmp`, `temp`, `foo`, `bar`, `baz`. `businessNames.words` de la configuration remplace la liste, `businessNames.allow` en retire des mots. Une clé d'un objet littéral suit le type pour lequel elle est écrite et n'est pas jugée, ni les tests. ESLint corrige une variable construite par `X.create(..)` ou `new X(..)`, ou lue depuis un *repository*, en la renommant, avec chacun de ses usages, du nom de `X` en camelCase (`appointment`), sauf si ce nom est déjà pris ; une variable de boucle est signalée avec le singulier de sa collection. |
-| `test/spec-required` | Chaque agrégat, objet-valeur, service du domaine, gestionnaire de commande, gestionnaire de requête, gestionnaire d'événements du domaine, gestionnaire d'événements d'intégration, *job* et projection a un `*.spec.ts` dans le `test/` du contexte. |
+| `test/spec-required` | Chaque agrégat, objet-valeur, service du domaine, gestionnaire de commande, gestionnaire de requête, gestionnaire d'événements du domaine, gestionnaire d'événements d'intégration, *job* et projection a un `*.spec.ts` dans le `test/` du contexte. Un fichier dont toutes les classes exportées sont abstraites et qui n'exporte aucune fonction est une base tenue par les *specs* de ses implémentations, et n'en demande pas. |
 | `events/name-format` | Les noms des événements du domaine et d'intégration suivent `<context>.<aggregate>.<fact-in-past-tense>` : le `static readonly eventName` qu'un événement du domaine déclare une fois (ou son `readonly name`, comme l'écrivait la 0.5) et le `type` d'une déclaration d'événement d'intégration. |
 | `events/name-declared-once` | Chaque classe de `domain/events/`, hormis une classe abstraite, déclare son nom une fois, `static readonly eventName = '<context>.<aggregate>.<fact>'`, sous lequel ses gestionnaires et ses projections sont attachés ; son `readonly name` le lit (`readonly name = InvoiceIssued.eventName`) au lieu d'écrire le nom une seconde fois. Vérifié sur chaque événement du domaine, consommé ou non. |
 | `events/defined-in-published-language` | Un événement d'intégration se déclare une fois avec `defineIntegrationEvent` dans le `published-language/` du producteur, avec un schéma de *payload*. Le catalogue et le document AsyncAPI sont générés à partir de ces déclarations. |

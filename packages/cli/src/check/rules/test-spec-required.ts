@@ -3,6 +3,7 @@ import { roleOf } from '../canonical/role-of.js';
 import type { Rule } from '../model/rule.js';
 import type { SourceFile } from '../model/source-file.js';
 import { inContext } from '../support/in-context.js';
+import { isAbstractBase } from '../support/is-abstract-base.js';
 import { perFile } from '../support/per-file.js';
 import { roleDirectory } from '../support/role-directory.js';
 
@@ -19,7 +20,7 @@ interface Subject {
 export const testSpecRequired: Rule = {
   id: 'test/spec-required',
   description:
-    "Every aggregate, value object, domain service, command handler, query handler, domain event handler, integration event handler and job has a *.spec.ts in the context's test/.",
+    "Every aggregate, value object, domain service, command handler, query handler, domain event handler, integration event handler and job has a *.spec.ts in the context's test/; an abstract base is held by the specs of its implementations.",
   scope: 'project',
   run(project) {
     const { contextsDir } = project.config;
@@ -64,7 +65,7 @@ function subjectOf(file: SourceFile): Subject | undefined {
   const name = path.posix.basename(file.path);
   const suffix = roleOf(roleDirectory(file.location))?.specFor?.find((candidate) => name.endsWith(candidate));
 
-  if (suffix === undefined) {
+  if (suffix === undefined || isAbstractBase(file)) {
     return undefined;
   }
 
