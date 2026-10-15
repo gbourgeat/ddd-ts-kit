@@ -1,5 +1,5 @@
 [English](parallel-work.md) · **Français**
-<!-- translation-of: parallel-work.md sha256:c62999e03ae15602 -->
+<!-- translation-of: parallel-work.md sha256:6f1abbac32d49d8b -->
 
 # Travailler en parallèle sans collisions
 
@@ -94,10 +94,12 @@ Les générateurs sont déterministes (sortie triée, indépendante de l'ordre d
 bien que deux personnes qui régénèrent à partir des mêmes sources obtiennent les mêmes octets.
 `docs --check` et `declarations/barrel-current` font échouer le *pipeline* si quelqu'un a oublié.
 
-**Qui régénère :** celui qui fusionne en second. La première branche à arriver est cohérente par
-elle-même ; la seconde se rebase sur la branche par défaut ou la fusionne, régénère, et commite
-le résultat avec son propre changement. Dans une équipe d'agents, confiez cette tâche au chef
-d'orchestre, pas à chaque *worker*.
+**Qui régénère :** chacun, puis celui qui fusionne en second. Un *worker* lance
+`npm run regenerate` après chaque *slice* et commite les fichiers dérivés avec elle, pour que sa
+branche passe `docs:check` seule et ne s'arrête jamais sur « régénérer » comme besoin. La première
+branche à arriver est cohérente par elle-même ; la seconde se rebase sur la branche par défaut ou
+la fusionne, prend l'un des deux côtés de chaque fichier dérivé, régénère, et commite le résultat
+avec son propre changement.
 
 ### Les migrations
 
@@ -172,7 +174,8 @@ Scope
 - You may not write anything else. Shared files (config, src/platform, src/main.ts,
   package.json, lockfile, migrations, docs/) and other contexts are refused by the guard:
   report the need, do not work around it. A slice that changes the stored state generates a
-  working migration only: `npm run db:generate working-<what-it-does>`.
+  working migration only: `npm run db:generate working-<what-it-does>`. The derived files (generated
+  documents, barrels, context map, dependency rules) are written by `npm run regenerate`, never by hand.
 
 Slices, in this order (rows of docs/architecture/slices.md)
 - #31 Contacts known from identity (projection): `@Projection` over `identity.person.registered` ; ...
@@ -192,6 +195,12 @@ donc à chaque *worktree* son propre `.env`. Les tests rapides n'ont besoin d'au
 *specs* d'adaptateurs peuvent tourner sur un PostgreSQL dans le processus), et c'est ce qui rend
 praticables quatre *workers* sur un seul ordinateur portable.
 
+Un dépôt à sous-modules les clone de nouveau dans chaque nouveau *worktree*, ce qui peut prendre
+des minutes. Empruntez les objets d'un *checkout* qui les a, et copiez-les aussitôt :
+`git submodule update --init --reference <checkout>/<chemin du sous-module> --dissociate <chemin du sous-module>`.
+Sans `--dissociate`, le nouveau *worktree* continue de pointer vers les objets de la référence, et
+supprimer ce *checkout* le casse.
+
 Les règles qui empêchent les *worktrees* de faire du tort :
 
 - un *worker* par *worktree*, une branche par *worktree* ; un *worktree* n'est pas un lieu de
@@ -199,7 +208,9 @@ Les règles qui empêchent les *worktrees* de faire du tort :
 - indexez fichier par fichier, et relisez le diff indexé avant de commiter : un `git add` large
   dans un répertoire où écrit un autre processus commite le travail à moitié fini de quelqu'un
   d'autre ;
-- retirez le *worktree* quand sa branche est fusionnée (`git worktree remove`).
+- retirez le *worktree* quand sa branche est fusionnée (`git worktree remove`) ;
+- un agent `context-builder` réécrit `.ddd-ts-kit/report.md` dans son *worktree* après chaque
+  étape (ignoré par git) : quand il s'arrête sans rapport, lisez-le là avant de lancer le suivant.
 
 Pour les agents de code en particulier : un agent à qui l'on dit de travailler « dans le contexte
 appointments » et qui est lancé dans le checkout principal lira quand même, et pourra modifier,

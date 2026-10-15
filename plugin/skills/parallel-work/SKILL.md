@@ -90,7 +90,7 @@ its end-to-end specs, any generator that writes a shared file and any dependency
 |---|---|---|
 | `ddd-ts-kit.config.json`, `src/main.ts`, `src/platform/**`, `src/apps/**`, `src/shared-kernel/**` | conductor, on the trunk | workers report the need and wait for the trunk |
 | registries the generators fill between markers (composition root, database schema index, audited events, job settings, access policies) | generators, run by the conductor | skeleton first; at a merge, keep both sides' lines |
-| `<context>.declarations.ts`, `docs/context-map.md`, `openapi/*`, `docs/integration/*`, `.dependency-cruiser.cjs` | generators only | never merged by hand: take either side, then `npm run regenerate` |
+| `<context>.declarations.ts`, `docs/context-map.md`, `openapi/*`, `docs/integration/*`, `.dependency-cruiser.cjs`, `clients/*` | `npm run regenerate`, a worker's included | a worker regenerates and commits them with its slice; never merged by hand: take either side, then `npm run regenerate` |
 | `package.json`, the lockfile | conductor | a worker asks for a dependency; after a conflict, `npm install` rewrites the lockfile |
 | migrations and their order | conductor | a worker generates a working one only (`db:generate working-<what>`); at the merge the conductor deletes it and generates the real one on the trunk |
 | `docs/architecture/plan.md`, `slices.md` | conductor | workers report, the conductor marks |
@@ -106,7 +106,8 @@ context owns, and a note past two), each with its rules from `slices.md`: send i
 Launch the `context-builder` agents of different contexts in one message so they run
 together, without the isolation option (the worktree already exists). In one context, launch
 the next row's agent once the previous one reported; a report naming an unfinished slice and
-its files goes to the next agent, which resumes from them.
+its files goes to the next agent, which resumes from them. An agent that stopped without a
+report left it in its worktree, `.ddd-ts-kit/report.md`, as of its last step: read it there.
 
 Each agent commits its rows. When the rows of a branch are committed: one review of the batch
 (`architecture-reviewer`, `--changed-since <base>`), `npm run verify`, then the branch merges

@@ -1,5 +1,5 @@
 [English](persistence.md) · **Français**
-<!-- translation-of: persistence.md sha256:0fb23c9c7b63e387 -->
+<!-- translation-of: persistence.md sha256:5dc161c1f625f207 -->
 
 # Persistance : Drizzle, Knex, Prisma, TypeORM, et quelle base de données
 
@@ -507,6 +507,13 @@ supprimer l'ancienne dans une suivante, ou écrire les instructions dans une mig
 personnalisée. Prisma 7 n'attend pas non plus : là où `prisma migrate dev` poserait une question
 (un avertissement de perte de données), il s'arrête sur une erreur dans un environnement non
 interactif (lu dans son code, non mesuré) ; knex et TypeORM ne demandent rien.
+**Une clé primaire changée.** Un projet a signalé que drizzle-kit écrivait l'instruction qui
+ajoute la nouvelle clé primaire d'une table avant celle qui supprime l'ancienne, si bien que la
+migration échouait sur la base (une table n'a qu'une clé primaire) ; non mesuré ici. Relire le SQL
+généré d'une migration qui change une clé primaire avant de le commiter : le `DROP CONSTRAINT` de
+l'ancienne clé vient en premier. Sinon, remettre les deux instructions dans l'ordre à la main dans
+cette nouvelle migration, qui n'est pas encore appliquée.
+
 La première migration knex qu'écrit `init` est `00000000000000_initial.js` : elle se trie avant
 tout horodatage ; un projet créé avant la 0.5 garde son `0001_initial.js`, puisqu'une migration
 appliquée n'est jamais renommée.

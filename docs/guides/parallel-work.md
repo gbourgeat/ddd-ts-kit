@@ -89,9 +89,11 @@ The generators are deterministic (sorted output, independent of registration ord
 people regenerating from the same sources get the same bytes. `docs --check` and
 `declarations/barrel-current` fail the pipeline if somebody forgot.
 
-**Who regenerates:** whoever merges second. The first branch to land is consistent by itself;
-the second one rebases or merges the default branch, regenerates, and commits the result with
-its own change. In a team of agents, give that job to the conductor, not to each worker.
+**Who regenerates:** everyone, then whoever merges second. A worker runs `npm run regenerate`
+after each slice and commits the derived files with it, so that its branch passes `docs:check`
+alone and never stops on "regenerate" as a need. The first branch to land is consistent by
+itself; the second one rebases or merges the default branch, takes either side of each derived
+file, regenerates, and commits the result with its own change.
 
 ### Migrations
 
@@ -165,7 +167,8 @@ Scope
 - You may not write anything else. Shared files (config, src/platform, src/main.ts,
   package.json, lockfile, migrations, docs/) and other contexts are refused by the guard:
   report the need, do not work around it. A slice that changes the stored state generates a
-  working migration only: `npm run db:generate working-<what-it-does>`.
+  working migration only: `npm run db:generate working-<what-it-does>`. The derived files (generated
+  documents, barrels, context map, dependency rules) are written by `npm run regenerate`, never by hand.
 
 Slices, in this order (rows of docs/architecture/slices.md)
 - #31 Contacts known from identity (projection): `@Projection` over `identity.person.registered` ; ...
@@ -184,12 +187,20 @@ its own ports if two of them run `npm run dev` or the end-to-end tests at once: 
 tests need no server at all (adapter specs can run on an in-process PostgreSQL), which is what
 makes four workers on one laptop practical.
 
+A repository with submodules clones each of them again in every new worktree, which can take
+minutes. Borrow the objects of a checkout that has them, and copy them at once:
+`git submodule update --init --reference <checkout>/<submodule path> --dissociate <submodule path>`.
+Without `--dissociate`, the new worktree keeps pointing at the objects of the reference, and
+removing that checkout breaks it.
+
 Rules that keep worktrees from hurting:
 
 - one worker per worktree, one branch per worktree; a worktree is not a place to share;
 - stage file by file, and read the staged diff before committing: a broad `git add` in a
   directory another process writes to commits somebody else's half-finished work;
-- remove the worktree when its branch is merged (`git worktree remove`).
+- remove the worktree when its branch is merged (`git worktree remove`);
+- a `context-builder` agent rewrites `.ddd-ts-kit/report.md` in its worktree after each step
+  (ignored by git): when one stops without a report, read it there before launching the next.
 
 For coding agents specifically: an agent told to work "in the appointments context" that is
 started in the main checkout will still read, and may edit, anything. Give it a worktree and
