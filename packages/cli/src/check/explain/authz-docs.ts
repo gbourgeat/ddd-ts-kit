@@ -30,6 +30,21 @@ await this.access.authorize(command.actor, billingPermissions['invoice.void'], i
 @Policy(billingPermissions['invoice.void'], { name: 'billing.only-issuer-voids' })
 export class OnlyIssuerVoidsPolicy {}`,
   },
+  'authz/granted': {
+    why: "In a project whose rights are roles (stack.authz rbac), a permission does two things: a use case requires it, and a role holds it. The generator declares the first; the grant lives in the roles of the platform. The super-admin holds the wildcard `*`, so a permission no role names is reachable by administrators only, the checks stay green and the people the use case was written for are refused at run time. It fails closed, which is safe, but silently. Judged: every key of every `definePermissions` set of a context is named in `<platformDir>/auth/roles.ts`, by the entry of its set (`billingPermissions['invoice.issue']`), by its id (`'billing:invoice.issue'`) or by the wildcard of its context (`'billing:*'`); the bare `*` does not count, and a grant to `Role.System` does. A permission meant for administrators only is granted to `Role.Admin` by name, so that the intent is read in review. Silent when the rights are attributes, relationships or an authorizer of the project, and when the platform has no roles file. A warning: it fails closed.",
+    bad: `// contexts/billing/application/authorization/billing.permissions.ts
+export const billingPermissions = definePermissions('billing', {
+  'invoice.void': { description: 'Void invoice' },
+});
+// platform/auth/roles.ts
+export const roles = { [Role.Admin]: ['*'] };`,
+    good: `// platform/auth/roles.ts
+export const roles = {
+  [Role.Admin]: ['*'],
+  [Role.Accountant]: [billingPermissions['invoice.void']],
+};
+// or, when generating the use case: --permission invoice.void --grant accountant`,
+  },
   'authz/policy-asked': {
     why: 'The bus checks the permission of a use case before its handler runs, with the identifier of the element at most: it cannot read the element. A policy is the part of the right that needs the element (only the issuer, not after closing), and it is evaluated only when the handler asks Access once the element is loaded. A handler that forgets to ask leaves the policy declared, tested and never applied, and nothing at run time says so. Judged: for every permission refined by a policy (@Policy or definePolicy in application/authorization/), the handlers in the folder of each command or query that requires it (@Requires, .requires(...) or requires(X, ...)) call authorize, decide or decideOn and name that permission in their code. The TODO(domain) the generator leaves in such a handler, naming the permission, is accepted: `ddd-ts-kit todo` lists it, and until it is done the authorization module refuses the result of the handler at run time (PolicyNotAskedError).',
     bad: `// application/authorization/only-issuer-voids.policy.ts

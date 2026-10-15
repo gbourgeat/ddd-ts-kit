@@ -18,6 +18,9 @@ paths:
 - Every command and query is registered in `<context>.module.ts` with the permission it requires, or as public (`authz/declared`), and the actor is in the message (`authz/actor-explicit`). Permissions live in `authorization/<context>.permissions.ts`, rules that need loaded state in `authorization/*.policy.ts`.
 - A class here carries no registration of its own: `<context>.module.ts` binds it and lists what its constructor receives. A job is registered as `@Scheduled('<context>.<job>', schedule)` would say: one name, one schedule, and the command bus as its only dependency.
 {{/if}}
+{{#if authz.rbac}}
+- A permission is held by a role: decide who holds it when you declare it, and pass `--grant <role>` to `generate command|query --permission <p>`, or grant it in the roles of the platform (`auth/roles.ts`) by name. The super-admin `*` alone leaves everybody else refused (`authz/granted`).
+{{/if}}
 - A port is an abstract class in `ports/<name>.port.ts` and its own injection token (`ports/abstract-class`, `ports/no-token-constant`), named for the need (`PaymentGateway`), with a fake in `test/fakes/`.
 {{#if style.declared}}
 - A constructor parameter is typed by a port, never by an adapter or a fake (`ports/no-concrete-dependency`); a port that only types a parameter is imported with `import type`.
