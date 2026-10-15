@@ -1,6 +1,9 @@
 import type { BriefedSlice } from './briefed-slice.js';
 import type { WorkerPlace } from './worker-place.js';
 
+/** The report a worker keeps current in its worktree, ignored by git with the rest of `.ddd-ts-kit/`. */
+const REPORT_FILE = '.ddd-ts-kit/report.md';
+
 /**
  * The briefing of a context worker, as the parallel-work skill of the plugin writes it, with
  * what the project says filled in. What only the conductor knows stays between angle brackets.
@@ -26,8 +29,10 @@ export function briefingOf(place: WorkerPlace): string {
     `\`npx ddd-ts-kit describe ${context} --json\`. Then the \`next\` places each generator prints.`,
     '',
     'For each slice: generate with --local-only --json, fill the TODO(domain) markers, replace every it.todo',
-    `by a test, \`npx ddd-ts-kit check --changed-since ${trunk}\`, \`npm test -- ${context}\`, then one`,
-    `commit: \`feat(${context}): <slice in business words>\`.`,
+    `by a test, \`npm run regenerate\`, \`npx ddd-ts-kit check --changed-since ${trunk}\`, \`npm test -- ${context}\`,`,
+    `then one commit, with the files regenerate rewrote: \`feat(${context}): <slice in business words>\`.`,
+    `After each step, rewrite ${REPORT_FILE} in the worktree in the form of the report below: if you stop,`,
+    'the conductor reads it there.',
     '',
     'Done when: every slice is committed, `npm run verify` is green in the worktree, and',
     `\`npx ddd-ts-kit todo ${context}\` lists nothing.`,
@@ -46,7 +51,8 @@ function scopeLines({ config, generators }: WorkerPlace, directory: string): str
     `- You may not write anything else. Shared files (config, ${config.platformDir}, ${config.sourceRoot}/main.ts,`,
     '  package.json, lockfile, migrations, docs/) and other contexts are refused by the guard:',
     '  report the need, do not work around it. A slice that changes the stored state generates a',
-    '  working migration only: `npm run db:generate working-<what-it-does>`.',
+    '  working migration only: `npm run db:generate working-<what-it-does>`. The derived files (generated',
+    '  documents, barrels, context map, dependency rules) are written by `npm run regenerate`, never by hand.',
     `- Generators you may run: ${generators.join(', ')}.`,
     '  The others are run by the conductor.',
   ];
