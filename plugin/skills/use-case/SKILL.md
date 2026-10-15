@@ -42,11 +42,18 @@ guess is a question for the user.
 Run the `Start with` commands of the slice row, or for a typical command:
 
 ```bash
-npx ddd-ts-kit generate command <ctx> <UseCase> --aggregate <Aggregate> --permission <aggregate>.<action> --json
+npx ddd-ts-kit generate command <ctx> <UseCase> --aggregate <Aggregate> --permission <aggregate>.<action> --grant <role> --json
 npx ddd-ts-kit generate error <ctx> <Concept> <refusal> --json        # one per refusal: a factory on the error class of the concept
 npx ddd-ts-kit generate domain-event <ctx> <Aggregate> <Fact> --json  # the fact recorded
 npx ddd-ts-kit generate route <ctx> <UseCase> --method POST --path /<resource> --json   # [--group <Name>] [--mapper] [--serializer]
 ```
+
+Decide who holds the permission before you generate: in a project whose rights are roles
+(`stack.authz` `rbac`), `--grant <role>` writes the grant in `platform/auth/roles.ts` and adds
+the role to `role.ts` when it is new. Without it, only the super-admin `*` reaches the use case,
+every other person is refused at run time, and `check` warns (`authz/granted`). Who holds it is
+a business decision: ask the user when the slice does not say. Under attributes or
+relationships, `--grant` is refused: give the right in that model instead.
 
 A refusal is named in the words of the business, twice: `generate error scheduling Appointment
 slotTaken` adds `AppointmentError.slotTaken()` with the code `SLOT_TAKEN` to
@@ -58,14 +65,14 @@ factory only for what a client may read, never for what identifies a person. Dec
 in `errors` of the route (`errors/known-code`).
 
 A use case that receives a file is
-`generate file-upload <ctx> <UseCase> --path /<resource>/:id/<file> (--permission ... | --public)`:
+`generate file-upload <ctx> <UseCase> --path /<resource>/:id/<file> (--permission ... --grant <role> | --public)`:
 a controller that declares the file (size and media types, in the contract), a command that
 carries it as a `FileUpload` (the bus stages it under a key of `FileKeys` before the transaction
 opens), a handler that reads `upload.file` and promotes it with the commit
 (`promoteOnCommit`). Record the `StoredFile` on the aggregate in that handler; the content never
 goes in a table. A download is a query answering a short signed link (`signedDownloadUrl`).
 
-A read is `generate query ... (--permission ... | --public)`; a search adds `--search` (paged,
+A read is `generate query ... (--permission ... --grant <role> | --public)`; a search adds `--search` (paged,
 narrowed in the query by the caller's access scope). A reaction inside the context is
 `generate event-handler` (phase below); work started by time is
 `generate job ... --command <UseCase>`, which only sends the command; work a command hands to a

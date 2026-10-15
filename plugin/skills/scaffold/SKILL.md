@@ -57,7 +57,9 @@ the tree, so a generated file conforms by construction and costs no tokens.
   searches (`invoice`, `invoices`). Keep the business word when you fill the `TODO(domain)`:
   never `target`, `data` or `item` (`naming/business-name`).
 - **Access.** `command` and `query` are refused without `--permission <aggregate>.<action>`
-  or `--public`; the permission joins `<context>.permissions.ts`.
+  or `--public`; the permission joins `<context>.permissions.ts`. With roles, add
+  `--grant <role>`: the role that holds it, written in the roles of the platform
+  (`authz/granted`).
 - **Ports.** A port is an abstract class, used as its own injection token: no constant, no
   token file. `port` and `repository` write the fake and the contract suite with it.
 - **Dependencies between kinds.** A missing repository or domain event is created; a

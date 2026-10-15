@@ -59,7 +59,7 @@ missing. Rows with no path between them can be built in parallel.
 |---|---|---|---|---|---|---|---|
 | 1 | ordering | skeleton | Order | `generate aggregate ordering Order` then `generate repository ordering Order` | | conductor | todo |
 | 2 | ordering | contract | Order placed | `generate integration-event ordering Order Placed` | 1 | conductor | todo |
-| 3 | ordering | slice | Place order | `generate command ordering PlaceOrder --aggregate Order --permission order.place`; `generate route ordering PlaceOrder --method POST --path /orders` | 1, 2 | ordering | todo |
+| 3 | ordering | slice | Place order | `generate command ordering PlaceOrder --aggregate Order --permission order.place --grant customer`; `generate route ordering PlaceOrder --method POST --path /orders` | 1, 2 | ordering | todo |
 | 4 | billing | slice | Invoice a placed order | `generate integration-handler billing ordering ordering.order.placed` | 2 | billing | todo |
 ```
 

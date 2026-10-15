@@ -111,6 +111,10 @@ Upstream contexts first, then by the dependency order of the slices. For each br
 3. mark its rows `done` in `slices.md`, commit (`npx ddd-ts-kit status` shows what is left);
 4. the other workers merge the trunk into their branch before their next slice.
 
+A worker never grants a permission to a role: the roles live in `src/platform/auth/`. When
+its report says who holds a new permission, grant it on the trunk in `roles.ts` (by the entry
+of the set) as you merge its branch, before `npm run verify`: `authz/granted` warns until then.
+
 When a worker reports a need on a shared file: do it on the trunk, commit, tell the worker to
 merge the trunk. Remove each worktree once its branch is merged
 (`git worktree remove ../<project>-<context>`).

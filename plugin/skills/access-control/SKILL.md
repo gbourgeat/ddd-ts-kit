@@ -31,9 +31,17 @@ Nothing is reachable by default (`authz/declared`): the generator refuses a comm
 query without one of the two.
 
 ```bash
-npx ddd-ts-kit generate command <ctx> <UseCase> --permission <aggregate>.<action> --json
+npx ddd-ts-kit generate command <ctx> <UseCase> --permission <aggregate>.<action> --grant <role> --json
 npx ddd-ts-kit generate query <ctx> <UseCase> --public --json
 ```
+
+- A permission is held by somebody: decide who when you declare it. With roles
+  (`stack.authz` `rbac`), `--grant <role>` writes `[Role.<Role>]: [<context>Permissions['<p>']]`
+  in `<platformDir>/auth/roles.ts` and adds the role to `role.ts` when it is new. The
+  super-admin `*` alone does not count: a permission no role names is refused to everybody
+  else, and `check` warns (`authz/granted`). One meant for administrators only is granted to
+  `Role.Admin` by name. A grant to every signed-in person goes in `signed-in-grants.ts`.
+  Under attributes or relationships, `--grant` is refused: give the right in that model.
 
 - The permission is named in the ubiquitous language (`invoice.issue`, not `admin.write`),
   joins `application/authorization/<context>.permissions.ts`, and its words are checked
@@ -143,7 +151,7 @@ stop at the first answer that changes the model (the guide
 | authorization in a repository | tenant scoping only there; rights in the application |
 
 Finish with
-`npx ddd-ts-kit check --rule authz/declared --rule authz/in-application --rule authz/actor-explicit --rule authz/fields-by-schema --rule authz/policy-asked`.
+`npx ddd-ts-kit check --rule authz/declared --rule authz/in-application --rule authz/actor-explicit --rule authz/fields-by-schema --rule authz/policy-asked --rule authz/granted`.
 Every decision, denials included, is recorded by the audit trail (skill
 `ddd-ts-kit:cross-cutting`), the refusals of the guards at the edge too (`onGuardRefusal` of the
 HTTP boundary, wired to `auditGuardRefusals`).

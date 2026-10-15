@@ -4,6 +4,27 @@ What each version changes for someone who uses the kit. The packages of `package
 together, under one version; the notes of each [GitHub release](https://github.com/gbourgeat/ddd-ts-kit/releases)
 list the pull requests behind it.
 
+## Unreleased
+
+**A permission no role holds is said.** In a project whose rights are roles (`stack.authz`
+`rbac`), `authz/granted` (`ddd-ts-kit check`) reports each permission a context declares that no
+role names in `platform/auth/roles.ts`, nor `platform/auth/signed-in-grants.ts`: the super-admin
+`*` was the only one to reach it, so the checks stayed green and every other person was refused
+at run time. It is a warning: `check` does not fail on it. A grant counts by the entry of the set
+(`billingPermissions['invoice.issue']`), by the id (`'billing:invoice.issue'`) or by the wildcard
+of the context (`'billing:*'`); a grant to `Role.System`, written by `generate job`, counts too.
+The rule is silent under attributes, relationships or an authorizer of the project's own.
+
+**`generate command`, `query` and `file-upload` take `--grant <role>`.** With `--permission`, it
+writes the grant in `platform/auth/roles.ts` and adds the role to `platform/auth/role.ts` when it
+is new. It is refused with `--public`, and when the rights are not roles. Without it, a `next`
+step points at the roles to edit. `init --force` writes the roles from their template again, and
+the warning names the grants to give back. To move, run `ddd-ts-kit check --rule authz/granted`
+and grant each permission it lists to the roles that hold it, by the entry of its set, in
+`roles.ts`; a permission meant for administrators only is granted to `Role.Admin` by name. A
+context worker never passes `--grant` (`--local-only` refuses it): the conductor grants on the
+trunk.
+
 ## 0.19.0
 
 **`status` and `worker-scope` read every slices table.** `docs/architecture/slices.md` may plan
