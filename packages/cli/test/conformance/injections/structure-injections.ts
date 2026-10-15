@@ -212,6 +212,16 @@ export const STRUCTURE_INJECTIONS: readonly Injection[] = [
     checker: true,
   },
   {
+    rule: 'config/rule-off-everywhere',
+    what: 'a rule turned off for the whole project, with no files named',
+    file: CONFIG,
+    changes: [{ file: CONFIG, from: '"rules": {},', to: '"rules": { "clean/file-size": "off" },' }],
+    checker: true,
+    alsoReports: [
+      { tool: 'checker', rule: 'governance/recorded-deviation', reason: 'Lowered with no deviation: unrecorded too.' },
+    ],
+  },
+  {
     rule: 'config/suppression-needs-reason',
     what: 'a suppression that gives no reason',
     file: HANDLER,
