@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:18321b84fdc49821 -->
+<!-- translation-of: README.md sha256:91cb20f36ff1d090 -->
 
 # ddd-ts-kit
 
@@ -1085,16 +1085,25 @@ un contexte ; `--json` affiche `{ count, remaining: [{ kind, context, file, line
 ## worker-scope
 
 ```
-ddd-ts-kit worker-scope <context> [--worktree <path>] [--branch <name>] [--dry-run]
+ddd-ts-kit worker-scope <context> [--base <ref>] [--rows <id,...>] [--worktree <path>] [--branch <name>] [--dry-run]
 ```
 
 Prépare la place d'un *worker* d'un build réparti par contexte : crée un *worktree* git du projet
-(`../<project>-<context>` par défaut) sur la branche `build/<context>`, y écrit
+(`../<project>-<context>` par défaut) sur la branche `build/<context>`, à partir de `--base` (une
+branche, une étiquette ou un *commit* : `origin/main` ; par défaut la branche courante), y écrit
 `.ddd-ts-kit/worker.json` (`{ "context": "<context>" }` ; `init` ignore `.ddd-ts-kit/`), et
 affiche la consigne du *worker* : son périmètre, les générateurs qu'il peut lancer, ses tranches
-encore à faire d'après `docs/architecture/slices.md`, les langages publiés qu'il consomme. Un
-*worktree* existant est gardé et seul le fichier est réécrit ; `--dry-run` ne crée et n'écrit
-rien. Il faut un dépôt git avec au moins un *commit*. Le *worker* génère ensuite avec
+encore à faire d'après `docs/architecture/slices.md`, les langages publiés qu'il consomme, et la
+base comme tronc de ses vérifications (`check --changed-since <base>`). `--rows 4.15,4.16` ne
+donne que ces lignes, dans cet ordre : un identifiant est lu tel qu'il est écrit, et une ligne
+absente du fichier, présente deux fois ou confiée à un autre propriétaire est refusée. Chaque
+ligne porte ses règles, lues sur une ligne `- #<id>: <règles>` sous les tableaux ; au-delà de
+deux lignes, une note le signale, car un agent en tient une ou deux. Un *worktree* existant, ou
+une branche existante, est gardé quand il contient la base et refusé sinon, pour qu'aucun
+*worker* ne construise sur un tronc périmé ; seul le fichier est réécrit. Sans `--base`, lancé
+depuis le *worktree* d'un *worker* (son `.ddd-ts-kit/worker.json`, ou une branche
+`build/<context>`), il refuse : cette branche deviendrait le tronc. `--dry-run` ne crée et
+n'écrit rien. Il faut un dépôt git avec au moins un *commit*. Le *worker* génère ensuite avec
 `--local-only`.
 
 ## affected

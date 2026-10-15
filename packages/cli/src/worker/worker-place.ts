@@ -1,5 +1,5 @@
 import type { Config } from '../config/index.js';
-import type { Slice } from '../progress/slice.js';
+import type { BriefedSlice } from './briefed-slice.js';
 
 /** What a briefing is filled with. */
 export interface WorkerPlace {
@@ -11,5 +11,5 @@ export interface WorkerPlace {
   readonly branch: string;
   readonly trunk: string;
   readonly generators: readonly string[];
-  readonly slices: readonly Slice[];
+  readonly slices: readonly BriefedSlice[];
 }

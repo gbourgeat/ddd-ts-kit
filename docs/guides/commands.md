@@ -237,7 +237,7 @@ Usage
   ddd-ts-kit describe <context>
   ddd-ts-kit status
   ddd-ts-kit todo [<context>]
-  ddd-ts-kit worker-scope <context> [--worktree <path>] [--branch <name>] [--dry-run]
+  ddd-ts-kit worker-scope <context> [--base <ref>] [--rows <id,...>] [--worktree <path>] [--branch <name>] [--dry-run]
   ddd-ts-kit docs [--check] [--stored-events]
   ddd-ts-kit sdk [--check] [--dry-run]
   ddd-ts-kit depcruise-config [--check|--write]
@@ -278,8 +278,11 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
                    scripts (docs:generate regenerates it, docs:check compares it, ci:build builds it);
                    --check writes nothing and exits 1 while a client differs from its contract
   todo             those markers as file:line, in the project or in one context
-  worker-scope     a git worktree on the branch build/<context> (by default ../<project>-<context>), its
-                   .ddd-ts-kit/worker.json, and the briefing of the worker of that context
+  worker-scope     a git worktree on the branch build/<context> (by default ../<project>-<context>), cut from
+                   --base <ref> (by default the current branch, refused from a worker's worktree), its
+                   .ddd-ts-kit/worker.json, and the briefing of the worker of that context; --rows <id,...>
+                   briefs those rows of slices.md only, with their rules; an existing worktree or branch
+                   that does not contain the base is refused
   --commit-size    the files and lines about to be committed against "commit" in the config (20 files and
                    600 lines by default, generated files not counted); --staged reads the index only;
                    advisory, --strict exits 1 when over

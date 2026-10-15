@@ -1,4 +1,4 @@
-import type { Slice } from '../progress/slice.js';
+import type { BriefedSlice } from './briefed-slice.js';
 
 /** The place one worker builds one context in, and what to tell that worker. */
 export interface WorkerScope {
@@ -11,7 +11,7 @@ export interface WorkerScope {
   /** Absolute path of the project inside the worktree: where every command of the worker runs. */
   readonly root: string;
   readonly branch: string;
-  /** The branch the worktree was cut from, and that the worker merges back from. */
+  /** The base: the ref the worktree was cut from (`--base`, by default the current branch), that the worker checks against and merges back from. */
   readonly trunk: string;
   /** True when this run created the worktree, or would with `--dry-run`. */
   readonly created: boolean;
@@ -19,8 +19,8 @@ export interface WorkerScope {
   readonly scopeFile: string;
   /** The generator kinds the worker may run; the conductor runs the others on the trunk. */
   readonly generators: readonly string[];
-  /** The rows of the slices table owned by the context and still to do. */
-  readonly slices: readonly Slice[];
+  /** The rows of the slices table the worker builds: those of `--rows`, by default those of the context still to do. */
+  readonly slices: readonly BriefedSlice[];
   readonly briefing: string;
   readonly notes: readonly string[];
 }
