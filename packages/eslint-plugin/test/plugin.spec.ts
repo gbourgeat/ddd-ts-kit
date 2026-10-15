@@ -188,6 +188,35 @@ describe('the dddTsKit helper', () => {
   });
 });
 
+describe('a rule set for some files', () => {
+  it('has a block of its own, after the architecture block', () => {
+    const rules = {
+      'clean/stepdown': { severity: 'off', files: ['src/legacy/**'] },
+      'clean/blank-lines': { severity: 'warn', files: ['test/**'] },
+      'clean/function-size': { severity: 'off', files: [] },
+    };
+
+    const config = inProject({ rules }, (root) => dddTsKit({ tsconfigRootDir: root }));
+    const names = config.map((entry) => entry.name);
+    const blankLines = config.find((entry) => entry.name === 'ddd-ts-kit/rules/clean/blank-lines');
+
+    expect(names.indexOf('ddd-ts-kit/rules/clean/stepdown')).toBeGreaterThan(names.indexOf('ddd-ts-kit/architecture'));
+
+    expect(config.find((entry) => entry.name === 'ddd-ts-kit/rules/clean/stepdown')).toMatchObject({
+      files: ['src/legacy/**'],
+      rules: { 'ddd-ts-kit/clean-stepdown': 'off' },
+    });
+
+    expect(blankLines?.files).toEqual(['test/**']);
+    expect(blankLines?.rules?.['@stylistic/padding-line-between-statements']).toEqual(expect.arrayContaining(['warn']));
+    expect(names).not.toContain('ddd-ts-kit/rules/clean/function-size');
+
+    expect(
+      config.find((entry) => entry.name === 'ddd-ts-kit/architecture')?.rules?.['ddd-ts-kit/clean-stepdown'],
+    ).not.toBe('off');
+  });
+});
+
 type Entry = ReturnType<typeof dddTsKit>[number];
 
 function architectureOf(root: string): Entry | undefined {

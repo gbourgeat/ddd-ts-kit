@@ -1,5 +1,5 @@
 [English](CONFIG.md) · **Français**
-<!-- translation-of: CONFIG.md sha256:be078d919fc14fa4 -->
+<!-- translation-of: CONFIG.md sha256:e16ba3e294a14300 -->
 
 # `ddd-ts-kit.config.json`
 
@@ -532,7 +532,7 @@ projet, et une configuration sans *preset* se comporte comme avant. Voir
 
 | Clé | Valeurs | Défaut |
 |---|---|---|
-| `rules.<id>` | `error`, `warn`, `off`, pour un identifiant de règle de la section 3 d'[ARCHITECTURE.fr.md](ARCHITECTURE.fr.md) (`ddd-ts-kit rules` les liste) | la sévérité qu'affiche `ddd-ts-kit rules` : `error`, sauf pour les sept règles qui valent `warn` par défaut |
+| `rules.<id>` | `error`, `warn`, `off`, pour un identifiant de règle de la section 3 d'[ARCHITECTURE.fr.md](ARCHITECTURE.fr.md) (`ddd-ts-kit rules` les liste) ; ou `{ "severity": "<one of them>", "files": ["<glob>"] }`, cette sévérité pour les constats sur les fichiers que les motifs désignent (relatifs à la racine du projet, `*` dans un segment, `**` à travers les segments) et le défaut pour tous les autres fichiers, lu par `ddd-ts-kit check` et par le préréglage ESLint. Un réglage sans `files` est signalé (`config/valid`) ; un `off` seul l'est aussi (`config/rule-off-everywhere`, un avertissement) : voir [Dérogations](#dérogations) | la sévérité qu'affiche `ddd-ts-kit rules` : `error`, sauf pour les règles qui valent `warn` par défaut |
 | `limits` | `{ "maxParameters": 3, "maxFunctionLines": 30 }`, lu par `clean/function-size` ; `maxFunctionLines` vaut au plus 100, une valeur plus grande est lue comme 100 et signalée | comme montré |
 | `onePerFile.allow` | `[{ "file": "<path or glob>", "reason": "<why these exports are one thing>" }]` : exempte un fichier du décompte de `clean/one-export-per-file`, jamais de son contrôle du nom de fichier. Une entrée sans `file` ou sans `reason` n'autorise rien et est signalée | `[]` |
 | `standardInterfaces` | `{ "<DeclaredName>": "<kernel interface to use instead>" }`, fusionné par-dessus les noms par défaut de `standard/no-parallel-interface` ; `false` retire un nom par défaut | `{}` |
@@ -562,7 +562,7 @@ d'eux qui n'a pas d'entrée dans `deviations` :
 
 | Réglage | `what` de sa dérogation |
 |---|---|
-| une règle passée à `off`, ou à `warn` quand elle vaut `error` par défaut | `rules.<id>` |
+| une règle passée à `off`, ou à `warn` quand elle vaut `error` par défaut, pour tout le projet ou pour certains fichiers | `rules.<id>` |
 | un répertoire supplémentaire dans un contexte | `contexts.<name>.extraDirectories.<path>` |
 | un *package* ajouté à une liste d'autorisation | `domainAllowedPackages.<package>`, `applicationAllowedPackages.<package>`, `publishedLanguageAllowedPackages.<package>` |
 | un seuil de couverture sous la référence | `coverage.<layer>.<rate>`, par exemple `coverage.infrastructure.branches` |
@@ -614,6 +614,28 @@ ajoute l'entrée :
 ou dont l'`adr` nomme un enregistrement que `docs/adr/` ne contient pas, est signalée elle aussi.
 Un commentaire de désactivation dans le code suit la même règle :
 `// ddd-ts-kit-disable-next-line <rule> -- ADR-0001: <reason>`.
+
+La décision porte sur les *mappers*, mais `"off"` seul fait taire la règle dans tous les fichiers
+du projet : une longue fonction écrite la semaine suivante dans un *handler* passerait inaperçue.
+`check` le dit, par un avertissement :
+
+```text
+$ npx ddd-ts-kit check --rule config/rule-off-everywhere
+ddd-ts-kit.config.json:57  warn   config/rule-off-everywhere
+  The rule "clean/function-size" is off for the whole project: no file is judged by it, not only the ones its exception is about.
+  fix: Turn it off for the files it is meant for, `"clean/function-size": { "severity": "off", "files": ["<glob>"] }`; when the whole project is meant, say so with `"files": ["**"]`.
+```
+
+Réglez la règle pour les fichiers dont parle l'enregistrement, et gardez la même dérogation :
+
+```json
+"rules": {
+  "clean/function-size": { "severity": "off", "files": ["src/contexts/billing/infrastructure/ledger/*.mapper.ts"] }
+}
+```
+
+Tous les autres fichiers sont jugés comme avant. La même forme abaisse une règle à `warn` pour
+certains fichiers, ou l'y relève à `error`.
 
 ## Seuils de couverture
 

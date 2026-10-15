@@ -512,7 +512,7 @@ preset behaves as before. See
 
 | Key | Values | Default |
 |---|---|---|
-| `rules.<id>` | `error`, `warn`, `off`, for a rule id of [ARCHITECTURE.md](ARCHITECTURE.md) section 3 (`ddd-ts-kit rules` lists them) | the severity `ddd-ts-kit rules` prints: `error`, except the seven rules that default to `warn` |
+| `rules.<id>` | `error`, `warn`, `off`, for a rule id of [ARCHITECTURE.md](ARCHITECTURE.md) section 3 (`ddd-ts-kit rules` lists them); or `{ "severity": "<one of them>", "files": ["<glob>"] }`, that severity for the findings on the files the globs match (relative to the project root, `*` inside one segment, `**` across segments) and the default for every other file, read by `ddd-ts-kit check` and by the ESLint preset. A setting with no `files` is reported (`config/valid`); a bare `off` is reported too (`config/rule-off-everywhere`, a warning): see [Deviations](#deviations) | the severity `ddd-ts-kit rules` prints: `error`, except the rules that default to `warn` |
 | `limits` | `{ "maxParameters": 3, "maxFunctionLines": 30 }`, read by `clean/function-size`; `maxFunctionLines` is at most 100, a larger value is read as 100 and reported | as shown |
 | `onePerFile.allow` | `[{ "file": "<path or glob>", "reason": "<why these exports are one thing>" }]`: exempts a file from the count of `clean/one-export-per-file`, never from its file name check. An entry without `file` or without `reason` allows nothing and is reported | `[]` |
 | `standardInterfaces` | `{ "<DeclaredName>": "<kernel interface to use instead>" }`, merged over the default names of `standard/no-parallel-interface`; `false` drops a default name | `{}` |
@@ -542,7 +542,7 @@ has no entry in `deviations`:
 
 | Setting | `what` of its deviation |
 |---|---|
-| a rule set to `off`, or to `warn` when its default is `error` | `rules.<id>` |
+| a rule set to `off`, or to `warn` when its default is `error`, for the whole project or for some files | `rules.<id>` |
 | an extra directory in a context | `contexts.<name>.extraDirectories.<path>` |
 | a package added to an allow-list | `domainAllowedPackages.<package>`, `applicationAllowedPackages.<package>`, `publishedLanguageAllowedPackages.<package>` |
 | a coverage threshold under the reference | `coverage.<layer>.<rate>`, for example `coverage.infrastructure.branches` |
@@ -593,6 +593,28 @@ entry:
 `check --rule governance/recorded-deviation` then reports nothing. An entry without a reason, or whose `adr` names a record that
 `docs/adr/` does not hold, is reported too. A suppression comment in the code follows the same
 rule: `// ddd-ts-kit-disable-next-line <rule> -- ADR-0001: <reason>`.
+
+The decision is about the mappers, but `"off"` alone silences the rule in every file of the
+project: a long function written next week in a handler would pass unseen. `check` says so, as
+a warning:
+
+```text
+$ npx ddd-ts-kit check --rule config/rule-off-everywhere
+ddd-ts-kit.config.json:57  warn   config/rule-off-everywhere
+  The rule "clean/function-size" is off for the whole project: no file is judged by it, not only the ones its exception is about.
+  fix: Turn it off for the files it is meant for, `"clean/function-size": { "severity": "off", "files": ["<glob>"] }`; when the whole project is meant, say so with `"files": ["**"]`.
+```
+
+Set the rule for the files the record is about, and keep the same deviation:
+
+```json
+"rules": {
+  "clean/function-size": { "severity": "off", "files": ["src/contexts/billing/infrastructure/ledger/*.mapper.ts"] }
+}
+```
+
+Every other file is judged as before. The same form lowers a rule to `warn` for some files, or
+raises one to `error` there.
 
 ## Coverage thresholds
 

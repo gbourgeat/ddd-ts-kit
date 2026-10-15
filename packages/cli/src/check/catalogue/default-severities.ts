@@ -10,4 +10,5 @@ export const DEFAULT_SEVERITIES: Readonly<Record<string, Severity>> = {
   'clean/no-flag-argument': 'warn',
   'application/command-query-separation': 'warn',
   'standard/no-parallel-interface': 'warn',
+  'config/rule-off-everywhere': 'warn',
 };

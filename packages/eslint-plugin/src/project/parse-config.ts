@@ -8,6 +8,7 @@ import type {
   Limits,
   OnePerFile,
   Config,
+  RuleSetting,
   SdkConfig,
 } from './config.js';
 import { parseAllowedFile } from './parse-allowed-file.js';
@@ -62,7 +63,7 @@ export function parseConfig(raw: unknown): Config {
     // A config without the key was written before it existed: its imports end with `.js`.
     importExtension: text(source['importExtension'], 'js'),
     contexts: mapEntries(source['contexts'], parseContext),
-    rules: mapEntries(source['rules'], String),
+    rules: mapEntries(source['rules'], parseRuleSetting),
     domainAllowedPackages: strings(source['domainAllowedPackages'], KERNEL),
     applicationAllowedPackages: strings(source['applicationAllowedPackages'], APPLICATION),
     publishedLanguageAllowedPackages: strings(
@@ -183,6 +184,12 @@ function parseOnePerFile(value: unknown): OnePerFile {
 
 function positive(candidate: unknown, fallback: number): number {
   return typeof candidate === 'number' && Number.isInteger(candidate) && candidate > 0 ? candidate : fallback;
+}
+
+function parseRuleSetting(value: unknown): RuleSetting {
+  return isRecord(value)
+    ? { severity: text(value['severity'], ''), files: strings(value['files'], []) }
+    : String(value);
 }
 
 function mapEntries<T>(value: unknown, parse: (entry: unknown) => T): Record<string, T> {

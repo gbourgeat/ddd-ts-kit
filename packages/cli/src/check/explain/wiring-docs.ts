@@ -66,6 +66,13 @@ export class IssueInvoiceHandler {
   ) {}
 }`,
   },
+  'config/rule-off-everywhere': {
+    why: 'An exception is decided for some files: generated mappers, a legacy module, a migration script. Written as "off" alone, it silences the rule in every file of the project, and the real findings in the others go unseen; the decision record says why the rule is off, not that the exception grew to the whole project. A rule set for some files keeps judging the rest. When the whole project is really meant, "files": ["**"] says it in so many words.',
+    bad: `"rules": { "clean/function-size": "off" },
+"deviations": [{ "what": "rules.clean/function-size", "adr": "0004", "reason": "The generated mappers of the legacy ledger are long." }]`,
+    good: `"rules": { "clean/function-size": { "severity": "off", "files": ["src/contexts/ledger/infrastructure/legacy/*.mapper.ts"] } },
+"deviations": [{ "what": "rules.clean/function-size", "adr": "0004", "reason": "The generated mappers of the legacy ledger are long." }]`,
+  },
   'config/valid': {
     why: 'Every other rule reads the config: a misspelled upstream or rule id silently disables a check. The contexts on disk and in the config have to be the same set, or part of the code is not checked at all. A function limit above the ceiling of 100 lines and an allowance without a file or a reason are read as something else than what is written, so they are reported too.',
     bad: `"rules": { "naming/sufix": "warn" }, "guard": "strict",

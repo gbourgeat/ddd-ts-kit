@@ -11,6 +11,7 @@ import { parseCoverage } from './parse-coverage.js';
 import { parseLimits } from './parse-limits.js';
 import { parseOnePerFile } from './parse-one-per-file.js';
 import { parseOpenApi } from './parse-open-api.js';
+import { parseRuleSetting } from './parse-rule-setting.js';
 import { parseSdk } from './parse-sdk.js';
 import { parseStack } from './parse-stack.js';
 import { isRecord } from './values/is-record.js';
@@ -41,7 +42,7 @@ export function parseConfig(raw: unknown): Config {
     importExtension: text(raw['importExtension'], UNWRITTEN_IMPORT_EXTENSION),
     stack,
     contexts: mapEntries(raw['contexts'], parseContext),
-    rules: mapEntries(raw['rules'], String),
+    rules: mapEntries(raw['rules'], parseRuleSetting),
     ...parseAllowedPackages(raw, stack.validation),
     ...parseGovernance(raw),
   };

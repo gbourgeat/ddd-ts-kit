@@ -112,6 +112,12 @@ severity is free; lowering one under its default (`off`, or `warn` for an `error
 deviation, and `ddd-ts-kit check` asks for its decision record: see
 [Deviations](../../docs/CONFIG.md#deviations).
 
+A severity for some files only is written the same way, with the files it is for:
+`"clean/stepdown": { "severity": "off", "files": ["src/contexts/ledger/infrastructure/legacy/**"] }`.
+The preset gives it a block of its own after `ddd-ts-kit/architecture`, named
+`ddd-ts-kit/rules/<id>`, whose `files` are those globs: every other file keeps the severity of
+the project, in ESLint as in `ddd-ts-kit check`.
+
 ## A report, and what to write instead
 
 Every message says what is wrong, what to write instead, and the rule. A handler that reads the

@@ -34,7 +34,8 @@ exception: a shortcut that is not written down is a defect waiting to be copied.
 3. **If the owner still wants the deviation, it is theirs to take.** Then make it visible
    and bounded:
    - the smallest scope: one line suppressed, never a file, a directory or a severity for
-     the whole project;
+     the whole project; a severity is set for the files it is about,
+     `"<rule>": { "severity": "off", "files": ["<glob>"] }` (`config/rule-off-everywhere`);
    - a decision record, written with `npx ddd-ts-kit generate adr "<title>" --deviation <what>`:
      context, what is deviated from, why, scope, and the condition under which it is removed;
    - the suppression or config entry carries the reason and the ADR number:

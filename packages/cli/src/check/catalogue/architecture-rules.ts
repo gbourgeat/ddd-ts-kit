@@ -18,6 +18,7 @@ import { cleanNoNoiseComment } from '../rules/clean-no-noise-comment.js';
 import { cleanOneExportPerFile } from '../rules/clean-one-export-per-file.js';
 import { cleanStepdown } from '../rules/clean-stepdown.js';
 import { compositionOnlyInModule } from '../rules/composition-only-in-module.js';
+import { configRuleOffEverywhere } from '../rules/config-rule-off-everywhere.js';
 import { contextDeclaredRelationship } from '../rules/context-declared-relationship.js';
 import { contextExtractable } from '../rules/context-extractable.js';
 import { contextNoCycle } from '../rules/context-no-cycle.js';
@@ -147,6 +148,7 @@ export const ARCHITECTURE_RULES: readonly Rule[] = [
   tenancyScopedStatement,
   standardNoParallelInterface,
   governanceRecordedDeviation,
+  configRuleOffEverywhere,
   compositionOnlyInModule,
   declarationsRoleDeclared,
   declarationsBarrelCurrent,

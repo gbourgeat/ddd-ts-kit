@@ -12,6 +12,9 @@ export interface Project {
   readonly contextEntries: readonly string[];
   /** Context directories found on disk. */
   readonly contextsOnDisk: readonly string[];
+  /** The severity of a rule for the whole project. */
   severity(ruleId: string): Severity;
+  /** The severity a setting for some files gives `file`; undefined when no such setting names it. */
+  fileSeverity(ruleId: string, file: string): Severity | undefined;
   locate(file: string): Location;
 }

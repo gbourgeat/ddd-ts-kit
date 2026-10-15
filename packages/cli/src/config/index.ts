@@ -26,6 +26,7 @@ export { IMPORT_EXTENSIONS } from './import-extensions.js';
 export { isOneOf } from './is-one-of.js';
 export { openApiProblems } from './open-api-problems.js';
 export { parseConfig } from './parse-config.js';
+export { projectSeverity } from './project-severity.js';
 export { DEFAULT_SDK_NAME } from './default-sdk-name.js';
 export { sdkProblems } from './sdk-problems.js';
 export { readConfig } from './read-config.js';

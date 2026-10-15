@@ -76,6 +76,7 @@ export function createDddTsKit(plugin: Plugin, options: DddTsKitOptions = {}): C
       plugins: { 'ddd-ts-kit': plugin, '@stylistic': stylistic },
       rules: configuredLevels(config),
     },
+    ...fileSettings(config),
     { name: 'ddd-ts-kit/scripts', files: JAVASCRIPT_FILES, rules: configuredBraces(config) },
     { name: 'ddd-ts-kit/inner-layers', files: innerLayerFiles(config), rules: INNER_LAYER_RULES },
     { name: 'ddd-ts-kit/aggregates', files: aggregateFiles(config), rules: standard.aggregateRules },
@@ -138,6 +139,49 @@ function configuredLevels(config: Config): Rules {
   const layout = configuredSeverity(config, LAYOUT_ID) ?? 'error';
 
   return { ...own, ...(layout === 'off' ? {} : layoutRules(layout)), ...configuredBraces(config) };
+}
+
+/** `rules.<id>` set for some files: a block of its own after the architecture block, so that ESLint applies it to those files alone. */
+function fileSettings(config: Config): ConfigArray {
+  return Object.entries(config.rules).flatMap(([ruleId, setting]) => {
+    if (typeof setting === 'string' || setting.files.length === 0 || !isSeverity(setting.severity)) {
+      return [];
+    }
+
+    const rules = levelsFor(ruleId, setting.severity);
+
+    return Object.keys(rules).length === 0
+      ? []
+      : [{ name: `ddd-ts-kit/rules/${ruleId}`, files: [...setting.files], rules }];
+  });
+}
+
+/** The ESLint rules that hold one architecture id, at one severity; a companion rule follows only `off`, as in `levelOf`. */
+function levelsFor(ruleId: string, severity: Severity): Rules {
+  const own = Object.entries(pluginRules)
+    .filter(([, rule]) => {
+      const docs = docsOf(rule);
+
+      return docs.ruleId === ruleId && (docs.name === eslintName(ruleId) || severity === 'off');
+    })
+    .map(([name]): [string, Severity] => [`ddd-ts-kit/${name}`, severity]);
+
+  return {
+    ...Object.fromEntries(own),
+    ...(ruleId === LAYOUT_ID ? held(layoutRules, severity) : {}),
+    ...(ruleId === BRACES_ID ? held(bracesRules, severity) : {}),
+  };
+}
+
+/** The rules of another plugin that hold one id: at that severity, or each of them off. */
+function held(rulesAt: (level: 'error' | 'warn') => Rules, severity: Severity): Rules {
+  return severity === 'off'
+    ? Object.fromEntries(Object.keys(rulesAt('error')).map((name) => [name, 'off']))
+    : rulesAt(severity);
+}
+
+function isSeverity(value: string): value is Severity {
+  return value === 'error' || value === 'warn' || value === 'off';
 }
 
 /** Scripts written in JavaScript carry no layer, but a branch reads the same in them. */
