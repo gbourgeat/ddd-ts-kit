@@ -265,6 +265,31 @@ describe('config/valid', () => {
   });
 });
 
+describe('clean/file-size', () => {
+  const long = lines('export const entries = [', ...Array.from({ length: 400 }, (_, index) => `  ${index},`), '];');
+
+  it('does not judge the generated barrel and dependency file at the root of a context', () => {
+    const root = projectWith({
+      'src/contexts/billing/billing.declarations.ts': long,
+      'src/contexts/shipping/shipping.dependencies.ts': long,
+    });
+
+    expect(reported(root, 'clean/file-size')).toEqual([]);
+  });
+
+  it('judges a file named like a generated one anywhere else, or after another context', () => {
+    const root = projectWith({
+      'src/contexts/billing/domain/billing.declarations.ts': long,
+      'src/contexts/billing/shipping.declarations.ts': long,
+    });
+
+    expect(reported(root, 'clean/file-size').map(({ file }) => file)).toEqual([
+      'src/contexts/billing/domain/billing.declarations.ts',
+      'src/contexts/billing/shipping.declarations.ts',
+    ]);
+  });
+});
+
 function messagesOf(files: Readonly<Record<string, string>>, config: Record<string, unknown> = {}): string[] {
   return reported(projectWith(files, config), RULE).map(({ file, line, message }) => `${file}:${line} ${message}`);
 }

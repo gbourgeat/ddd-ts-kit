@@ -307,6 +307,12 @@ const FILE_SIZE: readonly Fixture[] = [
     expect: { file: LINES },
     files: project({ [LINES]: listOfLines(351) }),
   },
+  {
+    ruleId: 'clean/file-size',
+    name: 'a file named like the barrel of a context, outside its root',
+    expect: { file: 'src/platform/billing.declarations.ts' },
+    files: project({ 'src/platform/billing.declarations.ts': listOfLines(400) }),
+  },
 ];
 
 export const LAYOUT_FIXTURES: readonly Fixture[] = [
