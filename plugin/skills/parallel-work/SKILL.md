@@ -16,6 +16,8 @@ allowed-tools:
   - Agent
   - Bash(npx ddd-ts-kit status)
   - Bash(npx ddd-ts-kit status --workers)
+  - Bash(npx ddd-ts-kit plan-waves)
+  - Bash(npx ddd-ts-kit plan-waves *)
   - Bash(npx ddd-ts-kit worker-scope *)
   - Bash(npx ddd-ts-kit generate *)
   - Bash(npx ddd-ts-kit docs)
@@ -54,6 +56,14 @@ A worker is one context and its worktree; an agent holds **one row, two at most*
 turns or its context run out. Inside a worktree, launch one `context-builder` agent per row,
 in sequence, each on the commits of the previous one.
 
+Do not batch and order by hand: `npx ddd-ts-kit plan-waves [<context>]` (`--json` for data)
+puts the rows not done in waves (wave 1: every dependency done; wave n: after earlier waves),
+cuts each wave into batches of one owner and one or two rows on one aggregate, prints the
+`worker-scope` command of each batch, marks two batches of a wave likely to touch the same files
+(same aggregate: run them one after the other) or unknown (no aggregate named: read their rows
+before running them side by side), and gives the merge order. It refuses a cycle, an unknown id or a row without owner: fix
+`slices.md` first. Launch a wave's batches side by side, the next wave once they merged.
+
 ## 2. Prepare the trunk (conductor, before any worker starts)
 
 1. **Contracts first.** For every `contract` row a worker depends on: generate it
@@ -74,7 +84,7 @@ in sequence, each on the commits of the previous one.
 ## 3. One worktree and one scope per worker
 
 ```bash
-npx ddd-ts-kit worker-scope <context> --base origin/main --rows <id>   # --dry-run to read it first; --worktree, --branch
+npx ddd-ts-kit worker-scope <context> --base origin/main --rows <id>   # as plan-waves prints it; --dry-run to read it first
 ```
 
 Run it from the checkout of the trunk, in your own session: the guard refuses it to a sub-agent
@@ -136,7 +146,9 @@ takes the same briefing and the same branch.
 
 ## 6. Merge, in order
 
-Upstream contexts first, then by the dependency order of the slices. Before each merge,
+In the merge order `plan-waves` gives: by wave, upstream first. `npx ddd-ts-kit status` tells a
+row ready on the trunk from one ready once a worker's branch merges, and lists what a waiting
+row waits for. Before each merge,
 `npx ddd-ts-kit status --workers`: a file the branch shares with another worker is where the
 second merge can conflict. For each branch:
 

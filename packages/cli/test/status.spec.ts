@@ -72,6 +72,8 @@ describe('status', () => {
       dependsOn: ['2'],
       owner: 'shipping',
       status: 'todo',
+      ready: 'waiting',
+      waitingFor: ['2'],
     });
   });
 

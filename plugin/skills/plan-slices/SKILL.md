@@ -14,6 +14,8 @@ allowed-tools:
   - Edit
   - Bash(npx ddd-ts-kit list *)
   - Bash(npx ddd-ts-kit status)
+  - Bash(npx ddd-ts-kit plan-waves)
+  - Bash(npx ddd-ts-kit plan-waves *)
 ---
 
 # Plan the slices
@@ -91,6 +93,11 @@ missing. Rows with no path between them can be built in parallel.
   for a row that changes a delivered behaviour, the tests it adapts
   (`adapts test/e2e/place-order.e2e.spec.ts`). `worker-scope` puts that line in the briefing
   of the row.
+
+Then run `npx ddd-ts-kit plan-waves`: it refuses a cycle in `Depends on`, an id no row carries
+and a row without owner, and otherwise shows the rows in waves (wave 1 can start now), cut into
+batches of one or two rows that `parallel-work` hands out. A batch it says names no aggregate
+gets one in `Start with` (`--aggregate <Name>`) when the slice works on one.
 
 Aim for slices of half a day at most. A slice with more than two failures to handle, two
 aggregates or two routes is two slices.

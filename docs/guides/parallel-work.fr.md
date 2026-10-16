@@ -1,5 +1,5 @@
 [English](parallel-work.md) · **Français**
-<!-- translation-of: parallel-work.md sha256:78139d4504c32336 -->
+<!-- translation-of: parallel-work.md sha256:4121a4aad0628d1d -->
 
 # Travailler en parallèle sans collisions
 
@@ -256,6 +256,66 @@ contexte :
 $ npx ddd-ts-kit generate job notification SendDueConfirmations --every 15m --command SendNotification --local-only
 Error: --local-only: this command would write 2 shared files: src/platform/auth/relate-system-actors.ts, src/platform/job-settings.ts.
   fix: Nothing was written. Have it run on the trunk without --local-only (the conductor of a parallel build does it), merge the trunk, then go on; a generated document listed alone means the trunk is stale: run `ddd-ts-kit docs` there first.
+```
+
+## Vagues et lots
+
+Quand plusieurs histoires se construisent en même temps dans un contexte, quelles lignes peuvent
+commencer, comment les grouper pour les agents, quels groupes peuvent tourner côte à côte et dans
+quel ordre fusionner se calcule à partir de `docs/architecture/slices.md`, sans le déduire à la
+main :
+
+```bash
+npx ddd-ts-kit plan-waves            # the whole plan; plan-waves <context> for one context; --json for data
+```
+
+La commande prend les lignes qui ne sont pas `done`. La vague 1 porte les lignes dont toutes les
+dépendances sont faites ; la vague n les lignes dont les dépendances sont faites ou dans des
+vagues antérieures : les lignes d'une vague ne s'attendent jamais entre elles. Chaque vague est
+découpée en lots : un propriétaire et un contexte par lot (le *worker* d'un contexte, le chef
+d'orchestre ou une personne), deux lignes au plus, puisqu'un agent en tient deux avant que ses
+tours ou son contexte s'épuisent, et deux lignes dans un même lot seulement quand leur
+`Start with` nomme le même agrégat (`--aggregate Invoice`, `aggregate billing Invoice`,
+`repository billing Invoice`). Deux lots d'un contexte dans une vague qui nomment le même agrégat
+risquent de toucher les mêmes fichiers : lancez-les l'un après l'autre. Quand un lot ne nomme
+aucun agrégat, la commande dit que le chevauchement est inconnu au lieu de le deviner. Chaque lot
+d'un *worker* vient avec sa commande `worker-scope`, avec un *worktree* et une branche à lui quand
+sa vague porte un autre lot de ce contexte ; un lot du chef d'orchestre se construit sur le
+tronc. Suit l'ordre des fusions : par vague, et dans une vague d'abord le lot que le plus de
+lignes attendent. Pour deux histoires dans `billing`, un extrait :
+
+```text
+Waves (docs/architecture/slices.md): 7 rows not done, 2 waves, 6 batches
+Wave 1
+  W1.1 billing (aggregate Invoice)
+    #US1.02 slice "Issue invoice"
+    #US1.03 slice "Cancel invoice"
+    npx ddd-ts-kit worker-scope billing --base origin/main --rows US1.02,US1.03 --worktree ../invoicing-billing-w1.1 --branch build/billing-w1.1
+    likely to touch the same files as W1.3
+  W1.2 conductor, billing (aggregate Customer)
+    #US2.01 skeleton "Customer"
+    on the trunk, by the conductor
+  ...
+Wave 2
+  W2.3 billing (aggregate unknown)
+    #US2.03 slice "Overdue invoices", after #US1.02
+    npx ddd-ts-kit worker-scope billing --base origin/main --rows US2.03 --worktree ../invoicing-billing-w2.3 --branch build/billing-w2.3
+    unknown whether it touches the files of W2.1, W2.2: no aggregate named
+Merge order: W1.1, W1.2, W1.3, W2.1, W2.2, W2.3
+```
+
+Un plan qui ne peut pas être ordonné n'a pas de vague : un cycle dans `Depends on`, une
+dépendance vers un identifiant qu'aucune ligne ne porte, une ligne sans propriétaire ou un
+identifiant que portent deux lignes est signalé seul, et la commande sort avec 1.
+
+Entre deux fusions, `npx ddd-ts-kit status` dit de chaque ligne non faite si elle est prête sur
+le tronc (toutes ses dépendances faites), prête sur une branche (chaque dépendance non faite est
+une ligne confiée à un *worker* dont le *worktree* a des *commits* d'avance sur sa base, lue dans
+son `.ddd-ts-kit/worker.json`), ou en attente, avec les identifiants qu'elle attend :
+
+```text
+    #US1.04 billing slice "Pay invoice" (owner billing, depends on US1.02): ready on a branch, once #US1.02 merges
+    #US2.02 billing slice "Register customer" (owner billing, depends on US2.01): waits for #US2.01
 ```
 
 ## L'ordre de fusion

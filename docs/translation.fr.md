@@ -1,5 +1,5 @@
 [English](translation.md) · **Français**
-<!-- translation-of: translation.md sha256:b2d1ec4f2a6570d4 -->
+<!-- translation-of: translation.md sha256:c7f94e10f565f84e -->
 
 # La documentation en français
 
@@ -303,6 +303,7 @@ disent ainsi.
 | given, when, then | étant donné, quand, alors |
 | vertical slice | tranche verticale |
 | conductor, briefing | chef d'orchestre, consigne |
+| wave, batch (of rows, `plan-waves`) | vague, lot |
 | worktree | *worktree* |
 | skill, agent, hook, plugin | *skill*, agent, *hook*, *plugin* |
 | package, workspace | *package*, *workspace* |

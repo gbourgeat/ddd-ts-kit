@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:f6e0fcc61902b03c -->
+<!-- translation-of: README.md sha256:d3b90134a7af38af -->
 
 # ddd-ts-kit
 
@@ -1074,10 +1074,16 @@ ddd-ts-kit todo [<context>]
 `status` affiche la ligne `Next:` de `docs/architecture/plan.md`, les lignes de
 `docs/architecture/slices.md` par statut et par responsable, et par contexte les `TODO(domain)`,
 `TODO(platform)` et `it.todo` restants, puis ceux hors des contextes. Un fichier manquant n'est
-pas une erreur. `--json` affiche `{ next, slices, remaining }` : `next` et `slices` valent `null`
-quand leur fichier manque, `slices` contient `{ file, rows, byStatus, byOwner }`, `remaining` un
-`{ context, domain, platform, test }` par contexte, et un avec un `context` vide pour ce qui reste
-hors d'eux.
+pas une erreur. Chaque ligne qui n'est pas faite dit si elle peut commencer : prête sur le tronc
+quand toutes ses dépendances sont faites, prête sur une branche quand chaque dépendance non faite
+est une ligne confiée à un *worker* dont le *worktree* a des *commits* d'avance sur sa base (les
+`rows` de son `.ddd-ts-kit/worker.json`, tels que `status --workers` les lit), et en attente
+sinon, avec les identifiants qu'elle attend. `--json` affiche `{ next, slices, remaining }` :
+`next` et `slices` valent `null` quand leur fichier manque, `slices` contient
+`{ file, rows, byStatus, byOwner }`, une ligne non faite portant
+`ready: 'trunk' | 'branch' | 'waiting'` et `waitingFor` (ses dépendances non faites),
+`remaining` un `{ context, domain, platform, test }` par contexte, et un avec un `context` vide
+pour ce qui reste hors d'eux.
 
 `status --workers` affiche à la place les *workers* d'une construction en parallèle : chaque
 *worktree* du dépôt dont la copie du projet porte `.ddd-ts-kit/worker.json`, avec sa branche,
@@ -1093,6 +1099,35 @@ commités. `--json` affiche
 
 `todo` liste ces marqueurs en `file:line` avec leur genre et leur texte, dans le projet ou dans
 un contexte ; `--json` affiche `{ count, remaining: [{ kind, context, file, line, text }] }`.
+
+## plan-waves
+
+```
+ddd-ts-kit plan-waves [<context>]
+```
+
+Ordonne les lignes de `docs/architecture/slices.md` qui ne sont pas `done`, pour une construction
+répartie entre des *workers*. La vague 1 porte les lignes dont toutes les dépendances sont faites ;
+la vague n les lignes dont les dépendances sont faites ou dans des vagues antérieures, de sorte
+qu'une ligne n'attend jamais une ligne de sa propre vague. Chaque vague est découpée en lots : un
+responsable et un contexte par lot, deux lignes au plus (ce que tient un agent), et deux lignes
+ensemble seulement quand leur `Start with` nomme le même agrégat. L'agrégat d'une ligne est lu dans
+ses commandes de générateur : `--aggregate <Name>`, `aggregate <context> <Name>` et
+`repository <context> <Name>`. Deux lots d'un contexte dans une vague sont dits susceptibles de
+toucher les mêmes fichiers quand ils nomment le même agrégat ; quand l'un d'eux n'en nomme aucun,
+le chevauchement est dit inconnu plutôt que deviné. Chaque lot du *worker* d'un contexte vient avec
+la commande qui le consigne, `npx ddd-ts-kit worker-scope <context> --base origin/main --rows <ids>`,
+avec ses propres `--worktree` et `--branch` quand sa vague porte un autre lot de ce contexte ; un
+lot du chef d'orchestre se construit sur le tronc ; une personne reçoit sa consigne à la main.
+Puis l'ordre des fusions : par vague, et dans une vague d'abord le lot que le plus de lignes
+attendent, directement ou non. Avec un contexte, seules ses lignes sont montrées ; les lignes
+d'autres contextes qu'elles attendent comptent dans la numérotation des vagues.
+
+Un cycle dans `Depends on`, une dépendance vers un identifiant qu'aucune ligne ne porte, une ligne
+sans responsable et un identifiant que portent deux lignes rendent les lignes impossibles à
+ordonner : ils sont signalés seuls, sans vagues, et la commande sort avec 1. Un fichier sans table
+de tranches, ou un contexte qu'aucune ligne ne nomme, est refusé. `--json` affiche
+`{ file, context, problems: [{ kind, rows, message }], waves: [{ wave, batches: [{ id, owner, context, rows: [{ id, kind, slice, status, waitingFor }], aggregates, brief, sameFiles, unknownOverlap }] }], mergeOrder }`.
 
 ## worker-scope
 
