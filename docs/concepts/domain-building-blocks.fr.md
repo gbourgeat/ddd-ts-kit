@@ -1,5 +1,5 @@
 [English](domain-building-blocks.md) · **Français**
-<!-- translation-of: domain-building-blocks.md sha256:031d0b05a29bd0d0 -->
+<!-- translation-of: domain-building-blocks.md sha256:0f918389238b59f5 -->
 
 # Événements du domaine, services du domaine, repositories et fabriques
 
@@ -44,15 +44,17 @@ export class AppointmentCancelled extends NamedDomainEvent('appointments.appoint
 }
 ```
 
-Le nom s'écrit une seule fois, dans `eventName` : l'événement le porte dans `name`, et chaque
-réaction s'y rattache par lui, `@DomainEventHandler(AppointmentCancelled)` le lit sur la classe
+Le nom s'écrit une seule fois, dans `extends NamedDomainEvent('..')` : la classe le porte comme
+`eventName` et chaque événement comme `name`, tous deux typés avec le littéral, et chaque réaction
+s'y rattache par lui, `@DomainEventHandler(AppointmentCancelled)` le lit sur la classe
 qu'il reçoit et `domainEvents.on(AppointmentCancelled.eventName, ..)` le nomme, si bien qu'un
 événement renommé ne peut pas laisser un gestionnaire à l'écoute de l'ancien nom.
 `events/name-format` en tient la forme, `<context>.<aggregate>.<fact>`, et
 `events/name-declared-once` la place : chaque classe de `domain/events/` déclare
-`static readonly eventName`, consommée ou non, et son `name` le lit. Un événement écrit avant la
+son nom une fois, consommée ou non, avec `NamedDomainEvent` ou avec `static readonly eventName`
+et un `name` qui le lit. Un événement écrit avant la
 0.7, avec `readonly name = '..'` seul, est signalé par cette règle, et `@DomainEventHandler` et
-`@On` le refusent à la compilation : ajoutez `static readonly eventName` à la classe.
+`@On` le refusent à la compilation : étendez `NamedDomainEvent('..')` ou ajoutez `static readonly eventName` à la classe.
 
 L'agrégat enregistre l'événement dans la méthode qui change son état, après l'invariant et le
 changement :

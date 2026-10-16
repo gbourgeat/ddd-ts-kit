@@ -1,5 +1,5 @@
 [English](http-caching.md) · **Français**
-<!-- translation-of: http-caching.md sha256:ca8f99ca9d991af0 -->
+<!-- translation-of: http-caching.md sha256:3d8d826af27fabd1 -->
 
 # Cache HTTP
 

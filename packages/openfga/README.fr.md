@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:a99cc5ff12d3495a -->
+<!-- translation-of: README.md sha256:903eebf3bd591305 -->
 
 # @ddd-ts-kit/openfga
 

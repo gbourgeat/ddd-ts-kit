@@ -1,5 +1,5 @@
 [English](event-sourcing.md) · **Français**
-<!-- translation-of: event-sourcing.md sha256:8ccf6d428ceca3b1 -->
+<!-- translation-of: event-sourcing.md sha256:6120da213094cbe7 -->
 
 # Event sourcing, par agrégat
 

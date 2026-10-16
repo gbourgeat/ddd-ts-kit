@@ -1,5 +1,5 @@
 [English](first-slice.md) · **Français**
-<!-- translation-of: first-slice.md sha256:4caf28da8f04bb6a -->
+<!-- translation-of: first-slice.md sha256:3ca53fd74ac3239b -->
 
 # Une tranche, de bout en bout
 

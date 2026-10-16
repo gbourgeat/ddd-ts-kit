@@ -1,5 +1,5 @@
 [English](clean-code.md) · **Français**
-<!-- translation-of: clean-code.md sha256:f7877baed63a6639 -->
+<!-- translation-of: clean-code.md sha256:9e76fe4ef613650c -->
 
 # Le code propre, tel que le kit l'applique
 

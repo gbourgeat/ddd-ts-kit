@@ -1,5 +1,5 @@
 [English](ubiquitous-language.md) · **Français**
-<!-- translation-of: ubiquitous-language.md sha256:6a22870a90689674 -->
+<!-- translation-of: ubiquitous-language.md sha256:2f2d31b64f7f17a3 -->
 
 # Langage omniprésent
 

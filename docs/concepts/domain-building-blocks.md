@@ -41,15 +41,15 @@ export class AppointmentCancelled extends NamedDomainEvent('appointments.appoint
 }
 ```
 
-The name is written once, in `eventName`: the event carries it in `name`, and every reaction is
+The name is written once, in `extends NamedDomainEvent('..')`: the class carries it as `eventName` and every event as `name`, both typed with the literal, and every reaction is
 attached by it, `@DomainEventHandler(AppointmentCancelled)` reads it from the class it is given
 and `domainEvents.on(AppointmentCancelled.eventName, ..)` names it, so a renamed event cannot
 leave a handler listening to the old name. `events/name-format` holds its form,
 `<context>.<aggregate>.<fact>`, and `events/name-declared-once` its place: every class of
-`domain/events/` declares `static readonly eventName`, consumed or not, and its `name` reads it.
+`domain/events/` declares it once, consumed or not, with `NamedDomainEvent` or with `static readonly eventName` and a `name` that reads it.
 An event written before 0.7, `readonly name = '..'` alone, is reported by that rule, and
-`@DomainEventHandler` and `@On` refuse it at compile time: add `static readonly eventName` to the
-class.
+`@DomainEventHandler` and `@On` refuse it at compile time: extend `NamedDomainEvent('..')` or add
+`static readonly eventName` to the class.
 
 The aggregate records the event in the method that changes its state, after the invariant and
 the change:

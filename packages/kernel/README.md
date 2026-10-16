@@ -862,7 +862,7 @@ left alone.
   `implements IntegrationEventHandler<OrderPlacedPayload>`. A job implements `ScheduledJob`.
 - **Names are written, not derived**: the consumer name, the policy name, the job name and the
   name of the domain event survive the renaming of a class, and the empty string is refused.
-  The name of a domain event is written once, in `static readonly eventName` on its class: its
+  The name of a domain event is written once on its class, `extends NamedDomainEvent('..')` or `static readonly eventName`: its
   handlers and projections read it there (`NamedDomainEventType`), and a class without it is
   refused by the compiler.
 - **A declared class is its own token**: `@ddd-ts-kit/di` binds a handler, a job or a policy

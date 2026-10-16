@@ -1,5 +1,5 @@
 [English](persistence.md) · **Français**
-<!-- translation-of: persistence.md sha256:5dc161c1f625f207 -->
+<!-- translation-of: persistence.md sha256:b8cc68997fa842bc -->
 
 # Persistance : Drizzle, Knex, Prisma, TypeORM, et quelle base de données
 

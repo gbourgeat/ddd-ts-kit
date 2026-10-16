@@ -1,5 +1,5 @@
 [English](message-brokers.md) · **Français**
-<!-- translation-of: message-brokers.md sha256:0a941a00b5cdabfc -->
+<!-- translation-of: message-brokers.md sha256:2a48e6b02ada2240 -->
 
 # Brokers de messages : en processus, RabbitMQ, Kafka, NATS JetStream, Redis Streams
 

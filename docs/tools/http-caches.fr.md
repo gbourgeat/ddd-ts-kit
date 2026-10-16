@@ -1,5 +1,5 @@
 [English](http-caches.md) · **Français**
-<!-- translation-of: http-caches.md sha256:cb8ef99ce0261bfe -->
+<!-- translation-of: http-caches.md sha256:541b440719742198 -->
 
 # Caches HTTP : Varnish, Souin, nginx, Fastly, Cloudflare, Bunny
 

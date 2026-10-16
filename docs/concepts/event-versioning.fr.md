@@ -1,5 +1,5 @@
 [English](event-versioning.md) · **Français**
-<!-- translation-of: event-versioning.md sha256:27a680a1e449fa46 -->
+<!-- translation-of: event-versioning.md sha256:3f3336f044e30539 -->
 
 # Versionner un événement d'intégration
 

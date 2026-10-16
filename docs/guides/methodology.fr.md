@@ -1,5 +1,5 @@
 [English](methodology.md) · **Français**
-<!-- translation-of: methodology.md sha256:4a0c87212d8129de -->
+<!-- translation-of: methodology.md sha256:7f1fd6d12822e6d0 -->
 
 # Méthodologie : d'une expression des besoins au code qui tourne
 

@@ -1,5 +1,5 @@
 [English](domain-and-integration-events.md) · **Français**
-<!-- translation-of: domain-and-integration-events.md sha256:069a1bfb9f7b93a2 -->
+<!-- translation-of: domain-and-integration-events.md sha256:0c008806fa400428 -->
 
 # Événements du domaine et événements d'intégration
 

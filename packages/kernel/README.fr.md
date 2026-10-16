@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:f823ab9a2902ff87 -->
+<!-- translation-of: README.md sha256:6ee16358ceb29b58 -->
 
 # @ddd-ts-kit/kernel
 
@@ -890,8 +890,8 @@ port et n'est pas vérifiée.
   `implements IntegrationEventHandler<OrderPlacedPayload>`. Un *job* implémente `ScheduledJob`.
 - **Les noms sont écrits, pas déduits** : le nom du consommateur, celui de la politique, celui du
   *job* et celui de l'événement du domaine survivent au renommage d'une classe, et la chaîne
-  vide est refusée. Le nom d'un événement du domaine s'écrit une fois, dans
-  `static readonly eventName` sur sa classe : ses gestionnaires et ses projections l'y lisent
+  vide est refusée. Le nom d'un événement du domaine s'écrit une fois sur
+  sa classe, `extends NamedDomainEvent('..')` ou `static readonly eventName` : ses gestionnaires et ses projections l'y lisent
   (`NamedDomainEventType`), et une classe qui ne le déclare pas est refusée par le compilateur.
 - **Une classe déclarée est son propre jeton** : `@ddd-ts-kit/di` lie un gestionnaire, un *job*
   ou une politique sous sa classe.

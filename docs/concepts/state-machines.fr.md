@@ -1,5 +1,5 @@
 [English](state-machines.md) · **Français**
-<!-- translation-of: state-machines.md sha256:a2c56803f618291a -->
+<!-- translation-of: state-machines.md sha256:21daeac3d759a4bc -->
 
 # Machines à états
 
