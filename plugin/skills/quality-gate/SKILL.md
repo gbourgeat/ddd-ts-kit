@@ -38,9 +38,11 @@ allowed-tools:
 | after each write | nothing: the guard runs `check-file` and returns the violations | none |
 | while iterating | `npx ddd-ts-kit check --changed-since <base>` and `npm test -- <context>` | seconds |
 | before the commit that closes a slice | the two above, `npm run typecheck`, `npm run lint`, `npm run format:check` (`npm run format` settles it), `npx ddd-ts-kit todo <context>` (nothing left), `npx ddd-ts-kit check --commit-size` | under a minute |
-| before a merge or a pull request | `npm run verify` | everything |
+| before a merge or a pull request | `npm run verify`, on the branch with the trunk merged in | everything |
 
-`npm run verify` chains types, lint, format, every spec with the coverage thresholds
+`check --changed-since` judges the changed files only: a cycle, an unused export or a rule
+broken by the combination with the trunk escapes it, which is why the last run is `verify`, on
+the whole tree, after merging the trunk. `npm run verify` chains types, lint, format, every spec with the coverage thresholds
 (`npm run test:coverage`), end-to-end tests, the architecture rules, the import graph
 (dependency-cruiser), dead code (knip) and documentation drift. Use
 `npm run typecheck`, never `npx tsc`: the project compiles with the native compiler.

@@ -110,9 +110,16 @@ the next row's agent once the previous one reported; a report naming an unfinish
 its files goes to the next agent, which resumes from them. An agent that stopped without a
 report left it in its worktree, `.ddd-ts-kit/report.md`, as of its last step: read it there.
 
-Each agent commits its rows. When the rows of a branch are committed: one review of the batch
-(`architecture-reviewer`, `--changed-since <base>`), `npm run verify`, then the branch merges
-or opens its pull request. A host without the
+A report sorts its needs. A **blocking** one stops that row: do it on the trunk, have the
+worker merge the trunk, then launch the next agent. A **note** waits for the merge of the
+branch (step 6): the run goes on.
+
+Each agent commits its rows. When the rows of a branch are committed: merge the trunk into the
+branch (`git merge origin/main` in its worktree; derived files resolved as the table says), one
+review of the batch (`architecture-reviewer`, `--changed-since <base>`), `npm run verify` on the
+merged branch, then the branch merges or opens its pull request. `check --changed-since` sees
+the files of the branch only: a cycle, an unused export or a rule broken by what the trunk
+gained meanwhile shows only in `verify` on the whole tree. A host without the
 agents of the plugin (Codex) runs one session per worktree, its briefing as the first prompt:
 the guard does not hold that session to its context, the briefing and the review do. A person
 takes the same briefing and the same branch.

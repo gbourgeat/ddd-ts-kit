@@ -35,14 +35,17 @@ Read first, and only: src/contexts/<context>/CONTEXT.md, then
 For each slice: generate with --local-only --json, fill the TODO(domain) markers, replace every it.todo
 by a test, `npm run regenerate`, `npx ddd-ts-kit check --changed-since <main>`, `npm test -- <context>`,
 then one commit, with the files regenerate rewrote: `feat(<context>): <slice in business words>`.
+Format with `npm run format` only: it is the formatter of the project, never run another one.
 After each step, rewrite .ddd-ts-kit/report.md in the worktree in the form of the report below: if you stop,
 the conductor reads it there.
 
-Done when: every slice is committed, `npm run verify` is green in the worktree, and
-`npx ddd-ts-kit todo <context>` lists nothing.
+Done when: every slice is committed, `npm run verify` is green in the worktree (the whole tree:
+`check --changed-since` sees your files only), and `npx ddd-ts-kit todo <context>` lists nothing.
 
 Report, always, even when you stop early, in under 200 words: slices done (commit hashes),
 slices not done and why, with the files left modified by an unfinished one, needs on shared
-files or on another context's contract, glossary terms added, open business questions. No
-code, no file contents.
+files or on another context's contract, each marked blocking (a slice cannot be finished
+without it: a migration, a contract field, a shared file, a dependency) or note (done at the
+merge: a permission to grant, a registration), glossary terms added, open business questions.
+No code, no file contents.
 ```

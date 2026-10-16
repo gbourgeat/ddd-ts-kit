@@ -101,6 +101,9 @@ describe('worker-scope', () => {
     expect(briefing).toContain('`npm run regenerate`, `npx ddd-ts-kit check --changed-since main`');
     expect(briefing).toContain('written by `npm run regenerate`, never by hand.');
     expect(briefing).toContain('After each step, rewrite .ddd-ts-kit/report.md in the worktree');
+    expect(briefing).toContain('Format with `npm run format` only');
+    expect(briefing).toContain('(the whole tree:\n`check --changed-since` sees your files only)');
+    expect(briefing).toContain('each marked blocking (a slice cannot be finished');
   });
 
   it('lists the generators that write nothing shared, from what each kind declares', () => {

@@ -281,7 +281,8 @@ Merge `calendars` first, then `appointments`.
 Each worker's brief says: the one directory it may write, the files it must not touch (the
 config, `src/platform/`, `src/main.ts`, another context, any generated document), that it must
 not regenerate shared documents, and that it stops and reports if its slice seems to need a
-change outside its directory. `worker-scope` prints that brief. W3 and W4 test their handlers with events built from the
+change outside its directory, marking each need blocking (the slice cannot be finished without
+it) or a note for the merge. `worker-scope` prints that brief. W3 and W4 test their handlers with events built from the
 declarations; they do not wait for W1 and W2 to finish.
 
 **Phase 3, integration (one worker).** Merge in the order of the map (`calendars`,
@@ -325,7 +326,9 @@ small fraction of the total time and remove nearly every collision from the rest
 - **An agent holds one row, two at most.** Given a dozen, a coding agent runs out of turns
   or context in the middle of one, and leaves a half-modified worktree with no report. Brief
   one agent per row (`--rows`), launch them in sequence in the context's worktree, each
-  committing its row, then review the batch once, `npm run verify`, and open the pull request.
+  committing its row, then merge the trunk into the branch, review the batch once, run
+  `npm run verify` on the merged branch, and open the pull request: `check --changed-since`
+  sees the files of the branch only, and what the trunk gained meanwhile can break the whole.
   The plugin's `context-builder` agent keeps its last turns for its report and names the files
   an unfinished slice left, so that the next agent resumes from them.
 - **Agents multiply cost as well as speed.** Each one carries its own context window; four

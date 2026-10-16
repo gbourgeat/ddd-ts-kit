@@ -5,6 +5,19 @@ import type { WorkerPlace } from './worker-place.js';
 const REPORT_FILE = '.ddd-ts-kit/report.md';
 
 /**
+ * A need marked blocking stops the row until the conductor does it; a note waits for the merge
+ * while the run goes on. Without the mark, every need stopped the run.
+ */
+const REPORT_LINES = [
+  'Report, always, even when you stop early, in under 200 words: slices done (commit hashes),',
+  'slices not done and why, with the files left modified by an unfinished one, needs on shared',
+  "files or on another context's contract, each marked blocking (a slice cannot be finished",
+  'without it: a migration, a contract field, a shared file, a dependency) or note (done at the',
+  'merge: a permission to grant, a registration), glossary terms added, open business questions.',
+  'No code, no file contents.',
+];
+
+/**
  * The briefing of a context worker, as the parallel-work skill of the plugin writes it, with
  * what the project says filled in. What only the conductor knows stays between angle brackets.
  */
@@ -28,20 +41,24 @@ export function briefingOf(place: WorkerPlace): string {
     `Read first, and only: ${directory}/CONTEXT.md, then`,
     `\`npx ddd-ts-kit describe ${context} --json\`. Then the \`next\` places each generator prints.`,
     '',
+    ...stepLines(place),
+    '',
+    ...REPORT_LINES,
+  ].join('\n');
+}
+
+function stepLines({ context, trunk }: WorkerPlace): string[] {
+  return [
     'For each slice: generate with --local-only --json, fill the TODO(domain) markers, replace every it.todo',
     `by a test, \`npm run regenerate\`, \`npx ddd-ts-kit check --changed-since ${trunk}\`, \`npm test -- ${context}\`,`,
     `then one commit, with the files regenerate rewrote: \`feat(${context}): <slice in business words>\`.`,
+    'Format with `npm run format` only: it is the formatter of the project, never run another one.',
     `After each step, rewrite ${REPORT_FILE} in the worktree in the form of the report below: if you stop,`,
     'the conductor reads it there.',
     '',
-    'Done when: every slice is committed, `npm run verify` is green in the worktree, and',
-    `\`npx ddd-ts-kit todo ${context}\` lists nothing.`,
-    '',
-    'Report, always, even when you stop early, in under 200 words: slices done (commit hashes),',
-    'slices not done and why, with the files left modified by an unfinished one, needs on shared',
-    "files or on another context's contract, glossary terms added, open business questions. No",
-    'code, no file contents.',
-  ].join('\n');
+    'Done when: every slice is committed, `npm run verify` is green in the worktree (the whole tree:',
+    `\`check --changed-since\` sees your files only), and \`npx ddd-ts-kit todo ${context}\` lists nothing.`,
+  ];
 }
 
 function scopeLines({ config, generators }: WorkerPlace, directory: string): string[] {
