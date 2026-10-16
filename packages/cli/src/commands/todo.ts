@@ -10,9 +10,10 @@ const MARKS: Readonly<Record<Remaining['kind'], string>> = {
   domain: 'TODO(domain)',
   platform: 'TODO(platform)',
   test: 'it.todo',
+  review: 'TODO(review)',
 };
 
-/** Lists what the generators left to fill, as `file:line`, in the whole project or in one context. */
+/** Lists what the generators left to fill and the remarks of a review left to settle, as `file:line`, in the whole project or in one context. */
 export const todoCommand: Command = (argv, io) => {
   const args = Arguments.parse(argv, {});
   const root = args.projectRoot;

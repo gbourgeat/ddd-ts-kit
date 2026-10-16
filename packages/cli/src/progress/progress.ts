@@ -31,4 +31,6 @@ export interface RemainingCount {
   readonly platform: number;
   /** `it.todo` entries. */
   readonly test: number;
+  /** `TODO(review)` markers: remarks of a review not settled yet. */
+  readonly review: number;
 }

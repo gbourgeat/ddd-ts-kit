@@ -61,6 +61,9 @@ const generatedLine = (name: string): string =>
 
 const GENERATED_ZOD_LINE = 'z.object({\n  id: z.string(),\n  // TODO(domain): declare the public fields.\n})';
 
+const REVIEWED_ZOD_LINE =
+  'z.object({\n  id: z.string(),\n  // TODO(review): share this line with the other search once both are filled.\n})';
+
 const MAPPING = source(
   "import type { Money } from '@/shared-kernel/presentation/money.schema.js';",
   '',
@@ -192,6 +195,18 @@ const NO_DUPLICATE_SHAPE: readonly Fixture[] = [
       {
         [AMEND_CONTROLLER]: controller(GENERATED_ZOD_LINE),
         [ISSUE_CONTROLLER]: controller(GENERATED_ZOD_LINE),
+      },
+      SHARED,
+    ),
+  },
+  {
+    ruleId: 'schema/no-duplicate-shape',
+    name: 'two zod shapes a review left a TODO(review) in',
+    expect: 'pass',
+    files: project(
+      {
+        [AMEND_CONTROLLER]: controller(REVIEWED_ZOD_LINE),
+        [ISSUE_CONTROLLER]: controller(REVIEWED_ZOD_LINE),
       },
       SHARED,
     ),

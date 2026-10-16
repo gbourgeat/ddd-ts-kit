@@ -18,7 +18,8 @@ export const NOTES = `  affected         what a pull request has to run: the con
                    its resource, its schema files and its spec follow; a context is turned whole or not at all
   describe         one context as facts: use cases, routes, events, ports, policies, gateways, dependencies
   status           the next step of docs/architecture/plan.md, the slices of docs/architecture/slices.md by
-                   status and by owner, and the TODO(domain), TODO(platform) and it.todo left in each context
+                   status and by owner, and the TODO(domain), TODO(platform), it.todo and TODO(review) left in
+                   each context
   sdk              the typed client of each document of the contract, a workspace package under
                    clients/<document> without runtime dependency: typed errors keyed by the error codes,
                    credentials per security scheme; records "sdk" in the config the first time, wires the

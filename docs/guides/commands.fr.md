@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:5c1c975165be9980 -->
+<!-- translation-of: commands.md sha256:ae22268472a10d83 -->
 
 # Quelle commande, quand
 
@@ -90,7 +90,7 @@ La tranche est finie quand `todo ordering` n'en liste plus rien.
 | `/ddd-ts-kit:plan-slices` | le travail en tranches verticales, ordonnées, avec leurs commandes de générateur | étape 6, après l'amorçage | `docs/architecture/slices.md` | `/ddd-ts-kit:use-case` |
 | `/ddd-ts-kit:use-case <UseCase>` | une tranche de bout en bout, test d'abord | pour chaque ligne des tranches | domaine, gestionnaire, route et *specs*, remplis | `npm run verify` |
 | `npx ddd-ts-kit generate <kind> ...` | un fichier d'un rôle avec sa *spec*, son *fake* et son enregistrement (liste ci-dessous) | chaque fois qu'il faut un fichier d'un rôle, jamais à la main | le fichier et les endroits `TODO(domain)`, `--json` pour la liste | remplir les endroits, puis `todo` |
-| `npx ddd-ts-kit todo [<context>]` | chaque `TODO(domain)`, `TODO(platform)` et `it.todo` restant | avant de clore une tranche | des entrées `file:line` | les écrire, puis `npm test` |
+| `npx ddd-ts-kit todo [<context>]` | chaque `TODO(domain)`, `TODO(platform)`, `it.todo` et `TODO(review)` restant | avant de clore une tranche, une story ou un jalon | des entrées `file:line` | les écrire, puis `npm test` ; régler chaque `TODO(review)` ou l'écarter par `generate adr` avant de clore la story ou le jalon |
 | `/ddd-ts-kit:parallel-work` | répartit les tranches entre des *workers*, un contexte chacun | quand plusieurs agents ou personnes construisent en même temps | une consigne par *worker*, des *worktrees* `npx ddd-ts-kit worker-scope <context>` | le `use-case` de chaque *worker* |
 
 ## Relier deux contextes
@@ -280,7 +280,8 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
                    its resource, its schema files and its spec follow; a context is turned whole or not at all
   describe         one context as facts: use cases, routes, events, ports, policies, gateways, dependencies
   status           the next step of docs/architecture/plan.md, the slices of docs/architecture/slices.md by
-                   status and by owner, and the TODO(domain), TODO(platform) and it.todo left in each context
+                   status and by owner, and the TODO(domain), TODO(platform), it.todo and TODO(review) left in
+                   each context
   sdk              the typed client of each document of the contract, a workspace package under
                    clients/<document> without runtime dependency: typed errors keyed by the error codes,
                    credentials per security scheme; records "sdk" in the config the first time, wires the

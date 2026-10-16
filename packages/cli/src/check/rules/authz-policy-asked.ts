@@ -21,7 +21,7 @@ const REGISTRATION = /\.\s*(?:command|query)\s*\(\s*([A-Z][\w$]*)\s*\)/g;
 const CHAINED_REQUIRES = /\.\s*requires\s*\(/;
 const MAP_REQUIRES = /(?<![\w$.])requires\s*\(/g;
 const ASKS_ACCESS = /\.\s*(?:authorize|decide|decideOn)\s*\(/;
-const STILL_GENERATED = 'TODO(domain)';
+const LEFT_TO_DO = /\bTODO\((?:domain|review)\)/;
 
 export const authzPolicyAsked: Rule = {
   id: 'authz/policy-asked',
@@ -250,8 +250,9 @@ function unasked(handler: SourceFile, { message, permission }: Requirement): Fin
 
 /**
  * A call to `authorize`, `decide` or `decideOn` of `Access`, and the permission named in the
- * code, not in a comment; or the `TODO(domain)` the generator leaves there, which `ddd-ts-kit
- * todo` lists and the authorization module enforces at run time until it is done.
+ * code, not in a comment; or the `TODO(domain)` the generator leaves there, or a `TODO(review)`,
+ * naming the permission, which `ddd-ts-kit todo` lists and the authorization module enforces at
+ * run time until it is done.
  */
 function asks(handler: SourceFile, permission: PermissionRef): boolean {
   const { code, comments } = handler.scan;
@@ -259,7 +260,7 @@ function asks(handler: SourceFile, permission: PermissionRef): boolean {
   const id = escapeRegExp(permission.id);
   const named = new RegExp(`(?<![\\w$.])${set}\\s*(?:\\[\\s*(['"\`])${id}\\1\\s*\\]|\\.\\s*${id}(?![\\w$]))`, 'g');
 
-  if (comments.some(({ text }) => text.includes(STILL_GENERATED) && new RegExp(named.source).test(text))) {
+  if (comments.some(({ text }) => LEFT_TO_DO.test(text) && new RegExp(named.source).test(text))) {
     return true;
   }
 

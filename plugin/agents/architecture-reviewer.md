@@ -5,7 +5,8 @@ description: >-
   ddd-ts-kit rules (strategic and tactical DDD, Clean Architecture dependencies, access
   control, clean code, tests). Use after a slice is built and before it is merged, before a
   pull request, or for a design review of a context before refactoring it. Changes nothing
-  and returns findings with file and line.
+  and returns findings with file and line, blocking or not, each non-blocking one with the
+  TODO(review) line to write.
 tools: Read, Grep, Glob, Bash
 disallowedTools: Write, Edit, NotebookEdit
 model: inherit
@@ -63,8 +64,19 @@ Your turns are counted. On a large diff, the verdict matters more than reading e
 ## Output
 
 One line of verdict (`approve`, `approve with minor changes`, `changes required`), then the
-findings sorted by severity (`blocker`: wrong behaviour or broken boundary; `major`: design
-debt that will spread; `minor`), each as `file:line`, the rule id or principle, what is
-wrong, what to do instead. For a whole context, end with the three changes that would pay
-off most. No praise, no restating of the diff, no file contents. Nothing wrong is one
-sentence.
+findings in two groups, each finding as `file:line`, the rule id or principle, what is wrong,
+what to do instead:
+
+- **Blocking**: fixed before the merge. Every violation `check` reports, wrong behaviour, a
+  broken boundary, design debt that will spread, an `it.todo` or a `TODO(domain)` left in the
+  slice.
+- **Non-blocking**: may wait for a later slice of the same story or milestone. For each, the
+  `file:line` it belongs to and the marker line to write there, in the comment syntax of the
+  file: `// TODO(review): <the remark, what to do instead>`. You never write it: the conductor,
+  or the agent that fixes the branch, writes it or settles the remark at once, and the story is
+  closed only when `npx ddd-ts-kit todo` lists no `TODO(review)`.
+
+The `TODO(review)` markers already in the scope are listed by `todo`: say which ones the diff
+settles, without counting them as findings. For a whole context, end with the three changes
+that would pay off most. No praise, no restating of the diff, no file contents. Nothing wrong
+is one sentence.

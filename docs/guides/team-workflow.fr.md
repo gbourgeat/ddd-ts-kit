@@ -1,5 +1,5 @@
 [English](team-workflow.md) · **Français**
-<!-- translation-of: team-workflow.md sha256:3461bbf3f711c226 -->
+<!-- translation-of: team-workflow.md sha256:049bfc86f4b2b83a -->
 
 # Travailler en équipe sur un projet DDD
 
@@ -209,7 +209,12 @@ son attention là où un outil ne peut pas juger. Ce qu'il faut regarder diffèr
 
 Le *plugin* offre le même découpage sous forme d'outil : l'agent `architecture-reviewer` relit un
 diff ou un contexte entier en lecture seule, en partant de la sortie du *checker* puis en jugeant
-ce que les outils ne peuvent pas juger.
+ce que les outils ne peuvent pas juger. Il trie ses constats : un constat bloquant se corrige
+avant la fusion ; un constat non bloquant vient avec la ligne `TODO(review): <remarque>` à écrire
+à son `file:line`, pour que la remarque vive dans le code plutôt que dans une pull request bientôt
+fermée. `ddd-ts-kit todo` la liste et `ddd-ts-kit status` la compte jusqu'à ce qu'elle soit
+traitée, ou écartée par un enregistrement de décision ; une story ou un jalon n'est clos que
+lorsqu'il n'en reste aucune.
 
 ## Branches et petites pull requests
 

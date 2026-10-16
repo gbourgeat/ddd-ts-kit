@@ -296,8 +296,8 @@ The plugin writes the same plan down as a table: the skill `plan-slices` produce
 its repository, whose generators also write shared files) or a `slice`, with an owner and the
 rows it depends on. Contracts and skeletons belong to the conductor, slices to the worker of
 their context, and only the conductor edits the file. `npx ddd-ts-kit status` reads it back:
-the slices by status and by owner, and the `TODO(domain)`, `TODO(platform)` and `it.todo` left
-in each context; `npx ddd-ts-kit todo <context>` lists them as `file:line`.
+the slices by status and by owner, and the `TODO(domain)`, `TODO(platform)`, `it.todo` and
+`TODO(review)` left in each context; `npx ddd-ts-kit todo <context>` lists them as `file:line`.
 
 Four rows of that table in the example application, as `status` and `worker-scope` read them:
 

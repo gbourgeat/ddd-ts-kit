@@ -70,6 +70,31 @@ describe('todo', () => {
     expect(jsonAt(all, 'remaining')).toHaveLength(Number(jsonAt(all, 'count')));
   });
 
+  it('lists the TODO(review) a review left where its remark belongs, in text and as JSON', () => {
+    const handler = 'src/contexts/billing/application/commands/issue-invoice/issue-invoice.handler.ts';
+    const lines = read(root, handler).split('\n');
+
+    write(
+      root,
+      handler,
+      [...lines.slice(0, 1), '// TODO(review): name the total after the glossary.', ...lines.slice(1)].join('\n'),
+    );
+
+    expect(cli(root, 'todo', 'billing').stdout).toContain(
+      `${handler}:2  TODO(review)  name the total after the glossary.`,
+    );
+
+    expect(jsonAt(cli(root, 'todo', 'billing', '--json').json(), 'remaining')).toContainEqual({
+      kind: 'review',
+      context: 'billing',
+      file: handler,
+      line: 2,
+      text: 'name the total after the glossary.',
+    });
+
+    expect(cli(root, 'todo', 'shipping').stdout).not.toContain('TODO(review)');
+  });
+
   it('says so when nothing is left, and refuses an unknown context', () => {
     write(root, 'src/contexts/shipping/CONTEXT.md', '# Shipping\n');
 

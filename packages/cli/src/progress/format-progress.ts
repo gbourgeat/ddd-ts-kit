@@ -71,5 +71,5 @@ function rowLine(row: Slice): string {
 }
 
 function remainingLine(count: RemainingCount): string {
-  return `  ${count.context === '' ? 'outside the contexts' : count.context}: ${count.domain} TODO(domain), ${count.platform} TODO(platform), ${count.test} it.todo`;
+  return `  ${count.context === '' ? 'outside the contexts' : count.context}: ${count.domain} TODO(domain), ${count.platform} TODO(platform), ${count.test} it.todo, ${count.review} TODO(review)`;
 }

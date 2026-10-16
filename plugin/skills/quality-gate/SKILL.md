@@ -37,8 +37,9 @@ allowed-tools:
 |---|---|---|
 | after each write | nothing: the guard runs `check-file` and returns the violations | none |
 | while iterating | `npx ddd-ts-kit check --changed-since <base>` and `npm test -- <context>` | seconds |
-| before the commit that closes a slice | the two above, `npm run typecheck`, `npm run lint`, `npm run format:check` (`npm run format` settles it), `npx ddd-ts-kit todo <context>` (nothing left), `npx ddd-ts-kit check --commit-size` | under a minute |
-| before a merge or a pull request | `npm run verify`, on the branch with the trunk merged in | everything |
+| before the commit that closes a slice | the two above, `npm run typecheck`, `npm run lint`, `npm run format:check` (`npm run format` settles it), `npx ddd-ts-kit todo <context>` (nothing left but `TODO(review)`), `npx ddd-ts-kit check --commit-size` | under a minute |
+| before a merge or a pull request | `npm run verify`, on the branch with the trunk merged in; each non-blocking remark of the review written as a `TODO(review)` or settled | everything |
+| before a story or a milestone is closed | `npx ddd-ts-kit todo`: no `TODO(review)` left | seconds |
 
 `check --changed-since` judges the changed files only: a cycle, an unused export or a rule
 broken by the combination with the trunk escapes it, which is why the last run is `verify`, on
@@ -46,8 +47,19 @@ the whole tree, after merging the trunk. `npm run verify` chains types, lint, fo
 (`npm run test:coverage`), end-to-end tests, the architecture rules, the import graph
 (dependency-cruiser), dead code (knip) and documentation drift. Use
 `npm run typecheck`, never `npx tsc`: the project compiles with the native compiler.
-`npx ddd-ts-kit status` counts the `TODO(domain)`, `TODO(platform)` and `it.todo` left in
-each context: a gate is not passed while the slice still has one.
+`npx ddd-ts-kit status` counts the `TODO(domain)`, `TODO(platform)`, `it.todo` and
+`TODO(review)` left in each context: a gate is not passed while the slice still has one of the
+first three.
+
+## Review remarks
+
+A review sorts its findings: a blocking one is fixed before the merge; a non-blocking one is
+settled at once, or written before the merge as `TODO(review): <remark>` at the line it is
+about, by whoever fixes the branch (the `architecture-reviewer` agent gives the line and its
+`file:line`, and never writes it). A slice may merge with `TODO(review)` markers; a story or a
+milestone is closed only when `todo` lists none, each one handled, or dismissed by a decision
+record (`npx ddd-ts-kit generate adr "<title>"`, quoting the remark without its marker) with
+the marker deleted in the same commit.
 
 ## Coverage
 
