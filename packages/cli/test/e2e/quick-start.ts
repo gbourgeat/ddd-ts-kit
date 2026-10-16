@@ -9,14 +9,14 @@ const ON_NPM: readonly (readonly [RegExp, string])[] = [
 ];
 
 /**
- * The commands of the quick start of the root README, in order: every line of its `bash`
- * blocks, a continued line joined and a trailing comment removed, said for the package manager
- * asked for. A reader types them; the suite runs them.
+ * The commands of the root README that an agent types for a new project (its section "What the
+ * agent runs"), in order: every line of its `bash` blocks, a continued line joined and a trailing
+ * comment removed, said for the package manager asked for. The agent types them; the suite runs them.
  */
 export function quickStart(manager: Manager): string[] {
   const section = read(REPO_ROOT, 'README.md')
     .split(/^## /m)
-    .find((part) => part.startsWith('Quick start'));
+    .find((part) => part.startsWith('What the agent runs'));
 
   const blocks = [...(section ?? '').matchAll(/```bash\n([\s\S]*?)```/g)].map((block) => block[1] ?? '');
 
