@@ -1,5 +1,5 @@
 [English](parallel-work.md) · **Français**
-<!-- translation-of: parallel-work.md sha256:1e83c686663a786e -->
+<!-- translation-of: parallel-work.md sha256:74876fd8dccfcc1c -->
 
 # Travailler en parallèle sans collisions
 
@@ -144,7 +144,7 @@ git worktree add ../scheduling-calendars -b feat/calendars-working-hours
 Pour un *worker* par contexte, la CLI le fait en une commande :
 
 ```bash
-npx ddd-ts-kit worker-scope appointments --base origin/main --rows 12
+npx ddd-ts-kit worker-scope appointments --base origin/main --rows M1.12
 ```
 
 Elle ajoute un *worktree* sur la branche `build/appointments` (par défaut dans
@@ -152,7 +152,7 @@ Elle ajoute un *worktree* sur la branche `build/appointments` (par défaut dans
 à partir de `--base` (par défaut la branche courante), y écrit `.ddd-ts-kit/worker.json` qui
 nomme le contexte, et affiche la consigne de ce *worker* : le répertoire qu'il peut écrire, les
 générateurs qu'il peut lancer, ses lignes de `docs/architecture/slices.md` avec les règles écrites
-sous les tableaux (`- #12: refuses a booking outside working hours`), les contrats qu'il consomme,
+sous les tableaux (`- #M1.12: refuses a booking outside working hours`), les contrats qu'il consomme,
 et la base comme tronc de ses vérifications. `--rows` réduit la consigne à ces lignes, dans cet
 ordre ; sans lui, toutes les lignes du contexte encore à faire sont listées, avec une note
 au-delà de deux. `--dry-run` affiche la même chose sans rien toucher. Elle a besoin d'un dépôt
@@ -323,14 +323,14 @@ les lisent :
 
 | # | Contexte | Sorte | Tranche | Commencer par | Dépend de | Propriétaire | Statut |
 |---|---|---|---|---|---|---|---|
-| 3 | notification | skeleton | Notification, Reminder | `aggregate notification <Name>` puis `repository notification <Name>`, deux fois | | conductor | done |
-| 31 | notification | slice | Contacts known from identity (projection) | `@Projection` sur `identity.person.registered` | 4 | notification | todo |
-| 32 | notification | slice | Send a notification for a fact of an appointment | `port notification Mailer` ; `adapter notification Mailer --kind external --decorators` ; `command notification SendNotification --aggregate Notification --permission notification.send` ; `integration-handler notification scheduling scheduling.appointment.booked`, `.confirmed`, `.rescheduled`, `.cancelled` | 3, 5, 31 | notification | todo |
-| 34 | notification | slice | Sent notifications of a person | `query notification SearchNotifications --permission notification.read --search` (`GET /notifications`) | 32 | notification | todo |
+| M1.03 | notification | skeleton | Notification, Reminder | `aggregate notification <Name>` puis `repository notification <Name>`, deux fois | | conductor | done |
+| M1.31 | notification | slice | Contacts known from identity (projection) | `@Projection` sur `identity.person.registered` | M1.04 | notification | todo |
+| M1.32 | notification | slice | Send a notification for a fact of an appointment | `port notification Mailer` ; `adapter notification Mailer --kind external --decorators` ; `command notification SendNotification --aggregate Notification --permission notification.send` ; `integration-handler notification scheduling scheduling.appointment.booked`, `.confirmed`, `.rescheduled`, `.cancelled` | M1.03, M1.05, M1.31 | notification | todo |
+| M1.34 | notification | slice | Sent notifications of a person | `query notification SearchNotifications --permission notification.read --search` (`GET /notifications`) | M1.32 | notification | todo |
 
-La ligne 3 est un squelette : ses générateurs écrivent l'index des schémas de la plateforme, le
-chef d'orchestre la lance donc sur le tronc. Les lignes 31, 32 et 34 appartiennent au *worker*
-`notification`, comme la ligne 33, laissée hors de cet extrait ; le *worker* commence chacune
+La ligne M1.03 est un squelette : ses générateurs écrivent l'index des schémas de la plateforme, le
+chef d'orchestre la lance donc sur le tronc. Les lignes M1.31, M1.32 et M1.34 appartiennent au *worker*
+`notification`, comme la ligne M1.33, laissée hors de cet extrait ; le *worker* commence chacune
 une fois fusionnées les lignes dont elle dépend.
 
 Ce qui fait fonctionner le plan, c'est que les phases 0 et 1 ne sont délibérément pas parallèles.

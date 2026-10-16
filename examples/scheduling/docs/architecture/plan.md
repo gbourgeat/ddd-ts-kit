@@ -49,7 +49,7 @@ the code later becomes a record in `docs/adr/` once the project exists.
 - 2026-10-10 an offer of the waitlist is a requested appointment with a short deadline: the hold, its expiry and the overlap guarantee are the ones of appointments (conductor).
 - 2026-10-10 parallel build: the platform worker and three context workers at a time, sharing one tree (no git here), each inside its folder; `scheduling` split between two workers on different aggregates (conductor; outcome in `docs/tooling-report.md`).
 - 2026-10-10 scheduled work runs in a worker process (`src/apps/worker/main.ts`), not in the API (product owner).
-- 2026-10-10, after delivery: `analytics` keeps one row per fact (the outcome of each appointment) and computes the occupancy at read time, in the database; the stored occupancy, its nightly verification and its job are removed: a counter kept by events has to be defended against order and repaired, a figure computed from the facts cannot drift (product owner; `slices.md`, notes of 35 and 37).
+- 2026-10-10, after delivery: `analytics` keeps one row per fact (the outcome of each appointment) and computes the occupancy at read time, in the database; the stored occupancy, its nightly verification and its job are removed: a counter kept by events has to be defended against order and repaired, a figure computed from the facts cannot drift (product owner; `slices.md`, notes of M1.35 and M1.37).
 
 ## Open questions
 

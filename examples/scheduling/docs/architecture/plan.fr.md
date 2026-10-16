@@ -1,5 +1,5 @@
 [English](plan.md) · **Français**
-<!-- translation-of: plan.md sha256:74ea13cac69e7956 -->
+<!-- translation-of: plan.md sha256:2428279888941525 -->
 
 # Plan d'architecture
 
@@ -52,7 +52,7 @@ le code devient ensuite un enregistrement dans `docs/adr/` une fois le projet ex
 - 2026-10-10 une offre de la liste d'attente est un rendez-vous demandé avec une échéance courte : la réservation temporaire, son expiration et la garantie contre le chevauchement sont celles des rendez-vous (chef d'orchestre).
 - 2026-10-10 construction en parallèle : le *worker* de la plateforme et trois *workers* de contexte à la fois, partageant un seul arbre (pas de git ici), chacun dans son dossier ; `scheduling` partagé entre deux *workers* sur des agrégats différents (chef d'orchestre ; résultat dans `docs/tooling-report.md`).
 - 2026-10-10 le travail planifié tourne dans un processus *worker* (`src/apps/worker/main.ts`), pas dans l'API (*product owner*).
-- 2026-10-10, après la livraison : `analytics` garde une ligne par fait (l'issue de chaque rendez-vous) et calcule l'occupation à la lecture, dans la base de données ; l'occupation stockée, sa vérification nocturne et son *job* sont retirés : un compteur tenu par des événements doit être défendu contre l'ordre et réparé, un chiffre calculé à partir des faits ne peut pas dériver (*product owner* ; `slices.md`, notes de 35 et 37).
+- 2026-10-10, après la livraison : `analytics` garde une ligne par fait (l'issue de chaque rendez-vous) et calcule l'occupation à la lecture, dans la base de données ; l'occupation stockée, sa vérification nocturne et son *job* sont retirés : un compteur tenu par des événements doit être défendu contre l'ordre et réparé, un chiffre calculé à partir des faits ne peut pas dériver (*product owner* ; `slices.md`, notes de M1.35 et M1.37).
 
 ## Questions ouvertes
 
