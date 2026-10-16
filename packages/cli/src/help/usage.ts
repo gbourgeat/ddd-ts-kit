@@ -25,6 +25,7 @@ export const USAGE = `Usage
   ddd-ts-kit status
   ddd-ts-kit todo [<context>]
   ddd-ts-kit worker-scope <context> [--base <ref>] [--rows <id,...>] [--worktree <path>] [--branch <name>] [--dry-run]
+  ddd-ts-kit verify-slice <context> --since <git-ref>
   ddd-ts-kit docs [--check] [--stored-events]
   ddd-ts-kit sdk [--check] [--dry-run]
   ddd-ts-kit depcruise-config [--check|--write]

@@ -1,0 +1,75 @@
+import { beforeEach, describe, expect, it } from 'vitest';
+import { cli, read, write } from './helpers.js';
+import { committedProject } from './support/committed-project.js';
+import { git } from './support/git.js';
+import { jsonAt } from './support/json-at.js';
+
+const SERVICE = 'src/contexts/billing/domain/services/pricing.service.ts';
+const SPEC = 'src/contexts/billing/test/unit/pricing.service.spec.ts';
+const IMPURE = "import { z } from 'zod';\n\nexport const pricing = z;\n";
+
+let root: string;
+
+/** Scripts that stand for the real ones: regenerate passes, the tests fail when FAIL is in their arguments' place. */
+function withScripts(test: string): void {
+  const manifest: { scripts: Record<string, string> } = JSON.parse(read(root, 'package.json'));
+
+  manifest.scripts['regenerate'] = 'node -e ""';
+  manifest.scripts['test'] = test;
+  write(root, 'package.json', `${JSON.stringify(manifest, null, 2)}\n`);
+  git(root, 'commit', '--quiet', '--all', '--message', 'chore: scripts');
+}
+
+beforeEach(() => {
+  root = committedProject('verify-slice', '--context', 'billing:core');
+});
+
+describe('verify-slice', () => {
+  it('runs every step, reports a new file that breaks a rule and the failing tests, and exits 1', () => {
+    withScripts('node -e "console.log(\'1 test failed\'); process.exit(1)"');
+    git(root, 'switch', '--quiet', '--create', 'build/billing');
+    write(root, SERVICE, IMPURE);
+
+    const result = cli(root, 'verify-slice', 'billing', '--since', 'main');
+
+    expect(result.code).toBe(1);
+    expect(result.stdout).toContain('regenerate: ok');
+    expect(result.stdout).toContain('check (changed since main): ');
+    expect(result.stdout).toContain(`${SERVICE}:1  error  layer/domain-purity`);
+    expect(result.stdout).toContain('tests of billing: failed\n');
+    expect(result.stdout).toContain('1 test failed');
+    expect(result.stdout).toContain('next: fix the causes above, then run verify-slice again');
+  });
+
+  it('names the paths to stage and the files near the size limit when every step passes', () => {
+    withScripts('node -e ""');
+    git(root, 'switch', '--quiet', '--create', 'build/billing');
+    const prices = Array.from({ length: 318 }, (_, line) => `  ${line},`).join('\n');
+
+    write(root, SERVICE, `export const prices = [\n${prices}\n];\n`);
+    write(root, SPEC, "import { it } from 'vitest';\n\nit('prices', () => undefined);\n");
+
+    const result = cli(root, 'verify-slice', 'billing', '--since', 'main', '--json');
+    const verification = result.json();
+
+    expect(result.code).toBe(0);
+    expect(jsonAt(verification, 'ok')).toBe(true);
+    expect(jsonAt(verification, 'toStage')).toEqual(expect.arrayContaining([SERVICE, SPEC]));
+    expect(jsonAt(verification, 'nearTheLimit')).toEqual([{ file: SERVICE, lines: 320 }]);
+  });
+
+  it('asks for the trunk, and for the scripts of this version', () => {
+    const noTrunk = cli(root, 'verify-slice', 'billing');
+    const manifest: { scripts: Record<string, string> } = JSON.parse(read(root, 'package.json'));
+
+    delete manifest.scripts['regenerate'];
+    write(root, 'package.json', JSON.stringify(manifest));
+
+    const noScript = cli(root, 'verify-slice', 'billing', '--since', 'main');
+
+    expect(noTrunk.code).toBe(2);
+    expect(noTrunk.stderr).toContain('--since origin/main');
+    expect(noScript.code).toBe(2);
+    expect(noScript.stderr).toContain('init --force');
+  });
+});
