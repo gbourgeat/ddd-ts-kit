@@ -49,7 +49,7 @@ le fichier où vit chaque partie :
 <!-- checked sample -->
 ```ts
 import { definePermissions } from '@ddd-ts-kit/auth';
-import {
+import { NamedDomainEvent, 
   AggregateRoot,
   AuthorizedCommand,
   ConceptError,
@@ -62,15 +62,13 @@ import {
 import { CommandHandler, Requires } from '@ddd-ts-kit/kernel/declarations';
 
 // domain/ : n'importe rien d'autre que le noyau
-export class AppointmentBooked implements DomainEvent {
-  static readonly eventName = 'appointments.appointment.booked';
-
-  readonly name = AppointmentBooked.eventName;
-
+export class AppointmentBooked extends NamedDomainEvent('appointments.appointment.booked') {
   constructor(
     readonly aggregateId: string,
     readonly occurredAt: Date,
-  ) {}
+  ) {
+    super();
+  }
 }
 
 export class AppointmentError extends ConceptError {

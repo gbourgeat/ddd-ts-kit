@@ -250,7 +250,7 @@ the platform binds it at start-up. Why, and what each layer holds:
 | `naming/business-name` | A variable, a loop variable, a destructured binding, a parameter (of a function, a method, a signature or an arrow) and a property (of a class, an interface or a type of an object) of `domain/` and `application/` of a context, and of the shared kernel outside `presentation/`, is named after the concept it holds, never by a generic word: `target`, `targets`, `data`, `item`, `items`, `obj`, `object`, `thing`, `things`, `stuff`, `info`, `element`, `el`, `tmp`, `temp`, `foo`, `bar`, `baz`. `businessNames.words` of the config replaces the list, `businessNames.allow` removes words from it. A key of an object literal follows the type it is written for and is not judged, nor the tests. ESLint fixes a variable built by `X.create(..)` or `new X(..)`, or read from a repository, renaming it with every use to the camel name of `X` (`appointment`) unless that name is taken; a loop variable is reported with the singular of its collection. |
 | `test/spec-required` | Every aggregate, value object, domain service, command handler, query handler, domain event handler, integration event handler, job and projection has a `*.spec.ts` in the context's `test/`. A file whose exported classes are all abstract and that exports no function is a base held by the specs of its implementations, and needs none. |
 | `events/name-format` | Domain and integration event names follow `<context>.<aggregate>.<fact-in-past-tense>`: the `static readonly eventName` a domain event declares once (or its `readonly name`, as 0.5 wrote it) and the `type` of an integration event declaration. |
-| `events/name-declared-once` | Every class of `domain/events/` but an abstract one declares its name once, `static readonly eventName = '<context>.<aggregate>.<fact>'`, which handlers and projections are attached under; its `readonly name` reads it (`readonly name = InvoiceIssued.eventName`) instead of writing the name a second time. Checked on every domain event, consumed or not. |
+| `events/name-declared-once` | Every class of `domain/events/` but an abstract one declares its name once, `static readonly eventName = '<context>.<aggregate>.<fact>'`, which handlers and projections are attached under; its `readonly name` reads it instead of writing the name a second time: extend `NamedDomainEvent('<context>.<aggregate>.<fact>')` of the kernel, which declares both, or write `readonly name = InvoiceIssued.eventName`. Checked on every domain event, consumed or not. |
 | `events/defined-in-published-language` | An integration event is declared once with `defineIntegrationEvent` in the producer's `published-language/`, with a payload schema. Catalog and AsyncAPI document are generated from these declarations. |
 | `test/no-mocks` | No `vi.mock`, `jest.mock`, `vi.fn`, `jest.fn`, `vi.spyOn`, `jest.spyOn` or mocking library in a context's `test/`. Use the fake of the port. Default severity `warn`. |
 | `test/builder-required` | An aggregate has a builder in `test/builders/`. Default severity `warn`. |
@@ -395,7 +395,7 @@ invoice.pay(clock.now());
 
 <!-- checked sample -->
 ```ts
-import { AggregateRoot, ConceptError, type DomainEvent } from '@ddd-ts-kit/kernel';
+import { AggregateRoot, ConceptError, NamedDomainEvent } from '@ddd-ts-kit/kernel';
 
 // domain/errors/invoice.error.ts: one class per concept, one factory per refusal
 export class InvoiceError extends ConceptError {
@@ -405,15 +405,13 @@ export class InvoiceError extends ConceptError {
 }
 
 // domain/events/invoice-paid.event.ts: a fact, in the past tense
-export class InvoicePaid implements DomainEvent {
-  static readonly eventName = 'billing.invoice.paid';
-
-  readonly name = InvoicePaid.eventName;
-
+export class InvoicePaid extends NamedDomainEvent('billing.invoice.paid') {
   constructor(
     readonly aggregateId: string,
     readonly occurredAt: Date,
-  ) {}
+  ) {
+    super();
+  }
 }
 
 // domain/aggregates/invoice.aggregate.ts

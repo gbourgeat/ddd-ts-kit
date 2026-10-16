@@ -31,17 +31,17 @@ Side by side, in the `scheduling` context of the example application. The domain
 class of the domain, free to hold a `Date` or a value object:
 
 ```ts
+import { NamedDomainEvent } from '@ddd-ts-kit/kernel';
+
 // contexts/scheduling/domain/events/appointment-booked.event.ts (simplified)
-export class AppointmentBooked implements DomainEvent {
-  static readonly eventName = 'scheduling.appointment.booked';
-
-  readonly name = AppointmentBooked.eventName;
-
+export class AppointmentBooked extends NamedDomainEvent('scheduling.appointment.booked') {
   constructor(
     readonly aggregateId: string,
     readonly occurredAt: Date,
     readonly slot: Slot, // a type of the model, which consumers never see
-  ) {}
+  ) {
+    super();
+  }
 }
 ```
 
@@ -325,18 +325,16 @@ to the outbox. Then the transaction commits, and the handlers of the `after-comm
 <!-- checked sample -->
 ```ts
 // an after-commit handler, for illustration
-import type { DomainEvent } from '@ddd-ts-kit/kernel';
+import { NamedDomainEvent } from '@ddd-ts-kit/kernel';
 import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
 
-class AppointmentBooked implements DomainEvent {
-  static readonly eventName = 'scheduling.appointment.booked';
-
-  readonly name = AppointmentBooked.eventName;
-
+class AppointmentBooked extends NamedDomainEvent('scheduling.appointment.booked') {
   constructor(
     readonly aggregateId: string,
     readonly occurredAt: Date,
-  ) {}
+  ) {
+    super();
+  }
 }
 
 /** A board of free slots kept in a cache: refreshing it may fail without harm. */
@@ -365,7 +363,7 @@ where it stands:
 
 <!-- checked sample -->
 ```ts
-import {
+import { NamedDomainEvent, 
   AggregateRoot,
   InMemoryDomainEventDispatcher,
   InMemoryUnitOfWork,
@@ -375,15 +373,13 @@ import {
   type DomainEvent,
 } from '@ddd-ts-kit/kernel';
 
-class SlotHeld implements DomainEvent {
-  static readonly eventName = 'scheduling.slot.held';
-
-  readonly name = SlotHeld.eventName;
-
+class SlotHeld extends NamedDomainEvent('scheduling.slot.held') {
   constructor(
     readonly aggregateId: string,
     readonly occurredAt: Date,
-  ) {}
+  ) {
+    super();
+  }
 }
 
 class Slot extends AggregateRoot {

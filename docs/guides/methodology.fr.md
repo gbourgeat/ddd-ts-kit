@@ -289,7 +289,7 @@ générés avec leurs endroits `TODO(domain)` :
 
 <!-- checked sample -->
 ```ts
-import { AggregateRoot, ConceptError, type DomainEvent } from '@ddd-ts-kit/kernel';
+import { AggregateRoot, ConceptError, NamedDomainEvent } from '@ddd-ts-kit/kernel';
 import { given } from '@ddd-ts-kit/testing';
 import { describe, expect, it } from 'vitest';
 
@@ -303,15 +303,13 @@ export class AppointmentError extends ConceptError {
 }
 
 // Le fait, au passé.
-export class AppointmentCancelled implements DomainEvent {
-  static readonly eventName = 'appointments.appointment.cancelled';
-
-  readonly name = AppointmentCancelled.eventName;
-
+export class AppointmentCancelled extends NamedDomainEvent('appointments.appointment.cancelled') {
   constructor(
     readonly aggregateId: string,
     readonly occurredAt: Date,
-  ) {}
+  ) {
+    super();
+  }
 }
 
 type AppointmentStatus = 'booked' | 'cancelled';

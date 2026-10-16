@@ -34,7 +34,7 @@ aggregate its file under `domain/` and the builder its file under `test/builders
 
 <!-- checked sample -->
 ```ts
-import { AggregateRoot, ConceptError, type DomainEvent } from '@ddd-ts-kit/kernel';
+import { AggregateRoot, ConceptError, NamedDomainEvent } from '@ddd-ts-kit/kernel';
 import { Builder, given, resetSequences, sequence, type Defaults } from '@ddd-ts-kit/testing';
 import { beforeEach, expect, it } from 'vitest';
 
@@ -45,16 +45,14 @@ class OrderError extends ConceptError {
   }
 }
 
-class OrderPaid implements DomainEvent {
-  static readonly eventName = 'ordering.order.paid';
-
-  readonly name = OrderPaid.eventName;
-
+class OrderPaid extends NamedDomainEvent('ordering.order.paid') {
   constructor(
     readonly aggregateId: string,
     readonly occurredAt: Date,
     readonly amount: number,
-  ) {}
+  ) {
+    super();
+  }
 }
 
 class Order extends AggregateRoot {

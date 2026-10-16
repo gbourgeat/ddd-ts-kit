@@ -1,11 +1,7 @@
-import type { DomainEvent } from '@ddd-ts-kit/kernel';
+import { NamedDomainEvent } from '@ddd-ts-kit/kernel';
 
 /** The person an invitation was addressed to accepted it. */
-export class InvitationAccepted implements DomainEvent {
-  static readonly eventName = '{{context.kebab}}.invitation.accepted';
-
-  readonly name = InvitationAccepted.eventName;
-
+export class InvitationAccepted extends NamedDomainEvent('{{context.kebab}}.invitation.accepted') {
   constructor(
     readonly aggregateId: string,
     readonly occurredAt: Date,
@@ -13,5 +9,7 @@ export class InvitationAccepted implements DomainEvent {
       readonly organisationId: string;
       readonly accountId: string;
     },
-  ) {}
+  ) {
+    super();
+  }
 }

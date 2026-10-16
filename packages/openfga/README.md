@@ -242,19 +242,17 @@ export class RelationshipsOnAppointmentBooked { /* ... */ }
 
 <!-- checked sample -->
 ```ts
-import type { DomainEvent } from '@ddd-ts-kit/kernel';
+import { NamedDomainEvent } from '@ddd-ts-kit/kernel';
 import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
 
-export class AppointmentBooked implements DomainEvent {
-  static readonly eventName = 'scheduling.appointment.booked';
-
-  readonly name = AppointmentBooked.eventName;
-
+export class AppointmentBooked extends NamedDomainEvent('scheduling.appointment.booked') {
   constructor(
     readonly aggregateId: string,
     readonly occurredAt: Date,
     readonly booking: { readonly calendarId: string; readonly patientId: string },
-  ) {}
+  ) {
+    super();
+  }
 }
 
 // The port of the context, in its own words; its adapter writes the tuples to OpenFgaRelationTupleStore.

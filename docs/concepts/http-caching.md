@@ -279,18 +279,16 @@ show:
 <!-- checked sample -->
 ```ts
 // scheduling/application/event-handlers/calendar-opening-hours-set.event-handler.ts
-import { CacheInvalidation, CachePurger, cacheTag, type DomainEvent } from '@ddd-ts-kit/kernel';
+import { CacheInvalidation, CachePurger, cacheTag, NamedDomainEvent } from '@ddd-ts-kit/kernel';
 import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
 
-export class CalendarOpeningHoursSet implements DomainEvent {
-  static readonly eventName = 'scheduling.calendar.opening-hours-set';
-
-  readonly name = CalendarOpeningHoursSet.eventName;
-
+export class CalendarOpeningHoursSet extends NamedDomainEvent('scheduling.calendar.opening-hours-set') {
   constructor(
     readonly aggregateId: string,
     readonly occurredAt: Date,
-  ) {}
+  ) {
+    super();
+  }
 }
 
 // instead of: a purge sent after the commit, from the process: lost if it stops in between

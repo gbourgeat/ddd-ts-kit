@@ -17,6 +17,6 @@ export function assertDeclaresItsName(scope: Scope, names: EventNames): void {
 
   throw new CliError(
     `${names.event.pascal} does not declare the name its events carry, and a declared reaction is attached under it.`,
-    `In ${eventFileOf(scope, names)}, write \`static readonly eventName = '${names.eventName}';\` and \`readonly name = ${names.event.pascal}.eventName;\`, then run the command again.`,
+    `In ${eventFileOf(scope, names)}, extend \`NamedDomainEvent('${names.eventName}')\` (or write \`static readonly eventName = '${names.eventName}';\` and \`readonly name = ${names.event.pascal}.eventName;\`), then run the command again.`,
   );
 }

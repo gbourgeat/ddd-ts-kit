@@ -57,7 +57,7 @@ file, and `ddd-ts-kit generate` writes them):
 
 <!-- checked sample -->
 ```ts
-import { AggregateRoot, ConceptError, Entity, ValueObject, type DomainEvent } from '@ddd-ts-kit/kernel';
+import { AggregateRoot, ConceptError, Entity, ValueObject, NamedDomainEvent } from '@ddd-ts-kit/kernel';
 
 // The refusals of the concept, each a static factory (see "Domain errors").
 export class OrderError extends ConceptError {
@@ -104,16 +104,14 @@ export class OrderLine extends Entity {
 }
 
 // A domain event: a fact of the past, named <context>.<aggregate>.<fact>.
-export class OrderPlaced implements DomainEvent {
-  static readonly eventName = 'ordering.order.placed';
-
-  readonly name = OrderPlaced.eventName;
-
+export class OrderPlaced extends NamedDomainEvent('ordering.order.placed') {
   constructor(
     readonly aggregateId: string,
     readonly occurredAt: Date,
     readonly lineCount: number,
-  ) {}
+  ) {
+    super();
+  }
 }
 
 // The aggregate root: the only way in, every rule checked by an intention method.
@@ -424,7 +422,7 @@ The whole timeline, with the doubles of the kernel and nothing else, as a spec w
 
 <!-- checked sample -->
 ```ts
-import {
+import { NamedDomainEvent, 
   AggregateRoot,
   InMemoryDomainEventDispatcher,
   InMemoryUnitOfWork,
@@ -432,15 +430,13 @@ import {
   type DomainEvent,
 } from '@ddd-ts-kit/kernel';
 
-class CartOpened implements DomainEvent {
-  static readonly eventName = 'shop.cart.opened';
-
-  readonly name = CartOpened.eventName;
-
+class CartOpened extends NamedDomainEvent('shop.cart.opened') {
   constructor(
     readonly aggregateId: string,
     readonly occurredAt: Date,
-  ) {}
+  ) {
+    super();
+  }
 }
 
 class Cart extends AggregateRoot {

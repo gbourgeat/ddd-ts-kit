@@ -25,7 +25,7 @@ porte les faits dont une réaction a besoin, jamais l'agrégat lui-même.
 <!-- checked sample -->
 ```ts
 // contexts/appointments/domain/events/appointment-cancelled.event.ts
-import type { DomainEvent } from '@ddd-ts-kit/kernel';
+import { NamedDomainEvent } from '@ddd-ts-kit/kernel';
 
 // un objet-valeur du modèle, venu de domain/value-objects/ : déclaré ici pour que l'exemple se suffise à lui-même
 interface CancellationReason {
@@ -33,16 +33,14 @@ interface CancellationReason {
   readonly late: boolean;
 }
 
-export class AppointmentCancelled implements DomainEvent {
-  static readonly eventName = 'appointments.appointment.cancelled';
-
-  readonly name = AppointmentCancelled.eventName;
-
+export class AppointmentCancelled extends NamedDomainEvent('appointments.appointment.cancelled') {
   constructor(
     readonly aggregateId: string,
     readonly occurredAt: Date,
     readonly reason: CancellationReason,
-  ) {}
+  ) {
+    super();
+  }
 }
 ```
 
@@ -62,18 +60,16 @@ changement :
 <!-- checked sample -->
 ```ts
 // contexts/appointments/domain/aggregates/appointment.aggregate.ts (un extrait)
-import { AggregateRoot, ConceptError, type DomainEvent } from '@ddd-ts-kit/kernel';
+import { AggregateRoot, ConceptError, NamedDomainEvent } from '@ddd-ts-kit/kernel';
 
-class AppointmentCancelled implements DomainEvent {
-  static readonly eventName = 'appointments.appointment.cancelled';
-
-  readonly name = AppointmentCancelled.eventName;
-
+class AppointmentCancelled extends NamedDomainEvent('appointments.appointment.cancelled') {
   constructor(
     readonly aggregateId: string,
     readonly occurredAt: Date,
     readonly reason: string,
-  ) {}
+  ) {
+    super();
+  }
 }
 
 class AppointmentError extends ConceptError {
@@ -390,17 +386,15 @@ Le constructeur est privé, pour que ce soient les seules portes d'entrée :
 <!-- checked sample -->
 ```ts
 // contexts/appointments/domain/aggregates/appointment.aggregate.ts (les portes d'entrée)
-import { AggregateRoot, ConceptError, type DomainEvent } from '@ddd-ts-kit/kernel';
+import { AggregateRoot, ConceptError, NamedDomainEvent } from '@ddd-ts-kit/kernel';
 
-class AppointmentBooked implements DomainEvent {
-  static readonly eventName = 'appointments.appointment.booked';
-
-  readonly name = AppointmentBooked.eventName;
-
+class AppointmentBooked extends NamedDomainEvent('appointments.appointment.booked') {
   constructor(
     readonly aggregateId: string,
     readonly occurredAt: Date,
-  ) {}
+  ) {
+    super();
+  }
 }
 
 class AppointmentError extends ConceptError {

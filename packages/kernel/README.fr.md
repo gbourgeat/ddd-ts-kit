@@ -60,7 +60,7 @@ chacun son propre fichier, et `ddd-ts-kit generate` les écrit) :
 
 <!-- checked sample -->
 ```ts
-import { AggregateRoot, ConceptError, Entity, ValueObject, type DomainEvent } from '@ddd-ts-kit/kernel';
+import { AggregateRoot, ConceptError, Entity, ValueObject, NamedDomainEvent } from '@ddd-ts-kit/kernel';
 
 // Les refus du concept, chacun une fabrique statique (voir « Erreurs du domaine »).
 export class OrderError extends ConceptError {
@@ -107,16 +107,14 @@ export class OrderLine extends Entity {
 }
 
 // Un événement du domaine : un fait passé, nommé <contexte>.<agrégat>.<fait>.
-export class OrderPlaced implements DomainEvent {
-  static readonly eventName = 'ordering.order.placed';
-
-  readonly name = OrderPlaced.eventName;
-
+export class OrderPlaced extends NamedDomainEvent('ordering.order.placed') {
   constructor(
     readonly aggregateId: string,
     readonly occurredAt: Date,
     readonly lineCount: number,
-  ) {}
+  ) {
+    super();
+  }
 }
 
 // La racine d'agrégat : la seule entrée, chaque règle vérifiée par une méthode d'intention.
@@ -433,7 +431,7 @@ en place :
 
 <!-- checked sample -->
 ```ts
-import {
+import { NamedDomainEvent, 
   AggregateRoot,
   InMemoryDomainEventDispatcher,
   InMemoryUnitOfWork,
@@ -441,15 +439,13 @@ import {
   type DomainEvent,
 } from '@ddd-ts-kit/kernel';
 
-class CartOpened implements DomainEvent {
-  static readonly eventName = 'shop.cart.opened';
-
-  readonly name = CartOpened.eventName;
-
+class CartOpened extends NamedDomainEvent('shop.cart.opened') {
   constructor(
     readonly aggregateId: string,
     readonly occurredAt: Date,
-  ) {}
+  ) {
+    super();
+  }
 }
 
 class Cart extends AggregateRoot {

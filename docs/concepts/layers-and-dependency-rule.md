@@ -43,7 +43,7 @@ lives in:
 <!-- checked sample -->
 ```ts
 import { definePermissions } from '@ddd-ts-kit/auth';
-import {
+import { NamedDomainEvent, 
   AggregateRoot,
   AuthorizedCommand,
   ConceptError,
@@ -56,15 +56,13 @@ import {
 import { CommandHandler, Requires } from '@ddd-ts-kit/kernel/declarations';
 
 // domain/: imports nothing but the kernel
-export class AppointmentBooked implements DomainEvent {
-  static readonly eventName = 'appointments.appointment.booked';
-
-  readonly name = AppointmentBooked.eventName;
-
+export class AppointmentBooked extends NamedDomainEvent('appointments.appointment.booked') {
   constructor(
     readonly aggregateId: string,
     readonly occurredAt: Date,
-  ) {}
+  ) {
+    super();
+  }
 }
 
 export class AppointmentError extends ConceptError {

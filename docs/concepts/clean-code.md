@@ -228,7 +228,7 @@ stores the reasons, declare it as a vocabulary and write `CancellationReason.Cli
 
 <!-- checked sample -->
 ```ts
-import { AggregateRoot, ConceptError, ValueObject, type DomainEvent } from '@ddd-ts-kit/kernel';
+import { AggregateRoot, ConceptError, ValueObject, NamedDomainEvent } from '@ddd-ts-kit/kernel';
 
 const CANCELLATION_NOTICE_HOURS = 24;
 const MILLISECONDS_PER_HOUR = 3_600_000;
@@ -273,16 +273,14 @@ export class AppointmentError extends ConceptError {
   }
 }
 
-export class AppointmentCancelled implements DomainEvent {
-  static readonly eventName = 'appointments.appointment.cancelled';
-
-  readonly name = AppointmentCancelled.eventName;
-
+export class AppointmentCancelled extends NamedDomainEvent('appointments.appointment.cancelled') {
   constructor(
     readonly aggregateId: string,
     readonly occurredAt: Date,
     readonly reason: CancellationReason,
-  ) {}
+  ) {
+    super();
+  }
 }
 
 export class Appointment extends AggregateRoot {

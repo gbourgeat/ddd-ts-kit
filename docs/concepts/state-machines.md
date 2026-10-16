@@ -189,7 +189,7 @@ A whole aggregate, smaller than the appointment, that uses each of them:
 
 <!-- checked sample -->
 ```ts
-import { AggregateRoot, ConceptError, defineStateMachine, type DomainEvent } from '@ddd-ts-kit/kernel';
+import { AggregateRoot, ConceptError, defineStateMachine, NamedDomainEvent } from '@ddd-ts-kit/kernel';
 
 export const InvoiceStatus = { Draft: 'draft', Issued: 'issued', Paid: 'paid', Cancelled: 'cancelled' } as const;
 export type InvoiceStatus = (typeof InvoiceStatus)[keyof typeof InvoiceStatus];
@@ -228,15 +228,13 @@ export const invoiceLifecycle = defineStateMachine({
   refused: ({ from }, { invoiceId }: InvoiceCheck) => InvoiceError.closed(invoiceId, from),
 });
 
-export class InvoiceIssued implements DomainEvent {
-  static readonly eventName = 'billing.invoice.issued';
-
-  readonly name = InvoiceIssued.eventName;
-
+export class InvoiceIssued extends NamedDomainEvent('billing.invoice.issued') {
   constructor(
     readonly aggregateId: string,
     readonly occurredAt: Date,
-  ) {}
+  ) {
+    super();
+  }
 }
 
 interface InvoiceState {
