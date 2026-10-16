@@ -40,9 +40,17 @@ function sliceLines(slices: SlicesProgress): string[] {
       ? []
       : [`  row numbers used more than once: ${slices.duplicates.join(', ')} (give each row its own number)`];
 
+  const unscoped =
+    slices.unscoped.length === 0
+      ? []
+      : [
+          `  row numbers without the code of their story or milestone: ${slices.unscoped.join(', ')} (number them \`US5.03\`, \`M2.07\`: a sequence across stories slides when one is cut)`,
+        ];
+
   return [
     `Slices (${slices.file}): ${slices.rows.length}, ${counts(slices.byStatus, statuses)}`,
     ...duplicated,
+    ...unscoped,
     ...open,
     '  by owner',
     ...owners,

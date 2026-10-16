@@ -19,6 +19,8 @@ export interface SlicesProgress {
   readonly byOwner: Readonly<Record<string, Readonly<Record<string, readonly string[]>>>>;
   /** The ids that more than one row carries, across the tables of the file: each such row is counted. */
   readonly duplicates: readonly string[];
+  /** The ids that are a bare number, without the code of their story or milestone (`12`, not `US5.12`). */
+  readonly unscoped: readonly string[];
 }
 
 export interface RemainingCount {
