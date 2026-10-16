@@ -1016,7 +1016,7 @@ each `CONTEXT.md`.
 ## status, todo
 
 ```
-ddd-ts-kit status
+ddd-ts-kit status [--workers]
 ddd-ts-kit todo [<context>]
 ```
 
@@ -1027,6 +1027,17 @@ error. `--json` prints `{ next, slices, remaining }`: `next` and `slices` are `n
 file is missing, `slices` holds `{ file, rows, byStatus, byOwner }`, `remaining` one
 `{ context, domain, platform, test }` per context, and one with an empty `context` for what is
 left outside them.
+
+`status --workers` prints the workers of a parallel build instead: each worktree of the
+repository whose copy of the project holds `.ddd-ts-kit/worker.json`, with its branch, its
+context, its rows, its base, the commits it is ahead of the base, the files it changed (committed
+since the merge base, modified, and untracked but not ignored, relative to the top of the
+repository) and its `.ddd-ts-kit/report.md` with when it was written; then the contexts built by
+more than one worker and the files changed by more than one worker, each with their worktrees.
+A scope file that holds the context only is read too: the worker comes without its rows, its
+base and its commits ahead, and its files are the uncommitted ones. `--json` prints
+`{ workers: [{ worktree, branch, context, rows, base, ahead, files, report }], overlaps: { contexts: [{ context, worktrees }], files: [{ file, worktrees }] } }`,
+`report` being `{ file, modified }` or `null`. Without a worker it says so in one line.
 
 `todo` lists those markers as `file:line` with their kind and their text, in the project or in one
 context; `--json` prints `{ count, remaining: [{ kind, context, file, line, text }] }`.
@@ -1040,7 +1051,7 @@ ddd-ts-kit worker-scope <context> [--base <ref>] [--rows <id,...>] [--worktree <
 Prepares the place of one worker of a build split by context: creates a git worktree of the
 project (`../<project>-<context>` by default) on the branch `build/<context>`, cut from
 `--base` (a branch, a tag or a commit: `origin/main`; by default the current branch), writes
-`.ddd-ts-kit/worker.json` in it (`{ "context": "<context>" }`; `init` ignores `.ddd-ts-kit/`), and
+`.ddd-ts-kit/worker.json` in it (`{ context, rows, base, branch }`; `init` ignores `.ddd-ts-kit/`), and
 prints the briefing of the worker: its scope, the generators it may run, its slices still to do
 from `docs/architecture/slices.md`, the published languages it consumes, and the base as the
 trunk of its checks (`check --changed-since <base>`). `--rows 4.15,4.16` briefs those rows only,

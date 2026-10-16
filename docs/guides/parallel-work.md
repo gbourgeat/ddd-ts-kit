@@ -142,7 +142,7 @@ npx ddd-ts-kit worker-scope appointments --base origin/main --rows M1.12
 It adds a worktree on the branch `build/appointments` (by default in
 `../<project>-appointments`; `--worktree <path>` and `--branch <name>` change both), cut from
 `--base` (by default the current branch), writes `.ddd-ts-kit/worker.json` naming the context in
-it, and prints the briefing of that worker: the directory it may write, the generators it may
+it, with the rows briefed, the base and the branch, and prints the briefing of that worker: the directory it may write, the generators it may
 run, its rows of `docs/architecture/slices.md` with the rules written under the tables
 (`- #M1.12: refuses a booking outside working hours`), the contracts it consumes, and the base as
 the trunk of its checks. `--rows` narrows the briefing to those rows, in that order; without
@@ -152,13 +152,30 @@ existing worktree, or branch, is kept when it contains the base, and refused whe
 a worker never starts from a stale trunk. Without `--base`, run from a worker's worktree, it
 refuses too, since that worker's branch would become the trunk. When it keeps a worktree, only
 the file is written again. `init` lists `.ddd-ts-kit/` in `.gitignore`, so the file
-is never committed. The file is one line of meaning:
+is never committed. The guard of the plugin reads its `context`; the rest is what
+`status --workers` shows:
 
 ```json
 {
-  "context": "appointments"
+  "context": "appointments",
+  "rows": ["M1.12"],
+  "base": "origin/main",
+  "branch": "build/appointments"
 }
 ```
+
+From the checkout of the trunk, `npx ddd-ts-kit status --workers` (`--json` for data) reads
+every worktree of the repository that holds that file and shows, for each worker: its
+worktree, its branch, its context, its rows, its base, the number of commits it is ahead of
+the base, the files it changed (committed since the merge base with the base, modified, and
+untracked but not ignored), and whether it wrote `.ddd-ts-kit/report.md`, with when. Then the
+overlaps: a context built by two workers, and each file changed by more than one worker, with
+the workers that changed it. Such a file conflicts at the merge of the second branch when both
+changed the same lines: run it before briefing a second worker in a context, to give it other
+files, and before each merge, to know which branches will meet in which files. A
+file written by an older version of the kit holds the context only: the worker is shown
+without its rows and its base, and its files are the uncommitted ones only. With no worker, it
+says so in one line.
 
 The briefing is filled from the project. In the example application, an excerpt of what
 `npx ddd-ts-kit worker-scope notification --dry-run` prints (the path shortened, `main` as the
@@ -238,6 +255,20 @@ Error: --local-only: this command would write 2 shared files: src/platform/auth/
 
 Merge small and often. Two branches that each lived a week will conflict in the aggregate and
 in every derived file; the same work in ten pull requests conflicts in none.
+
+A branch cut from another unmerged branch is stacked. When the first one merges by squash, its
+commits become one new commit on the default branch, and merging the default branch into the
+second replays them as conflicts. Move only the second branch's own commits instead:
+
+```bash
+git fetch origin
+git rebase --onto origin/main <last commit of the first branch> <second branch>
+npm run regenerate              # a derived file in conflict: take either side, then regenerate
+git diff --stat origin/main...  # every file of the branch's rows is still there
+```
+
+A file of its rows missing from that list, or a slice whose code is gone, was lost on the way:
+never settle a conflict by taking the default branch's side of a whole file.
 
 ## A concrete plan: four contexts, four workers
 

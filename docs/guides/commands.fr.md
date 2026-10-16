@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:4153296730e6fbdb -->
+<!-- translation-of: commands.md sha256:3ab8775ace75316a -->
 
 # Quelle commande, quand
 
@@ -92,6 +92,7 @@ La tranche est finie quand `todo ordering` n'en liste plus rien.
 | `npx ddd-ts-kit generate <kind> ...` | un fichier d'un rôle avec sa *spec*, son *fake* et son enregistrement (liste ci-dessous) | chaque fois qu'il faut un fichier d'un rôle, jamais à la main | le fichier et les endroits `TODO(domain)`, `--json` pour la liste | remplir les endroits, puis `todo` |
 | `npx ddd-ts-kit todo [<context>]` | chaque `TODO(domain)`, `TODO(platform)`, `it.todo` et `TODO(review)` restant | avant de clore une tranche, une story ou un jalon | des entrées `file:line` | les écrire, puis `npm test` ; régler chaque `TODO(review)` ou l'écarter par `generate adr` avant de clore la story ou le jalon |
 | `/ddd-ts-kit:parallel-work` | répartit les tranches entre des *workers*, un contexte chacun | quand plusieurs agents ou personnes construisent en même temps | une consigne par *worker*, des *worktrees* `npx ddd-ts-kit worker-scope <context>` | le `use-case` de chaque *worker* |
+| `npx ddd-ts-kit status --workers` | le *worktree*, la branche, le contexte, les lignes et l'avance de chaque *worker*, les fichiers qu'il a changés, et ceux que deux *workers* changent | avant de confier une consigne à un second *worker* dans un contexte, avant chaque fusion | un texte court, `--json` pour des données | d'autres lignes pour le nouveau *worker*, ou l'ordre des fusions |
 
 ## Relier deux contextes
 
@@ -241,7 +242,7 @@ Usage
   ddd-ts-kit generate --help --json
   ddd-ts-kit list [--context <name>]
   ddd-ts-kit describe <context>
-  ddd-ts-kit status
+  ddd-ts-kit status [--workers]
   ddd-ts-kit todo [<context>]
   ddd-ts-kit worker-scope <context> [--base <ref>] [--rows <id,...>] [--worktree <path>] [--branch <name>] [--dry-run]
   ddd-ts-kit verify-slice <context> --since <git-ref>
@@ -283,7 +284,9 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
   describe         one context as facts: use cases, routes, events, ports, policies, gateways, dependencies
   status           the next step of docs/architecture/plan.md, the slices of docs/architecture/slices.md by
                    status and by owner, and the TODO(domain), TODO(platform), it.todo and TODO(review) left in
-                   each context
+                   each context; --workers shows instead each worktree holding .ddd-ts-kit/worker.json (branch,
+                   context, rows, base, commits ahead, files changed since the base, its report), then the
+                   contexts and the files more than one worker holds
   sdk              the typed client of each document of the contract, a workspace package under
                    clients/<document> without runtime dependency: typed errors keyed by the error codes,
                    credentials per security scheme; records "sdk" in the config the first time, wires the

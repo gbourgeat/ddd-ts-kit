@@ -89,6 +89,7 @@ The slice is finished when `todo ordering` no longer lists anything of it.
 | `npx ddd-ts-kit generate <kind> ...` | one file of a role with its spec, fake and registration (list below) | whenever a file of a role is needed, never by hand | the file and the `TODO(domain)` places, `--json` for the list | fill the places, then `todo` |
 | `npx ddd-ts-kit todo [<context>]` | each `TODO(domain)`, `TODO(platform)`, `it.todo` and `TODO(review)` left | before closing a slice, a story or a milestone | `file:line` entries | write them, then `npm test`; settle each `TODO(review)` or dismiss it with `generate adr` before the story or milestone is closed |
 | `/ddd-ts-kit:parallel-work` | splits the slices between workers, one context each | when several agents or people build at once | a briefing per worker, `npx ddd-ts-kit worker-scope <context>` worktrees | each worker's `use-case` |
+| `npx ddd-ts-kit status --workers` | each worker's worktree, branch, context, rows and commits ahead, the files it changed, and the files two workers change | before briefing a second worker in a context, before each merge | a short text, `--json` for data | other rows for the new worker, or the merge order |
 
 ## Connect two contexts
 
@@ -236,7 +237,7 @@ Usage
   ddd-ts-kit generate --help --json
   ddd-ts-kit list [--context <name>]
   ddd-ts-kit describe <context>
-  ddd-ts-kit status
+  ddd-ts-kit status [--workers]
   ddd-ts-kit todo [<context>]
   ddd-ts-kit worker-scope <context> [--base <ref>] [--rows <id,...>] [--worktree <path>] [--branch <name>] [--dry-run]
   ddd-ts-kit verify-slice <context> --since <git-ref>
@@ -278,7 +279,9 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
   describe         one context as facts: use cases, routes, events, ports, policies, gateways, dependencies
   status           the next step of docs/architecture/plan.md, the slices of docs/architecture/slices.md by
                    status and by owner, and the TODO(domain), TODO(platform), it.todo and TODO(review) left in
-                   each context
+                   each context; --workers shows instead each worktree holding .ddd-ts-kit/worker.json (branch,
+                   context, rows, base, commits ahead, files changed since the base, its report), then the
+                   contexts and the files more than one worker holds
   sdk              the typed client of each document of the contract, a workspace package under
                    clients/<document> without runtime dependency: typed errors keyed by the error codes,
                    credentials per security scheme; records "sdk" in the config the first time, wires the

@@ -1,0 +1,44 @@
+/** Who builds what, in which worktree, and where two workers meet: what `status --workers` says. */
+export interface WorkersStatus {
+  /** One entry per worktree holding `.ddd-ts-kit/worker.json`, in the order git lists them. */
+  readonly workers: readonly WorkerStatus[];
+  readonly overlaps: Overlaps;
+}
+
+/** One worker. What its scope file does not say (a file written before the rows and the base were recorded) is left out. */
+export interface WorkerStatus {
+  /** Absolute path of the git worktree. */
+  readonly worktree: string;
+  /** The branch checked out there, or the one its scope file names on a detached HEAD. */
+  readonly branch?: string;
+  readonly context: string;
+  /** The ids of the rows it was briefed on. */
+  readonly rows?: readonly string[];
+  /** The ref it was cut from. */
+  readonly base?: string;
+  /** The commits on its branch that the base does not have; left out when the base is unknown or names no commit. */
+  readonly ahead?: number;
+  /**
+   * The files it changed, relative to the top of the repository: committed since the merge base
+   * with its base, modified, and untracked but not ignored. Without a known base, the modified
+   * and untracked ones only.
+   */
+  readonly files: readonly string[];
+  /** Its `.ddd-ts-kit/report.md`; null while it has written none. */
+  readonly report: WorkerReport | null;
+}
+
+export interface WorkerReport {
+  /** Absolute path. */
+  readonly file: string;
+  /** When it was last written, as an ISO 8601 date. */
+  readonly modified: string;
+}
+
+/** Where two workers or more meet: each is a merge conflict to come. */
+export interface Overlaps {
+  /** Each context built by more than one worker, with their worktrees. */
+  readonly contexts: readonly { readonly context: string; readonly worktrees: readonly string[] }[];
+  /** Each file changed by more than one worker, relative to the top of the repository, with their worktrees. */
+  readonly files: readonly { readonly file: string; readonly worktrees: readonly string[] }[];
+}

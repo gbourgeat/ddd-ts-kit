@@ -1,8 +1,6 @@
 import type { BriefedSlice } from './briefed-slice.js';
+import { REPORT_FILE } from './report-file.js';
 import type { WorkerPlace } from './worker-place.js';
-
-/** The report a worker keeps current in its worktree, ignored by git with the rest of `.ddd-ts-kit/`. */
-const REPORT_FILE = '.ddd-ts-kit/report.md';
 
 /**
  * A need marked blocking stops the row until the conductor does it; a note waits for the merge
