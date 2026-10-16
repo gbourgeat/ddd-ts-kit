@@ -172,6 +172,11 @@ function preBash(input) {
   if (!project || project.mode === 'off') {
     return;
   }
+  const preparing = workerPlaceReason(input, command);
+  if (preparing) {
+    decide(input, project.mode === 'advise' ? 'ask' : 'deny', preparing);
+    return;
+  }
   const context = workerContext(project, input);
   if (!context) {
     return;
@@ -599,6 +604,13 @@ function commandDirectory(command, cwd) {
   }
 
   return isAbsolute(directory) ? directory : resolve(cwd, directory);
+}
+
+// `worker-scope` adds a worktree and a branch: the conductor's to place, from the trunk. A sub-agent reads a briefing.
+function workerPlaceReason(input, command) {
+  return input.agent_type && /ddd-ts-kit(?:@\S+)?\s+worker-scope\b/.test(command) && !/--dry-run\b/.test(command)
+    ? 'Only the conductor prepares the place of a worker: `worker-scope` adds a git worktree and a branch. A sub-agent reads a briefing with `worker-scope <context> --dry-run`, which creates nothing; if a worker is missing, report it to the conductor.'
+    : undefined;
 }
 
 function sharedGeneratorReason(project, context, command) {

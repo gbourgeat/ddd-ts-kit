@@ -606,6 +606,20 @@ test('a context worker generates a working migration only', () => {
   assert.equal(run('pre-bash', bash(root, 'npm run db:generate add-orders')).output, undefined);
 });
 
+test('a sub-agent reads a briefing of worker-scope, and only the conductor prepares a worktree', () => {
+  const root = project();
+  const reviewer = { agent_type: 'ddd-ts-kit:architecture-reviewer' };
+  const preparing = run('pre-bash', bash(root, 'npx ddd-ts-kit worker-scope ordering --rows 3', reviewer));
+  assert.equal(decision(preparing), 'deny');
+  assert.match(reason(preparing), /--dry-run/);
+  const reading = 'npx ddd-ts-kit worker-scope ordering --rows 3 --dry-run --json';
+  assert.equal(run('pre-bash', bash(root, reading, reviewer)).output, undefined);
+  assert.equal(
+    run('pre-bash', bash(root, 'npx ddd-ts-kit worker-scope ordering --base origin/main')).output,
+    undefined,
+  );
+});
+
 test('a context worker does not change the dependencies', () => {
   const root = project();
   const result = run('pre-bash', bash(root, 'npm install dayjs', worker(root)));
