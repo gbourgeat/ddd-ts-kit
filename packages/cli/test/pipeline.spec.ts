@@ -80,11 +80,14 @@ describe('pipeline templates', () => {
     );
   });
 
-  it('the vitest config differs by the placeholders of the source root and the contexts directory, by the architecture specs it runs, by the decorators plugin, which is written for the standard decorator mode only, by the coverage plugin of the legacy mode, and by the inlined package under discovery', () => {
+  it('the vitest config differs by the placeholders of the source root and the contexts directory, by the architecture specs it runs, by the decorators plugin, which is written for the standard decorator mode only, by the coverage plugin of the legacy mode, by the inlined package under discovery, and by the global setup that saves the test database of an ORM', () => {
     // The proof that each context wires alone lives in test/architecture, outside the source root.
     const rendered = template('vitest.config.ts.tpl')
-      .replaceAll(/^[ \t]*\{\{#if (?:assembly\.discovery|decorators\.legacy)\}\}\n[\s\S]*?^[ \t]*\{\{\/if\}\}\n/gm, '')
-      .replaceAll(/^[ \t]*\{\{(?:#if decorators\.standard|\/if)\}\}\n/gm, '')
+      .replaceAll(
+        /^[ \t]*\{\{#if (?:assembly\.discovery|decorators\.legacy|persistence\.hasDatabase)\}\}\n[\s\S]*?^[ \t]*\{\{\/if\}\}\n/gm,
+        '',
+      )
+      .replaceAll(/^[ \t]*\{\{(?:#if decorators\.standard|\/if|#unless persistence\.hasDatabase|\/unless)\}\}\n/gm, '')
       .replace(", 'test/architecture/**/*.spec.ts'", '')
       .replaceAll('{{config.contextsDir}}', 'src/contexts')
       .replaceAll('{{config.sourceRoot}}', 'src')

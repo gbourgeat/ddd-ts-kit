@@ -1,3 +1,7 @@
+{{#if tests.vitest}}
+import { existsSync, openAsBlob } from 'node:fs';
+import { writeFile } from 'node:fs/promises';
+{{/if}}
 import { PGlite } from '@electric-sql/pglite';
 import { is, sql, SQL } from 'drizzle-orm';
 import { getTableConfig, PgDialect, PgTable } from 'drizzle-orm/pg-core';
@@ -30,6 +34,46 @@ export function openTestDatabase(url?: string): Promise<TestDatabase> {
 }
 
 async function openInProcess(): Promise<TestDatabase> {
+  const client = await {{#if tests.vitest}}startedInProcess(){{/if}}{{#if tests.jest}}createdInProcess(){{/if}};
+
+  return {
+    persistence: persistenceOver(drizzle(client), () => client.close()),
+    reset: async () => {
+      await client.exec(truncateStatement());
+    },
+    close: () => client.close(),
+  };
+}
+{{#if tests.vitest}}
+
+/**
+ * Names the file of the template database of the run: set by its global setup,
+ * test/support/test-database-template.ts, before any spec starts.
+ */
+const TEMPLATE = 'TEST_DATABASE_TEMPLATE';
+
+/**
+ * A copy of the template database of the run. The first opening of a run, that of its global setup,
+ * creates the database and saves it as the template; with no template named, each opening creates its own.
+ */
+async function startedInProcess(): Promise<PGlite> {
+  const template = process.env[TEMPLATE];
+
+  if (template !== undefined && existsSync(template)) {
+    return PGlite.create({ loadDataDir: await openAsBlob(template) });
+  }
+
+  const client = await createdInProcess();
+
+  if (template !== undefined) {
+    await writeFile(template, new Uint8Array(await (await client.dumpDataDir('none')).arrayBuffer()));
+  }
+
+  return client;
+}
+{{/if}}
+
+async function createdInProcess(): Promise<PGlite> {
   const client = new PGlite();
 
 {{#if audit.on}}
@@ -43,13 +87,7 @@ async function openInProcess(): Promise<TestDatabase> {
   }
 {{/unless}}
 
-  return {
-    persistence: persistenceOver(drizzle(client), () => client.close()),
-    reset: async () => {
-      await client.exec(truncateStatement());
-    },
-    close: () => client.close(),
-  };
+  return client;
 }
 
 async function openServer(url: string): Promise<TestDatabase> {

@@ -1,7 +1,11 @@
+{{#if tests.vitest}}
+import { existsSync, openAsBlob } from 'node:fs';
+import { writeFile } from 'node:fs/promises';
+{{/if}}
 import { PGlite } from '@electric-sql/pglite';
 import { PGLiteSocketServer } from '@electric-sql/pglite-socket';
 import type { Knex } from 'knex';
-import { connectToDatabase } from '{{alias.platform}}/database/connect-to-database{{alias.ext}}';
+import { connectToDatabase, type DatabaseConnection } from '{{alias.platform}}/database/connect-to-database{{alias.ext}}';
 import { persistenceOver } from '{{alias.platform}}/database/persistence-over{{alias.ext}}';
 import type { Persistence } from '{{alias.platform}}/database/persistence{{alias.ext}}';
 {{#if audit.on}}
@@ -30,7 +34,63 @@ export function openTestDatabase(url?: string): Promise<TestDatabase> {
 }
 
 async function openInProcess(): Promise<TestDatabase> {
-  const engine = await PGlite.create();
+  const started = await {{#if tests.vitest}}startedInProcess(){{/if}}{{#if tests.jest}}createdInProcess(){{/if}};
+  const { db } = started.connection;
+
+  const close = async (): Promise<void> => {
+    await started.disconnect();
+    await started.engine.close();
+  };
+
+  return { persistence: persistenceOver(db, close), reset: () => truncateAll(db), close };
+}
+
+/** PostgreSQL in process, served over the wire protocol, and the one connection the tests reach it by. */
+interface InProcess {
+  readonly engine: PGlite;
+  readonly connection: DatabaseConnection;
+
+  /** Closes the connection and the server; the engine stays open. */
+  disconnect(): Promise<void>;
+}
+{{#if tests.vitest}}
+
+/**
+ * Names the file of the template database of the run: set by its global setup,
+ * test/support/test-database-template.ts, before any spec starts.
+ */
+const TEMPLATE = 'TEST_DATABASE_TEMPLATE';
+
+/**
+ * A copy of the template database of the run. The first opening of a run, that of its global setup,
+ * creates the database and saves it as the template; with no template named, each opening creates its own.
+ */
+async function startedInProcess(): Promise<InProcess> {
+  const template = process.env[TEMPLATE];
+
+  if (template !== undefined && existsSync(template)) {
+    return served(await PGlite.create({ loadDataDir: await openAsBlob(template) }));
+  }
+
+  const started = await createdInProcess();
+
+  if (template !== undefined) {
+    await writeFile(template, new Uint8Array(await (await started.engine.dumpDataDir('none')).arrayBuffer()));
+  }
+
+  return started;
+}
+{{/if}}
+
+async function createdInProcess(): Promise<InProcess> {
+  const started = await served(await PGlite.create());
+
+  await createTables(started.connection.db);
+
+  return started;
+}
+
+async function served(engine: PGlite): Promise<InProcess> {
   const server = new PGLiteSocketServer({ db: engine, host: '127.0.0.1', port: 0, maxConnections: 10 });
 
   await server.start();
@@ -40,15 +100,12 @@ async function openInProcess(): Promise<TestDatabase> {
     poolSize: 1,
   });
 
-  await createTables(connection.db);
-
-  const close = async (): Promise<void> => {
+  const disconnect = async (): Promise<void> => {
     await connection.close();
     await server.stop();
-    await engine.close();
   };
 
-  return { persistence: persistenceOver(connection.db, close), reset: () => truncateAll(connection.db), close };
+  return { engine, connection, disconnect };
 }
 
 async function openServer(url: string): Promise<TestDatabase> {

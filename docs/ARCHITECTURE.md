@@ -183,8 +183,9 @@ export class PayInvoiceCommand extends AuthorizedCommand<void> {
 The tree is **closed**: a directory not listed here is a design decision, added to
 `extraDirectories` in the config with a reason, not created ad hoc. The levels named
 `<use-case>` are open, and so is everything below `test/unit/`, `test/integration/`,
-`test/fakes/` and `test/builders/`. End-to-end specs (`test/e2e/`) and the architecture test
-(`test/architecture/`) live at the project root, outside the contexts.
+`test/fakes/` and `test/builders/`. End-to-end specs (`test/e2e/`), the architecture test
+(`test/architecture/`) and the global setup of the test runs (`test/support/`) live at the
+project root, outside the contexts.
 
 **A concept with no role of its own still has a home.** The domain has no `types/`,
 `functions/` or `utils/` directory: each would hold concepts nobody named. A type alone or a

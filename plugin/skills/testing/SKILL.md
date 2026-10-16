@@ -109,7 +109,10 @@ built. A test states only what its rule depends on.
 `npx ddd-ts-kit generate e2e <ctx> <UseCase>` writes the three baseline cases of a route:
 401 without a credential, 403 without the permission, the documented status with it. Add
 the business scenario; assert what a client observes (responses, published events), never
-the database.
+the database. What happens after the answer (the outbox relayed, the handlers it reaches) is
+asserted once `await application.settled()` has resolved, never after a fixed delay: it fails
+naming what is still pending. With Vitest on an ORM, each spec opens a copy of the test
+database a global setup saved once per run (`test/support/test-database-template.ts`).
 
 ## Shape
 
