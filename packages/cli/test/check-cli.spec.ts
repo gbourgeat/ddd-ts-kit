@@ -1,6 +1,8 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { AGGREGATE, changeConfig, checkJsonOf, errorFixOf, HANDLER } from './check-support.js';
 import { cli, read, scaffoldEverything, tempDir, write } from './helpers.js';
+import { committedProject } from './support/committed-project.js';
+import { git } from './support/git.js';
 
 const ADR = '# The amount schema is shared with the route until it moves\n';
 /** The rules these tests break on purpose: what else the generated project holds is judged by the generator's own tests. */
@@ -73,6 +75,18 @@ describe('check', () => {
     expect(cli(root, 'check', '--format', 'xml').code).toBe(2);
     expect(noGit.code).toBe(2);
     expect(errorFixOf(noGit)).toContain('git repository');
+  });
+
+  it('judges with --changed-since the files changed since the ref, a new file not added to git included', () => {
+    const repository = committedProject('changed-since', '--context', 'billing:core');
+    const fresh = 'src/contexts/billing/domain/services/pricing.service.ts';
+
+    git(repository, 'switch', '--quiet', '--create', 'build/billing');
+    write(repository, fresh, "import { z } from 'zod';\n\nexport const pricing = z;\n");
+
+    const judged = checkJsonOf(cli(repository, 'check', '--changed-since', 'main', ...LAYERS, '--json'));
+
+    expect(judged.violations.map((violation) => violation.file)).toEqual([fresh]);
   });
 
   it('finds the project root from a sub-directory', () => {
