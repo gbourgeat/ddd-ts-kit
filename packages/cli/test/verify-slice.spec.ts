@@ -21,7 +21,7 @@ function withScripts(test: string): void {
 }
 
 beforeEach(() => {
-  root = committedProject('verify-slice', '--context', 'billing:core');
+  root = committedProject('verify-slice', '--context', 'billing:core', '--package-manager', 'npm');
 });
 
 describe('verify-slice', () => {
@@ -54,7 +54,7 @@ describe('verify-slice', () => {
 
     expect(result.code).toBe(0);
     expect(jsonAt(verification, 'ok')).toBe(true);
-    expect(jsonAt(verification, 'toStage')).toEqual(expect.arrayContaining([SERVICE, SPEC]));
+    expect(jsonAt(verification, 'toStage')).toEqual([SERVICE, SPEC]);
     expect(jsonAt(verification, 'nearTheLimit')).toEqual([{ file: SERVICE, lines: 320 }]);
   });
 

@@ -20,11 +20,15 @@ export function runScript({ root, manager, script, args = [] }: ScriptCall): Scr
     stdio: ['ignore', 'pipe', 'pipe'],
   });
 
+  if (run.error !== undefined) {
+    return { ok: false, output: `${manager} could not run (${run.error.message}): is it installed?` };
+  }
+
   if (run.status === 0) {
     return { ok: true, output: '' };
   }
 
   const printed = `${run.stdout}${run.stderr}`.trimEnd().split('\n');
 
-  return { ok: false, output: printed.slice(-TAIL_LINES).join('\n') || String(run.error ?? 'no output') };
+  return { ok: false, output: printed.slice(-TAIL_LINES).join('\n') || 'no output' };
 }
