@@ -256,6 +256,20 @@ Error: --local-only: this command would write 2 shared files: src/platform/auth/
 Merge small and often. Two branches that each lived a week will conflict in the aggregate and
 in every derived file; the same work in ten pull requests conflicts in none.
 
+A branch cut from another unmerged branch is stacked. When the first one merges by squash, its
+commits become one new commit on the default branch, and merging the default branch into the
+second replays them as conflicts. Move only the second branch's own commits instead:
+
+```bash
+git fetch origin
+git rebase --onto origin/main <last commit of the first branch> <second branch>
+npm run regenerate              # a derived file in conflict: take either side, then regenerate
+git diff --stat origin/main...  # every file of the branch's rows is still there
+```
+
+A file of its rows missing from that list, or a slice whose code is gone, was lost on the way:
+never settle a conflict by taking the default branch's side of a whole file.
+
 ## A concrete plan: four contexts, four workers
 
 A scheduling application with four contexts: `calendars`, `appointments`, `availability`,

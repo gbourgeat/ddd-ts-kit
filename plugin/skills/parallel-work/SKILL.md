@@ -153,6 +153,15 @@ second merge can conflict. For each branch:
    marker deleted in the same commit;
 4. the other workers merge the trunk into their branch before their next slice.
 
+A branch cut from another branch (a second batch of one context, started before the first
+merged) is stacked: when the first merges by squash, its commits are rewritten into one, and
+merging the trunk into the second replays them as conflicts. Move only the second branch's own
+commits onto the trunk instead: `git rebase --onto origin/main <last commit of the first
+branch> <second branch>`, take either side of a derived file and `npm run regenerate`, then
+compare `git diff --stat origin/main...` with the rows of the branch: a file of its rows that is
+missing, or a slice whose code is gone, was lost in the rebase. Never resolve by taking the
+trunk's side of a whole file.
+
 A worker never grants a permission to a role: the roles live in `src/platform/auth/`. When
 its report says who holds a new permission, grant it on the trunk in `roles.ts` (by the entry
 of the set) as you merge its branch, before `npm run verify`: `authz/granted` warns until then.

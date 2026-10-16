@@ -1,5 +1,5 @@
 [English](parallel-work.md) · **Français**
-<!-- translation-of: parallel-work.md sha256:0ac2f928a69f5abf -->
+<!-- translation-of: parallel-work.md sha256:78139d4504c32336 -->
 
 # Travailler en parallèle sans collisions
 
@@ -273,6 +273,22 @@ Error: --local-only: this command would write 2 shared files: src/platform/auth/
 Fusionnez petit et souvent. Deux branches qui ont vécu chacune une semaine entreront en conflit
 dans l'agrégat et dans chaque fichier dérivé ; le même travail en dix *pull requests* n'entre en
 conflit nulle part.
+
+Une branche coupée d'une autre branche non fusionnée est empilée. Quand la première est fusionnée
+en *squash*, ses commits deviennent un seul nouveau commit sur la branche par défaut, et fusionner
+la branche par défaut dans la seconde les rejoue en conflits. Ne déplacez que les commits propres
+à la seconde :
+
+```bash
+git fetch origin
+git rebase --onto origin/main <last commit of the first branch> <second branch>
+npm run regenerate              # a derived file in conflict: take either side, then regenerate
+git diff --stat origin/main...  # every file of the branch's rows is still there
+```
+
+Un fichier de ses lignes absent de cette liste, ou une tranche dont le code a disparu, s'est
+perdu en route : ne réglez jamais un conflit en prenant le côté de la branche par défaut pour
+un fichier entier.
 
 ## Un plan concret : quatre contextes, quatre workers
 
