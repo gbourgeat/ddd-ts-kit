@@ -23,6 +23,7 @@ Rules by slice
 - #4.15: refuses an invoice without lines
 - #4.15: refuses an invoice of a closed account
 - #D4.01: refuses a refund above the amount paid
+- 5.01: ships a paid order only
 `;
 
 let root: string;
@@ -53,6 +54,14 @@ describe('worker-scope --rows', () => {
 
     expect(briefing).not.toContain('Cancel invoice');
     expect(briefing.indexOf('#D4.01')).toBeLessThan(briefing.indexOf('#4.15'));
+  });
+
+  it('reads a rule line written without the #', () => {
+    const scope = cli(root, 'worker-scope', 'shipping', '--rows', '5.01', '--dry-run', '--json').json();
+
+    expect(jsonAt(scope, 'slices')).toEqual([
+      expect.objectContaining({ id: '5.01', rules: 'ships a paid order only' }),
+    ]);
   });
 
   it('leaves the rules out of a row that has none, instead of a placeholder', () => {

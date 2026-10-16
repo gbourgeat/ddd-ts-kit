@@ -1,8 +1,12 @@
 import type { Workspace } from '../workspace/index.js';
 import { SLICES_FILE } from './read-slices.js';
 
-/** A rule line of the slices file: `- #<row>: <invariants and failures by name>`, anywhere outside a table. */
-const RULE_LINE = /^\s*[-*]\s+#([^\s:]+)\s*:\s*(.+?)\s*$/;
+/**
+ * A rule line of the slices file, anywhere outside a table: `- #<row>: <invariants and failures
+ * by name>`, or `- <row>: ..` without the `#`, as a plan written by hand often has it. A list item
+ * whose first word is not the id of a row gives a rule no row asks for.
+ */
+const RULE_LINE = /^\s*[-*]\s+#?([^\s:,#]+)\s*:\s*(.+?)\s*$/;
 
 /**
  * The rules written for each row of the slices file, by row id, as the plan-slices skill writes
