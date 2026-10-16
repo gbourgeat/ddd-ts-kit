@@ -14,6 +14,8 @@ const ROLE = 'src/platform/auth/role.ts';
 const SERVICE = `${BILLING}/domain/services/pricing.service.ts`;
 const CATALOG_SERVICE = `${CATALOG}/domain/services/listing.service.ts`;
 const CURRENCY = 'src/shared-kernel/currency.vocabulary.ts';
+const TABLES = `${BILLING}/infrastructure/persistence/billing.schema.ts`;
+const QUERIES = `${BILLING}/infrastructure/persistence/drizzle-invoice.repository.ts`;
 
 const SPECS = {
   [`${BILLING}/test/unit/pricing.service.spec.ts`]: "import { it } from 'vitest';\n\nit('prices', () => undefined);\n",
@@ -119,6 +121,28 @@ export const VOCABULARY_FIXTURES: readonly Fixture[] = [
     name: 'a role word in the model of a context, where it may mean something else, and a value of billing in catalog',
     expect: 'pass',
     files: named({ [SERVICE]: raw('ISSUER', 'admin'), [CATALOG_SERVICE]: raw('LISTED', 'issued') }),
+  },
+  {
+    ruleId: rule,
+    name: 'storage names of the persistence that spell a value: a column, a table, a schema, a column in a query',
+    expect: 'pass',
+    files: named({
+      [TABLES]:
+        "export const invoices = billingSchema.table('issued', {\n  draft: text('draft').notNull(),\n  entity: { name: 'draft', tableName: 'issued', schema: 'draft' },\n});\n",
+      [QUERIES]: "export const issued = (knex: Knex) => knex('invoices').where('draft', status).select('issued');\n",
+    }),
+  },
+  {
+    ruleId: rule,
+    name: 'a stored value in the persistence: the default of a column',
+    expect: { file: TABLES },
+    files: named({ [TABLES]: "export const invoices = { status: text('status').default('draft') };\n" }),
+  },
+  {
+    ruleId: rule,
+    name: 'a stored value in the persistence: a value compared in a query',
+    expect: { file: QUERIES },
+    files: named({ [QUERIES]: "export const issued = (knex: Knex) => knex('invoices').where('status', 'issued');\n" }),
   },
   {
     ruleId: rule,

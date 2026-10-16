@@ -15,6 +15,8 @@ const GRANTS = 'src/platform/auth/roles.ts';
 const ROUTES = `${BILLING}/presentation/http/billing.routes.ts`;
 const SERVICE = `${BILLING}/domain/services/pricing.service.ts`;
 const CATALOG = 'src/contexts/catalog/domain/services/listing.service.ts';
+const SCHEMA = `${BILLING}/infrastructure/persistence/billing.schema.ts`;
+const REPOSITORY = `${BILLING}/infrastructure/persistence/knex-invoice.repository.ts`;
 const NAMED = { ...SAMPLE_CONFIG, stack: { literals: 'named' } };
 
 afterAll(() => {
@@ -88,6 +90,14 @@ ruleTester.run('language-declared-vocabulary', languageDeclaredVocabulary, {
     inProject(AGGREGATE, "export const isIssued = (status: string) => status === 'issued';", SAMPLE_CONFIG),
     inProject(SERVICE, "export const issuer = 'admin';\nexport const kind = 'system';"),
     inProject(CATALOG, "export const listed = 'issued';\nexport const level = 'high';"),
+    inProject(
+      SCHEMA,
+      "export const invoices = billingSchema.table('issued', {\n  draft: text('draft'),\n  entity: { name: 'draft', tableName: 'issued', schema: 'draft' },\n});",
+    ),
+    inProject(
+      REPOSITORY,
+      "export const find = (knex: Knex) => knex('invoices').where('draft', status).select('issued');",
+    ),
   ],
   invalid: [
     {
@@ -100,6 +110,14 @@ ruleTester.run('language-declared-vocabulary', languageDeclaredVocabulary, {
       ],
     },
     { ...inProject(ROUTES, "export const guard = { role: 'admin' };"), errors: [{ messageId: 'raw' }] },
+    {
+      ...inProject(SCHEMA, "export const invoices = { status: text('status').default('draft') };"),
+      errors: [{ messageId: 'raw' }],
+    },
+    {
+      ...inProject(REPOSITORY, "export const find = (knex: Knex) => knex('invoices').where('status', 'issued');"),
+      errors: [{ messageId: 'raw' }],
+    },
     {
       ...inProject(CATALOG, "export const priced = 'EUR';\nexport const legacy = 'GBP, sterling';"),
       errors: [
