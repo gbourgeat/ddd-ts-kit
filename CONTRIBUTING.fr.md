@@ -1,5 +1,5 @@
 [English](CONTRIBUTING.md) · **Français**
-<!-- translation-of: CONTRIBUTING.md sha256:fbf7a67826b32298 -->
+<!-- translation-of: CONTRIBUTING.md sha256:23148f89a7d3c7b7 -->
 
 # Contribuer
 
@@ -64,6 +64,17 @@ node --test plugin/hooks/guard.test.mjs
   rester vert : le générateur et le checker ne sont jamais en désaccord.
 - Une nouvelle règle de vérification vient avec une fixture qui passe et une fixture qui
   échoue, une phrase `fix` et une entrée `explain`.
+- Un changement qui fait signaler aux contrôles ce qu'ils ne signalaient pas (une nouvelle
+  règle, une règle qui juge plus de fichiers, une limite abaissée) ne fait jamais passer au rouge
+  un projet vert dans une version de correctif ou une version mineure : ce qu'il ajoute arrive
+  d'abord dans les projets comme un avertissement, et devient une erreur une version mineure
+  plus tard. Une nouvelle règle prend `warn` par défaut (`default-severities.ts` pour
+  `ddd-ts-kit check`, `recommended: 'warn'` pour la règle ESLint) ; une règle qui juge davantage
+  signale ce qu'elle ajoute sous un identifiant de règle à part, en avertissement, fondu dans la
+  règle à la version mineure suivante. `CHANGELOG.md` le dit dans les deux versions : ce que la règle signale, la correction, et
+  `ddd-ts-kit check --rule <id>` pour lister les fichiers à reprendre avant qu'elle ne bloque. Un
+  projet continue de construire pendant qu'il monte de version ; une règle qui arrive en erreur
+  arrête sa branche principale et toutes les branches qui en partent.
 - Un nouveau template compile tel qu'il est généré et ne porte de marqueurs `TODO(domain)` que
   là où une connaissance du métier est nécessaire.
 - Les packages d'exécution gardent les bibliothèques tierces derrière des dépendances pairs
