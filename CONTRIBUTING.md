@@ -59,6 +59,15 @@ node --test plugin/hooks/guard.test.mjs
   the generator and the checker never disagree.
 - A new check rule comes with a passing and a failing fixture, a `fix` sentence and an
   `explain` entry.
+- A change that makes the checks report what they did not (a new rule, a rule that judges more
+  files, a lower limit) never turns a green project red in a patch or a minor version: what it
+  adds reaches projects as a warning first, and becomes an error one minor version later. A new
+  rule takes `warn` as its default (`default-severities.ts` for `ddd-ts-kit check`, `recommended:
+  'warn'` for the ESLint rule); a rule that judges more reports what it adds under a rule id of
+  its own, a warning, merged into the rule at the next minor version. `CHANGELOG.md` says
+  it in both versions: what the rule reports, the fix, and `ddd-ts-kit check --rule <id>` to list
+  the files to take up before it blocks. A project builds while it upgrades; a rule that lands
+  as an error stops its main branch and every branch cut from it.
 - A new template compiles as generated and carries `TODO(domain)` markers only where business
   knowledge is needed.
 - Runtime packages keep third-party libraries behind optional peer dependencies and subpath
