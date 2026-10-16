@@ -9,9 +9,9 @@ import { perFile } from '../support/per-file.js';
 
 const RELATIONSHIP_SCHEMA = /(?<![\w$.])defineSchema\s*\(/;
 const MODULE_SPECIFIER = /\b(?:from|import)\s*$/;
-/** `text('reason')`, `createTable('expense')`, `.where('reason', ..)`: the first argument of a call, but `.default(..)`. */
+/** `text('note')`, `createTable('invoice')`, `.where('note', ..)`: the first argument of a call, but `.default(..)`. */
 const FIRST_ARGUMENT = /(?<![\w$])(?!default\s*\()[\w$]+\s*\(\s*$/;
-/** `{ name: 'reason' }`, `tableName: 'expense'`: the name of a column, a table or a schema in an object. */
+/** `{ name: 'note' }`, `tableName: 'invoice'`: the name of a column, a table or a schema in an object. */
 const NAME_PROPERTY = /(?<![\w$])(?:name|tableName|schema)\s*:\s*$/;
 
 export const languageDeclaredVocabulary: Rule = {
@@ -85,7 +85,7 @@ function isSpecifier(code: string, literal: StringRecord): boolean {
 
 /**
  * In the persistence of a context, the name of a column, a table or a schema is a word of the
- * storage that may spell a value by chance (a column `reason` next to a kind `reason`): the
+ * storage that may spell a value by chance (a column `note` next to a kind `note`): the
  * first argument of a call, or the value of `name`, `tableName` or `schema`. A stored value, the
  * argument of `.default(..)` or a value compared in a query, is still judged.
  */
