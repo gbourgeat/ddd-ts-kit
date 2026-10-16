@@ -31,6 +31,11 @@ command or query handler, the route, their tests. It fits one commit of reasonab
 discovery timeline is a candidate; a reaction to an event of another context (a policy) is a
 slice of the context that reacts.
 
+A slice that changes what is already built (a route answers otherwise, a state gains a step,
+an event carries more) adapts, in the same row, the tests that hold the former behaviour: the
+specs, the end-to-end specs and the acceptance tests of the stories already delivered. Never in
+a row at the end of the milestone: until then, the merge of the row turns them red.
+
 Three kinds of rows, because they do not have the same owner:
 
 | Kind | What | Owner |
@@ -46,7 +51,7 @@ Three kinds of rows, because they do not have the same owner:
 2. **Contracts**, upstream first, following the context map: what a downstream waits for.
 3. **By value** inside each context; core before supporting before generic.
 
-`Depends on` names row numbers. A slice depends on the skeleton of its aggregate and on the
+`Depends on` names row ids. A slice depends on the skeleton of its aggregate and on the
 contracts it consumes, never on a slice of another context: if it does, a contract is
 missing. Rows with no path between them can be built in parallel.
 
@@ -57,10 +62,10 @@ missing. Rows with no path between them can be built in parallel.
 
 | # | Context | Kind | Slice | Start with | Depends on | Owner | Status |
 |---|---|---|---|---|---|---|---|
-| 1 | ordering | skeleton | Order | `generate aggregate ordering Order` then `generate repository ordering Order` | | conductor | todo |
-| 2 | ordering | contract | Order placed | `generate integration-event ordering Order Placed` | 1 | conductor | todo |
-| 3 | ordering | slice | Place order | `generate command ordering PlaceOrder --aggregate Order --permission order.place --grant customer`; `generate route ordering PlaceOrder --method POST --path /orders` | 1, 2 | ordering | todo |
-| 4 | billing | slice | Invoice a placed order | `generate integration-handler billing ordering ordering.order.placed` | 2 | billing | todo |
+| US1.01 | ordering | skeleton | Order | `generate aggregate ordering Order` then `generate repository ordering Order` | | conductor | todo |
+| US1.02 | ordering | contract | Order placed | `generate integration-event ordering Order Placed` | US1.01 | conductor | todo |
+| US1.03 | ordering | slice | Place order | `generate command ordering PlaceOrder --aggregate Order --permission order.place --grant customer`; `generate route ordering PlaceOrder --method POST --path /orders` | US1.01, US1.02 | ordering | todo |
+| US1.04 | billing | slice | Invoice a placed order | `generate integration-handler billing ordering ordering.order.placed` | US1.02 | billing | todo |
 ```
 
 - `Start with` holds the exact generator commands (without `npx ddd-ts-kit` and `--json`), so
@@ -72,11 +77,18 @@ missing. Rows with no path between them can be built in parallel.
   reports, the conductor marks the row at the merge.
 - Keep the eight column names as they are: `npx ddd-ts-kit status` reads every table with this
   header, in the order of the file (slices by status and by owner), and `worker-scope` puts the
-  `todo` rows of an owner in its briefing. One table per milestone is fine; number the rows
-  across the file, never twice (`status` names a number used twice).
+  `todo` rows of an owner in its briefing. One table per story or milestone is fine.
+- `#` is the code of the story or milestone, then a number within it: `US5.03`, `M2.07`. Never
+  one sequence across stories: when a story is cut or a row inserted, the numbers after it
+  slide, and the ids that briefings, commits, reports and `Depends on` carry stop meaning the
+  same row. An id is written once and never renumbered; a row added later takes the next free
+  number of its story, a row removed leaves its number unused. `status` names an id used twice
+  and an id that is a bare number.
 - Keep rule details out of the table: under it, one line per slice that needs it,
-  `- #<n>: <invariants and failures by name>` (`- #3: refuses an order without lines`).
-  `worker-scope` puts that line in the briefing of the row.
+  `- #<id>: <invariants and failures by name>` (`- #US1.03: refuses an order without lines`), and
+  for a row that changes a delivered behaviour, the tests it adapts
+  (`adapts test/e2e/place-order.e2e.spec.ts`). `worker-scope` puts that line in the briefing
+  of the row.
 
 Aim for slices of half a day at most. A slice with more than two failures to handle, two
 aggregates or two routes is two slices.

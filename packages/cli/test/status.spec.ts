@@ -126,6 +126,20 @@ describe('status', () => {
     );
   });
 
+  it('says which row numbers carry no code of their story or milestone', () => {
+    write(
+      root,
+      'docs/architecture/slices.md',
+      `| # | Context | Kind | Slice | Start with | Depends on | Owner | Status |\n|---|---|---|---|---|---|---|---|\n| US5.01 | billing | slice | Issue invoice | \`generate command billing IssueInvoice --aggregate Invoice --permission invoice.issue\` | | billing | todo |\n| 7 | billing | slice | Cancel invoice | \`generate command billing CancelInvoice --aggregate Invoice --permission invoice.cancel\` | US5.01 | billing | todo |\n`,
+    );
+
+    expect(jsonAt(cli(root, 'status', '--json').json(), 'slices')).toMatchObject({ unscoped: ['7'], duplicates: [] });
+
+    expect(cli(root, 'status').stdout).toContain(
+      '  row numbers without the code of their story or milestone: 7 (number them `US5.03`, `M2.07`',
+    );
+  });
+
   it('reads a slices file without the table as a project without slices', () => {
     write(root, 'docs/architecture/slices.md', '# Slices\n\nNothing cut yet.\n');
 
