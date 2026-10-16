@@ -8,7 +8,7 @@ type MessageId = 'raw';
 
 /** The relationship schema of the access model declares its relations: like a published language, it names its values itself. */
 const RELATIONSHIP_SCHEMA = /(?<![\w$.])defineSchema\s*\(/;
-/** The properties of an object that name a column, a table or a schema (`{ name: 'reason' }`). */
+/** The properties of an object that name a column, a table or a schema (`{ name: 'note' }`). */
 const NAME_PROPERTIES = new Set(['name', 'tableName', 'schema']);
 
 export const languageDeclaredVocabulary = defineRule<MessageId>({
@@ -100,7 +100,7 @@ function isSpecifier(node: TSESTree.Node): boolean {
 
 /**
  * In the persistence of a context, the name of a column, a table or a schema is a word of the
- * storage that may spell a value by chance (a column `reason` next to a kind `reason`): the
+ * storage that may spell a value by chance (a column `note` next to a kind `note`): the
  * first argument of a call, or the value of `name`, `tableName` or `schema`. A stored value, the
  * argument of `.default(..)` or a value compared in a query, is still judged.
  */

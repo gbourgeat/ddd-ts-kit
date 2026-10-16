@@ -1,5 +1,5 @@
 [English](parallel-work.md) · **Français**
-<!-- translation-of: parallel-work.md sha256:74876fd8dccfcc1c -->
+<!-- translation-of: parallel-work.md sha256:cad2af8fc8bdbf18 -->
 
 # Travailler en parallèle sans collisions
 
@@ -115,8 +115,8 @@ seule migration que la garde le laisse écrire. `persistence/migration-history` 
 *worktree* et la signale sur le tronc : le chef d'orchestre la supprime donc à la fusion et y
 génère la vraie ([persistance](../tools/persistence.fr.md#migrations--noms-fusions-et-ordre)).
 
-Une décision prise pendant la construction d'une *slice* (comment se calcule un cumul
-d'indemnités, pourquoi une règle lit le montant stocké) est enregistrée par le *worker*
+Une décision prise pendant la construction d'une *slice* (comment s'arrondit une pénalité de
+retard, à partir de quelle date court un délai) est enregistrée par le *worker*
 lui-même : `generate adr "<title>"` écrit un nouveau fichier de `docs/adr/`, que la garde le
 laisse remplir jusqu'à ce qu'il soit commité avec la *slice*. Une dérogation à une règle,
 `generate adr --deviation`, écrit aussi la configuration : elle reste un besoin pour le chef

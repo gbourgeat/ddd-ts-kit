@@ -109,8 +109,8 @@ lets it write. `persistence/migration-history` accepts it in the worktree and re
 trunk, so the conductor deletes it at the merge and generates the real one there
 ([persistence](../tools/persistence.md#migrations-names-merges-and-order)).
 
-A decision taken while building a slice (how a cumulated allowance is computed, why a rule
-reads the stored amount) is recorded by the worker itself: `generate adr "<title>"` writes a new
+A decision taken while building a slice (how a late fee is rounded, from which date a deadline
+counts) is recorded by the worker itself: `generate adr "<title>"` writes a new
 file of `docs/adr/`, which the guard lets the worker fill until it is committed with the slice.
 A deviation from a rule, `generate adr --deviation`, also writes the config: it stays a need
 for the conductor and a decision of the project owner. Two branches that took the same number

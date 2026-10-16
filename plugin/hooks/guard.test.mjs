@@ -551,13 +551,13 @@ test('a context worker generates freely inside its context, and reads anywhere',
 test('a context worker records a decision of its slices, and no deviation', () => {
   const root = committed();
   const agent = worker(root);
-  const record = 'npx ddd-ts-kit generate adr "Cumulated mileage allowance" --number 0501';
+  const record = 'npx ddd-ts-kit generate adr "Rounding of late fees" --number 0402';
   assert.equal(run('pre-bash', bash(root, record, agent)).output, undefined);
   const deviation = run('pre-bash', bash(root, `${record} --deviation clean/file-size`, agent));
   assert.equal(decision(deviation), 'deny');
   assert.match(reason(deviation), /ddd-ts-kit\.config\.json/);
-  put(root, 'docs/adr/0501-cumulated-mileage-allowance.md', '# ADR-0501: Cumulated mileage allowance\n');
-  const own = join(root, 'docs/adr/0501-cumulated-mileage-allowance.md');
+  put(root, 'docs/adr/0402-rounding-of-late-fees.md', '# ADR-0402: Rounding of late fees\n');
+  const own = join(root, 'docs/adr/0402-rounding-of-late-fees.md');
   assert.equal(run('pre-write', write(own, agent)).output, undefined);
   put(root, 'docs/adr/0001-record-architecture-decisions.md', '# ADR-0001\n');
   git(root, 'add', 'docs/adr/0001-record-architecture-decisions.md');
