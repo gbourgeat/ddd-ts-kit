@@ -78,6 +78,7 @@ worktree (`cd <worktree> && ...`).
    `npm test -- <context>`. Fix causes: no suppression, no skipped test, no lowered severity.
    A size limit is met by extracting (a value object, a domain service, a policy, a file per
    responsibility), never by shortening or deleting a comment, a test or a written rule.
+   Format with `npm run format` only: never run another formatter (Prettier) on the project.
 5. Commit the slice alone, staging its paths one by one (never everything at once), with
    the derived files regenerate rewrote: `feat(<context>): <the slice in business words>`.
    The hooks run; never bypass them.
@@ -91,6 +92,8 @@ so, do not edit `docs/architecture/`.
 - slices done, each with its commit hash;
 - slices not done, each with the reason, and for an unfinished one the files it left modified;
 - needs on shared files, dependencies or another context's contract, each precise enough to
-  be done without asking you again;
+  be done without asking you again, and marked **blocking** (a slice of yours cannot be
+  finished without it: a migration, a contract field, a shared file, a dependency) or
+  **note** (the conductor does it at the merge: a permission to grant, a registration);
 - glossary terms added; open business questions;
 - the result of `npm run verify`.

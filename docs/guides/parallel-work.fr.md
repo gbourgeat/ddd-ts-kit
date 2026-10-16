@@ -1,5 +1,5 @@
 [English](parallel-work.md) · **Français**
-<!-- translation-of: parallel-work.md sha256:d0e48709d3ac119a -->
+<!-- translation-of: parallel-work.md sha256:1e83c686663a786e -->
 
 # Travailler en parallèle sans collisions
 
@@ -298,7 +298,8 @@ contenu déclarés. Régénérez le catalogue. Fusionnez `calendars` d'abord, pu
 La consigne de chaque *worker* dit : le seul répertoire qu'il peut écrire, les fichiers qu'il ne
 doit pas toucher (la configuration, `src/platform/`, `src/main.ts`, un autre contexte, tout
 document généré), qu'il ne doit pas régénérer les documents partagés, et qu'il s'arrête et rend
-compte si sa tranche semble exiger un changement hors de son répertoire. `worker-scope` affiche
+compte si sa tranche semble exiger un changement hors de son répertoire, en marquant chaque
+besoin bloquant (la tranche ne peut pas être finie sans lui) ou note pour la fusion. `worker-scope` affiche
 cette consigne. W3 et W4 testent leurs gestionnaires avec des événements construits à partir des
 déclarations ; ils n'attendent pas que W1 et W2 aient fini.
 
@@ -347,8 +348,10 @@ reste.
 - **Un agent tient une ligne, deux au plus.** Avec une douzaine, un agent de code épuise ses
   tours ou son contexte au milieu de l'une d'elles, et laisse un *worktree* à moitié modifié,
   sans rapport. Donnez une ligne par agent (`--rows`), lancez-les en séquence dans le *worktree*
-  du contexte, chacun commitant sa ligne, puis relisez le lot une fois, `npm run verify`, et
-  ouvrez la *pull request*. L'agent `context-builder` du *plugin* garde ses derniers tours pour
+  du contexte, chacun commitant sa ligne, puis fusionnez le tronc dans la branche, relisez le
+  lot une fois, lancez `npm run verify` sur la branche fusionnée, et ouvrez la *pull request* :
+  `check --changed-since` ne voit que les fichiers de la branche, et ce que le tronc a reçu
+  entre-temps peut casser l'ensemble. L'agent `context-builder` du *plugin* garde ses derniers tours pour
   son rapport et nomme les fichiers qu'une tranche inachevée a laissés, pour que l'agent suivant
   reprenne à partir d'eux.
 - **Les agents multiplient le coût autant que la vitesse.** Chacun porte sa propre fenêtre de
