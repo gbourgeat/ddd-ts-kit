@@ -10,6 +10,9 @@ export interface SliceVerification {
   readonly check: CheckResult;
   readonly tests: ScriptRun;
   readonly nearTheLimit: readonly SizedFile[];
+  /** The paths of the slice, to stage one by one. */
   readonly toStage: readonly string[];
+  /** The other changed paths of the working tree: never staged with the slice. */
+  readonly leftOut: readonly string[];
   readonly ok: boolean;
 }

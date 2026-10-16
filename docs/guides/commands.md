@@ -113,7 +113,7 @@ The slice is finished when `todo ordering` no longer lists anything of it.
 
 | Command or skill | Does | When | Produces | Then |
 |---|---|---|---|---|
-| `npx ddd-ts-kit verify-slice <context> --since <ref>` | in one run: `npm run regenerate`, the architecture rules on the files changed since the ref (new ones included), the tests of the context, the changed files near the 350-line limit | before the commit of a slice, again until it passes | each step with its cause, then the paths to stage | the commit of the slice |
+| `npx ddd-ts-kit verify-slice <context> --since <ref>` | in one run: `npm run regenerate`, the architecture rules on the files changed since the ref (new ones included), the tests of the context, the changed files near the 350-line limit | before the commit of a slice, again until it passes | each step with its cause, then the paths of the slice to stage, and every other changed path, left out and never staged with it | the commit of the slice, of the paths it lists to stage only |
 | `npx ddd-ts-kit check --changed-since <ref>` | the architecture rules on what changed | while iterating | violations with their fix | `npx ddd-ts-kit explain <rule-id>` when one is unclear |
 | `npm run regenerate` (`npx ddd-ts-kit depcruise-config --write`, then `npm run docs:generate`, which runs `npx ddd-ts-kit docs`) | regenerate every derived file: `.dependency-cruiser.cjs`, the context map, the `CONTEXT.md` lists, the barrels and the contracts | after a change of a route, a schema, an event or the config | the generated files, committed with the code | `/ddd-ts-kit:commit-discipline` |
 | `/ddd-ts-kit:commit-discipline`, `npx ddd-ts-kit check --commit-size --staged` | one slice per commit, its size against the config | before `git commit` (the hook runs the check) | a message `<type>(<context>): ...` | the next slice |
@@ -299,7 +299,9 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
                    that does not contain the base is refused
   verify-slice     closes a slice before its commit, in one run: the regenerate script, check on the files
                    changed since --since (new ones included), the test script for the context; then the
-                   changed files past 300 of the 350 lines, and the paths to stage; exits 1 while a step fails
+                   changed files past 300 of the 350 lines, the paths of the slice to stage (its context, an
+                   end-to-end spec, a working migration, the derived files git tracks) and every other
+                   changed path, left out and never to stage with it; exits 1 while a step fails
   --commit-size    the files and lines about to be committed against "commit" in the config (20 files and
                    600 lines by default, generated files not counted); --staged reads the index only;
                    advisory, --strict exits 1 when over

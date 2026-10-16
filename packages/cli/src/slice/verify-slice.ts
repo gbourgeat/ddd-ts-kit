@@ -7,7 +7,8 @@ import { loadProject } from '../check/project/load-project.js';
 import { CliError } from '../cli-error.js';
 import { isRecord } from '../config/values/is-record.js';
 import { nearTheLimit } from './near-the-limit.js';
-import { pathsToStage } from './paths-to-stage.js';
+import { changedEntries } from './changed-entries.js';
+import { planStaging } from './plan-staging.js';
 import { runScript } from './run-script.js';
 import type { SliceToVerify } from './slice-to-verify.js';
 import type { SliceVerification } from './slice-verification.js';
@@ -43,7 +44,7 @@ export function verifySlice({ root, config, context, since }: SliceToVerify): Sl
     check,
     tests,
     nearTheLimit: nearTheLimit(root, changed),
-    toStage: pathsToStage(root),
+    ...planStaging(changedEntries(root), config, context),
     ok: regenerate.ok && check.errorCount === 0 && tests.ok,
   };
 }

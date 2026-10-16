@@ -14,6 +14,7 @@ export function formatSliceVerification(verification: SliceVerification): string
     ...step(`tests of ${context}`, verification.tests),
     ...nearTheLimitLines(verification),
     ...nextLines(verification),
+    ...leftOutLines(verification),
   ].join('\n');
 }
 
@@ -40,6 +41,16 @@ function nextLines({ ok, toStage, context }: SliceVerification): string[] {
     : [
         `next: commit the slice, staging these paths one by one: feat(${context}): <the slice in business words>`,
         ...toStage.map((file) => `  ${file}`),
+      ];
+}
+
+/** Said whether the slice passed or not: an agent must never sweep these into its commit. */
+function leftOutLines({ leftOut }: SliceVerification): string[] {
+  return leftOut.length === 0
+    ? []
+    : [
+        'left out: changed or new, but not part of the slice; never stage them with it (a person decides about them)',
+        ...leftOut.map((file) => `  ${file}`),
       ];
 }
 

@@ -38,7 +38,9 @@ export const NOTES = `  affected         what a pull request has to run: the con
                    that does not contain the base is refused
   verify-slice     closes a slice before its commit, in one run: the regenerate script, check on the files
                    changed since --since (new ones included), the test script for the context; then the
-                   changed files past 300 of the 350 lines, and the paths to stage; exits 1 while a step fails
+                   changed files past 300 of the 350 lines, the paths of the slice to stage (its context, an
+                   end-to-end spec, a working migration, the derived files git tracks) and every other
+                   changed path, left out and never to stage with it; exits 1 while a step fails
   --commit-size    the files and lines about to be committed against "commit" in the config (20 files and
                    600 lines by default, generated files not counted); --staged reads the index only;
                    advisory, --strict exits 1 when over
