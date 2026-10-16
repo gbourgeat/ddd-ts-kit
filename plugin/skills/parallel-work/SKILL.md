@@ -76,7 +76,8 @@ in sequence, each on the commits of the previous one.
 npx ddd-ts-kit worker-scope <context> --base origin/main --rows <id>   # --dry-run to read it first; --worktree, --branch
 ```
 
-Run it from the checkout of the trunk. From the base (by default the current branch; it
+Run it from the checkout of the trunk, in your own session: the guard refuses it to a sub-agent
+unless `--dry-run`, which prints the briefing and creates nothing. From the base (by default the current branch; it
 refuses a worker's worktree), it adds the git worktree `../<project>-<context>` on the branch
 `build/<context>`, or keeps it when it contains the base and refuses it when it does not,
 writes `.ddd-ts-kit/worker.json` (`{ "context": "<context>" }`) in it,
