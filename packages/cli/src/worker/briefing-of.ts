@@ -50,8 +50,9 @@ export function briefingOf(place: WorkerPlace): string {
 function stepLines({ context, trunk }: WorkerPlace): string[] {
   return [
     'For each slice: generate with --local-only --json, fill the TODO(domain) markers, replace every it.todo',
-    `by a test, \`npm run regenerate\`, \`npx ddd-ts-kit check --changed-since ${trunk}\`, \`npm test -- ${context}\`,`,
-    `then one commit, with the files regenerate rewrote: \`feat(${context}): <slice in business words>\`.`,
+    `by a test, then \`npx ddd-ts-kit verify-slice ${context} --since ${trunk}\` (regenerate, the rules on your changed`,
+    'files, the tests of the context, the files near the size limit) until it passes, then one commit of the paths it',
+    `lists, staged one by one: \`feat(${context}): <slice in business words>\`.`,
     'Format with `npm run format` only: it is the formatter of the project, never run another one.',
     `After each step, rewrite ${REPORT_FILE} in the worktree in the form of the report below: if you stop,`,
     'the conductor reads it there.',

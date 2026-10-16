@@ -106,7 +106,7 @@ describe('worker-scope --base', () => {
     expect(scope.code).toBe(0);
     expect(scope.json()).toMatchObject({ trunk: 'release', created: true });
     expect(git(worktree, 'rev-parse', 'HEAD')).toBe(git(root, 'rev-parse', 'release'));
-    expect(String(jsonAt(scope.json(), 'briefing'))).toContain('`npx ddd-ts-kit check --changed-since release`');
+    expect(String(jsonAt(scope.json(), 'briefing'))).toContain('`npx ddd-ts-kit verify-slice billing --since release`');
   });
 
   it('refuses a base that names no commit', () => {

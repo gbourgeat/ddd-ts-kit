@@ -40,6 +40,7 @@ describe('agent settings', () => {
 
     const allowed = [
       'Bash(npx ddd-ts-kit check *)',
+      'Bash(npx ddd-ts-kit verify-slice *)',
       'Bash(npx ddd-ts-kit generate *)',
       'Bash(npx ddd-ts-kit rules)',
       'Bash(npm run verify)',
@@ -53,7 +54,7 @@ describe('agent settings', () => {
     expect(keysAt(readJson(root, SETTINGS))).toEqual(['permissions']);
     expect(keysAt(readJson(root, SETTINGS), 'permissions')).toEqual(['allow', 'deny', 'ask']);
     expect(permissions(root, 'allow')).toEqual(expect.arrayContaining(allowed));
-    expect(permissions(root, 'allow')).toHaveLength(18);
+    expect(permissions(root, 'allow')).toHaveLength(19);
     expect(permissions(root, 'deny')).toEqual(DENIED);
     expect(permissions(root, 'ask')).toEqual(ASKED);
   });
@@ -80,7 +81,7 @@ describe('agent settings', () => {
     expect(permissions(root, 'deny')).toContain('Edit(./openapi/**)');
 
     expect(stringsAt(report, 'notes').join('\n')).toMatch(
-      /\.claude\/settings\.json gained 35 permission\(s\): allow Bash\(npx ddd-ts-kit check \*\)/,
+      /\.claude\/settings\.json gained 36 permission\(s\): allow Bash\(npx ddd-ts-kit check \*\)/,
     );
 
     expect(stringsAt(cli(root, 'init', '--json').json(), 'updated')).not.toContain(SETTINGS);

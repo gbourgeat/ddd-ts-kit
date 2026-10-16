@@ -33,8 +33,9 @@ Read first, and only: src/contexts/<context>/CONTEXT.md, then
 `npx ddd-ts-kit describe <context> --json`. Then the `next` places each generator prints.
 
 For each slice: generate with --local-only --json, fill the TODO(domain) markers, replace every it.todo
-by a test, `npm run regenerate`, `npx ddd-ts-kit check --changed-since <main>`, `npm test -- <context>`,
-then one commit, with the files regenerate rewrote: `feat(<context>): <slice in business words>`.
+by a test, then `npx ddd-ts-kit verify-slice <context> --since <main>` (regenerate, the rules on your changed
+files, the tests of the context, the files near the size limit) until it passes, then one commit of the paths it
+lists, staged one by one: `feat(<context>): <slice in business words>`.
 Format with `npm run format` only: it is the formatter of the project, never run another one.
 After each step, rewrite .ddd-ts-kit/report.md in the worktree in the form of the report below: if you stop,
 the conductor reads it there.

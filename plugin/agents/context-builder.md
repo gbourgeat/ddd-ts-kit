@@ -74,13 +74,15 @@ worktree (`cd <worktree> && ...`).
    intention method, the handler spec then the handler, then the route. Replace every
    `it.todo`. Fakes and builders, never mocks. Do not change what the generator structured,
    and never edit `<context>.declarations.ts`: it is regenerated.
-4. `npm run regenerate`, then `npx ddd-ts-kit check --changed-since <trunk>` and
-   `npm test -- <context>`. Fix causes: no suppression, no skipped test, no lowered severity.
+4. `npx ddd-ts-kit verify-slice <context> --since <trunk>`: one run regenerates the derived
+   files, checks the files changed since the trunk and runs the specs of the context, then
+   names the files near the 350-line limit and the paths to stage. Run it again until it
+   passes. Fix causes: no suppression, no skipped test, no lowered severity.
    A size limit is met by extracting (a value object, a domain service, a policy, a file per
    responsibility), never by shortening or deleting a comment, a test or a written rule.
    Format with `npm run format` only: never run another formatter (Prettier) on the project.
-5. Commit the slice alone, staging its paths one by one (never everything at once), with
-   the derived files regenerate rewrote: `feat(<context>): <the slice in business words>`.
+5. Commit the slice alone, staging one by one the paths `verify-slice` listed (never
+   everything at once), derived files included: `feat(<context>): <the slice in business words>`.
    The hooks run; never bypass them.
 
 When all slices are committed: `npx ddd-ts-kit todo <context>` lists nothing but

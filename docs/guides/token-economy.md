@@ -195,14 +195,13 @@ permission, the refusal code and the route: every word of it saves a search.
 contract of its upstream, not the upstream's code; see [Parallel work](parallel-work.md).
 Remember that each agent carries its own context window: parallelism buys time, not tokens.
 
-**Check narrowly while working.** `npx ddd-ts-kit check --changed-since origin/main` and the
-tests of one context, not the whole gate after every edit. Run `npm run verify` once at the
-end.
+**Check narrowly while working.** One run of `verify-slice` per slice instead of three
+commands, each with its own output to read: it regenerates, checks the changed files, runs the
+tests of one context and lists what to stage. Run `npm run verify` once at the end.
 
 ```bash
-npx ddd-ts-kit check --changed-since origin/main   # the rules, on the changed files only
-npx vitest run src/contexts/ordering                # the tests of one context
-npm run verify                                      # the whole gate, once, before the commit
+npx ddd-ts-kit verify-slice ordering --since origin/main   # regenerate, the rules on the changed files, the tests of ordering
+npm run verify                                             # the whole gate, once, before the pull request
 ```
 
 **Keep noisy output out of the main conversation.** Run long test suites and log reading in a

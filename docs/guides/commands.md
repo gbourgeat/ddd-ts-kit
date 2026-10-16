@@ -112,6 +112,7 @@ The slice is finished when `todo ordering` no longer lists anything of it.
 
 | Command or skill | Does | When | Produces | Then |
 |---|---|---|---|---|
+| `npx ddd-ts-kit verify-slice <context> --since <ref>` | in one run: `npm run regenerate`, the architecture rules on the files changed since the ref (new ones included), the tests of the context, the changed files near the 350-line limit | before the commit of a slice, again until it passes | each step with its cause, then the paths to stage | the commit of the slice |
 | `npx ddd-ts-kit check --changed-since <ref>` | the architecture rules on what changed | while iterating | violations with their fix | `npx ddd-ts-kit explain <rule-id>` when one is unclear |
 | `npm run regenerate` (`npx ddd-ts-kit depcruise-config --write`, then `npm run docs:generate`, which runs `npx ddd-ts-kit docs`) | regenerate every derived file: `.dependency-cruiser.cjs`, the context map, the `CONTEXT.md` lists, the barrels and the contracts | after a change of a route, a schema, an event or the config | the generated files, committed with the code | `/ddd-ts-kit:commit-discipline` |
 | `/ddd-ts-kit:commit-discipline`, `npx ddd-ts-kit check --commit-size --staged` | one slice per commit, its size against the config | before `git commit` (the hook runs the check) | a message `<type>(<context>): ...` | the next slice |

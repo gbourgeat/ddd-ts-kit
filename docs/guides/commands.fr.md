@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:69d116ed94a59ff3 -->
+<!-- translation-of: commands.md sha256:4153296730e6fbdb -->
 
 # Quelle commande, quand
 
@@ -115,6 +115,7 @@ La tranche est finie quand `todo ordering` n'en liste plus rien.
 
 | Commande ou *skill* | Fait | Quand | Produit | Ensuite |
 |---|---|---|---|---|
+| `npx ddd-ts-kit verify-slice <context> --since <ref>` | en une passe : `npm run regenerate`, les règles d'architecture sur les fichiers modifiés depuis la référence (nouveaux compris), les tests du contexte, les fichiers modifiés proches de la limite de 350 lignes | avant le commit d'une tranche, à relancer jusqu'à ce qu'elle passe | chaque étape avec sa cause, puis les chemins à indexer | le commit de la tranche |
 | `npx ddd-ts-kit check --changed-since <ref>` | les règles d'architecture sur ce qui a changé | pendant l'itération | des violations avec leur correction | `npx ddd-ts-kit explain <rule-id>` quand l'une n'est pas claire |
 | `npm run regenerate` (`npx ddd-ts-kit depcruise-config --write`, puis `npm run docs:generate`, qui lance `npx ddd-ts-kit docs`) | régénère tous les fichiers dérivés : `.dependency-cruiser.cjs`, la carte des contextes, les listes des `CONTEXT.md`, les *barrels* et les contrats | après un changement d'une route, d'un schéma, d'un événement ou de la configuration | les fichiers générés, commités avec le code | `/ddd-ts-kit:commit-discipline` |
 | `/ddd-ts-kit:commit-discipline`, `npx ddd-ts-kit check --commit-size --staged` | une tranche par *commit*, sa taille comparée à la configuration | avant `git commit` (le *hook* lance le contrôle) | un message `<type>(<context>): ...` | la tranche suivante |
