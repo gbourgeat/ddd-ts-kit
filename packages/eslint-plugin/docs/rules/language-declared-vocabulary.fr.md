@@ -1,5 +1,5 @@
 [English](language-declared-vocabulary.md) · **Français**
-<!-- translation-of: language-declared-vocabulary.md sha256:c7ca1a73dd25b20b -->
+<!-- translation-of: language-declared-vocabulary.md sha256:a438233da76f086c -->
 
 # ddd-ts-kit/language-declared-vocabulary
 
@@ -47,7 +47,7 @@ Un mot signifie une chose dans un contexte, et peut signifier autre chose dans l
 
 ## Détails
 
-Une clé entre guillemets est une valeur réécrite et elle est signalée : écrivez-la comme une clé calculée, `[AppointmentStatus.NoShow]: 'No show'`, ce qui type aussi l'objet par le vocabulaire. Une clé identifiant et le spécificateur d'un import ou d'un export sont des noms et ne sont pas jugés. Un test écrit volontairement les valeurs qu'envoie un client, et un langage publié nomme lui-même les valeurs de son contrat : ni l'un ni l'autre n'est jugé. Le message nomme le vocabulaire, le fichier qui le déclare et ce qu'il faut écrire à la place.
+Une clé entre guillemets est une valeur réécrite et elle est signalée : écrivez-la comme une clé calculée, `[AppointmentStatus.NoShow]: 'No show'`, ce qui type aussi l'objet par le vocabulaire. Une clé identifiant et le spécificateur d'un import ou d'un export sont des noms et ne sont pas jugés. Dans la persistance d'un contexte (`infrastructure/persistence/`), le nom d'une colonne, d'une table ou d'un schéma est un mot du stockage et n'est pas jugé : le premier argument d'un appel (`text('reason')`, `createTable('expense')`, `.where('reason', ..)`) et la valeur de `name`, `tableName` ou `schema` ; une valeur stockée, l'argument de `.default(..)` ou une valeur comparée dans une requête, l'est. Un test écrit volontairement les valeurs qu'envoie un client, et un langage publié nomme lui-même les valeurs de son contrat : ni l'un ni l'autre n'est jugé. Le message nomme le vocabulaire, le fichier qui le déclare et ce qu'il faut écrire à la place.
 
 ## Options
 

@@ -9,11 +9,15 @@ import { perFile } from '../support/per-file.js';
 
 const RELATIONSHIP_SCHEMA = /(?<![\w$.])defineSchema\s*\(/;
 const MODULE_SPECIFIER = /\b(?:from|import)\s*$/;
+/** `text('reason')`, `createTable('expense')`, `.where('reason', ..)`: the first argument of a call, but `.default(..)`. */
+const FIRST_ARGUMENT = /(?<![\w$])(?!default\s*\()[\w$]+\s*\(\s*$/;
+/** `{ name: 'reason' }`, `tableName: 'expense'`: the name of a column, a table or a schema in an object. */
+const NAME_PROPERTY = /(?<![\w$])(?:name|tableName|schema)\s*:\s*$/;
 
 export const languageDeclaredVocabulary: Rule = {
   id: 'language/declared-vocabulary',
   description:
-    'Under "stack.literals": "named", a value of a closed vocabulary the project declares (an object `as const` with the union type of its name, a permission set of definePermissions) is read through it, never written again as a string literal outside its declaration, a quoted key included: the vocabulary of a context in that context, the one of the platform in the platform and the route groups of the contexts, a permission id and one of the shared kernel everywhere; tests, published languages and the relationship schema are not judged; an object is read when each entry is a key and a string literal.',
+    'Under "stack.literals": "named", a value of a closed vocabulary the project declares (an object `as const` with the union type of its name, a permission set of definePermissions) is read through it, never written again as a string literal outside its declaration, a quoted key included: the vocabulary of a context in that context, the one of the platform in the platform and the route groups of the contexts, a permission id and one of the shared kernel everywhere; tests, published languages, the relationship schema and the storage names of the persistence (a column, a table, a schema) are not judged; an object is read when each entry is a key and a string literal.',
   scope: 'project',
   run(project) {
     if (project.config.stack.literals !== 'named') {
@@ -43,7 +47,8 @@ function rawValues(file: SourceFile, declared: ReadonlyMap<string, readonly Decl
     if (
       values.length === 0 ||
       values.some(({ file: at }) => at === file.path) ||
-      isSpecifier(file.scan.code, literal)
+      isSpecifier(file.scan.code, literal) ||
+      isStorageName(file, literal)
     ) {
       return [];
     }
@@ -75,5 +80,26 @@ function isReadBy(file: SourceFile, { readBy }: DeclaredValue): boolean {
 
 /** The specifier of an import or an export names a module, not a value. */
 function isSpecifier(code: string, literal: StringRecord): boolean {
-  return MODULE_SPECIFIER.test(code.slice(Math.max(0, literal.start - 40), literal.start));
+  return MODULE_SPECIFIER.test(before(code, literal));
+}
+
+/**
+ * In the persistence of a context, the name of a column, a table or a schema is a word of the
+ * storage that may spell a value by chance (a column `reason` next to a kind `reason`): the
+ * first argument of a call, or the value of `name`, `tableName` or `schema`. A stored value, the
+ * argument of `.default(..)` or a value compared in a query, is still judged.
+ */
+function isStorageName(file: SourceFile, literal: StringRecord): boolean {
+  const { location } = file;
+
+  const persistence =
+    location.area === 'context' && location.layer === 'infrastructure' && location.inside[0] === 'persistence';
+
+  const preceding = before(file.scan.code, literal);
+
+  return persistence && (FIRST_ARGUMENT.test(preceding) || NAME_PROPERTY.test(preceding));
+}
+
+function before(code: string, literal: StringRecord): string {
+  return code.slice(Math.max(0, literal.start - 40), literal.start);
 }

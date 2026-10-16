@@ -8,6 +8,8 @@ type MessageId = 'raw';
 
 /** The relationship schema of the access model declares its relations: like a published language, it names its values itself. */
 const RELATIONSHIP_SCHEMA = /(?<![\w$.])defineSchema\s*\(/;
+/** The properties of an object that name a column, a table or a schema (`{ name: 'reason' }`). */
+const NAME_PROPERTIES = new Set(['name', 'tableName', 'schema']);
 
 export const languageDeclaredVocabulary = defineRule<MessageId>({
   id: 'language/declared-vocabulary',
@@ -28,7 +30,7 @@ export const languageDeclaredVocabulary = defineRule<MessageId>({
     const judge = (node: TSESTree.Node, value: string): void => {
       const known = (declared.get(value) ?? []).filter((candidate) => isReadBy(file, candidate));
 
-      if (known.length > 0 && !known.some((at) => at.file === file.path) && !isSpecifier(node)) {
+      if (known.length > 0 && !known.some((at) => at.file === file.path) && !isName(file, node)) {
         const vocabularies = known.map(({ vocabulary, file: at }) => `${vocabulary} (${at})`).join(' and of ');
 
         report({
@@ -78,6 +80,11 @@ function isReadBy(file: LintedFile, { readBy }: DeclaredValue): boolean {
   return location.area === 'context' && location.context === readBy.context;
 }
 
+/** A literal that names a module or a place of the storage, not a value. */
+function isName(file: LintedFile, node: TSESTree.Node): boolean {
+  return isSpecifier(node) || isStorageName(file, node);
+}
+
 /** The specifier of an import or an export names a module, not a value. */
 function isSpecifier(node: TSESTree.Node): boolean {
   const { parent } = node;
@@ -89,4 +96,43 @@ function isSpecifier(node: TSESTree.Node): boolean {
     parent?.type === AST_NODE_TYPES.ImportExpression ||
     parent?.type === AST_NODE_TYPES.TSExternalModuleReference
   );
+}
+
+/**
+ * In the persistence of a context, the name of a column, a table or a schema is a word of the
+ * storage that may spell a value by chance (a column `reason` next to a kind `reason`): the
+ * first argument of a call, or the value of `name`, `tableName` or `schema`. A stored value, the
+ * argument of `.default(..)` or a value compared in a query, is still judged.
+ */
+function isStorageName(file: LintedFile, node: TSESTree.Node): boolean {
+  const { location } = file;
+  const { parent } = node;
+
+  const persistence =
+    location.area === 'context' && location.layer === 'infrastructure' && location.inside[0] === 'persistence';
+
+  if (!persistence || parent === undefined) {
+    return false;
+  }
+
+  if (parent.type === AST_NODE_TYPES.CallExpression) {
+    return parent.arguments[0] === node && calleeName(parent.callee) !== 'default';
+  }
+
+  return (
+    parent.type === AST_NODE_TYPES.Property &&
+    parent.value === node &&
+    parent.key.type === AST_NODE_TYPES.Identifier &&
+    NAME_PROPERTIES.has(parent.key.name)
+  );
+}
+
+function calleeName(callee: TSESTree.Expression): string | undefined {
+  if (callee.type === AST_NODE_TYPES.Identifier) {
+    return callee.name;
+  }
+
+  return callee.type === AST_NODE_TYPES.MemberExpression && callee.property.type === AST_NODE_TYPES.Identifier
+    ? callee.property.name
+    : undefined;
 }
