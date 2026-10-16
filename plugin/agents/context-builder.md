@@ -81,8 +81,9 @@ worktree (`cd <worktree> && ...`).
    A size limit is met by extracting (a value object, a domain service, a policy, a file per
    responsibility), never by shortening or deleting a comment, a test or a written rule.
    Format with `npm run format` only: never run another formatter (Prettier) on the project.
-5. Commit the slice alone, staging one by one the paths `verify-slice` listed (never
+5. Commit the slice alone, staging one by one the paths `verify-slice` lists to stage (never
    everything at once), derived files included: `feat(<context>): <the slice in business words>`.
+   A path it leaves out is not yours, whatever it holds: never stage it, never delete it.
    The hooks run; never bypass them.
 
 When all slices are committed: `npx ddd-ts-kit todo <context>` lists nothing but

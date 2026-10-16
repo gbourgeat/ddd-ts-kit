@@ -92,7 +92,10 @@ describe('worker-scope', () => {
     );
 
     expect(briefing).toContain('`npx ddd-ts-kit verify-slice billing --since main`');
-    expect(briefing).toContain('lists, staged one by one: `feat(billing): <slice in business words>`.');
+
+    expect(briefing).toContain(
+      'lists to stage, one by one, never one it leaves out: `feat(billing): <slice in business words>`.',
+    );
   });
 
   it('asks the worker to regenerate the derived files with each slice and to keep its report in the worktree', () => {

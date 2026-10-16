@@ -55,7 +55,29 @@ describe('verify-slice', () => {
     expect(result.code).toBe(0);
     expect(jsonAt(verification, 'ok')).toBe(true);
     expect(jsonAt(verification, 'toStage')).toEqual([SERVICE, SPEC]);
+    expect(jsonAt(verification, 'leftOut')).toEqual([]);
     expect(jsonAt(verification, 'nearTheLimit')).toEqual([{ file: SERVICE, lines: 320 }]);
+  });
+
+  it('never proposes to commit a file outside the slice, a private note at the root included, and says to leave it out', () => {
+    withScripts('node -e ""');
+    git(root, 'switch', '--quiet', '--create', 'build/billing');
+    write(root, SERVICE, "export const pricing = 'priced';\n");
+    write(root, SPEC, "import { it } from 'vitest';\n\nit('prices', () => undefined);\n");
+    write(root, 'Synthèse privée.md', '# Not for the repository\n');
+    write(root, '.idea/workspace.xml', '<project />\n');
+
+    const result = cli(root, 'verify-slice', 'billing', '--since', 'main');
+    const verification = cli(root, 'verify-slice', 'billing', '--since', 'main', '--json').json();
+
+    expect(jsonAt(verification, 'toStage')).toEqual([SERVICE, SPEC]);
+
+    expect(jsonAt(verification, 'leftOut')).toEqual(
+      expect.arrayContaining(['Synthèse privée.md', '.idea/workspace.xml']),
+    );
+
+    expect(result.stdout).toContain('left out: changed or new, but not part of the slice; never stage them with it');
+    expect(result.stdout.split('left out:')[0]).not.toContain('Synthèse');
   });
 
   it('asks for the trunk, and for the scripts of this version', () => {
