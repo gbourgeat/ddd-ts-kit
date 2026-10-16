@@ -8,6 +8,7 @@ import { controllersCommand } from './commands/controllers.js';
 import { depcruiseConfigCommand } from './commands/depcruise-config.js';
 import { describeCommand } from './commands/describe.js';
 import { docsCommand } from './commands/docs.js';
+import { doctorCommand } from './commands/doctor.js';
 import { drizzleGenerateCommand } from './commands/drizzle-generate.js';
 import { errorFactoriesCommand } from './commands/error-factories.js';
 import { generateCommand } from './commands/generate.js';
@@ -37,6 +38,7 @@ const COMMANDS: Readonly<Record<string, Command>> = {
   'worker-scope': workerScopeCommand,
   'verify-slice': verifySliceCommand,
   docs: docsCommand,
+  doctor: doctorCommand,
   sdk: sdkCommand,
   'depcruise-config': depcruiseConfigCommand,
   'build-aliases': buildAliasesCommand,

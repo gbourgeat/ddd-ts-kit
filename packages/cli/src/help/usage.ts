@@ -23,6 +23,7 @@ export const USAGE = `Usage
   ddd-ts-kit list [--context <name>]
   ddd-ts-kit describe <context>
   ddd-ts-kit status [--workers]
+  ddd-ts-kit doctor [--strict]
   ddd-ts-kit todo [<context>]
   ddd-ts-kit worker-scope <context> [--base <ref>] [--rows <id,...>] [--worktree <path>] [--branch <name>] [--dry-run]
   ddd-ts-kit verify-slice <context> --since <git-ref>
