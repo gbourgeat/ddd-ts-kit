@@ -1,5 +1,5 @@
 [English](event-versioning.md) · **Français**
-<!-- translation-of: event-versioning.md sha256:27a680a1e449fa46 -->
+<!-- translation-of: event-versioning.md sha256:3f3336f044e30539 -->
 
 # Versionner un événement d'intégration
 
@@ -142,7 +142,7 @@ comprend :
 <!-- checked sample -->
 ```ts
 import { defineIntegrationEvent, type PayloadOf } from '@ddd-ts-kit/events';
-import {
+import { NamedDomainEvent, 
   Command,
   CommandBus,
   type DomainEvent,
@@ -186,16 +186,14 @@ export const appointmentBookedV2 = defineIntegrationEvent({
 });
 
 // appointments/domain/events/appointment-booked.event.ts
-export class AppointmentBooked implements DomainEvent {
-  static readonly eventName = 'appointments.appointment.booked';
-
-  readonly name = AppointmentBooked.eventName;
-
+export class AppointmentBooked extends NamedDomainEvent('appointments.appointment.booked') {
   constructor(
     readonly aggregateId: string,
     readonly occurredAt: Date,
     readonly slots: readonly { readonly startsAt: Date; readonly endsAt: Date }[],
-  ) {}
+  ) {
+    super();
+  }
 }
 
 // appointments/application/integration/publishers/appointment-booked.publisher.ts

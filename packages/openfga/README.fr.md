@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:a99cc5ff12d3495a -->
+<!-- translation-of: README.md sha256:903eebf3bd591305 -->
 
 # @ddd-ts-kit/openfga
 
@@ -245,19 +245,17 @@ export class RelationshipsOnAppointmentBooked { /* ... */ }
 
 <!-- checked sample -->
 ```ts
-import type { DomainEvent } from '@ddd-ts-kit/kernel';
+import { NamedDomainEvent } from '@ddd-ts-kit/kernel';
 import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
 
-export class AppointmentBooked implements DomainEvent {
-  static readonly eventName = 'scheduling.appointment.booked';
-
-  readonly name = AppointmentBooked.eventName;
-
+export class AppointmentBooked extends NamedDomainEvent('scheduling.appointment.booked') {
   constructor(
     readonly aggregateId: string,
     readonly occurredAt: Date,
     readonly booking: { readonly calendarId: string; readonly patientId: string },
-  ) {}
+  ) {
+    super();
+  }
 }
 
 // Le port du contexte, dans ses propres mots ; son adaptateur écrit les tuples dans OpenFgaRelationTupleStore.

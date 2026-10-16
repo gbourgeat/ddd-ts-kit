@@ -8,3 +8,5 @@ export interface DomainEvent {
   readonly occurredAt: Date;
   readonly aggregateId: string;
 }
+
+export { NamedDomainEvent } from './named-domain-event.js';

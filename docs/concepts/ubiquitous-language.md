@@ -122,7 +122,7 @@ all words of the glossary above; none of them coins a business term of its own.
 <!-- checked sample -->
 ```ts
 import { definePermissions } from '@ddd-ts-kit/auth';
-import { AuthorizedCommand, ConceptError, type Actor, type DomainEvent } from '@ddd-ts-kit/kernel';
+import { AuthorizedCommand, ConceptError, type Actor, NamedDomainEvent } from '@ddd-ts-kit/kernel';
 import { Requires } from '@ddd-ts-kit/kernel/declarations';
 
 export const appointmentsPermissions = definePermissions('appointments', {
@@ -152,16 +152,14 @@ export class AppointmentError extends ConceptError {
   }
 }
 
-export class AppointmentRescheduled implements DomainEvent {
-  static readonly eventName = 'appointments.appointment.rescheduled';
-
-  readonly name = AppointmentRescheduled.eventName;
-
+export class AppointmentRescheduled extends NamedDomainEvent('appointments.appointment.rescheduled') {
   constructor(
     readonly aggregateId: string,
     readonly occurredAt: Date,
     readonly startsAt: Date,
-  ) {}
+  ) {
+    super();
+  }
 }
 ```
 
@@ -297,18 +295,16 @@ type it handles from the contract of its upstream, `appointmentBookedV1.type`.
 
 <!-- checked sample -->
 ```ts
-import type { DomainEvent } from '@ddd-ts-kit/kernel';
+import { NamedDomainEvent } from '@ddd-ts-kit/kernel';
 import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
 
-export class AppointmentBooked implements DomainEvent {
-  static readonly eventName = 'scheduling.appointment.booked';
-
-  readonly name = AppointmentBooked.eventName;
-
+export class AppointmentBooked extends NamedDomainEvent('scheduling.appointment.booked') {
   constructor(
     readonly aggregateId: string,
     readonly occurredAt: Date,
-  ) {}
+  ) {
+    super();
+  }
 }
 
 // A port of the context, declared here so that the sample compiles alone.

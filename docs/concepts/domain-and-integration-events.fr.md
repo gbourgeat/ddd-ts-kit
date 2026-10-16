@@ -1,5 +1,5 @@
 [English](domain-and-integration-events.md) · **Français**
-<!-- translation-of: domain-and-integration-events.md sha256:069a1bfb9f7b93a2 -->
+<!-- translation-of: domain-and-integration-events.md sha256:0c008806fa400428 -->
 
 # Événements du domaine et événements d'intégration
 
@@ -34,17 +34,17 @@ Côte à côte, dans le contexte `scheduling` de l'application d'exemple. L'év�
 une classe du domaine, libre de contenir une `Date` ou un objet-valeur :
 
 ```ts
+import { NamedDomainEvent } from '@ddd-ts-kit/kernel';
+
 // contexts/scheduling/domain/events/appointment-booked.event.ts (simplifié)
-export class AppointmentBooked implements DomainEvent {
-  static readonly eventName = 'scheduling.appointment.booked';
-
-  readonly name = AppointmentBooked.eventName;
-
+export class AppointmentBooked extends NamedDomainEvent('scheduling.appointment.booked') {
   constructor(
     readonly aggregateId: string,
     readonly occurredAt: Date,
     readonly slot: Slot, // un type du modèle, que les consommateurs ne voient jamais
-  ) {}
+  ) {
+    super();
+  }
 }
 ```
 
@@ -333,18 +333,16 @@ Puis la transaction est validée, et les gestionnaires de la phase `after-commit
 <!-- checked sample -->
 ```ts
 // un gestionnaire after-commit, pour l'illustration
-import type { DomainEvent } from '@ddd-ts-kit/kernel';
+import { NamedDomainEvent } from '@ddd-ts-kit/kernel';
 import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
 
-class AppointmentBooked implements DomainEvent {
-  static readonly eventName = 'scheduling.appointment.booked';
-
-  readonly name = AppointmentBooked.eventName;
-
+class AppointmentBooked extends NamedDomainEvent('scheduling.appointment.booked') {
   constructor(
     readonly aggregateId: string,
     readonly occurredAt: Date,
-  ) {}
+  ) {
+    super();
+  }
 }
 
 /** Un tableau des créneaux libres gardé dans un cache : le rafraîchir peut échouer sans dommage. */
@@ -373,7 +371,7 @@ les adaptateurs des ORM, si bien que quelques lignes montrent quand chaque phase
 
 <!-- checked sample -->
 ```ts
-import {
+import { NamedDomainEvent, 
   AggregateRoot,
   InMemoryDomainEventDispatcher,
   InMemoryUnitOfWork,
@@ -383,15 +381,13 @@ import {
   type DomainEvent,
 } from '@ddd-ts-kit/kernel';
 
-class SlotHeld implements DomainEvent {
-  static readonly eventName = 'scheduling.slot.held';
-
-  readonly name = SlotHeld.eventName;
-
+class SlotHeld extends NamedDomainEvent('scheduling.slot.held') {
   constructor(
     readonly aggregateId: string,
     readonly occurredAt: Date,
-  ) {}
+  ) {
+    super();
+  }
 }
 
 class Slot extends AggregateRoot {

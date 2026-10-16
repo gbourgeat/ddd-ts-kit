@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:1b19da8b009fd33b -->
+<!-- translation-of: README.md sha256:fd22f8be3fca7153 -->
 
 # @ddd-ts-kit/testing
 
@@ -35,7 +35,7 @@ l'agrégat son fichier sous `domain/` et au *builder* le sien sous `test/builder
 
 <!-- checked sample -->
 ```ts
-import { AggregateRoot, ConceptError, type DomainEvent } from '@ddd-ts-kit/kernel';
+import { AggregateRoot, ConceptError, NamedDomainEvent } from '@ddd-ts-kit/kernel';
 import { Builder, given, resetSequences, sequence, type Defaults } from '@ddd-ts-kit/testing';
 import { beforeEach, expect, it } from 'vitest';
 
@@ -46,16 +46,14 @@ class OrderError extends ConceptError {
   }
 }
 
-class OrderPaid implements DomainEvent {
-  static readonly eventName = 'ordering.order.paid';
-
-  readonly name = OrderPaid.eventName;
-
+class OrderPaid extends NamedDomainEvent('ordering.order.paid') {
   constructor(
     readonly aggregateId: string,
     readonly occurredAt: Date,
     readonly amount: number,
-  ) {}
+  ) {
+    super();
+  }
 }
 
 class Order extends AggregateRoot {

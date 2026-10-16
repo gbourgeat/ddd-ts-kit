@@ -6,8 +6,10 @@ import type { ClassShape } from '../structure/class-shape.js';
 import { inContext } from '../support/in-context.js';
 import { perFile } from '../support/per-file.js';
 
-/** `static readonly eventName = '...'`, typed or not. */
-const STATIC_NAME = /(?<![\w$.])static\s+readonly\s+eventName\s*(?::[^=;\n'"]+)?=\s*$/;
+/** `static readonly eventName = '...'`, typed or not, or `extends NamedDomainEvent('...')`. */
+const STATIC_NAME =
+  /(?<![\w$.])static\s+readonly\s+eventName\s*(?::[^=;\n'"]+)?=\s*$|(?<![\w$.])NamedDomainEvent\s*\(\s*$/;
+
 /** `name = '...'`, `name: '...'`, `name: string = '...'`: the name written a second time. */
 const NAME_LITERAL = /(?<![\w$.])name\s*\??\s*(?:[:=]|:[^=;\n'"]+=)\s*$/;
 
@@ -45,8 +47,8 @@ function judge(file: SourceFile, declared: ClassShape, context: string): Finding
     return [
       {
         line: written[0]?.line ?? declared.line,
-        message: `The domain event ${declared.name} does not declare its name once: it has no static readonly eventName.`,
-        fix: `Write \`static readonly eventName = '${name}';\` in ${declared.name} and \`readonly name = ${declared.name}.eventName;\`: handlers and projections are attached under that static name.`,
+        message: `The domain event ${declared.name} does not declare its name once: it declares no eventName.`,
+        fix: `Write \`extends NamedDomainEvent('${name}')\` on ${declared.name}, or write \`static readonly eventName = '${name}';\` and \`readonly name = ${declared.name}.eventName;\`: handlers and projections are attached under that static name.`,
       },
     ];
   }
@@ -54,7 +56,7 @@ function judge(file: SourceFile, declared: ClassShape, context: string): Finding
   return written.map(({ line, value }) => ({
     line,
     message: `The domain event ${declared.name} writes its name "${value}" a second time instead of reading its eventName.`,
-    fix: `Write \`readonly name = ${declared.name}.eventName;\`: the name is declared once, on the class.`,
+    fix: `Extend NamedDomainEvent, or write \`readonly name = ${declared.name}.eventName;\`: the name is declared once, on the class.`,
   }));
 }
 
@@ -63,7 +65,7 @@ function literalsAfter(file: SourceFile, declared: ClassShape, pattern: RegExp):
 
   return strings.filter(
     (literal) =>
-      literal.start > declared.bodyStart &&
+      literal.start > declared.start &&
       literal.start < declared.end &&
       pattern.test(code.slice(Math.max(0, literal.start - 200), literal.start)),
   );

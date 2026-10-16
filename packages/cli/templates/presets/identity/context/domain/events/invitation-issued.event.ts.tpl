@@ -1,12 +1,8 @@
-import type { DomainEvent } from '@ddd-ts-kit/kernel';
+import { NamedDomainEvent } from '@ddd-ts-kit/kernel';
 import type { MemberRole } from '{{alias.context}}/domain/vocabularies/member-role.vocabulary{{alias.ext}}';
 
 /** An invitation was issued to an email address. */
-export class InvitationIssued implements DomainEvent {
-  static readonly eventName = '{{context.kebab}}.invitation.issued';
-
-  readonly name = InvitationIssued.eventName;
-
+export class InvitationIssued extends NamedDomainEvent('{{context.kebab}}.invitation.issued') {
   constructor(
     readonly aggregateId: string,
     readonly occurredAt: Date,
@@ -18,5 +14,7 @@ export class InvitationIssued implements DomainEvent {
       /** The delegation that lent the right to invite, when the role of the inviter did not grant it. */
       readonly delegationId?: string;
     },
-  ) {}
+  ) {
+    super();
+  }
 }

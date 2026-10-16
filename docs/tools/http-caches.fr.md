@@ -1,5 +1,5 @@
 [English](http-caches.md) · **Français**
-<!-- translation-of: http-caches.md sha256:cb8ef99ce0261bfe -->
+<!-- translation-of: http-caches.md sha256:541b440719742198 -->
 
 # Caches HTTP : Varnish, Souin, nginx, Fastly, Cloudflare, Bunny
 
@@ -167,7 +167,7 @@ avec la même fonction (`cacheTag`), si bien que les deux se rejoignent toujours
 <!-- checked sample -->
 ```ts
 import { CacheScope, Public, RouteGroup } from '@ddd-ts-kit/http';
-import { cacheTag, type CacheInvalidation, type DomainEvent } from '@ddd-ts-kit/kernel';
+import { cacheTag, type CacheInvalidation, NamedDomainEvent } from '@ddd-ts-kit/kernel';
 import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
 
 // présentation : chaque lecture du groupe est gardée une heure par un cache partagé, rangée sous calendar:<calendarId>,
@@ -187,15 +187,13 @@ import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
 export class CalendarPagesRoutes {}
 
 // domaine : ce que l'agrégat enregistre quand ses horaires d'ouverture changent
-export class CalendarOpeningHoursSet implements DomainEvent {
-  static readonly eventName = 'scheduling.calendar.opening-hours-set';
-
-  readonly name = CalendarOpeningHoursSet.eventName;
-
+export class CalendarOpeningHoursSet extends NamedDomainEvent('scheduling.calendar.opening-hours-set') {
   constructor(
     readonly aggregateId: string,
     readonly occurredAt: Date,
-  ) {}
+  ) {
+    super();
+  }
 }
 
 // application : demandée avant la validation (la phase par défaut), purgée après, par l'outbox

@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:f823ab9a2902ff87 -->
+<!-- translation-of: README.md sha256:6ee16358ceb29b58 -->
 
 # @ddd-ts-kit/kernel
 
@@ -60,7 +60,7 @@ chacun son propre fichier, et `ddd-ts-kit generate` les écrit) :
 
 <!-- checked sample -->
 ```ts
-import { AggregateRoot, ConceptError, Entity, ValueObject, type DomainEvent } from '@ddd-ts-kit/kernel';
+import { AggregateRoot, ConceptError, Entity, ValueObject, NamedDomainEvent } from '@ddd-ts-kit/kernel';
 
 // Les refus du concept, chacun une fabrique statique (voir « Erreurs du domaine »).
 export class OrderError extends ConceptError {
@@ -107,16 +107,14 @@ export class OrderLine extends Entity {
 }
 
 // Un événement du domaine : un fait passé, nommé <contexte>.<agrégat>.<fait>.
-export class OrderPlaced implements DomainEvent {
-  static readonly eventName = 'ordering.order.placed';
-
-  readonly name = OrderPlaced.eventName;
-
+export class OrderPlaced extends NamedDomainEvent('ordering.order.placed') {
   constructor(
     readonly aggregateId: string,
     readonly occurredAt: Date,
     readonly lineCount: number,
-  ) {}
+  ) {
+    super();
+  }
 }
 
 // La racine d'agrégat : la seule entrée, chaque règle vérifiée par une méthode d'intention.
@@ -433,7 +431,7 @@ en place :
 
 <!-- checked sample -->
 ```ts
-import {
+import { NamedDomainEvent, 
   AggregateRoot,
   InMemoryDomainEventDispatcher,
   InMemoryUnitOfWork,
@@ -441,15 +439,13 @@ import {
   type DomainEvent,
 } from '@ddd-ts-kit/kernel';
 
-class CartOpened implements DomainEvent {
-  static readonly eventName = 'shop.cart.opened';
-
-  readonly name = CartOpened.eventName;
-
+class CartOpened extends NamedDomainEvent('shop.cart.opened') {
   constructor(
     readonly aggregateId: string,
     readonly occurredAt: Date,
-  ) {}
+  ) {
+    super();
+  }
 }
 
 class Cart extends AggregateRoot {
@@ -894,8 +890,8 @@ port et n'est pas vérifiée.
   `implements IntegrationEventHandler<OrderPlacedPayload>`. Un *job* implémente `ScheduledJob`.
 - **Les noms sont écrits, pas déduits** : le nom du consommateur, celui de la politique, celui du
   *job* et celui de l'événement du domaine survivent au renommage d'une classe, et la chaîne
-  vide est refusée. Le nom d'un événement du domaine s'écrit une fois, dans
-  `static readonly eventName` sur sa classe : ses gestionnaires et ses projections l'y lisent
+  vide est refusée. Le nom d'un événement du domaine s'écrit une fois sur
+  sa classe, `extends NamedDomainEvent('..')` ou `static readonly eventName` : ses gestionnaires et ses projections l'y lisent
   (`NamedDomainEventType`), et une classe qui ne le déclare pas est refusée par le compilateur.
 - **Une classe déclarée est son propre jeton** : `@ddd-ts-kit/di` lie un gestionnaire, un *job*
   ou une politique sous sa classe.

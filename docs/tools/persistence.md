@@ -74,19 +74,17 @@ application.
 <!-- checked sample -->
 ```ts
 import type { Knex } from 'knex';
-import { AggregateRoot, ConceptError, type DomainEvent, Repository } from '@ddd-ts-kit/kernel';
+import { AggregateRoot, ConceptError, NamedDomainEvent, Repository } from '@ddd-ts-kit/kernel';
 import { type KnexContext, insertIgnoringConflict, optimisticUpdate } from '@ddd-ts-kit/knex';
 
 // domain/events/invoice-paid.event.ts: the domain knows no row, no SQL, no library.
-export class InvoicePaid implements DomainEvent {
-  static readonly eventName = 'billing.invoice.paid';
-
-  readonly name = InvoicePaid.eventName;
-
+export class InvoicePaid extends NamedDomainEvent('billing.invoice.paid') {
   constructor(
     readonly aggregateId: string,
     readonly occurredAt: Date,
-  ) {}
+  ) {
+    super();
+  }
 }
 
 // domain/errors/invoice.error.ts

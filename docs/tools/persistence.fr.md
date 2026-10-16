@@ -1,5 +1,5 @@
 [English](persistence.md) · **Français**
-<!-- translation-of: persistence.md sha256:5dc161c1f625f207 -->
+<!-- translation-of: persistence.md sha256:b8cc68997fa842bc -->
 
 # Persistance : Drizzle, Knex, Prisma, TypeORM, et quelle base de données
 
@@ -83,19 +83,17 @@ dans un projet, chaque partie est un fichier à part, nommé dans les commentair
 <!-- checked sample -->
 ```ts
 import type { Knex } from 'knex';
-import { AggregateRoot, ConceptError, type DomainEvent, Repository } from '@ddd-ts-kit/kernel';
+import { AggregateRoot, ConceptError, NamedDomainEvent, Repository } from '@ddd-ts-kit/kernel';
 import { type KnexContext, insertIgnoringConflict, optimisticUpdate } from '@ddd-ts-kit/knex';
 
 // domain/events/invoice-paid.event.ts : le domaine ne connaît ni ligne, ni SQL, ni bibliothèque.
-export class InvoicePaid implements DomainEvent {
-  static readonly eventName = 'billing.invoice.paid';
-
-  readonly name = InvoicePaid.eventName;
-
+export class InvoicePaid extends NamedDomainEvent('billing.invoice.paid') {
   constructor(
     readonly aggregateId: string,
     readonly occurredAt: Date,
-  ) {}
+  ) {
+    super();
+  }
 }
 
 // domain/errors/invoice.error.ts

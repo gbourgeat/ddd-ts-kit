@@ -1,5 +1,5 @@
 [English](ubiquitous-language.md) · **Français**
-<!-- translation-of: ubiquitous-language.md sha256:6a22870a90689674 -->
+<!-- translation-of: ubiquitous-language.md sha256:2f2d31b64f7f17a3 -->
 
 # Langage omniprésent
 
@@ -129,7 +129,7 @@ métier qui lui serait propre.
 <!-- checked sample -->
 ```ts
 import { definePermissions } from '@ddd-ts-kit/auth';
-import { AuthorizedCommand, ConceptError, type Actor, type DomainEvent } from '@ddd-ts-kit/kernel';
+import { AuthorizedCommand, ConceptError, type Actor, NamedDomainEvent } from '@ddd-ts-kit/kernel';
 import { Requires } from '@ddd-ts-kit/kernel/declarations';
 
 export const appointmentsPermissions = definePermissions('appointments', {
@@ -159,16 +159,14 @@ export class AppointmentError extends ConceptError {
   }
 }
 
-export class AppointmentRescheduled implements DomainEvent {
-  static readonly eventName = 'appointments.appointment.rescheduled';
-
-  readonly name = AppointmentRescheduled.eventName;
-
+export class AppointmentRescheduled extends NamedDomainEvent('appointments.appointment.rescheduled') {
   constructor(
     readonly aggregateId: string,
     readonly occurredAt: Date,
     readonly startsAt: Date,
-  ) {}
+  ) {
+    super();
+  }
 }
 ```
 
@@ -311,18 +309,16 @@ d'intégration lit le type qu'il traite dans le contrat de son contexte amont,
 
 <!-- checked sample -->
 ```ts
-import type { DomainEvent } from '@ddd-ts-kit/kernel';
+import { NamedDomainEvent } from '@ddd-ts-kit/kernel';
 import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
 
-export class AppointmentBooked implements DomainEvent {
-  static readonly eventName = 'scheduling.appointment.booked';
-
-  readonly name = AppointmentBooked.eventName;
-
+export class AppointmentBooked extends NamedDomainEvent('scheduling.appointment.booked') {
   constructor(
     readonly aggregateId: string,
     readonly occurredAt: Date,
-  ) {}
+  ) {
+    super();
+  }
 }
 
 // Un port du contexte, déclaré ici pour que l'exemple compile seul.

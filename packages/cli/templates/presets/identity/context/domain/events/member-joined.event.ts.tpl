@@ -1,12 +1,8 @@
-import type { DomainEvent } from '@ddd-ts-kit/kernel';
+import { NamedDomainEvent } from '@ddd-ts-kit/kernel';
 import type { MemberRole } from '{{alias.context}}/domain/vocabularies/member-role.vocabulary{{alias.ext}}';
 
 /** An account became a member of an organisation, in a role. */
-export class MemberJoined implements DomainEvent {
-  static readonly eventName = '{{context.kebab}}.member.joined';
-
-  readonly name = MemberJoined.eventName;
-
+export class MemberJoined extends NamedDomainEvent('{{context.kebab}}.member.joined') {
   constructor(
     readonly aggregateId: string,
     readonly occurredAt: Date,
@@ -15,5 +11,7 @@ export class MemberJoined implements DomainEvent {
       readonly accountId: string;
       readonly role: MemberRole;
     },
-  ) {}
+  ) {
+    super();
+  }
 }

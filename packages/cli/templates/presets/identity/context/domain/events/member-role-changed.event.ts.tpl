@@ -1,12 +1,8 @@
-import type { DomainEvent } from '@ddd-ts-kit/kernel';
+import { NamedDomainEvent } from '@ddd-ts-kit/kernel';
 import type { MemberRole } from '{{alias.context}}/domain/vocabularies/member-role.vocabulary{{alias.ext}}';
 
 /** A member holds another role: what they may do in the organisation follows from it from now on. */
-export class MemberRoleChanged implements DomainEvent {
-  static readonly eventName = '{{context.kebab}}.member.role-changed';
-
-  readonly name = MemberRoleChanged.eventName;
-
+export class MemberRoleChanged extends NamedDomainEvent('{{context.kebab}}.member.role-changed') {
   constructor(
     readonly aggregateId: string,
     readonly occurredAt: Date,
@@ -18,5 +14,7 @@ export class MemberRoleChanged implements DomainEvent {
       /** The delegation that lent the right to decide it, when the role of who decided did not grant it. */
       readonly delegationId?: string;
     },
-  ) {}
+  ) {
+    super();
+  }
 }

@@ -160,7 +160,7 @@ with the same function (`cacheTag`), so the two always meet:
 <!-- checked sample -->
 ```ts
 import { CacheScope, Public, RouteGroup } from '@ddd-ts-kit/http';
-import { cacheTag, type CacheInvalidation, type DomainEvent } from '@ddd-ts-kit/kernel';
+import { cacheTag, type CacheInvalidation, NamedDomainEvent } from '@ddd-ts-kit/kernel';
 import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
 
 // presentation: every read of the group is kept an hour by a shared cache, filed under calendar:<calendarId>,
@@ -180,15 +180,13 @@ import { DomainEventHandler } from '@ddd-ts-kit/kernel/declarations';
 export class CalendarPagesRoutes {}
 
 // domain: what the aggregate records when its opening hours change
-export class CalendarOpeningHoursSet implements DomainEvent {
-  static readonly eventName = 'scheduling.calendar.opening-hours-set';
-
-  readonly name = CalendarOpeningHoursSet.eventName;
-
+export class CalendarOpeningHoursSet extends NamedDomainEvent('scheduling.calendar.opening-hours-set') {
   constructor(
     readonly aggregateId: string,
     readonly occurredAt: Date,
-  ) {}
+  ) {
+    super();
+  }
 }
 
 // application: asked before the commit (the default phase), purged after it, through the outbox

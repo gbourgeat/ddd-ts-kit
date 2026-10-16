@@ -1,5 +1,5 @@
 [English](message-brokers.md) · **Français**
-<!-- translation-of: message-brokers.md sha256:0a941a00b5cdabfc -->
+<!-- translation-of: message-brokers.md sha256:2a48e6b02ada2240 -->
 
 # Brokers de messages : en processus, RabbitMQ, Kafka, NATS JetStream, Redis Streams
 
@@ -49,21 +49,19 @@ le *broker* derrière lui :
 <!-- checked sample -->
 ```ts
 import { defineIntegrationEvent } from '@ddd-ts-kit/events';
-import { IdGenerator, IntegrationEventPublisher, type DomainEvent } from '@ddd-ts-kit/kernel';
+import { IdGenerator, IntegrationEventPublisher, NamedDomainEvent } from '@ddd-ts-kit/kernel';
 import { zodSchema } from '@ddd-ts-kit/validation/zod';
 import { z } from 'zod';
 
 // contexts/appointments/domain/events/appointment-booked.event.ts
-export class AppointmentBooked implements DomainEvent {
-  static readonly eventName = 'appointments.appointment.booked';
-
-  readonly name = AppointmentBooked.eventName;
-
+export class AppointmentBooked extends NamedDomainEvent('appointments.appointment.booked') {
   constructor(
     readonly aggregateId: string,
     readonly occurredAt: Date,
     readonly startsAt: Date,
-  ) {}
+  ) {
+    super();
+  }
 }
 
 // contexts/appointments/published-language/appointment-booked.v1.integration-event.ts

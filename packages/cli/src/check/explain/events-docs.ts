@@ -7,14 +7,11 @@ export const EVENTS_DOCS: Readonly<Record<string, RuleDoc>> = {
     good: `static readonly eventName = 'billing.invoice.issued';`,
   },
   'events/name-declared-once': {
-    why: 'A domain event handler and a projection are attached under the name the event class declares, static readonly eventName: the compiler refuses a reaction to an event class without it. Checked on every domain event, a missing name is found when the event is written, not later when someone first reacts to it. A name written a second time, as a literal in readonly name, drifts from the one the reactions read.',
+    why: 'A domain event handler and a projection are attached under the name the event class declares, static readonly eventName: the compiler refuses a reaction to an event class without it. Checked on every domain event, a missing name is found when the event is written, not later when someone first reacts to it. A name written a second time, as a literal in readonly name, drifts from the one the reactions read: extend NamedDomainEvent and the instance name reads the static one.',
     bad: `export class InvoiceIssued implements DomainEvent {
   readonly name = 'billing.invoice.issued';
 }`,
-    good: `export class InvoiceIssued implements DomainEvent {
-  static readonly eventName = 'billing.invoice.issued';
-
-  readonly name = InvoiceIssued.eventName;
+    good: `export class InvoiceIssued extends NamedDomainEvent('billing.invoice.issued') {
 }`,
   },
   'events/defined-in-published-language': {

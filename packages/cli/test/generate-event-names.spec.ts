@@ -59,7 +59,7 @@ beforeAll(() => {
 describe('the name of a domain event', () => {
   it('is declared once by the event class, and read by the reactions', () => {
     expect(read(root, EVENT)).toContain(
-      "  static readonly eventName = 'billing.invoice.issued';\n\n  readonly name = InvoiceIssued.eventName;",
+      "export class InvoiceIssued extends NamedDomainEvent('billing.invoice.issued') {\n",
     );
 
     expect(cli(root, 'generate', 'event-handler', 'billing', 'Invoice', 'Issued').code).toBe(0);
@@ -71,8 +71,8 @@ describe('the name of a domain event', () => {
       root,
       EVENT,
       read(root, EVENT).replace(
-        "static readonly eventName = 'billing.invoice.issued';\n\n  readonly name = InvoiceIssued.eventName;",
-        "readonly name = 'billing.invoice.issued';",
+        "extends NamedDomainEvent('billing.invoice.issued') {",
+        "{\n  readonly name = 'billing.invoice.issued';",
       ),
     );
 

@@ -44,21 +44,19 @@ transaction of the command; the relay sends it after the commit, whichever broke
 <!-- checked sample -->
 ```ts
 import { defineIntegrationEvent } from '@ddd-ts-kit/events';
-import { IdGenerator, IntegrationEventPublisher, type DomainEvent } from '@ddd-ts-kit/kernel';
+import { IdGenerator, IntegrationEventPublisher, NamedDomainEvent } from '@ddd-ts-kit/kernel';
 import { zodSchema } from '@ddd-ts-kit/validation/zod';
 import { z } from 'zod';
 
 // contexts/appointments/domain/events/appointment-booked.event.ts
-export class AppointmentBooked implements DomainEvent {
-  static readonly eventName = 'appointments.appointment.booked';
-
-  readonly name = AppointmentBooked.eventName;
-
+export class AppointmentBooked extends NamedDomainEvent('appointments.appointment.booked') {
   constructor(
     readonly aggregateId: string,
     readonly occurredAt: Date,
     readonly startsAt: Date,
-  ) {}
+  ) {
+    super();
+  }
 }
 
 // contexts/appointments/published-language/appointment-booked.v1.integration-event.ts

@@ -92,7 +92,7 @@ project splits it across `domain/` and `infrastructure/persistence/`, as the com
 
 <!-- checked sample -->
 ```ts
-import {
+import { NamedDomainEvent, 
   ConceptError,
   EventSerializer,
   EventSourcedAggregate,
@@ -106,28 +106,24 @@ import {
 } from '@ddd-ts-kit/kernel';
 
 // domain/events: facts, in the past tense
-export class AttendanceRecordCreated implements DomainEvent {
-  static readonly eventName = 'scheduling.attendance-record.created';
-
-  readonly name = AttendanceRecordCreated.eventName;
-
+export class AttendanceRecordCreated extends NamedDomainEvent('scheduling.attendance-record.created') {
   constructor(
     readonly aggregateId: string,
     readonly occurredAt: Date,
     readonly patientId: string,
-  ) {}
+  ) {
+    super();
+  }
 }
 
-export class AttendanceRecordNoShowNoted implements DomainEvent {
-  static readonly eventName = 'scheduling.attendance-record.no-show-noted';
-
-  readonly name = AttendanceRecordNoShowNoted.eventName;
-
+export class AttendanceRecordNoShowNoted extends NamedDomainEvent('scheduling.attendance-record.no-show-noted') {
   constructor(
     readonly aggregateId: string,
     readonly occurredAt: Date,
     readonly appointmentId: string,
-  ) {}
+  ) {
+    super();
+  }
 }
 
 export type AttendanceRecordEvent = AttendanceRecordCreated | AttendanceRecordNoShowNoted;
@@ -298,18 +294,16 @@ version 1 as a version 2; the events already stored stay as they are:
 <!-- checked sample -->
 ```ts
 // contexts/scheduling/infrastructure/persistence/attendance-record-events.mapper.ts (one entry)
-import { defineStoredEvent, personalData, type DomainEvent, type PersonalValue } from '@ddd-ts-kit/kernel';
+import { defineStoredEvent, personalData, NamedDomainEvent, type PersonalValue } from '@ddd-ts-kit/kernel';
 
-export class AttendanceRecordCancellationNoted implements DomainEvent {
-  static readonly eventName = 'scheduling.attendance-record.cancellation-noted';
-
-  readonly name = AttendanceRecordCancellationNoted.eventName;
-
+export class AttendanceRecordCancellationNoted extends NamedDomainEvent('scheduling.attendance-record.cancellation-noted') {
   constructor(
     readonly aggregateId: string,
     readonly occurredAt: Date,
     readonly cancelled: { readonly patientId: string; readonly appointmentId: string; readonly reason: string | undefined },
-  ) {}
+  ) {
+    super();
+  }
 }
 
 /** The stored shape of version 2: what `docs --stored-events` fingerprints. */
@@ -359,7 +353,7 @@ The whole mechanism in a few lines, on the in-memory stores of the kernel:
 
 <!-- checked sample -->
 ```ts
-import {
+import { NamedDomainEvent, 
   ERASED_PERSONAL_DATA,
   EventSerializer,
   InMemoryEventStore,
@@ -372,17 +366,15 @@ import {
   type StoredEventTypes,
 } from '@ddd-ts-kit/kernel';
 
-export class AttendanceRecordCancellationNoted implements DomainEvent {
-  static readonly eventName = 'scheduling.attendance-record.cancellation-noted';
-
-  readonly name = AttendanceRecordCancellationNoted.eventName;
-
+export class AttendanceRecordCancellationNoted extends NamedDomainEvent('scheduling.attendance-record.cancellation-noted') {
   constructor(
     readonly aggregateId: string,
     readonly occurredAt: Date,
     readonly patientId: string,
     readonly reason: string | undefined, // the words of the patient: personal data
-  ) {}
+  ) {
+    super();
+  }
 }
 
 interface AttendanceRecordCancellationNotedData {
@@ -499,30 +491,26 @@ records:
 ```ts
 import { describe, expect, it } from 'vitest';
 import { givenEvents } from '@ddd-ts-kit/testing';
-import { EventSourcedAggregate, type AggregateHistory, type Appliers, type DomainEvent } from '@ddd-ts-kit/kernel';
+import { EventSourcedAggregate, type AggregateHistory, type Appliers, NamedDomainEvent } from '@ddd-ts-kit/kernel';
 
-class AttendanceRecordCreated implements DomainEvent {
-  static readonly eventName = 'scheduling.attendance-record.created';
-
-  readonly name = AttendanceRecordCreated.eventName;
-
+class AttendanceRecordCreated extends NamedDomainEvent('scheduling.attendance-record.created') {
   constructor(
     readonly aggregateId: string,
     readonly occurredAt: Date,
     readonly patientId: string,
-  ) {}
+  ) {
+    super();
+  }
 }
 
-class AttendanceRecordNoShowNoted implements DomainEvent {
-  static readonly eventName = 'scheduling.attendance-record.no-show-noted';
-
-  readonly name = AttendanceRecordNoShowNoted.eventName;
-
+class AttendanceRecordNoShowNoted extends NamedDomainEvent('scheduling.attendance-record.no-show-noted') {
   constructor(
     readonly aggregateId: string,
     readonly occurredAt: Date,
     readonly appointmentId: string,
-  ) {}
+  ) {
+    super();
+  }
 }
 
 type AttendanceRecordEvent = AttendanceRecordCreated | AttendanceRecordNoShowNoted;

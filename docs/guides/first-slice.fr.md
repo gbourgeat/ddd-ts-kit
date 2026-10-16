@@ -1,5 +1,5 @@
 [English](first-slice.md) · **Français**
-<!-- translation-of: first-slice.md sha256:881baca31d5e2b43 -->
+<!-- translation-of: first-slice.md sha256:ab4528e7e3ac2342 -->
 
 # Une tranche, de bout en bout
 
@@ -35,7 +35,7 @@ générateurs écrivent un fichier par classe (le refus vient de
 <!-- checked sample -->
 ```ts
 import { definePermissions } from '@ddd-ts-kit/auth';
-import {
+import { NamedDomainEvent, 
   type Actor,
   AggregateRoot,
   AuthorizedCommand,
@@ -60,16 +60,14 @@ export class OrderError extends ConceptError {
 }
 
 // domain/events/order-placed.event.ts : un fait, nommé au passé
-export class OrderPlaced implements DomainEvent {
-  static readonly eventName = 'ordering.order.placed';
-
-  readonly name = OrderPlaced.eventName;
-
+export class OrderPlaced extends NamedDomainEvent('ordering.order.placed') {
   constructor(
     readonly aggregateId: string,
     readonly occurredAt: Date,
     readonly customerId: string,
-  ) {}
+  ) {
+    super();
+  }
 }
 
 // domain/aggregates/order.aggregate.ts : les invariants vivent ici, et nulle part ailleurs

@@ -1,5 +1,5 @@
 [English](ARCHITECTURE.md) · **Français**
-<!-- translation-of: ARCHITECTURE.md sha256:71404ae88f40478f -->
+<!-- translation-of: ARCHITECTURE.md sha256:a84488bc6d9b866a -->
 
 # Référence de l'architecture
 
@@ -259,7 +259,7 @@ et la plateforme le lie au démarrage. Pourquoi, et ce que contient chaque couch
 | `naming/business-name` | Une variable, une variable de boucle, un nom déstructuré, un paramètre (d'une fonction, d'une méthode, d'une signature ou d'une fonction fléchée) et une propriété (d'une classe, d'une interface ou d'un type objet) de `domain/` et `application/` d'un contexte, et du noyau partagé hors de `presentation/`, portent le nom du concept qu'ils désignent, jamais un mot générique : `target`, `targets`, `data`, `item`, `items`, `obj`, `object`, `thing`, `things`, `stuff`, `info`, `element`, `el`, `tmp`, `temp`, `foo`, `bar`, `baz`. `businessNames.words` de la configuration remplace la liste, `businessNames.allow` en retire des mots. Une clé d'un objet littéral suit le type pour lequel elle est écrite et n'est pas jugée, ni les tests. ESLint corrige une variable construite par `X.create(..)` ou `new X(..)`, ou lue depuis un *repository*, en la renommant, avec chacun de ses usages, du nom de `X` en camelCase (`appointment`), sauf si ce nom est déjà pris ; une variable de boucle est signalée avec le singulier de sa collection. |
 | `test/spec-required` | Chaque agrégat, objet-valeur, service du domaine, gestionnaire de commande, gestionnaire de requête, gestionnaire d'événements du domaine, gestionnaire d'événements d'intégration, *job* et projection a un `*.spec.ts` dans le `test/` du contexte. Un fichier dont toutes les classes exportées sont abstraites et qui n'exporte aucune fonction est une base tenue par les *specs* de ses implémentations, et n'en demande pas. |
 | `events/name-format` | Les noms des événements du domaine et d'intégration suivent `<context>.<aggregate>.<fact-in-past-tense>` : le `static readonly eventName` qu'un événement du domaine déclare une fois (ou son `readonly name`, comme l'écrivait la 0.5) et le `type` d'une déclaration d'événement d'intégration. |
-| `events/name-declared-once` | Chaque classe de `domain/events/`, hormis une classe abstraite, déclare son nom une fois, `static readonly eventName = '<context>.<aggregate>.<fact>'`, sous lequel ses gestionnaires et ses projections sont attachés ; son `readonly name` le lit (`readonly name = InvoiceIssued.eventName`) au lieu d'écrire le nom une seconde fois. Vérifié sur chaque événement du domaine, consommé ou non. |
+| `events/name-declared-once` | Chaque classe de `domain/events/`, hormis une classe abstraite, déclare son nom une fois, `static readonly eventName = '<context>.<aggregate>.<fact>'`, sous lequel ses gestionnaires et ses projections sont attachés ; son `readonly name` le lit au lieu d'écrire le nom une seconde fois : étendre `NamedDomainEvent('<context>.<aggregate>.<fact>')` du noyau, qui déclare les deux, ou écrire `readonly name = InvoiceIssued.eventName`. Vérifié sur chaque événement du domaine, consommé ou non. |
 | `events/defined-in-published-language` | Un événement d'intégration se déclare une fois avec `defineIntegrationEvent` dans le `published-language/` du producteur, avec un schéma de *payload*. Le catalogue et le document AsyncAPI sont générés à partir de ces déclarations. |
 | `test/no-mocks` | Aucun `vi.mock`, `jest.mock`, `vi.fn`, `jest.fn`, `vi.spyOn`, `jest.spyOn` ni aucune bibliothèque de *mocks* dans le `test/` d'un contexte. Utiliser le *fake* du port. Sévérité par défaut `warn`. |
 | `test/builder-required` | Un agrégat a un *builder* dans `test/builders/`. Sévérité par défaut `warn`. |
@@ -405,7 +405,7 @@ invoice.pay(clock.now());
 
 <!-- checked sample -->
 ```ts
-import { AggregateRoot, ConceptError, type DomainEvent } from '@ddd-ts-kit/kernel';
+import { AggregateRoot, ConceptError, NamedDomainEvent } from '@ddd-ts-kit/kernel';
 
 // domain/errors/invoice.error.ts : une classe par concept, une fabrique par refus
 export class InvoiceError extends ConceptError {
@@ -415,15 +415,13 @@ export class InvoiceError extends ConceptError {
 }
 
 // domain/events/invoice-paid.event.ts : un fait, au passé
-export class InvoicePaid implements DomainEvent {
-  static readonly eventName = 'billing.invoice.paid';
-
-  readonly name = InvoicePaid.eventName;
-
+export class InvoicePaid extends NamedDomainEvent('billing.invoice.paid') {
   constructor(
     readonly aggregateId: string,
     readonly occurredAt: Date,
-  ) {}
+  ) {
+    super();
+  }
 }
 
 // domain/aggregates/invoice.aggregate.ts

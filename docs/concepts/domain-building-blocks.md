@@ -22,7 +22,7 @@ immutable, and it carries the facts a reaction needs, never the aggregate itself
 <!-- checked sample -->
 ```ts
 // contexts/appointments/domain/events/appointment-cancelled.event.ts
-import type { DomainEvent } from '@ddd-ts-kit/kernel';
+import { NamedDomainEvent } from '@ddd-ts-kit/kernel';
 
 // a value object of the model, from domain/value-objects/: declared here so that the sample stands alone
 interface CancellationReason {
@@ -30,28 +30,26 @@ interface CancellationReason {
   readonly late: boolean;
 }
 
-export class AppointmentCancelled implements DomainEvent {
-  static readonly eventName = 'appointments.appointment.cancelled';
-
-  readonly name = AppointmentCancelled.eventName;
-
+export class AppointmentCancelled extends NamedDomainEvent('appointments.appointment.cancelled') {
   constructor(
     readonly aggregateId: string,
     readonly occurredAt: Date,
     readonly reason: CancellationReason,
-  ) {}
+  ) {
+    super();
+  }
 }
 ```
 
-The name is written once, in `eventName`: the event carries it in `name`, and every reaction is
+The name is written once, in `extends NamedDomainEvent('..')`: the class carries it as `eventName` and every event as `name`, both typed with the literal, and every reaction is
 attached by it, `@DomainEventHandler(AppointmentCancelled)` reads it from the class it is given
 and `domainEvents.on(AppointmentCancelled.eventName, ..)` names it, so a renamed event cannot
 leave a handler listening to the old name. `events/name-format` holds its form,
 `<context>.<aggregate>.<fact>`, and `events/name-declared-once` its place: every class of
-`domain/events/` declares `static readonly eventName`, consumed or not, and its `name` reads it.
+`domain/events/` declares it once, consumed or not, with `NamedDomainEvent` or with `static readonly eventName` and a `name` that reads it.
 An event written before 0.7, `readonly name = '..'` alone, is reported by that rule, and
-`@DomainEventHandler` and `@On` refuse it at compile time: add `static readonly eventName` to the
-class.
+`@DomainEventHandler` and `@On` refuse it at compile time: extend `NamedDomainEvent('..')` or add
+`static readonly eventName` to the class.
 
 The aggregate records the event in the method that changes its state, after the invariant and
 the change:
@@ -59,18 +57,16 @@ the change:
 <!-- checked sample -->
 ```ts
 // contexts/appointments/domain/aggregates/appointment.aggregate.ts (an excerpt)
-import { AggregateRoot, ConceptError, type DomainEvent } from '@ddd-ts-kit/kernel';
+import { AggregateRoot, ConceptError, NamedDomainEvent } from '@ddd-ts-kit/kernel';
 
-class AppointmentCancelled implements DomainEvent {
-  static readonly eventName = 'appointments.appointment.cancelled';
-
-  readonly name = AppointmentCancelled.eventName;
-
+class AppointmentCancelled extends NamedDomainEvent('appointments.appointment.cancelled') {
   constructor(
     readonly aggregateId: string,
     readonly occurredAt: Date,
     readonly reason: string,
-  ) {}
+  ) {
+    super();
+  }
 }
 
 class AppointmentError extends ConceptError {
@@ -374,17 +370,15 @@ The constructor is private so that these are the only ways in:
 <!-- checked sample -->
 ```ts
 // contexts/appointments/domain/aggregates/appointment.aggregate.ts (the ways in)
-import { AggregateRoot, ConceptError, type DomainEvent } from '@ddd-ts-kit/kernel';
+import { AggregateRoot, ConceptError, NamedDomainEvent } from '@ddd-ts-kit/kernel';
 
-class AppointmentBooked implements DomainEvent {
-  static readonly eventName = 'appointments.appointment.booked';
-
-  readonly name = AppointmentBooked.eventName;
-
+class AppointmentBooked extends NamedDomainEvent('appointments.appointment.booked') {
   constructor(
     readonly aggregateId: string,
     readonly occurredAt: Date,
-  ) {}
+  ) {
+    super();
+  }
 }
 
 class AppointmentError extends ConceptError {

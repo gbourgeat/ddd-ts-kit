@@ -32,7 +32,7 @@ one file per class (the refusal comes from `generate error ordering Order empty`
 <!-- checked sample -->
 ```ts
 import { definePermissions } from '@ddd-ts-kit/auth';
-import {
+import { NamedDomainEvent, 
   type Actor,
   AggregateRoot,
   AuthorizedCommand,
@@ -57,16 +57,14 @@ export class OrderError extends ConceptError {
 }
 
 // domain/events/order-placed.event.ts: a fact, named in the past tense
-export class OrderPlaced implements DomainEvent {
-  static readonly eventName = 'ordering.order.placed';
-
-  readonly name = OrderPlaced.eventName;
-
+export class OrderPlaced extends NamedDomainEvent('ordering.order.placed') {
   constructor(
     readonly aggregateId: string,
     readonly occurredAt: Date,
     readonly customerId: string,
-  ) {}
+  ) {
+    super();
+  }
 }
 
 // domain/aggregates/order.aggregate.ts: the invariants live here, and nowhere else
