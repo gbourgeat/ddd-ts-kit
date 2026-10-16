@@ -411,7 +411,7 @@ function versionGap(project) {
     return [];
   }
   const move = isOlder(installed, KIT_VERSION)
-    ? `upgrade \`ddd-ts-kit\` and every \`@ddd-ts-kit/*\` package together (the steps: node_modules/ddd-ts-kit/CHANGELOG.md), or use the plugin release written for ${installed}`
+    ? `upgrade \`ddd-ts-kit\` and every \`@ddd-ts-kit/*\` package together (the steps: node_modules/ddd-ts-kit/CHANGELOG.md; then \`npx ddd-ts-kit doctor\` lists what the upgrade left to do), or use the plugin release written for ${installed}`
     : 'update the plugin';
 
   return [

@@ -116,6 +116,7 @@ test('session start says when the installed packages are not the version the ski
   assert.doesNotMatch(briefing(`${major}.${minor}.${patch + 1}`), /Version gap/);
   assert.match(briefing(breaking(1)), /Version gap: .* update the plugin/);
   assert.match(briefing(`${breaking(-1)}-rc.1`), /Version gap: .* node_modules\/ddd-ts-kit\/CHANGELOG\.md/);
+  assert.match(briefing(breaking(-1)), /npx ddd-ts-kit doctor/);
 });
 
 test('outside a ddd-ts-kit project every mode stays silent', () => {

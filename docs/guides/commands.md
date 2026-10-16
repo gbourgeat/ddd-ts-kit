@@ -238,6 +238,7 @@ Usage
   ddd-ts-kit list [--context <name>]
   ddd-ts-kit describe <context>
   ddd-ts-kit status [--workers]
+  ddd-ts-kit doctor [--strict]
   ddd-ts-kit todo [<context>]
   ddd-ts-kit worker-scope <context> [--base <ref>] [--rows <id,...>] [--worktree <path>] [--branch <name>] [--dry-run]
   ddd-ts-kit verify-slice <context> --since <git-ref>
@@ -276,6 +277,9 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
   controllers      moves the function routes of a project, or of one context, to controller classes: each
                    <name>.route.ts becomes <resource>/<name>/<name>.controller.ts behind the route group of
                    its resource, its schema files and its spec follow; a context is turned whole or not at all
+  doctor           what an upgrade left to do: the scripts, the packages of the kit (at the ranges of this
+                   version) and the agent permissions this version writes that the project lacks or writes
+                   otherwise; init adds what is missing; --strict exits 1 while something is missing
   describe         one context as facts: use cases, routes, events, ports, policies, gateways, dependencies
   status           the next step of docs/architecture/plan.md, the slices of docs/architecture/slices.md by
                    status and by owner, and the TODO(domain), TODO(platform), it.todo and TODO(review) left in

@@ -2,65 +2,9 @@ import type { Workspace } from '../workspace/index.js';
 import { isRecord } from './is-record.js';
 import { jsonObject } from './json-object.js';
 import { formatJson } from '../json/format-json.js';
+import { AGENT_PERMISSIONS as PERMISSIONS } from './agent-permissions.js';
 
 const AGENT_SETTINGS = '.claude/settings.json';
-
-type Permissions = Readonly<Record<'allow' | 'deny' | 'ask', readonly string[]>>;
-
-/**
- * What an agent may do in the project without asking, what it never does, and what it asks
- * for. Permissions only: nothing here changes how the agent behaves otherwise.
- */
-const PERMISSIONS: Permissions = {
-  allow: [
-    'Bash(npx ddd-ts-kit check *)',
-    'Bash(npx ddd-ts-kit verify-slice *)',
-    'Bash(npx ddd-ts-kit list *)',
-    'Bash(npx ddd-ts-kit generate *)',
-    'Bash(npx ddd-ts-kit docs *)',
-    'Bash(npx ddd-ts-kit explain *)',
-    'Bash(npx ddd-ts-kit rules)',
-    'Bash(npm run verify)',
-    'Bash(npm run typecheck)',
-    'Bash(npm run lint *)',
-    'Bash(npm test *)',
-    'Bash(npm run test:e2e *)',
-    'Bash(npm run regenerate)',
-    'Bash(npm run docs:generate)',
-    'Bash(npm run docs:check)',
-    'Bash(npm run openapi:generate)',
-    'Bash(npm run openapi:check)',
-    'Bash(npm run events:generate)',
-    'Bash(npm run events:check)',
-  ],
-  // Secrets, then the generated contracts: those are regenerated, never edited. In a deny
-  // list, a pattern starting with `!` carves its matches out of the rules before it
-  // (gitignore negation), which keeps `.env.example`, documentation, readable.
-  deny: [
-    'Read(./.env)',
-    'Read(./.env.*)',
-    'Read(!./.env.example)',
-    'Edit(./openapi/**)',
-    'Edit(./docs/integration/asyncapi.*)',
-    'Edit(./docs/integration/event-catalog.md)',
-  ],
-  // Then the files that hold the rules and the pipeline: changing one is a decision of the
-  // project owner, the same list as the editor hook of the plugin asks about.
-  ask: [
-    'Bash(git push *)',
-    'Bash(npm publish *)',
-    'Edit(./ddd-ts-kit.config.json)',
-    'Edit(./eslint.config.mjs)',
-    'Edit(./biome.json)',
-    'Edit(./.dependency-cruiser.cjs)',
-    'Edit(./knip.json)',
-    'Edit(./lefthook.yml)',
-    'Edit(./.gitlab-ci.yml)',
-    'Edit(./.github/workflows/**)',
-    'Edit(./.claude/settings.json)',
-    'Edit(./.github/copilot/settings.json)',
-  ],
-};
 
 /** Creates the settings, or adds the missing permissions to the ones the project already has, and says which. */
 export function writeAgentSettings(ws: Workspace): void {
