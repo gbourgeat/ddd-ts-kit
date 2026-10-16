@@ -4,6 +4,68 @@ What each version changes for someone who uses the kit. The packages of `package
 together, under one version; the notes of each [GitHub release](https://github.com/gbourgeat/ddd-ts-kit/releases)
 list the pull requests behind it.
 
+## 0.23.0
+
+**A domain event declares its name once, with `NamedDomainEvent`.** `export class InvoiceIssued
+extends NamedDomainEvent('billing.invoice.issued') { .. }` gives the class `eventName` and each
+instance `name`, both typed with the literal, in place of the two lines `static readonly eventName`
+and `readonly name = X.eventName`. The generators and the identity preset write it; the rules and
+generators that read an event's name recognise it. The former form stays accepted.
+
+**`verify-slice` closes a slice in one run.** `npx ddd-ts-kit verify-slice <context> --since
+<trunk>` runs the `regenerate` script, the architecture rules on the files changed since the trunk
+(new files included) and the `test` script for the context, then names the changed files past 300
+of the 350 lines and the paths to stage, one by one. Every step runs, so one answer says all that is
+left; it exits 1 while a step fails. The briefing of `worker-scope` and the `context-builder` agent
+use it in place of three commands. It needs the `regenerate` script of 0.21: run
+`npx ddd-ts-kit init --force` if it is missing.
+
+**`status --workers` shows who builds what.** For each git worktree that `worker-scope` prepared:
+its branch, context, rows, base, commits ahead, the files it changed and its report; then the files
+more than one worker changed, where the second merge will conflict. `worker-scope` now writes the
+rows, the base and the branch in `.ddd-ts-kit/worker.json`. `parallel-work` has the conductor run
+it before briefing a second worker in a context and before each merge, and says how a stacked
+branch moves its own commits onto the trunk after a squash merge.
+
+**A non-blocking review remark is a `TODO(review)` marker.** `architecture-reviewer` sorts its
+findings into blocking and non-blocking, and gives each non-blocking one its `file:line` and the
+marker line to write there. `todo` lists `TODO(review)`, `status` counts it per context. A slice
+may merge with such markers; a story or a milestone is closed when none is left, each handled or
+dismissed by a decision record.
+
+**Slices are numbered within their story.** `plan-slices` gives each row the code of its story or
+milestone and a number within it (`US5.03`, `M2.07`), never one sequence across stories, and an id
+is never renumbered. `status` names a bare number. A rule line under the slices tables may omit the
+`#` (`- 5.01: ..`): `worker-scope` reads it. A slice that changes a behaviour already delivered
+adapts its tests in the same row. The example application numbers its rows `M1.01` to `M1.39`.
+
+**The briefing of a worker says what blocks.** A worker marks each need of its report blocking (a
+migration, a contract field, a shared file, a dependency) or a note for the merge, and the run goes
+on for a note. It records a decision of its own slices with `generate adr` (without `--deviation`,
+which stays the conductor's), formats with `npm run format` only, and is done when `npm run verify`
+passes on the whole tree. The conductor merges the trunk into a branch before its review and
+`verify`. Only the conductor prepares a worktree: the guard refuses `worker-scope` without
+`--dry-run` to a sub-agent.
+
+**`check --changed-since` judges the new files.** A file git does not track yet, as a generator
+just wrote it, was left out until it was staged; it is judged now.
+
+**`clean/file-size` judges `test/` and `scripts/`, and tells an aggregate how to shrink.**
+`ddd-ts-kit check` now holds the end-to-end specs and the scripts to the 350 lines, as the ESLint
+rule already did in the lint gate. For an aggregate past the limit, the fix names a domain service
+that returns the new state and its events, which the aggregate applies, or a value object; never a
+public setter.
+
+**`language/declared-vocabulary` leaves the storage names alone.** In `infrastructure/persistence/`,
+the name of a column, a table or a schema (the first argument of a call, `name`, `tableName`,
+`schema`) is no longer taken for a value of a vocabulary; a stored value (`.default(..)`, a value
+compared in a query) still is.
+
+To move: run `npx ddd-ts-kit init --force`, which adds the `regenerate` script when it is missing
+and allows `verify-slice` to agents in `.claude/settings.json`; run
+`npx ddd-ts-kit check` once and split each file of `test/` or `scripts/` it reports past 350 lines
+(the lint gate already refused them).
+
 ## 0.22.0
 
 **A context builder keeps its report current and regenerates with each slice.** The
