@@ -6,6 +6,7 @@ ruleTester.run('clean-no-noise-comment', cleanNoNoiseComment, {
     '// The vendor rounds half up (contract 4.2), so we round before summing.\nconst total = 1;',
     '/** Posix path relative to the project root. */\nconst path = 1;',
     '// TODO(domain): decide what "issue invoice" does.\nconst total = 1;',
+    '// TODO(review): name the total after its term in the glossary.\nconst total = 1;',
     '// TODO: retry with backoff, see #142\nconst total = 1;',
     '/**\n * @param amount in cents, never negative\n * @returns the amount with tax\n */\nfunction addTax(amount: number): number { return amount; }',
     'if (ready) {\n  run();\n} // only when the outbox is empty, otherwise the relay runs twice',

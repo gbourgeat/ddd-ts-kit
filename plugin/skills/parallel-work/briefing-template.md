@@ -40,7 +40,8 @@ After each step, rewrite .ddd-ts-kit/report.md in the worktree in the form of th
 the conductor reads it there.
 
 Done when: every slice is committed, `npm run verify` is green in the worktree (the whole tree:
-`check --changed-since` sees your files only), and `npx ddd-ts-kit todo <context>` lists nothing.
+`check --changed-since` sees your files only), and `npx ddd-ts-kit todo <context>` lists nothing but
+`TODO(review)` lines: those remarks of a review are followed by the conductor, leave them.
 
 Report, always, even when you stop early, in under 200 words: slices done (commit hashes),
 slices not done and why, with the files left modified by an unfinished one, needs on shared

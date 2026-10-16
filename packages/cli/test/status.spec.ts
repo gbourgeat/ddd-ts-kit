@@ -1,7 +1,9 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { cli, write } from './helpers.js';
+import { cli, read, write } from './helpers.js';
 import { initProject } from './support/init-project.js';
 import { jsonAt } from './support/json-at.js';
+
+const AGGREGATE = 'src/contexts/billing/domain/aggregates/invoice.aggregate.ts';
 
 const PLAN =
   '# Architecture plan\n\nNext: 6 plan-slices - cut the first slices of billing\n\nThe `Next:` line above is read by tools.\n';
@@ -34,25 +36,6 @@ describe('status', () => {
     expect(status.stdout).toContain('The recommended path starts with step 1, discover the domain, before any code');
     expect(status.stdout).toContain('Slices: no docs/architecture/slices.md');
     expect(cli(root, 'status', '--json').json()).toMatchObject({ next: null, slices: null });
-  });
-
-  it('counts the TODO(domain) and the it.todo left in each context', () => {
-    const remaining = jsonAt(cli(root, 'status', '--json').json(), 'remaining');
-    const listed = jsonAt(cli(root, 'todo', 'billing', '--json').json(), 'remaining');
-
-    const count = (kind: string): number =>
-      Array.isArray(listed) ? listed.filter((left) => jsonAt(left, 'kind') === kind).length : -1;
-
-    expect(remaining).toContainEqual({
-      context: 'billing',
-      domain: count('domain'),
-      platform: count('platform'),
-      test: count('test'),
-    });
-
-    expect(count('domain')).toBeGreaterThan(0);
-    expect(count('test')).toBeGreaterThan(0);
-    expect(cli(root, 'status').stdout).toMatch(/ {2}billing: \d+ TODO\(domain\), \d+ TODO\(platform\), \d+ it\.todo/);
   });
 
   it('reads the Next line of the plan', () => {
@@ -144,5 +127,44 @@ describe('status', () => {
     write(root, 'docs/architecture/slices.md', '# Slices\n\nNothing cut yet.\n');
 
     expect(jsonAt(cli(root, 'status', '--json').json(), 'slices')).toBeNull();
+  });
+});
+
+describe('status, what is left in each context', () => {
+  let root: string;
+
+  beforeAll(() => {
+    root = initProject('--context', 'billing:core', '--context', 'shipping:supporting');
+    cli(root, 'generate', 'aggregate', 'billing', 'Invoice', '--term', 'Invoice=A request for payment');
+  });
+
+  it('counts the TODO(domain), the it.todo and the TODO(review) left in each context', () => {
+    write(
+      root,
+      AGGREGATE,
+      `${read(root, AGGREGATE)}\n// TODO(review): name the total after its term in the glossary.\n`,
+    );
+
+    const remaining = jsonAt(cli(root, 'status', '--json').json(), 'remaining');
+    const listed = jsonAt(cli(root, 'todo', 'billing', '--json').json(), 'remaining');
+
+    const count = (kind: string): number =>
+      Array.isArray(listed) ? listed.filter((left) => jsonAt(left, 'kind') === kind).length : -1;
+
+    expect(remaining).toContainEqual({
+      context: 'billing',
+      domain: count('domain'),
+      platform: count('platform'),
+      test: count('test'),
+      review: 1,
+    });
+
+    expect(count('domain')).toBeGreaterThan(0);
+    expect(count('test')).toBeGreaterThan(0);
+    expect(count('review')).toBe(1);
+
+    expect(cli(root, 'status').stdout).toMatch(
+      / {2}billing: \d+ TODO\(domain\), \d+ TODO\(platform\), \d+ it\.todo, 1 TODO\(review\)/,
+    );
   });
 });

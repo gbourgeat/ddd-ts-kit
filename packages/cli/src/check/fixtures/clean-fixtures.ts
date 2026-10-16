@@ -153,7 +153,7 @@ export const CLEAN_FIXTURES: readonly Fixture[] = [
   },
   {
     ruleId: 'clean/no-noise-comment',
-    name: 'comments that say why, a described parameter, an owned TODO',
+    name: 'comments that say why, a described parameter, an owned TODO, a TODO(review)',
     expect: 'pass',
     files: project({
       [FIND]: [
@@ -164,6 +164,7 @@ export const CLEAN_FIXTURES: readonly Fixture[] = [
         ' */',
         'export function find(id: string): string {',
         '  // TODO(billing-team): replace by the archive lookup, see #142.',
+        '  // TODO(review): name the archive after its term in the glossary.',
         '  return id;',
         '}',
         '',

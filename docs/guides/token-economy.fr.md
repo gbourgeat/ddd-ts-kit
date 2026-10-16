@@ -1,5 +1,5 @@
 [English](token-economy.md) · **Français**
-<!-- translation-of: token-economy.md sha256:93fcde280d5bb645 -->
+<!-- translation-of: token-economy.md sha256:3fa39a6f5df0a4a4 -->
 
 # Économie de tokens : dépenser moins avec les agents de code
 
@@ -242,8 +242,8 @@ Slices (docs/architecture/slices.md): 3, 1 in progress, 1 todo, 1 done
     ordering: 1 in progress, 1 todo
 
 Remaining
-  ordering: 25 TODO(domain), 0 TODO(platform), 11 it.todo
-  outside the contexts: 9 TODO(domain), 6 TODO(platform), 0 it.todo
+  ordering: 25 TODO(domain), 0 TODO(platform), 11 it.todo, 0 TODO(review)
+  outside the contexts: 9 TODO(domain), 6 TODO(platform), 0 it.todo, 0 TODO(review)
 ```
 
 **Ne pas coller ce qu'un chemin peut dire.** Renvoyez à `docs/ARCHITECTURE.md` par identifiant de

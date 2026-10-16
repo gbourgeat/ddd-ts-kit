@@ -83,8 +83,10 @@ worktree (`cd <worktree> && ...`).
    the derived files regenerate rewrote: `feat(<context>): <the slice in business words>`.
    The hooks run; never bypass them.
 
-When all slices are committed: `npx ddd-ts-kit todo <context>` lists nothing, then
-`npm run verify` once in the worktree. Do not merge, do not push unless the briefing says
+When all slices are committed: `npx ddd-ts-kit todo <context>` lists nothing but
+`TODO(review)` lines, then `npm run verify` once in the worktree. A `TODO(review)` is a remark
+of a review that the conductor follows until the story or milestone is closed: it never blocks
+your slices, and you leave it where it is unless your briefing gives it to you. Do not merge, do not push unless the briefing says
 so, do not edit `docs/architecture/`.
 
 ## Report (always, even partial; under 200 words, no code, no file contents)

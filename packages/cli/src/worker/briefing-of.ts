@@ -57,7 +57,8 @@ function stepLines({ context, trunk }: WorkerPlace): string[] {
     'the conductor reads it there.',
     '',
     'Done when: every slice is committed, `npm run verify` is green in the worktree (the whole tree:',
-    `\`check --changed-since\` sees your files only), and \`npx ddd-ts-kit todo ${context}\` lists nothing.`,
+    `\`check --changed-since\` sees your files only), and \`npx ddd-ts-kit todo ${context}\` lists nothing but`,
+    '`TODO(review)` lines: those remarks of a review are followed by the conductor, leave them.',
   ];
 }
 

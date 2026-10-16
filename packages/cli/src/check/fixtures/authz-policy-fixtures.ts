@@ -67,6 +67,26 @@ export const AUTHZ_POLICY_FIXTURES: readonly Fixture[] = [
   },
   {
     ruleId: 'authz/policy-asked',
+    name: 'a handler carrying a TODO(review) that names the permission',
+    expect: 'pass',
+    files: withPolicy(
+      declaredHandler(
+        "    // TODO(review): ask billingPermissions['invoice.issue'] once the invoice is loaded, not before.\n    await this.invoices.save(command);",
+      ),
+    ),
+  },
+  {
+    ruleId: 'authz/policy-asked',
+    name: 'a handler carrying a TODO of another owner that names the permission',
+    expect: { file: HANDLER },
+    files: withPolicy(
+      declaredHandler(
+        "    // TODO(billing-team): ask billingPermissions['invoice.issue'] here.\n    await this.invoices.save(command);",
+      ),
+    ),
+  },
+  {
+    ruleId: 'authz/policy-asked',
     name: 'a handler naming the permission in a comment only',
     expect: { file: HANDLER },
     files: withPolicy(

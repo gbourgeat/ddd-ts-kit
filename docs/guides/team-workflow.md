@@ -199,7 +199,11 @@ cannot judge. What to look for differs by layer:
 
 The plugin offers the same split as a tool: the `architecture-reviewer` agent reviews a diff
 or a whole context read-only, starting from the checker's output and then judging what tools
-cannot.
+cannot. It sorts its findings: a blocking one is fixed before the merge; a non-blocking one
+comes with the `TODO(review): <remark>` line to write at its `file:line`, so that the remark
+lives in the code rather than in a pull request that is soon closed. `ddd-ts-kit todo` lists it
+and `ddd-ts-kit status` counts it until it is handled, or dismissed by a decision record; a
+story or a milestone is closed only when none is left.
 
 ## Branching and small pull requests
 

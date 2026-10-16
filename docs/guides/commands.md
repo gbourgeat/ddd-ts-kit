@@ -87,7 +87,7 @@ The slice is finished when `todo ordering` no longer lists anything of it.
 | `/ddd-ts-kit:plan-slices` | the work as vertical slices, ordered, with their generator commands | step 6, after the bootstrap | `docs/architecture/slices.md` | `/ddd-ts-kit:use-case` |
 | `/ddd-ts-kit:use-case <UseCase>` | one slice end to end, test first | for each row of the slices | domain, handler, route and specs, filled | `npm run verify` |
 | `npx ddd-ts-kit generate <kind> ...` | one file of a role with its spec, fake and registration (list below) | whenever a file of a role is needed, never by hand | the file and the `TODO(domain)` places, `--json` for the list | fill the places, then `todo` |
-| `npx ddd-ts-kit todo [<context>]` | each `TODO(domain)`, `TODO(platform)` and `it.todo` left | before closing a slice | `file:line` entries | write them, then `npm test` |
+| `npx ddd-ts-kit todo [<context>]` | each `TODO(domain)`, `TODO(platform)`, `it.todo` and `TODO(review)` left | before closing a slice, a story or a milestone | `file:line` entries | write them, then `npm test`; settle each `TODO(review)` or dismiss it with `generate adr` before the story or milestone is closed |
 | `/ddd-ts-kit:parallel-work` | splits the slices between workers, one context each | when several agents or people build at once | a briefing per worker, `npx ddd-ts-kit worker-scope <context>` worktrees | each worker's `use-case` |
 
 ## Connect two contexts
@@ -275,7 +275,8 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
                    its resource, its schema files and its spec follow; a context is turned whole or not at all
   describe         one context as facts: use cases, routes, events, ports, policies, gateways, dependencies
   status           the next step of docs/architecture/plan.md, the slices of docs/architecture/slices.md by
-                   status and by owner, and the TODO(domain), TODO(platform) and it.todo left in each context
+                   status and by owner, and the TODO(domain), TODO(platform), it.todo and TODO(review) left in
+                   each context
   sdk              the typed client of each document of the contract, a workspace package under
                    clients/<document> without runtime dependency: typed errors keyed by the error codes,
                    credentials per security scheme; records "sdk" in the config the first time, wires the

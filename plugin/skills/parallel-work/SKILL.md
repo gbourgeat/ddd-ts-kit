@@ -118,7 +118,10 @@ branch (step 6): the run goes on.
 Each agent commits its rows. When the rows of a branch are committed: merge the trunk into the
 branch (`git merge origin/main` in its worktree; derived files resolved as the table says), one
 review of the batch (`architecture-reviewer`, `--changed-since <base>`), `npm run verify` on the
-merged branch, then the branch merges or opens its pull request. `check --changed-since` sees
+merged branch, then the branch merges or opens its pull request. The blocking findings of the
+review are fixed on the branch; each non-blocking one is settled at once or written, before the
+merge, as the `TODO(review): <remark>` line the review gives, at its `file:line`, by you or the
+agent that fixes the branch, never left in the body of a pull request. `check --changed-since` sees
 the files of the branch only: a cycle, an unused export or a rule broken by what the trunk
 gained meanwhile shows only in `verify` on the whole tree. A host without the
 agents of the plugin (Codex) runs one session per worktree, its briefing as the first prompt:
@@ -136,6 +139,10 @@ Upstream contexts first, then by the dependency order of the slices. For each br
    file name and its `# ADR-NNNN` title);
 2. `npm run verify` on the trunk; a red trunk is fixed before the next merge;
 3. mark its rows `done` in `slices.md`, commit (`npx ddd-ts-kit status` shows what is left);
+   a slice merges with `TODO(review)` markers, but a story or a milestone is closed only when
+   `npx ddd-ts-kit todo` lists none: each one handled in a slice, or dismissed by a decision
+   record (`npx ddd-ts-kit generate adr "<title>"`, quoting the remark without its marker), the
+   marker deleted in the same commit;
 4. the other workers merge the trunk into their branch before their next slice.
 
 A worker never grants a permission to a role: the roles live in `src/platform/auth/`. When

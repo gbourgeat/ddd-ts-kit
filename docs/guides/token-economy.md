@@ -233,8 +233,8 @@ Slices (docs/architecture/slices.md): 3, 1 in progress, 1 todo, 1 done
     ordering: 1 in progress, 1 todo
 
 Remaining
-  ordering: 25 TODO(domain), 0 TODO(platform), 11 it.todo
-  outside the contexts: 9 TODO(domain), 6 TODO(platform), 0 it.todo
+  ordering: 25 TODO(domain), 0 TODO(platform), 11 it.todo, 0 TODO(review)
+  outside the contexts: 9 TODO(domain), 6 TODO(platform), 0 it.todo, 0 TODO(review)
 ```
 
 **Do not paste what a path can say.** Point to `docs/ARCHITECTURE.md` by rule id rather than

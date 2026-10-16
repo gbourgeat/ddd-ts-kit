@@ -1,5 +1,5 @@
 [English](parallel-work.md) · **Français**
-<!-- translation-of: parallel-work.md sha256:cad2af8fc8bdbf18 -->
+<!-- translation-of: parallel-work.md sha256:f6e53bb5e2f945d8 -->
 
 # Travailler en parallèle sans collisions
 
@@ -315,7 +315,7 @@ son *repository*, dont les générateurs écrivent aussi des fichiers partagés)
 un propriétaire et les lignes dont elle dépend. Les contrats et les squelettes appartiennent au
 chef d'orchestre, les tranches au *worker* de leur contexte, et seul le chef d'orchestre modifie
 le fichier. `npx ddd-ts-kit status` le relit : les tranches par statut et par propriétaire, et
-les `TODO(domain)`, `TODO(platform)` et `it.todo` restants dans chaque contexte ;
+les `TODO(domain)`, `TODO(platform)`, `it.todo` et `TODO(review)` restants dans chaque contexte ;
 `npx ddd-ts-kit todo <context>` les liste sous la forme `file:line`.
 
 Quatre lignes de ce tableau dans l'application d'exemple, telles que `status` et `worker-scope`

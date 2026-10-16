@@ -53,9 +53,13 @@ function countsOf(remaining: readonly Remaining[], declared: readonly string[]):
     domain: count(context, 'domain'),
     platform: count(context, 'platform'),
     test: count(context, 'test'),
+    review: count(context, 'review'),
   });
 
   const elsewhere = counted('');
 
-  return [...names.map(counted), ...(elsewhere.domain + elsewhere.platform + elsewhere.test > 0 ? [elsewhere] : [])];
+  const isEmpty = (counts: RemainingCount): boolean =>
+    counts.domain + counts.platform + counts.test + counts.review === 0;
+
+  return [...names.map(counted), ...(isEmpty(elsewhere) ? [] : [elsewhere])];
 }
