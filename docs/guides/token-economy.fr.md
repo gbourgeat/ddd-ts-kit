@@ -1,5 +1,5 @@
 [English](token-economy.md) · **Français**
-<!-- translation-of: token-economy.md sha256:3fa39a6f5df0a4a4 -->
+<!-- translation-of: token-economy.md sha256:e0e2e37699760576 -->
 
 # Économie de tokens : dépenser moins avec les agents de code
 
@@ -201,14 +201,14 @@ de son amont, pas le code de cet amont ; voir [Travail en parallèle](parallel-w
 que chaque agent porte sa propre fenêtre de contexte : le parallélisme achète du temps, pas des
 tokens.
 
-**Contrôler au plus près pendant le travail.** `npx ddd-ts-kit check --changed-since origin/main`
-et les tests d'un seul contexte, pas toute la porte après chaque modification. Lancez
+**Contrôler au plus près pendant le travail.** Une passe de `verify-slice` par tranche au lieu
+de trois commandes, chacune avec sa sortie à lire : elle régénère, contrôle les fichiers
+modifiés, lance les tests d'un seul contexte et liste ce qu'il faut indexer. Lancez
 `npm run verify` une fois, à la fin.
 
 ```bash
-npx ddd-ts-kit check --changed-since origin/main   # les règles, sur les seuls fichiers modifiés
-npx vitest run src/contexts/ordering                # les tests d'un seul contexte
-npm run verify                                      # toute la porte, une fois, avant le commit
+npx ddd-ts-kit verify-slice ordering --since origin/main   # régénérer, les règles sur les fichiers modifiés, les tests d'ordering
+npm run verify                                             # toute la porte, une fois, avant la pull request
 ```
 
 **Garder les sorties bruyantes hors de la conversation principale.** Lancez les longues suites de

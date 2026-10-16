@@ -17,6 +17,7 @@ import { sdkCommand } from './commands/sdk.js';
 import { statusCommand } from './commands/status.js';
 import { todoCommand } from './commands/todo.js';
 import { valueObjectsCommand } from './commands/value-objects.js';
+import { verifySliceCommand } from './commands/verify-slice.js';
 import { workerScopeCommand } from './commands/worker-scope.js';
 import { CliError } from './cli-error.js';
 import { KINDS } from './generate/kinds.js';
@@ -34,6 +35,7 @@ const COMMANDS: Readonly<Record<string, Command>> = {
   status: statusCommand,
   todo: todoCommand,
   'worker-scope': workerScopeCommand,
+  'verify-slice': verifySliceCommand,
   docs: docsCommand,
   sdk: sdkCommand,
   'depcruise-config': depcruiseConfigCommand,

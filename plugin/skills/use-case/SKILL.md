@@ -13,6 +13,7 @@ allowed-tools:
   - Edit
   - Bash(npx ddd-ts-kit generate *)
   - Bash(npx ddd-ts-kit check *)
+  - Bash(npx ddd-ts-kit verify-slice *)
   - Bash(npx ddd-ts-kit describe *)
   - Bash(npx ddd-ts-kit todo *)
   - Bash(npx ddd-ts-kit explain *)
@@ -128,11 +129,9 @@ marker as you resolve it.
 ## 4. Prove and close
 
 ```bash
-npm test -- <ctx>
-npx ddd-ts-kit check --changed-since HEAD
+npx ddd-ts-kit verify-slice <ctx> --since <trunk>   # regenerate, rules on the changed files, specs of <ctx>, paths to stage
 npx ddd-ts-kit todo <ctx>    # every TODO(domain) and it.todo left, as file:line
 npx ddd-ts-kit check --commit-size
-npm run regenerate           # only when a route, a schema, an event or the config changed
 ```
 
 Then one commit for the slice (skill `ddd-ts-kit:commit-discipline`), and its row marked in

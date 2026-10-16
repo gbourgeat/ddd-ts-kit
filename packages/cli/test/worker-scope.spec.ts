@@ -88,17 +88,14 @@ describe('worker-scope', () => {
       '- You may write: src/contexts/billing/** and test/e2e/<use-case>.e2e.spec.ts of your slices.',
     );
 
-    expect(briefing).toContain('`npx ddd-ts-kit check --changed-since main`');
-
-    expect(briefing).toContain(
-      'then one commit, with the files regenerate rewrote: `feat(billing): <slice in business words>`.',
-    );
+    expect(briefing).toContain('`npx ddd-ts-kit verify-slice billing --since main`');
+    expect(briefing).toContain('lists, staged one by one: `feat(billing): <slice in business words>`.');
   });
 
   it('asks the worker to regenerate the derived files with each slice and to keep its report in the worktree', () => {
     const briefing = String(jsonAt(cli(root, 'worker-scope', 'billing', '--json').json(), 'briefing'));
 
-    expect(briefing).toContain('`npm run regenerate`, `npx ddd-ts-kit check --changed-since main`');
+    expect(briefing).toContain('`npx ddd-ts-kit verify-slice billing --since main` (regenerate, the rules');
     expect(briefing).toContain('written by `npm run regenerate`, never by hand.');
     expect(briefing).toContain('After each step, rewrite .ddd-ts-kit/report.md in the worktree');
     expect(briefing).toContain('Format with `npm run format` only');
