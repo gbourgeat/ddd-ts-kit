@@ -1,5 +1,5 @@
 [English](ARCHITECTURE.md) · **Français**
-<!-- translation-of: ARCHITECTURE.md sha256:cecaa5fa53b85bc9 -->
+<!-- translation-of: ARCHITECTURE.md sha256:39766169baa9d985 -->
 
 # Référence de l'architecture
 
@@ -271,7 +271,7 @@ et la plateforme le lie au démarrage. Pourquoi, et ce que contient chaque couch
 | `purity/no-ambient-randomness` | Aucun `Math.random`, `crypto.randomUUID` ni bibliothèque d'identifiants dans `domain/` ou `application/` : les identifiants viennent du port `IdGenerator`. |
 | `purity/no-environment` | Aucun `process.env`, `console`, accès au système de fichiers ni au réseau dans `domain/` ou `application/`. |
 | `clean/stepdown` | Un fichier se lit de haut en bas : les fabriques statiques, les membres publics, puis les protégés et les privés, et une fonction au-dessus des fonctions qu'elle appelle. |
-| `clean/function-size` | Une fonction a au plus 3 paramètres et 30 lignes (configurable, jamais au-dessus de 100) ; une fonction plus longue fait plus d'une chose. Des paramètres qui voyagent ensemble forment un seul concept : ils deviennent un objet de props typé ou un objet valeur, jamais un quatrième paramètre. Sévérité par défaut `warn`. Aucune fonction ne dépasse 100 lignes de code, rappels (callbacks) de `describe` compris : ce plafond est une `error`. Un fichier de spec tient un `describe` de premier niveau par comportement (un `describe` imbriqué compte dans son parent) ; un second fichier de spec ne s'impose qu'au-delà des 350 lignes de `clean/file-size`. |
+| `clean/function-size` | Une fonction a au plus 3 paramètres et 30 lignes (configurable, jamais au-dessus de 100) ; une fonction plus longue fait plus d'une chose. Des paramètres qui voyagent ensemble forment un seul concept : ils deviennent un objet de props typé ou un objet valeur, jamais un quatrième paramètre. Un paramètre typé `Actor` ou `Date`, qui agit et quand, est le contexte d'une intention plutôt que son entrée et n'est pas compté (`invoice.issue(lines, customer, actor, now)` en compte trois). Sévérité par défaut `warn`. Aucune fonction ne dépasse 100 lignes de code, rappels (callbacks) de `describe` compris : ce plafond est une `error`. Un fichier de spec tient un `describe` de premier niveau par comportement (un `describe` imbriqué compte dans son parent) ; un second fichier de spec ne s'impose qu'au-delà des 350 lignes de `clean/file-size`. |
 | `clean/no-commented-out-code` | Pas de code en commentaire. Le gestionnaire de versions s'en souvient. |
 | `clean/no-noise-comment` | Aucun commentaire qui répète le code, aucune bannière, aucun journal, aucun commentaire d'accolade fermante, aucun `@param` sans description, aucun `TODO` ni `FIXME` sans propriétaire ni référence (les marqueurs de la section 6 portent les leurs). Sévérité par défaut `warn`. |
 | `clean/no-escape-hatch` | Aucun `any`, aucune assertion de non-nullité, aucune assertion de type hors des *mappers* et de l'infrastructure, aucun `@ts-ignore`, aucun `@ts-expect-error` sans raison, aucun `eslint-disable` sans raison. |

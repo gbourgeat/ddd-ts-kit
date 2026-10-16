@@ -10,6 +10,8 @@ const body = (lines: number): string => Array.from({ length: lines }, (_, index)
 ruleTester.run('clean-function-size', cleanFunctionSize, {
   valid: [
     'function charge(amount: Amount, card: Card, at: Date): void {}',
+    'function issue(lines: Lines, customer: Customer, actor: Actor, now: Date): void {}',
+    'class Invoice { reschedule(slot: Slot, reason: Reason, by: Actor, at: Date): void {} }',
     'class Handler { constructor(a: A, b: B, c: C, d: D, e: E) {} }',
     'function bound(this: Window, a: A, b: B, c: C): void {}',
     `function steps(): void {\n${body(30)}\n}`,
@@ -25,7 +27,11 @@ ruleTester.run('clean-function-size', cleanFunctionSize, {
   ],
   invalid: [
     {
-      code: 'function charge(amount: Amount, card: Card, at: Date, retry: number): void {}',
+      code: 'function charge(amount: Amount, card: Card, retry: number, note: string, at: Date): void {}',
+      errors: [{ messageId: 'parameters', data: { name: "Function 'charge'", count: 4, limit: 3 } }],
+    },
+    {
+      code: 'function charge(amount: Amount, card: Card, retry: number, at?: Date): void {}',
       errors: [{ messageId: 'parameters', data: { name: "Function 'charge'", count: 4, limit: 3 } }],
     },
     {

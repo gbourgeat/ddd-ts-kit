@@ -26,6 +26,9 @@ const RUNNER_MODIFIERS = new Set([
   'fails',
 ]);
 
+/** Who acts and when: the context of an intention, not counted among the parameters it takes. */
+const CONTEXT_TYPES = new Set(['Actor', 'Date']);
+
 export const cleanFunctionSize = defineRule<'parameters' | 'lines', [Options]>({
   id: 'clean/function-size',
   type: 'suggestion',
@@ -34,7 +37,7 @@ export const cleanFunctionSize = defineRule<'parameters' | 'lines', [Options]>({
     'A function has at most 3 parameters and 30 lines (configurable, never above 100 lines); a longer one is doing more than one thing.',
   messages: {
     parameters:
-      '{{name}} takes {{count}} parameters (limit {{limit}}). Group the parameters that travel together into a typed props object or a value object (`Invoice.draft({ customer, lines, currency, draftedAt })`): they are a concept that has no name yet. Never add one more parameter, nor split the function only to get under the limit.',
+      '{{name}} takes {{count}} parameters (limit {{limit}}, an actor or an instant not counted). Group the parameters that travel together into a typed props object or a value object (`Invoice.draft({ customer, lines, currency, draftedAt })`): they are a concept that has no name yet. Never add one more parameter, nor split the function only to get under the limit.',
     lines:
       '{{name}} is {{count}} lines long (limit {{limit}}). Extract each step into a function named after what it does, placed below this one, until the body reads as a list of intentions.',
   },
@@ -53,7 +56,7 @@ export const cleanFunctionSize = defineRule<'parameters' | 'lines', [Options]>({
 
     const judge = (node: FunctionNode): void => {
       const { name, loc } = describedFunction(node, sourceCode);
-      const parameters = node.params.filter((parameter) => !isThisParameter(parameter)).length;
+      const parameters = countedParameters(node.params.filter((parameter) => !isThisParameter(parameter)));
 
       // A constructor lists the dependencies it is given: that is wiring, not a signature to shorten.
       if (parameters > maxParameters && !isConstructor(node)) {
@@ -70,6 +73,24 @@ export const cleanFunctionSize = defineRule<'parameters' | 'lines', [Options]>({
     return { FunctionDeclaration: judge, FunctionExpression: judge, ArrowFunctionExpression: judge };
   },
 });
+
+/** The parameters a signature is judged on: one typed `Actor` or `Date`, who acts and when, is not counted. */
+function countedParameters(parameters: readonly TSESTree.Parameter[]): number {
+  return parameters.some(isContextParameter) ? parameters.length - 1 : parameters.length;
+}
+
+function isContextParameter(parameter: TSESTree.Parameter): boolean {
+  const annotation =
+    parameter.type === AST_NODE_TYPES.Identifier ? parameter.typeAnnotation?.typeAnnotation : undefined;
+
+  return (
+    annotation?.type === AST_NODE_TYPES.TSTypeReference &&
+    annotation.typeName.type === AST_NODE_TYPES.Identifier &&
+    CONTEXT_TYPES.has(annotation.typeName.name) &&
+    parameter.type === AST_NODE_TYPES.Identifier &&
+    !parameter.optional
+  );
+}
 
 function isThisParameter(parameter: TSESTree.Parameter): boolean {
   return parameter.type === AST_NODE_TYPES.Identifier && parameter.name === 'this';

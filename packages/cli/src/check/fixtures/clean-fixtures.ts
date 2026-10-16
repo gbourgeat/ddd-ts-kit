@@ -89,6 +89,24 @@ export const CLEAN_FIXTURES: readonly Fixture[] = [
   },
   {
     ruleId: 'clean/function-size',
+    name: 'three parameters and the instant of the intention, which is not counted',
+    expect: 'pass',
+    files: project({
+      [ISSUE]:
+        'export function issue(id: string, customer: string, amount: number, now: Date): string {\n  return id + customer + amount + now.toISOString();\n}\n',
+    }),
+  },
+  {
+    ruleId: 'clean/function-size',
+    name: 'four parameters besides the actor',
+    expect: { file: ISSUE },
+    files: project({
+      [ISSUE]:
+        'export function issue(id: string, customer: string, amount: number, currency: string, actor: Actor): string {\n  return id + customer + amount + currency + String(actor);\n}\n',
+    }),
+  },
+  {
+    ruleId: 'clean/function-size',
     name: 'a function with four parameters',
     expect: { file: ISSUE },
     files: project({

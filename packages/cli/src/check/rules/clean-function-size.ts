@@ -63,7 +63,7 @@ function measured(file: SourceFile): Measured[] {
   const measure = (shape: FunctionShape, label: string): Omit<Measured, 'isInjected'> => ({
     label,
     line: shape.line,
-    parameters: shape.parameters.length,
+    parameters: countedParameters(shape.parameters),
     bodyLines: shape.bodyLines,
     isComposition,
   });
@@ -101,6 +101,16 @@ function ceilingFlaw(label: string, bodyLines: number): Flaw {
   };
 }
 
+/** A parameter typed `Actor` or `Date`: who acts and when, the context of an intention rather than its input. */
+const CONTEXT_PARAMETER = /^[\w$]+\s*:\s*(?:Actor|Date)\s*$/;
+
+/** The parameters a signature is judged on: one that carries the actor or the instant is not counted. */
+function countedParameters(parameters: readonly string[]): number {
+  return parameters.some((parameter) => CONTEXT_PARAMETER.test(parameter.trim()))
+    ? parameters.length - 1
+    : parameters.length;
+}
+
 function tooManyParameters(shape: Measured, limits: Limits): Flaw[] {
   if (shape.isInjected || shape.parameters <= limits.maxParameters) {
     return [];
@@ -108,7 +118,7 @@ function tooManyParameters(shape: Measured, limits: Limits): Flaw[] {
 
   return [
     {
-      message: `${shape.label} takes ${shape.parameters} parameters (limit ${limits.maxParameters}).`,
+      message: `${shape.label} takes ${shape.parameters} parameters (limit ${limits.maxParameters}, an actor or an instant not counted).`,
       fix: 'Group the parameters that travel together into a typed props object or a value object (`Invoice.draft({ customer, lines, currency, draftedAt })`): they are a concept that has no name yet. Never add one more parameter, nor split the function only to get under the limit.',
     },
   ];

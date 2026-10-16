@@ -1,5 +1,5 @@
 [English](clean-function-size.md) · **Français**
-<!-- translation-of: clean-function-size.md sha256:1032533df3060314 -->
+<!-- translation-of: clean-function-size.md sha256:38b276d9ff8deece -->
 
 # ddd-ts-kit/clean-function-size
 
@@ -13,7 +13,7 @@ Une fonction à plus de trois paramètres cache un concept qui n'a pas encore de
 
 ## Signalé
 
-- plus de `maxParameters` paramètres (3 par défaut) ; les constructeurs sont exemptés, un paramètre `this` n'est pas compté
+- plus de `maxParameters` paramètres (3 par défaut) ; les constructeurs sont exemptés, un paramètre `this` n'est pas compté, ni un paramètre typé `Actor` ou `Date` (qui agit et quand : le contexte d'une intention)
 - plus de `maxLines` lignes de code dans le corps (30 par défaut, jamais plus de 100) ; les lignes vides et les lignes de commentaire ne sont pas comptées
 
 Incorrect :
