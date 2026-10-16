@@ -313,6 +313,21 @@ const FILE_SIZE: readonly Fixture[] = [
     expect: { file: 'src/platform/billing.declarations.ts' },
     files: project({ 'src/platform/billing.declarations.ts': listOfLines(400) }),
   },
+  {
+    ruleId: 'clean/file-size',
+    name: 'an end-to-end spec of 351 lines, beside the source root',
+    expect: { file: 'test/e2e/issue-invoice.e2e.spec.ts' },
+    files: project({ 'test/e2e/issue-invoice.e2e.spec.ts': listOfLines(351) }),
+  },
+  {
+    ruleId: 'clean/file-size',
+    name: 'an end-to-end spec and a script of exactly 350 lines',
+    expect: 'pass',
+    files: project({
+      'test/e2e/issue-invoice.e2e.spec.ts': listOfLines(350),
+      'scripts/seed-demo.ts': listOfLines(350),
+    }),
+  },
 ];
 
 export const LAYOUT_FIXTURES: readonly Fixture[] = [
