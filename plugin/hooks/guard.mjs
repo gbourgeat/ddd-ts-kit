@@ -9,7 +9,7 @@ import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 const CONFIG = 'ddd-ts-kit.config.json';
 // The version of the packages the skills of this plugin describe. `release-version.mjs` keeps it
 // the version of the kit: setting a new version of the packages rewrites it.
-const KIT_VERSION = '0.23.0';
+const KIT_VERSION = '0.23.1';
 const PLAN = 'docs/architecture/plan.md';
 const WORKER_SCOPE = '.ddd-ts-kit/worker.json';
 // The report a worker keeps current after each step, ignored by git: what the conductor reads when it stops.
