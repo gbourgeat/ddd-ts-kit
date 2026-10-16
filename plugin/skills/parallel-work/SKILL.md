@@ -94,6 +94,7 @@ its end-to-end specs, any generator that writes a shared file and any dependency
 | `package.json`, the lockfile | conductor | a worker asks for a dependency; after a conflict, `npm install` rewrites the lockfile |
 | migrations and their order | conductor | a worker generates a working one only (`db:generate working-<what>`); at the merge the conductor deletes it and generates the real one on the trunk |
 | `docs/architecture/plan.md`, `slices.md` | conductor | workers report, the conductor marks |
+| `docs/adr/` | conductor; a worker for a decision of its slices (`generate adr`, without `--deviation`) | a new file per decision; a number taken on both sides is renumbered at the merge |
 
 Another context's `published-language/` is read-only for a worker: a missing field is
 reported, agreed, and added on the trunk.
@@ -122,7 +123,9 @@ Upstream contexts first, then by the dependency order of the slices. For each br
 
 1. merge it into the trunk; resolve only as the table says (regenerate, never hand-merge); a
    working migration of the branch is deleted (under drizzle-kit, with its snapshot and journal
-   entry) and generated again on the trunk, `npm run db:generate <what-it-does>`;
+   entry) and generated again on the trunk, `npm run db:generate <what-it-does>`; a decision
+   record of the branch whose number the trunk took meanwhile takes the next free one (its
+   file name and its `# ADR-NNNN` title);
 2. `npm run verify` on the trunk; a red trunk is fixed before the next merge;
 3. mark its rows `done` in `slices.md`, commit (`npx ddd-ts-kit status` shows what is left);
 4. the other workers merge the trunk into their branch before their next slice.

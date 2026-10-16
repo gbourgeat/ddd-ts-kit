@@ -137,6 +137,7 @@ describe('worker-scope', () => {
       'acl',
       'e2e',
       'adapter (once the project has its first adapter)',
+      'adr (without --deviation: a decision of its slices)',
     ]);
 
     expect(String(jsonAt(scope, 'briefing'))).toContain(

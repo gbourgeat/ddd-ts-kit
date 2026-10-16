@@ -102,8 +102,9 @@ const SHARED_GENERATORS = [
   'policy',
   'service',
   'worker',
-  'adr',
 ];
+// A decision record of a worker's own slices: a new file of docs/adr/. With --deviation it also writes the config.
+const DECISION_RECORD = /^docs\/adr\/[^/]+\.md$/;
 // The migration a worker generates in its worktree, `npm run db:generate working-<what>`, as each
 // migration tool writes it; the conductor generates the real one on the trunk at merge.
 const WORKING_MIGRATION = /(^|\/)migrations\/(.+\/)?\d+[_-]working[_-][\w-]*(\.(sql|[cm]?[jt]s)|\/migration\.sql)$/;
@@ -515,7 +516,8 @@ function workerScopeReason(project, file, input) {
     path.startsWith(`${project.contextsDir}/${context}/`) ||
     /^test\/e2e\/[^/]+\.e2e\.spec\.ts$/.test(path) ||
     path === WORKER_REPORT ||
-    isWorkingMigration(project, path)
+    isWorkingMigration(project, path) ||
+    isOwnDecisionRecord(project, path)
   ) {
     return undefined;
   }
@@ -524,6 +526,11 @@ function workerScopeReason(project, file, input) {
     : 'is a shared file (config, composition root, platform, generated documents, migrations, dependencies) that only the conductor or a generator changes';
 
   return `You build the context "${context}": writes are limited to ${project.contextsDir}/${context}/ and its end-to-end specs. ${path} ${owner}. ${REPORT_TO_CONDUCTOR}`;
+}
+
+// A record the worker generated and has not committed yet; the records of the trunk are not its to rewrite.
+function isOwnDecisionRecord(project, path) {
+  return DECISION_RECORD.test(path) && git(project, ['ls-files', '--', path]) === '';
 }
 
 function isWorkingMigration(project, path) {
@@ -598,6 +605,12 @@ function sharedGeneratorReason(project, context, command) {
   for (const [, kind, target] of command.matchAll(
     /ddd-ts-kit(?:@\S+)?\s+(?:generate|g)\s+([a-z-]+)(?:\s+([A-Za-z0-9-]+))?/g,
   )) {
+    if (kind === 'adr') {
+      if (/--deviation\b/.test(command)) {
+        return `\`generate adr --deviation\` also writes the deviation in ddd-ts-kit.config.json, which is shared, and relaxing a rule is a decision of the project owner. ${REPORT_TO_CONDUCTOR}`;
+      }
+      continue;
+    }
     if (SHARED_GENERATORS.includes(kind)) {
       return `\`generate ${kind}\` writes shared files (config, registries of the platform, schema). The conductor runs it on the trunk before the workers start. ${REPORT_TO_CONDUCTOR}`;
     }

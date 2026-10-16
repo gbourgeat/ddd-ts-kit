@@ -16,11 +16,12 @@ Scope
 - You may not write anything else. Shared files (config, src/platform, src/main.ts,
   package.json, lockfile, migrations, docs/) and other contexts are refused by the guard:
   report the need, do not work around it. A slice that changes the stored state generates a
-  working migration only: `npm run db:generate working-<what-it-does>`. The derived files (generated
+  working migration only: `npm run db:generate working-<what-it-does>`. A decision taken in a slice is
+  recorded by `generate adr` (without --deviation), and committed with it. The derived files (generated
   documents, barrels, context map, dependency rules) are written by `npm run regenerate`, never by hand.
 - Generators you may run: aggregate, builder, entity, value-object, domain-event,
   error, domain-service, command (on an aggregate that has its repository), query,
-  port, route, integration-handler, event-handler, acl, e2e, adapter.
+  port, route, integration-handler, event-handler, acl, e2e, adapter, adr (without --deviation).
   The others are run by the conductor.
 
 Slices, in this order (rows of docs/architecture/slices.md, one or two per agent)

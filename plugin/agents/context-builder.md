@@ -34,8 +34,8 @@ worktree (`cd <worktree> && ...`).
 - You write only `src/contexts/<your context>/**` and the end-to-end specs of your slices.
 - Shared files are not yours: the config, `src/main.ts`, `src/platform/**`, `package.json`,
   the lockfile, migrations (but your working migration, `npm run db:generate working-<what>`),
-  what you would write by hand under `docs/`. Another context is not yours either; its
-  `published-language/` is read-only.
+  what you would write by hand under `docs/` (but a decision record you generated). Another
+  context is not yours either; its `published-language/` is read-only.
 - The derived files (generated documents, barrels, context map, dependency rules) are never
   written by hand: `npm run regenerate` rewrites them, and you commit them with the slice that
   changed them. At the merge they are regenerated, never merged.
@@ -43,9 +43,11 @@ worktree (`cd <worktree> && ...`).
   `aggregate`, `builder`, `entity`, `value-object`, `domain-event`, `error`,
   `domain-service`, `command` (on an aggregate whose repository exists), `query`, `port`,
   `route`, `integration-handler`, `event-handler`, `projection`, `acl`, `e2e`, `adapter` (once the project
-  has its first adapter: the first one brings a helper to the platform). The conductor
+  has its first adapter: the first one brings a helper to the platform), and `adr` without
+  `--deviation` for a decision taken in one of your slices, committed with it. The conductor
   runs `context`, `repository`, `integration-event`, `job`, `gateway`, `policy`, the first
-  `adapter` of the project, and adds dependencies. Never pass `--grant`: the roles are a
+  `adapter` of the project, and adds dependencies. A deviation from a rule (`adr --deviation`)
+  is the project owner's: report it. Never pass `--grant`: the roles are a
   file of the platform. Who holds each new permission is a need of your report, and the
   `authz/granted` warning it leaves in your worktree is that need, not a cause to fix.
 - When you need something outside your scope (a field in an upstream contract, a new
