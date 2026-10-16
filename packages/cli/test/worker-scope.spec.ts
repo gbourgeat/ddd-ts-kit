@@ -22,6 +22,9 @@ const SLICES = `# Slices
 | 5 | billing | slice | Refund invoice | \`generate command billing RefundInvoice --aggregate Invoice --permission invoice.refund\` | 2 | billing | todo |
 `;
 
+/** The scope of the worker of billing: the context the guard reads, then what `status --workers` shows. */
+const BILLING_SCOPE = { context: 'billing', rows: ['2', '5'], base: 'main', branch: 'build/billing' };
+
 let root: string;
 let worktree: string;
 
@@ -68,7 +71,7 @@ describe('worker-scope', () => {
       scopeFile: path.join(String(jsonAt(scope.json(), 'root')), '.ddd-ts-kit/worker.json'),
     });
 
-    expect(JSON.parse(read(worktree, '.ddd-ts-kit/worker.json'))).toEqual({ context: 'billing' });
+    expect(JSON.parse(read(worktree, '.ddd-ts-kit/worker.json'))).toEqual(BILLING_SCOPE);
     expect(git(worktree, 'branch', '--show-current').trim()).toBe('build/billing');
     expect(exists(worktree, 'ddd-ts-kit.config.json')).toBe(true);
   });
@@ -170,7 +173,7 @@ describe('worker-scope, on slices, an existing worktree and other places', () =>
     expect(again.code).toBe(0);
     expect(again.stdout).toContain(`worktree kept: `);
     expect(again.stdout).toContain('You build the bounded context billing of shop.');
-    expect(JSON.parse(read(worktree, '.ddd-ts-kit/worker.json'))).toEqual({ context: 'billing' });
+    expect(JSON.parse(read(worktree, '.ddd-ts-kit/worker.json'))).toMatchObject({ context: 'billing', base: 'main' });
   });
 
   it('takes another directory and another branch, and names the upstream contracts', () => {

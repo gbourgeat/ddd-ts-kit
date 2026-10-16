@@ -9,8 +9,10 @@ import { Workspace } from '../workspace/index.js';
 import { briefedRows } from './briefed-rows.js';
 import { briefingOf } from './briefing-of.js';
 import { ensureContainsBase } from './ensure-contains-base.js';
+import { listWorktrees } from './list-worktrees.js';
 import { baseOf } from './base-of.js';
 import type { WorkerScope } from './worker-scope.js';
+import type { WorkerFile } from './worker-file.js';
 import { workerGenerators } from './worker-generators.js';
 
 /** What the caller asks for one worker. */
@@ -42,7 +44,7 @@ export function openWorkerScope(root: string, config: Config, request: WorkerReq
   }
 
   if (!dryRun) {
-    writeScope(inside, context);
+    writeScope(inside, { context, rows: slices.map((row) => row.id), base: trunk, branch });
   }
 
   const generators = workerGenerators(KINDS);
@@ -126,10 +128,7 @@ function isWorktree(root: string, worktree: string): boolean {
     return false;
   }
 
-  const known = (runGit(root, ['worktree', 'list', '--porcelain']) ?? '')
-    .split('\n')
-    .filter((line) => line.startsWith('worktree '))
-    .map((line) => line.slice('worktree '.length));
+  const known = listWorktrees(root).map((listed) => listed.path);
 
   if (known.includes(fs.realpathSync(worktree))) {
     return true;
@@ -159,11 +158,12 @@ function addWorktree(root: string, place: { worktree: string; branch: string; ba
   }
 }
 
-function writeScope(inside: string, context: string): void {
+/** The guard of the plugin reads `context`; `status --workers` shows the rest. */
+function writeScope(inside: string, scope: WorkerFile): void {
   const file = path.join(inside, WORKER_SCOPE_FILE);
 
   fs.mkdirSync(path.dirname(file), { recursive: true });
-  fs.writeFileSync(file, `${JSON.stringify({ context }, null, 2)}\n`);
+  fs.writeFileSync(file, `${JSON.stringify(scope, null, 2)}\n`);
 }
 
 function notesOf(root: string, inside: string): string[] {

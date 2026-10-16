@@ -15,6 +15,7 @@ allowed-tools:
   - Edit
   - Agent
   - Bash(npx ddd-ts-kit status)
+  - Bash(npx ddd-ts-kit status --workers)
   - Bash(npx ddd-ts-kit worker-scope *)
   - Bash(npx ddd-ts-kit generate *)
   - Bash(npx ddd-ts-kit docs)
@@ -80,10 +81,15 @@ Run it from the checkout of the trunk, in your own session: the guard refuses it
 unless `--dry-run`, which prints the briefing and creates nothing. From the base (by default the current branch; it
 refuses a worker's worktree), it adds the git worktree `../<project>-<context>` on the branch
 `build/<context>`, or keeps it when it contains the base and refuses it when it does not,
-writes `.ddd-ts-kit/worker.json` (`{ "context": "<context>" }`) in it,
+writes `.ddd-ts-kit/worker.json` (its context, rows, base and branch) in it,
 and prints the briefing of that worker. Then `npm ci` in the worktree. With that file, the
 guard refuses any write of a `context-builder` agent outside `src/contexts/<context>/` and
 its end-to-end specs, any generator that writes a shared file and any dependency change.
+
+Before briefing a worker in a context that already has one, run
+`npx ddd-ts-kit status --workers` from the trunk: it lists each worker (worktree, branch,
+context, rows, commits ahead) with the files it changed, then the files more than one worker
+changed. Give the new worker rows on other files, or wait for the merge of the first.
 
 ## 4. Shared files: who touches them, how they stay conflict-free
 
@@ -130,7 +136,9 @@ takes the same briefing and the same branch.
 
 ## 6. Merge, in order
 
-Upstream contexts first, then by the dependency order of the slices. For each branch:
+Upstream contexts first, then by the dependency order of the slices. Before each merge,
+`npx ddd-ts-kit status --workers`: a file the branch shares with another worker is where the
+second merge can conflict. For each branch:
 
 1. merge it into the trunk; resolve only as the table says (regenerate, never hand-merge); a
    working migration of the branch is deleted (under drizzle-kit, with its snapshot and journal

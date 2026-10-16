@@ -1,5 +1,5 @@
 [English](parallel-work.md) · **Français**
-<!-- translation-of: parallel-work.md sha256:f6e53bb5e2f945d8 -->
+<!-- translation-of: parallel-work.md sha256:0ac2f928a69f5abf -->
 
 # Travailler en parallèle sans collisions
 
@@ -150,7 +150,7 @@ npx ddd-ts-kit worker-scope appointments --base origin/main --rows M1.12
 Elle ajoute un *worktree* sur la branche `build/appointments` (par défaut dans
 `../<project>-appointments` ; `--worktree <path>` et `--branch <name>` changent l'un et l'autre),
 à partir de `--base` (par défaut la branche courante), y écrit `.ddd-ts-kit/worker.json` qui
-nomme le contexte, et affiche la consigne de ce *worker* : le répertoire qu'il peut écrire, les
+nomme le contexte, avec les lignes de la consigne, la base et la branche, et affiche la consigne de ce *worker* : le répertoire qu'il peut écrire, les
 générateurs qu'il peut lancer, ses lignes de `docs/architecture/slices.md` avec les règles écrites
 sous les tableaux (`- #M1.12: refuses a booking outside working hours`), les contrats qu'il consomme,
 et la base comme tronc de ses vérifications. `--rows` réduit la consigne à ces lignes, dans cet
@@ -160,13 +160,31 @@ avec au moins un *commit*. Un *worktree*, ou une branche, qui existe déjà est 
 contient la base, et refusé sinon : un *worker* ne part jamais d'un tronc périmé. Sans `--base`,
 lancée depuis le *worktree* d'un *worker*, elle refuse aussi, car la branche de ce *worker*
 deviendrait le tronc. Quand elle conserve un *worktree*, seul le fichier est réécrit. `init` liste `.ddd-ts-kit/` dans `.gitignore`, si bien que
-le fichier n'est jamais commité. Le fichier tient en une ligne utile :
+le fichier n'est jamais commité. La garde du plugin en lit le `context` ; le reste est ce
+qu'affiche `status --workers` :
 
 ```json
 {
-  "context": "appointments"
+  "context": "appointments",
+  "rows": ["M1.12"],
+  "base": "origin/main",
+  "branch": "build/appointments"
 }
 ```
+
+Depuis le checkout du tronc, `npx ddd-ts-kit status --workers` (`--json` pour des données) lit
+chaque *worktree* du dépôt qui porte ce fichier et affiche, pour chaque *worker* : son
+*worktree*, sa branche, son contexte, ses lignes, sa base, le nombre de *commits* qu'il a
+d'avance sur la base, les fichiers qu'il a changés (commités depuis la base de fusion avec la
+base, modifiés, et non suivis mais non ignorés), et s'il a écrit `.ddd-ts-kit/report.md`, avec
+sa date. Puis les recouvrements : un contexte construit par deux *workers*, et chaque fichier
+changé par plus d'un *worker*, avec les *workers* qui l'ont changé. Un tel fichier entre en
+conflit à la fusion de la seconde branche quand les deux ont changé les mêmes lignes :
+lancez-la avant de confier une consigne à un second *worker* dans un contexte, pour lui donner
+d'autres fichiers, et avant chaque fusion, pour savoir quelles branches se rencontreront dans
+quels fichiers. Un fichier écrit par une version plus ancienne du kit ne porte que le
+contexte : le *worker* est affiché sans ses lignes ni sa base, et ses fichiers sont les seuls
+fichiers non commités. Sans *worker*, elle le dit en une ligne.
 
 La consigne est remplie à partir du projet. Dans l'application d'exemple, un extrait de ce
 qu'affiche `npx ddd-ts-kit worker-scope notification --dry-run` (le chemin raccourci, `main`

@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:91cb20f36ff1d090 -->
+<!-- translation-of: README.md sha256:f6e0fcc61902b03c -->
 
 # ddd-ts-kit
 
@@ -1067,7 +1067,7 @@ dans chaque `CONTEXT.md`.
 ## status, todo
 
 ```
-ddd-ts-kit status
+ddd-ts-kit status [--workers]
 ddd-ts-kit todo [<context>]
 ```
 
@@ -1078,6 +1078,18 @@ pas une erreur. `--json` affiche `{ next, slices, remaining }` : `next` et `slic
 quand leur fichier manque, `slices` contient `{ file, rows, byStatus, byOwner }`, `remaining` un
 `{ context, domain, platform, test }` par contexte, et un avec un `context` vide pour ce qui reste
 hors d'eux.
+
+`status --workers` affiche à la place les *workers* d'une construction en parallèle : chaque
+*worktree* du dépôt dont la copie du projet porte `.ddd-ts-kit/worker.json`, avec sa branche,
+son contexte, ses lignes, sa base, les *commits* qu'il a d'avance sur la base, les fichiers qu'il
+a changés (commités depuis la base de fusion, modifiés, et non suivis mais non ignorés, relatifs
+au sommet du dépôt) et son `.ddd-ts-kit/report.md` avec sa date d'écriture ; puis les contextes
+construits par plus d'un *worker* et les fichiers changés par plus d'un *worker*, chacun avec
+leurs *worktrees*. Un fichier de périmètre qui ne porte que le contexte est lu aussi : le
+*worker* vient sans ses lignes, sa base ni son avance, et ses fichiers sont les fichiers non
+commités. `--json` affiche
+`{ workers: [{ worktree, branch, context, rows, base, ahead, files, report }], overlaps: { contexts: [{ context, worktrees }], files: [{ file, worktrees }] } }`,
+`report` valant `{ file, modified }` ou `null`. Sans *worker*, elle le dit en une ligne.
 
 `todo` liste ces marqueurs en `file:line` avec leur genre et leur texte, dans le projet ou dans
 un contexte ; `--json` affiche `{ count, remaining: [{ kind, context, file, line, text }] }`.
@@ -1091,7 +1103,7 @@ ddd-ts-kit worker-scope <context> [--base <ref>] [--rows <id,...>] [--worktree <
 Prépare la place d'un *worker* d'un build réparti par contexte : crée un *worktree* git du projet
 (`../<project>-<context>` par défaut) sur la branche `build/<context>`, à partir de `--base` (une
 branche, une étiquette ou un *commit* : `origin/main` ; par défaut la branche courante), y écrit
-`.ddd-ts-kit/worker.json` (`{ "context": "<context>" }` ; `init` ignore `.ddd-ts-kit/`), et
+`.ddd-ts-kit/worker.json` (`{ context, rows, base, branch }` ; `init` ignore `.ddd-ts-kit/`), et
 affiche la consigne du *worker* : son périmètre, les générateurs qu'il peut lancer, ses tranches
 encore à faire d'après `docs/architecture/slices.md`, les langages publiés qu'il consomme, et la
 base comme tronc de ses vérifications (`check --changed-since <base>`). `--rows 4.15,4.16` ne

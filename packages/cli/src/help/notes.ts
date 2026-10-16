@@ -19,7 +19,9 @@ export const NOTES = `  affected         what a pull request has to run: the con
   describe         one context as facts: use cases, routes, events, ports, policies, gateways, dependencies
   status           the next step of docs/architecture/plan.md, the slices of docs/architecture/slices.md by
                    status and by owner, and the TODO(domain), TODO(platform), it.todo and TODO(review) left in
-                   each context
+                   each context; --workers shows instead each worktree holding .ddd-ts-kit/worker.json (branch,
+                   context, rows, base, commits ahead, files changed since the base, its report), then the
+                   contexts and the files more than one worker holds
   sdk              the typed client of each document of the contract, a workspace package under
                    clients/<document> without runtime dependency: typed errors keyed by the error codes,
                    credentials per security scheme; records "sdk" in the config the first time, wires the
