@@ -19,6 +19,10 @@ ruleTester.run('clean-file-size', cleanFileSize, {
     { code: `${lines(351)}\n`, errors: [{ messageId: 'tooLong', data: { count: 351, limit: 350 } }] },
     { ...at(`${BILLING}/test/unit/invoice.spec.ts`, lines(360)), errors: [{ messageId: 'tooLong' }] },
     { ...at('src/generated-client.ts', lines(351)), errors: [{ messageId: 'tooLong' }] },
+    {
+      ...at(`${BILLING}/domain/aggregates/invoice.aggregate.ts`, lines(351)),
+      errors: [{ messageId: 'aggregateTooLong', data: { count: 351, limit: 350 } }],
+    },
   ],
 });
 

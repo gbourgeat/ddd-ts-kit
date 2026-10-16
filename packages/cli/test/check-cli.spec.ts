@@ -89,6 +89,22 @@ describe('check', () => {
     expect(judged.violations.map((violation) => violation.file)).toEqual([fresh]);
   });
 
+  it('names how an aggregate past the size limit moves a decision out', () => {
+    const long = projectWithImpureAggregate('check-aggregate-size');
+    const padding = Array.from({ length: 360 }, (_, line) => `export const line${line} = ${line};`).join('\n');
+
+    write(long, AGGREGATE, `${read(long, AGGREGATE)}\n${padding}\n`);
+    write(long, HANDLER, `${read(long, HANDLER)}\n${padding}\n`);
+
+    const fixes = checkJsonOf(cli(long, 'check', '--rule', 'clean/file-size', '--json')).violations.map((violation) => [
+      violation.file,
+      violation.fix,
+    ]);
+
+    expect(fixes).toContainEqual([AGGREGATE, expect.stringContaining('returns the new state and its events')]);
+    expect(fixes).toContainEqual([HANDLER, expect.stringContaining('Split it by responsibility')]);
+  });
+
   it('finds the project root from a sub-directory', () => {
     expect(cli(`${root}/src/contexts/billing`, 'check', ...LAYERS, '--json').json()).toMatchObject({ errors: 2 });
   });
