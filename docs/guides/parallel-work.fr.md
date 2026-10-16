@@ -1,5 +1,5 @@
 [English](parallel-work.md) · **Français**
-<!-- translation-of: parallel-work.md sha256:6f1abbac32d49d8b -->
+<!-- translation-of: parallel-work.md sha256:d0e48709d3ac119a -->
 
 # Travailler en parallèle sans collisions
 
@@ -115,6 +115,14 @@ seule migration que la garde le laisse écrire. `persistence/migration-history` 
 *worktree* et la signale sur le tronc : le chef d'orchestre la supprime donc à la fusion et y
 génère la vraie ([persistance](../tools/persistence.fr.md#migrations--noms-fusions-et-ordre)).
 
+Une décision prise pendant la construction d'une *slice* (comment se calcule un cumul
+d'indemnités, pourquoi une règle lit le montant stocké) est enregistrée par le *worker*
+lui-même : `generate adr "<title>"` écrit un nouveau fichier de `docs/adr/`, que la garde le
+laisse remplir jusqu'à ce qu'il soit commité avec la *slice*. Une dérogation à une règle,
+`generate adr --deviation`, écrit aussi la configuration : elle reste un besoin pour le chef
+d'orchestre et une décision du propriétaire du projet. Deux branches qui ont pris le même
+numéro se rencontrent à la fusion, où l'enregistrement le plus tardif prend le suivant libre.
+
 ### Le langage publié d'un amont
 
 Un consommateur ne peut pas être construit contre un contrat qui bouge encore. Fusionnez d'abord
@@ -174,7 +182,8 @@ Scope
 - You may not write anything else. Shared files (config, src/platform, src/main.ts,
   package.json, lockfile, migrations, docs/) and other contexts are refused by the guard:
   report the need, do not work around it. A slice that changes the stored state generates a
-  working migration only: `npm run db:generate working-<what-it-does>`. The derived files (generated
+  working migration only: `npm run db:generate working-<what-it-does>`. A decision taken in a slice is
+  recorded by `generate adr` (without --deviation), and committed with it. The derived files (generated
   documents, barrels, context map, dependency rules) are written by `npm run regenerate`, never by hand.
 
 Slices, in this order (rows of docs/architecture/slices.md)

@@ -109,6 +109,13 @@ lets it write. `persistence/migration-history` accepts it in the worktree and re
 trunk, so the conductor deletes it at the merge and generates the real one there
 ([persistence](../tools/persistence.md#migrations-names-merges-and-order)).
 
+A decision taken while building a slice (how a cumulated allowance is computed, why a rule
+reads the stored amount) is recorded by the worker itself: `generate adr "<title>"` writes a new
+file of `docs/adr/`, which the guard lets the worker fill until it is committed with the slice.
+A deviation from a rule, `generate adr --deviation`, also writes the config: it stays a need
+for the conductor and a decision of the project owner. Two branches that took the same number
+meet at the merge, where the later record takes the next free one.
+
 ### The published language of an upstream
 
 A consumer cannot be built against a contract that is still moving. Merge the upstream's
@@ -167,7 +174,8 @@ Scope
 - You may not write anything else. Shared files (config, src/platform, src/main.ts,
   package.json, lockfile, migrations, docs/) and other contexts are refused by the guard:
   report the need, do not work around it. A slice that changes the stored state generates a
-  working migration only: `npm run db:generate working-<what-it-does>`. The derived files (generated
+  working migration only: `npm run db:generate working-<what-it-does>`. A decision taken in a slice is
+  recorded by `generate adr` (without --deviation), and committed with it. The derived files (generated
   documents, barrels, context map, dependency rules) are written by `npm run regenerate`, never by hand.
 
 Slices, in this order (rows of docs/architecture/slices.md)
