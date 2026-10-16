@@ -12,7 +12,7 @@ A function with more than three parameters hides a concept that has no name yet;
 
 ## Reported
 
-- more than `maxParameters` parameters (default 3); constructors are exempt, a `this` parameter is not counted
+- more than `maxParameters` parameters (default 3); constructors are exempt, a `this` parameter is not counted, nor one parameter typed `Actor` or `Date` (who acts and when: the context of an intention)
 - more than `maxLines` lines of code in the body (default 30, never above 100); blank lines and comment lines are not counted
 
 Incorrect:
