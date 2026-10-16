@@ -34,7 +34,7 @@ export const cleanFunctionSize = defineRule<'parameters' | 'lines', [Options]>({
     'A function has at most 3 parameters and 30 lines (configurable, never above 100 lines); a longer one is doing more than one thing.',
   messages: {
     parameters:
-      '{{name}} takes {{count}} parameters (limit {{limit}}). Group the parameters that travel together into a typed props object or a value object (`Contestation.create({ claim, reason, raisedBy, raisedAt })`): they are a concept that has no name yet. Never add one more parameter, nor split the function only to get under the limit.',
+      '{{name}} takes {{count}} parameters (limit {{limit}}). Group the parameters that travel together into a typed props object or a value object (`Invoice.draft({ customer, lines, currency, draftedAt })`): they are a concept that has no name yet. Never add one more parameter, nor split the function only to get under the limit.',
     lines:
       '{{name}} is {{count}} lines long (limit {{limit}}). Extract each step into a function named after what it does, placed below this one, until the body reads as a list of intentions.',
   },

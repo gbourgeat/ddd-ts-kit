@@ -22,7 +22,7 @@ integration handler to its consumer name and its system actor. The name passes t
 as any concept of the context (`--term`, `--allow-name`). Without it, nothing changes.
 
 **`clean/function-size` names the fix.** More than three parameters: group them in a typed props
-object or a value object (`Contestation.create({ ... })`), never a fourth parameter. A `describe`
+object or a value object (`Invoice.draft({ ... })`), never a fourth parameter. A `describe`
 past the 100-line ceiling: one top-level `describe` per behaviour, in the same file. The ESLint
 rule no longer takes production code such as `context.run(callback)` for a group of tests: such a
 callback is now held to the limit of a function, and may be reported where it was not.

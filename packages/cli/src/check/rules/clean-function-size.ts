@@ -109,7 +109,7 @@ function tooManyParameters(shape: Measured, limits: Limits): Flaw[] {
   return [
     {
       message: `${shape.label} takes ${shape.parameters} parameters (limit ${limits.maxParameters}).`,
-      fix: 'Group the parameters that travel together into a typed props object or a value object (`Contestation.create({ claim, reason, raisedBy, raisedAt })`): they are a concept that has no name yet. Never add one more parameter, nor split the function only to get under the limit.',
+      fix: 'Group the parameters that travel together into a typed props object or a value object (`Invoice.draft({ customer, lines, currency, draftedAt })`): they are a concept that has no name yet. Never add one more parameter, nor split the function only to get under the limit.',
     },
   ];
 }
