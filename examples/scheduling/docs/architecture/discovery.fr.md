@@ -1,5 +1,5 @@
 [English](discovery.md) · **Français**
-<!-- translation-of: discovery.md sha256:ff31754937339c14 -->
+<!-- translation-of: discovery.md sha256:ef298f51d19df73a -->
 
 # Découverte du domaine
 
@@ -34,7 +34,7 @@ Un *event storming* léger, par écrit, à partir de `needs.md`. Les mots sont c
 | 23 | Le temps (chaque minute) | Faire expirer les propositions | Proposition expirée | chaque fois qu'une proposition expire, proposer le créneau à la personne suivante | |
 | 24 | Le temps (toutes les 15 minutes) | Envoyer les rappels dus | Rappel envoyé (une fois par rendez-vous et par début) | | Rendez-vous qui commencent dans 24 h |
 | 25 | Système (politique de 13, 14, 16, 17, 21) | Envoyer une notification | Notification envoyée, ou Notification en échec | | Coordonnées de la personne |
-| 26 | Le temps (chaque nuit) | Vérifier l'occupation (construit, puis retiré après la livraison : l'occupation est mesurée au moment où elle est lue, voir `slices.md`, note de 37) | Occupation vérifiée | | |
+| 26 | Le temps (chaque nuit) | Vérifier l'occupation (construit, puis retiré après la livraison : l'occupation est mesurée au moment où elle est lue, voir `slices.md`, note de M1.37) | Occupation vérifiée | | |
 | 27 | Responsable de cabinet, praticien | (lectures) | | | Occupation, annulations, absences par calendrier et par jour |
 | 28 | Support | (lectures au nom d'un utilisateur) | | chaque regard est enregistré | Ce que voit l'utilisateur |
 | 29 | Administrateur de la plateforme | (lectures) | | | Qui a fait quoi, à qui on a refusé quoi |

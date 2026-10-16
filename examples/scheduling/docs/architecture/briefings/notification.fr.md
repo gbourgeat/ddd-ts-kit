@@ -1,5 +1,5 @@
 [English](notification.md) · **Français**
-<!-- translation-of: notification.md sha256:ce64e0b85be0fc5f -->
+<!-- translation-of: notification.md sha256:a57a4e823e50e9d4 -->
 
 # Consigne : notification
 
@@ -10,8 +10,8 @@ Périmètre
 - Générateurs que vous pouvez lancer : value-object, entity, domain-event, error, domain-service,
   command, query, route, port, adapter, event-handler, integration-handler, builder, e2e.
 
-Tranches, dans cet ordre (lignes de `docs/architecture/slices.md`, règles sous son tableau) : 31, 32,
-33, 34. Les agrégats `Notification` et `Reminder` existent avec leurs *repositories* ;
+Tranches, dans cet ordre (lignes de `docs/architecture/slices.md`, règles sous son tableau) : M1.31,
+M1.32, M1.33, M1.34. Les agrégats `Notification` et `Reminder` existent avec leurs *repositories* ;
 `SendDueReminders` et son *job* existent, non remplis.
 
 Contrats que vous consommez (en lecture seule) : `src/contexts/scheduling/published-language/*`

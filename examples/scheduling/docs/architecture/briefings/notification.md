@@ -9,8 +9,8 @@ Scope
 - Generators you may run: value-object, entity, domain-event, error, domain-service,
   command, query, route, port, adapter, event-handler, integration-handler, builder, e2e.
 
-Slices, in this order (rows of `docs/architecture/slices.md`, rules below its table): 31, 32, 33,
-34. Aggregates `Notification` and `Reminder` exist with their repositories; `SendDueReminders` and
+Slices, in this order (rows of `docs/architecture/slices.md`, rules below its table): M1.31, M1.32,
+M1.33, M1.34. Aggregates `Notification` and `Reminder` exist with their repositories; `SendDueReminders` and
 its job exist, unfilled.
 
 Contracts you consume (read-only): `src/contexts/scheduling/published-language/*` (events of

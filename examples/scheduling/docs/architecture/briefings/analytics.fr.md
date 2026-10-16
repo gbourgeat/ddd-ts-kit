@@ -1,12 +1,12 @@
 [English](analytics.md) · **Français**
-<!-- translation-of: analytics.md sha256:a23c87e74719e420 -->
+<!-- translation-of: analytics.md sha256:9056b620f108a119 -->
 
 # Consigne : analytics
 
 > Gardée telle qu'elle a été donnée. Après la livraison (2026-10-10), le propriétaire a remplacé une
 > partie de ce qu'elle demande : le modèle de lecture de l'occupation et `VerifyOccupancy` ont
 > disparu, l'occupation est mesurée à partir des issues au moment où on la lit. Voir
-> `../slices.md`, notes de 35 et 37.
+> `../slices.md`, notes de M1.35 et M1.37.
 
 Vous construisez le contexte délimité `analytics` de l'exemple scheduling. Nom du *worker* : `analytics`.
 
@@ -15,8 +15,8 @@ Périmètre
 - Générateurs que vous pouvez lancer : value-object, entity, domain-event, error, domain-service,
   command, query, route, port, adapter, event-handler, integration-handler, builder, e2e.
 
-Tranches, dans cet ordre (lignes de `docs/architecture/slices.md`, règles sous son tableau) : 35,
-36, 37. `VerifyOccupancy` et son *job* existent, non remplis ; la *gateway*
+Tranches, dans cet ordre (lignes de `docs/architecture/slices.md`, règles sous son tableau) : M1.35,
+M1.36, M1.37. `VerifyOccupancy` et son *job* existent, non remplis ; la *gateway*
 `AppointmentExportGateway` existe, non remplie, sur le contrat de lecture
 `src/contexts/scheduling/published-language/appointment-export.contract.ts`.
 

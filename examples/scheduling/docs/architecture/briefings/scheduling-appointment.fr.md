@@ -1,5 +1,5 @@
 [English](scheduling-appointment.md) · **Français**
-<!-- translation-of: scheduling-appointment.md sha256:2f3a16f9da7688ae -->
+<!-- translation-of: scheduling-appointment.md sha256:a5180cf11e52076b -->
 
 # Consigne : scheduling, rendez-vous
 
@@ -10,9 +10,9 @@ le même dossier au même moment.
 Périmètre
 - Vous possédez : l'agrégat `Appointment` avec ses objets-valeurs, son *repository*, son *builder*
   et sa table ; le service du domaine `Scheduler` ; les deux politiques du préavis du patient ; les
-  commandes, requêtes et routes des lignes 22 à 27 et 30 ; la projection de l'agenda ; la *gateway*
+  commandes, requêtes et routes des lignes M1.22 à M1.27 et M1.30 ; la projection de l'agenda ; la *gateway*
   vers l'annuaire des personnes ; l'implémentation d'`AppointmentExportContract` ; la méthode des
-  rendez-vous du port `SchedulingRelationships` (ligne 21 : `scheduling-calendar` crée le port et
+  rendez-vous du port `SchedulingRelationships` (ligne M1.21 : `scheduling-calendar` crée le port et
   son adaptateur, vous ajoutez la vôtre ; s'il n'existe pas encore quand vous en avez besoin,
   créez-le avec le générateur et ne leur dites rien : ils le liront).
 - Vous ne touchez pas : `Calendar`, `Waitlist`, leurs objets-valeurs, la projection des praticiens.
@@ -26,14 +26,14 @@ La jonction avec `scheduling-calendar`, fixée : générez l'objet-valeur `Slot`
 (`Slot.between(startsAt, endsAt, heldUntil)` : début, fin du rendez-vous, fin de ce qu'il occupe
 avec le battement ; `overlaps(other)` compare ce qui est occupé). Ils fournissent sur `Calendar` :
 `slotFor(appointmentTypeId, startsAt, now): Slot` (lève les erreurs de disponibilité de la règle
-22), `confirmationDeadlineFor(appointmentTypeId, now): Date | undefined`, et les accesseurs
+M1.22), `confirmationDeadlineFor(appointmentTypeId, now): Date | undefined`, et les accesseurs
 `practiceId`, `practitionerId`, `limit`, `timeZone.dayOf(instant)`. Construisez d'abord la vie d'un
 rendez-vous (elle n'a besoin que de `Slot`), puis la réservation et le déplacement une fois que
 `Calendar.slotFor` existe. Ils ont besoin de vous, pour la liste d'attente : une fabrique (factory)
 qui donne un rendez-vous demandé avec une échéance.
 
-Tranches, dans cet ordre : l'agrégat avec toute sa vie (lignes 22, 24, 25 au niveau du domaine),
-22, 23, 21 (partie rendez-vous), 24, 25, 26, 27, 30. La ligne 23 est tout l'intérêt de l'exemple :
+Tranches, dans cet ordre : l'agrégat avec toute sa vie (lignes M1.22, M1.24, M1.25 au niveau du domaine),
+M1.22, M1.23, M1.21 (partie rendez-vous), M1.24, M1.25, M1.26, M1.27, M1.30. La ligne M1.23 est tout l'intérêt de l'exemple :
 une contrainte d'exclusion de PostgreSQL sur le calendrier et l'intervalle occupé des rendez-vous
 actifs (l'extension `btree_gist` ; le *worker* de la plateforme la charge dans le PostgreSQL en
 processus des tests), l'adaptateur qui traduit cette violation en l'erreur du domaine

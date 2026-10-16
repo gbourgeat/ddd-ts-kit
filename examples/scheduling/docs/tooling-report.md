@@ -232,11 +232,11 @@ wrote and a worker deleted (the readers of `query --list`, friction 3) are count
 | Worker | Scope | Generator runs | Result |
 |---|---|---|---|
 | platform | `src/platform/auth`, buses, test support | 1 | done in 9 min |
-| identity | the context | 47 | slices 11 to 17, 286 tests, 36 end-to-end tests |
-| scheduling-calendar | Calendar, Waitlist, practitioners, day view | 50 | slices 18 to 21, 28, 29 |
-| scheduling-appointment | Appointment, Scheduler, lists, export | 34 | slices 21 to 27, 30; recalled once for the read-model defect |
-| notification | the context | 22 | slices 31 to 34, 184 tests |
-| analytics | the context | 7 | slices 35 to 37, 94 tests |
+| identity | the context | 47 | slices M1.11 to M1.17, 286 tests, 36 end-to-end tests |
+| scheduling-calendar | Calendar, Waitlist, practitioners, day view | 50 | slices M1.18 to M1.21, M1.28, M1.29 |
+| scheduling-appointment | Appointment, Scheduler, lists, export | 34 | slices M1.21 to M1.27, M1.30; recalled once for the read-model defect |
+| notification | the context | 22 | slices M1.31 to M1.34, 184 tests |
+| analytics | the context | 7 | slices M1.35 to M1.37, 94 tests |
 | end-to-end | `test/e2e/journey-*`, integration fixes | 0 | 17 tests, three integration faults fixed |
 
 There is no git in this build, so the workers shared one tree instead of a worktree each, and

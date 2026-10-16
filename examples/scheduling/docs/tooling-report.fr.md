@@ -1,5 +1,5 @@
 [English](tooling-report.md) · **Français**
-<!-- translation-of: tooling-report.md sha256:e8cf031825a87352 -->
+<!-- translation-of: tooling-report.md sha256:ace0c685dd09417b -->
 
 # Rapport sur l'outillage
 
@@ -256,11 +256,11 @@ friction 3) ne sont comptés nulle part.
 | *Worker* | Périmètre | Exécutions de générateurs | Résultat |
 |---|---|---|---|
 | plateforme | `src/platform/auth`, bus, support de test | 1 | terminé en 9 min |
-| identity | le contexte | 47 | tranches 11 à 17, 286 tests, 36 tests de bout en bout |
-| scheduling-calendar | Calendar, Waitlist, praticiens, vue du jour | 50 | tranches 18 à 21, 28, 29 |
-| scheduling-appointment | Appointment, Scheduler, listes, export | 34 | tranches 21 à 27, 30 ; rappelé une fois pour le défaut des modèles de lecture |
-| notification | le contexte | 22 | tranches 31 à 34, 184 tests |
-| analytics | le contexte | 7 | tranches 35 à 37, 94 tests |
+| identity | le contexte | 47 | tranches M1.11 à M1.17, 286 tests, 36 tests de bout en bout |
+| scheduling-calendar | Calendar, Waitlist, praticiens, vue du jour | 50 | tranches M1.18 à M1.21, M1.28, M1.29 |
+| scheduling-appointment | Appointment, Scheduler, listes, export | 34 | tranches M1.21 à M1.27, M1.30 ; rappelé une fois pour le défaut des modèles de lecture |
+| notification | le contexte | 22 | tranches M1.31 à M1.34, 184 tests |
+| analytics | le contexte | 7 | tranches M1.35 à M1.37, 94 tests |
 | bout en bout | `test/e2e/journey-*`, corrections d'intégration | 0 | 17 tests, trois fautes d'intégration corrigées |
 
 Il n'y a pas de git dans cette construction, donc les *workers* ont partagé une seule

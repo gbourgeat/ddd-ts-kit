@@ -9,9 +9,9 @@ Scope
 - Generators you may run: value-object, entity, domain-event, error, domain-service,
   command, query, route, port, adapter, event-handler, builder, e2e.
 
-Slices, in this order (rows of `docs/architecture/slices.md`, rules below its table): 11, 12, 13,
-14, 15, 16, 17. Aggregates `Person`, `Practice` (its members are part of it) and `Delegation`
-exist with their repositories; the integration events of row 4 exist with their payloads decided
+Slices, in this order (rows of `docs/architecture/slices.md`, rules below its table): M1.11, M1.12,
+M1.13, M1.14, M1.15, M1.16, M1.17. Aggregates `Person`, `Practice` (its members are part of it) and `Delegation`
+exist with their repositories; the integration events of row M1.04 exist with their payloads decided
 (read-only for you: `src/contexts/identity/published-language/*.payload.ts`; fill their
 publishers and the domain events behind them). `ExpireDelegations` and its job exist, unfilled.
 

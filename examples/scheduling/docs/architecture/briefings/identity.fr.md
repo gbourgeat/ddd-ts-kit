@@ -1,5 +1,5 @@
 [English](identity.md) · **Français**
-<!-- translation-of: identity.md sha256:beabc55e9f9b6e84 -->
+<!-- translation-of: identity.md sha256:a9a52c098717e860 -->
 
 # Consigne : identity
 
@@ -10,9 +10,9 @@ Périmètre
 - Générateurs que vous pouvez lancer : value-object, entity, domain-event, error, domain-service,
   command, query, route, port, adapter, event-handler, builder, e2e.
 
-Tranches, dans cet ordre (lignes de `docs/architecture/slices.md`, règles sous son tableau) : 11, 12,
-13, 14, 15, 16, 17. Les agrégats `Person`, `Practice` (ses membres en font partie) et `Delegation`
-existent avec leurs *repositories* ; les événements d'intégration de la ligne 4 existent avec leur
+Tranches, dans cet ordre (lignes de `docs/architecture/slices.md`, règles sous son tableau) : M1.11,
+M1.12, M1.13, M1.14, M1.15, M1.16, M1.17. Les agrégats `Person`, `Practice` (ses membres en font partie) et `Delegation`
+existent avec leurs *repositories* ; les événements d'intégration de la ligne M1.04 existent avec leur
 contenu décidé (en lecture seule pour vous : `src/contexts/identity/published-language/*.payload.ts` ;
 remplissez leurs *publishers* et les événements du domaine qui sont derrière). `ExpireDelegations`
 et son *job* existent, non remplis.

@@ -4,7 +4,7 @@
 
 > Kept as it was given. After delivery (2026-10-10) the owner replaced part of what it asks for:
 > the occupancy read model and `VerifyOccupancy` are gone, the occupancy is measured from the
-> outcomes when it is read. See `../slices.md`, notes of 35 and 37.
+> outcomes when it is read. See `../slices.md`, notes of M1.35 and M1.37.
 
 You build the bounded context `analytics` of the scheduling example. Worker name: `analytics`.
 
@@ -13,7 +13,8 @@ Scope
 - Generators you may run: value-object, entity, domain-event, error, domain-service,
   command, query, route, port, adapter, event-handler, integration-handler, builder, e2e.
 
-Slices, in this order (rows of `docs/architecture/slices.md`, rules below its table): 35, 36, 37.
+Slices, in this order (rows of `docs/architecture/slices.md`, rules below its table): M1.35, M1.36,
+M1.37.
 `VerifyOccupancy` and its job exist, unfilled; the gateway `AppointmentExportGateway` exists,
 unfilled, over the read contract `src/contexts/scheduling/published-language/appointment-export.contract.ts`.
 

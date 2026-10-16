@@ -136,7 +136,7 @@ git worktree add ../scheduling-calendars -b feat/calendars-working-hours
 For one worker per context the CLI does it in one command:
 
 ```bash
-npx ddd-ts-kit worker-scope appointments --base origin/main --rows 12
+npx ddd-ts-kit worker-scope appointments --base origin/main --rows M1.12
 ```
 
 It adds a worktree on the branch `build/appointments` (by default in
@@ -144,7 +144,7 @@ It adds a worktree on the branch `build/appointments` (by default in
 `--base` (by default the current branch), writes `.ddd-ts-kit/worker.json` naming the context in
 it, and prints the briefing of that worker: the directory it may write, the generators it may
 run, its rows of `docs/architecture/slices.md` with the rules written under the tables
-(`- #12: refuses a booking outside working hours`), the contracts it consumes, and the base as
+(`- #M1.12: refuses a booking outside working hours`), the contracts it consumes, and the base as
 the trunk of its checks. `--rows` narrows the briefing to those rows, in that order; without
 it, every row of the context still to do is listed, with a note past two. `--dry-run` prints
 the same without touching anything. It needs a repository with at least one commit. An
@@ -303,13 +303,13 @@ Four rows of that table in the example application, as `status` and `worker-scop
 
 | # | Context | Kind | Slice | Start with | Depends on | Owner | Status |
 |---|---|---|---|---|---|---|---|
-| 3 | notification | skeleton | Notification, Reminder | `aggregate notification <Name>` then `repository notification <Name>`, twice | | conductor | done |
-| 31 | notification | slice | Contacts known from identity (projection) | `@Projection` over `identity.person.registered` | 4 | notification | todo |
-| 32 | notification | slice | Send a notification for a fact of an appointment | `port notification Mailer`; `adapter notification Mailer --kind external --decorators`; `command notification SendNotification --aggregate Notification --permission notification.send`; `integration-handler notification scheduling scheduling.appointment.booked`, `.confirmed`, `.rescheduled`, `.cancelled` | 3, 5, 31 | notification | todo |
-| 34 | notification | slice | Sent notifications of a person | `query notification SearchNotifications --permission notification.read --search` (`GET /notifications`) | 32 | notification | todo |
+| M1.03 | notification | skeleton | Notification, Reminder | `aggregate notification <Name>` then `repository notification <Name>`, twice | | conductor | done |
+| M1.31 | notification | slice | Contacts known from identity (projection) | `@Projection` over `identity.person.registered` | M1.04 | notification | todo |
+| M1.32 | notification | slice | Send a notification for a fact of an appointment | `port notification Mailer`; `adapter notification Mailer --kind external --decorators`; `command notification SendNotification --aggregate Notification --permission notification.send`; `integration-handler notification scheduling scheduling.appointment.booked`, `.confirmed`, `.rescheduled`, `.cancelled` | M1.03, M1.05, M1.31 | notification | todo |
+| M1.34 | notification | slice | Sent notifications of a person | `query notification SearchNotifications --permission notification.read --search` (`GET /notifications`) | M1.32 | notification | todo |
 
-Row 3 is a skeleton: its generators write the schema index of the platform, so the conductor
-runs it on the trunk. Rows 31, 32 and 34 belong to the `notification` worker, as does row 33, left out of this
+Row M1.03 is a skeleton: its generators write the schema index of the platform, so the conductor
+runs it on the trunk. Rows M1.31, M1.32 and M1.34 belong to the `notification` worker, as does row M1.33, left out of this
 excerpt; the worker starts each one once the rows it depends on are merged.
 
 What makes the plan work is that phases 0 and 1 are deliberately not parallel. They take a

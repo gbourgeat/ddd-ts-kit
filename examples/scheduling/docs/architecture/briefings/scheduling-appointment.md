@@ -9,9 +9,9 @@ folder at the same time.
 Scope
 - You own: the aggregate `Appointment` with its value objects, repository, builder and table; the
   domain service `Scheduler`; the two policies of the patient's notice; the commands, queries and
-  routes of rows 22 to 27 and 30; the agenda projection; the gateway to the person directory; the
+  routes of rows M1.22 to M1.27 and M1.30; the agenda projection; the gateway to the person directory; the
   implementation of `AppointmentExportContract`; the appointment method of the port
-  `SchedulingRelationships` (row 21: `scheduling-calendar` creates the port and its adapter, you
+  `SchedulingRelationships` (row M1.21: `scheduling-calendar` creates the port and its adapter, you
   add yours; if it does not exist yet when you need it, create it with the generator and tell them
   nothing: they will read it).
 - You do not touch: `Calendar`, `Waitlist`, their value objects, the practitioners projection.
@@ -24,14 +24,14 @@ Scope
 The seam with `scheduling-calendar`, fixed: generate the value object `Slot` FIRST
 (`Slot.between(startsAt, endsAt, heldUntil)`: start, end of the appointment, end of what it holds
 with the buffer; `overlaps(other)` compares what is held). They provide on `Calendar`:
-`slotFor(appointmentTypeId, startsAt, now): Slot` (throws the availability errors of rule 22),
+`slotFor(appointmentTypeId, startsAt, now): Slot` (throws the availability errors of rule M1.22),
 `confirmationDeadlineFor(appointmentTypeId, now): Date | undefined`, and the getters `practiceId`,
 `practitionerId`, `limit`, `timeZone.dayOf(instant)`. Build the life of an appointment first
 (it needs only `Slot`), then booking and rescheduling once `Calendar.slotFor` exists. They need
 from you, for the waitlist: a factory that gives a requested appointment with a deadline.
 
-Slices, in this order: the aggregate with its whole life (rows 22, 24, 25 at domain level), 22,
-23, 21 (appointment part), 24, 25, 26, 27, 30. Row 23 is the point of the example: an exclusion
+Slices, in this order: the aggregate with its whole life (rows M1.22, M1.24, M1.25 at domain level), M1.22,
+M1.23, M1.21 (appointment part), M1.24, M1.25, M1.26, M1.27, M1.30. Row M1.23 is the point of the example: an exclusion
 constraint of PostgreSQL over the calendar and the held range of active appointments (the
 `btree_gist` extension; the platform worker loads it into the in-process PostgreSQL of the tests),
 the adapter translating that violation into the domain error `SLOT_TAKEN`, the route answering 409,
