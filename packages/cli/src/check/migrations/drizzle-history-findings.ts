@@ -3,7 +3,7 @@ import { lineOf } from '../support/line-of.js';
 import type { DrizzleMigrations, JournalEntry } from './drizzle-migrations.js';
 
 const REGENERATE =
-  'Keep the migrations of the main branch, delete the one of your branch (its .sql file, its snapshot under meta/ and its entry of meta/_journal.json), then run `npm run db:generate <name>` again on top of them.';
+  'Keep the migrations of the main branch, delete the one of your branch (its .sql file, its snapshot under meta/ and its entry of meta/_journal.json), then run `npm run db:generate <name>` again on top of them, or let `npx ddd-ts-kit drizzle-generate --replay` do both.';
 
 /**
  * What makes drizzle-kit and its migrator misbehave after a merge: an entry without its file or

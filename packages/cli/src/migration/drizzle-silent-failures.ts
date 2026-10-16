@@ -17,6 +17,6 @@ export const DRIZZLE_SILENT_FAILURES: readonly DrizzleSilentFailure[] = [
     printed: 'which is a collision',
     message:
       'Two snapshots of the migrations were generated from the same one, as two branches merged without regenerating: no migration was written.',
-    fix: 'Keep the migrations of the main branch, delete the one of your branch (its .sql file, its snapshot under meta/ and its entry of meta/_journal.json), then run `npm run db:generate <name>` again on top of them; `npm run check:arch` names them (persistence/migration-history).',
+    fix: 'Keep the migrations of the main branch, delete the one of your branch (its .sql file, its snapshot under meta/ and its entry of meta/_journal.json), then run `npm run db:generate <name>` again on top of them, or let `npx ddd-ts-kit drizzle-generate --replay` do both; `npm run check:arch` names them (persistence/migration-history).',
   },
 ];

@@ -106,8 +106,18 @@ somewhere.
 A worker whose slice changes the stored state still needs the table for its specs: it generates
 a working migration, `npm run db:generate working-<what-it-does>`, the only migration the guard
 lets it write. `persistence/migration-history` accepts it in the worktree and reports it on the
-trunk, so the conductor deletes it at the merge and generates the real one there
+trunk, so the conductor replaces it at the merge by the real one, generated on the trunk
 ([persistence](../tools/persistence.md#migrations-names-merges-and-order)).
+
+Under drizzle-kit, nobody deletes and regenerates by hand: after a merge where both sides added
+a migration, `npx ddd-ts-kit drizzle-generate --replay` deletes the migrations of the branch that
+the trunk (`--base`, `origin/main` by default) does not have, with their snapshots and journal
+entries, and generates them again on top, in their order and under their names. In the worktree
+of a worker, which merges the trunk into its branch, they stay working migrations; on the trunk,
+where the conductor runs it after merging the branch (the trunk before the merge as `--base`),
+the `working-` prefix goes and the real migration is committed with the merge. A journal still in
+conflict is refused: take the trunk's (`git checkout origin/main -- migrations/meta/_journal.json`)
+and run it again. Under knex, Prisma and TypeORM, these steps stay by hand.
 
 A decision taken while building a slice (how a late fee is rounded, from which date a deadline
 counts) is recorded by the worker itself: `generate adr "<title>"` writes a new

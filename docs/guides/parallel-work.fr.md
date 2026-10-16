@@ -1,5 +1,5 @@
 [English](parallel-work.md) · **Français**
-<!-- translation-of: parallel-work.md sha256:4121a4aad0628d1d -->
+<!-- translation-of: parallel-work.md sha256:1eb5b46a4a2bee3f -->
 
 # Travailler en parallèle sans collisions
 
@@ -112,8 +112,19 @@ seconde régénère la sienne. Ne modifiez jamais une migration qui a été exé
 Un *worker* dont la *slice* change l'état stocké a quand même besoin de la table pour ses
 *specs* : il génère une migration de travail, `npm run db:generate working-<what-it-does>`, la
 seule migration que la garde le laisse écrire. `persistence/migration-history` l'admet dans le
-*worktree* et la signale sur le tronc : le chef d'orchestre la supprime donc à la fusion et y
-génère la vraie ([persistance](../tools/persistence.fr.md#migrations--noms-fusions-et-ordre)).
+*worktree* et la signale sur le tronc : le chef d'orchestre la remplace donc à la fusion par la
+vraie, générée sur le tronc ([persistance](../tools/persistence.fr.md#migrations--noms-fusions-et-ordre)).
+
+Sous drizzle-kit, personne ne supprime ni ne régénère à la main : après une fusion où les deux
+côtés ont ajouté une migration, `npx ddd-ts-kit drizzle-generate --replay` supprime les
+migrations de la branche que le tronc (`--base`, `origin/main` par défaut) n'a pas, avec leurs
+*snapshots* et leurs entrées du journal, et les génère de nouveau au-dessus, dans leur ordre et
+sous leur nom. Dans le *worktree* d'un *worker*, qui fusionne le tronc dans sa branche, elles
+restent des migrations de travail ; sur le tronc, où le chef d'orchestre le lance après avoir
+fusionné la branche (le tronc d'avant la fusion comme `--base`), le préfixe `working-` disparaît
+et la vraie migration est commitée avec la fusion. Un journal encore en conflit est refusé :
+prendre celui du tronc (`git checkout origin/main -- migrations/meta/_journal.json`) et le
+relancer. Sous knex, Prisma et TypeORM, ces étapes restent à la main.
 
 Une décision prise pendant la construction d'une *slice* (comment s'arrondit une pénalité de
 retard, à partir de quelle date court un délai) est enregistrée par le *worker*
