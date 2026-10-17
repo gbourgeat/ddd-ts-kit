@@ -58,6 +58,7 @@ describe('shipped templates', () => {
 
     expect([...kinds].sort()).toEqual(
       [
+        'acceptance',
         'acl',
         'adapter',
         'adr',

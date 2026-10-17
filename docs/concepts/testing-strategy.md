@@ -403,6 +403,16 @@ turn) is awaited with `await application.settled()`, then asserted at once. A fi
 when long and flaky when short; `settled` resolves as soon as the outbox holds no pending event,
 and when the time is up it fails naming what is still pending and how much of it failed.
 
+The acceptance of a story is an end-to-end spec written before its code, from the criteria of the
+story (`docs/architecture/stories/<story>.md`): `test/acceptance/<story>.acceptance.spec.ts`, one
+scenario per criterion, through the API only. Each scenario runs wrapped in `pending(...)` of
+`@ddd-ts-kit/testing/e2e`, which passes while an assertion fails and fails once the scenario
+passes, or stops on anything else, so that a scenario waiting for its code never hides a broken
+one. `ddd-ts-kit acceptance <story> --lock` then records a fingerprint of each criterion and each
+scenario: a scenario changed while its criterion was not is reported, never silently made easier
+to pass. The slice that satisfies a scenario removes its wrapper; the story closes when none is
+left (`ddd-ts-kit acceptance <story> --gate passing`).
+
 ## What to test where
 
 | Behaviour | Level | Why there |

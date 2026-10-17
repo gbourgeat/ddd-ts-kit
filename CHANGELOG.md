@@ -6,6 +6,35 @@ list the pull requests behind it.
 
 ## 0.26.0
 
+**A story's acceptance tests are written, locked and run before its code, and a locked scenario
+changes only with its criterion.** A story states its acceptance criteria in
+`docs/architecture/stories/<story>.md` (`- AC1: ...` under `## Acceptance criteria`).
+`ddd-ts-kit generate acceptance <story>` writes `test/acceptance/<story>.acceptance.spec.ts`, an
+`it.todo` per criterion (per slice row when the story states none), on the support of
+`test/e2e/`. Each scenario names the rows that make it pass and the criterion it proves
+(`'#US5.02 AC1 ...'`) and runs wrapped in the new `pending(...)` of `@ddd-ts-kit/testing/e2e`:
+it passes while an assertion fails, and fails once the scenario passes (the slice removes the
+wrapper) or stops on anything but an assertion (the scenario is broken). The new command
+`ddd-ts-kit acceptance [<story>]` reads the scenarios against the rows of `slices.md` and the
+criteria: `--gate written` before the code (every slice row and criterion covered, nothing left
+to write, the acceptance locked), `--gate passing` before the story closes. `--lock` writes
+`test/acceptance/<story>.acceptance.lock.json`, the fingerprint of each criterion and scenario
+(the wrapper, the layout and the comments aside); afterwards a scenario changed or removed while
+its criterion was not is reported whatever the gate, and locking it again takes
+`--reason "<how it failed its criterion>"`, kept as an amendment the command lists for the
+owner to validate. The guard of the plugin lets a sub-agent only remove `pending(...)` in an
+acceptance spec, refuses it `acceptance --lock`, refuses the lock file to any hand edit, and
+refuses an acceptance spec written by hand instead of generated. `verify-slice` stages the
+acceptance spec with the slice. The new rule `test/acceptance-black-box` (a warning) refuses an
+acceptance spec that imports from the source root anything but the builders and the published
+language of a context. The skills `testing`, `use-case`, `plan-slices`, `quality-gate`,
+`parallel-work` and the `context-builder` agent follow.
+
+To move: a new project runs its acceptance specs with `npm run test:e2e`; in an existing one, add
+`'test/acceptance/**/*.acceptance.spec.ts'` to the `include` of `vitest.e2e.config.ts` (the
+`testMatch` of `jest.e2e.config.js`). `npx ddd-ts-kit init` adds the permission of
+`npx ddd-ts-kit acceptance *` and the refusal to edit a lock; update the plugin.
+`ddd-ts-kit check --rule test/acceptance-black-box` lists the acceptance specs to take up.
 **The guard recognises the CLI of the kit however it is launched.** The refusal of
 `worker-scope` to a sub-agent (without `--dry-run` or `--resume`) and the refusal to a worker of a
 generator that writes shared files or another context read the command word by word: the
