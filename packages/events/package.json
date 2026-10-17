@@ -1,6 +1,6 @@
 {
   "name": "@ddd-ts-kit/events",
-  "version": "0.23.0",
+  "version": "0.23.1",
   "description": "Technology-agnostic integration events: typed declarations, registry, transactional outbox, AsyncAPI and catalog generation.",
   "keywords": [
     "ddd",
@@ -42,8 +42,8 @@
     "dist"
   ],
   "dependencies": {
-    "@ddd-ts-kit/kernel": "0.23.0",
-    "@ddd-ts-kit/validation": "0.23.0"
+    "@ddd-ts-kit/kernel": "0.23.1",
+    "@ddd-ts-kit/validation": "0.23.1"
   },
   "devDependencies": {
     "zod": "^4.6.5"

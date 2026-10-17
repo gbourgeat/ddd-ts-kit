@@ -4,6 +4,28 @@ What each version changes for someone who uses the kit. The packages of `package
 together, under one version; the notes of each [GitHub release](https://github.com/gbourgeat/ddd-ts-kit/releases)
 list the pull requests behind it.
 
+## 0.23.1
+
+**`verify-slice` proposes to stage the paths of the slice only.** In 0.23.0 it listed every path
+`git status` reported in the repository as the paths to commit: a file of another context or of
+the platform, an editor's folder, notes or a document left at the root of a shared checkout. The
+list is now closed: the files of the context, an end-to-end spec of `test/e2e/`, a working
+migration with its snapshot and the journal, and the derived files `regenerate` rewrites when git
+already tracks them. Every other changed path is listed as left out, never to stage with the
+slice; `--json` gives `toStage` and `leftOut`. The briefing and the `context-builder` agent say
+that a path left out is never staged nor deleted. Upgrade from 0.23.0 now.
+
+**`doctor` lists what an upgrade left to do.** `npx ddd-ts-kit doctor` compares the project with
+what the installed version writes: the scripts of `package.json` (missing, or written otherwise),
+the packages of the kit (missing, or at another range) and the permissions of
+`.claude/settings.json` (missing). `npx ddd-ts-kit init` adds what is missing and leaves what the
+project wrote. `--strict` exits 1 while something is missing. The version gap the plugin says at
+session start points to it.
+
+**`clean/function-size` does not count one parameter typed `Actor` or `Date`.** Who acts and when
+are the context of an intention rather than its input: `invoice.issue(lines, customer, actor,
+now)` counts three. The rule reports less, never more.
+
 ## 0.23.0
 
 **A domain event declares its name once, with `NamedDomainEvent`.** `export class InvoiceIssued

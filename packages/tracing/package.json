@@ -1,6 +1,6 @@
 {
   "name": "@ddd-ts-kit/tracing",
-  "version": "0.23.0",
+  "version": "0.23.1",
   "description": "Non-invasive OpenTelemetry tracing: adapters are wrapped at the composition root, the domain never knows.",
   "keywords": [
     "ddd",
@@ -45,7 +45,7 @@
     "dist"
   ],
   "dependencies": {
-    "@ddd-ts-kit/kernel": "0.23.0"
+    "@ddd-ts-kit/kernel": "0.23.1"
   },
   "peerDependencies": {
     "@opentelemetry/api": "^1.9.0",
@@ -73,11 +73,11 @@
     }
   },
   "devDependencies": {
-    "@ddd-ts-kit/audit": "0.23.0",
-    "@ddd-ts-kit/di": "0.23.0",
-    "@ddd-ts-kit/events": "0.23.0",
-    "@ddd-ts-kit/http": "0.23.0",
-    "@ddd-ts-kit/scheduling": "0.23.0",
+    "@ddd-ts-kit/audit": "0.23.1",
+    "@ddd-ts-kit/di": "0.23.1",
+    "@ddd-ts-kit/events": "0.23.1",
+    "@ddd-ts-kit/http": "0.23.1",
+    "@ddd-ts-kit/scheduling": "0.23.1",
     "@opentelemetry/api": "^1.9.1",
     "@opentelemetry/auto-instrumentations-node": "latest",
     "@opentelemetry/context-async-hooks": "^2.0.0",
