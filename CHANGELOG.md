@@ -4,6 +4,43 @@ What each version changes for someone who uses the kit. The packages of `package
 together, under one version; the notes of each [GitHub release](https://github.com/gbourgeat/ddd-ts-kit/releases)
 list the pull requests behind it.
 
+## 0.24.0
+
+**`plan-waves` orders the work, and `status` says when a row can start.** `npx ddd-ts-kit
+plan-waves [<context>]` reads the rows of `slices.md` not done and gives waves (the rows whose
+dependencies are done, then the rows waiting only for earlier waves), batches of one or two rows
+per owner, the batches of one context and one wave that touch the same aggregate, the
+`worker-scope` command that briefs each batch, and a merge order. A cycle, an unknown dependency,
+a row without owner or an id used twice is reported alone. `status` gives each row not done its
+readiness: on the trunk, on a branch (its dependencies are rows of a worker whose worktree has
+commits), or waiting, with what it waits for.
+
+**`drizzle-generate` formats, warns and replays.** After a migration, it formats the files it wrote
+under `meta/` with the formatter the `format` script names (Biome or Prettier), and warns when the
+SQL changes a primary key in an order PostgreSQL refuses. `npx ddd-ts-kit drizzle-generate --replay
+[--base <ref>]`, run on a branch after merging the trunk, deletes the branch's migrations the base
+does not have and generates them again on top of the trunk's last snapshot, with their names; the
+`persistence` and `parallel-work` skills use it at the merge. It is Drizzle's only.
+
+**Each spec opens a copy of a started test database.** With Vitest on an ORM, a global setup starts
+PGlite once and saves it; every integration spec opens a copy and creates its tables there, so the
+slow start is paid once per run and the code that creates the tables still counts in the coverage
+of each context. `settled()` of `@ddd-ts-kit/testing/e2e`,
+and `application.settled()` of the generated end-to-end support, wait until the outbox has nothing
+pending instead of a fixed delay, and fail with what is still pending.
+
+**`tree/documented-paths` (a warning).** A path of a context cited as code in a Markdown file of
+`docs/architecture/` is judged as `tree/closed` judges a file: a plan, a design note or a review
+that names a directory the canonical tree refuses describes a design the code no longer has. A path
+that does not exist yet is not reported.
+
+To move: `npx ddd-ts-kit check` reports, as a warning, the paths of `docs/architecture/` the tree
+refuses: write the place the code has now. To take the test database template in an existing
+project, regenerate `vitest.config.ts`, `vitest.e2e.config.ts`,
+`src/platform/database/open-test-database.ts` and `test/e2e/support/start-application.ts`
+(`npx ddd-ts-kit init --force`, which rewrites every file of the platform); plain `npx ddd-ts-kit
+init` adds the setup file and the rest keeps working as before.
+
 ## 0.23.1
 
 **`verify-slice` proposes to stage the paths of the slice only.** In 0.23.0 it listed every path
