@@ -16,7 +16,7 @@ npm i -D @ddd-ts-kit/testing
 |---|---|---|
 | `@ddd-ts-kit/testing` | builders, scenarios, `createTestBuses`, `InMemoryRepository` | no runner, no library |
 | `@ddd-ts-kit/testing/faker` | generated data for builders | `@faker-js/faker` (optional peer) |
-| `@ddd-ts-kit/testing/e2e` | HTTP client, `settled`, `eventually`, `collectEvents` | Node only: no HTTP framework, no container |
+| `@ddd-ts-kit/testing/e2e` | HTTP client, `settled`, `eventually`, `collectEvents`, `pending` | Node only: no HTTP framework, no container |
 | `@ddd-ts-kit/testing/contracts` | contract suites of the kernel ports, `ContractSuite` to write another | the runner you pass |
 | `@ddd-ts-kit/testing/vitest` | `decorators()`, the Vite plugin that lets Vitest run standard decorators, and `decoratorCoverage()` | Node only; runs the `tsc` of the project |
 | `@ddd-ts-kit/testing/coverage` | `governedCoverage()`, `governedJestCoverage()`, `unaffectedContexts()`: the coverage the runner measures and its floor, read from `ddd-ts-kit.config.json` | Node only |
@@ -642,6 +642,7 @@ afterAll(() => server.close());
 | `expectProblem(response, { status, code, facts })` | asserts an RFC 9457 `application/problem+json` answer and returns the document; `code` and `facts` are optional, and `facts` names the facts the document must expose, as JSON writes them (a date is its ISO text) |
 | `settled(sources, { timeoutMs = 2000, intervalMs = 10 })` | resolves as soon as every source counts no pending work; when the time is up, fails naming each source still pending, how much it holds and how much of it failed |
 | `eventually(assertion, { timeoutMs = 2000, intervalMs = 20 })` | retries until the assertion passes; when the time is up, fails quoting the last error |
+| `pending(body)` | holds an acceptance scenario written before its code: passes while an assertion of `body` fails, fails once `body` passes (remove the wrapper) or stops on anything but an assertion (the scenario is broken); `it('#US5.02 AC1 ...', pending(async () => { ... }))` |
 | `collectEvents(subscriber, types)` | records published integration events: `received(type?)`, `waitFor(type, predicate?, options?)`, `stop()` |
 
 The assertions are those of `node:assert`: they read the same under any runner.

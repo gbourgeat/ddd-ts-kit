@@ -15,6 +15,8 @@ allowed-tools:
   - Bash(npx ddd-ts-kit check *)
   - Bash(npx ddd-ts-kit verify-slice *)
   - Bash(npx ddd-ts-kit cited *)
+  - Bash(npx ddd-ts-kit acceptance *)
+  - Bash(npm run test:e2e *)
   - Bash(npx ddd-ts-kit describe *)
   - Bash(npx ddd-ts-kit todo *)
   - Bash(npx ddd-ts-kit explain *)
@@ -41,6 +43,10 @@ the other reacts (skill `ddd-ts-kit:integration-event`). A word or a rule you wo
 guess is a question for the user.
 
 ## 2. Generate the slice
+
+A row of a story whose acceptance exists starts once it is written and locked:
+`npx ddd-ts-kit acceptance <story> --gate written` passes. It names what is missing; writing the
+scenarios is skill `ddd-ts-kit:testing`, never a step of the slice.
 
 Before generating a row of the slices file, check its design against the trunk:
 `npx ddd-ts-kit cited --rows <id> --base origin/main`. Each line it prints is a name the design
@@ -140,6 +146,12 @@ npx ddd-ts-kit verify-slice <ctx> --since <trunk>   # regenerate, rules on the c
 npx ddd-ts-kit todo <ctx>    # every TODO(domain) and it.todo left, as file:line
 npx ddd-ts-kit check --commit-size
 ```
+
+When the story has an acceptance spec, run `npm run test:e2e -- test/acceptance/<story>`: a
+scenario naming this row that now passes fails the run, asking to remove its `pending(...)`;
+remove it, and nothing else of the scenario. One that still fails on what this row should do
+means the slice is not done. A scenario that seems wrong is never changed to pass: skill
+`ddd-ts-kit:testing`, "Acceptance of a story".
 
 Then one commit for the slice (skill `ddd-ts-kit:commit-discipline`), and its row marked in
 `slices.md` when you are the conductor. Report in a few lines: the rules encoded and where,

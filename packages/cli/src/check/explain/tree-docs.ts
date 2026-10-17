@@ -98,6 +98,15 @@ expect(await repository.findById(id)).toBeDefined();`,
     good: `// test/builders/invoice.builder.ts
 anInvoice().issued().build();`,
   },
+  'test/acceptance-black-box': {
+    why: 'An acceptance scenario says what a client of the application observes once a story is built, and it is written before the code of the story: the scenario of a route not built yet fails on its answer, and stays wrapped in `pending(...)` until the rows it names are built. A class of the application imported by the spec would not exist yet, so the spec could not even compile before the code; once it exists, the scenario that calls it tests the class, not what the client gets. The spec drives the routes and asserts the answer, the problem document and the integration events. It may import the builders of a context (test data) and its published language (the contract its clients already read), the support of test/e2e/ and the packages. It is a warning.',
+    bad: `// test/acceptance/us5.acceptance.spec.ts
+import { Invoice } from '@/contexts/billing/domain/aggregates/invoice.aggregate.js';`,
+    good: `// test/acceptance/us5.acceptance.spec.ts
+it('#US5.02 AC1 an accountant issues an invoice', pending(async () => {
+  expectStatus(await accountant.post('/invoices', anInvoiceRequest()), 201);
+}));`,
+  },
   'test/helper-placed': {
     why: 'test/unit/ and test/integration/ hold specs. A helper written among them (an arrange function several specs import, a factory of test data, an in-memory class) has no name a reader can look for, and the next spec copies it instead of finding it. Each has its place: the arrangement several specs of the context share, the test application or the buses with the fakes of the context, is a world of test/worlds/*.world.ts (generate test-world writes one from the fakes of the context); test data is a builder of test/builders/; an in-memory implementation of a port is a fake of test/fakes/. A file whose name ends with .spec.ts, .test.ts or .d.ts is not reported. It is a warning.',
     bad: `test/unit/scheduling-application.ts   // imported by four handler specs`,

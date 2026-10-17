@@ -11,7 +11,7 @@ export default defineConfig({
   // An import alias is resolved from the "paths" of tsconfig.json, which name the sources.
   resolve: { tsconfigPaths: true },
   test: {
-    include: ['test/e2e/**/*.e2e.spec.ts'],
+    include: ['test/e2e/**/*.e2e.spec.ts', 'test/acceptance/**/*.acceptance.spec.ts'],
     {{#if assembly.discovery}}
     // Discovery imports the role files of a context itself: inlined, the package loads them through the runner, which compiles them.
     server: { deps: { inline: ['@ddd-ts-kit/di'] } },

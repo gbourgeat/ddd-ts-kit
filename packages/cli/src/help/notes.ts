@@ -68,6 +68,21 @@ export const NOTES = `  affected         what a pull request has to run: the con
                    is its own, its file:line and its fix: handle it, or dismiss it by a decision record
                    (generate adr), then delete the marker. Reads only: exits 0 when it can close, 1
                    listing what keeps it open, 2 on a code no row carries or without slices.md
+  acceptance       the acceptance scenarios of each story (test/acceptance/<story>.acceptance.spec.ts) against
+                   its rows in slices.md and the criteria of docs/architecture/stories/<story>.md: the rows and
+                   criteria each scenario names (#US5.02 AC1 in its title), the scenarios left to write
+                   (it.todo), those wrapped in pending(...) of @ddd-ts-kit/testing/e2e until their code is
+                   built, and what is inconsistent (no row, an unknown row or criterion, a scenario skipped,
+                   a pending one whose rows are done, a locked one changed while its criteria were not);
+                   --gate written: every slice row and criterion has a written scenario, none is left to
+                   write, the acceptance is locked (before the code of the story); --gate passing: none is
+                   pending either (before the story closes); exits 1 while a gate is not met, or, without
+                   one, on an inconsistency. Never runs a test. --lock writes
+                   test/acceptance/<story>.acceptance.lock.json, the fingerprint of each criterion and of
+                   each scenario (pending(...), layout and comments aside), refused while a scenario is
+                   left to write or a locked one changed while no criterion it proves did; --reason
+                   "<how the scenario failed its criterion>" locks it anyway and keeps the reason as an
+                   amendment, listed for the owner to validate
   worker-scope     a git worktree on the branch build/<context> (by default ../<project>-<context>), cut from
                    --base <ref> (by default the current branch, refused from a worker's worktree), its
                    .ddd-ts-kit/worker.json, and the briefing of the worker of that context; --rows <id,...>

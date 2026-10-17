@@ -10,6 +10,7 @@ export type { HttpClient } from './e2e/http-client.js';
 export type { HttpHeaders } from './e2e/http-headers.js';
 export type { HttpResponse } from './e2e/http-response.js';
 export { listenOnRandomPort, type NodeServer } from './e2e/listen-on-random-port.js';
+export { pending, type ScenarioBody } from './e2e/pending.js';
 export type { RequestOptions } from './e2e/request-options.js';
 export type { RunningServer } from './e2e/running-server.js';
 export { settled, type PendingCount, type PendingWork, type SettledOptions } from './e2e/settled.js';

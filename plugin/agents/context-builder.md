@@ -39,7 +39,11 @@ install of its package manager), never an install that names a package.
 
 ## Your scope, held by the guard
 
-- You write only `src/contexts/<your context>/**` and the end-to-end specs of your slices.
+- You write only `src/contexts/<your context>/**` and the end-to-end specs of your slices. In
+  the acceptance spec of the story (`test/acceptance/`), you only remove `pending(...)` around a
+  scenario your row now satisfies: the guard refuses any other change, and `npx ddd-ts-kit
+  acceptance --lock` to you. A scenario that seems wrong is a need of your report, with the
+  criterion of the story it fails; never change it to pass.
 - Shared files are not yours: the config, `src/main.ts`, `src/platform/**`, `package.json`,
   the lockfile, migrations (but your working migration, `npm run db:generate working-<what>`),
   what you would write by hand under `docs/` (but a decision record you generated). Another
@@ -91,7 +95,10 @@ install of its package manager), never an install that names a package.
 3. Fill the `TODO(domain)` markers inside out and test first: the aggregate spec then its
    intention method, the handler spec then the handler, then the route. Replace every
    `it.todo`. Fakes and builders, never mocks. Do not change what the generator structured,
-   and never edit `<context>.declarations.ts`: it is regenerated.
+   and never edit `<context>.declarations.ts`: it is regenerated. When the story has an
+   acceptance spec, `npm run test:e2e -- test/acceptance/<story>` once the route answers: each
+   scenario of your row that now passes asks to remove its `pending(...)`; one that still fails
+   on what your row should do means the slice is not done.
 4. `npx ddd-ts-kit verify-slice <context> --since <trunk>`: one run regenerates the derived
    files, checks the files changed since the trunk and runs the specs of the context, then
    names the files near the 350-line limit and the paths to stage. Run it again until it
