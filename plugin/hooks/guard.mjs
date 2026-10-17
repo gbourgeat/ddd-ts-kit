@@ -2,7 +2,7 @@
 // Fails open by design: a guard that breaks must never block the work it guards.
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { closeSync, existsSync, fstatSync, openSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { closeSync, existsSync, fstatSync, mkdirSync, openSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 
@@ -109,8 +109,10 @@ const DECISION_RECORD = /^docs\/adr\/[^/]+\.md$/;
 // migration tool writes it; the conductor generates the real one on the trunk at merge.
 const WORKING_MIGRATION = /(^|\/)migrations\/(.+\/)?\d+[_-]working[_-][\w-]*(\.(sql|[cm]?[jt]s)|\/migration\.sql)$/;
 const REPORT_TO_CONDUCTOR = 'Do not work around it: finish what you can and report the need to the conductor.';
-const EDIT_WITH_TOOLS =
-  'Edit with the Edit or Write tool so that the scope check applies; to delete or move a file of your scope, use `git rm` or `git mv`, allowed inside the scope only. Output to /dev/null or to the system temp directory stays free.';
+// Where the guard keeps the state of a worker between two of its calls: the kit's ignored folder.
+const GUARD_STATE = '.ddd-ts-kit/guard';
+const FREE_OUTPUT = 'Output to /dev/null or to the system temp directory stays free.';
+const EDIT_WITH_TOOLS = `Inside your scope, the editor tools and the shell may both write; outside it, nothing may. ${FREE_OUTPUT}`;
 // The clean install of each package manager: what installs the lockfile as it is.
 const CLEAN_INSTALL = { npm: 'npm ci', pnpm: 'pnpm install --frozen-lockfile' };
 
@@ -200,6 +202,11 @@ function session(input) {
 
 // A patch of Codex can touch several files: a refusal of any of them wins over a question.
 function preWrite(input) {
+  const pending = pendingOfWriter(input);
+  if (pending) {
+    decide(input, pending.mode === 'advise' ? 'ask' : 'deny', pending.reason);
+    return;
+  }
   const verdicts = writesOf(input)
     .map((written) => verdictOn(written, input))
     .filter(Boolean);
@@ -207,6 +214,17 @@ function preWrite(input) {
   if (verdict) {
     decide(input, verdict.decision, verdict.reason);
   }
+}
+
+// A worker whose inline code changed files outside its scope puts them back before writing again.
+function pendingOfWriter(input) {
+  const [first] = writesOf(input);
+  const project = first && findProject(dirname(first.file));
+  if (!project || project.mode === 'off' || !workerContext(project, input)) {
+    return undefined;
+  }
+  const pending = pendingChangeReason(project, input, []);
+  return pending?.reason ? { mode: project.mode, reason: pending.reason } : undefined;
 }
 
 function verdictOn({ file, written, replaced }, input) {
@@ -246,15 +264,29 @@ async function preBash(input) {
   }
   shell = await import('./shell-commands.mjs');
   const commands = shell.simpleCommands(command, input.cwd ?? process.cwd());
+  const refusal = workerCommandReason(project, input, { context, command, commands });
+  if (refusal) {
+    decide(input, project.mode === 'advise' ? 'ask' : 'deny', refusal);
+  }
+}
+
+// What a worker may not run: a file it must put back first, then what the command itself would do;
+// a command allowed to run inline code has the files outside the scope noted before it.
+function workerCommandReason(project, input, { context, command, commands }) {
+  const pending = pendingChangeReason(project, input, commands);
+  if (pending) {
+    return pending.reason;
+  }
   const refusal =
     sharedGeneratorReason(project, context, command) ??
     dependencyChangeReason(commands) ??
     workingMigrationReason(command) ??
     formatterReason(project, commands) ??
     fileChangeReason(project, input, commands);
-  if (refusal) {
-    decide(input, project.mode === 'advise' ? 'ask' : 'deny', refusal);
+  if (!refusal) {
+    noteBeforeInlineCode(project, input, commands);
   }
+  return refusal;
 }
 
 function postWrite(input) {
@@ -798,51 +830,69 @@ function formatRunsBiome(project) {
   return typeof format === 'string' && /\bbiome\b/.test(format);
 }
 
-// A worker edits through the editor tools only: the shell must not write around the scope check
-// of pre-write. Redirections and in-place edits are refused on any file of a project; copies,
-// moves, deletions and restores outside the scope of the worker.
+// A worker never writes outside its scope, whatever the tool. A file the shell writes by name (a
+// redirection, `sed -i`, `perl -i`, `tee`) is held to the checks of a write with the editor tools;
+// copies, moves, deletions and restores outside the scope are refused; inline code, whose writes
+// cannot be read in advance, is checked after it ran (`pendingChangeReason`).
 function fileChangeReason(project, input, commands) {
   for (const command of commands) {
-    const what = redirectionWrite(command) ?? inPlaceWrite(command) ?? inlineCode(command);
-    if (what) {
-      return `A worker changes files with the editor tools only: ${what}. ${EDIT_WITH_TOOLS}`;
+    for (const target of writtenTargets(command)) {
+      const refusal = shellWriteReason(project, input, target);
+      if (refusal) {
+        return refusal;
+      }
     }
     const changed = changedPaths(command).find((path) => outsideScope(project, input, path.place));
     if (changed) {
-      return `A worker changes files with the editor tools only: \`${changed.by}\` changes ${describePlace(project, changed.place)}, outside your scope. ${EDIT_WITH_TOOLS}`;
+      return `A worker never changes a file outside its scope: \`${changed.by}\` changes ${describePlace(project, changed.place)}. ${EDIT_WITH_TOOLS}`;
     }
   }
   return undefined;
 }
 
-function redirectionWrite({ redirects, directory }) {
-  const written = redirects.find(
-    ({ operator, target }) => OUTPUT_REDIRECTS.has(operator) && isProjectPath(shell.placeOf(target, directory)),
+// The files a command writes by name, of a project or unknown to all but the shell.
+function writtenTargets(command) {
+  const at = (target, by) => ({ place: shell.placeOf(target, command.directory), by });
+  const redirected = command.redirects
+    .filter(({ operator }) => OUTPUT_REDIRECTS.has(operator))
+    .map(({ operator, target }) =>
+      at(target, `the redirection \`${operator} ${target.replaceAll(shell.UNKNOWN, '$(...)')}\``),
+    );
+
+  return [...redirected, ...inPlaceTargets(command).map((file) => at(file.word, file.by))].filter(({ place }) =>
+    isProjectPath(place),
   );
-  return written
-    ? `the redirection \`${written.operator} ${written.target.replaceAll(shell.UNKNOWN, '$(...)')}\` writes a file of the project`
-    : undefined;
 }
 
 function isProjectPath(place) {
   return place === undefined || findProject(place) !== undefined;
 }
 
-// `sed -i`, `perl -i` and `tee` write the files they are given.
-function inPlaceWrite({ words, directory }) {
-  const name = shell.commandName(words);
-  const files =
-    name === 'sed' || name === 'perl'
-      ? inPlaceFiles(words.slice(1))
-      : name === 'tee'
-        ? shell.operands(words.slice(1))
-        : [];
-  const touched = files.find((file) => isProjectPath(shell.placeOf(file, directory)));
-  if (touched === undefined) {
-    return undefined;
+function shellWriteReason(project, input, { place, by }) {
+  if (place === undefined) {
+    return `A worker writes with the shell only to a file it names: ${by} writes files only the shell knows. ${EDIT_WITH_TOOLS}`;
   }
+  const owner = findProject(place);
+  if (owner.root !== project.root) {
+    return `A worker never changes a file outside its scope: ${by} writes ${place}, in another checkout. ${EDIT_WITH_TOOLS}`;
+  }
+  const refusal =
+    generatedFileReason(project, place) ??
+    workerScopeReason(project, place, input) ??
+    handWrittenRoleReason(project, place);
 
-  return name === 'tee' ? `\`tee\` writes ${touched}` : `\`${name} -i\` edits ${touched} in place`;
+  return refusal ? `${by}: ${refusal} ${FREE_OUTPUT}` : undefined;
+}
+
+// `sed -i`, `perl -i` and `tee` write the files they are given.
+function inPlaceTargets({ words }) {
+  const name = shell.commandName(words);
+  if (name === 'tee') {
+    return shell.operands(words.slice(1)).map((word) => ({ word, by: `\`tee\` writing ${word}` }));
+  }
+  const files = name === 'sed' || name === 'perl' ? inPlaceFiles(words.slice(1)) : [];
+
+  return files.map((word) => ({ word, by: `\`${name} -i\` editing ${word}` }));
 }
 
 // The files of an in-place edit: every operand once the script is given by `-e` or `-f`, else all but the first.
@@ -985,6 +1035,126 @@ function outsideScope(project, input, place) {
   }
 
   return owner.root !== project.root || workerScopeReason(project, place, input) !== undefined;
+}
+
+// Inline code of a worker (`python3 - <<EOF`, `node -e`) runs, but its writes cannot be read in
+// advance: the files outside the scope are noted before it, and compared at the next call of the
+// guard by that worker. A file it changed there stops the worker until it is put back; the
+// commands that put back exactly those files stay allowed.
+function noteBeforeInlineCode(project, input, commands) {
+  if (commands.some((command) => inlineCode(command) !== undefined)) {
+    const before = Object.fromEntries(outsideChanges(project, input));
+    writeState(stateFile('before-inline', project, input), before);
+  }
+}
+
+function pendingChangeReason(project, input, commands) {
+  settleInlineCode(project, input);
+  const recorded = stateFile('outside', project, input);
+  const changed = readJson(recorded);
+  if (!changed) {
+    return undefined;
+  }
+  const now = outsideChanges(project, input);
+  const left = Object.entries(changed).filter(([path, was]) => (now.get(path)?.hash ?? null) !== (was?.hash ?? null));
+  if (left.length === 0) {
+    rmSync(recorded, { force: true });
+    return undefined;
+  }
+  const paths = new Set(left.map(([path]) => path));
+  if (commands.length > 0 && commands.every((command) => putsBack(project, command, paths))) {
+    return { undoing: true };
+  }
+
+  return { reason: putBackReason(left, now) };
+}
+
+function settleInlineCode(project, input) {
+  const noted = stateFile('before-inline', project, input);
+  const before = readJson(noted);
+  if (!before) {
+    return;
+  }
+  rmSync(noted, { force: true });
+  const now = outsideChanges(project, input);
+  const changed = [...new Set([...Object.keys(before), ...now.keys()])].filter(
+    (path) => (before[path]?.hash ?? null) !== (now.get(path)?.hash ?? null),
+  );
+  if (changed.length > 0) {
+    const recorded = readJson(stateFile('outside', project, input)) ?? {};
+    for (const path of changed) {
+      recorded[path] ??= before[path] ?? null;
+    }
+    writeState(stateFile('outside', project, input), recorded);
+  }
+}
+
+// A command that only puts back some of `paths`: `git restore`, `git checkout --`, `rm` of a new file.
+function putsBack(project, command, paths) {
+  const touched = [...changedPaths(command), ...writtenTargets(command)];
+  return (
+    touched.length > 0 &&
+    touched.every(({ place }) => place !== undefined && paths.has(projectPath(project, place))) &&
+    inlineCode(command) === undefined
+  );
+}
+
+function putBackReason(left, now) {
+  const restore = left.filter(([path, was]) => was !== null || !now.get(path)?.untracked).map(([path]) => path);
+  const remove = left.filter(([path, was]) => was === null && now.get(path)?.untracked).map(([path]) => path);
+  const steps = [
+    ...(restore.length > 0 ? [`\`git restore -- ${restore.join(' ')}\``] : []),
+    ...(remove.length > 0 ? [`\`rm ${remove.join(' ')}\``] : []),
+  ];
+
+  return `Your inline code changed files outside your scope: ${left.map(([path]) => path).join(', ')}. Put them back before anything else (${steps.join(', then ')}: allowed for these files), then change only files of your scope. ${REPORT_TO_CONDUCTOR}`;
+}
+
+// The files outside the scope that differ from HEAD, each with the hash of its content (null when
+// deleted) and whether git tracks it; generated files are left out: a generator rewrites them.
+function outsideChanges(project, input) {
+  const status = git(project, ['status', '--porcelain=v1', '-z', '--untracked-files=all']) ?? '';
+  const entries = status.split('\0');
+  const changes = new Map();
+  for (let index = 0; index < entries.length; index += 1) {
+    const entry = entries[index];
+    if (entry.length < 4) {
+      continue;
+    }
+    const path = entry.slice(3);
+    index += /^[RC]/.test(entry) ? 1 : 0;
+    if (path.startsWith('.ddd-ts-kit/')) {
+      continue;
+    }
+    const file = join(project.root, path);
+    if (workerScopeReason(project, file, input) && !generatedFileReason(project, file)) {
+      changes.set(path, { hash: contentHash(file), untracked: entry.startsWith('??') });
+    }
+  }
+  return changes;
+}
+
+function contentHash(file) {
+  try {
+    return createHash('sha256').update(readFileSync(file)).digest('hex');
+  } catch {
+    return null;
+  }
+}
+
+// The state of a worker kept between two calls of the guard, in the kit's ignored folder of its
+// worktree rather than a shared temporary directory.
+function stateFile(kind, project, input) {
+  const key = createHash('sha256')
+    .update(`${input.session_id ?? ''}\0${input.agent_id ?? ''}`)
+    .digest('hex')
+    .slice(0, 16);
+  return join(project.root, GUARD_STATE, `${kind}-${key}.json`);
+}
+
+function writeState(file, state) {
+  mkdirSync(dirname(file), { recursive: true });
+  writeFileSync(file, JSON.stringify(state), { mode: 0o600 });
 }
 
 function describePlace(project, place) {

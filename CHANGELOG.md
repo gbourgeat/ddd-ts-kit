@@ -49,17 +49,21 @@ Outside a git repository only the file is judged.
 **`status --workers` says which worktree lacks its dependencies.** `dependencies not installed`
 in the line of a worker whose copy of the project has no `node_modules`; `installed` in `--json`.
 
-**The guard holds a worker to the editor tools.** For a `context-builder` agent with its
-`.ddd-ts-kit/worker.json`, the guard of the plugin refuses a shell command that writes a file of
-the project around the Edit and Write tools, so that the scope check of each write cannot be
-bypassed: an in-place edit (`sed -i`, `perl -i`), a redirection (`>`, `>>`, `&>`) or `tee` into a
-project, inline code given to an interpreter (`node -e`, `python3 -c`, `ruby -e`, `-` or a heredoc),
-and `cp`, `mv`, `rm`, `touch`, `truncate`, `dd`, `install`, `ln`, `find -delete`,
-`git checkout -- <path>`, `git restore`, `git rm`, `git mv` and `git clean` outside its scope;
-`git apply` and `patch` too. Commands nested in `bash -c`, `eval`, `$(...)`, `xargs` and
-`find -exec` are read the same way. Output to `/dev/null`, a descriptor (`2>&1`) or a path out of
-any project (the system temp directory) stays free, and so does a heredoc fed to git
-(`git commit -F - <<EOF`). The conductor and the other agents are not held to it.
+**The guard holds the shell of a worker to its scope.** For a `context-builder` agent with its
+`.ddd-ts-kit/worker.json`, a file the shell writes by name is judged as a write of the Edit and
+Write tools: an in-place edit (`sed -i`, `perl -i`), a redirection (`>`, `>>`, `&>`) or `tee`
+pass inside the scope of the worker and are refused outside it (a shared file, another context,
+a generated file, another checkout) or on a path only the shell knows (`"$FILE"`); so are `cp`,
+`mv`, `rm`, `touch`, `truncate`, `dd`, `install`, `ln`, `find -delete`, `git checkout -- <path>`,
+`git restore`, `git rm`, `git mv` and `git clean` outside its scope, and `git apply` and `patch`
+always. Inline code given to an interpreter (`node -e`, `python3 -c`, `-` or a heredoc) cannot be
+read in advance: it runs, the guard notes the files outside the scope before it, and at the next
+command or write of that worker a file it changed there stops the worker until it is put back,
+with the `git restore` or `rm` the refusal names, allowed for those files only. Commands nested
+in `bash -c`, `eval`, `$(...)`, `xargs` and `find -exec` are read the same way. Output to
+`/dev/null`, a descriptor (`2>&1`) or a path out of any project (the system temp directory)
+stays free, and so does a heredoc fed to git (`git commit -F - <<EOF`). The conductor and the
+other agents are not held to it.
 
 **The guard refuses a worker another formatter.** `npx prettier` in a project whose `format`
 script runs Biome, and a bare `npx biome` (without `--no`: it can run an unrelated package of the

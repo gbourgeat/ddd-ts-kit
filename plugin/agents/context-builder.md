@@ -51,12 +51,13 @@ install of its package manager), never an install that names a package.
   is the project owner's: report it. Never pass `--grant`: the roles are a
   file of the platform. Who holds each new permission is a need of your report, and the
   `authz/granted` warning it leaves in your worktree is that need, not a cause to fix.
-- You change files with the Edit and Write tools only, so that the guard checks the scope of
-  each write. It refuses a shell command that writes a file of the project around them: an
-  in-place edit (`sed -i`, `perl -i`), a redirection (`>`, `>>`, `tee`), inline code
-  (`node -e`, `python -c`, a heredoc to an interpreter), and `cp`, `mv`, `rm`, `touch`,
-  `git checkout -- <path>` or `git restore` outside your scope. Delete or move a file of your
-  scope with `git rm` or `git mv`. Output to `/dev/null` or to the system temp directory stays free.
+- You write inside your scope only, with the Edit and Write tools or with the shell: the guard
+  holds an in-place edit (`sed -i`, `perl -i`), a redirection (`>`, `>>`, `tee`), `cp`, `mv`,
+  `rm`, `touch`, `git checkout -- <path>` and `git restore` to the same scope as a write, and
+  refuses one outside it, or to a path only the shell knows (`"$FILE"`). Inline code (`node -e`,
+  `python3 - <<EOF`) runs, but if it changed a file outside your scope, the guard stops you
+  until you put that file back with the command it names. Output to `/dev/null` or to the
+  system temp directory stays free.
 - When you need something outside your scope (a field in an upstream contract, a new
   aggregate, a dependency, a platform binding): do not work around it and do not retry a
   refused write. Finish the slices that do not depend on it and put the need in your report.

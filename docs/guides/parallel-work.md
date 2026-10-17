@@ -207,8 +207,8 @@ Scope
 - You may write: src/contexts/notification/** and test/e2e/<use-case>.e2e.spec.ts of your slices.
 - You may not write anything else. Shared files (config, src/platform, src/main.ts,
   package.json, lockfile, migrations, docs/) and other contexts are refused by the guard:
-  report the need, do not work around it. Change files with the Edit and Write tools only: the guard
-  refuses a shell command that writes one (`sed -i`, `>`, `tee`, `node -e`). A slice that changes the stored state generates a
+  report the need, do not work around it. The shell writes inside your scope only, as the editor tools do:
+  a write outside it is refused, and inline code (`node -e`, a heredoc) that changed one stops you. A slice that changes the stored state generates a
   working migration only: `npm run db:generate working-<what-it-does>`. A decision taken in a slice is
   recorded by `generate adr` (without --deviation), and committed with it. The derived files (generated
   documents, barrels, context map, dependency rules) are written by `npm run regenerate`, never by hand.
@@ -260,13 +260,14 @@ lint, test, compiler and pipeline configuration). For its `context-builder` agen
 further: with a `.ddd-ts-kit/worker.json` in the worktree, a write outside
 `src/contexts/<context>/` and the end-to-end specs is refused, and so are a generator that
 writes shared files and a dependency change, wherever its flags stand (`npm i -D zod`); the
-clean install stays free. It changes files with the editor tools only, so that each write
-goes through that scope check: a shell command that writes a file of the project around them
-is refused (an in-place edit such as `sed -i`, a redirection or `tee` into the project, inline
-code given to an interpreter such as `node -e` or a heredoc, and `cp`, `mv`, `rm`, `touch`,
-`git checkout -- <path>` or `git restore` outside its scope; `git rm` and `git mv` inside it
-pass), and so are `npx prettier` in a project that `format` runs Biome on and a bare
-`npx biome`. Output to `/dev/null` or the system temp directory stays free, and the conductor
+clean install stays free. The same scope holds for the shell: an in-place edit such as
+`sed -i`, a redirection or `tee`, and `cp`, `mv`, `rm`, `touch`, `git checkout -- <path>` or
+`git restore` pass inside the scope and are refused outside it, or on a path only the shell
+knows (`"$FILE"`). Inline code given to an interpreter (`node -e`, a heredoc) cannot be read in
+advance: it runs, the guard notes the files outside the scope before it and compares them at
+the worker's next command, and a file it changed there stops the worker until it is put back
+(`git restore`, or `rm` of a new file, allowed for those files). `npx prettier` in a project
+that `format` runs Biome on and a bare `npx biome` are refused. Output to `/dev/null` or the system temp directory stays free, and the conductor
 is not held to any of this. A worker passes `--local-only` to `generate`:
 the command then refuses, and writes nothing, when the kind would write outside its context:
 

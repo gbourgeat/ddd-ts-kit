@@ -96,8 +96,9 @@ runs the clean install of the project in a worktree it creates (`--no-install` l
 you; a note then says what to run), and prints the briefing of that worker. With that file,
 the guard refuses any write of a `context-builder` agent outside `src/contexts/<context>/` and
 its end-to-end specs, any generator that writes a shared file, any dependency change, and any
-shell command that writes a file around the Edit and Write tools (`sed -i`, `>`, `tee`, inline
-`node -e`, `cp`, `mv` or `rm` outside the scope); `npx prettier` and a bare `npx biome` too.
+shell command that writes outside the scope (`sed -i`, `>`, `tee`, `cp`, `mv`, `rm`, or a path
+only the shell knows); inline code (`node -e`, a heredoc) runs, and a file it changed outside the
+scope stops the worker until it is put back; `npx prettier` and a bare `npx biome` are refused too.
 
 Before briefing a worker in a context that already has one, run
 `npx ddd-ts-kit status --workers` from the trunk: it lists each worker (worktree, branch,
