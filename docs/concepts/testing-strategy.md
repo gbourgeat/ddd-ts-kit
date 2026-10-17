@@ -348,10 +348,11 @@ API, use generated data with a seed printed on failure so a failing run can be r
 assert what a client observes (responses, published events), never the database directly.
 
 Adapter and end-to-end specs of a generated project run on PostgreSQL in process (PGlite). With
-Vitest, a global setup (`test/support/test-database-template.ts`) starts it once per run, creates
-the tables and saves the database as a template; each spec opens a copy of it instead of starting
-PostgreSQL and creating the tables itself, so that a busy machine no longer makes the hook that
-opens the database outlast its timeout. With Jest, each spec still creates its own.
+Vitest, a global setup (`test/support/test-database-template.ts`) starts it once per run and saves
+its initialised cluster; each spec opens a copy of it instead of running an initdb of its own, the
+slow part of starting, so that a busy machine no longer makes the hook that opens the database
+outlast its timeout. Each spec still creates its tables on that copy: the code of the contexts that
+creates them stays run, and measured, as before. With Jest, each spec still initialises its own.
 
 What happens after the answer (the outbox relayed, the handlers it reaches, what they store in
 turn) is awaited with `await application.settled()`, then asserted at once. A fixed delay is slow

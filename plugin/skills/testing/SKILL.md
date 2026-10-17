@@ -111,8 +111,9 @@ built. A test states only what its rule depends on.
 the business scenario; assert what a client observes (responses, published events), never
 the database. What happens after the answer (the outbox relayed, the handlers it reaches) is
 asserted once `await application.settled()` has resolved, never after a fixed delay: it fails
-naming what is still pending. With Vitest on an ORM, each spec opens a copy of the test
-database a global setup saved once per run (`test/support/test-database-template.ts`).
+naming what is still pending. With Vitest on an ORM, each spec opens a copy of the PostgreSQL
+cluster a global setup initialised once per run (`test/support/test-database-template.ts`), and
+creates its tables there.
 
 ## Shape
 

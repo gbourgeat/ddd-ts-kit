@@ -20,7 +20,7 @@ export default defineConfig({
     // empty each other's tables, so they run one after the other there.
     fileParallelism: (process.env['DATABASE_URL'] ?? '') === '',
 {{#if persistence.hasDatabase}}
-    // Starts PostgreSQL in process once and creates its tables: each application starts on a copy of that template database.
+    // Initialises PostgreSQL in process once: each application starts on a copy of that cluster, and creates its tables there.
     globalSetup: ['test/support/test-database-template.ts'],
 {{/if}}
     testTimeout: 20_000,

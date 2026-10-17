@@ -1,6 +1,5 @@
 {{#if tests.vitest}}
-import { existsSync, openAsBlob } from 'node:fs';
-import { writeFile } from 'node:fs/promises';
+import { openAsBlob } from 'node:fs';
 {{/if}}
 import { PGlite } from '@electric-sql/pglite';
 import { PGLiteSocketServer } from '@electric-sql/pglite-socket';
@@ -28,7 +27,19 @@ export function openTestDatabase(url?: string): Promise<TestDatabase> {
 }
 
 async function openInProcess(): Promise<TestDatabase> {
-  const { engine, server, dataSource } = await {{#if tests.vitest}}startedInProcess(){{/if}}{{#if tests.jest}}createdInProcess(){{/if}};
+  const engine = await {{#if tests.vitest}}startedPostgres(){{/if}}{{#if tests.jest}}PGlite.create(){{/if}};
+  const server = new PGLiteSocketServer({ db: engine, host: '127.0.0.1', port: 0, maxConnections: 10 });
+
+  await server.start();
+
+  // PGlite is one session behind every socket: a second connection would step into the transaction of the first.
+  const dataSource = createDataSource('postgresql://postgres:postgres@' + server.getServerConn() + '/postgres', {
+    poolSize: 1,
+  });
+
+  await dataSource.initialize();
+  await createTables(dataSource);
+
   const persistence = persistenceOver(dataSource);
 
   const close = async (): Promise<void> => {
@@ -40,64 +51,20 @@ async function openInProcess(): Promise<TestDatabase> {
   return { persistence, reset: () => truncateAll(dataSource), close };
 }
 
-/** PostgreSQL in process, served over the wire protocol, and the one connection the tests reach it by. */
-interface InProcess {
-  readonly engine: PGlite;
-  readonly server: PGLiteSocketServer;
-  readonly dataSource: DataSource;
-}
 {{#if tests.vitest}}
-
 /**
- * Names the file of the template database of the run: set by its global setup,
- * test/support/test-database-template.ts, before any spec starts.
+ * PostgreSQL in process: a copy of the cluster the global setup of the run initialised once
+ * (test/support/test-database-template.ts), which spares each spec the initdb of its own; without
+ * one (a run that names no global setup), a cluster initialised here. The tables are created on it
+ * by the caller, every time, as the first migration creates them.
  */
-const TEMPLATE = 'TEST_DATABASE_TEMPLATE';
+async function startedPostgres(): Promise<PGlite> {
+  const template = process.env['TEST_DATABASE_TEMPLATE'];
 
-/**
- * A copy of the template database of the run. The first opening of a run, that of its global setup,
- * creates the database and saves it as the template; with no template named, each opening creates its own.
- */
-async function startedInProcess(): Promise<InProcess> {
-  const template = process.env[TEMPLATE];
-
-  if (template !== undefined && existsSync(template)) {
-    return served(await PGlite.create({ loadDataDir: await openAsBlob(template) }));
-  }
-
-  const started = await createdInProcess();
-
-  if (template !== undefined) {
-    await writeFile(template, new Uint8Array(await (await started.engine.dumpDataDir('none')).arrayBuffer()));
-  }
-
-  return started;
+  return PGlite.create(template === undefined ? {} : { loadDataDir: await openAsBlob(template) });
 }
+
 {{/if}}
-
-async function createdInProcess(): Promise<InProcess> {
-  const started = await served(await PGlite.create());
-
-  await createTables(started.dataSource);
-
-  return started;
-}
-
-async function served(engine: PGlite): Promise<InProcess> {
-  const server = new PGLiteSocketServer({ db: engine, host: '127.0.0.1', port: 0, maxConnections: 10 });
-
-  await server.start();
-
-  // PGlite is one session behind every socket: a second connection would step into the transaction of the first.
-  const dataSource = createDataSource('postgresql://postgres:postgres@' + server.getServerConn() + '/postgres', {
-    poolSize: 1,
-  });
-
-  await dataSource.initialize();
-
-  return { engine, server, dataSource };
-}
-
 async function openServer(url: string): Promise<TestDatabase> {
   const dataSource = createDataSource(url);
 

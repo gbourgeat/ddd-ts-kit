@@ -9,19 +9,23 @@ const SUPPORT = 'test/e2e/support/start-application.ts';
 
 describe('the test database of a project on an ORM', () => {
   it.each(['drizzle', 'knex', 'prisma', 'typeorm'])(
-    'with %s, is saved once per Vitest run by a global setup, and each spec opens a copy of it',
+    'with %s, starts from a cluster a global setup initialised once per Vitest run, and creates its tables in each spec',
     (orm) => {
       const root = initProject('--orm', orm);
 
-      expect(read(root, TEMPLATE)).toContain('await (await openTestDatabase()).close();');
+      expect(read(root, TEMPLATE)).toContain("process.env['TEST_DATABASE_TEMPLATE'] = file;");
       expect(read(root, 'vitest.config.ts')).toContain(GLOBAL_SETUP);
       expect(read(root, 'vitest.e2e.config.ts')).toContain(GLOBAL_SETUP);
-      expect(read(root, OPEN)).toContain("const TEMPLATE = 'TEST_DATABASE_TEMPLATE';");
-      expect(read(root, OPEN)).toContain('PGlite.create({ loadDataDir: await openAsBlob(template) })');
+
+      expect(read(root, OPEN)).toContain(
+        'return PGlite.create(template === undefined ? {} : { loadDataDir: await openAsBlob(template) });',
+      );
+
+      expect(read(root, OPEN)).toContain('= await startedPostgres();');
     },
   );
 
-  it('with Jest, is created by each spec, as no global setup names a template', () => {
+  it('with Jest, is initialised by each spec, as no global setup names a cluster', () => {
     const root = initProject('--tests', 'jest');
 
     expect(exists(root, TEMPLATE)).toBe(false);

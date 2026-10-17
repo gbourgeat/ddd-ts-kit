@@ -1,5 +1,5 @@
 [English](testing-strategy.md) · **Français**
-<!-- translation-of: testing-strategy.md sha256:c1cfdb0a9ddf4fde -->
+<!-- translation-of: testing-strategy.md sha256:e2c50bbdc326cbb5 -->
 
 # Stratégie de test
 
@@ -360,10 +360,11 @@ publiés), jamais directement la base de données.
 
 Les *specs* d'adaptateur et de bout en bout d'un projet généré s'exécutent sur PostgreSQL dans le
 processus (PGlite). Avec Vitest, une mise en place globale (`test/support/test-database-template.ts`)
-le démarre une fois par exécution, crée les tables et enregistre la base comme modèle ; chaque
-*spec* en ouvre une copie au lieu de démarrer PostgreSQL et de créer les tables elle-même, si bien
-qu'une machine chargée ne fait plus dépasser son délai au *hook* qui ouvre la base. Avec Jest,
-chaque *spec* crée encore la sienne.
+le démarre une fois par exécution et enregistre son cluster initialisé ; chaque *spec* en ouvre une
+copie au lieu de lancer son propre initdb, la partie lente du démarrage, si bien qu'une machine
+chargée ne fait plus dépasser son délai au *hook* qui ouvre la base. Chaque *spec* crée encore ses
+tables sur cette copie : le code des contextes qui les crée reste exécuté, et mesuré, comme avant.
+Avec Jest, chaque *spec* initialise encore le sien.
 
 Ce qui se passe après la réponse (l'outbox relayée, les gestionnaires qu'elle atteint, ce qu'ils
 enregistrent à leur tour) s'attend avec `await application.settled()`, puis se vérifie aussitôt.
