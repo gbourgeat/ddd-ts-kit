@@ -503,7 +503,7 @@ config, `docsUi`, `ci` and `logger` included.
 | `biome.json` | the formatter: Biome with its linter and its import organiser off, line width 120; `npm run format` writes, `npm run format:check` checks, and what the CLI generates is already formatted |
 | `knip.json` | dead code: entry points are `main.ts` and `apps/*/main.ts`, the scripts, the specs and the fakes, the module files in the explicit style, the role files under discovery (jobs and publishers included) |
 | `vitest.config.ts` | unit and integration projects, the coverage thresholds read from `ddd-ts-kit.config.json` (`governedCoverage`), per context and layer, in the standard decorator mode `decorators()` of `@ddd-ts-kit/testing/vitest`, which compiles the files holding a decorator with the compiler of the project (Vitest does not lower standard decorators; it lowers legacy ones itself, so a project with `experimentalDecorators` gets no plugin), and under `--assembly discovery` `server.deps.inline: ['@ddd-ts-kit/di']` |
-| `lefthook.yml`, `commitlint.config.mjs` | pre-commit (ESLint, the format check and `check` on the staged files, `check --commit-size --staged`, which never blocks), pre-push (types, unit tests) and commit-msg hooks (`npm run hooks:install`), conventional commits |
+| `lefthook.yml`, `commitlint.config.mjs` | pre-commit (ESLint, the format check and `check` on the staged files, `check --commit-size --staged`, which never blocks), pre-push (types, unit tests) and commit-msg hooks (`npm run hooks:install`), each run by the lefthook of the checkout it fires in (`lefthook: node_modules/.bin/lefthook`: a worktree without its dependencies fails the commit instead of skipping the checks), conventional commits |
 | `--ci github` | `.github/workflows/ci.yml`, `pr-title.yml`, `copilot-setup-steps.yml` (Node and the dependencies, installed before the Copilot cloud agent starts), `.github/dependabot.yml`, `.github/branch-protection.md`, `renovate.json`; `codeql.yml` with `--ci-extras codeql` |
 | `--ci gitlab` | `.gitlab-ci.yml` (architecture findings as a Code Quality report through `check --format gitlab`), `.gitlab/merge-request-settings.md`, `renovate.json` |
 | `README.md`, `AGENTS.md`, `CLAUDE.md`, `.claude/rules/*.md`, `.github/instructions/*.instructions.md` | how to run it; a slim guide in `AGENTS.md`, which Codex, Copilot and most coding agents read and `CLAUDE.md` imports (commands, how to read less, the map of the rules, generated files, compiler note, the skills of the plugin: `/ddd-ts-kit:start`, `glossary`, `use-case`, `document`, `quality-gate`) and the invariants in seven rule files, `domain.md`, `application.md`, `published-language.md`, `infrastructure.md`, `presentation.md`, `platform.md` and `tests.md`, each scoped by a `paths` frontmatter, and the same seven for GitHub Copilot, each scoped by `applyTo` |
@@ -1037,13 +1037,14 @@ reads them), and waiting otherwise, with the ids it waits for. `--json` prints
 
 `status --workers` prints the workers of a parallel build instead: each worktree of the
 repository whose copy of the project holds `.ddd-ts-kit/worker.json`, with its branch, its
-context, its rows, its base, the commits it is ahead of the base, the files it changed (committed
+context, its rows, its base, the commits it is ahead of the base, `dependencies not installed`
+when its copy of the project has no `node_modules`, the files it changed (committed
 since the merge base, modified, and untracked but not ignored, relative to the top of the
 repository) and its `.ddd-ts-kit/report.md` with when it was written; then the contexts built by
 more than one worker and the files changed by more than one worker, each with their worktrees.
 A scope file that holds the context only is read too: the worker comes without its rows, its
 base and its commits ahead, and its files are the uncommitted ones. `--json` prints
-`{ workers: [{ worktree, branch, context, rows, base, ahead, files, report }], overlaps: { contexts: [{ context, worktrees }], files: [{ file, worktrees }] } }`,
+`{ workers: [{ worktree, branch, context, rows, base, ahead, installed, files, report }], overlaps: { contexts: [{ context, worktrees }], files: [{ file, worktrees }] } }`,
 `report` being `{ file, modified }` or `null`. Without a worker it says so in one line.
 
 `todo` lists those markers as `file:line` with their kind and their text, in the project or in one
@@ -1076,10 +1077,27 @@ command exits 1. A file without a slices table, or a context no row names, is re
 prints
 `{ file, context, problems: [{ kind, rows, message }], waves: [{ wave, batches: [{ id, owner, context, rows: [{ id, kind, slice, status, waitingFor }], aggregates, brief, sameFiles, unknownOverlap }] }], mergeOrder }`.
 
+## doctor
+
+```
+ddd-ts-kit doctor [--strict]
+```
+
+What an upgrade left to do: the scripts, the packages of the kit (at the ranges of this version)
+and the permissions of the agents that this version writes and the project lacks or writes
+otherwise, then the git hooks. `lefthook.yml` must hold `lefthook: node_modules/.bin/lefthook`,
+which makes each checkout and each worktree run its own lefthook and fail a commit, loudly,
+when its dependencies are missing; the fix is that line, or `init --force` for the whole file.
+The pre-commit hook under `git rev-parse --git-path hooks` must exist and come from lefthook;
+the fix is `npm run hooks:install`, once per clone. `--strict` exits 1 while something is
+missing or at another range; a script written otherwise and a hook this clone has not installed
+are said without failing it. `--json` prints `{ version, findings: [{ area, name, problem,
+expected, found }] }`, `area` being `script`, `package`, `permission` or `hook`.
+
 ## worker-scope
 
 ```
-ddd-ts-kit worker-scope <context> [--base <ref>] [--rows <id,...>] [--worktree <path>] [--branch <name>] [--dry-run]
+ddd-ts-kit worker-scope <context> [--base <ref>] [--rows <id,...>] [--worktree <path>] [--branch <name>] [--no-install] [--dry-run]
 ```
 
 Prepares the place of one worker of a build split by context: creates a git worktree of the
@@ -1095,8 +1113,11 @@ tables; more than two rows get a note, since an agent holds one or two. An exist
 an existing branch, is kept when it contains the base and refused when it does not, so that no
 worker builds on a stale trunk; only the file is written again. Without `--base`, run from a
 worker's worktree (its `.ddd-ts-kit/worker.json`, or a branch `build/<context>`), it refuses:
-that branch would become the trunk. `--dry-run` creates and writes nothing. It needs a git
-repository with one commit at least. The worker then generates with `--local-only`.
+that branch would become the trunk. In a worktree it creates, it then runs the clean install of
+the package manager of the project (`npm ci`, `pnpm install --frozen-lockfile`), its output kept
+only when it fails; a note gives the time it took, or, when it failed or `--no-install` left it
+out, what to run before the worker starts. `--dry-run` creates, writes and installs nothing. It
+needs a git repository with one commit at least. The worker then generates with `--local-only`.
 
 ## affected
 

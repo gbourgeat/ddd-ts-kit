@@ -26,6 +26,71 @@ Nothing to move: the rule only reports less. A workaround such as
 `[InvoiceStatus.Issued]: InvoiceStatus.Issued` in a table keyed by a foreign type can be written
 with the foreign word again, `'issued': InvoiceStatus.Issued`.
 
+**The git hooks run in every worktree, and fail loudly where they cannot.** The `lefthook.yml`
+that `init` writes starts with `lefthook: node_modules/.bin/lefthook`. The hooks of a repository
+are shared by all its worktrees; until now the hook script held the absolute path of the lefthook
+of whichever checkout installed it last, then fell back to other launchers. Once that checkout was
+removed, a worktree without its dependencies skipped every check silently, or had pnpm install
+the project inside it. Now each checkout runs its own lefthook, and one without its dependencies
+fails the commit with `node_modules/.bin/lefthook: not found`. The repository of the kit does the
+same.
+
+**`worker-scope` installs the dependencies of the worktree it creates.** It runs the clean install
+of the package manager of the project there (`npm ci`, `pnpm install --frozen-lockfile`),
+quietly, and its notes say how long it took. When the install fails, the note gives the end of
+its output and what to run; `--no-install` leaves the install out, with the same note.
+`--dry-run` and a worktree it keeps install nothing.
+
+**`doctor` checks the git hooks.** Under a new area, `hook`: a `lefthook.yml` without the
+`lefthook:` line (missing, fails `--strict`), and a pre-commit hook this clone has not installed,
+or that lefthook did not write (said, never failing `--strict`: it is a state of one clone).
+Outside a git repository only the file is judged.
+
+**`status --workers` says which worktree lacks its dependencies.** `dependencies not installed`
+in the line of a worker whose copy of the project has no `node_modules`; `installed` in `--json`.
+
+**The guard holds a worker to the editor tools.** For a `context-builder` agent with its
+`.ddd-ts-kit/worker.json`, the guard of the plugin refuses a shell command that writes a file of
+the project around the Edit and Write tools, so that the scope check of each write cannot be
+bypassed: an in-place edit (`sed -i`, `perl -i`), a redirection (`>`, `>>`, `&>`) or `tee` into a
+project, inline code given to an interpreter (`node -e`, `python3 -c`, `ruby -e`, `-` or a heredoc),
+and `cp`, `mv`, `rm`, `touch`, `truncate`, `dd`, `install`, `ln`, `find -delete`,
+`git checkout -- <path>`, `git restore`, `git rm`, `git mv` and `git clean` outside its scope;
+`git apply` and `patch` too. Commands nested in `bash -c`, `eval`, `$(...)`, `xargs` and
+`find -exec` are read the same way. Output to `/dev/null`, a descriptor (`2>&1`) or a path out of
+any project (the system temp directory) stays free, and so does a heredoc fed to git
+(`git commit -F - <<EOF`). The conductor and the other agents are not held to it.
+
+**The guard refuses a worker another formatter.** `npx prettier` in a project whose `format`
+script runs Biome, and a bare `npx biome` (without `--no`: it can run an unrelated package of the
+registry named biome, which formats nothing), are refused with "format with `npm run format`
+only, then `npm run lint:fix`".
+
+**The guard reads a dependency change wherever its flags stand.** `npm i -D zod`,
+`npm install --save-dev zod`, `pnpm add -D zod`, `yarn add --dev zod`, `npm i zod@1 --save-exact`
+are refused to a worker like `npm i zod`; `npm ci`, `npm install` and
+`pnpm install --frozen-lockfile` stay free. At session start, a worktree whose `package.json`
+already lists the kit but has no `node_modules` is told to run the clean install, not to install
+the kit.
+
+**Format, then lint.** The briefing of a worker, the `context-builder` agent and the `quality-gate`
+and `clean-code` skills say `npm run format`, then `npm run lint:fix`: when Biome wraps a long
+line, the lint then asks for a blank line around it, and that finding is expected.
+
+**A new project has no warning on its first commit.** The `vitest.config.ts` that `init` writes
+declared its two projects inside the function of `defineConfig`, 32 lines long against the limit
+of 30 of `clean/function-size`. They are constants of the file now.
+
+To move:
+
+- add `lefthook: node_modules/.bin/lefthook` at the top of `lefthook.yml` (or
+  `npx ddd-ts-kit init --force` writes the kit's file over yours), then `npm run hooks:install`
+  once per clone; `npx ddd-ts-kit doctor` says whether it is done;
+- `worker-scope` now installs the dependencies of a new worktree: drop an `npm ci` you ran after
+  it, or pass `--no-install` to keep doing it yourself;
+- optional: the `vitest.config.ts` of a project generated before can take the same shape
+  (`npm run lint` warns `ddd-ts-kit/clean-function-size` on it while it is over the limit).
+
 ## 0.25.1
 
 **The places that teach how a spec builds its test application point to worlds.** The command

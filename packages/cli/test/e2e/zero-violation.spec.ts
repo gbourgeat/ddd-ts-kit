@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { cli, scaffoldEverything, tempDir, walk } from '../helpers.js';
+import { runnerConfigFindings } from './runner-config-findings.js';
 import { label, STACKS } from './stacks.js';
 
 interface CheckJson {
@@ -90,6 +91,8 @@ describe('a freshly generated project', () => {
     expect(json.files).toBeGreaterThan(45);
     expect(cli(root, 'docs', '--check').code).toBe(0);
     expect(result.code).toBe(0);
+    // The first commit lints the configuration of the test runner too: no warning there either.
+    expect(runnerConfigFindings(root)).toEqual([]);
   });
 
   it('holds every kind of the generator, and no token file', () => {

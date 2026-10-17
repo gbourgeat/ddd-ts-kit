@@ -1,5 +1,5 @@
 [English](parallel-work.md) · **Français**
-<!-- translation-of: parallel-work.md sha256:1eb5b46a4a2bee3f -->
+<!-- translation-of: parallel-work.md sha256:63ed4b90b1a966d3 -->
 
 # Travailler en parallèle sans collisions
 
@@ -170,7 +170,11 @@ au-delà de deux. `--dry-run` affiche la même chose sans rien toucher. Elle a b
 avec au moins un *commit*. Un *worktree*, ou une branche, qui existe déjà est conservé quand il
 contient la base, et refusé sinon : un *worker* ne part jamais d'un tronc périmé. Sans `--base`,
 lancée depuis le *worktree* d'un *worker*, elle refuse aussi, car la branche de ce *worker*
-deviendrait le tronc. Quand elle conserve un *worktree*, seul le fichier est réécrit. `init` liste `.ddd-ts-kit/` dans `.gitignore`, si bien que
+deviendrait le tronc. Quand elle conserve un *worktree*, seul le fichier est réécrit. Dans un *worktree* qu'elle
+crée, elle lance ensuite l'installation propre du gestionnaire de paquets du projet (`npm ci`,
+`pnpm install --frozen-lockfile`), sans bruit, et ses notes disent combien de temps elle a pris ;
+quand l'installation échoue, ou que `--no-install` l'écarte, une note dit quoi lancer avant que
+le *worker* ne démarre. `init` liste `.ddd-ts-kit/` dans `.gitignore`, si bien que
 le fichier n'est jamais commité. La garde du plugin en lit le `context` ; le reste est ce
 qu'affiche `status --workers` :
 
@@ -186,9 +190,10 @@ qu'affiche `status --workers` :
 Depuis le checkout du tronc, `npx ddd-ts-kit status --workers` (`--json` pour des données) lit
 chaque *worktree* du dépôt qui porte ce fichier et affiche, pour chaque *worker* : son
 *worktree*, sa branche, son contexte, ses lignes, sa base, le nombre de *commits* qu'il a
-d'avance sur la base, les fichiers qu'il a changés (commités depuis la base de fusion avec la
-base, modifiés, et non suivis mais non ignorés), et s'il a écrit `.ddd-ts-kit/report.md`, avec
-sa date. Puis les recouvrements : un contexte construit par deux *workers*, et chaque fichier
+d'avance sur la base, `dependencies not installed` quand sa copie du projet n'a pas de
+`node_modules` (`installed` en JSON), les fichiers qu'il a changés (commités depuis la base de
+fusion avec la base, modifiés, et non suivis mais non ignorés), et s'il a écrit
+`.ddd-ts-kit/report.md`, avec sa date. Puis les recouvrements : un contexte construit par deux *workers*, et chaque fichier
 changé par plus d'un *worker*, avec les *workers* qui l'ont changé. Un tel fichier entre en
 conflit à la fusion de la seconde branche quand les deux ont changé les mêmes lignes :
 lancez-la avant de confier une consigne à un second *worker* dans un contexte, pour lui donner
@@ -205,12 +210,15 @@ comme tronc, et les générateurs, les étapes et le compte rendu omis) :
 You build the bounded context notification of scheduling.
 
 Worktree: ../scheduling-notification/   Branch: build/notification   Trunk: main
+Run every command from the worktree (`cd ../scheduling-notification/ && ...` or `--cwd ../scheduling-notification/`).
+Without node_modules: `npm ci`, never an install that names a package.
 
 Scope
 - You may write: src/contexts/notification/** and test/e2e/<use-case>.e2e.spec.ts of your slices.
 - You may not write anything else. Shared files (config, src/platform, src/main.ts,
   package.json, lockfile, migrations, docs/) and other contexts are refused by the guard:
-  report the need, do not work around it. A slice that changes the stored state generates a
+  report the need, do not work around it. Change files with the Edit and Write tools only: the guard
+  refuses a shell command that writes one (`sed -i`, `>`, `tee`, `node -e`). A slice that changes the stored state generates a
   working migration only: `npm run db:generate working-<what-it-does>`. A decision taken in a slice is
   recorded by `generate adr` (without --deviation), and committed with it. The derived files (generated
   documents, barrels, context map, dependency rules) are written by `npm run regenerate`, never by hand.
@@ -226,8 +234,8 @@ Contracts you consume (read-only): src/contexts/scheduling/published-language/, 
 
 ![Un dépôt, plusieurs worktrees : le checkout principal sur la branche par défaut appartient au chef d'orchestre ; chaque worktree est sur sa propre branche, porte son propre .ddd-ts-kit/worker.json qui nomme son contexte, et son worker n'écrit que dans le répertoire de ce contexte](../assets/diagrams/parallel-work-worktrees.fr.svg)
 
-Chaque *worktree* a besoin de son propre `npm install` (les dépendances ne sont pas partagées
-entre *worktrees*) et de ses propres ports si deux d'entre eux lancent `npm run dev` ou les tests
+Chaque *worktree* a ses propres dépendances (elles ne sont pas partagées entre *worktrees* :
+`worker-scope` les installe) et ses propres ports si deux d'entre eux lancent `npm run dev` ou les tests
 de bout en bout en même temps : le `docker-compose.yml` généré prend ses ports dans `.env`, donnez
 donc à chaque *worktree* son propre `.env`. Les tests rapides n'ont besoin d'aucun serveur (les
 *specs* d'adaptateurs peuvent tourner sur un PostgreSQL dans le processus), et c'est ce qui rend
@@ -238,6 +246,13 @@ des minutes. Empruntez les objets d'un *checkout* qui les a, et copiez-les aussi
 `git submodule update --init --reference <checkout>/<chemin du sous-module> --dissociate <chemin du sous-module>`.
 Sans `--dissociate`, le nouveau *worktree* continue de pointer vers les objets de la référence, et
 supprimer ce *checkout* le casse.
+
+Les *hooks* git sont partagés par tous les *worktrees* du dépôt, et le `lefthook.yml` généré
+lance le lefthook du *worktree* où ils se déclenchent (`lefthook: node_modules/.bin/lefthook`) :
+un *worktree* sans ses dépendances fait échouer le *commit*, bruyamment, au lieu de sauter les
+vérifications ou d'emprunter le lefthook d'un *checkout* qui a peut-être disparu.
+`npx ddd-ts-kit doctor` signale un `lefthook.yml` sans cette ligne ou un clone sans le *hook*
+(`npm run hooks:install`).
 
 Les règles qui empêchent les *worktrees* de faire du tort :
 
@@ -259,7 +274,16 @@ demande confirmation avant un changement des fichiers gouvernés (la configurati
 des tests, du compilateur et du *pipeline*). Pour son agent `context-builder`, il va plus loin :
 avec un `.ddd-ts-kit/worker.json` dans le *worktree*, une écriture hors de
 `src/contexts/<context>/` et des *specs* de bout en bout est refusée, de même qu'un générateur
-qui écrit des fichiers partagés et un changement de dépendance. Un *worker* passe `--local-only`
+qui écrit des fichiers partagés et un changement de dépendance, où que se trouvent ses options
+(`npm i -D zod`) ; l'installation propre reste libre. Il ne change les fichiers qu'avec les outils
+d'édition, pour que chaque écriture passe par ce contrôle de périmètre : une commande *shell* qui
+écrit un fichier du projet en les contournant est refusée (une édition en place comme `sed -i`,
+une redirection ou `tee` vers le projet, du code en ligne donné à un interpréteur comme
+`node -e` ou un *heredoc*, et `cp`, `mv`, `rm`, `touch`, `git checkout -- <path>` ou
+`git restore` hors de son périmètre ; `git rm` et `git mv` y passent), de même que
+`npx prettier` dans un projet dont `format` lance Biome et un `npx biome` nu. Une sortie vers
+`/dev/null` ou le répertoire temporaire du système reste libre, et le chef d'orchestre n'est
+tenu à rien de tout cela. Un *worker* passe `--local-only`
 à `generate` : la commande refuse alors, et n'écrit rien, quand la sorte écrirait hors de son
 contexte :
 

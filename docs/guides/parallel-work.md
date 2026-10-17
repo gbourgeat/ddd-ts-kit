@@ -161,7 +161,10 @@ the same without touching anything. It needs a repository with at least one comm
 existing worktree, or branch, is kept when it contains the base, and refused when it does not:
 a worker never starts from a stale trunk. Without `--base`, run from a worker's worktree, it
 refuses too, since that worker's branch would become the trunk. When it keeps a worktree, only
-the file is written again. `init` lists `.ddd-ts-kit/` in `.gitignore`, so the file
+the file is written again. In a worktree it creates, it then runs the clean install of the
+package manager of the project (`npm ci`, `pnpm install --frozen-lockfile`), quietly, and its
+notes say how long it took; when the install fails, or `--no-install` leaves it out, a note
+says what to run before the worker starts. `init` lists `.ddd-ts-kit/` in `.gitignore`, so the file
 is never committed. The guard of the plugin reads its `context`; the rest is what
 `status --workers` shows:
 
@@ -177,8 +180,10 @@ is never committed. The guard of the plugin reads its `context`; the rest is wha
 From the checkout of the trunk, `npx ddd-ts-kit status --workers` (`--json` for data) reads
 every worktree of the repository that holds that file and shows, for each worker: its
 worktree, its branch, its context, its rows, its base, the number of commits it is ahead of
-the base, the files it changed (committed since the merge base with the base, modified, and
-untracked but not ignored), and whether it wrote `.ddd-ts-kit/report.md`, with when. Then the
+the base, `dependencies not installed` when its copy of the project has no `node_modules`
+(`installed` in JSON), the files it changed (committed since the merge base with the base,
+modified, and untracked but not ignored), and whether it wrote `.ddd-ts-kit/report.md`, with
+when. Then the
 overlaps: a context built by two workers, and each file changed by more than one worker, with
 the workers that changed it. Such a file conflicts at the merge of the second branch when both
 changed the same lines: run it before briefing a second worker in a context, to give it other
@@ -195,12 +200,15 @@ trunk, and the generators, steps and report left out):
 You build the bounded context notification of scheduling.
 
 Worktree: ../scheduling-notification/   Branch: build/notification   Trunk: main
+Run every command from the worktree (`cd ../scheduling-notification/ && ...` or `--cwd ../scheduling-notification/`).
+Without node_modules: `npm ci`, never an install that names a package.
 
 Scope
 - You may write: src/contexts/notification/** and test/e2e/<use-case>.e2e.spec.ts of your slices.
 - You may not write anything else. Shared files (config, src/platform, src/main.ts,
   package.json, lockfile, migrations, docs/) and other contexts are refused by the guard:
-  report the need, do not work around it. A slice that changes the stored state generates a
+  report the need, do not work around it. Change files with the Edit and Write tools only: the guard
+  refuses a shell command that writes one (`sed -i`, `>`, `tee`, `node -e`). A slice that changes the stored state generates a
   working migration only: `npm run db:generate working-<what-it-does>`. A decision taken in a slice is
   recorded by `generate adr` (without --deviation), and committed with it. The derived files (generated
   documents, barrels, context map, dependency rules) are written by `npm run regenerate`, never by hand.
@@ -216,8 +224,8 @@ Contracts you consume (read-only): src/contexts/scheduling/published-language/, 
 
 ![One repository, several worktrees: the main checkout on the default branch belongs to the conductor; each worktree is on its own branch, holds its own .ddd-ts-kit/worker.json naming its context, and its worker writes only that context's directory](../assets/diagrams/parallel-work-worktrees.svg)
 
-Each worktree needs its own `npm install` (dependencies are not shared between worktrees) and
-its own ports if two of them run `npm run dev` or the end-to-end tests at once: the generated
+Each worktree has its own dependencies (they are not shared between worktrees: `worker-scope`
+installs them) and its own ports if two of them run `npm run dev` or the end-to-end tests at once: the generated
 `docker-compose.yml` takes its ports from `.env`, so give each worktree its own `.env`. Fast
 tests need no server at all (adapter specs can run on an in-process PostgreSQL), which is what
 makes four workers on one laptop practical.
@@ -227,6 +235,12 @@ minutes. Borrow the objects of a checkout that has them, and copy them at once:
 `git submodule update --init --reference <checkout>/<submodule path> --dissociate <submodule path>`.
 Without `--dissociate`, the new worktree keeps pointing at the objects of the reference, and
 removing that checkout breaks it.
+
+The git hooks are shared by every worktree of the repository, and the generated `lefthook.yml`
+runs the lefthook of the worktree they fire in (`lefthook: node_modules/.bin/lefthook`): a
+worktree without its dependencies fails the commit, loudly, instead of skipping the checks or
+borrowing the lefthook of a checkout that may be gone. `npx ddd-ts-kit doctor` says when
+`lefthook.yml` lacks that line or the clone lacks the hook (`npm run hooks:install`).
 
 Rules that keep worktrees from hurting:
 
@@ -245,7 +259,15 @@ exists and any edit of a generated file (the three contracts, the barrel,
 lint, test, compiler and pipeline configuration). For its `context-builder` agent it goes
 further: with a `.ddd-ts-kit/worker.json` in the worktree, a write outside
 `src/contexts/<context>/` and the end-to-end specs is refused, and so are a generator that
-writes shared files and a dependency change. A worker passes `--local-only` to `generate`:
+writes shared files and a dependency change, wherever its flags stand (`npm i -D zod`); the
+clean install stays free. It changes files with the editor tools only, so that each write
+goes through that scope check: a shell command that writes a file of the project around them
+is refused (an in-place edit such as `sed -i`, a redirection or `tee` into the project, inline
+code given to an interpreter such as `node -e` or a heredoc, and `cp`, `mv`, `rm`, `touch`,
+`git checkout -- <path>` or `git restore` outside its scope; `git rm` and `git mv` inside it
+pass), and so are `npx prettier` in a project that `format` runs Biome on and a bare
+`npx biome`. Output to `/dev/null` or the system temp directory stays free, and the conductor
+is not held to any of this. A worker passes `--local-only` to `generate`:
 the command then refuses, and writes nothing, when the kind would write outside its context:
 
 ```text

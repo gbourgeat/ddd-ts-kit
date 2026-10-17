@@ -48,12 +48,13 @@ function workerLines(worker: WorkerStatus): string[] {
   ];
 }
 
-/** What its scope file says, and how far it went: what the file does not say is left out. */
+/** What its scope file says, how far it went, and a worktree without its dependencies: what the file does not say is left out. */
 function factsOf(worker: WorkerStatus): string[] {
   return [
     `context ${worker.context}`,
     ...(worker.rows === undefined ? [] : [`rows ${worker.rows.map((id) => `#${id}`).join(', ') || 'none'}`]),
     ...(worker.base === undefined ? [] : [`base ${worker.base}`]),
     ...(worker.ahead === undefined ? [] : [`${worker.ahead} commit${worker.ahead === 1 ? '' : 's'} ahead`]),
+    ...(worker.installed ? [] : ['dependencies not installed']),
   ];
 }

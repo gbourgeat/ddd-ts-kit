@@ -242,7 +242,9 @@ Stated exactly, from [pipeline/lefthook.yml](../../pipeline/lefthook.yml), [pipe
 
 ![The moments a change goes through, from the file write in an agent session to the gate of the CI, with what each one blocks or only advises, and below them what no tool holds](../assets/diagrams/commit-discipline-gates.svg)
 
-The hooks are installed once per clone (`npm run hooks:install`). The plugin's hook fails open
+The hooks are installed once per clone (`npm run hooks:install`) and shared by its worktrees;
+each worktree runs its own lefthook (`lefthook: node_modules/.bin/lefthook`), so one without its
+dependencies fails the commit instead of skipping the checks. The plugin's hook fails open
 by design: a broken guard never blocks work, so it is a convenience and CI is the authority.
 
 **Not enforced by any tool:** the size of a commit or a pull request (`check --commit-size`

@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:a040f508dc6a5ef1 -->
+<!-- translation-of: commands.md sha256:8e20107e9290f5ff -->
 
 # Quelle commande, quand
 
@@ -246,7 +246,7 @@ Usage
   ddd-ts-kit doctor [--strict]
   ddd-ts-kit todo [<context>]
   ddd-ts-kit plan-waves [<context>]
-  ddd-ts-kit worker-scope <context> [--base <ref>] [--rows <id,...>] [--worktree <path>] [--branch <name>] [--dry-run]
+  ddd-ts-kit worker-scope <context> [--base <ref>] [--rows <id,...>] [--worktree <path>] [--branch <name>] [--no-install] [--dry-run]
   ddd-ts-kit verify-slice <context> --since <git-ref>
   ddd-ts-kit docs [--check] [--stored-events]
   ddd-ts-kit sdk [--check] [--dry-run]
@@ -294,15 +294,17 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
                    its resource, its schema files and its spec follow; a context is turned whole or not at all
   doctor           what an upgrade left to do: the scripts, the packages of the kit (at the ranges of this
                    version) and the agent permissions this version writes that the project lacks or writes
-                   otherwise; init adds what is missing; --strict exits 1 while something is missing
+                   otherwise, and the git hooks (the lefthook: line of lefthook.yml, the pre-commit hook of
+                   lefthook in this clone); init adds what is missing, hooks:install the hook; --strict
+                   exits 1 while something is missing, never for a hook this clone has not installed
   describe         one context as facts: use cases, routes, events, ports, policies, gateways, dependencies
   status           the next step of docs/architecture/plan.md, the slices of docs/architecture/slices.md by
                    status and by owner, each row not done ready on the trunk (its dependencies done), ready
                    on a branch (the others briefed to a worker with commits ahead of its base) or waiting
                    (with the ids it waits for), and the TODO(domain), TODO(platform), it.todo and TODO(review)
                    left in each context; --workers shows instead each worktree holding .ddd-ts-kit/worker.json (branch,
-                   context, rows, base, commits ahead, files changed since the base, its report), then the
-                   contexts and the files more than one worker holds
+                   context, rows, base, commits ahead, dependencies not installed, files changed since the base,
+                   its report), then the contexts and the files more than one worker holds
   sdk              the typed client of each document of the contract, a workspace package under
                    clients/<document> without runtime dependency: typed errors keyed by the error codes,
                    credentials per security scheme; records "sdk" in the config the first time, wires the
@@ -318,8 +320,9 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
   worker-scope     a git worktree on the branch build/<context> (by default ../<project>-<context>), cut from
                    --base <ref> (by default the current branch, refused from a worker's worktree), its
                    .ddd-ts-kit/worker.json, and the briefing of the worker of that context; --rows <id,...>
-                   briefs those rows of slices.md only, with their rules; an existing worktree or branch
-                   that does not contain the base is refused
+                   briefs those rows of slices.md only, with their rules; a worktree it creates gets the
+                   clean install of the package manager (npm ci), its time in the notes, unless --no-install;
+                   an existing worktree or branch that does not contain the base is refused
   verify-slice     closes a slice before its commit, in one run: the regenerate script, check on the files
                    changed since --since (new ones included), the test script for the context; then the
                    changed files past 300 of the 350 lines, the paths of the slice to stage (its context, an

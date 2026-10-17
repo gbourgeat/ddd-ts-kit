@@ -3,14 +3,15 @@ import path from 'node:path';
 import type { Config } from '../config/index.js';
 import { isRecord } from '../config/values/is-record.js';
 import type { DoctorFinding } from './doctor-finding.js';
+import { hookFindings } from './hook-findings.js';
 import { packageFindings } from './package-findings.js';
 import { permissionFindings } from './permission-findings.js';
 import { scriptFindings } from './script-findings.js';
 
 /**
  * What the project lacks of what this version of the kit writes, the steps an upgrade leaves to do:
- * scripts, packages of the kit, permissions of the agents. Settings the project does not have
- * are not judged: an agent may run elsewhere than Claude Code.
+ * scripts, packages of the kit, permissions of the agents, then the git hooks of this clone.
+ * Settings the project does not have are not judged: an agent may run elsewhere than Claude Code.
  */
 export function diagnose(root: string, config: Config): DoctorFinding[] {
   const manifest = readJson(path.join(root, 'package.json'));
@@ -27,6 +28,7 @@ export function diagnose(root: string, config: Config): DoctorFinding[] {
     ...scriptFindings(config, scripts),
     ...packageFindings(config, installed),
     ...(fs.existsSync(settingsFile) ? permissionFindings(config, readJson(settingsFile)) : []),
+    ...hookFindings(root),
   ];
 }
 

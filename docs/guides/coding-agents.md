@@ -52,7 +52,9 @@ project owner before a suppression, a skipped test or a change of the rules is w
 every written file and returns the violations with their fix, and refuses to finish while
 architecture errors remain. It reminds, without blocking, when the uncommitted changes exceed
 the advised size of a commit, and in a worker's worktree (`.ddd-ts-kit/worker.json`) it
-refuses a write outside the worker's context. It fails open: a broken guard never blocks work. Set
+refuses a write outside the worker's context, a dependency change, a shell command that writes
+a file of the project around the Edit and Write tools (`sed -i`, a redirection, `tee`, inline
+`node -e`, or `cp`, `mv`, `rm` outside the scope) and another formatter than `npm run format`. It fails open: a broken guard never blocks work. Set
 `"guard": "advise"` in the config to be asked instead of refused, `"off"` to silence it.
 
 Each agent gets what its host runs. The skills work in all three. The four agents are sub-agents

@@ -1,3 +1,4 @@
+import { inDialect } from '../package-manager/in-dialect.js';
 import type { BriefedSlice } from './briefed-slice.js';
 import { REPORT_FILE } from './report-file.js';
 import type { WorkerPlace } from './worker-place.js';
@@ -28,6 +29,7 @@ export function briefingOf(place: WorkerPlace): string {
     '',
     `Worktree: ${root}   Branch: ${place.branch}   Trunk: ${trunk}`,
     `Run every command from the worktree (\`cd ${root} && ...\` or \`--cwd ${root}\`).`,
+    `Without node_modules: \`${inDialect('npm ci', place.config.stack.packageManager)}\`, never an install that names a package.`,
     '',
     ...scopeLines(place, directory),
     '',
@@ -51,7 +53,8 @@ function stepLines({ context, trunk }: WorkerPlace): string[] {
     `by a test, then \`npx ddd-ts-kit verify-slice ${context} --since ${trunk}\` (regenerate, the rules on your changed`,
     'files, the tests of the context, the files near the size limit) until it passes, then one commit of the paths it',
     `lists to stage, one by one, never one it leaves out: \`feat(${context}): <slice in business words>\`.`,
-    'Format with `npm run format` only: it is the formatter of the project, never run another one.',
+    'Format with `npm run format`, then `npm run lint:fix` (a blank line asked after a wrapped line is expected);',
+    'never Prettier nor a bare `npx biome`.',
     `After each step, rewrite ${REPORT_FILE} in the worktree in the form of the report below: if you stop,`,
     'the conductor reads it there.',
     '',
@@ -67,7 +70,8 @@ function scopeLines({ config, generators }: WorkerPlace, directory: string): str
     `- You may write: ${directory}/** and test/e2e/<use-case>.e2e.spec.ts of your slices.`,
     `- You may not write anything else. Shared files (config, ${config.platformDir}, ${config.sourceRoot}/main.ts,`,
     '  package.json, lockfile, migrations, docs/) and other contexts are refused by the guard:',
-    '  report the need, do not work around it. A slice that changes the stored state generates a',
+    '  report the need, do not work around it. Change files with the Edit and Write tools only: the guard',
+    '  refuses a shell command that writes one (`sed -i`, `>`, `tee`, `node -e`). A slice that changes the stored state generates a',
     '  working migration only: `npm run db:generate working-<what-it-does>`. A decision taken in a slice is',
     '  recorded by `generate adr` (without --deviation), and committed with it. The derived files (generated',
     '  documents, barrels, context map, dependency rules) are written by `npm run regenerate`, never by hand.',

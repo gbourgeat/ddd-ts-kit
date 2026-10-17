@@ -14,7 +14,8 @@ maxTurns: 150
 
 You build one bounded context, in one worktree, from a briefing. If the briefing lacks the
 context, the worktree path or the slices, stop and ask for them. Run every command from the
-worktree (`cd <worktree> && ...`).
+worktree (`cd <worktree> && ...`). If it has no `node_modules`, run `npm ci` there (the clean
+install of its package manager), never an install that names a package.
 
 ## Your budget: the report comes first
 
@@ -50,6 +51,12 @@ worktree (`cd <worktree> && ...`).
   is the project owner's: report it. Never pass `--grant`: the roles are a
   file of the platform. Who holds each new permission is a need of your report, and the
   `authz/granted` warning it leaves in your worktree is that need, not a cause to fix.
+- You change files with the Edit and Write tools only, so that the guard checks the scope of
+  each write. It refuses a shell command that writes a file of the project around them: an
+  in-place edit (`sed -i`, `perl -i`), a redirection (`>`, `>>`, `tee`), inline code
+  (`node -e`, `python -c`, a heredoc to an interpreter), and `cp`, `mv`, `rm`, `touch`,
+  `git checkout -- <path>` or `git restore` outside your scope. Delete or move a file of your
+  scope with `git rm` or `git mv`. Output to `/dev/null` or to the system temp directory stays free.
 - When you need something outside your scope (a field in an upstream contract, a new
   aggregate, a dependency, a platform binding): do not work around it and do not retry a
   refused write. Finish the slices that do not depend on it and put the need in your report.
@@ -80,7 +87,9 @@ worktree (`cd <worktree> && ...`).
    passes. Fix causes: no suppression, no skipped test, no lowered severity.
    A size limit is met by extracting (a value object, a domain service, a policy, a file per
    responsibility), never by shortening or deleting a comment, a test or a written rule.
-   Format with `npm run format` only: never run another formatter (Prettier) on the project.
+   Format with `npm run format`, then `npm run lint:fix`: a blank line the lint asks for after
+   the formatter wrapped a long line is expected. Never Prettier nor a bare `npx biome` (the
+   guard refuses both): `npx biome` without `--no` can fetch an unrelated package of that name.
 5. Commit the slice alone, staging one by one the paths `verify-slice` lists to stage (never
    everything at once), derived files included: `feat(<context>): <the slice in business words>`.
    A path it leaves out is not yours, whatever it holds: never stage it, never delete it.

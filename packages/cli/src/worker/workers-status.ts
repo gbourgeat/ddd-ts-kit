@@ -18,6 +18,8 @@ export interface WorkerStatus {
   readonly base?: string;
   /** The commits on its branch that the base does not have; left out when the base is unknown or names no commit. */
   readonly ahead?: number;
+  /** Whether its copy of the project has its dependencies (`node_modules`): without them its hooks and checks fail. */
+  readonly installed: boolean;
   /**
    * The files it changed, relative to the top of the repository: committed since the merge base
    * with its base, modified, and untracked but not ignored. Without a known base, the modified

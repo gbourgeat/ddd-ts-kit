@@ -109,7 +109,10 @@ and report zero violation.
 
 ## Git hooks
 
-`lefthook.yml`, installed once per clone with `npx lefthook install`:
+`lefthook.yml`, installed once per clone with `npx lefthook install`. Its line
+`lefthook: node_modules/.bin/lefthook` makes the hook, shared by every worktree of the
+repository, run the lefthook of the checkout it fires in: a checkout without its dependencies
+fails the commit instead of skipping the checks.
 
 | Hook | Runs | On |
 |---|---|---|

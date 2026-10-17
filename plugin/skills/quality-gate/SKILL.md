@@ -42,6 +42,12 @@ allowed-tools:
 | before a merge or a pull request | `npm run verify`, on the branch with the trunk merged in; each non-blocking remark of the review written as a `TODO(review)` or settled | everything |
 | before a story or a milestone is closed | `npx ddd-ts-kit todo`: no `TODO(review)` left | seconds |
 
+Layout is settled in this order: `npm run format`, then `npm run lint:fix`. Biome wraps a long
+line, and the lint then asks for a blank line around the statement that now spans several lines:
+that new finding is expected, never a conflict between the two. Never Prettier nor a bare
+`npx biome` (without `--no`, it can fetch an unrelated package of that name); the guard refuses
+both to a worker.
+
 `check --changed-since` judges the changed files only: a cycle, an unused export or a rule
 broken by the combination with the trunk escapes it, which is why the last run is `verify`, on
 the whole tree, after merging the trunk. `npm run verify` chains types, lint, format, every spec with the coverage thresholds

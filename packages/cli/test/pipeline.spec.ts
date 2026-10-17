@@ -19,7 +19,7 @@ const OPTIONAL_STEPS = /\{\{#if (?:pm\.corepack|orm\.prisma|sdk\.on)\}\}\n[\s\S]
 const EXTRA_BLOCK = /\{\{#if extras\.\w+\}\}\n(?:(?!\{\{#if)[\s\S])*?\{\{\/if\}\}\n/g;
 
 const UNIT_PROJECT_OF_THE_SOURCE =
-  "{\n        extends: true,\n        test: { name: 'unit', include: ['src/**/*.spec.ts'], exclude: [INTEGRATION_SPECS, ...NOT_AFFECTED] },\n      },";
+  "{\n  extends: true,\n  test: { name: 'unit', include: ['src/**/*.spec.ts'], exclude: [INTEGRATION_SPECS, ...NOT_AFFECTED] },\n};";
 
 /**
  * The CLI ships its own copy of the pipeline assets so that the published package is
@@ -93,7 +93,7 @@ describe('pipeline templates', () => {
       .replaceAll('{{config.sourceRoot}}', 'src')
       // With the architecture specs the unit project no longer fits one line: the formatter gives it several.
       .replace(
-        "{\n        extends: true,\n        test: {\n          name: 'unit',\n          include: ['src/**/*.spec.ts'],\n          exclude: [INTEGRATION_SPECS, ...NOT_AFFECTED],\n        },\n      },",
+        "{\n  extends: true,\n  test: {\n    name: 'unit',\n    include: ['src/**/*.spec.ts'],\n    exclude: [INTEGRATION_SPECS, ...NOT_AFFECTED],\n  },\n};",
         UNIT_PROJECT_OF_THE_SOURCE,
       );
 

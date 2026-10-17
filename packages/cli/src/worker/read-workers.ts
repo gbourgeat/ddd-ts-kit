@@ -44,6 +44,7 @@ function workerIn(worktree: Worktree, project: string): WorkerStatus[] {
       ...(scope.rows === undefined ? {} : { rows: scope.rows }),
       ...(scope.base === undefined ? {} : { base: scope.base }),
       ...(ahead === undefined ? {} : { ahead }),
+      installed: fs.existsSync(path.join(project, 'node_modules')),
       files: changedFiles(worktree.path, mergeBase),
       report: reportIn(project),
     },

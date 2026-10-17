@@ -100,7 +100,7 @@ describe('worker-scope --base', () => {
     git(root, 'branch', 'release', 'HEAD');
     git(root, 'commit', '--quiet', '--allow-empty', '--message', 'chore: ahead of release');
 
-    const scope = cli(root, 'worker-scope', 'billing', '--base', 'release', '--json');
+    const scope = cli(root, 'worker-scope', 'billing', '--base', 'release', '--no-install', '--json');
     const worktree = String(jsonAt(scope.json(), 'worktree'));
 
     expect(scope.code).toBe(0);
@@ -117,7 +117,7 @@ describe('worker-scope --base', () => {
   });
 
   it('refuses a worktree that exists and does not contain the base, and keeps one that does', () => {
-    const stale = cli(root, 'worker-scope', 'billing');
+    const stale = cli(root, 'worker-scope', 'billing', '--no-install');
 
     expect(stale.code).toBe(2);
 
