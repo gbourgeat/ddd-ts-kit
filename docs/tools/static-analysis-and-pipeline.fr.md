@@ -1,5 +1,5 @@
 [English](static-analysis-and-pipeline.md) · **Français**
-<!-- translation-of: static-analysis-and-pipeline.md sha256:702c2fb4e5fe3108 -->
+<!-- translation-of: static-analysis-and-pipeline.md sha256:5b943691f90c19bc -->
 
 # L'analyse statique et le pipeline
 
@@ -203,6 +203,8 @@ pre-push:
       run: npm run ci:typecheck
     - name: unit tests
       run: npm run ci:test:unit
+    - name: merges
+      run: npx --no -- ddd-ts-kit verify-merge --warn
 
 commit-msg:
   jobs:

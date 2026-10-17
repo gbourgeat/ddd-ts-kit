@@ -566,6 +566,10 @@ between the schema files and the last snapshot, so it can generate the changes o
 as one migration only (delete them and generate that one by hand). The replay is Drizzle's:
 under knex, Prisma and TypeORM, which keep no journal, the steps above are done by hand.
 
+`npx ddd-ts-kit verify-merge`, run after the merge, reports a migration of either side that the
+result lost. It knows a migration by its description, its name without its number and without
+`working-`: a migration generated again under another number, or without the prefix, is kept.
+
 A migration already merged on the main branch is never edited or regenerated: a correction is a
 new migration.
 

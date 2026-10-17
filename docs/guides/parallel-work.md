@@ -80,10 +80,26 @@ git status --short                           # every file the generators rewrote
 git add openapi/openapi.yaml                 # file by file, then read the staged diff
 git diff --cached --stat
 git commit --no-edit
+npx ddd-ts-kit verify-merge                  # what the merge lost: nothing, here
 ```
 
 The regenerated document holds both routes, `/notifications/preferences` from this branch and
 `/people/invitations` from the default branch, because both are now in the sources.
+
+A derived file is the only one taken from either side. A conflict in a source file or a test is
+resolved hunk by hunk, keeping what both sides added: `git merge -X theirs`, `-X ours` or
+`git checkout --theirs <file>` on a source file settle every conflict at once by dropping the
+other side, and git reports a clean merge while a whole slice of the branch (its method, its
+route, its spec, its row marked done) is gone. The guard of the plugin refuses them to a
+sub-agent. `npx ddd-ts-kit verify-merge`, run after the merge, reads git only and lists, merge by
+merge, each line one side added that the result lacks, each row of `slices.md` no longer done,
+each test, spec file or migration gone and each conflict marker left, with `file:line` and the
+side to restore it from (`git show <side>:<file>`); a line one side removed and the merge brought
+back is a warning, and so is a line one side wrote where the other changed the same lines (the
+merge chose). It exits 1 on an error. It is silent without a merge, so the pre-push hook of `init`
+runs it on every push, and `verify-slice` runs it too; both only warn in this version, and a
+later minor version makes them block. A removal decided on purpose goes in the merge commit as a
+trailer, `Lost-Accepted: <file:line>,...`, and is listed without failing.
 
 The generators are deterministic (sorted output, independent of registration order), so two
 people regenerating from the same sources get the same bytes. `docs --check` and
@@ -93,7 +109,7 @@ people regenerating from the same sources get the same bytes. `docs --check` and
 after each slice and commits the derived files with it, so that its branch passes `docs:check`
 alone and never stops on "regenerate" as a need. The first branch to land is consistent by
 itself; the second one rebases or merges the default branch, takes either side of each derived
-file, regenerates, and commits the result with its own change.
+file, regenerates, commits the result with its own change, and runs `npx ddd-ts-kit verify-merge`.
 
 ### Migrations
 
@@ -397,7 +413,12 @@ git diff --stat origin/main...  # every file of the branch's rows is still there
 ```
 
 A file of its rows missing from that list, or a slice whose code is gone, was lost on the way:
-never settle a conflict by taking the default branch's side of a whole file.
+never settle a conflict by taking the default branch's side of a whole file. A rebase writes no
+merge commit for `verify-merge` to read; after a merge of the default branch into the second
+branch instead, `npx ddd-ts-kit verify-merge HEAD --base <last commit of the first branch>` judges
+it on that base (a `Merge-Base: <commit>` trailer in the merge message does the same for every
+later run), where git's own merge base would report the lines the first branch rewrote after the
+second was cut.
 
 ## A concrete plan: four contexts, four workers
 
@@ -486,7 +507,8 @@ small fraction of the total time and remove nearly every collision from the rest
 - **An agent holds one row, two at most.** Given a dozen, a coding agent runs out of turns
   or context in the middle of one, and leaves a half-modified worktree with no report. Brief
   one agent per row (`--rows`), launch them in sequence in the context's worktree, each
-  committing its row, then merge the trunk into the branch, review the batch once, run
+  committing its row, then merge the trunk into the branch (`npx ddd-ts-kit verify-merge`
+  after it), review the batch once, run
   `npm run verify` on the merged branch, and open the pull request: `check --changed-since`
   sees the files of the branch only, and what the trunk gained meanwhile can break the whole.
   The plugin's `context-builder` agent keeps its last turns for its report and names the files

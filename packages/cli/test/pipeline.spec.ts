@@ -43,6 +43,15 @@ describe('pipeline templates', () => {
     expect(template(copy)).toBe(source(file));
   });
 
+  it('reports the merges of the branch before a push, after the unit specs, as a warning in this version', () => {
+    const [, beforePush = ''] = template('lefthook.yml').split('pre-push:');
+    const [jobs = ''] = beforePush.split('commit-msg:');
+
+    expect(jobs).toContain('    - name: merges\n      run: npx --no -- ddd-ts-kit verify-merge --warn\n');
+    expect(jobs.indexOf('verify-merge')).toBeGreaterThan(jobs.indexOf('ci:test:unit'));
+    expect(read(initProject('--package-manager', 'pnpm'), 'lefthook.yml')).toContain('ddd-ts-kit verify-merge --warn');
+  });
+
   it('the setup action of the GitHub pipeline is the source, plus the step that asks corepack for pnpm and the one that generates the Prisma client', () => {
     expect(template('github/actions/setup/action.yml.tpl').replaceAll(OPTIONAL_STEPS, '')).toBe(
       source('github/actions/setup/action.yml'),

@@ -1,5 +1,5 @@
 [English](parallel-work.md) · **Français**
-<!-- translation-of: parallel-work.md sha256:1ce24e6458080932 -->
+<!-- translation-of: parallel-work.md sha256:994019ca9fe5e789 -->
 
 # Travailler en parallèle sans collisions
 
@@ -84,11 +84,29 @@ git status --short                           # chaque fichier que les générate
 git add openapi/openapi.yaml                 # fichier par fichier, puis relire le diff indexé
 git diff --cached --stat
 git commit --no-edit
+npx ddd-ts-kit verify-merge                  # ce que la fusion a perdu : rien, ici
 ```
 
 Le document régénéré porte les deux routes, `/notifications/preferences` de cette branche et
 `/people/invitations` de la branche par défaut, parce que les deux sont désormais dans les
 sources.
+
+Un fichier dérivé est le seul qu'on prend d'un côté ou de l'autre. Un conflit dans un fichier
+source ou un test se résout bloc par bloc, en gardant ce que les deux côtés ont ajouté :
+`git merge -X theirs`, `-X ours` ou `git checkout --theirs <file>` sur un fichier source règlent
+tous les conflits d'un coup en jetant l'autre côté, et git annonce une fusion propre alors qu'une
+tranche entière de la branche (sa méthode, sa route, sa *spec*, sa ligne marquée terminée) a
+disparu. La garde du *plugin* les refuse à un sous-agent. `npx ddd-ts-kit verify-merge`, lancé
+après la fusion, ne lit que git et liste, fusion par fusion, chaque ligne ajoutée par un côté qui
+manque au résultat, chaque ligne de `slices.md` qui n'est plus terminée, chaque test, fichier de
+*spec* ou migration disparu et chaque marqueur de conflit laissé, avec `file:line` et le côté
+d'où la rétablir (`git show <side>:<file>`) ; une ligne retirée par un côté et ramenée par la
+fusion est un avertissement, comme une ligne écrite par un côté là où l'autre a changé les mêmes
+lignes (la fusion a choisi). Elle sort avec 1 sur une erreur. Elle se tait sans fusion : le *hook*
+de *pre-push* d'`init` la lance à chaque *push*, et `verify-slice` la lance aussi ; tous deux ne
+font qu'avertir dans cette version, et une version mineure ultérieure les fera bloquer. Une suppression voulue se consigne dans le
+*commit* de fusion par un *trailer*, `Lost-Accepted: <file:line>,...`, et est listée sans faire
+échouer.
 
 Les générateurs sont déterministes (sortie triée, indépendante de l'ordre d'enregistrement), si
 bien que deux personnes qui régénèrent à partir des mêmes sources obtiennent les mêmes octets.
@@ -98,8 +116,8 @@ bien que deux personnes qui régénèrent à partir des mêmes sources obtiennen
 `npm run regenerate` après chaque *slice* et commite les fichiers dérivés avec elle, pour que sa
 branche passe `docs:check` seule et ne s'arrête jamais sur « régénérer » comme besoin. La première
 branche à arriver est cohérente par elle-même ; la seconde se rebase sur la branche par défaut ou
-la fusionne, prend l'un des deux côtés de chaque fichier dérivé, régénère, et commite le résultat
-avec son propre changement.
+la fusionne, prend l'un des deux côtés de chaque fichier dérivé, régénère, commite le résultat
+avec son propre changement, et lance `npx ddd-ts-kit verify-merge`.
 
 ### Les migrations
 
@@ -426,7 +444,12 @@ git diff --stat origin/main...  # every file of the branch's rows is still there
 
 Un fichier de ses lignes absent de cette liste, ou une tranche dont le code a disparu, s'est
 perdu en route : ne réglez jamais un conflit en prenant le côté de la branche par défaut pour
-un fichier entier.
+un fichier entier. Un *rebase* n'écrit aucun *commit* de fusion que `verify-merge` puisse lire ;
+après une fusion de la branche par défaut dans la seconde branche, en revanche,
+`npx ddd-ts-kit verify-merge HEAD --base <last commit of the first branch>` la juge sur cette
+base (un *trailer* `Merge-Base: <commit>` dans le message de fusion fait de même pour chaque
+passe suivante), là où la base de fusion de git signalerait les lignes que la première branche a
+réécrites après la coupe de la seconde.
 
 ## Un plan concret : quatre contextes, quatre workers
 
@@ -520,7 +543,8 @@ reste.
 - **Un agent tient une ligne, deux au plus.** Avec une douzaine, un agent de code épuise ses
   tours ou son contexte au milieu de l'une d'elles, et laisse un *worktree* à moitié modifié,
   sans rapport. Donnez une ligne par agent (`--rows`), lancez-les en séquence dans le *worktree*
-  du contexte, chacun commitant sa ligne, puis fusionnez le tronc dans la branche, relisez le
+  du contexte, chacun commitant sa ligne, puis fusionnez le tronc dans la branche
+  (`npx ddd-ts-kit verify-merge` ensuite), relisez le
   lot une fois, lancez `npm run verify` sur la branche fusionnée, et ouvrez la *pull request* :
   `check --changed-since` ne voit que les fichiers de la branche, et ce que le tronc a reçu
   entre-temps peut casser l'ensemble. L'agent `context-builder` du *plugin* garde ses derniers tours pour

@@ -11,12 +11,13 @@ export function readWorkerFile(file: string): WorkerFile | undefined {
     return undefined;
   }
 
-  const { rows, base, branch } = json;
+  const { rows, base, baseCommit, branch } = json;
 
   return {
     context,
     ...(Array.isArray(rows) ? { rows: rows.filter((id) => typeof id === 'string') } : {}),
     ...(typeof base === 'string' ? { base } : {}),
+    ...(typeof baseCommit === 'string' ? { baseCommit } : {}),
     ...(typeof branch === 'string' ? { branch } : {}),
   };
 }

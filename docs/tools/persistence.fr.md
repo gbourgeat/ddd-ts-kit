@@ -1,5 +1,5 @@
 [English](persistence.md) · **Français**
-<!-- translation-of: persistence.md sha256:6550197918439f38 -->
+<!-- translation-of: persistence.md sha256:da6597627b75b7c1 -->
 
 # Persistance : Drizzle, Knex, Prisma, TypeORM, et quelle base de données
 
@@ -596,6 +596,11 @@ changent le schéma : drizzle-kit génère la différence entre les fichiers du 
 *snapshot*, il ne peut donc générer de nouveau les changements d'une branche qu'en une seule
 migration (les supprimer et générer celle-ci à la main). Le *replay* est celui de Drizzle : sous
 knex, Prisma et TypeORM, qui ne tiennent pas de journal, les étapes ci-dessus se font à la main.
+
+`npx ddd-ts-kit verify-merge`, lancé après la fusion, signale une migration de l'un ou l'autre
+côté que le résultat a perdue. Elle reconnaît une migration à sa description, son nom sans son
+numéro et sans `working-` : une migration générée de nouveau sous un autre numéro, ou sans le
+préfixe, est gardée.
 
 Une migration déjà fusionnée sur la branche principale n'est jamais modifiée ni régénérée : une
 correction est une nouvelle migration.

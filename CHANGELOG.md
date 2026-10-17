@@ -126,6 +126,50 @@ place the code has now. Before building a row designed in a document, run
 `npx ddd-ts-kit cited --rows <id> --base origin/main`, and correct the names it reports on the
 trunk. `npx ddd-ts-kit init` (or `doctor`) adds the permission of `cited` to the agent settings.
 
+**`verify-merge` reports the lines, rows and tests a merge lost.** `npx ddd-ts-kit verify-merge`
+reads git only and checks every merge commit since the trunk (the base of
+`.ddd-ts-kit/worker.json`, then `origin/HEAD`, then `origin/main`, or `--since`) and the merge in
+progress, or one named commit; a squash commit takes `--theirs <branch head>`. It reports as
+errors a line one side added (or both kept) that the result lacks, a file neither side deleted
+gone from the result, a row of `slices.md` done on one side and no longer done, a test or spec
+file of one side gone, a migration whose description the result lacks, a conflict marker. As
+warnings: a line one side removed and the merge brought back; a line one side wrote where the
+other side changed the same lines, inside a block it deleted or in a file it deleted (the merge
+chose between them); a line the merge replaced by lines of its own. A line laid out again, moved
+to another file or an import merged into one statement is not a loss; derived files, files a
+tool says it wrote, migrations and lockfiles are left out of the lines. The base is `--base`,
+else a `Merge-Base:` trailer, else `git merge-base`; a `Lost-Accepted: <file:line>,...` trailer
+records a removal decided on purpose, listed without failing, and a loss a later commit restored
+is listed as repaired. Silent and exit 0 without a merge, exit 1 on an error, `--json` for data.
+
+**`verify-merge` reaches projects as a warning first.** It is an estimate: on 150 merges that
+resolved conflicts in three public projects, one in five still reported an error, most of them a
+change of one branch dropped on purpose because the other branch had replaced the feature. So in
+this version `--warn` prints the same report and exits 0, the pre-push hook of `init` runs
+`npx --no -- ddd-ts-kit verify-merge --warn` (lefthook shows its output), and `verify-slice`
+reports the merges since `--since` in a step of their own, `merges since <since>`, without
+failing the slice. A later minor version makes the hook and `verify-slice` block on an error;
+`verify-merge` run alone already exits 1 on one.
+
+**`.ddd-ts-kit/worker.json` records the commit of the base.** `worker-scope` writes `baseCommit`,
+the commit the base names when it creates or keeps the worktree, next to `base`, a moving name.
+Readers accept a file without it.
+
+**The guard refuses to a sub-agent the commands that take one side of a merge.** `git merge` or
+`git pull` with `-X theirs`, `-X ours` or `-s ours`, and `git checkout` or `git restore` with
+`--theirs` or `--ours` on a path under the source root or the tests, are refused to a sub-agent
+with the way to resolve each hunk and `verify-merge`. A derived file outside the sources
+(`openapi/`, the context map) is not judged by this rule: the conductor takes either side and
+regenerates, and a worker leaves it to the conductor, its scope ending at its context. The
+briefing of `worker-scope`, the parallel-work skill and the `context-builder` agent say the same.
+
+To move: `npx ddd-ts-kit init --force` writes the pre-push job into `lefthook.yml` and the agent
+permissions `Bash(npx ddd-ts-kit verify-merge)` and `Bash(npx ddd-ts-kit verify-merge *)`
+(`npx ddd-ts-kit doctor` lists what is missing). Read what the hook prints after a merge of the
+trunk: each error is a loss to restore, or a decision to record in the merge commit with
+`Lost-Accepted:`, before a later version blocks the push on it. A worktree prepared by an older
+version has no `baseCommit` until `worker-scope` runs again for it; nothing reads it yet.
+
 ## 0.25.1
 
 **The places that teach how a spec builds its test application point to worlds.** The command

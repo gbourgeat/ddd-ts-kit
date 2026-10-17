@@ -82,7 +82,9 @@ describe('verify-slice', () => {
     expect(result.stdout).toContain('left out: changed or new, but not part of the slice; never stage them with it');
     expect(result.stdout.split('left out:')[0]).not.toContain('Synthèse');
   });
+});
 
+describe('verify-slice: the design of the rows and the merges of the branch', () => {
   it('lists the names the slice removes that the design of a row not done cites, without failing, its own rows left out', () => {
     const port = 'src/contexts/billing/application/ports/price-list.port.ts';
 
@@ -126,6 +128,39 @@ describe('verify-slice', () => {
     expect(jsonAt(cli(root, 'verify-slice', 'billing', '--since', 'main', '--json').json(), 'citedRemovals')).toEqual(
       [],
     );
+  });
+
+  it('reports, without failing the slice in this version, a merge of the trunk that lost a line of the branch', () => {
+    const priced = (...lines: readonly string[]): string =>
+      `export const prices = [\n  'standard',\n${lines.join('')}];\n`;
+
+    withScripts('node -e ""');
+    write(root, SERVICE, priced());
+    git(root, 'add', '--all');
+    git(root, 'commit', '--quiet', '--message', 'feat(billing): prices');
+    git(root, 'switch', '--quiet', '--create', 'build/billing');
+    write(root, SERVICE, priced("  'reduced',\n"));
+    git(root, 'commit', '--quiet', '--all', '--message', 'feat(billing): reduced price');
+    git(root, 'switch', '--quiet', 'main');
+    write(root, SERVICE, priced("  'premium',\n"));
+    git(root, 'commit', '--quiet', '--all', '--message', 'feat(billing): premium price');
+    git(root, 'switch', '--quiet', 'build/billing');
+    git(root, 'merge', '--quiet', '-X', 'theirs', 'main', '--message', 'Merge main into build/billing');
+
+    const result = cli(root, 'verify-slice', 'billing', '--since', 'main');
+
+    const answer = cli(root, 'verify-slice', 'billing', '--since', 'main', '--json').json();
+
+    expect(result.code).toBe(0);
+    expect(result.stdout).toContain('merges since main: 1 error(s), not failing the slice in this version\n    merge ');
+    expect(result.stdout).toContain(`        ${SERVICE}:3 (ours)  'reduced',`);
+
+    expect(result.stdout).toContain(
+      'a later minor version fails the slice on them; `npx ddd-ts-kit verify-merge` alone',
+    );
+
+    expect(jsonAt(answer, 'merges', 'ok')).toBe(false);
+    expect(jsonAt(answer, 'ok')).toBe(true);
   });
 
   it('asks for the trunk, and for the scripts of this version', () => {

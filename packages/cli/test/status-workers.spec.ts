@@ -56,6 +56,7 @@ describe('status --workers', () => {
       context: 'billing',
       rows: ['M1.01'],
       base: 'main',
+      baseCommit: git(root, 'rev-parse', 'main').trim(),
       branch: 'build/billing-issue',
     });
   });

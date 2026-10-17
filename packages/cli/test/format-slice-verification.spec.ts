@@ -6,6 +6,8 @@ import type { SliceVerification } from '../src/slice/slice-verification.js';
 
 const PASSED = { ok: true, output: '' };
 
+const NO_MERGE = { merges: [], errorCount: 0, warningCount: 0, ok: true };
+
 const warning: Violation = {
   ruleId: 'clean/function-size',
   severity: 'warn',
@@ -21,6 +23,7 @@ const verification = (overrides: Partial<SliceVerification>): SliceVerification 
   regenerate: PASSED,
   check: summarize([]),
   tests: PASSED,
+  merges: NO_MERGE,
   nearTheLimit: [],
   toStage: [],
   leftOut: [],
@@ -32,9 +35,13 @@ const verification = (overrides: Partial<SliceVerification>): SliceVerification 
 describe('the report of verify-slice', () => {
   it('says there is nothing to commit when every step passed and nothing changed', () => {
     expect(formatSliceVerification(verification({}))).toBe(
-      ['regenerate: ok', 'check (changed since main): ok', 'tests of billing: ok', 'next: nothing to commit'].join(
-        '\n',
-      ),
+      [
+        'regenerate: ok',
+        'check (changed since main): ok',
+        'tests of billing: ok',
+        'merges since main: none',
+        'next: nothing to commit',
+      ].join('\n'),
     );
   });
 
@@ -70,7 +77,9 @@ describe('the report of verify-slice', () => {
     expect(report).toContain('  src/contexts/billing/domain/aggregates/invoice.aggregate.ts (342)');
     expect(report).toContain('next: fix the causes above, then run verify-slice again');
   });
+});
 
+describe('the report of verify-slice: the names a design cites and the merges', () => {
   it('ends with the names the slice removes that a design still cites, and what replaced them', () => {
     const report = formatSliceVerification(
       verification({
@@ -100,5 +109,49 @@ describe('the report of verify-slice', () => {
         '  `RefundBasisService` (now RefundBasisReader): docs/architecture/reviews/refunds.md:14 (#M2.04)',
       ),
     ).toBe(true);
+  });
+
+  it('shows what a merge of the branch lost under its step without failing the slice yet, and a merge that lost nothing as ok', () => {
+    const lost = {
+      kind: 'lost-line',
+      file: 'src/contexts/billing/domain/aggregates/invoice.aggregate.ts',
+      line: 40,
+      side: 'ours',
+      text: 'pay(amount: Money): void {',
+    } as const;
+
+    const merge = {
+      commit: 'f5fdb26c0ffee',
+      subject: 'Merge main into build/billing',
+      base: 'f19bfe8c0ffee',
+      baseFrom: 'merge-base',
+      ours: 'f4a2e02c0ffee',
+      theirs: '0c9930ac0ffee',
+      errors: [lost],
+      warnings: [],
+      accepted: [],
+      repaired: [],
+    } as const;
+
+    const reported = formatSliceVerification(
+      verification({ merges: { since: 'main', merges: [merge], errorCount: 1, warningCount: 0, ok: false } }),
+    );
+
+    const passed = formatSliceVerification(
+      verification({ merges: { merges: [{ ...merge, errors: [] }], errorCount: 0, warningCount: 0, ok: true } }),
+    );
+
+    expect(reported).toContain(
+      'merges since main: 1 error(s), not failing the slice in this version\n    merge f5fdb26 "Merge main into build/billing": 1 error(s)',
+    );
+
+    expect(reported).toContain(`        ${lost.file}:40 (ours)  pay(amount: Money): void {`);
+
+    expect(reported).toContain(
+      '  restore each loss above before the commit: a later minor version fails the slice on them',
+    );
+
+    expect(reported).toContain('next: nothing to commit');
+    expect(passed).toContain('merges since main: ok\n');
   });
 });

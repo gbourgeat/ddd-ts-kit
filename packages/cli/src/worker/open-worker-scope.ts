@@ -102,7 +102,7 @@ function prepareWorktree(root: string, request: WorkerRequest, place: PreparedPl
     addWorktree(root, { worktree, branch, base: trunk });
   }
 
-  writeScope(inside, { context: request.context, rows: [...rows], base: trunk, branch });
+  writeScope(root, inside, { context: request.context, rows: [...rows], base: trunk, branch });
 
   return created && request.install ? installDependencies(inside, manager) : undefined;
 }
@@ -204,12 +204,24 @@ function addWorktree(root: string, place: { worktree: string; branch: string; ba
   }
 }
 
-/** The guard of the plugin reads `context`; `status --workers` shows the rest. */
-function writeScope(inside: string, scope: WorkerFile): void {
+/**
+ * The guard of the plugin reads `context`; `status --workers` shows the rest. The commit the base
+ * names now is recorded next to it: the base is a moving name, the commit tells later where the
+ * branch started.
+ */
+function writeScope(root: string, inside: string, scope: WorkerFile & { readonly base: string }): void {
   const file = path.join(inside, WORKER_SCOPE_FILE);
+  const baseCommit = runGit(root, ['rev-parse', '--verify', '--quiet', `${scope.base}^{commit}`])?.trim();
+  const { branch, ...recorded } = scope;
+
+  const written: WorkerFile = {
+    ...recorded,
+    ...(baseCommit === undefined ? {} : { baseCommit }),
+    ...(branch === undefined ? {} : { branch }),
+  };
 
   fs.mkdirSync(path.dirname(file), { recursive: true });
-  fs.writeFileSync(file, `${JSON.stringify(scope, null, 2)}\n`);
+  fs.writeFileSync(file, `${JSON.stringify(written, null, 2)}\n`);
 }
 
 function notesOf(root: string, inside: string, dependencies: Dependencies): string[] {

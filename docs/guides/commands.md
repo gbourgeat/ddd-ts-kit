@@ -114,7 +114,7 @@ The slice is finished when `todo ordering` no longer lists anything of it.
 
 | Command or skill | Does | When | Produces | Then |
 |---|---|---|---|---|
-| `npx ddd-ts-kit verify-slice <context> --since <ref>` | in one run: `npm run regenerate`, the architecture rules on the files changed since the ref (new ones included), the tests of the context, the changed files near the 350-line limit | before the commit of a slice, again until it passes | each step with its cause, then the paths of the slice to stage, every other changed path, left out and never staged with it, and the names the slice removes that the design of a row not done still cites (never a failure) | the commit of the slice, of the paths it lists to stage only; those names go to the conductor as notes |
+| `npx ddd-ts-kit verify-slice <context> --since <ref>` | in one run: `npm run regenerate`, the architecture rules on the files changed since the ref (new ones included), the tests of the context, the merges since the ref (as `verify-merge` checks them, reported without failing the slice in this version), the changed files near the 350-line limit | before the commit of a slice, again until it passes | each step with its cause, then the paths of the slice to stage, every other changed path, left out and never staged with it, and the names the slice removes that the design of a row not done still cites (never a failure) | the commit of the slice, of the paths it lists to stage only; those names go to the conductor as notes |
 | `npx ddd-ts-kit check --changed-since <ref>` | the architecture rules on what changed | while iterating | violations with their fix | `npx ddd-ts-kit explain <rule-id>` when one is unclear |
 | `npm run regenerate` (`npx ddd-ts-kit depcruise-config --write`, then `npm run docs:generate`, which runs `npx ddd-ts-kit docs`) | regenerate every derived file: `.dependency-cruiser.cjs`, the context map, the `CONTEXT.md` lists, the barrels and the contracts | after a change of a route, a schema, an event or the config | the generated files, committed with the code | `/ddd-ts-kit:commit-discipline` |
 | `/ddd-ts-kit:commit-discipline`, `npx ddd-ts-kit check --commit-size --staged` | one slice per commit, its size against the config | before `git commit` (the hook runs the check) | a message `<type>(<context>): ...` | the next slice |
@@ -124,6 +124,7 @@ The slice is finished when `todo ordering` no longer lists anything of it.
 | Command or skill | Does | When | Produces | Then |
 |---|---|---|---|---|
 | `/ddd-ts-kit:quality-gate`, `npm run verify` | every gate of the pipeline, fixed at the root cause | before opening the pull or merge request | a green gate | the request |
+| `npx ddd-ts-kit verify-merge` | what the merges of the branch lost, read from git alone: a line one side added, a row done, a test, a spec file, a migration, a conflict marker | after each merge of the trunk into the branch; the pre-push hook (`--warn`) and `verify-slice` run it too, as a warning in this version: a later minor version blocks | the findings of each merge, with `file:line` and the side that held them; nothing without a merge; exit 1 on an error, 0 with `--warn` | restore each one from its side, or record a removal decided on purpose with a `Lost-Accepted: <file:line>` trailer |
 | `npx ddd-ts-kit affected --base origin/main` | the contexts a change reaches through the context map | in the pipeline; locally to see what it will run | filters for the tests and the linter | the pipeline |
 | agent `architecture-reviewer` | a read-only review of the diff against the rules | before merging a slice | findings with file and line | fixes, then merge |
 
@@ -245,6 +246,7 @@ Usage
   ddd-ts-kit worker-scope <context> [--base <ref>] [--rows <id,...>] [--worktree <path>] [--branch <name>] [--no-install] [--dry-run]
   ddd-ts-kit verify-slice <context> --since <git-ref>
   ddd-ts-kit cited [<context>] [--rows <id,...>] [--base <ref>] [--removed-since <ref>]
+  ddd-ts-kit verify-merge [<commit>] [--since <git-ref>] [--theirs <git-ref>] [--base <commit>] [--warn]
   ddd-ts-kit docs [--check] [--stored-events]
   ddd-ts-kit sdk [--check] [--dry-run]
   ddd-ts-kit depcruise-config [--check|--write]
@@ -325,8 +327,10 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
                    changed since --since (new ones included), the test script for the context; then the
                    changed files past 300 of the 350 lines, the paths of the slice to stage (its context, an
                    end-to-end spec, a working migration, the derived files git tracks) and every other
-                   changed path, left out and never to stage with it; exits 1 while a step fails; then the
-                   names the slice removes that the design of a row not done still cites (never a failure)
+                   changed path, left out and never to stage with it; the merges since --since, as
+                   verify-merge checks them, reported without failing the slice in this version (a later
+                   minor version fails it); exits 1 while a step fails; then the names the slice removes
+                   that the design of a row not done still cites (never a failure)
   cited            the names the design of rows not done cites as code (paths, classes, Class.member) that
                    the code does not have: those the history of --base removed (with the commit and the
                    successor), the places the canonical tree refuses, and a name never there whose close
@@ -336,6 +340,25 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
                    line links to. Default: every row not done, of the context when given, at the current
                    branch. --removed-since <ref>: the names a change removes, from the merge base to the
                    working tree, that such a design cites. Reads only, exits 0
+  verify-merge checks them, reported without failing the slice in this version (a later
+                   minor version fails it); exits 1 while a step fails
+  verify-merge     what the merges of a branch lost, read from git only: every merge commit since --since
+                   (by default the base of .ddd-ts-kit/worker.json, then origin/HEAD, then origin/main) and
+                   the merge in progress (its result: the index and the working tree), or one <commit>; a
+                   squash commit takes --theirs <head of the branch it took in>. Errors: a line one side
+                   added or both kept missing from the result (whitespace, a line laid out again, a move
+                   to another file and imports merged into one statement aside), a file neither side
+                   deleted gone from the result, a row of slices.md done on one side and no longer done or
+                   gone, a test title or a spec file of one side gone, a migration of one side whose
+                   description (name without number and working-) the result lacks, a conflict marker;
+                   warnings: a line one side removed brought back, a line one side wrote where the other
+                   changed the same lines or deleted the file (the merge chose), a line the merge replaced
+                   by lines of its own. Derived files, files a tool says it wrote, migrations, lockfiles
+                   and slices.md are left out of the lines. The base is --base, else the Merge-Base:
+                   trailer of the merge, else git merge-base; entries of a Lost-Accepted: <file:line>,...
+                   trailer are listed and never fail, nor what a later commit restored; silent and exit 0
+                   without a merge, exit 1 on an error; --warn prints the same and exits 0, as the
+                   pre-push hook of init runs it in this version (a later minor version blocks the push)
   --commit-size    the files and lines about to be committed against "commit" in the config (20 files and
                    600 lines by default, generated files not counted); --staged reads the index only;
                    advisory, --strict exits 1 when over

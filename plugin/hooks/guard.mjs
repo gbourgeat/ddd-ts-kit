@@ -253,7 +253,7 @@ async function preBash(input) {
   if (!project || project.mode === 'off') {
     return;
   }
-  const preparing = workerPlaceReason(input, command);
+  const preparing = workerPlaceReason(input, command) ?? oneSideMergeReason(project, input, command);
   if (preparing) {
     decide(input, project.mode === 'advise' ? 'ask' : 'deny', preparing);
     return;
@@ -460,6 +460,7 @@ function describeProject(root) {
   return {
     root,
     cli: existsSync(local) ? local : undefined,
+    sourceRoot: config.sourceRoot ?? 'src',
     contextsDir: config.contextsDir ?? 'src/contexts',
     platformDir: config.platformDir ?? 'src/platform',
     commit: commitLimits(config.commit),
@@ -722,6 +723,38 @@ function workerPlaceReason(input, command) {
   return input.agent_type && /ddd-ts-kit(?:@\S+)?\s+worker-scope\b/.test(command) && !/--dry-run\b/.test(command)
     ? 'Only the conductor prepares the place of a worker: `worker-scope` adds a git worktree and a branch. A sub-agent reads a briefing with `worker-scope <context> --dry-run`, which creates nothing; if a worker is missing, report it to the conductor.'
     : undefined;
+}
+
+// Taking one side of a merge erases what the other side added without a conflict: a sub-agent
+// resolves each hunk instead. A derived file outside the sources (openapi/, the context map) is
+// taken from either side and regenerated, so only the sources and the tests are held.
+function oneSideMergeReason(project, input, command) {
+  if (!input.agent_type) {
+    return undefined;
+  }
+  const merging = [...command.matchAll(/\bgit\s+(?:-[Cc]\s+\S+\s+)*(?:merge|pull)\b([^;&|]*)/g)].some(([, args]) =>
+    /(?:^|\s)(?:-X\s*|--strategy-option[= ]\s*)(?:ours|theirs)\b|(?:^|\s)(?:-s\s*|--strategy[= ]\s*)ours\b/.test(args),
+  );
+  const directory = commandDirectory(command, input.cwd ?? process.cwd());
+  const takingASide = [...command.matchAll(/\bgit\s+(?:-[Cc]\s+\S+\s+)*(?:checkout|restore)\b([^;&|]*)/g)].some(
+    ([, args]) => /(?:^|\s)--(?:ours|theirs)\b/.test(args) && heldPaths(project, directory, args),
+  );
+  return merging || takingASide
+    ? 'Taking one side of a merge (`-X theirs`, `-X ours`, `-s ours`, `checkout` or `restore --theirs/--ours` on a source or a test) erases what the other side added, without a conflict to show it. Resolve each hunk keeping the intent of both sides, `git add` the file, commit, then run `npx ddd-ts-kit verify-merge`: it lists any line, row or test the merge lost. A derived file is taken from either side and rewritten by `npm run regenerate`.'
+    : undefined;
+}
+
+// A path under the source root or the tests, or the whole tree.
+function heldPaths(project, directory, args) {
+  return args
+    .split(/\s+/)
+    .filter((token) => token !== '' && !token.startsWith('-'))
+    .map((token) => projectPath(project, resolve(directory, token.replace(/^["']|["']$/g, ''))))
+    .some(
+      (path) =>
+        path === '' ||
+        [project.sourceRoot, 'test', 'tests'].some((root) => path === root || path.startsWith(`${root}/`)),
+    );
 }
 
 function sharedGeneratorReason(project, context, command) {
