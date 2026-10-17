@@ -23,7 +23,6 @@ export const acceptanceCommand: Command = (argv, io) => {
   const args = Arguments.parse(argv, {
     gate: { type: 'string' },
     lock: { type: 'boolean', default: false },
-    reason: { type: 'string' },
   });
 
   const ws = new Workspace(args.projectRoot, false);
@@ -38,8 +37,8 @@ export const acceptanceCommand: Command = (argv, io) => {
     );
   }
 
-  if (args.flag('lock') || args.text('reason') !== undefined) {
-    return lock(ws, { asked, story: stories[0], reason: args.text('reason'), json: args.json }, io);
+  if (args.flag('lock')) {
+    return lock(ws, { asked, story: stories[0], json: args.json }, io);
   }
 
   const failing = stories.some((story) => story.problems.some((problem) => countsFor(problem, gate)));
@@ -56,16 +55,15 @@ export const acceptanceCommand: Command = (argv, io) => {
 interface LockRequest {
   readonly asked: string | undefined;
   readonly story: StoryAcceptance | undefined;
-  readonly reason: string | undefined;
   readonly json: boolean;
 }
 
-function lock(ws: Workspace, { asked, story, reason, json }: LockRequest, io: Io): number {
+function lock(ws: Workspace, { asked, story, json }: LockRequest, io: Io): number {
   if (asked === undefined || story === undefined) {
     throw new CliError('--lock locks the acceptance of one story.', 'Name it: `npx ddd-ts-kit acceptance US5 --lock`.');
   }
 
-  const locked = lockAcceptance(ws, { story, reason, on: new Date().toISOString().slice(0, 10) });
+  const locked = lockAcceptance(ws, { story, on: new Date().toISOString().slice(0, 10) });
 
   ws.commit(false);
 
@@ -75,7 +73,8 @@ function lock(ws: Workspace, { asked, story, reason, json }: LockRequest, io: Io
       : [
           `Locked ${locked.scenarios} scenario${locked.scenarios === 1 ? '' : 's'} of ${story.story} in ${locked.file}: commit it with them.`,
           ...locked.amendments.map(
-            (amendment) => `Amended, for the owner to validate: "${amendment.scenario}": ${amendment.reason}`,
+            (amendment) =>
+              `Amended by ${amendment.verdict}, for the owner to validate: ${amendment.subject}: ${amendment.reason}`,
           ),
         ].join('\n'),
   );

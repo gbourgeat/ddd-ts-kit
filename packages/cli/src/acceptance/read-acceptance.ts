@@ -4,6 +4,7 @@ import { ACCEPTANCE_DIR, acceptanceFileOf } from './acceptance-file-of.js';
 import { criteriaIn } from './criteria-in.js';
 import { lockFileOf } from './lock-file-of.js';
 import { readLock } from './read-lock.js';
+import { readVerdicts } from './read-verdicts.js';
 import { lockProblems } from './lock-problems.js';
 import type { Scenario } from './scenario.js';
 import { scenarioProblems } from './scenario-problems.js';
@@ -70,7 +71,7 @@ function acceptanceOf(ws: Workspace, story: string, slices: readonly Slice[]): S
     problems: [
       ...storyProblems({ story, file, text, rows, criteria, scenarios, specification }),
       ...scenarios.flatMap((scenario) => scenarioProblems(scenario, context)),
-      ...lockProblems({ story, lock, scenarios, criteria }),
+      ...lockProblems({ story, lock, scenarios, criteria, verdicts: readVerdicts(ws, story) }),
     ],
   };
 }

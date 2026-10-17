@@ -540,7 +540,7 @@ test('a sub-agent only removes pending(...) from an acceptance scenario, by edit
     const refused = run('pre-write', edit(file, { from: SCENARIO, to: easier }, agent));
     assert.equal(decision(refused), 'deny', easier);
     assert.match(reason(refused), /only removes `pending\(\.\.\.\)`/);
-    assert.match(reason(refused), /the conductor changes the criterion or locks again with a reason/);
+    assert.match(reason(refused), /the conductor has the acceptance-judge agent judge it/);
   }
   const testWriter = { agent_type: 'ddd-ts-kit:domain-test-writer' };
   assert.equal(
@@ -569,7 +569,7 @@ test('the lock of an acceptance is written by the CLI only, and locking is refus
   const agent = worker(root);
   for (const command of [
     'npx ddd-ts-kit acceptance US5 --lock',
-    'npx ddd-ts-kit acceptance US5 --lock --reason "the scenario expected 200"',
+    'npx ddd-ts-kit acceptance US5 --lock --json',
     'pnpm exec ddd-ts-kit acceptance US5 --lock',
   ]) {
     assert.equal(decision(run('pre-bash', bash(root, command, agent))), 'deny', command);
@@ -577,6 +577,56 @@ test('the lock of an acceptance is written by the CLI only, and locking is refus
   }
   assert.equal(run('pre-bash', bash(root, 'npx ddd-ts-kit acceptance US5 --gate written', agent)).output, undefined);
   assert.equal(decision(run('pre-bash', bash(root, 'npx ddd-ts-kit generate acceptance US5', agent))), 'deny');
+});
+
+test('a verdict on a locked acceptance is written by the acceptance judge alone, and the judge writes nothing else', () => {
+  const root = project();
+  const judge = { agent_type: 'ddd-ts-kit:acceptance-judge' };
+  const verdictFile = join(root, 'test/acceptance/verdicts/us5-3f1c0a9b2d4e5f60.md');
+  assert.equal(run('pre-write', write(verdictFile, judge)).output, undefined);
+  for (const writer of [
+    {},
+    { agent_type: 'ddd-ts-kit:context-builder' },
+    { agent_type: 'ddd-ts-kit:domain-test-writer' },
+  ]) {
+    const refused = run('pre-write', write(verdictFile, writer));
+    assert.equal(decision(refused), 'deny');
+    assert.match(reason(refused), /the acceptance-judge agent alone writes it/);
+  }
+  for (const elsewhere of [
+    ACCEPTANCE,
+    'test/acceptance/us5.acceptance.lock.json',
+    'src/contexts/ordering/CONTEXT.md',
+  ]) {
+    assert.equal(decision(run('pre-write', write(join(root, elsewhere), judge))), 'deny', elsewhere);
+  }
+});
+
+test('the shell only reads, versions or checks the lock and the verdicts of an acceptance, and the judge only reads', () => {
+  const root = project();
+  for (const command of [
+    'echo "Verdict: amend" > test/acceptance/verdicts/us5-1.md',
+    "node -e \"require('fs').writeFileSync('test/acceptance/verdicts/us5-1.md', '')\"",
+    'cp /tmp/forged.json test/acceptance/us5.acceptance.lock.json',
+  ]) {
+    assert.equal(decision(run('pre-bash', bash(root, command))), 'deny', command);
+  }
+  for (const command of [
+    'git add test/acceptance/us5.acceptance.lock.json test/acceptance/verdicts/us5-1.md',
+    'cat test/acceptance/verdicts/us5-1.md',
+  ]) {
+    assert.equal(run('pre-bash', bash(root, command)).output, undefined, command);
+  }
+  const judge = { agent_type: 'ddd-ts-kit:acceptance-judge' };
+  assert.equal(
+    run('pre-bash', bash(root, 'git show HEAD:test/acceptance/us5.acceptance.spec.ts', judge)).output,
+    undefined,
+  );
+  assert.equal(
+    decision(run('pre-bash', bash(root, 'sed -i s/201/200/ test/acceptance/us5.acceptance.spec.ts', judge))),
+    'deny',
+  );
+  assert.equal(decision(run('pre-bash', bash(root, 'npx ddd-ts-kit acceptance US5 --lock', judge))), 'deny');
 });
 
 test('a context worker does not run a generator that writes shared files or another context', () => {

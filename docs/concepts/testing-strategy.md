@@ -409,8 +409,9 @@ scenario per criterion, through the API only. Each scenario runs wrapped in `pen
 `@ddd-ts-kit/testing/e2e`, which passes while an assertion fails and fails once the scenario
 passes, or stops on anything else, so that a scenario waiting for its code never hides a broken
 one. `ddd-ts-kit acceptance <story> --lock` then records a fingerprint of each criterion and each
-scenario: a scenario changed while its criterion was not is reported, never silently made easier
-to pass. The slice that satisfies a scenario removes its wrapper; the story closes when none is
+scenario: a scenario changed while its criterion was not, or a criterion changed, is reported and
+locked again only once the `acceptance-judge` agent, which did not make the change, let that very
+version through; never silently made easier to pass. The slice that satisfies a scenario removes its wrapper; the story closes when none is
 left (`ddd-ts-kit acceptance <story> --gate passing`).
 
 ## What to test where

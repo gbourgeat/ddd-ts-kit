@@ -89,7 +89,7 @@ La tranche est finie quand `todo ordering` n'en liste plus rien.
 |---|---|---|---|---|
 | `/ddd-ts-kit:plan-slices` | le travail en tranches verticales, ordonnées, avec leurs commandes de générateur | étape 6, après l'amorçage | `docs/architecture/slices.md` | `/ddd-ts-kit:use-case` |
 | `npx ddd-ts-kit cited --rows <id> --base origin/main` | les noms que la conception d'une ligne cite comme du code et que le tronc n'a pas : retirés par son historique (avec le commit et ce qui les remplace), refusés par l'arborescence canonique, ou proches d'un nom qu'il a gagné depuis que la ligne a été écrite ; un nom prévu reste muet | avant de construire seul une ligne, avant de committer une revue de conception | une ligne par nom, `--json` pour les données ; code de sortie 0 | construire sur ce que le tronc a, et corriger le document sur le tronc |
-| `npx ddd-ts-kit generate acceptance <story>`, puis `npx ddd-ts-kit acceptance <story> --lock` | la *spec* d'acceptation d'une *story*, un `it.todo` par critère de `docs/architecture/stories/<story>.md`, à écrire en scénarios enveloppés dans `pending(...)` ; le verrou les enregistre, après quoi un scénario ne change qu'avec son critère ou avec un motif gardé pour le responsable du projet | avant la première ligne de code d'une *story* | `test/acceptance/<story>.acceptance.spec.ts` et son `.lock.json` | `npx ddd-ts-kit acceptance <story> --gate written`, puis les lignes |
+| `npx ddd-ts-kit generate acceptance <story>`, puis `npx ddd-ts-kit acceptance <story> --lock` | la *spec* d'acceptation d'une *story*, un `it.todo` par critère de `docs/architecture/stories/<story>.md`, à écrire en scénarios enveloppés dans `pending(...)` ; le verrou les enregistre, après quoi un scénario ne change qu'avec son critère, et un critère ou un scénario dont les critères n'ont pas changé seulement avec un verdict de l'agent `acceptance-judge` | avant la première ligne de code d'une *story* | `test/acceptance/<story>.acceptance.spec.ts` et son `.lock.json` | `npx ddd-ts-kit acceptance <story> --gate written`, puis les lignes |
 | `npx ddd-ts-kit acceptance [<story>] [--gate written\|passing]` | les scénarios de chaque *story* face à ses lignes et à ses critères : à écrire, en attente, dérivés du verrou, incohérents, et les amendements à valider | avant le code d'une *story* (`written`), avant de la clore (`passing`) | un texte court, `--json` pour des données ; code de sortie 1 tant que la barrière demandée n'est pas franchie | écrire, verrouiller, construire, ou signaler les amendements |
 | `/ddd-ts-kit:use-case <UseCase>` | une tranche de bout en bout, test d'abord | pour chaque ligne des tranches | domaine, gestionnaire, route et *specs*, remplis | `npm run verify` |
 | `npx ddd-ts-kit generate <kind> ...` | un fichier d'un rôle avec sa *spec*, son *fake* et son enregistrement (liste ci-dessous) | chaque fois qu'il faut un fichier d'un rôle, jamais à la main | le fichier et les endroits `TODO(domain)`, `--json` pour la liste | remplir les endroits, puis `todo` |
@@ -254,7 +254,7 @@ Usage
   ddd-ts-kit todo [<context>]
   ddd-ts-kit plan-waves [<context>]
   ddd-ts-kit story-check <code> [--strict]
-  ddd-ts-kit acceptance [<story>] [--gate written|passing] [--lock [--reason "<why>"]]
+  ddd-ts-kit acceptance [<story>] [--gate written|passing] [--lock]
   ddd-ts-kit worker-scope <context> [--base <ref>] [--rows <id,...>] [--worktree <path>] [--branch <name>] [--no-install] [--dry-run]
   ddd-ts-kit worker-scope <context> --resume [--worktree <path> | --branch <name>] [--fresh]
   ddd-ts-kit verify-slice <context> --since <git-ref>
@@ -366,9 +366,11 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
                    one, on an inconsistency. Never runs a test. --lock writes
                    test/acceptance/<story>.acceptance.lock.json, the fingerprint of each criterion and of
                    each scenario (pending(...), layout and comments aside), refused while a scenario is
-                   left to write or a locked one changed while no criterion it proves did; --reason
-                   "<how the scenario failed its criterion>" locks it anyway and keeps the reason as an
-                   amendment, listed for the owner to validate
+                   left to write, or while a criterion changed, or a locked scenario changed while its
+                   criteria did not, without a verdict "amend" of the acceptance-judge agent on that very
+                   version (test/acceptance/verdicts/*.md, lines Story:, Subject:, Fingerprint:,
+                   Verdict:, Reason:); a refusal wins; the verdicts become amendments of the lock,
+                   listed for the owner to validate
   worker-scope     a git worktree on the branch build/<context> (by default ../<project>-<context>), cut from
                    --base <ref> (by default the current branch, refused from a worker's worktree), its
                    .ddd-ts-kit/worker.json, and the briefing of the worker of that context; --rows <id,...>

@@ -162,12 +162,17 @@ scenario is never changed to make code pass. When one seems wrong, compare it wi
 | What is wrong | Do |
 |---|---|
 | the code | fix the code; the scenario stays |
-| the specification changed | change the criterion in the story file first, then the scenario, then `--lock` |
-| the scenario does not say what its criterion says | fix it, then `--lock --reason "<how it failed its criterion>"`: the amendment is reported to the owner, who validates it |
+| the specification changed | change the criterion in the story file, then its scenarios |
+| the scenario does not say what its criterion says | fix it |
 
-`acceptance` reports a locked scenario changed while its criterion was not, whatever the gate,
-and `--lock` refuses it without a reason. A sub-agent never changes a scenario nor locks: the
-guard refuses both, and it reports the scenario and the criterion it fails instead.
+Then launch the `ddd-ts-kit:acceptance-judge` agent on each change `npx ddd-ts-kit acceptance
+<story>` reports (its subject and fingerprint): it compares the locked version, the new one, the
+criterion and the owner's answers, and writes `Verdict: amend` or `refuse`. `--lock` refuses
+every changed criterion, and every scenario changed while its criteria were not, without an
+`amend` verdict on that very version; the verdicts become amendments the owner validates. A
+`refuse` means restore it (git). Nobody but the judge writes a verdict, and a sub-agent never
+changes a scenario nor locks: the guard refuses all three. A host without the agents of the
+plugin asks the owner to write the verdict.
 
 ## Shape
 

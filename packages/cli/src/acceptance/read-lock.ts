@@ -37,9 +37,10 @@ function lockOf(raw: Record<string, unknown>, story: string): AcceptanceLock {
     ),
     amendments: records(raw['amendments']).map(
       (amendment): Amendment => ({
-        scenario: text(amendment['scenario']),
+        subject: text(amendment['subject']),
         criteria: texts(amendment['criteria']),
         reason: text(amendment['reason']),
+        verdict: text(amendment['verdict']),
         on: text(amendment['on']),
       }),
     ),

@@ -24,7 +24,7 @@ export interface StoryAcceptance {
   readonly scenarios: readonly Scenario[];
   /** The lock file, when the acceptance is locked. */
   readonly lock?: string;
-  /** The changes of locked scenarios no change of their criteria explained, with the reason given: for the owner to validate. */
+  /** The changes since a lock the acceptance-judge agent let through, with its verdicts: for the owner to validate. */
   readonly amendments: readonly Amendment[];
   readonly problems: readonly AcceptanceProblem[];
 }

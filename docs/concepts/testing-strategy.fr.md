@@ -1,5 +1,5 @@
 [English](testing-strategy.md) · **Français**
-<!-- translation-of: testing-strategy.md sha256:e7f1a0ef50fbda6a -->
+<!-- translation-of: testing-strategy.md sha256:3f9b8df7dffc35cc -->
 
 # Stratégie de test
 
@@ -428,8 +428,9 @@ scénario s'exécute enveloppé dans `pending(...)` de `@ddd-ts-kit/testing/e2e`
 qu'une assertion échoue et échoue dès que le scénario passe, ou s'arrête sur autre chose, si bien
 qu'un scénario qui attend son code ne cache jamais un scénario cassé.
 `ddd-ts-kit acceptance <story> --lock` enregistre ensuite une empreinte de chaque critère et de
-chaque scénario : un scénario changé alors que son critère ne l'est pas est signalé, jamais rendu
-plus facile à passer en silence. La *slice* qui satisfait un scénario retire son enveloppe ; la
+chaque scénario : un scénario changé alors que son critère ne l'est pas, ou un critère changé, est
+signalé et n'est verrouillé à nouveau qu'une fois que l'agent `acceptance-judge`, qui n'a pas fait
+le changement, a laissé passer cette version précise ; jamais rendu plus facile à passer en silence. La *slice* qui satisfait un scénario retire son enveloppe ; la
 *story* se clôt quand il n'en reste aucune (`ddd-ts-kit acceptance <story> --gate passing`).
 
 ## Quoi tester où

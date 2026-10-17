@@ -25,7 +25,7 @@ function formatStory(story: StoryAcceptance, gate: AcceptanceGate | undefined): 
     ...story.rows.map((row) => `  #${row.id} ${row.kind} "${row.slice}" (${row.status}): ${scenariosOf(row)}`),
     ...story.amendments.map(
       (amendment) =>
-        `  amended on ${amendment.on}, for the owner to validate: "${amendment.scenario}": ${amendment.reason}`,
+        `  amended on ${amendment.on}, for the owner to validate: ${amendment.subject} (${amendment.verdict}): ${amendment.reason}`,
     ),
     ...problems.map((problem) => `  ${problem.at}  ${problem.message}`),
     ...verdict,

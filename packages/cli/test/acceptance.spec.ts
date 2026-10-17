@@ -1,66 +1,8 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { cli, exists, read, write } from './helpers.js';
+import { LOCK, SLICES, SPEC, SPECIFICATION, STORY, WRITTEN, BUILT } from './support/acceptance-story.js';
 import { initProject } from './support/init-project.js';
 import { jsonAt } from './support/json-at.js';
-
-const SPEC = 'test/acceptance/us5.acceptance.spec.ts';
-const LOCK = 'test/acceptance/us5.acceptance.lock.json';
-const STORY = 'docs/architecture/stories/US5.md';
-
-const SLICES = `# Slices
-
-| # | Context | Kind | Slice | Start with | Depends on | Owner | Status |
-|---|---|---|---|---|---|---|---|
-| US5.01 | ordering | skeleton | Order | \`generate aggregate ordering Order\` | | conductor | done |
-| US5.02 | ordering | slice | Place order | \`generate command ordering PlaceOrder --aggregate Order --permission order.place\` | US5.01 | ordering | todo |
-| US5.03 | billing | slice | Invoice a customer's order | \`generate integration-handler billing ordering ordering.order.placed\` | US5.02 | billing | todo |
-| US6.01 | ordering | slice | Cancel order | \`generate command ordering CancelOrder --aggregate Order --permission order.cancel\` | | ordering | done |
-`;
-
-const SPECIFICATION = `# US5 Order and invoice
-
-## Acceptance criteria
-
-- AC1: a customer places an order and reads its number
-- AC2: the order placed is invoiced
-  to its customer
-
-## Decisions
-`;
-
-/** The spec of US5 once its scenarios are written, each in one of the forms a formatter leaves. */
-const WRITTEN = `import { describe, it } from 'vitest';
-import { expectStatus, pending } from '@ddd-ts-kit/testing/e2e';
-
-describe('US5, acceptance', () => {
-  it('#US5.02 AC1 a customer places an order and reads its number', pending(async () => {
-    expectStatus({ status: 404, headers: {}, body: undefined }, 201);
-  }));
-
-  it(
-    "#US5.03 AC2 the customer's order is invoiced",
-    pending(async () => {
-      // An invoice is announced once the order is placed.
-      expectStatus({ status: 404, headers: {}, body: undefined }, 201);
-    }),
-  );
-});
-`;
-
-/** The same scenarios once their rows are built: the wrapper gone, the formatter run again. */
-const BUILT = `import { describe, it } from 'vitest';
-import { expectStatus } from '@ddd-ts-kit/testing/e2e';
-
-describe('US5, acceptance', () => {
-  it('#US5.02 AC1 a customer places an order and reads its number', async () => {
-    expectStatus({ status: 404, headers: {}, body: undefined }, 201);
-  });
-
-  it("#US5.03 AC2 the customer's order is invoiced", async () => {
-    expectStatus({ status: 404, headers: {}, body: undefined }, 201);
-  });
-});
-`;
 
 // One project for the whole file: each block takes the story where the previous one left it.
 let root: string;
@@ -196,85 +138,6 @@ describe('the gates of an acceptance', () => {
 
     expect(passing.code).toBe(0);
     expect(passing.stdout).toContain('#US5.02 slice "Place order" (todo): 1 scenario, 1 active');
-  });
-});
-
-describe('the lock of an acceptance', () => {
-  it('reports a locked scenario changed while its criterion was not, whatever the gate, and refuses to lock it again without a reason', () => {
-    write(root, SPEC, BUILT.replace('201);\n  });\n\n  it(', '200);\n  });\n\n  it('));
-
-    const drifted = cli(root, 'acceptance', 'US5');
-
-    expect(drifted.code).toBe(1);
-
-    expect(drifted.stdout).toContain(
-      `${LOCK}  "#US5.02 AC1 a customer places an order and reads its number" changed or disappeared since the lock, and no criterion it proves (AC1) changed`,
-    );
-
-    const refused = cli(root, 'acceptance', 'US5', '--lock');
-
-    expect(refused.code).not.toBe(0);
-    expect(refused.stderr).toContain('Locked scenarios of US5 changed while no criterion they prove did');
-    expect(refused.stderr).toContain('Never to make a test pass.');
-  });
-
-  it('locks a scenario that failed its criterion with the reason, kept as an amendment for the owner to validate', () => {
-    const reason = 'AC1 says the order is placed: 201 Created, the scenario expected 200';
-    const locked = cli(root, 'acceptance', 'US5', '--lock', '--reason', reason);
-
-    expect(locked.code).toBe(0);
-
-    expect(locked.stdout).toContain(
-      `Amended, for the owner to validate: "#US5.02 AC1 a customer places an order and reads its number": ${reason}`,
-    );
-
-    expect(JSON.parse(read(root, LOCK))).toMatchObject({
-      amendments: [
-        {
-          scenario: '#US5.02 AC1 a customer places an order and reads its number',
-          criteria: ['AC1'],
-          reason,
-          on: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
-        },
-      ],
-    });
-
-    const report = cli(root, 'acceptance', 'US5');
-
-    expect(report.code).toBe(0);
-    expect(report.stdout).toMatch(/amended on \d{4}-\d{2}-\d{2}, for the owner to validate: "#US5\.02 AC1/);
-  });
-
-  it('lets a scenario change with its criterion, asking only to lock again', () => {
-    write(root, STORY, SPECIFICATION.replace('and reads its number', 'and reads its number and its total'));
-    write(root, SPEC, read(root, SPEC).replace('201);\n  });\n});', '202);\n  });\n});').replace('200);', '201);'));
-
-    const report = cli(root, 'acceptance', 'US5', '--gate', 'written');
-
-    expect(report.code).toBe(1);
-    expect(report.stdout).toContain('criterion AC1 changed');
-
-    expect(report.stdout).toContain(
-      '"#US5.02 AC1 a customer places an order and reads its number" changed with its criterion',
-    );
-
-    expect(report.stdout).not.toContain(
-      '"#US5.02 AC1 a customer places an order and reads its number" changed or disappeared since the lock',
-    );
-  });
-
-  it('reports the drift of the scenario of an unchanged criterion even then', () => {
-    expect(cli(root, 'acceptance', 'US5').stdout).toContain(
-      `"#US5.03 AC2 the customer's order is invoiced" changed or disappeared since the lock, and no criterion it proves (AC2) changed`,
-    );
-  });
-
-  it('reports a locked scenario removed while its criterion stayed', () => {
-    write(root, SPEC, BUILT.replace(/\n {2}it\("#US5\.03[^]*?\n {2}\}\);\n/, '\n'));
-
-    expect(cli(root, 'acceptance', 'US5').stdout).toContain(
-      `"#US5.03 AC2 the customer's order is invoiced" changed or disappeared since the lock`,
-    );
   });
 });
 
