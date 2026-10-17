@@ -95,6 +95,37 @@ To move:
 - optional: the `vitest.config.ts` of a project generated before can take the same shape
   (`npm run lint` warns `ddd-ts-kit/clean-function-size` on it while it is over the limit).
 
+**`cited` reports the names of a row's design that the trunk removed or renamed.** The design of
+a row is its `Slice` and `Start with` cells and its rule lines in `slices.md`, the section of a
+document of `docs/architecture/` whose heading names the row, and a document that names it or that
+its rule line links to (by convention a design review in `docs/architecture/reviews/<topic>.md`,
+one `## #<id> <slice>` heading per row). `npx ddd-ts-kit cited [<context>] [--rows <id,...>]
+[--base <ref>]` reads the names it cites as code (paths, classes, `Class.member`) against the
+ref, from git, and reports only what has evidence: a name its history removed, with the commit and
+what replaced it (the file it was renamed to, a file the same commit added); a place the canonical
+tree refuses; a name never there when a close name of the same part (a port for a service) arrived
+after the line was written. A planned name stays silent, and so does a name whose sentence says
+it was removed. `--removed-since <ref>` lists instead the names a change removes that such a
+design still cites. It reads only and exits 0; `init` allows `npx ddd-ts-kit cited *` to agents.
+
+**`worker-scope` and `verify-slice` read the design of the rows.** The briefing names, under each
+row, the documents of its design, then the names the base does not have (eight lines at most,
+the rest in `--json` under `citations`), and the conductor gets a note naming the lines to correct
+on the trunk; a local base behind its upstream and a shallow clone are noted. `verify-slice` ends
+with the names the slice removes that the design of a row not done still cites, the worker's own
+rows left out: informational, it never fails on them.
+
+**`tree/documented-paths` judges paths written relative to a context.** A path of
+`docs/architecture/` that starts with `domain/`, `application/`, `infrastructure/`,
+`presentation/` or `published-language/` is judged in every declared context, their extra
+directories considered, and reported when every one of them refuses it. The rule stays a warning.
+
+To move: `npx ddd-ts-kit check --rule tree/documented-paths` lists the paths of
+`docs/architecture/` the canonical tree refuses, the context-relative ones included: write the
+place the code has now. Before building a row designed in a document, run
+`npx ddd-ts-kit cited --rows <id> --base origin/main`, and correct the names it reports on the
+trunk. `npx ddd-ts-kit init` (or `doctor`) adds the permission of `cited` to the agent settings.
+
 ## 0.25.1
 
 **The places that teach how a spec builds its test application point to worlds.** The command

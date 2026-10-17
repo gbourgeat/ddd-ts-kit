@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { changedFiles } from '../check/commands/changed-files.js';
+import { citedRemovals } from '../citations/cited-removals.js';
 import { runCheck } from '../check/engine/run-check.js';
 import { summarize } from '../check/engine/summarize.js';
 import { loadProject } from '../check/project/load-project.js';
@@ -28,7 +29,8 @@ export function verifySlice({ root, config, context, since }: SliceToVerify): Sl
   const manager = config.stack.packageManager;
   const regenerate = runScript({ root, manager, script: 'regenerate' });
   const changed = changedFiles(root, since);
-  const run = runCheck(loadProject(root), { rules: [] });
+  const project = loadProject(root);
+  const run = runCheck(project, { rules: [] });
 
   const check = summarize(
     run.violations.filter((violation) => changed.has(violation.file)),
@@ -45,6 +47,7 @@ export function verifySlice({ root, config, context, since }: SliceToVerify): Sl
     tests,
     nearTheLimit: nearTheLimit(root, changed),
     ...planStaging(changedEntries(root), config, context),
+    citedRemovals: citedRemovals(project, since),
     ok: regenerate.ok && check.errorCount === 0 && tests.ok,
   };
 }

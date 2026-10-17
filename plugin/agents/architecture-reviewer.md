@@ -32,8 +32,11 @@ Your turns are counted. On a large diff, the verdict matters more than reading e
 1. Scope: the diff you were given (`git diff --name-only <base>...HEAD`), or one context.
 2. Machines first: `npx ddd-ts-kit check --changed-since <base> --format json` (or
    `check src/contexts/<context>`), `npx ddd-ts-kit describe <context> --json` for what each
-   touched context holds, and `npx ddd-ts-kit todo <context>` for the markers left. Report
-   mechanical violations as they are, without commentary.
+   touched context holds, `npx ddd-ts-kit todo <context>` for the markers left, and
+   `npx ddd-ts-kit cited --removed-since <base>` for the names the change removes that the
+   design of a row not done still cites. Report mechanical violations as they are, without
+   commentary; each name `cited` lists is a non-blocking finding on that document line, with
+   the marker `<!-- TODO(review): <name> is gone, write <what replaced it> -->`.
 3. Read the `CONTEXT.md` of each touched context, then the touched files only. Do not read
    generated files (barrels, contracts) beyond their diff.
 4. Judge what tools cannot see:
@@ -75,6 +78,10 @@ what to do instead:
   file: `// TODO(review): <the remark, what to do instead>`. You never write it: the conductor,
   or the agent that fixes the branch, writes it or settles the remark at once, and the story is
   closed only when `npx ddd-ts-kit todo` lists no `TODO(review)`.
+
+Asked for a design review of rows still to build, write it to be saved as
+`docs/architecture/reviews/<topic>.md`: one heading `## #<id> <slice>` per row, every class,
+method and path in backticks, so that `worker-scope` and `cited` find the design of each row.
 
 The `TODO(review)` markers already in the scope are listed by `todo`: say which ones the diff
 settles, without counting them as findings. For a whole context, end with the three changes

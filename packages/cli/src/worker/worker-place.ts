@@ -1,3 +1,4 @@
+import type { CitationsAtRef } from '../citations/stale-names-at.js';
 import type { Config } from '../config/index.js';
 import type { BriefedSlice } from './briefed-slice.js';
 
@@ -12,4 +13,6 @@ export interface WorkerPlace {
   readonly trunk: string;
   readonly generators: readonly string[];
   readonly slices: readonly BriefedSlice[];
+  /** The names their design cites that the trunk does not have. */
+  readonly citations: CitationsAtRef;
 }

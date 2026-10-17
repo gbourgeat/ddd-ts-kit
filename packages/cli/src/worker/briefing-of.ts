@@ -1,6 +1,8 @@
 import { inDialect } from '../package-manager/in-dialect.js';
 import type { BriefedSlice } from './briefed-slice.js';
+import { designLine } from './design-line.js';
 import { REPORT_FILE } from './report-file.js';
+import { staleNamesBlock } from './stale-names-block.js';
 import type { WorkerPlace } from './worker-place.js';
 
 /**
@@ -35,6 +37,7 @@ export function briefingOf(place: WorkerPlace): string {
     '',
     'Slices, in this order (rows of docs/architecture/slices.md)',
     ...sliceLines(place.slices),
+    ...staleNamesBlock(place.citations),
     '',
     `Contracts you consume (read-only): ${contractsOf(place)}`,
     '',
@@ -85,9 +88,10 @@ function sliceLines(slices: readonly BriefedSlice[]): string[] {
     return ['- #<n> <slice>: <generator commands of the row> ; rules: <invariants and failures by name>'];
   }
 
-  return slices.map(
-    (row) => `- #${row.id} ${row.slice}: ${row.startWith}${row.rules === undefined ? '' : ` ; rules: ${row.rules}`}`,
-  );
+  return slices.flatMap((row) => [
+    `- #${row.id} ${row.slice}: ${row.startWith}${row.rules === undefined ? '' : ` ; rules: ${row.rules}`}`,
+    ...designLine(row),
+  ]);
 }
 
 function contractsOf({ config, context }: WorkerPlace): string {

@@ -1,3 +1,5 @@
+import { designOf } from '../citations/design-of.js';
+import { rowDocuments } from '../citations/row-documents.js';
 import { CliError } from '../cli-error.js';
 import { readSliceRules } from '../progress/read-slice-rules.js';
 import { readSlices, SLICES_FILE } from '../progress/read-slices.js';
@@ -23,7 +25,8 @@ export function briefedRows(ws: Workspace, context: string, ids: readonly string
   const rows = readSlices(ws) ?? [];
   const rules = readSliceRules(ws);
   const chosen = ids === undefined ? todoRows(rows, context) : asked(rows, context, ids);
-  const slices = chosen.map((row) => ({ ...row, rules: rules.get(row.id) }));
+  const parts = chosen.length === 0 ? [] : rowDocuments(ws.root, rows);
+  const slices = chosen.map((row) => ({ ...row, rules: rules.get(row.id), design: designOf(parts, row.id) }));
 
   return { slices, notes: [...doneNotes(slices, ids), ...sizeNotes(slices, context)] };
 }

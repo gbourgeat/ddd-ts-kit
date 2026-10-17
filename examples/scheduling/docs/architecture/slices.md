@@ -46,7 +46,7 @@ and `scheduling-appointment`, on different aggregates).
 | M1.34 | notification | slice | Sent notifications of a person | `query notification SearchNotifications --permission notification.read --search` (`GET /notifications`) | M1.32 | notification | todo |
 | M1.35 | analytics | slice | Outcomes of appointments (projection) and occupancy per day (the occupancy projection was replaced after delivery, see the note of M1.35) | two `@Projection` read models over the events of row M1.05; `port analytics ...` as needed | M1.05 | analytics | todo |
 | M1.36 | analytics | slice | Read occupancy | `query analytics SearchOccupancy --permission occupancy.read --search` (`GET /practices/:practiceId/occupancy`) | M1.35 | analytics | todo |
-| M1.37 | analytics | slice | Verify occupancy nightly (replaced after delivery, see the note of M1.37); rebuild the outcomes from scheduling | fill `VerifyOccupancy`; fill the gateway of row M1.07; a spec that runs `ProjectionRebuild` | M1.07, M1.35 | analytics | todo |
+| M1.37 | analytics | slice | Verify occupancy nightly (replaced after delivery, see the note of M1.37); rebuild the outcomes from scheduling | fill the gateway of row M1.07; a spec that runs `ProjectionRebuild` | M1.07, M1.35 | analytics | todo |
 | M1.38 | all | slice | One booking, one trace, through the worker | `worker`; end-to-end spec asserting the span tree, the log fields, the audit entries, the error report | M1.22, M1.32, M1.35 | conductor | todo |
 | M1.39 | all | slice | Real run | `docker compose`, `scripts/demo.sh` | M1.38 | conductor | todo |
 

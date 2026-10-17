@@ -222,6 +222,46 @@ Slices, in this order (rows of docs/architecture/slices.md)
 Contracts you consume (read-only): src/contexts/scheduling/published-language/, src/contexts/identity/published-language/
 ```
 
+### The design of a row, checked against the trunk
+
+A row is often designed before it is built: in its `Slice` and `Start with` cells, in its rule
+line, and in a design review of `docs/architecture/` (by convention
+`docs/architecture/reviews/<topic>.md`, one `## #M2.03 <slice>` heading per row, names in
+backticks). The trunk moves meanwhile: a service becomes a port, a command is removed. Under
+each row whose design lives in such a document, the briefing names it:
+
+```text
+- #M2.03 Compute the refund: `command billing ComputeRefund ...` ; rules: ...
+  design: docs/architecture/reviews/refunds.md (section "#M2.03 Compute the refund")
+```
+
+`worker-scope` then reads the names that design cites as code (paths, classes, `Class.member`)
+against the base, from the history of the repository, without checking it out. It reports only
+what has evidence: a name the history of the base removed (with the commit, and what replaced
+it: the file it was renamed to, or a file the same commit added with the same words), a place
+the canonical tree refuses, and a name the base never had when a close name of the same part (a
+port for a service) arrived after the line citing it was written. A name still to build stays
+silent, and so does a name whose sentence says it was removed. When something is reported, the
+briefing carries a block of eight lines at most:
+
+```text
+Names of the design that origin/main does not have (checked at 1a2b3c4): build on what origin/main has,
+and put each line in your report as a note for the conductor, who corrects the document.
+- docs/architecture/reviews/refunds.md:14 `RefundBasisService`: removed by 9f3e2d1 (2026-10-16, "fix(billing): read the refund basis through a port"); now `RefundBasisReader`, src/contexts/billing/application/ports/refund-basis-reader.port.ts (added with the removal)
+```
+
+and the conductor gets a note naming the lines: correct them on the trunk before the worker
+starts, or launch as is, since its briefing lists them. A worker never edits `docs/`. A local
+base behind its upstream, or a shallow clone, is noted too: the names were checked against
+what it has. `--json` holds the same under `citations`.
+
+Without workers, `npx ddd-ts-kit cited --rows <id> --base origin/main` checks the design of a
+row the same way, and `cited` alone every row not done; the conductor runs it before committing
+a design review. After a change, `verify-slice` lists the names the slice removes that the
+design of a row not done still cites, the worker's own rows left out; it never fails on them,
+and the worker passes them on as notes. The reviewer runs `cited --removed-since <base>` for a
+whole branch.
+
 ![One repository, several worktrees: the main checkout on the default branch belongs to the conductor; each worktree is on its own branch, holds its own .ddd-ts-kit/worker.json naming its context, and its worker writes only that context's directory](../assets/diagrams/parallel-work-worktrees.svg)
 
 Each worktree has its own dependencies (they are not shared between worktrees: `worker-scope`

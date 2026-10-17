@@ -1,4 +1,5 @@
 import type { Workspace } from '../workspace/index.js';
+import { cellsOf } from './cells-of.js';
 import type { Slice } from './slice.js';
 
 export const SLICES_FILE = 'docs/architecture/slices.md';
@@ -37,20 +38,6 @@ function tableRows(lines: readonly string[], header: number): string[][] {
     .slice(header + 2, end === -1 ? undefined : end)
     .map(cellsOf)
     .filter((cells) => cells.length === COLUMNS.length);
-}
-
-/** The cells of a table row; a `\|` inside a cell is a bar of its text. */
-function cellsOf(line: string): string[] {
-  const row = line.trim();
-
-  if (!row.startsWith('|') || !row.endsWith('|')) {
-    return [];
-  }
-
-  return row
-    .slice(1, -1)
-    .split(/(?<!\\)\|/)
-    .map((cell) => cell.trim().replaceAll('\\|', '|'));
 }
 
 function sliceOf(cells: readonly string[]): Slice {

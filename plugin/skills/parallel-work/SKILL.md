@@ -123,8 +123,14 @@ reported, agreed, and added on the trunk.
 ## 5. Brief and launch
 
 `worker-scope` prints the briefing of the rows of `--rows` (by default every `todo` row the
-context owns, and a note past two), each with its rules from `slices.md`: send it as it is
-([briefing-template.md](briefing-template.md) is the same text, to write one by hand).
+context owns, and a note past two), each with its rules from `slices.md` and the documents of
+its design (`design:`): send it as it is ([briefing-template.md](briefing-template.md) is the
+same text, to write one by hand). When the design cites names the base removed, refuses or
+replaced, the briefing lists them (eight lines at most) and a note tells you the lines: correct
+them on the trunk before launching, or launch as is; the worker builds on the trunk's names and
+reports each line as a note, never edits `docs/`. A worker's `verify-slice` and the reviewer's
+`npx ddd-ts-kit cited --removed-since <base>` name what a slice removes that another row's
+design still cites: correct those documents at the merge.
 Launch the `context-builder` agents of different contexts in one message so they run
 together, without the isolation option (the worktree already exists). In one context, launch
 the next row's agent once the previous one reported; a report naming an unfinished slice and

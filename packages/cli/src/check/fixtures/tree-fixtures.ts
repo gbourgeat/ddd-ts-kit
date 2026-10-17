@@ -249,7 +249,7 @@ export const TREE_FIXTURES: readonly Fixture[] = [
     expect: 'pass',
     files: project({
       'docs/architecture/slices.md':
-        '# Slices\n\nAdd `src/contexts/billing/application/ports/return-basis-reader.port.ts` and fill `src/contexts/billing/domain/aggregates/invoice.aggregate.ts:42`, then `src/platform/auth/roles.ts` and `npm test`.\n',
+        '# Slices\n\nAdd `src/contexts/billing/application/ports/credit-limit-reader.port.ts` and fill `src/contexts/billing/domain/aggregates/invoice.aggregate.ts:42`, then `src/platform/auth/roles.ts` and `npm test`.\n',
       'docs/architecture/reviews/billing.md': 'See `src/contexts/billing/infrastructure/persistence/`.\n',
     }),
   },
@@ -259,7 +259,39 @@ export const TREE_FIXTURES: readonly Fixture[] = [
     expect: { file: 'docs/architecture/reviews/billing.md' },
     files: project({
       'docs/architecture/reviews/billing.md':
-        '# Review\n\nMove the rule to `src/contexts/billing/application/services/return-basis.service.ts`.\n',
+        '# Review\n\nMove the rule to `src/contexts/billing/application/services/credit-limit.service.ts`.\n',
+    }),
+  },
+  {
+    ruleId: 'tree/documented-paths',
+    name: 'paths relative to a context that a context accepts, its extra directory included, and placeholders',
+    expect: 'pass',
+    files: project(
+      {
+        'docs/architecture/reviews/billing.md':
+          '# Review\n\nAdd `application/ports/credit-limit-reader.port.ts`, relay through `infrastructure/messaging/outbox.ts`, write `application/projections/<name>.projection.ts`, then `test/e2e/issue-invoice.e2e.spec.ts`.\n',
+      },
+      {
+        [CONFIG_FILE]: config({
+          contexts: {
+            billing: {
+              classification: 'core',
+              upstreams: [],
+              extraDirectories: [{ path: 'infrastructure/messaging', reason: 'outbox relay' }],
+            },
+            catalog: { classification: 'supporting', upstreams: [] },
+          },
+        }),
+      },
+    ),
+  },
+  {
+    ruleId: 'tree/documented-paths',
+    name: 'a path relative to a context that every context refuses',
+    expect: { file: 'docs/architecture/reviews/billing.md' },
+    files: project({
+      'docs/architecture/reviews/billing.md':
+        '# Review\n\nMove the rule to `application/services/credit-limit.service.ts`.\n',
     }),
   },
 ];

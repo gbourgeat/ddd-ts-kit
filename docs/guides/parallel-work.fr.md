@@ -1,5 +1,5 @@
 [English](parallel-work.md) · **Français**
-<!-- translation-of: parallel-work.md sha256:c296a2b7c026747f -->
+<!-- translation-of: parallel-work.md sha256:1ce24e6458080932 -->
 
 # Travailler en parallèle sans collisions
 
@@ -231,6 +231,47 @@ Slices, in this order (rows of docs/architecture/slices.md)
 
 Contracts you consume (read-only): src/contexts/scheduling/published-language/, src/contexts/identity/published-language/
 ```
+
+### La conception d'une ligne, vérifiée contre le tronc
+
+Une ligne est souvent conçue avant d'être construite : dans ses cellules `Slice` et `Start with`,
+dans sa ligne de règles, et dans une revue de conception de `docs/architecture/` (par convention
+`docs/architecture/reviews/<sujet>.md`, un titre `## #M2.03 <tranche>` par ligne, les noms entre
+accents graves). Le tronc avance pendant ce temps : un service devient un port, une commande est
+retirée. Sous chaque ligne dont la conception vit dans un tel document, la consigne le nomme :
+
+```text
+- #M2.03 Compute the refund: `command billing ComputeRefund ...` ; rules: ...
+  design: docs/architecture/reviews/refunds.md (section "#M2.03 Compute the refund")
+```
+
+`worker-scope` lit alors les noms que cette conception cite comme du code (chemins, classes,
+`Classe.membre`) contre la base, dans l'historique du dépôt, sans l'extraire. Il ne signale que ce
+qui a une preuve : un nom que l'historique de la base a retiré (avec le commit, et ce qui l'a
+remplacé : le fichier vers lequel il a été renommé, ou un fichier que le même commit a ajouté avec
+les mêmes mots), un emplacement que l'arborescence canonique refuse, et un nom que la base n'a
+jamais eu quand un nom proche de même rôle (un port pour un service) est arrivé après l'écriture de
+la ligne qui le cite. Un nom encore à construire reste muet, comme un nom dont la phrase dit qu'il
+a été retiré. Quand quelque chose est signalé, la consigne porte un bloc de huit lignes au plus :
+
+```text
+Names of the design that origin/main does not have (checked at 1a2b3c4): build on what origin/main has,
+and put each line in your report as a note for the conductor, who corrects the document.
+- docs/architecture/reviews/refunds.md:14 `RefundBasisService`: removed by 9f3e2d1 (2026-10-16, "fix(billing): read the refund basis through a port"); now `RefundBasisReader`, src/contexts/billing/application/ports/refund-basis-reader.port.ts (added with the removal)
+```
+
+et le chef d'orchestre reçoit une note qui nomme les lignes : les corriger sur le tronc avant que
+le *worker* démarre, ou le lancer tel quel, puisque sa consigne les liste. Un *worker* ne modifie
+jamais `docs/`. Une base locale en retard sur sa branche amont, ou un clone superficiel, est notée
+aussi : les noms ont été vérifiés contre ce qu'elle contient. `--json` porte la même chose sous
+`citations`.
+
+Sans *workers*, `npx ddd-ts-kit cited --rows <id> --base origin/main` vérifie de la même façon la
+conception d'une ligne, et `cited` seul celle de chaque ligne non terminée ; le chef d'orchestre
+le lance avant de committer une revue de conception. Après un changement, `verify-slice` liste les
+noms que la tranche retire et que la conception d'une ligne non terminée cite encore, les lignes
+du *worker* lui-même mises à part ; il n'échoue jamais pour eux, et le *worker* les transmet en
+notes. Le relecteur lance `cited --removed-since <base>` pour une branche entière.
 
 ![Un dépôt, plusieurs worktrees : le checkout principal sur la branche par défaut appartient au chef d'orchestre ; chaque worktree est sur sa propre branche, porte son propre .ddd-ts-kit/worker.json qui nomme son contexte, et son worker n'écrit que dans le répertoire de ce contexte](../assets/diagrams/parallel-work-worktrees.fr.svg)
 

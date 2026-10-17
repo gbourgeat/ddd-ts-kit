@@ -24,6 +24,7 @@ const verification = (overrides: Partial<SliceVerification>): SliceVerification 
   nearTheLimit: [],
   toStage: [],
   leftOut: [],
+  citedRemovals: [],
   ok: true,
   ...overrides,
 });
@@ -68,5 +69,36 @@ describe('the report of verify-slice', () => {
     expect(report).toContain('regenerate: failed\n    docs:generate failed');
     expect(report).toContain('  src/contexts/billing/domain/aggregates/invoice.aggregate.ts (342)');
     expect(report).toContain('next: fix the causes above, then run verify-slice again');
+  });
+
+  it('ends with the names the slice removes that a design still cites, and what replaced them', () => {
+    const report = formatSliceVerification(
+      verification({
+        citedRemovals: [
+          {
+            rows: ['M2.04'],
+            document: 'docs/architecture/reviews/refunds.md',
+            line: 14,
+            cited: 'RefundBasisService',
+            kind: 'symbol',
+            state: 'removed',
+            removedBy: { path: 'src/contexts/billing/domain/services/refund-basis.service.ts' },
+            candidates: [
+              {
+                name: 'RefundBasisReader',
+                file: 'src/contexts/billing/application/ports/refund-basis-reader.port.ts',
+                evidence: 'added-with-removal',
+              },
+            ],
+          },
+        ],
+      }),
+    );
+
+    expect(
+      report.endsWith(
+        '  `RefundBasisService` (now RefundBasisReader): docs/architecture/reviews/refunds.md:14 (#M2.04)',
+      ),
+    ).toBe(true);
   });
 });

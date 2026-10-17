@@ -2,8 +2,10 @@
 
 `npx ddd-ts-kit worker-scope <context> --base <trunk> --rows <id>` prints this briefing with
 the paths, the branch, the contracts, the rows and their rules filled in. Written by hand,
-complete the brackets, delete what does not apply, send it as the prompt of a `context-builder` agent or hand it to a
-developer. Keep it under 300 words: the worker reads the rest itself.
+complete the brackets, delete what does not apply (the `design:` line and the block of names
+when `npx ddd-ts-kit cited --rows <n> --base <main>` reports nothing), send it as the prompt of
+a `context-builder` agent or hand it to a developer. Keep it under 300 words: the worker reads
+the rest itself.
 
 ```text
 You build the bounded context <context> of <project>.
@@ -28,6 +30,10 @@ Scope
 
 Slices, in this order (rows of docs/architecture/slices.md, one or two per agent)
 - #<n> <slice>: <generator commands of the row> ; rules: <invariants and failures by name>
+  design: <docs/architecture/reviews/<topic>.md (section "#<n> <slice>"), when a document holds part of it>
+Names of the design that <main> does not have (checked at <commit>): build on what <main> has,
+and put each line in your report as a note for the conductor, who corrects the document.
+- <document>:<line> `<name>`: <removed by, refused, or not on <main>; and what <main> has instead>
 
 Contracts you consume (read-only): src/contexts/<upstream>/published-language/
 

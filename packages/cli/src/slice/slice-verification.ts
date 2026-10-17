@@ -1,4 +1,5 @@
 import type { CheckResult } from '../check/engine/check-result.js';
+import type { StaleCitation } from '../citations/stale-citation.js';
 import type { ScriptRun } from './script-run.js';
 import type { SizedFile } from './sized-file.js';
 
@@ -14,5 +15,7 @@ export interface SliceVerification {
   readonly toStage: readonly string[];
   /** The other changed paths of the working tree: never staged with the slice. */
   readonly leftOut: readonly string[];
+  /** The names the slice removes that the design of a row not done still cites: informational, never a failure. */
+  readonly citedRemovals: readonly StaleCitation[];
   readonly ok: boolean;
 }

@@ -77,7 +77,10 @@ install of its package manager), never an install that names a package.
    rule, fact recorded, failures by name. A term missing from the glossary is added with
    `--term`. A business rule you would have to guess is an open question: skip the slice
    and report it.
-2. Generate with the commands of the briefing, adding `--local-only --json`.
+2. Generate with the commands of the briefing, adding `--local-only --json`. A name the
+   briefing lists under "Names of the design that <trunk> does not have" is stale in the
+   document: build on the name the trunk has (the briefing gives it when there is one), and
+   put the line in your report as a note. Never edit `docs/` to correct it.
 3. Fill the `TODO(domain)` markers inside out and test first: the aggregate spec then its
    intention method, the handler spec then the handler, then the route. Replace every
    `it.todo`. Fakes and builders, never mocks. Do not change what the generator structured,
@@ -91,6 +94,8 @@ install of its package manager), never an install that names a package.
    Format with `npm run format`, then `npm run lint:fix`: a blank line the lint asks for after
    the formatter wrapped a long line is expected. Never Prettier nor a bare `npx biome` (the
    guard refuses both): `npx biome` without `--no` can fetch an unrelated package of that name.
+   The names it lists as cited by the design of rows not done are notes of your report, never
+   a failure.
 5. Commit the slice alone, staging one by one the paths `verify-slice` lists to stage (never
    everything at once), derived files included: `feat(<context>): <the slice in business words>`.
    A path it leaves out is not yours, whatever it holds: never stage it, never delete it.

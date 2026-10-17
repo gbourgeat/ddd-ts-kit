@@ -1,3 +1,4 @@
+import type { CitationsAtRef } from '../citations/stale-names-at.js';
 import type { BriefedSlice } from './briefed-slice.js';
 
 /** The place one worker builds one context in, and what to tell that worker. */
@@ -21,6 +22,8 @@ export interface WorkerScope {
   readonly generators: readonly string[];
   /** The rows of the slices table the worker builds: those of `--rows`, by default those of the context still to do. */
   readonly slices: readonly BriefedSlice[];
+  /** The names the design of those rows cites that the trunk does not have, checked at the trunk. */
+  readonly citations: CitationsAtRef;
   readonly briefing: string;
   readonly notes: readonly string[];
 }

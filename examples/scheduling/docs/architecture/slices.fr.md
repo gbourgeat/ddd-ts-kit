@@ -1,5 +1,5 @@
 [English](slices.md) · **Français**
-<!-- translation-of: slices.md sha256:ae8055ee9176dd32 -->
+<!-- translation-of: slices.md sha256:2c47dce4e68268b3 -->
 
 # Tranches
 
@@ -48,7 +48,7 @@ sur des agrégats différents).
 | M1.34 | notification | slice | Les notifications envoyées à une personne | `query notification SearchNotifications --permission notification.read --search` (`GET /notifications`) | M1.32 | notification | todo |
 | M1.35 | analytics | slice | Issues des rendez-vous (projection) et occupation par jour (la projection de l'occupation a été remplacée après la livraison, voir la note de M1.35) | deux modèles de lecture `@Projection` sur les événements de la ligne M1.05 ; `port analytics ...` selon les besoins | M1.05 | analytics | todo |
 | M1.36 | analytics | slice | Lire l'occupation | `query analytics SearchOccupancy --permission occupancy.read --search` (`GET /practices/:practiceId/occupancy`) | M1.35 | analytics | todo |
-| M1.37 | analytics | slice | Vérifier l'occupation chaque nuit (remplacé après la livraison, voir la note de M1.37) ; reconstruire les issues à partir de scheduling | remplir `VerifyOccupancy` ; remplir la *gateway* de la ligne M1.07 ; une *spec* qui exécute `ProjectionRebuild` | M1.07, M1.35 | analytics | todo |
+| M1.37 | analytics | slice | Vérifier l'occupation chaque nuit (remplacé après la livraison, voir la note de M1.37) ; reconstruire les issues à partir de scheduling | remplir la *gateway* de la ligne M1.07 ; une *spec* qui exécute `ProjectionRebuild` | M1.07, M1.35 | analytics | todo |
 | M1.38 | all | slice | Une réservation, une trace, à travers le *worker* | `worker` ; *spec* de bout en bout qui vérifie l'arbre des *spans*, les champs des journaux, les entrées d'audit, le rapport d'erreur | M1.22, M1.32, M1.35 | conductor | todo |
 | M1.39 | all | slice | Exécution réelle | `docker compose`, `scripts/demo.sh` | M1.38 | conductor | todo |
 
