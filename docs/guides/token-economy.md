@@ -241,6 +241,10 @@ Remaining
   outside the contexts: 9 TODO(domain), 6 TODO(platform), 0 it.todo, 0 TODO(review)
 ```
 
+Whether a story or a milestone can close is one more call, `npx ddd-ts-kit story-check <code>`:
+one line when it can, else only the markers of its own, each with its `file:line`, instead of
+the whole `todo` list to sort by hand.
+
 **Do not paste what a path can say.** Point to `docs/ARCHITECTURE.md` by rule id rather than
 quoting it; the skills of the plugin do the same, on purpose.
 

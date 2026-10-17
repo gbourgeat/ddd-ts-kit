@@ -19,6 +19,7 @@ allowed-tools:
   - Bash(npx ddd-ts-kit status --workers)
   - Bash(npx ddd-ts-kit plan-waves)
   - Bash(npx ddd-ts-kit plan-waves *)
+  - Bash(npx ddd-ts-kit story-check *)
   - Bash(npx ddd-ts-kit worker-scope *)
   - Bash(npx ddd-ts-kit generate *)
   - Bash(npx ddd-ts-kit docs)
@@ -177,7 +178,7 @@ minor version blocks on it; `verify-merge` alone exits 1), one
 review of the batch (`architecture-reviewer`, `--changed-since <base>`), `npm run verify` on the
 merged branch, then the branch merges or opens its pull request. The blocking findings of the
 review are fixed on the branch; each non-blocking one is settled at once or written, before the
-merge, as the `TODO(review): <remark>` line the review gives, at its `file:line`, by you or the
+merge, as the `TODO(review): #<row id> <remark>` line the review gives, at its `file:line`, by you or the
 agent that fixes the branch, never left in the body of a pull request. `check --changed-since` sees
 the files of the branch only: a cycle, an unused export or a rule broken by what the trunk
 gained meanwhile shows only in `verify` on the whole tree. A host without the
@@ -205,9 +206,14 @@ second merge can conflict. For each branch:
 2. `npm run verify` on the trunk; a red trunk is fixed before the next merge;
 3. mark its rows `done` in `slices.md`, commit (`npx ddd-ts-kit status` shows what is left);
    a slice merges with `TODO(review)` markers, but a story or a milestone is closed only when
-   `npx ddd-ts-kit todo` lists none: each one handled in a slice, or dismissed by a decision
-   record (`npx ddd-ts-kit generate adr "<title>"`, quoting the remark without its marker), the
-   marker deleted in the same commit;
+   `npx ddd-ts-kit story-check <code>` exits 0 (`status` names a story whose rows are all done
+   while markers of its own keep it open): each marker it says is the story's handled in a slice,
+   or dismissed by a decision record (`npx ddd-ts-kit generate adr "<title>"`, quoting the remark
+   without its marker), the marker deleted in the same commit. A marker belongs to the story of
+   the row its text names, else of the row the commit that wrote it names (its `Slice:` trailer);
+   one that belongs to no row blocks only when no other open story works in its context, and is
+   listed otherwise: settle it or name its row in it; `--strict` blocks on every marker of the
+   story's contexts;
 4. the other workers merge the trunk into their branch before their next slice.
 
 A branch cut from another branch (a second batch of one context, started before the first

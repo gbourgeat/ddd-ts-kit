@@ -1,4 +1,8 @@
+import { runGit } from '../commit/run-git.js';
 import type { Config } from '../config/index.js';
+import { attributeMarkers } from '../story/attribute-markers.js';
+import { projectContexts } from '../story/project-contexts.js';
+import { unclosedStories } from '../story/unclosed-stories.js';
 import type { Workspace } from '../workspace/index.js';
 import type { Progress, RemainingCount, SlicesProgress } from './progress.js';
 import { readRemaining } from './read-remaining.js';
@@ -16,15 +20,28 @@ const PLAN_FILE = 'docs/architecture/plan.md';
  */
 export function readProgress(ws: Workspace, config: Config, onBranches: ReadonlySet<string>): Progress {
   const slices = readSlices(ws);
+  const remaining = readRemaining(ws, config);
+  const around = { root: ws.root, onBranches, remaining, contexts: projectContexts(ws, config) };
 
   return {
     next: /^Next:[ \t]*(\S.*?)\s*$/m.exec(ws.read(PLAN_FILE) ?? '')?.[1] ?? null,
-    slices: slices === undefined ? null : slicesProgress(slices, onBranches),
-    remaining: countsOf(readRemaining(ws, config), Object.keys(config.contexts)),
+    slices: slices === undefined ? null : slicesProgress(slices, around),
+    remaining: countsOf(remaining, Object.keys(config.contexts)),
   };
 }
 
-function slicesProgress(rows: readonly Slice[], onBranches: ReadonlySet<string>): SlicesProgress {
+/** What the rows are read against: the project, the branches of the workers, its markers and its contexts. */
+interface Around {
+  readonly root: string;
+  readonly onBranches: ReadonlySet<string>;
+  readonly remaining: readonly Remaining[];
+  readonly contexts: readonly string[];
+}
+
+function slicesProgress(rows: readonly Slice[], { root, onBranches, remaining, contexts }: Around): SlicesProgress {
+  const ids = [...new Set(rows.map((row) => row.id))];
+  const attribute = (markers: readonly Remaining[]) => attributeMarkers(root, markers, { ids, git: runGit });
+
   const owners = [...new Set(rows.map((row) => row.owner))].sort();
 
   return {
@@ -34,6 +51,7 @@ function slicesProgress(rows: readonly Slice[], onBranches: ReadonlySet<string>)
     byOwner: Object.fromEntries(owners.map((owner) => [owner, idsByStatus(rows.filter((row) => row.owner === owner))])),
     duplicates: [...new Set(rows.map((row) => row.id).filter((id, index, ids) => ids.indexOf(id) !== index))],
     unscoped: [...new Set(rows.map((row) => row.id).filter((id) => /^\d+$/.test(id)))],
+    unclosed: unclosedStories({ rows, remaining, contexts, attribute }),
   };
 }
 

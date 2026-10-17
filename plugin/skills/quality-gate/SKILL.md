@@ -28,6 +28,7 @@ allowed-tools:
   - Bash(npx ddd-ts-kit todo *)
   - Bash(npx ddd-ts-kit todo)
   - Bash(npx ddd-ts-kit status)
+  - Bash(npx ddd-ts-kit story-check *)
   - Bash(npx ddd-ts-kit docs)
   - Bash(npx ddd-ts-kit explain *)
 ---
@@ -43,7 +44,7 @@ allowed-tools:
 | before the commit that closes a slice | the two above, `npm run typecheck`, `npm run lint`, `npm run format:check` (`npm run format` settles it), `npx ddd-ts-kit todo <context>` (nothing left but `TODO(review)`), `npx ddd-ts-kit check --commit-size` | under a minute |
 | after merging the trunk into the branch | `npx ddd-ts-kit verify-merge`: each line, row done or test the merge lost, to restore from its side; it exits 1 on one (the pre-push hook and `verify-slice` run it too, and only warn in this version) | a second |
 | before a merge or a pull request | `npm run verify`, on the branch with the trunk merged in; each non-blocking remark of the review written as a `TODO(review)` or settled | everything |
-| before a story or a milestone is closed | `npx ddd-ts-kit todo`: no `TODO(review)` left | seconds |
+| before a story or a milestone is closed | `npx ddd-ts-kit story-check <code>` (`M1` for the rows `M1.*`): every row `done`, no marker of its own left; exits 1 with each blocker, why it is the story's, its `file:line` and its fix | seconds |
 
 Layout is settled in this order: `npm run format`, then `npm run lint:fix`. Biome wraps a long
 line, and the lint then asks for a blank line around the statement that now spans several lines:
@@ -64,12 +65,18 @@ first three.
 ## Review remarks
 
 A review sorts its findings: a blocking one is fixed before the merge; a non-blocking one is
-settled at once, or written before the merge as `TODO(review): <remark>` at the line it is
+settled at once, or written before the merge as `TODO(review): #<row id> <remark>` at the line it is
 about, by whoever fixes the branch (the `architecture-reviewer` agent gives the line and its
 `file:line`, and never writes it). A slice may merge with `TODO(review)` markers; a story or a
-milestone is closed only when `todo` lists none, each one handled, or dismissed by a decision
-record (`npx ddd-ts-kit generate adr "<title>"`, quoting the remark without its marker) with
-the marker deleted in the same commit.
+milestone is closed only when `npx ddd-ts-kit story-check <code>` exits 0: every marker of its
+own handled, or dismissed by a decision record (`npx ddd-ts-kit generate adr "<title>"`,
+quoting the remark without its marker) with the marker deleted in the same commit. A marker is
+the story's when its text names one of its rows (the `#<row id>` above), else when the commit that
+wrote its line does (its `Slice: <row id>` trailer, else its message), else, not committed, when
+the worker whose worktree holds it was briefed on one of its rows. One that belongs to no row
+blocks only when no other open story has a row in its context; otherwise `story-check` lists it
+without blocking: settle it, or name its row in it. `--strict` blocks on every marker of the
+story's contexts.
 
 ## Coverage
 

@@ -36,6 +36,31 @@ To move: update the plugin; the conductor's skill may now use `SendMessage`. A w
 before this version commits without the trailer: its rows are matched in order with its
 `feat(<context>)` commits and shown `(by order)`.
 
+**`story-check` says whether a story or a milestone can close.** The kit said that a slice may
+merge with `TODO(review)` markers while a story closes only once none of its own is left; nothing
+checked it. `npx ddd-ts-kit story-check <code>` (`M1` for the rows `M1.01`, `M1.02`: the id
+without its last `.<number>`) exits 0 when every row of the story is `done` in
+`docs/architecture/slices.md` and no marker of its own is left, 1 listing the rows not done with
+their status and each marker that keeps it open, with why it is the story's, its `file:line` and
+its fix (handle it, or dismiss it by a decision record with `generate adr`, then delete the
+marker), and 2 on a code no row carries or without a slices table. Since several stories often
+build one context at once, a `TODO(domain)`, `TODO(platform)`, `it.todo` or `TODO(review)` is
+attributed before it blocks: to the rows its text names (`#M1.03` or `M1.03`), else to the rows
+the commit that wrote its line names (`git blame`, once per file: its `Slice: <id>` trailer, else
+the ids its message names), else, not committed in a worker's worktree, to the rows of
+`.ddd-ts-kit/worker.json`. A marker of a context that belongs to no row blocks only when no other
+open story has a row in that context, and is listed without blocking otherwise; `--strict` blocks
+on every marker of the story's contexts. `status` adds a line for a story whose rows are all done
+while markers of its own keep it open (`story M1: every row done, 3 markers left: npx ddd-ts-kit
+story-check M1`, `slices.unclosed` in `--json`), and `init` allows `story-check` to the agent. The
+plan-slices, quality-gate and parallel-work skills and the architecture-reviewer agent run it
+before a story or a milestone is declared closed, and the review now writes each non-blocking
+remark as `TODO(review): #<row id> <remark>`.
+
+To move: `npx ddd-ts-kit init` adds the permission to `.claude/settings.json` (`doctor` names it
+while it is missing). Name the row in the `TODO(review)` markers already written
+(`TODO(review): #M1.03 <remark>`) so that each is held against its own story.
+
 **`language/declared-vocabulary` accepts a word of another language when its type says so.**
 A context that reads a published payload or an outside record meets words that spell a value of
 its own vocabulary (catalog publishes a `state` of `'draft' | 'issued'`, billing declares

@@ -36,7 +36,7 @@ Your turns are counted. On a large diff, the verdict matters more than reading e
    `npx ddd-ts-kit cited --removed-since <base>` for the names the change removes that the
    design of a row not done still cites. Report mechanical violations as they are, without
    commentary; each name `cited` lists is a non-blocking finding on that document line, with
-   the marker `<!-- TODO(review): <name> is gone, write <what replaced it> -->`.
+   the marker `<!-- TODO(review): #<row id> <name> is gone, write <what replaced it> -->`.
 3. Read the `CONTEXT.md` of each touched context, then the touched files only. Do not read
    generated files (barrels, contracts) beyond their diff.
 4. Judge what tools cannot see:
@@ -75,9 +75,13 @@ what to do instead:
   slice.
 - **Non-blocking**: may wait for a later slice of the same story or milestone. For each, the
   `file:line` it belongs to and the marker line to write there, in the comment syntax of the
-  file: `// TODO(review): <the remark, what to do instead>`. You never write it: the conductor,
+  file, naming the row the remark belongs to (from the briefing, the commit or `slices.md`):
+  `// TODO(review): #<row id> <the remark, what to do instead>`. The id ties it to its story:
+  `story-check` blocks that story on it, and no other. You never write it: the conductor,
   or the agent that fixes the branch, writes it or settles the remark at once, and the story is
-  closed only when `npx ddd-ts-kit todo` lists no `TODO(review)`.
+  closed only when `npx ddd-ts-kit story-check <code>` exits 0. Asked whether a story or a
+  milestone can close, run it and report what it lists, each blocker with its `file:line` and why
+  it is the story's, then the unattributed markers it lists without blocking.
 
 Asked for a design review of rows still to build, write it to be saved as
 `docs/architecture/reviews/<topic>.md`: one heading `## #<id> <slice>` per row, every class,

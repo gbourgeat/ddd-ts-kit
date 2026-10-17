@@ -200,10 +200,15 @@ cannot judge. What to look for differs by layer:
 The plugin offers the same split as a tool: the `architecture-reviewer` agent reviews a diff
 or a whole context read-only, starting from the checker's output and then judging what tools
 cannot. It sorts its findings: a blocking one is fixed before the merge; a non-blocking one
-comes with the `TODO(review): <remark>` line to write at its `file:line`, so that the remark
-lives in the code rather than in a pull request that is soon closed. `ddd-ts-kit todo` lists it
-and `ddd-ts-kit status` counts it until it is handled, or dismissed by a decision record; a
-story or a milestone is closed only when none is left.
+comes with the `TODO(review): #<row id> <remark>` line to write at its `file:line`, so that the
+remark lives in the code rather than in a pull request that is soon closed, tied to the row it is
+about. `ddd-ts-kit todo` lists it and `ddd-ts-kit status` counts it until it is handled, or
+dismissed by a decision record; a story or a milestone is closed only when none of its own is
+left. `ddd-ts-kit story-check <code>` answers that: a marker is the story's when its text names
+one of its rows, else when the commit that wrote it does (its `Slice:` trailer, else its
+message), so that two stories building one context in parallel do not hold each other open; a
+marker that belongs to no row blocks only when no other open story works in its context, and is
+listed otherwise, for the conductor to settle or to attribute.
 
 ## Branching and small pull requests
 

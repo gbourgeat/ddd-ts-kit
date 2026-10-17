@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:7ce7266aa838236f -->
+<!-- translation-of: README.md sha256:1415e0bb16b456bb -->
 
 # ddd-ts-kit
 
@@ -1080,9 +1080,14 @@ pas une erreur. Chaque ligne qui n'est pas faite dit si elle peut commencer : pr
 quand toutes ses dépendances sont faites, prête sur une branche quand chaque dépendance non faite
 est une ligne confiée à un *worker* dont le *worktree* a des *commits* d'avance sur sa base (les
 `rows` de son `.ddd-ts-kit/worker.json`, tels que `status --workers` les lit), et en attente
-sinon, avec les identifiants qu'elle attend. `--json` affiche `{ next, slices, remaining }` :
+sinon, avec les identifiants qu'elle attend. Une story ou un jalon dont toutes les lignes sont
+faites mais que des marqueurs qui lui appartiennent gardent ouvert a sa propre ligne (seuls les
+marqueurs qui peuvent garder une telle story ouverte passent par git blame, un appel par fichier), avec la commande qui les liste :
+`story M1: every row done, 3 markers left: npx ddd-ts-kit story-check M1` (voir
+[story-check](#story-check)). `--json` affiche `{ next, slices, remaining }` :
 `next` et `slices` valent `null` quand leur fichier manque, `slices` contient
-`{ file, rows, byStatus, byOwner }`, une ligne non faite portant
+`{ file, rows, byStatus, byOwner, duplicates, unscoped, unclosed }`, `unclosed` valant
+`[{ story, markers, command }]`, une ligne non faite portant
 `ready: 'trunk' | 'branch' | 'waiting'` et `waitingFor` (ses dépendances non faites),
 `remaining` un `{ context, domain, platform, test }` par contexte, et un avec un `context` vide
 pour ce qui reste hors d'eux.
@@ -1139,6 +1144,87 @@ sans responsable et un identifiant que portent deux lignes rendent les lignes im
 ordonner : ils sont signalés seuls, sans vagues, et la commande sort avec 1. Un fichier sans table
 de tranches, ou un contexte qu'aucune ligne ne nomme, est refusé. `--json` affiche
 `{ file, context, problems: [{ kind, rows, message }], waves: [{ wave, batches: [{ id, owner, context, rows: [{ id, kind, slice, status, waitingFor }], aggregates, brief, sameFiles, unknownOverlap }] }], mergeOrder }`.
+
+## story-check
+
+```
+ddd-ts-kit story-check <code> [--strict]
+```
+
+Dit si une story ou un jalon peut être clos : chacune de ses lignes de
+`docs/architecture/slices.md` est `done` (les autres sont listées avec leur statut), et il ne reste
+aucun marqueur qui lui appartient. `<code>` est le début des identifiants de ses lignes,
+l'identifiant sans son dernier `.<numéro>` : `M1` pour `M1.01`, `M1.02`, `US5` pour `US5.03` (un
+`#` devant est ignoré).
+
+Plusieurs stories construisent souvent le même contexte à la fois, et un marqueur ne dit pas à qui
+il est : chaque `TODO(domain)`, `TODO(platform)`, `it.todo` et `TODO(review)` est d'abord attribué
+à des lignes.
+
+1. Son texte nomme une ligne : `#M1.03` ou `M1.03`, comme mot entier, ainsi que `cited` les lit
+   (`M1.035` n'est pas `M1.03`). C'est pourquoi une remarque de revue s'écrit
+   `TODO(review): #<identifiant de ligne> <remarque>`.
+2. Sinon le *commit* qui a écrit sa ligne en nomme une : `git blame --porcelain` donne le *commit*
+   (un appel par fichier, sur les lignes de ses marqueurs, et un appel git pour tous les
+   *commits*), dont le *trailer* `Slice: <id>`, sinon les identifiants de lignes que nomment son
+   sujet ou son corps, donnent les lignes. Un `TODO(domain)` ou un `it.todo` écrit par un
+   générateur appartient à la ligne dont le *commit* l'a créé.
+3. Sinon, pour une ligne pas encore commitée, les lignes de `.ddd-ts-kit/worker.json` quand le
+   projet est le *worktree* d'un *worker*.
+
+Un marqueur appartient à la story quand il appartient à une de ses lignes, où qu'il soit. Un
+marqueur d'un contexte de ses lignes qui n'appartient à aucune ligne lui appartient quand aucune
+autre story ouverte (qui a une ligne non faite) n'a de ligne dans ce contexte, puisqu'il ne peut
+être à personne d'autre ; sinon il est listé sans bloquer, avec les stories à qui il peut
+appartenir : le régler, ou y nommer sa ligne. Un marqueur des lignes d'autres stories ne bloque
+pas, et il est compté. Une cellule Context qui ne nomme aucun contexte du projet (`all`,
+`platform`) n'en ajoute aucun : hors des contextes, seul un marqueur attribué à une de ses lignes
+compte. `--strict` fait bloquer chaque marqueur de ses contextes, à qui qu'il soit.
+
+Elle ne lit que les fichiers et git. Elle sort avec 0 quand la story peut être close (une ligne,
+puis les marqueurs listés sans bloquer, s'il y en a), 1 quand quelque chose la garde ouverte,
+chaque marqueur bloquant avec la raison pour laquelle il est à elle (`names #M1.01`,
+`written by a782a19 Slice: M1.02`, `no other open story in payments`), son `file:line` et sa
+correction (le traiter, ou l'écarter par un enregistrement de décision,
+`npx ddd-ts-kit generate adr "<title>"`, puis supprimer le marqueur), et 2 sur un code qu'aucune
+ligne ne porte ou sans tableau des tranches. `--json` affiche
+`{ story, rows, contexts, unread, strict, open: [{ id, context, slice, status }], markers, unattributed, others, canClose }`,
+chaque marqueur valant `{ kind, context, file, line, text, attribution: { by, rows, commit? } }`,
+avec `why`, `sharedWith` et `fix` dans `markers` et `unattributed` ; `by` vaut `text`, `commit`,
+`worker` ou `none`.
+
+```
+$ npx ddd-ts-kit story-check M1
+M1 cannot close: every row done, 3 markers of its own left.
+
+TODO(review) (1): handle it in a slice, or dismiss it by a decision record (`npx ddd-ts-kit generate adr "<title>"`, quoting the remark without its marker), then delete the marker in the same commit
+  docs/architecture/reviews/invoices.md:3  #M1.01 name the total after its term.  (names #M1.01)
+
+TODO(domain) (1): write the business decision it asks for, or dismiss it by a decision record (`npx ddd-ts-kit generate adr "<title>"`), then delete the marker
+  src/contexts/billing/application/commands/issue-invoice/issue-invoice.handler.ts:2  the rounding of a total.  (written by a782a19 Slice: M1.02)
+
+TODO(platform) (1): make the technical choice it asks for, or dismiss it by a decision record (`npx ddd-ts-kit generate adr "<title>"`), then delete the marker
+  src/contexts/payments/domain/aggregates/payment.aggregate.ts:2  the provider of a refund.  (no other open story in payments)
+
+Not blocking, unattributed (1): settle each, or name its row in the marker (`TODO(review): #<row> <remark>`)
+  src/contexts/billing/test/unit/invoice.aggregate.spec.ts:1  it.todo  refuses an invoice without lines  (unattributed, may belong to open US2: settle it or name the row in the marker)
+
+Not blocking: 1 marker of these contexts belongs to rows of US2.
+
+Once each is settled: npx ddd-ts-kit story-check M1
+```
+
+Une fois les trois réglés :
+
+```
+$ npx ddd-ts-kit story-check M1
+M1 can close: its 3 rows done, no marker of its own left in billing, payments.
+
+Not blocking, unattributed (1): settle each, or name its row in the marker (`TODO(review): #<row> <remark>`)
+  src/contexts/billing/test/unit/invoice.aggregate.spec.ts:1  it.todo  refuses an invoice without lines  (unattributed, may belong to open US2: settle it or name the row in the marker)
+
+Not blocking: 1 marker of these contexts belongs to rows of US2.
+```
 
 ## doctor
 

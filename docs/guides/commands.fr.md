@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:15363ab8e9b4f220 -->
+<!-- translation-of: commands.md sha256:ffd4af12716080a1 -->
 
 # Quelle commande, quand
 
@@ -92,6 +92,7 @@ La tranche est finie quand `todo ordering` n'en liste plus rien.
 | `/ddd-ts-kit:use-case <UseCase>` | une tranche de bout en bout, test d'abord | pour chaque ligne des tranches | domaine, gestionnaire, route et *specs*, remplis | `npm run verify` |
 | `npx ddd-ts-kit generate <kind> ...` | un fichier d'un rôle avec sa *spec*, son *fake* et son enregistrement (liste ci-dessous) | chaque fois qu'il faut un fichier d'un rôle, jamais à la main | le fichier et les endroits `TODO(domain)`, `--json` pour la liste | remplir les endroits, puis `todo` |
 | `npx ddd-ts-kit todo [<context>]` | chaque `TODO(domain)`, `TODO(platform)`, `it.todo` et `TODO(review)` restant | avant de clore une tranche, une story ou un jalon | des entrées `file:line` | les écrire, puis `npm test` ; régler chaque `TODO(review)` ou l'écarter par `generate adr` avant de clore la story ou le jalon |
+| `npx ddd-ts-kit story-check <code> [--strict]` | si une story ou un jalon (`M1` pour les lignes `M1.*`) peut être clos : chaque ligne `done`, aucun marqueur qui lui appartient, un marqueur lui appartenant quand son texte, le *commit* qui l'a écrit ou le *worker* qui le porte nomme une de ses lignes, ou quand il n'appartient à aucune ligne dans un contexte où aucune autre story ouverte ne travaille | avant de déclarer clos une story ou un jalon ; `status` nomme celui dont les lignes sont faites mais que des marqueurs gardent ouvert | une ligne quand il peut être clos ; sinon chaque marqueur bloquant avec la raison pour laquelle il est à lui, son `file:line` et sa correction, puis les marqueurs non attribués listés sans bloquer ; sort avec 0, 1, ou 2 sur un code inconnu | traiter chaque marqueur bloquant ou l'écarter par `generate adr`, puis supprimer le marqueur ; nommer la ligne dans un marqueur non attribué (`TODO(review): #M1.03 ...`) |
 | `/ddd-ts-kit:parallel-work` | répartit les tranches entre des *workers*, un contexte chacun | quand plusieurs agents ou personnes construisent en même temps | une consigne par *worker*, des *worktrees* `npx ddd-ts-kit worker-scope <context>`, avec les documents de la conception de chaque ligne et les noms qu'ils citent que le tronc n'a pas | le `use-case` de chaque *worker* |
 | `npx ddd-ts-kit status --workers` | le *worktree*, la branche, le contexte, les lignes et l'avance de chaque *worker*, son état (lignes commitées, ligne en cours, dernier verify-slice), les fichiers qu'il a changés, et ceux que deux *workers* changent | avant de confier une consigne à un second *worker* dans un contexte, avant chaque fusion | un texte court, `--json` pour des données | d'autres lignes pour le nouveau *worker*, l'ordre des fusions, ou `--resume` pour un *worker* arrêté |
 | `npx ddd-ts-kit worker-scope <context> --resume` | où en est un *worker* arrêté (lignes d'après leur *trailer* `Slice:`, fichiers de la ligne en cours, marqueurs, dernier verify-slice, rapport, agent), lu sans rien changer | sur une notification d'arrêt d'un `context-builder` (limite de tours, erreur, une personne) | le texte du SendMessage pour son agent, ou la consigne d'un nouvel agent | l'envoyer tel quel |
@@ -249,6 +250,7 @@ Usage
   ddd-ts-kit doctor [--strict]
   ddd-ts-kit todo [<context>]
   ddd-ts-kit plan-waves [<context>]
+  ddd-ts-kit story-check <code> [--strict]
   ddd-ts-kit worker-scope <context> [--base <ref>] [--rows <id,...>] [--worktree <path>] [--branch <name>] [--no-install] [--dry-run]
   ddd-ts-kit worker-scope <context> --resume [--worktree <path> | --branch <name>] [--fresh]
   ddd-ts-kit verify-slice <context> --since <git-ref>
@@ -308,7 +310,9 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
                    status and by owner, each row not done ready on the trunk (its dependencies done), ready
                    on a branch (the others briefed to a worker with commits ahead of its base) or waiting
                    (with the ids it waits for), and the TODO(domain), TODO(platform), it.todo and TODO(review)
-                   left in each context; --workers shows instead each worktree holding .ddd-ts-kit/worker.json (branch,
+                   left in each context, and each story or milestone whose rows are all done while markers
+                   of its own keep it open (see story-check, whose git blame it runs on those markers
+                   only); --workers shows instead each worktree holding .ddd-ts-kit/worker.json (branch,
                    context, rows, base, commits ahead, dependencies not installed, files changed since the base,
                    its report), a state line (rows committed, the row under way, files uncommitted, markers,
                    last verify-slice, and the worker-scope --resume command of a stopped one), then the
@@ -325,6 +329,21 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
                    the batches of a wave likely to touch the same files (same aggregate in Start with, or
                    unknown when it names none), and the merge order; a cycle, a dependency on an unknown id
                    or a row without owner is reported alone, and exits 1
+  story-check      whether a story or a milestone can close, <code> being the start of the ids of its rows
+                   (M1 for M1.01, M1.02: the id without its last .<number>): every row of it done in
+                   slices.md (the others listed with their status), and no marker of its own left
+                   (TODO(domain), TODO(platform), it.todo, TODO(review)). A marker is attributed to
+                   rows: those its text names (#M1.03 or M1.03, word-bounded), else those of the commit
+                   that wrote its line (git blame, once per file; its Slice: trailer, else the row ids
+                   its message names), else, not committed, those of .ddd-ts-kit/worker.json in a
+                   worker's worktree. It is the story's own when it belongs to one of its rows,
+                   wherever it is; a marker of a context of its rows that belongs to no row is its own
+                   when no other open story has a row in that context, and is listed without blocking
+                   otherwise (settle it or name its row in it); a marker of other stories' rows does not
+                   block. --strict: every marker of its contexts blocks. Each blocker comes with why it
+                   is its own, its file:line and its fix: handle it, or dismiss it by a decision record
+                   (generate adr), then delete the marker. Reads only: exits 0 when it can close, 1
+                   listing what keeps it open, 2 on a code no row carries or without slices.md
   worker-scope     a git worktree on the branch build/<context> (by default ../<project>-<context>), cut from
                    --base <ref> (by default the current branch, refused from a worker's worktree), its
                    .ddd-ts-kit/worker.json, and the briefing of the worker of that context; --rows <id,...>
@@ -358,8 +377,6 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
                    line links to. Default: every row not done, of the context when given, at the current
                    branch. --removed-since <ref>: the names a change removes, from the merge base to the
                    working tree, that such a design cites. Reads only, exits 0
-  verify-merge checks them, reported without failing the slice in this version (a later
-                   minor version fails it); exits 1 while a step fails
   verify-merge     what the merges of a branch lost, read from git only: every merge commit since --since
                    (by default the base of .ddd-ts-kit/worker.json, then origin/HEAD, then origin/main) and
                    the merge in progress (its result: the index and the working tree), or one <commit>; a

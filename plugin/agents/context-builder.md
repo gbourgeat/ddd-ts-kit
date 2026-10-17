@@ -113,7 +113,9 @@ install of its package manager), never an install that names a package.
 When all slices are committed: `npx ddd-ts-kit todo <context>` lists nothing but
 `TODO(review)` lines, then `npm run verify` once in the worktree. A `TODO(review)` is a remark
 of a review that the conductor follows until the story or milestone is closed: it never blocks
-your slices, and you leave it where it is unless your briefing gives it to you. Do not merge, do not push unless the briefing says
+your slices, and you leave it where it is unless your briefing gives it to you. One you write
+names its row first, `TODO(review): #<row id> <remark>`: `npx ddd-ts-kit story-check` holds the
+story of that row open on it, and no other. Do not merge, do not push unless the briefing says
 so, do not edit `docs/architecture/`.
 
 When the briefing or the conductor asks you to bring the trunk in (`git merge <trunk>`):

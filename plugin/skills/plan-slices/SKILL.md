@@ -16,6 +16,7 @@ allowed-tools:
   - Bash(npx ddd-ts-kit status)
   - Bash(npx ddd-ts-kit plan-waves)
   - Bash(npx ddd-ts-kit plan-waves *)
+  - Bash(npx ddd-ts-kit story-check *)
   - Bash(npx ddd-ts-kit cited *)
 ---
 
@@ -77,13 +78,16 @@ missing. Rows with no path between them can be built in parallel.
   (`--term "<Term>=<meaning>"`).
 - `Owner` is `conductor`, the name of a context (one worker per context) or a person.
 - `Status` is `todo`, `in progress`, `done`. Only the conductor edits this file: a worker
-  reports, the conductor marks the row at the merge. A story or a milestone is closed when its
-  rows are `done` and `npx ddd-ts-kit todo` lists no `TODO(review)` (skill
-  `ddd-ts-kit:quality-gate`).
+  reports, the conductor marks the row at the merge. A story or a milestone is closed when
+  `npx ddd-ts-kit story-check <code>` exits 0: its rows are `done` and no marker of its own is
+  left, a marker being its own when its text or the commit that wrote it names one of its rows
+  (skill `ddd-ts-kit:quality-gate`). `status` names a story whose rows are all done while
+  markers of its own keep it open.
 - Keep the eight column names as they are: `npx ddd-ts-kit status` reads every table with this
   header, in the order of the file (slices by status and by owner), and `worker-scope` puts the
   `todo` rows of an owner in its briefing. One table per story or milestone is fine.
-- `#` is the code of the story or milestone, then a number within it: `US5.03`, `M2.07`. Never
+- `#` is the code of the story or milestone, then a number within it: `US5.03`, `M2.07` (the
+  code is the id without its last `.<number>`: `story-check US5` reads the rows `US5.*`). Never
   one sequence across stories: when a story is cut or a row inserted, the numbers after it
   slide, and the ids that briefings, commits, reports and `Depends on` carry stop meaning the
   same row. An id is written once and never renumbered; a row added later takes the next free

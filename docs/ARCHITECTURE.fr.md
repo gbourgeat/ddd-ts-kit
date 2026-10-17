@@ -1,5 +1,5 @@
 [English](ARCHITECTURE.md) · **Français**
-<!-- translation-of: ARCHITECTURE.md sha256:c92b920cf7d79f92 -->
+<!-- translation-of: ARCHITECTURE.md sha256:0108f08a756e52f1 -->
 
 # Référence de l'architecture
 
@@ -1430,9 +1430,17 @@ que `ddd-ts-kit todo` liste en `file:line` et que `ddd-ts-kit status` compte par
 `TODO(domain)`, une décision du métier que le générateur laisse ; `TODO(platform)`, un choix
 technique de la plateforme ; `it.todo`, un test à écrire ; `TODO(review)`, une remarque non
 bloquante d'une relecture, écrite à la ligne qu'elle concerne plutôt que dans le corps d'une
-pull request. Une tranche est close quand son contexte n'en garde plus que des `TODO(review)` ;
-une story ou un jalon est clos quand il n'en reste plus aucun, chaque `TODO(review)` traité dans
-une tranche ou écarté par un enregistrement de décision (`generate adr`). Tout autre `TODO`
+pull request, qui nomme la ligne à laquelle elle appartient : `TODO(review): #M1.03 <remarque>`.
+Une tranche est close quand son contexte n'en garde plus que des `TODO(review)` ; une story ou un
+jalon est clos quand il ne reste plus aucun marqueur qui lui appartient
+(`ddd-ts-kit story-check <code>`), chacun traité dans une tranche ou écarté par un enregistrement
+de décision (`generate adr`). Un marqueur appartient aux lignes que son texte nomme (`#M1.03` ou
+`M1.03`), sinon aux lignes que nomme le *commit* qui a écrit sa ligne (son *trailer*
+`Slice: <id>`, sinon son message), sinon, non commité dans le *worktree* d'un *worker*, aux lignes
+de ce *worker* ; il appartient aux stories de ces lignes, où qu'il soit. Un marqueur d'un contexte
+qui n'appartient à aucune ligne ne garde une story de ce contexte ouverte que si aucune autre story
+ouverte n'y a de ligne ; sinon il est listé, sans bloquer, pour que le chef d'orchestre le règle
+ou l'attribue en nommant sa ligne. Tout autre `TODO`
 nomme son propriétaire ou une référence (`TODO(billing-team)`, `#142`). Une règle qui accepte un
 `TODO(domain)` là où elle signalerait sinon (`authz/policy-asked`, `schema/no-duplicate-shape`)
 accepte un `TODO(review)` de la même façon.

@@ -21,6 +21,18 @@ export interface SlicesProgress {
   readonly duplicates: readonly string[];
   /** The ids that are a bare number, without the code of their story or milestone (`12`, not `US5.12`). */
   readonly unscoped: readonly string[];
+  /** The stories and milestones whose rows are all done while markers of their own keep them open (`story-check`). */
+  readonly unclosed: readonly UnclosedStory[];
+}
+
+/** A story or a milestone whose rows are all done, that `story-check` refuses to close. */
+export interface UnclosedStory {
+  /** Its code: `M1` for the rows `M1.01`, `M1.02`. */
+  readonly story: string;
+  /** The markers of its own that keep it open, as `story-check` attributes them. */
+  readonly markers: number;
+  /** The command that lists them. */
+  readonly command: string;
 }
 
 /** A row of the slices table; one not done says whether it can start, and what it waits for. */

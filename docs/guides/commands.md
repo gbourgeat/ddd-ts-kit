@@ -89,6 +89,7 @@ The slice is finished when `todo ordering` no longer lists anything of it.
 | `/ddd-ts-kit:use-case <UseCase>` | one slice end to end, test first | for each row of the slices | domain, handler, route and specs, filled | `npm run verify` |
 | `npx ddd-ts-kit generate <kind> ...` | one file of a role with its spec, fake and registration (list below) | whenever a file of a role is needed, never by hand | the file and the `TODO(domain)` places, `--json` for the list | fill the places, then `todo` |
 | `npx ddd-ts-kit todo [<context>]` | each `TODO(domain)`, `TODO(platform)`, `it.todo` and `TODO(review)` left | before closing a slice, a story or a milestone | `file:line` entries | write them, then `npm test`; settle each `TODO(review)` or dismiss it with `generate adr` before the story or milestone is closed |
+| `npx ddd-ts-kit story-check <code> [--strict]` | whether a story or a milestone (`M1` for the rows `M1.*`) can close: every row `done`, no marker of its own left, a marker being its own when its text, the commit that wrote it or the worker holding it names one of its rows, or when it belongs to no row in a context no other open story works in | before a story or a milestone is declared closed; `status` names one whose rows are done while markers keep it open | one line when it can close; else each blocker with why it is the story's, its `file:line` and its fix, then the unattributed markers it lists without blocking; exits 0, 1, or 2 on an unknown code | handle each blocker or dismiss it with `generate adr`, then delete the marker; name the row in an unattributed one (`TODO(review): #M1.03 ...`) |
 | `/ddd-ts-kit:parallel-work` | splits the slices between workers, one context each | when several agents or people build at once | a briefing per worker, `npx ddd-ts-kit worker-scope <context>` worktrees, with the documents of each row's design and the names they cite the trunk does not have | each worker's `use-case` |
 | `npx ddd-ts-kit status --workers` | each worker's worktree, branch, context, rows and commits ahead, its state (rows committed, row under way, last verify-slice), the files it changed, and the files two workers change | before briefing a second worker in a context, before each merge | a short text, `--json` for data | other rows for the new worker, the merge order, or `--resume` for a stopped one |
 | `npx ddd-ts-kit worker-scope <context> --resume` | where a stopped worker stands (rows by their `Slice:` trailer, files of the row under way, markers, last verify-slice, report, agent), read without changing anything | on a stop notification of a `context-builder` (turn limit, error, a person) | the SendMessage text for its agent, or the briefing of a new one | send it as it is |
@@ -244,6 +245,7 @@ Usage
   ddd-ts-kit doctor [--strict]
   ddd-ts-kit todo [<context>]
   ddd-ts-kit plan-waves [<context>]
+  ddd-ts-kit story-check <code> [--strict]
   ddd-ts-kit worker-scope <context> [--base <ref>] [--rows <id,...>] [--worktree <path>] [--branch <name>] [--no-install] [--dry-run]
   ddd-ts-kit worker-scope <context> --resume [--worktree <path> | --branch <name>] [--fresh]
   ddd-ts-kit verify-slice <context> --since <git-ref>
@@ -303,7 +305,9 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
                    status and by owner, each row not done ready on the trunk (its dependencies done), ready
                    on a branch (the others briefed to a worker with commits ahead of its base) or waiting
                    (with the ids it waits for), and the TODO(domain), TODO(platform), it.todo and TODO(review)
-                   left in each context; --workers shows instead each worktree holding .ddd-ts-kit/worker.json (branch,
+                   left in each context, and each story or milestone whose rows are all done while markers
+                   of its own keep it open (see story-check, whose git blame it runs on those markers
+                   only); --workers shows instead each worktree holding .ddd-ts-kit/worker.json (branch,
                    context, rows, base, commits ahead, dependencies not installed, files changed since the base,
                    its report), a state line (rows committed, the row under way, files uncommitted, markers,
                    last verify-slice, and the worker-scope --resume command of a stopped one), then the
@@ -320,6 +324,21 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
                    the batches of a wave likely to touch the same files (same aggregate in Start with, or
                    unknown when it names none), and the merge order; a cycle, a dependency on an unknown id
                    or a row without owner is reported alone, and exits 1
+  story-check      whether a story or a milestone can close, <code> being the start of the ids of its rows
+                   (M1 for M1.01, M1.02: the id without its last .<number>): every row of it done in
+                   slices.md (the others listed with their status), and no marker of its own left
+                   (TODO(domain), TODO(platform), it.todo, TODO(review)). A marker is attributed to
+                   rows: those its text names (#M1.03 or M1.03, word-bounded), else those of the commit
+                   that wrote its line (git blame, once per file; its Slice: trailer, else the row ids
+                   its message names), else, not committed, those of .ddd-ts-kit/worker.json in a
+                   worker's worktree. It is the story's own when it belongs to one of its rows,
+                   wherever it is; a marker of a context of its rows that belongs to no row is its own
+                   when no other open story has a row in that context, and is listed without blocking
+                   otherwise (settle it or name its row in it); a marker of other stories' rows does not
+                   block. --strict: every marker of its contexts blocks. Each blocker comes with why it
+                   is its own, its file:line and its fix: handle it, or dismiss it by a decision record
+                   (generate adr), then delete the marker. Reads only: exits 0 when it can close, 1
+                   listing what keeps it open, 2 on a code no row carries or without slices.md
   worker-scope     a git worktree on the branch build/<context> (by default ../<project>-<context>), cut from
                    --base <ref> (by default the current branch, refused from a worker's worktree), its
                    .ddd-ts-kit/worker.json, and the briefing of the worker of that context; --rows <id,...>
@@ -353,8 +372,6 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
                    line links to. Default: every row not done, of the context when given, at the current
                    branch. --removed-since <ref>: the names a change removes, from the merge base to the
                    working tree, that such a design cites. Reads only, exits 0
-  verify-merge checks them, reported without failing the slice in this version (a later
-                   minor version fails it); exits 1 while a step fails
   verify-merge     what the merges of a branch lost, read from git only: every merge commit since --since
                    (by default the base of .ddd-ts-kit/worker.json, then origin/HEAD, then origin/main) and
                    the merge in progress (its result: the index and the working tree), or one <commit>; a
