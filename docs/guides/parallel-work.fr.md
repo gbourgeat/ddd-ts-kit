@@ -1,5 +1,5 @@
 [English](parallel-work.md) · **Français**
-<!-- translation-of: parallel-work.md sha256:5fe3145ebc5dac9d -->
+<!-- translation-of: parallel-work.md sha256:21f320dffb8d3f2f -->
 
 # Travailler en parallèle sans collisions
 

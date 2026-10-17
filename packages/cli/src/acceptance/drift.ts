@@ -3,7 +3,7 @@ import type { Criterion } from './criteria-in.js';
 import type { Scenario } from './scenario.js';
 
 /** What a locked scenario or criterion became: its new fingerprint, or `removed`. */
-export const REMOVED = 'removed';
+const REMOVED = 'removed';
 
 /**
  * A change since the lock that only a verdict of the acceptance-judge agent lets through: a

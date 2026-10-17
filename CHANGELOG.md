@@ -4,7 +4,7 @@ What each version changes for someone who uses the kit. The packages of `package
 together, under one version; the notes of each [GitHub release](https://github.com/gbourgeat/ddd-ts-kit/releases)
 list the pull requests behind it.
 
-## 0.26.0
+## Unreleased
 
 **A story's acceptance tests are written, locked and run before its code, and a locked scenario
 changes only with its criterion.** A story states its acceptance criteria in
@@ -38,6 +38,9 @@ To move: a new project runs its acceptance specs with `npm run test:e2e`; in an 
 `testMatch` of `jest.e2e.config.js`). `npx ddd-ts-kit init` adds the permission of
 `npx ddd-ts-kit acceptance *` and the refusal to edit a lock; update the plugin.
 `ddd-ts-kit check --rule test/acceptance-black-box` lists the acceptance specs to take up.
+
+## 0.26.0
+
 **The guard recognises the CLI of the kit however it is launched.** The refusal of
 `worker-scope` to a sub-agent (without `--dry-run` or `--resume`) and the refusal to a worker of a
 generator that writes shared files or another context read the command word by word: the
