@@ -2,16 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { RoleBasedAuthorizer } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { anActor } from '@ddd-ts-kit/auth/testing';
-import { contextModule, createTestApplication, fake } from '@ddd-ts-kit/di';
-import * as identityDeclarations from '@/contexts/identity/identity.declarations';
-import { platformTestModule } from '@/platform/platform-test.module';
 import { identityPermissions } from '@/contexts/identity/application/authorization/identity.permissions';
 import { RegisterPersonCommand } from '@/contexts/identity/application/commands/register-person/register-person.command';
-import { IdentityRelationships } from '@/contexts/identity/application/ports/identity-relationships.port';
-import { PersonRepository } from '@/contexts/identity/domain/repositories/person.repository';
 import { aPerson } from '@/contexts/identity/test/builders/person.builder';
-import { FakeIdentityRelationships } from '@/contexts/identity/test/fakes/identity-relationships.fake';
-import { FakePersonRepository } from '@/contexts/identity/test/fakes/person.repository.fake';
+import { anIdentityWorld } from '@/contexts/identity/test/worlds/identity.world';
 
 const holders = authorizationModule({
   authorizer: new RoleBasedAuthorizer({ roles: { holder: [identityPermissions['person.register']] } }),
@@ -21,7 +15,7 @@ const holder = anActor().named('person-ada').withRole('holder').build();
 
 describe('Register person', () => {
   it('saves the person and answers its identifier', async () => {
-    const { application, personRepository } = arrange();
+    const { application, personRepository } = await arrange();
 
     const id = await application.commandBus.execute(
       new RegisterPersonCommand(holder, 'Ada Lovelace', 'ada@example.com'),
@@ -32,7 +26,7 @@ describe('Register person', () => {
   });
 
   it('is refused to an actor who does not hold the permission person.register', async () => {
-    const { application } = arrange();
+    const { application } = await arrange();
 
     await expect(
       application.commandBus.execute(new RegisterPersonCommand(anActor().build(), 'Ada Lovelace', 'ada@example.com')),
@@ -42,7 +36,7 @@ describe('Register person', () => {
   });
 
   it('makes the actor known as a person, with the name and the address they gave, and tells the other contexts', async () => {
-    const { application, personRepository, relationships } = arrange();
+    const { application, personRepository, relationships } = await arrange();
 
     await application.commandBus.execute(new RegisterPersonCommand(holder, ' Ada  Lovelace ', 'Ada@Example.com'));
 
@@ -63,7 +57,7 @@ describe('Register person', () => {
   });
 
   it('updates the name and the address of a person who registers again and announces nothing new', async () => {
-    const { application, personRepository } = arrange();
+    const { application, personRepository } = await arrange();
 
     await personRepository.save(
       aPerson().identifiedBy('person-ada').named('Ada Lovelace').reachedAt('ada@example.com').build(),
@@ -89,7 +83,7 @@ describe('Register person', () => {
       code: 'INVALID_EMAIL',
     },
   ])('refuses $what, and saves and publishes nothing', async ({ displayName, email, code }) => {
-    const { application, personRepository } = arrange();
+    const { application, personRepository } = await arrange();
 
     await expect(
       application.commandBus.execute(new RegisterPersonCommand(holder, displayName, email)),
@@ -100,15 +94,11 @@ describe('Register person', () => {
   });
 });
 
-function arrange() {
-  const personRepository = new FakePersonRepository();
-  const relationships = new FakeIdentityRelationships();
-
-  const application = createTestApplication({
-    modules: [platformTestModule, contextModule('identity', identityDeclarations), holders],
-    fakes: [fake(PersonRepository, personRepository), fake(IdentityRelationships, relationships)],
+async function arrange() {
+  const { identityRelationships: relationships, ...arranged } = await anIdentityWorld({
+    modules: [holders],
     idPrefix: 'person',
   });
 
-  return { application, personRepository, relationships };
+  return { ...arranged, relationships };
 }

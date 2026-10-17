@@ -132,6 +132,9 @@ it('reserves the stock of the order it places', async () => {
 
 The module is the unit under test: no `new PlaceOrderHandler(...)` by hand, no `vi.mock`. The
 fake is an object literal, since a port is only a shape.
+When several specs of a context build the same test application, `npx ddd-ts-kit generate
+test-world <context>` writes it once, in `test/worlds/`, with every fake of `test/fakes/`: see
+[Worlds](../../docs/concepts/testing-strategy.md#worlds).
 
 ## A context that declares itself
 

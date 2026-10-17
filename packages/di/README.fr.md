@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:2a6480f2779bc1f3 -->
+<!-- translation-of: README.md sha256:ae159f1f989deb60 -->
 
 # @ddd-ts-kit/di
 
@@ -134,6 +134,9 @@ it('reserves the stock of the order it places', async () => {
 
 Le module est l'unité testée : pas de `new PlaceOrderHandler(...)` écrit à la main, pas de
 `vi.mock`. Le *fake* est un littéral d'objet, puisqu'un port n'est qu'une forme.
+Quand plusieurs *specs* d'un contexte construisent la même application de test,
+`npx ddd-ts-kit generate test-world <context>` l'écrit une fois, dans `test/worlds/`, avec chaque
+*fake* de `test/fakes/` : voir [Mondes](../../docs/concepts/testing-strategy.fr.md#mondes).
 
 ## Un contexte qui se déclare lui-même
 

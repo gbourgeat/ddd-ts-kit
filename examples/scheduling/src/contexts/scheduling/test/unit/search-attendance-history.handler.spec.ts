@@ -2,17 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { RoleBasedAuthorizer } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { anActor } from '@ddd-ts-kit/auth/testing';
-import { contextModule, createTestApplication, fake } from '@ddd-ts-kit/di';
 import { Criteria } from '@ddd-ts-kit/kernel';
-import * as schedulingDeclarations from '@/contexts/scheduling/scheduling.declarations';
-import { platformTestModule } from '@/platform/platform-test.module';
 import { schedulingPermissions } from '@/contexts/scheduling/application/authorization/scheduling.permissions';
-import {
-  AttendanceHistory,
-  type AttendanceEntry,
-} from '@/contexts/scheduling/application/ports/attendance-history.port';
+import type { AttendanceEntry } from '@/contexts/scheduling/application/ports/attendance-history.port';
 import { SearchAttendanceHistoryQuery } from '@/contexts/scheduling/application/queries/search-attendance-history/search-attendance-history.query';
-import { FakeAttendanceHistory } from '@/contexts/scheduling/test/fakes/attendance-history.fake';
+import { aSchedulingWorld } from '@/contexts/scheduling/test/worlds/scheduling.world';
 
 const holders = authorizationModule({
   authorizer: new RoleBasedAuthorizer({
@@ -65,19 +59,17 @@ describe('Search attendance history', () => {
 });
 
 async function arrange(entries: readonly AttendanceEntry[]) {
-  const history = new FakeAttendanceHistory();
-
-  for (const written of entries) {
-    await history.upsertIfNewer(
-      written.id,
-      { eventId: written.id, occurredAt: at, version: written.version },
-      () => written,
-    );
-  }
-
-  const application = createTestApplication({
-    modules: [platformTestModule, contextModule('scheduling', schedulingDeclarations), holders],
-    fakes: [fake(AttendanceHistory, history)],
+  const { application } = await aSchedulingWorld({
+    modules: [holders],
+    given: async (fakes) => {
+      for (const written of entries) {
+        await fakes.attendanceHistory.upsertIfNewer(
+          written.id,
+          { eventId: written.id, occurredAt: at, version: written.version },
+          () => written,
+        );
+      }
+    },
   });
 
   return { application };

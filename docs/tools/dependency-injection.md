@@ -361,6 +361,10 @@ it('books the appointment at the instant of the clock, under a new id', async ()
 of the port. Manual wiring has no container to bind a fake in: its specs build the handler
 with `new` and register it on `createTestBuses()` of `@ddd-ts-kit/testing`.
 
+When several specs of a context build the same application, or the same buses, with the same
+fakes, `npx ddd-ts-kit generate test-world <context>` writes that arrangement once, in
+`test/worlds/`: see [Worlds](../concepts/testing-strategy.md#worlds).
+
 ## Comparison
 
 | | tsyringe + `@ddd-ts-kit/di` | NestJS container | Manual wiring |

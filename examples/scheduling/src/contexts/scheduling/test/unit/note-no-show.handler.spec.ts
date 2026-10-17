@@ -2,13 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { RoleBasedAuthorizer } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { anActor } from '@ddd-ts-kit/auth/testing';
-import { contextModule, createTestApplication, fake } from '@ddd-ts-kit/di';
-import * as schedulingDeclarations from '@/contexts/scheduling/scheduling.declarations';
-import { platformTestModule } from '@/platform/platform-test.module';
 import { schedulingPermissions } from '@/contexts/scheduling/application/authorization/scheduling.permissions';
 import { NoteNoShowCommand } from '@/contexts/scheduling/application/commands/note-no-show/note-no-show.command';
-import { AttendanceRecordRepository } from '@/contexts/scheduling/domain/repositories/attendance-record.repository';
-import { FakeAttendanceRecordRepository } from '@/contexts/scheduling/test/fakes/attendance-record.repository.fake';
+import { aSchedulingWorld } from '@/contexts/scheduling/test/worlds/scheduling.world';
 
 const holders = authorizationModule({
   authorizer: new RoleBasedAuthorizer({
@@ -21,7 +17,7 @@ const startsAt = new Date('2026-03-02T09:00:00.000Z');
 
 describe('Note no show', () => {
   it('opens the record of the patient in the practice with its first fact, and answers its identifier', async () => {
-    const { application, records } = arrange();
+    const { application, records } = await arrange();
 
     const id = await application.commandBus.execute(
       new NoteNoShowCommand(holder, 'practice-1', 'patient-1', 'appointment-1', startsAt),
@@ -36,7 +32,7 @@ describe('Note no show', () => {
   });
 
   it('notes a later fact in the same record, at the end of its stream', async () => {
-    const { application, records } = arrange();
+    const { application, records } = await arrange();
 
     await application.commandBus.execute(
       new NoteNoShowCommand(holder, 'practice-1', 'patient-1', 'appointment-1', startsAt),
@@ -50,7 +46,7 @@ describe('Note no show', () => {
   });
 
   it('refuses to note the same appointment twice, and appends nothing', async () => {
-    const { application, records } = arrange();
+    const { application, records } = await arrange();
 
     await application.commandBus.execute(
       new NoteNoShowCommand(holder, 'practice-1', 'patient-1', 'appointment-1', startsAt),
@@ -68,7 +64,7 @@ describe('Note no show', () => {
   });
 
   it('is refused to an actor who does not hold the permission attendance.note', async () => {
-    const { application } = arrange();
+    const { application } = await arrange();
 
     await expect(
       application.commandBus.execute(
@@ -78,14 +74,8 @@ describe('Note no show', () => {
   });
 });
 
-function arrange() {
-  const context = contextModule('scheduling', schedulingDeclarations);
-  const records = new FakeAttendanceRecordRepository();
+async function arrange() {
+  const { application, attendanceRecordRepository } = await aSchedulingWorld({ modules: [holders] });
 
-  const application = createTestApplication({
-    modules: [platformTestModule, context, holders],
-    fakes: [fake(AttendanceRecordRepository, records)],
-  });
-
-  return { application, records };
+  return { application, records: attendanceRecordRepository };
 }

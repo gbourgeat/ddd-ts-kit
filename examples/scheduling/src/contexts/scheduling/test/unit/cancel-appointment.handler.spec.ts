@@ -2,21 +2,12 @@ import { describe, expect, it } from 'vitest';
 import { RoleBasedAuthorizer } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { anActor } from '@ddd-ts-kit/auth/testing';
-import { contextModule, createTestApplication, fake } from '@ddd-ts-kit/di';
-import * as schedulingDeclarations from '@/contexts/scheduling/scheduling.declarations';
-import { platformTestModule } from '@/platform/platform-test.module';
 import { schedulingPermissions } from '@/contexts/scheduling/application/authorization/scheduling.permissions';
 import { CancelAppointmentCommand } from '@/contexts/scheduling/application/commands/cancel-appointment/cancel-appointment.command';
-import { AppointmentRepository } from '@/contexts/scheduling/domain/repositories/appointment.repository';
-import { CalendarRepository } from '@/contexts/scheduling/domain/repositories/calendar.repository';
-import { WaitlistRepository } from '@/contexts/scheduling/domain/repositories/waitlist.repository';
 import type { Appointment } from '@/contexts/scheduling/domain/aggregates/appointment.aggregate';
 import { anAppointment } from '@/contexts/scheduling/test/builders/appointment.builder';
 import { aCalendar } from '@/contexts/scheduling/test/builders/calendar.builder';
-import { FakeAppointmentRepository } from '@/contexts/scheduling/test/fakes/appointment.repository.fake';
-import { FakeWaitlistRepository } from '@/contexts/scheduling/test/fakes/waitlist.repository.fake';
-import { Agenda } from '@/contexts/scheduling/application/ports/agenda.port';
-import { FakeAgenda } from '@/contexts/scheduling/test/fakes/agenda.fake';
+import { aSchedulingWorld } from '@/contexts/scheduling/test/worlds/scheduling.world';
 
 const holders = authorizationModule({
   authorizer: new RoleBasedAuthorizer({
@@ -29,8 +20,6 @@ const holders = authorizationModule({
 });
 
 const holder = anActor().withRole('holder').build();
-// A freed slot is offered to the waitlist of its calendar: every calendar exists here, and nobody waits.
-const calendars = { findById: async (id: string) => aCalendar().identifiedBy(id).build(), save: async () => undefined };
 const NOW = new Date('2026-03-01T09:00:00.000Z');
 const patient = anActor().named('patient-1').withRole('holder').build();
 const FACTS = ['scheduling.appointment.cancelled'] as const;
@@ -121,24 +110,22 @@ describe('Cancel appointment', () => {
   });
 });
 
+/** A freed slot is offered to the waitlist of its calendar: the calendar of every stored appointment exists, and nobody waits. */
 async function arrange(...stored: readonly Appointment[]) {
-  const appointmentRepository = new FakeAppointmentRepository();
   const announced: string[] = [];
 
-  await stored.reduce(
-    (saved, appointment) => saved.then(() => appointmentRepository.save(appointment)),
-    Promise.resolve(),
-  );
-
-  const application = createTestApplication({
-    modules: [platformTestModule, contextModule('scheduling', schedulingDeclarations), holders],
-    fakes: [
-      fake(Agenda, new FakeAgenda()),
-      fake(AppointmentRepository, appointmentRepository),
-      fake(CalendarRepository, calendars),
-      fake(WaitlistRepository, new FakeWaitlistRepository()),
-    ],
+  const { application, appointmentRepository } = await aSchedulingWorld({
+    modules: [holders],
     now: NOW,
+    given: async (fakes) => {
+      await stored.reduce(
+        (saved, appointment) =>
+          saved
+            .then(() => fakes.calendarRepository.save(aCalendar().identifiedBy(appointment.calendarId).build()))
+            .then(() => fakes.appointmentRepository.save(appointment)),
+        Promise.resolve(),
+      );
+    },
   });
 
   FACTS.forEach((name) => application.domainEvents.on(name, async () => void announced.push(name)));

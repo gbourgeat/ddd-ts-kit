@@ -65,11 +65,11 @@ describe('{{name.title}}', () => {
 {{/if}}
 
 {{#if command.hasAggregate}}
-  // TODO(domain): replace each entry below by a test named after the business behaviour of "{{name.words}}": arrange with the builders of test/builders and the fakes, execute through the bus, assert the stored {{aggregate.words}}, the facts announced with the save (`application.domainEvents.on('<name>', ...)` before executing), `application.eventBus.published` and the answer.
+  // TODO(domain): replace each entry below by a test named after the business behaviour of "{{name.words}}": arrange with the builders of test/builders and the fakes, execute through the bus, assert the stored {{aggregate.words}}, the facts announced with the save (`application.domainEvents.on('<name>', ...)` before executing), `application.eventBus.published` and the answer; when several specs of {{context.kebab}} share this arrangement, `npx ddd-ts-kit generate test-world {{context.kebab}}` writes it once in test/worlds/.
   it.todo('applies the business decision to the {{aggregate.words}}');
 {{/if}}
 {{#unless command.hasAggregate}}
-  // TODO(domain): replace each entry below by a test named after the business behaviour of "{{name.words}}": arrange with builders and fakes of its ports (`fakes: [fake(Port, aFake)]`), execute through the bus, assert the outcome.
+  // TODO(domain): replace each entry below by a test named after the business behaviour of "{{name.words}}": arrange with builders and fakes of its ports (`fakes: [fake(Port, aFake)]`), execute through the bus, assert the outcome; when several specs of {{context.kebab}} share this arrangement, `npx ddd-ts-kit generate test-world {{context.kebab}}` writes it once in test/worlds/.
   it.todo('applies the business decision to the aggregate');
 {{/unless}}
   it.todo('refuses the command when a business rule is violated, with the expected error code');

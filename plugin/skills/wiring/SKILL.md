@@ -122,4 +122,6 @@ const application = createTestApplication({
 
 The test application brings a fixed clock, sequential identifiers, in-memory buses, logger,
 metrics and error reporter. Replace every adapter that leaves the process by its fake; never
-mock a module. Details: skill `ddd-ts-kit:testing`.
+mock a module. When several specs of a context share this arrangement,
+`npx ddd-ts-kit generate test-world <ctx>` writes it once, in `test/worlds/`. Details: skill
+`ddd-ts-kit:testing`.

@@ -2,14 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { RoleBasedAuthorizer } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { anActor } from '@ddd-ts-kit/auth/testing';
-import { contextModule, createTestApplication, fake } from '@ddd-ts-kit/di';
-import * as schedulingDeclarations from '@/contexts/scheduling/scheduling.declarations';
-import { platformTestModule } from '@/platform/platform-test.module';
 import { schedulingPermissions } from '@/contexts/scheduling/application/authorization/scheduling.permissions';
 import { DefineAppointmentTypeCommand } from '@/contexts/scheduling/application/commands/define-appointment-type/define-appointment-type.command';
-import { CalendarRepository } from '@/contexts/scheduling/domain/repositories/calendar.repository';
 import { aCalendar } from '@/contexts/scheduling/test/builders/calendar.builder';
-import { FakeCalendarRepository } from '@/contexts/scheduling/test/fakes/calendar.repository.fake';
+import { aSchedulingWorld } from '@/contexts/scheduling/test/worlds/scheduling.world';
 
 const holders = authorizationModule({
   authorizer: new RoleBasedAuthorizer({
@@ -96,14 +92,12 @@ describe('Define appointment type', () => {
 });
 
 async function arrange() {
-  const calendarRepository = new FakeCalendarRepository();
-
-  await calendarRepository.save(aCalendar().identifiedBy('calendar-1').build());
-
-  const application = createTestApplication({
-    modules: [platformTestModule, contextModule('scheduling', schedulingDeclarations), holders],
-    fakes: [fake(CalendarRepository, calendarRepository)],
+  const { application, calendarRepository } = await aSchedulingWorld({
+    modules: [holders],
     idPrefix: 'type',
+    given: async (fakes) => {
+      await fakes.calendarRepository.save(aCalendar().identifiedBy('calendar-1').build());
+    },
   });
 
   return { application, calendarRepository };

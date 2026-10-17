@@ -230,8 +230,8 @@ export const AUTHZ_AND_EVENT_INJECTIONS: readonly Injection[] = [
       },
       {
         file: HANDLER_SPEC,
-        from: '  const reminderRepository = new FakeReminderRepository();\n',
-        to: "  const reminderRepository = new FakeReminderRepository();\n\n  vi.spyOn(reminderRepository, 'save');\n",
+        from: "  return aNotificationWorld({\n    modules: [holders],\n    idPrefix: 'reminder',\n  });\n",
+        to: "  const world = await aNotificationWorld({\n    modules: [holders],\n    idPrefix: 'reminder',\n  });\n\n  vi.spyOn(world.reminderRepository, 'save');\n\n  return world;\n",
       },
     ],
     checker: true,

@@ -2,16 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { ALLOWED, deny, type AccessScope, type Authorizer } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { anActor } from '@ddd-ts-kit/auth/testing';
-import { contextModule, createTestApplication, fake } from '@ddd-ts-kit/di';
-import * as schedulingDeclarations from '@/contexts/scheduling/scheduling.declarations';
-import { platformTestModule } from '@/platform/platform-test.module';
-import { Agenda } from '@/contexts/scheduling/application/ports/agenda.port';
 import { GetCalendarDayQuery } from '@/contexts/scheduling/application/queries/get-calendar-day/get-calendar-day.query';
-import { CalendarRepository } from '@/contexts/scheduling/domain/repositories/calendar.repository';
 import { anAgendaEntry } from '@/contexts/scheduling/test/builders/agenda-entry.builder';
 import { aCalendar } from '@/contexts/scheduling/test/builders/calendar.builder';
-import { FakeAgenda } from '@/contexts/scheduling/test/fakes/agenda.fake';
-import { FakeCalendarRepository } from '@/contexts/scheduling/test/fakes/calendar.repository.fake';
+import type { FakeAgenda } from '@/contexts/scheduling/test/fakes/agenda.fake';
+import { aSchedulingWorld } from '@/contexts/scheduling/test/worlds/scheduling.world';
 
 const holder = anActor().withRole('holder').build();
 const monday = '2026-03-02';
@@ -180,26 +175,19 @@ describe('Get calendar day, the slots held that day', () => {
 
 /** Open 09:00 to 12:00 and 14:00 to 18:00, except Friday 6 March (10:00 to 12:00), and off from that Friday 13:00 to the next Monday 08:00, Paris time. */
 async function arrange(readable: AccessScope = { kind: 'none' }) {
-  const calendarRepository = new FakeCalendarRepository();
-  const agenda = new FakeAgenda();
-
-  await calendarRepository.save(
-    aCalendar()
-      .identifiedBy('calendar-1')
-      .openEveryDay(['09:00', '12:00'], ['14:00', '18:00'])
-      .withException('2026-03-06', ['10:00', '12:00'])
-      .off(new Date('2026-03-06T12:00:00.000Z'), new Date('2026-03-09T07:00:00.000Z'))
-      .offering('consultation', { buffer: 10 })
-      .build(),
-  );
-
-  const application = createTestApplication({
-    modules: [
-      platformTestModule,
-      contextModule('scheduling', schedulingDeclarations),
-      authorizationModule({ authorizer: holdersReading(readable) }),
-    ],
-    fakes: [fake(CalendarRepository, calendarRepository), fake(Agenda, agenda)],
+  const { application, agenda } = await aSchedulingWorld({
+    modules: [authorizationModule({ authorizer: holdersReading(readable) })],
+    given: async (fakes) => {
+      await fakes.calendarRepository.save(
+        aCalendar()
+          .identifiedBy('calendar-1')
+          .openEveryDay(['09:00', '12:00'], ['14:00', '18:00'])
+          .withException('2026-03-06', ['10:00', '12:00'])
+          .off(new Date('2026-03-06T12:00:00.000Z'), new Date('2026-03-09T07:00:00.000Z'))
+          .offering('consultation', { buffer: 10 })
+          .build(),
+      );
+    },
   });
 
   return { application, agenda };

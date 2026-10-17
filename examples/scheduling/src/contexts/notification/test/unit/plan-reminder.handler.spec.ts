@@ -2,14 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { RoleBasedAuthorizer } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { anActor } from '@ddd-ts-kit/auth/testing';
-import { contextModule, createTestApplication, fake } from '@ddd-ts-kit/di';
-import * as notificationDeclarations from '@/contexts/notification/notification.declarations';
-import { platformTestModule } from '@/platform/platform-test.module';
 import { notificationPermissions } from '@/contexts/notification/application/authorization/notification.permissions';
 import { PlanReminderCommand } from '@/contexts/notification/application/commands/plan-reminder/plan-reminder.command';
-import { ReminderRepository } from '@/contexts/notification/domain/repositories/reminder.repository';
 import { aReminder } from '@/contexts/notification/test/builders/reminder.builder';
-import { FakeReminderRepository } from '@/contexts/notification/test/fakes/reminder.repository.fake';
+import { aNotificationWorld } from '@/contexts/notification/test/worlds/notification.world';
 
 const holders = authorizationModule({
   authorizer: new RoleBasedAuthorizer({ roles: { holder: [notificationPermissions['reminder.plan']] } }),
@@ -21,7 +17,7 @@ const appointment = { appointmentId: 'appointment-1', recipientId: 'patient-1', 
 
 describe('Plan reminder', () => {
   it('saves the reminder and answers its identifier', async () => {
-    const { application, reminderRepository } = arrange();
+    const { application, reminderRepository } = await arrange();
 
     const id = await application.commandBus.execute(new PlanReminderCommand(holder, appointment));
 
@@ -30,7 +26,7 @@ describe('Plan reminder', () => {
   });
 
   it('is refused to an actor who does not hold the permission reminder.plan', async () => {
-    const { application } = arrange();
+    const { application } = await arrange();
 
     await expect(
       application.commandBus.execute(new PlanReminderCommand(anActor().build(), appointment)),
@@ -38,7 +34,7 @@ describe('Plan reminder', () => {
   });
 
   it('plans the reminder of the appointment, due 24 hours before its start', async () => {
-    const { application, reminderRepository } = arrange();
+    const { application, reminderRepository } = await arrange();
 
     const id = await application.commandBus.execute(new PlanReminderCommand(holder, appointment));
 
@@ -52,7 +48,7 @@ describe('Plan reminder', () => {
   });
 
   it('keeps one reminder per appointment and start: planning twice answers the same reminder', async () => {
-    const { application, reminderRepository } = arrange();
+    const { application, reminderRepository } = await arrange();
     const first = await application.commandBus.execute(new PlanReminderCommand(holder, appointment));
 
     const second = await application.commandBus.execute(new PlanReminderCommand(holder, appointment));
@@ -62,7 +58,7 @@ describe('Plan reminder', () => {
   });
 
   it('does not plan again a reminder already sent for the same start', async () => {
-    const { application, reminderRepository } = arrange();
+    const { application, reminderRepository } = await arrange();
 
     await reminderRepository.save(
       aReminder()
@@ -79,7 +75,7 @@ describe('Plan reminder', () => {
   });
 
   it('makes the reminder of a moved appointment due again, 24 hours before the new start', async () => {
-    const { application, reminderRepository } = arrange();
+    const { application, reminderRepository } = await arrange();
     const movedTo = new Date('2026-02-01T15:00:00.000Z');
 
     await reminderRepository.save(
@@ -103,7 +99,7 @@ describe('Plan reminder', () => {
   });
 
   it('announces nothing to other contexts', async () => {
-    const { application } = arrange();
+    const { application } = await arrange();
 
     await application.commandBus.execute(new PlanReminderCommand(holder, appointment));
 
@@ -111,14 +107,9 @@ describe('Plan reminder', () => {
   });
 });
 
-function arrange() {
-  const reminderRepository = new FakeReminderRepository();
-
-  const application = createTestApplication({
-    modules: [platformTestModule, contextModule('notification', notificationDeclarations), holders],
-    fakes: [fake(ReminderRepository, reminderRepository)],
+async function arrange() {
+  return aNotificationWorld({
+    modules: [holders],
     idPrefix: 'reminder',
   });
-
-  return { application, reminderRepository };
 }

@@ -2,23 +2,14 @@ import { describe, expect, it } from 'vitest';
 import { RoleBasedAuthorizer } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { AllowAll, anActor } from '@ddd-ts-kit/auth/testing';
-import { contextModule, createTestApplication, fake } from '@ddd-ts-kit/di';
-import * as schedulingDeclarations from '@/contexts/scheduling/scheduling.declarations';
-import { platformTestModule } from '@/platform/platform-test.module';
 import { schedulingPermissions } from '@/contexts/scheduling/application/authorization/scheduling.permissions';
 import { OfferFreedSlotCommand } from '@/contexts/scheduling/application/commands/offer-freed-slot/offer-freed-slot.command';
 import { AppointmentRepository } from '@/contexts/scheduling/domain/repositories/appointment.repository';
-import { CalendarRepository } from '@/contexts/scheduling/domain/repositories/calendar.repository';
-import { WaitlistRepository } from '@/contexts/scheduling/domain/repositories/waitlist.repository';
 import { Cancellation } from '@/contexts/scheduling/domain/value-objects/cancellation.vo';
 import { anAppointment } from '@/contexts/scheduling/test/builders/appointment.builder';
 import { aCalendar } from '@/contexts/scheduling/test/builders/calendar.builder';
 import { aWaitlist } from '@/contexts/scheduling/test/builders/waitlist.builder';
-import { FakeAppointmentRepository } from '@/contexts/scheduling/test/fakes/appointment.repository.fake';
-import { FakeCalendarRepository } from '@/contexts/scheduling/test/fakes/calendar.repository.fake';
-import { FakeWaitlistRepository } from '@/contexts/scheduling/test/fakes/waitlist.repository.fake';
-import { Agenda } from '@/contexts/scheduling/application/ports/agenda.port';
-import { FakeAgenda } from '@/contexts/scheduling/test/fakes/agenda.fake';
+import { aSchedulingWorld } from '@/contexts/scheduling/test/worlds/scheduling.world';
 
 const holders = authorizationModule({
   authorizer: new RoleBasedAuthorizer({ roles: { holder: [schedulingPermissions['waitlist.offer']] } }),
@@ -186,31 +177,20 @@ describe('Offer freed slot, when an appointment frees what it held', () => {
 });
 
 async function arrange(authorization = holders) {
-  const waitlistRepository = new FakeWaitlistRepository();
-  const calendarRepository = new FakeCalendarRepository();
-  const appointmentRepository = new FakeAppointmentRepository();
-
-  await calendarRepository.save(
-    aCalendar().identifiedBy('calendar-1').openEveryDay(['00:00', '24:00']).offering('consultation').build(),
-  );
-
-  await waitlistRepository.save(
-    aWaitlist().forCalendar('calendar-1').onDay('2026-03-02').joinedBy('patient-1').joinedBy('patient-2').build(),
-  );
-
-  const application = createTestApplication({
-    modules: [platformTestModule, contextModule('scheduling', schedulingDeclarations), authorization],
-    fakes: [
-      fake(Agenda, new FakeAgenda()),
-      fake(WaitlistRepository, waitlistRepository),
-      fake(CalendarRepository, calendarRepository),
-      fake(AppointmentRepository, appointmentRepository),
-    ],
+  return aSchedulingWorld({
+    modules: [authorization],
     idPrefix: 'appointment',
     now,
-  });
+    given: async (fakes) => {
+      await fakes.calendarRepository.save(
+        aCalendar().identifiedBy('calendar-1').openEveryDay(['00:00', '24:00']).offering('consultation').build(),
+      );
 
-  return { application, waitlistRepository, calendarRepository, appointmentRepository };
+      await fakes.waitlistRepository.save(
+        aWaitlist().forCalendar('calendar-1').onDay('2026-03-02').joinedBy('patient-1').joinedBy('patient-2').build(),
+      );
+    },
+  });
 }
 
 /** An instant of Monday 2 March 2026 on the wall clock of Paris (UTC+1 that day). */

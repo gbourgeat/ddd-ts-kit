@@ -2,14 +2,11 @@ import { describe, expect, it } from 'vitest';
 import type { Authorizer } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { anActor } from '@ddd-ts-kit/auth/testing';
-import { contextModule, createTestApplication, fake } from '@ddd-ts-kit/di';
 import { Criteria, offsetPage } from '@ddd-ts-kit/kernel';
-import * as schedulingDeclarations from '@/contexts/scheduling/scheduling.declarations';
-import { platformTestModule } from '@/platform/platform-test.module';
-import { Agenda, type AgendaEntry } from '@/contexts/scheduling/application/ports/agenda.port';
+import type { AgendaEntry } from '@/contexts/scheduling/application/ports/agenda.port';
 import { SearchPracticeAgendaQuery } from '@/contexts/scheduling/application/queries/search-practice-agenda/search-practice-agenda.query';
 import { anAgendaEntry } from '@/contexts/scheduling/test/builders/agenda-entry.builder';
-import { FakeAgenda } from '@/contexts/scheduling/test/fakes/agenda.fake';
+import { aSchedulingWorld } from '@/contexts/scheduling/test/worlds/scheduling.world';
 
 // As the relationships would answer: a member reads the agenda of their practice, narrowed to the calendars they run.
 const MEMBERS: Readonly<Record<string, string>> = {
@@ -109,26 +106,26 @@ describe('Search practice agenda', () => {
 });
 
 async function arrange(...entries: readonly AgendaEntry[]) {
-  const agenda = new FakeAgenda();
-
-  await entries.reduce(
-    (written, entry, index) =>
-      written
-        .then(() =>
-          agenda.upsertIfNewer(entry.id, { eventId: `event-${index}`, occurredAt: entry.changedAt }, () => entry),
-        )
-        .then(() => undefined),
-    Promise.resolve(),
-  );
-
-  return createTestApplication({
-    modules: [
-      platformTestModule,
-      contextModule('scheduling', schedulingDeclarations),
-      authorizationModule({ authorizer: byRelationships }),
-    ],
-    fakes: [fake(Agenda, agenda)],
+  const { application } = await aSchedulingWorld({
+    modules: [authorizationModule({ authorizer: byRelationships })],
+    given: async (fakes) => {
+      await entries.reduce(
+        (written, entry, index) =>
+          written
+            .then(() =>
+              fakes.agenda.upsertIfNewer(
+                entry.id,
+                { eventId: `event-${index}`, occurredAt: entry.changedAt },
+                () => entry,
+              ),
+            )
+            .then(() => undefined),
+        Promise.resolve(),
+      );
+    },
   });
+
+  return application;
 }
 
 function at(time: string): Date {
