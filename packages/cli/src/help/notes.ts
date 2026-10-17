@@ -80,9 +80,11 @@ export const NOTES = `  affected         what a pull request has to run: the con
                    one, on an inconsistency. Never runs a test. --lock writes
                    test/acceptance/<story>.acceptance.lock.json, the fingerprint of each criterion and of
                    each scenario (pending(...), layout and comments aside), refused while a scenario is
-                   left to write or a locked one changed while no criterion it proves did; --reason
-                   "<how the scenario failed its criterion>" locks it anyway and keeps the reason as an
-                   amendment, listed for the owner to validate
+                   left to write, or while a criterion changed, or a locked scenario changed while its
+                   criteria did not, without a verdict "amend" of the acceptance-judge agent on that very
+                   version (test/acceptance/verdicts/*.md, lines Story:, Subject:, Fingerprint:,
+                   Verdict:, Reason:); a refusal wins; the verdicts become amendments of the lock,
+                   listed for the owner to validate
   worker-scope     a git worktree on the branch build/<context> (by default ../<project>-<context>), cut from
                    --base <ref> (by default the current branch, refused from a worker's worktree), its
                    .ddd-ts-kit/worker.json, and the briefing of the worker of that context; --rows <id,...>

@@ -1,5 +1,5 @@
 [English](ARCHITECTURE.md) · **Français**
-<!-- translation-of: ARCHITECTURE.md sha256:1b53ca9ec13c4206 -->
+<!-- translation-of: ARCHITECTURE.md sha256:fdf069ad44d2c9e7 -->
 
 # Référence de l'architecture
 
@@ -1480,7 +1480,8 @@ code. Chaque scénario nomme les lignes qui le font passer et le critère qu'il 
 (`#US5.02 AC1 ...`), et s'exécute enveloppé dans `pending(...)` de `@ddd-ts-kit/testing/e2e`, qui
 le tient tant qu'il échoue sur une assertion, jusqu'à ce que la *slice* qui le satisfait retire
 l'enveloppe. `ddd-ts-kit acceptance <story> --lock` enregistre l'empreinte de chaque critère et de
-chaque scénario : un scénario verrouillé ne change ensuite qu'avec son critère, ou avec un motif
-que le verrou garde pour que le responsable du projet le valide, et `ddd-ts-kit acceptance`
-signale tout autre changement. Une *story* commence son code une fois que
+chaque scénario : un scénario verrouillé ne change ensuite qu'avec son critère ; un critère changé,
+ou un scénario changé alors que ses critères ne l'étaient pas, seulement avec un verdict `amend`
+de l'agent `acceptance-judge` sur cette version précise, que le verrou garde pour que le
+responsable du projet le valide ; `ddd-ts-kit acceptance` signale tout autre changement. Une *story* commence son code une fois que
 `acceptance <story> --gate written` passe, et se clôt une fois que `--gate passing` passe.

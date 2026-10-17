@@ -27,7 +27,7 @@ export const USAGE = `Usage
   ddd-ts-kit todo [<context>]
   ddd-ts-kit plan-waves [<context>]
   ddd-ts-kit story-check <code> [--strict]
-  ddd-ts-kit acceptance [<story>] [--gate written|passing] [--lock [--reason "<why>"]]
+  ddd-ts-kit acceptance [<story>] [--gate written|passing] [--lock]
   ddd-ts-kit worker-scope <context> [--base <ref>] [--rows <id,...>] [--worktree <path>] [--branch <name>] [--no-install] [--dry-run]
   ddd-ts-kit worker-scope <context> --resume [--worktree <path> | --branch <name>] [--fresh]
   ddd-ts-kit verify-slice <context> --since <git-ref>

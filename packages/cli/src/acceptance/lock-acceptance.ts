@@ -5,16 +5,17 @@ import { countsFor } from './counts-for.js';
 import { driftOf } from './drift.js';
 import { lockFileOf } from './lock-file-of.js';
 import { readLock } from './read-lock.js';
+import { readVerdicts } from './read-verdicts.js';
 import type { StoryAcceptance } from './story-acceptance.js';
+import { verdictOn } from './verdict-on.js';
 
 /** What locking judges again itself, or lets through: the lock is what it writes. */
 const LEFT_TO_THE_LOCK = new Set(['unlocked', 'drift', 'done-pending']);
 
-/** What to lock: the acceptance of the story as read, the reason of the amendments, and the day. */
+/** What to lock: the acceptance of the story as read, and the day the amendments carry. */
 export interface LockRequest {
   readonly story: StoryAcceptance;
-  readonly reason: string | undefined;
-  /** The date the amendments carry, `YYYY-MM-DD`. */
+  /** `YYYY-MM-DD`. */
   readonly on: string;
 }
 
@@ -27,9 +28,10 @@ export interface Locked {
 
 /**
  * Records the scenarios and the criteria of a story as agreed. Refused while the scenarios are not
- * written (an it.todo, a slice row or a criterion without a scenario), and, when a locked scenario
- * changed although no criterion it proves did, unless a reason is given: the reason is kept as an
- * amendment, which `acceptance` lists for the owner to validate.
+ * written (an it.todo, a slice row or a criterion without a scenario), and while a change since the
+ * previous lock that only a verdict lets through (a criterion changed, a scenario changed while its
+ * criteria were not) has no `amend` verdict of the acceptance-judge agent for its very version: the
+ * verdicts become amendments of the lock, which `acceptance` lists for the owner to validate.
  */
 export function lockAcceptance(ws: Workspace, request: LockRequest): Locked {
   const { story } = request;
@@ -37,7 +39,7 @@ export function lockAcceptance(ws: Workspace, request: LockRequest): Locked {
   requireWritten(story);
 
   const previous = readLock(ws, story.story);
-  const amendments = amendmentsOf(previous, request);
+  const amendments = amendmentsOf(ws, previous, request);
   const written = story.scenarios.filter(({ state }) => state === 'pending' || state === 'active');
 
   const lock: AcceptanceLock = {
@@ -67,18 +69,28 @@ function requireWritten(story: StoryAcceptance): void {
   }
 }
 
-/** The amendments a reason explains: refused without one while a locked scenario drifted. */
-function amendmentsOf(previous: AcceptanceLock | undefined, { story, reason, on }: LockRequest): Amendment[] {
-  const unexplained = previous === undefined ? [] : driftOf(previous, story.scenarios, story.criteria).unexplained;
+/** The changes since the previous lock with their `amend` verdicts; refused while one has none. */
+function amendmentsOf(ws: Workspace, previous: AcceptanceLock | undefined, { story, on }: LockRequest): Amendment[] {
+  const changes = previous === undefined ? [] : driftOf(previous, story.scenarios, story.criteria).toJudge;
+  const verdicts = readVerdicts(ws, story.story);
+  const unjudged = changes.filter((change) => verdictOn(change, verdicts)?.verdict !== 'amend');
 
-  if (unexplained.length > 0 && (reason === undefined || reason.trim() === '')) {
+  if (unjudged.length > 0) {
     throw new CliError(
-      `Locked scenarios of ${story.story} changed while no criterion they prove did: ${unexplained.map(({ title }) => `"${title}"`).join(', ')}.`,
-      `Restore them as locked; or, when the specification changed, write the new criterion in ${story.specification ?? 'the specification of the story'} first; or, when a scenario did not match its criterion, lock with --reason "<how it failed its criterion>": the reason is kept and reported for the owner to validate. Never to make a test pass.`,
+      `Changed since the lock without a verdict that lets it through: ${unjudged.map((change) => `${change.subject} (fingerprint ${change.fingerprint})`).join(', ')}.`,
+      'Restore each as locked; or launch the acceptance-judge agent on each, with its subject and fingerprint, and lock again once it wrote `Verdict: amend`. Never change an acceptance test to make code pass.',
     );
   }
 
-  return unexplained.map(
-    (locked): Amendment => ({ scenario: locked.title, criteria: locked.criteria, reason: (reason ?? '').trim(), on }),
-  );
+  return changes.map((change): Amendment => {
+    const verdict = verdictOn(change, verdicts);
+
+    return {
+      subject: change.subject,
+      criteria: change.criteria,
+      reason: verdict?.reason ?? '',
+      verdict: verdict?.file ?? '',
+      on,
+    };
+  });
 }

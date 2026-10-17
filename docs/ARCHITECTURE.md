@@ -1416,6 +1416,7 @@ scenario names the rows that make it pass and the criterion it proves (`#US5.02 
 runs wrapped in `pending(...)` of `@ddd-ts-kit/testing/e2e`, which holds it while it fails on an
 assertion, until the slice that satisfies it removes the wrapper. `ddd-ts-kit acceptance <story>
 --lock` records the fingerprint of each criterion and scenario: a locked scenario then changes
-only with its criterion, or with a reason the lock keeps for the owner to validate, and
-`ddd-ts-kit acceptance` reports any other change. A story starts its code once
+only with its criterion; a changed criterion, or a scenario changed while its criteria were not,
+only with a verdict `amend` of the `acceptance-judge` agent on that very version, which the lock
+keeps for the owner to validate; `ddd-ts-kit acceptance` reports any other change. A story starts its code once
 `acceptance <story> --gate written` passes, and closes once `--gate passing` does.

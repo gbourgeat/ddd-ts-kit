@@ -19,11 +19,14 @@ wrapper) or stops on anything but an assertion (the scenario is broken). The new
 criteria: `--gate written` before the code (every slice row and criterion covered, nothing left
 to write, the acceptance locked), `--gate passing` before the story closes. `--lock` writes
 `test/acceptance/<story>.acceptance.lock.json`, the fingerprint of each criterion and scenario
-(the wrapper, the layout and the comments aside); afterwards a scenario changed or removed while
-its criterion was not is reported whatever the gate, and locking it again takes
-`--reason "<how it failed its criterion>"`, kept as an amendment the command lists for the
-owner to validate. The guard of the plugin lets a sub-agent only remove `pending(...)` in an
-acceptance spec, refuses it `acceptance --lock`, refuses the lock file to any hand edit, and
+(the wrapper, the layout and the comments aside). Afterwards a criterion changed, or a scenario
+changed or removed while its criteria were not, is reported whatever the gate, and locking again
+takes a verdict `amend` on that very version from the new `acceptance-judge` agent, which compares
+the locked version, the new one, the criterion and the owner's answers
+(`test/acceptance/verdicts/*.md`); a refusal wins, and the verdicts become amendments the command
+lists for the owner to validate. The guard of the plugin lets a sub-agent only remove
+`pending(...)` in an acceptance spec, refuses it `acceptance --lock`, lets the judge alone write a
+verdict and nothing else, refuses the lock and the verdicts to any hand edit or shell write, and
 refuses an acceptance spec written by hand instead of generated. `verify-slice` stages the
 acceptance spec with the slice. The new rule `test/acceptance-black-box` (a warning) refuses an
 acceptance spec that imports from the source root anything but the builders and the published
