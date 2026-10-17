@@ -1,6 +1,8 @@
+import fs from 'node:fs';
 import path from 'node:path';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { cli, read, tempDir, write } from './helpers.js';
+import { git } from './support/git.js';
 import { jsonAt } from './support/json-at.js';
 
 let root: string;
@@ -60,5 +62,58 @@ describe('doctor', () => {
     expect(jsonAt(result.json(), 'findings')).toEqual([
       expect.objectContaining({ area: 'script', name: 'regenerate', problem: 'written otherwise', found: 'echo done' }),
     ]);
+  });
+});
+
+describe('doctor, on the git hooks', () => {
+  it('names a lefthook.yml without its lefthook line, and how to take it, failing --strict', () => {
+    write(root, 'lefthook.yml', read(root, 'lefthook.yml').replace(/^lefthook: .*\n/m, ''));
+
+    const result = cli(root, 'doctor');
+
+    expect(result.stdout).toContain('  hook lefthook.yml lefthook: missing (lefthook: node_modules/.bin/lefthook)');
+
+    expect(result.stdout).toContain(
+      'fix: add the line `lefthook: node_modules/.bin/lefthook` at the top of lefthook.yml',
+    );
+
+    expect(result.stdout).toContain('`npx ddd-ts-kit init --force`');
+    expect(result.stdout).not.toContain('fix: `npx ddd-ts-kit init` adds what is missing');
+    expect(cli(root, 'doctor', '--strict').code).toBe(1);
+  });
+
+  it('names a missing lefthook.yml', () => {
+    fs.rmSync(path.join(root, 'lefthook.yml'));
+
+    expect(cli(root, 'doctor').stdout).toContain('  hook lefthook.yml: missing (the file init writes)');
+  });
+
+  it('in a clone, says the pre-commit hook is not installed or not from lefthook, without failing --strict', () => {
+    git(root, 'init', '--quiet');
+
+    const missing = cli(root, 'doctor', '--strict');
+
+    expect(missing.code).toBe(0);
+    expect(missing.stdout).toContain('  hook pre-commit: not installed (the hook lefthook installs)');
+    expect(missing.stdout).toContain('fix: `npm run hooks:install` installs the hooks of lefthook.yml in this clone');
+
+    write(root, '.git/hooks/pre-commit', '#!/bin/sh\nexit 0\n');
+
+    expect(jsonAt(cli(root, 'doctor', '--json').json(), 'findings')).toEqual([
+      expect.objectContaining({ area: 'hook', name: 'pre-commit', problem: 'written otherwise' }),
+    ]);
+
+    write(root, '.git/hooks/pre-commit', '#!/bin/sh\ncall_lefthook run "pre-commit" "$@"\n');
+
+    expect(cli(root, 'doctor').stdout).toContain('The project has what ddd-ts-kit');
+  });
+
+  it('speaks the package manager of the project in the fix of the hooks', () => {
+    const pnpm = path.join(tempDir('doctor-pnpm'), 'shop');
+
+    cli(pnpm, 'init', '--context', 'billing:core', '--package-manager', 'pnpm');
+    git(pnpm, 'init', '--quiet');
+
+    expect(cli(pnpm, 'doctor').stdout).toContain('fix: `pnpm run hooks:install` installs the hooks');
   });
 });

@@ -1,5 +1,5 @@
 [English](coding-agents.md) · **Français**
-<!-- translation-of: coding-agents.md sha256:ff9574f94ae13c25 -->
+<!-- translation-of: coding-agents.md sha256:ed48dbd1ca5bd64c -->
 
 # Le plugin pour agents de code : Claude Code, Codex, GitHub Copilot
 
@@ -53,7 +53,10 @@ désactivation, un test sauté ou un changement des règles soit écrit, vérifi
 écrit et renvoie les violations avec leur correction, et refuse de terminer tant que des
 erreurs d'architecture restent. Il rappelle, sans bloquer, quand les changements non commités
 dépassent la taille conseillée d'un commit, et dans le worktree d'un worker
-(`.ddd-ts-kit/worker.json`), il refuse une écriture hors du contexte du worker. En cas de
+(`.ddd-ts-kit/worker.json`), il refuse une écriture hors du contexte du worker, un changement de
+dépendance, une commande *shell* qui écrit un fichier du projet en contournant les outils Edit et
+Write (`sed -i`, une redirection, `tee`, du `node -e` en ligne, ou `cp`, `mv`, `rm` hors du
+périmètre) et un autre formateur que `npm run format`. En cas de
 panne, il laisse passer : une garde cassée ne bloque jamais le travail. Mettez `"guard": "advise"` dans la
 configuration pour être consulté au lieu d'essuyer un refus, `"off"` pour le faire taire.
 

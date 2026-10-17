@@ -5,12 +5,38 @@ import { decorators } from '@ddd-ts-kit/testing/vitest';
 {{#if decorators.legacy}}
 import { decoratorCoverage } from '@ddd-ts-kit/testing/vitest';
 {{/if}}
-import { defineConfig } from 'vitest/config';
+import { defineConfig, type TestProjectInlineConfiguration } from 'vitest/config';
 
 const INTEGRATION_SPECS = '{{config.contextsDir}}/*/test/integration/**/*.spec.ts';
 const INTEGRATION_MODE = 'integration';
 // A pull request names the contexts its change reaches (DDD_TS_KIT_AFFECTED, from `ddd-ts-kit affected`): the specs of the others are left to the default branch.
 const NOT_AFFECTED = unaffectedContexts().map((directory) => `${directory}**`);
+
+const UNIT_PROJECT: TestProjectInlineConfiguration = {
+  extends: true,
+  test: {
+    name: 'unit',
+    include: ['{{config.sourceRoot}}/**/*.spec.ts', 'test/architecture/**/*.spec.ts'],
+    exclude: [INTEGRATION_SPECS, ...NOT_AFFECTED],
+  },
+};
+
+const INTEGRATION_PROJECT: TestProjectInlineConfiguration = {
+  extends: true,
+  test: {
+    name: INTEGRATION_MODE,
+    include: [INTEGRATION_SPECS],
+    exclude: NOT_AFFECTED,
+{{#if persistence.hasDatabase}}
+    globalSetup: ['test/support/test-database-template.ts'],
+    // A hook opens a copy of the PostgreSQL cluster the global setup initialised once per run and creates its tables, or reaches a server: under coverage on a busy machine it can outlast the default 10 seconds.
+{{/if}}
+{{#unless persistence.hasDatabase}}
+    // A hook opens the test database (PGlite started and its tables created, or a server reached): under coverage on a busy machine it outlasts the default 10 seconds.
+{{/unless}}
+    hookTimeout: 60_000,
+  },
+};
 
 export default defineConfig(({ mode }) => ({
   {{#if decorators.standard}}
@@ -30,32 +56,7 @@ export default defineConfig(({ mode }) => ({
     // Discovery imports the role files of a context itself: inlined, the package loads them through the runner, which compiles them.
     server: { deps: { inline: ['@ddd-ts-kit/di'] } },
     {{/if}}
-    projects: [
-      {
-        extends: true,
-        test: {
-          name: 'unit',
-          include: ['{{config.sourceRoot}}/**/*.spec.ts', 'test/architecture/**/*.spec.ts'],
-          exclude: [INTEGRATION_SPECS, ...NOT_AFFECTED],
-        },
-      },
-      {
-        extends: true,
-        test: {
-          name: INTEGRATION_MODE,
-          include: [INTEGRATION_SPECS],
-          exclude: NOT_AFFECTED,
-{{#if persistence.hasDatabase}}
-          globalSetup: ['test/support/test-database-template.ts'],
-          // A hook opens a copy of the PostgreSQL cluster the global setup initialised once per run and creates its tables, or reaches a server: under coverage on a busy machine it can outlast the default 10 seconds.
-{{/if}}
-{{#unless persistence.hasDatabase}}
-          // A hook opens the test database (PGlite started and its tables created, or a server reached): under coverage on a busy machine it outlasts the default 10 seconds.
-{{/unless}}
-          hookTimeout: 60_000,
-        },
-      },
-    ],
+    projects: [UNIT_PROJECT, INTEGRATION_PROJECT],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'cobertura', 'lcov'],

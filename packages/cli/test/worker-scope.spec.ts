@@ -1,10 +1,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { cli, exists, read, write } from './helpers.js';
 import { committedProject } from './support/committed-project.js';
 import { git } from './support/git.js';
 import { jsonAt } from './support/json-at.js';
+import { type StubInstallers, stubInstallers } from './support/stub-installers.js';
 
 const SLICES = `# Slices
 
@@ -27,12 +28,16 @@ const BILLING_SCOPE = { context: 'billing', rows: ['2', '5'], base: 'main', bran
 
 let root: string;
 let worktree: string;
+let installers: StubInstallers;
 
 beforeAll(() => {
+  installers = stubInstallers();
   root = committedProject('shop', '--context', 'billing:core', '--context', 'shipping:supporting');
   worktree = fs.realpathSync(path.dirname(root)) + path.sep + 'shop-billing';
   write(root, 'docs/architecture/slices.md', SLICES);
 });
+
+afterAll(() => installers.restore());
 
 describe('worker-scope', () => {
   it('refuses a context the config does not know', () => {
@@ -64,6 +69,12 @@ describe('worker-scope', () => {
     expect(scope.code).toBe(0);
     expect(fs.realpathSync(String(jsonAt(scope.json(), 'worktree')))).toBe(worktree);
 
+    expect(jsonAt(scope.json(), 'notes')).toContainEqual(
+      expect.stringMatching(
+        /^dependencies installed in the worktree with `pnpm install --frozen-lockfile` \([\d.]+ s\)\.$/,
+      ),
+    );
+
     expect(scope.json()).toMatchObject({
       created: true,
       branch: 'build/billing',
@@ -74,6 +85,9 @@ describe('worker-scope', () => {
     expect(JSON.parse(read(worktree, '.ddd-ts-kit/worker.json'))).toEqual(BILLING_SCOPE);
     expect(git(worktree, 'branch', '--show-current').trim()).toBe('build/billing');
     expect(exists(worktree, 'ddd-ts-kit.config.json')).toBe(true);
+    // The clean install of the package manager of the project, pnpm by default.
+    expect(installers.calls()).toEqual([`pnpm install --frozen-lockfile in ${worktree}`]);
+    expect(exists(worktree, 'node_modules')).toBe(true);
   });
 
   it('leaves the scope file out of git: init ignores .ddd-ts-kit/', () => {
@@ -104,11 +118,15 @@ describe('worker-scope', () => {
     expect(briefing).toContain('`npx ddd-ts-kit verify-slice billing --since main` (regenerate, the rules');
     expect(briefing).toContain('written by `npm run regenerate`, never by hand.');
     expect(briefing).toContain('After each step, rewrite .ddd-ts-kit/report.md in the worktree');
-    expect(briefing).toContain('Format with `npm run format` only');
+    expect(briefing).toContain('Format with `npm run format`, then `npm run lint:fix`');
+    expect(briefing).toContain('never Prettier nor a bare `npx biome`');
+    expect(briefing).toContain('Without node_modules: `pnpm install --frozen-lockfile`');
     expect(briefing).toContain('(the whole tree:\n`check --changed-since` sees your files only)');
     expect(briefing).toContain('each marked blocking (a slice cannot be finished');
   });
+});
 
+describe('worker-scope, the generators of a worker', () => {
   it('lists the generators that write nothing shared, from what each kind declares', () => {
     const scope = cli(root, 'worker-scope', 'billing', '--json').json();
     const generators = jsonAt(scope, 'generators');

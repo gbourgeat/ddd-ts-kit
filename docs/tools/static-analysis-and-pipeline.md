@@ -166,9 +166,16 @@ Put together, a generated project runs each analyzer at the moment its cost allo
 
 ![From a file write to the merge: check-file after each write of an agent, ESLint, Biome and the checker on staged files before a commit, the type check and the unit tests before a push, every ci script on the pull request, and one required check at the merge](../assets/diagrams/static-analysis-and-pipeline-when-each-runs.svg)
 
-The hooks of the laptop are in the `lefthook.yml` that `init` writes:
+The hooks of the laptop are in the `lefthook.yml` that `init` writes. Its `lefthook:` line makes
+the hook run the lefthook of the checkout it fires in: the hooks of a repository are shared by
+all its worktrees, and without that line they would run the lefthook of whichever checkout
+installed them last, or skip every check once that checkout is gone. A worktree without its
+dependencies now fails the commit loudly; `npx ddd-ts-kit doctor` says when the line or the
+installed hook is missing.
 
 ```yaml
+lefthook: node_modules/.bin/lefthook
+
 pre-commit:
   parallel: true
   jobs:

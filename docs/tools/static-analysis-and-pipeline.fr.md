@@ -1,5 +1,5 @@
 [English](static-analysis-and-pipeline.md) · **Français**
-<!-- translation-of: static-analysis-and-pipeline.md sha256:e59558981f0a0d75 -->
+<!-- translation-of: static-analysis-and-pipeline.md sha256:702c2fb4e5fe3108 -->
 
 # L'analyse statique et le pipeline
 
@@ -172,9 +172,16 @@ Mis bout à bout, un projet généré fait tourner chaque analyseur au moment qu
 
 ![De l'écriture d'un fichier à la fusion : check-file après chaque écriture d'un agent, ESLint, Biome et le checker sur les fichiers indexés avant un commit, la vérification de types et les tests unitaires avant un push, chaque script ci sur la pull request, et un seul contrôle obligatoire à la fusion](../assets/diagrams/static-analysis-and-pipeline-when-each-runs.fr.svg)
 
-Les *hooks* du poste de travail sont dans le `lefthook.yml` qu'écrit `init` :
+Les *hooks* du poste de travail sont dans le `lefthook.yml` qu'écrit `init`. Sa ligne
+`lefthook:` fait lancer au *hook* le lefthook du *checkout* où il se déclenche : les *hooks* d'un
+dépôt sont partagés par tous ses *worktrees*, et sans cette ligne ils lanceraient le lefthook du
+dernier *checkout* qui les a installés, ou sauteraient toutes les vérifications une fois ce
+*checkout* disparu. Un *worktree* sans ses dépendances fait désormais échouer le *commit*
+bruyamment ; `npx ddd-ts-kit doctor` signale une ligne ou un *hook* installé qui manque.
 
 ```yaml
+lefthook: node_modules/.bin/lefthook
+
 pre-commit:
   parallel: true
   jobs:

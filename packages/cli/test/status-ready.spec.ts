@@ -50,7 +50,7 @@ describe('status, whether each row not done can start', () => {
   });
 
   it('keeps a row waiting while the worker briefed on its dependency has no commit ahead of its base', () => {
-    expect(cli(root, 'worker-scope', 'billing', '--rows', 'M1.02', '--worktree', issuing).code).toBe(0);
+    expect(cli(root, 'worker-scope', 'billing', '--rows', 'M1.02', '--worktree', issuing, '--no-install').code).toBe(0);
 
     expect(jsonAt(cli(root, 'status', '--json').json(), 'slices', 'rows')).toContainEqual(
       expect.objectContaining({ id: 'M1.03', ready: 'waiting' }),

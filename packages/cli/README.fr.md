@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:4a9662de62c453d1 -->
+<!-- translation-of: README.md sha256:d154715bea0c8cd8 -->
 
 # ddd-ts-kit
 
@@ -519,7 +519,7 @@ choix sont enregistrés sous `stack` dans la configuration, `docsUi`, `ci` et `l
 | `biome.json` | le formateur : Biome avec son linter et son organisateur d'imports désactivés, largeur de ligne 120 ; `npm run format` écrit, `npm run format:check` vérifie, et ce que la CLI génère est déjà formaté |
 | `knip.json` | code mort : les points d'entrée sont `main.ts` et `apps/*/main.ts`, les scripts, les *specs* et les *fakes*, les fichiers de module dans le style explicite, les fichiers de rôle sous discovery (*jobs* et *publishers* compris) |
 | `vitest.config.ts` | projets unitaires et d'intégration, les seuils de couverture lus dans `ddd-ts-kit.config.json` (`governedCoverage`), par contexte et par couche, dans le mode des décorateurs standard `decorators()` de `@ddd-ts-kit/testing/vitest`, qui compile les fichiers contenant un décorateur avec le compilateur du projet (Vitest ne transforme pas les décorateurs standard ; il transforme lui-même les anciens, si bien qu'un projet avec `experimentalDecorators` ne reçoit pas de *plugin*), et sous `--assembly discovery` `server.deps.inline: ['@ddd-ts-kit/di']` |
-| `lefthook.yml`, `commitlint.config.mjs` | *hooks* pre-commit (ESLint, la vérification du format et `check` sur les fichiers indexés, `check --commit-size --staged`, qui ne bloque jamais), pre-push (types, tests unitaires) et commit-msg (`npm run hooks:install`), *commits* conventionnels |
+| `lefthook.yml`, `commitlint.config.mjs` | *hooks* pre-commit (ESLint, la vérification du format et `check` sur les fichiers indexés, `check --commit-size --staged`, qui ne bloque jamais), pre-push (types, tests unitaires) et commit-msg (`npm run hooks:install`), chacun lancé par le lefthook du *checkout* où il se déclenche (`lefthook: node_modules/.bin/lefthook` : un *worktree* sans ses dépendances fait échouer le *commit* au lieu de sauter les vérifications), *commits* conventionnels |
 | `--ci github` | `.github/workflows/ci.yml`, `pr-title.yml`, `copilot-setup-steps.yml` (Node et les dépendances, installés avant le démarrage de l'agent cloud de Copilot), `.github/dependabot.yml`, `.github/branch-protection.md`, `renovate.json` ; `codeql.yml` avec `--ci-extras codeql` |
 | `--ci gitlab` | `.gitlab-ci.yml` (les constats d'architecture comme rapport Code Quality au moyen de `check --format gitlab`), `.gitlab/merge-request-settings.md`, `renovate.json` |
 | `README.md`, `AGENTS.md`, `CLAUDE.md`, `.claude/rules/*.md`, `.github/instructions/*.instructions.md` | comment le lancer ; un guide léger dans `AGENTS.md`, que lisent Codex, Copilot et la plupart des agents de code et qu'importe `CLAUDE.md` (commandes, comment lire moins, la carte des règles, fichiers générés, note sur le compilateur, les *skills* du *plugin* : `/ddd-ts-kit:start`, `glossary`, `use-case`, `document`, `quality-gate`) et les invariants dans sept fichiers de règles, `domain.md`, `application.md`, `published-language.md`, `infrastructure.md`, `presentation.md`, `platform.md` et `tests.md`, chacun délimité par un frontmatter `paths`, et les mêmes sept pour GitHub Copilot, chacun délimité par `applyTo` |
@@ -1089,14 +1089,15 @@ pour ce qui reste hors d'eux.
 
 `status --workers` affiche à la place les *workers* d'une construction en parallèle : chaque
 *worktree* du dépôt dont la copie du projet porte `.ddd-ts-kit/worker.json`, avec sa branche,
-son contexte, ses lignes, sa base, les *commits* qu'il a d'avance sur la base, les fichiers qu'il
+son contexte, ses lignes, sa base, les *commits* qu'il a d'avance sur la base,
+`dependencies not installed` quand sa copie du projet n'a pas de `node_modules`, les fichiers qu'il
 a changés (commités depuis la base de fusion, modifiés, et non suivis mais non ignorés, relatifs
 au sommet du dépôt) et son `.ddd-ts-kit/report.md` avec sa date d'écriture ; puis les contextes
 construits par plus d'un *worker* et les fichiers changés par plus d'un *worker*, chacun avec
 leurs *worktrees*. Un fichier de périmètre qui ne porte que le contexte est lu aussi : le
 *worker* vient sans ses lignes, sa base ni son avance, et ses fichiers sont les fichiers non
 commités. `--json` affiche
-`{ workers: [{ worktree, branch, context, rows, base, ahead, files, report }], overlaps: { contexts: [{ context, worktrees }], files: [{ file, worktrees }] } }`,
+`{ workers: [{ worktree, branch, context, rows, base, ahead, installed, files, report }], overlaps: { contexts: [{ context, worktrees }], files: [{ file, worktrees }] } }`,
 `report` valant `{ file, modified }` ou `null`. Sans *worker*, elle le dit en une ligne.
 
 `todo` liste ces marqueurs en `file:line` avec leur genre et leur texte, dans le projet ou dans
@@ -1131,10 +1132,28 @@ ordonner : ils sont signalés seuls, sans vagues, et la commande sort avec 1. Un
 de tranches, ou un contexte qu'aucune ligne ne nomme, est refusé. `--json` affiche
 `{ file, context, problems: [{ kind, rows, message }], waves: [{ wave, batches: [{ id, owner, context, rows: [{ id, kind, slice, status, waitingFor }], aggregates, brief, sameFiles, unknownOverlap }] }], mergeOrder }`.
 
+## doctor
+
+```
+ddd-ts-kit doctor [--strict]
+```
+
+Ce qu'une montée de version a laissé à faire : les scripts, les paquets du kit (aux plages de
+cette version) et les permissions des agents que cette version écrit et que le projet n'a pas ou
+écrit autrement, puis les *hooks* git. `lefthook.yml` doit porter
+`lefthook: node_modules/.bin/lefthook`, qui fait lancer à chaque *checkout* et à chaque
+*worktree* son propre lefthook, et fait échouer un *commit*, bruyamment, quand ses dépendances
+manquent ; le correctif est cette ligne, ou `init --force` pour le fichier entier. Le *hook*
+pre-commit sous `git rev-parse --git-path hooks` doit exister et venir de lefthook ; le correctif
+est `npm run hooks:install`, une fois par clone. `--strict` sort avec 1 tant que quelque chose
+manque ou est à une autre plage ; un script écrit autrement et un *hook* que ce clone n'a pas
+installé sont signalés sans le faire échouer. `--json` affiche `{ version, findings: [{ area,
+name, problem, expected, found }] }`, `area` valant `script`, `package`, `permission` ou `hook`.
+
 ## worker-scope
 
 ```
-ddd-ts-kit worker-scope <context> [--base <ref>] [--rows <id,...>] [--worktree <path>] [--branch <name>] [--dry-run]
+ddd-ts-kit worker-scope <context> [--base <ref>] [--rows <id,...>] [--worktree <path>] [--branch <name>] [--no-install] [--dry-run]
 ```
 
 Prépare la place d'un *worker* d'un build réparti par contexte : crée un *worktree* git du projet
@@ -1151,8 +1170,11 @@ deux lignes, une note le signale, car un agent en tient une ou deux. Un *worktre
 une branche existante, est gardé quand il contient la base et refusé sinon, pour qu'aucun
 *worker* ne construise sur un tronc périmé ; seul le fichier est réécrit. Sans `--base`, lancé
 depuis le *worktree* d'un *worker* (son `.ddd-ts-kit/worker.json`, ou une branche
-`build/<context>`), il refuse : cette branche deviendrait le tronc. `--dry-run` ne crée et
-n'écrit rien. Il faut un dépôt git avec au moins un *commit*. Le *worker* génère ensuite avec
+`build/<context>`), il refuse : cette branche deviendrait le tronc. Dans un *worktree* qu'il
+crée, il lance ensuite l'installation propre du gestionnaire de paquets du projet (`npm ci`,
+`pnpm install --frozen-lockfile`), dont la sortie n'est gardée qu'en cas d'échec ; une note donne
+le temps qu'elle a pris, ou, quand elle a échoué ou que `--no-install` l'a écartée, quoi lancer
+avant que le *worker* ne démarre. `--dry-run` ne crée, n'écrit et n'installe rien. Il faut un dépôt git avec au moins un *commit*. Le *worker* génère ensuite avec
 `--local-only`.
 
 ## affected

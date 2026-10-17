@@ -5,7 +5,7 @@ import { Arguments } from './arguments.js';
 import type { Command } from './command.js';
 import { knownContext } from './known-context.js';
 
-/** Prepares the place of one worker of a parallel build (worktree, branch, scope file) and prints its briefing. */
+/** Prepares the place of one worker of a parallel build (worktree, branch, dependencies, scope file) and prints its briefing. */
 export const workerScopeCommand: Command = (argv, io) => {
   const args = Arguments.parse(argv, {
     worktree: { type: 'string' },
@@ -13,6 +13,7 @@ export const workerScopeCommand: Command = (argv, io) => {
     base: { type: 'string' },
     rows: { type: 'string' },
     'dry-run': { type: 'boolean', default: false },
+    'no-install': { type: 'boolean', default: false },
   });
 
   const root = args.projectRoot;
@@ -24,6 +25,7 @@ export const workerScopeCommand: Command = (argv, io) => {
     ...args.texts(['worktree', 'branch', 'base']),
     ...rowsOf(args.text('rows')),
     dryRun: args.flag('dry-run'),
+    install: !args.flag('no-install'),
   });
 
   io.out(args.json ? JSON.stringify(scope, null, 2) : formatScope(scope));

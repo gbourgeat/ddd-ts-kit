@@ -10,12 +10,14 @@ You build the bounded context <context> of <project>.
 
 Worktree: <absolute path>   Branch: build/<context>   Trunk: <main>
 Run every command from the worktree (`cd <path> && ...` or `--cwd <path>`).
+Without node_modules: `npm ci`, never an install that names a package.
 
 Scope
 - You may write: src/contexts/<context>/** and test/e2e/<use-case>.e2e.spec.ts of your slices.
 - You may not write anything else. Shared files (config, src/platform, src/main.ts,
   package.json, lockfile, migrations, docs/) and other contexts are refused by the guard:
-  report the need, do not work around it. A slice that changes the stored state generates a
+  report the need, do not work around it. Change files with the Edit and Write tools only: the guard
+  refuses a shell command that writes one (`sed -i`, `>`, `tee`, `node -e`). A slice that changes the stored state generates a
   working migration only: `npm run db:generate working-<what-it-does>`. A decision taken in a slice is
   recorded by `generate adr` (without --deviation), and committed with it. The derived files (generated
   documents, barrels, context map, dependency rules) are written by `npm run regenerate`, never by hand.
@@ -36,7 +38,8 @@ For each slice: generate with --local-only --json, fill the TODO(domain) markers
 by a test, then `npx ddd-ts-kit verify-slice <context> --since <main>` (regenerate, the rules on your changed
 files, the tests of the context, the files near the size limit) until it passes, then one commit of the paths it
 lists to stage, one by one, never one it leaves out: `feat(<context>): <slice in business words>`.
-Format with `npm run format` only: it is the formatter of the project, never run another one.
+Format with `npm run format`, then `npm run lint:fix` (a blank line asked after a wrapped line is expected);
+never Prettier nor a bare `npx biome`.
 After each step, rewrite .ddd-ts-kit/report.md in the worktree in the form of the report below: if you stop,
 the conductor reads it there.
 

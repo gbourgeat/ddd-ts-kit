@@ -92,14 +92,17 @@ unless `--dry-run`, which prints the briefing and creates nothing. From the base
 refuses a worker's worktree), it adds the git worktree `../<project>-<context>` on the branch
 `build/<context>`, or keeps it when it contains the base and refuses it when it does not,
 writes `.ddd-ts-kit/worker.json` (its context, rows, base and branch) in it,
-and prints the briefing of that worker. Then `npm ci` in the worktree. With that file, the
-guard refuses any write of a `context-builder` agent outside `src/contexts/<context>/` and
-its end-to-end specs, any generator that writes a shared file and any dependency change.
+runs the clean install of the project in a worktree it creates (`--no-install` leaves it to
+you; a note then says what to run), and prints the briefing of that worker. With that file,
+the guard refuses any write of a `context-builder` agent outside `src/contexts/<context>/` and
+its end-to-end specs, any generator that writes a shared file, any dependency change, and any
+shell command that writes a file around the Edit and Write tools (`sed -i`, `>`, `tee`, inline
+`node -e`, `cp`, `mv` or `rm` outside the scope); `npx prettier` and a bare `npx biome` too.
 
 Before briefing a worker in a context that already has one, run
 `npx ddd-ts-kit status --workers` from the trunk: it lists each worker (worktree, branch,
-context, rows, commits ahead) with the files it changed, then the files more than one worker
-changed. Give the new worker rows on other files, or wait for the merge of the first.
+context, rows, commits ahead, dependencies not installed) with the files it changed, then the
+files more than one worker changed. Give the new worker rows on other files, or wait for the merge of the first.
 
 ## 4. Shared files: who touches them, how they stay conflict-free
 

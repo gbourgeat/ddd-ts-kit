@@ -1,4 +1,7 @@
 min_version: 2.0.0
+# The hook runs the lefthook of the checkout it fires in: each worktree its own, and a checkout
+# without its dependencies fails the commit instead of skipping the checks.
+lefthook: node_modules/.bin/lefthook
 
 pre-commit:
   parallel: true

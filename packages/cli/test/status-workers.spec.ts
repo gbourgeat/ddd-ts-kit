@@ -96,7 +96,7 @@ describe('status --workers', () => {
 
     const text = cli(root, 'status', '--workers').stdout;
 
-    expect(text).toContain('    context billing, rows #M1.01, base main, 1 commit ahead\n');
+    expect(text).toContain('    context billing, rows #M1.01, base main, 1 commit ahead, dependencies not installed\n');
     expect(text).toContain('  context billing, built by build/billing-issue, build/billing-cancel\n');
     expect(text).toContain(`  ${SHARED}, changed by build/billing-issue, build/billing-cancel`);
   });
@@ -114,11 +114,28 @@ describe('status --workers', () => {
       worktree: cancelling,
       branch: 'build/billing-cancel',
       context: 'billing',
+      installed: false,
       files: [SHARED, 'src/contexts/billing/cancel.ts'],
       report: null,
     });
 
     expect(cli(root, 'status', '--workers').stdout).toContain('2 files changed (uncommitted only');
+  });
+
+  it('says which worktree has its dependencies, in JSON and in words', () => {
+    fs.mkdirSync(path.join(issuing, 'node_modules'));
+
+    const workers = jsonAt(cli(root, 'status', '--workers', '--json').json(), 'workers');
+
+    expect(workers).toEqual([
+      expect.objectContaining({ worktree: issuing, installed: true }),
+      expect.objectContaining({ worktree: cancelling, installed: false }),
+    ]);
+
+    const text = cli(root, 'status', '--workers').stdout;
+
+    expect(text).toContain('    context billing, rows #M1.01, base main, 1 commit ahead\n');
+    expect(text).toContain('    context billing, dependencies not installed\n');
   });
 
   it('leaves status without --workers as it was', () => {
@@ -127,7 +144,18 @@ describe('status --workers', () => {
 });
 
 function open(row: string, worktree: string, branch: string): void {
-  const opened = cli(root, 'worker-scope', 'billing', '--rows', row, '--worktree', worktree, '--branch', branch);
+  const opened = cli(
+    root,
+    'worker-scope',
+    'billing',
+    '--rows',
+    row,
+    '--worktree',
+    worktree,
+    '--branch',
+    branch,
+    '--no-install',
+  );
 
   expect(opened.code).toBe(0);
 }

@@ -1,5 +1,5 @@
 [English](commit-discipline.md) · **Français**
-<!-- translation-of: commit-discipline.md sha256:8887241760d0d08b -->
+<!-- translation-of: commit-discipline.md sha256:8bd88bdc46eaa72d -->
 
 # La discipline des commits et des pull requests
 
@@ -254,7 +254,10 @@ git stash pop
 
 ![Les moments par lesquels passe un changement, de l'écriture d'un fichier dans une session d'agent jusqu'à la porte de la CI, avec ce que chacun bloque ou ne fait que conseiller, et en dessous ce qu'aucun outil ne tient](../assets/diagrams/commit-discipline-gates.fr.svg)
 
-Les *hooks* s'installent une fois par clone (`npm run hooks:install`). Le *hook* du *plugin*
+Les *hooks* s'installent une fois par clone (`npm run hooks:install`) et sont partagés par ses
+*worktrees* ; chaque *worktree* lance son propre lefthook (`lefthook: node_modules/.bin/lefthook`),
+si bien qu'un *worktree* sans ses dépendances fait échouer le *commit* au lieu de sauter les
+vérifications. Le *hook* du *plugin*
 laisse passer en cas d'échec, par conception : une garde cassée ne bloque jamais le travail ; il
 est donc une commodité, et la CI fait autorité.
 

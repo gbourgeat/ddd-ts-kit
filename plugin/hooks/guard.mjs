@@ -109,8 +109,69 @@ const DECISION_RECORD = /^docs\/adr\/[^/]+\.md$/;
 // migration tool writes it; the conductor generates the real one on the trunk at merge.
 const WORKING_MIGRATION = /(^|\/)migrations\/(.+\/)?\d+[_-]working[_-][\w-]*(\.(sql|[cm]?[jt]s)|\/migration\.sql)$/;
 const REPORT_TO_CONDUCTOR = 'Do not work around it: finish what you can and report the need to the conductor.';
+const EDIT_WITH_TOOLS =
+  'Edit with the Edit or Write tool so that the scope check applies; to delete or move a file of your scope, use `git rm` or `git mv`, allowed inside the scope only. Output to /dev/null or to the system temp directory stays free.';
+// The clean install of each package manager: what installs the lockfile as it is.
+const CLEAN_INSTALL = { npm: 'npm ci', pnpm: 'pnpm install --frozen-lockfile' };
+
+// The subcommands of each package manager that change package.json or the lockfile; an install
+// changes them when it names a package.
+const DEPENDENCY_CHANGES = {
+  npm: ['uninstall', 'un', 'unlink', 'remove', 'rm', 'r', 'update', 'up', 'upgrade', 'udpate'],
+  pnpm: ['add', 'remove', 'rm', 'uninstall', 'un', 'update', 'up', 'upgrade'],
+  yarn: ['add', 'remove', 'upgrade', 'up', 'upgrade-interactive'],
+  bun: ['add', 'a', 'remove', 'rm', 'update', 'upgrade'],
+};
+const INSTALLS = ['install', 'i', 'in', 'ins', 'inst', 'insta', 'instal', 'isnt', 'isnta', 'isntal', 'isntall'];
+// The options of a package manager that take a value: that value is not a package.
+const VALUED_MANAGER_OPTIONS = [
+  '--prefix',
+  '-C',
+  '--dir',
+  '-w',
+  '--workspace',
+  '--filter',
+  '-F',
+  '--registry',
+  '--omit',
+  '--include',
+  '--loglevel',
+  '--cache',
+  '--tag',
+  '--userconfig',
+  '--cwd',
+];
+
+// How a worker's command can write files without the editor tools: the code an interpreter is
+// given inline (from its option, from `-` or from its standard input).
+const INLINE_CODE = {
+  python: /^-[a-zA-Z]*c$/,
+  node: /^(?:-[a-zA-Z]*[ep][a-zA-Z]*|--eval(?:=.*)?|--print(?:=.*)?)$/,
+  bun: /^(?:-e|-p|--eval|--print)$/,
+  ruby: /^-[a-zA-Z]*e[a-zA-Z]*$/,
+  perl: /^-[a-zA-Z]*[eE][a-zA-Z]*$/,
+  php: /^-r$/,
+};
+const OUTPUT_REDIRECTS = new Set(['>', '>>', '>|', '&>', '&>>', '<>']);
+// The commands that change the paths they are given, with the options that take a value, and which
+// operands they change: all of them, or the destination only.
+const PATH_COMMANDS = {
+  cp: { valued: ['-S', '--suffix'], changes: 'destination' },
+  ln: { valued: ['-S', '--suffix'], changes: 'destination' },
+  install: { valued: ['-S', '--suffix', '-m', '--mode', '-o', '--owner', '-g', '--group'], changes: 'destination' },
+  mv: { valued: ['-S', '--suffix'], changes: 'all' },
+  rm: { valued: [], changes: 'all' },
+  rmdir: { valued: [], changes: 'all' },
+  unlink: { valued: [], changes: 'all' },
+  shred: { valued: ['-n', '-s', '--iterations', '--size'], changes: 'all' },
+  touch: { valued: ['-r', '-d', '-t', '--reference', '--date'], changes: 'all' },
+  truncate: { valued: ['-s', '-r', '--size', '--reference'], changes: 'all' },
+};
 
 const MODES = { session, 'pre-write': preWrite, 'pre-bash': preBash, 'post-write': postWrite, stop };
+
+// The reader of shell commands, loaded only when a worker runs one: every other call of the guard skips its cost.
+let shell;
 
 main();
 
@@ -118,7 +179,9 @@ function main() {
   try {
     const run = MODES[process.argv[2]];
     if (run) {
-      run(readInput());
+      Promise.resolve(run(readInput())).catch(() => {
+        process.exitCode = 0;
+      });
     }
   } catch {
     process.exitCode = 0;
@@ -163,7 +226,7 @@ function verdictOn({ file, written, replaced }, input) {
   return deviation ? { decision: 'ask', reason: deviation } : undefined;
 }
 
-function preBash(input) {
+async function preBash(input) {
   const command = toolInput(input).command;
   if (typeof command !== 'string') {
     return;
@@ -181,10 +244,14 @@ function preBash(input) {
   if (!context) {
     return;
   }
+  shell = await import('./shell-commands.mjs');
+  const commands = shell.simpleCommands(command, input.cwd ?? process.cwd());
   const refusal =
     sharedGeneratorReason(project, context, command) ??
-    dependencyChangeReason(command) ??
-    workingMigrationReason(command);
+    dependencyChangeReason(commands) ??
+    workingMigrationReason(command) ??
+    formatterReason(project, commands) ??
+    fileChangeReason(project, input, commands);
   if (refusal) {
     decide(input, project.mode === 'advise' ? 'ask' : 'deny', refusal);
   }
@@ -364,6 +431,7 @@ function describeProject(root) {
     contextsDir: config.contextsDir ?? 'src/contexts',
     platformDir: config.platformDir ?? 'src/platform',
     commit: commitLimits(config.commit),
+    packageManager: config.stack?.packageManager === 'pnpm' ? 'pnpm' : 'npm',
     // enforce: block; advise: ask the user; off: silent.
     mode: process.env.DDD_TS_KIT_GUARD ?? config.guard ?? 'enforce',
   };
@@ -396,11 +464,22 @@ function projectBriefing(project, input) {
   if (project.cli) {
     lines.push('Contexts:', contextMap(project));
   } else {
-    lines.push('The CLI is not installed in this project: `npm i -D ddd-ts-kit`.');
+    lines.push(installAdvice(project));
   }
   const reminder = project.mode === 'off' ? undefined : commitReminder(project, input, { repeat: true });
 
   return reminder ? [...lines, reminder] : lines;
+}
+
+// A worktree of a project that already depends on the kit lacks its install, not the kit.
+function installAdvice(project) {
+  const manifest = readJson(join(project.root, 'package.json'));
+  const listed = ['dependencies', 'devDependencies'].some((field) => manifest?.[field]?.['ddd-ts-kit'] !== undefined);
+  if (listed) {
+    return `The dependencies are not installed here: run \`${CLEAN_INSTALL[project.packageManager]}\`, never an install that names a package.`;
+  }
+
+  return `The CLI is not installed in this project: \`${project.packageManager === 'pnpm' ? 'pnpm add -D' : 'npm i -D'} ddd-ts-kit\`.`;
 }
 
 // The skills describe KIT_VERSION while the checks run the CLI the project installed, and the
@@ -652,10 +731,272 @@ function workingMigrationReason(command) {
     : undefined;
 }
 
-function dependencyChangeReason(command) {
-  return /\b(npm|pnpm|yarn|bun)\s+(install|i|add|uninstall|remove|rm|update|upgrade)\s+[^-\s;&|]/.test(command)
+// The flags may stand anywhere: `npm i -D zod`, `npm i zod@1 --save-exact`. A clean install stays free.
+function dependencyChangeReason(commands) {
+  return commands.some(changesDependencies)
     ? `Adding, removing or updating a dependency changes package.json and the lockfile, which are shared. ${REPORT_TO_CONDUCTOR}`
     : undefined;
+}
+
+function changesDependencies({ words }) {
+  const manager = shell.commandName(words);
+  if (!(manager in DEPENDENCY_CHANGES)) {
+    return false;
+  }
+  const [subcommand, ...rest] = shell.operands(words.slice(1), VALUED_MANAGER_OPTIONS);
+  if (DEPENDENCY_CHANGES[manager].includes(subcommand)) {
+    return true;
+  }
+  if (
+    manager === 'npm' &&
+    ((subcommand === 'pkg' && /^(set|delete)$/.test(rest[0])) || (subcommand === 'audit' && rest[0] === 'fix'))
+  ) {
+    return true;
+  }
+
+  return INSTALLS.includes(subcommand) && rest.length > 0;
+}
+
+// Another formatter lays the code out otherwise than `format`, and the lint then reports the lines it moved;
+// `npx biome` without `--no` can fetch an unrelated package of the registry under that name.
+function formatterReason(project, commands) {
+  const run = project.packageManager === 'pnpm' ? 'pnpm run' : 'npm run';
+  const advice = `Format with \`${run} format\` only, then \`${run} lint:fix\`: a blank line the lint asks for after a line the formatter wrapped is expected.`;
+  for (const { words } of commands) {
+    const fetched = fetchedPackage(words);
+    if (fetched?.name === 'prettier' && formatRunsBiome(project)) {
+      return `\`npx prettier\` is not the formatter of this project: its \`format\` script runs Biome. ${advice}`;
+    }
+    if (fetched?.name === 'biome' && !fetched.installedOnly) {
+      return `\`npx biome\` without \`--no\` can run an unrelated package of the registry named biome, which formats nothing. ${advice}`;
+    }
+  }
+  return undefined;
+}
+
+// The package a runner fetches (`npx`, `pnpm dlx`, ...), without its version, and whether `--no` keeps it to what is installed.
+function fetchedPackage(words) {
+  const name = shell.commandName(words);
+  const fetching = ['npx', 'pnpx', 'bunx'].includes(name) || (['pnpm', 'yarn'].includes(name) && words[1] === 'dlx');
+  if (!fetching) {
+    return undefined;
+  }
+  const args = words.slice(name === 'pnpm' || name === 'yarn' ? 2 : 1);
+  const named = args[args.findIndex((word) => word === '-p' || word === '--package') + 1];
+  const first = shell.operands(args, ['-p', '--package', '-c', '--call'])[0];
+  const spec = args.some((word) => word === '-p' || word === '--package') ? named : first;
+  return spec === undefined
+    ? undefined
+    : {
+        name: spec.replace(/(.)@.*$/, '$1'),
+        installedOnly: name === 'npx' && args.some((word) => /^--no(-install)?$/.test(word)),
+      };
+}
+
+function formatRunsBiome(project) {
+  const format = readJson(join(project.root, 'package.json'))?.scripts?.format;
+  return typeof format === 'string' && /\bbiome\b/.test(format);
+}
+
+// A worker edits through the editor tools only: the shell must not write around the scope check
+// of pre-write. Redirections and in-place edits are refused on any file of a project; copies,
+// moves, deletions and restores outside the scope of the worker.
+function fileChangeReason(project, input, commands) {
+  for (const command of commands) {
+    const what = redirectionWrite(command) ?? inPlaceWrite(command) ?? inlineCode(command);
+    if (what) {
+      return `A worker changes files with the editor tools only: ${what}. ${EDIT_WITH_TOOLS}`;
+    }
+    const changed = changedPaths(command).find((path) => outsideScope(project, input, path.place));
+    if (changed) {
+      return `A worker changes files with the editor tools only: \`${changed.by}\` changes ${describePlace(project, changed.place)}, outside your scope. ${EDIT_WITH_TOOLS}`;
+    }
+  }
+  return undefined;
+}
+
+function redirectionWrite({ redirects, directory }) {
+  const written = redirects.find(
+    ({ operator, target }) => OUTPUT_REDIRECTS.has(operator) && isProjectPath(shell.placeOf(target, directory)),
+  );
+  return written
+    ? `the redirection \`${written.operator} ${written.target.replaceAll(shell.UNKNOWN, '$(...)')}\` writes a file of the project`
+    : undefined;
+}
+
+function isProjectPath(place) {
+  return place === undefined || findProject(place) !== undefined;
+}
+
+// `sed -i`, `perl -i` and `tee` write the files they are given.
+function inPlaceWrite({ words, directory }) {
+  const name = shell.commandName(words);
+  const files =
+    name === 'sed' || name === 'perl'
+      ? inPlaceFiles(words.slice(1))
+      : name === 'tee'
+        ? shell.operands(words.slice(1))
+        : [];
+  const touched = files.find((file) => isProjectPath(shell.placeOf(file, directory)));
+  if (touched === undefined) {
+    return undefined;
+  }
+
+  return name === 'tee' ? `\`tee\` writes ${touched}` : `\`${name} -i\` edits ${touched} in place`;
+}
+
+// The files of an in-place edit: every operand once the script is given by `-e` or `-f`, else all but the first.
+function inPlaceFiles(args) {
+  if (!args.some((word) => (/^-[a-zA-Z]*i/.test(word) && !word.startsWith('--')) || word.startsWith('--in-place'))) {
+    return [];
+  }
+  const files = [];
+  let scripted = false;
+  for (let index = 0; index < args.length; index += 1) {
+    const word = args[index];
+    const valued = /^-[a-zA-Z]*[efE]$/.test(word) || ['--expression', '--file'].includes(word);
+    scripted ||= valued || /^(-[a-zA-Z]*[efE]|--expression=|--file=)/.test(word);
+    if (valued || word === '-l' || word === '--line-length') {
+      index += 1;
+    } else if (!word.startsWith('-')) {
+      files.push(word);
+    }
+  }
+
+  return scripted ? files : files.slice(1);
+}
+
+function inlineCode({ words, heredoc, piped, redirects }) {
+  const name = shell.commandName(words);
+  const language = name.replace(/[\d.]+$/, '');
+  const args = words.slice(1);
+  if (name === 'deno' && args[0] === 'eval') {
+    return '`deno eval` runs inline code, which can write any file';
+  }
+  if (!(language in INLINE_CODE)) {
+    return undefined;
+  }
+  const flag = args.find((word) => INLINE_CODE[language].test(word));
+  const script = args.find((word) => !word.startsWith('-') || word === '-');
+  const fed = heredoc || piped || redirects.some(({ operator }) => operator === '<' || operator === '<<<');
+  const fromInput = script === '-' || (script === undefined && fed && !args.includes('-m'));
+
+  return flag || fromInput
+    ? `\`${name}${flag ? ` ${flag}` : ''}\` runs inline code, which can write any file`
+    : undefined;
+}
+
+// The paths a command changes, each with what changes it.
+function changedPaths({ words, directory }) {
+  const name = shell.commandName(words);
+  const at = (word, by) => ({ place: shell.placeOf(word, directory), by });
+  if (name in PATH_COMMANDS) {
+    return pathOperands(name, words.slice(1)).map((word) => at(word, name));
+  }
+  if (name === 'dd') {
+    return words.filter((word) => word.startsWith('of=')).map((word) => at(word.slice(3), 'dd'));
+  }
+  if (name === 'find' && words.includes('-delete')) {
+    const roots = words.slice(1, shell.firstExpression(words));
+    return (roots.length > 0 ? roots : ['.']).map((root) => at(`${root}/{}`, 'find -delete'));
+  }
+  if (name === 'patch' && !words.includes('--dry-run')) {
+    return [{ place: undefined, by: 'patch' }];
+  }
+
+  return name === 'git' ? gitChangedPaths(words.slice(1), directory) : [];
+}
+
+function pathOperands(name, args) {
+  const { valued, changes } = PATH_COMMANDS[name];
+  const target = args.findIndex((word) => word === '-t' || word === '--target-directory');
+  const joined = args.find((word) => word.startsWith('--target-directory='));
+  const words = shell.operands(args, [...valued, '-t', '--target-directory']);
+  if (changes === 'all' || (name === 'install' && args.includes('-d'))) {
+    return target === -1 ? words : [...words, args[target + 1]];
+  }
+  if (target !== -1 || joined) {
+    return [target === -1 ? joined.slice('--target-directory='.length) : args[target + 1]];
+  }
+
+  return words.slice(-1);
+}
+
+// `git checkout -- <path>`, `git restore`, `git rm`, `git mv` and `git clean` rewrite or delete
+// files of the work tree; `git apply` writes the files of a patch.
+function gitChangedPaths(args, directory) {
+  const { subcommand, tail, moved } = gitInvocation(args, directory);
+  const at = (word) => ({ place: shell.placeOf(word, moved), by: `git ${subcommand}` });
+  if (subcommand === 'checkout') {
+    return checkedOutPaths(tail, moved).map(at);
+  }
+  if (subcommand === 'restore') {
+    const staged = tail.some((word) => word === '--staged' || word === '-S');
+    const worktree = tail.some((word) => word === '--worktree' || word === '-W');
+    return staged && !worktree ? [] : shell.operands(tail, ['-s', '--source']).map(at);
+  }
+  if (subcommand === 'rm' || subcommand === 'mv') {
+    return shell.operands(tail).map(at);
+  }
+  if (subcommand === 'clean' && !tail.some((word) => /^(-[a-zA-Z]*n|--dry-run)$/.test(word))) {
+    const named = shell.operands(tail, ['-e', '--exclude']);
+    return (named.length > 0 ? named : ['.']).map(at);
+  }
+  const checking = tail.some((word) => /^--(check|stat|numstat|summary|cached)$/.test(word));
+
+  return subcommand === 'apply' && !checking ? [{ place: undefined, by: 'git apply' }] : [];
+}
+
+// The options before the subcommand of git; `-C <directory>` moves where its paths are read from.
+function gitInvocation(args, directory) {
+  let index = 0;
+  let moved = directory;
+  while (index < args.length && args[index].startsWith('-')) {
+    if (args[index] === '-C') {
+      moved = shell.placeOf(args[index + 1] ?? shell.UNKNOWN, moved);
+    }
+    index += args[index] === '-C' || args[index] === '-c' ? 2 : 1;
+  }
+
+  return { subcommand: args[index], tail: args.slice(index + 1), moved };
+}
+
+// After `--`, every word is a path; without it, the words that name an existing file or directory are.
+function checkedOutPaths(tail, directory) {
+  const dashes = tail.indexOf('--');
+  if (dashes !== -1) {
+    return tail.slice(dashes + 1);
+  }
+
+  return shell.operands(tail, ['-b', '-B', '--orphan']).filter((word) => {
+    const place = shell.placeOf(word, directory);
+    return place === undefined || existsSync(place);
+  });
+}
+
+// A path of no project is free; a path only the shell knows, or of another checkout, is not.
+function outsideScope(project, input, place) {
+  if (place === undefined) {
+    return true;
+  }
+  const owner = findProject(place);
+  if (owner === undefined) {
+    return false;
+  }
+
+  return owner.root !== project.root || workerScopeReason(project, place, input) !== undefined;
+}
+
+function describePlace(project, place) {
+  if (place === undefined) {
+    return 'files only the shell knows';
+  }
+  const path = projectPath(project, place);
+  if (path === '{}' || path.endsWith('/{}')) {
+    return path === '{}' ? 'files anywhere in the project' : `files under ${path.slice(0, -3)}`;
+  }
+
+  return path === '' ? 'the whole project' : path.startsWith('..') ? place : path;
 }
 
 function projectPath(project, file) {

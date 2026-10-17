@@ -1,5 +1,5 @@
 {
-  "description": "Architecture guard of ddd-ts-kit: at session start, the next step of the plan, a one-line map per context and any gap between the version the skills describe and the installed packages; refuses hand-written generated files and writes of a context worker outside its bounded context; checks each written file; refuses to finish while architecture errors remain; reminds, without blocking, to commit a finished slice. Fails open, no network.",
+  "description": "Architecture guard of ddd-ts-kit: at session start, the next step of the plan, a one-line map per context and any gap between the version the skills describe and the installed packages; refuses hand-written generated files, writes of a context worker outside its bounded context, and its shell commands that write files around the editor tools, change dependencies or run another formatter; checks each written file; refuses to finish while architecture errors remain; reminds, without blocking, to commit a finished slice. Fails open, no network.",
   "hooks": {
     "SessionStart": [
       {

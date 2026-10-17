@@ -22,9 +22,9 @@ function directory(label) {
   return mkdtempSync(join(workspace, `${label}-`));
 }
 
-function project(config = {}) {
+function project(config = {}, flags = []) {
   const root = directory('project');
-  const init = spawnSync('node', [cli, 'init', '--orm', 'none', '--context', 'ordering:core'], {
+  const init = spawnSync('node', [cli, 'init', '--orm', 'none', '--context', 'ordering:core', ...flags], {
     cwd: root,
     encoding: 'utf8',
   });
@@ -621,11 +621,191 @@ test('a sub-agent reads a briefing of worker-scope, and only the conductor prepa
   );
 });
 
-test('a context worker does not change the dependencies', () => {
+const DEPENDENCY_CHANGES = [
+  'npm install dayjs',
+  'npm i zod',
+  'npm i -D zod',
+  'npm install --save-dev zod',
+  'npm install -E -D zod',
+  'npm i zod@1 --save-exact',
+  'pnpm add -D zod',
+  'yarn add --dev zod',
+  'bun add zod',
+  'npm uninstall dayjs',
+  'pnpm update',
+  'npm pkg set dependencies.zod=4',
+  'cd src && npm i -D zod',
+  'bash -c "npm i -D zod"',
+];
+
+test('a context worker does not change the dependencies, wherever the flags stand', () => {
   const root = project();
-  const result = run('pre-bash', bash(root, 'npm install dayjs', worker(root)));
-  assert.equal(decision(result), 'deny');
-  assert.match(reason(result), /lockfile/);
+  const agent = worker(root);
+  for (const command of DEPENDENCY_CHANGES) {
+    const result = run('pre-bash', bash(root, command, agent));
+    assert.equal(decision(result), 'deny', command);
+    assert.match(reason(result), /lockfile/, command);
+  }
+});
+
+test('a context worker installs the lockfile freely', () => {
+  const root = project();
+  const agent = worker(root);
+  for (const command of [
+    'npm ci',
+    'npm install',
+    'npm i',
+    'npm install --omit dev',
+    'pnpm install --frozen-lockfile',
+    'yarn install --immutable',
+    'git commit -m "build: npm i zod is for the conductor"',
+  ]) {
+    assert.equal(run('pre-bash', bash(root, command, agent)).output, undefined, command);
+  }
+});
+
+// The table of the Bash commands a worker runs: the kit's own commands pass, every way of writing
+// a file of the project around the editor tools is refused.
+const WORKER_COMMANDS_ALLOWED = [
+  'npx ddd-ts-kit generate value-object invoicing Money --json',
+  'npx ddd-ts-kit verify-slice invoicing --since main 2>&1 | tail -40',
+  'npx ddd-ts-kit check --changed-since main > /dev/null',
+  'npm run format',
+  'npm run lint:fix',
+  'npm run regenerate',
+  'npm test -- invoicing 2>&1 | tail -20',
+  'npm run verify &> /dev/null; echo $?',
+  'npm test > "$TMPDIR/invoicing-tests.log" 2>&1',
+  'ls src/contexts >&2',
+  'git add src/contexts/invoicing && git status --porcelain',
+  'git diff --stat main',
+  'git log --oneline -5',
+  "git commit -F - <<'EOF'\nfeat(invoicing): issue an invoice\n\nA total > 0 is checked; rm -rf src is a sentence here.\nEOF",
+  'git commit -m "feat(invoicing): echo > file is a message"',
+  'git checkout -b build/invoicing-2',
+  'git checkout main',
+  'git checkout -- src/contexts/invoicing/CONTEXT.md',
+  'git restore src/contexts/invoicing/CONTEXT.md',
+  'git restore --staged package.json',
+  'git rm src/contexts/invoicing/domain/draft.ts',
+  'git mv src/contexts/invoicing/a.ts src/contexts/invoicing/b.ts',
+  'git clean -n',
+  'git apply --check invoicing.patch',
+  'cat src/contexts/invoicing/CONTEXT.md',
+  'grep -rn Invoice src/contexts | head',
+  'sed -n 1,20p src/platform/compose-application.ts',
+  'echo "notes" > "$TMPDIR/notes.txt"',
+  'rm src/contexts/invoicing/domain/draft.notes.md',
+  'rm -f .ddd-ts-kit/report.md',
+  'cp src/contexts/invoicing/domain/invoice.ts "$TMPDIR/invoice.ts"',
+  'mv src/contexts/invoicing/a.ts src/contexts/invoicing/b.ts',
+  'touch src/contexts/invoicing/domain/payment.notes.md',
+  'find src/contexts/invoicing -name "*.orig" -delete',
+  'node scripts/report.mjs',
+  'node --version',
+  'python3 -m json.tool package.json',
+  'npx --no -- biome format src/contexts/invoicing',
+  'npx @biomejs/biome format src/contexts/invoicing',
+];
+
+const WORKER_COMMANDS_REFUSED = [
+  ['sed -i "s/a/b/" src/contexts/invoicing/CONTEXT.md', /`sed -i` edits/],
+  ["sed -i.bak -e 's/a/b/' src/main.ts", /`sed -i` edits src\/main\.ts in place/],
+  ['perl -pi -e "s/a/b/" src/main.ts', /`perl -i` edits src\/main\.ts in place/],
+  ["perl -i -pe 's/a/b/' package.json", /`perl -i` edits package\.json in place/],
+  ['perl -pe \'s/a/b/\' src/main.ts > "$TMPDIR/main.ts"', /`perl -pe` runs inline code/],
+  ["sed -ne 's/a/b/p' -i src/contexts/invoicing/CONTEXT.md", /edits src\/contexts\/invoicing\/CONTEXT\.md in place/],
+  ['echo x > src/main.ts', /the redirection `> src\/main\.ts`/],
+  ['echo x >> src/contexts/invoicing/CONTEXT.md', /redirection `>>/],
+  ['npm test &> test-output.log', /redirection `&> test-output\.log`/],
+  ["cat > src/platform/extra.ts <<'EOF'\nexport const a = 1;\nEOF", /redirection `> src\/platform\/extra\.ts`/],
+  ['echo x > "$OUT"', /redirection `> \$OUT`/],
+  ['echo x | tee src/main.ts', /`tee` writes src\/main\.ts/],
+  ['echo x | tee -a docs/notes.md', /`tee` writes/],
+  ["python3 -c \"open('src/main.ts', 'w').write('')\"", /`python3 -c` runs inline code/],
+  ["node -e \"require('node:fs').writeFileSync('src/main.ts', '')\"", /`node -e` runs inline code/],
+  ["ruby -e \"File.write('src/main.ts', '')\"", /`ruby -e`/],
+  ["node - <<'EOF'\nconsole.log(1)\nEOF", /`node` runs inline code/],
+  ['python3 <<EOF\nprint(1)\nEOF', /`python3` runs inline code/],
+  ['cat build.js | node', /`node` runs inline code/],
+  ['cp "$TMPDIR/x.ts" src/platform/x.ts', /`cp` changes src\/platform\/x\.ts, outside your scope/],
+  ['mv src/contexts/invoicing/a.ts src/platform/a.ts', /`mv` changes src\/platform\/a\.ts/],
+  ['mv src/platform/a.ts src/contexts/invoicing/a.ts', /`mv` changes src\/platform\/a\.ts/],
+  ['rm -rf src/contexts/catalog', /`rm` changes src\/contexts\/catalog/],
+  ['rm package-lock.json', /`rm` changes package-lock\.json/],
+  ['rm "$FILE"', /files only the shell knows/],
+  ['touch src/platform/new.ts', /`touch`/],
+  ['truncate -s 0 src/main.ts', /`truncate`/],
+  ['dd if=/dev/zero of=src/main.ts count=1', /`dd` changes src\/main\.ts/],
+  ['install -m 644 notes.txt src/platform/notes.txt', /`install`/],
+  ['ln -sf ../x src/platform/link.ts', /`ln`/],
+  ['git checkout -- src/main.ts', /`git checkout` changes src\/main\.ts/],
+  ['git checkout main -- package.json', /`git checkout` changes package\.json/],
+  ['git checkout .', /the whole project/],
+  ['git restore src/main.ts', /`git restore`/],
+  ['git -C src restore main.ts', /`git restore` changes src\/main\.ts/],
+  ['git rm src/platform/compose-application.ts', /`git rm`/],
+  ['git mv src/main.ts src/contexts/invoicing/main.ts', /`git mv` changes src\/main\.ts/],
+  ['git clean -fd', /`git clean` changes the whole project/],
+  ['git apply invoicing.patch', /`git apply`/],
+  ['patch -p1 < invoicing.patch', /`patch`/],
+  ['find . -name "*.orig" -delete', /`find -delete` changes files anywhere in the project/],
+  ['find src -name "*.orig" -exec rm {} \\;', /`rm` changes files under src/],
+  ['find src -name "*.ts" -exec sed -i "s/a/b/" {} +', /`sed -i` edits/],
+  ['ls src | xargs rm', /`rm` changes files only the shell knows/],
+  ['bash -c "echo x > src/main.ts"', /redirection/],
+  ["sh -c 'rm src/main.ts'", /`rm` changes src\/main\.ts/],
+  ['eval "rm src/main.ts"', /`rm`/],
+  ['echo $(rm src/main.ts)', /`rm`/],
+  ['cd src && rm main.ts', /`rm` changes src\/main\.ts/],
+  ['FORCE=1 rm src/main.ts', /`rm`/],
+  ['sudo rm src/main.ts', /`rm`/],
+  ['npx prettier --write src', /not the formatter of this project.*npm run format/],
+  ['npx biome format --write .', /without `--no`.*npm run format/],
+  ['npx -y biome@2 check .', /without `--no`/],
+  ['pnpm dlx prettier --check .', /npm run format/],
+];
+
+test('a context worker changes files with the editor tools only: the table of its Bash commands', () => {
+  const root = project({}, ['--package-manager', 'npm']);
+  const agent = worker(root, 'invoicing');
+  for (const command of WORKER_COMMANDS_ALLOWED) {
+    assert.equal(run('pre-bash', bash(root, command, agent)).output, undefined, command);
+  }
+  for (const [command, expected] of WORKER_COMMANDS_REFUSED) {
+    const result = run('pre-bash', bash(root, command, agent));
+    assert.equal(decision(result), 'deny', command);
+    assert.match(reason(result), expected, command);
+  }
+  const redirected = reason(run('pre-bash', bash(root, 'echo x > src/main.ts', agent)));
+  assert.match(redirected, /Edit or Write tool so that the scope check applies/);
+  assert.match(redirected, /`git rm` or `git mv`, allowed inside the scope only/);
+});
+
+test('the conductor and the other agents are not held to the editor tools', () => {
+  const root = project({}, ['--package-manager', 'npm']);
+  worker(root, 'invoicing');
+  const reviewer = { agent_type: 'ddd-ts-kit:architecture-reviewer' };
+  for (const [command] of WORKER_COMMANDS_REFUSED) {
+    assert.equal(run('pre-bash', bash(root, command)).output, undefined, command);
+    assert.equal(run('pre-bash', bash(root, command, reviewer)).output, undefined, command);
+  }
+});
+
+test('the formatter advice and the install advice speak the package manager of the project', () => {
+  const root = project({}, ['--package-manager', 'pnpm']);
+  const prettier = run('pre-bash', bash(root, 'npx prettier --write .', worker(root, 'invoicing')));
+  assert.match(reason(prettier), /`pnpm run format` only, then `pnpm run lint:fix`/);
+  rmSync(join(root, 'node_modules'), { recursive: true });
+  const briefing = run('session', { cwd: root }).output.hookSpecificOutput.additionalContext;
+  assert.match(briefing, /The dependencies are not installed here: run `pnpm install --frozen-lockfile`/);
+  const npm = project({}, ['--package-manager', 'npm']);
+  rmSync(join(npm, 'node_modules'), { recursive: true });
+  assert.match(run('session', { cwd: npm }).output.hookSpecificOutput.additionalContext, /run `npm ci`/);
+  const manifest = JSON.parse(readFileSync(join(npm, 'package.json'), 'utf8'));
+  delete manifest.devDependencies['ddd-ts-kit'];
+  writeFileSync(join(npm, 'package.json'), JSON.stringify(manifest));
+  assert.match(run('session', { cwd: npm }).output.hookSpecificOutput.additionalContext, /`npm i -D ddd-ts-kit`/);
 });
 
 test('the worktree of a worker is found in its command, and other agents run anything', () => {

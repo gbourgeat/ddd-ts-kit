@@ -125,8 +125,11 @@ yet: its home is in the table "a concept with no role of its own" of `docs/ARCHI
 never a `types/` or `utils/` folder. Members are `private`, never `#name`. A blank line before a
 `return` that is not alone in its block and around `if`, `for`, `try`. Every `if`, `else`, `for`, `while` and `do`
 has braces and its body on its own lines, never `if (a) return b;`: a branch is visible at a
-glance, and a statement added to it later cannot silently fall outside it. `npm run lint:fix`
-then `npm run format` (Biome, line width 120) settle layout: do not spend tokens on it.
+glance, and a statement added to it later cannot silently fall outside it. `npm run format`
+(Biome, line width 120), then `npm run lint:fix`, settle layout: do not spend tokens on it. A
+blank line the lint asks for after the formatter wrapped a long line is expected, and the
+second command adds it. Never Prettier nor a bare `npx biome`: another width, or an unrelated
+package of that name.
 
 ## Types
 
