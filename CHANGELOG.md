@@ -4,7 +4,7 @@ What each version changes for someone who uses the kit. The packages of `package
 together, under one version; the notes of each [GitHub release](https://github.com/gbourgeat/ddd-ts-kit/releases)
 list the pull requests behind it.
 
-## Unreleased
+## 0.26.0
 
 **The guard recognises the CLI of the kit however it is launched.** The refusal of
 `worker-scope` to a sub-agent (without `--dry-run` or `--resume`) and the refusal to a worker of a
