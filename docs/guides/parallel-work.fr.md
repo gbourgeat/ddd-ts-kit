@@ -1,5 +1,5 @@
 [English](parallel-work.md) · **Français**
-<!-- translation-of: parallel-work.md sha256:63ed4b90b1a966d3 -->
+<!-- translation-of: parallel-work.md sha256:c296a2b7c026747f -->
 
 # Travailler en parallèle sans collisions
 
@@ -217,8 +217,8 @@ Scope
 - You may write: src/contexts/notification/** and test/e2e/<use-case>.e2e.spec.ts of your slices.
 - You may not write anything else. Shared files (config, src/platform, src/main.ts,
   package.json, lockfile, migrations, docs/) and other contexts are refused by the guard:
-  report the need, do not work around it. Change files with the Edit and Write tools only: the guard
-  refuses a shell command that writes one (`sed -i`, `>`, `tee`, `node -e`). A slice that changes the stored state generates a
+  report the need, do not work around it. The shell writes inside your scope only, as the editor tools do:
+  a write outside it is refused, and inline code (`node -e`, a heredoc) that changed one stops you. A slice that changes the stored state generates a
   working migration only: `npm run db:generate working-<what-it-does>`. A decision taken in a slice is
   recorded by `generate adr` (without --deviation), and committed with it. The derived files (generated
   documents, barrels, context map, dependency rules) are written by `npm run regenerate`, never by hand.
@@ -275,13 +275,15 @@ des tests, du compilateur et du *pipeline*). Pour son agent `context-builder`, i
 avec un `.ddd-ts-kit/worker.json` dans le *worktree*, une écriture hors de
 `src/contexts/<context>/` et des *specs* de bout en bout est refusée, de même qu'un générateur
 qui écrit des fichiers partagés et un changement de dépendance, où que se trouvent ses options
-(`npm i -D zod`) ; l'installation propre reste libre. Il ne change les fichiers qu'avec les outils
-d'édition, pour que chaque écriture passe par ce contrôle de périmètre : une commande *shell* qui
-écrit un fichier du projet en les contournant est refusée (une édition en place comme `sed -i`,
-une redirection ou `tee` vers le projet, du code en ligne donné à un interpréteur comme
-`node -e` ou un *heredoc*, et `cp`, `mv`, `rm`, `touch`, `git checkout -- <path>` ou
-`git restore` hors de son périmètre ; `git rm` et `git mv` y passent), de même que
-`npx prettier` dans un projet dont `format` lance Biome et un `npx biome` nu. Une sortie vers
+(`npm i -D zod`) ; l'installation propre reste libre. Le même périmètre vaut pour le *shell* :
+une édition en place comme `sed -i`, une redirection ou `tee`, et `cp`, `mv`, `rm`, `touch`,
+`git checkout -- <path>` ou `git restore` passent dans le périmètre et sont refusés hors de lui,
+ou sur un chemin que seul le *shell* connaît (`"$FILE"`). Le code en ligne donné à un interpréteur
+(`node -e`, un *heredoc*) ne se lit pas d'avance : il s'exécute, la garde note les fichiers hors
+du périmètre avant lui et les compare à la commande suivante du *worker*, et un fichier qu'il y a
+changé arrête le *worker* jusqu'à ce qu'il soit remis en état (`git restore`, ou `rm` d'un
+nouveau fichier, permis pour ces fichiers). `npx prettier` dans un projet dont `format` lance
+Biome et un `npx biome` nu sont refusés. Une sortie vers
 `/dev/null` ou le répertoire temporaire du système reste libre, et le chef d'orchestre n'est
 tenu à rien de tout cela. Un *worker* passe `--local-only`
 à `generate` : la commande refuse alors, et n'écrit rien, quand la sorte écrirait hors de son

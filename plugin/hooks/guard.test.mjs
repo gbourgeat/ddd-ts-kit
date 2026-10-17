@@ -706,29 +706,29 @@ const WORKER_COMMANDS_ALLOWED = [
   'python3 -m json.tool package.json',
   'npx --no -- biome format src/contexts/invoicing',
   'npx @biomejs/biome format src/contexts/invoicing',
+  'sed -i "s/a/b/" src/contexts/invoicing/CONTEXT.md',
+  "sed -ne 's/a/b/p' -i src/contexts/invoicing/CONTEXT.md",
+  'echo x >> src/contexts/invoicing/CONTEXT.md',
+  "cat > src/contexts/invoicing/domain/notes.md <<'EOF'\nA note.\nEOF",
+  'echo x | tee src/contexts/invoicing/domain/notes.md',
+  'perl -pe \'s/a/b/\' src/main.ts > "$TMPDIR/main.ts"',
+  "python3 -c \"open('src/contexts/invoicing/CONTEXT.md', 'a').write('')\"",
+  "node - <<'EOF'\nconsole.log(1)\nEOF",
+  'python3 <<EOF\nprint(1)\nEOF',
+  'cat build.js | node',
 ];
 
 const WORKER_COMMANDS_REFUSED = [
-  ['sed -i "s/a/b/" src/contexts/invoicing/CONTEXT.md', /`sed -i` edits/],
-  ["sed -i.bak -e 's/a/b/' src/main.ts", /`sed -i` edits src\/main\.ts in place/],
-  ['perl -pi -e "s/a/b/" src/main.ts', /`perl -i` edits src\/main\.ts in place/],
-  ["perl -i -pe 's/a/b/' package.json", /`perl -i` edits package\.json in place/],
-  ['perl -pe \'s/a/b/\' src/main.ts > "$TMPDIR/main.ts"', /`perl -pe` runs inline code/],
-  ["sed -ne 's/a/b/p' -i src/contexts/invoicing/CONTEXT.md", /edits src\/contexts\/invoicing\/CONTEXT\.md in place/],
+  ["sed -i.bak -e 's/a/b/' src/main.ts", /`sed -i` editing src\/main\.ts: You build the context/],
+  ['perl -pi -e "s/a/b/" src/main.ts', /`perl -i` editing src\/main\.ts/],
+  ["perl -i -pe 's/a/b/' package.json", /`perl -i` editing package\.json/],
   ['echo x > src/main.ts', /the redirection `> src\/main\.ts`/],
-  ['echo x >> src/contexts/invoicing/CONTEXT.md', /redirection `>>/],
   ['npm test &> test-output.log', /redirection `&> test-output\.log`/],
   ["cat > src/platform/extra.ts <<'EOF'\nexport const a = 1;\nEOF", /redirection `> src\/platform\/extra\.ts`/],
   ['echo x > "$OUT"', /redirection `> \$OUT`/],
-  ['echo x | tee src/main.ts', /`tee` writes src\/main\.ts/],
-  ['echo x | tee -a docs/notes.md', /`tee` writes/],
-  ["python3 -c \"open('src/main.ts', 'w').write('')\"", /`python3 -c` runs inline code/],
-  ["node -e \"require('node:fs').writeFileSync('src/main.ts', '')\"", /`node -e` runs inline code/],
-  ["ruby -e \"File.write('src/main.ts', '')\"", /`ruby -e`/],
-  ["node - <<'EOF'\nconsole.log(1)\nEOF", /`node` runs inline code/],
-  ['python3 <<EOF\nprint(1)\nEOF', /`python3` runs inline code/],
-  ['cat build.js | node', /`node` runs inline code/],
-  ['cp "$TMPDIR/x.ts" src/platform/x.ts', /`cp` changes src\/platform\/x\.ts, outside your scope/],
+  ['echo x | tee src/main.ts', /`tee` writing src\/main\.ts/],
+  ['echo x | tee -a docs/notes.md', /`tee` writing docs\/notes\.md/],
+  ['cp "$TMPDIR/x.ts" src/platform/x.ts', /outside its scope: `cp` changes src\/platform\/x\.ts/],
   ['mv src/contexts/invoicing/a.ts src/platform/a.ts', /`mv` changes src\/platform\/a\.ts/],
   ['mv src/platform/a.ts src/contexts/invoicing/a.ts', /`mv` changes src\/platform\/a\.ts/],
   ['rm -rf src/contexts/catalog', /`rm` changes src\/contexts\/catalog/],
@@ -751,7 +751,7 @@ const WORKER_COMMANDS_REFUSED = [
   ['patch -p1 < invoicing.patch', /`patch`/],
   ['find . -name "*.orig" -delete', /`find -delete` changes files anywhere in the project/],
   ['find src -name "*.orig" -exec rm {} \\;', /`rm` changes files under src/],
-  ['find src -name "*.ts" -exec sed -i "s/a/b/" {} +', /`sed -i` edits/],
+  ['find src -name "*.ts" -exec sed -i "s/a/b/" {} +', /`sed -i` editing/],
   ['ls src | xargs rm', /`rm` changes files only the shell knows/],
   ['bash -c "echo x > src/main.ts"', /redirection/],
   ["sh -c 'rm src/main.ts'", /`rm` changes src\/main\.ts/],
@@ -766,7 +766,7 @@ const WORKER_COMMANDS_REFUSED = [
   ['pnpm dlx prettier --check .', /npm run format/],
 ];
 
-test('a context worker changes files with the editor tools only: the table of its Bash commands', () => {
+test('a context worker changes no file outside its scope, by any tool: the table of its Bash commands', () => {
   const root = project({}, ['--package-manager', 'npm']);
   const agent = worker(root, 'invoicing');
   for (const command of WORKER_COMMANDS_ALLOWED) {
@@ -778,11 +778,53 @@ test('a context worker changes files with the editor tools only: the table of it
     assert.match(reason(result), expected, command);
   }
   const redirected = reason(run('pre-bash', bash(root, 'echo x > src/main.ts', agent)));
-  assert.match(redirected, /Edit or Write tool so that the scope check applies/);
-  assert.match(redirected, /`git rm` or `git mv`, allowed inside the scope only/);
+  assert.match(redirected, /You build the context "invoicing"/);
+  assert.match(redirected, /system temp directory stays free/);
 });
 
-test('the conductor and the other agents are not held to the editor tools', () => {
+test('inline code of a worker runs, and what it changed outside the scope stops the worker until put back', () => {
+  const root = committed();
+  const agent = { ...worker(root, 'ordering'), session_id: 'inline', agent_id: 'builder-1' };
+  const inline = "python3 - <<'EOF'\nprint(1)\nEOF";
+
+  // Inside its scope: nothing to put back.
+  assert.equal(run('pre-bash', bash(root, inline, agent)).output, undefined);
+  put(root, 'src/contexts/ordering/domain/notes.md', 'a note');
+  assert.equal(run('pre-bash', bash(root, 'npm test', agent)).output, undefined);
+
+  // Outside: a changed shared file and a new one stop the next command and the next write.
+  assert.equal(run('pre-bash', bash(root, inline, agent)).output, undefined);
+  writeFileSync(join(root, 'package.json'), '{}\n');
+  put(root, 'src/platform/extra.ts', 'export const extra = 1;\n');
+  const stopped = run('pre-bash', bash(root, 'npm test', agent));
+  assert.equal(decision(stopped), 'deny');
+  assert.match(reason(stopped), /changed files outside your scope: package\.json, src\/platform\/extra\.ts/);
+  assert.match(reason(stopped), /`git restore -- package\.json`, then `rm src\/platform\/extra\.ts`/);
+  assert.equal(decision(run('pre-write', write(join(root, 'src/contexts/ordering/CONTEXT.md'), agent))), 'deny');
+
+  // Putting back exactly those files is allowed; anything else stays refused until it is done.
+  assert.equal(run('pre-bash', bash(root, 'git restore -- package.json', agent)).output, undefined);
+  assert.equal(decision(run('pre-bash', bash(root, 'git restore -- README.md', agent))), 'deny');
+  git(root, 'restore', '--', 'package.json');
+  assert.equal(run('pre-bash', bash(root, 'rm src/platform/extra.ts', agent)).output, undefined);
+  rmSync(join(root, 'src/platform/extra.ts'));
+  assert.equal(run('pre-bash', bash(root, 'npm test', agent)).output, undefined);
+  assert.equal(run('pre-write', write(join(root, 'src/contexts/ordering/CONTEXT.md'), agent)).output, undefined);
+});
+
+test('inline code of the conductor is not watched', () => {
+  const root = committed();
+  worker(root, 'ordering');
+  const conductor = { session_id: 'inline', agent_id: undefined };
+  assert.equal(
+    run('pre-bash', bash(root, "node -e \"require('fs').writeFileSync('package.json', '{}')\"", conductor)).output,
+    undefined,
+  );
+  writeFileSync(join(root, 'package.json'), '{}\n');
+  assert.equal(run('pre-bash', bash(root, 'npm test', conductor)).output, undefined);
+});
+
+test('the conductor and the other agents are not held to the scope of a worker', () => {
   const root = project({}, ['--package-manager', 'npm']);
   worker(root, 'invoicing');
   const reviewer = { agent_type: 'ddd-ts-kit:architecture-reviewer' };
