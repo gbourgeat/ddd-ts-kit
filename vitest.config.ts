@@ -20,7 +20,7 @@ const FLOORS: Readonly<Record<string, readonly [number, number, number, number]>
   kafka: [40, 53, 44, 40],
   kernel: [85, 78, 87, 85],
   knex: [90, 77, 98, 90],
-  nats: [32, 36, 39, 32],
+  nats: [49, 60, 57, 48],
   openfga: [99, 94, 97, 99],
   pino: [96, 88, 100, 96],
   prisma: [95, 80, 100, 95],
