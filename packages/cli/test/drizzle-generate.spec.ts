@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { generateDrizzleMigration } from '../src/migration/index.js';
 import { cli, exists, read, tempDir, write } from './helpers.js';
+import { DRIZZLE_KIT_STUB } from './support/drizzle-kit-stub.js';
 
 const BIN = 'node_modules/drizzle-kit/bin.cjs';
 
@@ -115,5 +116,112 @@ describe('ddd-ts-kit drizzle-generate', () => {
 
     expect(result.code).toBe(2);
     expect(result.stderr).toContain('npm install');
+  });
+
+  it('keeps --base and --name apart from --replay', () => {
+    const root = projectWithDrizzleKit('');
+
+    expect(cli(root, 'drizzle-generate', '--name', 'add-invoices', '--base', 'origin/main').stderr).toContain(
+      '--base names the trunk of a replay',
+    );
+
+    expect(cli(root, 'drizzle-generate', '--replay', '--custom').stderr).toContain('without --name or --custom');
+    expect(exists(root, 'arguments.json')).toBe(false);
+  });
+});
+
+/** A project whose drizzle-kit is the stand-in that writes a migration from the tables of `schema/`. */
+function projectWritingMigrations(): string {
+  const root = tempDir('drizzle-generate');
+
+  write(root, 'ddd-ts-kit.config.json', JSON.stringify({ contexts: {} }));
+  write(root, BIN, DRIZZLE_KIT_STUB);
+
+  return root;
+}
+
+/** Biome installed in the project, as a stand-in that records the paths it is given, then exits with `code`. */
+function withBiome(root: string, code = 0): void {
+  write(root, 'package.json', JSON.stringify({ scripts: { format: 'biome format --write .' } }));
+  write(root, 'node_modules/@biomejs/biome/package.json', JSON.stringify({ bin: { biome: 'bin/biome' } }));
+
+  write(
+    root,
+    'node_modules/@biomejs/biome/bin/biome',
+    `require('node:fs').writeFileSync('formatted.json', JSON.stringify(process.argv.slice(2)));\nconsole.error('biome said no');\nprocess.exit(${code});\n`,
+  );
+}
+
+const TABLE = JSON.stringify({ name: 'invoices', columns: { id: { name: 'id', primaryKey: true } } });
+
+describe('ddd-ts-kit drizzle-generate, once drizzle-kit has written the migration', () => {
+  it('formats the snapshot and the journal with the formatter of the format script, never the SQL', () => {
+    const root = projectWritingMigrations();
+
+    withBiome(root);
+    write(root, 'schema/invoices.json', TABLE);
+
+    const result = cli(root, 'drizzle-generate', '--name', 'add-invoices');
+    const [command, inPlace, unmatched, ...paths] = JSON.parse(read(root, 'formatted.json')) as string[];
+
+    expect(result.code).toBe(0);
+    expect([command, inPlace, unmatched]).toEqual(['format', '--write', '--no-errors-on-unmatched']);
+    expect(paths).toHaveLength(2);
+    expect(paths).toContain('migrations/meta/_journal.json');
+    expect(paths.every((file) => file.startsWith('migrations/meta/') && file.endsWith('.json'))).toBe(true);
+    expect(result.stdout).toContain('Formatted with Biome, as the format script does: migrations/meta/');
+  });
+
+  it('reports a formatter that fails, and keeps the exit code of drizzle-kit', () => {
+    const root = projectWritingMigrations();
+
+    withBiome(root, 1);
+    write(root, 'schema/invoices.json', TABLE);
+
+    const result = cli(root, 'drizzle-generate', '--name', 'add-invoices');
+
+    expect(result.code).toBe(0);
+    expect(result.stderr).toContain('Warning: Biome failed on migrations/meta/');
+    expect(result.stderr).toContain('biome said no');
+  });
+
+  it('says what it leaves unformatted without a format script, or with a formatter not installed', () => {
+    const root = projectWritingMigrations();
+
+    write(root, 'schema/invoices.json', TABLE);
+
+    expect(cli(root, 'drizzle-generate', '--name', 'add-invoices').stdout).toContain(
+      'Not formatted (package.json has no `format` script that runs Biome or Prettier): migrations/meta/',
+    );
+
+    write(root, 'package.json', JSON.stringify({ scripts: { format: 'prettier --write .' } }));
+    write(root, 'schema/payments.json', JSON.stringify({ name: 'payments' }));
+
+    expect(cli(root, 'drizzle-generate', '--name', 'add-payments').stdout).toContain(
+      'the format script runs Prettier, which is not installed',
+    );
+  });
+
+  it('warns, exit code unchanged, when the migration drops a column before the primary key that holds it', () => {
+    const root = projectWritingMigrations();
+
+    write(root, 'schema/invoices.json', TABLE);
+    cli(root, 'drizzle-generate', '--name', 'add-invoices');
+
+    write(root, 'schema/invoices.json', JSON.stringify({ name: 'invoices', columns: { number: { name: 'number' } } }));
+
+    write(
+      root,
+      'schema/invoices.sql',
+      'ALTER TABLE "invoices" DROP COLUMN "id";--> statement-breakpoint\nALTER TABLE "invoices" DROP CONSTRAINT "invoices_pkey";',
+    );
+
+    const result = cli(root, 'drizzle-generate', '--name', 'number-invoices');
+
+    expect(result.code).toBe(0);
+    expect(result.stderr).toMatch(/Warning: migrations\/\d+_number-invoices\.sql: The column "id" of "invoices"/);
+    expect(result.stderr).toContain('  line 1: ALTER TABLE "invoices" DROP COLUMN "id"');
+    expect(result.stderr).toContain('  line 2: ALTER TABLE "invoices" DROP CONSTRAINT "invoices_pkey"');
+    expect(result.stderr).toContain('Fix: Drop the key first');
   });
 });

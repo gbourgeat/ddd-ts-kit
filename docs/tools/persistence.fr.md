@@ -1,5 +1,5 @@
 [English](persistence.md) · **Français**
-<!-- translation-of: persistence.md sha256:b8cc68997fa842bc -->
+<!-- translation-of: persistence.md sha256:6550197918439f38 -->
 
 # Persistance : Drizzle, Knex, Prisma, TypeORM, et quelle base de données
 
@@ -505,12 +505,31 @@ supprimer l'ancienne dans une suivante, ou écrire les instructions dans une mig
 personnalisée. Prisma 7 n'attend pas non plus : là où `prisma migrate dev` poserait une question
 (un avertissement de perte de données), il s'arrête sur une erreur dans un environnement non
 interactif (lu dans son code, non mesuré) ; knex et TypeORM ne demandent rien.
-**Une clé primaire changée.** Un projet a signalé que drizzle-kit écrivait l'instruction qui
-ajoute la nouvelle clé primaire d'une table avant celle qui supprime l'ancienne, si bien que la
-migration échouait sur la base (une table n'a qu'une clé primaire) ; non mesuré ici. Relire le SQL
-généré d'une migration qui change une clé primaire avant de le commiter : le `DROP CONSTRAINT` de
-l'ancienne clé vient en premier. Sinon, remettre les deux instructions dans l'ordre à la main dans
-cette nouvelle migration, qui n'est pas encore appliquée.
+**Une clé primaire changée.** drizzle-kit peut écrire l'instruction qui ajoute la nouvelle clé
+primaire d'une table avant celle qui supprime l'ancienne, ce qui échoue sur la base (une table n'a
+qu'une clé primaire), ou supprimer une colonne de l'ancienne clé avant l'instruction qui supprime
+la clé, qui échoue alors parce que la colonne a emporté la clé avec elle ; non mesuré ici.
+`ddd-ts-kit drizzle-generate` lit donc le SQL qu'il vient d'écrire et avertit, sans changer le
+code de sortie, avec le fichier, les deux instructions et la correction : supprimer d'abord
+l'ancienne clé, en remettant dans l'ordre les instructions de cette nouvelle migration, qui n'est
+pas encore appliquée, ou écrire la migration avec `--custom`. Il lit les instructions
+`ALTER TABLE` de PostgreSQL : une contrainte supprimée est une clé primaire quand le *snapshot*
+d'avant la migration l'enregistre, ou quand son nom finit par `_pkey` (le nom que PostgreSQL donne
+à une clé) ou `_pk` (celui que drizzle-kit donne à une clé composite) ; les colonnes d'une clé
+viennent de ce *snapshot*, sinon du nom que drizzle-kit donne à une clé composite. Une clé d'un
+autre nom que le *snapshot* n'enregistre pas, ou une instruction écrite sous une autre forme
+(`DROP` d'une colonne sans `COLUMN`, un bloc `DO`), n'est pas vue : relire le SQL d'une telle
+migration avant de la commiter.
+
+**Formaté comme le projet.** drizzle-kit écrit le *snapshot* et le journal sous `meta/` dans sa
+propre mise en forme, que la porte de formatage d'un projet peut refuser. Une fois une migration
+écrite, `ddd-ts-kit drizzle-generate` formate les fichiers JSON qu'il a écrits sous `meta/` avec
+le formateur que lance le script `format` de `package.json`, Biome ou Prettier, tel qu'installé
+dans le projet, à qui il ne donne que ces chemins (le script lui-même formaterait tout le
+projet) ; le SQL reste tel que drizzle-kit l'a écrit, et un chemin que la configuration du
+formateur ignore est laissé de côté (le `biome.json` qu'écrit `init` ignore `migrations/meta`).
+Il dit ce qu'il a formaté ; sans un tel script, ou quand le formateur échoue, il le dit, et la
+migration reste écrite.
 
 La première migration knex qu'écrit `init` est `00000000000000_initial.js` : elle se trie avant
 tout horodatage ; un projet créé avant la 0.5 garde son `0001_initial.js`, puisqu'une migration
@@ -555,6 +574,29 @@ la vôtre n'est pas encore fusionnée :
 4. `npm run check:arch` ne signale rien, et la branche est fusionnée avant qu'une autre migration
    n'arrive, sinon les étapes sont répétées.
 
+**Sous drizzle-kit, `ddd-ts-kit drizzle-generate --replay` fait les étapes 2 et 3**, sur la
+branche une fois la branche principale fusionnée dedans :
+
+```bash
+git merge origin/main                                       # meta/_journal.json conflicts
+git checkout origin/main -- migrations/meta/_journal.json   # the journal of the main branch
+npx ddd-ts-kit drizzle-generate --replay                    # --base <ref>, origin/main by default
+```
+
+Il compare les fichiers `.sql` du dossier des migrations avec ceux de `--base` : ceux que la base
+n'a pas sont ceux de la branche. Il les supprime, avec leurs *snapshots* et leurs entrées du
+journal (le journal devient celui de la base, dont le dernier *snapshot* est alors le parent de
+ce qui suit), génère de nouveau chacune au-dessus, dans leur ordre et sous leur nom, et dit ce
+qu'il a supprimé et généré. Une migration personnalisée (son *snapshot* répète celui qui le
+précède) est générée de nouveau avec `--custom` et retrouve ses instructions. Il refuse, avec la
+correction : un journal qui contient encore des marqueurs de conflit (prendre celui de la base,
+comme ci-dessus : le *replay* trouve les migrations de la branche par leurs fichiers), une base
+qui a des migrations que la branche n'a pas fusionnées, et deux migrations de la branche qui
+changent le schéma : drizzle-kit génère la différence entre les fichiers du schéma et le dernier
+*snapshot*, il ne peut donc générer de nouveau les changements d'une branche qu'en une seule
+migration (les supprimer et générer celle-ci à la main). Le *replay* est celui de Drizzle : sous
+knex, Prisma et TypeORM, qui ne tiennent pas de journal, les étapes ci-dessus se font à la main.
+
 Une migration déjà fusionnée sur la branche principale n'est jamais modifiée ni régénérée : une
 correction est une nouvelle migration.
 
@@ -566,10 +608,13 @@ numéro (`20261015101500_working-add-claims.sql`, `20261015101500_working_add_cl
 Prisma, `1791829645467-working-add-claims.ts` sous TypeORM) : le *migrator* l'applique comme les
 autres, et rien ne change dans la configuration de l'outil. `persistence/migration-history`
 l'admet là où existe le fichier de périmètre du *worker*, `.ddd-ts-kit/worker.json`, et le
-signale partout ailleurs. Quand le *conductor* fusionne la branche, il supprime la migration de
-travail (et, sous drizzle-kit, son *snapshot* et son entrée du journal), lance
-`npm run db:generate <what-it-does>` sur le tronc, après les branches fusionnées avant elle, et
-commite la vraie migration avec la fusion.
+signale partout ailleurs. Quand le *conductor* fusionne la branche sous drizzle-kit,
+`npx ddd-ts-kit drizzle-generate --replay` (le tronc d'avant la fusion comme `--base`) supprime
+la migration de travail, avec son *snapshot* et son entrée du journal, et la génère de nouveau sur
+le tronc, après les branches fusionnées avant elle, sous son nom sans `working-` ; le *conductor*
+commite la vraie migration avec la fusion. Dans le *worktree* d'un *worker*, qui fusionne le tronc
+dans sa branche, le *replay* garde le préfixe. Sous les autres outils, le *conductor* supprime la
+migration de travail et lance `npm run db:generate <what-it-does>` sur le tronc.
 
 **Écarté : un dossier de migrations par contexte.** drizzle-kit peut faire tourner une
 configuration par contexte (son propre `schema`, son `out` et sa table de migrations) : cela

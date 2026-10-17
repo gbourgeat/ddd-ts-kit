@@ -82,14 +82,19 @@ lookups of the port, the columns, the mapper.
   without a terminal it fails: add then drop in a later migration, or `-- <name> --custom`;
   never under `script` or another pseudo-terminal, where it waits), applied with
   `npm run db:migrate`, committed, forward-only, and compatible with the version still running.
-  When a merge brings a migration from the main branch before yours is merged, delete yours
-  (and, under drizzle-kit, its snapshot and journal entry) and generate it again on top: `persistence/migration-history` reports the forked or
-  unordered history otherwise, which drizzle's migrator would skip silently. Procedure and
-  measurements: `docs/tools/persistence.md`, "Migrations: names, merges and order". A changed
-  primary key under drizzle-kit: read the generated SQL before committing, the old key must be
-  dropped before the new one is added. A worker
-  of a parallel build generates a working migration only, `npm run db:generate working-<what>`,
-  which the conductor replaces on the trunk at merge.
+  When a merge brings a migration from the main branch before yours is merged, yours is
+  generated again on top: under drizzle-kit, take the main branch's journal
+  (`git checkout origin/main -- migrations/meta/_journal.json`) and run
+  `npx ddd-ts-kit drizzle-generate --replay` (`--base <ref>`, `origin/main` by default), which
+  deletes the branch's migrations with their snapshots and journal entries and generates them
+  again, in order, under their names; under the other tools, delete yours and run
+  `db:generate` again. `persistence/migration-history` reports the forked or unordered history
+  otherwise, which drizzle's migrator would skip silently. Procedure and measurements:
+  `docs/tools/persistence.md`, "Migrations: names, merges and order". `drizzle-generate`
+  formats the snapshot and journal it wrote with the project's formatter, and warns when the
+  SQL changes a primary key in an order that fails: reorder it (old key dropped first) or write
+  it with `--custom`. A worker of a parallel build generates a working migration only,
+  `npm run db:generate working-<what>`, which the conductor replaces on the trunk at merge.
 
 ## By ORM
 

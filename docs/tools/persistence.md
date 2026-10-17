@@ -481,12 +481,28 @@ read two ways: add the new column in one migration and drop the old one in a lat
 write the statements in a custom migration. Prisma 7 does not wait either: where
 `prisma migrate dev` would ask (a warning of data loss), it stops with an error in a
 non-interactive environment (read in its code, not measured); knex and TypeORM ask nothing.
-**A changed primary key.** A project reported that drizzle-kit wrote the statement that adds the
-new primary key of a table before the one that drops the old key, so the migration failed on the
-database (a table has one primary key); not measured here. Read the generated SQL of a migration
-that changes a primary key before committing it: the `DROP CONSTRAINT` of the old key comes
-first. When it does not, reorder the two statements by hand in that new migration, which is still
-unapplied.
+**A changed primary key.** drizzle-kit can write the statement that adds the new primary key of a
+table before the one that drops the old key, which fails on the database (a table has one primary
+key), or drop a column of the old key before the statement that drops the key, which then fails
+because the column took the key with it; not measured here. So `ddd-ts-kit drizzle-generate`
+reads the SQL it has just written and warns, exit code unchanged, with the file, the two
+statements and the fix: drop the old key first, by reordering the statements of that new
+migration, which is still unapplied, or write the migration with `--custom`. It reads the
+`ALTER TABLE` statements of PostgreSQL: a dropped constraint is a primary key when the snapshot
+before the migration records it, or when its name ends in `_pkey` (the name PostgreSQL gives a
+key) or `_pk` (the one drizzle-kit gives a composite key); the columns of a key come from that
+snapshot, else from the name drizzle-kit gives a composite key. A key of another name that the
+snapshot does not record, or a statement written in another form (`DROP` of a column without
+`COLUMN`, a `DO` block), is not seen: read the SQL of such a migration before committing it.
+
+**Formatted as the project.** drizzle-kit writes the snapshot and the journal under `meta/` in
+its own layout, which the format gate of a project can refuse. Once a migration is written,
+`ddd-ts-kit drizzle-generate` formats the JSON files it wrote under `meta/` with the formatter
+the `format` script of `package.json` runs, Biome or Prettier, as installed in the project, given
+those paths only (the script itself would format the whole project); the SQL stays as drizzle-kit
+wrote it, and a path the configuration of the formatter ignores is passed over (the `biome.json`
+that `init` writes ignores `migrations/meta`). It says what it formatted; without such a script,
+or when the formatter fails, it says so, and the migration stays written.
 
 The first knex migration that `init` writes is `00000000000000_initial.js`: it sorts before any
 timestamp; a project created before 0.5 keeps its `0001_initial.js`, since an applied
@@ -528,6 +544,28 @@ not merged yet:
 4. `npm run check:arch` reports nothing, and the branch is merged before another migration
    lands, or the steps are repeated.
 
+**Under drizzle-kit, `ddd-ts-kit drizzle-generate --replay` does steps 2 and 3**, on the branch
+once the main branch is merged into it:
+
+```bash
+git merge origin/main                                       # meta/_journal.json conflicts
+git checkout origin/main -- migrations/meta/_journal.json   # the journal of the main branch
+npx ddd-ts-kit drizzle-generate --replay                    # --base <ref>, origin/main by default
+```
+
+It compares the `.sql` files of the migrations folder with those of `--base`: the ones the base
+does not have are the branch's. It deletes them, with their snapshots and their journal entries
+(the journal becomes the one of the base, whose last snapshot is then the parent of what
+follows), generates each again on top, in their order and under their names, and says what it
+deleted and generated. A custom migration (its snapshot repeats the one before it) is generated
+again with `--custom` and gets its statements back. It refuses, with the fix: a journal that
+still holds conflict markers (take the one of the base, as above: the replay finds the
+migrations of the branch by their files), a base with migrations the branch has not merged, and
+two migrations of the branch that change the schema: drizzle-kit generates the difference
+between the schema files and the last snapshot, so it can generate the changes of a branch again
+as one migration only (delete them and generate that one by hand). The replay is Drizzle's:
+under knex, Prisma and TypeORM, which keep no journal, the steps above are done by hand.
+
 A migration already merged on the main branch is never edited or regenerated: a correction is a
 new migration.
 
@@ -539,9 +577,13 @@ the marker because every tool above keeps it after its number (`20261015101500_w
 TypeORM): the migrator applies it like any other, and nothing in the configuration of the tool
 changes. `persistence/migration-history` accepts it where the worker scope file
 `.ddd-ts-kit/worker.json` exists, and reports it everywhere else. When the conductor merges the
-branch, it deletes the working migration (and, under drizzle-kit, its snapshot and its journal
-entry), runs `npm run db:generate <what-it-does>` on the trunk, after the branches merged before
-it, and commits the real migration with the merge.
+branch under drizzle-kit, `npx ddd-ts-kit drizzle-generate --replay` (the trunk before the merge
+as `--base`) deletes the working migration, with its snapshot and its journal entry, and
+generates it again on the trunk, after the branches merged before it, under its name without
+`working-`; the conductor commits the real migration with the merge. In the worktree of a worker,
+which merges the trunk into its branch, the replay keeps the prefix. Under the other tools, the
+conductor deletes the working migration and runs `npm run db:generate <what-it-does>` on the
+trunk.
 
 **Not chosen: one migrations folder per context.** drizzle-kit can run one config per context
 (its own `schema`, `out` and migrations table), so it would work, but it solves the wrong half:

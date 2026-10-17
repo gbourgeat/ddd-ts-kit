@@ -109,7 +109,7 @@ changed. Give the new worker rows on other files, or wait for the merge of the f
 | registries the generators fill between markers (composition root, database schema index, audited events, job settings, access policies) | generators, run by the conductor | skeleton first; at a merge, keep both sides' lines |
 | `<context>.declarations.ts`, `docs/context-map.md`, `openapi/*`, `docs/integration/*`, `.dependency-cruiser.cjs`, `clients/*` | `npm run regenerate`, a worker's included | a worker regenerates and commits them with its slice; never merged by hand: take either side, then `npm run regenerate` |
 | `package.json`, the lockfile | conductor | a worker asks for a dependency; after a conflict, `npm install` rewrites the lockfile |
-| migrations and their order | conductor | a worker generates a working one only (`db:generate working-<what>`); at the merge the conductor deletes it and generates the real one on the trunk |
+| migrations and their order | conductor | a worker generates a working one only (`db:generate working-<what>`); at the merge it is replaced by the real one, generated on the trunk (under drizzle-kit, `npx ddd-ts-kit drizzle-generate --replay`) |
 | `docs/architecture/plan.md`, `slices.md` | conductor | workers report, the conductor marks |
 | `docs/adr/` | conductor; a worker for a decision of its slices (`generate adr`, without `--deviation`) | a new file per decision; a number taken on both sides is renumbered at the merge |
 
@@ -132,7 +132,10 @@ worker merge the trunk, then launch the next agent. A **note** waits for the mer
 branch (step 6): the run goes on.
 
 Each agent commits its rows. When the rows of a branch are committed: merge the trunk into the
-branch (`git merge origin/main` in its worktree; derived files resolved as the table says), one
+branch (`git merge origin/main` in its worktree; derived files resolved as the table says; when
+both sides added a migration under drizzle-kit, take the trunk's journal,
+`git checkout origin/main -- migrations/meta/_journal.json`, and run
+`npx ddd-ts-kit drizzle-generate --replay`, which generates the branch's again on top), one
 review of the batch (`architecture-reviewer`, `--changed-since <base>`), `npm run verify` on the
 merged branch, then the branch merges or opens its pull request. The blocking findings of the
 review are fixed on the branch; each non-blocking one is settled at once or written, before the
@@ -153,8 +156,12 @@ row waits for. Before each merge,
 second merge can conflict. For each branch:
 
 1. merge it into the trunk; resolve only as the table says (regenerate, never hand-merge); a
-   working migration of the branch is deleted (under drizzle-kit, with its snapshot and journal
-   entry) and generated again on the trunk, `npm run db:generate <what-it-does>`; a decision
+   working migration of the branch becomes the real one: under drizzle-kit,
+   `npx ddd-ts-kit drizzle-generate --replay` (its `--base`, `origin/main` by default, is the
+   trunk before the merge) deletes it with its snapshot and journal entry and generates it
+   again on the trunk without `working-`
+   (it refuses a journal still in conflict: take the trunk's and run it again); under the other
+   tools, delete it and run `npm run db:generate <what-it-does>`; a decision
    record of the branch whose number the trunk took meanwhile takes the next free one (its
    file name and its `# ADR-NNNN` title);
 2. `npm run verify` on the trunk; a red trunk is fixed before the next merge;

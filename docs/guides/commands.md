@@ -248,6 +248,7 @@ Usage
   ddd-ts-kit depcruise-config [--check|--write]
   ddd-ts-kit build-aliases [--project <tsconfig>]
   ddd-ts-kit drizzle-generate --name <what-it-does> [--custom]
+  ddd-ts-kit drizzle-generate --replay [--base <git-ref>]
   ddd-ts-kit error-factories --plan | --apply [--dry-run]
   ddd-ts-kit controllers [<context>] [--dry-run]
   ddd-ts-kit value-objects [--dry-run]
@@ -268,7 +269,15 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
                    into relative paths, so that plain node runs the output (tsconfig.build.json by default)
   drizzle-generate the db:generate of a Drizzle project: drizzle-kit generate --name, which without a terminal
                    fails and names the fix when drizzle-kit would ask whether a column or table is renamed,
-                   where drizzle-kit alone writes nothing and exits 0
+                   where drizzle-kit alone writes nothing and exits 0; then formats the snapshot and the
+                   journal it wrote with the Biome or Prettier of the format script, and warns when the
+                   SQL changes a primary key in an order that fails on PostgreSQL (exit code unchanged);
+                   --replay, after merging the trunk into a branch when both added migrations: deletes
+                   the migrations of the branch that --base <ref> (origin/main by default) does not have,
+                   with their snapshots and journal entries, then generates each again on top, in order,
+                   under its name (working- dropped outside a worker's worktree, a custom one keeping
+                   its SQL); refused while the journal holds conflict markers or when two of them change
+                   the schema
   error-factories  moves a project from one class per error to static factories on one error class per
                    concept: --plan writes error-factories.plan.json, where each class is given its concept;
                    --apply follows it (classes, specs, every usage, "stack.refusals" in the config)
