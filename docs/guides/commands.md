@@ -85,10 +85,11 @@ The slice is finished when `todo ordering` no longer lists anything of it.
 | Command or skill | Does | When | Produces | Then |
 |---|---|---|---|---|
 | `/ddd-ts-kit:plan-slices` | the work as vertical slices, ordered, with their generator commands | step 6, after the bootstrap | `docs/architecture/slices.md` | `/ddd-ts-kit:use-case` |
+| `npx ddd-ts-kit cited --rows <id> --base origin/main` | the names the design of a row cites as code that the trunk does not have: removed by its history (with the commit and what replaced them), refused by the canonical tree, or close to a name it gained since the line was written; planned names stay silent | before building a row alone, before committing a design review | one line per name, `--json` for data; exits 0 | build on what the trunk has, and correct the document on the trunk |
 | `/ddd-ts-kit:use-case <UseCase>` | one slice end to end, test first | for each row of the slices | domain, handler, route and specs, filled | `npm run verify` |
 | `npx ddd-ts-kit generate <kind> ...` | one file of a role with its spec, fake and registration (list below) | whenever a file of a role is needed, never by hand | the file and the `TODO(domain)` places, `--json` for the list | fill the places, then `todo` |
 | `npx ddd-ts-kit todo [<context>]` | each `TODO(domain)`, `TODO(platform)`, `it.todo` and `TODO(review)` left | before closing a slice, a story or a milestone | `file:line` entries | write them, then `npm test`; settle each `TODO(review)` or dismiss it with `generate adr` before the story or milestone is closed |
-| `/ddd-ts-kit:parallel-work` | splits the slices between workers, one context each | when several agents or people build at once | a briefing per worker, `npx ddd-ts-kit worker-scope <context>` worktrees | each worker's `use-case` |
+| `/ddd-ts-kit:parallel-work` | splits the slices between workers, one context each | when several agents or people build at once | a briefing per worker, `npx ddd-ts-kit worker-scope <context>` worktrees, with the documents of each row's design and the names they cite the trunk does not have | each worker's `use-case` |
 | `npx ddd-ts-kit status --workers` | each worker's worktree, branch, context, rows and commits ahead, the files it changed, and the files two workers change | before briefing a second worker in a context, before each merge | a short text, `--json` for data | other rows for the new worker, or the merge order |
 
 ## Connect two contexts
@@ -113,7 +114,7 @@ The slice is finished when `todo ordering` no longer lists anything of it.
 
 | Command or skill | Does | When | Produces | Then |
 |---|---|---|---|---|
-| `npx ddd-ts-kit verify-slice <context> --since <ref>` | in one run: `npm run regenerate`, the architecture rules on the files changed since the ref (new ones included), the tests of the context, the changed files near the 350-line limit | before the commit of a slice, again until it passes | each step with its cause, then the paths of the slice to stage, and every other changed path, left out and never staged with it | the commit of the slice, of the paths it lists to stage only |
+| `npx ddd-ts-kit verify-slice <context> --since <ref>` | in one run: `npm run regenerate`, the architecture rules on the files changed since the ref (new ones included), the tests of the context, the changed files near the 350-line limit | before the commit of a slice, again until it passes | each step with its cause, then the paths of the slice to stage, every other changed path, left out and never staged with it, and the names the slice removes that the design of a row not done still cites (never a failure) | the commit of the slice, of the paths it lists to stage only; those names go to the conductor as notes |
 | `npx ddd-ts-kit check --changed-since <ref>` | the architecture rules on what changed | while iterating | violations with their fix | `npx ddd-ts-kit explain <rule-id>` when one is unclear |
 | `npm run regenerate` (`npx ddd-ts-kit depcruise-config --write`, then `npm run docs:generate`, which runs `npx ddd-ts-kit docs`) | regenerate every derived file: `.dependency-cruiser.cjs`, the context map, the `CONTEXT.md` lists, the barrels and the contracts | after a change of a route, a schema, an event or the config | the generated files, committed with the code | `/ddd-ts-kit:commit-discipline` |
 | `/ddd-ts-kit:commit-discipline`, `npx ddd-ts-kit check --commit-size --staged` | one slice per commit, its size against the config | before `git commit` (the hook runs the check) | a message `<type>(<context>): ...` | the next slice |
@@ -243,6 +244,7 @@ Usage
   ddd-ts-kit plan-waves [<context>]
   ddd-ts-kit worker-scope <context> [--base <ref>] [--rows <id,...>] [--worktree <path>] [--branch <name>] [--no-install] [--dry-run]
   ddd-ts-kit verify-slice <context> --since <git-ref>
+  ddd-ts-kit cited [<context>] [--rows <id,...>] [--base <ref>] [--removed-since <ref>]
   ddd-ts-kit docs [--check] [--stored-events]
   ddd-ts-kit sdk [--check] [--dry-run]
   ddd-ts-kit depcruise-config [--check|--write]
@@ -315,14 +317,25 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
   worker-scope     a git worktree on the branch build/<context> (by default ../<project>-<context>), cut from
                    --base <ref> (by default the current branch, refused from a worker's worktree), its
                    .ddd-ts-kit/worker.json, and the briefing of the worker of that context; --rows <id,...>
-                   briefs those rows of slices.md only, with their rules; a worktree it creates gets the
-                   clean install of the package manager (npm ci), its time in the notes, unless --no-install;
-                   an existing worktree or branch that does not contain the base is refused
+                   briefs those rows of slices.md only, with their rules, the documents of their design and
+                   the names that design cites the base does not have (see cited); a worktree it creates gets
+                   the clean install of the package manager (npm ci), its time in the notes, unless
+                   --no-install; an existing worktree or branch that does not contain the base is refused
   verify-slice     closes a slice before its commit, in one run: the regenerate script, check on the files
                    changed since --since (new ones included), the test script for the context; then the
                    changed files past 300 of the 350 lines, the paths of the slice to stage (its context, an
                    end-to-end spec, a working migration, the derived files git tracks) and every other
-                   changed path, left out and never to stage with it; exits 1 while a step fails
+                   changed path, left out and never to stage with it; exits 1 while a step fails; then the
+                   names the slice removes that the design of a row not done still cites (never a failure)
+  cited            the names the design of rows not done cites as code (paths, classes, Class.member) that
+                   the code does not have: those the history of --base removed (with the commit and the
+                   successor), the places the canonical tree refuses, and a name never there whose close
+                   name of the same part arrived after the line was written; planned names stay silent.
+                   The design of a row: its cells and rule lines in slices.md, a section of a document of
+                   docs/architecture whose heading names it, a document that names it or that its rule
+                   line links to. Default: every row not done, of the context when given, at the current
+                   branch. --removed-since <ref>: the names a change removes, from the merge base to the
+                   working tree, that such a design cites. Reads only, exits 0
   --commit-size    the files and lines about to be committed against "commit" in the config (20 files and
                    600 lines by default, generated files not counted); --staged reads the index only;
                    advisory, --strict exits 1 when over

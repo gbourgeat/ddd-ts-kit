@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { staleNamesAt } from '../citations/stale-names-at.js';
 import { CliError } from '../cli-error.js';
 import { runGit } from '../commit/run-git.js';
 import { WORKER_SCOPE_FILE } from '../commit/worker-scope-file.js';
@@ -9,6 +10,7 @@ import { inDialect } from '../package-manager/in-dialect.js';
 import { Workspace } from '../workspace/index.js';
 import { briefedRows } from './briefed-rows.js';
 import { briefingOf } from './briefing-of.js';
+import { designNote } from './design-note.js';
 import { ensureContainsBase } from './ensure-contains-base.js';
 import { type DependencyInstall, installDependencies } from './install-dependencies.js';
 import { listWorktrees } from './list-worktrees.js';
@@ -44,19 +46,12 @@ export function openWorkerScope(root: string, config: Config, request: WorkerReq
   const { project, worktree, branch, trunk, created, inside } = placeOf(root, config, request);
   const { slices, notes } = briefedRows(new Workspace(root, false), context, request.rows);
   const manager = config.stack.packageManager;
+  const citations = staleNamesAt(root, config, { ref: trunk, rows: slices.map((row) => row.id) });
 
-  if (created && !dryRun) {
-    addWorktree(root, { worktree, branch, base: trunk });
-  }
-
-  if (!dryRun) {
-    writeScope(inside, { context, rows: slices.map((row) => row.id), base: trunk, branch });
-  }
-
-  const install = created && !dryRun && request.install ? installDependencies(inside, manager) : undefined;
-
+  const rows = slices.map((row) => row.id);
+  const install = prepareWorktree(root, request, { worktree, branch, trunk, created, inside, rows, manager });
   const generators = workerGenerators(KINDS);
-  const briefing = briefingOf({ config, context, project, root: inside, branch, trunk, generators, slices });
+  const briefing = briefingOf({ config, context, project, root: inside, branch, trunk, generators, slices, citations });
 
   return {
     dryRun,
@@ -70,9 +65,46 @@ export function openWorkerScope(root: string, config: Config, request: WorkerReq
     scopeFile: path.join(inside, WORKER_SCOPE_FILE),
     generators,
     slices,
+    citations,
     briefing,
-    notes: [...notes, ...notesOf(root, dryRun ? root : inside, { manager, install })],
+    notes: [
+      ...notes,
+      ...designNote(citations),
+      ...citations.notes,
+      ...notesOf(root, dryRun ? root : inside, { manager, install }),
+    ],
   };
+}
+
+/** The place of a worker as `prepareWorktree` needs it. */
+interface PreparedPlace {
+  readonly worktree: string;
+  readonly branch: string;
+  readonly trunk: string;
+  readonly created: boolean;
+  readonly inside: string;
+  readonly rows: readonly string[];
+  readonly manager: Config['stack']['packageManager'];
+}
+
+/**
+ * Outside a dry run: the worktree it creates, the file that confines the worker, then the clean
+ * install of a worktree it created, unless refused; answers that install, if it made one.
+ */
+function prepareWorktree(root: string, request: WorkerRequest, place: PreparedPlace): DependencyInstall | undefined {
+  const { worktree, branch, trunk, created, inside, rows, manager } = place;
+
+  if (request.dryRun) {
+    return undefined;
+  }
+
+  if (created) {
+    addWorktree(root, { worktree, branch, base: trunk });
+  }
+
+  writeScope(inside, { context: request.context, rows: [...rows], base: trunk, branch });
+
+  return created && request.install ? installDependencies(inside, manager) : undefined;
 }
 
 /** What the worktree got of its dependencies: the install this run made, if it made one. */

@@ -15,6 +15,7 @@ export function formatSliceVerification(verification: SliceVerification): string
     ...nearTheLimitLines(verification),
     ...nextLines(verification),
     ...leftOutLines(verification),
+    ...citedRemovalLines(verification),
   ].join('\n');
 }
 
@@ -51,6 +52,23 @@ function leftOutLines({ leftOut }: SliceVerification): string[] {
     : [
         'left out: changed or new, but not part of the slice; never stage them with it (a person decides about them)',
         ...leftOut.map((file) => `  ${file}`),
+      ];
+}
+
+/** Said whether the slice passed or not: the documents are corrected by the conductor, never by the slice. */
+function citedRemovalLines({ citedRemovals }: SliceVerification): string[] {
+  return citedRemovals.length === 0
+    ? []
+    : [
+        'cited by the design of rows not done: names this slice removes (tell the conductor, as notes of your report)',
+        ...citedRemovals.map(({ cited, candidates, document, line, rows }) => {
+          const now =
+            candidates.length === 0 ? '' : ` (now ${candidates.map((candidate) => candidate.name).join(' or ')})`;
+
+          const owners = rows.length === 0 ? '' : ` (${rows.map((id) => `#${id}`).join(', ')})`;
+
+          return `  \`${cited}\`${now}: ${document}:${line}${owners}`;
+        }),
       ];
 }
 

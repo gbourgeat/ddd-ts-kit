@@ -4,6 +4,7 @@ import type { WorkerScope } from '../worker/worker-scope.js';
 import { Arguments } from './arguments.js';
 import type { Command } from './command.js';
 import { knownContext } from './known-context.js';
+import { rowsOption } from './rows-option.js';
 
 /** Prepares the place of one worker of a parallel build (worktree, branch, dependencies, scope file) and prints its briefing. */
 export const workerScopeCommand: Command = (argv, io) => {
@@ -23,7 +24,7 @@ export const workerScopeCommand: Command = (argv, io) => {
   const scope = openWorkerScope(root, config, {
     context,
     ...args.texts(['worktree', 'branch', 'base']),
-    ...rowsOf(args.text('rows')),
+    ...rowsOption(args.text('rows')),
     dryRun: args.flag('dry-run'),
     install: !args.flag('no-install'),
   });
@@ -32,20 +33,6 @@ export const workerScopeCommand: Command = (argv, io) => {
 
   return 0;
 };
-
-/** `--rows 4.15,4.16`: the ids of the # column, as written. */
-function rowsOf(rows: string | undefined): { rows?: string[] } {
-  if (rows === undefined) {
-    return {};
-  }
-
-  return {
-    rows: rows
-      .split(',')
-      .map((id) => id.trim().replace(/^#/, ''))
-      .filter((id) => id !== ''),
-  };
-}
 
 function formatScope(scope: WorkerScope): string {
   const would = scope.dryRun ? 'would be ' : '';

@@ -14,6 +14,7 @@ allowed-tools:
   - Bash(npx ddd-ts-kit generate *)
   - Bash(npx ddd-ts-kit check *)
   - Bash(npx ddd-ts-kit verify-slice *)
+  - Bash(npx ddd-ts-kit cited *)
   - Bash(npx ddd-ts-kit describe *)
   - Bash(npx ddd-ts-kit todo *)
   - Bash(npx ddd-ts-kit explain *)
@@ -40,6 +41,11 @@ the other reacts (skill `ddd-ts-kit:integration-event`). A word or a rule you wo
 guess is a question for the user.
 
 ## 2. Generate the slice
+
+Before generating a row of the slices file, check its design against the trunk:
+`npx ddd-ts-kit cited --rows <id> --base origin/main`. Each line it prints is a name the design
+cites that the trunk removed, refuses or replaced: build on the name the trunk has, and report the
+line so that the document is corrected. A name still to build is never listed.
 
 Run the `Start with` commands of the slice row, or for a typical command:
 

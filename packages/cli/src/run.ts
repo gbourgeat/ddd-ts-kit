@@ -4,6 +4,7 @@ import { affectedCommand } from './commands/affected.js';
 import { buildAliasesCommand } from './commands/build-aliases.js';
 import { checkFileCommand, explainCommand, rulesCommand } from './commands/check.js';
 import { checksCommand } from './commands/checks.js';
+import { citedCommand } from './commands/cited.js';
 import { controllersCommand } from './commands/controllers.js';
 import { depcruiseConfigCommand } from './commands/depcruise-config.js';
 import { describeCommand } from './commands/describe.js';
@@ -39,6 +40,7 @@ const COMMANDS: Readonly<Record<string, Command>> = {
   'plan-waves': planWavesCommand,
   'worker-scope': workerScopeCommand,
   'verify-slice': verifySliceCommand,
+  cited: citedCommand,
   docs: docsCommand,
   doctor: doctorCommand,
   sdk: sdkCommand,

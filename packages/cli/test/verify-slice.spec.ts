@@ -1,5 +1,8 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { cli, read, write } from './helpers.js';
+import { commitFiles } from './support/commit-files.js';
 import { committedProject } from './support/committed-project.js';
 import { git } from './support/git.js';
 import { jsonAt } from './support/json-at.js';
@@ -78,6 +81,51 @@ describe('verify-slice', () => {
 
     expect(result.stdout).toContain('left out: changed or new, but not part of the slice; never stage them with it');
     expect(result.stdout.split('left out:')[0]).not.toContain('Synthèse');
+  });
+
+  it('lists the names the slice removes that the design of a row not done cites, without failing, its own rows left out', () => {
+    const port = 'src/contexts/billing/application/ports/price-list.port.ts';
+
+    const slices = [
+      '| # | Context | Kind | Slice | Start with | Depends on | Owner | Status |',
+      '|---|---|---|---|---|---|---|---|',
+      '| M4.01 | billing | slice | Price an invoice | fill `PriceList` | | billing | done |',
+      '| M4.02 | billing | slice | Discount an invoice | read `PriceList` | | billing | todo |',
+    ].join('\n');
+
+    withScripts('node -e ""');
+
+    commitFiles(root, {
+      message: 'feat(billing): price list',
+      files: { [port]: 'export abstract class PriceList {}\n', 'docs/architecture/slices.md': `${slices}\n` },
+    });
+
+    git(root, 'switch', '--quiet', '--create', 'build/billing');
+    fs.rmSync(path.join(root, port));
+
+    const result = cli(root, 'verify-slice', 'billing', '--since', 'main');
+    const verification = cli(root, 'verify-slice', 'billing', '--since', 'main', '--json').json();
+
+    expect(result.code).toBe(0);
+
+    expect(jsonAt(verification, 'citedRemovals')).toEqual([
+      expect.objectContaining({
+        cited: 'PriceList',
+        document: 'docs/architecture/slices.md',
+        line: 4,
+        rows: ['M4.02'],
+      }),
+    ]);
+
+    expect(result.stdout).toContain(
+      'cited by the design of rows not done: names this slice removes (tell the conductor, as notes of your report)\n  `PriceList`: docs/architecture/slices.md:4 (#M4.02)',
+    );
+
+    write(root, '.ddd-ts-kit/worker.json', JSON.stringify({ context: 'billing', rows: ['M4.02'] }));
+
+    expect(jsonAt(cli(root, 'verify-slice', 'billing', '--since', 'main', '--json').json(), 'citedRemovals')).toEqual(
+      [],
+    );
   });
 
   it('asks for the trunk, and for the scripts of this version', () => {

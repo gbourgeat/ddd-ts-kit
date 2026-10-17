@@ -52,14 +52,25 @@ export const NOTES = `  affected         what a pull request has to run: the con
   worker-scope     a git worktree on the branch build/<context> (by default ../<project>-<context>), cut from
                    --base <ref> (by default the current branch, refused from a worker's worktree), its
                    .ddd-ts-kit/worker.json, and the briefing of the worker of that context; --rows <id,...>
-                   briefs those rows of slices.md only, with their rules; a worktree it creates gets the
-                   clean install of the package manager (npm ci), its time in the notes, unless --no-install;
-                   an existing worktree or branch that does not contain the base is refused
+                   briefs those rows of slices.md only, with their rules, the documents of their design and
+                   the names that design cites the base does not have (see cited); a worktree it creates gets
+                   the clean install of the package manager (npm ci), its time in the notes, unless
+                   --no-install; an existing worktree or branch that does not contain the base is refused
   verify-slice     closes a slice before its commit, in one run: the regenerate script, check on the files
                    changed since --since (new ones included), the test script for the context; then the
                    changed files past 300 of the 350 lines, the paths of the slice to stage (its context, an
                    end-to-end spec, a working migration, the derived files git tracks) and every other
-                   changed path, left out and never to stage with it; exits 1 while a step fails
+                   changed path, left out and never to stage with it; exits 1 while a step fails; then the
+                   names the slice removes that the design of a row not done still cites (never a failure)
+  cited            the names the design of rows not done cites as code (paths, classes, Class.member) that
+                   the code does not have: those the history of --base removed (with the commit and the
+                   successor), the places the canonical tree refuses, and a name never there whose close
+                   name of the same part arrived after the line was written; planned names stay silent.
+                   The design of a row: its cells and rule lines in slices.md, a section of a document of
+                   docs/architecture whose heading names it, a document that names it or that its rule
+                   line links to. Default: every row not done, of the context when given, at the current
+                   branch. --removed-since <ref>: the names a change removes, from the merge base to the
+                   working tree, that such a design cites. Reads only, exits 0
   --commit-size    the files and lines about to be committed against "commit" in the config (20 files and
                    600 lines by default, generated files not counted); --staged reads the index only;
                    advisory, --strict exits 1 when over

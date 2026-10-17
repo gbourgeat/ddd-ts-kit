@@ -1,5 +1,5 @@
 [English](token-economy.md) · **Français**
-<!-- translation-of: token-economy.md sha256:e0e2e37699760576 -->
+<!-- translation-of: token-economy.md sha256:e0ab1ba2a9dee063 -->
 
 # Économie de tokens : dépenser moins avec les agents de code
 
@@ -210,6 +210,11 @@ modifiés, lance les tests d'un seul contexte et liste ce qu'il faut indexer. La
 npx ddd-ts-kit verify-slice ordering --since origin/main   # régénérer, les règles sur les fichiers modifiés, les tests d'ordering
 npm run verify                                             # toute la porte, une fois, avant la pull request
 ```
+
+**Vérifier la conception contre le tronc, pas en cherchant.** Avant de construire une ligne dont
+la conception nomme des classes et des chemins, `npx ddd-ts-kit cited --rows <id> --base origin/main`
+n'affiche que les noms que le tronc a retirés ou refuse, une ligne chacun avec ce qui les a
+remplacés, au lieu d'une recherche dans l'arborescence pour chaque nom que la conception cite.
 
 **Garder les sorties bruyantes hors de la conversation principale.** Lancez les longues suites de
 tests et la lecture des journaux dans un sous-agent, ou filtrez la sortie avant qu'elle soit lue.

@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:d154715bea0c8cd8 -->
+<!-- translation-of: README.md sha256:54b67fcc0718fe47 -->
 
 # ddd-ts-kit
 
@@ -1176,6 +1176,68 @@ crée, il lance ensuite l'installation propre du gestionnaire de paquets du proj
 le temps qu'elle a pris, ou, quand elle a échoué ou que `--no-install` l'a écartée, quoi lancer
 avant que le *worker* ne démarre. `--dry-run` ne crée, n'écrit et n'installe rien. Il faut un dépôt git avec au moins un *commit*. Le *worker* génère ensuite avec
 `--local-only`.
+
+Sous chaque ligne dont la conception vit dans un document de `docs/architecture/`, la consigne le
+nomme (`design: docs/architecture/reviews/refunds.md (section "#M2.03 Compute the refund")`), et
+les noms que cette conception cite et que la base n'a pas, tels que `cited` les trouve, viennent
+dans un bloc de huit lignes au plus, avec une note pour le chef d'orchestre qui nomme les lignes à
+corriger sur le tronc. `--json` les porte sous `citations`.
+
+## cited
+
+```
+ddd-ts-kit cited [<context>] [--rows <id,...>] [--base <ref>] [--removed-since <ref>]
+```
+
+Les noms que la conception des lignes non terminées cite comme du code et que le code n'a pas. La
+conception d'une ligne, ce sont ses cellules `Slice` et `Start with` et ses lignes de règles dans
+`docs/architecture/slices.md`, la section d'un fichier Markdown de `docs/architecture/` dont le
+titre nomme la ligne (jusqu'au titre suivant de même niveau), un fichier qui la nomme dans son
+texte (le fichier entier), et un fichier vers lequel pointe sa ligne de règles ; un fichier écrit
+avant l'amorçage et une traduction à côté de son original sont laissés de côté. Un nom est un
+segment de code en ligne : un chemin sous la racine des sources ou relatif à un contexte,
+`Classe.membre`, ou un nom en PascalCase (d'un seul mot seulement s'il n'est pas un terme du
+glossaire du contexte de la ligne). Un segment qui contient une espace, comme une commande de
+générateur, ne nomme rien.
+
+Chaque nom est lu contre `--base` (la branche courante par défaut) dans git, sans extraction, et
+n'est signalé qu'avec une preuve :
+
+- retiré (`removed`) : l'historique de la référence a retiré le fichier qui le donnait
+  (`verify-occupancy.command.ts` donne `VerifyOccupancy`, quand ce fichier le déclarait), ou le
+  dernier commit qui a changé une classe en a sorti le membre ; le rapport nomme le commit, son
+  jour et son sujet, et ce qui l'a remplacé, trois au plus : le fichier vers lequel il a été
+  renommé, un fichier que le même commit a ajouté dans le même contexte avec ses mots, un nom de
+  même radical ;
+- refusé (`refused`) : un chemin que l'arborescence canonique refuse, jugé comme `tree/closed`
+  juge un fichier ;
+- proche (`similar`) : un nom que la référence n'a jamais eu, terminé par un suffixe de rôle
+  (`RefundBasisService`), quand la référence a un nom de même radical dont le rôle tient la même
+  place (`RefundBasisReader`, un port) et dont le fichier est arrivé après la dernière modification
+  de la ligne qui le cite.
+
+Tout le reste est prévu, et muet. Un nom dont la phrase dit qu'il a été retiré ou renommé est de
+l'histoire, et reste muet ; de même un nom dont la même partie cite déjà le successeur. `--rows`
+vérifie ces lignes ; sans lui, chaque ligne non terminée, du contexte quand il est donné. Avec
+`--removed-since <ref>`, il liste plutôt les noms que le changement retire, de la base de fusion
+avec `<ref>` à l'arbre de travail, et que la conception d'une ligne non terminée cite encore (les
+lignes du *worker* du *worktree* mises à part), et un document lié à aucune ligne est lu aussi. Il
+lit, n'écrit rien, et sort avec le code 0. `--json` affiche `{ base, commit, counts: { present,
+planned }, citations: [{ rows, document, line, cited, kind, state, removedBy?, refusal?,
+candidates }], notes }`, ou `{ since, citations }` avec `--removed-since`. Un clone superficiel, où
+un nom retiré ne se distingue pas d'un nom prévu, et une base locale en retard sur sa branche amont
+sont notés.
+
+Dans l'application d'exemple, avant la correction de son fichier des tranches :
+
+```text
+$ npx ddd-ts-kit cited analytics --rows M1.37 --base HEAD
+Names of the design of #M1.37 that HEAD does not have (checked at d2bb88de):
+- docs/architecture/briefings/analytics.md:18 `VerifyOccupancy`: removed by eefe4d21 (2026-10-10, "refactor(example): compute analytics occupancy at read time from one row per appointment (#5)") (#M1.37)
+- docs/architecture/briefings/analytics.md:33 `VerifyOccupancy`: removed by eefe4d21 (2026-10-10, "refactor(example): compute analytics occupancy at read time from one row per appointment (#5)") (#M1.37)
+- docs/architecture/slices.md:49 `VerifyOccupancy`: removed by eefe4d21 (2026-10-10, "refactor(example): compute analytics occupancy at read time from one row per appointment (#5)") (#M1.37)
+Also cited: 4 present, 3 planned (silent).
+```
 
 ## affected
 

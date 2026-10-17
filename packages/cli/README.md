@@ -1119,6 +1119,62 @@ only when it fails; a note gives the time it took, or, when it failed or `--no-i
 out, what to run before the worker starts. `--dry-run` creates, writes and installs nothing. It
 needs a git repository with one commit at least. The worker then generates with `--local-only`.
 
+Under each row whose design lives in a document of `docs/architecture/`, the briefing names it
+(`design: docs/architecture/reviews/refunds.md (section "#M2.03 Compute the refund")`), and the
+names that design cites the base does not have, as `cited` finds them, come in a block of eight
+lines at most, with a note for the conductor naming the lines to correct on the trunk. `--json`
+holds them under `citations`.
+
+## cited
+
+```
+ddd-ts-kit cited [<context>] [--rows <id,...>] [--base <ref>] [--removed-since <ref>]
+```
+
+The names the design of rows not done cites as code that the code does not have. The design of
+a row is its `Slice` and `Start with` cells and its rule lines in `docs/architecture/slices.md`,
+the section of a Markdown file of `docs/architecture/` whose heading names the row (to the next
+heading of the same level), a file that names it in its text (the whole file), and a file its
+rule line links to; a file written before the bootstrap and a translation next to its original
+are left out. A name is an inline code span: a path under the source root or relative to a
+context, `Class.member`, or a PascalCase name (one word only when it is not a term of the
+glossary of the row's context). A span with a space, such as a generator command, names nothing.
+
+Each name is read against `--base` (the current branch by default) from git, without a checkout,
+and reported only with evidence:
+
+- removed: the history of the ref removed the file that gave it (`verify-occupancy.command.ts`
+  gives `VerifyOccupancy`, when that file declared it), or the last commit that changed a class
+  took the member out; the report names the commit, its day and subject, and what replaced it,
+  three at most: the file it was renamed to, a file the same commit added in the same context
+  with its words, a name of its stem;
+- refused: a path the canonical tree refuses, judged as `tree/closed` judges a file;
+- similar: a name the ref never had, ending with a role suffix (`RefundBasisService`), when the
+  ref has a name of its stem whose role plays the same part (`RefundBasisReader`, a port) and
+  whose file arrived after the line citing it was last changed.
+
+Everything else is planned, and silent. A name whose sentence says it was removed or renamed is
+history, and silent; so is a name whose successor the same part cites. `--rows` checks those
+rows; without it every row not done, of the context when one is given. With `--removed-since
+<ref>` it lists instead the names the change removes, from the merge base with `<ref>` to the
+working tree, that the design of a row not done still cites (the rows of the worker of the
+worktree left out), and a document linked to no row is read too. It reads, writes nothing, and
+exits 0. `--json` prints `{ base, commit, counts: { present, planned }, citations: [{ rows,
+document, line, cited, kind, state, removedBy?, refusal?, candidates }], notes }`, or
+`{ since, citations }` with `--removed-since`. A shallow clone, where a removed name cannot be
+told from a planned one, and a local base behind its upstream are noted.
+
+From the example application, before its slices file was corrected:
+
+```text
+$ npx ddd-ts-kit cited analytics --rows M1.37 --base HEAD
+Names of the design of #M1.37 that HEAD does not have (checked at d2bb88de):
+- docs/architecture/briefings/analytics.md:18 `VerifyOccupancy`: removed by eefe4d21 (2026-10-10, "refactor(example): compute analytics occupancy at read time from one row per appointment (#5)") (#M1.37)
+- docs/architecture/briefings/analytics.md:33 `VerifyOccupancy`: removed by eefe4d21 (2026-10-10, "refactor(example): compute analytics occupancy at read time from one row per appointment (#5)") (#M1.37)
+- docs/architecture/slices.md:49 `VerifyOccupancy`: removed by eefe4d21 (2026-10-10, "refactor(example): compute analytics occupancy at read time from one row per appointment (#5)") (#M1.37)
+Also cited: 4 present, 3 planned (silent).
+```
+
 ## affected
 
 ```

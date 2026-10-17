@@ -204,6 +204,11 @@ npx ddd-ts-kit verify-slice ordering --since origin/main   # regenerate, the rul
 npm run verify                                             # the whole gate, once, before the pull request
 ```
 
+**Check the design against the trunk, not by searching.** Before building a row whose design
+names classes and paths, `npx ddd-ts-kit cited --rows <id> --base origin/main` prints only the
+names the trunk removed or refuses, one line each with what replaced them, instead of a search
+of the tree for every name the design cites.
+
 **Keep noisy output out of the main conversation.** Run long test suites and log reading in a
 subagent, or filter the output before it is read. Ask for failures only: with Vitest 5, the
 test runner `init` installs, `--reporter=minimal` prints the failed tests and nothing else.
