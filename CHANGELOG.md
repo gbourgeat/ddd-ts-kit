@@ -4,6 +4,23 @@ What each version changes for someone who uses the kit. The packages of `package
 together, under one version; the notes of each [GitHub release](https://github.com/gbourgeat/ddd-ts-kit/releases)
 list the pull requests behind it.
 
+## 0.25.1
+
+**The places that teach how a spec builds its test application point to worlds.** The command
+handler specs `generate` writes say, in their `TODO(domain)`, that `generate test-world <context>`
+writes the arrangement once in `test/worlds/` when several specs of the context share it; the
+`wiring` and `use-case` skills, `docs/tools/dependency-injection.md` and the README of
+`@ddd-ts-kit/di` say the same where a reader writes that arrangement.
+
+**The example application arranges through worlds.** `identity` and `notification` get their
+world, and 42 handler, projection and integration handler specs take their test application from
+the world of their context, their starting data in `given`. A spec keeps its own setup when it
+builds what a world does not: a database wired by hand, a handler built by hand, a fake with
+constructor arguments, a platform port.
+
+Nothing to move: specs already written keep working; a project takes a world when its specs
+repeat the same arrangement.
+
 ## 0.25.0
 
 **`generate test-world` gives the shared arrangement of a context its place, `test/worlds/`.**
