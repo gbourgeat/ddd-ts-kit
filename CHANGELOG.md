@@ -4,6 +4,28 @@ What each version changes for someone who uses the kit. The packages of `package
 together, under one version; the notes of each [GitHub release](https://github.com/gbourgeat/ddd-ts-kit/releases)
 list the pull requests behind it.
 
+## Unreleased
+
+**`language/declared-vocabulary` accepts a word of another language when its type says so.**
+A context that reads a published payload or an outside record meets words that spell a value of
+its own vocabulary (catalog publishes a `state` of `'draft' | 'issued'`, billing declares
+`InvoiceStatus` with the same strings); the checker and ESLint reported them, and the only way out
+was to write `InvoiceStatus.Issued` for a word of catalog. Outside `domain/`, such a word is no
+longer judged when its type says which language it belongs to: a key of a table typed
+`Record<T, ..>`, a value of one typed `Record<.., T>` (by an annotation or `satisfies`), or a
+literal written `'issued' satisfies T`, `T` being one type imported from a published language,
+imported as a type from a package, or imported from or declared in
+`infrastructure/anti-corruption/` or `infrastructure/external/`; there, the literal types of an
+interface or a type alias that describe an outside record are not judged either. The compiler
+holds the spelling of such a word. A key of a table typed by the vocabulary of the context, a
+comparison or a `case` without `satisfies` and a value of the context in a translation table are
+still reported, and in a file that reads another language the fix names the types it reads from
+there and how to type the literal by one (ESLint message `rawBesideOtherLanguage`).
+
+Nothing to move: the rule only reports less. A workaround such as
+`[InvoiceStatus.Issued]: InvoiceStatus.Issued` in a table keyed by a foreign type can be written
+with the foreign word again, `'issued': InvoiceStatus.Issued`.
+
 ## 0.25.1
 
 **The places that teach how a spec builds its test application point to worlds.** The command

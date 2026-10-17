@@ -74,6 +74,11 @@ comes from the event; when the design names the handler after what it does here,
   unit of work, and the command must be safe to replay.
 - Let a failure throw so the provider retries; after bounded retries the message is buried
   in a dead-letter destination and reported, never swallowed.
+- A word of the payload that spells a value of the context stays a word of the contract: the
+  handler keys its translation by the payload type, `Record<ProductListedV1Payload['state'],
+  InvoiceStatus>`, or writes `'issued' satisfies ProductListedV1Payload['state']` in a `case`,
+  never `InvoiceStatus.Issued` (`language/declared-vocabulary`). Better still, the producer
+  declares those values as a vocabulary of its published language.
 - A foreign model the context does not want is translated first:
   `npx ddd-ts-kit generate acl <ctx> <upstream>`.
 

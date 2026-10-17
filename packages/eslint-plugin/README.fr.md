@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:989ceeb1b4dabe43 -->
+<!-- translation-of: README.md sha256:bf4e26b225f91ffd -->
 
 # @ddd-ts-kit/eslint-plugin
 
@@ -211,7 +211,7 @@ chaque règle à `error`.
 | [`context/published-language-only`](docs/rules/context-published-language-only.fr.md) | `ddd-ts-kit/context-published-language-only` | un autre contexte n'est importé qu'à travers son `published-language/` | `error` | maison |
 | [`context/declared-relationship`](docs/rules/context-declared-relationship.fr.md) | `ddd-ts-kit/context-declared-relationship` | un tel import exige que l'amont soit déclaré dans la config | `error` | maison |
 | [`context/published-language-is-a-contract`](docs/rules/context-published-language-is-a-contract.fr.md) | `ddd-ts-kit/context-published-language-is-a-contract` | `published-language/` n'importe que sa liste d'autorisation et d'autres langages publiés | `error` | maison |
-| [`language/declared-vocabulary`](docs/rules/language-declared-vocabulary.fr.md) | `ddd-ts-kit/language-declared-vocabulary` | une valeur d'un vocabulaire fermé que déclare le projet (un objet `as const` avec le type union de son nom, un ensemble de permissions) est lue à travers lui, jamais réécrite sous forme de chaîne, sous `"stack.literals": "named"` ; tests et langages publiés exclus | `error` | maison |
+| [`language/declared-vocabulary`](docs/rules/language-declared-vocabulary.fr.md) | `ddd-ts-kit/language-declared-vocabulary` | une valeur d'un vocabulaire fermé que déclare le projet (un objet `as const` avec le type union de son nom, un ensemble de permissions) est lue à travers lui, jamais réécrite sous forme de chaîne, sous `"stack.literals": "named"` ; tests, langages publiés et, hors de `domain/`, un mot typé par un autre langage exclus | `error` | maison |
 | [`naming/business-name`](docs/rules/naming-business-name.fr.md) | `ddd-ts-kit/naming-business-name` | une variable, un paramètre, une propriété, un nom déstructuré ou une variable de boucle de `domain/`, `application/` et du noyau partagé porte le nom de son concept, jamais `target`, `data`, `item` ni un autre mot générique (`words`, `allow`, `businessNames` de la configuration) ; corrigible quand l'initialiseur nomme le concept | `error` | maison |
 | [`purity/no-system-clock`](docs/rules/purity-no-system-clock.fr.md) | `ddd-ts-kit/purity-no-system-clock` | pas de `new Date()`, `Date.now()`, `Date()`, `performance.now()` dans `domain/` et `application/` | `error` | maison |
 | [`purity/no-ambient-randomness`](docs/rules/purity-no-ambient-randomness.fr.md) | `ddd-ts-kit/purity-no-ambient-randomness` | pas de `Math.random`, `crypto.randomUUID` ni de bibliothèque d'identifiants dans `domain/` et `application/` | `error` | maison |
