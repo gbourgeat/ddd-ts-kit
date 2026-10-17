@@ -6,6 +6,13 @@ list the pull requests behind it.
 
 ## Unreleased
 
+**The guard recognises the CLI of the kit however it is launched.** The refusal of
+`worker-scope` to a sub-agent (without `--dry-run` or `--resume`) and the refusal to a worker of a
+generator that writes shared files or another context read the command word by word: the
+`ddd-ts-kit` binary (`npx`, `npm exec`, `pnpm exec`, `bunx`, `node_modules/.bin`), the entry file
+of the CLI run by node (`node .../dist/bin.js`) and the kit script of a project
+(`node scripts/kit.mjs`) are held alike; until now only `ddd-ts-kit <command>` was.
+
 **A context-builder is warned before its turn limit, and the conductor resumes a stopped worker
 from `worker-scope --resume`.** An agent cannot count its turns, and one that stopped at its limit
 left the conductor to inspect the worktree by hand to write the next message. The guard of the

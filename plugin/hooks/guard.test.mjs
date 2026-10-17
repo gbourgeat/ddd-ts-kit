@@ -626,6 +626,46 @@ test('a sub-agent reads a briefing of worker-scope, and only the conductor prepa
   );
 });
 
+test('worker-scope is refused to a sub-agent however the CLI is launched', () => {
+  const root = project();
+  const reviewer = { agent_type: 'ddd-ts-kit:architecture-reviewer' };
+  for (const command of [
+    'node packages/cli/dist/bin.js worker-scope ordering',
+    'node node_modules/ddd-ts-kit/dist/bin.js worker-scope ordering --rows 3',
+    'node scripts/kit.mjs worker-scope ordering',
+    'npm exec ddd-ts-kit -- worker-scope ordering',
+    'pnpm exec ddd-ts-kit worker-scope ordering',
+    'node_modules/.bin/ddd-ts-kit worker-scope ordering',
+    'bunx ddd-ts-kit@latest worker-scope ordering',
+  ]) {
+    assert.equal(decision(run('pre-bash', bash(root, command, reviewer))), 'deny', command);
+  }
+  for (const command of [
+    'node packages/cli/dist/bin.js worker-scope ordering --dry-run',
+    'grep -rn worker-scope docs',
+    'git log --grep worker-scope',
+  ]) {
+    assert.equal(run('pre-bash', bash(root, command, reviewer)).output, undefined, command);
+  }
+});
+
+test('a generator of shared files is refused to a worker however the CLI is launched', () => {
+  const root = project();
+  const agent = worker(root);
+  for (const command of [
+    'node node_modules/ddd-ts-kit/dist/bin.js generate repository ordering Order',
+    'node scripts/kit.mjs g context shipping',
+    'npm exec ddd-ts-kit -- generate integration-event ordering Order Placed',
+  ]) {
+    assert.equal(decision(run('pre-bash', bash(root, command, agent))), 'deny', command);
+  }
+  assert.equal(
+    run('pre-bash', bash(root, 'node scripts/kit.mjs generate value-object ordering Money', agent)).output,
+    undefined,
+  );
+  assert.equal(run('pre-bash', bash(root, 'npm run docs:generate', agent)).output, undefined);
+});
+
 // Each takes one side of a merge on the sources or the tests.
 const ONE_SIDE = [
   'git merge -X theirs origin/main',

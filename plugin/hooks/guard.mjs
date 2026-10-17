@@ -288,7 +288,7 @@ async function preBash(input) {
   if (!project || project.mode === 'off') {
     return;
   }
-  const preparing = workerPlaceReason(input, command) ?? oneSideMergeReason(project, input, command);
+  const preparing = (await workerPlaceReason(input, command)) ?? oneSideMergeReason(project, input, command);
   if (preparing) {
     decide(input, project.mode === 'advise' ? 'ask' : 'deny', preparing);
     return;
@@ -313,7 +313,7 @@ function workerCommandReason(project, input, { context, command, commands }) {
     return pending.reason;
   }
   const refusal =
-    sharedGeneratorReason(project, context, command) ??
+    sharedGeneratorReason(project, context, commands) ??
     dependencyChangeReason(commands) ??
     workingMigrationReason(command) ??
     formatterReason(project, commands) ??
@@ -862,12 +862,41 @@ function commandDirectory(command, cwd) {
 
 // `worker-scope` adds a worktree and a branch: the conductor's to place, from the trunk. A sub-agent
 // reads a briefing (`--dry-run`) or where a worker stands (`--resume`): both create nothing.
-function workerPlaceReason(input, command) {
-  return input.agent_type &&
-    /ddd-ts-kit(?:@\S+)?\s+worker-scope\b/.test(command) &&
-    !/--(?:dry-run|resume)\b/.test(command)
+async function workerPlaceReason(input, command) {
+  if (!input.agent_type || !command.includes('worker-scope')) {
+    return undefined;
+  }
+  shell = await import('./shell-commands.mjs');
+  const preparing = kitInvocations(shell.simpleCommands(command, input.cwd ?? process.cwd())).some(
+    ({ subcommand, args }) => subcommand === 'worker-scope' && !args.some((arg) => /^--(?:dry-run|resume)\b/.test(arg)),
+  );
+  return preparing
     ? 'Only the conductor prepares the place of a worker: `worker-scope` adds a git worktree and a branch. A sub-agent reads a briefing with `worker-scope <context> --dry-run`, or where a worker stands with `--resume`, which create nothing; if a worker is missing, report it to the conductor.'
     : undefined;
+}
+
+// Each run of the CLI of the kit in `commands`, however it is launched: the `ddd-ts-kit` binary
+// (`npx`, `npm exec`, `pnpm exec`, `bunx`, `node_modules/.bin`), the entry file of the CLI run by
+// node (`.../cli/dist/bin.js`, `.../ddd-ts-kit/dist/bin.js`) or the kit script of a project.
+function kitInvocations(commands) {
+  return commands.flatMap(({ words }) => {
+    const at = words.findIndex(isKitLauncher);
+    if (at === -1) {
+      return [];
+    }
+    const rest = words.slice(at + 1).filter((word) => word !== '--');
+    const index = rest.findIndex((word) => !word.startsWith('-'));
+    return index === -1 ? [] : [{ subcommand: rest[index], args: rest.slice(index + 1) }];
+  });
+}
+
+function isKitLauncher(word) {
+  const name = word.split('/').pop() ?? '';
+  return (
+    /^ddd-ts-kit(?:@\S+)?$/.test(name) ||
+    /(?:^|\/)(?:cli|ddd-ts-kit)\/dist\/bin\.[cm]?js$/.test(word) ||
+    /(?:^|\/)scripts\/kit\.mjs$/.test(word)
+  );
 }
 
 // Taking one side of a merge erases what the other side added without a conflict: a sub-agent
@@ -902,12 +931,14 @@ function heldPaths(project, directory, args) {
     );
 }
 
-function sharedGeneratorReason(project, context, command) {
-  for (const [, kind, target] of command.matchAll(
-    /ddd-ts-kit(?:@\S+)?\s+(?:generate|g)\s+([a-z-]+)(?:\s+([A-Za-z0-9-]+))?/g,
-  )) {
+function sharedGeneratorReason(project, context, commands) {
+  for (const { subcommand, args } of kitInvocations(commands)) {
+    if (subcommand !== 'generate' && subcommand !== 'g') {
+      continue;
+    }
+    const [kind, target] = args.filter((arg) => !arg.startsWith('-'));
     if (kind === 'adr') {
-      if (/--deviation\b/.test(command)) {
+      if (args.includes('--deviation')) {
         return `\`generate adr --deviation\` also writes the deviation in ddd-ts-kit.config.json, which is shared, and relaxing a rule is a decision of the project owner. ${REPORT_TO_CONDUCTOR}`;
       }
       continue;
@@ -918,12 +949,17 @@ function sharedGeneratorReason(project, context, command) {
     if (target && target !== context) {
       return `You build the context "${context}"; \`generate ${kind} ${target}\` writes in another context. ${REPORT_TO_CONDUCTOR}`;
     }
-    const aggregate = kind === 'command' ? /--aggregate[= ]\s*([A-Za-z0-9]+)/.exec(command)?.[1] : undefined;
+    const aggregate = kind === 'command' ? aggregateOption(args) : undefined;
     if (aggregate && !hasRepository(project, context, aggregate)) {
       return `\`generate command --aggregate ${aggregate}\` would also create the repository of ${aggregate}, which registers in shared files. ${REPORT_TO_CONDUCTOR}`;
     }
   }
   return undefined;
+}
+
+function aggregateOption(args) {
+  const at = args.findIndex((arg) => arg === '--aggregate' || arg.startsWith('--aggregate='));
+  return at === -1 ? undefined : args[at].includes('=') ? args[at].split('=')[1] : args[at + 1];
 }
 
 function hasRepository(project, context, aggregate) {
