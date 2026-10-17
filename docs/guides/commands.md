@@ -240,6 +240,7 @@ Usage
   ddd-ts-kit status [--workers]
   ddd-ts-kit doctor [--strict]
   ddd-ts-kit todo [<context>]
+  ddd-ts-kit plan-waves [<context>]
   ddd-ts-kit worker-scope <context> [--base <ref>] [--rows <id,...>] [--worktree <path>] [--branch <name>] [--dry-run]
   ddd-ts-kit verify-slice <context> --since <git-ref>
   ddd-ts-kit docs [--check] [--stored-events]
@@ -282,8 +283,10 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
                    otherwise; init adds what is missing; --strict exits 1 while something is missing
   describe         one context as facts: use cases, routes, events, ports, policies, gateways, dependencies
   status           the next step of docs/architecture/plan.md, the slices of docs/architecture/slices.md by
-                   status and by owner, and the TODO(domain), TODO(platform), it.todo and TODO(review) left in
-                   each context; --workers shows instead each worktree holding .ddd-ts-kit/worker.json (branch,
+                   status and by owner, each row not done ready on the trunk (its dependencies done), ready
+                   on a branch (the others briefed to a worker with commits ahead of its base) or waiting
+                   (with the ids it waits for), and the TODO(domain), TODO(platform), it.todo and TODO(review)
+                   left in each context; --workers shows instead each worktree holding .ddd-ts-kit/worker.json (branch,
                    context, rows, base, commits ahead, files changed since the base, its report), then the
                    contexts and the files more than one worker holds
   sdk              the typed client of each document of the contract, a workspace package under
@@ -292,6 +295,12 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
                    scripts (docs:generate regenerates it, docs:check compares it, ci:build builds it);
                    --check writes nothing and exits 1 while a client differs from its contract
   todo             those markers as file:line, in the project or in one context
+  plan-waves       the rows of slices.md not done, of the project or of one context, in waves (wave 1: every
+                   dependency done; wave n: the others in earlier waves), each wave cut into batches of one
+                   owner, one or two rows on one aggregate, with the worker-scope command that briefs each,
+                   the batches of a wave likely to touch the same files (same aggregate in Start with, or
+                   unknown when it names none), and the merge order; a cycle, a dependency on an unknown id
+                   or a row without owner is reported alone, and exits 1
   worker-scope     a git worktree on the branch build/<context> (by default ../<project>-<context>), cut from
                    --base <ref> (by default the current branch, refused from a worker's worktree), its
                    .ddd-ts-kit/worker.json, and the briefing of the worker of that context; --rows <id,...>

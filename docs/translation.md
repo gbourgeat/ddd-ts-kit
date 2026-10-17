@@ -289,6 +289,7 @@ in the French column is kept in English, because French developers say it that w
 | given, when, then | étant donné, quand, alors |
 | vertical slice | tranche verticale |
 | conductor, briefing | chef d'orchestre, consigne |
+| wave, batch (of rows, `plan-waves`) | vague, lot |
 | worktree | *worktree* |
 | skill, agent, hook, plugin | *skill*, agent, *hook*, *plugin* |
 | package, workspace | *package*, *workspace* |

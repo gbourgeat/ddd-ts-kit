@@ -1023,10 +1023,15 @@ ddd-ts-kit todo [<context>]
 `status` prints the `Next:` line of `docs/architecture/plan.md`, the rows of
 `docs/architecture/slices.md` by status and by owner, and per context the `TODO(domain)`,
 `TODO(platform)` and `it.todo` left, then those outside the contexts. A missing file is not an
-error. `--json` prints `{ next, slices, remaining }`: `next` and `slices` are `null` when their
-file is missing, `slices` holds `{ file, rows, byStatus, byOwner }`, `remaining` one
-`{ context, domain, platform, test }` per context, and one with an empty `context` for what is
-left outside them.
+error. Each row not done says whether it can start: ready on the trunk when every dependency is
+done, ready on a branch when each dependency not done is a row briefed to a worker whose worktree
+has commits ahead of its base (the `rows` of its `.ddd-ts-kit/worker.json`, as `status --workers`
+reads them), and waiting otherwise, with the ids it waits for. `--json` prints
+`{ next, slices, remaining }`: `next` and `slices` are `null` when their file is missing,
+`slices` holds `{ file, rows, byStatus, byOwner }`, a row not done carrying
+`ready: 'trunk' | 'branch' | 'waiting'` and `waitingFor` (its dependencies not done),
+`remaining` one `{ context, domain, platform, test }` per context, and one with an empty
+`context` for what is left outside them.
 
 `status --workers` prints the workers of a parallel build instead: each worktree of the
 repository whose copy of the project holds `.ddd-ts-kit/worker.json`, with its branch, its
@@ -1041,6 +1046,33 @@ base and its commits ahead, and its files are the uncommitted ones. `--json` pri
 
 `todo` lists those markers as `file:line` with their kind and their text, in the project or in one
 context; `--json` prints `{ count, remaining: [{ kind, context, file, line, text }] }`.
+
+## plan-waves
+
+```
+ddd-ts-kit plan-waves [<context>]
+```
+
+Orders the rows of `docs/architecture/slices.md` that are not `done`, for a build split between
+workers. Wave 1 holds the rows whose dependencies are all done; wave n the rows whose dependencies
+are done or in earlier waves, so that a row never waits for a row of its own wave. Each wave is cut
+into batches: one owner and one context per batch, two rows at most (what an agent holds), and two
+rows together only when their `Start with` names the same aggregate. The aggregate of a row is read
+from its generator commands: `--aggregate <Name>`, `aggregate <context> <Name>` and
+`repository <context> <Name>`. Two batches of one context in one wave are said likely to touch the
+same files when they name the same aggregate; when one of them names none, the overlap is said to
+be unknown rather than guessed. Each batch of a context's worker comes with the command that briefs
+it, `npx ddd-ts-kit worker-scope <context> --base origin/main --rows <ids>`, with its own
+`--worktree` and `--branch` when its wave holds another batch of that context; a batch of the
+conductor is built on the trunk; a person is briefed by hand. Then the merge order: by wave, and in
+a wave the batch that the most rows wait for, directly or not, first. With a context, only its rows
+are shown; the rows of other contexts it waits for count in the numbering of the waves.
+
+A cycle in `Depends on`, a dependency on an id no row carries, a row without owner and an id two
+rows carry make the rows impossible to order: they are reported alone, without waves, and the
+command exits 1. A file without a slices table, or a context no row names, is refused. `--json`
+prints
+`{ file, context, problems: [{ kind, rows, message }], waves: [{ wave, batches: [{ id, owner, context, rows: [{ id, kind, slice, status, waitingFor }], aggregates, brief, sameFiles, unknownOverlap }] }], mergeOrder }`.
 
 ## worker-scope
 

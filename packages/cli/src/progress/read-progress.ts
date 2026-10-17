@@ -5,26 +5,31 @@ import { readRemaining } from './read-remaining.js';
 import { readSlices, SLICES_FILE } from './read-slices.js';
 import type { Remaining } from './remaining.js';
 import type { Slice } from './slice.js';
+import { statusRowOf } from './status-row-of.js';
 
 const PLAN_FILE = 'docs/architecture/plan.md';
 
-/** What `status` says, read from the plan, the slices table and the markers of the tree; a missing file is not an error. */
-export function readProgress(ws: Workspace, config: Config): Progress {
+/**
+ * What `status` says, read from the plan, the slices table and the markers of the tree; a missing
+ * file is not an error. `onBranches` holds the ids of the rows on a worker's branch with commits
+ * ahead of its base, which a row not done may wait for.
+ */
+export function readProgress(ws: Workspace, config: Config, onBranches: ReadonlySet<string>): Progress {
   const slices = readSlices(ws);
 
   return {
     next: /^Next:[ \t]*(\S.*?)\s*$/m.exec(ws.read(PLAN_FILE) ?? '')?.[1] ?? null,
-    slices: slices === undefined ? null : slicesProgress(slices),
+    slices: slices === undefined ? null : slicesProgress(slices, onBranches),
     remaining: countsOf(readRemaining(ws, config), Object.keys(config.contexts)),
   };
 }
 
-function slicesProgress(rows: readonly Slice[]): SlicesProgress {
+function slicesProgress(rows: readonly Slice[], onBranches: ReadonlySet<string>): SlicesProgress {
   const owners = [...new Set(rows.map((row) => row.owner))].sort();
 
   return {
     file: SLICES_FILE,
-    rows,
+    rows: rows.map((row) => statusRowOf(row, { rows, onBranches })),
     byStatus: idsByStatus(rows),
     byOwner: Object.fromEntries(owners.map((owner) => [owner, idsByStatus(rows.filter((row) => row.owner === owner))])),
     duplicates: [...new Set(rows.map((row) => row.id).filter((id, index, ids) => ids.indexOf(id) !== index))],

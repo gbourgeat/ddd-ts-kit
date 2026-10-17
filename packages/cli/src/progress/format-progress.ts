@@ -1,5 +1,4 @@
-import type { Progress, RemainingCount, SlicesProgress } from './progress.js';
-import type { Slice } from './slice.js';
+import type { Progress, RemainingCount, SlicesProgress, StatusRow } from './progress.js';
 
 const STATUS_ORDER = ['in progress', 'todo', 'done'];
 
@@ -64,10 +63,27 @@ function counts(byStatus: Readonly<Record<string, readonly string[]>>, statuses:
     .join(', ');
 }
 
-function rowLine(row: Slice): string {
+function rowLine(row: StatusRow): string {
   const waits = row.dependsOn.length > 0 ? `, depends on ${row.dependsOn.join(', ')}` : '';
 
-  return `    #${row.id} ${row.context} ${row.kind} "${row.slice}" (owner ${row.owner}${waits})`;
+  return `    #${row.id} ${row.context} ${row.kind} "${row.slice}" (owner ${row.owner}${waits})${readyText(row)}`;
+}
+
+/** Whether the row can start: on the trunk, once the branches holding its dependencies merge, or later. */
+function readyText(row: StatusRow): string {
+  const waiting = row.waitingFor ?? [];
+  const ids = waiting.map((id) => `#${id}`).join(', ');
+
+  switch (row.ready) {
+    case 'trunk':
+      return ': ready on the trunk';
+    case 'branch':
+      return `: ready on a branch, once ${ids} ${waiting.length === 1 ? 'merges' : 'merge'}`;
+    case 'waiting':
+      return `: waits for ${ids}`;
+    default:
+      return '';
+  }
 }
 
 function remainingLine(count: RemainingCount): string {

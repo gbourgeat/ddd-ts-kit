@@ -12,7 +12,7 @@ export interface Progress {
 
 export interface SlicesProgress {
   readonly file: string;
-  readonly rows: readonly Slice[];
+  readonly rows: readonly StatusRow[];
   /** The ids of the rows, by status. */
   readonly byStatus: Readonly<Record<string, readonly string[]>>;
   /** The ids of the rows, by owner then by status. */
@@ -21,6 +21,17 @@ export interface SlicesProgress {
   readonly duplicates: readonly string[];
   /** The ids that are a bare number, without the code of their story or milestone (`12`, not `US5.12`). */
   readonly unscoped: readonly string[];
+}
+
+/** A row of the slices table; one not done says whether it can start, and what it waits for. */
+export interface StatusRow extends Slice {
+  /**
+   * Left out on a done row. `trunk`: every dependency is done. `branch`: each one not done is a
+   * row briefed to a worker whose branch has commits its base does not have. `waiting` otherwise.
+   */
+  readonly ready?: 'trunk' | 'branch' | 'waiting';
+  /** The dependencies not done, in the order of the row; left out on a done row. */
+  readonly waitingFor?: readonly string[];
 }
 
 export interface RemainingCount {

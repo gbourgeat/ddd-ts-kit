@@ -14,6 +14,7 @@ import { errorFactoriesCommand } from './commands/error-factories.js';
 import { generateCommand } from './commands/generate.js';
 import { initCommand } from './commands/init.js';
 import { listCommand } from './commands/list.js';
+import { planWavesCommand } from './commands/plan-waves.js';
 import { sdkCommand } from './commands/sdk.js';
 import { statusCommand } from './commands/status.js';
 import { todoCommand } from './commands/todo.js';
@@ -35,6 +36,7 @@ const COMMANDS: Readonly<Record<string, Command>> = {
   describe: describeCommand,
   status: statusCommand,
   todo: todoCommand,
+  'plan-waves': planWavesCommand,
   'worker-scope': workerScopeCommand,
   'verify-slice': verifySliceCommand,
   docs: docsCommand,

@@ -244,6 +244,62 @@ Error: --local-only: this command would write 2 shared files: src/platform/auth/
   fix: Nothing was written. Have it run on the trunk without --local-only (the conductor of a parallel build does it), merge the trunk, then go on; a generated document listed alone means the trunk is stale: run `ddd-ts-kit docs` there first.
 ```
 
+## Waves and batches
+
+When several stories build in one context at once, which rows can start, how to group them for
+the agents, which groups can run side by side and in which order to merge is computed from
+`docs/architecture/slices.md`, not worked out by hand:
+
+```bash
+npx ddd-ts-kit plan-waves            # the whole plan; plan-waves <context> for one context; --json for data
+```
+
+It takes the rows that are not `done`. Wave 1 holds the rows whose dependencies are all done;
+wave n the rows whose dependencies are done or in earlier waves: the rows of one wave never wait
+for each other. Each wave is cut into batches: one owner and one context per batch (a context's
+worker, the conductor or a person), two rows at most, since an agent holds two before its turns
+or its context run out, and two rows in one batch only when their `Start with` names the same
+aggregate (`--aggregate Invoice`, `aggregate billing Invoice`, `repository billing Invoice`). Two
+batches of one context in one wave that name the same aggregate are likely to touch the same
+files: run them one after the other. When a batch names no aggregate, the command says the
+overlap is unknown instead of guessing. Each batch of a worker comes with its `worker-scope`
+command, with a worktree and a branch of its own when its wave holds another batch of that
+context; a batch of the conductor is built on the trunk. The merge order follows: by wave, and in
+a wave the batch the most rows wait for first. For two stories in `billing`, an excerpt:
+
+```text
+Waves (docs/architecture/slices.md): 7 rows not done, 2 waves, 6 batches
+Wave 1
+  W1.1 billing (aggregate Invoice)
+    #US1.02 slice "Issue invoice"
+    #US1.03 slice "Cancel invoice"
+    npx ddd-ts-kit worker-scope billing --base origin/main --rows US1.02,US1.03 --worktree ../invoicing-billing-w1.1 --branch build/billing-w1.1
+    likely to touch the same files as W1.3
+  W1.2 conductor, billing (aggregate Customer)
+    #US2.01 skeleton "Customer"
+    on the trunk, by the conductor
+  ...
+Wave 2
+  W2.3 billing (aggregate unknown)
+    #US2.03 slice "Overdue invoices", after #US1.02
+    npx ddd-ts-kit worker-scope billing --base origin/main --rows US2.03 --worktree ../invoicing-billing-w2.3 --branch build/billing-w2.3
+    unknown whether it touches the files of W2.1, W2.2: no aggregate named
+Merge order: W1.1, W1.2, W1.3, W2.1, W2.2, W2.3
+```
+
+A plan that cannot be ordered gets no wave: a cycle in `Depends on`, a dependency on an id no row
+carries, a row without owner or an id two rows carry is reported alone, and the command exits 1.
+
+Between two merges, `npx ddd-ts-kit status` says of each row not done whether it is ready on the
+trunk (every dependency done), ready on a branch (each dependency not done is a row briefed to a
+worker whose worktree has commits ahead of its base, read from its `.ddd-ts-kit/worker.json`), or
+waiting, with the ids it waits for:
+
+```text
+    #US1.04 billing slice "Pay invoice" (owner billing, depends on US1.02): ready on a branch, once #US1.02 merges
+    #US2.02 billing slice "Register customer" (owner billing, depends on US2.01): waits for #US2.01
+```
+
 ## Merge order
 
 1. **The bootstrap**, alone, first.
