@@ -23,5 +23,5 @@ paths:
 - Coverage is a floor per context and layer, read from `coverage` in `ddd-ts-kit.config.json` and held by `npm run verify` (`npm run test:coverage`): a layer under its threshold gets the test that is missing. No `exclude` in the runner config, no `v8 ignore` or `istanbul ignore` comment without `-- ADR-NNNN: <reason>` (`test/coverage-governed`); a rate proves that code ran, never that a test asserts anything.
 - An `it.todo` left by the generator names a behaviour still to prove: replace it by a real test, do not delete it. `npx ddd-ts-kit todo <context>` lists what remains.
 - A test never asserts on a private field; it observes results, recorded events and what the fakes received.
-- `test/e2e/` (project root) drives the whole application through HTTP with generated, seeded data, never reads the database, and asserts the trace of a request with `expectSpanTree(storyOf(trace), [...])`.
+- `test/e2e/` (project root) drives the whole application through HTTP with generated, seeded data, never reads the database, and asserts the trace of a request with `expectSpanTree(storyOf(trace), [...])`. What happens after the answer (the outbox relayed, the handlers it reaches) is asserted once `await application.settled()` has resolved, never after a fixed delay.
 - Write tests with `/ddd-ts-kit:testing`; scaffold with `npx ddd-ts-kit generate builder|e2e`.

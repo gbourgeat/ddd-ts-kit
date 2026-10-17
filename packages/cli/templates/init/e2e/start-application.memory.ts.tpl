@@ -7,7 +7,7 @@ import { InMemoryCachePurger, PurgingPublisher, type IntegrationEventSubscriber 
 {{#unless httpCache.varnish}}
 import type { IntegrationEventSubscriber } from '@ddd-ts-kit/kernel';
 {{/unless}}
-import { createHttpClient, type HttpClient } from '@ddd-ts-kit/testing/e2e';
+import { createHttpClient, settled, type HttpClient, type SettledOptions } from '@ddd-ts-kit/testing/e2e';
 {{#if authz.rebac}}
 import { relationTuples } from '{{alias.platform}}/auth/relation-tuples{{alias.ext}}';
 {{/if}}
@@ -60,6 +60,25 @@ export interface RunningApplication {
 
   /** A client presenting the credential of `actor`; `client` itself presents none. */
   as(actor: TestActor): Promise<HttpClient>;
+
+  /**
+{{#if events.outbox}}
+   * Resolves once the work the requests so far started has settled: every event stored in the
+   * outbox relayed, and the handlers it reached run, with what they stored in turn. Await it
+   * before asserting what happens after the answer, instead of waiting a fixed time; it fails
+   * after `timeoutMs` (2 seconds by default) naming what is still pending, and how much of it
+   * failed and waits for a retry (a handler that throws, an adapter that cannot be reached).
+{{#if broker.provided}}
+   * With a broker server (its URL in the environment), relayed means handed to the broker: what
+   * its consumers do next is awaited with `collectEvents(application.events, [...]).waitFor(...)`.
+{{/if}}
+{{/if}}
+{{#unless events.outbox}}
+   * Resolves once the work the requests so far started has settled. Without an outbox, events go
+   * out with the commit and their handlers are awaited before the answer: nothing is left then.
+{{/unless}}
+   */
+  settled(options?: SettledOptions): Promise<void>;
 {{#if authz.rebac}}
 
   /** Stores a relationship, as the application does when an element is created or shared. */
@@ -93,6 +112,7 @@ export async function startApplication(): Promise<RunningApplication> {
 {{#if authz.rebac}}
     relate: (tuple) => relationTuples.write([tuple]),
 {{/if}}
+    settled: (options) => current.settled(options),
     reset: async () => {
       await current.close();
       current = await start(credentials);
@@ -107,6 +127,8 @@ interface Started {
 {{#if httpCache.varnish}}
   readonly purges: InMemoryCachePurger;
 {{/if}}
+
+  settled(options?: SettledOptions): Promise<void>;
 
   close(): Promise<void>;
 }
@@ -155,6 +177,13 @@ async function start(credentials: Credentials): Promise<Started> {
 {{#if httpCache.varnish}}
     purges,
 {{/if}}
+{{#if events.outbox}}
+    settled: (options) => settled({ outbox: () => persistence.outbox.stats() }, options),
+{{/if}}
+{{#unless events.outbox}}
+    // Without an outbox nothing runs after the answer: the events went out with the commit.
+    settled: (options) => settled({}, options),
+{{/unless}}
     close: async () => {
       await server.close();
 {{#if events.outbox}}

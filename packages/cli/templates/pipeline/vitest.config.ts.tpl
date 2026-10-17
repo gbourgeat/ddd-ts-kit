@@ -45,7 +45,13 @@ export default defineConfig(({ mode }) => ({
           name: INTEGRATION_MODE,
           include: [INTEGRATION_SPECS],
           exclude: NOT_AFFECTED,
+{{#if persistence.hasDatabase}}
+          globalSetup: ['test/support/test-database-template.ts'],
+          // A hook opens a copy of the PostgreSQL cluster the global setup initialised once per run and creates its tables, or reaches a server: under coverage on a busy machine it can outlast the default 10 seconds.
+{{/if}}
+{{#unless persistence.hasDatabase}}
           // A hook opens the test database (PGlite started and its tables created, or a server reached): under coverage on a busy machine it outlasts the default 10 seconds.
+{{/unless}}
           hookTimeout: 60_000,
         },
       },

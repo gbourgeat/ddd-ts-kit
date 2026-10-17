@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:fd22f8be3fca7153 -->
+<!-- translation-of: README.md sha256:0a3b1e8636b7ce36 -->
 
 # @ddd-ts-kit/testing
 
@@ -17,7 +17,7 @@ npm i -D @ddd-ts-kit/testing
 |---|---|---|
 | `@ddd-ts-kit/testing` | *builders*, scénarios, `createTestBuses`, `InMemoryRepository` | aucun runner, aucune bibliothèque |
 | `@ddd-ts-kit/testing/faker` | des données générées pour les *builders* | `@faker-js/faker` (*peer* optionnel) |
-| `@ddd-ts-kit/testing/e2e` | client HTTP, `eventually`, `collectEvents` | Node seulement : aucun framework HTTP, aucun conteneur |
+| `@ddd-ts-kit/testing/e2e` | client HTTP, `settled`, `eventually`, `collectEvents` | Node seulement : aucun framework HTTP, aucun conteneur |
 | `@ddd-ts-kit/testing/contracts` | les suites de contrat des ports du noyau, `ContractSuite` pour en écrire une autre | le runner que vous passez |
 | `@ddd-ts-kit/testing/vitest` | `decorators()`, le *plugin* Vite qui permet à Vitest d'exécuter les décorateurs standard, et `decoratorCoverage()` | Node seulement ; exécute le `tsc` du projet |
 | `@ddd-ts-kit/testing/coverage` | `governedCoverage()`, `governedJestCoverage()`, `unaffectedContexts()` : la couverture que mesure le runner et son plancher, lus dans `ddd-ts-kit.config.json` | Node seulement |
@@ -646,10 +646,43 @@ afterAll(() => server.close());
 | `client.post(path, body, { headers })`, `client.withHeaders(headers)` | des en-têtes pour un appel, ou un client pour un autre appelant |
 | `expectStatus(response, 201)` | rend la réponse, ou échoue en montrant le corps, où l'API dit pourquoi |
 | `expectProblem(response, { status, code, facts })` | vérifie une réponse RFC 9457 `application/problem+json` et rend le document ; `code` et `facts` sont optionnels, et `facts` nomme les faits que le document doit exposer, tels que JSON les écrit (une date est son texte ISO) |
+| `settled(sources, { timeoutMs = 2000, intervalMs = 10 })` | se résout dès que chaque source ne compte plus de travail en attente ; quand le temps est écoulé, échoue en nommant chaque source qui attend encore, combien elle en tient et combien en a échoué |
 | `eventually(assertion, { timeoutMs = 2000, intervalMs = 20 })` | réessaie jusqu'à ce que l'assertion passe ; quand le temps est écoulé, échoue en citant la dernière erreur |
 | `collectEvents(subscriber, types)` | enregistre les événements d'intégration publiés : `received(type?)`, `waitFor(type, predicate?, options?)`, `stop()` |
 
 Les assertions sont celles de `node:assert` : elles se lisent de la même façon sous n'importe quel runner.
+
+**Attendre ce qu'une requête HTTP a laissé derrière elle, jamais un temps fixe.** Ce qui se passe
+après la réponse (l'outbox relayée, les gestionnaires qu'elle atteint, ce qu'ils enregistrent à leur
+tour) s'attend avec `settled`, puis se vérifie aussitôt. Chaque source compte son travail en attente,
+du moment où il commence jusqu'à ce qu'il soit fini : les `stats()` d'un store de l'outbox sont un
+tel compte, puisqu'un enregistrement reste en attente pendant que le relais le publie et que les
+gestionnaires qu'il atteint s'exécutent. Le `test/e2e/support/start-application.ts` d'un projet
+généré l'offre en `application.settled()`, sur l'outbox de sa base de données.
+
+<!-- checked sample -->
+```ts
+import type { OutboxStore } from '@ddd-ts-kit/events';
+import { collectEvents, expectStatus, settled, type HttpClient } from '@ddd-ts-kit/testing/e2e';
+import type { IntegrationEventSubscriber } from '@ddd-ts-kit/kernel';
+import { expect } from 'vitest';
+
+// Du projet : le client de l'application, son outbox et l'endroit où ses événements s'entendent.
+declare const client: HttpClient;
+declare const outbox: OutboxStore;
+declare const events: IntegrationEventSubscriber;
+
+const issued = collectEvents(events, ['billing.invoice.issued']);
+
+expectStatus(await client.post('/invoices', { customerId: 'customer-1' }), 201);
+await settled({ outbox: () => outbox.stats() }); // "Still pending after 2000 ms: outbox: 1 (1 failed, waiting for a retry)"
+
+expect(issued.received('billing.invoice.issued')).toHaveLength(1);
+```
+
+`settled` ne connaît que les sources qu'on lui donne : ce qu'un *broker* livre à ses consommateurs
+après que le relais le lui a remis s'attend avec `collectEvents(...).waitFor`, et une projection lue
+par l'API avec `eventually`.
 
 **Préparer par l'API.** Un test de bout en bout crée son état comme le ferait un client, jamais en
 écrivant des lignes. Le *builder* qui donne l'agrégat aux tests unitaires donne ici le contenu de la

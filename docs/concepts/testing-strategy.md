@@ -347,6 +347,18 @@ The same builders serve every level. End-to-end tests create their state through
 API, use generated data with a seed printed on failure so a failing run can be replayed, and
 assert what a client observes (responses, published events), never the database directly.
 
+Adapter and end-to-end specs of a generated project run on PostgreSQL in process (PGlite). With
+Vitest, a global setup (`test/support/test-database-template.ts`) starts it once per run and saves
+its initialised cluster; each spec opens a copy of it instead of running an initdb of its own, the
+slow part of starting, so that a busy machine no longer makes the hook that opens the database
+outlast its timeout. Each spec still creates its tables on that copy: the code of the contexts that
+creates them stays run, and measured, as before. With Jest, each spec still initialises its own.
+
+What happens after the answer (the outbox relayed, the handlers it reaches, what they store in
+turn) is awaited with `await application.settled()`, then asserted at once. A fixed delay is slow
+when long and flaky when short; `settled` resolves as soon as the outbox holds no pending event,
+and when the time is up it fails naming what is still pending and how much of it failed.
+
 ## What to test where
 
 | Behaviour | Level | Why there |
@@ -442,7 +454,9 @@ test: { coverage: { provider: 'v8', ...governedCoverage(mode) } } // from @ddd-t
   being adopted, or a third-party SDK with no seam, may justify a mock; make it a recorded
   decision rather than a habit.
 - **End-to-end tests of eventual behaviour are slower and need care.** They wait for an
-  outcome instead of sleeping, and a badly bounded wait makes a flaky test.
+  outcome instead of sleeping, and a badly bounded wait makes a flaky test. `settled` counts
+  what the outbox holds: what a broker server delivers to its consumers afterwards is awaited
+  with `collectEvents(...).waitFor`, and a projection read through the API with `eventually`.
 - **No performance, load or security testing** is part of this strategy, and no consumer-driven
   contract testing between separately deployed services: the generated OpenAPI and AsyncAPI
   documents with drift checks hold the contracts instead. After extracting a service, consider

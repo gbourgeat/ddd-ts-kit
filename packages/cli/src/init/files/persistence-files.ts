@@ -1,6 +1,8 @@
 import type { Config } from '../../config/index.js';
 import type { InitFile } from './init-file.js';
+import { WITH_DATABASE } from '../../stack/with-database.js';
 import { platformFile } from './platform-file.js';
+import { when } from './when.js';
 
 type Variants = readonly (readonly [file: string, variant?: string])[];
 
@@ -60,12 +62,16 @@ const TOOLING: Readonly<Record<string, InitFile[]>> = {
 };
 
 export function persistenceFiles(config: Config): InitFile[] {
-  const { orm } = config.stack;
+  const { orm, tests } = config.stack;
   const files = (PERSISTENCE[orm] ?? []).filter(([file]) => file !== INERT || composesWithoutConnecting(config));
 
   return [
     ...files.map(([file, variant]) => platformFile(config, `database/${file}`, variant)),
     ...(TOOLING[orm] ?? []),
+    // The global setup of Vitest that saves the test database once per run, for each spec to open a copy of it.
+    ...when(tests === 'vitest' && WITH_DATABASE.includes(orm), [
+      ['test/support/test-database-template.ts', 'init/platform/database/test-database-template.ts.tpl'],
+    ]),
   ];
 }
 

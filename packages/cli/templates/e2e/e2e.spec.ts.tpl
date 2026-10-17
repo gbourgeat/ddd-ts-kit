@@ -75,7 +75,7 @@ describe('{{name.title}}, end to end', () => {
     });
 {{/unless}}
 
-    // Exact on names and structure, and kept before the tests whose request leaves work behind (a relay still publishing would add its spans here). Once "{{name.words}}" announces a fact, its spans come after the save, under `unit-of-work before-commit`: `domain-event <name>`, `handler <Class>`, `outbox append <type>`, then, awaited with `eventually`, `publish <type>` and `process <consumer>` with the command it sends.
+    // Exact on names and structure, and kept before the tests whose request leaves work behind (a relay still publishing would add its spans here). Once "{{name.words}}" announces a fact, its spans come after the save, under `unit-of-work before-commit`: `domain-event <name>`, `handler <Class>`, `outbox append <type>`, then, once `application.settled()` has resolved inside `traceOf`, `publish <type>` and `process <consumer>` with the command it sends.
     expectSpanTree(storyOf(trace), [
       {{e2e.tree}}
     ]);
@@ -99,7 +99,7 @@ describe('{{name.title}}, end to end', () => {
     expectStatus(response, {{e2e.status}});
   });
 
-  // TODO(domain): replace each entry below by a test of what a client or another context observes: responses, then the integration events (`collectEvents(application.events, [...])` and `eventually(...)` for what happens after the answer). Never read the database.
+  // TODO(domain): replace each entry below by a test of what a client or another context observes: responses, then the integration events (`collectEvents(application.events, [...])`, asserted once `await application.settled()` has resolved, for what happens after the answer; never a fixed delay). Never read the database.
   it.todo('lets a client observe the outcome of "{{name.words}}" through the API');
   it.todo('publishes the integration events other contexts rely on');
   it.todo('answers the documented problem for each business refusal');

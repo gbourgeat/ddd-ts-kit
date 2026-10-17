@@ -1,3 +1,6 @@
+{{#if tests.vitest}}
+import { openAsBlob } from 'node:fs';
+{{/if}}
 import { PGlite } from '@electric-sql/pglite';
 import { PGLiteSocketServer } from '@electric-sql/pglite-socket';
 import type { DataSource } from 'typeorm';
@@ -24,7 +27,7 @@ export function openTestDatabase(url?: string): Promise<TestDatabase> {
 }
 
 async function openInProcess(): Promise<TestDatabase> {
-  const engine = await PGlite.create();
+  const engine = await {{#if tests.vitest}}startedPostgres(){{/if}}{{#if tests.jest}}PGlite.create(){{/if}};
   const server = new PGLiteSocketServer({ db: engine, host: '127.0.0.1', port: 0, maxConnections: 10 });
 
   await server.start();
@@ -48,6 +51,20 @@ async function openInProcess(): Promise<TestDatabase> {
   return { persistence, reset: () => truncateAll(dataSource), close };
 }
 
+{{#if tests.vitest}}
+/**
+ * PostgreSQL in process: a copy of the cluster the global setup of the run initialised once
+ * (test/support/test-database-template.ts), which spares each spec the initdb of its own; without
+ * one (a run that names no global setup), a cluster initialised here. The tables are created on it
+ * by the caller, every time, as the first migration creates them.
+ */
+async function startedPostgres(): Promise<PGlite> {
+  const template = process.env['TEST_DATABASE_TEMPLATE'];
+
+  return PGlite.create(template === undefined ? {} : { loadDataDir: await openAsBlob(template) });
+}
+
+{{/if}}
 async function openServer(url: string): Promise<TestDatabase> {
   const dataSource = createDataSource(url);
 

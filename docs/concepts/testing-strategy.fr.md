@@ -1,5 +1,5 @@
 [English](testing-strategy.md) · **Français**
-<!-- translation-of: testing-strategy.md sha256:85d319b778894544 -->
+<!-- translation-of: testing-strategy.md sha256:e2c50bbdc326cbb5 -->
 
 # Stratégie de test
 
@@ -358,6 +358,20 @@ publique, utilisent des données générées avec une graine affichée en cas d'
 exécution en échec puisse être rejouée, et vérifient ce qu'un client observe (réponses, événements
 publiés), jamais directement la base de données.
 
+Les *specs* d'adaptateur et de bout en bout d'un projet généré s'exécutent sur PostgreSQL dans le
+processus (PGlite). Avec Vitest, une mise en place globale (`test/support/test-database-template.ts`)
+le démarre une fois par exécution et enregistre son cluster initialisé ; chaque *spec* en ouvre une
+copie au lieu de lancer son propre initdb, la partie lente du démarrage, si bien qu'une machine
+chargée ne fait plus dépasser son délai au *hook* qui ouvre la base. Chaque *spec* crée encore ses
+tables sur cette copie : le code des contextes qui les crée reste exécuté, et mesuré, comme avant.
+Avec Jest, chaque *spec* initialise encore le sien.
+
+Ce qui se passe après la réponse (l'outbox relayée, les gestionnaires qu'elle atteint, ce qu'ils
+enregistrent à leur tour) s'attend avec `await application.settled()`, puis se vérifie aussitôt.
+Un délai fixe est lent quand il est long et instable quand il est court ; `settled` se résout dès
+que l'outbox ne tient plus aucun événement en attente, et quand le temps est écoulé il échoue en
+nommant ce qui attend encore et combien en a échoué.
+
 ## Quoi tester où
 
 | Comportement | Niveau | Pourquoi là |
@@ -459,6 +473,9 @@ test: { coverage: { provider: 'v8', ...governedCoverage(mode) } } // depuis @ddd
   faites-en une décision enregistrée plutôt qu'une habitude.
 - **Les tests de bout en bout d'un comportement à terme sont plus lents et demandent du soin.** Ils
   attendent un résultat au lieu de dormir, et une attente mal bornée fait un test instable.
+  `settled` compte ce que tient l'outbox : ce qu'un *broker* livre ensuite à ses
+  consommateurs s'attend avec `collectEvents(...).waitFor`, et une projection lue par l'API avec
+  `eventually`.
 - **Aucun test de performance, de charge ou de sécurité** ne fait partie de cette stratégie, ni
   aucun test de contrat piloté par les consommateurs entre des services déployés séparément : les
   documents OpenAPI et AsyncAPI générés, avec leurs vérifications de dérive, tiennent les contrats à

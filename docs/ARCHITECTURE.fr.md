@@ -1,5 +1,5 @@
 [English](ARCHITECTURE.md) · **Français**
-<!-- translation-of: ARCHITECTURE.md sha256:68aaef7c67c153d1 -->
+<!-- translation-of: ARCHITECTURE.md sha256:7fbfeb50908a868f -->
 
 # Référence de l'architecture
 
@@ -192,8 +192,8 @@ L'arborescence est **fermée** : un répertoire qui n'est pas listé ici est une
 conception, ajoutée à `extraDirectories` dans la config avec une raison, pas créée au cas par
 cas. Les niveaux nommés `<use-case>` sont ouverts, de même que tout ce qui se trouve sous
 `test/unit/`, `test/integration/`, `test/fakes/` et `test/builders/`. Les *specs* de bout en bout
-(`test/e2e/`) et le test d'architecture (`test/architecture/`) vivent à la racine du projet, hors
-des contextes.
+(`test/e2e/`), le test d'architecture (`test/architecture/`) et la mise en place globale des
+exécutions de test (`test/support/`) vivent à la racine du projet, hors des contextes.
 
 **Un concept sans rôle à lui a quand même sa place.** Le domaine n'a pas de répertoire
 `types/`, `functions/` ni `utils/` : chacun accueillerait des concepts que personne n'a nommés.

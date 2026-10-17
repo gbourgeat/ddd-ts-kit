@@ -16,7 +16,7 @@ npm i -D @ddd-ts-kit/testing
 |---|---|---|
 | `@ddd-ts-kit/testing` | builders, scenarios, `createTestBuses`, `InMemoryRepository` | no runner, no library |
 | `@ddd-ts-kit/testing/faker` | generated data for builders | `@faker-js/faker` (optional peer) |
-| `@ddd-ts-kit/testing/e2e` | HTTP client, `eventually`, `collectEvents` | Node only: no HTTP framework, no container |
+| `@ddd-ts-kit/testing/e2e` | HTTP client, `settled`, `eventually`, `collectEvents` | Node only: no HTTP framework, no container |
 | `@ddd-ts-kit/testing/contracts` | contract suites of the kernel ports, `ContractSuite` to write another | the runner you pass |
 | `@ddd-ts-kit/testing/vitest` | `decorators()`, the Vite plugin that lets Vitest run standard decorators, and `decoratorCoverage()` | Node only; runs the `tsc` of the project |
 | `@ddd-ts-kit/testing/coverage` | `governedCoverage()`, `governedJestCoverage()`, `unaffectedContexts()`: the coverage the runner measures and its floor, read from `ddd-ts-kit.config.json` | Node only |
@@ -640,10 +640,42 @@ afterAll(() => server.close());
 | `client.post(path, body, { headers })`, `client.withHeaders(headers)` | headers for one call, or a client for another caller |
 | `expectStatus(response, 201)` | hands the response back, or fails showing the body, where the API says why |
 | `expectProblem(response, { status, code, facts })` | asserts an RFC 9457 `application/problem+json` answer and returns the document; `code` and `facts` are optional, and `facts` names the facts the document must expose, as JSON writes them (a date is its ISO text) |
+| `settled(sources, { timeoutMs = 2000, intervalMs = 10 })` | resolves as soon as every source counts no pending work; when the time is up, fails naming each source still pending, how much it holds and how much of it failed |
 | `eventually(assertion, { timeoutMs = 2000, intervalMs = 20 })` | retries until the assertion passes; when the time is up, fails quoting the last error |
 | `collectEvents(subscriber, types)` | records published integration events: `received(type?)`, `waitFor(type, predicate?, options?)`, `stop()` |
 
 The assertions are those of `node:assert`: they read the same under any runner.
+
+**Wait for what a request left behind, never a fixed time.** What happens after the answer (the
+outbox relayed, the handlers it reaches, what they store in turn) is awaited with `settled`,
+then asserted at once. Each source counts its pending work, from the moment it is started until
+it has finished: the `stats()` of an outbox store are such a count, since a record stays pending
+while the relay publishes it and the handlers it reaches run. The `test/e2e/support/start-application.ts`
+of a generated project offers it as `application.settled()`, on the outbox of its database.
+
+<!-- checked sample -->
+```ts
+import type { OutboxStore } from '@ddd-ts-kit/events';
+import { collectEvents, expectStatus, settled, type HttpClient } from '@ddd-ts-kit/testing/e2e';
+import type { IntegrationEventSubscriber } from '@ddd-ts-kit/kernel';
+import { expect } from 'vitest';
+
+// From the project: the client of the application, its outbox and where its events are heard.
+declare const client: HttpClient;
+declare const outbox: OutboxStore;
+declare const events: IntegrationEventSubscriber;
+
+const issued = collectEvents(events, ['billing.invoice.issued']);
+
+expectStatus(await client.post('/invoices', { customerId: 'customer-1' }), 201);
+await settled({ outbox: () => outbox.stats() }); // "Still pending after 2000 ms: outbox: 1 (1 failed, waiting for a retry)"
+
+expect(issued.received('billing.invoice.issued')).toHaveLength(1);
+```
+
+`settled` knows only the sources it is given: what a broker server delivers to its consumers
+after the relay handed it over is awaited with `collectEvents(...).waitFor`, and a projection
+read through the API with `eventually`.
 
 **Arrange through the API.** An end-to-end test creates its state the way a client would,
 never by writing rows. The builder that gives the aggregate to unit tests gives the request

@@ -1,3 +1,6 @@
+{{#if tests.vitest}}
+import { openAsBlob } from 'node:fs';
+{{/if}}
 import { PGlite } from '@electric-sql/pglite';
 import { is, sql, SQL } from 'drizzle-orm';
 import { getTableConfig, PgDialect, PgTable } from 'drizzle-orm/pg-core';
@@ -30,7 +33,7 @@ export function openTestDatabase(url?: string): Promise<TestDatabase> {
 }
 
 async function openInProcess(): Promise<TestDatabase> {
-  const client = new PGlite();
+  const client = await {{#if tests.vitest}}startedPostgres(){{/if}}{{#if tests.jest}}PGlite.create(){{/if}};
 
 {{#if audit.on}}
   for (const statement of [...tables().flatMap(createStatements), ...auditGuardStatements(schema.AUDIT_SCHEMA)]) {
@@ -52,6 +55,20 @@ async function openInProcess(): Promise<TestDatabase> {
   };
 }
 
+{{#if tests.vitest}}
+/**
+ * PostgreSQL in process: a copy of the cluster the global setup of the run initialised once
+ * (test/support/test-database-template.ts), which spares each spec the initdb of its own; without
+ * one (a run that names no global setup), a cluster initialised here. The tables are created on it
+ * by the caller, every time, as the first migration creates them.
+ */
+async function startedPostgres(): Promise<PGlite> {
+  const template = process.env['TEST_DATABASE_TEMPLATE'];
+
+  return PGlite.create(template === undefined ? {} : { loadDataDir: await openAsBlob(template) });
+}
+
+{{/if}}
 async function openServer(url: string): Promise<TestDatabase> {
   const connection = connectToDatabase(url);
 
