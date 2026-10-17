@@ -1,5 +1,5 @@
 [English](testing-strategy.md) · **Français**
-<!-- translation-of: testing-strategy.md sha256:bf398bfccf866062 -->
+<!-- translation-of: testing-strategy.md sha256:e7f1a0ef50fbda6a -->
 
 # Stratégie de test
 
@@ -420,6 +420,17 @@ enregistrent à leur tour) s'attend avec `await application.settled()`, puis se 
 Un délai fixe est lent quand il est long et instable quand il est court ; `settled` se résout dès
 que l'outbox ne tient plus aucun événement en attente, et quand le temps est écoulé il échoue en
 nommant ce qui attend encore et combien en a échoué.
+
+L'acceptation d'une *story* est une *spec* de bout en bout écrite avant son code, à partir des
+critères de la *story* (`docs/architecture/stories/<story>.md`) :
+`test/acceptance/<story>.acceptance.spec.ts`, un scénario par critère, par l'API seulement. Chaque
+scénario s'exécute enveloppé dans `pending(...)` de `@ddd-ts-kit/testing/e2e`, qui passe tant
+qu'une assertion échoue et échoue dès que le scénario passe, ou s'arrête sur autre chose, si bien
+qu'un scénario qui attend son code ne cache jamais un scénario cassé.
+`ddd-ts-kit acceptance <story> --lock` enregistre ensuite une empreinte de chaque critère et de
+chaque scénario : un scénario changé alors que son critère ne l'est pas est signalé, jamais rendu
+plus facile à passer en silence. La *slice* qui satisfait un scénario retire son enveloppe ; la
+*story* se clôt quand il n'en reste aucune (`ddd-ts-kit acceptance <story> --gate passing`).
 
 ## Quoi tester où
 
