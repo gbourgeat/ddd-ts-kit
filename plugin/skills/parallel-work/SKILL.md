@@ -47,6 +47,10 @@ approved the split.
 
 ## 1. Decide whether it pays
 
+Work cut by user story rather than by context is `/ddd-ts-kit:story`, run by the owner, one
+session and one terminal per story: it reuses the worktrees, the briefings and the merge rules
+below. This skill splits one plan between workers of different contexts.
+
 Parallel work pays when at least two contexts each have three or more ready slices and
 their contracts are settled. It does not when: there is one context; a boundary or a payload
 is still debated; the slices form one chain; the walking skeleton is not merged yet (build

@@ -23,6 +23,15 @@ const CONFIG = 'ddd-ts-kit.config.json';
 const KIT_VERSION = '0.26.0';
 const PLAN = 'docs/architecture/plan.md';
 const WORKER_SCOPE = '.ddd-ts-kit/worker.json';
+// The worktree of a story one session takes to its pull request; its code waits for the build gate.
+const STORY_SCOPE = '.ddd-ts-kit/story.json';
+// What the build gate of a story reads: when none of them changed, a gate once met stays met.
+const STORY_INPUTS = [
+  'docs/architecture/slices.md',
+  'docs/architecture/stories',
+  'docs/architecture/reviews',
+  'test/acceptance',
+];
 // The report a worker keeps current after each commit and before it ends, ignored by git: what the conductor reads when it stops.
 const WORKER_REPORT = '.ddd-ts-kit/report.md';
 const WORKER_AGENT = 'context-builder';
@@ -292,6 +301,7 @@ function verdictOn({ file, written, replaced }, input) {
   }
   const refusal =
     acceptanceReason(project, input, { file, written, replaced }) ??
+    storyCodeReason(project, file) ??
     generatedFileReason(project, file) ??
     testWriterScopeReason(project, file, input) ??
     (isUnwrapping(project, file, input) ? undefined : workerScopeReason(project, file, input)) ??
@@ -318,7 +328,8 @@ async function preBash(input) {
     (await landingReason(input, command)) ??
     oneSideMergeReason(project, input, command) ??
     (await acceptanceLockingReason(input, command)) ??
-    (await acceptanceFilesShellReason(input, command));
+    (await acceptanceFilesShellReason(input, command)) ??
+    (await storyGeneratorReason(project, input, command));
   if (preparing) {
     decide(input, project.mode === 'advise' ? 'ask' : 'deny', preparing);
     return;
@@ -427,11 +438,37 @@ function stop(input) {
   if (errors.length > 0) {
     return stopAlreadyRefused(project, input, errors) ? undefined : blockStop(errors);
   }
+  const unfinished = unfinishedStoryReason(project, input);
+  if (unfinished) {
+    return emit({ decision: 'block', reason: unfinished });
+  }
   const reminder = commitReminder(project, input, { repeat: false });
   // A warning shown to the user, never a block: the size of a commit is advice.
   if (reminder) {
     emit({ systemMessage: reminder });
   }
+}
+
+// The session of a story ends on its report: written once the pull request is open, or with what
+// blocks the story. Refused once for the same step, so that a session that cannot go on still stops.
+function unfinishedStoryReason(project, input) {
+  const story = readJson(join(project.root, STORY_SCOPE))?.story;
+  if (typeof story !== 'string' || !project.cli) {
+    return undefined;
+  }
+  const phases = runCli(project, ['story', story, '--json'], 8000);
+  const report = phases?.phases?.find(({ id }) => id === 'report');
+  if (!report || report.met) {
+    return undefined;
+  }
+  const key = createHash('sha256')
+    .update(`${project.root}\n${sessionOf(input)}\n${phases.next}`)
+    .digest('hex')
+    .slice(0, 24);
+  if (typeof input.stop_hook_active !== 'boolean' && alreadyRemembered(join(tmpdir(), `ddd-ts-kit-story-${key}`))) {
+    return undefined;
+  }
+  return `ddd-ts-kit: story ${story} is not finished. Next: ${phases.next} Go on without asking: a question now is a provisional decision, recorded in docs/architecture/stories/${story}.md. If something truly blocks the story, write its \`## Report\` there with what blocks it and every decision taken so far, then stop.`;
 }
 
 function remainingErrors(project) {
@@ -598,6 +635,7 @@ function projectBriefing(project, input) {
     ...(project.mode === 'off' ? [] : versionGap(project)),
     ...planPointer(project.root),
     ...workerNotice(project, input),
+    ...storyNotice(project),
     ...workersToResume(project),
   ];
   if (project.cli) {
@@ -662,6 +700,22 @@ function planPointer(root) {
 
   return [
     `Plan: ${PLAN} (resume with /ddd-ts-kit:start). Next: ${(next ?? 'not stated, read the plan').slice(0, 300)}`,
+  ];
+}
+
+// In the worktree of a story: the story, its phase and its next step, so that a session resumes it.
+function storyNotice(project) {
+  const story = readJson(join(project.root, STORY_SCOPE))?.story;
+  if (typeof story !== 'string' || project.mode === 'off' || !project.cli) {
+    return [];
+  }
+  const phases = runCli(project, ['story', story, '--json'], 6000);
+  if (!phases) {
+    return [`Story ${story}: run \`npx ddd-ts-kit story ${story}\` for where it stands.`];
+  }
+  const done = phases.phases.filter(({ met }) => met).map(({ title }) => title);
+  return [
+    `Story ${story} (skill ddd-ts-kit:story): ${done.length === 0 ? 'nothing done yet' : `done: ${done.join(', ')}`}. Next: ${phases.next ?? 'its pull request'}`,
   ];
 }
 
@@ -911,6 +965,74 @@ async function acceptanceLockingReason(input, command) {
     : undefined;
 }
 
+// In the worktree of a story, the code of a context waits until each row has its design review and
+// the acceptance is written and locked (`ddd-ts-kit story --gate build`); the glossary of a context
+// is part of the specification and stays open.
+function storyCodeReason(project, file) {
+  const path = projectPath(project, file);
+  if (!insideContexts(project, path) || /(^|\/)CONTEXT\.md$/.test(path)) {
+    return undefined;
+  }
+  return storyBuildReason(project);
+}
+
+async function storyGeneratorReason(project, input, command) {
+  if (!command.includes('generate') && !/\bg\b/.test(command)) {
+    return undefined;
+  }
+  shell = await import('./shell-commands.mjs');
+  const generating = kitInvocations(shell.simpleCommands(command, input.cwd ?? process.cwd())).some(
+    ({ subcommand, args }) =>
+      ['generate', 'g'].includes(subcommand) &&
+      args[0] !== undefined &&
+      !['acceptance', 'adr'].includes(args[0]) &&
+      !args.includes('--help') &&
+      !args.includes('--dry-run'),
+  );
+  return generating ? storyBuildReason(project) : undefined;
+}
+
+function storyBuildReason(project) {
+  const story = readJson(join(project.root, STORY_SCOPE))?.story;
+  if (typeof story !== 'string' || !project.cli) {
+    return undefined;
+  }
+  const cache = join(project.root, GUARD_STATE, 'story-gate.json');
+  const key = storyInputsKey(project);
+  if (readJson(cache)?.key === key) {
+    return undefined;
+  }
+  const gate = runCli(project, ['story', story, '--gate', 'build', '--json'], 4000);
+  if (gate === undefined || gate.met === true) {
+    if (gate?.met === true) {
+      writeState(cache, { key });
+    }
+    return undefined;
+  }
+  return `The code of story ${story} waits for its build gate: a design review section per row and the acceptance written and locked, before any code. Next: ${gate.next} (\`npx ddd-ts-kit story ${story}\` shows every phase).`;
+}
+
+// The size and the time of change of every file the build gate of a story reads.
+function storyInputsKey(project) {
+  const hash = createHash('sha256');
+  for (const input of STORY_INPUTS) {
+    for (const file of filesBelow(join(project.root, input))) {
+      const stat = statSync(file, { throwIfNoEntry: false });
+      hash.update(`${file}\0${stat?.size ?? ''}\0${stat?.mtimeMs ?? ''}\n`);
+    }
+  }
+  return hash.digest('hex');
+}
+
+function filesBelow(path) {
+  if (!isDirectory(path)) {
+    return existsSync(path) ? [path] : [];
+  }
+  return readdirSync(path)
+    .sort()
+    .flatMap((name) => filesBelow(join(path, name)));
+}
+
 function handWrittenRoleReason(project, file) {
   const path = projectPath(project, file);
   if (
@@ -974,15 +1096,17 @@ function commandDirectory(command, cwd) {
 // `worker-scope` adds a worktree and a branch: the conductor's to place, from the trunk. A sub-agent
 // reads a briefing (`--dry-run`) or where a worker stands (`--resume`): both create nothing.
 async function workerPlaceReason(input, command) {
-  if (!input.agent_type || !command.includes('worker-scope')) {
+  if (!input.agent_type || !/(?:worker|story)-scope/.test(command)) {
     return undefined;
   }
   shell = await import('./shell-commands.mjs');
   const preparing = kitInvocations(shell.simpleCommands(command, input.cwd ?? process.cwd())).some(
-    ({ subcommand, args }) => subcommand === 'worker-scope' && !args.some((arg) => /^--(?:dry-run|resume)\b/.test(arg)),
+    ({ subcommand, args }) =>
+      (subcommand === 'worker-scope' && !args.some((arg) => /^--(?:dry-run|resume)\b/.test(arg))) ||
+      (subcommand === 'story-scope' && !args.includes('--dry-run')),
   );
   return preparing
-    ? 'Only the conductor prepares the place of a worker: `worker-scope` adds a git worktree and a branch. A sub-agent reads a briefing with `worker-scope <context> --dry-run`, or where a worker stands with `--resume`, which create nothing; if a worker is missing, report it to the conductor.'
+    ? 'Only the conductor prepares the place of a worker or of a story: `worker-scope` and `story-scope` add a git worktree and a branch. A sub-agent reads a briefing with `worker-scope <context> --dry-run`, or where a worker stands with `--resume`, which create nothing; if a worker is missing, report it to the conductor.'
     : undefined;
 }
 

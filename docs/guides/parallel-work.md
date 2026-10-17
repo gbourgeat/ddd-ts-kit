@@ -703,6 +703,7 @@ small fraction of the total time and remove nearly every collision from the rest
 
 ## See also
 
+- [Story workflow](story-workflow.md): one session per user story, one story per terminal
 - [Team workflow](team-workflow.md)
 - [Commit discipline](commit-discipline.md)
 - [Methodology](methodology.md)

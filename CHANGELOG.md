@@ -6,6 +6,26 @@ list the pull requests behind it.
 
 ## Unreleased
 
+**One session takes one user story to its pull request, one story per terminal.** The new skill
+`/ddd-ts-kit:story <code>` (run by the owner) works in the worktree of the story: it asks every
+question at once, then without stopping writes `docs/architecture/stories/<code>.md` (statement,
+questions and answers, acceptance criteria, decisions), the rows of the story, a design review
+section per row in `docs/architecture/reviews/<code>.md` read by `architecture-reviewer`, the
+acceptance written and locked; it builds row by row with one `context-builder` agent confined to
+one context, merges the trunk in, reviews, verifies, writes `## Report` (each provisional
+decision, compromise and amendment) and opens the pull request. New commands:
+`ddd-ts-kit story-scope <code>` opens the worktree of a story on `story/<code>` (or finds it
+again), refuses a story open in another worktree and names the other open stories with the
+contexts they change; `ddd-ts-kit story [<code>] [--gate build|close]` says where a story stands,
+phase by phase, and its next step; `worker-scope <context> --here` briefs the next agent inside
+the worktree of a story, without a worktree of its own. In the worktree of a story, the guard of
+the plugin refuses any code of a context until `story --gate build` passes, says the phase at
+session start, and refuses once to end the session before the report. New guide:
+[story workflow](docs/guides/story-workflow.md).
+
+To move: update the plugin; `npx ddd-ts-kit init` adds the permissions of `story` and
+`story-scope`.
+
 **A story's acceptance tests are written, locked and run before its code, and a locked scenario
 changes only with its criterion.** A story states its acceptance criteria in
 `docs/architecture/stories/<story>.md` (`- AC1: ...` under `## Acceptance criteria`).

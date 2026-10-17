@@ -84,6 +84,9 @@ The slice is finished when `todo ordering` no longer lists anything of it.
 
 | Command or skill | Does | When | Produces | Then |
 |---|---|---|---|---|
+| `/ddd-ts-kit:story <code> [<statement>]` | one user story from its questions to a green pull request, in its own worktree: questions first, then specification, rows, design review, acceptance, build, review, report ([story workflow](story-workflow.md)) | once the project is bootstrapped, one terminal per story | the pull request of the story and its report | review the report, validate each provisional decision |
+| `npx ddd-ts-kit story-scope <code>` | the worktree of a story on `story/<code>`, its `.ddd-ts-kit/story.json` and its install; the other open stories and their contexts | the first step of the story skill | `../<project>-<code>` | `npx ddd-ts-kit story <code>` |
+| `npx ddd-ts-kit story [<code>] [--gate build\|close]` | the phases of a story and the next step; `build` opens its code, `close` its pull request | at any time in the worktree of a story | a short text, `--json` for data; exits 1 while the gate is not met | do the next step |
 | `/ddd-ts-kit:plan-slices` | the work as vertical slices, ordered, with their generator commands | step 6, after the bootstrap | `docs/architecture/slices.md` | `/ddd-ts-kit:use-case` |
 | `npx ddd-ts-kit cited --rows <id> --base origin/main` | the names the design of a row cites as code that the trunk does not have: removed by its history (with the commit and what replaced them), refused by the canonical tree, or close to a name it gained since the line was written; planned names stay silent | before building a row alone, before committing a design review | one line per name, `--json` for data; exits 0 | build on what the trunk has, and correct the document on the trunk |
 | `npx ddd-ts-kit generate acceptance <story>`, then `npx ddd-ts-kit acceptance <story> --lock` | the acceptance spec of a story, one `it.todo` per criterion of `docs/architecture/stories/<story>.md`, to write as scenarios wrapped in `pending(...)`; the lock records them, after which a scenario changes only with its criterion, and a criterion or a scenario whose criteria stayed only with a verdict of the `acceptance-judge` agent | before the first row of code of a story | `test/acceptance/<story>.acceptance.spec.ts` and its `.lock.json` | `npx ddd-ts-kit acceptance <story> --gate written`, then the rows |
@@ -252,6 +255,9 @@ Usage
   ddd-ts-kit acceptance [<story>] [--gate written|passing] [--lock]
   ddd-ts-kit worker-scope <context> [--base <ref>] [--rows <id,...>] [--worktree <path>] [--branch <name>] [--no-install] [--dry-run]
   ddd-ts-kit worker-scope <context> --resume [--worktree <path> | --branch <name>] [--fresh]
+  ddd-ts-kit worker-scope <context> --here [--rows <id,...>] [--base <ref>] [--dry-run]
+  ddd-ts-kit story-scope <story> [--base <ref>] [--worktree <path>] [--branch <name>] [--no-install] [--dry-run]
+  ddd-ts-kit story [<story>] [--gate build|close]
   ddd-ts-kit verify-slice <context> --since <git-ref>
   ddd-ts-kit cited [<context>] [--rows <id,...>] [--base <ref>] [--removed-since <ref>]
   ddd-ts-kit verify-merge [<commit>] [--since <git-ref>] [--theirs <git-ref>] [--base <commit>] [--warn]
@@ -375,6 +381,21 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
                    next; a worktree it creates gets the clean install of the package manager (npm ci), its
                    time in the notes, unless --no-install; an existing worktree or branch that does not
                    contain the base is refused, with the merge-trunk that brings it in
+  --here           worker-scope in the worktree of a story (.ddd-ts-kit/story.json): writes the scope of the
+                   next agent in place, its base the base of the story, and prints its briefing; no
+                   worktree, branch or install of its own; the agents of a story run one after the other
+  story-scope      the worktree of one story, ../<project>-<story> on story/<story> cut from --base (by default
+                   the current branch, refused from the worktree of a story), its .ddd-ts-kit/story.json and
+                   its clean install; an existing one is kept and the story resumes there; refused when the
+                   story is open in another worktree; names the other open stories and the contexts their
+                   rows change
+  story            where a story stands, phase by phase: its specification and criteria
+                   (docs/architecture/stories/<story>.md), its rows in slices.md, a design review section
+                   per row not done (docs/architecture/reviews/<story>.md, ## #<id>), its acceptance written
+                   and locked, its rows done, its acceptance passing, its ## Report; and the next step; in
+                   the worktree of a story, the story is its own; --gate build exits 1 until the first four
+                   are met (the code may start: the guard of the plugin opens the contexts), --gate close
+                   until all are
   --resume         worker-scope reads where the stopped worker of the context stands (its rows by their
                    Slice: trailer, the files of the row under way, the markers, its last verify-slice, its
                    report, its agent as the guard recorded it) and prints the message that resumes its agent

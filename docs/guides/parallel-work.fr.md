@@ -1,5 +1,5 @@
 [English](parallel-work.md) · **Français**
-<!-- translation-of: parallel-work.md sha256:21f320dffb8d3f2f -->
+<!-- translation-of: parallel-work.md sha256:d0e4e1bec0aef181 -->
 
 # Travailler en parallèle sans collisions
 
@@ -762,6 +762,7 @@ reste.
 
 ## Voir aussi
 
+- [Parcours d'une story](story-workflow.fr.md) : une session par *user story*, une *story* par terminal
 - [Travailler en équipe](team-workflow.fr.md)
 - [La discipline des commits](commit-discipline.fr.md)
 - [Méthodologie](methodology.fr.md)
