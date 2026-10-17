@@ -82,6 +82,7 @@ import { testNoMocks } from '../rules/test-no-mocks.js';
 import { testSpecRequired } from '../rules/test-spec-required.js';
 import { tracingPlatformOnly } from '../rules/tracing-platform-only.js';
 import { treeClosed } from '../rules/tree-closed.js';
+import { treeDocumentedPaths } from '../rules/tree-documented-paths.js';
 import { treeContextDoc } from '../rules/tree-context-doc.js';
 
 /** The rules of docs/ARCHITECTURE.md section 3 this checker holds, `config/valid` aside: it needs their ids. */
@@ -96,6 +97,7 @@ export const ARCHITECTURE_RULES: readonly Rule[] = [
   contextNoCycle,
   treeClosed,
   treeContextDoc,
+  treeDocumentedPaths,
   namingSuffix,
   namingOneConceptPerFile,
   namingSearchNotList,

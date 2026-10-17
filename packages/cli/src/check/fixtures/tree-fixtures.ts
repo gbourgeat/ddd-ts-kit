@@ -236,4 +236,23 @@ export const TREE_FIXTURES: readonly Fixture[] = [
       [POLICY]: `${DECLARED.policy}\n@Policy(billingPermissions['invoice.issue'], { name: 'billing.only-accountant-issues' })\nclass OnlyAccountantIssuesPolicy {}\n`,
     }),
   },
+  {
+    ruleId: 'tree/documented-paths',
+    name: 'a plan citing canonical places, a file still to create, a line number and paths outside the contexts',
+    expect: 'pass',
+    files: project({
+      'docs/architecture/slices.md':
+        '# Slices\n\nAdd `src/contexts/billing/application/ports/return-basis-reader.port.ts` and fill `src/contexts/billing/domain/aggregates/invoice.aggregate.ts:42`, then `src/platform/auth/roles.ts` and `npm test`.\n',
+      'docs/architecture/reviews/billing.md': 'See `src/contexts/billing/infrastructure/persistence/`.\n',
+    }),
+  },
+  {
+    ruleId: 'tree/documented-paths',
+    name: 'a design note naming a directory the canonical tree refuses',
+    expect: { file: 'docs/architecture/reviews/billing.md' },
+    files: project({
+      'docs/architecture/reviews/billing.md':
+        '# Review\n\nMove the rule to `src/contexts/billing/application/services/return-basis.service.ts`.\n',
+    }),
+  },
 ];

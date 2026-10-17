@@ -12,6 +12,11 @@ contexts/billing/billing.declarations.ts   // declared style only`,
     bad: `contexts/billing/ without CONTEXT.md, or with "## Classification" saying generic while the config says core`,
     good: `## Purpose, ## Classification, ## Ubiquitous language, ## Aggregates, ## Published events, ## Relationships`,
   },
+  'tree/documented-paths': {
+    why: 'A plan, a design note or a review of docs/architecture is read by the next person or agent before the code. When a rule moved a file (a service of application/services became a port), a document that still names the old place sends its reader to a design the code no longer has, and a worker may build it again. Each path of a context written as code in a Markdown file of docs/architecture is judged as tree/closed judges a file: its directories and the file itself must have a place in the canonical tree. A path that does not exist yet is not reported: a plan names files to create. It is a warning.',
+    bad: `docs/architecture/design-review.md: "add \`src/contexts/billing/application/services/return-basis.service.ts\`"`,
+    good: `docs/architecture/design-review.md: "add the port \`src/contexts/billing/application/ports/return-basis-reader.port.ts\`"`,
+  },
   'naming/suffix': {
     why: 'The suffix states the role of a file before it is opened and lets the other rules know what they are looking at. Kebab-case avoids case-only renames that break on some file systems. A use case folder holds its message, its handler and, when it answers something, its result (*.result.ts); a job is application/scheduling/*.job.ts. Under presentation/http/ a controller lives in a folder of its own, presentation/http/<resource>/<use-case>/, with the schemas of its request and of its answer (*.params.ts, *.query.ts, *.headers.ts, *.body.ts, *.accepted.ts, *.answer.ts, *.line.ts), its *.mapper.ts and its *.serializer.ts; a route group is presentation/http/<name>.routes.ts, a guard presentation/http/guards/*.guard.ts, and what several routes share is under presentation/http/shared/. Function routes stay flat: *.route.ts and *.dto.ts, listed in presentation/http/<context>.routes.ts.',
     bad: `domain/aggregates/Invoice.ts`,

@@ -142,4 +142,16 @@ export const BOUNDARY_INJECTIONS: readonly Injection[] = [
     ],
     checker: true,
   },
+  {
+    rule: 'tree/documented-paths',
+    what: 'a design note naming a directory the canonical tree refuses',
+    file: 'docs/architecture/design-notes.md',
+    changes: [
+      {
+        file: 'docs/architecture/design-notes.md',
+        to: '# Design notes\n\nThe reminder rule goes to `src/contexts/notification/application/services/reminder-rule.service.ts`.\n',
+      },
+    ],
+    checker: true,
+  },
 ];

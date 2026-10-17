@@ -11,4 +11,5 @@ export const DEFAULT_SEVERITIES: Readonly<Record<string, Severity>> = {
   'application/command-query-separation': 'warn',
   'standard/no-parallel-interface': 'warn',
   'config/rule-off-everywhere': 'warn',
+  'tree/documented-paths': 'warn',
 };
