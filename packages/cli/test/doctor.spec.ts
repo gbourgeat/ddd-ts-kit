@@ -3,6 +3,7 @@ import path from 'node:path';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { cli, read, tempDir, write } from './helpers.js';
 import { git } from './support/git.js';
+import { installKit } from './support/install-kit.js';
 import { jsonAt } from './support/json-at.js';
 
 let root: string;
@@ -17,6 +18,7 @@ function changeManifest(change: (manifest: Record<string, Record<string, string>
 beforeEach(() => {
   root = path.join(tempDir('doctor'), 'shop');
   cli(root, 'init', '--context', 'billing:core', '--package-manager', 'npm');
+  installKit(root);
 });
 
 describe('doctor', () => {
@@ -25,6 +27,7 @@ describe('doctor', () => {
 
     expect(result.code).toBe(0);
     expect(result.stdout).toContain('The project has what ddd-ts-kit');
+    expect(result.stdout).toContain('This checkout runs it: the Node it asks');
   });
 
   it('names a missing script, a package of the kit at another range and a missing permission, and how to take them', () => {

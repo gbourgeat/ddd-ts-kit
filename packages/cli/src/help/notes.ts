@@ -27,8 +27,13 @@ export const NOTES = `  affected         what a pull request has to run: the con
   doctor           what an upgrade left to do: the scripts, the packages of the kit (at the ranges of this
                    version) and the agent permissions this version writes that the project lacks or writes
                    otherwise, and the git hooks (the lefthook: line of lefthook.yml, the pre-commit hook of
-                   lefthook in this clone); init adds what is missing, hooks:install the hook; --strict
-                   exits 1 while something is missing, never for a hook this clone has not installed
+                   lefthook in this clone); init adds what is missing, hooks:install the hook; then what
+                   this checkout lacks to run the project, read without network: the running Node against
+                   engines.node and .nvmrc, node_modules installed since the lockfile last changed, each
+                   package of the kit installed at the version of this CLI, the submodules initialised;
+                   each with its fix; --strict exits 1 while something is missing or the checkout cannot
+                   run the project, never for a hook this clone has not installed, a Node .nvmrc does not
+                   name or a lockfile changed since the install
   describe         one context as facts: use cases, routes, events, ports, policies, gateways, dependencies
   status           the next step of docs/architecture/plan.md, the slices of docs/architecture/slices.md by
                    status and by owner, each row not done ready on the trunk (its dependencies done), ready
