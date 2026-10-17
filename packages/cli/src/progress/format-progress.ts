@@ -1,4 +1,4 @@
-import type { Progress, RemainingCount, SlicesProgress, StatusRow } from './progress.js';
+import type { Progress, RemainingCount, SlicesProgress, StatusRow, UnclosedStory } from './progress.js';
 
 const STATUS_ORDER = ['in progress', 'todo', 'done'];
 
@@ -50,10 +50,15 @@ function sliceLines(slices: SlicesProgress): string[] {
     `Slices (${slices.file}): ${slices.rows.length}, ${counts(slices.byStatus, statuses)}`,
     ...duplicated,
     ...unscoped,
+    ...slices.unclosed.map(unclosedLine),
     ...open,
     '  by owner',
     ...owners,
   ];
+}
+
+function unclosedLine({ story, markers, command }: UnclosedStory): string {
+  return `  story ${story}: every row done, ${markers} ${markers === 1 ? 'marker' : 'markers'} left: ${command}`;
 }
 
 function counts(byStatus: Readonly<Record<string, readonly string[]>>, statuses: readonly string[]): string {

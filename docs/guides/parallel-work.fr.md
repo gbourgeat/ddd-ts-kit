@@ -1,5 +1,5 @@
 [English](parallel-work.md) · **Français**
-<!-- translation-of: parallel-work.md sha256:7de0a3c7769ae7c2 -->
+<!-- translation-of: parallel-work.md sha256:5c2824b6f62914a7 -->
 
 # Travailler en parallèle sans collisions
 
@@ -507,6 +507,22 @@ son `.ddd-ts-kit/worker.json`), ou en attente, avec les identifiants qu'elle att
 ```text
     #US1.04 billing slice "Pay invoice" (owner billing, depends on US1.02): ready on a branch, once #US1.02 merges
     #US2.02 billing slice "Register customer" (owner billing, depends on US2.01): waits for #US2.01
+```
+
+Une story ou un jalon est clos quand `npx ddd-ts-kit story-check <code>` sort avec 0 : ses lignes
+sont faites et il ne reste aucun marqueur qui lui appartient. Quand plusieurs stories construisent
+un même contexte à la fois, un marqueur est attribué avant de bloquer : à la ligne que son texte
+nomme (`TODO(review): #US1.04 <remarque>`, la forme qu'écrit la relecture), sinon à la ligne que
+nomme le *commit* qui a écrit sa ligne (son *trailer* `Slice: <id>`, sinon son message), sinon,
+non commité dans le *worktree* d'un *worker*, aux lignes de ce *worker*. Un marqueur qui
+n'appartient à aucune ligne ne bloque que si aucune autre story ouverte n'a de ligne dans son
+contexte ; sinon il est listé sans bloquer, pour que le chef d'orchestre le règle ou l'attribue en
+nommant sa ligne. `--strict` bloque sur chaque marqueur des contextes de la story. `status` nomme
+une story dont toutes les lignes sont faites mais que des marqueurs qui lui appartiennent gardent
+ouverte :
+
+```text
+  story US1: every row done, 2 markers left: npx ddd-ts-kit story-check US1
 ```
 
 ## L'ordre de fusion

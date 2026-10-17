@@ -17,7 +17,13 @@
       "Bash(npm run openapi:generate)",
       "Bash(npm run openapi:check)",
       "Bash(npm run events:generate)",
-      "Bash(npm run events:check)"
+      "Bash(npm run events:check)",
+      "Bash(npx ddd-ts-kit verify-slice *)",
+      "Bash(npx ddd-ts-kit cited *)",
+      "Bash(npx ddd-ts-kit verify-merge)",
+      "Bash(npx ddd-ts-kit verify-merge *)",
+      "Bash(npx ddd-ts-kit story-check *)",
+      "Bash(npm run regenerate)"
     ],
     "deny": [
       "Read(./.env)",
@@ -38,7 +44,8 @@
       "Edit(./.gitlab-ci.yml)",
       "Edit(./.github/workflows/**)",
       "Edit(./.claude/settings.json)",
-      "Edit(./.github/copilot/settings.json)"
+      "Edit(./.github/copilot/settings.json)",
+      "Edit(./biome.json)"
     ]
   }
 }

@@ -1028,9 +1028,14 @@ ddd-ts-kit todo [<context>]
 error. Each row not done says whether it can start: ready on the trunk when every dependency is
 done, ready on a branch when each dependency not done is a row briefed to a worker whose worktree
 has commits ahead of its base (the `rows` of its `.ddd-ts-kit/worker.json`, as `status --workers`
-reads them), and waiting otherwise, with the ids it waits for. `--json` prints
+reads them), and waiting otherwise, with the ids it waits for. A story or a milestone whose rows
+are all done while markers of its own keep it open gets a line of its own (only the markers that
+may keep such a story open are blamed, one git call per file), with the command that lists them:
+`story M1: every row done, 3 markers left: npx ddd-ts-kit story-check M1` (see
+[story-check](#story-check)). `--json` prints
 `{ next, slices, remaining }`: `next` and `slices` are `null` when their file is missing,
-`slices` holds `{ file, rows, byStatus, byOwner }`, a row not done carrying
+`slices` holds `{ file, rows, byStatus, byOwner, duplicates, unscoped, unclosed }`, `unclosed`
+being `[{ story, markers, command }]`, a row not done carrying
 `ready: 'trunk' | 'branch' | 'waiting'` and `waitingFor` (its dependencies not done),
 `remaining` one `{ context, domain, platform, test }` per context, and one with an empty
 `context` for what is left outside them.
@@ -1084,6 +1089,81 @@ rows carry make the rows impossible to order: they are reported alone, without w
 command exits 1. A file without a slices table, or a context no row names, is refused. `--json`
 prints
 `{ file, context, problems: [{ kind, rows, message }], waves: [{ wave, batches: [{ id, owner, context, rows: [{ id, kind, slice, status, waitingFor }], aggregates, brief, sameFiles, unknownOverlap }] }], mergeOrder }`.
+
+## story-check
+
+```
+ddd-ts-kit story-check <code> [--strict]
+```
+
+Says whether a story or a milestone can close: every row of it in `docs/architecture/slices.md`
+is `done` (the others are listed with their status), and no marker of its own is left. `<code>` is
+the start of the ids of its rows, the id without its last `.<number>`: `M1` for `M1.01`, `M1.02`,
+`US5` for `US5.03` (a `#` before it is left out).
+
+Several stories often build the same context at once, and a marker does not say whose it is: each
+`TODO(domain)`, `TODO(platform)`, `it.todo` and `TODO(review)` is attributed to rows first.
+
+1. Its text names a row: `#M1.03` or `M1.03`, word-bounded as `cited` reads them (`M1.035` is not
+   `M1.03`). This is why a remark of a review is written `TODO(review): #<row id> <remark>`.
+2. Else the commit that wrote its line names one: `git blame --porcelain` gives the commit (one call
+   per file, on the lines of its markers, and one git call for all the commits), whose
+   `Slice: <id>` trailer, else the row ids its subject or body names, give the rows. A
+   `TODO(domain)` or an `it.todo` a generator wrote belongs to the row whose commit created it.
+3. Else, for a line not committed yet, the rows of `.ddd-ts-kit/worker.json` when the project is
+   the worktree of a worker.
+
+A marker is the story's own when it belongs to one of its rows, wherever it is. A marker of a
+context of its rows that belongs to no row is its own when no other open story (one with a row not
+done) has a row in that context, since it can be no one else's; otherwise it is listed without
+blocking, with the stories it may belong to: settle it, or name its row in it. A marker of the rows
+of other stories does not block, and is counted. A Context cell that names no context of the
+project (`all`, `platform`) adds none: outside the contexts, only a marker attributed to one of its
+rows counts. `--strict` makes every marker of its contexts block, whoever it belongs to.
+
+It reads the files and git only. It exits 0 when the story can close (one line, then the markers
+listed without blocking, if any), 1 when something keeps it open, each blocker with why it is its
+own (`names #M1.01`, `written by a782a19 Slice: M1.02`, `no other open story in payments`), its
+`file:line` and its fix (handle it, or dismiss it by a decision record,
+`npx ddd-ts-kit generate adr "<title>"`, then delete the marker), and 2 on a code no row carries or
+without a slices table. `--json` prints
+`{ story, rows, contexts, unread, strict, open: [{ id, context, slice, status }], markers, unattributed, others, canClose }`,
+each marker being `{ kind, context, file, line, text, attribution: { by, rows, commit? } }`, with
+`why`, `sharedWith` and `fix` in `markers` and `unattributed`; `by` is `text`, `commit`, `worker`
+or `none`.
+
+```
+$ npx ddd-ts-kit story-check M1
+M1 cannot close: every row done, 3 markers of its own left.
+
+TODO(review) (1): handle it in a slice, or dismiss it by a decision record (`npx ddd-ts-kit generate adr "<title>"`, quoting the remark without its marker), then delete the marker in the same commit
+  docs/architecture/reviews/invoices.md:3  #M1.01 name the total after its term.  (names #M1.01)
+
+TODO(domain) (1): write the business decision it asks for, or dismiss it by a decision record (`npx ddd-ts-kit generate adr "<title>"`), then delete the marker
+  src/contexts/billing/application/commands/issue-invoice/issue-invoice.handler.ts:2  the rounding of a total.  (written by a782a19 Slice: M1.02)
+
+TODO(platform) (1): make the technical choice it asks for, or dismiss it by a decision record (`npx ddd-ts-kit generate adr "<title>"`), then delete the marker
+  src/contexts/payments/domain/aggregates/payment.aggregate.ts:2  the provider of a refund.  (no other open story in payments)
+
+Not blocking, unattributed (1): settle each, or name its row in the marker (`TODO(review): #<row> <remark>`)
+  src/contexts/billing/test/unit/invoice.aggregate.spec.ts:1  it.todo  refuses an invoice without lines  (unattributed, may belong to open US2: settle it or name the row in the marker)
+
+Not blocking: 1 marker of these contexts belongs to rows of US2.
+
+Once each is settled: npx ddd-ts-kit story-check M1
+```
+
+Once the three are settled:
+
+```
+$ npx ddd-ts-kit story-check M1
+M1 can close: its 3 rows done, no marker of its own left in billing, payments.
+
+Not blocking, unattributed (1): settle each, or name its row in the marker (`TODO(review): #<row> <remark>`)
+  src/contexts/billing/test/unit/invoice.aggregate.spec.ts:1  it.todo  refuses an invoice without lines  (unattributed, may belong to open US2: settle it or name the row in the marker)
+
+Not blocking: 1 marker of these contexts belongs to rows of US2.
+```
 
 ## doctor
 

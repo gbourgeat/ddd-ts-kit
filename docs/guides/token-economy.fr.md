@@ -1,5 +1,5 @@
 [English](token-economy.md) · **Français**
-<!-- translation-of: token-economy.md sha256:e0ab1ba2a9dee063 -->
+<!-- translation-of: token-economy.md sha256:3df1728d8041cb77 -->
 
 # Économie de tokens : dépenser moins avec les agents de code
 
@@ -250,6 +250,11 @@ Remaining
   ordering: 25 TODO(domain), 0 TODO(platform), 11 it.todo, 0 TODO(review)
   outside the contexts: 9 TODO(domain), 6 TODO(platform), 0 it.todo, 0 TODO(review)
 ```
+
+Savoir si une story ou un jalon peut être clos coûte un appel de plus,
+`npx ddd-ts-kit story-check <code>` : une ligne quand il le peut, sinon seulement les marqueurs qui
+lui appartiennent, chacun avec son `file:line`, au lieu de toute la liste de `todo` à trier à la
+main.
 
 **Ne pas coller ce qu'un chemin peut dire.** Renvoyez à `docs/ARCHITECTURE.md` par identifiant de
 règle plutôt que de le citer ; les *skills* du *plugin* font de même, à dessein.

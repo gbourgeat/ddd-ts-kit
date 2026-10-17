@@ -1,5 +1,5 @@
 [English](team-workflow.md) · **Français**
-<!-- translation-of: team-workflow.md sha256:049bfc86f4b2b83a -->
+<!-- translation-of: team-workflow.md sha256:701ec4dc3c41054b -->
 
 # Travailler en équipe sur un projet DDD
 
@@ -210,11 +210,17 @@ son attention là où un outil ne peut pas juger. Ce qu'il faut regarder diffèr
 Le *plugin* offre le même découpage sous forme d'outil : l'agent `architecture-reviewer` relit un
 diff ou un contexte entier en lecture seule, en partant de la sortie du *checker* puis en jugeant
 ce que les outils ne peuvent pas juger. Il trie ses constats : un constat bloquant se corrige
-avant la fusion ; un constat non bloquant vient avec la ligne `TODO(review): <remarque>` à écrire
-à son `file:line`, pour que la remarque vive dans le code plutôt que dans une pull request bientôt
-fermée. `ddd-ts-kit todo` la liste et `ddd-ts-kit status` la compte jusqu'à ce qu'elle soit
+avant la fusion ; un constat non bloquant vient avec la ligne
+`TODO(review): #<identifiant de ligne> <remarque>` à écrire à son `file:line`, pour que la remarque
+vive dans le code plutôt que dans une pull request bientôt fermée, liée à la ligne qu'elle
+concerne. `ddd-ts-kit todo` la liste et `ddd-ts-kit status` la compte jusqu'à ce qu'elle soit
 traitée, ou écartée par un enregistrement de décision ; une story ou un jalon n'est clos que
-lorsqu'il n'en reste aucune.
+lorsqu'il ne reste aucun marqueur qui lui appartient. `ddd-ts-kit story-check <code>` le dit : un
+marqueur est à la story quand son texte nomme une de ses lignes, sinon quand le *commit* qui l'a
+écrit en nomme une (son *trailer* `Slice:`, sinon son message), si bien que deux stories qui
+construisent un même contexte en parallèle ne se gardent pas ouvertes l'une l'autre ; un marqueur
+qui n'appartient à aucune ligne ne bloque que si aucune autre story ouverte ne travaille dans son
+contexte, et il est listé sinon, pour que le chef d'orchestre le règle ou l'attribue.
 
 ## Branches et petites pull requests
 

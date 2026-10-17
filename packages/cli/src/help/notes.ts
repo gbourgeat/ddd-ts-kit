@@ -34,7 +34,9 @@ export const NOTES = `  affected         what a pull request has to run: the con
                    status and by owner, each row not done ready on the trunk (its dependencies done), ready
                    on a branch (the others briefed to a worker with commits ahead of its base) or waiting
                    (with the ids it waits for), and the TODO(domain), TODO(platform), it.todo and TODO(review)
-                   left in each context; --workers shows instead each worktree holding .ddd-ts-kit/worker.json (branch,
+                   left in each context, and each story or milestone whose rows are all done while markers
+                   of its own keep it open (see story-check, whose git blame it runs on those markers
+                   only); --workers shows instead each worktree holding .ddd-ts-kit/worker.json (branch,
                    context, rows, base, commits ahead, dependencies not installed, files changed since the base,
                    its report), a state line (rows committed, the row under way, files uncommitted, markers,
                    last verify-slice, and the worker-scope --resume command of a stopped one), then the
@@ -51,6 +53,21 @@ export const NOTES = `  affected         what a pull request has to run: the con
                    the batches of a wave likely to touch the same files (same aggregate in Start with, or
                    unknown when it names none), and the merge order; a cycle, a dependency on an unknown id
                    or a row without owner is reported alone, and exits 1
+  story-check      whether a story or a milestone can close, <code> being the start of the ids of its rows
+                   (M1 for M1.01, M1.02: the id without its last .<number>): every row of it done in
+                   slices.md (the others listed with their status), and no marker of its own left
+                   (TODO(domain), TODO(platform), it.todo, TODO(review)). A marker is attributed to
+                   rows: those its text names (#M1.03 or M1.03, word-bounded), else those of the commit
+                   that wrote its line (git blame, once per file; its Slice: trailer, else the row ids
+                   its message names), else, not committed, those of .ddd-ts-kit/worker.json in a
+                   worker's worktree. It is the story's own when it belongs to one of its rows,
+                   wherever it is; a marker of a context of its rows that belongs to no row is its own
+                   when no other open story has a row in that context, and is listed without blocking
+                   otherwise (settle it or name its row in it); a marker of other stories' rows does not
+                   block. --strict: every marker of its contexts blocks. Each blocker comes with why it
+                   is its own, its file:line and its fix: handle it, or dismiss it by a decision record
+                   (generate adr), then delete the marker. Reads only: exits 0 when it can close, 1
+                   listing what keeps it open, 2 on a code no row carries or without slices.md
   worker-scope     a git worktree on the branch build/<context> (by default ../<project>-<context>), cut from
                    --base <ref> (by default the current branch, refused from a worker's worktree), its
                    .ddd-ts-kit/worker.json, and the briefing of the worker of that context; --rows <id,...>
@@ -84,8 +101,6 @@ export const NOTES = `  affected         what a pull request has to run: the con
                    line links to. Default: every row not done, of the context when given, at the current
                    branch. --removed-since <ref>: the names a change removes, from the merge base to the
                    working tree, that such a design cites. Reads only, exits 0
-  verify-merge checks them, reported without failing the slice in this version (a later
-                   minor version fails it); exits 1 while a step fails
   verify-merge     what the merges of a branch lost, read from git only: every merge commit since --since
                    (by default the base of .ddd-ts-kit/worker.json, then origin/HEAD, then origin/main) and
                    the merge in progress (its result: the index and the working tree), or one <commit>; a

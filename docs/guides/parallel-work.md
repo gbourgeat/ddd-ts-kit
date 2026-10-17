@@ -474,6 +474,20 @@ waiting, with the ids it waits for:
     #US2.02 billing slice "Register customer" (owner billing, depends on US2.01): waits for #US2.01
 ```
 
+A story or a milestone closes when `npx ddd-ts-kit story-check <code>` exits 0: its rows are done
+and no marker of its own is left. With several stories building one context at once, a marker is
+attributed before it blocks: to the row its text names (`TODO(review): #US1.04 <remark>`, the form
+the review writes), else to the row the commit that wrote its line names (its `Slice: <id>`
+trailer, else its message), else, not committed in a worker's worktree, to that worker's rows. A
+marker that belongs to no row blocks only when no other open story has a row in its context;
+otherwise it is listed without blocking, for the conductor to settle or to attribute by naming its
+row. `--strict` blocks on every marker of the story's contexts. `status` names a story whose rows
+are all done while markers of its own keep it open:
+
+```text
+  story US1: every row done, 2 markers left: npx ddd-ts-kit story-check US1
+```
+
 ## Merge order
 
 1. **The bootstrap**, alone, first.

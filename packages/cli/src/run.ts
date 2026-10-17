@@ -18,6 +18,7 @@ import { listCommand } from './commands/list.js';
 import { planWavesCommand } from './commands/plan-waves.js';
 import { sdkCommand } from './commands/sdk.js';
 import { statusCommand } from './commands/status.js';
+import { storyCheckCommand } from './commands/story-check.js';
 import { todoCommand } from './commands/todo.js';
 import { valueObjectsCommand } from './commands/value-objects.js';
 import { verifyMergeCommand } from './commands/verify-merge.js';
@@ -39,6 +40,7 @@ const COMMANDS: Readonly<Record<string, Command>> = {
   status: statusCommand,
   todo: todoCommand,
   'plan-waves': planWavesCommand,
+  'story-check': storyCheckCommand,
   'worker-scope': workerScopeCommand,
   'verify-slice': verifySliceCommand,
   cited: citedCommand,

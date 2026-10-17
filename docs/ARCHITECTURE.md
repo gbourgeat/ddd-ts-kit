@@ -1370,9 +1370,16 @@ does is a function name waiting to be extracted.
 as `file:line` and `ddd-ts-kit status` counts per context: `TODO(domain)`, a decision of the
 business the generator leaves; `TODO(platform)`, a technical choice of the platform; `it.todo`,
 a test to write; `TODO(review)`, a non-blocking remark of a review, written at the line it is
-about instead of in the body of a pull request. A slice is closed when its context has none
-left but `TODO(review)`; a story or a milestone is closed when none is left at all, each
-`TODO(review)` handled in a slice or dismissed by a decision record (`generate adr`). Any other
+about instead of in the body of a pull request, naming the row it belongs to:
+`TODO(review): #M1.03 <remark>`. A slice is closed when its context has none left but
+`TODO(review)`; a story or a milestone is closed when none of its own is left
+(`ddd-ts-kit story-check <code>`), each handled in a slice or dismissed by a decision record
+(`generate adr`). A marker belongs to the rows its text names (`#M1.03` or `M1.03`), else to the
+rows the commit that wrote its line names (its `Slice: <id>` trailer, else its message), else, not
+committed in the worktree of a worker, to the rows of that worker; it belongs to the stories of
+those rows, wherever it is. A marker of a context that belongs to no row keeps a story of that
+context open only when no other open story has a row there; otherwise it is listed, without
+blocking, for the conductor to settle or to attribute by naming its row. Any other
 `TODO` names its owner or a reference (`TODO(billing-team)`, `#142`). A rule that accepts a
 `TODO(domain)` where it would otherwise report (`authz/policy-asked`, `schema/no-duplicate-shape`)
 accepts a `TODO(review)` the same way.

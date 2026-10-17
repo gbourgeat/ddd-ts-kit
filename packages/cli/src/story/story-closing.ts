@@ -1,0 +1,43 @@
+import type { AttributedMarker } from './attributed-marker.js';
+
+/** Whether a story or a milestone can close, and what keeps it open. */
+export interface StoryClosing {
+  /** Its code, the start of the ids of its rows: `M1` for `M1.01`, `M1.02`. */
+  readonly story: string;
+  /** The ids of its rows, in the order of the slices file. */
+  readonly rows: readonly string[];
+  /** The contexts of the project its rows belong to. */
+  readonly contexts: readonly string[];
+  /** The Context cells of its rows that name no context of the project (`all`, `platform`). */
+  readonly unread: readonly string[];
+  /** True with `--strict`: every marker of its contexts keeps it open, whoever it belongs to. */
+  readonly strict: boolean;
+  /** Its rows not done. */
+  readonly open: readonly OpenRow[];
+  /** The markers that keep it open: its own, each with why it is. */
+  readonly markers: readonly StoryMarker[];
+  /** The markers of its contexts that belong to no row while another open story works there: listed, not blocking. */
+  readonly unattributed: readonly StoryMarker[];
+  /** The markers of its contexts that belong to rows of other stories: not blocking. */
+  readonly others: readonly AttributedMarker[];
+  /** True when every row is done and no marker of its own is left. */
+  readonly canClose: boolean;
+}
+
+/** A row of the story not done yet. */
+export interface OpenRow {
+  readonly id: string;
+  readonly context: string;
+  readonly slice: string;
+  readonly status: string;
+}
+
+/** A marker the story has to settle, or one that may be its own. */
+export interface StoryMarker extends AttributedMarker {
+  /** Why it is the story's (`names #M1.03`, `written by 2443af2 Slice: M1.02`), or whose it may be. */
+  readonly why: string;
+  /** The other stories with a row not done in the context of the marker. */
+  readonly sharedWith: readonly string[];
+  /** What settles it. */
+  readonly fix: string;
+}
