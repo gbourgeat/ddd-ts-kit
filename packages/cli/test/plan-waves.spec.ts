@@ -106,7 +106,7 @@ describe('plan-waves, two stories building in one context', () => {
     expect(jsonAt(plan, 'mergeOrder')).toEqual(['W1.1', 'W1.2', 'W1.3', 'W2.1', 'W2.2', 'W2.3', 'W3.1']);
   });
 
-  it('prints each wave, its batches with the command that briefs them, then the merge order', () => {
+  it('prints each wave, its batches with the command that briefs them, then the merge order and what precedes each merge', () => {
     const text = cli(root, 'plan-waves').stdout;
 
     expect(text).toContain('Waves (docs/architecture/slices.md): 8 rows not done, 3 waves, 7 batches\nWave 1\n');
@@ -122,7 +122,10 @@ describe('plan-waves, two stories building in one context', () => {
     expect(text).toContain('    #US2.04 slice "Credit invoice" (in progress)\n');
     expect(text).toContain('  W2.3 billing (aggregate unknown)\n    #US2.03 slice "Overdue invoices", after #US1.02\n');
     expect(text).toContain('    unknown whether it touches the files of W2.1, W2.2: no aggregate named');
-    expect(text).toContain('Merge order: W1.1, W1.2, W1.3, W2.1, W2.2, W2.3, W3.1');
+
+    expect(text).toContain(
+      'Merge order: W1.1, W1.2, W1.3, W2.1, W2.2, W2.3, W3.1\nBefore each merge: `npx ddd-ts-kit merge-trunk --to-land --cwd <worktree>`, then the squash merge',
+    );
   });
 });
 

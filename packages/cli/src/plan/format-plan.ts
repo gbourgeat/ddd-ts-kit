@@ -1,6 +1,13 @@
 import type { Batch, PlannedRow, Wave, WavePlan } from './wave-plan.js';
 
-/** `plan-waves` for a reader: the problems alone when there are some, else each wave and its batches, then the merge order. */
+/** Before the squash merge of each branch, its migrations get their real names and the trunk comes in from what already landed. */
+const BEFORE_EACH_MERGE =
+  'Before each merge: `npx ddd-ts-kit merge-trunk --to-land --cwd <worktree>`, then the squash merge';
+
+/**
+ * `plan-waves` for a reader: the problems alone when there are some, else each wave and its
+ * batches, then the merge order and what to run before each merge.
+ */
 export function formatPlan(plan: WavePlan): string {
   const scope = plan.context === null ? plan.file : `${plan.file}, context ${plan.context}`;
 
@@ -23,6 +30,7 @@ export function formatPlan(plan: WavePlan): string {
     `Waves (${scope}): ${rows} rows not done, ${plural(plan.waves.length, 'wave', 'waves')}, ${plural(batches.length, 'batch', 'batches')}`,
     ...plan.waves.flatMap(waveLines),
     `Merge order: ${plan.mergeOrder.join(', ')}`,
+    BEFORE_EACH_MERGE,
   ].join('\n');
 }
 

@@ -544,8 +544,19 @@ not merged yet:
 4. `npm run check:arch` reports nothing, and the branch is merged before another migration
    lands, or the steps are repeated.
 
-**Under drizzle-kit, `ddd-ts-kit drizzle-generate --replay` does steps 2 and 3**, on the branch
-once the main branch is merged into it:
+**`npx ddd-ts-kit merge-trunk` does steps 2 and 3 as it brings the main branch in**: when both
+sides added a migration since its base, it takes the journal and snapshots of the main branch and
+runs the replay below itself; a refusal of the replay stops the merge with its fix. With
+`--to-land`, which the conductor runs just before the squash merge, the migrations of the branch
+the main branch does not have get their real names: replayed under drizzle-kit (the `working-`
+prefix goes, in the worktree of a worker too), renamed under knex, Prisma and TypeORM (a number
+after the last one of the main branch, without `working-`, the content kept; TypeORM's class and
+`name` follow, Prisma's folder). When a migration the main branch gained since the base and one
+of the branch change the same table, their order is a decision: the merge stops and says to
+generate the branch's again on the main branch (`npm run db:generate <what-it-does>`).
+
+**Under drizzle-kit, `ddd-ts-kit drizzle-generate --replay` does steps 2 and 3** on its own too,
+on the branch once the main branch is merged into it without `merge-trunk`:
 
 ```bash
 git merge origin/main                                       # meta/_journal.json conflicts
@@ -564,7 +575,8 @@ migrations of the branch by their files), a base with migrations the branch has 
 two migrations of the branch that change the schema: drizzle-kit generates the difference
 between the schema files and the last snapshot, so it can generate the changes of a branch again
 as one migration only (delete them and generate that one by hand). The replay is Drizzle's:
-under knex, Prisma and TypeORM, which keep no journal, the steps above are done by hand.
+under knex, Prisma and TypeORM, which keep no journal, `merge-trunk --to-land` renames the
+migrations, and generating one again after an overlap stays by hand.
 
 `npx ddd-ts-kit verify-merge`, run after the merge, reports a migration of either side that the
 result lost. It knows a migration by its description, its name without its number and without
@@ -585,9 +597,12 @@ branch under drizzle-kit, `npx ddd-ts-kit drizzle-generate --replay` (the trunk 
 as `--base`) deletes the working migration, with its snapshot and its journal entry, and
 generates it again on the trunk, after the branches merged before it, under its name without
 `working-`; the conductor commits the real migration with the merge. In the worktree of a worker,
-which merges the trunk into its branch, the replay keeps the prefix. Under the other tools, the
-conductor deletes the working migration and runs `npm run db:generate <what-it-does>` on the
-trunk.
+which merges the trunk into its branch, the replay keeps the prefix. With pull requests merged by
+squash, the conductor runs `npx ddd-ts-kit merge-trunk --to-land --cwd <worktree>` before the
+squash instead: the migration gets its real name on the branch, under every tool (replayed under
+drizzle-kit, renamed under the others), and lands with it; the guard refuses `--to-land` to a
+sub-agent. A migration of the branch and one the trunk gained on the same table stop it: the
+conductor generates that one again on the trunk with `npm run db:generate <what-it-does>`.
 
 **Not chosen: one migrations folder per context.** drizzle-kit can run one config per context
 (its own `schema`, `out` and migrations table), so it would work, but it solves the wrong half:

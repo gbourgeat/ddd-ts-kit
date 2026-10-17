@@ -1,5 +1,5 @@
 [English](parallel-work.md) · **Français**
-<!-- translation-of: parallel-work.md sha256:5c2824b6f62914a7 -->
+<!-- translation-of: parallel-work.md sha256:5fe3145ebc5dac9d -->
 
 # Travailler en parallèle sans collisions
 
@@ -71,42 +71,82 @@ En entier, pour la branche qui arrive en second. Ici, le worker de `notification
 `GET /notifications/preferences` pendant que la branche par défaut recevait
 `GET /people/invitations` de `identity`. Le document OpenAPI trie ses chemins : les deux nouvelles
 entrées tombent au même endroit, juste avant `/people/me`, et git ne sait pas les placer l'une
-après l'autre :
+après l'autre. `merge-trunk` le règle :
 
 ```bash
 git fetch origin
-git merge origin/main
-# CONFLICT (content): Merge conflict in openapi/openapi.yaml
-git checkout --theirs openapi/openapi.yaml   # n'importe quel côté : le fichier est réécrit ci-dessous
-npm run regenerate
-npm run verify
-git status --short                           # chaque fichier que les générateurs ont réécrit
-git add openapi/openapi.yaml                 # fichier par fichier, puis relire le diff indexé
-git diff --cached --stat
-git commit --no-edit
-npx ddd-ts-kit verify-merge                  # ce que la fusion a perdu : rien, ici
+npx ddd-ts-kit merge-trunk                   # origin/HEAD, puis origin/main ; --trunk <ref> en nomme un autre
+```
+
+```text
+merge-trunk build/notification <- origin/main (4be1d07)
+base 9c2e5a0: git merge-base (no commit of this branch found landed on the trunk)
+conflicts: plain git merge 1, own diff since base 1, automatic 1, for you 0
+automatic:
+  openapi/openapi.yaml  derived: trunk side, regenerated at the end
+regenerate: ok
+lost lines: none lost
+committed 71d0c3a "Merge origin/main into build/notification"
+next: `npm run verify` in this worktree, then push
 ```
 
 Le document régénéré porte les deux routes, `/notifications/preferences` de cette branche et
 `/people/invitations` de la branche par défaut, parce que les deux sont désormais dans les
 sources.
 
-Un fichier dérivé est le seul qu'on prend d'un côté ou de l'autre. Un conflit dans un fichier
-source ou un test se résout bloc par bloc, en gardant ce que les deux côtés ont ajouté :
-`git merge -X theirs`, `-X ours` ou `git checkout --theirs <file>` sur un fichier source règlent
-tous les conflits d'un coup en jetant l'autre côté, et git annonce une fusion propre alors qu'une
-tranche entière de la branche (sa méthode, sa route, sa *spec*, sa ligne marquée terminée) a
-disparu. La garde du *plugin* les refuse à un sous-agent. `npx ddd-ts-kit verify-merge`, lancé
-après la fusion, ne lit que git et liste, fusion par fusion, chaque ligne ajoutée par un côté qui
-manque au résultat, chaque ligne de `slices.md` qui n'est plus terminée, chaque test, fichier de
-*spec* ou migration disparu et chaque marqueur de conflit laissé, avec `file:line` et le côté
-d'où la rétablir (`git show <side>:<file>`) ; une ligne retirée par un côté et ramenée par la
-fusion est un avertissement, comme une ligne écrite par un côté là où l'autre a changé les mêmes
-lignes (la fusion a choisi). Elle sort avec 1 sur une erreur. Elle se tait sans fusion : le *hook*
-de *pre-push* d'`init` la lance à chaque *push*, et `verify-slice` la lance aussi ; tous deux ne
-font qu'avertir dans cette version, et une version mineure ultérieure les fera bloquer. Une suppression voulue se consigne dans le
-*commit* de fusion par un *trailer*, `Lost-Accepted: <file:line>,...`, et est listée sans faire
-échouer.
+`npx ddd-ts-kit merge-trunk` apporte le tronc dans la branche en un seul *commit* de fusion et ne
+rebase jamais. Il règle seul ce qu'un outil écrit : un fichier dérivé prend le côté du tronc et
+est réécrit par `npm run regenerate` à la fin, les régions générées de `CONTEXT.md` et de la carte
+des contextes prennent le côté du tronc, un conflit à l'intérieur d'un registre généré
+(`// ddd-ts-kit:<region>`) garde les lignes des deux côtés (une ligne retirée par un côté reste
+retirée), `slices.md` se fusionne ligne par ligne (chaque statut le plus avancé des deux côtés),
+le verrou des événements stockés se fusionne par clé, le journal et les *snapshots* de
+drizzle-kit prennent le côté du tronc avant le rejeu, le fichier de verrouillage prend le côté du
+tronc et est réinstallé quand la branche a changé `package.json`.
+
+Ce qui reste (un conflit dans un fichier source, dans un test, hors d'une région générée, une
+cellule de `slices.md` changée par les deux côtés) demeure dans une fusion en cours que git
+comprend (`git status` affiche `UU`), et la commande sort avec 1 en donnant, pour chaque fichier,
+les lignes de chaque bloc, ce que cette branche et ses lignes du plan y ont fait, les *commits*
+du tronc qui l'ont touché depuis la base et ce qu'ils y ont fait :
+
+```text
+for you (a merge is in progress; `merge-trunk --abort` undoes it):
+  src/contexts/billing/domain/invoice.ts  hunks at lines 40-58
+    ours  (build/billing-2, rows #M1.02): adds 4 lines: pay(amount: Money, at: Date): void {
+    theirs (origin/main since 6d8be4b, 9a0c1f2 "feat(billing): cancel an invoice (#7)"): adds 3 lines: cancel(reason: CancelReason): void {
+    both sides only add lines: keep both. Never take one side of the whole file.
+next: resolve each hunk, `git add <file>`, then `npx ddd-ts-kit merge-trunk --continue`
+```
+
+Chaque bloc se résout en gardant ce que les deux côtés voulaient. `git merge -X theirs`,
+`-X ours` ou `git checkout --theirs <file>` sur un fichier source règlent tous les conflits d'un
+coup en jetant l'autre côté, et git annonce une fusion propre alors qu'une tranche entière de la
+branche (sa méthode, sa route, sa *spec*, sa ligne marquée terminée) a disparu ; la garde du
+*plugin* les refuse à un sous-agent. `--continue` refuse tant qu'un chemin n'est pas fusionné ou
+garde un marqueur de conflit, puis pose les migrations, régénère, et lance `verify-merge` sur le
+résultat non commité : une ligne ajoutée par un côté qui manque au résultat, une ligne de
+`slices.md` qui n'est plus terminée, un test, un fichier de *spec* ou une migration disparu
+l'arrête (sortie 1), avec `file:line` et le côté d'où la rétablir (`git show ORIG_HEAD:<file>`
+pour cette branche). Une suppression voulue : `merge-trunk --continue --accept-lost`, qui la
+consigne dans le *commit* de fusion par un *trailer* `Lost-Accepted: <file:line>,...`, listé par
+chaque passe suivante sans faire échouer. Le *commit* ne porte que les chemins de la fusion (les
+chemins en conflit, les fichiers dérivés, les migrations, les décisions, le fichier de
+verrouillage) ; tout autre chemin changé est listé et le bloque jusqu'à ce qu'il soit indexé ou
+mis de côté. Le message porte `Merge-Base: <commit>`, `Trunk: <commit>` et, quand la branche a été
+trouvée écrasée sur le tronc, `Landed: <commit>` : `verify-merge` juge ensuite la fusion sur cette
+base. Une fusion terminée à la main par `git commit` garde ces *trailers*.
+
+`--dry-run` donne l'aperçu (rien ne change), `--abort` défait la fusion en cours. L'arbre doit
+être propre et aucune autre fusion, aucun *rebase* ni *cherry-pick* en cours (sortie 2 sinon) ;
+le tronc n'est jamais récupéré, le *commit* qu'il nomme est affiché. `merge-trunk` demande
+git 2.40 ; un git plus ancien ne fusionne qu'à partir de la base que git calcule
+(`--since <merge base>`), avec `git merge` lui-même.
+
+`verify-merge` seul ne lit que git et liste, fusion par fusion, ce qu'une fusion a perdu ; il se
+tait sans fusion : le *hook* de *pre-push* d'`init` le lance à chaque *push*, et `verify-slice`
+le lance aussi ; tous deux ne font qu'avertir dans cette version, et une version mineure
+ultérieure les fera bloquer.
 
 Les générateurs sont déterministes (sortie triée, indépendante de l'ordre d'enregistrement), si
 bien que deux personnes qui régénèrent à partir des mêmes sources obtiennent les mêmes octets.
@@ -115,9 +155,8 @@ bien que deux personnes qui régénèrent à partir des mêmes sources obtiennen
 **Qui régénère :** chacun, puis celui qui fusionne en second. Un *worker* lance
 `npm run regenerate` après chaque *slice* et commite les fichiers dérivés avec elle, pour que sa
 branche passe `docs:check` seule et ne s'arrête jamais sur « régénérer » comme besoin. La première
-branche à arriver est cohérente par elle-même ; la seconde se rebase sur la branche par défaut ou
-la fusionne, prend l'un des deux côtés de chaque fichier dérivé, régénère, commite le résultat
-avec son propre changement, et lance `npx ddd-ts-kit verify-merge`.
+branche à arriver est cohérente par elle-même ; la seconde lance `npx ddd-ts-kit merge-trunk`,
+qui prend le côté du tronc de chaque fichier dérivé, régénère et commite le résultat.
 
 ### Les migrations
 
@@ -133,16 +172,23 @@ seule migration que la garde le laisse écrire. `persistence/migration-history` 
 *worktree* et la signale sur le tronc : le chef d'orchestre la remplace donc à la fusion par la
 vraie, générée sur le tronc ([persistance](../tools/persistence.fr.md#migrations--noms-fusions-et-ordre)).
 
-Sous drizzle-kit, personne ne supprime ni ne régénère à la main : après une fusion où les deux
-côtés ont ajouté une migration, `npx ddd-ts-kit drizzle-generate --replay` supprime les
-migrations de la branche que le tronc (`--base`, `origin/main` par défaut) n'a pas, avec leurs
-*snapshots* et leurs entrées du journal, et les génère de nouveau au-dessus, dans leur ordre et
-sous leur nom. Dans le *worktree* d'un *worker*, qui fusionne le tronc dans sa branche, elles
-restent des migrations de travail ; sur le tronc, où le chef d'orchestre le lance après avoir
-fusionné la branche (le tronc d'avant la fusion comme `--base`), le préfixe `working-` disparaît
-et la vraie migration est commitée avec la fusion. Un journal encore en conflit est refusé :
-prendre celui du tronc (`git checkout origin/main -- migrations/meta/_journal.json`) et le
-relancer. Sous knex, Prisma et TypeORM, ces étapes restent à la main.
+Sous drizzle-kit, personne ne supprime ni ne régénère à la main : quand les deux côtés ont
+ajouté une migration depuis la base, `merge-trunk` prend le journal et les *snapshots* du tronc
+et génère de nouveau au-dessus les migrations de la branche que le tronc n'a pas
+(`drizzle-generate --replay`), dans leur ordre et sous leur nom. Dans le *worktree* d'un
+*worker*, elles restent des migrations de travail. Juste avant la fusion en *squash*, le chef
+d'orchestre lance `npx ddd-ts-kit merge-trunk --to-land --cwd <worktree>` : le préfixe `working-`
+disparaît, dans le *worktree* d'un *worker* aussi, et la vraie migration arrive avec la branche.
+Un refus du rejeu (deux migrations de la branche qui changent le schéma) arrête la fusion avec
+son correctif. Sous knex, Prisma et TypeORM, `--to-land` renomme chaque migration de la branche
+que le tronc n'a pas : un numéro après le dernier du tronc, sans `working-` (TypeORM : la classe
+et son `name` suivent, Prisma : le dossier), le contenu gardé. Quand une migration reçue par le
+tronc depuis la base change une table qu'une migration de la branche change aussi, leur ordre
+est une décision : la fusion s'arrête et dit de la générer de nouveau sur le tronc
+(`npm run db:generate <what-it-does>`). `drizzle-generate --replay` reste pour une fusion faite
+sans `merge-trunk`. Un enregistrement de décision de la branche dont le tronc a pris le numéro
+entre-temps reçoit le prochain numéro libre (son fichier, son titre `# ADR-NNNN`, les liens de
+ses traductions).
 
 Une décision prise pendant la construction d'une *slice* (comment s'arrondit une pénalité de
 retard, à partir de quelle date court un délai) est enregistrée par le *worker*
@@ -212,7 +258,12 @@ chaque *worktree* du dépôt qui porte ce fichier et affiche, pour chaque *worke
 d'avance sur la base, `dependencies not installed` quand sa copie du projet n'a pas de
 `node_modules` (`installed` en JSON), les fichiers qu'il a changés (commités depuis la base de
 fusion avec la base, modifiés, et non suivis mais non ignorés), et s'il a écrit
-`.ddd-ts-kit/report.md`, avec sa date et s'il est à jour. Une ligne `state:` dit où en sont ses
+`.ddd-ts-kit/report.md`, avec sa date et s'il est à jour. Une fois sa branche fusionnée en *squash* dans la base, le
+*commit* qui l'a reçue est affiché (`landed`), et ses *commits* d'avance et ses fichiers sont
+comptés à partir de là : une branche réutilisée sans rien de neuf ne compte rien, et ce qui est
+déjà arrivé n'est pas un recouvrement. Suivent ses *commits* de retard sur la base et ce que
+`merge-trunk` laisserait en conflit maintenant (`behind`, `mergePreview`).
+Une ligne `state:` dit où en sont ses
 lignes et quoi faire ensuite (`progress` en JSON, décrit sous
 [Quand un agent s'arrête](#quand-un-agent-sarrête)) :
 
@@ -493,6 +544,7 @@ Wave 2
     npx ddd-ts-kit worker-scope billing --base origin/main --rows US2.03 --worktree ../invoicing-billing-w2.3 --branch build/billing-w2.3
     unknown whether it touches the files of W2.1, W2.2: no aggregate named
 Merge order: W1.1, W1.2, W1.3, W2.1, W2.2, W2.3
+Before each merge: `npx ddd-ts-kit merge-trunk --to-land --cwd <worktree>`, then the squash merge
 ```
 
 Un plan qui ne peut pas être ordonné n'a pas de vague : un cycle dans `Depends on`, une
@@ -525,6 +577,13 @@ ouverte :
   story US1: every row done, 2 markers left: npx ddd-ts-kit story-check US1
 ```
 
+Une ligne arrivée sur le tronc avec la branche d'un *worker* alors que le fichier des tranches du
+tronc ne la marque pas terminée est nommée, pour que le chef d'orchestre la marque :
+
+```text
+  #US1.02 landed on the trunk (d8d281b) but is not marked done: mark it done in docs/architecture/slices.md
+```
+
 ## L'ordre de fusion
 
 1. **L'amorçage**, seul, en premier.
@@ -541,26 +600,37 @@ Fusionnez petit et souvent. Deux branches qui ont vécu chacune une semaine entr
 dans l'agrégat et dans chaque fichier dérivé ; le même travail en dix *pull requests* n'entre en
 conflit nulle part.
 
-Une branche coupée d'une autre branche non fusionnée est empilée. Quand la première est fusionnée
-en *squash*, ses commits deviennent un seul nouveau commit sur la branche par défaut, et fusionner
-la branche par défaut dans la seconde les rejoue en conflits. Ne déplacez que les commits propres
-à la seconde :
+Avant chaque fusion en *squash*, le chef d'orchestre apporte le tronc dans la branche et pose ses
+migrations : `npx ddd-ts-kit merge-trunk --to-land --cwd <worktree>`, `npm run verify` dans le
+*worktree*, *push*, puis la fusion en *squash*. `--to-land` revient au chef d'orchestre : la garde
+le refuse à un sous-agent, qui lance `merge-trunk` seul. Un *squash* fait hors de GitHub ou de
+GitLab se vérifie par `npx ddd-ts-kit verify-merge <squash commit> --theirs <head of the branch>`.
 
-```bash
-git fetch origin
-git rebase --onto origin/main <last commit of the first branch> <second branch>
-npm run regenerate              # a derived file in conflict: take either side, then regenerate
-git diff --stat origin/main...  # every file of the branch's rows is still there
+Une branche coupée d'une autre branche non fusionnée est empilée, et une branche réutilisée pour
+sa ligne suivante après la fusion en *squash* de sa première ligne est dans la même situation :
+ses premiers *commits* sont sur la branche par défaut sous la forme d'un seul nouveau *commit*,
+et un simple `git merge` les rejoue en conflits (et garde une migration de travail à côté de la
+vraie que le tronc a générée). `merge-trunk` calcule plutôt la fusion à partir du *commit* le plus
+récent de la branche que le tronc porte déjà : le *commit* dont le *patch* entier, sans les
+fichiers que les outils réécrivent, est un *commit* du tronc (trouvé sur cette branche, sur la
+branche enregistrée comme sa base dans `.ddd-ts-kit/worker.json`, ou sur une branche locale qui
+partage des *commits* avec elle), sinon la base que worker-scope a enregistrée quand toutes ses
+lignes sont sur le tronc, sinon la base de fusion de git. Aucun appel à GitHub ou GitLab : des
+*patch ids* seulement.
+
+```text
+merge-trunk build/billing-2 <- origin/main (d8d281b)
+base 6d8be4b: build/billing-1 landed as d8d281b "feat(billing): issue and cancel (#1)"
+conflicts: plain git merge 3, own diff since base 1, automatic 1, for you 0
 ```
 
-Un fichier de ses lignes absent de cette liste, ou une tranche dont le code a disparu, s'est
-perdu en route : ne réglez jamais un conflit en prenant le côté de la branche par défaut pour
-un fichier entier. Un *rebase* n'écrit aucun *commit* de fusion que `verify-merge` puisse lire ;
-après une fusion de la branche par défaut dans la seconde branche, en revanche,
-`npx ddd-ts-kit verify-merge HEAD --base <last commit of the first branch>` la juge sur cette
-base (un *trailer* `Merge-Base: <commit>` dans le message de fusion fait de même pour chaque
-passe suivante), là où la base de fusion de git signalerait les lignes que la première branche a
-réécrites après la coupe de la seconde.
+Une base trouvée trop ancienne se voit en conflits de plus, jamais en perte silencieuse : quand la
+première branche a été supprimée et que rien ne prouve où elle est arrivée, le rapport nomme
+chaque branche qui partage des *commits* et n'a pas été trouvée, avec le `--since <commit>` à
+passer une fois qu'une personne a vérifié. `status --workers` en donne l'aperçu pour chaque
+*worker* : où sa branche est arrivée, ses *commits* d'avance et ses fichiers changés comptés à
+partir de là (plus de faux recouvrements avec ce qui est déjà arrivé), ses *commits* de retard, et
+ce que `merge-trunk` laisserait en conflit maintenant.
 
 ## Un plan concret : quatre contextes, quatre workers
 
@@ -654,8 +724,8 @@ reste.
 - **Un agent tient une ligne, deux au plus.** Avec une douzaine, un agent de code épuise ses
   tours ou son contexte au milieu de l'une d'elles, et laisse un *worktree* à moitié modifié,
   sans rapport. Donnez une ligne par agent (`--rows`), lancez-les en séquence dans le *worktree*
-  du contexte, chacun commitant sa ligne, puis fusionnez le tronc dans la branche
-  (`npx ddd-ts-kit verify-merge` ensuite), relisez le
+  du contexte, chacun commitant sa ligne, puis apportez le tronc dans la branche
+  (`npx ddd-ts-kit merge-trunk`), relisez le
   lot une fois, lancez `npm run verify` sur la branche fusionnée, et ouvrez la *pull request* :
   `check --changed-since` ne voit que les fichiers de la branche, et ce que le tronc a reçu
   entre-temps peut casser l'ensemble. Le garde avertit deux fois l'agent `context-builder` du

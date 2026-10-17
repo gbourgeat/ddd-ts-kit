@@ -126,7 +126,8 @@ The slice is finished when `todo ordering` no longer lists anything of it.
 | Command or skill | Does | When | Produces | Then |
 |---|---|---|---|---|
 | `/ddd-ts-kit:quality-gate`, `npm run verify` | every gate of the pipeline, fixed at the root cause | before opening the pull or merge request | a green gate | the request |
-| `npx ddd-ts-kit verify-merge` | what the merges of the branch lost, read from git alone: a line one side added, a row done, a test, a spec file, a migration, a conflict marker | after each merge of the trunk into the branch; the pre-push hook (`--warn`) and `verify-slice` run it too, as a warning in this version: a later minor version blocks | the findings of each merge, with `file:line` and the side that held them; nothing without a merge; exit 1 on an error, 0 with `--warn` | restore each one from its side, or record a removal decided on purpose with a `Lost-Accepted: <file:line>` trailer |
+| `npx ddd-ts-kit merge-trunk` | brings the trunk into the branch as one merge commit computed from the branch's own diff (from where it landed after a squash): derived files, generated regions and registries, `slices.md` rows, drizzle meta, the lockfile and the stored-events lock settled, migrations replayed (renamed with `--to-land`), decision records renumbered, regenerate, then `verify-merge` on the result | a worker: to bring the trunk in, never `git merge` alone; the conductor: `--to-land --cwd <worktree>` just before the squash merge | one merge commit with `Merge-Base:`, `Trunk:` and `Landed:` trailers; or a merge in progress with each hunk left, what each side did there, exit 1 | resolve each hunk, `git add`, `merge-trunk --continue` (`--accept-lost` for a removal decided on purpose, `--abort` to undo), then `npm run verify` |
+| `npx ddd-ts-kit verify-merge` | what the merges of the branch lost, read from git alone: a line one side added, a row done, a test, a spec file, a migration, a conflict marker | merge-trunk runs it before its commit; after a merge made otherwise, or of a squash with `--theirs <head>`; the pre-push hook (`--warn`) and `verify-slice` run it too, as a warning in this version: a later minor version blocks | the findings of each merge, with `file:line` and the side that held them; nothing without a merge; exit 1 on an error, 0 with `--warn` | restore each one from its side, or record a removal decided on purpose with a `Lost-Accepted: <file:line>` trailer |
 | `npx ddd-ts-kit affected --base origin/main` | the contexts a change reaches through the context map | in the pipeline; locally to see what it will run | filters for the tests and the linter | the pipeline |
 | agent `architecture-reviewer` | a read-only review of the diff against the rules | before merging a slice | findings with file and line | fixes, then merge |
 
@@ -251,6 +252,8 @@ Usage
   ddd-ts-kit verify-slice <context> --since <git-ref>
   ddd-ts-kit cited [<context>] [--rows <id,...>] [--base <ref>] [--removed-since <ref>]
   ddd-ts-kit verify-merge [<commit>] [--since <git-ref>] [--theirs <git-ref>] [--base <commit>] [--warn]
+  ddd-ts-kit merge-trunk [--trunk <git-ref>] [--since <commit>] [--to-land] [--dry-run]
+  ddd-ts-kit merge-trunk --continue [--accept-lost] | --abort
   ddd-ts-kit docs [--check] [--stored-events]
   ddd-ts-kit sdk [--check] [--dry-run]
   ddd-ts-kit depcruise-config [--check|--write]
@@ -304,14 +307,17 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
   status           the next step of docs/architecture/plan.md, the slices of docs/architecture/slices.md by
                    status and by owner, each row not done ready on the trunk (its dependencies done), ready
                    on a branch (the others briefed to a worker with commits ahead of its base) or waiting
-                   (with the ids it waits for), and the TODO(domain), TODO(platform), it.todo and TODO(review)
-                   left in each context, and each story or milestone whose rows are all done while markers
-                   of its own keep it open (see story-check, whose git blame it runs on those markers
-                   only); --workers shows instead each worktree holding .ddd-ts-kit/worker.json (branch,
-                   context, rows, base, commits ahead, dependencies not installed, files changed since the base,
-                   its report), a state line (rows committed, the row under way, files uncommitted, markers,
-                   last verify-slice, and the worker-scope --resume command of a stopped one), then the
-                   contexts and the files more than one worker holds
+                   (with the ids it waits for), a row that landed with a worker's branch but is not marked done,
+                   and the TODO(domain), TODO(platform), it.todo and TODO(review) left in each context, and
+                   each story or milestone whose rows are all done while markers of its own keep it open (see
+                   story-check, whose git blame it runs on those markers only); --workers shows instead each
+                   worktree holding .ddd-ts-kit/worker.json (branch, context, rows, base, commits ahead and
+                   files changed counted from where its branch landed on the base when it was squash-merged
+                   there (else from the merge base), commits behind, the commit it landed as, what merge-trunk
+                   would leave conflicted now, dependencies not installed, its report), a state line (rows
+                   committed, the row under way, files uncommitted, markers, last verify-slice, and the
+                   worker-scope --resume command of a stopped one), then the contexts and the files more than
+                   one worker holds
   sdk              the typed client of each document of the contract, a workspace package under
                    clients/<document> without runtime dependency: typed errors keyed by the error codes,
                    credentials per security scheme; records "sdk" in the config the first time, wires the
@@ -322,8 +328,9 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
                    dependency done; wave n: the others in earlier waves), each wave cut into batches of one
                    owner, one or two rows on one aggregate, with the worker-scope command that briefs each,
                    the batches of a wave likely to touch the same files (same aggregate in Start with, or
-                   unknown when it names none), and the merge order; a cycle, a dependency on an unknown id
-                   or a row without owner is reported alone, and exits 1
+                   unknown when it names none), the merge order and what runs before each merge (merge-trunk
+                   --to-land); a cycle, a dependency on an unknown id or a row without owner is reported
+                   alone, and exits 1
   story-check      whether a story or a milestone can close, <code> being the start of the ids of its rows
                    (M1 for M1.01, M1.02: the id without its last .<number>): every row of it done in
                    slices.md (the others listed with their status), and no marker of its own left
@@ -347,7 +354,7 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
                    batch plan-waves cuts for the context (one or two rows on one aggregate), a note naming the
                    next; a worktree it creates gets the clean install of the package manager (npm ci), its
                    time in the notes, unless --no-install; an existing worktree or branch that does not
-                   contain the base is refused
+                   contain the base is refused, with the merge-trunk that brings it in
   --resume         worker-scope reads where the stopped worker of the context stands (its rows by their
                    Slice: trailer, the files of the row under way, the markers, its last verify-slice, its
                    report, its agent as the guard recorded it) and prints the message that resumes its agent
@@ -389,6 +396,24 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
                    trailer are listed and never fail, nor what a later commit restored; silent and exit 0
                    without a merge, exit 1 on an error; --warn prints the same and exits 0, as the
                    pre-push hook of init runs it in this version (a later minor version blocks the push)
+  merge-trunk      brings the trunk (--trunk, by default origin/HEAD then origin/main, never fetched) into the
+                   branch as one merge commit computed from the branch's own diff: from the newest commit of
+                   the branch the trunk holds (--since; else the commit whose patch, derived files,
+                   migrations, slices.md, plan.md and lockfiles left out, is one commit of the trunk, on this
+                   branch or a branch it shares commits with; else the base recorded for the worker when its
+                   lines are on the trunk; else git merge-base). Settles derived files and drizzle-kit meta
+                   (trunk side), generated regions of CONTEXT.md and the context map (trunk side), conflicts
+                   inside generated registries (lines of both sides), slices.md row by row (the furthest
+                   status), the stored-events lock by key, the lockfile (trunk side, installed again when
+                   the branch changed package.json); the rest is left in a merge in progress git
+                   understands, with what each side did (exit 1). Then, or on --continue: the drizzle
+                   migrations of both sides replayed, on --to-land the working migrations renamed (knex,
+                   Prisma, TypeORM; stop when both sides change one table), decision records renumbered,
+                   regenerate, verify-merge on the uncommitted result (an error stops; --accept-lost records
+                   a Lost-Accepted: trailer), and the commit of the merge's paths only, with the trailers
+                   Merge-Base:, Trunk: and Landed:; any other changed path blocks it. --dry-run previews,
+                   --abort undoes; refused (exit 2) on a dirty tree, another operation in progress, an
+                   unknown trunk, or a git older than 2.40 with a base git would not compute
   --commit-size    the files and lines about to be committed against "commit" in the config (20 files and
                    600 lines by default, generated files not counted); --staged reads the index only;
                    advisory, --strict exits 1 when over

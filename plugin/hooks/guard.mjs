@@ -288,7 +288,10 @@ async function preBash(input) {
   if (!project || project.mode === 'off') {
     return;
   }
-  const preparing = (await workerPlaceReason(input, command)) ?? oneSideMergeReason(project, input, command);
+  const preparing =
+    (await workerPlaceReason(input, command)) ??
+    (await landingReason(input, command)) ??
+    oneSideMergeReason(project, input, command);
   if (preparing) {
     decide(input, project.mode === 'advise' ? 'ask' : 'deny', preparing);
     return;
@@ -875,6 +878,22 @@ async function workerPlaceReason(input, command) {
     : undefined;
 }
 
+// `merge-trunk --to-land` gives the working migrations of a branch their real names just before its
+// squash merge: the conductor's step. A sub-agent brings the trunk in with `merge-trunk` alone,
+// however it launches the CLI.
+async function landingReason(input, command) {
+  if (!input.agent_type || !command.includes('--to-land')) {
+    return undefined;
+  }
+  shell = await import('./shell-commands.mjs');
+  const landing = kitInvocations(shell.simpleCommands(command, input.cwd ?? process.cwd())).some(
+    ({ subcommand, args }) => subcommand === 'merge-trunk' && args.includes('--to-land'),
+  );
+  return landing
+    ? 'Only the conductor lands a branch: `merge-trunk --to-land` gives the working migrations their real names just before the squash merge. A worker brings the trunk in with `npx ddd-ts-kit merge-trunk` alone; report to the conductor that the branch is ready to land.'
+    : undefined;
+}
+
 // Each run of the CLI of the kit in `commands`, however it is launched: the `ddd-ts-kit` binary
 // (`npx`, `npm exec`, `pnpm exec`, `bunx`, `node_modules/.bin`), the entry file of the CLI run by
 // node (`.../cli/dist/bin.js`, `.../ddd-ts-kit/dist/bin.js`) or the kit script of a project.
@@ -914,7 +933,7 @@ function oneSideMergeReason(project, input, command) {
     ([, args]) => /(?:^|\s)--(?:ours|theirs)\b/.test(args) && heldPaths(project, directory, args),
   );
   return merging || takingASide
-    ? 'Taking one side of a merge (`-X theirs`, `-X ours`, `-s ours`, `checkout` or `restore --theirs/--ours` on a source or a test) erases what the other side added, without a conflict to show it. Resolve each hunk keeping the intent of both sides, `git add` the file, commit, then run `npx ddd-ts-kit verify-merge`: it lists any line, row or test the merge lost. A derived file is taken from either side and rewritten by `npm run regenerate`.'
+    ? 'Taking one side of a merge (`-X theirs`, `-X ours`, `-s ours`, `checkout` or `restore --theirs/--ours` on a source or a test) erases what the other side added, without a conflict to show it. Bring the trunk in with `npx ddd-ts-kit merge-trunk`: it settles the derived files itself; resolve each hunk it leaves keeping the intent of both sides, `git add` the file, then `npx ddd-ts-kit merge-trunk --continue`, which commits only once no line, row or test is lost.'
     : undefined;
 }
 

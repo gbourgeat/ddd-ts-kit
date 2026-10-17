@@ -185,11 +185,14 @@ describe('worker-scope, the generators of a worker', () => {
 });
 
 describe('worker-scope, on slices, an existing worktree and other places', () => {
-  it('asks the worker to resolve each hunk when it brings the trunk in, then to run verify-merge', () => {
+  it('asks the worker to bring the trunk in with merge-trunk only, and to resolve each hunk of a stop', () => {
     const briefing = String(jsonAt(cli(root, 'worker-scope', 'billing', '--json').json(), 'briefing'));
 
-    expect(briefing).toContain('To bring the trunk in: `git merge main`, each hunk resolved keeping both sides');
-    expect(briefing).toContain('on a source file, then `npx ddd-ts-kit verify-merge`.');
+    expect(briefing).toContain(
+      'To bring the trunk in: `npx ddd-ts-kit merge-trunk --trunk main` only, never `git merge` alone',
+    );
+
+    expect(briefing).toContain('`git add` it, then `npx ddd-ts-kit merge-trunk --continue`');
     expect(briefing).toContain('that a change of this branch broke is adapted in this branch');
   });
 

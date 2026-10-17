@@ -47,10 +47,10 @@ one by one, never one it leaves out, and commit with the command it prints:
 `feat(<context>): <slice in business words>` with the trailer `Slice: <row>`.
 Format with `npm run format`, then `npm run lint:fix` (a blank line asked after a wrapped line is expected);
 never Prettier nor a bare `npx biome`.
-To bring the trunk in: `git merge <main>`, each hunk resolved keeping both sides, never `-X theirs/ours` or
-`checkout --theirs/--ours` on a source file, then `npx ddd-ts-kit verify-merge`. A spec of a delivered row
-that a change of this branch broke is adapted in this branch, in a commit of its own.
-Restore each loss verify-merge lists before going on: verify-slice and the push only warn in this version.
+To bring the trunk in: `npx ddd-ts-kit merge-trunk --trunk <main>` only, never `git merge` alone, `-X theirs/ours`
+or `checkout --theirs/--ours` on a source file. On a stop, resolve each hunk keeping the intent of both sides,
+`git add` it, then `npx ddd-ts-kit merge-trunk --continue`: it commits only once no line, row or test is lost.
+A spec of a delivered row that a change of this branch broke is adapted in this branch, in a commit of its own.
 
 Budget: one row is one agent's work, two at most. The guard counts your tool calls and warns you twice,
 early rather than late: about 30 turns before your limit (finish the slice under way, start no other) and

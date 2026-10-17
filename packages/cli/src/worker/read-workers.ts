@@ -1,7 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { runGit } from '../commit/run-git.js';
+import { SLICES_FILE } from '../progress/read-slices.js';
+import { slicesIn } from '../progress/slices-in.js';
 import { WORKER_SCOPE_FILE } from '../commit/worker-scope-file.js';
+import { type BranchStanding, branchStanding } from './branch-standing.js';
 import { changedFiles } from './changed-files.js';
 import { listWorktrees, type Worktree } from './list-worktrees.js';
 import { overlapsOf } from './overlaps-of.js';
@@ -35,9 +38,9 @@ function workerIn(worktree: Worktree, project: string): WorkerStatus[] {
   }
 
   const branch = worktree.branch ?? scope.branch;
-  const { ahead, mergeBase } = sinceBase(worktree.path, scope.base);
   // A scope file written before the rows were recorded has no rows to follow.
   const progress = scope.rows === undefined ? undefined : progressOf(project, scope);
+  const standing = scope.base === undefined ? undefined : branchStanding(worktree.path, project, scope.base);
 
   return [
     {
@@ -46,25 +49,44 @@ function workerIn(worktree: Worktree, project: string): WorkerStatus[] {
       context: scope.context,
       ...(scope.rows === undefined ? {} : { rows: scope.rows }),
       ...(scope.base === undefined ? {} : { base: scope.base }),
-      ...(ahead === undefined ? {} : { ahead }),
+      ...standingOf(standing, landedRows(project, { standing, rows: scope.rows ?? [] })),
       installed: fs.existsSync(path.join(project, 'node_modules')),
-      files: changedFiles(worktree.path, mergeBase),
+      files: changedFiles(worktree.path, standing?.since),
       report: reportIn(project),
       ...(progress === undefined ? {} : { progress }),
     },
   ];
 }
 
-/** Where the worktree stands against its base; nothing when the base is unknown or names no commit. */
-function sinceBase(worktree: string, base: string | undefined): { ahead?: number; mergeBase?: string } {
-  if (base === undefined) {
+/** What the status says of the standing: nothing when the base is unknown or names no commit. */
+function standingOf(
+  standing: BranchStanding | undefined,
+  rows: readonly string[],
+): Pick<WorkerStatus, 'ahead' | 'behind' | 'landed' | 'mergePreview'> {
+  if (standing === undefined) {
     return {};
   }
 
-  const mergeBase = runGit(worktree, ['merge-base', base, 'HEAD'])?.trim();
-  const ahead = runGit(worktree, ['rev-list', '--count', `${base}..HEAD`]);
+  const { ahead, behind, landed, mergePreview } = standing;
+  const where = landed === undefined ? {} : { landed: { commit: landed.commit, subject: landed.subject, rows } };
 
-  return mergeBase === undefined || ahead === undefined ? {} : { ahead: Number(ahead.trim()), mergeBase };
+  return { ahead, behind, ...where, ...(mergePreview === undefined ? {} : { mergePreview }) };
+}
+
+/** The briefed rows the branch had done where it landed: on the trunk, whatever the trunk's slices file says. */
+function landedRows(
+  project: string,
+  { standing, rows }: { standing: BranchStanding | undefined; rows: readonly string[] },
+): string[] {
+  if (standing?.landed === undefined) {
+    return [];
+  }
+
+  const done = (slicesIn(runGit(project, ['show', `${standing.since}:./${SLICES_FILE}`]) ?? '') ?? []).filter(
+    (row) => row.status === 'done',
+  );
+
+  return rows.filter((id) => done.some((row) => row.id === id));
 }
 
 function reportIn(project: string): WorkerReport | null {

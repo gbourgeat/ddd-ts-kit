@@ -129,7 +129,9 @@ describe('verify-slice: the design of the rows and the merges of the branch', ()
       [],
     );
   });
+});
 
+describe('verify-slice, on the merges of the branch and what it asks for', () => {
   it('reports, without failing the slice in this version, a merge of the trunk that lost a line of the branch', () => {
     const priced = (...lines: readonly string[]): string =>
       `export const prices = [\n  'standard',\n${lines.join('')}];\n`;

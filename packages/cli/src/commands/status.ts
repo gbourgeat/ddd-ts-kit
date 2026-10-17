@@ -2,6 +2,7 @@ import { readConfig } from '../config/index.js';
 import { formatProgress } from '../progress/format-progress.js';
 import { readProgress } from '../progress/read-progress.js';
 import { formatWorkers } from '../worker/format-workers.js';
+import { landedRows } from '../worker/landed-rows.js';
 import { readWorkers } from '../worker/read-workers.js';
 import { rowsOnBranches } from '../worker/rows-on-branches.js';
 import { Workspace } from '../workspace/index.js';
@@ -25,7 +26,8 @@ export const statusCommand: Command = (argv, io) => {
     return 0;
   }
 
-  const progress = readProgress(new Workspace(root, false), readConfig(root).config, rowsOnBranches(workers));
+  const rows = { onBranches: rowsOnBranches(workers), landed: landedRows(workers) };
+  const progress = readProgress(new Workspace(root, false), readConfig(root).config, rows);
 
   io.out(args.json ? JSON.stringify(progress, null, 2) : formatProgress(progress));
 

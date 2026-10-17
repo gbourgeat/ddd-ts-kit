@@ -17,6 +17,11 @@ export interface DrizzleReplay {
   /** The trunk the branch merged: its migrations are kept, the others generated again on top. */
   readonly base: string;
   readonly interactive: boolean;
+  /**
+   * The replay that lands the branch (`merge-trunk --to-land`): its migrations get their real
+   * names even in the worktree of a worker, which otherwise keeps them working ones.
+   */
+  readonly final?: boolean;
 }
 
 /**
@@ -41,13 +46,13 @@ export function replayDrizzleMigrations(replay: DrizzleReplay, io: Io): number {
   );
 
   const written = new Set<string>();
-  const inWorker = fs.existsSync(path.join(replay.root, WORKER_SCOPE_FILE));
+  const keepWorking = replay.final !== true && fs.existsSync(path.join(replay.root, WORKER_SCOPE_FILE));
   let since = 0;
 
   for (const migration of plan.migrations) {
     waitForNextSecond(since);
 
-    const code = generateAgain({ plan, migration, name: replayedName(migration.tag, inWorker) }, replay, io);
+    const code = generateAgain({ plan, migration, name: replayedName(migration.tag, keepWorking) }, replay, io);
 
     if (typeof code === 'number') {
       return code;

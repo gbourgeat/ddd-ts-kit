@@ -15,6 +15,7 @@ import { errorFactoriesCommand } from './commands/error-factories.js';
 import { generateCommand } from './commands/generate.js';
 import { initCommand } from './commands/init.js';
 import { listCommand } from './commands/list.js';
+import { mergeTrunkCommand } from './commands/merge-trunk.js';
 import { planWavesCommand } from './commands/plan-waves.js';
 import { sdkCommand } from './commands/sdk.js';
 import { statusCommand } from './commands/status.js';
@@ -45,6 +46,7 @@ const COMMANDS: Readonly<Record<string, Command>> = {
   'verify-slice': verifySliceCommand,
   cited: citedCommand,
   'verify-merge': verifyMergeCommand,
+  'merge-trunk': mergeTrunkCommand,
   docs: docsCommand,
   doctor: doctorCommand,
   sdk: sdkCommand,

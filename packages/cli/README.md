@@ -1036,7 +1036,9 @@ may keep such a story open are blamed, one git call per file), with the command 
 `{ next, slices, remaining }`: `next` and `slices` are `null` when their file is missing,
 `slices` holds `{ file, rows, byStatus, byOwner, duplicates, unscoped, unclosed }`, `unclosed`
 being `[{ story, markers, command }]`, a row not done carrying
-`ready: 'trunk' | 'branch' | 'waiting'` and `waitingFor` (its dependencies not done),
+`ready: 'trunk' | 'branch' | 'waiting'` and `waitingFor` (its dependencies not done), and
+`landedNotDone` the rows not marked done that landed on the trunk with a worker's branch, each
+`{ id, commit }` (said as `#<id> landed on the trunk (<commit>) but is not marked done`),
 `remaining` one `{ context, domain, platform, test }` per context, and one with an empty
 `context` for what is left outside them.
 
@@ -1045,12 +1047,19 @@ repository whose copy of the project holds `.ddd-ts-kit/worker.json`, with its b
 context, its rows, its base, the commits it is ahead of the base, `dependencies not installed`
 when its copy of the project has no `node_modules`, the files it changed (committed
 since the merge base, modified, and untracked but not ignored, relative to the top of the
-repository) and its `.ddd-ts-kit/report.md` with when it was written; then the contexts built by
+repository) and its `.ddd-ts-kit/report.md` with when it was written. Once its branch was
+squash-merged into the base, found as `merge-trunk` finds it (patch ids, no GitHub call), the
+commit that took it in and the rows it had done there are shown, and its commits ahead and its
+files are counted from where it landed: a reused branch with nothing new counts nothing, and no
+false overlap is reported on what already landed. Its commits behind the base follow, and, when
+it is behind, what `merge-trunk` would leave conflicted now (computed with `git merge-tree`,
+nothing written). Then the contexts built by
 more than one worker and the files changed by more than one worker, each with their worktrees.
 A scope file that holds the context only is read too: the worker comes without its rows, its
 base and its commits ahead, and its files are the uncommitted ones. `--json` prints
-`{ workers: [{ worktree, branch, context, rows, base, ahead, installed, files, report, progress }], overlaps: { contexts: [{ context, worktrees }], files: [{ file, worktrees }] } }`,
-`report` being `{ file, modified }` or `null`. Without a worker it says so in one line. A worker
+`{ workers: [{ worktree, branch, context, rows, base, ahead, behind, landed, mergePreview, installed, files, report, progress }], overlaps: { contexts: [{ context, worktrees }], files: [{ file, worktrees }] } }`,
+`landed` being `{ commit, subject, rows }`, `mergePreview` `{ conflicts, files }`, `report`
+`{ file, modified }` or `null`. Without a worker it says so in one line. A worker
 whose scope file names its rows gets a `state:` line, such as `stopped mid-row #M1.14 (6 files
 uncommitted, 3 TODO(domain), last verify-slice failed: tests); resume: npx ddd-ts-kit
 worker-scope billing --resume`, and `progress` in JSON: `{ rows: [{ id, slice, state, commit?,
@@ -1081,7 +1090,8 @@ be unknown rather than guessed. Each batch of a context's worker comes with the 
 it, `npx ddd-ts-kit worker-scope <context> --base origin/main --rows <ids>`, with its own
 `--worktree` and `--branch` when its wave holds another batch of that context; a batch of the
 conductor is built on the trunk; a person is briefed by hand. Then the merge order: by wave, and in
-a wave the batch that the most rows wait for, directly or not, first. With a context, only its rows
+a wave the batch that the most rows wait for, directly or not, first, and what runs before each
+merge: `npx ddd-ts-kit merge-trunk --to-land --cwd <worktree>`, then the squash merge. With a context, only its rows
 are shown; the rows of other contexts it waits for count in the numbering of the waves.
 
 A cycle in `Depends on`, a dependency on an id no row carries, a row without owner and an id two
@@ -1203,7 +1213,9 @@ in that order: an id is read as written, and a row the file does not have, has t
 another owner is refused. Each row carries its rules, from a line `- #<id>: <rules>` under the
 tables; more than two rows get a note, since an agent holds one or two. An existing worktree, or
 an existing branch, is kept when it contains the base and refused when it does not, so that no
-worker builds on a stale trunk; only the file is written again. Without `--base`, run from a
+worker builds on a stale trunk, with the fix: `npx ddd-ts-kit merge-trunk --trunk <base> --cwd
+<worktree>`, never a plain `git merge`, which conflicts again on what already landed; only the
+file is written again. Without `--base`, run from a
 worker's worktree (its `.ddd-ts-kit/worker.json`, or a branch `build/<context>`), it refuses:
 that branch would become the trunk. In a worktree it creates, it then runs the clean install of
 the package manager of the project (`npm ci`, `pnpm install --frozen-lockfile`), its output kept
@@ -1345,6 +1357,100 @@ each finding being `{ kind, file, line, side, text }`. It cannot see a line both
 two places, a lost line of punctuation or a change of meaning, and a shallow clone lacks the
 commits it reads: in CI it needs `fetch-depth: 0`, which is why the pipelines of `init` do not
 run it.
+
+## merge-trunk
+
+```
+ddd-ts-kit merge-trunk [--trunk <ref>] [--since <commit>] [--to-land] [--dry-run]
+ddd-ts-kit merge-trunk --continue [--accept-lost] | --abort
+```
+
+Brings the trunk into the branch as one merge commit computed from the branch's own diff. Never
+rebases, never fetches (the commit `--trunk` names is printed; by default `origin/HEAD`, then
+`origin/main`). Refused, exit 2: a working tree that is not clean (`.ddd-ts-kit/` aside), a merge,
+rebase, cherry-pick or revert in progress, an unknown trunk.
+
+1. **The base**: the newest commit of the branch the trunk already holds. `--since <commit>` (a
+   commit of the branch); else the landed point: the newest commit whose whole change since the
+   trunk is one commit of the trunk, compared by stable patch id without context lines, the
+   derived files, migrations, `slices.md`, `plan.md` and lockfiles left out, looked for on this
+   branch, on the branch `.ddd-ts-kit/worker.json` records as its base, and on the local branches
+   sharing commits with it (a stacked branch whose parent was squash-merged, a branch reused after
+   its first row landed); of commits sharing one patch the oldest is taken, a newer one only when
+   the trunk holds what it changed; else the `baseCommit` worker-scope recorded, when it is a
+   commit of the branch and its own lines are all on the trunk (otherwise it stops, nothing
+   changed, and lists them for a person to confirm with `--since`); else `git merge-base`, and
+   the report names each branch sharing commits not found on the trunk, with its `--since`. Too
+   old shows as more conflicts, never as a silent loss.
+2. **The preview**: `git merge-tree --write-tree --merge-base=<base> HEAD <trunk>`, diff3 markers;
+   the same without the base gives what a plain `git merge` would conflict on. `--dry-run` stops
+   here and changes nothing.
+3. **The merge**: the tree becomes a merge in progress git understands (`ORIG_HEAD`, the index
+   with the three stages of each conflicted path, `MERGE_HEAD`, `MERGE_MODE`, `MERGE_MSG`, linked
+   worktrees included): `git status`, `git add`, `git commit` and `git merge --abort` work on it.
+   The message is `Merge <trunk> into <branch>` with the trailers `Merge-Base: <base>`,
+   `Trunk: <commit>` and, when the branch was found squashed there, `Landed: <commit>`.
+4. **What is settled without a person**:
+
+   | Class | Paths | Resolution |
+   |---|---|---|
+   | derived | `openapi/`, `clients/`, `docs/integration/`, `.dependency-cruiser.cjs`, the barrels and lists of each context | trunk side, rewritten by `regenerate` |
+   | mixed document | `CONTEXT.md`, `docs/context-map.md` | a conflict inside a `<!-- ddd-ts-kit:<region> -->` region: trunk side; outside: for you |
+   | registry | a conflict inside `// ddd-ts-kit:<region>` markers of any file | the base without what either side removed, plus what each added, ours first, once each; names imported from one module joined in one statement in `imports` |
+   | slices | `docs/architecture/slices.md` | row by row by `#`: the furthest status (done, in progress, todo), each other cell from the side that changed it; a cell both changed differently: for you |
+   | drizzle meta | `<out>/meta/_journal.json`, snapshots | trunk side, then the replay |
+   | lockfile | `package-lock.json`, `pnpm-lock.yaml`, `yarn.lock` | trunk side; `<manager> install` when the branch changed `package.json` since the base |
+   | stored events | `stored-events.lock.json` | every version of both sides; one recorded with two shapes: for you |
+   | anything else | sources, tests, `package.json`, configuration, a file one side deleted | for you |
+
+   Anything for you: `.ddd-ts-kit/merge.json` records the merge, the report lists each file with
+   the lines of each hunk, what this branch and its rows did there, the commits of the trunk that
+   touched it since the base and what they did, and the command exits 1.
+5. **`--continue`** (or straight on without a conflict for you): refused while a path is unmerged
+   or keeps a conflict marker; the install, then the migrations: under drizzle-kit, when both
+   sides added some since the base, or with `--to-land` and a working migration, the replay of
+   `drizzle-generate --replay` (with `--to-land`, the real names, in a worker's worktree too);
+   under knex, Prisma and TypeORM with `--to-land` only, each migration of the branch the trunk
+   does not have renamed after the trunk's last, without `working-`, the content kept (TypeORM's
+   class and `name`, Prisma's folder), and a stop when a migration the trunk gained since the base
+   names a table one of the branch names (generate it again on the trunk); a decision record of
+   the branch whose number the trunk took since the base gets the next free one (its files, its
+   `# ADR-NNNN` title, the links of its translations, recorded as `Lost-Accepted:` lines).
+6. **`regenerate`** (skipped without the config of the kit or the script); a failure stops.
+7. **`verify-merge`** on the uncommitted result, on the base the trailer records: an error stops
+   (exit 1), with `file:line (ours|theirs)  <text>`, the rows no longer done, the tests lost;
+   `--continue --accept-lost` records them in a `Lost-Accepted:` trailer and goes on.
+8. **The commit** of the paths of the merge only: what is staged plus what the steps rewrote (the
+   derived files, the migrations, the decision records, the lockfile, `slices.md`, the
+   stored-events lock). Any other changed path is listed as left out and blocks it until it is
+   staged or set aside. The hooks of the project run.
+
+`--abort` undoes the merge in progress as `git merge --abort` does and forgets its state. Each stop
+says what to do next and keeps the merge in progress for the next `--continue`. git 2.40 is needed
+for a base git would not compute; an older git merges with `git merge` itself from
+`git merge-base` (`--since <merge base>`), and refuses `--dry-run`. Exit 0 once committed, up to
+date or previewed, 1 on a stop, 2 when it cannot start.
+
+```text
+merge-trunk build/billing-2 <- origin/main (d8d281b)
+base 6d8be4b: build/billing-1 landed as d8d281b "feat(billing): issue and cancel (#1)"
+conflicts: plain git merge 3, own diff since base 2, automatic 1, for you 1
+automatic:
+  openapi/openapi.yaml  derived: trunk side, regenerated at the end
+for you (a merge is in progress; `merge-trunk --abort` undoes it):
+  src/contexts/billing/domain/invoice.ts  hunks at lines 40-58
+    ours  (build/billing-2, rows #M1.02): adds 4 lines: pay(amount: Money, at: Date): void {
+    theirs (origin/main since 6d8be4b, 9a0c1f2 "feat(billing): cancel an invoice (#7)"): adds 3 lines: cancel(reason: CancelReason): void {
+    both sides only add lines: keep both. Never take one side of the whole file.
+stopped: 1 conflicted path left for you
+next: resolve each hunk, `git add <file>`, then `npx ddd-ts-kit merge-trunk --continue`
+```
+
+`--json` prints the same report:
+`{ status, branch, trunk: { ref, commit }, base: { commit, evidence, landedAs?, unlanded?, notOnTrunk? }, conflicts: { plainMerge, ownDiff, automatic, forYou }, automatic: [{ file, kind, how }], forYou: [{ file, kind, why, hunks, ours: { branch, rows, change }, theirs: { ref, commits, change }, advice }], migrations, regenerate: { status, output? }, lostLines: { errors, warnings, accepted } | null, leftOut, stop?, commit?, next }`,
+`status` being `up-to-date`, `dry-run`, `stopped` or `committed` and `evidence` `option`,
+`landed`, `recorded` or `merge-base`. The guard of the plugin refuses `--to-land` to a sub-agent:
+landing a branch is the conductor's step, just before its squash merge.
 
 ## affected
 

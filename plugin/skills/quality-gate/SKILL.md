@@ -24,6 +24,8 @@ allowed-tools:
   - Bash(npx ddd-ts-kit verify-slice *)
   - Bash(npx ddd-ts-kit verify-merge)
   - Bash(npx ddd-ts-kit verify-merge *)
+  - Bash(npx ddd-ts-kit merge-trunk)
+  - Bash(npx ddd-ts-kit merge-trunk *)
   - Bash(npx ddd-ts-kit check)
   - Bash(npx ddd-ts-kit todo *)
   - Bash(npx ddd-ts-kit todo)
@@ -42,7 +44,8 @@ allowed-tools:
 | after each write | nothing: the guard runs `check-file` and returns the violations | none |
 | while iterating | `npx ddd-ts-kit verify-slice <context> --since <base>`: regenerate, the rules on the changed files, the specs of the context, the files near the size limit and the paths of the slice to stage, in one run; a path it leaves out is never staged with the slice | seconds |
 | before the commit that closes a slice | the two above, `npm run typecheck`, `npm run lint`, `npm run format:check` (`npm run format` settles it), `npx ddd-ts-kit todo <context>` (nothing left but `TODO(review)`), `npx ddd-ts-kit check --commit-size` | under a minute |
-| after merging the trunk into the branch | `npx ddd-ts-kit verify-merge`: each line, row done or test the merge lost, to restore from its side; it exits 1 on one (the pre-push hook and `verify-slice` run it too, and only warn in this version) | a second |
+| to bring the trunk into the branch | `npx ddd-ts-kit merge-trunk`: one merge commit from the branch's own diff, derived files settled, `verify-merge` on the result before its commit; on a stop, resolve each hunk, `git add`, `merge-trunk --continue` | seconds |
+| after a merge made otherwise | `npx ddd-ts-kit verify-merge`: each line, row done or test the merge lost, to restore from its side; it exits 1 on one (the pre-push hook and `verify-slice` run it too, and only warn in this version) | a second |
 | before a merge or a pull request | `npm run verify`, on the branch with the trunk merged in; each non-blocking remark of the review written as a `TODO(review)` or settled | everything |
 | before a story or a milestone is closed | `npx ddd-ts-kit story-check <code>` (`M1` for the rows `M1.*`): every row `done`, no marker of its own left; exits 1 with each blocker, why it is the story's, its `file:line` and its fix | seconds |
 

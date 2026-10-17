@@ -51,6 +51,7 @@ function sliceLines(slices: SlicesProgress): string[] {
     ...duplicated,
     ...unscoped,
     ...slices.unclosed.map(unclosedLine),
+    ...landedLines(slices),
     ...open,
     '  by owner',
     ...owners,
@@ -93,4 +94,12 @@ function readyText(row: StatusRow): string {
 
 function remainingLine(count: RemainingCount): string {
   return `  ${count.context === '' ? 'outside the contexts' : count.context}: ${count.domain} TODO(domain), ${count.platform} TODO(platform), ${count.test} it.todo, ${count.review} TODO(review)`;
+}
+
+/** The rows that landed with a worker's branch while the slices file does not mark them done. */
+function landedLines({ landedNotDone, file }: SlicesProgress): string[] {
+  return landedNotDone.map(
+    ({ id, commit }) =>
+      `  #${id} landed on the trunk (${commit.slice(0, 7)}) but is not marked done: mark it done in ${file}`,
+  );
 }
