@@ -1,5 +1,5 @@
 [English](parallel-work.md) · **Français**
-<!-- translation-of: parallel-work.md sha256:5fe3145ebc5dac9d -->
+<!-- translation-of: parallel-work.md sha256:fbe16254a1b1dee4 -->
 
 # Travailler en parallèle sans collisions
 
@@ -372,6 +372,13 @@ un *worktree* sans ses dépendances fait échouer le *commit*, bruyamment, au li
 vérifications ou d'emprunter le lefthook d'un *checkout* qui a peut-être disparu.
 `npx ddd-ts-kit doctor` signale un `lefthook.yml` sans cette ligne ou un clone sans le *hook*
 (`npm run hooks:install`).
+
+Un nouveau *worktree* part de rien, et ce qui s'y passe mal est son environnement, pas son code.
+`npx ddd-ts-kit doctor` dans ce *worktree* dit, en une seconde et sans réseau, ce qui lui manque
+pour faire tourner le projet : un Node qu'`engines.node` refuse ou que `.nvmrc` ne nomme pas, un
+`node_modules` absent ou installé avant la dernière modification du *lockfile*, un paquet du kit
+installé à une autre version que la CLI, un sous-module non initialisé ; chacun avec son
+correctif. `--strict` échoue tant que le *worktree* ne peut pas faire tourner le projet.
 
 Les règles qui empêchent les *worktrees* de faire du tort :
 

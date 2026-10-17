@@ -112,6 +112,10 @@ context, rows, commits ahead, dependencies not installed), its state (rows commi
 under way, the last `verify-slice`, the `--resume` command of a stopped one) and the files it changed, then the
 files more than one worker changed. Give the new worker rows on other files, or wait for the merge of the first.
 
+In a worktree made otherwise, or when a worker stops on its environment, run
+`npx ddd-ts-kit doctor --strict` in it: it names a Node that `engines.node` refuses, a missing or
+stale `node_modules`, packages of the kit at another version and submodules not initialised.
+
 ## 4. Shared files: who touches them, how they stay conflict-free
 
 | Shared | Touched by | Kept conflict-free by |

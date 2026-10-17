@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:26e424fca03ce5b5 -->
+<!-- translation-of: README.md sha256:223a989ac908410a -->
 
 # ddd-ts-kit
 
@@ -1251,10 +1251,29 @@ cette version) et les permissions des agents que cette version écrit et que le 
 *worktree* son propre lefthook, et fait échouer un *commit*, bruyamment, quand ses dépendances
 manquent ; le correctif est cette ligne, ou `init --force` pour le fichier entier. Le *hook*
 pre-commit sous `git rev-parse --git-path hooks` doit exister et venir de lefthook ; le correctif
-est `npm run hooks:install`, une fois par clone. `--strict` sort avec 1 tant que quelque chose
-manque ou est à une autre plage ; un script écrit autrement et un *hook* que ce clone n'a pas
-installé sont signalés sans le faire échouer. `--json` affiche `{ version, findings: [{ area,
-name, problem, expected, found }] }`, `area` valant `script`, `package`, `permission` ou `hook`.
+est `npm run hooks:install`, une fois par clone.
+
+Puis ce qui manque à ce *checkout* pour faire tourner le projet, l'état d'un clone ou d'un
+nouveau *worktree* plutôt que du projet, lu dans ses fichiers sans réseau : le Node qui tourne
+face à `engines.node` de `package.json` (`unsupported`) et à la version que nomme `.nvmrc`
+(`other version` ; un alias comme `lts/*` n'est pas jugé) ; `node_modules` présent (`missing`)
+et installé depuis la dernière modification du *lockfile* (`outdated`, d'après la copie du
+*lockfile* que le gestionnaire de paquets écrit sous `node_modules`) ; `ddd-ts-kit` et chaque
+paquet `@ddd-ts-kit/*` que `package.json` déclare ou que `node_modules` contient, installé
+(`not installed`) à la version de la CLI qui tourne (`other version`) ; et, quand le dépôt a un
+`.gitmodules`, chaque sous-module initialisé (`not initialised`, d'après `git submodule status`).
+Chacun vient avec son correctif : un Node qu'`engines.node` accepte (`nvm use`), `npm ci`, les
+paquets du kit montés ensemble, `git submodule update --init --recursive`.
+
+`--strict` sort avec 1 tant que quelque chose manque ou est à une autre plage, ou tant que le
+*checkout* ne peut pas faire tourner le projet : un Node hors d'`engines.node`, pas de
+`node_modules`, un paquet du kit non installé ou à une autre version, un sous-module non
+initialisé. Un script écrit autrement, un *hook* que ce clone n'a pas installé, un Node que
+`.nvmrc` ne nomme pas quand `engines.node` l'accepte, et un *lockfile* modifié depuis
+l'installation (un *checkout* peut le réécrire avec ce que `node_modules` contient déjà) sont
+signalés sans le faire échouer. `--json` affiche `{ version, findings: [{ area, name, problem,
+expected, found }] }`, `area` valant `script`, `package`, `permission`, `hook`, `node`,
+`install` ou `submodule`.
 
 ## worker-scope
 
