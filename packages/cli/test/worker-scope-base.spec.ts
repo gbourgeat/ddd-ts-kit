@@ -88,10 +88,23 @@ describe('worker-scope --rows', () => {
 
   it('notes a row already done, and a briefing of more rows than an agent holds', () => {
     const done = jsonAt(cli(root, 'worker-scope', 'billing', '--rows', '4.14', '--dry-run', '--json').json(), 'notes');
-    const all = jsonAt(cli(root, 'worker-scope', 'billing', '--dry-run', '--json').json(), 'notes');
+    const all = cli(root, 'worker-scope', 'billing', '--rows', '4.15,4.16,D4.01', '--dry-run', '--json').json();
 
     expect(done).toContainEqual(expect.stringContaining('Row #4.14 is marked done'));
-    expect(all).toContainEqual(expect.stringContaining('3 rows in one briefing: an agent holds 2 at most'));
+
+    expect(jsonAt(all, 'notes')).toContainEqual(
+      expect.stringContaining('3 rows in one briefing: an agent holds 2 at most'),
+    );
+  });
+
+  it('briefs by default the first batch plan-waves cuts for the context, and names the next', () => {
+    const scope = cli(root, 'worker-scope', 'billing', '--dry-run', '--json').json();
+
+    expect(jsonAt(scope, 'slices')).toEqual([expect.objectContaining({ id: '4.15' })]);
+
+    expect(jsonAt(scope, 'notes')).toContainEqual(
+      "Briefed the first of 3 batches of billing still to do, one agent's work; the next: `npx ddd-ts-kit worker-scope billing --rows 4.16`, once this one is committed.",
+    );
   });
 });
 

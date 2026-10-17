@@ -24,7 +24,7 @@ const SLICES = `# Slices
 `;
 
 /** The scope of the worker of billing: the context the guard reads, then what `status --workers` shows, with the commit of its base. */
-const BILLING_SCOPE = { context: 'billing', rows: ['2', '5'], base: 'main', branch: 'build/billing' };
+const BILLING_SCOPE = { context: 'billing', rows: ['2'], base: 'main', branch: 'build/billing' };
 
 let root: string;
 let worktree: string;
@@ -112,7 +112,7 @@ describe('worker-scope', () => {
     expect(briefing).toContain('`npx ddd-ts-kit verify-slice billing --since main`');
 
     expect(briefing).toContain(
-      'lists to stage, one by one, never one it leaves out: `feat(billing): <slice in business words>`.',
+      'one by one, never one it leaves out, and commit with the command it prints:\n`feat(billing): <slice in business words>` with the trailer `Slice: <row>`.',
     );
   });
 
@@ -121,7 +121,16 @@ describe('worker-scope', () => {
 
     expect(briefing).toContain('`npx ddd-ts-kit verify-slice billing --since main` (regenerate, the rules');
     expect(briefing).toContain('written by `npm run regenerate`, never by hand.');
-    expect(briefing).toContain('After each step, rewrite .ddd-ts-kit/report.md in the worktree');
+
+    expect(briefing).toContain(
+      'Rewrite .ddd-ts-kit/report.md in the worktree, in the form of the report below, after each commit',
+    );
+
+    expect(briefing).toContain(
+      "Budget: one row is one agent's work, two at most. The guard counts your tool calls and warns you twice,",
+    );
+
+    expect(briefing).toContain('you leave and your report are read by `worker-scope --resume`.');
     expect(briefing).toContain('Format with `npm run format`, then `npm run lint:fix`');
     expect(briefing).toContain('never Prettier nor a bare `npx biome`');
     expect(briefing).toContain('Without node_modules: `pnpm install --frozen-lockfile`');
@@ -184,12 +193,11 @@ describe('worker-scope, on slices, an existing worktree and other places', () =>
     expect(briefing).toContain('that a change of this branch broke is adapted in this branch');
   });
 
-  it('lists the slices of the context that are still to do, from every table of the file', () => {
+  it('briefs the first batch of the context still to do, from every table of the file, and names the next', () => {
     const scope = cli(root, 'worker-scope', 'billing', '--json').json();
 
     expect(jsonAt(scope, 'slices')).toEqual([
       expect.objectContaining({ id: '2', slice: 'Issue invoice', owner: 'billing', status: 'todo' }),
-      expect.objectContaining({ id: '5', slice: 'Refund invoice', owner: 'billing', status: 'todo' }),
     ]);
 
     expect(String(jsonAt(scope, 'briefing'))).toContain(
@@ -197,6 +205,16 @@ describe('worker-scope, on slices, an existing worktree and other places', () =>
     );
 
     expect(String(jsonAt(scope, 'briefing'))).not.toContain('Cancel invoice');
+
+    expect(jsonAt(scope, 'notes')).toContainEqual(
+      expect.stringContaining('`npx ddd-ts-kit worker-scope billing --rows 5`'),
+    );
+  });
+
+  it('keeps the briefing of one row short: its budget included, under 750 words', () => {
+    const briefing = String(jsonAt(cli(root, 'worker-scope', 'billing', '--rows', '2', '--json').json(), 'briefing'));
+
+    expect(briefing.split(/\s+/).length).toBeLessThan(750);
   });
 
   it('keeps a worktree that exists: it only writes the scope again and prints', () => {

@@ -1,5 +1,5 @@
 [English](coding-agents.md) · **Français**
-<!-- translation-of: coding-agents.md sha256:96d080aef57984e9 -->
+<!-- translation-of: coding-agents.md sha256:76990f7320278e7e -->
 
 # Le plugin pour agents de code : Claude Code, Codex, GitHub Copilot
 
@@ -56,7 +56,15 @@ dépassent la taille conseillée d'un commit, et dans le worktree d'un worker
 (`.ddd-ts-kit/worker.json`), il refuse une écriture hors du contexte du worker, par les outils
 d'édition ou par le *shell* (`sed -i`, une redirection, `tee`, `cp`, `mv`, `rm`), arrête le
 worker quand son code en ligne (`node -e`, un *heredoc*) a changé un fichier hors de ce contexte,
-et refuse un changement de dépendance et un autre formateur que `npm run format`. En cas de
+et refuse un changement de dépendance et un autre formateur que `npm run format`.
+Pour un `context-builder`, il compte les appels d'outils dans ces mêmes *hooks* et avertit
+l'agent deux fois avant sa limite de tours, enregistre ses exécutions dans son *worktree*
+(`.ddd-ts-kit/agent.json`), et écoute deux événements rares de Claude Code, filtrés sur cet agent :
+`SubagentStart` (un lancement ou une reprise démarre un nouveau compte) et `SubagentStop` (quand il
+finit de lui-même, il est relancé une fois pour commiter une tranche que `verify-slice` a validée
+ou réécrire un rapport périmé). Au démarrage de session, il nomme les *workers* à reprendre
+([travail en parallèle](parallel-work.fr.md#quand-un-agent-sarrête)). Aucun *hook* ne tourne sur
+chaque appel d'outil : une session ordinaire ne lance pas plus de processus qu'avant. En cas de
 panne, il laisse passer : une garde cassée ne bloque jamais le travail. Mettez `"guard": "advise"` dans la
 configuration pour être consulté au lieu d'essuyer un refus, `"off"` pour le faire taire.
 

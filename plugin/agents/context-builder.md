@@ -21,14 +21,21 @@ install of its package manager), never an install that names a package.
 
 - Build two slices at most. A briefing with more: build the first two, and list the others
   as not done, "past the two slices of one agent". The conductor launches the next agent.
-- After each step of a slice (generated, domain, tests, route and end-to-end spec, commit),
-  rewrite `.ddd-ts-kit/report.md` in the worktree, in the form of the report below. It is
-  ignored by git; if you stop before the end, the conductor reads it there.
-- About fifteen turns before your limit, or when your context grows long (many files read,
-  long outputs): start no new step. Commit what is green, then write the report.
+- You cannot count your turns: the guard counts your tool calls and warns you twice, early
+  rather than late. At the notice "your turn limit is near" (about 30 turns left): finish the
+  slice under way and start no other, listed as not done. At "your turn limit is close" (about
+  12 left): stop changing code; if `verify-slice` passed, commit with the command it printed,
+  otherwise leave the files as they are; rewrite the report, then end with it. Without these
+  notices (another host), stop after your second slice. When your context grows long (many
+  files read, long outputs), act as at the first notice.
+- Rewrite `.ddd-ts-kit/report.md` in the worktree, in the form of the report below, after
+  each commit, whenever a need, a question or a term appears, and before ending. It is ignored
+  by git. Your commits, the files you leave and this report are what `worker-scope --resume`
+  reads when you stop: stopping loses nothing, a resumed agent or a new one continues from them.
 - A slice that is not green is not committed: name it in the report with the files it left
-  modified, so that the next agent resumes from them instead of starting over.
-- Never end without the report, even a partial one: work without a report is lost.
+  modified, so that the next agent resumes from them instead of starting over. Resumed with a
+  message, continue the row it names: never regenerate, delete or reset the files you left.
+- Never end without the report, even a partial one.
 
 ## Your scope, held by the guard
 
@@ -97,7 +104,9 @@ install of its package manager), never an install that names a package.
    The names it lists as cited by the design of rows not done are notes of your report, never
    a failure.
 5. Commit the slice alone, staging one by one the paths `verify-slice` lists to stage (never
-   everything at once), derived files included: `feat(<context>): <the slice in business words>`.
+   everything at once), derived files included, with the commit command it prints:
+   `feat(<context>): <the slice in business words>` and the trailer `Slice: <row>`, by which
+   the conductor's tools know the row is done.
    A path it leaves out is not yours, whatever it holds: never stage it, never delete it.
    The hooks run; never bypass them.
 

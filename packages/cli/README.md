@@ -1044,8 +1044,16 @@ repository) and its `.ddd-ts-kit/report.md` with when it was written; then the c
 more than one worker and the files changed by more than one worker, each with their worktrees.
 A scope file that holds the context only is read too: the worker comes without its rows, its
 base and its commits ahead, and its files are the uncommitted ones. `--json` prints
-`{ workers: [{ worktree, branch, context, rows, base, ahead, installed, files, report }], overlaps: { contexts: [{ context, worktrees }], files: [{ file, worktrees }] } }`,
-`report` being `{ file, modified }` or `null`. Without a worker it says so in one line.
+`{ workers: [{ worktree, branch, context, rows, base, ahead, installed, files, report, progress }], overlaps: { contexts: [{ context, worktrees }], files: [{ file, worktrees }] } }`,
+`report` being `{ file, modified }` or `null`. Without a worker it says so in one line. A worker
+whose scope file names its rows gets a `state:` line, such as `stopped mid-row #M1.14 (6 files
+uncommitted, 3 TODO(domain), last verify-slice failed: tests); resume: npx ddd-ts-kit
+worker-scope billing --resume`, and `progress` in JSON: `{ rows: [{ id, slice, state, commit?,
+byOrder? }], inSlice, leftOut, markers: { domain, test }, verification, report: { modified,
+current }, agent, phase, next }`, `phase` being `not started`, `mid-row`, `between rows` or
+`rows committed`, and `next` one of `wait`, `send-message` (with `to`), `new-agent`, `merge`, as
+`worker-scope --resume` decides it (`wait` while the agent called a tool in the last three minutes
+and did not stop since).
 
 `todo` lists those markers as `file:line` with their kind and their text, in the project or in one
 context; `--json` prints `{ count, remaining: [{ kind, context, file, line, text }] }`.
@@ -1098,6 +1106,7 @@ expected, found }] }`, `area` being `script`, `package`, `permission` or `hook`.
 
 ```
 ddd-ts-kit worker-scope <context> [--base <ref>] [--rows <id,...>] [--worktree <path>] [--branch <name>] [--no-install] [--dry-run]
+ddd-ts-kit worker-scope <context> --resume [--worktree <path> | --branch <name>] [--fresh]
 ```
 
 Prepares the place of one worker of a build split by context: creates a git worktree of the
@@ -1105,8 +1114,10 @@ project (`../<project>-<context>` by default) on the branch `build/<context>`, c
 `--base` (a branch, a tag or a commit: `origin/main`; by default the current branch), writes
 `.ddd-ts-kit/worker.json` in it (`{ context, rows, base, baseCommit, branch }`, `baseCommit` being
 the commit the base names at that moment; `init` ignores `.ddd-ts-kit/`), and
-prints the briefing of the worker: its scope, the generators it may run, its slices still to do
-from `docs/architecture/slices.md`, the published languages it consumes, and the base as the
+prints the briefing of the worker: its scope, the generators it may run, its slices from
+`docs/architecture/slices.md` (by default the first batch `plan-waves` cuts for the context, one
+or two rows still to do on one aggregate, with a note naming the `--rows` of the next batch), its
+turn budget, the published languages it consumes, and the base as the
 trunk of its checks (`check --changed-since <base>`). `--rows 4.15,4.16` briefs those rows only,
 in that order: an id is read as written, and a row the file does not have, has twice or gives to
 another owner is refused. Each row carries its rules, from a line `- #<id>: <rules>` under the
@@ -1125,6 +1136,26 @@ Under each row whose design lives in a document of `docs/architecture/`, the bri
 names that design cites the base does not have, as `cited` finds them, come in a block of eight
 lines at most, with a note for the conductor naming the lines to correct on the trunk. `--json`
 holds them under `citations`.
+
+In a worker's worktree, `verify-slice` names the row it closes (the first of `worker.json` that no
+commit of the branch closes yet) and prints the exact commit command, with the trailer that
+names the row: `git commit -m "feat(billing): pay an invoice" -m "Slice: M1.14"`. It keeps its
+result in `.ddd-ts-kit/verification.json` (`{ at, head, row, ok, failed, toStage }`), and the
+guard of the plugin keeps the runs of the `context-builder` agent in `.ddd-ts-kit/agent.json`.
+
+`--resume` reads where the stopped worker of the context stands, from the trunk, and creates and
+rewrites nothing: its rows (committed by their `Slice:` trailer, or in order with the
+`feat(<context>)` commits for an older commit, shown `(by order)`), the files of the row under
+way, the markers left in the context, its last verification and what changed since, whether its
+report is current, and its agent. Then the next step: `SendMessage` to that agent, with the
+message to send as it is, when it stopped mid-row after progress in a run that is not its third;
+a new `context-builder` with the briefing of the row under way only, plus the files the earlier
+agent left (never to regenerate) and its report quoted, between rows, without a recorded agent,
+after three runs or a run without progress, or with `--fresh` (a full context); the merge once
+every row is committed and nothing is left. It refuses a context no worktree builds, and names
+the worktrees of a context two workers build: choose one with `--worktree` or `--branch`.
+`--json` prints `{ context, worktree, root, branch, base, progress, next, sendMessage, briefing,
+notes }`.
 
 ## cited
 

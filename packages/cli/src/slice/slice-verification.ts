@@ -21,4 +21,8 @@ export interface SliceVerification {
   /** The names the slice removes that the design of a row not done still cites: informational, never a failure. */
   readonly citedRemovals: readonly StaleCitation[];
   readonly ok: boolean;
+  /** In the worktree of a worker: the row being closed, the first of its scope file no commit closes yet. */
+  readonly row?: string;
+  /** In the worktree of a worker: the commit command, with the trailer `Slice: <row>`. */
+  readonly commit?: string;
 }

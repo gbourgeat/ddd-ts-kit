@@ -59,17 +59,23 @@ function nearTheLimitLines({ nearTheLimit }: SliceVerification): string[] {
       ];
 }
 
-function nextLines({ ok, toStage, context }: SliceVerification): string[] {
+function nextLines({ ok, toStage, context, commit }: SliceVerification): string[] {
   if (!ok) {
     return ['next: fix the causes above, then run verify-slice again'];
   }
 
-  return toStage.length === 0
-    ? ['next: nothing to commit']
-    : [
+  if (toStage.length === 0) {
+    return ['next: nothing to commit'];
+  }
+
+  const staged = toStage.map((file) => `  ${file}`);
+
+  return commit === undefined
+    ? [
         `next: commit the slice, staging these paths one by one: feat(${context}): <the slice in business words>`,
-        ...toStage.map((file) => `  ${file}`),
-      ];
+        ...staged,
+      ]
+    : ['next: stage these paths one by one, then commit the slice with this command:', ...staged, `  ${commit}`];
 }
 
 /** Said whether the slice passed or not: an agent must never sweep these into its commit. */

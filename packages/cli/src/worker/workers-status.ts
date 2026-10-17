@@ -1,3 +1,5 @@
+import type { WorkerProgress } from './worker-progress.js';
+
 /** Who builds what, in which worktree, and where two workers meet: what `status --workers` says. */
 export interface WorkersStatus {
   /** One entry per worktree holding `.ddd-ts-kit/worker.json`, in the order git lists them. */
@@ -28,6 +30,8 @@ export interface WorkerStatus {
   readonly files: readonly string[];
   /** Its `.ddd-ts-kit/report.md`; null while it has written none. */
   readonly report: WorkerReport | null;
+  /** Where its rows stand and what the conductor does next; left out when its config cannot be read. */
+  readonly progress?: WorkerProgress;
 }
 
 export interface WorkerReport {

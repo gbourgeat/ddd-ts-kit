@@ -178,3 +178,70 @@ describe('verify-slice: the design of the rows and the merges of the branch', ()
     expect(noScript.stderr).toContain('init --force');
   });
 });
+
+describe('verify-slice in the worktree of a worker', () => {
+  const SLICES = `# Slices
+
+| # | Context | Kind | Slice | Start with | Depends on | Owner | Status |
+|---|---|---|---|---|---|---|---|
+| M1.01 | billing | slice | Price an invoice | \`generate domain-service billing Pricing\` | | billing | todo |
+| M1.02 | billing | slice | Discount an invoice | \`generate domain-service billing Discount\` | | billing | todo |
+`;
+
+  it('prints the commit command naming the first row not committed, and keeps its verification for the conductor', () => {
+    withScripts('node -e ""');
+    write(root, 'docs/architecture/slices.md', SLICES);
+    git(root, 'add', '--all');
+    git(root, 'commit', '--quiet', '--message', 'docs: slices');
+    git(root, 'switch', '--quiet', '--create', 'build/billing');
+
+    write(
+      root,
+      '.ddd-ts-kit/worker.json',
+      JSON.stringify({ context: 'billing', rows: ['M1.01', 'M1.02'], base: 'main' }),
+    );
+
+    write(root, SERVICE, "export const pricing = 'priced';\n");
+    write(root, SPEC, "import { it } from 'vitest';\n\nit('prices', () => undefined);\n");
+
+    const first = cli(root, 'verify-slice', 'billing', '--since', 'main');
+
+    expect(first.code).toBe(0);
+    expect(first.stdout).toContain('next: stage these paths one by one, then commit the slice with this command:\n');
+    expect(first.stdout).toContain('  git commit -m "feat(billing): price an invoice" -m "Slice: M1.01"');
+
+    expect(JSON.parse(read(root, '.ddd-ts-kit/verification.json'))).toEqual({
+      at: expect.any(String),
+      head: git(root, 'rev-parse', 'HEAD').trim(),
+      row: 'M1.01',
+      ok: true,
+      failed: [],
+      toStage: [SERVICE, SPEC],
+    });
+
+    git(root, 'add', SERVICE, SPEC);
+    git(root, 'commit', '--quiet', '--message', 'feat(billing): price an invoice', '--message', 'Slice: M1.01');
+
+    const second = cli(root, 'verify-slice', 'billing', '--since', 'main', '--json').json();
+
+    expect(jsonAt(second, 'row')).toBe('M1.02');
+    expect(jsonAt(second, 'commit')).toBe('git commit -m "feat(billing): discount an invoice" -m "Slice: M1.02"');
+  });
+
+  it('writes nothing outside a worker, and says the failed steps in its record', () => {
+    withScripts('node -e "process.exit(1)"');
+    write(root, SERVICE, IMPURE);
+
+    expect(cli(root, 'verify-slice', 'billing', '--since', 'main', '--json').json()).not.toHaveProperty('row');
+    expect(fs.existsSync(path.join(root, '.ddd-ts-kit/verification.json'))).toBe(false);
+
+    write(root, '.ddd-ts-kit/worker.json', JSON.stringify({ context: 'billing', rows: ['9'], base: 'main' }));
+    cli(root, 'verify-slice', 'billing', '--since', 'main');
+
+    expect(JSON.parse(read(root, '.ddd-ts-kit/verification.json'))).toMatchObject({
+      row: '9',
+      ok: false,
+      failed: ['check', 'tests'],
+    });
+  });
+});
