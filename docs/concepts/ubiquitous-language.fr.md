@@ -1,5 +1,5 @@
 [English](ubiquitous-language.md) · **Français**
-<!-- translation-of: ubiquitous-language.md sha256:2f2d31b64f7f17a3 -->
+<!-- translation-of: ubiquitous-language.md sha256:3ad064cfff42239c -->
 
 # Langage omniprésent
 
@@ -288,8 +288,9 @@ contexte n'est jugé que dans ce contexte, puisque chaque contexte parle son pro
 vocabulaires de la plateforme, dans la plateforme et dans les groupes de routes, où une garde
 nomme un rôle ; un identifiant de permission et un vocabulaire du noyau partagé, partout. Les
 tests, les langages publiés et le schéma de relations du modèle d'accès ne sont pas jugés : ils
-nomment leurs valeurs à dessein. Une valeur que partagent deux vocabulaires est signalée avec les
-deux. Un vocabulaire est reconnu quand chaque entrée est une clé et une chaîne littérale, les
+nomment leurs valeurs à dessein, pas plus qu'un mot dont le type dit qu'il appartient à un autre
+langage ([plus bas](#un-mot-dun-autre-langage)). Une valeur que partagent deux vocabulaires est
+signalée avec les deux. Un vocabulaire est reconnu quand chaque entrée est une clé et une chaîne littérale, les
 commentaires, les deux sortes de guillemets et `as const satisfies ..` étant permis ; la règle
 s'applique sous `"stack.literals": "named"`, qu'écrit `init`, et reste silencieuse dans un
 projet dont la configuration ne dit rien, comme l'écrivait la version 0.5
@@ -352,6 +353,63 @@ refuse (`ERR_UNSUPPORTED_TYPESCRIPT_SYNTAX`), `tsc` le refuse sous `erasableSynt
 `npm run dev`, Oxc pour Vitest, SWC pour Jest. L'objet `as const` s'exécute partout, n'ajoute
 aucun code d'exécution qui lui soit propre, et donne la même complétion et le même
 affinage de type.
+
+### Un mot d'un autre langage
+
+Un contexte lit des mots qui ne sont pas les siens : le contenu du langage publié d'un contexte
+amont, l'enregistrement d'un système externe. Quand l'un d'eux épelle une valeur d'un vocabulaire
+du contexte (catalog publie un `state` valant `'draft' | 'issued'`, et billing a son propre
+`InvoiceStatus` avec les mêmes chaînes), le mot appartient toujours à l'autre langage : écrire
+`InvoiceStatus.Issued` à sa place affirmerait que les deux sens n'en font qu'un.
+
+Le premier choix est en amont : le producteur déclare ses valeurs fermées comme un vocabulaire de
+son langage publié, un objet `as const` avec son type union, et le consommateur les lit par leur
+clé (`[ProductState.Issued]: InvoiceStatus.Issued`), si bien que rien n'est épelé deux fois.
+Sinon le littéral dit par son type à quel langage il appartient, et le compilateur vérifie son
+orthographe : une clé d'une table typée `Record<TheirType, ..>`, une valeur d'une table typée
+`Record<.., TheirType>` (par l'annotation de sa déclaration ou par `satisfies`), ou
+`'issued' satisfies TheirType` dans une comparaison ou un `case`. Traduisez une fois à la
+frontière, dans le gestionnaire d'intégration ou le traducteur anticorruption, puis parlez le
+vocabulaire du contexte.
+
+<!-- checked sample -->
+```ts
+// Le contenu que publie catalog, tel que le donne un import de son langage publié.
+interface ProductListedV1Payload {
+  readonly productId: string;
+  readonly state: 'draft' | 'issued';
+}
+
+// Le vocabulaire de billing, qui contient les deux mêmes chaînes avec son propre sens.
+declare const InvoiceStatus: { readonly Draft: 'draft'; readonly Issued: 'issued' };
+type InvoiceStatus = (typeof InvoiceStatus)[keyof typeof InvoiceStatus];
+
+// Indexée par le type de l'autre langage : le compilateur vérifie chaque clé par rapport à lui.
+const statusOf = {
+  'draft': InvoiceStatus.Draft,
+  'issued': InvoiceStatus.Issued,
+} as const satisfies Record<ProductListedV1Payload['state'], InvoiceStatus>;
+
+export function toInvoiceStatus(payload: ProductListedV1Payload): InvoiceStatus {
+  return statusOf[payload.state];
+}
+
+// Une comparaison ou un case dit à quel langage appartient son mot.
+export function isListedAsIssued(payload: ProductListedV1Payload): boolean {
+  return payload.state === ('issued' satisfies ProductListedV1Payload['state']);
+}
+```
+
+`language/declared-vocabulary` ne juge pas un tel mot hors de `domain/` quand `TheirType` est
+une seule référence de type (`Payload['state']`, `typeof x`, pas d'union) dont le nom est importé
+d'un langage publié, importé comme type d'un paquet, ou importé de ou déclaré dans
+`infrastructure/anti-corruption/` ou `infrastructure/external/`. Là, les types littéraux d'une
+interface ou d'un alias de type, qui décrivent un enregistrement extérieur tel qu'il arrive, ne
+sont pas jugés non plus. Une clé d'une table typée par le vocabulaire du contexte, une comparaison
+ou un `case` sans `satisfies`, et une valeur du contexte dans une table de traduction restent
+signalés, et dans un fichier qui lit un autre langage le correctif nomme les types qu'il y lit.
+Sans information de type, la règle fait confiance au type qu'elle lit : un type étranger qui vaut
+`string` ne vérifie rien.
 
 ## Le même mot dans deux contextes
 

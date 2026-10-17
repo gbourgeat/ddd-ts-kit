@@ -1,10 +1,13 @@
-import { AST_NODE_TYPES, type TSESTree } from '@typescript-eslint/utils';
+import { AST_NODE_TYPES, type TSESLint, type TSESTree } from '@typescript-eslint/utils';
 import type { LintedFile } from '../project/linted-file.js';
 import { defineRule } from '../support/rule/define-rule.js';
 import type { DeclaredValue } from '../support/vocabularies/declared-value.js';
+import { inOutsideRecord } from '../support/vocabularies/in-outside-record.js';
+import { otherLanguageOf } from '../support/vocabularies/other-language-of.js';
 import { projectVocabularies } from '../support/vocabularies/project-vocabularies.js';
+import { typedByOtherLanguage } from '../support/vocabularies/typed-by-other-language.js';
 
-type MessageId = 'raw';
+type MessageId = 'raw' | 'rawBesideOtherLanguage';
 
 /** The relationship schema of the access model declares its relations: like a published language, it names its values itself. */
 const RELATIONSHIP_SCHEMA = /(?<![\w$.])defineSchema\s*\(/;
@@ -16,9 +19,11 @@ export const languageDeclaredVocabulary = defineRule<MessageId>({
   type: 'suggestion',
   recommended: 'error',
   description:
-    'Under "stack.literals": "named", a value of a closed vocabulary the project declares is read through it, never written again as a string literal: in its context, in the platform and the route groups for the platform, everywhere for a permission id.',
+    'Under "stack.literals": "named", a value of a closed vocabulary the project declares is read through it, never written again as a string literal: in its context, in the platform and the route groups for the platform, everywhere for a permission id; outside domain/, a word whose type says it belongs to another language is not judged.',
   messages: {
     raw: '"{{value}}" is a value of {{vocabularies}}. Write {{written}}, as a computed key `[..]:` for a key: the value is declared once, the editor completes it and a typo stops the build.',
+    rawBesideOtherLanguage:
+      '"{{value}}" is a value of {{vocabularies}}. Write {{written}}, as a computed key `[..]:` for a key, if it is the word of this context: the value is declared once, the editor completes it and a typo stops the build. If it is a word of another language this file reads ({{other}}), say so by its type and the compiler holds its spelling: type the table by it, `Record<TheirType, {{vocabulary}}>` for its keys or `Record<{{vocabulary}}, TheirType>` for its values (an annotation or `satisfies`), or write `\'{{value}}\' satisfies TheirType` in a comparison or a `case`.',
   },
   create({ context, file, sourceCode, report }) {
     if (file.config.stack.literals !== 'named' || !isJudged(file) || RELATIONSHIP_SCHEMA.test(sourceCode.text)) {
@@ -27,17 +32,19 @@ export const languageDeclaredVocabulary = defineRule<MessageId>({
 
     const declared = projectVocabularies(file, context.languageOptions.parser);
 
+    let read: Map<string, string> | undefined;
+    const otherLanguage = (): Map<string, string> => (read ??= otherLanguageOf(file, sourceCode.ast));
+
     const judge = (node: TSESTree.Node, value: string): void => {
       const known = (declared.get(value) ?? []).filter((candidate) => isReadBy(file, candidate));
 
-      if (known.length > 0 && !known.some((at) => at.file === file.path) && !isName(file, node)) {
-        const vocabularies = known.map(({ vocabulary, file: at }) => `${vocabulary} (${at})`).join(' and of ');
-
-        report({
-          node,
-          messageId: 'raw',
-          data: { value, vocabularies, written: known.map(({ written }) => written).join(' or ') },
-        });
+      if (
+        known.length > 0 &&
+        !known.some((at) => at.file === file.path) &&
+        !isName(file, node) &&
+        !isOtherLanguage(file, node, otherLanguage)
+      ) {
+        report(reportOf({ node, value, known }, otherLanguage()));
       }
     };
 
@@ -57,6 +64,35 @@ export const languageDeclaredVocabulary = defineRule<MessageId>({
     };
   },
 });
+
+/**
+ * A word of another language is not the context's when its type says so (a key or a value of a
+ * table typed by it, `satisfies`), and neither is a type of an outside record as it arrives.
+ */
+function isOtherLanguage(file: LintedFile, node: TSESTree.Node, otherLanguage: () => Map<string, string>): boolean {
+  return typedByOtherLanguage(node, otherLanguage()) || inOutsideRecord(file, node);
+}
+
+/**
+ * The report names the vocabulary; when the file reads another language, it also says how a word
+ * of that language is written so that the compiler holds it, instead of the vocabulary of the context.
+ */
+function reportOf(
+  { node, value, known }: { node: TSESTree.Node; value: string; known: readonly DeclaredValue[] },
+  other: ReadonlyMap<string, string>,
+): TSESLint.ReportDescriptor<MessageId> {
+  const vocabularies = known.map(({ vocabulary, file: at }) => `${vocabulary} (${at})`).join(' and of ');
+  const written = known.map((at) => at.written).join(' or ');
+
+  if (other.size === 0) {
+    return { node, messageId: 'raw', data: { value, vocabularies, written } };
+  }
+
+  const read = [...other].map(([name, place]) => `${name} of ${place}`).join(', ');
+  const vocabulary = known[0]?.vocabulary ?? '';
+
+  return { node, messageId: 'rawBesideOtherLanguage', data: { value, vocabularies, written, other: read, vocabulary } };
+}
 
 /** Sources only: a test sends the values a client sends; a published language names the values of its contract itself. */
 function isJudged(file: LintedFile): boolean {

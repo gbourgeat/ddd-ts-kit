@@ -7,6 +7,9 @@ paths:
 
 - An adapter `implements` a port of `application/ports/` or a repository port of `domain/repositories/`, and never `extends` it (`ports/implements-never-extends`). It never imports `presentation/` (`layer/infrastructure-no-presentation`).
 - `persistence/` holds repository adapters, mappers and rows, `external/` the adapters of outside systems, `anti-corruption/` the translators of another model.
+{{#if literals.named}}
+- A word of the other model stays its word: a translator keys its tables by the type of that model, `Record<TheirRecord['code'], InvoiceStatus>` (an annotation or `satisfies`), and compares with `'code' satisfies TheirRecord['code']`, so that the compiler holds its spelling; the value of the context it produces is read from its vocabulary (`language/declared-vocabulary`).
+{{/if}}
 - Rows never leave `persistence/`: a mapper translates to and from the aggregate, and is the only place for a type assertion (`clean/no-escape-hatch`).
 - The content of a file never goes in a table: no binary or base64 column (`persistence/no-file-content`). The file lives in the `FileStorage` port; a row keeps the key, size, media type and checksum of its `StoredFile`.
 - Own tables, in the schema of the context: no join, foreign key or transaction across contexts (`context/extractable`).

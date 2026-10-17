@@ -48,6 +48,8 @@ without fighting them. Reference: `docs/ARCHITECTURE.md` section 6.
   (`npx ddd-ts-kit generate vocabulary <context> <Name> --value <value>...`, an object `as const`
   and its union type) and read by its key, `AppointmentStatus.NoShow`; a permission is read from
   its set, `billingPermissions['invoice.issue']`, never by its id (`language/declared-vocabulary`).
+  A word of another language that spells the same string stays its word, typed by it outside
+  `domain/`: `Record<ProductListedV1Payload['state'], InvoiceStatus>`, `'issued' satisfies TheirType`.
 - No magic number in `domain/` and `application/`: 0, 1, -1 and an index only; a duration, a
   limit or a rate is a constant of the module, `const MINUTES_PER_HOUR = 60;`, or a value object
   of the business (`clean/no-magic-number`). Both rules hold under `"stack.literals": "named"`,

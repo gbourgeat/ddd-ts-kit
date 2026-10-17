@@ -277,8 +277,9 @@ value a vocabulary declares is reported with the key to write instead, a quoted 
 only, since each context speaks its own language; the vocabularies of the platform in the
 platform and in the route groups, where a guard names a role; a permission id and a vocabulary of
 the shared kernel everywhere. Tests, published languages and the relationship schema of the access
-model are not judged: they name their values on purpose. A value two vocabularies share is
-reported with both. A vocabulary is read when each entry is a key and a string literal, comments,
+model are not judged: they name their values on purpose, and neither is a word whose type says
+it belongs to another language ([below](#a-word-of-another-language)). A value two vocabularies
+share is reported with both. A vocabulary is read when each entry is a key and a string literal, comments,
 either quote and `as const satisfies ..` allowed; the rule holds under `"stack.literals":
 "named"`, which `init` writes, and stays silent in a project whose config does not say, as 0.5
 wrote it ([Configuration](../CONFIG.md#stack)).
@@ -336,6 +337,61 @@ project runs, on Node 24.21: Node's own type stripping refuses it
 only the transpilers run it: `tsc` without that option, tsx (esbuild) for `npm run dev`, Oxc for
 Vitest, SWC for Jest. The object `as const` runs everywhere, adds no
 runtime of its own, and gives the same completion and the same narrowing.
+
+### A word of another language
+
+A context reads words that are not its own: the payload of an upstream's published language, the
+record of an external system. When one of them spells a value of a vocabulary of the context
+(catalog publishes a `state` of `'draft' | 'issued'`, and billing has its own `InvoiceStatus`
+with the same strings), the word still belongs to the other language: writing
+`InvoiceStatus.Issued` for it would state that the two meanings are one.
+
+The first choice is upstream: the producer declares its closed values as a vocabulary of its
+published language, an object `as const` with its union type, and the consumer reads them by
+their key (`[ProductState.Issued]: InvoiceStatus.Issued`), so that nothing is spelled twice.
+Otherwise the literal says by its type which language it belongs to, and the compiler holds its
+spelling: a key of a table typed `Record<TheirType, ..>`, a value of one typed
+`Record<.., TheirType>` (by the annotation of its declaration or by `satisfies`), or
+`'issued' satisfies TheirType` in a comparison or a `case`. Translate once at the edge, in the
+integration handler or the anti-corruption translator, then speak the vocabulary of the context.
+
+<!-- checked sample -->
+```ts
+// The payload catalog publishes, as an import from its published language gives it.
+interface ProductListedV1Payload {
+  readonly productId: string;
+  readonly state: 'draft' | 'issued';
+}
+
+// The vocabulary of billing, which holds the same two strings with its own meaning.
+declare const InvoiceStatus: { readonly Draft: 'draft'; readonly Issued: 'issued' };
+type InvoiceStatus = (typeof InvoiceStatus)[keyof typeof InvoiceStatus];
+
+// Keyed by the type of the other language: the compiler checks each key against it.
+const statusOf = {
+  'draft': InvoiceStatus.Draft,
+  'issued': InvoiceStatus.Issued,
+} as const satisfies Record<ProductListedV1Payload['state'], InvoiceStatus>;
+
+export function toInvoiceStatus(payload: ProductListedV1Payload): InvoiceStatus {
+  return statusOf[payload.state];
+}
+
+// A comparison or a case says which language its word belongs to.
+export function isListedAsIssued(payload: ProductListedV1Payload): boolean {
+  return payload.state === ('issued' satisfies ProductListedV1Payload['state']);
+}
+```
+
+`language/declared-vocabulary` does not judge such a word outside `domain/` when `TheirType` is
+one type reference (`Payload['state']`, `typeof x`, no union) whose name is imported from a
+published language, imported as a type from a package, or imported from or declared in
+`infrastructure/anti-corruption/` or `infrastructure/external/`. There, the literal types of an
+interface or a type alias, which describe an outside record as it arrives, are not judged either.
+A key of a table typed by the vocabulary of the context, a comparison or a `case` without
+`satisfies`, and a value of the context in a translation table are still reported, and in a
+file that reads another language the fix names the types it reads from there. Without type
+information the rule trusts the type it reads: a foreign type that is `string` holds nothing.
 
 ## The same word in two contexts
 

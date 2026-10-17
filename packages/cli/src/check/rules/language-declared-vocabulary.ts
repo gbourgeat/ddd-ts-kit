@@ -1,5 +1,8 @@
 import { declaredVocabularies } from '../language/declared-vocabularies.js';
 import type { DeclaredValue } from '../language/declared-value.js';
+import { inOutsideRecord } from '../language/in-outside-record.js';
+import { otherLanguageOf } from '../language/other-language-of.js';
+import { typedByOtherLanguage } from '../language/typed-by-other-language.js';
 import type { Finding } from '../model/finding.js';
 import type { Rule } from '../model/rule.js';
 import type { SourceFile } from '../model/source-file.js';
@@ -17,7 +20,7 @@ const NAME_PROPERTY = /(?<![\w$])(?:name|tableName|schema)\s*:\s*$/;
 export const languageDeclaredVocabulary: Rule = {
   id: 'language/declared-vocabulary',
   description:
-    'Under "stack.literals": "named", a value of a closed vocabulary the project declares (an object `as const` with the union type of its name, a permission set of definePermissions) is read through it, never written again as a string literal outside its declaration, a quoted key included: the vocabulary of a context in that context, the one of the platform in the platform and the route groups of the contexts, a permission id and one of the shared kernel everywhere; tests, published languages, the relationship schema and the storage names of the persistence (a column, a table, a schema) are not judged; an object is read when each entry is a key and a string literal.',
+    'Under "stack.literals": "named", a value of a closed vocabulary the project declares (an object `as const` with the union type of its name, a permission set of definePermissions) is read through it, never written again as a string literal outside its declaration, a quoted key included: the vocabulary of a context in that context, the one of the platform in the platform and the route groups of the contexts, a permission id and one of the shared kernel everywhere; tests, published languages, the relationship schema and the storage names of the persistence (a column, a table, a schema) are not judged, nor, outside `domain/`, a word whose type says it belongs to another language (a key of an object typed `Record<T, ..>`, a value of one typed `Record<.., T>`, a literal written `satisfies T`, `T` one type of a published language, of a package or of `infrastructure/anti-corruption/` or `infrastructure/external/`) and the types of an outside record declared there; an object is read when each entry is a key and a string literal.',
   scope: 'project',
   run(project) {
     if (project.config.stack.literals !== 'named') {
@@ -41,6 +44,8 @@ function isJudged(file: SourceFile): boolean {
 }
 
 function rawValues(file: SourceFile, declared: ReadonlyMap<string, readonly DeclaredValue[]>): Finding[] {
+  const other = otherLanguageOf(file);
+
   return file.scan.strings.flatMap((literal) => {
     const values = (declared.get(literal.value) ?? []).filter((value) => isReadBy(file, value));
 
@@ -48,7 +53,8 @@ function rawValues(file: SourceFile, declared: ReadonlyMap<string, readonly Decl
       values.length === 0 ||
       values.some(({ file: at }) => at === file.path) ||
       isSpecifier(file.scan.code, literal) ||
-      isStorageName(file, literal)
+      isStorageName(file, literal) ||
+      isOtherLanguage(file, literal, other)
     ) {
       return [];
     }
@@ -57,10 +63,35 @@ function rawValues(file: SourceFile, declared: ReadonlyMap<string, readonly Decl
       {
         line: literal.line,
         message: `"${literal.value}" is a value of ${values.map(({ vocabulary, file: at }) => `${vocabulary} (${at})`).join(' and of ')}.`,
-        fix: `Write ${values.map(({ written }) => written).join(' or ')}, as a computed key \`[..]:\` for a key: the value is declared once, the editor completes it and a typo stops the build.`,
+        fix: fixOf(literal.value, values, other),
       },
     ];
   });
+}
+
+/**
+ * The fix names the vocabulary; when the file reads another language, it also says how a word of
+ * that language is written so that the compiler holds it, instead of the vocabulary of the context.
+ */
+function fixOf(value: string, values: readonly DeclaredValue[], other: ReadonlyMap<string, string>): string {
+  const written = values.map((declared) => declared.written).join(' or ');
+
+  if (other.size === 0) {
+    return `Write ${written}, as a computed key \`[..]:\` for a key: the value is declared once, the editor completes it and a typo stops the build.`;
+  }
+
+  const read = [...other].map(([name, place]) => `${name} of ${place}`).join(', ');
+  const vocabulary = values[0]?.vocabulary ?? '';
+
+  return `Write ${written}, as a computed key \`[..]:\` for a key, if it is the word of this context: the value is declared once, the editor completes it and a typo stops the build. If it is a word of another language this file reads (${read}), say so by its type and the compiler holds its spelling: type the table by it, \`Record<TheirType, ${vocabulary}>\` for its keys or \`Record<${vocabulary}, TheirType>\` for its values (an annotation or \`satisfies\`), or write \`'${value}' satisfies TheirType\` in a comparison or a \`case\`.`;
+}
+
+/**
+ * A word of another language is not the context's when its type says so (a key or a value of a
+ * table typed by it, `satisfies`), and neither is a type of an outside record as it arrives.
+ */
+function isOtherLanguage(file: SourceFile, literal: StringRecord, other: ReadonlyMap<string, string>): boolean {
+  return typedByOtherLanguage(file.scan.code, literal, other) || inOutsideRecord(file, literal);
 }
 
 /** A vocabulary of a context is the language of that context alone; the one of the platform is read there and by the route groups, where a guard names a role. */

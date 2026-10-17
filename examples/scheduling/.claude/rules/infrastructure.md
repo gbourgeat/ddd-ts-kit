@@ -7,6 +7,7 @@ paths:
 
 - An adapter `implements` a port of `application/ports/` or a repository port of `domain/repositories/`, and never `extends` it (`ports/implements-never-extends`). It never imports `presentation/` (`layer/infrastructure-no-presentation`).
 - `persistence/` holds repository adapters, mappers and rows, `external/` the adapters of outside systems, `anti-corruption/` the translators of another model.
+- A word of the other model stays its word: a translator keys its tables by the type of that model, `Record<TheirRecord['code'], InvoiceStatus>` (an annotation or `satisfies`), and compares with `'code' satisfies TheirRecord['code']`, so that the compiler holds its spelling; the value of the context it produces is read from its vocabulary (`language/declared-vocabulary`).
 - Rows never leave `persistence/`: a mapper translates to and from the aggregate, and is the only place for a type assertion (`clean/no-escape-hatch`).
 - Own tables, in the schema of the context: no join, foreign key or transaction across contexts (`context/extractable`).
 - Audit columns and the tenant column are stamped from the execution scope with the kernel helpers (`stampCreation`, `stampUpdate`, `tenantScopeOf`), never handed over by a use case.

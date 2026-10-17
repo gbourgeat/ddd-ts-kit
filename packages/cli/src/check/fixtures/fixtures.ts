@@ -23,6 +23,7 @@ import { GOVERNANCE_FIXTURES } from './governance-fixtures.js';
 import { IMPORTS_FIXTURES } from './imports-fixtures.js';
 import { LANGUAGE_FIXTURES } from './language-fixtures.js';
 import { VOCABULARY_FIXTURES } from './vocabulary-fixtures.js';
+import { OTHER_LANGUAGE_FIXTURES } from './other-language-fixtures.js';
 import { LAYER_FIXTURES } from './layer-fixtures.js';
 import { LAYOUT_FIXTURES } from './layout-fixtures.js';
 import { LIFECYCLE_FIXTURES } from './lifecycle-fixtures.js';
@@ -73,6 +74,7 @@ export const FIXTURES: readonly Fixture[] = [
   ...IMPORTS_FIXTURES,
   ...LANGUAGE_FIXTURES,
   ...VOCABULARY_FIXTURES,
+  ...OTHER_LANGUAGE_FIXTURES,
   ...LAYER_FIXTURES,
   ...LAYOUT_FIXTURES,
   ...LIFECYCLE_FIXTURES,
