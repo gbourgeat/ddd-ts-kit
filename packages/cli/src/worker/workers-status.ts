@@ -59,7 +59,7 @@ export interface Overlaps {
 }
 
 /** Where a worker's branch landed on its base, and what of it. */
-export interface Landed {
+interface Landed {
   /** The commit of the base that took the branch in. */
   readonly commit: string;
   readonly subject: string;

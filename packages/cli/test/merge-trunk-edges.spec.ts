@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { cli, write } from './helpers.js';
 import { DRIZZLE_KIT_STUB } from './support/drizzle-kit-stub.js';
 import { git } from './support/git.js';
+import { IDENTITY_VARIABLES } from './support/git-identity.js';
 import { commitFiles, goOn, mergeTrunk, merging, onBranch, trunkRepository } from './support/trunk-history.js';
 
 const INVOICE = 'src/contexts/billing/invoice.ts';
@@ -160,6 +161,36 @@ describe('merge-trunk: a deleted file, a drizzle refusal, and the refusals to st
     expect(goOn(root, '--continue').stderr).toContain('No merge of merge-trunk is in progress');
     expect(goOn(root, '--abort').code).toBe(2);
     expect(fs.existsSync(path.join(root, '.ddd-ts-kit/merge.json'))).toBe(false);
+  });
+
+  it('refuses to start where git knows no committer, before any change', () => {
+    const root = conflicting();
+    const saved = { ...process.env };
+
+    const config = {
+      GIT_CONFIG_GLOBAL: '/dev/null',
+      GIT_CONFIG_NOSYSTEM: '1',
+      GIT_CONFIG_COUNT: '1',
+      GIT_CONFIG_KEY_0: 'user.useConfigOnly',
+      GIT_CONFIG_VALUE_0: 'true',
+    };
+
+    try {
+      IDENTITY_VARIABLES.forEach((key) => {
+        delete process.env[key];
+      });
+
+      Object.assign(process.env, config);
+
+      const refused = mergeTrunk(root);
+
+      expect(refused.code).toBe(2);
+      expect(refused.stderr).toContain('git does not know who commits in this repository');
+    } finally {
+      process.env = saved;
+    }
+
+    expect(merging(root)).toBe(false);
   });
 
   it('refuses a --since that is not a commit of the branch', () => {

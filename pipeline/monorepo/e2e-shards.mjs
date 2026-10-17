@@ -32,6 +32,8 @@ export const SHARDS = [
     'first-minute-no-context.spec.ts': 181,
     // Measured (2026-10-13) with the client SDK of each pair: 44 s here; 53 s in CI before the SDK.
     'contract-pairs.spec.ts': 44,
+    // Measured (2026-10-17): a copy of the example application, merge-trunk run in two of its worktrees.
+    'merge-trunk-example.spec.ts': 4,
   },
   {
     'first-minute-two-contexts.spec.ts': 184,

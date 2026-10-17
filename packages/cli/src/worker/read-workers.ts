@@ -10,6 +10,7 @@ import { listWorktrees, type Worktree } from './list-worktrees.js';
 import { overlapsOf } from './overlaps-of.js';
 import { progressOf } from './progress-of.js';
 import { readWorkerFile } from './read-worker-file.js';
+import type { WorkerFile } from './worker-file.js';
 import { REPORT_FILE } from './report-file.js';
 import type { WorkerReport, WorkerStatus, WorkersStatus } from './workers-status.js';
 
@@ -40,7 +41,7 @@ function workerIn(worktree: Worktree, project: string): WorkerStatus[] {
   const branch = worktree.branch ?? scope.branch;
   // A scope file written before the rows were recorded has no rows to follow.
   const progress = scope.rows === undefined ? undefined : progressOf(project, scope);
-  const standing = scope.base === undefined ? undefined : branchStanding(worktree.path, project, scope.base);
+  const standing = standingIn(worktree, project, scope);
 
   return [
     {
@@ -49,13 +50,18 @@ function workerIn(worktree: Worktree, project: string): WorkerStatus[] {
       context: scope.context,
       ...(scope.rows === undefined ? {} : { rows: scope.rows }),
       ...(scope.base === undefined ? {} : { base: scope.base }),
-      ...standingOf(standing, landedRows(project, { standing, rows: scope.rows ?? [] })),
+      ...standingOf(standing, landedRows(project, { standing, scope })),
       installed: fs.existsSync(path.join(project, 'node_modules')),
       files: changedFiles(worktree.path, standing?.since),
       report: reportIn(project),
       ...(progress === undefined ? {} : { progress }),
     },
   ];
+}
+
+/** Where the branch of the worker stands against its base; nothing without a base. */
+function standingIn(worktree: Worktree, project: string, { base }: WorkerFile): BranchStanding | undefined {
+  return base === undefined ? undefined : branchStanding(worktree.path, project, base);
 }
 
 /** What the status says of the standing: nothing when the base is unknown or names no commit. */
@@ -76,7 +82,7 @@ function standingOf(
 /** The briefed rows the branch had done where it landed: on the trunk, whatever the trunk's slices file says. */
 function landedRows(
   project: string,
-  { standing, rows }: { standing: BranchStanding | undefined; rows: readonly string[] },
+  { standing, scope }: { standing: BranchStanding | undefined; scope: WorkerFile },
 ): string[] {
   if (standing?.landed === undefined) {
     return [];
@@ -86,7 +92,7 @@ function landedRows(
     (row) => row.status === 'done',
   );
 
-  return rows.filter((id) => done.some((row) => row.id === id));
+  return (scope.rows ?? []).filter((id) => done.some((row) => row.id === id));
 }
 
 function reportIn(project: string): WorkerReport | null {

@@ -249,7 +249,7 @@ merge.** Under drizzle-kit the replay drops `working-` even in the worktree of a
 knex, Prisma and TypeORM each migration of the branch the trunk does not have is renamed after the
 trunk's last, its content kept (TypeORM's class and `name`, Prisma's folder), and the merge stops
 when a migration the trunk gained and one of the branch change the same table. The guard of the
-plugin refuses `--to-land` to a sub-agent: it is the conductor's step. `plan-waves` ends with what
+plugin refuses `--to-land` to a sub-agent, however it launches the CLI: it is the conductor's step. `plan-waves` ends with what
 runs before each merge.
 
 **`status` counts a worker's branch from where it landed.** Once a branch was squash-merged into

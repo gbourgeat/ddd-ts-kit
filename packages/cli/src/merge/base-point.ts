@@ -29,7 +29,7 @@ export interface LandedAs {
   readonly from: string;
 }
 
-export interface Unlanded {
+interface Unlanded {
   readonly branch: string;
   readonly since: string;
 }

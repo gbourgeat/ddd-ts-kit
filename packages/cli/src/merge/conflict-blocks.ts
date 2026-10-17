@@ -1,7 +1,7 @@
 /** Lines a merge settled, or one conflict with its three sides as diff3 markers wrote them. */
 export type Segment = SettledLines | ConflictBlock;
 
-export interface SettledLines {
+interface SettledLines {
   readonly kind: 'settled';
   readonly lines: readonly string[];
 }

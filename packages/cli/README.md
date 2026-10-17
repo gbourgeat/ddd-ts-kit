@@ -1368,7 +1368,8 @@ ddd-ts-kit merge-trunk --continue [--accept-lost] | --abort
 Brings the trunk into the branch as one merge commit computed from the branch's own diff. Never
 rebases, never fetches (the commit `--trunk` names is printed; by default `origin/HEAD`, then
 `origin/main`). Refused, exit 2: a working tree that is not clean (`.ddd-ts-kit/` aside), a merge,
-rebase, cherry-pick or revert in progress, an unknown trunk.
+rebase, cherry-pick or revert in progress, a repository where git knows no committer (the merge
+ends with a commit), an unknown trunk.
 
 1. **The base**: the newest commit of the branch the trunk already holds. `--since <commit>` (a
    commit of the branch); else the landed point: the newest commit whose whole change since the

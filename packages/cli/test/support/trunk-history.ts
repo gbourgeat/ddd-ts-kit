@@ -2,9 +2,13 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { type CliResult, cli, tempDir, write } from '../helpers.js';
 import { git } from './git.js';
+import { withGitIdentity } from './git-identity.js';
 import { commit, type Files } from './merge-repository.js';
 
 export type { Files } from './merge-repository.js';
+
+// merge-trunk commits through the git the CLI runs: it needs an identity on a runner without one.
+withGitIdentity();
 
 /** A throwaway repository on `main` holding `base`, its kit folder ignored. */
 export function trunkRepository(base: Files): string {

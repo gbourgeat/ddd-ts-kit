@@ -46,7 +46,10 @@ interface Around {
   readonly contexts: readonly string[];
 }
 
-function slicesProgress(rows: readonly Slice[], { root, onBranches, landed, remaining, contexts }: Around): SlicesProgress {
+function slicesProgress(
+  rows: readonly Slice[],
+  { root, onBranches, landed, remaining, contexts }: Around,
+): SlicesProgress {
   const ids = [...new Set(rows.map((row) => row.id))];
   const attribute = (markers: readonly Remaining[]) => attributeMarkers(root, markers, { ids, git: runGit });
 

@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:9df4ee56d670f780 -->
+<!-- translation-of: README.md sha256:26e424fca03ce5b5 -->
 
 # ddd-ts-kit
 
@@ -1449,7 +1449,8 @@ Apporte le tronc dans la branche en un seul *commit* de fusion calculé à parti
 de la branche. Ne rebase jamais, ne récupère jamais rien (le *commit* que nomme `--trunk` est
 affiché ; par défaut `origin/HEAD`, puis `origin/main`). Refusé, sortie 2 : un arbre de travail
 qui n'est pas propre (hors `.ddd-ts-kit/`), une fusion, un *rebase*, un *cherry-pick* ou un
-*revert* en cours, un tronc inconnu.
+*revert* en cours, un dépôt où git ne connaît aucun auteur de *commit* (la fusion se termine
+par un *commit*), un tronc inconnu.
 
 1. **La base** : le *commit* le plus récent de la branche que le tronc porte déjà. `--since
    <commit>` (un *commit* de la branche) ; sinon le point d'arrivée : le *commit* le plus récent

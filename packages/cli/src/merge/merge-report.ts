@@ -32,7 +32,7 @@ export interface MergeReport {
   readonly next: string;
 }
 
-export interface ConflictCounts {
+interface ConflictCounts {
   /** The files a plain `git merge` of the trunk would leave conflicted. */
   readonly plainMerge: number;
   /** The files left conflicted by the merge computed from the base: the branch's own diff against the trunk. */

@@ -412,8 +412,9 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
                    regenerate, verify-merge on the uncommitted result (an error stops; --accept-lost records
                    a Lost-Accepted: trailer), and the commit of the merge's paths only, with the trailers
                    Merge-Base:, Trunk: and Landed:; any other changed path blocks it. --dry-run previews,
-                   --abort undoes; refused (exit 2) on a dirty tree, another operation in progress, an
-                   unknown trunk, or a git older than 2.40 with a base git would not compute
+                   --abort undoes; refused (exit 2) on a dirty tree, another operation in progress, no
+                   committer known to git, an unknown trunk, or a git older than 2.40 with a base git
+                   would not compute
   --commit-size    the files and lines about to be committed against "commit" in the config (20 files and
                    600 lines by default, generated files not counted); --staged reads the index only;
                    advisory, --strict exits 1 when over
