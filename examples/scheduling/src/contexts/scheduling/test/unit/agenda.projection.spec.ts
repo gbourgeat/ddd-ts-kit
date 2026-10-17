@@ -1,12 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { RoleBasedAuthorizer } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
-import { contextModule, createTestApplication, fake } from '@ddd-ts-kit/di';
-import * as schedulingDeclarations from '@/contexts/scheduling/scheduling.declarations';
-import { platformTestModule } from '@/platform/platform-test.module';
 import { schedulingPermissions } from '@/contexts/scheduling/application/authorization/scheduling.permissions';
-import { Agenda } from '@/contexts/scheduling/application/ports/agenda.port';
-import { SchedulingRelationships } from '@/contexts/scheduling/application/ports/scheduling-relationships.port';
 import { AgendaProjection } from '@/contexts/scheduling/application/projections/agenda.projection';
 import { AppointmentAnnotated } from '@/contexts/scheduling/domain/events/appointment-annotated.event';
 import { AppointmentBooked } from '@/contexts/scheduling/domain/events/appointment-booked.event';
@@ -14,16 +9,12 @@ import { AppointmentCancelled } from '@/contexts/scheduling/domain/events/appoin
 import { AppointmentExpired } from '@/contexts/scheduling/domain/events/appointment-expired.event';
 import { AppointmentRescheduled } from '@/contexts/scheduling/domain/events/appointment-rescheduled.event';
 import { AppointmentRepository } from '@/contexts/scheduling/domain/repositories/appointment.repository';
-import { CalendarRepository } from '@/contexts/scheduling/domain/repositories/calendar.repository';
-import { WaitlistRepository } from '@/contexts/scheduling/domain/repositories/waitlist.repository';
 import { Cancellation } from '@/contexts/scheduling/domain/value-objects/cancellation.vo';
 import { Slot } from '@/contexts/scheduling/domain/value-objects/slot.vo';
 import { anAppointment } from '@/contexts/scheduling/test/builders/appointment.builder';
 import { aCalendar } from '@/contexts/scheduling/test/builders/calendar.builder';
 import { FakeAgenda } from '@/contexts/scheduling/test/fakes/agenda.fake';
-import { FakeAppointmentRepository } from '@/contexts/scheduling/test/fakes/appointment.repository.fake';
-import { FakeWaitlistRepository } from '@/contexts/scheduling/test/fakes/waitlist.repository.fake';
-import { FakeSchedulingRelationships } from '@/contexts/scheduling/test/fakes/scheduling-relationships.fake';
+import { aSchedulingWorld } from '@/contexts/scheduling/test/worlds/scheduling.world';
 
 // The use cases of the context ask `Access`, and a freed slot is offered to the waitlist by the context itself.
 const authorization = authorizationModule({
@@ -33,13 +24,11 @@ const authorization = authorizationModule({
   }),
 });
 
-// A freed slot is offered to the waitlist of its calendar: every calendar exists here, and nobody waits.
-const calendars = { findById: async (id: string) => aCalendar().identifiedBy(id).build(), save: async () => undefined };
 const bornAt = new Date('2026-03-01T08:00:00.000Z');
 
 describe('The agenda, kept from the facts of the appointments', () => {
   it('shows a booked appointment with everything it holds', async () => {
-    const { appointments, agenda } = arrange();
+    const { appointments, agenda } = await arrange();
 
     await appointments.save(planned().build());
 
@@ -63,7 +52,7 @@ describe('The agenda, kept from the facts of the appointments', () => {
   });
 
   it('shows a requested appointment with the deadline of its confirmation', async () => {
-    const { appointments, agenda } = arrange();
+    const { appointments, agenda } = await arrange();
 
     await appointments.save(planned().requestedUntil(at('08:00')).build());
 
@@ -71,7 +60,7 @@ describe('The agenda, kept from the facts of the appointments', () => {
   });
 
   it('shows a confirmed appointment as booked, without a deadline', async () => {
-    const { appointments, agenda } = arrange();
+    const { appointments, agenda } = await arrange();
     const appointment = planned().requestedUntil(at('08:00')).build();
 
     await appointments.save(appointment);
@@ -87,7 +76,7 @@ describe('The agenda, kept from the facts of the appointments', () => {
   });
 
   it('moves a rescheduled appointment and keeps where it stands', async () => {
-    const { appointments, agenda } = arrange();
+    const { appointments, agenda } = await arrange();
     const appointment = planned().requestedUntil(at('08:00')).build();
 
     await appointments.save(appointment);
@@ -116,7 +105,7 @@ describe('The agenda, kept from the facts of the appointments', () => {
   });
 
   it('shows the internal note of the staff, and keeps it when the appointment changes its standing', async () => {
-    const { appointments, agenda } = arrange();
+    const { appointments, agenda } = await arrange();
     const appointment = planned().requestedUntil(at('08:00')).build();
 
     appointment.annotate('Prefers the morning', bornAt);
@@ -129,7 +118,7 @@ describe('The agenda, kept from the facts of the appointments', () => {
   });
 
   it('shows who cancelled an appointment, and keeps it in the agenda', async () => {
-    const { appointments, agenda } = arrange();
+    const { appointments, agenda } = await arrange();
     const appointment = planned().build();
 
     await appointments.save(appointment);
@@ -149,7 +138,7 @@ describe('The agenda, kept from the facts of the appointments', () => {
     ['completed', planned().completed(), { status: 'completed' }],
     ['marked as a no-show', planned().markedNoShow(), { status: 'no-show' }],
   ])('shows an appointment that was %s', async (_end, builder, expected) => {
-    const { appointments, agenda } = arrange();
+    const { appointments, agenda } = await arrange();
 
     await appointments.save(builder.build());
 
@@ -230,18 +219,13 @@ describe('The agenda, given facts twice or out of order', () => {
   });
 });
 
-function arrange() {
-  const agenda = new FakeAgenda();
-
-  const application = createTestApplication({
-    modules: [platformTestModule, contextModule('scheduling', schedulingDeclarations), authorization],
-    fakes: [
-      fake(Agenda, agenda),
-      fake(AppointmentRepository, new FakeAppointmentRepository()),
-      fake(SchedulingRelationships, new FakeSchedulingRelationships()),
-      fake(CalendarRepository, calendars),
-      fake(WaitlistRepository, new FakeWaitlistRepository()),
-    ],
+/** A freed slot is offered to the waitlist of its calendar: the calendar of the appointment exists, and nobody waits. */
+async function arrange() {
+  const { application, agenda } = await aSchedulingWorld({
+    modules: [authorization],
+    given: async (fakes) => {
+      await fakes.calendarRepository.save(aCalendar().identifiedBy('calendar-4').build());
+    },
   });
 
   return { appointments: application.get(AppointmentRepository), agenda };

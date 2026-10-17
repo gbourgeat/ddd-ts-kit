@@ -1,5 +1,5 @@
 [English](dependency-injection.md) · **Français**
-<!-- translation-of: dependency-injection.md sha256:2fc41981e34c3647 -->
+<!-- translation-of: dependency-injection.md sha256:10befc54a5002fa7 -->
 
 # Injection de dépendances : tsyringe avec déclarations, NestJS, câblage manuel
 
@@ -363,6 +363,10 @@ it('books the appointment at the instant of the clock, under a new id', async ()
 méthode du port. Le câblage manuel n'a pas de conteneur où lier un *fake* : ses *specs*
 construisent le gestionnaire avec `new` et l'inscrivent sur `createTestBuses()` de
 `@ddd-ts-kit/testing`.
+
+Quand plusieurs *specs* d'un contexte construisent la même application, ou les mêmes bus, avec
+les mêmes *fakes*, `npx ddd-ts-kit generate test-world <context>` écrit cette mise en place une
+fois, dans `test/worlds/` : voir [Mondes](../concepts/testing-strategy.fr.md#mondes).
 
 ## Comparaison
 

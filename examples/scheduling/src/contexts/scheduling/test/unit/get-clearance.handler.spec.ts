@@ -2,23 +2,13 @@ import { describe, expect, it } from 'vitest';
 import { RoleBasedAuthorizer } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { anActor } from '@ddd-ts-kit/auth/testing';
-import { contextModule, createTestApplication, fake } from '@ddd-ts-kit/di';
-import * as schedulingDeclarations from '@/contexts/scheduling/scheduling.declarations';
-import { platformTestModule } from '@/platform/platform-test.module';
 import { schedulingPermissions } from '@/contexts/scheduling/application/authorization/scheduling.permissions';
 import { ClearCalendarCommand } from '@/contexts/scheduling/application/commands/clear-calendar/clear-calendar.command';
 import { GetClearanceQuery } from '@/contexts/scheduling/application/queries/get-clearance/get-clearance.query';
 import { ConfirmationDeadlineTimeoutBackgroundJob } from '@/contexts/scheduling/application/background/confirmation-deadline-timeout.background-job';
-import { Agenda } from '@/contexts/scheduling/application/ports/agenda.port';
-import { AppointmentRepository } from '@/contexts/scheduling/domain/repositories/appointment.repository';
-import { CalendarRepository } from '@/contexts/scheduling/domain/repositories/calendar.repository';
-import { WaitlistRepository } from '@/contexts/scheduling/domain/repositories/waitlist.repository';
 import { aCalendar } from '@/contexts/scheduling/test/builders/calendar.builder';
 import { anAppointment } from '@/contexts/scheduling/test/builders/appointment.builder';
-import { FakeAgenda } from '@/contexts/scheduling/test/fakes/agenda.fake';
-import { FakeAppointmentRepository } from '@/contexts/scheduling/test/fakes/appointment.repository.fake';
-import { FakeCalendarRepository } from '@/contexts/scheduling/test/fakes/calendar.repository.fake';
-import { FakeWaitlistRepository } from '@/contexts/scheduling/test/fakes/waitlist.repository.fake';
+import { aSchedulingWorld } from '@/contexts/scheduling/test/worlds/scheduling.world';
 
 const holders = authorizationModule({
   authorizer: new RoleBasedAuthorizer({
@@ -88,23 +78,15 @@ describe('Get clearance', () => {
 });
 
 async function arrange() {
-  const calendars = new FakeCalendarRepository();
-  const appointments = new FakeAppointmentRepository();
+  const { application } = await aSchedulingWorld({
+    modules: [holders],
+    given: async (fakes) => {
+      await fakes.calendarRepository.save(aCalendar().identifiedBy('calendar-1').build());
 
-  await calendars.save(aCalendar().identifiedBy('calendar-1').build());
-
-  await appointments.save(
-    anAppointment().onCalendar('calendar-1').startingAt(new Date('2026-08-04T08:00:00.000Z')).build(),
-  );
-
-  const application = createTestApplication({
-    modules: [platformTestModule, contextModule('scheduling', schedulingDeclarations), holders],
-    fakes: [
-      fake(Agenda, new FakeAgenda()),
-      fake(CalendarRepository, calendars),
-      fake(AppointmentRepository, appointments),
-      fake(WaitlistRepository, new FakeWaitlistRepository()),
-    ],
+      await fakes.appointmentRepository.save(
+        anAppointment().onCalendar('calendar-1').startingAt(new Date('2026-08-04T08:00:00.000Z')).build(),
+      );
+    },
   });
 
   const clearance = await application.as(holder, (actor) =>

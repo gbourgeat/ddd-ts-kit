@@ -2,14 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { RoleBasedAuthorizer } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { anActor } from '@ddd-ts-kit/auth/testing';
-import { contextModule, createTestApplication, fake } from '@ddd-ts-kit/di';
-import * as notificationDeclarations from '@/contexts/notification/notification.declarations';
-import { platformTestModule } from '@/platform/platform-test.module';
 import { notificationPermissions } from '@/contexts/notification/application/authorization/notification.permissions';
 import { WithdrawReminderCommand } from '@/contexts/notification/application/commands/withdraw-reminder/withdraw-reminder.command';
-import { ReminderRepository } from '@/contexts/notification/domain/repositories/reminder.repository';
 import { aReminder } from '@/contexts/notification/test/builders/reminder.builder';
-import { FakeReminderRepository } from '@/contexts/notification/test/fakes/reminder.repository.fake';
+import { aNotificationWorld } from '@/contexts/notification/test/worlds/notification.world';
 
 const holders = authorizationModule({
   authorizer: new RoleBasedAuthorizer({ roles: { holder: [notificationPermissions['reminder.withdraw']] } }),
@@ -20,7 +16,7 @@ const startsAt = new Date('2026-01-10T09:00:00.000Z');
 
 describe('Withdraw reminder', () => {
   it('withdraws the planned reminder of the appointment', async () => {
-    const { application, reminderRepository } = arrange();
+    const { application, reminderRepository } = await arrange();
 
     await reminderRepository.save(
       aReminder().identifiedBy('reminder-1').of('appointment-1').plannedFor(startsAt).build(),
@@ -32,7 +28,7 @@ describe('Withdraw reminder', () => {
   });
 
   it('is refused to an actor who does not hold the permission reminder.withdraw', async () => {
-    const { application } = arrange();
+    const { application } = await arrange();
 
     await expect(
       application.commandBus.execute(new WithdrawReminderCommand(anActor().build(), 'appointment-1')),
@@ -40,7 +36,7 @@ describe('Withdraw reminder', () => {
   });
 
   it('leaves the reminders of other appointments planned', async () => {
-    const { application, reminderRepository } = arrange();
+    const { application, reminderRepository } = await arrange();
 
     await reminderRepository.save(aReminder().identifiedBy('reminder-1').of('appointment-1').build());
     await reminderRepository.save(aReminder().identifiedBy('reminder-2').of('appointment-2').build());
@@ -50,7 +46,7 @@ describe('Withdraw reminder', () => {
   });
 
   it('leaves a reminder already sent as it is', async () => {
-    const { application, reminderRepository } = arrange();
+    const { application, reminderRepository } = await arrange();
 
     await reminderRepository.save(
       aReminder()
@@ -67,7 +63,7 @@ describe('Withdraw reminder', () => {
   });
 
   it('changes nothing for an appointment without a reminder, and when asked twice', async () => {
-    const { application, reminderRepository } = arrange();
+    const { application, reminderRepository } = await arrange();
 
     await reminderRepository.save(aReminder().identifiedBy('reminder-1').of('appointment-1').build());
     await application.commandBus.execute(new WithdrawReminderCommand(holder, 'appointment-unknown'));
@@ -80,14 +76,9 @@ describe('Withdraw reminder', () => {
   });
 });
 
-function arrange() {
-  const reminderRepository = new FakeReminderRepository();
-
-  const application = createTestApplication({
-    modules: [platformTestModule, contextModule('notification', notificationDeclarations), holders],
-    fakes: [fake(ReminderRepository, reminderRepository)],
+async function arrange() {
+  return aNotificationWorld({
+    modules: [holders],
     idPrefix: 'reminder',
   });
-
-  return { application, reminderRepository };
 }

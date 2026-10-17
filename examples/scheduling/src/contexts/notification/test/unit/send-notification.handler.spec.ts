@@ -2,19 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { RoleBasedAuthorizer } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { anActor } from '@ddd-ts-kit/auth/testing';
-import { contextModule, createTestApplication, fake } from '@ddd-ts-kit/di';
-import * as notificationDeclarations from '@/contexts/notification/notification.declarations';
-import { platformTestModule } from '@/platform/platform-test.module';
 import { notificationPermissions } from '@/contexts/notification/application/authorization/notification.permissions';
 import { SendNotificationCommand } from '@/contexts/notification/application/commands/send-notification/send-notification.command';
-import { Contacts } from '@/contexts/notification/application/ports/contacts.port';
-import { Mailer } from '@/contexts/notification/application/ports/mailer.port';
-import { NotificationRepository } from '@/contexts/notification/domain/repositories/notification.repository';
-import { ReminderRepository } from '@/contexts/notification/domain/repositories/reminder.repository';
-import { FakeContacts } from '@/contexts/notification/test/fakes/contacts.fake';
-import { FakeMailer } from '@/contexts/notification/test/fakes/mailer.fake';
-import { FakeNotificationRepository } from '@/contexts/notification/test/fakes/notification.repository.fake';
-import { FakeReminderRepository } from '@/contexts/notification/test/fakes/reminder.repository.fake';
+import { aNotificationWorld } from '@/contexts/notification/test/worlds/notification.world';
 
 const permissions = Object.values(notificationPermissions);
 
@@ -151,22 +141,11 @@ describe('Send notification', () => {
 });
 
 async function arrange() {
-  const notificationRepository = new FakeNotificationRepository();
-  const contacts = new FakeContacts();
-  const mailer = new FakeMailer();
-
-  await contacts.know('patient-1', 'ada@example.test');
-
-  const application = createTestApplication({
-    modules: [platformTestModule, contextModule('notification', notificationDeclarations), holders],
-    fakes: [
-      fake(NotificationRepository, notificationRepository),
-      fake(ReminderRepository, new FakeReminderRepository()),
-      fake(Contacts, contacts),
-      fake(Mailer, mailer),
-    ],
+  return aNotificationWorld({
+    modules: [holders],
     idPrefix: 'notification',
+    given: async ({ contacts }) => {
+      await contacts.know('patient-1', 'ada@example.test');
+    },
   });
-
-  return { application, notificationRepository, contacts, mailer };
 }

@@ -2,17 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { RoleBasedAuthorizer } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { anActor } from '@ddd-ts-kit/auth/testing';
-import { contextModule, createTestApplication, fake } from '@ddd-ts-kit/di';
-import * as schedulingDeclarations from '@/contexts/scheduling/scheduling.declarations';
-import { platformTestModule } from '@/platform/platform-test.module';
 import { schedulingPermissions } from '@/contexts/scheduling/application/authorization/scheduling.permissions';
 import { JoinWaitlistCommand } from '@/contexts/scheduling/application/commands/join-waitlist/join-waitlist.command';
-import { CalendarRepository } from '@/contexts/scheduling/domain/repositories/calendar.repository';
-import { WaitlistRepository } from '@/contexts/scheduling/domain/repositories/waitlist.repository';
 import { aCalendar } from '@/contexts/scheduling/test/builders/calendar.builder';
 import { aWaitlist } from '@/contexts/scheduling/test/builders/waitlist.builder';
-import { FakeCalendarRepository } from '@/contexts/scheduling/test/fakes/calendar.repository.fake';
-import { FakeWaitlistRepository } from '@/contexts/scheduling/test/fakes/waitlist.repository.fake';
+import { aSchedulingWorld } from '@/contexts/scheduling/test/worlds/scheduling.world';
 
 const holders = authorizationModule({
   authorizer: new RoleBasedAuthorizer({ roles: { holder: [schedulingPermissions['waitlist.join']] } }),
@@ -120,18 +114,13 @@ describe('Join waitlist', () => {
 });
 
 async function arrange() {
-  const waitlistRepository = new FakeWaitlistRepository();
-  const calendarRepository = new FakeCalendarRepository();
-
-  await calendarRepository.save(
-    aCalendar().identifiedBy('calendar-1').openEveryDay(['08:00', '20:00']).offering('consultation').build(),
-  );
-
-  const application = createTestApplication({
-    modules: [platformTestModule, contextModule('scheduling', schedulingDeclarations), holders],
-    fakes: [fake(WaitlistRepository, waitlistRepository), fake(CalendarRepository, calendarRepository)],
+  return aSchedulingWorld({
+    modules: [holders],
     idPrefix: 'id',
+    given: async (fakes) => {
+      await fakes.calendarRepository.save(
+        aCalendar().identifiedBy('calendar-1').openEveryDay(['08:00', '20:00']).offering('consultation').build(),
+      );
+    },
   });
-
-  return { application, waitlistRepository, calendarRepository };
 }

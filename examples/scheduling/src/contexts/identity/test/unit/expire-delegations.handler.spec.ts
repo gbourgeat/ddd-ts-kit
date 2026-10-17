@@ -2,20 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { RoleBasedAuthorizer } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { anActor } from '@ddd-ts-kit/auth/testing';
-import { contextModule, createTestApplication, fake } from '@ddd-ts-kit/di';
-import * as identityDeclarations from '@/contexts/identity/identity.declarations';
-import { platformTestModule } from '@/platform/platform-test.module';
 import { identityPermissions } from '@/contexts/identity/application/authorization/identity.permissions';
 import { ExpireDelegationsCommand } from '@/contexts/identity/application/commands/expire-delegations/expire-delegations.command';
-import { IdentityRelationships } from '@/contexts/identity/application/ports/identity-relationships.port';
-import { DelegationRepository } from '@/contexts/identity/domain/repositories/delegation.repository';
-import { PersonRepository } from '@/contexts/identity/domain/repositories/person.repository';
-import { PracticeRepository } from '@/contexts/identity/domain/repositories/practice.repository';
 import { aDelegation } from '@/contexts/identity/test/builders/delegation.builder';
-import { FakeDelegationRepository } from '@/contexts/identity/test/fakes/delegation.repository.fake';
-import { FakeIdentityRelationships } from '@/contexts/identity/test/fakes/identity-relationships.fake';
-import { FakePersonRepository } from '@/contexts/identity/test/fakes/person.repository.fake';
-import { FakePracticeRepository } from '@/contexts/identity/test/fakes/practice.repository.fake';
+import { anIdentityWorld, type IdentityWorldOptions } from '@/contexts/identity/test/worlds/identity.world';
 
 const holders = authorizationModule({
   authorizer: new RoleBasedAuthorizer({ roles: { holder: [identityPermissions['delegation.expire']] } }),
@@ -40,7 +30,7 @@ describe('Expire delegations', () => {
   });
 
   it('is refused to an actor who does not hold the permission delegation.expire', async () => {
-    const { application } = arrange();
+    const { application } = await arrange();
 
     await expect(
       application.commandBus.execute(new ExpireDelegationsCommand(anActor().build(), end)),
@@ -87,42 +77,31 @@ describe('Expire delegations', () => {
 });
 
 async function arrangeWithDelegations() {
-  const arranged = arrange();
-  const granted = aDelegation().bornAt(grantedAt);
+  return arrange(async (fakes) => {
+    const granted = aDelegation().bornAt(grantedAt);
 
-  await arranged.delegationRepository.save(
-    granted.identifiedBy('delegation-due').givenTo('assistant-1').endingAt(end).build(),
-  );
+    await fakes.delegationRepository.save(
+      granted.identifiedBy('delegation-due').givenTo('assistant-1').endingAt(end).build(),
+    );
 
-  await arranged.delegationRepository.save(
-    granted
-      .identifiedBy('delegation-later')
-      .givenTo('assistant-2')
-      .endingAt(new Date('2026-05-01T00:00:00.000Z'))
-      .build(),
-  );
+    await fakes.delegationRepository.save(
+      granted
+        .identifiedBy('delegation-later')
+        .givenTo('assistant-2')
+        .endingAt(new Date('2026-05-01T00:00:00.000Z'))
+        .build(),
+    );
 
-  await arranged.delegationRepository.save(granted.identifiedBy('delegation-open').givenTo('assistant-3').build());
-
-  return arranged;
+    await fakes.delegationRepository.save(granted.identifiedBy('delegation-open').givenTo('assistant-3').build());
+  });
 }
 
-function arrange() {
-  const practiceRepository = new FakePracticeRepository();
-  const personRepository = new FakePersonRepository();
-  const delegationRepository = new FakeDelegationRepository();
-  const relationships = new FakeIdentityRelationships();
-
-  const application = createTestApplication({
-    modules: [platformTestModule, contextModule('identity', identityDeclarations), holders],
-    fakes: [
-      fake(PracticeRepository, practiceRepository),
-      fake(PersonRepository, personRepository),
-      fake(DelegationRepository, delegationRepository),
-      fake(IdentityRelationships, relationships),
-    ],
+async function arrange(given: NonNullable<IdentityWorldOptions['given']> = async () => undefined) {
+  const { identityRelationships: relationships, ...arranged } = await anIdentityWorld({
+    modules: [holders],
     idPrefix: 'delegation',
+    given,
   });
 
-  return { application, practiceRepository, personRepository, delegationRepository, relationships };
+  return { ...arranged, relationships };
 }

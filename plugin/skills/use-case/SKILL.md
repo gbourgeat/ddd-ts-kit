@@ -106,7 +106,8 @@ to open.
    the aggregate recorded, and they are dispatched once the handler has returned, before the
    commit: no `pullEvents()`, no dispatcher in a handler
    (`domain-events/dispatched-on-save`). Time and identifiers come from `Clock` and
-   `IdGenerator`.
+   `IdGenerator`. When the handler specs of the context arrange the same application, take it
+   from a world (`npx ddd-ts-kit generate test-world <ctx>`, in `test/worlds/`).
 3. **Presentation.** The route, one controller class with one method
    (`presentation/http/<resource>/<use-case>/<use-case>.controller.ts`): its decorator declares
    the method, the path after the prefix of its route group, the schemas (shape only), the

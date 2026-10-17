@@ -2,14 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { RoleBasedAuthorizer } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { anActor } from '@ddd-ts-kit/auth/testing';
-import { contextModule, createTestApplication, fake } from '@ddd-ts-kit/di';
-import * as schedulingDeclarations from '@/contexts/scheduling/scheduling.declarations';
-import { platformTestModule } from '@/platform/platform-test.module';
 import { schedulingPermissions } from '@/contexts/scheduling/application/authorization/scheduling.permissions';
 import { SetOpeningHoursCommand } from '@/contexts/scheduling/application/commands/set-opening-hours/set-opening-hours.command';
-import { CalendarRepository } from '@/contexts/scheduling/domain/repositories/calendar.repository';
 import { aCalendar } from '@/contexts/scheduling/test/builders/calendar.builder';
-import { FakeCalendarRepository } from '@/contexts/scheduling/test/fakes/calendar.repository.fake';
+import { aSchedulingWorld } from '@/contexts/scheduling/test/worlds/scheduling.world';
 
 const holders = authorizationModule({
   authorizer: new RoleBasedAuthorizer({ roles: { holder: [schedulingPermissions['calendar.set-opening-hours']] } }),
@@ -107,15 +103,13 @@ describe('Set opening hours', () => {
 });
 
 async function arrange() {
-  const calendarRepository = new FakeCalendarRepository();
-
-  await calendarRepository.save(aCalendar().identifiedBy('calendar-1').openEveryDay(['08:00', '20:00']).build());
-
-  const application = createTestApplication({
-    modules: [platformTestModule, contextModule('scheduling', schedulingDeclarations), holders],
-    fakes: [fake(CalendarRepository, calendarRepository)],
+  return aSchedulingWorld({
+    modules: [holders],
     idPrefix: 'id',
+    given: async (fakes) => {
+      await fakes.calendarRepository.save(
+        aCalendar().identifiedBy('calendar-1').openEveryDay(['08:00', '20:00']).build(),
+      );
+    },
   });
-
-  return { application, calendarRepository };
 }

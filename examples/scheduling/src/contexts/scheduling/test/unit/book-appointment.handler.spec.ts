@@ -2,22 +2,12 @@ import { describe, expect, it } from 'vitest';
 import { RoleBasedAuthorizer } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { anActor } from '@ddd-ts-kit/auth/testing';
-import { contextModule, createTestApplication, fake } from '@ddd-ts-kit/di';
-import * as schedulingDeclarations from '@/contexts/scheduling/scheduling.declarations';
-import { platformTestModule } from '@/platform/platform-test.module';
 import { schedulingPermissions } from '@/contexts/scheduling/application/authorization/scheduling.permissions';
 import { BookAppointmentCommand } from '@/contexts/scheduling/application/commands/book-appointment/book-appointment.command';
-import { SchedulingRelationships } from '@/contexts/scheduling/application/ports/scheduling-relationships.port';
 import type { Appointment } from '@/contexts/scheduling/domain/aggregates/appointment.aggregate';
-import { AppointmentRepository } from '@/contexts/scheduling/domain/repositories/appointment.repository';
-import { CalendarRepository } from '@/contexts/scheduling/domain/repositories/calendar.repository';
 import { anAppointment } from '@/contexts/scheduling/test/builders/appointment.builder';
 import { aCalendar } from '@/contexts/scheduling/test/builders/calendar.builder';
-import { FakeAppointmentRepository } from '@/contexts/scheduling/test/fakes/appointment.repository.fake';
-import { FakeCalendarRepository } from '@/contexts/scheduling/test/fakes/calendar.repository.fake';
-import { FakeSchedulingRelationships } from '@/contexts/scheduling/test/fakes/scheduling-relationships.fake';
-import { Agenda } from '@/contexts/scheduling/application/ports/agenda.port';
-import { FakeAgenda } from '@/contexts/scheduling/test/fakes/agenda.fake';
+import { aSchedulingWorld } from '@/contexts/scheduling/test/worlds/scheduling.world';
 
 const holders = authorizationModule({
   authorizer: new RoleBasedAuthorizer({
@@ -203,28 +193,20 @@ describe('Book appointment with an internal note', () => {
 });
 
 async function arrange(...stored: readonly Appointment[]) {
-  const appointmentRepository = new FakeAppointmentRepository();
-  const calendarRepository = new FakeCalendarRepository();
-  const relationships = new FakeSchedulingRelationships();
   const announced: string[] = [];
 
-  await calendarRepository.save(openCalendar());
-
-  await stored.reduce(
-    (saved, appointment) => saved.then(() => appointmentRepository.save(appointment)),
-    Promise.resolve(),
-  );
-
-  const application = createTestApplication({
-    modules: [platformTestModule, contextModule('scheduling', schedulingDeclarations), holders],
-    fakes: [
-      fake(Agenda, new FakeAgenda()),
-      fake(AppointmentRepository, appointmentRepository),
-      fake(CalendarRepository, calendarRepository),
-      fake(SchedulingRelationships, relationships),
-    ],
+  const { application, appointmentRepository, schedulingRelationships } = await aSchedulingWorld({
+    modules: [holders],
     idPrefix: 'appointment',
     now: NOW,
+    given: async (fakes) => {
+      await fakes.calendarRepository.save(openCalendar());
+
+      await stored.reduce(
+        (saved, appointment) => saved.then(() => fakes.appointmentRepository.save(appointment)),
+        Promise.resolve(),
+      );
+    },
   });
 
   application.domainEvents.on(
@@ -232,7 +214,7 @@ async function arrange(...stored: readonly Appointment[]) {
     async () => void announced.push('scheduling.appointment.booked'),
   );
 
-  return { application, appointmentRepository, relationships, announced };
+  return { application, appointmentRepository, relationships: schedulingRelationships, announced };
 }
 
 function openCalendar() {

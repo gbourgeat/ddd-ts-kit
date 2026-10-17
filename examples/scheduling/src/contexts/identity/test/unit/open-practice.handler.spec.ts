@@ -2,20 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { RoleBasedAuthorizer } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { anActor } from '@ddd-ts-kit/auth/testing';
-import { contextModule, createTestApplication, fake } from '@ddd-ts-kit/di';
-import * as identityDeclarations from '@/contexts/identity/identity.declarations';
-import { platformTestModule } from '@/platform/platform-test.module';
 import { identityPermissions } from '@/contexts/identity/application/authorization/identity.permissions';
 import { OpenPracticeCommand } from '@/contexts/identity/application/commands/open-practice/open-practice.command';
-import { IdentityRelationships } from '@/contexts/identity/application/ports/identity-relationships.port';
-import { DelegationRepository } from '@/contexts/identity/domain/repositories/delegation.repository';
-import { PersonRepository } from '@/contexts/identity/domain/repositories/person.repository';
-import { PracticeRepository } from '@/contexts/identity/domain/repositories/practice.repository';
 import { aPerson } from '@/contexts/identity/test/builders/person.builder';
-import { FakeDelegationRepository } from '@/contexts/identity/test/fakes/delegation.repository.fake';
-import { FakeIdentityRelationships } from '@/contexts/identity/test/fakes/identity-relationships.fake';
-import { FakePersonRepository } from '@/contexts/identity/test/fakes/person.repository.fake';
-import { FakePracticeRepository } from '@/contexts/identity/test/fakes/practice.repository.fake';
+import { anIdentityWorld } from '@/contexts/identity/test/worlds/identity.world';
 
 const holders = authorizationModule({
   authorizer: new RoleBasedAuthorizer({ roles: { holder: [identityPermissions['practice.open']] } }),
@@ -27,7 +17,7 @@ const opening = { name: 'Riverside', timeZone: 'Europe/Paris', managerId: 'perso
 
 describe('Open practice', () => {
   it('saves the practice and answers its identifier', async () => {
-    const { application, practiceRepository, personRepository } = arrange();
+    const { application, practiceRepository, personRepository } = await arrange();
 
     await personRepository.save(aPerson().identifiedBy('person-ada').build());
 
@@ -38,7 +28,7 @@ describe('Open practice', () => {
   });
 
   it('is refused to an actor who does not hold the permission practice.open', async () => {
-    const { application } = arrange();
+    const { application } = await arrange();
 
     await expect(
       application.commandBus.execute(new OpenPracticeCommand(anActor().build(), opening)),
@@ -46,7 +36,7 @@ describe('Open practice', () => {
   });
 
   it('opens the practice in its time zone with a registered person as its first manager, and tells the other contexts', async () => {
-    const { application, practiceRepository, personRepository, relationships } = arrange();
+    const { application, practiceRepository, personRepository, relationships } = await arrange();
 
     await personRepository.save(aPerson().identifiedBy('person-ada').named('Ada Lovelace').build());
     const before = application.eventBus.published.length;
@@ -79,7 +69,7 @@ describe('Open practice', () => {
   });
 
   it('refuses a time zone that is not an IANA zone, and saves and publishes nothing', async () => {
-    const { application, practiceRepository, personRepository } = arrange();
+    const { application, practiceRepository, personRepository } = await arrange();
 
     await personRepository.save(aPerson().identifiedBy('person-ada').build());
     const before = application.eventBus.published.length;
@@ -95,7 +85,7 @@ describe('Open practice', () => {
   });
 
   it('refuses a first manager who is not a registered person, and saves and publishes nothing', async () => {
-    const { application, practiceRepository } = arrange();
+    const { application, practiceRepository } = await arrange();
 
     await expect(application.commandBus.execute(new OpenPracticeCommand(holder, opening))).rejects.toMatchObject({
       code: 'PERSON_NOT_REGISTERED',
@@ -106,22 +96,11 @@ describe('Open practice', () => {
   });
 });
 
-function arrange() {
-  const practiceRepository = new FakePracticeRepository();
-  const personRepository = new FakePersonRepository();
-  const delegationRepository = new FakeDelegationRepository();
-  const relationships = new FakeIdentityRelationships();
-
-  const application = createTestApplication({
-    modules: [platformTestModule, contextModule('identity', identityDeclarations), holders],
-    fakes: [
-      fake(PracticeRepository, practiceRepository),
-      fake(PersonRepository, personRepository),
-      fake(DelegationRepository, delegationRepository),
-      fake(IdentityRelationships, relationships),
-    ],
+async function arrange() {
+  const { identityRelationships: relationships, ...arranged } = await anIdentityWorld({
+    modules: [holders],
     idPrefix: 'practice',
   });
 
-  return { application, practiceRepository, personRepository, delegationRepository, relationships };
+  return { ...arranged, relationships };
 }

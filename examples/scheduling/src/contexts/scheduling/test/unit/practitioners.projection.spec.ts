@@ -1,16 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { AllowAll } from '@ddd-ts-kit/auth/testing';
-import { contextModule, createTestApplication, fake } from '@ddd-ts-kit/di';
 import { Criteria, scoped } from '@ddd-ts-kit/kernel';
-import * as schedulingDeclarations from '@/contexts/scheduling/scheduling.declarations';
-import { platformTestModule } from '@/platform/platform-test.module';
 import { practiceMemberAddedV1, practiceMemberRemovedV1 } from '@/contexts/identity/published-language/index';
-import {
-  PractitionerDirectory,
-  type PractitionerEntry,
-} from '@/contexts/scheduling/application/ports/practitioner-directory.port';
-import { FakePractitionerDirectory } from '@/contexts/scheduling/test/fakes/practitioner-directory.fake';
+import type { PractitionerEntry } from '@/contexts/scheduling/application/ports/practitioner-directory.port';
+import { aSchedulingWorld } from '@/contexts/scheduling/test/worlds/scheduling.world';
 
 type Role = 'manager' | 'practitioner' | 'assistant';
 
@@ -89,20 +83,13 @@ describe('Practitioners known from identity', () => {
 });
 
 async function arrange() {
-  const practitioners = new FakePractitionerDirectory();
-
-  const application = createTestApplication({
-    modules: [
-      platformTestModule,
-      contextModule('scheduling', schedulingDeclarations),
-      authorizationModule({ authorizer: new AllowAll() }),
-    ],
-    fakes: [fake(PractitionerDirectory, practitioners)],
+  const { application, practitionerDirectory } = await aSchedulingWorld({
+    modules: [authorizationModule({ authorizer: new AllowAll() })],
   });
 
   await application.start();
 
-  return { application, practitioners };
+  return { application, practitioners: practitionerDirectory };
 }
 
 function added(id: string, role: Role, occurredAt = at('08:00')) {

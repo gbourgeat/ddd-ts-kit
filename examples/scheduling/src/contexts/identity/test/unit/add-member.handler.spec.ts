@@ -2,21 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { RoleBasedAuthorizer } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { anActor } from '@ddd-ts-kit/auth/testing';
-import { contextModule, createTestApplication, fake } from '@ddd-ts-kit/di';
-import * as identityDeclarations from '@/contexts/identity/identity.declarations';
-import { platformTestModule } from '@/platform/platform-test.module';
 import { identityPermissions } from '@/contexts/identity/application/authorization/identity.permissions';
 import { AddMemberCommand } from '@/contexts/identity/application/commands/add-member/add-member.command';
-import { IdentityRelationships } from '@/contexts/identity/application/ports/identity-relationships.port';
-import { DelegationRepository } from '@/contexts/identity/domain/repositories/delegation.repository';
-import { PersonRepository } from '@/contexts/identity/domain/repositories/person.repository';
-import { PracticeRepository } from '@/contexts/identity/domain/repositories/practice.repository';
 import { aPerson } from '@/contexts/identity/test/builders/person.builder';
 import { aPractice } from '@/contexts/identity/test/builders/practice.builder';
-import { FakeDelegationRepository } from '@/contexts/identity/test/fakes/delegation.repository.fake';
-import { FakeIdentityRelationships } from '@/contexts/identity/test/fakes/identity-relationships.fake';
-import { FakePersonRepository } from '@/contexts/identity/test/fakes/person.repository.fake';
-import { FakePracticeRepository } from '@/contexts/identity/test/fakes/practice.repository.fake';
+import { anIdentityWorld, type IdentityWorldOptions } from '@/contexts/identity/test/worlds/identity.world';
 
 const holders = authorizationModule({
   authorizer: new RoleBasedAuthorizer({ roles: { holder: [identityPermissions['member.add']] } }),
@@ -37,7 +27,7 @@ describe('Add member', () => {
   });
 
   it('is refused to an actor who does not hold the permission member.add', async () => {
-    const { application } = arrange();
+    const { application } = await arrange();
 
     await expect(
       application.commandBus.execute(
@@ -113,34 +103,22 @@ describe('Add member', () => {
 });
 
 async function arrangeWithPractice() {
-  const arranged = arrange();
+  return arrange(async (fakes) => {
+    await fakes.personRepository.save(aPerson().identifiedBy('person-ada').build());
+    await fakes.personRepository.save(aPerson().identifiedBy('person-grace').named('Grace Hopper').build());
 
-  await arranged.personRepository.save(aPerson().identifiedBy('person-ada').build());
-  await arranged.personRepository.save(aPerson().identifiedBy('person-grace').named('Grace Hopper').build());
-
-  await arranged.practiceRepository.save(
-    aPractice().identifiedBy('practice-7').inTimeZone('Europe/Paris').managedBy('person-ada').build(),
-  );
-
-  return arranged;
+    await fakes.practiceRepository.save(
+      aPractice().identifiedBy('practice-7').inTimeZone('Europe/Paris').managedBy('person-ada').build(),
+    );
+  });
 }
 
-function arrange() {
-  const practiceRepository = new FakePracticeRepository();
-  const personRepository = new FakePersonRepository();
-  const delegationRepository = new FakeDelegationRepository();
-  const relationships = new FakeIdentityRelationships();
-
-  const application = createTestApplication({
-    modules: [platformTestModule, contextModule('identity', identityDeclarations), holders],
-    fakes: [
-      fake(PracticeRepository, practiceRepository),
-      fake(PersonRepository, personRepository),
-      fake(DelegationRepository, delegationRepository),
-      fake(IdentityRelationships, relationships),
-    ],
+async function arrange(given: NonNullable<IdentityWorldOptions['given']> = async () => undefined) {
+  const { identityRelationships: relationships, ...arranged } = await anIdentityWorld({
+    modules: [holders],
     idPrefix: 'practice',
+    given,
   });
 
-  return { application, practiceRepository, personRepository, delegationRepository, relationships };
+  return { ...arranged, relationships };
 }

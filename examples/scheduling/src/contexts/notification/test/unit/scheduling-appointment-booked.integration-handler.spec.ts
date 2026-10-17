@@ -1,21 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { RoleBasedAuthorizer } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
-import { contextModule, createTestApplication, fake } from '@ddd-ts-kit/di';
 import { InMemoryCommandBus } from '@ddd-ts-kit/kernel';
-import * as notificationDeclarations from '@/contexts/notification/notification.declarations';
-import { platformTestModule } from '@/platform/platform-test.module';
 import { appointmentBookedV1 } from '@/contexts/scheduling/published-language/index';
 import { notificationPermissions } from '@/contexts/notification/application/authorization/notification.permissions';
 import { SchedulingAppointmentBookedIntegrationHandler } from '@/contexts/notification/application/integration/handlers/scheduling-appointment-booked.integration-handler';
-import { Contacts } from '@/contexts/notification/application/ports/contacts.port';
-import { Mailer } from '@/contexts/notification/application/ports/mailer.port';
-import { NotificationRepository } from '@/contexts/notification/domain/repositories/notification.repository';
-import { ReminderRepository } from '@/contexts/notification/domain/repositories/reminder.repository';
-import { FakeContacts } from '@/contexts/notification/test/fakes/contacts.fake';
-import { FakeMailer } from '@/contexts/notification/test/fakes/mailer.fake';
-import { FakeNotificationRepository } from '@/contexts/notification/test/fakes/notification.repository.fake';
-import { FakeReminderRepository } from '@/contexts/notification/test/fakes/reminder.repository.fake';
+import { aNotificationWorld } from '@/contexts/notification/test/worlds/notification.world';
 
 const authorization = authorizationModule({
   authorizer: new RoleBasedAuthorizer({
@@ -116,26 +106,16 @@ describe('When scheduling publishes scheduling.appointment.booked', () => {
 });
 
 async function arrange() {
-  const notificationRepository = new FakeNotificationRepository();
-  const reminderRepository = new FakeReminderRepository();
-  const contacts = new FakeContacts();
-  const mailer = new FakeMailer();
-
-  await contacts.know('patient-1', 'ada@example.test');
-
-  const application = createTestApplication({
-    modules: [platformTestModule, contextModule('notification', notificationDeclarations), authorization],
-    fakes: [
-      fake(NotificationRepository, notificationRepository),
-      fake(ReminderRepository, reminderRepository),
-      fake(Contacts, contacts),
-      fake(Mailer, mailer),
-    ],
+  const arranged = await aNotificationWorld({
+    modules: [authorization],
+    given: async ({ contacts }) => {
+      await contacts.know('patient-1', 'ada@example.test');
+    },
   });
 
-  await application.start();
+  await arranged.application.start();
 
-  return { application, notificationRepository, reminderRepository, mailer };
+  return arranged;
 }
 
 function booked(id: string, status: 'booked' | 'requested' = 'booked') {
