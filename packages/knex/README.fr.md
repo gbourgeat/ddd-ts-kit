@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:638096e9a00ef0af -->
+<!-- translation-of: README.md sha256:81fa61ce387efbaa -->
 
 # @ddd-ts-kit/knex
 
@@ -840,7 +840,7 @@ refuse `--database mysql` et `--database sqlite`.
 |---|---|
 | PostgreSQL | Couvert par la suite automatisée : suites de contrat de `@ddd-ts-kit/testing`, contrat de *repository*, annulation, unité de travail imbriquée, réservations concurrentes. Elle s'exécute par défaut sur PGlite servi par le protocole réseau de PostgreSQL, et sur un vrai serveur quand `DDD_TS_KIT_TEST_DATABASE_URL` est définie (dernière exécution : PostgreSQL 18). |
 | MySQL 8 | Absent de la suite automatisée. Les suites de contrat de l'outbox et des événements traités, et l'annulation d'`append`, ont été exécutées une fois à la main contre MySQL 8.4 avec `mysql2`, avec `skip-locked` et `compare-and-set`. |
-| SQLite | Absent de la suite automatisée. Les mêmes suites ont été exécutées une fois à la main avec `better-sqlite3`. Pas de `SKIP LOCKED` : la réservation est `compare-and-set`. Pas de schémas : `createOutboxTables` refuse `schema` ; nommez plutôt les tables par contexte. |
+| SQLite | Automatisé, dans l'exécution unitaire : les suites de contrat de l'outbox et des événements traités s'exécutent sur une base en mémoire avec `better-sqlite3`, sans conteneur ni variable d'environnement (`test/stores.sqlite.spec.ts`). Pas de `SKIP LOCKED` : la réservation est `compare-and-set`. Pas de schémas : `createOutboxTables` refuse `schema` ; nommez plutôt les tables par contexte. |
 | MariaDB, CockroachDB, SQL Server, Oracle | Jamais exécutées. MariaDB stocke le JSON sous forme de texte : le *payload* reviendrait donc sous forme de chaîne. |
 
 ## Limites
