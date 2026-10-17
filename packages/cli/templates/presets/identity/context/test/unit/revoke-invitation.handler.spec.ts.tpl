@@ -4,7 +4,7 @@ import { MemberRole } from '{{alias.context}}/domain/vocabularies/member-role.vo
 import { RevokeInvitationCommand } from '{{alias.context}}/application/commands/revoke-invitation/revoke-invitation.command{{alias.ext}}';
 import { anInvitation } from '{{alias.context}}/test/builders/invitation.builder{{alias.ext}}';
 import { aMember } from '{{alias.context}}/test/builders/member.builder{{alias.ext}}';
-import { arrangeIdentity } from '{{alias.context}}/test/unit/identity-application{{alias.ext}}';
+import { arrangeIdentity } from '{{alias.context}}/test/worlds/{{context.kebab}}.world{{alias.ext}}';
 
 describe('Revoke invitation', () => {
   it('takes back an invitation of the organisation', async () => {

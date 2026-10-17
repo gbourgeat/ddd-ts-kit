@@ -3,7 +3,7 @@ import { MemberRole } from '{{alias.context}}/domain/vocabularies/member-role.vo
 import { OpenOrganisationCommand } from '{{alias.context}}/application/commands/open-organisation/open-organisation.command{{alias.ext}}';
 import { anAccount } from '{{alias.context}}/test/builders/account.builder{{alias.ext}}';
 import { anOrganisation } from '{{alias.context}}/test/builders/organisation.builder{{alias.ext}}';
-import { arrangeIdentity, startedIdentity } from '{{alias.context}}/test/unit/identity-application{{alias.ext}}';
+import { arrangeIdentity, startedIdentity } from '{{alias.context}}/test/worlds/{{context.kebab}}.world{{alias.ext}}';
 
 const acme = { slug: 'acme', name: 'Acme' };
 

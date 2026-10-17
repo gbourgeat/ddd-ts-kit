@@ -5,6 +5,7 @@
       "entry": [
         "src/contexts/*/published-language/index.ts",
         "src/contexts/*/test/fakes/*.ts",
+        "src/contexts/*/test/worlds/*.ts",
         "scripts/*.ts",
         "test/e2e/**/*.ts",
         "src/apps/*/main.ts"

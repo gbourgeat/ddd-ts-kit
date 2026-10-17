@@ -77,6 +77,7 @@ import { schemaPresentationOnly } from '../rules/schema-presentation-only.js';
 import { standardNoParallelInterface } from '../rules/standard-no-parallel-interface.js';
 import { tenancyScopedStatement } from '../rules/tenancy-scoped-statement.js';
 import { testBuilderRequired } from '../rules/test-builder-required.js';
+import { testHelperPlaced } from '../rules/test-helper-placed.js';
 import { testCoverageGoverned } from '../rules/test-coverage-governed.js';
 import { testNoMocks } from '../rules/test-no-mocks.js';
 import { testSpecRequired } from '../rules/test-spec-required.js';
@@ -110,6 +111,7 @@ export const ARCHITECTURE_RULES: readonly Rule[] = [
   eventsDefinedInPublishedLanguage,
   testNoMocks,
   testBuilderRequired,
+  testHelperPlaced,
   testCoverageGoverned,
   languageGlossaryTerm,
   languageNoTechnicalName,

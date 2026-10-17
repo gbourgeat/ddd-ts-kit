@@ -114,6 +114,8 @@ export function scaffoldEverything(root: string, stack = DEFAULT_STACK, more: re
   scaffoldOrderFulfilment(step, withHttp, grantOf(stack, more));
   scaffoldBillingLifecycle(step, stack);
   scaffoldNamedReactions(step);
+  // The arrangement the specs of billing share, once every fake of the context exists.
+  step('generate', 'test-world', 'billing');
   step('generate', 'worker');
 
   return results;

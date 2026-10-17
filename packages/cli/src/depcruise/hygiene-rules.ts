@@ -55,7 +55,7 @@ function productionRules(config: Config): CruiseRule[] {
   ];
 }
 
-/** Entry points, files loaded by a tool instead of an import, and the fakes a context keeps ready for the tests to come. */
+/** Entry points, files loaded by a tool instead of an import, and the fakes and worlds a context keeps ready for the tests to come. */
 function orphanExceptions(config: Config): string[] {
   return [
     `^${escapePattern(config.sourceRoot)}/main\\.ts$`,
@@ -63,6 +63,7 @@ function orphanExceptions(config: Config): string[] {
     `^${escapePattern(config.platformDir)}/tracing\\.ts$`,
     `^${escapePattern(config.contextsDir)}/[^/]+/published-language/`,
     `^${escapePattern(config.contextsDir)}/[^/]+/test/fakes/`,
+    `^${escapePattern(config.contextsDir)}/[^/]+/test/worlds/`,
     ...discoveredFiles(config),
     '\\.d\\.[cm]?ts$',
     '\\.(spec|test)\\.[cm]?ts$',

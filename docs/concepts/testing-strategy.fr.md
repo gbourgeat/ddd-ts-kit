@@ -1,5 +1,5 @@
 [English](testing-strategy.md) · **Français**
-<!-- translation-of: testing-strategy.md sha256:e2c50bbdc326cbb5 -->
+<!-- translation-of: testing-strategy.md sha256:bf398bfccf866062 -->
 
 # Stratégie de test
 
@@ -288,6 +288,55 @@ export function anAppointment(): AppointmentBuilder {
 Règle [`test/builder-required`](../ARCHITECTURE.fr.md#3-règles-de-dépendance). Sans *builders*,
 chaque changement d'un constructeur modifie cinquante tests, et chaque test enfouit son unique
 valeur pertinente sous dix valeurs qui ne le sont pas.
+
+## Mondes
+
+Plusieurs *specs* de *handler* d'un contexte construisent la même application de test avec les
+mêmes *fakes*. Cette mise en place s'écrit une fois, comme un monde de `test/worlds/`, et se
+génère au lieu de se copier :
+
+```bash
+npx ddd-ts-kit generate test-world scheduling
+```
+
+Le générateur lit `test/fakes/*.fake.ts`, trouve le port que chaque classe implémente dans
+`domain/repositories/` ou `application/ports/`, et écrit `test/worlds/scheduling.world.ts` :
+`aSchedulingWorld(options)` construit chaque *fake*, laisse la *spec* enregistrer ce dont elle
+part, puis confie les *fakes* à l'application de test et la rend avec chaque *fake* sous le nom
+de son port. Une *spec* de l'exemple se lit alors :
+
+```ts
+// scheduling/test/unit/confirm-appointment.handler.spec.ts
+const { application, appointmentRepository } = await aSchedulingWorld({
+  modules: [holders],
+  now: NOW,
+  given: async (fakes) => {
+    await fakes.appointmentRepository.save(requested);
+  },
+});
+```
+
+- **Ce qu'il prend.** `now` et `idPrefix` vont à l'application de test ; `modules` ajoute ce que
+  la *spec* apporte, son module d'autorisation (par défaut aucun rôle ne détient de
+  permission) ; `given` reçoit les *fakes* avant que l'application ne les branche, si bien que
+  les événements enregistrés en construisant les agrégats stockés ne sont pas annoncés comme si
+  une commande venait de s'exécuter.
+- **Sans conteneur d'injection** (`createTestBuses`), le monde rend les bus et les *fakes*,
+  chaque *repository* enveloppé par `dispatching`, et la *spec* enregistre le *handler* qu'elle
+  teste.
+- **Ce qu'il laisse de côté, en le disant.** Un *fake* dont le constructeur attend un argument
+  (un lecteur qui répond ce que la *spec* lui donne) et, avec un conteneur, le *fake* d'un port
+  que rien ne lie ni n'utilise encore : l'application de test le refuserait. Relancez le
+  générateur avec `--force` quand le contexte a gagné un *fake*.
+- **Ce qui reste dans la *spec*.** La permission qu'elle exerce, les données dont elle part
+  (construites par les *builders*) et les faits qu'elle écoute. Un monde ne contient aucune
+  donnée de test.
+
+Une aide écrite parmi les *specs* à la place, `test/unit/scheduling-application.ts`, est
+signalée par [`test/helper-placed`](../ARCHITECTURE.fr.md#3-règles-de-dépendance), un
+avertissement : `test/unit/` et `test/integration/` contiennent des *specs*, et une mise en place
+partagée, des données de test ou un port en mémoire ont chacun leur place (`test/worlds/`,
+`test/builders/`, `test/fakes/`).
 
 ## Étant donné / quand / alors
 

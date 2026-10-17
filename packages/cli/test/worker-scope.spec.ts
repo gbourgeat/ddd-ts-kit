@@ -116,6 +116,7 @@ describe('worker-scope', () => {
     expect(generators).toEqual([
       'aggregate',
       'builder',
+      'test-world',
       'entity',
       'value-object',
       'vocabulary',
@@ -147,7 +148,7 @@ describe('worker-scope', () => {
     ]);
 
     expect(String(jsonAt(scope, 'briefing'))).toContain(
-      '- Generators you may run: aggregate, builder, entity, value-object, vocabulary, state-machine, domain-event',
+      '- Generators you may run: aggregate, builder, test-world, entity, value-object, vocabulary, state-machine,',
     );
   });
 });

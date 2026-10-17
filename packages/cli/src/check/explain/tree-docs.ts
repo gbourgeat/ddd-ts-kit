@@ -98,4 +98,10 @@ expect(await repository.findById(id)).toBeDefined();`,
     good: `// test/builders/invoice.builder.ts
 anInvoice().issued().build();`,
   },
+  'test/helper-placed': {
+    why: 'test/unit/ and test/integration/ hold specs. A helper written among them (an arrange function several specs import, a factory of test data, an in-memory class) has no name a reader can look for, and the next spec copies it instead of finding it. Each has its place: the arrangement several specs of the context share, the test application or the buses with the fakes of the context, is a world of test/worlds/*.world.ts (generate test-world writes one from the fakes of the context); test data is a builder of test/builders/; an in-memory implementation of a port is a fake of test/fakes/. A file whose name ends with .spec.ts, .test.ts or .d.ts is not reported. It is a warning.',
+    bad: `test/unit/scheduling-application.ts   // imported by four handler specs`,
+    good: `// test/worlds/scheduling.world.ts, written by \`npx ddd-ts-kit generate test-world scheduling\`
+const { application, appointmentRepository } = await aSchedulingWorld({ now: NOW });`,
+  },
 };

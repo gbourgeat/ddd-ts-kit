@@ -1,7 +1,7 @@
 import { describe, expect, it } from '{{tests.module}}';
 import { memberRemovedV1 } from '{{alias.context}}/published-language/member-removed.v1.integration-event{{alias.ext}}';
 import { aMember } from '{{alias.context}}/test/builders/member.builder{{alias.ext}}';
-import { arrangeIdentity, startedIdentity } from '{{alias.context}}/test/unit/identity-application{{alias.ext}}';
+import { arrangeIdentity, startedIdentity } from '{{alias.context}}/test/worlds/{{context.kebab}}.world{{alias.ext}}';
 
 const removal = memberRemovedV1.create(
   { memberId: 'member-1', organisationId: 'acme', accountId: 'subject-alan' },

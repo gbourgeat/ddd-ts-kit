@@ -1,5 +1,5 @@
 [English](translation.md) · **Français**
-<!-- translation-of: translation.md sha256:c7f94e10f565f84e -->
+<!-- translation-of: translation.md sha256:1665c08a5058a6ff -->
 
 # La documentation en français
 
@@ -295,6 +295,7 @@ disent ainsi.
 | stack (the choices of `init`) | *stack* |
 | preset (`--preset`, a context written whole) | *preset* (un exemple commenté de configuration reste un « préréglage ») |
 | spec, fake, builder | *spec*, *fake* (double de test), *builder* |
+| world (`test/worlds/`, the arrangement several specs share) | monde |
 | mock, stub, spy | *mock*, *stub*, *spy* |
 | contract suite | suite de contrat |
 | fixture | *fixture* |

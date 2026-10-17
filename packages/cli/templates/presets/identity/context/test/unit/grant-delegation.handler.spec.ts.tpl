@@ -3,7 +3,7 @@ import { MemberRight } from '{{alias.context}}/domain/vocabularies/member-right.
 import { MemberRole } from '{{alias.context}}/domain/vocabularies/member-role.vocabulary{{alias.ext}}';
 import { GrantDelegationCommand } from '{{alias.context}}/application/commands/grant-delegation/grant-delegation.command{{alias.ext}}';
 import { aMember } from '{{alias.context}}/test/builders/member.builder{{alias.ext}}';
-import { arrangeIdentity } from '{{alias.context}}/test/unit/identity-application{{alias.ext}}';
+import { arrangeIdentity } from '{{alias.context}}/test/worlds/{{context.kebab}}.world{{alias.ext}}';
 
 const startsAt = new Date('2026-01-01T00:00:00.000Z');
 const endsAt = new Date('2026-01-15T00:00:00.000Z');

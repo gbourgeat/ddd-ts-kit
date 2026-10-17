@@ -83,6 +83,8 @@ export interface Kind {
   readonly summary: string;
   /** Positional arguments after the kind, by name; all are required. */
   readonly positionals: readonly string[];
+  /** Positional arguments that may follow the required ones, by name: `[Name]` of a world. */
+  readonly optionalPositionals?: readonly string[];
   /** True when the kind may write outside the context it is given (config, composition root, registries of the platform, documentation): `SHARED_WRITES` says what and when. */
   readonly writesShared: boolean;
   /** The flags this kind reads as a text where the other kinds read a switch: `--command <UseCase>` of a job. */

@@ -27,6 +27,7 @@ const SHARED_KINDS = [
 const LOCAL_RUNS: readonly (readonly string[])[] = [
   ['aggregate', 'billing', 'Price'],
   ['builder', 'billing', 'Invoice', '--force'],
+  ['test-world', 'billing', 'Invoicing'],
   ['entity', 'billing', 'PriceLine'],
   ['value-object', 'billing', 'LinePrice'],
   ['domain-event', 'billing', 'Invoice', 'Cancelled'],

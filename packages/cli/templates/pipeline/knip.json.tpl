@@ -3,6 +3,7 @@
   "entry": [
 {{#if tests.jest}}
     "{{config.contextsDir}}/*/test/fakes/*.ts",
+    "{{config.contextsDir}}/*/test/worlds/*.ts",
 {{/if}}
 {{#if knip.apps}}
     "{{config.sourceRoot}}/apps/*/main.ts",
@@ -19,6 +20,7 @@
     "entry": [
       "{{config.sourceRoot}}/**/*.spec.ts",
       "{{config.contextsDir}}/*/test/fakes/*.ts",
+      "{{config.contextsDir}}/*/test/worlds/*.ts",
       "test/architecture/**/*.spec.ts"{{knip.e2eSpecs}}{{knip.testDatabase}}
     ]
   }

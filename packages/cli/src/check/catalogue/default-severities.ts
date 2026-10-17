@@ -12,4 +12,5 @@ export const DEFAULT_SEVERITIES: Readonly<Record<string, Severity>> = {
   'standard/no-parallel-interface': 'warn',
   'config/rule-off-everywhere': 'warn',
   'tree/documented-paths': 'warn',
+  'test/helper-placed': 'warn',
 };

@@ -22,6 +22,8 @@ export interface ContextFacts {
   readonly domainEvents: readonly string[];
   readonly publishedEvents: readonly PublishedEvent[];
   readonly builders: readonly string[];
+  /** The arrangements its specs share, `test/worlds/*.world.ts`. */
+  readonly worlds: readonly string[];
   /** Permission names declared in `application/authorization/<context>.permissions.ts`. */
   readonly permissions: readonly string[];
   readonly policies: readonly string[];

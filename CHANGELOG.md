@@ -4,6 +4,33 @@ What each version changes for someone who uses the kit. The packages of `package
 together, under one version; the notes of each [GitHub release](https://github.com/gbourgeat/ddd-ts-kit/releases)
 list the pull requests behind it.
 
+## Unreleased
+
+**`generate test-world` gives the shared arrangement of a context its place, `test/worlds/`.**
+`npx ddd-ts-kit generate test-world <context> [Name]` writes `test/worlds/<name>.world.ts`, the
+name defaulting to the context: `a<Name>World({ now, idPrefix, given })` reads the fakes of
+`test/fakes/` and the port each one implements, builds them, hands them to `given` so that a spec
+stores what it starts from, then to the test application (`modules` adds the authorization of the
+spec) or, wired by hand, to the buses of `createTestBuses`, each repository wrapped by
+`dispatching`; it returns every fake under the name of its port. A fake that needs constructor
+arguments, or, under a container, the fake of a port nothing binds or depends on yet, is left out
+with a note. `test/worlds/` (`*.world.ts`) joins the canonical tree; `list` and `describe` name
+the worlds of each context, and the import graph (rewritten by the next `generate`) and the knip
+config of a new project keep a world no spec imports yet, as they keep a fake.
+The identity preset writes its shared arrangement in `test/worlds/<context>.world.ts`, and three
+handler specs of the example application use the world of `scheduling`.
+
+**`test/helper-placed` (a warning).** A `.ts` file of a context's `test/unit/` or
+`test/integration/` that is not a spec (`*.spec.ts`, `*.test.ts`) is reported: an arrangement
+several specs share goes to `test/worlds/`, test data to `test/builders/`, an in-memory port to
+`test/fakes/`.
+
+To move: `npx ddd-ts-kit check --rule test/helper-placed` lists the helpers written among the
+specs; move each to its place, or replace a shared arrange function by the world `generate
+test-world` writes. A project created by the identity preset moves
+`test/unit/identity-application.ts` to `test/worlds/<context>.world.ts` and updates the imports of
+its specs.
+
 ## 0.24.0
 
 **`plan-waves` orders the work, and `status` says when a row can start.** `npx ddd-ts-kit

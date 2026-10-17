@@ -2,17 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { RoleBasedAuthorizer } from '@ddd-ts-kit/auth';
 import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { anActor } from '@ddd-ts-kit/auth/testing';
-import { contextModule, createTestApplication, fake } from '@ddd-ts-kit/di';
-import * as schedulingDeclarations from '@/contexts/scheduling/scheduling.declarations';
-import { platformTestModule } from '@/platform/platform-test.module';
 import { schedulingPermissions } from '@/contexts/scheduling/application/authorization/scheduling.permissions';
 import { MarkAppointmentNoShowCommand } from '@/contexts/scheduling/application/commands/mark-appointment-no-show/mark-appointment-no-show.command';
-import { AppointmentRepository } from '@/contexts/scheduling/domain/repositories/appointment.repository';
 import type { Appointment } from '@/contexts/scheduling/domain/aggregates/appointment.aggregate';
 import { anAppointment } from '@/contexts/scheduling/test/builders/appointment.builder';
-import { FakeAppointmentRepository } from '@/contexts/scheduling/test/fakes/appointment.repository.fake';
-import { Agenda } from '@/contexts/scheduling/application/ports/agenda.port';
-import { FakeAgenda } from '@/contexts/scheduling/test/fakes/agenda.fake';
+import { aSchedulingWorld } from '@/contexts/scheduling/test/worlds/scheduling.world';
 
 const holders = authorizationModule({
   authorizer: new RoleBasedAuthorizer({
@@ -89,18 +83,14 @@ describe('Mark appointment no show', () => {
 });
 
 async function arrange(...stored: readonly Appointment[]) {
-  const appointmentRepository = new FakeAppointmentRepository();
   const announced: string[] = [];
 
-  await stored.reduce(
-    (saved, appointment) => saved.then(() => appointmentRepository.save(appointment)),
-    Promise.resolve(),
-  );
-
-  const application = createTestApplication({
-    modules: [platformTestModule, contextModule('scheduling', schedulingDeclarations), holders],
-    fakes: [fake(AppointmentRepository, appointmentRepository), fake(Agenda, new FakeAgenda())],
+  const { application, appointmentRepository } = await aSchedulingWorld({
+    modules: [holders],
     now: NOW,
+    given: async (fakes) => {
+      await Promise.all(stored.map((appointment) => fakes.appointmentRepository.save(appointment)));
+    },
   });
 
   FACTS.forEach((name) => application.domainEvents.on(name, async () => void announced.push(name)));

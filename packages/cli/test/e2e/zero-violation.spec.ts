@@ -54,6 +54,7 @@ const BILLING = [
   'test/builders/invoice.builder.ts',
   'test/fakes/invoice.repository.fake.ts',
   'test/fakes/payment-gateway.fake.ts',
+  'test/worlds/billing.world.ts',
   'test/integration/invoice.repository.contract.spec.ts',
   'test/unit/invoice.aggregate.spec.ts',
   'test/unit/issue-invoice.handler.spec.ts',

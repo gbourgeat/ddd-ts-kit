@@ -3,7 +3,7 @@ import { MemberRole } from '{{alias.context}}/domain/vocabularies/member-role.vo
 import { RevokeDelegationCommand } from '{{alias.context}}/application/commands/revoke-delegation/revoke-delegation.command{{alias.ext}}';
 import { aDelegation } from '{{alias.context}}/test/builders/delegation.builder{{alias.ext}}';
 import { aMember } from '{{alias.context}}/test/builders/member.builder{{alias.ext}}';
-import { arrangeIdentity } from '{{alias.context}}/test/unit/identity-application{{alias.ext}}';
+import { arrangeIdentity } from '{{alias.context}}/test/worlds/{{context.kebab}}.world{{alias.ext}}';
 
 describe('Revoke delegation', () => {
   it('ends a delegation of the organisation while it holds, and tells the other contexts', async () => {

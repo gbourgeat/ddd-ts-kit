@@ -95,6 +95,7 @@ describe('shipped templates', () => {
         'route',
         'sdk',
         'state-machine',
+        'test-world',
         'value-object',
         'worker',
       ].sort(),

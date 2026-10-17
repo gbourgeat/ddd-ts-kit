@@ -43,6 +43,7 @@ type TreeFacts = Pick<
   | 'domainEvents'
   | 'publishedEvents'
   | 'builders'
+  | 'worlds'
   | 'permissions'
   | 'jobs'
   | 'backgroundJobs'
@@ -58,6 +59,7 @@ function treeFacts(ws: Workspace, directory: string, name: string): TreeFacts {
     domainEvents: namesBySuffix(ws, `${directory}/domain/events`, '.event.ts'),
     publishedEvents: publishedEventsOf(ws, `${directory}/published-language`),
     builders: namesBySuffix(ws, `${directory}/test/builders`, '.builder.ts'),
+    worlds: namesBySuffix(ws, `${directory}/test/worlds`, '.world.ts'),
     permissions: permissionsOf(ws.read(`${directory}/application/authorization/${name}.permissions.ts`) ?? ''),
     jobs: readJobs(ws, directory, name),
     backgroundJobs: readBackgroundJobs(ws, directory),

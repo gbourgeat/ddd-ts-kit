@@ -768,6 +768,12 @@ customer of `anOrder()` is generated, the order line is whatever the default say
 only values the test states are the ones the rule depends on: the order is paid, then paid
 again.
 
+When several specs of a context repeat the arrangement of level 2, the test application or
+the buses with the same fakes, it is written once in `test/worlds/` of the context:
+`npx ddd-ts-kit generate test-world <context>` writes `a<Name>World({ now, idPrefix, given })`,
+which builds every fake of `test/fakes/`, lets `given` store what the spec starts from, and
+returns each fake under the name of its port ([Testing strategy, worlds](../../docs/concepts/testing-strategy.md#worlds)).
+
 ## Contract suites
 
 A fake is only worth trusting if it behaves like the adapter it stands for. Each suite takes

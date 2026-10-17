@@ -1,5 +1,5 @@
 [English](ARCHITECTURE.md) · **Français**
-<!-- translation-of: ARCHITECTURE.md sha256:7fbfeb50908a868f -->
+<!-- translation-of: ARCHITECTURE.md sha256:3dc2286507544792 -->
 
 # Référence de l'architecture
 
@@ -117,6 +117,8 @@ src/
       unit/  integration/
       fakes/                     implémentations en mémoire des ports et des repositories
       builders/                  *.builder.ts      (builders de données de test, un par agrégat)
+      worlds/                    *.world.ts        (la mise en place que partagent plusieurs specs du contexte :
+                                 l'application de test ou les bus avec les fakes du contexte)
 ```
 
 Sous `presentation/http/`, une route est un dossier. `"stack.routes": "controllers"` (la forme
@@ -191,7 +193,10 @@ export class PayInvoiceCommand extends AuthorizedCommand<void> {
 L'arborescence est **fermée** : un répertoire qui n'est pas listé ici est une décision de
 conception, ajoutée à `extraDirectories` dans la config avec une raison, pas créée au cas par
 cas. Les niveaux nommés `<use-case>` sont ouverts, de même que tout ce qui se trouve sous
-`test/unit/`, `test/integration/`, `test/fakes/` et `test/builders/`. Les *specs* de bout en bout
+`test/unit/`, `test/integration/`, `test/fakes/`, `test/builders/` et `test/worlds/`.
+`test/unit/` et `test/integration/` ne contiennent que des *specs* : une aide que partagent
+plusieurs *specs* a la place de son genre, un *fake*, un *builder* ou un monde
+(`test/helper-placed`). Les *specs* de bout en bout
 (`test/e2e/`), le test d'architecture (`test/architecture/`) et la mise en place globale des
 exécutions de test (`test/support/`) vivent à la racine du projet, hors des contextes.
 
@@ -264,6 +269,7 @@ et la plateforme le lie au démarrage. Pourquoi, et ce que contient chaque couch
 | `events/defined-in-published-language` | Un événement d'intégration se déclare une fois avec `defineIntegrationEvent` dans le `published-language/` du producteur, avec un schéma de *payload*. Le catalogue et le document AsyncAPI sont générés à partir de ces déclarations. |
 | `test/no-mocks` | Aucun `vi.mock`, `jest.mock`, `vi.fn`, `jest.fn`, `vi.spyOn`, `jest.spyOn` ni aucune bibliothèque de *mocks* dans le `test/` d'un contexte. Utiliser le *fake* du port. Sévérité par défaut `warn`. |
 | `test/builder-required` | Un agrégat a un *builder* dans `test/builders/`. Sévérité par défaut `warn`. |
+| `test/helper-placed` | Un fichier du `test/unit/` ou du `test/integration/` d'un contexte est une *spec* (`*.spec.ts`, `*.test.ts`). Une aide écrite parmi elles va à la place de son genre : une mise en place que partagent plusieurs *specs* dans `test/worlds/*.world.ts`, des données de test dans `test/builders/`, un port en mémoire dans `test/fakes/`. Sévérité par défaut `warn`. |
 | `test/coverage-governed` | La couverture ne se truque pas par exclusion. La config du lanceur de tests lit ce qu'elle mesure et ses seuils dans la clé `coverage` de `ddd-ts-kit.config.json`, par `governedCoverage` (`governedJestCoverage` sous jest) de `@ddd-ts-kit/testing/coverage` : les quatre couches de chaque contexte, y compris les fichiers qu'aucune *spec* ne charge, chaque contexte et chaque couche tenus à leur plancher dès leur premier fichier source. Refusés : `include`, `exclude`, `thresholds` ou `ignoreClassMethods` écrits à la main dans un bloc `coverage` (`collectCoverageFrom`, `coveragePathIgnorePatterns`, `coverageThreshold` sous jest), les mêmes fixés par une option dans un script de `package.json`, et un commentaire `v8 ignore`, `c8 ignore` ou `istanbul ignore` dans une source de production qui ne se termine pas par `-- ADR-NNNN: <reason>` nommant un enregistrement de décision existant. |
 | `language/glossary-term` | Chaque agrégat, entité, objet-valeur, service du domaine, événement du domaine, commande et requête est nommé avec des termes de la table `## Ubiquitous language` du `CONTEXT.md` de son contexte, et sous `"stack.refusals": "factories"` chaque classe d'erreur de `domain/errors/` aussi (`AppointmentError` est nommée d'après `Appointment`). Le glossaire s'écrit avant le code. |
 | `language/declared-vocabulary` | Une valeur d'un vocabulaire fermé que le projet déclare, un objet `as const` exporté avec le type union de son nom (`domain/vocabularies/*.vocabulary.ts`, le `Role` de la plateforme) ou un ensemble de permissions de `definePermissions`, se lit à travers lui (`AppointmentStatus.NoShow`, `billingPermissions['invoice.issue']`), et ne se réécrit jamais en littéral de chaîne hors de sa déclaration, clé entre guillemets comprise (`[AppointmentStatus.NoShow]: ..`). Sous `"stack.literals": "named"`, ce qu'écrit `init` ; une config qui ne dit rien garde les littéraux libres. Où : le vocabulaire d'un contexte dans ce contexte seulement, celui de la plateforme dans la plateforme et dans les groupes de routes `*.routes.ts`, un identifiant de permission et un vocabulaire du noyau partagé partout. Les tests, les langages publiés et le schéma des relations (`defineSchema`) ne sont pas jugés. Dans la persistance d'un contexte (`infrastructure/persistence/`), le nom d'une colonne, d'une table ou d'un schéma est un mot du stockage et n'est pas jugé : le premier argument d'un appel (`text('note')`, `createTable('invoice')`, `.where('note', ..)`) et la valeur de `name`, `tableName` ou `schema` ; une valeur stockée, l'argument de `.default(..)` ou une valeur comparée dans une requête, l'est. Lu comme un vocabulaire : chaque entrée une clé et un littéral de chaîne, commentaires, l'un ou l'autre guillemet et `as const satisfies ..` permis, à côté de `export type X = (typeof X)[keyof typeof X]` ; un nombre, une décomposition (spread) ou une entrée calculée laisse l'objet non lu. |
@@ -379,7 +385,7 @@ moment où il coûte assez peu pour tourner :
 
 | Analyseur | Tient | Quand |
 |---|---|---|
-| `ddd-ts-kit check` (sans dépendance, au niveau du texte) | seul, la structure et les faits à l'échelle du projet : `tree/*`, `naming/*`, `language/*`, `config/*`, `persistence/migration-history`, `tenancy/scoped-statement`, `context/no-cycle`, `authz/policy-asked`, `authz/granted`, `test/spec-required`, `test/builder-required`, `test/coverage-governed`, `events/defined-in-published-language`, `events/name-declared-once`, `composition/only-in-module`, `declarations/barrel-current`, `imports/alias-declared`, `imports/alias-only` et `imports/extension` dans `test/` et `scripts/` comme sous la racine des sources, l'import qui nomme un répertoire, le côté config de `events/outbox-required` et de `governance/recorded-deviation` (les enregistrements de décision existent), et ce qui doit être unique dans le projet (noms de consommateurs, noms de *jobs*) ou dans un contexte (codes d'erreur, `errors/code-unique`), `errors/known-code` et `schema/no-duplicate-shape`, le verrou de `event-sourcing/upcaster-required`. Il tient aussi une approximation rapide de chaque règle de code ci-dessous sauf `domain/*` (hormis `domain/value-object-class`, qu'il lit dans le texte des fichiers), `application/*` et les trois règles de code de `errors/*` ; de `clean/blank-lines` il ne tient que le `return` et les lignes vides aux bords d'un bloc, et il ne tient rien de `clean/formatted` | à chaque écriture d'un fichier (*hook* de l'éditeur), sur les fichiers indexés, en CI |
+| `ddd-ts-kit check` (sans dépendance, au niveau du texte) | seul, la structure et les faits à l'échelle du projet : `tree/*`, `naming/*`, `language/*`, `config/*`, `persistence/migration-history`, `tenancy/scoped-statement`, `context/no-cycle`, `authz/policy-asked`, `authz/granted`, `test/spec-required`, `test/builder-required`, `test/helper-placed`, `test/coverage-governed`, `events/defined-in-published-language`, `events/name-declared-once`, `composition/only-in-module`, `declarations/barrel-current`, `imports/alias-declared`, `imports/alias-only` et `imports/extension` dans `test/` et `scripts/` comme sous la racine des sources, l'import qui nomme un répertoire, le côté config de `events/outbox-required` et de `governance/recorded-deviation` (les enregistrements de décision existent), et ce qui doit être unique dans le projet (noms de consommateurs, noms de *jobs*) ou dans un contexte (codes d'erreur, `errors/code-unique`), `errors/known-code` et `schema/no-duplicate-shape`, le verrou de `event-sourcing/upcaster-required`. Il tient aussi une approximation rapide de chaque règle de code ci-dessous sauf `domain/*` (hormis `domain/value-object-class`, qu'il lit dans le texte des fichiers), `application/*` et les trois règles de code de `errors/*` ; de `clean/blank-lines` il ne tient que le `return` et les lignes vides aux bords d'un bloc, et il ne tient rien de `clean/formatted` | à chaque écriture d'un fichier (*hook* de l'éditeur), sur les fichiers indexés, en CI |
 | `@ddd-ts-kit/eslint-plugin` (arbre syntaxique) | le code : `layer/*`, les imports de `context/*` et `context/extractable`, `purity/*`, `clean/*` sauf `clean/formatted` (`clean/blank-lines` par deux règles de `@stylistic/eslint-plugin` et `clean/braces` par `curly`, que ses préréglages activent), `domain/*`, `application/*`, `errors/through-factory`, `errors/constructor-not-public`, `errors/factory-name`, `authz/*` sauf `authz/policy-asked`, `events/name-format`, `events/outbox-required`, `events/consumer-idempotent`, `aspects/*`, `tracing/*`, `domain-events/*`, `event-sourcing/*` sauf le verrou de `event-sourcing/upcaster-required`, `schema/presentation-only`, `standard/*`, `ports/*`, `scheduling/*`, `lifecycle/*` (de `lifecycle/status-through-machine`, les écritures que montre un fichier ; la machine restée non importée n'est lue que par `ddd-ts-kit check`), `process/*`, `declarations/role-declared`, `declarations/constructor-injection` (qu'il corrige aussi, en retirant une liste redondante), `test/no-mocks`, `imports/alias-only` et `imports/extension` (qu'il corrige aussi), `naming/business-name` (qu'il corrige aussi là où le nom est connu), et le côté commentaire de `governance/recorded-deviation`. `domain/*` sauf `domain/value-object-class`, `application/*` et ces trois règles de `errors/*` ne sont tenus que par lui. De `declarations/constructor-injection` et du côté constructeur de `ports/no-concrete-dependency`, il tient ce que montre un fichier : une interface ou un alias de type déclaré dans un autre fichier et un constructeur hérité d'une autre classe sont lus par `ddd-ts-kit check`. De `domain-events/transactional-before-commit`, il tient ce que montre une classe déclarée ; où vivent les adaptateurs d'un port de `application/ports/` et la phase dans laquelle un fichier de module du style explicite enregistre un gestionnaire ne sont tenus que par `ddd-ts-kit check`. Fait foi quand les deux divergent | sur les fichiers indexés, en CI |
 | Biome (formateur seulement : son linter et son organisateur d'imports sont désactivés) | `clean/formatted` : où va chaque jeton du code, à une largeur de ligne de 120, avec le `biome.json` qu'écrit `init` ; il retire aussi les lignes vides aux bords d'un bloc et ne laisse jamais un corps sur la ligne de ses accolades, ce qui complète `clean/blank-lines` et `clean/braces`. ESLint n'active aucune règle qui décide la même chose | sur les fichiers indexés, en CI |
 | dependency-cruiser (graphe des imports résolu) | les mêmes frontières à travers les barrels et les réexportations, les cycles entre fichiers, les orphelins, les dépendances non déclarées ; sa configuration est générée à partir de la config par `ddd-ts-kit depcruise-config` | en CI |
@@ -1236,6 +1242,82 @@ it('charges the amount of the invoice', async () => {
 valides, des méthodes qui révèlent l'intention dans le langage omniprésent, et construit par
 l'API publique de l'agrégat, si bien qu'un test ne peut jamais partir d'un état invalide. Un
 test n'énonce que ce qui compte pour la règle qu'il vérifie.
+
+**Mondes.** La mise en place que partagent plusieurs *specs* d'un contexte, l'application de test
+(ou les bus en mémoire) avec les *fakes* du contexte, s'écrit une fois, comme un monde dans
+`test/worlds/<name>.world.ts` : `npx ddd-ts-kit generate test-world <context> [Name]` lit les
+*fakes* de `test/fakes/` et le port que chacun implémente, et écrit `a<Name>World(options)`, qui
+construit les *fakes*, les passe à `given` pour que la *spec* enregistre ce dont elle part, puis
+rend l'application et chaque *fake* sous le nom de son port. Ses options transmettent `now` et
+`idPrefix` et, avec un conteneur d'injection, les modules qu'une *spec* ajoute (son autorisation).
+Sans conteneur, il rend les bus et les *fakes*, chaque *repository* enveloppé par `dispatching`,
+et la *spec* enregistre le *handler* qu'elle teste. Un monde importe des *fakes* et des
+*builders* ; aucun fichier de production n'importe un monde, pas plus qu'un fichier de test
+(`not-to-test` du graphe des imports). Une aide écrite dans `test/unit/` ou `test/integration/` à
+la place est signalée (`test/helper-placed`).
+
+<!-- checked sample -->
+```ts
+import { RoleBasedAuthorizer } from '@ddd-ts-kit/auth';
+import { authorizationModule } from '@ddd-ts-kit/auth/di';
+import { createTestApplication, fake, type ContextModule } from '@ddd-ts-kit/di';
+import { Command } from '@ddd-ts-kit/kernel';
+import { expect, it } from 'vitest';
+
+declare abstract class InvoiceRepository {
+  abstract findById(id: string): Promise<{ readonly id: string } | undefined>;
+}
+
+declare class FakeInvoiceRepository implements InvoiceRepository {
+  findById(id: string): Promise<{ readonly id: string } | undefined>;
+}
+
+declare class IssueInvoiceCommand extends Command<string> {
+  constructor(customerId: string);
+}
+
+declare const platformTestModule: ContextModule;
+declare const billingModule: ContextModule;
+declare const accountants: ContextModule;
+
+const nobody = authorizationModule({ authorizer: new RoleBasedAuthorizer({ roles: {} }) });
+
+interface BillingWorldFakes {
+  readonly invoiceRepository: FakeInvoiceRepository;
+}
+
+interface BillingWorldOptions {
+  readonly now?: Date;
+  readonly idPrefix?: string;
+  readonly modules?: readonly ContextModule[];
+  readonly given?: (fakes: BillingWorldFakes) => Promise<void>;
+}
+
+// test/worlds/billing.world.ts : écrit par `npx ddd-ts-kit generate test-world billing`
+export async function aBillingWorld({ modules = [nobody], given, ...settings }: BillingWorldOptions = {}) {
+  const fakes = { invoiceRepository: new FakeInvoiceRepository() };
+
+  // Ce dont la spec part est enregistré avant que l'application annonce ce qu'une sauvegarde enregistre.
+  await given?.(fakes);
+
+  const application = createTestApplication({
+    ...settings,
+    modules: [platformTestModule, billingModule, ...modules],
+    fakes: [fake(InvoiceRepository, fakes.invoiceRepository)],
+  });
+
+  return { application, ...fakes };
+}
+
+// test/unit/issue-invoice.handler.spec.ts : la spec n'énonce que ce dont sa règle dépend
+it('stores the issued invoice', async () => {
+  const { application, invoiceRepository } = await aBillingWorld({ modules: [accountants], idPrefix: 'invoice' });
+
+  const id = await application.commandBus.execute(new IssueInvoiceCommand('customer-1'));
+
+  expect(await invoiceRepository.findById(id)).toBeDefined();
+});
+```
 
 **Scénarios.** Les *specs* d'agrégat se lisent étant donné / quand / alors : des événements
 passés ou un état construit, une intention, puis les événements enregistrés ou l'erreur levée.

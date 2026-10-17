@@ -6,7 +6,7 @@ import { MemberRole } from '{{alias.context}}/domain/vocabularies/member-role.vo
 import { InviteMemberCommand } from '{{alias.context}}/application/commands/invite-member/invite-member.command{{alias.ext}}';
 import { aDelegation } from '{{alias.context}}/test/builders/delegation.builder{{alias.ext}}';
 import { aMember } from '{{alias.context}}/test/builders/member.builder{{alias.ext}}';
-import { arrangeIdentity } from '{{alias.context}}/test/unit/identity-application{{alias.ext}}';
+import { arrangeIdentity } from '{{alias.context}}/test/worlds/{{context.kebab}}.world{{alias.ext}}';
 
 const grace = { email: 'grace@example.test', role: MemberRole.Member };
 
