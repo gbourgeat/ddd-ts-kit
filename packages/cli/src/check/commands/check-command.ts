@@ -9,6 +9,7 @@ import type { CheckResult } from '../engine/check-result.js';
 import { formatCheck, type CheckFormat } from '../engine/format-check.js';
 import { runCheck } from '../engine/run-check.js';
 import { summarize } from '../engine/summarize.js';
+import { explanationsOf } from '../explain/explanations-of.js';
 import type { Violation } from '../model/violation.js';
 import { loadLooseProject } from '../project/load-loose-project.js';
 import { loadProject } from '../project/load-project.js';
@@ -26,6 +27,7 @@ export const checkCommand: Command = (argv, io) => {
     'changed-since': { type: 'string' },
     self: { type: 'boolean', default: false },
     'clean-only': { type: 'boolean', default: false },
+    explain: { type: 'boolean', default: false },
   });
 
   if (args.flag('self')) {
@@ -36,7 +38,9 @@ export const checkCommand: Command = (argv, io) => {
   const rules = knownRules(args.many('rule'));
   const result = args.flag('clean-only') ? checkCleanliness(args, rules) : checkProject(args, rules);
 
-  io.out(formatCheck(result, format));
+  const explanations = args.flag('explain') ? explanationsOf(result.violations) : undefined;
+
+  io.out(formatCheck(result, format, explanations));
 
   return result.errorCount > 0 ? 1 : 0;
 };

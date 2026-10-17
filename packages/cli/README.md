@@ -1505,7 +1505,7 @@ generated pipelines wire all three.
 
 ```
 ddd-ts-kit check [paths...] [--rule <id>]... [--format text|json|github|gitlab]
-                 [--changed-since <git-ref>] [--self]
+                 [--changed-since <git-ref>] [--explain] [--self]
 ddd-ts-kit check --clean-only <dir>... [--rule <id>]... [--format text|json|github]
 ddd-ts-kit check --commit-size [--staged] [--strict]
 ```
@@ -1567,6 +1567,11 @@ const due = handler.isDueNow(new Reminder(new Date('2026-03-01T09:00:00Z'))); //
 - `paths` and `--changed-since` limit what is reported, not what is analysed.
   `--changed-since` runs `git diff --name-only --relative <ref>...` in the project.
 - `--format github` prints `::error file=...,line=...::` annotations.
+- `--explain` follows the violations with each rule they report, once, with its description and
+  the reason it exists (as `explain` prints it, without the examples), and in JSON adds an
+  `explanations` array. With `--format github` or `gitlab`, the reason goes at the end of the
+  message of each annotation instead: a pull request shows an annotation alone on its line, and
+  a Code Quality report has no place for text beside its issues. The fingerprints stay the same.
 - `--format gitlab` prints a GitLab Code Quality report: one issue per violation, `major` for
   an error and `minor` for a warning, with a fingerprint that does not depend on the line.
 - Severities come from `rules` in the config (`error`, `warn`, `off`). Default `error`, except

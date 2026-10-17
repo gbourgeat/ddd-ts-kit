@@ -4,6 +4,19 @@ What each version changes for someone who uses the kit. The packages of `package
 together, under one version; the notes of each [GitHub release](https://github.com/gbourgeat/ddd-ts-kit/releases)
 list the pull requests behind it.
 
+## Unreleased
+
+**`check --explain` follows the violations with the reason of each rule they report.** A reviewer
+of a pull request ran `ddd-ts-kit explain <rule-id>` for each rule `check --changed-since` named.
+`--explain` prints, after the violations, one block per rule reported, however many times: its
+id, its description and why it exists, as `explain` gives it without the examples; for a rule
+another tool decides, where it is checked. `--format json` adds an `explanations` array.
+`--format github` and `--format gitlab` keep one annotation per violation and end the message of
+each with `Why: <reason>`, since a pull request shows an annotation alone on its line and a Code
+Quality report has no place for text beside its issues; the fingerprints do not change. It
+combines with paths, `--rule`, `--changed-since` and `--clean-only`. Without it, the output is
+the same as before.
+
 ## 0.26.0
 
 **The guard recognises the CLI of the kit however it is launched.** The refusal of
