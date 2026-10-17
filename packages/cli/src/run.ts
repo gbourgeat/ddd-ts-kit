@@ -1,5 +1,6 @@
 import type { Command } from './commands/command.js';
 import type { Io } from './commands/io.js';
+import { acceptanceCommand } from './commands/acceptance.js';
 import { affectedCommand } from './commands/affected.js';
 import { buildAliasesCommand } from './commands/build-aliases.js';
 import { checkFileCommand, explainCommand, rulesCommand } from './commands/check.js';
@@ -39,6 +40,7 @@ const COMMANDS: Readonly<Record<string, Command>> = {
   status: statusCommand,
   todo: todoCommand,
   'plan-waves': planWavesCommand,
+  acceptance: acceptanceCommand,
   'worker-scope': workerScopeCommand,
   'verify-slice': verifySliceCommand,
   cited: citedCommand,

@@ -507,6 +507,78 @@ test('in advise mode the worker scope asks, and off silences it', () => {
   assert.equal(run('pre-write', write(join(silent, 'src/main.ts'), worker(silent))).output, undefined);
 });
 
+const ACCEPTANCE = 'test/acceptance/us5.acceptance.spec.ts';
+const SCENARIO = `it('#US5.02 AC1 a customer places an order', pending(async () => {
+  expectStatus(await client.post('/orders', {}), 201);
+}));
+`;
+const edit = (file, { from, to }, extra = {}) => ({
+  tool_name: 'Edit',
+  tool_input: { file_path: file, old_string: from, new_string: to },
+  ...extra,
+});
+
+test('a sub-agent only removes pending(...) from an acceptance scenario, by edit or by rewrite', () => {
+  const root = project();
+  const agent = worker(root);
+  const file = join(root, ACCEPTANCE);
+  put(root, ACCEPTANCE, SCENARIO);
+  const unwrapped = `it('#US5.02 AC1 a customer places an order', async () => {
+  expectStatus(await client.post('/orders', {}), 201);
+});
+`;
+  assert.equal(run('pre-write', edit(file, { from: SCENARIO, to: unwrapped }, agent)).output, undefined);
+  assert.equal(
+    run('pre-write', { tool_name: 'Write', tool_input: { file_path: file, content: unwrapped }, ...agent }).output,
+    undefined,
+  );
+  for (const easier of [
+    SCENARIO.replace('201', '404'),
+    SCENARIO.replace('{}), 201', '{ lines: [] }), 201'),
+    SCENARIO.replace('  expectStatus', '  // expectStatus'),
+  ]) {
+    const refused = run('pre-write', edit(file, { from: SCENARIO, to: easier }, agent));
+    assert.equal(decision(refused), 'deny', easier);
+    assert.match(reason(refused), /only removes `pending\(\.\.\.\)`/);
+    assert.match(reason(refused), /the conductor changes the criterion or locks again with a reason/);
+  }
+  const testWriter = { agent_type: 'ddd-ts-kit:domain-test-writer' };
+  assert.equal(
+    decision(run('pre-write', edit(file, { from: SCENARIO, to: SCENARIO.replace('201', '200') }, testWriter))),
+    'deny',
+  );
+  const created = run('pre-write', write(join(root, 'test/acceptance/us6.acceptance.spec.ts'), agent));
+  assert.equal(decision(created), 'deny');
+});
+
+test('the conductor edits an acceptance scenario, which the lock then judges; a new spec comes from its generator', () => {
+  const root = project();
+  const file = join(root, ACCEPTANCE);
+  put(root, ACCEPTANCE, SCENARIO);
+  assert.equal(run('pre-write', edit(file, { from: SCENARIO, to: SCENARIO.replace('201', '200') })).output, undefined);
+  const created = run('pre-write', write(join(root, 'test/acceptance/us6.acceptance.spec.ts')));
+  assert.equal(decision(created), 'deny');
+  assert.match(reason(created), /npx ddd-ts-kit generate acceptance <story> --json/);
+});
+
+test('the lock of an acceptance is written by the CLI only, and locking is refused to a sub-agent', () => {
+  const root = project();
+  const lock = run('pre-write', write(join(root, 'test/acceptance/us5.acceptance.lock.json')));
+  assert.equal(decision(lock), 'deny');
+  assert.match(reason(lock), /npx ddd-ts-kit acceptance <story> --lock` writes it/);
+  const agent = worker(root);
+  for (const command of [
+    'npx ddd-ts-kit acceptance US5 --lock',
+    'npx ddd-ts-kit acceptance US5 --lock --reason "the scenario expected 200"',
+    'pnpm exec ddd-ts-kit acceptance US5 --lock',
+  ]) {
+    assert.equal(decision(run('pre-bash', bash(root, command, agent))), 'deny', command);
+    assert.equal(run('pre-bash', bash(root, command)).output, undefined, command);
+  }
+  assert.equal(run('pre-bash', bash(root, 'npx ddd-ts-kit acceptance US5 --gate written', agent)).output, undefined);
+  assert.equal(decision(run('pre-bash', bash(root, 'npx ddd-ts-kit generate acceptance US5', agent))), 'deny');
+});
+
 test('a context worker does not run a generator that writes shared files or another context', () => {
   const root = project();
   const agent = worker(root);

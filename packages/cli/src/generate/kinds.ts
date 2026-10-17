@@ -1,4 +1,5 @@
 import type { Kind } from './kind.js';
+import { acceptanceKind } from './kinds/acceptance-kind.js';
 import { aclKind } from './kinds/acl-kind.js';
 import { adapterKind } from './kinds/adapter-kind.js';
 import { adrKind } from './kinds/adr-kind.js';
@@ -73,6 +74,7 @@ export const KINDS: readonly Kind[] = [
   processKind,
   aclKind,
   e2eKind,
+  acceptanceKind,
   policyKind,
   gatewayKind,
   adapterKind,

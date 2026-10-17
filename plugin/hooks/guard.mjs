@@ -70,7 +70,12 @@ const GENERATORS = [
   [/\.route\.ts$/, 'route <context> <UseCase> --method <M> --path <p>'],
   [/\.builder\.ts$/, 'builder <context> <Aggregate>'],
   [/\.e2e\.spec\.ts$/, 'e2e <context> <UseCase>'],
+  [/\.acceptance\.spec\.ts$/, 'acceptance <story>'],
 ];
+
+// The acceptance of a story and its lock: a sub-agent only unwraps a scenario its rows now satisfy.
+const ACCEPTANCE_SPEC = /^test\/acceptance\/[^/]+\.acceptance\.spec\.ts$/;
+const ACCEPTANCE_LOCK = /^test\/acceptance\/[^/]+\.acceptance\.lock\.json$/;
 
 // A journey crosses use cases, and often contexts: no single route generates it, so it is written by hand.
 const JOURNEY = /^test\/e2e\/journey-[^/]+\.e2e\.spec\.ts$/;
@@ -113,6 +118,7 @@ const SHARED_GENERATORS = [
   'policy',
   'service',
   'worker',
+  'acceptance',
 ];
 // A decision record of a worker's own slices: a new file of docs/adr/. With --deviation it also writes the config.
 const DECISION_RECORD = /^docs\/adr\/[^/]+\.md$/;
@@ -267,9 +273,10 @@ function verdictOn({ file, written, replaced }, input) {
     return undefined;
   }
   const refusal =
+    acceptanceReason(project, input, { file, written, replaced }) ??
     generatedFileReason(project, file) ??
     testWriterScopeReason(project, file, input) ??
-    workerScopeReason(project, file, input) ??
+    (isUnwrapping(project, file, input) ? undefined : workerScopeReason(project, file, input)) ??
     handWrittenRoleReason(project, file);
   if (refusal) {
     return { decision: project.mode === 'advise' ? 'ask' : 'deny', reason: refusal };
@@ -288,7 +295,10 @@ async function preBash(input) {
   if (!project || project.mode === 'off') {
     return;
   }
-  const preparing = (await workerPlaceReason(input, command)) ?? oneSideMergeReason(project, input, command);
+  const preparing =
+    (await workerPlaceReason(input, command)) ??
+    oneSideMergeReason(project, input, command) ??
+    (await acceptanceLockingReason(input, command));
   if (preparing) {
     decide(input, project.mode === 'advise' ? 'ask' : 'deny', preparing);
     return;
@@ -804,9 +814,53 @@ function workerContext(project, input) {
   return typeof context === 'string' && /^[a-z][a-z0-9-]*$/.test(context) ? context : undefined;
 }
 
+// The acceptance of a story is the contract its code is built against: its lock is written by the
+// CLI only, which refuses a scenario changed without its criterion unless a reason is kept for the
+// owner; a sub-agent never rewrites a scenario, it removes `pending(...)` once its rows pass it.
+function acceptanceReason(project, input, { file, written, replaced }) {
+  const path = projectPath(project, file);
+  if (ACCEPTANCE_LOCK.test(path)) {
+    return `${path} is the lock of a story's acceptance: \`npx ddd-ts-kit acceptance <story> --lock\` writes it, and refuses a scenario changed while its criterion was not unless --reason says how the scenario failed its criterion.`;
+  }
+  if (!ACCEPTANCE_SPEC.test(path) || !input.agent_type) {
+    return undefined;
+  }
+  const before = replaced.trim() === '' ? (readText(file) ?? '') : replaced;
+  return existsSync(file) && asserted(written) === asserted(before)
+    ? undefined
+    : `${path} is the acceptance of a story, locked with its specification: a sub-agent only removes \`pending(...)\` around a scenario its rows now satisfy. A scenario that seems wrong is not changed to pass: name it and the criterion it fails in your report, and the conductor changes the criterion or locks again with a reason the owner validates. ${REPORT_TO_CONDUCTOR}`;
+}
+
+// What a scenario asserts, the wrapper `pending(...)`, white space, parentheses and commas aside.
+function asserted(text) {
+  return text.replace(/\bpending\b/g, '').replace(/[\s(),]/g, '');
+}
+
+// A sub-agent unwrapping a scenario writes outside its context: what it writes was judged above.
+function isUnwrapping(project, file, input) {
+  return Boolean(input.agent_type) && ACCEPTANCE_SPEC.test(projectPath(project, file));
+}
+
+async function acceptanceLockingReason(input, command) {
+  if (!input.agent_type || !command.includes('acceptance')) {
+    return undefined;
+  }
+  shell = await import('./shell-commands.mjs');
+  const locking = kitInvocations(shell.simpleCommands(command, input.cwd ?? process.cwd())).some(
+    ({ subcommand, args }) => subcommand === 'acceptance' && args.some((arg) => /^--(?:lock|reason)\b/.test(arg)),
+  );
+  return locking
+    ? 'Locking the acceptance of a story, or amending it with a reason, is a decision of the conductor, reported to the owner. Report the scenario and the criterion it fails instead.'
+    : undefined;
+}
+
 function handWrittenRoleReason(project, file) {
   const path = projectPath(project, file);
-  if (existsSync(file) || JOURNEY.test(path) || !(insideContexts(project, path) || path.startsWith('test/e2e/'))) {
+  if (
+    existsSync(file) ||
+    JOURNEY.test(path) ||
+    !(insideContexts(project, path) || path.startsWith('test/e2e/') || path.startsWith('test/acceptance/'))
+  ) {
     return undefined;
   }
   if (/\.ports\.ts$/.test(path)) {
