@@ -666,6 +666,29 @@ test('a generator of shared files is refused to a worker however the CLI is laun
   assert.equal(run('pre-bash', bash(root, 'npm run docs:generate', agent)).output, undefined);
 });
 
+test('only the conductor lands a branch with merge-trunk --to-land; a worker brings the trunk in without it', () => {
+  const root = project();
+  const agent = worker(root);
+  for (const command of [
+    'npx ddd-ts-kit merge-trunk --to-land',
+    `npx ddd-ts-kit merge-trunk --to-land --cwd ${root}`,
+    'node packages/cli/dist/bin.js merge-trunk --trunk origin/main --to-land',
+    'node scripts/kit.mjs merge-trunk --to-land',
+  ]) {
+    const refused = run('pre-bash', bash(root, command, agent));
+    assert.equal(decision(refused), 'deny', command);
+    assert.match(reason(refused), /Only the conductor lands a branch/);
+  }
+  for (const command of [
+    'npx ddd-ts-kit merge-trunk',
+    'npx ddd-ts-kit merge-trunk --continue',
+    'npx ddd-ts-kit merge-trunk --abort',
+  ]) {
+    assert.equal(run('pre-bash', bash(root, command, agent)).output, undefined, command);
+  }
+  assert.equal(run('pre-bash', bash(root, 'npx ddd-ts-kit merge-trunk --to-land')).output, undefined);
+});
+
 // Each takes one side of a merge on the sources or the tests.
 const ONE_SIDE = [
   'git merge -X theirs origin/main',
@@ -686,14 +709,14 @@ const NOT_ONE_SIDE = [
   'git restore --staged src/contexts/ordering/domain/order.aggregate.ts',
 ];
 
-test('a sub-agent never takes one side of a merge on the sources or the tests, and is pointed to verify-merge', () => {
+test('a sub-agent never takes one side of a merge on the sources or the tests, and is pointed to merge-trunk', () => {
   const root = project();
   const agent = worker(root);
   for (const command of [...ONE_SIDE, `cd ${root} && git checkout --theirs src`]) {
     const refused = run('pre-bash', bash(root, command, agent));
     assert.equal(decision(refused), 'deny', command);
-    assert.match(reason(refused), /Resolve each hunk/);
-    assert.match(reason(refused), /npx ddd-ts-kit verify-merge/);
+    assert.match(reason(refused), /resolve each hunk/);
+    assert.match(reason(refused), /npx ddd-ts-kit merge-trunk --continue/);
   }
   for (const command of NOT_ONE_SIDE) {
     assert.equal(run('pre-bash', bash(root, command, agent)).output, undefined, command);

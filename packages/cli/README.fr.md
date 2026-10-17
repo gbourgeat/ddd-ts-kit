@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:1415e0bb16b456bb -->
+<!-- translation-of: README.md sha256:26e424fca03ce5b5 -->
 
 # ddd-ts-kit
 
@@ -1088,7 +1088,10 @@ marqueurs qui peuvent garder une telle story ouverte passent par git blame, un a
 `next` et `slices` valent `null` quand leur fichier manque, `slices` contient
 `{ file, rows, byStatus, byOwner, duplicates, unscoped, unclosed }`, `unclosed` valant
 `[{ story, markers, command }]`, une ligne non faite portant
-`ready: 'trunk' | 'branch' | 'waiting'` et `waitingFor` (ses dépendances non faites),
+`ready: 'trunk' | 'branch' | 'waiting'` et `waitingFor` (ses dépendances non faites), et
+`landedNotDone` les lignes non marquées terminées arrivées sur le tronc avec la branche d'un
+*worker*, chacune `{ id, commit }` (dite `#<id> landed on the trunk (<commit>) but is not marked
+done`),
 `remaining` un `{ context, domain, platform, test }` par contexte, et un avec un `context` vide
 pour ce qui reste hors d'eux.
 
@@ -1097,13 +1100,20 @@ pour ce qui reste hors d'eux.
 son contexte, ses lignes, sa base, les *commits* qu'il a d'avance sur la base,
 `dependencies not installed` quand sa copie du projet n'a pas de `node_modules`, les fichiers qu'il
 a changés (commités depuis la base de fusion, modifiés, et non suivis mais non ignorés, relatifs
-au sommet du dépôt) et son `.ddd-ts-kit/report.md` avec sa date d'écriture ; puis les contextes
-construits par plus d'un *worker* et les fichiers changés par plus d'un *worker*, chacun avec
+au sommet du dépôt) et son `.ddd-ts-kit/report.md` avec sa date d'écriture. Une fois sa branche
+fusionnée en *squash* dans la base, trouvée comme `merge-trunk` la trouve (*patch ids*, aucun
+appel à GitHub), le *commit* qui l'a reçue et les lignes qu'elle y avait terminées sont affichés,
+et ses *commits* d'avance et ses fichiers sont comptés depuis l'endroit où elle est arrivée : une
+branche réutilisée sans rien de neuf ne compte rien, et aucun faux recouvrement n'est signalé sur
+ce qui est déjà arrivé. Suivent ses *commits* de retard sur la base et, quand elle est en retard,
+ce que `merge-trunk` laisserait en conflit maintenant (calculé par `git merge-tree`, rien
+d'écrit). Puis les contextes construits par plus d'un *worker* et les fichiers changés par plus d'un *worker*, chacun avec
 leurs *worktrees*. Un fichier de périmètre qui ne porte que le contexte est lu aussi : le
 *worker* vient sans ses lignes, sa base ni son avance, et ses fichiers sont les fichiers non
 commités. `--json` affiche
-`{ workers: [{ worktree, branch, context, rows, base, ahead, installed, files, report, progress }], overlaps: { contexts: [{ context, worktrees }], files: [{ file, worktrees }] } }`,
-`report` valant `{ file, modified }` ou `null`. Sans *worker*, elle le dit en une ligne. Un
+`{ workers: [{ worktree, branch, context, rows, base, ahead, behind, landed, mergePreview, installed, files, report, progress }], overlaps: { contexts: [{ context, worktrees }], files: [{ file, worktrees }] } }`,
+`landed` valant `{ commit, subject, rows }`, `mergePreview` `{ conflicts, files }`, `report`
+`{ file, modified }` ou `null`. Sans *worker*, elle le dit en une ligne. Un
 *worker* dont le fichier de périmètre nomme ses lignes reçoit une ligne `state:`, par exemple
 `stopped mid-row #M1.14 (6 files uncommitted, 3 TODO(domain), last verify-slice failed: tests);
 resume: npx ddd-ts-kit worker-scope billing --resume`, et `progress` en JSON : `{ rows: [{ id,
@@ -1136,7 +1146,9 @@ la commande qui le consigne, `npx ddd-ts-kit worker-scope <context> --base origi
 avec ses propres `--worktree` et `--branch` quand sa vague porte un autre lot de ce contexte ; un
 lot du chef d'orchestre se construit sur le tronc ; une personne reçoit sa consigne à la main.
 Puis l'ordre des fusions : par vague, et dans une vague d'abord le lot que le plus de lignes
-attendent, directement ou non. Avec un contexte, seules ses lignes sont montrées ; les lignes
+attendent, directement ou non, et ce qui se lance avant chaque fusion :
+`npx ddd-ts-kit merge-trunk --to-land --cwd <worktree>`, puis la fusion en *squash*. Avec un
+contexte, seules ses lignes sont montrées ; les lignes
 d'autres contextes qu'elles attendent comptent dans la numérotation des vagues.
 
 Un cycle dans `Depends on`, une dépendance vers un identifiant qu'aucune ligne ne porte, une ligne
@@ -1266,7 +1278,9 @@ absente du fichier, présente deux fois ou confiée à un autre propriétaire es
 ligne porte ses règles, lues sur une ligne `- #<id>: <règles>` sous les tableaux ; au-delà de
 deux lignes, une note le signale, car un agent en tient une ou deux. Un *worktree* existant, ou
 une branche existante, est gardé quand il contient la base et refusé sinon, pour qu'aucun
-*worker* ne construise sur un tronc périmé ; seul le fichier est réécrit. Sans `--base`, lancé
+*worker* ne construise sur un tronc périmé, avec le correctif :
+`npx ddd-ts-kit merge-trunk --trunk <base> --cwd <worktree>`, jamais un simple `git merge`, qui
+entre de nouveau en conflit sur ce qui est déjà arrivé ; seul le fichier est réécrit. Sans `--base`, lancé
 depuis le *worktree* d'un *worker* (son `.ddd-ts-kit/worker.json`, ou une branche
 `build/<context>`), il refuse : cette branche deviendrait le tronc. Dans un *worktree* qu'il
 crée, il lance ensuite l'installation propre du gestionnaire de paquets du projet (`npm ci`,
@@ -1422,6 +1436,111 @@ chaque constat étant `{ kind, file, line, side, text }`. Elle ne voit pas une m
 une ligne de ponctuation perdue, ni un changement de sens, et un clone superficiel n'a pas les
 *commits* qu'elle lit : en CI il lui faut `fetch-depth: 0`, c'est pourquoi les *pipelines*
 d'`init` ne la lancent pas.
+
+
+## merge-trunk
+
+```
+ddd-ts-kit merge-trunk [--trunk <ref>] [--since <commit>] [--to-land] [--dry-run]
+ddd-ts-kit merge-trunk --continue [--accept-lost] | --abort
+```
+
+Apporte le tronc dans la branche en un seul *commit* de fusion calculé à partir du *diff* propre
+de la branche. Ne rebase jamais, ne récupère jamais rien (le *commit* que nomme `--trunk` est
+affiché ; par défaut `origin/HEAD`, puis `origin/main`). Refusé, sortie 2 : un arbre de travail
+qui n'est pas propre (hors `.ddd-ts-kit/`), une fusion, un *rebase*, un *cherry-pick* ou un
+*revert* en cours, un dépôt où git ne connaît aucun auteur de *commit* (la fusion se termine
+par un *commit*), un tronc inconnu.
+
+1. **La base** : le *commit* le plus récent de la branche que le tronc porte déjà. `--since
+   <commit>` (un *commit* de la branche) ; sinon le point d'arrivée : le *commit* le plus récent
+   dont le changement entier depuis le tronc est un *commit* du tronc, comparé par *patch id*
+   stable sans lignes de contexte, sans les fichiers dérivés, les migrations, `slices.md`,
+   `plan.md` ni les fichiers de verrouillage, cherché sur cette branche, sur la branche que
+   `.ddd-ts-kit/worker.json` enregistre comme sa base, et sur les branches locales qui partagent
+   des *commits* avec elle (une branche empilée dont le parent a été fusionné en *squash*, une
+   branche réutilisée après l'arrivée de sa première ligne) ; parmi des *commits* qui partagent un
+   même *patch*, le plus ancien est pris, un plus récent seulement quand le tronc porte ce qu'il a
+   changé ; sinon le `baseCommit` enregistré par worker-scope, quand c'est un *commit* de la
+   branche et que ses propres lignes sont toutes sur le tronc (sinon il s'arrête, rien de changé,
+   et les liste pour qu'une personne confirme par `--since`) ; sinon `git merge-base`, et le
+   rapport nomme chaque branche qui partage des *commits* sans être trouvée sur le tronc, avec son
+   `--since`. Trop ancienne, la base se voit en conflits de plus, jamais en perte silencieuse.
+2. **L'aperçu** : `git merge-tree --write-tree --merge-base=<base> HEAD <trunk>`, marqueurs diff3 ;
+   le même sans la base donne ce sur quoi un simple `git merge` entrerait en conflit. `--dry-run`
+   s'arrête ici et ne change rien.
+3. **La fusion** : l'arbre devient une fusion en cours que git comprend (`ORIG_HEAD`, l'index
+   avec les trois étapes de chaque chemin en conflit, `MERGE_HEAD`, `MERGE_MODE`, `MERGE_MSG`,
+   *worktrees* liés compris) : `git status`, `git add`, `git commit` et `git merge --abort`
+   fonctionnent dessus. Le message est `Merge <trunk> into <branch>` avec les *trailers*
+   `Merge-Base: <base>`, `Trunk: <commit>` et, quand la branche y a été trouvée écrasée,
+   `Landed: <commit>`.
+4. **Ce qui se règle sans personne** :
+
+   | Classe | Chemins | Résolution |
+   |---|---|---|
+   | dérivé | `openapi/`, `clients/`, `docs/integration/`, `.dependency-cruiser.cjs`, les *barrels* et listes de chaque contexte | côté du tronc, réécrit par `regenerate` |
+   | document mixte | `CONTEXT.md`, `docs/context-map.md` | un conflit dans une région `<!-- ddd-ts-kit:<region> -->` : côté du tronc ; hors région : pour vous |
+   | registre | un conflit entre des marqueurs `// ddd-ts-kit:<region>` de n'importe quel fichier | la base sans ce que l'un ou l'autre côté a retiré, plus ce que chacun a ajouté, le nôtre d'abord, une fois chacun ; dans `imports`, les noms importés d'un même module joints en une instruction |
+   | tranches | `docs/architecture/slices.md` | ligne par ligne par `#` : le statut le plus avancé (done, in progress, todo), chaque autre cellule du côté qui l'a changée ; une cellule changée autrement par les deux : pour vous |
+   | méta de drizzle | `<out>/meta/_journal.json`, *snapshots* | côté du tronc, puis le *replay* |
+   | verrouillage | `package-lock.json`, `pnpm-lock.yaml`, `yarn.lock` | côté du tronc ; `<manager> install` quand la branche a changé `package.json` depuis la base |
+   | événements stockés | `stored-events.lock.json` | chaque version des deux côtés ; une enregistrée sous deux formes : pour vous |
+   | tout le reste | sources, tests, `package.json`, configuration, un fichier supprimé par un côté | pour vous |
+
+   S'il reste quelque chose pour vous : `.ddd-ts-kit/merge.json` enregistre la fusion, le rapport
+   liste chaque fichier avec les lignes de chaque bloc, ce que cette branche et ses lignes du plan
+   y ont fait, les *commits* du tronc qui l'ont touché depuis la base et ce qu'ils y ont fait, et
+   la commande sort avec 1.
+5. **`--continue`** (ou directement sans conflit pour vous) : refusé tant qu'un chemin n'est pas
+   fusionné ou garde un marqueur de conflit ; l'installation, puis les migrations : sous
+   drizzle-kit, quand les deux côtés en ont ajouté depuis la base, ou avec `--to-land` et une
+   migration de travail, le *replay* de `drizzle-generate --replay` (avec `--to-land`, les vrais
+   noms, dans le *worktree* d'un *worker* aussi) ; sous knex, Prisma et TypeORM avec `--to-land`
+   seulement, chaque migration de la branche que le tronc n'a pas renommée après la dernière du
+   tronc, sans `working-`, le contenu gardé (la classe et le `name` de TypeORM, le dossier de
+   Prisma), et un arrêt quand une migration reçue par le tronc depuis la base nomme une table
+   qu'une de la branche nomme (la générer de nouveau sur le tronc) ; un enregistrement de décision
+   de la branche dont le tronc a pris le numéro depuis la base reçoit le prochain libre (ses
+   fichiers, son titre `# ADR-NNNN`, les liens de ses traductions, consignés en lignes
+   `Lost-Accepted:`).
+6. **`regenerate`** (sauté sans la configuration du kit ou le script) ; un échec arrête.
+7. **`verify-merge`** sur le résultat non commité, sur la base qu'enregistre le *trailer* : une
+   erreur arrête (sortie 1), avec `file:line (ours|theirs)  <text>`, les lignes du plan qui ne
+   sont plus terminées, les tests perdus ; `--continue --accept-lost` les consigne dans un
+   *trailer* `Lost-Accepted:` et continue.
+8. **Le *commit*** des seuls chemins de la fusion : ce qui est indexé plus ce que les étapes ont
+   réécrit (les fichiers dérivés, les migrations, les décisions, le fichier de verrouillage,
+   `slices.md`, le verrou des événements stockés). Tout autre chemin changé est listé comme laissé
+   de côté et le bloque jusqu'à ce qu'il soit indexé ou mis de côté. Les *hooks* du projet
+   tournent.
+
+`--abort` défait la fusion en cours comme `git merge --abort` et oublie son état. Chaque arrêt
+dit quoi faire ensuite et garde la fusion en cours pour le `--continue` suivant. git 2.40 est
+nécessaire pour une base que git ne calculerait pas ; un git plus ancien fusionne avec
+`git merge` lui-même depuis `git merge-base` (`--since <merge base>`), et refuse `--dry-run`.
+Sortie 0 une fois commité, à jour ou en aperçu, 1 sur un arrêt, 2 quand il ne peut pas démarrer.
+
+```text
+merge-trunk build/billing-2 <- origin/main (d8d281b)
+base 6d8be4b: build/billing-1 landed as d8d281b "feat(billing): issue and cancel (#1)"
+conflicts: plain git merge 3, own diff since base 2, automatic 1, for you 1
+automatic:
+  openapi/openapi.yaml  derived: trunk side, regenerated at the end
+for you (a merge is in progress; `merge-trunk --abort` undoes it):
+  src/contexts/billing/domain/invoice.ts  hunks at lines 40-58
+    ours  (build/billing-2, rows #M1.02): adds 4 lines: pay(amount: Money, at: Date): void {
+    theirs (origin/main since 6d8be4b, 9a0c1f2 "feat(billing): cancel an invoice (#7)"): adds 3 lines: cancel(reason: CancelReason): void {
+    both sides only add lines: keep both. Never take one side of the whole file.
+stopped: 1 conflicted path left for you
+next: resolve each hunk, `git add <file>`, then `npx ddd-ts-kit merge-trunk --continue`
+```
+
+`--json` affiche le même rapport :
+`{ status, branch, trunk: { ref, commit }, base: { commit, evidence, landedAs?, unlanded?, notOnTrunk? }, conflicts: { plainMerge, ownDiff, automatic, forYou }, automatic: [{ file, kind, how }], forYou: [{ file, kind, why, hunks, ours: { branch, rows, change }, theirs: { ref, commits, change }, advice }], migrations, regenerate: { status, output? }, lostLines: { errors, warnings, accepted } | null, leftOut, stop?, commit?, next }`,
+`status` valant `up-to-date`, `dry-run`, `stopped` ou `committed` et `evidence` `option`,
+`landed`, `recorded` ou `merge-base`. La garde du *plugin* refuse `--to-land` à un sous-agent :
+poser une branche est l'étape du chef d'orchestre, juste avant sa fusion en *squash*.
 
 ## affected
 

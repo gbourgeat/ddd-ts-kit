@@ -67,39 +67,76 @@ npm run verify
 In full, for the branch that lands second. Here the `notification` worker added
 `GET /notifications/preferences` while the default branch received `GET /people/invitations` from
 `identity`. The OpenAPI document sorts its paths, so both new entries land at the same place,
-just before `/people/me`, and git cannot put one after the other:
+just before `/people/me`, and git cannot put one after the other. `merge-trunk` settles it:
 
 ```bash
 git fetch origin
-git merge origin/main
-# CONFLICT (content): Merge conflict in openapi/openapi.yaml
-git checkout --theirs openapi/openapi.yaml   # either side: the file is rewritten below
-npm run regenerate
-npm run verify
-git status --short                           # every file the generators rewrote
-git add openapi/openapi.yaml                 # file by file, then read the staged diff
-git diff --cached --stat
-git commit --no-edit
-npx ddd-ts-kit verify-merge                  # what the merge lost: nothing, here
+npx ddd-ts-kit merge-trunk                   # origin/HEAD, then origin/main; --trunk <ref> names another
+```
+
+```text
+merge-trunk build/notification <- origin/main (4be1d07)
+base 9c2e5a0: git merge-base (no commit of this branch found landed on the trunk)
+conflicts: plain git merge 1, own diff since base 1, automatic 1, for you 0
+automatic:
+  openapi/openapi.yaml  derived: trunk side, regenerated at the end
+regenerate: ok
+lost lines: none lost
+committed 71d0c3a "Merge origin/main into build/notification"
+next: `npm run verify` in this worktree, then push
 ```
 
 The regenerated document holds both routes, `/notifications/preferences` from this branch and
 `/people/invitations` from the default branch, because both are now in the sources.
 
-A derived file is the only one taken from either side. A conflict in a source file or a test is
-resolved hunk by hunk, keeping what both sides added: `git merge -X theirs`, `-X ours` or
+`npx ddd-ts-kit merge-trunk` brings the trunk into the branch as one merge commit and never
+rebases. It settles by itself what a tool writes: a derived file takes the trunk's side and is
+rewritten by `npm run regenerate` at the end, the generated regions of `CONTEXT.md` and of the
+context map take the trunk's side, a conflict inside a generated registry
+(`// ddd-ts-kit:<region>`) keeps the lines of both sides (a line one side removed stays removed),
+`slices.md` merges row by row (each status the furthest of both sides), the stored-events lock
+merges by key, the drizzle-kit journal and snapshots take the trunk's side before the replay, the
+lockfile takes the trunk's side and is installed again when the branch changed `package.json`.
+
+What is left (a conflict in a source file, in a test, outside a generated region, a cell of
+`slices.md` both sides changed) stays in a merge in progress that git understands (`git status`
+shows `UU`), and the command exits 1 with, for each file, the lines of each hunk, what this branch
+and its rows did there, the commits of the trunk that touched it since the base and what they did:
+
+```text
+for you (a merge is in progress; `merge-trunk --abort` undoes it):
+  src/contexts/billing/domain/invoice.ts  hunks at lines 40-58
+    ours  (build/billing-2, rows #M1.02): adds 4 lines: pay(amount: Money, at: Date): void {
+    theirs (origin/main since 6d8be4b, 9a0c1f2 "feat(billing): cancel an invoice (#7)"): adds 3 lines: cancel(reason: CancelReason): void {
+    both sides only add lines: keep both. Never take one side of the whole file.
+next: resolve each hunk, `git add <file>`, then `npx ddd-ts-kit merge-trunk --continue`
+```
+
+Each hunk is resolved keeping what both sides meant. `git merge -X theirs`, `-X ours` or
 `git checkout --theirs <file>` on a source file settle every conflict at once by dropping the
 other side, and git reports a clean merge while a whole slice of the branch (its method, its
-route, its spec, its row marked done) is gone. The guard of the plugin refuses them to a
-sub-agent. `npx ddd-ts-kit verify-merge`, run after the merge, reads git only and lists, merge by
-merge, each line one side added that the result lacks, each row of `slices.md` no longer done,
-each test, spec file or migration gone and each conflict marker left, with `file:line` and the
-side to restore it from (`git show <side>:<file>`); a line one side removed and the merge brought
-back is a warning, and so is a line one side wrote where the other changed the same lines (the
-merge chose). It exits 1 on an error. It is silent without a merge, so the pre-push hook of `init`
-runs it on every push, and `verify-slice` runs it too; both only warn in this version, and a
-later minor version makes them block. A removal decided on purpose goes in the merge commit as a
-trailer, `Lost-Accepted: <file:line>,...`, and is listed without failing.
+route, its spec, its row marked done) is gone; the guard of the plugin refuses them to a
+sub-agent. `--continue` refuses while a path is unmerged or keeps a conflict marker, then lands
+the migrations, regenerates, and runs `verify-merge` on the uncommitted result: a line one side
+added that the result lacks, a row of `slices.md` no longer done, a test, a spec file or a
+migration gone stops it (exit 1), with `file:line` and the side to restore it from
+(`git show ORIG_HEAD:<file>` for this branch). A removal decided on purpose:
+`merge-trunk --continue --accept-lost`, which records it in the merge commit as a trailer
+`Lost-Accepted: <file:line>,...`, listed by every later run without failing. The commit holds the
+paths of the merge only (the conflicted ones, the derived files, the migrations, the decision
+records, the lockfile); any other changed path is listed and blocks it until it is staged or set
+aside. The message carries `Merge-Base: <commit>`, `Trunk: <commit>` and, when the branch was
+found squashed there, `Landed: <commit>`: `verify-merge` judges the merge on that base later too.
+A merge finished by hand with `git commit` keeps those trailers.
+
+`--dry-run` previews (nothing changes), `--abort` undoes the merge in progress. The tree must be
+clean and no other merge, rebase or cherry-pick in progress (exit 2 otherwise); the trunk is never
+fetched, the commit it names is printed. `merge-trunk` needs git 2.40; an older git merges only
+from the base git computes (`--since <merge base>`), with `git merge` itself.
+
+`verify-merge` alone reads git only and lists, merge by merge, what a merge lost; it is silent
+without a merge, so the pre-push hook of `init` runs it on every push, and `verify-slice` runs it
+too; both only warn in this version, and a later minor version makes them block.
 
 The generators are deterministic (sorted output, independent of registration order), so two
 people regenerating from the same sources get the same bytes. `docs --check` and
@@ -108,8 +145,8 @@ people regenerating from the same sources get the same bytes. `docs --check` and
 **Who regenerates:** everyone, then whoever merges second. A worker runs `npm run regenerate`
 after each slice and commits the derived files with it, so that its branch passes `docs:check`
 alone and never stops on "regenerate" as a need. The first branch to land is consistent by
-itself; the second one rebases or merges the default branch, takes either side of each derived
-file, regenerates, commits the result with its own change, and runs `npx ddd-ts-kit verify-merge`.
+itself; the second one runs `npx ddd-ts-kit merge-trunk`, which takes the trunk's side of each
+derived file, regenerates and commits the result.
 
 ### Migrations
 
@@ -125,15 +162,21 @@ lets it write. `persistence/migration-history` accepts it in the worktree and re
 trunk, so the conductor replaces it at the merge by the real one, generated on the trunk
 ([persistence](../tools/persistence.md#migrations-names-merges-and-order)).
 
-Under drizzle-kit, nobody deletes and regenerates by hand: after a merge where both sides added
-a migration, `npx ddd-ts-kit drizzle-generate --replay` deletes the migrations of the branch that
-the trunk (`--base`, `origin/main` by default) does not have, with their snapshots and journal
-entries, and generates them again on top, in their order and under their names. In the worktree
-of a worker, which merges the trunk into its branch, they stay working migrations; on the trunk,
-where the conductor runs it after merging the branch (the trunk before the merge as `--base`),
-the `working-` prefix goes and the real migration is committed with the merge. A journal still in
-conflict is refused: take the trunk's (`git checkout origin/main -- migrations/meta/_journal.json`)
-and run it again. Under knex, Prisma and TypeORM, these steps stay by hand.
+Under drizzle-kit, nobody deletes and regenerates by hand: when both sides added a migration
+since the base, `merge-trunk` takes the trunk's journal and snapshots and generates the
+migrations of the branch the trunk does not have again on top (`drizzle-generate --replay`), in
+their order and under their names. In the worktree of a worker they stay working migrations.
+Just before the squash merge, the conductor runs `npx ddd-ts-kit merge-trunk --to-land --cwd
+<worktree>`: the `working-` prefix goes, in the worktree of a worker too, and the real migration
+lands with the branch. A refusal of the replay (two migrations of the branch that change the
+schema) stops the merge with its fix. Under knex, Prisma and TypeORM, `--to-land` renames each
+migration of the branch the trunk does not have: a number after the trunk's last, without
+`working-` (TypeORM: the class and its `name` follow, Prisma: the folder), the content kept.
+When a migration the trunk gained since the base changes a table a migration of the branch
+changes too, their order is a decision: the merge stops and says to generate it again on the
+trunk (`npm run db:generate <what-it-does>`). `drizzle-generate --replay` stays for a merge made
+without `merge-trunk`. A decision record of the branch whose number the trunk took meanwhile
+gets the next free number (its file, its `# ADR-NNNN` title, the links of its translations).
 
 A decision taken while building a slice (how a late fee is rounded, from which date a deadline
 counts) is recorded by the worker itself: `generate adr "<title>"` writes a new
@@ -201,7 +244,10 @@ worktree, its branch, its context, its rows, its base, the number of commits it 
 the base, `dependencies not installed` when its copy of the project has no `node_modules`
 (`installed` in JSON), the files it changed (committed since the merge base with the base,
 modified, and untracked but not ignored), and whether it wrote `.ddd-ts-kit/report.md`, with
-when and whether it is current. A `state:` line says where its rows stand and what to do next
+when and whether it is current. Once its branch was squash-merged into the base, the commit that took it in is shown
+(`landed`), and its commits ahead and its files are counted from there: a reused branch with
+nothing new counts nothing, and what already landed is no overlap. Its commits behind the base
+and what `merge-trunk` would leave conflicted now (`behind`, `mergePreview`) follow. A `state:` line says where its rows stand and what to do next
 (`progress` in JSON, described under [When an agent stops](#when-an-agent-stops)):
 
 ```text
@@ -459,6 +505,7 @@ Wave 2
     npx ddd-ts-kit worker-scope billing --base origin/main --rows US2.03 --worktree ../invoicing-billing-w2.3 --branch build/billing-w2.3
     unknown whether it touches the files of W2.1, W2.2: no aggregate named
 Merge order: W1.1, W1.2, W1.3, W2.1, W2.2, W2.3
+Before each merge: `npx ddd-ts-kit merge-trunk --to-land --cwd <worktree>`, then the squash merge
 ```
 
 A plan that cannot be ordered gets no wave: a cycle in `Depends on`, a dependency on an id no row
@@ -488,6 +535,13 @@ are all done while markers of its own keep it open:
   story US1: every row done, 2 markers left: npx ddd-ts-kit story-check US1
 ```
 
+A row that landed with a worker's branch while the slices file of the trunk does not mark it
+done is named, so that the conductor marks it:
+
+```text
+  #US1.02 landed on the trunk (d8d281b) but is not marked done: mark it done in docs/architecture/slices.md
+```
+
 ## Merge order
 
 1. **The bootstrap**, alone, first.
@@ -500,24 +554,34 @@ are all done while markers of its own keep it open:
 Merge small and often. Two branches that each lived a week will conflict in the aggregate and
 in every derived file; the same work in ten pull requests conflicts in none.
 
-A branch cut from another unmerged branch is stacked. When the first one merges by squash, its
-commits become one new commit on the default branch, and merging the default branch into the
-second replays them as conflicts. Move only the second branch's own commits instead:
+Before each squash merge, the conductor brings the trunk into the branch and lands its
+migrations: `npx ddd-ts-kit merge-trunk --to-land --cwd <worktree>`, `npm run verify` in the
+worktree, push, then the squash merge. `--to-land` is the conductor's: the guard refuses it to a
+sub-agent, which runs `merge-trunk` alone. A squash made outside GitHub or GitLab is checked with
+`npx ddd-ts-kit verify-merge <squash commit> --theirs <head of the branch>`.
 
-```bash
-git fetch origin
-git rebase --onto origin/main <last commit of the first branch> <second branch>
-npm run regenerate              # a derived file in conflict: take either side, then regenerate
-git diff --stat origin/main...  # every file of the branch's rows is still there
+A branch cut from another unmerged branch is stacked, and a branch reused for its next row
+after its first row was squash-merged is in the same place: its first commits are on the default
+branch as one new commit, and a plain `git merge` replays them as conflicts (and keeps a working
+migration next to the real one the trunk generated). `merge-trunk` computes the merge from the
+newest commit of the branch the trunk already holds instead: the commit whose whole patch, the
+files tools write again left out, is one commit of the trunk (found on this branch, on the branch
+recorded as its base in `.ddd-ts-kit/worker.json`, or on a local branch sharing commits with it),
+else the base worker-scope recorded when all its lines are on the trunk, else git's merge base.
+No GitHub or GitLab call: patch ids only.
+
+```text
+merge-trunk build/billing-2 <- origin/main (d8d281b)
+base 6d8be4b: build/billing-1 landed as d8d281b "feat(billing): issue and cancel (#1)"
+conflicts: plain git merge 3, own diff since base 1, automatic 1, for you 0
 ```
 
-A file of its rows missing from that list, or a slice whose code is gone, was lost on the way:
-never settle a conflict by taking the default branch's side of a whole file. A rebase writes no
-merge commit for `verify-merge` to read; after a merge of the default branch into the second
-branch instead, `npx ddd-ts-kit verify-merge HEAD --base <last commit of the first branch>` judges
-it on that base (a `Merge-Base: <commit>` trailer in the merge message does the same for every
-later run), where git's own merge base would report the lines the first branch rewrote after the
-second was cut.
+A base found too old shows as more conflicts, never as a silent loss: when the first branch was
+deleted and nothing proves where it landed, the report names each branch sharing commits that was
+not found, with the `--since <commit>` to pass once a person has checked. `status --workers`
+previews it for every worker: where its branch landed, its commits ahead and files changed counted
+from there (no more false overlaps with what already landed), its commits behind, and what
+`merge-trunk` would leave conflicted now.
 
 ## A concrete plan: four contexts, four workers
 
@@ -606,8 +670,8 @@ small fraction of the total time and remove nearly every collision from the rest
 - **An agent holds one row, two at most.** Given a dozen, a coding agent runs out of turns
   or context in the middle of one, and leaves a half-modified worktree with no report. Brief
   one agent per row (`--rows`), launch them in sequence in the context's worktree, each
-  committing its row, then merge the trunk into the branch (`npx ddd-ts-kit verify-merge`
-  after it), review the batch once, run
+  committing its row, then bring the trunk into the branch (`npx ddd-ts-kit merge-trunk`),
+  review the batch once, run
   `npm run verify` on the merged branch, and open the pull request: `check --changed-since`
   sees the files of the branch only, and what the trunk gained meanwhile can break the whole.
   The guard warns the plugin's `context-builder` agent twice before its turn limit, so that it

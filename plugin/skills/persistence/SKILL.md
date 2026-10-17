@@ -83,12 +83,14 @@ lookups of the port, the columns, the mapper.
   never under `script` or another pseudo-terminal, where it waits), applied with
   `npm run db:migrate`, committed, forward-only, and compatible with the version still running.
   When a merge brings a migration from the main branch before yours is merged, yours is
-  generated again on top: under drizzle-kit, take the main branch's journal
-  (`git checkout origin/main -- migrations/meta/_journal.json`) and run
-  `npx ddd-ts-kit drizzle-generate --replay` (`--base <ref>`, `origin/main` by default), which
-  deletes the branch's migrations with their snapshots and journal entries and generates them
-  again, in order, under their names; under the other tools, delete yours and run
-  `db:generate` again. `persistence/migration-history` reports the forked or unordered history
+  generated again on top: `npx ddd-ts-kit merge-trunk` does it as it brings the main branch in
+  (under drizzle-kit it takes the main branch's journal and replays the branch's migrations, in
+  order, under their names), and `merge-trunk --to-land`, run by the conductor before the squash
+  merge, gives them their real names (renamed after the main branch's last under knex, Prisma
+  and TypeORM; a migration of each side on the same table stops it: run `db:generate` again on
+  the main branch). After a merge made without it, under drizzle-kit, take the main branch's
+  journal (`git checkout origin/main -- migrations/meta/_journal.json`) and run
+  `npx ddd-ts-kit drizzle-generate --replay` (`--base <ref>`, `origin/main` by default). `persistence/migration-history` reports the forked or unordered history
   otherwise, which drizzle's migrator would skip silently. Procedure and measurements:
   `docs/tools/persistence.md`, "Migrations: names, merges and order". `drizzle-generate`
   formats the snapshot and journal it wrote with the project's formatter, and warns when the

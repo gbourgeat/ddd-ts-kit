@@ -1,5 +1,5 @@
 [English](persistence.md) · **Français**
-<!-- translation-of: persistence.md sha256:da6597627b75b7c1 -->
+<!-- translation-of: persistence.md sha256:725d4d148eeea94d -->
 
 # Persistance : Drizzle, Knex, Prisma, TypeORM, et quelle base de données
 
@@ -574,7 +574,20 @@ la vôtre n'est pas encore fusionnée :
 4. `npm run check:arch` ne signale rien, et la branche est fusionnée avant qu'une autre migration
    n'arrive, sinon les étapes sont répétées.
 
-**Sous drizzle-kit, `ddd-ts-kit drizzle-generate --replay` fait les étapes 2 et 3**, sur la
+**`npx ddd-ts-kit merge-trunk` fait les étapes 2 et 3 en apportant la branche principale** :
+quand les deux côtés ont ajouté une migration depuis sa base, il prend le journal et les
+*snapshots* de la branche principale et lance lui-même le *replay* ci-dessous ; un refus du
+*replay* arrête la fusion avec son correctif. Avec `--to-land`, que le *conductor* lance juste
+avant la fusion en *squash*, les migrations de la branche que la branche principale n'a pas
+reçoivent leur vrai nom : rejouées sous drizzle-kit (le préfixe `working-` disparaît, dans le
+*worktree* d'un *worker* aussi), renommées sous knex, Prisma et TypeORM (un numéro après le
+dernier de la branche principale, sans `working-`, le contenu gardé ; la classe et le `name` de
+TypeORM suivent, le dossier de Prisma aussi). Quand une migration reçue par la branche principale
+depuis la base et une de la branche changent la même table, leur ordre est une décision : la
+fusion s'arrête et dit de générer de nouveau celle de la branche sur la branche principale
+(`npm run db:generate <what-it-does>`).
+
+**Sous drizzle-kit, `ddd-ts-kit drizzle-generate --replay` fait aussi seul les étapes 2 et 3**, sur la
 branche une fois la branche principale fusionnée dedans :
 
 ```bash
@@ -595,7 +608,8 @@ qui a des migrations que la branche n'a pas fusionnées, et deux migrations de l
 changent le schéma : drizzle-kit génère la différence entre les fichiers du schéma et le dernier
 *snapshot*, il ne peut donc générer de nouveau les changements d'une branche qu'en une seule
 migration (les supprimer et générer celle-ci à la main). Le *replay* est celui de Drizzle : sous
-knex, Prisma et TypeORM, qui ne tiennent pas de journal, les étapes ci-dessus se font à la main.
+knex, Prisma et TypeORM, qui ne tiennent pas de journal, `merge-trunk --to-land` renomme les
+migrations, et en générer une de nouveau après un recouvrement reste à la main.
 
 `npx ddd-ts-kit verify-merge`, lancé après la fusion, signale une migration de l'un ou l'autre
 côté que le résultat a perdue. Elle reconnaît une migration à sa description, son nom sans son
@@ -618,8 +632,12 @@ signale partout ailleurs. Quand le *conductor* fusionne la branche sous drizzle-
 la migration de travail, avec son *snapshot* et son entrée du journal, et la génère de nouveau sur
 le tronc, après les branches fusionnées avant elle, sous son nom sans `working-` ; le *conductor*
 commite la vraie migration avec la fusion. Dans le *worktree* d'un *worker*, qui fusionne le tronc
-dans sa branche, le *replay* garde le préfixe. Sous les autres outils, le *conductor* supprime la
-migration de travail et lance `npm run db:generate <what-it-does>` sur le tronc.
+dans sa branche, le *replay* garde le préfixe. Avec des *pull requests* fusionnées en *squash*, le
+*conductor* lance plutôt `npx ddd-ts-kit merge-trunk --to-land --cwd <worktree>` avant le
+*squash* : la migration reçoit son vrai nom sur la branche, sous chaque outil (rejouée sous
+drizzle-kit, renommée sous les autres), et arrive avec elle ; la garde refuse `--to-land` à un
+sous-agent. Une migration de la branche et une reçue par le tronc sur la même table l'arrêtent :
+le *conductor* génère celle-ci de nouveau sur le tronc par `npm run db:generate <what-it-does>`.
 
 **Écarté : un dossier de migrations par contexte.** drizzle-kit peut faire tourner une
 configuration par contexte (son propre `schema`, son `out` et sa table de migrations) : cela

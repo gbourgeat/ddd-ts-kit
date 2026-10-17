@@ -38,7 +38,7 @@ function workerLines(worker: WorkerStatus, workers: readonly WorkerStatus[]): st
   const since =
     worker.ahead === undefined || worker.base === undefined
       ? 'uncommitted only: no base that names a commit'
-      : `since ${worker.base}`;
+      : `since ${worker.landed === undefined ? worker.base : `it landed on ${worker.base}`}`;
 
   const state = stateLineOf(worker, workers.filter((other) => other.context === worker.context).length > 1);
 
@@ -46,6 +46,7 @@ function workerLines(worker: WorkerStatus, workers: readonly WorkerStatus[]): st
     `  ${worker.branch ?? '(detached)'}  ${worker.worktree}`,
     `    ${factsOf(worker).join(', ')}`,
     ...(state === undefined ? [] : [`    state: ${state}`]),
+    ...mergeLines(worker),
     `    report: ${reportText(worker)}`,
     `    ${worker.files.length} file${worker.files.length === 1 ? '' : 's'} changed (${since})`,
     ...worker.files.map((file) => `      ${file}`),
@@ -69,6 +70,27 @@ function factsOf(worker: WorkerStatus): string[] {
     ...(worker.rows === undefined ? [] : [`rows ${worker.rows.map((id) => `#${id}`).join(', ') || 'none'}`]),
     ...(worker.base === undefined ? [] : [`base ${worker.base}`]),
     ...(worker.ahead === undefined ? [] : [`${worker.ahead} commit${worker.ahead === 1 ? '' : 's'} ahead`]),
+    ...(worker.behind === undefined || worker.behind === 0 ? [] : [`${worker.behind} behind`]),
     ...(worker.installed ? [] : ['dependencies not installed']),
+  ];
+}
+
+/** Where it landed, and what bringing the base in would leave conflicted. */
+function mergeLines({ landed, mergePreview }: WorkerStatus): string[] {
+  const preview =
+    mergePreview === undefined
+      ? []
+      : [
+          mergePreview.conflicts === 0
+            ? '    merge-trunk would merge the base without a conflict'
+            : `    merge-trunk would leave ${mergePreview.conflicts} conflicted file${mergePreview.conflicts === 1 ? '' : 's'}: ${mergePreview.files.join(', ')}`,
+        ];
+
+  const rows =
+    landed === undefined || landed.rows.length === 0 ? '' : ` (rows ${landed.rows.map((id) => `#${id}`).join(', ')})`;
+
+  return [
+    ...(landed === undefined ? [] : [`    landed as ${landed.commit.slice(0, 7)} "${landed.subject}"${rows}`]),
+    ...preview,
   ];
 }

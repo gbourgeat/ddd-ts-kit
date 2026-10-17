@@ -225,6 +225,52 @@ trunk: each error is a loss to restore, or a decision to record in the merge com
 `Lost-Accepted:`, before a later version blocks the push on it. A worktree prepared by an older
 version has no `baseCommit` until `worker-scope` runs again for it; nothing reads it yet.
 
+**`merge-trunk` brings the trunk into a branch from its own diff, settles what a kit derives and
+checks that no line was lost.** `npx ddd-ts-kit merge-trunk` makes one merge commit, never a
+rebase. It finds the newest commit of the branch the trunk already holds: a squash merge is
+recognised by patch id (derived files, migrations, `slices.md`, `plan.md` and lockfiles left out),
+on the branch, on the branch it was stacked on, or on a local branch sharing commits with it;
+else the base worker-scope recorded, when its lines are on the trunk; else `git merge-base`
+(`--since <commit>` overrides). From there `git merge-tree` computes the merge, so a branch reused
+after its first row landed, or stacked on a branch squash-merged since, no longer conflicts on
+what landed nor keeps a working migration next to the real one. Derived files, the generated
+regions of `CONTEXT.md` and of the context map, conflicts inside generated registries, the rows
+of `slices.md`, the drizzle-kit journal, the lockfile and the stored-events lock are settled
+without a person; the rest stays a merge in progress git understands, with what each side did in
+each hunk (exit 1), and `--continue` goes on. Then the drizzle migrations of both sides are
+replayed, decision records renumbered, `regenerate` runs, `verify-merge` checks the uncommitted
+result (an error stops it; `--accept-lost` records a `Lost-Accepted:` trailer), and the paths of
+the merge alone are committed with the trailers `Merge-Base:`, `Trunk:` and `Landed:`.
+`--dry-run` previews, `--abort` undoes. The report says how many files a plain `git merge` would
+leave conflicted against the branch's own diff; `--json` gives the same.
+
+**`merge-trunk --to-land` gives the migrations of a branch their real names before its squash
+merge.** Under drizzle-kit the replay drops `working-` even in the worktree of a worker; under
+knex, Prisma and TypeORM each migration of the branch the trunk does not have is renamed after the
+trunk's last, its content kept (TypeORM's class and `name`, Prisma's folder), and the merge stops
+when a migration the trunk gained and one of the branch change the same table. The guard of the
+plugin refuses `--to-land` to a sub-agent, however it launches the CLI: it is the conductor's step. `plan-waves` ends with what
+runs before each merge.
+
+**`status` counts a worker's branch from where it landed.** Once a branch was squash-merged into
+its base, `status --workers` shows the commit that took it in (`landed`), counts its commits ahead
+and its files from there (no stale count, no false overlap with what landed), and adds its commits
+behind and what `merge-trunk` would leave conflicted now (`behind`, `mergePreview`). A row that
+landed with a branch is no longer counted on its way, and `status` names a landed row the slices
+file of the trunk does not mark done.
+
+**A worker brings the trunk in with `merge-trunk`, never with `git merge` alone.** The briefing of
+`worker-scope`, the parallel-work skill, the briefing template and the `context-builder` agent say
+so; the guard's refusal of `-X theirs` and `checkout --theirs` points to `merge-trunk --continue`,
+and `worker-scope` refusing a worktree that does not contain its base gives the `merge-trunk` that
+brings it in.
+
+To move: `npx ddd-ts-kit init --force` (or `doctor`) adds the agent permissions
+`Bash(npx ddd-ts-kit merge-trunk)` and `Bash(npx ddd-ts-kit merge-trunk *)`. Bring the trunk into a
+branch with `npx ddd-ts-kit merge-trunk` from now on, and run `merge-trunk --to-land --cwd
+<worktree>` before each squash merge of a worker's branch. It needs git 2.40; an older git merges
+only from `git merge-base`.
+
 ## 0.25.1
 
 **The places that teach how a spec builds its test application point to worlds.** The command

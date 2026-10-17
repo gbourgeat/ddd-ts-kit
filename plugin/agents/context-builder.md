@@ -118,15 +118,18 @@ names its row first, `TODO(review): #<row id> <remark>`: `npx ddd-ts-kit story-c
 story of that row open on it, and no other. Do not merge, do not push unless the briefing says
 so, do not edit `docs/architecture/`.
 
-When the briefing or the conductor asks you to bring the trunk in (`git merge <trunk>`):
-resolve each conflicting hunk keeping what both sides added; never `-X theirs`, `-X ours`,
-`-s ours`, or `git checkout`/`git restore --theirs/--ours` on a source file or a test (the
-guard refuses them), which erase the other side without a conflict. A derived file is taken
-from either side and regenerated. Then `npx ddd-ts-kit verify-merge`: it lists any line, row
-or test the merge lost, and exits 1 on one; restore each from its side before going on, even
-though `verify-slice` and the push only warn about them in this version. A warning (a line
-the merge chose between two rewrites, or wrote again) is read once. A spec of a delivered row
-that a change of your branch broke is adapted in your branch, in a commit of its own.
+When the briefing or the conductor asks you to bring the trunk in: `npx ddd-ts-kit merge-trunk
+--trunk <trunk>` only, never `git merge` alone. It settles the derived files, generated regions
+and registries, `slices.md` and the lockfile itself, and stops (exit 1) on each source or test
+hunk with what each side did there. Resolve each one keeping what both sides added; never
+`-X theirs`, `-X ours`, `-s ours`, or `git checkout`/`git restore --theirs/--ours` on a source
+file or a test (the guard refuses them), which erase the other side without a conflict. `git
+add` the file, then `npx ddd-ts-kit merge-trunk --continue`: it regenerates, runs `verify-merge`
+on the result and stops again on any line, row or test lost (restore it with
+`git show ORIG_HEAD:<file>`), then commits the merge. `--to-land` is the conductor's (the guard
+refuses it to you); `--abort` undoes the merge. A warning (a line the merge chose between two
+rewrites, or wrote again) is read once. A spec of a delivered row that a change of your branch
+broke is adapted in your branch, in a commit of its own.
 
 ## Report (always, even partial; under 200 words, no code, no file contents)
 

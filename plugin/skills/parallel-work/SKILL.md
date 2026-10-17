@@ -27,6 +27,8 @@ allowed-tools:
   - Bash(npx ddd-ts-kit check *)
   - Bash(npx ddd-ts-kit verify-merge)
   - Bash(npx ddd-ts-kit verify-merge *)
+  - Bash(npx ddd-ts-kit merge-trunk)
+  - Bash(npx ddd-ts-kit merge-trunk *)
   - Bash(npm run regenerate)
   - Bash(npm run docs:generate)
   - Bash(npm run verify)
@@ -115,12 +117,12 @@ files more than one worker changed. Give the new worker rows on other files, or 
 | Shared | Touched by | Kept conflict-free by |
 |---|---|---|
 | `ddd-ts-kit.config.json`, `src/main.ts`, `src/platform/**`, `src/apps/**`, `src/shared-kernel/**` | conductor, on the trunk | workers report the need and wait for the trunk |
-| registries the generators fill between markers (composition root, database schema index, audited events, job settings, access policies) | generators, run by the conductor | skeleton first; at a merge, keep both sides' lines |
-| `<context>.declarations.ts`, `docs/context-map.md`, `openapi/*`, `docs/integration/*`, `.dependency-cruiser.cjs`, `clients/*` | `npm run regenerate`, a worker's included | a worker regenerates and commits them with its slice; never merged by hand: take either side, then `npm run regenerate` |
-| `package.json`, the lockfile | conductor | a worker asks for a dependency; after a conflict, `npm install` rewrites the lockfile |
-| migrations and their order | conductor | a worker generates a working one only (`db:generate working-<what>`); at the merge it is replaced by the real one, generated on the trunk (under drizzle-kit, `npx ddd-ts-kit drizzle-generate --replay`) |
-| `docs/architecture/plan.md`, `slices.md` | conductor | workers report, the conductor marks |
-| `docs/adr/` | conductor; a worker for a decision of its slices (`generate adr`, without `--deviation`) | a new file per decision; a number taken on both sides is renumbered at the merge |
+| registries the generators fill between markers (composition root, database schema index, audited events, job settings, access policies) | generators, run by the conductor | skeleton first; at a merge, `merge-trunk` keeps both sides' lines |
+| `<context>.declarations.ts`, `docs/context-map.md`, `openapi/*`, `docs/integration/*`, `.dependency-cruiser.cjs`, `clients/*` | `npm run regenerate`, a worker's included | a worker regenerates and commits them with its slice; never merged by hand: `merge-trunk` takes the trunk's side and regenerates |
+| `package.json`, the lockfile | conductor | a worker asks for a dependency; `merge-trunk` takes the trunk's lockfile and installs again when the branch changed `package.json` |
+| migrations and their order | conductor | a worker generates a working one only (`db:generate working-<what>`); `merge-trunk` replays the drizzle ones of both sides, and `merge-trunk --to-land` gives them their real names before the squash merge |
+| `docs/architecture/plan.md`, `slices.md` | conductor | workers report, the conductor marks; `merge-trunk` merges `slices.md` row by row |
+| `docs/adr/` | conductor; a worker for a decision of its slices (`generate adr`, without `--deviation`) | a new file per decision; `merge-trunk` renumbers a number the trunk took meanwhile |
 
 Another context's `published-language/` is read-only for a worker: a missing field is
 reported, agreed, and added on the trunk.
@@ -161,20 +163,21 @@ report) and records its runs in its worktree; a session start names the workers 
    the row in `slices.md` (plan-slices), or ask the owner.
 
 A report sorts its needs. A **blocking** one stops that row: do it on the trunk, have the
-worker merge the trunk, then launch the next agent. A **note** waits for the merge of the
+worker bring the trunk in (`npx ddd-ts-kit merge-trunk`), then launch the next agent. A **note** waits for the merge of the
 branch (step 6): the run goes on.
 
-Each agent commits its rows. When the rows of a branch are committed: merge the trunk into the
-branch (`git merge origin/main` in its worktree; derived files resolved as the table says; when
-both sides added a migration under drizzle-kit, take the trunk's journal,
-`git checkout origin/main -- migrations/meta/_journal.json`, and run
-`npx ddd-ts-kit drizzle-generate --replay`, which generates the branch's again on top; every
-other hunk resolved keeping both sides, never by taking one side of a source file or a test:
-`-X theirs`, `-X ours`, `checkout --theirs` erase the other side without a conflict, and the
-guard refuses them to a sub-agent), then `npx ddd-ts-kit verify-merge` in the worktree: it
-lists each line, row done or test the merge lost, to restore from its side before going on
-(the pre-push hook and `verify-slice` run it too, and only warn in this version: a later
-minor version blocks on it; `verify-merge` alone exits 1), one
+Each agent commits its rows. When the rows of a branch are committed: bring the trunk into the
+branch, `npx ddd-ts-kit merge-trunk --cwd <worktree>`, never `git merge` alone. It computes the
+merge from the newest commit of the branch the trunk holds (a first row already squash-merged, a
+branch it was stacked on), settles the derived files, generated regions and registries, the rows
+of `slices.md`, the drizzle-kit journal and the lockfile itself, and leaves each source or test
+hunk in a merge in progress with what each side did there (exit 1). Resolve each hunk keeping
+both sides, never by taking one side of a source file or a test (`-X theirs`, `-X ours`,
+`checkout --theirs` erase the other side without a conflict, and the guard refuses them to a
+sub-agent), `git add` it, then `npx ddd-ts-kit merge-trunk --continue`: it replays the
+migrations, regenerates, runs `verify-merge` on the result and commits only once no line, row
+or test is lost (a removal decided on purpose: `--continue --accept-lost`; `--abort` undoes).
+Then one
 review of the batch (`architecture-reviewer`, `--changed-since <base>`), `npm run verify` on the
 merged branch, then the branch merges or opens its pull request. The blocking findings of the
 review are fixed on the branch; each non-blocking one is settled at once or written, before the
@@ -194,15 +197,15 @@ row waits for. Before each merge,
 `npx ddd-ts-kit status --workers`: a file the branch shares with another worker is where the
 second merge can conflict. For each branch:
 
-1. merge it into the trunk; resolve only as the table says (regenerate, never hand-merge); a
-   working migration of the branch becomes the real one: under drizzle-kit,
-   `npx ddd-ts-kit drizzle-generate --replay` (its `--base`, `origin/main` by default, is the
-   trunk before the merge) deletes it with its snapshot and journal entry and generates it
-   again on the trunk without `working-`
-   (it refuses a journal still in conflict: take the trunk's and run it again); under the other
-   tools, delete it and run `npm run db:generate <what-it-does>`; a decision
-   record of the branch whose number the trunk took meanwhile takes the next free one (its
-   file name and its `# ADR-NNNN` title);
+1. land it: `npx ddd-ts-kit merge-trunk --to-land --cwd <worktree>` brings the trunk in and
+   gives its migrations their real names (replayed under drizzle-kit, renamed after the trunk's
+   last under knex, Prisma and TypeORM; a migration of the trunk and one of the branch on the
+   same table stop it: generate that one again on the trunk with
+   `npm run db:generate <what-it-does>`), renumbers a decision record whose number the trunk took
+   meanwhile, regenerates and checks nothing was lost; `npm run verify` in the worktree, push,
+   then the squash merge (a squash made outside GitHub or GitLab:
+   `npx ddd-ts-kit verify-merge <squash commit> --theirs <head of the branch>`). Only you run
+   `--to-land`: the guard refuses it to a sub-agent;
 2. `npm run verify` on the trunk; a red trunk is fixed before the next merge;
 3. mark its rows `done` in `slices.md`, commit (`npx ddd-ts-kit status` shows what is left);
    a slice merges with `TODO(review)` markers, but a story or a milestone is closed only when
@@ -214,16 +217,18 @@ second merge can conflict. For each branch:
    one that belongs to no row blocks only when no other open story works in its context, and is
    listed otherwise: settle it or name its row in it; `--strict` blocks on every marker of the
    story's contexts;
-4. the other workers merge the trunk into their branch before their next slice.
+4. the other workers bring the trunk into their branch with `merge-trunk` before their next
+   slice; a branch reused for its next row does the same, from where its first row landed.
 
 A branch cut from another branch (a second batch of one context, started before the first
-merged) is stacked: when the first merges by squash, its commits are rewritten into one, and
-merging the trunk into the second replays them as conflicts. Move only the second branch's own
-commits onto the trunk instead: `git rebase --onto origin/main <last commit of the first
-branch> <second branch>`, take either side of a derived file and `npm run regenerate`, then
-compare `git diff --stat origin/main...` with the rows of the branch: a file of its rows that is
-missing, or a slice whose code is gone, was lost in the rebase. Never resolve by taking the
-trunk's side of a whole file.
+merged) is stacked: when the first merges by squash, its commits are rewritten into one, and a
+plain merge of the trunk into the second replays them as conflicts. `merge-trunk` finds where the
+first branch landed (by patch id, on the branch recorded as its base or any local branch sharing
+commits) and merges from there; when the first branch is gone and nothing proves it, it falls
+back to an older base (more conflicts, never a silent loss) and names the `--since <commit>` to
+confirm. `status --workers` shows, per worker, where it landed, what is ahead and behind, and
+what `merge-trunk` would leave conflicted now. Never resolve by taking the trunk's side of a
+whole file.
 
 A worker never grants a permission to a role: the roles live in `src/platform/auth/`. When
 its report says who holds a new permission, grant it on the trunk in `roles.ts` (by the entry

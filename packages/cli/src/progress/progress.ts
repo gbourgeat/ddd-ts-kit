@@ -21,6 +21,8 @@ export interface SlicesProgress {
   readonly duplicates: readonly string[];
   /** The ids that are a bare number, without the code of their story or milestone (`12`, not `US5.12`). */
   readonly unscoped: readonly string[];
+  /** The rows not marked done that landed on the trunk with a worker's branch, with the commit that took them in. */
+  readonly landedNotDone: readonly { readonly id: string; readonly commit: string }[];
   /** The stories and milestones whose rows are all done while markers of their own keep them open (`story-check`). */
   readonly unclosed: readonly UnclosedStory[];
 }

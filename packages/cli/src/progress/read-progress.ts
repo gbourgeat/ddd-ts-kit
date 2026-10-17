@@ -13,15 +13,22 @@ import { statusRowOf } from './status-row-of.js';
 
 const PLAN_FILE = 'docs/architecture/plan.md';
 
+/** What the workers say of the rows: those on their way on a branch, those that landed with one. */
+export interface RowsOfWorkers {
+  /** The ids of the rows on a worker's branch with commits ahead of its base, which a row not done may wait for. */
+  readonly onBranches: ReadonlySet<string>;
+  /** The ids of the rows that landed on the trunk with a worker's branch, with the commit that took them in. */
+  readonly landed: ReadonlyMap<string, string>;
+}
+
 /**
  * What `status` says, read from the plan, the slices table and the markers of the tree; a missing
- * file is not an error. `onBranches` holds the ids of the rows on a worker's branch with commits
- * ahead of its base, which a row not done may wait for.
+ * file is not an error.
  */
-export function readProgress(ws: Workspace, config: Config, onBranches: ReadonlySet<string>): Progress {
+export function readProgress(ws: Workspace, config: Config, workers: RowsOfWorkers): Progress {
   const slices = readSlices(ws);
   const remaining = readRemaining(ws, config);
-  const around = { root: ws.root, onBranches, remaining, contexts: projectContexts(ws, config) };
+  const around = { root: ws.root, ...workers, remaining, contexts: projectContexts(ws, config) };
 
   return {
     next: /^Next:[ \t]*(\S.*?)\s*$/m.exec(ws.read(PLAN_FILE) ?? '')?.[1] ?? null,
@@ -30,15 +37,19 @@ export function readProgress(ws: Workspace, config: Config, onBranches: Readonly
   };
 }
 
-/** What the rows are read against: the project, the branches of the workers, its markers and its contexts. */
+/** What the rows are read against: the project, the branches of the workers and what landed, its markers and its contexts. */
 interface Around {
   readonly root: string;
   readonly onBranches: ReadonlySet<string>;
+  readonly landed: ReadonlyMap<string, string>;
   readonly remaining: readonly Remaining[];
   readonly contexts: readonly string[];
 }
 
-function slicesProgress(rows: readonly Slice[], { root, onBranches, remaining, contexts }: Around): SlicesProgress {
+function slicesProgress(
+  rows: readonly Slice[],
+  { root, onBranches, landed, remaining, contexts }: Around,
+): SlicesProgress {
   const ids = [...new Set(rows.map((row) => row.id))];
   const attribute = (markers: readonly Remaining[]) => attributeMarkers(root, markers, { ids, git: runGit });
 
@@ -47,6 +58,11 @@ function slicesProgress(rows: readonly Slice[], { root, onBranches, remaining, c
   return {
     file: SLICES_FILE,
     rows: rows.map((row) => statusRowOf(row, { rows, onBranches })),
+    landedNotDone: rows.flatMap((row) => {
+      const commit = landed.get(row.id);
+
+      return commit === undefined || row.status === 'done' ? [] : [{ id: row.id, commit }];
+    }),
     byStatus: idsByStatus(rows),
     byOwner: Object.fromEntries(owners.map((owner) => [owner, idsByStatus(rows.filter((row) => row.owner === owner))])),
     duplicates: [...new Set(rows.map((row) => row.id).filter((id, index, ids) => ids.indexOf(id) !== index))],

@@ -110,7 +110,9 @@ describe('the report of verify-slice: the names a design cites and the merges', 
       ),
     ).toBe(true);
   });
+});
 
+describe('the report of verify-slice, on the merges of the branch', () => {
   it('shows what a merge of the branch lost under its step without failing the slice yet, and a merge that lost nothing as ok', () => {
     const lost = {
       kind: 'lost-line',
