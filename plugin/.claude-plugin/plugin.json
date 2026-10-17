@@ -1,6 +1,6 @@
 {
   "name": "ddd-ts-kit",
-  "version": "0.65.0",
+  "version": "0.66.0",
   "description": "Domain-Driven Design (DDD), Clean Architecture and Clean Code for TypeScript backends, for Claude Code, Codex and GitHub Copilot: a guided path from needs to bounded contexts (strategic design first), bootstrap, scaffolding from templates, collision-free parallel work, commit discipline and architecture checks at every write. Framework-agnostic (Express, Fastify, Hono, NestJS).",
   "author": {
     "name": "Gary Bourgeat"

@@ -54,7 +54,14 @@ architecture errors remain. It reminds, without blocking, when the uncommitted c
 the advised size of a commit, and in a worker's worktree (`.ddd-ts-kit/worker.json`) it
 refuses a write outside the worker's context, by the editor tools or by the shell (`sed -i`, a
 redirection, `tee`, `cp`, `mv`, `rm`), stops the worker when its inline code (`node -e`, a heredoc)
-changed a file outside it, and refuses a dependency change and another formatter than `npm run format`. It fails open: a broken guard never blocks work. Set
+changed a file outside it, and refuses a dependency change and another formatter than `npm run format`.
+For a `context-builder`, it counts the tool calls inside those same hooks and warns the agent
+twice before its turn limit, records its runs in its worktree (`.ddd-ts-kit/agent.json`), and
+listens to two rare events of Claude Code, filtered by that agent: `SubagentStart` (a launch or a
+resume starts a new count) and `SubagentStop` (when it ends on its own, it is kept going once to
+commit a slice that passed `verify-slice` or to rewrite a stale report). At session start, it
+names the workers to resume ([parallel work](parallel-work.md#when-an-agent-stops)). No hook
+runs on every tool call: an ordinary session starts no more processes than before. It fails open: a broken guard never blocks work. Set
 `"guard": "advise"` in the config to be asked instead of refused, `"off"` to silence it.
 
 Each agent gets what its host runs. The skills work in all three. The four agents are sub-agents

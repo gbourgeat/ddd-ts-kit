@@ -5,6 +5,7 @@ import { WORKER_SCOPE_FILE } from '../commit/worker-scope-file.js';
 import { changedFiles } from './changed-files.js';
 import { listWorktrees, type Worktree } from './list-worktrees.js';
 import { overlapsOf } from './overlaps-of.js';
+import { progressOf } from './progress-of.js';
 import { readWorkerFile } from './read-worker-file.js';
 import { REPORT_FILE } from './report-file.js';
 import type { WorkerReport, WorkerStatus, WorkersStatus } from './workers-status.js';
@@ -35,6 +36,8 @@ function workerIn(worktree: Worktree, project: string): WorkerStatus[] {
 
   const branch = worktree.branch ?? scope.branch;
   const { ahead, mergeBase } = sinceBase(worktree.path, scope.base);
+  // A scope file written before the rows were recorded has no rows to follow.
+  const progress = scope.rows === undefined ? undefined : progressOf(project, scope);
 
   return [
     {
@@ -47,6 +50,7 @@ function workerIn(worktree: Worktree, project: string): WorkerStatus[] {
       installed: fs.existsSync(path.join(project, 'node_modules')),
       files: changedFiles(worktree.path, mergeBase),
       report: reportIn(project),
+      ...(progress === undefined ? {} : { progress }),
     },
   ];
 }

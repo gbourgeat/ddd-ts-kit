@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:bd06bcd481a8337d -->
+<!-- translation-of: README.md sha256:7ce7266aa838236f -->
 
 # ddd-ts-kit
 
@@ -1097,8 +1097,16 @@ construits par plus d'un *worker* et les fichiers changés par plus d'un *worker
 leurs *worktrees*. Un fichier de périmètre qui ne porte que le contexte est lu aussi : le
 *worker* vient sans ses lignes, sa base ni son avance, et ses fichiers sont les fichiers non
 commités. `--json` affiche
-`{ workers: [{ worktree, branch, context, rows, base, ahead, installed, files, report }], overlaps: { contexts: [{ context, worktrees }], files: [{ file, worktrees }] } }`,
-`report` valant `{ file, modified }` ou `null`. Sans *worker*, elle le dit en une ligne.
+`{ workers: [{ worktree, branch, context, rows, base, ahead, installed, files, report, progress }], overlaps: { contexts: [{ context, worktrees }], files: [{ file, worktrees }] } }`,
+`report` valant `{ file, modified }` ou `null`. Sans *worker*, elle le dit en une ligne. Un
+*worker* dont le fichier de périmètre nomme ses lignes reçoit une ligne `state:`, par exemple
+`stopped mid-row #M1.14 (6 files uncommitted, 3 TODO(domain), last verify-slice failed: tests);
+resume: npx ddd-ts-kit worker-scope billing --resume`, et `progress` en JSON : `{ rows: [{ id,
+slice, state, commit?, byOrder? }], inSlice, leftOut, markers: { domain, test }, verification,
+report: { modified, current }, agent, phase, next }`, `phase` valant `not started`, `mid-row`,
+`between rows` ou `rows committed`, et `next` l'un de `wait`, `send-message` (avec `to`),
+`new-agent`, `merge`, tel que `worker-scope --resume` le décide (`wait` tant que l'agent a appelé
+un outil dans les trois dernières minutes sans s'arrêter depuis).
 
 `todo` liste ces marqueurs en `file:line` avec leur genre et leur texte, dans le projet ou dans
 un contexte ; `--json` affiche `{ count, remaining: [{ kind, context, file, line, text }] }`.
@@ -1154,6 +1162,7 @@ name, problem, expected, found }] }`, `area` valant `script`, `package`, `permis
 
 ```
 ddd-ts-kit worker-scope <context> [--base <ref>] [--rows <id,...>] [--worktree <path>] [--branch <name>] [--no-install] [--dry-run]
+ddd-ts-kit worker-scope <context> --resume [--worktree <path> | --branch <name>] [--fresh]
 ```
 
 Prépare la place d'un *worker* d'un build réparti par contexte : crée un *worktree* git du projet
@@ -1162,7 +1171,9 @@ branche, une étiquette ou un *commit* : `origin/main` ; par défaut la branche 
 `.ddd-ts-kit/worker.json` (`{ context, rows, base, baseCommit, branch }`, `baseCommit` étant le
 *commit* que nomme la base à ce moment ; `init` ignore `.ddd-ts-kit/`), et
 affiche la consigne du *worker* : son périmètre, les générateurs qu'il peut lancer, ses tranches
-encore à faire d'après `docs/architecture/slices.md`, les langages publiés qu'il consomme, et la
+d'après `docs/architecture/slices.md` (par défaut le premier lot que `plan-waves` découpe pour le
+contexte, une ou deux lignes encore à faire sur un agrégat, avec une note qui nomme le `--rows` du
+lot suivant), son budget de tours, les langages publiés qu'il consomme, et la
 base comme tronc de ses vérifications (`check --changed-since <base>`). `--rows 4.15,4.16` ne
 donne que ces lignes, dans cet ordre : un identifiant est lu tel qu'il est écrit, et une ligne
 absente du fichier, présente deux fois ou confiée à un autre propriétaire est refusée. Chaque
@@ -1183,6 +1194,28 @@ nomme (`design: docs/architecture/reviews/refunds.md (section "#M2.03 Compute th
 les noms que cette conception cite et que la base n'a pas, tels que `cited` les trouve, viennent
 dans un bloc de huit lignes au plus, avec une note pour le chef d'orchestre qui nomme les lignes à
 corriger sur le tronc. `--json` les porte sous `citations`.
+
+Dans le *worktree* d'un *worker*, `verify-slice` nomme la ligne qu'il ferme (la première de
+`worker.json` qu'aucun *commit* de la branche ne ferme encore) et affiche la commande de *commit*
+exacte, avec le *trailer* qui nomme la ligne :
+`git commit -m "feat(billing): pay an invoice" -m "Slice: M1.14"`. Il garde son résultat dans
+`.ddd-ts-kit/verification.json` (`{ at, head, row, ok, failed, toStage }`), et le garde du
+*plugin* garde les exécutions de l'agent `context-builder` dans `.ddd-ts-kit/agent.json`.
+
+`--resume` lit où en est le *worker* arrêté du contexte, depuis le tronc, et ne crée ni ne réécrit
+rien : ses lignes (commitées d'après leur *trailer* `Slice:`, ou dans l'ordre des *commits*
+`feat(<contexte>)` pour un *commit* plus ancien, affichées `(by order)`), les fichiers de la ligne
+en cours, les marqueurs laissés dans le contexte, sa dernière vérification et ce qui a changé
+depuis, si son rapport est à jour, et son agent. Puis l'étape suivante : `SendMessage` à cet agent,
+avec le message à envoyer tel quel, quand il s'est arrêté au milieu d'une ligne après un progrès,
+dans une exécution qui n'est pas sa troisième ; un nouveau `context-builder` avec la consigne de la
+seule ligne en cours, plus les fichiers que l'agent précédent a laissés (jamais à régénérer) et son
+rapport cité, entre deux lignes, sans agent enregistré, après trois exécutions ou une exécution
+sans progrès, ou avec `--fresh` (un contexte plein) ; la fusion quand chaque ligne est commitée et
+que rien ne reste. Elle refuse un contexte qu'aucun *worktree* ne construit, et nomme les
+*worktrees* d'un contexte que deux *workers* construisent : choisissez-en un avec `--worktree` ou
+`--branch`. `--json` affiche `{ context, worktree, root, branch, base, progress, next,
+sendMessage, briefing, notes }`.
 
 ## cited
 

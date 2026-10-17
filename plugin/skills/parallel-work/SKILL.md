@@ -14,6 +14,7 @@ allowed-tools:
   - Write
   - Edit
   - Agent
+  - SendMessage
   - Bash(npx ddd-ts-kit status)
   - Bash(npx ddd-ts-kit status --workers)
   - Bash(npx ddd-ts-kit plan-waves)
@@ -104,7 +105,8 @@ scope stops the worker until it is put back; `npx prettier` and a bare `npx biom
 
 Before briefing a worker in a context that already has one, run
 `npx ddd-ts-kit status --workers` from the trunk: it lists each worker (worktree, branch,
-context, rows, commits ahead, dependencies not installed) with the files it changed, then the
+context, rows, commits ahead, dependencies not installed), its state (rows committed, the row
+under way, the last `verify-slice`, the `--resume` command of a stopped one) and the files it changed, then the
 files more than one worker changed. Give the new worker rows on other files, or wait for the merge of the first.
 
 ## 4. Shared files: who touches them, how they stay conflict-free
@@ -124,8 +126,9 @@ reported, agreed, and added on the trunk.
 
 ## 5. Brief and launch
 
-`worker-scope` prints the briefing of the rows of `--rows` (by default every `todo` row the
-context owns, and a note past two), each with its rules from `slices.md` and the documents of
+`worker-scope` prints the briefing of the rows of `--rows` (by default the first batch
+`plan-waves` cuts for the context, one or two rows on one aggregate, with a note naming the
+next `--rows`; a note past two rows asked for), each with its rules from `slices.md` and the documents of
 its design (`design:`): send it as it is ([briefing-template.md](briefing-template.md) is the
 same text, to write one by hand). When the design cites names the base removed, refuses or
 replaced, the briefing lists them (eight lines at most) and a note tells you the lines: correct
@@ -135,9 +138,26 @@ reports each line as a note, never edits `docs/`. A worker's `verify-slice` and 
 design still cites: correct those documents at the merge.
 Launch the `context-builder` agents of different contexts in one message so they run
 together, without the isolation option (the worktree already exists). In one context, launch
-the next row's agent once the previous one reported; a report naming an unfinished slice and
-its files goes to the next agent, which resumes from them. An agent that stopped without a
-report left it in its worktree, `.ddd-ts-kit/report.md`, as of its last step: read it there.
+the next row's agent once the previous one reported. The guard warns each `context-builder`
+twice before its turn limit (finish the slice under way, then stop, commit what passed and
+report) and records its runs in its worktree; a session start names the workers to resume.
+
+**When an agent stops**, whatever the reason:
+
+1. On a notification "stopped at its N-turn limit", "failed: ... API error", "was stopped", or a
+   report naming an unfinished row: run `npx ddd-ts-kit worker-scope <context> --resume` from
+   the trunk. It reads the worktree (rows committed by their `Slice:` trailer, the files of the
+   row under way, the markers, the last `verify-slice`, the report, the agent) and changes
+   nothing. Never inspect the worktree by hand, never clean or reset it, never relaunch a fresh
+   agent there without the resume briefing.
+2. `next: SendMessage to <id>`: send the printed message as it is, without asking the owner. The
+   agent keeps its history and gets a new turn budget.
+3. `next: launch a new context-builder`, a SendMessage refused, or "Prompt is too long" (run it
+   again with `--fresh`): launch a new `context-builder` with the printed briefing, which holds
+   the row under way only and the files the earlier agent left.
+4. A rate or session limit: wait for the reset, then step 1.
+5. Bounded autonomy: after two stops on one row without a new commit, stop resuming it: split
+   the row in `slices.md` (plan-slices), or ask the owner.
 
 A report sorts its needs. A **blocking** one stops that row: do it on the trunk, have the
 worker merge the trunk, then launch the next agent. A **note** waits for the merge of the

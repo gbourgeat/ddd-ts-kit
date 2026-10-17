@@ -36,7 +36,9 @@ export const NOTES = `  affected         what a pull request has to run: the con
                    (with the ids it waits for), and the TODO(domain), TODO(platform), it.todo and TODO(review)
                    left in each context; --workers shows instead each worktree holding .ddd-ts-kit/worker.json (branch,
                    context, rows, base, commits ahead, dependencies not installed, files changed since the base,
-                   its report), then the contexts and the files more than one worker holds
+                   its report), a state line (rows committed, the row under way, files uncommitted, markers,
+                   last verify-slice, and the worker-scope --resume command of a stopped one), then the
+                   contexts and the files more than one worker holds
   sdk              the typed client of each document of the contract, a workspace package under
                    clients/<document> without runtime dependency: typed errors keyed by the error codes,
                    credentials per security scheme; records "sdk" in the config the first time, wires the
@@ -53,9 +55,16 @@ export const NOTES = `  affected         what a pull request has to run: the con
                    --base <ref> (by default the current branch, refused from a worker's worktree), its
                    .ddd-ts-kit/worker.json, and the briefing of the worker of that context; --rows <id,...>
                    briefs those rows of slices.md only, with their rules, the documents of their design and
-                   the names that design cites the base does not have (see cited); a worktree it creates gets
-                   the clean install of the package manager (npm ci), its time in the notes, unless
-                   --no-install; an existing worktree or branch that does not contain the base is refused
+                   the names that design cites the base does not have (see cited), and by default the first
+                   batch plan-waves cuts for the context (one or two rows on one aggregate), a note naming the
+                   next; a worktree it creates gets the clean install of the package manager (npm ci), its
+                   time in the notes, unless --no-install; an existing worktree or branch that does not
+                   contain the base is refused
+  --resume         worker-scope reads where the stopped worker of the context stands (its rows by their
+                   Slice: trailer, the files of the row under way, the markers, its last verify-slice, its
+                   report, its agent as the guard recorded it) and prints the message that resumes its agent
+                   (SendMessage) or the briefing of a new one; creates and rewrites nothing; --fresh asks for
+                   a new agent whatever the last one did; several worktrees of the context need --worktree
   verify-slice     closes a slice before its commit, in one run: the regenerate script, check on the files
                    changed since --since (new ones included), the test script for the context; then the
                    changed files past 300 of the 350 lines, the paths of the slice to stage (its context, an
@@ -63,7 +72,9 @@ export const NOTES = `  affected         what a pull request has to run: the con
                    changed path, left out and never to stage with it; the merges since --since, as
                    verify-merge checks them, reported without failing the slice in this version (a later
                    minor version fails it); exits 1 while a step fails; then the names the slice removes
-                   that the design of a row not done still cites (never a failure)
+                   that the design of a row not done still cites (never a failure); in the worktree of a
+                   worker, the commit command with the trailer Slice: <row>, and
+                   .ddd-ts-kit/verification.json for the conductor
   cited            the names the design of rows not done cites as code (paths, classes, Class.member) that
                    the code does not have: those the history of --base removed (with the commit and the
                    successor), the places the canonical tree refuses, and a name never there whose close

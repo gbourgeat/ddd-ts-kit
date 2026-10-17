@@ -42,16 +42,24 @@ Read first, and only: src/contexts/<context>/CONTEXT.md, then
 
 For each slice: generate with --local-only --json, fill the TODO(domain) markers, replace every it.todo
 by a test, then `npx ddd-ts-kit verify-slice <context> --since <main>` (regenerate, the rules on your changed
-files, the tests of the context, the files near the size limit) until it passes, then one commit of the paths it
-lists to stage, one by one, never one it leaves out: `feat(<context>): <slice in business words>`.
+files, the tests of the context, the files near the size limit) until it passes, then stage the paths it lists,
+one by one, never one it leaves out, and commit with the command it prints:
+`feat(<context>): <slice in business words>` with the trailer `Slice: <row>`.
 Format with `npm run format`, then `npm run lint:fix` (a blank line asked after a wrapped line is expected);
 never Prettier nor a bare `npx biome`.
-After each step, rewrite .ddd-ts-kit/report.md in the worktree in the form of the report below: if you stop,
-the conductor reads it there.
 To bring the trunk in: `git merge <main>`, each hunk resolved keeping both sides, never `-X theirs/ours` or
 `checkout --theirs/--ours` on a source file, then `npx ddd-ts-kit verify-merge`. A spec of a delivered row
 that a change of this branch broke is adapted in this branch, in a commit of its own.
 Restore each loss verify-merge lists before going on: verify-slice and the push only warn in this version.
+
+Budget: one row is one agent's work, two at most. The guard counts your tool calls and warns you twice,
+early rather than late: about 30 turns before your limit (finish the slice under way, start no other) and
+about 12 before (stop changing code, commit what verify-slice passed, rewrite the report, end). Without
+these notices (another host), stop after your second slice. Stopping loses nothing: your commits, the files
+you leave and your report are read by `worker-scope --resume`. When your context grows long, act as at the
+first notice.
+Rewrite .ddd-ts-kit/report.md in the worktree, in the form of the report below, after each commit, whenever
+a need, a question or a term appears, and before ending.
 
 Done when: every slice is committed, `npm run verify` is green in the worktree (the whole tree:
 `check --changed-since` sees your files only), and `npx ddd-ts-kit todo <context>` lists nothing but

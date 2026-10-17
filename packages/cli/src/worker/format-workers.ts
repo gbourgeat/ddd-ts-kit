@@ -1,4 +1,5 @@
 import { WORKER_SCOPE_FILE } from '../commit/worker-scope-file.js';
+import { stateLineOf } from './state-line-of.js';
 import type { WorkerStatus, WorkersStatus } from './workers-status.js';
 
 /** `status --workers` for a reader: each worker and what it changed, then where two workers meet. */
@@ -20,7 +21,7 @@ export function formatWorkers(status: WorkersStatus): string {
 
   return [
     `Workers: ${workers.length}`,
-    ...workers.flatMap(workerLines),
+    ...workers.flatMap((worker) => workerLines(worker, workers)),
     '',
     ...(shared.length === 0
       ? ['Overlaps: none']
@@ -33,19 +34,32 @@ function nameOf(workers: readonly WorkerStatus[]): (worktree: string) => string 
   return (worktree) => workers.find((worker) => worker.worktree === worktree)?.branch ?? worktree;
 }
 
-function workerLines(worker: WorkerStatus): string[] {
+function workerLines(worker: WorkerStatus, workers: readonly WorkerStatus[]): string[] {
   const since =
     worker.ahead === undefined || worker.base === undefined
       ? 'uncommitted only: no base that names a commit'
       : `since ${worker.base}`;
 
+  const state = stateLineOf(worker, workers.filter((other) => other.context === worker.context).length > 1);
+
   return [
     `  ${worker.branch ?? '(detached)'}  ${worker.worktree}`,
     `    ${factsOf(worker).join(', ')}`,
-    `    report: ${worker.report === null ? 'none written yet' : `written ${worker.report.modified}`}`,
+    ...(state === undefined ? [] : [`    state: ${state}`]),
+    `    report: ${reportText(worker)}`,
     `    ${worker.files.length} file${worker.files.length === 1 ? '' : 's'} changed (${since})`,
     ...worker.files.map((file) => `      ${file}`),
   ];
+}
+
+function reportText({ report, progress }: WorkerStatus): string {
+  if (report === null) {
+    return 'none written yet';
+  }
+
+  const current = progress?.report?.current;
+
+  return `written ${report.modified}${current === undefined ? '' : current ? ' (current)' : ' (older than its last change)'}`;
 }
 
 /** What its scope file says, how far it went, and a worktree without its dependencies: what the file does not say is left out. */

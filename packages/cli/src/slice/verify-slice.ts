@@ -11,9 +11,11 @@ import { verifyMerges } from '../merge/lost/verify-merges.js';
 import { nearTheLimit } from './near-the-limit.js';
 import { changedEntries } from './changed-entries.js';
 import { planStaging } from './plan-staging.js';
+import { recordVerification } from './record-verification.js';
 import { runScript } from './run-script.js';
 import type { SliceToVerify } from './slice-to-verify.js';
 import type { SliceVerification } from './slice-verification.js';
+import { workerSliceOf } from './worker-slice-of.js';
 
 /** The scripts a slice runs; `regenerate` arrived in 0.21. */
 const SCRIPTS = ['regenerate', 'test'];
@@ -24,7 +26,8 @@ const SCRIPTS = ['regenerate', 'test'];
  * the context, the merges of the branch since `since` (what one of them lost is reported but does
  * not fail the slice in this version: the check reaches projects as a warning first); then the
  * changed files near the size limit and the paths to stage. Every step runs, so that one answer
- * tells everything that is left.
+ * tells everything that is left. In the worktree of a worker, the answer names the row being
+ * closed and its commit command, and is kept in `.ddd-ts-kit/verification.json` for the conductor.
  */
 export function verifySlice({ root, config, context, since }: SliceToVerify): SliceVerification {
   requireScripts(root);
@@ -43,7 +46,7 @@ export function verifySlice({ root, config, context, since }: SliceToVerify): Sl
   const tests = runScript({ root, manager, script: 'test', args: [context] });
   const merges = verifyMerges({ root, since });
 
-  return {
+  return closedByWorker(root, {
     context,
     since,
     regenerate,
@@ -54,7 +57,22 @@ export function verifySlice({ root, config, context, since }: SliceToVerify): Sl
     ...planStaging(changedEntries(root), config, context),
     citedRemovals: citedRemovals(project, since),
     ok: regenerate.ok && check.errorCount === 0 && tests.ok,
-  };
+  });
+}
+
+/** In the worktree of a worker: the row it closes and its commit command, kept for the conductor. */
+function closedByWorker(root: string, verification: SliceVerification): SliceVerification {
+  const worker = workerSliceOf(root, verification.context, verification.since);
+
+  if (worker === undefined) {
+    return verification;
+  }
+
+  const named = { ...verification, ...worker };
+
+  recordVerification(root, named);
+
+  return named;
 }
 
 function requireScripts(root: string): void {

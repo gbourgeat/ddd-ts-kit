@@ -2,7 +2,18 @@
 // Fails open by design: a guard that breaks must never block the work it guards.
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { closeSync, existsSync, fstatSync, mkdirSync, openSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  closeSync,
+  existsSync,
+  fstatSync,
+  mkdirSync,
+  openSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 
@@ -12,7 +23,7 @@ const CONFIG = 'ddd-ts-kit.config.json';
 const KIT_VERSION = '0.25.1';
 const PLAN = 'docs/architecture/plan.md';
 const WORKER_SCOPE = '.ddd-ts-kit/worker.json';
-// The report a worker keeps current after each step, ignored by git: what the conductor reads when it stops.
+// The report a worker keeps current after each commit and before it ends, ignored by git: what the conductor reads when it stops.
 const WORKER_REPORT = '.ddd-ts-kit/report.md';
 const WORKER_AGENT = 'context-builder';
 // The host caps SessionStart context at 10 000 characters; a session should start far below it.
@@ -170,10 +181,20 @@ const PATH_COMMANDS = {
   truncate: { valued: ['-s', '-r', '--size', '--reference'], changes: 'all' },
 };
 
-const MODES = { session, 'pre-write': preWrite, 'pre-bash': preBash, 'post-write': postWrite, stop };
+const MODES = {
+  session,
+  'pre-write': preWrite,
+  'pre-bash': preBash,
+  'post-write': postWrite,
+  stop,
+  'subagent-start': subagentStart,
+  'subagent-stop': subagentStop,
+};
 
 // The reader of shell commands, loaded only when a worker runs one: every other call of the guard skips its cost.
 let shell;
+// The notice due to a context-builder near its turn limit, said with the decision of the call or alone.
+let notice;
 
 main();
 
@@ -181,12 +202,21 @@ function main() {
   try {
     const run = MODES[process.argv[2]];
     if (run) {
-      Promise.resolve(run(readInput())).catch(() => {
-        process.exitCode = 0;
-      });
+      Promise.resolve(run(readInput()))
+        .then(sayNotice)
+        .catch(() => {
+          process.exitCode = 0;
+        });
     }
   } catch {
     process.exitCode = 0;
+  }
+}
+
+// A notice no decision carried is said alone, as context of the call.
+function sayNotice() {
+  if (notice) {
+    emit({ hookSpecificOutput: { hookEventName: 'PreToolUse', additionalContext: notice } });
   }
 }
 
@@ -201,7 +231,11 @@ function session(input) {
 }
 
 // A patch of Codex can touch several files: a refusal of any of them wins over a question.
-function preWrite(input) {
+async function preWrite(input) {
+  if (isBuilder(input)) {
+    const [first] = writesOf(input);
+    await countBuilderCall(input, first && findProject(dirname(first.file)));
+  }
   const pending = pendingOfWriter(input);
   if (pending) {
     decide(input, pending.mode === 'advise' ? 'ask' : 'deny', pending.reason);
@@ -250,6 +284,7 @@ async function preBash(input) {
     return;
   }
   const project = findProject(commandDirectory(command, input.cwd ?? process.cwd()));
+  await countBuilderCall(input, project, command);
   if (!project || project.mode === 'off') {
     return;
   }
@@ -308,6 +343,46 @@ function postWrite(input) {
   }
   process.stderr.write(`${feedback}\n`);
   process.exitCode = 2;
+}
+
+// A context-builder of Claude Code: its tool calls are counted, its runs and stops recorded.
+function isBuilder(input) {
+  return hostOf(input) === 'claude' && String(input.agent_type ?? '').includes(WORKER_AGENT);
+}
+
+// The project of the session (the conductor's: a sub-agent keeps the working directory of its
+// session) holds the state of each builder's run in the guard's folder; the worktree of the builder,
+// shown by the call, holds what the conductor reads back.
+function builderPlaces(input, project) {
+  const home = findProject(input.cwd ?? process.cwd()) ?? project;
+  if (!home || home.mode === 'off' || project?.mode === 'off') {
+    return undefined;
+  }
+  const worker = project && existsSync(join(project.root, WORKER_SCOPE)) ? project.root : undefined;
+  return { state: stateFile('turns', home, input), worker };
+}
+
+async function countBuilderCall(input, project, command) {
+  const places = isBuilder(input) && project?.mode !== 'off' ? builderPlaces(input, project) : undefined;
+  if (places) {
+    const runs = await import('./builder-runs.mjs');
+    notice = runs.countCall(input, places, command);
+  }
+}
+
+async function subagentStart(input) {
+  const places = isBuilder(input) ? builderPlaces(input, undefined) : undefined;
+  if (places) {
+    (await import('./builder-runs.mjs')).startRun(input, places);
+  }
+}
+
+async function subagentStop(input) {
+  const places = isBuilder(input) ? builderPlaces(input, undefined) : undefined;
+  const reason = places ? (await import('./builder-runs.mjs')).stopRun(input, places) : undefined;
+  if (reason) {
+    emit({ decision: 'block', reason });
+  }
 }
 
 function stop(input) {
@@ -493,6 +568,7 @@ function projectBriefing(project, input) {
     ...(project.mode === 'off' ? [] : versionGap(project)),
     ...planPointer(project.root),
     ...workerNotice(project, input),
+    ...workersToResume(project),
   ];
   if (project.cli) {
     lines.push('Contexts:', contextMap(project));
@@ -566,6 +642,72 @@ function workerNotice(project, input) {
         `Worker scope: bounded context "${context}" only (${project.contextsDir}/${context}/). Shared files belong to the conductor.`,
       ]
     : [];
+}
+
+// In the conductor's session, the workers whose agent stopped: one line each with the command
+// that resumes it. Asked of the CLI only when a worktree of the repository holds a worker: a
+// session without one starts no process for it.
+function workersToResume(project) {
+  if (project.mode === 'off' || !project.cli || existsSync(join(project.root, WORKER_SCOPE))) {
+    return [];
+  }
+  if (!hasWorkerWorktree(project.root)) {
+    return [];
+  }
+  const workers = runCli(project, ['status', '--workers', '--json'], 6000)?.workers ?? [];
+  const stopped = workers.filter(
+    ({ progress }) =>
+      ['send-message', 'new-agent'].includes(progress?.next?.action) &&
+      (progress.agent || progress.phase !== 'not started'),
+  );
+  return stopped.map(
+    ({ branch, context, worktree, progress }) =>
+      `Worker to resume: ${branch ?? worktree} (${progress.phase}${progress.agent ? `, agent ${progress.agent.agentId}` : ''}): \`npx ddd-ts-kit worker-scope ${context} --resume${workers.filter((other) => other.context === context).length > 1 ? ` --worktree ${worktree}` : ''}\`, then send what it prints.`,
+  );
+}
+
+// Read from git's own files, without running git: the worktrees of the repository listed under
+// its common directory, each with the path of its checkout.
+function hasWorkerWorktree(root) {
+  const top = repositoryTop(root);
+  if (!top) {
+    return false;
+  }
+  const dotGit = join(top, '.git');
+  const gitDir = isDirectory(dotGit)
+    ? dotGit
+    : resolve(top, /^gitdir:\s*(.+)$/m.exec(readText(dotGit) ?? '')?.[1] ?? '');
+  const common = resolve(gitDir, (readText(join(gitDir, 'commondir')) ?? '.').trim());
+  const prefix = relative(top, root);
+  let names;
+  try {
+    names = readdirSync(join(common, 'worktrees'));
+  } catch {
+    return false;
+  }
+  return names.some((name) => {
+    const checkout = dirname((readText(join(common, 'worktrees', name, 'gitdir')) ?? '').trim());
+    return checkout !== '.' && existsSync(join(checkout, prefix, WORKER_SCOPE));
+  });
+}
+
+function repositoryTop(from) {
+  for (let directory = resolve(from); ; directory = dirname(directory)) {
+    if (existsSync(join(directory, '.git'))) {
+      return directory;
+    }
+    if (dirname(directory) === directory) {
+      return undefined;
+    }
+  }
+}
+
+function isDirectory(path) {
+  try {
+    return statSync(path).isDirectory();
+  } catch {
+    return false;
+  }
 }
 
 function readText(path) {
@@ -718,10 +860,13 @@ function commandDirectory(command, cwd) {
   return isAbsolute(directory) ? directory : resolve(cwd, directory);
 }
 
-// `worker-scope` adds a worktree and a branch: the conductor's to place, from the trunk. A sub-agent reads a briefing.
+// `worker-scope` adds a worktree and a branch: the conductor's to place, from the trunk. A sub-agent
+// reads a briefing (`--dry-run`) or where a worker stands (`--resume`): both create nothing.
 function workerPlaceReason(input, command) {
-  return input.agent_type && /ddd-ts-kit(?:@\S+)?\s+worker-scope\b/.test(command) && !/--dry-run\b/.test(command)
-    ? 'Only the conductor prepares the place of a worker: `worker-scope` adds a git worktree and a branch. A sub-agent reads a briefing with `worker-scope <context> --dry-run`, which creates nothing; if a worker is missing, report it to the conductor.'
+  return input.agent_type &&
+    /ddd-ts-kit(?:@\S+)?\s+worker-scope\b/.test(command) &&
+    !/--(?:dry-run|resume)\b/.test(command)
+    ? 'Only the conductor prepares the place of a worker: `worker-scope` adds a git worktree and a branch. A sub-agent reads a briefing with `worker-scope <context> --dry-run`, or where a worker stands with `--resume`, which create nothing; if a worker is missing, report it to the conductor.'
     : undefined;
 }
 
@@ -1217,7 +1362,16 @@ function decide(input, permissionDecision, reason) {
   if (host === 'codex' && permissionDecision === 'ask') {
     return emit({ systemMessage: permissionDecisionReason });
   }
-  emit({ hookSpecificOutput: { hookEventName: 'PreToolUse', permissionDecision, permissionDecisionReason } });
+  const additionalContext = notice;
+  notice = undefined;
+  emit({
+    hookSpecificOutput: {
+      hookEventName: 'PreToolUse',
+      permissionDecision,
+      permissionDecisionReason,
+      ...(additionalContext ? { additionalContext } : {}),
+    },
+  });
 }
 
 function isChecked(file) {

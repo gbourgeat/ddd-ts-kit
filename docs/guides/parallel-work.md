@@ -171,8 +171,10 @@ It adds a worktree on the branch `build/appointments` (by default in
 it, with the rows briefed, the base and the branch, and prints the briefing of that worker: the directory it may write, the generators it may
 run, its rows of `docs/architecture/slices.md` with the rules written under the tables
 (`- #M1.12: refuses a booking outside working hours`), the contracts it consumes, and the base as
-the trunk of its checks. `--rows` narrows the briefing to those rows, in that order; without
-it, every row of the context still to do is listed, with a note past two. `--dry-run` prints
+the trunk of its checks. `--rows` narrows the briefing to those rows, in that order, with a note
+past two; without it, the briefing holds the first batch `plan-waves` cuts for the context (one
+or two rows still to do on one aggregate: one agent's work), and a note names the `--rows` of the
+next batch. `--dry-run` prints
 the same without touching anything. It needs a repository with at least one commit. An
 existing worktree, or branch, is kept when it contains the base, and refused when it does not:
 a worker never starts from a stale trunk. Without `--base`, run from a worker's worktree, it
@@ -199,7 +201,14 @@ worktree, its branch, its context, its rows, its base, the number of commits it 
 the base, `dependencies not installed` when its copy of the project has no `node_modules`
 (`installed` in JSON), the files it changed (committed since the merge base with the base,
 modified, and untracked but not ignored), and whether it wrote `.ddd-ts-kit/report.md`, with
-when. Then the
+when and whether it is current. A `state:` line says where its rows stand and what to do next
+(`progress` in JSON, described under [When an agent stops](#when-an-agent-stops)):
+
+```text
+    state: stopped mid-row #M1.14 (6 files uncommitted, 3 TODO(domain), last verify-slice failed: tests); resume: npx ddd-ts-kit worker-scope billing --resume
+```
+
+Then the
 overlaps: a context built by two workers, and each file changed by more than one worker, with
 the workers that changed it. Such a file conflicts at the merge of the second branch when both
 changed the same lines: run it before briefing a second worker in a context, to give it other
@@ -209,7 +218,7 @@ without its rows and its base, and its files are the uncommitted ones only. With
 says so in one line.
 
 The briefing is filled from the project. In the example application, an excerpt of what
-`npx ddd-ts-kit worker-scope notification --dry-run` prints (the path shortened, `main` as the
+`npx ddd-ts-kit worker-scope notification --rows M1.31,M1.32,M1.33,M1.34 --dry-run` prints (the path shortened, `main` as the
 trunk, and the generators, steps and report left out):
 
 ```text
@@ -230,10 +239,10 @@ Scope
   documents, barrels, context map, dependency rules) are written by `npm run regenerate`, never by hand.
 
 Slices, in this order (rows of docs/architecture/slices.md)
-- #31 Contacts known from identity (projection): `@Projection` over `identity.person.registered` ; ...
-- #32 Send a notification for a fact of an appointment: `port notification Mailer`; ...
-- #33 Plan, withdraw and send reminders: `command notification PlanReminder --aggregate Reminder --permission reminder.plan`; ...
-- #34 Sent notifications of a person: `query notification SearchNotifications --permission notification.read --search` (`GET /notifications`) ; ...
+- #M1.31 Contacts known from identity (projection): `@Projection` over `identity.person.registered` ; ...
+- #M1.32 Send a notification for a fact of an appointment: `port notification Mailer`; ...
+- #M1.33 Plan, withdraw and send reminders: `command notification PlanReminder --aggregate Reminder --permission reminder.plan`; ...
+- #M1.34 Sent notifications of a person: `query notification SearchNotifications --permission notification.read --search` (`GET /notifications`) ; ...
 
 Contracts you consume (read-only): src/contexts/scheduling/published-language/, src/contexts/identity/published-language/
 ```
@@ -304,8 +313,9 @@ Rules that keep worktrees from hurting:
 - stage file by file, and read the staged diff before committing: a broad `git add` in a
   directory another process writes to commits somebody else's half-finished work;
 - remove the worktree when its branch is merged (`git worktree remove`);
-- a `context-builder` agent rewrites `.ddd-ts-kit/report.md` in its worktree after each step
-  (ignored by git): when one stops without a report, read it there before launching the next.
+- a `context-builder` agent rewrites `.ddd-ts-kit/report.md` in its worktree (ignored by git)
+  after each commit and before it ends: when one stops, `worker-scope --resume` reads it there
+  with the rest of the worktree.
 
 For coding agents specifically: an agent told to work "in the appointments context" that is
 started in the main checkout will still read, and may edit, anything. Give it a worktree and
@@ -332,6 +342,81 @@ $ npx ddd-ts-kit generate job notification SendDueConfirmations --every 15m --co
 Error: --local-only: this command would write 2 shared files: src/platform/auth/relate-system-actors.ts, src/platform/job-settings.ts.
   fix: Nothing was written. Have it run on the trunk without --local-only (the conductor of a parallel build does it), merge the trunk, then go on; a generated document listed alone means the trunk is stale: run `ddd-ts-kit docs` there first.
 ```
+
+### When an agent stops
+
+An agent stops before its rows are done for many reasons: its turn limit (`maxTurns: 150` for
+the `context-builder`), a full context (`Prompt is too long`), a rate limit, a person. It cannot
+count its own turns, so it is not asked to: the guard counts and warns it, and what it leaves is
+read from git and from files the kit writes, never from what it says.
+
+**Two notices before the limit.** The guard counts the tool calls of a `context-builder` inside
+the hooks that already run on its shell commands and its writes (no hook is added on every tool
+call), and adds a notice to the call that crosses each threshold, once a run: "your turn limit
+is near" (finish the slice under way, start no other) and "your turn limit is close" (stop
+changing code, commit what `verify-slice` passed, rewrite the report, end). Reads (`Read`,
+`Grep`, `Glob`) are not seen, so the thresholds assume a quarter of the calls uncounted: on the
+measured runs, where nearly every call went through the shell, the notices came at 90 and 117
+calls of 150, early rather than late. Stopping early costs a message; stopping late loses the
+report. A resumed agent gets a new turn budget, and its count starts again.
+
+**What the worktree holds**, all under `.ddd-ts-kit/`, ignored by git:
+
+- the commits of the branch, each closing one row with the trailer `Slice: <id>`: in a worker's
+  worktree, `verify-slice` prints the exact commit command, `git commit -m "feat(billing): pay an
+  invoice" -m "Slice: M1.14"` (a commit without trailer, from an older kit, is matched in order
+  with the `feat(<context>)` commits and shown `(by order)`);
+- `verification.json`, written by `verify-slice` in a worker's worktree: when it ran, at which
+  commit, for which row, the steps that failed and the paths it listed to stage;
+- `agent.json`, written by the guard: the agent id, its run (1 at launch, one more at each
+  resume), when its run started and at which commit, when it was last seen, the calls counted,
+  the calls each committed row took, and its last stop when it ended on its own;
+- `report.md`, written by the agent, whose freshness is read from the time of the last commit
+  and of the last change of a file of the slice.
+
+**One command for the conductor.** On a stop notification, from the trunk:
+
+```text
+$ npx ddd-ts-kit worker-scope billing --resume
+worker build/billing  ../shop-billing  (base origin/main)
+rows: #M1.07 committed a1b2c3d, #M1.12 committed d4e5f6a, #M1.14 in progress, #M1.15 to do
+#M1.14: 6 files uncommitted (src/contexts/billing/...), 3 TODO(domain), 2 it.todo; last verify-slice 2026-10-17T19:02Z failed: tests (2 files changed since)
+report: written 2026-10-17T19:05Z (current)
+agent: a389e09, run 1, 104 tool calls counted, last tool call 2026-10-17T19:06Z, stopped without ending (a limit or an error) with a current report
+
+next: SendMessage to a389e09:
+---
+Continue row #M1.14 (Pay an invoice) in ../shop-billing; do not start #M1.15.
+Committed: #M1.07, #M1.12. Left modified by you: src/contexts/billing/... 3 TODO(domain) and 2 it.todo remain; your last verify-slice failed at tests.
+Next: finish #M1.14, `npx ddd-ts-kit verify-slice billing --since origin/main` until it passes, commit with the command it prints, rewrite .ddd-ts-kit/report.md, end with the report.
+---
+If SendMessage is refused, or the agent stops again without progress: launch a new context-builder with this briefing:
+---
+<the briefing of #M1.14 only, then: Resume: row #M1.14 was started by an earlier agent. These files exist and are yours
+to continue: never regenerate, delete or reset them: ... Start with `npx ddd-ts-kit todo billing` and `verify-slice`, not
+with the generators. Its report: (quoted, 200 words at most)>
+---
+```
+
+It reads only: it creates no worktree or branch and rewrites no file, so a sub-agent may run it
+too. `next` is `SendMessage` when the agent stopped mid-row after progress in a run that is not
+its third (it keeps its history); a new agent between rows, without a recorded agent, after
+three runs, after a run without progress, or with `--fresh` (a full context); the merge once
+every row is committed and nothing is left. Several worktrees of one context need
+`--worktree <path>` or `--branch <name>`. `--json` gives `{ progress, next, sendMessage,
+briefing }`. In a new session of the conductor, the session start names each worker to resume
+with this command; without a worker worktree it starts no process for it.
+
+**What the hooks verify, and what they cannot.** Checked with headless runs of Claude Code: a
+notice added by the guard reaches the agent's model, which follows it; `SubagentStart` fires at
+the launch and at a `SendMessage` resume; `SubagentStop` fires when the agent ends on its own and
+honours one `block`, and then the guard keeps it going once when it would leave a slice that
+passed `verify-slice` uncommitted, or no current report. A stop at the turn limit runs no hook at
+all: the notices are the primary mechanism, and `--resume` reads the rest from the worktree.
+
+The parallel-work skill tells the conductor what to do on each kind of stop: run `--resume`, send
+the message as it is without asking, launch the briefing for a new agent, wait for a rate limit,
+and after two stops on one row without a new commit, split the row or ask the owner.
 
 ## Waves and batches
 
@@ -511,8 +596,9 @@ small fraction of the total time and remove nearly every collision from the rest
   after it), review the batch once, run
   `npm run verify` on the merged branch, and open the pull request: `check --changed-since`
   sees the files of the branch only, and what the trunk gained meanwhile can break the whole.
-  The plugin's `context-builder` agent keeps its last turns for its report and names the files
-  an unfinished slice left, so that the next agent resumes from them.
+  The guard warns the plugin's `context-builder` agent twice before its turn limit, so that it
+  keeps its last turns for a commit and its report, and `worker-scope --resume` turns what it left
+  into the message or the briefing that resumes it ([When an agent stops](#when-an-agent-stops)).
 - **Agents multiply cost as well as speed.** Each one carries its own context window; four
   workers spend roughly four times the tokens of one, see
   [Token economy](token-economy.md). On one machine they also share memory, CPU, ports and the

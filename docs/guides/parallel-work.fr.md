@@ -1,5 +1,5 @@
 [English](parallel-work.md) · **Français**
-<!-- translation-of: parallel-work.md sha256:994019ca9fe5e789 -->
+<!-- translation-of: parallel-work.md sha256:7de0a3c7769ae7c2 -->
 
 # Travailler en parallèle sans collisions
 
@@ -183,8 +183,9 @@ nomme le contexte, avec les lignes de la consigne, la base et la branche, et aff
 générateurs qu'il peut lancer, ses lignes de `docs/architecture/slices.md` avec les règles écrites
 sous les tableaux (`- #M1.12: refuses a booking outside working hours`), les contrats qu'il consomme,
 et la base comme tronc de ses vérifications. `--rows` réduit la consigne à ces lignes, dans cet
-ordre ; sans lui, toutes les lignes du contexte encore à faire sont listées, avec une note
-au-delà de deux. `--dry-run` affiche la même chose sans rien toucher. Elle a besoin d'un dépôt
+ordre, avec une note au-delà de deux ; sans lui, la consigne tient le premier lot que
+`plan-waves` découpe pour le contexte (une ou deux lignes encore à faire sur un agrégat : le
+travail d'un agent), et une note nomme le `--rows` du lot suivant. `--dry-run` affiche la même chose sans rien toucher. Elle a besoin d'un dépôt
 avec au moins un *commit*. Un *worktree*, ou une branche, qui existe déjà est conservé quand il
 contient la base, et refusé sinon : un *worker* ne part jamais d'un tronc périmé. Sans `--base`,
 lancée depuis le *worktree* d'un *worker*, elle refuse aussi, car la branche de ce *worker*
@@ -211,7 +212,15 @@ chaque *worktree* du dépôt qui porte ce fichier et affiche, pour chaque *worke
 d'avance sur la base, `dependencies not installed` quand sa copie du projet n'a pas de
 `node_modules` (`installed` en JSON), les fichiers qu'il a changés (commités depuis la base de
 fusion avec la base, modifiés, et non suivis mais non ignorés), et s'il a écrit
-`.ddd-ts-kit/report.md`, avec sa date. Puis les recouvrements : un contexte construit par deux *workers*, et chaque fichier
+`.ddd-ts-kit/report.md`, avec sa date et s'il est à jour. Une ligne `state:` dit où en sont ses
+lignes et quoi faire ensuite (`progress` en JSON, décrit sous
+[Quand un agent s'arrête](#quand-un-agent-sarrête)) :
+
+```text
+    state: stopped mid-row #M1.14 (6 files uncommitted, 3 TODO(domain), last verify-slice failed: tests); resume: npx ddd-ts-kit worker-scope billing --resume
+```
+
+Puis les recouvrements : un contexte construit par deux *workers*, et chaque fichier
 changé par plus d'un *worker*, avec les *workers* qui l'ont changé. Un tel fichier entre en
 conflit à la fusion de la seconde branche quand les deux ont changé les mêmes lignes :
 lancez-la avant de confier une consigne à un second *worker* dans un contexte, pour lui donner
@@ -221,7 +230,7 @@ contexte : le *worker* est affiché sans ses lignes ni sa base, et ses fichiers 
 fichiers non commités. Sans *worker*, elle le dit en une ligne.
 
 La consigne est remplie à partir du projet. Dans l'application d'exemple, un extrait de ce
-qu'affiche `npx ddd-ts-kit worker-scope notification --dry-run` (le chemin raccourci, `main`
+qu'affiche `npx ddd-ts-kit worker-scope notification --rows M1.31,M1.32,M1.33,M1.34 --dry-run` (le chemin raccourci, `main`
 comme tronc, et les générateurs, les étapes et le compte rendu omis) :
 
 ```text
@@ -242,10 +251,10 @@ Scope
   documents, barrels, context map, dependency rules) are written by `npm run regenerate`, never by hand.
 
 Slices, in this order (rows of docs/architecture/slices.md)
-- #31 Contacts known from identity (projection): `@Projection` over `identity.person.registered` ; ...
-- #32 Send a notification for a fact of an appointment: `port notification Mailer`; ...
-- #33 Plan, withdraw and send reminders: `command notification PlanReminder --aggregate Reminder --permission reminder.plan`; ...
-- #34 Sent notifications of a person: `query notification SearchNotifications --permission notification.read --search` (`GET /notifications`) ; ...
+- #M1.31 Contacts known from identity (projection): `@Projection` over `identity.person.registered` ; ...
+- #M1.32 Send a notification for a fact of an appointment: `port notification Mailer`; ...
+- #M1.33 Plan, withdraw and send reminders: `command notification PlanReminder --aggregate Reminder --permission reminder.plan`; ...
+- #M1.34 Sent notifications of a person: `query notification SearchNotifications --permission notification.read --search` (`GET /notifications`) ; ...
 
 Contracts you consume (read-only): src/contexts/scheduling/published-language/, src/contexts/identity/published-language/
 ```
@@ -321,8 +330,9 @@ Les règles qui empêchent les *worktrees* de faire du tort :
   dans un répertoire où écrit un autre processus commite le travail à moitié fini de quelqu'un
   d'autre ;
 - retirez le *worktree* quand sa branche est fusionnée (`git worktree remove`) ;
-- un agent `context-builder` réécrit `.ddd-ts-kit/report.md` dans son *worktree* après chaque
-  étape (ignoré par git) : quand il s'arrête sans rapport, lisez-le là avant de lancer le suivant.
+- un agent `context-builder` réécrit `.ddd-ts-kit/report.md` dans son *worktree* (ignoré par
+  git) après chaque *commit* et avant de finir : quand il s'arrête, `worker-scope --resume` le lit
+  là avec le reste du *worktree*.
 
 Pour les agents de code en particulier : un agent à qui l'on dit de travailler « dans le contexte
 appointments » et qui est lancé dans le checkout principal lira quand même, et pourra modifier,
@@ -353,6 +363,91 @@ $ npx ddd-ts-kit generate job notification SendDueConfirmations --every 15m --co
 Error: --local-only: this command would write 2 shared files: src/platform/auth/relate-system-actors.ts, src/platform/job-settings.ts.
   fix: Nothing was written. Have it run on the trunk without --local-only (the conductor of a parallel build does it), merge the trunk, then go on; a generated document listed alone means the trunk is stale: run `ddd-ts-kit docs` there first.
 ```
+
+### Quand un agent s'arrête
+
+Un agent s'arrête avant la fin de ses lignes pour bien des raisons : sa limite de tours
+(`maxTurns: 150` pour le `context-builder`), un contexte plein (`Prompt is too long`), une limite
+de débit, une personne. Il ne peut pas compter ses propres tours, on ne le lui demande donc pas :
+le garde compte et l'avertit, et ce qu'il laisse se lit dans git et dans des fichiers que le kit
+écrit, jamais dans ce qu'il dit.
+
+**Deux avertissements avant la limite.** Le garde compte les appels d'outils d'un
+`context-builder` dans les *hooks* qui tournent déjà sur ses commandes *shell* et ses écritures
+(aucun *hook* n'est ajouté sur chaque appel d'outil), et ajoute un avertissement à l'appel qui
+franchit chaque seuil, une fois par exécution : « your turn limit is near » (finir la tranche en
+cours, n'en commencer aucune autre) et « your turn limit is close » (ne plus changer de code,
+commiter ce que `verify-slice` a validé, réécrire le rapport, finir). Les lectures (`Read`,
+`Grep`, `Glob`) ne sont pas vues, et les seuils supposent donc un quart des appels non comptés :
+sur les exécutions mesurées, où presque chaque appel passait par le *shell*, les avertissements
+sont arrivés à 90 et 117 appels sur 150, tôt plutôt que tard. S'arrêter tôt coûte un message ;
+s'arrêter tard perd le rapport. Un agent repris reçoit un nouveau budget de tours, et son compte
+repart de zéro.
+
+**Ce que tient le *worktree***, tout sous `.ddd-ts-kit/`, ignoré par git :
+
+- les *commits* de la branche, chacun fermant une ligne avec le *trailer* `Slice: <id>` : dans le
+  *worktree* d'un *worker*, `verify-slice` affiche la commande de *commit* exacte,
+  `git commit -m "feat(billing): pay an invoice" -m "Slice: M1.14"` (un *commit* sans *trailer*,
+  d'un kit plus ancien, est apparié dans l'ordre aux *commits* `feat(<contexte>)` et affiché
+  `(by order)`) ;
+- `verification.json`, écrit par `verify-slice` dans le *worktree* d'un *worker* : quand il a
+  tourné, à quel *commit*, pour quelle ligne, les étapes en échec et les chemins qu'il a listés à
+  indexer ;
+- `agent.json`, écrit par le garde : l'identifiant de l'agent, son exécution (1 au lancement, une
+  de plus à chaque reprise), quand elle a commencé et à quel *commit*, quand il a été vu pour la
+  dernière fois, les appels comptés, les appels de chaque ligne commitée, et son dernier arrêt
+  quand il a fini de lui-même ;
+- `report.md`, écrit par l'agent, dont la fraîcheur se lit à l'heure du dernier *commit* et du
+  dernier changement d'un fichier de la tranche.
+
+**Une commande pour le chef d'orchestre.** Sur une notification d'arrêt, depuis le tronc :
+
+```text
+$ npx ddd-ts-kit worker-scope billing --resume
+worker build/billing  ../shop-billing  (base origin/main)
+rows: #M1.07 committed a1b2c3d, #M1.12 committed d4e5f6a, #M1.14 in progress, #M1.15 to do
+#M1.14: 6 files uncommitted (src/contexts/billing/...), 3 TODO(domain), 2 it.todo; last verify-slice 2026-10-17T19:02Z failed: tests (2 files changed since)
+report: written 2026-10-17T19:05Z (current)
+agent: a389e09, run 1, 104 tool calls counted, last tool call 2026-10-17T19:06Z, stopped without ending (a limit or an error) with a current report
+
+next: SendMessage to a389e09:
+---
+Continue row #M1.14 (Pay an invoice) in ../shop-billing; do not start #M1.15.
+Committed: #M1.07, #M1.12. Left modified by you: src/contexts/billing/... 3 TODO(domain) and 2 it.todo remain; your last verify-slice failed at tests.
+Next: finish #M1.14, `npx ddd-ts-kit verify-slice billing --since origin/main` until it passes, commit with the command it prints, rewrite .ddd-ts-kit/report.md, end with the report.
+---
+If SendMessage is refused, or the agent stops again without progress: launch a new context-builder with this briefing:
+---
+<the briefing of #M1.14 only, then: Resume: row #M1.14 was started by an earlier agent. These files exist and are yours
+to continue: never regenerate, delete or reset them: ... Start with `npx ddd-ts-kit todo billing` and `verify-slice`, not
+with the generators. Its report: (quoted, 200 words at most)>
+---
+```
+
+Elle ne fait que lire : elle ne crée ni *worktree* ni branche et ne réécrit aucun fichier, un
+sous-agent peut donc la lancer aussi. `next` vaut `SendMessage` quand l'agent s'est arrêté au
+milieu d'une ligne après un progrès, dans une exécution qui n'est pas sa troisième (il garde son
+historique) ; un nouvel agent entre deux lignes, sans agent enregistré, après trois exécutions,
+après une exécution sans progrès, ou avec `--fresh` (un contexte plein) ; la fusion quand chaque
+ligne est commitée et que rien ne reste. Plusieurs *worktrees* d'un même contexte demandent
+`--worktree <chemin>` ou `--branch <nom>`. `--json` donne `{ progress, next, sendMessage,
+briefing }`. Dans une nouvelle session du chef d'orchestre, le démarrage de session nomme chaque
+*worker* à reprendre avec cette commande ; sans *worktree* de *worker*, il ne lance aucun
+processus pour cela.
+
+**Ce que les *hooks* vérifient, et ce qu'ils ne peuvent pas.** Vérifié par des exécutions sans
+interface de Claude Code : un avertissement ajouté par le garde atteint le modèle de l'agent, qui
+le suit ; `SubagentStart` se déclenche au lancement et à une reprise par `SendMessage` ;
+`SubagentStop` se déclenche quand l'agent finit de lui-même et honore un `block`, et le garde le
+relance alors une fois quand il laisserait non commitée une tranche que `verify-slice` a validée,
+ou aucun rapport à jour. Un arrêt à la limite de tours ne déclenche aucun *hook* : les
+avertissements sont le mécanisme principal, et `--resume` lit le reste dans le *worktree*.
+
+La compétence parallel-work dit au chef d'orchestre quoi faire à chaque sorte d'arrêt : lancer
+`--resume`, envoyer le message tel quel sans demander, lancer la consigne d'un nouvel agent,
+attendre la fin d'une limite de débit, et après deux arrêts sur une même ligne sans nouveau
+*commit*, découper la ligne ou demander au responsable.
 
 ## Vagues et lots
 
@@ -547,9 +642,10 @@ reste.
   (`npx ddd-ts-kit verify-merge` ensuite), relisez le
   lot une fois, lancez `npm run verify` sur la branche fusionnée, et ouvrez la *pull request* :
   `check --changed-since` ne voit que les fichiers de la branche, et ce que le tronc a reçu
-  entre-temps peut casser l'ensemble. L'agent `context-builder` du *plugin* garde ses derniers tours pour
-  son rapport et nomme les fichiers qu'une tranche inachevée a laissés, pour que l'agent suivant
-  reprenne à partir d'eux.
+  entre-temps peut casser l'ensemble. Le garde avertit deux fois l'agent `context-builder` du
+  *plugin* avant sa limite de tours, pour qu'il garde ses derniers tours pour un *commit* et son
+  rapport, et `worker-scope --resume` fait de ce qu'il a laissé le message ou la consigne qui le
+  reprend ([Quand un agent s'arrête](#quand-un-agent-sarrête)).
 - **Les agents multiplient le coût autant que la vitesse.** Chacun porte sa propre fenêtre de
   contexte ; quatre *workers* dépensent environ quatre fois les *tokens* d'un seul, voir
   [Économie de tokens](token-economy.fr.md). Sur une même machine, ils partagent aussi la

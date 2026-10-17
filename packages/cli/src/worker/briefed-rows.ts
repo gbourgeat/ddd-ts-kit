@@ -1,6 +1,7 @@
 import { designOf } from '../citations/design-of.js';
 import { rowDocuments } from '../citations/row-documents.js';
 import { CliError } from '../cli-error.js';
+import { planWaves } from '../plan/plan-waves.js';
 import { readSliceRules } from '../progress/read-slice-rules.js';
 import { readSlices, SLICES_FILE } from '../progress/read-slices.js';
 import type { Slice } from '../progress/slice.js';
@@ -18,21 +19,50 @@ const ROWS_PER_AGENT = 2;
 
 /**
  * The rows of the slices file for one worker: the ids asked for, in the order given, or by
- * default every row of the context still to do. A row asked for must exist once and belong to
- * the context. Ids are compared as text.
+ * default the first batch `plan-waves` cuts for the context (one or two rows still to do on one
+ * aggregate: one agent's work), with a note naming the next. A row asked for must exist once and
+ * belong to the context. Ids are compared as text.
  */
 export function briefedRows(ws: Workspace, context: string, ids: readonly string[] | undefined): BriefedRows {
   const rows = readSlices(ws) ?? [];
   const rules = readSliceRules(ws);
-  const chosen = ids === undefined ? todoRows(rows, context) : asked(rows, context, ids);
-  const parts = chosen.length === 0 ? [] : rowDocuments(ws.root, rows);
-  const slices = chosen.map((row) => ({ ...row, rules: rules.get(row.id), design: designOf(parts, row.id) }));
+  const batch = ids === undefined ? firstBatch(rows, context) : { rows: asked(rows, context, ids), notes: [] };
+  const parts = batch.rows.length === 0 ? [] : rowDocuments(ws.root, rows);
+  const slices = batch.rows.map((row) => ({ ...row, rules: rules.get(row.id), design: designOf(parts, row.id) }));
 
-  return { slices, notes: [...doneNotes(slices, ids), ...sizeNotes(slices, context)] };
+  return { slices, notes: [...batch.notes, ...doneNotes(slices, ids), ...sizeNotes(slices, context)] };
 }
 
-function todoRows(rows: readonly Slice[], context: string): Slice[] {
-  return rows.filter((row) => row.owner === context && row.status === 'todo');
+/** The rows of the first batch of the context still to do; every row still to do when the plan cannot be ordered. */
+function firstBatch(rows: readonly Slice[], context: string): { rows: Slice[]; notes: string[] } {
+  const todo = rows.filter((row) => row.owner === context && row.status === 'todo');
+  const plan = planWaves(rows, { context, project: '' });
+
+  if (plan.problems.length > 0) {
+    return { rows: todo, notes: [] };
+  }
+
+  const batches = plan.waves
+    .flatMap((wave) => wave.batches)
+    .map((batch) =>
+      todo.filter((row) => batch.owner === context && batch.rows.some((planned) => planned.id === row.id)),
+    )
+    .filter((batchRows) => batchRows.length > 0);
+
+  const [first = [], second] = batches;
+
+  if (second === undefined) {
+    return { rows: first, notes: [] };
+  }
+
+  const ids = second.map((row) => row.id).join(',');
+
+  return {
+    rows: first,
+    notes: [
+      `Briefed the first of ${batches.length} batches of ${context} still to do, one agent's work; the next: \`npx ddd-ts-kit worker-scope ${context} --rows ${ids}\`, once this one is committed.`,
+    ],
+  };
 }
 
 function asked(rows: readonly Slice[], context: string, ids: readonly string[]): Slice[] {

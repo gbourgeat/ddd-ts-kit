@@ -90,7 +90,8 @@ The slice is finished when `todo ordering` no longer lists anything of it.
 | `npx ddd-ts-kit generate <kind> ...` | one file of a role with its spec, fake and registration (list below) | whenever a file of a role is needed, never by hand | the file and the `TODO(domain)` places, `--json` for the list | fill the places, then `todo` |
 | `npx ddd-ts-kit todo [<context>]` | each `TODO(domain)`, `TODO(platform)`, `it.todo` and `TODO(review)` left | before closing a slice, a story or a milestone | `file:line` entries | write them, then `npm test`; settle each `TODO(review)` or dismiss it with `generate adr` before the story or milestone is closed |
 | `/ddd-ts-kit:parallel-work` | splits the slices between workers, one context each | when several agents or people build at once | a briefing per worker, `npx ddd-ts-kit worker-scope <context>` worktrees, with the documents of each row's design and the names they cite the trunk does not have | each worker's `use-case` |
-| `npx ddd-ts-kit status --workers` | each worker's worktree, branch, context, rows and commits ahead, the files it changed, and the files two workers change | before briefing a second worker in a context, before each merge | a short text, `--json` for data | other rows for the new worker, or the merge order |
+| `npx ddd-ts-kit status --workers` | each worker's worktree, branch, context, rows and commits ahead, its state (rows committed, row under way, last verify-slice), the files it changed, and the files two workers change | before briefing a second worker in a context, before each merge | a short text, `--json` for data | other rows for the new worker, the merge order, or `--resume` for a stopped one |
+| `npx ddd-ts-kit worker-scope <context> --resume` | where a stopped worker stands (rows by their `Slice:` trailer, files of the row under way, markers, last verify-slice, report, agent), read without changing anything | on a stop notification of a `context-builder` (turn limit, error, a person) | the SendMessage text for its agent, or the briefing of a new one | send it as it is |
 
 ## Connect two contexts
 
@@ -244,6 +245,7 @@ Usage
   ddd-ts-kit todo [<context>]
   ddd-ts-kit plan-waves [<context>]
   ddd-ts-kit worker-scope <context> [--base <ref>] [--rows <id,...>] [--worktree <path>] [--branch <name>] [--no-install] [--dry-run]
+  ddd-ts-kit worker-scope <context> --resume [--worktree <path> | --branch <name>] [--fresh]
   ddd-ts-kit verify-slice <context> --since <git-ref>
   ddd-ts-kit cited [<context>] [--rows <id,...>] [--base <ref>] [--removed-since <ref>]
   ddd-ts-kit verify-merge [<commit>] [--since <git-ref>] [--theirs <git-ref>] [--base <commit>] [--warn]
@@ -303,7 +305,9 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
                    (with the ids it waits for), and the TODO(domain), TODO(platform), it.todo and TODO(review)
                    left in each context; --workers shows instead each worktree holding .ddd-ts-kit/worker.json (branch,
                    context, rows, base, commits ahead, dependencies not installed, files changed since the base,
-                   its report), then the contexts and the files more than one worker holds
+                   its report), a state line (rows committed, the row under way, files uncommitted, markers,
+                   last verify-slice, and the worker-scope --resume command of a stopped one), then the
+                   contexts and the files more than one worker holds
   sdk              the typed client of each document of the contract, a workspace package under
                    clients/<document> without runtime dependency: typed errors keyed by the error codes,
                    credentials per security scheme; records "sdk" in the config the first time, wires the
@@ -320,9 +324,16 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
                    --base <ref> (by default the current branch, refused from a worker's worktree), its
                    .ddd-ts-kit/worker.json, and the briefing of the worker of that context; --rows <id,...>
                    briefs those rows of slices.md only, with their rules, the documents of their design and
-                   the names that design cites the base does not have (see cited); a worktree it creates gets
-                   the clean install of the package manager (npm ci), its time in the notes, unless
-                   --no-install; an existing worktree or branch that does not contain the base is refused
+                   the names that design cites the base does not have (see cited), and by default the first
+                   batch plan-waves cuts for the context (one or two rows on one aggregate), a note naming the
+                   next; a worktree it creates gets the clean install of the package manager (npm ci), its
+                   time in the notes, unless --no-install; an existing worktree or branch that does not
+                   contain the base is refused
+  --resume         worker-scope reads where the stopped worker of the context stands (its rows by their
+                   Slice: trailer, the files of the row under way, the markers, its last verify-slice, its
+                   report, its agent as the guard recorded it) and prints the message that resumes its agent
+                   (SendMessage) or the briefing of a new one; creates and rewrites nothing; --fresh asks for
+                   a new agent whatever the last one did; several worktrees of the context need --worktree
   verify-slice     closes a slice before its commit, in one run: the regenerate script, check on the files
                    changed since --since (new ones included), the test script for the context; then the
                    changed files past 300 of the 350 lines, the paths of the slice to stage (its context, an
@@ -330,7 +341,9 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
                    changed path, left out and never to stage with it; the merges since --since, as
                    verify-merge checks them, reported without failing the slice in this version (a later
                    minor version fails it); exits 1 while a step fails; then the names the slice removes
-                   that the design of a row not done still cites (never a failure)
+                   that the design of a row not done still cites (never a failure); in the worktree of a
+                   worker, the commit command with the trailer Slice: <row>, and
+                   .ddd-ts-kit/verification.json for the conductor
   cited            the names the design of rows not done cites as code (paths, classes, Class.member) that
                    the code does not have: those the history of --base removed (with the commit and the
                    successor), the places the canonical tree refuses, and a name never there whose close

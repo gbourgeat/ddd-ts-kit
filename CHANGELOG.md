@@ -6,6 +6,29 @@ list the pull requests behind it.
 
 ## Unreleased
 
+**A context-builder is warned before its turn limit, and the conductor resumes a stopped worker
+from `worker-scope --resume`.** An agent cannot count its turns, and one that stopped at its limit
+left the conductor to inspect the worktree by hand to write the next message. The guard of the
+plugin now counts the tool calls of a `context-builder` inside the hooks that already run on its
+shell commands and its writes (no hook on every tool call: an ordinary session starts no more
+processes) and adds two notices, once a run: finish the slice under way, then stop changing code,
+commit what passed and end with the report. It records the agent's runs in its worktree
+(`.ddd-ts-kit/agent.json`), restarts the count at each launch or resume (`SubagentStart`), and,
+when the agent ends on its own (`SubagentStop`), keeps it going once to commit a slice that passed
+`verify-slice` or to rewrite a stale report; both hooks are filtered by the agent. In a worker's
+worktree, `verify-slice` prints the exact commit command with the trailer `Slice: <row>` and keeps
+its result in `.ddd-ts-kit/verification.json`. `status --workers` adds a `state:` line per worker
+(`progress` in JSON), and `worker-scope <context> --resume` reads where a stopped worker stands
+and prints the `SendMessage` text for its agent, or the briefing of a new agent holding the row
+under way only and the files left. A session start names the workers to resume. `worker-scope`
+without `--rows` now briefs the first batch `plan-waves` cuts for the context (one or two rows),
+with a note naming the next, and the briefing carries the turn budget. The parallel-work skill
+says what to do on each kind of stop, with a limit of two stops on one row.
+
+To move: update the plugin; the conductor's skill may now use `SendMessage`. A worker briefed
+before this version commits without the trailer: its rows are matched in order with its
+`feat(<context>)` commits and shown `(by order)`.
+
 **`language/declared-vocabulary` accepts a word of another language when its type says so.**
 A context that reads a published payload or an outside record meets words that spell a value of
 its own vocabulary (catalog publishes a `state` of `'draft' | 'issued'`, billing declares

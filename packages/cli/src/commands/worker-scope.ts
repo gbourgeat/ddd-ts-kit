@@ -1,12 +1,17 @@
 import { readConfig } from '../config/index.js';
+import { formatResume } from '../worker/format-resume.js';
 import { openWorkerScope } from '../worker/open-worker-scope.js';
+import { resumeWorker } from '../worker/resume-worker.js';
 import type { WorkerScope } from '../worker/worker-scope.js';
 import { Arguments } from './arguments.js';
 import type { Command } from './command.js';
 import { knownContext } from './known-context.js';
 import { rowsOption } from './rows-option.js';
 
-/** Prepares the place of one worker of a parallel build (worktree, branch, dependencies, scope file) and prints its briefing. */
+/**
+ * Prepares the place of one worker of a parallel build (worktree, branch, dependencies, scope file) and prints its briefing.
+ * With `--resume`, reads where a stopped worker stands and prints the message or the briefing that resumes it, creating nothing.
+ */
 export const workerScopeCommand: Command = (argv, io) => {
   const args = Arguments.parse(argv, {
     worktree: { type: 'string' },
@@ -15,11 +20,21 @@ export const workerScopeCommand: Command = (argv, io) => {
     rows: { type: 'string' },
     'dry-run': { type: 'boolean', default: false },
     'no-install': { type: 'boolean', default: false },
+    resume: { type: 'boolean', default: false },
+    fresh: { type: 'boolean', default: false },
   });
 
   const root = args.projectRoot;
   const { config } = readConfig(root);
   const context = knownContext(config, args.positionals[0]);
+
+  if (args.flag('resume')) {
+    const resume = resumeWorker(root, { context, ...args.texts(['worktree', 'branch']), fresh: args.flag('fresh') });
+
+    io.out(args.json ? JSON.stringify(resume, null, 2) : formatResume(resume));
+
+    return 0;
+  }
 
   const scope = openWorkerScope(root, config, {
     context,
