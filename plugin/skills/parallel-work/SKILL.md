@@ -23,6 +23,8 @@ allowed-tools:
   - Bash(npx ddd-ts-kit docs)
   - Bash(npx ddd-ts-kit depcruise-config --write)
   - Bash(npx ddd-ts-kit check *)
+  - Bash(npx ddd-ts-kit verify-merge)
+  - Bash(npx ddd-ts-kit verify-merge *)
   - Bash(npm run regenerate)
   - Bash(npm run docs:generate)
   - Bash(npm run verify)
@@ -145,7 +147,13 @@ Each agent commits its rows. When the rows of a branch are committed: merge the 
 branch (`git merge origin/main` in its worktree; derived files resolved as the table says; when
 both sides added a migration under drizzle-kit, take the trunk's journal,
 `git checkout origin/main -- migrations/meta/_journal.json`, and run
-`npx ddd-ts-kit drizzle-generate --replay`, which generates the branch's again on top), one
+`npx ddd-ts-kit drizzle-generate --replay`, which generates the branch's again on top; every
+other hunk resolved keeping both sides, never by taking one side of a source file or a test:
+`-X theirs`, `-X ours`, `checkout --theirs` erase the other side without a conflict, and the
+guard refuses them to a sub-agent), then `npx ddd-ts-kit verify-merge` in the worktree: it
+lists each line, row done or test the merge lost, to restore from its side before going on
+(the pre-push hook and `verify-slice` run it too, and only warn in this version: a later
+minor version blocks on it; `verify-merge` alone exits 1), one
 review of the batch (`architecture-reviewer`, `--changed-since <base>`), `npm run verify` on the
 merged branch, then the branch merges or opens its pull request. The blocking findings of the
 review are fixed on the branch; each non-blocking one is settled at once or written, before the

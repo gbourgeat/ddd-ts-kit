@@ -7,6 +7,7 @@ import { summarize } from '../check/engine/summarize.js';
 import { loadProject } from '../check/project/load-project.js';
 import { CliError } from '../cli-error.js';
 import { isRecord } from '../config/values/is-record.js';
+import { verifyMerges } from '../merge/lost/verify-merges.js';
 import { nearTheLimit } from './near-the-limit.js';
 import { changedEntries } from './changed-entries.js';
 import { planStaging } from './plan-staging.js';
@@ -20,8 +21,10 @@ const SCRIPTS = ['regenerate', 'test'];
 /**
  * The steps that close a slice before its commit, in one run: the derived files regenerated,
  * the architecture rules on the files changed since `since` (new ones included), the specs of
- * the context; then the changed files near the size limit and the paths to stage. Every step
- * runs, so that one answer tells everything that is left.
+ * the context, the merges of the branch since `since` (what one of them lost is reported but does
+ * not fail the slice in this version: the check reaches projects as a warning first); then the
+ * changed files near the size limit and the paths to stage. Every step runs, so that one answer
+ * tells everything that is left.
  */
 export function verifySlice({ root, config, context, since }: SliceToVerify): SliceVerification {
   requireScripts(root);
@@ -38,6 +41,7 @@ export function verifySlice({ root, config, context, since }: SliceToVerify): Sl
   );
 
   const tests = runScript({ root, manager, script: 'test', args: [context] });
+  const merges = verifyMerges({ root, since });
 
   return {
     context,
@@ -45,6 +49,7 @@ export function verifySlice({ root, config, context, since }: SliceToVerify): Sl
     regenerate,
     check,
     tests,
+    merges,
     nearTheLimit: nearTheLimit(root, changed),
     ...planStaging(changedEntries(root), config, context),
     citedRemovals: citedRemovals(project, since),

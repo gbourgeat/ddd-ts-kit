@@ -48,6 +48,10 @@ Format with `npm run format`, then `npm run lint:fix` (a blank line asked after 
 never Prettier nor a bare `npx biome`.
 After each step, rewrite .ddd-ts-kit/report.md in the worktree in the form of the report below: if you stop,
 the conductor reads it there.
+To bring the trunk in: `git merge <main>`, each hunk resolved keeping both sides, never `-X theirs/ours` or
+`checkout --theirs/--ours` on a source file, then `npx ddd-ts-kit verify-merge`. A spec of a delivered row
+that a change of this branch broke is adapted in this branch, in a commit of its own.
+Restore each loss verify-merge lists before going on: verify-slice and the push only warn in this version.
 
 Done when: every slice is committed, `npm run verify` is green in the worktree (the whole tree:
 `check --changed-since` sees your files only), and `npx ddd-ts-kit todo <context>` lists nothing but

@@ -23,7 +23,7 @@ const SLICES = `# Slices
 | 5 | billing | slice | Refund invoice | \`generate command billing RefundInvoice --aggregate Invoice --permission invoice.refund\` | 2 | billing | todo |
 `;
 
-/** The scope of the worker of billing: the context the guard reads, then what `status --workers` shows. */
+/** The scope of the worker of billing: the context the guard reads, then what `status --workers` shows, with the commit of its base. */
 const BILLING_SCOPE = { context: 'billing', rows: ['2', '5'], base: 'main', branch: 'build/billing' };
 
 let root: string;
@@ -82,7 +82,11 @@ describe('worker-scope', () => {
       scopeFile: path.join(String(jsonAt(scope.json(), 'root')), '.ddd-ts-kit/worker.json'),
     });
 
-    expect(JSON.parse(read(worktree, '.ddd-ts-kit/worker.json'))).toEqual(BILLING_SCOPE);
+    expect(JSON.parse(read(worktree, '.ddd-ts-kit/worker.json'))).toEqual({
+      ...BILLING_SCOPE,
+      baseCommit: git(root, 'rev-parse', 'main').trim(),
+    });
+
     expect(git(worktree, 'branch', '--show-current').trim()).toBe('build/billing');
     expect(exists(worktree, 'ddd-ts-kit.config.json')).toBe(true);
     // The clean install of the package manager of the project, pnpm by default.
@@ -172,6 +176,14 @@ describe('worker-scope, the generators of a worker', () => {
 });
 
 describe('worker-scope, on slices, an existing worktree and other places', () => {
+  it('asks the worker to resolve each hunk when it brings the trunk in, then to run verify-merge', () => {
+    const briefing = String(jsonAt(cli(root, 'worker-scope', 'billing', '--json').json(), 'briefing'));
+
+    expect(briefing).toContain('To bring the trunk in: `git merge main`, each hunk resolved keeping both sides');
+    expect(briefing).toContain('on a source file, then `npx ddd-ts-kit verify-merge`.');
+    expect(briefing).toContain('that a change of this branch broke is adapted in this branch');
+  });
+
   it('lists the slices of the context that are still to do, from every table of the file', () => {
     const scope = cli(root, 'worker-scope', 'billing', '--json').json();
 
@@ -195,7 +207,12 @@ describe('worker-scope, on slices, an existing worktree and other places', () =>
     expect(again.code).toBe(0);
     expect(again.stdout).toContain(`worktree kept: `);
     expect(again.stdout).toContain('You build the bounded context billing of shop.');
-    expect(JSON.parse(read(worktree, '.ddd-ts-kit/worker.json'))).toMatchObject({ context: 'billing', base: 'main' });
+
+    expect(JSON.parse(read(worktree, '.ddd-ts-kit/worker.json'))).toMatchObject({
+      context: 'billing',
+      base: 'main',
+      baseCommit: git(root, 'rev-parse', 'main').trim(),
+    });
   });
 
   it('takes another directory and another branch, and names the upstream contracts', () => {

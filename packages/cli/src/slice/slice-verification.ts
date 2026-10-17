@@ -1,5 +1,6 @@
 import type { CheckResult } from '../check/engine/check-result.js';
 import type { StaleCitation } from '../citations/stale-citation.js';
+import type { MergeVerification } from '../merge/lost/merge-verification.js';
 import type { ScriptRun } from './script-run.js';
 import type { SizedFile } from './sized-file.js';
 
@@ -10,6 +11,8 @@ export interface SliceVerification {
   readonly regenerate: ScriptRun;
   readonly check: CheckResult;
   readonly tests: ScriptRun;
+  /** The merges of the branch since `since`, the trunk brought in: what each one lost; reported, never in `ok` in this version. */
+  readonly merges: MergeVerification;
   readonly nearTheLimit: readonly SizedFile[];
   /** The paths of the slice, to stage one by one. */
   readonly toStage: readonly string[];

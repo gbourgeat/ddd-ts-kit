@@ -1,6 +1,10 @@
 import { formatCheck } from '../check/engine/format-check.js';
+import { formatMergeVerification } from '../merge/lost/format-merge-verification.js';
 import type { ScriptRun } from './script-run.js';
 import type { SliceVerification } from './slice-verification.js';
+
+const MERGES_WILL_BLOCK =
+  '  restore each loss above before the commit: a later minor version fails the slice on them; `npx ddd-ts-kit verify-merge` alone already exits 1 on them';
 
 /** The verification of a slice as a short report: each step, what failed with its cause, then what to do next. */
 export function formatSliceVerification(verification: SliceVerification): string {
@@ -12,6 +16,7 @@ export function formatSliceVerification(verification: SliceVerification): string
     `check (changed since ${since}): ${checked}${check.warningCount > 0 ? `, ${check.warningCount} warning(s)` : ''}`,
     ...(check.violations.length > 0 ? indented(formatCheck(check, 'text')) : []),
     ...step(`tests of ${context}`, verification.tests),
+    ...mergesLines(verification),
     ...nearTheLimitLines(verification),
     ...nextLines(verification),
     ...leftOutLines(verification),
@@ -21,6 +26,28 @@ export function formatSliceVerification(verification: SliceVerification): string
 
 function step(name: string, run: ScriptRun): string[] {
   return run.ok ? [`${name}: ok`] : [`${name}: failed`, ...indented(run.output)];
+}
+
+/**
+ * The merges of the branch: none, ok, or what each lost, as `verify-merge` reports it. In this
+ * version an error is reported, loudly, without failing the slice: the check reaches projects as
+ * a warning first.
+ */
+function mergesLines({ merges, since }: SliceVerification): string[] {
+  const { errorCount, warningCount } = merges;
+
+  const counted = [
+    ...(errorCount === 0 ? [] : [`${errorCount} error(s), not failing the slice in this version`]),
+    ...(warningCount === 0 ? [] : [`${warningCount} warning(s)`]),
+  ];
+
+  const verdict = merges.merges.length === 0 ? 'none' : counted.join(', ') || 'ok';
+
+  return [
+    `merges since ${since}: ${verdict}`,
+    ...(errorCount + warningCount === 0 ? [] : indented(formatMergeVerification(merges))),
+    ...(errorCount === 0 ? [] : [MERGES_WILL_BLOCK]),
+  ];
 }
 
 function nearTheLimitLines({ nearTheLimit }: SliceVerification): string[] {

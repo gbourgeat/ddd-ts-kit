@@ -29,6 +29,7 @@ export const USAGE = `Usage
   ddd-ts-kit worker-scope <context> [--base <ref>] [--rows <id,...>] [--worktree <path>] [--branch <name>] [--no-install] [--dry-run]
   ddd-ts-kit verify-slice <context> --since <git-ref>
   ddd-ts-kit cited [<context>] [--rows <id,...>] [--base <ref>] [--removed-since <ref>]
+  ddd-ts-kit verify-merge [<commit>] [--since <git-ref>] [--theirs <git-ref>] [--base <commit>] [--warn]
   ddd-ts-kit docs [--check] [--stored-events]
   ddd-ts-kit sdk [--check] [--dry-run]
   ddd-ts-kit depcruise-config [--check|--write]

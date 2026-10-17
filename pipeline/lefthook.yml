@@ -24,6 +24,8 @@ pre-push:
       run: npm run ci:typecheck
     - name: unit tests
       run: npm run ci:test:unit
+    - name: merges
+      run: npx --no -- ddd-ts-kit verify-merge --warn
 
 commit-msg:
   jobs:

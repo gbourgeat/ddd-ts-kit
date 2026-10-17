@@ -9,6 +9,8 @@ export const AGENT_PERMISSIONS: AgentPermissions = {
     'Bash(npx ddd-ts-kit check *)',
     'Bash(npx ddd-ts-kit verify-slice *)',
     'Bash(npx ddd-ts-kit cited *)',
+    'Bash(npx ddd-ts-kit verify-merge)',
+    'Bash(npx ddd-ts-kit verify-merge *)',
     'Bash(npx ddd-ts-kit list *)',
     'Bash(npx ddd-ts-kit generate *)',
     'Bash(npx ddd-ts-kit docs *)',

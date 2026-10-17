@@ -1,4 +1,5 @@
 import type { Config } from '../config/index.js';
+import { isDerived } from '../derived/is-derived.js';
 import type { ChangedEntry } from './changed-entry.js';
 import type { StagingPlan } from './staging-plan.js';
 
@@ -48,24 +49,5 @@ function isWorkingMigration(path: string, working: ReadonlySet<string>): boolean
   return (
     working.size > 0 &&
     (snapshot !== undefined ? working.has(snapshot) : /(?:^|\/)migrations\/meta\/_journal\.json$/.test(path))
-  );
-}
-
-/** What `npm run regenerate` rewrites: the dependency rules, the context map, the barrels and lists of each context, the contracts and their clients. */
-function isDerived(path: string, { contextsDir }: Config): boolean {
-  const [context, file, ...deeper] = path.startsWith(`${contextsDir}/`)
-    ? path.slice(contextsDir.length + 1).split('/')
-    : [];
-
-  const ofAContext =
-    context !== undefined &&
-    deeper.length === 0 &&
-    (file === 'CONTEXT.md' || file === `${context}.declarations.ts` || file === `${context}.dependencies.ts`);
-
-  return (
-    ofAContext ||
-    path === '.dependency-cruiser.cjs' ||
-    path === 'docs/context-map.md' ||
-    /^(?:openapi|docs\/integration|clients)\//.test(path)
   );
 }

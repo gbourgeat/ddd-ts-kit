@@ -1,5 +1,5 @@
 [English](commit-discipline.md) · **Français**
-<!-- translation-of: commit-discipline.md sha256:8bd88bdc46eaa72d -->
+<!-- translation-of: commit-discipline.md sha256:0b0d15b750611c6f -->
 
 # La discipline des commits et des pull requests
 
@@ -248,7 +248,7 @@ git stash pop
 | chaque écriture de fichier dans une session d'agent | le *hook* du *plugin* | refuse un fichier écrit à la main là où un générateur existe, une modification d'un fichier généré (contrats, *barrels*, `.dependency-cruiser.cjs`) et, pour un *worker* d'un seul contexte, une écriture hors de ce contexte ; demande au propriétaire avant une désactivation, un test sauté ou un changement des fichiers gouvernés ; renvoie les violations du fichier écrit ; refuse de terminer tant que des erreurs d'architecture restent, puis rappelle la taille du *commit* sans bloquer |
 | `pre-commit` (lefthook) | ESLint et le formateur (`biome format`) sur les fichiers indexés ; `ddd-ts-kit check` sur les sources indexées sous `src/` ; `ddd-ts-kit check --commit-size --staged` | les règles de code, le format et la structure de ce qui est commité ; la taille du *commit*, à titre de conseil |
 | `commit-msg` (lefthook) | commitlint | le format conventional commits |
-| `pre-push` (lefthook) | la vérification des types et les tests unitaires | le projet compile et ses tests rapides passent |
+| `pre-push` (lefthook) | la vérification des types et les tests unitaires ; `ddd-ts-kit verify-merge --warn` | le projet compile et ses tests rapides passent ; ce qu'une fusion depuis le tronc a perdu (une ligne, une tranche terminée, un test) est affiché, en avertissement dans cette version |
 | *pull request* | la vérification du titre | le titre est un conventional commit |
 | CI | vérification des types, lint, architecture, code mort, tests, dérive de la documentation et des contrats, sécurité, build, image, puis le *job* unique `gate` | tout, y compris les fichiers générés périmés |
 

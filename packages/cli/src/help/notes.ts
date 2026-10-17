@@ -60,8 +60,10 @@ export const NOTES = `  affected         what a pull request has to run: the con
                    changed since --since (new ones included), the test script for the context; then the
                    changed files past 300 of the 350 lines, the paths of the slice to stage (its context, an
                    end-to-end spec, a working migration, the derived files git tracks) and every other
-                   changed path, left out and never to stage with it; exits 1 while a step fails; then the
-                   names the slice removes that the design of a row not done still cites (never a failure)
+                   changed path, left out and never to stage with it; the merges since --since, as
+                   verify-merge checks them, reported without failing the slice in this version (a later
+                   minor version fails it); exits 1 while a step fails; then the names the slice removes
+                   that the design of a row not done still cites (never a failure)
   cited            the names the design of rows not done cites as code (paths, classes, Class.member) that
                    the code does not have: those the history of --base removed (with the commit and the
                    successor), the places the canonical tree refuses, and a name never there whose close
@@ -71,6 +73,25 @@ export const NOTES = `  affected         what a pull request has to run: the con
                    line links to. Default: every row not done, of the context when given, at the current
                    branch. --removed-since <ref>: the names a change removes, from the merge base to the
                    working tree, that such a design cites. Reads only, exits 0
+  verify-merge checks them, reported without failing the slice in this version (a later
+                   minor version fails it); exits 1 while a step fails
+  verify-merge     what the merges of a branch lost, read from git only: every merge commit since --since
+                   (by default the base of .ddd-ts-kit/worker.json, then origin/HEAD, then origin/main) and
+                   the merge in progress (its result: the index and the working tree), or one <commit>; a
+                   squash commit takes --theirs <head of the branch it took in>. Errors: a line one side
+                   added or both kept missing from the result (whitespace, a line laid out again, a move
+                   to another file and imports merged into one statement aside), a file neither side
+                   deleted gone from the result, a row of slices.md done on one side and no longer done or
+                   gone, a test title or a spec file of one side gone, a migration of one side whose
+                   description (name without number and working-) the result lacks, a conflict marker;
+                   warnings: a line one side removed brought back, a line one side wrote where the other
+                   changed the same lines or deleted the file (the merge chose), a line the merge replaced
+                   by lines of its own. Derived files, files a tool says it wrote, migrations, lockfiles
+                   and slices.md are left out of the lines. The base is --base, else the Merge-Base:
+                   trailer of the merge, else git merge-base; entries of a Lost-Accepted: <file:line>,...
+                   trailer are listed and never fail, nor what a later commit restored; silent and exit 0
+                   without a merge, exit 1 on an error; --warn prints the same and exits 0, as the
+                   pre-push hook of init runs it in this version (a later minor version blocks the push)
   --commit-size    the files and lines about to be committed against "commit" in the config (20 files and
                    600 lines by default, generated files not counted); --staged reads the index only;
                    advisory, --strict exits 1 when over

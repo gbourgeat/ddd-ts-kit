@@ -20,6 +20,7 @@ import { sdkCommand } from './commands/sdk.js';
 import { statusCommand } from './commands/status.js';
 import { todoCommand } from './commands/todo.js';
 import { valueObjectsCommand } from './commands/value-objects.js';
+import { verifyMergeCommand } from './commands/verify-merge.js';
 import { verifySliceCommand } from './commands/verify-slice.js';
 import { workerScopeCommand } from './commands/worker-scope.js';
 import { CliError } from './cli-error.js';
@@ -41,6 +42,7 @@ const COMMANDS: Readonly<Record<string, Command>> = {
   'worker-scope': workerScopeCommand,
   'verify-slice': verifySliceCommand,
   cited: citedCommand,
+  'verify-merge': verifyMergeCommand,
   docs: docsCommand,
   doctor: doctorCommand,
   sdk: sdkCommand,

@@ -107,6 +107,16 @@ of a review that the conductor follows until the story or milestone is closed: i
 your slices, and you leave it where it is unless your briefing gives it to you. Do not merge, do not push unless the briefing says
 so, do not edit `docs/architecture/`.
 
+When the briefing or the conductor asks you to bring the trunk in (`git merge <trunk>`):
+resolve each conflicting hunk keeping what both sides added; never `-X theirs`, `-X ours`,
+`-s ours`, or `git checkout`/`git restore --theirs/--ours` on a source file or a test (the
+guard refuses them), which erase the other side without a conflict. A derived file is taken
+from either side and regenerated. Then `npx ddd-ts-kit verify-merge`: it lists any line, row
+or test the merge lost, and exits 1 on one; restore each from its side before going on, even
+though `verify-slice` and the push only warn about them in this version. A warning (a line
+the merge chose between two rewrites, or wrote again) is read once. A spec of a delivered row
+that a change of your branch broke is adapted in your branch, in a commit of its own.
+
 ## Report (always, even partial; under 200 words, no code, no file contents)
 
 - slices done, each with its commit hash;

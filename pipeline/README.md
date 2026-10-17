@@ -120,6 +120,7 @@ fails the commit instead of skipping the checks.
 | pre-commit | `ddd-ts-kit check` | staged sources under `src/` |
 | pre-commit | `ddd-ts-kit check --commit-size --staged` | the index: advice on the size of the commit, never a refusal |
 | pre-push | `ci:typecheck`, `ci:test:unit` | the project |
+| pre-push | `ddd-ts-kit verify-merge --warn` | the merges since the trunk: what each lost, shown without blocking in this version; silent without a merge |
 | commit-msg | `commitlint` | the message |
 
 `commitlint.config.mjs` is also what the pull request title check (GitHub) and the merge request

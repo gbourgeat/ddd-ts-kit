@@ -9,5 +9,7 @@ export interface WorkerFile {
   readonly rows?: readonly string[];
   /** The ref its worktree was cut from and is checked against. */
   readonly base?: string;
+  /** The commit the base named when worker-scope created or kept the worktree; absent from older files. */
+  readonly baseCommit?: string;
   readonly branch?: string;
 }

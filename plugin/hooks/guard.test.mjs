@@ -621,6 +621,43 @@ test('a sub-agent reads a briefing of worker-scope, and only the conductor prepa
   );
 });
 
+// Each takes one side of a merge on the sources or the tests.
+const ONE_SIDE = [
+  'git merge -X theirs origin/main',
+  'git merge --no-edit -Xours origin/main',
+  'git merge --strategy-option=theirs main',
+  'git merge -s ours origin/main',
+  'git pull -X theirs origin main',
+  'git checkout --theirs src/contexts/ordering/domain/order.aggregate.ts',
+  'git checkout --ours -- src/contexts/ordering',
+  'git restore --theirs test/e2e/place-order.e2e.spec.ts',
+  'git checkout --theirs .',
+];
+
+// A plain merge, a squash, an unstaged path.
+const NOT_ONE_SIDE = [
+  'git merge origin/main',
+  'git merge --no-ff --squash build/ordering',
+  'git restore --staged src/contexts/ordering/domain/order.aggregate.ts',
+];
+
+test('a sub-agent never takes one side of a merge on the sources or the tests, and is pointed to verify-merge', () => {
+  const root = project();
+  const agent = worker(root);
+  for (const command of [...ONE_SIDE, `cd ${root} && git checkout --theirs src`]) {
+    const refused = run('pre-bash', bash(root, command, agent));
+    assert.equal(decision(refused), 'deny', command);
+    assert.match(reason(refused), /Resolve each hunk/);
+    assert.match(reason(refused), /npx ddd-ts-kit verify-merge/);
+  }
+  for (const command of NOT_ONE_SIDE) {
+    assert.equal(run('pre-bash', bash(root, command, agent)).output, undefined, command);
+  }
+  const reviewer = { agent_type: 'ddd-ts-kit:architecture-reviewer' };
+  assert.equal(decision(run('pre-bash', bash(root, 'git merge -X theirs main', reviewer))), 'deny');
+  assert.equal(run('pre-bash', bash(root, 'git merge -X theirs main')).output, undefined);
+});
+
 const DEPENDENCY_CHANGES = [
   'npm install dayjs',
   'npm i zod',
