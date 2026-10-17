@@ -141,7 +141,7 @@ describe('the knip config init writes', () => {
   const BILLING = ['--context', 'billing:core'];
   const entries = (root: string): string[] => stringsAt(readJson(root, 'knip.json'), 'entry');
 
-  it('of an explicit project differs from the source by the fakes and the architecture specs its test runner enters by, and by what the stack does not have', () => {
+  it('of an explicit project differs from the source by the fakes, the worlds and the architecture specs its test runner enters by, and by what the stack does not have', () => {
     const generated = readJson(
       initProject('--ci', 'gitlab', '--style', 'explicit', '--context', 'billing:core'),
       'knip.json',
@@ -151,14 +151,15 @@ describe('the knip config init writes', () => {
 
     expect(stringsAt(generated, 'entry')).toEqual(stringsAt(expected, 'entry'));
 
-    // A fake is test support kept ready for the specs to come: with it, the port it implements is in use. It is an
-    // entry of the test runner, which reports no pattern left without a match before the first fake.
+    // A fake or a world is test support kept ready for the specs to come: with a fake, the port it implements is in
+    // use. Each is an entry of the test runner, which reports no pattern left without a match before the first one.
     // The proof that each context wires alone is a spec outside the source root.
     expect(stringsAt(generated, 'vitest', 'entry')).toEqual(
       stringsAt(expected, 'vitest', 'entry').toSpliced(
         1,
         0,
         'src/contexts/*/test/fakes/*.ts',
+        'src/contexts/*/test/worlds/*.ts',
         'test/architecture/**/*.spec.ts',
       ),
     );

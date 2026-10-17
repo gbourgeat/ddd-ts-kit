@@ -7,6 +7,7 @@ const { ADAPTER, ANALYTICS, CONFIG, DUE_HANDLER, NOTIFICATION, OCCUPANCY_ROUTE, 
 const { SENT_AGGREGATE } = PATHS;
 const ALIAS = `${SOURCE_ALIAS}contexts/notification`;
 const SCHEMA = `${NOTIFICATION}/infrastructure/persistence/notification.schema.ts`;
+const HELPER = `${NOTIFICATION}/test/unit/reminder-moments.ts`;
 const OCCUPANCY_HANDLER = `${ANALYTICS}/application/queries/search-occupancy/search-occupancy.handler.ts`;
 
 /** Layers and contexts: an import that crosses a boundary, and a relationship that closes a cycle. */
@@ -152,6 +153,13 @@ export const BOUNDARY_INJECTIONS: readonly Injection[] = [
         to: '# Design notes\n\nThe reminder rule goes to `src/contexts/notification/application/services/reminder-rule.service.ts`.\n',
       },
     ],
+    checker: true,
+  },
+  {
+    rule: 'test/helper-placed',
+    what: 'a helper several specs would share, written among the specs',
+    file: HELPER,
+    changes: [{ file: HELPER, to: "export const REMINDER_DUE_AT = new Date('2026-03-01T09:00:00.000Z');\n" }],
     checker: true,
   },
 ];

@@ -1,6 +1,6 @@
 import { describe, expect, it } from '{{tests.module}}';
 import { organisationOpenedV1 } from '{{alias.context}}/published-language/organisation-opened.v1.integration-event{{alias.ext}}';
-import { startedIdentity } from '{{alias.context}}/test/unit/identity-application{{alias.ext}}';
+import { startedIdentity } from '{{alias.context}}/test/worlds/{{context.kebab}}.world{{alias.ext}}';
 
 const opening = organisationOpenedV1.create(
   { organisationId: 'acme', name: 'Acme', openedBy: 'subject-ada' },

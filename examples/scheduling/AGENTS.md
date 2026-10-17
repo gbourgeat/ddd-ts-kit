@@ -18,7 +18,7 @@ A ddd-ts-kit project: one bounded context per directory of `src/contexts/`, each
 
 ## Rules by layer
 
-One file per layer in `.claude/rules/`: `domain.md` (`domain/`, the shared kernel), `application.md`, `published-language.md`, `infrastructure.md`, `presentation.md` (and the OpenAPI contract), `platform.md` (`src/platform/`, `main.ts`, `apps/`), `tests.md` (specs, fakes, builders, `test/`). The same text is in `.github/instructions/<layer>.instructions.md`. Claude Code and GitHub Copilot load it with the files it applies to; an agent that does not (Codex) reads the file of a layer before it edits a file of that layer.
+One file per layer in `.claude/rules/`: `domain.md` (`domain/`, the shared kernel), `application.md`, `published-language.md`, `infrastructure.md`, `presentation.md` (and the OpenAPI contract), `platform.md` (`src/platform/`, `main.ts`, `apps/`), `tests.md` (specs, fakes, builders, worlds, `test/`). The same text is in `.github/instructions/<layer>.instructions.md`. Claude Code and GitHub Copilot load it with the files it applies to; an agent that does not (Codex) reads the file of a layer before it edits a file of that layer.
 
 ## Generated files
 

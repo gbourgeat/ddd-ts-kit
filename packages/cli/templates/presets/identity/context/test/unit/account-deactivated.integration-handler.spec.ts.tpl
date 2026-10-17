@@ -1,6 +1,6 @@
 import { describe, expect, it } from '{{tests.module}}';
 import { accountDeactivatedV1 } from '{{alias.context}}/published-language/account-deactivated.v1.integration-event{{alias.ext}}';
-import { startedIdentity } from '{{alias.context}}/test/unit/identity-application{{alias.ext}}';
+import { startedIdentity } from '{{alias.context}}/test/worlds/{{context.kebab}}.world{{alias.ext}}';
 
 const deactivation = accountDeactivatedV1.create(
   { accountId: 'subject-ada' },

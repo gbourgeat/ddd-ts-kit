@@ -3,7 +3,7 @@ import { InvitationStatus } from '{{alias.context}}/domain/vocabularies/invitati
 import { DeclineInvitationCommand } from '{{alias.context}}/application/commands/decline-invitation/decline-invitation.command{{alias.ext}}';
 import { anAccount } from '{{alias.context}}/test/builders/account.builder{{alias.ext}}';
 import { anInvitation } from '{{alias.context}}/test/builders/invitation.builder{{alias.ext}}';
-import { arrangeIdentity } from '{{alias.context}}/test/unit/identity-application{{alias.ext}}';
+import { arrangeIdentity } from '{{alias.context}}/test/worlds/{{context.kebab}}.world{{alias.ext}}';
 
 describe('Decline invitation', () => {
   it('records the answer of the person it was sent to, who joins nothing', async () => {

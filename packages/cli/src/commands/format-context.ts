@@ -18,10 +18,7 @@ export function formatContext(context: ContextSummary): string {
   return [
     heading(context),
     `  glossary: ${context.glossary === 0 ? 'empty (define the ubiquitous language first)' : `${context.glossary} term${context.glossary === 1 ? '' : 's'}`}`,
-    list(
-      'upstreams',
-      context.upstreams.map((upstream) => `${upstream.context} (${upstream.relationship})`),
-    ),
+    list('upstreams', upstreamsOf(context)),
     list(
       'aggregates',
       context.aggregates.map((name) => (context.eventSourced.includes(name) ? `${name} (event-sourced)` : name)),
@@ -36,6 +33,7 @@ export function formatContext(context: ContextSummary): string {
       context.jobs.map((job) => `${job.name} (${job.schedule}, sends ${job.command})`),
     ),
     list('builders', context.builders),
+    list('worlds', context.worlds),
     list('permissions', context.permissions),
     list('policies', lists.policies),
     list('gateways', lists.gateways),
@@ -51,6 +49,10 @@ function heading(context: ContextSummary): string {
   ];
 
   return `${context.name} [${context.classification}]${flags.length > 0 ? ` (${flags.join(', ')})` : ''}`;
+}
+
+function upstreamsOf(context: ContextSummary): string[] {
+  return context.upstreams.map((upstream) => `${upstream.context} (${upstream.relationship})`);
 }
 
 interface DeclaredLists {

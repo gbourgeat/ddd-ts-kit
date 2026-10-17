@@ -2,7 +2,7 @@ import { describe, expect, it } from '{{tests.module}}';
 import { MemberRole } from '{{alias.context}}/domain/vocabularies/member-role.vocabulary{{alias.ext}}';
 import { memberJoinedV1 } from '{{alias.context}}/published-language/member-joined.v1.integration-event{{alias.ext}}';
 import { aMember } from '{{alias.context}}/test/builders/member.builder{{alias.ext}}';
-import { arrangeIdentity } from '{{alias.context}}/test/unit/identity-application{{alias.ext}}';
+import { arrangeIdentity } from '{{alias.context}}/test/worlds/{{context.kebab}}.world{{alias.ext}}';
 
 const joining = memberJoinedV1.create(
   { memberId: 'member-1', organisationId: 'acme', accountId: 'subject-grace', role: MemberRole.Member },

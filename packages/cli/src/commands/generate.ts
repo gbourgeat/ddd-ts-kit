@@ -125,14 +125,24 @@ function requestedKind(name: string | undefined, rest: readonly string[]): Kind 
     );
   }
 
-  if (rest.length !== kind.positionals.length) {
+  const optional = kind.optionalPositionals ?? [];
+
+  if (rest.length < kind.positionals.length || rest.length > kind.positionals.length + optional.length) {
     throw new CliError(
-      `${kind.name} expects ${kind.positionals.length} argument(s): ${kind.positionals.join(', ')}.`,
+      `${kind.name} expects ${expectedArguments(kind.positionals, optional)}.`,
       `Usage: ddd-ts-kit generate ${kind.usage}`,
     );
   }
 
   return kind;
+}
+
+function expectedArguments(required: readonly string[], optional: readonly string[]): string {
+  const named = [...required, ...optional.map((name) => `[${name}]`)].join(', ');
+
+  return optional.length === 0
+    ? `${required.length} argument(s): ${named}`
+    : `${required.length} to ${required.length + optional.length} arguments: ${named}`;
 }
 
 /** The flags of `generate` that take one word. */

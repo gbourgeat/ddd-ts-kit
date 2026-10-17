@@ -217,6 +217,7 @@ module.exports = {
           "^src/platform/tracing\\.ts$",
           "^src/contexts/[^/]+/published-language/",
           "^src/contexts/[^/]+/test/fakes/",
+          "^src/contexts/[^/]+/test/worlds/",
           "\\.d\\.[cm]?ts$",
           "\\.(spec|test)\\.[cm]?ts$",
           "(^|/)[^/]+\\.config\\.[cm]?[jt]s$",

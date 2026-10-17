@@ -289,7 +289,7 @@ describe('an explicit project, as `list` maps it', () => {
     { name: 'billing.issue-invoices-monthly', schedule: 'cron 0 6 1 * * (Europe/Paris)', command: 'IssueInvoice' },
   ];
 
-  it('maps the project for `list`, with the glossary size, the builders and the end-to-end specs', () => {
+  it('maps the project for `list`, with the glossary size, the builders, the worlds and the end-to-end specs', () => {
     const map = cli(root, 'list', '--json').json() as { contexts: Record<string, unknown>[]; e2e: string[] };
     const text = cli(root, 'list').stdout;
 
@@ -305,6 +305,7 @@ describe('an explicit project, as `list` maps it', () => {
         domainEvents: ['InvoiceIssued', 'InvoiceMarkedAsPaid'],
         publishedEvents: ['billing.invoice.issued@v1', 'billing.invoice.issued@v2'],
         builders: ['Invoice'],
+        worlds: ['Billing'],
         jobs: JOBS,
       }),
       expect.objectContaining({
@@ -327,7 +328,7 @@ describe('an explicit project, as `list` maps it', () => {
     expect(text).toContain('billing [core]\n  glossary: 17 terms\n  upstreams: none\n  aggregates: Invoice');
 
     expect(text).toContain(
-      '  scheduled jobs: billing.cancel-stale-invoices (every 15m, sends CancelInvoice), billing.issue-invoices-monthly (cron 0 6 1 * * (Europe/Paris), sends IssueInvoice)\n  builders: Invoice',
+      '  scheduled jobs: billing.cancel-stale-invoices (every 15m, sends CancelInvoice), billing.issue-invoices-monthly (cron 0 6 1 * * (Europe/Paris), sends IssueInvoice)\n  builders: Invoice\n  worlds: Billing',
     );
 
     expect(text).toContain('end-to-end specs: issue-invoice, track-purchase-order');

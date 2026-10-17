@@ -86,4 +86,5 @@ export const ROLES: readonly Role[] = [
   },
   { directory: 'presentation/cli', suffixes: [] },
   { directory: 'test/builders', suffixes: ['.builder.ts'] },
+  { directory: 'test/worlds', suffixes: ['.world.ts'] },
 ];

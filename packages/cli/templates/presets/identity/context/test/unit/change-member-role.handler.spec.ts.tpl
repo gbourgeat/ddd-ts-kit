@@ -5,7 +5,7 @@ import { ChangeMemberRoleCommand } from '{{alias.context}}/application/commands/
 import { aDelegation } from '{{alias.context}}/test/builders/delegation.builder{{alias.ext}}';
 import { aMember } from '{{alias.context}}/test/builders/member.builder{{alias.ext}}';
 import { anOrganisation } from '{{alias.context}}/test/builders/organisation.builder{{alias.ext}}';
-import { arrangeIdentity } from '{{alias.context}}/test/unit/identity-application{{alias.ext}}';
+import { arrangeIdentity } from '{{alias.context}}/test/worlds/{{context.kebab}}.world{{alias.ext}}';
 
 const DAY = 86_400_000;
 

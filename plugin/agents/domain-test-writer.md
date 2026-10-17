@@ -18,13 +18,16 @@ refuses it. If a test reveals a defect or an untestable design, stop and report 
 
 `src/contexts/<context>/CONTEXT.md`, then `npx ddd-ts-kit todo <context>` for every
 `it.todo` left as `file:line` (`describe <context> --json` for what exists), then only the
-unit under test, its generated spec and the builders and fakes it uses. A missing
-spec, builder or fake is generated (`npx ddd-ts-kit generate builder ...`), not typed.
+unit under test, its generated spec and the builders, fakes and worlds it uses. A missing
+spec, builder or fake is generated (`npx ddd-ts-kit generate builder ...`), not typed; so is
+the arrangement several specs share (`npx ddd-ts-kit generate test-world <context>`, in
+`test/worlds/`).
 
 ## Rules
 
 - Specs live in the context's `test/unit/` (`test/integration/` for adapters), named after
-  the unit: `<name>.<role>.spec.ts`. Replace each `it.todo`; never delete one.
+  the unit: `<name>.<role>.spec.ts`. Replace each `it.todo`; never delete one. Nothing but
+  specs goes there (`test/helper-placed`): a shared arrangement is a world of `test/worlds/`.
 - Test names are business rules in the glossary's words: `refuses to issue an invoice
   without lines`, not `should throw when lines.length is 0`.
 - Domain specs: given a state built by a builder, when one intention, then the recorded
@@ -43,6 +46,6 @@ spec, builder or fake is generated (`npx ddd-ts-kit generate builder ...`), not 
 ## Finish
 
 `npm test -- <context>`, `npx ddd-ts-kit todo <context>` (no `it.todo` left) and
-`npx ddd-ts-kit check --rule test/spec-required --rule test/no-mocks`. Report in a few
+`npx ddd-ts-kit check --rule test/spec-required --rule test/no-mocks --rule test/helper-placed`. Report in a few
 lines: the behaviours now covered, the result, each behaviour you could not cover and why,
 each defect found with `file:line`. No file contents.

@@ -97,7 +97,7 @@ describe('depcruise-config against the script of the pipeline', () => {
     fs.rmSync(sandbox, { recursive: true, force: true });
   });
 
-  it('builds the same rules and options, plus the fakes and the entry points of single contexts among the files that may have no importer', async () => {
+  it('builds the same rules and options, plus the fakes, the worlds and the entry points of single contexts among the files that may have no importer', async () => {
     const shipped: unknown = jsonAt(
       await import(pathToFileURL(path.join(sandbox, 'depcruise-config.mjs')).href),
       'default',
@@ -108,7 +108,12 @@ describe('depcruise-config against the script of the pipeline', () => {
     // An entry point of a context run alone has no importer either; the port follows `platformDir` for tracing.ts, the same place by default.
     const added = orphansOf(ported).filter((pattern) => !orphansOf(shipped).includes(pattern));
 
-    expect(added).toEqual(['^app/apps/[^/]+/main\\.ts$', '^app/contexts/[^/]+/test/fakes/']);
+    expect(added).toEqual([
+      '^app/apps/[^/]+/main\\.ts$',
+      '^app/contexts/[^/]+/test/fakes/',
+      '^app/contexts/[^/]+/test/worlds/',
+    ]);
+
     expect(orphansOf(ported).filter((pattern) => !added.includes(pattern))).toEqual(orphansOf(shipped));
     expect(withoutOrphans(ported)).toEqual(withoutOrphans(JSON.parse(JSON.stringify(shipped))));
   });

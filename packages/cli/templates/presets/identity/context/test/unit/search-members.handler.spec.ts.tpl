@@ -3,7 +3,7 @@ import { offsetPage } from '@ddd-ts-kit/kernel';
 import { MemberRole } from '{{alias.context}}/domain/vocabularies/member-role.vocabulary{{alias.ext}}';
 import { SearchMembersQuery } from '{{alias.context}}/application/queries/search-members/search-members.query{{alias.ext}}';
 import { aMember } from '{{alias.context}}/test/builders/member.builder{{alias.ext}}';
-import { arrangeIdentity } from '{{alias.context}}/test/unit/identity-application{{alias.ext}}';
+import { arrangeIdentity } from '{{alias.context}}/test/worlds/{{context.kebab}}.world{{alias.ext}}';
 
 const ada = {
   memberId: 'member-1',

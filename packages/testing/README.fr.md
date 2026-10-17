@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:0a3b1e8636b7ce36 -->
+<!-- translation-of: README.md sha256:886980acec763fd8 -->
 
 # @ddd-ts-kit/testing
 
@@ -773,6 +773,12 @@ est ce sous quoi le *fake* est lié. Avec un autre conteneur, `createTestBuses()
 bus sur lesquels enregistrer le gestionnaire. Au niveau 3, le client de `anOrder()` est généré, la ligne
 de la commande est celle que donne la valeur par défaut, et les seules valeurs que le test énonce sont celles
 dont dépend la règle : la commande est payée, puis payée de nouveau.
+
+Quand plusieurs *specs* d'un contexte répètent la mise en place du niveau 2, l'application de test ou
+les bus avec les mêmes *fakes*, elle s'écrit une fois dans `test/worlds/` du contexte :
+`npx ddd-ts-kit generate test-world <context>` écrit `a<Name>World({ now, idPrefix, given })`, qui
+construit chaque *fake* de `test/fakes/`, laisse `given` enregistrer ce dont la *spec* part, et rend
+chaque *fake* sous le nom de son port ([Stratégie de test, mondes](../../docs/concepts/testing-strategy.fr.md#mondes)).
 
 ## Suites de contrat
 

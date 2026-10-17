@@ -3,9 +3,10 @@ name: testing
 description: >-
   Writes readable, refactoring-proof tests for a ddd-ts-kit project. Given / when / then
   for aggregates, real handlers through the test application with fakes, builders for test
-  data, contract suites shared by fakes and adapters, end-to-end specs. Use when writing or
-  reviewing a test, turning it.todo entries into tests, when a test needs data setup, when
-  tempted by vi.mock, vi.fn or a spy, or when a test/* rule is reported.
+  data, worlds for the arrangement several specs share, contract suites shared by fakes and
+  adapters, end-to-end specs. Use when writing or reviewing a test, turning it.todo entries
+  into tests, when a test needs data setup or a shared arrangement, when tempted by vi.mock,
+  vi.fn or a spy, or when a test/* rule is reported.
 allowed-tools:
   - Read
   - Edit
@@ -97,6 +98,29 @@ from its own import: a class handed over alone has no dependency list
 bound by the platform test module or by a `fake(Port, aFake)`, read models of projections
 included.
 
+## Worlds
+
+When a second spec of a context repeats the arrangement of another (the same test application
+or buses, the same fakes), generate a world instead of copying it or writing a helper:
+`npx ddd-ts-kit generate test-world <ctx> [Name]` writes `test/worlds/<name>.world.ts`.
+
+```ts
+const { application, orderRepository } = await anOrderingWorld({
+  modules: [holders],
+  now: NOW,
+  given: async (fakes) => {
+    await fakes.orderRepository.save(anOrder().build());
+  },
+});
+```
+
+It builds every fake of `test/fakes/` and returns each under the name of its port; `given`
+stores the starting state before the application wires the fakes, so the events recorded while
+building it are not announced. The permission, the data and the facts a spec listens to stay in
+the spec. Run it again with `--force` once the context has a new fake. Nothing else goes in
+`test/unit/` or `test/integration/` but specs (`test/helper-placed`): an arrangement is a world,
+test data a builder, an in-memory port a fake.
+
 ## Builders
 
 One per aggregate in `test/builders/` (`generate builder`, written with the aggregate):
@@ -127,4 +151,4 @@ the spec for the behaviour, and let the rate follow. The thresholds of `ddd-ts-k
 are a floor per context and layer, not a goal; a test written to move a number proves nothing.
 
 Finish with `npm test -- <context>`, `npm run test:coverage` before the slice is closed, and
-`npx ddd-ts-kit check --rule test/no-mocks --rule test/builder-required --rule test/spec-required`.
+`npx ddd-ts-kit check --rule test/no-mocks --rule test/builder-required --rule test/spec-required --rule test/helper-placed`.

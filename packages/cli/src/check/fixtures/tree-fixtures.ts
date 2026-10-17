@@ -24,6 +24,7 @@ export const TREE_FIXTURES: readonly Fixture[] = [
         ...handler('export class IssueInvoiceHandler {}\n'),
         [`${BILLING}/infrastructure/messaging/outbox.ts`]: 'export const outbox = 1;\n',
         [`${BILLING}/test/unit/domain/deep/anything.spec.ts`]: SPEC,
+        [`${BILLING}/test/worlds/billing.world.ts`]: 'export const aBillingWorld = 1;\n',
         [`${BILLING}/billing.module.ts`]: 'export const billingModule = {};\n',
       },
       {
@@ -144,6 +145,12 @@ export const TREE_FIXTURES: readonly Fixture[] = [
     name: 'a builder without its suffix',
     expect: { file: `${BILLING}/test/builders/invoice.ts` },
     files: project({ [`${BILLING}/test/builders/invoice.ts`]: 'export const anInvoice = 1;\n' }),
+  },
+  {
+    ruleId: 'naming/suffix',
+    name: 'a world of test/worlds/ without its suffix',
+    expect: { file: `${BILLING}/test/worlds/billing.ts` },
+    files: project({ [`${BILLING}/test/worlds/billing.ts`]: 'export const aBillingWorld = 1;\n' }),
   },
   {
     ruleId: 'naming/suffix',

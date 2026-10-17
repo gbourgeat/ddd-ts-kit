@@ -281,6 +281,7 @@ in the French column is kept in English, because French developers say it that w
 | stack (the choices of `init`) | *stack* |
 | preset (`--preset`, a context written whole) | *preset* (a worked example of a configuration stays « préréglage ») |
 | spec, fake, builder | *spec*, *fake* (double de test), *builder* |
+| world (`test/worlds/`, the arrangement several specs share) | monde |
 | mock, stub, spy | *mock*, *stub*, *spy* |
 | contract suite | suite de contrat |
 | fixture | *fixture* |

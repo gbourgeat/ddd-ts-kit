@@ -613,6 +613,7 @@ Next, in this order: the language of the context first, then the business decisi
 | `context` | `<name> --classification <c> [--purpose "<two sentences>"] [--term ...]... [--upstream <ctx>[:relationship]]... [--preset identity]` | `CONTEXT.md` with its glossary, `published-language/index.ts`, config entry, registration in `platform/compose-application.ts` and in `test/architecture/extractable.spec.ts`; on tsyringe, with HTTP, `presentation/http/<name>.routes.ts` (a function of the two buses, in both styles); declared: the barrel `<name>.declarations.ts`; explicit and hand wiring: `<name>.module.ts`. `application/authorization/<name>.permissions.ts` is born with the first permission, or at once when `platform/auth/permissions.ts` lists the permission sets (rebac, custom). With `--preset`, the context is then written whole from that preset, its classification and purpose those of the preset unless the flags say otherwise ([Presets](#presets)) |
 | `aggregate` | `<context> <Name> [--event-sourced]` | aggregate, builder, spec in given / when / then; with `--event-sourced`, an aggregate on `EventSourcedAggregate` whose state is the replay of its events, born with its `Created` domain event, the codec of its stored events in `infrastructure/persistence/<name>-events.mapper.ts`, a builder that replays a history and a spec given events, and a note naming the `EventSourcedRepository` its repository adapter delegates to |
 | `builder` | `<context> <Aggregate>` | `test/builders/<name>.builder.ts`, a class extending `Builder` |
+| `test-world` | `<context> [Name]` | `test/worlds/<name>.world.ts` (the name defaults to the context): `a<Name>World({ now, idPrefix, given })`, the arrangement several specs of the context share. It reads the fakes of `test/fakes/` and the port each one implements, builds them, hands them to `given` so that the spec stores what it starts from, then to the test application (with `modules`, the authorization of the spec) or, wired by hand, wraps the repositories of the buses of `createTestBuses` with `dispatching`; it returns every fake under the name of its port. A fake that needs constructor arguments, or, under a container, stands for a port nothing binds or depends on yet, is left out with a note |
 | `entity` | `<context> <Name>` | entity, spec |
 | `value-object` (`vo`) | `<context> <Name>` | value object, spec |
 | `vocabulary` | `<context> <Name> --value <value> [--value <value>]...` | `domain/vocabularies/<name>.vocabulary.ts`: an object `as const` of the values, keyed by each value in PascalCase, and the union type of the same name; run again, adds the values the file does not hold |
@@ -751,7 +752,8 @@ Next, in this order: the language of the context first, then the business decisi
   handler spec goes through `createTestApplication` of `@ddd-ts-kit/di` and observes the facts
   announced with the save with `application.domainEvents.on('<name>', ...)`; with hand wiring it
   goes through `createTestBuses()` of `@ddd-ts-kit/testing`, whose `dispatching(fake)` makes the
-  save of a fake announce its events to `domainEvents`.
+  save of a fake announce its events to `domainEvents`. The arrangement several specs of a
+  context share is generated once, `generate test-world`, in `test/worlds/`.
 - `--json` prints `{ dryRun, created, updated, skipped, next, todos, notes }`. `next` lists the
   `TODO(domain)` places as `file:line`, the glossary first, then the lines a command wrote for the
   team to check (the grant of a job); `todos` adds their text.
@@ -976,7 +978,7 @@ ddd-ts-kit list [--context <name>]
 
 `--context` restricts the answer to one context. Contexts with their classification, glossary size, upstreams, aggregates, commands, queries,
 domain events, published events, integration event handlers, scheduled jobs (name, schedule, the
-command each sends; `jobs` in `--json`), builders, permissions, policies, gateways and whether the
+command each sends; `jobs` in `--json`), builders, worlds, permissions, policies, gateways and whether the
 context is deployable alone, then the end-to-end specs. In the declared style the use cases, the
 handlers, the policies, the gateways and the adapters are read from the decorators: a command or a
 query shows what it requires (or `public`), a handler its consumer name and its event, a policy its
@@ -1260,6 +1262,7 @@ const due = handler.isDueNow(new Reminder(new Date('2026-03-01T09:00:00Z'))); //
 | `test/spec-required` | an aggregate, value object, domain service, handler, domain event handler, integration event handler or job without a spec (a `*.result.ts` needs none) |
 | `test/no-mocks` | `vi.mock`, `vi.fn`, `vi.spyOn`, their `jest` twins, or a mocking library in a context's tests |
 | `test/builder-required` | an aggregate without `test/builders/<name>.builder.ts` |
+| `test/helper-placed` | a file of a context's `test/unit/` or `test/integration/` that is not a spec (`*.spec.ts`, `*.test.ts`): it goes to `test/worlds/`, `test/builders/` or `test/fakes/` |
 | `events/name-format` | an event name that is not `<context>.<aggregate>.<fact>` in kebab-case with the right context |
 | `events/name-declared-once` | a class of `domain/events/` without `static readonly eventName`, or whose `readonly name` writes the name again instead of reading it |
 | `events/defined-in-published-language` | `defineIntegrationEvent` outside a published language, without a payload, twice for one version; an event described by hand |

@@ -1,7 +1,7 @@
 import { describe, expect, it } from '{{tests.module}}';
 import { ProvisionAccountCommand } from '{{alias.context}}/application/commands/provision-account/provision-account.command{{alias.ext}}';
 import { anAccount } from '{{alias.context}}/test/builders/account.builder{{alias.ext}}';
-import { arrangeIdentity } from '{{alias.context}}/test/unit/identity-application{{alias.ext}}';
+import { arrangeIdentity } from '{{alias.context}}/test/worlds/{{context.kebab}}.world{{alias.ext}}';
 
 const profile = { email: 'Ada@Example.test', emailVerified: true, displayName: 'Ada Lovelace' };
 

@@ -280,6 +280,50 @@ Rule [`test/builder-required`](../ARCHITECTURE.md#3-dependency-rules). Without b
 change of a constructor edits fifty tests and each test buries its one relevant value under ten
 irrelevant ones.
 
+## Worlds
+
+Several handler specs of a context build the same test application with the same fakes. That
+arrangement is written once, as a world of `test/worlds/`, and generated rather than copied:
+
+```bash
+npx ddd-ts-kit generate test-world scheduling
+```
+
+The generator reads `test/fakes/*.fake.ts`, finds the port each class implements in
+`domain/repositories/` or `application/ports/`, and writes
+`test/worlds/scheduling.world.ts`: `aSchedulingWorld(options)` builds every fake, lets the spec
+store what it starts from, then hands the fakes to the test application and returns it with
+each fake under the name of its port. A spec of the example then reads:
+
+```ts
+// scheduling/test/unit/confirm-appointment.handler.spec.ts
+const { application, appointmentRepository } = await aSchedulingWorld({
+  modules: [holders],
+  now: NOW,
+  given: async (fakes) => {
+    await fakes.appointmentRepository.save(requested);
+  },
+});
+```
+
+- **What it takes.** `now` and `idPrefix` go to the test application; `modules` adds what the
+  spec brings, its authorization module (by default no role holds a permission); `given`
+  receives the fakes before the application wires them, so the events recorded while building
+  the stored aggregates are not announced as if a command had just run.
+- **Without an injection container** (`createTestBuses`), the world returns the buses and the
+  fakes, each repository wrapped by `dispatching`, and the spec registers the handler it tests.
+- **What it leaves out, and says so.** A fake whose constructor needs an argument (a reader that
+  answers what the spec gives it), and, under a container, the fake of a port that nothing binds
+  or depends on yet: the test application would refuse it. Run the generator again with
+  `--force` when the context gained a fake.
+- **What stays in the spec.** The permission it exercises, the data it starts from (built by the
+  builders) and the facts it listens to. A world holds no test data.
+
+A helper written among the specs instead, `test/unit/scheduling-application.ts`, is reported by
+[`test/helper-placed`](../ARCHITECTURE.md#3-dependency-rules), a warning: `test/unit/` and
+`test/integration/` hold specs, and a shared arrangement, test data or an in-memory port each
+has its place (`test/worlds/`, `test/builders/`, `test/fakes/`).
+
 ## Given / when / then
 
 An aggregate spec is a scenario: a built state (or past events), one intention, then the

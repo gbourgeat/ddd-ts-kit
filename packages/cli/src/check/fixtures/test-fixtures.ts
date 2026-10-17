@@ -7,6 +7,7 @@ import { project } from './project.js';
 import { SAMPLES } from './samples.js';
 
 const { AGGREGATE, AGGREGATE_SPEC, BILLING, BUILDER, CATALOG, HANDLER, HANDLER_SPEC } = PATHS;
+const WORLD = `${BILLING}/test/worlds/billing.world.ts`;
 const { SPEC } = SAMPLES;
 const REMINDER_SERVICE = `${BILLING}/domain/services/reminder.service.ts`;
 
@@ -118,5 +119,29 @@ export const TEST_FIXTURES: readonly Fixture[] = [
     name: 'an aggregate without a builder',
     expect: { file: AGGREGATE },
     files: project({ [AGGREGATE]: 'export class Invoice {}\n', [AGGREGATE_SPEC]: SPEC }),
+  },
+  {
+    ruleId: 'test/helper-placed',
+    name: 'specs, a declaration file, and a world, a builder and a fake in their places',
+    expect: 'pass',
+    files: project({
+      [HANDLER]: 'export class IssueInvoiceHandler {}\n',
+      [HANDLER_SPEC]: SPEC,
+      [`${BILLING}/test/integration/deep/invoice.repository.test.ts`]: SPEC,
+      [`${BILLING}/test/unit/globals.d.ts`]: 'export {};\n',
+      [WORLD]: 'export const aBillingWorld = 1;\n',
+      [BUILDER]: 'export const anInvoice = 1;\n',
+      [`${BILLING}/test/fakes/payment-gateway.fake.ts`]: 'export class FakePaymentGateway {}\n',
+    }),
+  },
+  {
+    ruleId: 'test/helper-placed',
+    name: 'an arrangement several specs import, written among them',
+    expect: { file: `${BILLING}/test/unit/billing-application.ts` },
+    files: project({
+      [HANDLER]: 'export class IssueInvoiceHandler {}\n',
+      [HANDLER_SPEC]: SPEC,
+      [`${BILLING}/test/unit/billing-application.ts`]: 'export const arrangeBilling = 1;\n',
+    }),
   },
 ];
