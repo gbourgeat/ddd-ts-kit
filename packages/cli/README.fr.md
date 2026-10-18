@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:df4712a9a18c12d4 -->
+<!-- translation-of: README.md sha256:e0cc9ee5149d8f81 -->
 
 # ddd-ts-kit
 
@@ -1595,7 +1595,7 @@ ajoute, `lint` ce qu'elle ajoute à ESLint ; les *pipelines* générés câblent
 
 ```
 ddd-ts-kit check [paths...] [--rule <id>]... [--format text|json|github|gitlab]
-                 [--changed-since <git-ref>] [--self]
+                 [--changed-since <git-ref>] [--explain] [--self]
 ddd-ts-kit check --clean-only <dir>... [--rule <id>]... [--format text|json|github]
 ddd-ts-kit check --commit-size [--staged] [--strict]
 ```
@@ -1658,6 +1658,12 @@ règle.
 - `paths` et `--changed-since` limitent ce qui est signalé, pas ce qui est analysé.
   `--changed-since` lance `git diff --name-only --relative <ref>...` dans le projet.
 - `--format github` affiche des annotations `::error file=...,line=...::`.
+- `--explain` fait suivre les violations de chaque règle qu'elles signalent, une fois, avec sa
+  description et la raison de son existence (comme `explain` l'affiche, sans les exemples), et
+  ajoute en JSON un tableau `explanations`. Avec `--format github` ou `gitlab`, la raison va à la
+  place à la fin du message de chaque annotation : une *pull request* montre une annotation seule
+  sur sa ligne, et un rapport Code Quality n'a pas de place pour du texte à côté de ses problèmes.
+  Les empreintes restent les mêmes.
 - `--format gitlab` affiche un rapport Code Quality de GitLab : un problème par violation,
   `major` pour une erreur et `minor` pour un avertissement, avec une empreinte qui ne dépend pas
   de la ligne.

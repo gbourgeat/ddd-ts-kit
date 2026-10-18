@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:f9e4aa433089ae95 -->
+<!-- translation-of: commands.md sha256:c43d7178bc60ee7c -->
 
 # Quelle commande, quand
 
@@ -127,7 +127,7 @@ La tranche est finie quand `todo ordering` n'en liste plus rien.
 | Commande ou *skill* | Fait | Quand | Produit | Ensuite |
 |---|---|---|---|---|
 | `npx ddd-ts-kit verify-slice <context> --since <ref>` | en une passe : `npm run regenerate`, les règles d'architecture sur les fichiers modifiés depuis la référence (nouveaux compris), les tests du contexte, les fusions depuis la référence (contrôlées comme le fait `verify-merge`, signalées sans faire échouer la tranche dans cette version), les fichiers modifiés proches de la limite de 350 lignes | avant le commit d'une tranche, à relancer jusqu'à ce qu'elle passe | chaque étape avec sa cause, puis les chemins de la tranche à indexer, tout autre chemin modifié, laissé de côté et jamais indexé avec elle, et les noms que la tranche retire et que la conception d'une ligne non terminée cite encore (jamais un échec) | le commit de la tranche, des seuls chemins qu'elle liste à indexer ; ces noms vont au chef d'orchestre, en notes |
-| `npx ddd-ts-kit check --changed-since <ref>` | les règles d'architecture sur ce qui a changé | pendant l'itération | des violations avec leur correction | `npx ddd-ts-kit explain <rule-id>` quand l'une n'est pas claire |
+| `npx ddd-ts-kit check --changed-since <ref>` | les règles d'architecture sur ce qui a changé | pendant l'itération | des violations avec leur correction, puis, avec `--explain`, la raison de chaque règle signalée, une fois | `npx ddd-ts-kit explain <rule-id>` quand l'une n'est pas claire |
 | `npm run regenerate` (`npx ddd-ts-kit depcruise-config --write`, puis `npm run docs:generate`, qui lance `npx ddd-ts-kit docs`) | régénère tous les fichiers dérivés : `.dependency-cruiser.cjs`, la carte des contextes, les listes des `CONTEXT.md`, les *barrels* et les contrats | après un changement d'une route, d'un schéma, d'un événement ou de la configuration | les fichiers générés, commités avec le code | `/ddd-ts-kit:commit-discipline` |
 | `/ddd-ts-kit:commit-discipline`, `npx ddd-ts-kit check --commit-size --staged` | une tranche par *commit*, sa taille comparée à la configuration | avant `git commit` (le *hook* lance le contrôle) | un message `<type>(<context>): ...` | la tranche suivante |
 
@@ -282,7 +282,7 @@ Usage
   ddd-ts-kit controllers [<context>] [--dry-run]
   ddd-ts-kit value-objects [--dry-run]
   ddd-ts-kit affected [--base <git-ref>] [--head <git-ref>] [--format text|json|github|env]
-  ddd-ts-kit check [paths...] [--rule <id>]... [--format text|json|github|gitlab] [--changed-since <git-ref>] [--self]
+  ddd-ts-kit check [paths...] [--rule <id>]... [--format text|json|github|gitlab] [--changed-since <git-ref>] [--explain] [--self]
   ddd-ts-kit check --clean-only <dir>... [--rule <id>]... [--format text|json|github]
   ddd-ts-kit check --commit-size [--staged] [--strict]
   ddd-ts-kit check-file <path>
@@ -490,6 +490,9 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
   --commit-size    the files and lines about to be committed against "commit" in the config (20 files and
                    600 lines by default, generated files not counted); --staged reads the index only;
                    advisory, --strict exits 1 when over
+  --explain        check follows the violations with the reason of each rule they report, once per rule, as
+                   explain gives it without its examples ("explanations" in JSON); with github and gitlab, each
+                   annotation carries the reason of its rule, a pull request showing an annotation on its own
   --stored-events  docs records the shape of each version of the stored events in stored-events.lock.json,
                    never rewriting a recorded one: run it once the shape of a version is the one to store;
                    docs --check fails while a declared version is not recorded

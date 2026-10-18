@@ -293,6 +293,7 @@ and on a laptop, `npm run ci:arch`, which runs both.
 | Gates | the same `ci:*` scripts | the same `ci:*` scripts |
 | Lint and architecture findings | annotations on the pull request (`check --format github`) | Code Quality reports (`check --format gitlab` writes the report directly; ESLint through its GitLab formatter) |
 | A lint warning | fails the lint job (`ci:lint` runs `ddd-ts-kit lint`; a rule of the kit in transition is shown without failing) | fails the lint job, and is in the Code Quality report |
+| The reason of a rule, for the reviewer | `check --format github --explain`: each annotation ends with it | `check --format gitlab --explain`: each issue ends with it, the fingerprints unchanged |
 | Test reports | the Vitest reporter for Actions, coverage as an artifact | JUnit and Cobertura reports in the merge request |
 | Secrets scan | gitleaks | gitleaks |
 | Image build without push | the Docker build action | BuildKit rootless |
@@ -318,7 +319,8 @@ From [`pipeline/README.md`](../../pipeline/README.md), the
 [ESLint plugin README](../../packages/eslint-plugin/README.md):
 
 - **Checker.** No runtime dependency. Each violation has a rule id, a severity, a location and
-  a `fix` sentence; `explain <rule-id>` gives the reason with a bad and a good example. Output
+  a `fix` sentence; `explain <rule-id>` gives the reason with a bad and a good example, and
+  `check --explain` the reason of each rule a run reports, once. Output
   formats for people, JSON, GitHub annotations and GitLab Code Quality. A generation test
   produces every kind for every stack and requires zero violation, so generator and checker
   cannot disagree.

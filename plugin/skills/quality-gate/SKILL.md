@@ -109,7 +109,8 @@ infrastructure 70/60/70/70, as statements/branches/functions/lines).
 ## Read a violation
 
 Each carries a rule id, a `file:line`, a message and a `fix` sentence. Open that file at that
-line only. `npx ddd-ts-kit explain <rule-id>` gives the reason and a good and a bad example.
+line only. `npx ddd-ts-kit explain <rule-id>` gives the reason and a good and a bad example;
+`check --explain` adds the reason of every rule a run reports, once each, without a call per rule.
 
 | Rule family | Usual root cause | Fix |
 |---|---|---|

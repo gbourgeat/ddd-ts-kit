@@ -1,5 +1,5 @@
 [English](static-analysis-and-pipeline.md) · **Français**
-<!-- translation-of: static-analysis-and-pipeline.md sha256:f669d89a6471abc2 -->
+<!-- translation-of: static-analysis-and-pipeline.md sha256:51fda6e95ede6d47 -->
 
 # L'analyse statique et le pipeline
 
@@ -302,6 +302,7 @@ et sur un poste de travail, `npm run ci:arch`, qui lance les deux.
 | Portes | les mêmes scripts `ci:*` | les mêmes scripts `ci:*` |
 | Constats de lint et d'architecture | des annotations sur la *pull request* (`check --format github`) | des rapports Code Quality (`check --format gitlab` écrit directement le rapport ; ESLint par son formateur GitLab) |
 | Un avertissement de lint | fait échouer le *job* de lint (`ci:lint` lance `ddd-ts-kit lint` ; une règle du kit en transition est affichée sans échouer) | fait échouer le *job* de lint, et figure dans le rapport Code Quality |
+| La raison d'une règle, pour qui relit | `check --format github --explain` : chaque annotation se termine par elle | `check --format gitlab --explain` : chaque problème se termine par elle, les empreintes inchangées |
 | Rapports de tests | le *reporter* Vitest pour Actions, la couverture comme artefact | des rapports JUnit et Cobertura dans la *merge request* |
 | Recherche de secrets | gitleaks | gitleaks |
 | Construction d'image sans *push* | l'action Docker de *build* | BuildKit sans privilèges (rootless) |
@@ -329,7 +330,8 @@ D'après [`pipeline/README.md`](../../pipeline/README.md), le
 
 - **Le *checker*.** Aucune dépendance à l'exécution. Chaque violation a un identifiant de règle,
   une sévérité, un emplacement et une phrase `fix` ; `explain <rule-id>` en donne la raison avec
-  un mauvais et un bon exemple. Des formats de sortie pour les personnes, JSON, les annotations
+  un mauvais et un bon exemple, et `check --explain` la raison de chaque règle qu'une exécution
+  signale, une fois. Des formats de sortie pour les personnes, JSON, les annotations
   GitHub et GitLab Code Quality. Un test de génération produit chaque sorte de fichier pour chaque
   *stack* et exige zéro violation, si bien que le générateur et le *checker* ne peuvent pas être
   en désaccord.

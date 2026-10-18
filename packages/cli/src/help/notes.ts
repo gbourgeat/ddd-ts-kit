@@ -197,6 +197,9 @@ export const NOTES = `  affected         what a pull request has to run: the con
   --commit-size    the files and lines about to be committed against "commit" in the config (20 files and
                    600 lines by default, generated files not counted); --staged reads the index only;
                    advisory, --strict exits 1 when over
+  --explain        check follows the violations with the reason of each rule they report, once per rule, as
+                   explain gives it without its examples ("explanations" in JSON); with github and gitlab, each
+                   annotation carries the reason of its rule, a pull request showing an annotation on its own
   --stored-events  docs records the shape of each version of the stored events in stored-events.lock.json,
                    never rewriting a recorded one: run it once the shape of a version is the one to store;
                    docs --check fails while a declared version is not recorded
