@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import type { Scan } from '../scan/scan.js';
-import { declaredShape } from './declared-shape.js';
+import { declaredShape, type ShapeReading } from './declared-shape.js';
 import type { StoredShape } from './stored-shape.js';
 
 /**
@@ -18,7 +18,23 @@ const KIT_STORED_TYPES = new Set(['PersonalValue']);
  * changes would not move the fingerprint. `undefined` when the file declares no such type.
  */
 export function readStoredShape(scan: Scan, typeName: string): StoredShape | undefined {
-  const root = declaredShape(scan, typeName);
+  const current = fingerprinted(scan, typeName, 'current');
+
+  if (current === undefined) {
+    return undefined;
+  }
+
+  const former = fingerprinted(scan, typeName, '0.82')?.fingerprint;
+
+  return { ...current, formerFingerprint: former === current.fingerprint ? undefined : former };
+}
+
+function fingerprinted(
+  scan: Scan,
+  typeName: string,
+  reading: ShapeReading,
+): Omit<StoredShape, 'formerFingerprint'> | undefined {
+  const root = declaredShape(scan, typeName, reading);
 
   if (root === undefined) {
     return undefined;
@@ -36,7 +52,7 @@ export function readStoredShape(scan: Scan, typeName: string): StoredShape | und
 
     seen.add(name);
 
-    const shape = declaredShape(scan, name);
+    const shape = declaredShape(scan, name, reading);
 
     if (shape === undefined) {
       unresolved.push(name);

@@ -74,7 +74,7 @@ function missingUpcasters({ eventClass, version, upcasters, line }: StoredEventD
 }
 
 function changedShape(declaration: StoredEventDeclaration, lock: StoredEventsLock): Finding[] {
-  const { name, eventClass, version, fingerprint, line } = declaration;
+  const { name, eventClass, version, line } = declaration;
   const recorded = name === undefined ? {} : (lock[name] ?? {});
   const latest = Math.max(0, ...Object.keys(recorded).map(Number));
 
@@ -90,7 +90,18 @@ function changedShape(declaration: StoredEventDeclaration, lock: StoredEventsLoc
 
   const stored = version === undefined ? undefined : recorded[String(version)];
 
-  return stored !== undefined && fingerprint !== undefined && stored !== fingerprint
-    ? [{ line, message: `The stored shape of ${eventClass} in version ${version ?? 0} changed.`, fix: NEW_VERSION_FIX }]
-    : [];
+  return stored === undefined || isSameShape(stored, declaration)
+    ? []
+    : [
+        {
+          line,
+          message: `The stored shape of ${eventClass} in version ${version ?? 0} changed.`,
+          fix: NEW_VERSION_FIX,
+        },
+      ];
+}
+
+/** A version recorded by 0.82.0 or earlier holds the fingerprint of that reading until `docs --stored-events` records it again. */
+function isSameShape(stored: string, { fingerprint, formerFingerprint }: StoredEventDeclaration): boolean {
+  return fingerprint === undefined || stored === fingerprint || stored === formerFingerprint;
 }
