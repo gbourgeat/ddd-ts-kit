@@ -32,8 +32,10 @@ export function parseConfig(raw: unknown): Config {
 
   const sourceRoot = posix(text(raw['sourceRoot'], 'src'));
   const stack = parseStack(isRecord(raw['stack']) ? raw['stack'] : {});
+  const initVersion = raw['initVersion'];
 
   return {
+    initVersion: typeof initVersion === 'string' ? initVersion : undefined,
     sourceRoot,
     contextsDir: posix(text(raw['contextsDir'], `${sourceRoot}/contexts`)),
     sharedKernelDir: posix(text(raw['sharedKernelDir'], `${sourceRoot}/shared-kernel`)),
