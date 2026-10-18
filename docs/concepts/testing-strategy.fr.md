@@ -1,5 +1,5 @@
 [English](testing-strategy.md) · **Français**
-<!-- translation-of: testing-strategy.md sha256:3f9b8df7dffc35cc -->
+<!-- translation-of: testing-strategy.md sha256:a7c5a362445278d2 -->
 
 # Stratégie de test
 
@@ -413,7 +413,20 @@ le démarre une fois par exécution et enregistre son cluster initialisé ; chaq
 copie au lieu de lancer son propre initdb, la partie lente du démarrage, si bien qu'une machine
 chargée ne fait plus dépasser son délai au *hook* qui ouvre la base. Chaque *spec* crée encore ses
 tables sur cette copie : le code des contextes qui les crée reste exécuté, et mesuré, comme avant.
-Avec Jest, chaque *spec* initialise encore le sien.
+Mesuré avec PGlite 0.5.9 sur une machine au repos (2026-10-18, cinq exécutions chacune) : un
+initdb prend environ 770 ms, ouvrir une copie du cluster enregistré environ 170 ms, et créer vingt
+tables avec leurs clés et leurs index sur elle environ 25 ms. Enregistrer aussi les tables dans
+la copie épargnerait ces 25 ms et laisserait non exécuté le code qui les crée : ce n'est pas
+fait. Contre un serveur (une URL), la base est migrée à l'avance et chaque *spec* ne fait que
+vider ses tables : une base modèle n'épargnerait rien.
+
+Avec Jest, chaque *spec* initialise encore le sien. Une mise en place globale de Jest se charge
+comme un module ES sous `--experimental-vm-modules`, et aucune exécution de bout en bout du kit ne
+tient un projet Jest avec une base de données : la copie n'est pas proposée là où rien ne
+verrait qu'elle casse. Un projet Jest qui en a besoin peut écrire la même mise en place globale
+(`globalSetup` et `globalTeardown` de `jest.config.js`) qui définit `TEST_DATABASE_TEMPLATE`, et
+ouvrir la copie dans `src/platform/database/open-test-database.ts` comme le fait le fichier
+généré pour Vitest.
 
 Ce qui se passe après la réponse (l'outbox relayée, les gestionnaires qu'elle atteint, ce qu'ils
 enregistrent à leur tour) s'attend avec `await application.settled()`, puis se vérifie aussitôt.
