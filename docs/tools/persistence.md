@@ -8,8 +8,9 @@ transactions belong to the application through the `UnitOfWork` port. The kit sh
 three pieces for four libraries (a unit of work with an ambient transaction, an outbox store, a
 processed-event store), all held to the same contract suites. What differs is how each library
 handles transactions, migrations, type safety and raw SQL, and how far each adapter was
-actually tested: PostgreSQL is covered by the automated suites for all four, MySQL 8 and
-SQLite were run by hand once for three of them, and nothing else was run at all.
+actually tested: PostgreSQL is covered by the automated suites for all four, SQLite by those
+of the Knex stores, MySQL 8 and SQLite were otherwise run by hand once for three of them, and
+nothing else was run at all.
 
 ## What the application asks of persistence
 
@@ -394,13 +395,13 @@ choose it: [Event sourcing, per aggregate](../concepts/event-sourcing.md).
 |---|---|---|---|---|
 | PostgreSQL | automated: contract suites on PGlite (in process); works with node-postgres, postgres-js, PGlite, Neon drivers | automated on PGlite over the wire protocol, and on a real server when a URL is given (last run: PostgreSQL 18): contracts, rollback, nested unit of work, concurrent claims | same as Knex, through `@prisma/adapter-pg`, both claim strategies | same as Knex |
 | MySQL 8 | not provided: the package is PostgreSQL only | by hand, once, against 8.4: outbox and processed-event contracts, rollback of `append` | by hand, once, against 8.4 through `@prisma/adapter-mariadb` | by hand, once, against 8.4 |
-| SQLite | not provided | by hand, once (`better-sqlite3`); no `SKIP LOCKED`, no schemas | by hand, once, outbox contract only; the processed-event store needs a custom delegate | by hand, once; no `SKIP LOCKED`, no schemas |
+| SQLite | not provided | automated, in the unit run: outbox and processed-event contracts on an in-memory database (`better-sqlite3`); no `SKIP LOCKED`, no schemas | by hand, once, outbox contract only; the processed-event store needs a custom delegate | by hand, once; no `SKIP LOCKED`, no schemas |
 | MariaDB, CockroachDB, SQL Server, Oracle | not provided | never run | CockroachDB, SQL Server never run | never run |
 | MongoDB | not provided | not applicable | never run | never run |
 | Library version tested | not stated in the README | not stated | Prisma 7.10; the peer range admits 6, on which nothing was run | TypeORM 1.1; the peer range admits 0.3, on which nothing was run |
 
 "By hand, once" is the READMEs' own wording: those suites are not in CI, so a regression on
-MySQL or SQLite would not be caught by the kit.
+MySQL, or on SQLite outside the Knex stores, would not be caught by the kit.
 
 ### What the generator and the other packages add
 
@@ -421,9 +422,9 @@ From [`packages/cli/README.md`](../../packages/cli/README.md) and
 
 | Database | Position in this kit | What you lose or must check |
 |---|---|---|
-| PostgreSQL | the default and the only one in the automated suites | nothing |
+| PostgreSQL | the default, and the only one in the automated suites of every adapter | nothing |
 | MySQL 8 | stores run by hand once (Knex, Prisma, TypeORM) | no generated persistence, no SQL audit trail; `DATETIME` without time zone under Knex; no `SKIP LOCKED` on 5.7; one schema per context becomes one database or a table prefix |
-| SQLite | stores run by hand once | no schemas, compare-and-set claim, single writer: tests and tools, not several instances |
+| SQLite | Knex stores automated in the unit run, the others run by hand once | no schemas, compare-and-set claim, single writer: tests and tools, not several instances |
 | MongoDB, others | no adapter | `stack.orm: custom`: your own unit of work (its `run` built on `withinUnitOfWork` of the kernel), outbox store and processed-event store, each passing the contract suites; without multi-document transactions the outbox guarantee is not available |
 
 `stack.database` accepts `postgres`, `mysql`, `sqlite`, `mongodb` and `none`

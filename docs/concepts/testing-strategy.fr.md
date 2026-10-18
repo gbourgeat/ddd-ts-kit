@@ -1,5 +1,5 @@
 [English](testing-strategy.md) · **Français**
-<!-- translation-of: testing-strategy.md sha256:a7c5a362445278d2 -->
+<!-- translation-of: testing-strategy.md sha256:22f9fe50741b1565 -->
 
 # Stratégie de test
 
@@ -538,7 +538,8 @@ test: { coverage: { provider: 'v8', ...governedCoverage(mode) } } // depuis @ddd
 - **PostgreSQL dans le processus n'est pas le serveur de production.** Les *specs* rapides des
   adaptateurs s'exécutent sur PGlite ; une dernière exécution d'intégration contre le vrai serveur
   reste nécessaire, et les README des adaptateurs d'ORM disent que MySQL et SQLite sont hors de la
-  suite automatisée.
+  suite automatisée, sauf les registres de Knex, tenus à leurs suites de contrat sur une base
+  SQLite en mémoire dans l'exécution unitaire.
 - **Les règles d'existence vérifient des fichiers, pas leur contenu.** `test/spec-required` et
   `test/builder-required` vérifient que le fichier existe ; une *spec* qui ne contient que des
   `it.todo` les satisfait. Des *todos* restants signifient que le travail n'est pas fini.

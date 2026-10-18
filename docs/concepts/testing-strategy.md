@@ -513,7 +513,8 @@ test: { coverage: { provider: 'v8', ...governedCoverage(mode) } } // from @ddd-t
   bug comes from such a gap, add the case to the suite, not only to one adapter.
 - **In-process PostgreSQL is not the production server.** Fast adapter specs run on PGlite; a
   final integration run against the real server remains necessary, and the READMEs of the ORM
-  adapters state that MySQL and SQLite are outside the automated suite.
+  adapters state that MySQL and SQLite are outside the automated suite, except the Knex stores,
+  held to their contract suites on an in-memory SQLite database in the unit run.
 - **The existence rules check files, not content.** `test/spec-required` and
   `test/builder-required` verify that the file exists; a spec holding only `it.todo` satisfies
   them. Leftover todos mean the work is not done.
