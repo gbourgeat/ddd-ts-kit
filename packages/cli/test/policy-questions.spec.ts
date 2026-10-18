@@ -98,3 +98,99 @@ describe('a policy and the use cases of its permission', () => {
     expect(cli(project, 'check', '--rule', 'authz/policy-asked').code).toBe(1);
   });
 });
+
+describe('a policy and the use cases of its permission, beyond a plain command', () => {
+  const QUERY = `${BILLING}/application/queries/get-invoice/get-invoice.handler.ts`;
+  const READ = ['--term', 'Get=To read one element'];
+  const MODULE = `${BILLING}/billing.module.ts`;
+
+  function explicit(): string {
+    const project = tempDir('policy-questions-explicit');
+
+    expect(cli(project, 'init', '--style', 'explicit', '--context', 'billing:core').code).toBe(0);
+
+    return project;
+  }
+
+  it('writes again a command on an aggregate and a plain query, and leaves a search that asks its scope', () => {
+    const project = billing();
+
+    generate(project, 'aggregate', 'billing', 'Invoice', ...TERMS);
+
+    generate(
+      project,
+      'command',
+      'billing',
+      'CancelInvoice',
+      '--permission',
+      'invoice.cancel',
+      '--aggregate',
+      'Invoice',
+      ...TERMS,
+    );
+
+    generate(project, 'query', 'billing', 'GetInvoice', '--permission', 'invoice.cancel', ...TERMS, ...READ);
+
+    generate(
+      project,
+      'query',
+      'billing',
+      'SearchInvoices',
+      '--permission',
+      'invoice.cancel',
+      '--search',
+      ...TERMS,
+      '--term',
+      'Search=To find elements',
+    );
+
+    generate(project, 'policy', 'billing', 'OnlyIssuerCancels', '--permission', 'invoice.cancel');
+
+    expect(read(project, HANDLER)).toContain(
+      "    await this.access.authorize(command.actor, billingPermissions['invoice.cancel'], command);",
+    );
+
+    expect(read(project, QUERY)).toContain(
+      "    await this.access.authorize(query.actor, billingPermissions['invoice.cancel'], query);",
+    );
+
+    expect(read(project, `${BILLING}/application/queries/search-invoices/search-invoices.handler.ts`)).not.toContain(
+      'TODO(domain): a policy refines',
+    );
+
+    expect(read(project, `${BILLING}/billing.declarations.ts`)).toContain(
+      'injected(GetInvoiceHandler, [GetInvoiceReader, Access]);',
+    );
+  });
+
+  it('writes again the registration of a query of a project in the explicit style', () => {
+    const project = explicit();
+
+    generate(project, 'query', 'billing', 'GetInvoice', '--permission', 'invoice.cancel', ...TERMS, ...READ);
+    generate(project, 'policy', 'billing', 'OnlyIssuerCancels', '--permission', 'invoice.cancel');
+
+    expect(read(project, MODULE)).toContain('.handledBy(GetInvoiceHandler, [GetInvoiceReader, Access]);');
+    expect(read(project, MODULE)).toMatch(/import \{ Access \} from '@ddd-ts-kit\/auth';/);
+
+    expect(read(project, QUERY)).toContain(
+      "await this.access.authorize(query.actor, billingPermissions['invoice.cancel'], query);",
+    );
+  });
+
+  it('leaves only a marker in a query whose registration the team changed', () => {
+    const project = explicit();
+
+    generate(project, 'query', 'billing', 'GetInvoice', '--permission', 'invoice.cancel', ...TERMS, ...READ);
+
+    const changed = read(project, MODULE).replace('[GetInvoiceReader]);', '[GetInvoiceReader, Clock]);');
+
+    write(project, MODULE, changed);
+    generate(project, 'policy', 'billing', 'OnlyIssuerCancels', '--permission', 'invoice.cancel');
+
+    expect(read(project, QUERY)).toContain(
+      "// TODO(domain): a policy refines billingPermissions['invoice.cancel']: load the element this query acts on",
+    );
+
+    expect(read(project, MODULE)).toBe(changed);
+  });
+});

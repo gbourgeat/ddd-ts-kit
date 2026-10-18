@@ -1,7 +1,10 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { checkJsonOf } from './check-support.js';
 import { cli, exists, read, scaffoldEverything, tempDir, write } from './helpers.js';
-import { report } from './reports.js';
+import { type Report, report } from './reports.js';
+import { initProject } from './support/init-project.js';
 
 const BILLING = 'src/contexts/billing';
 const AGGREGATE = `${BILLING}/domain/aggregates/ledger.aggregate.ts`;
@@ -148,5 +151,53 @@ describe('docs --stored-events', () => {
     ).toEqual([
       expect.objectContaining({ file: CODEC, message: 'The stored shape of LedgerCredited in version 1 changed.' }),
     ]);
+  });
+});
+
+describe('generate domain-event on an event-sourced aggregate reshaped by hand', () => {
+  const TERMS = [
+    '--term',
+    'Ledger=The payments of a customer',
+    '--term',
+    'Create=To open',
+    '--term',
+    'Credit=To add money',
+  ];
+
+  function ledger(): string {
+    const project = initProject('--context', 'billing:core');
+    const generated = cli(project, 'generate', 'aggregate', 'billing', 'Ledger', '--event-sourced', ...TERMS);
+
+    expect(generated.code, generated.stderr).toBe(0);
+
+    return project;
+  }
+
+  function credited(project: string): Report {
+    return report(cli(project, 'generate', 'domain-event', 'billing', 'Ledger', 'Credited', ...TERMS, '--json'));
+  }
+
+  const NOTE = 'Ledger is event-sourced: add LedgerCredited to the union of its events';
+
+  it('says what to write when the aggregate has no appliers() it can read', () => {
+    const project = ledger();
+    const reshaped = read(project, AGGREGATE).replace('protected appliers(', 'protected handlers(');
+
+    write(project, AGGREGATE, reshaped);
+
+    expect(credited(project).notes.join('\n')).toContain(NOTE);
+    expect(read(project, AGGREGATE)).toBe(reshaped);
+  });
+
+  it('says what to write when the codec of the stored events is gone or was reshaped', () => {
+    const gone = ledger();
+    const reshaped = ledger();
+
+    fs.rmSync(path.join(gone, CODEC));
+    write(reshaped, CODEC, read(reshaped, CODEC).replaceAll('\n/**', '\n/*'));
+
+    expect(credited(gone).notes.join('\n')).toContain(NOTE);
+    expect(credited(reshaped).notes.join('\n')).toContain(NOTE);
+    expect(read(reshaped, AGGREGATE)).not.toContain('LedgerCredited');
   });
 });
