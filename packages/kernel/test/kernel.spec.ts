@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   AggregateRoot,
+  Entity,
   InMemoryEventBus,
   InMemoryProcessedEventStore,
   ValueObject,
@@ -14,6 +15,41 @@ import {
 class Money extends ValueObject<{ amount: number; currency: string }> {
   static of(amount: number, currency: string): Money {
     return new Money({ amount, currency });
+  }
+}
+
+class Price extends ValueObject<{ amount: number; currency: string }> {
+  static of(amount: number, currency: string): Price {
+    return new Price({ amount, currency });
+  }
+}
+
+class Slot extends ValueObject<{
+  startsAt: Date;
+  attendees: readonly string[];
+  place: Readonly<Record<string, string | number>> | null;
+}> {
+  static of(
+    startsAt: Date,
+    attendees: readonly string[],
+    place: Readonly<Record<string, string | number>> | null,
+  ): Slot {
+    return new Slot({ startsAt, attendees, place });
+  }
+}
+
+class Patient extends Entity {
+  constructor(
+    id: string,
+    readonly name: string,
+  ) {
+    super(id);
+  }
+}
+
+class Practitioner extends Entity {
+  constructor(id: string) {
+    super(id);
   }
 }
 
@@ -39,6 +75,57 @@ describe('ValueObject', () => {
   it('compares by value and by type', () => {
     expect(Money.of(5, 'EUR').equals(Money.of(5, 'EUR'))).toBe(true);
     expect(Money.of(5, 'EUR').equals(Money.of(6, 'EUR'))).toBe(false);
+  });
+
+  it('is never equal to nothing, nor to a value object of another type holding the same values', () => {
+    expect(Money.of(5, 'EUR').equals(undefined)).toBe(false);
+    expect(Money.of(5, 'EUR').equals(null)).toBe(false);
+    expect(Money.of(5, 'EUR').equals(Price.of(5, 'EUR'))).toBe(false);
+  });
+
+  it('compares instants by time, lists item by item and nested records key by key', () => {
+    const slot = Slot.of(new Date('2026-10-01T08:00:00Z'), ['ada', 'grace'], { room: 'B', floor: 2 });
+
+    expect(slot.equals(Slot.of(new Date('2026-10-01T08:00:00Z'), ['ada', 'grace'], { room: 'B', floor: 2 }))).toBe(
+      true,
+    );
+
+    expect(slot.equals(Slot.of(new Date('2026-10-01T09:00:00Z'), ['ada', 'grace'], { room: 'B', floor: 2 }))).toBe(
+      false,
+    );
+
+    expect(slot.equals(Slot.of(new Date('2026-10-01T08:00:00Z'), ['grace', 'ada'], { room: 'B', floor: 2 }))).toBe(
+      false,
+    );
+
+    expect(slot.equals(Slot.of(new Date('2026-10-01T08:00:00Z'), ['ada'], { room: 'B', floor: 2 }))).toBe(false);
+    expect(slot.equals(Slot.of(new Date('2026-10-01T08:00:00Z'), ['ada', 'grace'], { room: 'B' }))).toBe(false);
+
+    expect(slot.equals(Slot.of(new Date('2026-10-01T08:00:00Z'), ['ada', 'grace'], { room: 'B', wing: 2 }))).toBe(
+      false,
+    );
+
+    expect(slot.equals(Slot.of(new Date('2026-10-01T08:00:00Z'), ['ada', 'grace'], null))).toBe(false);
+  });
+
+  it('serializes as its values, which cannot be changed', () => {
+    const money = Money.of(5, 'EUR');
+
+    expect(JSON.stringify(money)).toBe('{"amount":5,"currency":"EUR"}');
+    expect(Object.isFrozen(money.toJSON())).toBe(true);
+  });
+});
+
+describe('Entity', () => {
+  it('is equal to an entity of the same type and the same id, whatever else it holds', () => {
+    expect(new Patient('p1', 'Ada').equals(new Patient('p1', 'Ada Lovelace'))).toBe(true);
+    expect(new Patient('p1', 'Ada').equals(new Patient('p2', 'Ada'))).toBe(false);
+  });
+
+  it('is never equal to nothing, nor to an entity of another type with the same id', () => {
+    expect(new Patient('p1', 'Ada').equals(undefined)).toBe(false);
+    expect(new Patient('p1', 'Ada').equals(null)).toBe(false);
+    expect(new Patient('p1', 'Ada').equals(new Practitioner('p1'))).toBe(false);
   });
 });
 
