@@ -370,7 +370,8 @@ exists and any edit of a generated file (the three contracts, the barrel,
 `.dependency-cruiser.cjs`), and asks before a change of the governed files (the config, the
 lint, test, compiler and pipeline configuration). For its `context-builder` agent it goes
 further: with a `.ddd-ts-kit/worker.json` in the worktree, a write outside
-`src/contexts/<context>/` and the end-to-end specs is refused, and so are a generator that
+`src/contexts/<context>/` and the end-to-end specs is refused (in the acceptance spec of a story,
+anything but removing `pending(...)` around a scenario; locking it is refused too), and so are a generator that
 writes shared files and a dependency change, wherever its flags stand (`npm i -D zod`); the
 clean install stays free. The same scope holds for the shell: an in-place edit such as
 `sed -i`, a redirection or `tee`, and `cp`, `mv`, `rm`, `touch`, `git checkout -- <path>` or
@@ -702,6 +703,7 @@ small fraction of the total time and remove nearly every collision from the rest
 
 ## See also
 
+- [Story workflow](story-workflow.md): one session per user story, one story per terminal
 - [Team workflow](team-workflow.md)
 - [Commit discipline](commit-discipline.md)
 - [Methodology](methodology.md)

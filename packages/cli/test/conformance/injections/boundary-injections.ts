@@ -4,10 +4,11 @@ import { SOURCE_ALIAS } from '../source-alias.js';
 import { SOURCE_SUFFIX } from '../source-suffix.js';
 
 const { ADAPTER, ANALYTICS, CONFIG, DUE_HANDLER, NOTIFICATION, OCCUPANCY_ROUTE, PLAN_HANDLER, PUBLISHED } = PATHS;
-const { SENT_AGGREGATE } = PATHS;
+const { AGGREGATE, SENT_AGGREGATE } = PATHS;
 const ALIAS = `${SOURCE_ALIAS}contexts/notification`;
 const SCHEMA = `${NOTIFICATION}/infrastructure/persistence/notification.schema.ts`;
 const HELPER = `${NOTIFICATION}/test/unit/reminder-moments.ts`;
+const ACCEPTANCE = 'test/acceptance/us1.acceptance.spec.ts';
 const OCCUPANCY_HANDLER = `${ANALYTICS}/application/queries/search-occupancy/search-occupancy.handler.ts`;
 
 /** Layers and contexts: an import that crosses a boundary, and a relationship that closes a cycle. */
@@ -160,6 +161,18 @@ export const BOUNDARY_INJECTIONS: readonly Injection[] = [
     what: 'a helper several specs would share, written among the specs',
     file: HELPER,
     changes: [{ file: HELPER, to: "export const REMINDER_DUE_AT = new Date('2026-03-01T09:00:00.000Z');\n" }],
+    checker: true,
+  },
+  {
+    rule: 'test/acceptance-black-box',
+    what: 'an acceptance spec that imports an aggregate instead of driving the application through its routes',
+    file: ACCEPTANCE,
+    changes: [
+      {
+        file: ACCEPTANCE,
+        to: `import { expect, it } from 'vitest';\nimport { Reminder } from '${SOURCE_ALIAS}${AGGREGATE.replace(/^src\//, '').replace(/\.ts$/, '')}${SOURCE_SUFFIX}';\n\nit('#US1.01 AC1 a reminder can be planned', () => {\n  expect(Reminder).toBeDefined();\n});\n`,
+      },
+    ],
     checker: true,
   },
 ];

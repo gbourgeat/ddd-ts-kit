@@ -12,7 +12,7 @@ for the three agents:
 | Copilot CLI | `copilot plugin marketplace add gbourgeat/ddd-ts-kit`, then `copilot plugin install ddd-ts-kit@ddd-ts-kit` | by its name, `start` |
 | Copilot cloud agent, VS Code | declared by the `.github/copilot/settings.json` that `init` writes: the cloud agent installs it, VS Code recommends it | by its name, `start` |
 
-Twenty-two skills, in the order a project meets them:
+Twenty-three skills, in the order a project meets them:
 
 | Skill | Use |
 |---|---|
@@ -24,6 +24,7 @@ Twenty-two skills, in the order a project meets them:
 | `bootstrap` | choose the stack and create the project (run by the user) |
 | `plan-slices` | the work as vertical slices per context, ordered, with their generator commands |
 | `parallel-work` | split the slices between several agents or people without collision |
+| `story` | take one user story from its questions to a green pull request in one session, one story per terminal (run by the user; [story workflow](story-workflow.md)) |
 | `scaffold` | one file of any role, from a template |
 | `use-case` | one feature end to end, test first |
 | `integration-event` | make two contexts collaborate through a versioned event |
@@ -39,10 +40,11 @@ Twenty-two skills, in the order a project meets them:
 | `quality-gate` | run the checks at the right scope and fix at the root cause |
 | `commit-discipline` | one slice per commit, generated files with what generated them |
 
-Four agents: `domain-explorer` (read-only answers about what exists and where),
+Five agents: `domain-explorer` (read-only answers about what exists and where),
 `context-builder` (builds the slices of one context in its own worktree),
 `domain-test-writer` (turns `it.todo` entries into specs) and `architecture-reviewer`
-(read-only review of a diff, a branch or a context).
+(read-only review of a diff, a branch or a context), and `acceptance-judge` (judges a change to a
+locked acceptance test, independently of the session that made it, and writes its verdict).
 
 The hook is the part that makes the rest binding. In a project that has a
 `ddd-ts-kit.config.json` it reminds the workflow and the context map at session start, says
@@ -60,11 +62,15 @@ twice before its turn limit, records its runs in its worktree (`.ddd-ts-kit/agen
 listens to two rare events of Claude Code, filtered by that agent: `SubagentStart` (a launch or a
 resume starts a new count) and `SubagentStop` (when it ends on its own, it is kept going once to
 commit a slice that passed `verify-slice` or to rewrite a stale report). At session start, it
-names the workers to resume ([parallel work](parallel-work.md#when-an-agent-stops)). No hook
+names the workers to resume ([parallel work](parallel-work.md#when-an-agent-stops)). In the
+worktree of a story (`.ddd-ts-kit/story.json`), it refuses any code of a context until each row
+has its design review and the acceptance is written and locked, says the phase of the story at
+session start, and refuses once to end the session before its report
+([story workflow](story-workflow.md)). No hook
 runs on every tool call: an ordinary session starts no more processes than before. It fails open: a broken guard never blocks work. Set
 `"guard": "advise"` in the config to be asked instead of refused, `"off"` to silence it.
 
-Each agent gets what its host runs. The skills work in all three. The four agents are sub-agents
+Each agent gets what its host runs. The skills work in all three. The five agents are sub-agents
 of Claude Code; Codex loads no agent from a plugin, and one session per worktree takes the place
 of `context-builder`. The hook runs wherever the host runs the hooks of a plugin: it reads the
 patches of Codex and the tool calls of Copilot as well as those of Claude Code. Codex cannot put

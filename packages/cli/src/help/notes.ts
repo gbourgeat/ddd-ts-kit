@@ -72,6 +72,23 @@ export const NOTES = `  affected         what a pull request has to run: the con
                    is its own, its file:line and its fix: handle it, or dismiss it by a decision record
                    (generate adr), then delete the marker. Reads only: exits 0 when it can close, 1
                    listing what keeps it open, 2 on a code no row carries or without slices.md
+  acceptance       the acceptance scenarios of each story (test/acceptance/<story>.acceptance.spec.ts) against
+                   its rows in slices.md and the criteria of docs/architecture/stories/<story>.md: the rows and
+                   criteria each scenario names (#US5.02 AC1 in its title), the scenarios left to write
+                   (it.todo), those wrapped in pending(...) of @ddd-ts-kit/testing/e2e until their code is
+                   built, and what is inconsistent (no row, an unknown row or criterion, a scenario skipped,
+                   a pending one whose rows are done, a locked one changed while its criteria were not);
+                   --gate written: every slice row and criterion has a written scenario, none is left to
+                   write, the acceptance is locked (before the code of the story); --gate passing: none is
+                   pending either (before the story closes); exits 1 while a gate is not met, or, without
+                   one, on an inconsistency. Never runs a test. --lock writes
+                   test/acceptance/<story>.acceptance.lock.json, the fingerprint of each criterion and of
+                   each scenario (pending(...), layout and comments aside), refused while a scenario is
+                   left to write, or while a criterion changed, or a locked scenario changed while its
+                   criteria did not, without a verdict "amend" of the acceptance-judge agent on that very
+                   version (test/acceptance/verdicts/*.md, lines Story:, Subject:, Fingerprint:,
+                   Verdict:, Reason:); a refusal wins; the verdicts become amendments of the lock,
+                   listed for the owner to validate
   worker-scope     a git worktree on the branch build/<context> (by default ../<project>-<context>), cut from
                    --base <ref> (by default the current branch, refused from a worker's worktree), its
                    .ddd-ts-kit/worker.json, and the briefing of the worker of that context; --rows <id,...>
@@ -81,6 +98,21 @@ export const NOTES = `  affected         what a pull request has to run: the con
                    next; a worktree it creates gets the clean install of the package manager (npm ci), its
                    time in the notes, unless --no-install; an existing worktree or branch that does not
                    contain the base is refused, with the merge-trunk that brings it in
+  --here           worker-scope in the worktree of a story (.ddd-ts-kit/story.json): writes the scope of the
+                   next agent in place, its base the base of the story, and prints its briefing; no
+                   worktree, branch or install of its own; the agents of a story run one after the other
+  story-scope      the worktree of one story, ../<project>-<story> on story/<story> cut from --base (by default
+                   the current branch, refused from the worktree of a story), its .ddd-ts-kit/story.json and
+                   its clean install; an existing one is kept and the story resumes there; refused when the
+                   story is open in another worktree; names the other open stories and the contexts their
+                   rows change
+  story            where a story stands, phase by phase: its specification and criteria
+                   (docs/architecture/stories/<story>.md), its rows in slices.md, a design review section
+                   per row not done (docs/architecture/reviews/<story>.md, ## #<id>), its acceptance written
+                   and locked, its rows done, its acceptance passing, its ## Report; and the next step; in
+                   the worktree of a story, the story is its own; --gate build exits 1 until the first four
+                   are met (the code may start: the guard of the plugin opens the contexts), --gate close
+                   until all are
   --resume         worker-scope reads where the stopped worker of the context stands (its rows by their
                    Slice: trailer, the files of the row under way, the markers, its last verify-slice, its
                    report, its agent as the guard recorded it) and prints the message that resumes its agent
