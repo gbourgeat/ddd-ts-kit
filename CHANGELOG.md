@@ -4,7 +4,7 @@ What each version changes for someone who uses the kit. The packages of `package
 together, under one version; the notes of each [GitHub release](https://github.com/gbourgeat/ddd-ts-kit/releases)
 list the pull requests behind it.
 
-## Unreleased
+## 0.82.0
 
 **`drizzle-generate --replay` replays only what forks, and refuses to lose a migration edited by
 hand.** The replay first reads the history on disk: when the journal lists every migration in
@@ -121,6 +121,17 @@ before the outside system is ready is listed by `ddd-ts-kit todo` until it is wi
 unwired on purpose gets its decision record in `docs/adr/` and
 `// ddd-ts-kit-disable-next-line declarations/port-adapter-wired -- ADR-NNNN: <why>` above the class.
 It becomes an error in the next minor version.
+
+**The plugin and the packages share one version: 0.82.0.** The plugin numbered itself apart
+(0.81.0 while the packages were at 0.27.0), so one agent showed a version and another the other.
+From this release on, the release sets the version of the plugin with the version of the
+packages; the version its skills describe already was that of the packages. The packages jump
+from 0.27.0 to 0.82.0, above the last version of the plugin, so that an installed plugin is still
+updated; no version between them was published. The plugin now changes with each release of the
+kit, and an urgent fix of it is a patch release of the kit.
+
+To move: upgrade the packages of the kit to 0.82.0 together, as at every release, and update the
+plugin; from now on its version is the version of the kit.
 
 ## 0.27.0
 
