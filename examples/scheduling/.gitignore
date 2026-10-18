@@ -5,3 +5,4 @@ dist
 *.tsbuildinfo
 .ddd-ts-kit/
 .data/
+.worktrees/
