@@ -106,16 +106,14 @@ To move: a new project runs its acceptance specs with `npm run test:e2e`; in an 
 carries no `@Repository`, `@Gateway` or `@Adapter`, and in both styles no file of the composition
 root (`<context>.module.ts`, `main.ts`, `apps/<context>/main.ts`, the platform directory) imports
 it. `declarations/role-declared` reads a role file by its suffix, so such a class in a file without
-one was reported by no rule and only showed at run time as a missing binding. To move, run
+one was reported by no rule and only showed at run time as a missing binding. A file that still
+carries a `TODO(domain)` or `TODO(platform)` is not judged yet: an adapter the generator wrote
+before the outside system is ready is listed by `ddd-ts-kit todo` until it is wired. To move, run
 `ddd-ts-kit check --rule declarations/port-adapter-wired`, then declare each reported class
 (`@Gateway(Port)` in a `*.gateway.ts`, for example) or bind it in the module file; one kept
 unwired on purpose gets its decision record in `docs/adr/` and
 `// ddd-ts-kit-disable-next-line declarations/port-adapter-wired -- ADR-NNNN: <why>` above the class.
 It becomes an error in the next minor version.
-
-In the explicit style, `generate adapter <context> <Port>` now refuses a port the module file
-already binds, as the declared style does: it used to write a second class that nothing bound,
-with a note to bind it later, which is what this rule reports.
 
 ## 0.26.0
 

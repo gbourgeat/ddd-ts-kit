@@ -24,6 +24,9 @@ const ADAPTER_DECORATORS = [
 
 const RULE_ID = 'declarations/port-adapter-wired';
 
+/** A marker the generator leaves in an adapter it writes before the outside system is ready, which `ddd-ts-kit todo` lists. */
+const LEFT_TO_DO = /\bTODO\((?:domain|platform)\)/;
+
 interface Implementation {
   readonly shape: ClassShape;
   readonly port: string;
@@ -33,7 +36,7 @@ interface Implementation {
 export const declarationsPortAdapterWired: Rule = {
   id: RULE_ID,
   description:
-    'A class of infrastructure/ that implements a port is wired: declared with @Repository, @Gateway or @Adapter in the declared style, or imported by the composition root (<context>.module.ts, main.ts, apps/, the platform directory). One kept unwired on purpose says so with a suppression that points to a decision record.',
+    'A class of infrastructure/ that implements a port is wired: declared with @Repository, @Gateway or @Adapter in the declared style, or imported by the composition root (<context>.module.ts, main.ts, apps/, the platform directory). One kept unwired on purpose says so with a suppression that points to a decision record. A file that still carries a TODO(domain) or TODO(platform) of the generator is not judged yet.',
   scope: 'project',
   run(project) {
     const composed = composedClasses(project);
@@ -41,7 +44,7 @@ export const declarationsPortAdapterWired: Rule = {
     return perFile(project, this.id, (file) => {
       const place = inLayer(file, 'infrastructure');
 
-      if (place === undefined) {
+      if (place === undefined || isLeftToDo(file)) {
         return [];
       }
 
@@ -51,6 +54,14 @@ export const declarationsPortAdapterWired: Rule = {
     });
   },
 };
+
+/**
+ * An adapter the generator wrote is wired once the outside system is ready, a step its markers
+ * name: until they are done, the file is listed by `ddd-ts-kit todo`, not reported here.
+ */
+function isLeftToDo({ scan }: SourceFile): boolean {
+  return scan.comments.some(({ text }) => LEFT_TO_DO.test(text));
+}
 
 /** `<file>#<class>` for each class a file of the composition root imports as a value. */
 function composedClasses(project: Project): ReadonlySet<string> {

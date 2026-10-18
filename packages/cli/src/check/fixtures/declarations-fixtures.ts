@@ -238,6 +238,17 @@ export const DECLARATIONS_FIXTURES: readonly Fixture[] = [
   },
   {
     ruleId: 'declarations/port-adapter-wired',
+    name: 'explicit style: an adapter the generator wrote, its outside system not ready, left to do',
+    expect: 'pass',
+    files: project({
+      [PORT]: DECLARED.port,
+      [STRIPE]: stripeGateway(
+        '// TODO(platform): replace the body by the real client of the outside system, built in billing.module.ts.',
+      ),
+    }),
+  },
+  {
+    ruleId: 'declarations/port-adapter-wired',
     name: 'declared style: an adapter that carries no declaration and that nothing binds',
     expect: { file: STRIPE },
     files: declaredProject({ [PORT]: DECLARED.port, [STRIPE]: stripeGateway() }),

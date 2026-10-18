@@ -36,7 +36,9 @@ export const adapterKind: Kind = {
 
     const adapter = adapterVars(scope, name);
 
-    refuseSecondAdapter(scope, name);
+    if (isDeclared(scope.config)) {
+      refuseSecondAdapter(scope, name);
+    }
 
     const context = vars(scope, { name: named(name), adapter });
 
@@ -87,39 +89,22 @@ function bindingKind(scope: Scope): string {
   );
 }
 
-/**
- * A port has one adapter: a second class declaring itself for it would stop the application at
- * startup, and a second class the module file cannot bind would be wired by nothing
- * (`declarations/port-adapter-wired`).
- */
+/** A port has one adapter: a second class declaring itself for it would stop the application at startup. */
 function refuseSecondAdapter(scope: Scope, name: Name): void {
-  const bound = isDeclared(scope.config) ? declaredAdapterOf(scope, name.pascal) : boundIn(scope, name.pascal);
+  const declaration = new RegExp(`@(?:Repository|Gateway|Adapter)\\(\\s*${name.pascal}\\b`);
+
+  const bound = filesUnder(scope.ws, `${scope.dir}/infrastructure`).find((file) =>
+    declaration.test(scope.ws.read(`${scope.dir}/infrastructure/${file}`) ?? ''),
+  );
 
   if (bound === undefined) {
     return;
   }
 
   throw new CliError(
-    `${name.pascal} is already bound by ${bound}.`,
-    `A port has one adapter. When the outside system is ready, turn that class into the remote adapter (its ${isDeclared(scope.config) ? 'declaration' : 'binding'} stays), or remove it and run the command again.`,
+    `${name.pascal} is already bound by infrastructure/${bound}.`,
+    `A port has one adapter. When the outside system is ready, turn that class into the remote adapter (its declaration stays), or remove it and run the command again.`,
   );
-}
-
-function declaredAdapterOf(scope: Scope, port: string): string | undefined {
-  const declaration = new RegExp(`@(?:Repository|Gateway|Adapter)\\(\\s*${port}\\b`);
-
-  const bound = filesUnder(scope.ws, `${scope.dir}/infrastructure`).find((file) =>
-    declaration.test(scope.ws.read(`${scope.dir}/infrastructure/${file}`) ?? ''),
-  );
-
-  return bound === undefined ? undefined : `infrastructure/${bound}`;
-}
-
-/** The module file, when it already binds the port. */
-function boundIn(scope: Scope, port: string): string | undefined {
-  const module = `${scope.context.kebab}.module.ts`;
-
-  return new RegExp(`\\bbind\\(${port}\\)`).test(scope.ws.read(`${scope.dir}/${module}`) ?? '') ? module : undefined;
 }
 
 interface Registration {
@@ -130,8 +115,8 @@ interface Registration {
 
 /**
  * A declared adapter binds itself. Otherwise it is bound by the generator where the module
- * declares its bindings, and said in a note where the wiring is by hand. The first adapter that
- * names `ownPolicy` brings the helper to the platform.
+ * declares its bindings, and said in a note where the wiring is by hand or the port already has
+ * an adapter. The first adapter that names `ownPolicy` brings the helper to the platform.
  */
 function register(scope: Scope, context: RenderContext, { port, kind, decorated }: Registration): void {
   const module = `${scope.context.kebab}.module.ts`;
@@ -143,7 +128,11 @@ function register(scope: Scope, context: RenderContext, { port, kind, decorated 
     return;
   }
 
-  if (scope.config.stack.di === 'tsyringe') {
+  if (isBound(scope, port)) {
+    scope.ws.note(
+      `${port} is already bound in ${module}: bind Remote${port} in its place when the outside system is ready, with .as('${kind}').`,
+    );
+  } else if (scope.config.stack.di === 'tsyringe') {
     wire(scope, 'adapter', context);
     writeOwnPolicy(scope, context);
   } else {
@@ -153,4 +142,10 @@ function register(scope: Scope, context: RenderContext, { port, kind, decorated 
 
     scope.ws.note(`Instantiate Remote${port} in ${module} and give it to the handlers that need it: ${wrapped}.`);
   }
+}
+
+function isBound(scope: Scope, port: string): boolean {
+  const module = scope.ws.read(`${scope.dir}/${scope.context.kebab}.module.ts`) ?? '';
+
+  return new RegExp(`\\bbind\\(${port}\\)`).test(module);
 }
