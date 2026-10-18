@@ -4,6 +4,33 @@ What each version changes for someone who uses the kit. The packages of `package
 together, under one version; the notes of each [GitHub release](https://github.com/gbourgeat/ddd-ts-kit/releases)
 list the pull requests behind it.
 
+## Unreleased
+
+**`drizzle-generate --replay` replays only what forks, and refuses to lose a migration edited by
+hand.** The replay first reads the history on disk: when the journal lists every migration in
+order, each snapshot from the one before, the branch's already follow the trunk, and nothing is
+generated again (a name that changes, `working-` dropped, is renamed in place). Otherwise it
+deletes the branch's migrations and generates them again on top as before, then compares each
+generated one with what the branch had: when drizzle-kit now writes other statements (its SQL was
+edited by hand, or the trunk changed what it changes), it puts the migrations folder back as it
+found it and refuses, naming the statement that differs; the fix is to generate that migration on
+top by hand and write the edit again, after which a replay, or `merge-trunk --continue`, finds
+nothing forked. Several migrations of a branch that change the schema and fork are still
+refused: drizzle-kit diffs the final schema and can generate them again as one only. Measured with the real drizzle-kit
+0.31.11: the replayed history is applied by `drizzle-kit migrate`.
+
+**`persistence/primary-key-order` (a warning).** Under drizzle-kit, a migration that adds the new
+primary key of a table before its old one is dropped, or drops a column before the key that holds
+it, is reported on the line of the statement that runs too early: PostgreSQL refuses it when it
+runs. `drizzle-generate` already warned once when it wrote one; the rule keeps reporting it. Fix:
+drop the old key first, in that migration while it is still unapplied, or write it with
+`--custom`. `ddd-ts-kit check --rule persistence/primary-key-order` lists the migrations to take
+up; the rule stays a warning in this version.
+
+**Two migrations kept apart.** The `persistence` skill and the persistence page say how: change
+the schema in two steps, with a `db:generate` after each, since one `db:generate` writes every
+change since the last migration as one.
+
 ## 0.26.0
 
 **The guard recognises the CLI of the kit however it is launched.** The refusal of
