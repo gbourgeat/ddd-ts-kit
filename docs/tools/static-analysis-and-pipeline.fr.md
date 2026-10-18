@@ -1,5 +1,5 @@
 [English](static-analysis-and-pipeline.md) · **Français**
-<!-- translation-of: static-analysis-and-pipeline.md sha256:c55989d3708c8b0f -->
+<!-- translation-of: static-analysis-and-pipeline.md sha256:f669d89a6471abc2 -->
 
 # L'analyse statique et le pipeline
 
@@ -167,7 +167,7 @@ Ce que reçoit chaque projet, outil par outil, est sur la page du
   fichier.
 - **Le coût d'un faux positif.** Une règle heuristique (commentaires de bruit, code commenté) est
   par défaut un avertissement ; les règles structurelles sont par défaut des erreurs. Les scripts
-  `lint` et `ci:lint` échouent sur les deux (`--max-warnings 0`) : un avertissement dit de quelle
+  `lint` et `ci:lint` échouent sur les deux (`ddd-ts-kit lint`, sauf pour une règle du kit en transition, affichée sans échouer) : un avertissement dit de quelle
   sorte est le constat, pas qu'il peut rester.
 
 Mis bout à bout, un projet généré fait tourner chaque analyseur au moment que son coût permet :
@@ -301,7 +301,7 @@ et sur un poste de travail, `npm run ci:arch`, qui lance les deux.
 | Exécutions redondantes | annulées par des groupes de concurrence | annulées par des *jobs* interruptibles |
 | Portes | les mêmes scripts `ci:*` | les mêmes scripts `ci:*` |
 | Constats de lint et d'architecture | des annotations sur la *pull request* (`check --format github`) | des rapports Code Quality (`check --format gitlab` écrit directement le rapport ; ESLint par son formateur GitLab) |
-| Un avertissement de lint | fait échouer le *job* de lint (`ci:lint` lance `eslint . --max-warnings 0`) | fait échouer le *job* de lint, et figure dans le rapport Code Quality |
+| Un avertissement de lint | fait échouer le *job* de lint (`ci:lint` lance `ddd-ts-kit lint` ; une règle du kit en transition est affichée sans échouer) | fait échouer le *job* de lint, et figure dans le rapport Code Quality |
 | Rapports de tests | le *reporter* Vitest pour Actions, la couverture comme artefact | des rapports JUnit et Cobertura dans la *merge request* |
 | Recherche de secrets | gitleaks | gitleaks |
 | Construction d'image sans *push* | l'action Docker de *build* | BuildKit sans privilèges (rootless) |

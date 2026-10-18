@@ -1818,6 +1818,21 @@ Runs the per-file rules (layers, contexts, naming, events, language, purity, cle
 composition, suppressions) on one file without walking the project: meant for an editor or
 agent hook after each write. A file that is not a source of the project is ignored.
 
+## lint
+
+```
+ddd-ts-kit lint [paths...] [--format <eslint formatter>] [--fix]
+```
+
+What `lint` and `ci:lint` of a generated project run: the ESLint of the project, through its API,
+on the paths given (the project otherwise), its report in the format asked (`--format gitlab`
+writes the Code Quality report as `eslint-formatter-gitlab` does), `--fix` as ESLint takes it.
+It exits 1 on an error, and on a warning as on an error, but on a warning of a rule of the kit in
+transition: a rule new in this version, whose documentation names the version in which it becomes
+an error. Those are shown in the report and listed after it, one line per rule, without failing:
+an upgrade of the kit never turns a green lint red. Without ESLint installed it exits 2 and names
+the install. See [Quality baseline](../../docs/tools/quality-baseline.md#warnings-fail-the-lint).
+
 ## rules, explain
 
 ```

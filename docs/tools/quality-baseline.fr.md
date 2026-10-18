@@ -1,5 +1,5 @@
 [English](quality-baseline.md) · **Français**
-<!-- translation-of: quality-baseline.md sha256:c6ca7fb9e33aa452 -->
+<!-- translation-of: quality-baseline.md sha256:fe21c0de02a8cc7a -->
 
 # Base de qualité
 
@@ -128,17 +128,26 @@ lancent jamais la couverture avant un *commit*.
 ## Un avertissement fait échouer le lint
 
 Dans un projet généré et dans l'application d'exemple, `lint` et `ci:lint` lancent
-`eslint . --max-warnings 0` : un seul avertissement fait échouer `npm run lint`, `verify` et le
-*job* de lint du *pipeline*, comme une erreur. Le *preset* garde ses avertissements comme
+`ddd-ts-kit lint`, l'ESLint du projet (ses motifs, `--format` et `--fix` comme ESLint les prend) :
+un seul avertissement fait échouer `npm run lint`, `verify` et le *job* de lint du *pipeline*,
+comme une erreur. Le *preset* garde ses avertissements comme
 avertissements (par exemple `complexity`, `max-depth`, `clean/function-size`,
 `clean/no-flag-argument`, `clean/no-noise-comment`, `any` et l'assertion non nulle dans une
 *spec*) : l'éditeur et le rapport distinguent toujours une affaire de jugement d'une règle
 enfreinte, et ni l'une ni l'autre n'est laissée de côté. Un nouveau projet n'en a aucun, et
 `init` n'écrit aucun fichier de désactivations : le premier avertissement se voit le jour où il
-est écrit. Une règle qu'ajoute une version ultérieure arrive en avertissement
-([CONTRIBUTING.md](../../CONTRIBUTING.fr.md)) : sous la limite, la mise à jour qui l'apporte fait
-échouer le lint jusqu'à ce que ses constats soient corrigés ou consignés, et le CHANGELOG de
-cette version la nomme. Le *hook* d'avant *commit* lance ESLint sur les fichiers indexés sans la
+est écrit.
+
+**Une règle du kit en transition** est la seule exception. Une règle qu'ajoute une version
+ultérieure, ou ce qu'une règle juge de plus, arrive en avertissement pendant une version mineure
+et devient une erreur à la suivante ([CONTRIBUTING.md](../../CONTRIBUTING.fr.md)) ; sa
+documentation nomme cette version, et le CHANGELOG de la version qui l'apporte nomme la règle.
+`ddd-ts-kit lint` affiche ses avertissements dans le rapport, puis une ligne par règle
+(`ddd-ts-kit/<rule>: 2 warning(s), not counted while the rule is new; it becomes an error in
+0.28.0: fix them before upgrading to it.`), et n'échoue pas sur eux : une mise à jour du kit ne
+fait jamais passer au rouge un lint vert, et les constats sont corrigés ou consignés avant la
+version qui fait de la règle une erreur. Un simple `eslint . --max-warnings 0` les compterait,
+c'est pourquoi les scripts lancent la commande du kit. Le *hook* d'avant *commit* lance ESLint sur les fichiers indexés sans la
 limite : il affiche un avertissement sans arrêter le *commit* ; `verify` et le *pipeline*
 l'arrêtent.
 
@@ -147,7 +156,7 @@ qui manque au projet et laisse celui qu'il a, avec une note qui dit ce que le ki
 `npx ddd-ts-kit doctor` liste `lint` et `ci:lint` comme écrits autrement, ce sur quoi
 `doctor --strict` n'échoue pas. Son lint reste tel qu'il était jusqu'à ce qu'il prenne les
 nouveaux scripts : `npx ddd-ts-kit init --force` (qui écrit chaque fichier et chaque script du
-kit par-dessus ceux du projet), ou ` --max-warnings 0` ajouté à la main aux deux scripts. Avant
+kit par-dessus ceux du projet), ou les deux scripts réglés à la main sur `ddd-ts-kit lint`. Avant
 cela, il règle chaque règle qui avertit, de l'une de deux façons :
 
 1. **Corriger les avertissements.** `npx eslint .` les liste.

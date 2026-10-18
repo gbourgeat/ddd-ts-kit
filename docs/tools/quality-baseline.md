@@ -124,23 +124,31 @@ jest the adapter specs run with the unit specs. The hooks never run coverage bef
 ## Warnings fail the lint
 
 In a generated project and in the example application, `lint` and `ci:lint` run
-`eslint . --max-warnings 0`: one warning fails `npm run lint`, `verify` and the lint job of the
-pipeline, as an error does. The preset keeps its warnings as warnings (such as `complexity`,
+`ddd-ts-kit lint`, the ESLint of the project (its patterns, `--format` and `--fix` as ESLint
+takes them): one warning fails `npm run lint`, `verify` and the lint job of the pipeline, as an
+error does. The preset keeps its warnings as warnings (such as `complexity`,
 `max-depth`, `clean/function-size`, `clean/no-flag-argument`, `clean/no-noise-comment`, `any`
 and the non-null assertion in a spec): the editor and the report still tell a judgement call
 from a broken rule, and neither is left behind. A new project has none, and `init` writes no
-suppressions file: the first warning is seen the day it is written. A rule a later version adds
-lands as a warning ([CONTRIBUTING.md](../../CONTRIBUTING.md)): under the limit, the upgrade that
-brings it fails the lint until its findings are fixed or recorded, and the CHANGELOG of that
-version names it. The hook before a commit runs ESLint on the staged files without the limit,
+suppressions file: the first warning is seen the day it is written.
+
+**A rule of the kit in transition** is the one exception. A rule a later version adds, or what a
+rule judges more, lands as a warning for one minor version and becomes an error at the next
+([CONTRIBUTING.md](../../CONTRIBUTING.md)); its documentation names that version, and the
+CHANGELOG of the version that brings it names the rule. `ddd-ts-kit lint` shows its warnings in
+the report, then one line per rule (`ddd-ts-kit/<rule>: 2 warning(s), not counted while the rule
+is new; it becomes an error in 0.28.0: fix them before upgrading to it.`), and does not fail on
+them: an upgrade of the kit never turns a green lint red, and the findings are fixed or recorded
+before the version that makes the rule an error. Plain `eslint . --max-warnings 0` would count
+them, which is why the scripts run the kit's command. The hook before a commit runs ESLint on the staged files without the limit,
 so it shows a warning without stopping the commit; `verify` and the pipeline stop it.
 
 A project made by an earlier version keeps its own scripts: `init` adds a script a project
 lacks and leaves one it has, with a note naming what the kit expects, and `npx ddd-ts-kit
 doctor` lists `lint` and `ci:lint` as written otherwise, which `doctor --strict` does not fail
 on. Its lint stays as it was until it takes the new scripts: `npx ddd-ts-kit init --force`
-(which writes every file and script of the kit over the project's), or ` --max-warnings 0`
-added by hand to the two scripts. Before that, it settles each rule that warns, one of two
+(which writes every file and script of the kit over the project's), or the two scripts
+set by hand to `ddd-ts-kit lint`. Before that, it settles each rule that warns, one of two
 ways:
 
 1. **Fix the warnings.** `npx eslint .` lists them.
