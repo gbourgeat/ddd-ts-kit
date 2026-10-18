@@ -257,10 +257,6 @@ function scaffoldShipping(step: Step, declared: boolean): void {
 
   step('generate', 'gateway', 'shipping', 'billing', 'InvoiceStatus');
 
-  if (!declared) {
-    step('generate', 'adapter', 'shipping', 'InvoiceStatusGateway', '--kind', 'gateway');
-  }
-
   step('generate', 'service', 'shipping');
   step('generate', 'adr', 'Keep shipping in the same repository as billing');
 }

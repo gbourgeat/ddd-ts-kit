@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { scan } from '../src/check/scan/scan.js';
 import { cli, EXPLICIT_STACK, read, scaffoldEverything, tempDir, walk, type CliResult } from './helpers.js';
-import { report } from './reports.js';
+import { failure, report } from './reports.js';
 
 const BILLING = 'src/contexts/billing';
 const SHIPPING = 'src/contexts/shipping';
@@ -120,6 +120,17 @@ describe('the module file of an explicit context', () => {
     expect(module).toContain("import { Database } from '@/platform/database/database';");
     expect(module).toContain('export const billingModule = defineContextModule({');
     expect(module.match(/from '@ddd-ts-kit\/di';/g)).toHaveLength(1);
+  });
+
+  it('refuses a second adapter for a port it already binds, which nothing could wire', () => {
+    const second = cli(root, 'generate', 'adapter', 'shipping', 'InvoiceStatusGateway', '--kind', 'gateway', '--json');
+
+    expect(second.code).toBe(2);
+    expect(failure(second).message).toBe('InvoiceStatusGateway is already bound by shipping.module.ts.');
+
+    expect(walk(root, `${SHIPPING}/infrastructure`)).not.toContain(
+      `${SHIPPING}/infrastructure/external/remote-invoice-status-gateway.adapter.ts`,
+    );
   });
 
   it('binds a reaction to a domain event under itself and subscribes it when the module starts', () => {
