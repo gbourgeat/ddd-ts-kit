@@ -1,5 +1,5 @@
 [English](coding-agents.md) · **Français**
-<!-- translation-of: coding-agents.md sha256:6b062bc989335aa2 -->
+<!-- translation-of: coding-agents.md sha256:32ee7dc2a6417e1e -->
 
 # Le plugin pour agents de code : Claude Code, Codex, GitHub Copilot
 
@@ -66,7 +66,11 @@ l'agent deux fois avant sa limite de tours, enregistre ses exécutions dans son 
 `SubagentStart` (un lancement ou une reprise démarre un nouveau compte) et `SubagentStop` (quand il
 finit de lui-même, il est relancé une fois pour commiter une tranche que `verify-slice` a validée
 ou réécrire un rapport périmé). Au démarrage de session, il nomme les *workers* à reprendre
-([travail en parallèle](parallel-work.fr.md#quand-un-agent-sarrête)). Dans le *worktree* d'une
+([travail en parallèle](parallel-work.fr.md#quand-un-agent-sarrête)). Dans un projet créé par
+`init` (`"worktrees": "required"`), il refuse le code d'un contexte et les générateurs qui
+l'écrivent dans le *checkout* principal du tronc, et dans un *worktree* de `.worktrees/` sans son
+propre `node_modules` : `npx ddd-ts-kit worktree <name>` ouvre l'endroit où l'écrire ; un projet
+démarré avant en est seulement averti au démarrage de session. Dans le *worktree* d'une
 *story* (`.ddd-ts-kit/story.json`), il refuse tout code d'un contexte tant que chaque ligne n'a
 pas sa revue de conception et que l'acceptation n'est pas écrite et verrouillée, dit la phase de
 la *story* au démarrage de session avec ses croisements avec les autres *stories* ouvertes, dit

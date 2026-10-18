@@ -39,7 +39,7 @@ until phase 5 is met. Reading costs: [../start/token-economy.md](../start/token-
 ## 0. Its worktree
 
 From the checkout of the trunk, after `git fetch`: `npx ddd-ts-kit story-scope $0`. It opens
-`../<project>-<story>` on `story/<story>`, cut from the branch the trunk follows (`origin/main`)
+`.worktrees/<story>` on `story/<story>`, cut from the branch the trunk follows (`origin/main`)
 when it has one (or finds it again: the story resumes where it was left), installs it, and
 names the other stories open in the repository with the contexts they change. From now on every
 command is `cd <worktree> && ...` and every file is written by its absolute path under the

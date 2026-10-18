@@ -198,9 +198,23 @@ A worktree is a second working directory of the same repository on another branc
 several workers run at once on one machine without stashing or switching:
 
 ```bash
-git worktree add ../scheduling-appointments -b feat/appointments-book
-git worktree add ../scheduling-calendars -b feat/calendars-working-hours
+git worktree add .worktrees/appointments -b feat/appointments-book
+git worktree add .worktrees/calendars -b feat/calendars-working-hours
 ```
+
+The worktrees of a project live in its `.worktrees/` folder, which `init` lists in `.gitignore`
+and every tool of the project leaves out (Biome, ESLint, the checker, Docker): one place, never
+a sibling folder lost next to the project, never one worktree nested in another, whichever
+worktree a command runs from. `npx ddd-ts-kit worktree <name>` opens one for any piece of work,
+on `work/<name>` cut from `origin/main`, installed. In a project `init` created, the guard of the
+plugin refuses the code of a context in the main checkout of the trunk (`"worktrees":
+"required"`, see [configuration](../CONFIG.md)): the conductor writes the contracts and the
+skeletons in a worktree of its own too, lands them as a pull request, then cuts the workers from
+`origin/main`. A project started before keeps `"advised"` until its owner sets it: the guard only
+says where the code goes, and while its `.gitignore` does not hold `.worktrees/` the worktrees
+open next to it, as before. A worktree of `.worktrees/` without its own `node_modules` would run
+on the packages of the main checkout above it, the trunk's versions: the commands install it,
+and the guard refuses its code until it is.
 
 For one worker per context the CLI does it in one command:
 
@@ -209,7 +223,7 @@ npx ddd-ts-kit worker-scope appointments --base origin/main --rows M1.12
 ```
 
 It adds a worktree on the branch `build/appointments` (by default in
-`../<project>-appointments`; `--worktree <path>` and `--branch <name>` change both), cut from
+`.worktrees/appointments`; `--worktree <path>` and `--branch <name>` change both), cut from
 `--base` (by default the current branch), writes `.ddd-ts-kit/worker.json` naming the context in
 it, with the rows briefed, the base and the branch, and prints the briefing of that worker: the directory it may write, the generators it may
 run, its rows of `docs/architecture/slices.md` with the rules written under the tables
@@ -270,8 +284,8 @@ trunk, and the generators, steps and report left out):
 ```text
 You build the bounded context notification of scheduling.
 
-Worktree: ../scheduling-notification/   Branch: build/notification   Trunk: main
-Run every command from the worktree (`cd ../scheduling-notification/ && ...` or `--cwd ../scheduling-notification/`).
+Worktree: .worktrees/notification/   Branch: build/notification   Trunk: main
+Run every command from the worktree (`cd .worktrees/notification/ && ...` or `--cwd .worktrees/notification/`).
 Without node_modules: `npm ci`, never an install that names a package.
 
 Scope
@@ -425,7 +439,7 @@ report. A resumed agent gets a new turn budget, and its count starts again.
 
 ```text
 $ npx ddd-ts-kit worker-scope billing --resume
-worker build/billing  ../shop-billing  (base origin/main)
+worker build/billing  .worktrees/billing  (base origin/main)
 rows: #M1.07 committed a1b2c3d, #M1.12 committed d4e5f6a, #M1.14 in progress, #M1.15 to do
 #M1.14: 6 files uncommitted (src/contexts/billing/...), 3 TODO(domain), 2 it.todo; last verify-slice 2026-10-17T19:02Z failed: tests (2 files changed since)
 report: written 2026-10-17T19:05Z (current)
@@ -433,7 +447,7 @@ agent: a389e09, run 1, 104 tool calls counted, last tool call 2026-10-17T19:06Z,
 
 next: SendMessage to a389e09:
 ---
-Continue row #M1.14 (Pay an invoice) in ../shop-billing; do not start #M1.15.
+Continue row #M1.14 (Pay an invoice) in .worktrees/billing; do not start #M1.15.
 Committed: #M1.07, #M1.12. Left modified by you: src/contexts/billing/... 3 TODO(domain) and 2 it.todo remain; your last verify-slice failed at tests.
 Next: finish #M1.14, `npx ddd-ts-kit verify-slice billing --since origin/main` until it passes, commit with the command it prints, rewrite .ddd-ts-kit/report.md, end with the report.
 ---
@@ -494,7 +508,7 @@ Wave 1
   W1.1 billing (aggregate Invoice)
     #US1.02 slice "Issue invoice"
     #US1.03 slice "Cancel invoice"
-    npx ddd-ts-kit worker-scope billing --base origin/main --rows US1.02,US1.03 --worktree ../invoicing-billing-w1.1 --branch build/billing-w1.1
+    npx ddd-ts-kit worker-scope billing --base origin/main --rows US1.02,US1.03 --worktree .worktrees/billing-w1.1 --branch build/billing-w1.1
     likely to touch the same files as W1.3
   W1.2 conductor, billing (aggregate Customer)
     #US2.01 skeleton "Customer"
@@ -503,7 +517,7 @@ Wave 1
 Wave 2
   W2.3 billing (aggregate unknown)
     #US2.03 slice "Overdue invoices", after #US1.02
-    npx ddd-ts-kit worker-scope billing --base origin/main --rows US2.03 --worktree ../invoicing-billing-w2.3 --branch build/billing-w2.3
+    npx ddd-ts-kit worker-scope billing --base origin/main --rows US2.03 --worktree .worktrees/billing-w2.3 --branch build/billing-w2.3
     unknown whether it touches the files of W2.1, W2.2: no aggregate named
 Merge order: W1.1, W1.2, W1.3, W2.1, W2.2, W2.3
 Before each merge: `npx ddd-ts-kit merge-trunk --to-land --cwd <worktree>`, then the squash merge

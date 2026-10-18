@@ -8,6 +8,7 @@ import {
   CONFIG_FILE,
   FUNCTION_LINES_CEILING,
   GUARD_MODES,
+  WORKTREE_MODES,
   IMPORT_EXTENSIONS,
   isOneOf,
   RELATIONSHIPS,
@@ -101,6 +102,20 @@ export class ConfigInspection {
         `Use one of: ${GUARD_MODES.join(', ')} (how the editor hook reacts to a violation: refuse the write, only report it, or stay silent).`,
       ),
     ];
+  }
+
+  worktreeMode(): Violation[] {
+    const { worktrees } = this.project.config;
+
+    return isOneOf(WORKTREE_MODES, worktrees)
+      ? []
+      : [
+          this.inConfig(
+            'worktrees',
+            `"worktrees" is "${worktrees}".`,
+            `Use one of: ${WORKTREE_MODES.join(', ')} (whether the guard refuses the code of a context in the main checkout of the trunk, or only says to open a worktree).`,
+          ),
+        ];
   }
 
   /** Another value is read as `js`: the config says something no tool does. */
