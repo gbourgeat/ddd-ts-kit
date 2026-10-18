@@ -1,9 +1,18 @@
 import fs from 'node:fs/promises';
+import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import os from 'node:os';
 import path from 'node:path';
-import { afterAll, afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { FixedClock, InMemoryFileStorage, LocalFileStorage, type ServedFileStorage } from '@ddd-ts-kit/kernel';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import {
+  FixedClock,
+  InMemoryFileStorage,
+  LocalFileStorage,
+  contentDisposition,
+  type ServedFileStorage,
+} from '@ddd-ts-kit/kernel';
+import { listenOnRandomPort, type RunningServer } from '../src/e2e.js';
 import { fileStorageContract, followServed, type SignedRequest } from '../src/contracts.js';
+import { readAll } from '../src/contracts/file-storage/read-all.js';
 
 const runner = { describe, it, expect, beforeEach, afterEach };
 const NOW = new Date('2026-03-01T10:00:00.000Z');
@@ -50,4 +59,49 @@ fileStorageContract(runner, {
   },
   elapse,
   follow,
+});
+
+/** Answers the signed links of the storage of the test over HTTP, as the routes of an application do. */
+async function serveSignedLinks(request: IncomingMessage, response: ServerResponse): Promise<void> {
+  const token = new URL(request.url ?? '/', 'http://localhost').searchParams.get('token') ?? '';
+
+  if (request.method === 'GET') {
+    const download = await storage.openSigned(token);
+
+    if (download === undefined) {
+      response.writeHead(403).end();
+
+      return;
+    }
+
+    const body = await readAll(download.stream);
+
+    response.writeHead(200, { 'content-disposition': contentDisposition(download.fileName) }).end(body);
+
+    return;
+  }
+
+  const stored = await storage.acceptSigned(token, request, request.headers['content-type'] ?? '');
+
+  response.writeHead(stored === undefined ? 403 : 200).end();
+}
+
+let server: RunningServer;
+
+beforeAll(async () => {
+  server = await listenOnRandomPort(createServer((request, response) => void serveSignedLinks(request, response)));
+});
+
+afterAll(() => server.close());
+
+// Without `follow`, the contract follows each link over the network.
+fileStorageContract(runner, {
+  name: 'InMemoryFileStorage, its links served over HTTP',
+  createStorage: () => {
+    clock = new FixedClock(NOW);
+    storage = new InMemoryFileStorage({ clock, baseUrl: `${server.url}/files` });
+
+    return storage;
+  },
+  elapse,
 });

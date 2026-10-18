@@ -94,6 +94,16 @@ describe('asynchronous scenarios', () => {
       .thenState((order) => expect(order.status).toBe('paid'));
   });
 
+  it('matches the events of an asynchronous when by class or by properties', async () => {
+    await given(anOrder().identifiedBy('order-1'))
+      .when(async (order) => {
+        await later();
+        order.pay(at);
+      })
+      .thenEvents([OrderPaid])
+      .thenEvents([{ name: 'ordering.order.paid', aggregateId: 'order-1' }]);
+  });
+
   it('awaits an asynchronous arrangement', async () => {
     const loaded = scenario(async () => {
       await later();
@@ -199,6 +209,31 @@ describe('failure messages', () => {
     expect(failureOf(() => payingTwice().thenError('EMPTY_ORDER'))).toContain(
       'Expected the action to fail with code EMPTY_ORDER',
     );
+  });
+
+  it('describes an error without a code by its class, and a thrown value that is no error as it is', () => {
+    const failing = (thrown: unknown) =>
+      given(anOrder()).when((): void => {
+        throw thrown;
+      });
+
+    expect(failureOf(() => failing(new TypeError('no ledger')).thenError('EMPTY_ORDER'))).toBe(
+      'Expected the action to fail with code EMPTY_ORDER, but it failed with TypeError: no ledger.',
+    );
+
+    expect(failureOf(() => failing('no ledger').thenError(EmptyOrder))).toBe(
+      "Expected the action to fail with EmptyOrder, but it failed with 'no ledger'.",
+    );
+  });
+
+  it('says that nothing was recorded', () => {
+    expect(
+      failureOf(() =>
+        given(anOrder())
+          .when(() => undefined)
+          .thenEventNames(['ordering.order.paid']),
+      ),
+    ).toContain('Recorded:\n  (none)');
   });
 
   it('does not let an unexpected error pass for a success', () => {

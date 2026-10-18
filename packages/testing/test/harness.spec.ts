@@ -30,6 +30,11 @@ class InMemoryOrders extends InMemoryRepository<Order> {
   paid(): Order[] {
     return this.all().filter((order) => order.status === 'paid');
   }
+
+  /** What a port with a removal method gives the application. */
+  delete(id: string): boolean {
+    return this.remove(id);
+  }
 }
 
 class PlaceOrderHandler implements CommandHandler<PlaceOrder> {
@@ -170,6 +175,15 @@ describe('InMemoryRepository', () => {
 
     orders.clear();
     expect(orders.count()).toBe(0);
+  });
+
+  it('lets a subclass remove an aggregate, and says whether there was one', async () => {
+    const orders = new InMemoryOrders();
+
+    await orders.save(place('order-1'));
+
+    expect([orders.delete('order-1'), orders.delete('order-1')]).toEqual([true, false]);
+    expect(await orders.findById('order-1')).toBeUndefined();
   });
 
   it('hands out copies: changing one does not change the store', async () => {

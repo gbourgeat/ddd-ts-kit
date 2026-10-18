@@ -36,6 +36,7 @@ import {
 } from '../src/contracts.js';
 import { anOrder } from './support/builders.js';
 import { Order, at } from './support/order.js';
+import { RedeliveringBus } from './support/redelivering-bus.js';
 import { TransactionalJournal } from './support/transactional-journal.js';
 
 // The globals of the runner are passed as they are: the suites import no runner themselves.
@@ -83,9 +84,26 @@ eventBusContract(
   },
 );
 
+// A broker never rejects a publication for a failing handler: it delivers the event again.
+eventBusContract(runner, {
+  name: 'a bus that redelivers as a broker does',
+  createBus: () => {
+    const bus = new RedeliveringBus();
+
+    return { bus, settle: () => bus.settle() };
+  },
+});
+
 outboxStoreContract(runner, {
   name: 'InMemoryOutboxStore',
   leaseMs: 30_000,
+  createStore: () => new InMemoryOutboxStore({ leaseMs: 30_000 }),
+});
+
+outboxStoreContract(runner, {
+  name: 'InMemoryOutboxStore, keeping the tenant of an event',
+  leaseMs: 30_000,
+  carriesTenant: true,
   createStore: () => new InMemoryOutboxStore({ leaseMs: 30_000 }),
 });
 
@@ -97,6 +115,12 @@ eventStoreContract(runner, {
     checkpoints: new InMemoryCheckpointStore(),
     subjectKeys: new InMemorySubjectKeyStore(),
   }),
+});
+
+// A store whose package keeps no snapshot, checkpoint or key is held to the store part alone.
+eventStoreContract(runner, {
+  name: 'InMemoryEventStore, without companions',
+  createStore: () => new InMemoryEventStore(),
 });
 
 eventStoreUnitOfWorkContract(runner, {

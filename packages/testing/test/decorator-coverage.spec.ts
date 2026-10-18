@@ -43,4 +43,10 @@ describe('decoratorCoverage(), the Vitest plugin', () => {
     expect(plugin.transform(TRANSFORMED, '/project/node_modules/library/index.js')).toBeUndefined();
     expect(plugin.transform(commented, '/project/src/issue-invoice.handler.ts')?.code).toContain('}; // the class\n');
   });
+
+  it('leaves alone a file that names _decorate without applying a decorator', () => {
+    const named = 'import { __decorate as _decorate } from "tslib";\nexport const helper = _decorate;\n';
+
+    expect(plugin.transform(named, '/project/src/helper.ts')).toBeUndefined();
+  });
 });

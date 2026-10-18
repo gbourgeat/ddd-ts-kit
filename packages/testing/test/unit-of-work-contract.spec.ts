@@ -11,6 +11,22 @@ unitOfWorkContract(runner, {
   createUnitOfWork: () => new TransactionalMemory(),
 });
 
+// A database of one connection: nothing outside the unit of work to look from.
+unitOfWorkContract(runner, {
+  name: 'a unit of work built on withinUnitOfWork, over a database of one connection',
+  createUnitOfWork: () => {
+    const memory = new TransactionalMemory();
+
+    return {
+      unitOfWork: memory.unitOfWork,
+      outbox: memory.outbox,
+      insert: (id) => memory.insert(id),
+      insertRefusedAtCommit: (id) => memory.insertRefusedAtCommit(id),
+      ids: () => memory.ids(),
+    };
+  },
+});
+
 describe('the unit of work contract and an adapter that forgot withinUnitOfWork', () => {
   it('fails it wherever the events would have left before the end or the handlers run before the commit', async () => {
     const collecting = new CollectingRunner();

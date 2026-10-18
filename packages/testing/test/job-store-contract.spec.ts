@@ -12,3 +12,9 @@ jobStoreContract(
     unitOfWork: () => new InMemoryUnitOfWork(),
   },
 );
+
+// A store that takes no part in a unit of work is held to the rest of the contract.
+jobStoreContract(
+  { describe, it, expect, beforeEach, afterEach },
+  { name: 'InMemoryJobStore, outside any unit of work', createStore: () => new InMemoryJobStore() },
+);

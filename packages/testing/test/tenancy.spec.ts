@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { AsyncLocalStorageExecutionScope } from '@ddd-ts-kit/kernel';
+import { AsyncLocalStorageExecutionScope, NoCurrentTenantError, type Repository } from '@ddd-ts-kit/kernel';
 import { anExecutionContext, asTenant } from '../src/index.js';
 import { tenantIsolationContract } from '../src/contracts.js';
+import { CollectingRunner } from './support/collecting-runner.js';
 import { Order, at } from './support/order.js';
 import { TenantOrders } from './support/tenant-orders.js';
 
@@ -28,6 +29,62 @@ tenantIsolationContract<Order>(runner, {
   ...orders,
   name: 'in memory, without the inserts and the reads of an elevation',
   createRepository: (scope) => new TenantOrders(scope),
+});
+
+/** Row-level security alone: the database shows nothing to work that names no tenant, and refuses its writes. */
+class RowLevelSecurityOrders extends TenantOrders {
+  override findById(id: string): Promise<Order | undefined> {
+    return Promise.resolve()
+      .then(() => super.findById(id))
+      .catch((error: unknown) => (error instanceof NoCurrentTenantError ? undefined : Promise.reject(error)));
+  }
+}
+
+tenantIsolationContract<Order>(runner, {
+  ...orders,
+  name: 'in memory, under row-level security alone',
+  elevatedReads: true,
+  createRepository: (scope) => new RowLevelSecurityOrders(scope),
+});
+
+/** A repository that takes every save and finds nothing back. */
+class ForgetfulOrders implements Repository<Order> {
+  async findById(): Promise<Order | undefined> {
+    return undefined;
+  }
+
+  async save(): Promise<void> {
+    return undefined;
+  }
+}
+
+describe('the tenant isolation contract and a repository that keeps nothing', () => {
+  it.each([true, false])(
+    'fails it on every test, with or without the reads of an elevation (%s)',
+    async (elevatedReads) => {
+      const collecting = new CollectingRunner();
+
+      tenantIsolationContract<Order>(collecting, {
+        ...orders,
+        name: 'forgetful',
+        recreate: (order: Order) => Order.place(order.id, { id: 'c-2', name: 'Bob' }, [{ sku: 'b', quantity: 2 }], at),
+        elevatedReads,
+        createRepository: () => new ForgetfulOrders(),
+      });
+
+      const { failed, passed } = await collecting.run();
+
+      expect(failed).toEqual([
+        'hides from a tenant what another tenant saved, and keeps it for its owner',
+        'leaves untouched what a tenant saved when another saves under the same id',
+        'leaves untouched what a tenant saved when another inserts a new aggregate under its id',
+        'lets an elevation read what it reaches when the strategy allows it, and write nothing',
+        'refuses a write of work that names no tenant, and shows it nothing',
+      ]);
+
+      expect(passed).toEqual([]);
+    },
+  );
 });
 
 describe('asTenant', () => {

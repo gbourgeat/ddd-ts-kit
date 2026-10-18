@@ -52,6 +52,14 @@ describe('pending', () => {
     ).rejects.toThrow(/stops on 'refused'/);
   });
 
+  it('fails when the scenario throws nothing at all, saying so', async () => {
+    await expect(
+      pending(async () => {
+        throw undefined;
+      })(),
+    ).rejects.toThrow(/stops on Error: A scenario threw nothing\./);
+  });
+
   it('treats an AssertionError of node:assert built by hand as an assertion', async () => {
     const failure = new AssertionError({ message: 'Expected status 201, received 404', actual: 404, expected: 201 });
 

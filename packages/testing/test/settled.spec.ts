@@ -71,6 +71,14 @@ describe('settled', () => {
     );
   });
 
+  it('reads a count that states no failure as work pending without failures', async () => {
+    await expect(settled({ mails: () => ({ pending: 0 }) })).resolves.toBeUndefined();
+
+    await expect(settled({ mails: async () => ({ pending: 3 }) }, { timeoutMs: 40 })).rejects.toThrow(
+      'Still pending after 40 ms: mails: 3',
+    );
+  });
+
   it('fails with what a source threw while counting', async () => {
     const unreachable = (): Promise<number> => Promise.reject(new Error('The store is unreachable.'));
 
