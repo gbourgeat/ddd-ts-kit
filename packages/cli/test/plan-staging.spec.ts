@@ -29,6 +29,17 @@ describe('what a slice stages, by a closed list', () => {
     expect(plan.toStage).toHaveLength(7);
   });
 
+  it('stages the acceptance spec a slice unwraps, never the lock of the story', () => {
+    const plan = planStaging(
+      [modified('test/acceptance/us5.acceptance.spec.ts'), modified('test/acceptance/us5.acceptance.lock.json')],
+      config,
+      'billing',
+    );
+
+    expect(plan.toStage).toEqual(['test/acceptance/us5.acceptance.spec.ts']);
+    expect(plan.leftOut).toEqual(['test/acceptance/us5.acceptance.lock.json']);
+  });
+
   it('leaves out every other path: a private note, an editor folder, another context, the platform, a new file where derived files live', () => {
     const plan = planStaging(
       [

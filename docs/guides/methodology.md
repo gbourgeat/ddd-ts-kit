@@ -410,6 +410,7 @@ documentation with the code that changed it ([Commit discipline](commit-discipli
 
 ## See also
 
+- [Story workflow](story-workflow.md): step 7 one user story at a time, one session per story
 - [Context map: a worked example](../concepts/context-map-worked-example.md)
 - [Which command, when](commands.md)
 - [Team workflow](team-workflow.md)
