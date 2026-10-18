@@ -418,13 +418,18 @@ option names (`consumer`, `retry`, `reconnect`, `onFailure`, `onDelivery`) and t
 
 ## Testing
 
-The suites need a real server and are skipped without `DDD_TS_KIT_TEST_NATS_URL`:
+The codec of the envelope, the settings and their defaults, the topology description and the
+failure codes are covered without a server, in the unit run. The other suites need a real
+server and are skipped without `DDD_TS_KIT_TEST_NATS_URL`:
 
 ```
 docker run -d --rm --name ddd-ts-kit-test-nats -p 127.0.0.1:4222:4222 nats:2.15.0-alpine -js
 DDD_TS_KIT_TEST_NATS_URL=nats://127.0.0.1:4222 npx vitest run packages/nats
 docker rm -f ddd-ts-kit-test-nats
 ```
+
+The integration job of the CI runs them on every pull request that reaches this package,
+against NATS Server 2.15.0 with JetStream that `pipeline/github/scripts/start-nats.sh` starts, its image pinned by digest.
 
 They run the contract suite on file and on memory storage, then the behaviours of this
 provider, one suite per behaviour (`publishing`, with the deduplication inside and outside

@@ -9,11 +9,11 @@
   "scripts": {
     "typecheck": "node scripts/tsc.mjs -p tsconfig.json --noEmit",
     "build": "node scripts/tsc.mjs -p tsconfig.build.json && node scripts/kit.mjs build-aliases",
-    "lint": "eslint .",
+    "lint": "node scripts/kit.mjs lint",
     "format": "biome format --write .",
     "format:check": "biome format .",
     "ci:typecheck": "npm run typecheck",
-    "ci:lint": "eslint .",
+    "ci:lint": "node scripts/kit.mjs lint",
     "ci:format": "npm run format:check",
     "ci:arch": "npm run ci:arch:check && npm run ci:arch:graph",
     "ci:arch:check": "node scripts/kit.mjs check",

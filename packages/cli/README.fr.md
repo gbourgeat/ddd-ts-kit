@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:3d01b78606d29a72 -->
+<!-- translation-of: README.md sha256:bc80996d76eeba47 -->
 
 # ddd-ts-kit
 
@@ -705,12 +705,12 @@ Next, in this order: the language of the context first, then the business decisi
   `platform.jobs.register({ name, schedule, run })`.
 - **Les *jobs*.** Le planning est validé quand le *job* est généré, par les règles du planificateur
   (`parseJobSchedule` du kernel, fixé par un test) : une durée (`15m`, `2s`, des chiffres seuls
-  sont des millisecondes) ou une expression cron à cinq champs, avec un fuseau horaire IANA ;
-  `--time-zone` sans `--cron` est refusé, de même qu'un *job* sans `--command`, une commande qui
-  n'existe pas (avec la commande qui la crée) et une commande dont le constructeur demande plus
-  que l'acteur et l'instant pour lequel le travail est fait : un *job* dit seulement que le moment
-  est venu, le gestionnaire trouve sur quoi agir. Les paramètres optionnels ou qui ont une valeur
-  par défaut sont laissés hors de l'appel.
+  sont des millisecondes) ou une expression cron à cinq champs ou un raccourci (`@daily`), avec un
+  fuseau horaire IANA ; `--time-zone` sans `--cron` est refusé, de même qu'un *job* sans
+  `--command`, une commande qui n'existe pas (avec la commande qui la crée) et une commande dont le
+  constructeur demande plus que l'acteur et l'instant pour lequel le travail est fait : un *job* dit
+  seulement que le moment est venu, le gestionnaire trouve sur quoi agir. Les paramètres optionnels
+  ou qui ont une valeur par défaut sont laissés hors de l'appel.
 - **L'autorisation d'un *job*.** Un *job* dont la commande est protégée l'envoie en tant que
   `system:<context>.<name>`, qui n'a aucun droit tant que le modèle ne lui en donne pas.
   `generate job` écrit l'autorisation là où le modèle en fait une ligne, dans une région marquée
@@ -1251,10 +1251,32 @@ cette version) et les permissions des agents que cette version écrit et que le 
 *worktree* son propre lefthook, et fait échouer un *commit*, bruyamment, quand ses dépendances
 manquent ; le correctif est cette ligne, ou `init --force` pour le fichier entier. Le *hook*
 pre-commit sous `git rev-parse --git-path hooks` doit exister et venir de lefthook ; le correctif
-est `npm run hooks:install`, une fois par clone. `--strict` sort avec 1 tant que quelque chose
-manque ou est à une autre plage ; un script écrit autrement et un *hook* que ce clone n'a pas
-installé sont signalés sans le faire échouer. `--json` affiche `{ version, findings: [{ area,
-name, problem, expected, found }] }`, `area` valant `script`, `package`, `permission` ou `hook`.
+est `npm run hooks:install`, une fois par clone.
+
+Puis ce qui manque à ce *checkout* pour faire tourner le projet, l'état d'un clone ou d'un
+nouveau *worktree* plutôt que du projet, lu dans ses fichiers sans réseau : le Node qui tourne
+face à `engines.node` de `package.json` (`unsupported`) et à la version que nomme `.nvmrc`
+(`other version` ; un alias comme `lts/*` n'est pas jugé) ; `node_modules` présent (`missing`)
+et installé depuis la dernière modification du *lockfile* (`outdated`, d'après la copie du
+*lockfile* que le gestionnaire de paquets écrit sous `node_modules`) ; `ddd-ts-kit` et chaque
+paquet `@ddd-ts-kit/*` que `package.json` déclare ou que `node_modules` contient, installé
+(`not installed`) à la version de la CLI qui tourne (`other version`). Un projet sans *lockfile*
+à lui dans un *workspace* (un `package.json` au-dessus qui déclare `workspaces`, ou un
+`pnpm-workspace.yaml`, avec le *lockfile*) est lu là où le *workspace* installe, ses paquets
+résolus comme le fait Node, du projet vers le haut ; et, quand le dépôt a un
+`.gitmodules`, chaque sous-module initialisé (`not initialised`, d'après `git submodule status`).
+Chacun vient avec son correctif : un Node qu'`engines.node` accepte (`nvm use`), `npm ci`, les
+paquets du kit montés ensemble, `git submodule update --init --recursive`.
+
+`--strict` sort avec 1 tant que quelque chose manque ou est à une autre plage, ou tant que le
+*checkout* ne peut pas faire tourner le projet : un Node hors d'`engines.node`, pas de
+`node_modules`, un paquet du kit non installé ou à une autre version, un sous-module non
+initialisé. Un script écrit autrement, un *hook* que ce clone n'a pas installé, un Node que
+`.nvmrc` ne nomme pas quand `engines.node` l'accepte, et un *lockfile* modifié depuis
+l'installation (un *checkout* peut le réécrire avec ce que `node_modules` contient déjà) sont
+signalés sans le faire échouer. `--json` affiche `{ version, findings: [{ area, name, problem,
+expected, found }] }`, `area` valant `script`, `package`, `permission`, `hook`, `node`,
+`install` ou `submodule`.
 
 ## worker-scope
 
@@ -1595,7 +1617,7 @@ ajoute, `lint` ce qu'elle ajoute à ESLint ; les *pipelines* générés câblent
 
 ```
 ddd-ts-kit check [paths...] [--rule <id>]... [--format text|json|github|gitlab]
-                 [--changed-since <git-ref>] [--self]
+                 [--changed-since <git-ref>] [--explain] [--self]
 ddd-ts-kit check --clean-only <dir>... [--rule <id>]... [--format text|json|github]
 ddd-ts-kit check --commit-size [--staged] [--strict]
 ```
@@ -1658,6 +1680,12 @@ règle.
 - `paths` et `--changed-since` limitent ce qui est signalé, pas ce qui est analysé.
   `--changed-since` lance `git diff --name-only --relative <ref>...` dans le projet.
 - `--format github` affiche des annotations `::error file=...,line=...::`.
+- `--explain` fait suivre les violations de chaque règle qu'elles signalent, une fois, avec sa
+  description et la raison de son existence (comme `explain` l'affiche, sans les exemples), et
+  ajoute en JSON un tableau `explanations`. Avec `--format github` ou `gitlab`, la raison va à la
+  place à la fin du message de chaque annotation : une *pull request* montre une annotation seule
+  sur sa ligne, et un rapport Code Quality n'a pas de place pour du texte à côté de ses problèmes.
+  Les empreintes restent les mêmes.
 - `--format gitlab` affiche un rapport Code Quality de GitLab : un problème par violation,
   `major` pour une erreur et `minor` pour un avertissement, avec une empreinte qui ne dépend pas
   de la ligne.
@@ -1933,6 +1961,22 @@ Exécute les règles par fichier (couches, contextes, nommage, événements, lan
 propre, *mocks*, composition, désactivations) sur un fichier sans parcourir le projet : conçu pour
 un *hook* d'éditeur ou d'agent après chaque écriture. Un fichier qui n'est pas une source du
 projet est ignoré.
+
+## lint
+
+```
+ddd-ts-kit lint [paths...] [--format <eslint formatter>] [--fix]
+```
+
+Ce que lancent `lint` et `ci:lint` d'un projet généré : l'ESLint du projet, par son API, sur les
+chemins donnés (le projet sinon), son rapport dans le format demandé (`--format gitlab` écrit le
+rapport Code Quality comme le fait `eslint-formatter-gitlab`), `--fix` comme ESLint le prend. Il
+sort en 1 sur une erreur, et sur un avertissement comme sur une erreur, sauf sur un avertissement
+d'une règle du kit en transition : une règle nouvelle dans cette version, dont la documentation
+nomme la version où elle devient une erreur. Ceux-là sont affichés dans le rapport et listés
+après lui, une ligne par règle, sans échouer : une mise à jour du kit ne fait jamais passer au
+rouge un lint vert. Sans ESLint installé, il sort en 2 et nomme l'installation. Voir
+[Base de qualité](../../docs/tools/quality-baseline.fr.md#un-avertissement-fait-échouer-le-lint).
 
 ## rules, explain
 

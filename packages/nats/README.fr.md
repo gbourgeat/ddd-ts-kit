@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:614b1f30d185197a -->
+<!-- translation-of: README.md sha256:f38da105c12a0ddc -->
 
 # @ddd-ts-kit/nats
 
@@ -437,13 +437,18 @@ des options (`consumer`, `retry`, `reconnect`, `onFailure`, `onDelivery`) et les
 
 ## Tests
 
-Les suites ont besoin d'un vrai serveur et sont ignorées sans `DDD_TS_KIT_TEST_NATS_URL` :
+Le codec de l'enveloppe, les réglages et leurs valeurs par défaut, la description de la
+topologie et les codes d'échec sont couverts sans serveur, par les tests unitaires. Les autres
+suites ont besoin d'un vrai serveur et sont ignorées sans `DDD_TS_KIT_TEST_NATS_URL` :
 
 ```
 docker run -d --rm --name ddd-ts-kit-test-nats -p 127.0.0.1:4222:4222 nats:2.15.0-alpine -js
 DDD_TS_KIT_TEST_NATS_URL=nats://127.0.0.1:4222 npx vitest run packages/nats
 docker rm -f ddd-ts-kit-test-nats
 ```
+
+Le *job* d'intégration de la CI les exécute sur chaque *pull request* qui atteint ce *package*,
+contre NATS Server 2.15.0 avec JetStream que démarre `pipeline/github/scripts/start-nats.sh`, son image épinglée par *digest*.
 
 Elles exécutent la suite de contrat sur le stockage fichier et sur le stockage mémoire, puis les
 comportements de ce fournisseur, une suite par comportement (`publishing`, avec la déduplication

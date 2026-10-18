@@ -8,8 +8,9 @@ transactions belong to the application through the `UnitOfWork` port. The kit sh
 three pieces for four libraries (a unit of work with an ambient transaction, an outbox store, a
 processed-event store), all held to the same contract suites. What differs is how each library
 handles transactions, migrations, type safety and raw SQL, and how far each adapter was
-actually tested: PostgreSQL is covered by the automated suites for all four, MySQL 8 and
-SQLite were run by hand once for three of them, and nothing else was run at all.
+actually tested: PostgreSQL is covered by the automated suites for all four, SQLite by those
+of the Knex stores, MySQL 8 and SQLite were otherwise run by hand once for three of them, and
+nothing else was run at all.
 
 ## What the application asks of persistence
 
@@ -394,13 +395,13 @@ choose it: [Event sourcing, per aggregate](../concepts/event-sourcing.md).
 |---|---|---|---|---|
 | PostgreSQL | automated: contract suites on PGlite (in process); works with node-postgres, postgres-js, PGlite, Neon drivers | automated on PGlite over the wire protocol, and on a real server when a URL is given (last run: PostgreSQL 18): contracts, rollback, nested unit of work, concurrent claims | same as Knex, through `@prisma/adapter-pg`, both claim strategies | same as Knex |
 | MySQL 8 | not provided: the package is PostgreSQL only | by hand, once, against 8.4: outbox and processed-event contracts, rollback of `append` | by hand, once, against 8.4 through `@prisma/adapter-mariadb` | by hand, once, against 8.4 |
-| SQLite | not provided | by hand, once (`better-sqlite3`); no `SKIP LOCKED`, no schemas | by hand, once, outbox contract only; the processed-event store needs a custom delegate | by hand, once; no `SKIP LOCKED`, no schemas |
+| SQLite | not provided | automated, in the unit run: outbox and processed-event contracts on an in-memory database (`better-sqlite3`); no `SKIP LOCKED`, no schemas | by hand, once, outbox contract only; the processed-event store needs a custom delegate | by hand, once; no `SKIP LOCKED`, no schemas |
 | MariaDB, CockroachDB, SQL Server, Oracle | not provided | never run | CockroachDB, SQL Server never run | never run |
 | MongoDB | not provided | not applicable | never run | never run |
 | Library version tested | not stated in the README | not stated | Prisma 7.10; the peer range admits 6, on which nothing was run | TypeORM 1.1; the peer range admits 0.3, on which nothing was run |
 
 "By hand, once" is the READMEs' own wording: those suites are not in CI, so a regression on
-MySQL or SQLite would not be caught by the kit.
+MySQL, or on SQLite outside the Knex stores, would not be caught by the kit.
 
 ### What the generator and the other packages add
 
@@ -421,9 +422,9 @@ From [`packages/cli/README.md`](../../packages/cli/README.md) and
 
 | Database | Position in this kit | What you lose or must check |
 |---|---|---|
-| PostgreSQL | the default and the only one in the automated suites | nothing |
+| PostgreSQL | the default, and the only one in the automated suites of every adapter | nothing |
 | MySQL 8 | stores run by hand once (Knex, Prisma, TypeORM) | no generated persistence, no SQL audit trail; `DATETIME` without time zone under Knex; no `SKIP LOCKED` on 5.7; one schema per context becomes one database or a table prefix |
-| SQLite | stores run by hand once | no schemas, compare-and-set claim, single writer: tests and tools, not several instances |
+| SQLite | Knex stores automated in the unit run, the others run by hand once | no schemas, compare-and-set claim, single writer: tests and tools, not several instances |
 | MongoDB, others | no adapter | `stack.orm: custom`: your own unit of work (its `run` built on `withinUnitOfWork` of the kernel), outbox store and processed-event store, each passing the contract suites; without multi-document transactions the outbox guarantee is not available |
 
 `stack.database` accepts `postgres`, `mysql`, `sqlite`, `mongodb` and `none`
@@ -469,6 +470,16 @@ refuses to run without the description: two branches never write the same file.
 The command takes the description after the script: `npm run db:generate add-invoices`
 (`npm run db:generate -- audit-guard --custom` for a hand-written drizzle-kit migration).
 
+**Two migrations kept apart.** A tool that generates from the schema writes, in one migration,
+the difference between the schema files and the last migration: two changes made before one
+`db:generate` come out as one migration. When they have to stay two (a new table, then a
+constraint once it is filled; a column added, then the old one dropped in a later deployment),
+change the schema in two steps, with a `db:generate` after each: make the first change, run
+`npm run db:generate add-due-dates`, then make the second and run
+`npm run db:generate require-due-dates`. Already generated as one and not merged yet: delete it
+(under drizzle-kit, its `.sql` file, its snapshot under `meta/` and its journal entry), undo the
+second change, and take the two steps.
+
 **Without a terminal.** When a change of the schema could be a rename (a column or a table gone
 and another one added), drizzle-kit asks on a terminal whether it is created or renamed.
 Measured with drizzle-kit 0.31.11 (2026-10-15): without a terminal, as an agent or a pipeline
@@ -494,6 +505,11 @@ key) or `_pk` (the one drizzle-kit gives a composite key); the columns of a key 
 snapshot, else from the name drizzle-kit gives a composite key. A key of another name that the
 snapshot does not record, or a statement written in another form (`DROP` of a column without
 `COLUMN`, a `DO` block), is not seen: read the SQL of such a migration before committing it.
+The warning scrolls away with the output; the rule `persistence/primary-key-order` of
+`ddd-ts-kit check` (a warning, as a new rule is) reads the same statements in every `.sql` file
+of the migrations folder and reports the migration, on the line of the statement that runs too
+early, with the same fix, until it is fixed (`ddd-ts-kit check --rule persistence/primary-key-order`
+lists them).
 
 **Formatted as the project.** drizzle-kit writes the snapshot and the journal under `meta/` in
 its own layout, which the format gate of a project can refuse. Once a migration is written,
@@ -565,18 +581,40 @@ npx ddd-ts-kit drizzle-generate --replay                    # --base <ref>, orig
 ```
 
 It compares the `.sql` files of the migrations folder with those of `--base`: the ones the base
-does not have are the branch's. It deletes them, with their snapshots and their journal entries
-(the journal becomes the one of the base, whose last snapshot is then the parent of what
-follows), generates each again on top, in their order and under their names, and says what it
-deleted and generated. A custom migration (its snapshot repeats the one before it) is generated
-again with `--custom` and gets its statements back. It refuses, with the fix: a journal that
-still holds conflict markers (take the one of the base, as above: the replay finds the
-migrations of the branch by their files), a base with migrations the branch has not merged, and
-two migrations of the branch that change the schema: drizzle-kit generates the difference
-between the schema files and the last snapshot, so it can generate the changes of a branch again
-as one migration only (delete them and generate that one by hand). The replay is Drizzle's:
-under knex, Prisma and TypeORM, which keep no journal, `merge-trunk --to-land` renames the
-migrations, and generating one again after an overlap stays by hand.
+does not have are the branch's. When the history on disk does not fork (the journal lists every
+file in the order they were generated, each snapshot from the one before, so the branch's
+follow the last migration of the base), it generates nothing: it only renames a migration whose
+name changes (`working-` dropped, below), its number, snapshot and statements kept, and says so.
+Otherwise it deletes them, with their snapshots and their journal entries (the journal becomes
+the one of the base, whose last snapshot is then the parent of what follows), generates each
+again on top, in their order and under their names, and says what it deleted and generated. A
+custom migration (its snapshot repeats the one before it) is generated again with `--custom` and
+gets its statements back. It refuses, with the fix: a journal that still holds conflict markers
+(take the one of the base, as above: the replay finds the migrations of the branch by their
+files), a base with migrations the branch has not merged, and two migrations of the branch that
+change the schema: drizzle-kit generates the difference between the schema files and the last
+snapshot, so it cannot split the changes of a branch again into the steps they were, and one
+migration in their place would join steps planned apart (a table, then a constraint once it is
+filled, fails on a database that holds rows). The fix generates them again by hand, one at a
+time and in their order, as "Two migrations kept apart" above says: delete
+them, undo every change of the branch in the schema files but the first one's, run
+`npm run db:generate <its name>`, bring back the next change and run it again (`git show
+<commit>:<schema file>` holds the schema of each step). It also refuses a generated
+migration whose statements drizzle-kit now writes otherwise: its SQL was edited by hand (a key
+reordered, an index added), or the base changed what it changes. Generating it again would lose
+that, so it puts the migrations folder back as it found it and says which statement differs;
+the fix is to generate that migration on top of the base by hand and write the edits again
+(`git show HEAD:<file>` holds them), after which a replay finds nothing forked. The replay is
+Drizzle's: under knex, Prisma and TypeORM, which keep no journal, `merge-trunk --to-land` renames
+the migrations, and generating one again after an overlap stays by hand.
+
+**Measured with drizzle-kit 0.31.11, drizzle-orm 0.45.4 and PGlite 0.5.10 (2026-10-18)**, the
+real drizzle-kit on a TypeScript schema: a branch adds a table while the main branch adds
+another, the branch merges it and takes its journal, `drizzle-generate --replay --base main`
+generates the branch's migration again on top with the same statements, and `drizzle-kit migrate`
+applies the three migrations to an empty database; the same with each side adding a column to
+one table. A second replay says nothing is forked. A migration of the branch with an index added
+by hand is refused, and the folder is as before the replay.
 
 `npx ddd-ts-kit verify-merge`, run after the merge, reports a migration of either side that the
 result lost. It knows a migration by its description, its name without its number and without

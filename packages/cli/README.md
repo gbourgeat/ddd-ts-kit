@@ -683,11 +683,11 @@ Next, in this order: the language of the context first, then the business decisi
   `platform.jobs.register({ name, schedule, run })`.
 - **Jobs.** The schedule is validated when the job is generated, by the rules of the scheduler
   (`parseJobSchedule` of the kernel, pinned by a test): a duration (`15m`, `2s`, digits alone are
-  milliseconds) or a five-field cron expression, with an IANA time zone; `--time-zone` without
-  `--cron` is refused, and so is a job without `--command`, a command that does not exist (with the
-  command that creates it) and a command whose constructor needs more than the actor and the
-  instant the work is for: a job only says that the time has come, the handler finds what to act
-  on. Parameters that are optional or have a default are left out of the call.
+  milliseconds) or a cron expression of five fields or a shorthand (`@daily`), with an IANA time
+  zone; `--time-zone` without `--cron` is refused, and so is a job without `--command`, a command
+  that does not exist (with the command that creates it) and a command whose constructor needs more
+  than the actor and the instant the work is for: a job only says that the time has come, the
+  handler finds what to act on. Parameters that are optional or have a default are left out of the call.
 - **The grant of a job.** A job whose command is protected sends it as `system:<context>.<name>`,
   which has no right unless the model gives it one. `generate job` writes the grant where the model
   makes it one line, in a `system-grants` marker region, and `next` points at that line:
@@ -1187,10 +1187,30 @@ otherwise, then the git hooks. `lefthook.yml` must hold `lefthook: node_modules/
 which makes each checkout and each worktree run its own lefthook and fail a commit, loudly,
 when its dependencies are missing; the fix is that line, or `init --force` for the whole file.
 The pre-commit hook under `git rev-parse --git-path hooks` must exist and come from lefthook;
-the fix is `npm run hooks:install`, once per clone. `--strict` exits 1 while something is
-missing or at another range; a script written otherwise and a hook this clone has not installed
-are said without failing it. `--json` prints `{ version, findings: [{ area, name, problem,
-expected, found }] }`, `area` being `script`, `package`, `permission` or `hook`.
+the fix is `npm run hooks:install`, once per clone.
+
+Then what this checkout lacks to run the project, the state of a clone or a new worktree rather
+than of the project, read from its files without network: the running Node against
+`engines.node` of `package.json` (`unsupported`) and the version `.nvmrc` names (`other version`;
+an alias such as `lts/*` is not judged); `node_modules` present (`missing`) and installed since
+the lockfile last changed (`outdated`, from the copy of the lockfile the package manager writes
+under `node_modules`); `ddd-ts-kit` and every `@ddd-ts-kit/*` package that `package.json`
+declares or `node_modules` holds, installed (`not installed`) at the version of the running CLI
+(`other version`). A project without a lockfile of its own inside a workspace (a `package.json`
+above it that declares `workspaces`, or a `pnpm-workspace.yaml`, with the lockfile) is read where
+the workspace installs, its packages resolved as Node does, from the project up; and, when the repository has a `.gitmodules`, every submodule initialised
+(`not initialised`, from `git submodule status`). Each comes with its fix: a Node that
+`engines.node` accepts (`nvm use`), `npm ci`, the packages of the kit upgraded together,
+`git submodule update --init --recursive`.
+
+`--strict` exits 1 while something is missing or at another range, or while the checkout cannot
+run the project: a Node outside `engines.node`, no `node_modules`, a package of the kit not
+installed or at another version, a submodule not initialised. A script written otherwise, a hook
+this clone has not installed, a Node `.nvmrc` does not name while `engines.node` accepts it, and a
+lockfile changed since the install (a checkout may rewrite it with what `node_modules` already
+holds) are said without failing it. `--json` prints `{ version, findings: [{ area, name, problem,
+expected, found }] }`, `area` being `script`, `package`, `permission`, `hook`, `node`, `install`
+or `submodule`.
 
 ## worker-scope
 
@@ -1506,7 +1526,7 @@ generated pipelines wire all three.
 
 ```
 ddd-ts-kit check [paths...] [--rule <id>]... [--format text|json|github|gitlab]
-                 [--changed-since <git-ref>] [--self]
+                 [--changed-since <git-ref>] [--explain] [--self]
 ddd-ts-kit check --clean-only <dir>... [--rule <id>]... [--format text|json|github]
 ddd-ts-kit check --commit-size [--staged] [--strict]
 ```
@@ -1568,6 +1588,11 @@ const due = handler.isDueNow(new Reminder(new Date('2026-03-01T09:00:00Z'))); //
 - `paths` and `--changed-since` limit what is reported, not what is analysed.
   `--changed-since` runs `git diff --name-only --relative <ref>...` in the project.
 - `--format github` prints `::error file=...,line=...::` annotations.
+- `--explain` follows the violations with each rule they report, once, with its description and
+  the reason it exists (as `explain` prints it, without the examples), and in JSON adds an
+  `explanations` array. With `--format github` or `gitlab`, the reason goes at the end of the
+  message of each annotation instead: a pull request shows an annotation alone on its line, and
+  a Code Quality report has no place for text beside its issues. The fingerprints stay the same.
 - `--format gitlab` prints a GitLab Code Quality report: one issue per violation, `major` for
   an error and `minor` for a warning, with a fingerprint that does not depend on the line.
 - Severities come from `rules` in the config (`error`, `warn`, `off`). Default `error`, except
@@ -1817,6 +1842,21 @@ ddd-ts-kit check-file <path>
 Runs the per-file rules (layers, contexts, naming, events, language, purity, clean code, mocks,
 composition, suppressions) on one file without walking the project: meant for an editor or
 agent hook after each write. A file that is not a source of the project is ignored.
+
+## lint
+
+```
+ddd-ts-kit lint [paths...] [--format <eslint formatter>] [--fix]
+```
+
+What `lint` and `ci:lint` of a generated project run: the ESLint of the project, through its API,
+on the paths given (the project otherwise), its report in the format asked (`--format gitlab`
+writes the Code Quality report as `eslint-formatter-gitlab` does), `--fix` as ESLint takes it.
+It exits 1 on an error, and on a warning as on an error, but on a warning of a rule of the kit in
+transition: a rule new in this version, whose documentation names the version in which it becomes
+an error. Those are shown in the report and listed after it, one line per rule, without failing:
+an upgrade of the kit never turns a green lint red. Without ESLint installed it exits 2 and names
+the install. See [Quality baseline](../../docs/tools/quality-baseline.md#warnings-fail-the-lint).
 
 ## rules, explain
 

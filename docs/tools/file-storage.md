@@ -85,7 +85,7 @@ export function fileRoutes(storage: FileStorage): readonly Route[] {
 | OVHcloud Object Storage | `https://s3.<region>.io.cloud.ovh.net` | European hosting |
 | Scaleway Object Storage | `https://s3.<region>.scw.cloud` | European hosting |
 | Cloudflare R2 | `https://<account>.r2.cloudflarestorage.com` | region `auto`; no egress fee |
-| Garage | your own | self-hosted, small footprint |
+| Garage | your own | self-hosted, small footprint; region `s3_region` of its config (`garage` in its examples); verified, below |
 
 `s3ClientOf(settings)` builds a client for any of them: path-style addressing with an endpoint,
 and checksums only when an operation requires one, since the default of recent SDKs (a
@@ -145,10 +145,15 @@ sent in parts, and refused beyond its limit without leaving anything behind.
   limit that leaves the previous object and no part behind, keys that could leave their place
   refused, copy, move, listing, signed links that expire, refuse a changed signature or another
   media type.
+- **Run once by hand on Garage v2.1.0 (2026-10-18)**, a single node in Docker
+  (`dxflrs/garage:v2.1.0`, region `garage`): the whole suite of `packages/s3` passed, 34 tests,
+  the contract above among them (the signed upload link refuses another media type there too),
+  with `DDD_TS_KIT_TEST_S3_REGION=garage` since Garage refuses a request signed for another
+  region. Not in the pipeline.
 - `init --storage local|s3` wires the platform: `platform/files/` binds the ports, registers
   the hourly purge of staged files, mounts the routes that answer the links of a served
   storage and the upload reader; `generate file-upload` writes the first upload.
-- Not verified: the other providers of the table, which speak the same protocol; a provider
+- Not verified: AWS S3, OVHcloud, Scaleway and Cloudflare R2, which speak the same protocol; a provider
   whose presigned upload ignores the signed `content-type`.
 
 ## Another provider: Google Cloud Storage, Azure Blob Storage
