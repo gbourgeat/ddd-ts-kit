@@ -1,5 +1,5 @@
 [English](story-workflow.md) · **Français**
-<!-- translation-of: story-workflow.md sha256:8ce268c7ac082751 -->
+<!-- translation-of: story-workflow.md sha256:baac573619f2b92a -->
 
 # Parcours d'une story : une session par user story
 
@@ -31,7 +31,7 @@ terminal 2 : /ddd-ts-kit:story US6 docs/backlog/us6.md
 
 | # | Phase | Artefact | Qui décide |
 |---|---|---|---|
-| 0 | son *worktree* : `npx ddd-ts-kit story-scope US5` | `../<project>-us5` sur `story/us5`, `.ddd-ts-kit/story.json` | |
+| 0 | son *worktree* : `npx ddd-ts-kit story-scope US5` | `.worktrees/us5` sur `story/us5`, `.ddd-ts-kit/story.json` | |
 | 1 | toutes les questions, d'un coup | `## Questions` de `docs/architecture/stories/US5.md` | le responsable du projet, une fois |
 | 2 | spécification et lignes | `## Acceptance criteria` (`- AC1: ...`), les lignes `US5.01`, ... de `slices.md` | la session |
 | 3 | une revue de conception de chaque ligne | `docs/architecture/reviews/US5.md`, une section `## #US5.02 ...` par ligne, lue par `architecture-reviewer` | la session |
@@ -95,14 +95,23 @@ les *stories*, une par terminal.
 
 ## Plusieurs stories, plusieurs terminaux
 
-`story-scope` refuse une *story* déjà ouverte dans un autre *worktree*, et nomme les autres
-*stories* ouvertes avec les contextes que leurs lignes changent : la session lit leurs lignes
-avant de découper les siennes, et se tient à l'écart de leurs agrégats quand elle le peut. Chaque
-branche fusionne le tronc avant sa *pull request* avec
+`story-scope` refuse une *story* déjà ouverte dans un autre *worktree*, et coupe la branche de
+celle que suit le tronc (`origin/main` pour `main`) : un `git fetch` suffit alors à voir le tronc
+avancer. `npx ddd-ts-kit stories` dit, depuis n'importe quel *worktree*, où les *stories*
+ouvertes se croisent pendant qu'on les construit : les contextes que nomment les lignes de deux
+d'entre elles, les fichiers que changent les deux *worktrees* (*commités* ou non), ce que la
+fusion de la branche de l'une dans l'autre laisserait à régler à la main et ce que
+`merge-trunk` règle seul (calculé avec `git merge-tree`, rien n'est écrit), et le retard de
+chaque *story* sur son tronc. La session le lit avant de découper ses lignes et avant chaque
+ligne ; la garde le dit au démarrage de la session, et une fois par fichier quand la session
+écrit un fichier qu'une autre *story* change. La session tient ses lignes à l'écart de ce
+qu'une autre *story* change quand elle le peut, sinon elle consigne laquelle arrive la première.
+Chaque branche fusionne le tronc avant sa *pull request* avec
 `npx ddd-ts-kit merge-trunk --trunk <base>` : les fichiers partagés par construction (documents
 générés, registres, migrations, `slices.md`) se fusionnent comme le dit le
-[travail en parallèle](parallel-work.fr.md), le reste revient à la session. Les *pull requests* fusionnent l'une après l'autre, chacune sur un tronc
-vert.
+[travail en parallèle](parallel-work.fr.md), le reste revient à la session ; la seconde *story*
+à arriver règle le conflit que les deux partagent. Les *pull requests* fusionnent l'une après
+l'autre, chacune sur un tronc vert.
 
 ## Ce qui tient l'ordre
 
@@ -112,8 +121,9 @@ vert.
 | un scénario verrouillé changé alors que son critère ne l'est pas, ou un critère changé | `ddd-ts-kit acceptance` et `--lock`, jusqu'à un verdict de l'agent `acceptance-judge` ; la garde, qui ne laisse que le juge écrire un verdict |
 | un agent hors de son contexte | la garde, d'après `.ddd-ts-kit/worker.json` |
 | la même *story* dans deux sessions | `story-scope` |
+| deux *stories* qui changent le même fichier | `stories` ; la garde, au démarrage de la session et à la première écriture d'un tel fichier |
 | une session qui finit avant son rapport | la garde, qui refuse le premier arrêt de chaque étape |
-| la *pull request* : chaque ligne faite, aucun scénario en attente, le rapport écrit | `story --gate close` |
+| la *pull request* : chaque ligne faite, aucun scénario en attente, le tronc fusionné, le rapport écrit | `story --gate close` |
 
 ## Hôtes
 
@@ -129,7 +139,11 @@ revue.
 - Le juge est un agent, pas le responsable du projet : son verdict est une seconde lecture avant le
   verrou, et le responsable valide chaque amendement à la revue de la *pull request*.
 - Deux *stories* sur le même agrégat dans deux terminaux entrent encore en conflit à la fusion de
-  la seconde ; `story-scope` nomme le risque, il ne l'empêche pas.
+  la seconde : `stories` et la garde le disent dès que les deux changent un fichier, ils ne
+  l'empêchent pas.
+- Le tronc est lu tel que le dernier `git fetch` l'a laissé : ni la garde ni la CLI ne vont sur
+  le réseau. La *skill* fait un `fetch` avant chaque ligne et avant de clore ; la garde dit quand
+  le dernier `fetch` date de plus d'une heure.
 
 ## Voir aussi
 
