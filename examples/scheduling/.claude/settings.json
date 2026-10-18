@@ -23,7 +23,15 @@
       "Bash(npx ddd-ts-kit verify-merge)",
       "Bash(npx ddd-ts-kit verify-merge *)",
       "Bash(npx ddd-ts-kit story-check *)",
-      "Bash(npm run regenerate)"
+      "Bash(npm run regenerate)",
+      "Bash(npx ddd-ts-kit acceptance *)",
+      "Bash(npx ddd-ts-kit story *)",
+      "Bash(npx ddd-ts-kit story-scope *)",
+      "Bash(npx ddd-ts-kit stories)",
+      "Bash(npx ddd-ts-kit stories *)",
+      "Bash(npx ddd-ts-kit worktree *)",
+      "Bash(npx ddd-ts-kit merge-trunk)",
+      "Bash(npx ddd-ts-kit merge-trunk *)"
     ],
     "deny": [
       "Read(./.env)",
@@ -31,7 +39,8 @@
       "Read(!./.env.example)",
       "Edit(./openapi/**)",
       "Edit(./docs/integration/asyncapi.*)",
-      "Edit(./docs/integration/event-catalog.md)"
+      "Edit(./docs/integration/event-catalog.md)",
+      "Edit(./test/acceptance/*.acceptance.lock.json)"
     ],
     "ask": [
       "Bash(git push *)",
