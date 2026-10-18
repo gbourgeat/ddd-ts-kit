@@ -64,16 +64,21 @@ src/contexts/billing/domain/value-objects/email.vo.ts:2  error  layer/domain-pur
 ```
 
 The shape of a request is validated at the edge, by the schema of its route; the rule of the
-business stays in plain TypeScript, with a refusal of its concept:
+business stays in plain TypeScript, with a refusal named after what it refuses:
 
 <!-- checked sample -->
 ```ts
-import { ConceptError, ValueObject } from '@ddd-ts-kit/kernel';
+import { DomainRefusal, ValueObject } from '@ddd-ts-kit/kernel';
 
-// domain/errors/email.error.ts
-export class EmailError extends ConceptError {
-  static invalid(value: string) {
-    return EmailError.refusal('INVALID_EMAIL', `"${value}" is not an email address.`, { value });
+// domain/errors/codes.ts
+export const IdentityCodes = { InvalidEmail: 'INVALID_EMAIL' } as const;
+
+// domain/errors/invalid-email.error.ts
+export class InvalidEmail extends DomainRefusal {
+  readonly code = IdentityCodes.InvalidEmail;
+
+  static forAddress(value: string) {
+    return InvalidEmail.refusal(`"${value}" is not an email address.`, { value });
   }
 }
 
@@ -87,7 +92,7 @@ export class Email extends ValueObject<{ readonly value: string }> {
     const address = value.trim().toLowerCase();
 
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(address)) {
-      throw EmailError.invalid(value);
+      throw InvalidEmail.forAddress(value);
     }
 
     return new Email({ value: address });

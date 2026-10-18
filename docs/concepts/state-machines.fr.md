@@ -1,5 +1,5 @@
 [English](state-machines.md) · **Français**
-<!-- translation-of: state-machines.md sha256:21daeac3d759a4bc -->
+<!-- translation-of: state-machines.md sha256:9b615f4e7ac6b581 -->
 
 # Machines à états
 
@@ -9,20 +9,20 @@ d'instructions `if` dans chaque méthode d'intention, ce cycle de vie est éparp
 peut le dessiner, et une nouvelle méthode oublie facilement une vérification. Une machine à états
 le déclare une fois, à côté de l'agrégat : les états, les transitions nommées d'après les méthodes
 d'intention, les gardes que le statut seul ne tranche pas, et le refus d'une transition interdite,
-construit par une fabrique statique de l'erreur du concept. L'agrégat lui demande son prochain
-statut ; la documentation la dessine.
+construit par une fabrique statique d'une classe de refus du modèle. L'agrégat lui demande son
+prochain statut ; la documentation la dessine.
 
 ![Une déclaration et ceux qui la lisent : l'agrégat interroge la machine à états à l'exécution, la spec de la machine lui demande des transitions, ddd-ts-kit docs et ddd-ts-kit describe lisent son texte source, et la règle lifecycle/status-through-machine vérifie chaque écriture du statut dans l'agrégat](../assets/diagrams/state-machines-declaration-and-readers.fr.svg)
 
 ## Déclarer le cycle de vie
 
 Le cycle de vie d'un rendez-vous, tel que le déclare l'application d'exemple
-([`examples/scheduling`](../../examples/scheduling)), avec le vocabulaire du statut et les
-fabriques de l'erreur du concept qu'il utilise :
+([`examples/scheduling`](../../examples/scheduling)), avec le vocabulaire du statut et les refus
+du modèle qu'il utilise, une classe chacun :
 
 <!-- checked sample -->
 ```ts
-import { ConceptError, defineStateMachine, type DomainError } from '@ddd-ts-kit/kernel';
+import { DomainRefusal, defineStateMachine, type DomainError } from '@ddd-ts-kit/kernel';
 
 // scheduling/domain/vocabularies/appointment-status.vocabulary.ts
 export const AppointmentStatus = {
@@ -36,27 +36,42 @@ export const AppointmentStatus = {
 
 export type AppointmentStatus = (typeof AppointmentStatus)[keyof typeof AppointmentStatus];
 
-// scheduling/domain/errors/appointment.error.ts (les trois fabriques qu'utilise la machine)
-export class AppointmentError extends ConceptError {
-  static alreadyConfirmed(appointmentId: string) {
-    return AppointmentError.refusal(
-      'APPOINTMENT_ALREADY_CONFIRMED',
-      `Appointment ${appointmentId} is booked: nothing is left to confirm.`,
-      { appointmentId },
-    );
-  }
+// scheduling/domain/errors/codes.ts (les trois codes qu'utilise la machine)
+export const SchedulingCodes = {
+  AppointmentAlreadyConfirmed: 'APPOINTMENT_ALREADY_CONFIRMED',
+  AppointmentEnded: 'APPOINTMENT_ENDED',
+  AppointmentNotStarted: 'APPOINTMENT_NOT_STARTED',
+} as const;
 
-  static ended(appointmentId: string, status: string) {
-    return AppointmentError.refusal(
-      'APPOINTMENT_ENDED',
-      `Appointment ${appointmentId} is ${status} and does not change any more.`,
-      { appointmentId, status },
-    ).exposing('status');
-  }
+// scheduling/domain/errors/appointment-already-confirmed.error.ts
+export class AppointmentAlreadyConfirmed extends DomainRefusal {
+  readonly code = SchedulingCodes.AppointmentAlreadyConfirmed;
 
-  static notStarted(appointmentId: string, startsAt: Date) {
-    return AppointmentError.refusal(
-      'APPOINTMENT_NOT_STARTED',
+  static forAppointment(appointmentId: string) {
+    return AppointmentAlreadyConfirmed.refusal(`Appointment ${appointmentId} is booked: nothing is left to confirm.`, {
+      appointmentId,
+    });
+  }
+}
+
+// scheduling/domain/errors/appointment-ended.error.ts
+export class AppointmentEnded extends DomainRefusal {
+  readonly code = SchedulingCodes.AppointmentEnded;
+
+  static forAppointment(appointmentId: string, status: string) {
+    return AppointmentEnded.refusal(`Appointment ${appointmentId} is ${status} and does not change any more.`, {
+      appointmentId,
+      status,
+    }).exposing('status');
+  }
+}
+
+// scheduling/domain/errors/appointment-not-started.error.ts
+export class AppointmentNotStarted extends DomainRefusal {
+  readonly code = SchedulingCodes.AppointmentNotStarted;
+
+  static forAppointment(appointmentId: string, startsAt: Date) {
+    return AppointmentNotStarted.refusal(
       `Appointment ${appointmentId} starts at ${startsAt.toISOString()}: its outcome is not known before.`,
       { appointmentId, startsAt },
     ).exposing('startsAt');
@@ -98,7 +113,7 @@ export const appointmentLifecycle = defineStateMachine({
 
 /** Une issue est connue une fois le rendez-vous commencé. */
 function started({ appointmentId, at, startsAt }: AppointmentMoment): DomainError | undefined {
-  return startsAt.getTime() > at.getTime() ? AppointmentError.notStarted(appointmentId, startsAt) : undefined;
+  return startsAt.getTime() > at.getTime() ? AppointmentNotStarted.forAppointment(appointmentId, startsAt) : undefined;
 }
 
 /** Un rendez-vous réservé n'a plus rien à confirmer ; tout autre refus vient d'un rendez-vous terminé. */
@@ -107,8 +122,8 @@ function refused(
   { appointmentId }: AppointmentMoment,
 ): DomainError {
   return from === AppointmentStatus.Booked && transition === 'confirm'
-    ? AppointmentError.alreadyConfirmed(appointmentId)
-    : AppointmentError.ended(appointmentId, from);
+    ? AppointmentAlreadyConfirmed.forAppointment(appointmentId)
+    : AppointmentEnded.forAppointment(appointmentId, from);
 }
 ```
 
@@ -120,8 +135,9 @@ function refused(
 - **Une garde** est une règle que le statut seul ne dit pas (« pas avant que le rendez-vous
   commence »). Elle reçoit le contexte que lui passe l'agrégat et répond par un refus ou par rien.
 - **Le refus** d'une transition que l'état n'autorise pas est construit par une fabrique statique
-  de l'erreur du concept, à qui sont donnés l'état, la transition et le contexte : les codes
-  d'erreur du modèle restent là où ils sont, dans `AppointmentError`.
+  d'une classe de refus, à qui sont donnés l'état, la transition et le contexte : les codes
+  d'erreur du modèle restent là où ils sont, dans `domain/errors/codes.ts`, et chaque refus dans
+  sa propre classe (`AppointmentEnded`).
 - Sans `refused`, une transition interdite lève `TransitionError.forbidden(from, transition)` du
   noyau (kernel), code `FORBIDDEN_TRANSITION` : une valeur d'attente jusqu'à ce que le cycle de
   vie ait ses propres refus.
@@ -153,11 +169,11 @@ confirm(now: Date): void {
   // Le cycle de vie, écrit une fois de plus : la prochaine méthode qui change le statut doit le
   // répéter, et lifecycle/status-through-machine refuse l'écriture du statut ci-dessous.
   if (this.state.status === AppointmentStatus.Booked) {
-    throw AppointmentError.alreadyConfirmed(this.id);
+    throw AppointmentAlreadyConfirmed.forAppointment(this.id);
   }
 
   if (this.state.status !== AppointmentStatus.Requested) {
-    throw AppointmentError.ended(this.id, this.state.status);
+    throw AppointmentEnded.forAppointment(this.id, this.state.status);
   }
 
   this.state = { ...this.state, changedAt: now, status: AppointmentStatus.Booked };
@@ -191,20 +207,26 @@ Un agrégat entier, plus petit que le rendez-vous, qui utilise chacune d'elles :
 
 <!-- checked sample -->
 ```ts
-import { AggregateRoot, ConceptError, defineStateMachine, NamedDomainEvent } from '@ddd-ts-kit/kernel';
+import { AggregateRoot, DomainRefusal, defineStateMachine, NamedDomainEvent } from '@ddd-ts-kit/kernel';
 
 export const InvoiceStatus = { Draft: 'draft', Issued: 'issued', Paid: 'paid', Cancelled: 'cancelled' } as const;
 export type InvoiceStatus = (typeof InvoiceStatus)[keyof typeof InvoiceStatus];
 
-export class InvoiceError extends ConceptError {
-  static empty(invoiceId: string) {
-    return InvoiceError.refusal('INVOICE_EMPTY', `Invoice ${invoiceId} has no line to issue.`, { invoiceId });
-  }
+export const BillingCodes = { InvoiceEmpty: 'INVOICE_EMPTY', InvoiceClosed: 'INVOICE_CLOSED' } as const;
 
-  static closed(invoiceId: string, status: string) {
-    return InvoiceError.refusal('INVOICE_CLOSED', `Invoice ${invoiceId} is ${status}.`, { invoiceId, status }).exposing(
-      'status',
-    );
+export class InvoiceEmpty extends DomainRefusal {
+  readonly code = BillingCodes.InvoiceEmpty;
+
+  static forInvoice(invoiceId: string) {
+    return InvoiceEmpty.refusal(`Invoice ${invoiceId} has no line to issue.`, { invoiceId });
+  }
+}
+
+export class InvoiceClosed extends DomainRefusal {
+  readonly code = BillingCodes.InvoiceClosed;
+
+  static forInvoice(invoiceId: string, status: string) {
+    return InvoiceClosed.refusal(`Invoice ${invoiceId} is ${status}.`, { invoiceId, status }).exposing('status');
   }
 }
 
@@ -222,12 +244,12 @@ export const invoiceLifecycle = defineStateMachine({
     issue: {
       from: [InvoiceStatus.Draft],
       to: InvoiceStatus.Issued,
-      guard: ({ invoiceId, lines }: InvoiceCheck) => (lines === 0 ? InvoiceError.empty(invoiceId) : undefined),
+      guard: ({ invoiceId, lines }: InvoiceCheck) => (lines === 0 ? InvoiceEmpty.forInvoice(invoiceId) : undefined),
     },
     pay: { from: [InvoiceStatus.Issued], to: InvoiceStatus.Paid },
     cancel: { from: [InvoiceStatus.Draft, InvoiceStatus.Issued], to: InvoiceStatus.Cancelled },
   },
-  refused: ({ from }, { invoiceId }: InvoiceCheck) => InvoiceError.closed(invoiceId, from),
+  refused: ({ from }, { invoiceId }: InvoiceCheck) => InvoiceClosed.forInvoice(invoiceId, from),
 });
 
 export class InvoiceIssued extends NamedDomainEvent('billing.invoice.issued') {

@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:281de46cd74226d4 -->
+<!-- translation-of: README.md sha256:4e0553c362a45a3d -->
 
 # @ddd-ts-kit/sentry
 
@@ -175,7 +175,7 @@ capture qui l'entoure la remonte.
 
 <!-- checked sample -->
 ```ts
-import { ConceptError, type ErrorReporter } from '@ddd-ts-kit/kernel';
+import { DomainRefusal, type ErrorReporter } from '@ddd-ts-kit/kernel';
 
 interface PaymentGateway {
   capture(paymentId: string): Promise<'captured' | 'declined'>;
@@ -185,9 +185,17 @@ interface CapturePaymentCommand {
   readonly paymentId: string;
 }
 
-export class PaymentError extends ConceptError {
-  static declined(paymentId: string) {
-    return PaymentError.refusal('PAYMENT_DECLINED', `Payment ${paymentId} was declined.`, { paymentId });
+// domain/errors/codes.ts
+export const PaymentsCodes = {
+  PaymentDeclined: 'PAYMENT_DECLINED',
+} as const;
+
+// domain/errors/payment-declined.error.ts
+export class PaymentDeclined extends DomainRefusal {
+  readonly code = PaymentsCodes.PaymentDeclined;
+
+  static forPayment(paymentId: string) {
+    return PaymentDeclined.refusal(`Payment ${paymentId} was declined.`, { paymentId });
   }
 }
 
@@ -214,7 +222,7 @@ export class CapturePaymentHandler {
 
   async execute(command: CapturePaymentCommand): Promise<void> {
     if ((await this.gateway.capture(command.paymentId)) === 'declined') {
-      throw PaymentError.declined(command.paymentId);
+      throw PaymentDeclined.forPayment(command.paymentId);
     }
   }
 }

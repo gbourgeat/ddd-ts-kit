@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:ce7e9c2f3249b9bf -->
+<!-- translation-of: README.md sha256:0ee776f7afe36659 -->
 
 # @ddd-ts-kit/testing
 
@@ -35,14 +35,18 @@ l'agrégat son fichier sous `domain/` et au *builder* le sien sous `test/builder
 
 <!-- checked sample -->
 ```ts
-import { AggregateRoot, ConceptError, NamedDomainEvent } from '@ddd-ts-kit/kernel';
+import { AggregateRoot, DomainRefusal, NamedDomainEvent } from '@ddd-ts-kit/kernel';
 import { Builder, given, resetSequences, sequence, type Defaults } from '@ddd-ts-kit/testing';
 import { beforeEach, expect, it } from 'vitest';
 
 // Le modèle sous test.
-class OrderError extends ConceptError {
-  static alreadyPaid(orderId: string) {
-    return OrderError.refusal('ORDER_ALREADY_PAID', `Order ${orderId} is already paid.`, { orderId });
+const OrderingCodes = { OrderAlreadyPaid: 'ORDER_ALREADY_PAID' } as const;
+
+class OrderAlreadyPaid extends DomainRefusal {
+  readonly code = OrderingCodes.OrderAlreadyPaid;
+
+  static forOrder(orderId: string) {
+    return OrderAlreadyPaid.refusal(`Order ${orderId} is already paid.`, { orderId });
   }
 }
 
@@ -76,7 +80,7 @@ class Order extends AggregateRoot {
 
   pay(at: Date): void {
     if (this.paid) {
-      throw OrderError.alreadyPaid(this.id);
+      throw OrderAlreadyPaid.forOrder(this.id);
     }
 
     this.paid = true;
@@ -411,30 +415,34 @@ avec une `AssertionError` qui nomme ce qui a été refusé à la place, ou les f
 ligne. Les faits donnés doivent être portés avec ces valeurs ; le refus peut en porter d'autres.
 
 Au lieu de vérifier la formulation d'un message, qui casse quand on la reformule, ou la classe de
-l'erreur, qui ne dit rien du refus dont il s'agissait :
+l'erreur, qui ne dit rien de ses faits et n'est pas ce que lit un client :
 
 ```ts
 expect(() => order.pay(at)).toThrow('Order order-1 is already paid.');
-expect(() => order.pay(at)).toThrow(OrderError);
+expect(() => order.pay(at)).toThrow(OrderAlreadyPaid);
 ```
 
 vérifiez le code, stable pour chaque client, et les faits que porte le refus :
 
 <!-- checked sample -->
 ```ts
-import { ConceptError } from '@ddd-ts-kit/kernel';
+import { DomainRefusal } from '@ddd-ts-kit/kernel';
 import { expectRefusal } from '@ddd-ts-kit/testing';
 
-class OrderError extends ConceptError {
-  static alreadyPaid(orderId: string) {
-    return OrderError.refusal('ORDER_ALREADY_PAID', `Order ${orderId} is already paid.`, { orderId });
+const OrderingCodes = { OrderAlreadyPaid: 'ORDER_ALREADY_PAID' } as const;
+
+class OrderAlreadyPaid extends DomainRefusal {
+  readonly code = OrderingCodes.OrderAlreadyPaid;
+
+  static forOrder(orderId: string) {
+    return OrderAlreadyPaid.refusal(`Order ${orderId} is already paid.`, { orderId });
   }
 }
 
 const order = {
   id: 'order-1',
   pay(): void {
-    throw OrderError.alreadyPaid(this.id);
+    throw OrderAlreadyPaid.forOrder(this.id);
   },
 };
 

@@ -26,8 +26,8 @@ its repository are classes the generators wrote; the command bus comes from the 
 
 What is left to you is the business: the `TODO(domain)` places. Filled in, the domain and
 application part of this slice reads as follows, in one block here where the generators write
-one file per class (the refusal comes from `generate error ordering Order empty`, the event from
-`generate domain-event ordering Order Placed`):
+one file per class (the refusal comes from `generate error ordering OrderEmpty onPlacement`, the
+event from `generate domain-event ordering Order Placed`):
 
 <!-- checked sample -->
 ```ts
@@ -37,7 +37,7 @@ import { NamedDomainEvent,
   AggregateRoot,
   AuthorizedCommand,
   type Clock,
-  ConceptError,
+  DomainRefusal,
   type DomainEvent,
   type IdGenerator,
   Repository,
@@ -49,10 +49,17 @@ export const orderingPermissions = definePermissions('ordering', {
   'order.place': { description: 'Place order' },
 });
 
-// domain/errors/order.error.ts: each refusal is a static factory with a stable code
-export class OrderError extends ConceptError {
-  static empty() {
-    return OrderError.refusal('ORDER_EMPTY', 'An order holds at least one product.');
+// domain/errors/codes.ts: the codes of the context, one closed list
+export const OrderingCodes = {
+  OrderEmpty: 'ORDER_EMPTY',
+} as const;
+
+// domain/errors/order-empty.error.ts: one class per refusal, built by a static factory
+export class OrderEmpty extends DomainRefusal {
+  readonly code = OrderingCodes.OrderEmpty;
+
+  static onPlacement() {
+    return OrderEmpty.refusal('An order holds at least one product.');
   }
 }
 
@@ -85,7 +92,7 @@ export class Order extends AggregateRoot<string> {
   // the customer and the products travel together: one parameter object, three parameters at most
   static place(id: string, request: Pick<OrderState, 'customerId' | 'productIds'>, now: Date): Order {
     if (request.productIds.length === 0) {
-      throw OrderError.empty();
+      throw OrderEmpty.onPlacement();
     }
 
     const order = new Order(id, { ...request, placedAt: now });

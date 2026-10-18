@@ -1,5 +1,5 @@
 [English](clean-code.md) · **Français**
-<!-- translation-of: clean-code.md sha256:9e76fe4ef613650c -->
+<!-- translation-of: clean-code.md sha256:fa470fa512533632 -->
 
 # Le code propre, tel que le kit l'applique
 
@@ -179,13 +179,13 @@ cancel(reason: CancellationReason, at: Date): void {
 
 private assertNotCancelled(): void {
   if (this.status.kind === 'cancelled') {
-    throw AppointmentError.alreadyCancelled(this.id);
+    throw AppointmentAlreadyCancelled.forAppointment(this.id);
   }
 }
 
 private assertWithinCancellationWindow(at: Date): void {
   if (!this.slot.startsAtLeast(CANCELLATION_NOTICE_HOURS, at)) {
-    throw AppointmentError.cancellationWindowPassed(this.id, this.slot.startsAt);
+    throw CancellationWindowPassed.forAppointment(this.id, this.slot.startsAt);
   }
 }
 ```
@@ -198,8 +198,9 @@ Quatre règles respectées d'un coup :
   ([Invariants, permissions, validation](invariants-permissions-validation.fr.md)) ; si le
   métier a vraiment deux comportements, ce sont deux méthodes.
 - `domain/no-generic-error` : un échec métier est une `DomainError` spécifique avec un code
-  stable, pas `new Error('too late')`. Il est nommé deux fois dans les mots du métier, par la
-  fabrique qui le construit et par son code (`errors/through-factory`, `errors/factory-name`).
+  stable, pas `new Error('too late')`. Il est nommé deux fois dans les mots du métier, par sa
+  classe et par son code, et construit par une fabrique qui dit sur quoi il porte
+  (`errors/through-factory`, `errors/factory-name`, `errors/code-listed`).
 - `clean/no-noise-comment` : `// vérifier l'état` répétait le code ; le nom extrait le dit.
 - Commande ou requête, jamais les deux : `cancel` change l'état et ne renvoie rien.
 
@@ -211,12 +212,12 @@ de `else` après un `return` ou un `throw`.
 if (this.status.kind !== 'cancelled') {
   this.status = { kind: 'cancelled', at, reason };
 } else {
-  throw AppointmentError.alreadyCancelled(this.id);
+  throw AppointmentAlreadyCancelled.forAppointment(this.id);
 }
 
 // exigé : la garde d'abord, puis le chemin nominal contre la marge gauche
 if (this.status.kind === 'cancelled') {
-  throw AppointmentError.alreadyCancelled(this.id);
+  throw AppointmentAlreadyCancelled.forAppointment(this.id);
 }
 
 this.status = { kind: 'cancelled', at, reason };
@@ -237,7 +238,7 @@ pèse le même choix pour `'patient' | 'practice'`).
 
 <!-- checked sample -->
 ```ts
-import { AggregateRoot, ConceptError, ValueObject, NamedDomainEvent } from '@ddd-ts-kit/kernel';
+import { AggregateRoot, DomainRefusal, ValueObject, NamedDomainEvent } from '@ddd-ts-kit/kernel';
 
 const CANCELLATION_NOTICE_HOURS = 24;
 const MILLISECONDS_PER_HOUR = 3_600_000;
@@ -264,21 +265,27 @@ export class TimeSlot extends ValueObject<{ startsAt: Date; endsAt: Date }> {
   }
 }
 
-export class AppointmentError extends ConceptError {
-  static alreadyCancelled(appointmentId: string) {
-    return AppointmentError.refusal(
-      'APPOINTMENT_ALREADY_CANCELLED',
-      `Appointment ${appointmentId} is already cancelled.`,
-      { appointmentId },
-    );
-  }
+export const AppointmentsCodes = {
+  AppointmentAlreadyCancelled: 'APPOINTMENT_ALREADY_CANCELLED',
+  CancellationWindowPassed: 'CANCELLATION_WINDOW_PASSED',
+} as const;
 
-  static cancellationWindowPassed(appointmentId: string, startsAt: Date) {
-    return AppointmentError.refusal(
-      'CANCELLATION_WINDOW_PASSED',
-      `Appointment ${appointmentId} starts too soon to be cancelled.`,
-      { appointmentId, startsAt },
-    );
+export class AppointmentAlreadyCancelled extends DomainRefusal {
+  readonly code = AppointmentsCodes.AppointmentAlreadyCancelled;
+
+  static forAppointment(appointmentId: string) {
+    return AppointmentAlreadyCancelled.refusal(`Appointment ${appointmentId} is already cancelled.`, { appointmentId });
+  }
+}
+
+export class CancellationWindowPassed extends DomainRefusal {
+  readonly code = AppointmentsCodes.CancellationWindowPassed;
+
+  static forAppointment(appointmentId: string, startsAt: Date) {
+    return CancellationWindowPassed.refusal(`Appointment ${appointmentId} starts too soon to be cancelled.`, {
+      appointmentId,
+      startsAt,
+    });
   }
 }
 
@@ -315,13 +322,13 @@ export class Appointment extends AggregateRoot {
 
   private assertNotCancelled(): void {
     if (this.status.kind === 'cancelled') {
-      throw AppointmentError.alreadyCancelled(this.id);
+      throw AppointmentAlreadyCancelled.forAppointment(this.id);
     }
   }
 
   private assertWithinCancellationWindow(at: Date): void {
     if (!this.slot.startsAtLeast(CANCELLATION_NOTICE_HOURS, at)) {
-      throw AppointmentError.cancellationWindowPassed(this.id, this.slot.startsAt);
+      throw CancellationWindowPassed.forAppointment(this.id, this.slot.startsAt);
     }
   }
 }

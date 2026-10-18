@@ -211,11 +211,17 @@ of `SendReminders` only acts on what is.
 
 <!-- checked sample -->
 ```ts
-import { AggregateRoot, ConceptError, Repository } from '@ddd-ts-kit/kernel';
+import { AggregateRoot, DomainRefusal, Repository } from '@ddd-ts-kit/kernel';
 
-export class ReminderError extends ConceptError {
-  static notDue(reminderId: string) {
-    return ReminderError.refusal('REMINDER_NOT_DUE', `Reminder ${reminderId} is not due.`, { reminderId });
+// domain/errors/codes.ts
+export const NotificationCodes = { ReminderNotDue: 'REMINDER_NOT_DUE' } as const;
+
+// domain/errors/reminder-not-due.error.ts
+export class ReminderNotDue extends DomainRefusal {
+  readonly code = NotificationCodes.ReminderNotDue;
+
+  static forReminder(reminderId: string) {
+    return ReminderNotDue.refusal(`Reminder ${reminderId} is not due.`, { reminderId });
   }
 }
 
@@ -239,7 +245,7 @@ export class Reminder extends AggregateRoot<string> {
 
   send(asOf: Date): void {
     if (!this.isDue(asOf)) {
-      throw ReminderError.notDue(this.id);
+      throw ReminderNotDue.forReminder(this.id);
     }
 
     this.sent = true;

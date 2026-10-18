@@ -1,5 +1,5 @@
 [English](translation.md) · **Français**
-<!-- translation-of: translation.md sha256:1665c08a5058a6ff -->
+<!-- translation-of: translation.md sha256:13c12ca64cbd29c1 -->
 
 # La documentation en français
 
@@ -416,11 +416,17 @@ packages du *workspace*, si bien qu'il ne peut pas s'écarter de l'API :
 ````md
 <!-- checked sample -->
 ```ts
-import { ConceptError } from '@ddd-ts-kit/kernel';
+import { DomainRefusal } from '@ddd-ts-kit/kernel';
 
-export class InvoiceError extends ConceptError {
-  static alreadyPaid(invoiceId: string) {
-    return InvoiceError.refusal('INVOICE_ALREADY_PAID', `Invoice ${invoiceId} is already paid.`, { invoiceId });
+export const BillingCodes = {
+  InvoiceAlreadyPaid: 'INVOICE_ALREADY_PAID',
+} as const;
+
+export class InvoiceAlreadyPaid extends DomainRefusal {
+  readonly code = BillingCodes.InvoiceAlreadyPaid;
+
+  static forInvoice(invoiceId: string) {
+    return InvoiceAlreadyPaid.refusal(`Invoice ${invoiceId} is already paid.`, { invoiceId });
   }
 }
 ```
@@ -430,11 +436,17 @@ qui s'affiche ainsi :
 
 <!-- checked sample -->
 ```ts
-import { ConceptError } from '@ddd-ts-kit/kernel';
+import { DomainRefusal } from '@ddd-ts-kit/kernel';
 
-export class InvoiceError extends ConceptError {
-  static alreadyPaid(invoiceId: string) {
-    return InvoiceError.refusal('INVOICE_ALREADY_PAID', `Invoice ${invoiceId} is already paid.`, { invoiceId });
+export const BillingCodes = {
+  InvoiceAlreadyPaid: 'INVOICE_ALREADY_PAID',
+} as const;
+
+export class InvoiceAlreadyPaid extends DomainRefusal {
+  readonly code = BillingCodes.InvoiceAlreadyPaid;
+
+  static forInvoice(invoiceId: string) {
+    return InvoiceAlreadyPaid.refusal(`Invoice ${invoiceId} is already paid.`, { invoiceId });
   }
 }
 ```

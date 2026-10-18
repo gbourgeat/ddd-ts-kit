@@ -1,5 +1,5 @@
 [English](file-storage.md) · **Français**
-<!-- translation-of: file-storage.md sha256:375ebca27bf0eb49 -->
+<!-- translation-of: file-storage.md sha256:e6e1eb0862c51c32 -->
 
 # Stockage de fichiers
 
@@ -206,7 +206,7 @@ promotion :
 
 <!-- checked sample -->
 ```ts
-import { AuthorizedCommand, ConceptError, type Clock, type FileStaging, type FileUpload, type StoredFile } from '@ddd-ts-kit/kernel';
+import { AuthorizedCommand, DomainRefusal, type Clock, type FileStaging, type FileUpload, type StoredFile } from '@ddd-ts-kit/kernel';
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
 
 declare class AttachDocumentCommand extends AuthorizedCommand<string> {
@@ -224,9 +224,13 @@ declare abstract class AppointmentRepository {
   abstract save(appointment: Appointment): Promise<void>;
 }
 
-class AppointmentError extends ConceptError {
-  static notFound(appointmentId: string) {
-    return AppointmentError.refusal('APPOINTMENT_NOT_FOUND', `Appointment ${appointmentId} does not exist.`, { appointmentId });
+const SchedulingCodes = { UnknownAppointment: 'APPOINTMENT_NOT_FOUND' } as const;
+
+class UnknownAppointment extends DomainRefusal {
+  readonly code = SchedulingCodes.UnknownAppointment;
+
+  static forAppointment(appointmentId: string) {
+    return UnknownAppointment.refusal(`Appointment ${appointmentId} does not exist.`, { appointmentId });
   }
 }
 
@@ -242,7 +246,7 @@ export class AttachDocumentHandler implements CommandHandler<AttachDocumentComma
     const appointment = await this.appointments.findById(command.appointmentId);
 
     if (appointment === undefined) {
-      throw AppointmentError.notFound(command.appointmentId);
+      throw UnknownAppointment.forAppointment(command.appointmentId);
     }
 
     // déjà mis en attente et analysé par le bus : une clé, une taille, un type vérifié, une empreinte
@@ -287,10 +291,11 @@ Les deux commandes, réduites à ce qu'elles font des fichiers :
 
 <!-- checked sample -->
 ```ts
-import { ConceptError, type FileKeys, type FileStaging, type PendingUpload, type SignedUpload, type StoredFile } from '@ddd-ts-kit/kernel';
+import { DomainRefusal, type FileKeys, type FileStaging, type PendingUpload, type SignedUpload, type StoredFile } from '@ddd-ts-kit/kernel';
 
-declare class AppointmentError extends ConceptError {
-  static noUploadAwaited(): AppointmentError;
+declare class NoUploadAwaited extends DomainRefusal {
+  readonly code: 'NO_UPLOAD_AWAITED';
+  static onConfirmation(): NoUploadAwaited;
 }
 
 declare class Appointment {
@@ -323,7 +328,7 @@ export async function confirmUpload(staging: FileStaging, appointment: Appointme
   const pending = appointment.awaitedDocument;
 
   if (pending === undefined) {
-    throw AppointmentError.noUploadAwaited();
+    throw NoUploadAwaited.onConfirmation();
   }
 
   const file = await staging.confirm(pending); // mesuré contre le plafond, vérifié sur ses octets, analysé

@@ -1,5 +1,5 @@
 [English](methodology.md) · **Français**
-<!-- translation-of: methodology.md sha256:2a9a5881826d9110 -->
+<!-- translation-of: methodology.md sha256:311a6726ceea21c8 -->
 
 # Méthodologie : d'une expression des besoins au code qui tourne
 
@@ -289,16 +289,20 @@ générés avec leurs endroits `TODO(domain)` :
 
 <!-- checked sample -->
 ```ts
-import { AggregateRoot, ConceptError, NamedDomainEvent } from '@ddd-ts-kit/kernel';
+import { AggregateRoot, DomainRefusal, NamedDomainEvent } from '@ddd-ts-kit/kernel';
 import { given } from '@ddd-ts-kit/testing';
 import { describe, expect, it } from 'vitest';
 
 // Le refus, nommé dans les mots du métier.
-export class AppointmentError extends ConceptError {
-  static alreadyCancelled(appointmentId: string) {
-    return AppointmentError.refusal('APPOINTMENT_ALREADY_CANCELLED', `Appointment ${appointmentId} is already cancelled.`, {
-      appointmentId,
-    });
+export const AppointmentsCodes = {
+  AppointmentAlreadyCancelled: 'APPOINTMENT_ALREADY_CANCELLED',
+} as const;
+
+export class AppointmentAlreadyCancelled extends DomainRefusal {
+  readonly code = AppointmentsCodes.AppointmentAlreadyCancelled;
+
+  static forAppointment(appointmentId: string) {
+    return AppointmentAlreadyCancelled.refusal(`Appointment ${appointmentId} is already cancelled.`, { appointmentId });
   }
 }
 
@@ -333,7 +337,7 @@ export class Appointment extends AggregateRoot {
   // Une intention : elle garde sa règle, change l'état et enregistre ce qui s'est passé.
   cancel(now: Date): void {
     if (this.status === 'cancelled') {
-      throw AppointmentError.alreadyCancelled(this.id);
+      throw AppointmentAlreadyCancelled.forAppointment(this.id);
     }
 
     this.status = 'cancelled';

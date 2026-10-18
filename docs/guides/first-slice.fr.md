@@ -1,5 +1,5 @@
 [English](first-slice.md) · **Français**
-<!-- translation-of: first-slice.md sha256:ab4528e7e3ac2342 -->
+<!-- translation-of: first-slice.md sha256:febc763c3889c213 -->
 
 # Une tranche, de bout en bout
 
@@ -29,7 +29,7 @@ de commandes vient de la plateforme qu'a écrite `init`.
 Ce qui vous reste, c'est le métier : les endroits `TODO(domain)`. Une fois remplie, la partie
 domaine et application de cette tranche se lit ainsi, en un seul bloc ici, là où les
 générateurs écrivent un fichier par classe (le refus vient de
-`generate error ordering Order empty`, l'événement de
+`generate error ordering OrderEmpty onPlacement`, l'événement de
 `generate domain-event ordering Order Placed`) :
 
 <!-- checked sample -->
@@ -40,7 +40,7 @@ import { NamedDomainEvent,
   AggregateRoot,
   AuthorizedCommand,
   type Clock,
-  ConceptError,
+  DomainRefusal,
   type DomainEvent,
   type IdGenerator,
   Repository,
@@ -52,10 +52,17 @@ export const orderingPermissions = definePermissions('ordering', {
   'order.place': { description: 'Place order' },
 });
 
-// domain/errors/order.error.ts : chaque refus est une fabrique statique avec un code stable
-export class OrderError extends ConceptError {
-  static empty() {
-    return OrderError.refusal('ORDER_EMPTY', 'An order holds at least one product.');
+// domain/errors/codes.ts : les codes du contexte, une liste fermée
+export const OrderingCodes = {
+  OrderEmpty: 'ORDER_EMPTY',
+} as const;
+
+// domain/errors/order-empty.error.ts : une classe par refus, construite par une fabrique statique
+export class OrderEmpty extends DomainRefusal {
+  readonly code = OrderingCodes.OrderEmpty;
+
+  static onPlacement() {
+    return OrderEmpty.refusal('An order holds at least one product.');
   }
 }
 
@@ -88,7 +95,7 @@ export class Order extends AggregateRoot<string> {
   // le client et les produits voyagent ensemble : un objet de paramètres, trois paramètres au plus
   static place(id: string, request: Pick<OrderState, 'customerId' | 'productIds'>, now: Date): Order {
     if (request.productIds.length === 0) {
-      throw OrderError.empty();
+      throw OrderEmpty.onPlacement();
     }
 
     const order = new Order(id, { ...request, placedAt: now });

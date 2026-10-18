@@ -459,7 +459,7 @@ written in the use case:
 
 <!-- checked sample -->
 ```ts
-import { Command, ConceptError, FixedClock, InMemoryRateLimiter, RateLimiter, type CommandHandler } from '@ddd-ts-kit/kernel';
+import { Command, DomainRefusal, FixedClock, InMemoryRateLimiter, RateLimiter, type CommandHandler } from '@ddd-ts-kit/kernel';
 
 export class RequestPasswordReset extends Command {
   constructor(readonly accountId: string) {
@@ -467,9 +467,17 @@ export class RequestPasswordReset extends Command {
   }
 }
 
-export class PasswordResetError extends ConceptError {
-  static tooMany(retryAfterMs: number) {
-    return PasswordResetError.refusal('PASSWORD_RESETS_EXHAUSTED', 'Three password resets per hour at most.', { retryAfterMs });
+// domain/errors/codes.ts
+export const IdentityCodes = {
+  PasswordResetsExhausted: 'PASSWORD_RESETS_EXHAUSTED',
+} as const;
+
+// domain/errors/password-resets-exhausted.error.ts
+export class PasswordResetsExhausted extends DomainRefusal {
+  readonly code = IdentityCodes.PasswordResetsExhausted;
+
+  static withRetryAfter(retryAfterMs: number) {
+    return PasswordResetsExhausted.refusal('Three password resets per hour at most.', { retryAfterMs });
   }
 }
 
@@ -480,7 +488,7 @@ export class RequestPasswordResetHandler implements CommandHandler<RequestPasswo
     const decision = await this.limiter.consume(`password-reset:${accountId}`, { limit: 3, windowMs: 3_600_000 });
 
     if (!decision.allowed) {
-      throw PasswordResetError.tooMany(decision.retryAfterMs);
+      throw PasswordResetsExhausted.withRetryAfter(decision.retryAfterMs);
     }
 
     // send the link

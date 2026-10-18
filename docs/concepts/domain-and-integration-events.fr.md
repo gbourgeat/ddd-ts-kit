@@ -1,5 +1,5 @@
 [English](domain-and-integration-events.md) · **Français**
-<!-- translation-of: domain-and-integration-events.md sha256:0c008806fa400428 -->
+<!-- translation-of: domain-and-integration-events.md sha256:2fb661bbb5e837bc -->
 
 # Événements du domaine et événements d'intégration
 
@@ -72,7 +72,7 @@ La déclaration complète est dans [Concevoir la charge utile](#concevoir-la-cha
    <!-- checked sample -->
    ```ts
    // contexts/scheduling/domain/aggregates/appointment.aggregate.ts (simplifié)
-   import { AggregateRoot, ConceptError, type DomainEvent } from '@ddd-ts-kit/kernel';
+   import { AggregateRoot, DomainRefusal, type DomainEvent } from '@ddd-ts-kit/kernel';
 
    interface Slot {
      readonly calendarId: string;
@@ -94,9 +94,15 @@ La déclaration complète est dans [Concevoir la charge utile](#concevoir-la-cha
      ) {}
    }
 
-   export class AppointmentError extends ConceptError {
-     static emptySlot(startsAt: Date) {
-       return AppointmentError.refusal('EMPTY_SLOT', 'A slot ends after it starts.', { startsAt });
+   // contexts/scheduling/domain/errors/codes.ts
+   export const SchedulingCodes = { EmptySlot: 'EMPTY_SLOT' } as const;
+
+   // contexts/scheduling/domain/errors/empty-slot.error.ts
+   export class EmptySlot extends DomainRefusal {
+     readonly code = SchedulingCodes.EmptySlot;
+
+     static atStart(startsAt: Date) {
+       return EmptySlot.refusal('A slot ends after it starts.', { startsAt });
      }
    }
 
@@ -110,7 +116,7 @@ La déclaration complète est dans [Concevoir la charge utile](#concevoir-la-cha
 
      static book(id: string, slot: Slot, now: Date): Appointment {
        if (slot.endsAt <= slot.startsAt) {
-         throw AppointmentError.emptySlot(slot.startsAt); // l'invariant d'abord
+         throw EmptySlot.atStart(slot.startsAt); // l'invariant d'abord
        }
 
        const appointment = new Appointment(id, slot);
