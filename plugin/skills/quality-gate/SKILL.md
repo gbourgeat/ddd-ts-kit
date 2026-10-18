@@ -55,6 +55,11 @@ that new finding is expected, never a conflict between the two. Never Prettier n
 `npx biome` (without `--no`, it can fetch an unrelated package of that name); the guard refuses
 both to a worker.
 
+`npm run lint` fails on a warning as on an error (`--max-warnings 0`): fix it the same way. An
+entry of `eslint-suppressions.json` is a finding the project recorded: once it is fixed the lint
+fails until `npx eslint . --prune-suppressions` removes it; adding one (`--suppress-all`,
+`--suppress-rule`) is a suppression.
+
 `check --changed-since` judges the changed files only: a cycle, an unused export or a rule
 broken by the combination with the trunk escapes it, which is why the last run is `verify`, on
 the whole tree, after merging the trunk. `npm run verify` chains types, lint, format, every spec with the coverage thresholds
