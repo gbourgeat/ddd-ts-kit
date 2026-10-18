@@ -1,5 +1,5 @@
 [English](message-brokers.md) · **Français**
-<!-- translation-of: message-brokers.md sha256:2a48e6b02ada2240 -->
+<!-- translation-of: message-brokers.md sha256:0c5336e1954ca270 -->
 
 # Brokers de messages : en processus, RabbitMQ, Kafka, NATS JetStream, Redis Streams
 
@@ -227,8 +227,10 @@ messages d'erreur. Les faits ci-dessous viennent des README des *packages*
 - RabbitMQ : les autres *brokers* AMQP 0-9-1 ; la limite de livraison des files quorum après le
   plantage d'un consommateur.
 
-Autrement dit : chaque *provider* a été éprouvé contre un nœud unique, sur une machine de
-développeur ou en CI. Le comportement multinœud, la configuration de sécurité et la reprise après
+Autrement dit : chaque *provider* est éprouvé contre un nœud unique. Le *job* d'intégration de la
+CI exécute les suites des quatre *providers* de *broker* sur chaque *pull request* qui les
+atteint, contre RabbitMQ 4.3.6, Apache Kafka 4.3.1, NATS Server 2.15.0 et Dragonfly 2.0.2, chaque
+image épinglée par *digest* ; Valkey et Redis ont été exécutés à la main. Le comportement multinœud, la configuration de sécurité et la reprise après
 plantage du processus consommateur sont à tester par vous avant la production.
 
 Comme les quatre partagent leurs noms d'options, changer de *broker* est une modification de la

@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:368e864da1d73ee6 -->
+<!-- translation-of: README.md sha256:191731b3db98cd17 -->
 
 # @ddd-ts-kit/kafka
 
@@ -556,6 +556,9 @@ docker run -d --rm --name ddd-ts-kit-test-kafka -p 127.0.0.1:9092:9092 -p 127.0.
 DDD_TS_KIT_TEST_KAFKA_BROKERS=127.0.0.1:9092 DDD_TS_KIT_TEST_KAFKA_RELAY=127.0.0.1:9095=127.0.0.1:9094 npx vitest run packages/kafka
 docker rm -f ddd-ts-kit-test-kafka
 ```
+
+Le *job* d'intégration de la CI les exécute sur chaque *pull request* qui atteint ce *package*,
+contre Apache Kafka 4.3.1 en mode KRaft, avec son écouteur relayé que démarre `pipeline/github/scripts/start-kafka.sh`, son image épinglée par *digest*.
 
 Un client Kafka se connecte aux adresses que le *broker* annonce : on ne peut donc pas provoquer
 une panne réseau en pointant le bus vers un relais réseau. Le *broker* a un second écouteur,

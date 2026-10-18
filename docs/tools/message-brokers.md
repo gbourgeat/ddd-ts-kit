@@ -215,8 +215,10 @@ codes travel, never error messages. Facts below come from the package READMEs
 - RabbitMQ: other AMQP 0-9-1 brokers; the delivery limit of quorum queues after a consumer
   crash.
 
-In other words: every provider was proven against a single node on a developer machine or in
-CI. Multi-node behaviour, security configuration and crash recovery of the consumer process
+In other words: every provider is proven against a single node. The integration job of CI runs
+the suites of the four broker providers on every pull request that reaches them, against
+RabbitMQ 4.3.6, Apache Kafka 4.3.1, NATS Server 2.15.0 and Dragonfly 2.0.2, each image pinned by
+digest; Valkey and Redis were run by hand. Multi-node behaviour, security configuration and crash recovery of the consumer process
 are yours to test before production.
 
 Because the four share their option names, changing broker is a change of the platform, in
