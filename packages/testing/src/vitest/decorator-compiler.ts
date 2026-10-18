@@ -31,6 +31,12 @@ interface CacheEntry {
   readonly output: string;
 }
 
+/** What `tsc` wrote for one file: the code and its source map, as text. */
+interface Emitted {
+  readonly code: string;
+  readonly map: string;
+}
+
 /** Compiles one file holding standard decorators with the `tsc` of the project, once per content. */
 export class DecoratorCompiler {
   private readonly projects = new Map<string, ProjectOptions>();
@@ -45,14 +51,11 @@ export class DecoratorCompiler {
     }
 
     const entry = this.entryOf(file, code, project);
-
-    if (!existsSync(entry.output)) {
-      this.emit({ ...entry, file }, code, project);
-    }
+    const emitted = isComplete(entry.output) ? emittedAt(entry.output) : this.emit({ ...entry, file }, code, project);
 
     return {
-      code: readFileSync(entry.output, 'utf8').replace(/\n\/\/# sourceMappingURL=.*\s*$/, '\n'),
-      map: sourceMapOf(readFileSync(`${entry.output}.map`, 'utf8'), file, code),
+      code: emitted.code.replace(/\n\/\/# sourceMappingURL=.*\s*$/, '\n'),
+      map: sourceMapOf(emitted.map, file, code),
     };
   }
 
@@ -94,8 +97,12 @@ export class DecoratorCompiler {
     };
   }
 
-  /** Emitted next to the cache, then moved into it in one step: a reader never sees half a file. */
-  private emit(entry: CacheEntry & { readonly file: string }, code: string, project: ProjectOptions): void {
+  /**
+   * Emitted next to the cache, read there, then moved into it in one step: a reader never sees half a
+   * file, and what this call answers does not depend on the cache. An entry that lost its output or its
+   * map is replaced, instead of failing every compile of its file.
+   */
+  private emit(entry: CacheEntry & { readonly file: string }, code: string, project: ProjectOptions): Emitted {
     const workshop = `${entry.directory}.${process.pid}`;
 
     mkdirSync(workshop, { recursive: true });
@@ -105,9 +112,17 @@ export class DecoratorCompiler {
       writeFileSync(path.join(workshop, 'tsconfig.json'), JSON.stringify(singleFileProject(entry.source, project)));
       this.run(['-p', workshop], entry.file);
 
+      const emitted = emittedAt(path.join(workshop, path.basename(entry.output)));
+
+      if (existsSync(entry.directory) && !isComplete(entry.output)) {
+        rmSync(entry.directory, { recursive: true, force: true });
+      }
+
       if (!existsSync(entry.directory)) {
         renameSync(workshop, entry.directory);
       }
+
+      return emitted;
     } finally {
       rmSync(workshop, { recursive: true, force: true });
     }
@@ -123,6 +138,15 @@ export class DecoratorCompiler {
       throw new Error(`The TypeScript compiler refused ${subject}:\n${saidBy(error)}`, { cause: error });
     }
   }
+}
+
+/** An entry of the cache holds the output and its map; one without them was damaged. */
+function isComplete(output: string): boolean {
+  return existsSync(output) && existsSync(`${output}.map`);
+}
+
+function emittedAt(output: string): Emitted {
+  return { code: readFileSync(output, 'utf8'), map: readFileSync(`${output}.map`, 'utf8') };
 }
 
 function nearestTsconfig(directory: string): string | undefined {
