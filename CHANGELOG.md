@@ -6,6 +6,42 @@ list the pull requests behind it.
 
 ## Unreleased
 
+**`drizzle-generate --replay` replays only what forks, and refuses to lose a migration edited by
+hand.** The replay first reads the history on disk: when the journal lists every migration in
+order, each snapshot from the one before, the branch's already follow the trunk, and nothing is
+generated again (a name that changes, `working-` dropped, is renamed in place). Otherwise it
+deletes the branch's migrations and generates them again on top as before, then compares each
+generated one with what the branch had: when drizzle-kit now writes other statements (its SQL was
+edited by hand, or the trunk changed what it changes), it puts the migrations folder back as it
+found it and refuses, naming the statement that differs; the fix is to generate that migration on
+top by hand and write the edit again, after which a replay, or `merge-trunk --continue`, finds
+nothing forked. Several migrations of a branch that change the schema and fork are still
+refused rather than joined: drizzle-kit diffs the final schema and cannot split them again, and
+one migration in their place would join steps planned apart (a table, then a constraint once it
+is filled, fails on a database that holds rows). Its fix said to generate them as one; it now
+says to generate them again one at a time, in their order. Measured with the real drizzle-kit
+0.31.11: the replayed history is applied by `drizzle-kit migrate`.
+
+**`persistence/primary-key-order` (a warning).** Under drizzle-kit, a migration that adds the new
+primary key of a table before its old one is dropped, or drops a column before the key that holds
+it, is reported on the line of the statement that runs too early: PostgreSQL refuses it when it
+runs. `drizzle-generate` already warned once when it wrote one; the rule keeps reporting it. Fix:
+drop the old key first, in that migration while it is still unapplied, or write it with
+`--custom`. `ddd-ts-kit check --rule persistence/primary-key-order` lists the migrations to take
+up; the rule stays a warning in this version.
+
+**Two migrations kept apart.** The `persistence` skill and the persistence page say how: change
+the schema in two steps, with a `db:generate` after each, since one `db:generate` writes every
+change since the last migration as one.
+
+**A cron accepts the shorthands `@hourly`, `@daily`, `@weekly`, `@monthly` and `@yearly`.**
+`@Scheduled` and `ddd-ts-kit generate job --cron` read `@yearly` and `@annually` as `0 0 1 1 *`,
+`@monthly` as `0 0 1 * *`, `@weekly` as `0 0 * * 0`, `@daily` and `@midnight` as `0 0 * * *` and
+`@hourly` as `0 * * * *`, in any case, and fire on the occurrences of those five fields (`@hourly`
+keeps its rhythm when clocks change, as `0 * * * *` does). A diagnostic and `ddd-ts-kit docs` show
+the shorthand as written. `@reboot` and any other `@word` are refused by both with the same
+message, which lists the shorthands accepted: a scheduled job has no occurrence at start.
+
 **A lint warning fails the lint of a generated project.** `lint` and `ci:lint` ran `eslint .`,
 which exits 0 on warnings: `verify` and the pipeline passed them, a new one as well, and they
 piled up. `init` now writes `ddd-ts-kit lint` for both, and the example application runs the

@@ -1,5 +1,5 @@
 [English](persistence.md) · **Français**
-<!-- translation-of: persistence.md sha256:725d4d148eeea94d -->
+<!-- translation-of: persistence.md sha256:071548b009cfe198 -->
 
 # Persistance : Drizzle, Knex, Prisma, TypeORM, et quelle base de données
 
@@ -491,6 +491,17 @@ le même fichier.
 La commande prend la description après le script : `npm run db:generate add-invoices`
 (`npm run db:generate -- audit-guard --custom` pour une migration drizzle-kit écrite à la main).
 
+**Deux migrations gardées séparées.** Un outil qui génère depuis le schéma écrit, dans une
+migration, la différence entre les fichiers du schéma et la dernière migration : deux changements
+faits avant un seul `db:generate` donnent une seule migration. Quand elles doivent rester deux
+(une nouvelle table, puis une contrainte une fois qu'elle est remplie ; une colonne ajoutée, puis
+l'ancienne supprimée dans un déploiement suivant), changer le schéma en deux temps, avec un
+`db:generate` après chacun : faire le premier changement, lancer
+`npm run db:generate add-due-dates`, puis faire le second et lancer
+`npm run db:generate require-due-dates`. Déjà générées en une seule et pas encore fusionnée : la
+supprimer (sous drizzle-kit, son fichier `.sql`, son *snapshot* sous `meta/` et son entrée du
+journal), défaire le second changement, et procéder en deux temps.
+
 **Sans terminal.** Quand un changement du schéma pourrait être un renommage (une colonne ou une
 table disparaît et une autre apparaît), drizzle-kit demande sur un terminal s'il s'agit d'une
 création ou d'un renommage. Mesuré avec drizzle-kit 0.31.11 (2026-10-15) : sans terminal, comme
@@ -520,6 +531,11 @@ viennent de ce *snapshot*, sinon du nom que drizzle-kit donne à une clé compos
 autre nom que le *snapshot* n'enregistre pas, ou une instruction écrite sous une autre forme
 (`DROP` d'une colonne sans `COLUMN`, un bloc `DO`), n'est pas vue : relire le SQL d'une telle
 migration avant de la commiter.
+L'avertissement défile avec la sortie ; la règle `persistence/primary-key-order` de
+`ddd-ts-kit check` (un avertissement, comme toute nouvelle règle) lit les mêmes instructions dans
+chaque fichier `.sql` du dossier des migrations et signale la migration, à la ligne de
+l'instruction qui s'exécute trop tôt, avec la même correction, jusqu'à ce qu'elle soit corrigée
+(`ddd-ts-kit check --rule persistence/primary-key-order` les liste).
 
 **Formaté comme le projet.** drizzle-kit écrit le *snapshot* et le journal sous `meta/` dans sa
 propre mise en forme, que la porte de formatage d'un projet peut refuser. Une fois une migration
@@ -597,7 +613,11 @@ npx ddd-ts-kit drizzle-generate --replay                    # --base <ref>, orig
 ```
 
 Il compare les fichiers `.sql` du dossier des migrations avec ceux de `--base` : ceux que la base
-n'a pas sont ceux de la branche. Il les supprime, avec leurs *snapshots* et leurs entrées du
+n'a pas sont ceux de la branche. Quand l'historique sur le disque ne fourche pas (le journal liste
+chaque fichier dans l'ordre où ils ont été générés, chaque *snapshot* issu du précédent, donc ceux
+de la branche suivent la dernière migration de la base), il ne génère rien : il renomme seulement
+une migration dont le nom change (`working-` retiré, plus bas), son numéro, son *snapshot* et ses
+instructions gardés, et le dit. Sinon il les supprime, avec leurs *snapshots* et leurs entrées du
 journal (le journal devient celui de la base, dont le dernier *snapshot* est alors le parent de
 ce qui suit), génère de nouveau chacune au-dessus, dans leur ordre et sous leur nom, et dit ce
 qu'il a supprimé et généré. Une migration personnalisée (son *snapshot* répète celui qui le
@@ -606,10 +626,32 @@ correction : un journal qui contient encore des marqueurs de conflit (prendre ce
 comme ci-dessus : le *replay* trouve les migrations de la branche par leurs fichiers), une base
 qui a des migrations que la branche n'a pas fusionnées, et deux migrations de la branche qui
 changent le schéma : drizzle-kit génère la différence entre les fichiers du schéma et le dernier
-*snapshot*, il ne peut donc générer de nouveau les changements d'une branche qu'en une seule
-migration (les supprimer et générer celle-ci à la main). Le *replay* est celui de Drizzle : sous
-knex, Prisma et TypeORM, qui ne tiennent pas de journal, `merge-trunk --to-land` renomme les
-migrations, et en générer une de nouveau après un recouvrement reste à la main.
+*snapshot*, il ne peut donc pas redécouper les changements d'une branche en les étapes qu'ils
+étaient, et une seule migration à leur place joindrait des étapes prévues séparées (une table,
+puis une contrainte une fois qu'elle est remplie, échoue sur une base qui contient des lignes).
+La correction les génère de nouveau à la main, une à la fois et dans leur ordre, comme le dit
+« Deux migrations gardées séparées » plus haut : les supprimer, défaire
+dans les fichiers du schéma tous les changements de la branche sauf celui de la première, lancer
+`npm run db:generate <son nom>`, remettre le changement suivant et relancer (`git show
+<commit>:<fichier du schéma>` contient le schéma de chaque étape). Il
+refuse aussi une migration générée dont drizzle-kit écrit maintenant les instructions autrement :
+son SQL a été modifié à la main (une clé remise dans l'ordre, un index ajouté), ou la base a
+changé ce qu'elle change. La générer de nouveau perdrait cela : il remet donc le dossier des
+migrations tel qu'il l'a trouvé et dit quelle instruction diffère ; la correction est de générer
+cette migration au-dessus de la base à la main et d'y réécrire les modifications
+(`git show HEAD:<file>` les contient), après quoi un *replay* ne trouve plus rien de fourché. Le
+*replay* est celui de Drizzle : sous knex, Prisma et TypeORM, qui ne tiennent pas de journal,
+`merge-trunk --to-land` renomme les migrations, et en générer une de nouveau après un
+recouvrement reste à la main.
+
+**Mesuré avec drizzle-kit 0.31.11, drizzle-orm 0.45.4 et PGlite 0.5.10 (2026-10-18)**, le vrai
+drizzle-kit sur un schéma TypeScript : une branche ajoute une table pendant que la branche
+principale en ajoute une autre, la branche la fusionne et prend son journal,
+`drizzle-generate --replay --base main` génère de nouveau la migration de la branche au-dessus
+avec les mêmes instructions, et `drizzle-kit migrate` applique les trois migrations à une base
+vide ; de même quand chaque côté ajoute une colonne à une même table. Un second *replay* dit que
+rien n'est fourché. Une migration de la branche à laquelle un index a été ajouté à la main est
+refusée, et le dossier est comme avant le *replay*.
 
 `npx ddd-ts-kit verify-merge`, lancé après la fusion, signale une migration de l'un ou l'autre
 côté que le résultat a perdue. Elle reconnaît une migration à sa description, son nom sans son

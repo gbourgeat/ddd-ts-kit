@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:1e6f84ec36c9dfff -->
+<!-- translation-of: README.md sha256:df4712a9a18c12d4 -->
 
 # ddd-ts-kit
 
@@ -705,12 +705,12 @@ Next, in this order: the language of the context first, then the business decisi
   `platform.jobs.register({ name, schedule, run })`.
 - **Les *jobs*.** Le planning est validé quand le *job* est généré, par les règles du planificateur
   (`parseJobSchedule` du kernel, fixé par un test) : une durée (`15m`, `2s`, des chiffres seuls
-  sont des millisecondes) ou une expression cron à cinq champs, avec un fuseau horaire IANA ;
-  `--time-zone` sans `--cron` est refusé, de même qu'un *job* sans `--command`, une commande qui
-  n'existe pas (avec la commande qui la crée) et une commande dont le constructeur demande plus
-  que l'acteur et l'instant pour lequel le travail est fait : un *job* dit seulement que le moment
-  est venu, le gestionnaire trouve sur quoi agir. Les paramètres optionnels ou qui ont une valeur
-  par défaut sont laissés hors de l'appel.
+  sont des millisecondes) ou une expression cron à cinq champs ou un raccourci (`@daily`), avec un
+  fuseau horaire IANA ; `--time-zone` sans `--cron` est refusé, de même qu'un *job* sans
+  `--command`, une commande qui n'existe pas (avec la commande qui la crée) et une commande dont le
+  constructeur demande plus que l'acteur et l'instant pour lequel le travail est fait : un *job* dit
+  seulement que le moment est venu, le gestionnaire trouve sur quoi agir. Les paramètres optionnels
+  ou qui ont une valeur par défaut sont laissés hors de l'appel.
 - **L'autorisation d'un *job*.** Un *job* dont la commande est protégée l'envoie en tant que
   `system:<context>.<name>`, qui n'a aucun droit tant que le modèle ne lui en donne pas.
   `generate job` écrit l'autorisation là où le modèle en fait une ligne, dans une région marquée

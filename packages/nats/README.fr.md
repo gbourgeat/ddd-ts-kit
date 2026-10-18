@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:614b1f30d185197a -->
+<!-- translation-of: README.md sha256:b0f8cacb36b418a4 -->
 
 # @ddd-ts-kit/nats
 
@@ -437,7 +437,9 @@ des options (`consumer`, `retry`, `reconnect`, `onFailure`, `onDelivery`) et les
 
 ## Tests
 
-Les suites ont besoin d'un vrai serveur et sont ignorées sans `DDD_TS_KIT_TEST_NATS_URL` :
+Le codec de l'enveloppe, les réglages et leurs valeurs par défaut, la description de la
+topologie et les codes d'échec sont couverts sans serveur, par les tests unitaires. Les autres
+suites ont besoin d'un vrai serveur et sont ignorées sans `DDD_TS_KIT_TEST_NATS_URL` :
 
 ```
 docker run -d --rm --name ddd-ts-kit-test-nats -p 127.0.0.1:4222:4222 nats:2.15.0-alpine -js

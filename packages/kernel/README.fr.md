@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:6ee16358ceb29b58 -->
+<!-- translation-of: README.md sha256:f1e6e5871bd4010a -->
 
 # @ddd-ts-kit/kernel
 
@@ -951,7 +951,7 @@ typiquement une commande. Le second argument est la planification et, à côté,
 | Clé | Par défaut | |
 |---|---|---|
 | `every` | | un intervalle, en millisecondes ou `'30s'`, `'15m'`, `'2h'`, `'1d'`, aligné sur l'époque Unix |
-| `cron`, `timeZone` | `timeZone: 'UTC'` | les cinq champs standard, sur les horloges d'un fuseau IANA |
+| `cron`, `timeZone` | `timeZone: 'UTC'` | les cinq champs standard ou un raccourci (`@hourly`, `@daily`, `@weekly`, `@monthly`, `@yearly`), sur les horloges d'un fuseau IANA |
 | `overlap` | `'skip'` | une occurrence qui arrive pendant que l'exécution précédente est en cours est sautée, ou mise en file derrière elle (`'queue'`) |
 | `missed` | `'skip'` | les occurrences passées sans avoir été atteintes sont abandonnées, ou la dernière est exécutée une fois (`'run-once'`) |
 | `timeoutMs` | aucun | le signal d'une exécution plus longue est interrompu |
