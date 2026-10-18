@@ -25,7 +25,7 @@ export interface StoryRequest {
   readonly worktree?: string;
   /** By default `story/<story>`, in lower case. */
   readonly branch?: string;
-  /** The ref the branch is cut from and merges back into; by default the current branch. */
+  /** The ref the branch is cut from and merges back into; by default the branch the current one follows, else the current one. */
   readonly base?: string;
   readonly dryRun: boolean;
   readonly install: boolean;
@@ -94,7 +94,15 @@ function baseOutsideStory(root: string, config: Config, base: string | undefined
     );
   }
 
-  return baseOf(root, config, base);
+  return baseOf(root, config, base ?? upstreamOf(root));
+}
+
+/**
+ * The branch the current one follows, `origin/main` for `main`: what a fetch brings up to date,
+ * where the local branch stays behind until it is pulled.
+ */
+function upstreamOf(root: string): string | undefined {
+  return runGit(root, ['rev-parse', '--abbrev-ref', '--symbolic-full-name', '@{upstream}'])?.trim() || undefined;
 }
 
 function refuseOpenElsewhere(

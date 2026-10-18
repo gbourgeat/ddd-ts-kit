@@ -25,6 +25,13 @@ const PLAN = 'docs/architecture/plan.md';
 const WORKER_SCOPE = '.ddd-ts-kit/worker.json';
 // The worktree of a story one session takes to its pull request; its code waits for the build gate.
 const STORY_SCOPE = '.ddd-ts-kit/story.json';
+// How long the guard keeps what `stories --json` said before reading it again.
+const STORIES_TTL = 60_000;
+// A fetch older than this leaves the trunk of a story behind the remote one: the session is told to fetch.
+const STALE_FETCH = 3_600_000;
+// The files a merge of two stories settles by their kind: no story is warned of them.
+const SETTLED_BY_MERGE =
+  /(^|\/)(docs\/architecture\/slices\.md|package-lock\.json|npm-shrinkwrap\.json|pnpm-lock\.yaml|yarn\.lock|bun\.lock|stored-events\.lock\.json)$/;
 // What the build gate of a story reads: when none of them changed, a gate once met stays met.
 const STORY_INPUTS = [
   'docs/architecture/slices.md',
@@ -278,8 +285,26 @@ async function preWrite(input) {
     .map((written) => verdictOn(written, input))
     .filter(Boolean);
   const verdict = verdicts.find(({ decision }) => decision === 'deny') ?? verdicts[0];
+  if (verdict?.decision !== 'deny') {
+    noteCrossings(input);
+  }
   if (verdict) {
     decide(input, verdict.decision, verdict.reason);
+  }
+}
+
+// What the write meets of the other stories open in the repository, said with the decision of the call or alone.
+function noteCrossings(input) {
+  const crossings = writesOf(input).flatMap(({ file }) => {
+    const project = findProject(dirname(file));
+    const said =
+      project && project.mode !== 'off' && existsSync(join(project.root, STORY_SCOPE))
+        ? crossingNotice(project, input, file)
+        : undefined;
+    return said ? [said] : [];
+  });
+  if (crossings.length > 0) {
+    notice = [notice, ...crossings].filter(Boolean).join('\n');
   }
 }
 
@@ -716,7 +741,37 @@ function storyNotice(project) {
   const done = phases.phases.filter(({ met }) => met).map(({ title }) => title);
   return [
     `Story ${story} (skill ddd-ts-kit:story): ${done.length === 0 ? 'nothing done yet' : `done: ${done.join(', ')}`}. Next: ${phases.next ?? 'its pull request'}`,
+    ...meetingNotice(project),
   ];
+}
+
+// Where this story meets the other open ones and how far the trunk moved, at session start.
+function meetingNotice(project) {
+  const view = storiesOf(project)?.view;
+  const own = view?.stories.find(({ story }) => story === view.here);
+  if (!own) {
+    return [];
+  }
+  const meetings = view.crossings.map(({ stories: [, other], contexts, files, merge }) => {
+    const parts = [
+      ...(contexts.length === 0 ? [] : [`contexts ${contexts.join(', ')}`]),
+      ...(files.length === 0 ? [] : [`${files.length} file(s) both change`]),
+      ...((merge?.byHand.length ?? 0) === 0 ? [] : [`${merge.byHand.length} conflict(s) to settle by hand`]),
+    ];
+    return `It meets story ${other}: ${parts.length === 0 ? 'conflicts merge-trunk settles' : parts.join(', ')}.`;
+  });
+  const trunk = own.trunk?.behind
+    ? [
+        `The trunk moved: ${own.trunk.behind} commit(s) of ${own.trunk.ref} to merge in${own.trunk.byHand.length === 0 ? '' : `, ${own.trunk.byHand.length} conflict(s) to settle by hand`}.`,
+      ]
+    : [];
+  const fetched = view.fetched ? Date.parse(view.fetched) : undefined;
+  if (fetched !== undefined && Date.now() - fetched > STALE_FETCH) {
+    trunk.push(`The trunk is read as the fetch of ${view.fetched} left it: \`git fetch\` first.`);
+  }
+  return meetings.length + trunk.length === 0
+    ? []
+    : [...meetings, ...trunk, '`npx ddd-ts-kit stories` says where, before the rows are cut and before each row.'];
 }
 
 function workerNotice(project, input) {
@@ -990,6 +1045,71 @@ async function storyGeneratorReason(project, input, command) {
       !args.includes('--dry-run'),
   );
   return generating ? storyBuildReason(project) : undefined;
+}
+
+// In the worktree of a story, a write to a file another open story changes too, or that merging
+// its branch would leave to a person: said once per session, file and story, without refusing it.
+function crossingNotice(project, input, file) {
+  const stories = storiesOf(project);
+  const own = stories?.view.here;
+  if (own === undefined) {
+    return undefined;
+  }
+  const path = `${stories.prefix}${projectPath(project, file)}`;
+  if (SETTLED_BY_MERGE.test(path)) {
+    return undefined;
+  }
+  const lines = stories.view.stories
+    .filter((other) => other.story !== own)
+    .map((other) => ({ other, forYou: forYouWith(stories.view, own, other) }))
+    .filter(({ other, forYou }) => other.files.includes(path) || forYou.includes(path))
+    .filter(({ other }) => !alreadyRemembered(crossingMarker(project, input, `${path}\n${other.story}`)))
+    .map(({ other, forYou }) => crossingLine(other, forYou, path));
+  return lines.length === 0
+    ? undefined
+    : `${lines.join(' ')} Keep the change to what the row needs; \`npx ddd-ts-kit stories\` says where the stories meet, and the report records which one lands first.`;
+}
+
+// The files merging the branch of another story into this one now leaves to a person.
+function forYouWith(view, own, other) {
+  const crossing = view.crossings.find(({ stories }) => stories[0] === own && stories[1] === other.story);
+  return (crossing?.merge?.byHand ?? []).map(({ file }) => file);
+}
+
+function crossingLine(other, forYou, path) {
+  const where = `${other.story} (${other.branch ?? 'detached'}, ${other.worktree})`;
+  return forYou.includes(path)
+    ? `${where} changes ${path} too, and merging its branch into this one now leaves that file to settle by hand.`
+    : `${where} changes ${path} too.`;
+}
+
+function crossingMarker(project, input, subject) {
+  const key = createHash('sha256')
+    .update(`${project.root}\n${sessionOf(input)}\n${subject}`)
+    .digest('hex')
+    .slice(0, 24);
+  return join(tmpdir(), `ddd-ts-kit-crossing-${key}`);
+}
+
+// What `stories --json` says, read again once its copy in the guard's folder is a minute old,
+// with the path of the project inside its repository: the files are named from its top.
+function storiesOf(project) {
+  if (!project.cli) {
+    return undefined;
+  }
+  const cache = join(project.root, GUARD_STATE, 'stories.json');
+  const cached = readJson(cache);
+  if (cached && Date.now() - cached.at < STORIES_TTL) {
+    return cached;
+  }
+  const view = runCli(project, ['stories', '--json'], 3000);
+  const prefix = spawnSync('git', ['rev-parse', '--show-prefix'], { cwd: project.root, encoding: 'utf8' });
+  if (!view || prefix.status !== 0) {
+    return undefined;
+  }
+  const fresh = { at: Date.now(), prefix: prefix.stdout.trim(), view };
+  writeState(cache, fresh);
+  return fresh;
 }
 
 function storyBuildReason(project) {

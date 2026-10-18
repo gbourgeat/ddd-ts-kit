@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:1baa8103b1aa9066 -->
+<!-- translation-of: commands.md sha256:7d2bfa4574fb2f86 -->
 
 # Quelle commande, quand
 
@@ -89,6 +89,7 @@ La tranche est finie quand `todo ordering` n'en liste plus rien.
 |---|---|---|---|---|
 | `/ddd-ts-kit:story <code> [<énoncé>]` | une *user story* de ses questions à une *pull request* verte, dans son propre *worktree* : les questions d'abord, puis spécification, lignes, revue de conception, acceptation, construction, revue, rapport ([parcours d'une story](story-workflow.fr.md)) | une fois le projet amorcé, un terminal par *story* | la *pull request* de la *story* et son rapport | relire le rapport, valider chaque décision provisoire |
 | `npx ddd-ts-kit story-scope <code>` | le *worktree* d'une *story* sur `story/<code>`, son `.ddd-ts-kit/story.json` et son installation ; les autres *stories* ouvertes et leurs contextes | la première étape de la *skill* story | `../<project>-<code>` | `npx ddd-ts-kit story <code>` |
+| `npx ddd-ts-kit stories` | les *stories* ouvertes dans les *worktrees* du dépôt et où deux d'entre elles se croisent : les contextes que les deux nomment, les fichiers que les deux changent, ce que la fusion de l'une dans l'autre laisse à régler à la main, le retard de chacune sur son tronc | avant de découper les lignes d'une *story* et avant chaque ligne, après `git fetch` | un texte court, `--json` pour des données ; code de sortie 0 | se tenir à l'écart de ce qu'une autre *story* change, ou consigner laquelle arrive la première |
 | `npx ddd-ts-kit story [<code>] [--gate build\|close]` | les phases d'une *story* et l'étape suivante ; `build` ouvre son code, `close` sa *pull request* | à tout moment dans le *worktree* d'une *story* | un texte court, `--json` pour des données ; code de sortie 1 tant que la barrière n'est pas franchie | faire l'étape suivante |
 | `/ddd-ts-kit:plan-slices` | le travail en tranches verticales, ordonnées, avec leurs commandes de générateur | étape 6, après l'amorçage | `docs/architecture/slices.md` | `/ddd-ts-kit:use-case` |
 | `npx ddd-ts-kit cited --rows <id> --base origin/main` | les noms que la conception d'une ligne cite comme du code et que le tronc n'a pas : retirés par son historique (avec le commit et ce qui les remplace), refusés par l'arborescence canonique, ou proches d'un nom qu'il a gagné depuis que la ligne a été écrite ; un nom prévu reste muet | avant de construire seul une ligne, avant de committer une revue de conception | une ligne par nom, `--json` pour les données ; code de sortie 0 | construire sur ce que le tronc a, et corriger le document sur le tronc |
@@ -263,6 +264,7 @@ Usage
   ddd-ts-kit worker-scope <context> --here [--rows <id,...>] [--base <ref>] [--dry-run]
   ddd-ts-kit story-scope <story> [--base <ref>] [--worktree <path>] [--branch <name>] [--no-install] [--dry-run]
   ddd-ts-kit story [<story>] [--gate build|close]
+  ddd-ts-kit stories
   ddd-ts-kit verify-slice <context> --since <git-ref>
   ddd-ts-kit cited [<context>] [--rows <id,...>] [--base <ref>] [--removed-since <ref>]
   ddd-ts-kit verify-merge [<commit>] [--since <git-ref>] [--theirs <git-ref>] [--base <commit>] [--warn]
@@ -397,10 +399,16 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
   story            where a story stands, phase by phase: its specification and criteria
                    (docs/architecture/stories/<story>.md), its rows in slices.md, a design review section
                    per row not done (docs/architecture/reviews/<story>.md, ## #<id>), its acceptance written
-                   and locked, its rows done, its acceptance passing, its ## Report; and the next step; in
-                   the worktree of a story, the story is its own; --gate build exits 1 until the first four
-                   are met (the code may start: the guard of the plugin opens the contexts), --gate close
-                   until all are
+                   and locked, its rows done, its acceptance passing, its trunk merged in, its ## Report; and
+                   the next step; in the worktree of a story, the story is its own; --gate build exits 1
+                   until the first four are met (the code may start: the guard of the plugin opens the
+                   contexts), --gate close until all are
+  stories          the stories open in the worktrees of the repository and where two of them meet: the
+                   contexts the rows of both name, the files both worktrees change (committed or not), what
+                   merging the branch of one into the other leaves to a person and what merge-trunk settles
+                   (git merge-tree, nothing written); how far each is behind its base; from the worktree of a
+                   story, the stories it meets; the guard of the plugin says it at session start and on a
+                   write to a file another story changes
   --resume         worker-scope reads where the stopped worker of the context stands (its rows by their
                    Slice: trailer, the files of the row under way, the markers, its last verify-slice, its
                    report, its agent as the guard recorded it) and prints the message that resumes its agent

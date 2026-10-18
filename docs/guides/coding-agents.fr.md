@@ -1,5 +1,5 @@
 [English](coding-agents.md) · **Français**
-<!-- translation-of: coding-agents.md sha256:cf38db60fdd5b8de -->
+<!-- translation-of: coding-agents.md sha256:6b062bc989335aa2 -->
 
 # Le plugin pour agents de code : Claude Code, Codex, GitHub Copilot
 
@@ -69,7 +69,9 @@ ou réécrire un rapport périmé). Au démarrage de session, il nomme les *work
 ([travail en parallèle](parallel-work.fr.md#quand-un-agent-sarrête)). Dans le *worktree* d'une
 *story* (`.ddd-ts-kit/story.json`), il refuse tout code d'un contexte tant que chaque ligne n'a
 pas sa revue de conception et que l'acceptation n'est pas écrite et verrouillée, dit la phase de
-la *story* au démarrage de session, et refuse une fois de finir la session avant son rapport
+la *story* au démarrage de session avec ses croisements avec les autres *stories* ouvertes, dit
+une fois par fichier quand la session écrit un fichier qu'une autre *story* ouverte change, et
+refuse une fois de finir la session avant son rapport
 ([parcours d'une story](story-workflow.fr.md)). Aucun *hook* ne tourne sur
 chaque appel d'outil : une session ordinaire ne lance pas plus de processus qu'avant. En cas de
 panne, il laisse passer : une garde cassée ne bloque jamais le travail. Mettez `"guard": "advise"` dans la

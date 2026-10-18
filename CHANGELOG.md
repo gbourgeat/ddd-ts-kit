@@ -6,6 +6,24 @@ list the pull requests behind it.
 
 ## Unreleased
 
+**Where the open stories meet, while they are built.** The new command `ddd-ts-kit stories`
+lists the stories open in the worktrees of the repository and, for each pair that meets, the
+contexts the rows of both name, the files both worktrees change (committed or not, those
+`merge-trunk` settles by their kind aside), and what merging the branch of one into the other
+would leave to settle by hand and what `merge-trunk` settles alone, computed with
+`git merge-tree` without writing anything; for each story, how far it is behind its trunk and
+what bringing the trunk in would leave to a person. From the worktree of a story it names the
+stories that one meets. The guard of the plugin says it at session start in the worktree of a
+story, with the trunk that moved and a last fetch more than an hour old, and says once per file
+when the session writes a file another open story changes. `story --gate close` now also waits
+for the trunk merged in (the phase `trunk`), and `story-scope` cuts a story from the branch the
+current one follows (`origin/main` for `main`) when it has one, so that a `git fetch` is enough
+to see the trunk move: nothing of the kit goes to the network. The skill `story` reads
+`stories` before cutting the rows and before each row, and fetches before closing.
+
+To move: `npx ddd-ts-kit init` adds the permission of `npx ddd-ts-kit stories`; update the
+plugin. A story opened before this version keeps its base: `story-scope` resumes it as it was.
+
 **One session takes one user story to its pull request, one story per terminal.** The new skill
 `/ddd-ts-kit:story <code>` (run by the owner) works in the worktree of the story: it asks every
 question at once, then without stopping writes `docs/architecture/stories/<code>.md` (statement,
