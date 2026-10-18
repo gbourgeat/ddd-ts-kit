@@ -10,7 +10,13 @@ import {
   type ErrorReporter,
   type IntegrationEventSubscriber,
 } from '@ddd-ts-kit/kernel';
-import { createHttpClient, type HttpClient, type HttpHeaders } from '@ddd-ts-kit/testing/e2e';
+import {
+  createHttpClient,
+  settled,
+  type HttpClient,
+  type HttpHeaders,
+  type SettledOptions,
+} from '@ddd-ts-kit/testing/e2e';
 import { type Client, createClient } from 'scheduling-api-client';
 import { relateSystemActors } from '@/platform/auth/relate-system-actors';
 import { composeApplication, type Application } from '@/platform/compose-application';
@@ -53,6 +59,18 @@ export interface RunningApplication {
   /** The typed client presenting the credential of `actor`, given as the client is given it: a function asked before each request. */
   apiAs(actor: TestActor): Client;
 
+  /**
+   * Resolves once the work the requests so far started has settled: every event stored in the
+   * outbox relayed, and the handlers it reached run, with what they stored in turn. Await it
+   * before asserting what happens after the answer, instead of waiting a fixed time; it fails
+   * after `timeoutMs` (2 seconds by default) naming what is still pending, and how much of it
+   * failed and waits for a retry (a handler that throws, an adapter that cannot be reached).
+   * With a Redis server (REDIS_URL), relayed means handed to the broker: what its consumers do
+   * next is awaited with `collectEvents(application.events, [...]).waitFor(...)`. A background
+   * job (`jobs: true`) is not counted: what it does is awaited on the resource that follows it.
+   */
+  settled(options?: SettledOptions): Promise<void>;
+
   /** Stores a relationship, as the application does when an element is created or shared. */
   relate(tuple: RelationTuple): Promise<void>;
 
@@ -94,14 +112,7 @@ export async function startApplication(options: StartOptions = {}): Promise<Runn
   const redis = config.redisUrl === noRedis ? undefined : openRedis(config);
   const persistence = options.storage?.(database.persistence) ?? database.persistence;
 
-  const application = composeApplication(persistence, {
-    events: eventsOf(config),
-    authenticator: credentials.authenticator,
-    networks: config.networks,
-    ...observedOf(options),
-    ...(redis === undefined ? {} : { redis }),
-    files: openFiles(config.files),
-  });
+  const application = composedOn(persistence, { config, credentials, redis }, options);
 
   await application.start();
 
@@ -118,10 +129,27 @@ export async function startApplication(options: StartOptions = {}): Promise<Runn
     filesDirectory,
     events: application.eventSubscriber,
     purges,
+    settled: (settling) => settled({ outbox: () => persistence.outbox.stats() }, settling),
     relate: (tuple) => tuples.write([tuple]),
     reset: () => relay.whileStopped(() => database.reset().then(() => relateSystemActors(tuples))),
     close: () => closeInOrder({ server, relay, application, redis, database, filesDirectory }),
   };
+}
+
+/** The application on the storage of the test, with the services of its run. */
+function composedOn(
+  persistence: Persistence,
+  { config, credentials, redis }: { config: AppConfig; credentials: Credentials; redis: RedisServices | undefined },
+  options: StartOptions,
+): Application {
+  return composeApplication(persistence, {
+    events: eventsOf(config),
+    authenticator: credentials.authenticator,
+    networks: config.networks,
+    ...observedOf(options),
+    ...(redis === undefined ? {} : { redis }),
+    files: openFiles(config.files),
+  });
 }
 
 /** Who calls the running application: anonymously or as an actor, by raw HTTP or through the typed client of its contract. */

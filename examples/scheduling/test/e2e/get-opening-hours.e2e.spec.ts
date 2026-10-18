@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it, onTestFailed } from 'vitest';
 import { cacheTag, tenantCacheTags } from '@ddd-ts-kit/kernel';
-import { createHttpClient, eventually, expectProblem, expectStatus, type HttpClient } from '@ddd-ts-kit/testing/e2e';
+import { createHttpClient, expectProblem, expectStatus, type HttpClient } from '@ddd-ts-kit/testing/e2e';
 import { reportSeedOnFailure } from '@ddd-ts-kit/testing/faker';
 import { NETWORK } from '$test/e2e/support/create-credentials';
 import { openStaffedPractice } from '$test/e2e/support/open-staffed-practice';
@@ -45,7 +45,8 @@ describe('Get opening hours, end to end: what a cache may keep, and its purge af
     // Setting up the practice set the hours and defined a consultation, each purging the calendar: a test starts after both.
     const calendar = calendarTag(practice.calendarId);
 
-    await eventually(() => expect(application.purges.purged.filter((tag) => tag === calendar)).toHaveLength(2));
+    await application.settled();
+    expect(application.purges.purged.filter((tag) => tag === calendar)).toHaveLength(2);
     application.purges.purged.splice(0);
   });
 
@@ -84,7 +85,8 @@ describe('Get opening hours, end to end: what a cache may keep, and its purge af
     expectStatus(await practitioner.put(hoursPath, mornings), 200);
 
     // The refused command wrote no purge request: the only purge is the one of the change committed after it.
-    await eventually(() => expect(application.purges.purged).toEqual([calendarTag(practice.calendarId)]));
+    await application.settled();
+    expect(application.purges.purged).toEqual([calendarTag(practice.calendarId)]);
   });
 
   it('answers 412 to a change made on hours that changed since they were read, and makes it on the current version', async () => {
@@ -107,7 +109,8 @@ describe('Get opening hours, end to end: what a cache may keep, and its purge af
   it('purges the hours after any change of the calendar, so that the version they name is the one a change is made on', async () => {
     expectStatus(await practitioner.post(exceptionsPath, closedOnMonday), 201);
 
-    await eventually(() => expect(application.purges.purged).toEqual([calendarTag(practice.calendarId)]));
+    await application.settled();
+    expect(application.purges.purged).toEqual([calendarTag(practice.calendarId)]);
 
     const read = expectStatus(await application.client.get<OpeningHours>(hoursPath, inNetwork(NETWORK)), 200);
 
@@ -133,13 +136,11 @@ describe('Get opening hours, end to end: what a cache may keep, and its purge af
 
       const current = expectStatus(await application.client.get<OpeningHours>(hoursPath, inNetwork(NETWORK)), 200);
 
-      await eventually(async () => {
-        const fresh = expectStatus(await varnish.get<OpeningHours>(hoursPath, inNetwork(NETWORK)), 200);
-
-        expect(fresh.body.version).toBe(current.body.version);
-      });
+      await application.settled();
 
       const served = expectStatus(await varnish.get<OpeningHours>(hoursPath, inNetwork(NETWORK)), 200);
+
+      expect(served.body.version).toBe(current.body.version);
       const onTheVersionServed = { headers: { 'if-match': served.headers['etag'] ?? '' } };
 
       expectStatus(await practitioner.put(hoursPath, mornings, onTheVersionServed), 200);
@@ -157,11 +158,11 @@ describe('Get opening hours, end to end: what a cache may keep, and its purge af
 
       expectStatus(await practitioner.put(hoursPath, afternoons), 200);
 
-      await eventually(async () => {
-        const fresh = expectStatus(await varnish.get<OpeningHours>(hoursPath, inNetwork(NETWORK)), 200);
+      await application.settled();
 
-        expect(fresh.body.ranges).toEqual(afternoons.ranges);
-      });
+      const fresh = expectStatus(await varnish.get<OpeningHours>(hoursPath, inNetwork(NETWORK)), 200);
+
+      expect(fresh.body.ranges).toEqual(afternoons.ranges);
     });
   });
 });
@@ -179,7 +180,8 @@ describe('Get opening hours, end to end: the copy of one network is never the an
     const calendar = calendarTag(calendarId);
 
     hoursPath = '/calendars/' + calendarId + '/opening-hours';
-    await eventually(() => expect(application.purges.purged.filter((tag) => tag === calendar)).toHaveLength(2));
+    await application.settled();
+    expect(application.purges.purged.filter((tag) => tag === calendar)).toHaveLength(2);
     application.purges.purged.splice(0);
   });
 

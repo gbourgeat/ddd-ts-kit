@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { eventually, expectProblem, expectStatus, type HttpClient, type HttpResponse } from '@ddd-ts-kit/testing/e2e';
+import { expectProblem, expectStatus, type HttpClient, type HttpResponse } from '@ddd-ts-kit/testing/e2e';
 import { bookAppointment } from '$test/e2e/support/book-appointment';
 import type { Listed } from '$test/e2e/support/listed';
 import { openStaffedPractice } from '$test/e2e/support/open-staffed-practice';
@@ -110,8 +110,10 @@ describe('What one practice and one patient hold, kept from the others', () => {
     await openStaffedPractice(application, hillside);
     const marie = await application.as({ id: hillside.managerId });
 
-    const seenByItsManager = await eventually(async () =>
-      expectOne(await ada.get<Listed<Identified>>('/practices/' + practice.practiceId + '/agenda')),
+    await application.settled();
+
+    const seenByItsManager = expectOne(
+      await ada.get<Listed<Identified>>('/practices/' + practice.practiceId + '/agenda'),
     );
 
     const agenda = await marie.get('/practices/' + practice.practiceId + '/agenda');
@@ -127,9 +129,9 @@ describe('What one practice and one patient hold, kept from the others', () => {
   it('refuses a patient the appointment of another, and shows them its slot as busy without the patient', async () => {
     const appointmentId = expectStatus(await bookAppointment(paul, practice, { startsAt }), 201).body.id;
 
-    const day = await eventually(
-      async () => expectStatus(await paul.get<{ day: string }>('/appointments/' + appointmentId), 200).body.day,
-    );
+    await application.settled();
+
+    const day = expectStatus(await paul.get<{ day: string }>('/appointments/' + appointmentId), 200).body.day;
 
     const dayOfTheCalendar = '/calendars/' + practice.calendarId + '/days/' + day;
 
@@ -157,9 +159,9 @@ describe('An appointment that starts in less than a day', () => {
       startsAt: startsAt.toISOString(),
     });
 
-    const detail = await eventually(async () =>
-      expectStatus(await paul.get<{ status: string }>('/appointments/' + appointmentId), 200),
-    );
+    await application.settled();
+
+    const detail = expectStatus(await paul.get<{ status: string }>('/appointments/' + appointmentId), 200);
 
     // The policy answers `scheduling.patient-cancels-until-notice`; the problem document of the kit carries the code and the permission, not that reason.
     expect(expectProblem(cancellation, { status: 403, code: 'FORBIDDEN' })['detail']).toContain(
@@ -185,8 +187,10 @@ describe('An appointment that starts in less than a day', () => {
       reason: 'The practitioner is away.',
     });
 
-    const detail = await eventually(async () =>
-      expectCancelled(await paul.get<{ status: string; cancelledBy?: string }>('/appointments/' + appointmentId)),
+    await application.settled();
+
+    const detail = expectCancelled(
+      await paul.get<{ status: string; cancelledBy?: string }>('/appointments/' + appointmentId),
     );
 
     expectProblem(silent, { status: 422, code: 'REASON_REQUIRED' });
@@ -200,7 +204,9 @@ describe('Support staff acting through a patient', () => {
     const appointmentId = expectStatus(await bookAppointment(paul, practice, { startsAt }), 201).body.id;
     const sam = await application.as({ id: 'paul', roles: ['patient'], impersonatedBy: 'sam' });
 
-    const list = await eventually(async () => expectOne(await sam.get<Listed<Identified>>('/appointments')));
+    await application.settled();
+
+    const list = expectOne(await sam.get<Listed<Identified>>('/appointments'));
     const detail = await sam.get<Identified>('/appointments/' + appointmentId);
 
     const writes = [

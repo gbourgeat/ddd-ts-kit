@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { InMemoryErrorReporter } from '@ddd-ts-kit/kernel';
-import { eventually, expectProblem, expectStatus, type HttpClient } from '@ddd-ts-kit/testing/e2e';
+import { expectProblem, expectStatus, type HttpClient } from '@ddd-ts-kit/testing/e2e';
 import { expectSpanTree, installTestTracing, type ExpectedSpan, type SpanNode } from '@ddd-ts-kit/tracing/testing';
 import type { LogSettings } from '@/platform/observability/create-logger';
 import { bookAppointment } from '$test/e2e/support/book-appointment';
@@ -120,16 +120,14 @@ describe('One booking, followed from outside: its trace, its log lines, its erro
 
     expectStatus(await bookAppointment(correlated(), practice, { startsAt }), 201);
 
-    await eventually(async () =>
-      expect(expectStatus(await paul.get<Listed<unknown>>('/notifications'), 200).body.items).toHaveLength(1),
-    );
+    await application.settled();
 
-    await eventually(async () =>
-      expect(
-        expectStatus(await manager.get<Listed<unknown>>('/practices/' + practice.practiceId + '/occupancy'), 200).body
-          .items,
-      ).toHaveLength(1),
-    );
+    expect(expectStatus(await paul.get<Listed<unknown>>('/notifications'), 200).body.items).toHaveLength(1);
+
+    expect(
+      expectStatus(await manager.get<Listed<unknown>>('/practices/' + practice.practiceId + '/occupancy'), 200).body
+        .items,
+    ).toHaveLength(1);
   }
 });
 
