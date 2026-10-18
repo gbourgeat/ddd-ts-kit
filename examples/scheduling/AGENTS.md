@@ -35,5 +35,5 @@ The compiler is the native TypeScript 7, installed as `@typescript/native`; `typ
 
 ## Workflow
 
-Follow the recommended steps in order, the supported path (`README.md` of ddd-ts-kit, "Start a project"): discover the domain, bounded contexts, glossaries, context map, bootstrap, plan the slices, build slice by slice, quality gate, document. `npx ddd-ts-kit status` says where the project stands. When asked to skip a step, say which one and what it costs, and record it in `docs/architecture/plan.md`.
+Follow the recommended steps in order, the supported path (`README.md`, "Recommended steps"): discover the domain, bounded contexts, glossaries, context map, bootstrap, plan the slices, build slice by slice, quality gate, document. `npx ddd-ts-kit status` says where the project stands. When asked to skip a step, say which one and what it costs, and record it in `docs/architecture/plan.md`.
 With the ddd-ts-kit plugin: `/ddd-ts-kit:start` for a new project or to resume one, `/ddd-ts-kit:glossary` before a new name, `/ddd-ts-kit:use-case` for a feature, `/ddd-ts-kit:document` for the contracts, `/ddd-ts-kit:quality-gate` before a pull or merge request. The plugin installs in Claude Code, Codex and the Copilot CLI from the marketplace `gbourgeat/ddd-ts-kit`; Codex calls a skill by its name, `$start`, `$use-case`.
