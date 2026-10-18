@@ -7,7 +7,9 @@
 //
 // The unit run takes `filters` as its path filters and `packages` as KIT_AFFECTED, which
 // vitest.config.ts reads to hold the coverage floor of those packages only. The end-to-end
-// suite, the example and the conformance run integrate every package: they are never narrowed.
+// suite, the generated projects, the example, the conformance run and the alias runs integrate
+// every package: they are never narrowed, and skipped only when nothing but documents changed
+// (`integrated`).
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -18,11 +20,14 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
 /** What the specs of the CLI read outside their package: the reference, the pipeline assets, the example, the plugin, the formatter config. */
 const READ_BY_THE_CLI_SPECS = ['docs/', 'pipeline/', 'examples/', 'plugin/', '.claude-plugin/', 'biome.json'];
 
-/** Read by no spec: only the gates that always run (dashes, plugin validation) look at them. */
+/** Read by no spec: only the gates that always run (dashes, plugin validation, the files of changes/) look at them. */
 const DOCUMENTS = /^[^/]+\.md$|^LICENSE$/;
 
 /** The documentation website, read by no spec of a package: the site job of the CI builds it. */
 const SITE = 'site/';
+
+/** The documents the runs that integrate every package read: the quick start of the root README, the rule table of the reference. */
+const READ_BY_THE_WHOLE_RUNS = ['README.md', 'docs/ARCHITECTURE.md'];
 
 /** The packages whose adapter specs need a server of the integration job: PostgreSQL, OpenFGA, MinIO for s3, Varnish for http, or Dragonfly for redis. */
 const ON_A_SERVER = ['drizzle', 'knex', 'prisma', 'typeorm', 'audit', 'openfga', 's3', 'http', 'redis'];
@@ -132,7 +137,23 @@ export function select(graph, changed) {
     scope: packages.length === 0 ? 'none' : 'packages',
     reason: 'the changed packages and the packages that depend on them',
     packages,
+    integrated: changed.some(integrates),
   };
+}
+
+/**
+ * Whether a changed file reaches the runs that integrate every package. A document they do not
+ * read does not: a page of docs/, a skill, a README of a package, the website, a file of changes/.
+ * What the generators write (packages/<name>/templates/) and the example do.
+ */
+function integrates(file) {
+  const document =
+    file.endsWith('.md') &&
+    !file.startsWith('examples/') &&
+    !/^packages\/[^/]+\/templates\//.test(file) &&
+    !READ_BY_THE_WHOLE_RUNS.includes(file);
+
+  return !(document || file === 'LICENSE' || file.startsWith(SITE) || file.startsWith('docs/assets/'));
 }
 
 function reachOf(graph, file) {
@@ -146,7 +167,7 @@ function reachOf(graph, file) {
     return ['cli'];
   }
 
-  return DOCUMENTS.test(file) || file.startsWith(SITE) ? [] : 'everything';
+  return DOCUMENTS.test(file) || file.startsWith(SITE) || file.startsWith('changes/') ? [] : 'everything';
 }
 
 /** Every package that depends on `name`, directly or through another. */
@@ -169,11 +190,11 @@ export function dependentsOf(graph, name) {
 }
 
 function everything(reason, graph = readGraph(ROOT)) {
-  return { scope: 'all', reason, packages: Object.keys(graph) };
+  return { scope: 'all', reason, packages: Object.keys(graph), integrated: true };
 }
 
 /** `packages` and `filters` are empty for everything: no filter, every floor held. */
-function asOutputs({ scope, packages }) {
+function asOutputs({ scope, packages, integrated }) {
   const partial = scope === 'packages';
 
   return [
@@ -181,6 +202,7 @@ function asOutputs({ scope, packages }) {
     `packages=${partial ? packages.join(',') : ''}`,
     `filters=${partial ? packages.map((name) => `packages/${name}/`).join(' ') : ''}`,
     `integration=${scope === 'all' || (partial && packages.some((name) => ON_A_SERVER.includes(name)))}`,
+    `integrated=${integrated}`,
   ].join('\n');
 }
 
