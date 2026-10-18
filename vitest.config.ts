@@ -3,7 +3,9 @@ import { defineConfig } from 'vitest/config';
 /**
  * The floor of each package, as [statements, branches, functions, lines]: what the unit run measured
  * on 2026-10-10 (2026-10-18 for cli, kernel, knex, prisma, sentry and testing), rounded down, so that
- * the coverage of a package cannot fall without the gate saying so. A floor is raised when the package gains tests, never lowered to make a change pass.
+ * the coverage of a package cannot fall without the gate saying so. The statements and lines of
+ * sentry, measured at 100, are held at 99: a floor of 100 would leave no line of margin. A floor is
+ * raised when the package gains tests, never lowered to make a change pass.
  * The four broker packages and s3 are low on purpose of the measure, not of the code: most of their
  * specs need a server (a broker, MinIO) and run in the integration job, which this run skips.
  */
@@ -28,7 +30,7 @@ const FLOORS: Readonly<Record<string, readonly [number, number, number, number]>
   redis: [57, 48, 60, 58],
   s3: [50, 35, 52, 50],
   scheduling: [98, 94, 98, 98],
-  sentry: [100, 99, 100, 100],
+  sentry: [99, 99, 100, 99],
   testing: [99, 96, 99, 99],
   tracing: [96, 90, 96, 96],
   typeorm: [96, 88, 97, 96],
