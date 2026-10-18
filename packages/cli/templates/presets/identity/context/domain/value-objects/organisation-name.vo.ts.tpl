@@ -1,5 +1,10 @@
 import { ValueObject } from '@ddd-ts-kit/kernel';
+{{#unless refusals.named}}
 import { OrganisationError } from '{{alias.context}}/domain/errors/organisation.error{{alias.ext}}';
+{{/unless}}
+{{#if refusals.named}}
+import { InvalidOrganisationName } from '{{alias.context}}/domain/errors/invalid-organisation-name.error{{alias.ext}}';
+{{/if}}
 
 const LONGEST = 100;
 
@@ -17,7 +22,12 @@ export class OrganisationName extends ValueObject<OrganisationNameProps> {
     const value = raw.trim();
 
     if (value.length === 0 || value.length > LONGEST) {
+{{#if refusals.named}}
+      throw InvalidOrganisationName.forValue(raw);
+{{/if}}
+{{#unless refusals.named}}
       throw OrganisationError.invalidOrganisationName(raw);
+{{/unless}}
     }
 
     return new OrganisationName({ value });

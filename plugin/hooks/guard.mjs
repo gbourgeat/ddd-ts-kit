@@ -63,7 +63,10 @@ const GENERATORS = [
   [/\.vo\.ts$/, 'value-object <context> <Name>'],
   [/\.vocabulary\.ts$/, 'vocabulary <context> <Name> --value <value>...'],
   [/\.event\.ts$/, 'domain-event <context> <Aggregate> <Fact>'],
-  [/\.error\.ts$/, 'error <context> <Concept> <refusal>'],
+  [
+    /\.error\.ts$/,
+    'error <context> <Refusal> <factory> (under "stack.refusals": "factories": error <context> <Concept> <refusal>)',
+  ],
   [/\/domain\/services\/[^/]+\.service\.ts$/, 'domain-service <context> <Name>'],
   [/\/domain\/repositories\/[^/]+\.repository\.ts$/, 'repository <context> <Aggregate>'],
   [/\.command\.ts$/, 'command <context> <UseCase> (--permission <aggregate>.<action> [--grant <role>] | --public)'],

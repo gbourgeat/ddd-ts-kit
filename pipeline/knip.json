@@ -9,6 +9,9 @@
   "project": ["src/**/*.ts", "scripts/**/*.ts", "test/**/*.ts"],
   "ignoreDependencies": ["eslint-formatter-gitlab"],
   "ignoreExportsUsedInFile": true,
+  "ignoreIssues": {
+    "src/contexts/*/domain/errors/codes.ts": ["types"]
+  },
   "vitest": {
     "config": ["vitest.config.ts", "vitest.e2e.config.ts"],
     "entry": ["src/**/*.spec.ts", "test/e2e/**/*.e2e.spec.ts"]

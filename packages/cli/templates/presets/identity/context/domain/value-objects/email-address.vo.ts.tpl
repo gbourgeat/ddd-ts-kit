@@ -1,5 +1,10 @@
 import { ValueObject } from '@ddd-ts-kit/kernel';
+{{#unless refusals.named}}
 import { AccountError } from '{{alias.context}}/domain/errors/account.error{{alias.ext}}';
+{{/unless}}
+{{#if refusals.named}}
+import { InvalidEmailAddress } from '{{alias.context}}/domain/errors/invalid-email-address.error{{alias.ext}}';
+{{/if}}
 
 /** The longest address the standards allow (RFC 5321, a path of 256 characters and its two brackets). */
 const LONGEST = 254;
@@ -19,7 +24,12 @@ export class EmailAddress extends ValueObject<EmailAddressProps> {
     const value = raw.trim().toLowerCase();
 
     if (value.length > LONGEST || !SHAPE.test(value)) {
+{{#if refusals.named}}
+      throw InvalidEmailAddress.forValue(raw);
+{{/if}}
+{{#unless refusals.named}}
       throw AccountError.invalidEmailAddress(raw);
+{{/unless}}
     }
 
     return new EmailAddress({ value });

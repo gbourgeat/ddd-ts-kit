@@ -173,7 +173,7 @@ describe('the knip config init writes', () => {
       ),
     );
 
-    for (const key of ['$schema', 'project', 'ignoreDependencies', 'ignoreExportsUsedInFile']) {
+    for (const key of ['$schema', 'project', 'ignoreDependencies', 'ignoreExportsUsedInFile', 'ignoreIssues']) {
       expect(jsonAt(generated, key), key).toEqual(jsonAt(expected, key));
     }
 

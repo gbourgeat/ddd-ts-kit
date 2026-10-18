@@ -190,8 +190,8 @@ function resolveWriting(
   options: StackOptions,
 ): Record<'refusals' | 'routes' | 'schemas' | 'valueObjects' | 'literals' | 'values', string> {
   return {
-    // A new project builds its domain errors through factories; a recorded one keeps the form it says, or the one of 0.2.
-    refusals: choose(REFUSAL_FORMS, options.refusals, 'refusals') ?? 'factories',
+    // A new project names each refusal and builds it through factories; a recorded one keeps the form it says, or the one of 0.2.
+    refusals: choose(REFUSAL_FORMS, options.refusals, 'refusals') ?? 'named',
     // A new project writes each route as a controller class; a recorded one keeps the form it says, or the functions of 0.3.
     routes: choose(ROUTE_FORMS, options.routes, 'routes') ?? 'controllers',
     // A new project declares a shape once and shares it; a recorded one keeps the form it says, or one schema per route as 0.5.

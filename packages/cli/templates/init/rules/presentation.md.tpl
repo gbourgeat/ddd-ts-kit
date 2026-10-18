@@ -21,6 +21,9 @@ paths:
 {{/if}}
 - Imports `application/` (and domain types for mapping), never `infrastructure/` (`layer/presentation-no-infrastructure`).
 - Input shape is validated here with the schema library of the project, behind the `Schema` port. Business rules are not validated here.
+{{#if refusals.named}}
+- Every route says who may call it (its group or its guards for a controller, `security` for a function) and the codes of the refusals it can answer in `errors`, as the `codes.ts` of its context lists them (`errors/known-code`); the mapping from code to status lives in one place, the error mapper. A client reads the `code`, under `facts` only what a factory exposed, and the message of the refusal as `detail` unless it quotes a fact that is not exposed.
+{{/if}}
 {{#if refusals.factories}}
 - Every route says who may call it (its group or its guards for a controller, `security` for a function) and the codes of the refusals it can answer in `errors`, as their factories set them (`errors/known-code`); the mapping from code to status lives in one place, the error mapper. A client reads the `code`, under `facts` only what a factory exposed, and the message of the refusal as `detail` unless it quotes a fact that is not exposed.
 {{/if}}

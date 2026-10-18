@@ -4,6 +4,7 @@ import path from 'node:path';
 import { afterAll } from 'vitest';
 import { run } from '../src/run.js';
 import { grantOf } from './support/grant-of.js';
+import { refusalOf } from './support/refusal-of.js';
 import { initFlags } from './support/init-flags.js';
 import { scaffoldBillingJobs } from './support/scaffold-billing-jobs.js';
 import { scaffoldBillingLifecycle } from './support/scaffold-billing-lifecycle.js';
@@ -109,6 +110,7 @@ export function scaffoldEverything(root: string, stack = DEFAULT_STACK, more: re
 
   step('init', ...initFlags(stack), ...more);
   scaffoldBilling(step, withHttp, grantOf(stack, more));
+  step('generate', 'error', 'billing', ...refusalOf(more));
 
   if (withHttp) {
     // The acceptance of a story, written before its code: an it.todo per slice row of the story.
@@ -168,7 +170,6 @@ function scaffoldBilling(step: Step, withHttp: boolean, grant: (role: string) =>
   step('generate', 'entity', 'billing', 'InvoiceLine', ...term('Line=One billed item of an invoice'));
   step('g', 'vo', 'billing', 'Money', ...term('Money=An amount in a currency'));
   step('generate', 'domain-event', 'billing', 'Invoice', 'Issued');
-  step('generate', 'error', 'billing', 'Invoice', 'alreadyIssued', '--code', 'INVOICE_ALREADY_ISSUED');
   step('generate', 'domain-service', 'billing', 'Pricing', ...term('Price=What a customer pays for one item'));
   step('generate', 'repository', 'billing', 'Invoice');
 

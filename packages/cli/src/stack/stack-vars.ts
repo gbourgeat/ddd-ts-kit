@@ -72,7 +72,7 @@ function modelWritingVars(config: Config): RenderContext {
   const { refusals, schemas, valueObjects, literals, values } = config.stack;
 
   return {
-    refusals: one(refusals, ['factories', 'classes']),
+    refusals: one(refusals, ['named', 'factories', 'classes']),
     schemas: one(schemas, ['shared', 'per-route']),
     valueObjects: one(valueObjects, ['throwing', 'result']),
     literals: one(literals, ['named', 'free']),
