@@ -33,12 +33,16 @@ function project(config = {}, flags = []) {
   if (Object.keys(config).length > 0) {
     patchConfig(root, config);
   }
+  launcher(root);
+  return root;
+}
+
+// A launcher like the one npm writes: the compiled entry file itself is not executable.
+function launcher(root) {
   mkdirSync(join(root, 'node_modules', '.bin'), { recursive: true });
-  // A launcher like the one npm writes: the compiled entry file itself is not executable.
   writeFileSync(join(root, 'node_modules', '.bin', 'ddd-ts-kit'), `#!/bin/sh\nexec node "${cli}" "$@"\n`, {
     mode: 0o755,
   });
-  return root;
 }
 
 function patchConfig(root, patch) {
@@ -505,6 +509,308 @@ test('in advise mode the worker scope asks, and off silences it', () => {
   assert.equal(decision(run('pre-write', write(join(advised, 'src/main.ts'), worker(advised)))), 'ask');
   const silent = project({ guard: 'off' });
   assert.equal(run('pre-write', write(join(silent, 'src/main.ts'), worker(silent))).output, undefined);
+});
+
+const ACCEPTANCE = 'test/acceptance/us5.acceptance.spec.ts';
+const SCENARIO = `it('#US5.02 AC1 a customer places an order', pending(async () => {
+  expectStatus(await client.post('/orders', {}), 201);
+}));
+`;
+const edit = (file, { from, to }, extra = {}) => ({
+  tool_name: 'Edit',
+  tool_input: { file_path: file, old_string: from, new_string: to },
+  ...extra,
+});
+
+const STORY_SLICES = `# Slices
+
+| # | Context | Kind | Slice | Start with | Depends on | Owner | Status |
+|---|---|---|---|---|---|---|---|
+| US5.01 | ordering | slice | Place order | \`generate command ordering PlaceOrder --public\` | | ordering | todo |
+`;
+
+function storyWorktree() {
+  const root = project();
+  put(root, '.ddd-ts-kit/story.json', JSON.stringify({ story: 'US5', base: 'main', branch: 'story/us5' }));
+  put(root, 'docs/architecture/slices.md', STORY_SLICES);
+  return root;
+}
+
+// Each row designed, the acceptance written and locked: what opens the code of a story.
+function openTheBuildGate(root) {
+  put(
+    root,
+    'docs/architecture/stories/US5.md',
+    '# US5\n\n## Acceptance criteria\n\n- AC1: a customer places an order\n',
+  );
+  put(root, 'docs/architecture/reviews/US5.md', '# US5\n\n## #US5.01 Place order\n\n`PlaceOrderCommand`.\n');
+  put(
+    root,
+    'test/acceptance/us5.acceptance.spec.ts',
+    "import { it } from 'vitest';\nimport { pending } from '@ddd-ts-kit/testing/e2e';\n\nit('#US5.01 AC1 a customer places an order', pending(async () => {}));\n",
+  );
+  const locked = spawnSync('node', [cli, 'acceptance', 'US5', '--lock'], { cwd: root, encoding: 'utf8' });
+  assert.equal(locked.status, 0, locked.stderr);
+}
+
+test('in the worktree of a story, the code waits for each row designed and the acceptance locked', () => {
+  const root = storyWorktree();
+  const code = join(root, 'src/contexts/ordering/domain/order-number.ts');
+  for (const input of [write(code), write(code, { agent_type: 'ddd-ts-kit:context-builder' })]) {
+    const refused = run('pre-write', input);
+    assert.equal(decision(refused), 'deny');
+    assert.match(reason(refused), /The code of story US5 waits for its build gate/);
+    assert.match(reason(refused), /Next: Write docs\/architecture\/stories\/US5\.md/);
+  }
+  assert.equal(run('pre-write', write(join(root, 'src/contexts/ordering/CONTEXT.md'))).output, undefined);
+  assert.equal(
+    decision(run('pre-bash', bash(root, 'npx ddd-ts-kit generate command ordering PlaceOrder --public'))),
+    'deny',
+  );
+  assert.equal(run('pre-bash', bash(root, 'npx ddd-ts-kit generate acceptance US5')).output, undefined);
+  assert.equal(
+    decision(
+      run('pre-bash', bash(root, 'npx ddd-ts-kit story-scope US6', { agent_type: 'ddd-ts-kit:context-builder' })),
+    ),
+    'deny',
+  );
+  openTheBuildGate(root);
+  assert.equal(run('pre-write', write(code)).output, undefined);
+  assert.equal(
+    run('pre-bash', bash(root, 'npx ddd-ts-kit generate command ordering PlaceOrder --public')).output,
+    undefined,
+  );
+  assert.ok(existsSync(join(root, '.ddd-ts-kit/guard/story-gate.json')));
+});
+
+// A project committed on main in the main checkout of its repository, its worktrees ignored.
+function trunkCheckout(config = {}) {
+  const root = project(config);
+  put(root, '.gitignore', 'node_modules\n.worktrees/\n');
+  git(root, 'init', '--quiet', '--initial-branch', 'main');
+  git(root, 'add', '--all');
+  git(root, 'commit', '--quiet', '--no-verify', '--message', 'chore: bootstrap');
+  return root;
+}
+
+test('in the main checkout of the trunk the code of a context waits for a worktree, and a worktree of .worktrees/ for its own install', () => {
+  const root = trunkCheckout();
+  const refused = run('pre-write', write(join(root, 'src/contexts/ordering/domain/order-number.ts')));
+  assert.equal(decision(refused), 'deny');
+  assert.match(reason(refused), /This is the main checkout of the trunk \(branch main\)/);
+  assert.match(reason(refused), /npx ddd-ts-kit worktree <name>/);
+  assert.equal(run('pre-write', write(join(root, 'src/contexts/ordering/CONTEXT.md'))).output, undefined);
+  assert.equal(run('pre-write', write(join(root, 'docs/architecture/plan.md'))).output, undefined);
+  assert.equal(decision(run('pre-bash', bash(root, 'npx ddd-ts-kit generate aggregate ordering Order'))), 'deny');
+  assert.equal(run('pre-bash', bash(root, 'npx ddd-ts-kit generate context billing:supporting')).output, undefined);
+  assert.match(
+    run('session', { cwd: root }).output.hookSpecificOutput.additionalContext,
+    /Main checkout of the trunk \(branch main\): the code of the contexts is written in a worktree, refused here/,
+  );
+
+  const worktree = join(root, '.worktrees', 'order-number');
+  git(root, 'worktree', 'add', '--quiet', '-b', 'work/order-number', worktree);
+  const code = join(worktree, 'src/contexts/ordering/domain/order-number.ts');
+  const borrowed = run('pre-write', write(code));
+  assert.equal(decision(borrowed), 'deny');
+  assert.match(reason(borrowed), /a worktree of \.worktrees\/ without its own node_modules/);
+  launcher(worktree);
+  assert.equal(run('pre-write', write(code)).output, undefined);
+});
+
+test('a project started before the worktrees setting, and one set to advised, only hear where the code goes', () => {
+  const root = trunkCheckout();
+  const path = join(root, 'ddd-ts-kit.config.json');
+  const { worktrees, ...before } = JSON.parse(readFileSync(path, 'utf8'));
+  assert.equal(worktrees, 'required');
+  writeFileSync(path, JSON.stringify(before));
+  assert.equal(run('pre-write', write(join(root, 'src/contexts/ordering/domain/order-number.ts'))).output, undefined);
+  patchConfig(root, { worktrees: 'advised' });
+  assert.equal(run('pre-write', write(join(root, 'src/contexts/ordering/domain/order-number.ts'))).output, undefined);
+  const started = run('session', { cwd: root }).output.hookSpecificOutput.additionalContext;
+  assert.match(
+    started,
+    /Main checkout of the trunk \(branch main\): the code of the contexts is written in a worktree; open one/,
+  );
+});
+
+// Two stories open in two worktrees of one repository, the CLI of the kit installed in each.
+function twoStories() {
+  const root = project();
+  put(root, '.gitignore', 'node_modules\n.ddd-ts-kit/\n');
+  put(
+    root,
+    'docs/architecture/slices.md',
+    `${STORY_SLICES}| US6.01 | billing | slice | Issue invoice | \`generate command billing IssueInvoice --public\` | | billing | todo |\n`,
+  );
+  git(root, 'init', '--quiet', '--initial-branch', 'main');
+  git(root, 'add', '--all');
+  git(root, 'commit', '--quiet', '--no-verify', '--message', 'chore: bootstrap');
+  return Object.fromEntries(
+    ['us5', 'us6'].map((code) => {
+      const worktree = `${root}-${code}`;
+      git(root, 'worktree', 'add', '--quiet', '-b', `story/${code}`, worktree);
+      put(
+        worktree,
+        '.ddd-ts-kit/story.json',
+        JSON.stringify({ story: code.toUpperCase(), base: 'main', branch: `story/${code}` }),
+      );
+      launcher(worktree);
+      return [code, worktree];
+    }),
+  );
+}
+
+test('in the worktree of a story, a write to a file another open story changes is said once, and so is where they meet at session start', () => {
+  const { us5, us6 } = twoStories();
+  put(us6, 'docs/notes.md', 'US6\n');
+  const first = run('pre-write', write(join(us5, 'docs/notes.md'), { session_id: 'crossing' }));
+  assert.match(
+    first.output.hookSpecificOutput.additionalContext,
+    /US6 \(story\/us6, .*\) changes docs\/notes\.md too\./,
+  );
+  assert.match(first.output.hookSpecificOutput.additionalContext, /npx ddd-ts-kit stories/);
+  assert.equal(run('pre-write', write(join(us5, 'docs/notes.md'), { session_id: 'crossing' })).output, undefined);
+  assert.equal(
+    run('pre-write', write(join(us5, 'docs/architecture/slices.md'), { session_id: 'crossing' })).output,
+    undefined,
+  );
+  put(us5, 'docs/notes.md', 'US5\n');
+  rmSync(join(us5, '.ddd-ts-kit/guard/stories.json'));
+  const started = run('session', { cwd: us5 }).output.hookSpecificOutput.additionalContext;
+  assert.match(started, /It meets story US6: 1 file\(s\) both change\./);
+});
+
+test('a session of a story starts on its phase and ends on its report, refused once for the same step', () => {
+  const root = storyWorktree();
+  const started = run('session', { cwd: root }).output.hookSpecificOutput.additionalContext;
+  assert.match(
+    started,
+    /Story US5 \(skill ddd-ts-kit:story\): done: rows\. Next: Write docs\/architecture\/stories\/US5\.md/,
+  );
+  const stopping = { cwd: root, session_id: 'story-session', stop_hook_active: false };
+  const refused = run('stop', stopping);
+  assert.equal(refused.output.decision, 'block');
+  assert.match(refused.output.reason, /story US5 is not finished/);
+  assert.match(refused.output.reason, /Go on without asking/);
+  assert.equal(run('stop', { ...stopping, stop_hook_active: true }).output, undefined);
+  put(
+    root,
+    'docs/architecture/stories/US5.md',
+    '# US5\n\n## Report\n\n- Blocked: the owner has not said who places an order.\n',
+  );
+  assert.equal(run('stop', stopping).output, undefined);
+});
+
+test('a sub-agent only removes pending(...) from an acceptance scenario, by edit or by rewrite', () => {
+  const root = project();
+  const agent = worker(root);
+  const file = join(root, ACCEPTANCE);
+  put(root, ACCEPTANCE, SCENARIO);
+  const unwrapped = `it('#US5.02 AC1 a customer places an order', async () => {
+  expectStatus(await client.post('/orders', {}), 201);
+});
+`;
+  assert.equal(run('pre-write', edit(file, { from: SCENARIO, to: unwrapped }, agent)).output, undefined);
+  assert.equal(
+    run('pre-write', { tool_name: 'Write', tool_input: { file_path: file, content: unwrapped }, ...agent }).output,
+    undefined,
+  );
+  for (const easier of [
+    SCENARIO.replace('201', '404'),
+    SCENARIO.replace('{}), 201', '{ lines: [] }), 201'),
+    SCENARIO.replace('  expectStatus', '  // expectStatus'),
+  ]) {
+    const refused = run('pre-write', edit(file, { from: SCENARIO, to: easier }, agent));
+    assert.equal(decision(refused), 'deny', easier);
+    assert.match(reason(refused), /only removes `pending\(\.\.\.\)`/);
+    assert.match(reason(refused), /the conductor has the acceptance-judge agent judge it/);
+  }
+  const testWriter = { agent_type: 'ddd-ts-kit:domain-test-writer' };
+  assert.equal(
+    decision(run('pre-write', edit(file, { from: SCENARIO, to: SCENARIO.replace('201', '200') }, testWriter))),
+    'deny',
+  );
+  const created = run('pre-write', write(join(root, 'test/acceptance/us6.acceptance.spec.ts'), agent));
+  assert.equal(decision(created), 'deny');
+});
+
+test('the conductor edits an acceptance scenario, which the lock then judges; a new spec comes from its generator', () => {
+  const root = project();
+  const file = join(root, ACCEPTANCE);
+  put(root, ACCEPTANCE, SCENARIO);
+  assert.equal(run('pre-write', edit(file, { from: SCENARIO, to: SCENARIO.replace('201', '200') })).output, undefined);
+  const created = run('pre-write', write(join(root, 'test/acceptance/us6.acceptance.spec.ts')));
+  assert.equal(decision(created), 'deny');
+  assert.match(reason(created), /npx ddd-ts-kit generate acceptance <story> --json/);
+});
+
+test('the lock of an acceptance is written by the CLI only, and locking is refused to a sub-agent', () => {
+  const root = project();
+  const lock = run('pre-write', write(join(root, 'test/acceptance/us5.acceptance.lock.json')));
+  assert.equal(decision(lock), 'deny');
+  assert.match(reason(lock), /npx ddd-ts-kit acceptance <story> --lock` writes it/);
+  const agent = worker(root);
+  for (const command of [
+    'npx ddd-ts-kit acceptance US5 --lock',
+    'npx ddd-ts-kit acceptance US5 --lock --json',
+    'pnpm exec ddd-ts-kit acceptance US5 --lock',
+  ]) {
+    assert.equal(decision(run('pre-bash', bash(root, command, agent))), 'deny', command);
+    assert.equal(run('pre-bash', bash(root, command)).output, undefined, command);
+  }
+  assert.equal(run('pre-bash', bash(root, 'npx ddd-ts-kit acceptance US5 --gate written', agent)).output, undefined);
+  assert.equal(decision(run('pre-bash', bash(root, 'npx ddd-ts-kit generate acceptance US5', agent))), 'deny');
+});
+
+test('a verdict on a locked acceptance is written by the acceptance judge alone, and the judge writes nothing else', () => {
+  const root = project();
+  const judge = { agent_type: 'ddd-ts-kit:acceptance-judge' };
+  const verdictFile = join(root, 'test/acceptance/verdicts/us5-3f1c0a9b2d4e5f60.md');
+  assert.equal(run('pre-write', write(verdictFile, judge)).output, undefined);
+  for (const writer of [
+    {},
+    { agent_type: 'ddd-ts-kit:context-builder' },
+    { agent_type: 'ddd-ts-kit:domain-test-writer' },
+  ]) {
+    const refused = run('pre-write', write(verdictFile, writer));
+    assert.equal(decision(refused), 'deny');
+    assert.match(reason(refused), /the acceptance-judge agent alone writes it/);
+  }
+  for (const elsewhere of [
+    ACCEPTANCE,
+    'test/acceptance/us5.acceptance.lock.json',
+    'src/contexts/ordering/CONTEXT.md',
+  ]) {
+    assert.equal(decision(run('pre-write', write(join(root, elsewhere), judge))), 'deny', elsewhere);
+  }
+});
+
+test('the shell only reads, versions or checks the lock and the verdicts of an acceptance, and the judge only reads', () => {
+  const root = project();
+  for (const command of [
+    'echo "Verdict: amend" > test/acceptance/verdicts/us5-1.md',
+    "node -e \"require('fs').writeFileSync('test/acceptance/verdicts/us5-1.md', '')\"",
+    'cp /tmp/forged.json test/acceptance/us5.acceptance.lock.json',
+  ]) {
+    assert.equal(decision(run('pre-bash', bash(root, command))), 'deny', command);
+  }
+  for (const command of [
+    'git add test/acceptance/us5.acceptance.lock.json test/acceptance/verdicts/us5-1.md',
+    'cat test/acceptance/verdicts/us5-1.md',
+  ]) {
+    assert.equal(run('pre-bash', bash(root, command)).output, undefined, command);
+  }
+  const judge = { agent_type: 'ddd-ts-kit:acceptance-judge' };
+  assert.equal(
+    run('pre-bash', bash(root, 'git show HEAD:test/acceptance/us5.acceptance.spec.ts', judge)).output,
+    undefined,
+  );
+  assert.equal(
+    decision(run('pre-bash', bash(root, 'sed -i s/201/200/ test/acceptance/us5.acceptance.spec.ts', judge))),
+    'deny',
+  );
+  assert.equal(decision(run('pre-bash', bash(root, 'npx ddd-ts-kit acceptance US5 --lock', judge))), 'deny');
 });
 
 test('a context worker does not run a generator that writes shared files or another context', () => {

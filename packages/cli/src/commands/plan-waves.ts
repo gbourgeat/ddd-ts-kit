@@ -1,4 +1,3 @@
-import path from 'node:path';
 import { CliError } from '../cli-error.js';
 import { formatPlan } from '../plan/format-plan.js';
 import { planWaves } from '../plan/plan-waves.js';
@@ -26,7 +25,7 @@ export const planWavesCommand: Command = (argv, io) => {
     );
   }
 
-  const plan = planWaves(rows, { context: contextOf(rows, args.positionals[0]), project: path.basename(root) });
+  const plan = planWaves(rows, { context: contextOf(rows, args.positionals[0]) });
 
   io.out(args.json ? JSON.stringify(plan, null, 2) : formatPlan(plan));
 

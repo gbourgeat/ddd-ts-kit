@@ -47,6 +47,10 @@ approved the split.
 
 ## 1. Decide whether it pays
 
+Work cut by user story rather than by context is `/ddd-ts-kit:story`, run by the owner, one
+session and one terminal per story: it reuses the worktrees, the briefings and the merge rules
+below. This skill splits one plan between workers of different contexts.
+
 Parallel work pays when at least two contexts each have three or more ready slices and
 their contracts are settled. It does not when: there is one context; a boundary or a payload
 is still debated; the slices form one chain; the walking skeleton is not merged yet (build
@@ -72,6 +76,10 @@ before running them side by side), and gives the merge order. It refuses a cycle
 
 ## 2. Prepare the trunk (conductor, before any worker starts)
 
+0. **Your own worktree.** The guard refuses the code of a context in the main checkout of the
+   trunk: `npx ddd-ts-kit worktree <plan>` opens `.worktrees/<plan>` on `work/<plan>`, cut from
+   `origin/main`, installed. Every step below runs there (`cd <worktree> && ...`, every file by
+   its absolute path under it).
 1. **Contracts first.** For every `contract` row a worker depends on: generate it
    (`generate integration-event`, `generate gateway`), write its payload schema or read
    contract in the upstream's `published-language/` with the owners of both sides, commit. A
@@ -82,10 +90,14 @@ before running them side by side), and gives the merge order. It refuses a cycle
    when a slice plans an adapter and the project has none yet, the first `generate adapter`
    (it writes `platform/resilience/own-policy.ts`, which the next ones only import).
    These kinds write shared files (`generate --help --json` says which, under
-   `writesShared`); run on the trunk, they never conflict. Leave the `TODO(domain)` markers
+   `writesShared`); run before any worker, they never conflict. Leave the `TODO(domain)` markers
    to the workers.
-3. `npm run verify`, commit (one commit per contract and per aggregate), tell the owner the
-   trunk is ready. `.ddd-ts-kit/` is in the `.gitignore` that `init` writes: keep it there.
+3. `npm run verify`, commit (one commit per contract and per aggregate), push `work/<plan>` and
+   land it as its own pull request: the workers are cut from `origin/main` once it merged, as
+   `plan-waves` prints them. To start them before it merges, cut them from your branch instead
+   (`--base work/<plan>`); `merge-trunk` later finds the commits they share with it. Tell the
+   owner the trunk is ready. `.ddd-ts-kit/` and `.worktrees/` are in the `.gitignore` that
+   `init` writes: keep them there.
 
 ## 3. One worktree and one scope per worker
 
@@ -93,15 +105,16 @@ before running them side by side), and gives the merge order. It refuses a cycle
 npx ddd-ts-kit worker-scope <context> --base origin/main --rows <id>   # as plan-waves prints it; --dry-run to read it first
 ```
 
-Run it from the checkout of the trunk, in your own session: the guard refuses it to a sub-agent
+Run it from the checkout of the trunk or from your worktree, in your own session: the guard refuses it to a sub-agent
 unless `--dry-run`, which prints the briefing and creates nothing. From the base (by default the current branch; it
-refuses a worker's worktree), it adds the git worktree `../<project>-<context>` on the branch
+refuses a worker's worktree), it adds the git worktree `.worktrees/<context>` of the main checkout (ignored by git and by
+every tool, never nested in another worktree) on the branch
 `build/<context>`, or keeps it when it contains the base and refuses it when it does not,
 writes `.ddd-ts-kit/worker.json` (its context, rows, base and branch) in it,
 runs the clean install of the project in a worktree it creates (`--no-install` leaves it to
 you; a note then says what to run), and prints the briefing of that worker. With that file,
 the guard refuses any write of a `context-builder` agent outside `src/contexts/<context>/` and
-its end-to-end specs, any generator that writes a shared file, any dependency change, and any
+its end-to-end specs (in an acceptance spec, anything but removing `pending(...)`), any generator that writes a shared file, any dependency change, and any
 shell command that writes outside the scope (`sed -i`, `>`, `tee`, `cp`, `mv`, `rm`, or a path
 only the shell knows); inline code (`node -e`, a heredoc) runs, and a file it changed outside the
 scope stops the worker until it is put back; `npx prettier` and a bare `npx biome` are refused too.
@@ -122,6 +135,7 @@ files more than one worker changed. Give the new worker rows on other files, or 
 | `package.json`, the lockfile | conductor | a worker asks for a dependency; `merge-trunk` takes the trunk's lockfile and installs again when the branch changed `package.json` |
 | migrations and their order | conductor | a worker generates a working one only (`db:generate working-<what>`); `merge-trunk` replays the drizzle ones of both sides, and `merge-trunk --to-land` gives them their real names before the squash merge |
 | `docs/architecture/plan.md`, `slices.md` | conductor | workers report, the conductor marks; `merge-trunk` merges `slices.md` row by row |
+| `docs/architecture/stories/*.md`, `test/acceptance/*` (the acceptance of a story and its lock) | conductor, before the first row of the story | a worker removes `pending(...)` from the scenarios its row satisfies, nothing else; a scenario it finds wrong is a need of its report |
 | `docs/adr/` | conductor; a worker for a decision of its slices (`generate adr`, without `--deviation`) | a new file per decision; `merge-trunk` renumbers a number the trunk took meanwhile |
 
 Another context's `published-language/` is read-only for a worker: a missing field is
@@ -162,7 +176,7 @@ report) and records its runs in its worktree; a session start names the workers 
 5. Bounded autonomy: after two stops on one row without a new commit, stop resuming it: split
    the row in `slices.md` (plan-slices), or ask the owner.
 
-A report sorts its needs. A **blocking** one stops that row: do it on the trunk, have the
+A report sorts its needs. A **blocking** one stops that row: do it in your worktree and land it, have the
 worker bring the trunk in (`npx ddd-ts-kit merge-trunk`), then launch the next agent. A **note** waits for the merge of the
 branch (step 6): the run goes on.
 
@@ -234,8 +248,8 @@ A worker never grants a permission to a role: the roles live in `src/platform/au
 its report says who holds a new permission, grant it on the trunk in `roles.ts` (by the entry
 of the set) as you merge its branch, before `npm run verify`: `authz/granted` warns until then.
 
-When a worker reports a need on a shared file: do it on the trunk, commit, tell the worker to
-merge the trunk. Remove each worktree once its branch is merged
-(`git worktree remove ../<project>-<context>`).
+When a worker reports a need on a shared file: do it in your worktree, land it, tell the worker
+to merge the trunk. Remove each worktree once its branch is merged
+(`git worktree remove .worktrees/<context>`).
 
 Token rules for everyone: [../start/token-economy.md](../start/token-economy.md).

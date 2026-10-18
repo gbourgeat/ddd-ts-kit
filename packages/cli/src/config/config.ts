@@ -92,6 +92,13 @@ export interface Config {
   readonly commit: CommitLimits;
   /** How the editor hook of the plugin reacts to a violation: `enforce`, `advise` or `off`. Kept as written, `check` reports a wrong value. */
   readonly guard: string;
+  /**
+   * Where the guard of the plugin lets a session write the code of a context: `required`, only in a
+   * worktree (the main checkout of the trunk refuses it), as `init` writes a new project; or
+   * `advised`, anywhere with a notice, when the key is absent (a project started before). Kept as
+   * written, `check` reports a wrong value.
+   */
+  readonly worktrees: string;
   readonly deviations: readonly Deviation[];
   /** Names reported by `standard/no-parallel-interface`, over its defaults: the kernel interface to use instead, or `false` to drop a default. */
   readonly standardInterfaces: Readonly<Record<string, string | false>>;

@@ -105,6 +105,13 @@ missing. Rows with no path between them can be built in parallel.
   lists the names the review cites that the trunk removed, refuses or replaced, with what took
   their place. Write the name the trunk has.
 
+A story states what its client observes once it is built, before any row is built: its
+acceptance criteria in `docs/architecture/stories/<story>.md`, under `## Acceptance criteria`,
+`- AC1: ...` each. Its acceptance spec (`generate acceptance <story>`, skill `ddd-ts-kit:testing`)
+is written, wrapped in `pending(...)`, locked and committed before the first row of code;
+`npx ddd-ts-kit acceptance <story> --gate written` says when. Each `slice` row is named by at
+least one scenario: a row no client can observe is a `skeleton` or a `contract`.
+
 Then run `npx ddd-ts-kit plan-waves`: it refuses a cycle in `Depends on`, an id no row carries
 and a row without owner, and otherwise shows the rows in waves (wave 1 can start now), cut into
 batches of one or two rows that `parallel-work` hands out. A batch it says names no aggregate
