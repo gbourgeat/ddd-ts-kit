@@ -88,12 +88,17 @@ function decoratedPolicies(file: SourceFile): PermissionRef[] {
   );
 }
 
+/** The permission of `definePolicy({ permission, ... })`, read from the object written as its first argument only. */
 function definedPolicies(file: SourceFile): PermissionRef[] {
   const { code } = file.scan;
 
   return [...code.matchAll(DEFINE_POLICY)].flatMap((match) => {
-    const open = code.indexOf('{', match.index + match[0].length - 1);
-    const entry = open === -1 ? undefined : callArguments(code, open).find((part) => PERMISSION_ENTRY.test(part.code));
+    const [options] = callArguments(code, match.index + match[0].length - 1);
+
+    const entry =
+      options?.code.startsWith('{') === true
+        ? callArguments(code, options.start).find((part) => PERMISSION_ENTRY.test(part.code))
+        : undefined;
 
     if (entry === undefined) {
       return [];
