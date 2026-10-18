@@ -364,6 +364,9 @@ DDD_TS_KIT_TEST_AMQP_URL=amqp://kit:kit@127.0.0.1:5672 npx vitest run packages/r
 docker rm -f ddd-ts-kit-test-rabbitmq
 ```
 
+The integration job of the CI runs them on every pull request that reaches this package,
+against RabbitMQ 4.3.6 that `pipeline/github/scripts/start-rabbitmq.sh` starts, its image pinned by digest.
+
 They run the contract suite on quorum and on classic queues, then the behaviours of this
 provider, one suite per behaviour (`publishing`, `consuming`, `correlation`, `retries`,
 `dead-letters`, `topology`, `connection-loss` through a TCP relay the test cuts, `closing`)

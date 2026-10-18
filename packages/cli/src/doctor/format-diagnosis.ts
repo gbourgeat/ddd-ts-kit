@@ -2,14 +2,31 @@ import type { Stack } from '../config/index.js';
 import { inDialect } from '../package-manager/in-dialect.js';
 import type { DoctorFinding } from './doctor-finding.js';
 
-/** The findings by area, each with what this version writes, then how to take what is missing. */
+/** The areas of a checkout rather than of the project: two clones of one project may differ in them. */
+const OF_THE_CHECKOUT: ReadonlySet<DoctorFinding['area']> = new Set(['node', 'install', 'submodule']);
+
+/**
+ * The findings by area, each with what this version writes, then how to take what is missing;
+ * then what this checkout lacks to run the project, and how to give it.
+ */
 export function formatDiagnosis(
   findings: readonly DoctorFinding[],
   version: string,
   manager: Stack['packageManager'],
 ): string {
+  const ofTheProject = findings.filter((finding) => !OF_THE_CHECKOUT.has(finding.area));
+  const ofTheCheckout = findings.filter((finding) => OF_THE_CHECKOUT.has(finding.area));
+
+  return [...projectLines(ofTheProject, version, manager), '', ...checkoutLines(ofTheCheckout, version, manager)].join(
+    '\n',
+  );
+}
+
+function projectLines(findings: readonly DoctorFinding[], version: string, manager: Stack['packageManager']): string[] {
   if (findings.length === 0) {
-    return `The project has what ddd-ts-kit ${version} writes: scripts, packages of the kit, permissions and git hooks.`;
+    return [
+      `The project has what ddd-ts-kit ${version} writes: scripts, packages of the kit, permissions and git hooks.`,
+    ];
   }
 
   return [
@@ -18,7 +35,26 @@ export function formatDiagnosis(
     '',
     ...fixesOf(findings),
     ...hookFixesOf(findings).map((fix) => inDialect(fix, manager)),
-  ].join('\n');
+  ];
+}
+
+function checkoutLines(
+  findings: readonly DoctorFinding[],
+  version: string,
+  manager: Stack['packageManager'],
+): string[] {
+  if (findings.length === 0) {
+    return [
+      `This checkout runs it: the Node it asks, its dependencies installed since the lockfile last changed, the packages of the kit at ${version}, its submodules initialised.`,
+    ];
+  }
+
+  return [
+    `What this checkout lacks to run the project, with ddd-ts-kit ${version}:`,
+    ...findings.map(lineOf),
+    '',
+    ...checkoutFixesOf(findings).map((fix) => inDialect(fix, manager)),
+  ];
 }
 
 function lineOf({ area, name, problem, expected, found }: DoctorFinding): string {
@@ -72,6 +108,42 @@ function hookFixesOf(findings: readonly DoctorFinding[]): string[] {
   if (hooks.some((finding) => finding.name === 'pre-commit')) {
     fixes.push(
       'fix: `npm run hooks:install` installs the hooks of lefthook.yml in this clone, once: every worktree of the repository shares them.',
+    );
+  }
+
+  return fixes;
+}
+
+/** Written for npm, said in the dialect of the project by the caller. */
+function checkoutFixesOf(findings: readonly DoctorFinding[]): string[] {
+  const has = (area: DoctorFinding['area'], problems: readonly DoctorFinding['problem'][]): boolean =>
+    findings.some((finding) => finding.area === area && problems.includes(finding.problem));
+
+  const fixes: string[] = [];
+
+  if (has('node', ['unsupported'])) {
+    fixes.push(
+      'fix: run the project with a Node that engines.node accepts (`nvm use` switches to the one .nvmrc names, when it has one), then `npm ci`: a dependency built for another Node may not load.',
+    );
+  } else if (has('node', ['other version'])) {
+    fixes.push('fix: `nvm use` switches to the Node .nvmrc names.');
+  }
+
+  if (has('install', ['missing', 'outdated', 'not installed'])) {
+    fixes.push(
+      'fix: `npm ci` installs what package-lock.json holds (`npm install` while the project has none), never an install that names a package.',
+    );
+  }
+
+  if (has('install', ['other version'])) {
+    fixes.push(
+      "fix: upgrade `ddd-ts-kit` and every `@ddd-ts-kit/*` package together to one version (the steps of each version are in node_modules/ddd-ts-kit/CHANGELOG.md), then `npm ci`; with a CLI other than the project's, a global one, run `npx ddd-ts-kit doctor` instead: it checks with the version the project installed.",
+    );
+  }
+
+  if (has('submodule', ['not initialised'])) {
+    fixes.push(
+      'fix: `git submodule update --init --recursive` checks out each submodule at the commit the project records.',
     );
   }
 

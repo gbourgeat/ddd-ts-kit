@@ -168,6 +168,12 @@ docker run -d --name minio -p 127.0.0.1:9000:9000 -e MINIO_ROOT_USER=ddd-ts-kit 
 DDD_TS_KIT_TEST_S3_ENDPOINT=http://localhost:9000 npx vitest run packages/s3
 ```
 
+The same specs run on another server of the protocol: `DDD_TS_KIT_TEST_S3_REGION` (`us-east-1` by
+default), `DDD_TS_KIT_TEST_S3_ACCESS_KEY` and `DDD_TS_KIT_TEST_S3_SECRET_KEY` name its region and
+key, and the bucket `ddd-ts-kit-test` is created when the key may create one. Run once by hand
+on Garage v2.1.0 (2026-10-18), region `garage`: the 34 tests passed. The other providers of
+[docs/tools/file-storage.md](../../docs/tools/file-storage.md) are not verified.
+
 A project holds its own binding to the same suite, on the MinIO of its compose stack: each test
 writes under a prefix of its own, so the tests share one bucket without seeing each other's
 files.

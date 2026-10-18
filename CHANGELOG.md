@@ -42,6 +42,71 @@ keeps its rhythm when clocks change, as `0 * * * *` does). A diagnostic and `ddd
 the shorthand as written. `@reboot` and any other `@word` are refused by both with the same
 message, which lists the shorthands accepted: a scheduled job has no occurrence at start.
 
+**A lint warning fails the lint of a generated project.** `lint` and `ci:lint` ran `eslint .`,
+which exits 0 on warnings: `verify` and the pipeline passed them, a new one as well, and they
+piled up. `init` now writes `ddd-ts-kit lint` for both, and the example application runs the
+same: the ESLint of the project, through its API (its paths, `--format` and `--fix` as ESLint
+takes them), failing on an error and on a warning alike, but on a warning of a rule of the kit in
+transition. A rule a version adds, or what a rule judges more, is a warning for one minor version
+and an error at the next; its documentation names that version (`transition`), and `ddd-ts-kit
+lint` shows its warnings and lists them after the report, one line per rule with the version that
+makes it an error, without failing on them. An upgrade of the kit therefore never turns a green
+lint red, which a plain `eslint . --max-warnings 0` would. The preset keeps its warnings as warnings (`complexity`, `max-depth`,
+`clean/function-size`, `clean/no-flag-argument`, ...) and `init` writes no suppressions file: a
+new project has no warning, so the first one fails `npm run lint`, `verify` and the lint job on
+GitHub and GitLab. The hook before a commit is unchanged: it shows a warning without stopping the
+commit. The quality-gate skill says so; the workflow is in
+[Quality baseline](docs/tools/quality-baseline.md#warnings-fail-the-lint).
+
+To move: nothing changes until the project acts. `npx ddd-ts-kit init` keeps an existing `lint`
+and `ci:lint` and notes what the kit expects; `doctor` lists them as written otherwise, which
+`doctor --strict` does not fail on. To take the limit, run `npx eslint .` and settle each
+warning: fix it, or raise its rule to `error` (its id in the `rules` key of
+`ddd-ts-kit.config.json` for a rule of the kit, a block after the preset in `eslint.config.mjs`
+for `complexity` or `max-depth`) and record the existing findings with
+`npx eslint . --suppress-rule <rule>` (or `--suppress-all`) in `eslint-suppressions.json`,
+committed; once one is fixed, `npx eslint . --prune-suppressions` removes its entry, and the lint
+fails until it does. Then set the two scripts to `ddd-ts-kit lint`, or run
+`npx ddd-ts-kit init --force`, which also writes every other file and script of the kit over the
+project's. Update the plugin.
+
+**`check --explain` follows the violations with the reason of each rule they report.** A reviewer
+of a pull request ran `ddd-ts-kit explain <rule-id>` for each rule `check --changed-since` named.
+`--explain` prints, after the violations, one block per rule reported, however many times: its
+id, its description and why it exists, as `explain` gives it without the examples; for a rule
+another tool decides, where it is checked. `--format json` adds an `explanations` array.
+`--format github` and `--format gitlab` keep one annotation per violation and end the message of
+each with `Why: <reason>`, since a pull request shows an annotation alone on its line and a Code
+Quality report has no place for text beside its issues; the fingerprints do not change. It
+combines with paths, `--rule`, `--changed-since` and `--clean-only`. Without it, the output is
+the same as before.
+
+**`doctor` checks the environment of a checkout.** A new worktree starts from nothing, and what
+goes wrong there is its environment: `verify` failed late, on a symptom. After what an upgrade
+left to do, `npx ddd-ts-kit doctor` now says what this checkout lacks to run the project, read
+from its files without network: the running Node against `engines.node` (`node engines.node:
+unsupported`) and the version `.nvmrc` names; `node_modules` missing or installed before the
+lockfile last changed (`install node_modules: missing`, `outdated`); `ddd-ts-kit` and every
+`@ddd-ts-kit/*` package installed at the version of the running CLI (`install <package>: not
+installed`, `other version`), where the package findings read the ranges of `package.json`, in
+the install of its workspace for a project inside one; and,
+with a `.gitmodules`, every submodule initialised (`submodule <path>: not initialised`). Each comes
+with its fix (`nvm use`, `npm ci` in the dialect of the project, `git submodule update --init
+--recursive`). `--strict` now also exits 1 while the checkout cannot run the project: a Node
+outside `engines.node`, no `node_modules`, a package of the kit not installed or at another
+version, a submodule not initialised. A Node `.nvmrc` does not name and a lockfile changed since
+the install are said without failing it. A project or a pipeline that runs `doctor --strict` where
+no dependencies are installed fails from this version: install first. `--json` gains the areas
+`node`, `install` and `submodule`. The `parallel-work` skill runs it in a worktree made otherwise.
+
+**`init` records the version that wrote the files of the platform.** `ddd-ts-kit.config.json`
+now starts with `"initVersion"`, the version of the CLI whose `init` wrote the files it owns;
+`init --force` rewrites it, and `init` run again to add a context leaves it. Nothing reads it yet:
+it is the first step of an `init` that tells, after an upgrade, a change of its templates from an
+adaptation of the team. A config without the key stays valid.
+
+To move: nothing; `init --force` adds the key to a project initialised before it existed.
+
 ## 0.27.0
 
 **The worktrees of a project live inside it, and a new project writes its code in a worktree.**

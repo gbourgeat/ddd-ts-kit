@@ -367,6 +367,13 @@ worktree without its dependencies fails the commit, loudly, instead of skipping 
 borrowing the lefthook of a checkout that may be gone. `npx ddd-ts-kit doctor` says when
 `lefthook.yml` lacks that line or the clone lacks the hook (`npm run hooks:install`).
 
+A new worktree starts from nothing, and what goes wrong there is its environment, not its code.
+`npx ddd-ts-kit doctor` in it says, in a second and without network, what it lacks to run the
+project: a Node that `engines.node` refuses or that `.nvmrc` does not name, `node_modules`
+missing or installed before the lockfile last changed, a package of the kit installed at another
+version than the CLI, a submodule not initialised; each with its fix. `--strict` fails while the
+worktree cannot run the project.
+
 Rules that keep worktrees from hurting:
 
 - one worker per worktree, one branch per worktree; a worktree is not a place to share;

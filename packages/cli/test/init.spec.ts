@@ -7,6 +7,7 @@ import { readJson } from './support/read-json.js';
 import { stringsAt } from './support/strings-at.js';
 import { textsAt } from './support/texts-at.js';
 import { KIT_RANGE } from './support/kit-range.js';
+import { VERSION } from '../src/version.js';
 
 const BOOTSTRAPPED = [
   'ddd-ts-kit.config.json',
@@ -190,6 +191,9 @@ describe('init, the choices it records and the ones it refuses', () => {
     const config = readJson(root, 'ddd-ts-kit.config.json');
 
     expect(jsonAt(config, 'stack')).toEqual(FASTIFY_STACK);
+    // The version of the CLI that wrote the files of the platform, first, so that a later version can tell its templates from the project's changes.
+    expect(Object.keys(Object(config))[0]).toBe('initVersion');
+    expect(jsonAt(config, 'initVersion')).toBe(VERSION);
 
     expect(jsonAt(config, 'contexts')).toMatchObject({
       billing: { classification: 'core' },
@@ -278,6 +282,12 @@ describe('init in a project that already exists', () => {
     });
 
     expect(stringsAt(report, 'notes').join('\n')).toContain('keeps its own "test" script');
+
+    // A lint that passes its warnings stays the project's: the kit's, which fails on one, is written by `init --force` alone.
+    expect(stringsAt(report, 'notes').join('\n')).toContain(
+      'keeps its own "lint" script; the kit expects: ddd-ts-kit lint',
+    );
+
     expect(read(root, 'src/platform/tracing.ts')).toContain("'legacy-shop'");
   });
 
@@ -291,8 +301,10 @@ describe('init in a project that already exists', () => {
     expect(read(root, 'src/main.ts')).toContain('composeApplication');
   });
 
-  it('keeps the recorded stack when run again', () => {
+  it('keeps the recorded stack when run again, and the version that wrote the files', () => {
     const root = initProject('--http', 'fastify', '--di', 'manual');
+
+    write(root, 'ddd-ts-kit.config.json', read(root, 'ddd-ts-kit.config.json').replace(VERSION, '0.1.0'));
 
     const again = stringsAt(
       cli(root, 'init', '--http', 'express', '--context', 'billing:core', '--json').json(),
@@ -307,6 +319,7 @@ describe('init in a project that already exists', () => {
     );
 
     expect(readJson(root, 'ddd-ts-kit.config.json')).toMatchObject({
+      initVersion: '0.1.0',
       stack: { http: 'fastify' },
       contexts: { billing: { classification: 'core' } },
     });

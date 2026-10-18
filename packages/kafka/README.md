@@ -527,6 +527,9 @@ DDD_TS_KIT_TEST_KAFKA_BROKERS=127.0.0.1:9092 DDD_TS_KIT_TEST_KAFKA_RELAY=127.0.0
 docker rm -f ddd-ts-kit-test-kafka
 ```
 
+The integration job of the CI runs them on every pull request that reaches this package,
+against Apache Kafka 4.3.1 in KRaft mode, with its relayed listener that `pipeline/github/scripts/start-kafka.sh` starts, its image pinned by digest.
+
 A Kafka client connects to the addresses the broker advertises, so a network failure cannot
 be produced by pointing the bus at a relay: the broker has a second listener, `RELAYED`,
 that advertises `127.0.0.1:9095`, where the tests listen and relay to the port behind it

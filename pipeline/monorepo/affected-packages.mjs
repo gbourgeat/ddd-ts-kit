@@ -29,8 +29,21 @@ const SITE = 'site/';
 /** The documents the runs that integrate every package read: the quick start of the root README, the rule table of the reference. */
 const READ_BY_THE_WHOLE_RUNS = ['README.md', 'docs/ARCHITECTURE.md'];
 
-/** The packages whose adapter specs need a server of the integration job: PostgreSQL, OpenFGA, MinIO for s3, Varnish for http, or Dragonfly for redis. */
-const ON_A_SERVER = ['drizzle', 'knex', 'prisma', 'typeorm', 'audit', 'openfga', 's3', 'http', 'redis'];
+/** The packages whose adapter specs need a server of the integration job: PostgreSQL, OpenFGA, MinIO for s3, Varnish for http, Dragonfly for redis, or the broker of nats, rabbitmq and kafka. */
+const ON_A_SERVER = [
+  'drizzle',
+  'knex',
+  'prisma',
+  'typeorm',
+  'audit',
+  'openfga',
+  's3',
+  'http',
+  'redis',
+  'nats',
+  'rabbitmq',
+  'kafka',
+];
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   main(process.argv.slice(2));
@@ -194,7 +207,8 @@ function everything(reason, graph = readGraph(ROOT)) {
 }
 
 /** `packages` and `filters` are empty for everything: no filter, every floor held. */
-function asOutputs({ scope, packages, integrated }) {
+/** The outputs of the install job: what the other jobs of the CI read, among them whether the integration job starts its servers. */
+export function asOutputs({ scope, packages, integrated }) {
   const partial = scope === 'packages';
 
   return [

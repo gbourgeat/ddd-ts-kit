@@ -7,6 +7,7 @@ import { formatJson } from '../json/format-json.js';
 /** The config as written to disk: defaults are spelled out so the file documents itself. */
 export function serializeConfig(config: Config): string {
   const {
+    initVersion,
     sourceRoot,
     contextsDir,
     sharedKernelDir,
@@ -19,6 +20,7 @@ export function serializeConfig(config: Config): string {
   } = config;
 
   const written = {
+    ...(initVersion === undefined ? {} : { initVersion }),
     sourceRoot,
     contextsDir,
     sharedKernelDir,

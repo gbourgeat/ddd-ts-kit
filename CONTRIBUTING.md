@@ -63,11 +63,15 @@ node --test plugin/hooks/guard.test.mjs
   files, a lower limit) never turns a green project red in a patch or a minor version: what it
   adds reaches projects as a warning first, and becomes an error one minor version later. A new
   rule takes `warn` as its default (`default-severities.ts` for `ddd-ts-kit check`, `recommended:
-  'warn'` for the ESLint rule); a rule that judges more reports what it adds under a rule id of
+  'warn'` for the ESLint rule, with `transition: '<next minor version>'` in its definition); a
+  rule that judges more reports what it adds under a rule id of
   its own, a warning, merged into the rule at the next minor version. Its file of `changes/` says
   it, and the one that makes it an error says it again: what the rule reports, the fix, and `ddd-ts-kit check --rule <id>` to list
   the files to take up before it blocks. A project builds while it upgrades; a rule that lands
-  as an error stops its main branch and every branch cut from it.
+  as an error stops its main branch and every branch cut from it. A generated project fails its
+  lint on a warning (`ddd-ts-kit lint`), so the `transition` of an ESLint rule is what keeps the
+  promise: that command shows the warnings of a rule in transition without failing on them. The
+  next minor version sets `recommended: 'error'` and removes `transition`.
 - A new template compiles as generated and carries `TODO(domain)` markers only where business
   knowledge is needed.
 - Runtime packages keep third-party libraries behind optional peer dependencies and subpath

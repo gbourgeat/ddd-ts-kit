@@ -428,6 +428,9 @@ DDD_TS_KIT_TEST_NATS_URL=nats://127.0.0.1:4222 npx vitest run packages/nats
 docker rm -f ddd-ts-kit-test-nats
 ```
 
+The integration job of the CI runs them on every pull request that reaches this package,
+against NATS Server 2.15.0 with JetStream that `pipeline/github/scripts/start-nats.sh` starts, its image pinned by digest.
+
 They run the contract suite on file and on memory storage, then the behaviours of this
 provider, one suite per behaviour (`publishing`, with the deduplication inside and outside
 the duplicate window, `consuming`, `correlation`, `retries`, `dead-letters`, `topology`,

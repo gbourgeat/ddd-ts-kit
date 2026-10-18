@@ -124,7 +124,7 @@ The slice is finished when `todo ordering` no longer lists anything of it.
 | Command or skill | Does | When | Produces | Then |
 |---|---|---|---|---|
 | `npx ddd-ts-kit verify-slice <context> --since <ref>` | in one run: `npm run regenerate`, the architecture rules on the files changed since the ref (new ones included), the tests of the context, the merges since the ref (as `verify-merge` checks them, reported without failing the slice in this version), the changed files near the 350-line limit | before the commit of a slice, again until it passes | each step with its cause, then the paths of the slice to stage, every other changed path, left out and never staged with it, and the names the slice removes that the design of a row not done still cites (never a failure) | the commit of the slice, of the paths it lists to stage only; those names go to the conductor as notes |
-| `npx ddd-ts-kit check --changed-since <ref>` | the architecture rules on what changed | while iterating | violations with their fix | `npx ddd-ts-kit explain <rule-id>` when one is unclear |
+| `npx ddd-ts-kit check --changed-since <ref>` | the architecture rules on what changed | while iterating | violations with their fix, then, with `--explain`, the reason of each rule reported, once | `npx ddd-ts-kit explain <rule-id>` when one is unclear |
 | `npm run regenerate` (`npx ddd-ts-kit depcruise-config --write`, then `npm run docs:generate`, which runs `npx ddd-ts-kit docs`) | regenerate every derived file: `.dependency-cruiser.cjs`, the context map, the `CONTEXT.md` lists, the barrels and the contracts | after a change of a route, a schema, an event or the config | the generated files, committed with the code | `/ddd-ts-kit:commit-discipline` |
 | `/ddd-ts-kit:commit-discipline`, `npx ddd-ts-kit check --commit-size --staged` | one slice per commit, its size against the config | before `git commit` (the hook runs the check) | a message `<type>(<context>): ...` | the next slice |
 
@@ -152,7 +152,7 @@ The slice is finished when `todo ordering` no longer lists anything of it.
 | Command | Does | When | Produces | Then |
 |---|---|---|---|---|
 | read [CHANGELOG.md](../../CHANGELOG.md), also shipped as `node_modules/ddd-ts-kit/CHANGELOG.md` | what changed and what to do | before upgrading, or when the session start says the plugin describes another version | the steps of the version | update the `@ddd-ts-kit/*` and `ddd-ts-kit` versions together |
-| `npx ddd-ts-kit init --force` | rewrites the files `init` owns, keeps the config and wires the contexts again | after the upgrade | the platform and pipeline files of the new version, and notes | `npm run verify` |
+| `npx ddd-ts-kit init --force` | rewrites the files `init` owns, keeps the config, records its version as `initVersion` and wires the contexts again | after the upgrade | the platform and pipeline files of the new version, and notes | `npm run verify` |
 | `npx ddd-ts-kit controllers`, `error-factories --plan` then `--apply`, `value-objects` | moves function routes to controllers, error classes to factories, value objects from a `Result` to factories that throw | when the project adopts those forms | the rewritten files and the config key | `npx ddd-ts-kit docs`, `npm run verify` |
 | `npm run regenerate` | regenerate what derives from the config | after any change of the config | `.dependency-cruiser.cjs`, the generated documents | `npm run verify` |
 
@@ -277,10 +277,11 @@ Usage
   ddd-ts-kit controllers [<context>] [--dry-run]
   ddd-ts-kit value-objects [--dry-run]
   ddd-ts-kit affected [--base <git-ref>] [--head <git-ref>] [--format text|json|github|env]
-  ddd-ts-kit check [paths...] [--rule <id>]... [--format text|json|github|gitlab] [--changed-since <git-ref>] [--self]
+  ddd-ts-kit check [paths...] [--rule <id>]... [--format text|json|github|gitlab] [--changed-since <git-ref>] [--explain] [--self]
   ddd-ts-kit check --clean-only <dir>... [--rule <id>]... [--format text|json|github]
   ddd-ts-kit check --commit-size [--staged] [--strict]
   ddd-ts-kit check-file <path>
+  ddd-ts-kit lint [paths...] [--format <eslint formatter>] [--fix]
   ddd-ts-kit rules
   ddd-ts-kit explain <rule-id>
 
@@ -316,8 +317,16 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
   doctor           what an upgrade left to do: the scripts, the packages of the kit (at the ranges of this
                    version) and the agent permissions this version writes that the project lacks or writes
                    otherwise, and the git hooks (the lefthook: line of lefthook.yml, the pre-commit hook of
-                   lefthook in this clone); init adds what is missing, hooks:install the hook; --strict
-                   exits 1 while something is missing, never for a hook this clone has not installed
+                   lefthook in this clone); init adds what is missing, hooks:install the hook; then what
+                   this checkout lacks to run the project, read without network: the running Node against
+                   engines.node and .nvmrc, node_modules installed since the lockfile last changed, each
+                   package of the kit installed at the version of this CLI, the submodules initialised;
+                   each with its fix; --strict exits 1 while something is missing or the checkout cannot
+                   run the project, never for a hook this clone has not installed, a Node .nvmrc does not
+                   name or a lockfile changed since the install
+  lint             the ESLint of the project (lint and ci:lint run it): fails on an error, and on a warning
+                   as on an error, but on one of a rule of the kit in transition, a new rule that becomes an
+                   error in the version it names, whose warnings are listed apart; --format and --fix as ESLint
   describe         one context as facts: use cases, routes, events, ports, policies, gateways, dependencies
   status           the next step of docs/architecture/plan.md, the slices of docs/architecture/slices.md by
                    status and by owner, each row not done ready on the trunk (its dependencies done), ready
@@ -481,6 +490,9 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
   --commit-size    the files and lines about to be committed against "commit" in the config (20 files and
                    600 lines by default, generated files not counted); --staged reads the index only;
                    advisory, --strict exits 1 when over
+  --explain        check follows the violations with the reason of each rule they report, once per rule, as
+                   explain gives it without its examples ("explanations" in JSON); with github and gitlab, each
+                   annotation carries the reason of its rule, a pull request showing an annotation on its own
   --stored-events  docs records the shape of each version of the stored events in stored-events.lock.json,
                    never rewriting a recorded one: run it once the shape of a version is the one to store;
                    docs --check fails while a declared version is not recorded

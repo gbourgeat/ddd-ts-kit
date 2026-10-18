@@ -29,8 +29,16 @@ export const NOTES = `  affected         what a pull request has to run: the con
   doctor           what an upgrade left to do: the scripts, the packages of the kit (at the ranges of this
                    version) and the agent permissions this version writes that the project lacks or writes
                    otherwise, and the git hooks (the lefthook: line of lefthook.yml, the pre-commit hook of
-                   lefthook in this clone); init adds what is missing, hooks:install the hook; --strict
-                   exits 1 while something is missing, never for a hook this clone has not installed
+                   lefthook in this clone); init adds what is missing, hooks:install the hook; then what
+                   this checkout lacks to run the project, read without network: the running Node against
+                   engines.node and .nvmrc, node_modules installed since the lockfile last changed, each
+                   package of the kit installed at the version of this CLI, the submodules initialised;
+                   each with its fix; --strict exits 1 while something is missing or the checkout cannot
+                   run the project, never for a hook this clone has not installed, a Node .nvmrc does not
+                   name or a lockfile changed since the install
+  lint             the ESLint of the project (lint and ci:lint run it): fails on an error, and on a warning
+                   as on an error, but on one of a rule of the kit in transition, a new rule that becomes an
+                   error in the version it names, whose warnings are listed apart; --format and --fix as ESLint
   describe         one context as facts: use cases, routes, events, ports, policies, gateways, dependencies
   status           the next step of docs/architecture/plan.md, the slices of docs/architecture/slices.md by
                    status and by owner, each row not done ready on the trunk (its dependencies done), ready
@@ -194,6 +202,9 @@ export const NOTES = `  affected         what a pull request has to run: the con
   --commit-size    the files and lines about to be committed against "commit" in the config (20 files and
                    600 lines by default, generated files not counted); --staged reads the index only;
                    advisory, --strict exits 1 when over
+  --explain        check follows the violations with the reason of each rule they report, once per rule, as
+                   explain gives it without its examples ("explanations" in JSON); with github and gitlab, each
+                   annotation carries the reason of its rule, a pull request showing an annotation on its own
   --stored-events  docs records the shape of each version of the stored events in stored-events.lock.json,
                    never rewriting a recorded one: run it once the shape of a version is the one to store;
                    docs --check fails while a declared version is not recorded

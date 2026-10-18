@@ -1,5 +1,5 @@
 [English](CONTRIBUTING.md) · **Français**
-<!-- translation-of: CONTRIBUTING.md sha256:080fb5617acc5527 -->
+<!-- translation-of: CONTRIBUTING.md sha256:cdda9fd05fc1a650 -->
 
 # Contribuer
 
@@ -69,12 +69,17 @@ node --test plugin/hooks/guard.test.mjs
   un projet vert dans une version de correctif ou une version mineure : ce qu'il ajoute arrive
   d'abord dans les projets comme un avertissement, et devient une erreur une version mineure
   plus tard. Une nouvelle règle prend `warn` par défaut (`default-severities.ts` pour
-  `ddd-ts-kit check`, `recommended: 'warn'` pour la règle ESLint) ; une règle qui juge davantage
+  `ddd-ts-kit check`, `recommended: 'warn'` pour la règle ESLint, avec
+  `transition: '<version mineure suivante>'` dans sa définition) ; une règle qui juge davantage
   signale ce qu'elle ajoute sous un identifiant de règle à part, en avertissement, fondu dans la
   règle à la version mineure suivante. Son fichier de `changes/` le dit, et celui qui en fait une erreur le redit : ce que la règle signale, la correction, et
   `ddd-ts-kit check --rule <id>` pour lister les fichiers à reprendre avant qu'elle ne bloque. Un
   projet continue de construire pendant qu'il monte de version ; une règle qui arrive en erreur
-  arrête sa branche principale et toutes les branches qui en partent.
+  arrête sa branche principale et toutes les branches qui en partent. Un projet généré fait
+  échouer son lint sur un avertissement (`ddd-ts-kit lint`) : c'est la `transition` d'une règle
+  ESLint qui tient la promesse, puisque cette commande affiche les avertissements d'une règle en
+  transition sans échouer sur eux. La version mineure suivante passe `recommended: 'error'` et
+  retire `transition`.
 - Un nouveau template compile tel qu'il est généré et ne porte de marqueurs `TODO(domain)` que
   là où une connaissance du métier est nécessaire.
 - Les packages d'exécution gardent les bibliothèques tierces derrière des dépendances pairs

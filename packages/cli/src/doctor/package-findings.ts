@@ -3,7 +3,7 @@ import { dependenciesFor } from '../init/manifest/dependencies-for.js';
 import type { DoctorFinding } from './doctor-finding.js';
 
 /** The packages of the kit are released together: each one at the range this version writes. */
-const OF_THE_KIT = /^(?:ddd-ts-kit|@ddd-ts-kit\/.+)$/;
+export const OF_THE_KIT = /^(?:ddd-ts-kit|@ddd-ts-kit\/.+)$/;
 
 /**
  * The packages of the kit the project needs for its stack, missing or at another range than this

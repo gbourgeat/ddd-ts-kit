@@ -1,5 +1,5 @@
 [English](persistence.md) · **Français**
-<!-- translation-of: persistence.md sha256:071548b009cfe198 -->
+<!-- translation-of: persistence.md sha256:2558312a89b87a86 -->
 
 # Persistance : Drizzle, Knex, Prisma, TypeORM, et quelle base de données
 
@@ -10,9 +10,9 @@ livre les trois mêmes pièces pour quatre bibliothèques (une unité de travail
 ambiante, un registre d'outbox, un registre des événements traités), toutes tenues aux mêmes
 suites de contrat. Ce qui diffère, c'est la façon dont chaque bibliothèque gère les transactions,
 les migrations, la sûreté des types et le SQL brut, et jusqu'où chaque adaptateur a réellement
-été testé : PostgreSQL est couvert par les suites automatisées pour les quatre, MySQL 8 et SQLite
-ont été essayés à la main une fois pour trois d'entre elles, et rien d'autre n'a été essayé du
-tout.
+été testé : PostgreSQL est couvert par les suites automatisées pour les quatre, SQLite par celles
+des registres de Knex, MySQL 8 et SQLite ont été par ailleurs essayés à la main une fois pour
+trois d'entre elles, et rien d'autre n'a été essayé du tout.
 
 ## Ce que l'application demande à la persistance
 
@@ -412,13 +412,14 @@ ni sur SQLite. Quand le choisir : [Event sourcing, par agrégat](../concepts/eve
 |---|---|---|---|---|
 | PostgreSQL | automatisé : suites de contrat sur PGlite (dans le processus) ; fonctionne avec les pilotes node-postgres, postgres-js, PGlite, Neon | automatisé sur PGlite par le protocole réseau, et sur un vrai serveur quand une URL est donnée (dernière exécution : PostgreSQL 18) : contrats, annulation, unité de travail imbriquée, prises en charge concurrentes | comme Knex, par `@prisma/adapter-pg`, les deux stratégies de prise en charge | comme Knex |
 | MySQL 8 | non fourni : le *package* est pour PostgreSQL seulement | à la main, une fois, contre 8.4 : contrats d'outbox et des événements traités, annulation d'`append` | à la main, une fois, contre 8.4 par `@prisma/adapter-mariadb` | à la main, une fois, contre 8.4 |
-| SQLite | non fourni | à la main, une fois (`better-sqlite3`) ; pas de `SKIP LOCKED`, pas de schémas | à la main, une fois, contrat d'outbox seulement ; le registre des événements traités a besoin d'un délégué sur mesure | à la main, une fois ; pas de `SKIP LOCKED`, pas de schémas |
+| SQLite | non fourni | automatisé, dans l'exécution unitaire : contrats de l'outbox et des événements traités sur une base en mémoire (`better-sqlite3`) ; pas de `SKIP LOCKED`, pas de schémas | à la main, une fois, contrat d'outbox seulement ; le registre des événements traités a besoin d'un délégué sur mesure | à la main, une fois ; pas de `SKIP LOCKED`, pas de schémas |
 | MariaDB, CockroachDB, SQL Server, Oracle | non fourni | jamais essayé | CockroachDB, SQL Server jamais essayés | jamais essayé |
 | MongoDB | non fourni | sans objet | jamais essayé | jamais essayé |
 | Version de la bibliothèque testée | non indiquée dans le README | non indiquée | Prisma 7.10 ; la plage de pairs admet la 6, sur laquelle rien n'a été essayé | TypeORM 1.1 ; la plage de pairs admet la 0.3, sur laquelle rien n'a été essayé |
 
 « À la main, une fois » est la formule des README eux-mêmes : ces suites ne sont pas dans la CI,
-si bien qu'une régression sur MySQL ou SQLite ne serait pas détectée par le kit.
+si bien qu'une régression sur MySQL, ou sur SQLite en dehors des registres de Knex, ne serait pas
+détectée par le kit.
 
 ### Ce qu'ajoutent le générateur et les autres packages
 
@@ -440,9 +441,9 @@ D'après [`packages/cli/README.fr.md`](../../packages/cli/README.fr.md) et
 
 | Base de données | Place dans ce kit | Ce que vous perdez ou devez vérifier |
 |---|---|---|
-| PostgreSQL | la base par défaut, et la seule des suites automatisées | rien |
+| PostgreSQL | la base par défaut, et la seule des suites automatisées de chaque adaptateur | rien |
 | MySQL 8 | registres essayés à la main une fois (Knex, Prisma, TypeORM) | pas de persistance générée, pas de journal d'audit SQL ; `DATETIME` sans fuseau horaire sous Knex ; pas de `SKIP LOCKED` sur la 5.7 ; un schéma par contexte devient une base de données ou un préfixe de table |
-| SQLite | registres essayés à la main une fois | pas de schémas, prise en charge par comparaison et échange (compare-and-set), un seul écrivain : pour les tests et les outils, pas pour plusieurs instances |
+| SQLite | registres de Knex automatisés dans l'exécution unitaire, les autres essayés à la main une fois | pas de schémas, prise en charge par comparaison et échange (compare-and-set), un seul écrivain : pour les tests et les outils, pas pour plusieurs instances |
 | MongoDB, autres | pas d'adaptateur | `stack.orm: custom` : votre propre unité de travail (son `run` construit sur `withinUnitOfWork` du noyau), votre registre d'outbox et votre registre des événements traités, chacun passant les suites de contrat ; sans transactions multidocuments, la garantie de l'outbox n'est pas disponible |
 
 `stack.database` accepte `postgres`, `mysql`, `sqlite`, `mongodb` et `none`

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import path from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { dependentsOf, readGraph, select } from './affected-packages.mjs';
+import { asOutputs, dependentsOf, readGraph, select } from './affected-packages.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const graph = readGraph(ROOT);
@@ -104,4 +104,18 @@ test('a change of documents alone leaves out the runs that integrate every packa
   assert.equal(select(graph, ['examples/scheduling/docs/architecture/contexts.md']).integrated, true);
   assert.equal(select(graph, ['docs/guides/commands.md', 'packages/pino/src/index.ts']).integrated, true);
   assert.equal(select(graph, ['package.json']).integrated, true);
+});
+
+test('a package whose adapter specs need a server starts the integration job, the brokers among them', () => {
+  const integration = (changed) =>
+    asOutputs(select(graph, changed))
+      .split('\n')
+      .find((line) => line.startsWith('integration='));
+
+  for (const broker of ['nats', 'rabbitmq', 'kafka']) {
+    assert.equal(integration([`packages/${broker}/src/index.ts`]), 'integration=true');
+  }
+
+  assert.equal(integration(['packages/pino/src/index.ts']), 'integration=false');
+  assert.equal(integration(['README.md']), 'integration=false');
 });
