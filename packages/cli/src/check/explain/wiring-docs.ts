@@ -66,6 +66,19 @@ export class IssueInvoiceHandler {
   ) {}
 }`,
   },
+  'declarations/port-adapter-wired': {
+    why: 'A port is resolved by its class at start-up, so an adapter that nothing binds compiles, passes the contract suite its spec runs, and is only missed when the application starts without it, or keeps an older adapter bound. declarations/role-declared reads a role file by its suffix; a class of infrastructure/ that implements a port in a file without one, with no declaration and no binding in the composition root, is reported by no other rule. An adapter can be kept unwired on purpose (a provider being replaced, one kept for a fallback): a suppression that names a decision record says so, and tells it from a forgotten declaration.',
+    bad: `// infrastructure/external/stripe-payment-gateway.ts, imported by no module file and by no file of the platform
+export class StripePaymentGateway implements PaymentGateway {}`,
+    good: `// declared style: infrastructure/external/stripe-payment.gateway.ts
+@Gateway(PaymentGateway)
+export class StripePaymentGateway implements PaymentGateway {}
+// explicit style: billing.module.ts
+builder.bind(PaymentGateway).toClass(StripePaymentGateway, [PaymentsSettings]);
+// kept on purpose
+// ddd-ts-kit-disable-next-line declarations/port-adapter-wired -- ADR-0007: kept until the switch back is decided
+export class StripePaymentGateway implements PaymentGateway {}`,
+  },
   'config/rule-off-everywhere': {
     why: 'An exception is decided for some files: generated mappers, a legacy module, a migration script. Written as "off" alone, it silences the rule in every file of the project, and the real findings in the others go unseen; the decision record says why the rule is off, not that the exception grew to the whole project. A rule set for some files keeps judging the rest. When the whole project is really meant, "files": ["**"] says it in so many words.',
     bad: `"rules": { "clean/function-size": "off" },

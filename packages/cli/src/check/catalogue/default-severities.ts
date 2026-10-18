@@ -13,4 +13,5 @@ export const DEFAULT_SEVERITIES: Readonly<Record<string, Severity>> = {
   'config/rule-off-everywhere': 'warn',
   'tree/documented-paths': 'warn',
   'test/helper-placed': 'warn',
+  'declarations/port-adapter-wired': 'warn',
 };
