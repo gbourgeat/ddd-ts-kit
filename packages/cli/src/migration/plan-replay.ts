@@ -1,6 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { drizzleHistoryFindings } from '../check/migrations/drizzle-history-findings.js';
 import { drizzleOutFolder } from '../check/migrations/drizzle-out-folder.js';
+import { readDrizzleMigrations } from '../check/migrations/read-drizzle-migrations.js';
 import { CliError } from '../cli-error.js';
 import { runGit } from '../commit/run-git.js';
 import type { BranchMigration } from './branch-migration.js';
@@ -12,9 +14,10 @@ const CONFLICT_MARKER = /^(?:<{7}|={7}|>{7})(?: |$)/m;
 
 /**
  * The migrations of the branch that `base` does not have, by their `.sql` files, read before
- * anything is deleted. Refused, with the fix: a journal that still holds conflict markers, a base
- * that is not a commit, a base with migrations the branch has not merged, and more than one
- * migration of the branch that changes the schema.
+ * anything is deleted, and whether the history forks from the base. Refused, with the fix: a
+ * journal that still holds conflict markers, a base that is not a commit, a base with migrations
+ * the branch has not merged, and, when the history forks, more than one migration of the branch
+ * that changes the schema.
  */
 export function planReplay({ root, base }: Pick<ReplayPlan, 'root' | 'base'>): ReplayPlan {
   const folder = drizzleOutFolder(root);
@@ -35,10 +38,24 @@ export function planReplay({ root, base }: Pick<ReplayPlan, 'root' | 'base'>): R
   }
 
   const migrations = branchMigrations({ files, folder, tags: here.filter((tag) => !onBase.includes(tag)) });
+  const forked = forks(root);
 
-  refuseSeveralSchemaChanges(migrations);
+  if (forked) {
+    refuseSeveralSchemaChanges(migrations);
+  }
 
-  return { root, base, folder, migrations };
+  return { root, base, folder, migrations, forked, found: files };
+}
+
+/**
+ * Every migration of the base is here, so a history whose journal lists the files in the order
+ * they were generated, each snapshot from the one before, has those of the base first: the
+ * branch's follow the last of them, and generating them again would change nothing.
+ */
+function forks(root: string): boolean {
+  const history = readDrizzleMigrations(root);
+
+  return history === undefined || drizzleHistoryFindings(history).length > 0;
 }
 
 function refuseConflictMarkers(root: string, journal: string, base: string): void {
@@ -69,8 +86,8 @@ function refuseSeveralSchemaChanges(migrations: readonly BranchMigration[]): voi
 
   if (changing.length > 1) {
     throw new CliError(
-      `${changing.length} migrations of this branch change the schema (${changing.join(', ')}): drizzle-kit generates the difference between the schema files and the last snapshot, so it can generate them again only as one.`,
-      'Delete them (each .sql file, its snapshot under meta/ and its journal entry) and run `npm run db:generate <what-it-does>` once, then the replay again for the custom ones. A worker keeps one working migration and generates it again when its slice changes the schema again.',
+      `${changing.length} migrations of this branch change the schema (${changing.join(', ')}): drizzle-kit generates the difference between the schema files and the last snapshot, so it cannot split them again into the steps they were, and one migration in their place would join steps planned apart (a table, then a constraint once it is filled).`,
+      "Generate them again one at a time, in their order: delete them (each .sql file, its snapshot under meta/ and its journal entry), undo in the schema files every change of the branch but the first one's, run `npm run db:generate <its name>`, then bring back the next change and run it again, and so on (`git show <commit>:<schema file>` holds the schema of each step). Then the replay again for the custom ones. A worker keeps one working migration and generates it again when its slice changes the schema again.",
     );
   }
 }

@@ -69,7 +69,7 @@ function tagOf(root: string, name: string): string {
   return file === undefined ? '' : file.slice(0, -'.sql'.length);
 }
 
-describe('ddd-ts-kit drizzle-generate --replay', () => {
+describe('ddd-ts-kit drizzle-generate --replay of a forked history', () => {
   it('refuses while the journal holds the conflict markers of the merge, and says how to take the one of the base', () => {
     const root = repository();
 
@@ -132,6 +132,70 @@ describe('ddd-ts-kit drizzle-generate --replay', () => {
     },
     REPLAY_TIMEOUT,
   );
+
+  it(
+    'refuses a generated migration whose SQL was edited by hand, and puts the migrations folder back as it found it',
+    () => {
+      const root = repository();
+
+      branchesThatBothAddedAMigration(root, () => {
+        const sql = `migrations/${tagOf(root, 'working-add-invoices')}.sql`;
+
+        write(
+          root,
+          sql,
+          `${read(root, sql)}\n--> statement-breakpoint\nCREATE INDEX "invoices_due" ON "invoices" ("due");`,
+        );
+      });
+
+      git(root, 'checkout', 'main', '--', JOURNAL);
+
+      const tag = tagOf(root, 'working-add-invoices');
+      const before = git(root, 'status', '--porcelain');
+      const result = cli(root, 'drizzle-generate', '--replay', '--base', 'main');
+
+      expect(result.code).toBe(2);
+      expect(result.stderr).toContain(`${tag} is not what drizzle-kit writes for its change on top of main`);
+      expect(result.stderr).toContain('the branch has `CREATE INDEX "invoices_due" ON "invoices" ("due")`');
+      expect(result.stderr).toContain(`git show HEAD:migrations/${tag}.sql`);
+      expect(git(root, 'status', '--porcelain')).toBe(before);
+      expect(fs.readdirSync(path.join(root, 'migrations')).filter((entry) => entry.endsWith('.sql'))).toHaveLength(3);
+    },
+    REPLAY_TIMEOUT,
+  );
+});
+
+describe('ddd-ts-kit drizzle-generate --replay with nothing forked, or refused', () => {
+  it('finds nothing forked once the migration of the branch follows the trunk, and only renames a working one', () => {
+    const root = repository();
+
+    git(root, 'switch', '--quiet', '--create', 'build/billing');
+    write(root, 'schema/invoices.json', JSON.stringify({ name: 'invoices' }));
+    generate(root, 'working-add-invoices');
+    write(root, `migrations/${tagOf(root, 'working-add-invoices')}.sql`, 'CREATE TABLE "invoices" ("due" date);');
+    commit(root, 'feat(billing): issue an invoice');
+
+    const working = tagOf(root, 'working-add-invoices');
+
+    write(root, '.ddd-ts-kit/worker.json', JSON.stringify({ context: 'billing' }));
+
+    const kept = cli(root, 'drizzle-generate', '--replay', '--base', 'main');
+
+    expect(kept.code).toBe(0);
+    expect(kept.stdout).toContain('The migrations of this branch follow the last one of main: nothing to replay.');
+    expect(git(root, 'status', '--porcelain')).toBe('');
+
+    fs.rmSync(path.join(root, '.ddd-ts-kit'), { recursive: true });
+
+    const renamed = cli(root, 'drizzle-generate', '--replay', '--base', 'main');
+    const real = working.replace('_working-', '_');
+
+    expect(renamed.code).toBe(0);
+    expect(renamed.stdout).toContain(`Renamed ${working} to ${real}: it follows the last migration of main`);
+    expect(read(root, `migrations/${real}.sql`)).toBe('CREATE TABLE "invoices" ("due" date);');
+    expect(migrationNames(root)).toEqual(['initial', 'add-invoices']);
+    expect(drizzleHistoryFindings(readDrizzleMigrations(root) ?? fail())).toEqual([]);
+  });
 
   it('refuses two migrations of the branch that change the schema, before deleting anything', () => {
     const root = repository();
