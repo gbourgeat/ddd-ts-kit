@@ -66,46 +66,44 @@ function changedSince(base) {
  * written by the release only, a change of the plugin says what it changes in a file of changes/,
  * and that file opens with its bold summary.
  */
-export function problemsOf(changed, { read, readAtBase }) {
-  const release = changed.includes(RELEASE_MARK);
+export function problemsOf(changed, files) {
   const fragments = changed.filter(isFragment);
-  const problems = [];
+  const shared = changed.includes(RELEASE_MARK) ? [] : sharedLinesWritten(changed, fragments, files);
 
-  if (!release && changed.includes('CHANGELOG.md')) {
-    problems.push(
-      'CHANGELOG.md is written by the release: say what this change does for a user in a file of its own, changes/<what-it-does>.md (changes/README.md).',
-    );
-  }
+  return [...shared, ...fragments.filter((fragment) => !opensInBold(files.read(fragment))).map(withoutSummary)];
+}
 
-  if (
-    !release &&
-    changed.includes(PLUGIN_MANIFEST) &&
-    versionOf(read(PLUGIN_MANIFEST)) !== versionOf(readAtBase(PLUGIN_MANIFEST))
-  ) {
-    problems.push(
-      `The version of the plugin is the version of the kit, set by the release: leave ${PLUGIN_MANIFEST} as it is, and say what the plugin gains in changes/<what-it-does>.md.`,
-    );
-  }
+/** Outside the release: an edit of CHANGELOG.md, a new version of the plugin, a change of the plugin without its file. */
+function sharedLinesWritten(changed, fragments, { read, readAtBase }) {
+  const pluginChanged = changed.some((file) => file.startsWith('plugin/') && file !== PLUGIN_MANIFEST);
+  const versionMoved =
+    changed.includes(PLUGIN_MANIFEST) && versionOf(read(PLUGIN_MANIFEST)) !== versionOf(readAtBase(PLUGIN_MANIFEST));
 
-  if (
-    !release &&
-    changed.some((file) => file.startsWith('plugin/') && file !== PLUGIN_MANIFEST) &&
-    fragments.length === 0
-  ) {
-    problems.push(
-      'This change reaches the plugin: say what it changes for a user in changes/<what-it-does>.md, which the release folds into CHANGELOG.md; the plugin ships under the version of that release.',
-    );
-  }
+  return [
+    ...(changed.includes('CHANGELOG.md')
+      ? [
+          'CHANGELOG.md is written by the release: say what this change does for a user in a file of its own, changes/<what-it-does>.md (changes/README.md).',
+        ]
+      : []),
+    ...(versionMoved
+      ? [
+          `The version of the plugin is the version of the kit, set by the release: leave ${PLUGIN_MANIFEST} as it is, and say what the plugin gains in changes/<what-it-does>.md.`,
+        ]
+      : []),
+    ...(pluginChanged && fragments.length === 0
+      ? [
+          'This change reaches the plugin: say what it changes for a user in changes/<what-it-does>.md, which the release folds into CHANGELOG.md; the plugin ships under the version of that release.',
+        ]
+      : []),
+  ];
+}
 
-  for (const fragment of fragments) {
-    if (!read(fragment).trimStart().startsWith('**')) {
-      problems.push(
-        `${fragment} opens with its summary in bold, as an entry of CHANGELOG.md does: **What changes.** Then the detail.`,
-      );
-    }
-  }
+function opensInBold(text) {
+  return text.trimStart().startsWith('**');
+}
 
-  return problems;
+function withoutSummary(fragment) {
+  return `${fragment} opens with its summary in bold, as an entry of CHANGELOG.md does: **What changes.** Then the detail.`;
 }
 
 /** Only the version tells a release from another edit of the manifest (its description, its keywords). */

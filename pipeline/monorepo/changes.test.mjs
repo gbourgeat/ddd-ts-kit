@@ -54,7 +54,8 @@ test('a file of changes/ opens with its summary in bold; the README of the folde
   assert.deepEqual(problemsOf(['changes/README.md'], files({ 'changes/README.md': '# changes' })), []);
 });
 
-test('the release folds the files in the order they reached the trunk, after what Unreleased held, and deletes them', () => {
+/** A repository whose CHANGELOG.md has an Unreleased section, and two files of changes/ committed an hour apart, `second.md` first. */
+function repositoryWithChanges() {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'changes-fold-'));
   const git = (...args) => execFileSync('git', args, { cwd: root, stdio: 'pipe', env: { ...process.env, ...dates } });
   let dates = { GIT_COMMITTER_DATE: '2026-10-18T10:00:00' };
@@ -78,6 +79,12 @@ test('the release folds the files in the order they reached the trunk, after wha
   write('changes/first.md', '**First.** Named first, landed last.\n');
   git('add', '.');
   git('commit', '--quiet', '-m', 'first');
+
+  return root;
+}
+
+test('the release folds the files in the order they reached the trunk, after what Unreleased held, and deletes them', () => {
+  const root = repositoryWithChanges();
 
   try {
     assert.equal(foldChanges(root, '0.28.0'), 2);
