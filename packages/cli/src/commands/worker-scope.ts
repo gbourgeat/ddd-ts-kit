@@ -22,6 +22,7 @@ export const workerScopeCommand: Command = (argv, io) => {
     'no-install': { type: 'boolean', default: false },
     resume: { type: 'boolean', default: false },
     fresh: { type: 'boolean', default: false },
+    here: { type: 'boolean', default: false },
   });
 
   const root = args.projectRoot;
@@ -42,6 +43,7 @@ export const workerScopeCommand: Command = (argv, io) => {
     ...rowsOption(args.text('rows')),
     dryRun: args.flag('dry-run'),
     install: !args.flag('no-install'),
+    here: args.flag('here'),
   });
 
   io.out(args.json ? JSON.stringify(scope, null, 2) : formatScope(scope));

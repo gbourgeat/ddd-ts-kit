@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:1ff27c2e42874190 -->
+<!-- translation-of: README.md sha256:1a83dd8d1d766c39 -->
 
 <div align="center">
 
@@ -228,8 +228,8 @@ autres :
 
 Ce dépôt est la marketplace du plugin pour Claude Code, Codex et GitHub Copilot ; le
 [démarrage rapide](#démarrage-rapide) dit comment chaque agent l'installe. Vingt-deux skills conduisent un projet d'une expression des besoins jusqu'à des contextes qui
-fonctionnent, quatre agents explorent, construisent un contexte dans son propre worktree,
-écrivent les specs et relisent, et le hook refuse un fichier écrit à la main là où un générateur
+fonctionnent, cinq agents explorent, construisent un contexte dans son propre worktree,
+écrivent les specs, relisent et jugent un changement d'un test d'acceptation verrouillé, et le hook refuse un fichier écrit à la main là où un générateur
 existe et vérifie chaque fichier écrit. Même sans plugin, l'`AGENTS.md` et les règles par couche
 qu'écrit `init` guident chaque agent. [Le plugin pour agents de code](docs/guides/coding-agents.fr.md)
 liste les skills et dit ce que chaque hôte exécute.

@@ -10,6 +10,8 @@ const { AGGREGATE, AGGREGATE_SPEC, BILLING, BUILDER, CATALOG, HANDLER, HANDLER_S
 const WORLD = `${BILLING}/test/worlds/billing.world.ts`;
 const { SPEC } = SAMPLES;
 const REMINDER_SERVICE = `${BILLING}/domain/services/reminder.service.ts`;
+const ACCEPTANCE_SPEC = 'test/acceptance/us5.acceptance.spec.ts';
+const START = 'test/e2e/support/start-application.ts';
 
 export const TEST_FIXTURES: readonly Fixture[] = [
   {
@@ -119,6 +121,39 @@ export const TEST_FIXTURES: readonly Fixture[] = [
     name: 'an aggregate without a builder',
     expect: { file: AGGREGATE },
     files: project({ [AGGREGATE]: 'export class Invoice {}\n', [AGGREGATE_SPEC]: SPEC }),
+  },
+  {
+    ruleId: 'test/acceptance-black-box',
+    name: 'an acceptance spec that drives the application, its data from the builder of a context',
+    expect: 'pass',
+    files: project({
+      ...aggregate('export class Invoice {}\n'),
+      [START]: 'export const startApplication = (): number => 1;\n',
+      [ACCEPTANCE_SPEC]: [
+        "import { it } from 'vitest';",
+        "import { pending } from '@ddd-ts-kit/testing/e2e';",
+        "import { startApplication } from '$test/e2e/support/start-application.js';",
+        "import { anInvoice } from '@/contexts/billing/test/builders/invoice.builder.js';",
+        '',
+        "it('#US5.02 AC1 an invoice is issued', pending(async () => startApplication() + anInvoice));",
+        '',
+      ].join('\n'),
+    }),
+  },
+  {
+    ruleId: 'test/acceptance-black-box',
+    name: 'an acceptance spec that imports an aggregate',
+    expect: { file: ACCEPTANCE_SPEC },
+    files: project({
+      ...aggregate('export class Invoice {}\n'),
+      [ACCEPTANCE_SPEC]: [
+        "import { it } from 'vitest';",
+        "import { Invoice } from '@/contexts/billing/domain/aggregates/invoice.aggregate.js';",
+        '',
+        "it('#US5.02 AC1 an invoice is issued', () => new Invoice());",
+        '',
+      ].join('\n'),
+    }),
   },
   {
     ruleId: 'test/helper-placed',

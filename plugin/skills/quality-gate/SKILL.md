@@ -33,6 +33,7 @@ allowed-tools:
   - Bash(npx ddd-ts-kit story-check *)
   - Bash(npx ddd-ts-kit docs)
   - Bash(npx ddd-ts-kit explain *)
+  - Bash(npx ddd-ts-kit acceptance *)
 ---
 
 # Quality gate
@@ -47,7 +48,8 @@ allowed-tools:
 | to bring the trunk into the branch | `npx ddd-ts-kit merge-trunk`: one merge commit from the branch's own diff, derived files settled, `verify-merge` on the result before its commit; on a stop, resolve each hunk, `git add`, `merge-trunk --continue` | seconds |
 | after a merge made otherwise | `npx ddd-ts-kit verify-merge`: each line, row done or test the merge lost, to restore from its side; it exits 1 on one (the pre-push hook and `verify-slice` run it too, and only warn in this version) | a second |
 | before a merge or a pull request | `npm run verify`, on the branch with the trunk merged in; each non-blocking remark of the review written as a `TODO(review)` or settled | everything |
-| before a story or a milestone is closed | `npx ddd-ts-kit story-check <code>` (`M1` for the rows `M1.*`): every row `done`, no marker of its own left; exits 1 with each blocker, why it is the story's, its `file:line` and its fix | seconds |
+| before the code of a story | `npx ddd-ts-kit acceptance <story> --gate written`: every slice row and criterion has a scenario, wrapped in `pending(...)`, locked and committed | seconds |
+| before a story or a milestone is closed | `npx ddd-ts-kit story-check <code>` (`M1` for the rows `M1.*`): every row `done`, no marker of its own left; exits 1 with each blocker, why it is the story's, its `file:line` and its fix; then `npx ddd-ts-kit acceptance <story> --gate passing`: no scenario pending nor drifted from its lock, and each amendment it lists reported to the owner | seconds |
 
 Layout is settled in this order: `npm run format`, then `npm run lint:fix`. Biome wraps a long
 line, and the lint then asks for a blank line around the statement that now spans several lines:
@@ -129,8 +131,8 @@ Five ids are held by ESLint (`domain/*`, `application/*`): `npm run lint` report
 ## Not without the owner's explicit agreement
 
 A suppression, a lowered severity, a wider allow-list, an extra directory, a relaxed
-pipeline, `any`, a non-null assertion, a skipped or deleted test: skill
-`ddd-ts-kit:deviation`. Getting to green is never the reason.
+pipeline, `any`, a non-null assertion, a skipped or deleted test, an acceptance scenario changed
+while its criterion was not: skill `ddd-ts-kit:deviation`. Getting to green is never the reason.
 
 ## Report
 
