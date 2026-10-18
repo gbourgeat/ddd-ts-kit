@@ -38,7 +38,14 @@ export interface DddTsKitOptions {
 
 export const TYPESCRIPT_FILES = ['**/*.ts', '**/*.mts', '**/*.cts'];
 
-const DEFAULT_IGNORES = ['**/dist/**', '**/coverage/**', '**/node_modules/**', '**/reports/**', '**/*.d.ts'];
+const DEFAULT_IGNORES = [
+  '**/dist/**',
+  '**/coverage/**',
+  '**/node_modules/**',
+  '**/reports/**',
+  '**/.worktrees/**',
+  '**/*.d.ts',
+];
 
 /** The sources of the clients `ddd-ts-kit sdk` generates from the contract, in a project whose config asks for them ("sdk"). */
 const CLIENT_SOURCES = 'clients/*/src/**';

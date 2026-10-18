@@ -1,5 +1,5 @@
 [English](story-workflow.md) · **Français**
-<!-- translation-of: story-workflow.md sha256:3f5c4ef56c54f9e9 -->
+<!-- translation-of: story-workflow.md sha256:baac573619f2b92a -->
 
 # Parcours d'une story : une session par user story
 
@@ -31,7 +31,7 @@ terminal 2 : /ddd-ts-kit:story US6 docs/backlog/us6.md
 
 | # | Phase | Artefact | Qui décide |
 |---|---|---|---|
-| 0 | son *worktree* : `npx ddd-ts-kit story-scope US5` | `../<project>-us5` sur `story/us5`, `.ddd-ts-kit/story.json` | |
+| 0 | son *worktree* : `npx ddd-ts-kit story-scope US5` | `.worktrees/us5` sur `story/us5`, `.ddd-ts-kit/story.json` | |
 | 1 | toutes les questions, d'un coup | `## Questions` de `docs/architecture/stories/US5.md` | le responsable du projet, une fois |
 | 2 | spécification et lignes | `## Acceptance criteria` (`- AC1: ...`), les lignes `US5.01`, ... de `slices.md` | la session |
 | 3 | une revue de conception de chaque ligne | `docs/architecture/reviews/US5.md`, une section `## #US5.02 ...` par ligne, lue par `architecture-reviewer` | la session |

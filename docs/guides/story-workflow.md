@@ -29,7 +29,7 @@ terminal 2: /ddd-ts-kit:story US6 docs/backlog/us6.md
 
 | # | Phase | Artefact | Who decides |
 |---|---|---|---|
-| 0 | its worktree: `npx ddd-ts-kit story-scope US5` | `../<project>-us5` on `story/us5`, `.ddd-ts-kit/story.json` | |
+| 0 | its worktree: `npx ddd-ts-kit story-scope US5` | `.worktrees/us5` on `story/us5`, `.ddd-ts-kit/story.json` | |
 | 1 | every question, at once | `## Questions` of `docs/architecture/stories/US5.md` | the owner, once |
 | 2 | specification and rows | `## Acceptance criteria` (`- AC1: ...`), the rows `US5.01`, ... of `slices.md` | the session |
 | 3 | a design review of each row | `docs/architecture/reviews/US5.md`, one `## #US5.02 ...` section per row, read by `architecture-reviewer` | the session |

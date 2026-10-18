@@ -23,11 +23,12 @@ import { repositoryPrefix } from './repository-prefix.js';
 import type { WorkerScope } from './worker-scope.js';
 import type { WorkerFile } from './worker-file.js';
 import { workerGenerators } from './worker-generators.js';
+import { worktreeOf } from './worktree-of.js';
 
 /** What the caller asks for one worker. */
 export interface WorkerRequest {
   readonly context: string;
-  /** The worktree directory, relative to the project root; by default `../<project>-<context>`. */
+  /** The worktree directory, relative to the project root; by default `.worktrees/<context>` in the project of the main checkout. */
   readonly worktree?: string;
   /** By default `build/<context>`. */
   readonly branch?: string;
@@ -53,7 +54,7 @@ export interface WorkerRequest {
  */
 export function openWorkerScope(root: string, config: Config, request: WorkerRequest): WorkerScope {
   const { context, dryRun } = request;
-  const { project, worktree, branch, trunk, created, inside } = placeOf(root, config, request);
+  const { project, worktree, branch, trunk, created, inside, placeNote } = placeOf(root, config, request);
   const { slices, notes } = briefedRows(new Workspace(root, false), context, request.rows);
   const manager = config.stack.packageManager;
   const citations = staleNamesAt(root, config, { ref: trunk, rows: slices.map((row) => row.id) });
@@ -81,7 +82,7 @@ export function openWorkerScope(root: string, config: Config, request: WorkerReq
       ...notes,
       ...designNote(citations),
       ...citations.notes,
-      ...notesOf(root, dryRun ? root : inside, { manager, install }),
+      ...notesOf(root, dryRun ? root : inside, { manager, install, placeNote }),
     ],
   };
 }
@@ -121,6 +122,8 @@ function prepareWorktree(root: string, request: WorkerRequest, place: PreparedPl
 interface Dependencies {
   readonly manager: Config['stack']['packageManager'];
   readonly install: DependencyInstall | undefined;
+  /** Why the worktree is not under `.worktrees/`, when it is not. */
+  readonly placeNote: string | undefined;
 }
 
 /** Where the worker works: its worktree, its branch, and the project inside that worktree. */
@@ -132,6 +135,8 @@ interface Place {
   /** False when the worktree is already one of the repository. */
   readonly created: boolean;
   readonly inside: string;
+  /** Why the worktree is not under `.worktrees/`, when it is not. */
+  readonly placeNote?: string;
 }
 
 function placeOf(root: string, config: Config, request: WorkerRequest): Place {
@@ -142,7 +147,7 @@ function placeOf(root: string, config: Config, request: WorkerRequest): Place {
   const prefix = repositoryPrefix(root);
   const trunk = baseOf(root, config, request.base);
   const project = path.basename(root);
-  const worktree = path.resolve(root, request.worktree ?? `../${project}-${request.context}`);
+  const { worktree, note } = worktreeOf(root, request.worktree, request.context);
   const branch = request.branch ?? `build/${request.context}`;
   const created = !isWorktree(root, worktree);
 
@@ -159,6 +164,7 @@ function placeOf(root: string, config: Config, request: WorkerRequest): Place {
     trunk,
     created,
     inside: path.join(worktree, prefix),
+    ...(note === undefined ? {} : { placeNote: note }),
   };
 }
 
@@ -207,6 +213,7 @@ function notesOf(root: string, inside: string, dependencies: Dependencies): stri
   const ignored = runGit(inside, ['check-ignore', '--quiet', WORKER_SCOPE_FILE]) !== undefined;
 
   return [
+    ...(dependencies.placeNote === undefined ? [] : [dependencies.placeNote]),
     ...(ignored
       ? []
       : [
