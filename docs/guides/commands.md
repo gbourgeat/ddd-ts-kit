@@ -296,12 +296,14 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
                    where drizzle-kit alone writes nothing and exits 0; then formats the snapshot and the
                    journal it wrote with the Biome or Prettier of the format script, and warns when the
                    SQL changes a primary key in an order that fails on PostgreSQL (exit code unchanged);
-                   --replay, after merging the trunk into a branch when both added migrations: deletes
-                   the migrations of the branch that --base <ref> (origin/main by default) does not have,
-                   with their snapshots and journal entries, then generates each again on top, in order,
-                   under its name (working- dropped outside a worker's worktree, a custom one keeping
-                   its SQL); refused while the journal holds conflict markers or when two of them change
-                   the schema
+                   --replay, after merging the trunk into a branch when both added migrations: when the
+                   history forks from --base <ref> (origin/main by default), deletes the migrations of the
+                   branch the base does not have, with their snapshots and journal entries, then generates
+                   each again on top, in order, under its name (working- dropped outside a worker's
+                   worktree, a custom one keeping its SQL); when it does not fork, only renames them;
+                   refused while the journal holds conflict markers, when two of them change the schema,
+                   or when drizzle-kit now writes a generated one otherwise (edited by hand), the folder
+                   then put back as it was
   error-factories  moves a project from one class per error to static factories on one error class per
                    concept: --plan writes error-factories.plan.json, where each class is given its concept;
                    --apply follows it (classes, specs, every usage, "stack.refusals" in the config)

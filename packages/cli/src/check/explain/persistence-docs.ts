@@ -12,6 +12,13 @@ export const PERSISTENCE_DOCS: Readonly<Record<string, RuleDoc>> = {
   20261012093000_add-payments.sql   # generated again after main took add-invoices
   meta/_journal.json                # one entry each, in order, each snapshot from the one before`,
   },
+  'persistence/primary-key-order': {
+    why: 'A table has one primary key. When a migration changes it, drizzle-kit may write the statement that adds the new key before the one that drops the old key, or drop a column before the key that holds it; PostgreSQL refuses either, and the migration fails only when it runs, on the database of a colleague or of a deployment. `drizzle-generate` warns when it writes such a migration; this rule keeps reporting it until the migration is fixed, so that a warning that scrolled away is not merged. A dropped constraint is a primary key when the snapshot before the migration records it or its name ends in `_pkey` or `_pk`. Fix the migration while no database has applied it: move the `DROP CONSTRAINT` above, or write the change yourself with `npm run db:generate -- <name> --custom`.',
+    bad: `ALTER TABLE "invoices" ADD CONSTRAINT "invoices_id_issuer_pk" PRIMARY KEY("id","issuer");--> statement-breakpoint
+ALTER TABLE "invoices" DROP CONSTRAINT "invoices_pkey";   -- too late: the ADD above already failed`,
+    good: `ALTER TABLE "invoices" DROP CONSTRAINT "invoices_pkey";--> statement-breakpoint
+ALTER TABLE "invoices" ADD CONSTRAINT "invoices_id_issuer_pk" PRIMARY KEY("id","issuer");`,
+  },
   'persistence/no-file-content': {
     why: 'A file in a column is read whole into the memory of the application and of the database, travels in every backup, every replica and every dump, swells the table its rows share pages with, and cannot be handed out by a short signed link: an upload of a few megabytes becomes a transaction, a replication lag and a backup to restore. An object store is made for it: it streams, it is cheap per gigabyte, it has lifecycle rules and signed links. The row keeps what the domain needs to know about the file, its reference.',
     bad: `export const invoices = pgTable('invoices', {
