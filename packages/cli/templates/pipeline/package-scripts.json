@@ -2,11 +2,11 @@
   "scripts": {
     "typecheck": "node node_modules/@typescript/native/bin/tsc -p tsconfig.json --noEmit",
     "build": "node node_modules/@typescript/native/bin/tsc -p tsconfig.build.json && ddd-ts-kit build-aliases",
-    "lint": "eslint .",
+    "lint": "eslint . --max-warnings 0",
     "format": "biome format --write .",
     "format:check": "biome format .",
     "ci:typecheck": "npm run typecheck",
-    "ci:lint": "eslint .",
+    "ci:lint": "eslint . --max-warnings 0",
     "ci:format": "npm run format:check",
     "ci:arch": "npm run ci:arch:check && npm run ci:arch:graph",
     "ci:arch:check": "ddd-ts-kit check",

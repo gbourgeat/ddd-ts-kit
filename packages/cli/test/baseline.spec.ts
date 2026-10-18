@@ -81,6 +81,21 @@ describe('the quality baseline', () => {
     expect(beforePush).toMatch(/(npm|pnpm) run ci:test:unit/);
   });
 
+  it.each(['npm', 'pnpm'])(
+    'fails the lint of verify and of the pipeline on a warning as on an error (%s)',
+    (manager) => {
+      const scripts = scriptsOf(initProject('--ci', 'both', '--package-manager', manager));
+
+      // A new project has no warning: the first one fails `lint`, `verify` and the pipeline, and is fixed or recorded.
+      expect(scripts['lint']).toBe('eslint . --max-warnings 0');
+      expect(scripts['ci:lint']).toBe('eslint . --max-warnings 0');
+    },
+  );
+
+  it('writes no suppressions file: the warnings stay warnings, and a project records its existing errors itself', () => {
+    expect(exists(initProject('--ci', 'both'), 'eslint-suppressions.json')).toBe(false);
+  });
+
   it.each(['npm', 'pnpm'])('holds every gate in the three places whatever the package manager (%s)', (manager) => {
     expectBaseline(initProject('--ci', 'both', '--package-manager', manager));
   });
