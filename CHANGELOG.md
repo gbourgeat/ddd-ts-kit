@@ -99,6 +99,14 @@ the install are said without failing it. A project or a pipeline that runs `doct
 no dependencies are installed fails from this version: install first. `--json` gains the areas
 `node`, `install` and `submodule`. The `parallel-work` skill runs it in a worktree made otherwise.
 
+**`init` records the version that wrote the files of the platform.** `ddd-ts-kit.config.json`
+now starts with `"initVersion"`, the version of the CLI whose `init` wrote the files it owns;
+`init --force` rewrites it, and `init` run again to add a context leaves it. Nothing reads it yet:
+it is the first step of an `init` that tells, after an upgrade, a change of its templates from an
+adaptation of the team. A config without the key stays valid.
+
+To move: nothing; `init --force` adds the key to a project initialised before it existed.
+
 ## 0.27.0
 
 **The worktrees of a project live inside it, and a new project writes its code in a worktree.**

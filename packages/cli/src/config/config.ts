@@ -71,6 +71,8 @@ export interface OpenApiConfig {
 }
 
 export interface Config {
+  /** The version of the CLI whose `init` wrote the files of the platform, rewritten by `init --force`; none in a project initialised before the key existed. */
+  readonly initVersion: string | undefined;
   readonly sourceRoot: string;
   readonly contextsDir: string;
   readonly sharedKernelDir: string;

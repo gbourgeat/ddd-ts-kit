@@ -10,6 +10,7 @@ import { parseContextName, toName } from '../naming/index.js';
 import { inDialect } from '../package-manager/in-dialect.js';
 import { setUpSdk } from '../sdk/index.js';
 import { readTemplate, renderTemplate } from '../templating/index.js';
+import { VERSION } from '../version.js';
 import { Workspace, type WorkspaceReport } from '../workspace/index.js';
 import { applyPreset } from '../presets/apply-preset.js';
 import { presetNamed } from '../presets/preset-named.js';
@@ -43,7 +44,7 @@ export interface InitOptions extends StackOptions {
 
 export function runInit(root: string, options: InitOptions): WorkspaceReport {
   const ws = new Workspace(root, options.force);
-  const config = recordNoOutbox(ws, resolveStack(root, options), options.allowNoOutbox);
+  const config = { ...recordNoOutbox(ws, resolveStack(root, options), options.allowNoOutbox), initVersion: VERSION };
   const projectName = existingName(root) ?? (toName(path.basename(path.resolve(root))).kebab || 'app');
 
   ws.create(CONFIG_FILE, configText(ws, config));
@@ -80,7 +81,8 @@ export function runInit(root: string, options: InitOptions): WorkspaceReport {
 
 /**
  * A new project gets its config whole, its code written in worktrees only; one that is
- * initialised again with --force keeps what its team wrote around the stack.
+ * initialised again with --force keeps what its team wrote around the stack. Both record the
+ * version of the CLI that wrote the files.
  */
 function configText(ws: Workspace, config: Config): string {
   const recorded = ws.read(CONFIG_FILE);

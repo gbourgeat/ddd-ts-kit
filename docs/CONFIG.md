@@ -28,6 +28,7 @@ deviation.
 
 ```json
 {
+  "initVersion": "0.26.0",
   "sourceRoot": "src",
   "contextsDir": "src/contexts",
   "sharedKernelDir": "src/shared-kernel",
@@ -85,6 +86,13 @@ deviation.
 only when they say something: `stack.assembly` and `stack.dependencies` in the declared style
 only, `stack.tenancy` when it is not `none`. The optional keys (`coverage`, `deviations`,
 `commit`, `worker`, `ci`, `openapi`, `sdk`, ...) appear once a project sets them.
+
+`initVersion` is the version of the CLI whose `init` wrote the files of the platform. `init`
+writes it first in the file and `init --force` rewrites it, since it rewrote those files; `init`
+run again without `--force`, `generate context` and every other command leave it as it is. It is
+not edited by hand: it is there for a later `init` to tell what its templates changed since that
+version from what the team adapted in the files, and nothing reads it yet. A project initialised
+before the key existed has none and stays valid; `init --force` adds it.
 
 ## How a key is read
 

@@ -25,7 +25,7 @@ describe('init and the extension of an import', () => {
     const imports = projectImports(root);
 
     expect(jsonAt(readJson(root, CONFIG), 'importExtension')).toBe('none');
-    expect(Object.keys(Object(readJson(root, CONFIG))).slice(4, 6)).toEqual(['importAlias', 'importExtension']);
+    expect(Object.keys(Object(readJson(root, CONFIG))).slice(5, 7)).toEqual(['importAlias', 'importExtension']);
     expect(resolution(root)).toEqual(['ESNext', 'Bundler']);
     expect(imports.length).toBeGreaterThan(300);
     expect(imports.filter((specifier) => EXTENSION.test(specifier))).toEqual([]);
