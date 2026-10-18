@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it, onTestFailed } from 'vitest';
-import { eventually, expectProblem, expectStatus, type HttpClient, type HttpResponse } from '@ddd-ts-kit/testing/e2e';
+import { expectProblem, expectStatus, type HttpClient, type HttpResponse } from '@ddd-ts-kit/testing/e2e';
 import { reportSeedOnFailure } from '@ddd-ts-kit/testing/faker';
 import { bookAppointment } from '$test/e2e/support/book-appointment';
 import type { Listed } from '$test/e2e/support/listed';
@@ -71,9 +71,9 @@ describe('A patient books, is told, and cancels: the four contexts follow', () =
     const late = expectStatus(await bookAppointment(paul, practice, { startsAt: later }), 201).body.id;
     const held = '/appointments?filter[status]=booked&filter[calendarId]=' + practice.calendarId;
 
-    const newestFirst = await eventually(async () =>
-      idsOf(expectListed(await paul.get<Listed<AppointmentLine>>(held + '&sort=-startsAt'), 2)),
-    );
+    await application.settled();
+
+    const newestFirst = idsOf(expectListed(await paul.get<Listed<AppointmentLine>>(held + '&sort=-startsAt'), 2));
 
     const fromTheLater = await paul.get<Listed<AppointmentLine>>(held + '&filter[startsAt]=gte:' + later.toISOString());
     const ofRosa = await rosa.get<Listed<AppointmentLine>>(held);
@@ -86,9 +86,9 @@ describe('A patient books, is told, and cancels: the four contexts follow', () =
   it('tells the patient who booked, and nobody else', async () => {
     const appointmentId = expectStatus(await bookAppointment(paul, practice, { startsAt }), 201).body.id;
 
-    const told = await eventually(async () =>
-      expectListed(await paul.get<Listed<NotificationLine>>('/notifications'), 1),
-    );
+    await application.settled();
+
+    const told = expectListed(await paul.get<Listed<NotificationLine>>('/notifications'), 1);
 
     const ofRosa = await rosa.get<Listed<NotificationLine>>('/notifications');
 
@@ -102,8 +102,11 @@ describe('A patient books, is told, and cancels: the four contexts follow', () =
     expectStatus(await bookAppointment(paul, practice, { startsAt }), 201);
     expectStatus(await bookAppointment(rosa, practice, { startsAt: new Date(startsAt.getTime() + 30 * 60_000) }), 201);
 
-    const occupancy = await eventually(async () =>
-      expectHeld(await manager.get<Listed<OccupancyLine>>('/practices/' + practice.practiceId + '/occupancy'), 60),
+    await application.settled();
+
+    const occupancy = expectHeld(
+      await manager.get<Listed<OccupancyLine>>('/practices/' + practice.practiceId + '/occupancy'),
+      60,
     );
 
     expect(occupancy).toMatchObject({ calendarId: practice.calendarId, heldMinutes: 60, appointmentsHeld: 2 });
@@ -114,17 +117,15 @@ describe('A patient books, is told, and cancels: the four contexts follow', () =
     const appointmentId = expectStatus(await bookAppointment(paul, practice, { startsAt }), 201).body.id;
     const occupancyOfThePractice = '/practices/' + practice.practiceId + '/occupancy';
 
-    await eventually(async () => expectHeld(await manager.get<Listed<OccupancyLine>>(occupancyOfThePractice), 30));
+    await application.settled();
+    expectHeld(await manager.get<Listed<OccupancyLine>>(occupancyOfThePractice), 30);
 
     const cancellation = await paul.post('/appointments/' + appointmentId + '/cancellation', {});
 
-    const freed = await eventually(async () =>
-      expectHeld(await manager.get<Listed<OccupancyLine>>(occupancyOfThePractice), 0),
-    );
+    await application.settled();
 
-    const listed = await eventually(async () =>
-      expectListed(await paul.get<Listed<AppointmentLine>>('/appointments?filter[status]=cancelled'), 1),
-    );
+    const freed = expectHeld(await manager.get<Listed<OccupancyLine>>(occupancyOfThePractice), 0);
+    const listed = expectListed(await paul.get<Listed<AppointmentLine>>('/appointments?filter[status]=cancelled'), 1);
 
     const again = await bookAppointment(rosa, practice, { startsAt });
 

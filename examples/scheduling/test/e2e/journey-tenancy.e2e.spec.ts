@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { eventually, expectProblem, expectStatus, type HttpClient } from '@ddd-ts-kit/testing/e2e';
+import { expectProblem, expectStatus, type HttpClient } from '@ddd-ts-kit/testing/e2e';
 import { bookAppointment } from '$test/e2e/support/book-appointment';
 import { NETWORK } from '$test/e2e/support/create-credentials';
 import { inNetwork } from '$test/e2e/support/in-network';
@@ -70,8 +70,10 @@ describe('Two networks of practices served by one application', () => {
     const ofPaul = expectStatus(await bookAppointment(paul, north, { startsAt }), 201).body.id;
     const ofSven = expectStatus(await bookAppointment(sven, south, { startsAt }), 201).body.id;
 
-    const seenByPaul = await eventually(async () => idsOf(await listedBy(paul), ofPaul));
-    const seenBySven = await eventually(async () => idsOf(await listedBy(sven), ofSven));
+    await application.settled();
+
+    const seenByPaul = idsOf(await listedBy(paul), ofPaul);
+    const seenBySven = idsOf(await listedBy(sven), ofSven);
 
     expect(seenByPaul).toEqual([ofPaul]);
     expect(seenBySven).toEqual([ofSven]);

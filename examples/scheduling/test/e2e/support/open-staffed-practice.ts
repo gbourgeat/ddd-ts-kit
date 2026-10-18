@@ -1,4 +1,4 @@
-import { eventually, expectStatus } from '@ddd-ts-kit/testing/e2e';
+import { expectStatus } from '@ddd-ts-kit/testing/e2e';
 import { unwrap } from 'scheduling-api-client';
 import { registerPeople } from '$test/e2e/support/register-people';
 import type { StaffedPractice } from '$test/e2e/support/staffed-practice';
@@ -51,8 +51,11 @@ async function openCalendar(
   const practitioner = await application.as({ id: practitionerId });
 
   // Scheduling learns its practitioners from the events of identity: the calendar is refused until the membership has arrived.
-  const calendar = await eventually(async () =>
-    expectStatus(await practitioner.post<{ id: string }>('/calendars', { practiceId, practitionerId }), 201),
+  await application.settled();
+
+  const calendar = expectStatus(
+    await practitioner.post<{ id: string }>('/calendars', { practiceId, practitionerId }),
+    201,
   );
 
   const calendarId = calendar.body.id;

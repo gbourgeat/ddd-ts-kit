@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it, onTestFailed } from 'vitest';
-import { eventually, expectProblem, expectStatus, type HttpClient } from '@ddd-ts-kit/testing/e2e';
+import { expectProblem, expectStatus, type HttpClient } from '@ddd-ts-kit/testing/e2e';
 import { reportSeedOnFailure } from '@ddd-ts-kit/testing/faker';
 import { bookAppointment } from '$test/e2e/support/book-appointment';
 import { openStaffedPractice } from '$test/e2e/support/open-staffed-practice';
@@ -44,13 +44,11 @@ describe('The agenda of a practice, exported as CSV and answered in XML to a par
     const appointmentId = expectStatus(await bookAppointment(paul, practice, { startsAt }), 201).body.id;
     const exportOfThePractice = `/practices/${practice.practiceId}/agenda/export`;
 
-    const csv = await eventually(async () => {
-      const response = expectStatus(await manager.get<string>(exportOfThePractice, { headers: { accept: CSV } }), 200);
+    await application.settled();
 
-      expect(response.body).toContain(appointmentId);
+    const csv = expectStatus(await manager.get<string>(exportOfThePractice, { headers: { accept: CSV } }), 200);
 
-      return response;
-    });
+    expect(csv.body).toContain(appointmentId);
 
     const [header, row] = csv.body.trimEnd().split('\r\n');
 
@@ -67,13 +65,11 @@ describe('The agenda of a practice, exported as CSV and answered in XML to a par
     const appointmentId = expectStatus(await bookAppointment(paul, practice, { startsAt }), 201).body.id;
     const agenda = `/practices/${practice.practiceId}/agenda`;
 
-    const xml = await eventually(async () => {
-      const response = expectStatus(await manager.get<string>(agenda, { headers: { accept: XML } }), 200);
+    await application.settled();
 
-      expect(response.body).toContain(`<id>${appointmentId}</id>`);
+    const xml = expectStatus(await manager.get<string>(agenda, { headers: { accept: XML } }), 200);
 
-      return response;
-    });
+    expect(xml.body).toContain(`<id>${appointmentId}</id>`);
 
     expect(xml.headers['content-type']).toBe('application/xml; charset=utf-8');
     expect(xml.headers['vary']).toBe('accept');

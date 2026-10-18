@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it, onTestFailed } from 'vitest';
-import { eventually, expectProblem, expectStatus, type HttpClient } from '@ddd-ts-kit/testing/e2e';
+import { expectProblem, expectStatus, type HttpClient } from '@ddd-ts-kit/testing/e2e';
 import { reportSeedOnFailure } from '@ddd-ts-kit/testing/faker';
 import { openStaffedPractice } from '$test/e2e/support/open-staffed-practice';
 import { registerPeople } from '$test/e2e/support/register-people';
@@ -122,18 +122,14 @@ describe('Booking: in XML for a partner, and a form that differs by role around 
       201,
     ).body.id;
 
-    const forTheStaff = await eventually(async () => {
-      const detail = expectStatus(await practitioner.get<AppointmentDetail>(`/appointments/${appointmentId}`), 200);
+    await application.settled();
 
-      expect(detail.body.internalNote).toBe(NOTE);
-
-      return detail;
-    });
+    const forTheStaff = expectStatus(await practitioner.get<AppointmentDetail>(`/appointments/${appointmentId}`), 200);
 
     const forPaul = expectStatus(await paul.get<AppointmentDetail>(`/appointments/${appointmentId}`), 200);
 
     expectProblem(refused, { status: 403, code: 'FORBIDDEN' });
-    expect(forTheStaff.body.id).toBe(appointmentId);
+    expect(forTheStaff.body).toMatchObject({ id: appointmentId, internalNote: NOTE });
     expect(forPaul.body).not.toHaveProperty('internalNote');
   });
 });
