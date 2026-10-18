@@ -18,6 +18,7 @@ export const configValid: Rule = {
       ...inspection.undeclaredDirectories(),
       ...inspection.ruleSettings(KNOWN_RULE_IDS),
       ...inspection.guardMode(),
+      ...inspection.worktreeMode(),
       ...inspection.importExtension(),
       ...inspection.functionLinesLimit(),
       ...inspection.onePerFileAllowances(),

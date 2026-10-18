@@ -25,6 +25,8 @@ const PLAN = 'docs/architecture/plan.md';
 const WORKER_SCOPE = '.ddd-ts-kit/worker.json';
 // The worktree of a story one session takes to its pull request; its code waits for the build gate.
 const STORY_SCOPE = '.ddd-ts-kit/story.json';
+// Where the worktrees of a project live, inside it, ignored by git and by every tool.
+const WORKTREES_DIR = '.worktrees';
 // How long the guard keeps what `stories --json` said before reading it again.
 const STORIES_TTL = 60_000;
 // A fetch older than this leaves the trunk of a story behind the remote one: the session is told to fetch.
@@ -327,6 +329,7 @@ function verdictOn({ file, written, replaced }, input) {
   const refusal =
     acceptanceReason(project, input, { file, written, replaced }) ??
     storyCodeReason(project, file) ??
+    worktreeCodeReason(project, file) ??
     generatedFileReason(project, file) ??
     testWriterScopeReason(project, file, input) ??
     (isUnwrapping(project, file, input) ? undefined : workerScopeReason(project, file, input)) ??
@@ -354,7 +357,7 @@ async function preBash(input) {
     oneSideMergeReason(project, input, command) ??
     (await acceptanceLockingReason(input, command)) ??
     (await acceptanceFilesShellReason(input, command)) ??
-    (await storyGeneratorReason(project, input, command));
+    (await generatorPlaceReason(project, input, command));
   if (preparing) {
     decide(input, project.mode === 'advise' ? 'ask' : 'deny', preparing);
     return;
@@ -634,6 +637,9 @@ function describeProject(root) {
     packageManager: config.stack?.packageManager === 'pnpm' ? 'pnpm' : 'npm',
     // enforce: block; advise: ask the user; off: silent.
     mode: process.env.DDD_TS_KIT_GUARD ?? config.guard ?? 'enforce',
+    // required (what init writes in a new project): the code of a context is refused in the main checkout
+    // of the trunk; advised (the key absent, a project started before): only said.
+    worktrees: config.worktrees === 'required' ? 'required' : 'advised',
   };
 }
 
@@ -661,6 +667,7 @@ function projectBriefing(project, input) {
     ...planPointer(project.root),
     ...workerNotice(project, input),
     ...storyNotice(project),
+    ...worktreeNotice(project),
     ...workersToResume(project),
   ];
   if (project.cli) {
@@ -1032,19 +1039,96 @@ function storyCodeReason(project, file) {
 }
 
 async function storyGeneratorReason(project, input, command) {
+  return (await writesCode(input, command, ['acceptance', 'adr'])) ? storyBuildReason(project) : undefined;
+}
+
+// A command that runs a generator of the kit writing the code of a context: any kind but those
+// given, its help and its dry run aside.
+async function writesCode(input, command, aside) {
   if (!command.includes('generate') && !/\bg\b/.test(command)) {
-    return undefined;
+    return false;
   }
   shell = await import('./shell-commands.mjs');
-  const generating = kitInvocations(shell.simpleCommands(command, input.cwd ?? process.cwd())).some(
+  return kitInvocations(shell.simpleCommands(command, input.cwd ?? process.cwd())).some(
     ({ subcommand, args }) =>
       ['generate', 'g'].includes(subcommand) &&
       args[0] !== undefined &&
-      !['acceptance', 'adr'].includes(args[0]) &&
+      !aside.includes(args[0]) &&
       !args.includes('--help') &&
       !args.includes('--dry-run'),
   );
-  return generating ? storyBuildReason(project) : undefined;
+}
+
+// The code of a context is written in a worktree: the main checkout of the trunk refuses it
+// (unless the config only advises it), and so does a worktree of .worktrees/ without its own
+// dependencies, whose Node would resolve the packages of the main checkout above it.
+function worktreeCodeReason(project, file) {
+  const path = projectPath(project, file);
+  if (!insideContexts(project, path) || /(^|\/)CONTEXT\.md$/.test(path)) {
+    return undefined;
+  }
+  return worktreePlaceReason(project);
+}
+
+// A generator of code run where the code may not be written yet: before the build gate of a
+// story, in the main checkout of the trunk, in a worktree without its own install.
+async function generatorPlaceReason(project, input, command) {
+  return (
+    (await storyGeneratorReason(project, input, command)) ?? (await worktreeGeneratorReason(project, input, command))
+  );
+}
+
+async function worktreeGeneratorReason(project, input, command) {
+  return (await writesCode(input, command, ['acceptance', 'adr', 'context']))
+    ? worktreePlaceReason(project)
+    : undefined;
+}
+
+function worktreePlaceReason(project) {
+  if (borrowsDependencies(project)) {
+    return `${project.root} is a worktree of ${WORKTREES_DIR}/ without its own node_modules: Node would resolve the packages of the main checkout above it, the versions of the trunk. Install it first: \`cd ${project.root} && ${CLEAN_INSTALL[project.packageManager]}\`.`;
+  }
+  const branch = project.worktrees === 'required' ? trunkCheckoutBranch(project) : undefined;
+  return branch
+    ? `This is the main checkout of the trunk (branch ${branch}): the code of a context is written in a worktree. Open one with \`npx ddd-ts-kit worktree <name>\` (a story: \`npx ddd-ts-kit story-scope <code>\`; a plan of several workers: skill ddd-ts-kit:parallel-work), then work there, every command \`cd <worktree> && ...\` and every file by its absolute path under it. \`"worktrees": "advised"\` in the config lifts this refusal.`
+    : undefined;
+}
+
+// At session start: where the code of the contexts is written, when it is not here.
+function worktreeNotice(project) {
+  if (borrowsDependencies(project)) {
+    return [worktreePlaceReason(project)];
+  }
+  const branch = trunkCheckoutBranch(project);
+  if (!branch) {
+    return [];
+  }
+  const where = `Main checkout of the trunk (branch ${branch}): the code of the contexts is written in a worktree`;
+  const how =
+    'open one with `npx ddd-ts-kit worktree <name>` (a story: `npx ddd-ts-kit story-scope <code>`) and work there.';
+  return [project.worktrees === 'required' ? `${where}, refused here; ${how}` : `${where}; ${how}`];
+}
+
+function borrowsDependencies(project) {
+  return project.root.split(sep).includes(WORKTREES_DIR) && !existsSync(join(project.root, 'node_modules'));
+}
+
+// The branch of the main checkout of its repository holding the project, when that branch is the
+// trunk (the one origin/HEAD names, else main or master) and has a commit: read from .git, no git
+// process. A linked worktree has a .git file, not a folder.
+function trunkCheckoutBranch(project) {
+  const top = repositoryTop(project.root);
+  const git = top && join(top, '.git');
+  if (!git || !isDirectory(git)) {
+    return undefined;
+  }
+  const branch = /^ref: refs\/heads\/(.+)$/m.exec(readText(join(git, 'HEAD')) ?? '')?.[1];
+  const remote = /^ref: refs\/remotes\/origin\/(.+)$/m.exec(readText(join(git, 'refs/remotes/origin/HEAD')) ?? '')?.[1];
+  const trunk = remote ? branch === remote : ['main', 'master'].includes(branch);
+  const born =
+    existsSync(join(git, 'refs/heads', branch ?? '')) ||
+    (readText(join(git, 'packed-refs')) ?? '').includes(` refs/heads/${branch}\n`);
+  return trunk && born ? branch : undefined;
 }
 
 // In the worktree of a story, a write to a file another open story changes too, or that merging

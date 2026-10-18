@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:7d2bfa4574fb2f86 -->
+<!-- translation-of: commands.md sha256:ceaee865fb30be68 -->
 
 # Quelle commande, quand
 
@@ -88,8 +88,9 @@ La tranche est finie quand `todo ordering` n'en liste plus rien.
 | Commande ou *skill* | Fait | Quand | Produit | Ensuite |
 |---|---|---|---|---|
 | `/ddd-ts-kit:story <code> [<énoncé>]` | une *user story* de ses questions à une *pull request* verte, dans son propre *worktree* : les questions d'abord, puis spécification, lignes, revue de conception, acceptation, construction, revue, rapport ([parcours d'une story](story-workflow.fr.md)) | une fois le projet amorcé, un terminal par *story* | la *pull request* de la *story* et son rapport | relire le rapport, valider chaque décision provisoire |
-| `npx ddd-ts-kit story-scope <code>` | le *worktree* d'une *story* sur `story/<code>`, son `.ddd-ts-kit/story.json` et son installation ; les autres *stories* ouvertes et leurs contextes | la première étape de la *skill* story | `../<project>-<code>` | `npx ddd-ts-kit story <code>` |
+| `npx ddd-ts-kit story-scope <code>` | le *worktree* d'une *story* sur `story/<code>`, son `.ddd-ts-kit/story.json` et son installation ; les autres *stories* ouvertes et leurs contextes | la première étape de la *skill* story | `.worktrees/<code>` | `npx ddd-ts-kit story <code>` |
 | `npx ddd-ts-kit stories` | les *stories* ouvertes dans les *worktrees* du dépôt et où deux d'entre elles se croisent : les contextes que les deux nomment, les fichiers que les deux changent, ce que la fusion de l'une dans l'autre laisse à régler à la main, le retard de chacune sur son tronc | avant de découper les lignes d'une *story* et avant chaque ligne, après `git fetch` | un texte court, `--json` pour des données ; code de sortie 0 | se tenir à l'écart de ce qu'une autre *story* change, ou consigner laquelle arrive la première |
+| `npx ddd-ts-kit worktree <name>` | le *worktree* de tout travail qui n'est ni une *story* ni un *worker* : `.worktrees/<name>` sur `work/<name>` coupé de `origin/main`, installé | avant d'écrire le code d'un contexte depuis le *checkout* principal du tronc, que la garde refuse dans un projet créé par `init` | le *worktree*, sa branche et son installation | y travailler, *commiter*, ouvrir sa *pull request* |
 | `npx ddd-ts-kit story [<code>] [--gate build\|close]` | les phases d'une *story* et l'étape suivante ; `build` ouvre son code, `close` sa *pull request* | à tout moment dans le *worktree* d'une *story* | un texte court, `--json` pour des données ; code de sortie 1 tant que la barrière n'est pas franchie | faire l'étape suivante |
 | `/ddd-ts-kit:plan-slices` | le travail en tranches verticales, ordonnées, avec leurs commandes de générateur | étape 6, après l'amorçage | `docs/architecture/slices.md` | `/ddd-ts-kit:use-case` |
 | `npx ddd-ts-kit cited --rows <id> --base origin/main` | les noms que la conception d'une ligne cite comme du code et que le tronc n'a pas : retirés par son historique (avec le commit et ce qui les remplace), refusés par l'arborescence canonique, ou proches d'un nom qu'il a gagné depuis que la ligne a été écrite ; un nom prévu reste muet | avant de construire seul une ligne, avant de committer une revue de conception | une ligne par nom, `--json` pour les données ; code de sortie 0 | construire sur ce que le tronc a, et corriger le document sur le tronc |
@@ -265,6 +266,7 @@ Usage
   ddd-ts-kit story-scope <story> [--base <ref>] [--worktree <path>] [--branch <name>] [--no-install] [--dry-run]
   ddd-ts-kit story [<story>] [--gate build|close]
   ddd-ts-kit stories
+  ddd-ts-kit worktree <name> [--base <ref>] [--branch <name>] [--no-install] [--dry-run]
   ddd-ts-kit verify-slice <context> --since <git-ref>
   ddd-ts-kit cited [<context>] [--rows <id,...>] [--base <ref>] [--removed-since <ref>]
   ddd-ts-kit verify-merge [<commit>] [--since <git-ref>] [--theirs <git-ref>] [--base <commit>] [--warn]
@@ -379,8 +381,8 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
                    version (test/acceptance/verdicts/*.md, lines Story:, Subject:, Fingerprint:,
                    Verdict:, Reason:); a refusal wins; the verdicts become amendments of the lock,
                    listed for the owner to validate
-  worker-scope     a git worktree on the branch build/<context> (by default ../<project>-<context>), cut from
-                   --base <ref> (by default the current branch, refused from a worker's worktree), its
+  worker-scope     a git worktree on the branch build/<context> (by default .worktrees/<context>, see worktree),
+                   cut from --base <ref> (by default the current branch, refused from a worker's worktree), its
                    .ddd-ts-kit/worker.json, and the briefing of the worker of that context; --rows <id,...>
                    briefs those rows of slices.md only, with their rules, the documents of their design and
                    the names that design cites the base does not have (see cited), and by default the first
@@ -391,11 +393,21 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
   --here           worker-scope in the worktree of a story (.ddd-ts-kit/story.json): writes the scope of the
                    next agent in place, its base the base of the story, and prints its briefing; no
                    worktree, branch or install of its own; the agents of a story run one after the other
-  story-scope      the worktree of one story, ../<project>-<story> on story/<story> cut from --base (by default
-                   the current branch, refused from the worktree of a story), its .ddd-ts-kit/story.json and
+  story-scope      the worktree of one story, .worktrees/<story> on story/<story> cut from --base (by default
+                   origin/main from the trunk, else the current branch, refused from the worktree of a
+                   story), its .ddd-ts-kit/story.json and
                    its clean install; an existing one is kept and the story resumes there; refused when the
                    story is open in another worktree; names the other open stories and the contexts their
                    rows change
+  worktree         the worktree of any other piece of work, .worktrees/<name> on work/<name> cut from --base
+                   (by default origin/main from the trunk, else the current branch), and its clean install
+                   unless --no-install; an existing one is kept; .worktrees/ lies in the main checkout,
+                   whichever worktree it runs from, ignored by git and by the tools of the project; while
+                   the .gitignore of a project started before does not hold it (init adds it), a worktree
+                   opens next to the project, ../<project>-<name>; in a project whose config says
+                   "worktrees": "required" (what init writes), the guard of the plugin refuses the code of
+                   a context in the main checkout of the trunk, and in a worktree of .worktrees/ without
+                   its own node_modules
   story            where a story stands, phase by phase: its specification and criteria
                    (docs/architecture/stories/<story>.md), its rows in slices.md, a design review section
                    per row not done (docs/architecture/reviews/<story>.md, ## #<id>), its acceptance written
