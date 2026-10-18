@@ -1,5 +1,5 @@
+import { CliError } from '../cli-error.js';
 import { CONFIG_FILE, editConfigText, type Config } from '../config/index.js';
-import { isRecord } from '../check/support/is-record.js';
 import { addFactory } from '../generate/errors/add-factory.js';
 import { addSpecCase } from '../generate/errors/add-spec-case.js';
 import { fitSource } from '../layout/index.js';
@@ -9,12 +9,14 @@ import { legacyErrors } from './legacy-errors.js';
 import { nestedCases } from './nested-cases.js';
 import type { MigrationDraft } from './migration-draft.js';
 import type { MigrationPlan } from './migration-plan.js';
-import type { Move } from './move.js';
 import type { PlannedMove } from './planned-move.js';
 import { projectSources } from './project-sources.js';
+import { concerns } from './concerns.js';
+import { sayRefusals } from './say-refusals.js';
 import { renderFactory } from './render-factory.js';
 import { rewriteUsages } from './rewrite-usages.js';
 import { specParts } from './spec-parts.js';
+import { withImports } from './with-imports.js';
 
 interface Tree {
   readonly ws: Workspace;
@@ -49,31 +51,15 @@ export function applyPlan(tree: Tree, plan: MigrationPlan, draft: MigrationDraft
       file,
       rewriteUsages(
         source,
-        all.filter((move) => concerns(move, { file, source }, tree.config)),
+        all.filter((move) => concerns({ context: move.context, path: move.legacyPath }, { file, source }, tree.config)),
         told,
       ),
     );
   }
 
-  draft.write(CONFIG_FILE, editConfigText(draft.read(CONFIG_FILE) ?? '{}', sayFactories));
+  draft.write(CONFIG_FILE, editConfigText(draft.read(CONFIG_FILE) ?? '{}', sayRefusals('factories')));
 
   return moves;
-}
-
-/**
- * Two contexts may name a class the same way: a move concerns the files of its own context, and
- * elsewhere the files that import the class from that context.
- */
-function concerns(move: Move, { file, source }: { file: string; source: string }, config: Config): boolean {
-  const contexts = `${config.contextsDir}/`;
-
-  return file.startsWith(contexts)
-    ? file.startsWith(`${contexts}${move.context}/`)
-    : source.includes(`/${move.legacyPath}`);
-}
-
-function sayFactories(raw: Record<string, unknown>): void {
-  raw['stack'] = { ...(isRecord(raw['stack']) ? raw['stack'] : {}), refusals: 'factories' };
 }
 
 /** The classes still there whose plan entry says where they go; one that cannot move mechanically is said, and left. */
@@ -119,6 +105,14 @@ function moveClass({ config }: Tree, { error, move }: PlannedMove, draft: Migrat
     text: factory,
   });
 
+  // The draft is not committed yet: refusing here writes nothing of the move.
+  if (next === undefined) {
+    throw new CliError(
+      `${target} holds another class than ${move.conceptClass}.`,
+      `Give ${error.className} another concept in the plan, or move what ${target} holds to a file of its own, then run \`ddd-ts-kit error-factories --apply\` again.`,
+    );
+  }
+
   if (error.parameters.length > 3) {
     draft.manual.push(
       `${target}: ${move.conceptClass}.${move.factory} takes more than three parameters, give it one typed object.`,
@@ -132,11 +126,15 @@ function moveClass({ config }: Tree, { error, move }: PlannedMove, draft: Migrat
   }
 
   draft.remove(error.file);
-  draft.write(target, fitSource(next ?? empty));
+  draft.write(target, fitSource(next));
   moveSpec(context, { error, move }, draft);
 }
 
-/** The spec of the class, rewritten as any other file, becomes the cases of its factory in the spec of the concept class. */
+/**
+ * The spec of the class, rewritten as any other file, becomes the cases of its factory in the spec
+ * of the concept class. A spec of the concept class without a `describe` takes no case: the spec of
+ * the class stays, and is said.
+ */
 function moveSpec(context: string, { error, move }: PlannedMove, draft: MigrationDraft): void {
   const old = `${context}/test/unit/${baseName(error.file).replace(/\.ts$/, '.spec.ts')}`;
   const source = draft.read(old);
@@ -162,16 +160,14 @@ function moveSpec(context: string, { error, move }: PlannedMove, draft: Migratio
     nestedCases(move.factory, cases),
   );
 
+  if (merged === undefined) {
+    draft.manual.push(`${target}: no describe block was found, move the cases of ${old} to it by hand.`);
+
+    return;
+  }
+
   draft.remove(old);
-  draft.write(target, merged ?? existing);
-}
-
-function withImports(spec: string, imports: readonly string[]): string {
-  const missing = imports.filter((line) => !spec.includes(line));
-  const last = [...spec.matchAll(/^import [^;]+;\n/gm)].at(-1);
-  const at = last === undefined ? 0 : last.index + last[0].length;
-
-  return spec.slice(0, at) + missing.join('') + spec.slice(at);
+  draft.write(target, merged);
 }
 
 function baseName(file: string): string {

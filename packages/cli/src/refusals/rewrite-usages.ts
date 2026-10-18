@@ -15,7 +15,11 @@ export function rewriteUsages(source: string, moves: readonly Move[], onValue: O
 
   const rewritten = named.reduce((text, move) => {
     const name = escapeRegExp(move.className);
-    const known = PASSES.reduce((current, pass) => pass(current, move, name), text);
+
+    const known = (move.ownClass === true ? OWN_CLASS_PASSES : PASSES).reduce(
+      (current, pass) => pass(current, move, name),
+      text,
+    );
 
     return renamed(known, move, onValue);
   }, source);
@@ -23,11 +27,21 @@ export function rewriteUsages(source: string, moves: readonly Move[], onValue: O
   return named.length === 0 ? source : tidyImports(rewritten, new Set(named.map((move) => move.conceptClass)));
 }
 
+const CONSTRUCTION: Pass = (source, move, name) =>
+  replaceInCode(source, new RegExp(`${NOT_IN_A_NAME}new\\s+${name}\\s*\\(`, 'g'), () => ({
+    text: `${move.conceptClass}.${move.factory}(`,
+  }));
+
+const IMPORT: Pass = (source, move, name) =>
+  replaceInCode(source, new RegExp(`import\\s+(type\\s+)?\\{\\s*${name}\\s*\\}\\s*from\\s*`, 'g'), (found) =>
+    importOf(found, move),
+  );
+
+/** A class of its own stands where the class per error stood, in an assertion as anywhere else: only what builds it changes. */
+const OWN_CLASS_PASSES: readonly Pass[] = [CONSTRUCTION, IMPORT];
+
 const PASSES: readonly Pass[] = [
-  (source, move, name) =>
-    replaceInCode(source, new RegExp(`${NOT_IN_A_NAME}new\\s+${name}\\s*\\(`, 'g'), () => ({
-      text: `${move.conceptClass}.${move.factory}(`,
-    })),
+  CONSTRUCTION,
   (source, move, name) =>
     replaceInCode(source, new RegExp(`\\.thenError\\(\\s*${name}\\s*(?:,[^()]*)?\\)`, 'g'), () => ({
       text: `.thenError('${move.code}')`,
@@ -48,10 +62,7 @@ const PASSES: readonly Pass[] = [
     replaceInCode(source, new RegExp(`([A-Za-z_$][\\w$.]*)\\s+instanceof\\s+${name}(?![\\w$])`, 'g'), ({ match }) => ({
       text: `${move.conceptClass}.is(${match[1] ?? ''}, '${move.code}')`,
     })),
-  (source, move, name) =>
-    replaceInCode(source, new RegExp(`import\\s+(type\\s+)?\\{\\s*${name}\\s*\\}\\s*from\\s*`, 'g'), (found) =>
-      importOf(found, move),
-    ),
+  IMPORT,
 ];
 
 /** What is left names a type, and takes the name of the concept class; a value left there asserts less than it did, and is told. */
@@ -66,7 +77,7 @@ function renamed(source: string, move: Move, onValue: OnValue): string {
       .trimStart()
       .charAt(0);
 
-    if (!':<|&'.includes(before) && !(before === ',' && '>|&'.includes(after))) {
+    if (move.ownClass !== true && !':<|&'.includes(before) && !(before === ',' && '>|&'.includes(after))) {
       onValue(move.className, move.conceptClass);
     }
 
