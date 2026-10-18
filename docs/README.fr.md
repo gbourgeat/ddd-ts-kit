@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:7032e5ba58e0cef9 -->
+<!-- translation-of: README.md sha256:0bbaf7fee2622b81 -->
 
 # Documentation
 
@@ -112,7 +112,7 @@ a vérifié, les limites, et une recommandation selon la situation.
 | [Méthodologie](guides/methodology.fr.md) | le chemin complet d'une expression des besoins jusqu'au code qui tourne, étape par étape : le chemin pris en charge |
 | [Quelle commande, quand](guides/commands.fr.md) | la commande ou la *skill* de chaque moment d'un projet, une première fonctionnalité en partant de zéro, et la référence de chaque commande et de chaque option |
 | [Une tranche, de bout en bout](guides/first-slice.fr.md) | la requête HTTP `POST /orders` à travers les quatre couches d'une tranche générée, et son code de domaine et d'application une fois rempli |
-| [Le plugin pour agents de code](guides/coding-agents.fr.md) | installer le plugin dans Claude Code, Codex et Copilot, ses vingt-deux *skills*, ses quatre agents et son *hook*, et ce que chaque hôte exécute |
+| [Le plugin pour agents de code](guides/coding-agents.fr.md) | installer le plugin dans Claude Code, Codex et Copilot, ses vingt-deux *skills*, ses cinq agents et son *hook*, et ce que chaque hôte exécute |
 | [Travail en équipe](guides/team-workflow.fr.md) | la propriété par contexte, le glossaire, les contrats d'abord, la revue, les décisions, l'arrivée d'un nouveau membre |
 | [Travail en parallèle](guides/parallel-work.fr.md) | plusieurs personnes ou agents à la fois : ce qui est sûr, ce qui est séquencé, un plan concret |
 | [Discipline de commit](guides/commit-discipline.fr.md) | la taille d'un *commit* et d'une *pull request*, les fichiers générés, ce que les *hooks* et la CI imposent |

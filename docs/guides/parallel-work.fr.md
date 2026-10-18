@@ -1,5 +1,5 @@
 [English](parallel-work.md) · **Français**
-<!-- translation-of: parallel-work.md sha256:5fe3145ebc5dac9d -->
+<!-- translation-of: parallel-work.md sha256:21f320dffb8d3f2f -->
 
 # Travailler en parallèle sans collisions
 
@@ -393,7 +393,9 @@ modification d'un fichier généré (les trois contrats, le *barrel*, `.dependen
 demande confirmation avant un changement des fichiers gouvernés (la configuration, celle du lint,
 des tests, du compilateur et du *pipeline*). Pour son agent `context-builder`, il va plus loin :
 avec un `.ddd-ts-kit/worker.json` dans le *worktree*, une écriture hors de
-`src/contexts/<context>/` et des *specs* de bout en bout est refusée, de même qu'un générateur
+`src/contexts/<context>/` et des *specs* de bout en bout est refusée (dans la *spec* d'acceptation
+d'une *story*, tout sauf retirer `pending(...)` autour d'un scénario ; la verrouiller est refusé
+aussi), de même qu'un générateur
 qui écrit des fichiers partagés et un changement de dépendance, où que se trouvent ses options
 (`npm i -D zod`) ; l'installation propre reste libre. Le même périmètre vaut pour le *shell* :
 une édition en place comme `sed -i`, une redirection ou `tee`, et `cp`, `mv`, `rm`, `touch`,

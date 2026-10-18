@@ -70,7 +70,30 @@ const GENERATORS = [
   [/\.route\.ts$/, 'route <context> <UseCase> --method <M> --path <p>'],
   [/\.builder\.ts$/, 'builder <context> <Aggregate>'],
   [/\.e2e\.spec\.ts$/, 'e2e <context> <UseCase>'],
+  [/\.acceptance\.spec\.ts$/, 'acceptance <story>'],
 ];
+
+// The acceptance of a story and its lock: a sub-agent only unwraps a scenario its rows now satisfy.
+const ACCEPTANCE_SPEC = /^test\/acceptance\/[^/]+\.acceptance\.spec\.ts$/;
+const ACCEPTANCE_LOCK = /^test\/acceptance\/[^/]+\.acceptance\.lock\.json$/;
+// The verdicts that let a locked acceptance change: written by the acceptance-judge agent alone.
+const ACCEPTANCE_VERDICT = /^test\/acceptance\/verdicts\/[^/]+\.md$/;
+const JUDGE_AGENT = 'acceptance-judge';
+// What a command may do with the lock or a verdict outside the judge: read it, version it, run the kit.
+const READING_PROGRAMS = new Set([
+  'git',
+  'cat',
+  'ls',
+  'head',
+  'tail',
+  'grep',
+  'rg',
+  'wc',
+  'diff',
+  'npx',
+  'pnpm',
+  'ddd-ts-kit',
+]);
 
 // A journey crosses use cases, and often contexts: no single route generates it, so it is written by hand.
 const JOURNEY = /^test\/e2e\/journey-[^/]+\.e2e\.spec\.ts$/;
@@ -113,6 +136,7 @@ const SHARED_GENERATORS = [
   'policy',
   'service',
   'worker',
+  'acceptance',
 ];
 // A decision record of a worker's own slices: a new file of docs/adr/. With --deviation it also writes the config.
 const DECISION_RECORD = /^docs\/adr\/[^/]+\.md$/;
@@ -267,9 +291,10 @@ function verdictOn({ file, written, replaced }, input) {
     return undefined;
   }
   const refusal =
+    acceptanceReason(project, input, { file, written, replaced }) ??
     generatedFileReason(project, file) ??
     testWriterScopeReason(project, file, input) ??
-    workerScopeReason(project, file, input) ??
+    (isUnwrapping(project, file, input) ? undefined : workerScopeReason(project, file, input)) ??
     handWrittenRoleReason(project, file);
   if (refusal) {
     return { decision: project.mode === 'advise' ? 'ask' : 'deny', reason: refusal };
@@ -291,7 +316,9 @@ async function preBash(input) {
   const preparing =
     (await workerPlaceReason(input, command)) ??
     (await landingReason(input, command)) ??
-    oneSideMergeReason(project, input, command);
+    oneSideMergeReason(project, input, command) ??
+    (await acceptanceLockingReason(input, command)) ??
+    (await acceptanceFilesShellReason(input, command));
   if (preparing) {
     decide(input, project.mode === 'advise' ? 'ask' : 'deny', preparing);
     return;
@@ -807,9 +834,90 @@ function workerContext(project, input) {
   return typeof context === 'string' && /^[a-z][a-z0-9-]*$/.test(context) ? context : undefined;
 }
 
+// The acceptance of a story is the contract its code is built against: its lock is written by the
+// CLI only, which refuses a scenario changed without its criterion unless a reason is kept for the
+// owner; a sub-agent never rewrites a scenario, it removes `pending(...)` once its rows pass it.
+function acceptanceReason(project, input, { file, written, replaced }) {
+  const path = projectPath(project, file);
+  const judging = isJudge(input);
+  if (judging || path.startsWith('test/acceptance/verdicts/')) {
+    return judging === ACCEPTANCE_VERDICT.test(path) ? undefined : verdictReason(judging, path);
+  }
+  if (ACCEPTANCE_LOCK.test(path)) {
+    return `${path} is the lock of a story's acceptance: \`npx ddd-ts-kit acceptance <story> --lock\` writes it, and refuses a change since the lock that no verdict of the acceptance-judge agent lets through.`;
+  }
+  if (!ACCEPTANCE_SPEC.test(path) || !input.agent_type) {
+    return undefined;
+  }
+  const before = replaced.trim() === '' ? (readText(file) ?? '') : replaced;
+  return existsSync(file) && asserted(written) === asserted(before)
+    ? undefined
+    : `${path} is the acceptance of a story, locked with its specification: a sub-agent only removes \`pending(...)\` around a scenario its rows now satisfy. A scenario that seems wrong is not changed to pass: name it and the criterion it fails in your report, and the conductor has the acceptance-judge agent judge it before anything changes. ${REPORT_TO_CONDUCTOR}`;
+}
+
+function isJudge(input) {
+  return String(input.agent_type ?? '').includes(JUDGE_AGENT);
+}
+
+function verdictReason(judging, path) {
+  return judging
+    ? `The acceptance judge writes its verdict and nothing else: test/acceptance/verdicts/<story>-<fingerprint>.md, not ${path}.`
+    : `${path} is a verdict on a locked acceptance: the acceptance-judge agent alone writes it, so that a session never lets its own change through. Launch that agent with the subject and the fingerprint \`npx ddd-ts-kit acceptance <story>\` prints.`;
+}
+
+// Outside the judge, a command that names the lock or a verdict only reads it, versions it or runs the kit;
+// the judge itself only reads, and writes its verdict with the editor tool.
+async function acceptanceFilesShellReason(input, command) {
+  const judging = isJudge(input);
+  if (!judging && !/acceptance\/verdicts|\.acceptance\.lock\.json/.test(command)) {
+    return undefined;
+  }
+  shell = await import('./shell-commands.mjs');
+  const writing = shell
+    .simpleCommands(command, input.cwd ?? process.cwd())
+    .some(
+      ({ words, redirects }) =>
+        !READING_PROGRAMS.has(shell.commandName(words)) ||
+        redirects.some(({ operator, target }) => operator.includes('>') && target !== '/dev/null'),
+    );
+  if (!writing) {
+    return undefined;
+  }
+  return judging
+    ? 'The acceptance judge reads (git, cat, grep, the kit) and writes its verdict with the Write tool only.'
+    : 'The lock of an acceptance and its verdicts are written by `npx ddd-ts-kit acceptance <story> --lock` and by the acceptance-judge agent only; a command may read them, version them or run the kit.';
+}
+
+// What a scenario asserts, the wrapper `pending(...)`, white space, parentheses and commas aside.
+function asserted(text) {
+  return text.replace(/\bpending\b/g, '').replace(/[\s(),]/g, '');
+}
+
+// A sub-agent unwrapping a scenario writes outside its context: what it writes was judged above.
+function isUnwrapping(project, file, input) {
+  return Boolean(input.agent_type) && ACCEPTANCE_SPEC.test(projectPath(project, file));
+}
+
+async function acceptanceLockingReason(input, command) {
+  if (!input.agent_type || !command.includes('acceptance')) {
+    return undefined;
+  }
+  shell = await import('./shell-commands.mjs');
+  const locking = kitInvocations(shell.simpleCommands(command, input.cwd ?? process.cwd())).some(
+    ({ subcommand, args }) => subcommand === 'acceptance' && args.includes('--lock'),
+  );
+  return locking
+    ? 'Locking the acceptance of a story is a step of the conductor, once each change since the lock has its verdict. Report the scenario and the criterion it fails instead.'
+    : undefined;
+}
+
 function handWrittenRoleReason(project, file) {
   const path = projectPath(project, file);
-  if (existsSync(file) || JOURNEY.test(path) || !(insideContexts(project, path) || path.startsWith('test/e2e/'))) {
+  if (
+    existsSync(file) ||
+    JOURNEY.test(path) ||
+    !(insideContexts(project, path) || path.startsWith('test/e2e/') || path.startsWith('test/acceptance/'))
+  ) {
     return undefined;
   }
   if (/\.ports\.ts$/.test(path)) {

@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:c39052d675e3157c -->
+<!-- translation-of: commands.md sha256:43be1f6648b129e7 -->
 
 # Quelle commande, quand
 
@@ -89,6 +89,8 @@ La tranche est finie quand `todo ordering` n'en liste plus rien.
 |---|---|---|---|---|
 | `/ddd-ts-kit:plan-slices` | le travail en tranches verticales, ordonnées, avec leurs commandes de générateur | étape 6, après l'amorçage | `docs/architecture/slices.md` | `/ddd-ts-kit:use-case` |
 | `npx ddd-ts-kit cited --rows <id> --base origin/main` | les noms que la conception d'une ligne cite comme du code et que le tronc n'a pas : retirés par son historique (avec le commit et ce qui les remplace), refusés par l'arborescence canonique, ou proches d'un nom qu'il a gagné depuis que la ligne a été écrite ; un nom prévu reste muet | avant de construire seul une ligne, avant de committer une revue de conception | une ligne par nom, `--json` pour les données ; code de sortie 0 | construire sur ce que le tronc a, et corriger le document sur le tronc |
+| `npx ddd-ts-kit generate acceptance <story>`, puis `npx ddd-ts-kit acceptance <story> --lock` | la *spec* d'acceptation d'une *story*, un `it.todo` par critère de `docs/architecture/stories/<story>.md`, à écrire en scénarios enveloppés dans `pending(...)` ; le verrou les enregistre, après quoi un scénario ne change qu'avec son critère, et un critère ou un scénario dont les critères n'ont pas changé seulement avec un verdict de l'agent `acceptance-judge` | avant la première ligne de code d'une *story* | `test/acceptance/<story>.acceptance.spec.ts` et son `.lock.json` | `npx ddd-ts-kit acceptance <story> --gate written`, puis les lignes |
+| `npx ddd-ts-kit acceptance [<story>] [--gate written\|passing]` | les scénarios de chaque *story* face à ses lignes et à ses critères : à écrire, en attente, dérivés du verrou, incohérents, et les amendements à valider | avant le code d'une *story* (`written`), avant de la clore (`passing`) | un texte court, `--json` pour des données ; code de sortie 1 tant que la barrière demandée n'est pas franchie | écrire, verrouiller, construire, ou signaler les amendements |
 | `/ddd-ts-kit:use-case <UseCase>` | une tranche de bout en bout, test d'abord | pour chaque ligne des tranches | domaine, gestionnaire, route et *specs*, remplis | `npm run verify` |
 | `npx ddd-ts-kit generate <kind> ...` | un fichier d'un rôle avec sa *spec*, son *fake* et son enregistrement (liste ci-dessous) | chaque fois qu'il faut un fichier d'un rôle, jamais à la main | le fichier et les endroits `TODO(domain)`, `--json` pour la liste | remplir les endroits, puis `todo` |
 | `npx ddd-ts-kit todo [<context>]` | chaque `TODO(domain)`, `TODO(platform)`, `it.todo` et `TODO(review)` restant | avant de clore une tranche, une story ou un jalon | des entrées `file:line` | les écrire, puis `npm test` ; régler chaque `TODO(review)` ou l'écarter par `generate adr` avant de clore la story ou le jalon |
@@ -252,6 +254,7 @@ Usage
   ddd-ts-kit todo [<context>]
   ddd-ts-kit plan-waves [<context>]
   ddd-ts-kit story-check <code> [--strict]
+  ddd-ts-kit acceptance [<story>] [--gate written|passing] [--lock]
   ddd-ts-kit worker-scope <context> [--base <ref>] [--rows <id,...>] [--worktree <path>] [--branch <name>] [--no-install] [--dry-run]
   ddd-ts-kit worker-scope <context> --resume [--worktree <path> | --branch <name>] [--fresh]
   ddd-ts-kit verify-slice <context> --since <git-ref>
@@ -351,6 +354,23 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
                    is its own, its file:line and its fix: handle it, or dismiss it by a decision record
                    (generate adr), then delete the marker. Reads only: exits 0 when it can close, 1
                    listing what keeps it open, 2 on a code no row carries or without slices.md
+  acceptance       the acceptance scenarios of each story (test/acceptance/<story>.acceptance.spec.ts) against
+                   its rows in slices.md and the criteria of docs/architecture/stories/<story>.md: the rows and
+                   criteria each scenario names (#US5.02 AC1 in its title), the scenarios left to write
+                   (it.todo), those wrapped in pending(...) of @ddd-ts-kit/testing/e2e until their code is
+                   built, and what is inconsistent (no row, an unknown row or criterion, a scenario skipped,
+                   a pending one whose rows are done, a locked one changed while its criteria were not);
+                   --gate written: every slice row and criterion has a written scenario, none is left to
+                   write, the acceptance is locked (before the code of the story); --gate passing: none is
+                   pending either (before the story closes); exits 1 while a gate is not met, or, without
+                   one, on an inconsistency. Never runs a test. --lock writes
+                   test/acceptance/<story>.acceptance.lock.json, the fingerprint of each criterion and of
+                   each scenario (pending(...), layout and comments aside), refused while a scenario is
+                   left to write, or while a criterion changed, or a locked scenario changed while its
+                   criteria did not, without a verdict "amend" of the acceptance-judge agent on that very
+                   version (test/acceptance/verdicts/*.md, lines Story:, Subject:, Fingerprint:,
+                   Verdict:, Reason:); a refusal wins; the verdicts become amendments of the lock,
+                   listed for the owner to validate
   worker-scope     a git worktree on the branch build/<context> (by default ../<project>-<context>), cut from
                    --base <ref> (by default the current branch, refused from a worker's worktree), its
                    .ddd-ts-kit/worker.json, and the briefing of the worker of that context; --rows <id,...>
@@ -464,6 +484,7 @@ Kinds
   process <context> <Name> [--term "<Term>=<meaning>"]...   (alias: process-manager)
   acl <context> <upstreamOrSystemName>
   e2e <context> <UseCaseName>
+  acceptance <story> ["<title>"]
   policy <context> <Name> --permission <aggregate>.<action>
   gateway <context> <upstreamContext> <Name>
   adapter <context> <Port> [--kind external|gateway] [--decorators]

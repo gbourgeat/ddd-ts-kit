@@ -109,6 +109,13 @@ export function scaffoldEverything(root: string, stack = DEFAULT_STACK, more: re
 
   step('init', ...initFlags(stack), ...more);
   scaffoldBilling(step, withHttp, grantOf(stack, more));
+
+  if (withHttp) {
+    // The acceptance of a story, written before its code: an it.todo per slice row of the story.
+    write(root, 'docs/architecture/slices.md', STORY_SLICES);
+    step('generate', 'acceptance', 'US1', 'Invoice a customer');
+  }
+
   scaffoldDecoratedAdapter(step);
   scaffoldShipping(step, isDeclared(stack));
   scaffoldOrderFulfilment(step, withHttp, grantOf(stack, more));
@@ -122,6 +129,14 @@ export function scaffoldEverything(root: string, stack = DEFAULT_STACK, more: re
 }
 
 type Step = (...args: string[]) => void;
+
+const STORY_SLICES = `# Slices
+
+| # | Context | Kind | Slice | Start with | Depends on | Owner | Status |
+|---|---|---|---|---|---|---|---|
+| US1.01 | billing | skeleton | Invoice | \`generate aggregate billing Invoice\` | | conductor | done |
+| US1.02 | billing | slice | Issue invoice | \`generate command billing IssueInvoice --aggregate Invoice --permission invoice.issue\` | US1.01 | billing | todo |
+`;
 
 /** The style `init` gives a stack that does not name one: declared wherever the declarations are read, on tsyringe. */
 export function isDeclared(stack: StackFlags): boolean {
