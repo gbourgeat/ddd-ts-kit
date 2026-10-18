@@ -6,6 +6,36 @@ list the pull requests behind it.
 
 ## Unreleased
 
+**A lint warning fails the lint of a generated project.** `lint` and `ci:lint` ran `eslint .`,
+which exits 0 on warnings: `verify` and the pipeline passed them, a new one as well, and they
+piled up. `init` now writes `ddd-ts-kit lint` for both, and the example application runs the
+same: the ESLint of the project, through its API (its paths, `--format` and `--fix` as ESLint
+takes them), failing on an error and on a warning alike, but on a warning of a rule of the kit in
+transition. A rule a version adds, or what a rule judges more, is a warning for one minor version
+and an error at the next; its documentation names that version (`transition`), and `ddd-ts-kit
+lint` shows its warnings and lists them after the report, one line per rule with the version that
+makes it an error, without failing on them. An upgrade of the kit therefore never turns a green
+lint red, which a plain `eslint . --max-warnings 0` would. The preset keeps its warnings as warnings (`complexity`, `max-depth`,
+`clean/function-size`, `clean/no-flag-argument`, ...) and `init` writes no suppressions file: a
+new project has no warning, so the first one fails `npm run lint`, `verify` and the lint job on
+GitHub and GitLab. The hook before a commit is unchanged: it shows a warning without stopping the
+commit. The quality-gate skill says so; the workflow is in
+[Quality baseline](docs/tools/quality-baseline.md#warnings-fail-the-lint).
+
+To move: nothing changes until the project acts. `npx ddd-ts-kit init` keeps an existing `lint`
+and `ci:lint` and notes what the kit expects; `doctor` lists them as written otherwise, which
+`doctor --strict` does not fail on. To take the limit, run `npx eslint .` and settle each
+warning: fix it, or raise its rule to `error` (its id in the `rules` key of
+`ddd-ts-kit.config.json` for a rule of the kit, a block after the preset in `eslint.config.mjs`
+for `complexity` or `max-depth`) and record the existing findings with
+`npx eslint . --suppress-rule <rule>` (or `--suppress-all`) in `eslint-suppressions.json`,
+committed; once one is fixed, `npx eslint . --prune-suppressions` removes its entry, and the lint
+fails until it does. Then set the two scripts to `ddd-ts-kit lint`, or run
+`npx ddd-ts-kit init --force`, which also writes every other file and script of the kit over the
+project's. Update the plugin.
+
+## 0.27.0
+
 **The worktrees of a project live inside it, and a new project writes its code in a worktree.**
 `worker-scope`, `story-scope` and the new `ddd-ts-kit worktree <name>` (any other piece of work,
 on `work/<name>`, cut from `origin/main` when run from the trunk, installed) open their worktree
@@ -99,34 +129,6 @@ To move: a new project runs its acceptance specs with `npm run test:e2e`; in an 
 `testMatch` of `jest.e2e.config.js`). `npx ddd-ts-kit init` adds the permission of
 `npx ddd-ts-kit acceptance *` and the refusal to edit a lock; update the plugin.
 `ddd-ts-kit check --rule test/acceptance-black-box` lists the acceptance specs to take up.
-
-**A lint warning fails the lint of a generated project.** `lint` and `ci:lint` ran `eslint .`,
-which exits 0 on warnings: `verify` and the pipeline passed them, a new one as well, and they
-piled up. `init` now writes `ddd-ts-kit lint` for both, and the example application runs the
-same: the ESLint of the project, through its API (its paths, `--format` and `--fix` as ESLint
-takes them), failing on an error and on a warning alike, but on a warning of a rule of the kit in
-transition. A rule a version adds, or what a rule judges more, is a warning for one minor version
-and an error at the next; its documentation names that version (`transition`), and `ddd-ts-kit
-lint` shows its warnings and lists them after the report, one line per rule with the version that
-makes it an error, without failing on them. An upgrade of the kit therefore never turns a green
-lint red, which a plain `eslint . --max-warnings 0` would. The preset keeps its warnings as warnings (`complexity`, `max-depth`,
-`clean/function-size`, `clean/no-flag-argument`, ...) and `init` writes no suppressions file: a
-new project has no warning, so the first one fails `npm run lint`, `verify` and the lint job on
-GitHub and GitLab. The hook before a commit is unchanged: it shows a warning without stopping the
-commit. The quality-gate skill says so; the workflow is in
-[Quality baseline](docs/tools/quality-baseline.md#warnings-fail-the-lint).
-
-To move: nothing changes until the project acts. `npx ddd-ts-kit init` keeps an existing `lint`
-and `ci:lint` and notes what the kit expects; `doctor` lists them as written otherwise, which
-`doctor --strict` does not fail on. To take the limit, run `npx eslint .` and settle each
-warning: fix it, or raise its rule to `error` (its id in the `rules` key of
-`ddd-ts-kit.config.json` for a rule of the kit, a block after the preset in `eslint.config.mjs`
-for `complexity` or `max-depth`) and record the existing findings with
-`npx eslint . --suppress-rule <rule>` (or `--suppress-all`) in `eslint-suppressions.json`,
-committed; once one is fixed, `npx eslint . --prune-suppressions` removes its entry, and the lint
-fails until it does. Then set the two scripts to `ddd-ts-kit lint`, or run
-`npx ddd-ts-kit init --force`, which also writes every other file and script of the kit over the
-project's. Update the plugin.
 
 ## 0.26.0
 
