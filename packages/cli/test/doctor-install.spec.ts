@@ -68,6 +68,27 @@ describe('doctor, on the dependencies of the checkout', () => {
     expect(result.stdout).toContain('fix: upgrade `ddd-ts-kit` and every `@ddd-ts-kit/*` package together');
   });
 
+  it('reads the install of the workspace a project belongs to, and of no other directory above it', () => {
+    const above = path.dirname(root);
+
+    installKit(root);
+    fs.renameSync(path.join(root, 'node_modules'), path.join(above, 'node_modules'));
+    write(above, 'package-lock.json', '{}');
+    fs.utimesSync(path.join(above, 'package-lock.json'), new Date(0), new Date(0));
+
+    expect(cli(root, 'doctor').stdout).toContain('  install node_modules: missing (the dependencies installed)');
+
+    write(above, 'package.json', JSON.stringify({ name: 'shops', private: true, workspaces: ['shop'] }));
+
+    expect(cli(root, 'doctor').stdout).toContain('This checkout runs it');
+
+    write(above, 'node_modules/@ddd-ts-kit/kernel/package.json', JSON.stringify({ version: '0.1.0' }));
+
+    expect(cli(root, 'doctor').stdout).toContain(
+      `  install @ddd-ts-kit/kernel: other version (${VERSION}; yours: 0.1.0)`,
+    );
+  });
+
   it('judges a package of the kit node_modules holds that package.json does not declare', () => {
     installKit(root);
     write(root, 'node_modules/@ddd-ts-kit/kafka/package.json', JSON.stringify({ version: '0.2.0' }));

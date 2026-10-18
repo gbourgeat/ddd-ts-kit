@@ -1,5 +1,5 @@
 [English](parallel-work.md) · **Français**
-<!-- translation-of: parallel-work.md sha256:f1182c049b267b37 -->
+<!-- translation-of: parallel-work.md sha256:b75e37afde6bb6ed -->
 
 # Travailler en parallèle sans collisions
 
@@ -212,9 +212,25 @@ Un *worktree* est un second répertoire de travail du même dépôt, sur une aut
 branche :
 
 ```bash
-git worktree add ../scheduling-appointments -b feat/appointments-book
-git worktree add ../scheduling-calendars -b feat/calendars-working-hours
+git worktree add .worktrees/appointments -b feat/appointments-book
+git worktree add .worktrees/calendars -b feat/calendars-working-hours
 ```
+
+Les *worktrees* d'un projet vivent dans son dossier `.worktrees/`, qu'`init` inscrit dans
+`.gitignore` et que tous les outils du projet laissent de côté (Biome, ESLint, le *checker*,
+Docker) : un seul endroit, jamais un dossier voisin perdu à côté du projet, jamais un *worktree*
+imbriqué dans un autre, quel que soit le *worktree* d'où part la commande.
+`npx ddd-ts-kit worktree <name>` en ouvre un pour n'importe quel travail, sur `work/<name>` coupé
+de `origin/main`, installé. Dans un projet créé par `init`, la garde du *plugin* refuse le code
+d'un contexte dans le *checkout* principal du tronc (`"worktrees": "required"`, voir la
+[configuration](../CONFIG.fr.md)) : le chef d'orchestre écrit lui aussi les contrats et les
+squelettes dans un *worktree* à lui, les fait atterrir par une *pull request*, puis coupe les
+*workers* de `origin/main`. Un projet démarré avant garde `"advised"` tant que son responsable ne
+le pose pas : la garde dit seulement où va le code, et tant que son `.gitignore` ne contient pas
+`.worktrees/`, les *worktrees* s'ouvrent à côté de lui, comme avant. Un *worktree* de
+`.worktrees/` sans son propre `node_modules` tournerait sur les paquets du *checkout* principal
+au-dessus de lui, les versions du tronc : les commandes l'installent, et la garde refuse son code
+tant qu'il ne l'est pas.
 
 Pour un *worker* par contexte, la CLI le fait en une commande :
 
@@ -223,7 +239,7 @@ npx ddd-ts-kit worker-scope appointments --base origin/main --rows M1.12
 ```
 
 Elle ajoute un *worktree* sur la branche `build/appointments` (par défaut dans
-`../<project>-appointments` ; `--worktree <path>` et `--branch <name>` changent l'un et l'autre),
+`.worktrees/appointments` ; `--worktree <path>` et `--branch <name>` changent l'un et l'autre),
 à partir de `--base` (par défaut la branche courante), y écrit `.ddd-ts-kit/worker.json` qui
 nomme le contexte, avec les lignes de la consigne, la base et la branche, et affiche la consigne de ce *worker* : le répertoire qu'il peut écrire, les
 générateurs qu'il peut lancer, ses lignes de `docs/architecture/slices.md` avec les règles écrites
@@ -287,8 +303,8 @@ comme tronc, et les générateurs, les étapes et le compte rendu omis) :
 ```text
 You build the bounded context notification of scheduling.
 
-Worktree: ../scheduling-notification/   Branch: build/notification   Trunk: main
-Run every command from the worktree (`cd ../scheduling-notification/ && ...` or `--cwd ../scheduling-notification/`).
+Worktree: .worktrees/notification/   Branch: build/notification   Trunk: main
+Run every command from the worktree (`cd .worktrees/notification/ && ...` or `--cwd .worktrees/notification/`).
 Without node_modules: `npm ci`, never an install that names a package.
 
 Scope
@@ -465,7 +481,7 @@ repart de zéro.
 
 ```text
 $ npx ddd-ts-kit worker-scope billing --resume
-worker build/billing  ../shop-billing  (base origin/main)
+worker build/billing  .worktrees/billing  (base origin/main)
 rows: #M1.07 committed a1b2c3d, #M1.12 committed d4e5f6a, #M1.14 in progress, #M1.15 to do
 #M1.14: 6 files uncommitted (src/contexts/billing/...), 3 TODO(domain), 2 it.todo; last verify-slice 2026-10-17T19:02Z failed: tests (2 files changed since)
 report: written 2026-10-17T19:05Z (current)
@@ -473,7 +489,7 @@ agent: a389e09, run 1, 104 tool calls counted, last tool call 2026-10-17T19:06Z,
 
 next: SendMessage to a389e09:
 ---
-Continue row #M1.14 (Pay an invoice) in ../shop-billing; do not start #M1.15.
+Continue row #M1.14 (Pay an invoice) in .worktrees/billing; do not start #M1.15.
 Committed: #M1.07, #M1.12. Left modified by you: src/contexts/billing/... 3 TODO(domain) and 2 it.todo remain; your last verify-slice failed at tests.
 Next: finish #M1.14, `npx ddd-ts-kit verify-slice billing --since origin/main` until it passes, commit with the command it prints, rewrite .ddd-ts-kit/report.md, end with the report.
 ---
@@ -541,7 +557,7 @@ Wave 1
   W1.1 billing (aggregate Invoice)
     #US1.02 slice "Issue invoice"
     #US1.03 slice "Cancel invoice"
-    npx ddd-ts-kit worker-scope billing --base origin/main --rows US1.02,US1.03 --worktree ../invoicing-billing-w1.1 --branch build/billing-w1.1
+    npx ddd-ts-kit worker-scope billing --base origin/main --rows US1.02,US1.03 --worktree .worktrees/billing-w1.1 --branch build/billing-w1.1
     likely to touch the same files as W1.3
   W1.2 conductor, billing (aggregate Customer)
     #US2.01 skeleton "Customer"
@@ -550,7 +566,7 @@ Wave 1
 Wave 2
   W2.3 billing (aggregate unknown)
     #US2.03 slice "Overdue invoices", after #US1.02
-    npx ddd-ts-kit worker-scope billing --base origin/main --rows US2.03 --worktree ../invoicing-billing-w2.3 --branch build/billing-w2.3
+    npx ddd-ts-kit worker-scope billing --base origin/main --rows US2.03 --worktree .worktrees/billing-w2.3 --branch build/billing-w2.3
     unknown whether it touches the files of W2.1, W2.2: no aggregate named
 Merge order: W1.1, W1.2, W1.3, W2.1, W2.2, W2.3
 Before each merge: `npx ddd-ts-kit merge-trunk --to-land --cwd <worktree>`, then the squash merge

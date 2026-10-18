@@ -509,7 +509,7 @@ config, `docsUi`, `ci` and `logger` included.
 | `README.md`, `AGENTS.md`, `CLAUDE.md`, `.claude/rules/*.md`, `.github/instructions/*.instructions.md` | how to run it; a slim guide in `AGENTS.md`, which Codex, Copilot and most coding agents read and `CLAUDE.md` imports (commands, how to read less, the map of the rules, generated files, compiler note, the skills of the plugin: `/ddd-ts-kit:start`, `glossary`, `use-case`, `document`, `quality-gate`) and the invariants in seven rule files, `domain.md`, `application.md`, `published-language.md`, `infrastructure.md`, `presentation.md`, `platform.md` and `tests.md`, each scoped by a `paths` frontmatter, and the same seven for GitHub Copilot, each scoped by `applyTo` |
 | `.github/copilot/settings.json` | the plugin of the kit, declared for GitHub Copilot (`extraKnownMarketplaces`, `enabledPlugins`): its cloud agent installs it, the Copilot CLI and VS Code recommend it; an existing file keeps what it holds and gains the two entries |
 | `.claude/settings.json` | permissions only: the checks and generators run without asking, `.env` files are unreadable (`.env.example` stays readable), the three generated documents are not edited by hand, `git push`, `npm publish` and any edit of the files that hold the rules and the pipeline (`ddd-ts-kit.config.json`, `eslint.config.mjs`, `biome.json`, `.dependency-cruiser.cjs`, `knip.json`, `lefthook.yml`, `.gitlab-ci.yml`, `.github/workflows/**`, `.claude/settings.json`, `.github/copilot/settings.json`) ask first |
-| `.gitignore` | `node_modules`, `dist`, `coverage`, `.env`, `*.tsbuildinfo` and `.ddd-ts-kit/`, where `worker-scope` writes |
+| `.gitignore` | `node_modules`, `dist`, `coverage`, `.env`, `*.tsbuildinfo`, `.ddd-ts-kit/`, where `worker-scope` writes, and `.worktrees/`, where the worktrees live |
 
 `--ci both` writes the two pipelines, `--ci none` neither (and no `renovate.json`). The pipeline
 files are copies of the assets of the repository's `pipeline/` directory, shipped in
@@ -1196,7 +1196,9 @@ an alias such as `lts/*` is not judged); `node_modules` present (`missing`) and 
 the lockfile last changed (`outdated`, from the copy of the lockfile the package manager writes
 under `node_modules`); `ddd-ts-kit` and every `@ddd-ts-kit/*` package that `package.json`
 declares or `node_modules` holds, installed (`not installed`) at the version of the running CLI
-(`other version`); and, when the repository has a `.gitmodules`, every submodule initialised
+(`other version`). A project without a lockfile of its own inside a workspace (a `package.json`
+above it that declares `workspaces`, or a `pnpm-workspace.yaml`, with the lockfile) is read where
+the workspace installs, its packages resolved as Node does, from the project up; and, when the repository has a `.gitmodules`, every submodule initialised
 (`not initialised`, from `git submodule status`). Each comes with its fix: a Node that
 `engines.node` accepts (`nvm use`), `npm ci`, the packages of the kit upgraded together,
 `git submodule update --init --recursive`.
@@ -1218,7 +1220,8 @@ ddd-ts-kit worker-scope <context> --resume [--worktree <path> | --branch <name>]
 ```
 
 Prepares the place of one worker of a build split by context: creates a git worktree of the
-project (`../<project>-<context>` by default) on the branch `build/<context>`, cut from
+project (`.worktrees/<context>` of the main checkout by default, next to the project while its
+`.gitignore` does not hold `.worktrees/`) on the branch `build/<context>`, cut from
 `--base` (a branch, a tag or a commit: `origin/main`; by default the current branch), writes
 `.ddd-ts-kit/worker.json` in it (`{ context, rows, base, baseCommit, branch }`, `baseCommit` being
 the commit the base names at that moment; `init` ignores `.ddd-ts-kit/`), and

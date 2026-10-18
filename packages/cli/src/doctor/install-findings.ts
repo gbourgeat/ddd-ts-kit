@@ -10,20 +10,70 @@ import { OF_THE_KIT } from './package-findings.js';
 /**
  * What this checkout has installed: node_modules, installed since the lockfile last changed, then
  * each package of the kit package.json declares or node_modules holds, at the version of the
- * running CLI. Reads the files only: no package manager runs.
+ * running CLI. A project inside a workspace is installed where the lockfile of the workspace is,
+ * its packages resolved as Node does, from the project up to there. Reads the files only: no
+ * package manager runs.
  */
 export function installFindings(
   root: string,
   manager: Stack['packageManager'],
   declared: Readonly<Record<string, unknown>>,
 ): DoctorFinding[] {
-  const modules = path.join(root, 'node_modules');
+  const installRoot = installRootOf(root, manager);
 
-  if (!fs.existsSync(modules)) {
+  if (!fs.existsSync(path.join(installRoot, 'node_modules'))) {
     return [{ area: 'install', name: 'node_modules', problem: 'missing', expected: 'the dependencies installed' }];
   }
 
-  return [...freshnessFindings(root, manager), ...kitFindings(modules, declared)];
+  return [...freshnessFindings(installRoot, manager), ...kitFindings(modulesFrom(root, installRoot), declared)];
+}
+
+/**
+ * The project, unless it has no lockfile of its own and a workspace above it holds one: the
+ * nearest directory up whose package.json declares `workspaces`, or that has a
+ * `pnpm-workspace.yaml`, and the lockfile.
+ */
+function installRootOf(root: string, manager: Stack['packageManager']): string {
+  if (fs.existsSync(path.join(root, LOCKFILES[manager]))) {
+    return root;
+  }
+
+  for (let directory = path.dirname(path.resolve(root)); ; directory = path.dirname(directory)) {
+    if (isWorkspaceRoot(directory) && fs.existsSync(path.join(directory, LOCKFILES[manager]))) {
+      return directory;
+    }
+
+    if (path.dirname(directory) === directory) {
+      return root;
+    }
+  }
+}
+
+function isWorkspaceRoot(directory: string): boolean {
+  if (fs.existsSync(path.join(directory, 'pnpm-workspace.yaml'))) {
+    return true;
+  }
+
+  try {
+    const manifest: unknown = JSON.parse(fs.readFileSync(path.join(directory, 'package.json'), 'utf8'));
+
+    return isRecord(manifest) && manifest['workspaces'] !== undefined;
+  } catch {
+    return false;
+  }
+}
+
+/** The node_modules folders Node reads for the project, nearest first, up to the one of the install. */
+function modulesFrom(root: string, installRoot: string): string[] {
+  const folders: string[] = [];
+
+  for (let directory = path.resolve(root); ; directory = path.dirname(directory)) {
+    folders.push(path.join(directory, 'node_modules'));
+
+    if (directory === path.resolve(installRoot) || path.dirname(directory) === directory) {
+      return folders.filter((folder) => fs.existsSync(folder));
+    }
+  }
 }
 
 /** An install writes its copy of the lockfile last: a lockfile changed after it was changed by a pull, a merge or a checkout. */
@@ -45,11 +95,14 @@ function freshnessFindings(root: string, manager: Stack['packageManager']): Doct
     : [];
 }
 
-function kitFindings(modules: string, declared: Readonly<Record<string, unknown>>): DoctorFinding[] {
-  const names = new Set([...Object.keys(declared).filter((name) => OF_THE_KIT.test(name)), ...installedKit(modules)]);
+function kitFindings(modules: readonly string[], declared: Readonly<Record<string, unknown>>): DoctorFinding[] {
+  const names = new Set([
+    ...Object.keys(declared).filter((name) => OF_THE_KIT.test(name)),
+    ...modules.flatMap(installedKit),
+  ]);
 
   return [...names].sort(cliFirst).flatMap((name): DoctorFinding[] => {
-    const found = versionOf(path.join(modules, name, 'package.json'));
+    const found = resolvedVersionOf(modules, name);
 
     if (found === undefined) {
       return [{ area: 'install', name, problem: 'not installed', expected: VERSION }];
@@ -68,6 +121,13 @@ function installedKit(modules: string): string[] {
 
 function cliFirst(left: string, right: string): number {
   return Number(left !== 'ddd-ts-kit') - Number(right !== 'ddd-ts-kit') || left.localeCompare(right);
+}
+
+/** The version of the first copy of a package Node would load, nearest node_modules first. */
+function resolvedVersionOf(modules: readonly string[], name: string): string | undefined {
+  const folder = modules.find((candidate) => fs.existsSync(path.join(candidate, name, 'package.json')));
+
+  return folder === undefined ? undefined : versionOf(path.join(folder, name, 'package.json'));
 }
 
 function versionOf(manifest: string): string | undefined {

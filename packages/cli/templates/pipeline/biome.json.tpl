@@ -13,6 +13,7 @@
       "!**/dist",
       "!**/coverage",
       "!**/reports",
+      "!**/.worktrees",
       "!**/generated",
       "!**/package-lock.json",
       "!**/.dependency-cruiser.cjs",

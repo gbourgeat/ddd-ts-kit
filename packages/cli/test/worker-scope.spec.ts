@@ -33,7 +33,7 @@ let installers: StubInstallers;
 beforeAll(() => {
   installers = stubInstallers();
   root = committedProject('shop', '--context', 'billing:core', '--context', 'shipping:supporting');
-  worktree = fs.realpathSync(path.dirname(root)) + path.sep + 'shop-billing';
+  worktree = path.join(fs.realpathSync(root), '.worktrees', 'billing');
   write(root, 'docs/architecture/slices.md', SLICES);
 });
 
@@ -63,7 +63,7 @@ describe('worker-scope', () => {
     expect(git(root, 'branch', '--list', 'build/billing').trim()).toBe('');
   });
 
-  it('creates the worktree next to the project, on the branch build/<context>, with the scope of the worker', () => {
+  it('creates the worktree in .worktrees/ of the project, on the branch build/<context>, with the scope of the worker', () => {
     const scope = cli(root, 'worker-scope', 'billing', '--json');
 
     expect(scope.code).toBe(0);
@@ -103,7 +103,7 @@ describe('worker-scope', () => {
     const briefing = String(jsonAt(cli(root, 'worker-scope', 'billing', '--json').json(), 'briefing'));
 
     expect(briefing).toContain('You build the bounded context billing of shop.');
-    expect(briefing).toMatch(/^Worktree: \/.*shop-billing {3}Branch: build\/billing {3}Trunk: main$/m);
+    expect(briefing).toMatch(/^Worktree: \/.*\.worktrees\/billing {3}Branch: build\/billing {3}Trunk: main$/m);
 
     expect(briefing).toContain(
       '- You may write: src/contexts/billing/** and test/e2e/<use-case>.e2e.spec.ts of your slices.',

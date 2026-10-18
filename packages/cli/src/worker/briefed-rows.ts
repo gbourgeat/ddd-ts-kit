@@ -36,7 +36,7 @@ export function briefedRows(ws: Workspace, context: string, ids: readonly string
 /** The rows of the first batch of the context still to do; every row still to do when the plan cannot be ordered. */
 function firstBatch(rows: readonly Slice[], context: string): { rows: Slice[]; notes: string[] } {
   const todo = rows.filter((row) => row.owner === context && row.status === 'todo');
-  const plan = planWaves(rows, { context, project: '' });
+  const plan = planWaves(rows, { context });
 
   if (plan.problems.length > 0) {
     return { rows: todo, notes: [] };

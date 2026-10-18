@@ -11,8 +11,6 @@ export interface WaveRows {
   readonly rows: readonly Slice[];
   /** The wave of every planned row, by id: a dependency it does not hold is done. */
   readonly numbers: ReadonlyMap<string, number>;
-  /** The name of the project directory, which `worker-scope` names the worktrees after. */
-  readonly project: string;
 }
 
 /** A batch being cut. */
@@ -82,7 +80,7 @@ function batchesOf(wave: number, drafts: readonly Draft[], input: WaveRows): Bat
         waitingFor: row.dependsOn.filter((dependency) => input.numbers.has(dependency)),
       })),
       aggregates: draft.aggregates,
-      brief: briefOf(draft, drafts, { id: id(draft), project: input.project }),
+      brief: briefOf(draft, drafts, id(draft)),
       sameFiles: neighbours.filter((other) => draft.aggregates.some((name) => other.aggregates.includes(name))).map(id),
       unknownOverlap: neighbours.filter(unknown).map(id),
     };
@@ -93,7 +91,7 @@ function batchesOf(wave: number, drafts: readonly Draft[], input: WaveRows): Bat
  * The `worker-scope` command of a batch owned by the worker of its context. Two batches of one
  * context in one wave run side by side: each gets a worktree and a branch named after its id.
  */
-function briefOf(draft: Draft, drafts: readonly Draft[], input: { id: string; project: string }): string | null {
+function briefOf(draft: Draft, drafts: readonly Draft[], batch: string): string | null {
   if (draft.owner !== draft.context) {
     return null;
   }
@@ -102,7 +100,7 @@ function briefOf(draft: Draft, drafts: readonly Draft[], input: { id: string; pr
   const workers = drafts.filter((other) => other.owner === context && other.context === context);
   const rows = draft.rows.map((row) => row.id).join(',');
   const command = `npx ddd-ts-kit worker-scope ${context} --base origin/main --rows ${rows}`;
-  const own = `${context}-${input.id.toLowerCase()}`;
+  const own = `${context}-${batch.toLowerCase()}`;
 
-  return workers.length === 1 ? command : `${command} --worktree ../${input.project}-${own} --branch build/${own}`;
+  return workers.length === 1 ? command : `${command} --worktree .worktrees/${own} --branch build/${own}`;
 }

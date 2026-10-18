@@ -22,6 +22,7 @@ export { DEFAULT_IMPORT_EXTENSION } from './default-import-extension.js';
 export { editConfigText } from './edit-config-text.js';
 export { FUNCTION_LINES_CEILING } from './function-lines-ceiling.js';
 export { GUARD_MODES } from './guard-modes.js';
+export { WORKTREE_MODES } from './worktree-modes.js';
 export { IMPORT_EXTENSIONS } from './import-extensions.js';
 export { isOneOf } from './is-one-of.js';
 export { openApiProblems } from './open-api-problems.js';

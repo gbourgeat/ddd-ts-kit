@@ -76,6 +76,10 @@ before running them side by side), and gives the merge order. It refuses a cycle
 
 ## 2. Prepare the trunk (conductor, before any worker starts)
 
+0. **Your own worktree.** The guard refuses the code of a context in the main checkout of the
+   trunk: `npx ddd-ts-kit worktree <plan>` opens `.worktrees/<plan>` on `work/<plan>`, cut from
+   `origin/main`, installed. Every step below runs there (`cd <worktree> && ...`, every file by
+   its absolute path under it).
 1. **Contracts first.** For every `contract` row a worker depends on: generate it
    (`generate integration-event`, `generate gateway`), write its payload schema or read
    contract in the upstream's `published-language/` with the owners of both sides, commit. A
@@ -86,10 +90,14 @@ before running them side by side), and gives the merge order. It refuses a cycle
    when a slice plans an adapter and the project has none yet, the first `generate adapter`
    (it writes `platform/resilience/own-policy.ts`, which the next ones only import).
    These kinds write shared files (`generate --help --json` says which, under
-   `writesShared`); run on the trunk, they never conflict. Leave the `TODO(domain)` markers
+   `writesShared`); run before any worker, they never conflict. Leave the `TODO(domain)` markers
    to the workers.
-3. `npm run verify`, commit (one commit per contract and per aggregate), tell the owner the
-   trunk is ready. `.ddd-ts-kit/` is in the `.gitignore` that `init` writes: keep it there.
+3. `npm run verify`, commit (one commit per contract and per aggregate), push `work/<plan>` and
+   land it as its own pull request: the workers are cut from `origin/main` once it merged, as
+   `plan-waves` prints them. To start them before it merges, cut them from your branch instead
+   (`--base work/<plan>`); `merge-trunk` later finds the commits they share with it. Tell the
+   owner the trunk is ready. `.ddd-ts-kit/` and `.worktrees/` are in the `.gitignore` that
+   `init` writes: keep them there.
 
 ## 3. One worktree and one scope per worker
 
@@ -97,9 +105,10 @@ before running them side by side), and gives the merge order. It refuses a cycle
 npx ddd-ts-kit worker-scope <context> --base origin/main --rows <id>   # as plan-waves prints it; --dry-run to read it first
 ```
 
-Run it from the checkout of the trunk, in your own session: the guard refuses it to a sub-agent
+Run it from the checkout of the trunk or from your worktree, in your own session: the guard refuses it to a sub-agent
 unless `--dry-run`, which prints the briefing and creates nothing. From the base (by default the current branch; it
-refuses a worker's worktree), it adds the git worktree `../<project>-<context>` on the branch
+refuses a worker's worktree), it adds the git worktree `.worktrees/<context>` of the main checkout (ignored by git and by
+every tool, never nested in another worktree) on the branch
 `build/<context>`, or keeps it when it contains the base and refuses it when it does not,
 writes `.ddd-ts-kit/worker.json` (its context, rows, base and branch) in it,
 runs the clean install of the project in a worktree it creates (`--no-install` leaves it to
@@ -171,7 +180,7 @@ report) and records its runs in its worktree; a session start names the workers 
 5. Bounded autonomy: after two stops on one row without a new commit, stop resuming it: split
    the row in `slices.md` (plan-slices), or ask the owner.
 
-A report sorts its needs. A **blocking** one stops that row: do it on the trunk, have the
+A report sorts its needs. A **blocking** one stops that row: do it in your worktree and land it, have the
 worker bring the trunk in (`npx ddd-ts-kit merge-trunk`), then launch the next agent. A **note** waits for the merge of the
 branch (step 6): the run goes on.
 
@@ -243,8 +252,8 @@ A worker never grants a permission to a role: the roles live in `src/platform/au
 its report says who holds a new permission, grant it on the trunk in `roles.ts` (by the entry
 of the set) as you merge its branch, before `npm run verify`: `authz/granted` warns until then.
 
-When a worker reports a need on a shared file: do it on the trunk, commit, tell the worker to
-merge the trunk. Remove each worktree once its branch is merged
-(`git worktree remove ../<project>-<context>`).
+When a worker reports a need on a shared file: do it in your worktree, land it, tell the worker
+to merge the trunk. Remove each worktree once its branch is merged
+(`git worktree remove .worktrees/<context>`).
 
 Token rules for everyone: [../start/token-economy.md](../start/token-economy.md).
