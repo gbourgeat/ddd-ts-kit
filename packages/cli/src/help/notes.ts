@@ -98,6 +98,21 @@ export const NOTES = `  affected         what a pull request has to run: the con
                    next; a worktree it creates gets the clean install of the package manager (npm ci), its
                    time in the notes, unless --no-install; an existing worktree or branch that does not
                    contain the base is refused, with the merge-trunk that brings it in
+  --here           worker-scope in the worktree of a story (.ddd-ts-kit/story.json): writes the scope of the
+                   next agent in place, its base the base of the story, and prints its briefing; no
+                   worktree, branch or install of its own; the agents of a story run one after the other
+  story-scope      the worktree of one story, ../<project>-<story> on story/<story> cut from --base (by default
+                   the current branch, refused from the worktree of a story), its .ddd-ts-kit/story.json and
+                   its clean install; an existing one is kept and the story resumes there; refused when the
+                   story is open in another worktree; names the other open stories and the contexts their
+                   rows change
+  story            where a story stands, phase by phase: its specification and criteria
+                   (docs/architecture/stories/<story>.md), its rows in slices.md, a design review section
+                   per row not done (docs/architecture/reviews/<story>.md, ## #<id>), its acceptance written
+                   and locked, its rows done, its acceptance passing, its ## Report; and the next step; in
+                   the worktree of a story, the story is its own; --gate build exits 1 until the first four
+                   are met (the code may start: the guard of the plugin opens the contexts), --gate close
+                   until all are
   --resume         worker-scope reads where the stopped worker of the context stands (its rows by their
                    Slice: trailer, the files of the row under way, the markers, its last verify-slice, its
                    report, its agent as the guard recorded it) and prints the message that resumes its agent

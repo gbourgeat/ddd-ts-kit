@@ -518,6 +518,88 @@ const edit = (file, { from, to }, extra = {}) => ({
   ...extra,
 });
 
+const STORY_SLICES = `# Slices
+
+| # | Context | Kind | Slice | Start with | Depends on | Owner | Status |
+|---|---|---|---|---|---|---|---|
+| US5.01 | ordering | slice | Place order | \`generate command ordering PlaceOrder --public\` | | ordering | todo |
+`;
+
+function storyWorktree() {
+  const root = project();
+  put(root, '.ddd-ts-kit/story.json', JSON.stringify({ story: 'US5', base: 'main', branch: 'story/us5' }));
+  put(root, 'docs/architecture/slices.md', STORY_SLICES);
+  return root;
+}
+
+// Each row designed, the acceptance written and locked: what opens the code of a story.
+function openTheBuildGate(root) {
+  put(
+    root,
+    'docs/architecture/stories/US5.md',
+    '# US5\n\n## Acceptance criteria\n\n- AC1: a customer places an order\n',
+  );
+  put(root, 'docs/architecture/reviews/US5.md', '# US5\n\n## #US5.01 Place order\n\n`PlaceOrderCommand`.\n');
+  put(
+    root,
+    'test/acceptance/us5.acceptance.spec.ts',
+    "import { it } from 'vitest';\nimport { pending } from '@ddd-ts-kit/testing/e2e';\n\nit('#US5.01 AC1 a customer places an order', pending(async () => {}));\n",
+  );
+  const locked = spawnSync('node', [cli, 'acceptance', 'US5', '--lock'], { cwd: root, encoding: 'utf8' });
+  assert.equal(locked.status, 0, locked.stderr);
+}
+
+test('in the worktree of a story, the code waits for each row designed and the acceptance locked', () => {
+  const root = storyWorktree();
+  const code = join(root, 'src/contexts/ordering/domain/order-number.ts');
+  for (const input of [write(code), write(code, { agent_type: 'ddd-ts-kit:context-builder' })]) {
+    const refused = run('pre-write', input);
+    assert.equal(decision(refused), 'deny');
+    assert.match(reason(refused), /The code of story US5 waits for its build gate/);
+    assert.match(reason(refused), /Next: Write docs\/architecture\/stories\/US5\.md/);
+  }
+  assert.equal(run('pre-write', write(join(root, 'src/contexts/ordering/CONTEXT.md'))).output, undefined);
+  assert.equal(
+    decision(run('pre-bash', bash(root, 'npx ddd-ts-kit generate command ordering PlaceOrder --public'))),
+    'deny',
+  );
+  assert.equal(run('pre-bash', bash(root, 'npx ddd-ts-kit generate acceptance US5')).output, undefined);
+  assert.equal(
+    decision(
+      run('pre-bash', bash(root, 'npx ddd-ts-kit story-scope US6', { agent_type: 'ddd-ts-kit:context-builder' })),
+    ),
+    'deny',
+  );
+  openTheBuildGate(root);
+  assert.equal(run('pre-write', write(code)).output, undefined);
+  assert.equal(
+    run('pre-bash', bash(root, 'npx ddd-ts-kit generate command ordering PlaceOrder --public')).output,
+    undefined,
+  );
+  assert.ok(existsSync(join(root, '.ddd-ts-kit/guard/story-gate.json')));
+});
+
+test('a session of a story starts on its phase and ends on its report, refused once for the same step', () => {
+  const root = storyWorktree();
+  const started = run('session', { cwd: root }).output.hookSpecificOutput.additionalContext;
+  assert.match(
+    started,
+    /Story US5 \(skill ddd-ts-kit:story\): done: rows\. Next: Write docs\/architecture\/stories\/US5\.md/,
+  );
+  const stopping = { cwd: root, session_id: 'story-session', stop_hook_active: false };
+  const refused = run('stop', stopping);
+  assert.equal(refused.output.decision, 'block');
+  assert.match(refused.output.reason, /story US5 is not finished/);
+  assert.match(refused.output.reason, /Go on without asking/);
+  assert.equal(run('stop', { ...stopping, stop_hook_active: true }).output, undefined);
+  put(
+    root,
+    'docs/architecture/stories/US5.md',
+    '# US5\n\n## Report\n\n- Blocked: the owner has not said who places an order.\n',
+  );
+  assert.equal(run('stop', stopping).output, undefined);
+});
+
 test('a sub-agent only removes pending(...) from an acceptance scenario, by edit or by rewrite', () => {
   const root = project();
   const agent = worker(root);

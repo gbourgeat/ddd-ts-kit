@@ -12,7 +12,7 @@ for the three agents:
 | Copilot CLI | `copilot plugin marketplace add gbourgeat/ddd-ts-kit`, then `copilot plugin install ddd-ts-kit@ddd-ts-kit` | by its name, `start` |
 | Copilot cloud agent, VS Code | declared by the `.github/copilot/settings.json` that `init` writes: the cloud agent installs it, VS Code recommends it | by its name, `start` |
 
-Twenty-two skills, in the order a project meets them:
+Twenty-three skills, in the order a project meets them:
 
 | Skill | Use |
 |---|---|
@@ -24,6 +24,7 @@ Twenty-two skills, in the order a project meets them:
 | `bootstrap` | choose the stack and create the project (run by the user) |
 | `plan-slices` | the work as vertical slices per context, ordered, with their generator commands |
 | `parallel-work` | split the slices between several agents or people without collision |
+| `story` | take one user story from its questions to a green pull request in one session, one story per terminal (run by the user; [story workflow](story-workflow.md)) |
 | `scaffold` | one file of any role, from a template |
 | `use-case` | one feature end to end, test first |
 | `integration-event` | make two contexts collaborate through a versioned event |
@@ -61,7 +62,11 @@ twice before its turn limit, records its runs in its worktree (`.ddd-ts-kit/agen
 listens to two rare events of Claude Code, filtered by that agent: `SubagentStart` (a launch or a
 resume starts a new count) and `SubagentStop` (when it ends on its own, it is kept going once to
 commit a slice that passed `verify-slice` or to rewrite a stale report). At session start, it
-names the workers to resume ([parallel work](parallel-work.md#when-an-agent-stops)). No hook
+names the workers to resume ([parallel work](parallel-work.md#when-an-agent-stops)). In the
+worktree of a story (`.ddd-ts-kit/story.json`), it refuses any code of a context until each row
+has its design review and the acceptance is written and locked, says the phase of the story at
+session start, and refuses once to end the session before its report
+([story workflow](story-workflow.md)). No hook
 runs on every tool call: an ordinary session starts no more processes than before. It fails open: a broken guard never blocks work. Set
 `"guard": "advise"` in the config to be asked instead of refused, `"off"` to silence it.
 
