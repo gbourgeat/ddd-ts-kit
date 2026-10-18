@@ -19,7 +19,7 @@ const FLOORS: Readonly<Record<string, readonly [number, number, number, number]>
   http: [98, 93, 97, 98],
   kafka: [40, 53, 44, 40],
   kernel: [85, 78, 87, 85],
-  knex: [90, 77, 98, 90],
+  knex: [95, 86, 98, 95],
   nats: [32, 36, 39, 32],
   openfga: [99, 94, 97, 99],
   pino: [96, 88, 100, 96],
