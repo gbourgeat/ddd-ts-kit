@@ -29,7 +29,7 @@ const DEFAULT_SCRIPTS = {
   'infra:down': 'docker compose down',
   verify:
     'npm run typecheck && npm run lint && npm run format:check && npm run test:coverage && npm run test:e2e && npm run check:arch && npm run depcruise && npm run deadcode && npm run docs:check',
-  lint: 'eslint . --max-warnings 0',
+  lint: 'ddd-ts-kit lint',
   'lint:fix': 'eslint . --fix',
   'check:arch': 'ddd-ts-kit check',
   deadcode: 'knip',

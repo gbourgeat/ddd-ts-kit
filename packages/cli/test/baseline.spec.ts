@@ -86,9 +86,10 @@ describe('the quality baseline', () => {
     (manager) => {
       const scripts = scriptsOf(initProject('--ci', 'both', '--package-manager', manager));
 
-      // A new project has no warning: the first one fails `lint`, `verify` and the pipeline, and is fixed or recorded.
-      expect(scripts['lint']).toBe('eslint . --max-warnings 0');
-      expect(scripts['ci:lint']).toBe('eslint . --max-warnings 0');
+      // A new project has no warning: the first one fails `lint`, `verify` and the pipeline, and is fixed or recorded;
+      // a warning of a rule of the kit in transition is shown without failing (lint.spec.ts).
+      expect(scripts['lint']).toBe('ddd-ts-kit lint');
+      expect(scripts['ci:lint']).toBe('ddd-ts-kit lint');
     },
   );
 

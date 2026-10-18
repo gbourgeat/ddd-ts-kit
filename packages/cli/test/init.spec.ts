@@ -281,7 +281,7 @@ describe('init in a project that already exists', () => {
 
     // A lint that passes its warnings stays the project's: the kit's, which fails on one, is written by `init --force` alone.
     expect(stringsAt(report, 'notes').join('\n')).toContain(
-      'keeps its own "lint" script; the kit expects: eslint . --max-warnings 0',
+      'keeps its own "lint" script; the kit expects: ddd-ts-kit lint',
     );
 
     expect(read(root, 'src/platform/tracing.ts')).toContain("'legacy-shop'");
