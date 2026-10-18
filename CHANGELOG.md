@@ -6,6 +6,26 @@ list the pull requests behind it.
 
 ## Unreleased
 
+**`doctor` checks the environment of a checkout.** A new worktree starts from nothing, and what
+goes wrong there is its environment: `verify` failed late, on a symptom. After what an upgrade
+left to do, `npx ddd-ts-kit doctor` now says what this checkout lacks to run the project, read
+from its files without network: the running Node against `engines.node` (`node engines.node:
+unsupported`) and the version `.nvmrc` names; `node_modules` missing or installed before the
+lockfile last changed (`install node_modules: missing`, `outdated`); `ddd-ts-kit` and every
+`@ddd-ts-kit/*` package installed at the version of the running CLI (`install <package>: not
+installed`, `other version`), where the package findings read the ranges of `package.json`, in
+the install of its workspace for a project inside one; and,
+with a `.gitmodules`, every submodule initialised (`submodule <path>: not initialised`). Each comes
+with its fix (`nvm use`, `npm ci` in the dialect of the project, `git submodule update --init
+--recursive`). `--strict` now also exits 1 while the checkout cannot run the project: a Node
+outside `engines.node`, no `node_modules`, a package of the kit not installed or at another
+version, a submodule not initialised. A Node `.nvmrc` does not name and a lockfile changed since
+the install are said without failing it. A project or a pipeline that runs `doctor --strict` where
+no dependencies are installed fails from this version: install first. `--json` gains the areas
+`node`, `install` and `submodule`. The `parallel-work` skill runs it in a worktree made otherwise.
+
+## 0.27.0
+
 **The worktrees of a project live inside it, and a new project writes its code in a worktree.**
 `worker-scope`, `story-scope` and the new `ddd-ts-kit worktree <name>` (any other piece of work,
 on `work/<name>`, cut from `origin/main` when run from the trunk, installed) open their worktree
@@ -99,24 +119,6 @@ To move: a new project runs its acceptance specs with `npm run test:e2e`; in an 
 `testMatch` of `jest.e2e.config.js`). `npx ddd-ts-kit init` adds the permission of
 `npx ddd-ts-kit acceptance *` and the refusal to edit a lock; update the plugin.
 `ddd-ts-kit check --rule test/acceptance-black-box` lists the acceptance specs to take up.
-
-**`doctor` checks the environment of a checkout.** A new worktree starts from nothing, and what
-goes wrong there is its environment: `verify` failed late, on a symptom. After what an upgrade
-left to do, `npx ddd-ts-kit doctor` now says what this checkout lacks to run the project, read
-from its files without network: the running Node against `engines.node` (`node engines.node:
-unsupported`) and the version `.nvmrc` names; `node_modules` missing or installed before the
-lockfile last changed (`install node_modules: missing`, `outdated`); `ddd-ts-kit` and every
-`@ddd-ts-kit/*` package installed at the version of the running CLI (`install <package>: not
-installed`, `other version`), where the package findings read the ranges of `package.json`, in
-the install of its workspace for a project inside one; and,
-with a `.gitmodules`, every submodule initialised (`submodule <path>: not initialised`). Each comes
-with its fix (`nvm use`, `npm ci` in the dialect of the project, `git submodule update --init
---recursive`). `--strict` now also exits 1 while the checkout cannot run the project: a Node
-outside `engines.node`, no `node_modules`, a package of the kit not installed or at another
-version, a submodule not initialised. A Node `.nvmrc` does not name and a lockfile changed since
-the install are said without failing it. A project or a pipeline that runs `doctor --strict` where
-no dependencies are installed fails from this version: install first. `--json` gains the areas
-`node`, `install` and `submodule`. The `parallel-work` skill runs it in a worktree made otherwise.
 
 ## 0.26.0
 
