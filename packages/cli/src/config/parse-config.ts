@@ -73,6 +73,7 @@ type Governance = Pick<
   | 'coverage'
   | 'commit'
   | 'guard'
+  | 'worktrees'
   | 'deviations'
   | 'standardInterfaces'
   | 'businessNames'
@@ -89,6 +90,7 @@ function parseGovernance(raw: Record<string, unknown>): Governance {
     coverage: parseCoverage(raw['coverage']),
     commit: parseCommitLimits(raw['commit']),
     guard: text(raw['guard'], 'enforce'),
+    worktrees: text(raw['worktrees'], 'advised'),
     deviations: parseDeviations(raw['deviations']),
     standardInterfaces: parseStandardInterfaces(raw['standardInterfaces']),
     businessNames: parseBusinessNames(raw['businessNames']),

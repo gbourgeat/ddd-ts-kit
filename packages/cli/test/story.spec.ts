@@ -68,7 +68,7 @@ let installers: StubInstallers;
 beforeAll(() => {
   installers = stubInstallers();
   root = committedProject('shop', '--context', 'ordering:core', '--context', 'billing:supporting');
-  story = `${fs.realpathSync(path.dirname(root))}${path.sep}shop-us5`;
+  story = path.join(fs.realpathSync(root), '.worktrees', 'us5');
   write(root, 'docs/architecture/slices.md', SLICES);
   git(root, 'add', '--all');
   git(root, 'commit', '--quiet', '--message', 'docs: plan US5 and US6');
@@ -103,7 +103,7 @@ describe('story-scope', () => {
       branch: 'story/us5',
     });
 
-    expect(installers.calls().at(-1)).toMatch(/^pnpm install --frozen-lockfile in .*shop-us5$/);
+    expect(installers.calls().at(-1)).toMatch(/^pnpm install --frozen-lockfile in .*\.worktrees\/us5$/);
   });
 
   it('finds the story again where it was left, without installing twice', () => {

@@ -11,3 +11,4 @@ dist
 /site/.astro/
 # The notes of the repository, copied into the CLI package when it is packed.
 /packages/cli/CHANGELOG.md
+.worktrees/

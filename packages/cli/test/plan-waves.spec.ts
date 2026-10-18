@@ -1,4 +1,3 @@
-import path from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { cli, write } from './helpers.js';
 import { initProject } from './support/init-project.js';
@@ -27,11 +26,9 @@ ${HEADER}| US2.01 | billing | skeleton | Customer | \`generate aggregate billing
 `;
 
 let root: string;
-let project: string;
 
 beforeAll(() => {
   root = initProject('--context', 'billing:core', '--context', 'shipping:supporting');
-  project = path.basename(root);
   write(root, 'docs/architecture/slices.md', TWO_STORIES);
 });
 
@@ -64,7 +61,7 @@ describe('plan-waves, two stories building in one context', () => {
           { id: 'US1.03', kind: 'slice', slice: 'Cancel invoice', status: 'todo', waitingFor: [] },
         ],
         aggregates: ['Invoice'],
-        brief: `npx ddd-ts-kit worker-scope billing --base origin/main --rows US1.02,US1.03 --worktree ../${project}-billing-w1.1 --branch build/billing-w1.1`,
+        brief: `npx ddd-ts-kit worker-scope billing --base origin/main --rows US1.02,US1.03 --worktree .worktrees/billing-w1.1 --branch build/billing-w1.1`,
         sameFiles: ['W1.3'],
         unknownOverlap: [],
       },
@@ -81,7 +78,7 @@ describe('plan-waves, two stories building in one context', () => {
       expect.objectContaining({
         id: 'W1.3',
         rows: [expect.objectContaining({ id: 'US2.04', status: 'in progress' })],
-        brief: `npx ddd-ts-kit worker-scope billing --base origin/main --rows US2.04 --worktree ../${project}-billing-w1.3 --branch build/billing-w1.3`,
+        brief: `npx ddd-ts-kit worker-scope billing --base origin/main --rows US2.04 --worktree .worktrees/billing-w1.3 --branch build/billing-w1.3`,
         sameFiles: ['W1.1'],
       }),
     ]);
@@ -112,7 +109,7 @@ describe('plan-waves, two stories building in one context', () => {
     expect(text).toContain('Waves (docs/architecture/slices.md): 8 rows not done, 3 waves, 7 batches\nWave 1\n');
 
     expect(text).toContain(
-      `  W1.1 billing (aggregate Invoice)\n    #US1.02 slice "Issue invoice"\n    #US1.03 slice "Cancel invoice"\n    npx ddd-ts-kit worker-scope billing --base origin/main --rows US1.02,US1.03 --worktree ../${project}-billing-w1.1 --branch build/billing-w1.1\n    likely to touch the same files as W1.3\n`,
+      `  W1.1 billing (aggregate Invoice)\n    #US1.02 slice "Issue invoice"\n    #US1.03 slice "Cancel invoice"\n    npx ddd-ts-kit worker-scope billing --base origin/main --rows US1.02,US1.03 --worktree .worktrees/billing-w1.1 --branch build/billing-w1.1\n    likely to touch the same files as W1.3\n`,
     );
 
     expect(text).toContain(

@@ -28,6 +28,7 @@ export function openStories(root: string, prefix: string): OpenStory[] {
       {
         story: place.story,
         worktree: inside,
+        base: place.base,
         ...(worktree.branch === undefined ? {} : { branch: worktree.branch }),
         contexts: [...new Set(rows.map((row) => row.context))].sort(),
       },

@@ -29,7 +29,7 @@ terminal 2: /ddd-ts-kit:story US6 docs/backlog/us6.md
 
 | # | Phase | Artefact | Who decides |
 |---|---|---|---|
-| 0 | its worktree: `npx ddd-ts-kit story-scope US5` | `../<project>-us5` on `story/us5`, `.ddd-ts-kit/story.json` | |
+| 0 | its worktree: `npx ddd-ts-kit story-scope US5` | `.worktrees/us5` on `story/us5`, `.ddd-ts-kit/story.json` | |
 | 1 | every question, at once | `## Questions` of `docs/architecture/stories/US5.md` | the owner, once |
 | 2 | specification and rows | `## Acceptance criteria` (`- AC1: ...`), the rows `US5.01`, ... of `slices.md` | the session |
 | 3 | a design review of each row | `docs/architecture/reviews/US5.md`, one `## #US5.02 ...` section per row, read by `architecture-reviewer` | the session |
@@ -89,12 +89,20 @@ terminal.
 
 ## Several stories, several terminals
 
-`story-scope` refuses a story already open in another worktree, and names the other open
-stories with the contexts their rows change: the session reads their rows before cutting its
-own, and keeps off their aggregates when it can. Each branch brings the trunk in before its pull
+`story-scope` refuses a story already open in another worktree, and cuts the branch from the one
+the trunk follows (`origin/main` for `main`), so that a `git fetch` is enough to see the trunk
+move. `npx ddd-ts-kit stories` says, from any worktree, where the open stories meet while they
+are built: the contexts the rows of two of them name, the files both worktrees change
+(committed or not), what merging the branch of one into the other would leave to settle by hand
+and what `merge-trunk` settles alone (computed with `git merge-tree`, nothing written), and how
+far each story is behind its trunk. The session reads it before cutting its rows and before
+each row; the guard says it at session start, and once per file when the session writes a file
+another story changes. The session keeps its rows off what another story changes when it can,
+otherwise records which one lands first. Each branch brings the trunk in before its pull
 request with `npx ddd-ts-kit merge-trunk --trunk <base>`: the files shared by construction
 (generated documents, registries, migrations, `slices.md`) merge as [parallel work](parallel-work.md)
-says, the rest is left to the session. The pull requests merge one after the other, each on a green trunk.
+says, the rest is left to the session; the second story to land settles the conflict the two
+share. The pull requests merge one after the other, each on a green trunk.
 
 ## What holds the order
 
@@ -104,8 +112,9 @@ says, the rest is left to the session. The pull requests merge one after the oth
 | a locked scenario changed while its criterion was not, or a criterion changed | `ddd-ts-kit acceptance` and `--lock`, until a verdict of the `acceptance-judge` agent; the guard, which lets only the judge write a verdict |
 | an agent outside its context | the guard, from `.ddd-ts-kit/worker.json` |
 | the same story in two sessions | `story-scope` |
+| two stories that change the same file | `stories`; the guard, at session start and on the first write of such a file |
 | a session that ends before its report | the guard, which refuses the first stop of each step |
-| the pull request: every row done, no scenario pending, the report written | `story --gate close` |
+| the pull request: every row done, no scenario pending, the trunk merged in, the report written | `story --gate close` |
 
 ## Hosts
 
@@ -120,8 +129,11 @@ review.
   review of the pull request, not mid-story.
 - The judge is an agent, not the owner: its verdict is a second reading before the lock, and the
   owner validates each amendment at the review of the pull request.
-- Two stories on the same aggregate in two terminals still conflict at the merge of the second;
-  `story-scope` names the risk, it does not prevent it.
+- Two stories on the same aggregate in two terminals still conflict at the merge of the second:
+  `stories` and the guard say it as soon as both change a file, they do not prevent it.
+- The trunk is read as the last `git fetch` left it: neither the guard nor the CLI goes to the
+  network. The skill fetches before each row and before closing; the guard says when the last
+  fetch is more than an hour old.
 
 ## See also
 
