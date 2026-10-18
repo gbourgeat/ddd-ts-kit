@@ -28,6 +28,17 @@ function withTerm(directory: string, after: string, row: string): string {
   return read(directory, GLOSSARY).replace(new RegExp(`^(\\| ${after} \\|.*)$`, 'm'), `$1\n${row}`);
 }
 
+/**
+ * The copy has no node_modules and its scripts reach the CLI of the repository by a relative
+ * path: merge-trunk skips the regeneration there, as in a project without the script.
+ */
+function withoutRegenerate(directory: string): void {
+  const manifest = JSON.parse(read(directory, 'package.json')) as { scripts: Partial<Record<string, string>> };
+
+  delete manifest.scripts['regenerate'];
+  write(directory, 'package.json', JSON.stringify(manifest, null, 2) + '\n');
+}
+
 function worker(rows: string, place: string, branch: string): void {
   const opened = cli(
     root,
@@ -58,6 +69,7 @@ describe.runIf(SLOW)('merge-trunk on a copy of the example application', () => {
     registering = path.join(parent, 'scheduling-register');
     opening = path.join(parent, 'scheduling-open');
     fs.cpSync(EXAMPLE, root, { recursive: true, filter: (source) => !NOT_COPIED.includes(path.basename(source)) });
+    withoutRegenerate(root);
     git(root, 'init', '--quiet', '--initial-branch', 'main');
     commitFiles(root, {}, 'chore: the example application');
     worker('M1.11', registering, 'build/identity-register');
