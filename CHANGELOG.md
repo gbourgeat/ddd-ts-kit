@@ -34,6 +34,14 @@ up; the rule stays a warning in this version.
 the schema in two steps, with a `db:generate` after each, since one `db:generate` writes every
 change since the last migration as one.
 
+**A cron accepts the shorthands `@hourly`, `@daily`, `@weekly`, `@monthly` and `@yearly`.**
+`@Scheduled` and `ddd-ts-kit generate job --cron` read `@yearly` and `@annually` as `0 0 1 1 *`,
+`@monthly` as `0 0 1 * *`, `@weekly` as `0 0 * * 0`, `@daily` and `@midnight` as `0 0 * * *` and
+`@hourly` as `0 * * * *`, in any case, and fire on the occurrences of those five fields (`@hourly`
+keeps its rhythm when clocks change, as `0 * * * *` does). A diagnostic and `ddd-ts-kit docs` show
+the shorthand as written. `@reboot` and any other `@word` are refused by both with the same
+message, which lists the shorthands accepted: a scheduled job has no occurrence at start.
+
 ## 0.27.0
 
 **The worktrees of a project live inside it, and a new project writes its code in a worktree.**

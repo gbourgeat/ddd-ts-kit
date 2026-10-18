@@ -683,11 +683,11 @@ Next, in this order: the language of the context first, then the business decisi
   `platform.jobs.register({ name, schedule, run })`.
 - **Jobs.** The schedule is validated when the job is generated, by the rules of the scheduler
   (`parseJobSchedule` of the kernel, pinned by a test): a duration (`15m`, `2s`, digits alone are
-  milliseconds) or a five-field cron expression, with an IANA time zone; `--time-zone` without
-  `--cron` is refused, and so is a job without `--command`, a command that does not exist (with the
-  command that creates it) and a command whose constructor needs more than the actor and the
-  instant the work is for: a job only says that the time has come, the handler finds what to act
-  on. Parameters that are optional or have a default are left out of the call.
+  milliseconds) or a cron expression of five fields or a shorthand (`@daily`), with an IANA time
+  zone; `--time-zone` without `--cron` is refused, and so is a job without `--command`, a command
+  that does not exist (with the command that creates it) and a command whose constructor needs more
+  than the actor and the instant the work is for: a job only says that the time has come, the
+  handler finds what to act on. Parameters that are optional or have a default are left out of the call.
 - **The grant of a job.** A job whose command is protected sends it as `system:<context>.<name>`,
   which has no right unless the model gives it one. `generate job` writes the grant where the model
   makes it one line, in a `system-grants` marker region, and `next` points at that line:
