@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:8153d64fe01ece8e -->
+<!-- translation-of: README.md sha256:d07bd7ec143360d8 -->
 
 # Scheduling : l'application d'exemple de ddd-ts-kit
 
