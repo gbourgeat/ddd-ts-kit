@@ -110,7 +110,10 @@ edited by hand, or the trunk changed what it changes), it puts the migrations fo
 found it and refuses, naming the statement that differs; the fix is to generate that migration on
 top by hand and write the edit again, after which a replay, or `merge-trunk --continue`, finds
 nothing forked. Several migrations of a branch that change the schema and fork are still
-refused: drizzle-kit diffs the final schema and can generate them again as one only. Measured with the real drizzle-kit
+refused rather than joined: drizzle-kit diffs the final schema and cannot split them again, and
+one migration in their place would join steps planned apart (a table, then a constraint once it
+is filled, fails on a database that holds rows). Its fix said to generate them as one; it now
+says to generate them again one at a time, in their order. Measured with the real drizzle-kit
 0.31.11: the replayed history is applied by `drizzle-kit migrate`.
 
 **`persistence/primary-key-order` (a warning).** Under drizzle-kit, a migration that adds the new
