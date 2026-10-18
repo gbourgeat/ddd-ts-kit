@@ -1,4 +1,4 @@
-import { ConceptError } from '@ddd-ts-kit/kernel';
+import { ConceptError, DomainRefusal } from '@ddd-ts-kit/kernel';
 import { describe, expect, it } from 'vitest';
 import { createErrorMapper, toProblem } from '../src/index.js';
 import { PROBLEM_SCHEMA } from '../src/openapi/problem-schema.js';
@@ -25,6 +25,14 @@ class BookingError extends ConceptError {
 
   static agendaUnreadable(shard: string) {
     return BookingError.refusal('AGENDA_UNREADABLE', 'The agenda cannot be read.', { shard }).exposing('shard');
+  }
+}
+
+class PatientUnknown extends DomainRefusal {
+  readonly code = 'PATIENT_UNKNOWN';
+
+  static forPatient(patientId: string, startsAt: Date) {
+    return PatientUnknown.refusal(`No patient ${patientId}.`, { patientId, startsAt }).exposing('startsAt');
   }
 }
 
@@ -82,5 +90,12 @@ describe('the facts of a refusal in the problem document', () => {
   it('documents the member in the contract', () => {
     expect(PROBLEM_SCHEMA['properties']).toHaveProperty('facts.type', 'object');
     expect(PROBLEM_SCHEMA['required']).not.toContain('facts');
+  });
+
+  it('writes the exposed facts of a refusal of its own class, and hides the message that quotes a private one', () => {
+    const problem = toProblem(PatientUnknown.forPatient('patient-7', startsAt), mapper, 'req-1');
+
+    expect(problem).toMatchObject({ code: 'PATIENT_UNKNOWN', detail: 'Patient unknown.', facts: { startsAt } });
+    expect(JSON.stringify(problem)).not.toContain('patient-7');
   });
 });

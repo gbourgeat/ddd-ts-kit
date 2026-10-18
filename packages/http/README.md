@@ -79,7 +79,7 @@ async ({ params }) => {
   return found === undefined ? { status: 404 } : { status: 200, body: found };
 },
 
-// Write: the use case throws a refusal (NotFoundError, or a factory of a ConceptError) and the
+// Write: the use case throws a refusal (NotFoundError, or a factory of a refusal class) and the
 // route lists its code; the answer is a problem document, the same on every route (see "Errors")
 responses: { 200: { description: 'The order.', body: order } },
 errors: ['NOT_FOUND'],
@@ -466,23 +466,30 @@ A handler throws a `DomainError`; its `code` is mapped to a status in one place 
 
 ![How the answer to an error is chosen: an error that is not a DomainError answers 500 with no detail; a DomainError gets the status its code maps to, from the defaults, the codes of the application, else 422; a 5xx answers its status and code only, a 4xx a problem document with its detail, its exposed facts and its issues](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/http-package-error-answer.svg)
 
-A refusal built by a factory of a `ConceptError` carries facts, and they are private: the
-document holds, under `facts`, only the ones its factory exposed by name, and no `facts` member
-when it exposed none.
+A refusal built by a factory carries facts, and they are private: the document holds, under
+`facts`, only the ones its factory exposed by name, and no `facts` member when it exposed none.
 
 <!-- checked sample -->
 ```ts
-import { ConceptError } from '@ddd-ts-kit/kernel';
+import { DomainRefusal } from '@ddd-ts-kit/kernel';
 
-export class AppointmentError extends ConceptError {
-  static slotTaken(calendarId: string, startsAt: Date) {
-    return AppointmentError.refusal('SLOT_TAKEN', 'The slot is already held.', { calendarId, startsAt }).exposing('startsAt');
+// domain/errors/codes.ts
+export const SchedulingCodes = {
+  SlotTaken: 'SLOT_TAKEN',
+} as const;
+
+// domain/errors/slot-taken.error.ts
+export class SlotTaken extends DomainRefusal {
+  readonly code = SchedulingCodes.SlotTaken;
+
+  static forCalendar(calendarId: string, startsAt: Date) {
+    return SlotTaken.refusal('The slot is already held.', { calendarId, startsAt }).exposing('startsAt');
   }
 }
 ```
 
 With `SLOT_TAKEN` mapped to 409 (`createErrorMapper({ SLOT_TAKEN: 409 })`, below), a handler
-that throws `AppointmentError.slotTaken('c-1', startsAt)` answers:
+that throws `SlotTaken.forCalendar('c-1', startsAt)` answers:
 
 ```json
 { "type": "urn:problem:slot-taken", "title": "Conflict", "status": 409, "code": "SLOT_TAKEN",
@@ -544,10 +551,10 @@ from the `onError` hook, and report it to the error tracker with
 `ErrorReporter`, once, with the correlation, actor and tenant ids of its execution context
 (`context.execution`, present once the request got that far); a 4xx never does.
 
-A refusal built by a factory (`ConceptError`) answers its message as `detail` unless the message
-quotes a fact the factory did not expose: then the client reads a sentence made from the code
-(`INVALID_EMAIL` gives `Invalid email.`) and the message stays in the logs and the error
-reports. A fact is found in the message as a text, a number or an ISO instant; a fact written
+A refusal built by a factory (`DomainRefusal`, or `ConceptError` of the earlier form) answers
+its message as `detail` unless the message quotes a fact the factory did not expose: then the
+client reads a sentence made from the code (`INVALID_EMAIL` gives `Invalid email.`) and the
+message stays in the logs and the error reports. A fact is found in the message as a text, a number or an ISO instant; a fact written
 another way (a formatted date, a rounded number) is not seen, so expose what a client may
 read and keep the rest out of the sentence.
 
