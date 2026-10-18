@@ -1,5 +1,5 @@
 [English](methodology.md) · **Français**
-<!-- translation-of: methodology.md sha256:7f1fd6d12822e6d0 -->
+<!-- translation-of: methodology.md sha256:2a9a5881826d9110 -->
 
 # Méthodologie : d'une expression des besoins au code qui tourne
 
@@ -426,6 +426,7 @@ avec le code qui l'a changée ([Discipline des commits](commit-discipline.fr.md)
 
 ## Voir aussi
 
+- [Parcours d'une story](story-workflow.fr.md) : l'étape 7 une *user story* à la fois, une session par *story*
 - [Carte des contextes : un exemple détaillé](../concepts/context-map-worked-example.fr.md)
 - [Quelle commande, quand](commands.fr.md)
 - [Flux de travail en équipe](team-workflow.fr.md)

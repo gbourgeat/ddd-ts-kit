@@ -9,6 +9,12 @@ export const AGENT_PERMISSIONS: AgentPermissions = {
     'Bash(npx ddd-ts-kit check *)',
     'Bash(npx ddd-ts-kit verify-slice *)',
     'Bash(npx ddd-ts-kit cited *)',
+    'Bash(npx ddd-ts-kit acceptance *)',
+    'Bash(npx ddd-ts-kit story *)',
+    'Bash(npx ddd-ts-kit story-scope *)',
+    'Bash(npx ddd-ts-kit stories)',
+    'Bash(npx ddd-ts-kit stories *)',
+    'Bash(npx ddd-ts-kit worktree *)',
     'Bash(npx ddd-ts-kit verify-merge)',
     'Bash(npx ddd-ts-kit verify-merge *)',
     'Bash(npx ddd-ts-kit story-check *)',
@@ -32,7 +38,8 @@ export const AGENT_PERMISSIONS: AgentPermissions = {
     'Bash(npm run events:generate)',
     'Bash(npm run events:check)',
   ],
-  // Secrets, then the generated contracts: those are regenerated, never edited. In a deny
+  // Secrets, then the generated contracts: those are regenerated, never edited, and the lock of
+  // an acceptance, which `ddd-ts-kit acceptance <story> --lock` alone writes. In a deny
   // list, a pattern starting with `!` carves its matches out of the rules before it
   // (gitignore negation), which keeps `.env.example`, documentation, readable.
   deny: [
@@ -42,6 +49,7 @@ export const AGENT_PERMISSIONS: AgentPermissions = {
     'Edit(./openapi/**)',
     'Edit(./docs/integration/asyncapi.*)',
     'Edit(./docs/integration/event-catalog.md)',
+    'Edit(./test/acceptance/*.acceptance.lock.json)',
   ],
   // Then the files that hold the rules and the pipeline: changing one is a decision of the
   // project owner, the same list as the editor hook of the plugin asks about.

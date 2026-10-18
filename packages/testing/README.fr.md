@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:886980acec763fd8 -->
+<!-- translation-of: README.md sha256:ce7e9c2f3249b9bf -->
 
 # @ddd-ts-kit/testing
 
@@ -17,7 +17,7 @@ npm i -D @ddd-ts-kit/testing
 |---|---|---|
 | `@ddd-ts-kit/testing` | *builders*, scénarios, `createTestBuses`, `InMemoryRepository` | aucun runner, aucune bibliothèque |
 | `@ddd-ts-kit/testing/faker` | des données générées pour les *builders* | `@faker-js/faker` (*peer* optionnel) |
-| `@ddd-ts-kit/testing/e2e` | client HTTP, `settled`, `eventually`, `collectEvents` | Node seulement : aucun framework HTTP, aucun conteneur |
+| `@ddd-ts-kit/testing/e2e` | client HTTP, `settled`, `eventually`, `collectEvents`, `pending` | Node seulement : aucun framework HTTP, aucun conteneur |
 | `@ddd-ts-kit/testing/contracts` | les suites de contrat des ports du noyau, `ContractSuite` pour en écrire une autre | le runner que vous passez |
 | `@ddd-ts-kit/testing/vitest` | `decorators()`, le *plugin* Vite qui permet à Vitest d'exécuter les décorateurs standard, et `decoratorCoverage()` | Node seulement ; exécute le `tsc` du projet |
 | `@ddd-ts-kit/testing/coverage` | `governedCoverage()`, `governedJestCoverage()`, `unaffectedContexts()` : la couverture que mesure le runner et son plancher, lus dans `ddd-ts-kit.config.json` | Node seulement |
@@ -648,6 +648,7 @@ afterAll(() => server.close());
 | `expectProblem(response, { status, code, facts })` | vérifie une réponse RFC 9457 `application/problem+json` et rend le document ; `code` et `facts` sont optionnels, et `facts` nomme les faits que le document doit exposer, tels que JSON les écrit (une date est son texte ISO) |
 | `settled(sources, { timeoutMs = 2000, intervalMs = 10 })` | se résout dès que chaque source ne compte plus de travail en attente ; quand le temps est écoulé, échoue en nommant chaque source qui attend encore, combien elle en tient et combien en a échoué |
 | `eventually(assertion, { timeoutMs = 2000, intervalMs = 20 })` | réessaie jusqu'à ce que l'assertion passe ; quand le temps est écoulé, échoue en citant la dernière erreur |
+| `pending(body)` | tient un scénario d'acceptation écrit avant son code : passe tant qu'une assertion de `body` échoue, échoue dès que `body` passe (retirer l'enveloppe) ou s'arrête sur autre chose qu'une assertion (le scénario est cassé) ; `it('#US5.02 AC1 ...', pending(async () => { ... }))` |
 | `collectEvents(subscriber, types)` | enregistre les événements d'intégration publiés : `received(type?)`, `waitFor(type, predicate?, options?)`, `stop()` |
 
 Les assertions sont celles de `node:assert` : elles se lisent de la même façon sous n'importe quel runner.

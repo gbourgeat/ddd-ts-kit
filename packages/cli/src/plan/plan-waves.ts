@@ -11,8 +11,6 @@ import { waveNumbers } from './wave-numbers.js';
 export interface PlanRequest {
   /** The context whose rows to plan; null for every row. */
   readonly context: string | null;
-  /** The name of the project directory, which `worker-scope` names the worktrees after. */
-  readonly project: string;
 }
 
 /**
@@ -21,7 +19,7 @@ export interface PlanRequest {
  * context, the rows of other contexts it waits for count in the waves but are not shown.
  */
 export function planWaves(rows: readonly Slice[], request: PlanRequest): WavePlan {
-  const { context, project } = request;
+  const { context } = request;
   const planned = rowsToPlan(rows, context);
   const problems = planProblems(rows, planned);
 
@@ -30,7 +28,7 @@ export function planWaves(rows: readonly Slice[], request: PlanRequest): WavePla
   }
 
   const shown = planned.filter((row) => context === null || row.context === context);
-  const waves = batchedWaves({ rows: shown, numbers: waveNumbers(planned), project });
+  const waves = batchedWaves({ rows: shown, numbers: waveNumbers(planned) });
 
   return { file: SLICES_FILE, context, problems, waves, mergeOrder: mergeOrder(waves, planned) };
 }

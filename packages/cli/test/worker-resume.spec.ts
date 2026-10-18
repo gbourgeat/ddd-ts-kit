@@ -29,7 +29,7 @@ beforeEach(() => {
   write(root, 'docs/architecture/slices.md', SLICES);
   git(root, 'add', '--all');
   git(root, 'commit', '--quiet', '--message', 'docs: slices');
-  worktree = path.join(fs.realpathSync(path.dirname(root)), 'shop-billing');
+  worktree = path.join(fs.realpathSync(root), '.worktrees', 'billing');
   expect(cli(root, 'worker-scope', 'billing', '--rows', 'M1.01,M1.02,M1.03', '--no-install').code).toBe(0);
   write(worktree, ISSUE, 'export const issued = 1;\n');
   git(worktree, 'add', ISSUE);
@@ -55,7 +55,7 @@ describe('worker-scope --resume', () => {
     const resume = cli(root, 'worker-scope', 'billing', '--resume');
 
     expect(resume.code).toBe(0);
-    expect(resume.stdout).toMatch(/^worker build\/billing {2}\/.*shop-billing {2}\(base main\)$/m);
+    expect(resume.stdout).toMatch(/^worker build\/billing {2}\/.*\.worktrees\/billing {2}\(base main\)$/m);
     expect(resume.stdout).toMatch(/^rows: #M1\.01 committed [0-9a-f]+, #M1\.02 in progress, #M1\.03 to do$/m);
     expect(resume.stdout).toContain(`#M1.02: 1 file uncommitted (${PAY}), `);
     expect(resume.stdout).toContain('agent: a7, run 1, 81 tool calls counted');
@@ -130,7 +130,7 @@ describe('worker-scope --resume', () => {
     expect(read(worktree, '.ddd-ts-kit/worker.json')).toBe(scope);
     expect(git(worktree, 'status', '--porcelain', '--ignored')).toBe(status);
     expect(git(root, 'branch', '--list')).toBe(branches);
-    expect(git(root, 'worktree', 'list')).not.toContain('shop-shipping');
+    expect(git(root, 'worktree', 'list')).not.toContain('.worktrees/shipping');
   });
 
   it('refuses a context no worktree builds, and names the worktrees of a context two workers build', () => {
@@ -139,7 +139,7 @@ describe('worker-scope --resume', () => {
     expect(none.code).toBe(2);
     expect(none.stderr).toContain('No worktree of this repository builds shipping.');
 
-    const other = path.join(path.dirname(worktree), 'shop-billing-2');
+    const other = path.join(path.dirname(worktree), 'billing-2');
 
     expect(
       cli(

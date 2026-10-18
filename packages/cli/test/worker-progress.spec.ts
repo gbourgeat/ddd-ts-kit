@@ -27,7 +27,7 @@ beforeEach(() => {
   write(root, 'docs/architecture/slices.md', SLICES);
   git(root, 'add', '--all');
   git(root, 'commit', '--quiet', '--message', 'docs: slices');
-  worktree = path.join(fs.realpathSync(path.dirname(root)), 'shop-billing');
+  worktree = path.join(fs.realpathSync(root), '.worktrees', 'billing');
   expect(cli(root, 'worker-scope', 'billing', '--rows', 'M1.01,M1.02', '--no-install').code).toBe(0);
 });
 

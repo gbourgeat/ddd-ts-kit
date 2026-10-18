@@ -4,9 +4,10 @@ description: >-
   Writes readable, refactoring-proof tests for a ddd-ts-kit project. Given / when / then
   for aggregates, real handlers through the test application with fakes, builders for test
   data, worlds for the arrangement several specs share, contract suites shared by fakes and
-  adapters, end-to-end specs. Use when writing or reviewing a test, turning it.todo entries
-  into tests, when a test needs data setup or a shared arrangement, when tempted by vi.mock,
-  vi.fn or a spy, or when a test/* rule is reported.
+  adapters, end-to-end specs, the acceptance scenarios of a story written before its code.
+  Use when writing or reviewing a test, turning it.todo entries into tests, when a test needs
+  data setup or a shared arrangement, when tempted by vi.mock, vi.fn or a spy, when writing
+  or changing an acceptance scenario, or when a test/* rule is reported.
 allowed-tools:
   - Read
   - Edit
@@ -16,6 +17,7 @@ allowed-tools:
   - Bash(npm test *)
   - Bash(npm run test:coverage)
   - Bash(npm run test:e2e *)
+  - Bash(npx ddd-ts-kit acceptance *)
 ---
 
 # Tests
@@ -32,6 +34,7 @@ test and `it.todo` entries naming the behaviours to prove: replace each, never d
 | application | the real handler through the buses, with its permission | fakes of every port, fixed clock, sequential ids | `test/unit/` |
 | adapter | one adapter against its real dependency, and the contract suite | none | `test/integration/` |
 | end to end | the whole application through HTTP and the event bus | none; generated seeded data | `test/e2e/` at the project root |
+| acceptance | a story as its client sees it, written before its code | none; generated seeded data | `test/acceptance/` at the project root |
 
 ## No mocks
 
@@ -139,6 +142,38 @@ naming what is still pending. With Vitest on an ORM, each spec opens a copy of t
 cluster a global setup initialised once per run (`test/support/test-database-template.ts`), and
 creates its tables there.
 
+## Acceptance of a story, before its code
+
+The criteria are written first, in `docs/architecture/stories/<story>.md` under
+`## Acceptance criteria`, one item each: `- AC1: <what a client observes>`. Then
+`npx ddd-ts-kit generate acceptance <story>` writes `test/acceptance/<story>.acceptance.spec.ts`,
+an `it.todo` per criterion. Each becomes one or more scenarios through the API only
+(`test/acceptance-black-box`): routes, answers, problem documents, integration events. Title:
+the rows that make it pass, then the criterion, `'#US5.02 AC1 a customer places an order'`.
+Body wrapped in `pending(...)` of `@ddd-ts-kit/testing/e2e`: run
+`npm run test:e2e -- test/acceptance` and see each fail on an assertion (a scenario that passes or
+throws a `TypeError` fails the run). `npx ddd-ts-kit acceptance <story> --gate written` names
+what is left; once nothing is, `npx ddd-ts-kit acceptance <story> --lock`, and commit the spec and
+its lock together, before any code of the story.
+
+The slice that satisfies a scenario removes `pending(...)` in its commit, nothing else. A locked
+scenario is never changed to make code pass. When one seems wrong, compare it with its criterion:
+
+| What is wrong | Do |
+|---|---|
+| the code | fix the code; the scenario stays |
+| the specification changed | change the criterion in the story file, then its scenarios |
+| the scenario does not say what its criterion says | fix it |
+
+Then launch the `ddd-ts-kit:acceptance-judge` agent on each change `npx ddd-ts-kit acceptance
+<story>` reports (its subject and fingerprint): it compares the locked version, the new one, the
+criterion and the owner's answers, and writes `Verdict: amend` or `refuse`. `--lock` refuses
+every changed criterion, and every scenario changed while its criteria were not, without an
+`amend` verdict on that very version; the verdicts become amendments the owner validates. A
+`refuse` means restore it (git). Nobody but the judge writes a verdict, and a sub-agent never
+changes a scenario nor locks: the guard refuses all three. A host without the agents of the
+plugin asks the owner to write the verdict.
+
 ## Shape
 
 - `describe` the unit, `it` states the rule: `refuses to pay an order twice`.
@@ -151,4 +186,4 @@ the spec for the behaviour, and let the rate follow. The thresholds of `ddd-ts-k
 are a floor per context and layer, not a goal; a test written to move a number proves nothing.
 
 Finish with `npm test -- <context>`, `npm run test:coverage` before the slice is closed, and
-`npx ddd-ts-kit check --rule test/no-mocks --rule test/builder-required --rule test/spec-required --rule test/helper-placed`.
+`npx ddd-ts-kit check --rule test/no-mocks --rule test/builder-required --rule test/spec-required --rule test/helper-placed --rule test/acceptance-black-box`.
