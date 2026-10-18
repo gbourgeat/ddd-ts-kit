@@ -46,6 +46,14 @@ export const PERSISTENCE_INJECTIONS: readonly Injection[] = [
       },
     ],
     checker: true,
+    alsoReports: [
+      {
+        tool: 'checker',
+        rule: 'tenancy/scoped-statement',
+        reason:
+          'The rule reads the migrations of drizzle-kit only, so the copy says "orm": "drizzle": the Knex readers of the example are then read as Drizzle ones.',
+      },
+    ],
   },
   {
     rule: 'persistence/no-file-content',
