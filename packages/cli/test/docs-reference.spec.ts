@@ -27,7 +27,7 @@ describe('docs: the reference of a CONTEXT.md', () => {
     expect(cli(root, 'docs', '--check').code).toBe(0);
   });
 
-  it('lists use cases, routes, publishers, ports and policies as tables', () => {
+  it('lists use cases, routes, publishers, ports, policies and refusals as tables', () => {
     const doc = read(root, BILLING);
 
     expect(doc).toContain('**Dependencies**: upstreams: none; downstreams: `shipping` (customer-supplier).');
@@ -48,6 +48,10 @@ describe('docs: the reference of a CONTEXT.md', () => {
 
     expect(doc).toContain(
       '### Policies\n\n| Policy | Permission |\n|---|---|\n| `OnlyIssuerCancels` | `invoice.cancel` |',
+    );
+
+    expect(doc).toContain(
+      '### Errors\n\n| Refusal | Factory | Code | Exposed facts |\n|---|---|---|---|\n| `InvoiceAlreadyIssued` | `forInvoice` | `INVOICE_ALREADY_ISSUED` | none |',
     );
   });
 
