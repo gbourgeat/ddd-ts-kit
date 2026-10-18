@@ -4,6 +4,7 @@ import { cli, DEFAULT_STACK, read, scaffoldEverything, tempDir, write } from './
 import { initProject } from './support/init-project.js';
 import { jsonAt } from './support/json-at.js';
 import { readJson } from './support/read-json.js';
+import { VERSION } from '../src/version.js';
 
 const CONFIG = 'ddd-ts-kit.config.json';
 const COMPOSITION = 'src/platform/compose-application.ts';
@@ -44,6 +45,23 @@ describe('init --force on a project that is already initialised', () => {
     expect(read(root, 'knip.json')).toContain('src/contexts/*/published-language/index.ts');
     expect(read(root, '.dependency-cruiser.cjs')).toContain('shipping');
     expect(checkJsonOf(cli(root, 'check', '--rule', 'config/valid', '--json')).violations).toEqual([]);
+  });
+
+  it('records the version that rewrote the files, first, over an older one or none', () => {
+    const root = initProject();
+    const { initVersion, ...written } = Object(readJson(root, CONFIG)) as Record<string, unknown>;
+
+    expect(initVersion).toBe(VERSION);
+
+    write(root, CONFIG, `${JSON.stringify({ ...written, initVersion: '0.1.0' }, null, 2)}\n`);
+    expect(cli(root, 'init', '--force').stderr).toBe('');
+    expect(Object.keys(Object(readJson(root, CONFIG)))[0]).toBe('initVersion');
+    expect(config(root, 'initVersion')).toBe(VERSION);
+
+    write(root, CONFIG, `${JSON.stringify(written, null, 2)}\n`);
+    expect(cli(root, 'init', '--force').stderr).toBe('');
+    expect(Object.keys(Object(readJson(root, CONFIG)))[0]).toBe('initVersion');
+    expect(config(root, 'initVersion')).toBe(VERSION);
   });
 
   it('changes the choice a flag names and nothing else of the recorded stack', () => {
@@ -95,7 +113,7 @@ describe('init --force and the spelling of the imports, the settings of the agen
     write(root, CONFIG, read(root, CONFIG).replace(/\n\s*"importExtension": "js",/, ''));
 
     expect(cli(root, 'init', '--force').stderr).toBe('');
-    expect(Object.keys(Object(readJson(root, CONFIG))).slice(4, 6)).toEqual(['importAlias', 'importExtension']);
+    expect(Object.keys(Object(readJson(root, CONFIG))).slice(5, 7)).toEqual(['importAlias', 'importExtension']);
     expect(config(root, 'importExtension')).toBe('js');
     expect(jsonAt(readJson(root, 'tsconfig.json'), 'compilerOptions', 'moduleResolution')).toBe('NodeNext');
     expect(read(root, 'src/main.ts')).toContain("from '@/platform/compose-application.js';");
