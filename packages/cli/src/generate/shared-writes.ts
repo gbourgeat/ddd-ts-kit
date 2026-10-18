@@ -90,6 +90,9 @@ export const SHARED_WRITES: Readonly<Record<string, SharedWrite>> = {
     files: ['docs/adr/', 'ddd-ts-kit.config.json (with --deviation)'],
     worker: 'without --deviation: a decision of its slices',
   },
+  acceptance: {
+    files: ['test/acceptance/<story>.acceptance.spec.ts, the acceptance of a story, written before its code'],
+  },
   schema: {
     files: ['<sharedKernelDir>/presentation/<name>.schema.ts'],
     when: 'the first argument is shared-kernel: a schema several contexts answer with',

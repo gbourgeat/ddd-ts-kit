@@ -1,5 +1,5 @@
 [English](coding-agents.md) · **Français**
-<!-- translation-of: coding-agents.md sha256:76990f7320278e7e -->
+<!-- translation-of: coding-agents.md sha256:cf38db60fdd5b8de -->
 
 # Le plugin pour agents de code : Claude Code, Codex, GitHub Copilot
 
@@ -13,7 +13,7 @@ les trois agents :
 | Copilot CLI | `copilot plugin marketplace add gbourgeat/ddd-ts-kit`, puis `copilot plugin install ddd-ts-kit@ddd-ts-kit` | par son nom, `start` |
 | Agent cloud de Copilot, VS Code | déclaré par le `.github/copilot/settings.json` qu'écrit `init` : l'agent cloud l'installe, VS Code le recommande | par son nom, `start` |
 
-Vingt-deux skills, dans l'ordre où un projet les rencontre :
+Vingt-trois skills, dans l'ordre où un projet les rencontre :
 
 | Skill | Usage |
 |---|---|
@@ -25,6 +25,7 @@ Vingt-deux skills, dans l'ordre où un projet les rencontre :
 | `bootstrap` | choisir la stack et créer le projet (lancée par l'utilisateur) |
 | `plan-slices` | le travail en tranches verticales par contexte, ordonnées, avec leurs commandes de génération |
 | `parallel-work` | répartir les tranches entre plusieurs agents ou personnes sans collision |
+| `story` | mener une *user story* de ses questions à une *pull request* verte en une session, une *story* par terminal (lancée par l'utilisateur ; [parcours d'une story](story-workflow.fr.md)) |
 | `scaffold` | un fichier de n'importe quel rôle, à partir d'un template |
 | `use-case` | une fonctionnalité de bout en bout, test d'abord |
 | `integration-event` | faire collaborer deux contextes par un événement versionné |
@@ -40,10 +41,12 @@ Vingt-deux skills, dans l'ordre où un projet les rencontre :
 | `quality-gate` | lancer les contrôles à la bonne portée et corriger à la cause racine |
 | `commit-discipline` | une tranche par commit, les fichiers générés avec ce qui les a générés |
 
-Quatre agents : `domain-explorer` (réponses en lecture seule sur ce qui existe et où),
+Cinq agents : `domain-explorer` (réponses en lecture seule sur ce qui existe et où),
 `context-builder` (construit les tranches d'un contexte dans son propre worktree),
-`domain-test-writer` (transforme les entrées `it.todo` en specs) et `architecture-reviewer`
-(revue en lecture seule d'un diff, d'une branche ou d'un contexte).
+`domain-test-writer` (transforme les entrées `it.todo` en specs), `architecture-reviewer`
+(revue en lecture seule d'un diff, d'une branche ou d'un contexte) et `acceptance-judge` (juge un
+changement d'un test d'acceptation verrouillé, indépendamment de la session qui l'a fait, et écrit
+son verdict).
 
 Le hook est la partie qui rend le reste contraignant. Dans un projet qui a un
 `ddd-ts-kit.config.json`, il rappelle la démarche et la carte des contextes au début de la
@@ -63,12 +66,16 @@ l'agent deux fois avant sa limite de tours, enregistre ses exécutions dans son 
 `SubagentStart` (un lancement ou une reprise démarre un nouveau compte) et `SubagentStop` (quand il
 finit de lui-même, il est relancé une fois pour commiter une tranche que `verify-slice` a validée
 ou réécrire un rapport périmé). Au démarrage de session, il nomme les *workers* à reprendre
-([travail en parallèle](parallel-work.fr.md#quand-un-agent-sarrête)). Aucun *hook* ne tourne sur
+([travail en parallèle](parallel-work.fr.md#quand-un-agent-sarrête)). Dans le *worktree* d'une
+*story* (`.ddd-ts-kit/story.json`), il refuse tout code d'un contexte tant que chaque ligne n'a
+pas sa revue de conception et que l'acceptation n'est pas écrite et verrouillée, dit la phase de
+la *story* au démarrage de session, et refuse une fois de finir la session avant son rapport
+([parcours d'une story](story-workflow.fr.md)). Aucun *hook* ne tourne sur
 chaque appel d'outil : une session ordinaire ne lance pas plus de processus qu'avant. En cas de
 panne, il laisse passer : une garde cassée ne bloque jamais le travail. Mettez `"guard": "advise"` dans la
 configuration pour être consulté au lieu d'essuyer un refus, `"off"` pour le faire taire.
 
-Chaque agent reçoit ce que son hôte exécute. Les skills fonctionnent dans les trois. Les quatre
+Chaque agent reçoit ce que son hôte exécute. Les skills fonctionnent dans les trois. Les cinq
 agents sont des sous-agents de Claude Code ; Codex ne charge aucun agent depuis un plugin, et une
 session par worktree tient le rôle de `context-builder`. Le hook tourne partout où l'hôte exécute
 les hooks d'un plugin : il lit les patchs de Codex et les appels d'outils de Copilot aussi bien

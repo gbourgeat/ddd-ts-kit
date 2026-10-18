@@ -124,6 +124,7 @@ describe('init --force and the spelling of the imports, the settings of the agen
       'src/apps',
       'src/contexts',
       'src/platform',
+      'test/acceptance',
       'test/e2e',
     ]);
 
