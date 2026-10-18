@@ -3,13 +3,15 @@ import path from 'node:path';
 import { CliError } from '../cli-error.js';
 import { runGit } from '../commit/run-git.js';
 import type { Config } from '../config/index.js';
-import { inDialect } from '../package-manager/in-dialect.js';
 import { addWorktree } from '../worker/add-worktree.js';
 import { baseOf } from '../worker/base-of.js';
 import { ensureContainsBase } from '../worker/ensure-contains-base.js';
 import { installDependencies } from '../worker/install-dependencies.js';
 import { isWorktree } from '../worker/is-worktree.js';
+import { installNotes } from '../worker/install-notes.js';
 import { repositoryPrefix } from '../worker/repository-prefix.js';
+import { upstreamOf } from '../worker/upstream-of.js';
+import { worktreeOf } from '../worker/worktree-of.js';
 import { openStories } from './open-stories.js';
 import { readStoryPlace } from './read-story-place.js';
 import type { StoryPlace } from './story-place.js';
@@ -21,11 +23,11 @@ const STORY = /^[A-Za-z0-9][A-Za-z0-9-]*$/;
 /** What the caller asks for one story. */
 export interface StoryRequest {
   readonly story: string;
-  /** The worktree directory, relative to the project root; by default `../<project>-<story>`. */
+  /** The worktree directory, relative to the project root; by default `.worktrees/<story>` in the project of the main checkout. */
   readonly worktree?: string;
   /** By default `story/<story>`, in lower case. */
   readonly branch?: string;
-  /** The ref the branch is cut from and merges back into; by default the current branch. */
+  /** The ref the branch is cut from and merges back into; by default the branch the current one follows, else the current one. */
   readonly base?: string;
   readonly dryRun: boolean;
   readonly install: boolean;
@@ -42,7 +44,7 @@ export function openStoryScope(root: string, config: Config, request: StoryReque
   const story = storyNamed(request.story);
   const prefix = repositoryPrefix(root);
   const base = baseOutsideStory(root, config, request.base);
-  const worktree = path.resolve(root, request.worktree ?? `../${path.basename(root)}-${story.toLowerCase()}`);
+  const { worktree, note } = worktreeOf(root, request.worktree, story.toLowerCase());
   const branch = request.branch ?? `story/${story.toLowerCase()}`;
   const inside = path.join(worktree, prefix);
   const all = openStories(root, prefix);
@@ -68,7 +70,7 @@ export function openStoryScope(root: string, config: Config, request: StoryReque
     created,
     ...(install === undefined ? {} : { install }),
     others: all.filter((open) => open.story.toLowerCase() !== story.toLowerCase()),
-    notes: installNotes(inside, config, install),
+    notes: [...(note === undefined ? [] : [note]), ...installNotes(inside, config, install)],
   };
 }
 
@@ -94,7 +96,7 @@ function baseOutsideStory(root: string, config: Config, base: string | undefined
     );
   }
 
-  return baseOf(root, config, base);
+  return baseOf(root, config, base ?? upstreamOf(root));
 }
 
 function refuseOpenElsewhere(
@@ -143,24 +145,4 @@ function prepare(root: string, place: PreparedStory): ReturnType<typeof installD
   fs.writeFileSync(file, `${JSON.stringify(written, null, 2)}\n`);
 
   return created && place.install ? installDependencies(inside, config.stack.packageManager) : undefined;
-}
-
-function installNotes(
-  inside: string,
-  config: Config,
-  install: ReturnType<typeof installDependencies> | undefined,
-): string[] {
-  if (install?.ok === true) {
-    return [`dependencies installed in the worktree with \`${install.command}\` (${install.seconds} s).`];
-  }
-
-  if (install === undefined && fs.existsSync(path.join(inside, 'node_modules'))) {
-    return [];
-  }
-
-  const failed = install === undefined ? '' : `\`${install.command}\` failed (${install.seconds} s). `;
-
-  return [
-    `${failed}Install the dependencies before the story starts: \`cd ${inside} && ${inDialect('npm ci', config.stack.packageManager)}\`.`,
-  ];
 }

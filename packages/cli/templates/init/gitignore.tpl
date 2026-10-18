@@ -4,6 +4,7 @@ dist
 .env
 *.tsbuildinfo
 .ddd-ts-kit/
+.worktrees/
 {{#if orm.prisma}}
 generated
 {{/if}}

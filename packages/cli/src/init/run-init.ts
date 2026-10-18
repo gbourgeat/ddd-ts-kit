@@ -16,6 +16,7 @@ import { presetNamed } from '../presets/preset-named.js';
 import { addContext } from './add-context.js';
 import { existingName } from './existing-name.js';
 import { initFiles } from './files/init-files.js';
+import { ignoreWorktrees } from './ignore-worktrees.js';
 import { writeManifest } from './manifest/write-manifest.js';
 import { recordNoOutbox } from './record-no-outbox.js';
 import { resolveStack, type StackOptions } from './stack/resolve-stack.js';
@@ -49,6 +50,7 @@ export function runInit(root: string, options: InitOptions): WorkspaceReport {
   writeManifest(ws, { config, projectName, force: options.force });
   writeTypeScriptConfigs(ws, config);
   writeFiles(ws, config, projectName);
+  ignoreWorktrees(ws);
   writeCopilotInstructions(ws);
   ws.create(DEPCRUISE_FILE, renderCruiseFile(config));
   writeAgentSettings(ws);
@@ -76,14 +78,18 @@ export function runInit(root: string, options: InitOptions): WorkspaceReport {
   return report;
 }
 
-/** A new project gets its config whole; one that is initialised again with --force keeps what its team wrote around the stack. */
+/**
+ * A new project gets its config whole, its code written in worktrees only; one that is
+ * initialised again with --force keeps what its team wrote around the stack.
+ */
 function configText(ws: Workspace, config: Config): string {
   const recorded = ws.read(CONFIG_FILE);
+  const fresh = serializeConfig({ ...config, worktrees: 'required' });
 
   try {
-    return recorded === undefined ? serializeConfig(config) : restackConfigText(recorded, config);
+    return recorded === undefined ? fresh : restackConfigText(recorded, config);
   } catch {
-    return serializeConfig(config);
+    return fresh;
   }
 }
 

@@ -9,6 +9,7 @@ import type { Workspace } from '../workspace/index.js';
 import { readStoryClosing } from '../story/read-story-closing.js';
 import { reviewFileOf } from './review-file-of.js';
 import { sectionOf } from './section-of.js';
+import { trunkPhase } from './trunk-phase.js';
 import type { StoryPhase } from './story-phase.js';
 
 /** A design review section of a row: `## #US5.02 Place order`. */
@@ -26,7 +27,7 @@ interface StoryFacts {
 /**
  * The phases of a story, in order: its specification and criteria, its rows, the design review of
  * each row, its acceptance written and locked (the `build` gate: the code may start), then its rows
- * done, its acceptance passing and its report (the `close` gate).
+ * done, its acceptance passing, its trunk merged in and its report (the `close` gate).
  */
 export function readStoryPhases(ws: Workspace, story: string, slices: readonly Slice[]): StoryPhase[] {
   const rows = slices.filter((row) => storyOfRow(row.id).toLowerCase() === story.toLowerCase());
@@ -41,6 +42,7 @@ export function readStoryPhases(ws: Workspace, story: string, slices: readonly S
     acceptancePhase(facts, 'written'),
     builtPhase(facts),
     acceptancePhase(facts, 'passing'),
+    trunkPhase(ws, story),
     reportPhase(facts),
   ];
 }

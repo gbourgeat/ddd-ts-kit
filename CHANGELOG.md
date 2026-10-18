@@ -6,6 +6,47 @@ list the pull requests behind it.
 
 ## Unreleased
 
+**The worktrees of a project live inside it, and a new project writes its code in a worktree.**
+`worker-scope`, `story-scope` and the new `ddd-ts-kit worktree <name>` (any other piece of work,
+on `work/<name>`, cut from `origin/main` when run from the trunk, installed) open their worktree
+in `.worktrees/` of the main checkout, whichever worktree they run from, instead of a sibling
+folder `../<project>-<name>`; `plan-waves` names `.worktrees/<context>-<batch>`. `init` lists
+`.worktrees/` in `.gitignore`, the formatter, ESLint, the checker and the Docker context leave it
+out. A new project gets `"worktrees": "required"`: the guard of the plugin refuses the code of a
+context and the generators that write it (`context`, `adr` and `acceptance` aside) in the main
+checkout of the trunk, and says so at session start with the command that opens a worktree; the
+conductor of a parallel build writes its contracts and skeletons in a worktree of its own and
+lands them as a pull request. In a worktree of `.worktrees/` without its own `node_modules`,
+whose Node would resolve the packages of the main checkout above it, the guard refuses that code
+until it is installed. `story-scope` and `worktree` take the remote branch of the trunk as their
+base only from the trunk itself: any other branch is its own base.
+
+To move: nothing is required. A project started before has no `worktrees` key, read as
+`"advised"`: the guard only says where the code goes. Run `npx ddd-ts-kit init` once to add
+`.worktrees/` to `.gitignore` (until then the commands open their worktrees next to the project,
+as before, with a note), commit it, and set `"worktrees": "required"` when the team works in
+worktrees. Update the plugin, and `@ddd-ts-kit/eslint-plugin` for its ignore of `.worktrees/`;
+add `"!**/.worktrees"` to the `files.includes` of `biome.json`. A worktree opened before keeps its
+place: `git worktree move <path> .worktrees/<name>` moves it.
+
+**Where the open stories meet, while they are built.** The new command `ddd-ts-kit stories`
+lists the stories open in the worktrees of the repository and, for each pair that meets, the
+contexts the rows of both name, the files both worktrees change (committed or not, those
+`merge-trunk` settles by their kind aside), and what merging the branch of one into the other
+would leave to settle by hand and what `merge-trunk` settles alone, computed with
+`git merge-tree` without writing anything; for each story, how far it is behind its trunk and
+what bringing the trunk in would leave to a person. From the worktree of a story it names the
+stories that one meets. The guard of the plugin says it at session start in the worktree of a
+story, with the trunk that moved and a last fetch more than an hour old, and says once per file
+when the session writes a file another open story changes. `story --gate close` now also waits
+for the trunk merged in (the phase `trunk`), and `story-scope` cuts a story from the branch the
+current one follows (`origin/main` for `main`) when it has one, so that a `git fetch` is enough
+to see the trunk move: nothing of the kit goes to the network. The skill `story` reads
+`stories` before cutting the rows and before each row, and fetches before closing.
+
+To move: `npx ddd-ts-kit init` adds the permission of `npx ddd-ts-kit stories`; update the
+plugin. A story opened before this version keeps its base: `story-scope` resumes it as it was.
+
 **One session takes one user story to its pull request, one story per terminal.** The new skill
 `/ddd-ts-kit:story <code>` (run by the owner) works in the worktree of the story: it asks every
 question at once, then without stopping writes `docs/architecture/stories/<code>.md` (statement,
