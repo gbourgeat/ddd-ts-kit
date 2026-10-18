@@ -30,6 +30,10 @@ change it by hand.
   no constant, no `token()`, no `*.ports.ts` file (`ports/abstract-class`,
   `ports/no-token-constant`).
 - An adapter `implements` its port, never `extends` it (`ports/implements-never-extends`).
+- A class of `infrastructure/` that implements a port is wired, by its declaration or by a
+  binding in the composition root; one kept unwired on purpose says so above the class,
+  `// ddd-ts-kit-disable-next-line declarations/port-adapter-wired -- ADR-NNNN: <why>`, with its
+  decision record in `docs/adr/` (`declarations/port-adapter-wired`).
 - A dependency is named by the class of its port, never by an adapter or a fake
   (`ports/no-concrete-dependency`). Where a list is written (the explicit style, a
   `bind(Port)`), the port is imported as a value (`ports/value-import`).

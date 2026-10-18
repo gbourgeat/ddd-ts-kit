@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:26e424fca03ce5b5 -->
+<!-- translation-of: README.md sha256:b427cb8bfa4589be -->
 
 # ddd-ts-kit
 
@@ -1662,7 +1662,8 @@ règle.
   de la ligne.
 - Les sévérités viennent de `rules` dans la configuration (`error`, `warn`, `off`). Par défaut
   `error`, sauf `test/no-mocks`, `test/builder-required`, `clean/function-size`,
-  `clean/no-noise-comment`, `clean/no-flag-argument`, `standard/no-parallel-interface` et, tenue
+  `clean/no-noise-comment`, `clean/no-flag-argument`, `standard/no-parallel-interface`,
+  `declarations/port-adapter-wired` et, tenue
   par ESLint, `application/command-query-separation` (`warn`). `any` dans un fichier de test est
   toujours un avertissement.
 - `limits: { "maxParameters": 3, "maxFunctionLines": 30 }` dans la configuration règle
@@ -1762,6 +1763,7 @@ règle.
 | `declarations/role-declared` | style déclaré seulement : un fichier de rôle (autre que `*.command.ts` et `*.query.ts`, tenus par `authz/declared` ; `*.job.ts` sous `application/scheduling/` avec `@Scheduled` et `*.publisher.ts` avec `@DomainEventHandler` sont des rôles) qui n'exporte aucune classe portant le décorateur de son suffixe et de son dossier, ou une classe qui en porte une autre ; une classe déclarée dans un fichier qui n'est pas un fichier de rôle ; une option `consumer` ou `name` manquante, vide, une variable, une concaténation ou un template literal avec une substitution ; tout décorateur de déclaration sur une classe sous `domain/` |
 | `declarations/barrel-current` | style déclaré seulement : avec `stack.assembly: barrel`, un `<context>.declarations.ts` manquant ou qui diffère d'un `export *` par fichier de rôle trié par chemin, suivi d'un `injected(Class, [Tokens])` par classe dont le constructeur reçoit quelque chose (lu depuis les signatures, avec leurs imports) ; avec `discovery`, un barrel qui existe encore, et un `<context>.dependencies.ts` qui diffère de ces instructions `injected` (son absence est acceptée tant qu'il n'en contiendrait aucune). Le message nomme le fichier de rôle manquant ou la classe dont la liste est périmée. Elle a besoin de l'arbre, c'est pourquoi `check-file` ne l'exécute pas |
 | `declarations/constructor-injection` | style déclaré seulement, dans un fichier de rôle : sur une classe dont le décorateur ne liste rien, un paramètre de constructeur optionnel, qui a une valeur par défaut, est un paramètre du reste ou est déstructuré, n'a pas de type, ou est typé par autre chose qu'un nom de classe (arguments de type mis à part) : une union, une intersection, un tableau, un nom qualifié, un type du langage, une interface, un alias de type, une enum ou une classe non exportée du fichier ou du fichier du projet d'où elle est importée ; une classe qui hérite son constructeur d'une classe que le projet ne sait pas lire. Sous `stack.dependencies: signature`, un décorateur qui porte une liste alors que le constructeur peut être lu : une liste qui le répète, une qui en diffère |
+| `declarations/port-adapter-wired` | une classe de `infrastructure/` qui implémente un port et que rien ne câble : ni `@Repository`, `@Gateway` ou `@Adapter` dans le style déclaré, ni fichier de la racine de composition (`<context>.module.ts`, `main.ts`, `apps/<context>/main.ts`, la plateforme) qui l'importe ; celle gardée à dessein porte `// ddd-ts-kit-disable-next-line declarations/port-adapter-wired -- ADR-NNNN: <why>` |
 | `ports/abstract-class` | dans un fichier de port (`domain/repositories/*.repository.ts`, `application/ports/*.port.ts`) : une classe qui n'est pas `abstract` ; un membre qui n'est pas une méthode ou une propriété abstraite (`static readonly tokenKey = '<text>'` mis à part) : un constructeur, un corps, un initialiseur, un membre `private`, `protected` ou `#` ; une `interface` exportée (un alias `type`, une forme de données, n'est pas signalé) |
 | `ports/implements-never-extends` | une classe portant `@Repository(P)`, `@Gateway(P)` ou `@Adapter(P)`, ou donnée à `bind(P).toClass(C)` ou `rebind(P).toClass(C)`, sans `implements P` ou avec `extends P` ; sous `infrastructure/`, une classe qui étend une classe importée d'un fichier de port |
 | `ports/no-token-constant` | un appel de `token` importé d'un *package* `@ddd-ts-kit/*` ; `Symbol(..)`, `Symbol.for(..)` ou une chaîne littérale comme premier argument de `bind`, `rebind`, `resolve`, `fake` ou `override` dans un fichier qui importe `@ddd-ts-kit/di` ; un nom en UPPER_SNAKE_CASE dans une liste de dépendances ; un fichier nommé `*.ports.ts` ou `tokens.ts` |

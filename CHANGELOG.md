@@ -4,6 +4,25 @@ What each version changes for someone who uses the kit. The packages of `package
 together, under one version; the notes of each [GitHub release](https://github.com/gbourgeat/ddd-ts-kit/releases)
 list the pull requests behind it.
 
+## Unreleased
+
+**An adapter that nothing wires is reported.** `declarations/port-adapter-wired`
+(`ddd-ts-kit check`, a warning) reports a class of `infrastructure/` that implements a port of
+`domain/repositories/` or `application/ports/` and that nothing wires: in the declared style it
+carries no `@Repository`, `@Gateway` or `@Adapter`, and in both styles no file of the composition
+root (`<context>.module.ts`, `main.ts`, `apps/<context>/main.ts`, the platform directory) imports
+it. `declarations/role-declared` reads a role file by its suffix, so such a class in a file without
+one was reported by no rule and only showed at run time as a missing binding. To move, run
+`ddd-ts-kit check --rule declarations/port-adapter-wired`, then declare each reported class
+(`@Gateway(Port)` in a `*.gateway.ts`, for example) or bind it in the module file; one kept
+unwired on purpose gets its decision record in `docs/adr/` and
+`// ddd-ts-kit-disable-next-line declarations/port-adapter-wired -- ADR-NNNN: <why>` above the class.
+It becomes an error in the next minor version.
+
+In the explicit style, `generate adapter <context> <Port>` now refuses a port the module file
+already binds, as the declared style does: it used to write a second class that nothing bound,
+with a note to bind it later, which is what this rule reports.
+
 ## 0.26.0
 
 **The guard recognises the CLI of the kit however it is launched.** The refusal of
