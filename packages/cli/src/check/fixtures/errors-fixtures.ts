@@ -1,5 +1,6 @@
 import { CONFIG_FILE } from '../../config/index.js';
 import { config } from './config.js';
+import { errorsRoute as route } from './errors-route.js';
 import type { Fixture } from './fixture.js';
 import { PATHS } from './paths.js';
 import { project } from './project.js';
@@ -38,16 +39,6 @@ const LEGACY = source(
   "  readonly code = 'INVOICE_ALREADY_ISSUED';",
   '}',
 );
-
-const route = (...codes: string[]): string =>
-  source(
-    "import { defineRoute } from '@ddd-ts-kit/http';",
-    '',
-    'export const issueInvoiceRoute = defineRoute(',
-    `  { method: 'POST', path: '/invoices', errors: [${codes.map((code) => `'${code}'`).join(', ')}], security: false },`,
-    '  issue,',
-    ');',
-  );
 
 const INVOICE = concept(
   'Invoice',

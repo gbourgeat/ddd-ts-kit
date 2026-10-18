@@ -67,9 +67,12 @@ describe('error-factories', () => {
   });
 
   it('proposes the aggregate a class is named after, and nothing when none is', () => {
-    expect(cli(root, 'error-factories', '--plan', '--dry-run').stdout).toContain(`would write   ${PLAN}`);
+    expect(cli(root, 'error-factories', '--plan', '--to', 'factories', '--dry-run').stdout).toContain(
+      `would write   ${PLAN}`,
+    );
+
     expect(exists(root, PLAN)).toBe(false);
-    expect(cli(root, 'error-factories', '--plan').code).toBe(0);
+    expect(cli(root, 'error-factories', '--plan', '--to', 'factories').code).toBe(0);
 
     const plan = JSON.parse(read(root, PLAN)) as Plan;
 
@@ -110,7 +113,7 @@ describe('error-factories --apply', () => {
 
   beforeAll(() => {
     root = legacyProject();
-    cli(root, 'error-factories', '--plan');
+    cli(root, 'error-factories', '--plan', '--to', 'factories');
 
     const plan = JSON.parse(read(root, PLAN)) as Plan;
 
@@ -192,7 +195,7 @@ describe('error-factories --apply', () => {
   it('says which properties of an error became facts', () => {
     const fresh = legacyProject();
 
-    cli(fresh, 'error-factories', '--plan');
+    cli(fresh, 'error-factories', '--plan', '--to', 'factories');
     write(fresh, PLAN, read(root, PLAN));
 
     const applied = cli(fresh, 'error-factories', '--apply', '--json').json() as { manual: string[] };

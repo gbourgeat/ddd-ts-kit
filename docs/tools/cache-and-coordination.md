@@ -179,13 +179,17 @@ use case, which depends on the port and refuses with a code of its own:
 
 <!-- checked sample -->
 ```ts
-import { ConceptError, RateLimiter } from '@ddd-ts-kit/kernel';
+import { DomainRefusal, RateLimiter } from '@ddd-ts-kit/kernel';
 
-export class BookingError extends ConceptError {
-  static tooManyAttempts(retryAfterMs: number) {
-    return BookingError.refusal('TOO_MANY_BOOKING_ATTEMPTS', 'Too many booking attempts, try again later.', {
-      retryAfterMs,
-    });
+// contexts/appointments/domain/errors/codes.ts
+export const AppointmentsCodes = { TooManyBookingAttempts: 'TOO_MANY_BOOKING_ATTEMPTS' } as const;
+
+// contexts/appointments/domain/errors/too-many-booking-attempts.error.ts
+export class TooManyBookingAttempts extends DomainRefusal {
+  readonly code = AppointmentsCodes.TooManyBookingAttempts;
+
+  static withRetryAfter(retryAfterMs: number) {
+    return TooManyBookingAttempts.refusal('Too many booking attempts, try again later.', { retryAfterMs });
   }
 }
 
@@ -197,7 +201,7 @@ export class BookingAttempts {
     const decision = await this.limiter.consume(`booking:${clientId}`, { limit: 3, windowMs: 60_000 });
 
     if (!decision.allowed) {
-      throw BookingError.tooManyAttempts(decision.retryAfterMs);
+      throw TooManyBookingAttempts.withRetryAfter(decision.retryAfterMs);
     }
   }
 }
@@ -260,11 +264,11 @@ invariant. Instead of guarding the no-double-booking invariant with it:
 
 ```ts
 // a pause past five seconds, a failover, an eviction: and two bookings of one slot get in
-const handle = await lock.acquire(`slot:${practitionerId}:${startsAt}`, { ttlMs: 5_000 });
+const handle = await lock.acquire(`slot:${calendarId}:${startsAt}`, { ttlMs: 5_000 });
 if (handle === undefined) {
-  throw AppointmentError.slotTaken(practitionerId, startsAt);
+  throw SlotTaken.forCalendar(calendarId, startsAt);
 }
-await appointments.save(Appointment.book(practitionerId, startsAt));
+await appointments.save(Appointment.book(calendarId, startsAt));
 ```
 
 leave the invariant to the aggregate and to a constraint of the database (the exclusion

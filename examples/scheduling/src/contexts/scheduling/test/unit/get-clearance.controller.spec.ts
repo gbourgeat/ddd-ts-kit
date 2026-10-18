@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { controllerRoute, executeRoute } from '@ddd-ts-kit/http';
 import { InMemoryQueryBus } from '@ddd-ts-kit/kernel';
 import { GetClearanceQuery } from '@/contexts/scheduling/application/queries/get-clearance/get-clearance.query';
-import { CalendarError } from '@/contexts/scheduling/domain/errors/calendar.error';
+import { UnknownClearance } from '@/contexts/scheduling/domain/errors/unknown-clearance.error';
 import { GetClearanceController } from '@/contexts/scheduling/presentation/http/calendars/get-clearance/get-clearance.controller';
 
 const PARAMS = { calendarId: 'calendar-1', clearanceId: 'clearance-1' };
@@ -38,7 +38,7 @@ describe('GET /calendars/:calendarId/clearances/:clearanceId', () => {
   it('answers the refusal of the use case with its code', async () => {
     const queries = new InMemoryQueryBus().register(GetClearanceQuery, {
       execute: async () => {
-        throw CalendarError.unknownClearance('clearance-1');
+        throw UnknownClearance.forClearance('clearance-1');
       },
     });
 

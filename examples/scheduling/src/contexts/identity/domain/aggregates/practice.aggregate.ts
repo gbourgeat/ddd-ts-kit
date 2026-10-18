@@ -1,5 +1,9 @@
 import { AggregateRoot } from '@ddd-ts-kit/kernel';
-import { PracticeError } from '@/contexts/identity/domain/errors/practice.error';
+import { AlreadyMember } from '@/contexts/identity/domain/errors/already-member.error';
+import { NotAMember } from '@/contexts/identity/domain/errors/not-a-member.error';
+import { NotAPractitioner } from '@/contexts/identity/domain/errors/not-a-practitioner.error';
+import { NotAnAssistant } from '@/contexts/identity/domain/errors/not-an-assistant.error';
+import { PracticeLeftUnmanaged } from '@/contexts/identity/domain/errors/practice-left-unmanaged.error';
 import { PracticeMemberAdded } from '@/contexts/identity/domain/events/practice-member-added.event';
 import { PracticeMemberRemoved } from '@/contexts/identity/domain/events/practice-member-removed.event';
 import { PracticeOpened } from '@/contexts/identity/domain/events/practice-opened.event';
@@ -61,7 +65,7 @@ export class Practice extends AggregateRoot<string> {
 
   addMember(newcomer: Newcomer, now: Date): void {
     if (this.membershipOf(newcomer.personId) !== undefined) {
-      throw PracticeError.alreadyMember(newcomer.personId);
+      throw AlreadyMember.forPerson(newcomer.personId);
     }
 
     const membership = Membership.create(newcomer.personId, newcomer.role);
@@ -81,13 +85,13 @@ export class Practice extends AggregateRoot<string> {
     const leaving = this.membershipOf(personId);
 
     if (leaving === undefined) {
-      throw PracticeError.notAMember(personId);
+      throw NotAMember.forPerson(personId);
     }
 
     const remaining = this.state.members.filter((member) => !member.isOf(personId));
 
     if (leaving.has(RoleName.Manager) && !remaining.some((member) => member.has(RoleName.Manager))) {
-      throw PracticeError.lastManager();
+      throw PracticeLeftUnmanaged.onRemoval();
     }
 
     this.state = { ...this.state, members: remaining };
@@ -97,7 +101,7 @@ export class Practice extends AggregateRoot<string> {
   /** The desk a delegation is given on: the post of one of the practitioners of this practice. */
   deskOf(practitionerId: string): Desk {
     if (this.membershipOf(practitionerId)?.has(RoleName.Practitioner) !== true) {
-      throw PracticeError.notAPractitioner(practitionerId);
+      throw NotAPractitioner.forPerson(practitionerId);
     }
 
     return Desk.create(this.id, practitionerId);
@@ -108,7 +112,7 @@ export class Practice extends AggregateRoot<string> {
     const membership = this.membershipOf(assistantId);
 
     if (membership?.has(RoleName.Assistant) !== true) {
-      throw PracticeError.notAnAssistant(assistantId);
+      throw NotAnAssistant.forPerson(assistantId);
     }
 
     return membership;

@@ -1,30 +1,47 @@
+import type { CodeList } from '../check/errors/code-list.js';
+import { codeListName } from '../check/errors/code-list-name.js';
 import { errorCodes } from '../check/errors/error-codes.js';
-import { wholeLiteral } from '../check/declarations/whole-literal.js';
+import { readCodeList } from '../check/errors/read-code-list.js';
+import { refusalClasses } from '../check/errors/refusal-classes.js';
 import { scan, type Scan } from '../check/scan/scan.js';
-import { callArguments } from '../check/text/call-arguments.js';
 import { matchingBracket } from '../check/text/matching-bracket.js';
 import { staticMethods, type StaticMethod } from '../generate/errors/static-methods.js';
 import type { ErrorFact } from './context-description.js';
 import type { ContextSources } from './context-sources.js';
+import { exposedBy } from './exposed-by.js';
+import { readRefusals } from './read-refusals.js';
 
 const FOLDER = 'domain/errors';
 const CLASS = /(?<![\w$.])class\s+([A-Za-z_$][\w$]*)[^{]*\{/g;
-const EXPOSING = /\.\s*exposing\s*\(/g;
 
 /**
  * The refusals of a context: one row per static factory of an error class, with its code and
  * the facts it exposes, and one row per class that carries its code itself, as 0.2 wrote them.
+ * A class of one refusal (`"stack.refusals": "named"`) gives one row per factory, its code read
+ * from `domain/errors/codes.ts`.
  */
-export function readErrors({ ws, directory }: ContextSources): ErrorFact[] {
+export function readErrors({ ws, directory, name: context }: ContextSources): ErrorFact[] {
+  const list = codeListOf(ws.read(`${directory}/${FOLDER}/codes.ts`), context);
+
   return ws
     .list(`${directory}/${FOLDER}`)
     .filter((name) => name.endsWith('.error.ts'))
     .flatMap((name) => {
       const file = `${directory}/${FOLDER}/${name}`;
       const scanned = scan(ws.read(file) ?? '');
+      const named = new Set(refusalClasses(scanned).map((shape) => shape.name));
 
-      return [...scanned.code.matchAll(CLASS)].flatMap((declared) => errorsOf(scanned, declared, file));
+      const concepts = [...scanned.code.matchAll(CLASS)]
+        .filter((declared) => !named.has(declared[1] ?? ''))
+        .flatMap((declared) => errorsOf(scanned, declared, file));
+
+      return [...concepts, ...readRefusals(scanned, list, file)];
     });
+}
+
+/** The code list of the context, `<Context>Codes` in `domain/errors/codes.ts`; undefined without one. */
+function codeListOf(text: string | undefined, context: string): CodeList | undefined {
+  return text === undefined ? undefined : readCodeList(scan(text), codeListName(context));
 }
 
 function errorsOf(scanned: Scan, declared: RegExpExecArray, file: string): ErrorFact[] {
@@ -54,11 +71,4 @@ function codesIn(scanned: Scan, method: StaticMethod): string[] {
   return errorCodes(scanned)
     .filter(({ line }) => line >= starts && line <= ends)
     .map(({ code }) => code);
-}
-
-function exposedBy(scanned: Scan, method: StaticMethod): string[] {
-  return [...scanned.code.matchAll(EXPOSING)]
-    .filter((match) => match.index > method.open && match.index < method.end)
-    .flatMap((match) => callArguments(scanned.code, match.index + match[0].length - 1))
-    .flatMap((argument) => wholeLiteral(scanned, argument) ?? []);
 }

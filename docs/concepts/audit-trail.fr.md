@@ -1,5 +1,5 @@
 [English](audit-trail.md) · **Français**
-<!-- translation-of: audit-trail.md sha256:2ff0961b5ac82973 -->
+<!-- translation-of: audit-trail.md sha256:68992df8eefc5809 -->
 
 # Journal d'audit
 
@@ -75,7 +75,7 @@ tel quel :
 ```ts
 import {
   AuthorizedCommand,
-  ConceptError,
+  DomainRefusal,
   FixedExecutionScope,
   InMemoryCommandBus,
   InMemoryUnitOfWork,
@@ -88,9 +88,13 @@ import {
 import { InMemoryAuditTrail, auditMiddleware, auditedFields } from '@ddd-ts-kit/audit';
 
 // le cas d'usage : une commande et son gestionnaire, sans aucun appel d'audit
-class AppointmentError extends ConceptError {
-  static cancellationWindowPassed(appointmentId: string) {
-    return AppointmentError.refusal('CANCELLATION_WINDOW_PASSED', `Appointment ${appointmentId} starts in less than 24 hours.`, { appointmentId });
+const SchedulingCodes = { CancellationWindowPassed: 'CANCELLATION_WINDOW_PASSED' } as const;
+
+class CancellationWindowPassed extends DomainRefusal {
+  readonly code = SchedulingCodes.CancellationWindowPassed;
+
+  static forAppointment(appointmentId: string) {
+    return CancellationWindowPassed.refusal(`Appointment ${appointmentId} starts in less than 24 hours.`, { appointmentId });
   }
 }
 
@@ -105,7 +109,7 @@ class CancelAppointment extends AuthorizedCommand<void> {
 
 const handler = {
   async execute(command: CancelAppointment): Promise<void> {
-    throw AppointmentError.cancellationWindowPassed(command.appointmentId);
+    throw CancellationWindowPassed.forAppointment(command.appointmentId);
   },
 };
 

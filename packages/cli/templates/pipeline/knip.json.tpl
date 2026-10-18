@@ -15,6 +15,11 @@
   "ignoreDependencies": {{knip.ignored}},
 {{/if}}
   "ignoreExportsUsedInFile": true,
+{{#if refusals.named}}
+  "ignoreIssues": {
+    "{{config.contextsDir}}/*/domain/errors/codes.ts": ["types"]
+  },
+{{/if}}
   "vitest": {
     "config": ["vitest.config.ts"{{knip.e2eConfig}}],
     "entry": [

@@ -3,7 +3,9 @@ import { controllerRoute, createErrorMapper, executeRoute } from '@ddd-ts-kit/ht
 import { InMemoryCommandBus } from '@ddd-ts-kit/kernel';
 import { errorStatuses } from '@/platform/http/error-statuses';
 import { MarkAppointmentNoShowCommand } from '@/contexts/scheduling/application/commands/mark-appointment-no-show/mark-appointment-no-show.command';
-import { AppointmentError } from '@/contexts/scheduling/domain/errors/appointment.error';
+import { AppointmentEnded } from '@/contexts/scheduling/domain/errors/appointment-ended.error';
+import { UnknownAppointment } from '@/contexts/scheduling/domain/errors/unknown-appointment.error';
+import { AppointmentNotStarted } from '@/contexts/scheduling/domain/errors/appointment-not-started.error';
 import { MarkAppointmentNoShowController } from '@/contexts/scheduling/presentation/http/appointments/mark-appointment-no-show/mark-appointment-no-show.controller';
 
 // The one table of the platform: a code it does not name answers 422.
@@ -35,12 +37,12 @@ describe('POST /appointments/:appointmentId/no-show', () => {
 
   it.each([
     [
-      AppointmentError.notStarted('appointment-1', new Date('2026-03-02T08:00:00.000Z')),
+      AppointmentNotStarted.forAppointment('appointment-1', new Date('2026-03-02T08:00:00.000Z')),
       422,
       'APPOINTMENT_NOT_STARTED',
     ],
-    [AppointmentError.ended('appointment-1', 'cancelled'), 409, 'APPOINTMENT_ENDED'],
-    [AppointmentError.notFound('appointment-1'), 404, 'APPOINTMENT_NOT_FOUND'],
+    [AppointmentEnded.forAppointment('appointment-1', 'cancelled'), 409, 'APPOINTMENT_ENDED'],
+    [UnknownAppointment.forAppointment('appointment-1'), 404, 'APPOINTMENT_NOT_FOUND'],
   ])('answers the refusal %o with the status %i and the code %s', async (refusal, status, code) => {
     const commands = new InMemoryCommandBus().register(MarkAppointmentNoShowCommand, {
       execute: async () => {

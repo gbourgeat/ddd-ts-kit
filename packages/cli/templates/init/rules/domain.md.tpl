@@ -15,6 +15,10 @@ paths:
 - A closed list of values (a status, a kind, a role of the model) is a vocabulary, `npx ddd-ts-kit generate vocabulary <context> <Name> --value <value>...`: code reads `AppointmentStatus.NoShow`, never the string (`language/declared-vocabulary`).
 - No number without a name: 0, 1, -1 and an index only; a duration, a limit or a rate is a constant of the module (`const MINUTES_PER_HOUR = 60;`) or a value object (`clean/no-magic-number`).
 {{/if}}
+{{#if refusals.named}}
+- A violated invariant throws a refusal built by a static factory of the class named after it, never `new` and never a bare `Error`: `throw InvoiceAlreadyIssued.forInvoice(this.id)` (`errors/through-factory`, `domain/no-generic-error`). One class per refusal in `domain/errors/<refusal>.error.ts`, extending `DomainRefusal`, named after what is refused and never `...Error`, no constructor (`errors/constructor-not-public`); a factory is named after what the refusal is about, `for`, `with`, `because`, `on` or `at` then a capital letter, no digit: `forInvoice`, `withNotice`, `becauseOf` (`errors/factory-name`). The class reads its code from the closed list of its context, `domain/errors/codes.ts`, `readonly code = BillingCodes.InvoiceAlreadyIssued;`: one entry per refusal class and no other, in constant case (`errors/code-listed`), one code per refusal (`errors/code-unique`). The code is the contract a client reads: a renamed class keeps it.
+- A factory takes the facts of the refusal as typed parameters and gives them to `refusal(message, facts)`. Facts are private: one reaches a client only when the factory names it, `.exposing('<fact>')`, and never when it identifies a person. A caught refusal is recognised with `InvoiceAlreadyIssued.is(error)`.
+{{/if}}
 {{#if refusals.factories}}
 - A violated invariant throws a refusal built by a static factory of the error class of its concept, never `new` and never a bare `Error`: `throw InvoiceError.alreadyIssued(this.id)` (`errors/through-factory`, `domain/no-generic-error`). One class per concept of the glossary in `domain/errors/`, extending `ConceptError`, no constructor (`errors/constructor-not-public`); a factory is named after the refusal and its code says the same words (`errors/factory-name`), one code per refusal of the context (`errors/code-unique`).
 - A factory takes the facts of the refusal as typed parameters and gives them to `refusal(code, message, facts)`. Facts are private: one reaches a client only when the factory names it, `.exposing('<fact>')`, and never when it identifies a person.
@@ -23,16 +27,19 @@ paths:
 - A violated invariant throws a `DomainError` of `domain/errors/` with a stable `code`, never a bare `Error` (`domain/no-generic-error`).
 {{/if}}
 {{#if valueObjects.throwing}}
-- A value object refuses in `create` as the rest of the domain does: it returns the value object or throws the refusal of the concept it describes{{#if refusals.factories}} (`throw PersonError.invalidEmail(raw)`){{/if}}. The caller takes the value as it is, with no `unwrap`; a spec asserts the refusal with `expectRefusal(() => Email.create(raw), 'INVALID_EMAIL')`.
+- A value object refuses in `create` as the rest of the domain does: it returns the value object or throws the refusal of the concept it describes{{#if refusals.named}} (`throw InvalidEmail.forAddress(raw)`){{/if}}{{#if refusals.factories}} (`throw PersonError.invalidEmail(raw)`){{/if}}. The caller takes the value as it is, with no `unwrap`; a spec asserts the refusal with `expectRefusal(() => Email.create(raw), 'INVALID_EMAIL')`.
 {{/if}}
 {{#if valueObjects.result}}
-- A value object returns its refusals in the `Result` of `create`{{#if refusals.factories}}: `err(PersonError.invalidEmail(raw))`{{/if}}; the caller unwraps it with `unwrap(..)` of the kernel. `npx ddd-ts-kit value-objects` moves the project to factories that throw.
+- A value object returns its refusals in the `Result` of `create`{{#if refusals.named}}: `err(InvalidEmail.forAddress(raw))`{{/if}}{{#if refusals.factories}}: `err(PersonError.invalidEmail(raw))`{{/if}}; the caller unwraps it with `unwrap(..)` of the kernel. `npx ddd-ts-kit value-objects` moves the project to factories that throw.
 {{/if}}
 - Domain events are named in the past tense, `<context>.<aggregate>.<fact>` (`events/name-format`), declared once on the class, `static readonly eventName`, which `readonly name` reads (`events/name-declared-once`), and recorded by the aggregate (`this.record(...)`). They leave with the save: nothing here dispatches them.
 - An aggregate whose history is the business can be event-sourced, chosen per aggregate (`generate aggregate <context> <Name> --event-sourced`): it extends `EventSourcedAggregate`, a command checks the invariants then `this.record(...)`, and only its `apply<Fact>` methods (and `restore`, for a snapshot) change the state (`event-sourcing/state-in-apply`). Its events are named in the past tense (`event-sourcing/past-tense`). The other aggregates keep their state in tables.
 - A repository here is a port: an abstract class extending the kernel `Repository<Aggregate>`, abstract members only (`ports/abstract-class`). A domain service is stateless.
 - Time and identifiers come in as parameters (`purity/*`); nothing here knows the acting user or its rights (`authz/in-application`).
 - One concept per file, with the suffix of its role: `.aggregate.ts`, `.entity.ts`, `.vo.ts`, `.vocabulary.ts`, `.event.ts`, `.error.ts`, `.repository.ts`, `.service.ts` (`naming/suffix`, `naming/one-concept-per-file`).
+{{#if refusals.named}}
+- The language first, with `/ddd-ts-kit:glossary`. Then create with `npx ddd-ts-kit generate aggregate|entity|value-object|vocabulary|domain-event|domain-service|repository ... --json`, a refusal with `npx ddd-ts-kit generate error <context> <Refusal> <factory> --json` (it writes the class and its code in `codes.ts` when absent, adds the factory, and its case to the spec), and fill the `TODO(domain)` places it lists.
+{{/if}}
 {{#if refusals.factories}}
 - The language first, with `/ddd-ts-kit:glossary`. Then create with `npx ddd-ts-kit generate aggregate|entity|value-object|vocabulary|domain-event|domain-service|repository ... --json`, a refusal with `npx ddd-ts-kit generate error <context> <Concept> <refusal> --json` (it adds the factory to the class of the concept, and its case to the spec), and fill the `TODO(domain)` places it lists.
 {{/if}}

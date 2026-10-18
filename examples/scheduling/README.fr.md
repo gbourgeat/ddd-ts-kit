@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:d07bd7ec143360d8 -->
+<!-- translation-of: README.md sha256:ed440b2f9ac13aae -->
 
 # Scheduling : l'application d'exemple de ddd-ts-kit
 
@@ -344,8 +344,8 @@ declare class Cancellation {
   /** Refuse avec REASON_REQUIRED (422) quand le cabinet ne donne aucun motif : un invariant. */
   static create(by: 'patient' | 'practice', reason?: string): Cancellation;
 }
-declare class AppointmentError {
-  static notFound(appointmentId: string): Error;
+declare class UnknownAppointment {
+  static forAppointment(appointmentId: string): Error;
 }
 declare abstract class AppointmentRepository {
   abstract findById(id: string): Promise<Appointment | undefined>;
@@ -400,7 +400,7 @@ export class CancelAppointmentHandler implements CommandHandler<CancelAppointmen
     const appointment = await this.appointmentRepository.findById(appointmentId);
 
     if (appointment === undefined) {
-      throw AppointmentError.notFound(appointmentId);
+      throw UnknownAppointment.forAppointment(appointmentId);
     }
 
     // Lève ForbiddenError (403) quand une politique dit non.

@@ -1,5 +1,5 @@
 import { AggregateRoot, type StoredFile } from '@ddd-ts-kit/kernel';
-import { AppointmentError } from '@/contexts/scheduling/domain/errors/appointment.error';
+import { NoDocument } from '@/contexts/scheduling/domain/errors/no-document.error';
 import { AppointmentAnnotated } from '@/contexts/scheduling/domain/events/appointment-annotated.event';
 import { AppointmentBooked } from '@/contexts/scheduling/domain/events/appointment-booked.event';
 import { AppointmentCancelled } from '@/contexts/scheduling/domain/events/appointment-cancelled.event';
@@ -164,7 +164,7 @@ export class Appointment extends AggregateRoot<string> {
     const { document, ...kept } = this.state;
 
     if (document === undefined) {
-      throw AppointmentError.noDocument(this.id);
+      throw NoDocument.forAppointment(this.id);
     }
 
     this.state = { ...kept, changedAt: now };

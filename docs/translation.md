@@ -396,11 +396,17 @@ of the workspace, so it cannot drift from the API:
 ````md
 <!-- checked sample -->
 ```ts
-import { ConceptError } from '@ddd-ts-kit/kernel';
+import { DomainRefusal } from '@ddd-ts-kit/kernel';
 
-export class InvoiceError extends ConceptError {
-  static alreadyPaid(invoiceId: string) {
-    return InvoiceError.refusal('INVOICE_ALREADY_PAID', `Invoice ${invoiceId} is already paid.`, { invoiceId });
+export const BillingCodes = {
+  InvoiceAlreadyPaid: 'INVOICE_ALREADY_PAID',
+} as const;
+
+export class InvoiceAlreadyPaid extends DomainRefusal {
+  readonly code = BillingCodes.InvoiceAlreadyPaid;
+
+  static forInvoice(invoiceId: string) {
+    return InvoiceAlreadyPaid.refusal(`Invoice ${invoiceId} is already paid.`, { invoiceId });
   }
 }
 ```
@@ -410,11 +416,17 @@ which renders as:
 
 <!-- checked sample -->
 ```ts
-import { ConceptError } from '@ddd-ts-kit/kernel';
+import { DomainRefusal } from '@ddd-ts-kit/kernel';
 
-export class InvoiceError extends ConceptError {
-  static alreadyPaid(invoiceId: string) {
-    return InvoiceError.refusal('INVOICE_ALREADY_PAID', `Invoice ${invoiceId} is already paid.`, { invoiceId });
+export const BillingCodes = {
+  InvoiceAlreadyPaid: 'INVOICE_ALREADY_PAID',
+} as const;
+
+export class InvoiceAlreadyPaid extends DomainRefusal {
+  readonly code = BillingCodes.InvoiceAlreadyPaid;
+
+  static forInvoice(invoiceId: string) {
+    return InvoiceAlreadyPaid.refusal(`Invoice ${invoiceId} is already paid.`, { invoiceId });
   }
 }
 ```

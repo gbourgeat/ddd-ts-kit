@@ -40,14 +40,15 @@ const LINK_WORDS = new Set([
   'not',
 ]);
 
-/** The words of `name` that no term of the glossary covers. */
-export function unknownWords(name: string, glossary: Glossary): string[] {
+/** The words of `name` that no term of the glossary covers, the `allowed` ones aside (the qualifiers of a refusal). */
+export function unknownWords(name: string, glossary: Glossary, allowed: readonly string[] = []): string[] {
   const known = glossary.terms.flatMap((term) => splitWords(term));
 
   return splitWords(name).filter(
     (word) =>
       !STRUCTURAL_WORDS.has(word) &&
       !LINK_WORDS.has(word) &&
+      !allowed.includes(word) &&
       !/^v?\d+$/.test(word) &&
       !known.some((term) => sameWord(term, word)),
   );

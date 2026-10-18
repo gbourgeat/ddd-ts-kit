@@ -35,6 +35,10 @@ Needed and specific (delegations between members of a practice), but not what pr
 | Display name | The name a person is shown by to the others |  |
 | Time zone | The IANA zone whose wall-clock time a practice lives in |  |
 | Role | What a member is in a practice: manager, practitioner or assistant |  |
+| Active | Said of a delegation granted and not ended yet: neither revoked nor expired | Grant, which an ended delegation also received |
+| End | The instant a delegation stops, if it has one: chosen when it is granted; once it passes, the delegation expires | Revoke, which ends it earlier |
+| Past | Before now, by the clock of the platform: a delegation granted to end there would be born expired |  |
+| Left unmanaged | Said of a practice whose last manager would be removed: refused, a practice keeps one manager at least | Manager, the role it would lose |
 
 ## Aggregates
 
@@ -169,21 +173,21 @@ Generated from the code by `ddd-ts-kit docs`; the same facts as data: `ddd-ts-ki
 
 ### Errors
 
-| Error class | Refusal | Code | Exposed facts |
+| Refusal | Factory | Code | Exposed facts |
 |---|---|---|---|
-| `DelegationError` | `alreadyActive` | `DELEGATION_ALREADY_ACTIVE` | none |
-| `DelegationError` | `endsInThePast` | `DELEGATION_ENDS_IN_THE_PAST` | `endsAt` |
-| `DelegationError` | `notActive` | `DELEGATION_NOT_ACTIVE` | none |
-| `DelegationError` | `notFound` | `DELEGATION_NOT_FOUND` | none |
-| `PersonError` | `invalidDisplayName` | `INVALID_DISPLAY_NAME` | none |
-| `PersonError` | `invalidEmail` | `INVALID_EMAIL` | none |
-| `PersonError` | `notRegistered` | `PERSON_NOT_REGISTERED` | none |
-| `PracticeError` | `alreadyMember` | `ALREADY_MEMBER` | none |
-| `PracticeError` | `notAMember` | `NOT_A_MEMBER` | none |
-| `PracticeError` | `notAPractitioner` | `NOT_A_PRACTITIONER` | none |
-| `PracticeError` | `notAnAssistant` | `NOT_AN_ASSISTANT` | none |
-| `PracticeError` | `lastManager` | `LAST_MANAGER` | none |
-| `PracticeError` | `notFound` | `PRACTICE_NOT_FOUND` | none |
-| `PracticeError` | `unknownRole` | `UNKNOWN_ROLE` | none |
-| `PracticeError` | `unknownTimeZone` | `UNKNOWN_TIME_ZONE` | none |
+| `AlreadyMember` | `forPerson` | `ALREADY_MEMBER` | none |
+| `DelegationAlreadyActive` | `forDelegation` | `DELEGATION_ALREADY_ACTIVE` | none |
+| `DelegationEndsInThePast` | `atEnd` | `DELEGATION_ENDS_IN_THE_PAST` | `endsAt` |
+| `DelegationNotActive` | `forDelegation` | `DELEGATION_NOT_ACTIVE` | none |
+| `InvalidDisplayName` | `becauseOfLength` | `INVALID_DISPLAY_NAME` | none |
+| `InvalidEmail` | `forAddress` | `INVALID_EMAIL` | none |
+| `NotAMember` | `forPerson` | `NOT_A_MEMBER` | none |
+| `NotAPractitioner` | `forPerson` | `NOT_A_PRACTITIONER` | none |
+| `NotAnAssistant` | `forPerson` | `NOT_AN_ASSISTANT` | none |
+| `PersonNotRegistered` | `forPerson` | `PERSON_NOT_REGISTERED` | none |
+| `PracticeLeftUnmanaged` | `onRemoval` | `LAST_MANAGER` | none |
+| `UnknownDelegation` | `forDelegation` | `DELEGATION_NOT_FOUND` | none |
+| `UnknownPractice` | `forPractice` | `PRACTICE_NOT_FOUND` | none |
+| `UnknownRole` | `forName` | `UNKNOWN_ROLE` | none |
+| `UnknownTimeZone` | `forName` | `UNKNOWN_TIME_ZONE` | none |
 <!-- /ddd-ts-kit:reference -->

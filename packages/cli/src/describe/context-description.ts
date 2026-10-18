@@ -118,14 +118,19 @@ export interface PolicyFact {
 }
 
 export interface ErrorFact {
-  /** The error class: the one of a concept, or the class of one error in the form of 0.2. */
+  /** The error class: the one of a concept, the class of one refusal (`named`), or the class of one error in the form of 0.2. */
   readonly errorClass: string;
-  /** The static factory that builds the refusal; empty for a class per error. */
+  /** The static factory that builds the refusal; empty for a class per error, or a refusal class with no factory. */
   readonly refusal: string;
   readonly code: string;
   /** The facts the factory lets a client read, by name: the others stay in the process. */
   readonly exposes: readonly string[];
   readonly file: string;
+  /**
+   * Set on the row of a class of one refusal (`named`): its class is the refusal, `refusal` its
+   * factory. Absent otherwise, so that the rows of the earlier forms read as they did.
+   */
+  readonly named?: true;
 }
 
 export interface ProjectionFact {

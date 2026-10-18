@@ -17,7 +17,7 @@ whatever the entry point:
 <!-- checked sample -->
 ```ts
 import { z } from 'zod';
-import { ConceptError } from '@ddd-ts-kit/kernel';
+import { DomainRefusal } from '@ddd-ts-kit/kernel';
 import { zodSchema } from '@ddd-ts-kit/validation/zod';
 
 // Instead of: a business rule hidden in the schema of one route, which a job or a consumer never meets.
@@ -29,9 +29,13 @@ export const bookWithARule = zodSchema(
 export const book = zodSchema(z.object({ startsAt: z.iso.datetime() }));
 
 // ...and the rule in the domain, with its own refusal code.
-export class SlotError extends ConceptError {
-  static inThePast(startsAt: Date) {
-    return SlotError.refusal('SLOT_IN_THE_PAST', `The slot at ${startsAt.toISOString()} is in the past.`, {
+export const SchedulingCodes = { SlotInThePast: 'SLOT_IN_THE_PAST' } as const;
+
+export class SlotInThePast extends DomainRefusal {
+  readonly code = SchedulingCodes.SlotInThePast;
+
+  static atStart(startsAt: Date) {
+    return SlotInThePast.refusal(`The slot at ${startsAt.toISOString()} is in the past.`, {
       startsAt: startsAt.toISOString(),
     });
   }
@@ -39,7 +43,7 @@ export class SlotError extends ConceptError {
 
 export function startingAt(startsAt: Date, now: Date): Date {
   if (startsAt <= now) {
-    throw SlotError.inThePast(startsAt);
+    throw SlotInThePast.atStart(startsAt);
   }
 
   return startsAt;

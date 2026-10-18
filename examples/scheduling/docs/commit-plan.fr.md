@@ -1,5 +1,5 @@
 [English](commit-plan.md) · **Français**
-<!-- translation-of: commit-plan.md sha256:31084722b21c706a -->
+<!-- translation-of: commit-plan.md sha256:0a9add5962cfc522 -->
 
 # Plan des *commits*
 
@@ -348,7 +348,7 @@ examples/scheduling/test/e2e/identity-register-person.e2e.spec.ts
 examples/scheduling/src/contexts/identity/application/commands/open-practice/open-practice.command.ts
 examples/scheduling/src/contexts/identity/application/commands/open-practice/open-practice.handler.ts
 examples/scheduling/src/contexts/identity/domain/aggregates/practice.aggregate.ts
-examples/scheduling/src/contexts/identity/domain/errors/practice-not-found.error.ts
+examples/scheduling/src/contexts/identity/domain/errors/unknown-practice.error.ts
 examples/scheduling/src/contexts/identity/domain/errors/unknown-role.error.ts
 examples/scheduling/src/contexts/identity/domain/errors/unknown-time-zone.error.ts
 examples/scheduling/src/contexts/identity/domain/repositories/practice.repository.ts
@@ -367,7 +367,7 @@ examples/scheduling/src/contexts/identity/test/integration/practice.repository.c
 examples/scheduling/src/contexts/identity/test/unit/membership.vo.spec.ts
 examples/scheduling/src/contexts/identity/test/unit/open-practice.handler.spec.ts
 examples/scheduling/src/contexts/identity/test/unit/open-practice.route.spec.ts
-examples/scheduling/src/contexts/identity/test/unit/practice-not-found.error.spec.ts
+examples/scheduling/src/contexts/identity/test/unit/unknown-practice.error.spec.ts
 examples/scheduling/src/contexts/identity/test/unit/practice.aggregate.spec.ts
 examples/scheduling/src/contexts/identity/test/unit/role.vo.spec.ts
 examples/scheduling/src/contexts/identity/test/unit/time-zone.vo.spec.ts
@@ -419,7 +419,7 @@ examples/scheduling/src/contexts/identity/domain/aggregates/delegation.aggregate
 examples/scheduling/src/contexts/identity/domain/errors/delegation-already-active.error.ts
 examples/scheduling/src/contexts/identity/domain/errors/delegation-ends-in-the-past.error.ts
 examples/scheduling/src/contexts/identity/domain/errors/delegation-not-active.error.ts
-examples/scheduling/src/contexts/identity/domain/errors/delegation-not-found.error.ts
+examples/scheduling/src/contexts/identity/domain/errors/unknown-delegation.error.ts
 examples/scheduling/src/contexts/identity/domain/errors/not-a-practitioner.error.ts
 examples/scheduling/src/contexts/identity/domain/errors/not-an-assistant.error.ts
 examples/scheduling/src/contexts/identity/domain/repositories/delegation.repository.ts
@@ -441,7 +441,7 @@ examples/scheduling/src/contexts/identity/test/unit/delegation-already-active.er
 examples/scheduling/src/contexts/identity/test/unit/delegation-ends-in-the-past.error.spec.ts
 examples/scheduling/src/contexts/identity/test/unit/delegation-granted.event-handler.spec.ts
 examples/scheduling/src/contexts/identity/test/unit/delegation-not-active.error.spec.ts
-examples/scheduling/src/contexts/identity/test/unit/delegation-not-found.error.spec.ts
+examples/scheduling/src/contexts/identity/test/unit/unknown-delegation.error.spec.ts
 examples/scheduling/src/contexts/identity/test/unit/delegation-revoked.event-handler.spec.ts
 examples/scheduling/src/contexts/identity/test/unit/delegation.aggregate.spec.ts
 examples/scheduling/src/contexts/identity/test/unit/desk.vo.spec.ts
@@ -657,7 +657,7 @@ examples/scheduling/src/contexts/scheduling/test/unit/invalid-day.error.spec.ts
 examples/scheduling/src/contexts/scheduling/application/commands/add-time-off/add-time-off.command.ts
 examples/scheduling/src/contexts/scheduling/application/commands/add-time-off/add-time-off.handler.ts
 examples/scheduling/src/contexts/scheduling/domain/errors/invalid-time-off.error.ts
-examples/scheduling/src/contexts/scheduling/domain/errors/time-off-over-appointments.error.ts
+examples/scheduling/src/contexts/scheduling/domain/errors/time-off-covers-appointments.error.ts
 examples/scheduling/src/contexts/scheduling/domain/events/calendar-time-off-added.event.ts
 examples/scheduling/src/contexts/scheduling/domain/value-objects/time-off.vo.ts
 examples/scheduling/src/contexts/scheduling/presentation/http/add-time-off-accepted.dto.ts
@@ -667,7 +667,7 @@ examples/scheduling/src/contexts/scheduling/presentation/http/add-time-off.route
 examples/scheduling/src/contexts/scheduling/test/unit/add-time-off.handler.spec.ts
 examples/scheduling/src/contexts/scheduling/test/unit/add-time-off.route.spec.ts
 examples/scheduling/src/contexts/scheduling/test/unit/invalid-time-off.error.spec.ts
-examples/scheduling/src/contexts/scheduling/test/unit/time-off-over-appointments.error.spec.ts
+examples/scheduling/src/contexts/scheduling/test/unit/time-off-covers-appointments.error.spec.ts
 examples/scheduling/src/contexts/scheduling/test/unit/time-off.vo.spec.ts
 ```
 
@@ -709,7 +709,7 @@ examples/scheduling/src/contexts/scheduling/test/unit/unknown-appointment-type.e
 examples/scheduling/src/contexts/scheduling/domain/aggregates/appointment.aggregate.ts
 examples/scheduling/src/contexts/scheduling/domain/errors/appointment-already-confirmed.error.ts
 examples/scheduling/src/contexts/scheduling/domain/errors/appointment-ended.error.ts
-examples/scheduling/src/contexts/scheduling/domain/errors/appointment-not-found.error.ts
+examples/scheduling/src/contexts/scheduling/domain/errors/unknown-appointment.error.ts
 examples/scheduling/src/contexts/scheduling/domain/errors/appointment-not-started.error.ts
 examples/scheduling/src/contexts/scheduling/domain/errors/invalid-booking.error.ts
 examples/scheduling/src/contexts/scheduling/domain/errors/invalid-slot.error.ts
@@ -734,7 +734,7 @@ examples/scheduling/src/contexts/scheduling/test/unit/appointment-booked.event-h
 examples/scheduling/src/contexts/scheduling/test/unit/appointment-cancelled.event-handler.spec.ts
 examples/scheduling/src/contexts/scheduling/test/unit/appointment-ended.error.spec.ts
 examples/scheduling/src/contexts/scheduling/test/unit/appointment-expired.event-handler.spec.ts
-examples/scheduling/src/contexts/scheduling/test/unit/appointment-not-found.error.spec.ts
+examples/scheduling/src/contexts/scheduling/test/unit/unknown-appointment.error.spec.ts
 examples/scheduling/src/contexts/scheduling/test/unit/appointment-not-started.error.spec.ts
 examples/scheduling/src/contexts/scheduling/test/unit/appointment-rescheduled.event-handler.spec.ts
 examples/scheduling/src/contexts/scheduling/test/unit/appointment.aggregate.spec.ts

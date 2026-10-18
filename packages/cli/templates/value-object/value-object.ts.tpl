@@ -16,6 +16,9 @@ export class {{name.pascal}} extends ValueObject<{{name.pascal}}Props> {
 
 {{#if valueObjects.throwing}}
   static create(value: string): {{name.pascal}} {
+{{#if refusals.named}}
+    // TODO(domain): replace `value: string` by the real components of {{name.pascal}}, normalize them and check every validity rule; throw the refusal named after the rule, for example `Invalid{{name.pascal}}.forValue(value)` (`ddd-ts-kit generate error {{context.kebab}} Invalid{{name.pascal}} forValue`), instead of InvariantViolation.
+{{/if}}
 {{#if refusals.factories}}
     // TODO(domain): replace `value: string` by the real components of {{name.pascal}}, normalize them and check every validity rule; throw a refusal of the concept this value describes, for example `<Concept>Error.invalid{{name.pascal}}(value)` (`ddd-ts-kit generate error {{context.kebab}} <Concept> invalid{{name.pascal}}`), instead of InvariantViolation.
 {{/if}}
@@ -31,6 +34,9 @@ export class {{name.pascal}} extends ValueObject<{{name.pascal}}Props> {
 {{/if}}
 {{#if valueObjects.result}}
   static create(value: string): Result<{{name.pascal}}, InvariantViolation> {
+{{#if refusals.named}}
+    // TODO(domain): replace `value: string` by the real components of {{name.pascal}}, normalize them and check every validity rule; return `err(...)` with the refusal named after the rule, for example `Invalid{{name.pascal}}.forValue(value)` (`ddd-ts-kit generate error {{context.kebab}} Invalid{{name.pascal}} forValue`), instead of InvariantViolation.
+{{/if}}
 {{#if refusals.factories}}
     // TODO(domain): replace `value: string` by the real components of {{name.pascal}}, normalize them and check every validity rule; return `err(...)` with a refusal of the concept this value describes, for example `<Concept>Error.invalid{{name.pascal}}(value)` (`ddd-ts-kit generate error {{context.kebab}} <Concept> invalid{{name.pascal}}`), instead of InvariantViolation.
 {{/if}}

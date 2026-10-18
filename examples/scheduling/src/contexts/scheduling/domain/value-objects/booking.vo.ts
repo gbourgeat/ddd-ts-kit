@@ -1,5 +1,5 @@
 import { ValueObject } from '@ddd-ts-kit/kernel';
-import { AppointmentError } from '@/contexts/scheduling/domain/errors/appointment.error';
+import { InvalidBooking } from '@/contexts/scheduling/domain/errors/invalid-booking.error';
 import type { Slot } from '@/contexts/scheduling/domain/value-objects/slot.vo';
 
 export type BookingProps = {
@@ -32,11 +32,11 @@ export class Booking extends ValueObject<BookingProps> {
     const unnamed = NAMED.find(([field]) => props[field].trim().length === 0);
 
     if (unnamed !== undefined) {
-      throw AppointmentError.invalidBooking(unnamed[1]);
+      throw InvalidBooking.forRule(unnamed[1]);
     }
 
     if (!DAY.test(props.day)) {
-      throw AppointmentError.invalidBooking('gives its day as a calendar date');
+      throw InvalidBooking.forRule('gives its day as a calendar date');
     }
 
     return new Booking(props);

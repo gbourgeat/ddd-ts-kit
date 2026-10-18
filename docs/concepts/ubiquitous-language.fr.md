@@ -1,5 +1,5 @@
 [English](ubiquitous-language.md) · **Français**
-<!-- translation-of: ubiquitous-language.md sha256:3ad064cfff42239c -->
+<!-- translation-of: ubiquitous-language.md sha256:000f95fb1978428b -->
 
 # Langage omniprésent
 
@@ -19,7 +19,7 @@ dit « le client a annulé trop tard, donc le rendez-vous compte comme non honor
 phrase contient deux règles (un délai d'annulation, ce que devient une annulation tardive). La
 première n'en contient aucune. Le code écrit dans le premier vocabulaire a un `setStatus` ; le
 code écrit dans le second a `appointment.cancel(reason, at)` et un refus
-`AppointmentError.cancellationWindowPassed(...)` de code `CANCELLATION_WINDOW_PASSED`.
+`CancellationWindowPassed.forAppointment(...)` de code `CANCELLATION_WINDOW_PASSED`.
 
 ```ts
 // La phrase du développeur, en code : rien ne dit ce que le métier a décidé.
@@ -27,7 +27,7 @@ booking.setStatus('CANCELLED');
 await bookingRecords.update(booking);
 
 // La phrase du praticien, en code : la règle a un nom, et son refus aussi.
-appointment.cancel(reason, clock.now()); // lève AppointmentError.cancellationWindowPassed(...) quand il est trop tard
+appointment.cancel(reason, clock.now()); // lève CancellationWindowPassed.forAppointment(...) quand il est trop tard
 await appointments.save(appointment);
 ```
 
@@ -79,7 +79,7 @@ question à l'expert du domaine, pas un nom provisoire.
 
 | Mécanisme | Ce qu'il fait |
 |---|---|
-| `language/glossary-term` | chaque agrégat, entité, objet-valeur, service du domaine, événement du domaine, commande et requête est nommé avec des termes du glossaire de son contexte, et une classe d'erreur aussi dès que les erreurs sont construites par des fabriques (`AppointmentError`) |
+| `language/glossary-term` | chaque agrégat, entité, objet-valeur, service du domaine, événement du domaine, commande et requête est nommé avec des termes du glossaire de son contexte, et, sous `"stack.refusals": "factories"` ou `"named"`, chaque classe de `domain/errors/` aussi (`AppointmentError`, `SlotTaken`) ; une classe de refus de `named` peut aussi employer les qualificatifs `invalid`, `unknown`, `already`, `too`, `no`, `missing` et `required` (`BookingTooLate`) |
 | `language/no-technical-name` | pas de `Manager`, `Helper`, `Data`, `Impl`, `Model` ni rien de semblable dans un nom sous `domain/` ou dans le nom d'un cas d'usage |
 | le générateur | refuse un nom qui contient un mot non défini, un mot technique, ou un fait d'événement qui ne se lit pas au passé |
 | `--term "<Term>=<meaning>"` | ajoute les lignes du glossaire dans la commande même qui en a besoin, répétable |
@@ -110,9 +110,10 @@ Le langage va plus loin que les noms de classes :
 
 - **Les méthodes** sont ce que le métier dit qu'il se passe : `appointment.cancel(reason, at)`,
   jamais `setStatus`, `update` ou `process` ([Code propre](clean-code.fr.md)).
-- **Les erreurs** sont des refus nommés avec un code stable, construits par une fabrique de
-  leur concept : `AppointmentError.slotTaken(calendarId, startsAt)`, code `SLOT_TAKEN`
-  (`errors/through-factory`, `errors/factory-name`).
+- **Les erreurs** sont des refus nommés dans les mots du métier, avec un code stable,
+  construits par une fabrique qui dit sur quoi ils portent :
+  `SlotTaken.forCalendar(calendarId, startsAt)`, code `SLOT_TAKEN` (`errors/through-factory`,
+  `errors/factory-name`).
 - **Les noms de tests** se lisent comme des règles métier :
   `refuses to reschedule a cancelled appointment`.
 - **Les *builders*** le parlent aussi : `anAppointment().cancelled()`, pas
@@ -129,7 +130,7 @@ métier qui lui serait propre.
 <!-- checked sample -->
 ```ts
 import { definePermissions } from '@ddd-ts-kit/auth';
-import { AuthorizedCommand, ConceptError, type Actor, NamedDomainEvent } from '@ddd-ts-kit/kernel';
+import { AuthorizedCommand, DomainRefusal, type Actor, NamedDomainEvent } from '@ddd-ts-kit/kernel';
 import { Requires } from '@ddd-ts-kit/kernel/declarations';
 
 export const appointmentsPermissions = definePermissions('appointments', {
@@ -149,13 +150,17 @@ export class RescheduleAppointment extends AuthorizedCommand {
   }
 }
 
-export class AppointmentError extends ConceptError {
-  static cannotRescheduleCancelled(appointmentId: string) {
-    return AppointmentError.refusal(
-      'CANNOT_RESCHEDULE_CANCELLED',
-      `Appointment ${appointmentId} is cancelled: it cannot be rescheduled.`,
-      { appointmentId },
-    );
+export const AppointmentsCodes = {
+  CannotRescheduleCancelled: 'CANNOT_RESCHEDULE_CANCELLED',
+} as const;
+
+export class CannotRescheduleCancelled extends DomainRefusal {
+  readonly code = AppointmentsCodes.CannotRescheduleCancelled;
+
+  static forAppointment(appointmentId: string) {
+    return CannotRescheduleCancelled.refusal(`Appointment ${appointmentId} is cancelled: it cannot be rescheduled.`, {
+      appointmentId,
+    });
   }
 }
 

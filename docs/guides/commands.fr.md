@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:6e8c531eabdb71b5 -->
+<!-- translation-of: commands.md sha256:75f0b81191425464 -->
 
 # Quelle commande, quand
 
@@ -243,7 +243,7 @@ Usage
                   [--storage local|s3|none]
                   [--audit on|off]
                   [--errors none|sentry] [--logger stdout|pino|winston] [--style declared|explicit] [--assembly barrel|discovery]
-                  [--dependencies signature|listed] [--refusals factories|classes]
+                  [--dependencies signature|listed] [--refusals named|factories|classes]
                   [--routes controllers|functions] [--representations negotiated|json] [--forms on|off]
                   [--value-objects throwing|result] [--literals named|free] [--values classes|free] [--tenancy none|shared-table] [--queue database|redis|memory]
                   [--schemas shared|per-route]
@@ -278,7 +278,7 @@ Usage
   ddd-ts-kit build-aliases [--project <tsconfig>]
   ddd-ts-kit drizzle-generate --name <what-it-does> [--custom]
   ddd-ts-kit drizzle-generate --replay [--base <git-ref>]
-  ddd-ts-kit error-factories --plan | --apply [--dry-run]
+  ddd-ts-kit error-factories --plan | --apply [--to named|factories] [--dry-run]
   ddd-ts-kit controllers [<context>] [--dry-run]
   ddd-ts-kit value-objects [--dry-run]
   ddd-ts-kit affected [--base <git-ref>] [--head <git-ref>] [--format text|json|github|env]
@@ -310,9 +310,14 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
                    refused while the journal holds conflict markers, when two of them change the schema,
                    or when drizzle-kit now writes a generated one otherwise (edited by hand), the folder
                    then put back as it was
-  error-factories  moves a project from one class per error to static factories on one error class per
-                   concept: --plan writes error-factories.plan.json, where each class is given its concept;
-                   --apply follows it (classes, specs, every usage, "stack.refusals" in the config)
+  error-factories  moves the refusals of a project to one class per refusal (--to named, the default), from
+                   one class per error or from the factories of one error class per concept: --plan writes
+                   error-factories.plan.json, where each refusal is given a class (the PascalCase of its
+                   code, which it keeps) and a factory (for<Concept>), both editable; --apply follows it
+                   (codes.ts per context, one class file per refusal, specs, every usage, the concept
+                   classes left empty, "stack.refusals" in the config) and lists what it cannot rewrite
+                   (a bare <Concept>Error.is(error), CodeOf<typeof <Concept>Error>); --to factories moves
+                   one class per error to static factories on one error class per concept instead
   value-objects    moves the value objects of a project from a Result to factories that return the value or
                    throw: every create returning Result<T, E> returns T, err(..) is thrown, unwrap(..) of
                    them goes, specs assert expectRefusal(() => ..), "stack.valueObjects" becomes throwing
@@ -515,7 +520,7 @@ Kinds
   vocabulary <context> <Name> --value <value> [--value <value>]...
   state-machine <context> <Aggregate> [--value <state>]... [--transition "<intention>:<from>[,<from>]...[><to>]"]... [--term "<Term>=<meaning>"]...
   domain-event <context> <Aggregate> <Fact> [--term "<Term>=<meaning>"]...
-  error <context> <Concept> <refusal> [--code CODE] [--term "<Term>=<meaning>"]...   (alias: refusal)
+  error <context> <Refusal> <factory> [--code CODE] [--term "<Term>=<meaning>"]...   (alias: refusal)
   domain-error <context> <Name> [--code CODE]
   domain-service <context> <Name> [--term "<Term>=<meaning>"]...
   repository <context> <Aggregate> [--tenant-scoped]

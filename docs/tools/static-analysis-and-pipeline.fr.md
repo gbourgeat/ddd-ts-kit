@@ -1,5 +1,5 @@
 [English](static-analysis-and-pipeline.md) · **Français**
-<!-- translation-of: static-analysis-and-pipeline.md sha256:51fda6e95ede6d47 -->
+<!-- translation-of: static-analysis-and-pipeline.md sha256:fdc406be5a82f216 -->
 
 # L'analyse statique et le pipeline
 
@@ -66,16 +66,21 @@ src/contexts/billing/domain/value-objects/email.vo.ts:2  error  layer/domain-pur
 ```
 
 La forme d'une requête HTTP est validée à l'entrée, par le schéma de sa route ; la règle du
-métier reste en TypeScript simple, avec un refus de son concept :
+métier reste en TypeScript simple, avec un refus nommé d'après ce qu'il refuse :
 
 <!-- checked sample -->
 ```ts
-import { ConceptError, ValueObject } from '@ddd-ts-kit/kernel';
+import { DomainRefusal, ValueObject } from '@ddd-ts-kit/kernel';
 
-// domain/errors/email.error.ts
-export class EmailError extends ConceptError {
-  static invalid(value: string) {
-    return EmailError.refusal('INVALID_EMAIL', `"${value}" is not an email address.`, { value });
+// domain/errors/codes.ts
+export const IdentityCodes = { InvalidEmail: 'INVALID_EMAIL' } as const;
+
+// domain/errors/invalid-email.error.ts
+export class InvalidEmail extends DomainRefusal {
+  readonly code = IdentityCodes.InvalidEmail;
+
+  static forAddress(value: string) {
+    return InvalidEmail.refusal(`"${value}" is not an email address.`, { value });
   }
 }
 
@@ -89,7 +94,7 @@ export class Email extends ValueObject<{ readonly value: string }> {
     const address = value.trim().toLowerCase();
 
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(address)) {
-      throw EmailError.invalid(value);
+      throw InvalidEmail.forAddress(value);
     }
 
     return new Email({ value: address });

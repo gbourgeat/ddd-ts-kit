@@ -113,7 +113,7 @@ function doneBefore(checkpoint: unknown): number {
 
 The use case enqueues it through the `JobQueue` port, inside its own unit of work, and answers
 the id of the job, which a client polls. The handler of the example also refuses an unknown
-calendar (`CalendarError.unknown`) and keeps only the appointments the period covers; this
+calendar (`UnknownCalendar.forCalendar`) and keeps only the appointments the period covers; this
 sample, shortened, keeps the enqueueing:
 
 <!-- checked sample -->
@@ -344,14 +344,20 @@ URL names.
 ```ts
 // scheduling/application/queries/get-clearance/get-clearance.handler.ts
 import { definePermissions } from '@ddd-ts-kit/auth';
-import { AuthorizedQuery, ConceptError, JobQueue, type Actor, type QueuedJobStatus } from '@ddd-ts-kit/kernel';
+import { AuthorizedQuery, DomainRefusal, JobQueue, type Actor, type QueuedJobStatus } from '@ddd-ts-kit/kernel';
 import { QueryHandler, Requires } from '@ddd-ts-kit/kernel/declarations';
 
 const permissions = definePermissions('scheduling', { 'calendar.clear': { description: 'Clear calendar' } });
 
-export class CalendarError extends ConceptError {
-  static unknownClearance(clearanceId: string) {
-    return CalendarError.refusal('UNKNOWN_CLEARANCE', `There is no clearance ${clearanceId}.`, { clearanceId });
+// scheduling/domain/errors/codes.ts
+export const SchedulingCodes = { UnknownClearance: 'UNKNOWN_CLEARANCE' } as const;
+
+// scheduling/domain/errors/unknown-clearance.error.ts
+export class UnknownClearance extends DomainRefusal {
+  readonly code = SchedulingCodes.UnknownClearance;
+
+  static forClearance(clearanceId: string) {
+    return UnknownClearance.refusal(`There is no clearance ${clearanceId}.`, { clearanceId });
   }
 }
 
@@ -384,7 +390,7 @@ export class GetClearanceHandler implements QueryHandler<GetClearanceQuery> {
 
     // another kind of job, or the clearance of another calendar: unknown here
     if (job?.name !== 'scheduling.clear-calendar' || job.subject !== query.calendarId) {
-      throw CalendarError.unknownClearance(query.clearanceId);
+      throw UnknownClearance.forClearance(query.clearanceId);
     }
 
     const { status, progress } = job;

@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:d716322ee73d723e -->
+<!-- translation-of: README.md sha256:195402b698387143 -->
 
 # ddd-ts-kit
 
@@ -66,7 +66,7 @@ ddd-ts-kit init [--http express|fastify|hono|nest|none]
                 [--http-cache none|varnish] [--storage local|s3|none] [--audit on|off]
                 [--errors none|sentry] [--logger stdout|pino|winston]
                 [--style declared|explicit] [--assembly barrel|discovery]
-                [--dependencies signature|listed] [--refusals factories|classes]
+                [--dependencies signature|listed] [--refusals named|factories|classes]
                 [--routes controllers|functions] [--value-objects throwing|result]
                 [--literals named|free] [--values classes|free] [--tenancy none|shared-table]
                 [--queue database|redis|memory]
@@ -345,33 +345,49 @@ injected(KnexReminderRepository, [KnexContext, ExecutionScope, Clock]);
 et l'unique ligne de la racine de composition qui ajoute tout le contexte :
 `contextModule('notification', notificationDeclarations)` dans `src/platform/compose-application.ts`.
 
-**Les erreurs du domaine sont construites par des fabriques (factories).** `init` écrit
-`"stack.refusals": "factories"` : un contexte a une classe d'erreur par concept, qui étend
-`ConceptError` du kernel, et `generate error <context> <Concept> <refusal>` y ajoute une fabrique
-statique. Les règles `errors/*` tiennent cette forme. `--refusals classes`, ou une configuration
-sans la clé, garde une classe par erreur construite avec `new`, comme 0.1 et 0.2 les écrivaient ;
-`error-factories` fait passer un projet de l'une à l'autre.
+**Un refus est une classe à lui.** `init` écrit `"stack.refusals": "named"` : chaque refus d'un
+contexte est une classe nommée d'après ce qui est refusé, qui étend `DomainRefusal` du kernel,
+construite par des fabriques (factories) statiques nommées d'après ce sur quoi porte le refus, et
+son code se lit dans la liste fermée des codes du contexte, `domain/errors/codes.ts`.
+`generate error <context> <Refusal> <factory>` écrit la classe, son code et la fabrique. Les
+règles `errors/*` tiennent cette forme. Deux formes antérieures continuent de fonctionner :
+`--refusals factories`, une classe d'erreur par concept qui étend `ConceptError`, chaque refus une
+fabrique statique de celle-ci, comme l'écrivait `init` auparavant ; et `--refusals classes`, ou
+une configuration sans la clé, une classe par erreur construite avec `new`, comme 0.1 et 0.2 les
+écrivaient. `error-factories` fait passer un projet de l'une ou l'autre à `named`.
 
-L'ancienne forme, sous `"stack.refusals": "classes"` : une classe par erreur.
+La forme qu'écrit `init`, que commence `generate error scheduling SlotTaken forCalendar` :
 
 <!-- checked sample -->
 ```ts
-import { DomainError } from '@ddd-ts-kit/kernel';
+import { DomainRefusal } from '@ddd-ts-kit/kernel';
+
+// domain/errors/codes.ts : la liste fermée des codes du contexte
+export const SchedulingCodes = {
+  SlotTaken: 'SLOT_TAKEN',
+} as const;
+
+export type SchedulingCode = (typeof SchedulingCodes)[keyof typeof SchedulingCodes];
 
 // domain/errors/slot-taken.error.ts
-export class SlotTakenError extends DomainError {
-  readonly code = 'SLOT_TAKEN';
+export class SlotTaken extends DomainRefusal {
+  readonly code = SchedulingCodes.SlotTaken;
 
-  constructor(readonly calendarId: string) {
-    super(`The slot of calendar ${calendarId} is already held.`);
+  static forCalendar(calendarId: string) {
+    return SlotTaken.refusal(`The slot of calendar ${calendarId} is already held.`, { calendarId });
   }
 }
 
-const refusal = new SlotTakenError('calendar-1');
+const refusal = SlotTaken.forCalendar('calendar-1');
+
+// ce qui l'attrape reconnaît le refus à sa classe, et lit ses faits
+if (SlotTaken.is(refusal)) {
+  console.log(refusal.facts.calendarId);
+}
 ```
 
-La forme qu'écrit `init` : une classe par concept du glossaire, une fabrique par refus, que
-`generate error scheduling Appointment slotTaken` ajoute.
+Sous `"stack.refusals": "factories"` : une classe par concept du glossaire, une fabrique par refus,
+que `generate error scheduling Appointment slotTaken` ajoute.
 
 <!-- checked sample -->
 ```ts
@@ -390,6 +406,24 @@ const refusal = AppointmentError.slotTaken('calendar-1');
 if (AppointmentError.is(refusal, 'SLOT_TAKEN')) {
   console.log(refusal.facts.calendarId);
 }
+```
+
+La forme la plus ancienne, sous `"stack.refusals": "classes"` : une classe par erreur.
+
+<!-- checked sample -->
+```ts
+import { DomainError } from '@ddd-ts-kit/kernel';
+
+// domain/errors/slot-taken.error.ts
+export class SlotTakenError extends DomainError {
+  readonly code = 'SLOT_TAKEN';
+
+  constructor(readonly calendarId: string) {
+    super(`The slot of calendar ${calendarId} is already held.`);
+  }
+}
+
+const refusal = new SlotTakenError('calendar-1');
 ```
 
 **Une route est une classe contrôleur.** `init` écrit `"stack.routes": "controllers"` : chaque
@@ -438,15 +472,16 @@ async execute(command: IssueInvoiceCommand): Promise<void> {
 
 <!-- checked sample -->
 ```ts
-import { type Actor, AggregateRoot, AuthorizedCommand, type Clock, type CommandHandler, ConceptError, Repository } from '@ddd-ts-kit/kernel';
+import { type Actor, AggregateRoot, AuthorizedCommand, type Clock, type CommandHandler, DomainRefusal, Repository } from '@ddd-ts-kit/kernel';
 
 declare class Invoice extends AggregateRoot {
   /** Rend la facture définitive et enregistre InvoiceIssued, qui attend dans l'agrégat. */
   issue(now: Date): void;
 }
 
-declare class InvoiceError extends ConceptError {
-  static notFound(invoiceId: string): InvoiceError;
+declare class UnknownInvoice extends DomainRefusal {
+  readonly code: 'INVOICE_NOT_FOUND';
+  static forInvoice(invoiceId: string): UnknownInvoice;
 }
 
 export abstract class InvoiceRepository extends Repository<Invoice> {}
@@ -470,7 +505,7 @@ export class IssueInvoiceHandler implements CommandHandler<IssueInvoiceCommand> 
     const invoice = await this.invoiceRepository.findById(command.invoiceId);
 
     if (invoice === undefined) {
-      throw InvoiceError.notFound(command.invoiceId);
+      throw UnknownInvoice.forInvoice(command.invoiceId);
     }
 
     invoice.issue(this.clock.now());
@@ -638,8 +673,8 @@ Next, in this order: the language of the context first, then the business decisi
 | `value-object` (`vo`) | `<context> <Name>` | objet-valeur, *spec* |
 | `vocabulary` | `<context> <Name> --value <value> [--value <value>]...` | `domain/vocabularies/<name>.vocabulary.ts` : un objet `as const` des valeurs, indexé par chaque valeur en PascalCase, et le type union du même nom ; relancé, ajoute les valeurs que le fichier ne contient pas |
 | `domain-event` | `<context> <Aggregate> <Fact>` | événement nommé `<context>.<aggregate>.<fact>`, *spec* |
-| `error` (`refusal`) | `<context> <Concept> <refusal> [--code CODE] [--term ...]...` | une fabrique statique `<refusal>` sur `domain/errors/<concept>.error.ts`, la classe des erreurs de ce concept (créée si elle manque, qui étend `ConceptError`), et son cas dans `test/unit/<concept>.error.spec.ts`. La fabrique est ajoutée après la dernière ; relancée, la commande ne change rien. `<Concept>` est un terme du glossaire (`--term` l'ajoute). Le code est le nom du refus en casse de constante, précédé du concept quand le nom est un seul mot ou un code du kit (`Appointment notFound` pose `APPOINTMENT_NOT_FOUND`) ; `--code` prend l'une des formes qu'accepte `errors/factory-name`. Refusés : un nom comme `create` ou `error1`, et un code déjà posé dans le contexte |
-| `domain-error` | `<context> <Name> [--code CODE]` | une classe par erreur avec un code stable, *spec* : la forme d'un projet dont la configuration dit `"stack.refusals": "classes"` ou rien. Refusé sous `factories`, avec la commande `generate error` à lancer à la place |
+| `error` (`refusal`) | `<context> <Refusal> <factory> [--code CODE] [--term ...]...` | sous `"stack.refusals": "named"` : la classe `<Refusal>` dans `domain/errors/<refusal>.error.ts`, qui étend `DomainRefusal` et lit son code dans la liste, son entrée dans `domain/errors/codes.ts` (la liste `<Context>Codes` et son type `<Context>Code`, créés s'ils manquent ; l'entrée est ajoutée à la fin), la fabrique statique `<factory>` et son cas dans `test/unit/<refusal>.error.spec.ts`. Chacun est écrit s'il manque : relancée, la commande ne change rien ; avec une autre fabrique, elle l'ajoute à la classe. `<Refusal>` est en PascalCase (un `Error` final est retiré), nommé avec des termes du glossaire et les qualificatifs d'un refus, `invalid`, `unknown`, `already`, `too`, `no`, `missing` et `required` (`BookingTooLate`) : un mot que le glossaire ne définit pas est refusé, avec le `--term` qui l'ajoute ; `<factory>` commence par `for`, `with`, `because`, `on` ou `at` (`forAccountId`), sinon la commande refuse et propose `for<Factory>`. Le code est le refus en casse de constante (`InsufficientFunds` pose `INSUFFICIENT_FUNDS`), `--code` en donne un autre ; refusé : un code déjà posé dans le contexte. Sous `factories` et `classes`, `<context> <Concept> <refusal>` : une fabrique statique `<refusal>` sur `domain/errors/<concept>.error.ts`, la classe des erreurs de ce concept (créée si elle manque, qui étend `ConceptError`), et son cas dans `test/unit/<concept>.error.spec.ts`. La fabrique est ajoutée après la dernière ; relancée, la commande ne change rien. `<Concept>` est un terme du glossaire (`--term` l'ajoute). Le code est le nom du refus en casse de constante, précédé du concept quand le nom est un seul mot ou un code du kit (`Appointment notFound` pose `APPOINTMENT_NOT_FOUND`) ; `--code` prend l'une des formes qu'accepte `errors/factory-name`. Refusés : un nom comme `create` ou `error1`, et un code déjà posé dans le contexte |
+| `domain-error` | `<context> <Name> [--code CODE]` | une classe par erreur avec un code stable, *spec* : la forme d'un projet dont la configuration dit `"stack.refusals": "classes"` ou rien. Refusé sous `named` et `factories`, avec la commande `generate error` à lancer à la place |
 | `domain-service` | `<context> <Name>` | service, *spec* |
 | `state-machine` | `<context> <Aggregate> [--value <state>]... [--transition "<intention>:<from>[,<from>]...[><to>]"]...` | le vocabulaire `<Aggregate>Status` (créé depuis `--value`, deux états au moins, ou complété des valeurs qui lui manquent), `domain/state-machines/<aggregate>.state-machine.ts` (`<aggregate>Lifecycle` : chaque valeur un état, la première initiale, les transitions demandées, un `TODO(domain)` pour le refus de l'erreur du concept) et `test/unit/<aggregate>.state-machine.spec.ts` (chaque transition là où elle mène, un refus depuis un état qu'elle ne quitte pas) ; c'est à l'agrégat de l'utiliser |
 | `repository` | `<context> <Aggregate> [--tenant-scoped]` | le port `domain/repositories/<name>.repository.ts` (`abstract class <Name>Repository extends Repository<<Name>>`), l'adaptateur de l'ORM du projet (qui `implements` le port) avec son *mapper* et sa table (ou son modèle), un *fake*, une *spec* `repositoryContract` exécutée sur les deux, l'enregistrement |
@@ -931,45 +966,77 @@ groupes, tenir les gardes dans les *specs*.
 ## error-factories
 
 ```
-ddd-ts-kit error-factories --plan
+ddd-ts-kit error-factories --plan [--to named|factories]
 ddd-ts-kit error-factories --apply [--dry-run]
 ```
 
-Fait passer un projet d'une classe par erreur (`new SlotTakenError(..)`) à des fabriques
-statiques sur une classe d'erreur par concept (`AppointmentError.slotTaken(..)`), en deux étapes,
-parce que le concept sur lequel porte un refus est une décision du modèle.
+Fait passer les refus d'un projet à une classe par refus (`--to named`, par défaut), depuis une
+classe par erreur (`new SlotTakenError(..)`) ou depuis les fabriques d'une classe d'erreur par
+concept (`AppointmentError.slotTaken(..)`), vers `SlotTaken.forCalendar(..)`. En deux étapes,
+parce que le nom d'un refus et celui de sa fabrique sont des décisions du modèle.
 
-`--plan` écrit `error-factories.plan.json` : par contexte, une entrée par classe de
-`domain/errors/` qui étend `DomainError`, avec son code, le concept proposé pour elle (l'agrégat
-par lequel son nom commence ou finit, vide quand aucun ne convient) et le nom de fabrique qui dit
-son code (`APPOINTMENT_NOT_FOUND` sur `Appointment` donne `notFound`). Modifiez-le : chaque
-entrée a besoin d'un `concept`, un terme du glossaire.
+`--plan` écrit `error-factories.plan.json`, `{ "to": "named", "contexts": { .. } }` : par
+contexte, une entrée par refus, avec ce qui le construit aujourd'hui (`from` : `SlotTakenError`,
+`AppointmentError.ended`), son fichier, son code, qui est gardé, la classe proposée pour lui
+(`class` : le PascalCase de son code, `APPOINTMENT_ENDED` donne `AppointmentEnded`, et `X_NOT_FOUND`
+donne `UnknownX`) et sa fabrique (`factory` : `for` et son premier paramètre, sans suffixe `Id`,
+`appointmentId` donne `forAppointment`, `cause` donne `becauseOf` ; sinon `for` et le concept ou
+l'agrégat d'après lequel la classe est nommée).
+Modifiez les noms que vous voulez autres : deux entrées sous une même classe sont deux fabriques
+de celle-ci, sous son unique code. Une fabrique dont le code n'est pas un littéral de chaîne est
+laissée hors du plan, et se déplace à la main. Une classe est nommée avec des termes du glossaire
+de son contexte, puisque `language/glossary-term` juge chaque classe de `domain/errors/` sous
+`named`, les qualificatifs d'un refus mis à part : pour chaque classe proposée dont le nom emploie
+un mot que le glossaire ne définit pas, `--plan` dit, sous « Left to you », quels mots et où les
+définir, ou de renommer la classe dans le plan ; `--apply` le redit pour chaque classe qu'il
+écrit.
 
-`--apply` suit le plan et refuse une entrée sans concept, un nom de fabrique vague ou un nom qui
-ne dit pas le code. Il :
+`--apply` suit le plan, et refuse une classe qui n'est pas en PascalCase ou finit par `Error`, une
+fabrique qui ne commence pas par `for`, `with`, `because`, `on` ou `at` puis une majuscule, une
+classe à qui l'on donne deux codes et une fabrique prévue deux fois. Il :
 
-- écrit `domain/errors/<concept>.error.ts`, une classe qui étend `ConceptError` avec une fabrique
-  par classe déplacée là : les paramètres du constructeur, le message qu'il donnait à `super`, et
-  comme faits les paramètres qui sont de simples données (texte, nombres, booléens, dates) ;
-- supprime chaque classe et sa *spec*, dont les cas vont sous `describe('<factory>')` dans
-  `test/unit/<concept>.error.spec.ts` ;
-- réécrit chaque fichier sous la racine des sources et sous `test/` : `new X(..)` devient
-  `<Concept>Error.<factory>(..)`, `thenError(X)` et `thenError(X, code)` deviennent
-  `thenError('<CODE>')`, `toThrow(X)` et `expect.any(X)` deviennent une assertion sur le code,
-  `toBeInstanceOf(X)` devient `toMatchObject({ code })`, `e instanceof X` devient
-  `<Concept>Error.is(e, '<CODE>')`, un import de la classe devient l'import de sa classe de
-  concept, et un type nomme la classe de concept. Une classe du même nom dans deux contextes va
-  au concept du sien. Les commentaires et les chaînes sont laissés tels quels ;
-- pose `"stack.refusals": "factories"` dans la configuration.
+- écrit `domain/errors/codes.ts` dans chaque contexte, la liste `<Context>Codes` avec une entrée
+  par classe, et un fichier par classe de refus, `domain/errors/<refusal>.error.ts`, qui étend
+  `DomainRefusal` et lit son code dans la liste, avec ses fabriques : chacune garde les
+  paramètres, le message et les faits qu'elle avait ;
+- déplace chaque cas d'une *spec* vers `test/unit/<refusal>.error.spec.ts` ;
+- réécrit chaque fichier sous la racine des sources et sous `test/` :
+  `AppointmentError.ended(a, b)` devient `AppointmentEnded.forAppointment(a, b)`,
+  `AppointmentError.is(error, 'APPOINTMENT_ENDED')` devient `AppointmentEnded.is(error)`,
+  `new SlotTakenError(..)` devient `SlotTaken.forCalendar(..)`, et le nom d'une classe par erreur
+  devient le nom de sa classe partout ailleurs (assertions, `instanceof`, types), imports compris.
+  Les commentaires et les chaînes sont laissés tels quels ;
+- supprime les classes par erreur qu'il a déplacées, et les classes de concept restées vides ;
+- pose `"stack.refusals": "named"` dans la configuration.
 
-Il laisse, et le dit : une classe qui a des membres à elle, lit `this` dans son constructeur ou
-donne des options à `super` (écrite à la main) ; un endroit où une classe tenait lieu de valeur
-qu'il ne sait pas traduire ; une propriété de l'erreur devenue un fait (`error.personId` est
-désormais `error.facts.personId`) ; une fabrique de plus de trois paramètres. Et toujours : quels
-faits un client peut lire (aucun n'est exposé), les fabriques qui prennent encore une phrase
-comme seul paramètre, et les faits à vérifier dans les *specs*. Lancez le formateur ensuite.
+Il laisse, et le dit avec sa ligne, ce qui nomme encore une classe de concept disparue : un
+`AppointmentError.is(error)` sans code, qui désignait chaque refus du concept (écrivez les refus
+qu'il désigne, `AppointmentEnded.is(error) || ..`), et `CodeOf<typeof AppointmentError>` (écrivez
+l'union des codes qu'il désigne, ou le type des codes de `codes.ts`). Et toujours : lancer le
+formateur et les vérifications, décider quels faits un client peut lire là où aucune fabrique
+n'en expose encore, vérifier les faits dans les *specs*, et supprimer le fichier du plan.
 Relancé, il ne trouve plus rien à déplacer. `--json` répond
 `{ dryRun, moved, written, removed, manual }`.
+
+`--to factories` est le passage antérieur, d'une classe par erreur à des fabriques statiques sur
+une classe d'erreur par concept, dans les deux mêmes étapes. `--plan --to factories` écrit une
+entrée par classe de `domain/errors/` qui étend `DomainError`, avec son code, le concept proposé
+pour elle (l'agrégat par lequel son nom commence ou finit, vide quand aucun ne convient) et le
+nom de fabrique qui dit son code (`APPOINTMENT_NOT_FOUND` sur `Appointment` donne `notFound`) ;
+chaque entrée a besoin d'un `concept`, un terme du glossaire. `--apply` refuse alors une entrée
+sans concept, un nom de fabrique vague ou un nom qui ne dit pas le code. Il écrit
+`domain/errors/<concept>.error.ts`, une classe qui étend `ConceptError` avec une fabrique par
+classe déplacée là (les paramètres du constructeur, le message qu'il donnait à `super`, et comme
+faits les paramètres qui sont de simples données), déplace les cas des *specs* sous
+`describe('<factory>')` dans `test/unit/<concept>.error.spec.ts`, réécrit chaque usage
+(`new X(..)` devient `<Concept>Error.<factory>(..)`, `thenError(X)` devient `thenError('<CODE>')`,
+`toThrow(X)` et `expect.any(X)` une assertion sur le code, `toBeInstanceOf(X)`
+`toMatchObject({ code })`, `e instanceof X` `<Concept>Error.is(e, '<CODE>')`) et pose
+`"stack.refusals": "factories"`. Il laisse, et le dit : une classe qui a des membres à elle, lit
+`this` dans son constructeur ou donne des options à `super` ; un endroit où une classe tenait
+lieu de valeur qu'il ne sait pas traduire ; une propriété de l'erreur devenue un fait
+(`error.personId` est désormais `error.facts.personId`) ; une fabrique de plus de trois
+paramètres ; les fabriques qui prennent encore une phrase comme seul paramètre.
 
 ## build-aliases
 
@@ -1746,7 +1813,7 @@ règle.
 | `events/name-format` | un nom d'événement qui n'est pas `<context>.<aggregate>.<fact>` en kebab-case avec le bon contexte |
 | `events/name-declared-once` | une classe de `domain/events/` sans `static readonly eventName`, ou dont le `readonly name` écrit le nom une seconde fois au lieu de le lire |
 | `events/defined-in-published-language` | `defineIntegrationEvent` hors d'un langage publié, sans charge utile, deux fois pour une même version ; un événement décrit à la main |
-| `language/glossary-term` | une classe du modèle nommée avec un mot que le glossaire de son contexte ne définit pas ; un glossaire vide ; sous `"stack.refusals": "factories"`, une classe d'erreur de `domain/errors/` aussi |
+| `language/glossary-term` | une classe du modèle nommée avec un mot que le glossaire de son contexte ne définit pas ; un glossaire vide ; sous `"stack.refusals": "factories"` ou `"named"`, une classe de `domain/errors/` aussi, une classe de refus de `named` ayant droit en plus aux qualificatifs `invalid`, `unknown`, `already`, `too`, `no`, `missing` et `required` (`codes.ts` n'est pas jugé) |
 | `language/declared-vocabulary` | une chaîne littérale dont la valeur est une valeur d'un vocabulaire fermé que le projet déclare (un objet `as const` exporté avec le type union de son nom, un ensemble de permissions de `definePermissions`), hors du fichier qui le déclare, à l'endroit qui parle son langage (son contexte ; la plateforme et les groupes de routes pour la plateforme ; partout pour un identifiant de permission ou le noyau partagé) ; les tests, les langages publiés et le schéma de relations ne sont pas jugés, ni, hors de `domain/`, un mot typé par un autre langage (une clé d'un `Record<T, ..>`, une valeur d'un `Record<.., T>`, `'x' satisfies T`, `T` un type d'un langage publié, d'un paquet ou de `infrastructure/anti-corruption/` ou `infrastructure/external/`) ; sous `"stack.literals": "named"` |
 | `language/no-technical-name` | `Manager`, `Helper`, `Util`, `Utils`, `Data`, `Info`, `Processor`, `Wrapper`, `Impl`, `Base`, `Abstract`, `Dto`, `Entity`, `Model` dans un type déclaré sous `domain/` ou dans un dossier de cas d'usage |
 | `purity/no-system-clock` | `new Date()` sans argument, `Date.now()`, `performance.now()` dans `domain/` ou `application/` |
@@ -1800,10 +1867,11 @@ règle.
 | `ports/value-import` | une classe nommée dans une liste de dépendances, ou donnée à `bind` ou `rebind`, importée avec `import type` ou `import { type X }` |
 | `scheduling/job-triggers-use-case` | dans `application/scheduling/*.job.ts` : une classe exportée qui n'implémente pas `ScheduledJob` ; un `run` qui n'envoie aucune commande (pas d'appel `.execute(`) ; un *repository* dans la liste de dépendances ou le constructeur ; un import de `domain/aggregates/`, `domain/entities/`, `domain/services/` ou `infrastructure/`. Un enregistrement `builder.job(..)` d'une classe qui vit ailleurs |
 | `scheduling/job-name` | le premier argument de `@Scheduled(..)` ou de `.job(..)` qui n'est pas une chaîne littérale `<context>.<job-name>` en kebab-case minuscule avec le contexte de son fichier ; un `systemActor(..)` d'un fichier de *job* qui passe un autre nom ; un même nom de *job* utilisé deux fois dans le projet |
-| `errors/code-unique` | sous `"stack.refusals": "factories"`, dans le `domain/errors/` d'un contexte : un code posé une seconde fois, par une fabrique (`refusal('CODE', ..)`) ou par une classe (`readonly code = 'CODE'`), avec le fichier et la ligne du premier. Le même code dans deux contextes n'est pas signalé |
+| `errors/code-unique` | sous `"stack.refusals": "named"` ou `"factories"`, dans le `domain/errors/` d'un contexte : un code posé une seconde fois, par une valeur de `codes.ts`, une fabrique (`refusal('CODE', ..)`) ou une classe (`readonly code = 'CODE'`), avec le fichier et la ligne du premier. Le même code dans deux contextes n'est pas signalé |
+| `errors/code-listed` | sous `"stack.refusals": "named"`, dans le `domain/errors/` d'un contexte : une classe de refus (qui étend `DomainRefusal`) dont le code n'est pas `readonly code = <Context>Codes.<Class>` lu dans le `codes.ts` de son contexte, des classes de refus sans `codes.ts`, une classe que la liste ne contient pas ; dans `codes.ts`, pas de liste `<Context>Codes` ou une liste non déclarée `as const`, une clé qui ne nomme aucune classe de refus du contexte, une valeur qui n'est pas un littéral de chaîne en casse de constante |
 | `schema/presentation-only` | sous `"stack.schemas": "shared"` : dans le noyau partagé hors de `presentation/`, un import d'une bibliothèque de validation ; dans `domain/`, `application/`, `infrastructure/`, `published-language/` et le noyau partagé hors de `presentation/`, un import d'un fichier de `presentation/` du noyau partagé |
 | `schema/no-duplicate-shape` | sous `"stack.schemas": "shared"`, dans la couche présentation d'un contexte, ou dans celle-ci et `presentation/` du noyau partagé : une classe DTO ou un schéma objet (`z.object`, `v.object`, `Type.Object`) qui déclare la forme d'un autre, avec l'endroit de l'original (le noyau partagé, puis `presentation/http/shared/`) ; deux contextes ne sont pas comparés, et les paramètres de requête HTTP et les formes qui portent encore un `TODO(domain)` du générateur ne sont pas jugés |
-| `errors/known-code` | sous `"stack.refusals": "factories"`, dans un `*.route.ts` : un code de la liste `errors` qu'aucun refus du contexte de la route ne pose, qu'aucune classe hors des contextes ne pose, et qui n'est pas un code du kit |
+| `errors/known-code` | sous `"stack.refusals": "named"` ou `"factories"`, dans un `*.route.ts` : un code de la liste `errors` que le `codes.ts` du contexte de la route ne liste pas, qu'aucun refus de ce contexte ne pose, qu'aucune classe hors des contextes ne pose, et qui n'est pas un code du kit |
 | `domain/value-object-class` | sous `"stack.values": "classes"` : dans `domain/value-objects/` d'un contexte ou un `*.vo.ts` du noyau partagé hors de `presentation/`, aucune classe exportée ou une seconde, une classe qui n'étend ni `ValueObject` ni un autre objet-valeur du projet, un constructeur public, une classe concrète sans méthode statique, une fonction, une constante fléchée ou un objet littéral exporté (en ligne, par une liste ou par défaut) ; dans `domain/` et dans le noyau partagé hors de `presentation/`, une fonction exportée qui répond un enregistrement de données : des entrées de données, aucune décomposition, rien qu'un appel du modèle a construit |
 
 D'autres identifiants appartiennent à `@ddd-ts-kit/eslint-plugin`, qui lit l'arbre syntaxique là

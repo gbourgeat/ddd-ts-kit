@@ -28,7 +28,7 @@ starts, so a business rule never changes with a library.
 
 | Area | Exports |
 |---|---|
-| Domain | `Entity`, `AggregateRoot` (version, recorded events), `ValueObject`, `DomainEvent`, `DomainError` with a stable `code`, `ConceptError` (the errors of one concept, each built by a static factory: see "Domain errors"), `isRefusal`, `CodeOf`, `RefusalOf`, `Refusal`, `RefusalFacts`, the generic `InvariantViolation`, `NotFoundError`, `ConflictError`, `ConcurrencyError`, `PreconditionFailedError`, `Result` with `ok`, `err`, `unwrap` |
+| Domain | `Entity`, `AggregateRoot` (version, recorded events), `ValueObject`, `DomainEvent`, `DomainError` with a stable `code`, `ConceptError` (the errors of one concept, each built by a static factory: see "Domain errors"), `DomainRefusal` (one class per refusal, built by static factories), `FactualRefusal`, `isRefusal`, `CodeOf`, `RefusalOf`, `Refusal`, `RefusalFacts`, the generic `InvariantViolation`, `NotFoundError`, `ConflictError`, `ConcurrencyError`, `PreconditionFailedError`, `Result` with `ok`, `err`, `unwrap` |
 | Ports | `Clock`, `IdGenerator`, `UnitOfWork`, `Repository` (abstract classes: each one is its own injection token), `UseCase`, `DependencyKind` (the roles a binding declares, read by di, tracing and aspects: `repository`, `gateway`, `external`, `use-case`, `publisher`, `consumer`, `domain-event-handler`, `job`) |
 | Buses | `Command`, `Query`, `CommandBus`, `QueryBus`, `BusMiddleware`, the in-process `InMemoryCommandBus` and `InMemoryQueryBus` (`register(type, handler, { context })` names the bounded context in `MessageInfo`), `unitOfWorkMiddleware` |
 | Events | `IntegrationEvent`, `IntegrationEventPublisher`, `IntegrationEventSubscriber`, `EventBus` (both at once), `EventSubscribers` (the subscriber of each bounded context), `ProcessedEventStore`, `idempotent`, `InMemoryEventBus`, `DomainEventDispatcher`, `IntegrationEventCallback` and `DomainEventCallback` (the functions a subscriber and a dispatcher are given), `executionContextOfEvent`, `inEventScope`, `scopedPublisher`, `EventDelivery` (what a provider says of one delivery: attempt, last attempt, transport, source, consumer), `messagingSystemOf` |
@@ -57,20 +57,36 @@ file, and `ddd-ts-kit generate` writes them):
 
 <!-- checked sample -->
 ```ts
-import { AggregateRoot, ConceptError, Entity, ValueObject, NamedDomainEvent } from '@ddd-ts-kit/kernel';
+import { AggregateRoot, DomainRefusal, Entity, ValueObject, NamedDomainEvent } from '@ddd-ts-kit/kernel';
 
-// The refusals of the concept, each a static factory (see "Domain errors").
-export class OrderError extends ConceptError {
-  static invalidQuantity(units: number) {
-    return OrderError.refusal('INVALID_QUANTITY', `${units} is not a positive whole quantity.`, { units });
+// The codes of the context, in domain/errors/codes.ts, and its refusals, one class each (see "Domain errors").
+export const OrderingCodes = {
+  InvalidQuantity: 'INVALID_QUANTITY',
+  OrderAlreadyPlaced: 'ORDER_ALREADY_PLACED',
+  OrderEmpty: 'ORDER_EMPTY',
+} as const;
+
+export class InvalidQuantity extends DomainRefusal {
+  readonly code = OrderingCodes.InvalidQuantity;
+
+  static forUnits(units: number) {
+    return InvalidQuantity.refusal(`${units} is not a positive whole quantity.`, { units });
   }
+}
 
-  static alreadyPlaced(orderId: string) {
-    return OrderError.refusal('ORDER_ALREADY_PLACED', `Order ${orderId} is already placed.`, { orderId });
+export class OrderAlreadyPlaced extends DomainRefusal {
+  readonly code = OrderingCodes.OrderAlreadyPlaced;
+
+  static forOrder(orderId: string) {
+    return OrderAlreadyPlaced.refusal(`Order ${orderId} is already placed.`, { orderId });
   }
+}
 
-  static empty(orderId: string) {
-    return OrderError.refusal('ORDER_EMPTY', `Order ${orderId} has no line to place.`, { orderId });
+export class OrderEmpty extends DomainRefusal {
+  readonly code = OrderingCodes.OrderEmpty;
+
+  static onPlacement(orderId: string) {
+    return OrderEmpty.refusal(`Order ${orderId} has no line to place.`, { orderId });
   }
 }
 
@@ -82,7 +98,7 @@ export class Quantity extends ValueObject<{ readonly units: number }> {
 
   static create(units: number): Quantity {
     if (!Number.isInteger(units) || units <= 0) {
-      throw OrderError.invalidQuantity(units);
+      throw InvalidQuantity.forUnits(units);
     }
 
     return new Quantity({ units });
@@ -129,7 +145,7 @@ export class Order extends AggregateRoot {
 
   add(productId: string, quantity: Quantity): void {
     if (this.placed) {
-      throw OrderError.alreadyPlaced(this.id);
+      throw OrderAlreadyPlaced.forOrder(this.id);
     }
 
     this.lines.push(new OrderLine(productId, quantity));
@@ -137,11 +153,11 @@ export class Order extends AggregateRoot {
 
   place(now: Date): void {
     if (this.placed) {
-      throw OrderError.alreadyPlaced(this.id);
+      throw OrderAlreadyPlaced.forOrder(this.id);
     }
 
     if (this.lines.length === 0) {
-      throw OrderError.empty(this.id);
+      throw OrderEmpty.onPlacement(this.id);
     }
 
     this.placed = true;
@@ -188,45 +204,60 @@ refusal instead of throwing it (`"stack.valueObjects": "result"`). Why each bloc
 ## Domain errors
 
 A business refusal is a `DomainError`: an answer the code planned for, known everywhere by its
-`code`. A context has one error class per concept of its language, and each refusal is a static
-factory of that class, named in the words of the business:
+`code`. A context has one class per refusal, named after what is refused, which extends
+`DomainRefusal`; its static factories are named after what the refusal is about, and the code
+of every refusal of the context is written once, in the closed list `domain/errors/codes.ts`:
 
 <!-- checked sample -->
 ```ts
-import { ConceptError } from '@ddd-ts-kit/kernel';
+import { DomainRefusal } from '@ddd-ts-kit/kernel';
 
 declare const calendar: { readonly id: string };
 declare const slot: { readonly startsAt: Date };
 
-export class AppointmentError extends ConceptError {
-  static slotTaken(calendarId: string, startsAt: Date) {
-    return AppointmentError.refusal(
-      'SLOT_TAKEN',
+// domain/errors/codes.ts
+export const SchedulingCodes = {
+  SlotTaken: 'SLOT_TAKEN',
+  UnknownAppointment: 'APPOINTMENT_NOT_FOUND',
+} as const;
+
+export type SchedulingCode = (typeof SchedulingCodes)[keyof typeof SchedulingCodes];
+
+// domain/errors/slot-taken.error.ts
+export class SlotTaken extends DomainRefusal {
+  readonly code = SchedulingCodes.SlotTaken;
+
+  static forCalendar(calendarId: string, startsAt: Date) {
+    return SlotTaken.refusal(
       `The slot starting at ${startsAt.toISOString()} on calendar ${calendarId} is already held.`,
       { calendarId, startsAt },
     ).exposing('startsAt');
   }
+}
 
-  static notFound(appointmentId: string) {
-    return AppointmentError.refusal('APPOINTMENT_NOT_FOUND', `Appointment ${appointmentId} does not exist.`, {
-      appointmentId,
-    });
+// domain/errors/unknown-appointment.error.ts
+export class UnknownAppointment extends DomainRefusal {
+  readonly code = SchedulingCodes.UnknownAppointment;
+
+  static forAppointment(appointmentId: string) {
+    return UnknownAppointment.refusal(`Appointment ${appointmentId} does not exist.`, { appointmentId });
   }
 }
 
-throw AppointmentError.slotTaken(calendar.id, slot.startsAt);
+throw SlotTaken.forCalendar(calendar.id, slot.startsAt);
 ```
 
 | Member | What it does |
 |---|---|
-| `protected static refusal(code, message, facts?)` | builds the refusal of a factory: an instance of the class it is called on, typed with that code and those facts. The constructor is protected and a subclass declares none, so outside its class a refusal exists only through a factory |
+| `readonly code` | written by the class, read from the list of its context under its own name: one code per class, whatever the factory |
+| `protected static refusal(message, facts?)` | builds the refusal of a factory: an instance of the class it is called on, typed with its code and those facts. The constructor is protected and a subclass declares none, so outside its class a refusal exists only through a factory |
 | `protected exposing(...names)` | called on the refusal by its factory: these facts may leave the process. None does by default |
 | `protected causedBy(cause)` | called by its factory: the error this refusal translates, as `cause` |
-| `code`, `message`, `name`, `cause` | as on any `DomainError`; `name` is the class, `code` the identity of the refusal |
+| `message`, `name`, `cause` | as on any `DomainError`; `name` is the class |
 | `facts` | every fact the factory was given, as plain data (`RefusalFacts`: text, numbers, booleans, dates, `null`, lists of them), for the code that catches the error and for the tests |
 | `exposedFacts` | the facts a client may read: what `@ddd-ts-kit/http` writes under `facts` in the problem document |
 | `toJSON()` | `{ name, code, message }`, plus `facts` when some are exposed: never the stack, the cause or a private fact |
-| `static is(error, code?)` | narrows what was caught to a refusal of this class, of this code when one is given |
+| `static is(error)` | narrows what was caught to this refusal, with the facts of each of its factories |
 
 Instead of a bare `Error`, which nothing downstream can tell from a bug:
 
@@ -234,47 +265,70 @@ Instead of a bare `Error`, which nothing downstream can tell from a bug:
 throw new Error(`Slot ${startsAt.toISOString()} is taken`); // reported as unexpected, answered as a 500
 ```
 
-write the refusal of the concept, which every layer knows by its code:
+write the refusal, which every layer knows by its code:
 
 ```ts
-throw AppointmentError.slotTaken(calendar.id, slot.startsAt); // a planned answer: a 4xx with code SLOT_TAKEN
+throw SlotTaken.forCalendar(calendar.id, slot.startsAt); // a planned answer: a 4xx with code SLOT_TAKEN
 ```
 
 The HTTP status of each code is chosen in the presentation layer, in one place; the error
 logs, the spans and the audit trail record the `code`, and the error reporter leaves a
 `DomainError` alone (the two exceptions are under "ErrorReporter").
 
-The codes of a class are a closed vocabulary the compiler derives from its factories, so a
-`switch` is exhaustive and each case knows its facts:
+The codes of a context are a closed vocabulary, `SchedulingCode`: `isRefusal(error, SchedulingCodes)`
+narrows what was caught to one of them, so a `switch` on its code is exhaustive, and the class of
+one refusal knows its facts:
 
 ```ts
-import { isRefusal, type CodeOf } from '@ddd-ts-kit/kernel';
+import { isRefusal } from '@ddd-ts-kit/kernel';
 
-type AppointmentErrorCode = CodeOf<typeof AppointmentError>; // 'SLOT_TAKEN' | 'APPOINTMENT_NOT_FOUND'
-
-if (AppointmentError.is(error)) {
+if (isRefusal(error, SchedulingCodes)) {
   switch (error.code) {
     case 'SLOT_TAKEN':
-      return retryAfter(error.facts.startsAt); // a Date
+      return 'choose another slot';
     case 'APPOINTMENT_NOT_FOUND':
-      return forget(error.facts.appointmentId);
+      return 'book again';
   }
 }
 
-if (AppointmentError.is(error, 'SLOT_TAKEN')) {
-  error.facts.calendarId; // a string
+if (SlotTaken.is(error)) {
+  retryAfter(error.facts.startsAt); // a Date
 }
 
 isRefusal(error, 'SLOT_TAKEN'); // whatever the class: the code is what everything downstream keys on
 ```
 
-`error instanceof AppointmentError && error.code === 'SLOT_TAKEN'` works too, without the facts
-of that code. A factory lets its return type be inferred: an annotation `: AppointmentError`
-would hide its code from `CodeOf`.
+A factory lets its return type be inferred: an annotation `: SlotTaken` would hide its facts
+from `is`.
 
 **Facts are private.** A message is written for a human and answered to the client as `detail`;
 the facts are data, and stay in the process unless the factory names the ones that may leave.
 Never expose what identifies a person. The audit trail and the spans record the code alone.
+
+**One class per concept** is the form of `ConceptError`, and keeps working: a class gathers the
+refusals of one concept, each a factory named after the refusal that sets its own code, and
+`CodeOf<typeof AppointmentError>` is the union of its codes.
+
+<!-- checked sample -->
+```ts
+import { ConceptError, type CodeOf } from '@ddd-ts-kit/kernel';
+
+export class AppointmentError extends ConceptError {
+  static slotTaken(calendarId: string, startsAt: Date) {
+    return AppointmentError.refusal('SLOT_TAKEN', `The slot at ${startsAt.toISOString()} is held.`, {
+      calendarId,
+      startsAt,
+    }).exposing('startsAt');
+  }
+}
+
+export type AppointmentErrorCode = CodeOf<typeof AppointmentError>; // 'SLOT_TAKEN'
+```
+
+`ConceptError` has the members above, but `refusal(code, message, facts?)` takes the code, and
+`AppointmentError.is(error, 'SLOT_TAKEN')` narrows to one code of the class. `ConceptError` and
+`DomainRefusal` share `FactualRefusal`, the facts and their exposure, which is what
+`@ddd-ts-kit/http` reads.
 
 **One class per error** is the form of 0.1 and 0.2, and keeps working: `DomainError` is still
 abstract over `code`, its constructor still public, and `InvariantViolation`, `NotFoundError`,
@@ -288,28 +342,39 @@ export class SlotTakenError extends DomainError {
 ```
 
 A project says which form it writes with `"stack.refusals"` in `ddd-ts-kit.config.json`
-(`factories`, what `init` writes, or `classes`, what a config without the key means); the
-`errors/*` rules hold the first, and `ddd-ts-kit error-factories` moves a project from the
-second. Both forms can live in one project.
+(`named`, what `init` writes; `factories`, one class per concept; or `classes`, what a config
+without the key means); the `errors/*` rules hold the first two, and `ddd-ts-kit error-factories`
+moves a project from the others to `named`. The forms can live in one project.
 
 ## State machines
 
 <!-- checked sample -->
 ```ts
-import { AggregateRoot, ConceptError, defineStateMachine } from '@ddd-ts-kit/kernel';
+import { AggregateRoot, DomainRefusal, defineStateMachine } from '@ddd-ts-kit/kernel';
 
 // domain/vocabularies/parcel-status.vocabulary.ts
 export const ParcelStatus = { Registered: 'registered', Shipped: 'shipped', Delivered: 'delivered' } as const;
 export type ParcelStatus = (typeof ParcelStatus)[keyof typeof ParcelStatus];
 
-// domain/errors/parcel.error.ts
-export class ParcelError extends ConceptError {
-  static unpaid(parcelId: string) {
-    return ParcelError.refusal('PARCEL_UNPAID', `Parcel ${parcelId} is not paid yet.`, { parcelId });
-  }
+// domain/errors/codes.ts, then one class per refusal
+export const ShippingCodes = {
+  ParcelUnpaid: 'PARCEL_UNPAID',
+  ParcelTransitionRefused: 'PARCEL_TRANSITION_REFUSED',
+} as const;
 
-  static cannot(parcelId: string, from: ParcelStatus, transition: string) {
-    return ParcelError.refusal('PARCEL_TRANSITION_REFUSED', `Parcel ${parcelId} cannot ${transition} once ${from}.`, {
+export class ParcelUnpaid extends DomainRefusal {
+  readonly code = ShippingCodes.ParcelUnpaid;
+
+  static forParcel(parcelId: string) {
+    return ParcelUnpaid.refusal(`Parcel ${parcelId} is not paid yet.`, { parcelId });
+  }
+}
+
+export class ParcelTransitionRefused extends DomainRefusal {
+  readonly code = ShippingCodes.ParcelTransitionRefused;
+
+  static forParcel(parcelId: string, from: ParcelStatus, transition: string) {
+    return ParcelTransitionRefused.refusal(`Parcel ${parcelId} cannot ${transition} once ${from}.`, {
       parcelId,
       from,
       transition,
@@ -331,12 +396,12 @@ export const parcelLifecycle = defineStateMachine({
     ship: {
       from: [ParcelStatus.Registered],
       to: ParcelStatus.Shipped,
-      guard: ({ parcelId, paid }: ParcelMoment) => (paid ? undefined : ParcelError.unpaid(parcelId)),
+      guard: ({ parcelId, paid }: ParcelMoment) => (paid ? undefined : ParcelUnpaid.forParcel(parcelId)),
     },
     reroute: { from: [ParcelStatus.Shipped] },
     deliver: { from: [ParcelStatus.Shipped], to: ParcelStatus.Delivered },
   },
-  refused: ({ from, transition }, { parcelId }: ParcelMoment) => ParcelError.cannot(parcelId, from, transition),
+  refused: ({ from, transition }, { parcelId }: ParcelMoment) => ParcelTransitionRefused.forParcel(parcelId, from, transition),
 });
 
 // domain/aggregates/parcel.aggregate.ts: the aggregate asks the machine, never tests its status by hand
@@ -1425,13 +1490,17 @@ the instances as JSON, for tests and one process. The runner is `StoredProcessRu
 
 <!-- checked sample -->
 ```ts
-import { ConceptError, type RateLimiter } from '@ddd-ts-kit/kernel';
+import { DomainRefusal, type RateLimiter } from '@ddd-ts-kit/kernel';
 
-export class PasswordResetError extends ConceptError {
-  static tooManyAttempts(retryAfterMs: number) {
-    return PasswordResetError.refusal('TOO_MANY_RESET_ATTEMPTS', 'Too many password resets: try again later.', {
-      retryAfterMs,
-    }).exposing('retryAfterMs');
+export const IdentityCodes = { TooManyResetAttempts: 'TOO_MANY_RESET_ATTEMPTS' } as const;
+
+export class TooManyResetAttempts extends DomainRefusal {
+  readonly code = IdentityCodes.TooManyResetAttempts;
+
+  static withRetryAfter(retryAfterMs: number) {
+    return TooManyResetAttempts.refusal('Too many password resets: try again later.', { retryAfterMs }).exposing(
+      'retryAfterMs',
+    );
   }
 }
 
@@ -1439,7 +1508,7 @@ export async function allowReset(limiter: RateLimiter, accountId: string): Promi
   const decision = await limiter.consume(`password-reset:${accountId}`, { limit: 3, windowMs: 3_600_000 });
 
   if (!decision.allowed) {
-    throw PasswordResetError.tooManyAttempts(decision.retryAfterMs);
+    throw TooManyResetAttempts.withRetryAfter(decision.retryAfterMs);
   }
 }
 ```
@@ -1970,7 +2039,7 @@ export class AttendanceRecord extends EventSourcedAggregate<AttendanceEvent, Att
 
   noteNoShow(appointmentId: string, now: Date): void {
     if (this.state.noShows >= 3) {
-      throw AttendanceRecordError.alreadyBarred(this.id);
+      throw PatientBarred.forRecord(this.id);
     }
 
     this.record(new NoShowNoted(this.id, now, appointmentId));

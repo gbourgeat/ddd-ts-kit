@@ -64,7 +64,7 @@ Run the `Start with` commands of the slice row, or for a typical command:
 
 ```bash
 npx ddd-ts-kit generate command <ctx> <UseCase> --aggregate <Aggregate> --permission <aggregate>.<action> --grant <role> --json
-npx ddd-ts-kit generate error <ctx> <Concept> <refusal> --json        # one per refusal: a factory on the error class of the concept
+npx ddd-ts-kit generate error <ctx> <Refusal> <factory> --json        # one per refusal: its class, its code in codes.ts, a factory
 npx ddd-ts-kit generate domain-event <ctx> <Aggregate> <Fact> --json  # the fact recorded
 npx ddd-ts-kit generate route <ctx> <UseCase> --method POST --path /<resource> --json   # [--group <Name>] [--mapper] [--serializer]
 ```
@@ -76,14 +76,23 @@ every other person is refused at run time, and `check` warns (`authz/granted`). 
 a business decision: ask the user when the slice does not say. Under attributes or
 relationships, `--grant` is refused: give the right in that model instead.
 
-A refusal is named in the words of the business, twice: `generate error scheduling Appointment
-slotTaken` adds `AppointmentError.slotTaken()` with the code `SLOT_TAKEN` to
-`domain/errors/appointment.error.ts`, and its case to the spec. Give the factory the facts of
-the refusal as typed parameters, and throw it where the rule is kept:
-`throw AppointmentError.slotTaken(calendar.id, slot.startsAt)`. Never `new` an error of
-`domain/errors/` (`errors/through-factory`). Facts are private: add `.exposing('<fact>')` in the
-factory only for what a client may read, never for what identifies a person. Declare the code
-in `errors` of the route (`errors/known-code`).
+A refusal is named in the words of the business, twice: the class after what is refused, the
+factory after what the refusal is about. The class is made of terms of the glossary, plus the
+qualifiers `invalid`, `unknown`, `already`, `too`, `no`, `missing`, `required` (`BookingTooLate`);
+a missing term is added with `--term` (`language/glossary-term`). `generate error scheduling SlotTaken forCalendar` writes
+`domain/errors/slot-taken.error.ts` (`SlotTaken`, extending `DomainRefusal`, never `...Error`),
+adds `SlotTaken: 'SLOT_TAKEN'` to `SchedulingCodes` in `domain/errors/codes.ts`, the factory
+`SlotTaken.forCalendar()`, and its case to the spec. Give the factory the facts of the refusal as
+typed parameters, and throw it where the rule is kept:
+`throw SlotTaken.forCalendar(calendar.id, slot.startsAt)`. Seen from another place, the same
+refusal gets a second factory (`generate error scheduling SlotTaken atStart`); a second code is a
+second class. Never `new` an error of `domain/errors/` (`errors/through-factory`). Facts are
+private: add `.exposing('<fact>')` in the factory only for what a client may read, never for what
+identifies a person. Declare the code in `errors` of the route (`errors/known-code`). In a project
+whose config says `"stack.refusals": "factories"`, a refusal is a factory of the error class of
+its concept instead: `generate error scheduling Appointment slotTaken` adds
+`AppointmentError.slotTaken()`; `npx ddd-ts-kit error-factories` moves such a project to named
+refusals when the user decides to.
 
 A use case that receives a file is
 `generate file-upload <ctx> <UseCase> --path /<resource>/:id/<file> (--permission ... --grant <role> | --public)`:

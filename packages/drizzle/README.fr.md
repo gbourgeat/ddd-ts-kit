@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:dae6f42b8134935d -->
+<!-- translation-of: README.md sha256:818100938a696ac7 -->
 
 # @ddd-ts-kit/drizzle
 
@@ -179,16 +179,24 @@ Côté domaine, un agrégat qui ne sait rien des lignes, et son port :
 
 <!-- checked sample -->
 ```ts
-// contexts/order-management/domain/order.aggregate.ts
-import { AggregateRoot, ConceptError, Repository } from '@ddd-ts-kit/kernel';
+import { AggregateRoot, DomainRefusal, Repository } from '@ddd-ts-kit/kernel';
 
-export type OrderStatus = 'open' | 'placed';
+// contexts/order-management/domain/errors/codes.ts
+export const OrderManagementCodes = {
+  OrderAlreadyPlaced: 'ORDER_ALREADY_PLACED',
+} as const;
 
-export class OrderError extends ConceptError {
-  static alreadyPlaced(orderId: string) {
-    return OrderError.refusal('ORDER_ALREADY_PLACED', `Order ${orderId} is already placed.`, { orderId });
+// contexts/order-management/domain/errors/order-already-placed.error.ts
+export class OrderAlreadyPlaced extends DomainRefusal {
+  readonly code = OrderManagementCodes.OrderAlreadyPlaced;
+
+  static forOrder(orderId: string) {
+    return OrderAlreadyPlaced.refusal(`Order ${orderId} is already placed.`, { orderId });
   }
 }
+
+// contexts/order-management/domain/order.aggregate.ts
+export type OrderStatus = 'open' | 'placed';
 
 export class Order extends AggregateRoot {
   private constructor(
@@ -213,7 +221,7 @@ export class Order extends AggregateRoot {
 
   place(): void {
     if (this.status === 'placed') {
-      throw OrderError.alreadyPlaced(this.id);
+      throw OrderAlreadyPlaced.forOrder(this.id);
     }
 
     this.status = 'placed';

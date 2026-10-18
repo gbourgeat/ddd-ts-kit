@@ -1,7 +1,7 @@
 import { Access } from '@ddd-ts-kit/auth';
 import { type Clock } from '@ddd-ts-kit/kernel';
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
-import { AppointmentError } from '@/contexts/scheduling/domain/errors/appointment.error';
+import { UnknownAppointment } from '@/contexts/scheduling/domain/errors/unknown-appointment.error';
 import type { AppointmentRepository } from '@/contexts/scheduling/domain/repositories/appointment.repository';
 import { Cancellation } from '@/contexts/scheduling/domain/value-objects/cancellation.vo';
 import { schedulingPermissions } from '@/contexts/scheduling/application/authorization/scheduling.permissions';
@@ -20,7 +20,7 @@ export class CancelAppointmentHandler implements CommandHandler<CancelAppointmen
     const appointment = await this.appointmentRepository.findById(appointmentId);
 
     if (appointment === undefined) {
-      throw AppointmentError.notFound(appointmentId);
+      throw UnknownAppointment.forAppointment(appointmentId);
     }
 
     await this.access.authorize(actor, schedulingPermissions['appointment.cancel'], appointment);

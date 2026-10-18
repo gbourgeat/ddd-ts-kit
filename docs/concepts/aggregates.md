@@ -33,7 +33,7 @@ of `domain/`; their shapes are declared at the top so that the sample stands alo
 <!-- checked sample -->
 ```ts
 // contexts/appointments/domain/aggregates/appointment.aggregate.ts
-import { AggregateRoot, ConceptError, type DomainEvent } from '@ddd-ts-kit/kernel';
+import { AggregateRoot, DomainRefusal, type DomainEvent } from '@ddd-ts-kit/kernel';
 
 // In domain/value-objects/, domain/events/ and domain/errors/:
 declare class TimeSlot {
@@ -61,9 +61,13 @@ declare class AppointmentCancelled implements DomainEvent {
   readonly occurredAt: Date;
   readonly aggregateId: string;
 }
-declare class AppointmentError extends ConceptError {
-  static alreadyCancelled(appointmentId: string): AppointmentError;
-  static cancellationWindowPassed(appointmentId: string, startsAt: Date): AppointmentError;
+declare class AppointmentAlreadyCancelled extends DomainRefusal {
+  readonly code: 'APPOINTMENT_ALREADY_CANCELLED';
+  static forAppointment(appointmentId: string): AppointmentAlreadyCancelled;
+}
+declare class CancellationWindowPassed extends DomainRefusal {
+  readonly code: 'CANCELLATION_WINDOW_PASSED';
+  static forAppointment(appointmentId: string, startsAt: Date): CancellationWindowPassed;
 }
 
 const FREE_CANCELLATION_MS = 24 * 60 * 60 * 1000;
@@ -115,13 +119,13 @@ export class Appointment extends AggregateRoot<string> {
 
   private assertNotCancelled(): void {
     if (this.state.status === 'cancelled') {
-      throw AppointmentError.alreadyCancelled(this.id);
+      throw AppointmentAlreadyCancelled.forAppointment(this.id);
     }
   }
 
   private assertCancellationStillFree(at: Date): void {
     if (this.state.slot.startsWithin(FREE_CANCELLATION_MS, at)) {
-      throw AppointmentError.cancellationWindowPassed(this.id, this.state.slot.startsAt);
+      throw CancellationWindowPassed.forAppointment(this.id, this.state.slot.startsAt);
     }
   }
 }
@@ -137,34 +141,47 @@ the shape guarantees:
   `rehydrate` restores a stored state and records nothing.
 - **Refusals are named.** A violated invariant raises a `DomainError` with a stable code,
   never a generic error (`domain/no-generic-error`), and it is built by a static factory of the
-  error class of the concept, `AppointmentError`, so that the refusal reads as a sentence
-  (`errors/through-factory`). The factory writes the code (`APPOINTMENT_ALREADY_CANCELLED`),
-  the message and the facts once: see
+  class named after the refusal, `AppointmentAlreadyCancelled.forAppointment(..)`, so that the
+  refusal reads as a sentence (`errors/through-factory`). The class reads its code
+  (`APPOINTMENT_ALREADY_CANCELLED`) from the list of the context, and the factory writes the
+  message and the facts once: see
   [Invariants, permissions and validation](invariants-permissions-validation.md).
 - **Time is an argument.** The aggregate holds no clock; the handler passes `clock.now()`.
 - **Facts are recorded.** Each intention records a [domain event](domain-building-blocks.md),
   which the save hands over: it is dispatched at the end of the unit of work of the command,
   once the command handler has returned and before the commit.
 
-The error class of the concept, in `domain/errors/appointment.error.ts`, writes each refusal
-once: its code, its message, its facts, and the facts a client may read:
+Each refusal is a class of its own, in `domain/errors/<refusal>.error.ts`, which reads its code
+from `domain/errors/codes.ts`, the closed list of the codes of the context. Its factories write
+the message, the facts, and the facts a client may read, once:
 
 <!-- checked sample -->
 ```ts
-import { ConceptError } from '@ddd-ts-kit/kernel';
+import { DomainRefusal } from '@ddd-ts-kit/kernel';
 
-export class AppointmentError extends ConceptError {
-  static alreadyCancelled(appointmentId: string) {
-    return AppointmentError.refusal(
-      'APPOINTMENT_ALREADY_CANCELLED',
-      `Appointment ${appointmentId} is already cancelled.`,
-      { appointmentId },
-    );
+// domain/errors/codes.ts
+export const AppointmentsCodes = {
+  AppointmentAlreadyCancelled: 'APPOINTMENT_ALREADY_CANCELLED',
+  CancellationWindowPassed: 'CANCELLATION_WINDOW_PASSED',
+} as const;
+
+export type AppointmentsCode = (typeof AppointmentsCodes)[keyof typeof AppointmentsCodes];
+
+// domain/errors/appointment-already-cancelled.error.ts
+export class AppointmentAlreadyCancelled extends DomainRefusal {
+  readonly code = AppointmentsCodes.AppointmentAlreadyCancelled;
+
+  static forAppointment(appointmentId: string) {
+    return AppointmentAlreadyCancelled.refusal(`Appointment ${appointmentId} is already cancelled.`, { appointmentId });
   }
+}
 
-  static cancellationWindowPassed(appointmentId: string, startsAt: Date) {
-    return AppointmentError.refusal(
-      'CANCELLATION_WINDOW_PASSED',
+// domain/errors/cancellation-window-passed.error.ts
+export class CancellationWindowPassed extends DomainRefusal {
+  readonly code = AppointmentsCodes.CancellationWindowPassed;
+
+  static forAppointment(appointmentId: string, startsAt: Date) {
+    return CancellationWindowPassed.refusal(
       `Appointment ${appointmentId} starts at ${startsAt.toISOString()}: too late to cancel for free.`,
       { appointmentId, startsAt },
     ).exposing('startsAt');
@@ -404,7 +421,7 @@ versions do not help, because the two inserts touch two different rows. The opti
 | a database constraint on the appointments table | yes | a unique index on discrete slots, or an exclusion constraint on ranges in PostgreSQL |
 
 So the invariant is guarded twice, each guard doing what it can: the domain states the rule and
-names its refusal (`AppointmentError.slotAlreadyTaken`), and the storage makes it impossible to
+names its refusal (`SlotAlreadyTaken.forPractitioner`), and the storage makes it impossible to
 violate under concurrency. The repository adapter translates the constraint violation into the
 domain error, so the handler and the client see a business refusal with the code
 `SLOT_ALREADY_TAKEN`, not a driver error. The pre-check in the handler remains useful as the
@@ -428,13 +445,19 @@ driver error kept as its cause:
 
 <!-- checked sample -->
 ```ts
-import { ConceptError } from '@ddd-ts-kit/kernel';
+import { DomainRefusal } from '@ddd-ts-kit/kernel';
 
-// domain/errors/appointment.error.ts
-export class AppointmentError extends ConceptError {
-  static slotAlreadyTaken(practitionerId: string, startsAt: Date, cause: unknown) {
-    return AppointmentError.refusal(
-      'SLOT_ALREADY_TAKEN',
+// domain/errors/codes.ts
+export const AppointmentsCodes = {
+  SlotAlreadyTaken: 'SLOT_ALREADY_TAKEN',
+} as const;
+
+// domain/errors/slot-already-taken.error.ts
+export class SlotAlreadyTaken extends DomainRefusal {
+  readonly code = AppointmentsCodes.SlotAlreadyTaken;
+
+  static forPractitioner(practitionerId: string, startsAt: Date, cause: unknown) {
+    return SlotAlreadyTaken.refusal(
       `Practitioner ${practitionerId} already has an appointment at ${startsAt.toISOString()}.`,
       { practitionerId, startsAt },
     )
@@ -461,7 +484,7 @@ export async function insertAppointment(row: AppointmentRow): Promise<void> {
     await insertRow(row);
   } catch (error) {
     if (violates(error, NO_OVERLAP)) {
-      throw AppointmentError.slotAlreadyTaken(row.practitioner_id, row.starts_at, error);
+      throw SlotAlreadyTaken.forPractitioner(row.practitioner_id, row.starts_at, error);
     }
 
     throw error;

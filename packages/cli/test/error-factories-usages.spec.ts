@@ -88,7 +88,7 @@ describe('error-factories, with a class of the same name in two contexts', () =>
     }
 
     write(root, 'src/platform/zones.ts', user('shipping'));
-    cli(root, 'error-factories', '--plan');
+    cli(root, 'error-factories', '--plan', '--to', 'factories');
 
     const plan = JSON.parse(read(root, PLAN)) as Plan;
 

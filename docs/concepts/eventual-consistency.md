@@ -57,7 +57,7 @@ another context, which is a moment late:
 ```ts
 // appointments, handler of BookAppointment: the rule rests on data that may be a second old
 if (!(await availabilityGateway.isOpen(practitionerId, slot))) {
-  throw AppointmentError.slotTaken(practitionerId, slot.startsAt);
+  throw SlotTaken.forPractitioner(practitionerId, slot.startsAt);
 }
 ```
 

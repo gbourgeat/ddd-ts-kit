@@ -1,6 +1,5 @@
 import type { CodeOf } from './code-of.js';
-import type { DomainErrorJson } from './domain-error-json.js';
-import { DomainError } from './domain-error.js';
+import { FactualRefusal } from './factual-refusal.js';
 import type { RefusalFacts } from './refusal-facts.js';
 import type { RefusalOf } from './refusal-of.js';
 import type { Refusal } from './refusal.js';
@@ -19,7 +18,7 @@ import type { Refusal } from './refusal.js';
  * only through a factory, with the code and the message that factory wrote. The facts are
  * private until the factory exposes some by name (`.exposing('startsAt')`).
  */
-export class ConceptError extends DomainError {
+export class ConceptError extends FactualRefusal {
   /** Narrows what was caught to a refusal of this class, of this code when one is given. */
   static is<C extends { readonly prototype: object }, const Code extends CodeOf<C> = CodeOf<C>>(
     this: C,
@@ -37,24 +36,9 @@ export class ConceptError extends DomainError {
 
   readonly code: string;
 
-  /** Every fact of the refusal, for the code that catches it and for the tests. Private to the process. */
-  readonly facts: RefusalFacts;
-
-  private exposedNames: readonly string[] = [];
-
   protected constructor(code: string, message: string, facts: RefusalFacts) {
-    super(message);
+    super(message, facts);
     this.code = code;
-    this.facts = facts;
-  }
-
-  /** The facts a client may read: the ones the factory named, none by default. */
-  get exposedFacts(): RefusalFacts {
-    return Object.fromEntries(this.exposedNames.map((name) => [name, this.facts[name] ?? null]));
-  }
-
-  override toJSON(): DomainErrorJson {
-    return { ...super.toJSON(), ...(this.exposedNames.length === 0 ? {} : { facts: this.exposedFacts }) };
   }
 
   /** Builds the refusal of a factory: its code, the message it wrote and the facts it was given. */
@@ -67,19 +51,5 @@ export class ConceptError extends DomainError {
 
   protected static refusal(code: string, message: string, facts: RefusalFacts = {}): ConceptError {
     return new this(code, message, facts);
-  }
-
-  /** Called by a factory: these facts may leave the process, in a problem document for instance. */
-  protected exposing(...names: readonly (keyof this['facts'] & string)[]): this {
-    this.exposedNames = names;
-
-    return this;
-  }
-
-  /** Called by a factory: the error this refusal translates. */
-  protected causedBy(cause: unknown): this {
-    Object.defineProperty(this, 'cause', { value: cause, writable: true, configurable: true, enumerable: false });
-
-    return this;
   }
 }

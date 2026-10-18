@@ -1,5 +1,5 @@
 import { ValueObject } from '@ddd-ts-kit/kernel';
-import { WaitlistError } from '@/contexts/scheduling/domain/errors/waitlist.error';
+import { InvalidWaiter } from '@/contexts/scheduling/domain/errors/invalid-waiter.error';
 
 export type WaiterProps = {
   readonly patientId: string;
@@ -15,15 +15,15 @@ export class Waiter extends ValueObject<WaiterProps> {
 
   static create(props: WaiterProps): Waiter {
     if (props.patientId.trim().length === 0) {
-      throw WaitlistError.invalidWaiter('names a patient');
+      throw InvalidWaiter.forRule('names a patient');
     }
 
     if (props.appointmentTypeId.trim().length === 0) {
-      throw WaitlistError.invalidWaiter('names an appointment type');
+      throw InvalidWaiter.forRule('names an appointment type');
     }
 
     if (Number.isNaN(props.joinedAt.getTime())) {
-      throw WaitlistError.invalidWaiter('joined at a real instant');
+      throw InvalidWaiter.forRule('joined at a real instant');
     }
 
     return new Waiter({

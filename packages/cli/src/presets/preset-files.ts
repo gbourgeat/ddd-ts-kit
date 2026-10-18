@@ -4,7 +4,8 @@ import type { PresetFile } from './preset-file.js';
 
 /**
  * The variants a template is written for, by the segments before its extension:
- * `account.mapper.knex.ts.tpl`, `open-organisation.accepted.class-validator.per-route.ts.tpl`.
+ * `account.mapper.knex.ts.tpl`, `open-organisation.accepted.class-validator.per-route.ts.tpl`,
+ * `unknown-account.error.named.ts.tpl`.
  */
 const VARIANTS: Readonly<Record<string, (config: Config) => boolean>> = {
   knex: (config) => config.stack.orm === 'knex',
@@ -13,6 +14,8 @@ const VARIANTS: Readonly<Record<string, (config: Config) => boolean>> = {
   'class-validator': (config) => config.stack.validation === 'class-validator',
   'per-route': (config) => config.stack.schemas === 'per-route',
   shared: (config) => config.stack.schemas === 'shared',
+  named: (config) => config.stack.refusals === 'named',
+  factories: (config) => config.stack.refusals === 'factories',
 };
 
 const NAMES = Object.keys(VARIANTS).join('|');

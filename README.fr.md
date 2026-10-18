@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:1a83dd8d1d766c39 -->
+<!-- translation-of: README.md sha256:0ddedccff9a4c84a -->
 
 <div align="center">
 
@@ -196,7 +196,7 @@ export class PlaceOrderHandler implements CommandHandler<PlaceOrderCommand> {
 |---|---|---|
 | `new Date()` | `this.clock.now()`, le port `Clock` reçu dans le constructeur | `purity/no-system-clock` |
 | `crypto.randomUUID()` | `this.ids.next()`, le port `IdGenerator` | `purity/no-ambient-randomness` |
-| `throw new Error('Empty order')` | `throw OrderError.empty()`, un refus avec un code stable | `domain/no-generic-error` |
+| `throw new Error('Empty order')` | `throw OrderEmpty.onPlacement()`, un refus nommé dans les mots du métier, avec un code stable | `domain/no-generic-error` |
 | un import de `infrastructure/` dans un gestionnaire | le port `OrderRepository`, lié à son adaptateur par la plateforme | `layer/application-inward` |
 | un import du `domain/` d'un autre contexte | le `published-language/` de ce contexte, ou un événement d'intégration | `context/published-language-only` |
 

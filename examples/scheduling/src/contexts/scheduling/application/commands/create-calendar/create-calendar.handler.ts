@@ -1,7 +1,7 @@
 import { type Clock, type IdGenerator } from '@ddd-ts-kit/kernel';
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
 import { Calendar } from '@/contexts/scheduling/domain/aggregates/calendar.aggregate';
-import { CalendarError } from '@/contexts/scheduling/domain/errors/calendar.error';
+import { UnknownPractitioner } from '@/contexts/scheduling/domain/errors/unknown-practitioner.error';
 import type { CalendarRepository } from '@/contexts/scheduling/domain/repositories/calendar.repository';
 import { TimeZone } from '@/contexts/scheduling/domain/value-objects/time-zone.vo';
 import type { PractitionerDirectory } from '@/contexts/scheduling/application/ports/practitioner-directory.port';
@@ -20,7 +20,7 @@ export class CreateCalendarHandler implements CommandHandler<CreateCalendarComma
     const practitioner = await this.practitioners.get(`${practiceId}.${practitionerId}`);
 
     if (practitioner === undefined) {
-      throw CalendarError.unknownPractitioner(practiceId, practitionerId);
+      throw UnknownPractitioner.atPractice(practiceId, practitionerId);
     }
 
     // The calendar lives by the wall clock of its practice.

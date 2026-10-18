@@ -1,5 +1,5 @@
 [English](invariants-permissions-validation.md) · **Français**
-<!-- translation-of: invariants-permissions-validation.md sha256:3f728429f18fede0 -->
+<!-- translation-of: invariants-permissions-validation.md sha256:4b71222f75608b99 -->
 
 # Invariants, permissions et validation
 
@@ -94,7 +94,7 @@ qui interroge chaque politique de la permission, puis l'*authorizer*.
 <!-- checked sample -->
 ```ts
 import { Access, definePermissions, type PolicyContext } from '@ddd-ts-kit/auth';
-import { AuthorizedCommand, ConceptError, isAuthenticated, type Actor, type Clock } from '@ddd-ts-kit/kernel';
+import { AuthorizedCommand, DomainRefusal, isAuthenticated, type Actor, type Clock } from '@ddd-ts-kit/kernel';
 import { CommandHandler, Policy } from '@ddd-ts-kit/kernel/declarations';
 
 const permissions = definePermissions('appointments', {
@@ -117,8 +117,9 @@ declare abstract class AppointmentRepository {
   abstract save(appointment: Appointment): Promise<void>;
 }
 
-declare class AppointmentError extends ConceptError {
-  static notFound(appointmentId: string): AppointmentError;
+declare class UnknownAppointment extends DomainRefusal {
+  readonly code: 'APPOINTMENT_NOT_FOUND';
+  static forAppointment(appointmentId: string): UnknownAppointment;
 }
 
 // application/authorization/own-appointment.policy.ts
@@ -147,7 +148,7 @@ export class CancelAppointmentHandler implements CommandHandler<CancelAppointmen
     const appointment = await this.appointments.findById(appointmentId);
 
     if (appointment === undefined) {
-      throw AppointmentError.notFound(appointmentId);
+      throw UnknownAppointment.forAppointment(appointmentId);
     }
 
     await this.access.authorize(actor, permissions['appointment.cancel'], appointment); // 403 quand une politique refuse
@@ -161,20 +162,31 @@ export class CancelAppointmentHandler implements CommandHandler<CancelAppointmen
 
 <!-- checked sample -->
 ```ts
-import { AggregateRoot, ConceptError } from '@ddd-ts-kit/kernel';
+import { AggregateRoot, DomainRefusal } from '@ddd-ts-kit/kernel';
 
 const FREE_CANCELLATION_MS = 24 * 60 * 60_000;
 
-export class AppointmentError extends ConceptError {
-  static alreadyCancelled(appointmentId: string) {
-    return AppointmentError.refusal('APPOINTMENT_ALREADY_CANCELLED', `Appointment ${appointmentId} is already cancelled.`, {
-      appointmentId,
-    });
-  }
+// domain/errors/codes.ts
+export const SchedulingCodes = {
+  AppointmentAlreadyCancelled: 'APPOINTMENT_ALREADY_CANCELLED',
+  CancellationWindowPassed: 'CANCELLATION_WINDOW_PASSED',
+} as const;
 
-  static cancellationWindowPassed(appointmentId: string, startsAt: Date) {
-    return AppointmentError.refusal(
-      'CANCELLATION_WINDOW_PASSED',
+// domain/errors/appointment-already-cancelled.error.ts
+export class AppointmentAlreadyCancelled extends DomainRefusal {
+  readonly code = SchedulingCodes.AppointmentAlreadyCancelled;
+
+  static forAppointment(appointmentId: string) {
+    return AppointmentAlreadyCancelled.refusal(`Appointment ${appointmentId} is already cancelled.`, { appointmentId });
+  }
+}
+
+// domain/errors/cancellation-window-passed.error.ts
+export class CancellationWindowPassed extends DomainRefusal {
+  readonly code = SchedulingCodes.CancellationWindowPassed;
+
+  static forAppointment(appointmentId: string, startsAt: Date) {
+    return CancellationWindowPassed.refusal(
       `Appointment ${appointmentId} starts at ${startsAt.toISOString()}: free cancellation ended 24 hours before.`,
       { appointmentId, startsAt },
     ).exposing('startsAt');
@@ -201,13 +213,13 @@ export class Appointment extends AggregateRoot<string> {
 
   private assertNotCancelled(): void {
     if (this.cancelledFor !== undefined) {
-      throw AppointmentError.alreadyCancelled(this.id);
+      throw AppointmentAlreadyCancelled.forAppointment(this.id);
     }
   }
 
   private assertCancellationStillFree(at: Date): void {
     if (this.startsAt.getTime() - at.getTime() < FREE_CANCELLATION_MS) {
-      throw AppointmentError.cancellationWindowPassed(this.id, this.startsAt);
+      throw CancellationWindowPassed.forAppointment(this.id, this.startsAt);
     }
   }
 }
@@ -316,20 +328,28 @@ Les règles qui semblent ambiguës se séparent en général nettement avec le c
 
 ### Comment s'écrit un refus
 
-Une classe d'erreur par concept du langage, une fabrique (factory) statique par refus :
+Une classe par refus, nommée d'après lui, et une liste fermée des codes du contexte :
 
 <!-- checked sample -->
 ```ts
-// domain/errors/appointment.error.ts
-import { ConceptError } from '@ddd-ts-kit/kernel';
+import { DomainRefusal } from '@ddd-ts-kit/kernel';
 
 declare const calendar: { readonly id: string };
 declare const slot: { readonly startsAt: Date };
 
-export class AppointmentError extends ConceptError {
-  static slotTaken(calendarId: string, startsAt: Date) {
-    return AppointmentError.refusal(
-      'SLOT_TAKEN',
+// domain/errors/codes.ts
+export const SchedulingCodes = {
+  SlotTaken: 'SLOT_TAKEN',
+} as const;
+
+export type SchedulingCode = (typeof SchedulingCodes)[keyof typeof SchedulingCodes];
+
+// domain/errors/slot-taken.error.ts
+export class SlotTaken extends DomainRefusal {
+  readonly code = SchedulingCodes.SlotTaken;
+
+  static forCalendar(calendarId: string, startsAt: Date) {
+    return SlotTaken.refusal(
       `The slot starting at ${startsAt.toISOString()} on calendar ${calendarId} is already held.`,
       { calendarId, startsAt },
     ).exposing('startsAt');
@@ -337,33 +357,41 @@ export class AppointmentError extends ConceptError {
 }
 
 // là où la règle est gardée
-throw AppointmentError.slotTaken(calendar.id, slot.startsAt);
+throw SlotTaken.forCalendar(calendar.id, slot.startsAt);
 ```
 
-- **Le nom est celui du métier, deux fois.** La fabrique est ce que lit le développeur qui
+- **Le nom est celui du métier, deux fois.** La classe est ce que lit le développeur qui
   refuse ; le code, ce que lisent le client, le *mapper*, le journal d'audit et les tests. Ils
-  disent les mêmes mots : `slotTaken` et `SLOT_TAKEN` (`errors/factory-name`). Un code nomme un
-  seul refus d'un contexte (`errors/code-unique`).
-- **Le concept est ce qui a été demandé**, pas la classe qui détecte le problème : un calendrier
-  qui trouve un créneau occupé refuse avec `AppointmentError.slotTaken`, parce que l'appelant a
-  demandé un rendez-vous. Les refus d'un objet-valeur sont des fabriques du concept qu'il
-  décrit : `PersonError.invalidEmail(raw)`, levée par `Email.create` (ou renvoyée dans son
-  `Result` sous `"stack.valueObjects": "result"`).
+  disent les mêmes mots : `SlotTaken` et `SLOT_TAKEN`. Le code est écrit une seule fois, dans
+  `domain/errors/codes.ts`, et chaque classe y lit le sien (`errors/code-listed`). Un code nomme
+  un seul refus d'un contexte (`errors/code-unique`).
+- **La fabrique (factory) dit sur quoi porte le refus.** Son nom commence par `for`, `with`,
+  `because`, `on` ou `at` : `SlotTaken.forCalendar(calendar.id, startsAt)`,
+  `SlotTaken.atStart(startsAt)` (`errors/factory-name`). Une classe a autant de fabriques qu'il
+  y a de chemins vers le refus, toutes avec son unique code.
+- **Le refus est ce qui a été refusé à l'appelant**, quelle que soit la classe qui détecte le
+  problème : un calendrier qui trouve un créneau occupé refuse avec `SlotTaken`, parce que
+  l'appelant a demandé ce créneau. Un objet-valeur refuse de la même façon :
+  `InvalidEmail.forAddress(raw)`, levée par `Email.create` (ou renvoyée dans son `Result` sous
+  `"stack.valueObjects": "result"`).
 - **Les faits sont des données, et privées.** Ce à partir de quoi le message a été construit est
   gardé sur l'erreur sous `facts`, pour qu'un gestionnaire ou un test lise une date et non une
   phrase. Un fait n'atteint le client, sous `facts` dans le document *problem*, que lorsque la
   fabrique le nomme avec `.exposing(..)` ; rien de ce qui identifie une personne ne l'atteint
   jamais. Le message est répondu comme `detail` : n'y écrivez rien que l'appelant n'ait pas
   envoyé.
-- **Rien en aval ne connaît la classe.** `isRefusal(error, 'SLOT_TAKEN')`,
-  `AppointmentError.is(error, 'SLOT_TAKEN')`, `thenError('SLOT_TAKEN', { calendarId })`,
+- **Rien en aval n'a besoin de la classe.** `isRefusal(error, 'SLOT_TAKEN')`,
+  `SlotTaken.is(error)`, `thenError('SLOT_TAKEN', { calendarId })`,
   `expectProblem(response, { status: 409, code: 'SLOT_TAKEN' })` : le code est la clé.
-- **Une classe qui grossit nomme un second concept.** Au-delà d'une vingtaine de fabriques (un
-  fichier tient 350 lignes), scindez-la selon un terme du glossaire, jamais selon une ligne
-  technique.
+- **Un refus, un fichier.** `domain/errors/slot-taken.error.ts` contient `SlotTaken` et rien
+  d'autre. `ddd-ts-kit generate error scheduling SlotTaken forCalendar` écrit la classe, son
+  entrée dans `codes.ts`, la fabrique et son cas de *spec*, chacun quand il manque.
 
-Un projet écrit avec une classe par erreur (`new SlotTakenError(..)`) continue de fonctionner,
-et `ddd-ts-kit error-factories` le convertit : [CONFIG.md](../CONFIG.fr.md), `stack.refusals`.
+Cette forme est `"stack.refusals": "named"`, ce qu'écrit `init`. Les formes antérieures
+continuent de fonctionner : `factories`, une classe `ConceptError` par concept avec une
+fabrique par refus (`AppointmentError.slotTaken(..)`), et `classes`, une classe par erreur
+construite avec `new` (`new SlotTakenError(..)`). `ddd-ts-kit error-factories` fait passer un
+projet de l'une ou l'autre à `named` : [CONFIG.md](../CONFIG.fr.md), `stack.refusals`.
 
 ## Limites, et quand ne pas l'utiliser
 

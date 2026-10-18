@@ -1,5 +1,5 @@
 [English](background-jobs.md) · **Français**
-<!-- translation-of: background-jobs.md sha256:41f4f8f043cadba2 -->
+<!-- translation-of: background-jobs.md sha256:e699f0fc242987d3 -->
 
 # Jobs en arrière-plan
 
@@ -117,7 +117,7 @@ function doneBefore(checkpoint: unknown): number {
 
 Le cas d'usage le met en file par le port `JobQueue`, dans sa propre unité de travail, et répond
 l'identifiant du *job*, qu'un client interroge ensuite. Le gestionnaire de l'exemple refuse
-aussi un calendrier inconnu (`CalendarError.unknown`) et ne garde que les rendez-vous que la
+aussi un calendrier inconnu (`UnknownCalendar.forCalendar`) et ne garde que les rendez-vous que la
 période couvre ; cet extrait, raccourci, garde la mise en file :
 
 <!-- checked sample -->
@@ -362,14 +362,20 @@ du calendrier que nomme l'URL.
 ```ts
 // scheduling/application/queries/get-clearance/get-clearance.handler.ts
 import { definePermissions } from '@ddd-ts-kit/auth';
-import { AuthorizedQuery, ConceptError, JobQueue, type Actor, type QueuedJobStatus } from '@ddd-ts-kit/kernel';
+import { AuthorizedQuery, DomainRefusal, JobQueue, type Actor, type QueuedJobStatus } from '@ddd-ts-kit/kernel';
 import { QueryHandler, Requires } from '@ddd-ts-kit/kernel/declarations';
 
 const permissions = definePermissions('scheduling', { 'calendar.clear': { description: 'Clear calendar' } });
 
-export class CalendarError extends ConceptError {
-  static unknownClearance(clearanceId: string) {
-    return CalendarError.refusal('UNKNOWN_CLEARANCE', `There is no clearance ${clearanceId}.`, { clearanceId });
+// scheduling/domain/errors/codes.ts
+export const SchedulingCodes = { UnknownClearance: 'UNKNOWN_CLEARANCE' } as const;
+
+// scheduling/domain/errors/unknown-clearance.error.ts
+export class UnknownClearance extends DomainRefusal {
+  readonly code = SchedulingCodes.UnknownClearance;
+
+  static forClearance(clearanceId: string) {
+    return UnknownClearance.refusal(`There is no clearance ${clearanceId}.`, { clearanceId });
   }
 }
 
@@ -402,7 +408,7 @@ export class GetClearanceHandler implements QueryHandler<GetClearanceQuery> {
 
     // une autre sorte de job, ou la libération d'un autre calendrier : inconnue ici
     if (job?.name !== 'scheduling.clear-calendar' || job.subject !== query.calendarId) {
-      throw CalendarError.unknownClearance(query.clearanceId);
+      throw UnknownClearance.forClearance(query.clearanceId);
     }
 
     const { status, progress } = job;

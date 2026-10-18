@@ -3,7 +3,7 @@ import { controllerRoute, createErrorMapper, executeRoute } from '@ddd-ts-kit/ht
 import { InMemoryQueryBus } from '@ddd-ts-kit/kernel';
 import { errorStatuses } from '@/platform/http/error-statuses';
 import { GetAppointmentQuery } from '@/contexts/scheduling/application/queries/get-appointment/get-appointment.query';
-import { AppointmentError } from '@/contexts/scheduling/domain/errors/appointment.error';
+import { UnknownAppointment } from '@/contexts/scheduling/domain/errors/unknown-appointment.error';
 import { GetAppointmentController } from '@/contexts/scheduling/presentation/http/appointments/get-appointment/get-appointment.controller';
 import { anAgendaEntry } from '@/contexts/scheduling/test/builders/agenda-entry.builder';
 
@@ -66,7 +66,7 @@ describe('GET /appointments/:appointmentId', () => {
   it('answers 404 with its code for an appointment that does not exist', async () => {
     const queries = new InMemoryQueryBus().register(GetAppointmentQuery, {
       execute: async () => {
-        throw AppointmentError.notFound('appointment-1');
+        throw UnknownAppointment.forAppointment('appointment-1');
       },
     });
 
