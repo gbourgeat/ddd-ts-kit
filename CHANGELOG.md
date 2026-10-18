@@ -4,6 +4,16 @@ What each version changes for someone who uses the kit. The packages of `package
 together, under one version; the notes of each [GitHub release](https://github.com/gbourgeat/ddd-ts-kit/releases)
 list the pull requests behind it.
 
+## Unreleased
+
+**`init` records the version that wrote the files of the platform.** `ddd-ts-kit.config.json`
+now starts with `"initVersion"`, the version of the CLI whose `init` wrote the files it owns;
+`init --force` rewrites it, and `init` run again to add a context leaves it. Nothing reads it yet:
+it is the first step of an `init` that tells, after an upgrade, a change of its templates from an
+adaptation of the team. A config without the key stays valid.
+
+To move: nothing; `init --force` adds the key to a project initialised before it existed.
+
 ## 0.26.0
 
 **The guard recognises the CLI of the kit however it is launched.** The refusal of

@@ -1,5 +1,5 @@
 [English](CONFIG.md) · **Français**
-<!-- translation-of: CONFIG.md sha256:e16ba3e294a14300 -->
+<!-- translation-of: CONFIG.md sha256:bf2d3ba4b17ed8ca -->
 
 # `ddd-ts-kit.config.json`
 
@@ -30,6 +30,7 @@ aucune dérogation.
 
 ```json
 {
+  "initVersion": "0.26.0",
   "sourceRoot": "src",
   "contextsDir": "src/contexts",
   "sharedKernelDir": "src/shared-kernel",
@@ -88,6 +89,14 @@ Trois clés ne sont écrites que lorsqu'elles disent quelque chose : `stack.asse
 `stack.dependencies` dans le style déclaré seulement, `stack.tenancy` quand elle ne vaut pas
 `none`. Les clés facultatives (`coverage`, `deviations`, `commit`, `worker`, `ci`, `openapi`,
 `sdk`, ...) apparaissent dès qu'un projet les pose.
+
+`initVersion` est la version de la CLI dont l'`init` a écrit les fichiers de la plateforme.
+`init` l'écrit en tête du fichier et `init --force` la réécrit, puisqu'il a réécrit ces fichiers ;
+`init` relancé sans `--force`, `generate context` et toute autre commande la laissent telle quelle.
+Elle ne se modifie pas à la main : elle permettra à un `init` ultérieur de distinguer ce que ses
+*templates* ont changé depuis cette version de ce que l'équipe a adapté dans les fichiers, et rien
+ne la lit encore. Un projet initialisé avant que la clé existe n'en a pas et reste valide ;
+`init --force` l'ajoute.
 
 ## Comment une clé est lue
 
