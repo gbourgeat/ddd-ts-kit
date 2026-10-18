@@ -24,8 +24,21 @@ const DOCUMENTS = /^[^/]+\.md$|^LICENSE$/;
 /** The documentation website, read by no spec of a package: the site job of the CI builds it. */
 const SITE = 'site/';
 
-/** The packages whose adapter specs need a server of the integration job: PostgreSQL, OpenFGA, MinIO for s3, Varnish for http, or Dragonfly for redis. */
-const ON_A_SERVER = ['drizzle', 'knex', 'prisma', 'typeorm', 'audit', 'openfga', 's3', 'http', 'redis'];
+/** The packages whose adapter specs need a server of the integration job: PostgreSQL, OpenFGA, MinIO for s3, Varnish for http, Dragonfly for redis, or the broker of nats, rabbitmq and kafka. */
+const ON_A_SERVER = [
+  'drizzle',
+  'knex',
+  'prisma',
+  'typeorm',
+  'audit',
+  'openfga',
+  's3',
+  'http',
+  'redis',
+  'nats',
+  'rabbitmq',
+  'kafka',
+];
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   main(process.argv.slice(2));
@@ -173,7 +186,8 @@ function everything(reason, graph = readGraph(ROOT)) {
 }
 
 /** `packages` and `filters` are empty for everything: no filter, every floor held. */
-function asOutputs({ scope, packages }) {
+/** The outputs of the install job: what the other jobs of the CI read, among them whether the integration job starts its servers. */
+export function asOutputs({ scope, packages }) {
   const partial = scope === 'packages';
 
   return [

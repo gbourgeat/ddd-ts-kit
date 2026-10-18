@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:b0f8cacb36b418a4 -->
+<!-- translation-of: README.md sha256:f38da105c12a0ddc -->
 
 # @ddd-ts-kit/nats
 
@@ -446,6 +446,9 @@ docker run -d --rm --name ddd-ts-kit-test-nats -p 127.0.0.1:4222:4222 nats:2.15.
 DDD_TS_KIT_TEST_NATS_URL=nats://127.0.0.1:4222 npx vitest run packages/nats
 docker rm -f ddd-ts-kit-test-nats
 ```
+
+Le *job* d'intégration de la CI les exécute sur chaque *pull request* qui atteint ce *package*,
+contre NATS Server 2.15.0 avec JetStream que démarre `pipeline/github/scripts/start-nats.sh`, son image épinglée par *digest*.
 
 Elles exécutent la suite de contrat sur le stockage fichier et sur le stockage mémoire, puis les
 comportements de ce fournisseur, une suite par comportement (`publishing`, avec la déduplication

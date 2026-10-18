@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import path from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { dependentsOf, readGraph, select } from './affected-packages.mjs';
+import { asOutputs, dependentsOf, readGraph, select } from './affected-packages.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const graph = readGraph(ROOT);
@@ -89,4 +89,18 @@ test('documents no spec reads select nothing, the website neither', () => {
     'none',
   );
   assert.equal(select(graph, []).scope, 'none');
+});
+
+test('a package whose adapter specs need a server starts the integration job, the brokers among them', () => {
+  const integration = (changed) =>
+    asOutputs(select(graph, changed))
+      .split('\n')
+      .find((line) => line.startsWith('integration='));
+
+  for (const broker of ['nats', 'rabbitmq', 'kafka']) {
+    assert.equal(integration([`packages/${broker}/src/index.ts`]), 'integration=true');
+  }
+
+  assert.equal(integration(['packages/pino/src/index.ts']), 'integration=false');
+  assert.equal(integration(['README.md']), 'integration=false');
 });

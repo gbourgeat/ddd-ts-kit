@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:dfa21eec942a560e -->
+<!-- translation-of: README.md sha256:1f7d369470f657a0 -->
 
 # @ddd-ts-kit/rabbitmq
 
@@ -378,6 +378,9 @@ docker run -d --rm --name ddd-ts-kit-test-rabbitmq -e RABBITMQ_DEFAULT_USER=kit 
 DDD_TS_KIT_TEST_AMQP_URL=amqp://kit:kit@127.0.0.1:5672 npx vitest run packages/rabbitmq
 docker rm -f ddd-ts-kit-test-rabbitmq
 ```
+
+Le *job* d'intégration de la CI les exécute sur chaque *pull request* qui atteint ce *package*,
+contre RabbitMQ 4.3.6 que démarre `pipeline/github/scripts/start-rabbitmq.sh`, son image épinglée par *digest*.
 
 Elles exécutent la suite de contrat sur des files quorum et sur des files classiques, puis les
 comportements de ce fournisseur, une suite par comportement (`publishing`, `consuming`,
