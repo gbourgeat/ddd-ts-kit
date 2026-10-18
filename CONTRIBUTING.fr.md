@@ -1,5 +1,5 @@
 [English](CONTRIBUTING.md) · **Français**
-<!-- translation-of: CONTRIBUTING.md sha256:acdb8a63780a3900 -->
+<!-- translation-of: CONTRIBUTING.md sha256:b62b67aadf8abe18 -->
 
 # Contribuer
 
@@ -72,7 +72,7 @@ node --test plugin/hooks/guard.test.mjs
   `ddd-ts-kit check`, `recommended: 'warn'` pour la règle ESLint, avec
   `transition: '<version mineure suivante>'` dans sa définition) ; une règle qui juge davantage
   signale ce qu'elle ajoute sous un identifiant de règle à part, en avertissement, fondu dans la
-  règle à la version mineure suivante. `CHANGELOG.md` le dit dans les deux versions : ce que la règle signale, la correction, et
+  règle à la version mineure suivante. Son fichier de `changes/` le dit, et celui qui en fait une erreur le redit : ce que la règle signale, la correction, et
   `ddd-ts-kit check --rule <id>` pour lister les fichiers à reprendre avant qu'elle ne bloque. Un
   projet continue de construire pendant qu'il monte de version ; une règle qui arrive en erreur
   arrête sa branche principale et toutes les branches qui en partent. Un projet généré fait
@@ -106,8 +106,13 @@ node --test plugin/hooks/guard.test.mjs
 - Ni tiret cadratin ni tiret demi-cadratin, dans aucune langue (`npm run check:dashes`, lancé
   par la CI).
 - Des commits conventionnels : `<type>(<scope>): <summary>`.
-- Une pull request qui change le plugin (skills, agents, hooks) incrémente `version` dans
-  `plugin/.claude-plugin/plugin.json`, et passe `claude plugin validate . --strict`.
+- Ce qu'une pull request change pour un utilisateur s'écrit dans un fichier à elle,
+  `changes/<what-it-does>.md` ([changes/README.md](changes/README.md)), jamais dans
+  `CHANGELOG.md` ; une pull request qui change le plugin (skills, agents, hooks) en a un, laisse
+  `version` de `plugin/.claude-plugin/plugin.json` tel quel, et passe
+  `claude plugin validate . --strict`. Deux pull requests n'écrivent alors jamais la même ligne :
+  l'une fusionnée laisse les autres fusionnables telles quelles, leurs vérifications toujours
+  valables. Le *job* docs de la CI le tient (`node pipeline/monorepo/changes.mjs --check --base <ref>`).
 
 ## Comment un changement atteint `main`
 
@@ -142,10 +147,16 @@ chaque package, construit, vérifie les archives, publie chaque package sur le r
 sa provenance et crée la release GitHub. Une version qui a une partie de préversion
 (`0.2.0-rc.1`) est publiée sous l'étiquette `next`. Une exécution arrêtée à mi-chemin se
 relance : ce qui est déjà publié est sauté. Les notes de la release GitHub sont générées à
-partir des pull requests fusionnées ; `CHANGELOG.md` à la racine dit en quelques lignes ce qu'une version change pour un utilisateur, et s'écrit dans la pull request
-qui fixe la version ; le package de la CLI en livre une copie, que les agents lisent dans
-`node_modules`. Fixer la version réécrit aussi la version que décrivent les skills, dans
-`plugin/hooks/guard.mjs` : la même pull request augmente la version du *plugin*.
+partir des pull requests fusionnées ; `CHANGELOG.md` à la racine dit en quelques lignes ce qu'une version change pour un utilisateur :
+fixer la version y fond les fichiers de `changes/`, dans l'ordre où ils ont atteint `main`, et les
+supprime ; le package de la CLI en livre une copie, que les agents lisent dans `node_modules`. Le
+*plugin* sort avec les packages, sous leur version : la fixer écrit aussi `version` de
+`plugin/.claude-plugin/plugin.json` et la version que décrivent les skills, dans
+`plugin/hooks/guard.mjs`, pour que chaque agent affiche un seul numéro. Le *plugin* se numérotait
+à part jusque-là, en avance sur les packages : la première version commune est au-dessus de la
+sienne, ce que `--set` tient (il nomme la première version qu'il accepte), et `--expect` du
+workflow de release tient le *plugin* à l'étiquette. Un correctif urgent du *plugin* est une
+release de correctif du kit, pas une version à lui.
 
 **Aucun secret.** Le workflow publie par la publication de confiance (trusted publishing,
 OIDC) : chaque package désigne `release.yml` de ce dépôt, dans son environnement `npm`, comme

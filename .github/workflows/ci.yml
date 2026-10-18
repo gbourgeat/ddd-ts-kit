@@ -26,6 +26,7 @@ jobs:
       packages: ${{ steps.affected.outputs.packages }}
       filters: ${{ steps.affected.outputs.filters }}
       integration: ${{ steps.affected.outputs.integration }}
+      integrated: ${{ steps.affected.outputs.integrated }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -97,11 +98,16 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          # The merge commit of a pull request and its base, which the files of changes/ are judged against.
+          fetch-depth: 2
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 24
       - name: No em dash or en dash, and the French documentation complete and current (the scripts need no dependency)
         run: npm run ci:docs
+      - name: What the change does for a user in a file of changes/, CHANGELOG.md and the plugin version left to the release
+        if: ${{ github.event_name == 'pull_request' }}
+        run: node pipeline/monorepo/changes.mjs --check --base HEAD^1
 
   unit:
     name: Unit tests (Node 24, coverage floors)
@@ -172,6 +178,8 @@ jobs:
   alias:
     name: Import alias at run time (Node ${{ matrix.node }})
     needs: install
+    # The runs that integrate every package: left out when nothing but documents they do not read changed.
+    if: ${{ needs.install.outputs.integrated == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 25
     strategy:
@@ -256,6 +264,8 @@ jobs:
   e2e:
     name: End-to-end tests (${{ matrix.shard }}/4)
     needs: install
+    # The runs that integrate every package: left out when nothing but documents they do not read changed.
+    if: ${{ needs.install.outputs.integrated == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     strategy:
@@ -273,6 +283,8 @@ jobs:
   managers:
     name: Generated project on ${{ matrix.manager }}
     needs: install
+    # The runs that integrate every package: left out when nothing but documents they do not read changed.
+    if: ${{ needs.install.outputs.integrated == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     strategy:
@@ -294,6 +306,8 @@ jobs:
   example:
     name: Example application (examples/scheduling)
     needs: install
+    # The runs that integrate every package: left out when nothing but documents they do not read changed.
+    if: ${{ needs.install.outputs.integrated == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -323,6 +337,8 @@ jobs:
   conformance:
     name: Every rule broken once in a copy of the example
     needs: install
+    # The runs that integrate every package: left out when nothing but documents they do not read changed.
+    if: ${{ needs.install.outputs.integrated == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -412,12 +428,20 @@ jobs:
     steps:
       - name: Every gate passed
         env:
-          RESULTS: ${{ join(needs.*.result, ' ') }}
+          # Every job this one needs, read whole: a job added later is held without being listed here.
+          NEEDS: ${{ toJSON(needs) }}
+          # The runs that integrate every package, skipped when the change is documents alone (`integrated` of the install job), and then only.
+          MAY_SKIP: alias e2e managers example conformance
+          INTEGRATED: ${{ needs.install.outputs.integrated }}
         run: |
-          echo "Results: $RESULTS"
-          for result in $RESULTS; do
-            if [ "$result" != "success" ]; then
-              echo "::error::A required job ended as $result."
-              exit 1
-            fi
-          done
+          echo "Results: $(echo "$NEEDS" | jq -r 'to_entries | map("\(.key)=\(.value.result)") | join(" ")')"
+          failed=$(echo "$NEEDS" | jq -r --arg may "$MAY_SKIP" --arg integrated "$INTEGRATED" '
+            ($may | split(" ")) as $skippable
+            | to_entries[]
+            | select(.value.result != "success")
+            | select(.value.result != "skipped" or $integrated == "true" or ((.key | IN($skippable[])) | not))
+            | "\(.key)=\(.value.result)"')
+          if [ -n "$failed" ]; then
+            echo "::error::A required job did not pass: $failed"
+            exit 1
+          fi

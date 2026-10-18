@@ -47,6 +47,7 @@ test('a leaf is selected alone, the kernel selects every package that is built o
     scope: 'packages',
     reason: 'the changed packages and the packages that depend on them',
     packages: ['winston'],
+    integrated: true,
   });
 
   // The ESLint plugin does not build on the kernel, but its specs replay the checker of the CLI, which does.
@@ -89,6 +90,20 @@ test('documents no spec reads select nothing, the website neither', () => {
     'none',
   );
   assert.equal(select(graph, []).scope, 'none');
+});
+
+test('a change of documents alone leaves out the runs that integrate every package, but for what they read', () => {
+  assert.equal(
+    select(graph, ['docs/concepts/testing-strategy.md', 'plugin/skills/testing/SKILL.md']).integrated,
+    false,
+  );
+  assert.equal(select(graph, ['packages/knex/README.md', 'site/astro.config.mjs', 'changes/a.md']).integrated, false);
+  assert.equal(select(graph, ['README.md']).integrated, true);
+  assert.equal(select(graph, ['docs/ARCHITECTURE.md']).integrated, true);
+  assert.equal(select(graph, ['packages/cli/templates/init/CLAUDE.md.tpl']).integrated, true);
+  assert.equal(select(graph, ['examples/scheduling/docs/architecture/contexts.md']).integrated, true);
+  assert.equal(select(graph, ['docs/guides/commands.md', 'packages/pino/src/index.ts']).integrated, true);
+  assert.equal(select(graph, ['package.json']).integrated, true);
 });
 
 test('a package whose adapter specs need a server starts the integration job, the brokers among them', () => {
