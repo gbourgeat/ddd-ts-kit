@@ -1,5 +1,5 @@
 [English](quality-baseline.md) · **Français**
-<!-- translation-of: quality-baseline.md sha256:8db17e771d95e273 -->
+<!-- translation-of: quality-baseline.md sha256:fe21c0de02a8cc7a -->
 
 # Base de qualité
 
@@ -124,6 +124,75 @@ d'abord et sur ce qui a changé ; les plus larges tournent plus tard, sur tous l
 Sans frontière HTTP, un projet n'a pas de script de bout en bout et son *job* de *pipeline* le
 dit ; sous jest, les *specs* des adaptateurs tournent avec les *specs* unitaires. Les *hooks* ne
 lancent jamais la couverture avant un *commit*.
+
+## Un avertissement fait échouer le lint
+
+Dans un projet généré et dans l'application d'exemple, `lint` et `ci:lint` lancent
+`ddd-ts-kit lint`, l'ESLint du projet (ses motifs, `--format` et `--fix` comme ESLint les prend) :
+un seul avertissement fait échouer `npm run lint`, `verify` et le *job* de lint du *pipeline*,
+comme une erreur. Le *preset* garde ses avertissements comme
+avertissements (par exemple `complexity`, `max-depth`, `clean/function-size`,
+`clean/no-flag-argument`, `clean/no-noise-comment`, `any` et l'assertion non nulle dans une
+*spec*) : l'éditeur et le rapport distinguent toujours une affaire de jugement d'une règle
+enfreinte, et ni l'une ni l'autre n'est laissée de côté. Un nouveau projet n'en a aucun, et
+`init` n'écrit aucun fichier de désactivations : le premier avertissement se voit le jour où il
+est écrit.
+
+**Une règle du kit en transition** est la seule exception. Une règle qu'ajoute une version
+ultérieure, ou ce qu'une règle juge de plus, arrive en avertissement pendant une version mineure
+et devient une erreur à la suivante ([CONTRIBUTING.md](../../CONTRIBUTING.fr.md)) ; sa
+documentation nomme cette version, et le CHANGELOG de la version qui l'apporte nomme la règle.
+`ddd-ts-kit lint` affiche ses avertissements dans le rapport, puis une ligne par règle
+(`ddd-ts-kit/<rule>: 2 warning(s), not counted while the rule is new; it becomes an error in
+0.28.0: fix them before upgrading to it.`), et n'échoue pas sur eux : une mise à jour du kit ne
+fait jamais passer au rouge un lint vert, et les constats sont corrigés ou consignés avant la
+version qui fait de la règle une erreur. Un simple `eslint . --max-warnings 0` les compterait,
+c'est pourquoi les scripts lancent la commande du kit. Le *hook* d'avant *commit* lance ESLint sur les fichiers indexés sans la
+limite : il affiche un avertissement sans arrêter le *commit* ; `verify` et le *pipeline*
+l'arrêtent.
+
+Un projet fait par une version antérieure garde ses propres scripts : `init` ajoute un script
+qui manque au projet et laisse celui qu'il a, avec une note qui dit ce que le kit attend, et
+`npx ddd-ts-kit doctor` liste `lint` et `ci:lint` comme écrits autrement, ce sur quoi
+`doctor --strict` n'échoue pas. Son lint reste tel qu'il était jusqu'à ce qu'il prenne les
+nouveaux scripts : `npx ddd-ts-kit init --force` (qui écrit chaque fichier et chaque script du
+kit par-dessus ceux du projet), ou les deux scripts réglés à la main sur `ddd-ts-kit lint`. Avant
+cela, il règle chaque règle qui avertit, de l'une de deux façons :
+
+1. **Corriger les avertissements.** `npx eslint .` les liste.
+2. **Les consigner.** Une désactivation en masse d'ESLint (*bulk suppressions*) ne consigne que
+   des erreurs (`--suppress-all` n'écrit rien pour un avertissement) : la règle passe d'abord à
+   `error`, puis ce qui existe est consigné :
+   - une règle du kit par son identifiant dans la clé `rules` de `ddd-ts-kit.config.json`
+     ([CONFIG.md](../CONFIG.fr.md)), `"clean/function-size": "error"`, lue par
+     `ddd-ts-kit check` et par le *preset* ; relever une sévérité ne demande aucun
+     enregistrement de décision ;
+   - une règle standard du *preset* dans `eslint.config.mjs`, après le *preset* : une sévérité
+     seule garde les options du *preset*. `complexity` est désactivée dans les *specs* : son
+     bloc les nomme dans `ignores` (`'**/*.spec.ts'`, `'**/*.test.ts'`, `'**/test/**'`).
+
+```js
+import { dddTsKit } from '@ddd-ts-kit/eslint-plugin';
+
+export default [
+  ...dddTsKit({ tsconfigRootDir: import.meta.dirname }),
+  { files: ['**/*.ts'], rules: { 'max-depth': 'error' } },
+];
+```
+
+```bash
+npx eslint . --suppress-rule max-depth      # une règle ; --suppress-all consigne chaque règle à error
+npx eslint . --prune-suppressions           # après la correction d'un constat consigné
+```
+
+`--suppress-rule` écrit `eslint-suppressions.json` à la racine du projet, *commité* avec le
+changement de sévérité : pour chaque fichier, chaque règle et le nombre de ses constats. Dès lors
+`npm run lint` échoue sur un constat au-delà du nombre consigné, de n'importe quelle règle, et sur
+une entrée qui ne se produit plus, jusqu'à ce que `--prune-suppressions` la retire : le fichier
+ne fait que rétrécir. Une exécution qui laisse des contextes de côté (`--ignore-pattern`, sur une
+*pull request*) ne juge pas les entrées des fichiers qu'elle saute. Ajouter une entrée pour
+revenir au vert est une désactivation comme une désactivation en ligne : le propriétaire du
+projet la décide ([Dérogations](../CONFIG.fr.md#dérogations)).
 
 ## Couverture
 

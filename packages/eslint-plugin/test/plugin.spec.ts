@@ -46,6 +46,14 @@ describe('the plugin', () => {
     expect(row).toContain(`| \`${rules[name]?.meta.docs?.recommended ?? ''}\` |`);
   });
 
+  it('keeps a rule in transition a warning, until a version given in full', () => {
+    const inTransition = Object.values(rules).filter((rule) => docsOf(rule).transition !== undefined);
+
+    for (const rule of inTransition) {
+      expect(docsOf(rule)).toMatchObject({ recommended: 'warn', transition: expect.stringMatching(/^\d+\.\d+\.\d+$/) });
+    }
+  });
+
   it('has no documentation page without a rule', () => {
     const pages = fs
       .readdirSync(new URL('../docs/rules', import.meta.url))

@@ -11,6 +11,7 @@ import { depcruiseConfigCommand } from './commands/depcruise-config.js';
 import { describeCommand } from './commands/describe.js';
 import { docsCommand } from './commands/docs.js';
 import { doctorCommand } from './commands/doctor.js';
+import { lintCommand } from './commands/lint.js';
 import { drizzleGenerateCommand } from './commands/drizzle-generate.js';
 import { errorFactoriesCommand } from './commands/error-factories.js';
 import { generateCommand } from './commands/generate.js';
@@ -68,6 +69,7 @@ const COMMANDS: Readonly<Record<string, Command>> = {
   controllers: controllersCommand,
   check: checksCommand,
   'check-file': checkFileCommand,
+  lint: lintCommand,
   rules: rulesCommand,
   explain: explainCommand,
 };

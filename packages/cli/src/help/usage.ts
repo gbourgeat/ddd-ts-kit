@@ -54,6 +54,7 @@ export const USAGE = `Usage
   ddd-ts-kit check --clean-only <dir>... [--rule <id>]... [--format text|json|github]
   ddd-ts-kit check --commit-size [--staged] [--strict]
   ddd-ts-kit check-file <path>
+  ddd-ts-kit lint [paths...] [--format <eslint formatter>] [--fix]
   ddd-ts-kit rules
   ddd-ts-kit explain <rule-id>
 

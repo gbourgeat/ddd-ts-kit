@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:712ed163e11b40f1 -->
+<!-- translation-of: commands.md sha256:f9e4aa433089ae95 -->
 
 # Quelle commande, quand
 
@@ -286,6 +286,7 @@ Usage
   ddd-ts-kit check --clean-only <dir>... [--rule <id>]... [--format text|json|github]
   ddd-ts-kit check --commit-size [--staged] [--strict]
   ddd-ts-kit check-file <path>
+  ddd-ts-kit lint [paths...] [--format <eslint formatter>] [--fix]
   ddd-ts-kit rules
   ddd-ts-kit explain <rule-id>
 
@@ -323,6 +324,9 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
                    otherwise, and the git hooks (the lefthook: line of lefthook.yml, the pre-commit hook of
                    lefthook in this clone); init adds what is missing, hooks:install the hook; --strict
                    exits 1 while something is missing, never for a hook this clone has not installed
+  lint             the ESLint of the project (lint and ci:lint run it): fails on an error, and on a warning
+                   as on an error, but on one of a rule of the kit in transition, a new rule that becomes an
+                   error in the version it names, whose warnings are listed apart; --format and --fix as ESLint
   describe         one context as facts: use cases, routes, events, ports, policies, gateways, dependencies
   status           the next step of docs/architecture/plan.md, the slices of docs/architecture/slices.md by
                    status and by owner, each row not done ready on the trunk (its dependencies done), ready
