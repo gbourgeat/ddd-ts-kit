@@ -57,7 +57,7 @@ the slices by status and by owner, the `TODO(domain)` and `it.todo` left in each
 | 4 | Draw the context map | `ddd-ts-kit:context-map` | `docs/architecture/context-map.md` | Does every arrow have a pattern, a contract and no cycle? |
 | 5 | Choose the stack and bootstrap | `ddd-ts-kit:bootstrap` (the user runs it) | the project, `npm run verify` green | Is the empty project green and committed? |
 | 6 | Plan the slices | `ddd-ts-kit:plan-slices` | `docs/architecture/slices.md` | Can each slice be built and merged on its own, in this order? |
-| 7 | Build | `ddd-ts-kit:use-case`, or `ddd-ts-kit:parallel-work` for several workers | code, one commit per slice | Is every slice merged, verified and marked done? |
+| 7 | Build | `ddd-ts-kit:use-case`, `ddd-ts-kit:parallel-work` for several workers, or one user story per session with `/ddd-ts-kit:story` (the owner runs it, one terminal per story) | code, one commit per slice | Is every slice merged, verified and marked done? |
 
 For each step: invoke the skill, let it write its artefact, put its closing question to the
 owner, and wait for the answer. A step is done on a yes, never on your own judgement.
