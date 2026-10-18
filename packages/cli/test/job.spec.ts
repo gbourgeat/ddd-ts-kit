@@ -184,6 +184,10 @@ describe('generate job, refusals', () => {
 
     expect(failure(job('--cron', '0 0 31 2 *', '--command', 'CancelInvoice')).message).toContain('never fires');
 
+    expect(failure(job('--cron', '@reboot', '--command', 'CancelInvoice')).message).toContain(
+      'Cron "@reboot" is not a shorthand a scheduled job runs on',
+    );
+
     expect(
       failure(job('--cron', '0 7 * * *', '--time-zone', 'Mars/Olympus', '--command', 'CancelInvoice')).message,
     ).toContain('"Mars/Olympus" is not a time zone');

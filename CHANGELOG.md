@@ -6,6 +6,81 @@ list the pull requests behind it.
 
 ## Unreleased
 
+**`drizzle-generate --replay` replays only what forks, and refuses to lose a migration edited by
+hand.** The replay first reads the history on disk: when the journal lists every migration in
+order, each snapshot from the one before, the branch's already follow the trunk, and nothing is
+generated again (a name that changes, `working-` dropped, is renamed in place). Otherwise it
+deletes the branch's migrations and generates them again on top as before, then compares each
+generated one with what the branch had: when drizzle-kit now writes other statements (its SQL was
+edited by hand, or the trunk changed what it changes), it puts the migrations folder back as it
+found it and refuses, naming the statement that differs; the fix is to generate that migration on
+top by hand and write the edit again, after which a replay, or `merge-trunk --continue`, finds
+nothing forked. Several migrations of a branch that change the schema and fork are still
+refused rather than joined: drizzle-kit diffs the final schema and cannot split them again, and
+one migration in their place would join steps planned apart (a table, then a constraint once it
+is filled, fails on a database that holds rows). Its fix said to generate them as one; it now
+says to generate them again one at a time, in their order. Measured with the real drizzle-kit
+0.31.11: the replayed history is applied by `drizzle-kit migrate`.
+
+**`persistence/primary-key-order` (a warning).** Under drizzle-kit, a migration that adds the new
+primary key of a table before its old one is dropped, or drops a column before the key that holds
+it, is reported on the line of the statement that runs too early: PostgreSQL refuses it when it
+runs. `drizzle-generate` already warned once when it wrote one; the rule keeps reporting it. Fix:
+drop the old key first, in that migration while it is still unapplied, or write it with
+`--custom`. `ddd-ts-kit check --rule persistence/primary-key-order` lists the migrations to take
+up; the rule stays a warning in this version.
+
+**Two migrations kept apart.** The `persistence` skill and the persistence page say how: change
+the schema in two steps, with a `db:generate` after each, since one `db:generate` writes every
+change since the last migration as one.
+
+**A cron accepts the shorthands `@hourly`, `@daily`, `@weekly`, `@monthly` and `@yearly`.**
+`@Scheduled` and `ddd-ts-kit generate job --cron` read `@yearly` and `@annually` as `0 0 1 1 *`,
+`@monthly` as `0 0 1 * *`, `@weekly` as `0 0 * * 0`, `@daily` and `@midnight` as `0 0 * * *` and
+`@hourly` as `0 * * * *`, in any case, and fire on the occurrences of those five fields (`@hourly`
+keeps its rhythm when clocks change, as `0 * * * *` does). A diagnostic and `ddd-ts-kit docs` show
+the shorthand as written. `@reboot` and any other `@word` are refused by both with the same
+message, which lists the shorthands accepted: a scheduled job has no occurrence at start.
+
+**A lint warning fails the lint of a generated project.** `lint` and `ci:lint` ran `eslint .`,
+which exits 0 on warnings: `verify` and the pipeline passed them, a new one as well, and they
+piled up. `init` now writes `ddd-ts-kit lint` for both, and the example application runs the
+same: the ESLint of the project, through its API (its paths, `--format` and `--fix` as ESLint
+takes them), failing on an error and on a warning alike, but on a warning of a rule of the kit in
+transition. A rule a version adds, or what a rule judges more, is a warning for one minor version
+and an error at the next; its documentation names that version (`transition`), and `ddd-ts-kit
+lint` shows its warnings and lists them after the report, one line per rule with the version that
+makes it an error, without failing on them. An upgrade of the kit therefore never turns a green
+lint red, which a plain `eslint . --max-warnings 0` would. The preset keeps its warnings as warnings (`complexity`, `max-depth`,
+`clean/function-size`, `clean/no-flag-argument`, ...) and `init` writes no suppressions file: a
+new project has no warning, so the first one fails `npm run lint`, `verify` and the lint job on
+GitHub and GitLab. The hook before a commit is unchanged: it shows a warning without stopping the
+commit. The quality-gate skill says so; the workflow is in
+[Quality baseline](docs/tools/quality-baseline.md#warnings-fail-the-lint).
+
+To move: nothing changes until the project acts. `npx ddd-ts-kit init` keeps an existing `lint`
+and `ci:lint` and notes what the kit expects; `doctor` lists them as written otherwise, which
+`doctor --strict` does not fail on. To take the limit, run `npx eslint .` and settle each
+warning: fix it, or raise its rule to `error` (its id in the `rules` key of
+`ddd-ts-kit.config.json` for a rule of the kit, a block after the preset in `eslint.config.mjs`
+for `complexity` or `max-depth`) and record the existing findings with
+`npx eslint . --suppress-rule <rule>` (or `--suppress-all`) in `eslint-suppressions.json`,
+committed; once one is fixed, `npx eslint . --prune-suppressions` removes its entry, and the lint
+fails until it does. Then set the two scripts to `ddd-ts-kit lint`, or run
+`npx ddd-ts-kit init --force`, which also writes every other file and script of the kit over the
+project's. Update the plugin.
+
+**`check --explain` follows the violations with the reason of each rule they report.** A reviewer
+of a pull request ran `ddd-ts-kit explain <rule-id>` for each rule `check --changed-since` named.
+`--explain` prints, after the violations, one block per rule reported, however many times: its
+id, its description and why it exists, as `explain` gives it without the examples; for a rule
+another tool decides, where it is checked. `--format json` adds an `explanations` array.
+`--format github` and `--format gitlab` keep one annotation per violation and end the message of
+each with `Why: <reason>`, since a pull request shows an annotation alone on its line and a Code
+Quality report has no place for text beside its issues; the fingerprints do not change. It
+combines with paths, `--rule`, `--changed-since` and `--clean-only`. Without it, the output is
+the same as before.
+
 **`doctor` checks the environment of a checkout.** A new worktree starts from nothing, and what
 goes wrong there is its environment: `verify` failed late, on a symptom. After what an upgrade
 left to do, `npx ddd-ts-kit doctor` now says what this checkout lacks to run the project, read

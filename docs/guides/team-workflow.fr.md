@@ -1,5 +1,5 @@
 [English](team-workflow.md) · **Français**
-<!-- translation-of: team-workflow.md sha256:701ec4dc3c41054b -->
+<!-- translation-of: team-workflow.md sha256:20961fdde37c30e3 -->
 
 # Travailler en équipe sur un projet DDD
 
@@ -389,6 +389,11 @@ Good:
 
 Suppress one line (with a reason): // ddd-ts-kit-disable-next-line purity/no-system-clock -- <reason>
 ```
+
+Sur une *pull request*, `npx ddd-ts-kit check --changed-since origin/main --explain` fait suivre
+les constats de la raison de chaque règle qu'ils enfreignent, une fois par règle ; avec
+`--format github` ou `--format gitlab`, la raison termine chaque annotation, là où le relecteur la
+lit.
 
 Les vérifications tournent à trois moments : à chaque écriture de fichier dans une session
 d'agent (le *hook* du *plugin*), sur les fichiers indexés (pre-commit), et en CI. Une revue qui

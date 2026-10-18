@@ -1,7 +1,7 @@
 import { bin, type Invocation } from './run-in.js';
 
 /** The three analyzers of the generated pipeline next to `ddd-ts-kit check`, as its scripts call them. */
-export const ESLINT: Invocation = { command: bin('eslint'), args: ['.'] };
+export const ESLINT: Invocation = { command: bin('eslint'), args: ['.', '--max-warnings', '0'] };
 export const DEPCRUISE: Invocation = {
   command: bin('depcruise'),
   args: ['src', '--config', '.dependency-cruiser.cjs'],

@@ -396,7 +396,19 @@ Vitest, a global setup (`test/support/test-database-template.ts`) starts it once
 its initialised cluster; each spec opens a copy of it instead of running an initdb of its own, the
 slow part of starting, so that a busy machine no longer makes the hook that opens the database
 outlast its timeout. Each spec still creates its tables on that copy: the code of the contexts that
-creates them stays run, and measured, as before. With Jest, each spec still initialises its own.
+creates them stays run, and measured, as before. Measured with PGlite 0.5.9 on an idle machine
+(2026-10-18, five runs each): an initdb takes about 770 ms, opening a copy of the saved cluster
+about 170 ms, and creating twenty tables with their keys and indexes on it about 25 ms. Saving the
+tables in the copy as well would spare those 25 ms and leave the code that creates them unrun: it
+is not done. Against a server (a URL), the database is migrated beforehand and each spec only
+empties its tables, so a template database would spare nothing.
+
+With Jest, each spec still initialises its own. A global setup of Jest loads as an ES module
+under `--experimental-vm-modules`, and no end-to-end run of the kit holds a Jest project with a
+database, so the copy is not offered where nothing would catch it breaking. A Jest project that
+needs it can write the same global setup (`globalSetup` and `globalTeardown` of
+`jest.config.js`) that sets `TEST_DATABASE_TEMPLATE`, and open the copy in
+`src/platform/database/open-test-database.ts` as the file generated for Vitest does.
 
 What happens after the answer (the outbox relayed, the handlers it reaches, what they store in
 turn) is awaited with `await application.settled()`, then asserted at once. A fixed delay is slow
