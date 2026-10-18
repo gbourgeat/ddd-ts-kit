@@ -9,12 +9,14 @@ export const NOTES = `  affected         what a pull request has to run: the con
                    where drizzle-kit alone writes nothing and exits 0; then formats the snapshot and the
                    journal it wrote with the Biome or Prettier of the format script, and warns when the
                    SQL changes a primary key in an order that fails on PostgreSQL (exit code unchanged);
-                   --replay, after merging the trunk into a branch when both added migrations: deletes
-                   the migrations of the branch that --base <ref> (origin/main by default) does not have,
-                   with their snapshots and journal entries, then generates each again on top, in order,
-                   under its name (working- dropped outside a worker's worktree, a custom one keeping
-                   its SQL); refused while the journal holds conflict markers or when two of them change
-                   the schema
+                   --replay, after merging the trunk into a branch when both added migrations: when the
+                   history forks from --base <ref> (origin/main by default), deletes the migrations of the
+                   branch the base does not have, with their snapshots and journal entries, then generates
+                   each again on top, in order, under its name (working- dropped outside a worker's
+                   worktree, a custom one keeping its SQL); when it does not fork, only renames them;
+                   refused while the journal holds conflict markers, when two of them change the schema,
+                   or when drizzle-kit now writes a generated one otherwise (edited by hand), the folder
+                   then put back as it was
   error-factories  moves a project from one class per error to static factories on one error class per
                    concept: --plan writes error-factories.plan.json, where each class is given its concept;
                    --apply follows it (classes, specs, every usage, "stack.refusals" in the config)
@@ -29,6 +31,9 @@ export const NOTES = `  affected         what a pull request has to run: the con
                    otherwise, and the git hooks (the lefthook: line of lefthook.yml, the pre-commit hook of
                    lefthook in this clone); init adds what is missing, hooks:install the hook; --strict
                    exits 1 while something is missing, never for a hook this clone has not installed
+  lint             the ESLint of the project (lint and ci:lint run it): fails on an error, and on a warning
+                   as on an error, but on one of a rule of the kit in transition, a new rule that becomes an
+                   error in the version it names, whose warnings are listed apart; --format and --fix as ESLint
   describe         one context as facts: use cases, routes, events, ports, policies, gateways, dependencies
   status           the next step of docs/architecture/plan.md, the slices of docs/architecture/slices.md by
                    status and by owner, each row not done ready on the trunk (its dependencies done), ready
@@ -192,6 +197,9 @@ export const NOTES = `  affected         what a pull request has to run: the con
   --commit-size    the files and lines about to be committed against "commit" in the config (20 files and
                    600 lines by default, generated files not counted); --staged reads the index only;
                    advisory, --strict exits 1 when over
+  --explain        check follows the violations with the reason of each rule they report, once per rule, as
+                   explain gives it without its examples ("explanations" in JSON); with github and gitlab, each
+                   annotation carries the reason of its rule, a pull request showing an annotation on its own
   --stored-events  docs records the shape of each version of the stored events in stored-events.lock.json,
                    never rewriting a recorded one: run it once the shape of a version is the one to store;
                    docs --check fails while a declared version is not recorded

@@ -9,6 +9,9 @@ const INITIAL = '20261010120000_initial';
 const INVOICES = '20261011120000_add-invoices';
 const PAYMENTS = '20261012120000_add-payments';
 const ORIGIN = '00000000-0000-0000-0000-000000000000';
+const KEY_CHANGE = '20261013120000_change-invoice-key';
+const ADD_KEY = 'ALTER TABLE "invoices" ADD CONSTRAINT "invoices_id_issuer_pk" PRIMARY KEY("id","issuer");';
+const DROP_KEY = 'ALTER TABLE "invoices" DROP CONSTRAINT "invoices_pkey";';
 
 export const PERSISTENCE_FIXTURES: readonly Fixture[] = [
   {
@@ -62,7 +65,31 @@ export const PERSISTENCE_FIXTURES: readonly Fixture[] = [
     expect: { file: 'migrations/20261015101500_working-add-claims.js' },
     files: knex(['20261012093000_initial', '20261015101500_working-add-claims']),
   },
+  {
+    ruleId: 'persistence/primary-key-order',
+    name: 'a drizzle migration that drops the old primary key of a table before adding the new one',
+    expect: 'pass',
+    files: drizzleKeyChange([DROP_KEY, ADD_KEY]),
+  },
+  {
+    ruleId: 'persistence/primary-key-order',
+    name: 'a drizzle migration that adds the new primary key of a table before dropping the old one',
+    expect: { file: `migrations/${KEY_CHANGE}.sql` },
+    files: drizzleKeyChange([ADD_KEY, DROP_KEY]),
+  },
 ];
+
+/** The drizzle-kit project of three migrations, then a fourth one that changes the primary key of the invoices with `statements`. */
+function drizzleKeyChange(statements: readonly string[]): Record<string, string> {
+  const tags = [INITIAL, INVOICES, PAYMENTS, KEY_CHANGE];
+
+  return {
+    ...drizzle('b'),
+    [`migrations/${KEY_CHANGE}.sql`]: `${statements.join('--> statement-breakpoint\n')}\n`,
+    'migrations/meta/20261013120000_snapshot.json': snapshot('d', 'c'),
+    [JOURNAL]: journal(tags.map((tag) => [tag, Number(tag.slice(0, 14))])),
+  };
+}
 
 /** A drizzle-kit project with three migrations; `payments` names the snapshot the third one was generated from. */
 function drizzle(payments: string, order: readonly string[] = [INITIAL, INVOICES, PAYMENTS]): Record<string, string> {

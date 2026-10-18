@@ -10,7 +10,7 @@ export const BUCKET = 'ddd-ts-kit-test';
 export function connect(): S3Client {
   return s3ClientOf({
     endpoint: SERVER_URL,
-    region: 'us-east-1',
+    region: process.env['DDD_TS_KIT_TEST_S3_REGION'] ?? 'us-east-1',
     accessKeyId: process.env['DDD_TS_KIT_TEST_S3_ACCESS_KEY'] ?? 'ddd-ts-kit',
     secretAccessKey: process.env['DDD_TS_KIT_TEST_S3_SECRET_KEY'] ?? 'ddd-ts-kit-secret',
   });

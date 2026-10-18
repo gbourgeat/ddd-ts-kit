@@ -124,7 +124,7 @@ The slice is finished when `todo ordering` no longer lists anything of it.
 | Command or skill | Does | When | Produces | Then |
 |---|---|---|---|---|
 | `npx ddd-ts-kit verify-slice <context> --since <ref>` | in one run: `npm run regenerate`, the architecture rules on the files changed since the ref (new ones included), the tests of the context, the merges since the ref (as `verify-merge` checks them, reported without failing the slice in this version), the changed files near the 350-line limit | before the commit of a slice, again until it passes | each step with its cause, then the paths of the slice to stage, every other changed path, left out and never staged with it, and the names the slice removes that the design of a row not done still cites (never a failure) | the commit of the slice, of the paths it lists to stage only; those names go to the conductor as notes |
-| `npx ddd-ts-kit check --changed-since <ref>` | the architecture rules on what changed | while iterating | violations with their fix | `npx ddd-ts-kit explain <rule-id>` when one is unclear |
+| `npx ddd-ts-kit check --changed-since <ref>` | the architecture rules on what changed | while iterating | violations with their fix, then, with `--explain`, the reason of each rule reported, once | `npx ddd-ts-kit explain <rule-id>` when one is unclear |
 | `npm run regenerate` (`npx ddd-ts-kit depcruise-config --write`, then `npm run docs:generate`, which runs `npx ddd-ts-kit docs`) | regenerate every derived file: `.dependency-cruiser.cjs`, the context map, the `CONTEXT.md` lists, the barrels and the contracts | after a change of a route, a schema, an event or the config | the generated files, committed with the code | `/ddd-ts-kit:commit-discipline` |
 | `/ddd-ts-kit:commit-discipline`, `npx ddd-ts-kit check --commit-size --staged` | one slice per commit, its size against the config | before `git commit` (the hook runs the check) | a message `<type>(<context>): ...` | the next slice |
 
@@ -277,10 +277,11 @@ Usage
   ddd-ts-kit controllers [<context>] [--dry-run]
   ddd-ts-kit value-objects [--dry-run]
   ddd-ts-kit affected [--base <git-ref>] [--head <git-ref>] [--format text|json|github|env]
-  ddd-ts-kit check [paths...] [--rule <id>]... [--format text|json|github|gitlab] [--changed-since <git-ref>] [--self]
+  ddd-ts-kit check [paths...] [--rule <id>]... [--format text|json|github|gitlab] [--changed-since <git-ref>] [--explain] [--self]
   ddd-ts-kit check --clean-only <dir>... [--rule <id>]... [--format text|json|github]
   ddd-ts-kit check --commit-size [--staged] [--strict]
   ddd-ts-kit check-file <path>
+  ddd-ts-kit lint [paths...] [--format <eslint formatter>] [--fix]
   ddd-ts-kit rules
   ddd-ts-kit explain <rule-id>
 
@@ -296,12 +297,14 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
                    where drizzle-kit alone writes nothing and exits 0; then formats the snapshot and the
                    journal it wrote with the Biome or Prettier of the format script, and warns when the
                    SQL changes a primary key in an order that fails on PostgreSQL (exit code unchanged);
-                   --replay, after merging the trunk into a branch when both added migrations: deletes
-                   the migrations of the branch that --base <ref> (origin/main by default) does not have,
-                   with their snapshots and journal entries, then generates each again on top, in order,
-                   under its name (working- dropped outside a worker's worktree, a custom one keeping
-                   its SQL); refused while the journal holds conflict markers or when two of them change
-                   the schema
+                   --replay, after merging the trunk into a branch when both added migrations: when the
+                   history forks from --base <ref> (origin/main by default), deletes the migrations of the
+                   branch the base does not have, with their snapshots and journal entries, then generates
+                   each again on top, in order, under its name (working- dropped outside a worker's
+                   worktree, a custom one keeping its SQL); when it does not fork, only renames them;
+                   refused while the journal holds conflict markers, when two of them change the schema,
+                   or when drizzle-kit now writes a generated one otherwise (edited by hand), the folder
+                   then put back as it was
   error-factories  moves a project from one class per error to static factories on one error class per
                    concept: --plan writes error-factories.plan.json, where each class is given its concept;
                    --apply follows it (classes, specs, every usage, "stack.refusals" in the config)
@@ -316,6 +319,9 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
                    otherwise, and the git hooks (the lefthook: line of lefthook.yml, the pre-commit hook of
                    lefthook in this clone); init adds what is missing, hooks:install the hook; --strict
                    exits 1 while something is missing, never for a hook this clone has not installed
+  lint             the ESLint of the project (lint and ci:lint run it): fails on an error, and on a warning
+                   as on an error, but on one of a rule of the kit in transition, a new rule that becomes an
+                   error in the version it names, whose warnings are listed apart; --format and --fix as ESLint
   describe         one context as facts: use cases, routes, events, ports, policies, gateways, dependencies
   status           the next step of docs/architecture/plan.md, the slices of docs/architecture/slices.md by
                    status and by owner, each row not done ready on the trunk (its dependencies done), ready
@@ -479,6 +485,9 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
   --commit-size    the files and lines about to be committed against "commit" in the config (20 files and
                    600 lines by default, generated files not counted); --staged reads the index only;
                    advisory, --strict exits 1 when over
+  --explain        check follows the violations with the reason of each rule they report, once per rule, as
+                   explain gives it without its examples ("explanations" in JSON); with github and gitlab, each
+                   annotation carries the reason of its rule, a pull request showing an annotation on its own
   --stored-events  docs records the shape of each version of the stored events in stored-events.lock.json,
                    never rewriting a recorded one: run it once the shape of a version is the one to store;
                    docs --check fails while a declared version is not recorded

@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:3d01b78606d29a72 -->
+<!-- translation-of: README.md sha256:e0cc9ee5149d8f81 -->
 
 # ddd-ts-kit
 
@@ -705,12 +705,12 @@ Next, in this order: the language of the context first, then the business decisi
   `platform.jobs.register({ name, schedule, run })`.
 - **Les *jobs*.** Le planning est validé quand le *job* est généré, par les règles du planificateur
   (`parseJobSchedule` du kernel, fixé par un test) : une durée (`15m`, `2s`, des chiffres seuls
-  sont des millisecondes) ou une expression cron à cinq champs, avec un fuseau horaire IANA ;
-  `--time-zone` sans `--cron` est refusé, de même qu'un *job* sans `--command`, une commande qui
-  n'existe pas (avec la commande qui la crée) et une commande dont le constructeur demande plus
-  que l'acteur et l'instant pour lequel le travail est fait : un *job* dit seulement que le moment
-  est venu, le gestionnaire trouve sur quoi agir. Les paramètres optionnels ou qui ont une valeur
-  par défaut sont laissés hors de l'appel.
+  sont des millisecondes) ou une expression cron à cinq champs ou un raccourci (`@daily`), avec un
+  fuseau horaire IANA ; `--time-zone` sans `--cron` est refusé, de même qu'un *job* sans
+  `--command`, une commande qui n'existe pas (avec la commande qui la crée) et une commande dont le
+  constructeur demande plus que l'acteur et l'instant pour lequel le travail est fait : un *job* dit
+  seulement que le moment est venu, le gestionnaire trouve sur quoi agir. Les paramètres optionnels
+  ou qui ont une valeur par défaut sont laissés hors de l'appel.
 - **L'autorisation d'un *job*.** Un *job* dont la commande est protégée l'envoie en tant que
   `system:<context>.<name>`, qui n'a aucun droit tant que le modèle ne lui en donne pas.
   `generate job` écrit l'autorisation là où le modèle en fait une ligne, dans une région marquée
@@ -1595,7 +1595,7 @@ ajoute, `lint` ce qu'elle ajoute à ESLint ; les *pipelines* générés câblent
 
 ```
 ddd-ts-kit check [paths...] [--rule <id>]... [--format text|json|github|gitlab]
-                 [--changed-since <git-ref>] [--self]
+                 [--changed-since <git-ref>] [--explain] [--self]
 ddd-ts-kit check --clean-only <dir>... [--rule <id>]... [--format text|json|github]
 ddd-ts-kit check --commit-size [--staged] [--strict]
 ```
@@ -1658,6 +1658,12 @@ règle.
 - `paths` et `--changed-since` limitent ce qui est signalé, pas ce qui est analysé.
   `--changed-since` lance `git diff --name-only --relative <ref>...` dans le projet.
 - `--format github` affiche des annotations `::error file=...,line=...::`.
+- `--explain` fait suivre les violations de chaque règle qu'elles signalent, une fois, avec sa
+  description et la raison de son existence (comme `explain` l'affiche, sans les exemples), et
+  ajoute en JSON un tableau `explanations`. Avec `--format github` ou `gitlab`, la raison va à la
+  place à la fin du message de chaque annotation : une *pull request* montre une annotation seule
+  sur sa ligne, et un rapport Code Quality n'a pas de place pour du texte à côté de ses problèmes.
+  Les empreintes restent les mêmes.
 - `--format gitlab` affiche un rapport Code Quality de GitLab : un problème par violation,
   `major` pour une erreur et `minor` pour un avertissement, avec une empreinte qui ne dépend pas
   de la ligne.
@@ -1933,6 +1939,22 @@ Exécute les règles par fichier (couches, contextes, nommage, événements, lan
 propre, *mocks*, composition, désactivations) sur un fichier sans parcourir le projet : conçu pour
 un *hook* d'éditeur ou d'agent après chaque écriture. Un fichier qui n'est pas une source du
 projet est ignoré.
+
+## lint
+
+```
+ddd-ts-kit lint [paths...] [--format <eslint formatter>] [--fix]
+```
+
+Ce que lancent `lint` et `ci:lint` d'un projet généré : l'ESLint du projet, par son API, sur les
+chemins donnés (le projet sinon), son rapport dans le format demandé (`--format gitlab` écrit le
+rapport Code Quality comme le fait `eslint-formatter-gitlab`), `--fix` comme ESLint le prend. Il
+sort en 1 sur une erreur, et sur un avertissement comme sur une erreur, sauf sur un avertissement
+d'une règle du kit en transition : une règle nouvelle dans cette version, dont la documentation
+nomme la version où elle devient une erreur. Ceux-là sont affichés dans le rapport et listés
+après lui, une ligne par règle, sans échouer : une mise à jour du kit ne fait jamais passer au
+rouge un lint vert. Sans ESLint installé, il sort en 2 et nomme l'installation. Voir
+[Base de qualité](../../docs/tools/quality-baseline.fr.md#un-avertissement-fait-échouer-le-lint).
 
 ## rules, explain
 

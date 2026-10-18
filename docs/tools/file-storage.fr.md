@@ -1,5 +1,5 @@
 [English](file-storage.md) · **Français**
-<!-- translation-of: file-storage.md sha256:ac3c3c709ea1a662 -->
+<!-- translation-of: file-storage.md sha256:28f97c67c71e2c81 -->
 
 # Connecteurs de stockage de fichiers
 
@@ -87,7 +87,7 @@ export function fileRoutes(storage: FileStorage): readonly Route[] {
 | OVHcloud Object Storage | `https://s3.<region>.io.cloud.ovh.net` | hébergement européen |
 | Scaleway Object Storage | `https://s3.<region>.scw.cloud` | hébergement européen |
 | Cloudflare R2 | `https://<account>.r2.cloudflarestorage.com` | région `auto` ; pas de frais de sortie |
-| Garage | le vôtre | auto-hébergé, faible empreinte |
+| Garage | le vôtre | auto-hébergé, faible empreinte ; région `s3_region` de sa configuration (`garage` dans ses exemples) ; vérifié, ci-dessous |
 
 `s3ClientOf(settings)` construit un client pour n'importe lequel d'entre eux : adressage par chemin
 avec un endpoint, et des sommes de contrôle seulement quand une opération en exige une, puisque le
@@ -150,10 +150,15 @@ envoyé en parties, et refusé au-delà de sa limite sans rien laisser derrière
   derrière elle, des clés qui pourraient sortir de leur place refusées, copie, déplacement,
   listage, des liens signés qui expirent, qui refusent une signature modifiée ou un autre type de
   média.
+- **Exécuté une fois à la main sur Garage v2.1.0 (2026-10-18)**, un seul nœud dans Docker
+  (`dxflrs/garage:v2.1.0`, région `garage`) : toute la suite de `packages/s3` est passée, 34 tests,
+  dont le contrat ci-dessus (le lien d'envoi signé y refuse aussi un autre type de média), avec
+  `DDD_TS_KIT_TEST_S3_REGION=garage`, puisque Garage refuse une requête signée pour une autre
+  région. Pas dans le *pipeline*.
 - `init --storage local|s3` câble la plateforme : `platform/files/` lie les ports, enregistre la
   purge horaire des fichiers mis en attente, monte les routes qui répondent aux liens d'un stockage
   servi et le lecteur d'envois ; `generate file-upload` écrit le premier envoi.
-- Non vérifié : les autres fournisseurs du tableau, qui parlent le même protocole ; un fournisseur
+- Non vérifié : AWS S3, OVHcloud, Scaleway et Cloudflare R2, qui parlent le même protocole ; un fournisseur
   dont l'envoi présigné ignore le `content-type` signé.
 
 ## Un autre fournisseur : Google Cloud Storage, Azure Blob Storage

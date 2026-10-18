@@ -119,8 +119,9 @@ means :00, :15, :30 and :45 on every instance, before and after a restart. That 
 what lets several instances name the same instants. An interval follows no time zone: for
 "every morning", write a cron.
 
-**Cron** has the five standard fields at minute resolution, evaluated on the clocks of an IANA
-time zone. Daylight saving time deserves one decision per job:
+**Cron** has the five standard fields at minute resolution, or a shorthand that stands for them
+(`@hourly`, `@daily`, `@weekly`, `@monthly`, `@yearly`), evaluated on the clocks of an IANA time
+zone. Daylight saving time deserves one decision per job:
 
 | When clocks are | A job pinned to an hour (`30 2 * * *`) | A job of every hour (`0 * * * *`) |
 |---|---|---|
@@ -385,7 +386,7 @@ Stated by [`@ddd-ts-kit/scheduling`](../../packages/scheduling/README.md):
 - **No persistence of its own.** Runs and outcomes live in the memory of the instance; only
   checkpoints, if you provide the store, cross a restart.
 - **No retry and no backoff.**
-- **Minute resolution for cron**; no seconds field, no `@daily` shorthands, no `L`, `W`, `#`.
+- **Minute resolution for cron**; no seconds field, no `@reboot`, no `L`, `W`, `#`.
 - **One process, one event loop.** A job that blocks the loop delays every other job.
 - **Time zone rules are those of the runtime**: a zone whose rules changed needs an updated
   Node.

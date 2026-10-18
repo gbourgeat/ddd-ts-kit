@@ -418,7 +418,9 @@ option names (`consumer`, `retry`, `reconnect`, `onFailure`, `onDelivery`) and t
 
 ## Testing
 
-The suites need a real server and are skipped without `DDD_TS_KIT_TEST_NATS_URL`:
+The codec of the envelope, the settings and their defaults, the topology description and the
+failure codes are covered without a server, in the unit run. The other suites need a real
+server and are skipped without `DDD_TS_KIT_TEST_NATS_URL`:
 
 ```
 docker run -d --rm --name ddd-ts-kit-test-nats -p 127.0.0.1:4222:4222 nats:2.15.0-alpine -js

@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:1ff5474228b48807 -->
+<!-- translation-of: README.md sha256:648595bec5f485e4 -->
 
 # @ddd-ts-kit/s3
 
@@ -172,6 +172,13 @@ mêmes sources, épinglé par *digest* (`pipeline/github/scripts/start-minio.sh`
 docker run -d --name minio -p 127.0.0.1:9000:9000 -e MINIO_ROOT_USER=ddd-ts-kit -e MINIO_ROOT_PASSWORD=ddd-ts-kit-secret pgsty/minio:RELEASE.2026-08-04T00-00-00Z server /data
 DDD_TS_KIT_TEST_S3_ENDPOINT=http://localhost:9000 npx vitest run packages/s3
 ```
+
+Les mêmes *specs* s'exécutent sur un autre serveur du protocole : `DDD_TS_KIT_TEST_S3_REGION`
+(`us-east-1` par défaut), `DDD_TS_KIT_TEST_S3_ACCESS_KEY` et `DDD_TS_KIT_TEST_S3_SECRET_KEY`
+nomment sa région et sa clé, et le bucket `ddd-ts-kit-test` est créé quand la clé peut en créer
+un. Exécuté une fois à la main sur Garage v2.1.0 (2026-10-18), région `garage` : les 34 tests
+sont passés. Les autres fournisseurs de
+[docs/tools/file-storage.md](../../docs/tools/file-storage.fr.md) ne sont pas vérifiés.
 
 Un projet tient sa propre liaison à la même suite, sur le MinIO de sa *stack* compose : chaque
 test écrit sous un préfixe à lui, si bien que les tests partagent un seul bucket sans voir les
