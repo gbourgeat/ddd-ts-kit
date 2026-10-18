@@ -1,5 +1,5 @@
 [English](CONTRIBUTING.md) · **Français**
-<!-- translation-of: CONTRIBUTING.md sha256:cdda9fd05fc1a650 -->
+<!-- translation-of: CONTRIBUTING.md sha256:b62b67aadf8abe18 -->
 
 # Contribuer
 
@@ -152,10 +152,11 @@ fixer la version y fond les fichiers de `changes/`, dans l'ordre où ils ont att
 supprime ; le package de la CLI en livre une copie, que les agents lisent dans `node_modules`. Le
 *plugin* sort avec les packages, sous leur version : la fixer écrit aussi `version` de
 `plugin/.claude-plugin/plugin.json` et la version que décrivent les skills, dans
-`plugin/hooks/guard.mjs`, pour que chaque agent affiche un seul numéro. Une version est au-dessus de
-celle du *plugin* (il s'est numéroté lui-même jusqu'à 0.77.0 : la première version commune est
-0.78.0 ou plus), et `--expect` du workflow de release tient le *plugin* à l'étiquette. Un
-correctif urgent du *plugin* est une release de correctif (`--set 0.78.1`), pas une version à lui.
+`plugin/hooks/guard.mjs`, pour que chaque agent affiche un seul numéro. Le *plugin* se numérotait
+à part jusque-là, en avance sur les packages : la première version commune est au-dessus de la
+sienne, ce que `--set` tient (il nomme la première version qu'il accepte), et `--expect` du
+workflow de release tient le *plugin* à l'étiquette. Un correctif urgent du *plugin* est une
+release de correctif du kit, pas une version à lui.
 
 **Aucun secret.** Le workflow publie par la publication de confiance (trusted publishing,
 OIDC) : chaque package désigne `release.yml` de ce dépôt, dans son environnement `npm`, comme

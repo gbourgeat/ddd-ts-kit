@@ -32,8 +32,8 @@ const GENERATED = ['examples/scheduling/openapi/openapi.yaml', 'examples/schedul
 
 /**
  * The plugin is released with the packages, under their version: one number for a user whichever
- * agent shows it. Its manifest followed a numbering of its own up to 0.77.0, which a version cannot
- * go back under without an installed plugin missing the update.
+ * agent shows it. Its manifest followed a numbering of its own, ahead of the packages, which a
+ * version cannot go back under without an installed plugin missing the update.
  */
 const PLUGIN_MANIFEST = 'plugin/.claude-plugin/plugin.json';
 

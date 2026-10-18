@@ -140,10 +140,11 @@ version folds the files of `changes/` into it, in the order they reached `main`,
 the CLI package ships a copy, which agents read in `node_modules`. The plugin is released with the
 packages, under their version: setting it also writes `version` of
 `plugin/.claude-plugin/plugin.json` and the version the skills describe, in
-`plugin/hooks/guard.mjs`, so that every agent shows one number. A version is above the plugin's
-(it numbered itself up to 0.77.0, so the first common version is 0.78.0 or later), and `--expect`
-of the release workflow holds the plugin to the tag. An urgent fix of the plugin is a patch
-release (`--set 0.78.1`), not a version of its own.
+`plugin/hooks/guard.mjs`, so that every agent shows one number. The plugin numbered itself apart
+until then, ahead of the packages: the first common version is above its version, which `--set`
+holds (it names the first version it accepts), and `--expect` of the release workflow holds the
+plugin to the tag. An urgent fix of the plugin is a patch release of the kit, not a version of
+its own.
 
 **No secret.** The workflow publishes through trusted publishing (OIDC): each package names
 `release.yml` of this repository, in its `npm` environment, as its trusted publisher, and
