@@ -3,16 +3,8 @@ import { Arguments } from '../../commands/arguments.js';
 import { type Command } from '../../commands/command.js';
 import { DELEGATED_RULES } from '../catalogue/delegated-rules.js';
 import { KNOWN_RULE_IDS } from '../catalogue/known-rule-ids.js';
-import { RULES } from '../catalogue/rules.js';
-import { SUPPRESSION_RULE } from '../catalogue/suppression-rule.js';
-import { RULE_DOCS } from '../explain/rule-docs.js';
-import type { RuleDoc } from '../model/rule-doc.js';
+import { type DocumentedRule, documentedRule } from '../explain/documented-rule.js';
 import { knownRules } from './known-rules.js';
-
-interface Explanation extends RuleDoc {
-  readonly id: string;
-  readonly description: string;
-}
 
 export const explainCommand: Command = (argv, io) => {
   const args = Arguments.parse(argv, {});
@@ -41,20 +33,13 @@ export const explainCommand: Command = (argv, io) => {
   return 0;
 };
 
-function explanationOf(id: string): Explanation {
+function explanationOf(id: string): DocumentedRule {
   knownRules([id]);
 
-  const rule = [...RULES, SUPPRESSION_RULE].find((candidate) => candidate.id === id);
-  const doc = RULE_DOCS[id];
-
-  if (rule === undefined || doc === undefined) {
-    throw new CliError(`The rule "${id}" has no explanation.`, 'Report this as a bug of ddd-ts-kit.');
-  }
-
-  return { id, description: rule.description, ...doc };
+  return documentedRule(id);
 }
 
-function formatExplanation(explanation: Explanation): string {
+function formatExplanation(explanation: DocumentedRule): string {
   const indent = (block: string): string =>
     block
       .split('\n')

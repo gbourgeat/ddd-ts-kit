@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { CliError } from '../cli-error.js';
 import type { Io } from '../commands/io.js';
 import { WORKER_SCOPE_FILE } from '../commit/worker-scope-file.js';
 import type { BranchMigration } from './branch-migration.js';
@@ -7,8 +8,11 @@ import { deleteBranchMigrations } from './delete-branch-migrations.js';
 import { generateAndRead } from './generate-and-read.js';
 import { migrationFiles } from './migration-files.js';
 import { planReplay } from './plan-replay.js';
+import { renameBranchMigrations } from './rename-branch-migrations.js';
 import type { ReplayPlan } from './replay-plan.js';
 import { replayedName } from './replayed-name.js';
+import { restoreMigrationFolder } from './restore-migration-folder.js';
+import { sqlStatements } from './sql-statements.js';
 import { tidyWrittenMigration } from './tidy-written-migration.js';
 import { waitForNextSecond } from './wait-for-next-second.js';
 
@@ -26,9 +30,12 @@ export interface DrizzleReplay {
 
 /**
  * `drizzle-generate --replay`, after merging the trunk into a branch when both added migrations:
- * deletes the migrations of the branch the base does not have (with their snapshots and journal
- * entries), then generates them again on top of the base, one per deleted one, in their order and
- * under their names. A custom migration gets its statements back.
+ * when the history forks from the base, deletes the migrations of the branch the base does not
+ * have (with their snapshots and journal entries), then generates them again on top of the base,
+ * one per deleted one, in their order and under their names. A custom migration gets its
+ * statements back; a generated one that drizzle-kit now writes otherwise (edited by hand, or a
+ * change of the base on what it changes) is refused and the folder put back. Migrations that
+ * already follow the base are only renamed, when their name changes.
  */
 export function replayDrizzleMigrations(replay: DrizzleReplay, io: Io): number {
   const plan = planReplay(replay);
@@ -39,6 +46,12 @@ export function replayDrizzleMigrations(replay: DrizzleReplay, io: Io): number {
     return 0;
   }
 
+  const keepWorking = replay.final !== true && fs.existsSync(path.join(replay.root, WORKER_SCOPE_FILE));
+
+  if (!plan.forked) {
+    return renameInPlace(plan, keepWorking, io);
+  }
+
   deleteBranchMigrations(plan);
 
   io.out(
@@ -46,7 +59,6 @@ export function replayDrizzleMigrations(replay: DrizzleReplay, io: Io): number {
   );
 
   const written = new Set<string>();
-  const keepWorking = replay.final !== true && fs.existsSync(path.join(replay.root, WORKER_SCOPE_FILE));
   let since = 0;
 
   for (const migration of plan.migrations) {
@@ -68,6 +80,25 @@ export function replayDrizzleMigrations(replay: DrizzleReplay, io: Io): number {
   const files = migrationFiles(replay.root, plan.folder);
 
   tidyWrittenMigration({ root: replay.root, paths: [...written], files }, io);
+  io.out(`Stage ${plan.folder}/, then run \`npm run check:arch\`.`);
+
+  return 0;
+}
+
+/** The migrations of the branch follow the last one of the base already: drizzle-kit would write the same statements again. */
+function renameInPlace(plan: ReplayPlan, keepWorking: boolean, io: Io): number {
+  const renamed = renameBranchMigrations(plan, keepWorking);
+
+  if (renamed.length === 0) {
+    io.out(`The migrations of this branch follow the last one of ${plan.base}: nothing to replay.`);
+
+    return 0;
+  }
+
+  for (const { from, to } of renamed) {
+    io.out(`Renamed ${from} to ${to}: it follows the last migration of ${plan.base}, nothing to generate again.`);
+  }
+
   io.out(`Stage ${plan.folder}/, then run \`npm run check:arch\`.`);
 
   return 0;
@@ -105,9 +136,40 @@ function generateAgain(
 
   if (migration.custom) {
     fs.writeFileSync(path.join(root, sql), migration.sql);
+  } else {
+    refuseChangedStatements({ plan, migration, name }, written.files.get(sql) ?? '');
   }
 
   io.out(`Generated ${path.posix.basename(sql, '.sql')} in place of ${migration.tag}.`);
 
   return written.paths;
+}
+
+/**
+ * drizzle-kit writes the same statements for a change whichever schema it follows, unless the base
+ * changed the same thing: a generated migration whose statements differ from what it writes now was
+ * edited by hand, or needs a person. Generating it again would lose that, so the folder is put back.
+ */
+function refuseChangedStatements({ plan, migration, name }: Regeneration, generated: string): void {
+  const branch = sqlStatements(migration.sql).map((statement) => statement.text);
+  const now = sqlStatements(generated).map((statement) => statement.text);
+
+  const at = Array.from({ length: Math.max(branch.length, now.length) }, (_, index) => index).find(
+    (index) => branch[index] !== now[index],
+  );
+
+  if (at === undefined) {
+    return;
+  }
+
+  restoreMigrationFolder(plan);
+
+  throw new CliError(
+    `${migration.tag} is not what drizzle-kit writes for its change on top of ${plan.base}: the branch has ${quoted(branch[at])}, drizzle-kit writes ${quoted(now[at])}. Its SQL was edited by hand, or ${plan.base} changed what it changes, and generating it again would lose that: ${plan.folder}/ is back as the replay found it.`,
+    `Generate it yourself on top of ${plan.base}: delete the migrations of the branch ${plan.base} does not have (each .sql file, its snapshot under meta/ and its journal entry), run \`npm run db:generate ${name}\`, write the edits again (\`git show HEAD:${plan.folder}/${migration.tag}.sql\` holds them; \`--custom\` for a migration written by hand). The replay then finds nothing forked.`,
+  );
+}
+
+function quoted(statement: string | undefined): string {
+  return statement === undefined ? 'nothing more' : `\`${statement}\``;
 }

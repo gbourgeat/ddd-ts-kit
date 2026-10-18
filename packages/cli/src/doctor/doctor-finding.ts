@@ -1,10 +1,25 @@
-/** One thing a project lacks, or writes otherwise, compared with what this version of the kit writes. */
+/**
+ * One thing a project lacks, or writes otherwise, compared with what this version of the kit
+ * writes; or one its environment lacks to run it: `node`, `install` and `submodule` are the state
+ * of one checkout, not of the project.
+ */
 export interface DoctorFinding {
-  readonly area: 'script' | 'package' | 'permission' | 'hook';
+  readonly area: 'script' | 'package' | 'permission' | 'hook' | 'node' | 'install' | 'submodule';
   readonly name: string;
-  /** `not installed`: a git hook this clone lacks, a state of the clone rather than of the project. */
-  readonly problem: 'missing' | 'other version' | 'written otherwise' | 'not installed';
-  /** What this version writes. */
+  /**
+   * `not installed`: a git hook this clone lacks, or a package of the kit node_modules lacks.
+   * `unsupported`: a running Node outside `engines.node`. `outdated`: node_modules installed
+   * before the lockfile last changed.
+   */
+  readonly problem:
+    | 'missing'
+    | 'other version'
+    | 'written otherwise'
+    | 'not installed'
+    | 'unsupported'
+    | 'outdated'
+    | 'not initialised';
+  /** What this version writes, or what the project asks of its environment. */
   readonly expected: string;
   /** What the project has, when it has something. */
   readonly found?: string;

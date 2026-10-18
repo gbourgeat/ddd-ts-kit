@@ -13,11 +13,29 @@ const FIELDS: readonly CronField[] = [
   { label: 'day of week', min: 0, max: 7, names: DAY_NAMES },
 ];
 
+/** The shorthands most cron implementations accept, each one a fixed set of five fields. `@reboot` is not one: a scheduled job has no occurrence at start. */
+const SHORTHANDS = new Map([
+  ['@yearly', '0 0 1 1 *'],
+  ['@annually', '0 0 1 1 *'],
+  ['@monthly', '0 0 1 * *'],
+  ['@weekly', '0 0 * * 0'],
+  ['@daily', '0 0 * * *'],
+  ['@midnight', '0 0 * * *'],
+  ['@hourly', '0 * * * *'],
+]);
+
 const LONGEST_MONTH = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
 
 /** Why a text is not a cron expression a job can run on, or undefined. The same judgement as the kernel makes when the job is declared. */
 export function cronProblem(expression: string): string | undefined {
-  const texts = expression.trim().split(/\s+/);
+  const written = expression.trim();
+  const expanded = written.startsWith('@') ? SHORTHANDS.get(written.toLowerCase()) : written;
+
+  if (expanded === undefined) {
+    return `Cron "${written}" is not a shorthand a scheduled job runs on: write five fields or one of ${[...SHORTHANDS.keys()].join(', ')}.`;
+  }
+
+  const texts = expanded.split(/\s+/);
 
   if (texts.length !== FIELDS.length) {
     return `Cron "${expression}" has ${texts.length} field(s): five are expected (minute, hour, day of month, month, day of week).`;

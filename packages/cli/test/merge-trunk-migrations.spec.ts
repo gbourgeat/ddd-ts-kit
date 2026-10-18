@@ -4,7 +4,15 @@ import { describe, expect, it } from 'vitest';
 import { cli, read, write } from './helpers.js';
 import { DRIZZLE_KIT_STUB } from './support/drizzle-kit-stub.js';
 import { git } from './support/git.js';
-import { commitFiles, type Files, mergeTrunk, onBranch, trunkRepository, workerFile } from './support/trunk-history.js';
+import {
+  commitFiles,
+  type Files,
+  goOn,
+  mergeTrunk,
+  onBranch,
+  trunkRepository,
+  workerFile,
+} from './support/trunk-history.js';
 
 /** Generating again waits for the next second between two migrations, as drizzle-kit numbers them to the second. */
 const REPLAY_TIMEOUT = 30_000;
@@ -16,7 +24,7 @@ function generate(root: string, name: string): void {
 }
 
 /** A drizzle project whose drizzle-kit is the stand-in: the branch adds the invoices, the trunk the payments meanwhile. */
-function drizzleBranches(): string {
+function drizzleBranches(branchWork: (root: string) => void = () => undefined): string {
   const root = trunkRepository({
     'ddd-ts-kit.config.json': JSON.stringify({ contexts: {} }),
     'schema/accounts.json': '{"name":"accounts"}',
@@ -28,6 +36,7 @@ function drizzleBranches(): string {
   onBranch(root, 'build/billing');
   write(root, 'schema/invoices.json', '{"name":"invoices"}');
   generate(root, 'working-add-invoices');
+  branchWork(root);
   commitFiles(root, {}, 'feat(billing): issue an invoice');
   onBranch(root, 'main');
   write(root, 'schema/payments.json', '{"name":"payments"}');
@@ -36,6 +45,19 @@ function drizzleBranches(): string {
   onBranch(root, 'build/billing');
 
   return root;
+}
+
+/** Adds an index by hand to the working migration of the branch, as a person fixing what drizzle-kit wrote. */
+function editByHand(root: string): void {
+  const sql = migrationFile(root, 'working-add-invoices');
+
+  write(root, sql, `${read(root, sql)}\n--> statement-breakpoint\nCREATE INDEX "invoices_due" ON "invoices" ("due");`);
+}
+
+function migrationFile(root: string, name: string): string {
+  const file = fs.readdirSync(path.join(root, 'migrations')).find((entry) => entry.endsWith(`_${name}.sql`)) ?? '';
+
+  return `migrations/${file}`;
 }
 
 function names(root: string, folder = 'migrations'): string[] {
@@ -109,6 +131,44 @@ describe('merge-trunk: migrations', () => {
           entry.tag.replace(/^\d+_/, ''),
         ),
       ).toEqual(['initial', 'add-payments', 'add-invoices']);
+    },
+    REPLAY_TIMEOUT,
+  );
+
+  it(
+    'stops on a migration edited by hand, and goes on once a person generated it again on top of the trunk',
+    () => {
+      const root = drizzleBranches(editByHand);
+
+      workerFile(root, { base: 'main' });
+
+      const stopped = mergeTrunk(root);
+
+      expect(stopped.code, stopped.stdout).toBe(1);
+      expect(stopped.stdout).toContain('is not what drizzle-kit writes for its change on top of');
+
+      const sql = migrationFile(root, 'working-add-invoices');
+      const edited = read(root, sql);
+
+      fs.rmSync(path.join(root, sql));
+      fs.rmSync(path.join(root, `migrations/meta/${path.basename(sql).split('_')[0] ?? ''}_snapshot.json`));
+      git(root, 'checkout', 'main', '--', 'migrations/meta/_journal.json');
+      generate(root, 'working-add-invoices');
+      editByHand(root);
+      git(root, 'add', '--all');
+
+      const resumed = goOn(root, '--continue', '--json');
+
+      expect(resumed.code, resumed.stdout).toBe(0);
+
+      expect(resumed.json()).toMatchObject({
+        status: 'committed',
+        migrations: expect.arrayContaining([
+          expect.stringMatching(/^The migrations of this branch follow the last one of \w+: nothing to replay\.$/),
+        ]),
+      });
+
+      expect(read(root, migrationFile(root, 'working-add-invoices'))).toBe(edited);
     },
     REPLAY_TIMEOUT,
   );

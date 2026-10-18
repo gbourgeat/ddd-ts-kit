@@ -203,6 +203,11 @@ jobs:
       # The purges reach the container through its published port, from another address: Varnish lets them in with it.
       VARNISH_PURGE_KEY: ci-purge-key
       DDD_TS_KIT_TEST_VARNISH_PURGE_KEY: ci-purge-key
+      DDD_TS_KIT_TEST_NATS_URL: nats://localhost:4222
+      DDD_TS_KIT_TEST_AMQP_URL: amqp://kit:kit@localhost:5672
+      DDD_TS_KIT_TEST_KAFKA_BROKERS: 127.0.0.1:9092
+      # The broker advertises 9095 on its RELAYED listener; the connection-loss specs listen there and relay to 9094.
+      DDD_TS_KIT_TEST_KAFKA_RELAY: 127.0.0.1:9095=127.0.0.1:9094
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -235,6 +240,15 @@ jobs:
       - name: Varnish, with the VCL init --http-cache varnish writes, in front of the origin the purger spec starts
         if: ${{ needs.install.outputs.integration == 'true' }}
         run: sh pipeline/github/scripts/start-varnish.sh packages/cli/templates/init/docker/varnish.vcl.tpl 18089 16081
+      - name: NATS with JetStream for the broker adapter (pinned by digest, pulled with retries)
+        if: ${{ needs.install.outputs.integration == 'true' }}
+        run: sh pipeline/github/scripts/start-nats.sh
+      - name: RabbitMQ for the broker adapter (pinned by digest, pulled with retries, waited until fully booted)
+        if: ${{ needs.install.outputs.integration == 'true' }}
+        run: sh pipeline/github/scripts/start-rabbitmq.sh
+      - name: Kafka for the broker adapter, with the relayed listener of the connection-loss specs (pinned by digest)
+        if: ${{ needs.install.outputs.integration == 'true' }}
+        run: sh pipeline/github/scripts/start-kafka.sh
       - name: Adapter specs on a server (skipped when no adapter package is reached)
         if: ${{ needs.install.outputs.integration == 'true' }}
         run: npm run ci:test:integration

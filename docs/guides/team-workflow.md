@@ -373,6 +373,10 @@ Good:
 Suppress one line (with a reason): // ddd-ts-kit-disable-next-line purity/no-system-clock -- <reason>
 ```
 
+On a pull request, `npx ddd-ts-kit check --changed-since origin/main --explain` follows the
+findings with the reason of each rule they break, once per rule; with `--format github` or
+`--format gitlab`, the reason ends each annotation, where the reviewer reads it.
+
 The checks run at three moments: at each file write in an agent session (the plugin's hook),
 on staged files (pre-commit), and in CI. A review that starts after a green gate is a review
 of design.

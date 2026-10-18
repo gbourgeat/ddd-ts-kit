@@ -805,7 +805,7 @@ refuses `--database mysql` and `--database sqlite`.
 |---|---|
 | PostgreSQL | Covered by the automated suite: contract suites of `@ddd-ts-kit/testing`, repository contract, rollback, nested unit of work, concurrent claims. It runs on PGlite served over the PostgreSQL wire protocol by default, and on a real server when `DDD_TS_KIT_TEST_DATABASE_URL` is set (last run: PostgreSQL 18). |
 | MySQL 8 | Not in the automated suite. The outbox and processed-event contract suites and the rollback of `append` were run once by hand against MySQL 8.4 with `mysql2`, with `skip-locked` and `compare-and-set`. |
-| SQLite | Not in the automated suite. The same suites were run once by hand with `better-sqlite3`. No `SKIP LOCKED`: the claim is `compare-and-set`. No schemas: `createOutboxTables` refuses `schema`, name the tables per context instead. |
+| SQLite | Automated, in the unit run: the outbox and processed-event contract suites run on an in-memory database through `better-sqlite3`, with no container and no environment variable (`test/stores.sqlite.spec.ts`). No `SKIP LOCKED`: the claim is `compare-and-set`. No schemas: `createOutboxTables` refuses `schema`, name the tables per context instead. |
 | MariaDB, CockroachDB, SQL Server, Oracle | Never run. MariaDB stores JSON as text, so the payload would come back as a string. |
 
 ## Limits

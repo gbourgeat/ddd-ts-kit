@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { AGGREGATE, changeConfig, checkJsonOf, errorFixOf, HANDLER } from './check-support.js';
-import { cli, read, scaffoldEverything, tempDir, write } from './helpers.js';
+import { RULE_DOCS } from '../src/check/explain/rule-docs.js';
+import { AGGREGATE, changeConfig, checkJsonOf, errorFixOf, HANDLER, isRecord } from './check-support.js';
+import { cli, read, scaffoldEverything, tempDir, write, type CliResult } from './helpers.js';
 import { committedProject } from './support/committed-project.js';
 import { git } from './support/git.js';
 
@@ -185,6 +186,55 @@ describe('check and the config', () => {
   });
 });
 
+describe('check --explain', () => {
+  const PURITY = ['--rule', 'layer/domain-purity'];
+  const why = RULE_DOCS['layer/domain-purity']?.why ?? '';
+  let root: string;
+
+  beforeAll(() => {
+    root = projectWithImpureAggregate('check-explain');
+
+    write(
+      root,
+      'src/contexts/billing/domain/services/pricing.service.ts',
+      "import { z } from 'zod';\n\nexport const pricing = z;\n",
+    );
+  });
+
+  it('follows the violations with the reason of each rule, once for a rule reported twice', () => {
+    const { stdout } = cli(root, 'check', ...PURITY, '--explain');
+
+    expect(stdout.match(/ {2}error {2}layer\/domain-purity\n/g)).toHaveLength(2);
+    expect(stdout.split('\n').filter((line) => line === 'layer/domain-purity')).toHaveLength(1);
+    expect(stdout).toContain(`\n  why: ${why}\n\n2 errors, 0 warnings`);
+  });
+
+  it('adds the explanations to the json report, and none without a violation', () => {
+    const explained = cli(root, 'check', ...PURITY, '--explain', '--json').json();
+    const elsewhere = cli(root, 'check', 'src/contexts/shipping', ...PURITY, '--explain', '--json').json();
+
+    expect(explained).toMatchObject({ errors: 2, explanations: [{ id: 'layer/domain-purity', why }] });
+    expect(elsewhere).toMatchObject({ errors: 0, explanations: [] });
+    expect(cli(root, 'check', 'src/contexts/shipping', ...PURITY, '--explain').stdout).not.toContain('why:');
+    expect(cli(root, 'check', ...PURITY, '--json').json()).not.toHaveProperty('explanations');
+  });
+
+  it('gives the reason in each annotation of github and gitlab, with the same fingerprints', () => {
+    const annotations = cli(root, 'check', ...PURITY, '--explain', '--format', 'github').stdout.split('\n');
+    const explained = issuesOf(cli(root, 'check', ...PURITY, '--explain', '--format', 'gitlab'));
+    const plain = issuesOf(cli(root, 'check', ...PURITY, '--format', 'gitlab'));
+
+    expect(annotations.filter((line) => line.startsWith('::error file=') && line.includes(' Why: '))).toHaveLength(2);
+
+    expect(explained.map(descriptionOf)).toEqual([
+      expect.stringContaining(` Why: ${why}`),
+      expect.stringContaining(` Why: ${why}`),
+    ]);
+
+    expect(explained.map(fingerprintOf)).toEqual(plain.map(fingerprintOf));
+  });
+});
+
 describe('check --self', () => {
   it('replays the rule fixtures and exits 0', () => {
     const result = cli(tempDir('self'), 'check', '--self');
@@ -203,6 +253,20 @@ function projectWithImpureAggregate(label: string): string {
   write(root, AGGREGATE, `import { z } from 'zod';\n${read(root, AGGREGATE)}\nexport const shape = z;\n`);
 
   return root;
+}
+
+function issuesOf(result: CliResult): unknown[] {
+  const parsed = result.json();
+
+  return Array.isArray(parsed) ? parsed : [];
+}
+
+function descriptionOf(issue: unknown): unknown {
+  return isRecord(issue) ? issue['description'] : undefined;
+}
+
+function fingerprintOf(issue: unknown): unknown {
+  return isRecord(issue) ? issue['fingerprint'] : undefined;
 }
 
 function ruleIdsOf(root: string): string[] {

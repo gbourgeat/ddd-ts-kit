@@ -90,12 +90,18 @@ lookups of the port, the columns, the mapper.
   and TypeORM; a migration of each side on the same table stops it: run `db:generate` again on
   the main branch). After a merge made without it, under drizzle-kit, take the main branch's
   journal (`git checkout origin/main -- migrations/meta/_journal.json`) and run
-  `npx ddd-ts-kit drizzle-generate --replay` (`--base <ref>`, `origin/main` by default). `persistence/migration-history` reports the forked or unordered history
+  `npx ddd-ts-kit drizzle-generate --replay` (`--base <ref>`, `origin/main` by default); it
+  refuses a migration whose SQL was edited by hand and puts the folder back: generate that one
+  again on top by hand and write the edit again. `persistence/migration-history` reports the forked or unordered history
   otherwise, which drizzle's migrator would skip silently. Procedure and measurements:
   `docs/tools/persistence.md`, "Migrations: names, merges and order". `drizzle-generate`
   formats the snapshot and journal it wrote with the project's formatter, and warns when the
-  SQL changes a primary key in an order that fails: reorder it (old key dropped first) or write
-  it with `--custom`. A worker of a parallel build generates a working migration only,
+  SQL changes a primary key in an order that fails, which `persistence/primary-key-order`
+  reports until fixed: reorder it (old key dropped first) or write it with `--custom`. One
+  `db:generate` writes every schema change made since the last one as one migration: to keep two
+  apart (a table, then a constraint once it is filled), change the schema in two steps, with a
+  `db:generate` after each; the replay refuses two such migrations of a branch rather than join
+  them: generate them again one at a time, in their order. A worker of a parallel build generates a working migration only,
   `npm run db:generate working-<what>`, which the conductor replaces on the trunk at merge.
 
 ## By ORM

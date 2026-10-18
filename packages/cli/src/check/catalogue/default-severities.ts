@@ -14,5 +14,6 @@ export const DEFAULT_SEVERITIES: Readonly<Record<string, Severity>> = {
   'tree/documented-paths': 'warn',
   'test/helper-placed': 'warn',
   'test/acceptance-black-box': 'warn',
+  'persistence/primary-key-order': 'warn',
   'declarations/port-adapter-wired': 'warn',
 };
