@@ -13,5 +13,5 @@ TypeScript. Public repository.
 - Optional peers (zod, class-validator, express, fastify, nest, OpenTelemetry SDK) are imported
   only from their subpath entry file.
 - English only, no em dash or en dash, no `any`, no non-null assertion.
-- A change under `plugin/` bumps `plugin/.claude-plugin/plugin.json` `version`; `claude plugin validate . --strict`, `claude plugin validate plugin --strict` and `claude plugin validate plugin/skills --strict` must pass.
+- What a change does for a user goes in a file of its own under `changes/` (see `changes/README.md`), never in `CHANGELOG.md`, and a change under `plugin/` leaves `version` of `plugin/.claude-plugin/plugin.json` alone: the release writes both, the plugin under the version of the packages; `claude plugin validate . --strict`, `claude plugin validate plugin --strict` and `claude plugin validate plugin/skills --strict` must pass.
 - Details: `CONTRIBUTING.md`.

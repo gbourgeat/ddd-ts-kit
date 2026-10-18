@@ -64,8 +64,8 @@ node --test plugin/hooks/guard.test.mjs
   adds reaches projects as a warning first, and becomes an error one minor version later. A new
   rule takes `warn` as its default (`default-severities.ts` for `ddd-ts-kit check`, `recommended:
   'warn'` for the ESLint rule); a rule that judges more reports what it adds under a rule id of
-  its own, a warning, merged into the rule at the next minor version. `CHANGELOG.md` says
-  it in both versions: what the rule reports, the fix, and `ddd-ts-kit check --rule <id>` to list
+  its own, a warning, merged into the rule at the next minor version. Its file of `changes/` says
+  it, and the one that makes it an error says it again: what the rule reports, the fix, and `ddd-ts-kit check --rule <id>` to list
   the files to take up before it blocks. A project builds while it upgrades; a rule that lands
   as an error stops its main branch and every branch cut from it.
 - A new template compiles as generated and carries `TODO(domain)` markers only where business
@@ -91,8 +91,13 @@ node --test plugin/hooks/guard.test.mjs
   renders it to the committed `site/public/social-card.png`.
 - No em dash or en dash, in any language (`npm run check:dashes`, run by CI).
 - Conventional commits: `<type>(<scope>): <summary>`.
-- A pull request that changes the plugin (skills, agents, hooks) bumps `version` in
-  `plugin/.claude-plugin/plugin.json`, and passes `claude plugin validate . --strict`.
+- What a pull request changes for a user is written in a file of its own,
+  `changes/<what-it-does>.md` ([changes/README.md](changes/README.md)), never in `CHANGELOG.md`;
+  a pull request that changes the plugin (skills, agents, hooks) has one, leaves `version` of
+  `plugin/.claude-plugin/plugin.json` alone, and passes `claude plugin validate . --strict`. Two
+  pull requests then never write the same line: one merged leaves the others mergeable as they
+  are, with their checks still valid. The docs job of the CI holds it
+  (`node pipeline/monorepo/changes.mjs --check --base <ref>`).
 
 ## How a change reaches `main`
 
@@ -126,10 +131,15 @@ states, builds, checks the tarballs, publishes each package to the npm registry 
 and creates the GitHub release. A version with a pre-release part (`0.2.0-rc.1`) is published
 under the `next` tag. A run that stopped half-way is run again: what is already published is
 skipped. The notes of the GitHub release are generated from the merged pull requests;
-`CHANGELOG.md` at the root says in a few lines what a version changes for a user, and is
-written in the pull request that sets the version; the CLI package ships a copy, which agents read
-in `node_modules`. Setting the version also rewrites the version the skills describe, in
-`plugin/hooks/guard.mjs`: the same pull request bumps the version of the plugin.
+`CHANGELOG.md` at the root says in a few lines what a version changes for a user: setting the
+version folds the files of `changes/` into it, in the order they reached `main`, and deletes them;
+the CLI package ships a copy, which agents read in `node_modules`. The plugin is released with the
+packages, under their version: setting it also writes `version` of
+`plugin/.claude-plugin/plugin.json` and the version the skills describe, in
+`plugin/hooks/guard.mjs`, so that every agent shows one number. A version is above the plugin's
+(it numbered itself up to 0.77.0, so the first common version is 0.78.0 or later), and `--expect`
+of the release workflow holds the plugin to the tag. An urgent fix of the plugin is a patch
+release (`--set 0.78.1`), not a version of its own.
 
 **No secret.** The workflow publishes through trusted publishing (OIDC): each package names
 `release.yml` of this repository, in its `npm` environment, as its trusted publisher, and
