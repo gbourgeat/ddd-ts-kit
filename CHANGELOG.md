@@ -4,6 +4,30 @@ What each version changes for someone who uses the kit. The packages of `package
 together, under one version; the notes of each [GitHub release](https://github.com/gbourgeat/ddd-ts-kit/releases)
 list the pull requests behind it.
 
+## Unreleased
+
+**A lint warning fails the lint of a generated project.** `lint` and `ci:lint` ran `eslint .`,
+which exits 0 on warnings: `verify` and the pipeline passed them, a new one as well, and they
+piled up. `init` now writes `eslint . --max-warnings 0` for both, and the example application
+runs the same. The preset keeps its warnings as warnings (`complexity`, `max-depth`,
+`clean/function-size`, `clean/no-flag-argument`, ...) and `init` writes no suppressions file: a
+new project has no warning, so the first one fails `npm run lint`, `verify` and the lint job on
+GitHub and GitLab. The hook before a commit is unchanged: it shows a warning without stopping the
+commit. The quality-gate skill says so; the workflow is in
+[Quality baseline](docs/tools/quality-baseline.md#warnings-fail-the-lint).
+
+To move: nothing changes until the project acts. `npx ddd-ts-kit init` keeps an existing `lint`
+and `ci:lint` and notes what the kit expects; `doctor` lists them as written otherwise, which
+`doctor --strict` does not fail on. To take the limit, run `npx eslint .` and settle each
+warning: fix it, or raise its rule to `error` (its id in the `rules` key of
+`ddd-ts-kit.config.json` for a rule of the kit, a block after the preset in `eslint.config.mjs`
+for `complexity` or `max-depth`) and record the existing findings with
+`npx eslint . --suppress-rule <rule>` (or `--suppress-all`) in `eslint-suppressions.json`,
+committed; once one is fixed, `npx eslint . --prune-suppressions` removes its entry, and the lint
+fails until it does. Then add ` --max-warnings 0` to the two scripts, or run
+`npx ddd-ts-kit init --force`, which also writes every other file and script of the kit over the
+project's. Update the plugin.
+
 ## 0.26.0
 
 **The guard recognises the CLI of the kit however it is launched.** The refusal of

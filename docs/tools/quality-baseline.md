@@ -121,6 +121,61 @@ first and on what changed; the wider ones run later, on every file:
 Without an HTTP boundary a project has no end-to-end script and its pipeline job says so; under
 jest the adapter specs run with the unit specs. The hooks never run coverage before a commit.
 
+## Warnings fail the lint
+
+In a generated project and in the example application, `lint` and `ci:lint` run
+`eslint . --max-warnings 0`: one warning fails `npm run lint`, `verify` and the lint job of the
+pipeline, as an error does. The preset keeps its warnings as warnings (such as `complexity`,
+`max-depth`, `clean/function-size`, `clean/no-flag-argument`, `clean/no-noise-comment`, `any`
+and the non-null assertion in a spec): the editor and the report still tell a judgement call
+from a broken rule, and neither is left behind. A new project has none, and `init` writes no
+suppressions file: the first warning is seen the day it is written. A rule a later version adds
+lands as a warning ([CONTRIBUTING.md](../../CONTRIBUTING.md)): under the limit, the upgrade that
+brings it fails the lint until its findings are fixed or recorded, and the CHANGELOG of that
+version names it. The hook before a commit runs ESLint on the staged files without the limit,
+so it shows a warning without stopping the commit; `verify` and the pipeline stop it.
+
+A project made by an earlier version keeps its own scripts: `init` adds a script a project
+lacks and leaves one it has, with a note naming what the kit expects, and `npx ddd-ts-kit
+doctor` lists `lint` and `ci:lint` as written otherwise, which `doctor --strict` does not fail
+on. Its lint stays as it was until it takes the new scripts: `npx ddd-ts-kit init --force`
+(which writes every file and script of the kit over the project's), or ` --max-warnings 0`
+added by hand to the two scripts. Before that, it settles each rule that warns, one of two
+ways:
+
+1. **Fix the warnings.** `npx eslint .` lists them.
+2. **Record them.** An ESLint bulk suppression records errors only (`--suppress-all` writes
+   nothing for a warning), so the rule is raised to `error` first, then what exists is
+   recorded:
+   - a rule of the kit through its id in the `rules` key of `ddd-ts-kit.config.json`
+     ([CONFIG.md](../CONFIG.md)), `"clean/function-size": "error"`, read by `ddd-ts-kit check`
+     and by the preset; raising a severity needs no decision record;
+   - a standard rule of the preset in `eslint.config.mjs`, after the preset: a severity alone
+     keeps the options of the preset. `complexity` is off in the specs: its block names them in
+     `ignores` (`'**/*.spec.ts'`, `'**/*.test.ts'`, `'**/test/**'`).
+
+```js
+import { dddTsKit } from '@ddd-ts-kit/eslint-plugin';
+
+export default [
+  ...dddTsKit({ tsconfigRootDir: import.meta.dirname }),
+  { files: ['**/*.ts'], rules: { 'max-depth': 'error' } },
+];
+```
+
+```bash
+npx eslint . --suppress-rule max-depth      # one rule; --suppress-all records every rule at error
+npx eslint . --prune-suppressions           # after a recorded finding is fixed
+```
+
+`--suppress-rule` writes `eslint-suppressions.json` at the root of the project, committed with
+the change of severity: for each file, each rule and the count of its findings. From then on
+`npm run lint` fails on a finding beyond the recorded count, of any rule, and on an entry that
+no longer occurs, until `--prune-suppressions` removes it: the file only shrinks. A run that
+leaves contexts out (`--ignore-pattern`, on a pull request) does not judge the entries of the
+files it skips. Adding an entry to get to green is a suppression like an inline one: the
+project owner decides it ([Deviations](../CONFIG.md#deviations)).
+
 ## Coverage
 
 The thresholds are a setting of the project, not of the test runner: the `coverage` key of
