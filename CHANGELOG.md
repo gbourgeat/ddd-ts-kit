@@ -4,6 +4,16 @@ What each version changes for someone who uses the kit. The packages of `package
 together, under one version; the notes of each [GitHub release](https://github.com/gbourgeat/ddd-ts-kit/releases)
 list the pull requests behind it.
 
+## Unreleased
+
+**`init` records the version that wrote the files of the platform.** `ddd-ts-kit.config.json`
+now starts with `"initVersion"`, the version of the CLI whose `init` wrote the files it owns;
+`init --force` rewrites it, and `init` run again to add a context leaves it. Nothing reads it yet:
+it is the first step of an `init` that tells, after an upgrade, a change of its templates from an
+adaptation of the team. A config without the key stays valid.
+
+To move: nothing; `init --force` adds the key to a project initialised before it existed.
+
 ## 0.27.0
 
 **The worktrees of a project live inside it, and a new project writes its code in a worktree.**
@@ -99,14 +109,6 @@ To move: a new project runs its acceptance specs with `npm run test:e2e`; in an 
 `testMatch` of `jest.e2e.config.js`). `npx ddd-ts-kit init` adds the permission of
 `npx ddd-ts-kit acceptance *` and the refusal to edit a lock; update the plugin.
 `ddd-ts-kit check --rule test/acceptance-black-box` lists the acceptance specs to take up.
-
-**`init` records the version that wrote the files of the platform.** `ddd-ts-kit.config.json`
-now starts with `"initVersion"`, the version of the CLI whose `init` wrote the files it owns;
-`init --force` rewrites it, and `init` run again to add a context leaves it. Nothing reads it yet:
-it is the first step of an `init` that tells, after an upgrade, a change of its templates from an
-adaptation of the team. A config without the key stays valid.
-
-To move: nothing; `init --force` adds the key to a project initialised before it existed.
 
 ## 0.26.0
 
