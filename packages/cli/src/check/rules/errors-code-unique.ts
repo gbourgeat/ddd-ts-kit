@@ -1,38 +1,44 @@
 import { buildsThroughFactories } from '../errors/builds-through-factories.js';
-import { errorCodes } from '../errors/error-codes.js';
+import { codesSetIn } from '../errors/codes-set-in.js';
+import { isErrorFile } from '../errors/is-error-file.js';
+import { namesRefusals } from '../errors/names-refusals.js';
 import type { Finding } from '../model/finding.js';
 import type { Rule } from '../model/rule.js';
 import type { SourceFile } from '../model/source-file.js';
 import { perFile } from '../support/per-file.js';
 
-const FIX =
-  'Give each refusal of a context its own code, or call the factory that already sets this one: the HTTP mapping, the OpenAPI document, the audit trail and the tests know a refusal by its code alone.';
+const WHY = 'the HTTP mapping, the OpenAPI document, the audit trail and the tests know a refusal by its code alone.';
+
+const FACTORIES_FIX = `Give each refusal of a context its own code, or call the factory that already sets this one: ${WHY}`;
+
+const NAMED_FIX = `Give each refusal class of the context its own value in domain/errors/codes.ts, or throw the refusal that already has this code from one of its factories: ${WHY}`;
 
 export const errorsCodeUnique: Rule = {
   id: 'errors/code-unique',
   description:
-    'Under "stack.refusals": "factories", a code is given to one refusal of a context: no two factories, and no two error classes, of the domain/errors/ of a context set the same code.',
+    'Under "stack.refusals": "factories" or "named", a code is given to one refusal of a context: no two factories, no two error classes and no two entries of domain/errors/codes.ts, of the domain/errors/ of a context, set the same code.',
   scope: 'project',
   run(project) {
     if (!buildsThroughFactories(project)) {
       return [];
     }
 
+    const fix = namesRefusals(project) ? NAMED_FIX : FACTORIES_FIX;
     // Remembers, across the error files of a context, where each code was first written.
     const firstUse = new Map<string, string>();
 
-    return perFile(project, this.id, (file) => codesTaken(file, firstUse));
+    return perFile(project, this.id, (file) => codesTaken(file, firstUse, fix));
   },
 };
 
-function codesTaken(file: SourceFile, firstUse: Map<string, string>): Finding[] {
+function codesTaken(file: SourceFile, firstUse: Map<string, string>, fix: string): Finding[] {
   const { location } = file;
 
-  if (location.area !== 'context' || location.layer !== 'domain' || location.inside[0] !== 'errors' || file.isTest) {
+  if (location.area !== 'context' || !isErrorFile(file)) {
     return [];
   }
 
-  return errorCodes(file.scan).flatMap(({ code, line }) => {
+  return codesSetIn(file).flatMap(({ code, line }) => {
     const key = `${location.context} ${code}`;
     const first = firstUse.get(key);
 
@@ -42,6 +48,6 @@ function codesTaken(file: SourceFile, firstUse: Map<string, string>): Finding[] 
 
     return first === undefined
       ? []
-      : [{ line, message: `The code "${code}" is already set in ${first}, in the same context.`, fix: FIX }];
+      : [{ line, message: `The code "${code}" is already set in ${first}, in the same context.`, fix }];
   });
 }
