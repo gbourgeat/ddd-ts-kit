@@ -4,7 +4,7 @@ What each version changes for someone who uses the kit. The packages of `package
 together, under one version; the notes of each [GitHub release](https://github.com/gbourgeat/ddd-ts-kit/releases)
 list the pull requests behind it.
 
-## Unreleased
+## 0.27.0
 
 **The worktrees of a project live inside it, and a new project writes its code in a worktree.**
 `worker-scope`, `story-scope` and the new `ddd-ts-kit worktree <name>` (any other piece of work,
