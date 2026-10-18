@@ -33,12 +33,16 @@ function project(config = {}, flags = []) {
   if (Object.keys(config).length > 0) {
     patchConfig(root, config);
   }
+  launcher(root);
+  return root;
+}
+
+// A launcher like the one npm writes: the compiled entry file itself is not executable.
+function launcher(root) {
   mkdirSync(join(root, 'node_modules', '.bin'), { recursive: true });
-  // A launcher like the one npm writes: the compiled entry file itself is not executable.
   writeFileSync(join(root, 'node_modules', '.bin', 'ddd-ts-kit'), `#!/bin/sh\nexec node "${cli}" "$@"\n`, {
     mode: 0o755,
   });
-  return root;
 }
 
 function patchConfig(root, patch) {
@@ -577,6 +581,53 @@ test('in the worktree of a story, the code waits for each row designed and the a
     undefined,
   );
   assert.ok(existsSync(join(root, '.ddd-ts-kit/guard/story-gate.json')));
+});
+
+// Two stories open in two worktrees of one repository, the CLI of the kit installed in each.
+function twoStories() {
+  const root = project();
+  put(root, '.gitignore', 'node_modules\n.ddd-ts-kit/\n');
+  put(
+    root,
+    'docs/architecture/slices.md',
+    `${STORY_SLICES}| US6.01 | billing | slice | Issue invoice | \`generate command billing IssueInvoice --public\` | | billing | todo |\n`,
+  );
+  git(root, 'init', '--quiet', '--initial-branch', 'main');
+  git(root, 'add', '--all');
+  git(root, 'commit', '--quiet', '--no-verify', '--message', 'chore: bootstrap');
+  return Object.fromEntries(
+    ['us5', 'us6'].map((code) => {
+      const worktree = `${root}-${code}`;
+      git(root, 'worktree', 'add', '--quiet', '-b', `story/${code}`, worktree);
+      put(
+        worktree,
+        '.ddd-ts-kit/story.json',
+        JSON.stringify({ story: code.toUpperCase(), base: 'main', branch: `story/${code}` }),
+      );
+      launcher(worktree);
+      return [code, worktree];
+    }),
+  );
+}
+
+test('in the worktree of a story, a write to a file another open story changes is said once, and so is where they meet at session start', () => {
+  const { us5, us6 } = twoStories();
+  put(us6, 'docs/notes.md', 'US6\n');
+  const first = run('pre-write', write(join(us5, 'docs/notes.md'), { session_id: 'crossing' }));
+  assert.match(
+    first.output.hookSpecificOutput.additionalContext,
+    /US6 \(story\/us6, .*\) changes docs\/notes\.md too\./,
+  );
+  assert.match(first.output.hookSpecificOutput.additionalContext, /npx ddd-ts-kit stories/);
+  assert.equal(run('pre-write', write(join(us5, 'docs/notes.md'), { session_id: 'crossing' })).output, undefined);
+  assert.equal(
+    run('pre-write', write(join(us5, 'docs/architecture/slices.md'), { session_id: 'crossing' })).output,
+    undefined,
+  );
+  put(us5, 'docs/notes.md', 'US5\n');
+  rmSync(join(us5, '.ddd-ts-kit/guard/stories.json'));
+  const started = run('session', { cwd: us5 }).output.hookSpecificOutput.additionalContext;
+  assert.match(started, /It meets story US6: 1 file\(s\) both change\./);
 });
 
 test('a session of a story starts on its phase and ends on its report, refused once for the same step', () => {

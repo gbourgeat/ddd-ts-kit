@@ -38,8 +38,9 @@ until phase 5 is met. Reading costs: [../start/token-economy.md](../start/token-
 
 ## 0. Its worktree
 
-From the checkout of the trunk: `npx ddd-ts-kit story-scope $0`. It opens `../<project>-<story>`
-on `story/<story>` (or finds it again: the story resumes where it was left), installs it, and
+From the checkout of the trunk, after `git fetch`: `npx ddd-ts-kit story-scope $0`. It opens
+`../<project>-<story>` on `story/<story>`, cut from the branch the trunk follows (`origin/main`)
+when it has one (or finds it again: the story resumes where it was left), installs it, and
 names the other stories open in the repository with the contexts they change. From now on every
 command is `cd <worktree> && ...` and every file is written by its absolute path under the
 worktree. A story it names on the same contexts is being built in another terminal: read its
@@ -67,7 +68,10 @@ exists, it is the one reason to stop: write the report (phase 8) with the questi
 Skill `ddd-ts-kit:plan-slices` for this story alone: rows `$0.01`, `$0.02`, ... in
 `docs/architecture/slices.md`, contracts and skeletons first, each `slice` row a use case one
 agent builds in one context. Glossary terms the rows need go in the `CONTEXT.md` of their
-context now (the guard leaves it open).
+context now (the guard leaves it open). Before cutting them, `npx ddd-ts-kit stories`: the
+other open stories, the contexts and files they change, what merging their branch into yours
+would leave to settle by hand. Keep your rows off what they change when the story allows it;
+otherwise record which story lands first as a decision.
 
 ## 3. A design review of each row
 
@@ -95,7 +99,9 @@ not pass: do what its `Next:` line says, never write around it.
 
 ## 6. Build, row by row
 
-In the order of `npx ddd-ts-kit plan-waves`, one row at a time:
+In the order of `npx ddd-ts-kit plan-waves`, one row at a time, each started with `git fetch`
+and `npx ddd-ts-kit stories` (a conflict for you with the trunk is brought in now, with
+`merge-trunk`, while it is small):
 
 - a `contract` or `skeleton` row: yourself, with its generator commands, then
   `npx ddd-ts-kit verify-slice <context> --since <base>` and its commit;
@@ -113,7 +119,7 @@ plugin builds each row itself with skill `ddd-ts-kit:use-case`.
 
 ## 7. Close
 
-1. Bring the trunk in: commit, then `npx ddd-ts-kit merge-trunk --trunk <base>`. It settles what
+1. Bring the trunk in: commit, `git fetch`, then `npx ddd-ts-kit merge-trunk --trunk <base>`. It settles what
    the kit derives and leaves the rest to you, as skill `ddd-ts-kit:parallel-work` says; settle
    it, then `npx ddd-ts-kit merge-trunk --continue`.
 2. The `architecture-reviewer` agent on the branch (`--changed-since <base>`): blocking findings
@@ -137,5 +143,9 @@ not verified. `npx ddd-ts-kit story $0 --gate close` passes. Commit, push the br
   `## Decisions` (what, why, the alternatives, where), go on.
 - Never lower a rule, skip a test, suppress a check or change a locked scenario to get to
   green: skill `ddd-ts-kit:deviation`; it is a decision for the report, not one to take.
+- The guard says, once per file, when you write a file another open story changes too, and at
+  session start where the stories meet and how far the trunk moved: keep the change to what the
+  row needs, and say in the report which story lands first. The second to land settles the
+  conflict with `merge-trunk`.
 - The guard refuses to end the session before the report: a story that is truly blocked ends
   with a report that says what blocks it.

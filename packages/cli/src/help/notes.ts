@@ -109,10 +109,16 @@ export const NOTES = `  affected         what a pull request has to run: the con
   story            where a story stands, phase by phase: its specification and criteria
                    (docs/architecture/stories/<story>.md), its rows in slices.md, a design review section
                    per row not done (docs/architecture/reviews/<story>.md, ## #<id>), its acceptance written
-                   and locked, its rows done, its acceptance passing, its ## Report; and the next step; in
-                   the worktree of a story, the story is its own; --gate build exits 1 until the first four
-                   are met (the code may start: the guard of the plugin opens the contexts), --gate close
-                   until all are
+                   and locked, its rows done, its acceptance passing, its trunk merged in, its ## Report; and
+                   the next step; in the worktree of a story, the story is its own; --gate build exits 1
+                   until the first four are met (the code may start: the guard of the plugin opens the
+                   contexts), --gate close until all are
+  stories          the stories open in the worktrees of the repository and where two of them meet: the
+                   contexts the rows of both name, the files both worktrees change (committed or not), what
+                   merging the branch of one into the other leaves to a person and what merge-trunk settles
+                   (git merge-tree, nothing written); how far each is behind its base; from the worktree of a
+                   story, the stories it meets; the guard of the plugin says it at session start and on a
+                   write to a file another story changes
   --resume         worker-scope reads where the stopped worker of the context stands (its rows by their
                    Slice: trailer, the files of the row under way, the markers, its last verify-slice, its
                    report, its agent as the guard recorded it) and prints the message that resumes its agent

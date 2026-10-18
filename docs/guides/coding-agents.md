@@ -65,7 +65,8 @@ commit a slice that passed `verify-slice` or to rewrite a stale report). At sess
 names the workers to resume ([parallel work](parallel-work.md#when-an-agent-stops)). In the
 worktree of a story (`.ddd-ts-kit/story.json`), it refuses any code of a context until each row
 has its design review and the acceptance is written and locked, says the phase of the story at
-session start, and refuses once to end the session before its report
+session start with where it meets the other open stories, says once per file when the session
+writes a file another open story changes, and refuses once to end the session before its report
 ([story workflow](story-workflow.md)). No hook
 runs on every tool call: an ordinary session starts no more processes than before. It fails open: a broken guard never blocks work. Set
 `"guard": "advise"` in the config to be asked instead of refused, `"off"` to silence it.

@@ -61,7 +61,7 @@ describe('agent settings', () => {
     expect(keysAt(readJson(root, SETTINGS))).toEqual(['permissions']);
     expect(keysAt(readJson(root, SETTINGS), 'permissions')).toEqual(['allow', 'deny', 'ask']);
     expect(permissions(root, 'allow')).toEqual(expect.arrayContaining(allowed));
-    expect(permissions(root, 'allow')).toHaveLength(28);
+    expect(permissions(root, 'allow')).toHaveLength(30);
     expect(permissions(root, 'deny')).toEqual(DENIED);
     expect(permissions(root, 'ask')).toEqual(ASKED);
   });
@@ -88,7 +88,7 @@ describe('agent settings', () => {
     expect(permissions(root, 'deny')).toContain('Edit(./openapi/**)');
 
     expect(stringsAt(report, 'notes').join('\n')).toMatch(
-      /\.claude\/settings\.json gained 46 permission\(s\): allow Bash\(npx ddd-ts-kit check \*\)/,
+      /\.claude\/settings\.json gained 48 permission\(s\): allow Bash\(npx ddd-ts-kit check \*\)/,
     );
 
     expect(stringsAt(cli(root, 'init', '--json').json(), 'updated')).not.toContain(SETTINGS);

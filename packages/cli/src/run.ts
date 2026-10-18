@@ -21,6 +21,7 @@ import { planWavesCommand } from './commands/plan-waves.js';
 import { sdkCommand } from './commands/sdk.js';
 import { statusCommand } from './commands/status.js';
 import { storyCheckCommand } from './commands/story-check.js';
+import { storiesCommand } from './commands/stories.js';
 import { storyCommand } from './commands/story.js';
 import { storyScopeCommand } from './commands/story-scope.js';
 import { todoCommand } from './commands/todo.js';
@@ -48,6 +49,7 @@ const COMMANDS: Readonly<Record<string, Command>> = {
   acceptance: acceptanceCommand,
   'story-scope': storyScopeCommand,
   story: storyCommand,
+  stories: storiesCommand,
   'worker-scope': workerScopeCommand,
   'verify-slice': verifySliceCommand,
   cited: citedCommand,
