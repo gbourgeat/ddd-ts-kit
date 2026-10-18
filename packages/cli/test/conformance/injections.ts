@@ -7,6 +7,7 @@ import { ERROR_INJECTIONS } from './injections/error-injections.js';
 import { SCHEMA_INJECTIONS } from './injections/schema-injections.js';
 import { EVENT_SOURCING_INJECTIONS } from './injections/event-sourcing-injections.js';
 import { LIFECYCLE_INJECTIONS } from './injections/lifecycle-injections.js';
+import { PERSISTENCE_INJECTIONS } from './injections/persistence-injections.js';
 import { STRUCTURE_INJECTIONS } from './injections/structure-injections.js';
 import { VALUE_OBJECT_INJECTIONS } from './injections/value-object-injections.js';
 import { WIRING_INJECTIONS } from './injections/wiring-injections.js';
@@ -15,6 +16,7 @@ import { WIRING_INJECTIONS } from './injections/wiring-injections.js';
 export const INJECTIONS: readonly Injection[] = [
   ...BOUNDARY_INJECTIONS,
   ...STRUCTURE_INJECTIONS,
+  ...PERSISTENCE_INJECTIONS,
   ...CLEAN_INJECTIONS,
   ...BEHAVIOUR_INJECTIONS,
   ...VALUE_OBJECT_INJECTIONS,

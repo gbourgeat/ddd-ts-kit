@@ -1,5 +1,5 @@
 [English](static-analysis-and-pipeline.md) · **Français**
-<!-- translation-of: static-analysis-and-pipeline.md sha256:28da5483cd275b28 -->
+<!-- translation-of: static-analysis-and-pipeline.md sha256:51fda6e95ede6d47 -->
 
 # L'analyse statique et le pipeline
 
@@ -166,7 +166,9 @@ Ce que reçoit chaque projet, outil par outil, est sur la page du
   nom absent du glossaire ou un cycle dans la carte des contextes ne sont pas des faits d'un seul
   fichier.
 - **Le coût d'un faux positif.** Une règle heuristique (commentaires de bruit, code commenté) est
-  par défaut un avertissement ; les règles structurelles sont par défaut des erreurs.
+  par défaut un avertissement ; les règles structurelles sont par défaut des erreurs. Les scripts
+  `lint` et `ci:lint` échouent sur les deux (`ddd-ts-kit lint`, sauf pour une règle du kit en transition, affichée sans échouer) : un avertissement dit de quelle
+  sorte est le constat, pas qu'il peut rester.
 
 Mis bout à bout, un projet généré fait tourner chaque analyseur au moment que son coût permet :
 
@@ -211,6 +213,11 @@ commit-msg:
     - name: conventional commit
       run: npx --no -- commitlint --edit {1}
 ```
+
+Le *job* ESLint d'avant *commit* n'a pas de `--max-warnings` : il affiche un avertissement et
+laisse passer le *commit*, et `npm run lint`, `verify` et le *pipeline* échouent dessus. Comment un
+projet fait par une version antérieure prend la limite, en corrigeant ou en consignant les
+avertissements qu'il a déjà : [Base de qualité](quality-baseline.fr.md#un-avertissement-fait-échouer-le-lint).
 
 ## TypeScript 6 et 7 côte à côte
 
@@ -294,6 +301,7 @@ et sur un poste de travail, `npm run ci:arch`, qui lance les deux.
 | Exécutions redondantes | annulées par des groupes de concurrence | annulées par des *jobs* interruptibles |
 | Portes | les mêmes scripts `ci:*` | les mêmes scripts `ci:*` |
 | Constats de lint et d'architecture | des annotations sur la *pull request* (`check --format github`) | des rapports Code Quality (`check --format gitlab` écrit directement le rapport ; ESLint par son formateur GitLab) |
+| Un avertissement de lint | fait échouer le *job* de lint (`ci:lint` lance `ddd-ts-kit lint` ; une règle du kit en transition est affichée sans échouer) | fait échouer le *job* de lint, et figure dans le rapport Code Quality |
 | La raison d'une règle, pour qui relit | `check --format github --explain` : chaque annotation se termine par elle | `check --format gitlab --explain` : chaque problème se termine par elle, les empreintes inchangées |
 | Rapports de tests | le *reporter* Vitest pour Actions, la couverture comme artefact | des rapports JUnit et Cobertura dans la *merge request* |
 | Recherche de secrets | gitleaks | gitleaks |
@@ -389,7 +397,7 @@ page.)
 | Situation | Choix |
 |---|---|
 | Un projet généré par `init` | tout garder tel que généré ; marquer le *job* de porte unique comme obligatoire |
-| Adopter le kit dans une base de code existante | commencer par le *checker* et le *preset* ESLint en `warn` là où l'existant échoue, chaque assouplissement consigné avec son enregistrement de décision ; ajouter dependency-cruiser quand l'arborescence est en place |
+| Adopter le kit dans une base de code existante | commencer par le *checker* et le *preset* ESLint ; consigner les constats de lint que l'existant a déjà dans `eslint-suppressions.json` (`npx eslint . --suppress-all`, un avertissement passé d'abord à `error`), qui ne fait ensuite que rétrécir ; chaque assouplissement d'une règle consigné avec son enregistrement de décision ; ajouter dependency-cruiser quand l'arborescence est en place |
 | La boucle d'édition d'un agent de code | la vérification par fichier après chaque écriture, la porte complète avant de terminer |
 | Un monorepo avec ses propres outils de frontières | les garder pour les frontières entre *packages* ; les règles du kit s'appliquent toujours à l'intérieur de chaque service |
 | TypeScript 7 seul, sans TypeScript 6 | pas possible aujourd'hui avec le lint typé ; garder les deux |

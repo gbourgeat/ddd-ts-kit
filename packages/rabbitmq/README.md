@@ -354,7 +354,9 @@ and outlines SQS/SNS, which is not built.
 
 ## Testing
 
-The suites need a real broker and are skipped without `DDD_TS_KIT_TEST_AMQP_URL`:
+The codec of the envelope, the settings and their defaults, the topology description and the
+failure codes are covered without a broker, in the unit run. The other suites need a real
+broker and are skipped without `DDD_TS_KIT_TEST_AMQP_URL`:
 
 ```
 docker run -d --rm --name ddd-ts-kit-test-rabbitmq -e RABBITMQ_DEFAULT_USER=kit -e RABBITMQ_DEFAULT_PASS=kit -p 127.0.0.1:5672:5672 rabbitmq:4-management-alpine

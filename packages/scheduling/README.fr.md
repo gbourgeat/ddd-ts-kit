@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:2f1532d34dd0d64d -->
+<!-- translation-of: README.md sha256:67deda4742409f0f -->
 
 # @ddd-ts-kit/scheduling
 
@@ -175,8 +175,11 @@ Chaque champ accepte `*`, une valeur, un intervalle `a-b`, un pas sur l'un ou l'
 `8-18/2`) et des listes de ceux-ci (`0,30`, `mon-fri`). Les noms ignorent la casse. Quand le jour
 du mois et le jour de la semaine sont tous deux restreints (aucun ne commence par `*`), un jour qui
 convient à l'un ou à l'autre convient, comme dans tout cron : `0 0 13 * fri` est le 13 et chaque
-vendredi. Non pris en charge : `@daily` et ses semblables, `?`, `L`, `W`, `#`, un pas sur une
-valeur seule (`5/15`), un intervalle qui fait le tour (`fri-mon`).
+vendredi. Un raccourci vaut ses cinq champs, quelle que soit la casse : `@yearly` et `@annually`
+valent `0 0 1 1 *`, `@monthly` vaut `0 0 1 * *`, `@weekly` vaut `0 0 * * 0`, `@daily` et
+`@midnight` valent `0 0 * * *`, `@hourly` vaut `0 * * * *` ; un diagnostic le montre tel qu'il est
+écrit. Non pris en charge : `@reboot` (un *job* planifié n'a pas d'occurrence au démarrage), `?`,
+`L`, `W`, `#`, un pas sur une valeur seule (`5/15`), un intervalle qui fait le tour (`fri-mon`).
 
 **Les fuseaux horaires** sont des noms IANA, évalués avec `Intl.DateTimeFormat`, sans dépendance :
 les règles sont celles du *runtime*, mises à jour avec lui. Les champs sont lus sur les horloges

@@ -22,8 +22,20 @@ const MONTH: CronField = { label: 'month', min: 1, max: 12, names: MONTH_NAMES }
 
 const DAY_OF_WEEK: CronField = { label: 'day of week', min: 0, max: 7, names: DAY_NAMES };
 
+/** The shorthands most cron implementations accept, each one a fixed set of five fields. `@reboot` is not one: a scheduled job has no occurrence at start. */
+const SHORTHANDS = new Map([
+  ['@yearly', '0 0 1 1 *'],
+  ['@annually', '0 0 1 1 *'],
+  ['@monthly', '0 0 1 * *'],
+  ['@weekly', '0 0 * * 0'],
+  ['@daily', '0 0 * * *'],
+  ['@midnight', '0 0 * * *'],
+  ['@hourly', '0 * * * *'],
+]);
+
 export function parseCron(expression: string, timeZone: string): ParsedCron {
-  const fields = expression.trim().split(/\s+/);
+  const written = expression.trim();
+  const fields = fieldsOf(written);
   const [minute, hour, dayOfMonth, month, dayOfWeek] = fields;
 
   if (
@@ -43,7 +55,7 @@ export function parseCron(expression: string, timeZone: string): ParsedCron {
 
   return firing({
     kind: 'cron',
-    expression: fields.join(' '),
+    expression: written.startsWith('@') ? written : fields.join(' '),
     timeZone,
     minutes: valuesOf(minute, MINUTE),
     hours: valuesOf(hour, HOUR),
@@ -54,6 +66,23 @@ export function parseCron(expression: string, timeZone: string): ParsedCron {
     dayOfWeekRestricted: !dayOfWeek.startsWith('*'),
     everyHour: hour.startsWith('*'),
   });
+}
+
+/** The fields of an expression, a shorthand replaced by the five it stands for. */
+function fieldsOf(written: string): string[] {
+  if (!written.startsWith('@')) {
+    return written.split(/\s+/);
+  }
+
+  const expanded = SHORTHANDS.get(written.toLowerCase());
+
+  if (expanded === undefined) {
+    throw new InvalidJobScheduleError(
+      `Cron "${written}" is not a shorthand a scheduled job runs on: write five fields or one of ${[...SHORTHANDS.keys()].join(', ')}.`,
+    );
+  }
+
+  return expanded.split(' ');
 }
 
 function assertTimeZone(timeZone: string): void {
