@@ -6,6 +6,100 @@ list the pull requests behind it.
 
 ## Unreleased
 
+**The worktrees of a project live inside it, and a new project writes its code in a worktree.**
+`worker-scope`, `story-scope` and the new `ddd-ts-kit worktree <name>` (any other piece of work,
+on `work/<name>`, cut from `origin/main` when run from the trunk, installed) open their worktree
+in `.worktrees/` of the main checkout, whichever worktree they run from, instead of a sibling
+folder `../<project>-<name>`; `plan-waves` names `.worktrees/<context>-<batch>`. `init` lists
+`.worktrees/` in `.gitignore`, the formatter, ESLint, the checker and the Docker context leave it
+out. A new project gets `"worktrees": "required"`: the guard of the plugin refuses the code of a
+context and the generators that write it (`context`, `adr` and `acceptance` aside) in the main
+checkout of the trunk, and says so at session start with the command that opens a worktree; the
+conductor of a parallel build writes its contracts and skeletons in a worktree of its own and
+lands them as a pull request. In a worktree of `.worktrees/` without its own `node_modules`,
+whose Node would resolve the packages of the main checkout above it, the guard refuses that code
+until it is installed. `story-scope` and `worktree` take the remote branch of the trunk as their
+base only from the trunk itself: any other branch is its own base.
+
+To move: nothing is required. A project started before has no `worktrees` key, read as
+`"advised"`: the guard only says where the code goes. Run `npx ddd-ts-kit init` once to add
+`.worktrees/` to `.gitignore` (until then the commands open their worktrees next to the project,
+as before, with a note), commit it, and set `"worktrees": "required"` when the team works in
+worktrees. Update the plugin, and `@ddd-ts-kit/eslint-plugin` for its ignore of `.worktrees/`;
+add `"!**/.worktrees"` to the `files.includes` of `biome.json`. A worktree opened before keeps its
+place: `git worktree move <path> .worktrees/<name>` moves it.
+
+**Where the open stories meet, while they are built.** The new command `ddd-ts-kit stories`
+lists the stories open in the worktrees of the repository and, for each pair that meets, the
+contexts the rows of both name, the files both worktrees change (committed or not, those
+`merge-trunk` settles by their kind aside), and what merging the branch of one into the other
+would leave to settle by hand and what `merge-trunk` settles alone, computed with
+`git merge-tree` without writing anything; for each story, how far it is behind its trunk and
+what bringing the trunk in would leave to a person. From the worktree of a story it names the
+stories that one meets. The guard of the plugin says it at session start in the worktree of a
+story, with the trunk that moved and a last fetch more than an hour old, and says once per file
+when the session writes a file another open story changes. `story --gate close` now also waits
+for the trunk merged in (the phase `trunk`), and `story-scope` cuts a story from the branch the
+current one follows (`origin/main` for `main`) when it has one, so that a `git fetch` is enough
+to see the trunk move: nothing of the kit goes to the network. The skill `story` reads
+`stories` before cutting the rows and before each row, and fetches before closing.
+
+To move: `npx ddd-ts-kit init` adds the permission of `npx ddd-ts-kit stories`; update the
+plugin. A story opened before this version keeps its base: `story-scope` resumes it as it was.
+
+**One session takes one user story to its pull request, one story per terminal.** The new skill
+`/ddd-ts-kit:story <code>` (run by the owner) works in the worktree of the story: it asks every
+question at once, then without stopping writes `docs/architecture/stories/<code>.md` (statement,
+questions and answers, acceptance criteria, decisions), the rows of the story, a design review
+section per row in `docs/architecture/reviews/<code>.md` read by `architecture-reviewer`, the
+acceptance written and locked; it builds row by row with one `context-builder` agent confined to
+one context, merges the trunk in, reviews, verifies, writes `## Report` (each provisional
+decision, compromise and amendment) and opens the pull request. New commands:
+`ddd-ts-kit story-scope <code>` opens the worktree of a story on `story/<code>` (or finds it
+again), refuses a story open in another worktree and names the other open stories with the
+contexts they change; `ddd-ts-kit story [<code>] [--gate build|close]` says where a story stands,
+phase by phase, and its next step; `worker-scope <context> --here` briefs the next agent inside
+the worktree of a story, without a worktree of its own. In the worktree of a story, the guard of
+the plugin refuses any code of a context until `story --gate build` passes, says the phase at
+session start, and refuses once to end the session before the report. New guide:
+[story workflow](docs/guides/story-workflow.md).
+
+To move: update the plugin; `npx ddd-ts-kit init` adds the permissions of `story` and
+`story-scope`.
+
+**A story's acceptance tests are written, locked and run before its code, and a locked scenario
+changes only with its criterion.** A story states its acceptance criteria in
+`docs/architecture/stories/<story>.md` (`- AC1: ...` under `## Acceptance criteria`).
+`ddd-ts-kit generate acceptance <story>` writes `test/acceptance/<story>.acceptance.spec.ts`, an
+`it.todo` per criterion (per slice row when the story states none), on the support of
+`test/e2e/`. Each scenario names the rows that make it pass and the criterion it proves
+(`'#US5.02 AC1 ...'`) and runs wrapped in the new `pending(...)` of `@ddd-ts-kit/testing/e2e`:
+it passes while an assertion fails, and fails once the scenario passes (the slice removes the
+wrapper) or stops on anything but an assertion (the scenario is broken). The new command
+`ddd-ts-kit acceptance [<story>]` reads the scenarios against the rows of `slices.md` and the
+criteria: `--gate written` before the code (every slice row and criterion covered, nothing left
+to write, the acceptance locked), `--gate passing` before the story closes. `--lock` writes
+`test/acceptance/<story>.acceptance.lock.json`, the fingerprint of each criterion and scenario
+(the wrapper, the layout and the comments aside). Afterwards a criterion changed, or a scenario
+changed or removed while its criteria were not, is reported whatever the gate, and locking again
+takes a verdict `amend` on that very version from the new `acceptance-judge` agent, which compares
+the locked version, the new one, the criterion and the owner's answers
+(`test/acceptance/verdicts/*.md`); a refusal wins, and the verdicts become amendments the command
+lists for the owner to validate. The guard of the plugin lets a sub-agent only remove
+`pending(...)` in an acceptance spec, refuses it `acceptance --lock`, lets the judge alone write a
+verdict and nothing else, refuses the lock and the verdicts to any hand edit or shell write, and
+refuses an acceptance spec written by hand instead of generated. `verify-slice` stages the
+acceptance spec with the slice. The new rule `test/acceptance-black-box` (a warning) refuses an
+acceptance spec that imports from the source root anything but the builders and the published
+language of a context. The skills `testing`, `use-case`, `plan-slices`, `quality-gate`,
+`parallel-work` and the `context-builder` agent follow.
+
+To move: a new project runs its acceptance specs with `npm run test:e2e`; in an existing one, add
+`'test/acceptance/**/*.acceptance.spec.ts'` to the `include` of `vitest.e2e.config.ts` (the
+`testMatch` of `jest.e2e.config.js`). `npx ddd-ts-kit init` adds the permission of
+`npx ddd-ts-kit acceptance *` and the refusal to edit a lock; update the plugin.
+`ddd-ts-kit check --rule test/acceptance-black-box` lists the acceptance specs to take up.
+
 **`init` records the version that wrote the files of the platform.** `ddd-ts-kit.config.json`
 now starts with `"initVersion"`, the version of the CLI whose `init` wrote the files it owns;
 `init --force` rewrites it, and `init` run again to add a context leaves it. Nothing reads it yet:

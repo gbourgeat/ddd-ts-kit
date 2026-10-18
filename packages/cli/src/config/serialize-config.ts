@@ -65,6 +65,7 @@ function optionalKeys(config: Config): Record<string, unknown> {
     ...writtenBusinessNames(businessNames),
     ...(sized ? { commit } : {}),
     ...(worker ? { worker } : {}),
+    ...(config.worktrees === 'advised' ? {} : { worktrees: config.worktrees }),
     ...pipelineKeys(config),
   };
 }

@@ -1,5 +1,5 @@
 [English](CONFIG.md) · **Français**
-<!-- translation-of: CONFIG.md sha256:bf2d3ba4b17ed8ca -->
+<!-- translation-of: CONFIG.md sha256:1e818296d95a945e -->
 
 # `ddd-ts-kit.config.json`
 
@@ -561,6 +561,7 @@ même listés dans une liste d'autorisation.
 |---|---|---|
 | `commit` | `{ "maxFiles": 20, "maxLines": 600 }` : taille conseillée d'un *commit*, lue par `ddd-ts-kit check --commit-size` (indicatif, `--strict` sort en 1) et par le *hook* d'éditeur (un rappel, jamais bloquant). Les fichiers générés ne sont pas comptés. Une limite qui n'est pas un entier positif est lue comme sa valeur par défaut et signalée | comme montré |
 | `guard` | `enforce`, `advise`, `off` : comment le *hook* d'éditeur du *plugin* réagit à une violation. La variable d'environnement `DDD_TS_KIT_GUARD` l'emporte sur elle | `enforce` |
+| `worktrees` | `required`, `advised` : où la garde du *plugin* laisse une session écrire le code d'un contexte. `required` : dans un *worktree* seulement (`npx ddd-ts-kit worktree <name>`, `story-scope`, `worker-scope`, tous sous `.worktrees/`) ; dans le *checkout* principal, sur la branche du tronc, le code des contextes et les générateurs qui l'écrivent sont refusés. `advised` : partout, avec un avis au démarrage de la session, ce que garde un projet démarré avant cette clé tant qu'elle n'est pas posée | `required` dans un projet que crée `init`, `advised` quand la clé est absente |
 | `worker` | `true`, `false` : le projet a `src/apps/worker/main.ts` ; les *jobs* planifiés tournent alors là et non dans le processus de l'API. `generate worker` la pose | `false` |
 | `deviations[]` | `{ "what", "adr", "reason" }` : une exception enregistrée ; `adr` nomme un `docs/adr/<number>-*.md` existant | `[]` |
 
@@ -725,7 +726,7 @@ dérogation :
 ## Limites
 
 L'analyseur est tolérant : une clé qu'il ne connaît pas est ignorée sans message, et une
-classification, une relation, un identifiant de règle, un mode de garde, une extension d'import
+classification, une relation, un identifiant de règle, un mode de garde, un mode des *worktrees*, une extension d'import
 ou un taux de couverture erronés sont signalés par `check` sous `config/valid`, pas à la lecture
 du fichier. Seule une valeur `stack.*` erronée, ou un fichier qui n'est pas un objet JSON,
 arrête une commande.

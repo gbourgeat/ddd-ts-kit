@@ -540,6 +540,7 @@ even when listed in an allow-list.
 |---|---|---|
 | `commit` | `{ "maxFiles": 20, "maxLines": 600 }`: advised size of one commit, read by `ddd-ts-kit check --commit-size` (advisory, `--strict` exits 1) and by the editor hook (a reminder, never blocking). Generated files are not counted. A limit that is not a positive integer is read as its default and reported | as shown |
 | `guard` | `enforce`, `advise`, `off`: how the editor hook of the plugin reacts to a violation. The environment variable `DDD_TS_KIT_GUARD` takes precedence over it | `enforce` |
+| `worktrees` | `required`, `advised`: where the guard of the plugin lets a session write the code of a context. `required`: in a worktree only (`npx ddd-ts-kit worktree <name>`, `story-scope`, `worker-scope`, all under `.worktrees/`); in the main checkout, on the branch of the trunk, the code of the contexts and the generators that write it are refused. `advised`: anywhere, with a notice at session start, what a project started before this key keeps until it is set | `required` in a project `init` creates, `advised` when the key is absent |
 | `worker` | `true`, `false`: the project has `src/apps/worker/main.ts`; scheduled jobs then run there and not in the API process. `generate worker` sets it | `false` |
 | `deviations[]` | `{ "what", "adr", "reason" }`: a recorded exception; `adr` names an existing `docs/adr/<number>-*.md` | `[]` |
 
@@ -701,6 +702,6 @@ deviation:
 ## Limits
 
 The parser is tolerant: a key it does not know is ignored without a message, and a wrong
-classification, relationship, rule id, guard mode, import extension or coverage rate is reported by `check` as `config/valid`,
+classification, relationship, rule id, guard mode, worktrees mode, import extension or coverage rate is reported by `check` as `config/valid`,
 not when the file is read. Only a wrong `stack.*` value, or a file that is not a JSON object,
 stops a command.
