@@ -486,6 +486,41 @@ and purges a second time two seconds later: a read that loaded the old hours bef
 may reach Varnish after the first purge. The `PUT` itself may carry the `ETag` of the hours it
 read (`If-Match`): when somebody changed them since, the answer is 412.
 
+## Recommended steps
+
+Follow them in order: it is the path the kit supports, and each step leaves what the next one
+reads. This example followed them from its statement of needs, and each step below names what it
+left here. With the ddd-ts-kit plugin of Claude Code, `/ddd-ts-kit:start` conducts steps 1 to 7
+and records them in `docs/architecture/plan.md`; `npx ddd-ts-kit status` (`node scripts/kit.mjs
+status` in this repository) says which step is next.
+
+1. **Discover the domain** (`/ddd-ts-kit:discover-domain`): actors, commands, events and
+   policies. Here: [discovery.md](docs/architecture/discovery.md).
+2. **Find the bounded contexts** (`/ddd-ts-kit:bounded-contexts`). Here:
+   [contexts.md](docs/architecture/contexts.md).
+3. **Write the glossaries** (`/ddd-ts-kit:glossary`) before any code: the generators refuse a
+   name the glossary of its context does not hold. Here: the glossary of
+   [before-bootstrap/](docs/architecture/before-bootstrap/README.md), then the `CONTEXT.md` of
+   each context.
+4. **Draw the context map** (`/ddd-ts-kit:context-map`): who is upstream, by which pattern. Here:
+   [context-map.md](docs/context-map.md).
+5. **Bootstrap**: done by `init`. Declare each context with its language and its upstreams,
+   upstreams first: `npx ddd-ts-kit generate context <name> --classification <core|supporting|generic> --term "<Term>=<meaning>" --upstream <context>:<pattern>`.
+   Here: the commands recorded in [plan.md](docs/architecture/plan.md).
+6. **Plan the slices** (`/ddd-ts-kit:plan-slices`): one use case per slice. Here:
+   [slices.md](docs/architecture/slices.md).
+7. **Build slice by slice** (`/ddd-ts-kit:use-case`): `npx ddd-ts-kit generate ...`, then the
+   `TODO(domain)` places it lists (`npx ddd-ts-kit todo <context>`); builders and fakes, no mocks.
+   Here: five parallel workers, given the [briefings](docs/architecture/briefings/README.md).
+8. **Pass the gate** (`/ddd-ts-kit:quality-gate`): `npm run verify` before each merge.
+9. **Document** (`/ddd-ts-kit:document`): `npm run docs:generate`, committed with the code. Here:
+   `openapi/` and the [integration notes](docs/integration/README.md).
+
+A step skipped costs later: boundaries drawn from the tables, a glossary written after the
+code, a first integration made by a direct import the checker then refuses. The method, step by
+step: [methodology.md](../../docs/guides/methodology.md); the command for each moment of the
+project: [commands.md](../../docs/guides/commands.md).
+
 ## Replay the method
 
 1. Read `docs/architecture/needs.md`: it is the only input.

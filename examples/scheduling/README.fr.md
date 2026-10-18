@@ -500,6 +500,44 @@ purge une seconde fois deux secondes plus tard : une lecture qui a chargé les a
 la validation peut atteindre Varnish après la première purge. Le `PUT` lui-même peut porter l'`ETag`
 des horaires qu'il a lus (`If-Match`) : quand quelqu'un les a changés depuis, la réponse est 412.
 
+## Les étapes recommandées
+
+Suivez-les dans l'ordre : c'est le chemin que le kit prend en charge, et chaque étape laisse ce que
+la suivante lit. Cet exemple les a suivies depuis son expression de besoins, et chaque étape
+ci-dessous nomme ce qu'elle a laissé ici. Avec le *plugin* ddd-ts-kit de Claude Code,
+`/ddd-ts-kit:start` conduit les étapes 1 à 7 et les consigne dans `docs/architecture/plan.md` ;
+`npx ddd-ts-kit status` (`node scripts/kit.mjs status` dans ce dépôt) dit quelle étape vient
+ensuite.
+
+1. **Découvrir le domaine** (`/ddd-ts-kit:discover-domain`) : acteurs, commandes, événements et
+   politiques. Ici : [discovery.fr.md](docs/architecture/discovery.fr.md).
+2. **Trouver les *bounded contexts*** (`/ddd-ts-kit:bounded-contexts`). Ici :
+   [contexts.fr.md](docs/architecture/contexts.fr.md).
+3. **Écrire les glossaires** (`/ddd-ts-kit:glossary`) avant tout code : les générateurs refusent
+   un nom que le glossaire de son contexte ne contient pas. Ici : le glossaire de
+   [before-bootstrap/](docs/architecture/before-bootstrap/README.fr.md), puis le `CONTEXT.md` de
+   chaque contexte.
+4. **Dessiner la carte des contextes** (`/ddd-ts-kit:context-map`) : qui est en amont, selon quel
+   *pattern*. Ici : [context-map.fr.md](docs/context-map.fr.md).
+5. **Amorcer** : c'est le travail d'`init`. Déclarez chaque contexte avec son langage et ses
+   contextes amont, l'amont d'abord : `npx ddd-ts-kit generate context <name> --classification <core|supporting|generic> --term "<Term>=<meaning>" --upstream <context>:<pattern>`.
+   Ici : les commandes consignées dans [plan.fr.md](docs/architecture/plan.fr.md).
+6. **Planifier les tranches** (`/ddd-ts-kit:plan-slices`) : un cas d'usage par tranche. Ici :
+   [slices.fr.md](docs/architecture/slices.fr.md).
+7. **Construire tranche par tranche** (`/ddd-ts-kit:use-case`) : `npx ddd-ts-kit generate ...`,
+   puis les endroits `TODO(domain)` qu'il liste (`npx ddd-ts-kit todo <context>`) ; des *builders*
+   et des *fakes*, pas de *mocks*. Ici : cinq *workers* parallèles, munis des
+   [briefings](docs/architecture/briefings/README.fr.md).
+8. **Passer la barrière de qualité** (`/ddd-ts-kit:quality-gate`) : `npm run verify` avant chaque
+   fusion.
+9. **Documenter** (`/ddd-ts-kit:document`) : `npm run docs:generate`, commité avec le code. Ici :
+   `openapi/` et les [notes d'intégration](docs/integration/README.fr.md).
+
+Une étape sautée coûte plus tard : des frontières tracées d'après les tables, un glossaire écrit
+après le code, une première intégration faite par un import direct que le vérificateur refuse
+ensuite. La méthode, étape par étape : [methodology.fr.md](../../docs/guides/methodology.fr.md) ;
+la commande de chaque moment du projet : [commands.fr.md](../../docs/guides/commands.fr.md).
+
 ## Rejouer la méthode
 
 1. Lisez `docs/architecture/needs.md` : c'est la seule entrée.
