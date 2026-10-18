@@ -7,14 +7,19 @@ import { WORKER_SCOPE_FILE } from '../commit/worker-scope-file.js';
 import type { Config } from '../config/index.js';
 import { KINDS } from '../generate/kinds.js';
 import { inDialect } from '../package-manager/in-dialect.js';
+import { readStoryPlace } from '../stories/read-story-place.js';
+import { STORY_SCOPE_FILE } from '../stories/story-scope-file.js';
 import { Workspace } from '../workspace/index.js';
+import { addWorktree } from './add-worktree.js';
+import { branchExists } from './branch-exists.js';
 import { briefedRows } from './briefed-rows.js';
 import { briefingOf } from './briefing-of.js';
 import { designNote } from './design-note.js';
 import { ensureContainsBase } from './ensure-contains-base.js';
 import { type DependencyInstall, installDependencies } from './install-dependencies.js';
-import { listWorktrees } from './list-worktrees.js';
+import { isWorktree } from './is-worktree.js';
 import { baseOf } from './base-of.js';
+import { repositoryPrefix } from './repository-prefix.js';
 import type { WorkerScope } from './worker-scope.js';
 import type { WorkerFile } from './worker-file.js';
 import { workerGenerators } from './worker-generators.js';
@@ -33,6 +38,11 @@ export interface WorkerRequest {
   readonly dryRun: boolean;
   /** Whether a worktree this run creates gets its dependencies installed (`--no-install` says no). */
   readonly install: boolean;
+  /**
+   * In the worktree of a story: the worker builds there, one agent after the other, its scope
+   * written in place, its base the base of the story; no worktree, branch or install of its own.
+   */
+  readonly here?: boolean;
 }
 
 /**
@@ -125,7 +135,11 @@ interface Place {
 }
 
 function placeOf(root: string, config: Config, request: WorkerRequest): Place {
-  const prefix = prefixOf(root);
+  if (request.here === true) {
+    return herePlace(root, request);
+  }
+
+  const prefix = repositoryPrefix(root);
   const trunk = baseOf(root, config, request.base);
   const project = path.basename(root);
   const worktree = path.resolve(root, request.worktree ?? `../${project}-${request.context}`);
@@ -148,60 +162,25 @@ function placeOf(root: string, config: Config, request: WorkerRequest): Place {
   };
 }
 
-/** The path of the project inside its repository, empty at its top. */
-function prefixOf(root: string): string {
-  const prefix = runGit(root, ['rev-parse', '--show-prefix']);
+/** The worktree of the story itself, on its branch, the base of the story as the base of the worker. */
+function herePlace(root: string, request: WorkerRequest): Place {
+  const story = readStoryPlace(root);
 
-  if (prefix === undefined) {
+  if (story === undefined) {
     throw new CliError(
-      `${root} is not inside a git repository.`,
-      'Run `git init` and make a first commit: a worktree is cut from a commit.',
+      `--here briefs a worker inside the worktree of a story, and ${root} holds no ${STORY_SCOPE_FILE}.`,
+      'Open the story first (`npx ddd-ts-kit story-scope <story>`), then run worker-scope --here from its worktree; elsewhere a worker gets its own worktree.',
     );
   }
 
-  if (runGit(root, ['rev-parse', '--verify', '--quiet', 'HEAD']) === undefined) {
-    throw new CliError(
-      'The repository has no commit yet.',
-      'Commit the bootstrap first: a worktree is cut from a commit.',
-    );
-  }
-
-  return prefix.trim();
-}
-
-function isWorktree(root: string, worktree: string): boolean {
-  if (!fs.existsSync(worktree)) {
-    return false;
-  }
-
-  const known = listWorktrees(root).map((listed) => listed.path);
-
-  if (known.includes(fs.realpathSync(worktree))) {
-    return true;
-  }
-
-  throw new CliError(
-    `${worktree} exists and is not a worktree of this repository.`,
-    'Pass another directory with --worktree <path>, or remove that one.',
-  );
-}
-
-function branchExists(root: string, branch: string): boolean {
-  return runGit(root, ['rev-parse', '--verify', '--quiet', `refs/heads/${branch}`]) !== undefined;
-}
-
-/** Adds the worktree on its branch: an existing branch is checked out, a new one is cut from the base. */
-function addWorktree(root: string, place: { worktree: string; branch: string; base: string }): void {
-  const { worktree, branch, base } = place;
-  const target = branchExists(root, branch) ? [branch] : ['-b', branch, base];
-  const added = runGit(root, ['worktree', 'add', worktree, ...target]);
-
-  if (added === undefined) {
-    throw new CliError(
-      `git could not add the worktree ${worktree} on the branch ${branch}.`,
-      `Run \`git worktree add ${worktree} ${target.join(' ')}\` to read its reason; a branch checked out elsewhere takes --branch <name>.`,
-    );
-  }
+  return {
+    project: path.basename(root),
+    worktree: root,
+    branch: runGit(root, ['branch', '--show-current'])?.trim() || story.branch,
+    trunk: request.base ?? story.base,
+    created: false,
+    inside: root,
+  };
 }
 
 /**

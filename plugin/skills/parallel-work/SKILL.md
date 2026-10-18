@@ -47,6 +47,10 @@ approved the split.
 
 ## 1. Decide whether it pays
 
+Work cut by user story rather than by context is `/ddd-ts-kit:story`, run by the owner, one
+session and one terminal per story: it reuses the worktrees, the briefings and the merge rules
+below. This skill splits one plan between workers of different contexts.
+
 Parallel work pays when at least two contexts each have three or more ready slices and
 their contracts are settled. It does not when: there is one context; a boundary or a payload
 is still debated; the slices form one chain; the walking skeleton is not merged yet (build
@@ -101,7 +105,7 @@ writes `.ddd-ts-kit/worker.json` (its context, rows, base and branch) in it,
 runs the clean install of the project in a worktree it creates (`--no-install` leaves it to
 you; a note then says what to run), and prints the briefing of that worker. With that file,
 the guard refuses any write of a `context-builder` agent outside `src/contexts/<context>/` and
-its end-to-end specs, any generator that writes a shared file, any dependency change, and any
+its end-to-end specs (in an acceptance spec, anything but removing `pending(...)`), any generator that writes a shared file, any dependency change, and any
 shell command that writes outside the scope (`sed -i`, `>`, `tee`, `cp`, `mv`, `rm`, or a path
 only the shell knows); inline code (`node -e`, a heredoc) runs, and a file it changed outside the
 scope stops the worker until it is put back; `npx prettier` and a bare `npx biome` are refused too.
@@ -126,6 +130,7 @@ stale `node_modules`, packages of the kit at another version and submodules not 
 | `package.json`, the lockfile | conductor | a worker asks for a dependency; `merge-trunk` takes the trunk's lockfile and installs again when the branch changed `package.json` |
 | migrations and their order | conductor | a worker generates a working one only (`db:generate working-<what>`); `merge-trunk` replays the drizzle ones of both sides, and `merge-trunk --to-land` gives them their real names before the squash merge |
 | `docs/architecture/plan.md`, `slices.md` | conductor | workers report, the conductor marks; `merge-trunk` merges `slices.md` row by row |
+| `docs/architecture/stories/*.md`, `test/acceptance/*` (the acceptance of a story and its lock) | conductor, before the first row of the story | a worker removes `pending(...)` from the scenarios its row satisfies, nothing else; a scenario it finds wrong is a need of its report |
 | `docs/adr/` | conductor; a worker for a decision of its slices (`generate adr`, without `--deviation`) | a new file per decision; `merge-trunk` renumbers a number the trunk took meanwhile |
 
 Another context's `published-language/` is read-only for a worker: a missing field is

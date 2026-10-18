@@ -220,8 +220,9 @@ The rules cover, among others:
 ## The plugin for coding agents
 
 This repository is the marketplace of the plugin for Claude Code, Codex and GitHub Copilot; the
-[quick start](#quick-start) says how each agent installs it. Twenty-two skills conduct a project from a statement of needs to working contexts, four agents
-explore, build one context in its own worktree, write the specs and review, and the hook refuses
+[quick start](#quick-start) says how each agent installs it. Twenty-two skills conduct a project from a statement of needs to working contexts, five agents
+explore, build one context in its own worktree, write the specs, review and judge a change to a
+locked acceptance test, and the hook refuses
 a hand-written file where a generator exists and checks every file written. Without any plugin,
 the `AGENTS.md` and the rules by layer that `init` writes still guide every agent.
 [The plugin for coding agents](docs/guides/coding-agents.md) lists the skills and says what each
