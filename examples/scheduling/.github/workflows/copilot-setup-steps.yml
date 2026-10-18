@@ -1,0 +1,26 @@
+name: Copilot setup steps
+
+# The environment the Copilot cloud agent starts in: Node and the dependencies of the lockfile,
+# so that the checks and the generators of the kit answer at once. Copilot reads this file from
+# the default branch, and only a job of this name; the runs below check it when it changes.
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+  pull_request:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+
+permissions:
+  contents: read
+
+jobs:
+  copilot-setup-steps:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
