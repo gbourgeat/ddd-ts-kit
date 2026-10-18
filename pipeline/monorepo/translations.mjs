@@ -6,7 +6,8 @@
  *
  * In scope: every .md file of the repository, except
  *   - the French pages themselves (*.fr.md);
- *   - every CHANGELOG.md, AGENTS.md, CLAUDE.md and CONTEXT.md (a CONTEXT.md is partly generated);
+ *   - every CHANGELOG.md, AGENTS.md, CLAUDE.md and CONTEXT.md (a CONTEXT.md is partly generated),
+ *     and the files of changes/, the entries the release folds into CHANGELOG.md;
  *   - anything under a directory named node_modules, dist, coverage, reports, .git, .agents,
  *     .claude, .codex, .github, .gitlab or .ddd-ts-kit, wherever it is;
  *   - anything under plugin/, pipeline/ and packages/cli/templates/, and under site/, where the
@@ -40,7 +41,7 @@ const SKIPPED_DIRECTORIES = new Set([
   '.gitlab',
   '.ddd-ts-kit',
 ]);
-const SKIPPED_PREFIXES = ['plugin/', 'pipeline/', 'packages/cli/templates/', 'site/'];
+const SKIPPED_PREFIXES = ['plugin/', 'pipeline/', 'packages/cli/templates/', 'site/', 'changes/'];
 const SKIPPED_NAMES = new Set(['CHANGELOG.md', 'AGENTS.md', 'CLAUDE.md', 'CONTEXT.md']);
 const SKIPPED_FILES = new Set([
   'examples/scheduling/clients/api/README.md',

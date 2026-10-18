@@ -3,10 +3,12 @@
  * The packages are released together, under one version. Without an argument, checks that
  * every place that states the version agrees and prints it; `--expect <version>` also fails
  * when it is another one (the release workflow passes the tag); `--set <version>` writes the
- * new version everywhere, after which `npm install --package-lock-only` refreshes the lockfile.
+ * new version everywhere, the plugin's included, and folds the files of changes/ into CHANGELOG.md,
+ * after which `npm install --package-lock-only` refreshes the lockfile.
  */
 import fs from 'node:fs';
 import path from 'node:path';
+import { foldChanges } from './changes.mjs';
 
 const ROOT = path.resolve(import.meta.dirname, '../..');
 const SEMVER = /^\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?$/;
@@ -28,6 +30,13 @@ const MANIFESTS = [
 /** The contracts the example generates state its version, which is the one of the kit: they follow it, or its documents check fails. */
 const GENERATED = ['examples/scheduling/openapi/openapi.yaml', 'examples/scheduling/docs/integration/asyncapi.yaml'];
 
+/**
+ * The plugin is released with the packages, under their version: one number for a user whichever
+ * agent shows it. Its manifest followed a numbering of its own up to 0.77.0, which a version cannot
+ * go back under without an installed plugin missing the update.
+ */
+const PLUGIN_MANIFEST = 'plugin/.claude-plugin/plugin.json';
+
 process.exit(main(process.argv.slice(2)));
 
 function main([flag, value]) {
@@ -38,15 +47,23 @@ function main([flag, value]) {
   const found = stated();
   const versions = [...new Set(found.map((entry) => entry.version))];
 
-  if (versions.length !== 1 || (flag === '--expect' && versions[0] !== value)) {
+  const plugin = flag === '--expect' ? [{ version: pluginVersion(), where: PLUGIN_MANIFEST }] : [];
+  const all = [...found, ...plugin];
+
+  if (new Set(all.map((entry) => entry.version)).size !== 1 || (flag === '--expect' && versions[0] !== value)) {
     console.error(
-      `The release version is not stated once:\n${found.map((entry) => `  ${entry.version}  ${entry.where}`).join('\n')}`,
+      `The release version is not stated once:\n${all.map((entry) => `  ${entry.version}  ${entry.where}`).join('\n')}`,
     );
 
     return 1;
   }
 
   console.log(versions[0]);
+
+  if (pluginVersion() !== versions[0]) {
+    // Until the first release that sets both: the release workflow (--expect) requires them equal.
+    console.log(`note: the plugin is at ${pluginVersion()}; the next release sets both to one version.`);
+  }
 
   return 0;
 }
@@ -60,15 +77,49 @@ function set(version) {
 
   const [current] = [...new Set(stated().map((entry) => entry.version))];
 
+  if (!isBelow(pluginVersion(), version)) {
+    const [major, minor] = pluginVersion().split('.').map(Number);
+
+    console.error(
+      `The plugin is at ${pluginVersion()}, and a release sets the plugin's version too, above it so that an installed plugin is updated: set ${major}.${minor + 1}.0 or later.`,
+    );
+
+    return 2;
+  }
+
   for (const file of [...packageManifests(), ...MANIFESTS, ...SOURCES, ...GENERATED]) {
     const absolute = path.join(ROOT, file);
 
     fs.writeFileSync(absolute, restated(fs.readFileSync(absolute, 'utf8'), current, version));
   }
 
-  console.log(`${current} -> ${version}. Run: npm install --package-lock-only`);
+  const folded = foldChanges(ROOT, version);
+
+  setPluginVersion(version);
+  console.log(
+    `${current} -> ${version}, the plugin with it; ${folded} file(s) of changes/ folded into CHANGELOG.md. Run: npm install --package-lock-only`,
+  );
 
   return 0;
+}
+
+function pluginVersion() {
+  return read(PLUGIN_MANIFEST).version;
+}
+
+function setPluginVersion(version) {
+  const file = path.join(ROOT, PLUGIN_MANIFEST);
+  const text = fs.readFileSync(file, 'utf8');
+
+  fs.writeFileSync(file, text.replace(`"version": "${pluginVersion()}"`, `"version": "${version}"`));
+}
+
+/** Whether `left` comes before `right`, by their major, minor and patch numbers. */
+function isBelow(left, right) {
+  const [a, b] = [left, right].map((version) => version.split(/[.-]/).slice(0, 3).map(Number));
+  const difference = a.map((part, index) => part - (b[index] ?? 0)).find((delta) => delta !== 0) ?? 0;
+
+  return difference < 0;
 }
 
 /** Only the version of the kit is replaced: a line that states it names the kit or is a `version`, in JSON or in YAML. */

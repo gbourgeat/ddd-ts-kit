@@ -36,7 +36,7 @@
     "ci:typecheck": "npm run build && npm run typecheck:tests && npm run docs:samples",
     "ci:lint": "eslint --config eslint.config.mjs .",
     "ci:format": "npm run format:check",
-    "ci:arch": "npm run release:version && npm run check:self && npm run depcruise && node --test plugin/hooks/guard.test.mjs pipeline/monorepo/affected-packages.test.mjs pipeline/monorepo/e2e-shards.test.mjs pipeline/monorepo/translations.test.mjs pipeline/monorepo/doc-samples.test.mjs site/scripts/assemble.test.mjs",
+    "ci:arch": "npm run release:version && npm run check:self && npm run depcruise && node --test plugin/hooks/guard.test.mjs pipeline/monorepo/affected-packages.test.mjs pipeline/monorepo/changes.test.mjs pipeline/monorepo/e2e-shards.test.mjs pipeline/monorepo/translations.test.mjs pipeline/monorepo/doc-samples.test.mjs site/scripts/assemble.test.mjs",
     "ci:deadcode": "knip",
     "ci:test:unit": "vitest run --coverage",
     "ci:test:integration": "vitest run packages/drizzle packages/knex packages/prisma packages/typeorm packages/audit packages/openfga packages/s3 packages/http/test/varnish-cache-purger.spec.ts packages/redis/test/redis-job-store.spec.ts",
