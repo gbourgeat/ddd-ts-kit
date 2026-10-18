@@ -13,4 +13,5 @@ export const DEFAULT_SEVERITIES: Readonly<Record<string, Severity>> = {
   'config/rule-off-everywhere': 'warn',
   'tree/documented-paths': 'warn',
   'test/helper-placed': 'warn',
+  'persistence/primary-key-order': 'warn',
 };
