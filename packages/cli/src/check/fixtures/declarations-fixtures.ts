@@ -9,6 +9,7 @@ import { handler } from './handler.js';
 import { PATHS } from './paths.js';
 import { project } from './project.js';
 import { SAMPLES } from './samples.js';
+import { source } from './source.js';
 import { withoutFile } from './without-file.js';
 
 const {
@@ -26,10 +27,26 @@ const {
   JOB,
   JOB_SPEC,
   MODULE,
+  PLATFORM_MODULE,
   POLICY,
+  PORT,
 } = PATHS;
 
 const { SPEC } = SAMPLES;
+
+/** A class of infrastructure/ that implements a port, in a file without a role suffix, declared by nothing. */
+const STRIPE = `${BILLING}/infrastructure/external/stripe-payment-gateway.ts`;
+
+const STRIPE_IMPORT =
+  "import { StripePaymentGateway } from '@/contexts/billing/infrastructure/external/stripe-payment-gateway.js';";
+
+const PORT_IMPORT = "import { PaymentGateway } from '@/contexts/billing/application/ports/payment-gateway.port.js';";
+
+const stripeGateway = (...before: string[]): string =>
+  source(PORT_IMPORT, '', ...before, 'export class StripePaymentGateway implements PaymentGateway {}');
+
+const explicitModule = (...statements: string[]): string =>
+  source("import type { ModuleBuilder } from '@ddd-ts-kit/di';", PORT_IMPORT, ...statements);
 
 export const DECLARATIONS_FIXTURES: readonly Fixture[] = [
   {
@@ -166,6 +183,104 @@ export const DECLARATIONS_FIXTURES: readonly Fixture[] = [
     files: declaredProject({
       [JOB]: DECLARED.job.replace("@Scheduled('billing.send-reminders', { every: '15m' }, [CommandBus])\n", ''),
       [JOB_SPEC]: SPEC,
+    }),
+  },
+  {
+    ruleId: 'declarations/port-adapter-wired',
+    name: 'declared style: every adapter carries its declaration in its role file',
+    expect: 'pass',
+    files: declaredProject(DECLARED_CONTEXT),
+  },
+  {
+    ruleId: 'declarations/port-adapter-wired',
+    name: 'explicit style: an adapter bound to its port in the module file',
+    expect: 'pass',
+    files: project({
+      [PORT]: DECLARED.port,
+      [STRIPE]: stripeGateway(),
+      [MODULE]: explicitModule(
+        STRIPE_IMPORT,
+        '',
+        'export function billingModule(builder: ModuleBuilder): void {',
+        '  builder.bind(PaymentGateway).toClass(StripePaymentGateway, []);',
+        '}',
+      ),
+    }),
+  },
+  {
+    ruleId: 'declarations/port-adapter-wired',
+    name: 'declared style: an adapter without a declaration, bound by the platform',
+    expect: 'pass',
+    files: declaredProject({
+      [PORT]: DECLARED.port,
+      [STRIPE]: stripeGateway(),
+      [PLATFORM_MODULE]: source(
+        "import { defineModule } from '@ddd-ts-kit/di';",
+        PORT_IMPORT,
+        STRIPE_IMPORT,
+        '',
+        "export const platformModule = defineModule('platform', (builder) => {",
+        '  builder.bind(PaymentGateway).toFactory(() => new StripePaymentGateway());',
+        '});',
+      ),
+    }),
+  },
+  {
+    ruleId: 'declarations/port-adapter-wired',
+    name: 'an adapter kept unwired on purpose, with a suppression that points to a decision record',
+    expect: 'pass',
+    files: declaredProject({
+      [PORT]: DECLARED.port,
+      [STRIPE]: stripeGateway(
+        '// ddd-ts-kit-disable-next-line declarations/port-adapter-wired -- ADR-0001: kept for the switch back to Stripe',
+      ),
+    }),
+  },
+  {
+    ruleId: 'declarations/port-adapter-wired',
+    name: 'explicit style: an adapter the generator wrote, its outside system not ready, left to do',
+    expect: 'pass',
+    files: project({
+      [PORT]: DECLARED.port,
+      [STRIPE]: stripeGateway(
+        '// TODO(platform): replace the body by the real client of the outside system, built in billing.module.ts.',
+      ),
+    }),
+  },
+  {
+    ruleId: 'declarations/port-adapter-wired',
+    name: 'declared style: an adapter that carries no declaration and that nothing binds',
+    expect: { file: STRIPE },
+    files: declaredProject({ [PORT]: DECLARED.port, [STRIPE]: stripeGateway() }),
+  },
+  {
+    ruleId: 'declarations/port-adapter-wired',
+    name: 'explicit style: an adapter the module file does not bind',
+    expect: { file: STRIPE },
+    files: project({
+      [PORT]: DECLARED.port,
+      [STRIPE]: stripeGateway(),
+      [MODULE]: explicitModule(
+        '',
+        'export function billingModule(builder: ModuleBuilder): void {',
+        '  builder.bind(PaymentGateway).toValue(null);',
+        '}',
+      ),
+    }),
+  },
+  {
+    ruleId: 'declarations/port-adapter-wired',
+    name: 'explicit style: an adapter only a test binds',
+    expect: { file: STRIPE },
+    files: project({
+      [PORT]: DECLARED.port,
+      [STRIPE]: stripeGateway(),
+      [`${BILLING}/test/integration/stripe-payment-gateway.spec.ts`]: source(
+        "import { it } from 'vitest';",
+        STRIPE_IMPORT,
+        '',
+        "it.todo('charges through Stripe', () => new StripePaymentGateway());",
+      ),
     }),
   },
 ];

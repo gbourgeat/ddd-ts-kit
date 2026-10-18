@@ -13,6 +13,7 @@ const ALIAS = `${SOURCE_ALIAS}contexts/notification`;
 const OTHER_SUFFIX = SOURCE_SUFFIX === '' ? '.js' : '';
 const PORT_IMPORT = `import { ReminderRepository } from '${ALIAS}/domain/repositories/reminder.repository${SOURCE_SUFFIX}';`;
 const USER_CONTEXT = 'src/shared-kernel/user-context.ts';
+const SMTP_MAILER = `${PATHS.NOTIFICATION}/infrastructure/external/smtp-mailer.ts`;
 
 const LISTED =
   'A list in a decorator is a second statement of the dependencies in a project that states them in constructor signatures: the rule that holds the single statement reports it too.';
@@ -51,6 +52,18 @@ export const WIRING_INJECTIONS: readonly Injection[] = [
         reason: 'the generated file of the context still registers the dependencies of the class it no longer reads',
       },
     ],
+  },
+  {
+    rule: 'declarations/port-adapter-wired',
+    what: 'a mailer that implements its port in a file without a role suffix, declared and bound by nothing',
+    file: SMTP_MAILER,
+    changes: [
+      {
+        file: SMTP_MAILER,
+        to: `import type { Mailer } from '${ALIAS}/application/ports/mailer.port${SOURCE_SUFFIX}';\n\n/** The mailer of the next provider, written before anything binds it. */\nexport class SmtpMailer implements Mailer {\n  deliver(): Promise<void> {\n    return Promise.resolve();\n  }\n}\n`,
+      },
+    ],
+    checker: true,
   },
   {
     rule: 'ports/abstract-class',

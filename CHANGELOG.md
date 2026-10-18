@@ -107,6 +107,21 @@ adaptation of the team. A config without the key stays valid.
 
 To move: nothing; `init --force` adds the key to a project initialised before it existed.
 
+**An adapter that nothing wires is reported.** `declarations/port-adapter-wired`
+(`ddd-ts-kit check`, a warning) reports a class of `infrastructure/` that implements a port of
+`domain/repositories/` or `application/ports/` and that nothing wires: in the declared style it
+carries no `@Repository`, `@Gateway` or `@Adapter`, and in both styles no file of the composition
+root (`<context>.module.ts`, `main.ts`, `apps/<context>/main.ts`, the platform directory) imports
+it. `declarations/role-declared` reads a role file by its suffix, so such a class in a file without
+one was reported by no rule and only showed at run time as a missing binding. A file that still
+carries a `TODO(domain)` or `TODO(platform)` is not judged yet: an adapter the generator wrote
+before the outside system is ready is listed by `ddd-ts-kit todo` until it is wired. To move, run
+`ddd-ts-kit check --rule declarations/port-adapter-wired`, then declare each reported class
+(`@Gateway(Port)` in a `*.gateway.ts`, for example) or bind it in the module file; one kept
+unwired on purpose gets its decision record in `docs/adr/` and
+`// ddd-ts-kit-disable-next-line declarations/port-adapter-wired -- ADR-NNNN: <why>` above the class.
+It becomes an error in the next minor version.
+
 ## 0.27.0
 
 **The worktrees of a project live inside it, and a new project writes its code in a worktree.**
