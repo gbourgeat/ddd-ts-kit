@@ -428,21 +428,20 @@ jobs:
     steps:
       - name: Every gate passed
         env:
-          RESULTS: ${{ needs.install.result }} ${{ needs.typecheck.result }} ${{ needs.lint.result }} ${{ needs.architecture.result }} ${{ needs.deadcode.result }} ${{ needs.docs.result }} ${{ needs.site.result }} ${{ needs.unit.result }} ${{ needs.unit-oldest.result }} ${{ needs.integration.result }} ${{ needs.security.result }} ${{ needs.package.result }}
-          # Skipped when the change is documents alone (`integrated` of the install job), and then only.
-          INTEGRATED_RESULTS: ${{ needs.alias.result }} ${{ needs.e2e.result }} ${{ needs.managers.result }} ${{ needs.example.result }} ${{ needs.conformance.result }}
+          # Every job this one needs, read whole: a job added later is held without being listed here.
+          NEEDS: ${{ toJSON(needs) }}
+          # The runs that integrate every package, skipped when the change is documents alone (`integrated` of the install job), and then only.
+          MAY_SKIP: alias e2e managers example conformance
           INTEGRATED: ${{ needs.install.outputs.integrated }}
         run: |
-          echo "Results: $RESULTS; integrating every package: $INTEGRATED_RESULTS"
-          for result in $RESULTS; do
-            if [ "$result" != "success" ]; then
-              echo "::error::A required job ended as $result."
-              exit 1
-            fi
-          done
-          for result in $INTEGRATED_RESULTS; do
-            if [ "$result" != "success" ] && { [ "$result" != "skipped" ] || [ "$INTEGRATED" = "true" ]; }; then
-              echo "::error::A run that integrates every package ended as $result."
-              exit 1
-            fi
-          done
+          echo "Results: $(echo "$NEEDS" | jq -r 'to_entries | map("\(.key)=\(.value.result)") | join(" ")')"
+          failed=$(echo "$NEEDS" | jq -r --arg may "$MAY_SKIP" --arg integrated "$INTEGRATED" '
+            ($may | split(" ")) as $skippable
+            | to_entries[]
+            | select(.value.result != "success")
+            | select(.value.result != "skipped" or $integrated == "true" or ((.key | IN($skippable[])) | not))
+            | "\(.key)=\(.value.result)"')
+          if [ -n "$failed" ]; then
+            echo "::error::A required job did not pass: $failed"
+            exit 1
+          fi
