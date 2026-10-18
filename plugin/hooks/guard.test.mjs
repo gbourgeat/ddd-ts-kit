@@ -33,12 +33,16 @@ function project(config = {}, flags = []) {
   if (Object.keys(config).length > 0) {
     patchConfig(root, config);
   }
+  launcher(root);
+  return root;
+}
+
+// A launcher like the one npm writes: the compiled entry file itself is not executable.
+function launcher(root) {
   mkdirSync(join(root, 'node_modules', '.bin'), { recursive: true });
-  // A launcher like the one npm writes: the compiled entry file itself is not executable.
   writeFileSync(join(root, 'node_modules', '.bin', 'ddd-ts-kit'), `#!/bin/sh\nexec node "${cli}" "$@"\n`, {
     mode: 0o755,
   });
-  return root;
 }
 
 function patchConfig(root, patch) {
@@ -577,6 +581,104 @@ test('in the worktree of a story, the code waits for each row designed and the a
     undefined,
   );
   assert.ok(existsSync(join(root, '.ddd-ts-kit/guard/story-gate.json')));
+});
+
+// A project committed on main in the main checkout of its repository, its worktrees ignored.
+function trunkCheckout(config = {}) {
+  const root = project(config);
+  put(root, '.gitignore', 'node_modules\n.worktrees/\n');
+  git(root, 'init', '--quiet', '--initial-branch', 'main');
+  git(root, 'add', '--all');
+  git(root, 'commit', '--quiet', '--no-verify', '--message', 'chore: bootstrap');
+  return root;
+}
+
+test('in the main checkout of the trunk the code of a context waits for a worktree, and a worktree of .worktrees/ for its own install', () => {
+  const root = trunkCheckout();
+  const refused = run('pre-write', write(join(root, 'src/contexts/ordering/domain/order-number.ts')));
+  assert.equal(decision(refused), 'deny');
+  assert.match(reason(refused), /This is the main checkout of the trunk \(branch main\)/);
+  assert.match(reason(refused), /npx ddd-ts-kit worktree <name>/);
+  assert.equal(run('pre-write', write(join(root, 'src/contexts/ordering/CONTEXT.md'))).output, undefined);
+  assert.equal(run('pre-write', write(join(root, 'docs/architecture/plan.md'))).output, undefined);
+  assert.equal(decision(run('pre-bash', bash(root, 'npx ddd-ts-kit generate aggregate ordering Order'))), 'deny');
+  assert.equal(run('pre-bash', bash(root, 'npx ddd-ts-kit generate context billing:supporting')).output, undefined);
+  assert.match(
+    run('session', { cwd: root }).output.hookSpecificOutput.additionalContext,
+    /Main checkout of the trunk \(branch main\): the code of the contexts is written in a worktree, refused here/,
+  );
+
+  const worktree = join(root, '.worktrees', 'order-number');
+  git(root, 'worktree', 'add', '--quiet', '-b', 'work/order-number', worktree);
+  const code = join(worktree, 'src/contexts/ordering/domain/order-number.ts');
+  const borrowed = run('pre-write', write(code));
+  assert.equal(decision(borrowed), 'deny');
+  assert.match(reason(borrowed), /a worktree of \.worktrees\/ without its own node_modules/);
+  launcher(worktree);
+  assert.equal(run('pre-write', write(code)).output, undefined);
+});
+
+test('a project started before the worktrees setting, and one set to advised, only hear where the code goes', () => {
+  const root = trunkCheckout();
+  const path = join(root, 'ddd-ts-kit.config.json');
+  const { worktrees, ...before } = JSON.parse(readFileSync(path, 'utf8'));
+  assert.equal(worktrees, 'required');
+  writeFileSync(path, JSON.stringify(before));
+  assert.equal(run('pre-write', write(join(root, 'src/contexts/ordering/domain/order-number.ts'))).output, undefined);
+  patchConfig(root, { worktrees: 'advised' });
+  assert.equal(run('pre-write', write(join(root, 'src/contexts/ordering/domain/order-number.ts'))).output, undefined);
+  const started = run('session', { cwd: root }).output.hookSpecificOutput.additionalContext;
+  assert.match(
+    started,
+    /Main checkout of the trunk \(branch main\): the code of the contexts is written in a worktree; open one/,
+  );
+});
+
+// Two stories open in two worktrees of one repository, the CLI of the kit installed in each.
+function twoStories() {
+  const root = project();
+  put(root, '.gitignore', 'node_modules\n.ddd-ts-kit/\n');
+  put(
+    root,
+    'docs/architecture/slices.md',
+    `${STORY_SLICES}| US6.01 | billing | slice | Issue invoice | \`generate command billing IssueInvoice --public\` | | billing | todo |\n`,
+  );
+  git(root, 'init', '--quiet', '--initial-branch', 'main');
+  git(root, 'add', '--all');
+  git(root, 'commit', '--quiet', '--no-verify', '--message', 'chore: bootstrap');
+  return Object.fromEntries(
+    ['us5', 'us6'].map((code) => {
+      const worktree = `${root}-${code}`;
+      git(root, 'worktree', 'add', '--quiet', '-b', `story/${code}`, worktree);
+      put(
+        worktree,
+        '.ddd-ts-kit/story.json',
+        JSON.stringify({ story: code.toUpperCase(), base: 'main', branch: `story/${code}` }),
+      );
+      launcher(worktree);
+      return [code, worktree];
+    }),
+  );
+}
+
+test('in the worktree of a story, a write to a file another open story changes is said once, and so is where they meet at session start', () => {
+  const { us5, us6 } = twoStories();
+  put(us6, 'docs/notes.md', 'US6\n');
+  const first = run('pre-write', write(join(us5, 'docs/notes.md'), { session_id: 'crossing' }));
+  assert.match(
+    first.output.hookSpecificOutput.additionalContext,
+    /US6 \(story\/us6, .*\) changes docs\/notes\.md too\./,
+  );
+  assert.match(first.output.hookSpecificOutput.additionalContext, /npx ddd-ts-kit stories/);
+  assert.equal(run('pre-write', write(join(us5, 'docs/notes.md'), { session_id: 'crossing' })).output, undefined);
+  assert.equal(
+    run('pre-write', write(join(us5, 'docs/architecture/slices.md'), { session_id: 'crossing' })).output,
+    undefined,
+  );
+  put(us5, 'docs/notes.md', 'US5\n');
+  rmSync(join(us5, '.ddd-ts-kit/guard/stories.json'));
+  const started = run('session', { cwd: us5 }).output.hookSpecificOutput.additionalContext;
+  assert.match(started, /It meets story US6: 1 file\(s\) both change\./);
 });
 
 test('a session of a story starts on its phase and ends on its report, refused once for the same step', () => {

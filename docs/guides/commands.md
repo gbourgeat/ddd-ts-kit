@@ -85,7 +85,9 @@ The slice is finished when `todo ordering` no longer lists anything of it.
 | Command or skill | Does | When | Produces | Then |
 |---|---|---|---|---|
 | `/ddd-ts-kit:story <code> [<statement>]` | one user story from its questions to a green pull request, in its own worktree: questions first, then specification, rows, design review, acceptance, build, review, report ([story workflow](story-workflow.md)) | once the project is bootstrapped, one terminal per story | the pull request of the story and its report | review the report, validate each provisional decision |
-| `npx ddd-ts-kit story-scope <code>` | the worktree of a story on `story/<code>`, its `.ddd-ts-kit/story.json` and its install; the other open stories and their contexts | the first step of the story skill | `../<project>-<code>` | `npx ddd-ts-kit story <code>` |
+| `npx ddd-ts-kit story-scope <code>` | the worktree of a story on `story/<code>`, its `.ddd-ts-kit/story.json` and its install; the other open stories and their contexts | the first step of the story skill | `.worktrees/<code>` | `npx ddd-ts-kit story <code>` |
+| `npx ddd-ts-kit stories` | the stories open in the worktrees of the repository and where two of them meet: the contexts both name, the files both change, what merging one into the other leaves to settle by hand, how far each is behind its trunk | before cutting the rows of a story and before each row, after `git fetch` | a short text, `--json` for data; exits 0 | keep off what another story changes, or record which one lands first |
+| `npx ddd-ts-kit worktree <name>` | the worktree of any piece of work that is neither a story nor a worker: `.worktrees/<name>` on `work/<name>` cut from `origin/main`, installed | before writing the code of a context from the main checkout of the trunk, which the guard refuses in a project `init` created | the worktree, its branch and its install | work there, commit, open its pull request |
 | `npx ddd-ts-kit story [<code>] [--gate build\|close]` | the phases of a story and the next step; `build` opens its code, `close` its pull request | at any time in the worktree of a story | a short text, `--json` for data; exits 1 while the gate is not met | do the next step |
 | `/ddd-ts-kit:plan-slices` | the work as vertical slices, ordered, with their generator commands | step 6, after the bootstrap | `docs/architecture/slices.md` | `/ddd-ts-kit:use-case` |
 | `npx ddd-ts-kit cited --rows <id> --base origin/main` | the names the design of a row cites as code that the trunk does not have: removed by its history (with the commit and what replaced them), refused by the canonical tree, or close to a name it gained since the line was written; planned names stay silent | before building a row alone, before committing a design review | one line per name, `--json` for data; exits 0 | build on what the trunk has, and correct the document on the trunk |
@@ -258,6 +260,8 @@ Usage
   ddd-ts-kit worker-scope <context> --here [--rows <id,...>] [--base <ref>] [--dry-run]
   ddd-ts-kit story-scope <story> [--base <ref>] [--worktree <path>] [--branch <name>] [--no-install] [--dry-run]
   ddd-ts-kit story [<story>] [--gate build|close]
+  ddd-ts-kit stories
+  ddd-ts-kit worktree <name> [--base <ref>] [--branch <name>] [--no-install] [--dry-run]
   ddd-ts-kit verify-slice <context> --since <git-ref>
   ddd-ts-kit cited [<context>] [--rows <id,...>] [--base <ref>] [--removed-since <ref>]
   ddd-ts-kit verify-merge [<commit>] [--since <git-ref>] [--theirs <git-ref>] [--base <commit>] [--warn]
@@ -372,8 +376,8 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
                    version (test/acceptance/verdicts/*.md, lines Story:, Subject:, Fingerprint:,
                    Verdict:, Reason:); a refusal wins; the verdicts become amendments of the lock,
                    listed for the owner to validate
-  worker-scope     a git worktree on the branch build/<context> (by default ../<project>-<context>), cut from
-                   --base <ref> (by default the current branch, refused from a worker's worktree), its
+  worker-scope     a git worktree on the branch build/<context> (by default .worktrees/<context>, see worktree),
+                   cut from --base <ref> (by default the current branch, refused from a worker's worktree), its
                    .ddd-ts-kit/worker.json, and the briefing of the worker of that context; --rows <id,...>
                    briefs those rows of slices.md only, with their rules, the documents of their design and
                    the names that design cites the base does not have (see cited), and by default the first
@@ -384,18 +388,34 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
   --here           worker-scope in the worktree of a story (.ddd-ts-kit/story.json): writes the scope of the
                    next agent in place, its base the base of the story, and prints its briefing; no
                    worktree, branch or install of its own; the agents of a story run one after the other
-  story-scope      the worktree of one story, ../<project>-<story> on story/<story> cut from --base (by default
-                   the current branch, refused from the worktree of a story), its .ddd-ts-kit/story.json and
+  story-scope      the worktree of one story, .worktrees/<story> on story/<story> cut from --base (by default
+                   origin/main from the trunk, else the current branch, refused from the worktree of a
+                   story), its .ddd-ts-kit/story.json and
                    its clean install; an existing one is kept and the story resumes there; refused when the
                    story is open in another worktree; names the other open stories and the contexts their
                    rows change
+  worktree         the worktree of any other piece of work, .worktrees/<name> on work/<name> cut from --base
+                   (by default origin/main from the trunk, else the current branch), and its clean install
+                   unless --no-install; an existing one is kept; .worktrees/ lies in the main checkout,
+                   whichever worktree it runs from, ignored by git and by the tools of the project; while
+                   the .gitignore of a project started before does not hold it (init adds it), a worktree
+                   opens next to the project, ../<project>-<name>; in a project whose config says
+                   "worktrees": "required" (what init writes), the guard of the plugin refuses the code of
+                   a context in the main checkout of the trunk, and in a worktree of .worktrees/ without
+                   its own node_modules
   story            where a story stands, phase by phase: its specification and criteria
                    (docs/architecture/stories/<story>.md), its rows in slices.md, a design review section
                    per row not done (docs/architecture/reviews/<story>.md, ## #<id>), its acceptance written
-                   and locked, its rows done, its acceptance passing, its ## Report; and the next step; in
-                   the worktree of a story, the story is its own; --gate build exits 1 until the first four
-                   are met (the code may start: the guard of the plugin opens the contexts), --gate close
-                   until all are
+                   and locked, its rows done, its acceptance passing, its trunk merged in, its ## Report; and
+                   the next step; in the worktree of a story, the story is its own; --gate build exits 1
+                   until the first four are met (the code may start: the guard of the plugin opens the
+                   contexts), --gate close until all are
+  stories          the stories open in the worktrees of the repository and where two of them meet: the
+                   contexts the rows of both name, the files both worktrees change (committed or not), what
+                   merging the branch of one into the other leaves to a person and what merge-trunk settles
+                   (git merge-tree, nothing written); how far each is behind its base; from the worktree of a
+                   story, the stories it meets; the guard of the plugin says it at session start and on a
+                   write to a file another story changes
   --resume         worker-scope reads where the stopped worker of the context stands (its rows by their
                    Slice: trailer, the files of the row under way, the markers, its last verify-slice, its
                    report, its agent as the guard recorded it) and prints the message that resumes its agent

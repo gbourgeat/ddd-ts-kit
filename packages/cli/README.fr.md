@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:33f0bbcbe156e6ba -->
+<!-- translation-of: README.md sha256:1dd38d19581cd5e3 -->
 
 # ddd-ts-kit
 
@@ -525,7 +525,7 @@ choix sont enregistrés sous `stack` dans la configuration, `docsUi`, `ci` et `l
 | `README.md`, `AGENTS.md`, `CLAUDE.md`, `.claude/rules/*.md`, `.github/instructions/*.instructions.md` | comment le lancer ; un guide léger dans `AGENTS.md`, que lisent Codex, Copilot et la plupart des agents de code et qu'importe `CLAUDE.md` (commandes, comment lire moins, la carte des règles, fichiers générés, note sur le compilateur, les *skills* du *plugin* : `/ddd-ts-kit:start`, `glossary`, `use-case`, `document`, `quality-gate`) et les invariants dans sept fichiers de règles, `domain.md`, `application.md`, `published-language.md`, `infrastructure.md`, `presentation.md`, `platform.md` et `tests.md`, chacun délimité par un frontmatter `paths`, et les mêmes sept pour GitHub Copilot, chacun délimité par `applyTo` |
 | `.github/copilot/settings.json` | le *plugin* du kit, déclaré pour GitHub Copilot (`extraKnownMarketplaces`, `enabledPlugins`) : son agent cloud l'installe, la CLI Copilot et VS Code le recommandent ; un fichier existant garde ce qu'il contient et reçoit les deux entrées |
 | `.claude/settings.json` | des permissions seulement : les vérifications et les générateurs s'exécutent sans demander, les fichiers `.env` sont illisibles (`.env.example` reste lisible), les trois documents générés ne sont pas modifiés à la main, `git push`, `npm publish` et toute modification des fichiers qui portent les règles et le *pipeline* (`ddd-ts-kit.config.json`, `eslint.config.mjs`, `biome.json`, `.dependency-cruiser.cjs`, `knip.json`, `lefthook.yml`, `.gitlab-ci.yml`, `.github/workflows/**`, `.claude/settings.json`, `.github/copilot/settings.json`) demandent d'abord |
-| `.gitignore` | `node_modules`, `dist`, `coverage`, `.env`, `*.tsbuildinfo` et `.ddd-ts-kit/`, où écrit `worker-scope` |
+| `.gitignore` | `node_modules`, `dist`, `coverage`, `.env`, `*.tsbuildinfo`, `.ddd-ts-kit/`, où écrit `worker-scope`, et `.worktrees/`, où vivent les *worktrees* |
 
 `--ci both` écrit les deux *pipelines*, `--ci none` aucun (et pas de `renovate.json`). Les
 fichiers de *pipeline* sont des copies des fichiers du répertoire `pipeline/` du dépôt, livrées
@@ -1264,7 +1264,8 @@ ddd-ts-kit worker-scope <context> --resume [--worktree <path> | --branch <name>]
 ```
 
 Prépare la place d'un *worker* d'un build réparti par contexte : crée un *worktree* git du projet
-(`../<project>-<context>` par défaut) sur la branche `build/<context>`, à partir de `--base` (une
+(`.worktrees/<context>` du *checkout* principal par défaut, à côté du projet tant que son
+`.gitignore` ne contient pas `.worktrees/`) sur la branche `build/<context>`, à partir de `--base` (une
 branche, une étiquette ou un *commit* : `origin/main` ; par défaut la branche courante), y écrit
 `.ddd-ts-kit/worker.json` (`{ context, rows, base, baseCommit, branch }`, `baseCommit` étant le
 *commit* que nomme la base à ce moment ; `init` ignore `.ddd-ts-kit/`), et

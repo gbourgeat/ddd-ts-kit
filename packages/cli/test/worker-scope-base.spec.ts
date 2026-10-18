@@ -151,7 +151,7 @@ describe('worker-scope --base', () => {
   });
 
   it("refuses to take a worker's branch as the base when run from its worktree without --base", () => {
-    const worktree = path.join(fs.realpathSync(path.dirname(root)), 'shop-billing');
+    const worktree = path.join(fs.realpathSync(root), '.worktrees', 'billing');
 
     expect(read(worktree, '.ddd-ts-kit/worker.json')).toContain('billing');
 

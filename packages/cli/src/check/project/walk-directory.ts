@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-const SKIPPED_DIRECTORIES = new Set(['node_modules', 'dist', '.git']);
+const SKIPPED_DIRECTORIES = new Set(['node_modules', 'dist', '.git', '.worktrees']);
 
 /** Visits every entry below `directory`, sorted by name, directories before what they hold. */
 export function walkDirectory(

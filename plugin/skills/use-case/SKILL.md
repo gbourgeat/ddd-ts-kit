@@ -18,6 +18,7 @@ allowed-tools:
   - Bash(npx ddd-ts-kit acceptance *)
   - Bash(npm run test:e2e *)
   - Bash(npx ddd-ts-kit describe *)
+  - Bash(npx ddd-ts-kit worktree *)
   - Bash(npx ddd-ts-kit todo *)
   - Bash(npx ddd-ts-kit explain *)
   - Bash(npm test *)
@@ -32,6 +33,12 @@ Context: `$0`. Use case: `$ARGUMENTS`
 One use case, one context, one commit. Read `src/contexts/$0/CONTEXT.md` and the row of
 `docs/architecture/slices.md` when there is one; do not browse the tree
 (`npx ddd-ts-kit describe $0 --json` says what exists: use cases, routes, events, ports).
+
+Write it in a worktree, not in the main checkout of the trunk (the guard refuses it there in a
+project whose config says `"worktrees": "required"`): `npx ddd-ts-kit worktree <use-case>` opens
+`.worktrees/<use-case>` on its own branch, installed; then every command is `cd <worktree> && ...`
+and every file is written by its absolute path under it. A worktree of a story or of a worker
+already is one.
 
 ## 1. State it in the domain's words
 
