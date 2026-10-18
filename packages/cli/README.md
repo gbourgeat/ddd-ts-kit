@@ -1187,10 +1187,30 @@ otherwise, then the git hooks. `lefthook.yml` must hold `lefthook: node_modules/
 which makes each checkout and each worktree run its own lefthook and fail a commit, loudly,
 when its dependencies are missing; the fix is that line, or `init --force` for the whole file.
 The pre-commit hook under `git rev-parse --git-path hooks` must exist and come from lefthook;
-the fix is `npm run hooks:install`, once per clone. `--strict` exits 1 while something is
-missing or at another range; a script written otherwise and a hook this clone has not installed
-are said without failing it. `--json` prints `{ version, findings: [{ area, name, problem,
-expected, found }] }`, `area` being `script`, `package`, `permission` or `hook`.
+the fix is `npm run hooks:install`, once per clone.
+
+Then what this checkout lacks to run the project, the state of a clone or a new worktree rather
+than of the project, read from its files without network: the running Node against
+`engines.node` of `package.json` (`unsupported`) and the version `.nvmrc` names (`other version`;
+an alias such as `lts/*` is not judged); `node_modules` present (`missing`) and installed since
+the lockfile last changed (`outdated`, from the copy of the lockfile the package manager writes
+under `node_modules`); `ddd-ts-kit` and every `@ddd-ts-kit/*` package that `package.json`
+declares or `node_modules` holds, installed (`not installed`) at the version of the running CLI
+(`other version`). A project without a lockfile of its own inside a workspace (a `package.json`
+above it that declares `workspaces`, or a `pnpm-workspace.yaml`, with the lockfile) is read where
+the workspace installs, its packages resolved as Node does, from the project up; and, when the repository has a `.gitmodules`, every submodule initialised
+(`not initialised`, from `git submodule status`). Each comes with its fix: a Node that
+`engines.node` accepts (`nvm use`), `npm ci`, the packages of the kit upgraded together,
+`git submodule update --init --recursive`.
+
+`--strict` exits 1 while something is missing or at another range, or while the checkout cannot
+run the project: a Node outside `engines.node`, no `node_modules`, a package of the kit not
+installed or at another version, a submodule not initialised. A script written otherwise, a hook
+this clone has not installed, a Node `.nvmrc` does not name while `engines.node` accepts it, and a
+lockfile changed since the install (a checkout may rewrite it with what `node_modules` already
+holds) are said without failing it. `--json` prints `{ version, findings: [{ area, name, problem,
+expected, found }] }`, `area` being `script`, `package`, `permission`, `hook`, `node`, `install`
+or `submodule`.
 
 ## worker-scope
 

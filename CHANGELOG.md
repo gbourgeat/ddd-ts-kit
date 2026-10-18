@@ -81,6 +81,24 @@ Quality report has no place for text beside its issues; the fingerprints do not 
 combines with paths, `--rule`, `--changed-since` and `--clean-only`. Without it, the output is
 the same as before.
 
+**`doctor` checks the environment of a checkout.** A new worktree starts from nothing, and what
+goes wrong there is its environment: `verify` failed late, on a symptom. After what an upgrade
+left to do, `npx ddd-ts-kit doctor` now says what this checkout lacks to run the project, read
+from its files without network: the running Node against `engines.node` (`node engines.node:
+unsupported`) and the version `.nvmrc` names; `node_modules` missing or installed before the
+lockfile last changed (`install node_modules: missing`, `outdated`); `ddd-ts-kit` and every
+`@ddd-ts-kit/*` package installed at the version of the running CLI (`install <package>: not
+installed`, `other version`), where the package findings read the ranges of `package.json`, in
+the install of its workspace for a project inside one; and,
+with a `.gitmodules`, every submodule initialised (`submodule <path>: not initialised`). Each comes
+with its fix (`nvm use`, `npm ci` in the dialect of the project, `git submodule update --init
+--recursive`). `--strict` now also exits 1 while the checkout cannot run the project: a Node
+outside `engines.node`, no `node_modules`, a package of the kit not installed or at another
+version, a submodule not initialised. A Node `.nvmrc` does not name and a lockfile changed since
+the install are said without failing it. A project or a pipeline that runs `doctor --strict` where
+no dependencies are installed fails from this version: install first. `--json` gains the areas
+`node`, `install` and `submodule`. The `parallel-work` skill runs it in a worktree made otherwise.
+
 ## 0.27.0
 
 **The worktrees of a project live inside it, and a new project writes its code in a worktree.**
