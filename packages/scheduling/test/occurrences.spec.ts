@@ -172,6 +172,18 @@ describe('a cron expression in a time zone', () => {
     ]);
   });
 
+  it('reads a shorthand as its five fields: @daily is midnight on the clocks of the zone', () => {
+    expect(following({ cron: '@daily', timeZone: 'Europe/Paris' }, '2026-03-27T12:00:00.000Z', 3)).toEqual([
+      '2026-03-27T23:00:00.000Z',
+      '2026-03-28T23:00:00.000Z',
+      '2026-03-29T22:00:00.000Z',
+    ]);
+
+    expect(following({ cron: '@hourly', timeZone: 'Europe/Paris' }, '2026-03-28T23:30:00.000Z', 3)).toEqual(
+      following({ cron: '0 * * * *', timeZone: 'Europe/Paris' }, '2026-03-28T23:30:00.000Z', 3),
+    );
+  });
+
   it('follows a zone whose change is half an hour: Lord Howe Island', () => {
     // 2026-04-05: at 02:00 the clocks go back to 01:30, so 01:45 occurs twice.
     expect(following({ cron: '45 1 * * *', timeZone: 'Australia/Lord_Howe' }, '2026-04-03T12:00:00.000Z', 3)).toEqual([

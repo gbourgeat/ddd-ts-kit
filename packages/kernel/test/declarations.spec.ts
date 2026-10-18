@@ -223,6 +223,10 @@ function adaptersJobsAndPolicies(clinic: () => Clinic): void {
         /Job "clinic.purge": Cron "0 7 \* \*" has 4 field\(s\): five are expected/,
       );
 
+      expect(declare('clinic.purge', '@reboot')).toThrow(
+        /Job "clinic.purge": Cron "@reboot" is not a shorthand a scheduled job runs on/,
+      );
+
       expect(declare('clinic.purge', '0 7 * * *', 'Europe/Lutece')).toThrow(
         /Job "clinic.purge": "Europe\/Lutece" is not a time zone/,
       );

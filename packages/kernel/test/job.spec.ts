@@ -108,7 +108,6 @@ describe('a cron expression', () => {
     ['30-10 * * * *', '"30-10" is not a minute of a cron expression'],
     ['5/15 * * * *', '"5/15" is not a minute of a cron expression'],
     ['1,,2 * * * *', '"" is not a minute of a cron expression'],
-    ['@daily', 'has 1 field(s)'],
     ['? * * * *', '"?" is not a minute of a cron expression'],
   ])('"%s" is refused unless it can be read', (expression, complaint) => {
     if (complaint === undefined) {
@@ -116,6 +115,28 @@ describe('a cron expression', () => {
     } else {
       expect(refusal(() => cron(expression))).toContain(complaint);
     }
+  });
+
+  it.each([
+    ['@yearly', '0 0 1 1 *'],
+    ['@annually', '0 0 1 1 *'],
+    ['@monthly', '0 0 1 * *'],
+    ['@weekly', '0 0 * * 0'],
+    ['@daily', '0 0 * * *'],
+    ['@midnight', '0 0 * * *'],
+    ['@hourly', '0 * * * *'],
+    [' @Daily ', '0 0 * * *'],
+  ])('reads the shorthand "%s" as "%s", and keeps it as written', (shorthand, fields) => {
+    expect(cron(shorthand, 'Europe/Paris')).toEqual({
+      ...cron(fields, 'Europe/Paris'),
+      expression: shorthand.trim(),
+    });
+  });
+
+  it.each(['@reboot', '@foo', '@daily 5', '@'])('refuses "%s", naming the shorthands it accepts', (expression) => {
+    expect(refusal(() => cron(expression))).toBe(
+      `Cron "${expression}" is not a shorthand a scheduled job runs on: write five fields or one of @yearly, @annually, @monthly, @weekly, @daily, @midnight, @hourly.`,
+    );
   });
 
   it('is refused when no date satisfies it, unless a day of week gives it one', () => {
@@ -148,6 +169,7 @@ describe('a schedule', () => {
     );
 
     expect(describeJobSchedule({ cron: '0 7 * * *' })).toBe('cron 0 7 * * * (UTC)');
+    expect(describeJobSchedule({ cron: '@daily', timeZone: 'Europe/Paris' })).toBe('cron @daily (Europe/Paris)');
   });
 
   it('is taken out of the keys written next to other options, and refused when they are not one schedule', () => {

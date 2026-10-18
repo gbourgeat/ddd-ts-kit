@@ -1,5 +1,5 @@
 [English](scheduled-jobs.md) · **Français**
-<!-- translation-of: scheduled-jobs.md sha256:a6a68bfb08a372f9 -->
+<!-- translation-of: scheduled-jobs.md sha256:21ebe046eb11634a -->
 
 # Jobs planifiés
 
@@ -124,8 +124,9 @@ les 15 minutes signifie :00, :15, :30 et :45 sur chaque instance, avant comme ap
 redémarrage. C'est cet alignement qui permet à plusieurs instances de nommer les mêmes instants.
 Un intervalle ne suit aucun fuseau horaire : pour « chaque matin », écrivez un cron.
 
-**Le cron** a les cinq champs standard, à la minute près, évalués sur l'horloge d'un fuseau
-horaire IANA. Le changement d'heure mérite une décision par *job* :
+**Le cron** a les cinq champs standard, à la minute près, ou un raccourci qui les remplace
+(`@hourly`, `@daily`, `@weekly`, `@monthly`, `@yearly`), évalués sur l'horloge d'un fuseau horaire
+IANA. Le changement d'heure mérite une décision par *job* :
 
 | Quand les horloges sont | Un *job* fixé à une heure (`30 2 * * *`) | Un *job* de chaque heure (`0 * * * *`) |
 |---|---|---|
@@ -400,8 +401,8 @@ it('runs each occurrence on one instance only', async () => {
   l'instance ; seuls les points de reprise, si vous fournissez le stockage, survivent à un
   redémarrage.
 - **Ni nouvelle tentative ni temporisation croissante (backoff).**
-- **Résolution à la minute pour le cron** ; pas de champ des secondes, pas de raccourcis
-  `@daily`, pas de `L`, `W`, `#`.
+- **Résolution à la minute pour le cron** ; pas de champ des secondes, pas de `@reboot`, pas de
+  `L`, `W`, `#`.
 - **Un processus, une boucle d'événements.** Un *job* qui bloque la boucle retarde tous les
   autres.
 - **Les règles des fuseaux horaires sont celles de l'environnement d'exécution** : un fuseau

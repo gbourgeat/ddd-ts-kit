@@ -166,8 +166,11 @@ write a cron.
 Each field takes `*`, a value, a range `a-b`, a step on either (`*/15`, `8-18/2`) and lists of
 those (`0,30`, `mon-fri`). Names ignore case. When the day of month and the day of week are
 both restricted (neither starts with `*`), a day that fits either one fits, as in every cron:
-`0 0 13 * fri` is the 13th and every Friday. Not supported: `@daily` and the like, `?`, `L`,
-`W`, `#`, a step on a single value (`5/15`), a range that wraps (`fri-mon`).
+`0 0 13 * fri` is the 13th and every Friday. A shorthand stands for its five fields, in any case:
+`@yearly` and `@annually` are `0 0 1 1 *`, `@monthly` is `0 0 1 * *`, `@weekly` is `0 0 * * 0`,
+`@daily` and `@midnight` are `0 0 * * *`, `@hourly` is `0 * * * *`; a diagnostic shows it as
+written. Not supported: `@reboot` (a scheduled job has no occurrence at start), `?`, `L`, `W`,
+`#`, a step on a single value (`5/15`), a range that wraps (`fri-mon`).
 
 **Time zones** are IANA names, evaluated with `Intl.DateTimeFormat`, without a dependency: the
 rules are those of the runtime, updated with it. The fields are read on the clocks of the zone,

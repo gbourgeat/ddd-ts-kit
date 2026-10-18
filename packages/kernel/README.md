@@ -920,7 +920,7 @@ argument is the schedule and, next to it, the options:
 | Key | Default | |
 |---|---|---|
 | `every` | | an interval, as milliseconds or `'30s'`, `'15m'`, `'2h'`, `'1d'`, aligned on the Unix epoch |
-| `cron`, `timeZone` | `timeZone: 'UTC'` | the five standard fields, on the clocks of an IANA zone |
+| `cron`, `timeZone` | `timeZone: 'UTC'` | the five standard fields or a shorthand (`@hourly`, `@daily`, `@weekly`, `@monthly`, `@yearly`), on the clocks of an IANA zone |
 | `overlap` | `'skip'` | an occurrence that comes while the previous run is in progress is skipped, or `'queue'`d behind it |
 | `missed` | `'skip'` | occurrences that passed without being reached are dropped, or the latest is `'run-once'` |
 | `timeoutMs` | none | the signal of a longer run is aborted |

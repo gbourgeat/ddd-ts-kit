@@ -61,6 +61,7 @@ import { namingSearchNotList } from '../rules/naming-search-not-list.js';
 import { namingSuffix } from '../rules/naming-suffix.js';
 import { persistenceMigrationHistory } from '../rules/persistence-migration-history.js';
 import { persistenceNoFileContent } from '../rules/persistence-no-file-content.js';
+import { persistencePrimaryKeyOrder } from '../rules/persistence-primary-key-order.js';
 import { portsAbstractClass } from '../rules/ports-abstract-class.js';
 import { portsImplementsNeverExtends } from '../rules/ports-implements-never-extends.js';
 import { portsNoConcreteDependency } from '../rules/ports-no-concrete-dependency.js';
@@ -175,5 +176,6 @@ export const ARCHITECTURE_RULES: readonly Rule[] = [
   errorsKnownCode,
   persistenceMigrationHistory,
   persistenceNoFileContent,
+  persistencePrimaryKeyOrder,
   filesPortNotConnector,
 ];

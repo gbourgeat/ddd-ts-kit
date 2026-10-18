@@ -470,6 +470,16 @@ refuses to run without the description: two branches never write the same file.
 The command takes the description after the script: `npm run db:generate add-invoices`
 (`npm run db:generate -- audit-guard --custom` for a hand-written drizzle-kit migration).
 
+**Two migrations kept apart.** A tool that generates from the schema writes, in one migration,
+the difference between the schema files and the last migration: two changes made before one
+`db:generate` come out as one migration. When they have to stay two (a new table, then a
+constraint once it is filled; a column added, then the old one dropped in a later deployment),
+change the schema in two steps, with a `db:generate` after each: make the first change, run
+`npm run db:generate add-due-dates`, then make the second and run
+`npm run db:generate require-due-dates`. Already generated as one and not merged yet: delete it
+(under drizzle-kit, its `.sql` file, its snapshot under `meta/` and its journal entry), undo the
+second change, and take the two steps.
+
 **Without a terminal.** When a change of the schema could be a rename (a column or a table gone
 and another one added), drizzle-kit asks on a terminal whether it is created or renamed.
 Measured with drizzle-kit 0.31.11 (2026-10-15): without a terminal, as an agent or a pipeline
@@ -495,6 +505,11 @@ key) or `_pk` (the one drizzle-kit gives a composite key); the columns of a key 
 snapshot, else from the name drizzle-kit gives a composite key. A key of another name that the
 snapshot does not record, or a statement written in another form (`DROP` of a column without
 `COLUMN`, a `DO` block), is not seen: read the SQL of such a migration before committing it.
+The warning scrolls away with the output; the rule `persistence/primary-key-order` of
+`ddd-ts-kit check` (a warning, as a new rule is) reads the same statements in every `.sql` file
+of the migrations folder and reports the migration, on the line of the statement that runs too
+early, with the same fix, until it is fixed (`ddd-ts-kit check --rule persistence/primary-key-order`
+lists them).
 
 **Formatted as the project.** drizzle-kit writes the snapshot and the journal under `meta/` in
 its own layout, which the format gate of a project can refuse. Once a migration is written,
@@ -566,18 +581,40 @@ npx ddd-ts-kit drizzle-generate --replay                    # --base <ref>, orig
 ```
 
 It compares the `.sql` files of the migrations folder with those of `--base`: the ones the base
-does not have are the branch's. It deletes them, with their snapshots and their journal entries
-(the journal becomes the one of the base, whose last snapshot is then the parent of what
-follows), generates each again on top, in their order and under their names, and says what it
-deleted and generated. A custom migration (its snapshot repeats the one before it) is generated
-again with `--custom` and gets its statements back. It refuses, with the fix: a journal that
-still holds conflict markers (take the one of the base, as above: the replay finds the
-migrations of the branch by their files), a base with migrations the branch has not merged, and
-two migrations of the branch that change the schema: drizzle-kit generates the difference
-between the schema files and the last snapshot, so it can generate the changes of a branch again
-as one migration only (delete them and generate that one by hand). The replay is Drizzle's:
-under knex, Prisma and TypeORM, which keep no journal, `merge-trunk --to-land` renames the
-migrations, and generating one again after an overlap stays by hand.
+does not have are the branch's. When the history on disk does not fork (the journal lists every
+file in the order they were generated, each snapshot from the one before, so the branch's
+follow the last migration of the base), it generates nothing: it only renames a migration whose
+name changes (`working-` dropped, below), its number, snapshot and statements kept, and says so.
+Otherwise it deletes them, with their snapshots and their journal entries (the journal becomes
+the one of the base, whose last snapshot is then the parent of what follows), generates each
+again on top, in their order and under their names, and says what it deleted and generated. A
+custom migration (its snapshot repeats the one before it) is generated again with `--custom` and
+gets its statements back. It refuses, with the fix: a journal that still holds conflict markers
+(take the one of the base, as above: the replay finds the migrations of the branch by their
+files), a base with migrations the branch has not merged, and two migrations of the branch that
+change the schema: drizzle-kit generates the difference between the schema files and the last
+snapshot, so it cannot split the changes of a branch again into the steps they were, and one
+migration in their place would join steps planned apart (a table, then a constraint once it is
+filled, fails on a database that holds rows). The fix generates them again by hand, one at a
+time and in their order, as "Two migrations kept apart" above says: delete
+them, undo every change of the branch in the schema files but the first one's, run
+`npm run db:generate <its name>`, bring back the next change and run it again (`git show
+<commit>:<schema file>` holds the schema of each step). It also refuses a generated
+migration whose statements drizzle-kit now writes otherwise: its SQL was edited by hand (a key
+reordered, an index added), or the base changed what it changes. Generating it again would lose
+that, so it puts the migrations folder back as it found it and says which statement differs;
+the fix is to generate that migration on top of the base by hand and write the edits again
+(`git show HEAD:<file>` holds them), after which a replay finds nothing forked. The replay is
+Drizzle's: under knex, Prisma and TypeORM, which keep no journal, `merge-trunk --to-land` renames
+the migrations, and generating one again after an overlap stays by hand.
+
+**Measured with drizzle-kit 0.31.11, drizzle-orm 0.45.4 and PGlite 0.5.10 (2026-10-18)**, the
+real drizzle-kit on a TypeScript schema: a branch adds a table while the main branch adds
+another, the branch merges it and takes its journal, `drizzle-generate --replay --base main`
+generates the branch's migration again on top with the same statements, and `drizzle-kit migrate`
+applies the three migrations to an empty database; the same with each side adding a column to
+one table. A second replay says nothing is forked. A migration of the branch with an index added
+by hand is refused, and the folder is as before the replay.
 
 `npx ddd-ts-kit verify-merge`, run after the merge, reports a migration of either side that the
 result lost. It knows a migration by its description, its name without its number and without

@@ -24,6 +24,14 @@ const VALID: readonly JobSchedule[] = [
   { cron: '0 0 31 2 1' },
   { cron: '  0   7 * * *  ', timeZone: 'UTC' },
   { cron: '0 0 * JAN MON' },
+  { cron: '@yearly' },
+  { cron: '@annually' },
+  { cron: '@monthly' },
+  { cron: '@weekly' },
+  { cron: '@daily', timeZone: 'Europe/Paris' },
+  { cron: '@midnight' },
+  { cron: '@hourly' },
+  { cron: ' @Daily ' },
 ];
 
 const INVALID: readonly JobSchedule[] = [
@@ -50,6 +58,10 @@ const INVALID: readonly JobSchedule[] = [
   { cron: '0 0 31 apr,jun *' },
   { cron: '0 7 * * 1-5', timeZone: 'Mars/Olympus' },
   { cron: '' },
+  { cron: '@reboot' },
+  { cron: '@foo' },
+  { cron: '@daily 5' },
+  { cron: '@daily', timeZone: 'Mars/Olympus' },
 ];
 
 describe('the schedule validation of the CLI, held to parseJobSchedule of the kernel', () => {
@@ -71,10 +83,19 @@ describe('the schedule validation of the CLI, held to parseJobSchedule of the ke
     expect(jobScheduleProblem({ cron: '0 7 * * *', timeZone: 'Mars/Olympus' })).toContain('is not a time zone');
   });
 
+  it.each(['@reboot', '@foo', '@daily 5'])('refuses the shorthand %j with the words of the kernel', (cron) => {
+    expect(jobScheduleProblem({ cron })).toBe(kernelRefusal({ cron }));
+
+    expect(jobScheduleProblem({ cron })).toBe(
+      `Cron "${cron}" is not a shorthand a scheduled job runs on: write five fields or one of @yearly, @annually, @monthly, @weekly, @daily, @midnight, @hourly.`,
+    );
+  });
+
   it('writes the schedule the way the kernel reads it', () => {
     expect(writtenSchedule({ every: '15m' })).toBe("{ every: '15m' }");
     expect(writtenSchedule({ every: '900000' })).toBe('{ every: 900000 }');
     expect(writtenSchedule({ cron: ' 0  7 * * 1-5 ' })).toBe("{ cron: '0 7 * * 1-5' }");
+    expect(writtenSchedule({ cron: '@daily' })).toBe("{ cron: '@daily' }");
 
     expect(writtenSchedule({ cron: '0 7 * * 1-5', timeZone: 'Europe/Paris' })).toBe(
       "{ cron: '0 7 * * 1-5', timeZone: 'Europe/Paris' }",
@@ -83,12 +104,17 @@ describe('the schedule validation of the CLI, held to parseJobSchedule of the ke
 });
 
 function kernelAccepts(schedule: JobSchedule): boolean {
+  return kernelRefusal(schedule) === undefined;
+}
+
+/** The message of the error the kernel throws on the schedule, or undefined when it accepts it. */
+function kernelRefusal(schedule: JobSchedule): string | undefined {
   try {
     parseJobSchedule(asWritten(schedule));
 
-    return true;
-  } catch {
-    return false;
+    return undefined;
+  } catch (error) {
+    return error instanceof Error ? error.message : String(error);
   }
 }
 

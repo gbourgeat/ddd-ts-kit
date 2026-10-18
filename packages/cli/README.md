@@ -683,11 +683,11 @@ Next, in this order: the language of the context first, then the business decisi
   `platform.jobs.register({ name, schedule, run })`.
 - **Jobs.** The schedule is validated when the job is generated, by the rules of the scheduler
   (`parseJobSchedule` of the kernel, pinned by a test): a duration (`15m`, `2s`, digits alone are
-  milliseconds) or a five-field cron expression, with an IANA time zone; `--time-zone` without
-  `--cron` is refused, and so is a job without `--command`, a command that does not exist (with the
-  command that creates it) and a command whose constructor needs more than the actor and the
-  instant the work is for: a job only says that the time has come, the handler finds what to act
-  on. Parameters that are optional or have a default are left out of the call.
+  milliseconds) or a cron expression of five fields or a shorthand (`@daily`), with an IANA time
+  zone; `--time-zone` without `--cron` is refused, and so is a job without `--command`, a command
+  that does not exist (with the command that creates it) and a command whose constructor needs more
+  than the actor and the instant the work is for: a job only says that the time has come, the
+  handler finds what to act on. Parameters that are optional or have a default are left out of the call.
 - **The grant of a job.** A job whose command is protected sends it as `system:<context>.<name>`,
   which has no right unless the model gives it one. `generate job` writes the grant where the model
   makes it one line, in a `system-grants` marker region, and `next` points at that line:
@@ -1817,6 +1817,21 @@ ddd-ts-kit check-file <path>
 Runs the per-file rules (layers, contexts, naming, events, language, purity, clean code, mocks,
 composition, suppressions) on one file without walking the project: meant for an editor or
 agent hook after each write. A file that is not a source of the project is ignored.
+
+## lint
+
+```
+ddd-ts-kit lint [paths...] [--format <eslint formatter>] [--fix]
+```
+
+What `lint` and `ci:lint` of a generated project run: the ESLint of the project, through its API,
+on the paths given (the project otherwise), its report in the format asked (`--format gitlab`
+writes the Code Quality report as `eslint-formatter-gitlab` does), `--fix` as ESLint takes it.
+It exits 1 on an error, and on a warning as on an error, but on a warning of a rule of the kit in
+transition: a rule new in this version, whose documentation names the version in which it becomes
+an error. Those are shown in the report and listed after it, one line per rule, without failing:
+an upgrade of the kit never turns a green lint red. Without ESLint installed it exits 2 and names
+the install. See [Quality baseline](../../docs/tools/quality-baseline.md#warnings-fail-the-lint).
 
 ## rules, explain
 
