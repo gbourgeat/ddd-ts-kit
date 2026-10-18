@@ -1,6 +1,12 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { outboxStoreContract, processedEventStoreContract } from '@ddd-ts-kit/testing/contracts';
-import { KnexOutboxStore, KnexProcessedEventStore, createKnexUnitOfWork, createOutboxTables } from '../src/index.js';
+import {
+  KnexOutboxStore,
+  KnexProcessedEventStore,
+  createKnexUnitOfWork,
+  createOutboxTables,
+  dropOutboxTables,
+} from '../src/index.js';
 import { createSqliteDatabase, type TestSqliteDatabase } from './support/sqlite.js';
 
 const runner = { describe, it, expect, beforeEach, afterEach };
@@ -35,6 +41,17 @@ outboxStoreContract(runner, {
     await database.truncate();
 
     return new KnexOutboxStore(context(), { claim: 'compare-and-set' });
+  },
+});
+
+// Without a claim named, SQLite, which has no row lock, is claimed by compare-and-set.
+outboxStoreContract(runner, {
+  name: 'KnexOutboxStore on SQLite, choosing how to claim by itself',
+  leaseMs: 30_000,
+  createStore: async () => {
+    await database.truncate();
+
+    return new KnexOutboxStore(context());
   },
 });
 
@@ -77,5 +94,18 @@ describe('createOutboxTables on SQLite', () => {
     await expect(createOutboxTables(database.knex, { schema: 'messaging' })).rejects.toThrow(
       'SQLite has no schemas: name the tables per context with outboxTable and processedEventsTable',
     );
+  });
+
+  it('is undone by dropOutboxTables under the default names, as it is done under them', async () => {
+    const present = () =>
+      Promise.all(['outbox', 'processed_events'].map((table) => database.knex.schema.hasTable(table)));
+
+    await dropOutboxTables(database.knex);
+    const dropped = await present();
+
+    await createOutboxTables(database.knex);
+
+    expect(dropped).toEqual([false, false]);
+    expect(await present()).toEqual([true, true]);
   });
 });
