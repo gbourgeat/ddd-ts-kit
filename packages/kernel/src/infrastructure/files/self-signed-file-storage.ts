@@ -32,25 +32,21 @@ export abstract class SelfSignedFileStorage extends ServedFileStorage {
     this.baseUrl = withoutTrailingSlashes(options.baseUrl ?? 'http://localhost:3000/files');
   }
 
-  signedDownloadUrl(key: string, options: DownloadUrlOptions): Promise<SignedUrl> {
+  /** Async, so that a key or an expiry it refuses rejects the promise instead of throwing at the call. */
+  async signedDownloadUrl(key: string, options: DownloadUrlOptions): Promise<SignedUrl> {
     const grant = { action: 'download' as const, key: assertFileKey(key) };
     const named = options.fileName === undefined ? grant : { ...grant, fileName: options.fileName };
     const { token, expiresAt } = this.tokens.sign(named, assertExpiry(options.expiresInSeconds));
 
-    return Promise.resolve({ url: this.linkOf(token), expiresAt });
+    return { url: this.linkOf(token), expiresAt };
   }
 
-  signedUploadUrl(key: string, options: UploadUrlOptions): Promise<SignedUpload> {
+  async signedUploadUrl(key: string, options: UploadUrlOptions): Promise<SignedUpload> {
     const mediaType = mediaTypeOf(options.mediaType);
     const grant = { action: 'upload' as const, key: assertFileKey(key), mediaType, maxBytes: options.maxBytes };
     const { token, expiresAt } = this.tokens.sign(grant, assertExpiry(options.expiresInSeconds));
 
-    return Promise.resolve({
-      url: this.linkOf(token),
-      method: 'PUT',
-      headers: { 'content-type': mediaType },
-      expiresAt,
-    });
+    return { url: this.linkOf(token), method: 'PUT', headers: { 'content-type': mediaType }, expiresAt };
   }
 
   async openSigned(token: string): Promise<SignedDownload | undefined> {
