@@ -1,5 +1,5 @@
 import { ValueObject } from '@ddd-ts-kit/kernel';
-import { CalendarError } from '@/contexts/scheduling/domain/errors/calendar.error';
+import { InvalidBookingWindow } from '@/contexts/scheduling/domain/errors/invalid-booking-window.error';
 
 export type BookingWindowProps = {
   /** The minimum minutes between booking and start. */
@@ -20,11 +20,11 @@ export class BookingWindow extends ValueObject<BookingWindowProps> {
 
   static create(notice: number, horizon: number): BookingWindow {
     if (!Number.isInteger(notice) || notice < 0) {
-      throw CalendarError.invalidBookingWindow('has a notice of whole minutes');
+      throw InvalidBookingWindow.forRule('has a notice of whole minutes');
     }
 
     if (!Number.isInteger(horizon) || horizon <= notice) {
-      throw CalendarError.invalidBookingWindow('has a horizon after its notice');
+      throw InvalidBookingWindow.forRule('has a horizon after its notice');
     }
 
     return new BookingWindow({ notice, horizon });

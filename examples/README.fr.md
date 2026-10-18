@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:a4326d46243b9175 -->
+<!-- translation-of: README.md sha256:7039b42e6383197f -->
 
 # Exemples
 
@@ -153,7 +153,7 @@ qui a pris fin.
 <!-- checked sample: legacy-decorators -->
 ```ts
 import { Access, definePermissions } from '@ddd-ts-kit/auth';
-import { AuthorizedCommand, ConceptError, ValueObject, type Clock } from '@ddd-ts-kit/kernel';
+import { AuthorizedCommand, DomainRefusal, ValueObject, type Clock } from '@ddd-ts-kit/kernel';
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
 
 // Déclarés ici pour que l'extrait compile seul : dans l'exemple, ce sont des fichiers du contexte.
@@ -174,16 +174,27 @@ const schedulingPermissions = definePermissions('scheduling', {
   'appointment.cancel': { description: 'Patient cancels until notice' },
 });
 
-// domain/errors/appointment.error.ts : un refus a un code stable ; la plateforme le fait correspondre à un statut.
-export class AppointmentError extends ConceptError {
-  static notFound(appointmentId: string) {
-    return AppointmentError.refusal('APPOINTMENT_NOT_FOUND', `Appointment ${appointmentId} does not exist.`, {
-      appointmentId,
-    });
-  }
+// domain/errors/codes.ts : les codes du contexte, le contrat que lit un client ; la plateforme fait correspondre chacun à un statut.
+const SchedulingCodes = {
+  UnknownAppointment: 'APPOINTMENT_NOT_FOUND',
+  ReasonRequired: 'REASON_REQUIRED',
+} as const;
 
-  static reasonRequired() {
-    return AppointmentError.refusal('REASON_REQUIRED', 'The practice gives a reason when it cancels an appointment.');
+// domain/errors/unknown-appointment.error.ts : une classe par refus, nommée d'après ce qui est refusé.
+export class UnknownAppointment extends DomainRefusal {
+  readonly code = SchedulingCodes.UnknownAppointment;
+
+  static forAppointment(appointmentId: string) {
+    return UnknownAppointment.refusal(`Appointment ${appointmentId} does not exist.`, { appointmentId });
+  }
+}
+
+// domain/errors/reason-required.error.ts
+export class ReasonRequired extends DomainRefusal {
+  readonly code = SchedulingCodes.ReasonRequired;
+
+  static onCancellation() {
+    return ReasonRequired.refusal('The practice gives a reason when it cancels an appointment.');
   }
 }
 
@@ -203,7 +214,7 @@ export class Cancellation extends ValueObject<CancellationProps> {
     const given = reason?.trim() ?? '';
 
     if (by === 'practice' && given.length === 0) {
-      throw AppointmentError.reasonRequired();
+      throw ReasonRequired.onCancellation();
     }
 
     return new Cancellation({ by, reason: given.length === 0 ? undefined : given });
@@ -223,7 +234,7 @@ export class CancelAppointmentHandler implements CommandHandler<CancelAppointmen
     const target = await this.appointmentRepository.findById(appointmentId);
 
     if (target === undefined) {
-      throw AppointmentError.notFound(appointmentId);
+      throw UnknownAppointment.forAppointment(appointmentId);
     }
 
     // Les politiques de la permission, avec le rendez-vous chargé : 403 quand l'une dit non.

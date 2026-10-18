@@ -24,6 +24,9 @@ Needed by practice managers, built entirely from what scheduling announces: one 
 | Read | To see the occupancy of the calendars one measures |  |
 | Measure | To compute the occupancy of a calendar over a day from the outcomes of its appointments |  |
 | Figures | The minutes held and the counts of one line of occupancy, as a measure gives them | Occupancy: the line itself, with its calendar and its day |
+| Period | The time an outcome covers, from the start to the end of its appointment: the minutes a measure adds up | Day, which a period falls on |
+| Inverted | Said of a period whose end comes before its start: the time it covers would be negative, so no outcome has one |  |
+| Inconsistent | Said of figures that cannot be true together: a count below zero, or fewer appointments held than completed and missed | A low occupancy, which is true |
 
 ## How occupancy is measured
 
@@ -52,9 +55,9 @@ outcomes hold their time, and the figures of a set of outcomes. It reads each ou
 covers, to the nearest minute) and answers `OccupancyFigures`
 (`domain/value-objects/occupancy-figures.vo.ts`), two value objects compared by value; the read
 model line `Occupancy` carries the same figures as plain data. Each checks its rules once, in its
-factory: an outcome never ends before it starts (`OccupancyError.outcomeEndsBeforeStart`), and
+factory: an outcome never ends before it starts (`OutcomePeriodInverted.forPeriod`), and
 figures are whole numbers, none below zero, with at least as many appointments held as completed
-and missed ones (`OccupancyError.figuresInconsistent`). Scheduling never announces such an
+and missed ones (`FiguresInconsistent.forRule`). Scheduling never announces such an
 outcome, so neither refusal reaches a client: they say what a measure is.
 
 **Where it is computed.** In the database, when `SearchOccupancy` is read:
@@ -134,10 +137,10 @@ Generated from the code by `ddd-ts-kit docs`; the same facts as data: `ddd-ts-ki
 
 ### Errors
 
-| Error class | Refusal | Code | Exposed facts |
+| Refusal | Factory | Code | Exposed facts |
 |---|---|---|---|
-| `OccupancyError` | `outcomeEndsBeforeStart` | `OUTCOME_ENDS_BEFORE_START` | none |
-| `OccupancyError` | `figuresInconsistent` | `FIGURES_INCONSISTENT` | none |
+| `FiguresInconsistent` | `forRule` | `FIGURES_INCONSISTENT` | none |
+| `OutcomePeriodInverted` | `forPeriod` | `OUTCOME_ENDS_BEFORE_START` | none |
 
 ### Gateways
 

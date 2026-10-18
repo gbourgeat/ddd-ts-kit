@@ -1,6 +1,6 @@
 import { AggregateRoot, DomainError } from '@ddd-ts-kit/kernel';
-import { WaitlistError } from '@/contexts/scheduling/domain/errors/waitlist.error';
-import { CalendarError } from '@/contexts/scheduling/domain/errors/calendar.error';
+import { AlreadyWaiting } from '@/contexts/scheduling/domain/errors/already-waiting.error';
+import { InvalidDay } from '@/contexts/scheduling/domain/errors/invalid-day.error';
 import { WaitlistJoined } from '@/contexts/scheduling/domain/events/waitlist-joined.event';
 import { WaitlistSlotOffered } from '@/contexts/scheduling/domain/events/waitlist-slot-offered.event';
 import { Offer } from '@/contexts/scheduling/domain/value-objects/offer.vo';
@@ -45,7 +45,7 @@ export class Waitlist extends AggregateRoot<string> {
   /** A waitlist is born empty; it announces nothing until someone joins. */
   static create(wait: { readonly calendarId: string; readonly day: string }, now: Date): Waitlist {
     if (!TimeZone.isDay(wait.day)) {
-      throw CalendarError.invalidDay(wait.day);
+      throw InvalidDay.forDay(wait.day);
     }
 
     return new Waitlist(Waitlist.idOf(wait.calendarId, wait.day), {
@@ -63,7 +63,7 @@ export class Waitlist extends AggregateRoot<string> {
   /** A patient waits once on a waitlist, whatever the appointment type. */
   join(waiter: Waiter, now: Date): void {
     if (this.state.waiters.some((known) => known.patientId === waiter.patientId)) {
-      throw WaitlistError.alreadyWaiting(waiter.patientId);
+      throw AlreadyWaiting.forPatient(waiter.patientId);
     }
 
     this.state = { ...this.state, waiters: [...this.state.waiters, waiter] };

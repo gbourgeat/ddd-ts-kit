@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { controllerRoute, executeRoute } from '@ddd-ts-kit/http';
 import { InMemoryCommandBus } from '@ddd-ts-kit/kernel';
 import { AddMemberCommand } from '@/contexts/identity/application/commands/add-member/add-member.command';
-import { PracticeError } from '@/contexts/identity/domain/errors/practice.error';
-import { PersonError } from '@/contexts/identity/domain/errors/person.error';
+import { AlreadyMember } from '@/contexts/identity/domain/errors/already-member.error';
+import { UnknownPractice } from '@/contexts/identity/domain/errors/unknown-practice.error';
+import { UnknownRole } from '@/contexts/identity/domain/errors/unknown-role.error';
+import { PersonNotRegistered } from '@/contexts/identity/domain/errors/person-not-registered.error';
 import { AddMemberController } from '@/contexts/identity/presentation/http/practices/add-member/add-member.controller';
 
 const params = { practiceId: 'practice-1' };
@@ -65,10 +67,10 @@ describe('POST /practices/:practiceId/members', () => {
   });
 
   it.each([
-    ['PRACTICE_NOT_FOUND', PracticeError.notFound('practice-1')],
-    ['PERSON_NOT_REGISTERED', PersonError.notRegistered('person-1')],
-    ['UNKNOWN_ROLE', PracticeError.unknownRole('patient')],
-    ['ALREADY_MEMBER', PracticeError.alreadyMember('person-1')],
+    ['PRACTICE_NOT_FOUND', UnknownPractice.forPractice('practice-1')],
+    ['PERSON_NOT_REGISTERED', PersonNotRegistered.forPerson('person-1')],
+    ['UNKNOWN_ROLE', UnknownRole.forName('patient')],
+    ['ALREADY_MEMBER', AlreadyMember.forPerson('person-1')],
   ])('answers 422 with the code %s when the use case refuses', async (code, refusal) => {
     const commands = new InMemoryCommandBus().register(AddMemberCommand, {
       execute: async () => {

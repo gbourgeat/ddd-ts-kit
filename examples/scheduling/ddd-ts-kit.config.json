@@ -27,7 +27,7 @@
     "style": "declared",
     "assembly": "barrel",
     "dependencies": "signature",
-    "refusals": "factories",
+    "refusals": "named",
     "routes": "controllers",
     "schemas": "shared",
     "valueObjects": "throwing",

@@ -332,8 +332,8 @@ declare class Cancellation {
   /** Refuses with REASON_REQUIRED (422) when the practice gives no reason: an invariant. */
   static create(by: 'patient' | 'practice', reason?: string): Cancellation;
 }
-declare class AppointmentError {
-  static notFound(appointmentId: string): Error;
+declare class UnknownAppointment {
+  static forAppointment(appointmentId: string): Error;
 }
 declare abstract class AppointmentRepository {
   abstract findById(id: string): Promise<Appointment | undefined>;
@@ -388,7 +388,7 @@ export class CancelAppointmentHandler implements CommandHandler<CancelAppointmen
     const appointment = await this.appointmentRepository.findById(appointmentId);
 
     if (appointment === undefined) {
-      throw AppointmentError.notFound(appointmentId);
+      throw UnknownAppointment.forAppointment(appointmentId);
     }
 
     // Raises ForbiddenError (403) when a policy says no.

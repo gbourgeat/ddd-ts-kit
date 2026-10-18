@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { controllerRoute, executeRoute } from '@ddd-ts-kit/http';
 import { InMemoryCommandBus } from '@ddd-ts-kit/kernel';
 import { CreateCalendarCommand } from '@/contexts/scheduling/application/commands/create-calendar/create-calendar.command';
-import { CalendarError } from '@/contexts/scheduling/domain/errors/calendar.error';
+import { UnknownPractitioner } from '@/contexts/scheduling/domain/errors/unknown-practitioner.error';
 import { CreateCalendarController } from '@/contexts/scheduling/presentation/http/calendars/create-calendar/create-calendar.controller';
 
 describe('POST /calendars', () => {
@@ -46,7 +46,7 @@ describe('POST /calendars', () => {
   it('answers the refusal of an unknown practitioner with its code', async () => {
     const commands = new InMemoryCommandBus().register(CreateCalendarCommand, {
       execute: async () => {
-        throw CalendarError.unknownPractitioner('practice-1', 'practitioner-1');
+        throw UnknownPractitioner.atPractice('practice-1', 'practitioner-1');
       },
     });
 

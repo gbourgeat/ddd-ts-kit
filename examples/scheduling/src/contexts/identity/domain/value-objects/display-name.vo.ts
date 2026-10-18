@@ -1,5 +1,5 @@
 import { ValueObject } from '@ddd-ts-kit/kernel';
-import { PersonError } from '@/contexts/identity/domain/errors/person.error';
+import { InvalidDisplayName } from '@/contexts/identity/domain/errors/invalid-display-name.error';
 
 export type DisplayNameProps = {
   readonly value: string;
@@ -16,7 +16,7 @@ export class DisplayName extends ValueObject<DisplayNameProps> {
     const normalized = value.trim().replace(/\s+/g, ' ');
 
     if (normalized.length === 0 || normalized.length > LONGEST_NAME) {
-      throw PersonError.invalidDisplayName();
+      throw InvalidDisplayName.becauseOfLength();
     }
 
     return new DisplayName({ value: normalized });

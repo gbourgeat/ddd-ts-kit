@@ -1,7 +1,7 @@
 import { Access } from '@ddd-ts-kit/auth';
 import { Criteria, hydrate, scoped } from '@ddd-ts-kit/kernel';
 import { QueryHandler } from '@ddd-ts-kit/kernel/declarations';
-import { AppointmentError } from '@/contexts/scheduling/domain/errors/appointment.error';
+import { UnknownAppointment } from '@/contexts/scheduling/domain/errors/unknown-appointment.error';
 import { schedulingPermissions } from '@/contexts/scheduling/application/authorization/scheduling.permissions';
 import type { Agenda, AgendaEntry } from '@/contexts/scheduling/application/ports/agenda.port';
 import type { PersonDirectoryGateway } from '@/contexts/scheduling/application/ports/person-directory-gateway.port';
@@ -39,7 +39,7 @@ export class GetAppointmentHandler implements QueryHandler<GetAppointmentQuery> 
     const [first] = named.items;
 
     if (first === undefined) {
-      throw AppointmentError.notFound(query.appointmentId);
+      throw UnknownAppointment.forAppointment(query.appointmentId);
     }
 
     const { patient, ...entry } = first;

@@ -1,8 +1,8 @@
 import { Access } from '@ddd-ts-kit/auth';
 import type { Clock } from '@ddd-ts-kit/kernel';
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
-import { AppointmentError } from '@/contexts/scheduling/domain/errors/appointment.error';
-import { CalendarError } from '@/contexts/scheduling/domain/errors/calendar.error';
+import { UnknownAppointment } from '@/contexts/scheduling/domain/errors/unknown-appointment.error';
+import { UnknownCalendar } from '@/contexts/scheduling/domain/errors/unknown-calendar.error';
 import type { AppointmentRepository } from '@/contexts/scheduling/domain/repositories/appointment.repository';
 import type { CalendarRepository } from '@/contexts/scheduling/domain/repositories/calendar.repository';
 import { SchedulerService } from '@/contexts/scheduling/domain/services/scheduler.service';
@@ -28,7 +28,7 @@ export class RescheduleAppointmentHandler implements CommandHandler<RescheduleAp
     const appointment = await this.appointmentRepository.findById(appointmentId);
 
     if (appointment === undefined) {
-      throw AppointmentError.notFound(appointmentId);
+      throw UnknownAppointment.forAppointment(appointmentId);
     }
 
     await this.access.authorize(actor, schedulingPermissions['appointment.reschedule'], appointment);
@@ -36,7 +36,7 @@ export class RescheduleAppointmentHandler implements CommandHandler<RescheduleAp
     const calendar = await this.calendarRepository.findById(appointment.calendarId);
 
     if (calendar === undefined) {
-      throw CalendarError.unknown(appointment.calendarId);
+      throw UnknownCalendar.forCalendar(appointment.calendarId);
     }
 
     const now = this.clock.now();

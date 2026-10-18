@@ -3,7 +3,7 @@ import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
 import { Appointment } from '@/contexts/scheduling/domain/aggregates/appointment.aggregate';
 import type { Calendar } from '@/contexts/scheduling/domain/aggregates/calendar.aggregate';
 import { Waitlist } from '@/contexts/scheduling/domain/aggregates/waitlist.aggregate';
-import { CalendarError } from '@/contexts/scheduling/domain/errors/calendar.error';
+import { UnknownCalendar } from '@/contexts/scheduling/domain/errors/unknown-calendar.error';
 import type { AppointmentRepository } from '@/contexts/scheduling/domain/repositories/appointment.repository';
 import type { CalendarRepository } from '@/contexts/scheduling/domain/repositories/calendar.repository';
 import type { WaitlistRepository } from '@/contexts/scheduling/domain/repositories/waitlist.repository';
@@ -31,7 +31,7 @@ export class OfferFreedSlotHandler implements CommandHandler<OfferFreedSlotComma
     const calendar = await this.calendarRepository.findById(calendarId);
 
     if (calendar === undefined) {
-      throw CalendarError.unknown(calendarId);
+      throw UnknownCalendar.forCalendar(calendarId);
     }
 
     const slot = Slot.between(freed.startsAt, freed.endsAt, freed.heldUntil);

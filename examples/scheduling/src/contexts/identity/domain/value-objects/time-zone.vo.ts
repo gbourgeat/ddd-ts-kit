@@ -1,5 +1,5 @@
 import { ValueObject } from '@ddd-ts-kit/kernel';
-import { PracticeError } from '@/contexts/identity/domain/errors/practice.error';
+import { UnknownTimeZone } from '@/contexts/identity/domain/errors/unknown-time-zone.error';
 
 export type TimeZoneProps = {
   readonly value: string;
@@ -14,7 +14,7 @@ export class TimeZone extends ValueObject<TimeZoneProps> {
     const canonical = canonicalZoneOf(value.trim());
 
     if (canonical === undefined) {
-      throw PracticeError.unknownTimeZone(value);
+      throw UnknownTimeZone.forName(value);
     }
 
     return new TimeZone({ value: canonical });

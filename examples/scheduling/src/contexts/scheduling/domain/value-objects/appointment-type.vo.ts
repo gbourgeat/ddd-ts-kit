@@ -1,5 +1,5 @@
 import { ValueObject } from '@ddd-ts-kit/kernel';
-import { CalendarError } from '@/contexts/scheduling/domain/errors/calendar.error';
+import { InvalidAppointmentType } from '@/contexts/scheduling/domain/errors/invalid-appointment-type.error';
 import { Slot } from '@/contexts/scheduling/domain/value-objects/slot.vo';
 
 export type AppointmentTypeProps = {
@@ -30,7 +30,7 @@ export class AppointmentType extends ValueObject<AppointmentTypeProps> {
       return new AppointmentType({ ...facts, name: facts.name.trim() });
     }
 
-    throw CalendarError.invalidAppointmentType(refusal);
+    throw InvalidAppointmentType.forRule(refusal);
   }
 
   /** What an appointment of this type holds when it starts at the instant: its duration, then its buffer. */

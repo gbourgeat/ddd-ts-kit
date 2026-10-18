@@ -1,6 +1,6 @@
 import type { Clock } from '@ddd-ts-kit/kernel';
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
-import { AppointmentError } from '@/contexts/scheduling/domain/errors/appointment.error';
+import { UnknownAppointment } from '@/contexts/scheduling/domain/errors/unknown-appointment.error';
 import type { AppointmentRepository } from '@/contexts/scheduling/domain/repositories/appointment.repository';
 import { ConfirmAppointmentCommand } from '@/contexts/scheduling/application/commands/confirm-appointment/confirm-appointment.command';
 
@@ -15,7 +15,7 @@ export class ConfirmAppointmentHandler implements CommandHandler<ConfirmAppointm
     const appointment = await this.appointmentRepository.findById(command.appointmentId);
 
     if (appointment === undefined) {
-      throw AppointmentError.notFound(command.appointmentId);
+      throw UnknownAppointment.forAppointment(command.appointmentId);
     }
 
     appointment.confirm(this.clock.now());

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { CacheTagHeader, controllerRoute, createErrorMapper, executeRoute, type RawHeaders } from '@ddd-ts-kit/http';
 import { InMemoryQueryBus } from '@ddd-ts-kit/kernel';
 import { errorStatuses } from '@/platform/http/error-statuses';
-import { CalendarError } from '@/contexts/scheduling/domain/errors/calendar.error';
+import { UnknownCalendar } from '@/contexts/scheduling/domain/errors/unknown-calendar.error';
 import { GetOpeningHoursQuery } from '@/contexts/scheduling/application/queries/get-opening-hours/get-opening-hours.query';
 import { GetOpeningHoursController } from '@/contexts/scheduling/presentation/http/calendars/get-opening-hours/get-opening-hours.controller';
 
@@ -47,7 +47,7 @@ function answering(headers: RawHeaders = {}) {
   const queries = new InMemoryQueryBus().register(GetOpeningHoursQuery, {
     execute: async ({ calendarId }) => {
       if (calendarId !== 'calendar-1') {
-        throw CalendarError.unknown(calendarId);
+        throw UnknownCalendar.forCalendar(calendarId);
       }
 
       return hours;

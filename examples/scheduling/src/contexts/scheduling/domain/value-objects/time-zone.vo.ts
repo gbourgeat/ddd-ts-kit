@@ -1,5 +1,5 @@
 import { ValueObject } from '@ddd-ts-kit/kernel';
-import { CalendarError } from '@/contexts/scheduling/domain/errors/calendar.error';
+import { UnknownTimeZone } from '@/contexts/scheduling/domain/errors/unknown-time-zone.error';
 
 export type TimeZoneProps = {
   readonly name: string;
@@ -26,12 +26,12 @@ export class TimeZone extends ValueObject<TimeZoneProps> {
       const canonical = new Intl.DateTimeFormat('en-US', { timeZone: trimmed }).resolvedOptions().timeZone;
 
       if (trimmed.length === 0) {
-        throw CalendarError.unknownTimeZone(name);
+        throw UnknownTimeZone.forName(name);
       }
 
       return new TimeZone({ name: canonical });
     } catch {
-      throw CalendarError.unknownTimeZone(name);
+      throw UnknownTimeZone.forName(name);
     }
   }
 

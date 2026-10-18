@@ -82,6 +82,16 @@ This is why practices come: a time on a calendar is held once, under rules of av
 | Name | What a document was called when it was sent, shown back to people |  |
 | Clear | To cancel, through a worker, every appointment a calendar holds over a period, before an absence of its practitioner |  |
 | Clearance | One clearing of a calendar, followed while a worker cancels its appointments one by one |  |
+| Start | The instant an appointment begins: its outcome is not known before it | Booking, the moment the appointment is taken |
+| End | For an appointment, to reach a status it never leaves: cancelled, expired, completed or no-show; it changes no more after | Expire, one of the ways to end |
+| Late | Said of a booking whose start is closer than the notice: too little time is left before it | Far |
+| Far | Said of a booking whose start lies beyond the horizon: further ahead than the calendar takes appointments | Late |
+| Taken | Said of a slot an appointment already holds on the calendar: booking it again is refused | Busy, the same fact shown without saying by whom |
+| Outside availability | Said of a time the calendar takes no appointment at: outside its opening hours, on a closed exception or in a time off | Taken, which a free time becomes when booked |
+| Reach | For a patient, to hold as many future appointments with a practitioner as the limit allows: one more is refused |  |
+| Wait | To be on a waitlist, from joining it until an offer is accepted or one leaves | Hold, the time an offer waits for its waiter |
+| Cover | For a time off, to fall on the time of appointments still held: refused, the calendar is cleared first | Hold, which only an appointment does |
+| Long | Said of a document name with more characters than the practice keeps for it |  |
 
 ## Aggregates
 
@@ -327,38 +337,38 @@ Generated from the code by `ddd-ts-kit docs`; the same facts as data: `ddd-ts-ki
 
 ### Errors
 
-| Error class | Refusal | Code | Exposed facts |
+| Refusal | Factory | Code | Exposed facts |
 |---|---|---|---|
-| `AppointmentError` | `alreadyConfirmed` | `APPOINTMENT_ALREADY_CONFIRMED` | none |
-| `AppointmentError` | `ended` | `APPOINTMENT_ENDED` | `status` |
-| `AppointmentError` | `notFound` | `APPOINTMENT_NOT_FOUND` | none |
-| `AppointmentError` | `notStarted` | `APPOINTMENT_NOT_STARTED` | `startsAt` |
-| `AppointmentError` | `bookingTooFar` | `BOOKING_TOO_FAR` | `horizon` |
-| `AppointmentError` | `bookingTooLate` | `BOOKING_TOO_LATE` | `notice` |
-| `AppointmentError` | `invalidBooking` | `INVALID_BOOKING` | none |
-| `AppointmentError` | `invalidSlot` | `INVALID_SLOT` | none |
-| `AppointmentError` | `offGrid` | `OFF_GRID` | `grid` |
-| `AppointmentError` | `outsideAvailability` | `OUTSIDE_AVAILABILITY` | `startsAt` |
-| `AppointmentError` | `patientLimitReached` | `PATIENT_LIMIT_REACHED` | `limit` |
-| `AppointmentError` | `reasonRequired` | `REASON_REQUIRED` | none |
-| `AppointmentError` | `slotTaken` | `SLOT_TAKEN` | `startsAt` |
-| `AppointmentError` | `noDocument` | `NO_DOCUMENT` | none |
-| `AppointmentError` | `documentNameTooLong` | `DOCUMENT_NAME_TOO_LONG` | `longest` |
-| `AttendanceRecordError` | `alreadyNoted` | `ALREADY_NOTED` | none |
-| `CalendarError` | `invalidAppointmentType` | `INVALID_APPOINTMENT_TYPE` | none |
-| `CalendarError` | `invalidBookingWindow` | `INVALID_BOOKING_WINDOW` | none |
-| `CalendarError` | `invalidDay` | `INVALID_DAY` | `day` |
-| `CalendarError` | `invalidRange` | `INVALID_RANGE` | none |
-| `CalendarError` | `invalidTimeOff` | `INVALID_TIME_OFF` | none |
-| `CalendarError` | `timeOffOverAppointments` | `TIME_OFF_OVER_APPOINTMENTS` | `held` |
-| `CalendarError` | `unknownAppointmentType` | `UNKNOWN_APPOINTMENT_TYPE` | none |
-| `CalendarError` | `unknownClearance` | `UNKNOWN_CLEARANCE` | none |
-| `CalendarError` | `unknown` | `UNKNOWN_CALENDAR` | none |
-| `CalendarError` | `unknownPractitioner` | `UNKNOWN_PRACTITIONER` | none |
-| `CalendarError` | `unknownTimeZone` | `UNKNOWN_TIME_ZONE` | none |
-| `WaitlistError` | `alreadyWaiting` | `ALREADY_WAITING` | none |
-| `WaitlistError` | `invalidOffer` | `INVALID_OFFER` | none |
-| `WaitlistError` | `invalidWaiter` | `INVALID_WAITER` | none |
+| `AlreadyNoted` | `forAppointment` | `ALREADY_NOTED` | none |
+| `AlreadyWaiting` | `forPatient` | `ALREADY_WAITING` | none |
+| `AppointmentAlreadyConfirmed` | `forAppointment` | `APPOINTMENT_ALREADY_CONFIRMED` | none |
+| `AppointmentEnded` | `forAppointment` | `APPOINTMENT_ENDED` | `status` |
+| `AppointmentNotStarted` | `forAppointment` | `APPOINTMENT_NOT_STARTED` | `startsAt` |
+| `BookingTooFar` | `withHorizon` | `BOOKING_TOO_FAR` | `horizon` |
+| `BookingTooLate` | `withNotice` | `BOOKING_TOO_LATE` | `notice` |
+| `DocumentNameTooLong` | `withMaximum` | `DOCUMENT_NAME_TOO_LONG` | `longest` |
+| `InvalidAppointmentType` | `forRule` | `INVALID_APPOINTMENT_TYPE` | none |
+| `InvalidBookingWindow` | `forRule` | `INVALID_BOOKING_WINDOW` | none |
+| `InvalidBooking` | `forRule` | `INVALID_BOOKING` | none |
+| `InvalidDay` | `forDay` | `INVALID_DAY` | `day` |
+| `InvalidOffer` | `forRule` | `INVALID_OFFER` | none |
+| `InvalidRange` | `forRule` | `INVALID_RANGE` | none |
+| `InvalidSlot` | `forRule` | `INVALID_SLOT` | none |
+| `InvalidTimeOff` | `forRule` | `INVALID_TIME_OFF` | none |
+| `InvalidWaiter` | `forRule` | `INVALID_WAITER` | none |
+| `NoDocument` | `forAppointment` | `NO_DOCUMENT` | none |
+| `OffGrid` | `forGrid` | `OFF_GRID` | `grid` |
+| `OutsideAvailability` | `atStart` | `OUTSIDE_AVAILABILITY` | `startsAt` |
+| `PatientLimitReached` | `atLimit` | `PATIENT_LIMIT_REACHED` | `limit` |
+| `ReasonRequired` | `onCancellation` | `REASON_REQUIRED` | none |
+| `SlotTaken` | `forCalendar` | `SLOT_TAKEN` | `startsAt` |
+| `TimeOffCoversAppointments` | `withCount` | `TIME_OFF_OVER_APPOINTMENTS` | `held` |
+| `UnknownAppointmentType` | `forAppointmentType` | `UNKNOWN_APPOINTMENT_TYPE` | none |
+| `UnknownAppointment` | `forAppointment` | `APPOINTMENT_NOT_FOUND` | none |
+| `UnknownCalendar` | `forCalendar` | `UNKNOWN_CALENDAR` | none |
+| `UnknownClearance` | `forClearance` | `UNKNOWN_CLEARANCE` | none |
+| `UnknownPractitioner` | `atPractice` | `UNKNOWN_PRACTITIONER` | none |
+| `UnknownTimeZone` | `forName` | `UNKNOWN_TIME_ZONE` | none |
 
 ### Gateways
 

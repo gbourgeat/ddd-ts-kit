@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { controllerRoute, executeRoute } from '@ddd-ts-kit/http';
 import { InMemoryCommandBus } from '@ddd-ts-kit/kernel';
 import { RegisterPersonCommand } from '@/contexts/identity/application/commands/register-person/register-person.command';
-import { PersonError } from '@/contexts/identity/domain/errors/person.error';
+import { InvalidDisplayName } from '@/contexts/identity/domain/errors/invalid-display-name.error';
+import { InvalidEmail } from '@/contexts/identity/domain/errors/invalid-email.error';
 import { RegisterPersonController } from '@/contexts/identity/presentation/http/people/register-person/register-person.controller';
 
 const params = {};
@@ -69,8 +70,8 @@ describe('PUT /people/me', () => {
   });
 
   it.each([
-    ['INVALID_DISPLAY_NAME', PersonError.invalidDisplayName()],
-    ['INVALID_EMAIL', PersonError.invalidEmail('x')],
+    ['INVALID_DISPLAY_NAME', InvalidDisplayName.becauseOfLength()],
+    ['INVALID_EMAIL', InvalidEmail.forAddress('x')],
   ])('answers 422 with the code %s when the use case refuses', async (code, refusal) => {
     const commands = new InMemoryCommandBus().register(RegisterPersonCommand, {
       execute: async () => {
@@ -93,7 +94,7 @@ describe('PUT /people/me', () => {
   it('answers a sentence made from the code, never the address the use case refused', async () => {
     const commands = new InMemoryCommandBus().register(RegisterPersonCommand, {
       execute: async () => {
-        throw PersonError.invalidEmail('ada@nowhere');
+        throw InvalidEmail.forAddress('ada@nowhere');
       },
     });
 
