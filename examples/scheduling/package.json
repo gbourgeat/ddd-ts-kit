@@ -51,8 +51,7 @@
     "verify": "npm run typecheck && npm run lint && npm run format:check && npm run test:coverage && npm run test:e2e && npm run check:arch && npm run depcruise && npm run deadcode && npm run docs:check",
     "start:worker": "node dist/src/apps/worker/main.js",
     "sdk:generate": "node scripts/kit.mjs sdk",
-    "sdk:build": "node scripts/tsc.mjs -b clients",
-    "regenerate": "node scripts/kit.mjs depcruise-config --write && npm run docs:generate"
+    "sdk:build": "node scripts/tsc.mjs -b clients"
   },
   "dependencies": {
     "@ddd-ts-kit/aspects": "^0.82.0",
