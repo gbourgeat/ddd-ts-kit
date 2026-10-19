@@ -32,7 +32,11 @@ describe('the openapi value of a config', () => {
     ]);
 
     expect(openApiProblems({ format: 'xml' }, CONTEXTS)).toMatchObject([
-      { key: 'format', message: '"openapi.format" is "xml": the contracts are written in YAML.' },
+      {
+        key: 'format',
+        message: expect.stringContaining('"openapi.format" is "xml"'),
+        fix: 'Use one of: yaml, json.',
+      },
     ]);
   });
 
