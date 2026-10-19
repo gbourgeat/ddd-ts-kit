@@ -1,1 +1,0 @@
-**The `decorators()` plugin of `@ddd-ts-kit/testing/vitest` compiles again a cache entry that lost its output or its map, and replaces it.** An entry whose directory was left without its emitted file or its source map failed every compile of its file with `ENOENT` until the cache directory was removed by hand.
