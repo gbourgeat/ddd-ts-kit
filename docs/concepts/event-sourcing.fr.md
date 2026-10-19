@@ -1,5 +1,5 @@
 [English](event-sourcing.md) · **Français**
-<!-- translation-of: event-sourcing.md sha256:6120da213094cbe7 -->
+<!-- translation-of: event-sourcing.md sha256:c6adf6cb378fda21 -->
 
 # Event sourcing, par agrégat
 
@@ -98,7 +98,7 @@ disent les commentaires.
 <!-- checked sample -->
 ```ts
 import { NamedDomainEvent, 
-  ConceptError,
+  DomainRefusal,
   EventSerializer,
   EventSourcedAggregate,
   EventSourcedRepository,
@@ -133,11 +133,15 @@ export class AttendanceRecordNoShowNoted extends NamedDomainEvent('scheduling.at
 
 export type AttendanceRecordEvent = AttendanceRecordCreated | AttendanceRecordNoShowNoted;
 
-export class AttendanceRecordError extends ConceptError {
-  static alreadyNoted(appointmentId: string) {
-    return AttendanceRecordError.refusal('ALREADY_NOTED', `Appointment ${appointmentId} is already noted.`, {
-      appointmentId,
-    });
+// domain/errors/codes.ts
+export const SchedulingCodes = { AlreadyNoted: 'ALREADY_NOTED' } as const;
+
+// domain/errors/already-noted.error.ts
+export class AlreadyNoted extends DomainRefusal {
+  readonly code = SchedulingCodes.AlreadyNoted;
+
+  static forAppointment(appointmentId: string) {
+    return AlreadyNoted.refusal(`Appointment ${appointmentId} is already noted.`, { appointmentId });
   }
 }
 
@@ -167,7 +171,7 @@ export class AttendanceRecord extends EventSourcedAggregate<AttendanceRecordEven
   /** Une commande : vérifie sur l'état, puis enregistre ce qu'elle a décidé. */
   noteNoShow(appointmentId: string, now: Date): void {
     if (this.noted.includes(appointmentId)) {
-      throw AttendanceRecordError.alreadyNoted(appointmentId);
+      throw AlreadyNoted.forAppointment(appointmentId);
     }
 
     this.record(new AttendanceRecordNoShowNoted(this.id, now, appointmentId));

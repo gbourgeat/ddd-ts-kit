@@ -1,6 +1,7 @@
 import { Appointment } from '@/contexts/scheduling/domain/aggregates/appointment.aggregate';
 import type { Calendar } from '@/contexts/scheduling/domain/aggregates/calendar.aggregate';
-import { AppointmentError } from '@/contexts/scheduling/domain/errors/appointment.error';
+import { PatientLimitReached } from '@/contexts/scheduling/domain/errors/patient-limit-reached.error';
+import { SlotTaken } from '@/contexts/scheduling/domain/errors/slot-taken.error';
 import { Booking } from '@/contexts/scheduling/domain/value-objects/booking.vo';
 import type { Slot } from '@/contexts/scheduling/domain/value-objects/slot.vo';
 
@@ -83,7 +84,7 @@ export class SchedulerService {
     const slot = calendar.slotFor(wish.appointmentTypeId, wish.startsAt, wish.now);
 
     if (held.onCalendar.some((other) => other.calendarId === calendar.id && other.holds(slot))) {
-      throw AppointmentError.slotTaken(calendar.id, slot.startsAt);
+      throw SlotTaken.forCalendar(calendar.id, slot.startsAt);
     }
 
     const coming = held.byPatient.filter(
@@ -94,7 +95,7 @@ export class SchedulerService {
     );
 
     if (coming.length >= calendar.limit) {
-      throw AppointmentError.patientLimitReached(calendar.limit);
+      throw PatientLimitReached.atLimit(calendar.limit);
     }
 
     return slot;

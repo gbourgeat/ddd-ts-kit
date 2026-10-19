@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:bf4e26b225f91ffd -->
+<!-- translation-of: README.md sha256:fa83df3df6d355f5 -->
 
 # @ddd-ts-kit/eslint-plugin
 
@@ -234,9 +234,9 @@ chaque règle à `error`.
 | [`domain/value-object-immutability`](docs/rules/domain-value-object-immutability.fr.md) | `ddd-ts-kit/domain-value-object-immutability` | objets-valeurs : chaque propriété `readonly`, pas de *setter*, pas d'écriture dans `this` | `error` | maison |
 | [`domain/value-object-class`](docs/rules/domain-value-object-class.fr.md) | `ddd-ts-kit/domain-value-object-class` | sous `"stack.values": "classes"` : un fichier d'objet-valeur exporte une classe qui étend `ValueObject`, au constructeur privé ou protégé, avec des fabriques statiques, sans fonction ni objet littéral ; aucune fonction exportée de `domain/` ou du noyau partagé ne répond un enregistrement de données | `error` | maison |
 | [`domain/no-generic-error`](docs/rules/domain-no-generic-error.fr.md) | `ddd-ts-kit/domain-no-generic-error` | pas de `throw new Error(...)` dans `domain/` et `application/` | `error` | maison |
-| [`errors/through-factory`](docs/rules/errors-through-factory.fr.md) | `ddd-ts-kit/errors-through-factory` | sous `"stack.refusals": "factories"`, pas de `new` d'une classe importée de `domain/errors/` : un refus se construit par une fabrique statique de sa classe de concept | `error` | maison |
-| [`errors/constructor-not-public`](docs/rules/errors-constructor-not-public.fr.md) | `ddd-ts-kit/errors-constructor-not-public` | sous `"stack.refusals": "factories"`, une classe d'erreur de `domain/errors/` n'a pas de constructeur public, déclaré ou hérité de `DomainError` | `error` | maison |
-| [`errors/factory-name`](docs/rules/errors-factory-name.fr.md) | `ddd-ts-kit/errors-factory-name` | sous `"stack.refusals": "factories"`, une fabrique ne s'appelle pas `create`, `make`, `of` ou `error1`, et son code est son nom en casse constante, seul ou avec le nom du concept | `error` | maison |
+| [`errors/through-factory`](docs/rules/errors-through-factory.fr.md) | `ddd-ts-kit/errors-through-factory` | sous `"stack.refusals": "named"` ou `"factories"`, pas de `new` d'une classe importée de `domain/errors/`, ni sous `named` d'une classe qui étend `DomainRefusal` : un refus se construit par une fabrique statique de sa classe | `error` | maison |
+| [`errors/constructor-not-public`](docs/rules/errors-constructor-not-public.fr.md) | `ddd-ts-kit/errors-constructor-not-public` | sous `"stack.refusals": "named"` ou `"factories"`, une classe d'erreur de `domain/errors/` n'a pas de constructeur public, déclaré ou hérité de `DomainError` | `error` | maison |
+| [`errors/factory-name`](docs/rules/errors-factory-name.fr.md) | `ddd-ts-kit/errors-factory-name` | sous `"stack.refusals": "named"`, une classe de refus ne s'appelle pas `...Error` et une fabrique commence par `for`, `with`, `because`, `on` ou `at` puis une majuscule, sans chiffre ; sous `"factories"`, une fabrique ne s'appelle pas `create`, `make`, `of` ou `error1`, et son code est son nom en casse constante, seul ou avec le nom du concept | `error` | maison |
 | [`application/handler-shape`](docs/rules/application-handler-shape.fr.md) | `ddd-ts-kit/application-handler-shape` | un `*.handler.ts` exporte une classe dont la seule méthode publique est `execute` | `error` | maison |
 | [`presentation/controller-shape`](docs/rules/presentation-controller-shape.fr.md) | `ddd-ts-kit/presentation-controller-shape` | un `*.controller.ts` portant `@Controller` exporte une classe dont la seule méthode publique est `handle` | `error` | maison |
 | [`presentation/controller-delegates`](docs/rules/presentation-controller-delegates.fr.md) | `ddd-ts-kit/presentation-controller-delegates` | un contrôleur reçoit le bus de sa méthode, un *mapper* de requête HTTP et un sérialiseur, rien d'autre | `error` | maison |

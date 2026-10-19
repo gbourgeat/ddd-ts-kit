@@ -1,5 +1,11 @@
 import { AggregateRoot } from '@ddd-ts-kit/kernel';
+{{#unless refusals.named}}
 import { AccountError } from '{{alias.context}}/domain/errors/account.error{{alias.ext}}';
+{{/unless}}
+{{#if refusals.named}}
+import { AccountAlreadyDeactivated } from '{{alias.context}}/domain/errors/account-already-deactivated.error{{alias.ext}}';
+import { DeactivatedAccount } from '{{alias.context}}/domain/errors/deactivated-account.error{{alias.ext}}';
+{{/if}}
 import { AccountDeactivated } from '{{alias.context}}/domain/events/account-deactivated.event{{alias.ext}}';
 import { AccountProvisioned } from '{{alias.context}}/domain/events/account-provisioned.event{{alias.ext}}';
 import type { DisplayName } from '{{alias.context}}/domain/value-objects/display-name.vo{{alias.ext}}';
@@ -56,7 +62,12 @@ export class Account extends AggregateRoot<string> {
   /** The person signs in no more; their memberships and their history stay. */
   deactivate(now: Date): void {
     if (!this.isActive) {
+{{#if refusals.named}}
+      throw AccountAlreadyDeactivated.forAccount(this.id);
+{{/if}}
+{{#unless refusals.named}}
       throw AccountError.alreadyDeactivated(this.id);
+{{/unless}}
     }
 
     this.state = { ...this.state, status: AccountStatus.Deactivated, deactivatedAt: now };
@@ -66,7 +77,12 @@ export class Account extends AggregateRoot<string> {
   /** Refuses every intention of a deactivated account. */
   assertActive(): void {
     if (!this.isActive) {
+{{#if refusals.named}}
+      throw DeactivatedAccount.forAccount(this.id);
+{{/if}}
+{{#unless refusals.named}}
       throw AccountError.deactivated(this.id);
+{{/unless}}
     }
   }
 

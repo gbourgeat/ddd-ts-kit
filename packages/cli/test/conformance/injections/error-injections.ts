@@ -1,13 +1,15 @@
 import type { Injection } from '../injection.js';
 import { PATHS } from '../paths.js';
 
-const { SCHEDULING } = PATHS;
-const REMINDER_ERROR = 'src/contexts/notification/domain/errors/reminder.error.ts';
+const { NOTIFICATION, SCHEDULING } = PATHS;
+const REMINDER_ERROR = `${NOTIFICATION}/domain/errors/reminder-not-due.error.ts`;
+const CODES = `${NOTIFICATION}/domain/errors/codes.ts`;
 const SCHEDULER = `${SCHEDULING}/domain/services/scheduler.service.ts`;
 const ROUTE = `${SCHEDULING}/presentation/http/appointments/get-appointment/get-appointment.controller.ts`;
 const CLOSING = '    );\n  }\n}\n';
+const LISTED = "  ReminderNotDue: 'REMINDER_NOT_DUE',\n";
 
-/** How a domain error is written: through a factory of its concept class, under a code of its own. */
+/** How a domain error is written: one class per refusal, built by its factories, under a code of the list of its context. */
 export const ERROR_INJECTIONS: readonly Injection[] = [
   {
     rule: 'errors/through-factory',
@@ -16,8 +18,8 @@ export const ERROR_INJECTIONS: readonly Injection[] = [
     changes: [
       {
         file: SCHEDULER,
-        from: 'throw AppointmentError.slotTaken(calendar.id, slot.startsAt);',
-        to: "throw new AppointmentError('SLOT_TAKEN', 'The slot is held.', {});",
+        from: 'throw SlotTaken.forCalendar(calendar.id, slot.startsAt);',
+        to: "throw new SlotTaken('The slot is held.');",
       },
     ],
     checker: false,
@@ -25,13 +27,13 @@ export const ERROR_INJECTIONS: readonly Injection[] = [
   },
   {
     rule: 'errors/constructor-not-public',
-    what: 'an error class with a public constructor',
+    what: 'a refusal class with a public constructor',
     file: REMINDER_ERROR,
     changes: [
       {
         file: REMINDER_ERROR,
         from: CLOSING,
-        to: `${CLOSING.slice(0, -2)}\n  public constructor(code: string, message: string) {\n    super(code, message, {});\n  }\n}\n`,
+        to: `${CLOSING.slice(0, -2)}\n  public constructor(message: string) {\n    super(message);\n  }\n}\n`,
       },
     ],
     checker: false,
@@ -39,23 +41,30 @@ export const ERROR_INJECTIONS: readonly Injection[] = [
   },
   {
     rule: 'errors/factory-name',
-    what: 'a factory whose code says something else than its name',
-    file: REMINDER_ERROR,
-    changes: [{ file: REMINDER_ERROR, from: "'REMINDER_NOT_DUE'", to: "'REMINDER_REFUSED'" }],
-    checker: false,
-    eslint: 'ddd-ts-kit/errors-factory-name',
-  },
-  {
-    rule: 'errors/code-unique',
-    what: 'two factories of a context under one code',
+    what: 'a factory named without a prefix that says what the refusal is about',
     file: REMINDER_ERROR,
     changes: [
       {
         file: REMINDER_ERROR,
         from: CLOSING,
-        to: `${CLOSING.slice(0, -2)}\n  static reminderNotDue(reminderId: string) {\n    return ReminderError.refusal('REMINDER_NOT_DUE', \`The reminder \${reminderId} is not due.\`, { reminderId });\n  }\n}\n`,
+        to: `${CLOSING.slice(0, -2)}\n  static notDue(reminderId: string) {\n    return ReminderNotDue.refusal('The reminder is not due.', { reminderId });\n  }\n}\n`,
       },
     ],
+    checker: false,
+    eslint: 'ddd-ts-kit/errors-factory-name',
+  },
+  {
+    rule: 'errors/code-unique',
+    what: 'two refusals of a context under one code',
+    file: CODES,
+    changes: [{ file: CODES, from: "'INVALID_NOTIFICATION_KIND'", to: "'REMINDER_NOT_DUE'" }],
+    checker: true,
+  },
+  {
+    rule: 'errors/code-listed',
+    what: 'a code list holding a code no refusal class sets',
+    file: CODES,
+    changes: [{ file: CODES, from: LISTED, to: `${LISTED}  ReminderLate: 'REMINDER_LATE',\n` }],
     checker: true,
   },
   {

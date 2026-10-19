@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:fa5bdfd59abf43b7 -->
+<!-- translation-of: README.md sha256:2b6dfab4475bed5a -->
 
 # @ddd-ts-kit/http
 
@@ -87,7 +87,7 @@ async ({ params }) => {
   return found === undefined ? { status: 404 } : { status: 200, body: found };
 },
 
-// Écrivez : le cas d'usage lève un refus (NotFoundError, ou une fabrique d'une ConceptError) et la
+// Écrivez : le cas d'usage lève un refus (NotFoundError, ou une fabrique d'une classe de refus) et la
 // route liste son code ; la réponse est un document problem, le même sur chaque route (voir « Erreurs »)
 responses: { 200: { description: 'The order.', body: order } },
 errors: ['NOT_FOUND'],
@@ -490,23 +490,31 @@ et la réponse est en `application/problem+json` (RFC 9457) :
 
 ![Comment la réponse à une erreur est choisie : une erreur qui n'est pas une DomainError répond 500 sans détail ; une DomainError reçoit le statut auquel son code correspond, d'après les défauts, les codes de l'application, sinon 422 ; un 5xx ne répond que son statut et son code, un 4xx un document problem avec son détail, ses faits exposés et ses erreurs de validation](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/http-package-error-answer.fr.svg)
 
-Un refus construit par une fabrique d'une `ConceptError` porte des faits, et ils sont privés :
-le document ne contient, sous `facts`, que ceux que sa fabrique a exposés par leur nom, et aucun
-membre `facts` quand elle n'en a exposé aucun.
+Un refus construit par une fabrique porte des faits, et ils sont privés : le document ne
+contient, sous `facts`, que ceux que sa fabrique a exposés par leur nom, et aucun membre `facts`
+quand elle n'en a exposé aucun.
 
 <!-- checked sample -->
 ```ts
-import { ConceptError } from '@ddd-ts-kit/kernel';
+import { DomainRefusal } from '@ddd-ts-kit/kernel';
 
-export class AppointmentError extends ConceptError {
-  static slotTaken(calendarId: string, startsAt: Date) {
-    return AppointmentError.refusal('SLOT_TAKEN', 'The slot is already held.', { calendarId, startsAt }).exposing('startsAt');
+// domain/errors/codes.ts
+export const SchedulingCodes = {
+  SlotTaken: 'SLOT_TAKEN',
+} as const;
+
+// domain/errors/slot-taken.error.ts
+export class SlotTaken extends DomainRefusal {
+  readonly code = SchedulingCodes.SlotTaken;
+
+  static forCalendar(calendarId: string, startsAt: Date) {
+    return SlotTaken.refusal('The slot is already held.', { calendarId, startsAt }).exposing('startsAt');
   }
 }
 ```
 
 Avec `SLOT_TAKEN` associé à 409 (`createErrorMapper({ SLOT_TAKEN: 409 })`, plus bas), un
-gestionnaire qui lève `AppointmentError.slotTaken('c-1', startsAt)` répond :
+gestionnaire qui lève `SlotTaken.forCalendar('c-1', startsAt)` répond :
 
 ```json
 { "type": "urn:problem:slot-taken", "title": "Conflict", "status": 409, "code": "SLOT_TAKEN",
@@ -569,10 +577,10 @@ l'`ErrorReporter` du kernel, une seule fois, avec les identifiants de corrélati
 tenant de son contexte d'exécution (`context.execution`, présent dès que la requête HTTP est
 allée jusque-là) ; un 4xx, jamais.
 
-Un refus construit par une fabrique (`ConceptError`) répond son message comme `detail`, sauf si
-le message cite un fait que la fabrique n'a pas exposé : le client lit alors une phrase tirée du
-code (`INVALID_EMAIL` donne `Invalid email.`) et le message reste dans les journaux et les
-remontées d'erreurs. Un fait est repéré dans le message sous forme de texte, de nombre ou
+Un refus construit par une fabrique (`DomainRefusal`, ou `ConceptError` de la forme
+antérieure) répond son message comme `detail`, sauf si le message cite un fait que la fabrique
+n'a pas exposé : le client lit alors une phrase tirée du code (`INVALID_EMAIL` donne `Invalid
+email.`) et le message reste dans les journaux et les remontées d'erreurs. Un fait est repéré dans le message sous forme de texte, de nombre ou
 d'instant ISO ; un fait écrit autrement (une date formatée, un nombre arrondi) n'est pas
 vu : exposez donc ce qu'un client peut lire, et gardez le reste hors de la phrase.
 

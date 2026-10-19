@@ -4,11 +4,11 @@
 
 Architecture id: `errors/constructor-not-public`. Default severity: `error` in `recommended`, `error` in `strict`.
 
-Applies to: the production files of `domain/errors/` of a context, in a project whose config says `"stack.refusals": "factories"`.
+Applies to: the production files of `domain/errors/` of a context, in a project whose config says `"stack.refusals": "named"` or `"factories"`.
 
 ## Why
 
-A public constructor lets any caller build a refusal with a code and a message of its own. `ConceptError` of `@ddd-ts-kit/kernel` has a protected constructor, and a class that extends it declares none: a refusal then exists only through a static factory.
+A public constructor lets any caller build a refusal with a code and a message of its own. `DomainRefusal` (the base of a refusal under `named`) and `ConceptError` (the base of a concept class under `factories`) of `@ddd-ts-kit/kernel` have a protected constructor, and a class that extends one declares none: a refusal then exists only through a static factory.
 
 ## Reported
 
@@ -16,6 +16,8 @@ A public constructor lets any caller build a refusal with a code and a message o
 - a class that extends `DomainError` and declares no constructor: it inherits a public one
 
 An abstract class is not judged.
+
+The message names the base of the form in use: `DomainRefusal` under `named`, `ConceptError` under `factories`.
 
 Incorrect:
 
@@ -29,7 +31,19 @@ export class SlotTakenError extends DomainError {
 }
 ```
 
-Correct:
+Correct, under `named`:
+
+```ts
+export class SlotTaken extends DomainRefusal {
+  readonly code = SchedulingCodes.SlotTaken;
+
+  static forCalendar(calendarId: string) {
+    return SlotTaken.refusal(`The slot on calendar ${calendarId} is already held.`, { calendarId });
+  }
+}
+```
+
+Correct, under `factories`:
 
 ```ts
 export class AppointmentError extends ConceptError {
@@ -48,7 +62,7 @@ None.
 ## Limits
 
 - A class that extends a base of the project and declares no constructor is trusted: the visibility it inherits is in another file.
-- Nothing is fixed: making a constructor private breaks every `new` of the class. `ddd-ts-kit error-factories` moves a project to factories as a whole.
+- Nothing is fixed: making a constructor private breaks every `new` of the class. `ddd-ts-kit error-factories` moves a project to named refusals (or, with `--to factories`, to concept classes) as a whole.
 
 ## With the CLI checker
 

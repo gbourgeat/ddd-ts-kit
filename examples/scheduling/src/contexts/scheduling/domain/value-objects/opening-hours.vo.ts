@@ -1,5 +1,5 @@
 import { ValueObject } from '@ddd-ts-kit/kernel';
-import { CalendarError } from '@/contexts/scheduling/domain/errors/calendar.error';
+import { InvalidRange } from '@/contexts/scheduling/domain/errors/invalid-range.error';
 import { Range } from '@/contexts/scheduling/domain/value-objects/range.vo';
 import { Weekday } from '@/contexts/scheduling/domain/vocabularies/weekday.vocabulary';
 
@@ -32,7 +32,7 @@ export class OpeningHours extends ValueObject<OpeningHoursProps> {
       return new OpeningHours({ week: whole });
     }
 
-    throw CalendarError.invalidRange(`shares no minute with another range of ${crowded}`);
+    throw InvalidRange.forRule(`shares no minute with another range of ${crowded}`);
   }
 
   /** Hours that open nothing: what a calendar has before its hours are set. */

@@ -2,8 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { controllerRoute, executeRoute } from '@ddd-ts-kit/http';
 import { InMemoryCommandBus } from '@ddd-ts-kit/kernel';
 import { GrantDelegationCommand } from '@/contexts/identity/application/commands/grant-delegation/grant-delegation.command';
-import { DelegationError } from '@/contexts/identity/domain/errors/delegation.error';
-import { PracticeError } from '@/contexts/identity/domain/errors/practice.error';
+import { DelegationAlreadyActive } from '@/contexts/identity/domain/errors/delegation-already-active.error';
+import { DelegationEndsInThePast } from '@/contexts/identity/domain/errors/delegation-ends-in-the-past.error';
+import { NotAPractitioner } from '@/contexts/identity/domain/errors/not-a-practitioner.error';
+import { NotAnAssistant } from '@/contexts/identity/domain/errors/not-an-assistant.error';
+import { UnknownPractice } from '@/contexts/identity/domain/errors/unknown-practice.error';
 import { GrantDelegationController } from '@/contexts/identity/presentation/http/practices/grant-delegation/grant-delegation.controller';
 
 const params = { practiceId: 'practice-1', practitionerId: 'person-2' };
@@ -101,11 +104,11 @@ describe('POST /practices/:practiceId/desks/:practitionerId/delegations', () => 
   });
 
   it.each([
-    ['PRACTICE_NOT_FOUND', PracticeError.notFound('practice-1')],
-    ['NOT_A_PRACTITIONER', PracticeError.notAPractitioner('person-1')],
-    ['NOT_AN_ASSISTANT', PracticeError.notAnAssistant('person-1')],
-    ['DELEGATION_ENDS_IN_THE_PAST', DelegationError.endsInThePast(new Date('2020-01-01T00:00:00.000Z'))],
-    ['DELEGATION_ALREADY_ACTIVE', DelegationError.alreadyActive('delegation-1')],
+    ['PRACTICE_NOT_FOUND', UnknownPractice.forPractice('practice-1')],
+    ['NOT_A_PRACTITIONER', NotAPractitioner.forPerson('person-1')],
+    ['NOT_AN_ASSISTANT', NotAnAssistant.forPerson('person-1')],
+    ['DELEGATION_ENDS_IN_THE_PAST', DelegationEndsInThePast.atEnd(new Date('2020-01-01T00:00:00.000Z'))],
+    ['DELEGATION_ALREADY_ACTIVE', DelegationAlreadyActive.forDelegation('delegation-1')],
   ])('answers 422 with the code %s when the use case refuses', async (code, refusal) => {
     const commands = new InMemoryCommandBus().register(GrantDelegationCommand, {
       execute: async () => {

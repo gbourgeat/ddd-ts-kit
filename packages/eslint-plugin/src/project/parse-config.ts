@@ -24,7 +24,7 @@ const STYLES: readonly Style[] = ['declared', 'explicit'];
 
 const ASSEMBLIES: readonly Assembly[] = ['barrel', 'discovery'];
 const DEPENDENCY_STATEMENTS: readonly Stack['dependencies'][] = ['signature', 'listed'];
-const REFUSAL_FORMS: readonly Stack['refusals'][] = ['factories', 'classes'];
+const REFUSAL_FORMS: readonly Stack['refusals'][] = ['named', 'factories', 'classes'];
 const SCHEMA_FORMS: readonly Stack['schemas'][] = ['shared', 'per-route'];
 const LITERAL_FORMS: readonly Stack['literals'][] = ['named', 'free'];
 const VALUE_FORMS: readonly Stack['values'][] = ['classes', 'free'];

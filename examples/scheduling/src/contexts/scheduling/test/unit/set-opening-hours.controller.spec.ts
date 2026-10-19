@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { controllerRoute, executeRoute, type RawHeaders } from '@ddd-ts-kit/http';
 import { InMemoryCommandBus, expectVersion } from '@ddd-ts-kit/kernel';
 import { SetOpeningHoursCommand } from '@/contexts/scheduling/application/commands/set-opening-hours/set-opening-hours.command';
-import { CalendarError } from '@/contexts/scheduling/domain/errors/calendar.error';
+import { InvalidRange } from '@/contexts/scheduling/domain/errors/invalid-range.error';
 import { SetOpeningHoursController } from '@/contexts/scheduling/presentation/http/calendars/set-opening-hours/set-opening-hours.controller';
 
 const valid = { ranges: [{ weekday: 'monday', start: '09:00', end: '12:00' }] };
@@ -72,7 +72,7 @@ describe('PUT /calendars/:calendarId/opening-hours', () => {
   it('answers the refusal of the use case with its code', async () => {
     const commands = new InMemoryCommandBus().register(SetOpeningHoursCommand, {
       execute: async () => {
-        throw CalendarError.invalidRange('ends after it starts');
+        throw InvalidRange.forRule('ends after it starts');
       },
     });
 

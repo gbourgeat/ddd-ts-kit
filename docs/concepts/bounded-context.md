@@ -182,18 +182,24 @@ taken one. The consistency test says otherwise. Availability is computed from ev
 other contexts and is therefore always slightly late. A rule that must hold at every instant
 cannot rest on late data. The rule belongs to `appointments`, guarded by the aggregate and by a
 database constraint; `availability` only advises the user interface, and booking a slot that
-was taken a moment ago ends in the refusal `SLOT_TAKEN`, built by a factory of the error class
-of the concept:
+was taken a moment ago ends in the refusal `SLOT_TAKEN`, built by a factory of the class named
+after it, `SlotTaken`, which reads its code from the list of the codes of `appointments`:
 
 <!-- checked sample -->
 ```ts
-import { ConceptError } from '@ddd-ts-kit/kernel';
+import { DomainRefusal } from '@ddd-ts-kit/kernel';
 
-// contexts/appointments/domain/errors/appointment.error.ts
-export class AppointmentError extends ConceptError {
-  static slotTaken(practitionerId: string, startsAt: Date) {
-    return AppointmentError.refusal(
-      'SLOT_TAKEN',
+// contexts/appointments/domain/errors/codes.ts
+export const AppointmentsCodes = {
+  SlotTaken: 'SLOT_TAKEN',
+} as const;
+
+// contexts/appointments/domain/errors/slot-taken.error.ts
+export class SlotTaken extends DomainRefusal {
+  readonly code = AppointmentsCodes.SlotTaken;
+
+  static forPractitioner(practitionerId: string, startsAt: Date) {
+    return SlotTaken.refusal(
       `The slot starting at ${startsAt.toISOString()} is already held for practitioner ${practitionerId}.`,
       { practitionerId, startsAt },
     ).exposing('startsAt');
@@ -216,7 +222,7 @@ export function assertFree(wish: HeldSlot, held: readonly HeldSlot[]): void {
   );
 
   if (taken) {
-    throw AppointmentError.slotTaken(wish.practitionerId, wish.startsAt);
+    throw SlotTaken.forPractitioner(wish.practitionerId, wish.startsAt);
   }
 }
 ```

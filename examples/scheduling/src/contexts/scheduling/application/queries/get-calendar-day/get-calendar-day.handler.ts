@@ -2,7 +2,8 @@ import { Access } from '@ddd-ts-kit/auth';
 import { Criteria, offsetPage, scoped, type ReadScope } from '@ddd-ts-kit/kernel';
 import { QueryHandler } from '@ddd-ts-kit/kernel/declarations';
 import type { Calendar } from '@/contexts/scheduling/domain/aggregates/calendar.aggregate';
-import { CalendarError } from '@/contexts/scheduling/domain/errors/calendar.error';
+import { InvalidDay } from '@/contexts/scheduling/domain/errors/invalid-day.error';
+import { UnknownCalendar } from '@/contexts/scheduling/domain/errors/unknown-calendar.error';
 import type { CalendarRepository } from '@/contexts/scheduling/domain/repositories/calendar.repository';
 import { TimeZone } from '@/contexts/scheduling/domain/value-objects/time-zone.vo';
 import { schedulingPermissions } from '@/contexts/scheduling/application/authorization/scheduling.permissions';
@@ -30,13 +31,13 @@ export class GetCalendarDayHandler implements QueryHandler<GetCalendarDayQuery> 
    */
   async execute({ actor, calendarId, day }: GetCalendarDayQuery): Promise<GetCalendarDayResult> {
     if (!TimeZone.isDay(day)) {
-      throw CalendarError.invalidDay(day);
+      throw InvalidDay.forDay(day);
     }
 
     const calendar = await this.calendarRepository.findById(calendarId);
 
     if (calendar === undefined) {
-      throw CalendarError.unknown(calendarId);
+      throw UnknownCalendar.forCalendar(calendarId);
     }
 
     const scope = await this.access.scope(actor, schedulingPermissions['appointment.read'], 'appointment');

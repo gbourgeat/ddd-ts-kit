@@ -1,5 +1,5 @@
 [English](cache-and-coordination.md) · **Français**
-<!-- translation-of: cache-and-coordination.md sha256:b3e2baaf3b09d31b -->
+<!-- translation-of: cache-and-coordination.md sha256:88053e78a497f063 -->
 
 # Cache et coordination : Redis, Dragonfly, Valkey
 
@@ -191,13 +191,17 @@ propre :
 
 <!-- checked sample -->
 ```ts
-import { ConceptError, RateLimiter } from '@ddd-ts-kit/kernel';
+import { DomainRefusal, RateLimiter } from '@ddd-ts-kit/kernel';
 
-export class BookingError extends ConceptError {
-  static tooManyAttempts(retryAfterMs: number) {
-    return BookingError.refusal('TOO_MANY_BOOKING_ATTEMPTS', 'Too many booking attempts, try again later.', {
-      retryAfterMs,
-    });
+// contexts/appointments/domain/errors/codes.ts
+export const AppointmentsCodes = { TooManyBookingAttempts: 'TOO_MANY_BOOKING_ATTEMPTS' } as const;
+
+// contexts/appointments/domain/errors/too-many-booking-attempts.error.ts
+export class TooManyBookingAttempts extends DomainRefusal {
+  readonly code = AppointmentsCodes.TooManyBookingAttempts;
+
+  static withRetryAfter(retryAfterMs: number) {
+    return TooManyBookingAttempts.refusal('Too many booking attempts, try again later.', { retryAfterMs });
   }
 }
 
@@ -209,7 +213,7 @@ export class BookingAttempts {
     const decision = await this.limiter.consume(`booking:${clientId}`, { limit: 3, windowMs: 60_000 });
 
     if (!decision.allowed) {
-      throw BookingError.tooManyAttempts(decision.retryAfterMs);
+      throw TooManyBookingAttempts.withRetryAfter(decision.retryAfterMs);
     }
   }
 }
@@ -275,11 +279,11 @@ d'un invariant. Au lieu de garder avec lui l'invariant « pas de double réserva
 
 ```ts
 // une pause de plus de cinq secondes, une bascule, une éviction : et deux réservations d'un même créneau passent
-const handle = await lock.acquire(`slot:${practitionerId}:${startsAt}`, { ttlMs: 5_000 });
+const handle = await lock.acquire(`slot:${calendarId}:${startsAt}`, { ttlMs: 5_000 });
 if (handle === undefined) {
-  throw AppointmentError.slotTaken(practitionerId, startsAt);
+  throw SlotTaken.forCalendar(calendarId, startsAt);
 }
-await appointments.save(Appointment.book(practitionerId, startsAt));
+await appointments.save(Appointment.book(calendarId, startsAt));
 ```
 
 laissez l'invariant à l'agrégat et à une contrainte de la base de données (la contrainte

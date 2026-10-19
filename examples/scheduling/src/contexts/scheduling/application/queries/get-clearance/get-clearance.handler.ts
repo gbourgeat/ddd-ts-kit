@@ -3,7 +3,7 @@ import { QueryHandler } from '@ddd-ts-kit/kernel/declarations';
 import { ClearCalendarBackgroundJob } from '@/contexts/scheduling/application/background/clear-calendar.background-job';
 import { GetClearanceQuery } from '@/contexts/scheduling/application/queries/get-clearance/get-clearance.query';
 import type { GetClearanceResult } from '@/contexts/scheduling/application/queries/get-clearance/get-clearance.result';
-import { CalendarError } from '@/contexts/scheduling/domain/errors/calendar.error';
+import { UnknownClearance } from '@/contexts/scheduling/domain/errors/unknown-clearance.error';
 
 /**
  * Read from the queue, which keeps the progress of the job and never its payload: the subject of
@@ -18,7 +18,7 @@ export class GetClearanceHandler implements QueryHandler<GetClearanceQuery> {
     const job = await this.jobs.find(query.clearanceId);
 
     if (job?.name !== ClearCalendarBackgroundJob.jobName || job.subject !== query.calendarId) {
-      throw CalendarError.unknownClearance(query.clearanceId);
+      throw UnknownClearance.forClearance(query.clearanceId);
     }
 
     const { id, status, attempts, progress, lastErrorCode } = job;

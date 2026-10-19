@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:a856ad78d158765f -->
+<!-- translation-of: README.md sha256:689a91239855eb3c -->
 
 # @ddd-ts-kit/validation
 
@@ -20,7 +20,7 @@ le domaine, quel que soit le point d'entrée :
 <!-- checked sample -->
 ```ts
 import { z } from 'zod';
-import { ConceptError } from '@ddd-ts-kit/kernel';
+import { DomainRefusal } from '@ddd-ts-kit/kernel';
 import { zodSchema } from '@ddd-ts-kit/validation/zod';
 
 // Au lieu de : une règle métier cachée dans le schéma d'une route, qu'un job ou un consommateur ne rencontre jamais.
@@ -32,9 +32,13 @@ export const bookWithARule = zodSchema(
 export const book = zodSchema(z.object({ startsAt: z.iso.datetime() }));
 
 // ... et la règle dans le domaine, avec son propre code de refus.
-export class SlotError extends ConceptError {
-  static inThePast(startsAt: Date) {
-    return SlotError.refusal('SLOT_IN_THE_PAST', `The slot at ${startsAt.toISOString()} is in the past.`, {
+export const SchedulingCodes = { SlotInThePast: 'SLOT_IN_THE_PAST' } as const;
+
+export class SlotInThePast extends DomainRefusal {
+  readonly code = SchedulingCodes.SlotInThePast;
+
+  static atStart(startsAt: Date) {
+    return SlotInThePast.refusal(`The slot at ${startsAt.toISOString()} is in the past.`, {
       startsAt: startsAt.toISOString(),
     });
   }
@@ -42,7 +46,7 @@ export class SlotError extends ConceptError {
 
 export function startingAt(startsAt: Date, now: Date): Date {
   if (startsAt <= now) {
-    throw SlotError.inThePast(startsAt);
+    throw SlotInThePast.atStart(startsAt);
   }
 
   return startsAt;

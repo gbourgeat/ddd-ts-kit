@@ -1,5 +1,13 @@
 import { AggregateRoot } from '@ddd-ts-kit/kernel';
+{{#unless refusals.named}}
 import { DelegationError } from '{{alias.context}}/domain/errors/delegation.error{{alias.ext}}';
+{{/unless}}
+{{#if refusals.named}}
+import { DelegationNotActive } from '{{alias.context}}/domain/errors/delegation-not-active.error{{alias.ext}}';
+import { DelegationToOneself } from '{{alias.context}}/domain/errors/delegation-to-oneself.error{{alias.ext}}';
+import { DelegationWithNoRight } from '{{alias.context}}/domain/errors/delegation-with-no-right.error{{alias.ext}}';
+import { RightNotInRole } from '{{alias.context}}/domain/errors/right-not-in-role.error{{alias.ext}}';
+{{/if}}
 import { DelegationGranted } from '{{alias.context}}/domain/events/delegation-granted.event{{alias.ext}}';
 import { DelegationRevoked } from '{{alias.context}}/domain/events/delegation-revoked.event{{alias.ext}}';
 import type { DelegationPeriod } from '{{alias.context}}/domain/value-objects/delegation-period.vo{{alias.ext}}';
@@ -53,7 +61,12 @@ export class Delegation extends AggregateRoot<string> {
   /** Withdrawn by hand while it holds or before it starts: an ended delegation cannot be. */
   revoke(now: Date): void {
     if (this.state.endedAt !== undefined || now.getTime() >= this.state.period.endsAt.getTime()) {
+{{#if refusals.named}}
+      throw DelegationNotActive.forDelegation(this.id);
+{{/if}}
+{{#unless refusals.named}}
       throw DelegationError.notActive(this.id);
+{{/unless}}
     }
 
     this.end(now);
@@ -102,16 +115,31 @@ export class Delegation extends AggregateRoot<string> {
 
 function assertLendable(terms: Omit<DelegationState, 'endedAt'>, held: OrganisationRights): void {
   if (terms.delegateId === terms.delegatorId) {
+{{#if refusals.named}}
+    throw DelegationToOneself.forAccount(terms.delegatorId);
+{{/if}}
+{{#unless refusals.named}}
     throw DelegationError.toOneself(terms.delegatorId);
+{{/unless}}
   }
 
   if (terms.rights.length === 0) {
+{{#if refusals.named}}
+    throw DelegationWithNoRight.withNoRight();
+{{/if}}
+{{#unless refusals.named}}
     throw DelegationError.withoutRights();
+{{/unless}}
   }
 
   const beyond = terms.rights.find((right) => !held.includes(right));
 
   if (beyond !== undefined) {
+{{#if refusals.named}}
+    throw RightNotInRole.forRight(beyond);
+{{/if}}
+{{#unless refusals.named}}
     throw DelegationError.beyondRights(beyond);
+{{/unless}}
   }
 }

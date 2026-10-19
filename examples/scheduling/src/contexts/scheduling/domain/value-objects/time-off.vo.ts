@@ -1,5 +1,5 @@
 import { ValueObject } from '@ddd-ts-kit/kernel';
-import { CalendarError } from '@/contexts/scheduling/domain/errors/calendar.error';
+import { InvalidTimeOff } from '@/contexts/scheduling/domain/errors/invalid-time-off.error';
 
 export type TimeOffProps = {
   readonly startsAt: Date;
@@ -14,11 +14,11 @@ export class TimeOff extends ValueObject<TimeOffProps> {
 
   static create(startsAt: Date, endsAt: Date): TimeOff {
     if (Number.isNaN(startsAt.getTime()) || Number.isNaN(endsAt.getTime())) {
-      throw CalendarError.invalidTimeOff('is made of real instants');
+      throw InvalidTimeOff.forRule('is made of real instants');
     }
 
     if (endsAt.getTime() <= startsAt.getTime()) {
-      throw CalendarError.invalidTimeOff('ends after it starts');
+      throw InvalidTimeOff.forRule('ends after it starts');
     }
 
     return new TimeOff({ startsAt: new Date(startsAt), endsAt: new Date(endsAt) });

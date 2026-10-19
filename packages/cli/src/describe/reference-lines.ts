@@ -1,6 +1,6 @@
 import path from 'node:path';
 import type { Upstream } from '../config/index.js';
-import type { ContextDescription, RouteFact } from './context-description.js';
+import type { ContextDescription, ErrorFact, RouteFact } from './context-description.js';
 
 interface Table {
   readonly title: string;
@@ -104,17 +104,36 @@ function adapterTables(context: ContextDescription): Table[] {
   ];
 }
 
+/**
+ * A context of classes of one refusal names its columns after them: the refusal, then the factory
+ * that builds it. A context that mixes forms (a migration under way) keeps the earlier columns,
+ * which still say the truth of every row: a refusal class is an error class, its factory builds
+ * the refusal. The other way round, a concept class would be read as a refusal.
+ */
 function errorTable(context: ContextDescription): Table {
+  const named = context.errors.length > 0 && context.errors.every((error) => error.named === true);
+
   return {
     title: 'Errors',
-    columns: ['Error class', 'Refusal', 'Code', 'Exposed facts'],
+    columns: named
+      ? ['Refusal', 'Factory', 'Code', 'Exposed facts']
+      : ['Error class', 'Refusal', 'Code', 'Exposed facts'],
     rows: context.errors.map((error) => [
       code(error.errorClass),
-      error.refusal === '' ? 'the class itself' : code(error.refusal),
+      factoryCell(error, named),
       code(error.code),
       error.exposes.length === 0 ? 'none' : codes(error.exposes),
     ]),
   };
+}
+
+/** A class with no factory: under the named columns it has none, otherwise it is its own refusal, as a class per error is. */
+function factoryCell(error: ErrorFact, named: boolean): string {
+  if (error.refusal !== '') {
+    return code(error.refusal);
+  }
+
+  return named ? 'none' : 'the class itself';
 }
 
 /** A project of controllers reads who stands before each route: its group and its guards, next to the permission of the use case. */

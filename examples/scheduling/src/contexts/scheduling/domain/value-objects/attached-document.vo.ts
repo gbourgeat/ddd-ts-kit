@@ -1,5 +1,5 @@
 import { ValueObject, type StoredFile } from '@ddd-ts-kit/kernel';
-import { AppointmentError } from '@/contexts/scheduling/domain/errors/appointment.error';
+import { DocumentNameTooLong } from '@/contexts/scheduling/domain/errors/document-name-too-long.error';
 
 /** The longest name a document keeps: it is shown back to people, never used to find the file. */
 const LONGEST_NAME = 200;
@@ -24,7 +24,7 @@ export class AttachedDocument extends ValueObject<AttachedDocumentProps> {
     const trimmed = name.trim();
 
     if (trimmed.length > LONGEST_NAME) {
-      throw AppointmentError.documentNameTooLong(LONGEST_NAME);
+      throw DocumentNameTooLong.withMaximum(LONGEST_NAME);
     }
 
     return new AttachedDocument({ file, name: trimmed === '' ? 'document' : trimmed, attachedAt });

@@ -69,7 +69,7 @@ hand, with the in-memory pieces of the kernel and the package, so that it runs a
 ```ts
 import {
   AuthorizedCommand,
-  ConceptError,
+  DomainRefusal,
   FixedExecutionScope,
   InMemoryCommandBus,
   InMemoryUnitOfWork,
@@ -82,9 +82,13 @@ import {
 import { InMemoryAuditTrail, auditMiddleware, auditedFields } from '@ddd-ts-kit/audit';
 
 // the use case: a command and its handler, with no audit call anywhere
-class AppointmentError extends ConceptError {
-  static cancellationWindowPassed(appointmentId: string) {
-    return AppointmentError.refusal('CANCELLATION_WINDOW_PASSED', `Appointment ${appointmentId} starts in less than 24 hours.`, { appointmentId });
+const SchedulingCodes = { CancellationWindowPassed: 'CANCELLATION_WINDOW_PASSED' } as const;
+
+class CancellationWindowPassed extends DomainRefusal {
+  readonly code = SchedulingCodes.CancellationWindowPassed;
+
+  static forAppointment(appointmentId: string) {
+    return CancellationWindowPassed.refusal(`Appointment ${appointmentId} starts in less than 24 hours.`, { appointmentId });
   }
 }
 
@@ -99,7 +103,7 @@ class CancelAppointment extends AuthorizedCommand<void> {
 
 const handler = {
   async execute(command: CancelAppointment): Promise<void> {
-    throw AppointmentError.cancellationWindowPassed(command.appointmentId);
+    throw CancellationWindowPassed.forAppointment(command.appointmentId);
   },
 };
 

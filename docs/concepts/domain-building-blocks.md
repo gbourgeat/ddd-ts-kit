@@ -57,7 +57,7 @@ the change:
 <!-- checked sample -->
 ```ts
 // contexts/appointments/domain/aggregates/appointment.aggregate.ts (an excerpt)
-import { AggregateRoot, ConceptError, NamedDomainEvent } from '@ddd-ts-kit/kernel';
+import { AggregateRoot, DomainRefusal, NamedDomainEvent } from '@ddd-ts-kit/kernel';
 
 class AppointmentCancelled extends NamedDomainEvent('appointments.appointment.cancelled') {
   constructor(
@@ -69,9 +69,17 @@ class AppointmentCancelled extends NamedDomainEvent('appointments.appointment.ca
   }
 }
 
-class AppointmentError extends ConceptError {
-  static alreadyCancelled(appointmentId: string) {
-    return AppointmentError.refusal('APPOINTMENT_ALREADY_CANCELLED', `Appointment ${appointmentId} is already cancelled.`, { appointmentId });
+// domain/errors/codes.ts
+const AppointmentsCodes = {
+  AppointmentAlreadyCancelled: 'APPOINTMENT_ALREADY_CANCELLED',
+} as const;
+
+// domain/errors/appointment-already-cancelled.error.ts
+class AppointmentAlreadyCancelled extends DomainRefusal {
+  readonly code = AppointmentsCodes.AppointmentAlreadyCancelled;
+
+  static forAppointment(appointmentId: string) {
+    return AppointmentAlreadyCancelled.refusal(`Appointment ${appointmentId} is already cancelled.`, { appointmentId });
   }
 }
 
@@ -85,7 +93,7 @@ export class Appointment extends AggregateRoot<string> {
 
   cancel(reason: string, at: Date): void {
     if (this.status === 'cancelled') {
-      throw AppointmentError.alreadyCancelled(this.id); // the invariant first
+      throw AppointmentAlreadyCancelled.forAppointment(this.id); // the invariant first
     }
 
     this.status = 'cancelled'; // then the change of state
@@ -184,7 +192,7 @@ application layer decide business matters. A domain service is the third place.
 <!-- checked sample -->
 ```ts
 // contexts/appointments/domain/services/booking-eligibility.service.ts
-import { ConceptError } from '@ddd-ts-kit/kernel';
+import { DomainRefusal } from '@ddd-ts-kit/kernel';
 
 // value objects and errors of the model, declared here so that the sample stands alone
 interface TimeSlot {
@@ -197,16 +205,24 @@ interface PractitionerSchedule {
   isOffDuring(slot: TimeSlot): boolean;
 }
 
-export class AppointmentError extends ConceptError {
-  static outsideWorkingHours(startsAt: Date) {
-    return AppointmentError.refusal('OUTSIDE_WORKING_HOURS', `The practitioner does not work at ${startsAt.toISOString()}.`, { startsAt });
+// domain/errors/codes.ts
+export const AppointmentsCodes = {
+  OutsideWorkingHours: 'OUTSIDE_WORKING_HOURS',
+} as const;
+
+// domain/errors/outside-working-hours.error.ts
+export class OutsideWorkingHours extends DomainRefusal {
+  readonly code = AppointmentsCodes.OutsideWorkingHours;
+
+  static atStart(startsAt: Date) {
+    return OutsideWorkingHours.refusal(`The practitioner does not work at ${startsAt.toISOString()}.`, { startsAt });
   }
 }
 
 export class BookingEligibilityService {
   assertBookable(slot: TimeSlot, schedule: PractitionerSchedule): void {
     if (!schedule.covers(slot) || schedule.isOffDuring(slot)) {
-      throw AppointmentError.outsideWorkingHours(slot.startsAt);
+      throw OutsideWorkingHours.atStart(slot.startsAt);
     }
   }
 }
@@ -225,7 +241,7 @@ Instead of the same decision in the handler:
 // instead of: the application decides a business matter
 const schedule = await this.schedules.of(command.practitionerId);
 if (!schedule.covers(slot) || schedule.isOffDuring(slot)) {
-  throw AppointmentError.outsideWorkingHours(slot.startsAt);
+  throw OutsideWorkingHours.atStart(slot.startsAt);
 }
 
 // write: the handler loads, the domain decides
@@ -299,7 +315,7 @@ A handler then reads as the use case:
 <!-- checked sample -->
 ```ts
 // contexts/appointments/application/commands/cancel-appointment/cancel-appointment.handler.ts
-import { AggregateRoot, AuthorizedCommand, ConceptError, Repository, type Actor, type Clock } from '@ddd-ts-kit/kernel';
+import { AggregateRoot, AuthorizedCommand, DomainRefusal, Repository, type Actor, type Clock } from '@ddd-ts-kit/kernel';
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
 
 // from the domain and the command file of the use case, declared here so that the sample stands alone
@@ -307,8 +323,9 @@ declare class Appointment extends AggregateRoot<string> {
   cancel(reason: string, at: Date): void;
 }
 declare abstract class AppointmentRepository extends Repository<Appointment> {}
-declare class AppointmentError extends ConceptError {
-  static notFound(appointmentId: string): AppointmentError;
+declare class UnknownAppointment extends DomainRefusal {
+  readonly code: 'APPOINTMENT_NOT_FOUND';
+  static forAppointment(appointmentId: string): UnknownAppointment;
 }
 declare class CancelAppointment extends AuthorizedCommand<void> {
   constructor(actor: Actor, appointmentId: string, reason: string);
@@ -326,7 +343,7 @@ export class CancelAppointmentHandler implements CommandHandler<CancelAppointmen
   async execute(command: CancelAppointment): Promise<void> {
     const appointment = await this.appointments.findById(command.appointmentId);
     if (appointment === undefined) {
-      throw AppointmentError.notFound(command.appointmentId);
+      throw UnknownAppointment.forAppointment(command.appointmentId);
     }
 
     appointment.cancel(command.reason, this.clock.now());
@@ -370,7 +387,7 @@ The constructor is private so that these are the only ways in:
 <!-- checked sample -->
 ```ts
 // contexts/appointments/domain/aggregates/appointment.aggregate.ts (the ways in)
-import { AggregateRoot, ConceptError, NamedDomainEvent } from '@ddd-ts-kit/kernel';
+import { AggregateRoot, DomainRefusal, NamedDomainEvent } from '@ddd-ts-kit/kernel';
 
 class AppointmentBooked extends NamedDomainEvent('appointments.appointment.booked') {
   constructor(
@@ -381,9 +398,17 @@ class AppointmentBooked extends NamedDomainEvent('appointments.appointment.booke
   }
 }
 
-class AppointmentError extends ConceptError {
-  static startsInThePast(startsAt: Date) {
-    return AppointmentError.refusal('STARTS_IN_THE_PAST', `An appointment cannot start at ${startsAt.toISOString()}, in the past.`, { startsAt });
+// domain/errors/codes.ts
+const AppointmentsCodes = {
+  StartsInThePast: 'STARTS_IN_THE_PAST',
+} as const;
+
+// domain/errors/starts-in-the-past.error.ts
+class StartsInThePast extends DomainRefusal {
+  readonly code = AppointmentsCodes.StartsInThePast;
+
+  static atStart(startsAt: Date) {
+    return StartsInThePast.refusal(`An appointment cannot start at ${startsAt.toISOString()}, in the past.`, { startsAt });
   }
 }
 
@@ -405,7 +430,7 @@ export class Appointment extends AggregateRoot<string> {
   /** The birth: checks the birth invariants, sets the initial state, records the birth event. */
   static book(id: string, wish: { readonly clientId: string; readonly startsAt: Date }, now: Date): Appointment {
     if (wish.startsAt.getTime() <= now.getTime()) {
-      throw AppointmentError.startsInThePast(wish.startsAt);
+      throw StartsInThePast.atStart(wish.startsAt);
     }
 
     const appointment = new Appointment(id, { ...wish, status: 'booked' });

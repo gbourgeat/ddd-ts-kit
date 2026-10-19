@@ -1,5 +1,5 @@
 import { EventSourcedAggregate, type AggregateHistory, type Appliers } from '@ddd-ts-kit/kernel';
-import { AttendanceRecordError } from '@/contexts/scheduling/domain/errors/attendance-record.error';
+import { AlreadyNoted } from '@/contexts/scheduling/domain/errors/already-noted.error';
 import { AttendanceRecordCancellationNoted } from '@/contexts/scheduling/domain/events/attendance-record-cancellation-noted.event';
 import { AttendanceRecordCreated } from '@/contexts/scheduling/domain/events/attendance-record-created.event';
 import { AttendanceRecordNoShowNoted } from '@/contexts/scheduling/domain/events/attendance-record-no-show-noted.event';
@@ -101,7 +101,7 @@ export class AttendanceRecord extends EventSourcedAggregate<AttendanceRecordEven
 
   private refuseNotedTwice(appointmentId: string): void {
     if (this.state.noted.includes(appointmentId)) {
-      throw AttendanceRecordError.alreadyNoted(appointmentId);
+      throw AlreadyNoted.forAppointment(appointmentId);
     }
   }
 

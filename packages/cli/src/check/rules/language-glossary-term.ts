@@ -1,7 +1,9 @@
 import { Glossaries } from '../language/glossaries.js';
 import type { Glossary } from '../language/parse-glossary.js';
+import { REFUSAL_QUALIFIERS } from '../language/refusal-qualifiers.js';
 import { unknownWords } from '../language/unknown-words.js';
 import { buildsThroughFactories } from '../errors/builds-through-factories.js';
+import { refusalClasses } from '../errors/refusal-classes.js';
 import type { Finding } from '../model/finding.js';
 import type { Rule } from '../model/rule.js';
 import type { SourceFile } from '../model/source-file.js';
@@ -15,7 +17,7 @@ const DOMAIN_ROLES = new Set(['aggregates', 'entities', 'value-objects', 'servic
 export const languageGlossaryTerm: Rule = {
   id: 'language/glossary-term',
   description:
-    'Every aggregate, entity, value object, domain service, domain event, command and query is named with terms of the Ubiquitous language table of its context\'s CONTEXT.md, and under "stack.refusals": "factories" every error class of domain/errors/ too.',
+    'Every aggregate, entity, value object, domain service, domain event, command and query is named with terms of the Ubiquitous language table of its context\'s CONTEXT.md, and under "stack.refusals": "factories" or "named" every class of domain/errors/ too. A refusal class (under "named", one that extends DomainRefusal) may also use the qualifiers invalid, unknown, already, too, no, missing and required; domain/errors/codes.ts holds no class and is not judged.',
   scope: 'file',
   run(project) {
     const report = reporter(project, this.id);
@@ -68,9 +70,11 @@ function undefinedNames(
   classes: readonly RegExpExecArray[],
   { glossary, context, doc }: Language,
 ): Finding[] {
+  const refusals = new Set(refusalClasses(file.scan).map((shape) => shape.name));
+
   return classes.flatMap((match) => {
     const name = match[1] ?? '';
-    const unknown = unknownWords(name, glossary);
+    const unknown = unknownWords(name, glossary, refusals.has(name) ? REFUSAL_QUALIFIERS : []);
 
     if (unknown.length === 0) {
       return [];
@@ -89,7 +93,11 @@ function undefinedNames(
   });
 }
 
-/** The context of a file whose classes are concepts of the model: the building blocks, the use case messages and, once errors are named after concepts, the error classes. */
+/**
+ * The context of a file whose classes are concepts of the model: the building blocks, the use case
+ * messages and, once the project builds its refusals through factories, the error classes, named
+ * after a concept (`factories`) or after a refusal (`named`).
+ */
 function conceptsContext(file: SourceFile, roles: ReadonlySet<string>): string | undefined {
   if (!inContext(file.location) || file.isTest) {
     return undefined;

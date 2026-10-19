@@ -1,5 +1,5 @@
 [English](validation.md) · **Français**
-<!-- translation-of: validation.md sha256:00fbbf728727f305 -->
+<!-- translation-of: validation.md sha256:04f6a874a511a342 -->
 
 # Bibliothèques de validation : zod, class-validator, TypeBox, Standard Schema
 
@@ -60,18 +60,24 @@ const bookAppointmentBody = zodSchema(
 <!-- checked sample -->
 ```ts
 // contexts/appointments/domain/value-objects/time-slot.vo.ts
-import { ConceptError, ValueObject } from '@ddd-ts-kit/kernel';
+import { DomainRefusal, ValueObject } from '@ddd-ts-kit/kernel';
 
-export class TimeSlotError extends ConceptError {
-  static endsBeforeItStarts(startsAt: Date, endsAt: Date) {
-    return TimeSlotError.refusal('INVALID_TIME_SLOT', 'A slot ends after it starts.', { startsAt, endsAt });
+// contexts/appointments/domain/errors/codes.ts
+export const AppointmentsCodes = { InvalidTimeSlot: 'INVALID_TIME_SLOT' } as const;
+
+// contexts/appointments/domain/errors/invalid-time-slot.error.ts
+export class InvalidTimeSlot extends DomainRefusal {
+  readonly code = AppointmentsCodes.InvalidTimeSlot;
+
+  static forBounds(startsAt: Date, endsAt: Date) {
+    return InvalidTimeSlot.refusal('A slot ends after it starts.', { startsAt, endsAt });
   }
 }
 
 export class TimeSlot extends ValueObject<{ readonly startsAt: Date; readonly endsAt: Date }> {
   static create(startsAt: Date, endsAt: Date): TimeSlot {
     if (endsAt.getTime() <= startsAt.getTime()) {
-      throw TimeSlotError.endsBeforeItStarts(startsAt, endsAt);
+      throw InvalidTimeSlot.forBounds(startsAt, endsAt);
     }
 
     return new TimeSlot({ startsAt, endsAt });

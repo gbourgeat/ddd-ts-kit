@@ -1,5 +1,12 @@
 import { AggregateRoot } from '@ddd-ts-kit/kernel';
+{{#unless refusals.named}}
 import { InvitationError } from '{{alias.context}}/domain/errors/invitation.error{{alias.ext}}';
+{{/unless}}
+{{#if refusals.named}}
+import { InvitationExpired } from '{{alias.context}}/domain/errors/invitation-expired.error{{alias.ext}}';
+import { InvitationNotAddressedToAccount } from '{{alias.context}}/domain/errors/invitation-not-addressed-to-account.error{{alias.ext}}';
+import { InvitationNotPending } from '{{alias.context}}/domain/errors/invitation-not-pending.error{{alias.ext}}';
+{{/if}}
 import { InvitationAccepted } from '{{alias.context}}/domain/events/invitation-accepted.event{{alias.ext}}';
 import { InvitationDeclined } from '{{alias.context}}/domain/events/invitation-declined.event{{alias.ext}}';
 import { InvitationIssued } from '{{alias.context}}/domain/events/invitation-issued.event{{alias.ext}}';
@@ -77,7 +84,12 @@ export class Invitation extends AggregateRoot<string> {
   /** Taken back by the organisation while it waits for an answer, expired or not. */
   revoke(now: Date): void {
     if (this.state.status !== InvitationStatus.Pending) {
+{{#if refusals.named}}
+      throw InvitationNotPending.forInvitation(this.id, this.state.status);
+{{/if}}
+{{#unless refusals.named}}
       throw InvitationError.notPending(this.id, this.state.status);
+{{/unless}}
     }
 
     this.answer(InvitationStatus.Revoked, now);
@@ -110,15 +122,30 @@ export class Invitation extends AggregateRoot<string> {
 
   private assertAnswerableBy(invitee: Invitee, now: Date): void {
     if (this.state.status !== InvitationStatus.Pending) {
+{{#if refusals.named}}
+      throw InvitationNotPending.forInvitation(this.id, this.state.status);
+{{/if}}
+{{#unless refusals.named}}
       throw InvitationError.notPending(this.id, this.state.status);
+{{/unless}}
     }
 
     if (now.getTime() >= this.state.expiresAt.getTime()) {
+{{#if refusals.named}}
+      throw InvitationExpired.forInvitation(this.id, this.state.expiresAt);
+{{/if}}
+{{#unless refusals.named}}
       throw InvitationError.expired(this.id, this.state.expiresAt);
+{{/unless}}
     }
 
     if (!invitee.email.equals(this.state.email)) {
+{{#if refusals.named}}
+      throw InvitationNotAddressedToAccount.forInvitation(this.id);
+{{/if}}
+{{#unless refusals.named}}
       throw InvitationError.addressedToAnother(this.id);
+{{/unless}}
     }
   }
 

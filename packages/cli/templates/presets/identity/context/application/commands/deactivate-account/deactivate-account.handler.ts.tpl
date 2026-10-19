@@ -1,8 +1,14 @@
 import type { Clock } from '@ddd-ts-kit/kernel';
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
 import type { Member } from '{{alias.context}}/domain/aggregates/member.aggregate{{alias.ext}}';
+{{#unless refusals.named}}
 import { AccountError } from '{{alias.context}}/domain/errors/account.error{{alias.ext}}';
 import { OrganisationError } from '{{alias.context}}/domain/errors/organisation.error{{alias.ext}}';
+{{/unless}}
+{{#if refusals.named}}
+import { UnknownAccount } from '{{alias.context}}/domain/errors/unknown-account.error{{alias.ext}}';
+import { UnknownOrganisation } from '{{alias.context}}/domain/errors/unknown-organisation.error{{alias.ext}}';
+{{/if}}
 import type { AccountRepository } from '{{alias.context}}/domain/repositories/account.repository{{alias.ext}}';
 import type { DelegationRepository } from '{{alias.context}}/domain/repositories/delegation.repository{{alias.ext}}';
 import type { MemberRepository } from '{{alias.context}}/domain/repositories/member.repository{{alias.ext}}';
@@ -30,7 +36,12 @@ export class DeactivateAccountHandler implements CommandHandler<DeactivateAccoun
     const account = await this.accountRepository.findById(actor.id);
 
     if (account === undefined) {
+{{#if refusals.named}}
+      throw UnknownAccount.forAccount(actor.id);
+{{/if}}
+{{#unless refusals.named}}
       throw AccountError.notFound(actor.id);
+{{/unless}}
     }
 
     const now = this.clock.now();
@@ -52,7 +63,12 @@ export class DeactivateAccountHandler implements CommandHandler<DeactivateAccoun
     const organisation = await this.organisationRepository.findById(organisationId);
 
     if (organisation === undefined) {
+{{#if refusals.named}}
+      throw UnknownOrganisation.forOrganisation(organisationId);
+{{/if}}
+{{#unless refusals.named}}
       throw OrganisationError.notFound(organisationId);
+{{/unless}}
     }
 
     const owners = await this.memberRepository.countOwners(organisationId);

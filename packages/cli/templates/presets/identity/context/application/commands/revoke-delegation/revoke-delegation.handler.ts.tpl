@@ -1,7 +1,12 @@
 import type { Access } from '@ddd-ts-kit/auth';
 import type { Clock } from '@ddd-ts-kit/kernel';
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
+{{#unless refusals.named}}
 import { DelegationError } from '{{alias.context}}/domain/errors/delegation.error{{alias.ext}}';
+{{/unless}}
+{{#if refusals.named}}
+import { UnknownDelegation } from '{{alias.context}}/domain/errors/unknown-delegation.error{{alias.ext}}';
+{{/if}}
 import type { DelegationRepository } from '{{alias.context}}/domain/repositories/delegation.repository{{alias.ext}}';
 import type { MemberRepository } from '{{alias.context}}/domain/repositories/member.repository{{alias.ext}}';
 import { RoleRightsService } from '{{alias.context}}/domain/services/role-rights.service{{alias.ext}}';
@@ -28,7 +33,12 @@ export class RevokeDelegationHandler implements CommandHandler<RevokeDelegationC
     const delegation = await this.delegationRepository.findById(delegationId);
 
     if (delegation?.organisationId !== organisationId) {
+{{#if refusals.named}}
+      throw UnknownDelegation.forDelegation(delegationId);
+{{/if}}
+{{#unless refusals.named}}
       throw DelegationError.notFound(delegationId);
+{{/unless}}
     }
 
     delegation.revoke(now);

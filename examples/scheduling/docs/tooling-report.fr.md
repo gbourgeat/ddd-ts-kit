@@ -1,5 +1,5 @@
 [English](tooling-report.md) · **Français**
-<!-- translation-of: tooling-report.md sha256:ace0c685dd09417b -->
+<!-- translation-of: tooling-report.md sha256:c116a178ee9bcf6e -->
 
 # Rapport sur l'outillage
 
@@ -1795,3 +1795,68 @@ reminder of due)`, `delegation`, `appointment`) et le rendez-vous que réserve u
 `npm run docs:generate` a réécrit `openapi/`, `clients/` et `docs/integration/` à l'octet près :
 un nom local ne fait pas partie du contrat. `check` : 0 erreur. Les 1145 tests unitaires passent,
 en même nombre.
+
+## 2026-10-18 : une classe par refus
+
+La nouvelle forme par défaut du kit, `"stack.refusals": "named"`, celle qu'écrit désormais
+`init` : un refus est une classe nommée d'après ce qui est refusé, qui étend `DomainRefusal`, lit
+son code dans la liste fermée de son contexte (`domain/errors/codes.ts`) et se construit par des
+fabriques statiques nommées d'après ce sur quoi porte le refus.
+`throw AppointmentError.slotTaken(calendar.id, slot.startsAt)` est devenu
+`throw SlotTaken.forCalendar(calendar.id, slot.startsAt)`.
+
+| | Avant | Après |
+|---|---|---|
+| classes d'erreurs (`domain/errors/*.error.ts`) | 10 fichiers, 337 lignes | 50 fichiers, 566 lignes |
+| listes fermées de codes (`domain/errors/codes.ts`) | aucune | 4 fichiers, 66 lignes |
+| leurs *specs* (`test/unit/*.error.spec.ts`) | 10 fichiers, 512 lignes | 50 fichiers, 764 lignes |
+| refus | 50 fabriques sur 10 classes | 50 classes d'une fabrique chacune, les mêmes 50 codes |
+| faits qu'un client peut lire comme des données | 11 refus en exposent un | les mêmes 11, sous le même nom |
+
+Comment cela a été fait, dans cet ordre :
+
+1. `ddd-ts-kit error-factories --plan` (`--to named` est la valeur par défaut) a proposé pour
+   chacune des 50 fabriques une classe nommée d'après son code et une fabrique nommée d'après son
+   ancien concept (`forAppointment` pour les 15 refus d'`AppointmentError`). 38 noms de fabriques
+   ont été changés dans le plan, lus dans les paramètres de chaque fabrique :
+   `BookingTooLate.withNotice(notice)`, `PatientLimitReached.atLimit(limit)`,
+   `OutsideAvailability.atStart(startsAt)`, `ReasonRequired.onCancellation()`,
+   `UnknownPractitioner.atPractice(practiceId, practitionerId)`, `forRule(rule)` pour les dix qui
+   prennent une phrase. Aucun nom de classe n'a été changé dans le plan, et aucun n'entre en
+   conflit avec un événement du domaine ou une autre classe de son contexte.
+2. `ddd-ts-kit error-factories --apply` a écrit 147 fichiers et en a retiré 12 : les 4
+   `codes.ts`, les 50 classes, les *specs* des deux concepts dont les cas étaient indépendants (le
+   registre de présence, l'occupation) découpées par classe, chaque usage avec ses imports, et
+   `"stack.refusals": "named"`. Puis `npm run format` (17 fichiers).
+3. À la main : les *specs* des 8 autres concepts découpées en une *spec* par classe, la classe de
+   `LAST_MANAGER`, `knip.json`, les règles des agents sur les refus et deux mentions dans un
+   `CONTEXT.md` (ci-dessous), et le fichier du plan supprimé.
+
+Ce qu'ont dit les outils :
+
+- `ddd-ts-kit check` a refusé `LastManager`, la classe que le plan proposait pour `LAST_MANAGER`
+  (`language/no-technical-name` : « manager »), bien que `Manager` soit un terme du glossaire
+  d'identity. La classe est `PracticeLeftUnmanaged`, le nom qu'elle avait avant les fabriques
+  (`PracticeLeftUnmanagedError`), et elle garde son code : sous `named`, la clé de `codes.ts` est
+  la classe et la valeur est le code, si bien que les deux peuvent dire des mots différents.
+- Les 8 *specs* écrites comme une table par concept (`it.each`) ont été réécrites sur place, pas
+  découpées : la commande l'a dit (« its cases share a setup or code around them »), et leur
+  `describe` nommait encore les classes retirées. Elles ont été découpées en une *spec* par classe
+  par un script (44 *specs*), deux cas écrits à part ont été déplacés à la main, et
+  `UnknownClearance`, qui n'avait aucun cas, en a reçu un. Le cas « gives each refusal a code of
+  its own » a disparu : `errors/code-unique` le tient.
+- `npm run deadcode` a signalé les 4 types `<Context>Code` des fichiers `codes.ts` comme des
+  exports inutilisés. `knip.json` a reçu l'entrée `ignoreIssues` qu'écrit `init` sous `named` ; la
+  migration ne touche pas les fichiers du *pipeline*.
+- Les règles des agents sur les refus (`.claude/rules/domain.md`, `.claude/rules/presentation.md`
+  et leurs copies sous `.github/instructions/`) ont été réécrites à la main d'après les gabarits
+  d'`init` : aucune commande ne les réécrit.
+- `npx ddd-ts-kit docs` a réécrit la table `Errors` de chaque `CONTEXT.md` : classe, fabrique,
+  code, faits exposés. Le texte du `CONTEXT.md` d'analytics nommait deux fabriques ; modifié à la
+  main.
+- Le contrat HTTP n'a pas bougé : `openapi.js --check`, `events.js --check` et `sdk --check`
+  passent, et les *specs* de bout en bout n'ont pas été modifiées.
+
+`check` : 0 erreur. `lint` : 0 problème. 277 fichiers de tests unitaires et d'adaptateurs (1 496 tests) et 16
+fichiers de bout en bout passent. Les sections au-dessus de celle-ci nomment les formes qu'avait
+l'exemple à leur date.

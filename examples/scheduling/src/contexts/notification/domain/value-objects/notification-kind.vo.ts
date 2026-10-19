@@ -1,5 +1,5 @@
 import { ValueObject } from '@ddd-ts-kit/kernel';
-import { NotificationError } from '@/contexts/notification/domain/errors/notification.error';
+import { InvalidNotificationKind } from '@/contexts/notification/domain/errors/invalid-notification-kind.error';
 import { NotificationKindName } from '@/contexts/notification/domain/vocabularies/notification-kind-name.vocabulary';
 
 const KINDS = [
@@ -26,7 +26,7 @@ export class NotificationKind extends ValueObject<NotificationKindProps> {
     const known = KINDS.find((kind) => kind === normalized);
 
     if (known === undefined) {
-      throw NotificationError.invalidNotificationKind(value);
+      throw InvalidNotificationKind.forKind(value);
     }
 
     return new NotificationKind({ value: known });

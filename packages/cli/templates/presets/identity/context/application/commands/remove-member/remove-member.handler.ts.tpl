@@ -3,8 +3,14 @@ import type { Clock } from '@ddd-ts-kit/kernel';
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
 import type { Member } from '{{alias.context}}/domain/aggregates/member.aggregate{{alias.ext}}';
 import type { Organisation } from '{{alias.context}}/domain/aggregates/organisation.aggregate{{alias.ext}}';
+{{#unless refusals.named}}
 import { MemberError } from '{{alias.context}}/domain/errors/member.error{{alias.ext}}';
 import { OrganisationError } from '{{alias.context}}/domain/errors/organisation.error{{alias.ext}}';
+{{/unless}}
+{{#if refusals.named}}
+import { UnknownMember } from '{{alias.context}}/domain/errors/unknown-member.error{{alias.ext}}';
+import { UnknownOrganisation } from '{{alias.context}}/domain/errors/unknown-organisation.error{{alias.ext}}';
+{{/if}}
 import type { DelegationRepository } from '{{alias.context}}/domain/repositories/delegation.repository{{alias.ext}}';
 import type { MemberRepository } from '{{alias.context}}/domain/repositories/member.repository{{alias.ext}}';
 import type { OrganisationRepository } from '{{alias.context}}/domain/repositories/organisation.repository{{alias.ext}}';
@@ -60,11 +66,21 @@ export class RemoveMemberHandler implements CommandHandler<RemoveMemberCommand> 
     const member = await this.memberRepository.findOf(organisationId, accountId);
 
     if (organisation === undefined) {
+{{#if refusals.named}}
+      throw UnknownOrganisation.forOrganisation(organisationId);
+{{/if}}
+{{#unless refusals.named}}
       throw OrganisationError.notFound(organisationId);
+{{/unless}}
     }
 
     if (member === undefined) {
+{{#if refusals.named}}
+      throw UnknownMember.forMembership(organisationId, accountId);
+{{/if}}
+{{#unless refusals.named}}
       throw MemberError.notFound(organisationId, accountId);
+{{/unless}}
     }
 
     return { organisation, member };

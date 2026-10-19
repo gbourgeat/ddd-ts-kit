@@ -191,7 +191,7 @@ export class PlaceOrderHandler implements CommandHandler<PlaceOrderCommand> {
 |---|---|---|
 | `new Date()` | `this.clock.now()`, the `Clock` port received in the constructor | `purity/no-system-clock` |
 | `crypto.randomUUID()` | `this.ids.next()`, the `IdGenerator` port | `purity/no-ambient-randomness` |
-| `throw new Error('Empty order')` | `throw OrderError.empty()`, a refusal with a stable code | `domain/no-generic-error` |
+| `throw new Error('Empty order')` | `throw OrderEmpty.onPlacement()`, a refusal named in the words of the business, with a stable code | `domain/no-generic-error` |
 | an import of `infrastructure/` in a handler | the `OrderRepository` port, bound to its adapter by the platform | `layer/application-inward` |
 | an import of another context's `domain/` | that context's `published-language/`, or an integration event | `context/published-language-only` |
 

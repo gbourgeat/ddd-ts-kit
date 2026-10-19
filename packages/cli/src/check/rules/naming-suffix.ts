@@ -57,7 +57,7 @@ function withoutSuffix(name: string, location: ContextLocation): Flaw | undefine
   const directory = roleDirectory(location);
   const role = roleOf(directory);
 
-  if (role === undefined || role.suffixes.length === 0) {
+  if (role === undefined || role.suffixes.length === 0 || role.files?.includes(name) === true) {
     return undefined;
   }
 

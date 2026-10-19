@@ -46,7 +46,7 @@ import { definePermissions } from '@ddd-ts-kit/auth';
 import { NamedDomainEvent, 
   AggregateRoot,
   AuthorizedCommand,
-  ConceptError,
+  DomainRefusal,
   Repository,
   type Actor,
   type Clock,
@@ -65,12 +65,13 @@ export class AppointmentBooked extends NamedDomainEvent('appointments.appointmen
   }
 }
 
-export class AppointmentError extends ConceptError {
-  static slotTaken(calendarId: string, startsAt: Date) {
-    return AppointmentError.refusal('SLOT_TAKEN', `The slot at ${startsAt.toISOString()} is already taken.`, {
-      calendarId,
-      startsAt,
-    });
+export const AppointmentsCodes = { SlotTaken: 'SLOT_TAKEN' } as const;
+
+export class SlotTaken extends DomainRefusal {
+  readonly code = AppointmentsCodes.SlotTaken;
+
+  static forCalendar(calendarId: string, startsAt: Date) {
+    return SlotTaken.refusal(`The slot at ${startsAt.toISOString()} is already taken.`, { calendarId, startsAt });
   }
 }
 
@@ -122,7 +123,7 @@ export class BookAppointmentHandler implements CommandHandler<BookAppointment> {
 
   async execute({ calendarId, startsAt }: BookAppointment): Promise<string> {
     if (await this.appointments.isTaken(calendarId, startsAt)) {
-      throw AppointmentError.slotTaken(calendarId, startsAt);
+      throw SlotTaken.forCalendar(calendarId, startsAt);
     }
 
     const appointment = Appointment.book(this.ids.next(), calendarId, startsAt, this.clock.now());

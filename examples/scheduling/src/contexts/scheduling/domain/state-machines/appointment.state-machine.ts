@@ -1,5 +1,7 @@
 import { defineStateMachine, type DomainError } from '@ddd-ts-kit/kernel';
-import { AppointmentError } from '@/contexts/scheduling/domain/errors/appointment.error';
+import { AppointmentAlreadyConfirmed } from '@/contexts/scheduling/domain/errors/appointment-already-confirmed.error';
+import { AppointmentEnded } from '@/contexts/scheduling/domain/errors/appointment-ended.error';
+import { AppointmentNotStarted } from '@/contexts/scheduling/domain/errors/appointment-not-started.error';
 import { AppointmentStatus } from '@/contexts/scheduling/domain/vocabularies/appointment-status.vocabulary';
 
 /** What the transitions of an appointment are judged with. */
@@ -37,7 +39,7 @@ export const appointmentLifecycle = defineStateMachine({
 
 /** An outcome is known once the appointment started. */
 function started({ appointmentId, at, startsAt }: AppointmentMoment): DomainError | undefined {
-  return startsAt.getTime() > at.getTime() ? AppointmentError.notStarted(appointmentId, startsAt) : undefined;
+  return startsAt.getTime() > at.getTime() ? AppointmentNotStarted.forAppointment(appointmentId, startsAt) : undefined;
 }
 
 /** A booked appointment has nothing left to confirm; any other refusal comes from an appointment that ended. */
@@ -46,6 +48,6 @@ function refused(
   { appointmentId }: AppointmentMoment,
 ): DomainError {
   return from === AppointmentStatus.Booked && transition === 'confirm'
-    ? AppointmentError.alreadyConfirmed(appointmentId)
-    : AppointmentError.ended(appointmentId, from);
+    ? AppointmentAlreadyConfirmed.forAppointment(appointmentId)
+    : AppointmentEnded.forAppointment(appointmentId, from);
 }

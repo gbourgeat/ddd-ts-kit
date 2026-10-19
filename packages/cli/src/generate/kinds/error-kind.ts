@@ -6,8 +6,11 @@ import { addFactory } from '../errors/add-factory.js';
 import { addSpecCase } from '../errors/add-spec-case.js';
 import { codesOfContext } from '../errors/codes-of-context.js';
 import { refusalCode } from '../errors/refusal-code.js';
+import { refusalClassName } from '../errors/refusal-class-name.js';
+import { refusalFactoryName } from '../errors/refusal-factory-name.js';
 import { refusalName } from '../errors/refusal-name.js';
-import type { Kind } from '../kind.js';
+import { writeNamedRefusal } from '../errors/write-named-refusal.js';
+import type { Kind, KindRequest } from '../kind.js';
 import { learnTerms } from '../learn-terms.js';
 import { named } from '../named.js';
 import { openScope } from '../open-scope.js';
@@ -23,31 +26,46 @@ interface Refusal {
 export const errorKind: Kind = {
   name: 'error',
   aliases: ['refusal'],
-  usage: 'error <context> <Concept> <refusal> [--code CODE] [--term "<Term>=<meaning>"]...',
+  usage: 'error <context> <Refusal> <factory> [--code CODE] [--term "<Term>=<meaning>"]...',
   summary:
-    'A refusal: a static factory on the error class of a concept, the class created when absent, and its spec case.',
-  positionals: ['context', 'Concept', 'refusal'],
+    'A refusal: under "stack.refusals": "named", its class, its code in domain/errors/codes.ts and a static factory, each created when absent, and its spec case; under factories or classes, `<Concept> <refusal>` adds a static factory to the error class of a concept.',
+  positionals: ['context', 'Refusal', 'factory'],
   writesShared: false,
   run: (request) => {
     const scope = openScope(request);
 
     learnTerms(scope);
 
-    const name = concept(scope, request.args[1] ?? '', { what: 'error class', strip: ['error'] });
-    const refusal = refusalName(request.args[2] ?? '');
-    const asked = { concept: name, refusal, code: refusalCode({ concept: name, refusal }, request.flags.code) };
-    const file = `${scope.dir}/domain/errors/${name.kebab}.error.ts`;
+    if (request.config.stack.refusals === 'named') {
+      writeNamedRefusal(scope, {
+        refusal: refusalClassName(request.args[1] ?? '', scope.flags.allowName),
+        factory: refusalFactoryName(request.args[2] ?? ''),
+        asked: request.flags.code,
+      });
 
-    if (!hasFactory(scope, file, asked)) {
-      refuseTakenCode(scope, asked);
+      return;
     }
 
-    const context = vars(scope, { name: named(name), refusal: named(refusal), error: { code: asked.code } });
-
-    writeFactory(scope, file, { ...asked, context });
-    writeSpecCase(scope, `${scope.dir}/test/unit/${name.kebab}.error.spec.ts`, { ...asked, context });
+    writeConceptRefusal(scope, request);
   },
 };
+
+/** One refusal as a static factory of the error class of a concept: the form of `factories` and `classes`. */
+function writeConceptRefusal(scope: Scope, request: KindRequest): void {
+  const name = concept(scope, request.args[1] ?? '', { what: 'error class', strip: ['error'] });
+  const refusal = refusalName(request.args[2] ?? '');
+  const asked = { concept: name, refusal, code: refusalCode({ concept: name, refusal }, request.flags.code) };
+  const file = `${scope.dir}/domain/errors/${name.kebab}.error.ts`;
+
+  if (!hasFactory(scope, file, asked)) {
+    refuseTakenCode(scope, asked);
+  }
+
+  const context = vars(scope, { name: named(name), refusal: named(refusal), error: { code: asked.code } });
+
+  writeFactory(scope, file, { ...asked, context });
+  writeSpecCase(scope, `${scope.dir}/test/unit/${name.kebab}.error.spec.ts`, { ...asked, context });
+}
 
 /** Run again, the command finds its factory and changes nothing: its code is its own, not one already taken. */
 function hasFactory(scope: Scope, file: string, { refusal }: Refusal): boolean {

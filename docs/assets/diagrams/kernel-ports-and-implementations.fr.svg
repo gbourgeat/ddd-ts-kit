@@ -19,10 +19,11 @@
   <text x="149" y="112" font-size="16" font-weight="700" fill="#2f6f4f" text-anchor="middle">domaine</text>
   <line x1="40" y1="124" x2="258" y2="124" stroke="#2f6f4f" stroke-opacity="0.35"/>
   <text x="40" y="148" font-size="13" fill="#1f2328">agrégats : AggregateRoot</text>
-  <text x="40" y="170" font-size="13" fill="#1f2328">objets-valeurs : ValueObject</text>
-  <text x="40" y="192" font-size="13" fill="#1f2328">refus : ConceptError</text>
-  <text x="40" y="214" font-size="13" fill="#1f2328">ports de repository : Repository</text>
-  <text x="40" y="244" font-size="13" font-style="italic" font-weight="600" fill="#2f6f4f">n'importe que le noyau</text>
+  <text x="40" y="168" font-size="13" fill="#1f2328">objets-valeurs : ValueObject</text>
+  <text x="40" y="188" font-size="13" fill="#1f2328">refus : DomainRefusal,</text>
+  <text x="56" y="208" font-size="13" fill="#1f2328">ConceptError</text>
+  <text x="40" y="228" font-size="13" fill="#1f2328">ports de repository : Repository</text>
+  <text x="40" y="252" font-size="13" font-style="italic" font-weight="600" fill="#2f6f4f">n'importe que le noyau</text>
 
   <!-- application -->
   <rect x="24" y="274" width="250" height="194" rx="10" fill="#e7eef5" stroke="#2b5d8a" stroke-width="2"/>

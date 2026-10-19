@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { controllerRoute, executeRoute } from '@ddd-ts-kit/http';
 import { InMemoryCommandBus } from '@ddd-ts-kit/kernel';
 import { AddTimeOffCommand } from '@/contexts/scheduling/application/commands/add-time-off/add-time-off.command';
-import { CalendarError } from '@/contexts/scheduling/domain/errors/calendar.error';
+import { TimeOffCoversAppointments } from '@/contexts/scheduling/domain/errors/time-off-covers-appointments.error';
 import { AddTimeOffController } from '@/contexts/scheduling/presentation/http/calendars/add-time-off/add-time-off.controller';
 
 const valid = { startsAt: '2026-08-03T00:00:00.000Z', endsAt: '2026-08-17T00:00:00.000+02:00' };
@@ -55,7 +55,7 @@ describe('POST /calendars/:calendarId/time-off', () => {
   it('answers the refusal of the use case with its code', async () => {
     const commands = new InMemoryCommandBus().register(AddTimeOffCommand, {
       execute: async () => {
-        throw CalendarError.timeOffOverAppointments(2);
+        throw TimeOffCoversAppointments.withCount(2);
       },
     });
 

@@ -1,18 +1,22 @@
 import { AST_NODE_TYPES, type TSESTree } from '@typescript-eslint/utils';
-import { className } from '../support/classes/class-name.js';
+import { type ClassNode, className } from '../support/classes/class-name.js';
 import { memberName } from '../support/classes/member-name.js';
 import { visibilityOf } from '../support/classes/visibility-of.js';
 import { descendants } from '../support/descendants.js';
 import { constantCase } from '../support/errors/constant-case.js';
+import { hasFactoryPrefix } from '../support/errors/has-factory-prefix.js';
+import { prefixedName } from '../support/errors/prefixed-name.js';
 import { isErrorClass } from '../support/errors/is-error-class.js';
 import { isErrorFile } from '../support/errors/is-error-file.js';
 import { defineRule, type Report } from '../support/rule/define-rule.js';
 
-type MessageId = 'vagueName' | 'codeNotLiteral' | 'codeFormat' | 'mismatch';
+type MessageId = 'vagueName' | 'codeNotLiteral' | 'codeFormat' | 'mismatch' | NamedMessageId;
+type NamedMessageId = 'unprefixed' | 'digitInName' | 'errorSuffix';
 
 /** Names that say an error is being made, never which rule of the business refused. */
 const VAGUE_NAMES = ['create', 'make', 'of', 'from', 'build', 'new', 'error', 'failure', 'fail', 'refusal', 'refuse'];
 const ERROR_CODE = /^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$/;
+const ERROR_SUFFIX = /^(.+)Error$/;
 
 interface Factory {
   readonly name: string;
@@ -25,7 +29,7 @@ export const errorsFactoryName = defineRule<MessageId>({
   type: 'problem',
   recommended: 'error',
   description:
-    'Under "stack.refusals": "factories", a static factory of an error class is named after the refusal, in the words of the business, and its code is that name in constant case, alone or with the name of the concept.',
+    'Under "stack.refusals": "factories", a static factory of an error class is named after the refusal, in the words of the business, and its code is that name in constant case, alone or with the name of the concept. Under "named", the class is named after the refusal, never `...Error`, and a factory after what the refusal is about: for, with, because, on or at, then an upper-case letter, no digit.',
   messages: {
     vagueName:
       '`{{className}}.{{name}}` says that an error is built, not which rule refused. Name the factory after the refusal, as a domain expert would say it: `slotTaken`, `alreadyConfirmed`, `notFound`.',
@@ -35,10 +39,26 @@ export const errorsFactoryName = defineRule<MessageId>({
       'The code "{{code}}" of `{{className}}.{{name}}` is not in constant case. Write upper-case words separated by underscores, for example {{expected}}.',
     mismatch:
       'The factory `{{className}}.{{name}}` sets the code "{{code}}", which says something else. Write {{expected}}, or rename the factory after the code: a reader of the code that refuses and a reader of the contract must meet the same words.',
+    unprefixed:
+      '`{{className}}.{{name}}` does not say what the refusal is about: the class already says what is refused. Start the factory with for, with, because, on or at, followed by an upper-case letter: `{{expected}}`, `forAccountId`, `becauseOf`, `atStart`.',
+    digitInName:
+      '`{{className}}.{{name}}` holds a digit, which tells one factory from another and not what the refusal is about. Name it after its subject, with for, with, because, on or at: `forAccountId`, `withNotice`, `atStart`.',
+    errorSuffix:
+      'The refusal class {{className}} ends with Error. A refusal is named after what is refused, as a domain expert says it: name it {{expected}}, and its file after it.',
   },
   create({ file, report }) {
     if (!isErrorFile(file)) {
       return {};
+    }
+
+    if (file.config.stack.refusals === 'named') {
+      return {
+        ClassBody(body) {
+          if (isErrorClass(body.parent)) {
+            judgeNamed(body.parent, body.body.filter(isFactory), report);
+          }
+        },
+      };
     }
 
     return {
@@ -127,4 +147,33 @@ function expectedCodes({ name, concept }: Factory): string[] {
   const subject = constantCase(concept.replace(/Error$/, ''));
 
   return subject === '' ? [refusal] : [refusal, `${subject}_${refusal}`, `${refusal}_${subject}`];
+}
+
+/** Under `named`: `SlotTaken.forCalendar`, never `SlotTakenError.slotTaken`. The code is held by `errors/code-listed`. */
+function judgeNamed(owner: ClassNode, factories: TSESTree.MethodDefinition[], report: Report<MessageId>): void {
+  const refusal = className(owner);
+  const suffixed = ERROR_SUFFIX.exec(refusal);
+
+  if (suffixed !== null) {
+    report({ node: owner.id ?? owner, messageId: 'errorSuffix', data: { className: refusal, expected: suffixed[1] } });
+  }
+
+  for (const method of factories) {
+    judgeNamedFactory(refusal, method, report);
+  }
+}
+
+function judgeNamedFactory(refusal: string, method: TSESTree.MethodDefinition, report: Report<MessageId>): void {
+  const name = memberName(method) ?? '';
+  const data = { className: refusal, name };
+
+  if (/\d/.test(name)) {
+    report({ node: method.key, messageId: 'digitInName', data });
+
+    return;
+  }
+
+  if (!hasFactoryPrefix(name)) {
+    report({ node: method.key, messageId: 'unprefixed', data: { ...data, expected: prefixedName(name) } });
+  }
 }

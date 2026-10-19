@@ -1,7 +1,13 @@
 import type { Clock } from '@ddd-ts-kit/kernel';
 import { CommandHandler } from '@ddd-ts-kit/kernel/declarations';
+{{#unless refusals.named}}
 import { AccountError } from '{{alias.context}}/domain/errors/account.error{{alias.ext}}';
 import { InvitationError } from '{{alias.context}}/domain/errors/invitation.error{{alias.ext}}';
+{{/unless}}
+{{#if refusals.named}}
+import { UnknownAccount } from '{{alias.context}}/domain/errors/unknown-account.error{{alias.ext}}';
+import { UnknownInvitation } from '{{alias.context}}/domain/errors/unknown-invitation.error{{alias.ext}}';
+{{/if}}
 import type { AccountRepository } from '{{alias.context}}/domain/repositories/account.repository{{alias.ext}}';
 import type { InvitationRepository } from '{{alias.context}}/domain/repositories/invitation.repository{{alias.ext}}';
 import { DeclineInvitationCommand } from '{{alias.context}}/application/commands/decline-invitation/decline-invitation.command{{alias.ext}}';
@@ -21,11 +27,21 @@ export class DeclineInvitationHandler implements CommandHandler<DeclineInvitatio
     const account = await this.accountRepository.findById(actor.id);
 
     if (invitation === undefined) {
+{{#if refusals.named}}
+      throw UnknownInvitation.forReference();
+{{/if}}
+{{#unless refusals.named}}
       throw InvitationError.notFound();
+{{/unless}}
     }
 
     if (account === undefined) {
+{{#if refusals.named}}
+      throw UnknownAccount.forAccount(actor.id);
+{{/if}}
+{{#unless refusals.named}}
       throw AccountError.notFound(actor.id);
+{{/unless}}
     }
 
     invitation.decline(account, this.clock.now());

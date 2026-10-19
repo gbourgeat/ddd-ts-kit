@@ -1,4 +1,4 @@
-import { ConceptError, DomainError, type RefusalFacts } from '@ddd-ts-kit/kernel';
+import { DomainError, FactualRefusal, type RefusalFacts } from '@ddd-ts-kit/kernel';
 import { ValidationError } from '@ddd-ts-kit/validation';
 import type { ErrorMapper } from './error-mapper.js';
 import { INTERNAL_ERROR_CODE } from './internal-error-code.js';
@@ -36,7 +36,7 @@ export function toProblem(error: unknown, mapper: ErrorMapper, requestId: string
  * message stays where the error is logged and reported.
  */
 function publicDetail(error: DomainError): string {
-  if (!(error instanceof ConceptError)) {
+  if (!(error instanceof FactualRefusal)) {
     return error.message;
   }
 
@@ -72,7 +72,7 @@ function sentenceOf(code: string): string {
 
 /** Only what the factory of the refusal exposed by name: a fact never leaves the process by default. */
 function exposedFacts(error: DomainError): { facts?: RefusalFacts } {
-  if (!(error instanceof ConceptError)) {
+  if (!(error instanceof FactualRefusal)) {
     return {};
   }
 

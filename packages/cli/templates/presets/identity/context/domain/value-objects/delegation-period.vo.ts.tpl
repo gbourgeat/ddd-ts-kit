@@ -1,5 +1,11 @@
 import { ValueObject } from '@ddd-ts-kit/kernel';
+{{#unless refusals.named}}
 import { DelegationError } from '{{alias.context}}/domain/errors/delegation.error{{alias.ext}}';
+{{/unless}}
+{{#if refusals.named}}
+import { DelegationPeriodInverted } from '{{alias.context}}/domain/errors/delegation-period-inverted.error{{alias.ext}}';
+import { DelegationTooLong } from '{{alias.context}}/domain/errors/delegation-too-long.error{{alias.ext}}';
+{{/if}}
 
 /** A delegation is a stand-in for an absence: past this, the right belongs in a role. */
 const LONGEST_DAYS = 90;
@@ -18,11 +24,21 @@ export class DelegationPeriod extends ValueObject<DelegationPeriodProps> {
 
   static create(startsAt: Date, endsAt: Date): DelegationPeriod {
     if (endsAt.getTime() <= startsAt.getTime()) {
+{{#if refusals.named}}
+      throw DelegationPeriodInverted.forPeriod(startsAt, endsAt);
+{{/if}}
+{{#unless refusals.named}}
       throw DelegationError.periodInverted(startsAt, endsAt);
+{{/unless}}
     }
 
     if (endsAt.getTime() - startsAt.getTime() > LONGEST_DAYS * DAY_MS) {
+{{#if refusals.named}}
+      throw DelegationTooLong.withLongestDays(LONGEST_DAYS);
+{{/if}}
+{{#unless refusals.named}}
       throw DelegationError.tooLong(LONGEST_DAYS);
+{{/unless}}
     }
 
     return new DelegationPeriod({ startsAt, endsAt });

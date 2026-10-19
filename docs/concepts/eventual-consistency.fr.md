@@ -1,5 +1,5 @@
 [English](eventual-consistency.md) · **Français**
-<!-- translation-of: eventual-consistency.md sha256:8fc1aa42c68463ab -->
+<!-- translation-of: eventual-consistency.md sha256:e89f171d8775d363 -->
 
 # La cohérence à terme, expliquée à un responsable produit
 
@@ -61,7 +61,7 @@ projection d'un autre contexte, qui a un instant de retard :
 ```ts
 // appointments, gestionnaire de BookAppointment : la règle repose sur des données qui peuvent dater d'une seconde
 if (!(await availabilityGateway.isOpen(practitionerId, slot))) {
-  throw AppointmentError.slotTaken(practitionerId, slot.startsAt);
+  throw SlotTaken.forPractitioner(practitionerId, slot.startsAt);
 }
 ```
 

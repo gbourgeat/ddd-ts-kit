@@ -34,14 +34,18 @@ aggregate its file under `domain/` and the builder its file under `test/builders
 
 <!-- checked sample -->
 ```ts
-import { AggregateRoot, ConceptError, NamedDomainEvent } from '@ddd-ts-kit/kernel';
+import { AggregateRoot, DomainRefusal, NamedDomainEvent } from '@ddd-ts-kit/kernel';
 import { Builder, given, resetSequences, sequence, type Defaults } from '@ddd-ts-kit/testing';
 import { beforeEach, expect, it } from 'vitest';
 
 // The model under test.
-class OrderError extends ConceptError {
-  static alreadyPaid(orderId: string) {
-    return OrderError.refusal('ORDER_ALREADY_PAID', `Order ${orderId} is already paid.`, { orderId });
+const OrderingCodes = { OrderAlreadyPaid: 'ORDER_ALREADY_PAID' } as const;
+
+class OrderAlreadyPaid extends DomainRefusal {
+  readonly code = OrderingCodes.OrderAlreadyPaid;
+
+  static forOrder(orderId: string) {
+    return OrderAlreadyPaid.refusal(`Order ${orderId} is already paid.`, { orderId });
   }
 }
 
@@ -75,7 +79,7 @@ class Order extends AggregateRoot {
 
   pay(at: Date): void {
     if (this.paid) {
-      throw OrderError.alreadyPaid(this.id);
+      throw OrderAlreadyPaid.forOrder(this.id);
     }
 
     this.paid = true;
@@ -407,30 +411,34 @@ that differ, one line each. The facts given must be carried with those values; t
 carry others.
 
 Instead of asserting the wording of a message, which breaks when it is rephrased, or the class
-of the error, which says nothing about which refusal it was:
+of the error, which says nothing of its facts and is not what a client reads:
 
 ```ts
 expect(() => order.pay(at)).toThrow('Order order-1 is already paid.');
-expect(() => order.pay(at)).toThrow(OrderError);
+expect(() => order.pay(at)).toThrow(OrderAlreadyPaid);
 ```
 
 assert the code, stable for every client, and the facts the refusal carries:
 
 <!-- checked sample -->
 ```ts
-import { ConceptError } from '@ddd-ts-kit/kernel';
+import { DomainRefusal } from '@ddd-ts-kit/kernel';
 import { expectRefusal } from '@ddd-ts-kit/testing';
 
-class OrderError extends ConceptError {
-  static alreadyPaid(orderId: string) {
-    return OrderError.refusal('ORDER_ALREADY_PAID', `Order ${orderId} is already paid.`, { orderId });
+const OrderingCodes = { OrderAlreadyPaid: 'ORDER_ALREADY_PAID' } as const;
+
+class OrderAlreadyPaid extends DomainRefusal {
+  readonly code = OrderingCodes.OrderAlreadyPaid;
+
+  static forOrder(orderId: string) {
+    return OrderAlreadyPaid.refusal(`Order ${orderId} is already paid.`, { orderId });
   }
 }
 
 const order = {
   id: 'order-1',
   pay(): void {
-    throw OrderError.alreadyPaid(this.id);
+    throw OrderAlreadyPaid.forOrder(this.id);
   },
 };
 

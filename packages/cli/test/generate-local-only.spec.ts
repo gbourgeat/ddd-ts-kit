@@ -32,7 +32,7 @@ const LOCAL_RUNS: readonly (readonly string[])[] = [
   ['entity', 'billing', 'PriceLine'],
   ['value-object', 'billing', 'LinePrice'],
   ['domain-event', 'billing', 'Invoice', 'Cancelled'],
-  ['error', 'billing', 'Invoice', 'alreadyCancelled'],
+  ['error', 'billing', 'InvoiceAlreadyCancelled', 'forInvoice'],
   ['domain-error', 'billing', 'InvoiceAlreadyCancelled', '--allow-name'],
   ['domain-service', 'billing', 'MonthlyPricing'],
   ['command', 'billing', 'MarkInvoiceAsPaid', '--aggregate', 'Invoice', '--permission', 'invoice.pay'],

@@ -1,6 +1,6 @@
 import { QueryHandler } from '@ddd-ts-kit/kernel/declarations';
 import type { Calendar } from '@/contexts/scheduling/domain/aggregates/calendar.aggregate';
-import { CalendarError } from '@/contexts/scheduling/domain/errors/calendar.error';
+import { UnknownCalendar } from '@/contexts/scheduling/domain/errors/unknown-calendar.error';
 import type { CalendarRepository } from '@/contexts/scheduling/domain/repositories/calendar.repository';
 import { Weekday } from '@/contexts/scheduling/domain/vocabularies/weekday.vocabulary';
 import { GetOpeningHoursQuery } from '@/contexts/scheduling/application/queries/get-opening-hours/get-opening-hours.query';
@@ -24,7 +24,7 @@ export class GetOpeningHoursHandler implements QueryHandler<GetOpeningHoursQuery
     const calendar = await this.calendarRepository.findById(calendarId);
 
     if (calendar === undefined) {
-      throw CalendarError.unknown(calendarId);
+      throw UnknownCalendar.forCalendar(calendarId);
     }
 
     return {

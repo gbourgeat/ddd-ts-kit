@@ -1,6 +1,10 @@
 import { AggregateRoot } from '@ddd-ts-kit/kernel';
-import { AppointmentError } from '@/contexts/scheduling/domain/errors/appointment.error';
-import { CalendarError } from '@/contexts/scheduling/domain/errors/calendar.error';
+import { BookingTooFar } from '@/contexts/scheduling/domain/errors/booking-too-far.error';
+import { BookingTooLate } from '@/contexts/scheduling/domain/errors/booking-too-late.error';
+import { OffGrid } from '@/contexts/scheduling/domain/errors/off-grid.error';
+import { OutsideAvailability } from '@/contexts/scheduling/domain/errors/outside-availability.error';
+import { TimeOffCoversAppointments } from '@/contexts/scheduling/domain/errors/time-off-covers-appointments.error';
+import { UnknownAppointmentType } from '@/contexts/scheduling/domain/errors/unknown-appointment-type.error';
 import { CalendarAppointmentTypeDefined } from '@/contexts/scheduling/domain/events/calendar-appointment-type-defined.event';
 import { CalendarCreated } from '@/contexts/scheduling/domain/events/calendar-created.event';
 import { CalendarExceptionAdded } from '@/contexts/scheduling/domain/events/calendar-exception-added.event';
@@ -94,7 +98,7 @@ export class Calendar extends AggregateRoot<string> {
     const covered = held.filter((slot) => timeOff.covers(slot.startsAt, slot.endsAt));
 
     if (covered.length > 0) {
-      throw CalendarError.timeOffOverAppointments(covered.length);
+      throw TimeOffCoversAppointments.withCount(covered.length);
     }
 
     this.state = { ...this.state, timeOffs: [...this.state.timeOffs, timeOff] };
@@ -119,21 +123,21 @@ export class Calendar extends AggregateRoot<string> {
     const { bookingWindow, timeZone } = this.state;
 
     if (bookingWindow.isTooLate(startsAt, now)) {
-      throw AppointmentError.bookingTooLate(bookingWindow.notice);
+      throw BookingTooLate.withNotice(bookingWindow.notice);
     }
 
     if (bookingWindow.isTooFar(startsAt, now)) {
-      throw AppointmentError.bookingTooFar(bookingWindow.horizon);
+      throw BookingTooFar.withHorizon(bookingWindow.horizon);
     }
 
     if (startsAt.getTime() % MINUTE !== 0 || !appointmentType.startsOn(timeZone.minuteOf(startsAt))) {
-      throw AppointmentError.offGrid(appointmentType.grid);
+      throw OffGrid.forGrid(appointmentType.grid);
     }
 
     const slot = appointmentType.slotAt(startsAt);
 
     if (!this.isOpenDuring(slot)) {
-      throw AppointmentError.outsideAvailability(startsAt);
+      throw OutsideAvailability.atStart(startsAt);
     }
 
     return slot;
@@ -198,7 +202,7 @@ export class Calendar extends AggregateRoot<string> {
     const appointmentType = this.state.appointmentTypes.find((known) => known.id === appointmentTypeId);
 
     if (appointmentType === undefined) {
-      throw CalendarError.unknownAppointmentType(appointmentTypeId);
+      throw UnknownAppointmentType.forAppointmentType(appointmentTypeId);
     }
 
     return appointmentType;

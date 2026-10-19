@@ -1,5 +1,14 @@
 import { AggregateRoot } from '@ddd-ts-kit/kernel';
+{{#unless refusals.named}}
 import { MemberError } from '{{alias.context}}/domain/errors/member.error{{alias.ext}}';
+{{/unless}}
+{{#if refusals.named}}
+import { AboveOwnRole } from '{{alias.context}}/domain/errors/above-own-role.error{{alias.ext}}';
+import { LastOwner } from '{{alias.context}}/domain/errors/last-owner.error{{alias.ext}}';
+import { NotAnOwner } from '{{alias.context}}/domain/errors/not-an-owner.error{{alias.ext}}';
+import { OwnRole } from '{{alias.context}}/domain/errors/own-role.error{{alias.ext}}';
+import { UnknownMember } from '{{alias.context}}/domain/errors/unknown-member.error{{alias.ext}}';
+{{/if}}
 import { MemberJoined } from '{{alias.context}}/domain/events/member-joined.event{{alias.ext}}';
 import { MemberRemoved } from '{{alias.context}}/domain/events/member-removed.event{{alias.ext}}';
 import { MemberRoleChanged } from '{{alias.context}}/domain/events/member-role-changed.event{{alias.ext}}';
@@ -55,7 +64,14 @@ export class Member extends AggregateRoot<string> {
       return;
     }
 
+{{#if refusals.named}}
+    throw role === MemberRole.Owner
+      ? NotAnOwner.forOrganisation(organisationId)
+      : AboveOwnRole.forOrganisation(organisationId);
+{{/if}}
+{{#unless refusals.named}}
     throw role === MemberRole.Owner ? MemberError.ownersOnly(organisationId) : MemberError.aboveOwnRole(organisationId);
+{{/unless}}
   }
 
   /** Never one's own role, never above one's own role, and the last owner stays one. */
@@ -63,7 +79,12 @@ export class Member extends AggregateRoot<string> {
     this.assertActive();
 
     if (change.byAccount === this.state.accountId) {
+{{#if refusals.named}}
+      throw OwnRole.forOrganisation(this.state.organisationId);
+{{/if}}
+{{#unless refusals.named}}
       throw MemberError.ownRole(this.state.organisationId);
+{{/unless}}
     }
 
     if (role === this.state.role) {
@@ -121,7 +142,12 @@ export class Member extends AggregateRoot<string> {
 
   private assertActive(): void {
     if (!this.isActive) {
+{{#if refusals.named}}
+      throw UnknownMember.forMembership(this.state.organisationId, this.state.accountId);
+{{/if}}
+{{#unless refusals.named}}
       throw MemberError.notFound(this.state.organisationId, this.state.accountId);
+{{/unless}}
     }
   }
 
@@ -134,7 +160,12 @@ export class Member extends AggregateRoot<string> {
   /** `next` is the role after the change, none for a removal. */
   private assertOwnersKept(change: MembershipChange, next: MemberRole | undefined): void {
     if (this.state.role === MemberRole.Owner && next !== MemberRole.Owner && change.owners <= 1) {
+{{#if refusals.named}}
+      throw LastOwner.forOrganisation(this.state.organisationId);
+{{/if}}
+{{#unless refusals.named}}
       throw MemberError.lastOwner(this.state.organisationId);
+{{/unless}}
     }
   }
 }

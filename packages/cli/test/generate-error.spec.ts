@@ -1,18 +1,16 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { cli, exists, read, tempDir, write } from './helpers.js';
 import { failure, report } from './reports.js';
+import { billingProject as project, generateError as generate } from './support/billing-error-project.js';
 
 const ERROR = 'src/contexts/billing/domain/errors/invoice.error.ts';
 const SPEC = 'src/contexts/billing/test/unit/invoice.error.spec.ts';
-const TERMS = ['--term', 'Invoice=A request for payment', '--term', 'Issue=To make an invoice final'];
 
-const generate = (root: string, ...args: string[]) => cli(root, 'generate', 'error', 'billing', ...args, '--json');
-
-describe('generate error', () => {
+describe('generate error, in a project of one error class per concept', () => {
   let root: string;
 
   beforeAll(() => {
-    root = project('error');
+    root = project('error', '--refusals', 'factories');
   });
 
   it('creates the error class of the concept with its first factory, and the spec', () => {
@@ -120,7 +118,7 @@ describe('generate error', () => {
 
 describe('the errors of a context', () => {
   it('lists the errors of the context by class, refusal, code and exposed facts, in describe and in CONTEXT.md', () => {
-    const root = project('error-listed');
+    const root = project('error-listed', '--refusals', 'factories');
 
     expect(generate(root, 'Invoice', 'alreadyIssued').code).toBe(0);
 
@@ -201,12 +199,3 @@ describe('generate domain-error, in a project that keeps one class per error', (
     expect(cli(tempDir('unknown-form'), 'init', '--refusals', 'nope').code).toBe(2);
   });
 });
-
-function project(label: string, ...flags: string[]): string {
-  const root = tempDir(label);
-
-  expect(cli(root, 'init', ...flags).code).toBe(0);
-  expect(cli(root, 'generate', 'context', 'billing', '--classification', 'core', ...TERMS).code).toBe(0);
-
-  return root;
-}

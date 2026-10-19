@@ -31,6 +31,7 @@ import { declarationsRoleDeclared } from '../rules/declarations-role-declared.js
 import { domainEventsDispatchedOnSave } from '../rules/domain-events-dispatched-on-save.js';
 import { domainEventsTransactionalBeforeCommit } from '../rules/domain-events-transactional-before-commit.js';
 import { domainValueObjectClass } from '../rules/domain-value-object-class.js';
+import { errorsCodeListed } from '../rules/errors-code-listed.js';
 import { errorsCodeUnique } from '../rules/errors-code-unique.js';
 import { eventSourcingPastTense } from '../rules/event-sourcing-past-tense.js';
 import { eventSourcingProjectionNeverAppends } from '../rules/event-sourcing-projection-never-appends.js';
@@ -175,6 +176,7 @@ export const ARCHITECTURE_RULES: readonly Rule[] = [
   importsExtension,
   importsAliasDeclared,
   errorsCodeUnique,
+  errorsCodeListed,
   errorsKnownCode,
   persistenceMigrationHistory,
   persistenceNoFileContent,
