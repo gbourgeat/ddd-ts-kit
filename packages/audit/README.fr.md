@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:881c024b0dc348b9 -->
+<!-- translation-of: README.md sha256:bb7b82bc2fa855a3 -->
 
 # @ddd-ts-kit/audit
 
@@ -652,7 +652,8 @@ verrou de ligne dure jusqu'à la fin de la transaction : deux ajouts à une mêm
 donc jamais la même tête, et la chaîne ne peut pas bifurquer ; les ajouts à d'autres chaînes
 n'attendent pas. La clé primaire refuse une position en double si le verrou devait un jour être
 contourné. En `REPEATABLE READ` ou `SERIALIZABLE`, le second ajout échoue sur une erreur de
-sérialisation au lieu d'attendre, et son appelant rejoue l'unité de travail, comme pour toute autre
+sérialisation au lieu d'attendre, qui rejette l'unité de travail par une `TransactionConflictError`
+(une `ConcurrencyError`, répondue 409), et son appelant la rejoue, comme pour toute autre
 instruction à ces niveaux : le kit ne la rejoue pas.
 
 **À la validation.** Dans une unité de travail, ce qui est enregistré attend sa validation

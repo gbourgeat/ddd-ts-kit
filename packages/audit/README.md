@@ -625,8 +625,9 @@ with `SELECT ... FOR UPDATE`, computes the entry from it, inserts the entry and 
 The row lock lasts until the transaction ends, so two appends to one chain never read the same
 head and the chain cannot fork; appends to other chains do not wait. The primary key refuses a
 duplicate position should the lock ever be bypassed. Under `REPEATABLE READ` or `SERIALIZABLE`
-the second append fails with a serialization error instead of waiting, and its caller retries
-the unit of work, as for any other statement under those levels: the kit does not retry it.
+the second append fails with a serialization error instead of waiting, which rejects the unit of
+work with `TransactionConflictError` (a `ConcurrencyError`, answered 409), and its caller retries
+it, as for any other statement under those levels: the kit does not retry it.
 
 **At the commit.** Inside a unit of work, what is recorded waits for its commit (`atCommit` of
 the kernel): the entries are written last, after the work and its `before-commit` handlers,
