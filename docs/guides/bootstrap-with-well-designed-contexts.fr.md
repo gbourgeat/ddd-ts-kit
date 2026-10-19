@@ -1,5 +1,5 @@
 [English](bootstrap-with-well-designed-contexts.md) · **Français**
-<!-- translation-of: bootstrap-with-well-designed-contexts.md sha256:2f1ee8ff740d82fc -->
+<!-- translation-of: bootstrap-with-well-designed-contexts.md sha256:194b97cc496da3f1 -->
 
 # Démarrer avec des contextes bien conçus
 
@@ -48,9 +48,13 @@ de la plateforme (les événements audités, le schéma), qui ne compilent pas e
 `generate context --preset` en refuse un second, en nommant le contexte qui contient le premier,
 et `init` n'écrit qu'une fois un *preset* nommé deux fois.
 
-Le résultat est vert tel quel : aucun constat de `check`, d'ESLint, de dependency-cruiser et de
-knip, un formatage propre, typé, et ses *specs* passent, unitaires et d'intégration (les
-adaptateurs de l'ORM contre PostgreSQL en processus). Les *specs* de bout en bout le prouvent sur
+Ses contrats sont écrits à partir de l'application qui tourne, que seul le projet sait
+construire : après l'installation, `npm run docs:generate` ajoute les routes et les événements du
+*preset* aux documents OpenAPI et AsyncAPI, comme le dit `init`. Le résultat est alors vert tel
+quel, tout `npm run verify` : aucun constat de `check`, d'ESLint, de dependency-cruiser et de
+knip, un formatage propre, typé, les contrats à jour, et ses *specs* passent au-dessus des seuils
+de couverture, unitaires et d'intégration (les adaptateurs de l'ORM contre PostgreSQL en
+processus). Les *specs* de bout en bout le prouvent sur
 quatre *stacks* : des rôles sur Drizzle et Zod ; des relations sur Knex et class-validator avec
 des *tenants* et Keycloak ; des politiques par attributs sur Fastify avec des *tenants* et un
 vérificateur JWT (`packages/cli/test/e2e/preset-identity.spec.ts`) ; et généré dans un projet qui

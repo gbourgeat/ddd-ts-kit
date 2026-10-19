@@ -160,6 +160,10 @@ describe('what init says to do next', () => {
   it.each([
     [[], 'Run `pnpm install`, then `pnpm run verify`.'],
     [['--package-manager', 'npm'], 'Run `npm install`, then `npm run verify`.'],
+    [
+      ['--preset', 'identity'],
+      'Run `pnpm install`, then `pnpm run docs:generate` (the routes and events of the preset are not in the contracts yet), then `pnpm run verify`.',
+    ],
   ])('is the install and the whole gate, in the words of the package manager (%j)', (flags, note) => {
     const result = cli(tempDir('note'), 'init', ...flags, '--json');
 

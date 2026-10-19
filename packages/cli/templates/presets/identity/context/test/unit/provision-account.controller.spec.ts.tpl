@@ -43,6 +43,19 @@ describe('PUT /accounts/me', () => {
     expect(sent).toMatchObject([{ profile: { email: 'ada@example.test', emailVerified: false, displayName: 'ada@example.test' } }]);
   });
 
+  it('names the person after their username when the body names nothing, and sends no address the token lacks', async () => {
+    const { route, sent } = arrange();
+    const withoutAddress: Actor = { ...caller, attributes: { username: 'ada' } };
+
+    await executeRoute(
+      route,
+      { params: {}, query: {}, headers: {}, body: {}, raw: undefined },
+      { resolvePrincipal: () => withoutAddress },
+    );
+
+    expect(sent).toMatchObject([{ profile: { email: '', emailVerified: false, displayName: 'ada' } }]);
+  });
+
   it('refuses with 422 a request its contract does not describe, and sends nothing', async () => {
     const { route, sent } = arrange();
 

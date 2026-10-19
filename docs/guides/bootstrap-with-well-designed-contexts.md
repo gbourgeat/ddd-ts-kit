@@ -44,9 +44,12 @@ the same integration events and tables in the files of the platform (the audited
 schema), which do not compile together. `generate context --preset` refuses a second one, naming
 the context that holds the first, and `init` writes a preset named twice once.
 
-The result is green as it is: no finding of `check`, ESLint, dependency-cruiser and knip, format
-clean, typed, and its specs pass, unit and integration (the adapters of the ORM against
-PostgreSQL in process). The end-to-end specs prove it on four stacks: roles on Drizzle and Zod;
+Its contracts are written from the running application, which only the project can build: after
+the install, `npm run docs:generate` adds the routes and events of the preset to the OpenAPI and
+AsyncAPI documents, as `init` says. Then the result is green as it is, the whole `npm run verify`:
+no finding of `check`, ESLint, dependency-cruiser and knip, format clean, typed, the contracts up
+to date, and its specs pass over the coverage floors, unit and integration (the adapters of the
+ORM against PostgreSQL in process). The end-to-end specs prove it on four stacks: roles on Drizzle and Zod;
 relationships on Knex and class-validator with tenants and Keycloak; attribute policies on
 Fastify with tenants and a JWT verifier (`packages/cli/test/e2e/preset-identity.spec.ts`); and
 generated into a project that exists and decides with OpenFGA

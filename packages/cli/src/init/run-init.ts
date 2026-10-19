@@ -72,11 +72,21 @@ export function runInit(root: string, options: InitOptions): WorkspaceReport {
   const report = ws.commit(options.dryRun);
 
   if (!options.dryRun && report.created.includes('package.json')) {
-    report.notes.push(inDialect('Run `npm install`, then `npm run verify`.', config.stack.packageManager));
+    report.notes.push(inDialect(installNote(options), config.stack.packageManager));
     report.notes.push(inDialect(NEXT_STEP, config.stack.packageManager));
   }
 
   return report;
+}
+
+/**
+ * The install, then the whole gate. A preset writes routes and events, and the contracts are written
+ * from the running application, which only the project can build: `docs:generate` adds them first.
+ */
+function installNote(options: InitOptions): string {
+  return (options.presets ?? []).length === 0
+    ? 'Run `npm install`, then `npm run verify`.'
+    : 'Run `npm install`, then `npm run docs:generate` (the routes and events of the preset are not in the contracts yet), then `npm run verify`.';
 }
 
 /**
