@@ -998,7 +998,9 @@ streams), the behaviours of the provider (acknowledged publication cut mid-fligh
 dead-lettering, replay, poison, competing and separate consumers, takeover after the visibility
 timeout, groups lost and created again, reconnection through a TCP relay the test cuts,
 graceful close) and the whole chain from the outbox to an idempotent consumer. Each test works
-under a prefix of its own and deletes its keys.
+under a prefix of its own and deletes its keys. The integration job of the CI runs the whole
+suite on Dragonfly v2.0.2, which `pipeline/github/scripts/start-dragonfly.sh` starts, its image
+pinned by digest.
 
 ## Background job store
 
@@ -1036,7 +1038,7 @@ key staged before either committed both answer their own id, and only the first 
 
 Not BullMQ: it would bring a second worker model that the store contract (claim, lease,
 heartbeat, reports by attempt) does not map onto, and emulated cluster mode on Dragonfly. The
-store passes `jobStoreContract` on Dragonfly in the integration job of CI; it was also run by
+store passes `jobStoreContract` on Dragonfly in the integration job of CI, with the rest of the suite; it was also run by
 hand on Redis 8 (last run: Dragonfly 2.0.2, Redis 8.2, 2026-10-13). What the jobs guarantee: [Background jobs](../../docs/concepts/background-jobs.md).
 
 ## Contract suites
