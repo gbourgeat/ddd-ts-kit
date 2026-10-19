@@ -265,7 +265,11 @@ The same pieces, under the name each package gives them:
 
 Two commands may load the same invoice at the same version. The first save matches the
 version and moves it on; the second matches no row, and `optimisticUpdate` throws
-`ConcurrencyError` (code `CONCURRENCY_CONFLICT`), which rolls its transaction back.
+`ConcurrencyError` (code `CONCURRENCY_CONFLICT`), which rolls its transaction back. The four
+units of work give the same answer when the database gives their transaction up for a
+concurrent one, a deadlock (`40P01`) or a serialization failure (`40001`, Prisma `P2034`),
+whichever statement it chose: `TransactionConflictError`, a `ConcurrencyError` whose `cause` is
+the error of the driver, never an unexpected error.
 
 ![Two transactions load invoice inv-1 at version 3; the first update matches version 3 and writes version 4; the second update still expects version 3, writes no row and fails with ConcurrencyError](../assets/diagrams/persistence-optimistic-concurrency.svg)
 

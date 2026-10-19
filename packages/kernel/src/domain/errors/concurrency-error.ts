@@ -7,7 +7,7 @@ export const CONCURRENCY_CONFLICT = 'CONCURRENCY_CONFLICT';
 export class ConcurrencyError extends DomainError {
   readonly code = CONCURRENCY_CONFLICT;
 
-  constructor(aggregateId: string | number) {
-    super(`Aggregate ${aggregateId} was modified concurrently`);
+  constructor(aggregateId: string | number, options?: { readonly cause?: unknown }) {
+    super(`Aggregate ${aggregateId} was modified concurrently`, options);
   }
 }

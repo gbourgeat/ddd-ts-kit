@@ -526,7 +526,8 @@ export function startsAtOf(problem: Problem): string | undefined {
 ```
 
 Defaults: `VALIDATION_FAILED` 422 (with `issues`, paths prefixed by the part:
-`body.items.0.sku`), `NOT_FOUND` 404, `CONFLICT` 409, `INVARIANT_VIOLATION` 422, `UNAUTHORIZED`
+`body.items.0.sku`), `NOT_FOUND` 404, `CONFLICT` 409, `CONCURRENCY_CONFLICT` 409 (a lost update
+or a deadlock: the client sends the request again), `INVARIANT_VIOLATION` 422, `UNAUTHORIZED`
 401, `FORBIDDEN` 403, `NOT_ACCEPTABLE` 406, `PRECONDITION_FAILED` 412, `UNSUPPORTED_MEDIA_TYPE` 415
 (a body or a file of a type the route does not take), `PRECONDITION_REQUIRED` 428, and for files
 `FILE_NOT_FOUND` 404, `FILE_TOO_LARGE` 413. A domain code that is not mapped answers 422

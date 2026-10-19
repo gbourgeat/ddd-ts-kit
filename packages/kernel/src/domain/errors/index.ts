@@ -13,3 +13,4 @@ export * from './precondition-failed-error.js';
 export * from './refusal-facts.js';
 export * from './refusal-of.js';
 export * from './refusal.js';
+export * from './transaction-conflict-error.js';

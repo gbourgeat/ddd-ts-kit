@@ -45,7 +45,9 @@ lookups of the port, the columns, the mapper.
   Domain events are dispatched at its end, before the commit. A unit of work of your own
   builds `run` on `withinUnitOfWork` of the kernel and passes `unitOfWorkContract`.
 - **Optimistic concurrency** on the aggregate's `version`: a conflicting save raises
-  `ConcurrencyError`.
+  `ConcurrencyError`. A deadlock or a serialization failure anywhere in the transaction
+  rejects the unit of work with `TransactionConflictError`, a `ConcurrencyError`: retry the
+  command, never map the driver error by hand.
 - **Audit and tenant columns are standard**: `created_at`, `created_by`, `updated_at`,
   `updated_by`, and `tenant_id` with `--tenant-scoped`, stamped by the adapter from the
   `ExecutionScope` and the `Clock` through the kernel helpers. The domain does not know them.

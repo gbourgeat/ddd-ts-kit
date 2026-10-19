@@ -1,3 +1,5 @@
+import { TransactionConflictError } from '../../domain/errors/transaction-conflict-error.js';
+import { isTransactionConflict } from '../persistence/is-transaction-conflict.js';
 import { dispatchAfterCommit } from './dispatch-after-commit.js';
 import { dispatchBeforeCommit } from './dispatch-before-commit.js';
 import type { CommitStep } from './commit-step.js';
@@ -15,6 +17,10 @@ import { unitOfWorkScope, type UnitOfWorkScope } from './unit-of-work-scope.js';
  * The steps handed to `atCommit` are applied last, still inside `transaction`; when it rejects,
  * those applied are undone. Once `transaction` has resolved, and only then, the `after-commit`
  * handlers run, then the work handed to `afterCommit`.
+ *
+ * A deadlock or a serialization failure the database raised anywhere in the transaction, on the
+ * statement it chose, rejects the outermost unit of work as a `TransactionConflictError`, a
+ * `ConcurrencyError` whose `cause` is the error of the driver: the caller runs it again.
  *
  * Called inside a unit of work already running on the same asynchronous call chain it joins it:
  * `transaction(work)` and nothing else, so one dispatch, at the end of the outermost. Two
@@ -35,7 +41,7 @@ export async function withinUnitOfWork<T>(
     .run(scope, () => transaction(() => thenDispatched(work, scope, applied)))
     .catch(async (error: unknown) => {
       await undone(applied);
-      throw error;
+      throw isTransactionConflict(error) ? new TransactionConflictError(error) : error;
     })
     .finally(() => {
       scope.stage = 'closed';

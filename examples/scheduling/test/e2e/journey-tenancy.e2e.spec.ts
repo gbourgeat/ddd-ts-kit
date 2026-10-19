@@ -92,7 +92,7 @@ describe('Two networks of practices served by one application', () => {
     const registering = { displayName: 'Paul', email: 'paul@example.com' };
     const paulInSouth = await inNetwork(application, OTHER_NETWORK).as({ id: 'paul', roles: ['patient'] });
 
-    expectProblem(await paulInSouth.put('/people/me', registering), { status: 422, code: 'CONCURRENCY_CONFLICT' });
+    expectProblem(await paulInSouth.put('/people/me', registering), { status: 409, code: 'CONCURRENCY_CONFLICT' });
     expect(expectStatus(await paul.put<Identified>('/people/me', registering), 200).body).toEqual({ id: 'paul' });
   });
 

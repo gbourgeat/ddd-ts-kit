@@ -72,7 +72,7 @@ keeps a tenant: ADR-0004.
   attribute), and the keys of the tables stay `id` alone, unique across networks: identifiers the
   application generates, and subjects of one realm for people. A token whose claim names several
   networks (`north,south`) names none that can exist and is answered 404 at the edge; a subject
-  already registered in one network that registers in another is refused (422,
+  already registered in one network that registers in another is refused (409,
   `CONCURRENCY_CONFLICT`, the key being taken) and stays where it was, so no projection of the
   second network silently misses it. A person who works for two networks has two accounts. Serving
   one account in several networks would make every key and unique constraint lead with `tenant_id`
