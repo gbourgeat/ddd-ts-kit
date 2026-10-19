@@ -87,7 +87,11 @@ describe('generate error, in a project of one error class per concept', () => {
     expect(failure(generate(root, 'Invoice', 'error1')).message).toContain('is not the name of a refusal');
 
     expect(failure(generate(root, 'Invoice', 'voided', '--code', 'BILLING_FAILED')).fix).toContain(
-      'VOIDED, INVOICE_VOIDED, VOIDED_INVOICE',
+      'VOIDED, INVOICE_VOIDED, VOIDED_INVOICE; or name the refusal after the code: Invoice billingFailed (rule errors/factory-name).',
+    );
+
+    expect(failure(generate(root, 'Invoice', 'voided', '--code', 'INVOICE_ALREADY_PAID')).fix).toContain(
+      'name the refusal after the code: Invoice alreadyPaid',
     );
 
     expect(failure(generate(root, 'Issue', 'alreadyIssued')).message).toBe(

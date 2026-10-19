@@ -1,6 +1,6 @@
 import { KIT_ERROR_CODES } from '../../check/errors/kit-error-codes.js';
 import { CliError } from '../../cli-error.js';
-import type { Name } from '../../naming/index.js';
+import { toName, type Name } from '../../naming/index.js';
 
 interface Naming {
   readonly concept: Name;
@@ -23,9 +23,17 @@ export function refusalCode({ concept, refusal }: Naming, asked: string | undefi
   if (!accepted.includes(asked)) {
     throw new CliError(
       `The code "${asked}" does not say what ${concept.pascal}Error.${refusal.camel} says.`,
-      `Use one of: ${accepted.join(', ')}; or name the refusal after the code (rule errors/factory-name).`,
+      `Use one of: ${accepted.join(', ')}; or name the refusal after the code${namedAfter(concept, asked)} (rule errors/factory-name).`,
     );
   }
 
   return asked;
+}
+
+/** The refusal a code says, the concept around it left out: `NIGHTS_NOT_APPLICABLE` of `Stay` is `nightsNotApplicable`. */
+function namedAfter(concept: Name, code: string): string {
+  const said = code.replace(new RegExp(`^${concept.constant}_|_${concept.constant}$`), '');
+  const refusal = toName(said).camel;
+
+  return refusal === '' ? '' : `: ${concept.pascal} ${refusal}`;
 }

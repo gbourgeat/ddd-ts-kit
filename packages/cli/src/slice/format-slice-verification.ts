@@ -59,13 +59,17 @@ function nearTheLimitLines({ nearTheLimit }: SliceVerification): string[] {
       ];
 }
 
-function nextLines({ ok, toStage, context, commit }: SliceVerification): string[] {
+function nextLines({ ok, toStage, leftOut, context, commit }: SliceVerification): string[] {
   if (!ok) {
     return ['next: fix the causes above, then run verify-slice again'];
   }
 
   if (toStage.length === 0) {
-    return ['next: nothing to commit'];
+    return leftOut.length === 0
+      ? ['next: nothing to commit']
+      : [
+          `next: nothing of the slice of ${context} to commit; every change is left out below, outside the slice: a shared file is the conductor's, a file of another context its worker's`,
+        ];
   }
 
   const staged = toStage.map((file) => `  ${file}`);

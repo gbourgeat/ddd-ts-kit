@@ -4,6 +4,7 @@ import { authzActorExplicit } from '../rules/authz-actor-explicit.js';
 import { authzFieldsBySchema } from '../rules/authz-fields-by-schema.js';
 import { authzDeclared } from '../rules/authz-declared.js';
 import { authzGranted } from '../rules/authz-granted.js';
+import { authzScopeNarrows } from '../rules/authz-scope-narrows.js';
 import { authzInApplication } from '../rules/authz-in-application.js';
 import { authzPolicyAsked } from '../rules/authz-policy-asked.js';
 import { cleanBlankLines } from '../rules/clean-blank-lines.js';
@@ -152,6 +153,7 @@ export const ARCHITECTURE_RULES: readonly Rule[] = [
   authzFieldsBySchema,
   authzPolicyAsked,
   authzGranted,
+  authzScopeNarrows,
   aspectsOutsideIn,
   tracingPlatformOnly,
   tenancyScopedStatement,

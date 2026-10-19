@@ -45,6 +45,19 @@ export const roles = {
 };
 // or, when generating the use case: --permission invoice.void --grant accountant`,
   },
+  'authz/scope-narrows': {
+    why: "Every signed-in person holds the grants of SignedInGrantsAuthorizer, whatever the model of the project: it answers them before it asks the model, for a check and for a listing alike, and the listing is `all`. A handler that narrows a search by the scope of such a permission reads every element for every person who signed in, and the tests of the handler stay green. It is the shortcut taken when the model refuses a search with no element to check (relationships answer RESOURCE_REQUIRED): the grant lets the query past the bus, and the scope no longer narrows anything. The model decides instead: under relationships, the requirement names an enclosing resource (`{ type: 'context', id: '<context>' }` as the generator writes it, or the tenant of the actor) and Access.scope answers the ids of the elements. Judged: the second argument of a `.scope(` call in a context, the entry of a permission set written in place or held in a constant or a field of the same file, against the grants of `<platformDir>/auth/signed-in-grants.ts` and those given to every `new SignedInGrantsAuthorizer({ grants })` as an array literal or a constant declared as one (an entry, an id, the wildcard of a context, the bare `*`). What it cannot read is reported, never taken as safe: grants built by a call or a spread, a permission handed in to a `.scope(` call on `access`. What it cannot see at all: a permission every person holds through the model itself (a role every account has, a relation every member of a tenant has), and a search that does not ask Access.scope. Those are decisions of the model: the specs of the search prove them, with the real authorizer, an element of another owner absent. A warning: a search every signed-in person may run on every element is legitimate, its scope then says nothing.",
+    bad: `// platform/auth/signed-in-grants.ts
+export const signedInGrants: readonly Grant[] = [docsPermissions['document.search']];
+// contexts/docs/application/queries/search-documents/search-documents.handler.ts
+const scope = await this.access.scope(query.actor, docsPermissions['document.search'], 'document');`,
+    good: `// contexts/docs/application/queries/search-documents/search-documents.query.ts
+@Requires(docsPermissions['document.search'], { resource: () => ({ type: 'context', id: 'docs' }) })
+export class SearchDocumentsQuery extends AuthorizedQuery<SearchDocumentsResult> {}
+// contexts/docs/application/queries/search-documents/search-documents.handler.ts
+const scope = await this.access.scope(query.actor, docsPermissions['document.search'], 'document');
+// { kind: 'ids', ids: [...] }: the documents the actor reaches, an empty page for one who reaches none`,
+  },
   'authz/policy-asked': {
     why: 'The bus checks the permission of a use case before its handler runs, with the identifier of the element at most: it cannot read the element. A policy is the part of the right that needs the element (only the issuer, not after closing), and it is evaluated only when the handler asks Access once the element is loaded. A handler that forgets to ask leaves the policy declared, tested and never applied, and nothing at run time says so. Judged: for every permission refined by a policy (@Policy or definePolicy in application/authorization/), the handlers in the folder of each command or query that requires it (@Requires, .requires(...) or requires(X, ...)) call authorize, decide or decideOn and name that permission in their code. The TODO(domain) the generator leaves in such a handler, naming the permission, is accepted, and so is a TODO(review) that names it: `ddd-ts-kit todo` lists both, and until it is done the authorization module refuses the result of the handler at run time (PolicyNotAskedError).',
     bad: `// application/authorization/only-issuer-voids.policy.ts

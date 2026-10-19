@@ -58,6 +58,16 @@ describe('the report of verify-slice', () => {
     expect(report).toContain('next: commit the slice, staging these paths one by one: feat(billing):');
   });
 
+  it('says that nothing of the slice is to commit when every change is left out', () => {
+    const report = formatSliceVerification(verification({ leftOut: ['src/platform/auth/relationship-schema.ts'] }));
+
+    expect(report).toContain(
+      "next: nothing of the slice of billing to commit; every change is left out below, outside the slice: a shared file is the conductor's",
+    );
+
+    expect(report).not.toContain('next: nothing to commit');
+  });
+
   it('lists what it leaves out after the next step, whatever the result', () => {
     const report = formatSliceVerification(verification({ leftOut: ['notes.md'], ok: false }));
 
