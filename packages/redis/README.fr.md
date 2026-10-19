@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:bd773581b708e4c3 -->
+<!-- translation-of: README.md sha256:fbafa42f4edca08b -->
 
 # @ddd-ts-kit/redis
 
@@ -1038,7 +1038,9 @@ acquittée coupée en plein vol, relivraison, passage en file de rejet, rejeu, e
 consommateurs concurrents et distincts, reprise après le délai de visibilité, groupes perdus puis
 recréés, reconnexion à travers un relais TCP que le test coupe, fermeture propre) et toute la
 chaîne, de l'outbox jusqu'à un consommateur idempotent. Chaque test travaille sous un préfixe qui
-lui est propre, et supprime ses clés.
+lui est propre, et supprime ses clés. Le *job* d'intégration de la CI exécute toute la suite sur
+Dragonfly v2.0.2, que démarre `pipeline/github/scripts/start-dragonfly.sh`, son image épinglée par
+*digest*.
 
 ## Store de *jobs* en arrière-plan
 
@@ -1081,7 +1083,7 @@ chacun leur propre identifiant, et seul le premier est gardé.
 Pas de BullMQ : il apporterait un second modèle de *worker*, sur lequel le contrat du store
 (prise, bail, signal de vie, rapports par tentative) ne se calque pas, et le mode cluster émulé
 sur Dragonfly. Le store passe `jobStoreContract` sur Dragonfly dans le *job* d'intégration de la
-CI ; il a aussi été lancé à la main sur Redis 8 (dernier passage : Dragonfly 2.0.2, Redis 8.2,
+CI, avec le reste de la suite ; il a aussi été lancé à la main sur Redis 8 (dernier passage : Dragonfly 2.0.2, Redis 8.2,
 2026-10-13). Ce que garantissent les *jobs* : [Jobs en arrière-plan](../../docs/concepts/background-jobs.fr.md).
 
 ## Suites de contrat
