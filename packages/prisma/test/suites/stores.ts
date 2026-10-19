@@ -258,6 +258,29 @@ describe('PrismaOutboxStore.claimBatch between relays', () => {
   });
 });
 
+describe('PrismaOutboxStore with nothing to do', () => {
+  beforeEach(async () => {
+    await database.truncate();
+  });
+
+  it('sends no query for an empty batch, nor for a claim of nothing', async () => {
+    const store = messagingOutbox(skipLocked);
+
+    await store.append([event('evt-1')]);
+    database.queries.length = 0;
+
+    await store.append([]);
+    const claimed = await store.claimBatch(0, now);
+
+    await store.markPublished([], now);
+    const revived = await store.retryDead([], now);
+
+    expect([claimed, revived]).toEqual([[], 0]);
+    expect(database.queries).toEqual([]);
+    expect(await store.stats()).toEqual({ pending: 1, failed: 0, dead: 0 });
+  });
+});
+
 describe('PrismaOutboxStore: what a record keeps', () => {
   beforeEach(async () => {
     await database.truncate();

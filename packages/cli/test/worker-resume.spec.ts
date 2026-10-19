@@ -118,6 +118,23 @@ describe('worker-scope --resume', () => {
     ]);
   });
 
+  it('quotes a long report up to two hundred words, and says when the earlier agent left none', () => {
+    const words = Array.from({ length: 150 }, (_, index) => `w${index}`).join(' ');
+
+    write(worktree, '.ddd-ts-kit/report.md', `# Report\n\n${words}\n${words}\nnever quoted\n`);
+
+    const quoted = String(jsonAt(cli(root, 'worker-scope', 'billing', '--resume', '--json').json(), 'briefing'));
+
+    expect(quoted).toContain(`> ${words}\n> ${words.split(' ').slice(0, 48).join(' ')} (...)`);
+    expect(quoted).not.toContain('never quoted');
+
+    fs.rmSync(path.join(worktree, '.ddd-ts-kit/report.md'));
+
+    expect(String(jsonAt(cli(root, 'worker-scope', 'billing', '--resume', '--json').json(), 'briefing'))).toContain(
+      'It left no report.',
+    );
+  });
+
   it('creates and rewrites nothing', () => {
     agent();
 

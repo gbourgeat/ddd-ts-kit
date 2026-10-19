@@ -27,6 +27,17 @@ describe('the range of engines.node and .nvmrc', () => {
     ['22.0.0', '>= 20 < 23', true],
     ['23.0.0', '>20 <=22', false],
     ['25.1.0', '*', true],
+    ['22.12.1', '>22.12.0', true],
+    ['22.12.0', '>22.12.0', false],
+    ['22.13.0', '>22.12', true],
+    ['22.12.9', '>22.12', false],
+    ['22.12.9', '~22.12.3', true],
+    ['22.13.0', '~22.12.3', false],
+    ['22.9.0', '~22', true],
+    ['0.2.5', '^0.2.3', true],
+    ['0.3.0', '^0.2.3', false],
+    ['0.0.9', '^0.0', true],
+    ['0.1.0', '^0.0', false],
   ])('reads %s as in %s: %s', (version, range, inside) => {
     expect(inRange(version, range)).toBe(inside);
   });
@@ -34,6 +45,7 @@ describe('the range of engines.node and .nvmrc', () => {
   it('judges nothing it cannot read', () => {
     expect(inRange('22.12.0', 'lts/*')).toBeUndefined();
     expect(inRange('22.12.0', '>=22 || lts/jod')).toBeUndefined();
+    expect(inRange('twenty-two', '>=22')).toBeUndefined();
   });
 });
 

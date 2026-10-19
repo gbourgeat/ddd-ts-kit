@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { checkJsonOf } from './check-support.js';
-import { cli, read } from './helpers.js';
+import fs from 'node:fs';
+import path from 'node:path';
+import { cli, read, write } from './helpers.js';
 import { failure, report } from './reports.js';
 import { initProject } from './support/init-project.js';
 
@@ -122,5 +124,98 @@ describe('generate --grant <role>', () => {
     expect(uploaded.code).toBe(0);
     expect(read(root, ROLES)).toContain("[Role.Accountant]: [billingPermissions['invoice.attach-scan']],");
     expect(granted(root)).toEqual([]);
+  });
+});
+
+describe('generate --grant <role> on roles written by hand', () => {
+  it('is refused when the project keeps no roles file, and says nothing of a grant without --grant', () => {
+    const root = initProject('--context', 'billing:core');
+
+    fs.rmSync(path.join(root, ROLES));
+
+    expect(
+      failure(command(root, 'IssueInvoice', '--permission', 'invoice.issue', '--grant', 'accountant')).message,
+    ).toBe('--grant writes in src/platform/auth/roles.ts, which this project does not have.');
+
+    const generated = report(command(root, 'IssueInvoice', '--permission', 'invoice.issue'));
+
+    expect(generated.todos.map(({ text }) => text).join('\n')).not.toContain('by name to the roles that hold it');
+  });
+
+  it('is refused when the roles file declares no object of roles it can read', () => {
+    const root = initProject('--context', 'billing:core');
+
+    write(root, ROLES, "import { buildRoles } from './build-roles';\n\nexport const roles = buildRoles();\n");
+
+    const refused = failure(command(root, 'IssueInvoice', '--permission', 'invoice.issue', '--grant', 'accountant'));
+
+    expect(refused.message).toBe(
+      'src/platform/auth/roles.ts holds no `export const roles = { ... }` the generator can read.',
+    );
+
+    expect(refused.fix).toContain("Grant billingPermissions['invoice.issue'] to the role accountant by hand");
+  });
+
+  it('adds the role last when there is no role of system actors, with the imports it needs', () => {
+    const root = initProject('--context', 'billing:core');
+
+    write(root, ROLES, "export const roles = {\n  [Admin]: ['*'],\n};\n");
+    command(root, 'IssueInvoice', '--permission', 'invoice.issue', '--grant', 'accountant');
+
+    const roles = read(root, ROLES);
+
+    expect(roles).toContain("  [Admin]: ['*'],\n  [Role.Accountant]: [billingPermissions['invoice.issue']],\n};");
+    expect(roles).toMatch(/import \{ Role \} from '[^']+';/);
+    expect(roles).toMatch(/import \{ billingPermissions \} from '[^']+';/);
+  });
+
+  it('fills an empty list of the role, adds to a list over several lines, and leaves a grant it already holds', () => {
+    const root = initProject('--context', 'billing:core');
+
+    const imports =
+      "import { billingPermissions } from '@/contexts/billing/application/authorization/billing.permissions';\nimport { Role } from './role';\n";
+
+    const roles = [
+      'export const roles = {',
+      '  [Role.Accountant]: [],',
+      '  [Role.Auditor]: [',
+      "    billingPermissions['invoice.read'],",
+      '  ],',
+      "  [Role.Clerk]: [billingPermissions['invoice.issue']],",
+      '};',
+    ].join('\n');
+
+    write(root, ROLES, `${imports}\n${roles}\n`);
+
+    for (const role of ['accountant', 'auditor', 'clerk']) {
+      expect(command(root, `IssueInvoiceAs${role}`, '--permission', 'invoice.issue', '--grant', role).code).toBe(0);
+    }
+
+    expect(read(root, ROLES)).toBe(
+      `${imports}\n${[
+        'export const roles = {',
+        "  [Role.Accountant]: [billingPermissions['invoice.issue']],",
+        '  [Role.Auditor]: [',
+        "    billingPermissions['invoice.read'],",
+        "    billingPermissions['invoice.issue'],",
+        '  ],',
+        "  [Role.Clerk]: [billingPermissions['invoice.issue']],",
+        '};',
+      ].join('\n')}\n`,
+    );
+  });
+
+  it('says no grant is left to do when the signed-in grants already hold the permission', () => {
+    const root = initProject('--context', 'billing:core');
+
+    write(
+      root,
+      'src/platform/auth/signed-in-grants.ts',
+      "import { billingPermissions } from '@/contexts/billing/application/authorization/billing.permissions';\n\nexport const signedInGrants = [billingPermissions['invoice.issue']];\n",
+    );
+
+    const generated = report(command(root, 'IssueInvoice', '--permission', 'invoice.issue'));
+
+    expect(generated.todos.map(({ text }) => text).join('\n')).not.toContain('by name to the roles that hold it');
   });
 });

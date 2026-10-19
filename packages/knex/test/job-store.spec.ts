@@ -69,6 +69,29 @@ describe('KnexJobStore sharing the unit of work of the command', () => {
     expect(claimed?.payload).toEqual([1, 2]);
   });
 
+  it('claims nothing, without a query, for a limit of zero', async () => {
+    await database.truncate();
+    database.queries.length = 0;
+
+    const claimed = await new KnexJobStore(context()).claim({
+      queue: 'billing',
+      limit: 0,
+      now: new Date(),
+      leaseMs: 1_000,
+    });
+
+    expect([claimed, database.queries]).toEqual([[], []]);
+  });
+
+  it('drops the table of the default name when it is given none', async () => {
+    await dropJobTable(database.knex);
+    const dropped = !(await database.knex.schema.hasTable('background_jobs'));
+
+    await createJobTable(database.knex);
+
+    expect(dropped).toBe(true);
+  });
+
   it('drops the table it created, and leaves the schema', async () => {
     await dropJobTable(database.knex, { table: 'background_jobs' });
     await createJobTable(database.knex);

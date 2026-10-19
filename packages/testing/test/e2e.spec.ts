@@ -309,6 +309,17 @@ describe('eventually', () => {
 
     expect(attempts).toBeGreaterThan(1);
   });
+
+  it('shows what the assertion threw when it is not an error', async () => {
+    const failure: unknown = await eventually(
+      () => {
+        throw { behind: 2 };
+      },
+      { timeoutMs: 20, intervalMs: 5 },
+    ).catch((error: unknown) => error);
+
+    expect(failure).toMatchObject({ message: 'Still failing after 20 ms: { behind: 2 }', cause: { behind: 2 } });
+  });
 });
 
 describe('collectEvents', () => {

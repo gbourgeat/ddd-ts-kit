@@ -86,6 +86,20 @@ describe('expectRefusal', () => {
       'fact total: expected 0, the refusal carries no such fact',
     );
   });
+
+  it('fails on an error without a code, naming its class', () => {
+    expect(failureOf(() => expectRefusal(new TypeError('No ledger.'), 'EMPTY_ORDER'))).toBe(
+      'Expected a refusal with code EMPTY_ORDER, but got TypeError: No ledger..',
+    );
+  });
+
+  it('reads facts that are not a record as no fact at all', () => {
+    const odd = Object.assign(new EmptyOrder('No.'), { facts: 'none' });
+
+    expect(failureOf(() => expectRefusal(odd, 'EMPTY_ORDER', { total: 0 }))).toContain(
+      'fact total: expected 0, the refusal carries no such fact',
+    );
+  });
 });
 
 describe('thenError with facts', () => {

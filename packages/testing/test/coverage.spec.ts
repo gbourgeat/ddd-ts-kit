@@ -103,6 +103,18 @@ describe('governedCoverage(), what a Vitest run measures and is held to', () => 
     });
   });
 
+  it('reads a config file that holds no object as one that sets nothing: the reference, under src/contexts', () => {
+    const root = projectWith({}, BILLING);
+
+    writeFileSync(path.join(root, 'ddd-ts-kit.config.json'), 'null');
+
+    expect(governedCoverage('test', root).thresholds).toEqual({
+      'src/contexts/billing/domain/**/*.ts': REFERENCE_COVERAGE.domain,
+      'src/contexts/billing/application/**/*.ts': REFERENCE_COVERAGE.application,
+      'src/contexts/billing/infrastructure/**/*.ts': REFERENCE_COVERAGE.infrastructure,
+    });
+  });
+
   it('refuses to measure a directory that is not a project: the thresholds would be nobody knows which', () => {
     expect(() => governedCoverage('test', workspace)).toThrow('ddd-ts-kit.config.json was not found');
   });

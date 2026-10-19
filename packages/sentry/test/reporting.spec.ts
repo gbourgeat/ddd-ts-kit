@@ -1,6 +1,6 @@
 import { createServer, type Socket } from 'node:net';
 import { errorReportOf, executionContext, NoopErrorReporter, type Actor } from '@ddd-ts-kit/kernel';
-import { close, isInitialized } from '@sentry/node';
+import { close, defaultStackParser, isInitialized, makeNodeTransport, NodeClient } from '@sentry/node';
 import { afterEach, describe, expect, it } from 'vitest';
 import { initSentry, SentryErrorReporter } from '../src/index.js';
 import { aTracker, type Tracker } from './support/a-tracker.js';
@@ -28,6 +28,21 @@ afterEach(async () => {
   await tracker?.stop();
   tracker = undefined;
 });
+
+/** A client whose capture and flush fail, as an SDK with a bug would. */
+class BrokenClient extends NodeClient {
+  constructor() {
+    super({ integrations: [], stackParser: defaultStackParser, transport: makeNodeTransport });
+  }
+
+  override captureException(): string {
+    throw new Error('the SDK failed');
+  }
+
+  override flush(): PromiseLike<boolean> {
+    return Promise.reject(new Error('the SDK failed'));
+  }
+}
 
 function duplicateEmail(email: string): UniqueViolation {
   return new UniqueViolation(`duplicate key value violates unique constraint: Key (email)=(${email}) already exists`);
@@ -178,5 +193,53 @@ describe('SentryErrorReporter', () => {
 
     await close(100);
     await new Promise((resolve) => silent.close(resolve));
+  });
+});
+
+describe('SentryErrorReporter around a client that fails', () => {
+  it('neither throws nor rejects: the report is lost, and flush says so', async () => {
+    const errors = new SentryErrorReporter(new BrokenClient());
+
+    expect(() =>
+      errors.report(new Error('boom'), errorReportOf(undefined, { origin: 'http', operation: 'shipOrder' })),
+    ).not.toThrow();
+
+    await expect(errors.flush(10)).resolves.toBe(false);
+  });
+});
+
+describe('initSentry with sample rates', () => {
+  it('sends every error at a sample rate of 1, whatever the rate of the traces', async () => {
+    const { server, errors } = await tracking({ sampleRate: 1, tracesSampleRate: 0 });
+
+    errors.report(new Error('boom'), errorReportOf(undefined, { origin: 'http', operation: 'shipOrder' }));
+    await errors.flush(2_000);
+
+    expect(server.events).toHaveLength(1);
+  });
+
+  it('sends no error at a sample rate of 0', async () => {
+    const { server, errors } = await tracking({ sampleRate: 0 });
+
+    errors.report(new Error('boom'), errorReportOf(undefined, { origin: 'http', operation: 'shipOrder' }));
+    await errors.flush(2_000);
+
+    expect(server.events).toEqual([]);
+  });
+});
+
+describe('an error reported outside any span', () => {
+  it('leads to the trace the capture point knew', async () => {
+    const { server, errors } = await tracking();
+    const traceId = '4bf92f3577b34da6a3ce929d0e0e4736';
+
+    errors.report(new Error('boom'), {
+      ...errorReportOf(undefined, { origin: 'event', operation: 'onPaid' }),
+      traceId,
+    });
+
+    await errors.flush(2_000);
+
+    expect(server.events[0]?.contexts?.trace?.trace_id).toBe(traceId);
   });
 });

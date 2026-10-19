@@ -92,4 +92,14 @@ describe('expectNoSecret', () => {
 
     expectNoSecret(new ConcealedAdapter(), [PASSWORD]);
   });
+
+  it('looks through the other views when JSON cannot serialise the object, or serialises it to nothing', () => {
+    const cyclic: Record<string, unknown> = Object.assign(Object.create(null), { password: PASSWORD });
+    const silent = { toJSON: () => undefined, password: PASSWORD };
+
+    cyclic['self'] = cyclic;
+
+    expect(failureOf(cyclic)).toBe('The object shows secret #2 of 2 through an object spread');
+    expect(failureOf(silent)).toBe('Object shows secret #2 of 2 through an object spread');
+  });
 });

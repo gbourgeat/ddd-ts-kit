@@ -75,4 +75,10 @@ describe('a step of a process, given a state', () => {
       /read back as/,
     );
   });
+
+  it('asserts a step that ends the process without a state to keep', () => {
+    const settledAtOnce = (): ProcessDecision<undefined> => ({ state: undefined, ended: true });
+
+    givenProcess<undefined>(undefined).when(settledAtOnce).thenState(undefined).thenEnded();
+  });
 });

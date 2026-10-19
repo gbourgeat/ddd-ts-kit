@@ -4,6 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
 import { decorators, type DecoratorsOptions, type DecoratorsPlugin } from '../src/vitest.js';
+import { sourceMapOf } from '../src/vitest/source-map-of.js';
 
 const ROOT = path.resolve(import.meta.dirname, '../../..');
 const PROJECT = path.join(import.meta.dirname, 'fixtures/standard-decorators');
@@ -153,6 +154,69 @@ describe('decorators(), the Vitest plugin', () => {
     const plugin = decorators({ compiler: 'vitest' });
 
     expect(() => plugin.configResolved({ root: ROOT, cacheDir: workspace })).toThrow(/ships no tsc/);
+  });
+});
+
+describe('decorators(), finding its compiler and the project of a file', () => {
+  it('compiles a file no tsconfig governs at the newest dated target, its fields defined', () => {
+    const bare = mkdtempSync(path.join(workspace, 'bare-'));
+    const plugin = decorators({ compiler: path.join(ROOT, 'node_modules/@typescript/native/bin/tsc') });
+
+    plugin.configResolved({ root: bare, cacheDir: path.join(bare, 'cache') });
+
+    const code = plugin.transform(DECORATED, path.join(bare, 'calendar.ts'))?.code;
+
+    expect(code).toContain('__esDecorate');
+    expect(code).toMatch(/^\s*today = 1;/m);
+  });
+
+  it('takes a compiler named by a path relative to the root, and keeps its files where it is told', () => {
+    const { root } = projectWith({ target: 'es2023' });
+    const kept = path.join(root, 'kept');
+    const plugin = decorators({ compiler: './node_modules/@typescript/native/bin/tsc', cacheDir: kept });
+
+    plugin.configResolved({ root: ROOT, cacheDir: path.join(root, 'unused') });
+
+    expect(plugin.transform(DECORATED, path.join(root, 'calendar.ts'))?.code).toContain('__esDecorate');
+    expect(readdirSync(kept)).toHaveLength(1);
+  });
+
+  it('compiles with the typescript package of the project when no compiler is named', () => {
+    const { root } = projectWith({ target: 'es2023' });
+    const file = path.join(root, 'calendar.ts');
+    const plugin = decorators();
+
+    // Before TypeScript 7, the compiler reads no tsconfig whose project holds no source.
+    writeFileSync(file, DECORATED);
+    plugin.configResolved({ root: ROOT, cacheDir: path.join(root, 'cache') });
+
+    expect(plugin.transform(DECORATED, file)?.code).toContain('__esDecorate');
+  }, 60_000);
+
+  it('leaves every file to the runner until Vite resolved its configuration', () => {
+    expect(decorators().transform(DECORATED, path.join(workspace, 'calendar.ts'))).toBeUndefined();
+  });
+
+  it('refuses a compiler package that ships no command at all', () => {
+    const plugin = decorators({ compiler: '@faker-js/faker' });
+
+    expect(() => plugin.configResolved({ root: ROOT, cacheDir: workspace })).toThrow(
+      'The package "@faker-js/faker" ships no tsc: name the compiler to use.',
+    );
+  });
+});
+
+describe('the source map of a compiled file', () => {
+  it('names the real file and holds its text, whatever the compiler left out of its own map', () => {
+    for (const emitted of ['{"version":3}', 'null']) {
+      expect(JSON.parse(sourceMapOf(emitted, '/project/calendar.ts', DECORATED))).toEqual({
+        version: 3,
+        sources: ['/project/calendar.ts'],
+        sourcesContent: [DECORATED],
+        names: [],
+        mappings: '',
+      });
+    }
   });
 });
 

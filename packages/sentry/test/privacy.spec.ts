@@ -184,4 +184,23 @@ describe('the scrubbers alone', () => {
       message: SCRUBBED_MESSAGE,
     });
   });
+
+  it('scrubEvent keeps the message of a domain error among those an AggregateError gathers', () => {
+    const gathered = new AggregateError([leaking(), new LedgerUnavailable('The ledger is closed')], 'two steps failed');
+
+    const event: ErrorEvent = {
+      type: undefined,
+      exception: {
+        values: [
+          { type: 'LedgerUnavailable', value: 'The ledger is closed' },
+          { type: 'UniqueViolation', value: 'Key (email)=(ada@example.org) already exists' },
+          { type: 'AggregateError', value: 'two steps failed' },
+        ],
+      },
+    };
+
+    const values = scrubEvent(event, { originalException: gathered }, { scrubMessages: true }).exception?.values;
+
+    expect(values?.map(({ value }) => value)).toEqual(['The ledger is closed', SCRUBBED_MESSAGE, SCRUBBED_MESSAGE]);
+  });
 });

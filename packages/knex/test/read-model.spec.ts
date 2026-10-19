@@ -2,7 +2,13 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from
 import { readModelStoreContract, type CriteriaContractRow } from '@ddd-ts-kit/testing/contracts';
 import { KnexReadModelTable, createKnexUnitOfWork } from '../src/index.js';
 import { createDatabase, type TestDatabase } from './support/database.js';
-import { CONTRACT_TABLE, READ_SIDE, createContractTable } from './support/read-model/criteria-contract-table.js';
+import {
+  CONTRACT_TABLE,
+  CONTRACT_TABLE_IN_DEFAULT_SCHEMA,
+  READ_SIDE,
+  createContractTable,
+  createContractTableInDefaultSchema,
+} from './support/read-model/criteria-contract-table.js';
 
 const runner = { describe, it, expect, beforeEach, afterEach };
 const TABLE = `${READ_SIDE}.${CONTRACT_TABLE.table}`;
@@ -10,7 +16,13 @@ const TABLE = `${READ_SIDE}.${CONTRACT_TABLE.table}`;
 let database: TestDatabase;
 
 beforeAll(async () => {
-  database = await createDatabase(createContractTable, [TABLE]);
+  database = await createDatabase(
+    async (knex) => {
+      await createContractTable(knex);
+      await createContractTableInDefaultSchema(knex);
+    },
+    [TABLE, CONTRACT_TABLE_IN_DEFAULT_SCHEMA.table],
+  );
 });
 
 afterAll(async () => {
@@ -30,6 +42,20 @@ readModelStoreContract(runner, {
     await database.truncate();
 
     return tableOf();
+  },
+});
+
+// A read model in the default schema of the connection, its rebuild included.
+readModelStoreContract(runner, {
+  name: 'KnexReadModelTable in the default schema',
+  createTable: async () => {
+    const unitOfWork = createKnexUnitOfWork(database.knex);
+    const table = new KnexReadModelTable<CriteriaContractRow>(unitOfWork, CONTRACT_TABLE_IN_DEFAULT_SCHEMA);
+
+    await table.abandonRebuild();
+    await database.truncate();
+
+    return { table, unitOfWork };
   },
 });
 

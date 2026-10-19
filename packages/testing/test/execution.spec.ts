@@ -9,6 +9,16 @@ import {
 } from '@ddd-ts-kit/kernel';
 import { aSession, anExecutionContext, createTestBuses, defineBuilder, resetSequences, scoped } from '../src/index.js';
 
+/* What a project declares once in its platform: the extensions its sessions and its work carry. */
+declare module '@ddd-ts-kit/kernel' {
+  interface SessionExtensions {
+    readonly plan: 'free' | 'team';
+  }
+  interface ExecutionContextExtensions {
+    readonly region: string;
+  }
+}
+
 const ada: Actor = { id: 'ada', type: 'user', tenantId: 'acme', roles: ['accountant'], attributes: {} };
 
 const anAccountant = defineBuilder<Actor>({
@@ -67,6 +77,20 @@ describe('aSession', () => {
     expect(aSession().of(anAccountant()).build().actor.id).toBe('grace');
   });
 
+  it('dates the session, asks a second factor at no stated level, and carries the extensions of the project', () => {
+    const morning = new Date('2026-01-01T08:00:00.000Z');
+
+    const session = aSession().issuedAt(morning).withSecondFactor().withExtensions({ plan: 'team' }).build();
+
+    expect(session).toMatchObject({
+      issuedAt: morning,
+      authenticationStrength: { mfa: true },
+      extensions: { plan: 'team' },
+    });
+
+    expect(session.authenticationStrength).not.toHaveProperty('assuranceLevel');
+  });
+
   it('is immutable, so one instance serves every test', () => {
     const base = aSession().of(ada);
 
@@ -123,6 +147,12 @@ describe('anExecutionContext', () => {
       origin: 'event',
       deadline,
       locale: 'fr-FR',
+    });
+  });
+
+  it('carries the extensions of the project', () => {
+    expect(anExecutionContext().withExtensions({ region: 'eu-west' }).build().extensions).toEqual({
+      region: 'eu-west',
     });
   });
 });

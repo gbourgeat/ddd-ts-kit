@@ -153,4 +153,57 @@ describe('a repository adapter and the dispatch', () => {
     expect(first.heard).toEqual([]);
     expect(second.heard).toEqual(['shop.cart.opened']);
   });
+
+  it('follows a method written without async that answers a promise, and hands back as it is what has nothing to dispatch', async () => {
+    class CartNotFound extends Error {}
+
+    /** An adapter over a driver with callbacks: its methods answer promises of their own, or plain values. */
+    class LedgerCarts {
+      readonly saved: string[] = [];
+
+      readonly notFound = CartNotFound;
+
+      readonly pending = Promise.resolve(undefined);
+
+      save(cart: Cart): Promise<void> {
+        this.saved.push(cart.id);
+
+        return Promise.resolve();
+      }
+
+      findById(): Promise<undefined> {
+        return this.pending;
+      }
+
+      lastSaved(): string | null {
+        return this.saved.at(-1) ?? null;
+      }
+
+      receipt(cart: Cart): { readonly id: string; readonly then: string } {
+        return { id: cart.id, then: 'printed later' };
+      }
+
+      summary(cart: Cart): { readonly id: string } {
+        return { id: cart.id };
+      }
+    }
+
+    const bench = aBench();
+    const carts = dispatchingOnSave(new LedgerCarts(), () => bench.dispatcher);
+    const kept = Cart.open('c2');
+
+    bench.hear('shop.cart.opened');
+
+    expect(carts.lastSaved()).toBeNull();
+    expect(carts.findById()).toBe(carts.pending);
+    expect(carts.receipt(kept)).toEqual({ id: 'c2', then: 'printed later' });
+    expect(carts.summary(kept)).toEqual({ id: 'c2' });
+    expect(new carts.notFound('c9')).toBeInstanceOf(CartNotFound);
+
+    await carts.save(Cart.open('c1'));
+
+    expect(bench.heard).toEqual(['shop.cart.opened']);
+    expect(carts.lastSaved()).toBe('c1');
+    expect(kept.pullEvents()).toHaveLength(1);
+  });
 });

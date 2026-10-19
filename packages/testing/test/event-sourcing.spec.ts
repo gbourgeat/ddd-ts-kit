@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { personalData } from '@ddd-ts-kit/kernel';
+import { personalData, type StoredEventData } from '@ddd-ts-kit/kernel';
 import { expectSnapshotEquivalence, givenEvents } from '../src/index.js';
 import { Tally, TallyClosed, TallyClosedError, closed, counted } from './support/tally.js';
 
@@ -64,6 +64,24 @@ describe('expectSnapshotEquivalence', () => {
         state: (tally) => tally.toState(),
       }),
     ).not.toThrow();
+  });
+
+  it('reads a nested record of a snapshot back as stored, and has nothing to prove on an empty history', () => {
+    const nested = {
+      events: history,
+      rehydrate,
+      policy: {
+        encode: (tally: Tally) => ({ tally: { votes: tally.toState().votes, closed: tally.toState().closed } }),
+        decode: (data: StoredEventData) => ({
+          votes: data.record('tally').number('votes'),
+          closed: data.record('tally').flag('closed'),
+        }),
+      },
+      state: (tally: Tally) => tally.toState(),
+    };
+
+    expect(() => expectSnapshotEquivalence(nested)).not.toThrow();
+    expect(() => expectSnapshotEquivalence({ ...nested, events: [] })).not.toThrow();
   });
 
   it('names the first version whose snapshot loses part of the state', () => {

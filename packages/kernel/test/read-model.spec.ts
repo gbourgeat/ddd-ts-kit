@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { PGlite, type Transaction } from '@electric-sql/pglite';
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import {
   ConcurrencyError,
   InMemoryReadModelStore,
@@ -11,6 +12,7 @@ import {
   type EventStamp,
   type IntegrationEvent,
   type ReadModelRows,
+  type SqlRun,
   type StampedRow,
 } from '../src/index.js';
 
@@ -160,5 +162,118 @@ describe('PostgresReadModelRebuild', () => {
     expect(await new PostgresReadModelRebuild(asked.run, { table: 'patients' }).rebuilding()).toBe(true);
     expect(await new PostgresReadModelRebuild(recording().run, { table: 'patients' }).rebuilding()).toBe(false);
     expect(asked.statements).toEqual([['select to_regclass($1) is not null as rebuilding', ['"patients__touched"']]]);
+  });
+});
+
+describe('PostgresReadModelRebuild on an in-process PostgreSQL', () => {
+  let database: PGlite;
+
+  const runOn =
+    (executor: Pick<Transaction, 'query'>): SqlRun =>
+    async (statement, parameters) =>
+      (await executor.query<Readonly<Record<string, unknown>>>(statement, [...parameters])).rows;
+
+  const names = async (table: string): Promise<string[]> =>
+    (await database.query<{ name: string }>(`select name from ${table} order by id`)).rows.map(({ name }) => name);
+
+  beforeAll(() => {
+    database = new PGlite();
+  });
+
+  afterAll(async () => {
+    await database.close();
+  });
+
+  beforeEach(async () => {
+    await database.exec(`
+      drop schema if exists lodging cascade;
+      create schema lodging;
+      create table lodging.rooms (id text primary key, name text not null, deleted boolean not null default false);
+      insert into lodging.rooms values ('r1', 'Lavender', false), ('r2', 'Basil', true), ('r3', 'Cedar', false);
+    `);
+  });
+
+  it('opens a copy holding the deleted rows only, and records the keys written meanwhile, counting each write', async () => {
+    const rebuild = new PostgresReadModelRebuild(runOn(database), { schema: 'lodging', table: 'rooms' });
+
+    expect(await rebuild.rebuilding()).toBe(false);
+
+    await rebuild.begin();
+    await rebuild.touch('r3');
+    await rebuild.touch('r1');
+    await rebuild.touch('r3');
+
+    expect(await rebuild.rebuilding()).toBe(true);
+    expect(await names('lodging.rooms__rebuild')).toEqual(['Basil']);
+
+    expect(await rebuild.touched(10)).toEqual([
+      { key: 'r1', mark: 1 },
+      { key: 'r3', mark: 2 },
+    ]);
+
+    expect(await rebuild.touched(1)).toEqual([{ key: 'r1', mark: 1 }]);
+  });
+
+  it('settles a key only when it was not written again since it was read', async () => {
+    const rebuild = new PostgresReadModelRebuild(runOn(database), { schema: 'lodging', table: 'rooms' });
+
+    await rebuild.begin();
+    await rebuild.touch('r1');
+    await rebuild.touch('r3');
+
+    const read = await rebuild.touched(10);
+
+    await rebuild.touch('r3');
+    await rebuild.settle(read);
+
+    expect(await rebuild.touched(10)).toEqual([{ key: 'r3', mark: 2 }]);
+  });
+
+  it('puts the copy in place of the table in one transaction, with the writers held', async () => {
+    const rebuild = new PostgresReadModelRebuild(runOn(database), { schema: 'lodging', table: 'rooms' });
+
+    await rebuild.begin();
+    await database.exec(`insert into lodging.rooms__rebuild values ('r1', 'Lavender', false), ('r4', 'Thyme', false)`);
+
+    await database.transaction(async (transaction) => {
+      const swap = new PostgresReadModelRebuild(runOn(transaction), { schema: 'lodging', table: 'rooms' });
+
+      await swap.holdWriters();
+      await swap.promote();
+    });
+
+    expect(await names('lodging.rooms')).toEqual(['Lavender', 'Basil', 'Thyme']);
+    expect(await rebuild.rebuilding()).toBe(false);
+
+    expect(
+      (
+        await database.query(
+          `select to_regclass('lodging.rooms__rebuild') as copy, to_regclass('lodging.rooms__retired') as retired`,
+        )
+      ).rows,
+    ).toEqual([{ copy: null, retired: null }]);
+  });
+
+  it('drops what an abandoned rebuild opened and leaves the table as it was, even when nothing was opened', async () => {
+    await database.exec(`
+      create table lodging.desks (id text primary key, name text not null, removed boolean not null default false);
+      insert into lodging.desks values ('d1', 'Oak', false), ('d2', 'Pine', true);
+    `);
+
+    const rebuild = new PostgresReadModelRebuild(runOn(database), {
+      schema: 'lodging',
+      table: 'desks',
+      deletedColumn: 'removed',
+    });
+
+    await rebuild.abandon();
+    await rebuild.begin();
+
+    expect(await names('lodging.desks__rebuild')).toEqual(['Pine']);
+
+    await rebuild.abandon();
+
+    expect(await rebuild.rebuilding()).toBe(false);
+    expect(await names('lodging.desks')).toEqual(['Oak', 'Pine']);
   });
 });

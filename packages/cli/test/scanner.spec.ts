@@ -116,6 +116,40 @@ describe('import scanner', () => {
   });
 });
 
+describe('the literals a scan blanks', () => {
+  it('ends a string left open at the end of its line, and reads the next line as code', () => {
+    const scanned = scan("const a = 'open\nconst b = 'two';");
+
+    expect(scanned.code).toBe("const a = '    \nconst b = '   ';");
+
+    expect(scanned.strings.map(({ value, line }) => [value, line])).toEqual([
+      ['open', 1],
+      ['two', 2],
+    ]);
+  });
+
+  it('reads a template left open up to the end of the file', () => {
+    const scanned = scan('const t = `unclosed');
+
+    expect(scanned.code).toBe('const t = `        ');
+    expect(scanned.strings.map(({ value }) => value)).toEqual(['unclosed']);
+  });
+
+  it('reads a regular expression at the start of the file, quotes inside it included', () => {
+    const scanned = scan("/a 'b'/.test(x);\nconst c = 'c';");
+
+    expect(scanned.code).toBe("/     /.test(x);\nconst c = ' ';");
+    expect(scanned.strings.map(({ value }) => value)).toEqual(['c']);
+  });
+
+  it('ends a regular expression left open at the end of its line, a slash of a class aside', () => {
+    const scanned = scan("x = /a[/]b\nconst d = 'd';");
+
+    expect(scanned.code).toBe("x = /     \nconst d = ' ';");
+    expect(scanned.strings.map(({ value, line }) => [value, line])).toEqual([['d', 2]]);
+  });
+});
+
 function specifiers(source: string): string[] {
   return scan(source).imports.map((record) => `${record.kind}:${record.specifier}`);
 }

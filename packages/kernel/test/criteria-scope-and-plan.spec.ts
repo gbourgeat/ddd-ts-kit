@@ -45,6 +45,10 @@ describe('scoped and planCriteria', () => {
     expect(() => scoped(all, { kind: 'ids', ids: ['a1'] })).toThrow(UnmappedReadScopeError);
     expect(() => scoped(all, { kind: 'filter', filter: { region: 'eu' } }, mapping)).toThrow(UnmappedReadScopeError);
 
+    expect(() => scoped(all, { kind: 'filter', filter: { tenantId: 'acme' } }, { ids: 'id' })).toThrow(
+      UnmappedReadScopeError,
+    );
+
     expect(() =>
       planCriteria(
         appointments,

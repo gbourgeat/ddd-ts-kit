@@ -105,4 +105,11 @@ describe('the table of the process instances', () => {
     expect(await database.knex.schema.hasTable('billing_processes')).toBe(false);
     await createProcessTable(database.knex, { table: 'billing_processes' });
   });
+
+  it('is dropped under its default name when its down migration is given none', async () => {
+    await createProcessTable(database.knex);
+    await dropProcessTable(database.knex);
+
+    expect(await database.knex.schema.hasTable('process_instances')).toBe(false);
+  });
 });

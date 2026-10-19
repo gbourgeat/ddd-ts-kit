@@ -4,8 +4,8 @@ import { readModelColumns, type KnexReadModelOptions } from '../../../src/index.
 
 export const READ_SIDE = 'read_side';
 
-export const CONTRACT_TABLE: KnexReadModelOptions<CriteriaContractRow> = {
-  schema: READ_SIDE,
+/** The table of the contract dataset in the default schema of the connection. */
+export const CONTRACT_TABLE_IN_DEFAULT_SCHEMA: KnexReadModelOptions<CriteriaContractRow> = {
   table: 'criteria_contract',
   columns: {
     id: 'id',
@@ -21,11 +21,29 @@ export const CONTRACT_TABLE: KnexReadModelOptions<CriteriaContractRow> = {
   },
 };
 
-/** What the migration of a read model would contain. The text columns that are ordered take the "C" collation. */
-export async function createContractTable(knex: Knex): Promise<void> {
-  await knex.schema.createSchemaIfNotExists(READ_SIDE);
+export const CONTRACT_TABLE: KnexReadModelOptions<CriteriaContractRow> = {
+  ...CONTRACT_TABLE_IN_DEFAULT_SCHEMA,
+  schema: READ_SIDE,
+};
 
-  await knex.schema.withSchema(READ_SIDE).createTable(CONTRACT_TABLE.table, (table) => {
+/** What the migration of a read model would contain. The text columns that are ordered take the "C" collation. */
+export function createContractTable(knex: Knex): Promise<void> {
+  return createContractTableIn(knex, READ_SIDE);
+}
+
+/** The same table in the default schema of the connection. */
+export function createContractTableInDefaultSchema(knex: Knex): Promise<void> {
+  return createContractTableIn(knex, undefined);
+}
+
+async function createContractTableIn(knex: Knex, schema: string | undefined): Promise<void> {
+  if (schema !== undefined) {
+    await knex.schema.createSchemaIfNotExists(schema);
+  }
+
+  const tables = schema === undefined ? knex.schema : knex.schema.withSchema(schema);
+
+  await tables.createTable(CONTRACT_TABLE.table, (table) => {
     table.text('id').primary();
     table.text('status').notNullable();
     table.text('title').notNullable();

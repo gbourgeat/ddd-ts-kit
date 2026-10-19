@@ -38,4 +38,29 @@ describe('the primary keys of the snapshot a migration was generated from', () =
       previousPrimaryKeys(new Map([['migrations/meta/0002_snapshot.json', snapshot('child', 'gone', {})]]), SQL).size,
     ).toBe(0);
   });
+
+  it('skips the entries of a snapshot written in another shape', () => {
+    const files = new Map([
+      ['migrations/0001_create.sql', 'CREATE TABLE orders ();'],
+      [
+        'migrations/meta/0001_snapshot.json',
+        snapshot('parent', 'root', {
+          'public.text': 'not a table',
+          'public.unnamed': { name: 7 },
+          'public.orders': {
+            name: 'orders',
+            columns: { id: { name: 'id', primaryKey: true }, other: { name: 3, primaryKey: true }, flag: true },
+            compositePrimaryKeys: {
+              odd: 'not a key',
+              unnamed: { columns: ['a'] },
+              flat: { name: 'flat', columns: 'a' },
+            },
+          },
+        }),
+      ],
+      ['migrations/meta/0002_snapshot.json', snapshot('child', 'parent', {})],
+    ]);
+
+    expect([...previousPrimaryKeys(files, SQL)]).toEqual([['orders_pkey', ['id']]]);
+  });
 });
