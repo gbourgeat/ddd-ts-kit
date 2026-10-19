@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:81fa61ce387efbaa -->
+<!-- translation-of: README.md sha256:af94625dc6e22b42 -->
 
 # @ddd-ts-kit/knex
 

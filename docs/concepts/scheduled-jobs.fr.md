@@ -1,5 +1,5 @@
 [English](scheduled-jobs.md) · **Français**
-<!-- translation-of: scheduled-jobs.md sha256:0300f777f9e4b7f3 -->
+<!-- translation-of: scheduled-jobs.md sha256:0d1c11c3e0e1282c -->
 
 # Jobs planifiés
 

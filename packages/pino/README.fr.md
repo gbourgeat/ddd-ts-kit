@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:5f35d698f41007ec -->
+<!-- translation-of: README.md sha256:e4ef16161db84adc -->
 
 # @ddd-ts-kit/pino
 

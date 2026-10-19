@@ -1,5 +1,5 @@
 [English](tracing-platform-only.md) · **Français**
-<!-- translation-of: tracing-platform-only.md sha256:ee6162271423a3e3 -->
+<!-- translation-of: tracing-platform-only.md sha256:095717c568340310 -->
 
 # ddd-ts-kit/tracing-platform-only
 

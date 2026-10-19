@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:410681d147a9e950 -->
+<!-- translation-of: commands.md sha256:c8e5a77f6cbdfc54 -->
 
 # Quelle commande, quand
 

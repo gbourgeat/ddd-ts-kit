@@ -1,5 +1,5 @@
 [English](observability.md) · **Français**
-<!-- translation-of: observability.md sha256:0d5f7005b1555d3f -->
+<!-- translation-of: observability.md sha256:23874695f88725f8 -->
 
 # Observabilité : backends de traçage, *loggers* et suivi des erreurs
 

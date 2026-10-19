@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:b49a6b7ba1150d8f -->
+<!-- translation-of: README.md sha256:95af436f8417a4ae -->
 
 # @ddd-ts-kit/prisma
 

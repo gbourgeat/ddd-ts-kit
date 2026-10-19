@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:67deda4742409f0f -->
+<!-- translation-of: README.md sha256:c4ab73fac0c05730 -->
 
 # @ddd-ts-kit/scheduling
 

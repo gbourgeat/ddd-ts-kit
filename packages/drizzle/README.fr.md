@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:818100938a696ac7 -->
+<!-- translation-of: README.md sha256:5acb1ff30a3f6dc8 -->
 
 # @ddd-ts-kit/drizzle
 

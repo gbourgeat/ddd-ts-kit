@@ -1,5 +1,5 @@
 [English](tooling-report.md) · **Français**
-<!-- translation-of: tooling-report.md sha256:ed20a7bbb3748c1a -->
+<!-- translation-of: tooling-report.md sha256:8eb74aacb67a00a9 -->
 
 # Rapport sur l'outillage
 

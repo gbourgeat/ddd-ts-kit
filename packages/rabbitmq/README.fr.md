@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:cc46bd75b26b1d0e -->
+<!-- translation-of: README.md sha256:c47420de486f4b8c -->
 
 # @ddd-ts-kit/rabbitmq
 

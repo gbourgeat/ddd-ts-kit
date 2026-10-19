@@ -1,5 +1,5 @@
 [English](identity.md) · **Français**
-<!-- translation-of: identity.md sha256:a9a52c098717e860 -->
+<!-- translation-of: identity.md sha256:393012c6d7ad83aa -->
 
 # Consigne : identity
 

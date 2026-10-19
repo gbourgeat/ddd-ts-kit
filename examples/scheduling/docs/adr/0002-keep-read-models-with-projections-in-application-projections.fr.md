@@ -1,5 +1,5 @@
 [English](0002-keep-read-models-with-projections-in-application-projections.md) · **Français**
-<!-- translation-of: 0002-keep-read-models-with-projections-in-application-projections.md sha256:c5f6d3519a65bf21 -->
+<!-- translation-of: 0002-keep-read-models-with-projections-in-application-projections.md sha256:d20eefd8b31d79c2 -->
 
 # ADR-0002 : garder les modèles de lecture et leurs projections dans application/projections
 

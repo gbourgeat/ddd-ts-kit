@@ -1,5 +1,5 @@
 [English](import-aliases.md) · **Français**
-<!-- translation-of: import-aliases.md sha256:1037cd49eb55bd83 -->
+<!-- translation-of: import-aliases.md sha256:e148af8baf2d269a -->
 
 # Alias d'import : les `paths` de tsconfig, réécrits à la construction
 

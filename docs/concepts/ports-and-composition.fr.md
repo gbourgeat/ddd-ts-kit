@@ -1,5 +1,5 @@
 [English](ports-and-composition.md) · **Français**
-<!-- translation-of: ports-and-composition.md sha256:3c5b0871f260cdac -->
+<!-- translation-of: ports-and-composition.md sha256:d0b184ea92bbd5d4 -->
 
 # Ports et composition
 

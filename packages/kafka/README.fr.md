@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:6fadafd3b09723c8 -->
+<!-- translation-of: README.md sha256:990828bd6402e9cf -->
 
 # @ddd-ts-kit/kafka
 

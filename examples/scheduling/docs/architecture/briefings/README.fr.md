@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:584e655554df324c -->
+<!-- translation-of: README.md sha256:5c1237bc2e516383 -->
 
 # Consignes des *workers*
 

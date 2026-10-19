@@ -1,5 +1,5 @@
 [English](layers-and-dependency-rule.md) · **Français**
-<!-- translation-of: layers-and-dependency-rule.md sha256:ad2d1a0f1d09c43a -->
+<!-- translation-of: layers-and-dependency-rule.md sha256:3d2646aef607548a -->
 
 # Les couches et la règle de dépendance
 
