@@ -4,7 +4,7 @@ import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { contextModule, createTestApplication } from '@ddd-ts-kit/di';
 import { ProcessRunner } from '@ddd-ts-kit/kernel';
 import * as schedulingDeclarations from '@/contexts/scheduling/scheduling.declarations';
-import { platformTestModule } from '@/platform/platform-test.module';
+import { platformTestModule } from '@/platform/composition/platform-test.module';
 import { schedulingPermissions } from '@/contexts/scheduling/application/authorization/scheduling.permissions';
 import { ConfirmationDeadlineOnBookedEventHandler } from '@/contexts/scheduling/application/event-handlers/confirmation-deadline-on-booked.event-handler';
 import { AppointmentBooked } from '@/contexts/scheduling/domain/events/appointment-booked.event';

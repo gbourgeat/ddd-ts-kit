@@ -4,7 +4,7 @@ import { contextModule } from '@ddd-ts-kit/di';
 import { executeRoute, type RouteResponse } from '@ddd-ts-kit/http';
 import { FixedExecutionScope, SystemClock, executionContext, systemActor } from '@ddd-ts-kit/kernel';
 import * as schedulingDeclarations from '@/contexts/scheduling/scheduling.declarations';
-import { composeApplication, type Application } from '@/platform/compose-application';
+import { composeApplication, type Application } from '@/platform/composition/compose-application';
 import { openTestDatabase, type TestDatabase } from '@/platform/database/open-test-database';
 import { inProcessEvents } from '@/platform/events/in-process-events';
 import { KnexAppointmentRepository } from '@/contexts/scheduling/infrastructure/persistence/knex-appointment.repository';

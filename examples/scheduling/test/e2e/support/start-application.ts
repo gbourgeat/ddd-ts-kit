@@ -19,7 +19,7 @@ import {
 } from '@ddd-ts-kit/testing/e2e';
 import { type Client, createClient } from 'scheduling-api-client';
 import { relateSystemActors } from '@/platform/auth/relationships/relate-system-actors';
-import { composeApplication, type Application } from '@/platform/compose-application';
+import { composeApplication, type Application } from '@/platform/composition/compose-application';
 import type { AppConfig } from '@/platform/config/app-config';
 import { loadConfig } from '@/platform/config/load-config';
 import type { Persistence } from '@/platform/database/persistence';

@@ -214,7 +214,7 @@ module.exports = {
         "pathNot": [
           "^src/main\\.ts$",
           "^src/apps/[^/]+/main\\.ts$",
-          "^src/platform/tracing\\.ts$",
+          "^src/platform/(observability/)?tracing\\.ts$",
           "^src/contexts/[^/]+/published-language/",
           "^src/contexts/[^/]+/test/fakes/",
           "^src/contexts/[^/]+/test/worlds/",

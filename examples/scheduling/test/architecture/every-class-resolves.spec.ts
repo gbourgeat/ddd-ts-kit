@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { FakeAuthenticator } from '@ddd-ts-kit/auth/testing';
 import { declaredTokens } from '@ddd-ts-kit/di';
 import { declarationOf } from '@ddd-ts-kit/kernel/declarations';
-import { composeApplication, type Application } from '@/platform/compose-application';
+import { composeApplication, type Application } from '@/platform/composition/compose-application';
 import { openTestDatabase, type TestDatabase } from '@/platform/database/open-test-database';
 import { inProcessEvents } from '@/platform/events/in-process-events';
 import * as identityDeclarations from '@/contexts/identity/identity.declarations';

@@ -20,7 +20,7 @@ et son *job* existent, non remplis.
 Contrats que vous possédez et devez honorer : les contenus ci-dessus, et `PersonDirectoryContract`
 (`published-language/person-directory.contract.ts`), que `scheduling` appelle par une *gateway* :
 donnez-lui une implémentation qui lit vos tables, trouvez la forme que le *checker* accepte, et
-dites dans votre rapport ce que le chef d'orchestre doit lier dans `src/platform/platform.module.ts`.
+dites dans votre rapport ce que le chef d'orchestre doit lier dans `src/platform/composition/platform.module.ts`.
 
 Terminé quand : chaque tranche est construite et testée (domaine, gestionnaires, adaptateurs,
 routes), aucun marqueur ne reste dans votre contexte, eslint, vitest et check sont propres sur

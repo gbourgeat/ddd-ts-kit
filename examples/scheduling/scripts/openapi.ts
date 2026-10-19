@@ -5,7 +5,7 @@ import { generateOpenApi, routesByDocument } from '@ddd-ts-kit/http/openapi';
 import { contractFormat, stringifyContract } from 'ddd-ts-kit/dist/contracts.js';
 import { offlineAuthenticator } from '@/platform/auth/authentication/offline-authenticator';
 import { securitySchemes } from '@/platform/auth/authentication/security-schemes';
-import { composeApplication } from '@/platform/compose-application';
+import { composeApplication } from '@/platform/composition/compose-application';
 import { inertPersistence } from '@/platform/database/inert-persistence';
 import { inProcessEvents } from '@/platform/events/in-process-events';
 import { OPENAPI_DOCUMENTS } from '@/platform/http/openapi-documents';

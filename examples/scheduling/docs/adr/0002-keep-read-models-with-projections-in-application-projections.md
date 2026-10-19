@@ -16,7 +16,7 @@ Projections live in `application/projections/` of the three contexts, declared a
 
 ## Consequences
 
-A read model is written by one named class that the kit makes idempotent and ordered, instead of several integration event handlers each sending a command. The barrel does not list these classes: a projection that is not named in `src/platform/compose-application.ts` is silently not subscribed, so the end-to-end specs of each read model are what proves the wiring. `ddd-ts-kit docs` does not list projections in `CONTEXT.md`.
+A read model is written by one named class that the kit makes idempotent and ordered, instead of several integration event handlers each sending a command. The barrel does not list these classes: a projection that is not named in `src/platform/composition/compose-application.ts` is silently not subscribed, so the end-to-end specs of each read model are what proves the wiring. `ddd-ts-kit docs` does not list projections in `CONTEXT.md`.
 
 ## Alternatives considered
 

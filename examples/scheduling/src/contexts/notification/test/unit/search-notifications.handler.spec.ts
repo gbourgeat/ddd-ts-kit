@@ -5,7 +5,7 @@ import { anActor } from '@ddd-ts-kit/auth/testing';
 import { contextModule, createTestApplication, fake } from '@ddd-ts-kit/di';
 import * as notificationDeclarations from '@/contexts/notification/notification.declarations';
 import { cursorPage, offsetPage } from '@ddd-ts-kit/kernel';
-import { platformTestModule } from '@/platform/platform-test.module';
+import { platformTestModule } from '@/platform/composition/platform-test.module';
 import { notificationPermissions } from '@/contexts/notification/application/authorization/notification.permissions';
 import { SearchNotificationsReader } from '@/contexts/notification/application/ports/search-notifications-reader.port';
 import { SearchNotificationsQuery } from '@/contexts/notification/application/queries/search-notifications/search-notifications.query';

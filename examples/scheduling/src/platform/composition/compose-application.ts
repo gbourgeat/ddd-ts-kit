@@ -35,7 +35,7 @@ import {
 import { tracedPublisher } from '@ddd-ts-kit/tracing';
 import { AuditTrail, auditGuardRefusals } from '@ddd-ts-kit/audit';
 import { auditModule } from '@/platform/audit/audit.module';
-import { SearchAuditEntriesController } from '@/platform/audit/search-audit-entries.controller';
+import { SearchAuditEntriesController } from '@/platform/audit/search-audit-entries/search-audit-entries.controller';
 import { authorization } from '@/platform/auth/authorization/authorization';
 import { securitySchemes } from '@/platform/auth/authentication/security-schemes';
 import { httpBoundary, type HttpBoundary } from '@/platform/auth/authentication/http-boundary';
@@ -47,8 +47,8 @@ import { createQueryBus } from '@/platform/buses/create-query-bus';
 import type { Persistence } from '@/platform/database/persistence';
 import { fileRoutes } from '@/platform/files/file-routes';
 import { filesModule } from '@/platform/files/files.module';
-import { layFoundations, type Foundations } from '@/platform/lay-foundations';
-import { platformModule, type PlatformOptions } from '@/platform/platform.module';
+import { layFoundations, type Foundations } from '@/platform/composition/lay-foundations';
+import { platformModule, type PlatformOptions } from '@/platform/composition/platform.module';
 // ddd-ts-kit:imports
 import * as identityDeclarations from '@/contexts/identity/identity.declarations';
 import * as schedulingDeclarations from '@/contexts/scheduling/scheduling.declarations';

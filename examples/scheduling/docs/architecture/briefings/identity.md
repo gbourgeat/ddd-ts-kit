@@ -18,7 +18,7 @@ publishers and the domain events behind them). `ExpireDelegations` and its job e
 Contracts you own and must honour: the payloads above, and `PersonDirectoryContract`
 (`published-language/person-directory.contract.ts`), which `scheduling` calls through a gateway:
 give it an implementation that reads your tables, find the form the checker accepts, and say in
-your report what the conductor must bind in `src/platform/platform.module.ts`.
+your report what the conductor must bind in `src/platform/composition/platform.module.ts`.
 
 Done when: every slice is built and tested (domain, handlers, adapters, routes), no marker is
 left in your context, eslint, vitest and check are clean on your folder. Follow

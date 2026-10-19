@@ -4,7 +4,7 @@ import { authorizationModule } from '@ddd-ts-kit/auth/di';
 import { contextModule, createTestApplication, fake } from '@ddd-ts-kit/di';
 import * as notificationDeclarations from '@/contexts/notification/notification.declarations';
 import type { Message } from '@ddd-ts-kit/kernel';
-import { platformTestModule } from '@/platform/platform-test.module';
+import { platformTestModule } from '@/platform/composition/platform-test.module';
 import { notificationPermissions } from '@/contexts/notification/application/authorization/notification.permissions';
 import { SendDueRemindersCommand } from '@/contexts/notification/application/commands/send-due-reminders/send-due-reminders.command';
 import { Contacts } from '@/contexts/notification/application/ports/contacts.port';

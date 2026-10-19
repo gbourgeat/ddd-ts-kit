@@ -11,7 +11,10 @@ import {
 import { err, ok, type QueryBus } from '@ddd-ts-kit/kernel';
 import { customSchema, type JsonSchema } from '@ddd-ts-kit/validation';
 import { AuditRoutes } from '@/platform/audit/audit.routes';
-import { SearchAuditEntriesQuery, type AuditEntriesFilter } from '@/platform/audit/search-audit-entries.query';
+import {
+  SearchAuditEntriesQuery,
+  type AuditEntriesFilter,
+} from '@/platform/audit/search-audit-entries/search-audit-entries.query';
 
 /** Newest first unless asked otherwise, by cursor: the trail only grows, an offset would shift under the reader. */
 const pageLimits = { sortable: ['occurredAt', 'sequence'], maxSize: 100, kind: 'cursor' } as const;
