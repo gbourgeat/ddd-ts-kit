@@ -157,14 +157,19 @@ the path of the controller. Its contract lists `UNAUTHORIZED` (from `Authenticat
 ![The path of a request through a controller route: the HTTP adapter, validation by the schemas, the execution context, the guards, the controller, its request mapper, the command bus that checks the permission, the handler, then the serializer and the response; a refusal at any step becomes a problem document](../assets/diagrams/presentation-layer-request-path.svg)
 
 1. **The HTTP adapter** of the framework (Express, Fastify, Hono or NestJS) hands the raw
-   request to the pipeline of `@ddd-ts-kit/http`, which resolves the caller.
+   request to the pipeline of `@ddd-ts-kit/http`, which resolves the caller. The guards that
+   decide on the caller alone (`Authenticated`, `HasRole`, `HasScope`, the anonymous caller of
+   `TenantMember`) refuse it here, with 401 or 403, before anything of the request is read: a
+   caller refused on who it is never learns what the route expects, and its upload is never
+   received.
 2. **Every declared part goes through its schema** (`params`, `query`, `headers`, `body`); all
    the issues are reported together, as one `VALIDATION_FAILED` problem (422).
 3. **The execution context** of the request is built: its actor, its session, its tenant, its
    correlation id. A tenant the request names and an authenticated caller does not belong to is
    refused here (403), and reported as a guard refusal. Everything that follows runs inside it.
 4. **The guards run in order**: those of the parent group, of the group, then of the controller.
-   The first that throws answers 401 or 403, and the controller is never called.
+   The first that throws answers 401 or 403, and the controller is never called. A guard that
+   reads the path runs here, on validated parameters.
 5. **The controller**: `handle` receives the validated parts and the actor. It decides nothing
    and passes the request on.
 6. **The request mapper** turns the request and its actor into the command or the query.
@@ -320,6 +325,14 @@ export class ApiKeyGuard implements Guard {
   }
 }
 ```
+
+A guard decides in `check`, once the request is validated, so it reads typed parameters. A
+guard that decides on the caller alone also declares `admit(admission: GuardAdmission)`, which
+receives the route, the raw headers, the actor and the session, and runs before the request is
+read: the guards of the kit that need nothing else (`Authenticated`, `HasRole`, `HasScope`) do,
+and `TenantMember` refuses the anonymous caller there. The admissions run in the order of the
+guards, then the checks, and `guards: 'skip'` leaves both out. A route written with
+by hand, as a `Route` object, may declare `admit` itself.
 
 A refusal of a guard never reaches a use case, so the authorization hook of the bus does not see
 it: `onGuardRefusal` of the pipeline is told of each one. `auditGuardRefusals` of

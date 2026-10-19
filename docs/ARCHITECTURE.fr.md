@@ -1,5 +1,5 @@
 [English](ARCHITECTURE.md) · **Français**
-<!-- translation-of: ARCHITECTURE.md sha256:fcbb24b9653e27fc -->
+<!-- translation-of: ARCHITECTURE.md sha256:3b9d398393f79eb1 -->
 
 # Référence de l'architecture
 
@@ -148,7 +148,8 @@ jamais.
 **Gardes et permissions sont deux choses, et chacune a une seule place.** Une garde est un
 contrôle à l'entrée, sur un ensemble de routes : l'appelant est-il authentifié, a-t-il un rôle,
 le *tenant* de son jeton est-il celui du chemin, la clé de la requête HTTP est-elle connue. Elle
-lit l'appelant et la requête HTTP, s'exécute avant le contrôleur, et répond 401 ou 403 ; un
+lit l'appelant et la requête HTTP, s'exécute avant le contrôleur (avant que la requête HTTP soit
+lue quand elle décide sur l'appelant seul), et répond 401 ou 403 ; un
 groupe de routes ou un contrôleur la nomme dans `guards`. Une permission est un droit métier :
 elle peut dépendre de l'élément (à qui appartient ce rendez-vous, cette facture est-elle encore
 un brouillon) et elle se déclare sur le cas d'usage, avec `@Requires` sur la commande ou la

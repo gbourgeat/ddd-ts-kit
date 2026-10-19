@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:26f5291b6c7fc8e3 -->
+<!-- translation-of: README.md sha256:36775602c866d7dd -->
 
 # @ddd-ts-kit/http
 
@@ -159,8 +159,8 @@ anonyme atteindre `handle`.
 |---|---|
 | `Controller(spec)` | le décorateur d'un contrôleur : `group`, `method`, `path` (après le préfixe du groupe), `operationId` (par défaut, le nom de la classe sans `Controller`), `summary`, `description`, `tags`, `params`, `query`, `headers`, `body`, `upload` (voir « Téléversements et fichiers »), `response: { status, description?, body? }`, `errors`, `guards`, `deprecated`, `cache` et `ifMatch` (voir « Cache HTTP »), `produces` et `consumes` (voir [Représentations](#représentations--json-xml-csv)), `form` (voir [Formulaires décrits par le serveur](#formulaires-décrits-par-le-serveur)) |
 | `RouteGroup({ parent, prefix, tags, guards, errors, cache })` | nomme un ensemble de routes sur une classe vide ; un enfant hérite de son `parent` et y ajoute ; le `cache` le plus proche l'emporte |
-| `Guard` | l'interface `{ documents?, check(request: GuardRequest) }`, et le décorateur d'une classe de garde qui prend des dépendances |
-| `Authenticated`, `Public`, `HasRole(...roles)`, `HasScope(...scopes)`, `TenantMember` | les gardes que livre le package, sur l'`Actor` et la `Session` de la requête HTTP : 401 à l'appelant anonyme, 403 sans l'un des rôles, sans chacun des scopes nommés (`Session.scopes`, typés par les `SessionScopes` du projet) ou hors du tenant de la requête HTTP ; `Public` laisse entrer tout le monde et s'emploie seule. Un refus d'une garde est signalé à `onGuardRefusal` |
+| `Guard` | l'interface `{ documents?, admit?(admission: GuardAdmission), check(request: GuardRequest) }`, et le décorateur d'une classe de garde qui prend des dépendances ; `admit` décide sur l'appelant seul, avant que la requête HTTP soit lue |
+| `Authenticated`, `Public`, `HasRole(...roles)`, `HasScope(...scopes)`, `TenantMember` | les gardes que livre le package, sur l'`Actor` et la `Session` de la requête HTTP : 401 à l'appelant anonyme, avant que la requête HTTP soit lue, 403 sans l'un des rôles, sans chacun des scopes nommés (`Session.scopes`, typés par les `SessionScopes` du projet) ou hors du tenant de la requête HTTP ; `Public` laisse entrer tout le monde et s'emploie seule. Un refus d'une garde est signalé à `onGuardRefusal` |
 | `RequestMapper<Request, Message>`, `Serializer<Result, Body>` | les interfaces des deux traducteurs facultatifs (`map`, `serialize`), et les décorateurs qui les déclarent |
 | `HttpRequest<{ params, query, headers, body }>` | la requête HTTP telle que `handle`, un *mapper* ou une garde la nomment, avec `actor` et `context` |
 | `controllerRoutes(controllers, { resolve, security, guards })` | la `Route` de chaque contrôleur, donné comme classe (construite par `resolve`) ou comme instance ; `security` nomme les schémas de sécurité de l'application (`['bearer']` par défaut) ; `guards: 'skip'` sert à la *spec* d'un contrôleur seul |
@@ -168,7 +168,10 @@ anonyme atteindre `handle`.
 
 Un contrôleur sans groupe et sans garde est refusé dès que sa classe est définie. Les gardes
 s'exécutent dans l'ordre, après la validation et avant `handle`, dans la portée d'exécution de
-la requête HTTP, et ce qu'elles lèvent reçoit une réponse *problem* comme tout refus. Une garde
+la requête HTTP, et ce qu'elles lèvent reçoit une réponse *problem* comme tout refus. Avant
+cela, les gardes qui déclarent un `admit` décident sur l'appelant seul, dans l'ordre, avant que
+rien de la requête HTTP ne soit lu : l'appelant anonyme d'une route `Authenticated` reçoit 401,
+jamais les problèmes de validation de son entrée, et son téléversement n'est jamais reçu. Une garde
 est un contrôle à la frontière ; une permission se déclare sur le cas d'usage (`@Requires`), où
 un *job* et un gestionnaire d'événement la rencontrent aussi. Les contrôleurs sont des classes
 déclarées de la frontière (`Edge` de `@ddd-ts-kit/kernel/declarations`) : `@ddd-ts-kit/di` lie
@@ -188,9 +191,12 @@ fait que copier la requête HTTP de son framework dans une `RawRequest` (`params
 
 Les étapes inutiles sont sautées : pas de téléversement, pas d'`If-Match`, pas de garde, pas de
 validateur. Le premier refus termine la requête HTTP : une requête HTTP invalide n'atteint
-jamais une garde, et un appelant qu'une garde refuse n'atteint jamais `handle`. Les gardes
-s'exécutent après la validation, et lisent donc des paramètres typés ; une accréditation que
-`resolvePrincipal` rejette est refusée avant tout le reste.
+jamais le contrôle d'une garde, et un appelant qu'une garde refuse n'atteint jamais `handle`.
+Une accréditation que `resolvePrincipal` rejette est refusée avant tout le reste ; juste après,
+l'admission de la route (`admit`, les gardes qui décident sur l'appelant seul) refuse par 401 ou
+403 un appelant refusé pour ce qu'il est, avant le téléversement, le corps et la validation, et
+le signale à `onGuardRefusal`. Les contrôles des gardes s'exécutent après la validation, et
+lisent donc des paramètres typés.
 
 Comme `executeRoute` n'a besoin d'aucun serveur, la *spec* d'une route l'appelle directement,
 comme le font les adaptateurs :

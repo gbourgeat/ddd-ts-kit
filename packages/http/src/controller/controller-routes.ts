@@ -5,6 +5,7 @@ import { assertUniqueRoutes } from '../route/assert-unique-routes.js';
 import type { RequestSchemas } from '../route/request-schemas.js';
 import type { RouteInput } from '../route/route-input.js';
 import type { RouteOutput } from '../route/route-output.js';
+import type { RouteAdmission } from '../route/route-admission.js';
 import type { RouteSpec } from '../route/route-spec.js';
 import type { Route } from '../route/route.js';
 import type { ControllerClass } from './controller-class.js';
@@ -49,6 +50,7 @@ function routeOf(resolved: ResolvedController, options: ControllerRoutesOptions)
     security,
     ...cache,
     ...ifMatch,
+    ...admissionOf(resolved, options, identity),
     handle: handlerOf(resolved, options, identity),
   };
 }
@@ -70,6 +72,30 @@ function documentationOf({ spec, declared, guards }: ResolvedController): Docume
     errors: [...new Set([...declared.errors, ...guards.flatMap((guard) => guard.documents?.errors ?? [])])],
     ...(spec.deprecated === true ? { deprecated: true } : {}),
     ...presentationOf(spec),
+  };
+}
+
+/**
+ * The admissions of the guards, in order, before the request is read: the pipeline refuses there
+ * the caller a guard refuses on who it is, and every guard still checks the validated request.
+ */
+function admissionOf(
+  resolved: ResolvedController,
+  options: ControllerRoutesOptions,
+  identity: Pick<GuardRequest, 'method' | 'path' | 'operationId'>,
+): Pick<Route, 'admit'> {
+  const guards = options.guards === 'skip' ? [] : resolved.guards.filter((guard) => guard.admit !== undefined);
+
+  if (guards.length === 0) {
+    return {};
+  }
+
+  return {
+    admit: async (admission: RouteAdmission): Promise<void> => {
+      for (const guard of guards) {
+        await guard.admit?.({ ...identity, ...admission });
+      }
+    },
   };
 }
 
