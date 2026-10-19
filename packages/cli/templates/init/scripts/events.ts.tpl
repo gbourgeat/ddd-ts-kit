@@ -13,6 +13,10 @@ const catalog = path.resolve('docs/integration');
 const format = contractFormat();
 const other = format === 'yaml' ? 'asyncapi.json' : 'asyncapi.yaml';
 
+// What init leaves when the events are known only to the running application (a preset): the
+// first check writes both files, to commit; on a pipeline (CI set), it fails until they are.
+const PENDING = 'x-ddd-ts-kit-pending';
+
 /** The type of each declaration by the name its published language exports it under, `invoiceIssuedV1`: what a handler reads with `invoiceIssuedV1.type`. */
 const typesByName = new Map<string, string>();
 const registry = createEventRegistry(await declaredEvents());
@@ -46,7 +50,9 @@ function reportStale(): void {
   for (const [file, content] of Object.entries(generated)) {
     const committed = fs.existsSync(path.join(catalog, file)) ? fs.readFileSync(path.join(catalog, file), 'utf8') : '';
 
-    if (committed.replaceAll('\r\n', '\n') !== content) {
+    if (committed.includes(PENDING)) {
+      writeFirst(file, content);
+    } else if (committed.replaceAll('\r\n', '\n') !== content) {
       console.error('docs/integration/' + file + ' is out of date: run the script `docs:generate` and commit it.');
       process.exitCode = 1;
     }
@@ -56,6 +62,18 @@ function reportStale(): void {
     console.error('docs/integration/' + other + ' is in the other format: run the script `docs:generate`.');
     process.exitCode = 1;
   }
+}
+
+function writeFirst(file: string, content: string): void {
+  if (process.env['CI'] !== undefined) {
+    console.error('docs/integration/' + file + ' was never generated: run the script `docs:generate` and commit it.');
+    process.exitCode = 1;
+
+    return;
+  }
+
+  fs.writeFileSync(path.join(catalog, file), content);
+  console.error('docs/integration/' + file + ' is written for the first time, from the declarations of the events: commit it.');
 }
 
 /** Every declaration exported by a published language. Read from the compiled modules next to this script, so that a new context needs no registration: a path completed at run time cannot be an import alias, which the build rewrites. */

@@ -44,16 +44,19 @@ the same integration events and tables in the files of the platform (the audited
 schema), which do not compile together. `generate context --preset` refuses a second one, naming
 the context that holds the first, and `init` writes a preset named twice once.
 
-Its contracts are written from the running application, which only the project can build: after
-the install, `npm run docs:generate` adds the routes and events of the preset to the OpenAPI and
-AsyncAPI documents, as `init` says. Then the result is green as it is, the whole `npm run verify`:
-no finding of `check`, ESLint, dependency-cruiser and knip, format clean, typed, the contracts up
-to date, and its specs pass over the coverage floors, unit and integration (the adapters of the
-ORM against PostgreSQL in process). The end-to-end specs prove it on four stacks: roles on Drizzle and Zod;
-relationships on Knex and class-validator with tenants and Keycloak; attribute policies on
-Fastify with tenants and a JWT verifier (`packages/cli/test/e2e/preset-identity.spec.ts`); and
-generated into a project that exists and decides with OpenFGA
-(`preset-identity-generated.spec.ts`).
+The result is green as it is, the whole `npm run verify` right after the install: no finding of
+`check`, ESLint, dependency-cruiser and knip, format clean, typed, the contracts up to date, and
+its specs pass over the coverage floors, unit and integration (the adapters of the ORM against
+PostgreSQL in process). Its contracts are written from the running application, which only the
+project can build: `init --preset` marks `openapi/openapi.yaml`, `docs/integration/asyncapi.yaml`
+and `docs/integration/event-catalog.md` to be written (`x-ddd-ts-kit-pending`), the first `verify`
+writes them, and they are committed with the project; a pipeline (`CI` set) fails on a contract
+never written. A preset generated into a project that exists adds its routes and events to
+contracts already written: run `npm run docs:generate`, as after any generator that adds one. The
+end-to-end specs prove it on four stacks: roles on Drizzle and Zod; relationships on Knex and
+class-validator with tenants and Keycloak; attribute policies on Fastify with tenants and a JWT
+verifier (`packages/cli/test/e2e/preset-identity.spec.ts`); and generated into a project that
+exists and decides with OpenFGA (`preset-identity-generated.spec.ts`).
 
 ## What it writes
 

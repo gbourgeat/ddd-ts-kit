@@ -34,8 +34,7 @@ npx ddd-ts-kit check
 ```
 
 `init` ends by saying what to run next: `pnpm install`, then `pnpm run verify` (`npm install`,
-then `npm run verify` with `--package-manager npm`; with `--preset`, `docs:generate` in between,
-which adds the routes and events of the preset to the contracts), then the recommended steps of the method, in
+then `npm run verify` with `--package-manager npm`), then the recommended steps of the method, in
 order ([methodology](../../docs/guides/methodology.md)); [which command, when](../../docs/guides/commands.md)
 gives the command of each moment of a project and the reference of every flag. A new project passes that whole gate before
 anything is generated, with no context, with one and with several: the end-to-end suite installs

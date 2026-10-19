@@ -7,22 +7,39 @@ import { isRecord } from './is-record.js';
 
 const INTEGRATION = 'docs/integration';
 
+/** The mark of a contract whose routes or events only the running application knows: the first check of its script writes it. */
+const PENDING = 'x-ddd-ts-kit-pending';
+
+const PENDING_TEXT = 'Written by the first `docs:check` or `docs:generate`.';
+
+export interface ContractsRequest {
+  readonly config: Config;
+  readonly projectName: string;
+  readonly presetApplied: boolean;
+}
+
 /**
  * The generated contracts of a project that has no route and no integration event of its own
  * yet, as its scripts write them (`docs:generate`): the first commit holds them, and the check
  * of the documents passes before anything is generated. A contract that is already there is
- * left alone: the scripts of the project are what keeps it current from then on.
+ * left alone: the scripts of the project are what keeps it current from then on. When a preset
+ * wrote routes and events (`presetApplied`), each is marked to be written by the first check of
+ * its script, since only the running application knows them.
  */
-export function writeContracts(ws: Workspace, config: Config, projectName: string): void {
+export function writeContracts(ws: Workspace, { config, projectName, presetApplied }: ContractsRequest): void {
   const context = { ...stackVars(config), document: documentVars(ws, projectName) };
   const format = config.openapi.format === 'json' ? 'json' : 'yaml';
 
+  const mark = presetApplied ? { [PENDING]: PENDING_TEXT } : {};
+
   const written = (template: string): string =>
-    stringifyContract(JSON.parse(renderTemplate(template, context)), format);
+    stringifyContract({ ...asRecord(JSON.parse(renderTemplate(template, context))), ...mark }, format);
+
+  const catalog = readTemplate('docs/event-catalog.md');
 
   const contracts: (readonly [string, string])[] = [
     [`${INTEGRATION}/asyncapi.${format}`, written('docs/asyncapi.json.tpl')],
-    [`${INTEGRATION}/event-catalog.md`, readTemplate('docs/event-catalog.md')],
+    [`${INTEGRATION}/event-catalog.md`, presetApplied ? `${catalog}\n<!-- ${PENDING}: ${PENDING_TEXT} -->\n` : catalog],
   ];
 
   // A contract split into documents is written by its script, which knows the route groups.
@@ -46,4 +63,8 @@ function documentVars(ws: Workspace, projectName: string): RenderContext {
     JSON.stringify(typeof value === 'string' ? value : fallback);
 
   return { title: text(field('name'), projectName), version: text(field('version'), '0.0.0') };
+}
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return isRecord(value) ? value : {};
 }

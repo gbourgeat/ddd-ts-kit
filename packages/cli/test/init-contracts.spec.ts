@@ -136,3 +136,24 @@ describe('the contracts init writes', () => {
     );
   });
 });
+
+describe('the contracts of a preset', () => {
+  it('are marked to be written by the first check of their scripts, which write them there and fail on a pipeline', () => {
+    const preset = initProject('--preset', 'identity');
+    const bare = initProject();
+    const pending = 'Written by the first `docs:check` or `docs:generate`.';
+
+    expect(jsonAt(readContract(preset, OPENAPI), 'x-ddd-ts-kit-pending')).toBe(pending);
+    expect(jsonAt(readContract(preset, ASYNCAPI), 'x-ddd-ts-kit-pending')).toBe(pending);
+    expect(read(preset, CATALOG)).toContain(`<!-- x-ddd-ts-kit-pending: ${pending} -->`);
+
+    expect([OPENAPI, ASYNCAPI, CATALOG].filter((file) => read(bare, file).includes('x-ddd-ts-kit-pending'))).toEqual(
+      [],
+    );
+
+    for (const script of ['scripts/openapi.ts', 'scripts/events.ts']) {
+      expect(read(preset, script)).toContain('if (committed.includes(PENDING)) {\n      writeFirst(file, content);');
+      expect(read(preset, script)).toContain("if (process.env['CI'] !== undefined) {");
+    }
+  });
+});

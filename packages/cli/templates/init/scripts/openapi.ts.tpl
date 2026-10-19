@@ -19,6 +19,10 @@ import { OPENAPI_DOCUMENTS } from '{{alias.platform}}/http/openapi-documents{{al
 {{/if}}
 // with --check, fails when a committed file differs. Build products: never edit them by hand.
 const directory = path.resolve('openapi');
+
+// What init leaves when the routes are known only to the running application (a preset): the
+// first check writes the contract, to commit; on a pipeline (CI set), it fails until it is.
+const PENDING = 'x-ddd-ts-kit-pending';
 const format = contractFormat();
 
 const application = composeApplication(inertPersistence(), {
@@ -68,7 +72,9 @@ function reportDrift(): void {
     const contract = path.join(directory, file);
     const committed = fs.existsSync(contract) ? fs.readFileSync(contract, 'utf8') : '';
 
-    if (committed.replaceAll('\r\n', '\n') !== content) {
+    if (committed.includes(PENDING)) {
+      writeFirst(file, content);
+    } else if (committed.replaceAll('\r\n', '\n') !== content) {
       console.error(`openapi/${file} is out of date: run the script \`docs:generate\` and commit it.`);
       process.exitCode = 1;
     }
@@ -78,6 +84,18 @@ function reportDrift(): void {
     console.error(`openapi/${file} is no document of the contract any more: run the script \`docs:generate\`.`);
     process.exitCode = 1;
   }
+}
+
+function writeFirst(file: string, content: string): void {
+  if (process.env['CI'] !== undefined) {
+    console.error(`openapi/${file} was never generated: run the script \`docs:generate\` and commit it.`);
+    process.exitCode = 1;
+
+    return;
+  }
+
+  fs.writeFileSync(path.join(directory, file), content);
+  console.error(`openapi/${file} is written for the first time, from the routes of the application: commit it.`);
 }
 
 /** The contracts left by another format or by a document that is gone{{#if presentation.forms}}, and the forms of routes that declare none any more{{/if}}: what else the folder holds is left alone. */

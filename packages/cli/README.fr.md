@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:9b8292041b12ffa0 -->
+<!-- translation-of: README.md sha256:195402b698387143 -->
 
 # ddd-ts-kit
 
@@ -36,9 +36,7 @@ npx ddd-ts-kit check
 ```
 
 `init` se termine en disant quoi lancer ensuite : `pnpm install`, puis `pnpm run verify`
-(`npm install`, puis `npm run verify` avec `--package-manager npm` ; avec `--preset`,
-`docs:generate` entre les deux, qui ajoute les routes et les événements du *preset* aux
-contrats), puis les étapes recommandées
+(`npm install`, puis `npm run verify` avec `--package-manager npm`), puis les étapes recommandées
 de la méthode, dans l'ordre ([méthodologie](../../docs/guides/methodology.fr.md)) ;
 [quelle commande, quand](../../docs/guides/commands.fr.md) donne la commande de chaque moment d'un
 projet et la référence de chaque option. Un nouveau projet passe toute cette porte avant que quoi
