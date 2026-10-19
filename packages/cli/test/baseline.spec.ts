@@ -69,7 +69,7 @@ describe('the quality baseline', () => {
     expectBaseline(EXAMPLE);
   });
 
-  it('keeps the hooks to the fast subset: staged files before a commit and no coverage, types and unit specs before a push', () => {
+  it('keeps the hooks to the fast subset: staged files before a commit and no coverage, types and the unit specs of the contexts the branch reaches before a push', () => {
     const hooks = read(initProject(), 'lefthook.yml');
     const [beforeCommit = '', beforePush = ''] = hooks.split('pre-push:');
 
@@ -78,7 +78,7 @@ describe('the quality baseline', () => {
     expect(beforeCommit).toContain('ddd-ts-kit check {staged_files}');
     expect(beforeCommit).not.toMatch(/coverage|vitest|jest|(npm|pnpm) run/);
     expect(beforePush).toMatch(/(npm|pnpm) run ci:typecheck/);
-    expect(beforePush).toMatch(/(npm|pnpm) run ci:test:unit/);
+    expect(beforePush).toMatch(/(npx --no --|pnpm exec) ddd-ts-kit affected --base origin\/HEAD --run ci:test:unit/);
   });
 
   it.each(['npm', 'pnpm'])(
@@ -190,6 +190,15 @@ describe('what a pull request runs, against the default branch', () => {
 
     expect(read(initProject('--tests', 'jest', '--orm', 'custom'), 'jest.config.js')).toContain(
       "testPathIgnorePatterns: ['/node_modules/', ...unaffectedContexts().map((directory) => `/${directory}`)],",
+    );
+  });
+
+  it('gives the specs half of the cores of a developer machine, and every core of a pipeline runner', () => {
+    expect(read(root, 'vitest.config.ts')).toContain("const WORKERS = process.env.CI ? {} : { maxWorkers: '50%' };");
+    expect(read(root, 'vitest.config.ts')).toContain('    ...WORKERS,\n');
+
+    expect(read(initProject('--tests', 'jest', '--orm', 'custom'), 'jest.config.js')).toContain(
+      "...(process.env.CI ? {} : { maxWorkers: '50%' }),",
     );
   });
 

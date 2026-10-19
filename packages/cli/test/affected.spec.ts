@@ -3,7 +3,7 @@ import path from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { selectAffected } from '../src/affected/select-affected.js';
 import { parseConfig } from '../src/config/index.js';
-import { cli, write } from './helpers.js';
+import { cli, tempDir, write } from './helpers.js';
 import { committedProject } from './support/committed-project.js';
 import { git } from './support/git.js';
 
@@ -202,5 +202,95 @@ describe('ddd-ts-kit affected', () => {
     );
 
     expect(cli(root, 'affected', '--format', 'xml').stderr).toContain('Unknown value "xml" for --format.');
+  });
+});
+
+describe('ddd-ts-kit affected --run', () => {
+  let root: string;
+  /** Where the script `probe` of the project writes what it was run with: outside the project, whose diff it would change. */
+  let probed: string;
+
+  beforeAll(() => {
+    // npm runs the script: every runner of the pipeline has it, not every one has pnpm.
+    root = committedProject(
+      'shop',
+      '--context',
+      'billing:core',
+      '--context',
+      'catalog:supporting',
+      '--package-manager',
+      'npm',
+    );
+
+    cli(root, 'generate', 'context', 'shipping', '--classification', 'supporting', '--upstream', 'billing');
+    probed = path.join(tempDir('probe'), 'probed.json');
+
+    write(
+      root,
+      'probe.mjs',
+      `import fs from 'node:fs';\nfs.writeFileSync(${JSON.stringify(probed)}, JSON.stringify({ affected: process.env.DDD_TS_KIT_AFFECTED, args: process.argv.slice(2) }));\n`,
+    );
+
+    const manifest = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8')) as {
+      scripts: Record<string, string>;
+    };
+
+    write(
+      root,
+      'package.json',
+      `${JSON.stringify({ ...manifest, scripts: { ...manifest.scripts, probe: 'node probe.mjs' } }, null, 2)}\n`,
+    );
+
+    git(root, 'add', '--all');
+    git(root, 'commit', '--quiet', '--message', 'feat(shipping): add the context');
+  });
+
+  const commit = (file: string, content: string): void => {
+    write(root, file, content);
+    git(root, 'add', '--all');
+    git(root, 'commit', '--quiet', '--message', `chore: change ${file}`);
+  };
+
+  const probe = (...args: string[]): { code: number; stdout: string; run: unknown } => {
+    fs.rmSync(probed, { force: true });
+    const result = cli(root, 'affected', ...args, '--run', 'probe');
+
+    return {
+      code: result.code,
+      stdout: result.stdout,
+      run: fs.existsSync(probed) ? (JSON.parse(fs.readFileSync(probed, 'utf8')) as unknown) : undefined,
+    };
+  };
+
+  it('runs a script of the project on the contexts the change reaches, as the pre-push hook runs the unit specs', () => {
+    git(root, 'branch', '--force', 'base');
+    commit('src/contexts/billing/domain/rate.ts', 'export const rate = 1;\n');
+
+    expect(probe('--base', 'base')).toEqual({
+      code: 0,
+      stdout:
+        'probe on billing, shipping (the changed contexts and the contexts downstream of them in the context map).',
+      run: { affected: 'billing,shipping', args: ['--passWithNoTests'] },
+    });
+  });
+
+  it('runs it on everything without a base or when git cannot tell what changed, and not at all when nothing that runs changed', () => {
+    expect(probe()).toMatchObject({ code: 0, run: { affected: '', args: [] } });
+    expect(probe('--base', 'no-such-ref')).toMatchObject({ code: 0, run: { affected: '', args: [] } });
+
+    git(root, 'branch', '--force', 'base');
+    commit('docs/rates.md', '# Rates\n');
+
+    expect(probe('--base', 'base')).toEqual({
+      code: 0,
+      stdout: 'Nothing that runs is affected (only documents changed): probe is not run.',
+      run: undefined,
+    });
+  });
+
+  it('answers the exit code of the script', () => {
+    write(root, 'probe.mjs', 'process.exit(3);\n');
+
+    expect(probe().code).toBe(3);
   });
 });

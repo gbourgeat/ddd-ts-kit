@@ -1,5 +1,5 @@
 [English](test-runners.md) · **Français**
-<!-- translation-of: test-runners.md sha256:83bfbb276466c568 -->
+<!-- translation-of: test-runners.md sha256:970036d7a6c11bb6 -->
 
 # Lanceurs de tests : Vitest et Jest
 
@@ -222,6 +222,10 @@ export default defineConfig(({ mode }) => ({
 }));
 ```
 
+- hors *pipeline* (pas de variable `CI`), les *specs* prennent la moitié des cœurs
+  (`maxWorkers: '50%'`) : une machine de développement les partage avec l'éditeur et les agents
+  de code. `VITEST_MAX_WORKERS` fixe un autre nombre, pour un bac à sable plafonné sous les cœurs
+  de son hôte ;
 - une configuration de bout en bout séparée qui démarre toute l'application sur un port libre,
   sur un PostgreSQL dans le processus, sauf si une URL de base de données est donnée ;
 - des rapports JUnit et Cobertura pour GitLab, le rapporteur Actions pour GitHub ;
@@ -256,6 +260,7 @@ export default {
   transform: {
     '^.+\\.ts$': ['@swc/jest', { jsc: { parser: { syntax: 'typescript', decorators: true }, transform: { decoratorVersion: '2022-03' }, target: 'es2022' } }],
   },
+  ...(process.env.CI ? {} : { maxWorkers: '50%' }), // half of the cores outside a pipeline
   coverageProvider: 'v8',
   ...governedJestCoverage(),
 };

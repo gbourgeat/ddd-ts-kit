@@ -202,7 +202,9 @@ pre-push:
     - name: typecheck
       run: npm run ci:typecheck
     - name: unit tests
-      run: npm run ci:test:unit
+      # The contexts the branch reaches and the ones downstream of them, as on a pull request; everything when git
+      # cannot tell (no origin/HEAD: `git remote set-head origin --auto`). The pipeline runs everything on the trunk.
+      run: npx --no -- ddd-ts-kit affected --base origin/HEAD --run ci:test:unit
     - name: merges
       run: npx --no -- ddd-ts-kit verify-merge --warn
 
@@ -211,6 +213,13 @@ commit-msg:
     - name: conventional commit
       run: npx --no -- commitlint --edit {1}
 ```
+
+Before a push the unit specs run as on a pull request: `ddd-ts-kit affected --run` sets
+`DDD_TS_KIT_AFFECTED` to the contexts the branch reaches since `origin/HEAD` and the ones
+downstream of them, runs nothing when only documents changed, and everything when a shared
+path changed or git cannot tell. A push no longer runs every spec of a project that grows; the
+pipeline does, on the trunk and every night. Outside a pipeline the test runner takes half of
+the cores ([Sandboxing coding agents](../guides/agent-sandbox.md)).
 
 The ESLint job before a commit has no `--max-warnings`: it shows a warning and lets the commit
 through, and `npm run lint`, `verify` and the pipeline fail on it. How a project made by an

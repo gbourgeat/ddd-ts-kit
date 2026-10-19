@@ -1,7 +1,10 @@
 /** What a line of the usage cannot say about a command or a flag. */
 export const NOTES = `  affected         what a pull request has to run: the contexts a change set reaches through the context
                    map (a changed context and the contexts downstream of it), as filters for the test
-                   runner and the linter; everything when a shared path changed or without --base
+                   runner and the linter; everything when a shared path changed or without --base;
+                   --run <script> runs that script of the project on them (DDD_TS_KIT_AFFECTED set,
+                   --passWithNoTests on a partial run) and nothing when nothing that runs changed:
+                   the pre-push hook tests the contexts its branch reaches
   build-aliases    after the compiler: rewrites the import aliases left in the emitted .js and .d.ts files
                    into relative paths, so that plain node runs the output (tsconfig.build.json by default)
   drizzle-generate the db:generate of a Drizzle project: drizzle-kit generate --name, which without a terminal

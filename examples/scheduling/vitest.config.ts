@@ -1,9 +1,13 @@
-import { governedCoverage } from '@ddd-ts-kit/testing/coverage';
+import { governedCoverage, unaffectedContexts } from '@ddd-ts-kit/testing/coverage';
 import { decoratorCoverage } from '@ddd-ts-kit/testing/vitest';
 import { defineConfig } from 'vitest/config';
 
 const INTEGRATION_SPECS = 'src/contexts/*/test/integration/**/*.spec.ts';
 const INTEGRATION_MODE = 'integration';
+// A pull request names the contexts its change reaches (DDD_TS_KIT_AFFECTED, from `ddd-ts-kit affected`): the specs of the others are left to the default branch.
+const NOT_AFFECTED = unaffectedContexts().map((directory) => `${directory}**`);
+// A developer machine shares its cores with the editor, the coding agents and their worktrees: the specs take half of them. A pipeline runner has its own.
+const WORKERS = process.env.CI ? {} : { maxWorkers: '50%' };
 
 export default defineConfig(({ mode }) => ({
   // Under `emitDecoratorMetadata` the transform guards every type a decorated class names with a branch no test can take: the statements that apply decorators are kept out of the measure.
@@ -11,16 +15,17 @@ export default defineConfig(({ mode }) => ({
   // An import alias is resolved from the "paths" of tsconfig.json, which name the sources.
   resolve: { tsconfigPaths: true },
   test: {
+    ...WORKERS,
     projects: [
       {
         extends: true,
         test: {
           name: 'unit',
           include: ['src/**/*.spec.ts', 'test/architecture/**/*.spec.ts'],
-          exclude: [INTEGRATION_SPECS],
+          exclude: [INTEGRATION_SPECS, ...NOT_AFFECTED],
         },
       },
-      { extends: true, test: { name: INTEGRATION_MODE, include: [INTEGRATION_SPECS] } },
+      { extends: true, test: { name: INTEGRATION_MODE, include: [INTEGRATION_SPECS], exclude: NOT_AFFECTED } },
     ],
     coverage: {
       provider: 'v8',

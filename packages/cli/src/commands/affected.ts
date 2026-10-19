@@ -1,6 +1,7 @@
 import { changedPaths } from '../affected/changed-paths.js';
 import { everything } from '../affected/everything.js';
 import { formatSelection } from '../affected/format-selection.js';
+import { runAffected } from '../affected/run-affected.js';
 import { selectAffected } from '../affected/select-affected.js';
 import type { Selection } from '../affected/selection.js';
 import { CliError } from '../cli-error.js';
@@ -13,13 +14,16 @@ const FORMATS = ['text', 'json', 'github', 'env'];
 /**
  * `affected`: what a pull request has to run, read from the context map and the paths that
  * differ between two commits. Without `--base` everything is selected, which is what the
- * default branch runs; so is it whenever git cannot give the difference.
+ * default branch runs; so is it whenever git cannot give the difference. `--run <script>` runs
+ * that script of the project on the selection, as the pipeline does: the pre-push hook of a
+ * project tests the contexts its branch reaches, not every context.
  */
 export const affectedCommand: Command = (argv, io) => {
   const args = Arguments.parse(argv, {
     base: { type: 'string' },
     head: { type: 'string' },
     format: { type: 'string' },
+    run: { type: 'string' },
   });
 
   const format = args.json ? 'json' : (args.text('format') ?? 'text');
@@ -29,8 +33,15 @@ export const affectedCommand: Command = (argv, io) => {
   }
 
   const root = args.projectRoot;
+  const { config } = readConfig(root);
+  const selection = selectionFor(root, config, args);
+  const script = args.text('run');
 
-  io.out(formatSelection(selectionFor(root, readConfig(root).config, args), format));
+  if (script !== undefined) {
+    return runAffected({ root, manager: config.stack.packageManager, selection, script }, io);
+  }
+
+  io.out(formatSelection(selection, format));
 
   return 0;
 };

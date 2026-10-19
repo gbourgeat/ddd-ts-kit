@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:5dd7b0d6030b1d99 -->
+<!-- translation-of: README.md sha256:0159db44d79c6e6f -->
 
 # Documentation
 
@@ -121,6 +121,7 @@ a vérifié, les limites, et une recommandation selon la situation.
 | [Démarrer avec des contextes bien conçus](guides/bootstrap-with-well-designed-contexts.fr.md) | un contexte générique écrit en entier avec `--preset identity` : ce qu'il écrit, ce qu'il demande à la *stack*, comment il se compose avec chaque modèle d'accès et avec les *tenants* |
 | [Choisir le contrôle d'accès](guides/choosing-access-control.fr.md) | cinq questions qui choisissent les rôles, les attributs ou les relations (Zanzibar), des préréglages commentés pour chacun, le modèle combiné de l'exemple, les périmètres et les refus en bordure |
 | [Économie de jetons](guides/token-economy.fr.md) | dépenser moins de jetons avec les agents de code, et des outils complémentaires |
+| [Isoler les agents de code](guides/agent-sandbox.fr.md) | ce qui charge une machine et ce que fait le kit ; plafonner un agent, le bac à sable de l'agent, NVIDIA OpenShell pour la sécurité d'une session |
 | [La documentation en français](translation.fr.md) | contributeurs : comment chaque page garde sa traduction française à jour, le glossaire, le style des diagrammes, les exemples de code que le *pipeline* compile |
 
 ## Propositions
