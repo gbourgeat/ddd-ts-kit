@@ -4,14 +4,14 @@ import { ON_A_SERVER } from './pipeline/monorepo/affected-packages.mjs';
 /**
  * The floor of each package, as [statements, branches, functions, lines]: what the unit run measured
  * on 2026-10-10 (2026-10-18 for cli, kernel, knex, prisma, sentry and testing, 2026-10-19 for
- * rabbitmq and nats), rounded down, so that the coverage of a package cannot fall without the gate
- * saying so. The statements and lines of sentry, measured at 100, are held at 99: a floor of 100
- * would leave no line of margin. A floor is raised when the package gains tests, never lowered to
- * make a change pass.
- * Two broker packages and s3 are low on purpose of the measure, not of the code: most of their
- * specs need a server (a broker, MinIO) and run in the integration job, which this run skips.
- * rabbitmq runs the same specs on an AMQP broker held in memory, and nats on a NATS server the test
- * starts in its own process, so this run measures them whole.
+ * rabbitmq, nats and kafka), rounded down, so that the coverage of a package cannot fall without
+ * the gate saying so. The statements and lines of sentry, measured at 100, are held at 99: a floor
+ * of 100 would leave no line of margin. A floor is raised when the package gains tests, never
+ * lowered to make a change pass.
+ * redis and s3 are low on purpose of the measure, not of the code: most of their specs need a
+ * server (Dragonfly, MinIO) and run in the integration job, which this run skips. rabbitmq, nats
+ * and kafka run the same specs on a broker the test holds itself (an AMQP broker in memory, a NATS
+ * server in its own process, a Kafka cluster in memory), so this run measures them whole.
  */
 const FLOORS: Readonly<Record<string, readonly [number, number, number, number]>> = {
   aspects: [97, 95, 97, 97],
@@ -23,7 +23,7 @@ const FLOORS: Readonly<Record<string, readonly [number, number, number, number]>
   'eslint-plugin': [98, 91, 99, 98],
   events: [98, 91, 99, 98],
   http: [98, 93, 97, 98],
-  kafka: [40, 53, 44, 40],
+  kafka: [96, 91, 98, 96],
   kernel: [98, 94, 98, 98],
   knex: [96, 90, 98, 96],
   nats: [98, 96, 98, 98],

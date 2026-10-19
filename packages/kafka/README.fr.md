@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:191731b3db98cd17 -->
+<!-- translation-of: README.md sha256:6fadafd3b09723c8 -->
 
 # @ddd-ts-kit/kafka
 
@@ -51,6 +51,12 @@ Ce que cela demande à la CI et aux images :
   Debian ne se charge pas sur Alpine ;
 - rien d'autre n'est nécessaire à l'exécution : le binaire n'est lié qu'à la libc et à
   libstdc++.
+
+Le bus construit son producteur, ses consommateurs et son client d'administration à partir
+d'un `KafkaJS.Kafka` qu'il fait de `brokers` et de `client`. Une application qui configure ou
+instrumente ce client elle-même le lui donne en `cluster`, et le bus ne lit alors ni `brokers`
+ni `client` ; il déconnecte les clients qu'il construit, jamais celui qu'on lui a donné. Les
+*specs* de ce *package* lui donnent ainsi un cluster tenu en mémoire (voir Tester).
 
 ## Racine de composition
 
@@ -549,7 +555,15 @@ tourner. Kafka est celui à choisir quand l'ordre des événements d'un agrégat
 
 ## Tester
 
-Les suites demandent un vrai *broker* et sont sautées sans `DDD_TS_KIT_TEST_KAFKA_BROKERS` :
+Toutes les suites tournent dans les tests unitaires, sans *broker* : le bus reçoit, par son
+option `cluster`, un cluster Kafka tenu en mémoire (`test/support/cluster/`), qui implémente les
+interfaces KafkaJS du client et garde ce dont le bus dépend (*topics* partitionnés, une clé
+toujours sur la même partition, groupes de consommateurs qui se répartissent leurs partitions à
+chaque arrivée et départ en prévenant le *callback* de rééquilibrage, *offsets* commités,
+`eachMessage` relu après une erreur, partitions en pause, acquittements qui expirent en
+`ERR__MSG_TIMED_OUT`, un *topic* listé un instant après sa création, un réseau que le test
+sabote). Avec `DDD_TS_KIT_TEST_KAFKA_BROKERS`, les mêmes suites tournent une seconde fois contre
+un vrai *broker*, ce qui garde celui en mémoire fidèle :
 
 ```
 docker run -d --rm --name ddd-ts-kit-test-kafka -p 127.0.0.1:9092:9092 -p 127.0.0.1:9094:9094 -e KAFKA_NODE_ID=1 -e KAFKA_PROCESS_ROLES=broker,controller -e KAFKA_LISTENERS=PLAINTEXT://:9092,RELAYED://:9094,CONTROLLER://:9093 -e KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://127.0.0.1:9092,RELAYED://127.0.0.1:9095 -e KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,RELAYED:PLAINTEXT -e KAFKA_CONTROLLER_QUORUM_VOTERS=1@localhost:9093 -e KAFKA_CONTROLLER_LISTENER_NAMES=CONTROLLER -e KAFKA_INTER_BROKER_LISTENER_NAME=PLAINTEXT -e KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1 -e KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR=1 -e KAFKA_TRANSACTION_STATE_LOG_MIN_ISR=1 -e KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS=0 apache/kafka:4.3.1
@@ -557,14 +571,14 @@ DDD_TS_KIT_TEST_KAFKA_BROKERS=127.0.0.1:9092 DDD_TS_KIT_TEST_KAFKA_RELAY=127.0.0
 docker rm -f ddd-ts-kit-test-kafka
 ```
 
-Le *job* d'intégration de la CI les exécute sur chaque *pull request* qui atteint ce *package*,
+Le *job* d'intégration de la CI les exécute contre un vrai *broker* sur chaque *pull request* qui atteint ce *package*,
 contre Apache Kafka 4.3.1 en mode KRaft, avec son écouteur relayé que démarre `pipeline/github/scripts/start-kafka.sh`, son image épinglée par *digest*.
 
 Un client Kafka se connecte aux adresses que le *broker* annonce : on ne peut donc pas provoquer
 une panne réseau en pointant le bus vers un relais réseau. Le *broker* a un second écouteur,
 `RELAYED`, qui annonce `127.0.0.1:9095`, où les tests écoutent et relaient vers le port qui se
 trouve derrière (9094). `DDD_TS_KIT_TEST_KAFKA_RELAY` donne les deux adresses ; sans elle, les
-trois tests de panne réseau sont sautés et le reste s'exécute.
+tests de panne réseau ne tournent que sur le cluster en mémoire.
 
 Ils exécutent la suite de contrat sur des *topics* d'une et de trois partitions, puis les
 comportements de ce fournisseur, une suite par comportement (`publishing`, `consuming`,

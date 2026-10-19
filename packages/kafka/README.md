@@ -46,6 +46,12 @@ What it asks of CI and of images:
   on Alpine;
 - nothing else is needed at run time: the binary links only to libc and libstdc++.
 
+The bus builds its producer, consumers and admin from a `KafkaJS.Kafka` it makes of `brokers`
+and `client`. An application that configures or instruments that client itself hands it over
+as `cluster`, and the bus then reads neither `brokers` nor `client`; it disconnects the clients
+it builds, never the one it was given. The specs of this package give it a cluster held in
+memory that way (see Testing).
+
 ## Composition root
 
 Handlers never see this package. They publish to the outbox; the relay publishes to Kafka;
@@ -519,7 +525,15 @@ when the order of the events of an aggregate matters.
 
 ## Testing
 
-The suites need a real broker and are skipped without `DDD_TS_KIT_TEST_KAFKA_BROKERS`:
+Every suite runs in the unit run, without a broker: the bus is given, through its `cluster`
+option, a Kafka cluster held in memory (`test/support/cluster/`), which implements the KafkaJS
+interfaces of the client and keeps what the bus relies on (partitioned topics, a key always on
+one partition, consumer groups sharing their partitions out at each join and leave with the
+rebalance callback told, committed offsets, `eachMessage` read again after it threw, paused
+partitions, acknowledgements that time out with `ERR__MSG_TIMED_OUT`, a topic listed a moment
+after its creation, a network the test sabotages). With `DDD_TS_KIT_TEST_KAFKA_BROKERS`, the
+same suites run a second time against a real broker, which is what keeps the in-memory one
+honest:
 
 ```
 docker run -d --rm --name ddd-ts-kit-test-kafka -p 127.0.0.1:9092:9092 -p 127.0.0.1:9094:9094 -e KAFKA_NODE_ID=1 -e KAFKA_PROCESS_ROLES=broker,controller -e KAFKA_LISTENERS=PLAINTEXT://:9092,RELAYED://:9094,CONTROLLER://:9093 -e KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://127.0.0.1:9092,RELAYED://127.0.0.1:9095 -e KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,RELAYED:PLAINTEXT -e KAFKA_CONTROLLER_QUORUM_VOTERS=1@localhost:9093 -e KAFKA_CONTROLLER_LISTENER_NAMES=CONTROLLER -e KAFKA_INTER_BROKER_LISTENER_NAME=PLAINTEXT -e KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1 -e KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR=1 -e KAFKA_TRANSACTION_STATE_LOG_MIN_ISR=1 -e KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS=0 apache/kafka:4.3.1
@@ -527,14 +541,14 @@ DDD_TS_KIT_TEST_KAFKA_BROKERS=127.0.0.1:9092 DDD_TS_KIT_TEST_KAFKA_RELAY=127.0.0
 docker rm -f ddd-ts-kit-test-kafka
 ```
 
-The integration job of the CI runs them on every pull request that reaches this package,
+The integration job of the CI runs them against a real broker on every pull request that reaches this package,
 against Apache Kafka 4.3.1 in KRaft mode, with its relayed listener that `pipeline/github/scripts/start-kafka.sh` starts, its image pinned by digest.
 
 A Kafka client connects to the addresses the broker advertises, so a network failure cannot
 be produced by pointing the bus at a relay: the broker has a second listener, `RELAYED`,
 that advertises `127.0.0.1:9095`, where the tests listen and relay to the port behind it
-(9094). `DDD_TS_KIT_TEST_KAFKA_RELAY` gives both addresses; without it the three network
-failure tests are skipped and the rest runs.
+(9094). `DDD_TS_KIT_TEST_KAFKA_RELAY` gives both addresses; without it the network failure
+tests run on the in-memory cluster only.
 
 They run the contract suite on topics of one and of three partitions, then the behaviours of
 this provider, one suite per behaviour (`publishing`, `consuming`, `correlation`, `retries`
