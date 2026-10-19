@@ -1,6 +1,6 @@
 {
   "name": "@ddd-ts-kit/winston",
-  "version": "0.83.0",
+  "version": "0.83.1",
   "description": "Adapter of the kernel Logger port on winston, with trace and execution correlation on every line.",
   "keywords": [
     "ddd",
@@ -37,10 +37,10 @@
     "dist"
   ],
   "dependencies": {
-    "@ddd-ts-kit/kernel": "0.83.0"
+    "@ddd-ts-kit/kernel": "0.83.1"
   },
   "devDependencies": {
-    "@ddd-ts-kit/testing": "0.83.0",
+    "@ddd-ts-kit/testing": "0.83.1",
     "winston": "^3.19.0"
   },
   "peerDependencies": {
