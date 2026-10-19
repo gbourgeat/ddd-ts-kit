@@ -94,7 +94,7 @@
     "@commitlint/config-conventional": "^21.2.3",
     "@ddd-ts-kit/eslint-plugin": "^0.83.0",
     "@ddd-ts-kit/testing": "^0.83.0",
-    "@electric-sql/pglite": "0.5.9",
+    "@electric-sql/pglite": "0.5.10",
     "@electric-sql/pglite-socket": "0.2.12",
     "@eslint/js": "^10.0.1",
     "@faker-js/faker": "^10.6.0",
