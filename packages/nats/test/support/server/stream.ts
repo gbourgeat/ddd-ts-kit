@@ -1,6 +1,5 @@
 import { headerOf } from './headers.js';
 import { type Json, millisecondsOf, numberIn } from './json.js';
-import type { PullConsumer } from './pull-consumer.js';
 import { subjectMatches } from './subjects.js';
 
 export interface StoredMessage {
@@ -19,11 +18,14 @@ export interface Appended {
 
 const DEFAULT_DUPLICATE_WINDOW_MS = 120_000;
 
-/** A stream with the limits retention: every message kept until it is deleted, one by one or with the stream. */
-export class Stream {
+/**
+ * A stream with the limits retention: every message kept until it is deleted, one by one or with
+ * the stream. Its consumers are of the type JetStream gives it, so that they may know the stream.
+ */
+export class Stream<Consumer = unknown> {
   readonly messages = new Map<number, StoredMessage>();
 
-  readonly consumers = new Map<string, PullConsumer>();
+  readonly consumers = new Map<string, Consumer>();
 
   readonly created = new Date();
 

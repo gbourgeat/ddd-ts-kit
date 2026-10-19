@@ -20,7 +20,7 @@ import { type Appended, Stream } from './stream.js';
  * nats-server 2.15 answers it; anything else gets an error naming it.
  */
 export class JetStream {
-  private readonly streams = new Map<string, Stream>();
+  private readonly streams = new Map<string, Stream<PullConsumer>>();
 
   constructor(private readonly outbox: Outbox) {}
 
@@ -111,7 +111,7 @@ export class JetStream {
     const existing = this.streams.get(name);
 
     if (existing === undefined) {
-      const stream = new Stream(name, requested, streamConfigOf(requested));
+      const stream = new Stream<PullConsumer>(name, requested, streamConfigOf(requested));
 
       this.streams.set(name, stream);
 
@@ -125,7 +125,7 @@ export class JetStream {
     return streamInfo('stream_create', existing);
   }
 
-  private deleteStream(stream: Stream): Json {
+  private deleteStream(stream: Stream<PullConsumer>): Json {
     for (const consumer of stream.consumers.values()) {
       consumer.stop(true);
     }
@@ -242,7 +242,7 @@ export class JetStream {
     this.outbox.deliver(reply, reply, undefined, headers, message.data);
   }
 
-  private withStream(name: string | undefined, kind: string, answer: (stream: Stream) => Json): Json {
+  private withStream(name: string | undefined, kind: string, answer: (stream: Stream<PullConsumer>) => Json): Json {
     const stream = this.streams.get(name ?? '');
 
     return stream === undefined ? streamNotFound(kind) : answer(stream);
@@ -252,7 +252,7 @@ export class JetStream {
     streamName: string | undefined,
     name: string | undefined,
     kind: string,
-    answer: (consumer: PullConsumer, stream: Stream) => Json,
+    answer: (consumer: PullConsumer, stream: Stream<PullConsumer>) => Json,
   ): Json {
     const stream = this.streams.get(streamName ?? '');
     const consumer = stream?.consumers.get(name ?? '');
