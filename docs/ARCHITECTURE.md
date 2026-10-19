@@ -141,7 +141,8 @@ contract, the domain and the use cases never read one.
 **Guards and permissions are two things, and each has one place.** A guard is a control at the
 edge, over a set of routes: is the caller authenticated, does it hold a role, does the tenant of
 its token match the one of the path, is the key of the request known. It reads the caller and
-the request, runs before the controller, and answers 401 or 403; a route group or a controller
+the request, runs before the controller (before the request is read when it decides on the
+caller alone), and answers 401 or 403; a route group or a controller
 names it in `guards`. A permission is a business right: it may depend on the element (who owns
 this appointment, is this invoice still a draft) and it is declared on the use case, with
 `@Requires` on the command or the query, decided by the bus through the `Authorizer` port. A

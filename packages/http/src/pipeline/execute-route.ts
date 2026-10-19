@@ -17,11 +17,13 @@ import type { Route } from '../route/route.js';
 import { isAsyncIterable } from '../support/is-async-iterable.js';
 import { resolvedTenant } from '../tenancy/resolved-tenant.js';
 import { guardRefusals } from '../controller/guard-refusals.js';
+import { admittedCaller } from './admitted-caller.js';
 import { assertDeclaredResponse } from './assert-declared-response.js';
 import { cacheHeadersOf } from './cache-headers-of.js';
 import { conditionalAnswer } from './conditional-answer.js';
 import { CORRELATION_HEADER } from './correlation-header.js';
 import { correlationIdOf } from './correlation-id-of.js';
+import { deadlineOf } from './deadline-of.js';
 import type { ErrorContext } from './error-context.js';
 import type { ExecuteOptions } from './execute-options.js';
 import { executionOfRequest } from './execution-of-request.js';
@@ -102,6 +104,16 @@ function defaultRequestId(request: RawRequest): string {
 async function handled(call: Call): Promise<RouteOutput> {
   const { route, request, options } = call;
   const principal = await options.resolvePrincipal?.(request.raw);
+
+  await admittedCaller({
+    route,
+    headers: request.headers,
+    correlationId: call.correlationId,
+    principal,
+    deadline: deadlineOf(options),
+    reached: call.reached,
+  });
+
   const input = await acceptedInput(call);
   const expectedVersion = expectedVersionOf(route, request.headers);
   const execution = executionOf(call, principal, input.params);
@@ -210,16 +222,6 @@ function executionOf(call: Call, principal: unknown, params: unknown): Execution
   call.reached.execution = named ?? executionOfRequest({ correlationId, headers, principal, deadline, tenantId });
 
   return call.reached.execution;
-}
-
-function deadlineOf(options: ExecuteOptions): Date | undefined {
-  if (options.requestTimeoutMs === undefined) {
-    return undefined;
-  }
-
-  const arrivedAt = options.clock?.now() ?? new Date();
-
-  return new Date(arrivedAt.getTime() + options.requestTimeoutMs);
 }
 
 async function answer(result: RouteOutput, call: Call): Promise<RouteResponse> {

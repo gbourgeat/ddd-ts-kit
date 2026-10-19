@@ -4,6 +4,7 @@ import {
   type DeclaredDependencies,
   type DependenciesFromSignature,
 } from '@ddd-ts-kit/kernel/declarations';
+import type { GuardAdmission } from './guard-admission.js';
 import type { GuardDocumentation } from './guard-documentation.js';
 import type { GuardRequest } from './guard-request.js';
 
@@ -16,6 +17,14 @@ import type { GuardRequest } from './guard-request.js';
  */
 export interface Guard {
   readonly documents?: GuardDocumentation;
+
+  /**
+   * The part of the decision that reads the caller alone, made before the request is read: a
+   * caller refused here never learns what the route expects, and its upload is never received.
+   * The admissions of the guards of a route run in order before its request is read, their
+   * checks in order once it is validated; a guard that declares none is decided by its check.
+   */
+  admit?(admission: GuardAdmission): void | Promise<void>;
 
   check(request: GuardRequest): void | Promise<void>;
 }

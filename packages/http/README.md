@@ -150,8 +150,8 @@ It answers 201 with `{ id }`, documents `OUT_OF_STOCK` (its own), `FORBIDDEN` (i
 |---|---|
 | `Controller(spec)` | the decorator of a controller: `group`, `method`, `path` (after the prefix of the group), `operationId` (the class name without `Controller` by default), `summary`, `description`, `tags`, `params`, `query`, `headers`, `body`, `upload` (see "Uploads and files"), `response: { status, description?, body? }`, `errors`, `guards`, `deprecated`, `cache` and `ifMatch` (see "HTTP caching"), `produces` and `consumes` (see [Representations](#representations-json-xml-csv)), `form` (see [Forms described by the server](#forms-described-by-the-server)) |
 | `RouteGroup({ parent, prefix, tags, guards, errors, cache })` | names a set of routes on an empty class; a child inherits from its `parent` and adds; the nearest `cache` wins |
-| `Guard` | the interface `{ documents?, check(request: GuardRequest) }`, and the decorator of a guard class that takes dependencies |
-| `Authenticated`, `Public`, `HasRole(...roles)`, `HasScope(...scopes)`, `TenantMember` | the guards the package ships, over the `Actor` and the `Session` of the request: 401 to the anonymous caller, 403 without one of the roles, without every scope named (`Session.scopes`, typed by the `SessionScopes` of the project) or outside the tenant of the request; `Public` lets everybody in and stands alone. A refusal of a guard is reported to `onGuardRefusal` |
+| `Guard` | the interface `{ documents?, admit?(admission: GuardAdmission), check(request: GuardRequest) }`, and the decorator of a guard class that takes dependencies; `admit` decides on the caller alone, before the request is read |
+| `Authenticated`, `Public`, `HasRole(...roles)`, `HasScope(...scopes)`, `TenantMember` | the guards the package ships, over the `Actor` and the `Session` of the request: 401 to the anonymous caller, before the request is read, 403 without one of the roles, without every scope named (`Session.scopes`, typed by the `SessionScopes` of the project) or outside the tenant of the request; `Public` lets everybody in and stands alone. A refusal of a guard is reported to `onGuardRefusal` |
 | `RequestMapper<Request, Message>`, `Serializer<Result, Body>` | the interfaces of the two optional translators (`map`, `serialize`), and the decorators that declare them |
 | `HttpRequest<{ params, query, headers, body }>` | the request as `handle`, a mapper or a guard names it, with `actor` and `context` |
 | `controllerRoutes(controllers, { resolve, security, guards })` | the `Route` of each controller, given as a class (built by `resolve`) or as an instance; `security` names the schemes of the application (`['bearer']` by default); `guards: 'skip'` is for the spec of a controller alone |
@@ -159,7 +159,10 @@ It answers 201 with `{ id }`, documents `OUT_OF_STOCK` (its own), `FORBIDDEN` (i
 
 A controller with no group and no guard is refused when its class is defined. Guards run in
 order, after validation and before `handle`, inside the execution scope of the request, and
-what they throw is answered as a problem like any refusal. A guard is a control at the edge;
+what they throw is answered as a problem like any refusal. Before that, the guards that declare
+an `admit` decide on the caller alone, in order, before anything of the request is read: an
+anonymous caller of an `Authenticated` route gets 401, never the validation issues of its
+input, and its upload is never received. A guard is a control at the edge;
 a permission is declared on the use case (`@Requires`), where a job and an event handler meet
 it too. Controllers are declared classes of the edge (`Edge` of
 `@ddd-ts-kit/kernel/declarations`): `@ddd-ts-kit/di` binds each one under itself and lists them
@@ -176,9 +179,12 @@ copies the request of its framework into a `RawRequest` (`params`, `query`, `hea
 ![The steps executeRoute takes for one request: the identifiers, then, inside the around hook, authentication, upload, validation, If-Match, execution context and tenant, then guards and handle inside the execution scope, the check of the answer, the headers and the 304; each step that can refuse names its status, and every refusal becomes a problem document](https://raw.githubusercontent.com/gbourgeat/ddd-ts-kit/main/docs/assets/diagrams/http-package-pipeline.svg)
 
 The steps that are not needed are skipped: no upload, no `If-Match`, no guard, no validator.
-The first refusal ends the request: a request that is not valid never reaches a guard, and a
-caller a guard refuses never reaches `handle`. Guards run after validation, so they read typed
-parameters; a credential that `resolvePrincipal` rejects is refused before anything else.
+The first refusal ends the request: a request that is not valid never reaches the check of a
+guard, and a caller a guard refuses never reaches `handle`. A credential that `resolvePrincipal`
+rejects is refused before anything else; right after it, the admission of the route (`admit`,
+the guards that decide on the caller alone) refuses with 401 or 403 a caller refused on who it
+is, before the upload, the body and the validation, and reports it to `onGuardRefusal`. The
+checks of the guards run after validation, so they read typed parameters.
 
 Since `executeRoute` needs no server, a spec of a route calls it directly, as the adapters do:
 

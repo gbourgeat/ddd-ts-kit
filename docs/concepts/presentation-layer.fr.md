@@ -1,5 +1,5 @@
 [English](presentation-layer.md) · **Français**
-<!-- translation-of: presentation-layer.md sha256:c18799f4e8bed73a -->
+<!-- translation-of: presentation-layer.md sha256:67312a59c09cf6ef -->
 
 # La couche présentation : contrôleurs, groupes de routes, gardes
 
@@ -160,7 +160,11 @@ du groupe) et les deux codes du contrôleur.
 ![Le chemin d'une requête HTTP par une route de contrôleur : l'adaptateur HTTP, la validation par les schémas, le contexte d'exécution, les gardes, le contrôleur, son mapper de requête HTTP, le bus de commandes qui vérifie la permission, le gestionnaire, puis le sérialiseur et la réponse ; un refus à n'importe quelle étape devient un document problem](../assets/diagrams/presentation-layer-request-path.fr.svg)
 
 1. **L'adaptateur HTTP** du *framework* (Express, Fastify, Hono ou NestJS) passe la requête HTTP
-   brute au *pipeline* de `@ddd-ts-kit/http`, qui identifie l'appelant.
+   brute au *pipeline* de `@ddd-ts-kit/http`, qui identifie l'appelant. Les gardes qui décident
+   sur l'appelant seul (`Authenticated`, `HasRole`, `HasScope`, l'appelant anonyme de
+   `TenantMember`) le refusent dès ici, par 401 ou 403, avant que rien de la requête HTTP ne soit
+   lu : un appelant refusé pour ce qu'il est n'apprend jamais ce que la route attend, et son
+   téléversement n'est jamais reçu.
 2. **Chaque partie déclarée passe par son schéma** (`params`, `query`, `headers`, `body`) ; tous
    les problèmes sont signalés ensemble, en un seul problème `VALIDATION_FAILED` (422).
 3. **Le contexte d'exécution** de la requête HTTP est construit : son acteur, sa session, son
@@ -169,7 +173,7 @@ du groupe) et les deux codes du contrôleur.
    refus de garde. Tout ce qui suit s'exécute à l'intérieur.
 4. **Les gardes s'exécutent dans l'ordre** : celles du groupe parent, du groupe, puis du
    contrôleur. La première qui lève une erreur répond 401 ou 403, et le contrôleur n'est jamais
-   appelé.
+   appelé. Une garde qui lit le chemin s'exécute ici, sur des paramètres validés.
 5. **Le contrôleur** : `handle` reçoit les parties validées et l'acteur. Il ne décide de rien et
    passe la requête HTTP plus loin.
 6. **Le *mapper* de requête HTTP** transforme la requête HTTP et son acteur en commande ou en
@@ -330,6 +334,14 @@ export class ApiKeyGuard implements Guard {
   }
 }
 ```
+
+Une garde décide dans `check`, une fois la requête HTTP validée, et lit donc des paramètres
+typés. Une garde qui décide sur l'appelant seul déclare aussi `admit(admission: GuardAdmission)`,
+qui reçoit la route, les en-têtes bruts, l'acteur et la session, et s'exécute avant que la
+requête HTTP soit lue : les gardes du kit qui n'ont besoin de rien d'autre (`Authenticated`,
+`HasRole`, `HasScope`) le font, et `TenantMember` y refuse l'appelant anonyme. Les admissions
+s'exécutent dans l'ordre des gardes, puis les contrôles, et `guards: 'skip'` laisse les deux de
+côté. Une route écrite à la main, comme objet `Route`, peut déclarer `admit` elle-même.
 
 Un refus d'une garde n'atteint jamais un cas d'usage, donc le *hook* d'autorisation du bus ne le
 voit pas : `onGuardRefusal` du *pipeline* est informé de chacun. `auditGuardRefusals` de
