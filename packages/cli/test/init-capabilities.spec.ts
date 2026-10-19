@@ -50,7 +50,7 @@ describe('integration events', () => {
       });
 
       expect(platform(root, 'composition/compose-application.ts')).toContain(
-        "await discoverContext('billing', new URL('../contexts/billing/', import.meta.url)),",
+        "await discoverContext('billing', new URL('../../contexts/billing/', import.meta.url)),",
       );
 
       expect(platform(root, 'composition/compose-application.ts')).not.toContain('listeningContext');

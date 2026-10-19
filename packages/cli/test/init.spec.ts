@@ -105,7 +105,7 @@ describe('init', () => {
     expect(exists(root, 'src/contexts/billing/billing.declarations.ts')).toBe(false);
 
     expect(read(root, 'src/platform/composition/compose-application.ts')).toContain(
-      "await discoverContext('billing', new URL('../contexts/billing/', import.meta.url)),",
+      "await discoverContext('billing', new URL('../../contexts/billing/', import.meta.url)),",
     );
 
     expect(read(root, 'knip.json')).toContain(

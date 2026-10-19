@@ -1,3 +1,4 @@
+import { posix } from 'node:path';
 import { renderTemplate } from '../../templating/index.js';
 import type { Workspace } from '../../workspace/index.js';
 import { applyWiring } from '../apply-wiring.js';
@@ -18,7 +19,8 @@ const PROOF = 'test/architecture/extractable.spec.ts';
  */
 export function wireContext(ws: Workspace, plan: ContextPlan): void {
   const { config, context } = plan;
-  const vars = planVars(plan);
+  const composition = platformFileIn(config, 'composition/compose-application.ts', (path) => ws.exists(path));
+  const vars = planVars(plan, posix.dirname(composition));
   const family = wiringFamily(config);
   const registry = platformFileIn(config, 'auth/authorization/permissions.ts', (path) => ws.exists(path));
 
@@ -28,10 +30,7 @@ export function wireContext(ws: Workspace, plan: ContextPlan): void {
 
   for (const [file, wiring] of [
     [PROOF, `architecture/wiring.${family}.tpl`],
-    [
-      platformFileIn(config, 'composition/compose-application.ts', (path) => ws.exists(path)),
-      `context/wiring.${family}.tpl`,
-    ],
+    [composition, `context/wiring.${family}.tpl`],
   ] as const) {
     if (family === 'declared') {
       importAssembler(ws, config, file);

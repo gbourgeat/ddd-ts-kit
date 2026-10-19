@@ -26,7 +26,7 @@ describe('discovery in place of the barrel', () => {
     expect(exists(discovered, `${BILLING}/billing.declarations.ts`)).toBe(false);
 
     expect(composition).toContain(
-      "    await discoverContext('billing', new URL('../contexts/billing/', import.meta.url)),",
+      "    await discoverContext('billing', new URL('../../contexts/billing/', import.meta.url)),",
     );
 
     expect(composition).not.toContain('InvoiceIssuedPublisher');
@@ -79,7 +79,7 @@ describe('discovery in place of the barrel', () => {
     expect(cli(behindBroker, 'generate', 'context', 'billing', '--classification', 'core').code).toBe(0);
 
     expect(read(behindBroker, 'src/platform/composition/compose-application.ts')).toContain(
-      "await discoverContext('billing', new URL('../contexts/billing/', import.meta.url)),",
+      "await discoverContext('billing', new URL('../../contexts/billing/', import.meta.url)),",
     );
   });
 });

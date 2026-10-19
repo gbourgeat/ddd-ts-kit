@@ -40,7 +40,7 @@ function flatten(root: string): void {
     );
 
     fs.rmSync(path.join(root, file));
-    write(root, flatPath(file), flat);
+    write(root, flatPath(file), flatPath(file) === file ? flat : flat.replaceAll("new URL('../../", "new URL('../"));
   }
 
   for (const folder of [
@@ -70,6 +70,37 @@ describe('platform-folders, on a project generated before the folders of the pla
     expect(cli(root, 'platform-folders').code).toBe(0);
     expect(sources(root)).toEqual(expected);
     expect(cli(root, 'platform-folders').stdout).toContain('Nothing to do');
+  });
+
+  it('keeps a discovered context found from the composition root it moved', () => {
+    const root = initProject('--style', 'declared', '--assembly', 'discovery', '--context', 'billing:core');
+    const expected = sources(root);
+    const discovered = "await discoverContext('billing', new URL('../../contexts/billing/', import.meta.url))";
+
+    expect(read(root, `${PLATFORM}/composition/compose-application.ts`)).toContain(discovered);
+
+    flatten(root);
+
+    expect(read(root, `${PLATFORM}/compose-application.ts`)).toContain(
+      "await discoverContext('billing', new URL('../contexts/billing/', import.meta.url))",
+    );
+
+    expect(cli(root, 'generate', 'context', 'shipping', '--classification', 'supporting', '--allow-name').code).toBe(0);
+
+    expect(read(root, `${PLATFORM}/compose-application.ts`)).toContain(
+      "await discoverContext('shipping', new URL('../contexts/shipping/', import.meta.url))",
+    );
+
+    cli(root, 'platform-folders');
+
+    const composition = read(root, `${PLATFORM}/composition/compose-application.ts`);
+
+    expect(composition).toContain(discovered);
+    expect(composition).toContain("new URL('../../contexts/shipping/', import.meta.url)");
+
+    expect(sources(root)[`${PLATFORM}/composition/lay-foundations.ts`]).toBe(
+      expected[`${PLATFORM}/composition/lay-foundations.ts`],
+    );
   });
 
   it('shows what it would move with --dry-run, and moves nothing', () => {
