@@ -173,9 +173,10 @@ stop at the first answer that changes the model (the guide
 | an `isAdmin` flag on an entity deciding access | roles or relations in the authorizer |
 | `if (actor.roles.includes('staff'))` removing a field from an answer | `withFieldAccess` on the response schema |
 | authorization in a repository | tenant scoping only there; rights in the application |
+| a search permission given to every signed-in person to get it past the bus | a requirement on an enclosing resource; the signed-in grant would make the scope `all` (`authz/scope-narrows`) |
 
 Finish with
-`npx ddd-ts-kit check --rule authz/declared --rule authz/in-application --rule authz/actor-explicit --rule authz/fields-by-schema --rule authz/policy-asked --rule authz/granted`.
+`npx ddd-ts-kit check --rule authz/declared --rule authz/in-application --rule authz/actor-explicit --rule authz/fields-by-schema --rule authz/policy-asked --rule authz/granted --rule authz/scope-narrows`.
 Every decision, denials included, is recorded by the audit trail (skill
 `ddd-ts-kit:cross-cutting`), the refusals of the guards at the edge too (`onGuardRefusal` of the
 HTTP boundary, wired to `auditGuardRefusals`).

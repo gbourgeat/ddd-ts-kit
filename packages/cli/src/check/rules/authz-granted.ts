@@ -1,5 +1,6 @@
 import { isGranted } from '../authz/is-granted.js';
 import { permissionSets } from '../authz/permission-sets.js';
+import { signedInGrants } from '../authz/signed-in-grants.js';
 import type { Finding } from '../model/finding.js';
 import type { Project } from '../model/project.js';
 import type { Rule } from '../model/rule.js';
@@ -39,11 +40,10 @@ export const authzGranted: Rule = {
 
 /** The roles of the platform, and what every signed-in person holds when a context preset wrote it. */
 function grantFiles(project: Project): { roles: SourceFile | undefined; signedIn: SourceFile[] } {
-  const auth = `${project.config.platformDir}/auth`;
-  const at = (name: string): SourceFile | undefined => project.files.find((file) => file.path === `${auth}/${name}`);
-  const signedIn = at('signed-in-grants.ts');
+  const roles = project.files.find((file) => file.path === `${project.config.platformDir}/auth/roles.ts`);
+  const signedIn = signedInGrants(project);
 
-  return { roles: at('roles.ts'), signedIn: signedIn === undefined ? [] : [signedIn] };
+  return { roles, signedIn: signedIn === undefined ? [] : [signedIn] };
 }
 
 function ungranted(file: SourceFile, grants: readonly SourceFile[]): Finding[] {
