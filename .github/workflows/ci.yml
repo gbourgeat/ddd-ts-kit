@@ -19,7 +19,7 @@ permissions:
 jobs:
   install:
     name: Install and build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 10
     outputs:
       scope: ${{ steps.affected.outputs.scope }}
@@ -43,7 +43,7 @@ jobs:
   typecheck:
     name: Typecheck
     needs: install
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -55,7 +55,7 @@ jobs:
   lint:
     name: Lint
     needs: install
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -68,7 +68,7 @@ jobs:
   architecture:
     name: Architecture
     needs: install
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -81,7 +81,7 @@ jobs:
   deadcode:
     name: Dead code
     needs: install
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -92,7 +92,7 @@ jobs:
 
   docs:
     name: Docs
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -112,7 +112,7 @@ jobs:
   unit:
     name: Unit tests (Node 24, coverage floors)
     needs: install
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -141,7 +141,7 @@ jobs:
     # `!cancelled()` keeps a failed integration job from skipping the unit report.
     if: ${{ !cancelled() && github.event_name != 'pull_request' && needs.install.outputs.scope == 'all' && needs.unit.result == 'success' }}
     needs: [install, unit, integration]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -175,7 +175,7 @@ jobs:
   unit-oldest:
     name: Unit tests (Node 22)
     needs: install
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -195,7 +195,7 @@ jobs:
     needs: install
     # The runs that integrate every package: left out when nothing but documents they do not read changed.
     if: ${{ needs.install.outputs.integrated == 'true' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 25
     strategy:
       fail-fast: false
@@ -214,7 +214,7 @@ jobs:
   integration:
     name: Integration tests
     needs: install
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 20
     env:
       DDD_TS_KIT_TEST_DATABASE_URL: postgres://app:app@localhost:5432/app
@@ -290,7 +290,7 @@ jobs:
     needs: install
     # The runs that integrate every package: left out when nothing but documents they do not read changed.
     if: ${{ needs.install.outputs.integrated == 'true' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 30
     strategy:
       fail-fast: false
@@ -309,7 +309,7 @@ jobs:
     needs: install
     # The runs that integrate every package: left out when nothing but documents they do not read changed.
     if: ${{ needs.install.outputs.integrated == 'true' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 30
     strategy:
       fail-fast: false
@@ -332,7 +332,7 @@ jobs:
     needs: install
     # The runs that integrate every package: left out when nothing but documents they do not read changed.
     if: ${{ needs.install.outputs.integrated == 'true' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -363,7 +363,7 @@ jobs:
     needs: install
     # The runs that integrate every package: left out when nothing but documents they do not read changed.
     if: ${{ needs.install.outputs.integrated == 'true' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -375,7 +375,7 @@ jobs:
   security:
     name: Security
     needs: install
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -399,7 +399,7 @@ jobs:
   package:
     name: Packages
     needs: install
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -412,7 +412,7 @@ jobs:
   site:
     name: Documentation website
     needs: install
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -447,7 +447,7 @@ jobs:
     name: gate
     if: ${{ always() }}
     needs: [install, typecheck, lint, architecture, deadcode, docs, site, unit, unit-oldest, alias, integration, e2e, managers, example, conformance, security, package]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 5
     steps:
       - name: Every gate passed
