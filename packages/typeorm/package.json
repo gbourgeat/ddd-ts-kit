@@ -49,7 +49,7 @@
     "@ddd-ts-kit/testing": "0.83.1",
     "pg": "^8.23.1",
     "@types/pg": "^8.23.1",
-    "@electric-sql/pglite": "0.5.9",
-    "@electric-sql/pglite-socket": "0.2.12"
+    "@electric-sql/pglite": "0.5.10",
+    "@electric-sql/pglite-socket": "0.2.13"
   }
 }
