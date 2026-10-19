@@ -31,15 +31,16 @@ export function openApiProblems(value: unknown, contexts: readonly string[]): Co
       : [
           {
             key: 'format',
-            message: `"openapi.format" is ${JSON.stringify(format)}: the contracts are written in YAML.`,
+            message: `"openapi.format" is ${JSON.stringify(format)}, a format the contracts are not written in.`,
             fix: `Use one of: ${OPENAPI_FORMATS.join(', ')}.`,
           },
         ]),
-    ...(documents === undefined ? [] : documentProblems(documents, contexts)),
+    ...(documents === undefined ? [] : documentProblems(documents, contexts, format === 'json' ? 'json' : 'yaml')),
   ];
 }
 
-function documentProblems(documents: unknown, contexts: readonly string[]): CommitLimitProblem[] {
+/** `extension` is the one of the contract files, `yaml` unless the config asks for JSON. */
+function documentProblems(documents: unknown, contexts: readonly string[], extension: string): CommitLimitProblem[] {
   if (!Array.isArray(documents)) {
     return [
       {
@@ -53,19 +54,19 @@ function documentProblems(documents: unknown, contexts: readonly string[]): Comm
   const names = documents.map((entry) => (isRecord(entry) ? entry['name'] : undefined));
 
   return documents.flatMap((entry, index) => [
-    ...nameProblems(names, index),
+    ...nameProblems(names, index, extension),
     ...(isRecord(entry) ? criteriaProblems(entry, contexts) : []),
   ]);
 }
 
-function nameProblems(names: readonly unknown[], index: number): CommitLimitProblem[] {
+function nameProblems(names: readonly unknown[], index: number, extension: string): CommitLimitProblem[] {
   const name = names[index];
 
   if (typeof name !== 'string' || !FILE_NAME.test(name)) {
     return [
       {
         key: 'documents',
-        message: `The document ${index + 1} of "openapi.documents" has the name ${JSON.stringify(name)}: it names its file, openapi/<name>.yaml.`,
+        message: `The document ${index + 1} of "openapi.documents" has the name ${JSON.stringify(name)}: it names its file, openapi/<name>.${extension}.`,
         fix: 'Give it a name in lower-case kebab-case: "public", "back-office".',
       },
     ];
