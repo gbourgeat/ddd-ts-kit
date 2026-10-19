@@ -1,5 +1,5 @@
 [English](commit-plan.md) · **Français**
-<!-- translation-of: commit-plan.md sha256:0a9add5962cfc522 -->
+<!-- translation-of: commit-plan.md sha256:c5dc56588f9ab88e -->
 
 # Plan des *commits*
 
@@ -177,30 +177,30 @@ examples/scheduling/docs/architecture/contexts.md
 
 ```text
 examples/scheduling/docs/adr/0001-combine-token-roles-with-relationships-in-one-authorizer.md
-examples/scheduling/src/platform/auth/access-policies.ts
-examples/scheduling/src/platform/auth/authorization.ts
-examples/scheduling/src/platform/auth/create-authenticator.ts
-examples/scheduling/src/platform/auth/create-authorizer.ts
-examples/scheduling/src/platform/auth/create-relation-tuple-tables.ts
-examples/scheduling/src/platform/auth/create-tuple-store.ts
-examples/scheduling/src/platform/auth/http-boundary.ts
-examples/scheduling/src/platform/auth/knex-relation-tuple-store.contract.spec.ts
-examples/scheduling/src/platform/auth/knex-relation-tuple-store.spec.ts
-examples/scheduling/src/platform/auth/knex-relation-tuple-store.ts
-examples/scheduling/src/platform/auth/offline-authenticator.ts
-examples/scheduling/src/platform/auth/permission-mapping.ts
-examples/scheduling/src/platform/auth/permissions.ts
-examples/scheduling/src/platform/auth/principal-of.ts
-examples/scheduling/src/platform/auth/relate-system-actors.ts
-examples/scheduling/src/platform/auth/relation-tuples-table.ts
-examples/scheduling/src/platform/auth/relationship-schema.ts
-examples/scheduling/src/platform/auth/resource-of.ts
-examples/scheduling/src/platform/auth/resource-permissions.ts
-examples/scheduling/src/platform/auth/role-grant.ts
-examples/scheduling/src/platform/auth/role-grants.ts
-examples/scheduling/src/platform/auth/roles-and-relationships.authorizer.spec.ts
-examples/scheduling/src/platform/auth/roles-and-relationships.authorizer.ts
-examples/scheduling/src/platform/auth/security-schemes.ts
+examples/scheduling/src/platform/auth/authorization/access-policies.ts
+examples/scheduling/src/platform/auth/authorization/authorization.ts
+examples/scheduling/src/platform/auth/authentication/create-authenticator.ts
+examples/scheduling/src/platform/auth/authorization/create-authorizer.ts
+examples/scheduling/src/platform/auth/relationships/create-relation-tuple-tables.ts
+examples/scheduling/src/platform/auth/relationships/create-tuple-store.ts
+examples/scheduling/src/platform/auth/authentication/http-boundary.ts
+examples/scheduling/src/platform/auth/relationships/knex-relation-tuple-store.contract.spec.ts
+examples/scheduling/src/platform/auth/relationships/knex-relation-tuple-store.spec.ts
+examples/scheduling/src/platform/auth/relationships/knex-relation-tuple-store.ts
+examples/scheduling/src/platform/auth/authentication/offline-authenticator.ts
+examples/scheduling/src/platform/auth/relationships/permission-mapping.ts
+examples/scheduling/src/platform/auth/authorization/permissions.ts
+examples/scheduling/src/platform/auth/authentication/principal-of.ts
+examples/scheduling/src/platform/auth/relationships/relate-system-actors.ts
+examples/scheduling/src/platform/auth/relationships/relation-tuples-table.ts
+examples/scheduling/src/platform/auth/relationships/relationship-schema.ts
+examples/scheduling/src/platform/auth/relationships/resource-of.ts
+examples/scheduling/src/platform/auth/relationships/resource-permissions.ts
+examples/scheduling/src/platform/auth/authorization/role-grant.ts
+examples/scheduling/src/platform/auth/authorization/role-grants.ts
+examples/scheduling/src/platform/auth/authorization/roles-and-relationships.authorizer.spec.ts
+examples/scheduling/src/platform/auth/authorization/roles-and-relationships.authorizer.ts
+examples/scheduling/src/platform/auth/authentication/security-schemes.ts
 examples/scheduling/src/platform/buses/read-only-impersonation.spec.ts
 examples/scheduling/src/platform/buses/read-only-impersonation.ts
 ```

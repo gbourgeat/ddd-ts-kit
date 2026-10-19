@@ -7,8 +7,8 @@ import { source } from './source.js';
 
 const { BILLING, QUERY_HANDLER, QUERY_HANDLER_SPEC } = PATHS;
 const PERMISSIONS = `${BILLING}/application/authorization/billing.permissions.ts`;
-const SIGNED_IN = 'src/platform/auth/signed-in-grants.ts';
-const AUTHORIZER = 'src/platform/auth/create-authorizer.ts';
+const SIGNED_IN = 'src/platform/auth/authorization/signed-in-grants.ts';
+const AUTHORIZER = 'src/platform/auth/authorization/create-authorizer.ts';
 
 const DECLARED = source(
   "import { definePermissions } from '@ddd-ts-kit/auth';",

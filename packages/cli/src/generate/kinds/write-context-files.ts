@@ -8,6 +8,7 @@ import { wiringFamily } from '../wiring-family.js';
 import type { ContextPlan } from './context-plan.js';
 import { planVars } from './plan-vars.js';
 import { wireContext } from './wire-context.js';
+import { authFileIn } from '../../platform-auth/index.js';
 
 /** The files of a new context, the document first: the language is defined before the code that speaks it. */
 export function writeContextFiles(ws: Workspace, plan: ContextPlan): void {
@@ -48,7 +49,7 @@ function writeAssembly(ws: Workspace, { config, context }: ContextPlan, vars: Re
  * permission (relationships, a custom adapter) read them from the registry of the platform.
  */
 function registerPermissions(ws: Workspace, { config, context }: ContextPlan, vars: RenderContext): void {
-  const registry = `${config.platformDir}/auth/permissions.ts`;
+  const registry = authFileIn(config, 'permissions.ts', (path) => ws.exists(path));
 
   if (!ws.exists(registry)) {
     return;

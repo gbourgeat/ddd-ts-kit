@@ -96,7 +96,7 @@ describe('init --storage', () => {
       'mountExpress(app, served.fileRoutes, served.boundary);',
     );
 
-    expect(read(root, 'src/platform/auth/http-boundary.ts')).toContain('uploads: multipartUploads(),');
+    expect(read(root, 'src/platform/auth/authentication/http-boundary.ts')).toContain('uploads: multipartUploads(),');
     expect(read(root, 'src/platform/buses/create-command-bus.ts')).toContain('.use(stagingUploads(resolve))');
     expect(read(root, '.gitignore')).toContain('.data/');
     expect(read(root, 'package.json')).toContain('"busboy"');

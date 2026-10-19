@@ -24,7 +24,7 @@ import type { IntegrationEventPublisher, IntegrationEventSubscriber, Logger } fr
 import { auditModule } from '{{alias.platform}}/audit/audit.module{{alias.ext}}';
 {{/if}}
 {{#if http.any}}
-import { httpBoundary, type HttpBoundary } from '{{alias.platform}}/auth/http-boundary{{alias.ext}}';
+import { httpBoundary, type HttpBoundary } from '{{alias.platform}}/auth/authentication/http-boundary{{alias.ext}}';
 {{/if}}
 {{#if presentation.any}}
 import { presentationOf } from '{{alias.platform}}/http/presentation-of{{alias.ext}}';
@@ -33,7 +33,7 @@ import { presentationOf } from '{{alias.platform}}/http/presentation-of{{alias.e
 import { withForms } from '{{alias.platform}}/http/with-forms{{alias.ext}}';
 {{/if}}
 {{#if authz.rebac}}
-import { relateSystemActors } from '{{alias.platform}}/auth/relate-system-actors{{alias.ext}}';
+import { relateSystemActors } from '{{alias.platform}}/auth/relationships/relate-system-actors{{alias.ext}}';
 {{/if}}
 import { createPlatform, type PlatformOptions } from '{{alias.platform}}/create-platform{{alias.ext}}';
 import type { Persistence } from '{{alias.platform}}/database/persistence{{alias.ext}}';

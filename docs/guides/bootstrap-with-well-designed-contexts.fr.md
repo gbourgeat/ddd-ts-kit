@@ -1,5 +1,5 @@
 [English](bootstrap-with-well-designed-contexts.md) · **Français**
-<!-- translation-of: bootstrap-with-well-designed-contexts.md sha256:f03c127d93b59e57 -->
+<!-- translation-of: bootstrap-with-well-designed-contexts.md sha256:a7bf18dd37904d3e -->
 
 # Démarrer avec des contextes bien conçus
 
@@ -108,7 +108,7 @@ plusieurs variantes à la suite quand un fichier dépend de plusieurs clés :
 
 Chaque cas d'usage exige une permission d'`identityPermissions`, et chaque personne connectée les
 détient quoi que dise `--authz` : le *preset* écrit l'attribution `'identity:*'` dans
-`platform/auth/signed-in-grants.ts` et enveloppe le modèle de `createAuthorizer` dans
+`platform/auth/authorization/signed-in-grants.ts` et enveloppe le modèle de `createAuthorizer` dans
 `SignedInGrantsAuthorizer` de `@ddd-ts-kit/auth`, qui répond à ces attributions avant le modèle.
 Les systèmes, les services et les appelants anonymes n'en reçoivent rien. À l'intérieur d'une
 organisation, ce sont les politiques du contexte qui décident, sur les droits que l'acteur y

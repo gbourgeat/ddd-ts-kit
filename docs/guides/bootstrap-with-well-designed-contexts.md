@@ -103,7 +103,7 @@ a change of the model.
 
 Every use case requires a permission of `identityPermissions`, and every signed-in person holds
 them whatever `--authz` says: the preset writes the grant `'identity:*'` into
-`platform/auth/signed-in-grants.ts` and wraps the model of `createAuthorizer` in
+`platform/auth/authorization/signed-in-grants.ts` and wraps the model of `createAuthorizer` in
 `SignedInGrantsAuthorizer` of `@ddd-ts-kit/auth`, which answers those grants before the model.
 Systems, services and anonymous callers get nothing from it. Inside an organisation, the
 policies of the context decide, on the rights the actor holds there. So the same files serve:

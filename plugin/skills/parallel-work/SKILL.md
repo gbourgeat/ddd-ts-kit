@@ -253,7 +253,7 @@ confirm. `status --workers` shows, per worker, where it landed, what is ahead an
 what `merge-trunk` would leave conflicted now. Never resolve by taking the trunk's side of a
 whole file.
 
-A worker never grants a permission to a role: the roles live in `src/platform/auth/`. When
+A worker never grants a permission to a role: the roles live in `src/platform/auth/roles/`. When
 its report says who holds a new permission, grant it on the trunk in `roles.ts` (by the entry
 of the set) as you merge its branch, before `npm run verify`: `authz/granted` warns until then.
 

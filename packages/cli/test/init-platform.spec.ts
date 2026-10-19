@@ -17,9 +17,9 @@ const SHARED: readonly Export[] = [
   ['events/in-process-events.ts', 'export function inProcessEvents('],
   ['events/start-outbox-relay.ts', 'export function startOutboxRelay('],
   ['http/start-http-server.ts', 'export async function startHttpServer('],
-  ['auth/create-authenticator.ts', 'export function createAuthenticator('],
-  ['auth/create-authorizer.ts', 'export function createAuthorizer('],
-  ['auth/http-boundary.ts', 'export function httpBoundary('],
+  ['auth/authentication/create-authenticator.ts', 'export function createAuthenticator('],
+  ['auth/authorization/create-authorizer.ts', 'export function createAuthorizer('],
+  ['auth/authentication/http-boundary.ts', 'export function httpBoundary('],
   ['database/persistence.ts', 'export interface Persistence'],
   ['database/open-persistence.ts', 'export function openPersistence('],
   ['database/open-test-database.ts', 'export function openTestDatabase('],
@@ -34,7 +34,7 @@ const TSYRINGE: readonly Export[] = [
   ['lay-foundations.ts', 'export function layFoundations('],
   ['buses/create-command-bus.ts', 'export function createCommandBus('],
   ['buses/create-query-bus.ts', 'export function createQueryBus('],
-  ['auth/authorization.ts', 'export function authorization('],
+  ['auth/authorization/authorization.ts', 'export function authorization('],
   ['database/database.ts', 'export abstract class Database extends DrizzleContext<PgQueryResultHKT> {}'],
 ];
 
@@ -46,7 +46,7 @@ const MANUAL: readonly Export[] = [
     'export function createPlatform(persistence: Persistence, options: PlatformOptions): Platform',
   ],
   ['jobs/configured-job-scheduler.ts', 'export class ConfiguredJobScheduler implements JobScheduler'],
-  ['auth/use-case-protection.ts', 'export class UseCaseProtection'],
+  ['auth/authorization/use-case-protection.ts', 'export class UseCaseProtection'],
 ];
 
 const GONE = [

@@ -426,7 +426,7 @@ one. To name the literals: set `"literals": "named"` under `stack` and run `npx 
 ESLint. Each value is reported with what to write instead (`billingPermissions['invoice.cancel']`,
 imported from the permissions file of the context); a closed list of your own becomes a
 vocabulary with `npx ddd-ts-kit generate vocabulary <context> <Name> --value ..`, and the roles
-an object `Role` in `<platformDir>/auth/role.ts` written the same way. A number of the model
+an object `Role` in `<platformDir>/auth/authorization/role.ts` written the same way. A number of the model
 becomes a constant of the module or a `static readonly`. Until it is done, a rule can stay at
 `warn` under `rules`, recorded in `deviations`.
 

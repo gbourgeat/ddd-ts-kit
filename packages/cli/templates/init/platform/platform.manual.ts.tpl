@@ -27,7 +27,7 @@ import type {
 {{#if audit.on}}
 import type { Audit } from '{{alias.platform}}/audit/create-audit{{alias.ext}}';
 {{/if}}
-import type { UseCaseProtection } from '{{alias.platform}}/auth/use-case-protection{{alias.ext}}';
+import type { UseCaseProtection } from '{{alias.platform}}/auth/authorization/use-case-protection{{alias.ext}}';
 import type { Persistence } from '{{alias.platform}}/database/persistence{{alias.ext}}';
 {{#if files.any}}
 import type { Files } from '{{alias.platform}}/files/create-files{{alias.ext}}';

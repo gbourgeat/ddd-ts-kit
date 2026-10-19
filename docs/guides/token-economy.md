@@ -103,8 +103,8 @@ answers, abbreviated (`todos` repeats each place of `next` with the decision to 
     "src/contexts/ordering/test/unit/place-order.handler.spec.ts"
   ],
   "updated": [
-    "src/platform/auth/role.ts",
-    "src/platform/auth/roles.ts",
+    "src/platform/auth/authorization/role.ts",
+    "src/platform/auth/roles/roles.ts",
     "src/contexts/ordering/ordering.declarations.ts",
     "src/contexts/ordering/CONTEXT.md"
   ],
@@ -113,7 +113,7 @@ answers, abbreviated (`todos` repeats each place of `next` with the decision to 
     "src/contexts/ordering/application/commands/place-order/place-order.command.ts:7",
     "src/contexts/ordering/application/commands/place-order/place-order.handler.ts:16",
     "src/contexts/ordering/test/unit/place-order.handler.spec.ts:38",
-    "src/platform/auth/roles.ts:15"
+    "src/platform/auth/roles/roles.ts:15"
   ]
 }
 ```

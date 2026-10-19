@@ -19,6 +19,7 @@ import { initCommand } from './commands/init.js';
 import { listCommand } from './commands/list.js';
 import { mergeTrunkCommand } from './commands/merge-trunk.js';
 import { planWavesCommand } from './commands/plan-waves.js';
+import { platformFoldersCommand } from './commands/platform-folders.js';
 import { sdkCommand } from './commands/sdk.js';
 import { statusCommand } from './commands/status.js';
 import { storyCheckCommand } from './commands/story-check.js';
@@ -66,6 +67,7 @@ const COMMANDS: Readonly<Record<string, Command>> = {
   'drizzle-generate': drizzleGenerateCommand,
   'error-factories': errorFactoriesCommand,
   'value-objects': valueObjectsCommand,
+  'platform-folders': platformFoldersCommand,
   controllers: controllersCommand,
   check: checksCommand,
   'check-file': checkFileCommand,

@@ -70,7 +70,7 @@ npx ddd-ts-kit generate route <ctx> <UseCase> --method POST --path /<resource> -
 ```
 
 Decide who holds the permission before you generate: in a project whose rights are roles
-(`stack.authz` `rbac`), `--grant <role>` writes the grant in `platform/auth/roles.ts` and adds
+(`stack.authz` `rbac`), `--grant <role>` writes the grant in `platform/auth/roles/roles.ts` and adds
 the role to `role.ts` when it is new. Without it, only the super-admin `*` reaches the use case,
 every other person is refused at run time, and `check` warns (`authz/granted`). Who holds it is
 a business decision: ask the user when the slice does not say. Under attributes or

@@ -48,14 +48,14 @@ describe('the names a design cites', () => {
       names(
         [
           '`src/contexts/billing/application/ports/refund-basis-reader.port.ts`, `application/services/refund-basis.service.ts`,',
-          '`src/platform/auth/roles.ts`, `application/ports/`, `docs/architecture/slices.md`, `test/e2e/refund.e2e.spec.ts`,',
+          '`src/platform/auth/roles/roles.ts`, `application/ports/`, `docs/architecture/slices.md`, `test/e2e/refund.e2e.spec.ts`,',
           '`application/projections/<name>.projection.ts`, `CONTEXT.md`, `README.md`',
         ].join('\n'),
       ),
     ).toEqual([
       '1 path src/contexts/billing/application/ports/refund-basis-reader.port.ts',
       '1 path application/services/refund-basis.service.ts',
-      '2 path src/platform/auth/roles.ts',
+      '2 path src/platform/auth/roles/roles.ts',
       '2 path application/ports/',
     ]);
   });

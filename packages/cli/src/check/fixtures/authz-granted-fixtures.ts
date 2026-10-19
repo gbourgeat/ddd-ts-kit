@@ -8,9 +8,9 @@ import { source } from './source.js';
 
 const { BILLING } = PATHS;
 const PERMISSIONS = `${BILLING}/application/authorization/billing.permissions.ts`;
-const ROLES = 'src/platform/auth/roles.ts';
-const ROLE = 'src/platform/auth/role.ts';
-const SIGNED_IN = 'src/platform/auth/signed-in-grants.ts';
+const ROLES = 'src/platform/auth/roles/roles.ts';
+const ROLE = 'src/platform/auth/authorization/role.ts';
+const SIGNED_IN = 'src/platform/auth/authorization/signed-in-grants.ts';
 
 const DECLARED = source(
   "import { definePermissions } from '@ddd-ts-kit/auth';",
@@ -97,7 +97,7 @@ function roles(...grants: readonly string[]): string {
   return source(
     "import type { Grant } from '@ddd-ts-kit/auth';",
     "import { billingPermissions } from '@/contexts/billing/application/authorization/billing.permissions.js';",
-    "import { Role } from '@/platform/auth/role.js';",
+    "import { Role } from '@/platform/auth/authorization/role.js';",
     '',
     'export const roles: Readonly<Record<string, readonly Grant[]>> = {',
     "  [Role.Admin]: ['*'],",

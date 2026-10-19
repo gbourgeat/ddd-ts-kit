@@ -28,7 +28,7 @@ describe('the presentation of a new project', () => {
 
     expect(read(root, 'src/platform/http/with-forms.ts')).toContain('formRoutes(routes, { fieldAccess })');
 
-    expect(read(root, 'src/platform/auth/http-boundary.ts')).toContain(
+    expect(read(root, 'src/platform/auth/authentication/http-boundary.ts')).toContain(
       'export interface HttpBoundary extends Presentation {',
     );
 
@@ -123,7 +123,7 @@ describe('a project initialised before representations and forms', () => {
     expect(cli(root, 'init', '--force').code).toBe(0);
     expect(jsonAt(readJson(root, 'ddd-ts-kit.config.json'), 'stack', 'representations')).toBe('json');
     expect(jsonAt(readJson(root, 'ddd-ts-kit.config.json'), 'stack', 'forms')).toBe('off');
-    expect(read(root, 'src/platform/auth/http-boundary.ts')).not.toContain('Presentation');
+    expect(read(root, 'src/platform/auth/authentication/http-boundary.ts')).not.toContain('Presentation');
     expect(read(root, 'scripts/openapi.ts')).not.toContain('formDocumentsOf');
   });
 

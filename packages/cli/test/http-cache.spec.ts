@@ -34,8 +34,11 @@ describe('init --http-cache', () => {
 
     expect(read(root, 'src/platform/config/load-config.ts')).toContain('...readVarnish(env, problems),');
 
-    expect(read(root, 'src/platform/auth/http-boundary.ts')).toContain('cacheTags: { header: CacheTagHeader.xkey },');
-    expect(read(root, 'src/platform/auth/http-boundary.ts')).not.toContain('resolveTenant');
+    expect(read(root, 'src/platform/auth/authentication/http-boundary.ts')).toContain(
+      'cacheTags: { header: CacheTagHeader.xkey },',
+    );
+
+    expect(read(root, 'src/platform/auth/authentication/http-boundary.ts')).not.toContain('resolveTenant');
 
     expect(read(root, 'src/main.ts').replace(/\s+/g, ' ')).toContain(
       'publisher: new PurgingPublisher( new VarnishCachePurger({ url: config.varnishUrl, key: config.varnishPurgeKey }), application.eventBus, ),',
@@ -77,7 +80,7 @@ describe('init --http-cache', () => {
     const shared = initProject('--http-cache', 'varnish', '--tenancy', 'shared-table');
     const single = initProject('--http-cache', 'varnish');
 
-    expect(read(shared, 'src/platform/auth/http-boundary.ts')).toContain(
+    expect(read(shared, 'src/platform/auth/authentication/http-boundary.ts')).toContain(
       'cacheTags: { header: CacheTagHeader.xkey, perTenant: true },\n    resolveTenant: tenantFromHeader(),',
     );
 
@@ -96,7 +99,9 @@ describe('init --http-cache', () => {
       'cacheInvalidation: new PublishedCacheInvalidation({ publisher, ids, clock, scope, perTenant: true }),',
     );
 
-    expect(read(byHand, 'src/platform/auth/http-boundary.ts')).toContain('resolveTenant: tenantFromHeader(),');
+    expect(read(byHand, 'src/platform/auth/authentication/http-boundary.ts')).toContain(
+      'resolveTenant: tenantFromHeader(),',
+    );
 
     expect(read(nest, 'src/platform/create-platform.ts')).toContain(
       'return { ...events, cacheInvalidation: new PublishedCacheInvalidation({ publisher, ids, clock, scope }) };',

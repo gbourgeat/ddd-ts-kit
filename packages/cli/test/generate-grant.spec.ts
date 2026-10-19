@@ -6,8 +6,8 @@ import { cli, read, write } from './helpers.js';
 import { failure, report } from './reports.js';
 import { initProject } from './support/init-project.js';
 
-const ROLES = 'src/platform/auth/roles.ts';
-const ROLE = 'src/platform/auth/role.ts';
+const ROLES = 'src/platform/auth/roles/roles.ts';
+const ROLE = 'src/platform/auth/authorization/role.ts';
 
 function command(root: string, name: string, ...flags: readonly string[]) {
   return cli(root, 'generate', 'command', 'billing', name, '--allow-name', ...flags, '--json');
@@ -135,7 +135,7 @@ describe('generate --grant <role> on roles written by hand', () => {
 
     expect(
       failure(command(root, 'IssueInvoice', '--permission', 'invoice.issue', '--grant', 'accountant')).message,
-    ).toBe('--grant writes in src/platform/auth/roles.ts, which this project does not have.');
+    ).toBe('--grant writes in src/platform/auth/roles/roles.ts, which this project does not have.');
 
     const generated = report(command(root, 'IssueInvoice', '--permission', 'invoice.issue'));
 
@@ -150,7 +150,7 @@ describe('generate --grant <role> on roles written by hand', () => {
     const refused = failure(command(root, 'IssueInvoice', '--permission', 'invoice.issue', '--grant', 'accountant'));
 
     expect(refused.message).toBe(
-      'src/platform/auth/roles.ts holds no `export const roles = { ... }` the generator can read.',
+      'src/platform/auth/roles/roles.ts holds no `export const roles = { ... }` the generator can read.',
     );
 
     expect(refused.fix).toContain("Grant billingPermissions['invoice.issue'] to the role accountant by hand");
@@ -210,7 +210,7 @@ describe('generate --grant <role> on roles written by hand', () => {
 
     write(
       root,
-      'src/platform/auth/signed-in-grants.ts',
+      'src/platform/auth/authorization/signed-in-grants.ts',
       "import { billingPermissions } from '@/contexts/billing/application/authorization/billing.permissions';\n\nexport const signedInGrants = [billingPermissions['invoice.issue']];\n",
     );
 

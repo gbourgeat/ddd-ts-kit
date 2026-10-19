@@ -1,5 +1,5 @@
 [English](tooling-report.md) · **Français**
-<!-- translation-of: tooling-report.md sha256:c116a178ee9bcf6e -->
+<!-- translation-of: tooling-report.md sha256:ed20a7bbb3748c1a -->
 
 # Rapport sur l'outillage
 
@@ -396,7 +396,7 @@ lecture, au lieu de tenir des chiffres que les événements incrémentent ou rec
 | Consommateurs de chaque événement de rendez-vous | 2 | 1 |
 
 Hors du contexte : trois lignes de moins dans `src/platform/` (`compose-application.ts`,
-`auth/relate-system-actors.ts`, `job-settings.ts`), quatre de moins dans
+`auth/relationships/relate-system-actors.ts`, `job-settings.ts`), quatre de moins dans
 `test/e2e/journey-observability.e2e.spec.ts` (la trace d'une réservation a perdu un
 consommateur). La porte compte 1 282 tests unitaires et d'adaptateurs (1 288 avant) et les
 mêmes 57 de bout en bout. Les 210 lignes de source que le contexte a perdues, en net, étaient la
@@ -1148,7 +1148,7 @@ d'une garde à `onGuardRefusal`, et `auditGuardRefusals` de `@ddd-ts-kit/audit` 
 catégorie `authorization`, action `http:<operationId>`, issue `denied`, le code du refus comme
 raison, et l'acteur, la session et la corrélation de la requête HTTP. Trois fichiers ont changé
 ici, tels qu'`init` les écrit désormais : `audit/create-audit.ts` (le *hook*, à côté de
-`decisions`), `auth/http-boundary.ts` (`refusals` en entrée, `onGuardRefusal` en sortie) et
+`decisions`), `auth/authentication/http-boundary.ts` (`refusals` en entrée, `onGuardRefusal` en sortie) et
 `compose-application.ts` (le *hook* construit à partir de l'`AuditTrail`, de la `Clock` et de
 l'`IdGenerator` liés). `identity-open-practice.e2e.spec.ts` tient désormais que le refus d'une
 personne qui n'est pas administratrice de la plateforme est dans le journal, sous
@@ -1385,7 +1385,7 @@ Ce qui est encore une liste fermée de valeurs dans l'exemple, avec ce qui la ti
 | Catégorie | Nombre | Déclaré dans | Lu comme | État |
 |---|---|---|---|---|
 | Statuts et types du modèle | 7 vocabulaires, 33 valeurs | `domain/vocabularies/*.vocabulary.ts` | `AppointmentStatus.NoShow` | typé, `language/declared-vocabulary` |
-| Rôles du realm | 1 vocabulaire, 3 valeurs | `src/platform/auth/role.ts` | `Role.Admin` | typé, même règle |
+| Rôles du realm | 1 vocabulaire, 3 valeurs | `src/platform/auth/authorization/role.ts` | `Role.Admin` | typé, même règle |
 | Identifiants de permissions | 31 | `definePermissions` de chaque contexte | `schedulingPermissions['appointment.book']` | typé, même règle |
 | Noms des événements du domaine | 22 | `static readonly eventName` de la classe de l'événement | `AppointmentExpired.eventName`, 33 réactions | typé, `events/name-format`, `declarations/role-declared` |
 | Types des événements d'intégration | 14 déclarations | `type` de la déclaration du langage publié | `appointmentExpiredV1.type`, 5 gestionnaires | typé |

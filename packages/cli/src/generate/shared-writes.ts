@@ -11,8 +11,8 @@ export interface SharedWrite {
 const STORAGE = ['the schema index of the platform (<platformDir>/database/schema.ts)', 'prisma/schema.prisma'];
 
 const GRANTS = [
-  'the roles of the platform (<platformDir>/auth/roles.ts)',
-  'the role vocabulary of the platform (<platformDir>/auth/role.ts)',
+  'the roles of the platform (<platformDir>/auth/roles/roles.ts)',
+  'the role vocabulary of the platform (<platformDir>/auth/authorization/role.ts)',
 ];
 
 const GRANTED = '--grant <role> names the role that holds the permission (stack.authz rbac)';
@@ -27,7 +27,7 @@ export const SHARED_WRITES: Readonly<Record<string, SharedWrite>> = {
       'ddd-ts-kit.config.json',
       'the composition root (<platformDir>/compose-application.ts)',
       'test/architecture/extractable.spec.ts',
-      'the permissions registry (<platformDir>/auth/permissions.ts)',
+      'the permissions registry (<platformDir>/auth/authorization/permissions.ts)',
       'the CONTEXT.md of each upstream',
       'docs/context-map.md',
       '.dependency-cruiser.cjs',
@@ -52,13 +52,13 @@ export const SHARED_WRITES: Readonly<Record<string, SharedWrite>> = {
     worker: 'once the project has its first adapter',
   },
   'route-group': {
-    files: ['the role vocabulary of the platform (<platformDir>/auth/role.ts)'],
+    files: ['the role vocabulary of the platform (<platformDir>/auth/authorization/role.ts)'],
     when: '--role names a role the vocabulary does not hold yet',
     worker: 'without --role, or with a role the vocabulary already holds',
   },
   job: { files: ['<platformDir>/job-settings.ts', 'the grant of its system actor (<platformDir>/auth/)'] },
   policy: {
-    files: ['the access policies registry (<platformDir>/auth/access-policies.ts)'],
+    files: ['the access policies registry (<platformDir>/auth/authorization/access-policies.ts)'],
     when: 'stack.style is explicit',
   },
   gateway: {

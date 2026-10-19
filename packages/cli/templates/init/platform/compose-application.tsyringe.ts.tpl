@@ -92,12 +92,12 @@ import { searchAuditEntriesRoute } from '{{alias.platform}}/audit/search-audit-e
 {{#if audit.controller}}
 import { SearchAuditEntriesController } from '{{alias.platform}}/audit/search-audit-entries.controller{{alias.ext}}';
 {{/if}}
-import { authorization } from '{{alias.platform}}/auth/authorization{{alias.ext}}';
+import { authorization } from '{{alias.platform}}/auth/authorization/authorization{{alias.ext}}';
 {{#if routes.mountsControllers}}
-import { securitySchemes } from '{{alias.platform}}/auth/security-schemes{{alias.ext}}';
+import { securitySchemes } from '{{alias.platform}}/auth/authentication/security-schemes{{alias.ext}}';
 {{/if}}
 {{#if http.any}}
-import { httpBoundary, type HttpBoundary } from '{{alias.platform}}/auth/http-boundary{{alias.ext}}';
+import { httpBoundary, type HttpBoundary } from '{{alias.platform}}/auth/authentication/http-boundary{{alias.ext}}';
 {{/if}}
 {{#if presentation.any}}
 import { presentationOf } from '{{alias.platform}}/http/presentation-of{{alias.ext}}';
@@ -106,7 +106,7 @@ import { presentationOf } from '{{alias.platform}}/http/presentation-of{{alias.e
 import { withForms } from '{{alias.platform}}/http/with-forms{{alias.ext}}';
 {{/if}}
 {{#if authz.rebac}}
-import { relateSystemActors } from '{{alias.platform}}/auth/relate-system-actors{{alias.ext}}';
+import { relateSystemActors } from '{{alias.platform}}/auth/relationships/relate-system-actors{{alias.ext}}';
 {{/if}}
 import { createCommandBus } from '{{alias.platform}}/buses/create-command-bus{{alias.ext}}';
 import { createQueryBus } from '{{alias.platform}}/buses/create-query-bus{{alias.ext}}';

@@ -190,7 +190,7 @@ describe('a context generated in the declared style, towards the outside', () =>
       "@Policy(billingPermissions['invoice.cancel'], { name: 'billing.only-issuer-cancels' })\nexport class OnlyIssuerCancelsPolicy {",
     );
 
-    expect(read(root, 'src/platform/auth/access-policies.ts')).not.toContain('OnlyIssuerCancels');
+    expect(read(root, 'src/platform/auth/authorization/access-policies.ts')).not.toContain('OnlyIssuerCancels');
   });
 
   it('keeps in the platform modules the one thing a decorator cannot say: the value a gateway is given, for the application and for the specs', () => {

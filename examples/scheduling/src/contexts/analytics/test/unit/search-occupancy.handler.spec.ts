@@ -5,7 +5,7 @@ import { anActor } from '@ddd-ts-kit/auth/testing';
 import { contextModule, createTestApplication, fake } from '@ddd-ts-kit/di';
 import * as analyticsDeclarations from '@/contexts/analytics/analytics.declarations';
 import { Criteria, offsetPage } from '@ddd-ts-kit/kernel';
-import { createAuthorizer } from '@/platform/auth/create-authorizer';
+import { createAuthorizer } from '@/platform/auth/authorization/create-authorizer';
 import { platformTestModule } from '@/platform/platform-test.module';
 import { OccupancyReader, type Occupancy } from '@/contexts/analytics/application/ports/occupancy-reader.port';
 import { OutcomeRegister, type Outcome } from '@/contexts/analytics/application/ports/outcome-register.port';

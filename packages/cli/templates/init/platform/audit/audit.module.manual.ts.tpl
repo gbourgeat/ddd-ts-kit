@@ -14,7 +14,7 @@ import { searchAuditEntriesRoute } from '{{alias.platform}}/audit/search-audit-e
 {{/if}}
 {{#if audit.controller}}
 import { SearchAuditEntriesController } from '{{alias.platform}}/audit/search-audit-entries.controller{{alias.ext}}';
-import { securitySchemes } from '{{alias.platform}}/auth/security-schemes{{alias.ext}}';
+import { securitySchemes } from '{{alias.platform}}/auth/authentication/security-schemes{{alias.ext}}';
 {{/if}}
 
 interface AuditWiring {

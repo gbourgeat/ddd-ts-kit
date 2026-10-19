@@ -154,6 +154,7 @@ The slice is finished when `todo ordering` no longer lists anything of it.
 | read [CHANGELOG.md](../../CHANGELOG.md), also shipped as `node_modules/ddd-ts-kit/CHANGELOG.md` | what changed and what to do | before upgrading, or when the session start says the plugin describes another version | the steps of the version | update the `@ddd-ts-kit/*` and `ddd-ts-kit` versions together |
 | `npx ddd-ts-kit init --force` | rewrites the files `init` owns, keeps the config, records its version as `initVersion` and wires the contexts again | after the upgrade | the platform and pipeline files of the new version, and notes | `npm run verify` |
 | `npx ddd-ts-kit controllers`, `error-factories --plan` then `--apply`, `value-objects` | moves function routes to controllers, error classes to factories, value objects from a `Result` to factories that throw | when the project adopts those forms | the rewritten files and the config key | `npx ddd-ts-kit docs`, `npm run verify` |
+| `npx ddd-ts-kit platform-folders [--place <file>=<folder>]... [--dry-run]` | moves the files of `src/platform/auth/` a project generated flat to `authentication/`, `authorization/` and the folder of the model, with every import of them | when `doctor` reports `folder src/platform/auth: flat`; the generators and `init --force` keep the flat layout until then | the moved files, the rewritten imports, the files of the team it left flat | `npm run format`, `npm run verify` |
 | `npm run regenerate` | regenerate what derives from the config | after any change of the config | `.dependency-cruiser.cjs`, the generated documents | `npm run verify` |
 
 ## When something is refused
@@ -276,6 +277,7 @@ Usage
   ddd-ts-kit error-factories --plan | --apply [--to named|factories] [--dry-run]
   ddd-ts-kit controllers [<context>] [--dry-run]
   ddd-ts-kit value-objects [--dry-run]
+  ddd-ts-kit platform-folders [--place <file>=<folder>]... [--dry-run]
   ddd-ts-kit affected [--base <git-ref>] [--head <git-ref>] [--format text|json|github|env]
   ddd-ts-kit affected --base <git-ref> --run <script>
   ddd-ts-kit check [paths...] [--rule <id>]... [--format text|json|github|gitlab] [--changed-since <git-ref>] [--explain] [--self]
@@ -320,6 +322,12 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
   value-objects    moves the value objects of a project from a Result to factories that return the value or
                    throw: every create returning Result<T, E> returns T, err(..) is thrown, unwrap(..) of
                    them goes, specs assert expectRefusal(() => ..), "stack.valueObjects" becomes throwing
+  platform-folders takes the files of the platform a project generated flat to their folders: under
+                   auth/, authentication/ (who is calling), authorization/ (what they may do, whatever the
+                   model) and the folder of the model (roles/, attributes/, relationships/, custom/); every
+                   import of them under the source root, test/ and scripts/ follows; a file the kit did not
+                   write stays where it is, named, unless --place <file>=<folder> gives it its folder; the
+                   generators read either layout until then
   controllers      moves the function routes of a project, or of one context, to controller classes: each
                    <name>.route.ts becomes <resource>/<name>/<name>.controller.ts behind the route group of
                    its resource, its schema files and its spec follow; a context is turned whole or not at all

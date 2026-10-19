@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:4e0553c362a45a3d -->
+<!-- translation-of: README.md sha256:ab8effc74cf05f27 -->
 
 # @ddd-ts-kit/sentry
 
@@ -75,7 +75,7 @@ letters) tiennent chacun en une ligne, pour qui les veut.
 `NODE_ENV`), `SENTRY_RELEASE` et `SENTRY_SCRUB_MESSAGES` lus par
 `platform/config/load-config.ts` ; `errors` passé par `main.ts` à `composeApplication`, qui le
 donne à `kernelModule({ errorReporter })` ; `reportHttpErrors` dans
-`platform/auth/http-boundary.ts` ; `DeadLetterReports` dans
+`platform/auth/authentication/http-boundary.ts` ; `DeadLetterReports` dans
 `platform/events/create-event-provider.ts` (le *broker*) et dans
 `platform/events/start-outbox-relay.ts` (une publication déclarée morte).
 

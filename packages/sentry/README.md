@@ -70,7 +70,7 @@ The process handlers and the dead letters are one line each, for who wants them.
 above, with `SENTRY_DSN`, `SENTRY_ENVIRONMENT` (default: `NODE_ENV`), `SENTRY_RELEASE` and
 `SENTRY_SCRUB_MESSAGES` read by `platform/config/load-config.ts`; `errors` handed by `main.ts`
 to `composeApplication`, which gives it to `kernelModule({ errorReporter })`;
-`reportHttpErrors` in `platform/auth/http-boundary.ts`; `DeadLetterReports` in
+`reportHttpErrors` in `platform/auth/authentication/http-boundary.ts`; `DeadLetterReports` in
 `platform/events/create-event-provider.ts` (the broker) and in
 `platform/events/start-outbox-relay.ts` (a publication declared dead).
 

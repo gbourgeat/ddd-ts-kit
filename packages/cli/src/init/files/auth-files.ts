@@ -1,11 +1,12 @@
 import type { Config } from '../../config/index.js';
+import { type AuthFile, authPathOf } from '../../platform-auth/index.js';
 import { familyOf } from './family-of.js';
 import type { InitFile } from './init-file.js';
 import { platformFile } from './platform-file.js';
 import { when } from './when.js';
 
 /** What each authorization model needs next to its adapter of the `Authorizer` port. */
-const AUTHORIZATION_MODEL: Readonly<Record<string, readonly string[]>> = {
+const AUTHORIZATION_MODEL: Readonly<Record<string, readonly AuthFile[]>> = {
   rbac: ['role.ts', 'roles.ts'],
   abac: ['role.ts', 'attribute-policies.ts'],
   rebac: [
@@ -23,7 +24,7 @@ const AUTHORIZATION_MODEL: Readonly<Record<string, readonly string[]>> = {
 /** Who is calling (at the HTTP boundary only) and what they may do (behind one port, whatever the model). */
 export function authFiles(config: Config): InitFile[] {
   const { authz, audit } = config.stack;
-  const file = (name: string, variant?: string): InitFile => platformFile(config, `auth/${name}`, variant);
+  const file = (name: AuthFile, variant?: string): InitFile => platformFile(config, authPathOf(name), variant);
 
   return [
     familyOf(config) === 'tsyringe' ? file('authorization.ts', 'tsyringe') : file('use-case-protection.ts'),
@@ -38,7 +39,7 @@ export function authFiles(config: Config): InitFile[] {
 /** Authentication happens at the HTTP boundary: without one there is nobody to identify. */
 function authenticationFiles(config: Config): InitFile[] {
   const { http, authn } = config.stack;
-  const file = (name: string, variant?: string): InitFile => platformFile(config, `auth/${name}`, variant);
+  const file = (name: AuthFile, variant?: string): InitFile => platformFile(config, authPathOf(name), variant);
   const credential = authn === 'none' ? 'none' : 'tokens';
 
   if (http === 'none') {

@@ -1,5 +1,5 @@
 [English](authorization-in-practice.md) · **Français**
-<!-- translation-of: authorization-in-practice.md sha256:42320c74cf27488b -->
+<!-- translation-of: authorization-in-practice.md sha256:afb2b3a9e2e390d4 -->
 
 # L'autorisation en pratique
 
@@ -139,11 +139,11 @@ droit, `all` quand les *tenants* ne sont pas gérés ou que l'acteur les travers
 `filter: { tenantId }` sur le *tenant* du travail ou le seul *tenant* de l'acteur sinon, et
 `none` pour un acteur de plusieurs *tenants* hors du travail d'un *tenant*.
 
-Dans un projet généré, les rôles vivent dans `platform/auth/roles.ts`, et le
+Dans un projet généré, les rôles vivent dans `platform/auth/roles/roles.ts`, et le
 super-administrateur détient `*`. Une nouvelle permission n'est donc atteinte que par les
 administrateurs tant qu'aucun rôle ne la détient par son nom : `generate
 command|query|file-upload ... --permission <p> --grant <role>` écrit l'attribution (et ajoute
-le rôle à `platform/auth/role.ts` s'il est nouveau), et sans `--grant` les étapes `next` du
+le rôle à `platform/auth/authorization/role.ts` s'il est nouveau), et sans `--grant` les étapes `next` du
 générateur désignent les rôles à modifier.
 [`authz/granted`](../ARCHITECTURE.fr.md#3-règles-de-dépendance) avertit sur une permission que
 seul le `*` nu atteint ; une permission réservée aux administrateurs est accordée à

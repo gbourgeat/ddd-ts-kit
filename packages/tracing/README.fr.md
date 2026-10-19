@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:860413972237a22f -->
+<!-- translation-of: README.md sha256:b8e68665b9006be5 -->
 
 # @ddd-ts-kit/tracing
 
@@ -277,7 +277,7 @@ noyau place autour de chaque liaison, et la portée d'exécution est transmise p
 bien que le *hook* `decorate` n'ajoute rien (envelopper deux fois une instance est sans effet).
 Un projet généré par la CLI n'a aucune des deux lignes : il appelle `traceApplication()` une fois
 dans `src/platform/lay-foundations.ts`, `tracedRoutes()` dans
-`src/platform/auth/http-boundary.ts`, `tracedPublisher(...)` dans
+`src/platform/auth/authentication/http-boundary.ts`, `tracedPublisher(...)` dans
 `src/platform/compose-application.ts`, et `initTracing` dans `src/platform/tracing.ts`. La règle
 `tracing/platform-only` garde ces imports dans le répertoire de la plateforme, `main.ts` et
 `apps/`.

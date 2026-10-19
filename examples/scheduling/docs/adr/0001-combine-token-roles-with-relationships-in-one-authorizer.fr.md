@@ -1,5 +1,5 @@
 [English](0001-combine-token-roles-with-relationships-in-one-authorizer.md) · **Français**
-<!-- translation-of: 0001-combine-token-roles-with-relationships-in-one-authorizer.md sha256:72d97db5695c780e -->
+<!-- translation-of: 0001-combine-token-roles-with-relationships-in-one-authorizer.md sha256:a90080ebcd6de4c6 -->
 
 # ADR-0001 : combiner les rôles du jeton et les relations dans un seul autorisateur
 
@@ -20,7 +20,7 @@ La plateforme lie un seul autorisateur, `RolesAndRelationshipsAuthorizer`, qui r
 
 1. l'acteur anonyme est refusé ;
 2. un acteur système nommé `<context>.<what it does>` peut utiliser les permissions de ce contexte sur la ressource `context:<context>`, sans tuple stocké ;
-3. un rôle du jeton peut accorder la permission, d'après la table `src/platform/auth/role-grants.ts` ; un octroi peut dépendre d'un fait que le cas d'usage énonce dans le `context` de son exigence (`selfService: true` pour un patient qui réserve pour lui-même) ; un acteur système ne détient jamais de rôle ;
+3. un rôle du jeton peut accorder la permission, d'après la table `src/platform/auth/authorization/role-grants.ts` ; un octroi peut dépendre d'un fait que le cas d'usage énonce dans le `context` de son exigence (`selfService: true` pour un patient qui réserve pour lui-même) ; un acteur système ne détient jamais de rôle ;
 4. sinon, les relations décident, par `RelationBasedAuthorizer` sur le schéma de `relationship-schema.ts` et la correspondance de `resource-permissions.ts`.
 
 Pour une liste, seul un octroi marqué `listing: 'all'` et sans condition répond `{ kind: 'all' }` (l'administrateur de la plateforme). Tout autre octroi n'ouvre que le cas d'usage : les relations répondent quels éléments.

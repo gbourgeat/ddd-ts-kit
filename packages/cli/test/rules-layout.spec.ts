@@ -47,8 +47,8 @@ describe('the name of a file', () => {
 
   it('matches the files of onePerFile.allow by path or by glob', () => {
     expect(matchesGlob('src/platform/http-*.ts', 'src/platform/http-server.ts')).toBe(true);
-    expect(matchesGlob('src/platform/*.ts', 'src/platform/auth/roles.ts')).toBe(false);
-    expect(matchesGlob('src/**/roles.ts', 'src/platform/auth/roles.ts')).toBe(true);
+    expect(matchesGlob('src/platform/*.ts', 'src/platform/auth/roles/roles.ts')).toBe(false);
+    expect(matchesGlob('src/**/roles.ts', 'src/platform/auth/roles/roles.ts')).toBe(true);
     expect(matchesGlob('src/**/roles.ts', 'src/roles.ts')).toBe(true);
   });
 });

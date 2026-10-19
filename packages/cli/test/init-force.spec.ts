@@ -72,8 +72,11 @@ describe('init --force on a project that is already initialised', () => {
     expect(config(root, 'stack')).toEqual({ ...before, docsUi: 'scalar', cache: 'redis' });
     expect(Object.keys(Object(config(root, 'contexts')))).toEqual(['billing', 'shipping', 'order-fulfilment']);
     expect(read(root, 'package.json')).toContain('"@ddd-ts-kit/redis"');
+
     // The registry of permissions was rewritten too: the set of each context that has one is listed in it again.
-    expect(read(root, 'src/platform/auth/permissions.ts')).toContain('\n  billingPermissions,\n  shippingPermissions,');
+    expect(read(root, 'src/platform/auth/authorization/permissions.ts')).toContain(
+      '\n  billingPermissions,\n  shippingPermissions,',
+    );
   });
 
   it('refuses a flag the recorded stack cannot take, as it would for a new project, and writes nothing', () => {

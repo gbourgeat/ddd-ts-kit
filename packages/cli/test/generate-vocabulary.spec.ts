@@ -62,12 +62,12 @@ describe('generate vocabulary', () => {
   });
 
   it('gives a new project its roles as a vocabulary, read by the grants and by the guard of a route group', () => {
-    expect(read(root, 'src/platform/auth/role.ts')).toContain(
+    expect(read(root, 'src/platform/auth/authorization/role.ts')).toContain(
       "export const Role = {\n  Admin: 'admin',\n  System: 'system',\n} as const;",
     );
 
-    expect(read(root, 'src/platform/auth/roles.ts')).toContain('[Role.Admin]: [');
-    expect(read(root, 'src/platform/auth/create-authorizer.ts')).toContain('systemRole: Role.System');
+    expect(read(root, 'src/platform/auth/roles/roles.ts')).toContain('[Role.Admin]: [');
+    expect(read(root, 'src/platform/auth/authorization/create-authorizer.ts')).toContain('systemRole: Role.System');
 
     expect(
       cli(root, 'generate', 'route-group', 'billing', 'Ledger', '--prefix', '/ledger', '--role', 'accountant').code,
@@ -77,7 +77,7 @@ describe('generate vocabulary', () => {
       'guards: [HasRole(Role.Accountant)]',
     );
 
-    expect(read(root, 'src/platform/auth/role.ts')).toContain(
+    expect(read(root, 'src/platform/auth/authorization/role.ts')).toContain(
       "  System: 'system',\n  Accountant: 'accountant',\n} as const;",
     );
   });

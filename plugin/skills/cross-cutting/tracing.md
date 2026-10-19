@@ -15,7 +15,7 @@ span. The application is observed from outside, where it is composed. API: READM
   case, per call to a repository, a gateway or an outside adapter, per domain event handler,
   outbox append, publication, consumed event and job. Nothing is wrapped by hand, and no
   class knows it is traced.
-- The HTTP boundary (`src/platform/auth/http-boundary.ts`) takes `around: tracedRoutes()`;
+- The HTTP boundary (`src/platform/auth/authentication/http-boundary.ts`) takes `around: tracedRoutes()`;
   the publisher the outbox relay delivers with is `tracedPublisher(bus)`, so the publication
   and each consumer continue the trace of the command that recorded the event
   (`TRACE_CONSUMERS=link` starts one trace per delivery instead).

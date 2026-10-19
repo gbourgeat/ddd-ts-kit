@@ -1,5 +1,5 @@
 [English](language-declared-vocabulary.md) · **Français**
-<!-- translation-of: language-declared-vocabulary.md sha256:a297ca03357580ce -->
+<!-- translation-of: language-declared-vocabulary.md sha256:38684c24de6c3252 -->
 
 # ddd-ts-kit/language-declared-vocabulary
 
@@ -41,7 +41,7 @@ Un mot signifie une chose dans un contexte, et peut signifier autre chose dans l
 | Déclarée dans | Jugée dans |
 |---|---|
 | un contexte (`domain/vocabularies/` de `billing`) | ce contexte seulement : `issued` dans `catalog` est un autre mot |
-| la plateforme (le `Role` de `<platformDir>/auth/role.ts`) | la plateforme, et les groupes de routes `*.routes.ts` des contextes, où une garde nomme un rôle |
+| la plateforme (le `Role` de `<platformDir>/auth/authorization/role.ts`) | la plateforme, et les groupes de routes `*.routes.ts` des contextes, où une garde nomme un rôle |
 | le noyau partagé | partout |
 | un ensemble de permissions (`definePermissions`) | partout : un identifiant de permission nomme une permission d'un contexte |
 

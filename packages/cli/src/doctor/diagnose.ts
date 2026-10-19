@@ -3,6 +3,7 @@ import path from 'node:path';
 import type { Config } from '../config/index.js';
 import { isRecord } from '../config/values/is-record.js';
 import type { DoctorFinding } from './doctor-finding.js';
+import { folderFindings } from './folder-findings.js';
 import { hookFindings } from './hook-findings.js';
 import { installFindings } from './install-findings.js';
 import { nodeFindings } from './node-findings.js';
@@ -13,7 +14,8 @@ import { submoduleFindings } from './submodule-findings.js';
 
 /**
  * What the project lacks of what this version of the kit writes, the steps an upgrade leaves to do:
- * scripts, packages of the kit, permissions of the agents, then the git hooks of this clone.
+ * scripts, packages of the kit, permissions of the agents, the git hooks of this clone, then the
+ * files of the platform this version gives a folder.
  * Settings the project does not have are not judged: an agent may run elsewhere than Claude Code.
  * Then what this checkout lacks to run it: the Node it asks, its dependencies installed, the
  * packages of the kit at the version of this CLI, its submodules.
@@ -34,6 +36,7 @@ export function diagnose(root: string, config: Config): DoctorFinding[] {
     ...packageFindings(config, declared),
     ...(fs.existsSync(settingsFile) ? permissionFindings(config, readJson(settingsFile)) : []),
     ...hookFindings(root),
+    ...folderFindings(root, config),
     ...nodeFindings(process.versions.node, nodeEngine(manifest), readText(path.join(root, '.nvmrc'))),
     ...installFindings(root, config.stack.packageManager, declared),
     ...submoduleFindings(root),

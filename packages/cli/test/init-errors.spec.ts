@@ -111,11 +111,11 @@ describe('the composition root of a project that reports to Sentry or GlitchTip'
       `return new InMemoryQueryBus()\n    ${use}\n    .use(loggingMiddleware(`,
     );
 
-    expect(platform(root, 'auth/http-boundary.ts')).toContain('  const report = reportHttpErrors(errors);\n');
+    const boundary = platform(root, 'auth/authentication/http-boundary.ts');
 
-    expect(platform(root, 'auth/http-boundary.ts')).toContain(
-      'errorCode: context.problem.code,\n      });\n\n      report(error, context);\n    },',
-    );
+    expect(boundary).toContain('  const report = reportHttpErrors(errors);\n');
+
+    expect(boundary).toContain('errorCode: context.problem.code,\n      });\n\n      report(error, context);\n    },');
   });
 
   it.each([[['--di', 'manual']], [['--http', 'nest']]])(
@@ -154,7 +154,7 @@ describe('the composition root of a project that reports to Sentry or GlitchTip'
   it('reports without an HTTP boundary too: the buses, the jobs and the process remain', () => {
     const root = reported('--http', 'none');
 
-    expect(exists(root, 'src/platform/auth/http-boundary.ts')).toBe(false);
+    expect(exists(root, 'src/platform/auth/authentication/http-boundary.ts')).toBe(false);
     expect(platform(root, 'compose-application.ts')).toContain('{ errorReporter: options.errors }');
     expect(platform(root, 'compose-application.ts')).not.toContain('  ErrorReporter,\n');
 

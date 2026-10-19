@@ -1,5 +1,5 @@
 [English](commands.md) · **Français**
-<!-- translation-of: commands.md sha256:29b87ced272bba70 -->
+<!-- translation-of: commands.md sha256:410681d147a9e950 -->
 
 # Quelle commande, quand
 
@@ -157,6 +157,7 @@ La tranche est finie quand `todo ordering` n'en liste plus rien.
 | lire [CHANGELOG.md](../../CHANGELOG.md), livré aussi en `node_modules/ddd-ts-kit/CHANGELOG.md` | ce qui a changé et ce qu'il faut faire | avant la mise à jour, ou quand le début de session dit que le *plugin* décrit une autre version | les étapes de la version | mettre à jour ensemble les versions de `@ddd-ts-kit/*` et de `ddd-ts-kit` |
 | `npx ddd-ts-kit init --force` | réécrit les fichiers que possède `init`, garde la configuration, y inscrit sa version en `initVersion` et recâble les contextes | après la mise à jour | les fichiers de plateforme et de *pipeline* de la nouvelle version, et des notes | `npm run verify` |
 | `npx ddd-ts-kit controllers`, `error-factories --plan` puis `--apply`, `value-objects` | déplace les routes en fonctions vers des contrôleurs, les classes d'erreur vers des fabriques, les objets-valeurs d'un `Result` vers des fabriques qui lèvent une erreur | quand le projet adopte ces formes | les fichiers réécrits et la clé de configuration | `npx ddd-ts-kit docs`, `npm run verify` |
+| `npx ddd-ts-kit platform-folders [--place <file>=<folder>]... [--dry-run]` | déplace les fichiers de `src/platform/auth/` qu'un projet a générés à plat vers `authentication/`, `authorization/` et le dossier du modèle, avec chaque import qui les nomme | quand `doctor` signale `folder src/platform/auth: flat` ; les générateurs et `init --force` gardent le rangement à plat jusque-là | les fichiers déplacés, les imports réécrits, les fichiers de l'équipe laissés à plat | `npm run format`, `npm run verify` |
 | `npm run regenerate` | régénère ce qui découle de la configuration | après tout changement de la configuration | `.dependency-cruiser.cjs`, les documents générés | `npm run verify` |
 
 ## Quand quelque chose est refusé
@@ -281,6 +282,7 @@ Usage
   ddd-ts-kit error-factories --plan | --apply [--to named|factories] [--dry-run]
   ddd-ts-kit controllers [<context>] [--dry-run]
   ddd-ts-kit value-objects [--dry-run]
+  ddd-ts-kit platform-folders [--place <file>=<folder>]... [--dry-run]
   ddd-ts-kit affected [--base <git-ref>] [--head <git-ref>] [--format text|json|github|env]
   ddd-ts-kit affected --base <git-ref> --run <script>
   ddd-ts-kit check [paths...] [--rule <id>]... [--format text|json|github|gitlab] [--changed-since <git-ref>] [--explain] [--self]
@@ -325,6 +327,12 @@ Every command accepts --json (machine-readable output) and --cwd <dir> (project 
   value-objects    moves the value objects of a project from a Result to factories that return the value or
                    throw: every create returning Result<T, E> returns T, err(..) is thrown, unwrap(..) of
                    them goes, specs assert expectRefusal(() => ..), "stack.valueObjects" becomes throwing
+  platform-folders takes the files of the platform a project generated flat to their folders: under
+                   auth/, authentication/ (who is calling), authorization/ (what they may do, whatever the
+                   model) and the folder of the model (roles/, attributes/, relationships/, custom/); every
+                   import of them under the source root, test/ and scripts/ follows; a file the kit did not
+                   write stays where it is, named, unless --place <file>=<folder> gives it its folder; the
+                   generators read either layout until then
   controllers      moves the function routes of a project, or of one context, to controller classes: each
                    <name>.route.ts becomes <resource>/<name>/<name>.controller.ts behind the route group of
                    its resource, its schema files and its spec follow; a context is turned whole or not at all

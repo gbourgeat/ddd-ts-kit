@@ -40,7 +40,7 @@ const CONTEXTS = ['billing', 'catalog', 'payments'];
 const INVOICE = 'billing:src/contexts/billing/domain/invoice.aggregate.ts';
 const PAYMENT = 'payments:src/contexts/payments/domain/payment.aggregate.ts';
 const PRODUCT = 'catalog:src/contexts/catalog/domain/product.aggregate.ts';
-const PLATFORM = ':src/platform/auth/relation-tuples.ts';
+const PLATFORM = ':src/platform/auth/relationships/relation-tuples.ts';
 const BY_COMMIT: MarkerAttribution = { by: 'commit', rows: ['M1.01'], commit: { sha: '2443af2', trailer: true } };
 
 const closing = (story: string, markers: readonly AttributedMarker[], strict = false) =>
