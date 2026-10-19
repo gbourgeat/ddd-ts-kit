@@ -1,21 +1,20 @@
 import { EventEmitter } from 'node:events';
 import type { Channel, ChannelModel, ConfirmChannel, Connection } from 'amqplib';
 import { IllegalOperation, Unsupported } from './errors.js';
-import type { InMemoryAmqp } from './in-memory-amqp.js';
 import { MemoryChannel } from './memory-channel.js';
 import { SERVER_PROPERTIES } from './messages.js';
-import type { Wire } from './model.js';
+import type { BrokerState, ChannelOwner, Closable, Severable, Wire } from './model.js';
 
 /** A connection to the in-memory broker: its channels close with it. */
-export class MemoryConnection extends EventEmitter implements ChannelModel {
+export class MemoryConnection extends EventEmitter implements ChannelModel, Severable, ChannelOwner {
   readonly connection: Connection = { serverProperties: SERVER_PROPERTIES };
 
-  private readonly channels = new Set<MemoryChannel>();
+  private readonly channels = new Set<Closable>();
 
   private open = true;
 
   constructor(
-    private readonly broker: InMemoryAmqp,
+    private readonly broker: BrokerState,
     private readonly wire: Wire,
   ) {
     super();
@@ -54,7 +53,7 @@ export class MemoryConnection extends EventEmitter implements ChannelModel {
     }
   }
 
-  forget(channel: MemoryChannel): void {
+  forget(channel: Closable): void {
     this.channels.delete(channel);
   }
 

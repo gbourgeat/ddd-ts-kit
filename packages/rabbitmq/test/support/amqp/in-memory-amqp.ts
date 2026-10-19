@@ -2,7 +2,17 @@ import type { ChannelModel } from 'amqplib';
 import { AmqpError } from './errors.js';
 import { InMemoryNetwork } from './in-memory-network.js';
 import { MemoryConnection } from './memory-connection.js';
-import { DEFAULT_EXCHANGE, RELIABLE, type Arguments, type Exchange, type StoredMessage, type Wire } from './model.js';
+import {
+  DEFAULT_EXCHANGE,
+  RELIABLE,
+  type Arguments,
+  type BrokerState,
+  type Exchange,
+  type Opening,
+  type QueueState,
+  type StoredMessage,
+  type Wire,
+} from './model.js';
 import { Queue } from './queue.js';
 import { routes } from './routing.js';
 import { sameArguments } from './messages.js';
@@ -16,7 +26,7 @@ import { sameArguments } from './messages.js';
  * refused with 406 when its arguments differ, 404 for what does not exist. Not kept: the
  * `x-death` headers, exclusive queues, priorities, the expiration of one message.
  */
-export class InMemoryAmqp {
+export class InMemoryAmqp implements BrokerState, Opening {
   private readonly exchanges = new Map<string, Exchange>();
 
   private readonly queues = new Map<string, Queue>();
@@ -90,7 +100,7 @@ export class InMemoryAmqp {
   }
 
   /** Cancels its consumers, as the broker does: each one is handed `null`. */
-  deleteQueue(queue: Queue): number {
+  deleteQueue(queue: QueueState): number {
     this.queues.delete(queue.name);
 
     for (const exchange of this.exchanges.values()) {
@@ -128,7 +138,7 @@ export class InMemoryAmqp {
   }
 
   /** Where a queue sends what expired or was rejected without requeueing, if it says so. */
-  deadLetter(queue: Queue, message: StoredMessage): void {
+  deadLetter(queue: QueueState, message: StoredMessage): void {
     const exchangeName = queue.args['x-dead-letter-exchange'];
 
     if (typeof exchangeName !== 'string') {

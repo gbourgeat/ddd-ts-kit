@@ -1,11 +1,17 @@
 import type { ConfirmChannel, ConsumeMessage, GetMessage, Message, Options, Replies } from 'amqplib';
 import { DeclaringChannel } from './declaring-channel.js';
 import { AmqpError, IllegalOperation, Unsupported } from './errors.js';
-import type { InMemoryAmqp } from './in-memory-amqp.js';
-import type { MemoryConnection } from './memory-connection.js';
 import { fieldsOf, propertiesOf } from './messages.js';
-import type { Consumer, StoredMessage, Unacked, Wire } from './model.js';
-import type { Queue } from './queue.js';
+import type {
+  BrokerState,
+  ChannelOwner,
+  Consumer,
+  ConsumerChannel,
+  QueueState,
+  StoredMessage,
+  Unacked,
+  Wire,
+} from './model.js';
 
 type Confirmation = (error: unknown, ok: Replies.Empty) => void;
 
@@ -14,7 +20,7 @@ type Confirmation = (error: unknown, ok: Replies.Empty) => void;
  * returned first when mandatory and unroutable, consumers fed up to their prefetch, and on
  * closing every unacknowledged message back at the head of its queue, marked redelivered.
  */
-export class MemoryChannel extends DeclaringChannel implements ConfirmChannel {
+export class MemoryChannel extends DeclaringChannel implements ConfirmChannel, ConsumerChannel {
   private readonly consumers = new Map<string, Consumer>();
 
   private readonly unacked = new Map<number, Unacked>();
@@ -26,8 +32,8 @@ export class MemoryChannel extends DeclaringChannel implements ConfirmChannel {
   private prefetchCount = 0;
 
   constructor(
-    broker: InMemoryAmqp,
-    private readonly owner: MemoryConnection,
+    broker: BrokerState,
+    private readonly owner: ChannelOwner,
     private readonly wire: Wire,
   ) {
     super(broker);
@@ -247,7 +253,7 @@ export class MemoryChannel extends DeclaringChannel implements ConfirmChannel {
     return confirmed;
   }
 
-  private settle(message: Message, settled: (queue: Queue, stored: StoredMessage) => void): void {
+  private settle(message: Message, settled: (queue: QueueState, stored: StoredMessage) => void): void {
     this.ensureOpen();
     const { deliveryTag } = message.fields;
     const delivery = this.unacked.get(deliveryTag);

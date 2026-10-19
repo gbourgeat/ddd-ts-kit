@@ -1,10 +1,8 @@
 import { EventEmitter } from 'node:events';
 import type { Connection, Options, Replies } from 'amqplib';
 import { AmqpError, IllegalOperation, Unsupported } from './errors.js';
-import type { InMemoryAmqp } from './in-memory-amqp.js';
 import { SERVER_PROPERTIES, argumentsOf } from './messages.js';
-import type { Exchange } from './model.js';
-import type { Queue } from './queue.js';
+import type { BrokerState, Exchange, QueueState } from './model.js';
 
 /**
  * The half of a channel that declares: exchanges, queues and their bindings. A refusal closes
@@ -15,7 +13,7 @@ export abstract class DeclaringChannel extends EventEmitter {
 
   protected open = true;
 
-  constructor(protected readonly broker: InMemoryAmqp) {
+  constructor(protected readonly broker: BrokerState) {
     super();
   }
 
@@ -106,7 +104,7 @@ export abstract class DeclaringChannel extends EventEmitter {
   /** Closed, by the client, the broker or the loss of the connection. */
   abstract teardown(): void;
 
-  protected existingQueue(name: string): Queue {
+  protected existingQueue(name: string): QueueState {
     this.ensureOpen();
     const queue = this.broker.queue(name);
 

@@ -1,8 +1,6 @@
 import type { ChannelModel } from 'amqplib';
 import { ConnectionRefused } from './errors.js';
-import type { InMemoryAmqp } from './in-memory-amqp.js';
-import type { MemoryConnection } from './memory-connection.js';
-import type { Wire } from './model.js';
+import type { Opening, Severable, Wire } from './model.js';
 
 /**
  * The network between a bus and the broker: it can stop passing the replies of the broker
@@ -10,7 +8,7 @@ import type { Wire } from './model.js';
  * The same sabotage as the TCP relay used against a real broker, without a socket.
  */
 export class InMemoryNetwork implements Wire {
-  private readonly connections = new Set<MemoryConnection>();
+  private readonly connections = new Set<Severable>();
 
   private refusing = false;
 
@@ -21,7 +19,7 @@ export class InMemoryNetwork implements Wire {
   /** Publications sent through this network, to know that one left the bus. */
   traffic = 0;
 
-  constructor(private readonly broker: InMemoryAmqp) {}
+  constructor(private readonly broker: Opening) {}
 
   readonly connection = async (): Promise<ChannelModel> => {
     if (this.closed || this.refusing) {

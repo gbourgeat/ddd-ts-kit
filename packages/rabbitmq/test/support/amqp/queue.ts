@@ -1,8 +1,7 @@
-import type { InMemoryAmqp } from './in-memory-amqp.js';
-import type { Arguments, Consumer, StoredMessage } from './model.js';
+import type { Arguments, Consumer, DeadLettering, QueueState, StoredMessage } from './model.js';
 
 /** A queue: its ready messages, each with its expiry, handed to its consumers in turn. */
-export class Queue {
+export class Queue implements QueueState {
   readonly consumers: Consumer[] = [];
 
   private readonly ready: { readonly message: StoredMessage; expiry: ReturnType<typeof setTimeout> | undefined }[] = [];
@@ -12,7 +11,7 @@ export class Queue {
   private turn = 0;
 
   constructor(
-    private readonly broker: InMemoryAmqp,
+    private readonly broker: DeadLettering,
     readonly name: string,
     readonly durable: boolean,
     readonly args: Arguments,
