@@ -88,6 +88,29 @@ Never load then filter in memory. `generate query ... --search` writes a handler
 access scope of the actor (`all`, `none`, a set of ids, or a filter) and hands it to the read
 port; the adapter turns it into the query.
 
+A search across many elements asks two questions, under two permissions:
+
+- **May the actor run it?** The requirement of the query. Under relationships it always names a
+  resource (`RESOURCE_REQUIRED` otherwise): the enclosing one the generator writes,
+  `{ resource: () => ({ type: 'context', id: '<context>' }) }`. When an actor who reaches no
+  element must get 403 rather than an empty page, name the tenant of the actor instead,
+  `{ type: 'tenant', id: <its tenant> }`, with a schema permission such as
+  `browse: from('folder', 'view')` and a tuple `tenant:<id>#folder@folder:<id>` written with each
+  element. That check reads the elements of the tenant one by one for an actor who holds none.
+- **Which elements?** `Access.scope(query.actor, <context>Permissions['folder.view'], 'folder')`,
+  the permission of one element, mapped on its type: the relationships answer `ids`. An empty
+  page for an actor who reaches nothing is the right answer, not a leak.
+
+Never put the permission the scope asks in `signed-in-grants.ts` to let the query past the bus:
+what those grants cover lists `all` before the model is asked, so every signed-in person reads
+every element. When anybody may run the search, grant there its own permission
+(`folder.search`) and keep the scope on the permission of the element.
+
+Prove it with the real authorizer (the schema, the mapping and an `InMemoryRelationTupleStore`
+in `authorizationModule`), never `AllowAll` nor an answer written by hand: an element is absent
+for an actor with no relation to it, absent for the actor of another element, and absent from
+the page asked without any criterion.
+
 ## A field only some callers see
 
 "The patient does not see the internal note" is a right on a field, not a role test in a

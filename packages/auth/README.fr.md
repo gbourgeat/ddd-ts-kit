@@ -1,5 +1,5 @@
 [English](README.md) · **Français**
-<!-- translation-of: README.md sha256:25f674ba6b7de953 -->
+<!-- translation-of: README.md sha256:380b10fc6e8a224e -->
 
 # @ddd-ts-kit/auth
 
@@ -629,7 +629,9 @@ contrat.
 `authorizationModule`, et les données dont il a besoin. De RBAC à ReBAC : ajoutez `resource:`
 aux `requires` des cas d'usage qui n'en nommaient pas (une relation porte toujours sur quelque
 chose), faites correspondre chaque permission à une permission du schéma, et commencez à écrire
-des tuples. Les permissions, commandes, requêtes, gestionnaires, politiques, routes et tests des
+des tuples. Une recherche sur plusieurs éléments nomme une ressource englobante, le contexte
+(`{ type: 'context', id: 'docs' }`, ce qu'écrit le générateur) ou le *tenant* de l'acteur, et
+`Access.scope` sur le type des éléments restreint ce qu'elle lit. Les permissions, commandes, requêtes, gestionnaires, politiques, routes et tests des
 gestionnaires ne changent pas. Les modèles peuvent aussi se superposer : `Access` interroge les
 politiques d'instance puis l'autorisateur, donc « des rôles pour les actions, des politiques
 pour les quelques règles par élément » ne demande aucun magasin de tuples, et c'est par là qu'il
@@ -656,6 +658,12 @@ anonyme vont au modèle. Ce qu'elles couvrent liste `all` ; une autre liste rel�
 un modèle qui ne sait pas lister la fait échouer avec `ListingNotSupportedError`. Le *preset*
 d'identité de la CLI écrit cette enveloppe dans `createAuthorizer` et son attribution dans
 `signed-in-grants.ts`.
+
+Une permission de ces attributions liste `all` quel que soit le modèle, avant que le modèle soit
+interrogé : toute personne connectée lit tous les éléments. Ce n'est donc jamais le moyen de
+faire passer le bus à une recherche que le modèle refuse : attribuez-y la permission de lancer la
+recherche (`document.search`), et restreignez la recherche par la portée d'une autre permission
+(`document.view`), dont le modèle décide.
 
 ### Rôles
 
@@ -1043,7 +1051,7 @@ function whereOf(scope: AccessScope): SQL | undefined {
 
 | `AccessScope` | Donné par | Le port de lecture |
 |---|---|---|
-| `{ kind: 'all' }` | RBAC quand le rôle accorde la permission | n'ajoute rien |
+| `{ kind: 'all' }` | RBAC quand le rôle accorde la permission ; `SignedInGrantsAuthorizer` pour ce que couvrent ses attributions, quel que soit le modèle | n'ajoute rien |
 | `{ kind: 'none' }` | n'importe quel modèle, et toujours pour l'acteur anonyme | renvoie une page vide sans interroger la base |
 | `{ kind: 'filter', filter }` | RBAC avec le contrôle du *tenant* : `{ tenantId }` | ajoute une égalité par entrée, sur les colonnes qu'il choisit de faire correspondre |
 | `{ kind: 'ids', ids }` | ReBAC | ajoute `id IN (...)`, ou une jointure sur une table temporaire quand la liste est longue |
